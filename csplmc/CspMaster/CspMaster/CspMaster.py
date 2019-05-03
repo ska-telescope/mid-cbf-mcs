@@ -548,17 +548,38 @@ class CspMaster(with_metaclass(DeviceMeta,SKAMaster)):
     @DebugIt()
     def On(self, argin):
         # PROTECTED REGION ID(CspMaster.On) ENABLED START #
-        if len(argin) > 0:
-            for nelem in range(0, len(argin)):
-                device_name = argin[nelem]
-                # retrieve the sub_element proxy from the device name
-                device_proxy = self._se_proxies[device_name]
-                device_proxy.command_inout("On", "")
+        device_list = []        # list of FQDNs
+        err_msg = []            # list of messages to log
+        max_nelem = len(argin)  
+        if max_nelem == 0:      # no input argument -> switch on all sub-elements
+            max_nelem = len(self._se_fqdn)
+            device_list = self._se_fqdn
         else:
-            for nelem in range(0, len(self._se_fqdn)):
-                device_name = self._se_fqdn[nelem]
-                device_proxy = self._se_proxies[device_name]
+            device_list = argin 
+
+        # loop on sub-elements and issue the On command 
+        nerr = 0                # number of exception
+        for nelem in range(0, max_nelem):
+            device_name = device_list[nelem]
+            try: 
+                # retrieve the sub_element proxy from the device name
+                device_proxy = self._se_proxies[device_name] 
                 device_proxy.command_inout("On", "")
+            except KeyError as error:
+                err_msg.append("No proxy for device: " + str(error))
+                nerr += 1
+            except tango.DevFailed as df:
+                err_msg.append("Command failure for device " + device_name + ": " + str(df.args[0].desc))
+                nerr += 1
+        # throw exception  
+        if nerr > 0:
+            num_of_msg = len(err_msg)        
+            except_msg = ' '
+            for item in err_msg:
+               except_msg += item + "\n"
+               self.dev_logging(item, int(tango.LogLevel.LOG_ERROR))
+            tango.Except.throw_exception("Command failed", except_msg, 
+                                         "On command execution", tango.ErrSeverity.ERR)
         # PROTECTED REGION END #    //  CspMaster.On
 
     @command(
