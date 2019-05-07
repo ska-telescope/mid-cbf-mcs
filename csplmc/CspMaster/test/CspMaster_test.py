@@ -118,4 +118,3 @@ class TestCspMaster(object):
             argin = ["mid_csp_cbf/sub_elt/master", ]
             tango_context.device.On(argin)
         assert "Command failure" in str(df.value.args[0].desc)
-        assert 0
