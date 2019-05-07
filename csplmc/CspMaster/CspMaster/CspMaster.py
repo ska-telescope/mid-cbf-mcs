@@ -14,34 +14,32 @@ CSPMaster TANGO device class for the CSPMaster prototype
 # PROTECTED REGION ID (CspMaster.standardlibray_import) ENABLED START #
 # Python standard library
 from __future__ import absolute_import
-from future.utils import with_metaclass
 import sys
 import os
-import time
+from future.utils import with_metaclass
 # PROTECTED REGION END# //CspMaster.standardlibray_import
 
 # tango imports
 import tango
-from tango import DebugIt, AttrWriteType, AttrQuality, DevState, EventType, DeviceProxy
+from tango import DebugIt, EventType, DeviceProxy
 from tango.server import run, DeviceMeta, attribute, command, device_property
 
 # add the path to import global_enum package.
 file_path = os.path.dirname(os.path.abspath(__file__))
-base_pkg_path = os.path.abspath(os.path.join(file_path, "../.."))
-sys.path.insert(0, base_pkg_path)
+commons_pkg_path = os.path.abspath(os.path.join(file_path, "../../commons"))
+sys.path.insert(0, commons_pkg_path)
 
 # Additional import
 # PROTECTED REGION ID(CspMaster.additionnal_import) ENABLED START #
-# 
-from commons.global_enum import HealthState, AdminMode
+#
+from global_enum import HealthState, AdminMode
 from skabase.SKAMaster.SKAMaster import SKAMaster
 # PROTECTED REGION END #    //  CspMaster.additionnal_import
 
 
 __all__ = ["CspMaster", "main"]
 
-
-class CspMaster(with_metaclass(DeviceMeta,SKAMaster)):
+class CspMaster(with_metaclass(DeviceMeta, SKAMaster)):
     """
     CSPMaster TANGO device class for the CSPMaster prototype
     """
@@ -52,17 +50,17 @@ class CspMaster(with_metaclass(DeviceMeta,SKAMaster)):
     # ---------------
     def seSCMCallback(self, evt):
         """
-        Retrieve the values of the sub-element SCM attributes subscribed for change 
+        Retrieve the values of the sub-element SCM attributes subscribed for change
         event at device initialization.
         :param evt: A TANGO_CHANGE event on Subarray healthState.
         :return: None
         """
-        #TODO: add admin mode 
+        #TODO: add admin mode
         if evt.err is False:
             try:
-                if ("state" == evt.attr_value.name) or ("State" == evt.attr_value.name): 
+                if ("state" == evt.attr_value.name) or ("State" == evt.attr_value.name):
                     if self.CspMidCbf in evt.attr_name:
-                        self._cbf_state = evt.attr_value.value 
+                        self._cbf_state = evt.attr_value.value
                     elif self.CspMidPss in evt.attr_name:
                         self._pss_state = evt.attr_value.value
                     elif self.CspMidPst in evt.attr_name:
@@ -73,9 +71,9 @@ class CspMaster(with_metaclass(DeviceMeta,SKAMaster)):
                                   str(evt.attr_name)
                         self.dev_logging(log_msg, tango.LogLevel.LOG_WARN)
                         return
-                if "healthstate" in evt.attr_name: 
+                if "healthstate" in evt.attr_name:
                     if self.CspMidCbf in evt.attr_name:
-                        self._cbf_health_state = evt.attr_value.value 
+                        self._cbf_health_state = evt.attr_value.value
                     elif self.CspMidPss in evt.attr_name:
                         self._pss_health_state = evt.attr_value.value
                     elif self.CspMidPst in evt.attr_name:
@@ -92,7 +90,11 @@ class CspMaster(with_metaclass(DeviceMeta,SKAMaster)):
                 # update CSP global state
                 self.__set_csp_state()
             except Exception as except_occurred:
-                print(except_occurred)
+                self.dev_logging(str(except_occurred), tango.LogLevel.LOG_DEBUG)
+        else: 
+            for item in evt.errors: 
+                log_msg = item.reason + ": on attribute " + str(evt.attr_name)
+                self.dev_logging(log_msg, tango.LogLevel.LOG_WARN)
 
     # ---------------
     # Class private methods
@@ -104,16 +106,16 @@ class CspMaster(with_metaclass(DeviceMeta,SKAMaster)):
         :param  None
         :return None
         """
-        
+
         self.__set_csp_health_state()
         # CSP state reflects the status of CBF. Only if CBF is present CSP can work.
-        # The state of PSS and PST sub-elements only contributes to determine the CSP 
+        # The state of PSS and PST sub-elements only contributes to determine the CSP
         # health state.
         self.set_state(self._cbf_state)
 
     def __set_csp_health_state(self):
         """
-        Retrieve the healthState attribute of the CSP sub-elements and aggregate them 
+        Retrieve the healthState attribute of the CSP sub-elements and aggregate them
         to build up the CSP health state
         :param  None
         :return None
@@ -122,8 +124,8 @@ class CspMaster(with_metaclass(DeviceMeta,SKAMaster)):
         if (self._cbf_health_state == HealthState.OK.value) and \
            (self._pst_health_state == HealthState.OK.value) and \
            (self._pst_health_state == HealthState.OK.value):
-               self._health_state = HealthState.OK.value
-        elif (self._cbf_health_state == HealthState.UNKNOWN.value): 
+            self._health_state = HealthState.OK.value
+        elif (self._cbf_health_state == HealthState.UNKNOWN.value):
             self._health_state = HealthState.UNKNOWN.value
         elif (self._cbf_health_state == HealthState.FAILED.value):
             self._health_state = HealthState.FAILED.value
@@ -159,8 +161,9 @@ class CspMaster(with_metaclass(DeviceMeta,SKAMaster)):
         polling_period=3000,
         abs_change=5,
         rel_change=2,
-        doc="Percentage progress implemented for commands that  result in state/mode transitions\
-            for a large \nnumber of components and/or are executed in stages (e.g power up, power down)",
+        doc="Percentage progress implemented for commands that  result in state/mode \
+             transitions for a large \nnumber of components and/or are executed in \
+             stages (e.g power up, power down)",
     )
 
     cspCbfState = attribute(
@@ -225,7 +228,8 @@ class CspMaster(with_metaclass(DeviceMeta,SKAMaster)):
         label="VCC health status",
         polling_period=3000,
         abs_change=1,
-        doc="Report the health status of VCC capabilities as an array of unsigned short.\nEx:\n[0,0,0,2,0...3]",
+        doc="Report the health status of VCC capabilities as an array \
+             of unsigned short.\nEx:\n[0,0,0,2,0...3]",
     )
 
     reportVCCAdminMode = attribute(
@@ -234,7 +238,8 @@ class CspMaster(with_metaclass(DeviceMeta,SKAMaster)):
         label="VCC admin mode",
         polling_period=3000,
         abs_change=1,
-        doc="Report the administration mode of the VCC capabilities as an array of unisgned short.\nFor ex.:\n[0,0,0,...1,2]",
+        doc="Report the administration mode of the VCC capabilities as an array \
+             of unisgned short.\nFor ex.:\n[0,0,0,...1,2]",
     )
 
     reportFSPState = attribute(
@@ -260,7 +265,8 @@ class CspMaster(with_metaclass(DeviceMeta,SKAMaster)):
         label="FSP admin mode",
         polling_period=3000,
         abs_change=1,
-        doc="Report the administration mode of the FSP capabilities as an array of unisgned short.\nfor ex:\n[0,0,2,..]",
+        doc="Report the administration mode of the FSP capabilities as an array \
+             of unisgned short.\nfor ex:\n[0,0,2,..]",
     )
 
     reportSearchBeamState = attribute(
@@ -277,7 +283,8 @@ class CspMaster(with_metaclass(DeviceMeta,SKAMaster)):
         label="Search Beams health status",
         polling_period=3000,
         abs_change=1,
-        doc="Report the health status of the search beams as an array of unsigned short. For ex:\n[0,0,...,1..]",
+        doc="Report the health status of the search beams as an array \
+             of unsigned short. For ex:\n[0,0,...,1..]",
     )
 
     reportSearchBeamAdminMode = attribute(
@@ -286,7 +293,8 @@ class CspMaster(with_metaclass(DeviceMeta,SKAMaster)):
         label="Search beams admin mode",
         polling_period=3000,
         abs_change=1,
-        doc="Report the administration mode of the search beams as an array of unisgned short. Fo ex:\n[0,0,0,...2..]",
+        doc="Report the administration mode of the search beams as an array \
+             of unisgned short. Fo ex:\n[0,0,0,...2..]",
     )
 
     reportTimingBeamState = attribute(
@@ -303,7 +311,8 @@ class CspMaster(with_metaclass(DeviceMeta,SKAMaster)):
         label="Timing Beams health status",
         polling_period=3000,
         abs_change=1,
-        doc="Report the health status of the timing beams as an array of unsigned short. For ex:\n[0,0,...,1..]",
+        doc="Report the health status of the timing beams as an array \
+             of unsigned short. For ex:\n[0,0,...,1..]",
     )
 
     reportTimingBeamAdminMode = attribute(
@@ -312,7 +321,8 @@ class CspMaster(with_metaclass(DeviceMeta,SKAMaster)):
         label="Timing beams admin mode",
         polling_period=3000,
         abs_change=1,
-        doc="Report the administration mode of the timing beams as an array of unisgned short. Fo ex:\n[0,0,0,...2..]",
+        doc="Report the administration mode of the timing beams as an array \
+             of unisgned short. Fo ex:\n[0,0,0,...2..]",
     )
 
     reportVLBIBeamState = attribute(
@@ -329,7 +339,8 @@ class CspMaster(with_metaclass(DeviceMeta,SKAMaster)):
         label="VLBI Beams health status",
         polling_period=3000,
         abs_change=1,
-        doc="Report the health status of the VLBI beams as an array of unsigned short. For ex:\n[0,0,...,1..]",
+        doc="Report the health status of the VLBI beams as an array \
+             of unsigned short. For ex:\n[0,0,...,1..]",
     )
 
     reportVLBIBeamAdminMode = attribute(
@@ -338,7 +349,8 @@ class CspMaster(with_metaclass(DeviceMeta,SKAMaster)):
         label="VLBI beams admin mode",
         polling_period=3000,
         abs_change=1,
-        doc="Report the administration mode of the VLBI beams as an array of unisgned short. Fo ex:\n[0,0,0,...2..]",
+        doc="Report the administration mode of the VLBI beams as an array \
+             of unisgned short. Fo ex:\n[0,0,0,...2..]",
     )
 
     # ---------------
@@ -348,7 +360,6 @@ class CspMaster(with_metaclass(DeviceMeta,SKAMaster)):
     def init_device(self):
         SKAMaster.init_device(self)
         # PROTECTED REGION ID(CspMaster.init_device) ENABLED START #
-        
         self.set_state(tango.DevState.INIT)
 
         # initialize attribute values
@@ -379,13 +390,15 @@ class CspMaster(with_metaclass(DeviceMeta,SKAMaster)):
 
         # initialize the dictionary with sub-element proxies
         self._se_proxies = {}
+        # dictionary with timeout counts
+        self._se_timeout_evts = {}
 
         # initialize the list with the subscribed event IDs
         self._event_id = []
 
         # Try connection with each sub-element
         for nelem in range(0,len(self._se_fqdn)):
-            try: 
+            try:
                 log_msg = "Trying connection to" + str(self._se_fqdn[nelem]) + " device"
                 self.dev_logging(log_msg, int(tango.LogLevel.LOG_INFO))
                 device_proxy = DeviceProxy(self._se_fqdn[nelem])
@@ -394,19 +407,23 @@ class CspMaster(with_metaclass(DeviceMeta,SKAMaster)):
                 # store the sub-element proxies 
                 self._se_proxies[self._se_fqdn[nelem]] = device_proxy
 
+                # initialize the timeout events
+                self._se_timeout_evts[self._se_fqdn[nelem]] = 0
+
                 # Subscription of sub-element attributes: State and healthState 
-                ev_id = device_proxy.subscribe_event("State", EventType.CHANGE_EVENT, 
-                                        self.seSCMCallback, stateless=True)
+                ev_id = device_proxy.subscribe_event("State", EventType.CHANGE_EVENT,
+                        self.seSCMCallback, stateless=True)
                 self._event_id.append(ev_id)
 
-                ev_id = device_proxy.subscribe_event("healthState", EventType.CHANGE_EVENT, 
-                                        self.seSCMCallback, stateless=True)
+                ev_id = device_proxy.subscribe_event("healthState", EventType.CHANGE_EVENT,
+                        self.seSCMCallback, stateless=True)
                 self._event_id.append(ev_id)
             except tango.DevFailed as df:
-                for err in range(0, len(df.args)):
-                    log_msg = "Failure in connection to " + str(self._se_fqdn[nelem]) + " device: " +\
-                               str(df.args[err].reason)
+                for item in df.args:
+                    log_msg = "Failure in connection to " + str(self._se_fqdn[nelem]) + \
+                            " device: " + str(item.reason)
                     self.dev_logging(log_msg, int(tango.LogLevel.LOG_ERROR))
+
         # PROTECTED REGION END #    //  CspMaster.init_device
 
     def always_executed_hook(self):
@@ -542,49 +559,53 @@ class CspMaster(with_metaclass(DeviceMeta,SKAMaster)):
     # --------
 
     @command(
-    dtype_in=('str',), 
-    doc_in="If the array length is 0, the command applies to the whole\nCSP Element.\nIf the array length is > 1, each array element specifies the FQDN of the\nCSP SubElement to switch ON.", 
+        dtype_in=('str',), 
+        doc_in="If the array length is 0, the command applies to the whole\nCSP Element.\n\
+                If the array length is > 1, each array element specifies the FQDN of the\n\
+                CSP SubElement to switch ON.", 
     )
     @DebugIt()
     def On(self, argin):
         # PROTECTED REGION ID(CspMaster.On) ENABLED START #
         device_list = []        # list of FQDNs
         err_msg = []            # list of messages to log
-        max_nelem = len(argin)  
+        max_nelem = len(argin)
         if max_nelem == 0:      # no input argument -> switch on all sub-elements
             max_nelem = len(self._se_fqdn)
             device_list = self._se_fqdn
         else:
-            device_list = argin 
+            device_list = argin
 
         # loop on sub-elements and issue the On command 
         nerr = 0                # number of exception
         for nelem in range(0, max_nelem):
             device_name = device_list[nelem]
-            try: 
+            try:
                 # retrieve the sub_element proxy from the device name
-                device_proxy = self._se_proxies[device_name] 
+                device_proxy = self._se_proxies[device_name]
                 device_proxy.command_inout("On", "")
             except KeyError as error:
                 err_msg.append("No proxy for device: " + str(error))
                 nerr += 1
             except tango.DevFailed as df:
-                err_msg.append("Command failure for device " + device_name + ": " + str(df.args[0].desc))
+                err_msg.append("Command failure for device " + device_name + ": " + \
+                        str(df.args[0].desc))
                 nerr += 1
-        # throw exception  
+        # throw exception 
         if nerr > 0:
-            num_of_msg = len(err_msg)        
             except_msg = ' '
             for item in err_msg:
                except_msg += item + "\n"
                self.dev_logging(item, int(tango.LogLevel.LOG_ERROR))
-            tango.Except.throw_exception("Command failed", except_msg, 
+            tango.Except.throw_exception("Command failed", except_msg,
                                          "On command execution", tango.ErrSeverity.ERR)
         # PROTECTED REGION END #    //  CspMaster.On
 
     @command(
-    dtype_in=('str',), 
-    doc_in="If the array length is 0, the command applies to the whole\nCSP Element.\nIf the array length is > 1, each array element specifies the FQDN of the\nCSP SubElement to switch OFF.", 
+        dtype_in=('str',), 
+        doc_in="If the array length is 0, the command applies to the whole\nCSP Element.\n\
+                If the array length is > 1, each array element specifies the FQDN of the\n\
+                CSP SubElement to switch OFF.", 
     )
     @DebugIt()
     def Off(self, argin):
@@ -593,8 +614,10 @@ class CspMaster(with_metaclass(DeviceMeta,SKAMaster)):
         # PROTECTED REGION END #    //  CspMaster.Off
 
     @command(
-    dtype_in=('str',), 
-    doc_in="If the array length is 0, the command applies to the whole\nCSP Element.\nIf the array length is > 1, each array element specifies the FQDN of the\nCSP SubElement to switch OFF.", 
+        dtype_in=('str',), 
+        doc_in="If the array length is 0, the command applies to the whole\nCSP Element.\n\
+                If the array length is > 1, each array element specifies the FQDN of the\n\
+                CSP SubElement to switch OFF.", 
     )
     @DebugIt()
     def Standby(self,argin):
@@ -603,8 +626,8 @@ class CspMaster(with_metaclass(DeviceMeta,SKAMaster)):
         # PROTECTED REGION END #    //  CspMaster.Standby
 
     @command(
-    dtype_in='DevEnum', 
-    doc_in="adminMode", 
+        dtype_in='DevEnum', 
+        doc_in="adminMode", 
     )
     @DebugIt()
     def SetCbfAdminMode(self, argin):
@@ -613,8 +636,8 @@ class CspMaster(with_metaclass(DeviceMeta,SKAMaster)):
         # PROTECTED REGION END #    //  CspMaster.SetCbfAdminMode
 
     @command(
-    dtype_in='DevEnum', 
-    doc_in="adminMode", 
+        dtype_in='DevEnum', 
+        doc_in="adminMode", 
     )
     @DebugIt()
     def SetPssAdminMode(self, argin):
@@ -623,8 +646,8 @@ class CspMaster(with_metaclass(DeviceMeta,SKAMaster)):
         # PROTECTED REGION END #    //  CspMaster.SetPssAdminMode
 
     @command(
-    dtype_in='DevEnum', 
-    doc_in="adminMode", 
+        dtype_in='DevEnum', 
+        doc_in="adminMode", 
     )
     @DebugIt()
     def SetPstAdminMode(self, argin):
@@ -635,7 +658,6 @@ class CspMaster(with_metaclass(DeviceMeta,SKAMaster)):
 # ----------
 # Run server
 # ----------
-
 
 def main(args=None, **kwargs):
     # PROTECTED REGION ID(CspMaster.main) ENABLED START #

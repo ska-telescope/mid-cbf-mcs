@@ -92,6 +92,13 @@ class CbfTestMaster(with_metaclass(DeviceMeta,SKAMaster)):
         self.set_state(tango.DevState.STANDBY)
         self._health_state = HealthState.DEGRADED.value
 
+    def off_subelement(self):
+        """
+        Simulate the sub-element transition from STANDBY to OFF
+        """
+        self.set_state(tango.DevState.OFF)
+        self._health_state = HealthState.UNKNOWN.value
+
     def init_device(self):
         SKAMaster.init_device(self)
         # PROTECTED REGION ID(CbfTestMaster.init_device) ENABLED START #
@@ -100,7 +107,7 @@ class CbfTestMaster(with_metaclass(DeviceMeta,SKAMaster)):
         self._health_state = HealthState.UNKNOWN.value
 
         # start a timer to simulate device intialization
-        thread = threading.Timer(5, self.init_subelement)
+        thread = threading.Timer(1, self.init_subelement)
         thread.start()
 
         # PROTECTED REGION END #    //  CbfTestMaster.init_device
@@ -136,7 +143,7 @@ class CbfTestMaster(with_metaclass(DeviceMeta,SKAMaster)):
     @DebugIt()
     def On(self, argin):
         # PROTECTED REGION ID(CbfTestMaster.On) ENABLED START #
-        thread = threading.Timer(5, self.on_subelement)
+        thread = threading.Timer(2, self.on_subelement)
         thread.start()
         # PROTECTED REGION END #    //  CbfTestMaster.On
 
@@ -147,21 +154,48 @@ class CbfTestMaster(with_metaclass(DeviceMeta,SKAMaster)):
     @DebugIt()
     def Off(self, argin):
         # PROTECTED REGION ID(CbfTestMaster.Off) ENABLED START #
-        pass
+        thread = threading.Timer(2, self.off_subelement)
+        thread.start()
         # PROTECTED REGION END #    //  CbfTestMaster.Off
 
     @command(
+        dtype_in=('str',),
+        doc_in="If the array length is0, the command apllies to the whole\nCSP Element.\n\
+                If the array length is > 1, each array element specifies the FQDN of the\n\
+                CSP SubElement to switch OFF.",
     )
+
     @DebugIt()
-    def Standby(self):
+    def Standby(self, argin):
         # PROTECTED REGION ID(CbfTestMaster.Standby) ENABLED START #
-        pass
+        thread = threading.Timer(2, self.standby_subelement)
+        thread.start()
         # PROTECTED REGION END #    //  CbfTestMaster.Standby
+
+    def is_Off_allowed(self):
+        # PROTECTED REGION ID(CbfTestMaster.is_Off_allowed) ENABLED START #
+        if self.get_state() not in [DevState.STANDBY]:
+            return False
+        return True
+        # PROTECTED REGION END #    //  CbfTestMaster.is_Off_allowed.
+
+    def is_Standby_allowed(self):
+        # PROTECTED REGION ID(CbfTestMaster.is_Standby_allowed) ENABLED START #
+        if self.get_state() not in [DevState.ON, DevState.OFF]:
+            return False
+        return True
+        # PROTECTED REGION END #    //  CbfTestMaster.is_Standby_allowed
+
+    def is_On_allowed(self):
+        # PROTECTED REGION ID(CbfTestMaster.is_On_allowed) ENABLED START #
+        if self.get_state() not in [DevState.STANDBY]:
+            return False
+        return True
+        # PROTECTED REGION END #    //  CbfTestMaster.is_On_allowed
 
 # ----------
 # Run server
 # ----------
-
 
 def main(args=None, **kwargs):
     # PROTECTED REGION ID(CbfTestMaster.main) ENABLED START #

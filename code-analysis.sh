@@ -5,8 +5,8 @@ echo
 
 echo "MODULE ANALYSIS"
 echo "---------------"
-pylint powersupply
+pylint --rcfile=.pylintrc csplmc/CspMaster/CspMaster
 
 echo "TESTS ANALYSIS"
 echo "--------------"
-pylint tests
+pylint --rcfile=.pylintrc csplmc/CspMaster/test

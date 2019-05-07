@@ -107,7 +107,7 @@
     </commands>
     <commands name="Standby" description="Transit CSP or one or more CSP SubElements from ON/OFF to &#xA;STANDBY." execMethod="standby" displayLevel="OPERATOR" polledPeriod="0" isDynamic="false">
       <argin description="If the array length is0, the command apllies to the whole&#xA;CSP Element.&#xA;If the array length is > 1, each array element specifies the FQDN of the&#xA;CSP SubElement to put in STANDBY mode.">
-        <type xsi:type="pogoDsl:VoidType"/>
+        <type xsi:type="pogoDsl:StringArrayType"/>
       </argin>
       <argout description="">
         <type xsi:type="pogoDsl:VoidType"/>
