@@ -2,8 +2,8 @@
 * [Description](#description)
 * [Getting started](#getting-started)
 * [Prerequisities](#prerequisities)
-* [Run on local host](#run-on-local-host)
-* [Run in containers](#run-in-containers)
+* [Run on local host](#how-to-run-on-local-host)
+* [Run in containers](#how-to-run-in-containers)
 * [Running tests](#running-tests)
     * [Start the devices](#start-the-devices)
     * [Configure the devices](#configure-the-devices) 
@@ -34,13 +34,13 @@ git clone https://github.com/ska-telescope/csp-lmc-prototype.git
 * The SKA Base classes installed
 
 
-## Run on local host
+## How to run on local host
 
 ### Start the devices
 
 The script `start_prototype` in the project root directory starts the two TANGO devices, doing some preliminary controls.
 
-The script
+The script:
 
  * checks if the TANGO DB is up and running
  * checks if the CSP.LMC prototype TANGO devices are already registered within the TANGO DB, otherwise it adds them
@@ -73,7 +73,7 @@ For example, the procedure to configure the `CbfTestMaster` device is as follow:
 
 The same sequence of operations has to be repeated for the CspMaster, otherwise no TANGO client is able to subscribe and receive `events` for that device.
 
-## Run in Docker containers
+## How to run in Docker containers
 
 The CSP.LMC prototype can run also in a containerised environment: the YAML configuration file `docker-compose.yml` includes the stages to run the the CSP.LMC TANGO devices inside separate docker containers.
 
@@ -104,7 +104,7 @@ make down
 
 from the prototype root directory.
 
-__OSS__
+__NOTE__
  
 >Docker containers are run with the `--network=host` option.
 In this case there is no isolation between the host machine and the container. 
