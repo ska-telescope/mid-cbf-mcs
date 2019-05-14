@@ -10,7 +10,7 @@
 # DOCKER_REGISTRY_USER and PROJECT to give a final Docker tag of
 # nexus.engageska-portugal.pt/tango-example/csplmc
 #
-DOCKER_REGISTRY_USER:=tango-example
+DOCKER_REGISTRY_USER:=ska-docker
 PROJECT = csplmc
 
 #
