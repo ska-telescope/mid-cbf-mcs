@@ -50,6 +50,20 @@ services:
       - -ORBendPoint
       - giop:tcp::10000
 
+  conf-polling-events:
+    image: ${DOCKER_REGISTRY_HOST}/${DOCKER_REGISTRY_USER}/csplmc:latest
+    depends_on:
+    - cbftestmaster
+    - cspmaster
+
+    network_mode: ${NETWORK_MODE}
+    container_name: ${CONTAINER_NAME_PREFIX}conf-polling-events
+    environment:
+    - TANGO_HOST=${TANGO_HOST}
+    command: >
+      sh -c "wait-for-it.sh ${TANGO_HOST} --timeout=30 --strict --
+             /venv/bin/python /app/csplmc/configurePollingAndEvents.py"
+
   cbftestmaster:
     image: ${DOCKER_REGISTRY_HOST}/${DOCKER_REGISTRY_USER}/csplmc:latest
     network_mode: ${NETWORK_MODE}

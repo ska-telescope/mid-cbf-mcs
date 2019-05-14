@@ -1,0 +1,60 @@
+[
+  {
+    "class": "CspMaster",
+    "serverName": "CspMaster/csp",
+    "devName": "mid_csp/elt/master",
+    "deviceProperties": [],
+    "attributeProperties": [
+      {
+        "attributeName": "adminMode",
+        "attrPropName": "",
+        "attrPropValue": "",
+        "pollingPeriod": 1000,
+        "changeEventAbs": "1"
+      },
+      {
+        "attributeName": "State",
+        "attrPropName": "",
+        "attrPropValue": "",
+        "pollingPeriod": 1000,
+        "changeEventAbs": ""
+      },
+      {
+        "attributeName": "healthState",
+        "attrPropName": "",
+        "attrPropValue": "",
+        "pollingPeriod": 1000,
+        "changeEventAbs": "1"
+      }
+    ]
+  },
+  {
+    "class": "CbfTestMaster",
+    "serverName": "CbfTestMaster/test",
+    "devName": "mid_csp_cbf/sub_elt/master",
+    "deviceProperties": [],
+    "attributeProperties": [
+      {
+        "attributeName": "adminMode",
+        "attrPropName": "",
+        "attrPropValue": "",
+        "pollingPeriod": 1000,
+        "changeEventAbs": "1"
+      },
+      {
+        "attributeName": "healthState",
+        "attrPropName": "",
+        "attrPropValue": "",
+        "pollingPeriod": 1000,
+        "changeEventAbs": "1"
+      },
+      {
+        "attributeName": "State",
+        "attrPropName": "",
+        "attrPropValue": "",
+        "pollingPeriod": 1000,
+        "changeEventAbs": ""
+      }
+    ]
+  }
+]
