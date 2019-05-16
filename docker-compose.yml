@@ -1,0 +1,181 @@
+#
+# Docker compose file for TANGO database and database device server
+#
+# Defines:
+#   - tangodb: MariaDB database with TANGO schema
+#   - databaseds: TANGO database device server
+#   - rsyslog-csplmc: rsyslog service for logger
+#   - cspmaster: CspMaster device
+#
+# Requires:
+#   - None
+#
+version: '2'
+volumes:
+  tangodb: {}
+
+services:
+  tangodb:
+    image: nexus.engageska-portugal.pt/ska-docker/tango-db:latest
+    network_mode: ${NETWORK_MODE}
+    container_name: ${CONTAINER_NAME_PREFIX}tangodb
+    environment:
+      - MYSQL_ROOT_PASSWORD=secret
+      - MYSQL_DATABASE=tango
+      - MYSQL_USER=tango
+      - MYSQL_PASSWORD=tango
+    volumes:
+      - tangodb:/var/lib/mysql
+
+  databaseds:
+    image: nexus.engageska-portugal.pt/ska-docker/tango-cpp:latest
+    depends_on:
+      - tangodb
+    network_mode: ${NETWORK_MODE}
+    container_name: ${CONTAINER_NAME_PREFIX}databaseds
+    environment:
+      - MYSQL_HOST=${MYSQL_HOST}
+      - MYSQL_DATABASE=tango
+      - MYSQL_USER=tango
+      - MYSQL_PASSWORD=tango
+      - TANGO_HOST=${TANGO_HOST}
+    entrypoint:
+      - /usr/local/bin/wait-for-it.sh
+      - ${MYSQL_HOST}
+      - --timeout=30
+      - --strict
+      - --
+      - /usr/local/bin/DataBaseds
+      - "2"
+      - -ORBendPoint
+      - giop:tcp::10000
+
+  conf-polling-events:
+    image: ${DOCKER_REGISTRY_HOST}/${DOCKER_REGISTRY_USER}/csplmc:latest
+    depends_on:
+    - cbftestmaster
+    - cspmaster
+
+    network_mode: ${NETWORK_MODE}
+    container_name: ${CONTAINER_NAME_PREFIX}conf-polling-events
+    environment:
+    - TANGO_HOST=${TANGO_HOST}
+    command: >
+      sh -c "wait-for-it.sh ${TANGO_HOST} --timeout=30 --strict --
+             /venv/bin/python /app/csplmc/configurePollingAndEvents.py"
+
+  vcc:
+    image: ${DOCKER_REGISTRY_HOST}/${DOCKER_REGISTRY_USER}/csplmc:latest
+    network_mode: ${NETWORK_MODE}
+    container_name: ${CONTAINER_NAME_PREFIX}vcc
+    depends_on:
+      - databaseds
+      - rsyslog-csplmc
+    environment:
+      - TANGO_HOST=${TANGO_HOST}
+    command: >
+      sh -c "wait-for-it.sh ${TANGO_HOST} --timeout=30 --strict --
+             for i in $$(seq -w 1 197); do \
+             tango_admin --check-device mid_csp_cbf/vcc/$$i ||\
+             tango_admin --add-server Vcc/cbf Vcc mid_csp_cbf/vcc/$$i; done &&\
+             /venv/bin/python /app/csplmc/Vcc/Vcc/Vcc.py cbf"
+    volumes_from:
+      - rsyslog-csplmc:rw
+
+  fsp:
+    image: ${DOCKER_REGISTRY_HOST}/${DOCKER_REGISTRY_USER}/csplmc:latest
+    network_mode: ${NETWORK_MODE}
+    container_name: ${CONTAINER_NAME_PREFIX}fsp
+    depends_on:
+      - databaseds
+      - rsyslog-csplmc
+    environment:
+      - TANGO_HOST=${TANGO_HOST}
+    command: >
+      sh -c "wait-for-it.sh ${TANGO_HOST} --timeout=30 --strict --
+             for i in $$(seq -w 1 27); do \
+             tango_admin --check-device mid_csp_cbf/fsp/$$i ||\
+             tango_admin --add-server Fsp/cbf Fsp mid_csp_cbf/fsp/$$i; done &&\
+             /venv/bin/python /app/csplmc/Fsp/Fsp/Fsp.py cbf"
+    volumes_from:
+      - rsyslog-csplmc:rw
+
+  cbfsubarray:
+    image: ${DOCKER_REGISTRY_HOST}/${DOCKER_REGISTRY_USER}/csplmc:latest
+    network_mode: ${NETWORK_MODE}
+    container_name: ${CONTAINER_NAME_PREFIX}cbfsubarray
+    depends_on:
+      - databaseds
+      - rsyslog-csplmc
+    environment:
+      - TANGO_HOST=${TANGO_HOST}
+    command: >
+      sh -c "wait-for-it.sh ${TANGO_HOST} --timeout=30 --strict --
+             for i in $$(seq -w 1 16); do \
+             tango_admin --check-device mid_csp_cbf/cbfSubarray/$$i ||\
+             tango_admin --add-server CbfSubarray/cbf CbfSubarray mid_csp_cbf/cbfSubarray/$$i; done &&\
+             /venv/bin/python /app/csplmc/CbfSubarray/CbfSubarray/CbfSubarray.py cbf"
+    volumes_from:
+      - rsyslog-csplmc:rw
+
+  cbfmaster:
+    image: ${DOCKER_REGISTRY_HOST}/${DOCKER_REGISTRY_USER}/csplmc:latest
+    network_mode: ${NETWORK_MODE}
+    container_name: ${CONTAINER_NAME_PREFIX}cbfmaster
+    depends_on:
+      - databaseds
+      - rsyslog-csplmc
+      - cbfsubarray
+      - vcc
+      - fsp
+    environment:
+      - TANGO_HOST=${TANGO_HOST}
+    command: >
+      sh -c "wait-for-it.sh ${TANGO_HOST} --timeout=30 --strict --
+             tango_admin --check-device mid_csp_cbf/master/main ||\
+             tango_admin --add-server CbfMaster/cbf CbfMaster mid_csp_cbf/master/main &&\
+             /venv/bin/python /app/csplmc/CbfMaster/CbfMaster/CbfMaster.py cbf"
+    volumes_from:
+      - rsyslog-csplmc:rw
+
+  cbftestmaster:
+    image: ${DOCKER_REGISTRY_HOST}/${DOCKER_REGISTRY_USER}/csplmc:latest
+    network_mode: ${NETWORK_MODE}
+    container_name: ${CONTAINER_NAME_PREFIX}cbftestmaster
+    depends_on:
+      - databaseds
+      - rsyslog-csplmc
+    environment:
+      - TANGO_HOST=${TANGO_HOST}
+    command: >
+      sh -c "wait-for-it.sh ${TANGO_HOST} --timeout=30 --strict --
+             tango_admin --check-device mid_csp_cbf/sub_elt/master ||\
+             tango_admin --add-server CbfTestMaster/test CbfTestMaster mid_csp_cbf/sub_elt/master &&\
+             /venv/bin/python /app/csplmc/CbfTestMaster/CbfTestMaster.py test"
+    volumes_from:
+      - rsyslog-csplmc:rw
+
+  cspmaster:
+    image: ${DOCKER_REGISTRY_HOST}/${DOCKER_REGISTRY_USER}/csplmc:latest
+    network_mode: ${NETWORK_MODE}
+    container_name: ${CONTAINER_NAME_PREFIX}cspmaster
+    depends_on:
+      - databaseds
+      - cbftestmaster
+      - cbfmaster
+      - rsyslog-csplmc
+    environment:
+      - TANGO_HOST=${TANGO_HOST}
+    command: >
+      sh -c "wait-for-it.sh ${TANGO_HOST} --timeout=30 --strict --
+             tango_admin --check-device mid_csp/elt/master ||\
+             tango_admin --add-server CspMaster/csp CspMaster mid_csp/elt/master &&\
+             tango_admin --ping-device mid_csp_cbf/sub_elt/master 10 &&\
+             /venv/bin/python /app/csplmc/CspMaster/CspMaster/CspMaster.py csp"
+    volumes_from:
+      - rsyslog-csplmc:rw
+
+  rsyslog-csplmc: 
+    image: jumanjiman/rsyslog
+    container_name: ${CONTAINER_NAME_PREFIX}rsyslog-csplmc
+    network_mode: ${NETWORK_MODE}
