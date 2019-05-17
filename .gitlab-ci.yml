@@ -51,7 +51,8 @@ publish image:
 
 pages:
   stage: pages
-  dependencies: test
+  dependencies: 
+     - test
   script:
    - mkdir .public
    - cp build/csp*.* .public
