@@ -178,7 +178,7 @@ class CbfSubarray(SKASubarray):
     def ConfigureScan(self, argin):
         # PROTECTED REGION ID(CbfSubarray.ConfigureScan) ENABLED START #
         # argin will be a JSON object, with schema TBD
-
+        pass
         # PROTECTED REGION END #    //  CbfSubarray.ConfigureScan
 
 # ----------

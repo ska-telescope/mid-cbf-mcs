@@ -126,7 +126,7 @@ class CbfMaster(SKAMaster):
             elif health_state == HealthState.OK.value:
                 count_ok += 1
 
-        # probably change criteria later - this is an over-simplification
+        # change criteria later - this is an over-simplification
         # overall health state is OK if all subarrays/capabilities are OK
         if count_ok == self._count_vcc + self._count_fsp + self._count_subarray:
             self._health_state = HealthState.OK.value
