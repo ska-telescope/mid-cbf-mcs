@@ -27,7 +27,9 @@ before_script:
 # It is also specified that only the master branch will be subject of this job.
 
 stages:
-  - test
+  - test        
+  - pages
+  - publish
 
 test:
   tags:
@@ -36,10 +38,10 @@ test:
   script:
     - make build
     - make test
-push:
+publish:
   tags:
     - docker-executor
-  stage: test
+  stage: publish
   script:
     - make push
   when: manual
@@ -47,7 +49,7 @@ push:
 pages:
   tags:
     - docker-executor
-  stage: test
+  stage: pages
   script:
    - mkdir .public
    - cp build/csp*.* .public
