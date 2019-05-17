@@ -13,7 +13,6 @@ services:
 # If cache is defined outside the scope of jobs, it means it is set globally and all jobs will use that definition
 cache:
   paths:
-    - build
 
 # before_script is used to define the command that should be run before all jobs, including deploy jobs, but after the restoration of artifacts.
 # This can be an array or a multi-line string.
@@ -28,17 +27,21 @@ before_script:
 
 stages:
   - test        
-  - pages
   - publish
+  - pages
 
-test:
+test execution:
   tags:
     - docker-executor
   stage: test
   script:
     - make build
     - make test
-publish:
+  artifacts:
+    paths:
+      - build
+
+publish image:
   tags:
     - docker-executor
   stage: publish
@@ -47,9 +50,8 @@ publish:
   when: manual
 
 pages:
-  tags:
-    - docker-executor
   stage: pages
+  dependencies: test
   script:
    - mkdir .public
    - cp build/csp*.* .public
