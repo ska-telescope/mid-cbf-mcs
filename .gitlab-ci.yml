@@ -49,8 +49,8 @@ pages:
   stage: test
   script:
    - mkdir .public
-   - cp build/coverage.xml .public
-   - cp -r build/htmlcov/* .public
+   - cp build/csp*.* .public
+   - cp -ar build/csp_master_htmlcov .public
    - mv .public public
   artifacts:
     paths:
