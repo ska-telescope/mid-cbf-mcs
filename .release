@@ -8,12 +8,12 @@
 
 """Release information for Python Package"""
 
-name = """tangods-cspmaster"""
+name = """tangods-mid-cbf"""
 version = "0.0.1"
 version_info = version.split(".")
-description = """SKA Csp Master TANGO Device Server"""
-author = "E.G"
-author_email = "elisabetta.giani@inaf.it"
+description = """SKA Cbf Master TANGO Device Server"""
+author = "James Jiang"
+author_email = "james.jiang@nrc.cnrc.gc.ca"
 license = """BSD-3-Clause"""
 url = """www.tango-controls.org"""
 copyright = """"""

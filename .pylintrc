@@ -7,9 +7,15 @@
 # pygtk.require().
 init-hook='
     import sys;
-    sys.path.append("./csplmc/CspMaster");
+    sys.path.append("./csplmc/CbfMaster");
+    sys.path.append("./csplmc/CbfSubarray");
+    sys.path.append("./csplmc/Vcc");
+    sys.path.append("./csplmc/Fst");
     sys.path.append("./csplmc/commons");
-    sys.path.append("./csplmc/CspMaster/CspMaster");
+    sys.path.append("./csplmc/CbfMaster/CbfMaster");
+    sys.path.append("./csplmc/CbfSubarray/CbfSubarray");
+    sys.path.append("./csplmc/Vcc/Vcc");
+    sys.path.append("./csplmc/Fsp/Fsp");
     sys.path.append("/usr/local/lib/python3.5/dist-packages");
     sys.path.append("/venv/lib/python3.5/site-packages")'
 

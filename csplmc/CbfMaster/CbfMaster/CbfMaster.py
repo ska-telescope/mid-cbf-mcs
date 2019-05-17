@@ -287,9 +287,21 @@ class CbfMaster(SKAMaster):
         self._health_state = HealthState.UNKNOWN.value
 
         # self._max_capabilities inherited from SKAMaster
-        self._count_vcc = self._max_capabilities["VCC"]
-        self._count_fsp = self._max_capabilities["FSP"]
-        self._count_subarray = self._max_capabilities["Subarray"]
+        # check first if property exists in DB
+        try:
+            self._count_vcc = self._max_capabilities["VCC"]
+        except Exception:
+            self._count_vcc = 1
+
+        try:
+            self._count_fsp = self._max_capabilities["FSP"]
+        except Exception:
+            self._count_fsp = 1
+
+        try:
+            self._count_subarray = self._max_capabilities["Subarray"]
+        except Exception:
+            self._count_subarray = 1
 
         # initialize attribute values
         self._command_progress = 0

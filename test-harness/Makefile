@@ -12,14 +12,21 @@ all: test
 # The following steps copy across useful output to this volume which can
 # then be extracted to form the CI summary for the test procedure.
 test:
-	retry --max=10 -- tango_admin --ping-device mid_csp/elt/master
-	retry --max=10 -- tango_admin --ping-device mid_csp_cbf/sub_elt/master
-	cd /app/csplmc/CspMaster && python setup.py test | tee setup_py_test.stdout
-	-cd /app && ./code-analysis.sh | tee code_analysis.stdout
+	retry --max=10 -- tango_admin --ping-device mid_csp_cbf/master/main
+	for i in $(seq -w 1 16); \
+	do \
+             	retry --max=10 -- tango_admin --ping-device mid_csp_cbf/vcc/$i ; \
+	done
+	for i in $(seq -w 1 27); \
+	do \
+             	retry --max=10 -- tango_admin --ping-device mid_csp_cbf/fsp/$i; \
+	done
+	for i in $(seq -w 1 197); \
+	do
+             	retry --max=10 -- tango_admin --ping-device mid_csp_cbf/cbfSubarray/$i; \
+	done
+	cd /app && ./code-analysis.sh | tee code_analysis.stdout
 	if [ -d /build ]; then \
-		mv /app/csplmc/CspMaster/setup_py_test.stdout /build/csp_master_setup_test.stdout; \
-		mv /app/csplmc/CspMaster/htmlcov /build/csp_master_htmlcov; \
-		mv /app/csplmc/CspMaster/coverage.xml /build/csp_master_coverage.xml; \
 		mv /app/code_analysis.stdout /build/csplmc_code_analysis.stdout; \
 	fi;
 
