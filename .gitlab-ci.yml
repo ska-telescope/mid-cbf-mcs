@@ -28,7 +28,6 @@ before_script:
 stages:
   - test
 
-
 test:
   tags:
     - docker-executor
@@ -36,11 +35,6 @@ test:
   script:
     - make build
     - make test
-    - mv build public
-  artifacts:
-    paths:
-      - public
-
 push:
   tags:
     - docker-executor
@@ -53,11 +47,7 @@ pages:
   tags:
     - docker-executor
   stage: test
-
   script:
-   - make build
-   - make test
-   - ls -la
    - mkdir .public
    - cp build/coverage.xml .public
    - cp -r build/htmlcov/* .public
