@@ -24,10 +24,10 @@ class ControlMode(Enum):
 class ObsMode(Enum):
     IDLE             = 0
     IMAGING          = 1
-    PULSAR-SEARCH    = 2
-    PULSAR-TIMING    = 3
-    DYNAMIC-SPECTRUM = 4
-    TRANSIENT-SEARCH = 5
+    PULSARSEARCH    = 2
+    PULSARTIMING    = 3
+    DYNAMICSPECTRUM = 4
+    TRANSIENTSEARCH = 5
     VLBI             = 6
     CALIBRATION      = 7
 
