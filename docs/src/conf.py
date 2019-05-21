@@ -60,7 +60,7 @@ master_doc = 'index'
 # General information about the project.
 project = 'developer.skatelescope.org'
 copyright = '2018, SKA Organization'
-author = 'Marco Bartolini'
+author = 'James Jiang'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -112,7 +112,7 @@ html_context = {
     'logo': 'img/logo.jpg',
     'theme_logo_only' : True,
     'display_github': True, # Integrate GitHub
-    'github_user': 'flyingfrog81', # Username
+    'github_user': 'jamesjiang52', # Username
     'github_repo': 'developer.skatelescope.org', # Repo name
     'github_version': 'master', # Version
     'conf_py_path': '/src/', # Path in the checkout to the docs root
@@ -171,7 +171,7 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
     (master_doc, 'developerskatelescopeorg.tex', 'developer.skatelescope.org Documentation',
-     'Marco Bartolini', 'manual'),
+     'James Jiang', 'manual'),
 ]
 
 

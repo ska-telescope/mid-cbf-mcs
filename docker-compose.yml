@@ -3,10 +3,48 @@ volumes:
   tangodb: {}
 
 services:
+  tangodb:
+    image: nexus.engageska-portugal.pt/ska-docker/tango-db:latest
+    network_mode: ${NETWORK_MODE}
+    container_name: ${CONTAINER_NAME_PREFIX}tangodb
+    environment:
+      - MYSQL_ROOT_PASSWORD=secret
+      - MYSQL_DATABASE=tango
+      - MYSQL_USER=tango
+      - MYSQL_PASSWORD=tango
+    volumes:
+      - tangodb:/var/lib/mysql
+
+  databaseds:
+    image: nexus.engageska-portugal.pt/ska-docker/tango-cpp:latest
+    depends_on:
+      - tangodb
+    network_mode: ${NETWORK_MODE}
+    container_name: ${CONTAINER_NAME_PREFIX}databaseds
+    environment:
+      - MYSQL_HOST=${MYSQL_HOST}
+      - MYSQL_DATABASE=tango
+      - MYSQL_USER=tango
+      - MYSQL_PASSWORD=tango
+      - TANGO_HOST=${TANGO_HOST}
+    entrypoint:
+      - /usr/local/bin/wait-for-it.sh
+      - ${MYSQL_HOST}
+      - --timeout=30
+      - --strict
+      - --
+      - /usr/local/bin/DataBaseds
+      - "2"
+      - -ORBendPoint
+      - giop:tcp::10000
+
   vcc:
     image: ${DOCKER_REGISTRY_HOST}/${DOCKER_REGISTRY_USER}/csplmc:latest
     network_mode: ${NETWORK_MODE}
     container_name: ${CONTAINER_NAME_PREFIX}vcc
+    depends_on:
+      - databaseds
+      - rsyslog-csplmc
     environment:
       - TANGO_HOST=${TANGO_HOST}
     command: >
@@ -20,6 +58,9 @@ services:
     image: ${DOCKER_REGISTRY_HOST}/${DOCKER_REGISTRY_USER}/csplmc:latest
     network_mode: ${NETWORK_MODE}
     container_name: ${CONTAINER_NAME_PREFIX}fsp
+    depends_on:
+      - databaseds
+      - rsyslog-csplmc
     environment:
       - TANGO_HOST=${TANGO_HOST}
     command: >
@@ -33,6 +74,9 @@ services:
     image: ${DOCKER_REGISTRY_HOST}/${DOCKER_REGISTRY_USER}/csplmc:latest
     network_mode: ${NETWORK_MODE}
     container_name: ${CONTAINER_NAME_PREFIX}cbfsubarray
+    depends_on:
+      - databaseds
+      - rsyslog-csplmc
     environment:
       - TANGO_HOST=${TANGO_HOST}
     command: >
@@ -50,6 +94,8 @@ services:
       - cbfsubarray
       - vcc
       - fsp
+      - databaseds
+      - rsyslog-csplmc
     environment:
       - TANGO_HOST=${TANGO_HOST}
     command: >
@@ -57,4 +103,9 @@ services:
              tango_admin --check-device mid_csp_cbf/master/main ||\
              tango_admin --add-server CbfMaster/cbf CbfMaster mid_csp_cbf/master/main &&\
              /venv/bin/python /app/csplmc/CbfMaster/CbfMaster/CbfMaster.py cbf"
+
+  rsyslog-csplmc: 
+    image: jumanjiman/rsyslog
+    container_name: ${CONTAINER_NAME_PREFIX}rsyslog-csplmc
+    network_mode: ${NETWORK_MODE}
 

@@ -7,21 +7,25 @@ with open('README.md') as readme_file:
     readme = readme_file.read()
 
 setup(
-    name='powersupply',
+    name='Mid CBF',
     version='0.0.0',
     description="",
     long_description=readme + '\n\n',
-    author="Your Name",
-    author_email='stewart.williams@stfc.ac.uk',
-    url='https://github.com/ska-telescope/tango_example',
+    author="James Jiang",
+    author_email='james.jiang@nrc-cnrc.gc.ca',
+    url='https://github.com/ska-telescope/mid-cbf-mcs',
     packages=[
-        'powersupply',
+        'CbfMaster',
+	'CbfSubarray'
     ],
-    package_dir={'powersupply': 'powersupply'},
+    package_dir={
+	'CbfMaster': 'csplmc/CbfMaster',
+	'CbfSubarray': 'csplmc/CbfSubarray'
+    },
     include_package_data=True,
     license="BSD license",
     zip_safe=False,
-    keywords='ska_python_skeleton',
+    keywords='ska cbf',
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
         'Intended Audience :: Developers',
@@ -33,7 +37,7 @@ setup(
         'Programming Language :: Python :: 3.6',
     ],
     test_suite='tests',
-    install_requires=['pytango'],  # FIXME: add your package's dependencies to this list
+    install_requires=['pytango'],
     setup_requires=[
         # dependency for `python setup.py test`
         'pytest-runner',
