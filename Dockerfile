@@ -13,4 +13,4 @@ RUN buildDeps="ca-certificates git" \
    && rm -rf /var/lib/apt/lists/* /home/tango/.cache \ 
    && DEBIAN_FRONTEND=noninteractive apt-get update \
    && DEBIAN_FRONTEND=noninteractive apt-get -y install build-essential libssl-dev libffi-dev python3-dev
-CMD ["/venv/bin/python", "/app/csplmc/CbfMaster/CbfMaster/CspMaster.py"]
+CMD ["/venv/bin/python", "/app/csplmc/CbfMaster/CbfMaster/CbfMaster.py"]
