@@ -290,17 +290,17 @@ class CbfMaster(SKAMaster):
         # check first if property exists in DB
         try:
             self._count_vcc = self._max_capabilities["VCC"]
-        except Exception:
+        except AttributeError:  # not found in DB
             self._count_vcc = 1
 
         try:
             self._count_fsp = self._max_capabilities["FSP"]
-        except Exception:
+        except AttributeError:  # not found in DB
             self._count_fsp = 1
 
         try:
             self._count_subarray = self._max_capabilities["Subarray"]
-        except Exception:
+        except AttributeError:  # not found in DB
             self._count_subarray = 1
 
         # initialize attribute values
