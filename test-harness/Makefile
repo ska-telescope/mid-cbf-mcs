@@ -29,12 +29,12 @@ test:
 		echo Pinging mid_csp_cbf/cbfSubarray/$$i...; \
 	done
 	cd /app/csplmc/CbfMaster && python setup.py test | tee setup_py_test.stdout
-	-cd /app && ./code-analysis.sh | tee code_analysis.stdout
+	cd /app && ./code-analysis.sh | tee code_analysis.stdout
 	if [ -d /build ]; then \
-		mv /app/csplmc/CspMaster/setup_py_test.stdout /build/csp_master_setup_test.stdout; \
-		mv /app/csplmc/CspMaster/htmlcov /build/csp_master_htmlcov; \
-		mv /app/csplmc/CspMaster/coverage.xml /build/csp_master_coverage.xml; \
-		mv /app/code_analysis.stdout /build/csplmc_code_analysis.stdout; \
+		mv /app/csplmc/CbfMaster/setup_py_test.stdout /build/cbf_master_setup_test.stdout; \
+		mv /app/csplmc/CbfMaster/htmlcov /build/cbf_master_htmlcov; \
+		mv /app/csplmc/CbfMaster/coverage.xml /build/cbf_master_coverage.xml; \
+		mv /app/code_analysis.stdout /build/cbf_code_analysis.stdout; \
 	fi;
 
 .PHONY: all test

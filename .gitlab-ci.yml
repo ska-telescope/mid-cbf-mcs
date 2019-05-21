@@ -30,8 +30,8 @@ stages:
   - pages
 
 test:
-  tags:
-    - docker-executor
+#  tags:
+#    - docker-executor
   stage: test
   script:
     - make build
@@ -41,8 +41,8 @@ test:
       - build
 
 publish image:
-  tags:
-    - docker-executor
+#  tags:
+#    - docker-executor
   stage: publish
   script:
     - make push
@@ -54,8 +54,8 @@ pages:
      - test
   script:
    - mkdir .public
-   - cp build/csp*.* .public
-   - cp -r build/csp_master_htmlcov/* .public
+   - cp build/cbf*.* .public
+   - cp -r build/cbf_master_htmlcov/* .public
    - mv .public public
   artifacts:
     paths:
