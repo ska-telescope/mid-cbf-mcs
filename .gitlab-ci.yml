@@ -5,6 +5,8 @@ image: nexus.engageska-portugal.pt/ska-docker/tango-builder:latest
 
 variables:
   DOCKER_DRIVER: overlay2
+  DOCKER_HOST: tcp://docker:2375
+
 
 services:
   - docker:dind
