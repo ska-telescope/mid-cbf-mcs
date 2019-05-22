@@ -12,7 +12,8 @@ all: test
 # The following steps copy across useful output to this volume which can
 # then be extracted to form the CI summary for the test procedure.
 test:
-	sleep 30
+	sleep 10
+	docker ps -a
 	retry --max=10 -- tango_admin --ping-device mid_csp_cbf/master/main
 	for i in $$(seq -w 1 197); \
 	do \
