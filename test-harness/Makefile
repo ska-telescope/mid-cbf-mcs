@@ -12,7 +12,7 @@ all: test
 # The following steps copy across useful output to this volume which can
 # then be extracted to form the CI summary for the test procedure.
 test:
-	retry --max=10 -- tango_admin --ping-device mid_csp_cbf/master/main
+# 	retry --max=10 -- tango_admin --ping-device mid_csp_cbf/master/main
 	for i in $$(seq -w 1 197); \
 	do \
 		retry --max=10 -- tango_admin --ping-device mid_csp_cbf/vcc/$$i && \
