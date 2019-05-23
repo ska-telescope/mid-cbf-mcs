@@ -85,6 +85,7 @@ class Vcc(SKACapability):
 
     subarrayMembership = attribute(
         dtype='int',
+        access=AttrWriteType.READ_WRITE,
         label="Subarray membership",
         doc="Subarray membership",
     )
@@ -127,6 +128,11 @@ class Vcc(SKACapability):
         # PROTECTED REGION ID(Vcc.subarrayMembership_read) ENABLED START #
         return self._subarray_membership
         # PROTECTED REGION END #    //  Vcc.subarrayMembership_read
+
+    def write_subarrayMembership(self, value):
+        # PROTECTED REGION ID(Vcc.subarrayMembership_write) ENABLED START #
+        self._subarray_membership = value
+        # PROTECTED REGION END #    //  Vcc.subarrayMembership_write
 
 
     # --------

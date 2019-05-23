@@ -58,6 +58,7 @@ pages:
    - mkdir .public
    - cp build/cbf*.* .public
    - cp -r build/cbf_master_htmlcov/* .public
+   - cp -r build/cbf_subarray_htmlcov/* .public
    - mv .public public
   artifacts:
     paths:

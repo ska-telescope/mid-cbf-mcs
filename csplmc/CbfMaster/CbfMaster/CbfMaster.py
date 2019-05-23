@@ -26,6 +26,7 @@ from PyTango import AttrWriteType, PipeWriteType
 # add the path to import global_enum package.
 import os
 import sys
+from random import randint
 
 file_path = os.path.dirname(os.path.abspath(__file__))
 commons_pkg_path = os.path.abspath(os.path.join(file_path, "../../commons"))
@@ -92,6 +93,7 @@ class CbfMaster(SKAMaster):
         self.set_state(PyTango.DevState.DISABLE)
 
         # CBF transitions to ON if at least one receptor and subarray are operational
+        """
         vcc_working = False
         subarray_working = False
 
@@ -112,6 +114,7 @@ class CbfMaster(SKAMaster):
             return
 
         self.set_state(PyTango.DevState.ON)
+        """
 
     def __set_cbf_health_state(self):
         # count the number of "OKs" in all subarrays/capabilities
@@ -180,7 +183,21 @@ class CbfMaster(SKAMaster):
         doc="Percentage progress implemented for commands that  result in state/mode transitions for a large \nnumber of components and/or are executed in stages (e.g power up, power down)",
     )
 
+    receptorToVcc = attribute(
+        dtype=('str',),
+        max_dim_x=197,
+        label="Receptor-VCC map",
+        polling_period=3000,
+        doc="Maps receptors IDs to VCC IDs, in the form \"receptorID:vccID\"",
+    )
 
+    vccToReceptor = attribute(
+        dtype=('str',),
+        max_dim_x=197,
+        label="VCC-receptor map",
+        polling_period=3000,
+        doc="Maps VCC IDs to receptor IDs, in the form \"vccID:receptorID\"",
+    )
 
     reportVCCState = attribute(
         dtype=('DevState',),
@@ -333,6 +350,19 @@ class CbfMaster(SKAMaster):
         self._group_subarray = PyTango.Group("subarray")
         self._group_subarray.add("mid_csp_cbf/cbfSubarray/*")
 
+        # initialize dicts with maps receptorID <=> vccID (randomly for now)
+        # maps receptors IDs to VCC IDs (and vice versa), in the form "receptorID:vccID"
+        self._receptor_to_vcc = []
+        self._vcc_to_receptor = []
+
+        remaining = list(range(1, self._count_vcc + 1))
+        for i in range(self._count_vcc):
+            print(len(remaining))
+            receptorIDIndex = randint(0, len(remaining) - 1)
+            self._receptor_to_vcc.append("{}:{}".format(str(remaining[receptorIDIndex]), str(i)))
+            self._vcc_to_receptor.append("{}:{}".format(str(i), str(remaining[receptorIDIndex])))
+            del remaining[receptorIDIndex]
+
         # initialize the dict with subarray/capability proxies
         self._proxies = {}
 
@@ -393,6 +423,16 @@ class CbfMaster(SKAMaster):
         # PROTECTED REGION ID(CbfMaster.commandProgress_read) ENABLED START #
         return self._command_progress
         # PROTECTED REGION END #    //  CbfMaster.commandProgress_read
+
+    def read_receptorToVcc(self):
+        # PROTECTED REGION ID(CbfMaster.receptorToVcc_read) ENABLED START #
+        return self._receptor_to_vcc
+        # PROTECTED REGION END #    //  CbfMaster.receptorToVcc_read
+
+    def read_vccToReceptor(self):
+        # PROTECTED REGION ID(CbfMaster.vccToReceptor_read) ENABLED START #
+        return self._vcc_to_receptor
+        # PROTECTED REGION END #    //  CbfMaster.vccToReceptor_read
 
     def read_reportVCCState(self):
         # PROTECTED REGION ID(CbfMaster.reportVCCState_read) ENABLED START #
