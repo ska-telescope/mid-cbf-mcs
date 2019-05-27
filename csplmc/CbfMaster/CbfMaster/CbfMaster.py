@@ -251,20 +251,20 @@ class CbfMaster(SKAMaster):
         doc="Report the administration mode of the FSP capabilities as an array of unsigned short.\nfor ex:\n[0,0,2,..]",
     )
 
-    frequencyBandOffsetK = attribute(
+    frequencyOffsetK = attribute(
         dtype=('int',),
         access=AttrWriteType.READ_WRITE,
         max_dim_x=197,
-        label="Frequency band offset (k)",
-        doc="Frequency band offset (k) of all 197 receptors as an array of ints.",
+        label="Frequency offset (k)",
+        doc="Frequency offset (k) of all 197 receptors as an array of ints.",
     )
 
-    frequencyBandOffsetDeltaF = attribute(
+    frequencyOffsetDeltaF = attribute(
         dtype=('int',),
         access=AttrWriteType.READ_WRITE,
         max_dim_x=197,
-        label="Frequency band offset (delta f)",
-        doc="Frequency band offset (delta f) of all 197 receptors as an array of ints.",
+        label="Frequency offset (delta f)",
+        doc="Frequency offset (delta f) of all 197 receptors as an array of ints.",
     )
 
     reportSubarrayState = attribute(
@@ -330,8 +330,8 @@ class CbfMaster(SKAMaster):
         self._report_subarray_state = [PyTango.DevState.UNKNOWN for i in range(self._count_subarray)]
         self._report_subarray_health_state = [HealthState.UNKNOWN.value]*self._count_subarray
         self._report_subarray_admin_mode = [AdminMode.ONLINE.value]*self._count_subarray
-        self._frequency_band_offset_k = [0]*self._count_vcc
-        self._frequency_band_offset_delta_f = [0]*self._count_vcc
+        self._frequency_offset_k = [0]*self._count_vcc
+        self._frequency_offset_delta_f = [0]*self._count_vcc
 
         # evaluate the CBF element global state
         self.__set_cbf_state()
@@ -349,14 +349,13 @@ class CbfMaster(SKAMaster):
         self._group_subarray = PyTango.Group("subarray")
         self._group_subarray.add("mid_csp_cbf/cbfSubarray/*")
 
-        # initialize dicts with maps receptorID <=> vccID (randomly for now)
-        # maps receptors IDs to VCC IDs (and vice versa), in the form "receptorID:vccID"
+        # initialize dicts with maps receptorID <=> vccID (randomly for now, for testing purposes)
+        # maps receptors IDs to VCC IDs (and vice versa), in the form "receptorID:vccID" (and vice versa)
         self._receptor_to_vcc = []
         self._vcc_to_receptor = []
 
         remaining = list(range(1, self._count_vcc + 1))
         for i in range(1, self._count_vcc + 1):
-            print(len(remaining))
             receptorIDIndex = randint(0, len(remaining) - 1)
             self._receptor_to_vcc.append("{}:{}".format(str(remaining[receptorIDIndex]), str(i)))
             self._vcc_to_receptor.append("{}:{}".format(str(i), str(remaining[receptorIDIndex])))
@@ -463,35 +462,35 @@ class CbfMaster(SKAMaster):
         return self._report_fsp_admin_mode
         # PROTECTED REGION END #    //  CbfMaster.reportFSPAdminMode_read
 
-    def read_frequencyBandOffsetK(self):
-        # PROTECTED REGION ID(CbfMaster.frequencyBandOffsetK_read) ENABLED START #
-        return self._frequency_band_offset_k
-        # PROTECTED REGION END #    //  CbfMaster.frequencyBandOffsetK_read
+    def read_frequencyOffsetK(self):
+        # PROTECTED REGION ID(CbfMaster.frequencyOffsetK_read) ENABLED START #
+        return self._frequency_offset_k
+        # PROTECTED REGION END #    //  CbfMaster.frequencyOffsetK_read
 
-    def write_frequencyBandOffsetK(self, value):
-        # PROTECTED REGION ID(CbfMaster.frequencyBandOffsetK_write) ENABLED START #
+    def write_frequencyOffsetK(self, value):
+        # PROTECTED REGION ID(CbfMaster.frequencyOffsetK_write) ENABLED START #
         if len(value) == self._count_vcc:
-            self._frequency_band_offset_k = value
+            self._frequency_offset_k = value
         else:
-            log_msg = "Skipped writing to frequencyBandOffsetK attribute (expected " + str(self._count_vcc) + \
+            log_msg = "Skipped writing to frequencyOffsetK attribute (expected " + str(self._count_vcc) + \
                       " arguments, but received " + str(len(value)) + ". "
             self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
-        # PROTECTED REGION END #    //  CbfMaster.frequencyBandOffsetK_write
+        # PROTECTED REGION END #    //  CbfMaster.frequencyOffsetK_write
 
-    def read_frequencyBandOffsetDeltaF(self):
-        # PROTECTED REGION ID(CbfMaster.frequencyBandOffsetDeltaF_read) ENABLED START #
-        return self._frequency_band_offset_delta_f
-        # PROTECTED REGION END #    //  CbfMaster.frequencyBandOffsetDeltaF_read
+    def read_frequencyOffsetDeltaF(self):
+        # PROTECTED REGION ID(CbfMaster.frequencyOffsetDeltaF_read) ENABLED START #
+        return self._frequency_offset_delta_f
+        # PROTECTED REGION END #    //  CbfMaster.frequencyOffsetDeltaF_read
 
-    def write_frequencyBandOffsetDeltaF(self, value):
-        # PROTECTED REGION ID(CbfMaster.frequencyBandOffsetDeltaF_write) ENABLED START #
+    def write_frequencyOffsetDeltaF(self, value):
+        # PROTECTED REGION ID(CbfMaster.frequencyOffsetDeltaF_write) ENABLED START #
         if len(value) == self._count_vcc:
-            self._frequency_band_offset_delta_f = value
+            self._frequency_offset_delta_f = value
         else:
-            log_msg = "Skipped writing to frequencyBandOffsetDeltaF attribute (expected " + str(self._count_vcc) + \
+            log_msg = "Skipped writing to frequencyOffsetDeltaF attribute (expected " + str(self._count_vcc) + \
                       " arguments, but received " + str(len(value)) + ". "
             self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
-        # PROTECTED REGION END #    //  CbfMaster.frequencyBandOffsetDeltaF_write
+        # PROTECTED REGION END #    //  CbfMaster.frequencyOffsetDeltaF_write
 
     def read_reportSubarrayState(self):
         # PROTECTED REGION ID(CbfMaster.reportSubarrayState_read) ENABLED START #
