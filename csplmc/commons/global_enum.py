@@ -1,14 +1,14 @@
-from enum import Enum, unique
+from enum import IntEnum, unique
 
 @unique
-class HealthState(Enum):
+class HealthState(IntEnum):
     OK       = 0
     DEGRADED = 1
     FAILED   = 2
     UNKNOWN  = 3
 
 @unique
-class AdminMode(Enum):
+class AdminMode(IntEnum):
     ONLINE      = 0
     OFFLINE     = 1
     MAINTENANCE = 2
@@ -16,12 +16,12 @@ class AdminMode(Enum):
     RESERVED    = 4
 
 @unique
-class ControlMode(Enum):
+class ControlMode(IntEnum):
     REMOTE = 0
     LOCAL  = 1
 
 @unique
-class ObsMode(Enum):
+class ObsMode(IntEnum):
     IDLE             = 0
     IMAGING          = 1
     PULSARSEARCH    = 2
@@ -32,7 +32,7 @@ class ObsMode(Enum):
     CALIBRATION      = 7
 
 @unique
-class ObsState(Enum):
+class ObsState(IntEnum):
     IDLE        = 0
     CONFIGURING = 1
     READY       = 2

@@ -71,11 +71,15 @@ class TestCbfSubarray:
         # receptor list should be empty right after initialization
         assert create_subarray_1_proxy.receptors == None
         assert all([proxy.subarrayMembership == 0 for proxy in create_vcc_proxies])
+        time.sleep(1)
+        assert create_subarray_1_proxy.State() == DevState.OFF
 
         # add some receptors
         create_subarray_1_proxy.AddReceptors([1, 10, 197])
         assert create_subarray_1_proxy.receptors == (1, 10, 197)
         assert all([create_vcc_proxies[receptor_to_vcc[i] - 1].subarrayMembership == 1 for i in [1, 10, 197]])
+        time.sleep(1)
+        assert create_subarray_1_proxy.State() == DevState.ON
 
         # add more receptors...
         create_subarray_1_proxy.AddReceptors([17, 197])
@@ -92,6 +96,8 @@ class TestCbfSubarray:
         create_subarray_1_proxy.RemoveReceptors([10])
         assert create_subarray_1_proxy.receptors == None
         assert create_vcc_proxies[receptor_to_vcc[10] - 1].subarrayMembership == 0
+        time.sleep(1)
+        assert create_subarray_1_proxy.State() == DevState.OFF
 
     def test_AddRemoveReceptors_invalid(
             self,
@@ -118,11 +124,16 @@ class TestCbfSubarray:
         assert create_subarray_1_proxy.receptors == None
         assert create_subarray_2_proxy.receptors == None
         assert all([proxy.subarrayMembership == 0 for proxy in create_vcc_proxies])
+        time.sleep(1)
+        assert create_subarray_1_proxy.State() == DevState.OFF
+        assert create_subarray_2_proxy.State() == DevState.OFF
 
         # add some receptors to subarray 1
         create_subarray_1_proxy.AddReceptors([1, 10, 197])
         assert create_subarray_1_proxy.receptors == (1, 10, 197)
         assert all([create_vcc_proxies[receptor_to_vcc[i] - 1].subarrayMembership == 1 for i in [1, 10, 197]])
+        time.sleep(1)
+        assert create_subarray_1_proxy.State() == DevState.ON
 
         # try adding some receptors (including an invalid one) to subarray 2
         with pytest.raises(tango.DevFailed) as df:
@@ -131,6 +142,8 @@ class TestCbfSubarray:
         assert create_subarray_2_proxy.receptors == (17, 100)
         assert all([create_vcc_proxies[receptor_to_vcc[i] - 1].subarrayMembership == 1 for i in [1, 10, 197]])
         assert all([create_vcc_proxies[receptor_to_vcc[i] - 1].subarrayMembership == 2 for i in [17, 100]])
+        time.sleep(1)
+        assert create_subarray_2_proxy.State() == DevState.ON
 
         # try adding an invalid receptor ID to subarray 2
         with pytest.raises(tango.DevFailed) as df:
@@ -149,3 +162,6 @@ class TestCbfSubarray:
         assert create_subarray_1_proxy.receptors == None
         assert create_subarray_2_proxy.receptors == None
         assert all([create_vcc_proxies[receptor_to_vcc[i] - 1].subarrayMembership == 0 for i in [1, 10, 17, 100, 197]])
+        time.sleep(1)
+        assert create_subarray_1_proxy.State() == DevState.OFF
+        assert create_subarray_2_proxy.State() == DevState.OFF

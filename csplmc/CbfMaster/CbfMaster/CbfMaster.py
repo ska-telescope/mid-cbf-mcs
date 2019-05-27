@@ -180,7 +180,7 @@ class CbfMaster(SKAMaster):
         polling_period=3000,
         abs_change=5,
         rel_change=2,
-        doc="Percentage progress implemented for commands that  result in state/mode transitions for a large \nnumber of components and/or are executed in stages (e.g power up, power down)",
+        doc="Percentage progress implemented for commands that result in state/mode transitions for a large \nnumber of components and/or are executed in stages (e.g power up, power down)",
     )
 
     receptorToVcc = attribute(
@@ -301,7 +301,6 @@ class CbfMaster(SKAMaster):
         SKAMaster.init_device(self)
         # PROTECTED REGION ID(CbfMaster.init_device) ENABLED START #
         self.set_state(PyTango.DevState.INIT)
-        self._health_state = HealthState.UNKNOWN.value
 
         # self._max_capabilities inherited from SKAMaster
         # check first if property exists in DB
@@ -356,7 +355,7 @@ class CbfMaster(SKAMaster):
         self._vcc_to_receptor = []
 
         remaining = list(range(1, self._count_vcc + 1))
-        for i in range(self._count_vcc):
+        for i in range(1, self._count_vcc + 1):
             print(len(remaining))
             receptorIDIndex = randint(0, len(remaining) - 1)
             self._receptor_to_vcc.append("{}:{}".format(str(remaining[receptorIDIndex]), str(i)))
