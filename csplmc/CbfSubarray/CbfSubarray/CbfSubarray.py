@@ -25,6 +25,7 @@ from PyTango import AttrWriteType, PipeWriteType
 # PROTECTED REGION ID(CbfSubarray.additionnal_import) ENABLED START #
 import os
 import sys
+import json
 
 file_path = os.path.dirname(os.path.abspath(__file__))
 commons_pkg_path = os.path.abspath(os.path.join(file_path, "../../commons"))
@@ -147,7 +148,8 @@ class CbfSubarray(SKASubarray):
         self._fqdn_vcc = ["mid_csp_cbf/vcc/" + str(i + 1).zfill(3) for i in range(self._count_vcc)]
         self._fqdn_fsp = ["mid_csp_cbf/fsp/" + str(i + 1).zfill(2) for i in range(self._count_fsp)]
 
-        self._event_id = []
+        # store the subscribed events as ID:attribute_proxy key:value pairs
+        self._events = {}
 
         self.set_state(DevState.OFF)
         # PROTECTED REGION END #    //  CbfSubarray.init_device
@@ -273,8 +275,6 @@ class CbfSubarray(SKASubarray):
     @command(
         dtype_in='str',
         doc_in="Scan configuration",
-        dtype_out='str',
-        doc_out="Status",
     )
     @DebugIt()
     def ConfigureScan(self, argin):
@@ -291,6 +291,7 @@ class CbfSubarray(SKASubarray):
                                                 // for other frequency bands, can be a scalar or an array
                                                 // defaults to 0 if not specified
             "dopplerPhaseCorrectionSubscriptionPoint": str,  // FQDN of Doppler phase correction coefficients attribute of TM TelState
+            "delayModelSubscriptionPoint": str  // FQDN of delay model coefficients attribute of TM TelState
             "rfiFlaggingMask": [  // exact schema of RFI flagging mask is TBD; specified per receptor per frequency slice
                 {
                     "receptorID": int,
@@ -336,8 +337,7 @@ class CbfSubarray(SKASubarray):
                         [int, int],
                         ...
                     ],
-                    "destinationAddress": [str, str, str],  // array of [MAC address, IP address, port number] of destination addresses
-                    "delayModelSubscriptionPoint": str  // FQDN of delay model coefficients attribute of TM TelState
+                    "destinationAddress": [str, str, str]  // array of [MAC address, IP address, port number] of destination addresses
                 },
                 {
                     ...
@@ -346,14 +346,24 @@ class CbfSubarray(SKASubarray):
             ]
         }
         """
-        errs = []
-
         # transition state to CONFIGURING
         self._obs_state = ObsState.CONFIGURING.value
 
         # unsubscribe from all previously subscribed events
-        for event_id in self._event_id:
-            self.unsubscribe_event(event_id)
+        for event_id in self._events.keys():
+            self._events[event_id].unsubscribe_event(event_id)
+
+        # try to deserialize input string to a JSON object
+        try:
+            argin = json.loads(argin)
+        except json.JSONDecodeError:  # argument not a valid JSON object
+            # this is a fatal error
+            msg = "Scan configuration object is not a valid JSON object. Aborting configuration."
+            self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+            PyTango.Except.throw_exception("Command failed", msg,
+                                           "ConfigureScan execution", PyTango.ErrSeverity.ERR)
+
+        errs = []
 
         # Validate scanID.
         # If not given, use memorized scanID if valid.
@@ -398,8 +408,8 @@ class CbfSubarray(SKASubarray):
         # Abort the scan configuration if no receptor is assigned.
         if "receptors" in argin:
             try:
-                self.command_inout("AddReceptors", argin["receptors"])
-            except DevFailed as df:  # receptors is malformed
+                self.AddReceptors(list(map(int, argin["receptors"])))
+            except PyTango.DevFailed as df:  # receptors is malformed
                 self.dev_logging(df.args[0].desc, PyTango.LogLevel.LOG_ERROR)
                 errs.append(df.args[0].desc)
         # check if at least one receptor is assigned
@@ -420,7 +430,7 @@ class CbfSubarray(SKASubarray):
             else:
                 msg = "\n".join(errs)
                 msg += "'frequencyBand' must be an integer in the range [0, 5] (received {}). \
-                    Aborting configuration.".format(str(frequency_band))
+                    Aborting configuration.".format(str(argin["frequency_band"]))
                 # this is a fatal error
                 self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
                 PyTango.Except.throw_exception("Command failed", msg,
@@ -471,6 +481,7 @@ class CbfSubarray(SKASubarray):
                     PyTango.Except.throw_exception("Command failed", msg,
                                                    "ConfigureScan execution", PyTango.ErrSeverity.ERR)
 
+                streamTuning = argin["streamTuning"]
                 try:
                     if 5.85 <= float(streamTuning[0]) <= 7.25:
                         # TODO: find out what to do
@@ -551,7 +562,7 @@ class CbfSubarray(SKASubarray):
                     PyTango.EventType.CHANGE_EVENT,
                     self.doppler_phase_correction_event_callback
                 )
-                self._event_id.append(event_id)
+                self._events[event_id] = attribute_proxy
             except PyTango.DevFailed:  # attribute doesn't exist
                 log_msg = "Attribute {} not found for 'dopplerPhaseCorrectionSubscriptionPoint'. \
                     Proceeding.".format(argin["dopplerPhaseCorrectionSubscriptionPoint"])
@@ -561,6 +572,44 @@ class CbfSubarray(SKASubarray):
             log_msg = "'dopplerPhaseCorrectionSubscriptionPoint' not given. Proceeding."
             self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
             errs.append(log_msg)
+
+        # Validate delayModelSubscriptionPoint
+        # If not given, ignore the FSP and append an error.
+        # If malformed, ignore the FSP and append an error.
+        if "delayModelSubscriptionPoint" in argin:
+            try:
+                attribute_proxy = PyTango.AttributeProxy(str(argin["delayModelSubscriptionPoint"]))
+                attribute_proxy.ping()
+
+                # set up attribute polling and change events
+                attribute_proxy.poll(1000)  # polling period in milliseconds, may change later
+                attribute_info = attribute_proxy.get_config()
+                change_event_info = PyTango.ChangeEventInfo()
+                change_event_info.abs_change = "1"  # subscribe to all changes
+                attribute_info.events.ch_event = change_event_info
+                attribute_proxy.set_config(attribute_info)
+
+                # subscribe to the event
+                event_id = attribute_proxy.subscribe_event(
+                    PyTango.EventType.CHANGE_EVENT,
+                    self.delay_model_event_callback
+                )
+                self._events[event_id] = attribute_proxy
+            except PyTango.DevFailed:  # attribute doesn't exist
+                msg = "\n".join(errs)
+                msg += "Attribute {} not found for 'delayModelSubscriptionPoint'. \
+                    Aborting configuration.".format(argin["delayModelSubscriptionPoint"])
+                # this is a fatal error
+                self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+                PyTango.Except.throw_exception("Command failed", msg,
+                                               "ConfigureScan execution", PyTango.ErrSeverity.ERR)
+        else:
+            msg = "\n".join(errs)
+            msg += "'delayModelSubscriptionPoint' not given. Aborting configuration."
+            # this is a fatal error
+            self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+            PyTango.Except.throw_exception("Command failed", msg,
+                                           "ConfigureScan execution", PyTango.ErrSeverity.ERR)
 
         # TODO: validate rfiFlaggingMask
 
@@ -741,11 +790,11 @@ class CbfSubarray(SKASubarray):
                     # If not given, ignore the FSP and append an error.
                     # If malformed, ignore the FSP and append an error.
                     if "bandwidth" in fsp:
-                        if fsp["bandwidth"] in list(range(1, 7)):
+                        if fsp["bandwidth"] in list(range(0, 7)):
                             # TODO: find out what to do
                             pass
                         else:
-                            log_msg = "'bandwidth' must be an integer in the range [1, 6]. Ignoring FSP."
+                            log_msg = "'bandwidth' must be an integer in the range [0, 6]. Ignoring FSP."
                             self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
                             errs.append(log_msg)
                             continue
@@ -754,6 +803,8 @@ class CbfSubarray(SKASubarray):
                         self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
                         errs.append(log_msg)
                         continue
+
+                    # TODO: validate zoomWindowTuning
 
                     # Validate integrationTime
                     # If not given, ignore the FSP and append an error.
@@ -812,40 +863,6 @@ class CbfSubarray(SKASubarray):
                         pass
                     else:  # destinationAddress not given
                         log_msg = "FSP specified, but 'destinationAddress' not given. Ignoring FSP."
-                        self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
-                        errs.append(log_msg)
-                        continue
-
-                    # Validate delayModelSubscriptionPoint
-                    # If not given, ignore the FSP and append an error.
-                    # If malformed, ignore the FSP and append an error.
-                    if "delayModelSubscriptionPoint" in fsp:
-                        try:
-                            attribute_proxy = PyTango.AttributeProxy(str(fsp["delayModelSubscriptionPoint"]))
-                            attribute_proxy.ping()
-
-                            # set up attribute polling and change events
-                            attribute_proxy.poll(1000)  # polling period in milliseconds, may change later
-                            attribute_info = attribute_proxy.get_config()
-                            change_event_info = PyTango.ChangeEventInfo()
-                            change_event_info.abs_change = "1"  # subscribe to all changes
-                            attribute_info.events.ch_event = change_event_info
-                            attribute_proxy.set_config(attribute_info)
-
-                            # subscribe to the event
-                            event_id = attribute_proxy.subscribe_event(
-                                PyTango.EventType.CHANGE_EVENT,
-                                self.delay_model_event_callback
-                            )
-                            self._event_id.append(event_id)
-                        except PyTango.DevFailed:  # attribute doesn't exist
-                            log_msg = "Attribute {} not found for 'delayModelSubscriptionPoint'. \
-                                Ignoring FSP.".format(fsp["delayModelSubscriptionPoint"])
-                            self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
-                            errs.append(log_msg)
-                            continue
-                    else:
-                        log_msg = "FSP specified, but 'delayModelSubscriptionPoint' not given. Ignoring FSP."
                         self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
                         errs.append(log_msg)
                         continue

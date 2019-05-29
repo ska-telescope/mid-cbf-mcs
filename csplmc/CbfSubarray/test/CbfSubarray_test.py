@@ -13,6 +13,7 @@
 import sys
 import os
 import time
+import json
 
 # Path
 file_path = os.path.dirname(os.path.abspath(__file__))
@@ -30,16 +31,16 @@ from tango import DevState
 import pytest
 
 #Local imports
+
 from CbfSubarray.CbfSubarray import CbfSubarray
-from global_enum import HealthState, AdminMode
+from global_enum import HealthState, AdminMode, ObsState
 
 @pytest.mark.usefixtures(
-    #"tango_context",
-    #"initialize_device",
     "create_cbf_master_proxy",
     "create_subarray_1_proxy",
     "create_subarray_2_proxy",
-    "create_vcc_proxies"
+    "create_vcc_proxies",
+    "create_tm_telstate_proxy"
 )
 
 class TestCbfSubarray:
@@ -69,7 +70,7 @@ class TestCbfSubarray:
             proxy.Init()
 
         # receptor list should be empty right after initialization
-        assert create_subarray_1_proxy.receptors == None
+        assert create_subarray_1_proxy.receptors == ()
         assert all([proxy.subarrayMembership == 0 for proxy in create_vcc_proxies])
         time.sleep(1)
         assert create_subarray_1_proxy.State() == DevState.OFF
@@ -94,7 +95,7 @@ class TestCbfSubarray:
 
         # remove remaining receptors
         create_subarray_1_proxy.RemoveReceptors([10])
-        assert create_subarray_1_proxy.receptors == None
+        assert create_subarray_1_proxy.receptors == ()
         assert create_vcc_proxies[receptor_to_vcc[10] - 1].subarrayMembership == 0
         time.sleep(1)
         assert create_subarray_1_proxy.State() == DevState.OFF
@@ -121,8 +122,8 @@ class TestCbfSubarray:
             proxy.Init()
 
         # receptor list should be empty right after initialization
-        assert create_subarray_1_proxy.receptors == None
-        assert create_subarray_2_proxy.receptors == None
+        assert create_subarray_1_proxy.receptors == ()
+        assert create_subarray_2_proxy.receptors == ()
         assert all([proxy.subarrayMembership == 0 for proxy in create_vcc_proxies])
         time.sleep(1)
         assert create_subarray_1_proxy.State() == DevState.OFF
@@ -154,14 +155,33 @@ class TestCbfSubarray:
         # doing this doesn't actually throw an error
         create_subarray_2_proxy.RemoveReceptors([5])
         assert create_subarray_2_proxy.receptors == (17, 100)
-        assert create_vcc_proxies[receptor_to_vcc[5] - 1].subarrayMembership == 0  # check this just in case, I suppose
 
         # remove all receptors
         create_subarray_1_proxy.RemoveReceptors([1, 10, 197])
         create_subarray_2_proxy.RemoveReceptors([17, 100])
-        assert create_subarray_1_proxy.receptors == None
-        assert create_subarray_2_proxy.receptors == None
+        assert create_subarray_1_proxy.receptors == ()
+        assert create_subarray_2_proxy.receptors == ()
         assert all([create_vcc_proxies[receptor_to_vcc[i] - 1].subarrayMembership == 0 for i in [1, 10, 17, 100, 197]])
         time.sleep(1)
         assert create_subarray_1_proxy.State() == DevState.OFF
         assert create_subarray_2_proxy.State() == DevState.OFF
+
+    def test_ConfigureScan_dopplerPhaseCorrection(self, create_subarray_1_proxy):
+        create_subarray_1_proxy.Init()
+
+        # check default values
+        assert create_subarray_1_proxy.receptors == ()
+        assert create_subarray_1_proxy.scanID == 0
+        assert create_subarray_1_proxy.frequencyBand == 0
+        assert create_subarray_1_proxy.obsState == ObsState.IDLE.value
+
+        # since the event callback doesn't do anything currently, there's no way to tell if the subscription was
+        # actually successful; just make sure the command doesn't throw any errors for now
+        f = open(file_path + "/test_json/test_ConfigureScan_dopplerPhaseCorrection.json")
+        create_subarray_1_proxy.ConfigureScan(f.read().replace("\n", ""))
+        f.close()
+
+        assert create_subarray_1_proxy.receptors == (1,)
+        assert create_subarray_1_proxy.scanID == 1
+        assert create_subarray_1_proxy.frequencyBand == 0
+        assert create_subarray_1_proxy.obsState == ObsState.READY.value

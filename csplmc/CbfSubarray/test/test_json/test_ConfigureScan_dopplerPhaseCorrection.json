@@ -1,0 +1,42 @@
+{
+    "scanID": 1,
+    "receptors": [1],
+    "frequencyBand": 0,
+    "frequencyOffset": [0],
+    "dopplerPhaseCorrectionSubscriptionPoint": "ska1_mid/tm/telmodel/dopplerPhaseCorrection_1",
+    "delayModelSubscriptionPoint": "ska1_mid/tm/telmodel/delayModel",
+    "fsp": [
+        {
+            "fspID": 1,
+            "functionMode": 0,
+            "frequencySliceID": 1,
+            "bandwidth": 0,
+            "integrationTime": 140,
+            "destinationAddress": ["", "", ""]
+        },
+        {
+            "fspID": 1,
+            "functionMode": 0,
+            "frequencySliceID": 2,
+            "bandwidth": 0,
+            "integrationTime": 140,
+            "destinationAddress": ["", "", ""]
+        },
+        {
+            "fspID": 1,
+            "functionMode": 0,
+            "frequencySliceID": 3,
+            "bandwidth": 0,
+            "integrationTime": 140,
+            "destinationAddress": ["", "", ""]
+        },
+        {
+            "fspID": 1,
+            "functionMode": 0,
+            "frequencySliceID": 4,
+            "bandwidth": 0,
+            "integrationTime": 140,
+            "destinationAddress": ["", "", ""]
+        }
+    ]
+}

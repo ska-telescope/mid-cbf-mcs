@@ -30,3 +30,6 @@ def create_subarray_2_proxy():
 def create_vcc_proxies():
     return [DeviceProxy("mid_csp_cbf/vcc/" + str(i + 1).zfill(3)) for i in range(197)]
 
+@pytest.fixture(scope="class")
+def create_tm_telstate_proxy():
+    return DeviceProxy("ska1_mid/tm/telmodel")
