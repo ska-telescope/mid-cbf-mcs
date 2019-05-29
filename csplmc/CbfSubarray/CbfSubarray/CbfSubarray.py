@@ -30,7 +30,7 @@ file_path = os.path.dirname(os.path.abspath(__file__))
 commons_pkg_path = os.path.abspath(os.path.join(file_path, "../../commons"))
 sys.path.insert(0, commons_pkg_path)
 
-from global_enum import HealthState, AdminMode
+from global_enum import HealthState, AdminMode, ObsState
 from skabase.SKASubarray.SKASubarray import SKASubarray
 # PROTECTED REGION END #    //  CbfSubarray.additionnal_import
 
@@ -44,6 +44,29 @@ class CbfSubarray(SKASubarray):
     __metaclass__ = DeviceMeta
     # PROTECTED REGION ID(CbfSubarray.class_variable) ENABLED START #
 
+    def doppler_phase_correction_event_callback(self, event):
+        if not event.err:
+            try:
+                # TODO: find out what to do with the coefficients
+                pass
+            except Exception as except_occurred:
+                self.dev_logging(str(except_occurred), PyTango.LogLevel.LOG_DEBUG)
+        else:
+            for item in event.errors:
+                log_msg = item.reason + ": on attribute " + str(event.attr_name)
+                self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
+
+    def delay_model_event_callback(self, event):
+        if not event.err:
+            try:
+                # TODO: find out what to do with the coefficients
+                pass
+            except Exception as except_occurred:
+                self.dev_logging(str(except_occurred), PyTango.LogLevel.LOG_DEBUG)
+        else:
+            for item in event.errors:
+                log_msg = item.reason + ": on attribute " + str(event.attr_name)
+                self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
 
     # PROTECTED REGION END #    //  CbfSubarray.class_variable
 
@@ -98,7 +121,7 @@ class CbfSubarray(SKASubarray):
 
     receptors = attribute(
         dtype=('int',),
-        access=AttrWriteType.READ,
+        access=AttrWriteType.READ_WRITE,
         max_dim_x=197,
         label="Receptors",
         doc="List of receptors assigned to subarray",
@@ -123,6 +146,8 @@ class CbfSubarray(SKASubarray):
         self._count_fsp = 27
         self._fqdn_vcc = ["mid_csp_cbf/vcc/" + str(i + 1).zfill(3) for i in range(self._count_vcc)]
         self._fqdn_fsp = ["mid_csp_cbf/fsp/" + str(i + 1).zfill(2) for i in range(self._count_fsp)]
+
+        self._event_id = []
 
         self.set_state(DevState.OFF)
         # PROTECTED REGION END #    //  CbfSubarray.init_device
@@ -166,6 +191,11 @@ class CbfSubarray(SKASubarray):
         return self._receptors
         # PROTECTED REGION END #    //  CbfSubarray.receptors_read
 
+    def write_receptors(self, value):
+        # PROTECTED REGION ID(CbfSubarray.receptors_write) ENABLED START #
+        self.RemoveReceptors(self._receptors)  # remove all receptors
+        self.AddReceptors(value)
+        # PROTECTED REGION END #    //  CbfSubarray.receptors_write
 
     # --------
     # Commands
@@ -252,56 +282,78 @@ class CbfSubarray(SKASubarray):
         """
         The input JSON object has the following schema:
         {
-            "scanID": int,
-            "receptors": [int, int, int, ...],
-            "frequencyBand": int,
-            "frequencyOffset": [int, int, int, ...],  (per receptor)
-            "streamTuning: [float, float],
-            "frequencyBandOffset": [int, int],
-            "dopplerPhaseCorrection": [float, float, float, float],
-            "rfiFlaggingMask": [
+            "scanID": int,  // unique positive integer identifier for the scan
+            "receptors": [int, int, int, ...],  // array of receptor IDs to add to the subarray
+            "frequencyBand": int,  // integer in the range [0, 5], enumerated for frequency bands
+            "frequencyOffset": [int, int, int, ...],  // frequency offset (k) specified per receptor
+            "streamTuning: [float, float],  // stream tuning for frequency bands "5a" (4) and "5b" (5) (GHz); must have length 2
+            "frequencyBandOffset": [int, int],  // frequency band offset (Hz); for frequency bands "5a" and "5b", must be an array of length 2
+                                                // for other frequency bands, can be a scalar or an array
+                                                // defaults to 0 if not specified
+            "dopplerPhaseCorrectionSubscriptionPoint": str,  // FQDN of Doppler phase correction coefficients attribute of TM TelState
+            "rfiFlaggingMask": [  // exact schema of RFI flagging mask is TBD; specified per receptor per frequency slice
                 {
                     "receptorID": int,
                     "frequencySliceID": int,
                     ...
                 },
-                ... (x <number of receptors>*<number of frequency slices>)
+                ...
             ],
-            "searchWindow": [
+            "searchWindow": [  // array of maximum length 2, each element corresponding to a search window
                 {
-                    "searchWindowID": int,
-                    "searchWindowTuning": int,
-                    "enableTDC": bool,
-                    "numberBits": int,
-                    "destinationAddress": [str, str, str]
+                    "searchWindowID": int,  // search window identifier; either 1 or 2, unique to the subarray
+                    "searchWindowTuning": int,  // search window tuning (Hz) within observed frequency band
+                    "enableTDC": bool,  // enable transient data capture
+                    "numberBits": int,  // number of bits for transient data capture; one of [2, 4, 8]
+                    "periodBeforeEpoch": int,  // period before epoch (s) for which data is saved
+                                               // defaults to 2 if not specified
+                    "periodAfterEpoch": int,  // period after epoch (s) for which data is saved
+                                              // defaults to 22 if not specified
+                    "destinationAddress": [  // array of [MAC address, IP address, port number] of destination addresses,
+                        [str, str, str],     // specified per receptor
+                        [str, str, str],
+                        [str, str, str],
+                        ...
+                    ]
                 },
                 {
                     ...
                 }
             ],
-            "fsp": [
+            "fsp": [  // array of objects to configure FSPs
                 {
-                    "fspID": int,
-                    "functionMode": int,
-                    "receptors": [int, int, int, ...],
-                    "frequencySliceID": int,
-                    "bandwidth": int,
-                    "zoomWindowTuning": int,
-                    "integrationTime": int,
-                    "channelAveragingMap": [
+                    "fspID": int,  // positive integer specifying which FSP to configure
+                    "functionMode": int,  // integer in the range [0, 4], enumerated for processing modes
+                    "receptors": [int, int, int, ...],  // array of receptors IDs to use
+                                                        // defaults to all receptors in subarray if not specified
+                    "frequencySliceID": int,  // positive integer specifying which frequency slice to use as input
+                    "bandwidth": int,  // integer in the range [0, 6]; the bandwidth to be correlated is <full bandwidth>/(2**bandwidth)
+                    "zoomWindowTuning": int,  // zoom window tuning (kHz) within observed frequency band
+                    "integrationTime": int,  // integration time for products (ms)
+                    "channelAveragingMap": [  // array of [channel ID, averaging factor], specified per channel group (20 in total)
+                        [int, int],           // channel ID is a positive integer, identifying the first channel of the group
+                        [int, int],           // averaging factor is one of [0, 1, 2, 3, 4, 5, 6, 8]
                         [int, int],
-                        [int, int],
-                        [int, int],
-                        ... (x20)
+                        ...
                     ],
-                    "destinationAddress": [str, str, str],
-                    "delayTrackingCalibration": [float, float, float, ... (x6)]
+                    "destinationAddress": [str, str, str],  // array of [MAC address, IP address, port number] of destination addresses
+                    "delayModelSubscriptionPoint": str  // FQDN of delay model coefficients attribute of TM TelState
                 },
-                ... (x <number of frequency slices> (more for different processing modes))
+                {
+                    ...
+                },
+                ...
             ]
         }
         """
         errs = []
+
+        # transition state to CONFIGURING
+        self._obs_state = ObsState.CONFIGURING.value
+
+        # unsubscribe from all previously subscribed events
+        for event_id in self._event_id:
+            self.unsubscribe_event(event_id)
 
         # Validate scanID.
         # If not given, use memorized scanID if valid.
@@ -478,22 +530,37 @@ class CbfSubarray(SKASubarray):
             log_msg = "'frequencyBandOffset' not specified. Defaulting to 0 for both streams."
             self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
 
-        # TODO: validate dopplerPhaseCorrection
-        # If not given, do nothing.
-        # If malformed, do nothing, but append an error.
-        if "dopplerPhaseCorrection" in argin:
+        # Validate dopplerPhaseCorrectionSubscriptionPoint
+        # If not given, do nothing and append an error.
+        # If malformed, do nothing and append an error.
+        if "dopplerPhaseCorrectionSubscriptionPoint" in argin:
             try:
-                assert len(argin["dopplerPhaseCorrection"]) == 4  # check length and type
-                for coef in argin["dopplerPhaseCorrection"]:
-                    # TODO: find out valid ranges and what to do
-                    pass
-            except (TypeError, AssertionError):  # dopplerPhaseCorrection not the right length or not an array
-                log_msg = "'dopplerPhaseCorrection' must be an array of length 4. Proceeding."
+                attribute_proxy = PyTango.AttributeProxy(str(argin["dopplerPhaseCorrectionSubscriptionPoint"]))
+                attribute_proxy.ping()
+
+                # set up attribute polling and change events
+                attribute_proxy.poll(1000)  # polling period in milliseconds, may change later
+                attribute_info = attribute_proxy.get_config()
+                change_event_info = PyTango.ChangeEventInfo()
+                change_event_info.abs_change = "1"  # subscribe to all changes
+                attribute_info.events.ch_event = change_event_info
+                attribute_proxy.set_config(attribute_info)
+
+                # subscribe to the event
+                event_id = attribute_proxy.subscribe_event(
+                    PyTango.EventType.CHANGE_EVENT,
+                    self.doppler_phase_correction_event_callback
+                )
+                self._event_id.append(event_id)
+            except PyTango.DevFailed:  # attribute doesn't exist
+                log_msg = "Attribute {} not found for 'dopplerPhaseCorrectionSubscriptionPoint'. \
+                    Proceeding.".format(argin["dopplerPhaseCorrectionSubscriptionPoint"])
                 self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
                 errs.append(log_msg)
         else:  # dopplerPhaseCorrection not given
-            log_msg = "'dopplerPhaseCorrection' not given. Proceeding."
-            self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+            log_msg = "'dopplerPhaseCorrectionSubscriptionPoint' not given. Proceeding."
+            self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
+            errs.append(log_msg)
 
         # TODO: validate rfiFlaggingMask
 
@@ -749,14 +816,36 @@ class CbfSubarray(SKASubarray):
                         errs.append(log_msg)
                         continue
 
-                    # Validate delayTrackingCalibration
+                    # Validate delayModelSubscriptionPoint
                     # If not given, ignore the FSP and append an error.
                     # If malformed, ignore the FSP and append an error.
-                    if "delayTrackingCalibration" in fsp:
-                        # TODO: find out valid ranges and what to do
-                        pass
+                    if "delayModelSubscriptionPoint" in fsp:
+                        try:
+                            attribute_proxy = PyTango.AttributeProxy(str(fsp["delayModelSubscriptionPoint"]))
+                            attribute_proxy.ping()
+
+                            # set up attribute polling and change events
+                            attribute_proxy.poll(1000)  # polling period in milliseconds, may change later
+                            attribute_info = attribute_proxy.get_config()
+                            change_event_info = PyTango.ChangeEventInfo()
+                            change_event_info.abs_change = "1"  # subscribe to all changes
+                            attribute_info.events.ch_event = change_event_info
+                            attribute_proxy.set_config(attribute_info)
+
+                            # subscribe to the event
+                            event_id = attribute_proxy.subscribe_event(
+                                PyTango.EventType.CHANGE_EVENT,
+                                self.delay_model_event_callback
+                            )
+                            self._event_id.append(event_id)
+                        except PyTango.DevFailed:  # attribute doesn't exist
+                            log_msg = "Attribute {} not found for 'delayModelSubscriptionPoint'. \
+                                Ignoring FSP.".format(fsp["delayModelSubscriptionPoint"])
+                            self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
+                            errs.append(log_msg)
+                            continue
                     else:
-                        log_msg = "FSP specified, but 'delayTrackingCalibration' not given. Ignoring FSP."
+                        log_msg = "FSP specified, but 'delayModelSubscriptionPoint' not given. Ignoring FSP."
                         self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
                         errs.append(log_msg)
                         continue
@@ -791,6 +880,9 @@ class CbfSubarray(SKASubarray):
             msg = "\n".join(errs)
             self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
             PyTango.Except.throw_exception("Command failed", msg, "ConfigureScan execution", PyTango.ErrSeverity.ERR)
+
+        # transition state to READY
+        self._obs_state = ObsState.READY.value
         # PROTECTED REGION END #    //  CbfSubarray.ConfigureScan
 
 # ----------
