@@ -31,13 +31,14 @@ file_path = os.path.dirname(os.path.abspath(__file__))
 commons_pkg_path = os.path.abspath(os.path.join(file_path, "../commons"))
 sys.path.insert(0, commons_pkg_path)
 
+from skabase.SKABaseDevice.SKABaseDevice import SKABaseDevice
 from global_enum import HealthState, AdminMode
 # PROTECTED REGION END #    //  TmTelstateTest.additionnal_import
 
 __all__ = ["TmTelstateTest", "main"]
 
 
-class TmTelstateTest(Device):
+class TmTelstateTest(SKABaseDevice):
     """
     TmTelstateTest TANGO device class for the CBF prototype
     """
@@ -534,8 +535,9 @@ class TmTelstateTest(Device):
     def write_delayModel(self, value):
         # PROTECTED REGION ID(TmTelstateTest.delayModel_write) ENABLED START #
         try:
+            # since this is just a test device, assume that the JSON schema is always what we expect
             self._delay_model = json.loads(str(value))
-        except Exception as e:  # value is not an array
+        except json.JSONDecodeError:  # value is not a valid JSON object
             log_msg = "delayModel attribute must be a string representing a JSON object. Ignoring."
             self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
         # PROTECTED REGION END #    //  TmTelstateTest.delayModel_write

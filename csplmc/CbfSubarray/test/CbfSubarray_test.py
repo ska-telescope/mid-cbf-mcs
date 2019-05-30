@@ -90,7 +90,7 @@ class TestCbfSubarray:
         # remove some receptors
         create_subarray_1_proxy.RemoveReceptors([17, 1, 197])
         assert create_subarray_1_proxy.receptors == (10,)
-        assert all([create_vcc_proxies[i - 1].subarrayMembership == 0 for i in [1, 17, 197]])
+        assert all([create_vcc_proxies[receptor_to_vcc[i] - 1].subarrayMembership == 0 for i in [1, 17, 197]])
         assert create_vcc_proxies[receptor_to_vcc[10] - 1].subarrayMembership == 1
 
         # remove remaining receptors
@@ -166,7 +166,46 @@ class TestCbfSubarray:
         assert create_subarray_1_proxy.State() == DevState.OFF
         assert create_subarray_2_proxy.State() == DevState.OFF
 
-    def test_ConfigureScan_dopplerPhaseCorrection(self, create_subarray_1_proxy):
+    def test_RemoveAllReceptors(
+            self,
+            create_cbf_master_proxy,
+            create_subarray_1_proxy,
+            create_vcc_proxies
+    ):
+        """
+        Test RemoveAllReceptors command
+        """
+        receptor_to_vcc = dict([int(ID) for ID in pair.split(":")] for pair in
+                               create_cbf_master_proxy.receptorToVcc)
+
+        create_subarray_1_proxy.Init()
+        for proxy in create_vcc_proxies:
+            proxy.Init()
+
+        # receptor list should be empty right after initialization
+        assert create_subarray_1_proxy.receptors == ()
+        assert all([proxy.subarrayMembership == 0 for proxy in create_vcc_proxies])
+        time.sleep(1)
+        assert create_subarray_1_proxy.State() == DevState.OFF
+
+        # add some receptors
+        create_subarray_1_proxy.AddReceptors([1, 10, 197])
+        assert create_subarray_1_proxy.receptors == (1, 10, 197)
+        assert all([create_vcc_proxies[receptor_to_vcc[i] - 1].subarrayMembership == 1 for i in [1, 10, 197]])
+        time.sleep(1)
+        assert create_subarray_1_proxy.State() == DevState.ON
+
+        # remove all receptors
+        create_subarray_1_proxy.RemoveAllReceptors()
+        assert create_subarray_1_proxy.receptors == ()
+        assert all([create_vcc_proxies[receptor_to_vcc[i] - 1].subarrayMembership == 0 for i in [1, 10, 197]])
+        time.sleep(1)
+        assert create_subarray_1_proxy.State() == DevState.OFF
+
+    def test_ConfigureScan_basic(self, create_subarray_1_proxy):
+        """
+        Test a minimal successful configuration
+        """
         create_subarray_1_proxy.Init()
 
         # check default values
@@ -175,9 +214,7 @@ class TestCbfSubarray:
         assert create_subarray_1_proxy.frequencyBand == 0
         assert create_subarray_1_proxy.obsState == ObsState.IDLE.value
 
-        # since the event callback doesn't do anything currently, there's no way to tell if the subscription was
-        # actually successful; just make sure the command doesn't throw any errors for now
-        f = open(file_path + "/test_json/test_ConfigureScan_dopplerPhaseCorrection.json")
+        f = open(file_path + "/test_json/test_ConfigureScan_basic.json")
         create_subarray_1_proxy.ConfigureScan(f.read().replace("\n", ""))
         f.close()
 

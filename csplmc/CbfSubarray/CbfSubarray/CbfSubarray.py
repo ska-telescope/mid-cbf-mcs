@@ -49,9 +49,11 @@ class CbfSubarray(SKASubarray):
         if not event.err:
             try:
                 # TODO: find out what to do with the coefficients
-                pass
-            except Exception as except_occurred:
-                self.dev_logging(str(except_occurred), PyTango.LogLevel.LOG_DEBUG)
+                log_msg = "Value of " + str(event.attr_name) + " is " + str(event.attr_value.value)
+                self.dev_logging(log_msg, PyTango.LogLevel.LOG_DEBUG)
+                # self._dummy_1 += 1
+            except Exception as e:
+                self.dev_logging(str(e), PyTango.LogLevel.LOG_ERROR)
         else:
             for item in event.errors:
                 log_msg = item.reason + ": on attribute " + str(event.attr_name)
@@ -61,9 +63,11 @@ class CbfSubarray(SKASubarray):
         if not event.err:
             try:
                 # TODO: find out what to do with the coefficients
-                pass
-            except Exception as except_occurred:
-                self.dev_logging(str(except_occurred), PyTango.LogLevel.LOG_DEBUG)
+                log_msg = "Value of " + str(event.attr_name) + " is " + str(event.attr_value.value)
+                self.dev_logging(log_msg, PyTango.LogLevel.LOG_DEBUG)
+                # self._dummy_2 += 1
+            except Exception as e:
+                self.dev_logging(str(e), PyTango.LogLevel.LOG_ERROR)
         else:
             for item in event.errors:
                 log_msg = item.reason + ": on attribute " + str(event.attr_name)
@@ -118,7 +122,17 @@ class CbfSubarray(SKASubarray):
         doc="Scan ID",
     )
 
+    """
+    dummy_1 = attribute(
+        dtype='uint16',
+        access=AttrWriteType.READ,
+    )
 
+    dummy_2 = attribute(
+        dtype='uint16',
+        access=AttrWriteType.READ,
+    )
+    """
 
     receptors = attribute(
         dtype=('int',),
@@ -140,6 +154,8 @@ class CbfSubarray(SKASubarray):
         self._frequency_band = 0
         self._scan_ID = 0
         self._receptors = []
+        # self._dummy_1 = 0
+        # self._dummy_2 = 0
 
         self._proxy_cbf_master = PyTango.DeviceProxy("mid_csp_cbf/master/main")
 
@@ -152,6 +168,7 @@ class CbfSubarray(SKASubarray):
         self._events = {}
 
         self.set_state(DevState.OFF)
+        self._obs_state = ObsState.IDLE.value
         # PROTECTED REGION END #    //  CbfSubarray.init_device
 
     def always_executed_hook(self):
@@ -198,6 +215,14 @@ class CbfSubarray(SKASubarray):
         self.RemoveReceptors(self._receptors)  # remove all receptors
         self.AddReceptors(value)
         # PROTECTED REGION END #    //  CbfSubarray.receptors_write
+
+    """
+    def read_dummy_1(self):
+        return self._dummy_1
+
+    def read_dummy_2(self):
+        return self._dummy_2
+    """
 
     # --------
     # Commands
@@ -271,6 +296,12 @@ class CbfSubarray(SKASubarray):
         if not self._receptors:
             self.set_state(DevState.OFF)
         # PROTECTED REGION END #    //  CbfSubarray.RemoveReceptors
+
+    @command()
+    def RemoveAllReceptors(self):
+        # PROTECTED REGION ID(CbfSubarray.RemoveAllReceptors) ENABLED START #
+        self.RemoveReceptors(self._receptors[:])
+        # PROTECTED REGION END #    //  CbfSubarray.RemoveAllReceptors
 
     @command(
         dtype_in='str',
@@ -353,6 +384,8 @@ class CbfSubarray(SKASubarray):
         for event_id in self._events.keys():
             self._events[event_id].unsubscribe_event(event_id)
 
+        self._events = {}
+
         # try to deserialize input string to a JSON object
         try:
             argin = json.loads(argin)
@@ -388,7 +421,7 @@ class CbfSubarray(SKASubarray):
                 PyTango.Except.throw_exception("Command failed", msg,
                                                "ConfigureScan execution", PyTango.ErrSeverity.ERR)
         else:  # scanID not given
-            memorized_ID = self.read_attribute("scanID").value
+            memorized_ID = self.read_attribute("scanID").value  # TODO: fix this line
             # memorized scanID must be non-zero
             if memorized_ID == 0:
                 msg = "\n".join(errs)
@@ -437,7 +470,7 @@ class CbfSubarray(SKASubarray):
                                                "ConfigureScan execution", PyTango.ErrSeverity.ERR)
         else:  # frequencyBand not given
             # this never fails, since default value is 0, corresponding to frequency band "1"
-            self._frequency_band = self.read_attribute("frequencyBand").value
+            self._frequency_band = self.read_attribute("frequencyBand").value  # TODO: fix this line
             log_msg = "'frequencyBand' not given. Using memorized frequencyBand of {}".format(str(self._frequency_band))
             self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
 
@@ -552,14 +585,20 @@ class CbfSubarray(SKASubarray):
                 # set up attribute polling and change events
                 attribute_proxy.poll(1000)  # polling period in milliseconds, may change later
                 attribute_info = attribute_proxy.get_config()
+                """
                 change_event_info = PyTango.ChangeEventInfo()
                 change_event_info.abs_change = "1"  # subscribe to all changes
                 attribute_info.events.ch_event = change_event_info
+                """
+                periodic_event_info = PyTango.PeriodicEventInfo()
+                periodic_event_info.period = "10000"  # periodic event every 10 seconds
+                attribute_info.events.per_event = periodic_event_info
+
                 attribute_proxy.set_config(attribute_info)
 
                 # subscribe to the event
                 event_id = attribute_proxy.subscribe_event(
-                    PyTango.EventType.CHANGE_EVENT,
+                    PyTango.EventType.PERIODIC_EVENT,
                     self.doppler_phase_correction_event_callback
                 )
                 self._events[event_id] = attribute_proxy
@@ -584,14 +623,20 @@ class CbfSubarray(SKASubarray):
                 # set up attribute polling and change events
                 attribute_proxy.poll(1000)  # polling period in milliseconds, may change later
                 attribute_info = attribute_proxy.get_config()
+                """
                 change_event_info = PyTango.ChangeEventInfo()
                 change_event_info.abs_change = "1"  # subscribe to all changes
                 attribute_info.events.ch_event = change_event_info
+                """
+                periodic_event_info = PyTango.PeriodicEventInfo()
+                periodic_event_info.period = "10000"  # periodic event every 10 seconds
+                attribute_info.events.per_event = periodic_event_info
+
                 attribute_proxy.set_config(attribute_info)
 
                 # subscribe to the event
                 event_id = attribute_proxy.subscribe_event(
-                    PyTango.EventType.CHANGE_EVENT,
+                    PyTango.EventType.PERIODIC_EVENT,
                     self.delay_model_event_callback
                 )
                 self._events[event_id] = attribute_proxy
