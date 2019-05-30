@@ -51,7 +51,7 @@ class CbfSubarray(SKASubarray):
                 # TODO: find out what to do with the coefficients
                 log_msg = "Value of " + str(event.attr_name) + " is " + str(event.attr_value.value)
                 self.dev_logging(log_msg, PyTango.LogLevel.LOG_DEBUG)
-                # self._dummy_1 += 1
+                self._report_doppler_phase_correction = event.attr_value.value
             except Exception as e:
                 self.dev_logging(str(e), PyTango.LogLevel.LOG_ERROR)
         else:
@@ -65,7 +65,7 @@ class CbfSubarray(SKASubarray):
                 # TODO: find out what to do with the coefficients
                 log_msg = "Value of " + str(event.attr_name) + " is " + str(event.attr_value.value)
                 self.dev_logging(log_msg, PyTango.LogLevel.LOG_DEBUG)
-                # self._dummy_2 += 1
+                self._report_delay_model = event.attr_value.value
             except Exception as e:
                 self.dev_logging(str(e), PyTango.LogLevel.LOG_ERROR)
         else:
@@ -122,24 +122,27 @@ class CbfSubarray(SKASubarray):
         doc="Scan ID",
     )
 
-    """
-    dummy_1 = attribute(
-        dtype='uint16',
-        access=AttrWriteType.READ,
-    )
-
-    dummy_2 = attribute(
-        dtype='uint16',
-        access=AttrWriteType.READ,
-    )
-    """
-
     receptors = attribute(
         dtype=('int',),
         access=AttrWriteType.READ_WRITE,
         max_dim_x=197,
         label="Receptors",
         doc="List of receptors assigned to subarray",
+    )
+
+    reportDopplerPhaseCorrection = attribute(
+        dtype=('float',),
+        access=AttrWriteType.READ,
+        max_dim_x=4,
+        label="Doppler phase correction coefficients",
+        doc="Doppler phase correction coefficients (received from TM TelState)",
+    )
+
+    reportDelayModel = attribute(
+        dtype='str',
+        access=AttrWriteType.READ,
+        label="Delay model coefficients",
+        doc="Delay model coefficients (received from TM TelState)"
     )
 
     # ---------------
@@ -154,8 +157,8 @@ class CbfSubarray(SKASubarray):
         self._frequency_band = 0
         self._scan_ID = 0
         self._receptors = []
-        # self._dummy_1 = 0
-        # self._dummy_2 = 0
+        self._report_doppler_phase_correction = [0, 0, 0, 0]
+        self._report_delay_model = "{}"
 
         self._proxy_cbf_master = PyTango.DeviceProxy("mid_csp_cbf/master/main")
 
@@ -216,13 +219,15 @@ class CbfSubarray(SKASubarray):
         self.AddReceptors(value)
         # PROTECTED REGION END #    //  CbfSubarray.receptors_write
 
-    """
-    def read_dummy_1(self):
-        return self._dummy_1
+    def read_reportDopplerPhaseCorrection(self):
+        # PROTECTED REGION ID(CbfSubarray.reportDopplerPhaseCorrection_read) ENABLED START #
+        return self._report_doppler_phase_correction
+        # PROTECTED REGION END #    //  CbfSubarray.reportDopplerPhaseCorrection_read
 
-    def read_dummy_2(self):
-        return self._dummy_2
-    """
+    def read_reportDelayModel(self):
+        # PROTECTED REGION ID(CbfSubarray.reportDelayModel_read) ENABLED START #
+        return self._report_delay_model
+        # PROTECTED REGION END #    //  CbfSubarray.reportDelayModel_read
 
     # --------
     # Commands

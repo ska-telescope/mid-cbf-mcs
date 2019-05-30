@@ -204,6 +204,7 @@ class TmTelstateTest(SKABaseDevice):
     # ---------------
 
     def init_device(self):
+        SKABaseDevice.init_device(self)
         # PROTECTED REGION ID(TmTelstateTest.init_device) ENABLED START #
         self._doppler_phase_correction = [(0, 0, 0, 0) for i in range(16)]
         self._delay_model = {}  # this is interpreted as a JSON object
@@ -534,12 +535,8 @@ class TmTelstateTest(SKABaseDevice):
 
     def write_delayModel(self, value):
         # PROTECTED REGION ID(TmTelstateTest.delayModel_write) ENABLED START #
-        try:
-            # since this is just a test device, assume that the JSON schema is always what we expect
-            self._delay_model = json.loads(str(value))
-        except json.JSONDecodeError:  # value is not a valid JSON object
-            log_msg = "delayModel attribute must be a string representing a JSON object. Ignoring."
-            self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
+        # since this is just a test device, assume that the JSON schema is always what we expect
+        self._delay_model = json.loads(str(value))
         # PROTECTED REGION END #    //  TmTelstateTest.delayModel_write
 
 
