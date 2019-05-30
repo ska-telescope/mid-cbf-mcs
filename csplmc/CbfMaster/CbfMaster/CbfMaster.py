@@ -47,7 +47,6 @@ class CbfMaster(SKAMaster):
     # PROTECTED REGION ID(CbfMaster.class_variable) ENABLED START #
 
     def event_callback(self, event):
-        # TODO: add admin mode
         if not event.err:
             try:
                 device_name = event.device.dev_name()
@@ -75,6 +74,19 @@ class CbfMaster(SKAMaster):
                         log_msg = "Received health state change for unknown device " + str(event.attr_name)
                         self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
                         return
+                elif event.attr_name == "adminMode":
+                    if "cbfSubarray" in device_name:
+                        self._report_subarray_admin_mode[self._fqdn_subarray.index(device_name)] = event.attr_value.value
+                    elif "vcc" in device_name:
+                        self._report_vcc_admin_mode[self._fqdn_vcc.index(device_name)] = event.attr_value.value
+                    elif "fsp" in device_name:
+                        self._report_fsp_admin_mode[self._fqdn_fsp.index(device_name)] = event.attr_value.value
+                    else:
+                        # should NOT happen!
+                        log_msg = "Received health state change for unknown device " + str(event.attr_name)
+                        self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+                        return
+
                 log_msg = "New value for " + str(event.attr_name) + " is " + str(event.attr_value.value)
                 self.dev_logging(log_msg, PyTango.LogLevel.LOG_DEBUG)
 
@@ -225,6 +237,15 @@ class CbfMaster(SKAMaster):
         doc="Report the administration mode of the VCC capabilities as an array of unsigned short.\nFor ex.:\n[0,0,0,...1,2]",
     )
 
+    reportVCCSubarrayMembership = attribute(
+        dtype=('uint16',),
+        max_dim_x=197,
+        label="VCC subarray membership",
+        polling_period=3000,
+        abs_change=1,
+        doc="Report the subarray membership of VCCs (each can only belong to a single subarray), 0 if not assigned."
+    )
+
     reportFSPState = attribute(
         dtype=('DevState',),
         max_dim_x=27,
@@ -249,6 +270,16 @@ class CbfMaster(SKAMaster):
         polling_period=3000,
         abs_change=1,
         doc="Report the administration mode of the FSP capabilities as an array of unsigned short.\nfor ex:\n[0,0,2,..]",
+    )
+
+    reportFSPSubarrayMembership = attribute(
+        dtype=(('uint16',),),
+        max_dim_x=27,
+        max_dim_y=16,
+        label="FSP subarray membership",
+        polling_period=3000,
+        abs_change=1,
+        doc="Report the subarray membership of FSPs (each can only belong to at most 16 subarrays), 0 if not assigned."
     )
 
     frequencyOffsetK = attribute(
@@ -324,9 +355,11 @@ class CbfMaster(SKAMaster):
         self._report_vcc_state = [PyTango.DevState.UNKNOWN for i in range(self._count_vcc)]
         self._report_vcc_health_state = [HealthState.UNKNOWN.value]*self._count_vcc
         self._report_vcc_admin_mode = [AdminMode.ONLINE.value]*self._count_vcc
+        self._report_vcc_subarray_membership = [0]*self._count_vcc
         self._report_fsp_state = [PyTango.DevState.UNKNOWN for i in range(self._count_fsp)]
         self._report_fsp_health_state = [HealthState.UNKNOWN.value]*self._count_fsp
         self._report_fsp_admin_mode = [AdminMode.ONLINE.value]*self._count_fsp
+        self._report_fsp_subarray_membership = [[0] for i in range(self._count_fsp)]
         self._report_subarray_state = [PyTango.DevState.UNKNOWN for i in range(self._count_subarray)]
         self._report_subarray_health_state = [HealthState.UNKNOWN.value]*self._count_subarray
         self._report_subarray_admin_mode = [AdminMode.ONLINE.value]*self._count_subarray
@@ -388,12 +421,16 @@ class CbfMaster(SKAMaster):
                     attribute_info.events.ch_event = change_event_info
                     attribute_proxy.set_config(attribute_info)
 
-                # Subscription of subarray/capability attributes: State and healthState
+                # Subscription of subarray/capability attributes: State, healthState, and adminMode
                 event_id = device_proxy.subscribe_event("State", PyTango.EventType.CHANGE_EVENT,
                                                         self.event_callback, stateless=True)
                 self._event_id.append(event_id)
 
                 event_id = device_proxy.subscribe_event("healthState", PyTango.EventType.CHANGE_EVENT,
+                                                        self.event_callback, stateless=True)
+                self._event_id.append(event_id)
+
+                event_id = device_proxy.subscribe_event("adminMode", PyTango.EventType.CHANGE_EVENT,
                                                         self.event_callback, stateless=True)
                 self._event_id.append(event_id)
             except PyTango.DevFailed as df:
@@ -447,6 +484,11 @@ class CbfMaster(SKAMaster):
         return self._report_vcc_admin_mode
         # PROTECTED REGION END #    //  CbfMaster.reportVCCAdminMode_read
 
+    def read_reportVCCSubarrayMembership(self):
+        # PROTECTED REGION ID(CbfMaster.reportVCCSubarrayMembership_read) ENABLED START #
+        return self._report_vcc_subarray_membership
+        # PROTECTED REGION END #    //  CbfMaster.reportVCCSubarrayMembership_read
+
     def read_reportFSPState(self):
         # PROTECTED REGION ID(CbfMaster.reportFSPState_read) ENABLED START #
         return self._report_fsp_state
@@ -461,6 +503,11 @@ class CbfMaster(SKAMaster):
         # PROTECTED REGION ID(CbfMaster.reportFSPAdminMode_read) ENABLED START #
         return self._report_fsp_admin_mode
         # PROTECTED REGION END #    //  CbfMaster.reportFSPAdminMode_read
+
+    def read_reportFSPSubarrayMembership(self):
+        # PROTECTED REGION ID(CbfMaster.reportFSPSubarrayMembership_read) ENABLED START #
+        return self._report_fsp_subarray_membership
+        # PROTECTED REGION END #    //  CbfMaster.reportFSPSubarrayMembership_read
 
     def read_frequencyOffsetK(self):
         # PROTECTED REGION ID(CbfMaster.frequencyOffsetK_read) ENABLED START #
