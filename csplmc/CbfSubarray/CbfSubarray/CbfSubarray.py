@@ -45,7 +45,7 @@ class CbfSubarray(SKASubarray):
     __metaclass__ = DeviceMeta
     # PROTECTED REGION ID(CbfSubarray.class_variable) ENABLED START #
 
-    def doppler_phase_correction_event_callback(self, event):
+    def __doppler_phase_correction_event_callback(self, event):
         if not event.err:
             try:
                 # TODO: find out what to do with the coefficients
@@ -59,7 +59,7 @@ class CbfSubarray(SKASubarray):
                 log_msg = item.reason + ": on attribute " + str(event.attr_name)
                 self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
 
-    def delay_model_event_callback(self, event):
+    def __delay_model_event_callback(self, event):
         if not event.err:
             try:
                 # TODO: find out what to do with the coefficients
@@ -68,6 +68,41 @@ class CbfSubarray(SKASubarray):
                 self._report_delay_model = event.attr_value.value
             except Exception as e:
                 self.dev_logging(str(e), PyTango.LogLevel.LOG_ERROR)
+        else:
+            for item in event.errors:
+                log_msg = item.reason + ": on attribute " + str(event.attr_name)
+                self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
+
+    def __state_change_event_callback(self, event):
+        if not event.err:
+            try:
+                device_name = event.device.dev_name()
+                if event.attr_name == "State":
+                    if "vcc" in device_name:
+                        self._vcc_state[device_name] = event.attr_value.value
+                    elif "fsp" in device_name:
+                        self._fsp_state[device_name] = event.attr_value.value
+                    else:
+                        # should NOT happen!
+                        log_msg = "Received state change for unknown device " + str(event.attr_name)
+                        self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+                        return
+                elif event.attr_name == "healthState":
+                    if "vcc" in device_name:
+                        self._vcc_health_state[device_name] = event.attr_value.value
+                    elif "fsp" in device_name:
+                        self._fsp_health_state[device_name] = event.attr_value.value
+                    else:
+                        # should NOT happen!
+                        log_msg = "Received health state change for unknown device " + str(event.attr_name)
+                        self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+                        return
+
+                log_msg = "New value for " + str(event.attr_name) + " is " + str(event.attr_value.value)
+                self.dev_logging(log_msg, PyTango.LogLevel.LOG_DEBUG)
+
+            except Exception as except_occurred:
+                self.dev_logging(str(except_occurred), PyTango.LogLevel.LOG_DEBUG)
         else:
             for item in event.errors:
                 log_msg = item.reason + ": on attribute " + str(event.attr_name)
@@ -145,6 +180,40 @@ class CbfSubarray(SKASubarray):
         doc="Delay model coefficients (received from TM TelState)"
     )
 
+    vccState = attribute(
+        dtype=('DevState',),
+        max_dim_x=197,
+        label="VCC state",
+        polling_period=3000,
+        doc="Report the state of the assigned VCCs as an array of DevState",
+    )
+
+    vccHealthState = attribute(
+        dtype=('uint16',),
+        max_dim_x=197,
+        label="VCC health status",
+        polling_period=3000,
+        abs_change=1,
+        doc="Report the health state of assigned VCCs as an array of unsigned short.\nEx:\n[0,0,0,2,0...3]",
+    )
+
+    fspState = attribute(
+        dtype=('DevState',),
+        max_dim_x=27,
+        label="FSP state",
+        polling_period=3000,
+        doc="Report the state of the assigned FSPs",
+    )
+
+    fspHealthState = attribute(
+        dtype=('uint16',),
+        max_dim_x=27,
+        label="FSP health status",
+        polling_period=3000,
+        abs_change=1,
+        doc="Report the health state of the assigned FSPs.",
+    )
+
     # ---------------
     # General methods
     # ---------------
@@ -154,12 +223,18 @@ class CbfSubarray(SKASubarray):
         # PROTECTED REGION ID(CbfSubarray.init_device) ENABLED START #
         self.set_state(DevState.INIT)
 
+        # initialize attribute values
         self._frequency_band = 0
         self._scan_ID = 0
         self._receptors = []
         self._report_doppler_phase_correction = [0, 0, 0, 0]
         self._report_delay_model = "{}"
+        self._vcc_state = {}  # device_name:state
+        self._vcc_health_state = {}  # device_name:healthState
+        self._fsp_state = {}  # device_name:state
+        self._fsp_health_state = {}  # device_name:healthState
 
+        # device proxy for easy reference to CBF Master
         self._proxy_cbf_master = PyTango.DeviceProxy("mid_csp_cbf/master/main")
 
         self._count_vcc = 197
@@ -167,8 +242,14 @@ class CbfSubarray(SKASubarray):
         self._fqdn_vcc = ["mid_csp_cbf/vcc/" + str(i + 1).zfill(3) for i in range(self._count_vcc)]
         self._fqdn_fsp = ["mid_csp_cbf/fsp/" + str(i + 1).zfill(2) for i in range(self._count_fsp)]
 
-        # store the subscribed events as ID:attribute_proxy key:value pairs
-        self._events = {}
+        self._proxies_vcc = [PyTango.DeviceProxy(fqdn) for fqdn in self._fqdn_vcc]
+        self._proxies_fsp = [PyTango.DeviceProxy(fqdn) for fqdn in self._fqdn_fsp]
+
+        # store the subscribed telstate events as event_ID:attribute_proxy key:value pairs
+        self._events_telstate = {}
+
+        # store the subscribed state change events as vcc_ID:[event_ID, event_ID] key:value pairs
+        self._events_state_change = {}
 
         self.set_state(DevState.OFF)
         self._obs_state = ObsState.IDLE.value
@@ -229,6 +310,28 @@ class CbfSubarray(SKASubarray):
         return self._report_delay_model
         # PROTECTED REGION END #    //  CbfSubarray.reportDelayModel_read
 
+    def read_vccState(self):
+        # PROTECTED REGION ID(CbfSubarray.vccState_read) ENABLED START #
+        return self._vcc_state.values()
+        # PROTECTED REGION END #    //  CbfSubarray.vccState_read
+
+    def read_vccHealthState(self):
+        # PROTECTED REGION ID(CbfSubarray.vccHealthState_read) ENABLED START #
+        return self._vcc_health_state.values()
+        # PROTECTED REGION END #    //  CbfSubarray.vccHealthState_read
+
+    def read_fspState(self):
+        # PROTECTED REGION ID(CbfSubarray.fspState_read) ENABLED START #
+        return self._fsp_state.values()
+        # PROTECTED REGION END #    //  CbfSubarray.fspState_read
+
+    def read_fspHealthState(self):
+        # PROTECTED REGION ID(CbfSubarray.fspHealthState_read) ENABLED START #
+        return self._fsp_health_state.values()
+        # PROTECTED REGION END #    //  CbfSubarray.fspHealthState_read
+
+
+
     # --------
     # Commands
     # --------
@@ -246,7 +349,7 @@ class CbfSubarray(SKASubarray):
         for receptorID in argin:
             try:
                 vccID = receptor_to_vcc[receptorID]
-                vccProxy = PyTango.DeviceProxy("mid_csp_cbf/vcc/" + str(vccID).zfill(3))
+                vccProxy = self._proxies_vcc[vccID - 1]
                 subarrayID = vccProxy.subarrayMembership
 
                 # only add receptor if it does not already belong to a different subarray
@@ -259,6 +362,15 @@ class CbfSubarray(SKASubarray):
                         # change subarray membership of vcc
                         # last two chars of fqdn is subarrayID
                         vccProxy.subarrayMembership = int(self.get_name()[-2:])
+
+                        # subscribe to VCC state and healthState changes
+                        event_id_state, event_id_health_state = vccProxy.subscribe_event(
+                            "State", PyTango.EventType.CHANGE_EVENT, self.__state_change_event_callback
+                        ), vccProxy.subscribe_event(
+                            "healthState", PyTango.EventType.CHANGE_EVENT, self.__state_change_event_callback
+                        )
+
+                        self._events_state_change[vccID] = [event_id_state, event_id_health_state]
                     else:
                         log_msg = "Receptor {} already assigned to current subarray.".format(str(receptorID))
                         self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
@@ -287,12 +399,17 @@ class CbfSubarray(SKASubarray):
         for receptorID in argin:
             if receptorID in self._receptors:
                 vccID = receptor_to_vcc[receptorID]
-                vccProxy = PyTango.DeviceProxy("mid_csp_cbf/vcc/" + str(vccID).zfill(3))
+                vccProxy = self._proxies_vcc[vccID - 1]
 
                 self._receptors.remove(receptorID)
 
                 # reset subarray membership of vcc
                 vccProxy.subarrayMembership = 0
+
+                # unsubscribe to events
+                vccProxy.unsubscribe_event(self._events_state_change[vccID][0])  # state
+                vccProxy.unsubscribe_event(self._events_state_change[vccID][1])  # healthState
+                del self._events_state_change[vccID]
             else:
                 log_msg = "Receptor {} not assigned to subarray. Skipping.".format(str(receptorID))
                 self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
@@ -386,10 +503,10 @@ class CbfSubarray(SKASubarray):
         self._obs_state = ObsState.CONFIGURING.value
 
         # unsubscribe from all previously subscribed events
-        for event_id in self._events.keys():
-            self._events[event_id].unsubscribe_event(event_id)
+        for event_id in self._events_telstate.keys():
+            self._events_telstate[event_id].unsubscribe_event(event_id)
 
-        self._events = {}
+        self._events_telstate = {}
 
         # try to deserialize input string to a JSON object
         try:
@@ -604,9 +721,9 @@ class CbfSubarray(SKASubarray):
                 # subscribe to the event
                 event_id = attribute_proxy.subscribe_event(
                     PyTango.EventType.PERIODIC_EVENT,
-                    self.doppler_phase_correction_event_callback
+                    self.__doppler_phase_correction_event_callback
                 )
-                self._events[event_id] = attribute_proxy
+                self._events_telstate[event_id] = attribute_proxy
             except PyTango.DevFailed:  # attribute doesn't exist
                 log_msg = "Attribute {} not found for 'dopplerPhaseCorrectionSubscriptionPoint'. \
                     Proceeding.".format(argin["dopplerPhaseCorrectionSubscriptionPoint"])
@@ -642,9 +759,9 @@ class CbfSubarray(SKASubarray):
                 # subscribe to the event
                 event_id = attribute_proxy.subscribe_event(
                     PyTango.EventType.PERIODIC_EVENT,
-                    self.delay_model_event_callback
+                    self.__delay_model_event_callback
                 )
-                self._events[event_id] = attribute_proxy
+                self._events_telstate[event_id] = attribute_proxy
             except PyTango.DevFailed:  # attribute doesn't exist
                 msg = "\n".join(errs)
                 msg += "Attribute {} not found for 'delayModelSubscriptionPoint'. \
@@ -771,6 +888,7 @@ class CbfSubarray(SKASubarray):
                     if "fspID" in fsp:
                         if fsp["fspID"] in list(range(1, self._count_fsp + 1)):
                             # TODO: find out what to do
+                            # at least, need to subscribe to FSP events
                             pass
                         else:
                             log_msg = "'fspID' must be an integer in the range [1, {}]. \
