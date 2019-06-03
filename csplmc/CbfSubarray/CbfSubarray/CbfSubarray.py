@@ -103,7 +103,7 @@ class CbfSubarray(SKASubarray):
                 self.dev_logging(log_msg, PyTango.LogLevel.LOG_DEBUG)
 
             except Exception as except_occurred:
-                self.dev_logging(str(except_occurred), PyTango.LogLevel.LOG_DEBUG)
+                self.dev_logging(str(except_occurred), PyTango.LogLevel.LOG_ERROR)
         else:
             for item in event.errors:
                 log_msg = item.reason + ": on attribute " + str(event.attr_name)

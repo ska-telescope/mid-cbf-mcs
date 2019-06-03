@@ -35,10 +35,12 @@ Mid CBF
 Description
 ===================
 
-The CSP.LMC prototype implements at the moment two TANGO devices:
+The Mid CBF MCS prototype implements at the moment these TANGO devices:
 
-* the ``CbfMaster`` device: based on the ``SKAMaster`` class, it represents a primary point of contact for CBF Monitor and Control. It implements CBF state and mode indicators and a limited set of housekeeping commands.
-* the ``CbfSubarray`` device: based on the ``SKASubarray`` class, it implements commands needed for scan configuration.
+* ``CbfMaster``: Based on the ``SKAMaster`` class. It represents a primary point of contact for CBF Monitor and Control. It implements CBF state and mode indicators and a set of housekeeping commands.
+* ``CbfSubarray``: Based on the ``SKASubarray`` class. It implements commands needed for scan configuration.
+* ``Vcc`` and ``Fsp``: Based on the ``SKACapability`` class. These simulate the Mid CBF Capabilities to test basic functionality.
+* ``TmTelstateTest``: Based on the ``SKABaseDevice`` class. It simulates the TM TelState, providing regular updates to parameters during scans using a publish-subscribe mechanism.
 
 .. _getting-started:
 
@@ -56,7 +58,7 @@ To get a local copy of the project::
 How to run
 ==========
 
-The CSP.LMC prototype runs in a containerised environment: the YAML configuration file ``docker-compose.yml`` includes the stages to run the the CSP.LMC TANGO devices inside separate docker containers.
+The Mid CBF MCS prototype runs in a containerised environment; the YAML configuration file ``docker-compose.yml`` defines the services needed to run the TANGO devices inside separate Docker containers.
 
 From the project root directory issue the command ::
 
@@ -69,19 +71,20 @@ At the end of the procedure the command  ::
 
 shows the list of the running containers:
 
-* ``csplmc-tangodb``: the MariaDB database with the TANGO database tables
-* ``csplmc-databaseds``: the TANGO DB device server
 * ``csplmc-cbfmaster``: the ``CbfMaster`` TANGO device
 * ``csplmc-cbfSubarray``: the ``CbfSubarray`` TANGO device
-* ``csplmc-vcc``: the ``VCC`` TANGO device (currently only for testing purposes)
-* ``csplmc-fsp``: the ``FSP`` TANGO device (currently only for testing purposes)
-* ``csplmc-rsyslog-csplmc``: the rsyslog container for the CSP.LMC devices
+* ``csplmc-tmtelstatetest``: the ``TmTelstateTest`` TANGO device
+* ``csplmc-fsp``: the ``Fsp`` TANGO device
+* ``csplmc-vcc``: the ``Vcc`` TANGO device
+* ``csplmc-databaseds``: the TANGO DB device server
+* ``csplmc-tangodb``: the MariaDB database with the TANGO database tables
+* ``csplmc-rsyslog-csplmc``: the rsyslog container for the TANGO devices
 
 To stop the Docker containers, issue the command  ::
 
     make down
 
-from the prototype root directory.
+from the project root directory.
 
 .. _running-tests:
 
@@ -93,7 +96,7 @@ To run the test in Docker containers, issue the command ::
     make test
 
 
-from the root project directory.
+from the project root directory.
 
 .. _license:
 

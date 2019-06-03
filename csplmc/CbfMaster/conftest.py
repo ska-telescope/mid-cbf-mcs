@@ -11,45 +11,21 @@ sys.path.insert(0, "../commons")
 
 from tango import DeviceProxy
 from tango.test_context import DeviceTestContext
-import global_enum 
+import global_enum
+
 
 @pytest.fixture(scope="class")
-def tango_context(request):
-    """Creates and returns a TANGO DeviceTestContext object.
+def create_cbf_master_proxy():
+    return DeviceProxy("mid_csp_cbf/master/main")
 
-    Parameters
-    ----------
-    request: _pytest.fixtures.SubRequest
-        A request object gives access to the requesting test context.
-    """
-    # TODO: package_name and class_name can be used in future
-    # fq_test_class_name = request.cls.__module__
-    # fq_test_class_name_details = fq_test_class_name.split(".")
-    # package_name = fq_test_class_name_details[1]
-    # class_name = module_name = fq_test_class_name_details[1]
-    module = importlib.import_module("{}.{}".format("CbfMaster", "CbfMaster"))
-    klass = getattr(module, "CbfMaster")
-    tango_context = DeviceTestContext(klass)
-    tango_context.start()
-    klass.get_name = mock.Mock(side_effect=tango_context.get_device_access)
-    yield tango_context
-    tango_context.stop()
-
-@pytest.fixture(scope="function")
-def initialize_device(tango_context):
-    """Re-initializes the device.
-
-    Parameters
-    ----------
-    tango_context: tango.test_context.DeviceTestContext
-        Context to run a device without a database.
-    """
-    print("Initialize device")
-    yield tango_context.device.Init()
-
-"""
 @pytest.fixture(scope="class")
-def create_cbfmaster_proxy():
-    cbf_proxy = DeviceProxy("mid_csp_cbf/sub_elt/master")
-    return cbf_proxy
-"""
+def create_subarray_1_proxy():
+    return DeviceProxy("mid_csp_cbf/cbfSubarray/01")
+
+@pytest.fixture(scope="class")
+def create_subarray_2_proxy():
+    return DeviceProxy("mid_csp_cbf/cbfSubarray/02")
+
+@pytest.fixture(scope="class")
+def create_vcc_proxies():
+    return [DeviceProxy("mid_csp_cbf/vcc/" + str(i + 1).zfill(3)) for i in range(197)]

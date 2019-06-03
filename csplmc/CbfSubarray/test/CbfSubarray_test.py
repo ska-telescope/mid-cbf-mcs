@@ -237,14 +237,14 @@ class TestCbfSubarray:
         create_vcc_proxies[receptor_to_vcc[1] - 1].SetState(DevState.ON)
         create_vcc_proxies[receptor_to_vcc[10] - 1].SetState(DevState.DISABLE)
         create_vcc_proxies[receptor_to_vcc[197] - 1].SetState(DevState.STANDBY)
-        time.sleep(3)
+        time.sleep(4)
         assert sorted(create_subarray_1_proxy.vccState) == [DevState.ON, DevState.STANDBY, DevState.DISABLE]
 
         # change health states
         create_vcc_proxies[receptor_to_vcc[1] - 1].SetHealthState(1)
         create_vcc_proxies[receptor_to_vcc[10] - 1].SetHealthState(0)
         create_vcc_proxies[receptor_to_vcc[197] - 1].SetHealthState(2)
-        time.sleep(3)
+        time.sleep(4)
         assert sorted(create_subarray_1_proxy.vccHealthState) == [0, 1, 2]
 
         # remove a receptor
