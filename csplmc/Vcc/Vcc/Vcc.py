@@ -103,6 +103,8 @@ class Vcc(SKACapability):
 
         self._receptor_ID = 0
         self._subarray_membership = 0
+
+        self.set_state(PyTango.DevState.OFF)
         # PROTECTED REGION END #    //  Vcc.init_device
 
     def always_executed_hook(self):
@@ -140,14 +142,22 @@ class Vcc(SKACapability):
     # --------
 
     @command(
-    dtype_out='str', 
-    doc_out="Observation state", 
+        dtype_in='DevState',
+        doc_in='New state'
     )
-    @DebugIt()
-    def ObsState(self):
-        # PROTECTED REGION ID(Vcc.ObsState) ENABLED START #
-        return ""
-        # PROTECTED REGION END #    //  Vcc.ObsState
+    def SetState(self, argin):
+        # PROTECTED REGION ID(Vcc.SetState) ENABLED START #
+        self.set_state(argin)
+        # PROTECTED REGION END #    //  Vcc.SetState
+
+    @command(
+        dtype_in='uint16',
+        doc_in='New health state'
+    )
+    def SetHealthState(self, argin):
+        # PROTECTED REGION ID(Vcc.SetHealthState) ENABLED START #
+        self._health_state = argin
+        # PROTECTED REGION END #    //  Vcc.SetHealthState
 
 # ----------
 # Run server

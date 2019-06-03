@@ -202,6 +202,65 @@ class TestCbfSubarray:
         time.sleep(1)
         assert create_subarray_1_proxy.State() == DevState.OFF
 
+    def test_AddReceptors_subscriptions(
+            self,
+            create_cbf_master_proxy,
+            create_subarray_1_proxy,
+            create_vcc_proxies
+    ):
+        """
+        Test successful subscriptions to VCC state and healthState for AddReceptors command
+        """
+        receptor_to_vcc = dict([int(ID) for ID in pair.split(":")] for pair in
+                               create_cbf_master_proxy.receptorToVcc)
+        create_subarray_1_proxy.Init()
+        for proxy in create_vcc_proxies:
+            proxy.Init()
+
+        time.sleep(3)
+
+        # receptor list should be empty right after initialization
+        assert create_subarray_1_proxy.receptors == ()
+        assert create_subarray_1_proxy.vccState == None
+        assert create_subarray_1_proxy.vccHealthState == None
+
+        # add some receptors
+        create_subarray_1_proxy.AddReceptors([1, 10, 197])
+        time.sleep(3)
+        assert create_subarray_1_proxy.receptors == (1, 10, 197)
+        # default state is OFF
+        assert create_subarray_1_proxy.vccState == (DevState.OFF, DevState.OFF, DevState.OFF)
+        # default health state is 3 (UNKNOWN)
+        assert create_subarray_1_proxy.vccHealthState == (3, 3, 3)
+
+        # change states
+        create_vcc_proxies[receptor_to_vcc[1] - 1].SetState(DevState.ON)
+        create_vcc_proxies[receptor_to_vcc[10] - 1].SetState(DevState.DISABLE)
+        create_vcc_proxies[receptor_to_vcc[197] - 1].SetState(DevState.STANDBY)
+        time.sleep(3)
+        assert sorted(create_subarray_1_proxy.vccState) == [DevState.ON, DevState.STANDBY, DevState.DISABLE]
+
+        # change health states
+        create_vcc_proxies[receptor_to_vcc[1] - 1].SetHealthState(1)
+        create_vcc_proxies[receptor_to_vcc[10] - 1].SetHealthState(0)
+        create_vcc_proxies[receptor_to_vcc[197] - 1].SetHealthState(2)
+        time.sleep(3)
+        assert sorted(create_subarray_1_proxy.vccHealthState) == [0, 1, 2]
+
+        # remove a receptor
+        create_subarray_1_proxy.RemoveReceptors([10])
+        time.sleep(3)
+        assert create_subarray_1_proxy.receptors == (1, 197)
+        assert sorted(create_subarray_1_proxy.vccState) == [DevState.ON, DevState.STANDBY]
+        assert sorted(create_subarray_1_proxy.vccHealthState) == [1, 2]
+
+        # remove all receptors
+        create_subarray_1_proxy.RemoveAllReceptors()
+        time.sleep(3)
+        assert create_subarray_1_proxy.receptors == ()
+        assert create_subarray_1_proxy.vccState == None
+        assert create_subarray_1_proxy.vccHealthState == None
+
     def test_ConfigureScan_basic(self, create_subarray_1_proxy):
         """
         Test a minimal successful configuration
@@ -262,4 +321,5 @@ class TestCbfSubarray:
         create_tm_telstate_proxy.delayModel = "{\"test\": [{\"foo\": \"bar\", \"fizz\": \"buzz\"}]}"
         time.sleep(10)  # wait for next poll
         assert create_subarray_1_proxy.reportDopplerPhaseCorrection == (2.789, -1, 3.141, 0)
-        assert create_subarray_1_proxy.reportDelayModel == "{\"test\": [{\"foo\": \"bar\", \"fizz\": \"buzz\"}]}"
+        assert create_subarray_1_proxy.reportDelayModel == "{\"test\": [{\"foo\": \"bar\", \"fizz\": \"buzz\"}]}" or \
+            create_subarray_1_proxy.reportDelayModel == "{\"test\": [{\"fizz\": \"buzz\", \"foo\": \"bar\"}]}"

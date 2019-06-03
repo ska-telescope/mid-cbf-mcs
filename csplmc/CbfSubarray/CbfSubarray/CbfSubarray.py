@@ -77,7 +77,18 @@ class CbfSubarray(SKASubarray):
         if not event.err:
             try:
                 device_name = event.device.dev_name()
-                if event.attr_name == "State":
+                if "healthstate" in event.attr_name:
+                    if "vcc" in device_name:
+                        self._vcc_health_state[device_name] = event.attr_value.value
+                    elif "fsp" in device_name:
+                        self._fsp_health_state[device_name] = event.attr_value.value
+                    else:
+                        # should NOT happen!
+                        log_msg = "Received health state change for unknown device " + str(
+                            event.attr_name)
+                        self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+                        return
+                elif "state" in event.attr_name:
                     if "vcc" in device_name:
                         self._vcc_state[device_name] = event.attr_value.value
                     elif "fsp" in device_name:
@@ -87,18 +98,8 @@ class CbfSubarray(SKASubarray):
                         log_msg = "Received state change for unknown device " + str(event.attr_name)
                         self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
                         return
-                elif event.attr_name == "healthState":
-                    if "vcc" in device_name:
-                        self._vcc_health_state[device_name] = event.attr_value.value
-                    elif "fsp" in device_name:
-                        self._fsp_health_state[device_name] = event.attr_value.value
-                    else:
-                        # should NOT happen!
-                        log_msg = "Received health state change for unknown device " + str(event.attr_name)
-                        self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
-                        return
 
-                log_msg = "New value for " + str(event.attr_name) + " is " + str(event.attr_value.value)
+                log_msg = "New value for " + str(event.attr_name) + " of device " + device_name + " is " + str(event.attr_value.value)
                 self.dev_logging(log_msg, PyTango.LogLevel.LOG_DEBUG)
 
             except Exception as except_occurred:
@@ -184,7 +185,7 @@ class CbfSubarray(SKASubarray):
         dtype=('DevState',),
         max_dim_x=197,
         label="VCC state",
-        polling_period=3000,
+        polling_period=1000,
         doc="Report the state of the assigned VCCs as an array of DevState",
     )
 
@@ -192,7 +193,7 @@ class CbfSubarray(SKASubarray):
         dtype=('uint16',),
         max_dim_x=197,
         label="VCC health status",
-        polling_period=3000,
+        polling_period=1000,
         abs_change=1,
         doc="Report the health state of assigned VCCs as an array of unsigned short.\nEx:\n[0,0,0,2,0...3]",
     )
@@ -201,7 +202,7 @@ class CbfSubarray(SKASubarray):
         dtype=('DevState',),
         max_dim_x=27,
         label="FSP state",
-        polling_period=3000,
+        polling_period=1000,
         doc="Report the state of the assigned FSPs",
     )
 
@@ -209,7 +210,7 @@ class CbfSubarray(SKASubarray):
         dtype=('uint16',),
         max_dim_x=27,
         label="FSP health status",
-        polling_period=3000,
+        polling_period=1000,
         abs_change=1,
         doc="Report the health state of the assigned FSPs.",
     )
@@ -296,7 +297,7 @@ class CbfSubarray(SKASubarray):
 
     def write_receptors(self, value):
         # PROTECTED REGION ID(CbfSubarray.receptors_write) ENABLED START #
-        self.RemoveReceptors(self._receptors)  # remove all receptors
+        self.RemoveAllReceptors()
         self.AddReceptors(value)
         # PROTECTED REGION END #    //  CbfSubarray.receptors_write
 
@@ -312,22 +313,22 @@ class CbfSubarray(SKASubarray):
 
     def read_vccState(self):
         # PROTECTED REGION ID(CbfSubarray.vccState_read) ENABLED START #
-        return self._vcc_state.values()
+        return list(self._vcc_state.values())
         # PROTECTED REGION END #    //  CbfSubarray.vccState_read
 
     def read_vccHealthState(self):
         # PROTECTED REGION ID(CbfSubarray.vccHealthState_read) ENABLED START #
-        return self._vcc_health_state.values()
+        return list(self._vcc_health_state.values())
         # PROTECTED REGION END #    //  CbfSubarray.vccHealthState_read
 
     def read_fspState(self):
         # PROTECTED REGION ID(CbfSubarray.fspState_read) ENABLED START #
-        return self._fsp_state.values()
+        return list(self._fsp_state.values())
         # PROTECTED REGION END #    //  CbfSubarray.fspState_read
 
     def read_fspHealthState(self):
         # PROTECTED REGION ID(CbfSubarray.fspHealthState_read) ENABLED START #
-        return self._fsp_health_state.values()
+        return list(self._fsp_health_state.values())
         # PROTECTED REGION END #    //  CbfSubarray.fspHealthState_read
 
 
@@ -410,6 +411,8 @@ class CbfSubarray(SKASubarray):
                 vccProxy.unsubscribe_event(self._events_state_change[vccID][0])  # state
                 vccProxy.unsubscribe_event(self._events_state_change[vccID][1])  # healthState
                 del self._events_state_change[vccID]
+                del self._vcc_state[self._fqdn_vcc[vccID - 1]]
+                del self._vcc_health_state[self._fqdn_vcc[vccID - 1]]
             else:
                 log_msg = "Receptor {} not assigned to subarray. Skipping.".format(str(receptorID))
                 self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
@@ -859,7 +862,7 @@ class CbfSubarray(SKASubarray):
 
                     # Validate destinationAddress.
                     # If not given, do nothing.
-                    # If malformed, do nothing, but append an error.
+                    # If malformed, do nothing.
                     if "destinationAddress" in search_window:
                         # TODO: find out valid ranges and what to do
                         pass
