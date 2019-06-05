@@ -151,7 +151,7 @@ class CbfSubarray(SKASubarray):
     )
 
     scanID = attribute(
-        dtype='uint64',
+        dtype='uint16',
         access=AttrWriteType.READ_WRITE,
         label="Scan ID",
         memorized=True,
@@ -159,7 +159,7 @@ class CbfSubarray(SKASubarray):
     )
 
     receptors = attribute(
-        dtype=('int',),
+        dtype=('uint16',),
         access=AttrWriteType.READ_WRITE,
         max_dim_x=197,
         label="Receptors",
@@ -338,7 +338,7 @@ class CbfSubarray(SKASubarray):
     # --------
 
     @command(
-        dtype_in=('int',),
+        dtype_in=('uint16',),
         doc_in="List of receptor IDs",
     )
     @DebugIt()
@@ -390,7 +390,7 @@ class CbfSubarray(SKASubarray):
         # PROTECTED REGION END #    //  CbfSubarray.AddReceptors
 
     @command(
-        dtype_in=('int',),
+        dtype_in=('uint16',),
         doc_in="List of receptor IDs",
     )
     def RemoveReceptors(self, argin):

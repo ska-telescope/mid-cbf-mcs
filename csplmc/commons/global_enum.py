@@ -13,7 +13,6 @@ class AdminMode(IntEnum):
     OFFLINE     = 1
     MAINTENANCE = 2
     NOTFITTED   = 3
-    RESERVED    = 4
 
 @unique
 class ControlMode(IntEnum):
@@ -24,10 +23,10 @@ class ControlMode(IntEnum):
 class ObsMode(IntEnum):
     IDLE             = 0
     IMAGING          = 1
-    PULSARSEARCH    = 2
-    PULSARTIMING    = 3
-    DYNAMICSPECTRUM = 4
-    TRANSIENTSEARCH = 5
+    PULSARSEARCH     = 2
+    PULSARTIMING     = 3
+    DYNAMICSPECTRUM  = 4
+    TRANSIENTSEARCH  = 5
     VLBI             = 6
     CALIBRATION      = 7
 

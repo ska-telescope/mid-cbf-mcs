@@ -69,35 +69,38 @@ class TestCbfSubarray:
         for proxy in create_vcc_proxies:
             proxy.Init()
 
+        time.sleep(3)
+
         # receptor list should be empty right after initialization
         assert create_subarray_1_proxy.receptors == ()
         assert all([proxy.subarrayMembership == 0 for proxy in create_vcc_proxies])
-        time.sleep(1)
         assert create_subarray_1_proxy.State() == DevState.OFF
 
         # add some receptors
         create_subarray_1_proxy.AddReceptors([1, 10, 197])
+        time.sleep(1)
         assert create_subarray_1_proxy.receptors == (1, 10, 197)
         assert all([create_vcc_proxies[receptor_to_vcc[i] - 1].subarrayMembership == 1 for i in [1, 10, 197]])
-        time.sleep(1)
         assert create_subarray_1_proxy.State() == DevState.ON
 
         # add more receptors...
         create_subarray_1_proxy.AddReceptors([17, 197])
+        time.sleep(1)
         assert create_subarray_1_proxy.receptors == (1, 10, 197, 17)
         assert create_vcc_proxies[receptor_to_vcc[17] - 1].subarrayMembership == 1
 
         # remove some receptors
         create_subarray_1_proxy.RemoveReceptors([17, 1, 197])
+        time.sleep(1)
         assert create_subarray_1_proxy.receptors == (10,)
         assert all([create_vcc_proxies[receptor_to_vcc[i] - 1].subarrayMembership == 0 for i in [1, 17, 197]])
         assert create_vcc_proxies[receptor_to_vcc[10] - 1].subarrayMembership == 1
 
         # remove remaining receptors
         create_subarray_1_proxy.RemoveReceptors([10])
+        time.sleep(1)
         assert create_subarray_1_proxy.receptors == ()
         assert create_vcc_proxies[receptor_to_vcc[10] - 1].subarrayMembership == 0
-        time.sleep(1)
         assert create_subarray_1_proxy.State() == DevState.OFF
 
     def test_AddRemoveReceptors_invalid(
@@ -121,34 +124,36 @@ class TestCbfSubarray:
         for proxy in create_vcc_proxies:
             proxy.Init()
 
+        time.sleep(3)
+
         # receptor list should be empty right after initialization
         assert create_subarray_1_proxy.receptors == ()
         assert create_subarray_2_proxy.receptors == ()
         assert all([proxy.subarrayMembership == 0 for proxy in create_vcc_proxies])
-        time.sleep(1)
         assert create_subarray_1_proxy.State() == DevState.OFF
         assert create_subarray_2_proxy.State() == DevState.OFF
 
         # add some receptors to subarray 1
         create_subarray_1_proxy.AddReceptors([1, 10, 197])
+        time.sleep(1)
         assert create_subarray_1_proxy.receptors == (1, 10, 197)
         assert all([create_vcc_proxies[receptor_to_vcc[i] - 1].subarrayMembership == 1 for i in [1, 10, 197]])
-        time.sleep(1)
         assert create_subarray_1_proxy.State() == DevState.ON
 
         # try adding some receptors (including an invalid one) to subarray 2
         with pytest.raises(tango.DevFailed) as df:
             create_subarray_2_proxy.AddReceptors([17, 100, 197])
+        time.sleep(1)
         assert "already in use" in str(df.value.args[0].desc)
         assert create_subarray_2_proxy.receptors == (17, 100)
         assert all([create_vcc_proxies[receptor_to_vcc[i] - 1].subarrayMembership == 1 for i in [1, 10, 197]])
         assert all([create_vcc_proxies[receptor_to_vcc[i] - 1].subarrayMembership == 2 for i in [17, 100]])
-        time.sleep(1)
         assert create_subarray_2_proxy.State() == DevState.ON
 
         # try adding an invalid receptor ID to subarray 2
         with pytest.raises(tango.DevFailed) as df:
             create_subarray_2_proxy.AddReceptors([200])
+        time.sleep(1)
         assert "Invalid receptor ID" in str(df.value.args[0].desc)
 
         # try removing a receptor not assigned to subarray 2
@@ -159,10 +164,10 @@ class TestCbfSubarray:
         # remove all receptors
         create_subarray_1_proxy.RemoveReceptors([1, 10, 197])
         create_subarray_2_proxy.RemoveReceptors([17, 100])
+        time.sleep(1)
         assert create_subarray_1_proxy.receptors == ()
         assert create_subarray_2_proxy.receptors == ()
         assert all([create_vcc_proxies[receptor_to_vcc[i] - 1].subarrayMembership == 0 for i in [1, 10, 17, 100, 197]])
-        time.sleep(1)
         assert create_subarray_1_proxy.State() == DevState.OFF
         assert create_subarray_2_proxy.State() == DevState.OFF
 
@@ -182,24 +187,25 @@ class TestCbfSubarray:
         for proxy in create_vcc_proxies:
             proxy.Init()
 
+        time.sleep(3)
+
         # receptor list should be empty right after initialization
         assert create_subarray_1_proxy.receptors == ()
         assert all([proxy.subarrayMembership == 0 for proxy in create_vcc_proxies])
-        time.sleep(1)
         assert create_subarray_1_proxy.State() == DevState.OFF
 
         # add some receptors
         create_subarray_1_proxy.AddReceptors([1, 10, 197])
+        time.sleep(1)
         assert create_subarray_1_proxy.receptors == (1, 10, 197)
         assert all([create_vcc_proxies[receptor_to_vcc[i] - 1].subarrayMembership == 1 for i in [1, 10, 197]])
-        time.sleep(1)
         assert create_subarray_1_proxy.State() == DevState.ON
 
         # remove all receptors
         create_subarray_1_proxy.RemoveAllReceptors()
+        time.sleep(1)
         assert create_subarray_1_proxy.receptors == ()
         assert all([create_vcc_proxies[receptor_to_vcc[i] - 1].subarrayMembership == 0 for i in [1, 10, 197]])
-        time.sleep(1)
         assert create_subarray_1_proxy.State() == DevState.OFF
 
     def test_AddReceptors_subscriptions(
@@ -294,6 +300,8 @@ class TestCbfSubarray:
         """
         create_subarray_1_proxy.Init()
         create_tm_telstate_proxy.Init()
+
+        time.sleep(3)
 
         # check default values of attributes
         assert create_tm_telstate_proxy.dopplerPhaseCorrection_1 == (0, 0, 0, 0)
