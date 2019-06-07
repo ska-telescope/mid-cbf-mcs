@@ -45,7 +45,9 @@ ifneq ($(CI_JOB_ID),)
 NETWORK_MODE := tangonet-$(CI_JOB_ID)
 CONTAINER_NAME_PREFIX := $(PROJECT)-$(CI_JOB_ID)-
 else
-CONTAINER_NAME_PREFIX := $(PROJECT)-
+# CONTAINER_NAME_PREFIX := $(PROJECT)-
+CONTAINER_NAME_PREFIX := 
+NETWORK_MODE := tangonet
 endif
 
 ifeq ($(OS),Windows_NT)
@@ -79,10 +81,16 @@ TANGO_HOST := $(shell hostname):10000
 MYSQL_HOST := $(shell hostname):3306
 else
 # distinguish the bridge network from others by adding the project name
-NETWORK_MODE := $(NETWORK_MODE)-$(PROJECT)
+# NETWORK_MODE := $(NETWORK_MODE)-$(PROJECT)
 TANGO_HOST := $(CONTAINER_NAME_PREFIX)databaseds:10000
 MYSQL_HOST := $(CONTAINER_NAME_PREFIX)tangodb:3306
 endif
+
+COMPOSE_FILES := $(wildcard *.yml)
+COMPOSE_FILE_ARGS := $(foreach yml,$(COMPOSE_FILES),-f $(yml))
+
+WEBJIVE_COMPOSE_FILES = tangogql.yml webjive.yml traefik.yml
+WEBJIVE_COMPOSE_FILE_ARGS := $(foreach yml,$(WEBJIVE_COMPOSE_FILES),-f $(yml))
 
 
 DOCKER_COMPOSE_ARGS := DISPLAY=$(DISPLAY) XAUTHORITY=$(XAUTHORITY) TANGO_HOST=$(TANGO_HOST) \
@@ -131,11 +139,13 @@ test: build up ## test the application
 pull:  ## download the application image
 	docker pull $(IMAGE_TO_TEST)
 
-up: build  ## start develop/test environment
+up: ## build  ## start develop/test environment
 ifneq ($(NETWORK_MODE),host)
 	docker network inspect $(NETWORK_MODE) &> /dev/null || ([ $$? -ne 0 ] && docker network create $(NETWORK_MODE))
 endif
-	$(DOCKER_COMPOSE_ARGS) docker-compose up -d
+	$(DOCKER_COMPOSE_ARGS) docker-compose -f tango.yml up -d
+	$(DOCKER_COMPOSE_ARGS) docker-compose -f tango.yml $(WEBJIVE_COMPOSE_FILE_ARGS) up -d
+	$(DOCKER_COMPOSE_ARGS) docker-compose $(COMPOSE_FILE_ARGS) up -d
 
 piplock: build  ## overwrite Pipfile.lock with the image version
 	docker run $(IMAGE_TO_TEST) cat /app/Pipfile.lock > $(CURDIR)/Pipfile.lock
@@ -146,8 +156,10 @@ interactive:  ## start an interactive session using the project image (caution: 
 	  -v $(CURDIR):/app $(IMAGE_TO_TEST) /bin/bash
 
 down:  ## stop develop/test environment and any interactive session
-	docker ps | grep $(CONTAINER_NAME_PREFIX)dev && docker stop $(PROJECT)-dev || true
-	$(DOCKER_COMPOSE_ARGS) docker-compose down
+##	docker ps | grep $(CONTAINER_NAME_PREFIX)dev && docker stop $(PROJECT)-dev || true
+##	$(DOCKER_COMPOSE_ARGS) docker-compose down
+	docker stop $(docker ps -a -q)
+	docker rm $(docker ps -a -q)
 ifneq ($(NETWORK_MODE),host)
 	docker network inspect $(NETWORK_MODE) &> /dev/null && ([ $$? -eq 0 ] && docker network rm $(NETWORK_MODE)) || true
 endif

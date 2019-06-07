@@ -1,0 +1,12 @@
+version: "2.2"
+
+services:
+  traefik:
+    image: traefik:1.7-alpine
+    container_name: ${CONTAINER_NAME_PREFIX}traefik
+    network_mode: ${NETWORK_MODE}
+    command: --docker
+    ports:
+      - 22484:80
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock

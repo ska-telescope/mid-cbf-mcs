@@ -1,0 +1,30 @@
+version: "2.2"
+
+volumes:
+  tangogql-logs: {}
+
+services:
+  tangogql:
+    image: nexus.engageska-portugal.pt/ska-docker/webjive-develop_tangogql:latest
+    container_name: ${CONTAINER_NAME_PREFIX}tangogql
+    network_mode: ${NETWORK_MODE}
+    command: /bin/bash -c "source activate graphql && adev runserver tangogql/aioserver.py --app-factory=dev_run --port=5004"
+    depends_on:
+      - databaseds
+      - redis
+    volumes:
+      - tangogql-logs:/var/log/tangogql
+    environment:
+      - TANGO_HOST=${TANGO_HOST}
+      - LOG_PATH=/var/log/tangogql
+      # If this is not set, the output of python is delayed and only shows when the docker container restarts
+      - PYTHONUNBUFFERED=1
+    labels:
+      - "traefik.frontend.rule=Host:localhost; PathPrefix: /testdb/db, /testdb/socket, /testdb/graphiql; ReplacePathRegex: ^/testdb/((?:db|socket|graphiql.*?)/?)/?$$ /$$1"
+      - "traefik.port=5004"
+
+  redis:
+    image: redis
+    container_name: redis
+    network_mode: ${NETWORK_MODE}
+

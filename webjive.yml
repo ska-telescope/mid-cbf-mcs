@@ -1,0 +1,47 @@
+version: "2.2"
+
+volumes:
+  mongodb: {}
+
+services:
+  webjive:
+    image: nexus.engageska-portugal.pt/ska-docker/webjive-develop_webjive:latest
+    container_name: ${CONTAINER_NAME_PREFIX}webjive
+    network_mode: ${NETWORK_MODE}
+    depends_on:
+      - tangogql
+      - auth
+      - dashboards
+    labels:
+      - "traefik.frontend.rule=Host:localhost"
+      - "traefik.port=80"
+
+  auth:
+    image: nexus.engageska-portugal.pt/ska-docker/webjive-develop_auth:latest
+    container_name: ${CONTAINER_NAME_PREFIX}auth
+    network_mode: ${NETWORK_MODE}
+    environment:
+      - SECRET=s3cr3t
+    labels:
+      - "traefik.frontend.rule=Host:localhost; PathPrefixStrip: /auth"
+      - "traefik.port=8080"
+
+  dashboards:
+    image: nexus.engageska-portugal.pt/ska-docker/webjive-develop_dashboards:latest
+    container_name: ${CONTAINER_NAME_PREFIX}dashboards
+    network_mode: ${NETWORK_MODE}
+    depends_on:
+      - mongodb
+    environment:
+      - MONGO_HOST=mongodb://mongodb/dashboards
+      - SECRET=s3cr3t
+    labels:
+      - "traefik.frontend.rule=Host:localhost; PathPrefix: /dashboards"
+      - "traefik.port=3012"
+
+  mongodb:
+    image: mongo:3.6-stretch
+    container_name: ${CONTAINER_NAME_PREFIX}mongodb
+    network_mode: ${NETWORK_MODE}
+    volumes:
+      - mongodb:/data/db
