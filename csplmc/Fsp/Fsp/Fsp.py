@@ -43,40 +43,74 @@ class Fsp(SKACapability):
     """
     __metaclass__ = DeviceMeta
     # PROTECTED REGION ID(Fsp.class_variable) ENABLED START #
+
+    def __get_capability_proxies(self):
+        # for now, assume that given addresses are valid
+        if self.CorrelationAddress:
+            self._proxy_correlation = PyTango.DeviceProxy(self.CorrelationAddress)
+        else:
+            # use this default value
+            names = self.get_name().split("/")
+            names[1] = "fsp_corr"
+            self._proxy_correlation = PyTango.DeviceProxy("/".join(names))
+
+        if self.PSSAddress:
+            self._proxy_pss = PyTango.DeviceProxy(self.PSSAddress)
+        else:
+            # use this default value
+            names = self.get_name().split("/")
+            names[1] = "fsp_pss"
+            self._proxy_pss = PyTango.DeviceProxy("/".join(names))
+
+        if self.PSTAddress:
+            self._proxy_pst = PyTango.DeviceProxy(self.PSTAddress)
+        else:
+            # use this default value
+            names = self.get_name().split("/")
+            names[1] = "fsp_pst"
+            self._proxy_pst = PyTango.DeviceProxy("/".join(names))
+
+        if self.VLBIAddress:
+            self._proxy_vlbi = PyTango.DeviceProxy(self.VLBIAddress)
+        else:
+            # use this default value
+            names = self.get_name().split("/")
+            names[1] = "fsp_vlbi"
+            self._proxy_vlbi = PyTango.DeviceProxy("/".join(names))
+
     # PROTECTED REGION END #    //  Fsp.class_variable
 
     # -----------------
     # Device Properties
     # -----------------
 
+    CorrelationAddress = device_property(
+        dtype='str'
+    )
 
+    PSSAddress = device_property(
+        dtype='str'
+    )
 
+    PSTAddress = device_property(
+        dtype='str'
+    )
 
-
-
-
-
+    VLBIAddress = device_property(
+        dtype='str'
+    )
 
     # ----------
     # Attributes
     # ----------
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    functionMode = attribute(
+        dtype='DevEnum',
+        access=AttrWriteType.READ,
+        label="Function mode",
+        doc="Function mode; an int in the range [0, 4]",
+        enum_labels=["IDLE", "CORRELATION", "PSS", "PST", "VLBI", ],
+    )
 
     # ---------------
     # General methods
@@ -87,6 +121,21 @@ class Fsp(SKACapability):
         # PROTECTED REGION ID(Fsp.init_device) ENABLED START #
         self.set_state(PyTango.DevState.INIT)
         self._health_state = HealthState.UNKNOWN.value
+
+        # defines self._proxy_correlation, self._proxy_pss, self._proxy_pst, and self._proxy_vlbi
+        self.__get_capability_proxies()
+
+        # the modes are already disabled on initialization,
+        # but do this just in case, I suppose
+        self._proxy_correlation.SetState(PyTango.DevState.DISABLE)
+        self._proxy_pss.SetState(PyTango.DevState.DISABLE)
+        self._proxy_pst.SetState(PyTango.DevState.DISABLE)
+        self._proxy_vlbi.SetState(PyTango.DevState.DISABLE)
+
+        # initialize attribute values
+        self._function_mode = 0  # IDLE
+
+        self.set_state(PyTango.DevState.OFF)
         # PROTECTED REGION END #    //  Fsp.init_device
 
     def always_executed_hook(self):
@@ -103,20 +152,57 @@ class Fsp(SKACapability):
     # Attributes methods
     # ------------------
 
+    def read_functionMode(self):
+        # PROTECTED REGION ID(Fsp.functionMode_read) ENABLED START #
+        return self._function_mode
+        # PROTECTED REGION END #    //  Fsp.functionMode_read
 
     # --------
     # Commands
     # --------
 
     @command(
-    dtype_out='str', 
-    doc_out="Observation state", 
+        dtype_in='uint16',
+        doc_in='Function mode'
     )
-    @DebugIt()
-    def ObsState(self):
-        # PROTECTED REGION ID(Fsp.ObsState) ENABLED START #
-        return ""
-        # PROTECTED REGION END #    //  Fsp.ObsState
+    def SetFunctionMode(self, argin):
+        # PROTECTED REGION ID(Fsp.SetFunctionMode) ENABLED START #
+        if argin == 0:  # IDLE
+            self._function_mode = 0
+            self._proxy_correlation.SetState(PyTango.DevState.DISABLE)
+            self._proxy_pss.SetState(PyTango.DevState.DISABLE)
+            self._proxy_pst.SetState(PyTango.DevState.DISABLE)
+            self._proxy_vlbi.SetState(PyTango.DevState.DISABLE)
+        if argin == 1:  # CORR
+            self._function_mode = 1
+            self._proxy_correlation.SetState(PyTango.DevState.ON)
+            self._proxy_pss.SetState(PyTango.DevState.DISABLE)
+            self._proxy_pst.SetState(PyTango.DevState.DISABLE)
+            self._proxy_vlbi.SetState(PyTango.DevState.DISABLE)
+        if argin == 2:  # PSS
+            self._function_mode = 2
+            self._proxy_correlation.SetState(PyTango.DevState.DISABLE)
+            self._proxy_pss.SetState(PyTango.DevState.ON)
+            self._proxy_pst.SetState(PyTango.DevState.DISABLE)
+            self._proxy_vlbi.SetState(PyTango.DevState.DISABLE)
+        if argin == 3:  # PST
+            self._function_mode = 3
+            self._proxy_correlation.SetState(PyTango.DevState.DISABLE)
+            self._proxy_pss.SetState(PyTango.DevState.DISABLE)
+            self._proxy_pst.SetState(PyTango.DevState.ON)
+            self._proxy_vlbi.SetState(PyTango.DevState.DISABLE)
+        if argin == 4:  # VLBI
+            self._function_mode = 4
+            self._proxy_correlation.SetState(PyTango.DevState.DISABLE)
+            self._proxy_pss.SetState(PyTango.DevState.DISABLE)
+            self._proxy_pst.SetState(PyTango.DevState.DISABLE)
+            self._proxy_vlbi.SetState(PyTango.DevState.ON)
+
+        # shouldn't happen
+        self.dev_logging("functionMode not in valid range. Ignoring.",
+                         PyTango.LogLevel.LOG_WARN)
+        # PROTECTED REGION END #    //  Fsp.SetFunctionMode
+
 
 # ----------
 # Run server

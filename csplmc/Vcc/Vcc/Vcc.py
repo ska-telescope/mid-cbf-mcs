@@ -160,10 +160,8 @@ class Vcc(SKACapability):
 
     frequencyBand = attribute(
         dtype='DevEnum',
-        access=AttrWriteType.READ_WRITE,
+        access=AttrWriteType.READ,
         label="Frequency band",
-        memorized=True,
-        hw_memorized=True,
         doc="Frequency band; an int in the range [0, 5]",
         enum_labels=["1", "2", "3", "4", "5a", "5b", ],
     )
@@ -265,6 +263,7 @@ class Vcc(SKACapability):
 
         # initialize attribute values
         self._receptor_ID = 0
+        self._frequency_band = 0
         self._subarray_membership = 0
         self._stream_tuning = (0, 0)
         self._frequency_band_offset = (0, 0)
@@ -313,11 +312,6 @@ class Vcc(SKACapability):
         # PROTECTED REGION ID(Vcc.frequencyBand_read) ENABLED START #
         return self._frequency_band
         # PROTECTED REGION END #    //  Vcc.frequencyBand_read
-
-    def write_frequencyBand(self, value):
-        # PROTECTED REGION ID(Vcc.frequencyBand_write) ENABLED START #
-        self.SetFrequencyBand(value)
-        # PROTECTED REGION END #    //  Vcc.frequencyBand_write
 
     def read_streamTuning(self):
         # PROTECTED REGION ID(Vcc.streamTuning_read) ENABLED START #
@@ -448,24 +442,26 @@ class Vcc(SKACapability):
     )
     def SetFrequencyBand(self, argin):
         # PROTECTED REGION ID(Vcc.SetFrequencyBand) ENABLED START #
-        self._frequency_band = argin
-
         if argin in [0, 1]:  # frequencyBand 1 or 2
+            self._frequency_band = argin
             self._proxy_band_12.SetState(PyTango.DevState.ON)
             self._proxy_band_3.SetState(PyTango.DevState.DISABLE)
             self._proxy_band_4.SetState(PyTango.DevState.DISABLE)
             self._proxy_band_5.SetState(PyTango.DevState.DISABLE)
         elif argin == 2:  # frequencyBand 3
+            self._frequency_band = argin
             self._proxy_band_12.SetState(PyTango.DevState.DISABLE)
             self._proxy_band_3.SetState(PyTango.DevState.ON)
             self._proxy_band_4.SetState(PyTango.DevState.DISABLE)
             self._proxy_band_5.SetState(PyTango.DevState.DISABLE)
         elif argin == 3:  # frequencyBand 4
+            self._frequency_band = argin
             self._proxy_band_12.SetState(PyTango.DevState.DISABLE)
             self._proxy_band_3.SetState(PyTango.DevState.DISABLE)
             self._proxy_band_4.SetState(PyTango.DevState.ON)
             self._proxy_band_5.SetState(PyTango.DevState.DISABLE)
         elif argin in [4, 5]:  # frequencyBand 5a or 5b
+            self._frequency_band = argin
             self._proxy_band_12.SetState(PyTango.DevState.DISABLE)
             self._proxy_band_3.SetState(PyTango.DevState.DISABLE)
             self._proxy_band_4.SetState(PyTango.DevState.DISABLE)
@@ -481,7 +477,7 @@ class Vcc(SKACapability):
         doc_in='JSON object to configure a search window'
     )
     def ConfigureSearchWindow(self, argin):
-        # PROTECTED REGION ID(Vcc.SetFrequencyBand) ENABLED START #
+        # PROTECTED REGION ID(Vcc.ConfigureSearchWindow) ENABLED START #
 
         # transition state to CONFIGURING
         self._obs_state = ObsState.CONFIGURING.value
