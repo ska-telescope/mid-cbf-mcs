@@ -92,7 +92,7 @@ class VccTransientDataCapture(SKACapability):
         dtype=('str',),
         access=AttrWriteType.READ_WRITE,
         label="Destination addresses",
-        doc="Destination address (MAC address, IP address, port) for transient data"
+        doc="Destination addresses (MAC address, IP address, port) for transient data"
     )
 
     # ---------------

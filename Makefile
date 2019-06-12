@@ -158,8 +158,8 @@ interactive:  ## start an interactive session using the project image (caution: 
 down:  ## stop develop/test environment and any interactive session
 ##	docker ps | grep $(CONTAINER_NAME_PREFIX)dev && docker stop $(PROJECT)-dev || true
 ##	$(DOCKER_COMPOSE_ARGS) docker-compose down
-	docker stop $(docker ps -a -q)
-	docker rm $(docker ps -a -q)
+	docker stop $$(docker ps -a -q)
+	docker rm $$(docker ps -a -q)
 ifneq ($(NETWORK_MODE),host)
 	docker network inspect $(NETWORK_MODE) &> /dev/null && ([ $$? -eq 0 ] && docker network rm $(NETWORK_MODE)) || true
 endif

@@ -112,6 +112,13 @@ class Fsp(SKACapability):
         enum_labels=["IDLE", "CORRELATION", "PSS", "PST", "VLBI", ],
     )
 
+    subarrayMembership = attribute(
+        dtype=('uint16',),
+        access=AttrWriteType.READ,
+        label="Subarray membership",
+        doc="Subarray membership"
+    )
+
     # ---------------
     # General methods
     # ---------------
@@ -126,14 +133,14 @@ class Fsp(SKACapability):
         self.__get_capability_proxies()
 
         # the modes are already disabled on initialization,
-        # but do this just in case, I suppose
-        self._proxy_correlation.SetState(PyTango.DevState.DISABLE)
-        self._proxy_pss.SetState(PyTango.DevState.DISABLE)
-        self._proxy_pst.SetState(PyTango.DevState.DISABLE)
-        self._proxy_vlbi.SetState(PyTango.DevState.DISABLE)
+        # self._proxy_correlation.SetState(PyTango.DevState.DISABLE)
+        # self._proxy_pss.SetState(PyTango.DevState.DISABLE)
+        # self._proxy_pst.SetState(PyTango.DevState.DISABLE)
+        # self._proxy_vlbi.SetState(PyTango.DevState.DISABLE)
 
         # initialize attribute values
         self._function_mode = 0  # IDLE
+        self._subarray_membership = []
 
         self.set_state(PyTango.DevState.OFF)
         # PROTECTED REGION END #    //  Fsp.init_device
@@ -156,6 +163,11 @@ class Fsp(SKACapability):
         # PROTECTED REGION ID(Fsp.functionMode_read) ENABLED START #
         return self._function_mode
         # PROTECTED REGION END #    //  Fsp.functionMode_read
+
+    def read_subarrayMembership(self):
+        # PROTECTED REGION ID(Fsp.subarrayMembership_read) ENABLED START #
+        return self._subarray_membership
+        # PROTECTED REGION END #    //  Fsp.subarrayMembership_read
 
     # --------
     # Commands

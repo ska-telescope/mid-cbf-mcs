@@ -170,19 +170,19 @@ class Vcc(SKACapability):
         dtype=('float',),
         max_dim_x=2,
         access=AttrWriteType.READ_WRITE,
-        label="Stream tuning",
-        doc="Stream tuning"
+        label="Stream tuning (GHz)",
+        doc="Stream tuning (GHz)"
     )
 
     frequencyBandOffset = attribute(
         dtype=('int',),
         max_dim_x=2,
         access=AttrWriteType.READ_WRITE,
-        label="Frequency band offset",
-        doc="Frequency band offset"
+        label="Frequency band offset (Hz)",
+        doc="Frequency band offset (Hz)"
     )
 
-    dopplerPhaseCorrection(
+    dopplerPhaseCorrection = attribute(
         dtype=('float',),
         access=AttrWriteType.READ_WRITE,
         max_dim_x=4,
@@ -254,12 +254,13 @@ class Vcc(SKACapability):
         # self._proxy_tdc_1, and self._proxy_tdc_2
         self.__get_capability_proxies()
 
-        # the bands are already disabled on initialization,
-        # but do this just in case, I suppose
-        self._proxy_band_12.SetState(PyTango.DevState.DISABLE)
-        self._proxy_band_3.SetState(PyTango.DevState.DISABLE)
-        self._proxy_band_4.SetState(PyTango.DevState.DISABLE)
-        self._proxy_band_5.SetState(PyTango.DevState.DISABLE)
+        # the bands are already disabled on initialization
+        # self._proxy_band_12.SetState(PyTango.DevState.DISABLE)
+        # self._proxy_band_3.SetState(PyTango.DevState.DISABLE)
+        # self._proxy_band_4.SetState(PyTango.DevState.DISABLE)
+        # self._proxy_band_5.SetState(PyTango.DevState.DISABLE)
+        # self._proxy_tdc_1.SetState(PyTango.DevState.DISABLE)
+        # self._proxy_tdc_2.SetState(PyTango.DevSTate.DISABLE)
 
         # initialize attribute values
         self._receptor_ID = 0
