@@ -215,6 +215,31 @@ class Fsp(SKACapability):
                          PyTango.LogLevel.LOG_WARN)
         # PROTECTED REGION END #    //  Fsp.SetFunctionMode
 
+    @command(
+        dtype_in='uint16',
+        doc_in='Subarray ID'
+    )
+    def AddSubarrayMembership(self, argin):
+        # PROTECTED REGION ID(Fsp.AddSubarrayMembership) ENABLED START #
+        if argin not in self._subarray_membership:
+            self._subarray_membership.append(argin)
+        else:
+            log_msg = "FSP already belongs to subarray {}.".format(argin)
+            self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+        # PROTECTED REGION END #    //  Fsp.AddSubarrayMembership
+
+    @command(
+        dtype_in='uint16',
+        doc_in='Subarray ID'
+    )
+    def RemoveSubarrayMembership(self, argin):
+        # PROTECTED REGION ID(Fsp.RemoveSubarrayMembership) ENABLED START #
+        if argin in self._subarray_membership:
+            self._subarray_membership.remove(argin)
+        else:
+            log_msg = "FSP does not belong to subarray {}.".format(argin)
+            self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+        # PROTECTED REGION END #    //  Fsp.RemoveSubarrayMembership
 
 # ----------
 # Run server
