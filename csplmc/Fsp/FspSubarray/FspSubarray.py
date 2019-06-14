@@ -51,7 +51,7 @@ class FspSubarray(SKASubarray):
     # -----------------
 
     SubID = device_property(
-        dtype='uint16',
+        dtype='uint16'
     )
 
     CbfMasterAddress = device_property(
@@ -114,7 +114,7 @@ class FspSubarray(SKASubarray):
     )
 
     channelAveragingMap = attribute(
-        dtype='uint16',
+        dtype=(('uint16',),),
         max_dim_x=2,
         max_dim_y=20,
         access=AttrWriteType.READ,
@@ -124,6 +124,7 @@ class FspSubarray(SKASubarray):
 
     destinationAddress = attribute(
         dtype=('str',),
+        max_dim_x=3,
         access=AttrWriteType.READ_WRITE,
         label="Destination addresses",
         doc="Destination addresses (MAC address, IP address, port) for visibilities"
@@ -158,8 +159,13 @@ class FspSubarray(SKASubarray):
         self._zoom_window_tuning = 0
         self._integration_time = 0
         self._channel_averaging_map = [[0, 0] for i in range(20)]
-        self._destination_address = ("", "", "")
+        self._destination_address = ["", "", ""]
         self._delay_model = ""
+
+        self._count_vcc = 197
+        self._fqdn_vcc = [*map(lambda i: "mid_csp_cbf/vcc/{:03d}".format(i + 1),
+                               range(self._count_vcc))]
+        self._proxies_vcc = [*map(PyTango.DeviceProxy, self._fqdn_vcc)]
 
         # device proxy for easy reference to CBF Master
         self._proxy_cbf_master = PyTango.DeviceProxy(self.CbfMasterAddress)
@@ -301,8 +307,8 @@ class FspSubarray(SKASubarray):
             if receptorID in self._receptors:
                 self._receptors.remove(receptorID)
             else:
-                log_msg = "Receptor {} not assigned to FSP subarray. \
-                    Skipping.".format(str(receptorID))
+                log_msg = "Receptor {} not assigned to FSP subarray. "
+                "Skipping.".format(str(receptorID))
                 self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
         # PROTECTED REGION END #    //  FspSubarray.RemoveReceptors
 
@@ -339,7 +345,7 @@ class FspSubarray(SKASubarray):
         try:
             if "receptors" in argin:
                 self.RemoveAllReceptors()
-                self.AddReceptors(map(int, argin))
+                self.AddReceptors(map(int, argin["receptors"]))
             else:
                 self.RemoveAllReceptors()
                 self.AddReceptors(self._proxy_cbf_subarray.receptors)
@@ -362,8 +368,8 @@ class FspSubarray(SKASubarray):
                     range(1, num_frequency_slices[self._frequency_band] + 1)):
                 self._frequency_slice_ID = int(argin["frequencySliceID"])
             else:
-                log_msg = "'frequencySliceID' must be an integer in the range [1, {}] \
-                                        for a 'frequencyBand' of {}. Ignoring FSP.".format(
+                log_msg = "'frequencySliceID' must be an integer in the range [1, {}] "
+                "for a 'frequencyBand' of {}. Ignoring FSP.".format(
                     str(num_frequency_slices[self._frequency_band]),
                     str(self._frequency_band)
                 )
@@ -374,18 +380,18 @@ class FspSubarray(SKASubarray):
             self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
             errs.append(log_msg)
 
-        # Validate bandwidth
+        # Validate corrBandwidth
         # If not given, ignore the FSP and append an error.
         # If malformed, ignore the FSP and append an error.
-        if "bandwidth" in argin:
-            if int(argin["bandwidth"]) in list(range(0, 7)):
-                self._bandwidth = int(argin["bandwidth"])
+        if "corrBandwidth" in argin:
+            if int(argin["corrBandwidth"]) in list(range(0, 7)):
+                self._bandwidth = int(argin["corrBandwidth"])
             else:
-                log_msg = "'bandwidth' must be an integer in the range [0, 6]. Ignoring FSP."
+                log_msg = "'corrBandwidth' must be an integer in the range [0, 6]. Ignoring FSP."
                 self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
                 errs.append(log_msg)
         else:
-            log_msg = "FSP specified, but 'bandwidth' not given. Ignoring FSP."
+            log_msg = "FSP specified, but 'corrBandwidth' not given. Ignoring FSP."
             self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
             errs.append(log_msg)
 
@@ -408,8 +414,8 @@ class FspSubarray(SKASubarray):
             if int(argin["integrationTime"]) in list(range(140, 1401, 140)):
                 self._integration_time = int(argin["integrationTime"])
             else:
-                log_msg = "'integrationTime' must be an integer in the range [1, 10] multiplied by \
-                    140. Ignoring FSP."
+                log_msg = "'integrationTime' must be an integer in the range [1, 10] multiplied by "
+                "140. Ignoring FSP."
                 self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
                 errs.append(log_msg)
         else:
@@ -436,22 +442,22 @@ class FspSubarray(SKASubarray):
                         self._channel_averaging_map[i][1] = int(argin["channelAveragingMap"][i][1])
                     else:
                         self._channel_averaging_map[i][1] = 0
-                        log_msg = "'channelAveragingMap'[n][1] must be one of \
-                            [0, 1, 2, 3, 4, 5, 6, 8]. Defaulting to 0 for channel {0}.".format(
+                        log_msg = "'channelAveragingMap'[n][1] must be one of "
+                        "[0, 1, 2, 3, 4, 5, 6, 8]. Defaulting to 0 for channel {0}.".format(
                             argin["channelAveragingMap"][i][0]
                         )
                         self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
                         errs.append(log_msg)
             except (TypeError, AssertionError):  # dimensions not correct
                 self._channel_averaging_map = [[0, 0] for i in range(20)]
-                log_msg = "'channelAveragingMap' must be an 2D array of dimensions 2x20. \
-                    Defaulting to averaging factor = 0 for all channels."
+                log_msg = "'channelAveragingMap' must be an 2D array of dimensions 2x20. "
+                "Defaulting to averaging factor = 0 for all channels."
                 self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
                 errs.append(log_msg)
         else:
             self._channel_averaging_map = [[0, 0] for i in range(20)]
-            log_msg = "FSP specified, but 'channelAveragingMap not given. Default to averaging \
-                factor = 0 for all channels."
+            log_msg = "FSP specified, but 'channelAveragingMap not given. Default to averaging "
+            "factor = 0 for all channels."
             self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
 
         # raise an error if something went wrong

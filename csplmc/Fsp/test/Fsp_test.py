@@ -77,42 +77,67 @@ class TestFsp:
         assert create_pst_proxy.State() == DevState.DISABLE
         assert create_vlbi_proxy.State() == DevState.DISABLE
 
-        # set function mode to 1 (CORR)
-        create_fsp_proxy.SetFunctionMode(1)
+        # set function mode to CORR
+        create_fsp_proxy.SetFunctionMode("CORR")
         time.sleep(1)
         assert create_corr_proxy.State() == DevState.ON
         assert create_pss_proxy.State() == DevState.DISABLE
         assert create_pst_proxy.State() == DevState.DISABLE
         assert create_vlbi_proxy.State() == DevState.DISABLE
 
-        # set function mode to 2 (PSS)
-        create_fsp_proxy.SetFunctionMode(2)
+        # set function mode to PSS
+        create_fsp_proxy.SetFunctionMode("PSS-BF")
         time.sleep(1)
         assert create_corr_proxy.State() == DevState.DISABLE
         assert create_pss_proxy.State() == DevState.ON
         assert create_pst_proxy.State() == DevState.DISABLE
         assert create_vlbi_proxy.State() == DevState.DISABLE
 
-        # set function mode to 3 (PST)
-        create_fsp_proxy.SetFunctionMode(3)
+        # set function mode to PST
+        create_fsp_proxy.SetFunctionMode("PST-BF")
         time.sleep(1)
         assert create_corr_proxy.State() == DevState.DISABLE
         assert create_pss_proxy.State() == DevState.DISABLE
         assert create_pst_proxy.State() == DevState.ON
         assert create_vlbi_proxy.State() == DevState.DISABLE
 
-        # set function mode to 4 (VLBI)
-        create_fsp_proxy.SetFunctionMode(4)
+        # set function mode to VLBI
+        create_fsp_proxy.SetFunctionMode("VLBI")
         time.sleep(1)
         assert create_corr_proxy.State() == DevState.DISABLE
         assert create_pss_proxy.State() == DevState.DISABLE
         assert create_pst_proxy.State() == DevState.DISABLE
         assert create_vlbi_proxy.State() == DevState.ON
 
-        # set function mode to 0 (IDLE)
-        create_fsp_proxy.SetFunctionMode(0)
+        # set function mode to IDLE
+        create_fsp_proxy.SetFunctionMode("IDLE")
         time.sleep(1)
         assert create_corr_proxy.State() == DevState.DISABLE
         assert create_pss_proxy.State() == DevState.DISABLE
         assert create_pst_proxy.State() == DevState.DISABLE
         assert create_vlbi_proxy.State() == DevState.DISABLE
+
+    def test_AddRemoveSubarrayMembership(self, create_fsp_proxy):
+        create_fsp_proxy.Init()
+        time.sleep(3)
+
+        # subarray membership should be empty
+        assert create_fsp_proxy.subarrayMembership == None
+
+        # add FSP to some subarrays
+        create_fsp_proxy.AddSubarrayMembership(3)
+        create_fsp_proxy.AddSubarrayMembership(4)
+        assert create_fsp_proxy.subarrayMembership == (3, 4)
+
+        # remove from a subarray
+        create_fsp_proxy.RemoveSubarrayMembership(3)
+        assert create_fsp_proxy.subarrayMembership == (4,)
+
+        # add again...
+        create_fsp_proxy.AddSubarrayMembership(15)
+        assert create_fsp_proxy.subarrayMembership == (4, 15)
+
+        # remove from all subarrays
+        create_fsp_proxy.RemoveSubarrayMembership(4)
+        create_fsp_proxy.RemoveSubarrayMembership(15)
+        assert create_fsp_proxy.subarrayMembership == None

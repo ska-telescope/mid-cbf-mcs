@@ -40,7 +40,8 @@ from global_enum import HealthState, AdminMode, ObsState
     "create_band_12_proxy",
     "create_band_3_proxy",
     "create_band_4_proxy",
-    "create_band_5_proxy"
+    "create_band_5_proxy",
+    "create_tdc_1_proxy"
 )
 
 class TestVcc:
@@ -77,50 +78,86 @@ class TestVcc:
         assert create_band_4_proxy.State() == DevState.DISABLE
         assert create_band_5_proxy.State() == DevState.DISABLE
 
-        # set frequency band to 0 (1)
-        create_vcc_proxy.SetFrequencyBand(0)
+        # set frequency band to 1
+        create_vcc_proxy.SetFrequencyBand("1")
         time.sleep(1)
         assert create_band_12_proxy.State() == DevState.ON
         assert create_band_3_proxy.State() == DevState.DISABLE
         assert create_band_4_proxy.State() == DevState.DISABLE
         assert create_band_5_proxy.State() == DevState.DISABLE
 
-        # set frequency band to 2 (3)
-        create_vcc_proxy.SetFrequencyBand(2)
+        # set frequency band to 3
+        create_vcc_proxy.SetFrequencyBand("3")
         time.sleep(1)
         assert create_band_12_proxy.State() == DevState.DISABLE
         assert create_band_3_proxy.State() == DevState.ON
         assert create_band_4_proxy.State() == DevState.DISABLE
         assert create_band_5_proxy.State() == DevState.DISABLE
 
-        # set frequency band to 1 (2)
-        create_vcc_proxy.SetFrequencyBand(1)
+        # set frequency band to 2
+        create_vcc_proxy.SetFrequencyBand("2")
         time.sleep(1)
         assert create_band_12_proxy.State() == DevState.ON
         assert create_band_3_proxy.State() == DevState.DISABLE
         assert create_band_4_proxy.State() == DevState.DISABLE
         assert create_band_5_proxy.State() == DevState.DISABLE
 
-        # set frequency band to 4 (5a)
-        create_vcc_proxy.SetFrequencyBand(4)
+        # set frequency band to 5a
+        create_vcc_proxy.SetFrequencyBand("5a")
         time.sleep(1)
         assert create_band_12_proxy.State() == DevState.DISABLE
         assert create_band_3_proxy.State() == DevState.DISABLE
         assert create_band_4_proxy.State() == DevState.DISABLE
         assert create_band_5_proxy.State() == DevState.ON
 
-        # set frequency band to 3 (4)
-        create_vcc_proxy.SetFrequencyBand(3)
+        # set frequency band to 4
+        create_vcc_proxy.SetFrequencyBand("4")
         time.sleep(1)
         assert create_band_12_proxy.State() == DevState.DISABLE
         assert create_band_3_proxy.State() == DevState.DISABLE
         assert create_band_4_proxy.State() == DevState.ON
         assert create_band_5_proxy.State() == DevState.DISABLE
 
-        # set frequency band to 5 (5b)
-        create_vcc_proxy.SetFrequencyBand(5)
+        # set frequency band to 5b
+        create_vcc_proxy.SetFrequencyBand("5b")
         time.sleep(1)
         assert create_band_12_proxy.State() == DevState.DISABLE
         assert create_band_3_proxy.State() == DevState.DISABLE
         assert create_band_4_proxy.State() == DevState.DISABLE
         assert create_band_5_proxy.State() == DevState.ON
+
+    def test_ConfigureSearchWindow_basic(self, create_vcc_proxy, create_tdc_1_proxy):
+        """
+        Test a minimal successful search window configuration.
+        """
+        create_tdc_1_proxy.Init()
+        create_vcc_proxy.Init()
+        time.sleep(3)
+
+        # check initial values of attributes
+        assert create_tdc_1_proxy.searchWindowTuning == 0
+        assert create_tdc_1_proxy.enableTDC == False
+        assert create_tdc_1_proxy.numberBits == 0
+        assert create_tdc_1_proxy.periodBeforeEpoch == 0
+        assert create_tdc_1_proxy.periodAfterEpoch == 0
+        assert create_tdc_1_proxy.destinationAddress == ("", "" , "")
+
+        # check initial state
+        assert create_tdc_1_proxy.State() == DevState.DISABLE
+
+        # configure search window
+        f = open(file_path + "/test_json/test_ConfigureSearchWindow_basic.json")
+        create_vcc_proxy.ConfigureSearchWindow(f.read().replace("\n", ""))
+        f.close()
+        time.sleep(1)
+
+        # check configured values
+        assert create_tdc_1_proxy.searchWindowTuning == 1000000000
+        assert create_tdc_1_proxy.enableTDC == True
+        assert create_tdc_1_proxy.numberBits == 8
+        assert create_tdc_1_proxy.periodBeforeEpoch == 5
+        assert create_tdc_1_proxy.periodAfterEpoch == 25
+        assert create_tdc_1_proxy.destinationAddress == ("", "", "")
+
+        # check state
+        assert create_tdc_1_proxy.State() == DevState.ON

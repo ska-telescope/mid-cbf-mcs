@@ -12,7 +12,7 @@ sys.path.insert(0, "../commons")
 
 from tango import DeviceProxy
 from tango.test_context import DeviceTestContext
-import global_enum
+#import global_enum
 
 @pytest.fixture(scope="class")
 def create_vcc_proxy():
@@ -33,3 +33,7 @@ def create_band_4_proxy():
 @pytest.fixture(scope="class")
 def create_band_5_proxy():
     return DeviceProxy("mid_csp_cbf/vcc_band5/001")
+
+@pytest.fixture(scope="class")
+def create_tdc_1_proxy():
+    return DeviceProxy("mid_csp_cbf/vcc_tdc1/001")

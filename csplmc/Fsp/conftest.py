@@ -12,11 +12,27 @@ sys.path.insert(0, "../commons")
 
 from tango import DeviceProxy
 from tango.test_context import DeviceTestContext
-import global_enum
+#import global_enum
+
+@pytest.fixture(scope="class")
+def create_cbf_master_proxy():
+    return DeviceProxy("mid_csp_cbf/master/main")
+
+@pytest.fixture(scope="class")
+def create_vcc_proxies():
+    return [DeviceProxy("mid_csp_cbf/vcc/" + str(i + 1).zfill(3)) for i in range(197)]
 
 @pytest.fixture(scope="class")
 def create_fsp_proxy():
     return DeviceProxy("mid_csp_cbf/fsp/01")
+
+@pytest.fixture(scope="class")
+def create_cbf_subarray_1_proxy():
+    return DeviceProxy("mid_csp_cbf/cbfSubarray/01")
+
+@pytest.fixture(scope="class")
+def create_fsp_subarray_1_1_proxy():
+    return DeviceProxy("mid_csp_cbf/fspSubarray/01_01")
 
 @pytest.fixture(scope="class")
 def create_corr_proxy():

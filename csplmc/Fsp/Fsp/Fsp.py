@@ -114,6 +114,7 @@ class Fsp(SKACapability):
 
     subarrayMembership = attribute(
         dtype=('uint16',),
+        max_dim_x=16,
         access=AttrWriteType.READ,
         label="Subarray membership",
         doc="Subarray membership"
@@ -174,36 +175,36 @@ class Fsp(SKACapability):
     # --------
 
     @command(
-        dtype_in='uint16',
+        dtype_in='str',
         doc_in='Function mode'
     )
     def SetFunctionMode(self, argin):
         # PROTECTED REGION ID(Fsp.SetFunctionMode) ENABLED START #
-        if argin == 0:  # IDLE
+        if argin == "IDLE":
             self._function_mode = 0
             self._proxy_correlation.SetState(PyTango.DevState.DISABLE)
             self._proxy_pss.SetState(PyTango.DevState.DISABLE)
             self._proxy_pst.SetState(PyTango.DevState.DISABLE)
             self._proxy_vlbi.SetState(PyTango.DevState.DISABLE)
-        if argin == 1:  # CORR
+        if argin == "CORR":
             self._function_mode = 1
             self._proxy_correlation.SetState(PyTango.DevState.ON)
             self._proxy_pss.SetState(PyTango.DevState.DISABLE)
             self._proxy_pst.SetState(PyTango.DevState.DISABLE)
             self._proxy_vlbi.SetState(PyTango.DevState.DISABLE)
-        if argin == 2:  # PSS
+        if argin == "PSS-BF":
             self._function_mode = 2
             self._proxy_correlation.SetState(PyTango.DevState.DISABLE)
             self._proxy_pss.SetState(PyTango.DevState.ON)
             self._proxy_pst.SetState(PyTango.DevState.DISABLE)
             self._proxy_vlbi.SetState(PyTango.DevState.DISABLE)
-        if argin == 3:  # PST
+        if argin == "PST-BF":
             self._function_mode = 3
             self._proxy_correlation.SetState(PyTango.DevState.DISABLE)
             self._proxy_pss.SetState(PyTango.DevState.DISABLE)
             self._proxy_pst.SetState(PyTango.DevState.ON)
             self._proxy_vlbi.SetState(PyTango.DevState.DISABLE)
-        if argin == 4:  # VLBI
+        if argin == "VLBI":
             self._function_mode = 4
             self._proxy_correlation.SetState(PyTango.DevState.DISABLE)
             self._proxy_pss.SetState(PyTango.DevState.DISABLE)
@@ -211,8 +212,7 @@ class Fsp(SKACapability):
             self._proxy_vlbi.SetState(PyTango.DevState.ON)
 
         # shouldn't happen
-        self.dev_logging("functionMode not in valid range. Ignoring.",
-                         PyTango.LogLevel.LOG_WARN)
+        self.dev_logging("functionMode not valid. Ignoring.", PyTango.LogLevel.LOG_WARN)
         # PROTECTED REGION END #    //  Fsp.SetFunctionMode
 
     @command(

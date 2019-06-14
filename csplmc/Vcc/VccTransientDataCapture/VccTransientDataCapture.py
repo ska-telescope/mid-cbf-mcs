@@ -90,6 +90,7 @@ class VccTransientDataCapture(SKACapability):
 
     destinationAddress = attribute(
         dtype=('str',),
+        max_dim_x=3,
         access=AttrWriteType.READ_WRITE,
         label="Destination addresses",
         doc="Destination addresses (MAC address, IP address, port) for transient data"
@@ -111,7 +112,7 @@ class VccTransientDataCapture(SKACapability):
         self._number_bits = 0
         self._period_before_epoch = 0
         self._period_after_epoch = 0
-        self._destination_address = ("", "", "")
+        self._destination_address = ["", "", ""]
 
         self.set_state(PyTango.DevState.DISABLE)
         # PROTECTED REGION END #    //  VccTransientDataCapture.init_device

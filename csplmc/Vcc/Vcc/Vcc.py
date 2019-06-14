@@ -25,6 +25,7 @@ from PyTango import AttrWriteType, PipeWriteType
 # PROTECTED REGION ID(Vcc.additionnal_import) ENABLED START #
 import os
 import sys
+import json
 
 file_path = os.path.dirname(os.path.abspath(__file__))
 commons_pkg_path = os.path.abspath(os.path.join(file_path, "../../commons"))
@@ -438,31 +439,31 @@ class Vcc(SKACapability):
         # PROTECTED REGION END #    //  Vcc.SetHealthState
 
     @command(
-        dtype_in='uint16',
+        dtype_in='str',
         doc_in='New frequency band'
     )
     def SetFrequencyBand(self, argin):
         # PROTECTED REGION ID(Vcc.SetFrequencyBand) ENABLED START #
-        if argin in [0, 1]:  # frequencyBand 1 or 2
-            self._frequency_band = argin
+        if argin in ["1", "2"]:
+            self._frequency_band = ["1", "2"].index(argin)
             self._proxy_band_12.SetState(PyTango.DevState.ON)
             self._proxy_band_3.SetState(PyTango.DevState.DISABLE)
             self._proxy_band_4.SetState(PyTango.DevState.DISABLE)
             self._proxy_band_5.SetState(PyTango.DevState.DISABLE)
-        elif argin == 2:  # frequencyBand 3
-            self._frequency_band = argin
+        elif argin == "3":
+            self._frequency_band = 2
             self._proxy_band_12.SetState(PyTango.DevState.DISABLE)
             self._proxy_band_3.SetState(PyTango.DevState.ON)
             self._proxy_band_4.SetState(PyTango.DevState.DISABLE)
             self._proxy_band_5.SetState(PyTango.DevState.DISABLE)
-        elif argin == 3:  # frequencyBand 4
-            self._frequency_band = argin
+        elif argin == "4":
+            self._frequency_band = 3
             self._proxy_band_12.SetState(PyTango.DevState.DISABLE)
             self._proxy_band_3.SetState(PyTango.DevState.DISABLE)
             self._proxy_band_4.SetState(PyTango.DevState.ON)
             self._proxy_band_5.SetState(PyTango.DevState.DISABLE)
-        elif argin in [4, 5]:  # frequencyBand 5a or 5b
-            self._frequency_band = argin
+        elif argin in ["5a", "5b"]:
+            self._frequency_band = ["5a", "5b"].index(argin) + 4
             self._proxy_band_12.SetState(PyTango.DevState.DISABLE)
             self._proxy_band_3.SetState(PyTango.DevState.DISABLE)
             self._proxy_band_4.SetState(PyTango.DevState.DISABLE)
@@ -488,8 +489,8 @@ class Vcc(SKACapability):
             argin = json.loads(argin)
         except json.JSONDecodeError:  # argument not a valid JSON object
             # this is a fatal error
-            msg = "Search window configuration object is not a valid JSON object. Aborting \
-                configuration."
+            msg = "Search window configuration object is not a valid JSON object. Aborting "
+            "configuration."
             self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
             PyTango.Except.throw_exception("Command failed", msg, "ConfigureSearchWindow execution",
                                            PyTango.ErrSeverity.ERR)
@@ -509,9 +510,8 @@ class Vcc(SKACapability):
                 proxy_tdc = self._proxy_tdc_2
             else:  # searchWindowID not in valid range
                 msg = "\n".join(errs)
-                msg += "'searchWindowID' must be one of [1, 2] (received {}). \
-                                   Ignoring search window".format(
-                    str(argin["searchWindowID"]))
+                msg += "'searchWindowID' must be one of [1, 2] (received {}). "
+                "Ignoring search window".format(str(argin["searchWindowID"]))
                 # this is a fatal error
                 self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
                 PyTango.Except.throw_exception("Command failed", msg,
@@ -519,8 +519,8 @@ class Vcc(SKACapability):
                                                PyTango.ErrSeverity.ERR)
         else:  # searchWindowID not given
             msg = "\n".join(errs)
-            msg += "Search window specified, but 'searchWindowID' not given. \
-                Ignoring search window."
+            msg += "Search window specified, but 'searchWindowID' not given. "
+            "Ignoring search window."
             # this is a fatal error
             self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
             PyTango.Except.throw_exception("Command failed", msg,
@@ -535,8 +535,8 @@ class Vcc(SKACapability):
             proxy_tdc.searchWindowTuning = argin["searchWindowTuning"]
         else:  # searchWindowTuning not given
             msg = "\n".join(errs)
-            msg += "Search window specified, but 'searchWindowTuning' not given. \
-                Ignoring search window."
+            msg += "Search window specified, but 'searchWindowTuning' not given. "
+            "Ignoring search window."
             # this is a fatal error
             self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
             PyTango.Except.throw_exception("Command failed", msg,
@@ -546,37 +546,35 @@ class Vcc(SKACapability):
         # Validate enableTDC.
         # If not given, use a default value.
         # If malformed, use a default value, but append an error.
-        if "enableTDC" in argin:
-            if argin["enableTDC"] in [True, False]:
-                proxy_tdc.enableTDC = argin["enableTDC"]
-                if argin["enableTDC"]:
+        if "tdcEnable" in argin:
+            if argin["tdcEnable"] in [True, False]:
+                proxy_tdc.enableTDC = argin["tdcEnable"]
+                if argin["tdcEnable"]:
                     # transition to ON if TDC is enabled
                     proxy_tdc.SetState(PyTango.DevState.ON)
             else:
                 proxy_tdc.enableTDC = False
                 proxy_tdc.SetState(PyTango.DevState.DISABLE)
-                log_msg = "'enableTDC' must be one of [True, False] (received {}). \
-                                    Defaulting to False.".format(
-                    str(argin["enableTDC"]))
+                log_msg = "'tdcEnable' must be one of [True, False] (received {}). "
+                "Defaulting to False.".format(str(argin["tdcEnable"]))
                 self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
                 errs.append(log_msg)
         else:  # enableTDC not given
             proxy_tdc.enableTDC = False
             proxy_tdc.SetState(PyTango.DevState.DISABLE)
-            log_msg = "Search window specified, but 'enableTDC' not given. Defaulting to False."
+            log_msg = "Search window specified, but 'tdcEnable' not given. Defaulting to False."
             self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
 
         # Validate numberBits.
         # If not given, ignore the entire search window and append an error.
         # If malformed, ignore the entire search window and append an error.
-        if "numberBits" in argin:
-            if int(argin["numberBits"]) in [2, 4, 8]:
-                proxy_tdc.numberBits = int(argin)
+        if "tdcNumBits" in argin:
+            if int(argin["tdcNumBits"]) in [2, 4, 8]:
+                proxy_tdc.numberBits = int(argin["tdcNumBits"])
             else:
                 msg = "\n".join(errs)
-                msg += "'numberBits' must be one of [2, 4, 8] (received {}). \
-                                    Ignoring search window.".format(
-                    str(argin["numberBits"]))
+                msg += "'tdcNumBits' must be one of [2, 4, 8] (received {}). "
+                "Ignoring search window.".format(str(argin["tdcNumBits"]))
                 # this is a fatal error
                 self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
                 PyTango.Except.throw_exception("Command failed", msg,
@@ -584,7 +582,7 @@ class Vcc(SKACapability):
                                                PyTango.ErrSeverity.ERR)
         else:  # numberBits not given
             msg = "\n".join(errs)
-            msg += "Search window specified, but 'numberBits' not given. Ignoring search window."
+            msg += "Search window specified, but 'tdcNumBits' not given. Ignoring search window."
             # this is a fatal error
             self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
             PyTango.Except.throw_exception("Command failed", msg,
@@ -594,37 +592,37 @@ class Vcc(SKACapability):
         # Validate periodBeforeEpoch.
         # If not given, use a default value.
         # If malformed, use a default value, but append an error.
-        if "periodBeforeEpoch" in argin:
-            if int(argin["periodBeforeEpoch"]) > 0:
-                proxy_tdc.periodBeforeEpoch = int(argin["periodBeforeEpoch"])
+        if "tdcPeriodBeforeEpoch" in argin:
+            if int(argin["tdcPeriodBeforeEpoch"]) > 0:
+                proxy_tdc.periodBeforeEpoch = int(argin["tdcPeriodBeforeEpoch"])
             else:
                 proxy_tdc.periodBeforeEpoch = 2
-                log_msg = "'periodBeforeEpoch' must be a positive integer (received {}). \
-                                        Defaulting to 2.".format(
-                    str(argin["periodBeforeEpoch"]))
+                log_msg = "'tdcPeriodBeforeEpoch' must be a positive integer (received {}). "
+                "Defaulting to 2.".format(str(argin["tdcPeriodBeforeEpoch"]))
                 self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
                 errs.append(log_msg)
         else:  # periodBeforeEpoch not given
             proxy_tdc.periodBeforeEpoch = 2
-            log_msg = "Search window specified, but 'periodBeforeEpoch' not given. Defaulting to 2."
+            log_msg = "Search window specified, but 'tdcPeriodBeforeEpoch' not given. "
+            "Defaulting to 2."
             self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
 
         # Validate periodAfterEpoch.
         # If not given, use a default value.
         # If malformed, use a default value, but append an error.
-        if "periodAfterEpoch" in argin:
-            if int(argin["periodAfterEpoch"]) > 0:
-                proxy_tdc.periodAfterEpoch = int(argin["periodAfterEpoch"])
+        if "tdcPeriodAfterEpoch" in argin:
+            if int(argin["tdcPeriodAfterEpoch"]) > 0:
+                proxy_tdc.periodAfterEpoch = int(argin["tdcPeriodAfterEpoch"])
             else:
                 proxy_tdc.periodAfterEpoch = 2
-                log_msg = "'periodAfterEpoch' must be a positive integer (received {}). \
-                                                Defaulting to 22.".format(
-                    str(argin["periodAfterEpoch"]))
+                log_msg = "'tdcPeriodAfterEpoch' must be a positive integer (received {}). "
+                "Defaulting to 22.".format(str(argin["tdcPeriodAfterEpoch"]))
                 self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
                 errs.append(log_msg)
         else:  # periodAfterEpoch not given
             proxy_tdc.periodAfterEpoch = 2
-            log_msg = "Search window specified, but 'periodAfterEpoch' not given. Defaulting to 22."
+            log_msg = "Search window specified, but 'tdcPeriodAfterEpoch' not given. "
+            "Defaulting to 22."
             self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
 
         # Validate destinationAddress.
@@ -635,8 +633,8 @@ class Vcc(SKACapability):
             proxy_tdc.destinationAddress = argin["destinationAddress"]
         else:  # destinationAddress not given
             msg = "\n".join(errs)
-            msg += "Search window specified, but 'destinationAddress' not given. \
-                Ignoring search window."
+            msg += "Search window specified, but 'destinationAddress' not given. "
+            "Ignoring search window."
             # this is a fatal error
             self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
             PyTango.Except.throw_exception("Command failed", msg,
