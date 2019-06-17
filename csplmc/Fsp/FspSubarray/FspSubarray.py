@@ -92,7 +92,7 @@ class FspSubarray(SKASubarray):
         doc="Frequency slice ID"
     )
 
-    bandwidth = attribute(
+    corrBandwidth = attribute(
         dtype='uint16',
         access=AttrWriteType.READ,
         label="Bandwidth to be correlated",
@@ -215,10 +215,10 @@ class FspSubarray(SKASubarray):
         return self._frequency_slice_ID
         # PROTECTED REGION END #    //  FspSubarray.frequencySliceID_read
 
-    def read_bandwidth(self):
-        # PROTECTED REGION ID(FspSubarray.bandwidth_read) ENABLED START #
+    def read_corrBandwidth(self):
+        # PROTECTED REGION ID(FspSubarray.corrBandwidth_read) ENABLED START #
         return self._bandwidth
-        # PROTECTED REGION END #    //  FspSubarray.bandwidth_read
+        # PROTECTED REGION END #    //  FspSubarray.corrBandwidth_read
 
     def read_zoomWindowTuning(self):
         # PROTECTED REGION ID(FspSubarray.zoomWindowTuning_read) ENABLED START #

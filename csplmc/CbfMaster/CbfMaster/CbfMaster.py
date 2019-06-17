@@ -52,42 +52,56 @@ class CbfMaster(SKAMaster):
                 device_name = event.device.dev_name()
                 if "healthstate" in event.attr_name:
                     if "cbfSubarray" in device_name:
-                        self._report_subarray_health_state[self._fqdn_subarray.index(device_name)] = event.attr_value.value
+                        self._report_subarray_health_state[
+                            self._fqdn_subarray.index(device_name)] = \
+                            event.attr_value.value
                     elif "vcc" in device_name:
-                        self._report_vcc_health_state[self._fqdn_vcc.index(device_name)] = event.attr_value.value
+                        self._report_vcc_health_state[self._fqdn_vcc.index(device_name)] = \
+                            event.attr_value.value
                     elif "fsp" in device_name:
-                        self._report_fsp_health_state[self._fqdn_fsp.index(device_name)] = event.attr_value.value
+                        self._report_fsp_health_state[self._fqdn_fsp.index(device_name)] = \
+                            event.attr_value.value
                     else:
                         # should NOT happen!
-                        log_msg = "Received health state change for unknown device " + str(event.attr_name)
+                        log_msg = "Received health state change for unknown device " + \
+                                  str(event.attr_name)
                         self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
                         return
                 elif "state" in event.attr_name:
                     if "cbfSubarray" in device_name:
-                        self._report_subarray_state[self._fqdn_subarray.index(device_name)] = event.attr_value.value
+                        self._report_subarray_state[self._fqdn_subarray.index(device_name)] = \
+                            event.attr_value.value
                     elif "vcc" in device_name:
-                        self._report_vcc_state[self._fqdn_vcc.index(device_name)] = event.attr_value.value
+                        self._report_vcc_state[self._fqdn_vcc.index(device_name)] = \
+                            event.attr_value.value
                     elif "fsp" in device_name:
-                        self._report_fsp_state[self._fqdn_fsp.index(device_name)] = event.attr_value.value
+                        self._report_fsp_state[self._fqdn_fsp.index(device_name)] = \
+                            event.attr_value.value
                     else:
                         # should NOT happen!
-                        log_msg = "Received state change for unknown device " + str(event.attr_name)
+                        log_msg = "Received state change for unknown device " + \
+                                  str(event.attr_name)
                         self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
                         return
                 elif "adminmode" in event.attr_name:
                     if "cbfSubarray" in device_name:
-                        self._report_subarray_admin_mode[self._fqdn_subarray.index(device_name)] = event.attr_value.value
+                        self._report_subarray_admin_mode[self._fqdn_subarray.index(device_name)] = \
+                            event.attr_value.value
                     elif "vcc" in device_name:
-                        self._report_vcc_admin_mode[self._fqdn_vcc.index(device_name)] = event.attr_value.value
+                        self._report_vcc_admin_mode[self._fqdn_vcc.index(device_name)] = \
+                            event.attr_value.value
                     elif "fsp" in device_name:
-                        self._report_fsp_admin_mode[self._fqdn_fsp.index(device_name)] = event.attr_value.value
+                        self._report_fsp_admin_mode[self._fqdn_fsp.index(device_name)] = \
+                            event.attr_value.value
                     else:
                         # should NOT happen!
-                        log_msg = "Received admin mode change for unknown device " + str(event.attr_name)
+                        log_msg = "Received admin mode change for unknown device " + \
+                                  str(event.attr_name)
                         self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
                         return
 
-                log_msg = "New value for " + str(event.attr_name) + " is " + str(event.attr_value.value)
+                log_msg = "New value for " + str(event.attr_name) + " is " + \
+                          str(event.attr_value.value)
                 self.dev_logging(log_msg, PyTango.LogLevel.LOG_DEBUG)
 
                 # update CBF global state
@@ -104,12 +118,11 @@ class CbfMaster(SKAMaster):
             try:
                 device_name = event.device.dev_name()
                 if "vcc" in device_name:
-                    self._report_vcc_subarray_membership[int(device_name[-3:]) - 1] = event.attr_value.value
-
-                # TODO: add subarrayMembership attribute to FSP and revise this block
-                # elif "fsp" in device_name:
-                #    self._report_fsp_subarray_membership[int(device_name[-2:]) - 1] = event.attr_value.value
-
+                    self._report_vcc_subarray_membership[int(device_name[-3:]) - 1] = \
+                        event.attr_value.value
+                elif "fsp" in device_name:
+                    self._report_fsp_subarray_membership[int(device_name[-2:]) - 1] = \
+                       event.attr_value.value
                 else:
                     # should NOT happen!
                     log_msg = "Received event for unknown device " + str(
@@ -117,9 +130,22 @@ class CbfMaster(SKAMaster):
                     self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
                     return
 
-                log_msg = "New value for " + str(event.attr_name) + " of device " + device_name + " is " + str(event.attr_value.value)
+                log_msg = "New value for " + str(event.attr_name) + " of device " + \
+                          device_name + " is " + str(event.attr_value.value)
                 self.dev_logging(log_msg, PyTango.LogLevel.LOG_DEBUG)
 
+            except Exception as except_occurred:
+                self.dev_logging(str(except_occurred), PyTango.LogLevel.LOG_ERROR)
+        else:
+            for item in event.errors:
+                log_msg = item.reason + ": on attribute " + str(event.attr_name)
+                self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
+
+    def __scan_ID_event_callback(self, event):
+        if not event.err:
+            try:
+                self._subarray_scan_ID[int(event.device.dev_name()[-2:]) - 1] = \
+                    event.attr_value.value
             except Exception as except_occurred:
                 self.dev_logging(str(except_occurred), PyTango.LogLevel.LOG_ERROR)
         else:
@@ -180,6 +206,28 @@ class CbfMaster(SKAMaster):
         else:
             self._health_state = HealthState.FAILED.value
 
+    def __get_num_capabilities(self):
+        # self._max_capabilities inherited from SKAMaster
+        # check first if property exists in DB
+        if self._max_capabilities:
+            try:
+                self._count_vcc = self._max_capabilities["VCC"]
+            except KeyError:  # not found in DB
+                self._count_vcc = 197
+
+            try:
+                self._count_fsp = self._max_capabilities["FSP"]
+            except KeyError:  # not found in DB
+                self._count_fsp = 27
+
+            try:
+                self._count_subarray = self._max_capabilities["Subarray"]
+            except KeyError:  # not found in DB
+                self._count_subarray = 16
+        else:
+            self.dev_logging("MaxCapabilities device property not defined",
+                             PyTango.LogLevel.LOG_WARN)
+
     # PROTECTED REGION END #    //  CbfMaster.class_variable
 
     # -----------------
@@ -237,6 +285,14 @@ class CbfMaster(SKAMaster):
         label="VCC-receptor map",
         polling_period=3000,
         doc="Maps VCC IDs to receptor IDs, in the form \"vccID:receptorID\"",
+    )
+
+    subarrayScanID = attribute(
+        dtype=('uint'),
+        max_dim_x=16,
+        label="Subarray scan IDs",
+        pooling_period=3000,
+        doc="ID of subarray scans. 0 if subarray is not configured for a scan."
     )
 
     reportVCCState = attribute(
@@ -361,46 +417,36 @@ class CbfMaster(SKAMaster):
         # PROTECTED REGION ID(CbfMaster.init_device) ENABLED START #
         self.set_state(PyTango.DevState.INIT)
 
-        # self._max_capabilities inherited from SKAMaster
-        # check first if property exists in DB
-        try:
-            self._count_vcc = self._max_capabilities["VCC"]
-        except AttributeError:  # not found in DB
-            self._count_vcc = 197
-
-        try:
-            self._count_fsp = self._max_capabilities["FSP"]
-        except AttributeError:  # not found in DB
-            self._count_fsp = 27
-
-        try:
-            self._count_subarray = self._max_capabilities["Subarray"]
-        except AttributeError:  # not found in DB
-            self._count_subarray = 16
+        # defines self._count_vcc, self._count_fsp, and self._count_subarray
+        self.__get_num_capabilities()
 
         # initialize attribute values
         self._command_progress = 0
-        self._report_vcc_state = [PyTango.DevState.UNKNOWN for i in range(self._count_vcc)]
+        self._report_vcc_state = [PyTango.DevState.UNKNOWN]*self._count_vcc
         self._report_vcc_health_state = [HealthState.UNKNOWN.value]*self._count_vcc
         self._report_vcc_admin_mode = [AdminMode.ONLINE.value]*self._count_vcc
         self._report_vcc_subarray_membership = [0]*self._count_vcc
-        self._report_fsp_state = [PyTango.DevState.UNKNOWN for i in range(self._count_fsp)]
+        self._report_fsp_state = [PyTango.DevState.UNKNOWN]*self._count_fsp
         self._report_fsp_health_state = [HealthState.UNKNOWN.value]*self._count_fsp
         self._report_fsp_admin_mode = [AdminMode.ONLINE.value]*self._count_fsp
-        self._report_fsp_subarray_membership = [[] for i in range(self._count_fsp)]
-        self._report_subarray_state = [PyTango.DevState.UNKNOWN for i in range(self._count_subarray)]
+        self._report_fsp_subarray_membership = [() for i in range(self._count_fsp)]
+        self._report_subarray_state = [PyTango.DevState.UNKNOWN]*self._count_subarray
         self._report_subarray_health_state = [HealthState.UNKNOWN.value]*self._count_subarray
         self._report_subarray_admin_mode = [AdminMode.ONLINE.value]*self._count_subarray
         self._frequency_offset_k = [0]*self._count_vcc
         self._frequency_offset_delta_f = [0]*self._count_vcc
+        self._subarray_scan_ID = [0]*self._count_subarray
 
         # evaluate the CBF element global state
         self.__set_cbf_state()
 
         # initialize lists with subarray/capability FQDNs
-        self._fqdn_vcc = ["mid_csp_cbf/vcc/" + str(i + 1).zfill(3) for i in range(self._count_vcc)]
-        self._fqdn_fsp = ["mid_csp_cbf/fsp/" + str(i + 1).zfill(2) for i in range(self._count_fsp)]
-        self._fqdn_subarray = ["mid_csp_cbf/cbfSubarray/" + str(i + 1).zfill(2) for i in range(self._count_subarray)]
+        self._fqdn_vcc = [*map(lambda i: "mid_csp_cbf/vcc/" + str(i + 1).zfill(3),
+                               range(self._count_vcc))]
+        self._fqdn_fsp = [*map(lambda i: "mid_csp_cbf/fsp/" + str(i + 1).zfill(2),
+                               range(self._count_fsp))]
+        self._fqdn_subarray = [*map(lambda i: "mid_csp_cbf/cbfSubarray/" + str(i + 1).zfill(2),
+                                    range(self._count_subarray))]
 
         # groups to facilitate easy commands and attribute-reading/writing
         self._group_vcc = PyTango.Group("vcc")
@@ -411,8 +457,9 @@ class CbfMaster(SKAMaster):
         self._group_subarray.add("mid_csp_cbf/cbfSubarray/*")
 
         # initialize dicts with maps receptorID <=> vccID (randomly for now, for testing purposes)
-        # maps receptors IDs to VCC IDs (and vice versa), in the form "receptorID:vccID" (and vice versa)
+        # maps receptors IDs to VCC IDs, in the form "receptorID:vccID"
         self._receptor_to_vcc = []
+        # maps VCC IDs to receptor IDs, in the form "vccID:receptorID"
         self._vcc_to_receptor = []
 
         remaining = list(range(1, self._count_vcc + 1))
@@ -451,13 +498,14 @@ class CbfMaster(SKAMaster):
                     attribute_proxy.set_config(attribute_info)
 
                     self._event_id.append(
-                        device_proxy.subscribe_event(attribute, PyTango.EventType.CHANGE_EVENT,
-                                                     self.__state_change_event_callback,
-                                                     stateless=True)
+                        device_proxy.subscribe_event(
+                            attribute, PyTango.EventType.CHANGE_EVENT,
+                            self.__state_change_event_callback, stateless=True
+                        )
                     )
 
-                # subscribe to subarray membership change events
-                if "vcc" in fqdn:  # TODO: add FSPs
+                # subscribe to VCC/FSP subarray membership change events
+                if "vcc" in fqdn or "fsp" in fqdn:
                     attribute_proxy = PyTango.AttributeProxy(fqdn + "/subarrayMembership")
                     attribute_proxy.poll(1000)  # polling period in milliseconds, may change later
 
@@ -468,10 +516,28 @@ class CbfMaster(SKAMaster):
                     attribute_proxy.set_config(attribute_info)
 
                     self._event_id.append(
-                        device_proxy.subscribe_event("subarrayMembership",
-                                                     PyTango.EventType.CHANGE_EVENT,
-                                                     self.__membership_event_callback,
-                                                     stateless=True)
+                        device_proxy.subscribe_event(
+                            "subarrayMembership", PyTango.EventType.CHANGE_EVENT,
+                            self.__membership_event_callback, stateless=True
+                        )
+                    )
+
+                # subscribe to subarray scan ID change events
+                if "subarray" in fqdn:
+                    attribute_proxy = PyTango.AttributeProxy(fqdn + "/scanID")
+                    attribute_proxy.poll(1000)  # polling period in milliseconds, may change later
+
+                    attribute_info = attribute_proxy.get_config()
+                    change_event_info = PyTango.ChangeEventInfo()
+                    change_event_info.abs_change = "1"
+                    attribute_info.events.ch_event = change_event_info
+                    attribute_proxy.set_config(attribute_info)
+
+                    self._event_id.append(
+                        device_proxy.subscribe_event(
+                            "scanID", PyTango.EventType.CHANGE_EVENT,
+                            self.__scan_ID_event_callback, stateless=True
+                        )
                     )
             except PyTango.DevFailed as df:
                 for item in df.args:
@@ -508,6 +574,11 @@ class CbfMaster(SKAMaster):
         # PROTECTED REGION ID(CbfMaster.vccToReceptor_read) ENABLED START #
         return self._vcc_to_receptor
         # PROTECTED REGION END #    //  CbfMaster.vccToReceptor_read
+
+    def read_subarrayScanID(self):
+        # PROTECTED REGION ID(CbfMaster.subarrayScanID_read) ENABLED START #
+        return self._subarray_scan_ID
+        # PROTECTED REGION END #    //  CbfMaster.subarrayScanID_read
 
     def read_reportVCCState(self):
         # PROTECTED REGION ID(CbfMaster.reportVCCState_read) ENABLED START #

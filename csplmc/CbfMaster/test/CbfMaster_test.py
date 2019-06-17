@@ -60,7 +60,7 @@ class TestCbfMaster:
         """
         # Test the VCC subarray membership subscriptions
         """
-        receptor_to_vcc = dict([int(ID) for ID in pair.split(":")] for pair in
+        receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
                                create_cbf_master_proxy.receptorToVcc)
         create_subarray_1_proxy.Init()
         create_subarray_2_proxy.Init()

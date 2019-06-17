@@ -136,11 +136,11 @@ class TestVcc:
 
         # check initial values of attributes
         assert create_tdc_1_proxy.searchWindowTuning == 0
-        assert create_tdc_1_proxy.enableTDC == False
-        assert create_tdc_1_proxy.numberBits == 0
-        assert create_tdc_1_proxy.periodBeforeEpoch == 0
-        assert create_tdc_1_proxy.periodAfterEpoch == 0
-        assert create_tdc_1_proxy.destinationAddress == ("", "" , "")
+        assert create_tdc_1_proxy.tdcEnable == False
+        assert create_tdc_1_proxy.tdcNumBits == 0
+        assert create_tdc_1_proxy.tdcPeriodBeforeEpoch == 0
+        assert create_tdc_1_proxy.tdcPeriodAfterEpoch == 0
+        assert create_tdc_1_proxy.tdcDestinationAddress == ("", "" , "")
 
         # check initial state
         assert create_tdc_1_proxy.State() == DevState.DISABLE
@@ -153,11 +153,11 @@ class TestVcc:
 
         # check configured values
         assert create_tdc_1_proxy.searchWindowTuning == 1000000000
-        assert create_tdc_1_proxy.enableTDC == True
-        assert create_tdc_1_proxy.numberBits == 8
-        assert create_tdc_1_proxy.periodBeforeEpoch == 5
-        assert create_tdc_1_proxy.periodAfterEpoch == 25
-        assert create_tdc_1_proxy.destinationAddress == ("", "", "")
+        assert create_tdc_1_proxy.tdcEnable == True
+        assert create_tdc_1_proxy.tdcNumBits == 8
+        assert create_tdc_1_proxy.tdcPeriodBeforeEpoch == 5
+        assert create_tdc_1_proxy.tdcPeriodAfterEpoch == 25
+        assert create_tdc_1_proxy.tdcDestinationAddress == ("", "", "")
 
         # check state
         assert create_tdc_1_proxy.State() == DevState.ON

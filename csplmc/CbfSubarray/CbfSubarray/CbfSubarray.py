@@ -49,7 +49,8 @@ class CbfSubarray(SKASubarray):
     def __doppler_phase_correction_event_callback(self, event):
         if not event.err:
             try:
-                # TODO: find out what to do with the coefficients
+                for vcc in self._proxies_assigned_vcc:
+                    vcc.dopplerPhaseCorrection = event.attr_value.value
                 log_msg = "Value of " + str(event.attr_name) + " is " + str(event.attr_value.value)
                 self.dev_logging(log_msg, PyTango.LogLevel.LOG_DEBUG)
                 self._report_doppler_phase_correction = event.attr_value.value
@@ -63,7 +64,8 @@ class CbfSubarray(SKASubarray):
     def __delay_model_event_callback(self, event):
         if not event.err:
             try:
-                # TODO: find out what to do with the coefficients
+                for fsp_subarray in self._proxies_assigned_fsp_subarray:
+                    fsp_subarray.delayModel = event.attr_value.value
                 log_msg = "Value of " + str(event.attr_name) + " is " + str(event.attr_value.value)
                 self.dev_logging(log_msg, PyTango.LogLevel.LOG_DEBUG)
                 self._report_delay_model = event.attr_value.value
@@ -238,6 +240,7 @@ class CbfSubarray(SKASubarray):
         # initialize attribute values
         self._receptors = []
         self._frequency_band = 0
+        self._scan_ID = 0
         self._report_doppler_phase_correction = [0, 0, 0, 0]
         self._report_delay_model = "{}"
         self._vcc_state = {}  # device_name:state
@@ -254,8 +257,9 @@ class CbfSubarray(SKASubarray):
                                range(self._count_vcc))]
         self._fqdn_fsp = [*map(lambda i: "mid_csp_cbf/fsp/{:02d}".format(i + 1),
                                range(self._count_fsp))]
-        self._fqdn_fsp_subarray = [*map(lambda i: "mid_csp_cbf/fspSubarray/{0:02d}_\
-            {1:02d}".format(i + 1, self._subarray_id), range(self._count_fsp))]
+        self._fqdn_fsp_subarray = [*map(lambda i: "mid_csp_cbf/fspSubarray/{0:02d}_"
+                                   "{1:02d}".format(i + 1, self._subarray_id),
+                                        range(self._count_fsp))]
 
         self._proxies_vcc = [*map(PyTango.DeviceProxy, self._fqdn_vcc)]
         self._proxies_fsp = [*map(PyTango.DeviceProxy, self._fqdn_fsp)]
@@ -458,61 +462,51 @@ class CbfSubarray(SKASubarray):
         """
         The input JSON object has the following schema:
         {
-            "scanID": int,  // unique positive integer identifier for the scan
-            "frequencyBand": int,  // integer in the range [0, 5], enumerated for frequency bands
-            "frequencyOffset": [int, int, int, ...],  // frequency offset (k) specified per receptor
-            "streamTuning: [float, float],  // stream tuning for frequency bands "5a" (4) and "5b" (5) (GHz); must have length 2
-            "frequencyBandOffset": [int, int],  // frequency band offset (Hz); for frequency bands "5a" and "5b", must be an array of length 2
-                                                // for other frequency bands, can be a scalar or an array
-                                                // defaults to 0 if not specified
-            "dopplerPhaseCorrectionSubscriptionPoint": str,  // FQDN of Doppler phase correction coefficients attribute of TM TelState
-            "delayModelSubscriptionPoint": str  // FQDN of delay model coefficients attribute of TM TelState
-            "rfiFlaggingMask": [  // exact schema of RFI flagging mask is TBD; specified per receptor per frequency slice
-                {
-                    "receptorID": int,
-                    "frequencySliceID": int,
-                    ...
-                },
+            "scanID": int,
+            "frequencyBand": str,
+            "band5Tuning: [float, float],
+            "frequencyBandOffsetStream1": int,
+            "frequencyBandOffsetStream2": int,
+            "dopplerPhaseCorrSubscriptionPoint": str,
+            "delayModelSubscriptionPoint": str,
+            "visDestinationAddressSubscriptionPoint": str,
+            "rfiFlaggingMask": {
                 ...
-            ],
-            "searchWindow": [  // array of maximum length 2, each element corresponding to a search window
+            },
+            "searchWindow": [
                 {
-                    "searchWindowID": int,  // search window identifier; either 1 or 2, unique to the subarray
-                    "searchWindowTuning": int,  // search window tuning (Hz) within observed frequency band
-                    "enableTDC": bool,  // enable transient data capture
-                    "numberBits": int,  // number of bits for transient data capture; one of [2, 4, 8]
-                    "periodBeforeEpoch": int,  // period before epoch (s) for which data is saved
-                                               // defaults to 2 if not specified
-                    "periodAfterEpoch": int,  // period after epoch (s) for which data is saved
-                                              // defaults to 22 if not specified
-                    "destinationAddress": [  // array of [MAC address, IP address, port number] of destination addresses,
-                        [str, str, str],     // specified per receptor
-                        [str, str, str],
-                        [str, str, str],
-                        ...
+                    "searchWindowID": int,
+                    "searchWindowTuning": int,
+                    "tdcEnable": bool,
+                    "tdcNumBits": int,
+                    "tdcPeriodBeforeEpoch": int,
+                    "tdcPeriodAfterEpoch": int,
+                    "tdcDestinationAddress": [
+                        {
+                            "receptorID": int,
+                            "destinationAddress": [str, str, str]
+                        }
                     ]
                 },
                 {
                     ...
                 }
             ],
-            "fsp": [  // array of objects to configure FSPs
+            "fsp": [
                 {
-                    "fspID": int,  // positive integer specifying which FSP to configure
-                    "functionMode": int,  // integer in the range [0, 4], enumerated for processing modes
-                    "receptors": [int, int, int, ...],  // array of receptors IDs to use
-                                                        // defaults to all receptors in subarray if not specified
-                    "frequencySliceID": int,  // positive integer specifying which frequency slice to use as input
-                    "bandwidth": int,  // integer in the range [0, 6]; the bandwidth to be correlated is <full bandwidth>/(2**bandwidth)
-                    "zoomWindowTuning": int,  // zoom window tuning (kHz) within observed frequency band
-                    "integrationTime": int,  // integration time for products (ms)
-                    "channelAveragingMap": [  // array of [channel ID, averaging factor], specified per channel group (20 in total)
-                        [int, int],           // channel ID is a positive integer, identifying the first channel of the group
-                        [int, int],           // averaging factor is one of [0, 1, 2, 3, 4, 5, 6, 8]
+                    "fspID": int,
+                    "functionMode": str,
+                    "receptors": [int, int, int, ...],
+                    "frequencySliceID": int,
+                    "corrBandwidth": int,
+                    "zoomWindowTuning": int,
+                    "integrationTime": int,
+                    "channelAveragingMap": [
+                        [int, int],
+                        [int, int],
                         [int, int],
                         ...
-                    ],
-                    "destinationAddress": [str, str, str]  // array of [MAC address, IP address, port number] of destination addresses
+                    ]
                 },
                 {
                     ...
@@ -538,6 +532,11 @@ class CbfSubarray(SKASubarray):
             del self._fsp_state[self._fqdn_fsp[fspID - 1]]
             del self._fsp_health_state[self._fqdn_fsp[fspID - 1]]
 
+        # change FSP subarray membership
+        for proxy_fsp in self._proxies_assigned_fsp:
+            proxy_fsp.RemoveSubarrayMembership(self._subarray_id)
+        self._proxies_assigned_fsp = []
+
         # try to deserialize input string to a JSON object
         try:
             argin = json.loads(argin)
@@ -545,175 +544,159 @@ class CbfSubarray(SKASubarray):
             # this is a fatal error
             msg = "Scan configuration object is not a valid JSON object. Aborting configuration."
             self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
-            PyTango.Except.throw_exception("Command failed", msg,
-                                           "ConfigureScan execution", PyTango.ErrSeverity.ERR)
+            PyTango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
+                                           PyTango.ErrSeverity.ERR)
 
         errs = []
 
         # Validate scanID.
-        # If not given, use memorized scanID if valid.
+        # If not given, abort the scan configuration.
         # If malformed, abort the scan configuration.
         if "scanID" in argin:
-            try:
-                val = int(argin["scanID"])
-                if val > 0:  # scanID must be positive
-                    self._scan_ID = val
-                else:  # scanID not positive
-                    msg = "\n".join(errs)
-                    msg += "'scanID' must be positive (received {}). Aborting configuration.".format(str(val))
-                    # this is a fatal error
-                    self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
-                    PyTango.Except.throw_exception("Command failed", msg,
-                                                   "ConfigureScan execution", PyTango.ErrSeverity.ERR)
-            except ValueError:  # scanID not an int (or something that can be converted to an int)
+            if int(argin["scanID"]) <= 0:  # scanID not positive
                 msg = "\n".join(errs)
-                msg += "'scanID' must be an integer (received {}). Aborting configuration.".format(str(argin["scanID"]))
+                msg += "'scanID' must be positive (received {}). "
+                "Aborting configuration.".format(int(argin["scanID"]))
                 # this is a fatal error
                 self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
-                PyTango.Except.throw_exception("Command failed", msg,
-                                               "ConfigureScan execution", PyTango.ErrSeverity.ERR)
+                PyTango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
+                                               PyTango.ErrSeverity.ERR)
+            elif any(map(lambda i: i == int(argin["scanID"]),
+                         self._proxy_cbf_master.subarrayScanID)):  # scanID already taken
+                msg = "\n".join(errs)
+                msg += "'scanID' must be unique (received {}). "
+                "Aborting configuration.".format(int(argin["scanID"]))
+                # this is a fatal error
+                self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+                PyTango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
+                                               PyTango.ErrSeverity.ERR)
+            else:  # scanID is valid
+                self._scan_ID = int(argin["scanID"])
         else:  # scanID not given
-            if self._scan_ID:  # scanID was memorized and non-zero
-                log_msg = "'scanID' not given. Using memorized scanID of {}".format(str(self._scan_ID))
-                self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
-            else:
-                msg = "\n".join(errs)
-                msg += "'scanID' must be given. Aborting configuration."
-                # this is a fatal error
-                self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
-                PyTango.Except.throw_exception("Command failed", msg,
-                                               "ConfigureScan execution", PyTango.ErrSeverity.ERR)
+            msg = "\n".join(errs)
+            msg += "'scanID' must be given. Aborting configuration."
+            # this is a fatal error
+            self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+            PyTango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
+                                           PyTango.ErrSeverity.ERR)
 
         # Validate frequencyBand.
         # If not given, abort the scan configuration.
         # If malformed, abort the scan configuration.
         if "frequencyBand" in argin:
-            if argin["frequencyBand"] in list(range(6)):  # frequencyBand must be in range [0, 5]
-                self._frequency_band = argin["frequencyBand"]
+            frequency_bands = ["1", "2", "3", "4", "5a", "5b"]
+            if argin["frequencyBand"] in frequency_bands:
+                self._frequency_band = frequency_bands.index(argin["frequencyBand"])
                 for vcc in self._proxies_assigned_vcc:
                     vcc.SetFrequencyBand(argin["frequencyBand"])
             else:
                 msg = "\n".join(errs)
-                msg += "'frequencyBand' must be an integer in the range [0, 5] (received {}). \
-                    Aborting configuration.".format(str(argin["frequency_band"]))
+                msg += "'frequencyBand' must be one of {} (received {}). "
+                "Aborting configuration.".format(frequency_bands, argin["frequency_band"])
                 # this is a fatal error
                 self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
-                PyTango.Except.throw_exception("Command failed", msg,
-                                               "ConfigureScan execution", PyTango.ErrSeverity.ERR)
+                PyTango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
+                                               PyTango.ErrSeverity.ERR)
         else:  # frequencyBand not given
             msg = "\n".join(errs)
             msg += "'frequencyBand' must be given. Aborting configuration."
             # this is a fatal error
             self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
-            PyTango.Except.throw_exception("Command failed", msg,
-                                           "ConfigureScan execution", PyTango.ErrSeverity.ERR)
+            PyTango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
+                                           PyTango.ErrSeverity.ERR)
 
         # ======================================================================= #
         # At this point, self._scan_ID, self._receptors, and self._frequency_band #
         # are guaranteed to be properly configured.                               #
         # ======================================================================= #
 
-        # Validate frequencyOffset
-        # If not given, and not previously configured, abort the scan configuration.
-        # If malformed, abort the scan configuration.
-        if "frequencyOffset" in argin:
-            try:
-                assert len(argin["frequencyOffset"]) == len(self._receptors)
-                # TODO: find out valid ranges and what to do
-            except (TypeError, AssertionError):  # frequencyOffset is not the right length or not an array
-                msg = "\n".join(errs)
-                msg += "'frequencyOffset' must be an array of length {}. \
-                                    Aborting configuration.".format(str(len(self._receptors)))
-                # this is a fatal error
-                self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
-                PyTango.Except.throw_exception("Command failed", msg,
-                                               "ConfigureScan execution", PyTango.ErrSeverity.ERR)
-        else:  # frequencyOffset not given - check if previously configured
-            # TODO: write this block
-            pass
-
-        # Validate streamTuning, if frequencyBand is 4 or 5.
+        # Validate band5Tuning, if frequencyBand is 5a or 5b.
         # If not given, abort the scan configuration.
         # If malformed, abort the scan configuration.
-        if "streamTuning" in argin:
-            if self._frequency_band in [4, 5]:
+        if self._frequency_band in [4, 5]:  # frequency band is 5a or 5b
+            if "band5Tuning" in argin:
                 # check if streamTuning is an array of length 2
                 try:
-                    assert len(argin["streamTuning"]) == 2
+                    assert len(argin["band5Tuning"]) == 2
                 except (TypeError, AssertionError):
                     msg = "\n".join(errs)
-                    msg += "'streamTuning' must be an array of length 2. Aborting configuration."
+                    msg += "'band5Tuning' must be an array of length 2. Aborting configuration."
                     # this is a fatal error
                     self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
-                    PyTango.Except.throw_exception("Command failed", msg,
-                                                   "ConfigureScan execution", PyTango.ErrSeverity.ERR)
+                    PyTango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
+                                                   PyTango.ErrSeverity.ERR)
 
-                streamTuning = argin["streamTuning"]
-                try:
-                    if 5.85 <= float(streamTuning[0]) <= 7.25:
-                        # TODO: find out what to do
-                        pass
+                stream_tuning = [*map(float(argin["band5Tuning"]))]
+                if self._frequency_band == 4:
+                    if all([5.85 <= stream_tuning[i] <= 7.25 for i in [0, 1]]):
+                        for vcc in self._proxies_assigned_vcc:
+                            vcc.band5Tuning = stream_tuning
                     else:
-                        raise ValueError  # this is bad form, but makes it more convenient to handle
-
-                    if 9.55 <= float(streamTuning[1]) <= 14.05:
-                        # TODO: find out what to do
-                        pass
+                        msg = "\n".join(errs)
+                        msg += "Elements in 'band5Tuning must be floats between 5.85 and 7.25 "
+                        "(received {} and {}) for a 'frequencyBand' of 5a. "
+                        "Aborting configuration.".format(stream_tuning[0], stream_tuning[1])
+                        # this is a fatal error
+                        self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+                        PyTango.Except.throw_exception("Command failed", msg,
+                                                       "ConfigureScan execution",
+                                                       PyTango.ErrSeverity.ERR)
+                else:  # self._frequency_band == 5
+                    if all([9.55 <= stream_tuning[i] <= 14.05 for i in [0, 1]]):
+                        for vcc in self._proxies_assigned_vcc:
+                            vcc.band5Tuning = stream_tuning
                     else:
-                        raise ValueError  # this is bad form, but makes it more convenient to handle
-                except ValueError:
-                    msg = "\n".join(errs)
-                    msg += "'streamTuning[0]' must be a float between 5.85 and 7.25 (received {}), \
-                           and 'streamTuning[1]' must be a float between 9.55 and 14.05 (received {}). \
-                           Aborting configuration.".format(str(streamTuning[0]), str(streamTuning[1]))
-                    # this is a fatal error
-                    self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
-                    PyTango.Except.throw_exception("Command failed", msg,
-                                                   "ConfigureScan execution", PyTango.ErrSeverity.ERR)
+                        msg = "\n".join(errs)
+                        msg += "Elements in 'band5Tuning must be floats between 9.55 and 14.05 "
+                        "(received {} and {}) for a 'frequencyBand' of 5b. "
+                        "Aborting configuration.".format(stream_tuning[0], stream_tuning[1])
+                        # this is a fatal error
+                        self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+                        PyTango.Except.throw_exception("Command failed", msg,
+                                                       "ConfigureScan execution",
+                                                       PyTango.ErrSeverity.ERR)
             else:
-                log_msg = "'frequencyBand' is not 4 or 5, but 'streamTuning' was given. Ignoring."
-                self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
-        elif self._frequency_band in [4, 5]:
-            msg = "\n".join(errs)
-            msg += "'streamTuning' must be given for a 'frequencyBand' of {}. \
-                Aborting configuration".format(str(self._frequency_band))
-            # this is a fatal error
-            self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
-            PyTango.Except.throw_exception("Command failed", msg,
-                                           "ConfigureScan execution", PyTango.ErrSeverity.ERR)
+                msg = "\n".join(errs)
+                msg += "'band5Tuning' must be given for a 'frequencyBand' of {}. "
+                "Aborting configuration".format(["5a", "5b"][self._frequency_band - 4])
+                # this is a fatal error
+                self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+                PyTango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
+                                               PyTango.ErrSeverity.ERR)
 
-        # Validate frequencyBandOffset.
+        # Validate frequencyBandOffsetStream1.
         # If not given, use a default value.
         # If malformed, use a default value, but append an error.
-        if "frequencyBandOffset" in argin:
-            if self._frequency_band in [4, 5]:  # frequency band is 5a or 5b -> needs to be a 2-element array
-                try:
-                    assert len(argin["frequencyBandOffset"]) == 2
-                    # TODO: find out valid ranges and what to do
-                except (TypeError, AssertionError):  # frequencyBandOffset not the right length or not an array
-                    # find out what to do
-                    log_msg = "'frequencyBandOffset' must be an array of length 2 for a 'frequencyBand' of {}. \
-                        Defaulting to 0 for both streams".format(str(self._frequency_band))
-                    self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
-                    errs.append(log_msg)
-            else:  # frequency band is 1, 2, 3, or 4 -> can be a scalar or an array
-                try:
-                    offset = argin["frequencyBandOffset"][0]
-                except TypeError:  # frequencyBandOffset is a scalar
-                    offset = argin["frequencyBandOffset"]
-
-                # TODO: find out valid ranges and what to do
-        else:  # frequencyBandOffset not given
-            # TODO: find out what to do
-            log_msg = "'frequencyBandOffset' not specified. Defaulting to 0 for both streams."
+        if "frequencyBandOffsetStream1" in argin:
+            # TODO: validate input
+            for vcc in self._proxies_assigned_vcc:
+                vcc.frequencyBandOffsetStream1 = int(argin["frequencyBandOffsetStream1"])
+        else:  # frequencyBandOffsetStream1 not given
+            for vcc in self._proxies_assigned_vcc:
+                vcc.frequencyBandOffsetStream1 = 0
+            log_msg = "'frequencyBandOffsetStream1' not specified. Defaulting to 0."
             self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
 
-        # Validate dopplerPhaseCorrectionSubscriptionPoint
-        # If not given, do nothing and append an error.
-        # If malformed, do nothing and append an error.
-        if "dopplerPhaseCorrectionSubscriptionPoint" in argin:
+        # Validate frequencyBandOffsetStream2.
+        # If not given, use a default value.
+        # If malformed, use a default value, but append an error.
+        if self._frequency_band in [4, 5]:
+            if "frequencyBandOffsetStream2" in argin:
+                # TODO: validate input
+                for vcc in self._proxies_assigned_vcc:
+                    vcc.frequencyBandOffsetStream2 = int(argin["frequencyBandOffsetStream2"])
+            else:  # frequencyBandOffsetStream2 not given
+                for vcc in self._proxies_assigned_vcc:
+                    vcc.frequencyBandOffsetStream2 = 0
+                log_msg = "'frequencyBandOffsetStream2' not specified. Defaulting to 0."
+                self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+
+        # Validate dopplerPhaseCorrSubscriptionPoint
+        # If not given, do nothing.
+        # If malformed, do nothing, but append an error.
+        if "dopplerPhaseCorrSubscriptionPoint" in argin:
             try:
-                attribute_proxy = PyTango.AttributeProxy(str(argin["dopplerPhaseCorrectionSubscriptionPoint"]))
+                attribute_proxy = PyTango.AttributeProxy(argin["dopplerPhaseCorrSubscriptionPoint"])
                 attribute_proxy.ping()
 
                 # set up attribute polling and change events
@@ -737,21 +720,20 @@ class CbfSubarray(SKASubarray):
                 )
                 self._events_telstate[event_id] = attribute_proxy
             except PyTango.DevFailed:  # attribute doesn't exist
-                log_msg = "Attribute {} not found for 'dopplerPhaseCorrectionSubscriptionPoint'. \
-                    Proceeding.".format(argin["dopplerPhaseCorrectionSubscriptionPoint"])
+                log_msg = "Attribute {} not found for 'dopplerPhaseCorrSubscriptionPoint'. "
+                "Proceeding.".format(argin["dopplerPhaseCorrSubscriptionPoint"])
                 self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
                 errs.append(log_msg)
         else:  # dopplerPhaseCorrection not given
             log_msg = "'dopplerPhaseCorrectionSubscriptionPoint' not given. Proceeding."
-            self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
-            errs.append(log_msg)
+            self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
 
         # Validate delayModelSubscriptionPoint
-        # If not given, ignore the FSP and append an error.
-        # If malformed, ignore the FSP and append an error.
+        # If not given, append an error.
+        # If malformed, append an error.
         if "delayModelSubscriptionPoint" in argin:
             try:
-                attribute_proxy = PyTango.AttributeProxy(str(argin["delayModelSubscriptionPoint"]))
+                attribute_proxy = PyTango.AttributeProxy(argin["delayModelSubscriptionPoint"])
                 attribute_proxy.ping()
 
                 # set up attribute polling and change events
@@ -775,26 +757,28 @@ class CbfSubarray(SKASubarray):
                 )
                 self._events_telstate[event_id] = attribute_proxy
             except PyTango.DevFailed:  # attribute doesn't exist
-                msg = "\n".join(errs)
-                msg += "Attribute {} not found for 'delayModelSubscriptionPoint'. \
-                    Aborting configuration.".format(argin["delayModelSubscriptionPoint"])
-                # this is a fatal error
+                log_msg += "Attribute {} not found for 'delayModelSubscriptionPoint'. "
+                "Proceeding".format(argin["delayModelSubscriptionPoint"])
                 self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
-                PyTango.Except.throw_exception("Command failed", msg,
-                                               "ConfigureScan execution", PyTango.ErrSeverity.ERR)
+                errs.append(log_msg)
         else:
-            msg = "\n".join(errs)
-            msg += "'delayModelSubscriptionPoint' not given. Aborting configuration."
-            # this is a fatal error
+            log_msg += "'delayModelSubscriptionPoint' not given. Proceeding.".format(
+                argin["delayModelSubscriptionPoint"])
             self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
-            PyTango.Except.throw_exception("Command failed", msg,
-                                           "ConfigureScan execution", PyTango.ErrSeverity.ERR)
+            errs.append(log_msg)
 
+        # TODO: Validate visDestinationAddressSubscriptionPoint
+        # If not given, append an error.
+        # If malformed, append an error.
+
+        # Validate rfiFlaggingMask
+        # If not given, do nothing.
+        # If malformed, do nothing, but append an error
         if "rfiFlaggingMask" in argin:
             for vcc in self._proxies_assigned_vcc:
                 vcc.rfiFlaggingMask = json.dumps(argin["rfiFlaggingMask"])
         else:  # rfiFlaggingMask not given
-            log_msg = "'rfiFlaggingMask' not given."
+            log_msg = "'rfiFlaggingMask' not given. Proceeding."
             self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
 
         # Validate searchWindow.
@@ -804,27 +788,34 @@ class CbfSubarray(SKASubarray):
             # check if searchWindow is an array of maximum length 2
             try:
                 assert len(argin["searchWindow"]) <= 2
+                vcc_to_receptor = dict([*map(int, pair.split(":"))] for pair in
+                                       self._proxy_cbf_master.vccToReceptor)
 
                 for search_window in argin["searchWindow"]:
-                    search_window_config = copy.deepcopy(search_window)
-                    for i in range(len(self._proxies_assigned_vcc)):
-                        search_window_config["destinationAddress"] = \
-                            search_window["destinationAddress"][i]
+                    try:
+                        for vcc in self._proxies_assigned_vcc:
+                            try:
+                                receptorID = vcc_to_receptor[self._proxies_vcc.index(vcc) + 1]
+                                search_window["destinationAddress"] = \
+                                    search_window["tdcDestinationAddress"][str(receptorID)]
 
-                        # pass on configuration to VCC
-                        self._proxies_assigned_vcc[i].ConfigureSearchWindow(
-                            json.dumps(search_window_config)
-                        )
+                                # pass on configuration to VCC
+                                vcc.ConfigureSearchWindow(json.dumps(search_window))
+                            except PyTango.DevFailed as df:  # exception in ConfigureSearchWindow
+                                log_msg = "An exception occurred while configuring search "
+                                "windows:\n" + str(df.value.args[0].desc)
+                                self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
+                                errs.append(log_msg)
+
+                    except KeyError:  # tdcDestinationAddress not in search window
+                        log_msg = "Search window specified, but 'tdcDestinationAddress' was not "
+                        "given or missing receptors. Ignoring search window."
+                        self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
+                        errs.append(log_msg)
 
             except (TypeError, AssertionError):  # searchWindow not the right length or not an array
-                log_msg = "'searchWindow' must be an array of maximum length 2. \
-                    Not configuring search windows."
-                self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
-                errs.append(log_msg)
-
-            except PyTango.DevFailed as df:  # ConfigureSearchWindow threw an exception
-                log_msg = "An exception occurred while configuring search windows: \n" + \
-                    str(df.value.args[0].desc)
+                log_msg = "'searchWindow' must be an array of maximum length 2. "
+                "Not configuring search windows."
                 self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
                 errs.append(log_msg)
 
@@ -844,73 +835,77 @@ class CbfSubarray(SKASubarray):
         if "fsp" in argin:
             try:
                 for fsp in argin["fsp"]:
-                    # Validate fspID.
-                    # If not given, ignore the FSP and append an error.
-                    # If malformed, ignore the FSP and append an error.
-                    if "fspID" in fsp:
-                        if int(fsp["fspID"]) in list(range(1, self._count_fsp + 1)):
-                            fspID = int(fsp["fspID"])
-                            proxy_fsp = self._proxies_fsp[fspID - 1]
-                            proxy_fsp_subarray = self._proxies_fsp_subarray[fspID - 1]
-                            self._proxies_assigned_fsp.append(proxy_fsp)
-                            self._proxies_assigned_fsp_subarray.append(proxy_fsp_subarray)
+                    try:
+                        # Validate fspID.
+                        # If not given, ignore the FSP and append an error.
+                        # If malformed, ignore the FSP and append an error.
+                        if "fspID" in fsp:
+                            if int(fsp["fspID"]) in list(range(1, self._count_fsp + 1)):
+                                fspID = int(fsp["fspID"])
+                                proxy_fsp = self._proxies_fsp[fspID - 1]
+                                proxy_fsp_subarray = self._proxies_fsp_subarray[fspID - 1]
+                                self._proxies_assigned_fsp.append(proxy_fsp)
+                                self._proxies_assigned_fsp_subarray.append(proxy_fsp_subarray)
 
-                            # change FSP subarray membership
-                            proxy_fsp.AddSubarrayMembership(self._subarray_id)
+                                # change FSP subarray membership
+                                proxy_fsp.AddSubarrayMembership(self._subarray_id)
+                            else:
+                                log_msg = "'fspID' must be an integer in the range [1, {}]. "
+                                "Ignoring FSP.".format(str(self._count_fsp))
+                                self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
+                                errs.append(log_msg)
+                                continue
                         else:
-                            log_msg = "'fspID' must be an integer in the range [1, {}]. \
-                                Ignoring FSP.".format(str(self._count_fsp))
+                            log_msg = "FSP specified, but 'fspID' not given. Ignoring FSP."
                             self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
                             errs.append(log_msg)
                             continue
-                    else:
-                        log_msg = "FSP specified, but 'fspID' not given. Ignoring FSP."
-                        self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
-                        errs.append(log_msg)
-                        continue
 
-                    # Validate functionMode
-                    # If not given, ignore the FSP and append an error.
-                    # If malformed, ignore the FSP and append an error.
-                    if "functionMode" in fsp:
-                        if int(fsp["functionMode"]) in list(range(5)):
-                            proxy_fsp.SetFunctionMode(int(fsp["functionMode"]))
+                        # Validate functionMode
+                        # If not given, ignore the FSP and append an error.
+                        # If malformed, ignore the FSP and append an error.
+                        if "functionMode" in fsp:
+                            function_modes = ["CORR", "PSS-BF", "PST-BF", "VLBI"]
+                            if fsp["functionMode"] in function_modes:
+                                proxy_fsp.SetFunctionMode(fsp["functionMode"])
+                            else:
+                                log_msg = "'functionMode' must be one of {} (received {}). "
+                                "Ignoring FSP.".format(function_modes, fsp["functionMode"])
+                                self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
+                                errs.append(log_msg)
+                                continue
                         else:
-                            log_msg = "'functionMode' must be an integer in the range [0, 4] \
-                                (received {}). Ignoring FSP.".format(fsp["functionMode"])
+                            log_msg = "FSP specified, but 'functionMode' not given. Ignoring FSP."
                             self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
                             errs.append(log_msg)
                             continue
-                    else:
-                        log_msg = "FSP specified, but 'functionMode' not given. Ignoring FSP."
-                        self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
-                        errs.append(log_msg)
-                        continue
 
-                    # pass on configuration to FSP Subarray
-                    proxy_fsp_subarray.ConfigureScan(fsp)
+                        # pass on configuration to FSP Subarray
+                        proxy_fsp_subarray.ConfigureScan(fsp)
 
-                    # subscribe to FSP state and healthState changes
-                    event_id_state, event_id_health_state = proxy_fsp.subscribe_event(
-                        "State",
-                        PyTango.EventType.CHANGE_EVENT,
-                        self.__state_change_event_callback
-                    ), proxy_fsp.subscribe_event(
-                        "healthState",
-                        PyTango.EventType.CHANGE_EVENT,
-                        self.__state_change_event_callback
-                    )
-                    self._events_state_change_fsp[int(fsp["fspID"])] = [event_id_state,
+                        # subscribe to FSP state and healthState changes
+                        # if code flow reaches this point, FSP configuration was successful
+                        event_id_state, event_id_health_state = proxy_fsp.subscribe_event(
+                            "State",
+                            PyTango.EventType.CHANGE_EVENT,
+                            self.__state_change_event_callback
+                        ), proxy_fsp.subscribe_event(
+                            "healthState",
+                            PyTango.EventType.CHANGE_EVENT,
+                            self.__state_change_event_callback
+                        )
+                        self._events_state_change_fsp[int(fsp["fspID"])] = [event_id_state,
                                                                         event_id_health_state]
 
-            except TypeError:  # fsp not an array
-                log_msg = "'fsp' must be an array."
-                self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
-                errs.append(log_msg)
+                    except PyTango.DevFailed as df:  # exception in ConfigureScan
+                        log_msg = "An exception occurred while configuring FSPs: \n" + \
+                            str(df.value.args[0].desc)
+                        self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
+                        errs.append(log_msg)
 
-            except PyTango.DevFailed as df:  # FspSubarray.ConfigureScan threw an exception
-                log_msg = "An exception occurred while configuring FSPs: \n" + \
-                    str(df.value.args[0].desc)
+            except Exception as e:  # a number of other things can go wrong
+                log_msg = "An unknown exception occurred while configuring FSPs: \n" + \
+                    str(e)
                 self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
                 errs.append(log_msg)
 

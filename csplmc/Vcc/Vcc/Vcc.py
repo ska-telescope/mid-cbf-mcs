@@ -167,7 +167,7 @@ class Vcc(SKACapability):
         enum_labels=["1", "2", "3", "4", "5a", "5b", ],
     )
 
-    streamTuning = attribute(
+    band5Tuning = attribute(
         dtype=('float',),
         max_dim_x=2,
         access=AttrWriteType.READ_WRITE,
@@ -175,12 +175,18 @@ class Vcc(SKACapability):
         doc="Stream tuning (GHz)"
     )
 
-    frequencyBandOffset = attribute(
-        dtype=('int',),
-        max_dim_x=2,
+    frequencyBandOffsetStream1 = attribute(
+        dtype='int',
         access=AttrWriteType.READ_WRITE,
-        label="Frequency band offset (Hz)",
-        doc="Frequency band offset (Hz)"
+        label="Frequency band offset (stream 1) (Hz)",
+        doc="Frequency band offset (stream 1) (Hz)"
+    )
+
+    frequencyBandOffsetStream2 = attribute(
+        dtype='int',
+        access=AttrWriteType.READ_WRITE,
+        label="Frequency band offset (stream 2) (Hz)",
+        doc="Frequency band offset (stream 2) (Hz)"
     )
 
     dopplerPhaseCorrection = attribute(
@@ -268,7 +274,8 @@ class Vcc(SKACapability):
         self._frequency_band = 0
         self._subarray_membership = 0
         self._stream_tuning = (0, 0)
-        self._frequency_band_offset = (0, 0)
+        self._frequency_band_offset_stream_1 = 0
+        self._frequency_band_offset_stream_2 = 0
         self._doppler_phase_correction = (0, 0, 0, 0)
         self._rfi_flagging_mask = ""
         self._scfo_band_1 = 0
@@ -315,25 +322,35 @@ class Vcc(SKACapability):
         return self._frequency_band
         # PROTECTED REGION END #    //  Vcc.frequencyBand_read
 
-    def read_streamTuning(self):
-        # PROTECTED REGION ID(Vcc.streamTuning_read) ENABLED START #
+    def read_band5Tuning(self):
+        # PROTECTED REGION ID(Vcc.band5Tuning_read) ENABLED START #
         return self._stream_tuning
-        # PROTECTED REGION END #    //  Vcc.streamTuning_read
+        # PROTECTED REGION END #    //  Vcc.band5Tuning_read
 
-    def write_streamTuning(self, value):
-        # PROTECTED REGION ID(Vcc.streamTuning_write) ENABLED START #
+    def write_band5Tuning(self, value):
+        # PROTECTED REGION ID(Vcc.band5Tuning_write) ENABLED START #
         self._stream_tuning = value
-        # PROTECTED REGION END #    //  Vcc.streamtuning_write
+        # PROTECTED REGION END #    //  Vcc.band5Tuning_write
 
-    def read_frequencyBandOffset(self):
-        # PROTECTED REGION ID(Vcc.frequencyBandOffset_read) ENABLED START #
-        return self._frequency_band_offset
-        # PROTECTED REGION END #    //  Vcc.frequencyBandOffset_read
+    def read_frequencyBandOffsetStream1(self):
+        # PROTECTED REGION ID(Vcc.frequencyBandOffsetStream1_read) ENABLED START #
+        return self._frequency_band_offset_stream_1
+        # PROTECTED REGION END #    //  Vcc.frequencyBandOffsetStream1_read
 
-    def write_frequencyBandOffset(self, value):
-        # PROTECTED REGION ID(Vcc.frequencyBandOffset_write) ENABLED START #
-        self._frequency_band_offset = value
-        # PROTECTED REGION END #    //  Vcc.frequencyBandOffset_write
+    def write_frequencyBandOffsetStream1(self, value):
+        # PROTECTED REGION ID(Vcc.frequencyBandOffsetStream1_write) ENABLED START #
+        self._frequency_band_offset_stream_1 = value
+        # PROTECTED REGION END #    //  Vcc.frequencyBandOffsetStream1_write
+
+    def read_frequencyBandOffsetStream2(self):
+        # PROTECTED REGION ID(Vcc.frequencyBandOffsetStream2_read) ENABLED START #
+        return self._frequency_band_offset_stream_2
+        # PROTECTED REGION END #    //  Vcc.frequencyBandOffsetStream2_read
+
+    def write_frequencyBandOffsetStream2(self, value):
+        # PROTECTED REGION ID(Vcc.frequencyBandOffsetStream2_write) ENABLED START #
+        self._frequency_band_offset_stream_2 = value
+        # PROTECTED REGION END #    //  Vcc.frequencyBandOffsetStream2_write
 
     def read_dopplerPhaseCorrection(self):
         # PROTECTED REGION ID(Vcc.dopplerPhaseCorrection_read) ENABLED START #
@@ -523,8 +540,7 @@ class Vcc(SKACapability):
             "Ignoring search window."
             # this is a fatal error
             self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
-            PyTango.Except.throw_exception("Command failed", msg,
-                                           "ConfigureSearchWindow execution",
+            PyTango.Except.throw_exception("Command failed", msg, "ConfigureSearchWindow execution",
                                            PyTango.ErrSeverity.ERR)
 
         # Validate searchWindowTuning.
@@ -539,38 +555,37 @@ class Vcc(SKACapability):
             "Ignoring search window."
             # this is a fatal error
             self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
-            PyTango.Except.throw_exception("Command failed", msg,
-                                           "ConfigureSearchWindow execution",
+            PyTango.Except.throw_exception("Command failed", msg, "ConfigureSearchWindow execution",
                                            PyTango.ErrSeverity.ERR)
 
-        # Validate enableTDC.
+        # Validate tdcEnable.
         # If not given, use a default value.
         # If malformed, use a default value, but append an error.
         if "tdcEnable" in argin:
             if argin["tdcEnable"] in [True, False]:
-                proxy_tdc.enableTDC = argin["tdcEnable"]
+                proxy_tdc.tdcEnable = argin["tdcEnable"]
                 if argin["tdcEnable"]:
                     # transition to ON if TDC is enabled
                     proxy_tdc.SetState(PyTango.DevState.ON)
             else:
-                proxy_tdc.enableTDC = False
+                proxy_tdc.tdcEnable = False
                 proxy_tdc.SetState(PyTango.DevState.DISABLE)
                 log_msg = "'tdcEnable' must be one of [True, False] (received {}). "
                 "Defaulting to False.".format(str(argin["tdcEnable"]))
                 self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
                 errs.append(log_msg)
         else:  # enableTDC not given
-            proxy_tdc.enableTDC = False
+            proxy_tdc.tdcEnable = False
             proxy_tdc.SetState(PyTango.DevState.DISABLE)
             log_msg = "Search window specified, but 'tdcEnable' not given. Defaulting to False."
             self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
 
-        # Validate numberBits.
+        # Validate tdcNumBits.
         # If not given, ignore the entire search window and append an error.
         # If malformed, ignore the entire search window and append an error.
         if "tdcNumBits" in argin:
             if int(argin["tdcNumBits"]) in [2, 4, 8]:
-                proxy_tdc.numberBits = int(argin["tdcNumBits"])
+                proxy_tdc.tdcNumBits = int(argin["tdcNumBits"])
             else:
                 msg = "\n".join(errs)
                 msg += "'tdcNumBits' must be one of [2, 4, 8] (received {}). "
@@ -585,42 +600,41 @@ class Vcc(SKACapability):
             msg += "Search window specified, but 'tdcNumBits' not given. Ignoring search window."
             # this is a fatal error
             self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
-            PyTango.Except.throw_exception("Command failed", msg,
-                                           "ConfigureSearchWindow execution",
+            PyTango.Except.throw_exception("Command failed", msg, "ConfigureSearchWindow execution",
                                            PyTango.ErrSeverity.ERR)
 
-        # Validate periodBeforeEpoch.
+        # Validate tdcPeriodBeforeEpoch.
         # If not given, use a default value.
         # If malformed, use a default value, but append an error.
         if "tdcPeriodBeforeEpoch" in argin:
             if int(argin["tdcPeriodBeforeEpoch"]) > 0:
-                proxy_tdc.periodBeforeEpoch = int(argin["tdcPeriodBeforeEpoch"])
+                proxy_tdc.tdcPeriodBeforeEpoch = int(argin["tdcPeriodBeforeEpoch"])
             else:
-                proxy_tdc.periodBeforeEpoch = 2
+                proxy_tdc.tdcPeriodBeforeEpoch = 2
                 log_msg = "'tdcPeriodBeforeEpoch' must be a positive integer (received {}). "
                 "Defaulting to 2.".format(str(argin["tdcPeriodBeforeEpoch"]))
                 self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
                 errs.append(log_msg)
         else:  # periodBeforeEpoch not given
-            proxy_tdc.periodBeforeEpoch = 2
+            proxy_tdc.tdcPeriodBeforeEpoch = 2
             log_msg = "Search window specified, but 'tdcPeriodBeforeEpoch' not given. "
             "Defaulting to 2."
             self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
 
-        # Validate periodAfterEpoch.
+        # Validate tdcPeriodAfterEpoch.
         # If not given, use a default value.
         # If malformed, use a default value, but append an error.
         if "tdcPeriodAfterEpoch" in argin:
             if int(argin["tdcPeriodAfterEpoch"]) > 0:
-                proxy_tdc.periodAfterEpoch = int(argin["tdcPeriodAfterEpoch"])
+                proxy_tdc.tdcPeriodAfterEpoch = int(argin["tdcPeriodAfterEpoch"])
             else:
-                proxy_tdc.periodAfterEpoch = 2
+                proxy_tdc.tdcPeriodAfterEpoch = 22
                 log_msg = "'tdcPeriodAfterEpoch' must be a positive integer (received {}). "
                 "Defaulting to 22.".format(str(argin["tdcPeriodAfterEpoch"]))
                 self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
                 errs.append(log_msg)
         else:  # periodAfterEpoch not given
-            proxy_tdc.periodAfterEpoch = 2
+            proxy_tdc.tdcPeriodAfterEpoch = 22
             log_msg = "Search window specified, but 'tdcPeriodAfterEpoch' not given. "
             "Defaulting to 22."
             self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
@@ -630,15 +644,15 @@ class Vcc(SKACapability):
         # If malformed, ignore the entire search window and append and error.
         if "destinationAddress" in argin:
             # TODO: validate input
-            proxy_tdc.destinationAddress = argin["destinationAddress"]
+            proxy_tdc.tdcDestinationAddress = argin["destinationAddress"]
         else:  # destinationAddress not given
+            # due to implementation details, this should never happen
             msg = "\n".join(errs)
             msg += "Search window specified, but 'destinationAddress' not given. "
             "Ignoring search window."
             # this is a fatal error
             self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
-            PyTango.Except.throw_exception("Command failed", msg,
-                                           "ConfigureSearchWindow execution",
+            PyTango.Except.throw_exception("Command failed", msg, "ConfigureSearchWindow execution",
                                            PyTango.ErrSeverity.ERR)
 
         # raise an error if something went wrong

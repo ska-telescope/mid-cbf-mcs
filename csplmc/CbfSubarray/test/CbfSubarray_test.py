@@ -62,7 +62,7 @@ class TestCbfSubarray:
         """
         Test valid AddReceptors and RemoveReceptors commands
         """
-        receptor_to_vcc = dict([int(ID) for ID in pair.split(":")] for pair in
+        receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
                                create_cbf_master_proxy.receptorToVcc)
 
         create_subarray_1_proxy.Init()
@@ -116,7 +116,7 @@ class TestCbfSubarray:
             - when a receptor ID is invalid (e.g. out of range)
             - when a receptor to be removed is not assigned to the subarray
         """
-        receptor_to_vcc = dict([int(ID) for ID in pair.split(":")] for pair in
+        receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
                                create_cbf_master_proxy.receptorToVcc)
 
         create_subarray_1_proxy.Init()
@@ -180,7 +180,7 @@ class TestCbfSubarray:
         """
         Test RemoveAllReceptors command
         """
-        receptor_to_vcc = dict([int(ID) for ID in pair.split(":")] for pair in
+        receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
                                create_cbf_master_proxy.receptorToVcc)
 
         create_subarray_1_proxy.Init()
@@ -217,7 +217,7 @@ class TestCbfSubarray:
         """
         Test successful subscriptions to VCC state and healthState for AddReceptors command
         """
-        receptor_to_vcc = dict([int(ID) for ID in pair.split(":")] for pair in
+        receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
                                create_cbf_master_proxy.receptorToVcc)
         create_subarray_1_proxy.Init()
         for proxy in create_vcc_proxies:

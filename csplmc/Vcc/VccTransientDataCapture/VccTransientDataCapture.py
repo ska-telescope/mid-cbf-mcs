@@ -60,35 +60,35 @@ class VccTransientDataCapture(SKACapability):
         doc="Search window tuning"
     )
 
-    enableTDC = attribute(
+    tdcEnable = attribute(
         dtype='bool',
         access=AttrWriteType.READ_WRITE,
         label="Enable transient data capture",
         doc="Enable transient data capture"
     )
 
-    numberBits = attribute(
+    tdcNumBits = attribute(
         dtype='uint16',
         access=AttrWriteType.READ_WRITE,
         label="Number of bits",
         doc="Number of bits"
     )
 
-    periodBeforeEpoch = attribute(
+    tdcPeriodBeforeEpoch = attribute(
         dtype='uint',
         access=AttrWriteType.READ_WRITE,
         label="Period before the epoch",
         doc="Period before the epoch for which data is saved"
     )
 
-    periodAfterEpoch = attribute(
+    tdcPeriodAfterEpoch = attribute(
         dtype='uint',
         access=AttrWriteType.READ_WRITE,
         label="Period after the epoch",
         doc="Period after the epoch for which data is saved"
     )
 
-    destinationAddress = attribute(
+    tdcDestinationAddress = attribute(
         dtype=('str',),
         max_dim_x=3,
         access=AttrWriteType.READ_WRITE,
@@ -141,55 +141,55 @@ class VccTransientDataCapture(SKACapability):
         self._search_window_tuning = value
         # PROTECTED REGION END #    //  VccTransientData.searchWindowTuning_write
 
-    def read_enableTDC(self):
-        # PROTECTED REGION ID(VccTransientDataCapture.enableTDC_read) ENABLED START #
+    def read_tdcEnable(self):
+        # PROTECTED REGION ID(VccTransientDataCapture.tdcEnable_read) ENABLED START #
         return self._enable_TDC
-        # PROTECTED REGION END #    //  VccTransientDataCapture.enableTDC_read
+        # PROTECTED REGION END #    //  VccTransientDataCapture.tdcEnable_read
 
-    def write_enableTDC(self, value):
-        # PROTECTED REGION ID(VccTransientDataCapture.enableTDC_write) ENABLED START #
+    def write_tdcEnable(self, value):
+        # PROTECTED REGION ID(VccTransientDataCapture.tdcEnable_write) ENABLED START #
         self._enable_TDC = value
-        # PROTECTED REGION END #    //  VccTransientData.enableTDC_write
+        # PROTECTED REGION END #    //  VccTransientData.tdcEnable_write
 
-    def read_numberBits(self):
-        # PROTECTED REGION ID(VccTransientDataCapture.numberBits_read) ENABLED START #
+    def read_tdcNumBits(self):
+        # PROTECTED REGION ID(VccTransientDataCapture.tdcNumBits_read) ENABLED START #
         return self._number_bits
-        # PROTECTED REGION END #    //  VccTransientDataCapture.numberBits_read
+        # PROTECTED REGION END #    //  VccTransientDataCapture.tdcNumBits_read
 
-    def write_numberBits(self, value):
-        # PROTECTED REGION ID(VccTransientDataCapture.numberBits_write) ENABLED START #
+    def write_tdcNumBits(self, value):
+        # PROTECTED REGION ID(VccTransientDataCapture.tdcNumBits_write) ENABLED START #
         self._number_bits = value
-        # PROTECTED REGION END #    //  VccTransientData.numberBits_write
+        # PROTECTED REGION END #    //  VccTransientData.tdcNumBits_write
 
-    def read_periodBeforeEpoch(self):
-        # PROTECTED REGION ID(VccTransientDataCapture.periodBeforeEpoch_read) ENABLED START #
+    def read_tdcPeriodBeforeEpoch(self):
+        # PROTECTED REGION ID(VccTransientDataCapture.tdcPeriodBeforeEpoch_read) ENABLED START #
         return self._period_before_epoch
-        # PROTECTED REGION END #    //  VccTransientDataCapture.periodBeforeEpoch_read
+        # PROTECTED REGION END #    //  VccTransientDataCapture.tdcPeriodBeforeEpoch_read
 
-    def write_periodBeforeEpoch(self, value):
-        # PROTECTED REGION ID(VccTransientDataCapture.periodBeforeEpoch_write) ENABLED START #
+    def write_tdcPeriodBeforeEpoch(self, value):
+        # PROTECTED REGION ID(VccTransientDataCapture.tdcPeriodBeforeEpoch_write) ENABLED START #
         self._period_before_epoch = value
-        # PROTECTED REGION END #    //  VccTransientData.periodBeforeEpoch_write
+        # PROTECTED REGION END #    //  VccTransientData.tdcPeriodBeforeEpoch_write
 
-    def read_periodAfterEpoch(self):
-        # PROTECTED REGION ID(VccTransientDataCapture.periodAfterEpoch_read) ENABLED START #
+    def read_tdcPeriodAfterEpoch(self):
+        # PROTECTED REGION ID(VccTransientDataCapture.tdcPeriodAfterEpoch_read) ENABLED START #
         return self._period_after_epoch
-        # PROTECTED REGION END #    //  VccTransientDataCapture.periodAfterEpoch_read
+        # PROTECTED REGION END #    //  VccTransientDataCapture.tdcPeriodAfterEpoch_read
 
-    def write_periodAfterEpoch(self, value):
-        # PROTECTED REGION ID(VccTransientDataCapture.periodAfterEpoch_write) ENABLED START #
+    def write_tdcPeriodAfterEpoch(self, value):
+        # PROTECTED REGION ID(VccTransientDataCapture.tdcPeriodAfterEpoch_write) ENABLED START #
         self._period_after_epoch = value
-        # PROTECTED REGION END #    //  VccTransientData.periodAfterEpoch_write
+        # PROTECTED REGION END #    //  VccTransientData.tdcPeriodAfterEpoch_write
 
-    def read_destinationAddress(self):
-        # PROTECTED REGION ID(VccTransientDataCapture.destinationAddress_read) ENABLED START #
+    def read_tdcDestinationAddress(self):
+        # PROTECTED REGION ID(VccTransientDataCapture.tdcDestinationAddress_read) ENABLED START #
         return self._destination_address
-        # PROTECTED REGION END #    //  VccTransientDataCapture.destinationAddress_read
+        # PROTECTED REGION END #    //  VccTransientDataCapture.tdcDestinationAddress_read
 
-    def write_destinationAddress(self, value):
-        # PROTECTED REGION ID(VccTransientDataCapture.destinationAddress_write) ENABLED START #
+    def write_tdcDestinationAddress(self, value):
+        # PROTECTED REGION ID(VccTransientDataCapture.tdcDestinationAddress_write) ENABLED START #
         self._destination_address = value
-        # PROTECTED REGION END #    //  VccTransientData.destinationAddress_write
+        # PROTECTED REGION END #    //  VccTransientData.tdcDestinationAddress_write
 
     # --------
     # Commands
