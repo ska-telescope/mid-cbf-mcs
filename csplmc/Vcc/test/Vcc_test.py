@@ -140,7 +140,7 @@ class TestVcc:
         assert create_tdc_1_proxy.tdcNumBits == 0
         assert create_tdc_1_proxy.tdcPeriodBeforeEpoch == 0
         assert create_tdc_1_proxy.tdcPeriodAfterEpoch == 0
-        assert create_tdc_1_proxy.tdcDestinationAddress == ("", "" , "")
+        assert create_tdc_1_proxy.tdcDestinationAddress == ("", "", "")
 
         # check initial state
         assert create_tdc_1_proxy.State() == DevState.DISABLE

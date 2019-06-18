@@ -559,8 +559,8 @@ class Vcc(SKACapability):
                                            PyTango.ErrSeverity.ERR)
 
         # Validate tdcEnable.
-        # If not given, use a default value.
-        # If malformed, use a default value, but append an error.
+        # If not given, ignore the entire search window and append an error.
+        # If not given, ignore the entire search window and append an error.
         if "tdcEnable" in argin:
             if argin["tdcEnable"] in [True, False]:
                 proxy_tdc.tdcEnable = argin["tdcEnable"]
@@ -568,40 +568,48 @@ class Vcc(SKACapability):
                     # transition to ON if TDC is enabled
                     proxy_tdc.SetState(PyTango.DevState.ON)
             else:
-                proxy_tdc.tdcEnable = False
-                proxy_tdc.SetState(PyTango.DevState.DISABLE)
-                log_msg = "'tdcEnable' must be one of [True, False] (received {}). "
-                "Defaulting to False.".format(str(argin["tdcEnable"]))
-                self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
-                errs.append(log_msg)
-        else:  # enableTDC not given
-            proxy_tdc.tdcEnable = False
-            proxy_tdc.SetState(PyTango.DevState.DISABLE)
-            log_msg = "Search window specified, but 'tdcEnable' not given. Defaulting to False."
-            self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
-
-        # Validate tdcNumBits.
-        # If not given, ignore the entire search window and append an error.
-        # If malformed, ignore the entire search window and append an error.
-        if "tdcNumBits" in argin:
-            if int(argin["tdcNumBits"]) in [2, 4, 8]:
-                proxy_tdc.tdcNumBits = int(argin["tdcNumBits"])
-            else:
                 msg = "\n".join(errs)
-                msg += "'tdcNumBits' must be one of [2, 4, 8] (received {}). "
-                "Ignoring search window.".format(str(argin["tdcNumBits"]))
+                msg += "Search window specified, but 'tdcEnable' not given. "
+                "Ignoring search window."
                 # this is a fatal error
                 self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
                 PyTango.Except.throw_exception("Command failed", msg,
                                                "ConfigureSearchWindow execution",
                                                PyTango.ErrSeverity.ERR)
-        else:  # numberBits not given
+        else:  # enableTDC not given
             msg = "\n".join(errs)
-            msg += "Search window specified, but 'tdcNumBits' not given. Ignoring search window."
+            msg += "Search window specified, but 'tdcEnable' not given. "
+            "Ignoring search window."
             # this is a fatal error
             self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
             PyTango.Except.throw_exception("Command failed", msg, "ConfigureSearchWindow execution",
                                            PyTango.ErrSeverity.ERR)
+
+        # Validate tdcNumBits.
+        # If not given when required, ignore the entire search window and append an error.
+        # If malformed when required, ignore the entire search window and append an error.
+        if proxy_tdc.tdcEnable:
+            if "tdcNumBits" in argin:
+                if int(argin["tdcNumBits"]) in [2, 4, 8]:
+                    proxy_tdc.tdcNumBits = int(argin["tdcNumBits"])
+                else:
+                    msg = "\n".join(errs)
+                    msg += "'tdcNumBits' must be one of [2, 4, 8] (received {}). "
+                    "Ignoring search window.".format(str(argin["tdcNumBits"]))
+                    # this is a fatal error
+                    self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+                    PyTango.Except.throw_exception("Command failed", msg,
+                                                   "ConfigureSearchWindow execution",
+                                                   PyTango.ErrSeverity.ERR)
+            else:  # numberBits not given
+                msg = "\n".join(errs)
+                msg += "Search window specified, but 'tdcNumBits' not given. "
+                "Ignoring search window."
+                # this is a fatal error
+                self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+                PyTango.Except.throw_exception("Command failed", msg,
+                                               "ConfigureSearchWindow execution",
+                                               PyTango.ErrSeverity.ERR)
 
         # Validate tdcPeriodBeforeEpoch.
         # If not given, use a default value.
@@ -640,20 +648,22 @@ class Vcc(SKACapability):
             self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
 
         # Validate destinationAddress.
-        # If not given, ignore the entire search window and append an error.
-        # If malformed, ignore the entire search window and append and error.
-        if "destinationAddress" in argin:
-            # TODO: validate input
-            proxy_tdc.tdcDestinationAddress = argin["destinationAddress"]
-        else:  # destinationAddress not given
-            # due to implementation details, this should never happen
-            msg = "\n".join(errs)
-            msg += "Search window specified, but 'destinationAddress' not given. "
-            "Ignoring search window."
-            # this is a fatal error
-            self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
-            PyTango.Except.throw_exception("Command failed", msg, "ConfigureSearchWindow execution",
-                                           PyTango.ErrSeverity.ERR)
+        # If not given when required, ignore the entire search window and append an error.
+        # If malformed when required, ignore the entire search window and append and error.
+        if proxy_tdc.tdcEnable:
+            if "destinationAddress" in argin:
+                # TODO: validate input
+                proxy_tdc.tdcDestinationAddress = argin["destinationAddress"]
+            else:  # destinationAddress not given
+                # due to implementation details, this should never happen
+                msg = "\n".join(errs)
+                msg += "Search window specified, but 'destinationAddress' not given. "
+                "Ignoring search window."
+                # this is a fatal error
+                self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+                PyTango.Except.throw_exception("Command failed", msg,
+                                               "ConfigureSearchWindow execution",
+                                               PyTango.ErrSeverity.ERR)
 
         # raise an error if something went wrong
         if errs:

@@ -267,11 +267,22 @@ class TestCbfSubarray:
         assert create_subarray_1_proxy.vccState == None
         assert create_subarray_1_proxy.vccHealthState == None
 
-    def test_ConfigureScan_basic(self, create_subarray_1_proxy):
+    def test_ConfigureScan_basic(
+            self,
+            create_cbf_master_proxy,
+            create_subarray_1_proxy,
+            create_vcc_proxies
+    ):
         """
         Test a minimal successful configuration
         """
+        receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
+                               create_cbf_master_proxy.receptorToVcc)
+
         create_subarray_1_proxy.Init()
+        create_subarray_2_proxy.Init()
+        for proxy in create_vcc_proxies:
+            proxy.Init()
 
         # check default values
         assert create_subarray_1_proxy.receptors == ()
@@ -279,55 +290,18 @@ class TestCbfSubarray:
         assert create_subarray_1_proxy.frequencyBand == 0
         assert create_subarray_1_proxy.obsState == ObsState.IDLE.value
 
+        # add receptors
+        create_subarray_1_proxy.AddReceptors([10, 197])
+        time.sleep(1)
+        assert create_subarray_1_proxy.receptors == (10, 197)
+
         # configure scan
         f = open(file_path + "/test_json/test_ConfigureScan_basic.json")
         create_subarray_1_proxy.ConfigureScan(f.read().replace("\n", ""))
         f.close()
+        time.sleep(1)
 
         # check configured values
-        assert create_subarray_1_proxy.receptors == (1,)
         assert create_subarray_1_proxy.scanID == 1
-        assert create_subarray_1_proxy.frequencyBand == 0
+        assert create_subarray_1_proxy.frequencyBand == 4
         assert create_subarray_1_proxy.obsState == ObsState.READY.value
-
-    def test_ConfigureScan_subscriptions(
-            self,
-            create_subarray_1_proxy,
-            create_tm_telstate_proxy
-    ):
-        """
-        Test successful subscriptions to TM TelState attributes dopplerPhaseCorrection_1 and delayModel
-        """
-        create_subarray_1_proxy.Init()
-        create_tm_telstate_proxy.Init()
-
-        time.sleep(3)
-
-        # check default values of attributes
-        assert create_tm_telstate_proxy.dopplerPhaseCorrection_1 == (0, 0, 0, 0)
-        assert create_tm_telstate_proxy.delayModel == "{}"
-        assert create_subarray_1_proxy.reportDopplerPhaseCorrection == (0, 0, 0, 0)
-        assert create_subarray_1_proxy.reportDelayModel == "{}"
-
-        # configure scan
-        f = open(file_path + "/test_json/test_ConfigureScan_basic.json")
-        create_subarray_1_proxy.ConfigureScan(f.read().replace("\n", ""))
-        f.close()
-
-        # subscription should trigger an event, but default values are identical
-        assert create_subarray_1_proxy.reportDopplerPhaseCorrection == (0, 0, 0, 0)
-        assert create_subarray_1_proxy.reportDelayModel == "{}"
-
-        # change attribute values
-        create_tm_telstate_proxy.dopplerPhaseCorrection_1 = (1, 2, 3, 4)
-        create_tm_telstate_proxy.delayModel = "{\"test\": 10000}"
-        time.sleep(10)  # wait for next poll
-        assert create_subarray_1_proxy.reportDopplerPhaseCorrection == (1, 2, 3, 4)
-        assert create_subarray_1_proxy.reportDelayModel == "{\"test\": 10000}"
-
-        create_tm_telstate_proxy.dopplerPhaseCorrection_1 = (2.789, -1, 3.141, 0)
-        create_tm_telstate_proxy.delayModel = "{\"test\": [{\"foo\": \"bar\", \"fizz\": \"buzz\"}]}"
-        time.sleep(10)  # wait for next poll
-        assert create_subarray_1_proxy.reportDopplerPhaseCorrection == (2.789, -1, 3.141, 0)
-        assert create_subarray_1_proxy.reportDelayModel == "{\"test\": [{\"foo\": \"bar\", \"fizz\": \"buzz\"}]}" or \
-            create_subarray_1_proxy.reportDelayModel == "{\"test\": [{\"fizz\": \"buzz\", \"foo\": \"bar\"}]}"

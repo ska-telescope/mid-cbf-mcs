@@ -31,5 +31,13 @@ def create_vcc_proxies():
     return [DeviceProxy("mid_csp_cbf/vcc/" + str(i + 1).zfill(3)) for i in range(197)]
 
 @pytest.fixture(scope="class")
+def create_fsp_1_proxy():
+    return DeviceProxy("mid_csp_cbf/fsp/01")
+
+@pytest.fixture(scope="class")
+def create_fsp_2_proxy():
+    return DeviceProxy("mid_csp_cbf/fsp/02")
+
+@pytest.fixture(scope="class")
 def create_tm_telstate_proxy():
     return DeviceProxy("ska1_mid/tm/telmodel")

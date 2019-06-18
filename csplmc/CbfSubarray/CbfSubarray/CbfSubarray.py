@@ -53,7 +53,6 @@ class CbfSubarray(SKASubarray):
                     vcc.dopplerPhaseCorrection = event.attr_value.value
                 log_msg = "Value of " + str(event.attr_name) + " is " + str(event.attr_value.value)
                 self.dev_logging(log_msg, PyTango.LogLevel.LOG_DEBUG)
-                self._report_doppler_phase_correction = event.attr_value.value
             except Exception as e:
                 self.dev_logging(str(e), PyTango.LogLevel.LOG_ERROR)
         else:
@@ -68,7 +67,6 @@ class CbfSubarray(SKASubarray):
                     fsp_subarray.delayModel = event.attr_value.value
                 log_msg = "Value of " + str(event.attr_name) + " is " + str(event.attr_value.value)
                 self.dev_logging(log_msg, PyTango.LogLevel.LOG_DEBUG)
-                self._report_delay_model = event.attr_value.value
             except Exception as e:
                 self.dev_logging(str(e), PyTango.LogLevel.LOG_ERROR)
         else:
@@ -173,21 +171,6 @@ class CbfSubarray(SKASubarray):
         doc="List of receptors assigned to subarray",
     )
 
-    reportDopplerPhaseCorrection = attribute(
-        dtype=('float',),
-        access=AttrWriteType.READ,
-        max_dim_x=4,
-        label="Doppler phase correction coefficients",
-        doc="Doppler phase correction coefficients (received from TM TelState)",
-    )
-
-    reportDelayModel = attribute(
-        dtype='str',
-        access=AttrWriteType.READ,
-        label="Delay model coefficients",
-        doc="Delay model coefficients (received from TM TelState)"
-    )
-
     vccState = attribute(
         dtype=('DevState',),
         max_dim_x=197,
@@ -241,8 +224,6 @@ class CbfSubarray(SKASubarray):
         self._receptors = []
         self._frequency_band = 0
         self._scan_ID = 0
-        self._report_doppler_phase_correction = [0, 0, 0, 0]
-        self._report_delay_model = "{}"
         self._vcc_state = {}  # device_name:state
         self._vcc_health_state = {}  # device_name:healthState
         self._fsp_state = {}  # device_name:state
@@ -316,16 +297,6 @@ class CbfSubarray(SKASubarray):
         self.RemoveAllReceptors()
         self.AddReceptors(value)
         # PROTECTED REGION END #    //  CbfSubarray.receptors_write
-
-    def read_reportDopplerPhaseCorrection(self):
-        # PROTECTED REGION ID(CbfSubarray.reportDopplerPhaseCorrection_read) ENABLED START #
-        return self._report_doppler_phase_correction
-        # PROTECTED REGION END #    //  CbfSubarray.reportDopplerPhaseCorrection_read
-
-    def read_reportDelayModel(self):
-        # PROTECTED REGION ID(CbfSubarray.reportDelayModel_read) ENABLED START #
-        return self._report_delay_model
-        # PROTECTED REGION END #    //  CbfSubarray.reportDelayModel_read
 
     def read_vccState(self):
         # PROTECTED REGION ID(CbfSubarray.vccState_read) ENABLED START #
@@ -626,7 +597,7 @@ class CbfSubarray(SKASubarray):
                     PyTango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
                                                    PyTango.ErrSeverity.ERR)
 
-                stream_tuning = [*map(float(argin["band5Tuning"]))]
+                stream_tuning = [*map(float, argin["band5Tuning"])]
                 if self._frequency_band == 4:
                     if all([5.85 <= stream_tuning[i] <= 7.25 for i in [0, 1]]):
                         for vcc in self._proxies_assigned_vcc:
@@ -757,14 +728,14 @@ class CbfSubarray(SKASubarray):
                 )
                 self._events_telstate[event_id] = attribute_proxy
             except PyTango.DevFailed:  # attribute doesn't exist
-                log_msg += "Attribute {} not found for 'delayModelSubscriptionPoint'. "
+                log_msg = "Attribute {} not found for 'delayModelSubscriptionPoint'. "
                 "Proceeding".format(argin["delayModelSubscriptionPoint"])
-                self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+                self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
                 errs.append(log_msg)
         else:
-            log_msg += "'delayModelSubscriptionPoint' not given. Proceeding.".format(
+            log_msg = "'delayModelSubscriptionPoint' not given. Proceeding.".format(
                 argin["delayModelSubscriptionPoint"])
-            self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+            self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
             errs.append(log_msg)
 
         # TODO: Validate visDestinationAddressSubscriptionPoint

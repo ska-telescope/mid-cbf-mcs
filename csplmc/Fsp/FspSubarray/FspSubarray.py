@@ -400,7 +400,7 @@ class FspSubarray(SKASubarray):
         # If malformed when required, ignore the FSP and append an error.
         if self._bandwidth != 0:  # zoomWindowTuning is required
             if "zoomWindowTuning" in argin:
-                # TODO: find out valid ranges
+                # TODO: validate input
                 self._zoom_window_tuning = int(argin["zoomWindowTuning"])
             else:
                 log_msg = "FSP specified, but 'zoomWindowTuning' not given. Ignoring FSP."
@@ -434,7 +434,7 @@ class FspSubarray(SKASubarray):
                     assert len(argin["channelAveragingMap"][i]) == 2
 
                 for i in range(20):
-                    # TODO: find out valid ranges for channel ID
+                    # TODO: validate channel ID
                     self._channel_averaging_map[i][0] = int(argin["channelAveragingMap"][i][0])
 
                     # validate averaging factor
