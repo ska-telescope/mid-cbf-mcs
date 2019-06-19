@@ -145,6 +145,9 @@ class TestVcc:
         # check initial state
         assert create_tdc_1_proxy.State() == DevState.DISABLE
 
+        # set receptorID to 1 to correctly test tdcDestinationAddress
+        create_vcc_proxy.receptorID = 1
+
         # configure search window
         f = open(file_path + "/test_json/test_ConfigureSearchWindow_basic.json")
         create_vcc_proxy.ConfigureSearchWindow(f.read().replace("\n", ""))

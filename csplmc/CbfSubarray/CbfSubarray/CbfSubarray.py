@@ -526,8 +526,8 @@ class CbfSubarray(SKASubarray):
         if "scanID" in argin:
             if int(argin["scanID"]) <= 0:  # scanID not positive
                 msg = "\n".join(errs)
-                msg += "'scanID' must be positive (received {}). "
-                "Aborting configuration.".format(int(argin["scanID"]))
+                msg += "'scanID' must be positive (received {}). "\
+                    "Aborting configuration.".format(int(argin["scanID"]))
                 # this is a fatal error
                 self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
                 PyTango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
@@ -535,8 +535,8 @@ class CbfSubarray(SKASubarray):
             elif any(map(lambda i: i == int(argin["scanID"]),
                          self._proxy_cbf_master.subarrayScanID)):  # scanID already taken
                 msg = "\n".join(errs)
-                msg += "'scanID' must be unique (received {}). "
-                "Aborting configuration.".format(int(argin["scanID"]))
+                msg += "'scanID' must be unique (received {}). "\
+                    "Aborting configuration.".format(int(argin["scanID"]))
                 # this is a fatal error
                 self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
                 PyTango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
@@ -562,8 +562,8 @@ class CbfSubarray(SKASubarray):
                     vcc.SetFrequencyBand(argin["frequencyBand"])
             else:
                 msg = "\n".join(errs)
-                msg += "'frequencyBand' must be one of {} (received {}). "
-                "Aborting configuration.".format(frequency_bands, argin["frequency_band"])
+                msg += "'frequencyBand' must be one of {} (received {}). "\
+                    "Aborting configuration.".format(frequency_bands, argin["frequency_band"])
                 # this is a fatal error
                 self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
                 PyTango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
@@ -604,9 +604,9 @@ class CbfSubarray(SKASubarray):
                             vcc.band5Tuning = stream_tuning
                     else:
                         msg = "\n".join(errs)
-                        msg += "Elements in 'band5Tuning must be floats between 5.85 and 7.25 "
-                        "(received {} and {}) for a 'frequencyBand' of 5a. "
-                        "Aborting configuration.".format(stream_tuning[0], stream_tuning[1])
+                        msg += "Elements in 'band5Tuning must be floats between 5.85 and 7.25 "\
+                            "(received {} and {}) for a 'frequencyBand' of 5a. "\
+                            "Aborting configuration.".format(stream_tuning[0], stream_tuning[1])
                         # this is a fatal error
                         self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
                         PyTango.Except.throw_exception("Command failed", msg,
@@ -618,9 +618,9 @@ class CbfSubarray(SKASubarray):
                             vcc.band5Tuning = stream_tuning
                     else:
                         msg = "\n".join(errs)
-                        msg += "Elements in 'band5Tuning must be floats between 9.55 and 14.05 "
-                        "(received {} and {}) for a 'frequencyBand' of 5b. "
-                        "Aborting configuration.".format(stream_tuning[0], stream_tuning[1])
+                        msg += "Elements in 'band5Tuning must be floats between 9.55 and 14.05 "\
+                            "(received {} and {}) for a 'frequencyBand' of 5b. "\
+                            "Aborting configuration.".format(stream_tuning[0], stream_tuning[1])
                         # this is a fatal error
                         self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
                         PyTango.Except.throw_exception("Command failed", msg,
@@ -628,8 +628,8 @@ class CbfSubarray(SKASubarray):
                                                        PyTango.ErrSeverity.ERR)
             else:
                 msg = "\n".join(errs)
-                msg += "'band5Tuning' must be given for a 'frequencyBand' of {}. "
-                "Aborting configuration".format(["5a", "5b"][self._frequency_band - 4])
+                msg += "'band5Tuning' must be given for a 'frequencyBand' of {}. "\
+                    "Aborting configuration".format(["5a", "5b"][self._frequency_band - 4])
                 # this is a fatal error
                 self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
                 PyTango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
@@ -691,8 +691,8 @@ class CbfSubarray(SKASubarray):
                 )
                 self._events_telstate[event_id] = attribute_proxy
             except PyTango.DevFailed:  # attribute doesn't exist
-                log_msg = "Attribute {} not found for 'dopplerPhaseCorrSubscriptionPoint'. "
-                "Proceeding.".format(argin["dopplerPhaseCorrSubscriptionPoint"])
+                log_msg = "Attribute {} not found for 'dopplerPhaseCorrSubscriptionPoint'. "\
+                    "Proceeding.".format(argin["dopplerPhaseCorrSubscriptionPoint"])
                 self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
                 errs.append(log_msg)
         else:  # dopplerPhaseCorrection not given
@@ -728,8 +728,8 @@ class CbfSubarray(SKASubarray):
                 )
                 self._events_telstate[event_id] = attribute_proxy
             except PyTango.DevFailed:  # attribute doesn't exist
-                log_msg = "Attribute {} not found for 'delayModelSubscriptionPoint'. "
-                "Proceeding".format(argin["delayModelSubscriptionPoint"])
+                log_msg = "Attribute {} not found for 'delayModelSubscriptionPoint'. "\
+                    "Proceeding".format(argin["delayModelSubscriptionPoint"])
                 self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
                 errs.append(log_msg)
         else:
@@ -759,34 +759,21 @@ class CbfSubarray(SKASubarray):
             # check if searchWindow is an array of maximum length 2
             try:
                 assert len(argin["searchWindow"]) <= 2
-                vcc_to_receptor = dict([*map(int, pair.split(":"))] for pair in
-                                       self._proxy_cbf_master.vccToReceptor)
 
                 for search_window in argin["searchWindow"]:
-                    try:
-                        for vcc in self._proxies_assigned_vcc:
-                            try:
-                                receptorID = vcc_to_receptor[self._proxies_vcc.index(vcc) + 1]
-                                search_window["destinationAddress"] = \
-                                    search_window["tdcDestinationAddress"][str(receptorID)]
-
-                                # pass on configuration to VCC
-                                vcc.ConfigureSearchWindow(json.dumps(search_window))
-                            except PyTango.DevFailed as df:  # exception in ConfigureSearchWindow
-                                log_msg = "An exception occurred while configuring search "
-                                "windows:\n" + str(df.value.args[0].desc)
-                                self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
-                                errs.append(log_msg)
-
-                    except KeyError:  # tdcDestinationAddress not in search window
-                        log_msg = "Search window specified, but 'tdcDestinationAddress' was not "
-                        "given or missing receptors. Ignoring search window."
-                        self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
-                        errs.append(log_msg)
+                    for vcc in self._proxies_assigned_vcc:
+                        try:
+                            # pass on configuration to VCC
+                            vcc.ConfigureSearchWindow(json.dumps(search_window))
+                        except PyTango.DevFailed:  # exception in ConfigureSearchWindow
+                            log_msg = "An exception occurred while configuring search "\
+                                "windows:\n" + str(sys.exc_info()[1].args[0].desc)
+                            self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
+                            errs.append(log_msg)
 
             except (TypeError, AssertionError):  # searchWindow not the right length or not an array
-                log_msg = "'searchWindow' must be an array of maximum length 2. "
-                "Not configuring search windows."
+                log_msg = "'searchWindow' must be an array of maximum length 2. "\
+                    "Not configuring search windows."
                 self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
                 errs.append(log_msg)
 
@@ -821,8 +808,8 @@ class CbfSubarray(SKASubarray):
                                 # change FSP subarray membership
                                 proxy_fsp.AddSubarrayMembership(self._subarray_id)
                             else:
-                                log_msg = "'fspID' must be an integer in the range [1, {}]. "
-                                "Ignoring FSP.".format(str(self._count_fsp))
+                                log_msg = "'fspID' must be an integer in the range [1, {}]. "\
+                                    "Ignoring FSP.".format(str(self._count_fsp))
                                 self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
                                 errs.append(log_msg)
                                 continue
@@ -840,8 +827,8 @@ class CbfSubarray(SKASubarray):
                             if fsp["functionMode"] in function_modes:
                                 proxy_fsp.SetFunctionMode(fsp["functionMode"])
                             else:
-                                log_msg = "'functionMode' must be one of {} (received {}). "
-                                "Ignoring FSP.".format(function_modes, fsp["functionMode"])
+                                log_msg = "'functionMode' must be one of {} (received {}). "\
+                                    "Ignoring FSP.".format(function_modes, fsp["functionMode"])
                                 self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
                                 errs.append(log_msg)
                                 continue
@@ -851,8 +838,12 @@ class CbfSubarray(SKASubarray):
                             errs.append(log_msg)
                             continue
 
+                        fsp["frequencyBand"] = argin["frequencyBand"]
+                        if "receptors" not in fsp:
+                            fsp["receptors"] = self._receptors
+
                         # pass on configuration to FSP Subarray
-                        proxy_fsp_subarray.ConfigureScan(fsp)
+                        proxy_fsp_subarray.ConfigureScan(json.dumps(fsp))
 
                         # subscribe to FSP state and healthState changes
                         # if code flow reaches this point, FSP configuration was successful
@@ -866,11 +857,11 @@ class CbfSubarray(SKASubarray):
                             self.__state_change_event_callback
                         )
                         self._events_state_change_fsp[int(fsp["fspID"])] = [event_id_state,
-                                                                        event_id_health_state]
+                                                                            event_id_health_state]
 
-                    except PyTango.DevFailed as df:  # exception in ConfigureScan
+                    except PyTango.DevFailed:  # exception in ConfigureScan
                         log_msg = "An exception occurred while configuring FSPs: \n" + \
-                            str(df.value.args[0].desc)
+                            sys.exc_info()[1].args[0].desc
                         self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
                         errs.append(log_msg)
 

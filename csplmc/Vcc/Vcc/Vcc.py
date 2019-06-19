@@ -148,6 +148,7 @@ class Vcc(SKACapability):
 
     receptorID = attribute(
         dtype='uint16',
+        access=AttrWriteType.READ_WRITE,
         label="Receptor ID",
         doc="Receptor ID",
     )
@@ -306,6 +307,11 @@ class Vcc(SKACapability):
         # PROTECTED REGION ID(Vcc.receptorID_read) ENABLED START #
         return self._receptor_ID
         # PROTECTED REGION END #    //  Vcc.receptorID_read
+
+    def write_receptorID(self, value):
+        # PROTECTED REGION ID(Vcc.receptorID_write) ENABLED START #
+        self._receptor_ID = value
+        # PROTECTED REGION END #    //  Vcc.receptorID_write
 
     def read_subarrayMembership(self):
         # PROTECTED REGION ID(Vcc.subarrayMembership_read) ENABLED START #
@@ -506,8 +512,8 @@ class Vcc(SKACapability):
             argin = json.loads(argin)
         except json.JSONDecodeError:  # argument not a valid JSON object
             # this is a fatal error
-            msg = "Search window configuration object is not a valid JSON object. Aborting "
-            "configuration."
+            msg = "Search window configuration object is not a valid JSON object. Aborting "\
+                "configuration."
             self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
             PyTango.Except.throw_exception("Command failed", msg, "ConfigureSearchWindow execution",
                                            PyTango.ErrSeverity.ERR)
@@ -527,8 +533,8 @@ class Vcc(SKACapability):
                 proxy_tdc = self._proxy_tdc_2
             else:  # searchWindowID not in valid range
                 msg = "\n".join(errs)
-                msg += "'searchWindowID' must be one of [1, 2] (received {}). "
-                "Ignoring search window".format(str(argin["searchWindowID"]))
+                msg += "'searchWindowID' must be one of [1, 2] (received {}). "\
+                    "Ignoring search window".format(str(argin["searchWindowID"]))
                 # this is a fatal error
                 self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
                 PyTango.Except.throw_exception("Command failed", msg,
@@ -536,8 +542,8 @@ class Vcc(SKACapability):
                                                PyTango.ErrSeverity.ERR)
         else:  # searchWindowID not given
             msg = "\n".join(errs)
-            msg += "Search window specified, but 'searchWindowID' not given. "
-            "Ignoring search window."
+            msg += "Search window specified, but 'searchWindowID' not given. "\
+                "Ignoring search window."
             # this is a fatal error
             self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
             PyTango.Except.throw_exception("Command failed", msg, "ConfigureSearchWindow execution",
@@ -551,8 +557,8 @@ class Vcc(SKACapability):
             proxy_tdc.searchWindowTuning = argin["searchWindowTuning"]
         else:  # searchWindowTuning not given
             msg = "\n".join(errs)
-            msg += "Search window specified, but 'searchWindowTuning' not given. "
-            "Ignoring search window."
+            msg += "Search window specified, but 'searchWindowTuning' not given. "\
+                "Ignoring search window."
             # this is a fatal error
             self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
             PyTango.Except.throw_exception("Command failed", msg, "ConfigureSearchWindow execution",
@@ -567,10 +573,12 @@ class Vcc(SKACapability):
                 if argin["tdcEnable"]:
                     # transition to ON if TDC is enabled
                     proxy_tdc.SetState(PyTango.DevState.ON)
+                else:
+                    proxy_tdc.SetState(PyTango.DevState.DISABLE)
             else:
                 msg = "\n".join(errs)
-                msg += "Search window specified, but 'tdcEnable' not given. "
-                "Ignoring search window."
+                msg += "Search window specified, but 'tdcEnable' not given. "\
+                    "Ignoring search window."
                 # this is a fatal error
                 self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
                 PyTango.Except.throw_exception("Command failed", msg,
@@ -578,8 +586,8 @@ class Vcc(SKACapability):
                                                PyTango.ErrSeverity.ERR)
         else:  # enableTDC not given
             msg = "\n".join(errs)
-            msg += "Search window specified, but 'tdcEnable' not given. "
-            "Ignoring search window."
+            msg += "Search window specified, but 'tdcEnable' not given. "\
+                "Ignoring search window."
             # this is a fatal error
             self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
             PyTango.Except.throw_exception("Command failed", msg, "ConfigureSearchWindow execution",
@@ -594,8 +602,8 @@ class Vcc(SKACapability):
                     proxy_tdc.tdcNumBits = int(argin["tdcNumBits"])
                 else:
                     msg = "\n".join(errs)
-                    msg += "'tdcNumBits' must be one of [2, 4, 8] (received {}). "
-                    "Ignoring search window.".format(str(argin["tdcNumBits"]))
+                    msg += "'tdcNumBits' must be one of [2, 4, 8] (received {}). "\
+                        "Ignoring search window.".format(str(argin["tdcNumBits"]))
                     # this is a fatal error
                     self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
                     PyTango.Except.throw_exception("Command failed", msg,
@@ -603,8 +611,8 @@ class Vcc(SKACapability):
                                                    PyTango.ErrSeverity.ERR)
             else:  # numberBits not given
                 msg = "\n".join(errs)
-                msg += "Search window specified, but 'tdcNumBits' not given. "
-                "Ignoring search window."
+                msg += "Search window specified with TDC enabled, but 'tdcNumBits' not given. "\
+                    "Ignoring search window."
                 # this is a fatal error
                 self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
                 PyTango.Except.throw_exception("Command failed", msg,
@@ -619,14 +627,14 @@ class Vcc(SKACapability):
                 proxy_tdc.tdcPeriodBeforeEpoch = int(argin["tdcPeriodBeforeEpoch"])
             else:
                 proxy_tdc.tdcPeriodBeforeEpoch = 2
-                log_msg = "'tdcPeriodBeforeEpoch' must be a positive integer (received {}). "
-                "Defaulting to 2.".format(str(argin["tdcPeriodBeforeEpoch"]))
+                log_msg = "'tdcPeriodBeforeEpoch' must be a positive integer (received {}). "\
+                    "Defaulting to 2.".format(str(argin["tdcPeriodBeforeEpoch"]))
                 self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
                 errs.append(log_msg)
         else:  # periodBeforeEpoch not given
             proxy_tdc.tdcPeriodBeforeEpoch = 2
-            log_msg = "Search window specified, but 'tdcPeriodBeforeEpoch' not given. "
-            "Defaulting to 2."
+            log_msg = "Search window specified, but 'tdcPeriodBeforeEpoch' not given. "\
+                "Defaulting to 2."
             self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
 
         # Validate tdcPeriodAfterEpoch.
@@ -637,28 +645,29 @@ class Vcc(SKACapability):
                 proxy_tdc.tdcPeriodAfterEpoch = int(argin["tdcPeriodAfterEpoch"])
             else:
                 proxy_tdc.tdcPeriodAfterEpoch = 22
-                log_msg = "'tdcPeriodAfterEpoch' must be a positive integer (received {}). "
-                "Defaulting to 22.".format(str(argin["tdcPeriodAfterEpoch"]))
+                log_msg = "'tdcPeriodAfterEpoch' must be a positive integer (received {}). "\
+                    "Defaulting to 22.".format(str(argin["tdcPeriodAfterEpoch"]))
                 self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
                 errs.append(log_msg)
         else:  # periodAfterEpoch not given
             proxy_tdc.tdcPeriodAfterEpoch = 22
-            log_msg = "Search window specified, but 'tdcPeriodAfterEpoch' not given. "
-            "Defaulting to 22."
+            log_msg = "Search window specified, but 'tdcPeriodAfterEpoch' not given. "\
+                "Defaulting to 22."
             self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
 
-        # Validate destinationAddress.
+        # Validate tdcDestinationAddress.
         # If not given when required, ignore the entire search window and append an error.
         # If malformed when required, ignore the entire search window and append and error.
         if proxy_tdc.tdcEnable:
-            if "destinationAddress" in argin:
+            try:
                 # TODO: validate input
-                proxy_tdc.tdcDestinationAddress = argin["destinationAddress"]
-            else:  # destinationAddress not given
-                # due to implementation details, this should never happen
+                proxy_tdc.tdcDestinationAddress = \
+                    argin["tdcDestinationAddress"][str(self._receptor_ID)]
+            except KeyError:
+                # tdcDestinationAddress not given or receptorID not in tdcDestinationAddress
                 msg = "\n".join(errs)
-                msg += "Search window specified, but 'destinationAddress' not given. "
-                "Ignoring search window."
+                msg += "Search window specified with TDC enabled, but 'tdcDestinationAddress' "\
+                    "not given or missing receptors. Ignoring search window."
                 # this is a fatal error
                 self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
                 PyTango.Except.throw_exception("Command failed", msg,

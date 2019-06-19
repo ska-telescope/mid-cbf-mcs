@@ -127,17 +127,21 @@ class TestFsp:
         # add FSP to some subarrays
         create_fsp_proxy.AddSubarrayMembership(3)
         create_fsp_proxy.AddSubarrayMembership(4)
+        time.sleep(1)
         assert create_fsp_proxy.subarrayMembership == (3, 4)
 
         # remove from a subarray
         create_fsp_proxy.RemoveSubarrayMembership(3)
+        time.sleep(1)
         assert create_fsp_proxy.subarrayMembership == (4,)
 
         # add again...
         create_fsp_proxy.AddSubarrayMembership(15)
+        time.sleep(1)
         assert create_fsp_proxy.subarrayMembership == (4, 15)
 
         # remove from all subarrays
         create_fsp_proxy.RemoveSubarrayMembership(4)
         create_fsp_proxy.RemoveSubarrayMembership(15)
+        time.sleep(1)
         assert create_fsp_proxy.subarrayMembership == None

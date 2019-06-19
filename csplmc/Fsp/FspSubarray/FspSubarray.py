@@ -307,8 +307,8 @@ class FspSubarray(SKASubarray):
             if receptorID in self._receptors:
                 self._receptors.remove(receptorID)
             else:
-                log_msg = "Receptor {} not assigned to FSP subarray. "
-                "Skipping.".format(str(receptorID))
+                log_msg = "Receptor {} not assigned to FSP subarray. "\
+                    "Skipping.".format(str(receptorID))
                 self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
         # PROTECTED REGION END #    //  FspSubarray.RemoveReceptors
 
@@ -336,28 +336,55 @@ class FspSubarray(SKASubarray):
 
         errs = []
 
-        # set frequencyBand
-        self._frequency_band = self._proxy_cbf_subarray.frequencyBand
+        # Validate frequencyBand
+        # If not given, ignore the FSP and append an error (due to implementation details, this
+        # never happens).
+        # If malformed, ignore the FSP and append an error (due to implementation details, this
+        # never happens).
+        if "frequencyBand" in argin:
+            frequency_bands = ["1", "2", "3", "4", "5a", "5b"]
+            if argin["frequencyBand"] in frequency_bands:
+                self._frequency_band = frequency_bands.index(argin["frequencyBand"])
+            else:
+                msg = "\n".join(errs)
+                msg += "'frequencyBand' must be one of {} (received {}). " \
+                       "Aborting configuration.".format(frequency_bands, argin["frequency_band"])
+                # this is a fatal error
+                self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+                PyTango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
+                                               PyTango.ErrSeverity.ERR)
+        else:
+            msg = "\n".join(errs)
+            msg += "FSP specified, but 'frequencyBand' not given. Ignoring FSP."
+            # this is a fatal error
+            self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+            PyTango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
+                                           PyTango.ErrSeverity.ERR)
 
         # Validate receptors
-        # If not given, use all receptors assigned to the subarray.
-        # If malformed, use all receptors assigned to the subarray, but append an error.
-        try:
-            if "receptors" in argin:
+        # If not given, ignore the FSP and append an error (due to implementation details, this
+        # never happens).
+        # If malformed, ignore the FSP and append an error.
+        if "receptors" in argin:
+            try:
                 self.RemoveAllReceptors()
                 self.AddReceptors(map(int, argin["receptors"]))
-            else:
+            except PyTango.DevFailed as df:  # error in AddReceptors()
                 self.RemoveAllReceptors()
-                self.AddReceptors(self._proxy_cbf_subarray.receptors)
-                log_msg = "'receptors' not given. Using all available receptors."
-                self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
-        except PyTango.DevFailed as df:  # error in AddReceptors()
+                msg = "\n".join(errs)
+                msg += "'receptors' was malformed. Ignoring FSP."
+                # this is a fatal error
+                self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+                PyTango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
+                                               PyTango.ErrSeverity.ERR)
+        else:
             self.RemoveAllReceptors()
-            self.AddReceptors(self._proxy_cbf_subarray.receptors)
-            errs.append(str(df.value.args[0].desc))
-            log_msg = "'receptors' was malformed. Using all available receptors."
-            self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
-            errs.append(log_msg)
+            msg = "\n".join(errs)
+            msg += "FSP specified, but 'receptors' not given. Ignoring FSP."
+            # this is a fatal error
+            self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+            PyTango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
+                                           PyTango.ErrSeverity.ERR)
 
         # Validate frequencySliceID
         # If not given, ignore the FSP and append an error.
@@ -368,17 +395,23 @@ class FspSubarray(SKASubarray):
                     range(1, num_frequency_slices[self._frequency_band] + 1)):
                 self._frequency_slice_ID = int(argin["frequencySliceID"])
             else:
-                log_msg = "'frequencySliceID' must be an integer in the range [1, {}] "
-                "for a 'frequencyBand' of {}. Ignoring FSP.".format(
-                    str(num_frequency_slices[self._frequency_band]),
-                    str(self._frequency_band)
-                )
-                self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
-                errs.append(log_msg)
+                msg = "\n".join(errs)
+                msg += "'frequencySliceID' must be an integer in the range [1, {}] "\
+                    "for a 'frequencyBand' of {}. Ignoring FSP.".format(
+                        str(num_frequency_slices[self._frequency_band]),
+                        str(self._frequency_band)
+                    )
+                # this is a fatal error
+                self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+                PyTango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
+                                               PyTango.ErrSeverity.ERR)
         else:
-            log_msg = "FSP specified, but 'frequencySliceID' not given. Ignoring FSP."
-            self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
-            errs.append(log_msg)
+            msg = "\n".join(errs)
+            msg += "FSP specified, but 'frequencySliceID' not given. Ignoring FSP."
+            # this is a fatal error
+            self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+            PyTango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
+                                           PyTango.ErrSeverity.ERR)
 
         # Validate corrBandwidth
         # If not given, ignore the FSP and append an error.
@@ -387,13 +420,19 @@ class FspSubarray(SKASubarray):
             if int(argin["corrBandwidth"]) in list(range(0, 7)):
                 self._bandwidth = int(argin["corrBandwidth"])
             else:
-                log_msg = "'corrBandwidth' must be an integer in the range [0, 6]. Ignoring FSP."
-                self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
-                errs.append(log_msg)
+                msg = "\n".join(errs)
+                msg += "'corrBandwidth' must be an integer in the range [0, 6]. Ignoring FSP."
+                # this is a fatal error
+                self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+                PyTango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
+                                               PyTango.ErrSeverity.ERR)
         else:
-            log_msg = "FSP specified, but 'corrBandwidth' not given. Ignoring FSP."
-            self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
-            errs.append(log_msg)
+            msg = "\n".join(errs)
+            msg += "FSP specified, but 'corrBandwidth' not given. Ignoring FSP."
+            # this is a fatal error
+            self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+            PyTango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
+                                           PyTango.ErrSeverity.ERR)
 
         # Validate zoomWindowTuning
         # If not given when required, ignore the FSP and append an error.
@@ -403,9 +442,12 @@ class FspSubarray(SKASubarray):
                 # TODO: validate input
                 self._zoom_window_tuning = int(argin["zoomWindowTuning"])
             else:
-                log_msg = "FSP specified, but 'zoomWindowTuning' not given. Ignoring FSP."
-                self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
-                errs.append(log_msg)
+                msg = "\n".join(errs)
+                msg += "FSP specified, but 'zoomWindowTuning' not given. Ignoring FSP."
+                # this is a fatal error
+                self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+                PyTango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
+                                               PyTango.ErrSeverity.ERR)
 
         # Validate integrationTime
         # If not given, ignore the FSP and append an error.
@@ -414,14 +456,20 @@ class FspSubarray(SKASubarray):
             if int(argin["integrationTime"]) in list(range(140, 1401, 140)):
                 self._integration_time = int(argin["integrationTime"])
             else:
-                log_msg = "'integrationTime' must be an integer in the range [1, 10] multiplied by "
-                "140. Ignoring FSP."
-                self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
-                errs.append(log_msg)
+                msg = "\n".join(errs)
+                msg += "'integrationTime' must be an integer in the range [1, 10] multiplied "\
+                    "by 140. Ignoring FSP."
+                # this is a fatal error
+                self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+                PyTango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
+                                               PyTango.ErrSeverity.ERR)
         else:
-            log_msg = "FSP specified, but 'integrationTime' not given. Ignoring FSP."
-            self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
-            errs.append(log_msg)
+            msg = "\n".join(errs)
+            msg += "FSP specified, but 'integrationTime' not given. Ignoring FSP."
+            # this is a fatal error
+            self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+            PyTango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
+                                           PyTango.ErrSeverity.ERR)
 
         # Validate channelAveragingMap
         # If not given, use a default value.
@@ -442,22 +490,22 @@ class FspSubarray(SKASubarray):
                         self._channel_averaging_map[i][1] = int(argin["channelAveragingMap"][i][1])
                     else:
                         self._channel_averaging_map[i][1] = 0
-                        log_msg = "'channelAveragingMap'[n][1] must be one of "
-                        "[0, 1, 2, 3, 4, 5, 6, 8]. Defaulting to 0 for channel {0}.".format(
-                            argin["channelAveragingMap"][i][0]
-                        )
+                        log_msg = "'channelAveragingMap'[n][1] must be one of "\
+                            "[0, 1, 2, 3, 4, 5, 6, 8]. Defaulting to 0 for channel {0}.".format(
+                                argin["channelAveragingMap"][i][0]
+                            )
                         self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
                         errs.append(log_msg)
             except (TypeError, AssertionError):  # dimensions not correct
                 self._channel_averaging_map = [[0, 0] for i in range(20)]
-                log_msg = "'channelAveragingMap' must be an 2D array of dimensions 2x20. "
-                "Defaulting to averaging factor = 0 for all channels."
+                log_msg = "'channelAveragingMap' must be an 2D array of dimensions 2x20. "\
+                    "Defaulting to averaging factor = 0 for all channels."
                 self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
                 errs.append(log_msg)
         else:
             self._channel_averaging_map = [[0, 0] for i in range(20)]
-            log_msg = "FSP specified, but 'channelAveragingMap not given. Default to averaging "
-            "factor = 0 for all channels."
+            log_msg = "FSP specified, but 'channelAveragingMap not given. Default to averaging "\
+                "factor = 0 for all channels."
             self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
 
         # raise an error if something went wrong

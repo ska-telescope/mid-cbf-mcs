@@ -15,23 +15,15 @@
             "tdcNumBits": 8,
             "tdcPeriodBeforeEpoch": 5,
             "tdcPeriodAfterEpoch": 25,
-            "tdcDestinationAddress": [
-                {
-                    "10": ["foo", "bar", "baz"],
-                    "197": ["fizz", "buzz", "fizz-buzz"]
-                }
-            ]
+            "tdcDestinationAddress": {
+                "10": ["foo", "bar", "baz"],
+                "197": ["fizz", "buzz", "fizz-buzz"]
+            }
         },
         {
             "searchWindowID": 2,
             "searchWindowTuning": 7000000000,
-            "tdcNumBits": 4,
-            "tdcDestinationAddress": [
-                {
-                    "10": ["baz", "foo", "bar"],
-                    "197": ["fizz-buzz", "fizz", "buzz"]
-                }
-            ]
+            "tdcEnable": false
         }
     ],
     "fsp": [

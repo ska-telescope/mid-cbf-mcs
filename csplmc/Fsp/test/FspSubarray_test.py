@@ -198,7 +198,7 @@ class TestFspSubarray:
         # check initial values of attributes
         assert create_fsp_subarray_1_1_proxy.receptors == ()
         assert create_fsp_subarray_1_1_proxy.frequencySliceID == 0
-        assert create_fsp_subarray_1_1_proxy.bandwidth == 0
+        assert create_fsp_subarray_1_1_proxy.corrBandwidth == 0
         assert create_fsp_subarray_1_1_proxy.zoomWindowTuning == 0
         assert create_fsp_subarray_1_1_proxy.integrationTime == 0
         assert create_fsp_subarray_1_1_proxy.channelAveragingMap == \
@@ -214,7 +214,7 @@ class TestFspSubarray:
 
         assert create_fsp_subarray_1_1_proxy.receptors == (10, 197)
         assert create_fsp_subarray_1_1_proxy.frequencySliceID == 4
-        assert create_fsp_subarray_1_1_proxy.bandwidth == 1
+        assert create_fsp_subarray_1_1_proxy.corrBandwidth == 1
         assert create_fsp_subarray_1_1_proxy.zoomWindowTuning == 500000
         assert create_fsp_subarray_1_1_proxy.integrationTime == 140
         assert create_fsp_subarray_1_1_proxy.channelAveragingMap == (

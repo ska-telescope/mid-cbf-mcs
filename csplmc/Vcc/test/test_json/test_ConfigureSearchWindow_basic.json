@@ -5,5 +5,7 @@
     "tdcNumBits": 8,
     "tdcPeriodBeforeEpoch": 5,
     "tdcPeriodAfterEpoch": 25,
-    "destinationAddress": ["", "", ""]
+    "tdcDestinationAddress": {
+        "1": ["", "", ""]
+    }
 }

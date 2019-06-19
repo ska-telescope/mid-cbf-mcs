@@ -288,10 +288,10 @@ class CbfMaster(SKAMaster):
     )
 
     subarrayScanID = attribute(
-        dtype=('uint'),
+        dtype=('uint',),
         max_dim_x=16,
         label="Subarray scan IDs",
-        pooling_period=3000,
+        polling_period=3000,
         doc="ID of subarray scans. 0 if subarray is not configured for a scan."
     )
 
@@ -457,7 +457,7 @@ class CbfMaster(SKAMaster):
         self._group_subarray.add("mid_csp_cbf/cbfSubarray/*")
 
         # initialize dicts with maps receptorID <=> vccID (randomly for now, for testing purposes)
-        # maps receptors IDs to VCC IDs, in the form "receptorID:vccID"
+        # maps receptor IDs to VCC IDs, in the form "receptorID:vccID"
         self._receptor_to_vcc = []
         # maps VCC IDs to receptor IDs, in the form "vccID:receptorID"
         self._vcc_to_receptor = []
@@ -465,8 +465,11 @@ class CbfMaster(SKAMaster):
         remaining = list(range(1, self._count_vcc + 1))
         for i in range(1, self._count_vcc + 1):
             receptorIDIndex = randint(0, len(remaining) - 1)
-            self._receptor_to_vcc.append("{}:{}".format(str(remaining[receptorIDIndex]), str(i)))
-            self._vcc_to_receptor.append("{}:{}".format(str(i), str(remaining[receptorIDIndex])))
+            receptorID = remaining[receptorIDIndex]
+            self._receptor_to_vcc.append("{}:{}".format(receptorID, i))
+            self._vcc_to_receptor.append("{}:{}".format(i, receptorID))
+            vcc_proxy = PyTango.DeviceProxy(self._fqdn_vcc[i - 1])
+            vcc_proxy.receptorID = receptorID
             del remaining[receptorIDIndex]
 
         # initialize the dict with subarray/capability proxies
@@ -630,8 +633,8 @@ class CbfMaster(SKAMaster):
         if len(value) == self._count_vcc:
             self._frequency_offset_k = value
         else:
-            log_msg = "Skipped writing to frequencyOffsetK attribute (expected {} arguments, \
-                            but received {}.".format(self._count_vcc, len(value))
+            log_msg = "Skipped writing to frequencyOffsetK attribute (expected {} arguments, "\
+                "but received {}.".format(self._count_vcc, len(value))
             self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
         # PROTECTED REGION END #    //  CbfMaster.frequencyOffsetK_write
 
@@ -645,8 +648,8 @@ class CbfMaster(SKAMaster):
         if len(value) == self._count_vcc:
             self._frequency_offset_delta_f = value
         else:
-            log_msg = "Skipped writing to frequencyOffsetDeltaF attribute (expected {} arguments, \
-                but received {}.".format(self._count_vcc, len(value))
+            log_msg = "Skipped writing to frequencyOffsetDeltaF attribute (expected {} arguments, "\
+                "but received {}.".format(self._count_vcc, len(value))
             self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
         # PROTECTED REGION END #    //  CbfMaster.frequencyOffsetDeltaF_write
 

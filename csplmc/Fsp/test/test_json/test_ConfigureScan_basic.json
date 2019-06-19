@@ -1,5 +1,6 @@
 {
 	"receptors": [10, 197],
+	"frequencyBand": "5a",
 	"frequencySliceID": 4,
 	"corrBandwidth": 1,
 	"zoomWindowTuning": 500000,
