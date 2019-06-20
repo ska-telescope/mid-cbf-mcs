@@ -79,7 +79,7 @@ class Vcc(SKACapability):
             names[1] = "vcc_band5"
             self._proxy_band_5 = PyTango.DeviceProxy("/".join(names))
 
-        if self.TDCAddress1:
+        if self.TDC1Address:
             self._proxy_tdc_1 = PyTango.DeviceProxy(self.TDCAddress1)
         else:
             # use this default value
@@ -87,7 +87,7 @@ class Vcc(SKACapability):
             names[1] = "vcc_tdc1"
             self._proxy_tdc_1 = PyTango.DeviceProxy("/".join(names))
 
-        if self.TDCAddress2:
+        if self.TDC2Address:
             self._proxy_tdc_2 = PyTango.DeviceProxy(self.TDCAddress2)
         else:
             # use this default value
@@ -117,11 +117,11 @@ class Vcc(SKACapability):
         dtype='str'
     )
 
-    TDCAddress1 = device_property(
+    TDC1Address = device_property(
         dtype='str'
     )
 
-    TDCAddress2 = device_property(
+    TDC2Address = device_property(
         dtype='str'
     )
 
@@ -247,6 +247,13 @@ class Vcc(SKACapability):
         doc="Sample clock frequency offset for band 5b",
     )
 
+    delayModel = attribute(
+        dtype='str',
+        access=AttrWriteType.READ_WRITE,
+        label="Delay model coefficients",
+        doc="Delay model coefficients, given as a JSON object"
+    )
+
 
     # ---------------
     # General methods
@@ -285,6 +292,7 @@ class Vcc(SKACapability):
         self._scfo_band_4 = 0
         self._scfo_band_5a = 0
         self._scfo_band_5b = 0
+        self._delay_model = ""
 
         self.set_state(PyTango.DevState.OFF)
         # PROTECTED REGION END #    //  Vcc.init_device
@@ -437,6 +445,16 @@ class Vcc(SKACapability):
         # PROTECTED REGION ID(Vcc.scfoBand5b_write) ENABLED START #
         self._scfo_band_5b = value
         # PROTECTED REGION END #    //  Vcc.scfoBand5b_write
+
+    def read_delayModel(self):
+        # PROTECTED REGION ID(Vcc.delayModel_read) ENABLED START #
+        return self._delay_model
+        # PROTECTED REGION END #    //  Vcc.delayModel_read
+
+    def write_delayModel(self, value):
+        # PROTECTED REGION ID(Vcc.delayModel_write) ENABLED START #
+        self._delay_model = value
+        # PROTECTED REGION END #    //  Vcc.delayModel_write
 
 
     # --------

@@ -27,6 +27,7 @@ import os
 import sys
 import json
 import copy
+from random import randint
 
 file_path = os.path.dirname(os.path.abspath(__file__))
 commons_pkg_path = os.path.abspath(os.path.join(file_path, "../../commons"))
@@ -65,6 +66,8 @@ class CbfSubarray(SKASubarray):
             try:
                 for fsp_subarray in self._proxies_assigned_fsp_subarray:
                     fsp_subarray.delayModel = event.attr_value.value
+                for vcc in self._proxies_assigned_vcc:
+                    vcc.delayModel = event.attr_value.value
                 log_msg = "Value of " + str(event.attr_name) + " is " + str(event.attr_value.value)
                 self.dev_logging(log_msg, PyTango.LogLevel.LOG_DEBUG)
             except Exception as e:
@@ -110,6 +113,16 @@ class CbfSubarray(SKASubarray):
             for item in event.errors:
                 log_msg = item.reason + ": on attribute " + str(event.attr_name)
                 self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
+
+    def __generate_links(self):
+        """
+        Generate output links. Random for now.
+        """
+        self._output_links = []
+        receptors = sorted(self._receptors)
+        for i in range(len(receptors)):
+            for j in range(i, len(receptors)):
+                self._output_links.append([receptors[i], receptors[j], randint(1, 80)])
 
     # PROTECTED REGION END #    //  CbfSubarray.class_variable
 
@@ -171,6 +184,15 @@ class CbfSubarray(SKASubarray):
         doc="List of receptors assigned to subarray",
     )
 
+    outputLinks = attribute(
+        dtype=(('uint16',),),
+        access=AttrWriteType.READ,
+        max_dim_x=3,
+        max_dim_y=19503,
+        label="Output links",
+        doc="Table of output links assigned to baselines",
+    )
+
     vccState = attribute(
         dtype=('DevState',),
         max_dim_x=197,
@@ -224,6 +246,7 @@ class CbfSubarray(SKASubarray):
         self._receptors = []
         self._frequency_band = 0
         self._scan_ID = 0
+        self._output_links = []
         self._vcc_state = {}  # device_name:state
         self._vcc_health_state = {}  # device_name:healthState
         self._fsp_state = {}  # device_name:state
@@ -297,6 +320,11 @@ class CbfSubarray(SKASubarray):
         self.RemoveAllReceptors()
         self.AddReceptors(value)
         # PROTECTED REGION END #    //  CbfSubarray.receptors_write
+
+    def read_outputLinks(self):
+        # PROTECTED REGION ID(CbfSubarray.outputLinks_read) ENABLED START #
+        return self._output_links
+        # PROTECTED REGION END #    //  CbfSubarray.outputLinks_read
 
     def read_vccState(self):
         # PROTECTED REGION ID(CbfSubarray.vccState_read) ENABLED START #
@@ -673,11 +701,7 @@ class CbfSubarray(SKASubarray):
                 # set up attribute polling and change events
                 attribute_proxy.poll(1000)  # polling period in milliseconds, may change later
                 attribute_info = attribute_proxy.get_config()
-                """
-                change_event_info = PyTango.ChangeEventInfo()
-                change_event_info.abs_change = "1"  # subscribe to all changes
-                attribute_info.events.ch_event = change_event_info
-                """
+
                 periodic_event_info = PyTango.PeriodicEventInfo()
                 periodic_event_info.period = "10000"  # periodic event every 10 seconds
                 attribute_info.events.per_event = periodic_event_info
@@ -710,11 +734,7 @@ class CbfSubarray(SKASubarray):
                 # set up attribute polling and change events
                 attribute_proxy.poll(1000)  # polling period in milliseconds, may change later
                 attribute_info = attribute_proxy.get_config()
-                """
-                change_event_info = PyTango.ChangeEventInfo()
-                change_event_info.abs_change = "1"  # subscribe to all changes
-                attribute_info.events.ch_event = change_event_info
-                """
+
                 periodic_event_info = PyTango.PeriodicEventInfo()
                 periodic_event_info.period = "10000"  # periodic event every 10 seconds
                 attribute_info.events.per_event = periodic_event_info
@@ -876,6 +896,10 @@ class CbfSubarray(SKASubarray):
             self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
             errs.append(log_msg)
 
+        self.__generate_links()
+
+        self._obs_state = ObsState.IDLE.value
+
         # raise an error if something went wrong
         if errs:
             msg = "\n".join(errs)
@@ -883,8 +907,8 @@ class CbfSubarray(SKASubarray):
             PyTango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
                                            PyTango.ErrSeverity.ERR)
 
-        # transition state to READY
         self._obs_state = ObsState.READY.value
+
         # PROTECTED REGION END #    //  CbfSubarray.ConfigureScan
 
 # ----------
