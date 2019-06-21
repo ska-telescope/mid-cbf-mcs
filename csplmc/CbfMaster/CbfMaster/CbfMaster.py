@@ -234,13 +234,17 @@ class CbfMaster(SKAMaster):
     # Device Properties
     # -----------------
 
+    CbfSubarray = device_property(
+        dtype=('str',)
+    )
 
+    VCC = device_property(
+        dtype=('str',)
+    )
 
-
-
-
-
-
+    FSP = device_property(
+        dtype=('str',)
+    )
 
     # ----------
     # Attributes
@@ -441,20 +445,9 @@ class CbfMaster(SKAMaster):
         self.__set_cbf_state()
 
         # initialize lists with subarray/capability FQDNs
-        self._fqdn_vcc = [*map(lambda i: "mid_csp_cbf/vcc/" + str(i + 1).zfill(3),
-                               range(self._count_vcc))]
-        self._fqdn_fsp = [*map(lambda i: "mid_csp_cbf/fsp/" + str(i + 1).zfill(2),
-                               range(self._count_fsp))]
-        self._fqdn_subarray = [*map(lambda i: "mid_csp_cbf/cbfSubarray/" + str(i + 1).zfill(2),
-                                    range(self._count_subarray))]
-
-        # groups to facilitate easy commands and attribute-reading/writing
-        self._group_vcc = PyTango.Group("vcc")
-        self._group_vcc.add("mid_csp_cbf/vcc/*")
-        self._group_fsp = PyTango.Group("fsp")
-        self._group_fsp.add("mid_csp_cbf/fsp/*")
-        self._group_subarray = PyTango.Group("subarray")
-        self._group_subarray.add("mid_csp_cbf/cbfSubarray/*")
+        self._fqdn_vcc = list(self.VCC)
+        self._fqdn_fsp = list(self.FSP)
+        self._fqdn_subarray = list(self.CbfSubarray)
 
         # initialize dicts with maps receptorID <=> vccID (randomly for now, for testing purposes)
         # maps receptor IDs to VCC IDs, in the form "receptorID:vccID"

@@ -80,7 +80,7 @@ class Vcc(SKACapability):
             self._proxy_band_5 = PyTango.DeviceProxy("/".join(names))
 
         if self.TDC1Address:
-            self._proxy_tdc_1 = PyTango.DeviceProxy(self.TDCAddress1)
+            self._proxy_tdc_1 = PyTango.DeviceProxy(self.TDC1Address)
         else:
             # use this default value
             names = self.get_name().split("/")
@@ -88,7 +88,7 @@ class Vcc(SKACapability):
             self._proxy_tdc_1 = PyTango.DeviceProxy("/".join(names))
 
         if self.TDC2Address:
-            self._proxy_tdc_2 = PyTango.DeviceProxy(self.TDCAddress2)
+            self._proxy_tdc_2 = PyTango.DeviceProxy(self.TDC2Address)
         else:
             # use this default value
             names = self.get_name().split("/")

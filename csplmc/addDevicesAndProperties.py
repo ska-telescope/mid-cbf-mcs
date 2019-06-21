@@ -40,7 +40,7 @@ for device in json_devices:
             db.put_device_property(dev_info.name,
                                    {deviceProperty["devPropName"]:
                                         deviceProperty["devPropValue"]})
-
+    """
     # Adding attribute properties
     for attributeProperty in device["attributeProperties"]:
         # Adding attribute property: attributeProperty["attrPropName"]
@@ -51,3 +51,4 @@ for device in json_devices:
                                              {attributeProperty["attributeName"]:
                                                   {attributeProperty["attrPropName"]:
                                                        attributeProperty["attrPropValue"]}})
+    """

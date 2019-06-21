@@ -114,16 +114,6 @@ class CbfSubarray(SKASubarray):
                 log_msg = item.reason + ": on attribute " + str(event.attr_name)
                 self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
 
-    def __generate_links(self):
-        """
-        Generate output links. Random for now.
-        """
-        self._output_links = []
-        receptors = sorted(self._receptors)
-        for i in range(len(receptors)):
-            for j in range(i, len(receptors)):
-                self._output_links.append([receptors[i], receptors[j], randint(1, 80)])
-
     # PROTECTED REGION END #    //  CbfSubarray.class_variable
 
     # -----------------
@@ -138,9 +128,20 @@ class CbfSubarray(SKASubarray):
     CbfMasterAddress = device_property(
         dtype='str',
         doc="FQDN of CBF Master",
-        default_value="mid_csp_cbf/master/main"
+        default_value="mid_csp_cbf/sub_elt/master"
     )
 
+    VCC = device_property(
+        dtype=('str',)
+    )
+
+    FSP = device_property(
+        dtype=('str',)
+    )
+	
+    FspSubarray = device_property(
+        dtype=('str',)
+    )
 
     # ----------
     # Attributes
@@ -182,15 +183,6 @@ class CbfSubarray(SKASubarray):
         max_dim_x=197,
         label="Receptors",
         doc="List of receptors assigned to subarray",
-    )
-
-    outputLinks = attribute(
-        dtype=(('uint16',),),
-        access=AttrWriteType.READ,
-        max_dim_x=3,
-        max_dim_y=19503,
-        label="Output links",
-        doc="Table of output links assigned to baselines",
     )
 
     vccState = attribute(
@@ -257,13 +249,9 @@ class CbfSubarray(SKASubarray):
 
         self._count_vcc = 197
         self._count_fsp = 27
-        self._fqdn_vcc = [*map(lambda i: "mid_csp_cbf/vcc/{:03d}".format(i + 1),
-                               range(self._count_vcc))]
-        self._fqdn_fsp = [*map(lambda i: "mid_csp_cbf/fsp/{:02d}".format(i + 1),
-                               range(self._count_fsp))]
-        self._fqdn_fsp_subarray = [*map(lambda i: "mid_csp_cbf/fspSubarray/{0:02d}_"
-                                   "{1:02d}".format(i + 1, self._subarray_id),
-                                        range(self._count_fsp))]
+        self._fqdn_vcc = self.VCC
+        self._fqdn_fsp = self.FSP
+        self._fqdn_fsp_subarray = self.FspSubarray
 
         self._proxies_vcc = [*map(PyTango.DeviceProxy, self._fqdn_vcc)]
         self._proxies_fsp = [*map(PyTango.DeviceProxy, self._fqdn_fsp)]
@@ -895,8 +883,6 @@ class CbfSubarray(SKASubarray):
             log_msg = "'fsp' not given."
             self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
             errs.append(log_msg)
-
-        self.__generate_links()
 
         self._obs_state = ObsState.IDLE.value
 
