@@ -6,12 +6,12 @@
 #
 # DOCKER_REGISTRY_HOST, DOCKER_REGISTRY_USER and PROJECT are combined to define
 # the Docker tag for this project. The definition below inherits the standard
-# value for DOCKER_REGISTRY_HOST (=rnexus.engageska-portugal.pt) and overwrites
+# value for DOCKER_REGISTRY_HOST (nexus.engageska-portugal.pt) and overwrites
 # DOCKER_REGISTRY_USER and PROJECT to give a final Docker tag of
-# nexus.engageska-portugal.pt/tango-example/csplmc
+# nexus.engageska-portugal.pt/ska-docker/mid-cbf-mcs
 #
 DOCKER_REGISTRY_USER:=ska-docker
-PROJECT = csplmc
+PROJECT = mid-cbf-mcs
 
 #
 # include makefile to pick up the standard Make targets, e.g., 'make build'
@@ -96,6 +96,7 @@ WEBJIVE_COMPOSE_FILE_ARGS := $(foreach yml,$(WEBJIVE_COMPOSE_FILES),-f $(yml))
 DOCKER_COMPOSE_ARGS := DISPLAY=$(DISPLAY) XAUTHORITY=$(XAUTHORITY) TANGO_HOST=$(TANGO_HOST) \
 		NETWORK_MODE=$(NETWORK_MODE) XAUTHORITY_MOUNT=$(XAUTHORITY_MOUNT) MYSQL_HOST=$(MYSQL_HOST) \
 		DOCKER_REGISTRY_HOST=$(DOCKER_REGISTRY_HOST) DOCKER_REGISTRY_USER=$(DOCKER_REGISTRY_USER) \
+        PROJECT=$(PROJECT) \
 		CONTAINER_NAME_PREFIX=$(CONTAINER_NAME_PREFIX) COMPOSE_IGNORE_ORPHANS=true
 
 #
@@ -158,8 +159,8 @@ interactive:  ## start an interactive session using the project image (caution: 
 down:  ## stop develop/test environment and any interactive session
 ##	docker ps | grep $(CONTAINER_NAME_PREFIX)dev && docker stop $(PROJECT)-dev || true
 ##	$(DOCKER_COMPOSE_ARGS) docker-compose down
-	docker stop $(docker ps -a -q)
-	docker rm $(docker ps -a -q)
+	docker stop $$(docker ps -a -q)
+	docker rm $$(docker ps -a -q)
 ifneq ($(NETWORK_MODE),host)
 	docker network inspect $(NETWORK_MODE) &> /dev/null && ([ $$? -eq 0 ] && docker network rm $(NETWORK_MODE)) || true
 endif

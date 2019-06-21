@@ -64,7 +64,7 @@ class TmTelstateTest(SKABaseDevice):
     # ----------
 
     dopplerPhaseCorrection_1 = attribute(
-        dtype=('float',),
+        dtype=('double',),
         access=AttrWriteType.READ_WRITE,
         max_dim_x=4,
         label="Doppler phase correction (subarray 1)",
@@ -72,7 +72,7 @@ class TmTelstateTest(SKABaseDevice):
     )
 
     dopplerPhaseCorrection_2 = attribute(
-        dtype=('float',),
+        dtype=('double',),
         access=AttrWriteType.READ_WRITE,
         max_dim_x=4,
         label="Doppler phase correction (subarray 2)",
@@ -80,7 +80,7 @@ class TmTelstateTest(SKABaseDevice):
     )
 
     dopplerPhaseCorrection_3 = attribute(
-        dtype=('float',),
+        dtype=('double',),
         access=AttrWriteType.READ_WRITE,
         max_dim_x=4,
         label="Doppler phase correction (subarray 3)",
@@ -88,7 +88,7 @@ class TmTelstateTest(SKABaseDevice):
     )
 
     dopplerPhaseCorrection_4 = attribute(
-        dtype=('float',),
+        dtype=('double',),
         access=AttrWriteType.READ_WRITE,
         max_dim_x=4,
         label="Doppler phase correction (subarray 4)",
@@ -96,7 +96,7 @@ class TmTelstateTest(SKABaseDevice):
     )
 
     dopplerPhaseCorrection_5 = attribute(
-        dtype=('float',),
+        dtype=('double',),
         access=AttrWriteType.READ_WRITE,
         max_dim_x=4,
         label="Doppler phase correction (subarray 5)",
@@ -104,7 +104,7 @@ class TmTelstateTest(SKABaseDevice):
     )
 
     dopplerPhaseCorrection_6 = attribute(
-        dtype=('float',),
+        dtype=('double',),
         access=AttrWriteType.READ_WRITE,
         max_dim_x=4,
         label="Doppler phase correction (subarray 6)",
@@ -112,7 +112,7 @@ class TmTelstateTest(SKABaseDevice):
     )
 
     dopplerPhaseCorrection_7 = attribute(
-        dtype=('float',),
+        dtype=('double',),
         access=AttrWriteType.READ_WRITE,
         max_dim_x=4,
         label="Doppler phase correction (subarray 7)",
@@ -120,7 +120,7 @@ class TmTelstateTest(SKABaseDevice):
     )
 
     dopplerPhaseCorrection_8 = attribute(
-        dtype=('float',),
+        dtype=('double',),
         access=AttrWriteType.READ_WRITE,
         max_dim_x=4,
         label="Doppler phase correction (subarray 8)",
@@ -128,7 +128,7 @@ class TmTelstateTest(SKABaseDevice):
     )
 
     dopplerPhaseCorrection_9 = attribute(
-        dtype=('float',),
+        dtype=('double',),
         access=AttrWriteType.READ_WRITE,
         max_dim_x=4,
         label="Doppler phase correction (subarray 9)",
@@ -136,7 +136,7 @@ class TmTelstateTest(SKABaseDevice):
     )
 
     dopplerPhaseCorrection_10 = attribute(
-        dtype=('float',),
+        dtype=('double',),
         access=AttrWriteType.READ_WRITE,
         max_dim_x=4,
         label="Doppler phase correction (subarray 10)",
@@ -144,7 +144,7 @@ class TmTelstateTest(SKABaseDevice):
     )
 
     dopplerPhaseCorrection_11 = attribute(
-        dtype=('float',),
+        dtype=('double',),
         access=AttrWriteType.READ_WRITE,
         max_dim_x=4,
         label="Doppler phase correction (subarray 11)",
@@ -152,7 +152,7 @@ class TmTelstateTest(SKABaseDevice):
     )
 
     dopplerPhaseCorrection_12 = attribute(
-        dtype=('float',),
+        dtype=('double',),
         access=AttrWriteType.READ_WRITE,
         max_dim_x=4,
         label="Doppler phase correction (subarray 12)",
@@ -160,7 +160,7 @@ class TmTelstateTest(SKABaseDevice):
     )
 
     dopplerPhaseCorrection_13 = attribute(
-        dtype=('float',),
+        dtype=('double',),
         access=AttrWriteType.READ_WRITE,
         max_dim_x=4,
         label="Doppler phase correction (subarray 13)",
@@ -168,7 +168,7 @@ class TmTelstateTest(SKABaseDevice):
     )
 
     dopplerPhaseCorrection_14 = attribute(
-        dtype=('float',),
+        dtype=('double',),
         access=AttrWriteType.READ_WRITE,
         max_dim_x=4,
         label="Doppler phase correction (subarray 14)",
@@ -176,7 +176,7 @@ class TmTelstateTest(SKABaseDevice):
     )
 
     dopplerPhaseCorrection_15 = attribute(
-        dtype=('float',),
+        dtype=('double',),
         access=AttrWriteType.READ_WRITE,
         max_dim_x=4,
         label="Doppler phase correction (subarray 15)",
@@ -184,7 +184,7 @@ class TmTelstateTest(SKABaseDevice):
     )
 
     dopplerPhaseCorrection_16 = attribute(
-        dtype=('float',),
+        dtype=('double',),
         access=AttrWriteType.READ_WRITE,
         max_dim_x=4,
         label="Doppler phase correction (subarray 16)",

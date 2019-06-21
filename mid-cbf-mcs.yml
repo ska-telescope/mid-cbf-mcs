@@ -1,0 +1,399 @@
+version: "2.2"
+
+services:
+  add-devs-and-props:
+    image: ${DOCKER_REGISTRY_HOST}/${DOCKER_REGISTRY_USER}/${PROJECT}:latest
+    depends_on:
+      - databaseds
+    network_mode: ${NETWORK_MODE}
+    container_name: ${CONTAINER_NAME_PREFIX}add-devs-and-props
+    environment:
+      - TANGO_HOST=${TANGO_HOST}
+    command: >
+      sh -c "wait-for-it.sh ${TANGO_HOST} --timeout=30 --strict --
+             /venv/bin/python /app/csplmc/addDevicesAndProperties.py"
+
+#  vcc:
+#    image: ${DOCKER_REGISTRY_HOST}/${DOCKER_REGISTRY_USER}/${PROJECT}:latest
+#    network_mode: ${NETWORK_MODE}
+#    container_name: ${CONTAINER_NAME_PREFIX}vcc
+#    depends_on:
+#      - databaseds
+#      - rsyslog-csplmc
+#      - vcccapabilities
+#      - add-devs-and-props
+#    environment:
+#      - TANGO_HOST=${TANGO_HOST}
+#    command: >
+#      sh -c "wait-for-it.sh ${TANGO_HOST} --timeout=30 --strict --
+#             for i in $$(seq -w 1 197); do \
+#             tango_admin --check-device mid_csp_cbf/vcc/$$i &&\
+#             /venv/bin/python /app/csplmc/Vcc/Vcc/Vcc.py vcc-$$i; done"
+
+  vcc001:
+    image: ${DOCKER_REGISTRY_HOST}/${DOCKER_REGISTRY_USER}/${PROJECT}:latest
+    network_mode: ${NETWORK_MODE}
+    container_name: ${CONTAINER_NAME_PREFIX}vcc001
+    depends_on:
+      - databaseds
+      - rsyslog-csplmc
+      - vccband1and2001
+      - vccband3001
+      - vccband4001
+      - vccband5001
+      - vcctdc1001
+      - vcctdc2001
+      - add-devs-and-props
+    environment:
+      - TANGO_HOST=${TANGO_HOST}
+    command: >
+      sh -c "wait-for-it.sh ${TANGO_HOST} --timeout=30 --strict --
+             tango_admin --check-device mid_csp_cbf/vcc/001 &&\
+             /venv/bin/python /app/csplmc/Vcc/Vcc/Vcc.py vcc-001"
+             
+#  vcccapabilities:
+#    image: ${DOCKER_REGISTRY_HOST}/${DOCKER_REGISTRY_USER}/${PROJECT}:latest
+#    network_mode: ${NETWORK_MODE}
+#    container_name: ${CONTAINER_NAME_PREFIX}vcccapabilities
+#    depends_on:
+#      - databaseds
+#      - rsyslog-csplmc
+#      - add-devs-and-props
+#    environment:
+#      - TANGO_HOST=${TANGO_HOST}
+#    command: >
+#      sh -c "wait-for-it.sh ${TANGO_HOST} --timeout=30 --strict --
+#             for i in $$(seq -w 1 197); do \
+#             tango_admin --check-device mid_csp_cbf/vcc_band12/$$i &&\
+#             /venv/bin/python /app/csplmc/Vcc/VccBand1And2/VccBand1And2.py vcc-$$i; done &&\
+#             for i in $$(seq -w 1 197); do \
+#             tango_admin --check-device mid_csp_cbf/vcc_band3/$$i &&\
+#             /venv/bin/python /app/csplmc/Vcc/VccBand3/VccBand3.py vcc-$$i; done &&\
+#             for i in $$(seq -w 1 197); do \
+#             tango_admin --check-device mid_csp_cbf/vcc_band4/$$i &&\
+#             /venv/bin/python /app/csplmc/Vcc/VccBand4/VccBand4.py vcc-$$i; done &&\
+#             for i in $$(seq -w 1 197); do \
+#             tango_admin --check-device mid_csp_cbf/vcc_band5/$$i &&\
+#             /venv/bin/python /app/csplmc/Vcc/VccBand5/VccBand5.py vcc-$$i; done &&\
+#             for i in $$(seq -w 1 197); do \
+#             tango_admin --check-device mid_csp_cbf/vcc_tdc1/$$i &&\
+#             /venv/bin/python /app/csplmc/Vcc/VccTransientDataCapture/VccTransientDataCapture.py vcc-tdc1-$$i; done &&\
+#             for i in $$(seq -w 1 197); do \
+#             tango_admin --check-device mid_csp_cbf/vcc_tdc2/$$i &&\
+#             /venv/bin/python /app/csplmc/Vcc/VccTransientDataCapture/VccTransientDataCapture.py vcc-tdc2-$$i; done"
+             
+  vccband1and2001:
+    image: ${DOCKER_REGISTRY_HOST}/${DOCKER_REGISTRY_USER}/${PROJECT}:latest
+    network_mode: ${NETWORK_MODE}
+    container_name: ${CONTAINER_NAME_PREFIX}vccband1and2001
+    depends_on:
+      - databaseds
+      - rsyslog-csplmc
+      - add-devs-and-props
+    environment:
+      - TANGO_HOST=${TANGO_HOST}
+    command: >
+      sh -c "wait-for-it.sh ${TANGO_HOST} --timeout=30 --strict --
+             tango_admin --check-device mid_csp_cbf/vcc_band12/001 &&\
+             /venv/bin/python /app/csplmc/Vcc/VccBand1And2/VccBand1And2.py vcc-001"
+                          
+  vccband3001:
+    image: ${DOCKER_REGISTRY_HOST}/${DOCKER_REGISTRY_USER}/${PROJECT}:latest
+    network_mode: ${NETWORK_MODE}
+    container_name: ${CONTAINER_NAME_PREFIX}vccband3001
+    depends_on:
+      - databaseds
+      - rsyslog-csplmc
+      - add-devs-and-props
+    environment:
+      - TANGO_HOST=${TANGO_HOST}
+    command: >
+      sh -c "wait-for-it.sh ${TANGO_HOST} --timeout=30 --strict --
+             tango_admin --check-device mid_csp_cbf/vcc_band3/001 &&\
+             /venv/bin/python /app/csplmc/Vcc/VccBand3/VccBand3.py vcc-001"
+                                       
+  vccband4001:
+    image: ${DOCKER_REGISTRY_HOST}/${DOCKER_REGISTRY_USER}/${PROJECT}:latest
+    network_mode: ${NETWORK_MODE}
+    container_name: ${CONTAINER_NAME_PREFIX}vccband4001
+    depends_on:
+      - databaseds
+      - rsyslog-csplmc
+      - add-devs-and-props
+    environment:
+      - TANGO_HOST=${TANGO_HOST}
+    command: >
+      sh -c "wait-for-it.sh ${TANGO_HOST} --timeout=30 --strict --
+             tango_admin --check-device mid_csp_cbf/vcc_band4/001 &&\
+             /venv/bin/python /app/csplmc/Vcc/VccBand4/VccBand4.py vcc-001"
+                                       
+  vccband5001:
+    image: ${DOCKER_REGISTRY_HOST}/${DOCKER_REGISTRY_USER}/${PROJECT}:latest
+    network_mode: ${NETWORK_MODE}
+    container_name: ${CONTAINER_NAME_PREFIX}vccband5001
+    depends_on:
+      - databaseds
+      - rsyslog-csplmc
+      - add-devs-and-props
+    environment:
+      - TANGO_HOST=${TANGO_HOST}
+    command: >
+      sh -c "wait-for-it.sh ${TANGO_HOST} --timeout=30 --strict --
+             tango_admin --check-device mid_csp_cbf/vcc_band5/001 &&\
+             /venv/bin/python /app/csplmc/Vcc/VccBand5/VccBand5.py vcc-001"
+                                                    
+  vcctdc1001:
+    image: ${DOCKER_REGISTRY_HOST}/${DOCKER_REGISTRY_USER}/${PROJECT}:latest
+    network_mode: ${NETWORK_MODE}
+    container_name: ${CONTAINER_NAME_PREFIX}vcctdc1001
+    depends_on:
+      - databaseds
+      - rsyslog-csplmc
+      - add-devs-and-props
+    environment:
+      - TANGO_HOST=${TANGO_HOST}
+    command: >
+      sh -c "wait-for-it.sh ${TANGO_HOST} --timeout=30 --strict --
+             tango_admin --check-device mid_csp_cbf/vcc_tdc1/001 &&\
+             /venv/bin/python /app/csplmc/Vcc/VccTransientDataCapture/VccTransientDataCapture.py vcc-tdc1-001"
+                                                                 
+  vcctdc2001:
+    image: ${DOCKER_REGISTRY_HOST}/${DOCKER_REGISTRY_USER}/${PROJECT}:latest
+    network_mode: ${NETWORK_MODE}
+    container_name: ${CONTAINER_NAME_PREFIX}vcctdc2001
+    depends_on:
+      - databaseds
+      - rsyslog-csplmc
+      - add-devs-and-props
+    environment:
+      - TANGO_HOST=${TANGO_HOST}
+    command: >
+      sh -c "wait-for-it.sh ${TANGO_HOST} --timeout=30 --strict --
+             tango_admin --check-device mid_csp_cbf/vcc_tdc2/001 &&\
+             /venv/bin/python /app/csplmc/Vcc/VccTransientDataCapture/VccTransientDataCapture.py vcc-tdc2-001"
+
+#  fsp:
+#    image: ${DOCKER_REGISTRY_HOST}/${DOCKER_REGISTRY_USER}/${PROJECT}:latest
+#    network_mode: ${NETWORK_MODE}
+#    container_name: ${CONTAINER_NAME_PREFIX}fsp
+#    depends_on:
+#      - databaseds
+#      - rsyslog-csplmc
+#      - fspcapabilities
+#      - add-devs-and-props
+#    environment:
+#      - TANGO_HOST=${TANGO_HOST}
+#    command: >
+#      sh -c "wait-for-it.sh ${TANGO_HOST} --timeout=30 --strict --
+#             for i in $$(seq -w 1 27); do \
+#             tango_admin --check-device mid_csp_cbf/fsp/$$i &&\
+#             /venv/bin/python /app/csplmc/Fsp/Fsp/Fsp.py fsp-$$i; done"
+             
+  fsp01:
+    image: ${DOCKER_REGISTRY_HOST}/${DOCKER_REGISTRY_USER}/${PROJECT}:latest
+    network_mode: ${NETWORK_MODE}
+    container_name: ${CONTAINER_NAME_PREFIX}fsp01
+    depends_on:
+      - databaseds
+      - rsyslog-csplmc
+      - fspcorr01
+      - fsppss01
+      - fsppst01
+      - fspvlbi01
+      - add-devs-and-props
+    environment:
+      - TANGO_HOST=${TANGO_HOST}
+    command: >
+      sh -c "wait-for-it.sh ${TANGO_HOST} --timeout=30 --strict --
+             tango_admin --check-device mid_csp_cbf/fsp/01 &&\
+             /venv/bin/python /app/csplmc/Fsp/Fsp/Fsp.py fsp-01"
+             
+#  fspcapabilities:
+#    image: ${DOCKER_REGISTRY_HOST}/${DOCKER_REGISTRY_USER}/${PROJECT}:latest
+#    network_mode: ${NETWORK_MODE}
+#    container_name: ${CONTAINER_NAME_PREFIX}fspcapabilities
+#    depends_on:
+#      - databaseds
+#      - rsyslog-csplmc
+#      - add-devs-and-props
+#    environment:
+#      - TANGO_HOST=${TANGO_HOST}
+#    command: >
+#      sh -c "wait-for-it.sh ${TANGO_HOST} --timeout=30 --strict --
+#             for i in $$(seq -w 1 27); do \
+#             tango_admin --check-device mid_csp_cbf/fsp_corr/$$i &&\
+#             /venv/bin/python /app/csplmc/Fsp/FspCorr/FspCorr.py fsp-$$i; done &&\
+#             for i in $$(seq -w 1 27); do \
+#             tango_admin --check-device mid_csp_cbf/fsp_pss/$$i &&\
+#             /venv/bin/python /app/csplmc/Fsp/FspPss/FspPss.py fsp-$$i; done &&\
+#             for i in $$(seq -w 1 27); do \
+#             tango_admin --check-device mid_csp_cbf/fsp_pst/$$i &&\
+#             /venv/bin/python /app/csplmc/Fsp/FspPst/FspPst.py fsp-$$i; done &&\
+#             for i in $$(seq -w 1 27); do \
+#             tango_admin --check-device mid_csp_cbf/fsp_vlbi/$$i &&\
+#             /venv/bin/python /app/csplmc/Fsp/FspVlbi/FspVlbi.py fsp-$$i; done"
+                          
+  fspcorr01:
+    image: ${DOCKER_REGISTRY_HOST}/${DOCKER_REGISTRY_USER}/${PROJECT}:latest
+    network_mode: ${NETWORK_MODE}
+    container_name: ${CONTAINER_NAME_PREFIX}fspcorr01
+    depends_on:
+      - databaseds
+      - rsyslog-csplmc
+      - add-devs-and-props
+    environment:
+      - TANGO_HOST=${TANGO_HOST}
+    command: >
+      sh -c "wait-for-it.sh ${TANGO_HOST} --timeout=30 --strict --
+             tango_admin --check-device mid_csp_cbf/fsp_corr/01 &&\
+             /venv/bin/python /app/csplmc/Fsp/FspCorr/FspCorr.py fsp-01"
+                                       
+  fsppss01:
+    image: ${DOCKER_REGISTRY_HOST}/${DOCKER_REGISTRY_USER}/${PROJECT}:latest
+    network_mode: ${NETWORK_MODE}
+    container_name: ${CONTAINER_NAME_PREFIX}fsppss01
+    depends_on:
+      - databaseds
+      - rsyslog-csplmc
+      - add-devs-and-props
+    environment:
+      - TANGO_HOST=${TANGO_HOST}
+    command: >
+      sh -c "wait-for-it.sh ${TANGO_HOST} --timeout=30 --strict --
+             tango_admin --check-device mid_csp_cbf/fsp_pss/01 &&\
+             /venv/bin/python /app/csplmc/Fsp/FspPss/FspPss.py fsp-01"
+                                                    
+  fsppst01:
+    image: ${DOCKER_REGISTRY_HOST}/${DOCKER_REGISTRY_USER}/${PROJECT}:latest
+    network_mode: ${NETWORK_MODE}
+    container_name: ${CONTAINER_NAME_PREFIX}fsppst01
+    depends_on:
+      - databaseds
+      - rsyslog-csplmc
+      - add-devs-and-props
+    environment:
+      - TANGO_HOST=${TANGO_HOST}
+    command: >
+      sh -c "wait-for-it.sh ${TANGO_HOST} --timeout=30 --strict --
+             tango_admin --check-device mid_csp_cbf/fsp_pst/01 &&\
+             /venv/bin/python /app/csplmc/Fsp/FspPst/FspPst.py fsp-01"
+                                                    
+  fspvlbi01:
+    image: ${DOCKER_REGISTRY_HOST}/${DOCKER_REGISTRY_USER}/csplmc:latest
+    network_mode: ${NETWORK_MODE}
+    container_name: ${CONTAINER_NAME_PREFIX}fspvlbi01
+    depends_on:
+      - databaseds
+      - rsyslog-csplmc
+      - add-devs-and-props
+    environment:
+      - TANGO_HOST=${TANGO_HOST}
+    command: >
+      sh -c "wait-for-it.sh ${TANGO_HOST} --timeout=30 --strict --
+             tango_admin --check-device mid_csp_cbf/fsp_vlbi/01 &&\
+             /venv/bin/python /app/csplmc/Fsp/FspVlbi/FspVlbi.py fsp-01"
+             
+#  fspsubarray:
+#    image: ${DOCKER_REGISTRY_HOST}/${DOCKER_REGISTRY_USER}/${PROJECT}:latest
+#    network_mode: ${NETWORK_MODE}
+#    container_name: ${CONTAINER_NAME_PREFIX}fspsubarray
+#    depends_on:
+#      - databaseds
+#      - rsyslog-csplmc
+#      - add-devs-and-props
+#    environment:
+#      - TANGO_HOST=${TANGO_HOST}
+#    command: >
+#      sh -c "wait-for-it.sh ${TANGO_HOST} --timeout=30 --strict --
+#             for i in $$(seq -w 1 27); do \
+#             for j in $$(seq -w 1 16); do \
+#             tango_admin --check-device mid_csp_cbf/fspSubarray/$$i\_$$j &&\
+#             /venv/bin/python /app/csplmc/Fsp/FspSubarray/FspSubarray.py fspSubarray-$$i-$$j; done; done"
+                          
+  fspsubarray0101:
+    image: ${DOCKER_REGISTRY_HOST}/${DOCKER_REGISTRY_USER}/${PROJECT}:latest
+    network_mode: ${NETWORK_MODE}
+    container_name: ${CONTAINER_NAME_PREFIX}fspsubarray0101
+    depends_on:
+      - databaseds
+      - rsyslog-csplmc
+      - add-devs-and-props
+    environment:
+      - TANGO_HOST=${TANGO_HOST}
+    command: >
+      sh -c "wait-for-it.sh ${TANGO_HOST} --timeout=30 --strict --
+             tango_admin --check-device mid_csp_cbf/fspSubarray/01_01 &&\
+             /venv/bin/python /app/csplmc/Fsp/FspSubarray/FspSubarray.py fspSubarray-01-01"
+
+#  cbfsubarray:
+#    image: ${DOCKER_REGISTRY_HOST}/${DOCKER_REGISTRY_USER}/${PROJECT}:latest
+#    network_mode: ${NETWORK_MODE}
+#    container_name: ${CONTAINER_NAME_PREFIX}cbfsubarray
+#    depends_on:
+#      - vcc
+#      - fsp
+#      - databaseds
+#      - rsyslog-csplmc
+#      - add-devs-and-props
+#    environment:
+#      - TANGO_HOST=${TANGO_HOST}
+#    command: >
+#      sh -c "wait-for-it.sh ${TANGO_HOST} --timeout=30 --strict --
+#             for i in $$(seq -w 1 16); do \
+#             tango_admin --check-device mid_csp_cbf/sub_elt/subarray_$$i &&\
+#             /venv/bin/python /app/csplmc/CbfSubarray/CbfSubarray/CbfSubarray.py cbfSubarray-$$i; done"
+             
+  cbfsubarray01:
+    image: ${DOCKER_REGISTRY_HOST}/${DOCKER_REGISTRY_USER}/${PROJECT}:latest
+    network_mode: ${NETWORK_MODE}
+    container_name: ${CONTAINER_NAME_PREFIX}cbfsubarray01
+    depends_on:
+      - vcc001
+      - fsp01
+      - databaseds
+      - rsyslog-csplmc
+      - add-devs-and-props
+    environment:
+      - TANGO_HOST=${TANGO_HOST}
+    command: >
+      sh -c "wait-for-it.sh ${TANGO_HOST} --timeout=30 --strict --
+             tango_admin --check-device mid_csp_cbf/sub_elt/subarray_01 &&\
+             /venv/bin/python /app/csplmc/CbfSubarray/CbfSubarray/CbfSubarray.py cbfSubarray-01"
+
+  cbfmaster:
+    image: ${DOCKER_REGISTRY_HOST}/${DOCKER_REGISTRY_USER}/${PROJECT}:latest
+    network_mode: ${NETWORK_MODE}
+    container_name: ${CONTAINER_NAME_PREFIX}cbfmaster
+    depends_on:
+      - cbfsubarray01
+      - vcc001
+      - fsp01
+      - databaseds
+      - rsyslog-csplmc
+      - add-devs-and-props
+    environment:
+      - TANGO_HOST=${TANGO_HOST}
+    command: >
+      sh -c "wait-for-it.sh ${TANGO_HOST} --timeout=30 --strict --
+             tango_admin --check-device mid_csp_cbf/sub_elt/master &&\
+             /venv/bin/python /app/csplmc/CbfMaster/CbfMaster/CbfMaster.py master"
+
+  tmtelstatetest:
+    image: ${DOCKER_REGISTRY_HOST}/${DOCKER_REGISTRY_USER}/${PROJECT}:latest
+    network_mode: ${NETWORK_MODE}
+    container_name: ${CONTAINER_NAME_PREFIX}tmtelstatetest
+    depends_on:
+      - databaseds
+      - rsyslog-csplmc
+      - add-devs-and-props
+    environment:
+      - TANGO_HOST=${TANGO_HOST}
+    command: >
+      sh -c "wait-for-it.sh ${TANGO_HOST} --timeout=30 --strict --
+             tango_admin --check-device ska1_mid/tm/telmodel &&\
+             /venv/bin/python /app/csplmc/TmTelstateTest/TmTelstateTest.py tm"
+             
+  rsyslog-csplmc:
+    image: jumanjiman/rsyslog
+    container_name: ${CONTAINER_NAME_PREFIX}rsyslog-csplmc
+    network_mode: ${NETWORK_MODE}

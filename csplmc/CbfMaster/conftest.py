@@ -16,15 +16,15 @@ from tango.test_context import DeviceTestContext
 
 @pytest.fixture(scope="class")
 def create_cbf_master_proxy():
-    return DeviceProxy("mid_csp_cbf/master/main")
+    return DeviceProxy("mid_csp_cbf/sub_elt/master")
 
 @pytest.fixture(scope="class")
 def create_subarray_1_proxy():
-    return DeviceProxy("mid_csp_cbf/cbfSubarray/01")
+    return DeviceProxy("mid_csp_cbf/sub_elt/subarray_01")
 
 @pytest.fixture(scope="class")
 def create_subarray_2_proxy():
-    return DeviceProxy("mid_csp_cbf/cbfSubarray/02")
+    return DeviceProxy("mid_csp_cbf/sub_elt/subarray_02")
 
 @pytest.fixture(scope="class")
 def create_vcc_proxies():

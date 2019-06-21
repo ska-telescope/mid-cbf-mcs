@@ -40,6 +40,14 @@ from global_enum import HealthState, AdminMode, ObsState
     "create_subarray_1_proxy",
     "create_subarray_2_proxy",
     "create_vcc_proxies",
+    "create_vcc_band_proxies",
+    "create_vcc_tdc_proxies",
+    "create_fsp_1_proxy",
+    "create_fsp_2_proxy",
+    "create_fsp_1_function_mode_proxy",
+    "create_fsp_2_function_mode_proxy",
+    "create_fsp_1_subarray_1_proxy",
+    "create_fsp_2_subarray_1_proxy",
     "create_tm_telstate_proxy"
 )
 
@@ -62,7 +70,7 @@ class TestCbfSubarray:
         """
         Test valid AddReceptors and RemoveReceptors commands
         """
-        receptor_to_vcc = dict([int(ID) for ID in pair.split(":")] for pair in
+        receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
                                create_cbf_master_proxy.receptorToVcc)
 
         create_subarray_1_proxy.Init()
@@ -116,7 +124,7 @@ class TestCbfSubarray:
             - when a receptor ID is invalid (e.g. out of range)
             - when a receptor to be removed is not assigned to the subarray
         """
-        receptor_to_vcc = dict([int(ID) for ID in pair.split(":")] for pair in
+        receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
                                create_cbf_master_proxy.receptorToVcc)
 
         create_subarray_1_proxy.Init()
@@ -180,7 +188,7 @@ class TestCbfSubarray:
         """
         Test RemoveAllReceptors command
         """
-        receptor_to_vcc = dict([int(ID) for ID in pair.split(":")] for pair in
+        receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
                                create_cbf_master_proxy.receptorToVcc)
 
         create_subarray_1_proxy.Init()
@@ -217,7 +225,7 @@ class TestCbfSubarray:
         """
         Test successful subscriptions to VCC state and healthState for AddReceptors command
         """
-        receptor_to_vcc = dict([int(ID) for ID in pair.split(":")] for pair in
+        receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
                                create_cbf_master_proxy.receptorToVcc)
         create_subarray_1_proxy.Init()
         for proxy in create_vcc_proxies:
@@ -267,67 +275,162 @@ class TestCbfSubarray:
         assert create_subarray_1_proxy.vccState == None
         assert create_subarray_1_proxy.vccHealthState == None
 
-    def test_ConfigureScan_basic(self, create_subarray_1_proxy):
+    def test_ConfigureScan_basic(
+            self,
+            create_cbf_master_proxy,
+            create_subarray_1_proxy,
+            create_vcc_proxies,
+            create_vcc_band_proxies,
+            create_vcc_tdc_proxies,
+            create_fsp_1_proxy,
+            create_fsp_2_proxy,
+            create_fsp_1_function_mode_proxy,
+            create_fsp_2_function_mode_proxy,
+            create_fsp_1_subarray_1_proxy,
+            create_fsp_2_subarray_1_proxy
+    ):
         """
         Test a minimal successful configuration
         """
+        receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
+                               create_cbf_master_proxy.receptorToVcc)
+
         create_subarray_1_proxy.Init()
 
-        # check default values
+        # We actually don't want to initialize these...
+        # CBF Master (for the moment at least), creates the map of receptors to VCCs and assigns
+        # receptor IDs to VCCs accordingly. Initializing them sets them all back to 0.
+        # I wasted a few hours trying to figure out why this test wasn't working -.-
+        """
+        for proxy in create_vcc_proxies:
+            proxy.Init()
+        """
+
+        create_fsp_1_proxy.Init()
+        create_fsp_2_proxy.Init()
+
+        # don't bother initializing the sub-capability proxies - it takes way too long and they
+        # should be configured by ConfigureScan anyway
+
+        time.sleep(3)
+
+        # check initial value of attributes of CBF subarray
         assert create_subarray_1_proxy.receptors == ()
         assert create_subarray_1_proxy.scanID == 0
         assert create_subarray_1_proxy.frequencyBand == 0
         assert create_subarray_1_proxy.obsState == ObsState.IDLE.value
 
+        # add receptors
+        create_subarray_1_proxy.AddReceptors([10, 197])
+        time.sleep(1)
+        assert create_subarray_1_proxy.receptors == (10, 197)
+
         # configure scan
         f = open(file_path + "/test_json/test_ConfigureScan_basic.json")
+        create_subarray_1_proxy.set_timeout_millis(60000)  # since the command takes a while
         create_subarray_1_proxy.ConfigureScan(f.read().replace("\n", ""))
         f.close()
+        time.sleep(1)
 
-        # check configured values
-        assert create_subarray_1_proxy.receptors == (1,)
+        # check configured attributes of CBF subarray
         assert create_subarray_1_proxy.scanID == 1
-        assert create_subarray_1_proxy.frequencyBand == 0
+        assert create_subarray_1_proxy.frequencyBand == 4
         assert create_subarray_1_proxy.obsState == ObsState.READY.value
 
-    def test_ConfigureScan_subscriptions(
-            self,
-            create_subarray_1_proxy,
-            create_tm_telstate_proxy
-    ):
-        """
-        Test successful subscriptions to TM TelState attributes dopplerPhaseCorrection_1 and delayModel
-        """
-        create_subarray_1_proxy.Init()
-        create_tm_telstate_proxy.Init()
+        # check frequency band of VCCs, including states of frequency band capabilities
+        assert create_vcc_proxies[receptor_to_vcc[10] - 1].frequencyBand == 4
+        assert create_vcc_proxies[receptor_to_vcc[197] - 1].frequencyBand == 4
+        assert [proxy.State() for proxy in create_vcc_band_proxies[receptor_to_vcc[10] - 1]] == [
+            DevState.DISABLE, DevState.DISABLE, DevState.DISABLE, DevState.ON]
+        assert [proxy.State() for proxy in create_vcc_band_proxies[receptor_to_vcc[197] - 1]] == [
+            DevState.DISABLE, DevState.DISABLE, DevState.DISABLE, DevState.ON]
 
-        time.sleep(3)
+        # check the rest of the configured attributes of VCCs
+        # first for VCC belonging to receptor 10...
+        assert create_vcc_proxies[receptor_to_vcc[10] - 1].subarrayMembership == 1
+        assert create_vcc_proxies[receptor_to_vcc[10] - 1].band5Tuning == (5.85, 7.25)
+        assert create_vcc_proxies[receptor_to_vcc[10] - 1].frequencyBandOffsetStream1 == 0
+        assert create_vcc_proxies[receptor_to_vcc[10] - 1].frequencyBandOffsetStream2 == 0
+        assert create_vcc_proxies[receptor_to_vcc[10] - 1].rfiFlaggingMask == "{}"
+        # then for VCC belonging to receptor 197...
+        assert create_vcc_proxies[receptor_to_vcc[197] - 1].subarrayMembership == 1
+        assert create_vcc_proxies[receptor_to_vcc[197] - 1].band5Tuning == (5.85, 7.25)
+        assert create_vcc_proxies[receptor_to_vcc[197] - 1].frequencyBandOffsetStream1 == 0
+        assert create_vcc_proxies[receptor_to_vcc[197] - 1].frequencyBandOffsetStream2 == 0
+        assert create_vcc_proxies[receptor_to_vcc[197] - 1].rfiFlaggingMask == "{}"
 
-        # check default values of attributes
-        assert create_tm_telstate_proxy.dopplerPhaseCorrection_1 == (0, 0, 0, 0)
-        assert create_tm_telstate_proxy.delayModel == "{}"
-        assert create_subarray_1_proxy.reportDopplerPhaseCorrection == (0, 0, 0, 0)
-        assert create_subarray_1_proxy.reportDelayModel == "{}"
+        # check configured attributes of VCC search windows
+        # first for search window 1 of VCC belonging to receptor 10...
+        assert create_vcc_tdc_proxies[receptor_to_vcc[10] - 1][0].searchWindowTuning == 6000000000
+        assert create_vcc_tdc_proxies[receptor_to_vcc[10] - 1][0].tdcEnable == True
+        assert create_vcc_tdc_proxies[receptor_to_vcc[10] - 1][0].tdcNumBits == 8
+        assert create_vcc_tdc_proxies[receptor_to_vcc[10] - 1][0].tdcPeriodBeforeEpoch == 5
+        assert create_vcc_tdc_proxies[receptor_to_vcc[10] - 1][0].tdcPeriodAfterEpoch == 25
+        assert create_vcc_tdc_proxies[receptor_to_vcc[10] - 1][0].tdcDestinationAddress == (
+            "foo", "bar", "baz"
+        )
+        # then for search window 1 of VCC belonging to receptor 197...
+        assert create_vcc_tdc_proxies[receptor_to_vcc[197] - 1][0].searchWindowTuning == 6000000000
+        assert create_vcc_tdc_proxies[receptor_to_vcc[197] - 1][0].tdcEnable == True
+        assert create_vcc_tdc_proxies[receptor_to_vcc[197] - 1][0].tdcNumBits == 8
+        assert create_vcc_tdc_proxies[receptor_to_vcc[197] - 1][0].tdcPeriodBeforeEpoch == 5
+        assert create_vcc_tdc_proxies[receptor_to_vcc[197] - 1][0].tdcPeriodAfterEpoch == 25
+        assert create_vcc_tdc_proxies[receptor_to_vcc[197] - 1][0].tdcDestinationAddress == (
+            "fizz", "buzz", "fizz-buzz"
+        )
+        # then for search window 2 of VCC belonging to receptor 10...
+        assert create_vcc_tdc_proxies[receptor_to_vcc[10] - 1][1].searchWindowTuning == 7000000000
+        assert create_vcc_tdc_proxies[receptor_to_vcc[10] - 1][1].tdcEnable == False
+        # and lastly for search window 2 of VCC belonging to receptor 197...
+        assert create_vcc_tdc_proxies[receptor_to_vcc[197] - 1][1].searchWindowTuning == 7000000000
+        assert create_vcc_tdc_proxies[receptor_to_vcc[197] - 1][1].tdcEnable == False
 
-        # configure scan
-        f = open(file_path + "/test_json/test_ConfigureScan_basic.json")
-        create_subarray_1_proxy.ConfigureScan(f.read().replace("\n", ""))
-        f.close()
+        # check configured attributes of FSPs, including states of function mode capabilities
+        assert create_fsp_1_proxy.functionMode == 1
+        assert create_fsp_2_proxy.functionMode == 1
+        assert 1 in create_fsp_1_proxy.subarrayMembership
+        assert 1 in create_fsp_2_proxy.subarrayMembership
+        assert [proxy.State() for proxy in create_fsp_1_function_mode_proxy] == [
+            DevState.ON, DevState.DISABLE, DevState.DISABLE, DevState.DISABLE
+        ]
+        assert [proxy.State() for proxy in create_fsp_2_function_mode_proxy] == [
+            DevState.ON, DevState.DISABLE, DevState.DISABLE, DevState.DISABLE
+        ]
 
-        # subscription should trigger an event, but default values are identical
-        assert create_subarray_1_proxy.reportDopplerPhaseCorrection == (0, 0, 0, 0)
-        assert create_subarray_1_proxy.reportDelayModel == "{}"
-
-        # change attribute values
-        create_tm_telstate_proxy.dopplerPhaseCorrection_1 = (1, 2, 3, 4)
-        create_tm_telstate_proxy.delayModel = "{\"test\": 10000}"
-        time.sleep(10)  # wait for next poll
-        assert create_subarray_1_proxy.reportDopplerPhaseCorrection == (1, 2, 3, 4)
-        assert create_subarray_1_proxy.reportDelayModel == "{\"test\": 10000}"
-
-        create_tm_telstate_proxy.dopplerPhaseCorrection_1 = (2.789, -1, 3.141, 0)
-        create_tm_telstate_proxy.delayModel = "{\"test\": [{\"foo\": \"bar\", \"fizz\": \"buzz\"}]}"
-        time.sleep(10)  # wait for next poll
-        assert create_subarray_1_proxy.reportDopplerPhaseCorrection == (2.789, -1, 3.141, 0)
-        assert create_subarray_1_proxy.reportDelayModel == "{\"test\": [{\"foo\": \"bar\", \"fizz\": \"buzz\"}]}" or \
-            create_subarray_1_proxy.reportDelayModel == "{\"test\": [{\"fizz\": \"buzz\", \"foo\": \"bar\"}]}"
+        # check configured attributes of FSP subarrays
+        # first for FSP 1...
+        assert create_fsp_1_subarray_1_proxy.receptors == (10,)
+        assert create_fsp_1_subarray_1_proxy.frequencyBand == 4
+        assert create_fsp_1_subarray_1_proxy.frequencySliceID == 1
+        assert create_fsp_1_subarray_1_proxy.corrBandwidth == 1
+        assert create_fsp_1_subarray_1_proxy.zoomWindowTuning == 6000000
+        assert create_fsp_1_subarray_1_proxy.integrationTime == 140
+        assert create_fsp_1_subarray_1_proxy.channelAveragingMap == (
+            (1, 0),
+            (745, 0),
+            (1489, 0),
+            (2233, 0),
+            (2977, 0),
+            (3721, 0),
+            (4465, 0),
+            (5209, 0),
+            (5953, 0),
+            (6697, 0),
+            (7441, 0),
+            (8185, 0),
+            (8929, 0),
+            (9673, 0),
+            (10417, 0),
+            (11161, 0),
+            (11905, 0),
+            (12649, 0),
+            (13393, 0),
+            (14137, 0)
+        )
+        # then for FSP 2...
+        assert create_fsp_2_subarray_1_proxy.receptors == (10, 197)
+        assert create_fsp_2_subarray_1_proxy.frequencyBand == 4
+        assert create_fsp_2_subarray_1_proxy.frequencySliceID == 20
+        assert create_fsp_2_subarray_1_proxy.corrBandwidth == 0
+        assert create_fsp_2_subarray_1_proxy.integrationTime == 1400
+        assert create_fsp_2_subarray_1_proxy.channelAveragingMap == ((0, 0),)*20

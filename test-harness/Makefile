@@ -30,6 +30,8 @@ test:
 	done
 	cd /app/csplmc/CbfMaster && python setup.py test | tee setup_py_test.stdout
 	cd /app/csplmc/CbfSubarray && python setup.py test | tee setup_py_test.stdout
+	cd /app/csplmc/Vcc && python setup.py test | tee setup_py_test.stdout
+	cd /app/csplmc/Fsp && python setup.py test | tee setup_py_test.stdout
 	cd /app && ./code-analysis.sh | tee code_analysis.stdout
 	if [ -d /build ]; then \
 		mv /app/csplmc/CbfMaster/setup_py_test.stdout /build/cbf_master_setup_test.stdout; \
