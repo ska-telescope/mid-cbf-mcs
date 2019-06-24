@@ -65,6 +65,10 @@ class FspSubarray(SKASubarray):
         doc="FQDN of CBF Subarray"
     )
 
+    VCC = device_property(
+        dtype=('str',)
+    )
+
     # ----------
     # Attributes
     # ----------
@@ -151,6 +155,9 @@ class FspSubarray(SKASubarray):
         else:
             self._subarray_id = int(self.get_name()[-2:])  # last two chars of FQDN
 
+        # minimum integration time
+        self.MIN_INT_TIME = 140
+
         # initialize attribute values
         self._receptors = []
         self._frequency_band = 0
@@ -163,8 +170,7 @@ class FspSubarray(SKASubarray):
         self._delay_model = ""
 
         self._count_vcc = 197
-        self._fqdn_vcc = [*map(lambda i: "mid_csp_cbf/vcc/{:03d}".format(i + 1),
-                               range(self._count_vcc))]
+        self._fqdn_vcc = list(self.VCC)
         self._proxies_vcc = [*map(PyTango.DeviceProxy, self._fqdn_vcc)]
 
         # device proxy for easy reference to CBF Master
@@ -453,12 +459,13 @@ class FspSubarray(SKASubarray):
         # If not given, ignore the FSP and append an error.
         # If malformed, ignore the FSP and append an error.
         if "integrationTime" in argin:
-            if int(argin["integrationTime"]) in list(range(140, 1401, 140)):
+            if int(argin["integrationTime"]) in list(
+                    range(self.MIN_INT_TIME, 10*self.MIN_INT_TIME + 1, self.MIN_INT_TIME)):
                 self._integration_time = int(argin["integrationTime"])
             else:
                 msg = "\n".join(errs)
                 msg += "'integrationTime' must be an integer in the range [1, 10] multiplied "\
-                    "by 140. Ignoring FSP."
+                    "by {}. Ignoring FSP.".format(self.MIN_INT_TIME)
                 # this is a fatal error
                 self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
                 PyTango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
@@ -486,12 +493,12 @@ class FspSubarray(SKASubarray):
                     self._channel_averaging_map[i][0] = int(argin["channelAveragingMap"][i][0])
 
                     # validate averaging factor
-                    if int(argin["channelAveragingMap"][i][1]) in [0, 1, 2, 3, 4, 5, 6, 8]:
+                    if int(argin["channelAveragingMap"][i][1]) in [0, 1, 2, 3, 4, 6, 8]:
                         self._channel_averaging_map[i][1] = int(argin["channelAveragingMap"][i][1])
                     else:
                         self._channel_averaging_map[i][1] = 0
                         log_msg = "'channelAveragingMap'[n][1] must be one of "\
-                            "[0, 1, 2, 3, 4, 5, 6, 8]. Defaulting to 0 for channel {0}.".format(
+                            "[0, 1, 2, 3, 4, 6, 8]. Defaulting to 0 for channel {0}.".format(
                                 argin["channelAveragingMap"][i][0]
                             )
                         self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)

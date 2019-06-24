@@ -41,7 +41,7 @@ from global_enum import HealthState, AdminMode, ObsState
     "create_band_3_proxy",
     "create_band_4_proxy",
     "create_band_5_proxy",
-    "create_tdc_1_proxy"
+    "create_sw_1_proxy"
 )
 
 class TestVcc:
@@ -130,20 +130,20 @@ class TestVcc:
         """
         Test a minimal successful search window configuration.
         """
-        create_tdc_1_proxy.Init()
+        create_sw_1_proxy.Init()
         create_vcc_proxy.Init()
         time.sleep(3)
 
         # check initial values of attributes
-        assert create_tdc_1_proxy.searchWindowTuning == 0
-        assert create_tdc_1_proxy.tdcEnable == False
-        assert create_tdc_1_proxy.tdcNumBits == 0
-        assert create_tdc_1_proxy.tdcPeriodBeforeEpoch == 0
-        assert create_tdc_1_proxy.tdcPeriodAfterEpoch == 0
-        assert create_tdc_1_proxy.tdcDestinationAddress == ("", "", "")
+        assert create_sw_1_proxy.searchWindowTuning == 0
+        assert create_sw_1_proxy.tdcEnable == False
+        assert create_sw_1_proxy.tdcNumBits == 0
+        assert create_sw_1_proxy.tdcPeriodBeforeEpoch == 0
+        assert create_sw_1_proxy.tdcPeriodAfterEpoch == 0
+        assert create_sw_1_proxy.tdcDestinationAddress == ("", "", "")
 
         # check initial state
-        assert create_tdc_1_proxy.State() == DevState.DISABLE
+        assert create_sw_1_proxy.State() == DevState.DISABLE
 
         # set receptorID to 1 to correctly test tdcDestinationAddress
         create_vcc_proxy.receptorID = 1
@@ -155,12 +155,12 @@ class TestVcc:
         time.sleep(1)
 
         # check configured values
-        assert create_tdc_1_proxy.searchWindowTuning == 1000000000
-        assert create_tdc_1_proxy.tdcEnable == True
-        assert create_tdc_1_proxy.tdcNumBits == 8
-        assert create_tdc_1_proxy.tdcPeriodBeforeEpoch == 5
-        assert create_tdc_1_proxy.tdcPeriodAfterEpoch == 25
-        assert create_tdc_1_proxy.tdcDestinationAddress == ("", "", "")
+        assert create_sw_1_proxy.searchWindowTuning == 1000000000
+        assert create_sw_1_proxy.tdcEnable == True
+        assert create_sw_1_proxy.tdcNumBits == 8
+        assert create_sw_1_proxy.tdcPeriodBeforeEpoch == 5
+        assert create_sw_1_proxy.tdcPeriodAfterEpoch == 25
+        assert create_sw_1_proxy.tdcDestinationAddress == ("", "", "")
 
         # check state
-        assert create_tdc_1_proxy.State() == DevState.ON
+        assert create_sw_1_proxy.State() == DevState.ON

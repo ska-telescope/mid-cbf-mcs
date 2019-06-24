@@ -40,13 +40,14 @@ for device in json_devices:
             db.put_device_property(dev_info.name,
                                    {deviceProperty["devPropName"]:
                                         deviceProperty["devPropValue"]})
+
     """
     # Adding attribute properties
     for attributeProperty in device["attributeProperties"]:
         # Adding attribute property: attributeProperty["attrPropName"]
         # for attribute: attributeProperty["attributeName"]
         # with value: " + attributeProperty["attrPropValue"]
-        if(attributeProperty["attrPropName"])!="" and (attributeProperty["attrPropValue"]!=""):
+        if (attributeProperty["attrPropName"]) != "" and (attributeProperty["attrPropValue"] != ""):
             db.put_device_attribute_property(dev_info.name,
                                              {attributeProperty["attributeName"]:
                                                   {attributeProperty["attrPropName"]:

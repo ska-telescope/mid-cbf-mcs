@@ -79,21 +79,21 @@ class Vcc(SKACapability):
             names[1] = "vcc_band5"
             self._proxy_band_5 = PyTango.DeviceProxy("/".join(names))
 
-        if self.TDC1Address:
-            self._proxy_tdc_1 = PyTango.DeviceProxy(self.TDC1Address)
+        if self.SW1Address:
+            self._proxy_sw_1 = PyTango.DeviceProxy(self.SW1Address)
         else:
             # use this default value
             names = self.get_name().split("/")
-            names[1] = "vcc_tdc1"
-            self._proxy_tdc_1 = PyTango.DeviceProxy("/".join(names))
+            names[1] = "vcc_sw1"
+            self._proxy_sw_1 = PyTango.DeviceProxy("/".join(names))
 
-        if self.TDC2Address:
-            self._proxy_tdc_2 = PyTango.DeviceProxy(self.TDC2Address)
+        if self.SW2Address:
+            self._proxy_sw_2 = PyTango.DeviceProxy(self.SW2Address)
         else:
             # use this default value
             names = self.get_name().split("/")
-            names[1] = "vcc_tdc2"
-            self._proxy_tdc_2 = PyTango.DeviceProxy("/".join(names))
+            names[1] = "vcc_sw2"
+            self._proxy_sw_2 = PyTango.DeviceProxy("/".join(names))
 
     # PROTECTED REGION END #    //  Vcc.class_variable
 
@@ -117,11 +117,11 @@ class Vcc(SKACapability):
         dtype='str'
     )
 
-    TDC1Address = device_property(
+    SW1Address = device_property(
         dtype='str'
     )
 
-    TDC2Address = device_property(
+    SW2Address = device_property(
         dtype='str'
     )
 
@@ -266,7 +266,7 @@ class Vcc(SKACapability):
         self._health_state = HealthState.UNKNOWN.value
 
         # defines self._proxy_band_12, self._proxy_band_3, self._proxy_band_4, self._proxy_band_5,
-        # self._proxy_tdc_1, and self._proxy_tdc_2
+        # self._proxy_sw_1, and self._proxy_sw_2
         self.__get_capability_proxies()
 
         # the bands are already disabled on initialization
@@ -538,17 +538,17 @@ class Vcc(SKACapability):
 
         errs = []
 
-        # variable to use as TDC proxy
-        proxy_tdc = 0
+        # variable to use as SW proxy
+        proxy_sw = 0
 
         # Validate searchWindowID.
         # If not given, ignore the entire search window and append an error.
         # If malformed, ignore the entire search window and append an error.
         if "searchWindowID" in argin:
             if int(argin["searchWindowID"]) == 1:
-                proxy_tdc = self._proxy_tdc_1
+                proxy_sw = self._proxy_sw_1
             elif int(argin["searchWindowID"]) == 2:
-                proxy_tdc = self._proxy_tdc_2
+                proxy_sw = self._proxy_sw_2
             else:  # searchWindowID not in valid range
                 msg = "\n".join(errs)
                 msg += "'searchWindowID' must be one of [1, 2] (received {}). "\
@@ -572,7 +572,7 @@ class Vcc(SKACapability):
         # If malformed, ignore the entire search window and append an error.
         if "searchWindowTuning" in argin:
             # TODO: validate input
-            proxy_tdc.searchWindowTuning = argin["searchWindowTuning"]
+            proxy_sw.searchWindowTuning = argin["searchWindowTuning"]
         else:  # searchWindowTuning not given
             msg = "\n".join(errs)
             msg += "Search window specified, but 'searchWindowTuning' not given. "\
@@ -587,12 +587,12 @@ class Vcc(SKACapability):
         # If not given, ignore the entire search window and append an error.
         if "tdcEnable" in argin:
             if argin["tdcEnable"] in [True, False]:
-                proxy_tdc.tdcEnable = argin["tdcEnable"]
+                proxy_sw.tdcEnable = argin["tdcEnable"]
                 if argin["tdcEnable"]:
                     # transition to ON if TDC is enabled
-                    proxy_tdc.SetState(PyTango.DevState.ON)
+                    proxy_sw.SetState(PyTango.DevState.ON)
                 else:
-                    proxy_tdc.SetState(PyTango.DevState.DISABLE)
+                    proxy_sw.SetState(PyTango.DevState.DISABLE)
             else:
                 msg = "\n".join(errs)
                 msg += "Search window specified, but 'tdcEnable' not given. "\
@@ -614,10 +614,10 @@ class Vcc(SKACapability):
         # Validate tdcNumBits.
         # If not given when required, ignore the entire search window and append an error.
         # If malformed when required, ignore the entire search window and append an error.
-        if proxy_tdc.tdcEnable:
+        if proxy_sw.tdcEnable:
             if "tdcNumBits" in argin:
                 if int(argin["tdcNumBits"]) in [2, 4, 8]:
-                    proxy_tdc.tdcNumBits = int(argin["tdcNumBits"])
+                    proxy_sw.tdcNumBits = int(argin["tdcNumBits"])
                 else:
                     msg = "\n".join(errs)
                     msg += "'tdcNumBits' must be one of [2, 4, 8] (received {}). "\
@@ -642,15 +642,15 @@ class Vcc(SKACapability):
         # If malformed, use a default value, but append an error.
         if "tdcPeriodBeforeEpoch" in argin:
             if int(argin["tdcPeriodBeforeEpoch"]) > 0:
-                proxy_tdc.tdcPeriodBeforeEpoch = int(argin["tdcPeriodBeforeEpoch"])
+                proxy_sw.tdcPeriodBeforeEpoch = int(argin["tdcPeriodBeforeEpoch"])
             else:
-                proxy_tdc.tdcPeriodBeforeEpoch = 2
+                proxy_sw.tdcPeriodBeforeEpoch = 2
                 log_msg = "'tdcPeriodBeforeEpoch' must be a positive integer (received {}). "\
                     "Defaulting to 2.".format(str(argin["tdcPeriodBeforeEpoch"]))
                 self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
                 errs.append(log_msg)
         else:  # periodBeforeEpoch not given
-            proxy_tdc.tdcPeriodBeforeEpoch = 2
+            proxy_sw.tdcPeriodBeforeEpoch = 2
             log_msg = "Search window specified, but 'tdcPeriodBeforeEpoch' not given. "\
                 "Defaulting to 2."
             self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
@@ -660,15 +660,15 @@ class Vcc(SKACapability):
         # If malformed, use a default value, but append an error.
         if "tdcPeriodAfterEpoch" in argin:
             if int(argin["tdcPeriodAfterEpoch"]) > 0:
-                proxy_tdc.tdcPeriodAfterEpoch = int(argin["tdcPeriodAfterEpoch"])
+                proxy_sw.tdcPeriodAfterEpoch = int(argin["tdcPeriodAfterEpoch"])
             else:
-                proxy_tdc.tdcPeriodAfterEpoch = 22
+                proxy_sw.tdcPeriodAfterEpoch = 22
                 log_msg = "'tdcPeriodAfterEpoch' must be a positive integer (received {}). "\
                     "Defaulting to 22.".format(str(argin["tdcPeriodAfterEpoch"]))
                 self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
                 errs.append(log_msg)
         else:  # periodAfterEpoch not given
-            proxy_tdc.tdcPeriodAfterEpoch = 22
+            proxy_sw.tdcPeriodAfterEpoch = 22
             log_msg = "Search window specified, but 'tdcPeriodAfterEpoch' not given. "\
                 "Defaulting to 22."
             self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
@@ -676,10 +676,10 @@ class Vcc(SKACapability):
         # Validate tdcDestinationAddress.
         # If not given when required, ignore the entire search window and append an error.
         # If malformed when required, ignore the entire search window and append and error.
-        if proxy_tdc.tdcEnable:
+        if proxy_sw.tdcEnable:
             try:
                 # TODO: validate input
-                proxy_tdc.tdcDestinationAddress = \
+                proxy_sw.tdcDestinationAddress = \
                     argin["tdcDestinationAddress"][str(self._receptor_ID)]
             except KeyError:
                 # tdcDestinationAddress not given or receptorID not in tdcDestinationAddress

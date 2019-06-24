@@ -124,11 +124,18 @@ class CbfSubarray(SKASubarray):
         dtype='uint16',
     )
 
-
     CbfMasterAddress = device_property(
         dtype='str',
         doc="FQDN of CBF Master",
         default_value="mid_csp_cbf/sub_elt/master"
+    )
+
+    SW1Address = device_property(
+        dtype='str'
+    )
+
+    SW2Address = device_property(
+        dtype='str'
     )
 
     VCC = device_property(
@@ -138,7 +145,7 @@ class CbfSubarray(SKASubarray):
     FSP = device_property(
         dtype=('str',)
     )
-	
+
     FspSubarray = device_property(
         dtype=('str',)
     )
@@ -247,11 +254,14 @@ class CbfSubarray(SKASubarray):
         # device proxy for easy reference to CBF Master
         self._proxy_cbf_master = PyTango.DeviceProxy(self.CbfMasterAddress)
 
+        self._proxy_sw_1 = PyTango.DeviceProxy(self.SW1Address)
+        self._proxy_sw_2 = PyTango.DeviceProxy(self.SW2Address)
+
         self._count_vcc = 197
         self._count_fsp = 27
-        self._fqdn_vcc = self.VCC
-        self._fqdn_fsp = self.FSP
-        self._fqdn_fsp_subarray = self.FspSubarray
+        self._fqdn_vcc = list(self.VCC)
+        self._fqdn_fsp = list(self.FSP)
+        self._fqdn_fsp_subarray = list(self.FspSubarray)
 
         self._proxies_vcc = [*map(PyTango.DeviceProxy, self._fqdn_vcc)]
         self._proxies_fsp = [*map(PyTango.DeviceProxy, self._fqdn_fsp)]
@@ -686,16 +696,6 @@ class CbfSubarray(SKASubarray):
                 attribute_proxy = PyTango.AttributeProxy(argin["dopplerPhaseCorrSubscriptionPoint"])
                 attribute_proxy.ping()
 
-                # set up attribute polling and change events
-                attribute_proxy.poll(1000)  # polling period in milliseconds, may change later
-                attribute_info = attribute_proxy.get_config()
-
-                periodic_event_info = PyTango.PeriodicEventInfo()
-                periodic_event_info.period = "10000"  # periodic event every 10 seconds
-                attribute_info.events.per_event = periodic_event_info
-
-                attribute_proxy.set_config(attribute_info)
-
                 # subscribe to the event
                 event_id = attribute_proxy.subscribe_event(
                     PyTango.EventType.PERIODIC_EVENT,
@@ -718,16 +718,6 @@ class CbfSubarray(SKASubarray):
             try:
                 attribute_proxy = PyTango.AttributeProxy(argin["delayModelSubscriptionPoint"])
                 attribute_proxy.ping()
-
-                # set up attribute polling and change events
-                attribute_proxy.poll(1000)  # polling period in milliseconds, may change later
-                attribute_info = attribute_proxy.get_config()
-
-                periodic_event_info = PyTango.PeriodicEventInfo()
-                periodic_event_info.period = "10000"  # periodic event every 10 seconds
-                attribute_info.events.per_event = periodic_event_info
-
-                attribute_proxy.set_config(attribute_info)
 
                 # subscribe to the event
                 event_id = attribute_proxy.subscribe_event(
@@ -769,15 +759,22 @@ class CbfSubarray(SKASubarray):
                 assert len(argin["searchWindow"]) <= 2
 
                 for search_window in argin["searchWindow"]:
-                    for vcc in self._proxies_assigned_vcc:
-                        try:
-                            # pass on configuration to VCC
-                            vcc.ConfigureSearchWindow(json.dumps(search_window))
-                        except PyTango.DevFailed:  # exception in ConfigureSearchWindow
-                            log_msg = "An exception occurred while configuring search "\
-                                "windows:\n" + str(sys.exc_info()[1].args[0].desc)
-                            self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
-                            errs.append(log_msg)
+                    try:
+                        self.ConfigureSearchWindow(json.dumps(search_window))
+                        for vcc in self._proxies_assigned_vcc:
+                            try:
+                                # pass on configuration to VCC
+                                vcc.ConfigureSearchWindow(json.dumps(search_window))
+                            except PyTango.DevFailed:  # exception in Vcc.ConfigureSearchWindow
+                                log_msg = "An exception occurred while configuring search "\
+                                    "windows:\n" + str(sys.exc_info()[1].args[0].desc)
+                                self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
+                                errs.append(log_msg)
+                    except PyTango.DevFailed:  # exception in CbfSubarray.ConfigureSearchWindow
+                        log_msg = "An exception occurred while configuring search " \
+                                  "windows:\n" + str(sys.exc_info()[1].args[0].desc)
+                        self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
+                        errs.append(log_msg)
 
             except (TypeError, AssertionError):  # searchWindow not the right length or not an array
                 log_msg = "'searchWindow' must be an array of maximum length 2. "\
@@ -896,6 +893,199 @@ class CbfSubarray(SKASubarray):
         self._obs_state = ObsState.READY.value
 
         # PROTECTED REGION END #    //  CbfSubarray.ConfigureScan
+
+    @command(
+        dtype_in='str',
+        doc_in='JSON object to configure a search window'
+    )
+    def ConfigureSearchWindow(self, argin):
+        # PROTECTED REGION ID(CbfSubarray.ConfigureSearchWindow) ENABLED START #
+
+        # transition state to CONFIGURING
+        self._obs_state = ObsState.CONFIGURING.value
+
+        # try to deserialize input string to a JSON object
+        try:
+            argin = json.loads(argin)
+        except json.JSONDecodeError:  # argument not a valid JSON object
+            # this is a fatal error
+            msg = "Search window configuration object is not a valid JSON object. Aborting " \
+                  "configuration."
+            self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+            PyTango.Except.throw_exception("Command failed", msg,
+                                           "ConfigureSearchWindow execution",
+                                           PyTango.ErrSeverity.ERR)
+
+        errs = []
+
+        # variable to use as SW proxy
+        proxy_sw = 0
+
+        # Validate searchWindowID.
+        # If not given, ignore the entire search window and append an error.
+        # If malformed, ignore the entire search window and append an error.
+        if "searchWindowID" in argin:
+            if int(argin["searchWindowID"]) == 1:
+                proxy_sw = self._proxy_sw_1
+            elif int(argin["searchWindowID"]) == 2:
+                proxy_sw = self._proxy_sw_2
+            else:  # searchWindowID not in valid range
+                msg = "\n".join(errs)
+                msg += "'searchWindowID' must be one of [1, 2] (received {}). " \
+                       "Ignoring search window".format(str(argin["searchWindowID"]))
+                # this is a fatal error
+                self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+                PyTango.Except.throw_exception("Command failed", msg,
+                                               "ConfigureSearchWindow execution",
+                                               PyTango.ErrSeverity.ERR)
+        else:  # searchWindowID not given
+            msg = "\n".join(errs)
+            msg += "Search window specified, but 'searchWindowID' not given. " \
+                   "Ignoring search window."
+            # this is a fatal error
+            self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+            PyTango.Except.throw_exception("Command failed", msg,
+                                           "ConfigureSearchWindow execution",
+                                           PyTango.ErrSeverity.ERR)
+
+        # Validate searchWindowTuning.
+        # If not given, ignore the entire search window and append an error.
+        # If malformed, ignore the entire search window and append an error.
+        if "searchWindowTuning" in argin:
+            # TODO: validate input
+            proxy_sw.searchWindowTuning = argin["searchWindowTuning"]
+        else:  # searchWindowTuning not given
+            msg = "\n".join(errs)
+            msg += "Search window specified, but 'searchWindowTuning' not given. " \
+                   "Ignoring search window."
+            # this is a fatal error
+            self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+            PyTango.Except.throw_exception("Command failed", msg,
+                                           "ConfigureSearchWindow execution",
+                                           PyTango.ErrSeverity.ERR)
+
+        # Validate tdcEnable.
+        # If not given, ignore the entire search window and append an error.
+        # If not given, ignore the entire search window and append an error.
+        if "tdcEnable" in argin:
+            if argin["tdcEnable"] in [True, False]:
+                proxy_sw.tdcEnable = argin["tdcEnable"]
+                if argin["tdcEnable"]:
+                    # transition to ON if TDC is enabled
+                    proxy_sw.SetState(PyTango.DevState.ON)
+                else:
+                    proxy_sw.SetState(PyTango.DevState.DISABLE)
+            else:
+                msg = "\n".join(errs)
+                msg += "Search window specified, but 'tdcEnable' not given. " \
+                       "Ignoring search window."
+                # this is a fatal error
+                self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+                PyTango.Except.throw_exception("Command failed", msg,
+                                               "ConfigureSearchWindow execution",
+                                               PyTango.ErrSeverity.ERR)
+        else:  # enableTDC not given
+            msg = "\n".join(errs)
+            msg += "Search window specified, but 'tdcEnable' not given. " \
+                   "Ignoring search window."
+            # this is a fatal error
+            self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+            PyTango.Except.throw_exception("Command failed", msg,
+                                           "ConfigureSearchWindow execution",
+                                           PyTango.ErrSeverity.ERR)
+
+        # Validate tdcNumBits.
+        # If not given when required, ignore the entire search window and append an error.
+        # If malformed when required, ignore the entire search window and append an error.
+        if proxy_sw.tdcEnable:
+            if "tdcNumBits" in argin:
+                if int(argin["tdcNumBits"]) in [2, 4, 8]:
+                    proxy_sw.tdcNumBits = int(argin["tdcNumBits"])
+                else:
+                    msg = "\n".join(errs)
+                    msg += "'tdcNumBits' must be one of [2, 4, 8] (received {}). " \
+                           "Ignoring search window.".format(str(argin["tdcNumBits"]))
+                    # this is a fatal error
+                    self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+                    PyTango.Except.throw_exception("Command failed", msg,
+                                                   "ConfigureSearchWindow execution",
+                                                   PyTango.ErrSeverity.ERR)
+            else:  # numberBits not given
+                msg = "\n".join(errs)
+                msg += "Search window specified with TDC enabled, but 'tdcNumBits' not given. " \
+                       "Ignoring search window."
+                # this is a fatal error
+                self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+                PyTango.Except.throw_exception("Command failed", msg,
+                                               "ConfigureSearchWindow execution",
+                                               PyTango.ErrSeverity.ERR)
+
+        # Validate tdcPeriodBeforeEpoch.
+        # If not given, use a default value.
+        # If malformed, use a default value, but append an error.
+        if "tdcPeriodBeforeEpoch" in argin:
+            if int(argin["tdcPeriodBeforeEpoch"]) > 0:
+                proxy_sw.tdcPeriodBeforeEpoch = int(argin["tdcPeriodBeforeEpoch"])
+            else:
+                proxy_sw.tdcPeriodBeforeEpoch = 2
+                log_msg = "'tdcPeriodBeforeEpoch' must be a positive integer (received {}). " \
+                          "Defaulting to 2.".format(str(argin["tdcPeriodBeforeEpoch"]))
+                self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
+                errs.append(log_msg)
+        else:  # periodBeforeEpoch not given
+            proxy_sw.tdcPeriodBeforeEpoch = 2
+            log_msg = "Search window specified, but 'tdcPeriodBeforeEpoch' not given. " \
+                      "Defaulting to 2."
+            self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+
+        # Validate tdcPeriodAfterEpoch.
+        # If not given, use a default value.
+        # If malformed, use a default value, but append an error.
+        if "tdcPeriodAfterEpoch" in argin:
+            if int(argin["tdcPeriodAfterEpoch"]) > 0:
+                proxy_sw.tdcPeriodAfterEpoch = int(argin["tdcPeriodAfterEpoch"])
+            else:
+                proxy_sw.tdcPeriodAfterEpoch = 22
+                log_msg = "'tdcPeriodAfterEpoch' must be a positive integer (received {}). " \
+                          "Defaulting to 22.".format(str(argin["tdcPeriodAfterEpoch"]))
+                self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
+                errs.append(log_msg)
+        else:  # periodAfterEpoch not given
+            proxy_sw.tdcPeriodAfterEpoch = 22
+            log_msg = "Search window specified, but 'tdcPeriodAfterEpoch' not given. " \
+                      "Defaulting to 22."
+            self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+
+        # Validate tdcDestinationAddress.
+        # If not given when required, ignore the entire search window and append an error.
+        # If malformed when required, ignore the entire search window and append and error.
+        if proxy_sw.tdcEnable:
+            try:
+                # TODO: validate input
+                proxy_sw.tdcDestinationAddress = \
+                    argin["tdcDestinationAddress"][str(self._receptor_ID)]
+            except KeyError:
+                # tdcDestinationAddress not given or receptorID not in tdcDestinationAddress
+                msg = "\n".join(errs)
+                msg += "Search window specified with TDC enabled, but 'tdcDestinationAddress' " \
+                       "not given or missing receptors. Ignoring search window."
+                # this is a fatal error
+                self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+                PyTango.Except.throw_exception("Command failed", msg,
+                                               "ConfigureSearchWindow execution",
+                                               PyTango.ErrSeverity.ERR)
+
+        # raise an error if something went wrong
+        if errs:
+            msg = "\n".join(errs)
+            self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+            PyTango.Except.throw_exception("Command failed", msg,
+                                           "ConfigureSearchWindow execution",
+                                           PyTango.ErrSeverity.ERR)
+
+        # transition state to IDLE when done
+        self._obs_state = ObsState.IDLE.value
+        # PROTECTED REGION END #    //  CbfSubarray.ConfigureSearchWindow
 
 # ----------
 # Run server

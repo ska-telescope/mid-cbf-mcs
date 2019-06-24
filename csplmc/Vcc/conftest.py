@@ -35,5 +35,5 @@ def create_band_5_proxy():
     return DeviceProxy("mid_csp_cbf/vcc_band5/001")
 
 @pytest.fixture(scope="class")
-def create_tdc_1_proxy():
-    return DeviceProxy("mid_csp_cbf/vcc_tdc1/001")
+def create_sw_1_proxy():
+    return DeviceProxy("mid_csp_cbf/vcc_sw1/001")

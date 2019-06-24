@@ -118,10 +118,10 @@ class CbfMaster(SKAMaster):
             try:
                 device_name = event.device.dev_name()
                 if "vcc" in device_name:
-                    self._report_vcc_subarray_membership[int(device_name[-3:]) - 1] = \
+                    self._report_vcc_subarray_membership[self._fqdn_vcc.index(device_name)] = \
                         event.attr_value.value
                 elif "fsp" in device_name:
-                    self._report_fsp_subarray_membership[int(device_name[-2:]) - 1] = \
+                    self._report_fsp_subarray_membership[self._fqdn_fsp.index(device_name)] = \
                        event.attr_value.value
                 else:
                     # should NOT happen!
@@ -144,7 +144,7 @@ class CbfMaster(SKAMaster):
     def __scan_ID_event_callback(self, event):
         if not event.err:
             try:
-                self._subarray_scan_ID[int(event.device.dev_name()[-2:]) - 1] = \
+                self._subarray_scan_ID[self._fqdn_subarray.index(event.device.dev_name())] = \
                     event.attr_value.value
             except Exception as except_occurred:
                 self.dev_logging(str(except_occurred), PyTango.LogLevel.LOG_ERROR)
@@ -484,15 +484,6 @@ class CbfMaster(SKAMaster):
                 # set up attribute polling and change events on subarrays/capabilities
                 # and subscribe to event
                 for attribute in ["adminMode", "healthState", "State"]:
-                    attribute_proxy = PyTango.AttributeProxy(fqdn + "/" + attribute)
-                    attribute_proxy.poll(1000)  # polling period in milliseconds, may change later
-
-                    attribute_info = attribute_proxy.get_config()
-                    change_event_info = PyTango.ChangeEventInfo()
-                    change_event_info.abs_change = "1"
-                    attribute_info.events.ch_event = change_event_info
-                    attribute_proxy.set_config(attribute_info)
-
                     self._event_id.append(
                         device_proxy.subscribe_event(
                             attribute, PyTango.EventType.CHANGE_EVENT,
@@ -502,15 +493,6 @@ class CbfMaster(SKAMaster):
 
                 # subscribe to VCC/FSP subarray membership change events
                 if "vcc" in fqdn or "fsp" in fqdn:
-                    attribute_proxy = PyTango.AttributeProxy(fqdn + "/subarrayMembership")
-                    attribute_proxy.poll(1000)  # polling period in milliseconds, may change later
-
-                    attribute_info = attribute_proxy.get_config()
-                    change_event_info = PyTango.ChangeEventInfo()
-                    change_event_info.abs_change = "1"
-                    attribute_info.events.ch_event = change_event_info
-                    attribute_proxy.set_config(attribute_info)
-
                     self._event_id.append(
                         device_proxy.subscribe_event(
                             "subarrayMembership", PyTango.EventType.CHANGE_EVENT,
@@ -520,15 +502,6 @@ class CbfMaster(SKAMaster):
 
                 # subscribe to subarray scan ID change events
                 if "subarray" in fqdn:
-                    attribute_proxy = PyTango.AttributeProxy(fqdn + "/scanID")
-                    attribute_proxy.poll(1000)  # polling period in milliseconds, may change later
-
-                    attribute_info = attribute_proxy.get_config()
-                    change_event_info = PyTango.ChangeEventInfo()
-                    change_event_info.abs_change = "1"
-                    attribute_info.events.ch_event = change_event_info
-                    attribute_proxy.set_config(attribute_info)
-
                     self._event_id.append(
                         device_proxy.subscribe_event(
                             "scanID", PyTango.EventType.CHANGE_EVENT,
