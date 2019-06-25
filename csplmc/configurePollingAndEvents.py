@@ -6,8 +6,7 @@ import time
 # Update file path to devices.json in order to test locally
 # To test on docker environment use path : /app/csplmc/devices.json
 
-with open("./devices.json", "r") as file:
-#with open('/app/csplmc/devices.json', 'r') as file:
+with open('/app/csplmc/devices.json', 'r') as file:
     jsonDevices = file.read().replace('\n', '')
 
 # Loading devices.json file and creating an object

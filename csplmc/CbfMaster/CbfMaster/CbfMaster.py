@@ -424,6 +424,10 @@ class CbfMaster(SKAMaster):
         # defines self._count_vcc, self._count_fsp, and self._count_subarray
         self.__get_num_capabilities()
 
+        self._storage_logging_level = PyTango.LogLevel.LOG_DEBUG
+        self._element_logging_level = PyTango.LogLevel.LOG_DEBUG
+        self._central_logging_level = PyTango.LogLevel.LOG_DEBUG
+
         # initialize attribute values
         self._command_progress = 0
         self._report_vcc_state = [PyTango.DevState.UNKNOWN]*self._count_vcc

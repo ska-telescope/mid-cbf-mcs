@@ -146,13 +146,17 @@ ifneq ($(NETWORK_MODE),host)
 endif
 	$(DOCKER_COMPOSE_ARGS) docker-compose -f tango.yml up -d
 	$(DOCKER_COMPOSE_ARGS) docker-compose -f tango.yml $(WEBJIVE_COMPOSE_FILE_ARGS) up -d
-	$(DOCKER_COMPOSE_ARGS) docker-compose $(COMPOSE_FILE_ARGS) up -d
+	$(DOCKER_COMPOSE_ARGS) docker-compose $(COMPOSE_FILE_ARGS) up --no-start
 
 piplock: build  ## overwrite Pipfile.lock with the image version
 	docker run $(IMAGE_TO_TEST) cat /app/Pipfile.lock > $(CURDIR)/Pipfile.lock
 
-interactive: up
+# interactive: up
 interactive:  ## start an interactive session using the project image (caution: R/W mounts source directory to /app)
+ifneq ($(NETWORK_MODE),host)
+	docker network inspect $(NETWORK_MODE) &> /dev/null || ([ $$? -ne 0 ] && docker network create $(NETWORK_MODE))
+endif
+	$(DOCKER_COMPOSE_ARGS) docker-compose -f tango.yml up -d
 	docker run --rm -it -p 3000:3000 --name=$(CONTAINER_NAME_PREFIX)dev -e TANGO_HOST=$(TANGO_HOST) --network=$(NETWORK_MODE) \
 	  -v $(CURDIR):/app $(IMAGE_TO_TEST) /bin/bash
 

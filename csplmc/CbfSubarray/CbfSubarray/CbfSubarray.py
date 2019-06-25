@@ -1083,8 +1083,6 @@ class CbfSubarray(SKASubarray):
                                            "ConfigureSearchWindow execution",
                                            PyTango.ErrSeverity.ERR)
 
-        # transition state to IDLE when done
-        self._obs_state = ObsState.IDLE.value
         # PROTECTED REGION END #    //  CbfSubarray.ConfigureSearchWindow
 
 # ----------
