@@ -195,7 +195,14 @@ class TmTelstateTest(SKABaseDevice):
         dtype='str',
         access=AttrWriteType.READ_WRITE,
         label="Delay model coefficients",
-        doc="Delay model coefficients, given per receptor per frequency slice per polarization, as a JSON object"
+        doc="Delay model coefficients"
+    )
+
+    visDestinationAddress = attribute(
+        dtype='str',
+        access=AttrWriteType.READ_WRITE,
+        label="Destination addresses for visibilities",
+        doc="Destination addresses for visibilities"
     )
 
 
@@ -208,6 +215,7 @@ class TmTelstateTest(SKABaseDevice):
         # PROTECTED REGION ID(TmTelstateTest.init_device) ENABLED START #
         self._doppler_phase_correction = [(0, 0, 0, 0) for i in range(16)]
         self._delay_model = {}  # this is interpreted as a JSON object
+        self._vis_destination_address = {}  # this is interpreted as a JSON object
         # PROTECTED REGION END #    //  TmTelstateTest.init_device
 
     def always_executed_hook(self):
@@ -538,6 +546,17 @@ class TmTelstateTest(SKABaseDevice):
         # since this is just a test device, assume that the JSON schema is always what we expect
         self._delay_model = json.loads(str(value))
         # PROTECTED REGION END #    //  TmTelstateTest.delayModel_write
+
+    def read_visDestinationAddress(self):
+        # PROTECTED REGION ID(TmTelstateTest.visDestinationAddress_read) ENABLED START #
+        return json.dumps(self._vis_destination_address)
+        # PROTECTED REGION END #    //  TmTelstateTest.visDestinationAddress_read
+
+    def write_visDestinationAddress(self, value):
+        # PROTECTED REGION ID(TmTelstateTest.visDestinationAddress_write) ENABLED START #
+        # since this is just a test device, assume that the JSON schema is always what we expect
+        self._vis_destination_address = json.loads(str(value))
+        # PROTECTED REGION END #    //  TmTelstateTest.visDestinationAddress_write
 
 
     # --------

@@ -78,12 +78,20 @@ with open("devices.json", "w+") as f:
               "                \"changeEventAbs\": \"1\"\n" \
               "            },\n" \
               "            {\n" \
+              "                \"attributeName\": \"visDestinationAddress\",\n" \
+              "                \"attrPropName\": \"\",\n" \
+              "                \"attrPropValue\": \"\",\n" \
+              "                \"pollingPeriod\": 1000,\n" \
+              "                \"periodicEventCadence\": \"10000\",\n" \
+              "                \"changeEventAbs\": \"1\"\n" \
+              "            },\n" \
+              "            {\n" \
               "                \"attributeName\": \"dopplerPhaseCorrection_1\",\n" \
               "                \"attrPropName\": \"\",\n" \
               "                \"attrPropValue\": \"\",\n" \
               "                \"pollingPeriod\": 1000,\n" \
               "                \"periodicEventCadence\": \"10000\",\n" \
-              "                \"changeEventAbs\": \"\"\n" \
+              "                \"changeEventAbs\": \"1\"\n" \
               "            }\n" \
               "        ]\n" \
               "    },\n"

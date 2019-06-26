@@ -90,10 +90,9 @@ class SearchWindow(SKACapability):
 
     tdcDestinationAddress = attribute(
         dtype='str',
-        max_dim_x=3,
         access=AttrWriteType.READ_WRITE,
         label="Destination addresses",
-        doc="Destination addresses (MAC address, IP address, port) for transient data"
+        doc="Destination addresses for transient data"
     )
 
     # ---------------
@@ -112,7 +111,7 @@ class SearchWindow(SKACapability):
         self._number_bits = 0
         self._period_before_epoch = 0
         self._period_after_epoch = 0
-        self._destination_address = "{}"
+        self._destination_address = {}  # this is interpreted as a JSON object
 
         self.set_state(PyTango.DevState.DISABLE)
         # PROTECTED REGION END #    //  SearchWindow.init_device
@@ -183,12 +182,13 @@ class SearchWindow(SKACapability):
 
     def read_tdcDestinationAddress(self):
         # PROTECTED REGION ID(SearchWindow.tdcDestinationAddress_read) ENABLED START #
-        return self._destination_address
+        return json.dumps(self._destination_address)
         # PROTECTED REGION END #    //  SearchWindow.tdcDestinationAddress_read
 
     def write_tdcDestinationAddress(self, value):
         # PROTECTED REGION ID(SearchWindow.tdcDestinationAddress_write) ENABLED START #
-        self._destination_address = value
+        # if value is not valid JSON, the exception is caught by CbfSubarray.ConfigureScan()
+        self._destination_address = json.loads(value)
         # PROTECTED REGION END #    //  SearchWindow.tdcDestinationAddress_write
 
     # --------

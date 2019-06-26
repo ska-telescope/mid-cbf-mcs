@@ -77,6 +77,19 @@ class CbfSubarray(SKASubarray):
                 log_msg = item.reason + ": on attribute " + str(event.attr_name)
                 self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
 
+    def __vis_destination_address_event_callback(self, event):
+        if not event.err:
+            try:
+                # TODO: forward to FSP Subarrays
+                log_msg = "Value of " + str(event.attr_name) + " is " + str(event.attr_value.value)
+                self.dev_logging(log_msg, PyTango.LogLevel.LOG_DEBUG)
+            except Exception as e:
+                self.dev_logging(str(e), PyTango.LogLevel.LOG_ERROR)
+        else:
+            for item in event.errors:
+                log_msg = item.reason + ": on attribute " + str(event.attr_name)
+                self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
+
     def __state_change_event_callback(self, event):
         if not event.err:
             try:
@@ -113,6 +126,12 @@ class CbfSubarray(SKASubarray):
             for item in event.errors:
                 log_msg = item.reason + ": on attribute " + str(event.attr_name)
                 self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
+
+    def __raise_configure_scan_fatal_error(self, msg):
+        self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+        self._obs_state = ObsState.IDLE.value
+        PyTango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
+                                       PyTango.ErrSeverity.ERR)
 
     # PROTECTED REGION END #    //  CbfSubarray.class_variable
 
@@ -544,10 +563,7 @@ class CbfSubarray(SKASubarray):
         except json.JSONDecodeError:  # argument not a valid JSON object
             # this is a fatal error
             msg = "Scan configuration object is not a valid JSON object. Aborting configuration."
-            self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
-            self._obs_state = ObsState.IDLE.value
-            PyTango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
-                                           PyTango.ErrSeverity.ERR)
+            self.__raise_configure_scan_fatal_error(msg)
 
         errs = []
 
@@ -561,29 +577,21 @@ class CbfSubarray(SKASubarray):
                     "Aborting configuration.".format(int(argin["scanID"]))
                 # this is a fatal error
                 self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
-                self._obs_state = ObsState.IDLE.value
-                PyTango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
-                                               PyTango.ErrSeverity.ERR)
+                self.__raise_configure_scan_fatal_error(msg)
             elif any(map(lambda i: i == int(argin["scanID"]),
                          self._proxy_cbf_master.subarrayScanID)):  # scanID already taken
                 msg = "\n".join(errs)
                 msg += "'scanID' must be unique (received {}). "\
                     "Aborting configuration.".format(int(argin["scanID"]))
                 # this is a fatal error
-                self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
-                self._obs_state = ObsState.IDLE.value
-                PyTango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
-                                               PyTango.ErrSeverity.ERR)
+                self.__raise_configure_scan_fatal_error(msg)
             else:  # scanID is valid
                 self._scan_ID = int(argin["scanID"])
         else:  # scanID not given
             msg = "\n".join(errs)
             msg += "'scanID' must be given. Aborting configuration."
             # this is a fatal error
-            self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
-            self._obs_state = ObsState.IDLE.value
-            PyTango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
-                                           PyTango.ErrSeverity.ERR)
+            self.__raise_configure_scan_fatal_error(msg)
 
         # Validate frequencyBand.
         # If not given, abort the scan configuration.
@@ -599,18 +607,12 @@ class CbfSubarray(SKASubarray):
                 msg += "'frequencyBand' must be one of {} (received {}). "\
                     "Aborting configuration.".format(frequency_bands, argin["frequency_band"])
                 # this is a fatal error
-                self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
-                self._obs_state = ObsState.IDLE.value
-                PyTango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
-                                               PyTango.ErrSeverity.ERR)
+                self.__raise_configure_scan_fatal_error(msg)
         else:  # frequencyBand not given
             msg = "\n".join(errs)
             msg += "'frequencyBand' must be given. Aborting configuration."
             # this is a fatal error
-            self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
-            self._obs_state = ObsState.IDLE.value
-            PyTango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
-                                           PyTango.ErrSeverity.ERR)
+            self.__raise_configure_scan_fatal_error(msg)
 
         # ======================================================================= #
         # At this point, self._scan_ID, self._receptors, and self._frequency_band #
@@ -629,10 +631,7 @@ class CbfSubarray(SKASubarray):
                     msg = "\n".join(errs)
                     msg += "'band5Tuning' must be an array of length 2. Aborting configuration."
                     # this is a fatal error
-                    self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
-                    self._obs_state = ObsState.IDLE.value
-                    PyTango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
-                                                   PyTango.ErrSeverity.ERR)
+                    self.__raise_configure_scan_fatal_error(msg)
 
                 stream_tuning = [*map(float, argin["band5Tuning"])]
                 if self._frequency_band == 4:
@@ -645,11 +644,7 @@ class CbfSubarray(SKASubarray):
                             "(received {} and {}) for a 'frequencyBand' of 5a. "\
                             "Aborting configuration.".format(stream_tuning[0], stream_tuning[1])
                         # this is a fatal error
-                        self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
-                        self._obs_state = ObsState.IDLE.value
-                        PyTango.Except.throw_exception("Command failed", msg,
-                                                       "ConfigureScan execution",
-                                                       PyTango.ErrSeverity.ERR)
+                        self.__raise_configure_scan_fatal_error(msg)
                 else:  # self._frequency_band == 5
                     if all([9.55 <= stream_tuning[i] <= 14.05 for i in [0, 1]]):
                         for vcc in self._proxies_assigned_vcc:
@@ -660,20 +655,13 @@ class CbfSubarray(SKASubarray):
                             "(received {} and {}) for a 'frequencyBand' of 5b. "\
                             "Aborting configuration.".format(stream_tuning[0], stream_tuning[1])
                         # this is a fatal error
-                        self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
-                        self._obs_state = ObsState.IDLE.value
-                        PyTango.Except.throw_exception("Command failed", msg,
-                                                       "ConfigureScan execution",
-                                                       PyTango.ErrSeverity.ERR)
+                        self.__raise_configure_scan_fatal_error(msg)
             else:
                 msg = "\n".join(errs)
                 msg += "'band5Tuning' must be given for a 'frequencyBand' of {}. "\
                     "Aborting configuration".format(["5a", "5b"][self._frequency_band - 4])
                 # this is a fatal error
-                self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
-                self._obs_state = ObsState.IDLE.value
-                PyTango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
-                                               PyTango.ErrSeverity.ERR)
+                self.__raise_configure_scan_fatal_error(msg)
 
         # Validate frequencyBandOffsetStream1.
         # If not given, use a default value.
@@ -712,7 +700,7 @@ class CbfSubarray(SKASubarray):
 
                 # subscribe to the event
                 event_id = attribute_proxy.subscribe_event(
-                    PyTango.EventType.PERIODIC_EVENT,
+                    PyTango.EventType.CHANGE_EVENT,
                     self.__doppler_phase_correction_event_callback
                 )
                 self._events_telstate[event_id] = attribute_proxy
@@ -726,8 +714,8 @@ class CbfSubarray(SKASubarray):
             self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
 
         # Validate delayModelSubscriptionPoint
-        # If not given, append an error.
-        # If malformed, append an error.
+        # If not given, abort the scan configuration.
+        # If malformed, abort the scan configuration.
         if "delayModelSubscriptionPoint" in argin:
             try:
                 attribute_proxy = PyTango.AttributeProxy(argin["delayModelSubscriptionPoint"])
@@ -735,24 +723,48 @@ class CbfSubarray(SKASubarray):
 
                 # subscribe to the event
                 event_id = attribute_proxy.subscribe_event(
-                    PyTango.EventType.PERIODIC_EVENT,
+                    PyTango.EventType.CHANGE_EVENT,
                     self.__delay_model_event_callback
                 )
                 self._events_telstate[event_id] = attribute_proxy
             except PyTango.DevFailed:  # attribute doesn't exist
-                log_msg = "Attribute {} not found for 'delayModelSubscriptionPoint'. "\
-                    "Proceeding".format(argin["delayModelSubscriptionPoint"])
-                self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
-                errs.append(log_msg)
+                msg = "\n".join(errs)
+                msg += "Attribute {} not found for 'delayModelSubscriptionPoint'. "\
+                    "Aborting configuration.".format(argin["delayModelSubscriptionPoint"])
+                # this is a fatal error
+                self.__raise_configure_scan_fatal_error(msg)
         else:
-            log_msg = "'delayModelSubscriptionPoint' not given. Proceeding.".format(
-                argin["delayModelSubscriptionPoint"])
-            self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
-            errs.append(log_msg)
+            msg = "\n".join(errs)
+            msg += "'delayModelSubscriptionPoint' not given. Aborting configuration."
+            # this is a fatal error
+            self.__raise_configure_scan_fatal_error(msg)
 
-        # TODO: Validate visDestinationAddressSubscriptionPoint
+        # Validate visDestinationAddressSubscriptionPoint
         # If not given, append an error.
         # If malformed, append an error.
+        if "visDestinationAddressSubscriptionPoint" in argin:
+            try:
+                attribute_proxy = PyTango.AttributeProxy(argin["delayModelSubscriptionPoint"])
+                attribute_proxy.ping()
+
+                # subscribe to the event
+                event_id = attribute_proxy.subscribe_event(
+                    PyTango.EventType.CHANGE_EVENT,
+                    self.__vis_destination_address_event_callback
+                )
+                self._events_telstate[event_id] = attribute_proxy
+            except PyTango.DevFailed:  # attribute doesn't exist
+                msg = "\n".join(errs)
+                msg += "Attribute {} not found for 'visDestinationAddressSubscriptionPoint'. "\
+                    "Aborting configuration.".format(
+                        argin["visDestinationAddressSubscriptionPoint"])
+                # this is a fatal error
+                self.__raise_configure_scan_fatal_error(msg)
+        else:
+            msg = "\n".join(errs)
+            msg += "'visDestinationAddressSubscriptionPoint' not given. Aborting configuration."
+            # this is a fatal error
+            self.__raise_configure_scan_fatal_error(msg)
 
         # Validate rfiFlaggingMask
         # If not given, do nothing.

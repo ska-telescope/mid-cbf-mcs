@@ -6,6 +6,7 @@
     "frequencyBandOffsetStream2": 0,
     "dopplerPhaseCorrSubscriptionPoint": "ska1_mid/tm/telmodel/dopplerPhaseCorrection_1",
     "delayModelSubscriptionPoint": "ska1_mid/tm/telmodel/delayModel",
+    "visDestinationAddressSubscriptionPoint": "ska1_mid/tm/telmodel/visDestinationAddress",
     "rfiFlaggingMask": {},
     "searchWindow": [
         {
