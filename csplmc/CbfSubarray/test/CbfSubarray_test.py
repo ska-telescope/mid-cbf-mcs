@@ -39,6 +39,8 @@ from global_enum import HealthState, AdminMode, ObsState
     "create_cbf_master_proxy",
     "create_subarray_1_proxy",
     "create_subarray_2_proxy",
+    "create_sw_1_proxy",
+    "create_sw_2_proxy",
     "create_vcc_proxies",
     "create_vcc_band_proxies",
     "create_vcc_tdc_proxies",
@@ -279,6 +281,8 @@ class TestCbfSubarray:
             self,
             create_cbf_master_proxy,
             create_subarray_1_proxy,
+            create_sw_1_proxy,
+            create_sw_2_proxy,
             create_vcc_proxies,
             create_vcc_band_proxies,
             create_vcc_tdc_proxies,
@@ -358,6 +362,21 @@ class TestCbfSubarray:
         assert create_vcc_proxies[receptor_to_vcc[197] - 1].frequencyBandOffsetStream1 == 0
         assert create_vcc_proxies[receptor_to_vcc[197] - 1].frequencyBandOffsetStream2 == 0
         assert create_vcc_proxies[receptor_to_vcc[197] - 1].rfiFlaggingMask == "{}"
+
+        # check configured attributes of search windows
+        # first for search window 1...
+        assert create_sw_1_proxy.searchWindowTuning == 6000000000
+        assert create_sw_1_proxy.tdcEnable == True
+        assert create_sw_1_proxy.tdcNumBits == 8
+        assert create_sw_1_proxy.tdcPeriodBeforeEpoch == 5
+        assert create_sw_1_proxy.tdcPeriodAfterEpoch == 25
+        assert "".join(create_sw_1_proxy.tdcDestinationAddress.split()) in [
+               "{\"10\":[\"foo\",\"bar\",\"baz\"],\"197\":[\"fizz\",\"buzz\",\"fizz-buzz\"]}",
+               "{\"197\":[\"fizz\",\"buzz\",\"fizz-buzz\"],\"10\":[\"foo\",\"bar\",\"baz\"]}"
+        ]
+        # then for search window 2...
+        assert create_sw_2_proxy.searchWindowTuning == 7000000000
+        assert create_sw_2_proxy.tdcEnable == False
 
         # check configured attributes of VCC search windows
         # first for search window 1 of VCC belonging to receptor 10...

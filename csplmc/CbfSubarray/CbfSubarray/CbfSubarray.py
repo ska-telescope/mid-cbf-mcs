@@ -235,6 +235,10 @@ class CbfSubarray(SKASubarray):
         # PROTECTED REGION ID(CbfSubarray.init_device) ENABLED START #
         self.set_state(DevState.INIT)
 
+        self._storage_logging_level = PyTango.LogLevel.LOG_DEBUG
+        self._element_logging_level = PyTango.LogLevel.LOG_DEBUG
+        self._central_logging_level = PyTango.LogLevel.LOG_DEBUG
+
         # get subarray ID
         if self.SubID:
             self._subarray_id = self.SubID
@@ -541,6 +545,7 @@ class CbfSubarray(SKASubarray):
             # this is a fatal error
             msg = "Scan configuration object is not a valid JSON object. Aborting configuration."
             self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+            self._obs_state = ObsState.IDLE.value
             PyTango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
                                            PyTango.ErrSeverity.ERR)
 
@@ -556,6 +561,7 @@ class CbfSubarray(SKASubarray):
                     "Aborting configuration.".format(int(argin["scanID"]))
                 # this is a fatal error
                 self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+                self._obs_state = ObsState.IDLE.value
                 PyTango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
                                                PyTango.ErrSeverity.ERR)
             elif any(map(lambda i: i == int(argin["scanID"]),
@@ -565,6 +571,7 @@ class CbfSubarray(SKASubarray):
                     "Aborting configuration.".format(int(argin["scanID"]))
                 # this is a fatal error
                 self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+                self._obs_state = ObsState.IDLE.value
                 PyTango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
                                                PyTango.ErrSeverity.ERR)
             else:  # scanID is valid
@@ -574,6 +581,7 @@ class CbfSubarray(SKASubarray):
             msg += "'scanID' must be given. Aborting configuration."
             # this is a fatal error
             self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+            self._obs_state = ObsState.IDLE.value
             PyTango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
                                            PyTango.ErrSeverity.ERR)
 
@@ -592,6 +600,7 @@ class CbfSubarray(SKASubarray):
                     "Aborting configuration.".format(frequency_bands, argin["frequency_band"])
                 # this is a fatal error
                 self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+                self._obs_state = ObsState.IDLE.value
                 PyTango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
                                                PyTango.ErrSeverity.ERR)
         else:  # frequencyBand not given
@@ -599,6 +608,7 @@ class CbfSubarray(SKASubarray):
             msg += "'frequencyBand' must be given. Aborting configuration."
             # this is a fatal error
             self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+            self._obs_state = ObsState.IDLE.value
             PyTango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
                                            PyTango.ErrSeverity.ERR)
 
@@ -620,6 +630,7 @@ class CbfSubarray(SKASubarray):
                     msg += "'band5Tuning' must be an array of length 2. Aborting configuration."
                     # this is a fatal error
                     self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+                    self._obs_state = ObsState.IDLE.value
                     PyTango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
                                                    PyTango.ErrSeverity.ERR)
 
@@ -635,6 +646,7 @@ class CbfSubarray(SKASubarray):
                             "Aborting configuration.".format(stream_tuning[0], stream_tuning[1])
                         # this is a fatal error
                         self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+                        self._obs_state = ObsState.IDLE.value
                         PyTango.Except.throw_exception("Command failed", msg,
                                                        "ConfigureScan execution",
                                                        PyTango.ErrSeverity.ERR)
@@ -649,6 +661,7 @@ class CbfSubarray(SKASubarray):
                             "Aborting configuration.".format(stream_tuning[0], stream_tuning[1])
                         # this is a fatal error
                         self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+                        self._obs_state = ObsState.IDLE.value
                         PyTango.Except.throw_exception("Command failed", msg,
                                                        "ConfigureScan execution",
                                                        PyTango.ErrSeverity.ERR)
@@ -658,6 +671,7 @@ class CbfSubarray(SKASubarray):
                     "Aborting configuration".format(["5a", "5b"][self._frequency_band - 4])
                 # this is a fatal error
                 self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+                self._obs_state = ObsState.IDLE.value
                 PyTango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
                                                PyTango.ErrSeverity.ERR)
 
@@ -766,7 +780,7 @@ class CbfSubarray(SKASubarray):
                                 # pass on configuration to VCC
                                 vcc.ConfigureSearchWindow(json.dumps(search_window))
                             except PyTango.DevFailed:  # exception in Vcc.ConfigureSearchWindow
-                                log_msg = "An exception occurred while configuring search "\
+                                log_msg = "An exception occurred while configuring VCC search "\
                                     "windows:\n" + str(sys.exc_info()[1].args[0].desc)
                                 self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
                                 errs.append(log_msg)
@@ -900,9 +914,6 @@ class CbfSubarray(SKASubarray):
     )
     def ConfigureSearchWindow(self, argin):
         # PROTECTED REGION ID(CbfSubarray.ConfigureSearchWindow) ENABLED START #
-
-        # transition state to CONFIGURING
-        self._obs_state = ObsState.CONFIGURING.value
 
         # try to deserialize input string to a JSON object
         try:
@@ -1063,12 +1074,12 @@ class CbfSubarray(SKASubarray):
             try:
                 # TODO: validate input
                 proxy_sw.tdcDestinationAddress = \
-                    argin["tdcDestinationAddress"][str(self._receptor_ID)]
+                    json.dumps(argin["tdcDestinationAddress"])
             except KeyError:
-                # tdcDestinationAddress not given or receptorID not in tdcDestinationAddress
+                # tdcDestinationAddress not given
                 msg = "\n".join(errs)
                 msg += "Search window specified with TDC enabled, but 'tdcDestinationAddress' " \
-                       "not given or missing receptors. Ignoring search window."
+                    "not given. Ignoring search window."
                 # this is a fatal error
                 self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
                 PyTango.Except.throw_exception("Command failed", msg,

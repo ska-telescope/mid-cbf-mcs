@@ -1,13 +1,23 @@
 #!/usr/bin/env python
-from tango import AttributeProxy, ChangeEventInfo, AttributeInfoEx, DevFailed
+from tango import Database, AttributeProxy, ChangeEventInfo, AttributeInfoEx, DevFailed, PeriodicEventInfo
 import json
 import time
+
+timeSleep = 30
+for x in range(10):
+    try:
+        # Connecting to the databaseds
+        db = Database()
+    except:
+        # Could not connect to the databaseds. Retry after: str(timeSleep) seconds.
+        print("Could not connect to database")
+        time.sleep(timeSleep)
 
 # Update file path to devices.json in order to test locally
 # To test on docker environment use path : /app/csplmc/devices.json
 
 with open('/app/csplmc/devices.json', 'r') as file:
-    jsonDevices = file.read().replace('\n', '')
+    jsonDevices = file.read()
 
 # Loading devices.json file and creating an object
 json_devices = json.loads(jsonDevices)
@@ -37,3 +47,10 @@ for device in json_devices:
                 attributeProxy.set_config(attrInfoEx)
             else:
                 print("Skip setting change event absolute...")
+
+            if "periodicEventCadence" in attributeProperty:
+                attrInfoEx = attributeProxy.get_config()
+                period = PeriodicEventInfo()
+                period.period = attributeProperty["periodicEventCadence"]
+                attrInfoEx.events.per_event = period
+                attributeProxy.set_config(attrInfoEx)

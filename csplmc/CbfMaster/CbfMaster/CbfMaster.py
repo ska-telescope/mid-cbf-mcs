@@ -51,7 +51,7 @@ class CbfMaster(SKAMaster):
             try:
                 device_name = event.device.dev_name()
                 if "healthstate" in event.attr_name:
-                    if "cbfSubarray" in device_name:
+                    if "subarray" in device_name:
                         self._report_subarray_health_state[
                             self._fqdn_subarray.index(device_name)] = \
                             event.attr_value.value
@@ -68,7 +68,7 @@ class CbfMaster(SKAMaster):
                         self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
                         return
                 elif "state" in event.attr_name:
-                    if "cbfSubarray" in device_name:
+                    if "subarray" in device_name:
                         self._report_subarray_state[self._fqdn_subarray.index(device_name)] = \
                             event.attr_value.value
                     elif "vcc" in device_name:
@@ -84,7 +84,7 @@ class CbfMaster(SKAMaster):
                         self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
                         return
                 elif "adminmode" in event.attr_name:
-                    if "cbfSubarray" in device_name:
+                    if "subarray" in device_name:
                         self._report_subarray_admin_mode[self._fqdn_subarray.index(device_name)] = \
                             event.attr_value.value
                     elif "vcc" in device_name:

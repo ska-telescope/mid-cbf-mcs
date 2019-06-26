@@ -27,6 +27,14 @@ def create_subarray_2_proxy():
     return DeviceProxy("mid_csp_cbf/sub_elt/subarray_02")
 
 @pytest.fixture(scope="class")
+def create_sw_1_proxy():
+    return DeviceProxy("mid_csp_cbf/sw1/01")
+
+@pytest.fixture(scope="class")
+def create_sw_2_proxy():
+    return DeviceProxy("mid_csp_cbf/sw2/01")
+
+@pytest.fixture(scope="class")
 def create_vcc_proxies():
     return [DeviceProxy("mid_csp_cbf/vcc/" + str(i + 1).zfill(3)) for i in range(197)]
 
@@ -36,7 +44,7 @@ def create_vcc_band_proxies():
 
 @pytest.fixture(scope="class")
 def create_vcc_tdc_proxies():
-    return [[DeviceProxy("mid_csp_cbf/vcc_tdc{0}/{1:03d}".format(j, i + 1)) for j in ["1", "2"]] for i in range(197)]
+    return [[DeviceProxy("mid_csp_cbf/vcc_sw{0}/{1:03d}".format(j, i + 1)) for j in ["1", "2"]] for i in range(197)]
 
 @pytest.fixture(scope="class")
 def create_fsp_1_proxy():

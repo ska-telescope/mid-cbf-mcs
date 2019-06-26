@@ -522,9 +522,6 @@ class Vcc(SKACapability):
     def ConfigureSearchWindow(self, argin):
         # PROTECTED REGION ID(Vcc.ConfigureSearchWindow) ENABLED START #
 
-        # transition state to CONFIGURING
-        self._obs_state = ObsState.CONFIGURING.value
-
         # try to deserialize input string to a JSON object
         try:
             argin = json.loads(argin)
@@ -614,7 +611,7 @@ class Vcc(SKACapability):
         # Validate tdcNumBits.
         # If not given when required, ignore the entire search window and append an error.
         # If malformed when required, ignore the entire search window and append an error.
-        if proxy_sw.tdcEnable:
+        if argin["tdcEnable"]:
             if "tdcNumBits" in argin:
                 if int(argin["tdcNumBits"]) in [2, 4, 8]:
                     proxy_sw.tdcNumBits = int(argin["tdcNumBits"])
@@ -676,7 +673,7 @@ class Vcc(SKACapability):
         # Validate tdcDestinationAddress.
         # If not given when required, ignore the entire search window and append an error.
         # If malformed when required, ignore the entire search window and append and error.
-        if proxy_sw.tdcEnable:
+        if argin["tdcEnable"]:
             try:
                 # TODO: validate input
                 proxy_sw.tdcDestinationAddress = \
@@ -699,8 +696,6 @@ class Vcc(SKACapability):
             PyTango.Except.throw_exception("Command failed", msg, "ConfigureSearchWindow execution",
                                            PyTango.ErrSeverity.ERR)
 
-        # transition state to IDLE when done
-        self._obs_state = ObsState.IDLE.value
         # PROTECTED REGION END #    //  Vcc.ConfigureSearchWindow
 
 # ----------

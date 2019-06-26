@@ -146,7 +146,7 @@ ifneq ($(NETWORK_MODE),host)
 endif
 	$(DOCKER_COMPOSE_ARGS) docker-compose -f tango.yml up -d
 	$(DOCKER_COMPOSE_ARGS) docker-compose -f tango.yml $(WEBJIVE_COMPOSE_FILE_ARGS) up -d
-	$(DOCKER_COMPOSE_ARGS) docker-compose $(COMPOSE_FILE_ARGS) up --no-start
+	$(DOCKER_COMPOSE_ARGS) docker-compose $(COMPOSE_FILE_ARGS) up -d
 
 piplock: build  ## overwrite Pipfile.lock with the image version
 	docker run $(IMAGE_TO_TEST) cat /app/Pipfile.lock > $(CURDIR)/Pipfile.lock

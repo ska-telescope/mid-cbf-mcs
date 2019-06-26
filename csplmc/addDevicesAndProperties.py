@@ -10,6 +10,7 @@ for x in range(10):
         db = Database()
     except:
         # Could not connect to the databaseds. Retry after: str(timeSleep) seconds.
+        print("Could not connect to database")
         sleep(timeSleep)
 
 # Connected to the databaseds
@@ -18,7 +19,7 @@ for x in range(10):
 # To test on docker environment use path : /app/csplmc/devices.json
 
 with open('/app/csplmc/devices.json', 'r') as file:
-    jsonDevices = file.read().replace('\n', '')
+    jsonDevices = file.read()
 
 # Loading devices.json file and creating an object
 json_devices = json.loads(jsonDevices)
