@@ -420,6 +420,7 @@ class TestCbfSubarray:
         # first for FSP 1...
         assert create_fsp_1_subarray_1_proxy.receptors == (10,)
         assert create_fsp_1_subarray_1_proxy.frequencyBand == 4
+        assert create_fsp_1_subarray_1_proxy.band5Tuning == (5.85, 7.25)
         assert create_fsp_1_subarray_1_proxy.frequencySliceID == 1
         assert create_fsp_1_subarray_1_proxy.corrBandwidth == 1
         assert create_fsp_1_subarray_1_proxy.zoomWindowTuning == 6000000
@@ -449,6 +450,7 @@ class TestCbfSubarray:
         # then for FSP 2...
         assert create_fsp_2_subarray_1_proxy.receptors == (1, 10)
         assert create_fsp_2_subarray_1_proxy.frequencyBand == 4
+        assert create_fsp_1_subarray_1_proxy.band5Tuning == (5.85, 7.25)
         assert create_fsp_2_subarray_1_proxy.frequencySliceID == 20
         assert create_fsp_2_subarray_1_proxy.corrBandwidth == 0
         assert create_fsp_2_subarray_1_proxy.integrationTime == 1400

@@ -26,12 +26,13 @@ from PyTango import AttrWriteType, PipeWriteType
 import os
 import sys
 import json
+from random import randint
 
 file_path = os.path.dirname(os.path.abspath(__file__))
 commons_pkg_path = os.path.abspath(os.path.join(file_path, "../../commons"))
 sys.path.insert(0, commons_pkg_path)
 
-from global_enum import HealthState, AdminMode, ObsState
+from global_enum import HealthState, AdminMode, ObsState, const
 from skabase.SKASubarray.SKASubarray import SKASubarray
 
 # PROTECTED REGION END #    //  FspSubarray.additionnal_import
@@ -52,6 +53,10 @@ class FspSubarray(SKASubarray):
     # -----------------
 
     SubID = device_property(
+        dtype='uint16'
+    )
+
+    FspID = device_property(
         dtype='uint16'
     )
 
@@ -88,6 +93,14 @@ class FspSubarray(SKASubarray):
         label="Frequency band",
         doc="Frequency band; an int in the range [0, 5]",
         enum_labels=["1", "2", "3", "4", "5a", "5b", ],
+    )
+
+    band5Tuning = attribute(
+        dtype=('float',),
+        max_dim_x=2,
+        access=AttrWriteType.READ,
+        label="Stream tuning (GHz)",
+        doc="Stream tuning (GHz)"
     )
 
     frequencySliceID = attribute(
@@ -150,23 +163,29 @@ class FspSubarray(SKASubarray):
         SKASubarray.init_device(self)
         # PROTECTED REGION ID(FspSubarray.init_device) ENABLED START #
 
-        # get subarray ID
-        if self.SubID:
-            self._subarray_id = self.SubID
-        else:
-            self._subarray_id = int(self.get_name()[-2:])  # last two chars of FQDN
+        # get relevant IDs
+        self._subarray_id = self.SubID
+        self._fsp_id = self.FspID
 
-        # minimum integration time
-        self.MIN_INT_TIME = 140
+        self.FREQUENCY_SLICE_BW = const.FREQUENCY_SLICE_BW
+        self.MIN_INT_TIME = const.MIN_INT_TIME
+        self.NUM_CHANNEL_GROUPS = const.NUM_CHANNEL_GROUPS
+        self.NUM_FINE_CHANNELS = const.NUM_FINE_CHANNELS
+        self.NUM_PHASE_BINS = const.NUM_PHASE_BINS
+        self.NUM_OUTPUT_LINKS = const.NUM_OUTPUT_LINKS
 
         # initialize attribute values
         self._receptors = []
         self._frequency_band = 0
+        self._stream_tuning = (0, 0)
         self._frequency_slice_ID = 0
         self._bandwidth = 0
         self._zoom_window_tuning = 0
         self._integration_time = 0
-        self._channel_averaging_map = [[0, 0] for i in range(20)]
+        self._channel_averaging_map = [
+            [int(i*self.NUM_FINE_CHANNELS/self.NUM_CHANNEL_GROUPS) + 1, 0]
+            for i in range(self.NUM_CHANNEL_GROUPS)
+        ]
         self._destination_address = ["", "", ""]
         self._delay_model = ""
 
@@ -182,13 +201,7 @@ class FspSubarray(SKASubarray):
         self._proxies_vcc = [*map(PyTango.DeviceProxy, self._fqdn_vcc)]
 
         # device proxy for easy reference to CBF Subarray
-        if self.CbfSubarrayAddress:
-            self._proxy_cbf_subarray = PyTango.DeviceProxy(self.CbfSubarrayAddress)
-        else:
-            names = self.get_name().split("/")
-            names[1] = "cbfSubarray"
-            names[2] = names[2].split("_")[1]
-            self._proxy_cbf_subarray = PyTango.DeviceProxy("/".join(names))
+        self._proxy_cbf_subarray = PyTango.DeviceProxy(self.CbfSubarrayAddress)
         # PROTECTED REGION END #    //  FspSubarray.init_device
 
     def always_executed_hook(self):
@@ -220,6 +233,11 @@ class FspSubarray(SKASubarray):
         # PROTECTED REGION ID(FspSubarray.frequencyBand_read) ENABLED START #
         return self._frequency_band
         # PROTECTED REGION END #    //  FspSubarray.frequencyBand_read
+
+    def read_band5Tuning(self):
+        # PROTECTED REGION ID(FspSubarray.band5Tuning_read) ENABLED START #
+        return self._stream_tuning
+        # PROTECTED REGION END #    //  FspSubarray.band5Tuning_read
 
     def read_frequencySliceID(self):
         # PROTECTED REGION ID(FspSubarray.frequencySliceID_read) ENABLED START #
@@ -318,7 +336,7 @@ class FspSubarray(SKASubarray):
                 self._receptors.remove(receptorID)
             else:
                 log_msg = "Receptor {} not assigned to FSP subarray. "\
-                          "Skipping.".format(str(receptorID))
+                    "Skipping.".format(str(receptorID))
                 self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
         # PROTECTED REGION END #    //  FspSubarray.RemoveReceptors
 
@@ -358,7 +376,7 @@ class FspSubarray(SKASubarray):
             else:
                 msg = "\n".join(errs)
                 msg += "'frequencyBand' must be one of {} (received {}). "\
-                       "Aborting configuration.".format(frequency_bands, argin["frequency_band"])
+                    "Aborting configuration.".format(frequency_bands, argin["frequency_band"])
                 # this is a fatal error
                 self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
                 PyTango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
@@ -371,6 +389,11 @@ class FspSubarray(SKASubarray):
             PyTango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
                                            PyTango.ErrSeverity.ERR)
 
+        # Validate band5Tuning.
+        # Due to implementation details, this is always given (when required) and valid.
+        if self._frequency_band in [4, 5]:
+            self._stream_tuning = argin["band5Tuning"]
+
         # Validate receptors
         # If not given, ignore the FSP and append an error (due to implementation details, this
         # never happens).
@@ -382,7 +405,7 @@ class FspSubarray(SKASubarray):
             except PyTango.DevFailed as df:  # error in AddReceptors()
                 self.RemoveAllReceptors()
                 msg = "\n".join(errs)
-                msg += "'receptors' was malformed. Ignoring FSP."
+                msg += sys.exc_info()[1].args[0].desc + "\n'receptors' was malformed. Ignoring FSP."
                 # this is a fatal error
                 self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
                 PyTango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
@@ -400,7 +423,7 @@ class FspSubarray(SKASubarray):
         # If not given, ignore the FSP and append an error.
         # If malformed, ignore the FSP and append an error.
         if "frequencySliceID" in argin:
-            num_frequency_slices = [4, 5, 7, 12, 20, 26]
+            num_frequency_slices = [4, 5, 7, 12, 26, 26]
             if int(argin["frequencySliceID"]) in list(
                     range(1, num_frequency_slices[self._frequency_band] + 1)):
                 self._frequency_slice_ID = int(argin["frequencySliceID"])
@@ -464,7 +487,8 @@ class FspSubarray(SKASubarray):
         # If malformed, ignore the FSP and append an error.
         if "integrationTime" in argin:
             if int(argin["integrationTime"]) in list(
-                    range(self.MIN_INT_TIME, 10*self.MIN_INT_TIME + 1, self.MIN_INT_TIME)):
+                range(self.MIN_INT_TIME, 10*self.MIN_INT_TIME + 1, self.MIN_INT_TIME)
+            ):
                 self._integration_time = int(argin["integrationTime"])
             else:
                 msg = "\n".join(errs)
@@ -488,35 +512,58 @@ class FspSubarray(SKASubarray):
         if "channelAveragingMap" in argin:
             try:
                 # validate dimensions
-                assert len(argin["channelAveragingMap"]) == 20
+                assert len(argin["channelAveragingMap"]) == self.NUM_CHANNEL_GROUPS
                 for i in range(20):
                     assert len(argin["channelAveragingMap"][i]) == 2
 
                 for i in range(20):
-                    # TODO: validate channel ID
-                    self._channel_averaging_map[i][0] = int(argin["channelAveragingMap"][i][0])
+                    # validate channel ID of first channel in group
+                    if int(argin["channelAveragingMap"][i][0]) == \
+                            i*self.NUM_FINE_CHANNELS/self.NUM_CHANNEL_GROUPS + 1:
+                        pass  # the default value is already correct
+                    else:
+                        self._channel_averaging_map[i][1] = 0
+                        log_msg = "'channelAveragingMap'[{0}][0] is not the channel ID of the "\
+                            "first channel in a group. Defaulting to 0 for channel group "\
+                            "starting with channel {1}.".format(
+                                i,
+                                argin["channelAveragingMap"][i][0]
+                        )
+                        self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
+                        errs.append(log_msg)
+                        continue
 
                     # validate averaging factor
                     if int(argin["channelAveragingMap"][i][1]) in [0, 1, 2, 3, 4, 6, 8]:
                         self._channel_averaging_map[i][1] = int(argin["channelAveragingMap"][i][1])
                     else:
                         self._channel_averaging_map[i][1] = 0
-                        log_msg = "'channelAveragingMap'[n][1] must be one of "\
-                            "[0, 1, 2, 3, 4, 6, 8]. Defaulting to 0 for channel {0}.".format(
+                        log_msg = "'channelAveragingMap'[{0}][1] must be one of "\
+                            "[0, 1, 2, 3, 4, 6, 8]. Defaulting to 0 for channel group starting "\
+                            "with channel {1}.".format(
+                                i,
                                 argin["channelAveragingMap"][i][0]
                             )
                         self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
                         errs.append(log_msg)
             except (TypeError, AssertionError):  # dimensions not correct
-                self._channel_averaging_map = [[0, 0] for i in range(20)]
-                log_msg = "'channelAveragingMap' must be an 2D array of dimensions 2x20. "\
-                    "Defaulting to averaging factor = 0 for all channels."
+                self._channel_averaging_map = [
+                    [int(i*self.NUM_FINE_CHANNELS/self.NUM_CHANNEL_GROUPS) + 1, 0]
+                    for i in range(self.NUM_CHANNEL_GROUPS)
+                ]
+                log_msg = "'channelAveragingMap' must be an 2D array of dimensions 2x{}. "\
+                    "Defaulting to averaging factor = 0 for all channel groups.".format(
+                        self.NUM_CHANNEL_GROUPS
+                    )
                 self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
                 errs.append(log_msg)
         else:
-            self._channel_averaging_map = [[0, 0] for i in range(20)]
+            self._channel_averaging_map = [
+                [int(i*self.NUM_FINE_CHANNELS/self.NUM_CHANNEL_GROUPS) + 1, 0]
+                for i in range(self.NUM_CHANNEL_GROUPS)
+            ]
             log_msg = "FSP specified, but 'channelAveragingMap not given. Default to averaging "\
-                "factor = 0 for all channels."
+                "factor = 0 for all channel groups."
             self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
 
         # raise an error if something went wrong
@@ -528,6 +575,97 @@ class FspSubarray(SKASubarray):
 
         # PROTECTED REGION END #    //  FspSubarray.ConfigureScan
 
+    @command(
+        dtype_out='str',
+        doc_out="Output links",
+    )
+    def GenerateOutputLinks(self):
+        # PROTECTED REGION ID(FspSubarray.GenerateOutputLinks) ENABLED START #
+
+        # We can (probably) assume that all the self attributes are set properly at this point.
+        # It's envisioned that CbfSubarray.ConfigureScan() will only call this command if
+        # FspSubarray.ConfigureScan() did not throw any errors.
+
+        output_links = {
+            "fspID": self._fsp_id,
+            "frequencySliceID": self._frequency_slice_ID,
+            "channel": []
+        }
+
+        if self._frequency_band in list(range(4)):  # frequency band is not band 5
+            frequency_band_start = [*map(lambda j: j[0]*10**9, [
+                const.FREQUENCY_BAND_1_RANGE,
+                const.FREQUENCY_BAND_2_RANGE,
+                const.FREQUENCY_BAND_3_RANGE,
+                const.FREQUENCY_BAND_4_RANGE
+            ])][self._frequency_band]
+
+            frequency_slice_start = frequency_band_start + \
+                (self._frequency_slice_ID - 1)*const.FREQUENCY_SLICE_BW*10**6,
+
+        else:  # frequency band 5a or 5b (two streams with bandwidth 2.5 GHz)
+            if self._frequency_slice_ID <= 13:  # stream 1
+                frequency_band_start = self._stream_tuning[0]*10**9 - \
+                    const.BAND_5_STREAM_BANDWIDTH*10**9/2
+                frequency_slice_start = frequency_band_start + \
+                    (self._frequency_slice_ID - 1)*const.FREQUENCY_SLICE_BW*10**6,
+            else:  # 14 <= self._frequency_slice <= 26  # stream 2
+                frequency_band_start = self._stream_tuning[1]*10**9 - \
+                    const.BAND_5_STREAM_BANDWIDTH*10**9/2
+                frequency_slice_start = frequency_band_start + \
+                    (self._frequency_slice_ID - 14)*const.FREQUENCY_SLICE_BW*10**6
+
+        for channel_group_ID in range(const.NUM_CHANNEL_GROUPS):
+            channel_avg = self._channel_averaging_map[channel_group_ID][1]
+
+            if channel_avg:  # send channels to SDP
+                for channel_ID in range(
+                    int(channel_group_ID*self.NUM_FINE_CHANNELS/self.NUM_CHANNEL_GROUPS) + 1,
+                    int((channel_group_ID + 1)*self.NUM_FINE_CHANNELS/self.NUM_CHANNEL_GROUPS) + 1,
+                    channel_avg
+                ):
+                    channel = {
+                        "channelID": channel_ID,
+                        "channelBandwidth":
+                            self.FREQUENCY_SLICE_BW*10**6/self.NUM_FINE_CHANNELS*channel_avg,
+                        "channelCenterFrequency": frequency_slice_start +
+                            (channel_ID - 1)*self.FREQUENCY_SLICE_BW*10**6/
+                            self.NUM_FINE_CHANNELS*channel_avg +
+                            self.FREQUENCY_SLICE_BW*10**6/self.NUM_FINE_CHANNELS*channel_avg/2,
+                        "phaseBin": []
+                    }
+                    for i in range(self.NUM_PHASE_BINS):
+                        channel["phaseBin"].append({
+                            "phaseBinID": 0,  # phase bin ID unsupported for PI3
+                            "cbfOutputLink": randint(1, self.NUM_OUTPUT_LINKS)  # random link
+                        })
+                    output_links["channel"].append(channel)
+
+            else:  # don't send channels to SDP
+                for channel_ID in range(
+                    int(channel_group_ID*self.NUM_FINE_CHANNELS/self.NUM_CHANNEL_GROUPS) + 1,
+                    int((channel_group_ID + 1)*self.NUM_FINE_CHANNELS/self.NUM_CHANNEL_GROUPS) + 1
+                ):
+                    # treat all channels individually (i.e. no averaging)
+                    channel = {
+                        "channelID": channel_ID,
+                        "channelBandwidth":
+                            self.FREQUENCY_SLICE_BW*10**6/self.NUM_FINE_CHANNELS,
+                        "channelCenterFrequency": frequency_slice_start +
+                            (channel_ID - 1)*self.FREQUENCY_SLICE_BW*10**6/self.NUM_FINE_CHANNELS +
+                            self.FREQUENCY_SLICE_BW*10**6/self.NUM_FINE_CHANNELS/2,
+                        "phaseBin": []
+                    }
+                    for i in range(self.NUM_PHASE_BINS):
+                        channel["phaseBin"].append({
+                            "phaseBinID": 0,  # phase bin ID unsupported for PI3
+                            "cbfOutputLink": 0  # don't send channel
+                        })
+                    output_links["channel"].append(channel)
+
+        return json.dumps(output_links)
+
+        # PROTECTED REGION END #    //  FspSubarray.GenerateOutputLinks
 
 # ----------
 # Run server

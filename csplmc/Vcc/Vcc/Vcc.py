@@ -101,6 +101,10 @@ class Vcc(SKACapability):
     # Device Properties
     # -----------------
 
+    VccID = device_property(
+        dtype='str'
+    )
+
     Band1And2Address = device_property(
         dtype='str'
     )
@@ -268,6 +272,8 @@ class Vcc(SKACapability):
         # defines self._proxy_band_12, self._proxy_band_3, self._proxy_band_4, self._proxy_band_5,
         # self._proxy_sw_1, and self._proxy_sw_2
         self.__get_capability_proxies()
+
+        self._vcc_id = self.VccID
 
         # the bands are already disabled on initialization
         # self._proxy_band_12.SetState(PyTango.DevState.DISABLE)

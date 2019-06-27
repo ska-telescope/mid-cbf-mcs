@@ -197,6 +197,8 @@ class TestFspSubarray:
 
         # check initial values of attributes
         assert create_fsp_subarray_1_1_proxy.receptors == ()
+        assert create_fsp_subarray_1_1_proxy.frequencyBand == 0
+        assert create_fsp_subarray_1_1_proxy.band5Tuning == None
         assert create_fsp_subarray_1_1_proxy.frequencySliceID == 0
         assert create_fsp_subarray_1_1_proxy.corrBandwidth == 0
         assert create_fsp_subarray_1_1_proxy.zoomWindowTuning == 0
@@ -213,6 +215,8 @@ class TestFspSubarray:
         f.close()
 
         assert create_fsp_subarray_1_1_proxy.receptors == (10, 197)
+        assert create_fsp_subarray_1_1_proxy.frequencyBand == 4
+        assert create_fsp_subarray_1_1_proxy.band5Tuning == (5.85, 7.25)
         assert create_fsp_subarray_1_1_proxy.frequencySliceID == 4
         assert create_fsp_subarray_1_1_proxy.corrBandwidth == 1
         assert create_fsp_subarray_1_1_proxy.zoomWindowTuning == 500000

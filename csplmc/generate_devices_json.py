@@ -176,6 +176,10 @@ with open("devices.json", "w+") as f:
                   "        \"devName\": \"mid_csp_cbf/vcc/{0:03d}\",\n" \
                   "        \"deviceProperties\": [\n" \
                   "            {{\n" \
+                  "                \"devPropName\": \"VccID\",\n" \
+                  "                \"devPropValue\": {0}\n" \
+                  "            }},\n" \
+                  "            {{\n" \
                   "                \"devPropName\": \"Band1And2Address\",\n" \
                   "                \"devPropValue\": \"mid_csp_cbf/vcc_band12/{0:03d}\"\n" \
                   "            }},\n" \
@@ -239,6 +243,10 @@ with open("devices.json", "w+") as f:
                   "        \"serverName\": \"Fsp/fsp-{0:02d}\",\n" \
                   "        \"devName\": \"mid_csp_cbf/fsp/{0:02d}\",\n" \
                   "        \"deviceProperties\": [\n" \
+                  "            {{\n" \
+                  "                \"devPropName\": \"FspID\",\n" \
+                  "                \"devPropValue\": {0}\n" \
+                  "            }},\n" \
                   "            {{\n" \
                   "                \"devPropName\": \"CorrelationAddress\",\n" \
                   "                \"devPropValue\": \"mid_csp_cbf/fsp_corr/{0:02d}\"\n" \
@@ -401,6 +409,10 @@ with open("devices.json", "w+") as f:
                       "            {{\n" \
                       "                \"devPropName\": \"SubID\",\n" \
                       "                \"devPropValue\": {1}\n" \
+                      "            }},\n" \
+                      "            {{\n" \
+                      "                \"devPropName\": \"FspID\",\n" \
+                      "                \"devPropValue\": {0}\n" \
                       "            }},\n" \
                       "            {{\n" \
                       "                \"devPropName\": \"VCC\",\n" \

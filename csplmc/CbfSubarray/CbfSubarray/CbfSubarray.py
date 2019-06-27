@@ -33,7 +33,7 @@ file_path = os.path.dirname(os.path.abspath(__file__))
 commons_pkg_path = os.path.abspath(os.path.join(file_path, "../../commons"))
 sys.path.insert(0, commons_pkg_path)
 
-from global_enum import HealthState, AdminMode, ObsState
+from global_enum import HealthState, AdminMode, ObsState, const
 from skabase.SKASubarray.SKASubarray import SKASubarray
 # PROTECTED REGION END #    //  CbfSubarray.additionnal_import
 
@@ -173,21 +173,6 @@ class CbfSubarray(SKASubarray):
     # Attributes
     # ----------
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     frequencyBand = attribute(
         dtype='DevEnum',
         access=AttrWriteType.READ,
@@ -209,6 +194,12 @@ class CbfSubarray(SKASubarray):
         max_dim_x=197,
         label="Receptors",
         doc="List of receptors assigned to subarray",
+    )
+
+    outputLinksDistribution = attribute(
+        dtype='str',
+        label="Distribution of output links",
+        doc="Distribution of output links, given as a JSON object",
     )
 
     vccState = attribute(
@@ -268,7 +259,7 @@ class CbfSubarray(SKASubarray):
         self._receptors = []
         self._frequency_band = 0
         self._scan_ID = 0
-        self._output_links = []
+        self._output_links_distribution = {}
         self._vcc_state = {}  # device_name:state
         self._vcc_health_state = {}  # device_name:healthState
         self._fsp_state = {}  # device_name:state
@@ -347,10 +338,10 @@ class CbfSubarray(SKASubarray):
         self.AddReceptors(value)
         # PROTECTED REGION END #    //  CbfSubarray.receptors_write
 
-    def read_outputLinks(self):
-        # PROTECTED REGION ID(CbfSubarray.outputLinks_read) ENABLED START #
-        return self._output_links
-        # PROTECTED REGION END #    //  CbfSubarray.outputLinks_read
+    def read_outputLinksDistribution(self):
+        # PROTECTED REGION ID(CbfSubarray.outputLinksDistribution_read) ENABLED START #
+        return json.dumps(self._output_links_distribution)
+        # PROTECTED REGION END #    //  CbfSubarray.outputLinksDistribution_read
 
     def read_vccState(self):
         # PROTECTED REGION ID(CbfSubarray.vccState_read) ENABLED START #
@@ -561,6 +552,7 @@ class CbfSubarray(SKASubarray):
         for proxy_fsp in self._proxies_assigned_fsp:
             proxy_fsp.RemoveSubarrayMembership(self._subarray_id)
         self._proxies_assigned_fsp = []
+        self._proxies_assigned_fsp_subarray = []
 
         # try to deserialize input string to a JSON object
         try:
@@ -640,25 +632,41 @@ class CbfSubarray(SKASubarray):
 
                 stream_tuning = [*map(float, argin["band5Tuning"])]
                 if self._frequency_band == 4:
-                    if all([5.85 <= stream_tuning[i] <= 7.25 for i in [0, 1]]):
+                    if all(
+                        [const.FREQUENCY_BAND_5a_TUNING_BOUNDS[0] <= stream_tuning[i]
+                            <= const.FREQUENCY_BAND_5a_TUNING_BOUNDS[1] for i in [0, 1]]
+                    ):
                         for vcc in self._proxies_assigned_vcc:
                             vcc.band5Tuning = stream_tuning
                     else:
                         msg = "\n".join(errs)
-                        msg += "Elements in 'band5Tuning must be floats between 5.85 and 7.25 "\
+                        msg += "Elements in 'band5Tuning must be floats between {} and {} "\
                             "(received {} and {}) for a 'frequencyBand' of 5a. "\
-                            "Aborting configuration.".format(stream_tuning[0], stream_tuning[1])
+                            "Aborting configuration.".format(
+                                const.FREQUENCY_BAND_5a_TUNING_BOUNDS[0],
+                                const.FREQUENCY_BAND_5a_TUNING_BOUNDS[1],
+                                stream_tuning[0],
+                                stream_tuning[1]
+                            )
                         # this is a fatal error
                         self.__raise_configure_scan_fatal_error(msg)
                 else:  # self._frequency_band == 5
-                    if all([9.55 <= stream_tuning[i] <= 14.05 for i in [0, 1]]):
+                    if all(
+                        [const.FREQUENCY_BAND_5b_TUNING_BOUNDS[0] <= stream_tuning[i]
+                            <= const.FREQUENCY_BAND_5b_TUNING_BOUNDS[1] for i in [0, 1]]
+                    ):
                         for vcc in self._proxies_assigned_vcc:
                             vcc.band5Tuning = stream_tuning
                     else:
                         msg = "\n".join(errs)
-                        msg += "Elements in 'band5Tuning must be floats between 9.55 and 14.05 "\
+                        msg += "Elements in 'band5Tuning must be floats between {} and {} "\
                             "(received {} and {}) for a 'frequencyBand' of 5b. "\
-                            "Aborting configuration.".format(stream_tuning[0], stream_tuning[1])
+                            "Aborting configuration.".format(
+                                const.FREQUENCY_BAND_5b_TUNING_BOUNDS[0],
+                                const.FREQUENCY_BAND_5b_TUNING_BOUNDS[1],
+                                stream_tuning[0],
+                                stream_tuning[1]
+                            )
                         # this is a fatal error
                         self.__raise_configure_scan_fatal_error(msg)
             else:
@@ -877,6 +885,9 @@ class CbfSubarray(SKASubarray):
                         fsp["frequencyBand"] = argin["frequencyBand"]
                         if "receptors" not in fsp:
                             fsp["receptors"] = self._receptors
+                        if self._frequency_band in [4, 5]:
+                            # at this point, this is always given and valid
+                            fsp["band5Tuning"] = [*map(float, argin["band5Tuning"])]
 
                         # pass on configuration to FSP Subarray
                         proxy_fsp_subarray.ConfigureScan(json.dumps(fsp))
@@ -920,6 +931,17 @@ class CbfSubarray(SKASubarray):
             self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
             PyTango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
                                            PyTango.ErrSeverity.ERR)
+
+        # At this point, we can basically assume everything is properly configured
+        self._obs_state = ObsState.CONFIGURING.value
+
+        output_links = {
+            "scanID": self._scan_ID,
+            "fsp": [*map(lambda i: json.loads(i.GenerateOutputLinks()),
+                         self._proxies_assigned_fsp_subarray)]
+        }
+        # publish the output links
+        self._output_links_distribution = output_links
 
         self._obs_state = ObsState.READY.value
 
