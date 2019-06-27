@@ -25,6 +25,7 @@ from PyTango import AttrWriteType, PipeWriteType
 # PROTECTED REGION ID(SearchWindow.additionnal_import) ENABLED START #
 import os
 import sys
+import json
 
 file_path = os.path.dirname(os.path.abspath(__file__))
 commons_pkg_path = os.path.abspath(os.path.join(file_path, "../../commons"))

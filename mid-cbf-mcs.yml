@@ -1,29 +1,29 @@
 version: "2.2"
 
 services:
-  add-devs-and-props:
-    image: ${DOCKER_REGISTRY_HOST}/${DOCKER_REGISTRY_USER}/${PROJECT}:latest
-    depends_on:
-      - databaseds
-    network_mode: ${NETWORK_MODE}
-    container_name: ${CONTAINER_NAME_PREFIX}add-devs-and-props
-    environment:
-      - TANGO_HOST=${TANGO_HOST}
-    command: >
-      sh -c "wait-for-it.sh ${TANGO_HOST} --timeout=30 --strict --
-             /venv/bin/python /app/csplmc/addDevicesAndProperties.py"
+#  add-devs-and-props:
+#    image: ${DOCKER_REGISTRY_HOST}/${DOCKER_REGISTRY_USER}/${PROJECT}:latest
+#    depends_on:
+#      - databaseds
+#    network_mode: ${NETWORK_MODE}
+#    container_name: ${CONTAINER_NAME_PREFIX}add-devs-and-props
+#    environment:
+#      - TANGO_HOST=${TANGO_HOST}
+#    command: >
+#      sh -c "wait-for-it.sh ${TANGO_HOST} --timeout=30 --strict --
+#             /venv/bin/python /app/csplmc/addDevicesAndProperties.py"
 
-  conf-polling-events:
-    image: ${DOCKER_REGISTRY_HOST}/${DOCKER_REGISTRY_USER}/${PROJECT}:latest
-    depends_on:
-      - cbfmaster
-    network_mode: ${NETWORK_MODE}
-    container_name: ${CONTAINER_NAME_PREFIX}conf-polling-events
-    environment:
-      - TANGO_HOST=${TANGO_HOST}
-    command: >
-      sh -c "wait-for-it.sh ${TANGO_HOST} --timeout=30 --strict --
-             /venv/bin/python /app/csplmc/configurePollingAndEvents.py"
+#  conf-polling-events:
+#    image: ${DOCKER_REGISTRY_HOST}/${DOCKER_REGISTRY_USER}/${PROJECT}:latest
+#    depends_on:
+#      - cbfmaster
+#    network_mode: ${NETWORK_MODE}
+#    container_name: ${CONTAINER_NAME_PREFIX}conf-polling-events
+#    environment:
+#      - TANGO_HOST=${TANGO_HOST}
+#    command: >
+#      sh -c "wait-for-it.sh ${TANGO_HOST} --timeout=30 --strict --
+#             /venv/bin/python /app/csplmc/configurePollingAndEvents.py"
 
   vcc:
     image: ${DOCKER_REGISTRY_HOST}/${DOCKER_REGISTRY_USER}/${PROJECT}:latest
@@ -43,9 +43,11 @@ services:
       - TANGO_HOST=${TANGO_HOST}
     command: >
       sh -c "wait-for-it.sh ${TANGO_HOST} --timeout=30 --strict --
-             for i in $$(seq -w 1 197); do \
-             tango_admin --check-device mid_csp_cbf/vcc/$$i; done &&\
-             /venv/bin/python /app/csplmc/Vcc/Vcc/Vcc.py vcc"
+             for i in $$(seq -f "%03g" 1 9); do \
+             tango_admin --check-device mid_csp_cbf/vcc/$$i &&\
+             /venv/bin/python /app/csplmc/Vcc/Vcc/Vcc.py vcc-$$i & true; done &&\
+             tango_admin --check-device mid_csp_cbf/vcc/010 &&\
+             /venv/bin/python /app/csplmc/Vcc/Vcc/Vcc.py vcc-010"
              
   vccband1and2:
     image: ${DOCKER_REGISTRY_HOST}/${DOCKER_REGISTRY_USER}/${PROJECT}:latest
@@ -59,9 +61,11 @@ services:
       - TANGO_HOST=${TANGO_HOST}
     command: >
       sh -c "wait-for-it.sh ${TANGO_HOST} --timeout=30 --strict --
-             for i in $$(seq -w 1 197); do \
-             tango_admin --check-device mid_csp_cbf/vcc_band12/$$i; done &&\
-             /venv/bin/python /app/csplmc/Vcc/VccBand1And2/VccBand1And2.py vcc"
+             for i in $$(seq -f "%03g" 1 9); do \
+             tango_admin --check-device mid_csp_cbf/vcc_band12/$$i &&\
+             /venv/bin/python /app/csplmc/Vcc/VccBand1And2/VccBand1And2.py vcc-$$i & true; done &&\
+             tango_admin --check-device mid_csp_cbf/vcc_band12/010 &&\
+             /venv/bin/python /app/csplmc/Vcc/VccBand1And2/VccBand1And2.py vcc-010"
                           
   vccband3:
     image: ${DOCKER_REGISTRY_HOST}/${DOCKER_REGISTRY_USER}/${PROJECT}:latest
@@ -75,9 +79,11 @@ services:
       - TANGO_HOST=${TANGO_HOST}
     command: >
       sh -c "wait-for-it.sh ${TANGO_HOST} --timeout=30 --strict --
-             for i in $$(seq -w 1 197); do \
-             tango_admin --check-device mid_csp_cbf/vcc_band3/$$i; done &&\
-             /venv/bin/python /app/csplmc/Vcc/VccBand3/VccBand3.py vcc"
+             for i in $$(seq -f "%03g" 1 9); do \
+             tango_admin --check-device mid_csp_cbf/vcc_band3/$$i &&\
+             /venv/bin/python /app/csplmc/Vcc/VccBand3/VccBand3.py vcc-$$i & true; done &&\
+             tango_admin --check-device mid_csp_cbf/vcc_band3/010 &&\
+             /venv/bin/python /app/csplmc/Vcc/VccBand3/VccBand3.py vcc-010"
                                        
   vccband4:
     image: ${DOCKER_REGISTRY_HOST}/${DOCKER_REGISTRY_USER}/${PROJECT}:latest
@@ -91,9 +97,11 @@ services:
       - TANGO_HOST=${TANGO_HOST}
     command: >
       sh -c "wait-for-it.sh ${TANGO_HOST} --timeout=30 --strict --
-             for i in $$(seq -w 1 197); do \
-             tango_admin --check-device mid_csp_cbf/vcc_band4/$$i; done &&\
-             /venv/bin/python /app/csplmc/Vcc/VccBand4/VccBand4.py vcc"
+             for i in $$(seq -f "%03g" 1 9); do \
+             tango_admin --check-device mid_csp_cbf/vcc_band4/$$i &&\
+             /venv/bin/python /app/csplmc/Vcc/VccBand4/VccBand4.py vcc-$$i & true; done &&\
+             tango_admin --check-device mid_csp_cbf/vcc_band4/010 &&\
+             /venv/bin/python /app/csplmc/Vcc/VccBand4/VccBand4.py vcc-010"
                                        
   vccband5:
     image: ${DOCKER_REGISTRY_HOST}/${DOCKER_REGISTRY_USER}/${PROJECT}:latest
@@ -107,9 +115,11 @@ services:
       - TANGO_HOST=${TANGO_HOST}
     command: >
       sh -c "wait-for-it.sh ${TANGO_HOST} --timeout=30 --strict --
-             for i in $$(seq -w 1 197); do \
-             tango_admin --check-device mid_csp_cbf/vcc_band5/$$i; done &&\
-             /venv/bin/python /app/csplmc/Vcc/VccBand5/VccBand5.py vcc"
+             for i in $$(seq -f "%03g" 1 9); do \
+             tango_admin --check-device mid_csp_cbf/vcc_band5/$$i &&\
+             /venv/bin/python /app/csplmc/Vcc/VccBand5/VccBand5.py vcc-$$i & true; done &&\
+             tango_admin --check-device mid_csp_cbf/vcc_band5/010 &&\
+             /venv/bin/python /app/csplmc/Vcc/VccBand5/VccBand5.py vcc-010"
                                                     
   vccsw1:
     image: ${DOCKER_REGISTRY_HOST}/${DOCKER_REGISTRY_USER}/${PROJECT}:latest
@@ -123,9 +133,11 @@ services:
       - TANGO_HOST=${TANGO_HOST}
     command: >
       sh -c "wait-for-it.sh ${TANGO_HOST} --timeout=30 --strict --
-             for i in $$(seq -w 1 197); do \
-             tango_admin --check-device mid_csp_cbf/vcc_sw1/$$i; done &&\
-             /venv/bin/python /app/csplmc/Vcc/VccSearchWindow/VccSearchWindow.py vcc-sw1"
+             for i in $$(seq -f "%03g" 1 9); do \
+             tango_admin --check-device mid_csp_cbf/vcc_sw1/$$i &&\
+             /venv/bin/python /app/csplmc/Vcc/VccSearchWindow/VccSearchWindow.py vcc-sw1-$$i & true; done &&\
+             tango_admin --check-device mid_csp_cbf/vcc_sw1/010 &&\
+             /venv/bin/python /app/csplmc/Vcc/VccSearchWindow/VccSearchWindow.py vcc-sw1-010"
                                                                  
   vccsw2:
     image: ${DOCKER_REGISTRY_HOST}/${DOCKER_REGISTRY_USER}/${PROJECT}:latest
@@ -139,9 +151,11 @@ services:
       - TANGO_HOST=${TANGO_HOST}
     command: >
       sh -c "wait-for-it.sh ${TANGO_HOST} --timeout=30 --strict --
-             for i in $$(seq -w 1 197); do \
-             tango_admin --check-device mid_csp_cbf/vcc_sw2/$$i; done &&\
-             /venv/bin/python /app/csplmc/Vcc/VccSearchWindow/VccSearchWindow.py vcc-sw2"
+             for i in $$(seq -f "%03g" 1 9); do \
+             tango_admin --check-device mid_csp_cbf/vcc_sw2/$$i &&\
+             /venv/bin/python /app/csplmc/Vcc/VccSearchWindow/VccSearchWindow.py vcc-sw2-$$i & true; done &&\
+             tango_admin --check-device mid_csp_cbf/vcc_sw2/010 &&\
+             /venv/bin/python /app/csplmc/Vcc/VccSearchWindow/VccSearchWindow.py vcc-sw2-010"
              
   fsp:
     image: ${DOCKER_REGISTRY_HOST}/${DOCKER_REGISTRY_USER}/${PROJECT}:latest
@@ -159,9 +173,11 @@ services:
       - TANGO_HOST=${TANGO_HOST}
     command: >
       sh -c "wait-for-it.sh ${TANGO_HOST} --timeout=30 --strict --
-             for i in $$(seq -w 1 27); do \
-             tango_admin --check-device mid_csp_cbf/fsp/$$i; done &&\
-             /venv/bin/python /app/csplmc/Fsp/Fsp/Fsp.py fsp"
+             for i in $$(seq -w 1 26); do \
+             tango_admin --check-device mid_csp_cbf/fsp/$$i &&\
+             /venv/bin/python /app/csplmc/Fsp/Fsp/Fsp.py fsp-$$i & true; done &&\
+             tango_admin --check-device mid_csp_cbf/fsp/27 &&\
+             /venv/bin/python /app/csplmc/Fsp/Fsp/Fsp.py fsp-27"
                           
   fspcorr:
     image: ${DOCKER_REGISTRY_HOST}/${DOCKER_REGISTRY_USER}/${PROJECT}:latest
@@ -175,9 +191,11 @@ services:
       - TANGO_HOST=${TANGO_HOST}
     command: >
       sh -c "wait-for-it.sh ${TANGO_HOST} --timeout=30 --strict --
-             for i in $$(seq -w 1 27); do \
-             tango_admin --check-device mid_csp_cbf/fsp_corr/$$i; done &&\
-             /venv/bin/python /app/csplmc/Fsp/FspCorr/FspCorr.py fsp"
+             for i in $$(seq -w 1 26); do \
+             tango_admin --check-device mid_csp_cbf/fsp_corr/$$i &&\
+             /venv/bin/python /app/csplmc/Fsp/FspCorr/FspCorr.py fsp-$$i & true; done &&\
+             tango_admin --check-device mid_csp_cbf/fsp_corr/27 &&\
+             /venv/bin/python /app/csplmc/Fsp/FspCorr/FspCorr.py fsp-27"
                                        
   fsppss:
     image: ${DOCKER_REGISTRY_HOST}/${DOCKER_REGISTRY_USER}/${PROJECT}:latest
@@ -191,9 +209,11 @@ services:
       - TANGO_HOST=${TANGO_HOST}
     command: >
       sh -c "wait-for-it.sh ${TANGO_HOST} --timeout=30 --strict --
-             for i in $$(seq -w 1 27); do \
-             tango_admin --check-device mid_csp_cbf/fsp_pss/$$i; done &&\
-             /venv/bin/python /app/csplmc/Fsp/FspPss/FspPss.py fsp"
+             for i in $$(seq -w 1 26); do \
+             tango_admin --check-device mid_csp_cbf/fsp_pss/$$i &&\
+             /venv/bin/python /app/csplmc/Fsp/FspPss/FspPss.py fsp-$$i & true; done &&\
+             tango_admin --check-device mid_csp_cbf/fsp_pss/27 &&\
+             /venv/bin/python /app/csplmc/Fsp/FspPss/FspPss.py fsp-27"
                                                     
   fsppst:
     image: ${DOCKER_REGISTRY_HOST}/${DOCKER_REGISTRY_USER}/${PROJECT}:latest
@@ -207,9 +227,11 @@ services:
       - TANGO_HOST=${TANGO_HOST}
     command: >
       sh -c "wait-for-it.sh ${TANGO_HOST} --timeout=30 --strict --
-             for i in $$(seq -w 1 27); do \
-             tango_admin --check-device mid_csp_cbf/fsp_pst/$$i; done &&\
-             /venv/bin/python /app/csplmc/Fsp/FspPst/FspPst.py fsp"
+             for i in $$(seq -w 1 26); do \
+             tango_admin --check-device mid_csp_cbf/fsp_pst/$$i &&\
+             /venv/bin/python /app/csplmc/Fsp/FspPst/FspPst.py fsp-$$i & true; done &&\
+             tango_admin --check-device mid_csp_cbf/fsp_pst/27 &&\
+             /venv/bin/python /app/csplmc/Fsp/FspPst/FspPst.py fsp-27"
                                                     
   fspvlbi:
     image: ${DOCKER_REGISTRY_HOST}/${DOCKER_REGISTRY_USER}/${PROJECT}:latest
@@ -223,9 +245,11 @@ services:
       - TANGO_HOST=${TANGO_HOST}
     command: >
       sh -c "wait-for-it.sh ${TANGO_HOST} --timeout=30 --strict --
-             for i in $$(seq -w 1 27); do \
-             tango_admin --check-device mid_csp_cbf/fsp_vlbi/$$i; done &&\
-             /venv/bin/python /app/csplmc/Fsp/FspVlbi/FspVlbi.py fsp"
+             for i in $$(seq -w 1 26); do \
+             tango_admin --check-device mid_csp_cbf/fsp_vlbi/$$i &&\
+             /venv/bin/python /app/csplmc/Fsp/FspVlbi/FspVlbi.py fsp-$$i & true; done &&\
+             tango_admin --check-device mid_csp_cbf/fsp_vlbi/27 &&\
+             /venv/bin/python /app/csplmc/Fsp/FspVlbi/FspVlbi.py fsp-27"
                           
   fspsubarray:
     image: ${DOCKER_REGISTRY_HOST}/${DOCKER_REGISTRY_USER}/${PROJECT}:latest
@@ -239,10 +263,15 @@ services:
       - TANGO_HOST=${TANGO_HOST}
     command: >
       sh -c "wait-for-it.sh ${TANGO_HOST} --timeout=30 --strict --
-             for i in $$(seq -w 1 27); do \
+             for i in $$(seq -w 1 26); do \
              for j in $$(seq -w 1 16); do \
-             tango_admin --check-device mid_csp_cbf/fspSubarray/$$i\_$$j; done; done &&\
-             /venv/bin/python /app/csplmc/Fsp/FspSubarray/FspSubarray.py fspSubarray"
+             tango_admin --check-device mid_csp_cbf/fspSubarray/$$i\_$$j &&\
+             /venv/bin/python /app/csplmc/Fsp/FspSubarray/FspSubarray.py fspSubarray-$$i-$$j & true; done; done &&\
+             for j in $$(seq -w 1 15); do \
+             tango_admin --check-device mid_csp_cbf/fspSubarray/27\_$$j &&\
+             /venv/bin/python /app/csplmc/Fsp/FspSubarray/FspSubarray.py fspSubarray-27-$$j & true; done &&\
+             tango_admin --check-device mid_csp_cbf/fspSubarray/27\_16 &&\
+             /venv/bin/python /app/csplmc/Fsp/FspSubarray/FspSubarray.py fspSubarray-27-16"
 
   sw1:
     image: ${DOCKER_REGISTRY_HOST}/${DOCKER_REGISTRY_USER}/${PROJECT}:latest
@@ -256,9 +285,11 @@ services:
       - TANGO_HOST=${TANGO_HOST}
     command: >
       sh -c "wait-for-it.sh ${TANGO_HOST} --timeout=30 --strict --
-             for i in $$(seq -w 1 16); do \
-             tango_admin --check-device mid_csp_cbf/sw1/$$i; done &&\
-             /venv/bin/python /app/csplmc/CbfSubarray/SearchWindow/SearchWindow.py sw1"
+             for i in $$(seq -w 1 15); do \
+             tango_admin --check-device mid_csp_cbf/sw1/$$i &&\
+             /venv/bin/python /app/csplmc/CbfSubarray/SearchWindow/SearchWindow.py sw1-$$i & true; done &&\
+             tango_admin --check-device mid_csp_cbf/sw1/16 &&\
+             /venv/bin/python /app/csplmc/CbfSubarray/SearchWindow/SearchWindow.py sw1-16"
 
   sw2:
     image: ${DOCKER_REGISTRY_HOST}/${DOCKER_REGISTRY_USER}/${PROJECT}:latest
@@ -272,9 +303,11 @@ services:
       - TANGO_HOST=${TANGO_HOST}
     command: >
       sh -c "wait-for-it.sh ${TANGO_HOST} --timeout=30 --strict --
-             for i in $$(seq -w 1 16); do \
-             tango_admin --check-device mid_csp_cbf/sw2/$$i; done &&\
-             /venv/bin/python /app/csplmc/CbfSubarray/SearchWindow/SearchWindow.py sw2"
+             for i in $$(seq -w 1 15); do \
+             tango_admin --check-device mid_csp_cbf/sw2/$$i &&\
+             /venv/bin/python /app/csplmc/CbfSubarray/SearchWindow/SearchWindow.py sw2-$$i & true; done &&\
+             tango_admin --check-device mid_csp_cbf/sw2/16 &&\
+             /venv/bin/python /app/csplmc/CbfSubarray/SearchWindow/SearchWindow.py sw2-16"
              
   cbfsubarray:
     image: ${DOCKER_REGISTRY_HOST}/${DOCKER_REGISTRY_USER}/${PROJECT}:latest
@@ -293,9 +326,11 @@ services:
       - TANGO_HOST=${TANGO_HOST}
     command: >
       sh -c "wait-for-it.sh ${TANGO_HOST} --timeout=30 --strict --
-             for i in $$(seq -w 1 16); do \
-             tango_admin --check-device mid_csp_cbf/sub_elt/subarray_$$i; done &&\
-             /venv/bin/python /app/csplmc/CbfSubarray/CbfSubarray/CbfSubarray.py cbfSubarray"
+             for i in $$(seq -w 1 15); do \
+             tango_admin --check-device mid_csp_cbf/sub_elt/subarray\_$$i &&\
+             /venv/bin/python /app/csplmc/CbfSubarray/CbfSubarray/CbfSubarray.py cbfSubarray-$$i & true; done &&\
+             tango_admin --check-device mid_csp_cbf/sw1/16 &&\
+             /venv/bin/python /app/csplmc/CbfSubarray/CbfSubarray/CbfSubarray.py cbfSubarray-16"
 
   cbfmaster:
     image: ${DOCKER_REGISTRY_HOST}/${DOCKER_REGISTRY_USER}/${PROJECT}:latest

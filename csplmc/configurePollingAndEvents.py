@@ -30,27 +30,31 @@ json_devices = json.loads(jsonDevices)
 for device in json_devices:
     deviceName = device["devName"]
 
-    if "attributeProperties" in device:
-        for attributeProperty in device["attributeProperties"]:
-            attributeProxy = AttributeProxy(deviceName + "/" + attributeProperty["attributeName"])
-            print("Device: ", deviceName, " Attribute: ", attributeProperty["attributeName"])
-            print("Polling Period: ", attributeProperty["pollingPeriod"])
-            if (attributeProperty["pollingPeriod"] != ""):
-                attributeProxy.poll(attributeProperty["pollingPeriod"])
-            else:
-                print("Skip setting polling period...")
-            if (attributeProperty["changeEventAbs"] != ""):
-                attrInfoEx = attributeProxy.get_config()
-                absChange = ChangeEventInfo()
-                absChange.abs_change = attributeProperty["changeEventAbs"]
-                attrInfoEx.events.ch_event = absChange
-                attributeProxy.set_config(attrInfoEx)
-            else:
-                print("Skip setting change event absolute...")
+    try:
+        if "attributeProperties" in device:
+            for attributeProperty in device["attributeProperties"]:
+                attributeProxy = AttributeProxy(deviceName + "/" + attributeProperty["attributeName"])
+                print("Device: ", deviceName, " Attribute: ", attributeProperty["attributeName"])
+                print("Polling Period: ", attributeProperty["pollingPeriod"])
+                if (attributeProperty["pollingPeriod"] != ""):
+                    attributeProxy.poll(attributeProperty["pollingPeriod"])
+                else:
+                    print("Skip setting polling period...")
+                if (attributeProperty["changeEventAbs"] != ""):
+                    attrInfoEx = attributeProxy.get_config()
+                    absChange = ChangeEventInfo()
+                    absChange.abs_change = attributeProperty["changeEventAbs"]
+                    attrInfoEx.events.ch_event = absChange
+                    attributeProxy.set_config(attrInfoEx)
+                else:
+                    print("Skip setting change event absolute...")
 
-            if "periodicEventCadence" in attributeProperty:
-                attrInfoEx = attributeProxy.get_config()
-                period = PeriodicEventInfo()
-                period.period = attributeProperty["periodicEventCadence"]
-                attrInfoEx.events.per_event = period
-                attributeProxy.set_config(attrInfoEx)
+                if "periodicEventCadence" in attributeProperty:
+                    attrInfoEx = attributeProxy.get_config()
+                    period = PeriodicEventInfo()
+                    period.period = attributeProperty["periodicEventCadence"]
+                    attrInfoEx.events.per_event = period
+                    attributeProxy.set_config(attrInfoEx)
+    except Exception as e:
+        print(str(e))
+        continue

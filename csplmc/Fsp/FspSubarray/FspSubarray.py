@@ -33,6 +33,7 @@ sys.path.insert(0, commons_pkg_path)
 
 from global_enum import HealthState, AdminMode, ObsState
 from skabase.SKASubarray.SKASubarray import SKASubarray
+
 # PROTECTED REGION END #    //  FspSubarray.additionnal_import
 
 __all__ = ["FspSubarray", "main"]
@@ -169,12 +170,16 @@ class FspSubarray(SKASubarray):
         self._destination_address = ["", "", ""]
         self._delay_model = ""
 
-        self._count_vcc = 197
-        self._fqdn_vcc = list(self.VCC)
-        self._proxies_vcc = [*map(PyTango.DeviceProxy, self._fqdn_vcc)]
-
         # device proxy for easy reference to CBF Master
         self._proxy_cbf_master = PyTango.DeviceProxy(self.CbfMasterAddress)
+
+        self._master_max_capabilities = dict(
+            pair.split(":") for pair in
+            self._proxy_cbf_master.get_property("MaxCapabilities")["MaxCapabilities"]
+        )
+        self._count_vcc = int(self._master_max_capabilities["VCC"])
+        self._fqdn_vcc = list(self.VCC)[:self._count_vcc]
+        self._proxies_vcc = [*map(PyTango.DeviceProxy, self._fqdn_vcc)]
 
         # device proxy for easy reference to CBF Subarray
         if self.CbfSubarrayAddress:
@@ -261,7 +266,6 @@ class FspSubarray(SKASubarray):
         self._delay_model = value
         # PROTECTED REGION END #    //  FspSubarray.delayModel_write
 
-
     # --------
     # Commands
     # --------
@@ -314,7 +318,7 @@ class FspSubarray(SKASubarray):
                 self._receptors.remove(receptorID)
             else:
                 log_msg = "Receptor {} not assigned to FSP subarray. "\
-                    "Skipping.".format(str(receptorID))
+                          "Skipping.".format(str(receptorID))
                 self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
         # PROTECTED REGION END #    //  FspSubarray.RemoveReceptors
 
@@ -353,7 +357,7 @@ class FspSubarray(SKASubarray):
                 self._frequency_band = frequency_bands.index(argin["frequencyBand"])
             else:
                 msg = "\n".join(errs)
-                msg += "'frequencyBand' must be one of {} (received {}). " \
+                msg += "'frequencyBand' must be one of {} (received {}). "\
                        "Aborting configuration.".format(frequency_bands, argin["frequency_band"])
                 # this is a fatal error
                 self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
@@ -534,6 +538,7 @@ def main(args=None, **kwargs):
     # PROTECTED REGION ID(FspSubarray.main) ENABLED START #
     return run((FspSubarray,), args=args, **kwargs)
     # PROTECTED REGION END #    //  FspSubarray.main
+
 
 if __name__ == '__main__':
     main()

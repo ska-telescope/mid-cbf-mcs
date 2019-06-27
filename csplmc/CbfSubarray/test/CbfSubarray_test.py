@@ -325,9 +325,9 @@ class TestCbfSubarray:
         assert create_subarray_1_proxy.obsState == ObsState.IDLE.value
 
         # add receptors
-        create_subarray_1_proxy.AddReceptors([10, 197])
+        create_subarray_1_proxy.AddReceptors([1, 10])
         time.sleep(1)
-        assert create_subarray_1_proxy.receptors == (10, 197)
+        assert create_subarray_1_proxy.receptors == (1, 10)
 
         # configure scan
         f = open(file_path + "/test_json/test_ConfigureScan_basic.json")
@@ -343,10 +343,10 @@ class TestCbfSubarray:
 
         # check frequency band of VCCs, including states of frequency band capabilities
         assert create_vcc_proxies[receptor_to_vcc[10] - 1].frequencyBand == 4
-        assert create_vcc_proxies[receptor_to_vcc[197] - 1].frequencyBand == 4
+        assert create_vcc_proxies[receptor_to_vcc[1] - 1].frequencyBand == 4
         assert [proxy.State() for proxy in create_vcc_band_proxies[receptor_to_vcc[10] - 1]] == [
             DevState.DISABLE, DevState.DISABLE, DevState.DISABLE, DevState.ON]
-        assert [proxy.State() for proxy in create_vcc_band_proxies[receptor_to_vcc[197] - 1]] == [
+        assert [proxy.State() for proxy in create_vcc_band_proxies[receptor_to_vcc[1] - 1]] == [
             DevState.DISABLE, DevState.DISABLE, DevState.DISABLE, DevState.ON]
 
         # check the rest of the configured attributes of VCCs
@@ -356,12 +356,12 @@ class TestCbfSubarray:
         assert create_vcc_proxies[receptor_to_vcc[10] - 1].frequencyBandOffsetStream1 == 0
         assert create_vcc_proxies[receptor_to_vcc[10] - 1].frequencyBandOffsetStream2 == 0
         assert create_vcc_proxies[receptor_to_vcc[10] - 1].rfiFlaggingMask == "{}"
-        # then for VCC belonging to receptor 197...
-        assert create_vcc_proxies[receptor_to_vcc[197] - 1].subarrayMembership == 1
-        assert create_vcc_proxies[receptor_to_vcc[197] - 1].band5Tuning == (5.85, 7.25)
-        assert create_vcc_proxies[receptor_to_vcc[197] - 1].frequencyBandOffsetStream1 == 0
-        assert create_vcc_proxies[receptor_to_vcc[197] - 1].frequencyBandOffsetStream2 == 0
-        assert create_vcc_proxies[receptor_to_vcc[197] - 1].rfiFlaggingMask == "{}"
+        # then for VCC belonging to receptor 1...
+        assert create_vcc_proxies[receptor_to_vcc[1] - 1].subarrayMembership == 1
+        assert create_vcc_proxies[receptor_to_vcc[1] - 1].band5Tuning == (5.85, 7.25)
+        assert create_vcc_proxies[receptor_to_vcc[1] - 1].frequencyBandOffsetStream1 == 0
+        assert create_vcc_proxies[receptor_to_vcc[1] - 1].frequencyBandOffsetStream2 == 0
+        assert create_vcc_proxies[receptor_to_vcc[1] - 1].rfiFlaggingMask == "{}"
 
         # check configured attributes of search windows
         # first for search window 1...
@@ -371,8 +371,8 @@ class TestCbfSubarray:
         assert create_sw_1_proxy.tdcPeriodBeforeEpoch == 5
         assert create_sw_1_proxy.tdcPeriodAfterEpoch == 25
         assert "".join(create_sw_1_proxy.tdcDestinationAddress.split()) in [
-               "{\"10\":[\"foo\",\"bar\",\"baz\"],\"197\":[\"fizz\",\"buzz\",\"fizz-buzz\"]}",
-               "{\"197\":[\"fizz\",\"buzz\",\"fizz-buzz\"],\"10\":[\"foo\",\"bar\",\"baz\"]}"
+               "{\"10\":[\"foo\",\"bar\",\"baz\"],\"1\":[\"fizz\",\"buzz\",\"fizz-buzz\"]}",
+               "{\"1\":[\"fizz\",\"buzz\",\"fizz-buzz\"],\"10\":[\"foo\",\"bar\",\"baz\"]}"
         ]
         # then for search window 2...
         assert create_sw_2_proxy.searchWindowTuning == 7000000000
@@ -388,21 +388,21 @@ class TestCbfSubarray:
         assert create_vcc_tdc_proxies[receptor_to_vcc[10] - 1][0].tdcDestinationAddress == (
             "foo", "bar", "baz"
         )
-        # then for search window 1 of VCC belonging to receptor 197...
-        assert create_vcc_tdc_proxies[receptor_to_vcc[197] - 1][0].searchWindowTuning == 6000000000
-        assert create_vcc_tdc_proxies[receptor_to_vcc[197] - 1][0].tdcEnable == True
-        assert create_vcc_tdc_proxies[receptor_to_vcc[197] - 1][0].tdcNumBits == 8
-        assert create_vcc_tdc_proxies[receptor_to_vcc[197] - 1][0].tdcPeriodBeforeEpoch == 5
-        assert create_vcc_tdc_proxies[receptor_to_vcc[197] - 1][0].tdcPeriodAfterEpoch == 25
-        assert create_vcc_tdc_proxies[receptor_to_vcc[197] - 1][0].tdcDestinationAddress == (
+        # then for search window 1 of VCC belonging to receptor 1...
+        assert create_vcc_tdc_proxies[receptor_to_vcc[1] - 1][0].searchWindowTuning == 6000000000
+        assert create_vcc_tdc_proxies[receptor_to_vcc[1] - 1][0].tdcEnable == True
+        assert create_vcc_tdc_proxies[receptor_to_vcc[1] - 1][0].tdcNumBits == 8
+        assert create_vcc_tdc_proxies[receptor_to_vcc[1] - 1][0].tdcPeriodBeforeEpoch == 5
+        assert create_vcc_tdc_proxies[receptor_to_vcc[1] - 1][0].tdcPeriodAfterEpoch == 25
+        assert create_vcc_tdc_proxies[receptor_to_vcc[1] - 1][0].tdcDestinationAddress == (
             "fizz", "buzz", "fizz-buzz"
         )
         # then for search window 2 of VCC belonging to receptor 10...
         assert create_vcc_tdc_proxies[receptor_to_vcc[10] - 1][1].searchWindowTuning == 7000000000
         assert create_vcc_tdc_proxies[receptor_to_vcc[10] - 1][1].tdcEnable == False
-        # and lastly for search window 2 of VCC belonging to receptor 197...
-        assert create_vcc_tdc_proxies[receptor_to_vcc[197] - 1][1].searchWindowTuning == 7000000000
-        assert create_vcc_tdc_proxies[receptor_to_vcc[197] - 1][1].tdcEnable == False
+        # and lastly for search window 2 of VCC belonging to receptor 1...
+        assert create_vcc_tdc_proxies[receptor_to_vcc[1] - 1][1].searchWindowTuning == 7000000000
+        assert create_vcc_tdc_proxies[receptor_to_vcc[1] - 1][1].tdcEnable == False
 
         # check configured attributes of FSPs, including states of function mode capabilities
         assert create_fsp_1_proxy.functionMode == 1
@@ -447,7 +447,7 @@ class TestCbfSubarray:
             (14137, 0)
         )
         # then for FSP 2...
-        assert create_fsp_2_subarray_1_proxy.receptors == (10, 197)
+        assert create_fsp_2_subarray_1_proxy.receptors == (1, 10)
         assert create_fsp_2_subarray_1_proxy.frequencyBand == 4
         assert create_fsp_2_subarray_1_proxy.frequencySliceID == 20
         assert create_fsp_2_subarray_1_proxy.corrBandwidth == 0

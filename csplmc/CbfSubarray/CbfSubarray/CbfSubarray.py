@@ -280,10 +280,15 @@ class CbfSubarray(SKASubarray):
         self._proxy_sw_1 = PyTango.DeviceProxy(self.SW1Address)
         self._proxy_sw_2 = PyTango.DeviceProxy(self.SW2Address)
 
-        self._count_vcc = 197
-        self._count_fsp = 27
-        self._fqdn_vcc = list(self.VCC)
-        self._fqdn_fsp = list(self.FSP)
+        self._master_max_capabilities = dict(
+            pair.split(":") for pair in
+            self._proxy_cbf_master.get_property("MaxCapabilities")["MaxCapabilities"]
+        )
+
+        self._count_vcc = int(self._master_max_capabilities["VCC"])
+        self._count_fsp = int(self._master_max_capabilities["FSP"])
+        self._fqdn_vcc = list(self.VCC)[:self._count_vcc]
+        self._fqdn_fsp = list(self.FSP)[:self._count_fsp]
         self._fqdn_fsp_subarray = list(self.FspSubarray)
 
         self._proxies_vcc = [*map(PyTango.DeviceProxy, self._fqdn_vcc)]

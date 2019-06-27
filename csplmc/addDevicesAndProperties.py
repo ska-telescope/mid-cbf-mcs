@@ -30,6 +30,8 @@ for device in json_devices:
     dev_info.server = device["serverName"]
     dev_info.name = device["devName"]
 
+    print("Adding {}...".format(device["devName"]))
+
     # Adding device
     db.add_device(dev_info)
 

@@ -449,9 +449,9 @@ class CbfMaster(SKAMaster):
         self.__set_cbf_state()
 
         # initialize lists with subarray/capability FQDNs
-        self._fqdn_vcc = list(self.VCC)
-        self._fqdn_fsp = list(self.FSP)
-        self._fqdn_subarray = list(self.CbfSubarray)
+        self._fqdn_vcc = list(self.VCC)[:self._count_vcc]
+        self._fqdn_fsp = list(self.FSP)[:self._count_fsp]
+        self._fqdn_subarray = list(self.CbfSubarray)[:self._count_subarray]
 
         # initialize dicts with maps receptorID <=> vccID (randomly for now, for testing purposes)
         # maps receptor IDs to VCC IDs, in the form "receptorID:vccID"
