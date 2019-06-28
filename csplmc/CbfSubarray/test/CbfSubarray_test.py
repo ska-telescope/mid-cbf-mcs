@@ -427,6 +427,35 @@ class TestCbfSubarray:
         assert create_fsp_1_subarray_1_proxy.integrationTime == 140
         assert create_fsp_1_subarray_1_proxy.channelAveragingMap == (
             (1, 0),
+            (745, 1),
+            (1489, 2),
+            (2233, 3),
+            (2977, 4),
+            (3721, 6),
+            (4465, 8),
+            (5209, 0),
+            (5953, 1),
+            (6697, 2),
+            (7441, 3),
+            (8185, 4),
+            (8929, 6),
+            (9673, 8),
+            (10417, 0),
+            (11161, 1),
+            (11905, 2),
+            (12649, 3),
+            (13393, 4),
+            (14137, 6)
+        )
+        # then for FSP 2...
+        assert create_fsp_2_subarray_1_proxy.receptors == (1, 10)
+        assert create_fsp_2_subarray_1_proxy.frequencyBand == 4
+        assert create_fsp_1_subarray_1_proxy.band5Tuning == (5.85, 7.25)
+        assert create_fsp_2_subarray_1_proxy.frequencySliceID == 20
+        assert create_fsp_2_subarray_1_proxy.corrBandwidth == 0
+        assert create_fsp_2_subarray_1_proxy.integrationTime == 1400
+        assert create_fsp_2_subarray_1_proxy.channelAveragingMap == (
+            (1, 0),
             (745, 0),
             (1489, 0),
             (2233, 0),
@@ -447,11 +476,3 @@ class TestCbfSubarray:
             (13393, 0),
             (14137, 0)
         )
-        # then for FSP 2...
-        assert create_fsp_2_subarray_1_proxy.receptors == (1, 10)
-        assert create_fsp_2_subarray_1_proxy.frequencyBand == 4
-        assert create_fsp_1_subarray_1_proxy.band5Tuning == (5.85, 7.25)
-        assert create_fsp_2_subarray_1_proxy.frequencySliceID == 20
-        assert create_fsp_2_subarray_1_proxy.corrBandwidth == 0
-        assert create_fsp_2_subarray_1_proxy.integrationTime == 1400
-        assert create_fsp_2_subarray_1_proxy.channelAveragingMap == ((0, 0),)*20

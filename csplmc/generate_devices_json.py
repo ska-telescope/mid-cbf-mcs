@@ -1,7 +1,7 @@
 with open("devices.json", "w+") as f:
     string = "[\n"
 
-    fqdn_vcc = [*map(lambda j: "\"mid_csp_cbf/vcc/{:03d}\"".format(j), range(1, 198))]
+    fqdn_vcc = [*map(lambda j: "\"mid_csp_cbf/vcc/{:03d}\"".format(j), range(1, 199))]
     fqdn_fsp = [*map(lambda j: "\"mid_csp_cbf/fsp/{:02d}\"".format(j), range(1, 28))]
     fqdn_cbf_subarray = [*map(lambda j: "\"mid_csp_cbf/sub_elt/subarray_{:02d}\"".format(j), range(1, 17))]
     string_vcc = "\n                    " + \
@@ -22,7 +22,7 @@ with open("devices.json", "w+") as f:
               "        \"deviceProperties\": [\n" \
               "            {{\n" \
               "                \"devPropName\": \"MaxCapabilities\",\n" \
-              "                \"devPropValue\": [\"VCC:10\", \"FSP:27\", \"Subarray:16\"]\n" \
+              "                \"devPropValue\": [\"VCC:197\", \"FSP:27\", \"Subarray:16\"]\n" \
               "            }},\n" \
               "            {{\n" \
               "                \"devPropName\": \"VCC\",\n" \
@@ -172,7 +172,7 @@ with open("devices.json", "w+") as f:
     for i in range(1, 198):
         string += "    {{\n" \
                   "        \"class\": \"Vcc\",\n" \
-                  "        \"serverName\": \"Vcc/vcc-{0:03d}\",\n" \
+                  "        \"serverName\": \"Vcc/vcc\",\n" \
                   "        \"devName\": \"mid_csp_cbf/vcc/{0:03d}\",\n" \
                   "        \"deviceProperties\": [\n" \
                   "            {{\n" \
@@ -315,7 +315,7 @@ with open("devices.json", "w+") as f:
     for i in range(1, 198):
         string += "    {{\n" \
                   "        \"class\": \"VccBand1And2\",\n" \
-                  "        \"serverName\": \"VccBand1And2/vcc-{0:03d}\",\n" \
+                  "        \"serverName\": \"VccBand1And2/vcc\",\n" \
                   "        \"devName\": \"mid_csp_cbf/vcc_band12/{0:03d}\",\n" \
                   "        \"deviceProperties\": []\n" \
                   "    }},\n".format(i)
@@ -324,7 +324,7 @@ with open("devices.json", "w+") as f:
     for i in range(1, 198):
         string += "    {{\n" \
                   "        \"class\": \"VccBand3\",\n" \
-                  "        \"serverName\": \"VccBand3/vcc-{0:03d}\",\n" \
+                  "        \"serverName\": \"VccBand3/vcc\",\n" \
                   "        \"devName\": \"mid_csp_cbf/vcc_band3/{0:03d}\",\n" \
                   "        \"deviceProperties\": []\n" \
                   "    }},\n".format(i)
@@ -333,7 +333,7 @@ with open("devices.json", "w+") as f:
     for i in range(1, 198):
         string += "    {{\n" \
                   "        \"class\": \"VccBand4\",\n" \
-                  "        \"serverName\": \"VccBand4/vcc-{0:03d}\",\n" \
+                  "        \"serverName\": \"VccBand4/vcc\",\n" \
                   "        \"devName\": \"mid_csp_cbf/vcc_band4/{0:03d}\",\n" \
                   "        \"deviceProperties\": []\n" \
                   "    }},\n".format(i)
@@ -342,7 +342,7 @@ with open("devices.json", "w+") as f:
     for i in range(1, 198):
         string += "    {{\n" \
                   "        \"class\": \"VccBand5\",\n" \
-                  "        \"serverName\": \"VccBand5/vcc-{0:03d}\",\n" \
+                  "        \"serverName\": \"VccBand5/vcc\",\n" \
                   "        \"devName\": \"mid_csp_cbf/vcc_band5/{0:03d}\",\n" \
                   "        \"deviceProperties\": []\n" \
                   "    }},\n".format(i)
@@ -351,13 +351,13 @@ with open("devices.json", "w+") as f:
     for i in range(1, 198):
         string += "    {{\n" \
                   "        \"class\": \"VccSearchWindow\",\n" \
-                  "        \"serverName\": \"VccSearchWindow/vcc-sw1-{0:03d}\",\n" \
+                  "        \"serverName\": \"VccSearchWindow/vcc-sw1\",\n" \
                   "        \"devName\": \"mid_csp_cbf/vcc_sw1/{0:03d}\",\n" \
                   "        \"deviceProperties\": []\n" \
                   "    }},\n".format(i)
         string += "    {{\n" \
                   "        \"class\": \"VccSearchWindow\",\n" \
-                  "        \"serverName\": \"VccSearchWindow/vcc-sw2-{0:03d}\",\n" \
+                  "        \"serverName\": \"VccSearchWindow/vcc-sw2\",\n" \
                   "        \"devName\": \"mid_csp_cbf/vcc_sw2/{0:03d}\",\n" \
                   "        \"deviceProperties\": []\n" \
                   "    }},\n".format(i)

@@ -1,7 +1,7 @@
 {
 	"receptors": [10, 197],
 	"frequencyBand": "5a",
-	"streamTuning": [5.85, 7.25],
+	"band5Tuning": [5.85, 7.25],
 	"frequencySliceID": 4,
 	"corrBandwidth": 1,
 	"zoomWindowTuning": 500000,

@@ -133,6 +133,104 @@ class CbfSubarray(SKASubarray):
         PyTango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
                                        PyTango.ErrSeverity.ERR)
 
+    def __generate_output_links(self, scan_cfg):
+        # At this point, we can assume that the scan configuration is valid and that the FSP
+        # attributes have been set properly.
+
+        output_links_all = {
+            "scanID": self._scan_ID,
+            "fsp": []
+        }
+
+        for fsp in scan_cfg["fsp"]:
+            output_links = {
+                "fspID": int(fsp["fspID"]),
+                "frequencySliceID": int(fsp["frequencySliceID"]),
+                "channel": []
+            }
+
+            if self._frequency_band in list(range(4)):  # frequency band is not band 5
+                frequency_slice_start = [*map(lambda j: j[0]*10**9, [
+                    const.FREQUENCY_BAND_1_RANGE,
+                    const.FREQUENCY_BAND_2_RANGE,
+                    const.FREQUENCY_BAND_3_RANGE,
+                    const.FREQUENCY_BAND_4_RANGE
+                ])][self._frequency_band] + \
+                    (int(fsp["frequencySliceID"]) - 1)*const.FREQUENCY_SLICE_BW*10**6,
+
+            else:  # frequency band 5a or 5b (two streams with bandwidth 2.5 GHz)
+                if int(fsp["frequencySliceID"]) <= 13:  # stream 1
+                    frequency_slice_start = scan_cfg["band5Tuning"][0]*10**9 - \
+                        const.BAND_5_STREAM_BANDWIDTH*10**9/2 + \
+                        (int(fsp["frequencySliceID"]) - 1)*const.FREQUENCY_SLICE_BW*10**6
+                else:  # 14 <= self._frequency_slice <= 26  # stream 2
+                    frequency_slice_start = scan_cfg["band5Tuning"][1]*10**9 - \
+                        const.BAND_5_STREAM_BANDWIDTH*10**9/2 + \
+                        (int(fsp["frequencySliceID"]) - 14)*const.FREQUENCY_SLICE_BW*10**6
+
+            for channel_group_ID in range(const.NUM_CHANNEL_GROUPS):
+                if "channelAveragingMap" in fsp:
+                    channel_averaging_map = fsp["channelAveragingMap"]
+                else:
+                    channel_averaging_map = [
+                        [int(i*const.NUM_FINE_CHANNELS/const.NUM_CHANNEL_GROUPS) + 1, 0]
+                        for i in range(const.NUM_CHANNEL_GROUPS)
+                    ]
+                channel_avg = channel_averaging_map[channel_group_ID][1]
+
+                if channel_avg:  # send channels to SDP
+                    for channel_ID in range(
+                        int(channel_group_ID*const.NUM_FINE_CHANNELS/const.NUM_CHANNEL_GROUPS) + 1,
+                        int((channel_group_ID + 1)*const.NUM_FINE_CHANNELS/const.NUM_CHANNEL_GROUPS) \
+                            + 1,
+                        channel_avg
+                    ):
+                        channel = {
+                            "channelID": channel_ID,
+                            "channelBandwidth": \
+                                const.FREQUENCY_SLICE_BW*10**6/const.NUM_FINE_CHANNELS*channel_avg,
+                            "channelCenterFrequency": frequency_slice_start + \
+                                (channel_ID - 1)*const.FREQUENCY_SLICE_BW*10**6/ \
+                                const.NUM_FINE_CHANNELS*channel_avg + \
+                                const.FREQUENCY_SLICE_BW*10**6/const.NUM_FINE_CHANNELS*channel_avg/2,
+                            "phaseBin": []
+                        }
+                        for i in range(const.NUM_PHASE_BINS):
+                            channel["phaseBin"].append({
+                                "phaseBinID": 0,  # phase bin ID unsupported for PI3
+                                "cbfOutputLink": randint(1, const.NUM_OUTPUT_LINKS)  # random link
+                            })
+                        output_links["channel"].append(channel)
+
+                else:  # don't send channels to SDP
+                    for channel_ID in range(
+                        int(channel_group_ID*const.NUM_FINE_CHANNELS/const.NUM_CHANNEL_GROUPS) + 1,
+                        int((channel_group_ID + 1)*const.NUM_FINE_CHANNELS/const.NUM_CHANNEL_GROUPS) \
+                            + 1
+                    ):
+                        # treat all channels individually (i.e. no averaging)
+                        channel = {
+                            "channelID": channel_ID,
+                            "channelBandwidth": \
+                                const.FREQUENCY_SLICE_BW*10**6/const.NUM_FINE_CHANNELS,
+                            "channelCenterFrequency": frequency_slice_start + \
+                                (channel_ID - 1)*const.FREQUENCY_SLICE_BW*10**6/ \
+                                const.NUM_FINE_CHANNELS + \
+                                const.FREQUENCY_SLICE_BW*10**6/const.NUM_FINE_CHANNELS/2,
+                            "phaseBin": []
+                        }
+                        for i in range(const.NUM_PHASE_BINS):
+                            channel["phaseBin"].append({
+                                "phaseBinID": 0,  # phase bin ID unsupported for PI3
+                                "cbfOutputLink": 0  # don't send channel
+                            })
+                        output_links["channel"].append(channel)
+
+            output_links_all["fsp"].append(output_links)
+
+        # publish the output links
+        self._output_links_distribution = output_links
+
     # PROTECTED REGION END #    //  CbfSubarray.class_variable
 
     # -----------------
@@ -717,9 +815,11 @@ class CbfSubarray(SKASubarray):
                     self.__doppler_phase_correction_event_callback
                 )
                 self._events_telstate[event_id] = attribute_proxy
-            except PyTango.DevFailed:  # attribute doesn't exist
-                log_msg = "Attribute {} not found for 'dopplerPhaseCorrSubscriptionPoint'. "\
-                    "Proceeding.".format(argin["dopplerPhaseCorrSubscriptionPoint"])
+            except PyTango.DevFailed:  # attribute doesn't exist or is not set up correctly
+                log_msg = "Attribute {} not found or not set up correctly for "\
+                    "'dopplerPhaseCorrSubscriptionPoint'. Proceeding.".format(
+                        argin["dopplerPhaseCorrSubscriptionPoint"]
+                    )
                 self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
                 errs.append(log_msg)
         else:  # dopplerPhaseCorrection not given
@@ -740,10 +840,12 @@ class CbfSubarray(SKASubarray):
                     self.__delay_model_event_callback
                 )
                 self._events_telstate[event_id] = attribute_proxy
-            except PyTango.DevFailed:  # attribute doesn't exist
+            except PyTango.DevFailed:  # attribute doesn't exist or is not set up correctly
                 msg = "\n".join(errs)
-                msg += "Attribute {} not found for 'delayModelSubscriptionPoint'. "\
-                    "Aborting configuration.".format(argin["delayModelSubscriptionPoint"])
+                msg += "Attribute {} not found or not set up correctly for "\
+                    "'delayModelSubscriptionPoint'. Aborting configuration.".format(
+                        argin["delayModelSubscriptionPoint"]
+                    )
                 # this is a fatal error
                 self.__raise_configure_scan_fatal_error(msg)
         else:
@@ -757,7 +859,9 @@ class CbfSubarray(SKASubarray):
         # If malformed, append an error.
         if "visDestinationAddressSubscriptionPoint" in argin:
             try:
-                attribute_proxy = PyTango.AttributeProxy(argin["delayModelSubscriptionPoint"])
+                attribute_proxy = PyTango.AttributeProxy(
+                    argin["visDestinationAddressSubscriptionPoint"]
+                )
                 attribute_proxy.ping()
 
                 # subscribe to the event
@@ -766,11 +870,12 @@ class CbfSubarray(SKASubarray):
                     self.__vis_destination_address_event_callback
                 )
                 self._events_telstate[event_id] = attribute_proxy
-            except PyTango.DevFailed:  # attribute doesn't exist
+            except PyTango.DevFailed:  # attribute doesn't exist or is not set up correctly
                 msg = "\n".join(errs)
-                msg += "Attribute {} not found for 'visDestinationAddressSubscriptionPoint'. "\
-                    "Aborting configuration.".format(
-                        argin["visDestinationAddressSubscriptionPoint"])
+                msg += "Attribute {} not found or not set up correctly for "\
+                    "'visDestinationAddressSubscriptionPoint'. Aborting configuration.".format(
+                        argin["visDestinationAddressSubscriptionPoint"]
+                    )
                 # this is a fatal error
                 self.__raise_configure_scan_fatal_error(msg)
         else:
@@ -933,15 +1038,8 @@ class CbfSubarray(SKASubarray):
                                            PyTango.ErrSeverity.ERR)
 
         # At this point, we can basically assume everything is properly configured
-        self._obs_state = ObsState.CONFIGURING.value
-
-        output_links = {
-            "scanID": self._scan_ID,
-            "fsp": [*map(lambda i: json.loads(i.GenerateOutputLinks()),
-                         self._proxies_assigned_fsp_subarray)]
-        }
-        # publish the output links
-        self._output_links_distribution = output_links
+        # self._obs_state = ObsState.CONFIGURING.value
+        # self.__generate_output_links(argin)  # published output links to outputLinksDistribution
 
         self._obs_state = ObsState.READY.value
 

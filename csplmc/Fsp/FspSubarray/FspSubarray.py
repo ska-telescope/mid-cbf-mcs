@@ -167,12 +167,9 @@ class FspSubarray(SKASubarray):
         self._subarray_id = self.SubID
         self._fsp_id = self.FspID
 
-        self.FREQUENCY_SLICE_BW = const.FREQUENCY_SLICE_BW
         self.MIN_INT_TIME = const.MIN_INT_TIME
         self.NUM_CHANNEL_GROUPS = const.NUM_CHANNEL_GROUPS
         self.NUM_FINE_CHANNELS = const.NUM_FINE_CHANNELS
-        self.NUM_PHASE_BINS = const.NUM_PHASE_BINS
-        self.NUM_OUTPUT_LINKS = const.NUM_OUTPUT_LINKS
 
         # initialize attribute values
         self._receptors = []
@@ -574,98 +571,6 @@ class FspSubarray(SKASubarray):
                                            PyTango.ErrSeverity.ERR)
 
         # PROTECTED REGION END #    //  FspSubarray.ConfigureScan
-
-    @command(
-        dtype_out='str',
-        doc_out="Output links",
-    )
-    def GenerateOutputLinks(self):
-        # PROTECTED REGION ID(FspSubarray.GenerateOutputLinks) ENABLED START #
-
-        # We can (probably) assume that all the self attributes are set properly at this point.
-        # It's envisioned that CbfSubarray.ConfigureScan() will only call this command if
-        # FspSubarray.ConfigureScan() did not throw any errors.
-
-        output_links = {
-            "fspID": self._fsp_id,
-            "frequencySliceID": self._frequency_slice_ID,
-            "channel": []
-        }
-
-        if self._frequency_band in list(range(4)):  # frequency band is not band 5
-            frequency_band_start = [*map(lambda j: j[0]*10**9, [
-                const.FREQUENCY_BAND_1_RANGE,
-                const.FREQUENCY_BAND_2_RANGE,
-                const.FREQUENCY_BAND_3_RANGE,
-                const.FREQUENCY_BAND_4_RANGE
-            ])][self._frequency_band]
-
-            frequency_slice_start = frequency_band_start + \
-                (self._frequency_slice_ID - 1)*const.FREQUENCY_SLICE_BW*10**6,
-
-        else:  # frequency band 5a or 5b (two streams with bandwidth 2.5 GHz)
-            if self._frequency_slice_ID <= 13:  # stream 1
-                frequency_band_start = self._stream_tuning[0]*10**9 - \
-                    const.BAND_5_STREAM_BANDWIDTH*10**9/2
-                frequency_slice_start = frequency_band_start + \
-                    (self._frequency_slice_ID - 1)*const.FREQUENCY_SLICE_BW*10**6,
-            else:  # 14 <= self._frequency_slice <= 26  # stream 2
-                frequency_band_start = self._stream_tuning[1]*10**9 - \
-                    const.BAND_5_STREAM_BANDWIDTH*10**9/2
-                frequency_slice_start = frequency_band_start + \
-                    (self._frequency_slice_ID - 14)*const.FREQUENCY_SLICE_BW*10**6
-
-        for channel_group_ID in range(const.NUM_CHANNEL_GROUPS):
-            channel_avg = self._channel_averaging_map[channel_group_ID][1]
-
-            if channel_avg:  # send channels to SDP
-                for channel_ID in range(
-                    int(channel_group_ID*self.NUM_FINE_CHANNELS/self.NUM_CHANNEL_GROUPS) + 1,
-                    int((channel_group_ID + 1)*self.NUM_FINE_CHANNELS/self.NUM_CHANNEL_GROUPS) + 1,
-                    channel_avg
-                ):
-                    channel = {
-                        "channelID": channel_ID,
-                        "channelBandwidth":
-                            self.FREQUENCY_SLICE_BW*10**6/self.NUM_FINE_CHANNELS*channel_avg,
-                        "channelCenterFrequency": frequency_slice_start +
-                            (channel_ID - 1)*self.FREQUENCY_SLICE_BW*10**6/
-                            self.NUM_FINE_CHANNELS*channel_avg +
-                            self.FREQUENCY_SLICE_BW*10**6/self.NUM_FINE_CHANNELS*channel_avg/2,
-                        "phaseBin": []
-                    }
-                    for i in range(self.NUM_PHASE_BINS):
-                        channel["phaseBin"].append({
-                            "phaseBinID": 0,  # phase bin ID unsupported for PI3
-                            "cbfOutputLink": randint(1, self.NUM_OUTPUT_LINKS)  # random link
-                        })
-                    output_links["channel"].append(channel)
-
-            else:  # don't send channels to SDP
-                for channel_ID in range(
-                    int(channel_group_ID*self.NUM_FINE_CHANNELS/self.NUM_CHANNEL_GROUPS) + 1,
-                    int((channel_group_ID + 1)*self.NUM_FINE_CHANNELS/self.NUM_CHANNEL_GROUPS) + 1
-                ):
-                    # treat all channels individually (i.e. no averaging)
-                    channel = {
-                        "channelID": channel_ID,
-                        "channelBandwidth":
-                            self.FREQUENCY_SLICE_BW*10**6/self.NUM_FINE_CHANNELS,
-                        "channelCenterFrequency": frequency_slice_start +
-                            (channel_ID - 1)*self.FREQUENCY_SLICE_BW*10**6/self.NUM_FINE_CHANNELS +
-                            self.FREQUENCY_SLICE_BW*10**6/self.NUM_FINE_CHANNELS/2,
-                        "phaseBin": []
-                    }
-                    for i in range(self.NUM_PHASE_BINS):
-                        channel["phaseBin"].append({
-                            "phaseBinID": 0,  # phase bin ID unsupported for PI3
-                            "cbfOutputLink": 0  # don't send channel
-                        })
-                    output_links["channel"].append(channel)
-
-        return json.dumps(output_links)
-
-        # PROTECTED REGION END #    //  FspSubarray.GenerateOutputLinks
 
 # ----------
 # Run server
