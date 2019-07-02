@@ -611,24 +611,24 @@ class Vcc(SKACapability):
             else:  # frequency band 5a or 5b (two streams with bandwidth 2.5 GHz)
                 frequency_band_range_1 = (
                     self._stream_tuning[0]*10**9 + self._frequency_band_offset_stream_1 - \
-                        const.BAND_5_STREAM_BANDWIDTH*10**6/2,
+                        const.BAND_5_STREAM_BANDWIDTH*10**9/2,
                     self._stream_tuning[0]*10**9 + self._frequency_band_offset_stream_1 + \
-                        const.BAND_5_STREAM_BANDWIDTH*10**6/2
+                        const.BAND_5_STREAM_BANDWIDTH*10**9/2
                 )
 
                 frequency_band_range_2 = (
                     self._stream_tuning[1]*10**9 + self._frequency_band_offset_stream_2 - \
-                        const.BAND_5_STREAM_BANDWIDTH*10**6/2,
+                        const.BAND_5_STREAM_BANDWIDTH*10**9/2,
                     self._stream_tuning[1]*10**9 + self._frequency_band_offset_stream_2 + \
-                        const.BAND_5_STREAM_BANDWIDTH*10**6/2
+                        const.BAND_5_STREAM_BANDWIDTH*10**9/2
                 )
 
-                if (frequency_band_range_1[0]*10**9 + self._frequency_band_offset_stream_1 <= \
+                if (frequency_band_range_1[0] + self._frequency_band_offset_stream_1 <= \
                         int(argin["searchWindowTuning"]) <= \
-                        frequency_band_range_1[1]*10**9 + self._frequency_band_offset_stream_1) or\
-                        (frequency_band_range_2[0]*10**9 + self._frequency_band_offset_stream_2 <= \
+                        frequency_band_range_1[1] + self._frequency_band_offset_stream_1) or\
+                        (frequency_band_range_2[0] + self._frequency_band_offset_stream_2 <= \
                         int(argin["searchWindowTuning"]) <= \
-                        frequency_band_range_2[1]*10**9 + self._frequency_band_offset_stream_2):
+                        frequency_band_range_2[1] + self._frequency_band_offset_stream_2):
                     proxy_sw.searchWindowTuning = argin["searchWindowTuning"]
                 else:
                     msg = "\n".join(errs)
@@ -640,15 +640,15 @@ class Vcc(SKACapability):
                                                    "ConfigureSearchWindow execution",
                                                    PyTango.ErrSeverity.ERR)
 
-                if (frequency_band_range_1[0]*10**9 + self._frequency_band_offset_stream_1 + \
+                if (frequency_band_range_1[0] + self._frequency_band_offset_stream_1 + \
                         const.SEARCH_WINDOW_BW*10**6/2 <= \
                         int(argin["searchWindowTuning"]) <= \
-                        frequency_band_range_1[1]*10**9 + self._frequency_band_offset_stream_1 - \
+                        frequency_band_range_1[1] + self._frequency_band_offset_stream_1 - \
                         const.SEARCH_WINDOW_BW*10**6/2) or\
-                        (frequency_band_range_2[0]*10**9 + self._frequency_band_offset_stream_2 + \
+                        (frequency_band_range_2[0] + self._frequency_band_offset_stream_2 + \
                         const.SEARCH_WINDOW_BW*10**6/2 <= \
                         int(argin["searchWindowTuning"]) <= \
-                        frequency_band_range_2[1]*10**9 + self._frequency_band_offset_stream_2 - \
+                        frequency_band_range_2[1] + self._frequency_band_offset_stream_2 - \
                         const.SEARCH_WINDOW_BW*10**6/2):
                     # this is the acceptable range
                     pass

@@ -494,7 +494,7 @@ class FspSubarray(SKASubarray):
                     ][self._frequency_band]
 
                     if frequency_band_range[0]*10**9 + self._frequency_band_offset_stream_1 <= \
-                            int(argin["zoomWindowTuning"]) <= \
+                            int(argin["zoomWindowTuning"])*10**3 <= \
                             frequency_band_range[1]*10**9 + self._frequency_band_offset_stream_1:
                         self._zoom_window_tuning = int(argin["zoomWindowTuning"])
                     else:
@@ -509,7 +509,7 @@ class FspSubarray(SKASubarray):
 
                     if frequency_band_range[0]*10**9 + self._frequency_band_offset_stream_1 + \
                             self._bandwidth_actual*10**6/2 <= \
-                            int(argin["zoomWindowTuning"]) <= \
+                            int(argin["zoomWindowTuning"])*10**3 <= \
                             frequency_band_range[1]*10**9 + self._frequency_band_offset_stream_1 - \
                             self._bandwidth_actual*10**6/2:
                         # this is the acceptable range
@@ -522,24 +522,24 @@ class FspSubarray(SKASubarray):
                 else:  # frequency band 5a or 5b (two streams with bandwidth 2.5 GHz)
                     frequency_band_range_1 = (
                         self._stream_tuning[0]*10**9 + self._frequency_band_offset_stream_1 - \
-                            const.BAND_5_STREAM_BANDWIDTH*10**6/2,
+                            const.BAND_5_STREAM_BANDWIDTH*10**9/2,
                         self._stream_tuning[0]*10**9 + self._frequency_band_offset_stream_1 + \
-                            const.BAND_5_STREAM_BANDWIDTH*10**6/2
+                            const.BAND_5_STREAM_BANDWIDTH*10**9/2
                     )
 
                     frequency_band_range_2 = (
                         self._stream_tuning[1]*10**9 + self._frequency_band_offset_stream_2 - \
-                            const.BAND_5_STREAM_BANDWIDTH*10**6/2,
+                            const.BAND_5_STREAM_BANDWIDTH*10**9/2,
                         self._stream_tuning[1]*10**9 + self._frequency_band_offset_stream_2 + \
-                            const.BAND_5_STREAM_BANDWIDTH*10**6/2
+                            const.BAND_5_STREAM_BANDWIDTH*10**9/2
                     )
 
-                    if (frequency_band_range_1[0]*10**9 + self._frequency_band_offset_stream_1 <= \
-                            int(argin["zoomWindowTuning"]) <= \
-                            frequency_band_range_1[1]*10**9 + self._frequency_band_offset_stream_1) or\
-                            (frequency_band_range_2[0]*10**9 + self._frequency_band_offset_stream_2 <= \
-                            int(argin["zoomWindowTuning"]) <= \
-                            frequency_band_range_2[1]*10**9 + self._frequency_band_offset_stream_2):
+                    if (frequency_band_range_1[0] + self._frequency_band_offset_stream_1 <= \
+                            int(argin["zoomWindowTuning"])*10**3 <= \
+                            frequency_band_range_1[1] + self._frequency_band_offset_stream_1) or\
+                            (frequency_band_range_2[0] + self._frequency_band_offset_stream_2 <= \
+                            int(argin["zoomWindowTuning"])*10**3 <= \
+                            frequency_band_range_2[1] + self._frequency_band_offset_stream_2):
                         self._zoom_window_tuning = argin["zoomWindowTuning"]
                     else:
                         msg = "\n".join(errs)
@@ -551,15 +551,15 @@ class FspSubarray(SKASubarray):
                                                        "ConfigureScan execution",
                                                        PyTango.ErrSeverity.ERR)
 
-                    if (frequency_band_range_1[0]*10**9 + self._frequency_band_offset_stream_1 + \
+                    if (frequency_band_range_1[0] + self._frequency_band_offset_stream_1 + \
                             const.SEARCH_WINDOW_BW*10**6/2 <= \
-                            int(argin["zoomWindowTuning"]) <= \
-                            frequency_band_range_1[1]*10**9 + self._frequency_band_offset_stream_1 - \
+                            int(argin["zoomWindowTuning"])*10**3 <= \
+                            frequency_band_range_1[1] + self._frequency_band_offset_stream_1 - \
                             const.SEARCH_WINDOW_BW*10**6/2) or\
-                            (frequency_band_range_2[0]*10**9 + self._frequency_band_offset_stream_2 + \
+                            (frequency_band_range_2[0] + self._frequency_band_offset_stream_2 + \
                             const.SEARCH_WINDOW_BW*10**6/2 <= \
-                            int(argin["zoomWindowTuning"]) <= \
-                            frequency_band_range_2[1]*10**9 + self._frequency_band_offset_stream_2 - \
+                            int(argin["zoomWindowTuning"])*10**3 <= \
+                            frequency_band_range_2[1] + self._frequency_band_offset_stream_2 - \
                             const.SEARCH_WINDOW_BW*10**6/2):
                         # this is the acceptable range
                         pass
