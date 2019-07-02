@@ -31,7 +31,7 @@ file_path = os.path.dirname(os.path.abspath(__file__))
 commons_pkg_path = os.path.abspath(os.path.join(file_path, "../../commons"))
 sys.path.insert(0, commons_pkg_path)
 
-from global_enum import HealthState, AdminMode, ObsState
+from global_enum import HealthState, AdminMode, ObsState, const
 from skabase.SKACapability.SKACapability import SKACapability
 # PROTECTED REGION END #    //  Vcc.additionnal_import
 
@@ -574,8 +574,89 @@ class Vcc(SKACapability):
         # If not given, ignore the entire search window and append an error.
         # If malformed, ignore the entire search window and append an error.
         if "searchWindowTuning" in argin:
-            # TODO: validate input
-            proxy_sw.searchWindowTuning = argin["searchWindowTuning"]
+            if self._frequency_band in list(range(4)):  # frequency band is not band 5
+                frequency_band_range = [
+                    const.FREQUENCY_BAND_1_RANGE,
+                    const.FREQUENCY_BAND_2_RANGE,
+                    const.FREQUENCY_BAND_3_RANGE,
+                    const.FREQUENCY_BAND_4_RANGE
+                ][self._frequency_band]
+
+                if frequency_band_range[0]*10**9 + self._frequency_band_offset_stream_1 <= \
+                        int(argin["searchWindowTuning"]) <= \
+                        frequency_band_range[1]*10**9 + self._frequency_band_offset_stream_1:
+                    proxy_sw.searchWindowTuning = argin["searchWindowTuning"]
+                else:
+                    msg = "\n".join(errs)
+                    msg += "'searchWindowTuning' must be within observed band. " \
+                        "Ignoring search window."
+                    # this is a fatal error
+                    self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+                    PyTango.Except.throw_exception("Command failed", msg,
+                                                   "ConfigureSearchWindow execution",
+                                                   PyTango.ErrSeverity.ERR)
+
+                if frequency_band_range[0]*10**9 + self._frequency_band_offset_stream_1 + \
+                        const.SEARCH_WINDOW_BW*10**6/2 <= \
+                        int(argin["searchWindowTuning"]) <= \
+                        frequency_band_range[1]*10**9 + self._frequency_band_offset_stream_1 - \
+                        const.SEARCH_WINDOW_BW*10**6/2:
+                    # this is the acceptable range
+                    pass
+                else:
+                    # log a warning message
+                    log_msg = "'searchWindowTuning' partially out of observed band. " \
+                        "Proceeding."
+                    self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+            else:  # frequency band 5a or 5b (two streams with bandwidth 2.5 GHz)
+                frequency_band_range_1 = (
+                    self._stream_tuning[0]*10**9 + self._frequency_band_offset_stream_1 - \
+                        const.BAND_5_STREAM_BANDWIDTH*10**6/2,
+                    self._stream_tuning[0]*10**9 + self._frequency_band_offset_stream_1 + \
+                        const.BAND_5_STREAM_BANDWIDTH*10**6/2
+                )
+
+                frequency_band_range_2 = (
+                    self._stream_tuning[1]*10**9 + self._frequency_band_offset_stream_2 - \
+                        const.BAND_5_STREAM_BANDWIDTH*10**6/2,
+                    self._stream_tuning[1]*10**9 + self._frequency_band_offset_stream_2 + \
+                        const.BAND_5_STREAM_BANDWIDTH*10**6/2
+                )
+
+                if (frequency_band_range_1[0]*10**9 + self._frequency_band_offset_stream_1 <= \
+                        int(argin["searchWindowTuning"]) <= \
+                        frequency_band_range_1[1]*10**9 + self._frequency_band_offset_stream_1) or\
+                        (frequency_band_range_2[0]*10**9 + self._frequency_band_offset_stream_2 <= \
+                        int(argin["searchWindowTuning"]) <= \
+                        frequency_band_range_2[1]*10**9 + self._frequency_band_offset_stream_2):
+                    proxy_sw.searchWindowTuning = argin["searchWindowTuning"]
+                else:
+                    msg = "\n".join(errs)
+                    msg += "'searchWindowTuning' must be within observed band. " \
+                        "Ignoring search window."
+                    # this is a fatal error
+                    self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+                    PyTango.Except.throw_exception("Command failed", msg,
+                                                   "ConfigureSearchWindow execution",
+                                                   PyTango.ErrSeverity.ERR)
+
+                if (frequency_band_range_1[0]*10**9 + self._frequency_band_offset_stream_1 + \
+                        const.SEARCH_WINDOW_BW*10**6/2 <= \
+                        int(argin["searchWindowTuning"]) <= \
+                        frequency_band_range_1[1]*10**9 + self._frequency_band_offset_stream_1 - \
+                        const.SEARCH_WINDOW_BW*10**6/2) or\
+                        (frequency_band_range_2[0]*10**9 + self._frequency_band_offset_stream_2 + \
+                        const.SEARCH_WINDOW_BW*10**6/2 <= \
+                        int(argin["searchWindowTuning"]) <= \
+                        frequency_band_range_2[1]*10**9 + self._frequency_band_offset_stream_2 - \
+                        const.SEARCH_WINDOW_BW*10**6/2):
+                    # this is the acceptable range
+                    pass
+                else:
+                    # log a warning message
+                    log_msg = "'searchWindowTuning' partially out of observed band. " \
+                        "Proceeding."
+                    self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
         else:  # searchWindowTuning not given
             msg = "\n".join(errs)
             msg += "Search window specified, but 'searchWindowTuning' not given. "\

@@ -134,6 +134,7 @@ class CbfSubarray(SKASubarray):
                                        PyTango.ErrSeverity.ERR)
 
     def __generate_output_links(self, scan_cfg):
+        # TODO: find out why calling this function results in a timeout
         # At this point, we can assume that the scan configuration is valid and that the FSP
         # attributes have been set properly.
 
@@ -156,17 +157,20 @@ class CbfSubarray(SKASubarray):
                     const.FREQUENCY_BAND_3_RANGE,
                     const.FREQUENCY_BAND_4_RANGE
                 ])][self._frequency_band] + \
-                    (int(fsp["frequencySliceID"]) - 1)*const.FREQUENCY_SLICE_BW*10**6,
+                    (int(fsp["frequencySliceID"]) - 1)*const.FREQUENCY_SLICE_BW*10**6 + \
+                    self._frequency_band_offset_stream_1,
 
             else:  # frequency band 5a or 5b (two streams with bandwidth 2.5 GHz)
                 if int(fsp["frequencySliceID"]) <= 13:  # stream 1
                     frequency_slice_start = scan_cfg["band5Tuning"][0]*10**9 - \
                         const.BAND_5_STREAM_BANDWIDTH*10**9/2 + \
-                        (int(fsp["frequencySliceID"]) - 1)*const.FREQUENCY_SLICE_BW*10**6
+                        (int(fsp["frequencySliceID"]) - 1)*const.FREQUENCY_SLICE_BW*10**6 + \
+                        self._frequency_band_offset_stream_1
                 else:  # 14 <= self._frequency_slice <= 26  # stream 2
                     frequency_slice_start = scan_cfg["band5Tuning"][1]*10**9 - \
                         const.BAND_5_STREAM_BANDWIDTH*10**9/2 + \
-                        (int(fsp["frequencySliceID"]) - 14)*const.FREQUENCY_SLICE_BW*10**6
+                        (int(fsp["frequencySliceID"]) - 14)*const.FREQUENCY_SLICE_BW*10**6 + \
+                        self._frequency_band_offset_stream_2
 
             for channel_group_ID in range(const.NUM_CHANNEL_GROUPS):
                 if "channelAveragingMap" in fsp:
@@ -362,6 +366,11 @@ class CbfSubarray(SKASubarray):
         self._vcc_health_state = {}  # device_name:healthState
         self._fsp_state = {}  # device_name:state
         self._fsp_health_state = {}  # device_name:healthState
+
+        # for easy self-reference
+        self._frequency_band_offset_stream_1 = 0
+        self._frequency_band_offset_stream_2 = 0
+        self._stream_tuning = [0, 0]
 
         # device proxy for easy reference to CBF Master
         self._proxy_cbf_master = PyTango.DeviceProxy(self.CbfMasterAddress)
@@ -638,7 +647,7 @@ class CbfSubarray(SKASubarray):
         self._events_telstate = {}
 
         # unsubscribe from FSP state change events
-        for fspID, fsp_events in self._events_state_change_fsp:
+        for fspID in self._events_state_change_fsp.keys():
             proxy_fsp = self._proxies_fsp[fspID - 1]
             proxy_fsp.unsubscribe_event(self._events_state_change_fsp[fspID][0])  # state
             proxy_fsp.unsubscribe_event(self._events_state_change_fsp[fspID][1])  # healthState
@@ -734,6 +743,7 @@ class CbfSubarray(SKASubarray):
                         [const.FREQUENCY_BAND_5a_TUNING_BOUNDS[0] <= stream_tuning[i]
                             <= const.FREQUENCY_BAND_5a_TUNING_BOUNDS[1] for i in [0, 1]]
                     ):
+                        self._stream_tuning = stream_tuning
                         for vcc in self._proxies_assigned_vcc:
                             vcc.band5Tuning = stream_tuning
                     else:
@@ -753,6 +763,7 @@ class CbfSubarray(SKASubarray):
                         [const.FREQUENCY_BAND_5b_TUNING_BOUNDS[0] <= stream_tuning[i]
                             <= const.FREQUENCY_BAND_5b_TUNING_BOUNDS[1] for i in [0, 1]]
                     ):
+                        self._stream_tuning = stream_tuning
                         for vcc in self._proxies_assigned_vcc:
                             vcc.band5Tuning = stream_tuning
                     else:
@@ -778,10 +789,20 @@ class CbfSubarray(SKASubarray):
         # If not given, use a default value.
         # If malformed, use a default value, but append an error.
         if "frequencyBandOffsetStream1" in argin:
-            # TODO: validate input
-            for vcc in self._proxies_assigned_vcc:
-                vcc.frequencyBandOffsetStream1 = int(argin["frequencyBandOffsetStream1"])
+            if abs(int(argin["frequencyBandOffsetStream1"])) <= const.FREQUENCY_SLICE_BW*10**6/2:
+                self._frequency_band_offset_stream_1 = int(argin["frequencyBandOffsetStream1"])
+                for vcc in self._proxies_assigned_vcc:
+                    vcc.frequencyBandOffsetStream1 = int(argin["frequencyBandOffsetStream1"])
+            else:
+                self._frequency_band_offset_stream_1 = 0
+                for vcc in self._proxies_assigned_vcc:
+                    vcc.frequencyBandOffsetStream1 = 0
+                log_msg = "Absolute value of 'frequencyBandOffsetStream1' must be at most half "\
+                    "of the frequency slice bandwidth. Defaulting to 0."
+                self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
+                errs.append(log_msg)
         else:  # frequencyBandOffsetStream1 not given
+            self._frequency_band_offset_stream_1 = 0
             for vcc in self._proxies_assigned_vcc:
                 vcc.frequencyBandOffsetStream1 = 0
             log_msg = "'frequencyBandOffsetStream1' not specified. Defaulting to 0."
@@ -792,14 +813,27 @@ class CbfSubarray(SKASubarray):
         # If malformed, use a default value, but append an error.
         if self._frequency_band in [4, 5]:
             if "frequencyBandOffsetStream2" in argin:
-                # TODO: validate input
-                for vcc in self._proxies_assigned_vcc:
-                    vcc.frequencyBandOffsetStream2 = int(argin["frequencyBandOffsetStream2"])
+                if abs(int(argin["frequencyBandOffsetStream2"])) <= \
+                        const.FREQUENCY_SLICE_BW*10**6/2:
+                    self._frequency_band_offset_stream_2 = int(argin["frequencyBandOffsetStream2"])
+                    for vcc in self._proxies_assigned_vcc:
+                        vcc.frequencyBandOffsetStream2 = int(argin["frequencyBandOffsetStream2"])
+                else:
+                    self._frequency_band_offset_stream_2 = 0
+                    for vcc in self._proxies_assigned_vcc:
+                        vcc.frequencyBandOffsetStream2 = 0
+                    log_msg = "Absolute value of 'frequencyBandOffsetStream2' must be at most "\
+                        "half of the frequency slice bandwidth. Defaulting to 0."
+                    self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
+                    errs.append(log_msg)
             else:  # frequencyBandOffsetStream2 not given
+                self._frequency_band_offset_stream_2 = 0
                 for vcc in self._proxies_assigned_vcc:
                     vcc.frequencyBandOffsetStream2 = 0
                 log_msg = "'frequencyBandOffsetStream2' not specified. Defaulting to 0."
                 self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+        else:
+            self._frequency_band_offset_stream_2 = 0
 
         # Validate dopplerPhaseCorrSubscriptionPoint
         # If not given, do nothing.
@@ -987,12 +1021,14 @@ class CbfSubarray(SKASubarray):
                             errs.append(log_msg)
                             continue
 
-                        fsp["frequencyBand"] = argin["frequencyBand"]
+                        fsp["frequencyBand"] = self._frequency_band
+                        fsp["frequencyOffsetStream1"] = self._frequency_band_offset_stream_1
+                        fsp["frequencyOffsetStream2"] = self._frequency_band_offset_stream_2
                         if "receptors" not in fsp:
                             fsp["receptors"] = self._receptors
                         if self._frequency_band in [4, 5]:
                             # at this point, this is always given and valid
-                            fsp["band5Tuning"] = [*map(float, argin["band5Tuning"])]
+                            fsp["band5Tuning"] = self._stream_tuning
 
                         # pass on configuration to FSP Subarray
                         proxy_fsp_subarray.ConfigureScan(json.dumps(fsp))
@@ -1100,8 +1136,90 @@ class CbfSubarray(SKASubarray):
         # If not given, ignore the entire search window and append an error.
         # If malformed, ignore the entire search window and append an error.
         if "searchWindowTuning" in argin:
-            # TODO: validate input
-            proxy_sw.searchWindowTuning = argin["searchWindowTuning"]
+            if self._frequency_band in list(range(4)):  # frequency band is not band 5
+                frequency_band_range = [
+                    const.FREQUENCY_BAND_1_RANGE,
+                    const.FREQUENCY_BAND_2_RANGE,
+                    const.FREQUENCY_BAND_3_RANGE,
+                    const.FREQUENCY_BAND_4_RANGE
+                ][self._frequency_band]
+
+                if frequency_band_range[0]*10**9 + self._frequency_band_offset_stream_1 <= \
+                        int(argin["searchWindowTuning"]) <= \
+                        frequency_band_range[1]*10**9 + self._frequency_band_offset_stream_1:
+                    proxy_sw.searchWindowTuning = argin["searchWindowTuning"]
+                else:
+                    msg = "\n".join(errs)
+                    msg += "'searchWindowTuning' must be within observed band. " \
+                        "Ignoring search window."
+                    # this is a fatal error
+                    self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+                    PyTango.Except.throw_exception("Command failed", msg,
+                                                   "ConfigureSearchWindow execution",
+                                                   PyTango.ErrSeverity.ERR)
+
+                if frequency_band_range[0]*10**9 + self._frequency_band_offset_stream_1 + \
+                        const.SEARCH_WINDOW_BW*10**6/2 <= \
+                        int(argin["searchWindowTuning"]) <= \
+                        frequency_band_range[1]*10**9 + self._frequency_band_offset_stream_1 - \
+                        const.SEARCH_WINDOW_BW*10**6/2:
+                    # this is the acceptable range
+                    pass
+                else:
+                    # log a warning message
+                    log_msg = "'searchWindowTuning' partially out of observed band. " \
+                        "Proceeding."
+                    self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+            else:  # frequency band 5a or 5b (two streams with bandwidth 2.5 GHz)
+                frequency_band_range_1 = (
+                    self._stream_tuning[0]*10**9 + self._frequency_band_offset_stream_1 - \
+                        const.BAND_5_STREAM_BANDWIDTH*10**6/2,
+                    self._stream_tuning[0]*10**9 + self._frequency_band_offset_stream_1 + \
+                        const.BAND_5_STREAM_BANDWIDTH*10**6/2
+                )
+
+                frequency_band_range_2 = (
+                    self._stream_tuning[1]*10**9 + self._frequency_band_offset_stream_2 - \
+                        const.BAND_5_STREAM_BANDWIDTH*10**6/2,
+                    self._stream_tuning[1]*10**9 + self._frequency_band_offset_stream_2 + \
+                        const.BAND_5_STREAM_BANDWIDTH*10**6/2
+                )
+
+                if (frequency_band_range_1[0]*10**9 + self._frequency_band_offset_stream_1 <= \
+                        int(argin["searchWindowTuning"]) <= \
+                        frequency_band_range_1[1]*10**9 + self._frequency_band_offset_stream_1) or\
+                        (frequency_band_range_2[0]*10**9 + self._frequency_band_offset_stream_2 <= \
+                        int(argin["searchWindowTuning"]) <= \
+                        frequency_band_range_2[1]*10**9 + self._frequency_band_offset_stream_2):
+                    proxy_sw.searchWindowTuning = argin["searchWindowTuning"]
+                else:
+                    msg = "\n".join(errs)
+                    msg += "'searchWindowTuning' must be within observed band. " \
+                        "Ignoring search window."
+                    # this is a fatal error
+                    self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+                    PyTango.Except.throw_exception("Command failed", msg,
+                                                   "ConfigureSearchWindow execution",
+                                                   PyTango.ErrSeverity.ERR)
+
+                if (frequency_band_range_1[0]*10**9 + self._frequency_band_offset_stream_1 + \
+                        const.SEARCH_WINDOW_BW*10**6/2 <= \
+                        int(argin["searchWindowTuning"]) <= \
+                        frequency_band_range_1[1]*10**9 + self._frequency_band_offset_stream_1 - \
+                        const.SEARCH_WINDOW_BW*10**6/2) or\
+                        (frequency_band_range_2[0]*10**9 + self._frequency_band_offset_stream_2 + \
+                        const.SEARCH_WINDOW_BW*10**6/2 <= \
+                        int(argin["searchWindowTuning"]) <= \
+                        frequency_band_range_2[1]*10**9 + self._frequency_band_offset_stream_2 - \
+                        const.SEARCH_WINDOW_BW*10**6/2):
+                    # this is the acceptable range
+                    pass
+                else:
+                    # log a warning message
+                    log_msg = "'searchWindowTuning' partially out of observed band. " \
+                        "Proceeding."
+                    self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+
         else:  # searchWindowTuning not given
             msg = "\n".join(errs)
             msg += "Search window specified, but 'searchWindowTuning' not given. " \

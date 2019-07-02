@@ -103,6 +103,20 @@ class FspSubarray(SKASubarray):
         doc="Stream tuning (GHz)"
     )
 
+    frequencyBandOffsetStream1 = attribute(
+        dtype='int',
+        access=AttrWriteType.READ,
+        label="Frequency offset for stream 1 (Hz)",
+        doc="Frequency offset for stream 1 (Hz)"
+    )
+
+    frequencyBandOffsetStream2 = attribute(
+        dtype='int',
+        access=AttrWriteType.READ,
+        label="Frequency offset for stream 2 (Hz)",
+        doc="Frequency offset for stream 2 (Hz)"
+    )
+
     frequencySliceID = attribute(
         dtype='uint16',
         access=AttrWriteType.READ,
@@ -175,8 +189,11 @@ class FspSubarray(SKASubarray):
         self._receptors = []
         self._frequency_band = 0
         self._stream_tuning = (0, 0)
+        self._frequency_band_offset_stream_1 = 0
+        self._frequency_band_offset_stream_2 = 0
         self._frequency_slice_ID = 0
         self._bandwidth = 0
+        self._bandwidth_actual = const.FREQUENCY_SLICE_BW
         self._zoom_window_tuning = 0
         self._integration_time = 0
         self._channel_averaging_map = [
@@ -235,6 +252,16 @@ class FspSubarray(SKASubarray):
         # PROTECTED REGION ID(FspSubarray.band5Tuning_read) ENABLED START #
         return self._stream_tuning
         # PROTECTED REGION END #    //  FspSubarray.band5Tuning_read
+
+    def read_frequencyBandOffsetStream1(self):
+        # PROTECTED REGION ID(FspSubarray.frequencyBandOffsetStream1) ENABLED START #
+        return self._frequency_band_offset_stream_1
+        # PROTECTED REGION END #    //  FspSubarray.frequencyBandOffsetStream1
+
+    def read_frequencyBandOffsetStream2(self):
+        # PROTECTED REGION ID(FspSubarray.frequencyBandOffsetStream2) ENABLED START #
+        return self._frequency_band_offset_stream_2
+        # PROTECTED REGION END #    //  FspSubarray.frequencyBandOffsetStream2
 
     def read_frequencySliceID(self):
         # PROTECTED REGION ID(FspSubarray.frequencySliceID_read) ENABLED START #
@@ -361,35 +388,23 @@ class FspSubarray(SKASubarray):
 
         errs = []
 
-        # Validate frequencyBand
-        # If not given, ignore the FSP and append an error (due to implementation details, this
-        # never happens).
-        # If malformed, ignore the FSP and append an error (due to implementation details, this
-        # never happens).
-        if "frequencyBand" in argin:
-            frequency_bands = ["1", "2", "3", "4", "5a", "5b"]
-            if argin["frequencyBand"] in frequency_bands:
-                self._frequency_band = frequency_bands.index(argin["frequencyBand"])
-            else:
-                msg = "\n".join(errs)
-                msg += "'frequencyBand' must be one of {} (received {}). "\
-                    "Aborting configuration.".format(frequency_bands, argin["frequency_band"])
-                # this is a fatal error
-                self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
-                PyTango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
-                                               PyTango.ErrSeverity.ERR)
-        else:
-            msg = "\n".join(errs)
-            msg += "FSP specified, but 'frequencyBand' not given. Ignoring FSP."
-            # this is a fatal error
-            self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
-            PyTango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
-                                           PyTango.ErrSeverity.ERR)
+        # Validate frequencyBand.
+        # Due to implementation details, this is always given and valid.
+        self._frequency_band = int(argin["frequencyBand"])
 
         # Validate band5Tuning.
         # Due to implementation details, this is always given (when required) and valid.
         if self._frequency_band in [4, 5]:
             self._stream_tuning = argin["band5Tuning"]
+
+        # Validate frequencyBandOffsetStream1.
+        # Due to implementation details, this is always given and valid.
+        self._frequency_band_offset_stream_1 = int(argin["frequencyBandOffsetStream1"])
+
+        # Validate frequencyBandOffsetStream2.
+        # Due to implementation details, this is always given (when required) and valid.
+        if self._frequency_band in [4, 5]:
+            self._frequency_band_offset_stream_2 = int(argin["frequencyBandOffsetStream2"])
 
         # Validate receptors
         # If not given, ignore the FSP and append an error (due to implementation details, this
@@ -449,6 +464,7 @@ class FspSubarray(SKASubarray):
         if "corrBandwidth" in argin:
             if int(argin["corrBandwidth"]) in list(range(0, 7)):
                 self._bandwidth = int(argin["corrBandwidth"])
+                self._bandwidth_actual = int(const.FREQUENCY_SLICE_BW/2**int(argin["corrBandwidth"]))
             else:
                 msg = "\n".join(errs)
                 msg += "'corrBandwidth' must be an integer in the range [0, 6]. Ignoring FSP."
@@ -469,8 +485,90 @@ class FspSubarray(SKASubarray):
         # If malformed when required, ignore the FSP and append an error.
         if self._bandwidth != 0:  # zoomWindowTuning is required
             if "zoomWindowTuning" in argin:
-                # TODO: validate input
-                self._zoom_window_tuning = int(argin["zoomWindowTuning"])
+                if self._frequency_band in list(range(4)):  # frequency band is not band 5
+                    frequency_band_range = [
+                        const.FREQUENCY_BAND_1_RANGE,
+                        const.FREQUENCY_BAND_2_RANGE,
+                        const.FREQUENCY_BAND_3_RANGE,
+                        const.FREQUENCY_BAND_4_RANGE
+                    ][self._frequency_band]
+
+                    if frequency_band_range[0]*10**9 + self._frequency_band_offset_stream_1 <= \
+                            int(argin["zoomWindowTuning"]) <= \
+                            frequency_band_range[1]*10**9 + self._frequency_band_offset_stream_1:
+                        self._zoom_window_tuning = int(argin["zoomWindowTuning"])
+                    else:
+                        msg = "\n".join(errs)
+                        msg += "'zoomWindowTuning' must be within observed frequency slice. " \
+                            "Ignoring FSP."
+                        # this is a fatal error
+                        self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+                        PyTango.Except.throw_exception("Command failed", msg,
+                                                       "ConfigureScan execution",
+                                                       PyTango.ErrSeverity.ERR)
+
+                    if frequency_band_range[0]*10**9 + self._frequency_band_offset_stream_1 + \
+                            self._bandwidth_actual*10**6/2 <= \
+                            int(argin["zoomWindowTuning"]) <= \
+                            frequency_band_range[1]*10**9 + self._frequency_band_offset_stream_1 - \
+                            self._bandwidth_actual*10**6/2:
+                        # this is the acceptable range
+                        pass
+                    else:
+                        # log a warning message
+                        log_msg = "'zoomWindowTuning' partially out of observed frequency slice. " \
+                            "Proceeding."
+                        self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+                else:  # frequency band 5a or 5b (two streams with bandwidth 2.5 GHz)
+                    frequency_band_range_1 = (
+                        self._stream_tuning[0]*10**9 + self._frequency_band_offset_stream_1 - \
+                            const.BAND_5_STREAM_BANDWIDTH*10**6/2,
+                        self._stream_tuning[0]*10**9 + self._frequency_band_offset_stream_1 + \
+                            const.BAND_5_STREAM_BANDWIDTH*10**6/2
+                    )
+
+                    frequency_band_range_2 = (
+                        self._stream_tuning[1]*10**9 + self._frequency_band_offset_stream_2 - \
+                            const.BAND_5_STREAM_BANDWIDTH*10**6/2,
+                        self._stream_tuning[1]*10**9 + self._frequency_band_offset_stream_2 + \
+                            const.BAND_5_STREAM_BANDWIDTH*10**6/2
+                    )
+
+                    if (frequency_band_range_1[0]*10**9 + self._frequency_band_offset_stream_1 <= \
+                            int(argin["zoomWindowTuning"]) <= \
+                            frequency_band_range_1[1]*10**9 + self._frequency_band_offset_stream_1) or\
+                            (frequency_band_range_2[0]*10**9 + self._frequency_band_offset_stream_2 <= \
+                            int(argin["zoomWindowTuning"]) <= \
+                            frequency_band_range_2[1]*10**9 + self._frequency_band_offset_stream_2):
+                        self._zoom_window_tuning = argin["zoomWindowTuning"]
+                    else:
+                        msg = "\n".join(errs)
+                        msg += "'zoomWindowTuning' must be within observed frequency slice. " \
+                            "Ignoring FSP."
+                        # this is a fatal error
+                        self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+                        PyTango.Except.throw_exception("Command failed", msg,
+                                                       "ConfigureScan execution",
+                                                       PyTango.ErrSeverity.ERR)
+
+                    if (frequency_band_range_1[0]*10**9 + self._frequency_band_offset_stream_1 + \
+                            const.SEARCH_WINDOW_BW*10**6/2 <= \
+                            int(argin["zoomWindowTuning"]) <= \
+                            frequency_band_range_1[1]*10**9 + self._frequency_band_offset_stream_1 - \
+                            const.SEARCH_WINDOW_BW*10**6/2) or\
+                            (frequency_band_range_2[0]*10**9 + self._frequency_band_offset_stream_2 + \
+                            const.SEARCH_WINDOW_BW*10**6/2 <= \
+                            int(argin["zoomWindowTuning"]) <= \
+                            frequency_band_range_2[1]*10**9 + self._frequency_band_offset_stream_2 - \
+                            const.SEARCH_WINDOW_BW*10**6/2):
+                        # this is the acceptable range
+                        pass
+                    else:
+                        # log a warning message
+                        log_msg = "'zoomWindowTuning' partially out of observed frequency slice. " \
+                            "Proceeding."
+                        self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+                    self._zoom_window_tuning = int(argin["zoomWindowTuning"])
             else:
                 msg = "\n".join(errs)
                 msg += "FSP specified, but 'zoomWindowTuning' not given. Ignoring FSP."

@@ -46,6 +46,7 @@ class Const:
     def __init__(self):
         self.MIN_INT_TIME = 140  # ms
         self.FREQUENCY_SLICE_BW = 200  # MHz
+        self.SEARCH_WINDOW_BW = 300  # MHz
         self.FREQUENCY_BAND_1_RANGE = (0.35, 1.05)  # GHz
         self.FREQUENCY_BAND_2_RANGE = (0.95, 1.76)  # GHz
         self.FREQUENCY_BAND_3_RANGE = (1.65, 3.05)  # GHz
