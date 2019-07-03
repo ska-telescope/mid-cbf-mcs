@@ -20,7 +20,7 @@ with open("mid-cbf-mcs.yml", "w+") as f:
                   "    environment:\n" \
                   "      - TANGO_HOST=${{TANGO_HOST}}\n" \
                   "    command: >\n" \
-                  "      sh -c \"wait-for-it.sh ${{TANGO_HOST}} --timeout=30 --strict --\n" \
+                  "      sh -c \"wait-for-it.sh ${{TANGO_HOST}} --timeout=60 --strict --\n" \
                   "             tango_admin --check-device mid_csp_cbf/vcc_band12/{0:03d} &&\\\n" \
                   "             tango_admin --check-device mid_csp_cbf/vcc_band3/{0:03d} &&\\\n" \
                   "             tango_admin --check-device mid_csp_cbf/vcc_band4/{0:03d} &&\\\n" \
@@ -43,7 +43,7 @@ with open("mid-cbf-mcs.yml", "w+") as f:
                   "    environment:\n" \
                   "      - TANGO_HOST=${{TANGO_HOST}}\n" \
                   "    command: >\n" \
-                  "      sh -c \"wait-for-it.sh ${{TANGO_HOST}} --timeout=30 --strict --\n" \
+                  "      sh -c \"wait-for-it.sh ${{TANGO_HOST}} --timeout=60 --strict --\n" \
                   "             tango_admin --check-device mid_csp_cbf/fsp_corr/{0:02d} &&\\\n" \
                   "             tango_admin --check-device mid_csp_cbf/fsp_pss/{0:02d} &&\\\n" \
                   "             tango_admin --check-device mid_csp_cbf/fsp_pst/{0:02d} &&\\\n" \
@@ -67,7 +67,7 @@ with open("mid-cbf-mcs.yml", "w+") as f:
                   "    environment:\n" \
                   "      - TANGO_HOST=${{TANGO_HOST}}\n" \
                   "    command: >\n" \
-                  "      sh -c \"wait-for-it.sh ${{TANGO_HOST}} --timeout=30 --strict --\n" \
+                  "      sh -c \"wait-for-it.sh ${{TANGO_HOST}} --timeout=60 --strict --\n" \
                   "             tango_admin --check-device mid_csp_cbf/sw1/{0:02d} &&\\\n" \
                   "             tango_admin --check-device mid_csp_cbf/sw2/{0:02d} &&\\\n" \
                   "             tango_admin --check-device mid_csp_cbf/sub_elt/subarray_{0:02d} &&\\\n" \
@@ -86,7 +86,7 @@ with open("mid-cbf-mcs.yml", "w+") as f:
               "    environment:\n" \
               "      - TANGO_HOST=${{TANGO_HOST}}\n" \
               "    command: >\n" \
-              "      sh -c \"wait-for-it.sh ${{TANGO_HOST}} --timeout=30 --strict --\n" \
+              "      sh -c \"wait-for-it.sh ${{TANGO_HOST}} --timeout=60 --strict --\n" \
               "             tango_admin --check-device mid_csp_cbf/sub_elt/master &&\\\n" \
               "             /venv/bin/python /app/csplmc/CbfMaster/CbfMaster/CbfMaster.py master\"\n\n".format(depends_on_vcc, depends_on_fsp, depends_on_cbf_subarray)
 
@@ -101,7 +101,7 @@ with open("mid-cbf-mcs.yml", "w+") as f:
               "    environment:\n" \
               "      - TANGO_HOST=${TANGO_HOST}\n" \
               "    command: >\n" \
-              "      sh -c \"wait-for-it.sh ${TANGO_HOST} --timeout=30 --strict --\n" \
+              "      sh -c \"wait-for-it.sh ${TANGO_HOST} --timeout=60 --strict --\n" \
               "             tango_admin --check-device ska1_mid/tm/telmodel &&\\\n" \
               "             /venv/bin/python /app/csplmc/TmTelstateTest/TmTelstateTest.py tm\"\n\n"
 
