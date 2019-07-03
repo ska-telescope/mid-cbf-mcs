@@ -135,6 +135,7 @@ class CbfSubarray(SKASubarray):
 
     def __generate_output_links(self, scan_cfg):
         # TODO: find out why calling this function results in a timeout
+        # TODO: account for a zoom window (forgot to consider this originally -.-)
         # At this point, we can assume that the scan configuration is valid and that the FSP
         # attributes have been set properly.
 
@@ -233,7 +234,7 @@ class CbfSubarray(SKASubarray):
             output_links_all["fsp"].append(output_links)
 
         # publish the output links
-        self._output_links_distribution = output_links
+        self._output_links_distribution = output_links_all
 
     # PROTECTED REGION END #    //  CbfSubarray.class_variable
 

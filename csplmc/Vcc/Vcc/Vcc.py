@@ -762,9 +762,14 @@ class Vcc(SKACapability):
         # If malformed when required, ignore the entire search window and append and error.
         if argin["tdcEnable"]:
             try:
-                # TODO: validate input
-                proxy_sw.tdcDestinationAddress = \
-                    argin["tdcDestinationAddress"][str(self._receptor_ID)]
+                for receptor in argin["tdcDestinationAddress"]:
+                    if int(receptor["receptorID"]) == self._receptor_ID:
+                        # TODO: validate input
+                        proxy_sw.tdcDestinationAddress = \
+                            receptor["tdcDestinationAddress"]
+                        break
+                else:  # receptorID not found
+                    raise KeyError  # just handle all the errors in one place
             except KeyError:
                 # tdcDestinationAddress not given or receptorID not in tdcDestinationAddress
                 msg = "\n".join(errs)

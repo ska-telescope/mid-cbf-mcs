@@ -371,8 +371,10 @@ class TestCbfSubarray:
         assert create_sw_1_proxy.tdcPeriodBeforeEpoch == 5
         assert create_sw_1_proxy.tdcPeriodAfterEpoch == 25
         assert "".join(create_sw_1_proxy.tdcDestinationAddress.split()) in [
-               "{\"10\":[\"foo\",\"bar\",\"baz\"],\"1\":[\"fizz\",\"buzz\",\"fizz-buzz\"]}",
-               "{\"1\":[\"fizz\",\"buzz\",\"fizz-buzz\"],\"10\":[\"foo\",\"bar\",\"baz\"]}"
+            "[{\"receptorID\":10,\"tdcDestinationAddress\":[\"foo\",\"bar\",\"8080\"]},{\"receptorID\":1,\"tdcDestinationAddress\":[\"fizz\",\"buzz\",\"80\"]}]",
+            "[{\"tdcDestinationAddress\":[\"foo\",\"bar\",\"8080\"],\"receptorID\":10},{\"receptorID\":1,\"tdcDestinationAddress\":[\"fizz\",\"buzz\",\"80\"]}]",
+            "[{\"receptorID\":10,\"tdcDestinationAddress\":[\"foo\",\"bar\",\"8080\"]},{\"tdcDestinationAddress\":[\"fizz\",\"buzz\",\"80\"],\"receptorID\":1}]",
+            "[{\"tdcDestinationAddress\":[\"foo\",\"bar\",\"8080\"],\"receptorID\":10},{\"tdcDestinationAddress\":[\"fizz\",\"buzz\",\"80\"],\"receptorID\":1}]",
         ]
         # then for search window 2...
         assert create_sw_2_proxy.searchWindowTuning == 7000000000
@@ -386,7 +388,7 @@ class TestCbfSubarray:
         assert create_vcc_tdc_proxies[receptor_to_vcc[10] - 1][0].tdcPeriodBeforeEpoch == 5
         assert create_vcc_tdc_proxies[receptor_to_vcc[10] - 1][0].tdcPeriodAfterEpoch == 25
         assert create_vcc_tdc_proxies[receptor_to_vcc[10] - 1][0].tdcDestinationAddress == (
-            "foo", "bar", "baz"
+            "foo", "bar", "8080"
         )
         # then for search window 1 of VCC belonging to receptor 1...
         assert create_vcc_tdc_proxies[receptor_to_vcc[1] - 1][0].searchWindowTuning == 6000000000
@@ -395,7 +397,7 @@ class TestCbfSubarray:
         assert create_vcc_tdc_proxies[receptor_to_vcc[1] - 1][0].tdcPeriodBeforeEpoch == 5
         assert create_vcc_tdc_proxies[receptor_to_vcc[1] - 1][0].tdcPeriodAfterEpoch == 25
         assert create_vcc_tdc_proxies[receptor_to_vcc[1] - 1][0].tdcDestinationAddress == (
-            "fizz", "buzz", "fizz-buzz"
+            "fizz", "buzz", "80"
         )
         # then for search window 2 of VCC belonging to receptor 10...
         assert create_vcc_tdc_proxies[receptor_to_vcc[10] - 1][1].searchWindowTuning == 7000000000
