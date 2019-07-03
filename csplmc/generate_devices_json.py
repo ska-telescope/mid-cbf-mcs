@@ -104,7 +104,7 @@ with open("devices.json", "w+") as f:
                               "\n                "
         string += "    {{\n" \
                   "        \"class\": \"CbfSubarray\",\n" \
-                  "        \"serverName\": \"CbfSubarray/cbfSubarray-{0:02d}\",\n" \
+                  "        \"serverName\": \"CbfSubarrayMulti/cbfSubarray-{0:02d}\",\n" \
                   "        \"devName\": \"mid_csp_cbf/sub_elt/subarray_{0:02d}\",\n" \
                   "        \"deviceProperties\": [\n" \
                   "            {{\n" \
@@ -172,7 +172,7 @@ with open("devices.json", "w+") as f:
     for i in range(1, 198):
         string += "    {{\n" \
                   "        \"class\": \"Vcc\",\n" \
-                  "        \"serverName\": \"Vcc/vcc\",\n" \
+                  "        \"serverName\": \"VccMulti/vcc-{0:03d}\",\n" \
                   "        \"devName\": \"mid_csp_cbf/vcc/{0:03d}\",\n" \
                   "        \"deviceProperties\": [\n" \
                   "            {{\n" \
@@ -240,7 +240,7 @@ with open("devices.json", "w+") as f:
     for i in range(1, 28):
         string += "    {{\n" \
                   "        \"class\": \"Fsp\",\n" \
-                  "        \"serverName\": \"Fsp/fsp-{0:02d}\",\n" \
+                  "        \"serverName\": \"FspMulti/fsp-{0:02d}\",\n" \
                   "        \"devName\": \"mid_csp_cbf/fsp/{0:02d}\",\n" \
                   "        \"deviceProperties\": [\n" \
                   "            {{\n" \
@@ -300,13 +300,13 @@ with open("devices.json", "w+") as f:
     for i in range(1, 17):
         string += "    {{\n" \
                   "        \"class\": \"SearchWindow\",\n" \
-                  "        \"serverName\": \"SearchWindow/sw1-{0:02d}\",\n" \
+                  "        \"serverName\": \"CbfSubarrayMulti/cbfSubarray-{0:02d}\",\n" \
                   "        \"devName\": \"mid_csp_cbf/sw1/{0:02d}\",\n" \
                   "        \"deviceProperties\": []\n" \
                   "    }},\n".format(i)
         string += "    {{\n" \
                   "        \"class\": \"SearchWindow\",\n" \
-                  "        \"serverName\": \"SearchWindow/sw2-{0:02d}\",\n" \
+                  "        \"serverName\": \"CbfSubarrayMulti/cbfSubarray-{0:02d}\",\n" \
                   "        \"devName\": \"mid_csp_cbf/sw2/{0:02d}\",\n" \
                   "        \"deviceProperties\": []\n" \
                   "    }},\n".format(i)
@@ -315,7 +315,7 @@ with open("devices.json", "w+") as f:
     for i in range(1, 198):
         string += "    {{\n" \
                   "        \"class\": \"VccBand1And2\",\n" \
-                  "        \"serverName\": \"VccBand1And2/vcc\",\n" \
+                  "        \"serverName\": \"VccMulti/vcc-{0:03d}\",\n" \
                   "        \"devName\": \"mid_csp_cbf/vcc_band12/{0:03d}\",\n" \
                   "        \"deviceProperties\": []\n" \
                   "    }},\n".format(i)
@@ -324,7 +324,7 @@ with open("devices.json", "w+") as f:
     for i in range(1, 198):
         string += "    {{\n" \
                   "        \"class\": \"VccBand3\",\n" \
-                  "        \"serverName\": \"VccBand3/vcc\",\n" \
+                  "        \"serverName\": \"VccMulti/vcc-{0:03d}\",\n" \
                   "        \"devName\": \"mid_csp_cbf/vcc_band3/{0:03d}\",\n" \
                   "        \"deviceProperties\": []\n" \
                   "    }},\n".format(i)
@@ -333,7 +333,7 @@ with open("devices.json", "w+") as f:
     for i in range(1, 198):
         string += "    {{\n" \
                   "        \"class\": \"VccBand4\",\n" \
-                  "        \"serverName\": \"VccBand4/vcc\",\n" \
+                  "        \"serverName\": \"VccMulti/vcc-{0:03d}\",\n" \
                   "        \"devName\": \"mid_csp_cbf/vcc_band4/{0:03d}\",\n" \
                   "        \"deviceProperties\": []\n" \
                   "    }},\n".format(i)
@@ -342,7 +342,7 @@ with open("devices.json", "w+") as f:
     for i in range(1, 198):
         string += "    {{\n" \
                   "        \"class\": \"VccBand5\",\n" \
-                  "        \"serverName\": \"VccBand5/vcc\",\n" \
+                  "        \"serverName\": \"VccMulti/vcc-{0:03d}\",\n" \
                   "        \"devName\": \"mid_csp_cbf/vcc_band5/{0:03d}\",\n" \
                   "        \"deviceProperties\": []\n" \
                   "    }},\n".format(i)
@@ -351,13 +351,13 @@ with open("devices.json", "w+") as f:
     for i in range(1, 198):
         string += "    {{\n" \
                   "        \"class\": \"VccSearchWindow\",\n" \
-                  "        \"serverName\": \"VccSearchWindow/vcc-sw1\",\n" \
+                  "        \"serverName\": \"VccMulti/vcc-{0:03d}\",\n" \
                   "        \"devName\": \"mid_csp_cbf/vcc_sw1/{0:03d}\",\n" \
                   "        \"deviceProperties\": []\n" \
                   "    }},\n".format(i)
         string += "    {{\n" \
                   "        \"class\": \"VccSearchWindow\",\n" \
-                  "        \"serverName\": \"VccSearchWindow/vcc-sw2\",\n" \
+                  "        \"serverName\": \"VccMulti/vcc-{0:03d}\",\n" \
                   "        \"devName\": \"mid_csp_cbf/vcc_sw2/{0:03d}\",\n" \
                   "        \"deviceProperties\": []\n" \
                   "    }},\n".format(i)
@@ -366,7 +366,7 @@ with open("devices.json", "w+") as f:
     for i in range(1, 28):
         string += "    {{\n" \
                   "        \"class\": \"FspCorr\",\n" \
-                  "        \"serverName\": \"FspCorr/fsp-{0:02d}\",\n" \
+                  "        \"serverName\": \"FspMulti/fsp-{0:02d}\",\n" \
                   "        \"devName\": \"mid_csp_cbf/fsp_corr/{0:02d}\",\n" \
                   "        \"deviceProperties\": []\n" \
                   "    }},\n".format(i)
@@ -375,7 +375,7 @@ with open("devices.json", "w+") as f:
     for i in range(1, 28):
         string += "    {{\n" \
                   "        \"class\": \"FspPss\",\n" \
-                  "        \"serverName\": \"FspPss/fsp-{0:02d}\",\n" \
+                  "        \"serverName\": \"FspMulti/fsp-{0:02d}\",\n" \
                   "        \"devName\": \"mid_csp_cbf/fsp_pss/{0:02d}\",\n" \
                   "        \"deviceProperties\": []\n" \
                   "    }},\n".format(i)
@@ -384,7 +384,7 @@ with open("devices.json", "w+") as f:
     for i in range(1, 28):
         string += "    {{\n" \
                   "        \"class\": \"FspPst\",\n" \
-                  "        \"serverName\": \"FspPst/fsp-{0:02d}\",\n" \
+                  "        \"serverName\": \"FspMulti/fsp-{0:02d}\",\n" \
                   "        \"devName\": \"mid_csp_cbf/fsp_pst/{0:02d}\",\n" \
                   "        \"deviceProperties\": []\n" \
                   "    }},\n".format(i)
@@ -393,7 +393,7 @@ with open("devices.json", "w+") as f:
     for i in range(1, 28):
         string += "    {{\n" \
                   "        \"class\": \"FspVlbi\",\n" \
-                  "        \"serverName\": \"FspVlbi/fsp-{0:02d}\",\n" \
+                  "        \"serverName\": \"FspMulti/fsp-{0:02d}\",\n" \
                   "        \"devName\": \"mid_csp_cbf/fsp_vlbi/{0:02d}\",\n" \
                   "        \"deviceProperties\": []\n" \
                   "    }},\n".format(i)
@@ -403,7 +403,7 @@ with open("devices.json", "w+") as f:
         for j in range(1, 17):
             string += "    {{\n" \
                       "        \"class\": \"FspSubarray\",\n" \
-                      "        \"serverName\": \"FspSubarray/fspSubarray-{0:02d}-{1:02d}\",\n" \
+                      "        \"serverName\": \"FspMulti/fsp-{0:02d}\",\n" \
                       "        \"devName\": \"mid_csp_cbf/fspSubarray/{0:02d}_{1:02d}\",\n" \
                       "        \"deviceProperties\": [\n" \
                       "            {{\n" \
