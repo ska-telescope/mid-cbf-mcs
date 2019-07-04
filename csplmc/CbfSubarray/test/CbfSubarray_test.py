@@ -299,6 +299,7 @@ class TestCbfSubarray:
         receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
                                create_cbf_master_proxy.receptorToVcc)
 
+        create_subarray_1_proxy.set_timeout_millis(60000)  # since the command takes a while
         create_subarray_1_proxy.Init()
 
         # We actually don't want to initialize these...
@@ -331,7 +332,6 @@ class TestCbfSubarray:
 
         # configure scan
         f = open(file_path + "/test_json/test_ConfigureScan_basic.json")
-        create_subarray_1_proxy.set_timeout_millis(60000)  # since the command takes a while
         create_subarray_1_proxy.ConfigureScan(f.read().replace("\n", ""))
         f.close()
         time.sleep(1)

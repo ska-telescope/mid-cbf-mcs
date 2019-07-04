@@ -645,12 +645,12 @@ class CbfSubarray(SKASubarray):
         self._obs_state = ObsState.CONFIGURING.value
 
         # unsubscribe from TelState events
-        for event_id in self._events_telstate.keys():
+        for event_id in list(self._events_telstate.keys()):
             self._events_telstate[event_id].unsubscribe_event(event_id)
         self._events_telstate = {}
 
         # unsubscribe from FSP state change events
-        for fspID in self._events_state_change_fsp.keys():
+        for fspID in list(self._events_state_change_fsp.keys()):
             proxy_fsp = self._proxies_fsp[fspID - 1]
             proxy_fsp.unsubscribe_event(self._events_state_change_fsp[fspID][0])  # state
             proxy_fsp.unsubscribe_event(self._events_state_change_fsp[fspID][1])  # healthState
@@ -686,7 +686,8 @@ class CbfSubarray(SKASubarray):
                 self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
                 self.__raise_configure_scan_fatal_error(msg)
             elif any(map(lambda i: i == int(argin["scanID"]),
-                         self._proxy_cbf_master.subarrayScanID)):  # scanID already taken
+                         self._proxy_cbf_master.subarrayScanID)) and\
+                         int(argin["scanID"]) != self._scan_ID:  # scanID already taken
                 msg = "\n".join(errs)
                 msg += "'scanID' must be unique (received {}). "\
                     "Aborting configuration.".format(int(argin["scanID"]))

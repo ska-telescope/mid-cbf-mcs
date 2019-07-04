@@ -622,7 +622,7 @@ class FspSubarray(SKASubarray):
                             "first channel in a group. Defaulting to 0 for channel group "\
                             "starting with channel {1}.".format(
                                 i,
-                                argin["channelAveragingMap"][i][0]
+                                i*self.NUM_FINE_CHANNELS/self.NUM_CHANNEL_GROUPS + 1
                         )
                         self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
                         errs.append(log_msg)
