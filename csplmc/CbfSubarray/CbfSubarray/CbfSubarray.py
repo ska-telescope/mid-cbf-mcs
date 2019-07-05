@@ -408,6 +408,24 @@ class CbfSubarray(SKASubarray):
         self._events_state_change_fsp = {}
 
         self.set_state(DevState.OFF)
+
+        # to match VCC and CBF Master configuration
+        # needed if device is re-initialized after adding receptors
+        # (which technically should never happen)
+        # I'm not sure how event subscriptions work when the device is re-initialized.
+        try:
+            self._proxy_cbf_master.ping()
+            vcc_subarray_membership = self._proxy_cbf_master.reportVCCSubarrayMembership
+            vcc_to_receptor = dict([*map(int, pair.split(":"))] for pair in
+                                   self._proxy_cbf_master.vccToReceptor)
+            receptors_to_add = [
+                vcc_to_receptor[i + 1] for i in range(len(vcc_subarray_membership))
+                if vcc_subarray_membership[i] == self._subarray_id
+            ]
+            self.AddReceptors(receptors_to_add)
+        except PyTango.DevFailed:
+            pass  # CBF Master not available, so just leave receptors alone
+
         self._obs_state = ObsState.IDLE.value
         # PROTECTED REGION END #    //  CbfSubarray.init_device
 

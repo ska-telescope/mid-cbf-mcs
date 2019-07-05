@@ -159,6 +159,13 @@ with open("devices.json", "w+") as f:
                   "                \"changeEventAbs\": \"\"\n" \
                   "            }},\n" \
                   "            {{\n" \
+                  "                \"attributeName\": \"obsState\",\n" \
+                  "                \"attrPropName\": \"\",\n" \
+                  "                \"attrPropValue\": \"\",\n" \
+                  "                \"pollingPeriod\": 1000,\n" \
+                  "                \"changeEventAbs\": \"1\"\n" \
+                  "            }},\n" \
+                  "            {{\n" \
                   "                \"attributeName\": \"scanID\",\n" \
                   "                \"attrPropName\": \"\",\n" \
                   "                \"attrPropValue\": \"\",\n" \
