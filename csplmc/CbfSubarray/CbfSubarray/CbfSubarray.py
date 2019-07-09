@@ -415,7 +415,6 @@ class CbfSubarray(SKASubarray):
 
     def __raise_configure_scan_fatal_error(self, msg):
         self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
-        self._obs_state = ObsState.IDLE.value
         PyTango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
                                        PyTango.ErrSeverity.ERR)
 
@@ -956,10 +955,6 @@ class CbfSubarray(SKASubarray):
             ]
         }
         """
-        # transition state to CONFIGURING
-        self._obs_state = ObsState.CONFIGURING.value
-        self.push_change_event("obsState", self._obs_state)
-
         # unsubscribe from TelState events
         for event_id in list(self._events_telstate.keys()):
             self._events_telstate[event_id].unsubscribe_event(event_id)
@@ -981,6 +976,10 @@ class CbfSubarray(SKASubarray):
         self._proxies_assigned_fsp_subarray = []
 
         self.__validate_scan_configuration(argin)
+
+        # transition state to CONFIGURING
+        self._obs_state = ObsState.CONFIGURING.value
+        self.push_change_event("obsState", self._obs_state)
 
         argin = json.loads(argin)
 
