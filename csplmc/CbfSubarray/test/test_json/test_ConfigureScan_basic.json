@@ -40,7 +40,7 @@
             "receptors": [10],
             "frequencySliceID": 1,
             "corrBandwidth": 1,
-            "zoomWindowTuning": 6000000,
+            "zoomWindowTuning": 4700000,
             "integrationTime": 140,
             "channelAveragingMap": [
                 [1, 0],

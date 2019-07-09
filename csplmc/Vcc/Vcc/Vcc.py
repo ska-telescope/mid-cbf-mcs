@@ -525,268 +525,289 @@ class Vcc(SKACapability):
         dtype_in='str',
         doc_in='JSON object to configure a search window'
     )
-    def ConfigureSearchWindow(self, argin):
-        # PROTECTED REGION ID(Vcc.ConfigureSearchWindow) ENABLED START #
-
+    def ValidateSearchWindow(self, argin):
         # try to deserialize input string to a JSON object
         try:
             argin = json.loads(argin)
         except json.JSONDecodeError:  # argument not a valid JSON object
-            # this is a fatal error
-            msg = "Search window configuration object is not a valid JSON object. Aborting "\
-                "configuration."
+            msg = "Search window configuration object is not a valid JSON object."
             self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
             PyTango.Except.throw_exception("Command failed", msg, "ConfigureSearchWindow execution",
                                            PyTango.ErrSeverity.ERR)
 
-        errs = []
-
-        # variable to use as SW proxy
-        proxy_sw = 0
-
         # Validate searchWindowID.
-        # If not given, ignore the entire search window and append an error.
-        # If malformed, ignore the entire search window and append an error.
         if "searchWindowID" in argin:
-            if int(argin["searchWindowID"]) == 1:
-                proxy_sw = self._proxy_sw_1
-            elif int(argin["searchWindowID"]) == 2:
-                proxy_sw = self._proxy_sw_2
+            if int(argin["searchWindowID"]) in [1, 2]:
+                pass
             else:  # searchWindowID not in valid range
-                msg = "\n".join(errs)
-                msg += "'searchWindowID' must be one of [1, 2] (received {}). "\
-                    "Ignoring search window".format(str(argin["searchWindowID"]))
-                # this is a fatal error
+                msg = "'searchWindowID' must be one of [1, 2] (received {}).".format(
+                    str(argin["searchWindowID"])
+                )
                 self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
                 PyTango.Except.throw_exception("Command failed", msg,
                                                "ConfigureSearchWindow execution",
                                                PyTango.ErrSeverity.ERR)
-        else:  # searchWindowID not given
-            msg = "\n".join(errs)
-            msg += "Search window specified, but 'searchWindowID' not given. "\
-                "Ignoring search window."
-            # this is a fatal error
+        else:
+            msg = "Search window specified, but 'searchWindowID' not given."
             self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
             PyTango.Except.throw_exception("Command failed", msg, "ConfigureSearchWindow execution",
                                            PyTango.ErrSeverity.ERR)
 
         # Validate searchWindowTuning.
-        # If not given, ignore the entire search window and append an error.
-        # If malformed, ignore the entire search window and append an error.
         if "searchWindowTuning" in argin:
-            if self._frequency_band in list(range(4)):  # frequency band is not band 5
+            if argin["frequencyBand"] in list(range(4)):  # frequency band is not band 5
                 frequency_band_range = [
                     const.FREQUENCY_BAND_1_RANGE,
                     const.FREQUENCY_BAND_2_RANGE,
                     const.FREQUENCY_BAND_3_RANGE,
                     const.FREQUENCY_BAND_4_RANGE
-                ][self._frequency_band]
+                ][argin["frequencyBand"]]
 
-                if frequency_band_range[0]*10**9 + self._frequency_band_offset_stream_1 <= \
+                if frequency_band_range[0]*10**9 + argin["frequencyBandOffsetStream1"] <= \
                         int(argin["searchWindowTuning"]) <= \
-                        frequency_band_range[1]*10**9 + self._frequency_band_offset_stream_1:
-                    proxy_sw.searchWindowTuning = argin["searchWindowTuning"]
+                        frequency_band_range[1]*10**9 + argin["frequencyBandOffsetStream1"]:
+                    pass
                 else:
-                    msg = "\n".join(errs)
-                    msg += "'searchWindowTuning' must be within observed band. " \
-                        "Ignoring search window."
-                    # this is a fatal error
+                    msg = "'searchWindowTuning' must be within observed band."
                     self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
                     PyTango.Except.throw_exception("Command failed", msg,
                                                    "ConfigureSearchWindow execution",
                                                    PyTango.ErrSeverity.ERR)
-
-                if frequency_band_range[0]*10**9 + self._frequency_band_offset_stream_1 + \
-                        const.SEARCH_WINDOW_BW*10**6/2 <= \
-                        int(argin["searchWindowTuning"]) <= \
-                        frequency_band_range[1]*10**9 + self._frequency_band_offset_stream_1 - \
-                        const.SEARCH_WINDOW_BW*10**6/2:
-                    # this is the acceptable range
-                    pass
-                else:
-                    # log a warning message
-                    log_msg = "'searchWindowTuning' partially out of observed band. " \
-                        "Proceeding."
-                    self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
             else:  # frequency band 5a or 5b (two streams with bandwidth 2.5 GHz)
                 frequency_band_range_1 = (
-                    self._stream_tuning[0]*10**9 + self._frequency_band_offset_stream_1 - \
+                    argin["band5Tuning"][0]*10**9 + argin["frequencyBandOffsetStream1"] - \
                         const.BAND_5_STREAM_BANDWIDTH*10**9/2,
-                    self._stream_tuning[0]*10**9 + self._frequency_band_offset_stream_1 + \
+                    argin["band5Tuning"][0]*10**9 + argin["frequencyBandOffsetStream1"] + \
                         const.BAND_5_STREAM_BANDWIDTH*10**9/2
                 )
 
                 frequency_band_range_2 = (
-                    self._stream_tuning[1]*10**9 + self._frequency_band_offset_stream_2 - \
+                    argin["band5Tuning"][1]*10**9 + argin["frequencyBandOffsetStream2"] - \
                         const.BAND_5_STREAM_BANDWIDTH*10**9/2,
-                    self._stream_tuning[1]*10**9 + self._frequency_band_offset_stream_2 + \
+                    argin["band5Tuning"][1]*10**9 + argin["frequencyBandOffsetStream2"] + \
                         const.BAND_5_STREAM_BANDWIDTH*10**9/2
                 )
 
-                if (frequency_band_range_1[0] + self._frequency_band_offset_stream_1 <= \
+                if (frequency_band_range_1[0] <= \
                         int(argin["searchWindowTuning"]) <= \
-                        frequency_band_range_1[1] + self._frequency_band_offset_stream_1) or\
-                        (frequency_band_range_2[0] + self._frequency_band_offset_stream_2 <= \
+                        frequency_band_range_1[1]) or\
+                        (frequency_band_range_2[0] <= \
                         int(argin["searchWindowTuning"]) <= \
-                        frequency_band_range_2[1] + self._frequency_band_offset_stream_2):
-                    proxy_sw.searchWindowTuning = argin["searchWindowTuning"]
+                        frequency_band_range_2[1]):
+                    pass
                 else:
-                    msg = "\n".join(errs)
-                    msg += "'searchWindowTuning' must be within observed band. " \
-                        "Ignoring search window."
-                    # this is a fatal error
+                    msg = "'searchWindowTuning' must be within observed band."
                     self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
                     PyTango.Except.throw_exception("Command failed", msg,
                                                    "ConfigureSearchWindow execution",
                                                    PyTango.ErrSeverity.ERR)
-
-                if (frequency_band_range_1[0] + self._frequency_band_offset_stream_1 + \
-                        const.SEARCH_WINDOW_BW*10**6/2 <= \
-                        int(argin["searchWindowTuning"]) <= \
-                        frequency_band_range_1[1] + self._frequency_band_offset_stream_1 - \
-                        const.SEARCH_WINDOW_BW*10**6/2) or\
-                        (frequency_band_range_2[0] + self._frequency_band_offset_stream_2 + \
-                        const.SEARCH_WINDOW_BW*10**6/2 <= \
-                        int(argin["searchWindowTuning"]) <= \
-                        frequency_band_range_2[1] + self._frequency_band_offset_stream_2 - \
-                        const.SEARCH_WINDOW_BW*10**6/2):
-                    # this is the acceptable range
-                    pass
-                else:
-                    # log a warning message
-                    log_msg = "'searchWindowTuning' partially out of observed band. " \
-                        "Proceeding."
-                    self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
-        else:  # searchWindowTuning not given
-            msg = "\n".join(errs)
-            msg += "Search window specified, but 'searchWindowTuning' not given. "\
-                "Ignoring search window."
-            # this is a fatal error
+        else:
+            msg = "Search window specified, but 'searchWindowTuning' not given."
             self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
             PyTango.Except.throw_exception("Command failed", msg, "ConfigureSearchWindow execution",
                                            PyTango.ErrSeverity.ERR)
 
         # Validate tdcEnable.
-        # If not given, ignore the entire search window and append an error.
-        # If not given, ignore the entire search window and append an error.
         if "tdcEnable" in argin:
             if argin["tdcEnable"] in [True, False]:
-                proxy_sw.tdcEnable = argin["tdcEnable"]
-                if argin["tdcEnable"]:
-                    # transition to ON if TDC is enabled
-                    proxy_sw.SetState(PyTango.DevState.ON)
-                else:
-                    proxy_sw.SetState(PyTango.DevState.DISABLE)
+                pass
             else:
-                msg = "\n".join(errs)
-                msg += "Search window specified, but 'tdcEnable' not given. "\
-                    "Ignoring search window."
-                # this is a fatal error
+                msg = "Search window specified, but 'tdcEnable' not given."
                 self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
                 PyTango.Except.throw_exception("Command failed", msg,
                                                "ConfigureSearchWindow execution",
                                                PyTango.ErrSeverity.ERR)
-        else:  # enableTDC not given
-            msg = "\n".join(errs)
-            msg += "Search window specified, but 'tdcEnable' not given. "\
-                "Ignoring search window."
-            # this is a fatal error
+        else:
+            msg = "Search window specified, but 'tdcEnable' not given."
             self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
             PyTango.Except.throw_exception("Command failed", msg, "ConfigureSearchWindow execution",
                                            PyTango.ErrSeverity.ERR)
 
         # Validate tdcNumBits.
-        # If not given when required, ignore the entire search window and append an error.
-        # If malformed when required, ignore the entire search window and append an error.
         if argin["tdcEnable"]:
             if "tdcNumBits" in argin:
                 if int(argin["tdcNumBits"]) in [2, 4, 8]:
-                    proxy_sw.tdcNumBits = int(argin["tdcNumBits"])
+                    pass
                 else:
-                    msg = "\n".join(errs)
-                    msg += "'tdcNumBits' must be one of [2, 4, 8] (received {}). "\
-                        "Ignoring search window.".format(str(argin["tdcNumBits"]))
-                    # this is a fatal error
+                    msg = "'tdcNumBits' must be one of [2, 4, 8] (received {}).".format(
+                        str(argin["tdcNumBits"])
+                    )
                     self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
                     PyTango.Except.throw_exception("Command failed", msg,
                                                    "ConfigureSearchWindow execution",
                                                    PyTango.ErrSeverity.ERR)
-            else:  # numberBits not given
-                msg = "\n".join(errs)
-                msg += "Search window specified with TDC enabled, but 'tdcNumBits' not given. "\
-                    "Ignoring search window."
-                # this is a fatal error
+            else:
+                msg = "Search window specified with TDC enabled, but 'tdcNumBits' not given."
                 self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
                 PyTango.Except.throw_exception("Command failed", msg,
                                                "ConfigureSearchWindow execution",
                                                PyTango.ErrSeverity.ERR)
 
         # Validate tdcPeriodBeforeEpoch.
-        # If not given, use a default value.
-        # If malformed, use a default value, but append an error.
         if "tdcPeriodBeforeEpoch" in argin:
             if int(argin["tdcPeriodBeforeEpoch"]) > 0:
-                proxy_sw.tdcPeriodBeforeEpoch = int(argin["tdcPeriodBeforeEpoch"])
+                pass
             else:
-                proxy_sw.tdcPeriodBeforeEpoch = 2
-                log_msg = "'tdcPeriodBeforeEpoch' must be a positive integer (received {}). "\
-                    "Defaulting to 2.".format(str(argin["tdcPeriodBeforeEpoch"]))
-                self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
-                errs.append(log_msg)
-        else:  # periodBeforeEpoch not given
-            proxy_sw.tdcPeriodBeforeEpoch = 2
-            log_msg = "Search window specified, but 'tdcPeriodBeforeEpoch' not given. "\
-                "Defaulting to 2."
-            self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+                msg = "'tdcPeriodBeforeEpoch' must be a positive integer (received {}).".format(
+                    str(argin["tdcPeriodBeforeEpoch"])
+                )
+                self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+                PyTango.Except.throw_exception("Command failed", msg,
+                                               "ConfigureSearchWindow execution",
+                                               PyTango.ErrSeverity.ERR)
+        else:
+            pass
 
         # Validate tdcPeriodAfterEpoch.
-        # If not given, use a default value.
-        # If malformed, use a default value, but append an error.
         if "tdcPeriodAfterEpoch" in argin:
             if int(argin["tdcPeriodAfterEpoch"]) > 0:
-                proxy_sw.tdcPeriodAfterEpoch = int(argin["tdcPeriodAfterEpoch"])
+                pass
             else:
-                proxy_sw.tdcPeriodAfterEpoch = 22
-                log_msg = "'tdcPeriodAfterEpoch' must be a positive integer (received {}). "\
-                    "Defaulting to 22.".format(str(argin["tdcPeriodAfterEpoch"]))
+                msg = "'tdcPeriodAfterEpoch' must be a positive integer (received {}).".format(
+                    str(argin["tdcPeriodAfterEpoch"])
+                )
                 self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
-                errs.append(log_msg)
-        else:  # periodAfterEpoch not given
-            proxy_sw.tdcPeriodAfterEpoch = 22
-            log_msg = "Search window specified, but 'tdcPeriodAfterEpoch' not given. "\
-                "Defaulting to 22."
-            self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+                PyTango.Except.throw_exception("Command failed", msg,
+                                               "ConfigureSearchWindow execution",
+                                               PyTango.ErrSeverity.ERR)
+        else:
+            pass
 
         # Validate tdcDestinationAddress.
-        # If not given when required, ignore the entire search window and append an error.
-        # If malformed when required, ignore the entire search window and append and error.
         if argin["tdcEnable"]:
             try:
                 for receptor in argin["tdcDestinationAddress"]:
                     if int(receptor["receptorID"]) == self._receptor_ID:
                         # TODO: validate input
-                        proxy_sw.tdcDestinationAddress = \
-                            receptor["tdcDestinationAddress"]
+                        pass
                         break
                 else:  # receptorID not found
                     raise KeyError  # just handle all the errors in one place
             except KeyError:
                 # tdcDestinationAddress not given or receptorID not in tdcDestinationAddress
-                msg = "\n".join(errs)
-                msg += "Search window specified with TDC enabled, but 'tdcDestinationAddress' "\
-                    "not given or missing receptors. Ignoring search window."
-                # this is a fatal error
+                msg = "Search window specified with TDC enabled, but 'tdcDestinationAddress' "\
+                    "not given or missing receptors."
                 self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
                 PyTango.Except.throw_exception("Command failed", msg,
                                                "ConfigureSearchWindow execution",
                                                PyTango.ErrSeverity.ERR)
 
-        # raise an error if something went wrong
-        if errs:
-            msg = "\n".join(errs)
-            self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
-            PyTango.Except.throw_exception("Command failed", msg, "ConfigureSearchWindow execution",
-                                           PyTango.ErrSeverity.ERR)
+    @command(
+        dtype_in='str',
+        doc_in='JSON object to configure a search window'
+    )
+    def ConfigureSearchWindow(self, argin):
+        # PROTECTED REGION ID(Vcc.ConfigureSearchWindow) ENABLED START #
+        # This function is called after the configuration has already been validated,
+        # so the checks here have been removed to reduce overhead.
+
+        argin = json.loads(argin)
+
+        # variable to use as SW proxy
+        proxy_sw = 0
+
+        # Configure searchWindowID.
+        if int(argin["searchWindowID"]) == 1:
+            proxy_sw = self._proxy_sw_1
+        elif int(argin["searchWindowID"]) == 2:
+            proxy_sw = self._proxy_sw_2
+
+        # Configure searchWindowTuning.
+        if self._frequency_band in list(range(4)):  # frequency band is not band 5
+            proxy_sw.searchWindowTuning = argin["searchWindowTuning"]
+
+            frequency_band_range = [
+                const.FREQUENCY_BAND_1_RANGE,
+                const.FREQUENCY_BAND_2_RANGE,
+                const.FREQUENCY_BAND_3_RANGE,
+                const.FREQUENCY_BAND_4_RANGE
+            ][self._frequency_band]
+
+            if frequency_band_range[0]*10**9 + self._frequency_band_offset_stream_1 + \
+                    const.SEARCH_WINDOW_BW*10**6/2 <= \
+                    int(argin["searchWindowTuning"]) <= \
+                    frequency_band_range[1]*10**9 + self._frequency_band_offset_stream_1 - \
+                    const.SEARCH_WINDOW_BW*10**6/2:
+                # this is the acceptable range
+                pass
+            else:
+                # log a warning message
+                log_msg = "'searchWindowTuning' partially out of observed band. "\
+                    "Proceeding."
+                self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+        else:  # frequency band 5a or 5b (two streams with bandwidth 2.5 GHz)
+            proxy_sw.searchWindowTuning = argin["searchWindowTuning"]
+
+            frequency_band_range_1 = (
+                self._stream_tuning[0]*10**9 + self._frequency_band_offset_stream_1 - \
+                    const.BAND_5_STREAM_BANDWIDTH*10**9/2,
+                self._stream_tuning[0]*10**9 + self._frequency_band_offset_stream_1 + \
+                    const.BAND_5_STREAM_BANDWIDTH*10**9/2
+            )
+
+            frequency_band_range_2 = (
+                self._stream_tuning[1]*10**9 + self._frequency_band_offset_stream_2 - \
+                    const.BAND_5_STREAM_BANDWIDTH*10**9/2,
+                self._stream_tuning[1]*10**9 + self._frequency_band_offset_stream_2 + \
+                    const.BAND_5_STREAM_BANDWIDTH*10**9/2
+            )
+
+            if (frequency_band_range_1[0] + \
+                    const.SEARCH_WINDOW_BW*10**6/2 <= \
+                    int(argin["searchWindowTuning"]) <= \
+                    frequency_band_range_1[1] - \
+                    const.SEARCH_WINDOW_BW*10**6/2) or\
+                    (frequency_band_range_2[0] + \
+                    const.SEARCH_WINDOW_BW*10**6/2 <= \
+                    int(argin["searchWindowTuning"]) <= \
+                    frequency_band_range_2[1] - \
+                    const.SEARCH_WINDOW_BW*10**6/2):
+                # this is the acceptable range
+                pass
+            else:
+                # log a warning message
+                log_msg = "'searchWindowTuning' partially out of observed band. "\
+                    "Proceeding."
+                self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+
+        # Configure tdcEnable.
+        proxy_sw.tdcEnable = argin["tdcEnable"]
+        if argin["tdcEnable"]:
+            # transition to ON if TDC is enabled
+            proxy_sw.SetState(PyTango.DevState.ON)
+        else:
+            proxy_sw.SetState(PyTango.DevState.DISABLE)
+
+        # Configure tdcNumBits.
+        if argin["tdcEnable"]:
+            proxy_sw.tdcNumBits = int(argin["tdcNumBits"])
+
+        # Configure tdcPeriodBeforeEpoch.
+        if "tdcPeriodBeforeEpoch" in argin:
+            proxy_sw.tdcPeriodBeforeEpoch = int(argin["tdcPeriodBeforeEpoch"])
+        else:
+            proxy_sw.tdcPeriodBeforeEpoch = 2
+            log_msg = "Search window specified, but 'tdcPeriodBeforeEpoch' not given. "\
+                "Defaulting to 2."
+            self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+
+        # Configure tdcPeriodAfterEpoch.
+        if "tdcPeriodAfterEpoch" in argin:
+            proxy_sw.tdcPeriodAfterEpoch = int(argin["tdcPeriodAfterEpoch"])
+        else:
+            proxy_sw.tdcPeriodAfterEpoch = 22
+            log_msg = "Search window specified, but 'tdcPeriodAfterEpoch' not given. "\
+                "Defaulting to 22."
+            self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+
+        # Configure tdcDestinationAddress.
+        if argin["tdcEnable"]:
+            for receptor in argin["tdcDestinationAddress"]:
+                if int(receptor["receptorID"]) == self._receptor_ID:
+                    # TODO: validate input
+                    proxy_sw.tdcDestinationAddress = \
+                        receptor["tdcDestinationAddress"]
+                    break
 
         # PROTECTED REGION END #    //  Vcc.ConfigureSearchWindow
 
