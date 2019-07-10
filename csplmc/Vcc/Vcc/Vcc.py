@@ -300,7 +300,8 @@ class Vcc(SKACapability):
         self._scfo_band_5b = 0
         self._delay_model = ""
 
-        self.set_state(PyTango.DevState.OFF)
+        self._obs_state = ObsState.IDLE.value
+        self.set_state(PyTango.DevState.STANDBY)
         # PROTECTED REGION END #    //  Vcc.init_device
 
     def always_executed_hook(self):
@@ -467,23 +468,23 @@ class Vcc(SKACapability):
     # Commands
     # --------
 
-    @command(
-        dtype_in='DevState',
-        doc_in='New state'
-    )
-    def SetState(self, argin):
-        # PROTECTED REGION ID(Vcc.SetState) ENABLED START #
-        self.set_state(argin)
-        # PROTECTED REGION END #    //  Vcc.SetState
+    @command()
+    def On(self, argin):
+        # PROTECTED REGION ID(Vcc.On) ENABLED START #
+        self.set_state(PyTango.DevState.ON)
+        # PROTECTED REGION END #    //  Vcc.On
 
-    @command(
-        dtype_in='uint16',
-        doc_in='New health state'
-    )
-    def SetHealthState(self, argin):
-        # PROTECTED REGION ID(Vcc.SetHealthState) ENABLED START #
-        self._health_state = argin
-        # PROTECTED REGION END #    //  Vcc.SetHealthState
+    @command()
+    def Off(self, argin):
+        # PROTECTED REGION ID(Vcc.Off) ENABLED START #
+        self.set_state(PyTango.DevState.OFF)
+        # PROTECTED REGION END #    //  Vcc.Off
+
+    @command()
+    def Standby(self, argin):
+        # PROTECTED REGION ID(Vcc.Standby) ENABLED START #
+        self.set_state(PyTango.DevState.STANDBY)
+        # PROTECTED REGION END #    //  Vcc.Standby
 
     @command(
         dtype_in='str',

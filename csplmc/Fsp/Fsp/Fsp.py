@@ -30,7 +30,7 @@ file_path = os.path.dirname(os.path.abspath(__file__))
 commons_pkg_path = os.path.abspath(os.path.join(file_path, "../../commons"))
 sys.path.insert(0, commons_pkg_path)
 
-from global_enum import HealthState, AdminMode
+from global_enum import HealthState, AdminMode, ObsState
 from skabase.SKACapability.SKACapability import SKACapability
 # PROTECTED REGION END #    //  Fsp.additionnal_import
 
@@ -143,7 +143,8 @@ class Fsp(SKACapability):
         self._function_mode = 0  # IDLE
         self._subarray_membership = []
 
-        self.set_state(PyTango.DevState.OFF)
+        self._obs_state = ObsState.IDLE.value
+        self.set_state(PyTango.DevState.STANDBY)
         # PROTECTED REGION END #    //  Fsp.init_device
 
     def always_executed_hook(self):
@@ -173,6 +174,24 @@ class Fsp(SKACapability):
     # --------
     # Commands
     # --------
+
+    @command()
+    def On(self, argin):
+        # PROTECTED REGION ID(Fsp.On) ENABLED START #
+        self.set_state(PyTango.DevState.ON)
+        # PROTECTED REGION END #    //  Fsp.On
+
+    @command()
+    def Off(self, argin):
+        # PROTECTED REGION ID(Fsp.Off) ENABLED START #
+        self.set_state(PyTango.DevState.OFF)
+        # PROTECTED REGION END #    //  Fsp.Off
+
+    @command()
+    def Standby(self, argin):
+        # PROTECTED REGION ID(Fsp.Standby) ENABLED START #
+        self.set_state(PyTango.DevState.STANDBY)
+        # PROTECTED REGION END #    //  Fsp.Standby
 
     @command(
         dtype_in='str',

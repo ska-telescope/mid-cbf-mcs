@@ -476,6 +476,14 @@ class CbfMaster(SKAMaster):
         # initialize the list with the subscribed event IDs
         self._event_id = []
 
+        # initialize groups
+        self._group_vcc = PyTango.Group("VCC")
+        for fqdn in self._fqdn_vcc:
+            self._group_vcc.add(fqdn)
+        self._group_fsp = PyTango.Group("FSP")
+        for fqdn in self._fqdn_fsp:
+            self._group_fsp.add(fqdn)
+
         # Try connection with each subarray/capability
         for fqdn in self._fqdn_vcc + self._fqdn_fsp + self._fqdn_subarray:
             try:
@@ -651,6 +659,8 @@ class CbfMaster(SKAMaster):
     @DebugIt()
     def On(self, argin):
         # PROTECTED REGION ID(CbfMaster.On) ENABLED START #
+        self._group_vcc.command_inout("On")
+        self._group_fsp.command_inout("On")
         self.set_state(PyTango.DevState.ON)
         # PROTECTED REGION END #    //  CbfMaster.On
 
@@ -661,6 +671,8 @@ class CbfMaster(SKAMaster):
     @DebugIt()
     def Off(self, argin):
         # PROTECTED REGION ID(CbfMaster.Off) ENABLED START #
+        self._group_vcc.command_inout("Off")
+        self._group_fsp.command_inout("Off")
         self.set_state(PyTango.DevState.OFF)
         # PROTECTED REGION END #    //  CbfMaster.Off
 
@@ -671,6 +683,8 @@ class CbfMaster(SKAMaster):
     @DebugIt()
     def Standby(self, argin):
         # PROTECTED REGION ID(CbfMaster.Standby) ENABLED START #
+        self._group_vcc.command_inout("Standby")
+        self._group_fsp.command_inout("Standby")
         self.set_state(PyTango.DevState.STANDBY)
         # PROTECTED REGION END #    //  CbfMaster.Standby
 
