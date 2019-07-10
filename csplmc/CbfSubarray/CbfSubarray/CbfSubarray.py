@@ -346,69 +346,68 @@ class CbfSubarray(SKASubarray):
 
         # Validate fsp.
         if "fsp" in argin:
-            try:
-                for fsp in argin["fsp"]:
-                    try:
-                        # Validate fspID.
-                        if "fspID" in fsp:
-                            if int(fsp["fspID"]) in list(range(1, self._count_fsp + 1)):
-                                fspID = int(fsp["fspID"])
-                                proxy_fsp = self._proxies_fsp[fspID - 1]
-                                proxy_fsp_subarray = self._proxies_fsp_subarray[fspID - 1]
-                            else:
-                                msg = "'fspID' must be an integer in the range [1, {}]. "\
-                                    "Aborting configuration.".format(str(self._count_fsp))
-                                self.__raise_configure_scan_fatal_error(msg)
+            for fsp in argin["fsp"]:
+                try:
+                    # Validate fspID.
+                    if "fspID" in fsp:
+                        if int(fsp["fspID"]) in list(range(1, self._count_fsp + 1)):
+                            fspID = int(fsp["fspID"])
+                            proxy_fsp = self._proxies_fsp[fspID - 1]
+                            proxy_fsp_subarray = self._proxies_fsp_subarray[fspID - 1]
                         else:
-                            log_msg = "FSP specified, but 'fspID' not given. "\
-                                "Aborting configuration."
+                            msg = "'fspID' must be an integer in the range [1, {}]. "\
+                                "Aborting configuration.".format(str(self._count_fsp))
                             self.__raise_configure_scan_fatal_error(msg)
-
-                        # Validate functionMode.
-                        if "functionMode" in fsp:
-                            function_modes = ["CORR", "PSS-BF", "PST-BF", "VLBI"]
-                            if fsp["functionMode"] in function_modes:
-                                pass
-                            else:
-                                msg = "'functionMode' must be one of {} (received {}). "\
-                                    "Aborting configuration.".format(
-                                        function_modes, fsp["functionMode"]
-                                    )
-                                self.__raise_configure_scan_fatal_error(msg)
-                        else:
-                            log_msg = "FSP specified, but 'functionMode' not given. "\
-                                "Aborting configuration."
-                            self.__raise_configure_scan_fatal_error(msg)
-
-                        fsp["frequencyBand"] = argin["frequencyBand"]
-                        fsp["frequencyBandOffsetStream1"] = argin["frequencyBandOffsetStream1"]
-                        fsp["frequencyBandOffsetStream2"] = argin["frequencyBandOffsetStream2"]
-                        if "receptors" not in fsp:
-                            fsp["receptors"] = self._receptors
-                        if argin["frequencyBand"] in ["5a", "5b"]:
-                            fsp["band5Tuning"] = argin["band5Tuning"]
-
-                        # pass on configuration to FSP Subarray
-                        proxy_fsp_subarray.ValidateScan(json.dumps(fsp))
-
-                        proxy_fsp.unsubscribe_event(
-                            proxy_fsp.subscribe_event(
-                                "State",
-                                PyTango.EventType.CHANGE_EVENT,
-                                self.__state_change_event_callback
-                            )
-                        )
-                        proxy_fsp.unsubscribe_event(
-                            proxy_fsp.subscribe_event(
-                                "healthState",
-                                PyTango.EventType.CHANGE_EVENT,
-                                self.__state_change_event_callback
-                            )
-                        )
-                    except PyTango.DevFailed:  # exception in ConfigureScan
-                        msg = "An exception occurred while configuring FSPs:\n{}\n"\
-                            "Aborting configuration".format(sys.exc_info()[1].args[0].desc)
+                    else:
+                        log_msg = "FSP specified, but 'fspID' not given. "\
+                            "Aborting configuration."
                         self.__raise_configure_scan_fatal_error(msg)
+
+                    # Validate functionMode.
+                    if "functionMode" in fsp:
+                        function_modes = ["CORR", "PSS-BF", "PST-BF", "VLBI"]
+                        if fsp["functionMode"] in function_modes:
+                            pass
+                        else:
+                            msg = "'functionMode' must be one of {} (received {}). "\
+                                "Aborting configuration.".format(
+                                    function_modes, fsp["functionMode"]
+                                )
+                            self.__raise_configure_scan_fatal_error(msg)
+                    else:
+                        log_msg = "FSP specified, but 'functionMode' not given. "\
+                            "Aborting configuration."
+                        self.__raise_configure_scan_fatal_error(msg)
+
+                    fsp["frequencyBand"] = argin["frequencyBand"]
+                    fsp["frequencyBandOffsetStream1"] = argin["frequencyBandOffsetStream1"]
+                    fsp["frequencyBandOffsetStream2"] = argin["frequencyBandOffsetStream2"]
+                    if "receptors" not in fsp:
+                        fsp["receptors"] = self._receptors
+                    if argin["frequencyBand"] in ["5a", "5b"]:
+                        fsp["band5Tuning"] = argin["band5Tuning"]
+
+                    # pass on configuration to FSP Subarray
+                    proxy_fsp_subarray.ValidateScan(json.dumps(fsp))
+
+                    proxy_fsp.unsubscribe_event(
+                        proxy_fsp.subscribe_event(
+                            "State",
+                            PyTango.EventType.CHANGE_EVENT,
+                            self.__state_change_event_callback
+                        )
+                    )
+                    proxy_fsp.unsubscribe_event(
+                        proxy_fsp.subscribe_event(
+                            "healthState",
+                            PyTango.EventType.CHANGE_EVENT,
+                            self.__state_change_event_callback
+                        )
+                    )
+                except PyTango.DevFailed:  # exception in ConfigureScan
+                    msg = "An exception occurred while configuring FSPs:\n{}\n"\
+                        "Aborting configuration".format(sys.exc_info()[1].args[0].desc)
+                    self.__raise_configure_scan_fatal_error(msg)
         else:
             msg = "'fsp' not given. Aborting configuration."
             self.__raise_configure_scan_fatal_error(msg)

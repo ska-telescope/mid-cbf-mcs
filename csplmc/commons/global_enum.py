@@ -56,7 +56,7 @@ class Const:
         self.BAND_5_STREAM_BANDWIDTH = 2.5  # GHz
         self.NUM_FINE_CHANNELS = 14880
         self.NUM_CHANNEL_GROUPS = 20
-        self.NUM_PHASE_BINS = 10
+        self.NUM_PHASE_BINS = 1024
         self.NUM_OUTPUT_LINKS = 80
 
 
