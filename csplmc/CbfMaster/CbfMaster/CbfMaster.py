@@ -105,7 +105,7 @@ class CbfMaster(SKAMaster):
                 self.dev_logging(log_msg, PyTango.LogLevel.LOG_DEBUG)
 
                 # update CBF global state
-                self.__set_cbf_state()
+                # self.__set_cbf_state()
             except Exception as except_occurred:
                 self.dev_logging(str(except_occurred), PyTango.LogLevel.LOG_ERROR)
         else:
@@ -446,7 +446,8 @@ class CbfMaster(SKAMaster):
         self._subarray_scan_ID = [0]*self._count_subarray
 
         # evaluate the CBF element global state
-        self.__set_cbf_state()
+        # self.__set_cbf_state()
+        self.set_state(PyTango.DevState.STANDBY)
 
         # initialize lists with subarray/capability FQDNs
         self._fqdn_vcc = list(self.VCC)[:self._count_vcc]
@@ -644,126 +645,33 @@ class CbfMaster(SKAMaster):
     # --------
 
     @command(
-    dtype_in=('str',), 
-    doc_in="If the array length is 0, the command applies to the whole\nCSP Element.\nIf the array length is > 1, each array element specifies the FQDN of the\nCSP SubElement to switch ON.", 
+    dtype_in='str',
+    doc_in="TODO: ask Elisabetta why the input argument is always just an empty string.",
     )
     @DebugIt()
     def On(self, argin):
         # PROTECTED REGION ID(CbfMaster.On) ENABLED START #
-        # For now, simply send the "On" command to all constituent subarrays/capabilities
-        """
-        err_msg = []  # list of messages to log
-        if len(argin) == 0:  # no input argument -> switch on all sub-elements
-            device_list = self._fqdn_vcc + self._fqdn_fsp + self._fqdn_subarray
-        else:
-            device_list = argin
-
-        # loop on capabilities/subarrays and issue the On command
-        nerr = 0  # number of exception
-        for device_name in device_list:
-            try:
-                # retrieve the proxy
-                device_proxy = self._proxies[device_name]
-                device_proxy.command_inout("On", [])
-            except KeyError as error:
-                err_msg.append("No proxy for device: " + str(error))
-                nerr += 1
-            except PyTango.DevFailed as df:
-                err_msg.append("Command failure for device " + device_name + ": " + str(df.args[0].desc))
-                nerr += 1
-        # throw exception
-        if nerr > 0:
-            except_msg = ""
-            for item in err_msg:
-                except_msg += item + "\n"
-                self.dev_logging(item, PyTango.LogLevel.LOG_ERROR)
-            PyTango.Except.throw_exception("Command failed", except_msg,
-                                           "On command execution", PyTango.ErrSeverity.ERR)
-        """
-        # update global state
-        self.__set_cbf_state()
+        self.set_state(PyTango.DevState.ON)
         # PROTECTED REGION END #    //  CbfMaster.On
 
     @command(
-    dtype_in=('str',), 
-    doc_in="If the array length is 0, the command applies to the whole\nCSP Element.\nIf the array length is > 1, each array element specifies the FQDN of the\nCSP SubElement to switch OFF.", 
+    dtype_in='str',
+    doc_in="TODO: ask Elisabetta why the input argument is always just an empty string.",
     )
     @DebugIt()
     def Off(self, argin):
         # PROTECTED REGION ID(CbfMaster.Off) ENABLED START #
-        # For now, simply send the "Off" command to all constituent subarrays/capabilities
-        """
-        err_msg = []  # list of messages to log
-        if len(argin) == 0:  # no input argument -> switch on all sub-elements
-            device_list = self._fqdn_vcc + self._fqdn_fsp + self._fqdn_subarray
-        else:
-            device_list = argin
-
-        # loop on capabilities/subarrays and issue the On command
-        nerr = 0  # number of exception
-        for device_name in device_list:
-            try:
-                # retrieve the proxy
-                device_proxy = self._proxies[device_name]
-                device_proxy.command_inout("Off", [])
-            except KeyError as error:
-                err_msg.append("No proxy for device: " + str(error))
-                nerr += 1
-            except PyTango.DevFailed as df:
-                err_msg.append("Command failure for device " + device_name + ": " + str(df.args[0].desc))
-                nerr += 1
-        # throw exception
-        if nerr > 0:
-            except_msg = ""
-            for item in err_msg:
-                except_msg += item + "\n"
-                self.dev_logging(item, PyTango.LogLevel.LOG_ERROR)
-            PyTango.Except.throw_exception("Command failed", except_msg,
-                                           "Off command execution", PyTango.ErrSeverity.ERR)
-        """
-        # update global state
-        self.__set_cbf_state()
+        self.set_state(PyTango.DevState.OFF)
         # PROTECTED REGION END #    //  CbfMaster.Off
 
     @command(
-    dtype_in=('str',), 
-    doc_in="If the array length is 0, the command applies to the whole\nCSP Element.\nIf the array length is > 1, each array element specifies the FQDN of the\nCSP SubElement to put in STANDBY mode.", 
+    dtype_in='str',
+    doc_in="TODO: ask Elisabetta why the input argument is always just an empty string.",
     )
     @DebugIt()
     def Standby(self, argin):
         # PROTECTED REGION ID(CbfMaster.Standby) ENABLED START #
-        # For now, simply send the "Standby" command to all constituent subarrays/capabilities
-        """
-        err_msg = []  # list of messages to log
-        if len(argin) == 0:  # no input argument -> switch on all sub-elements
-            device_list = self._fqdn_vcc + self._fqdn_fsp + self._fqdn_subarray
-        else:
-            device_list = argin
-
-        # loop on capabilities/subarrays and issue the On command
-        nerr = 0  # number of exception
-        for device_name in device_list:
-            try:
-                # retrieve the proxy
-                device_proxy = self._proxies[device_name]
-                device_proxy.command_inout("Standby", [])
-            except KeyError as error:
-                err_msg.append("No proxy for device: " + str(error))
-                nerr += 1
-            except PyTango.DevFailed as df:
-                err_msg.append("Command failure for device " + device_name + ": " + str(df.args[0].desc))
-                nerr += 1
-        # throw exception
-        if nerr > 0:
-            except_msg = ""
-            for item in err_msg:
-                except_msg += item + "\n"
-                self.dev_logging(item, PyTango.LogLevel.LOG_ERROR)
-            PyTango.Except.throw_exception("Command failed", except_msg,
-                                           "Standby command execution", PyTango.ErrSeverity.ERR)
-        """
-        # update global state
-        self.__set_cbf_state()
+        self.set_state(PyTango.DevState.STANDBY)
         # PROTECTED REGION END #    //  CbfMaster.Standby
 
 # ----------
