@@ -154,12 +154,11 @@ class FspSubarray(SKASubarray):
         doc="Channel averaging map"
     )
 
-    destinationAddress = attribute(
-        dtype=('str',),
-        max_dim_x=3,
+    visDestinationAddress = attribute(
+        dtype='str',
         access=AttrWriteType.READ_WRITE,
         label="Destination addresses",
-        doc="Destination addresses (MAC address, IP address, port) for visibilities"
+        doc="Destination addresses for visibilities, given as a JSON object"
     )
 
     delayModel = attribute(
@@ -200,7 +199,7 @@ class FspSubarray(SKASubarray):
             [int(i*self.NUM_FINE_CHANNELS/self.NUM_CHANNEL_GROUPS) + 1, 0]
             for i in range(self.NUM_CHANNEL_GROUPS)
         ]
-        self._destination_address = ["", "", ""]
+        self._vis_destination_address = {}
         self._delay_model = ""
 
         # device proxy for easy reference to CBF Master
@@ -288,15 +287,15 @@ class FspSubarray(SKASubarray):
         return self._channel_averaging_map
         # PROTECTED REGION END #    //  FspSubarray.channelAveragingMap_read
 
-    def read_destinationAddress(self):
-        # PROTECTED REGION ID(FspSubarray.destinationAddress_read) ENABLED START #
-        return self._destination_address
-        # PROTECTED REGION END #    //  FspSubarray.destinationAddress_read
+    def read_visDestinationAddress(self):
+        # PROTECTED REGION ID(FspSubarray.visDestinationAddress_read) ENABLED START #
+        return json.dumps(self._vis_destination_address)
+        # PROTECTED REGION END #    //  FspSubarray.visDestinationAddress_read
 
-    def write_destinationAddress(self, value):
-        # PROTECTED REGION ID(FspSubarray.destinationAddress_write) ENABLED START #
-        self._destination_address = value
-        # PROTECTED REGION END #    //  FspSubarray.destinationAddress_write
+    def write_visDestinationAddress(self, value):
+        # PROTECTED REGION ID(FspSubarray.visDestinationAddress_write) ENABLED START #
+        self._vis_destination_address = json.loads(value)
+        # PROTECTED REGION END #    //  FspSubarray.visDestinationAddress_write
 
     def read_delayModel(self):
         # PROTECTED REGION ID(FspSubarray.delayModel_read) ENABLED START #

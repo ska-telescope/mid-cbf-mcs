@@ -48,13 +48,6 @@ for device in json_devices:
                     attributeProxy.set_config(attrInfoEx)
                 else:
                     print("Skip setting change event absolute...")
-
-                if "periodicEventCadence" in attributeProperty:
-                    attrInfoEx = attributeProxy.get_config()
-                    period = PeriodicEventInfo()
-                    period.period = attributeProperty["periodicEventCadence"]
-                    attrInfoEx.events.per_event = period
-                    attributeProxy.set_config(attrInfoEx)
     except Exception as e:
         print(str(e))
         continue

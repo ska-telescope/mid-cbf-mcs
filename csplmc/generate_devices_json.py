@@ -67,22 +67,25 @@ with open("devices.json", "w+") as f:
               "        \"class\": \"TmTelstateTest\",\n" \
               "        \"serverName\": \"TmTelstateTest/tm\",\n" \
               "        \"devName\": \"ska1_mid/tm/telmodel\",\n" \
-              "        \"deviceProperties\": [],\n" \
+              "        \"deviceProperties\": [\n" \
+              "            {\n" \
+              "                \"devPropName\": \"CspMasterAddress\",\n" \
+              "                \"devPropValue\": \"mid_csp/elt/master\"\n" \
+              "            }\n" \
+              "        ],\n" \
               "        \"attributeProperties\": [\n" \
               "            {\n" \
               "                \"attributeName\": \"delayModel\",\n" \
               "                \"attrPropName\": \"\",\n" \
               "                \"attrPropValue\": \"\",\n" \
               "                \"pollingPeriod\": 1000,\n" \
-              "                \"periodicEventCadence\": \"10000\",\n" \
               "                \"changeEventAbs\": \"1\"\n" \
               "            },\n" \
               "            {\n" \
-              "                \"attributeName\": \"visDestinationAddress\",\n" \
+              "                \"attributeName\": \"visDestinationAddress_1\",\n" \
               "                \"attrPropName\": \"\",\n" \
               "                \"attrPropValue\": \"\",\n" \
               "                \"pollingPeriod\": 1000,\n" \
-              "                \"periodicEventCadence\": \"10000\",\n" \
               "                \"changeEventAbs\": \"1\"\n" \
               "            },\n" \
               "            {\n" \
@@ -90,7 +93,6 @@ with open("devices.json", "w+") as f:
               "                \"attrPropName\": \"\",\n" \
               "                \"attrPropValue\": \"\",\n" \
               "                \"pollingPeriod\": 1000,\n" \
-              "                \"periodicEventCadence\": \"10000\",\n" \
               "                \"changeEventAbs\": \"1\"\n" \
               "            }\n" \
               "        ]\n" \
@@ -167,6 +169,13 @@ with open("devices.json", "w+") as f:
                   "            }},\n" \
                   "            {{\n" \
                   "                \"attributeName\": \"scanID\",\n" \
+                  "                \"attrPropName\": \"\",\n" \
+                  "                \"attrPropValue\": \"\",\n" \
+                  "                \"pollingPeriod\": 1000,\n" \
+                  "                \"changeEventAbs\": \"1\"\n" \
+                  "            }},\n" \
+                  "            {{\n" \
+                  "                \"attributeName\": \"outputLinksDistribution\",\n" \
                   "                \"attrPropName\": \"\",\n" \
                   "                \"attrPropValue\": \"\",\n" \
                   "                \"pollingPeriod\": 1000,\n" \

@@ -22,7 +22,7 @@ from PyTango.server import device_property
 from PyTango import AttrQuality, DispLevel, DevState
 from PyTango import AttrWriteType, PipeWriteType
 # Additional import
-# PROTECTED REGION ID(CbfSubarray.additionnal_import) ENABLED START #
+# PROTECTED REGION ID(TmTelstateTest.additionnal_import) ENABLED START #
 import os
 import sys
 import json
@@ -45,6 +45,75 @@ class TmTelstateTest(SKABaseDevice):
     __metaclass__ = DeviceMeta
     # PROTECTED REGION ID(TmTelstateTest.class_variable) ENABLED START #
 
+    def __output_links_event_callback(self, event):
+        if not event.err:
+            try:
+                log_msg = "Received output links."
+                self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+
+                output_links = json.loads(str(event.attr_value.value))
+
+                if not output_links["__valid"]:
+                    log_msg = "Discarding output links marked as invalid."
+                    self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+                    return
+
+                scan_ID = int(output_links["scanID"])
+                subarray_scan_ID = self._proxy_cbf_master.subarrayScanID
+                for i in range(len(subarray_scan_ID)):
+                    if subarray_scan_ID[i] == scan_ID:
+                        self.__generate_visibilities_destination_addresses(output_links, i)
+                        break
+            except Exception as e:
+                self.dev_logging(str(e), PyTango.LogLevel.LOG_ERROR)
+        else:
+            for item in event.errors:
+                log_msg = item.reason + ": on attribute " + str(event.attr_name)
+                self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
+
+    def __generate_visibilities_destination_addresses(self, output_links, index):
+        destination_addresses = {
+            "scanID": output_links["scanID"],
+            "fsp": []
+        }
+
+        for fsp_in in output_links["fsp"]:
+            fsp = {
+                "fspID": fsp_in["fspID"],
+                "channel": []
+            }
+            for channel_in in fsp_in["channel"]:
+                log_msg = "Assigning destination addresses for channel {} of FSP {}...".format(
+                    channel_in["channelID"], fsp_in["fspID"]
+                )
+                self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+
+                channel = {
+                    "channelID": channel_in["channelID"],
+                    "phaseBin": []
+                }
+                for phase_bin_in in channel_in["phaseBin"]:
+                    if phase_bin_in["cbfOutputLink"]:  # send channels to SDP
+                        # doesn't matter what values the addresses have for now
+                        channel["phaseBin"].append({
+                            "phaseBinID": phase_bin_in["phaseBinID"],
+                            "sdpMacAddress": "0A:00:27:00:00:0F",
+                            "sdpIpAddress": "127.0.0.1",
+                            "sdpPort": 80
+                        })
+                    else:  # not exactly sure if I should do anything
+                        pass
+                fsp["channel"].append(channel)
+            destination_addresses["fsp"].append(fsp)
+
+        log_msg = "Done assigning destination addresses."
+        self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+
+        # publish the destination addresses
+        destination_addresses["__valid"] = True
+        self._vis_destination_address[index] = destination_addresses
+        self.push_change_event("visDestinationAddress_1", self._vis_destination_address[index])
+        self._vis_destination_address[index]["__valid"] = False
 
     # PROTECTED REGION END #    //  TmTelstateTest.class_variable
 
@@ -52,9 +121,9 @@ class TmTelstateTest(SKABaseDevice):
     # Device Properties
     # -----------------
 
-
-
-
+    CspMasterAddress = device_property(
+        dtype='str'
+    )
 
 
 
@@ -198,11 +267,116 @@ class TmTelstateTest(SKABaseDevice):
         doc="Delay model coefficients"
     )
 
-    visDestinationAddress = attribute(
+    visDestinationAddress_1 = attribute(
         dtype='str',
         access=AttrWriteType.READ_WRITE,
-        label="Destination addresses for visibilities",
-        doc="Destination addresses for visibilities"
+        label="Destination addresses for visibilities (subarray 1)",
+        doc="Destination addresses for visibilities for subarray 1"
+    )
+
+    visDestinationAddress_2 = attribute(
+        dtype='str',
+        access=AttrWriteType.READ_WRITE,
+        label="Destination addresses for visibilities (subarray 2)",
+        doc="Destination addresses for visibilities for subarray 2"
+    )
+
+    visDestinationAddress_3 = attribute(
+        dtype='str',
+        access=AttrWriteType.READ_WRITE,
+        label="Destination addresses for visibilities (subarray 3)",
+        doc="Destination addresses for visibilities for subarray 3"
+    )
+
+    visDestinationAddress_4 = attribute(
+        dtype='str',
+        access=AttrWriteType.READ_WRITE,
+        label="Destination addresses for visibilities (subarray 4)",
+        doc="Destination addresses for visibilities for subarray 4"
+    )
+
+    visDestinationAddress_5 = attribute(
+        dtype='str',
+        access=AttrWriteType.READ_WRITE,
+        label="Destination addresses for visibilities (subarray 5)",
+        doc="Destination addresses for visibilities for subarray 5"
+    )
+
+    visDestinationAddress_6 = attribute(
+        dtype='str',
+        access=AttrWriteType.READ_WRITE,
+        label="Destination addresses for visibilities (subarray 6)",
+        doc="Destination addresses for visibilities for subarray 6"
+    )
+
+    visDestinationAddress_7 = attribute(
+        dtype='str',
+        access=AttrWriteType.READ_WRITE,
+        label="Destination addresses for visibilities (subarray 7)",
+        doc="Destination addresses for visibilities for subarray 7"
+    )
+
+    visDestinationAddress_8 = attribute(
+        dtype='str',
+        access=AttrWriteType.READ_WRITE,
+        label="Destination addresses for visibilities (subarray 8)",
+        doc="Destination addresses for visibilities for subarray 8"
+    )
+
+    visDestinationAddress_9 = attribute(
+        dtype='str',
+        access=AttrWriteType.READ_WRITE,
+        label="Destination addresses for visibilities (subarray 9)",
+        doc="Destination addresses for visibilities for subarray 9"
+    )
+
+    visDestinationAddress_10 = attribute(
+        dtype='str',
+        access=AttrWriteType.READ_WRITE,
+        label="Destination addresses for visibilities (subarray 10)",
+        doc="Destination addresses for visibilities for subarray 10"
+    )
+
+    visDestinationAddress_11 = attribute(
+        dtype='str',
+        access=AttrWriteType.READ_WRITE,
+        label="Destination addresses for visibilities (subarray 11)",
+        doc="Destination addresses for visibilities for subarray 11"
+    )
+
+    visDestinationAddress_12 = attribute(
+        dtype='str',
+        access=AttrWriteType.READ_WRITE,
+        label="Destination addresses for visibilities (subarray 12)",
+        doc="Destination addresses for visibilities for subarray 12"
+    )
+
+    visDestinationAddress_13 = attribute(
+        dtype='str',
+        access=AttrWriteType.READ_WRITE,
+        label="Destination addresses for visibilities (subarray 13)",
+        doc="Destination addresses for visibilities for subarray 13"
+    )
+
+    visDestinationAddress_14 = attribute(
+        dtype='str',
+        access=AttrWriteType.READ_WRITE,
+        label="Destination addresses for visibilities (subarray 14)",
+        doc="Destination addresses for visibilities for subarray 14"
+    )
+
+    visDestinationAddress_15 = attribute(
+        dtype='str',
+        access=AttrWriteType.READ_WRITE,
+        label="Destination addresses for visibilities (subarray 15)",
+        doc="Destination addresses for visibilities for subarray 15"
+    )
+
+    visDestinationAddress_16 = attribute(
+        dtype='str',
+        access=AttrWriteType.READ_WRITE,
+        label="Destination addresses for visibilities (subarray 16)",
+        doc="Destination addresses for visibilities for subarray 16"
     )
 
 
@@ -213,9 +387,32 @@ class TmTelstateTest(SKABaseDevice):
     def init_device(self):
         SKABaseDevice.init_device(self)
         # PROTECTED REGION ID(TmTelstateTest.init_device) ENABLED START #
+        self.set_state(DevState.INIT)
+
+        self._storage_logging_level = PyTango.LogLevel.LOG_DEBUG
+        self._element_logging_level = PyTango.LogLevel.LOG_DEBUG
+        self._central_logging_level = PyTango.LogLevel.LOG_DEBUG
+
         self._doppler_phase_correction = [(0, 0, 0, 0) for i in range(16)]
         self._delay_model = {}  # this is interpreted as a JSON object
-        self._vis_destination_address = {}  # this is interpreted as a JSON object
+        # these are interpreted as JSON objects
+        self._vis_destination_address = [{"__valid": False} for i in range(16)]
+
+        self._proxy_csp_master = PyTango.DeviceProxy(self.CspMasterAddress)
+        self._proxy_cbf_master = PyTango.DeviceProxy(
+            self._proxy_csp_master.get_property("CspMidCbf")["CspMidCbf"][0]
+        )
+
+        # subscribe to mid_csp_cbf/sub_elt/subarray_01 for testing until CspTelstate is available
+        self._proxy_cbf_subarray_01 = PyTango.DeviceProxy("mid_csp_cbf/sub_elt/subarray_01")
+        self._proxy_cbf_subarray_01.subscribe_event(
+            "outputLinksDistribution",
+            PyTango.EventType.CHANGE_EVENT,
+            self.__output_links_event_callback,
+            stateless=True
+        )
+
+        self.set_state(DevState.STANDBY)
         # PROTECTED REGION END #    //  TmTelstateTest.init_device
 
     def always_executed_hook(self):
@@ -547,16 +744,181 @@ class TmTelstateTest(SKABaseDevice):
         self._delay_model = json.loads(str(value))
         # PROTECTED REGION END #    //  TmTelstateTest.delayModel_write
 
-    def read_visDestinationAddress(self):
-        # PROTECTED REGION ID(TmTelstateTest.visDestinationAddress_read) ENABLED START #
-        return json.dumps(self._vis_destination_address)
-        # PROTECTED REGION END #    //  TmTelstateTest.visDestinationAddress_read
+    def read_visDestinationAddress_1(self):
+        # PROTECTED REGION ID(TmTelstateTest.visDestinationAddress_1_read) ENABLED START #
+        return json.dumps(self._vis_destination_address[0])
+        # PROTECTED REGION END #    //  TmTelstateTest.visDestinationAddress_1_read
 
-    def write_visDestinationAddress(self, value):
-        # PROTECTED REGION ID(TmTelstateTest.visDestinationAddress_write) ENABLED START #
+    def write_visDestinationAddress_1(self, value):
+        # PROTECTED REGION ID(TmTelstateTest.visDestinationAddress_1_write) ENABLED START #
         # since this is just a test device, assume that the JSON schema is always what we expect
-        self._vis_destination_address = json.loads(str(value))
-        # PROTECTED REGION END #    //  TmTelstateTest.visDestinationAddress_write
+        self._vis_destination_address[0] = json.loads(str(value))
+        # PROTECTED REGION END #    //  TmTelstateTest.visDestinationAddress_1_write
+
+    def read_visDestinationAddress_2(self):
+        # PROTECTED REGION ID(TmTelstateTest.visDestinationAddress_2_read) ENABLED START #
+        return json.dumps(self._vis_destination_address[1])
+        # PROTECTED REGION END #    //  TmTelstateTest.visDestinationAddress_2_read
+
+    def write_visDestinationAddress_2(self, value):
+        # PROTECTED REGION ID(TmTelstateTest.visDestinationAddress_2_write) ENABLED START #
+        # since this is just a test device, assume that the JSON schema is always what we expect
+        self._vis_destination_address[1] = json.loads(str(value))
+        # PROTECTED REGION END #    //  TmTelstateTest.visDestinationAddress_2_write
+
+    def read_visDestinationAddress_3(self):
+        # PROTECTED REGION ID(TmTelstateTest.visDestinationAddress_3_read) ENABLED START #
+        return json.dumps(self._vis_destination_address[2])
+        # PROTECTED REGION END #    //  TmTelstateTest.visDestinationAddress_3_read
+
+    def write_visDestinationAddress_3(self, value):
+        # PROTECTED REGION ID(TmTelstateTest.visDestinationAddress_3_write) ENABLED START #
+        # since this is just a test device, assume that the JSON schema is always what we expect
+        self._vis_destination_address[2] = json.loads(str(value))
+        # PROTECTED REGION END #    //  TmTelstateTest.visDestinationAddress_3_write
+
+    def read_visDestinationAddress_4(self):
+        # PROTECTED REGION ID(TmTelstateTest.visDestinationAddress_4_read) ENABLED START #
+        return json.dumps(self._vis_destination_address[3])
+        # PROTECTED REGION END #    //  TmTelstateTest.visDestinationAddress_4_read
+
+    def write_visDestinationAddress_4(self, value):
+        # PROTECTED REGION ID(TmTelstateTest.visDestinationAddress_4_write) ENABLED START #
+        # since this is just a test device, assume that the JSON schema is always what we expect
+        self._vis_destination_address[3] = json.loads(str(value))
+        # PROTECTED REGION END #    //  TmTelstateTest.visDestinationAddress_4_write
+
+    def read_visDestinationAddress_5(self):
+        # PROTECTED REGION ID(TmTelstateTest.visDestinationAddress_5_read) ENABLED START #
+        return json.dumps(self._vis_destination_address[4])
+        # PROTECTED REGION END #    //  TmTelstateTest.visDestinationAddress_5_read
+
+    def write_visDestinationAddress_5(self, value):
+        # PROTECTED REGION ID(TmTelstateTest.visDestinationAddress_5_write) ENABLED START #
+        # since this is just a test device, assume that the JSON schema is always what we expect
+        self._vis_destination_address[4] = json.loads(str(value))
+        # PROTECTED REGION END #    //  TmTelstateTest.visDestinationAddress_5_write
+
+    def read_visDestinationAddress_6(self):
+        # PROTECTED REGION ID(TmTelstateTest.visDestinationAddress_6_read) ENABLED START #
+        return json.dumps(self._vis_destination_address[5])
+        # PROTECTED REGION END #    //  TmTelstateTest.visDestinationAddress_6_read
+
+    def write_visDestinationAddress_6(self, value):
+        # PROTECTED REGION ID(TmTelstateTest.visDestinationAddress_6_write) ENABLED START #
+        # since this is just a test device, assume that the JSON schema is always what we expect
+        self._vis_destination_address[5] = json.loads(str(value))
+        # PROTECTED REGION END #    //  TmTelstateTest.visDestinationAddress_6_write
+
+    def read_visDestinationAddress_7(self):
+        # PROTECTED REGION ID(TmTelstateTest.visDestinationAddress_7_read) ENABLED START #
+        return json.dumps(self._vis_destination_address[6])
+        # PROTECTED REGION END #    //  TmTelstateTest.visDestinationAddress_7_read
+
+    def write_visDestinationAddress_7(self, value):
+        # PROTECTED REGION ID(TmTelstateTest.visDestinationAddress_7_write) ENABLED START #
+        # since this is just a test device, assume that the JSON schema is always what we expect
+        self._vis_destination_address[6] = json.loads(str(value))
+        # PROTECTED REGION END #    //  TmTelstateTest.visDestinationAddress_7_write
+
+    def read_visDestinationAddress_8(self):
+        # PROTECTED REGION ID(TmTelstateTest.visDestinationAddress_8_read) ENABLED START #
+        return json.dumps(self._vis_destination_address[7])
+        # PROTECTED REGION END #    //  TmTelstateTest.visDestinationAddress_8_read
+
+    def write_visDestinationAddress_8(self, value):
+        # PROTECTED REGION ID(TmTelstateTest.visDestinationAddress_8_write) ENABLED START #
+        # since this is just a test device, assume that the JSON schema is always what we expect
+        self._vis_destination_address[7] = json.loads(str(value))
+        # PROTECTED REGION END #    //  TmTelstateTest.visDestinationAddress_8_write
+
+    def read_visDestinationAddress_9(self):
+        # PROTECTED REGION ID(TmTelstateTest.visDestinationAddress_9_read) ENABLED START #
+        return json.dumps(self._vis_destination_address[8])
+        # PROTECTED REGION END #    //  TmTelstateTest.visDestinationAddress_9_read
+
+    def write_visDestinationAddress_9(self, value):
+        # PROTECTED REGION ID(TmTelstateTest.visDestinationAddress_9_write) ENABLED START #
+        # since this is just a test device, assume that the JSON schema is always what we expect
+        self._vis_destination_address[8] = json.loads(str(value))
+        # PROTECTED REGION END #    //  TmTelstateTest.visDestinationAddress_9_write
+
+    def read_visDestinationAddress_10(self):
+        # PROTECTED REGION ID(TmTelstateTest.visDestinationAddress_10_read) ENABLED START #
+        return json.dumps(self._vis_destination_address[9])
+        # PROTECTED REGION END #    //  TmTelstateTest.visDestinationAddress_10_read
+
+    def write_visDestinationAddress_10(self, value):
+        # PROTECTED REGION ID(TmTelstateTest.visDestinationAddress_10_write) ENABLED START #
+        # since this is just a test device, assume that the JSON schema is always what we expect
+        self._vis_destination_address[9] = json.loads(str(value))
+        # PROTECTED REGION END #    //  TmTelstateTest.visDestinationAddress_10_write
+
+    def read_visDestinationAddress_11(self):
+        # PROTECTED REGION ID(TmTelstateTest.visDestinationAddress_11_read) ENABLED START #
+        return json.dumps(self._vis_destination_address[10])
+        # PROTECTED REGION END #    //  TmTelstateTest.visDestinationAddress_11_read
+
+    def write_visDestinationAddress_11(self, value):
+        # PROTECTED REGION ID(TmTelstateTest.visDestinationAddress_11_write) ENABLED START #
+        # since this is just a test device, assume that the JSON schema is always what we expect
+        self._vis_destination_address[10] = json.loads(str(value))
+        # PROTECTED REGION END #    //  TmTelstateTest.visDestinationAddress_11_write
+
+    def read_visDestinationAddress_12(self):
+        # PROTECTED REGION ID(TmTelstateTest.visDestinationAddress_12_read) ENABLED START #
+        return json.dumps(self._vis_destination_address[11])
+        # PROTECTED REGION END #    //  TmTelstateTest.visDestinationAddress_12_read
+
+    def write_visDestinationAddress_12(self, value):
+        # PROTECTED REGION ID(TmTelstateTest.visDestinationAddress_12_write) ENABLED START #
+        # since this is just a test device, assume that the JSON schema is always what we expect
+        self._vis_destination_address[11] = json.loads(str(value))
+        # PROTECTED REGION END #    //  TmTelstateTest.visDestinationAddress_12_write
+
+    def read_visDestinationAddress_13(self):
+        # PROTECTED REGION ID(TmTelstateTest.visDestinationAddress_13_read) ENABLED START #
+        return json.dumps(self._vis_destination_address[12])
+        # PROTECTED REGION END #    //  TmTelstateTest.visDestinationAddress_13_read
+
+    def write_visDestinationAddress_13(self, value):
+        # PROTECTED REGION ID(TmTelstateTest.visDestinationAddress_13_write) ENABLED START #
+        # since this is just a test device, assume that the JSON schema is always what we expect
+        self._vis_destination_address[12] = json.loads(str(value))
+        # PROTECTED REGION END #    //  TmTelstateTest.visDestinationAddress_13_write
+
+    def read_visDestinationAddress_14(self):
+        # PROTECTED REGION ID(TmTelstateTest.visDestinationAddress_14_read) ENABLED START #
+        return json.dumps(self._vis_destination_address[13])
+        # PROTECTED REGION END #    //  TmTelstateTest.visDestinationAddress_14_read
+
+    def write_visDestinationAddress_14(self, value):
+        # PROTECTED REGION ID(TmTelstateTest.visDestinationAddress_14_write) ENABLED START #
+        # since this is just a test device, assume that the JSON schema is always what we expect
+        self._vis_destination_address[13] = json.loads(str(value))
+        # PROTECTED REGION END #    //  TmTelstateTest.visDestinationAddress_14_write
+
+    def read_visDestinationAddress_15(self):
+        # PROTECTED REGION ID(TmTelstateTest.visDestinationAddress_15_read) ENABLED START #
+        return json.dumps(self._vis_destination_address[14])
+        # PROTECTED REGION END #    //  TmTelstateTest.visDestinationAddress_15_read
+
+    def write_visDestinationAddress_15(self, value):
+        # PROTECTED REGION ID(TmTelstateTest.visDestinationAddress_15_write) ENABLED START #
+        # since this is just a test device, assume that the JSON schema is always what we expect
+        self._vis_destination_address[14] = json.loads(str(value))
+        # PROTECTED REGION END #    //  TmTelstateTest.visDestinationAddress_15_write
+
+    def read_visDestinationAddress_16(self):
+        # PROTECTED REGION ID(TmTelstateTest.visDestinationAddress_16_read) ENABLED START #
+        return json.dumps(self._vis_destination_address[15])
+        # PROTECTED REGION END #    //  TmTelstateTest.visDestinationAddress_16_read
+
+    def write_visDestinationAddress_16(self, value):
+        # PROTECTED REGION ID(TmTelstateTest.visDestinationAddress_16_write) ENABLED START #
+        # since this is just a test device, assume that the JSON schema is always what we expect
+        self._vis_destination_address[15] = json.loads(str(value))
+        # PROTECTED REGION END #    //  TmTelstateTest.visDestinationAddress_16_write
 
 
     # --------
