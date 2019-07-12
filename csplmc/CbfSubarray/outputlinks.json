@@ -1,0 +1,574 @@
+{
+  "fsp": [
+    {
+      "channel": [
+        {
+          "cbfOutLink": 37,
+          "chanBW": 53763,
+          "chanCentFreq": 4650026881,
+          "chanID": 1
+        },
+        {
+          "cbfOutLink": 28,
+          "chanBW": 53763,
+          "chanCentFreq": 4650080645,
+          "chanID": 9
+        },
+        {
+          "cbfOutLink": 78,
+          "chanBW": 53763,
+          "chanCentFreq": 4650134408,
+          "chanID": 17
+        },
+        {
+          "cbfOutLink": 78,
+          "chanBW": 53763,
+          "chanCentFreq": 4650188172,
+          "chanID": 25
+        },
+        {
+          "cbfOutLink": 15,
+          "chanBW": 53763,
+          "chanCentFreq": 4650241935,
+          "chanID": 33
+        },
+        {
+          "cbfOutLink": 70,
+          "chanBW": 53763,
+          "chanCentFreq": 4650295698,
+          "chanID": 41
+        },
+        {
+          "cbfOutLink": 5,
+          "chanBW": 53763,
+          "chanCentFreq": 4650349462,
+          "chanID": 49
+        },
+        {
+          "cbfOutLink": 49,
+          "chanBW": 53763,
+          "chanCentFreq": 4650403225,
+          "chanID": 57
+        },
+        {
+          "cbfOutLink": 53,
+          "chanBW": 53763,
+          "chanCentFreq": 4650456989,
+          "chanID": 65
+        },
+        {
+          "cbfOutLink": 73,
+          "chanBW": 53763,
+          "chanCentFreq": 4650510752,
+          "chanID": 73
+        },
+        {
+          "cbfOutLink": 65,
+          "chanBW": 53763,
+          "chanCentFreq": 4650564516,
+          "chanID": 81
+        },
+        {
+          "cbfOutLink": 80,
+          "chanBW": 53763,
+          "chanCentFreq": 4650618279,
+          "chanID": 89
+        },
+        {
+          "cbfOutLink": 56,
+          "chanBW": 53763,
+          "chanCentFreq": 4650672043,
+          "chanID": 97
+        },
+        {
+          "cbfOutLink": 34,
+          "chanBW": 53763,
+          "chanCentFreq": 4650725806,
+          "chanID": 105
+        },
+        {
+          "cbfOutLink": 79,
+          "chanBW": 53763,
+          "chanCentFreq": 4650779569,
+          "chanID": 113
+        },
+        {
+          "cbfOutLink": 3,
+          "chanBW": 53763,
+          "chanCentFreq": 4650833333,
+          "chanID": 121
+        },
+        {
+          "cbfOutLink": 5,
+          "chanBW": 53763,
+          "chanCentFreq": 4650887096,
+          "chanID": 129
+        },
+        {
+          "cbfOutLink": 17,
+          "chanBW": 53763,
+          "chanCentFreq": 4650940860,
+          "chanID": 137
+        },
+        {
+          "cbfOutLink": 74,
+          "chanBW": 53763,
+          "chanCentFreq": 4650994623,
+          "chanID": 145
+        },
+        {
+          "cbfOutLink": 78,
+          "chanBW": 53763,
+          "chanCentFreq": 4651048387,
+          "chanID": 153
+        },
+        {
+          "cbfOutLink": 7,
+          "chanBW": 53763,
+          "chanCentFreq": 4651102150,
+          "chanID": 161
+        },
+        {
+          "cbfOutLink": 57,
+          "chanBW": 53763,
+          "chanCentFreq": 4651155913,
+          "chanID": 169
+        },
+        {
+          "cbfOutLink": 72,
+          "chanBW": 53763,
+          "chanCentFreq": 4651209677,
+          "chanID": 177
+        },
+        {
+          "cbfOutLink": 66,
+          "chanBW": 53763,
+          "chanCentFreq": 4651263440,
+          "chanID": 185
+        },
+        {
+          "cbfOutLink": 70,
+          "chanBW": 53763,
+          "chanCentFreq": 4651317204,
+          "chanID": 193
+        },
+        {
+          "cbfOutLink": 46,
+          "chanBW": 53763,
+          "chanCentFreq": 4651370967,
+          "chanID": 201
+        },
+        {
+          "cbfOutLink": 51,
+          "chanBW": 53763,
+          "chanCentFreq": 4651424731,
+          "chanID": 209
+        },
+        {
+          "cbfOutLink": 65,
+          "chanBW": 53763,
+          "chanCentFreq": 4651478494,
+          "chanID": 217
+        },
+        {
+          "cbfOutLink": 37,
+          "chanBW": 53763,
+          "chanCentFreq": 4651532258,
+          "chanID": 225
+        },
+        {
+          "cbfOutLink": 43,
+          "chanBW": 53763,
+          "chanCentFreq": 4651586021,
+          "chanID": 233
+        },
+        {
+          "cbfOutLink": 56,
+          "chanBW": 53763,
+          "chanCentFreq": 4651639784,
+          "chanID": 241
+        },
+        {
+          "cbfOutLink": 37,
+          "chanBW": 53763,
+          "chanCentFreq": 4651693548,
+          "chanID": 249
+        },
+        {
+          "cbfOutLink": 9,
+          "chanBW": 53763,
+          "chanCentFreq": 4651747311,
+          "chanID": 257
+        },
+        {
+          "cbfOutLink": 53,
+          "chanBW": 53763,
+          "chanCentFreq": 4651801075,
+          "chanID": 265
+        },
+        {
+          "cbfOutLink": 61,
+          "chanBW": 53763,
+          "chanCentFreq": 4651854838,
+          "chanID": 273
+        },
+        {
+          "cbfOutLink": 26,
+          "chanBW": 53763,
+          "chanCentFreq": 4651908602,
+          "chanID": 281
+        },
+        {
+          "cbfOutLink": 64,
+          "chanBW": 53763,
+          "chanCentFreq": 4651962365,
+          "chanID": 289
+        },
+        {
+          "cbfOutLink": 7,
+          "chanBW": 53763,
+          "chanCentFreq": 4652016129,
+          "chanID": 297
+        },
+        {
+          "cbfOutLink": 23,
+          "chanBW": 53763,
+          "chanCentFreq": 4652069892,
+          "chanID": 305
+        },
+        {
+          "cbfOutLink": 68,
+          "chanBW": 53763,
+          "chanCentFreq": 4652123655,
+          "chanID": 313
+        },
+        {
+          "cbfOutLink": 51,
+          "chanBW": 53763,
+          "chanCentFreq": 4652177419,
+          "chanID": 321
+        },
+        {
+          "cbfOutLink": 34,
+          "chanBW": 53763,
+          "chanCentFreq": 4652231182,
+          "chanID": 329
+        },
+        {
+          "cbfOutLink": 19,
+          "chanBW": 53763,
+          "chanCentFreq": 4652284946,
+          "chanID": 337
+        },
+        {
+          "cbfOutLink": 27,
+          "chanBW": 53763,
+          "chanCentFreq": 4652338709,
+          "chanID": 345
+        },
+        {
+          "cbfOutLink": 80,
+          "chanBW": 53763,
+          "chanCentFreq": 4652392473,
+          "chanID": 353
+        },
+        {
+          "cbfOutLink": 20,
+          "chanBW": 53763,
+          "chanCentFreq": 4652446236,
+          "chanID": 361
+        },
+        {
+          "cbfOutLink": 44,
+          "chanBW": 53763,
+          "chanCentFreq": 4652499999,
+          "chanID": 369
+        },
+        {
+          "cbfOutLink": 31,
+          "chanBW": 53763,
+          "chanCentFreq": 4652553763,
+          "chanID": 377
+        },
+        {
+          "cbfOutLink": 21,
+          "chanBW": 53763,
+          "chanCentFreq": 4652607526,
+          "chanID": 385
+        },
+        {
+          "cbfOutLink": 14,
+          "chanBW": 53763,
+          "chanCentFreq": 4652661290,
+          "chanID": 393
+        },
+        {
+          "cbfOutLink": 27,
+          "chanBW": 53763,
+          "chanCentFreq": 4652715053,
+          "chanID": 401
+        },
+        {
+          "cbfOutLink": 32,
+          "chanBW": 53763,
+          "chanCentFreq": 4652768817,
+          "chanID": 409
+        },
+        {
+          "cbfOutLink": 8,
+          "chanBW": 53763,
+          "chanCentFreq": 4652822580,
+          "chanID": 417
+        },
+        {
+          "cbfOutLink": 19,
+          "chanBW": 53763,
+          "chanCentFreq": 4652876344,
+          "chanID": 425
+        },
+        {
+          "cbfOutLink": 77,
+          "chanBW": 53763,
+          "chanCentFreq": 4652930107,
+          "chanID": 433
+        },
+        {
+          "cbfOutLink": 29,
+          "chanBW": 53763,
+          "chanCentFreq": 4652983870,
+          "chanID": 441
+        },
+        {
+          "cbfOutLink": 55,
+          "chanBW": 53763,
+          "chanCentFreq": 4653037634,
+          "chanID": 449
+        },
+        {
+          "cbfOutLink": 9,
+          "chanBW": 53763,
+          "chanCentFreq": 4653091397,
+          "chanID": 457
+        },
+        {
+          "cbfOutLink": 20,
+          "chanBW": 53763,
+          "chanCentFreq": 4653145161,
+          "chanID": 465
+        },
+        {
+          "cbfOutLink": 18,
+          "chanBW": 53763,
+          "chanCentFreq": 4653198924,
+          "chanID": 473
+        },
+        {
+          "cbfOutLink": 44,
+          "chanBW": 53763,
+          "chanCentFreq": 4653252688,
+          "chanID": 481
+        },
+        {
+          "cbfOutLink": 24,
+          "chanBW": 53763,
+          "chanCentFreq": 4653306451,
+          "chanID": 489
+        },
+        {
+          "cbfOutLink": 74,
+          "chanBW": 53763,
+          "chanCentFreq": 4653360215,
+          "chanID": 497
+        },
+        {
+          "cbfOutLink": 20,
+          "chanBW": 53763,
+          "chanCentFreq": 4653413978,
+          "chanID": 505
+        },
+        {
+          "cbfOutLink": 12,
+          "chanBW": 53763,
+          "chanCentFreq": 4653467741,
+          "chanID": 513
+        },
+        {
+          "cbfOutLink": 73,
+          "chanBW": 53763,
+          "chanCentFreq": 4653521505,
+          "chanID": 521
+        },
+        {
+          "cbfOutLink": 42,
+          "chanBW": 53763,
+          "chanCentFreq": 4653575268,
+          "chanID": 529
+        },
+        {
+          "cbfOutLink": 77,
+          "chanBW": 53763,
+          "chanCentFreq": 4653629032,
+          "chanID": 537
+        },
+        {
+          "cbfOutLink": 16,
+          "chanBW": 53763,
+          "chanCentFreq": 4653682795,
+          "chanID": 545
+        },
+        {
+          "cbfOutLink": 8,
+          "chanBW": 53763,
+          "chanCentFreq": 4653736559,
+          "chanID": 553
+        },
+        {
+          "cbfOutLink": 37,
+          "chanBW": 53763,
+          "chanCentFreq": 4653790322,
+          "chanID": 561
+        },
+        {
+          "cbfOutLink": 78,
+          "chanBW": 53763,
+          "chanCentFreq": 4653844086,
+          "chanID": 569
+        },
+        {
+          "cbfOutLink": 25,
+          "chanBW": 53763,
+          "chanCentFreq": 4653897849,
+          "chanID": 577
+        },
+        {
+          "cbfOutLink": 17,
+          "chanBW": 53763,
+          "chanCentFreq": 4653951612,
+          "chanID": 585
+        },
+        {
+          "cbfOutLink": 71,
+          "chanBW": 53763,
+          "chanCentFreq": 4654005376,
+          "chanID": 593
+        },
+        {
+          "cbfOutLink": 73,
+          "chanBW": 53763,
+          "chanCentFreq": 4654059139,
+          "chanID": 601
+        },
+        {
+          "cbfOutLink": 26,
+          "chanBW": 53763,
+          "chanCentFreq": 4654112903,
+          "chanID": 609
+        },
+        {
+          "cbfOutLink": 73,
+          "chanBW": 53763,
+          "chanCentFreq": 4654166666,
+          "chanID": 617
+        },
+        {
+          "cbfOutLink": 4,
+          "chanBW": 53763,
+          "chanCentFreq": 4654220430,
+          "chanID": 625
+        },
+        {
+          "cbfOutLink": 63,
+          "chanBW": 53763,
+          "chanCentFreq": 4654274193,
+          "chanID": 633
+        },
+        {
+          "cbfOutLink": 3,
+          "chanBW": 53763,
+          "chanCentFreq": 4654327956,
+          "chanID": 641
+        },
+        {
+          "cbfOutLink": 18,
+          "chanBW": 53763,
+          "chanCentFreq": 4654381720,
+          "chanID": 649
+        },
+        {
+          "cbfOutLink": 68,
+          "chanBW": 53763,
+          "chanCentFreq": 4654435483,
+          "chanID": 657
+        },
+        {
+          "cbfOutLink": 10,
+          "chanBW": 53763,
+          "chanCentFreq": 4654489247,
+          "chanID": 665
+        },
+        {
+          "cbfOutLink": 15,
+          "chanBW": 53763,
+          "chanCentFreq": 4654543010,
+          "chanID": 673
+        },
+        {
+          "cbfOutLink": 61,
+          "chanBW": 53763,
+          "chanCentFreq": 4654596774,
+          "chanID": 681
+        },
+        {
+          "cbfOutLink": 66,
+          "chanBW": 53763,
+          "chanCentFreq": 4654650537,
+          "chanID": 689
+        },
+        {
+          "cbfOutLink": 4,
+          "chanBW": 53763,
+          "chanCentFreq": 4654704301,
+          "chanID": 697
+        },
+        {
+          "cbfOutLink": 62,
+          "chanBW": 53763,
+          "chanCentFreq": 4654758064,
+          "chanID": 705
+        },
+        {
+          "cbfOutLink": 4,
+          "chanBW": 53763,
+          "chanCentFreq": 4654811827,
+          "chanID": 713
+        },
+        {
+          "cbfOutLink": 42,
+          "chanBW": 53763,
+          "chanCentFreq": 4654865591,
+          "chanID": 721
+        },
+        {
+          "cbfOutLink": 4,
+          "chanBW": 53763,
+          "chanCentFreq": 4654919354,
+          "chanID": 729
+        },
+        {
+          "cbfOutLink": 46,
+          "chanBW": 53763,
+          "chanCentFreq": 4654973118,
+          "chanID": 737
+        }
+      ],
+      "frequencySliceID": 1,
+      "fspID": 1
+    },
+    {
+      "channel": [],
+      "frequencySliceID": 20,
+      "fspID": 2
+    }
+  ],
+  "scanID": 1
+}

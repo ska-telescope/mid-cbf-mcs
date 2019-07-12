@@ -1,15 +1,17 @@
+from num_capabilities import *
+
 with open("mid-cbf-mcs.yml", "w+") as f:
     string = "version: \"2.2\"\n\nservices:\n"
 
-    containers_vcc = [*map(lambda j: "vcc{:03d}".format(j), range(1, 198))]
-    containers_fsp = [*map(lambda j: "fsp{:02d}".format(j), range(1, 28))]
-    containers_cbf_subarray = [*map(lambda j: "cbfsubarray{:02d}".format(j), range(1, 17))]
+    containers_vcc = [*map(lambda j: "vcc{:03d}".format(j), range(1, num_vcc + 1))]
+    containers_fsp = [*map(lambda j: "fsp{:02d}".format(j), range(1, num_fsp + 1))]
+    containers_cbf_subarray = [*map(lambda j: "cbfsubarray{:02d}".format(j), range(1, num_subarray + 1))]
     depends_on_vcc = "\n      - ".join(containers_vcc)
     depends_on_fsp = "\n      - ".join(containers_fsp)
     depends_on_cbf_subarray = "\n      - ".join(containers_cbf_subarray)
 
     # Generate VCC containers
-    for i in range(1, 198):
+    for i in range(1, num_vcc + 1):
         string += "  vcc{0:03d}:\n" \
                   "    image: ${{DOCKER_REGISTRY_HOST}}/${{DOCKER_REGISTRY_USER}}/${{PROJECT}}:latest\n" \
                   "    network_mode: ${{NETWORK_MODE}}\n" \
@@ -31,7 +33,7 @@ with open("mid-cbf-mcs.yml", "w+") as f:
                   "             /venv/bin/python /app/csplmc/Vcc/VccMulti/VccMulti.py vcc-{0:03d}\"\n\n".format(i)
 
     # Generate FSP containers
-    for i in range(1, 28):
+    for i in range(1, num_fsp + 1):
         string += "  fsp{0:02d}:\n" \
                   "    image: ${{DOCKER_REGISTRY_HOST}}/${{DOCKER_REGISTRY_USER}}/${{PROJECT}}:latest\n" \
                   "    network_mode: ${{NETWORK_MODE}}\n" \
@@ -54,7 +56,7 @@ with open("mid-cbf-mcs.yml", "w+") as f:
                   "             /venv/bin/python /app/csplmc/Fsp/FspMulti/FspMulti.py fsp-{0:02d}\"\n\n".format(i, depends_on_vcc)
 
     # Generate CBF Subarray containers
-    for i in range(1, 17):
+    for i in range(1, num_subarray + 1):
         string += "  cbfsubarray{0:02d}:\n" \
                   "    image: ${{DOCKER_REGISTRY_HOST}}/${{DOCKER_REGISTRY_USER}}/${{PROJECT}}:latest\n" \
                   "    network_mode: ${{NETWORK_MODE}}\n" \

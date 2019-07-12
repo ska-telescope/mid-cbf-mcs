@@ -1,9 +1,11 @@
-with open("devices.json", "w+") as f:
+from num_capabilities import *
+
+with open("csplmc/devices.json", "w+") as f:
     string = "[\n"
 
-    fqdn_vcc = [*map(lambda j: "\"mid_csp_cbf/vcc/{:03d}\"".format(j), range(1, 199))]
-    fqdn_fsp = [*map(lambda j: "\"mid_csp_cbf/fsp/{:02d}\"".format(j), range(1, 28))]
-    fqdn_cbf_subarray = [*map(lambda j: "\"mid_csp_cbf/sub_elt/subarray_{:02d}\"".format(j), range(1, 17))]
+    fqdn_vcc = [*map(lambda j: "\"mid_csp_cbf/vcc/{:03d}\"".format(j), range(1, num_vcc + 1))]
+    fqdn_fsp = [*map(lambda j: "\"mid_csp_cbf/fsp/{:02d}\"".format(j), range(1, num_fsp + 1))]
+    fqdn_cbf_subarray = [*map(lambda j: "\"mid_csp_cbf/sub_elt/subarray_{:02d}\"".format(j), range(1, num_subarray + 1))]
     string_vcc = "\n                    " + \
                  ",\n                    ".join(fqdn_vcc) + \
                  "\n                "
@@ -22,7 +24,7 @@ with open("devices.json", "w+") as f:
               "        \"deviceProperties\": [\n" \
               "            {{\n" \
               "                \"devPropName\": \"MaxCapabilities\",\n" \
-              "                \"devPropValue\": [\"VCC:197\", \"FSP:27\", \"Subarray:16\"]\n" \
+              "                \"devPropValue\": [\"VCC:{3}\", \"FSP:{4}\", \"Subarray:{5}\"]\n" \
               "            }},\n" \
               "            {{\n" \
               "                \"devPropName\": \"VCC\",\n" \
@@ -60,7 +62,7 @@ with open("devices.json", "w+") as f:
               "                \"changeEventAbs\": \"\"\n" \
               "            }}\n" \
               "        ]\n" \
-              "    }},\n".format(string_vcc, string_fsp, string_cbf_subarray)
+              "    }},\n".format(string_vcc, string_fsp, string_cbf_subarray, num_vcc, num_fsp, num_subarray)
 
     # Generate TM TelState test device
     string += "    {\n" \
@@ -99,8 +101,8 @@ with open("devices.json", "w+") as f:
               "    },\n"
 
     # Generate CBF Subarrays
-    for i in range(1, 17):
-        fqdn_fsp_subarray = [*map(lambda j: "\"mid_csp_cbf/fspSubarray/{0:02d}_{1:02d}\"".format(j, i), range(1, 28))]
+    for i in range(1, num_subarray + 1):
+        fqdn_fsp_subarray = [*map(lambda j: "\"mid_csp_cbf/fspSubarray/{0:02d}_{1:02d}\"".format(j, i), range(1, num_fsp + 1))]
         string_fsp_subarray = "\n                    " + \
                               ",\n                    ".join(fqdn_fsp_subarray) + \
                               "\n                "
@@ -185,7 +187,7 @@ with open("devices.json", "w+") as f:
                   "    }},\n".format(i, string_vcc, string_fsp, string_fsp_subarray)
 
     # Generate VCCs
-    for i in range(1, 198):
+    for i in range(1, num_vcc + 1):
         string += "    {{\n" \
                   "        \"class\": \"Vcc\",\n" \
                   "        \"serverName\": \"VccMulti/vcc-{0:03d}\",\n" \
@@ -253,7 +255,7 @@ with open("devices.json", "w+") as f:
                   "    }},\n".format(i)
 
     # Generate FSPs
-    for i in range(1, 28):
+    for i in range(1, num_fsp + 1):
         string += "    {{\n" \
                   "        \"class\": \"Fsp\",\n" \
                   "        \"serverName\": \"FspMulti/fsp-{0:02d}\",\n" \
@@ -313,7 +315,7 @@ with open("devices.json", "w+") as f:
                   "    }},\n".format(i)
 
     # Generate CBF Subarray search windows (2 for each CBF Subarray)
-    for i in range(1, 17):
+    for i in range(1, num_subarray + 1):
         string += "    {{\n" \
                   "        \"class\": \"SearchWindow\",\n" \
                   "        \"serverName\": \"CbfSubarrayMulti/cbfSubarray-{0:02d}\",\n" \
@@ -328,7 +330,7 @@ with open("devices.json", "w+") as f:
                   "    }},\n".format(i)
 
     # Generate VCC band 1 and 2 Capabilities (for each VCC)
-    for i in range(1, 198):
+    for i in range(1, num_vcc + 1):
         string += "    {{\n" \
                   "        \"class\": \"VccBand1And2\",\n" \
                   "        \"serverName\": \"VccMulti/vcc-{0:03d}\",\n" \
@@ -337,7 +339,7 @@ with open("devices.json", "w+") as f:
                   "    }},\n".format(i)
 
     # Generate VCC band 3 Capabilities (for each VCC)
-    for i in range(1, 198):
+    for i in range(1, num_vcc + 1):
         string += "    {{\n" \
                   "        \"class\": \"VccBand3\",\n" \
                   "        \"serverName\": \"VccMulti/vcc-{0:03d}\",\n" \
@@ -346,7 +348,7 @@ with open("devices.json", "w+") as f:
                   "    }},\n".format(i)
 
     # Generate VCC band 4 Capabilities (for each VCC)
-    for i in range(1, 198):
+    for i in range(1, num_vcc + 1):
         string += "    {{\n" \
                   "        \"class\": \"VccBand4\",\n" \
                   "        \"serverName\": \"VccMulti/vcc-{0:03d}\",\n" \
@@ -355,7 +357,7 @@ with open("devices.json", "w+") as f:
                   "    }},\n".format(i)
 
     # Generate VCC band 5 Capabilities (for each VCC)
-    for i in range(1, 198):
+    for i in range(1, num_vcc + 1):
         string += "    {{\n" \
                   "        \"class\": \"VccBand5\",\n" \
                   "        \"serverName\": \"VccMulti/vcc-{0:03d}\",\n" \
@@ -364,7 +366,7 @@ with open("devices.json", "w+") as f:
                   "    }},\n".format(i)
 
     # Generate VCC search windows (2 for each VCC)
-    for i in range(1, 198):
+    for i in range(1, num_vcc + 1):
         string += "    {{\n" \
                   "        \"class\": \"VccSearchWindow\",\n" \
                   "        \"serverName\": \"VccMulti/vcc-{0:03d}\",\n" \
@@ -379,7 +381,7 @@ with open("devices.json", "w+") as f:
                   "    }},\n".format(i)
 
     # Generate FSP correlation Capabilities (for each FSP)
-    for i in range(1, 28):
+    for i in range(1, num_fsp + 1):
         string += "    {{\n" \
                   "        \"class\": \"FspCorr\",\n" \
                   "        \"serverName\": \"FspMulti/fsp-{0:02d}\",\n" \
@@ -388,7 +390,7 @@ with open("devices.json", "w+") as f:
                   "    }},\n".format(i)
 
     # Generate FSP PSS Capabilities (for each FSP)
-    for i in range(1, 28):
+    for i in range(1, num_fsp + 1):
         string += "    {{\n" \
                   "        \"class\": \"FspPss\",\n" \
                   "        \"serverName\": \"FspMulti/fsp-{0:02d}\",\n" \
@@ -397,7 +399,7 @@ with open("devices.json", "w+") as f:
                   "    }},\n".format(i)
 
     # Generate FSP PST Capabilities (for each FSP)
-    for i in range(1, 28):
+    for i in range(1, num_fsp + 1):
         string += "    {{\n" \
                   "        \"class\": \"FspPst\",\n" \
                   "        \"serverName\": \"FspMulti/fsp-{0:02d}\",\n" \
@@ -406,7 +408,7 @@ with open("devices.json", "w+") as f:
                   "    }},\n".format(i)
 
     # Generate FSP VLBI Capabilities (for each FSP)
-    for i in range(1, 28):
+    for i in range(1, num_fsp + 1):
         string += "    {{\n" \
                   "        \"class\": \"FspVlbi\",\n" \
                   "        \"serverName\": \"FspMulti/fsp-{0:02d}\",\n" \
@@ -415,8 +417,8 @@ with open("devices.json", "w+") as f:
                   "    }},\n".format(i)
 
     # Generate FSP Subarrays
-    for i in range(1, 28):
-        for j in range(1, 17):
+    for i in range(1, num_fsp + 1):
+        for j in range(1, num_subarray + 1):
             string += "    {{\n" \
                       "        \"class\": \"FspSubarray\",\n" \
                       "        \"serverName\": \"FspMulti/fsp-{0:02d}\",\n" \

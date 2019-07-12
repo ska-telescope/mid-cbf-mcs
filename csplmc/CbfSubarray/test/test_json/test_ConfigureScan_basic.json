@@ -18,7 +18,7 @@
             "tdcPeriodAfterEpoch": 25,
             "tdcDestinationAddress": [
                 {
-                    "receptorID": 10,
+                    "receptorID": 4,
                     "tdcDestinationAddress": ["foo", "bar", "8080"]
                 },
                 {
@@ -37,7 +37,7 @@
         {
             "fspID": 1,
             "functionMode": "CORR",
-            "receptors": [10],
+            "receptors": [4],
             "frequencySliceID": 1,
             "corrBandwidth": 1,
             "zoomWindowTuning": 4700000,

@@ -88,7 +88,7 @@ class TmTelstateTest(SKABaseDevice):
             }
             for channel_in in fsp_in["channel"]:
                 log_msg = "Assigning destination addresses for channel {} of FSP {}...".format(
-                    channel_in["channelID"], fsp_in["fspID"]
+                    channel_in["chanID"], fsp_in["fspID"]
                 )
                 self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
 
