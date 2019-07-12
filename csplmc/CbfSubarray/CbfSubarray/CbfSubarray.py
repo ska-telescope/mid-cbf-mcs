@@ -80,18 +80,22 @@ class CbfSubarray(SKASubarray):
 
     def __vis_destination_address_event_callback(self, event):
         if not event.err:
+            if self._obs_state not in [ObsState.CONFIGURING.value, ObsState.READY.value]:
+                return
             try:
                 log_msg = "Received destination addresses for visibilities."
                 self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
 
-                # No exception should technically ever be raised here.
-                destination_addresses = json.loads(str(event.attr_value.value))
-
-                if not destination_addresses["__valid"]:
-                    log_msg = "Discarding destination addresses marked as invalid."
+                value = str(event.attr_value.value)
+                if str(event.attr_value.value) == self._last_received_vis_destination_address:
+                    log_msg = "Skipped configuring destination addresses."
                     self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
                     return
 
+                self._last_received_vis_destination_address = value
+                destination_addresses = json.loads(value)
+
+                # No exception should technically ever be raised here.
                 if destination_addresses["scanID"] != self._scan_ID:
                     raise ValueError("scanID is not correct")
                 for fsp in destination_addresses["fsp"]:
@@ -235,16 +239,11 @@ class CbfSubarray(SKASubarray):
                         self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
 
                         channel = {
-                            "channelID": channel_ID,
-                            "channelBandwidth": int(channel_bandwidth),
-                            "channelCenterFrequency": int(next_channel_start + channel_bandwidth/2),
-                            "phaseBin": []
+                            "chanID": channel_ID,
+                            "bw": int(channel_bandwidth),
+                            "cf": int(next_channel_start + channel_bandwidth/2),
+                            "cbfOutLink": randint(1, const.NUM_OUTPUT_LINKS)
                         }
-                        for i in range(const.NUM_PHASE_BINS):
-                            channel["phaseBin"].append({
-                                "phaseBinID": 0,  # phase bin ID unsupported for PI3
-                                "cbfOutputLink": randint(1, const.NUM_OUTPUT_LINKS)  # random link
-                            })
                         output_links["channel"].append(channel)
                         next_channel_start += channel_bandwidth
                 """
@@ -256,16 +255,11 @@ class CbfSubarray(SKASubarray):
                     ):
                         # treat all channels individually (i.e. no averaging)
                         channel = {
-                            "channelID": channel_ID,
-                            "channelBandwidth": int(channel_bandwidth),
-                            "channelCenterFrequency": int(next_channel_start + channel_bandwidth/2),
-                            "phaseBin": []
+                            "chanID": channel_ID,
+                            "bw": int(channel_bandwidth),
+                            "cf": int(next_channel_start + channel_bandwidth/2),
+                            "cbfOutLink": 0
                         }
-                        for i in range(const.NUM_PHASE_BINS):
-                            channel["phaseBin"].append({
-                                "phaseBinID": 0,  # phase bin ID unsupported for PI3
-                                "cbfOutputLink": 0  # don't send channel
-                            })
                         output_links["channel"].append(channel)
                         next_channel_start += channel_bandwidth
                 """
@@ -273,12 +267,8 @@ class CbfSubarray(SKASubarray):
 
         log_msg = "Done assigning output links."
         self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
-
         # publish the output links
-        output_links_all["__valid"] = True
         self._output_links_distribution = output_links_all
-        self.push_change_event("outputLinksDistribution", self._output_links_distribution)
-        self._output_links_distribution["__valid"] = False
 
     def __validate_scan_configuration(self, argin):
         # try to deserialize input string to a JSON object
@@ -695,7 +685,8 @@ class CbfSubarray(SKASubarray):
         self._receptors = []
         self._frequency_band = 0
         self._scan_ID = 0
-        self._output_links_distribution = {"__valid": False}
+        self._output_links_distribution = {"scanID": 0}
+        self._last_received_vis_destination_address = "{}"
         self._vcc_state = {}  # device_name:state
         self._vcc_health_state = {}  # device_name:healthState
         self._fsp_state = {}  # device_name:state

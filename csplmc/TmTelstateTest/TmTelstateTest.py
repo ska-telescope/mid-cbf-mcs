@@ -52,18 +52,22 @@ class TmTelstateTest(SKABaseDevice):
                 self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
 
                 output_links = json.loads(str(event.attr_value.value))
+                scan_ID = int(output_links["scanID"])
 
-                if not output_links["__valid"]:
-                    log_msg = "Discarding output links marked as invalid."
+                if not scan_ID:
+                    log_msg = "Skipped assigning destination addresses."
                     self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
                     return
 
-                scan_ID = int(output_links["scanID"])
                 subarray_scan_ID = self._proxy_cbf_master.subarrayScanID
                 for i in range(len(subarray_scan_ID)):
                     if subarray_scan_ID[i] == scan_ID:
+                        if self._received_output_links[i]:
+                            log_msg = "Skipped assigning destination addresses."
+                            self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+                            return
                         self.__generate_visibilities_destination_addresses(output_links, i)
-                        break
+                        return
             except Exception as e:
                 self.dev_logging(str(e), PyTango.LogLevel.LOG_ERROR)
         else:
@@ -89,31 +93,19 @@ class TmTelstateTest(SKABaseDevice):
                 self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
 
                 channel = {
-                    "channelID": channel_in["channelID"],
-                    "phaseBin": []
+                    "chanID": channel_in["chanID"],
+                    "sdpMacAddress": "0A:00:27:00:00:0F",
+                    "sdpIpAddress": "127.0.0.1",
+                    "sdpPort": 80
                 }
-                for phase_bin_in in channel_in["phaseBin"]:
-                    if phase_bin_in["cbfOutputLink"]:  # send channels to SDP
-                        # doesn't matter what values the addresses have for now
-                        channel["phaseBin"].append({
-                            "phaseBinID": phase_bin_in["phaseBinID"],
-                            "sdpMacAddress": "0A:00:27:00:00:0F",
-                            "sdpIpAddress": "127.0.0.1",
-                            "sdpPort": 80
-                        })
-                    else:  # not exactly sure if I should do anything
-                        pass
                 fsp["channel"].append(channel)
             destination_addresses["fsp"].append(fsp)
 
         log_msg = "Done assigning destination addresses."
         self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
-
         # publish the destination addresses
-        destination_addresses["__valid"] = True
         self._vis_destination_address[index] = destination_addresses
-        self.push_change_event("visDestinationAddress_1", self._vis_destination_address[index])
-        self._vis_destination_address[index]["__valid"] = False
+        self._received_output_links[index] = True
 
     # PROTECTED REGION END #    //  TmTelstateTest.class_variable
 
@@ -396,7 +388,8 @@ class TmTelstateTest(SKABaseDevice):
         self._doppler_phase_correction = [(0, 0, 0, 0) for i in range(16)]
         self._delay_model = {}  # this is interpreted as a JSON object
         # these are interpreted as JSON objects
-        self._vis_destination_address = [{"__valid": False} for i in range(16)]
+        self._vis_destination_address = [{} for i in range(16)]
+        self._received_output_links = [False]*16
 
         self._proxy_csp_master = PyTango.DeviceProxy(self.CspMasterAddress)
         self._proxy_cbf_master = PyTango.DeviceProxy(
