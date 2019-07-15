@@ -403,8 +403,8 @@ class TmTelstateTest(SKABaseDevice):
 
         for proxy in self._proxy_csp_telstate_output_links:
             proxy.subscribe_event(
-                PyTango.EventType.CHANGE_EVENT, 
-                self.__output_links_event_callback, 
+                PyTango.EventType.CHANGE_EVENT,
+                self.__output_links_event_callback,
                 stateless=True
             )
 

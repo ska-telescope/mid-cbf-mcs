@@ -176,13 +176,20 @@ class CbfSubarray(SKASubarray):
             output_links = {
                 "fspID": int(fsp["fspID"]),
                 "frequencySliceID": int(fsp["frequencySliceID"]),
-                "channel": []
+                "cbfOutLink": []
             }
+
+            links = [[] for i in range(const.NUM_OUTPUT_LINKS)]
 
             channel_averaging_map_default = [
                 [int(i*const.NUM_FINE_CHANNELS/const.NUM_CHANNEL_GROUPS) + 1, 0]
                 for i in range(const.NUM_CHANNEL_GROUPS)
             ]
+
+            if "channelAveragingMap" in fsp:
+                channel_averaging_map = fsp["channelAveragingMap"]
+            else:
+                channel_averaging_map = channel_averaging_map_default
 
             bandwidth = const.FREQUENCY_SLICE_BW*10**6/2**int(fsp["corrBandwidth"])
 
@@ -215,25 +222,18 @@ class CbfSubarray(SKASubarray):
             next_channel_start = frequency_slice_start
 
             for channel_group_ID in range(const.NUM_CHANNEL_GROUPS):
-                if "channelAveragingMap" in fsp:
-                    channel_averaging_map = fsp["channelAveragingMap"]
-                else:
-                    channel_averaging_map = channel_averaging_map_default
                 channel_avg = channel_averaging_map[channel_group_ID][1]
 
-                if channel_avg:
-                    channel_bandwidth = bandwidth/const.NUM_FINE_CHANNELS*channel_avg
-                else:
-                    channel_bandwidth = bandwidth/const.NUM_FINE_CHANNELS
-
                 if channel_avg:  # send channels to SDP
+                    channel_bandwidth = bandwidth/const.NUM_FINE_CHANNELS*channel_avg
+
                     for channel_ID in range(
                         int(channel_group_ID*const.NUM_FINE_CHANNELS/const.NUM_CHANNEL_GROUPS) + 1,
                         int((channel_group_ID + 1)*const.NUM_FINE_CHANNELS/const.NUM_CHANNEL_GROUPS) \
                             + 1,
                         channel_avg
                     ):
-                        log_msg = "Assigning output links for channel {} of FSP {}...".format(
+                        log_msg = "Assigning output link for channel {} of FSP {}...".format(
                             channel_ID, fsp["fspID"]
                         )
                         self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
@@ -241,29 +241,24 @@ class CbfSubarray(SKASubarray):
                         channel = {
                             "chanID": channel_ID,
                             "bw": int(channel_bandwidth),
-                            "cf": int(next_channel_start + channel_bandwidth/2),
-                            "cbfOutLink": randint(1, const.NUM_OUTPUT_LINKS)
+                            "cf": int(next_channel_start + channel_bandwidth/2)
                         }
-                        output_links["channel"].append(channel)
+                        links[randint(0, const.NUM_OUTPUT_LINKS - 1)].append(channel)
                         next_channel_start += channel_bandwidth
-                """
                 else:  # don't send channels to SDP
-                    for channel_ID in range(
-                        int(channel_group_ID*const.NUM_FINE_CHANNELS/const.NUM_CHANNEL_GROUPS) + 1,
-                        int((channel_group_ID + 1)*const.NUM_FINE_CHANNELS/const.NUM_CHANNEL_GROUPS) \
-                            + 1
-                    ):
-                        # treat all channels individually (i.e. no averaging)
-                        channel = {
-                            "chanID": channel_ID,
-                            "bw": int(channel_bandwidth),
-                            "cf": int(next_channel_start + channel_bandwidth/2),
-                            "cbfOutLink": 0
-                        }
-                        output_links["channel"].append(channel)
-                        next_channel_start += channel_bandwidth
-                """
+                    next_channel_start += bandwidth/const.NUM_CHANNEL_GROUPS
+
+            for link_ID in range(1, const.NUM_OUTPUT_LINKS + 1):
+                if links[link_ID - 1]:
+                    output_links["cbfOutLink"].append({
+                        "linkID": link_ID,
+                        "channel": links[link_ID - 1]
+                    })
+
             output_links_all["fsp"].append(output_links)
+
+        # with open("outputlinks.json", "w+") as f:
+        #     json.dump(output_links_all, f, sort_keys=True, indent=2)
 
         log_msg = "Done assigning output links."
         self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
