@@ -117,7 +117,9 @@ class TmTelstateTest(SKABaseDevice):
         dtype='str'
     )
 
-
+    CspTelstateOutputLinks = device_property(
+        dtype=('str',)
+    )
 
 
     # ----------
@@ -395,15 +397,16 @@ class TmTelstateTest(SKABaseDevice):
         self._proxy_cbf_master = PyTango.DeviceProxy(
             self._proxy_csp_master.get_property("CspMidCbf")["CspMidCbf"][0]
         )
+        self._proxy_csp_telstate_output_links = [*map(
+            PyTango.AttributeProxy, self.CspTelstateOutputLinks)
+        ]
 
-        # subscribe to mid_csp_cbf/sub_elt/subarray_01 for testing until CspTelstate is available
-        self._proxy_cbf_subarray_01 = PyTango.DeviceProxy("mid_csp_cbf/sub_elt/subarray_01")
-        self._proxy_cbf_subarray_01.subscribe_event(
-            "outputLinksDistribution",
-            PyTango.EventType.CHANGE_EVENT,
-            self.__output_links_event_callback,
-            stateless=True
-        )
+        for proxy in self._proxy_csp_telstate_output_links:
+            proxy.subscribe_event(
+                PyTango.EventType.CHANGE_EVENT, 
+                self.__output_links_event_callback, 
+                stateless=True
+            )
 
         self.set_state(DevState.STANDBY)
         # PROTECTED REGION END #    //  TmTelstateTest.init_device

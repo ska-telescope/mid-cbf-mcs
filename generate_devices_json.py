@@ -6,6 +6,7 @@ with open("csplmc/devices.json", "w+") as f:
     fqdn_vcc = [*map(lambda j: "\"mid_csp_cbf/vcc/{:03d}\"".format(j), range(1, num_vcc + 1))]
     fqdn_fsp = [*map(lambda j: "\"mid_csp_cbf/fsp/{:02d}\"".format(j), range(1, num_fsp + 1))]
     fqdn_cbf_subarray = [*map(lambda j: "\"mid_csp_cbf/sub_elt/subarray_{:02d}\"".format(j), range(1, num_subarray + 1))]
+    fqdn_csp_telstate_output_links = [*map(lambda j: "\"mid_csp/elt/telstate/cbfOutputLinks{}\"".format(j), range(1, num_subarray + 1))]
     string_vcc = "\n                    " + \
                  ",\n                    ".join(fqdn_vcc) + \
                  "\n                "
@@ -15,6 +16,9 @@ with open("csplmc/devices.json", "w+") as f:
     string_cbf_subarray = "\n                    " + \
                           ",\n                    ".join(fqdn_cbf_subarray) + \
                           "\n                "
+    string_csp_telstate_output_links = "\n                    " + \
+                                       ",\n                    ".join(fqdn_csp_telstate_output_links) + \
+                                       "\n                "
 
     # Generate CBF Master
     string += "    {{\n" \
@@ -65,40 +69,44 @@ with open("csplmc/devices.json", "w+") as f:
               "    }},\n".format(string_vcc, string_fsp, string_cbf_subarray, num_vcc, num_fsp, num_subarray)
 
     # Generate TM TelState test device
-    string += "    {\n" \
+    string += "    {{\n" \
               "        \"class\": \"TmTelstateTest\",\n" \
               "        \"serverName\": \"TmTelstateTest/tm\",\n" \
               "        \"devName\": \"ska1_mid/tm/telmodel\",\n" \
               "        \"deviceProperties\": [\n" \
-              "            {\n" \
+              "            {{\n" \
               "                \"devPropName\": \"CspMasterAddress\",\n" \
               "                \"devPropValue\": \"mid_csp/elt/master\"\n" \
-              "            }\n" \
+              "            }},\n" \
+              "            {{\n" \
+              "                \"devPropName\": \"CspTelstateOutputLinks\",\n" \
+              "                \"devPropValue\": [{}]\n" \
+              "            }}\n" \
               "        ],\n" \
               "        \"attributeProperties\": [\n" \
-              "            {\n" \
+              "            {{\n" \
               "                \"attributeName\": \"delayModel\",\n" \
               "                \"attrPropName\": \"\",\n" \
               "                \"attrPropValue\": \"\",\n" \
               "                \"pollingPeriod\": 1000,\n" \
               "                \"changeEventAbs\": \"1\"\n" \
-              "            },\n" \
-              "            {\n" \
+              "            }},\n" \
+              "            {{\n" \
               "                \"attributeName\": \"visDestinationAddress_1\",\n" \
               "                \"attrPropName\": \"\",\n" \
               "                \"attrPropValue\": \"\",\n" \
               "                \"pollingPeriod\": 1000,\n" \
               "                \"changeEventAbs\": \"1\"\n" \
-              "            },\n" \
-              "            {\n" \
+              "            }},\n" \
+              "            {{\n" \
               "                \"attributeName\": \"dopplerPhaseCorrection_1\",\n" \
               "                \"attrPropName\": \"\",\n" \
               "                \"attrPropValue\": \"\",\n" \
               "                \"pollingPeriod\": 1000,\n" \
               "                \"changeEventAbs\": \"1\"\n" \
-              "            }\n" \
+              "            }}\n" \
               "        ]\n" \
-              "    },\n"
+              "    }},\n".format(string_csp_telstate_output_links)
 
     # Generate CBF Subarrays
     for i in range(1, num_subarray + 1):

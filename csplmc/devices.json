@@ -88,6 +88,12 @@
             {
                 "devPropName": "CspMasterAddress",
                 "devPropValue": "mid_csp/elt/master"
+            },
+            {
+                "devPropName": "CspTelstateOutputLinks",
+                "devPropValue": [
+                    "mid_csp/elt/telstate/cbfOutputLinks1"
+                ]
             }
         ],
         "attributeProperties": [
