@@ -107,6 +107,7 @@ class TmCspSubarrayLeafNodeTest(SKABaseDevice):
         self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
         # publish the destination addresses
         self._vis_destination_address = destination_addresses
+        self.push_change_event("visDestinationAddress", json.dumps(self._vis_destination_address))
         self._received_output_links = True
 
     # PROTECTED REGION END #    //  TmCspSubarrayLeafNodeTest.class_variable

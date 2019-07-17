@@ -394,6 +394,8 @@ class FspSubarray(SKASubarray):
                             0
                         ])
 
+        # I'm pretty sure the list is sorted by first element anyway,
+        # but specify that just in case, I guess.
         self._channel_info.sort(key=lambda x: x[0])
         # PROTECTED REGION END #    //  FspSubarray.AddChannelFrequencyInfo
 
@@ -427,6 +429,7 @@ class FspSubarray(SKASubarray):
                             PyTango.Except.throw_exception("Command failed", msg,
                                                            "AddChannelAddressInfo execution",
                                                            PyTango.ErrSeverity.ERR)
+                self._vis_destination_address = fsp
 
         # get list of unconfigured channels
         unconfigured_channels = [channel[0] for channel in self._channel_info if channel[4] == ""]
