@@ -176,19 +176,19 @@ class Fsp(SKACapability):
     # --------
 
     @command()
-    def On(self, argin):
+    def On(self):
         # PROTECTED REGION ID(Fsp.On) ENABLED START #
         self.set_state(PyTango.DevState.ON)
         # PROTECTED REGION END #    //  Fsp.On
 
     @command()
-    def Off(self, argin):
+    def Off(self):
         # PROTECTED REGION ID(Fsp.Off) ENABLED START #
         self.set_state(PyTango.DevState.OFF)
         # PROTECTED REGION END #    //  Fsp.Off
 
     @command()
-    def Standby(self, argin):
+    def Standby(self):
         # PROTECTED REGION ID(Fsp.Standby) ENABLED START #
         self.set_state(PyTango.DevState.STANDBY)
         # PROTECTED REGION END #    //  Fsp.Standby

@@ -469,19 +469,19 @@ class Vcc(SKACapability):
     # --------
 
     @command()
-    def On(self, argin):
+    def On(self):
         # PROTECTED REGION ID(Vcc.On) ENABLED START #
         self.set_state(PyTango.DevState.ON)
         # PROTECTED REGION END #    //  Vcc.On
 
     @command()
-    def Off(self, argin):
+    def Off(self):
         # PROTECTED REGION ID(Vcc.Off) ENABLED START #
         self.set_state(PyTango.DevState.OFF)
         # PROTECTED REGION END #    //  Vcc.Off
 
     @command()
-    def Standby(self, argin):
+    def Standby(self):
         # PROTECTED REGION ID(Vcc.Standby) ENABLED START #
         self.set_state(PyTango.DevState.STANDBY)
         # PROTECTED REGION END #    //  Vcc.Standby
