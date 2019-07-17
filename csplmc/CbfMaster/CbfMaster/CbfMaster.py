@@ -121,8 +121,11 @@ class CbfMaster(SKAMaster):
                     self._report_vcc_subarray_membership[self._fqdn_vcc.index(device_name)] = \
                         event.attr_value.value
                 elif "fsp" in device_name:
-                    self._report_fsp_subarray_membership[self._fqdn_fsp.index(device_name)] = \
-                       event.attr_value.value
+                    if event.attr_value.value not in self._report_fsp_subarray_membership[
+                            self._fqdn_fsp.index(device_name)]:
+                        self._report_fsp_subarray_membership[
+                            self._fqdn_fsp.index(device_name)
+                        ].append(event.attr_value.value)
                 else:
                     # should NOT happen!
                     log_msg = "Received event for unknown device " + str(
@@ -437,7 +440,7 @@ class CbfMaster(SKAMaster):
         self._report_fsp_state = [PyTango.DevState.UNKNOWN]*self._count_fsp
         self._report_fsp_health_state = [HealthState.UNKNOWN.value]*self._count_fsp
         self._report_fsp_admin_mode = [AdminMode.ONLINE.value]*self._count_fsp
-        self._report_fsp_subarray_membership = [() for i in range(self._count_fsp)]
+        self._report_fsp_subarray_membership = [[] for i in range(self._count_fsp)]
         self._report_subarray_state = [PyTango.DevState.UNKNOWN]*self._count_subarray
         self._report_subarray_health_state = [HealthState.UNKNOWN.value]*self._count_subarray
         self._report_subarray_admin_mode = [AdminMode.ONLINE.value]*self._count_subarray
