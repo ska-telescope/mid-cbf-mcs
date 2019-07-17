@@ -81,19 +81,17 @@
         ]
     },
     {
-        "class": "TmTelstateTest",
-        "serverName": "TmTelstateTest/tm",
-        "devName": "ska1_mid/tm/telmodel",
+        "class": "TmCspSubarrayLeafNodeTest",
+        "serverName": "TmCspSubarrayLeafNodeTest/tm",
+        "devName": "ska_mid/tm_leaf_node/csp_subarray_01",
         "deviceProperties": [
             {
                 "devPropName": "CspMasterAddress",
                 "devPropValue": "mid_csp/elt/master"
             },
             {
-                "devPropName": "CspTelstateOutputLinks",
-                "devPropValue": [
-                    "mid_csp/elt/telstate/cbfOutputLinks1"
-                ]
+                "devPropName": "CspSubarrayAddress",
+                "devPropValue": "mid_csp/elt/subarray_01"
             }
         ],
         "attributeProperties": [
@@ -105,14 +103,14 @@
                 "changeEventAbs": "1"
             },
             {
-                "attributeName": "visDestinationAddress_1",
+                "attributeName": "visDestinationAddress",
                 "attrPropName": "",
                 "attrPropValue": "",
                 "pollingPeriod": 1000,
                 "changeEventAbs": "1"
             },
             {
-                "attributeName": "dopplerPhaseCorrection_1",
+                "attributeName": "dopplerPhaseCorrection",
                 "attrPropName": "",
                 "attrPropValue": "",
                 "pollingPeriod": 1000,

@@ -202,6 +202,9 @@ class FspSubarray(SKASubarray):
         self._vis_destination_address = {}
         self._delay_model = ""
 
+        # For each channel sent to SDP: [chanID, bw, cf, cbfOutLink, sdpIp, sdpPort]
+        self._channel_info = []
+
         # device proxy for easy reference to CBF Master
         self._proxy_cbf_master = PyTango.DeviceProxy(self.CbfMasterAddress)
 
@@ -368,6 +371,81 @@ class FspSubarray(SKASubarray):
         # PROTECTED REGION ID(FspSubarray.RemoveAllReceptors) ENABLED START #
         self.RemoveReceptors(self._receptors[:])
         # PROTECTED REGION END #    //  FspSubarray.RemoveAllReceptors
+
+    @command(
+        dtype_in='str',
+        doc_in="Channel frequency info"
+    )
+    def AddChannelFrequencyInfo(self, argin):
+        # PROTECTED REGION ID(FspSubarray.AddChannelFrequencyInfo) ENABLED START #
+        argin = json.loads(argin)
+
+        for fsp in argin["fsp"]:
+            if fsp["fspID"] == self._fsp_id:
+                for link in fsp["cbfOutLink"]:
+                    for channel in link["channel"]:
+                        self._channel_info.append([
+                            channel["chanID"],
+                            channel["bw"],
+                            channel["cf"],
+                            link["linkID"],
+                            # configure the addresses later
+                            "",
+                            0
+                        ])
+
+        self._channel_info.sort(key=lambda x: x[0])
+        # PROTECTED REGION END #    //  FspSubarray.AddChannelFrequencyInfo
+
+    @command(
+        dtype_in='str',
+        doc_in="Channel address info"
+    )
+    def AddChannelAddressInfo(self, argin):
+        # PROTECTED REGION ID(FspSubarray.AddChannelAddressInfo) ENABLED START #
+        argin = json.loads(argin)
+
+        for fsp in argin["fsp"]:
+            if fsp["fspID"] == self._fsp_id:
+                channel_ID_list = [*map(lambda x: x[0], self._channel_info)]
+                for host in fsp["sdpHost"]:
+                    for channel in host["channel"]:
+                        try:
+                            i = channel_ID_list.index(channel["firstChan"])
+                            for j in range(i, i + channel["numChan"]):
+                                self._channel_info[j][4] = host["ip"]
+                                self._channel_info[j][5] = \
+                                    channel["portOff"] + self._channel_info[j][0]
+                        # Possible errors:
+                        #     Channel ID not found.
+                        #     Number of channels exceeds configured channels.
+                        # (probably among others)
+                        except Exception as e:
+                            msg = "An error occurred while configuring destination addresses:"\
+                                "\n{}\n".format(str(e))
+                            self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+                            PyTango.Except.throw_exception("Command failed", msg,
+                                                           "AddChannelAddressInfo execution",
+                                                           PyTango.ErrSeverity.ERR)
+
+        # get list of unconfigured channels
+        unconfigured_channels = [channel[0] for channel in self._channel_info if channel[4] == ""]
+        if unconfigured_channels:
+            # raise an error if some channels are unconfigured
+            msg = "The following channels are missing destination addresses:\n{}".format(
+                unconfigured_channels
+            )
+            self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+            PyTango.Except.throw_exception("Command failed", msg,
+                                           "AddChannelAddressInfo execution",
+                                           PyTango.ErrSeverity.ERR)
+        # PROTECTED REGION END #    //  FspSubarray.AddChannelAddressInfo
+
+    @command()
+    def RemoveChannelInfo(self):
+        # PROTECTED REGION ID(FspSubarray.RemoveChannelInfo) ENABLED START #
+        self._channel_info = []
+        # PROTECTED REGION END #    //  FspSubarray.RemoveChannelInfo
 
     @command(
         dtype_in='str',

@@ -81,6 +81,8 @@ class CbfSubarray(SKASubarray):
     def __vis_destination_address_event_callback(self, event):
         if not event.err:
             if self._obs_state not in [ObsState.CONFIGURING.value, ObsState.READY.value]:
+                log_msg = "obsState not correct for configuring destination addresses."
+                self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
                 return
             try:
                 log_msg = "Received destination addresses for visibilities."
@@ -109,11 +111,8 @@ class CbfSubarray(SKASubarray):
                         fsp["fspID"]
                     )
                     self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+                    proxy_fsp_subarray.AddChannelAddressInfo(value)
 
-                    # use async here since the objects are large
-                    proxy_fsp_subarray.write_attribute_asynch(
-                        "visDestinationAddress", json.dumps(fsp)
-                    )
                 log_msg = "Done configuring destination addresses."
                 self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
 
@@ -257,13 +256,16 @@ class CbfSubarray(SKASubarray):
 
             output_links_all["fsp"].append(output_links)
 
-        # with open("outputlinks.json", "w+") as f:
-        #     json.dump(output_links_all, f, sort_keys=True, indent=2)
+        json_output_links = json.dumps(output_links_all)
+
+        for proxy_fsp_subarray in self._proxies_assigned_fsp_subarray:
+            proxy_fsp_subarray.AddChannelFrequencyInfo(json_output_links)
 
         log_msg = "Done assigning output links."
         self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
         # publish the output links
         self._output_links_distribution = output_links_all
+        self.push_change_event("outputLinksDistribution", json_output_links)
 
     def __validate_scan_configuration(self, argin):
         # try to deserialize input string to a JSON object
@@ -979,6 +981,12 @@ class CbfSubarray(SKASubarray):
             ]
         }
         """
+        self.__validate_scan_configuration(argin)
+
+        # transition to obsState=CONFIGURING
+        self._obs_state = ObsState.CONFIGURING.value
+        self.push_change_event("obsState", self._obs_state)
+
         # unsubscribe from TelState events
         for event_id in list(self._events_telstate.keys()):
             self._events_telstate[event_id].unsubscribe_event(event_id)
@@ -997,13 +1005,10 @@ class CbfSubarray(SKASubarray):
         for proxy_fsp in self._proxies_assigned_fsp:
             proxy_fsp.RemoveSubarrayMembership(self._subarray_id)
         self._proxies_assigned_fsp = []
+
+        for proxy_fsp_subarray in self._proxies_assigned_fsp_subarray:
+            proxy_fsp_subarray.RemoveChannelInfo()
         self._proxies_assigned_fsp_subarray = []
-
-        self.__validate_scan_configuration(argin)
-
-        # transition to obsState=CONFIGURING
-        self._obs_state = ObsState.CONFIGURING.value
-        self.push_change_event("obsState", self._obs_state)
 
         argin = json.loads(argin)
 

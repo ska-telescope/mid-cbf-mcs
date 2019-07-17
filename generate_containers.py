@@ -92,10 +92,10 @@ with open("mid-cbf-mcs.yml", "w+") as f:
               "             tango_admin --check-device mid_csp_cbf/sub_elt/master &&\\\n" \
               "             /venv/bin/python /app/csplmc/CbfMaster/CbfMaster/CbfMaster.py master\"\n\n".format(depends_on_vcc, depends_on_fsp, depends_on_cbf_subarray)
 
-    string += "  tmtelstatetest:\n" \
+    string += "  tmcspsubarrayleafnodetest:\n" \
               "    image: ${DOCKER_REGISTRY_HOST}/${DOCKER_REGISTRY_USER}/${PROJECT}:latest\n" \
               "    network_mode: ${NETWORK_MODE}\n" \
-              "    container_name: ${CONTAINER_NAME_PREFIX}tmtelstatetest\n" \
+              "    container_name: ${CONTAINER_NAME_PREFIX}tmcspsubarrayleafnodetest\n" \
               "    depends_on:\n" \
               "      - cbfmaster\n" \
               "      - databaseds\n" \
@@ -104,8 +104,8 @@ with open("mid-cbf-mcs.yml", "w+") as f:
               "      - TANGO_HOST=${TANGO_HOST}\n" \
               "    command: >\n" \
               "      sh -c \"wait-for-it.sh ${TANGO_HOST} --timeout=60 --strict --\n" \
-              "             tango_admin --check-device ska1_mid/tm/telmodel &&\\\n" \
-              "             /venv/bin/python /app/csplmc/TmTelstateTest/TmTelstateTest.py tm\"\n\n"
+              "             tango_admin --check-device ska_mid/tm_leaf_node/csp_subarray_01 &&\\\n" \
+              "             /venv/bin/python /app/csplmc/TmCspSubarrayLeafNodeTest/TmCspSubarrayLeafNodeTest.py tm\"\n\n"
 
     string += "  rsyslog-midcbf:\n" \
               "    image: jumanjiman/rsyslog\n" \

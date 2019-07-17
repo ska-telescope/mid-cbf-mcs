@@ -4,9 +4,9 @@
     "band5Tuning": [5.85, 7.25],
     "frequencyBandOffsetStream1": 0,
     "frequencyBandOffsetStream2": 0,
-    "dopplerPhaseCorrSubscriptionPoint": "ska1_mid/tm/telmodel/dopplerPhaseCorrection_1",
-    "delayModelSubscriptionPoint": "ska1_mid/tm/telmodel/delayModel",
-    "visDestinationAddressSubscriptionPoint": "ska1_mid/tm/telmodel/visDestinationAddress_1",
+    "dopplerPhaseCorrSubscriptionPoint": "ska_mid/tm_leaf_node/csp_subarray_01/dopplerPhaseCorrection",
+    "delayModelSubscriptionPoint": "ska_mid/tm_leaf_node/csp_subarray_01/delayModel",
+    "visDestinationAddressSubscriptionPoint": "ska_mid/tm_leaf_node/csp_subarray_01/visDestinationAddress",
     "rfiFlaggingMask": {},
     "searchWindow": [
         {
