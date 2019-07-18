@@ -728,6 +728,10 @@ class CbfSubarray(SKASubarray):
         # store the subscribed state change events as fsp_ID:[event_ID, event_ID] key:value pairs
         self._events_state_change_fsp = {}
 
+        # initialize groups
+        self._group_vcc = PyTango.Group("VCC")
+        self._group_fsp_subarray = PyTango.Group("FSP Subarray")
+
         self.set_state(DevState.OFF)
 
         # to match VCC and CBF Master configuration
@@ -844,6 +848,7 @@ class CbfSubarray(SKASubarray):
 
                         self._receptors.append(receptorID)
                         self._proxies_assigned_vcc.append(vccProxy)
+                        self._group_vcc.add(self._fqdn_vcc[vccID - 1])
 
                         # subscribe to VCC state and healthState changes
                         event_id_state, event_id_health_state = vccProxy.subscribe_event(
@@ -900,6 +905,7 @@ class CbfSubarray(SKASubarray):
 
                 self._receptors.remove(receptorID)
                 self._proxies_assigned_vcc.remove(vccProxy)
+                self._group_vcc.remove(self._fqdn_vcc[vccID - 1])
             else:
                 log_msg = "Receptor {} not assigned to subarray. Skipping.".format(str(receptorID))
                 self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
@@ -1009,6 +1015,7 @@ class CbfSubarray(SKASubarray):
         for proxy_fsp_subarray in self._proxies_assigned_fsp_subarray:
             proxy_fsp_subarray.RemoveChannelInfo()
         self._proxies_assigned_fsp_subarray = []
+        self._group_fsp_subarray.remove_all()
 
         argin = json.loads(argin)
 
@@ -1118,6 +1125,7 @@ class CbfSubarray(SKASubarray):
             proxy_fsp_subarray = self._proxies_fsp_subarray[fspID - 1]
             self._proxies_assigned_fsp.append(proxy_fsp)
             self._proxies_assigned_fsp_subarray.append(proxy_fsp_subarray)
+            self._group_fsp_subarray.add(self._fqdn_fsp_subarray[fspID - 1])
             # change FSP subarray membership
             proxy_fsp.AddSubarrayMembership(self._subarray_id)
 
@@ -1271,6 +1279,39 @@ class CbfSubarray(SKASubarray):
                 json.dumps(argin["tdcDestinationAddress"])
 
         # PROTECTED REGION END #    //  CbfSubarray.ConfigureSearchWindow
+
+    @command()
+    def EndScan(self):
+        # PROTECTED REGION ID(CbfSubarray.EndScan) ENABLED START #
+        if self._obs_state != ObsState.SCANNING.value:
+            msg = "A scan has not been started."
+            self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+            PyTango.Except.throw_exception("Command failed", msg, "Scan execution",
+                                           PyTango.ErrSeverity.ERR)
+
+        self._group_vcc.command_inout("EndScan")
+        self._group_fsp_subarray.command_inout("EndScan")
+
+        self._obs_state = ObsState.READY.value
+        # PROTECTED REGION END #    //  CbfSubarray.EndScan
+
+    @command(
+        dtype_in=('str',),
+        doc_in="TODO: find out what the input argument is"
+    )
+    def Scan(self, argin):
+        # PROTECTED REGION ID(CbfSubarray.Scan) ENABLED START #
+        if self._obs_state != ObsState.READY.value:
+            msg = "A scan is not ready to be started."
+            self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+            PyTango.Except.throw_exception("Command failed", msg, "Scan execution",
+                                           PyTango.ErrSeverity.ERR)
+
+        self._group_vcc.command_inout("Scan")
+        self._group_fsp_subarray.command_inout("Scan")
+
+        self._obs_state = ObsState.SCANNING.value
+        # PROTECTED REGION END #    //  CbfSubarray.Scan
 
 # ----------
 # Run server

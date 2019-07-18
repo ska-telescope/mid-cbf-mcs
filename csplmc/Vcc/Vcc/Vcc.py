@@ -812,6 +812,20 @@ class Vcc(SKACapability):
 
         # PROTECTED REGION END #    //  Vcc.ConfigureSearchWindow
 
+    @command()
+    def EndScan(self):
+        # PROTECTED REGION ID(Vcc.EndScan) ENABLED START #
+        self._obs_state = ObsState.IDLE.value
+        # TODO: find out what else is supposed to happen
+        # PROTECTED REGION END #    //  Vcc.EndScan
+
+    @command()
+    def Scan(self):
+        # PROTECTED REGION ID(Vcc.Scan) ENABLED START #
+        self._obs_state = ObsState.SCANNING.value
+        # TODO: find out what else is supposed to happen
+        # PROTECTED REGION END #    //  Vcc.Scan
+
 # ----------
 # Run server
 # ----------

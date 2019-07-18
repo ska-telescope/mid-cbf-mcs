@@ -774,6 +774,20 @@ class FspSubarray(SKASubarray):
 
         # PROTECTED REGION END #    //  FspSubarray.ConfigureScan
 
+    @command()
+    def EndScan(self):
+        # PROTECTED REGION ID(FspSubarray.EndScan) ENABLED START #
+        self._obs_state = ObsState.IDLE.value
+        # TODO: find out what else is supposed to happen
+        # PROTECTED REGION END #    //  FspSubarray.EndScan
+
+    @command()
+    def Scan(self):
+        # PROTECTED REGION ID(FspSubarray.Scan) ENABLED START #
+        self._obs_state = ObsState.SCANNING.value
+        # TODO: find out what else is supposed to happen
+        # PROTECTED REGION END #    //  FspSubarray.Scan
+
 # ----------
 # Run server
 # ----------
