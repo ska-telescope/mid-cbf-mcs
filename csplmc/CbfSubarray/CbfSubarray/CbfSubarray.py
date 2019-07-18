@@ -503,10 +503,19 @@ class CbfSubarray(SKASubarray):
                         self.__raise_configure_scan_fatal_error(msg)
 
                     # Validate functionMode.
+                    function_modes = ["CORR", "PSS-BF", "PST-BF", "VLBI"]
                     if "functionMode" in fsp:
-                        function_modes = ["CORR", "PSS-BF", "PST-BF", "VLBI"]
                         if fsp["functionMode"] in function_modes:
-                            pass
+                            if function_modes.index(fsp["functionMode"]) + 1 == \
+                                    proxy_fsp.functionMode or\
+                                    proxy_fsp.functionMode == 0:
+                                pass
+                            else:
+                                msg = "A different subarray is using it FSP {} for a "\
+                                    "different function mode. Aborting configuration.".format(
+                                        fsp["fspID"]
+                                    )
+                                self.__raise_configure_scan_fatal_error(msg)
                         else:
                             msg = "'functionMode' must be one of {} (received {}). "\
                                 "Aborting configuration.".format(
@@ -989,33 +998,13 @@ class CbfSubarray(SKASubarray):
         """
         self.__validate_scan_configuration(argin)
 
+        # Call this just to release all FSPs and unsubscribe to events.
+        # We transition to obsState=CONFIGURING immediately after anyways.
+        self.GoToIdle()
+
         # transition to obsState=CONFIGURING
         self._obs_state = ObsState.CONFIGURING.value
         self.push_change_event("obsState", self._obs_state)
-
-        # unsubscribe from TelState events
-        for event_id in list(self._events_telstate.keys()):
-            self._events_telstate[event_id].unsubscribe_event(event_id)
-        self._events_telstate = {}
-
-        # unsubscribe from FSP state change events
-        for fspID in list(self._events_state_change_fsp.keys()):
-            proxy_fsp = self._proxies_fsp[fspID - 1]
-            proxy_fsp.unsubscribe_event(self._events_state_change_fsp[fspID][0])  # state
-            proxy_fsp.unsubscribe_event(self._events_state_change_fsp[fspID][1])  # healthState
-            del self._events_state_change_fsp[fspID]
-            del self._fsp_state[self._fqdn_fsp[fspID - 1]]
-            del self._fsp_health_state[self._fqdn_fsp[fspID - 1]]
-
-        # change FSP subarray membership
-        for proxy_fsp in self._proxies_assigned_fsp:
-            proxy_fsp.RemoveSubarrayMembership(self._subarray_id)
-        self._proxies_assigned_fsp = []
-
-        for proxy_fsp_subarray in self._proxies_assigned_fsp_subarray:
-            proxy_fsp_subarray.RemoveChannelInfo()
-        self._proxies_assigned_fsp_subarray = []
-        self._group_fsp_subarray.remove_all()
 
         argin = json.loads(argin)
 
@@ -1126,6 +1115,7 @@ class CbfSubarray(SKASubarray):
             self._proxies_assigned_fsp.append(proxy_fsp)
             self._proxies_assigned_fsp_subarray.append(proxy_fsp_subarray)
             self._group_fsp_subarray.add(self._fqdn_fsp_subarray[fspID - 1])
+
             # change FSP subarray membership
             proxy_fsp.AddSubarrayMembership(self._subarray_id)
 
@@ -1312,6 +1302,42 @@ class CbfSubarray(SKASubarray):
 
         self._obs_state = ObsState.SCANNING.value
         # PROTECTED REGION END #    //  CbfSubarray.Scan
+
+    # This command is called "GoToIdle", but a more proper name for it is "ReleaseAllResources".
+    # The reason why it's not called "ReleaseAllResources" is because, for some reason, the
+    # SKASubarray base class only allows the "ReleaseAllResources" command to be called when
+    # obsState=IDLE, but this functionality needs to be present when obsState=READY.
+    @command()
+    def GoToIdle(self):
+        # PROTECTED REGION ID(CbfSubarray.GoToIdle) ENABLED START #
+        # unsubscribe from TelState events
+        for event_id in list(self._events_telstate.keys()):
+            self._events_telstate[event_id].unsubscribe_event(event_id)
+        self._events_telstate = {}
+
+        # unsubscribe from FSP state change events
+        for fspID in list(self._events_state_change_fsp.keys()):
+            proxy_fsp = self._proxies_fsp[fspID - 1]
+            proxy_fsp.unsubscribe_event(self._events_state_change_fsp[fspID][0])  # state
+            proxy_fsp.unsubscribe_event(self._events_state_change_fsp[fspID][1])  # healthState
+            del self._events_state_change_fsp[fspID]
+            del self._fsp_state[self._fqdn_fsp[fspID - 1]]
+            del self._fsp_health_state[self._fqdn_fsp[fspID - 1]]
+
+        # change FSP subarray membership
+        for proxy_fsp in self._proxies_assigned_fsp:
+            proxy_fsp.RemoveSubarrayMembership(self._subarray_id)
+        self._proxies_assigned_fsp = []
+
+        # remove channel info from FSP subarrays
+        for proxy_fsp_subarray in self._proxies_assigned_fsp_subarray:
+            proxy_fsp_subarray.RemoveChannelInfo()
+        self._proxies_assigned_fsp_subarray = []
+        self._group_fsp_subarray.remove_all()
+
+        # transition to obsState=IDLE
+        self._obs_state = ObsState.IDLE.value
+        # PROTECTED REGION END #    //  CbfSubarray.GoToIdle
 
 # ----------
 # Run server
