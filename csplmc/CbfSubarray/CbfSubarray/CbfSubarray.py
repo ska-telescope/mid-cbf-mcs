@@ -1079,6 +1079,7 @@ class CbfSubarray(SKASubarray):
         self._events_telstate[event_id] = attribute_proxy
 
         # Configure visDestinationAddressSubscriptionPoint.
+        self._last_received_vis_destination_address = "{}"
         attribute_proxy = PyTango.AttributeProxy(argin["visDestinationAddressSubscriptionPoint"])
         attribute_proxy.ping()
         event_id = attribute_proxy.subscribe_event(

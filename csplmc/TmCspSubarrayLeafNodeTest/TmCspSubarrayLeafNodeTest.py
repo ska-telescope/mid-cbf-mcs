@@ -100,9 +100,6 @@ class TmCspSubarrayLeafNodeTest(SKABaseDevice):
 
             destination_addresses["fsp"].append(fsp)
 
-        with open("destinationaddresses.json", "w+") as f:
-            json.dump(destination_addresses, f, sort_keys=True, indent=2)
-
         log_msg = "Done assigning destination addresses."
         self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
         # publish the destination addresses
@@ -156,6 +153,13 @@ class TmCspSubarrayLeafNodeTest(SKABaseDevice):
         access=AttrWriteType.READ_WRITE,
         label="Destination addresses for visibilities",
         doc="Destination addresses for visibilities"
+    )
+
+    receivedOutputLinks = attribute(
+        dtype='bool',
+        access=AttrWriteType.READ,
+        label="Received output links",
+        doc="Received output links"
     )
 
     # ---------------
@@ -252,6 +256,11 @@ class TmCspSubarrayLeafNodeTest(SKABaseDevice):
         # since this is just a test device, assume that the JSON schema is always what we expect
         self._vis_destination_address = json.loads(str(value))
         # PROTECTED REGION END #    //  TmCspSubarrayLeafNodeTest.visDestinationAddress_write
+
+    def read_receivedOutputLinks(self):
+        # PROTECTED REGION ID(TmCspSubarrayLeafNodeTest.receivedOutputLinks_read) ENABLED START #
+        return self._received_output_links
+        # PROTECTED REGION END #    //  TmCspSubarrayLeafNodeTest.receivedOutputLinks_read
 
     # --------
     # Commands

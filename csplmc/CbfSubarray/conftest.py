@@ -36,15 +36,15 @@ def create_sw_2_proxy():
 
 @pytest.fixture(scope="class")
 def create_vcc_proxies():
-    return [DeviceProxy("mid_csp_cbf/vcc/" + str(i + 1).zfill(3)) for i in range(197)]
+    return [DeviceProxy("mid_csp_cbf/vcc/" + str(i + 1).zfill(3)) for i in range(4)]
 
 @pytest.fixture(scope="class")
 def create_vcc_band_proxies():
-    return [[DeviceProxy("mid_csp_cbf/vcc_band{0}/{1:03d}".format(j, i + 1)) for j in ["12", "3", "4", "5"]] for i in range(197)]
+    return [[DeviceProxy("mid_csp_cbf/vcc_band{0}/{1:03d}".format(j, i + 1)) for j in ["12", "3", "4", "5"]] for i in range(4)]
 
 @pytest.fixture(scope="class")
 def create_vcc_tdc_proxies():
-    return [[DeviceProxy("mid_csp_cbf/vcc_sw{0}/{1:03d}".format(j, i + 1)) for j in ["1", "2"]] for i in range(197)]
+    return [[DeviceProxy("mid_csp_cbf/vcc_sw{0}/{1:03d}".format(j, i + 1)) for j in ["1", "2"]] for i in range(4)]
 
 @pytest.fixture(scope="class")
 def create_fsp_1_proxy():
@@ -72,4 +72,4 @@ def create_fsp_2_subarray_1_proxy():
 
 @pytest.fixture(scope="class")
 def create_tm_telstate_proxy():
-    return DeviceProxy("ska1_mid/tm/telmodel")
+    return DeviceProxy("ska_mid/tm_leaf_node/csp_subarray_01")
