@@ -218,6 +218,8 @@ class FspSubarray(SKASubarray):
 
         # device proxy for easy reference to CBF Subarray
         self._proxy_cbf_subarray = PyTango.DeviceProxy(self.CbfSubarrayAddress)
+
+        self._obs_state = ObsState.IDLE.value
         # PROTECTED REGION END #    //  FspSubarray.init_device
 
     def always_executed_hook(self):
@@ -378,6 +380,8 @@ class FspSubarray(SKASubarray):
     )
     def AddChannelFrequencyInfo(self, argin):
         # PROTECTED REGION ID(FspSubarray.AddChannelFrequencyInfo) ENABLED START #
+        # obsState should already be CONFIGURING
+
         argin = json.loads(argin)
 
         for fsp in argin["fsp"]:
@@ -405,6 +409,8 @@ class FspSubarray(SKASubarray):
     )
     def AddChannelAddressInfo(self, argin):
         # PROTECTED REGION ID(FspSubarray.AddChannelAddressInfo) ENABLED START #
+        # obsState should already be CONFIGURING
+
         argin = json.loads(argin)
 
         for fsp in argin["receive_addresses"]:
@@ -442,6 +448,10 @@ class FspSubarray(SKASubarray):
             PyTango.Except.throw_exception("Command failed", msg,
                                            "AddChannelAddressInfo execution",
                                            PyTango.ErrSeverity.ERR)
+
+        # transition to obsState=READY
+        self._obs_state = ObsState.READY.value
+
         # PROTECTED REGION END #    //  FspSubarray.AddChannelAddressInfo
 
     @command()
@@ -659,6 +669,10 @@ class FspSubarray(SKASubarray):
         # This function is called after the configuration has already been validated,
         # so the checks here have been removed to reduce overhead.
 
+        # transition to obsState=CONFIGURING
+        self._obs_state = ObsState.CONFIGURING.value
+        self.push_change_event("obsState", self._obs_state)
+
         argin = json.loads(argin)
 
         # Configure frequencyBand.
@@ -772,21 +786,31 @@ class FspSubarray(SKASubarray):
                 "factor = 0 for all channel groups."
             self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
 
+        # This state transition will be later
+        # self._obs_state = ObsState.READY.value
+
         # PROTECTED REGION END #    //  FspSubarray.ConfigureScan
 
     @command()
     def EndScan(self):
         # PROTECTED REGION ID(FspSubarray.EndScan) ENABLED START #
-        self._obs_state = ObsState.IDLE.value
-        # TODO: find out what else is supposed to happen
+        self._obs_state = ObsState.READY.value
+        # nothing else is supposed to happen
         # PROTECTED REGION END #    //  FspSubarray.EndScan
 
     @command()
     def Scan(self):
         # PROTECTED REGION ID(FspSubarray.Scan) ENABLED START #
         self._obs_state = ObsState.SCANNING.value
-        # TODO: find out what else is supposed to happen
+        # nothing else is supposed to happen
         # PROTECTED REGION END #    //  FspSubarray.Scan
+
+    @command()
+    def GoToIdle(self):
+        # PROTECTED REGION ID(FspSubarray.GoToIdle) ENABLED START #
+        # transition to obsState=IDLE
+        self._obs_state = ObsState.IDLE.value
+        # PROTECTED REGION END #    //  FspSubarray.GoToIdle
 
 # ----------
 # Run server

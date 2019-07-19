@@ -51,8 +51,7 @@ class CbfSubarray(SKASubarray):
     def __doppler_phase_correction_event_callback(self, event):
         if not event.err:
             try:
-                for vcc in self._proxies_assigned_vcc:
-                    vcc.dopplerPhaseCorrection = event.attr_value.value
+                self._group_vcc.write_attribute("dopplerPhaseCorrection", event.attr_value.value)
                 log_msg = "Value of " + str(event.attr_name) + " is " + str(event.attr_value.value)
                 self.dev_logging(log_msg, PyTango.LogLevel.LOG_DEBUG)
             except Exception as e:
@@ -65,10 +64,8 @@ class CbfSubarray(SKASubarray):
     def __delay_model_event_callback(self, event):
         if not event.err:
             try:
-                for fsp_subarray in self._proxies_assigned_fsp_subarray:
-                    fsp_subarray.delayModel = event.attr_value.value
-                for vcc in self._proxies_assigned_vcc:
-                    vcc.delayModel = event.attr_value.value
+                self._group_fsp_subarray.write_attribute("delayModel", event.attr_value.value)
+                self._group_vcc.write_attribute("delayModel", event.attr_value.value)
                 log_msg = "Value of " + str(event.attr_name) + " is " + str(event.attr_value.value)
                 self.dev_logging(log_msg, PyTango.LogLevel.LOG_DEBUG)
             except Exception as e:
@@ -89,7 +86,7 @@ class CbfSubarray(SKASubarray):
                 self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
 
                 value = str(event.attr_value.value)
-                if str(event.attr_value.value) == self._last_received_vis_destination_address:
+                if value == self._last_received_vis_destination_address:
                     log_msg = "Skipped configuring destination addresses."
                     self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
                     return
@@ -257,9 +254,9 @@ class CbfSubarray(SKASubarray):
             output_links_all["fsp"].append(output_links)
 
         json_output_links = json.dumps(output_links_all)
-
-        for proxy_fsp_subarray in self._proxies_assigned_fsp_subarray:
-            proxy_fsp_subarray.AddChannelFrequencyInfo(json_output_links)
+        data = PyTango.DeviceData()
+        data.insert(PyTango.DevString, json_output_links)
+        self._group_fsp_subarray.command_inout("AddChannelFrequencyInfo", data)
 
         log_msg = "Done assigning output links."
         self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
@@ -511,7 +508,7 @@ class CbfSubarray(SKASubarray):
                                     proxy_fsp.functionMode == 0:
                                 pass
                             else:
-                                msg = "A different subarray is using it FSP {} for a "\
+                                msg = "A different subarray is using FSP {} for a "\
                                     "different function mode. Aborting configuration.".format(
                                         fsp["fspID"]
                                     )
@@ -739,6 +736,7 @@ class CbfSubarray(SKASubarray):
 
         # initialize groups
         self._group_vcc = PyTango.Group("VCC")
+        self._group_fsp = PyTango.Group("FSP")
         self._group_fsp_subarray = PyTango.Group("FSP Subarray")
 
         self.set_state(DevState.OFF)
@@ -1005,6 +1003,9 @@ class CbfSubarray(SKASubarray):
         # transition to obsState=CONFIGURING
         self._obs_state = ObsState.CONFIGURING.value
         self.push_change_event("obsState", self._obs_state)
+        data = PyTango.DeviceData()
+        data.insert(PyTango.DevUShort, ObsState.CONFIGURING.value)
+        self._group_vcc.command_inout("SetObservingState", data)
 
         argin = json.loads(argin)
 
@@ -1014,29 +1015,26 @@ class CbfSubarray(SKASubarray):
         # Configure frequencyBand.
         frequency_bands = ["1", "2", "3", "4", "5a", "5b"]
         self._frequency_band = frequency_bands.index(argin["frequencyBand"])
-        for vcc in self._proxies_assigned_vcc:
-            vcc.SetFrequencyBand(argin["frequencyBand"])
+        data = PyTango.DeviceData()
+        data.insert(PyTango.DevString, argin["frequencyBand"])
+        self._group_vcc.command_inout("SetFrequencyBand", data)
 
         # Configure band5Tuning, if frequencyBand is 5a or 5b.
         stream_tuning = [*map(float, argin["band5Tuning"])]
-        if self._frequency_band == 4:
+        if self._frequency_band in [4, 5]:
             self._stream_tuning = stream_tuning
-            for vcc in self._proxies_assigned_vcc:
-                vcc.band5Tuning = stream_tuning
-        elif self._frequency_band == 5:
-            self._stream_tuning = stream_tuning
-            for vcc in self._proxies_assigned_vcc:
-                vcc.band5Tuning = stream_tuning
+            self._group_vcc.write_attribute("band5Tuning", stream_tuning)
 
         # Configure frequencyBandOffsetStream1.
         if "frequencyBandOffsetStream1" in argin:
             self._frequency_band_offset_stream_1 = int(argin["frequencyBandOffsetStream1"])
-            for vcc in self._proxies_assigned_vcc:
-                vcc.frequencyBandOffsetStream1 = int(argin["frequencyBandOffsetStream1"])
+            self._group_vcc.write_attribute(
+                "frequencyBandOffsetStream1",
+                int(argin["frequencyBandOffsetStream1"])
+            )
         else:
             self._frequency_band_offset_stream_1 = 0
-            for vcc in self._proxies_assigned_vcc:
-                vcc.frequencyBandOffsetStream1 = 0
+            self._group_vcc.write_attribute("frequencyBandOffsetStream1", 0)
             log_msg = "'frequencyBandOffsetStream1' not specified. Defaulting to 0."
             self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
 
@@ -1046,18 +1044,18 @@ class CbfSubarray(SKASubarray):
         if self._frequency_band in [4, 5]:
             if "frequencyBandOffsetStream2" in argin:
                 self._frequency_band_offset_stream_2 = int(argin["frequencyBandOffsetStream2"])
-                for vcc in self._proxies_assigned_vcc:
-                    vcc.frequencyBandOffsetStream2 = int(argin["frequencyBandOffsetStream2"])
+                self._group_vcc.write_attribute(
+                    "frequencyBandOffsetStream2",
+                    int(argin["frequencyBandOffsetStream2"])
+                )
             else:
                 self._frequency_band_offset_stream_2 = 0
-                for vcc in self._proxies_assigned_vcc:
-                    vcc.frequencyBandOffsetStream2 = 0
+                self._group_vcc.write_attribute("frequencyBandOffsetStream2", 0)
                 log_msg = "'frequencyBandOffsetStream2' not specified. Defaulting to 0."
                 self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
         else:
             self._frequency_band_offset_stream_2 = 0
-            for vcc in self._proxies_assigned_vcc:
-                vcc.frequencyBandOffsetStream2 = 0
+            self._group_vcc.write_attribute("frequencyBandOffsetStream2", 0)
 
         # Configure dopplerPhaseCorrSubscriptionPoint.
         if "dopplerPhaseCorrSubscriptionPoint" in argin:
@@ -1090,8 +1088,10 @@ class CbfSubarray(SKASubarray):
 
         # Configure rfiFlaggingMask.
         if "rfiFlaggingMask" in argin:
-            for vcc in self._proxies_assigned_vcc:
-                vcc.rfiFlaggingMask = json.dumps(argin["rfiFlaggingMask"])
+            self._group_vcc.write_attribute(
+                "rfiFlaggingMask",
+                json.dumps(argin["rfiFlaggingMask"])
+            )
         else:
             log_msg = "'rfiFlaggingMask' not given. Proceeding."
             self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
@@ -1099,13 +1099,19 @@ class CbfSubarray(SKASubarray):
         # Configure searchWindow.
         if "searchWindow" in argin:
             for search_window in argin["searchWindow"]:
-                for vcc in self._proxies_assigned_vcc:
-                    # pass on configuration to VCC
-                    vcc.ConfigureSearchWindow(json.dumps(search_window))
+                # pass on configuration to VCC
+                data = PyTango.DeviceData()
+                data.insert(PyTango.DevString, json.dumps(search_window))
+                self._group_vcc.command_inout("ConfigureSearchWindow", data)
                 self.ConfigureSearchWindow(json.dumps(search_window))
         else:
             log_msg = "'searchWindow' not given."
             self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+
+        # The VCCs are done configuring at this point
+        data = PyTango.DeviceData()
+        data.insert(PyTango.DevUShort, ObsState.READY.value)
+        self._group_vcc.command_inout("SetObservingState", data)
 
         # Configure FSP.
         for fsp in argin["fsp"]:
@@ -1115,6 +1121,7 @@ class CbfSubarray(SKASubarray):
             proxy_fsp_subarray = self._proxies_fsp_subarray[fspID - 1]
             self._proxies_assigned_fsp.append(proxy_fsp)
             self._proxies_assigned_fsp_subarray.append(proxy_fsp_subarray)
+            self._group_fsp.add(self._fqdn_fsp[fspID - 1])
             self._group_fsp_subarray.add(self._fqdn_fsp_subarray[fspID - 1])
 
             # change FSP subarray membership
@@ -1308,6 +1315,7 @@ class CbfSubarray(SKASubarray):
     # The reason why it's not called "ReleaseAllResources" is because, for some reason, the
     # SKASubarray base class only allows the "ReleaseAllResources" command to be called when
     # obsState=IDLE, but this functionality needs to be present when obsState=READY.
+    # Note that this command does not remove VCCs from the subarray, but only sends them to IDLE.
     @command()
     def GoToIdle(self):
         # PROTECTED REGION ID(CbfSubarray.GoToIdle) ENABLED START #
@@ -1325,16 +1333,23 @@ class CbfSubarray(SKASubarray):
             del self._fsp_state[self._fqdn_fsp[fspID - 1]]
             del self._fsp_health_state[self._fqdn_fsp[fspID - 1]]
 
+        # send assigned VCCs and FSP subarrays to IDLE state
+        self._group_vcc.command_inout("GoToIdle")
+        self._group_fsp_subarray.command_inout("GoToIdle")
+
         # change FSP subarray membership
-        for proxy_fsp in self._proxies_assigned_fsp:
-            proxy_fsp.RemoveSubarrayMembership(self._subarray_id)
+        data = PyTango.DeviceData()
+        data.insert(PyTango.DevUShort, self._subarray_id)
+        self._group_fsp.command_inout("RemoveSubarrayMembership", data)
+        self._group_fsp.remove_all()
         self._proxies_assigned_fsp = []
 
         # remove channel info from FSP subarrays
-        for proxy_fsp_subarray in self._proxies_assigned_fsp_subarray:
-            proxy_fsp_subarray.RemoveChannelInfo()
-        self._proxies_assigned_fsp_subarray = []
+        self._group_fsp_subarray.command_inout("RemoveChannelInfo")
         self._group_fsp_subarray.remove_all()
+        self._proxies_assigned_fsp_subarray = []
+
+        self._scan_ID = 0
 
         # transition to obsState=IDLE
         self._obs_state = ObsState.IDLE.value

@@ -522,10 +522,10 @@ class TestCbfSubarray:
 
         # check initial states
         assert create_subarray_1_proxy.obsState.value == ObsState.READY.value
-        assert create_vcc_proxies[receptor_to_vcc[1] - 1].obsState.value == ObsState.IDLE.value
-        assert create_vcc_proxies[receptor_to_vcc[4] - 1].obsState.value == ObsState.IDLE.value
-        assert create_fsp_1_subarray_1_proxy.obsState.value == ObsState.IDLE.value
-        assert create_fsp_2_subarray_1_proxy.obsState.value == ObsState.IDLE.value
+        assert create_vcc_proxies[receptor_to_vcc[1] - 1].obsState.value == ObsState.READY.value
+        assert create_vcc_proxies[receptor_to_vcc[4] - 1].obsState.value == ObsState.READY.value
+        assert create_fsp_1_subarray_1_proxy.obsState.value == ObsState.READY.value
+        assert create_fsp_2_subarray_1_proxy.obsState.value == ObsState.READY.value
 
         # send the Scan command
         create_subarray_1_proxy.Scan(("",))
@@ -600,7 +600,7 @@ class TestCbfSubarray:
 
         # check states
         assert create_subarray_1_proxy.obsState.value == ObsState.READY.value
-        assert create_vcc_proxies[receptor_to_vcc[1] - 1].obsState.value == ObsState.IDLE.value
-        assert create_vcc_proxies[receptor_to_vcc[4] - 1].obsState.value == ObsState.IDLE.value
-        assert create_fsp_1_subarray_1_proxy.obsState.value == ObsState.IDLE.value
-        assert create_fsp_2_subarray_1_proxy.obsState.value == ObsState.IDLE.value
+        assert create_vcc_proxies[receptor_to_vcc[1] - 1].obsState.value == ObsState.READY.value
+        assert create_vcc_proxies[receptor_to_vcc[4] - 1].obsState.value == ObsState.READY.value
+        assert create_fsp_1_subarray_1_proxy.obsState.value == ObsState.READY.value
+        assert create_fsp_2_subarray_1_proxy.obsState.value == ObsState.READY.value

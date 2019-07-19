@@ -336,6 +336,8 @@ class Vcc(SKACapability):
     def write_subarrayMembership(self, value):
         # PROTECTED REGION ID(Vcc.subarrayMembership_write) ENABLED START #
         self._subarray_membership = value
+        if not value:
+            self._obs_state = ObsState.IDLE.value
         # PROTECTED REGION END #    //  Vcc.subarrayMembership_write
 
     def read_frequencyBand(self):
@@ -520,6 +522,22 @@ class Vcc(SKACapability):
         # shouldn't happen
         self.dev_logging("frequencyBand not in valid range. Ignoring.",
                          PyTango.LogLevel.LOG_WARN)
+        # PROTECTED REGION END #    // Vcc.SetFrequencyBand
+
+    @command(
+        dtype_in='uint16',
+        doc_in="New obsState (CONFIGURING OR READY)"
+    )
+    def SetObservingState(self, argin):
+        # PROTECTED REGION ID(Vcc.SetObservingState) ENABLED START #
+        # Since obsState is read-only, CBF Subarray needs a way to change the obsState
+        # of a VCC, BUT ONLY TO CONFIGURING OR READY, during a scan configuration.
+        if argin in [ObsState.CONFIGURING.value, ObsState.READY.value]:
+            self._obs_state = argin
+        else:
+            # shouldn't happen
+            self.dev_logging("obsState must be CONFIGURING or READY. Ignoring.",
+                             PyTango.LogLevel.LOG_WARN)
         # PROTECTED REGION END #    // Vcc.SetFrequencyBand
 
     @command(
@@ -815,16 +833,23 @@ class Vcc(SKACapability):
     @command()
     def EndScan(self):
         # PROTECTED REGION ID(Vcc.EndScan) ENABLED START #
-        self._obs_state = ObsState.IDLE.value
-        # TODO: find out what else is supposed to happen
+        self._obs_state = ObsState.READY.value
+        # nothing else is supposed to happen
         # PROTECTED REGION END #    //  Vcc.EndScan
 
     @command()
     def Scan(self):
         # PROTECTED REGION ID(Vcc.Scan) ENABLED START #
         self._obs_state = ObsState.SCANNING.value
-        # TODO: find out what else is supposed to happen
+        # nothing else is supposed to happen
         # PROTECTED REGION END #    //  Vcc.Scan
+
+    @command()
+    def GoToIdle(self):
+        # PROTECTED REGION ID(Vcc.GoToIdle) ENABLED START #
+        # transition to obsState=IDLE
+        self._obs_state = ObsState.IDLE.value
+        # PROTECTED REGION END #    //  Vcc.GoToIdle
 
 # ----------
 # Run server
