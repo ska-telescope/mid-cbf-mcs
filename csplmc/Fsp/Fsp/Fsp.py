@@ -255,6 +255,9 @@ class Fsp(SKACapability):
         # PROTECTED REGION ID(Fsp.RemoveSubarrayMembership) ENABLED START #
         if argin in self._subarray_membership:
             self._subarray_membership.remove(argin)
+            # change function mode to IDLE if no subarrays are using it.
+            if not self._subarray_membership:
+                self._function_mode = 0
         else:
             log_msg = "FSP does not belong to subarray {}.".format(argin)
             self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
