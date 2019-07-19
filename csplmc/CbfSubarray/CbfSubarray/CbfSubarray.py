@@ -98,17 +98,17 @@ class CbfSubarray(SKASubarray):
                 destination_addresses = json.loads(value)
 
                 # No exception should technically ever be raised here.
-                if destination_addresses["scanID"] != self._scan_ID:
+                if destination_addresses["scan_id"] != self._scan_ID:
                     raise ValueError("scanID is not correct")
-                for fsp in destination_addresses["fsp"]:
-                    proxy_fsp_subarray = self._proxies_fsp_subarray[fsp["fspID"] - 1]
+                for fsp in destination_addresses["receive_addresses"]:
+                    proxy_fsp_subarray = self._proxies_fsp_subarray[fsp["fsp_id"] - 1]
                     if proxy_fsp_subarray not in self._proxies_assigned_fsp_subarray:
                         raise ValueError("FSP {} does not belong to subarray {}.".format(
-                                fsp["fspID"], self._subarray_id
+                                fsp["fsp_id"], self._subarray_id
                             )
                         )
                     log_msg = "Configuring destination addresses for FSP {}...".format(
-                        fsp["fspID"]
+                        fsp["fsp_id"]
                     )
                     self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
                     proxy_fsp_subarray.AddChannelAddressInfo(value)

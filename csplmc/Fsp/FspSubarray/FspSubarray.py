@@ -407,17 +407,17 @@ class FspSubarray(SKASubarray):
         # PROTECTED REGION ID(FspSubarray.AddChannelAddressInfo) ENABLED START #
         argin = json.loads(argin)
 
-        for fsp in argin["fsp"]:
-            if fsp["fspID"] == self._fsp_id:
+        for fsp in argin["receive_addresses"]:
+            if fsp["fsp_id"] == self._fsp_id:
                 channel_ID_list = [*map(lambda x: x[0], self._channel_info)]
-                for host in fsp["sdpHost"]:
-                    for channel in host["channel"]:
+                for host in fsp["hosts"]:
+                    for channel in host["channels"]:
                         try:
-                            i = channel_ID_list.index(channel["firstChan"])
-                            for j in range(i, i + channel["numChan"]):
-                                self._channel_info[j][4] = host["ip"]
+                            i = channel_ID_list.index(channel["start_channel"])
+                            for j in range(i, i + channel["num_channels"]):
+                                self._channel_info[j][4] = host["host"]
                                 self._channel_info[j][5] = \
-                                    channel["portOff"] + self._channel_info[j][0]
+                                    channel["port_offset"] + self._channel_info[j][0]
                         # Possible errors:
                         #     Channel ID not found.
                         #     Number of channels exceeds configured channels.
