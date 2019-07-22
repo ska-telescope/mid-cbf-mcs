@@ -5,12 +5,12 @@ echo
 
 echo "MODULE ANALYSIS"
 echo "---------------"
-pylint --rcfile=.pylintrc csplmc/CbfMaster/CbfMaster
-pylint --rcfile=.pylintrc csplmc/CbfSubarray/CbfSubarray
-pylint --rcfile=.pylintrc csplmc/Vcc/Vcc
-pylint --rcfile=.pylintrc csplmc/Fsp/Fsp
-pylint --rcfile=.pylintrc csplmc/commons
+pylint --rcfile=.pylintrc tangods/CbfMaster/CbfMaster
+pylint --rcfile=.pylintrc tangods/CbfSubarray/CbfSubarray
+pylint --rcfile=.pylintrc tangods/Vcc/Vcc
+pylint --rcfile=.pylintrc tangods/Fsp/Fsp
+pylint --rcfile=.pylintrc tangods/commons
 
 #echo "TESTS ANALYSIS"
 #echo "--------------"
-#pylint --rcfile=.pylintrc csplmc/CspMaster/test
+#pylint --rcfile=.pylintrc tangods/CspMaster/test

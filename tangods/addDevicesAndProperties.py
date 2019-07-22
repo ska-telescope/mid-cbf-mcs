@@ -16,9 +16,9 @@ for x in range(10):
 # Connected to the databaseds
 
 # Update file path to devices.json in order to test locally
-# To test on docker environment use path : /app/csplmc/devices.json
+# To test on docker environment use path : /app/tangods/devices.json
 
-with open('/app/csplmc/devices.json', 'r') as file:
+with open('/app/tangods/devices.json', 'r') as file:
     jsonDevices = file.read()
 
 # Loading devices.json file and creating an object

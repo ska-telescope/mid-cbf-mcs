@@ -19,8 +19,8 @@ setup(
 	'CbfSubarray'
     ],
     package_dir={
-	'CbfMaster': 'csplmc/CbfMaster',
-	'CbfSubarray': 'csplmc/CbfSubarray'
+	'CbfMaster': 'tangods/CbfMaster',
+	'CbfSubarray': 'tangods/CbfSubarray'
     },
     include_package_data=True,
     license="BSD license",

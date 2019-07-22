@@ -28,18 +28,18 @@ test:
 		retry --max=10 -- tango_admin --ping-device mid_csp_cbf/cbfSubarray/$$i && \
 		echo Pinging mid_csp_cbf/cbfSubarray/$$i...; \
 	done
-	cd /app/csplmc/CbfMaster && python setup.py test | tee setup_py_test.stdout
-	cd /app/csplmc/CbfSubarray && python setup.py test | tee setup_py_test.stdout
-	cd /app/csplmc/Vcc && python setup.py test | tee setup_py_test.stdout
-	cd /app/csplmc/Fsp && python setup.py test | tee setup_py_test.stdout
+	cd /app/tangods/CbfMaster && python setup.py test | tee setup_py_test.stdout
+	cd /app/tangods/CbfSubarray && python setup.py test | tee setup_py_test.stdout
+	cd /app/tangods/Vcc && python setup.py test | tee setup_py_test.stdout
+	cd /app/tangods/Fsp && python setup.py test | tee setup_py_test.stdout
 	cd /app && ./code-analysis.sh | tee code_analysis.stdout
 	if [ -d /build ]; then \
-		mv /app/csplmc/CbfMaster/setup_py_test.stdout /build/cbf_master_setup_test.stdout; \
-		mv /app/csplmc/CbfMaster/htmlcov /build/cbf_master_htmlcov; \
-		mv /app/csplmc/CbfMaster/coverage.xml /build/cbf_master_coverage.xml; \
-		mv /app/csplmc/CbfSubarray/setup_py_test.stdout /build/cbf_subarray_setup_test.stdout; \
-		mv /app/csplmc/CbfSubarray/htmlcov /build/cbf_subarray_htmlcov; \
-		mv /app/csplmc/CbfSubarray/coverage.xml /build/cbf_subarray_coverage.xml; \
+		mv /app/tangods/CbfMaster/setup_py_test.stdout /build/cbf_master_setup_test.stdout; \
+		mv /app/tangods/CbfMaster/htmlcov /build/cbf_master_htmlcov; \
+		mv /app/tangods/CbfMaster/coverage.xml /build/cbf_master_coverage.xml; \
+		mv /app/tangods/CbfSubarray/setup_py_test.stdout /build/cbf_subarray_setup_test.stdout; \
+		mv /app/tangods/CbfSubarray/htmlcov /build/cbf_subarray_htmlcov; \
+		mv /app/tangods/CbfSubarray/coverage.xml /build/cbf_subarray_coverage.xml; \
 		mv /app/code_analysis.stdout /build/cbf_code_analysis.stdout; \
 	fi;
 

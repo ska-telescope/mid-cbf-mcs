@@ -46,7 +46,7 @@ NETWORK_MODE := tangonet-$(CI_JOB_ID)
 CONTAINER_NAME_PREFIX := $(PROJECT)-$(CI_JOB_ID)-
 else
 # CONTAINER_NAME_PREFIX := $(PROJECT)-
-CONTAINER_NAME_PREFIX := 
+CONTAINER_NAME_PREFIX := midcbf-
 NETWORK_MODE := tangonet
 endif
 
@@ -120,7 +120,7 @@ make = tar -c test-harness/ | \
 	   docker run -i --rm --network=$(NETWORK_MODE) \
 	   -e TANGO_HOST=$(TANGO_HOST) \
 	   -v $(CACHE_VOLUME):/home/tango/.cache \
-	   --volumes-from=$(CONTAINER_NAME_PREFIX)rsyslog-csplmc:rw \
+	   --volumes-from=$(CONTAINER_NAME_PREFIX)rsyslog:rw \
 	   -v /build -w /build -u tango $(DOCKER_RUN_ARGS) $(IMAGE_TO_TEST) \
 	   bash -c "sudo chown -R tango:tango /build && \
 	   tar x --strip-components 1 --warning=all && \
@@ -157,7 +157,7 @@ ifneq ($(NETWORK_MODE),host)
 	docker network inspect $(NETWORK_MODE) &> /dev/null || ([ $$? -ne 0 ] && docker network create $(NETWORK_MODE))
 endif
 	$(DOCKER_COMPOSE_ARGS) docker-compose -f tango.yml up -d
-	docker run --rm -it -p 3000:3000 --name=$(CONTAINER_NAME_PREFIX)dev -e TANGO_HOST=$(TANGO_HOST) --network=$(NETWORK_MODE) \
+	docker run --rm -it -p 3000:3000 --name=$(CONTAINER_NAME_PREFIX)cbfdev -e TANGO_HOST=$(TANGO_HOST) --network=$(NETWORK_MODE) \
 	  -v $(CURDIR):/app $(IMAGE_TO_TEST) /bin/bash
 
 down:  ## stop develop/test environment and any interactive session
