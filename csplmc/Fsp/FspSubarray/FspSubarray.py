@@ -378,10 +378,11 @@ class FspSubarray(SKASubarray):
         dtype_in='str',
         doc_in="Channel frequency info"
     )
-    def AddChannelFrequencyInfo(self, argin):
-        # PROTECTED REGION ID(FspSubarray.AddChannelFrequencyInfo) ENABLED START #
+    def AddChannels(self, argin):
+        # PROTECTED REGION ID(FspSubarray.AddChannels) ENABLED START #
         # obsState should already be CONFIGURING
 
+        self._channel_info.clear()
         argin = json.loads(argin)
 
         for fsp in argin["fsp"]:
@@ -401,14 +402,14 @@ class FspSubarray(SKASubarray):
         # I'm pretty sure the list is sorted by first element anyway,
         # but specify that just in case, I guess.
         self._channel_info.sort(key=lambda x: x[0])
-        # PROTECTED REGION END #    //  FspSubarray.AddChannelFrequencyInfo
+        # PROTECTED REGION END #    //  FspSubarray.AddChannels
 
     @command(
         dtype_in='str',
         doc_in="Channel address info"
     )
-    def AddChannelAddressInfo(self, argin):
-        # PROTECTED REGION ID(FspSubarray.AddChannelAddressInfo) ENABLED START #
+    def AddChannelAddresses(self, argin):
+        # PROTECTED REGION ID(FspSubarray.AddChannelAddresses) ENABLED START #
         # obsState should already be CONFIGURING
 
         argin = json.loads(argin)
@@ -452,13 +453,7 @@ class FspSubarray(SKASubarray):
         # transition to obsState=READY
         self._obs_state = ObsState.READY.value
 
-        # PROTECTED REGION END #    //  FspSubarray.AddChannelAddressInfo
-
-    @command()
-    def RemoveChannelInfo(self):
-        # PROTECTED REGION ID(FspSubarray.RemoveChannelInfo) ENABLED START #
-        self._channel_info = []
-        # PROTECTED REGION END #    //  FspSubarray.RemoveChannelInfo
+        # PROTECTED REGION END #    //  FspSubarray.AddChannelAddresses
 
     @command(
         dtype_in='str',
@@ -809,6 +804,7 @@ class FspSubarray(SKASubarray):
     def GoToIdle(self):
         # PROTECTED REGION ID(FspSubarray.GoToIdle) ENABLED START #
         # transition to obsState=IDLE
+        self._channel_info.clear()
         self._obs_state = ObsState.IDLE.value
         # PROTECTED REGION END #    //  FspSubarray.GoToIdle
 
