@@ -108,7 +108,7 @@ class CbfSubarray(SKASubarray):
                         fsp["fsp_id"]
                     )
                     self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
-                    proxy_fsp_subarray.AddChannelAddressInfo(value)
+                    proxy_fsp_subarray.AddChannelAddresses(value)
 
                 log_msg = "Done configuring destination addresses."
                 self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
@@ -256,7 +256,7 @@ class CbfSubarray(SKASubarray):
         json_output_links = json.dumps(output_links_all)
         data = PyTango.DeviceData()
         data.insert(PyTango.DevString, json_output_links)
-        self._group_fsp_subarray.command_inout("AddChannelFrequencyInfo", data)
+        self._group_fsp_subarray.command_inout("AddChannels", data)
 
         log_msg = "Done assigning output links."
         self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
@@ -1342,12 +1342,12 @@ class CbfSubarray(SKASubarray):
         data.insert(PyTango.DevUShort, self._subarray_id)
         self._group_fsp.command_inout("RemoveSubarrayMembership", data)
         self._group_fsp.remove_all()
-        self._proxies_assigned_fsp = []
+        self._proxies_assigned_fsp.clear()
 
         # remove channel info from FSP subarrays
-        self._group_fsp_subarray.command_inout("RemoveChannelInfo")
+        # already done in GoToIdle
         self._group_fsp_subarray.remove_all()
-        self._proxies_assigned_fsp_subarray = []
+        self._proxies_assigned_fsp_subarray.clear()
 
         self._scan_ID = 0
 
