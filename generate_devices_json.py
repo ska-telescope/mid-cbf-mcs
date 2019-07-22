@@ -1,6 +1,6 @@
 from num_capabilities import *
 
-with open("csplmc/devices.json", "w+") as f:
+with open("tangods/devices.json", "w+") as f:
     string = "[\n"
 
     fqdn_vcc = [*map(lambda j: "\"mid_csp_cbf/vcc/{:03d}\"".format(j), range(1, num_vcc + 1))]

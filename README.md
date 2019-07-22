@@ -47,7 +47,7 @@ The project can be found in the SKA GitHub repository.
 
 To get a local copy of the project
 ```
-git clone https://github.com/ska-telescope/mid-cbf-mcs.git
+$ git clone https://github.com/ska-telescope/mid-cbf-mcs.git
 ```
 
 ## Prerequisities
@@ -62,46 +62,48 @@ The Mid CBF MCS prototype runs in a containerised environment; the YAML configur
 
 From the project root directory, issue the command
 ```
-make interactive
+$ make interactive
 ```
 
 This will begin an interactive terminal session within the build context. Next, add the TANGO devices and their properties to the local MySQL database by running
 ```
-python addDevicesAndProperties.py
+$ cd tangods
+$ python addDevicesAndProperties.py
 ```
 
 The interactive session can then be exited by the command
 ```
-exit
+$ exit
 ```
 
 ### Start device servers
 
 To build a new image, issue the following command. If the existing image is adequate, this step may be skipped.
 ```
-make build
+$ make build
 ```
 
 To start the containers, run
 ```
-make up
+$ make up
 ```
 
 ### Configure attribute polling and events
 
 From the project root directory, again issue the command
 ```
-make interactive
+$ make interactive
 ```
 
 Then, to configure attribute polling and events in the local DB, run
 ```
-python configurePollingAndEvents.py
+$ cd tangods
+$ python configurePollingAndEvents.py
 ```
 
 The interactive session may then be exited.
 ```
-exit
+$ exit
 ```
 
 ### View containers
@@ -118,7 +120,7 @@ shows the list of the running containers:
 * `midcbf-fspxx`: `xx` ranges from `01` to `27`. The 27 instances of the `FspMulti` TANGO device servers.
 * `midcbf-vcc00x`: `x` ranges from `1` to `4`. The 4 instances of the `VccMulti` TANGO device servers.
 * `midcbf-tmcspsubarrayleafnodetest`: The `TmCspSubarrayLeafNodeTest` TANGO device server.
-* `rsyslog-midcbf`: The rsyslog container for the TANGO devices.
+* `midcbf-rsyslog`: The rsyslog container for the TANGO devices.
 * `midcbf-databaseds`: The TANGO DB device server.
 * `midcbf-tangodb`: The MySQL database with the TANGO database tables.
 
