@@ -820,8 +820,11 @@ class CbfSubarray(SKASubarray):
         self._group_fsp = PyTango.Group("FSP")
         self._group_fsp_subarray = PyTango.Group("FSP Subarray")
 
-        self.set_state(DevState.OFF)
+        self._obs_state = ObsState.IDLE.value
+        self.set_state(PyTango.DevState.DISABLE)
 
+        # don't need this anymore (since everything is reset when the device is deleted)
+        """
         # to match VCC and CBF Master configuration
         # needed if device is re-initialized after adding receptors
         # (which technically should never happen)
@@ -839,8 +842,7 @@ class CbfSubarray(SKASubarray):
             self._scan_ID = self._proxy_cbf_master.subarrayScanID[self._subarray_id - 1]
         except PyTango.DevFailed:
             pass  # CBF Master not available, so just leave receptors and scanID alone
-
-        self._obs_state = ObsState.IDLE.value
+        """
         # PROTECTED REGION END #    //  CbfSubarray.init_device
 
     def always_executed_hook(self):
@@ -850,9 +852,7 @@ class CbfSubarray(SKASubarray):
 
     def delete_device(self):
         # PROTECTED REGION ID(CbfSubarray.delete_device) ENABLED START #
-        self.GoToIdle()
-        # not sure if I should do this or not
-        # self.RemoveAllReceptors()
+        self.Off()
         # PROTECTED REGION END #    //  CbfSubarray.delete_device
 
     # ------------------
@@ -905,17 +905,28 @@ class CbfSubarray(SKASubarray):
         return list(self._fsp_health_state.values())
         # PROTECTED REGION END #    //  CbfSubarray.fspHealthState_read
 
-
-
     # --------
     # Commands
     # --------
+
+    @command()
+    def On(self):
+        # PROTECTED REGION ID(CbfSubarray.On) ENABLED START #
+        self.set_state(PyTango.DevState.OFF)
+        # PROTECTED REGION END #    //  CbfSubarray.On
+
+    @command()
+    def Off(self):
+        # PROTECTED REGION ID(CbfSubarray.Off) ENABLED START #
+        self.GoToIdle()
+        self.RemoveAllReceptors()
+        self.set_state(PyTango.DevState.DISABLE)
+        # PROTECTED REGION END #    //  CbfSubarray.Off
 
     @command(
         dtype_in=('uint16',),
         doc_in="List of receptor IDs",
     )
-    @DebugIt()
     def AddReceptors(self, argin):
         # PROTECTED REGION ID(CbfSubarray.AddReceptors) ENABLED START #
         errs = []  # list of error messages
@@ -1015,7 +1026,6 @@ class CbfSubarray(SKASubarray):
         dtype_in='str',
         doc_in="Scan configuration",
     )
-    @DebugIt()
     def ConfigureScan(self, argin):
         # PROTECTED REGION ID(CbfSubarray.ConfigureScan) ENABLED START #
         """

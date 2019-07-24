@@ -261,6 +261,10 @@ with open("tangods/devices.json", "w+") as f:
 
     # Generate FSPs
     for i in range(1, num_fsp + 1):
+        fqdn_fsp_subarray = [*map(lambda j: "\"mid_csp_cbf/fspSubarray/{0:02d}_{1:02d}\"".format(i, j), range(1, num_subarray + 1))]
+        string_fsp_subarray = "\n                    " + \
+                            ",\n                    ".join(fqdn_fsp_subarray) + \
+                            "\n                "
         string += "    {{\n" \
                   "        \"class\": \"Fsp\",\n" \
                   "        \"serverName\": \"FspMulti/fsp-{0:02d}\",\n" \
@@ -285,6 +289,10 @@ with open("tangods/devices.json", "w+") as f:
                   "            {{\n" \
                   "                \"devPropName\": \"VLBIAddress\",\n" \
                   "                \"devPropValue\": \"mid_csp_cbf/fsp_vlbi/{0:02d}\"\n" \
+                  "            }},\n" \
+                  "            {{\n" \
+                  "                \"devPropName\": \"FspSubarray\",\n" \
+                  "                \"devPropValue\": [{1}]\n" \
                   "            }}\n" \
                   "        ],\n" \
                   "        \"attributeProperties\": [\n" \
@@ -317,7 +325,7 @@ with open("tangods/devices.json", "w+") as f:
                   "                \"changeEventAbs\": \"1\"\n" \
                   "            }}\n" \
                   "        ]\n" \
-                  "    }},\n".format(i)
+                  "    }},\n".format(i, string_fsp_subarray)
 
     # Generate CBF Subarray search windows (2 for each CBF Subarray)
     for i in range(1, num_subarray + 1):

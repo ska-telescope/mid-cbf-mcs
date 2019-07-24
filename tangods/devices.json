@@ -542,6 +542,12 @@
             {
                 "devPropName": "VLBIAddress",
                 "devPropValue": "mid_csp_cbf/fsp_vlbi/01"
+            },
+            {
+                "devPropName": "FspSubarray",
+                "devPropValue": [
+                    "mid_csp_cbf/fspSubarray/01_01"
+                ]
             }
         ],
         "attributeProperties": [
@@ -599,6 +605,12 @@
             {
                 "devPropName": "VLBIAddress",
                 "devPropValue": "mid_csp_cbf/fsp_vlbi/02"
+            },
+            {
+                "devPropName": "FspSubarray",
+                "devPropValue": [
+                    "mid_csp_cbf/fspSubarray/02_01"
+                ]
             }
         ],
         "attributeProperties": [
@@ -656,6 +668,12 @@
             {
                 "devPropName": "VLBIAddress",
                 "devPropValue": "mid_csp_cbf/fsp_vlbi/03"
+            },
+            {
+                "devPropName": "FspSubarray",
+                "devPropValue": [
+                    "mid_csp_cbf/fspSubarray/03_01"
+                ]
             }
         ],
         "attributeProperties": [
@@ -713,6 +731,12 @@
             {
                 "devPropName": "VLBIAddress",
                 "devPropValue": "mid_csp_cbf/fsp_vlbi/04"
+            },
+            {
+                "devPropName": "FspSubarray",
+                "devPropValue": [
+                    "mid_csp_cbf/fspSubarray/04_01"
+                ]
             }
         ],
         "attributeProperties": [
@@ -770,6 +794,12 @@
             {
                 "devPropName": "VLBIAddress",
                 "devPropValue": "mid_csp_cbf/fsp_vlbi/05"
+            },
+            {
+                "devPropName": "FspSubarray",
+                "devPropValue": [
+                    "mid_csp_cbf/fspSubarray/05_01"
+                ]
             }
         ],
         "attributeProperties": [
@@ -827,6 +857,12 @@
             {
                 "devPropName": "VLBIAddress",
                 "devPropValue": "mid_csp_cbf/fsp_vlbi/06"
+            },
+            {
+                "devPropName": "FspSubarray",
+                "devPropValue": [
+                    "mid_csp_cbf/fspSubarray/06_01"
+                ]
             }
         ],
         "attributeProperties": [
@@ -884,6 +920,12 @@
             {
                 "devPropName": "VLBIAddress",
                 "devPropValue": "mid_csp_cbf/fsp_vlbi/07"
+            },
+            {
+                "devPropName": "FspSubarray",
+                "devPropValue": [
+                    "mid_csp_cbf/fspSubarray/07_01"
+                ]
             }
         ],
         "attributeProperties": [
@@ -941,6 +983,12 @@
             {
                 "devPropName": "VLBIAddress",
                 "devPropValue": "mid_csp_cbf/fsp_vlbi/08"
+            },
+            {
+                "devPropName": "FspSubarray",
+                "devPropValue": [
+                    "mid_csp_cbf/fspSubarray/08_01"
+                ]
             }
         ],
         "attributeProperties": [
@@ -998,6 +1046,12 @@
             {
                 "devPropName": "VLBIAddress",
                 "devPropValue": "mid_csp_cbf/fsp_vlbi/09"
+            },
+            {
+                "devPropName": "FspSubarray",
+                "devPropValue": [
+                    "mid_csp_cbf/fspSubarray/09_01"
+                ]
             }
         ],
         "attributeProperties": [
@@ -1055,6 +1109,12 @@
             {
                 "devPropName": "VLBIAddress",
                 "devPropValue": "mid_csp_cbf/fsp_vlbi/10"
+            },
+            {
+                "devPropName": "FspSubarray",
+                "devPropValue": [
+                    "mid_csp_cbf/fspSubarray/10_01"
+                ]
             }
         ],
         "attributeProperties": [
@@ -1112,6 +1172,12 @@
             {
                 "devPropName": "VLBIAddress",
                 "devPropValue": "mid_csp_cbf/fsp_vlbi/11"
+            },
+            {
+                "devPropName": "FspSubarray",
+                "devPropValue": [
+                    "mid_csp_cbf/fspSubarray/11_01"
+                ]
             }
         ],
         "attributeProperties": [
@@ -1169,6 +1235,12 @@
             {
                 "devPropName": "VLBIAddress",
                 "devPropValue": "mid_csp_cbf/fsp_vlbi/12"
+            },
+            {
+                "devPropName": "FspSubarray",
+                "devPropValue": [
+                    "mid_csp_cbf/fspSubarray/12_01"
+                ]
             }
         ],
         "attributeProperties": [
@@ -1226,6 +1298,12 @@
             {
                 "devPropName": "VLBIAddress",
                 "devPropValue": "mid_csp_cbf/fsp_vlbi/13"
+            },
+            {
+                "devPropName": "FspSubarray",
+                "devPropValue": [
+                    "mid_csp_cbf/fspSubarray/13_01"
+                ]
             }
         ],
         "attributeProperties": [
@@ -1283,6 +1361,12 @@
             {
                 "devPropName": "VLBIAddress",
                 "devPropValue": "mid_csp_cbf/fsp_vlbi/14"
+            },
+            {
+                "devPropName": "FspSubarray",
+                "devPropValue": [
+                    "mid_csp_cbf/fspSubarray/14_01"
+                ]
             }
         ],
         "attributeProperties": [
@@ -1340,6 +1424,12 @@
             {
                 "devPropName": "VLBIAddress",
                 "devPropValue": "mid_csp_cbf/fsp_vlbi/15"
+            },
+            {
+                "devPropName": "FspSubarray",
+                "devPropValue": [
+                    "mid_csp_cbf/fspSubarray/15_01"
+                ]
             }
         ],
         "attributeProperties": [
@@ -1397,6 +1487,12 @@
             {
                 "devPropName": "VLBIAddress",
                 "devPropValue": "mid_csp_cbf/fsp_vlbi/16"
+            },
+            {
+                "devPropName": "FspSubarray",
+                "devPropValue": [
+                    "mid_csp_cbf/fspSubarray/16_01"
+                ]
             }
         ],
         "attributeProperties": [
@@ -1454,6 +1550,12 @@
             {
                 "devPropName": "VLBIAddress",
                 "devPropValue": "mid_csp_cbf/fsp_vlbi/17"
+            },
+            {
+                "devPropName": "FspSubarray",
+                "devPropValue": [
+                    "mid_csp_cbf/fspSubarray/17_01"
+                ]
             }
         ],
         "attributeProperties": [
@@ -1511,6 +1613,12 @@
             {
                 "devPropName": "VLBIAddress",
                 "devPropValue": "mid_csp_cbf/fsp_vlbi/18"
+            },
+            {
+                "devPropName": "FspSubarray",
+                "devPropValue": [
+                    "mid_csp_cbf/fspSubarray/18_01"
+                ]
             }
         ],
         "attributeProperties": [
@@ -1568,6 +1676,12 @@
             {
                 "devPropName": "VLBIAddress",
                 "devPropValue": "mid_csp_cbf/fsp_vlbi/19"
+            },
+            {
+                "devPropName": "FspSubarray",
+                "devPropValue": [
+                    "mid_csp_cbf/fspSubarray/19_01"
+                ]
             }
         ],
         "attributeProperties": [
@@ -1625,6 +1739,12 @@
             {
                 "devPropName": "VLBIAddress",
                 "devPropValue": "mid_csp_cbf/fsp_vlbi/20"
+            },
+            {
+                "devPropName": "FspSubarray",
+                "devPropValue": [
+                    "mid_csp_cbf/fspSubarray/20_01"
+                ]
             }
         ],
         "attributeProperties": [
@@ -1682,6 +1802,12 @@
             {
                 "devPropName": "VLBIAddress",
                 "devPropValue": "mid_csp_cbf/fsp_vlbi/21"
+            },
+            {
+                "devPropName": "FspSubarray",
+                "devPropValue": [
+                    "mid_csp_cbf/fspSubarray/21_01"
+                ]
             }
         ],
         "attributeProperties": [
@@ -1739,6 +1865,12 @@
             {
                 "devPropName": "VLBIAddress",
                 "devPropValue": "mid_csp_cbf/fsp_vlbi/22"
+            },
+            {
+                "devPropName": "FspSubarray",
+                "devPropValue": [
+                    "mid_csp_cbf/fspSubarray/22_01"
+                ]
             }
         ],
         "attributeProperties": [
@@ -1796,6 +1928,12 @@
             {
                 "devPropName": "VLBIAddress",
                 "devPropValue": "mid_csp_cbf/fsp_vlbi/23"
+            },
+            {
+                "devPropName": "FspSubarray",
+                "devPropValue": [
+                    "mid_csp_cbf/fspSubarray/23_01"
+                ]
             }
         ],
         "attributeProperties": [
@@ -1853,6 +1991,12 @@
             {
                 "devPropName": "VLBIAddress",
                 "devPropValue": "mid_csp_cbf/fsp_vlbi/24"
+            },
+            {
+                "devPropName": "FspSubarray",
+                "devPropValue": [
+                    "mid_csp_cbf/fspSubarray/24_01"
+                ]
             }
         ],
         "attributeProperties": [
@@ -1910,6 +2054,12 @@
             {
                 "devPropName": "VLBIAddress",
                 "devPropValue": "mid_csp_cbf/fsp_vlbi/25"
+            },
+            {
+                "devPropName": "FspSubarray",
+                "devPropValue": [
+                    "mid_csp_cbf/fspSubarray/25_01"
+                ]
             }
         ],
         "attributeProperties": [
@@ -1967,6 +2117,12 @@
             {
                 "devPropName": "VLBIAddress",
                 "devPropValue": "mid_csp_cbf/fsp_vlbi/26"
+            },
+            {
+                "devPropName": "FspSubarray",
+                "devPropValue": [
+                    "mid_csp_cbf/fspSubarray/26_01"
+                ]
             }
         ],
         "attributeProperties": [
@@ -2024,6 +2180,12 @@
             {
                 "devPropName": "VLBIAddress",
                 "devPropValue": "mid_csp_cbf/fsp_vlbi/27"
+            },
+            {
+                "devPropName": "FspSubarray",
+                "devPropValue": [
+                    "mid_csp_cbf/fspSubarray/27_01"
+                ]
             }
         ],
         "attributeProperties": [

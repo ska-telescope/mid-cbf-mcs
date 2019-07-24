@@ -60,9 +60,7 @@ class FspPst(SKACapability):
     def init_device(self):
         SKACapability.init_device(self)
         # PROTECTED REGION ID(FspPst.init_device) ENABLED START #
-        self.set_state(PyTango.DevState.INIT)
-        self._health_state = HealthState.UNKNOWN.value
-        self.set_state(PyTango.DevState.DISABLE)
+        self.set_state(PyTango.DevState.OFF)
         # PROTECTED REGION END #    //  FspPst.init_device
 
     def always_executed_hook(self):

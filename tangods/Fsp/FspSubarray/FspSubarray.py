@@ -168,6 +168,7 @@ class FspSubarray(SKASubarray):
     def init_device(self):
         SKASubarray.init_device(self)
         # PROTECTED REGION ID(FspSubarray.init_device) ENABLED START #
+        self.set_state(PyTango.DevState.INIT)
 
         # get relevant IDs
         self._subarray_id = self.SubID
@@ -212,6 +213,7 @@ class FspSubarray(SKASubarray):
         self._proxy_cbf_subarray = PyTango.DeviceProxy(self.CbfSubarrayAddress)
 
         self._obs_state = ObsState.IDLE.value
+        self.set_state(PyTango.DevState.OFF)
         # PROTECTED REGION END #    //  FspSubarray.init_device
 
     def always_executed_hook(self):
@@ -221,7 +223,7 @@ class FspSubarray(SKASubarray):
 
     def delete_device(self):
         # PROTECTED REGION ID(FspSubarray.delete_device) ENABLED START #
-        pass
+        self.Off()
         # PROTECTED REGION END #    //  FspSubarray.delete_device
 
     # ------------------
@@ -298,11 +300,23 @@ class FspSubarray(SKASubarray):
     # Commands
     # --------
 
+    @command()
+    def On(self):
+        # PROTECTED REGION ID(FspSubarray.On) ENABLED START #
+        self.set_state(PyTango.DevState.ON)
+        # PROTECTED REGION END #    //  FspSubarray.On
+
+    @command()
+    def Off(self):
+        # PROTECTED REGION ID(FspSubarray.Off) ENABLED START #
+        self.GoToIdle()
+        self.set_state(PyTango.DevState.OFF)
+        # PROTECTED REGION END #    //  FspSubarray.Off
+
     @command(
         dtype_in=('uint16',),
         doc_in="List of receptor IDs",
     )
-    @DebugIt()
     def AddReceptors(self, argin):
         # PROTECTED REGION ID(FspSubarray.AddReceptors) ENABLED START #
         errs = []  # list of error messages
