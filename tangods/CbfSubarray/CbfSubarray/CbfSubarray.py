@@ -83,13 +83,20 @@ class CbfSubarray(SKASubarray):
                 delay_model_all = json.loads(value)
 
                 # we lock the mutex, push to the queue, then immediately unlock it
-                self._mutex_delay_model_queue.acquire()
+                # self._mutex_delay_model_queue.acquire()
                 for delay_model in delay_model_all["delayModel"]:
+                    t = Thread(
+                        target=self.__update_delay_model,
+                        args=(int(delay_model["epoch"]), json.dumps(delay_model["delayDetails"]))
+                    )
+                    t.start()
+                    """
                     heapq.heappush(
                         self._delay_model_queue,
                         (int(delay_model["epoch"]), json.dumps(delay_model["delayDetails"]))
                     )
-                self._mutex_delay_model_queue.release()
+                    """
+                # self._mutex_delay_model_queue.release()
             except Exception as e:
                 self.dev_logging(str(e), PyTango.LogLevel.LOG_ERROR)
         else:
@@ -97,6 +104,7 @@ class CbfSubarray(SKASubarray):
                 log_msg = item.reason + ": on attribute " + str(event.attr_name)
                 self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
 
+    """
     def __poll_delay_model_queue(self):
         while True:
             try:
@@ -120,14 +128,25 @@ class CbfSubarray(SKASubarray):
                     # model might be pushed to the queue with a closer activation time.
             except IndexError:  # delay model queue is empty
                 time.sleep(1)  # sleep for 1 second, I suppose?
+    """
 
     def __update_delay_model(self, epoch, model):
+        log_msg = "Delay model active at {} (currently {})...".format(epoch, int(time.time()))
+        self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+
+        if epoch > time.time():
+            time.sleep(epoch - time.time())
+
         log_msg = "Updating delay model at specified epoch {}...".format(epoch)
         self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
 
         data = PyTango.DeviceData()
         data.insert(PyTango.DevString, model)
+
+        # we lock the mutex, forward the configuration, then immediately unlock it
+        self._mutex_delay_model_config.acquire()
         self._group_vcc.command_inout("UpdateDelayModel", data)
+        self._mutex_delay_model_config.release()
 
     def __vis_destination_address_event_callback(self, event):
         if not event.err:
@@ -750,10 +769,12 @@ class CbfSubarray(SKASubarray):
         self._fsp_state = {}  # device_name:state
         self._fsp_health_state = {}  # device_name:healthState
 
-        self._delay_model_queue = []
-        heapq.heapify(self._delay_model_queue)
+        # self._delay_model_queue = []
+        # heapq.heapify(self._delay_model_queue)
         # for popping/pushing to delay model queue
-        self._mutex_delay_model_queue = Lock()
+        # self._mutex_delay_model_queue = Lock()
+        # for forwarding delay model configuration
+        self._mutex_delay_model_config = Lock()
 
         # for easy self-reference
         self._frequency_band_offset_stream_1 = 0
@@ -1139,8 +1160,8 @@ class CbfSubarray(SKASubarray):
         )
         self._events_telstate[event_id] = attribute_proxy
         # start a delay model queue polling thread
-        self._thread_poll_delay_model_queue = Thread(target=self.__poll_delay_model_queue)
-        self._thread_poll_delay_model_queue.start()
+        # self._thread_poll_delay_model_queue = Thread(target=self.__poll_delay_model_queue)
+        # self._thread_poll_delay_model_queue.start()
 
         # Configure visDestinationAddressSubscriptionPoint.
         self._last_received_vis_destination_address = "{}"
