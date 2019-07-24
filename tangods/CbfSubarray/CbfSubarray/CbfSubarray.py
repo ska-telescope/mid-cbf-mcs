@@ -65,7 +65,7 @@ class CbfSubarray(SKASubarray):
 
     def __delay_model_event_callback(self, event):
         if not event.err:
-            if self._obs_state != ObsState.READY.value:
+            if self._obs_state not in [ObsState.READY.value, ObsState.SCANNING.value]:
                 log_msg = "obsState not correct for updating delay model."
                 self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
                 return
@@ -80,14 +80,15 @@ class CbfSubarray(SKASubarray):
                     return
 
                 self._last_received_delay_model = value
-                delay_model = json.loads(value)["delayModel"][0]
+                delay_model_all = json.loads(value)
 
                 # we lock the mutex, push to the queue, then immediately unlock it
                 self._mutex_delay_model_queue.acquire()
-                heapq.heappush(
-                    self._delay_model_queue,
-                    (delay_model["epoch"], json.dumps(delay_model["delayDetails"]))
-                )
+                for delay_model in delay_model_all["delayModel"]:
+                    heapq.heappush(
+                        self._delay_model_queue,
+                        (int(delay_model["epoch"]), json.dumps(delay_model["delayDetails"]))
+                    )
                 self._mutex_delay_model_queue.release()
             except Exception as e:
                 self.dev_logging(str(e), PyTango.LogLevel.LOG_ERROR)
