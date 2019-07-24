@@ -253,8 +253,8 @@ class Vcc(SKACapability):
 
     delayModel = attribute(
         dtype=(('double',),),
-        max_dim_x=26,
-        max_dim_y=6,
+        max_dim_x=6,
+        max_dim_y=26,
         access=AttrWriteType.READ,
         label="Delay model coefficients",
         doc="Delay model coefficients, given per frequency slice"

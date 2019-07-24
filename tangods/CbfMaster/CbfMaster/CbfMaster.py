@@ -365,8 +365,8 @@ class CbfMaster(SKAMaster):
 
     reportFSPSubarrayMembership = attribute(
         dtype=(('uint16',),),
-        max_dim_x=27,
-        max_dim_y=16,
+        max_dim_x=16,
+        max_dim_y=27,
         label="FSP subarray membership",
         polling_period=3000,
         abs_change=1,
