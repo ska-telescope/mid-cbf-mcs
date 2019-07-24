@@ -161,13 +161,6 @@ class FspSubarray(SKASubarray):
         doc="Destination addresses for visibilities, given as a JSON object"
     )
 
-    delayModel = attribute(
-        dtype='str',
-        access=AttrWriteType.READ_WRITE,
-        label="Delay model coefficients",
-        doc="Delay model coefficients, given as a JSON object"
-    )
-
     # ---------------
     # General methods
     # ---------------
@@ -199,8 +192,7 @@ class FspSubarray(SKASubarray):
             [int(i*self.NUM_FINE_CHANNELS/self.NUM_CHANNEL_GROUPS) + 1, 0]
             for i in range(self.NUM_CHANNEL_GROUPS)
         ]
-        self._vis_destination_address = {}
-        self._delay_model = ""
+        self._vis_destination_address = []
 
         # For each channel sent to SDP: [chanID, bw, cf, cbfOutLink, sdpIp, sdpPort]
         self._channel_info = []
@@ -301,16 +293,6 @@ class FspSubarray(SKASubarray):
         # PROTECTED REGION ID(FspSubarray.visDestinationAddress_write) ENABLED START #
         self._vis_destination_address = json.loads(value)
         # PROTECTED REGION END #    //  FspSubarray.visDestinationAddress_write
-
-    def read_delayModel(self):
-        # PROTECTED REGION ID(FspSubarray.delayModel_read) ENABLED START #
-        return self._delay_model
-        # PROTECTED REGION END #    //  FspSubarray.delayModel_read
-
-    def write_delayModel(self, value):
-        # PROTECTED REGION ID(FspSubarray.delayModel_write) ENABLED START #
-        self._delay_model = value
-        # PROTECTED REGION END #    //  FspSubarray.delayModel_write
 
     # --------
     # Commands
@@ -436,7 +418,7 @@ class FspSubarray(SKASubarray):
                             PyTango.Except.throw_exception("Command failed", msg,
                                                            "AddChannelAddressInfo execution",
                                                            PyTango.ErrSeverity.ERR)
-                self._vis_destination_address = fsp
+                self._vis_destination_address = fsp["hosts"]
 
         # get list of unconfigured channels
         unconfigured_channels = [channel[0] for channel in self._channel_info if channel[4] == ""]

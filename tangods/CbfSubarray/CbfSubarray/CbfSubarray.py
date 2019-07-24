@@ -28,7 +28,9 @@ import sys
 import json
 import copy
 from random import randint
-from time import sleep
+import heapq
+from threading import Thread, Lock
+import time
 
 file_path = os.path.dirname(os.path.abspath(__file__))
 commons_pkg_path = os.path.abspath(os.path.join(file_path, "../../commons"))
@@ -63,17 +65,88 @@ class CbfSubarray(SKASubarray):
 
     def __delay_model_event_callback(self, event):
         if not event.err:
+            if self._obs_state not in [ObsState.READY.value, ObsState.SCANNING.value]:
+                log_msg = "obsState not correct for updating delay model."
+                self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+                return
             try:
-                self._group_fsp_subarray.write_attribute("delayModel", event.attr_value.value)
-                self._group_vcc.write_attribute("delayModel", event.attr_value.value)
-                log_msg = "Value of " + str(event.attr_name) + " is " + str(event.attr_value.value)
-                self.dev_logging(log_msg, PyTango.LogLevel.LOG_DEBUG)
+                log_msg = "Received delay model update."
+                self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+
+                value = str(event.attr_value.value)
+                if value == self._last_received_delay_model:
+                    log_msg = "Skipped updating delay model."
+                    self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+                    return
+
+                self._last_received_delay_model = value
+                delay_model_all = json.loads(value)
+
+                # we lock the mutex, push to the queue, then immediately unlock it
+                # self._mutex_delay_model_queue.acquire()
+                for delay_model in delay_model_all["delayModel"]:
+                    t = Thread(
+                        target=self.__update_delay_model,
+                        args=(int(delay_model["epoch"]), json.dumps(delay_model["delayDetails"]))
+                    )
+                    t.start()
+                    """
+                    heapq.heappush(
+                        self._delay_model_queue,
+                        (int(delay_model["epoch"]), json.dumps(delay_model["delayDetails"]))
+                    )
+                    """
+                # self._mutex_delay_model_queue.release()
             except Exception as e:
                 self.dev_logging(str(e), PyTango.LogLevel.LOG_ERROR)
         else:
             for item in event.errors:
                 log_msg = item.reason + ": on attribute " + str(event.attr_name)
                 self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
+
+    """
+    def __poll_delay_model_queue(self):
+        while True:
+            try:
+                log_msg = "Checking for active delay models (current epoch is {})...".format(
+                    int(time.time())
+                )
+                self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+
+                # simply accessing an element is thread-safe
+                root = self._delay_model_queue[0]
+                if root[0] <= time.time():  # time to activate delay model
+                    # we lock the mutex, pop the root of the queue, then immediately unlock it
+                    self._mutex_delay_model_queue.acquire()
+                    delay_model = heapq.heappop(self._delay_model_queue)
+                    self._mutex_delay_model_queue.release()
+                    self.__update_delay_model(delay_model[0], delay_model[1])
+                else:  # delay model not active yet
+                    time.sleep(1)  # sleep for 1 second, I suppose?
+                    # We don't want to simply sleep the difference between the current time and
+                    # the time that the root of the queue becomes active since another delay
+                    # model might be pushed to the queue with a closer activation time.
+            except IndexError:  # delay model queue is empty
+                time.sleep(1)  # sleep for 1 second, I suppose?
+    """
+
+    def __update_delay_model(self, epoch, model):
+        log_msg = "Delay model active at {} (currently {})...".format(epoch, int(time.time()))
+        self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+
+        if epoch > time.time():
+            time.sleep(epoch - time.time())
+
+        log_msg = "Updating delay model at specified epoch {}...".format(epoch)
+        self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+
+        data = PyTango.DeviceData()
+        data.insert(PyTango.DevString, model)
+
+        # we lock the mutex, forward the configuration, then immediately unlock it
+        self._mutex_delay_model_config.acquire()
+        self._group_vcc.command_inout("UpdateDelayModel", data)
+        self._mutex_delay_model_config.release()
 
     def __vis_destination_address_event_callback(self, event):
         if not event.err:
@@ -690,10 +763,18 @@ class CbfSubarray(SKASubarray):
         self._scan_ID = 0
         self._output_links_distribution = {"scanID": 0}
         self._last_received_vis_destination_address = "{}"
+        self._last_received_delay_model = "{}"
         self._vcc_state = {}  # device_name:state
         self._vcc_health_state = {}  # device_name:healthState
         self._fsp_state = {}  # device_name:state
         self._fsp_health_state = {}  # device_name:healthState
+
+        # self._delay_model_queue = []
+        # heapq.heapify(self._delay_model_queue)
+        # for popping/pushing to delay model queue
+        # self._mutex_delay_model_queue = Lock()
+        # for forwarding delay model configuration
+        self._mutex_delay_model_config = Lock()
 
         # for easy self-reference
         self._frequency_band_offset_stream_1 = 0
@@ -769,7 +850,9 @@ class CbfSubarray(SKASubarray):
 
     def delete_device(self):
         # PROTECTED REGION ID(CbfSubarray.delete_device) ENABLED START #
-        pass
+        self.GoToIdle()
+        # not sure if I should do this or not
+        # self.RemoveAllReceptors()
         # PROTECTED REGION END #    //  CbfSubarray.delete_device
 
     # ------------------
@@ -1068,6 +1151,7 @@ class CbfSubarray(SKASubarray):
             self._events_telstate[event_id] = attribute_proxy
 
         # Configure delayModelSubscriptionPoint.
+        self._last_received_delay_model = "{}"
         attribute_proxy = PyTango.AttributeProxy(argin["delayModelSubscriptionPoint"])
         attribute_proxy.ping()
         event_id = attribute_proxy.subscribe_event(
@@ -1075,6 +1159,9 @@ class CbfSubarray(SKASubarray):
             self.__delay_model_event_callback
         )
         self._events_telstate[event_id] = attribute_proxy
+        # start a delay model queue polling thread
+        # self._thread_poll_delay_model_queue = Thread(target=self.__poll_delay_model_queue)
+        # self._thread_poll_delay_model_queue.start()
 
         # Configure visDestinationAddressSubscriptionPoint.
         self._last_received_vis_destination_address = "{}"

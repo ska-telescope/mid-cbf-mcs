@@ -252,12 +252,13 @@ class Vcc(SKACapability):
     )
 
     delayModel = attribute(
-        dtype='str',
-        access=AttrWriteType.READ_WRITE,
+        dtype=(('double',),),
+        max_dim_x=6,
+        max_dim_y=26,
+        access=AttrWriteType.READ,
         label="Delay model coefficients",
-        doc="Delay model coefficients, given as a JSON object"
+        doc="Delay model coefficients, given per frequency slice"
     )
-
 
     # ---------------
     # General methods
@@ -298,7 +299,7 @@ class Vcc(SKACapability):
         self._scfo_band_4 = 0
         self._scfo_band_5a = 0
         self._scfo_band_5b = 0
-        self._delay_model = ""
+        self._delay_model = [[0]*6 for i in range(26)]
 
         self._obs_state = ObsState.IDLE.value
         self.set_state(PyTango.DevState.STANDBY)
@@ -460,12 +461,6 @@ class Vcc(SKACapability):
         return self._delay_model
         # PROTECTED REGION END #    //  Vcc.delayModel_read
 
-    def write_delayModel(self, value):
-        # PROTECTED REGION ID(Vcc.delayModel_write) ENABLED START #
-        self._delay_model = value
-        # PROTECTED REGION END #    //  Vcc.delayModel_write
-
-
     # --------
     # Commands
     # --------
@@ -539,6 +534,32 @@ class Vcc(SKACapability):
             self.dev_logging("obsState must be CONFIGURING or READY. Ignoring.",
                              PyTango.LogLevel.LOG_WARN)
         # PROTECTED REGION END #    // Vcc.SetFrequencyBand
+
+    @command(
+        dtype_in='str',
+        doc_in="Delay model, given per frequency slice"
+    )
+    def UpdateDelayModel(self, argin):
+        # PROTECTED REGION ID(Vcc.UpdateDelayModel) ENABLED START #
+        argin = json.loads(argin)
+
+        for receptor in argin:
+            if receptor["receptor"] == self._receptor_ID:
+                for frequency_slice in receptor["receptorDelayDetails"]:
+                    if 1 <= frequency_slice["fsid"] <= 26:
+                        if len(frequency_slice["delayCoeff"]) == 6:
+                            self._delay_model[frequency_slice["fsid"] - 1] = \
+                                frequency_slice["delayCoeff"]
+                        else:
+                            log_msg = "'delayCoeff' not valid for frequency slice {} of "\
+                                "receptor {}".format(frequency_slice["fsid"], self._receptor_ID)
+                            self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
+                    else:
+                        log_msg = "'fsid' {} not valid for receptor {}".format(
+                            frequency_slice["fsid"], self._receptor_ID
+                        )
+                        self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
+        # PROTECTED REGION END #    // Vcc.UpdateDelayModel
 
     @command(
         dtype_in='str',
