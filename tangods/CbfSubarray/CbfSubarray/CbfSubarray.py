@@ -615,8 +615,14 @@ class CbfSubarray(SKASubarray):
                         self.__raise_configure_scan_fatal_error(msg)
 
                     fsp["frequencyBand"] = argin["frequencyBand"]
-                    fsp["frequencyBandOffsetStream1"] = argin["frequencyBandOffsetStream1"]
-                    fsp["frequencyBandOffsetStream2"] = argin["frequencyBandOffsetStream2"]
+                    if "frequencyBandOffsetStream1" in argin:
+                        fsp["frequencyBandOffsetStream1"] = argin["frequencyBandOffsetStream1"]
+                    else:
+                        fsp["frequencyBandOffsetStream1"] = 0
+                    if "frequencyBandOffsetStream2" in argin:
+                        fsp["frequencyBandOffsetStream2"] = argin["frequencyBandOffsetStream2"]
+                    else:
+                        fsp["frequencyBandOffsetStream2"] = 0
                     if "receptors" not in fsp:
                         fsp["receptors"] = self._receptors
                     if argin["frequencyBand"] in ["5a", "5b"]:
@@ -1288,8 +1294,14 @@ class CbfSubarray(SKASubarray):
             proxy_fsp.SetFunctionMode(fsp["functionMode"])
 
             fsp["frequencyBand"] = argin["frequencyBand"]
-            fsp["frequencyBandOffsetStream1"] = self._frequency_band_offset_stream_1
-            fsp["frequencyBandOffsetStream2"] = self._frequency_band_offset_stream_2
+            if "frequencyBandOffsetStream1" in argin:
+                fsp["frequencyBandOffsetStream1"] = self._frequency_band_offset_stream_1
+            else:
+                fsp["frequencyBandOffsetStream1"] = 0
+            if "frequencyBandOffsetStream2" in argin:
+                fsp["frequencyBandOffsetStream2"] = self._frequency_band_offset_stream_2
+            else:
+                fsp["frequencyBandOffsetStream2"] = 0
             if "receptors" not in fsp:
                 fsp["receptors"] = self._receptors
             if self._frequency_band in [4, 5]:
