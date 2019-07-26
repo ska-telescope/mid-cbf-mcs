@@ -36,21 +36,21 @@
         {
             "fspID": 2,
             "functionMode": "CORR",
-            "frequencySliceID": 1,
+            "frequencySliceID": 2,
             "corrBandwidth": 0,
             "integrationTime": 140
         },
         {
             "fspID": 3,
             "functionMode": "CORR",
-            "frequencySliceID": 1,
+            "frequencySliceID": 3,
             "corrBandwidth": 0,
             "integrationTime": 140
         },
         {
             "fspID": 4,
             "functionMode": "CORR",
-            "frequencySliceID": 1,
+            "frequencySliceID": 4,
             "corrBandwidth": 0,
             "integrationTime": 140
         }

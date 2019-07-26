@@ -1179,8 +1179,8 @@ class CbfSubarray(SKASubarray):
         self._group_vcc.command_inout("SetFrequencyBand", data)
 
         # Configure band5Tuning, if frequencyBand is 5a or 5b.
-        stream_tuning = [*map(float, argin["band5Tuning"])]
         if self._frequency_band in [4, 5]:
+            stream_tuning = [*map(float, argin["band5Tuning"])]
             self._stream_tuning = stream_tuning
             self._group_vcc.write_attribute("band5Tuning", stream_tuning)
 
