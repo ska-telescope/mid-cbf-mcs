@@ -345,6 +345,13 @@ class CbfSubarray(SKASubarray):
             msg = "Scan configuration object is not a valid JSON object. Aborting configuration."
             self.__raise_configure_scan_fatal_error(msg)
 
+        for proxy in self._proxies_assigned_vcc:
+            if proxy.State() != PyTango.DevState.ON:
+                msg = "VCC {} is not ON. Aborting configuration.".format(
+                    self._proxies_vcc.index(proxy) + 1
+                )
+                self.__raise_configure_scan_fatal_error(msg)
+
         # Validate scanID.
         if "scanID" in argin:
             if int(argin["scanID"]) <= 0:  # scanID not positive
@@ -570,6 +577,16 @@ class CbfSubarray(SKASubarray):
                     else:
                         log_msg = "FSP specified, but 'fspID' not given. "\
                             "Aborting configuration."
+                        self.__raise_configure_scan_fatal_error(msg)
+
+                    if proxy_fsp.State() != PyTango.DevState.ON:
+                        msg = "FSP {} is not ON. Aborting configuration.".format(fspID)
+                        self.__raise_configure_scan_fatal_error(msg)
+
+                    if proxy_fsp_subarray.State() != PyTango.DevState.ON:
+                        msg = "Subarray {} of FSP {} is not ON. Aborting configuration.".format(
+                            self._subarray_id, fspID
+                        )
                         self.__raise_configure_scan_fatal_error(msg)
 
                     # Validate functionMode.
@@ -852,7 +869,9 @@ class CbfSubarray(SKASubarray):
 
     def delete_device(self):
         # PROTECTED REGION ID(CbfSubarray.delete_device) ENABLED START #
-        self.Off()
+        self.GoToIdle()
+        self.RemoveAllReceptors()
+        self.set_state(PyTango.DevState.DISABLE)
         # PROTECTED REGION END #    //  CbfSubarray.delete_device
 
     # ------------------
@@ -909,19 +928,42 @@ class CbfSubarray(SKASubarray):
     # Commands
     # --------
 
+    def is_On_allowed(self):
+        if self.dev_state() == PyTango.DevState.DISABLE and\
+                self._obs_state == ObsState.IDLE.value:
+            return True
+        return False
+
     @command()
     def On(self):
         # PROTECTED REGION ID(CbfSubarray.On) ENABLED START #
+        self._proxy_sw_1.SetState(PyTango.DevState.DISABLE)
+        self._proxy_sw_2.SetState(PyTango.DevState.DISABLE)
         self.set_state(PyTango.DevState.OFF)
         # PROTECTED REGION END #    //  CbfSubarray.On
+
+    def is_Off_allowed(self):
+        if self.dev_state() == PyTango.DevState.OFF and\
+                self._obs_state == ObsState.IDLE.value:
+            return True
+        return False
 
     @command()
     def Off(self):
         # PROTECTED REGION ID(CbfSubarray.Off) ENABLED START #
-        self.GoToIdle()
-        self.RemoveAllReceptors()
+        # This command can only be called when obsState=IDLE and state=OFF
+        # self.GoToIdle()
+        # self.RemoveAllReceptors()
+        self._proxy_sw_1.SetState(PyTango.DevState.OFF)
+        self._proxy_sw_2.SetState(PyTango.DevState.OFF)
         self.set_state(PyTango.DevState.DISABLE)
         # PROTECTED REGION END #    //  CbfSubarray.Off
+
+    def is_AddReceptors_allowed(self):
+        if self.dev_state() in [PyTango.DevState.OFF, PyTango.DevState.ON] and\
+                self._obs_state == ObsState.IDLE.value:
+            return True
+        return False
 
     @command(
         dtype_in=('uint16',),
@@ -982,6 +1024,12 @@ class CbfSubarray(SKASubarray):
                                            PyTango.ErrSeverity.ERR)
         # PROTECTED REGION END #    //  CbfSubarray.AddReceptors
 
+    def is_RemoveReceptors_allowed(self):
+        if self.dev_state() in [PyTango.DevState.OFF, PyTango.DevState.ON] and\
+                self._obs_state == ObsState.IDLE.value:
+            return True
+        return False
+
     @command(
         dtype_in=('uint16',),
         doc_in="List of receptor IDs",
@@ -1016,11 +1064,23 @@ class CbfSubarray(SKASubarray):
             self.set_state(DevState.OFF)
         # PROTECTED REGION END #    //  CbfSubarray.RemoveReceptors
 
+    def is_RemoveAllReceptors_allowed(self):
+        if self.dev_state() in [PyTango.DevState.OFF, PyTango.DevState.ON] and\
+                self._obs_state == ObsState.IDLE.value:
+            return True
+        return False
+
     @command()
     def RemoveAllReceptors(self):
         # PROTECTED REGION ID(CbfSubarray.RemoveAllReceptors) ENABLED START #
         self.RemoveReceptors(self._receptors[:])
         # PROTECTED REGION END #    //  CbfSubarray.RemoveAllReceptors
+
+    def is_ConfigureScan_allowed(self):
+        if self.dev_state() == PyTango.DevState.ON and\
+                self._obs_state in [ObsState.IDLE.value, ObsState.READY.value]:
+            return True
+        return False
 
     @command(
         dtype_in='str',
@@ -1259,6 +1319,12 @@ class CbfSubarray(SKASubarray):
 
         # PROTECTED REGION END #    //  CbfSubarray.ConfigureScan
 
+    def is_ConfigureSearchWindow_allowed(self):
+        if self.dev_state() == PyTango.DevState.ON and\
+                self._obs_state == ObsState.CONFIGURING.value:
+            return True
+        return False
+
     @command(
         dtype_in='str',
         doc_in='JSON object to configure a search window'
@@ -1375,20 +1441,33 @@ class CbfSubarray(SKASubarray):
 
         # PROTECTED REGION END #    //  CbfSubarray.ConfigureSearchWindow
 
+    def is_EndScan_allowed(self):
+        if self.dev_state() == PyTango.DevState.ON and\
+                self._obs_state == ObsState.SCANNING.value:
+            return True
+        return False
+
     @command()
     def EndScan(self):
         # PROTECTED REGION ID(CbfSubarray.EndScan) ENABLED START #
+        """
         if self._obs_state != ObsState.SCANNING.value:
             msg = "A scan has not been started."
             self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
             PyTango.Except.throw_exception("Command failed", msg, "Scan execution",
                                            PyTango.ErrSeverity.ERR)
-
+        """
         self._group_vcc.command_inout("EndScan")
         self._group_fsp_subarray.command_inout("EndScan")
 
         self._obs_state = ObsState.READY.value
         # PROTECTED REGION END #    //  CbfSubarray.EndScan
+
+    def is_Scan_allowed(self):
+        if self.dev_state() == PyTango.DevState.ON and\
+                self._obs_state == ObsState.READY.value:
+            return True
+        return False
 
     @command(
         dtype_in=('str',),
@@ -1396,17 +1475,24 @@ class CbfSubarray(SKASubarray):
     )
     def Scan(self, argin):
         # PROTECTED REGION ID(CbfSubarray.Scan) ENABLED START #
+        """
         if self._obs_state != ObsState.READY.value:
             msg = "A scan is not ready to be started."
             self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
             PyTango.Except.throw_exception("Command failed", msg, "Scan execution",
                                            PyTango.ErrSeverity.ERR)
-
+        """
         self._group_vcc.command_inout("Scan")
         self._group_fsp_subarray.command_inout("Scan")
 
         self._obs_state = ObsState.SCANNING.value
         # PROTECTED REGION END #    //  CbfSubarray.Scan
+
+    def is_GoToIdle_allowed(self):
+        if self.dev_state() in [PyTango.DevState.OFF, PyTango.DevState.ON] and\
+                self._obs_state in [ObsState.IDLE.value, ObsState.READY.value]:
+            return True
+        return False
 
     # This command is called "GoToIdle", but a more proper name for it is "ReleaseAllResources".
     # The reason why it's not called "ReleaseAllResources" is because, for some reason, the
@@ -1447,6 +1533,9 @@ class CbfSubarray(SKASubarray):
         self._proxies_assigned_fsp_subarray.clear()
 
         self._scan_ID = 0
+        self._output_links_distribution = {"scanID": 0}
+        self._last_received_vis_destination_address = "{}"
+        self._last_received_delay_model = "{}"
 
         # transition to obsState=IDLE
         self._obs_state = ObsState.IDLE.value

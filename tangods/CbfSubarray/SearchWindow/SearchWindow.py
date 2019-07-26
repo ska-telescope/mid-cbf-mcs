@@ -104,7 +104,6 @@ class SearchWindow(SKACapability):
         SKACapability.init_device(self)
         # PROTECTED REGION ID(SearchWindow.init_device) ENABLED START #
         self.set_state(PyTango.DevState.INIT)
-        self._health_state = HealthState.UNKNOWN.value
 
         # initialize attribute values
         self._search_window_tuning = 0
@@ -114,7 +113,7 @@ class SearchWindow(SKACapability):
         self._period_after_epoch = 0
         self._destination_address = {}  # this is interpreted as a JSON object
 
-        self.set_state(PyTango.DevState.DISABLE)
+        self.set_state(PyTango.DevState.OFF)
         # PROTECTED REGION END #    //  SearchWindow.init_device
 
     def always_executed_hook(self):

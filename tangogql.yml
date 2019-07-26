@@ -6,7 +6,7 @@ volumes:
 services:
   tangogql:
     image: nexus.engageska-portugal.pt/ska-docker/webjive-develop_tangogql:latest
-    container_name: ${CONTAINER_NAME_PREFIX}tangogql
+    container_name: tangogql
     network_mode: ${NETWORK_MODE}
     command: /bin/bash -c "source activate graphql && adev runserver tangogql/aioserver.py --app-factory=dev_run --port=5004"
     depends_on:

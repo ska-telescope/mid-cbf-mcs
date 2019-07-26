@@ -6,7 +6,7 @@ volumes:
 services:
   webjive:
     image: nexus.engageska-portugal.pt/ska-docker/webjive-develop_webjive:latest
-    container_name: ${CONTAINER_NAME_PREFIX}webjive
+    container_name: webjive
     network_mode: ${NETWORK_MODE}
     depends_on:
       - tangogql
@@ -18,7 +18,7 @@ services:
 
   auth:
     image: nexus.engageska-portugal.pt/ska-docker/webjive-develop_auth:latest
-    container_name: ${CONTAINER_NAME_PREFIX}auth
+    container_name: auth
     network_mode: ${NETWORK_MODE}
     environment:
       - SECRET=s3cr3t
@@ -28,7 +28,7 @@ services:
 
   dashboards:
     image: nexus.engageska-portugal.pt/ska-docker/webjive-develop_dashboards:latest
-    container_name: ${CONTAINER_NAME_PREFIX}dashboards
+    container_name: dashboards
     network_mode: ${NETWORK_MODE}
     depends_on:
       - mongodb
@@ -41,7 +41,7 @@ services:
 
   mongodb:
     image: mongo:3.6-stretch
-    container_name: ${CONTAINER_NAME_PREFIX}mongodb
+    container_name: mongodb
     network_mode: ${NETWORK_MODE}
     volumes:
       - mongodb:/data/db

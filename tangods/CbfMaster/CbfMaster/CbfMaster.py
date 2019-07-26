@@ -197,20 +197,6 @@ class CbfMaster(SKAMaster):
     # Attributes
     # ----------
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     commandProgress = attribute(
         dtype='uint16',
         label="Command progress percentage",
@@ -414,10 +400,10 @@ class CbfMaster(SKAMaster):
             del remaining[receptorIDIndex]
 
         # initialize the dict with subarray/capability proxies
-        self._proxies = {}
+        self._proxies = {}  # device_name:proxy
 
-        # initialize the list with the subscribed event IDs
-        self._event_id = []
+        # initialize the dict with the subscribed event IDs
+        self._event_id = {}  # proxy:[eventID]
 
         # initialize groups
         self._group_vcc = PyTango.Group("VCC")
@@ -439,11 +425,11 @@ class CbfMaster(SKAMaster):
                 device_proxy.ping()
 
                 self._proxies[fqdn] = device_proxy
+                events = []
 
-                # set up attribute polling and change events on subarrays/capabilities
-                # and subscribe to event
+                # subscribe to change events on subarrays/capabilities
                 for attribute in ["adminMode", "healthState", "State"]:
-                    self._event_id.append(
+                    events.append(
                         device_proxy.subscribe_event(
                             attribute, PyTango.EventType.CHANGE_EVENT,
                             self.__state_change_event_callback, stateless=True
@@ -452,7 +438,7 @@ class CbfMaster(SKAMaster):
 
                 # subscribe to VCC/FSP subarray membership change events
                 if "vcc" in fqdn or "fsp" in fqdn:
-                    self._event_id.append(
+                    events.append(
                         device_proxy.subscribe_event(
                             "subarrayMembership", PyTango.EventType.CHANGE_EVENT,
                             self.__membership_event_callback, stateless=True
@@ -461,12 +447,14 @@ class CbfMaster(SKAMaster):
 
                 # subscribe to subarray scan ID change events
                 if "subarray" in fqdn:
-                    self._event_id.append(
+                    events.append(
                         device_proxy.subscribe_event(
                             "scanID", PyTango.EventType.CHANGE_EVENT,
                             self.__scan_ID_event_callback, stateless=True
                         )
                     )
+
+                self._event_id[device_proxy] = events
             except PyTango.DevFailed as df:
                 for item in df.args:
                     log_msg = "Failure in connection to " + fqdn + " device: " + str(item.reason)
@@ -482,7 +470,15 @@ class CbfMaster(SKAMaster):
 
     def delete_device(self):
         # PROTECTED REGION ID(CbfMaster.delete_device) ENABLED START #
-        self.Off()
+        # unsubscribe to events
+        for proxy in list(self._event_id.keys()):
+            for event_id in self._event_id[proxy]:
+                proxy.unsubscribe_event(event_id)
+
+        self._group_subarray.command_inout("Off")
+        self._group_vcc.command_inout("Off")
+        self._group_fsp.command_inout("Off")
+        self.set_state(PyTango.DevState.OFF)
         # PROTECTED REGION END #    //  CbfMaster.delete_device
 
     # ------------------
@@ -594,10 +590,14 @@ class CbfMaster(SKAMaster):
         return self._report_subarray_admin_mode
         # PROTECTED REGION END #    //  CbfMaster.reportSubarrayAdminMode_read
 
-
     # --------
     # Commands
     # --------
+
+    def is_On_allowed(self):
+        if self.dev_state() == PyTango.DevState.STANDBY:
+            return True
+        return False
 
     @command(
         dtype_in='str',
@@ -611,6 +611,11 @@ class CbfMaster(SKAMaster):
         self.set_state(PyTango.DevState.ON)
         # PROTECTED REGION END #    //  CbfMaster.On
 
+    def is_Off_allowed(self):
+        if self.dev_state() == PyTango.DevState.STANDBY:
+            return True
+        return False
+
     @command(
         dtype_in='str',
         doc_in="TODO: ask Elisabetta why the input argument is always just an empty string.",
@@ -622,6 +627,11 @@ class CbfMaster(SKAMaster):
         self._group_fsp.command_inout("Off")
         self.set_state(PyTango.DevState.OFF)
         # PROTECTED REGION END #    //  CbfMaster.Off
+
+    def is_Standby_allowed(self):
+        if self.dev_state() == PyTango.DevState.ON:
+            return True
+        return False
 
     @command(
         dtype_in='str',

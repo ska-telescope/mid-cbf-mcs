@@ -259,7 +259,15 @@ class Vcc(SKACapability):
 
     def delete_device(self):
         # PROTECTED REGION ID(Vcc.delete_device) ENABLED START #
-        self.Off()
+        self._proxy_band_12.SetState(PyTango.DevState.OFF)
+        self._proxy_band_3.SetState(PyTango.DevState.OFF)
+        self._proxy_band_4.SetState(PyTango.DevState.OFF)
+        self._proxy_band_5.SetState(PyTango.DevState.OFF)
+        self._proxy_sw_1.SetState(PyTango.DevState.OFF)
+        self._proxy_sw_2.SetState(PyTango.DevState.OFF)
+
+        self.GoToIdle()
+        self.set_state(PyTango.DevState.OFF)
         # PROTECTED REGION END #    //  Vcc.delete_device
 
     # ------------------
@@ -412,6 +420,12 @@ class Vcc(SKACapability):
     # Commands
     # --------
 
+    def is_On_allowed(self):
+        if self.dev_state() == PyTango.DevState.OFF and\
+                self._obs_state == ObsState.IDLE.value:
+            return True
+        return False
+
     @command()
     def On(self):
         # PROTECTED REGION ID(Vcc.On) ENABLED START #
@@ -425,6 +439,12 @@ class Vcc(SKACapability):
         self.set_state(PyTango.DevState.ON)
         # PROTECTED REGION END #    //  Vcc.On
 
+    def is_Off_allowed(self):
+        if self.dev_state() == PyTango.DevState.ON and\
+                self._obs_state == ObsState.IDLE.value:
+            return True
+        return False
+
     @command()
     def Off(self):
         # PROTECTED REGION ID(Vcc.Off) ENABLED START #
@@ -435,9 +455,16 @@ class Vcc(SKACapability):
         self._proxy_sw_1.SetState(PyTango.DevState.OFF)
         self._proxy_sw_2.SetState(PyTango.DevState.OFF)
 
-        self.GoToIdle()
+        # This command can only be called when obsState=IDLE
+        # self.GoToIdle()
         self.set_state(PyTango.DevState.OFF)
         # PROTECTED REGION END #    //  Vcc.Off
+
+    def is_SetFrequencyBand_allowed(self):
+        if self.dev_state() == PyTango.DevState.ON and\
+                self._obs_state == ObsState.CONFIGURING.value:
+            return True
+        return False
 
     @command(
         dtype_in='str',
@@ -475,6 +502,16 @@ class Vcc(SKACapability):
                          PyTango.LogLevel.LOG_WARN)
         # PROTECTED REGION END #    // Vcc.SetFrequencyBand
 
+    def is_SetObservingState_allowed(self):
+        if self.dev_state() == PyTango.DevState.ON and\
+                self._obs_state in [
+                    ObsState.IDLE.value,
+                    ObsState.CONFIGURING.value,
+                    ObsState.READY.value
+                ]:
+            return True
+        return False
+
     @command(
         dtype_in='uint16',
         doc_in="New obsState (CONFIGURING OR READY)"
@@ -490,6 +527,12 @@ class Vcc(SKACapability):
             self.dev_logging("obsState must be CONFIGURING or READY. Ignoring.",
                              PyTango.LogLevel.LOG_WARN)
         # PROTECTED REGION END #    // Vcc.SetFrequencyBand
+
+    def is_UpdateDelayModel_allowed(self):
+        if self.dev_state() == PyTango.DevState.ON and\
+                self._obs_state in [ObsState.READY.value, ObsState.SCANNING.value]:
+            return True
+        return False
 
     @command(
         dtype_in='str',
@@ -516,6 +559,10 @@ class Vcc(SKACapability):
                         )
                         self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
         # PROTECTED REGION END #    // Vcc.UpdateDelayModel
+
+    def is_ValidateSearchWindow_allowed(self):
+        # This command has no side effects, so just allow it anytime
+        return True
 
     @command(
         dtype_in='str',
@@ -688,6 +735,12 @@ class Vcc(SKACapability):
                                                "ConfigureSearchWindow execution",
                                                PyTango.ErrSeverity.ERR)
 
+    def is_ConfigureSearchWindow_allowed(self):
+        if self.dev_state() == PyTango.DevState.ON and\
+                self._obs_state == ObsState.CONFIGURING.value:
+            return True
+        return False
+
     @command(
         dtype_in='str',
         doc_in='JSON object to configure a search window'
@@ -807,6 +860,12 @@ class Vcc(SKACapability):
 
         # PROTECTED REGION END #    //  Vcc.ConfigureSearchWindow
 
+    def is_EndScan_allowed(self):
+        if self.dev_state() == PyTango.DevState.ON and\
+                self._obs_state == ObsState.SCANNING.value:
+            return True
+        return False
+
     @command()
     def EndScan(self):
         # PROTECTED REGION ID(Vcc.EndScan) ENABLED START #
@@ -814,12 +873,24 @@ class Vcc(SKACapability):
         # nothing else is supposed to happen
         # PROTECTED REGION END #    //  Vcc.EndScan
 
+    def is_Scan_allowed(self):
+        if self.dev_state() == PyTango.DevState.ON and\
+                self._obs_state == ObsState.READY.value:
+            return True
+        return False
+
     @command()
     def Scan(self):
         # PROTECTED REGION ID(Vcc.Scan) ENABLED START #
         self._obs_state = ObsState.SCANNING.value
         # nothing else is supposed to happen
         # PROTECTED REGION END #    //  Vcc.Scan
+
+    def is_GoToIdle_allowed(self):
+        if self.dev_state() == PyTango.DevState.ON and\
+                self._obs_state in [ObsState.IDLE.value, ObsState.READY.value]:
+            return True
+        return False
 
     @command()
     def GoToIdle(self):
