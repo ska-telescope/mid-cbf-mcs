@@ -50,6 +50,15 @@ class CbfSubarray(SKASubarray):
     __metaclass__ = DeviceMeta
     # PROTECTED REGION ID(CbfSubarray.class_variable) ENABLED START #
 
+    def __void_callback(self, event):
+        # This callback is only meant to be used to test if a subscription is valid
+        if not event.err:
+            pass
+        else:
+            for item in event.errors:
+                log_msg = item.reason + ": on attribute " + str(event.attr_name)
+                self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
+
     def __doppler_phase_correction_event_callback(self, event):
         if not event.err:
             try:
@@ -66,7 +75,7 @@ class CbfSubarray(SKASubarray):
     def __delay_model_event_callback(self, event):
         if not event.err:
             if self._obs_state not in [ObsState.READY.value, ObsState.SCANNING.value]:
-                log_msg = "obsState not correct for updating delay model."
+                log_msg = "Ignoring delay model (obsState not correct)."
                 self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
                 return
             try:
@@ -75,28 +84,19 @@ class CbfSubarray(SKASubarray):
 
                 value = str(event.attr_value.value)
                 if value == self._last_received_delay_model:
-                    log_msg = "Skipped updating delay model."
+                    log_msg = "Ignoring delay model (identical to previous)."
                     self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
                     return
 
                 self._last_received_delay_model = value
                 delay_model_all = json.loads(value)
 
-                # we lock the mutex, push to the queue, then immediately unlock it
-                # self._mutex_delay_model_queue.acquire()
                 for delay_model in delay_model_all["delayModel"]:
                     t = Thread(
                         target=self.__update_delay_model,
                         args=(int(delay_model["epoch"]), json.dumps(delay_model["delayDetails"]))
                     )
                     t.start()
-                    """
-                    heapq.heappush(
-                        self._delay_model_queue,
-                        (int(delay_model["epoch"]), json.dumps(delay_model["delayDetails"]))
-                    )
-                    """
-                # self._mutex_delay_model_queue.release()
             except Exception as e:
                 self.dev_logging(str(e), PyTango.LogLevel.LOG_ERROR)
         else:
@@ -104,33 +104,8 @@ class CbfSubarray(SKASubarray):
                 log_msg = item.reason + ": on attribute " + str(event.attr_name)
                 self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
 
-    """
-    def __poll_delay_model_queue(self):
-        while True:
-            try:
-                log_msg = "Checking for active delay models (current epoch is {})...".format(
-                    int(time.time())
-                )
-                self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
-
-                # simply accessing an element is thread-safe
-                root = self._delay_model_queue[0]
-                if root[0] <= time.time():  # time to activate delay model
-                    # we lock the mutex, pop the root of the queue, then immediately unlock it
-                    self._mutex_delay_model_queue.acquire()
-                    delay_model = heapq.heappop(self._delay_model_queue)
-                    self._mutex_delay_model_queue.release()
-                    self.__update_delay_model(delay_model[0], delay_model[1])
-                else:  # delay model not active yet
-                    time.sleep(1)  # sleep for 1 second, I suppose?
-                    # We don't want to simply sleep the difference between the current time and
-                    # the time that the root of the queue becomes active since another delay
-                    # model might be pushed to the queue with a closer activation time.
-            except IndexError:  # delay model queue is empty
-                time.sleep(1)  # sleep for 1 second, I suppose?
-    """
-
     def __update_delay_model(self, epoch, model):
+        # This method is always called on a separate thread
         log_msg = "Delay model active at {} (currently {})...".format(epoch, int(time.time()))
         self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
 
@@ -151,7 +126,11 @@ class CbfSubarray(SKASubarray):
     def __vis_destination_address_event_callback(self, event):
         if not event.err:
             if self._obs_state not in [ObsState.CONFIGURING.value, ObsState.READY.value]:
-                log_msg = "obsState not correct for configuring destination addresses."
+                log_msg = "Ignoring destination addresses (obsState not correct)."
+                self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+                return
+            if not self._published_output_links:
+                log_msg = "Ignoring destination addresses (output links not published yet)."
                 self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
                 return
             try:
@@ -160,7 +139,7 @@ class CbfSubarray(SKASubarray):
 
                 value = str(event.attr_value.value)
                 if value == self._last_received_vis_destination_address:
-                    log_msg = "Skipped configuring destination addresses."
+                    log_msg = "Ignoring destination addresses (identical to previous)."
                     self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
                     return
 
@@ -336,6 +315,7 @@ class CbfSubarray(SKASubarray):
         # publish the output links
         self._output_links_distribution = output_links_all
         self.push_change_event("outputLinksDistribution", json_output_links)
+        self._published_output_links = True
 
     def __validate_scan_configuration(self, argin):
         # try to deserialize input string to a JSON object
@@ -465,7 +445,7 @@ class CbfSubarray(SKASubarray):
                 attribute_proxy.unsubscribe_event(
                     attribute_proxy.subscribe_event(
                         PyTango.EventType.CHANGE_EVENT,
-                        self.__doppler_phase_correction_event_callback
+                        self.__void_callback
                     )
                 )
             except PyTango.DevFailed:  # attribute doesn't exist or is not set up correctly
@@ -485,7 +465,7 @@ class CbfSubarray(SKASubarray):
                 attribute_proxy.unsubscribe_event(
                     attribute_proxy.subscribe_event(
                         PyTango.EventType.CHANGE_EVENT,
-                        self.__delay_model_event_callback
+                        self.__void_callback
                     )
                 )
             except PyTango.DevFailed:  # attribute doesn't exist or is not set up correctly
@@ -508,7 +488,7 @@ class CbfSubarray(SKASubarray):
                 attribute_proxy.unsubscribe_event(
                     attribute_proxy.subscribe_event(
                         PyTango.EventType.CHANGE_EVENT,
-                        self.__vis_destination_address_event_callback
+                        self.__void_callback
                     )
                 )
             except PyTango.DevFailed:  # attribute doesn't exist or is not set up correctly
@@ -653,6 +633,8 @@ class CbfSubarray(SKASubarray):
             msg = "'fsp' not given. Aborting configuration."
             self.__raise_configure_scan_fatal_error(msg)
 
+        # At this point, everything has been validated.
+
     def __raise_configure_scan_fatal_error(self, msg):
         self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
         PyTango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
@@ -785,18 +767,15 @@ class CbfSubarray(SKASubarray):
         self._frequency_band = 0
         self._scan_ID = 0
         self._output_links_distribution = {"scanID": 0}
-        self._last_received_vis_destination_address = "{}"
-        self._last_received_delay_model = "{}"
         self._vcc_state = {}  # device_name:state
         self._vcc_health_state = {}  # device_name:healthState
         self._fsp_state = {}  # device_name:state
         self._fsp_health_state = {}  # device_name:healthState
 
-        # self._delay_model_queue = []
-        # heapq.heapify(self._delay_model_queue)
-        # for popping/pushing to delay model queue
-        # self._mutex_delay_model_queue = Lock()
-        # for forwarding delay model configuration
+        self._published_output_links = False
+        self._last_received_vis_destination_address = "{}"
+        self._last_received_delay_model = "{}"
+
         self._mutex_delay_model_config = Lock()
 
         # for easy self-reference
@@ -1235,11 +1214,9 @@ class CbfSubarray(SKASubarray):
             self.__delay_model_event_callback
         )
         self._events_telstate[event_id] = attribute_proxy
-        # start a delay model queue polling thread
-        # self._thread_poll_delay_model_queue = Thread(target=self.__poll_delay_model_queue)
-        # self._thread_poll_delay_model_queue.start()
 
         # Configure visDestinationAddressSubscriptionPoint.
+        self._published_output_links = False
         self._last_received_vis_destination_address = "{}"
         attribute_proxy = PyTango.AttributeProxy(argin["visDestinationAddressSubscriptionPoint"])
         attribute_proxy.ping()
@@ -1514,7 +1491,7 @@ class CbfSubarray(SKASubarray):
     @command()
     def GoToIdle(self):
         # PROTECTED REGION ID(CbfSubarray.GoToIdle) ENABLED START #
-        # unsubscribe from TelState events
+        # unsubscribe from TMC events
         for event_id in list(self._events_telstate.keys()):
             self._events_telstate[event_id].unsubscribe_event(event_id)
         self._events_telstate = {}
@@ -1548,6 +1525,7 @@ class CbfSubarray(SKASubarray):
         self._output_links_distribution = {"scanID": 0}
         self._last_received_vis_destination_address = "{}"
         self._last_received_delay_model = "{}"
+        self._published_output_links = False
 
         # transition to obsState=IDLE
         self._obs_state = ObsState.IDLE.value
