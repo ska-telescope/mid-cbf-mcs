@@ -50,6 +50,15 @@ class CbfSubarray(SKASubarray):
     __metaclass__ = DeviceMeta
     # PROTECTED REGION ID(CbfSubarray.class_variable) ENABLED START #
 
+    def __void_callback(self, event):
+        # This callback is only meant to be used to test if a subscription is valid
+        if not event.err:
+            pass
+        else:
+            for item in event.errors:
+                log_msg = item.reason + ": on attribute " + str(event.attr_name)
+                self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
+
     def __doppler_phase_correction_event_callback(self, event):
         if not event.err:
             try:
@@ -66,7 +75,7 @@ class CbfSubarray(SKASubarray):
     def __delay_model_event_callback(self, event):
         if not event.err:
             if self._obs_state not in [ObsState.READY.value, ObsState.SCANNING.value]:
-                log_msg = "obsState not correct for updating delay model."
+                log_msg = "Ignoring delay model (obsState not correct)."
                 self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
                 return
             try:
@@ -75,28 +84,19 @@ class CbfSubarray(SKASubarray):
 
                 value = str(event.attr_value.value)
                 if value == self._last_received_delay_model:
-                    log_msg = "Skipped updating delay model."
+                    log_msg = "Ignoring delay model (identical to previous)."
                     self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
                     return
 
                 self._last_received_delay_model = value
                 delay_model_all = json.loads(value)
 
-                # we lock the mutex, push to the queue, then immediately unlock it
-                # self._mutex_delay_model_queue.acquire()
                 for delay_model in delay_model_all["delayModel"]:
                     t = Thread(
                         target=self.__update_delay_model,
                         args=(int(delay_model["epoch"]), json.dumps(delay_model["delayDetails"]))
                     )
                     t.start()
-                    """
-                    heapq.heappush(
-                        self._delay_model_queue,
-                        (int(delay_model["epoch"]), json.dumps(delay_model["delayDetails"]))
-                    )
-                    """
-                # self._mutex_delay_model_queue.release()
             except Exception as e:
                 self.dev_logging(str(e), PyTango.LogLevel.LOG_ERROR)
         else:
@@ -104,33 +104,8 @@ class CbfSubarray(SKASubarray):
                 log_msg = item.reason + ": on attribute " + str(event.attr_name)
                 self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
 
-    """
-    def __poll_delay_model_queue(self):
-        while True:
-            try:
-                log_msg = "Checking for active delay models (current epoch is {})...".format(
-                    int(time.time())
-                )
-                self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
-
-                # simply accessing an element is thread-safe
-                root = self._delay_model_queue[0]
-                if root[0] <= time.time():  # time to activate delay model
-                    # we lock the mutex, pop the root of the queue, then immediately unlock it
-                    self._mutex_delay_model_queue.acquire()
-                    delay_model = heapq.heappop(self._delay_model_queue)
-                    self._mutex_delay_model_queue.release()
-                    self.__update_delay_model(delay_model[0], delay_model[1])
-                else:  # delay model not active yet
-                    time.sleep(1)  # sleep for 1 second, I suppose?
-                    # We don't want to simply sleep the difference between the current time and
-                    # the time that the root of the queue becomes active since another delay
-                    # model might be pushed to the queue with a closer activation time.
-            except IndexError:  # delay model queue is empty
-                time.sleep(1)  # sleep for 1 second, I suppose?
-    """
-
     def __update_delay_model(self, epoch, model):
+        # This method is always called on a separate thread
         log_msg = "Delay model active at {} (currently {})...".format(epoch, int(time.time()))
         self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
 
@@ -151,7 +126,11 @@ class CbfSubarray(SKASubarray):
     def __vis_destination_address_event_callback(self, event):
         if not event.err:
             if self._obs_state not in [ObsState.CONFIGURING.value, ObsState.READY.value]:
-                log_msg = "obsState not correct for configuring destination addresses."
+                log_msg = "Ignoring destination addresses (obsState not correct)."
+                self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+                return
+            if not self._published_output_links:
+                log_msg = "Ignoring destination addresses (output links not published yet)."
                 self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
                 return
             try:
@@ -160,7 +139,7 @@ class CbfSubarray(SKASubarray):
 
                 value = str(event.attr_value.value)
                 if value == self._last_received_vis_destination_address:
-                    log_msg = "Skipped configuring destination addresses."
+                    log_msg = "Ignoring destination addresses (identical to previous)."
                     self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
                     return
 
@@ -336,6 +315,7 @@ class CbfSubarray(SKASubarray):
         # publish the output links
         self._output_links_distribution = output_links_all
         self.push_change_event("outputLinksDistribution", json_output_links)
+        self._published_output_links = True
 
     def __validate_scan_configuration(self, argin):
         # try to deserialize input string to a JSON object
@@ -344,6 +324,13 @@ class CbfSubarray(SKASubarray):
         except json.JSONDecodeError:  # argument not a valid JSON object
             msg = "Scan configuration object is not a valid JSON object. Aborting configuration."
             self.__raise_configure_scan_fatal_error(msg)
+
+        for proxy in self._proxies_assigned_vcc:
+            if proxy.State() != PyTango.DevState.ON:
+                msg = "VCC {} is not ON. Aborting configuration.".format(
+                    self._proxies_vcc.index(proxy) + 1
+                )
+                self.__raise_configure_scan_fatal_error(msg)
 
         # Validate scanID.
         if "scanID" in argin:
@@ -458,7 +445,7 @@ class CbfSubarray(SKASubarray):
                 attribute_proxy.unsubscribe_event(
                     attribute_proxy.subscribe_event(
                         PyTango.EventType.CHANGE_EVENT,
-                        self.__doppler_phase_correction_event_callback
+                        self.__void_callback
                     )
                 )
             except PyTango.DevFailed:  # attribute doesn't exist or is not set up correctly
@@ -478,7 +465,7 @@ class CbfSubarray(SKASubarray):
                 attribute_proxy.unsubscribe_event(
                     attribute_proxy.subscribe_event(
                         PyTango.EventType.CHANGE_EVENT,
-                        self.__delay_model_event_callback
+                        self.__void_callback
                     )
                 )
             except PyTango.DevFailed:  # attribute doesn't exist or is not set up correctly
@@ -501,7 +488,7 @@ class CbfSubarray(SKASubarray):
                 attribute_proxy.unsubscribe_event(
                     attribute_proxy.subscribe_event(
                         PyTango.EventType.CHANGE_EVENT,
-                        self.__vis_destination_address_event_callback
+                        self.__void_callback
                     )
                 )
             except PyTango.DevFailed:  # attribute doesn't exist or is not set up correctly
@@ -572,6 +559,16 @@ class CbfSubarray(SKASubarray):
                             "Aborting configuration."
                         self.__raise_configure_scan_fatal_error(msg)
 
+                    if proxy_fsp.State() != PyTango.DevState.ON:
+                        msg = "FSP {} is not ON. Aborting configuration.".format(fspID)
+                        self.__raise_configure_scan_fatal_error(msg)
+
+                    if proxy_fsp_subarray.State() != PyTango.DevState.ON:
+                        msg = "Subarray {} of FSP {} is not ON. Aborting configuration.".format(
+                            self._subarray_id, fspID
+                        )
+                        self.__raise_configure_scan_fatal_error(msg)
+
                     # Validate functionMode.
                     function_modes = ["CORR", "PSS-BF", "PST-BF", "VLBI"]
                     if "functionMode" in fsp:
@@ -598,8 +595,14 @@ class CbfSubarray(SKASubarray):
                         self.__raise_configure_scan_fatal_error(msg)
 
                     fsp["frequencyBand"] = argin["frequencyBand"]
-                    fsp["frequencyBandOffsetStream1"] = argin["frequencyBandOffsetStream1"]
-                    fsp["frequencyBandOffsetStream2"] = argin["frequencyBandOffsetStream2"]
+                    if "frequencyBandOffsetStream1" in argin:
+                        fsp["frequencyBandOffsetStream1"] = argin["frequencyBandOffsetStream1"]
+                    else:
+                        fsp["frequencyBandOffsetStream1"] = 0
+                    if "frequencyBandOffsetStream2" in argin:
+                        fsp["frequencyBandOffsetStream2"] = argin["frequencyBandOffsetStream2"]
+                    else:
+                        fsp["frequencyBandOffsetStream2"] = 0
                     if "receptors" not in fsp:
                         fsp["receptors"] = self._receptors
                     if argin["frequencyBand"] in ["5a", "5b"]:
@@ -629,6 +632,8 @@ class CbfSubarray(SKASubarray):
         else:
             msg = "'fsp' not given. Aborting configuration."
             self.__raise_configure_scan_fatal_error(msg)
+
+        # At this point, everything has been validated.
 
     def __raise_configure_scan_fatal_error(self, msg):
         self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
@@ -762,18 +767,15 @@ class CbfSubarray(SKASubarray):
         self._frequency_band = 0
         self._scan_ID = 0
         self._output_links_distribution = {"scanID": 0}
-        self._last_received_vis_destination_address = "{}"
-        self._last_received_delay_model = "{}"
         self._vcc_state = {}  # device_name:state
         self._vcc_health_state = {}  # device_name:healthState
         self._fsp_state = {}  # device_name:state
         self._fsp_health_state = {}  # device_name:healthState
 
-        # self._delay_model_queue = []
-        # heapq.heapify(self._delay_model_queue)
-        # for popping/pushing to delay model queue
-        # self._mutex_delay_model_queue = Lock()
-        # for forwarding delay model configuration
+        self._published_output_links = False
+        self._last_received_vis_destination_address = "{}"
+        self._last_received_delay_model = "{}"
+
         self._mutex_delay_model_config = Lock()
 
         # for easy self-reference
@@ -820,8 +822,11 @@ class CbfSubarray(SKASubarray):
         self._group_fsp = PyTango.Group("FSP")
         self._group_fsp_subarray = PyTango.Group("FSP Subarray")
 
-        self.set_state(DevState.OFF)
+        self._obs_state = ObsState.IDLE.value
+        self.set_state(PyTango.DevState.DISABLE)
 
+        # don't need this anymore (since everything is reset when the device is deleted)
+        """
         # to match VCC and CBF Master configuration
         # needed if device is re-initialized after adding receptors
         # (which technically should never happen)
@@ -839,8 +844,7 @@ class CbfSubarray(SKASubarray):
             self._scan_ID = self._proxy_cbf_master.subarrayScanID[self._subarray_id - 1]
         except PyTango.DevFailed:
             pass  # CBF Master not available, so just leave receptors and scanID alone
-
-        self._obs_state = ObsState.IDLE.value
+        """
         # PROTECTED REGION END #    //  CbfSubarray.init_device
 
     def always_executed_hook(self):
@@ -851,8 +855,8 @@ class CbfSubarray(SKASubarray):
     def delete_device(self):
         # PROTECTED REGION ID(CbfSubarray.delete_device) ENABLED START #
         self.GoToIdle()
-        # not sure if I should do this or not
-        # self.RemoveAllReceptors()
+        self.RemoveAllReceptors()
+        self.set_state(PyTango.DevState.DISABLE)
         # PROTECTED REGION END #    //  CbfSubarray.delete_device
 
     # ------------------
@@ -905,17 +909,51 @@ class CbfSubarray(SKASubarray):
         return list(self._fsp_health_state.values())
         # PROTECTED REGION END #    //  CbfSubarray.fspHealthState_read
 
-
-
     # --------
     # Commands
     # --------
+
+    def is_On_allowed(self):
+        if self.dev_state() == PyTango.DevState.DISABLE and\
+                self._obs_state == ObsState.IDLE.value:
+            return True
+        return False
+
+    @command()
+    def On(self):
+        # PROTECTED REGION ID(CbfSubarray.On) ENABLED START #
+        self._proxy_sw_1.SetState(PyTango.DevState.DISABLE)
+        self._proxy_sw_2.SetState(PyTango.DevState.DISABLE)
+        self.set_state(PyTango.DevState.OFF)
+        # PROTECTED REGION END #    //  CbfSubarray.On
+
+    def is_Off_allowed(self):
+        if self.dev_state() == PyTango.DevState.OFF and\
+                self._obs_state == ObsState.IDLE.value:
+            return True
+        return False
+
+    @command()
+    def Off(self):
+        # PROTECTED REGION ID(CbfSubarray.Off) ENABLED START #
+        # This command can only be called when obsState=IDLE and state=OFF
+        # self.GoToIdle()
+        # self.RemoveAllReceptors()
+        self._proxy_sw_1.SetState(PyTango.DevState.OFF)
+        self._proxy_sw_2.SetState(PyTango.DevState.OFF)
+        self.set_state(PyTango.DevState.DISABLE)
+        # PROTECTED REGION END #    //  CbfSubarray.Off
+
+    def is_AddReceptors_allowed(self):
+        if self.dev_state() in [PyTango.DevState.OFF, PyTango.DevState.ON] and\
+                self._obs_state == ObsState.IDLE.value:
+            return True
+        return False
 
     @command(
         dtype_in=('uint16',),
         doc_in="List of receptor IDs",
     )
-    @DebugIt()
     def AddReceptors(self, argin):
         # PROTECTED REGION ID(CbfSubarray.AddReceptors) ENABLED START #
         errs = []  # list of error messages
@@ -971,6 +1009,12 @@ class CbfSubarray(SKASubarray):
                                            PyTango.ErrSeverity.ERR)
         # PROTECTED REGION END #    //  CbfSubarray.AddReceptors
 
+    def is_RemoveReceptors_allowed(self):
+        if self.dev_state() in [PyTango.DevState.OFF, PyTango.DevState.ON] and\
+                self._obs_state == ObsState.IDLE.value:
+            return True
+        return False
+
     @command(
         dtype_in=('uint16',),
         doc_in="List of receptor IDs",
@@ -1005,17 +1049,28 @@ class CbfSubarray(SKASubarray):
             self.set_state(DevState.OFF)
         # PROTECTED REGION END #    //  CbfSubarray.RemoveReceptors
 
+    def is_RemoveAllReceptors_allowed(self):
+        if self.dev_state() in [PyTango.DevState.OFF, PyTango.DevState.ON] and\
+                self._obs_state == ObsState.IDLE.value:
+            return True
+        return False
+
     @command()
     def RemoveAllReceptors(self):
         # PROTECTED REGION ID(CbfSubarray.RemoveAllReceptors) ENABLED START #
         self.RemoveReceptors(self._receptors[:])
         # PROTECTED REGION END #    //  CbfSubarray.RemoveAllReceptors
 
+    def is_ConfigureScan_allowed(self):
+        if self.dev_state() == PyTango.DevState.ON and\
+                self._obs_state in [ObsState.IDLE.value, ObsState.READY.value]:
+            return True
+        return False
+
     @command(
         dtype_in='str',
         doc_in="Scan configuration",
     )
-    @DebugIt()
     def ConfigureScan(self, argin):
         # PROTECTED REGION ID(CbfSubarray.ConfigureScan) ENABLED START #
         """
@@ -1103,8 +1158,8 @@ class CbfSubarray(SKASubarray):
         self._group_vcc.command_inout("SetFrequencyBand", data)
 
         # Configure band5Tuning, if frequencyBand is 5a or 5b.
-        stream_tuning = [*map(float, argin["band5Tuning"])]
         if self._frequency_band in [4, 5]:
+            stream_tuning = [*map(float, argin["band5Tuning"])]
             self._stream_tuning = stream_tuning
             self._group_vcc.write_attribute("band5Tuning", stream_tuning)
 
@@ -1159,11 +1214,9 @@ class CbfSubarray(SKASubarray):
             self.__delay_model_event_callback
         )
         self._events_telstate[event_id] = attribute_proxy
-        # start a delay model queue polling thread
-        # self._thread_poll_delay_model_queue = Thread(target=self.__poll_delay_model_queue)
-        # self._thread_poll_delay_model_queue.start()
 
         # Configure visDestinationAddressSubscriptionPoint.
+        self._published_output_links = False
         self._last_received_vis_destination_address = "{}"
         attribute_proxy = PyTango.AttributeProxy(argin["visDestinationAddressSubscriptionPoint"])
         attribute_proxy.ping()
@@ -1218,8 +1271,14 @@ class CbfSubarray(SKASubarray):
             proxy_fsp.SetFunctionMode(fsp["functionMode"])
 
             fsp["frequencyBand"] = argin["frequencyBand"]
-            fsp["frequencyBandOffsetStream1"] = self._frequency_band_offset_stream_1
-            fsp["frequencyBandOffsetStream2"] = self._frequency_band_offset_stream_2
+            if "frequencyBandOffsetStream1" in argin:
+                fsp["frequencyBandOffsetStream1"] = self._frequency_band_offset_stream_1
+            else:
+                fsp["frequencyBandOffsetStream1"] = 0
+            if "frequencyBandOffsetStream2" in argin:
+                fsp["frequencyBandOffsetStream2"] = self._frequency_band_offset_stream_2
+            else:
+                fsp["frequencyBandOffsetStream2"] = 0
             if "receptors" not in fsp:
                 fsp["receptors"] = self._receptors
             if self._frequency_band in [4, 5]:
@@ -1248,6 +1307,12 @@ class CbfSubarray(SKASubarray):
         # self._obs_state = ObsState.READY.value
 
         # PROTECTED REGION END #    //  CbfSubarray.ConfigureScan
+
+    def is_ConfigureSearchWindow_allowed(self):
+        if self.dev_state() == PyTango.DevState.ON and\
+                self._obs_state == ObsState.CONFIGURING.value:
+            return True
+        return False
 
     @command(
         dtype_in='str',
@@ -1365,20 +1430,33 @@ class CbfSubarray(SKASubarray):
 
         # PROTECTED REGION END #    //  CbfSubarray.ConfigureSearchWindow
 
+    def is_EndScan_allowed(self):
+        if self.dev_state() == PyTango.DevState.ON and\
+                self._obs_state == ObsState.SCANNING.value:
+            return True
+        return False
+
     @command()
     def EndScan(self):
         # PROTECTED REGION ID(CbfSubarray.EndScan) ENABLED START #
+        """
         if self._obs_state != ObsState.SCANNING.value:
             msg = "A scan has not been started."
             self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
             PyTango.Except.throw_exception("Command failed", msg, "Scan execution",
                                            PyTango.ErrSeverity.ERR)
-
+        """
         self._group_vcc.command_inout("EndScan")
         self._group_fsp_subarray.command_inout("EndScan")
 
         self._obs_state = ObsState.READY.value
         # PROTECTED REGION END #    //  CbfSubarray.EndScan
+
+    def is_Scan_allowed(self):
+        if self.dev_state() == PyTango.DevState.ON and\
+                self._obs_state == ObsState.READY.value:
+            return True
+        return False
 
     @command(
         dtype_in=('str',),
@@ -1386,17 +1464,24 @@ class CbfSubarray(SKASubarray):
     )
     def Scan(self, argin):
         # PROTECTED REGION ID(CbfSubarray.Scan) ENABLED START #
+        """
         if self._obs_state != ObsState.READY.value:
             msg = "A scan is not ready to be started."
             self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
             PyTango.Except.throw_exception("Command failed", msg, "Scan execution",
                                            PyTango.ErrSeverity.ERR)
-
+        """
         self._group_vcc.command_inout("Scan")
         self._group_fsp_subarray.command_inout("Scan")
 
         self._obs_state = ObsState.SCANNING.value
         # PROTECTED REGION END #    //  CbfSubarray.Scan
+
+    def is_GoToIdle_allowed(self):
+        if self.dev_state() in [PyTango.DevState.OFF, PyTango.DevState.ON] and\
+                self._obs_state in [ObsState.IDLE.value, ObsState.READY.value]:
+            return True
+        return False
 
     # This command is called "GoToIdle", but a more proper name for it is "ReleaseAllResources".
     # The reason why it's not called "ReleaseAllResources" is because, for some reason, the
@@ -1406,7 +1491,7 @@ class CbfSubarray(SKASubarray):
     @command()
     def GoToIdle(self):
         # PROTECTED REGION ID(CbfSubarray.GoToIdle) ENABLED START #
-        # unsubscribe from TelState events
+        # unsubscribe from TMC events
         for event_id in list(self._events_telstate.keys()):
             self._events_telstate[event_id].unsubscribe_event(event_id)
         self._events_telstate = {}
@@ -1437,6 +1522,10 @@ class CbfSubarray(SKASubarray):
         self._proxies_assigned_fsp_subarray.clear()
 
         self._scan_ID = 0
+        self._output_links_distribution = {"scanID": 0}
+        self._last_received_vis_destination_address = "{}"
+        self._last_received_delay_model = "{}"
+        self._published_output_links = False
 
         # transition to obsState=IDLE
         self._obs_state = ObsState.IDLE.value

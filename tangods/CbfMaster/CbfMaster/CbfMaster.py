@@ -103,9 +103,6 @@ class CbfMaster(SKAMaster):
                 log_msg = "New value for " + str(event.attr_name) + " is " + \
                           str(event.attr_value.value)
                 self.dev_logging(log_msg, PyTango.LogLevel.LOG_DEBUG)
-
-                # update CBF global state
-                # self.__set_cbf_state()
             except Exception as except_occurred:
                 self.dev_logging(str(except_occurred), PyTango.LogLevel.LOG_ERROR)
         else:
@@ -156,59 +153,6 @@ class CbfMaster(SKAMaster):
                 log_msg = item.reason + ": on attribute " + str(event.attr_name)
                 self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
 
-    def __set_cbf_state(self):
-        self.__set_cbf_health_state()
-
-        self.set_state(PyTango.DevState.DISABLE)
-
-        # CBF transitions to ON if at least one receptor and subarray are operational
-        """
-        vcc_working = False
-        subarray_working = False
-
-        for state in self._report_vcc_state:
-            if state == PyTango.DevState.ON:
-                vcc_working = True
-                break
-
-        if not vcc_working:
-            return
-
-        for state in self._report_subarray_state:
-            if state == PyTango.DevState.ON:
-                subarray_working = True
-                break
-
-        if not subarray_working:
-            return
-
-        self.set_state(PyTango.DevState.ON)
-        """
-
-    def __set_cbf_health_state(self):
-        # count the number of "OKs" in all subarrays/capabilities
-        count_ok = 0
-        for health_state in self._report_vcc_health_state + \
-                self._report_fsp_health_state + \
-                self._report_subarray_health_state:
-            # set overall health state to unknown if at least one subarray/capability is unknown
-            if health_state == HealthState.UNKNOWN.value:
-                self._health_state = HealthState.UNKNOWN.value
-                return
-            elif health_state == HealthState.OK.value:
-                count_ok += 1
-
-        # change criteria later - this is an over-simplification
-        # overall health state is OK if all subarrays/capabilities are OK
-        if count_ok == self._count_vcc + self._count_fsp + self._count_subarray:
-            self._health_state = HealthState.OK.value
-        # overall health state is DEGRADED if not all, but at least one, subarray/capability is OK
-        elif count_ok > 0:
-            self._health_state = HealthState.DEGRADED.value
-        # overall health state is FAILED if no subarray/capability is OK
-        else:
-            self._health_state = HealthState.FAILED.value
-
     def __get_num_capabilities(self):
         # self._max_capabilities inherited from SKAMaster
         # check first if property exists in DB
@@ -252,20 +196,6 @@ class CbfMaster(SKAMaster):
     # ----------
     # Attributes
     # ----------
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     commandProgress = attribute(
         dtype='uint16',
@@ -448,10 +378,6 @@ class CbfMaster(SKAMaster):
         self._frequency_offset_delta_f = [0]*self._count_vcc
         self._subarray_scan_ID = [0]*self._count_subarray
 
-        # evaluate the CBF element global state
-        # self.__set_cbf_state()
-        self.set_state(PyTango.DevState.STANDBY)
-
         # initialize lists with subarray/capability FQDNs
         self._fqdn_vcc = list(self.VCC)[:self._count_vcc]
         self._fqdn_fsp = list(self.FSP)[:self._count_fsp]
@@ -474,10 +400,10 @@ class CbfMaster(SKAMaster):
             del remaining[receptorIDIndex]
 
         # initialize the dict with subarray/capability proxies
-        self._proxies = {}
+        self._proxies = {}  # device_name:proxy
 
-        # initialize the list with the subscribed event IDs
-        self._event_id = []
+        # initialize the dict with the subscribed event IDs
+        self._event_id = {}  # proxy:[eventID]
 
         # initialize groups
         self._group_vcc = PyTango.Group("VCC")
@@ -486,6 +412,9 @@ class CbfMaster(SKAMaster):
         self._group_fsp = PyTango.Group("FSP")
         for fqdn in self._fqdn_fsp:
             self._group_fsp.add(fqdn)
+        self._group_subarray = PyTango.Group("CBF Subarray")
+        for fqdn in self._fqdn_subarray:
+            self._group_subarray.add(fqdn)
 
         # Try connection with each subarray/capability
         for fqdn in self._fqdn_vcc + self._fqdn_fsp + self._fqdn_subarray:
@@ -496,11 +425,11 @@ class CbfMaster(SKAMaster):
                 device_proxy.ping()
 
                 self._proxies[fqdn] = device_proxy
+                events = []
 
-                # set up attribute polling and change events on subarrays/capabilities
-                # and subscribe to event
+                # subscribe to change events on subarrays/capabilities
                 for attribute in ["adminMode", "healthState", "State"]:
-                    self._event_id.append(
+                    events.append(
                         device_proxy.subscribe_event(
                             attribute, PyTango.EventType.CHANGE_EVENT,
                             self.__state_change_event_callback, stateless=True
@@ -509,7 +438,7 @@ class CbfMaster(SKAMaster):
 
                 # subscribe to VCC/FSP subarray membership change events
                 if "vcc" in fqdn or "fsp" in fqdn:
-                    self._event_id.append(
+                    events.append(
                         device_proxy.subscribe_event(
                             "subarrayMembership", PyTango.EventType.CHANGE_EVENT,
                             self.__membership_event_callback, stateless=True
@@ -518,17 +447,20 @@ class CbfMaster(SKAMaster):
 
                 # subscribe to subarray scan ID change events
                 if "subarray" in fqdn:
-                    self._event_id.append(
+                    events.append(
                         device_proxy.subscribe_event(
                             "scanID", PyTango.EventType.CHANGE_EVENT,
                             self.__scan_ID_event_callback, stateless=True
                         )
                     )
+
+                self._event_id[device_proxy] = events
             except PyTango.DevFailed as df:
                 for item in df.args:
                     log_msg = "Failure in connection to " + fqdn + " device: " + str(item.reason)
                     self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
 
+        self.set_state(PyTango.DevState.STANDBY)
         # PROTECTED REGION END #    //  CbfMaster.init_device
 
     def always_executed_hook(self):
@@ -538,7 +470,15 @@ class CbfMaster(SKAMaster):
 
     def delete_device(self):
         # PROTECTED REGION ID(CbfMaster.delete_device) ENABLED START #
-        pass
+        # unsubscribe to events
+        for proxy in list(self._event_id.keys()):
+            for event_id in self._event_id[proxy]:
+                proxy.unsubscribe_event(event_id)
+
+        self._group_subarray.command_inout("Off")
+        self._group_vcc.command_inout("Off")
+        self._group_fsp.command_inout("Off")
+        self.set_state(PyTango.DevState.OFF)
         # PROTECTED REGION END #    //  CbfMaster.delete_device
 
     # ------------------
@@ -650,44 +590,58 @@ class CbfMaster(SKAMaster):
         return self._report_subarray_admin_mode
         # PROTECTED REGION END #    //  CbfMaster.reportSubarrayAdminMode_read
 
-
     # --------
     # Commands
     # --------
 
+    def is_On_allowed(self):
+        if self.dev_state() == PyTango.DevState.STANDBY:
+            return True
+        return False
+
     @command(
-    dtype_in='str',
-    doc_in="TODO: ask Elisabetta why the input argument is always just an empty string.",
+        dtype_in='str',
+        doc_in="TODO: ask Elisabetta why the input argument is always just an empty string.",
     )
-    @DebugIt()
     def On(self, argin):
         # PROTECTED REGION ID(CbfMaster.On) ENABLED START #
+        self._group_subarray.command_inout("On")
         self._group_vcc.command_inout("On")
         self._group_fsp.command_inout("On")
         self.set_state(PyTango.DevState.ON)
         # PROTECTED REGION END #    //  CbfMaster.On
 
+    def is_Off_allowed(self):
+        if self.dev_state() == PyTango.DevState.STANDBY:
+            return True
+        return False
+
     @command(
-    dtype_in='str',
-    doc_in="TODO: ask Elisabetta why the input argument is always just an empty string.",
+        dtype_in='str',
+        doc_in="TODO: ask Elisabetta why the input argument is always just an empty string.",
     )
-    @DebugIt()
     def Off(self, argin):
         # PROTECTED REGION ID(CbfMaster.Off) ENABLED START #
+        self._group_subarray.command_inout("Off")
         self._group_vcc.command_inout("Off")
         self._group_fsp.command_inout("Off")
         self.set_state(PyTango.DevState.OFF)
         # PROTECTED REGION END #    //  CbfMaster.Off
 
+    def is_Standby_allowed(self):
+        if self.dev_state() == PyTango.DevState.ON:
+            return True
+        return False
+
     @command(
-    dtype_in='str',
-    doc_in="TODO: ask Elisabetta why the input argument is always just an empty string.",
+        dtype_in='str',
+        doc_in="TODO: ask Elisabetta why the input argument is always just an empty string.",
     )
-    @DebugIt()
     def Standby(self, argin):
         # PROTECTED REGION ID(CbfMaster.Standby) ENABLED START #
-        self._group_vcc.command_inout("Standby")
-        self._group_fsp.command_inout("Standby")
+        self._group_subarray.command_inout("Off")
+        self._group_vcc.command_inout("Off")
+        self._group_fsp.command_inout("Off")
         self.set_state(PyTango.DevState.STANDBY)
         # PROTECTED REGION END #    //  CbfMaster.Standby
 

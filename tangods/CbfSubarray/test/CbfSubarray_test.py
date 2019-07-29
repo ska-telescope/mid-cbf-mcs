@@ -65,14 +65,17 @@ class TestCbfSubarray:
         """
         for proxy in create_vcc_proxies:
             proxy.Init()
+        create_subarray_1_proxy.set_timeout_millis(60000)
+        create_subarray_1_proxy.Init()
+        time.sleep(3)
         create_cbf_master_proxy.set_timeout_millis(60000)
+        create_cbf_master_proxy.Init()
         time.sleep(60)  # takes pretty long for CBF Master to initialize
 
         receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
                                create_cbf_master_proxy.receptorToVcc)
 
-        create_subarray_1_proxy.set_timeout_millis(60000)
-        create_subarray_1_proxy.Init()
+        create_cbf_master_proxy.On("")
         time.sleep(3)
 
         # receptor list should be empty right after initialization
@@ -120,6 +123,9 @@ class TestCbfSubarray:
         """
         for proxy in create_vcc_proxies:
             proxy.Init()
+        create_subarray_1_proxy.set_timeout_millis(60000)
+        create_subarray_1_proxy.Init()
+        time.sleep(3)
         create_cbf_master_proxy.set_timeout_millis(60000)
         create_cbf_master_proxy.Init()
         time.sleep(60)  # takes pretty long for CBF Master to initialize
@@ -127,8 +133,7 @@ class TestCbfSubarray:
         receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
                                create_cbf_master_proxy.receptorToVcc)
 
-        create_subarray_1_proxy.set_timeout_millis(60000)
-        create_subarray_1_proxy.Init()
+        create_cbf_master_proxy.On("")
         time.sleep(3)
 
         # receptor list should be empty right after initialization
@@ -171,6 +176,11 @@ class TestCbfSubarray:
     """
         for proxy in create_vcc_proxies:
             proxy.Init()
+        create_subarray_1_proxy.set_timeout_millis(60000)
+        create_subarray_2_proxy.set_timeout_millis(60000)
+        create_subarray_1_proxy.Init()
+        create_subarray_2_proxy.Init()
+        time.sleep(3)
         create_cbf_master_proxy.set_timeout_millis(60000)
         create_cbf_master_proxy.Init()
         time.sleep(60)  # takes pretty long for CBF Master to initialize
@@ -178,10 +188,7 @@ class TestCbfSubarray:
         receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
                                create_cbf_master_proxy.receptorToVcc)
 
-        create_subarray_1_proxy.set_timeout_millis(60000)
-        create_subarray_2_proxy.set_timeout_millis(60000)
-        create_subarray_1_proxy.Init()
-        create_subarray_2_proxy.Init()
+        create_cbf_master_proxy.On("")
         time.sleep(3)
 
         # receptor list should be empty right after initialization
@@ -220,6 +227,9 @@ class TestCbfSubarray:
         """
         for proxy in create_vcc_proxies:
             proxy.Init()
+        create_subarray_1_proxy.set_timeout_millis(60000)
+        create_subarray_1_proxy.Init()
+        time.sleep(3)
         create_cbf_master_proxy.set_timeout_millis(60000)
         create_cbf_master_proxy.Init()
         time.sleep(60)  # takes pretty long for CBF Master to initialize
@@ -227,8 +237,7 @@ class TestCbfSubarray:
         receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
                                create_cbf_master_proxy.receptorToVcc)
 
-        create_subarray_1_proxy.set_timeout_millis(60000)
-        create_subarray_1_proxy.Init()
+        create_cbf_master_proxy.On("")
         time.sleep(3)
 
         # receptor list should be empty right after initialization
@@ -270,19 +279,26 @@ class TestCbfSubarray:
         """
         Test a minimal successful configuration
         """
+        for proxy in create_vcc_proxies:
+            proxy.Init()
+        create_fsp_1_subarray_1_proxy.Init()
+        create_fsp_2_subarray_1_proxy.Init()
+        create_fsp_1_proxy.Init()
+        create_fsp_2_proxy.Init()
+        create_subarray_1_proxy.set_timeout_millis(60000)  # since the command takes a while
+        create_subarray_1_proxy.Init()
+        time.sleep(3)
+        create_cbf_master_proxy.set_timeout_millis(60000)
+        create_cbf_master_proxy.Init()
+        time.sleep(60)  # takes pretty long for CBF Master to initialize
+        create_tm_telstate_proxy.Init()
+        time.sleep(1)
+
         receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
                                create_cbf_master_proxy.receptorToVcc)
 
-        create_subarray_1_proxy.set_timeout_millis(60000)  # since the command takes a while
-
-        create_subarray_1_proxy.Init()
-        # create_fsp_1_proxy.Init()
-        # create_fsp_2_proxy.Init()
-        # create_fsp_1_subarray_1_proxy.Init()
-        # create_fsp_2_subarray_1_proxy.Init()
+        create_cbf_master_proxy.On("")
         time.sleep(3)
-        create_tm_telstate_proxy.Init()
-        time.sleep(1)
 
         # check initial value of attributes of CBF subarray
         # assert create_subarray_1_proxy.receptors == ()
@@ -333,6 +349,7 @@ class TestCbfSubarray:
 
         # check configured attributes of search windows
         # first for search window 1...
+        assert create_sw_1_proxy.State() == DevState.ON
         assert create_sw_1_proxy.searchWindowTuning == 6000000000
         assert create_sw_1_proxy.tdcEnable == True
         assert create_sw_1_proxy.tdcNumBits == 8
@@ -345,11 +362,13 @@ class TestCbfSubarray:
             "[{\"tdcDestinationAddress\":[\"foo\",\"bar\",\"8080\"],\"receptorID\":4},{\"tdcDestinationAddress\":[\"fizz\",\"buzz\",\"80\"],\"receptorID\":1}]",
         ]
         # then for search window 2...
+        assert create_sw_2_proxy.State() == DevState.DISABLE
         assert create_sw_2_proxy.searchWindowTuning == 7000000000
         assert create_sw_2_proxy.tdcEnable == False
 
         # check configured attributes of VCC search windows
         # first for search window 1 of VCC belonging to receptor 10...
+        assert create_vcc_tdc_proxies[receptor_to_vcc[4] - 1][0].State() == DevState.ON
         assert create_vcc_tdc_proxies[receptor_to_vcc[4] - 1][0].searchWindowTuning == 6000000000
         assert create_vcc_tdc_proxies[receptor_to_vcc[4] - 1][0].tdcEnable == True
         assert create_vcc_tdc_proxies[receptor_to_vcc[4] - 1][0].tdcNumBits == 8
@@ -359,6 +378,7 @@ class TestCbfSubarray:
             "foo", "bar", "8080"
         )
         # then for search window 1 of VCC belonging to receptor 1...
+        assert create_vcc_tdc_proxies[receptor_to_vcc[1] - 1][0].State() == DevState.ON
         assert create_vcc_tdc_proxies[receptor_to_vcc[1] - 1][0].searchWindowTuning == 6000000000
         assert create_vcc_tdc_proxies[receptor_to_vcc[1] - 1][0].tdcEnable == True
         assert create_vcc_tdc_proxies[receptor_to_vcc[1] - 1][0].tdcNumBits == 8
@@ -368,9 +388,11 @@ class TestCbfSubarray:
             "fizz", "buzz", "80"
         )
         # then for search window 2 of VCC belonging to receptor 10...
+        assert create_vcc_tdc_proxies[receptor_to_vcc[4] - 1][1].State() == DevState.DISABLE
         assert create_vcc_tdc_proxies[receptor_to_vcc[4] - 1][1].searchWindowTuning == 7000000000
         assert create_vcc_tdc_proxies[receptor_to_vcc[4] - 1][1].tdcEnable == False
         # and lastly for search window 2 of VCC belonging to receptor 1...
+        assert create_vcc_tdc_proxies[receptor_to_vcc[1] - 1][1].State() == DevState.DISABLE
         assert create_vcc_tdc_proxies[receptor_to_vcc[1] - 1][1].searchWindowTuning == 7000000000
         assert create_vcc_tdc_proxies[receptor_to_vcc[1] - 1][1].tdcEnable == False
 
@@ -456,6 +478,8 @@ class TestCbfSubarray:
             create_cbf_master_proxy,
             create_subarray_1_proxy,
             create_vcc_proxies,
+            create_fsp_1_proxy,
+            create_fsp_2_proxy,
             create_fsp_1_subarray_1_proxy,
             create_fsp_2_subarray_1_proxy,
             create_tm_telstate_proxy
@@ -463,17 +487,26 @@ class TestCbfSubarray:
         """
         Test the Scan command
         """
+        for proxy in create_vcc_proxies:
+            proxy.Init()
+        create_fsp_1_subarray_1_proxy.Init()
+        create_fsp_2_subarray_1_proxy.Init()
+        create_fsp_1_proxy.Init()
+        create_fsp_2_proxy.Init()
+        create_subarray_1_proxy.set_timeout_millis(60000)  # since the command takes a while
+        create_subarray_1_proxy.Init()
+        time.sleep(3)
+        create_cbf_master_proxy.set_timeout_millis(60000)
+        create_cbf_master_proxy.Init()
+        time.sleep(60)  # takes pretty long for CBF Master to initialize
+        create_tm_telstate_proxy.Init()
+        time.sleep(1)
+
         receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
                                create_cbf_master_proxy.receptorToVcc)
 
-        create_subarray_1_proxy.set_timeout_millis(60000)  # since the command takes a while
-
-        create_subarray_1_proxy.Init()
-        # create_fsp_1_subarray_1_proxy.Init()
-        # create_fsp_2_subarray_1_proxy.Init()
+        create_cbf_master_proxy.On("")
         time.sleep(3)
-        create_tm_telstate_proxy.Init()
-        time.sleep(1)
 
         assert create_subarray_1_proxy.obsState.value == ObsState.IDLE.value
         assert create_tm_telstate_proxy.visDestinationAddress == "{}"
@@ -514,6 +547,8 @@ class TestCbfSubarray:
             create_cbf_master_proxy,
             create_subarray_1_proxy,
             create_vcc_proxies,
+            create_fsp_1_proxy,
+            create_fsp_2_proxy,
             create_fsp_1_subarray_1_proxy,
             create_fsp_2_subarray_1_proxy,
             create_tm_telstate_proxy
@@ -521,17 +556,26 @@ class TestCbfSubarray:
         """
         Test the EndScan command
         """
+        for proxy in create_vcc_proxies:
+            proxy.Init()
+        create_fsp_1_subarray_1_proxy.Init()
+        create_fsp_2_subarray_1_proxy.Init()
+        create_fsp_1_proxy.Init()
+        create_fsp_2_proxy.Init()
+        create_subarray_1_proxy.set_timeout_millis(60000)  # since the command takes a while
+        create_subarray_1_proxy.Init()
+        time.sleep(3)
+        create_cbf_master_proxy.set_timeout_millis(60000)
+        create_cbf_master_proxy.Init()
+        time.sleep(60)  # takes pretty long for CBF Master to initialize
+        create_tm_telstate_proxy.Init()
+        time.sleep(1)
+
         receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
                                create_cbf_master_proxy.receptorToVcc)
 
-        create_subarray_1_proxy.set_timeout_millis(60000)  # since the command takes a while
-
-        create_subarray_1_proxy.Init()
-        # create_fsp_1_subarray_1_proxy.Init()
-        # create_fsp_2_subarray_1_proxy.Init()
+        create_cbf_master_proxy.On("")
         time.sleep(3)
-        create_tm_telstate_proxy.Init()
-        time.sleep(1)
 
         assert create_subarray_1_proxy.obsState.value == ObsState.IDLE.value
         assert create_tm_telstate_proxy.visDestinationAddress == "{}"
@@ -578,20 +622,35 @@ class TestCbfSubarray:
             create_cbf_master_proxy,
             create_subarray_1_proxy,
             create_vcc_proxies,
+            create_fsp_1_proxy,
+            create_fsp_2_proxy,
+            create_fsp_1_subarray_1_proxy,
+            create_fsp_2_subarray_1_proxy,
             create_tm_telstate_proxy
     ):
         """
         Test the reception of delay models
         """
+        for proxy in create_vcc_proxies:
+            proxy.Init()
+        create_fsp_1_subarray_1_proxy.Init()
+        create_fsp_2_subarray_1_proxy.Init()
+        create_fsp_1_proxy.Init()
+        create_fsp_2_proxy.Init()
+        create_subarray_1_proxy.set_timeout_millis(60000)  # since the command takes a while
+        create_subarray_1_proxy.Init()
+        time.sleep(3)
+        create_cbf_master_proxy.set_timeout_millis(60000)
+        create_cbf_master_proxy.Init()
+        time.sleep(60)  # takes pretty long for CBF Master to initialize
+        create_tm_telstate_proxy.Init()
+        time.sleep(1)
+
         receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
                                create_cbf_master_proxy.receptorToVcc)
 
-        create_subarray_1_proxy.set_timeout_millis(60000)  # since the command takes a while
-
-        create_subarray_1_proxy.Init()
+        create_cbf_master_proxy.On("")
         time.sleep(3)
-        create_tm_telstate_proxy.Init()
-        time.sleep(1)
 
         assert create_subarray_1_proxy.obsState.value == ObsState.IDLE.value
 

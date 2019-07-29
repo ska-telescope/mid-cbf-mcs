@@ -168,6 +168,7 @@ class FspSubarray(SKASubarray):
     def init_device(self):
         SKASubarray.init_device(self)
         # PROTECTED REGION ID(FspSubarray.init_device) ENABLED START #
+        self.set_state(PyTango.DevState.INIT)
 
         # get relevant IDs
         self._subarray_id = self.SubID
@@ -212,6 +213,7 @@ class FspSubarray(SKASubarray):
         self._proxy_cbf_subarray = PyTango.DeviceProxy(self.CbfSubarrayAddress)
 
         self._obs_state = ObsState.IDLE.value
+        self.set_state(PyTango.DevState.OFF)
         # PROTECTED REGION END #    //  FspSubarray.init_device
 
     def always_executed_hook(self):
@@ -221,7 +223,9 @@ class FspSubarray(SKASubarray):
 
     def delete_device(self):
         # PROTECTED REGION ID(FspSubarray.delete_device) ENABLED START #
-        pass
+        self.GoToIdle()
+        self.RemoveAllReceptors()
+        self.set_state(PyTango.DevState.OFF)
         # PROTECTED REGION END #    //  FspSubarray.delete_device
 
     # ------------------
@@ -298,11 +302,47 @@ class FspSubarray(SKASubarray):
     # Commands
     # --------
 
+    def is_On_allowed(self):
+        if self.dev_state() == PyTango.DevState.OFF and\
+                self._obs_state == ObsState.IDLE.value:
+            return True
+        return False
+
+    @command()
+    def On(self):
+        # PROTECTED REGION ID(FspSubarray.On) ENABLED START #
+        self.set_state(PyTango.DevState.ON)
+        # PROTECTED REGION END #    //  FspSubarray.On
+
+    def is_Off_allowed(self):
+        if self.dev_state() == PyTango.DevState.ON and\
+                self._obs_state == ObsState.IDLE.value:
+            return True
+        return False
+
+    @command()
+    def Off(self):
+        # PROTECTED REGION ID(FspSubarray.Off) ENABLED START #
+        # This command can only be called when obsState=IDLE
+        # self.GoToIdle()
+        self.RemoveAllReceptors()
+        self.set_state(PyTango.DevState.OFF)
+        # PROTECTED REGION END #    //  FspSubarray.Off
+
+    def is_AddReceptors_allowed(self):
+        if self.dev_state() == PyTango.DevState.ON and\
+                self._obs_state in [
+                    ObsState.IDLE.value,
+                    ObsState.CONFIGURING.value,
+                    ObsState.READY.value
+                ]:
+            return True
+        return False
+
     @command(
         dtype_in=('uint16',),
         doc_in="List of receptor IDs",
     )
-    @DebugIt()
     def AddReceptors(self, argin):
         # PROTECTED REGION ID(FspSubarray.AddReceptors) ENABLED START #
         errs = []  # list of error messages
@@ -335,6 +375,16 @@ class FspSubarray(SKASubarray):
                                            PyTango.ErrSeverity.ERR)
         # PROTECTED REGION END #    //  FspSubarray.AddReceptors
 
+    def is_RemoveReceptors_allowed(self):
+        if self.dev_state() == PyTango.DevState.ON and\
+                self._obs_state in [
+                    ObsState.IDLE.value,
+                    ObsState.CONFIGURING.value,
+                    ObsState.READY.value
+                ]:
+            return True
+        return False
+
     @command(
         dtype_in=('uint16',),
         doc_in="List of receptor IDs",
@@ -350,11 +400,27 @@ class FspSubarray(SKASubarray):
                 self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
         # PROTECTED REGION END #    //  FspSubarray.RemoveReceptors
 
+    def is_RemoveAllReceptors_allowed(self):
+        if self.dev_state() == PyTango.DevState.ON and\
+                self._obs_state in [
+                    ObsState.IDLE.value,
+                    ObsState.CONFIGURING.value,
+                    ObsState.READY.value
+                ]:
+            return True
+        return False
+
     @command()
     def RemoveAllReceptors(self):
         # PROTECTED REGION ID(FspSubarray.RemoveAllReceptors) ENABLED START #
         self.RemoveReceptors(self._receptors[:])
         # PROTECTED REGION END #    //  FspSubarray.RemoveAllReceptors
+
+    def is_AddChannels_allowed(self):
+        if self.dev_state() == PyTango.DevState.ON and\
+                self._obs_state == ObsState.CONFIGURING.value:
+            return True
+        return False
 
     @command(
         dtype_in='str',
@@ -385,6 +451,12 @@ class FspSubarray(SKASubarray):
         # but specify that just in case, I guess.
         self._channel_info.sort(key=lambda x: x[0])
         # PROTECTED REGION END #    //  FspSubarray.AddChannels
+
+    def is_AddChannelAddresses_allowed(self):
+        if self.dev_state() == PyTango.DevState.ON and\
+                self._obs_state == ObsState.CONFIGURING.value:
+            return True
+        return False
 
     @command(
         dtype_in='str',
@@ -434,8 +506,11 @@ class FspSubarray(SKASubarray):
 
         # transition to obsState=READY
         self._obs_state = ObsState.READY.value
-
         # PROTECTED REGION END #    //  FspSubarray.AddChannelAddresses
+
+    def is_ValidateScan_allowed(self):
+        # This command has no side effects, so just allow it anytime
+        return True
 
     @command(
         dtype_in='str',
@@ -637,6 +712,12 @@ class FspSubarray(SKASubarray):
 
         # PROTECTED REGION END #    //  FspSubarray.ValidateScan
 
+    def is_ConfigureScan_allowed(self):
+        if self.dev_state() == PyTango.DevState.ON and\
+                self._obs_state in [ObsState.IDLE.value, ObsState.READY.value]:
+            return True
+        return False
+
     @command(
         dtype_in='str',
         doc_in="Scan configuration",
@@ -768,6 +849,12 @@ class FspSubarray(SKASubarray):
 
         # PROTECTED REGION END #    //  FspSubarray.ConfigureScan
 
+    def is_EndScan_allowed(self):
+        if self.dev_state() == PyTango.DevState.ON and\
+                self._obs_state == ObsState.SCANNING.value:
+            return True
+        return False
+
     @command()
     def EndScan(self):
         # PROTECTED REGION ID(FspSubarray.EndScan) ENABLED START #
@@ -775,12 +862,24 @@ class FspSubarray(SKASubarray):
         # nothing else is supposed to happen
         # PROTECTED REGION END #    //  FspSubarray.EndScan
 
+    def is_Scan_allowed(self):
+        if self.dev_state() == PyTango.DevState.ON and\
+                self._obs_state == ObsState.READY.value:
+            return True
+        return False
+
     @command()
     def Scan(self):
         # PROTECTED REGION ID(FspSubarray.Scan) ENABLED START #
         self._obs_state = ObsState.SCANNING.value
         # nothing else is supposed to happen
         # PROTECTED REGION END #    //  FspSubarray.Scan
+
+    def is_GoToIdle_allowed(self):
+        if self.dev_state() == PyTango.DevState.ON and\
+                self._obs_state in [ObsState.IDLE.value, ObsState.READY.value]:
+            return True
+        return False
 
     @command()
     def GoToIdle(self):

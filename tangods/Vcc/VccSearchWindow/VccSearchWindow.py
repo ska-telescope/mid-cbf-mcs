@@ -104,7 +104,6 @@ class VccSearchWindow(SKACapability):
         SKACapability.init_device(self)
         # PROTECTED REGION ID(VccSearchWindow.init_device) ENABLED START #
         self.set_state(PyTango.DevState.INIT)
-        self._health_state = HealthState.UNKNOWN.value
 
         # initialize attribute values
         self._search_window_tuning = 0
@@ -114,7 +113,7 @@ class VccSearchWindow(SKACapability):
         self._period_after_epoch = 0
         self._destination_address = ["", "", ""]
 
-        self.set_state(PyTango.DevState.DISABLE)
+        self.set_state(PyTango.DevState.OFF)
         # PROTECTED REGION END #    //  VccSearchWindow.init_device
 
     def always_executed_hook(self):

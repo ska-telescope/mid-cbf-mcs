@@ -48,35 +48,17 @@ class Fsp(SKACapability):
         # for now, assume that given addresses are valid
         if self.CorrelationAddress:
             self._proxy_correlation = PyTango.DeviceProxy(self.CorrelationAddress)
-        else:
-            # use this default value
-            names = self.get_name().split("/")
-            names[1] = "fsp_corr"
-            self._proxy_correlation = PyTango.DeviceProxy("/".join(names))
-
         if self.PSSAddress:
             self._proxy_pss = PyTango.DeviceProxy(self.PSSAddress)
-        else:
-            # use this default value
-            names = self.get_name().split("/")
-            names[1] = "fsp_pss"
-            self._proxy_pss = PyTango.DeviceProxy("/".join(names))
-
         if self.PSTAddress:
             self._proxy_pst = PyTango.DeviceProxy(self.PSTAddress)
-        else:
-            # use this default value
-            names = self.get_name().split("/")
-            names[1] = "fsp_pst"
-            self._proxy_pst = PyTango.DeviceProxy("/".join(names))
-
         if self.VLBIAddress:
             self._proxy_vlbi = PyTango.DeviceProxy(self.VLBIAddress)
-        else:
-            # use this default value
-            names = self.get_name().split("/")
-            names[1] = "fsp_vlbi"
-            self._proxy_vlbi = PyTango.DeviceProxy("/".join(names))
+        if self.FspSubarray:
+            self._proxy_fsp_subarray = [*map(
+                lambda i: PyTango.DeviceProxy(i),
+                list(self.FspSubarray)
+            )]
 
     # PROTECTED REGION END #    //  Fsp.class_variable
 
@@ -98,6 +80,10 @@ class Fsp(SKACapability):
 
     VLBIAddress = device_property(
         dtype='str'
+    )
+
+    FspSubarray = device_property(
+        dtype=('str',)
     )
 
     # ----------
@@ -128,9 +114,9 @@ class Fsp(SKACapability):
         SKACapability.init_device(self)
         # PROTECTED REGION ID(Fsp.init_device) ENABLED START #
         self.set_state(PyTango.DevState.INIT)
-        self._health_state = HealthState.UNKNOWN.value
 
-        # defines self._proxy_correlation, self._proxy_pss, self._proxy_pst, and self._proxy_vlbi
+        # defines self._proxy_correlation, self._proxy_pss, self._proxy_pst, self._proxy_vlbi,
+        # and self._proxy_fsp_subarray
         self.__get_capability_proxies()
 
         # the modes are already disabled on initialization,
@@ -143,8 +129,12 @@ class Fsp(SKACapability):
         self._function_mode = 0  # IDLE
         self._subarray_membership = []
 
-        self._obs_state = ObsState.IDLE.value
-        self.set_state(PyTango.DevState.STANDBY)
+        # initialize FSP subarray group
+        self._group_fsp_subarray = PyTango.Group("FSP Subarray")
+        for fqdn in list(self.FspSubarray):
+            self._group_fsp_subarray.add(fqdn)
+
+        self.set_state(PyTango.DevState.OFF)
         # PROTECTED REGION END #    //  Fsp.init_device
 
     def always_executed_hook(self):
@@ -154,7 +144,17 @@ class Fsp(SKACapability):
 
     def delete_device(self):
         # PROTECTED REGION ID(Fsp.delete_device) ENABLED START #
-        pass
+        self._proxy_correlation.SetState(PyTango.DevState.OFF)
+        self._proxy_pss.SetState(PyTango.DevState.OFF)
+        self._proxy_pst.SetState(PyTango.DevState.OFF)
+        self._proxy_vlbi.SetState(PyTango.DevState.OFF)
+        self._group_fsp_subarray.command_inout("Off")
+
+        # remove all subarray membership
+        for subarray_ID in self._subarray_membership[:]:
+            self.RemoveSubarrayMembership(subarray_ID)
+
+        self.set_state(PyTango.DevState.OFF)
         # PROTECTED REGION END #    //  Fsp.delete_device
 
     # ------------------
@@ -175,23 +175,48 @@ class Fsp(SKACapability):
     # Commands
     # --------
 
+    def is_On_allowed(self):
+        if self.dev_state() == PyTango.DevState.OFF:
+            return True
+        return False
+
     @command()
     def On(self):
         # PROTECTED REGION ID(Fsp.On) ENABLED START #
+        self._proxy_correlation.SetState(PyTango.DevState.DISABLE)
+        self._proxy_pss.SetState(PyTango.DevState.DISABLE)
+        self._proxy_pst.SetState(PyTango.DevState.DISABLE)
+        self._proxy_vlbi.SetState(PyTango.DevState.DISABLE)
+        self._group_fsp_subarray.command_inout("On")
+
         self.set_state(PyTango.DevState.ON)
         # PROTECTED REGION END #    //  Fsp.On
+
+    def is_Off_allowed(self):
+        if self.dev_state() == PyTango.DevState.ON:
+            return True
+        return False
 
     @command()
     def Off(self):
         # PROTECTED REGION ID(Fsp.Off) ENABLED START #
+        self._proxy_correlation.SetState(PyTango.DevState.OFF)
+        self._proxy_pss.SetState(PyTango.DevState.OFF)
+        self._proxy_pst.SetState(PyTango.DevState.OFF)
+        self._proxy_vlbi.SetState(PyTango.DevState.OFF)
+        self._group_fsp_subarray.command_inout("Off")
+
+        # remove all subarray membership
+        for subarray_ID in self._subarray_membership[:]:
+            self.RemoveSubarrayMembership(subarray_ID)
+
         self.set_state(PyTango.DevState.OFF)
         # PROTECTED REGION END #    //  Fsp.Off
 
-    @command()
-    def Standby(self):
-        # PROTECTED REGION ID(Fsp.Standby) ENABLED START #
-        self.set_state(PyTango.DevState.STANDBY)
-        # PROTECTED REGION END #    //  Fsp.Standby
+    def is_SetFunctionMode_allowed(self):
+        if self.dev_state() == PyTango.DevState.ON:
+            return True
+        return False
 
     @command(
         dtype_in='str',
@@ -234,6 +259,11 @@ class Fsp(SKACapability):
         self.dev_logging("functionMode not valid. Ignoring.", PyTango.LogLevel.LOG_WARN)
         # PROTECTED REGION END #    //  Fsp.SetFunctionMode
 
+    def is_AddSubarrayMembership_allowed(self):
+        if self.dev_state() == PyTango.DevState.ON:
+            return True
+        return False
+
     @command(
         dtype_in='uint16',
         doc_in='Subarray ID'
@@ -246,6 +276,11 @@ class Fsp(SKACapability):
             log_msg = "FSP already belongs to subarray {}.".format(argin)
             self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
         # PROTECTED REGION END #    //  Fsp.AddSubarrayMembership
+
+    def is_RemoveSubarrayMembership_allowed(self):
+        if self.dev_state() == PyTango.DevState.ON:
+            return True
+        return False
 
     @command(
         dtype_in='uint16',
