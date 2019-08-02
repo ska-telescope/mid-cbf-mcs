@@ -468,17 +468,17 @@ class FspSubarray(SKASubarray):
 
         argin = json.loads(argin)
 
-        for fsp in argin["receive_addresses"]:
-            if fsp["fsp_id"] == self._fsp_id:
+        for fsp in argin["receiveAddresses"]:
+            if fsp["fspId"] == self._fsp_id:
                 channel_ID_list = [*map(lambda x: x[0], self._channel_info)]
                 for host in fsp["hosts"]:
                     for channel in host["channels"]:
                         try:
-                            i = channel_ID_list.index(channel["start_channel"])
-                            for j in range(i, i + channel["num_channels"]):
+                            i = channel_ID_list.index(channel["startChannel"])
+                            for j in range(i, i + channel["numChannels"]):
                                 self._channel_info[j][4] = host["host"]
                                 self._channel_info[j][5] = \
-                                    channel["port_offset"] + self._channel_info[j][0]
+                                    channel["portOffset"] + self._channel_info[j][0]
                         # Possible errors:
                         #     Channel ID not found.
                         #     Number of channels exceeds configured channels.

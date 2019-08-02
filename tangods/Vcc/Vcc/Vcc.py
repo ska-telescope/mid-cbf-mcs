@@ -67,7 +67,7 @@ class Vcc(SKACapability):
     # -----------------
 
     VccID = device_property(
-        dtype='str'
+        dtype='uint16'
     )
 
     Band1And2Address = device_property(

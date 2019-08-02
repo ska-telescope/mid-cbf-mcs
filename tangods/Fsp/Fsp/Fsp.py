@@ -66,6 +66,10 @@ class Fsp(SKACapability):
     # Device Properties
     # -----------------
 
+    FspID = device_property(
+        dtype='uint16'
+    )
+
     CorrelationAddress = device_property(
         dtype='str'
     )
@@ -124,6 +128,8 @@ class Fsp(SKACapability):
         # self._proxy_pss.SetState(PyTango.DevState.DISABLE)
         # self._proxy_pst.SetState(PyTango.DevState.DISABLE)
         # self._proxy_vlbi.SetState(PyTango.DevState.DISABLE)
+
+        self._fsp_id = self.FspID
 
         # initialize attribute values
         self._function_mode = 0  # IDLE

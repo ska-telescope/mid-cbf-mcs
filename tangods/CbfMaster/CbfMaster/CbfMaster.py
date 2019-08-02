@@ -599,11 +599,8 @@ class CbfMaster(SKAMaster):
             return True
         return False
 
-    @command(
-        dtype_in='str',
-        doc_in="TODO: ask Elisabetta why the input argument is always just an empty string.",
-    )
-    def On(self, argin):
+    @command()
+    def On(self):
         # PROTECTED REGION ID(CbfMaster.On) ENABLED START #
         self._group_subarray.command_inout("On")
         self._group_vcc.command_inout("On")
@@ -616,11 +613,8 @@ class CbfMaster(SKAMaster):
             return True
         return False
 
-    @command(
-        dtype_in='str',
-        doc_in="TODO: ask Elisabetta why the input argument is always just an empty string.",
-    )
-    def Off(self, argin):
+    @command()
+    def Off(self):
         # PROTECTED REGION ID(CbfMaster.Off) ENABLED START #
         self._group_subarray.command_inout("Off")
         self._group_vcc.command_inout("Off")
@@ -633,11 +627,8 @@ class CbfMaster(SKAMaster):
             return True
         return False
 
-    @command(
-        dtype_in='str',
-        doc_in="TODO: ask Elisabetta why the input argument is always just an empty string.",
-    )
-    def Standby(self, argin):
+    @command()
+    def Standby(self):
         # PROTECTED REGION ID(CbfMaster.Standby) ENABLED START #
         self._group_subarray.command_inout("Off")
         self._group_vcc.command_inout("Off")

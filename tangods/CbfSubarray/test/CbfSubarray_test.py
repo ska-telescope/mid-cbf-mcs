@@ -596,7 +596,7 @@ class TestCbfSubarray:
         assert create_subarray_1_proxy.obsState.value == ObsState.READY.value
 
         # send the Scan command
-        create_subarray_1_proxy.Scan(("",))
+        create_subarray_1_proxy.Scan("")
         time.sleep(1)
 
         # check initial states
@@ -684,7 +684,7 @@ class TestCbfSubarray:
         assert create_vcc_proxies[receptor_to_vcc[4] - 1].delayModel[1] == (2.9, 3.0, 3.1, 3.2, 3.3, 3.4)
 
         # transition to obsState=SCANNING
-        create_subarray_1_proxy.Scan(("",))
+        create_subarray_1_proxy.Scan("")
         time.sleep(1)
         assert create_subarray_1_proxy.obsState.value == ObsState.SCANNING.value
 

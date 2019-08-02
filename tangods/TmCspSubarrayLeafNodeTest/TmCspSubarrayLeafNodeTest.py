@@ -71,14 +71,14 @@ class TmCspSubarrayLeafNodeTest(SKABaseDevice):
 
     def __generate_visibilities_destination_addresses(self, output_links):
         destination_addresses = {
-            "scan_id": output_links["scanID"],
-            "receive_addresses": []
+            "scanId": output_links["scanID"],
+            "receiveAddresses": []
         }
 
         for fsp_in in output_links["fsp"]:
             fsp = {
-                "phase_bin_id": 0,
-                "fsp_id": fsp_in["fspID"],
+                "phaseBinId": 0,
+                "fspId": fsp_in["fspID"],
                 "hosts": []
             }
             # get the total number of channels and first channel
@@ -93,13 +93,13 @@ class TmCspSubarrayLeafNodeTest(SKABaseDevice):
                 fsp["hosts"].append({
                     "host": "192.168.0.1",
                     "channels": [{
-                        "port_offset": 8080,
-                        "num_channels": num_channels,
-                        "start_channel": first_channel
+                        "portOffset": 8080,
+                        "numChannels": num_channels,
+                        "startChannel": first_channel
                     }]
                 })
 
-            destination_addresses["receive_addresses"].append(fsp)
+            destination_addresses["receiveAddresses"].append(fsp)
 
         log_msg = "Done assigning destination addresses."
         self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)

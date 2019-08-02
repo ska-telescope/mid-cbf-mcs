@@ -147,17 +147,17 @@ class CbfSubarray(SKASubarray):
                 destination_addresses = json.loads(value)
 
                 # No exception should technically ever be raised here.
-                if destination_addresses["scan_id"] != self._scan_ID:
-                    raise ValueError("scanID is not correct")
-                for fsp in destination_addresses["receive_addresses"]:
-                    proxy_fsp_subarray = self._proxies_fsp_subarray[fsp["fsp_id"] - 1]
+                if destination_addresses["scanId"] != self._scan_ID:
+                    raise ValueError("scan ID is not correct")
+                for fsp in destination_addresses["receiveAddresses"]:
+                    proxy_fsp_subarray = self._proxies_fsp_subarray[fsp["fspId"] - 1]
                     if proxy_fsp_subarray not in self._proxies_assigned_fsp_subarray:
                         raise ValueError("FSP {} does not belong to subarray {}.".format(
-                                fsp["fsp_id"], self._subarray_id
+                                fsp["fspId"], self._subarray_id
                             )
                         )
                     log_msg = "Configuring destination addresses for FSP {}...".format(
-                        fsp["fsp_id"]
+                        fsp["fspId"]
                     )
                     self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
                     proxy_fsp_subarray.AddChannelAddresses(value)
@@ -1459,8 +1459,8 @@ class CbfSubarray(SKASubarray):
         return False
 
     @command(
-        dtype_in=('str',),
-        doc_in="TODO: find out what the input argument is"
+        dtype_in='str',
+        doc_in="Activation time of the scan, as seconds since the Linux epoch"
     )
     def Scan(self, argin):
         # PROTECTED REGION ID(CbfSubarray.Scan) ENABLED START #
@@ -1471,6 +1471,8 @@ class CbfSubarray(SKASubarray):
             PyTango.Except.throw_exception("Command failed", msg, "Scan execution",
                                            PyTango.ErrSeverity.ERR)
         """
+        # TODO: actually use argin
+        # For MVP, ignore argin (activation time)
         self._group_vcc.command_inout("Scan")
         self._group_fsp_subarray.command_inout("Scan")
 
