@@ -488,7 +488,7 @@ class FspSubarray(SKASubarray):
                                 "\n{}\n".format(str(e))
                             self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
                             PyTango.Except.throw_exception("Command failed", msg,
-                                                           "AddChannelAddressInfo execution",
+                                                           "AddChannelAddresses execution",
                                                            PyTango.ErrSeverity.ERR)
                 self._vis_destination_address = fsp["hosts"]
 

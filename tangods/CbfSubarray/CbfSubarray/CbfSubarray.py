@@ -854,7 +854,7 @@ class CbfSubarray(SKASubarray):
 
     def delete_device(self):
         # PROTECTED REGION ID(CbfSubarray.delete_device) ENABLED START #
-        self.GoToIdle()
+        self.EndSB()
         self.RemoveAllReceptors()
         self.set_state(PyTango.DevState.DISABLE)
         # PROTECTED REGION END #    //  CbfSubarray.delete_device
@@ -914,39 +914,45 @@ class CbfSubarray(SKASubarray):
     # --------
 
     def is_On_allowed(self):
-        if self.dev_state() == PyTango.DevState.DISABLE and\
-                self._obs_state == ObsState.IDLE.value:
+        if self.dev_state() == PyTango.DevState.DISABLE:
             return True
         return False
 
     @command()
     def On(self):
         # PROTECTED REGION ID(CbfSubarray.On) ENABLED START #
+        if self._obs_state != ObsState.IDLE.value:
+            msg = "Device not in IDLE obsState."
+            self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+            PyTango.Except.throw_exception("Command failed", msg, "On execution",
+                                           PyTango.ErrSeverity.ERR)
+
         self._proxy_sw_1.SetState(PyTango.DevState.DISABLE)
         self._proxy_sw_2.SetState(PyTango.DevState.DISABLE)
         self.set_state(PyTango.DevState.OFF)
         # PROTECTED REGION END #    //  CbfSubarray.On
 
     def is_Off_allowed(self):
-        if self.dev_state() == PyTango.DevState.OFF and\
-                self._obs_state == ObsState.IDLE.value:
+        if self.dev_state() == PyTango.DevState.OFF:
             return True
         return False
 
     @command()
     def Off(self):
         # PROTECTED REGION ID(CbfSubarray.Off) ENABLED START #
-        # This command can only be called when obsState=IDLE and state=OFF
-        # self.GoToIdle()
-        # self.RemoveAllReceptors()
+        if self._obs_state != ObsState.IDLE.value:
+            msg = "Device not in IDLE obsState."
+            self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+            PyTango.Except.throw_exception("Command failed", msg, "Off execution",
+                                           PyTango.ErrSeverity.ERR)
+
         self._proxy_sw_1.SetState(PyTango.DevState.OFF)
         self._proxy_sw_2.SetState(PyTango.DevState.OFF)
         self.set_state(PyTango.DevState.DISABLE)
         # PROTECTED REGION END #    //  CbfSubarray.Off
 
     def is_AddReceptors_allowed(self):
-        if self.dev_state() in [PyTango.DevState.OFF, PyTango.DevState.ON] and\
-                self._obs_state == ObsState.IDLE.value:
+        if self.dev_state() in [PyTango.DevState.OFF, PyTango.DevState.ON]:
             return True
         return False
 
@@ -956,6 +962,12 @@ class CbfSubarray(SKASubarray):
     )
     def AddReceptors(self, argin):
         # PROTECTED REGION ID(CbfSubarray.AddReceptors) ENABLED START #
+        if self._obs_state != ObsState.IDLE.value:
+            msg = "Device not in IDLE obsState."
+            self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+            PyTango.Except.throw_exception("Command failed", msg, "AddReceptors execution",
+                                           PyTango.ErrSeverity.ERR)
+
         errs = []  # list of error messages
         receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
                                self._proxy_cbf_master.receptorToVcc)
@@ -1010,8 +1022,7 @@ class CbfSubarray(SKASubarray):
         # PROTECTED REGION END #    //  CbfSubarray.AddReceptors
 
     def is_RemoveReceptors_allowed(self):
-        if self.dev_state() in [PyTango.DevState.OFF, PyTango.DevState.ON] and\
-                self._obs_state == ObsState.IDLE.value:
+        if self.dev_state() in [PyTango.DevState.OFF, PyTango.DevState.ON]:
             return True
         return False
 
@@ -1021,6 +1032,12 @@ class CbfSubarray(SKASubarray):
     )
     def RemoveReceptors(self, argin):
         # PROTECTED REGION ID(CbfSubarray.RemoveReceptors) ENABLED START #
+        if self._obs_state != ObsState.IDLE.value:
+            msg = "Device not in IDLE obsState."
+            self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+            PyTango.Except.throw_exception("Command failed", msg, "RemoveReceptors execution",
+                                           PyTango.ErrSeverity.ERR)
+
         receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
                                self._proxy_cbf_master.receptorToVcc)
         for receptorID in argin:
@@ -1050,20 +1067,24 @@ class CbfSubarray(SKASubarray):
         # PROTECTED REGION END #    //  CbfSubarray.RemoveReceptors
 
     def is_RemoveAllReceptors_allowed(self):
-        if self.dev_state() in [PyTango.DevState.OFF, PyTango.DevState.ON] and\
-                self._obs_state == ObsState.IDLE.value:
+        if self.dev_state() in [PyTango.DevState.OFF, PyTango.DevState.ON]:
             return True
         return False
 
     @command()
     def RemoveAllReceptors(self):
         # PROTECTED REGION ID(CbfSubarray.RemoveAllReceptors) ENABLED START #
+        if self._obs_state != ObsState.IDLE.value:
+            msg = "Device not in IDLE obsState."
+            self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+            PyTango.Except.throw_exception("Command failed", msg, "RemoveAllReceptors execution",
+                                           PyTango.ErrSeverity.ERR)
+
         self.RemoveReceptors(self._receptors[:])
         # PROTECTED REGION END #    //  CbfSubarray.RemoveAllReceptors
 
     def is_ConfigureScan_allowed(self):
-        if self.dev_state() == PyTango.DevState.ON and\
-                self._obs_state in [ObsState.IDLE.value, ObsState.READY.value]:
+        if self.dev_state() == PyTango.DevState.ON:
             return True
         return False
 
@@ -1132,11 +1153,17 @@ class CbfSubarray(SKASubarray):
             ]
         }
         """
+        if self._obs_state not in [ObsState.IDLE.value, ObsState.READY.value]:
+            msg = "Device not in IDLE or READY obsState."
+            self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+            PyTango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
+                                           PyTango.ErrSeverity.ERR)
+
         self.__validate_scan_configuration(argin)
 
         # Call this just to release all FSPs and unsubscribe to events.
         # We transition to obsState=CONFIGURING immediately after anyways.
-        self.GoToIdle()
+        self.EndSB()
 
         # transition to obsState=CONFIGURING
         self._obs_state = ObsState.CONFIGURING.value
@@ -1309,8 +1336,7 @@ class CbfSubarray(SKASubarray):
         # PROTECTED REGION END #    //  CbfSubarray.ConfigureScan
 
     def is_ConfigureSearchWindow_allowed(self):
-        if self.dev_state() == PyTango.DevState.ON and\
-                self._obs_state == ObsState.CONFIGURING.value:
+        if self.dev_state() == PyTango.DevState.ON:
             return True
         return False
 
@@ -1322,6 +1348,11 @@ class CbfSubarray(SKASubarray):
         # PROTECTED REGION ID(CbfSubarray.ConfigureSearchWindow) ENABLED START #
         # This function is called after the configuration has already been validated,
         # so the checks here have been removed to reduce overhead.
+        if self._obs_state != ObsState.CONFIGURING.value:
+            msg = "Device not in CONFIGURING obsState."
+            self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+            PyTango.Except.throw_exception("Command failed", msg, "ConfigureSearchWindow execution",
+                                           PyTango.ErrSeverity.ERR)
 
         argin = json.loads(argin)
 
@@ -1431,21 +1462,19 @@ class CbfSubarray(SKASubarray):
         # PROTECTED REGION END #    //  CbfSubarray.ConfigureSearchWindow
 
     def is_EndScan_allowed(self):
-        if self.dev_state() == PyTango.DevState.ON and\
-                self._obs_state == ObsState.SCANNING.value:
+        if self.dev_state() == PyTango.DevState.ON:
             return True
         return False
 
     @command()
     def EndScan(self):
         # PROTECTED REGION ID(CbfSubarray.EndScan) ENABLED START #
-        """
         if self._obs_state != ObsState.SCANNING.value:
-            msg = "A scan has not been started."
+            msg = "Device not in SCANNING obsState."
             self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
-            PyTango.Except.throw_exception("Command failed", msg, "Scan execution",
+            PyTango.Except.throw_exception("Command failed", msg, "EndScan execution",
                                            PyTango.ErrSeverity.ERR)
-        """
+
         self._group_vcc.command_inout("EndScan")
         self._group_fsp_subarray.command_inout("EndScan")
 
@@ -1453,8 +1482,7 @@ class CbfSubarray(SKASubarray):
         # PROTECTED REGION END #    //  CbfSubarray.EndScan
 
     def is_Scan_allowed(self):
-        if self.dev_state() == PyTango.DevState.ON and\
-                self._obs_state == ObsState.READY.value:
+        if self.dev_state() == PyTango.DevState.ON:
             return True
         return False
 
@@ -1471,6 +1499,12 @@ class CbfSubarray(SKASubarray):
             PyTango.Except.throw_exception("Command failed", msg, "Scan execution",
                                            PyTango.ErrSeverity.ERR)
         """
+        if self._obs_state != ObsState.READY.value:
+            msg = "Device not in READY obsState."
+            self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+            PyTango.Except.throw_exception("Command failed", msg, "Scan execution",
+                                           PyTango.ErrSeverity.ERR)
+
         # TODO: actually use argin
         # For MVP, ignore argin (activation time)
         self._group_vcc.command_inout("Scan")
@@ -1479,20 +1513,20 @@ class CbfSubarray(SKASubarray):
         self._obs_state = ObsState.SCANNING.value
         # PROTECTED REGION END #    //  CbfSubarray.Scan
 
-    def is_GoToIdle_allowed(self):
-        if self.dev_state() in [PyTango.DevState.OFF, PyTango.DevState.ON] and\
-                self._obs_state in [ObsState.IDLE.value, ObsState.READY.value]:
+    def is_EndSB_allowed(self):
+        if self.dev_state() in [PyTango.DevState.OFF, PyTango.DevState.ON]:
             return True
         return False
 
-    # This command is called "GoToIdle", but a more proper name for it is "ReleaseAllResources".
-    # The reason why it's not called "ReleaseAllResources" is because, for some reason, the
-    # SKASubarray base class only allows the "ReleaseAllResources" command to be called when
-    # obsState=IDLE, but this functionality needs to be present when obsState=READY.
-    # Note that this command does not remove VCCs from the subarray, but only sends them to IDLE.
     @command()
-    def GoToIdle(self):
-        # PROTECTED REGION ID(CbfSubarray.GoToIdle) ENABLED START #
+    def EndSB(self):
+        # PROTECTED REGION ID(CbfSubarray.EndSB) ENABLED START #
+        if self._obs_state not in [ObsState.IDLE.value, ObsState.READY.value]:
+            msg = "Device not in IDLE or READY obsState."
+            self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+            PyTango.Except.throw_exception("Command failed", msg, "EndSB execution",
+                                           PyTango.ErrSeverity.ERR)
+
         # unsubscribe from TMC events
         for event_id in list(self._events_telstate.keys()):
             self._events_telstate[event_id].unsubscribe_event(event_id)
@@ -1531,8 +1565,7 @@ class CbfSubarray(SKASubarray):
 
         # transition to obsState=IDLE
         self._obs_state = ObsState.IDLE.value
-        # PROTECTED REGION END #    //  CbfSubarray.GoToIdle
-
+        # PROTECTED REGION END #    //  CbfSubarray.EndSB
 # ----------
 # Run server
 # ----------

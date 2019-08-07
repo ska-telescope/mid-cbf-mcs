@@ -75,7 +75,7 @@ class TestCbfSubarray:
         receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
                                create_cbf_master_proxy.receptorToVcc)
 
-        create_cbf_master_proxy.On("")
+        create_cbf_master_proxy.On()
         time.sleep(3)
 
         # receptor list should be empty right after initialization
@@ -133,7 +133,7 @@ class TestCbfSubarray:
         receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
                                create_cbf_master_proxy.receptorToVcc)
 
-        create_cbf_master_proxy.On("")
+        create_cbf_master_proxy.On()
         time.sleep(3)
 
         # receptor list should be empty right after initialization
@@ -188,7 +188,7 @@ class TestCbfSubarray:
         receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
                                create_cbf_master_proxy.receptorToVcc)
 
-        create_cbf_master_proxy.On("")
+        create_cbf_master_proxy.On()
         time.sleep(3)
 
         # receptor list should be empty right after initialization
@@ -237,7 +237,7 @@ class TestCbfSubarray:
         receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
                                create_cbf_master_proxy.receptorToVcc)
 
-        create_cbf_master_proxy.On("")
+        create_cbf_master_proxy.On()
         time.sleep(3)
 
         # receptor list should be empty right after initialization
@@ -297,7 +297,7 @@ class TestCbfSubarray:
         receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
                                create_cbf_master_proxy.receptorToVcc)
 
-        create_cbf_master_proxy.On("")
+        create_cbf_master_proxy.On()
         time.sleep(3)
 
         # check initial value of attributes of CBF subarray
@@ -505,7 +505,7 @@ class TestCbfSubarray:
         receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
                                create_cbf_master_proxy.receptorToVcc)
 
-        create_cbf_master_proxy.On("")
+        create_cbf_master_proxy.On()
         time.sleep(3)
 
         assert create_subarray_1_proxy.obsState.value == ObsState.IDLE.value
@@ -532,7 +532,7 @@ class TestCbfSubarray:
         assert create_fsp_2_subarray_1_proxy.obsState.value == ObsState.READY.value
 
         # send the Scan command
-        create_subarray_1_proxy.Scan(("",))
+        create_subarray_1_proxy.Scan("")
         time.sleep(1)
 
         # check states
@@ -574,7 +574,7 @@ class TestCbfSubarray:
         receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
                                create_cbf_master_proxy.receptorToVcc)
 
-        create_cbf_master_proxy.On("")
+        create_cbf_master_proxy.On()
         time.sleep(3)
 
         assert create_subarray_1_proxy.obsState.value == ObsState.IDLE.value
@@ -649,7 +649,7 @@ class TestCbfSubarray:
         receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
                                create_cbf_master_proxy.receptorToVcc)
 
-        create_cbf_master_proxy.On("")
+        create_cbf_master_proxy.On()
         time.sleep(3)
 
         assert create_subarray_1_proxy.obsState.value == ObsState.IDLE.value
