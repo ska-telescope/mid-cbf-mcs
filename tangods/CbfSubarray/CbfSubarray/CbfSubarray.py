@@ -514,10 +514,16 @@ class CbfSubarray(SKASubarray):
                     for vcc in self._proxies_assigned_vcc:
                         try:
                             search_window["frequencyBand"] = argin["frequencyBand"]
-                            search_window["frequencyBandOffsetStream1"] = \
-                                argin["frequencyBandOffsetStream1"]
-                            search_window["frequencyBandOffsetStream2"] = \
-                                argin["frequencyBandOffsetStream2"]
+                            if "frequencyBandOffsetStream1" in argin:
+                                search_window["frequencyBandOffsetStream1"] = \
+                                    argin["frequencyBandOffsetStream1"]
+                            else:
+                                search_window["frequencyBandOffsetStream1"] = 0
+                            if "frequencyBandOffsetStream2" in argin:
+                                search_window["frequencyBandOffsetStream2"] = \
+                                    argin["frequencyBandOffsetStream2"]
+                            else:
+                                search_window["frequencyBandOffsetStream2"] = 0
                             if argin["frequencyBand"] in ["5a", "5b"]:
                                 search_window["band5Tuning"] = argin["band5Tuning"]
 
