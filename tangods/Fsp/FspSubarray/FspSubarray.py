@@ -682,7 +682,7 @@ class FspSubarray(SKASubarray):
                                 i,
                                 argin["channelAveragingMap"][i][0]
                             )
-                        self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
+                        self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
                         PyTango.Except.throw_exception("Command failed", msg,
                                                        "ConfigureScan execution",
                                                        PyTango.ErrSeverity.ERR)
@@ -696,7 +696,7 @@ class FspSubarray(SKASubarray):
                                 i,
                                 argin["channelAveragingMap"][i][1]
                             )
-                        self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
+                        self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
                         PyTango.Except.throw_exception("Command failed", msg,
                                                        "ConfigureScan execution",
                                                        PyTango.ErrSeverity.ERR)

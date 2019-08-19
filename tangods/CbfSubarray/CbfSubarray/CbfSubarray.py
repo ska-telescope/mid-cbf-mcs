@@ -561,7 +561,7 @@ class CbfSubarray(SKASubarray):
                                 "Aborting configuration.".format(str(self._count_fsp))
                             self.__raise_configure_scan_fatal_error(msg)
                     else:
-                        log_msg = "FSP specified, but 'fspID' not given. "\
+                        msg = "FSP specified, but 'fspID' not given. "\
                             "Aborting configuration."
                         self.__raise_configure_scan_fatal_error(msg)
 
@@ -596,7 +596,7 @@ class CbfSubarray(SKASubarray):
                                 )
                             self.__raise_configure_scan_fatal_error(msg)
                     else:
-                        log_msg = "FSP specified, but 'functionMode' not given. "\
+                        msg = "FSP specified, but 'functionMode' not given. "\
                             "Aborting configuration."
                         self.__raise_configure_scan_fatal_error(msg)
 
