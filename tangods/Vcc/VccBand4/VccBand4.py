@@ -7,6 +7,12 @@
 # Distributed under the terms of the GPL license.
 # See LICENSE.txt for more info.
 
+"""
+Author: James Jiang James.Jiang@nrc-cnrc.gc.ca,
+Herzberg Astronomy and Astrophysics, National Research Council of Canada
+Copyright (c) 2019 National Research Council of Canada
+"""
+
 """ VccBand4 Tango device prototype
 
 VccBand4 TANGO device class for the prototype

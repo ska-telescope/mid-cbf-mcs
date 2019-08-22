@@ -1,3 +1,9 @@
+"""
+Author: James Jiang James.Jiang@nrc-cnrc.gc.ca,
+Herzberg Astronomy and Astrophysics, National Research Council of Canada
+Copyright (c) 2019 National Research Council of Canada
+"""
+
 from PyTango.server import run
 import os
 import sys
