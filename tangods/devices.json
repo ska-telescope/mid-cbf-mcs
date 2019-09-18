@@ -6,7 +6,7 @@
         "deviceProperties": [
             {
                 "devPropName": "MaxCapabilities",
-                "devPropValue": ["VCC:4", "FSP:27", "Subarray:1"]
+                "devPropValue": ["VCC:4", "FSP:4", "Subarray:2"]
             },
             {
                 "devPropName": "VCC",
@@ -23,36 +23,14 @@
                     "mid_csp_cbf/fsp/01",
                     "mid_csp_cbf/fsp/02",
                     "mid_csp_cbf/fsp/03",
-                    "mid_csp_cbf/fsp/04",
-                    "mid_csp_cbf/fsp/05",
-                    "mid_csp_cbf/fsp/06",
-                    "mid_csp_cbf/fsp/07",
-                    "mid_csp_cbf/fsp/08",
-                    "mid_csp_cbf/fsp/09",
-                    "mid_csp_cbf/fsp/10",
-                    "mid_csp_cbf/fsp/11",
-                    "mid_csp_cbf/fsp/12",
-                    "mid_csp_cbf/fsp/13",
-                    "mid_csp_cbf/fsp/14",
-                    "mid_csp_cbf/fsp/15",
-                    "mid_csp_cbf/fsp/16",
-                    "mid_csp_cbf/fsp/17",
-                    "mid_csp_cbf/fsp/18",
-                    "mid_csp_cbf/fsp/19",
-                    "mid_csp_cbf/fsp/20",
-                    "mid_csp_cbf/fsp/21",
-                    "mid_csp_cbf/fsp/22",
-                    "mid_csp_cbf/fsp/23",
-                    "mid_csp_cbf/fsp/24",
-                    "mid_csp_cbf/fsp/25",
-                    "mid_csp_cbf/fsp/26",
-                    "mid_csp_cbf/fsp/27"
+                    "mid_csp_cbf/fsp/04"
                 ]
             },
             {
                 "devPropName": "CbfSubarray",
                 "devPropValue": [
-                    "mid_csp_cbf/sub_elt/subarray_01"
+                    "mid_csp_cbf/sub_elt/subarray_01",
+                    "mid_csp_cbf/sub_elt/subarray_02"
                 ]
             }
         ],
@@ -154,30 +132,7 @@
                     "mid_csp_cbf/fsp/01",
                     "mid_csp_cbf/fsp/02",
                     "mid_csp_cbf/fsp/03",
-                    "mid_csp_cbf/fsp/04",
-                    "mid_csp_cbf/fsp/05",
-                    "mid_csp_cbf/fsp/06",
-                    "mid_csp_cbf/fsp/07",
-                    "mid_csp_cbf/fsp/08",
-                    "mid_csp_cbf/fsp/09",
-                    "mid_csp_cbf/fsp/10",
-                    "mid_csp_cbf/fsp/11",
-                    "mid_csp_cbf/fsp/12",
-                    "mid_csp_cbf/fsp/13",
-                    "mid_csp_cbf/fsp/14",
-                    "mid_csp_cbf/fsp/15",
-                    "mid_csp_cbf/fsp/16",
-                    "mid_csp_cbf/fsp/17",
-                    "mid_csp_cbf/fsp/18",
-                    "mid_csp_cbf/fsp/19",
-                    "mid_csp_cbf/fsp/20",
-                    "mid_csp_cbf/fsp/21",
-                    "mid_csp_cbf/fsp/22",
-                    "mid_csp_cbf/fsp/23",
-                    "mid_csp_cbf/fsp/24",
-                    "mid_csp_cbf/fsp/25",
-                    "mid_csp_cbf/fsp/26",
-                    "mid_csp_cbf/fsp/27"
+                    "mid_csp_cbf/fsp/04"
                 ]
             },
             {
@@ -186,30 +141,101 @@
                     "mid_csp_cbf/fspSubarray/01_01",
                     "mid_csp_cbf/fspSubarray/02_01",
                     "mid_csp_cbf/fspSubarray/03_01",
-                    "mid_csp_cbf/fspSubarray/04_01",
-                    "mid_csp_cbf/fspSubarray/05_01",
-                    "mid_csp_cbf/fspSubarray/06_01",
-                    "mid_csp_cbf/fspSubarray/07_01",
-                    "mid_csp_cbf/fspSubarray/08_01",
-                    "mid_csp_cbf/fspSubarray/09_01",
-                    "mid_csp_cbf/fspSubarray/10_01",
-                    "mid_csp_cbf/fspSubarray/11_01",
-                    "mid_csp_cbf/fspSubarray/12_01",
-                    "mid_csp_cbf/fspSubarray/13_01",
-                    "mid_csp_cbf/fspSubarray/14_01",
-                    "mid_csp_cbf/fspSubarray/15_01",
-                    "mid_csp_cbf/fspSubarray/16_01",
-                    "mid_csp_cbf/fspSubarray/17_01",
-                    "mid_csp_cbf/fspSubarray/18_01",
-                    "mid_csp_cbf/fspSubarray/19_01",
-                    "mid_csp_cbf/fspSubarray/20_01",
-                    "mid_csp_cbf/fspSubarray/21_01",
-                    "mid_csp_cbf/fspSubarray/22_01",
-                    "mid_csp_cbf/fspSubarray/23_01",
-                    "mid_csp_cbf/fspSubarray/24_01",
-                    "mid_csp_cbf/fspSubarray/25_01",
-                    "mid_csp_cbf/fspSubarray/26_01",
-                    "mid_csp_cbf/fspSubarray/27_01"
+                    "mid_csp_cbf/fspSubarray/04_01"
+                ]
+            }
+        ],
+        "attributeProperties": [
+            {
+                "attributeName": "adminMode",
+                "attrPropName": "",
+                "attrPropValue": "",
+                "pollingPeriod": 1000,
+                "changeEventAbs": "1"
+            },
+            {
+                "attributeName": "healthState",
+                "attrPropName": "",
+                "attrPropValue": "",
+                "pollingPeriod": 1000,
+                "changeEventAbs": "1"
+            },
+            {
+                "attributeName": "State",
+                "attrPropName": "",
+                "attrPropValue": "",
+                "pollingPeriod": 1000,
+                "changeEventAbs": ""
+            },
+            {
+                "attributeName": "obsState",
+                "attrPropName": "",
+                "attrPropValue": "",
+                "pollingPeriod": 1000,
+                "changeEventAbs": "1"
+            },
+            {
+                "attributeName": "scanID",
+                "attrPropName": "",
+                "attrPropValue": "",
+                "pollingPeriod": 1000,
+                "changeEventAbs": "1"
+            },
+            {
+                "attributeName": "outputLinksDistribution",
+                "attrPropName": "",
+                "attrPropValue": "",
+                "pollingPeriod": 1000,
+                "changeEventAbs": "1"
+            }
+        ]
+    },
+    {
+        "class": "CbfSubarray",
+        "serverName": "CbfSubarrayMulti/cbfSubarray-02",
+        "devName": "mid_csp_cbf/sub_elt/subarray_02",
+        "deviceProperties": [
+            {
+                "devPropName": "SubID",
+                "devPropValue": 2
+            },
+            {
+                "devPropName": "CbfMasterAddress",
+                "devPropValue": "mid_csp_cbf/sub_elt/master"
+            },
+            {
+                "devPropName": "SW1Address",
+                "devPropValue": "mid_csp_cbf/sw1/02"
+            },
+            {
+                "devPropName": "SW2Address",
+                "devPropValue": "mid_csp_cbf/sw2/02"
+            },
+            {
+                "devPropName": "VCC",
+                "devPropValue": [
+                    "mid_csp_cbf/vcc/001",
+                    "mid_csp_cbf/vcc/002",
+                    "mid_csp_cbf/vcc/003",
+                    "mid_csp_cbf/vcc/004"
+                ]
+            },
+            {
+                "devPropName": "FSP",
+                "devPropValue": [
+                    "mid_csp_cbf/fsp/01",
+                    "mid_csp_cbf/fsp/02",
+                    "mid_csp_cbf/fsp/03",
+                    "mid_csp_cbf/fsp/04"
+                ]
+            },
+            {
+                "devPropName": "FspSubarray",
+                "devPropValue": [
+                    "mid_csp_cbf/fspSubarray/01_02",
+                    "mid_csp_cbf/fspSubarray/02_02",
+                    "mid_csp_cbf/fspSubarray/03_02",
+                    "mid_csp_cbf/fspSubarray/04_02"
                 ]
             }
         ],
@@ -546,7 +572,8 @@
             {
                 "devPropName": "FspSubarray",
                 "devPropValue": [
-                    "mid_csp_cbf/fspSubarray/01_01"
+                    "mid_csp_cbf/fspSubarray/01_01",
+                    "mid_csp_cbf/fspSubarray/01_02"
                 ]
             }
         ],
@@ -609,7 +636,8 @@
             {
                 "devPropName": "FspSubarray",
                 "devPropValue": [
-                    "mid_csp_cbf/fspSubarray/02_01"
+                    "mid_csp_cbf/fspSubarray/02_01",
+                    "mid_csp_cbf/fspSubarray/02_02"
                 ]
             }
         ],
@@ -672,7 +700,8 @@
             {
                 "devPropName": "FspSubarray",
                 "devPropValue": [
-                    "mid_csp_cbf/fspSubarray/03_01"
+                    "mid_csp_cbf/fspSubarray/03_01",
+                    "mid_csp_cbf/fspSubarray/03_02"
                 ]
             }
         ],
@@ -735,1456 +764,8 @@
             {
                 "devPropName": "FspSubarray",
                 "devPropValue": [
-                    "mid_csp_cbf/fspSubarray/04_01"
-                ]
-            }
-        ],
-        "attributeProperties": [
-            {
-                "attributeName": "adminMode",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": "1"
-            },
-            {
-                "attributeName": "healthState",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": "1"
-            },
-            {
-                "attributeName": "State",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": ""
-            },
-            {
-                "attributeName": "subarrayMembership",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": "1"
-            }
-        ]
-    },
-    {
-        "class": "Fsp",
-        "serverName": "FspMulti/fsp-05",
-        "devName": "mid_csp_cbf/fsp/05",
-        "deviceProperties": [
-            {
-                "devPropName": "FspID",
-                "devPropValue": 5
-            },
-            {
-                "devPropName": "CorrelationAddress",
-                "devPropValue": "mid_csp_cbf/fsp_corr/05"
-            },
-            {
-                "devPropName": "PSSAddress",
-                "devPropValue": "mid_csp_cbf/fsp_pss/05"
-            },
-            {
-                "devPropName": "PSTAddress",
-                "devPropValue": "mid_csp_cbf/fsp_pst/05"
-            },
-            {
-                "devPropName": "VLBIAddress",
-                "devPropValue": "mid_csp_cbf/fsp_vlbi/05"
-            },
-            {
-                "devPropName": "FspSubarray",
-                "devPropValue": [
-                    "mid_csp_cbf/fspSubarray/05_01"
-                ]
-            }
-        ],
-        "attributeProperties": [
-            {
-                "attributeName": "adminMode",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": "1"
-            },
-            {
-                "attributeName": "healthState",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": "1"
-            },
-            {
-                "attributeName": "State",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": ""
-            },
-            {
-                "attributeName": "subarrayMembership",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": "1"
-            }
-        ]
-    },
-    {
-        "class": "Fsp",
-        "serverName": "FspMulti/fsp-06",
-        "devName": "mid_csp_cbf/fsp/06",
-        "deviceProperties": [
-            {
-                "devPropName": "FspID",
-                "devPropValue": 6
-            },
-            {
-                "devPropName": "CorrelationAddress",
-                "devPropValue": "mid_csp_cbf/fsp_corr/06"
-            },
-            {
-                "devPropName": "PSSAddress",
-                "devPropValue": "mid_csp_cbf/fsp_pss/06"
-            },
-            {
-                "devPropName": "PSTAddress",
-                "devPropValue": "mid_csp_cbf/fsp_pst/06"
-            },
-            {
-                "devPropName": "VLBIAddress",
-                "devPropValue": "mid_csp_cbf/fsp_vlbi/06"
-            },
-            {
-                "devPropName": "FspSubarray",
-                "devPropValue": [
-                    "mid_csp_cbf/fspSubarray/06_01"
-                ]
-            }
-        ],
-        "attributeProperties": [
-            {
-                "attributeName": "adminMode",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": "1"
-            },
-            {
-                "attributeName": "healthState",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": "1"
-            },
-            {
-                "attributeName": "State",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": ""
-            },
-            {
-                "attributeName": "subarrayMembership",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": "1"
-            }
-        ]
-    },
-    {
-        "class": "Fsp",
-        "serverName": "FspMulti/fsp-07",
-        "devName": "mid_csp_cbf/fsp/07",
-        "deviceProperties": [
-            {
-                "devPropName": "FspID",
-                "devPropValue": 7
-            },
-            {
-                "devPropName": "CorrelationAddress",
-                "devPropValue": "mid_csp_cbf/fsp_corr/07"
-            },
-            {
-                "devPropName": "PSSAddress",
-                "devPropValue": "mid_csp_cbf/fsp_pss/07"
-            },
-            {
-                "devPropName": "PSTAddress",
-                "devPropValue": "mid_csp_cbf/fsp_pst/07"
-            },
-            {
-                "devPropName": "VLBIAddress",
-                "devPropValue": "mid_csp_cbf/fsp_vlbi/07"
-            },
-            {
-                "devPropName": "FspSubarray",
-                "devPropValue": [
-                    "mid_csp_cbf/fspSubarray/07_01"
-                ]
-            }
-        ],
-        "attributeProperties": [
-            {
-                "attributeName": "adminMode",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": "1"
-            },
-            {
-                "attributeName": "healthState",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": "1"
-            },
-            {
-                "attributeName": "State",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": ""
-            },
-            {
-                "attributeName": "subarrayMembership",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": "1"
-            }
-        ]
-    },
-    {
-        "class": "Fsp",
-        "serverName": "FspMulti/fsp-08",
-        "devName": "mid_csp_cbf/fsp/08",
-        "deviceProperties": [
-            {
-                "devPropName": "FspID",
-                "devPropValue": 8
-            },
-            {
-                "devPropName": "CorrelationAddress",
-                "devPropValue": "mid_csp_cbf/fsp_corr/08"
-            },
-            {
-                "devPropName": "PSSAddress",
-                "devPropValue": "mid_csp_cbf/fsp_pss/08"
-            },
-            {
-                "devPropName": "PSTAddress",
-                "devPropValue": "mid_csp_cbf/fsp_pst/08"
-            },
-            {
-                "devPropName": "VLBIAddress",
-                "devPropValue": "mid_csp_cbf/fsp_vlbi/08"
-            },
-            {
-                "devPropName": "FspSubarray",
-                "devPropValue": [
-                    "mid_csp_cbf/fspSubarray/08_01"
-                ]
-            }
-        ],
-        "attributeProperties": [
-            {
-                "attributeName": "adminMode",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": "1"
-            },
-            {
-                "attributeName": "healthState",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": "1"
-            },
-            {
-                "attributeName": "State",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": ""
-            },
-            {
-                "attributeName": "subarrayMembership",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": "1"
-            }
-        ]
-    },
-    {
-        "class": "Fsp",
-        "serverName": "FspMulti/fsp-09",
-        "devName": "mid_csp_cbf/fsp/09",
-        "deviceProperties": [
-            {
-                "devPropName": "FspID",
-                "devPropValue": 9
-            },
-            {
-                "devPropName": "CorrelationAddress",
-                "devPropValue": "mid_csp_cbf/fsp_corr/09"
-            },
-            {
-                "devPropName": "PSSAddress",
-                "devPropValue": "mid_csp_cbf/fsp_pss/09"
-            },
-            {
-                "devPropName": "PSTAddress",
-                "devPropValue": "mid_csp_cbf/fsp_pst/09"
-            },
-            {
-                "devPropName": "VLBIAddress",
-                "devPropValue": "mid_csp_cbf/fsp_vlbi/09"
-            },
-            {
-                "devPropName": "FspSubarray",
-                "devPropValue": [
-                    "mid_csp_cbf/fspSubarray/09_01"
-                ]
-            }
-        ],
-        "attributeProperties": [
-            {
-                "attributeName": "adminMode",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": "1"
-            },
-            {
-                "attributeName": "healthState",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": "1"
-            },
-            {
-                "attributeName": "State",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": ""
-            },
-            {
-                "attributeName": "subarrayMembership",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": "1"
-            }
-        ]
-    },
-    {
-        "class": "Fsp",
-        "serverName": "FspMulti/fsp-10",
-        "devName": "mid_csp_cbf/fsp/10",
-        "deviceProperties": [
-            {
-                "devPropName": "FspID",
-                "devPropValue": 10
-            },
-            {
-                "devPropName": "CorrelationAddress",
-                "devPropValue": "mid_csp_cbf/fsp_corr/10"
-            },
-            {
-                "devPropName": "PSSAddress",
-                "devPropValue": "mid_csp_cbf/fsp_pss/10"
-            },
-            {
-                "devPropName": "PSTAddress",
-                "devPropValue": "mid_csp_cbf/fsp_pst/10"
-            },
-            {
-                "devPropName": "VLBIAddress",
-                "devPropValue": "mid_csp_cbf/fsp_vlbi/10"
-            },
-            {
-                "devPropName": "FspSubarray",
-                "devPropValue": [
-                    "mid_csp_cbf/fspSubarray/10_01"
-                ]
-            }
-        ],
-        "attributeProperties": [
-            {
-                "attributeName": "adminMode",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": "1"
-            },
-            {
-                "attributeName": "healthState",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": "1"
-            },
-            {
-                "attributeName": "State",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": ""
-            },
-            {
-                "attributeName": "subarrayMembership",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": "1"
-            }
-        ]
-    },
-    {
-        "class": "Fsp",
-        "serverName": "FspMulti/fsp-11",
-        "devName": "mid_csp_cbf/fsp/11",
-        "deviceProperties": [
-            {
-                "devPropName": "FspID",
-                "devPropValue": 11
-            },
-            {
-                "devPropName": "CorrelationAddress",
-                "devPropValue": "mid_csp_cbf/fsp_corr/11"
-            },
-            {
-                "devPropName": "PSSAddress",
-                "devPropValue": "mid_csp_cbf/fsp_pss/11"
-            },
-            {
-                "devPropName": "PSTAddress",
-                "devPropValue": "mid_csp_cbf/fsp_pst/11"
-            },
-            {
-                "devPropName": "VLBIAddress",
-                "devPropValue": "mid_csp_cbf/fsp_vlbi/11"
-            },
-            {
-                "devPropName": "FspSubarray",
-                "devPropValue": [
-                    "mid_csp_cbf/fspSubarray/11_01"
-                ]
-            }
-        ],
-        "attributeProperties": [
-            {
-                "attributeName": "adminMode",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": "1"
-            },
-            {
-                "attributeName": "healthState",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": "1"
-            },
-            {
-                "attributeName": "State",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": ""
-            },
-            {
-                "attributeName": "subarrayMembership",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": "1"
-            }
-        ]
-    },
-    {
-        "class": "Fsp",
-        "serverName": "FspMulti/fsp-12",
-        "devName": "mid_csp_cbf/fsp/12",
-        "deviceProperties": [
-            {
-                "devPropName": "FspID",
-                "devPropValue": 12
-            },
-            {
-                "devPropName": "CorrelationAddress",
-                "devPropValue": "mid_csp_cbf/fsp_corr/12"
-            },
-            {
-                "devPropName": "PSSAddress",
-                "devPropValue": "mid_csp_cbf/fsp_pss/12"
-            },
-            {
-                "devPropName": "PSTAddress",
-                "devPropValue": "mid_csp_cbf/fsp_pst/12"
-            },
-            {
-                "devPropName": "VLBIAddress",
-                "devPropValue": "mid_csp_cbf/fsp_vlbi/12"
-            },
-            {
-                "devPropName": "FspSubarray",
-                "devPropValue": [
-                    "mid_csp_cbf/fspSubarray/12_01"
-                ]
-            }
-        ],
-        "attributeProperties": [
-            {
-                "attributeName": "adminMode",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": "1"
-            },
-            {
-                "attributeName": "healthState",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": "1"
-            },
-            {
-                "attributeName": "State",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": ""
-            },
-            {
-                "attributeName": "subarrayMembership",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": "1"
-            }
-        ]
-    },
-    {
-        "class": "Fsp",
-        "serverName": "FspMulti/fsp-13",
-        "devName": "mid_csp_cbf/fsp/13",
-        "deviceProperties": [
-            {
-                "devPropName": "FspID",
-                "devPropValue": 13
-            },
-            {
-                "devPropName": "CorrelationAddress",
-                "devPropValue": "mid_csp_cbf/fsp_corr/13"
-            },
-            {
-                "devPropName": "PSSAddress",
-                "devPropValue": "mid_csp_cbf/fsp_pss/13"
-            },
-            {
-                "devPropName": "PSTAddress",
-                "devPropValue": "mid_csp_cbf/fsp_pst/13"
-            },
-            {
-                "devPropName": "VLBIAddress",
-                "devPropValue": "mid_csp_cbf/fsp_vlbi/13"
-            },
-            {
-                "devPropName": "FspSubarray",
-                "devPropValue": [
-                    "mid_csp_cbf/fspSubarray/13_01"
-                ]
-            }
-        ],
-        "attributeProperties": [
-            {
-                "attributeName": "adminMode",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": "1"
-            },
-            {
-                "attributeName": "healthState",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": "1"
-            },
-            {
-                "attributeName": "State",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": ""
-            },
-            {
-                "attributeName": "subarrayMembership",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": "1"
-            }
-        ]
-    },
-    {
-        "class": "Fsp",
-        "serverName": "FspMulti/fsp-14",
-        "devName": "mid_csp_cbf/fsp/14",
-        "deviceProperties": [
-            {
-                "devPropName": "FspID",
-                "devPropValue": 14
-            },
-            {
-                "devPropName": "CorrelationAddress",
-                "devPropValue": "mid_csp_cbf/fsp_corr/14"
-            },
-            {
-                "devPropName": "PSSAddress",
-                "devPropValue": "mid_csp_cbf/fsp_pss/14"
-            },
-            {
-                "devPropName": "PSTAddress",
-                "devPropValue": "mid_csp_cbf/fsp_pst/14"
-            },
-            {
-                "devPropName": "VLBIAddress",
-                "devPropValue": "mid_csp_cbf/fsp_vlbi/14"
-            },
-            {
-                "devPropName": "FspSubarray",
-                "devPropValue": [
-                    "mid_csp_cbf/fspSubarray/14_01"
-                ]
-            }
-        ],
-        "attributeProperties": [
-            {
-                "attributeName": "adminMode",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": "1"
-            },
-            {
-                "attributeName": "healthState",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": "1"
-            },
-            {
-                "attributeName": "State",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": ""
-            },
-            {
-                "attributeName": "subarrayMembership",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": "1"
-            }
-        ]
-    },
-    {
-        "class": "Fsp",
-        "serverName": "FspMulti/fsp-15",
-        "devName": "mid_csp_cbf/fsp/15",
-        "deviceProperties": [
-            {
-                "devPropName": "FspID",
-                "devPropValue": 15
-            },
-            {
-                "devPropName": "CorrelationAddress",
-                "devPropValue": "mid_csp_cbf/fsp_corr/15"
-            },
-            {
-                "devPropName": "PSSAddress",
-                "devPropValue": "mid_csp_cbf/fsp_pss/15"
-            },
-            {
-                "devPropName": "PSTAddress",
-                "devPropValue": "mid_csp_cbf/fsp_pst/15"
-            },
-            {
-                "devPropName": "VLBIAddress",
-                "devPropValue": "mid_csp_cbf/fsp_vlbi/15"
-            },
-            {
-                "devPropName": "FspSubarray",
-                "devPropValue": [
-                    "mid_csp_cbf/fspSubarray/15_01"
-                ]
-            }
-        ],
-        "attributeProperties": [
-            {
-                "attributeName": "adminMode",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": "1"
-            },
-            {
-                "attributeName": "healthState",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": "1"
-            },
-            {
-                "attributeName": "State",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": ""
-            },
-            {
-                "attributeName": "subarrayMembership",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": "1"
-            }
-        ]
-    },
-    {
-        "class": "Fsp",
-        "serverName": "FspMulti/fsp-16",
-        "devName": "mid_csp_cbf/fsp/16",
-        "deviceProperties": [
-            {
-                "devPropName": "FspID",
-                "devPropValue": 16
-            },
-            {
-                "devPropName": "CorrelationAddress",
-                "devPropValue": "mid_csp_cbf/fsp_corr/16"
-            },
-            {
-                "devPropName": "PSSAddress",
-                "devPropValue": "mid_csp_cbf/fsp_pss/16"
-            },
-            {
-                "devPropName": "PSTAddress",
-                "devPropValue": "mid_csp_cbf/fsp_pst/16"
-            },
-            {
-                "devPropName": "VLBIAddress",
-                "devPropValue": "mid_csp_cbf/fsp_vlbi/16"
-            },
-            {
-                "devPropName": "FspSubarray",
-                "devPropValue": [
-                    "mid_csp_cbf/fspSubarray/16_01"
-                ]
-            }
-        ],
-        "attributeProperties": [
-            {
-                "attributeName": "adminMode",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": "1"
-            },
-            {
-                "attributeName": "healthState",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": "1"
-            },
-            {
-                "attributeName": "State",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": ""
-            },
-            {
-                "attributeName": "subarrayMembership",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": "1"
-            }
-        ]
-    },
-    {
-        "class": "Fsp",
-        "serverName": "FspMulti/fsp-17",
-        "devName": "mid_csp_cbf/fsp/17",
-        "deviceProperties": [
-            {
-                "devPropName": "FspID",
-                "devPropValue": 17
-            },
-            {
-                "devPropName": "CorrelationAddress",
-                "devPropValue": "mid_csp_cbf/fsp_corr/17"
-            },
-            {
-                "devPropName": "PSSAddress",
-                "devPropValue": "mid_csp_cbf/fsp_pss/17"
-            },
-            {
-                "devPropName": "PSTAddress",
-                "devPropValue": "mid_csp_cbf/fsp_pst/17"
-            },
-            {
-                "devPropName": "VLBIAddress",
-                "devPropValue": "mid_csp_cbf/fsp_vlbi/17"
-            },
-            {
-                "devPropName": "FspSubarray",
-                "devPropValue": [
-                    "mid_csp_cbf/fspSubarray/17_01"
-                ]
-            }
-        ],
-        "attributeProperties": [
-            {
-                "attributeName": "adminMode",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": "1"
-            },
-            {
-                "attributeName": "healthState",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": "1"
-            },
-            {
-                "attributeName": "State",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": ""
-            },
-            {
-                "attributeName": "subarrayMembership",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": "1"
-            }
-        ]
-    },
-    {
-        "class": "Fsp",
-        "serverName": "FspMulti/fsp-18",
-        "devName": "mid_csp_cbf/fsp/18",
-        "deviceProperties": [
-            {
-                "devPropName": "FspID",
-                "devPropValue": 18
-            },
-            {
-                "devPropName": "CorrelationAddress",
-                "devPropValue": "mid_csp_cbf/fsp_corr/18"
-            },
-            {
-                "devPropName": "PSSAddress",
-                "devPropValue": "mid_csp_cbf/fsp_pss/18"
-            },
-            {
-                "devPropName": "PSTAddress",
-                "devPropValue": "mid_csp_cbf/fsp_pst/18"
-            },
-            {
-                "devPropName": "VLBIAddress",
-                "devPropValue": "mid_csp_cbf/fsp_vlbi/18"
-            },
-            {
-                "devPropName": "FspSubarray",
-                "devPropValue": [
-                    "mid_csp_cbf/fspSubarray/18_01"
-                ]
-            }
-        ],
-        "attributeProperties": [
-            {
-                "attributeName": "adminMode",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": "1"
-            },
-            {
-                "attributeName": "healthState",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": "1"
-            },
-            {
-                "attributeName": "State",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": ""
-            },
-            {
-                "attributeName": "subarrayMembership",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": "1"
-            }
-        ]
-    },
-    {
-        "class": "Fsp",
-        "serverName": "FspMulti/fsp-19",
-        "devName": "mid_csp_cbf/fsp/19",
-        "deviceProperties": [
-            {
-                "devPropName": "FspID",
-                "devPropValue": 19
-            },
-            {
-                "devPropName": "CorrelationAddress",
-                "devPropValue": "mid_csp_cbf/fsp_corr/19"
-            },
-            {
-                "devPropName": "PSSAddress",
-                "devPropValue": "mid_csp_cbf/fsp_pss/19"
-            },
-            {
-                "devPropName": "PSTAddress",
-                "devPropValue": "mid_csp_cbf/fsp_pst/19"
-            },
-            {
-                "devPropName": "VLBIAddress",
-                "devPropValue": "mid_csp_cbf/fsp_vlbi/19"
-            },
-            {
-                "devPropName": "FspSubarray",
-                "devPropValue": [
-                    "mid_csp_cbf/fspSubarray/19_01"
-                ]
-            }
-        ],
-        "attributeProperties": [
-            {
-                "attributeName": "adminMode",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": "1"
-            },
-            {
-                "attributeName": "healthState",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": "1"
-            },
-            {
-                "attributeName": "State",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": ""
-            },
-            {
-                "attributeName": "subarrayMembership",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": "1"
-            }
-        ]
-    },
-    {
-        "class": "Fsp",
-        "serverName": "FspMulti/fsp-20",
-        "devName": "mid_csp_cbf/fsp/20",
-        "deviceProperties": [
-            {
-                "devPropName": "FspID",
-                "devPropValue": 20
-            },
-            {
-                "devPropName": "CorrelationAddress",
-                "devPropValue": "mid_csp_cbf/fsp_corr/20"
-            },
-            {
-                "devPropName": "PSSAddress",
-                "devPropValue": "mid_csp_cbf/fsp_pss/20"
-            },
-            {
-                "devPropName": "PSTAddress",
-                "devPropValue": "mid_csp_cbf/fsp_pst/20"
-            },
-            {
-                "devPropName": "VLBIAddress",
-                "devPropValue": "mid_csp_cbf/fsp_vlbi/20"
-            },
-            {
-                "devPropName": "FspSubarray",
-                "devPropValue": [
-                    "mid_csp_cbf/fspSubarray/20_01"
-                ]
-            }
-        ],
-        "attributeProperties": [
-            {
-                "attributeName": "adminMode",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": "1"
-            },
-            {
-                "attributeName": "healthState",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": "1"
-            },
-            {
-                "attributeName": "State",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": ""
-            },
-            {
-                "attributeName": "subarrayMembership",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": "1"
-            }
-        ]
-    },
-    {
-        "class": "Fsp",
-        "serverName": "FspMulti/fsp-21",
-        "devName": "mid_csp_cbf/fsp/21",
-        "deviceProperties": [
-            {
-                "devPropName": "FspID",
-                "devPropValue": 21
-            },
-            {
-                "devPropName": "CorrelationAddress",
-                "devPropValue": "mid_csp_cbf/fsp_corr/21"
-            },
-            {
-                "devPropName": "PSSAddress",
-                "devPropValue": "mid_csp_cbf/fsp_pss/21"
-            },
-            {
-                "devPropName": "PSTAddress",
-                "devPropValue": "mid_csp_cbf/fsp_pst/21"
-            },
-            {
-                "devPropName": "VLBIAddress",
-                "devPropValue": "mid_csp_cbf/fsp_vlbi/21"
-            },
-            {
-                "devPropName": "FspSubarray",
-                "devPropValue": [
-                    "mid_csp_cbf/fspSubarray/21_01"
-                ]
-            }
-        ],
-        "attributeProperties": [
-            {
-                "attributeName": "adminMode",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": "1"
-            },
-            {
-                "attributeName": "healthState",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": "1"
-            },
-            {
-                "attributeName": "State",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": ""
-            },
-            {
-                "attributeName": "subarrayMembership",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": "1"
-            }
-        ]
-    },
-    {
-        "class": "Fsp",
-        "serverName": "FspMulti/fsp-22",
-        "devName": "mid_csp_cbf/fsp/22",
-        "deviceProperties": [
-            {
-                "devPropName": "FspID",
-                "devPropValue": 22
-            },
-            {
-                "devPropName": "CorrelationAddress",
-                "devPropValue": "mid_csp_cbf/fsp_corr/22"
-            },
-            {
-                "devPropName": "PSSAddress",
-                "devPropValue": "mid_csp_cbf/fsp_pss/22"
-            },
-            {
-                "devPropName": "PSTAddress",
-                "devPropValue": "mid_csp_cbf/fsp_pst/22"
-            },
-            {
-                "devPropName": "VLBIAddress",
-                "devPropValue": "mid_csp_cbf/fsp_vlbi/22"
-            },
-            {
-                "devPropName": "FspSubarray",
-                "devPropValue": [
-                    "mid_csp_cbf/fspSubarray/22_01"
-                ]
-            }
-        ],
-        "attributeProperties": [
-            {
-                "attributeName": "adminMode",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": "1"
-            },
-            {
-                "attributeName": "healthState",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": "1"
-            },
-            {
-                "attributeName": "State",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": ""
-            },
-            {
-                "attributeName": "subarrayMembership",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": "1"
-            }
-        ]
-    },
-    {
-        "class": "Fsp",
-        "serverName": "FspMulti/fsp-23",
-        "devName": "mid_csp_cbf/fsp/23",
-        "deviceProperties": [
-            {
-                "devPropName": "FspID",
-                "devPropValue": 23
-            },
-            {
-                "devPropName": "CorrelationAddress",
-                "devPropValue": "mid_csp_cbf/fsp_corr/23"
-            },
-            {
-                "devPropName": "PSSAddress",
-                "devPropValue": "mid_csp_cbf/fsp_pss/23"
-            },
-            {
-                "devPropName": "PSTAddress",
-                "devPropValue": "mid_csp_cbf/fsp_pst/23"
-            },
-            {
-                "devPropName": "VLBIAddress",
-                "devPropValue": "mid_csp_cbf/fsp_vlbi/23"
-            },
-            {
-                "devPropName": "FspSubarray",
-                "devPropValue": [
-                    "mid_csp_cbf/fspSubarray/23_01"
-                ]
-            }
-        ],
-        "attributeProperties": [
-            {
-                "attributeName": "adminMode",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": "1"
-            },
-            {
-                "attributeName": "healthState",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": "1"
-            },
-            {
-                "attributeName": "State",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": ""
-            },
-            {
-                "attributeName": "subarrayMembership",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": "1"
-            }
-        ]
-    },
-    {
-        "class": "Fsp",
-        "serverName": "FspMulti/fsp-24",
-        "devName": "mid_csp_cbf/fsp/24",
-        "deviceProperties": [
-            {
-                "devPropName": "FspID",
-                "devPropValue": 24
-            },
-            {
-                "devPropName": "CorrelationAddress",
-                "devPropValue": "mid_csp_cbf/fsp_corr/24"
-            },
-            {
-                "devPropName": "PSSAddress",
-                "devPropValue": "mid_csp_cbf/fsp_pss/24"
-            },
-            {
-                "devPropName": "PSTAddress",
-                "devPropValue": "mid_csp_cbf/fsp_pst/24"
-            },
-            {
-                "devPropName": "VLBIAddress",
-                "devPropValue": "mid_csp_cbf/fsp_vlbi/24"
-            },
-            {
-                "devPropName": "FspSubarray",
-                "devPropValue": [
-                    "mid_csp_cbf/fspSubarray/24_01"
-                ]
-            }
-        ],
-        "attributeProperties": [
-            {
-                "attributeName": "adminMode",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": "1"
-            },
-            {
-                "attributeName": "healthState",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": "1"
-            },
-            {
-                "attributeName": "State",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": ""
-            },
-            {
-                "attributeName": "subarrayMembership",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": "1"
-            }
-        ]
-    },
-    {
-        "class": "Fsp",
-        "serverName": "FspMulti/fsp-25",
-        "devName": "mid_csp_cbf/fsp/25",
-        "deviceProperties": [
-            {
-                "devPropName": "FspID",
-                "devPropValue": 25
-            },
-            {
-                "devPropName": "CorrelationAddress",
-                "devPropValue": "mid_csp_cbf/fsp_corr/25"
-            },
-            {
-                "devPropName": "PSSAddress",
-                "devPropValue": "mid_csp_cbf/fsp_pss/25"
-            },
-            {
-                "devPropName": "PSTAddress",
-                "devPropValue": "mid_csp_cbf/fsp_pst/25"
-            },
-            {
-                "devPropName": "VLBIAddress",
-                "devPropValue": "mid_csp_cbf/fsp_vlbi/25"
-            },
-            {
-                "devPropName": "FspSubarray",
-                "devPropValue": [
-                    "mid_csp_cbf/fspSubarray/25_01"
-                ]
-            }
-        ],
-        "attributeProperties": [
-            {
-                "attributeName": "adminMode",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": "1"
-            },
-            {
-                "attributeName": "healthState",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": "1"
-            },
-            {
-                "attributeName": "State",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": ""
-            },
-            {
-                "attributeName": "subarrayMembership",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": "1"
-            }
-        ]
-    },
-    {
-        "class": "Fsp",
-        "serverName": "FspMulti/fsp-26",
-        "devName": "mid_csp_cbf/fsp/26",
-        "deviceProperties": [
-            {
-                "devPropName": "FspID",
-                "devPropValue": 26
-            },
-            {
-                "devPropName": "CorrelationAddress",
-                "devPropValue": "mid_csp_cbf/fsp_corr/26"
-            },
-            {
-                "devPropName": "PSSAddress",
-                "devPropValue": "mid_csp_cbf/fsp_pss/26"
-            },
-            {
-                "devPropName": "PSTAddress",
-                "devPropValue": "mid_csp_cbf/fsp_pst/26"
-            },
-            {
-                "devPropName": "VLBIAddress",
-                "devPropValue": "mid_csp_cbf/fsp_vlbi/26"
-            },
-            {
-                "devPropName": "FspSubarray",
-                "devPropValue": [
-                    "mid_csp_cbf/fspSubarray/26_01"
-                ]
-            }
-        ],
-        "attributeProperties": [
-            {
-                "attributeName": "adminMode",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": "1"
-            },
-            {
-                "attributeName": "healthState",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": "1"
-            },
-            {
-                "attributeName": "State",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": ""
-            },
-            {
-                "attributeName": "subarrayMembership",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": "1"
-            }
-        ]
-    },
-    {
-        "class": "Fsp",
-        "serverName": "FspMulti/fsp-27",
-        "devName": "mid_csp_cbf/fsp/27",
-        "deviceProperties": [
-            {
-                "devPropName": "FspID",
-                "devPropValue": 27
-            },
-            {
-                "devPropName": "CorrelationAddress",
-                "devPropValue": "mid_csp_cbf/fsp_corr/27"
-            },
-            {
-                "devPropName": "PSSAddress",
-                "devPropValue": "mid_csp_cbf/fsp_pss/27"
-            },
-            {
-                "devPropName": "PSTAddress",
-                "devPropValue": "mid_csp_cbf/fsp_pst/27"
-            },
-            {
-                "devPropName": "VLBIAddress",
-                "devPropValue": "mid_csp_cbf/fsp_vlbi/27"
-            },
-            {
-                "devPropName": "FspSubarray",
-                "devPropValue": [
-                    "mid_csp_cbf/fspSubarray/27_01"
+                    "mid_csp_cbf/fspSubarray/04_01",
+                    "mid_csp_cbf/fspSubarray/04_02"
                 ]
             }
         ],
@@ -2229,6 +810,18 @@
         "class": "SearchWindow",
         "serverName": "CbfSubarrayMulti/cbfSubarray-01",
         "devName": "mid_csp_cbf/sw2/01",
+        "deviceProperties": []
+    },
+    {
+        "class": "SearchWindow",
+        "serverName": "CbfSubarrayMulti/cbfSubarray-02",
+        "devName": "mid_csp_cbf/sw1/02",
+        "deviceProperties": []
+    },
+    {
+        "class": "SearchWindow",
+        "serverName": "CbfSubarrayMulti/cbfSubarray-02",
+        "devName": "mid_csp_cbf/sw2/02",
         "deviceProperties": []
     },
     {
@@ -2400,144 +993,6 @@
         "deviceProperties": []
     },
     {
-        "class": "FspCorr",
-        "serverName": "FspMulti/fsp-05",
-        "devName": "mid_csp_cbf/fsp_corr/05",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspCorr",
-        "serverName": "FspMulti/fsp-06",
-        "devName": "mid_csp_cbf/fsp_corr/06",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspCorr",
-        "serverName": "FspMulti/fsp-07",
-        "devName": "mid_csp_cbf/fsp_corr/07",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspCorr",
-        "serverName": "FspMulti/fsp-08",
-        "devName": "mid_csp_cbf/fsp_corr/08",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspCorr",
-        "serverName": "FspMulti/fsp-09",
-        "devName": "mid_csp_cbf/fsp_corr/09",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspCorr",
-        "serverName": "FspMulti/fsp-10",
-        "devName": "mid_csp_cbf/fsp_corr/10",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspCorr",
-        "serverName": "FspMulti/fsp-11",
-        "devName": "mid_csp_cbf/fsp_corr/11",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspCorr",
-        "serverName": "FspMulti/fsp-12",
-        "devName": "mid_csp_cbf/fsp_corr/12",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspCorr",
-        "serverName": "FspMulti/fsp-13",
-        "devName": "mid_csp_cbf/fsp_corr/13",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspCorr",
-        "serverName": "FspMulti/fsp-14",
-        "devName": "mid_csp_cbf/fsp_corr/14",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspCorr",
-        "serverName": "FspMulti/fsp-15",
-        "devName": "mid_csp_cbf/fsp_corr/15",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspCorr",
-        "serverName": "FspMulti/fsp-16",
-        "devName": "mid_csp_cbf/fsp_corr/16",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspCorr",
-        "serverName": "FspMulti/fsp-17",
-        "devName": "mid_csp_cbf/fsp_corr/17",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspCorr",
-        "serverName": "FspMulti/fsp-18",
-        "devName": "mid_csp_cbf/fsp_corr/18",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspCorr",
-        "serverName": "FspMulti/fsp-19",
-        "devName": "mid_csp_cbf/fsp_corr/19",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspCorr",
-        "serverName": "FspMulti/fsp-20",
-        "devName": "mid_csp_cbf/fsp_corr/20",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspCorr",
-        "serverName": "FspMulti/fsp-21",
-        "devName": "mid_csp_cbf/fsp_corr/21",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspCorr",
-        "serverName": "FspMulti/fsp-22",
-        "devName": "mid_csp_cbf/fsp_corr/22",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspCorr",
-        "serverName": "FspMulti/fsp-23",
-        "devName": "mid_csp_cbf/fsp_corr/23",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspCorr",
-        "serverName": "FspMulti/fsp-24",
-        "devName": "mid_csp_cbf/fsp_corr/24",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspCorr",
-        "serverName": "FspMulti/fsp-25",
-        "devName": "mid_csp_cbf/fsp_corr/25",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspCorr",
-        "serverName": "FspMulti/fsp-26",
-        "devName": "mid_csp_cbf/fsp_corr/26",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspCorr",
-        "serverName": "FspMulti/fsp-27",
-        "devName": "mid_csp_cbf/fsp_corr/27",
-        "deviceProperties": []
-    },
-    {
         "class": "FspPss",
         "serverName": "FspMulti/fsp-01",
         "devName": "mid_csp_cbf/fsp_pss/01",
@@ -2559,144 +1014,6 @@
         "class": "FspPss",
         "serverName": "FspMulti/fsp-04",
         "devName": "mid_csp_cbf/fsp_pss/04",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspPss",
-        "serverName": "FspMulti/fsp-05",
-        "devName": "mid_csp_cbf/fsp_pss/05",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspPss",
-        "serverName": "FspMulti/fsp-06",
-        "devName": "mid_csp_cbf/fsp_pss/06",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspPss",
-        "serverName": "FspMulti/fsp-07",
-        "devName": "mid_csp_cbf/fsp_pss/07",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspPss",
-        "serverName": "FspMulti/fsp-08",
-        "devName": "mid_csp_cbf/fsp_pss/08",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspPss",
-        "serverName": "FspMulti/fsp-09",
-        "devName": "mid_csp_cbf/fsp_pss/09",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspPss",
-        "serverName": "FspMulti/fsp-10",
-        "devName": "mid_csp_cbf/fsp_pss/10",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspPss",
-        "serverName": "FspMulti/fsp-11",
-        "devName": "mid_csp_cbf/fsp_pss/11",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspPss",
-        "serverName": "FspMulti/fsp-12",
-        "devName": "mid_csp_cbf/fsp_pss/12",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspPss",
-        "serverName": "FspMulti/fsp-13",
-        "devName": "mid_csp_cbf/fsp_pss/13",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspPss",
-        "serverName": "FspMulti/fsp-14",
-        "devName": "mid_csp_cbf/fsp_pss/14",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspPss",
-        "serverName": "FspMulti/fsp-15",
-        "devName": "mid_csp_cbf/fsp_pss/15",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspPss",
-        "serverName": "FspMulti/fsp-16",
-        "devName": "mid_csp_cbf/fsp_pss/16",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspPss",
-        "serverName": "FspMulti/fsp-17",
-        "devName": "mid_csp_cbf/fsp_pss/17",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspPss",
-        "serverName": "FspMulti/fsp-18",
-        "devName": "mid_csp_cbf/fsp_pss/18",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspPss",
-        "serverName": "FspMulti/fsp-19",
-        "devName": "mid_csp_cbf/fsp_pss/19",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspPss",
-        "serverName": "FspMulti/fsp-20",
-        "devName": "mid_csp_cbf/fsp_pss/20",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspPss",
-        "serverName": "FspMulti/fsp-21",
-        "devName": "mid_csp_cbf/fsp_pss/21",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspPss",
-        "serverName": "FspMulti/fsp-22",
-        "devName": "mid_csp_cbf/fsp_pss/22",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspPss",
-        "serverName": "FspMulti/fsp-23",
-        "devName": "mid_csp_cbf/fsp_pss/23",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspPss",
-        "serverName": "FspMulti/fsp-24",
-        "devName": "mid_csp_cbf/fsp_pss/24",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspPss",
-        "serverName": "FspMulti/fsp-25",
-        "devName": "mid_csp_cbf/fsp_pss/25",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspPss",
-        "serverName": "FspMulti/fsp-26",
-        "devName": "mid_csp_cbf/fsp_pss/26",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspPss",
-        "serverName": "FspMulti/fsp-27",
-        "devName": "mid_csp_cbf/fsp_pss/27",
         "deviceProperties": []
     },
     {
@@ -2724,144 +1041,6 @@
         "deviceProperties": []
     },
     {
-        "class": "FspPst",
-        "serverName": "FspMulti/fsp-05",
-        "devName": "mid_csp_cbf/fsp_pst/05",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspPst",
-        "serverName": "FspMulti/fsp-06",
-        "devName": "mid_csp_cbf/fsp_pst/06",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspPst",
-        "serverName": "FspMulti/fsp-07",
-        "devName": "mid_csp_cbf/fsp_pst/07",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspPst",
-        "serverName": "FspMulti/fsp-08",
-        "devName": "mid_csp_cbf/fsp_pst/08",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspPst",
-        "serverName": "FspMulti/fsp-09",
-        "devName": "mid_csp_cbf/fsp_pst/09",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspPst",
-        "serverName": "FspMulti/fsp-10",
-        "devName": "mid_csp_cbf/fsp_pst/10",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspPst",
-        "serverName": "FspMulti/fsp-11",
-        "devName": "mid_csp_cbf/fsp_pst/11",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspPst",
-        "serverName": "FspMulti/fsp-12",
-        "devName": "mid_csp_cbf/fsp_pst/12",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspPst",
-        "serverName": "FspMulti/fsp-13",
-        "devName": "mid_csp_cbf/fsp_pst/13",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspPst",
-        "serverName": "FspMulti/fsp-14",
-        "devName": "mid_csp_cbf/fsp_pst/14",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspPst",
-        "serverName": "FspMulti/fsp-15",
-        "devName": "mid_csp_cbf/fsp_pst/15",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspPst",
-        "serverName": "FspMulti/fsp-16",
-        "devName": "mid_csp_cbf/fsp_pst/16",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspPst",
-        "serverName": "FspMulti/fsp-17",
-        "devName": "mid_csp_cbf/fsp_pst/17",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspPst",
-        "serverName": "FspMulti/fsp-18",
-        "devName": "mid_csp_cbf/fsp_pst/18",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspPst",
-        "serverName": "FspMulti/fsp-19",
-        "devName": "mid_csp_cbf/fsp_pst/19",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspPst",
-        "serverName": "FspMulti/fsp-20",
-        "devName": "mid_csp_cbf/fsp_pst/20",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspPst",
-        "serverName": "FspMulti/fsp-21",
-        "devName": "mid_csp_cbf/fsp_pst/21",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspPst",
-        "serverName": "FspMulti/fsp-22",
-        "devName": "mid_csp_cbf/fsp_pst/22",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspPst",
-        "serverName": "FspMulti/fsp-23",
-        "devName": "mid_csp_cbf/fsp_pst/23",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspPst",
-        "serverName": "FspMulti/fsp-24",
-        "devName": "mid_csp_cbf/fsp_pst/24",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspPst",
-        "serverName": "FspMulti/fsp-25",
-        "devName": "mid_csp_cbf/fsp_pst/25",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspPst",
-        "serverName": "FspMulti/fsp-26",
-        "devName": "mid_csp_cbf/fsp_pst/26",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspPst",
-        "serverName": "FspMulti/fsp-27",
-        "devName": "mid_csp_cbf/fsp_pst/27",
-        "deviceProperties": []
-    },
-    {
         "class": "FspVlbi",
         "serverName": "FspMulti/fsp-01",
         "devName": "mid_csp_cbf/fsp_vlbi/01",
@@ -2883,144 +1062,6 @@
         "class": "FspVlbi",
         "serverName": "FspMulti/fsp-04",
         "devName": "mid_csp_cbf/fsp_vlbi/04",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspVlbi",
-        "serverName": "FspMulti/fsp-05",
-        "devName": "mid_csp_cbf/fsp_vlbi/05",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspVlbi",
-        "serverName": "FspMulti/fsp-06",
-        "devName": "mid_csp_cbf/fsp_vlbi/06",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspVlbi",
-        "serverName": "FspMulti/fsp-07",
-        "devName": "mid_csp_cbf/fsp_vlbi/07",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspVlbi",
-        "serverName": "FspMulti/fsp-08",
-        "devName": "mid_csp_cbf/fsp_vlbi/08",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspVlbi",
-        "serverName": "FspMulti/fsp-09",
-        "devName": "mid_csp_cbf/fsp_vlbi/09",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspVlbi",
-        "serverName": "FspMulti/fsp-10",
-        "devName": "mid_csp_cbf/fsp_vlbi/10",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspVlbi",
-        "serverName": "FspMulti/fsp-11",
-        "devName": "mid_csp_cbf/fsp_vlbi/11",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspVlbi",
-        "serverName": "FspMulti/fsp-12",
-        "devName": "mid_csp_cbf/fsp_vlbi/12",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspVlbi",
-        "serverName": "FspMulti/fsp-13",
-        "devName": "mid_csp_cbf/fsp_vlbi/13",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspVlbi",
-        "serverName": "FspMulti/fsp-14",
-        "devName": "mid_csp_cbf/fsp_vlbi/14",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspVlbi",
-        "serverName": "FspMulti/fsp-15",
-        "devName": "mid_csp_cbf/fsp_vlbi/15",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspVlbi",
-        "serverName": "FspMulti/fsp-16",
-        "devName": "mid_csp_cbf/fsp_vlbi/16",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspVlbi",
-        "serverName": "FspMulti/fsp-17",
-        "devName": "mid_csp_cbf/fsp_vlbi/17",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspVlbi",
-        "serverName": "FspMulti/fsp-18",
-        "devName": "mid_csp_cbf/fsp_vlbi/18",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspVlbi",
-        "serverName": "FspMulti/fsp-19",
-        "devName": "mid_csp_cbf/fsp_vlbi/19",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspVlbi",
-        "serverName": "FspMulti/fsp-20",
-        "devName": "mid_csp_cbf/fsp_vlbi/20",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspVlbi",
-        "serverName": "FspMulti/fsp-21",
-        "devName": "mid_csp_cbf/fsp_vlbi/21",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspVlbi",
-        "serverName": "FspMulti/fsp-22",
-        "devName": "mid_csp_cbf/fsp_vlbi/22",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspVlbi",
-        "serverName": "FspMulti/fsp-23",
-        "devName": "mid_csp_cbf/fsp_vlbi/23",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspVlbi",
-        "serverName": "FspMulti/fsp-24",
-        "devName": "mid_csp_cbf/fsp_vlbi/24",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspVlbi",
-        "serverName": "FspMulti/fsp-25",
-        "devName": "mid_csp_cbf/fsp_vlbi/25",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspVlbi",
-        "serverName": "FspMulti/fsp-26",
-        "devName": "mid_csp_cbf/fsp_vlbi/26",
-        "deviceProperties": []
-    },
-    {
-        "class": "FspVlbi",
-        "serverName": "FspMulti/fsp-27",
-        "devName": "mid_csp_cbf/fsp_vlbi/27",
         "deviceProperties": []
     },
     {
@@ -3052,6 +1093,38 @@
             {
                 "devPropName": "CbfSubarrayAddress",
                 "devPropValue": "mid_csp_cbf/sub_elt/subarray_01"
+            }
+        ]
+    },
+    {
+        "class": "FspSubarray",
+        "serverName": "FspMulti/fsp-01",
+        "devName": "mid_csp_cbf/fspSubarray/01_02",
+        "deviceProperties": [
+            {
+                "devPropName": "SubID",
+                "devPropValue": 2
+            },
+            {
+                "devPropName": "FspID",
+                "devPropValue": 1
+            },
+            {
+                "devPropName": "VCC",
+                "devPropValue": [
+                    "mid_csp_cbf/vcc/001",
+                    "mid_csp_cbf/vcc/002",
+                    "mid_csp_cbf/vcc/003",
+                    "mid_csp_cbf/vcc/004"
+                ]
+            },
+            {
+                "devPropName": "CbfMasterAddress",
+                "devPropValue": "mid_csp_cbf/sub_elt/master"
+            },
+            {
+                "devPropName": "CbfSubarrayAddress",
+                "devPropValue": "mid_csp_cbf/sub_elt/subarray_02"
             }
         ]
     },
@@ -3089,6 +1162,38 @@
     },
     {
         "class": "FspSubarray",
+        "serverName": "FspMulti/fsp-02",
+        "devName": "mid_csp_cbf/fspSubarray/02_02",
+        "deviceProperties": [
+            {
+                "devPropName": "SubID",
+                "devPropValue": 2
+            },
+            {
+                "devPropName": "FspID",
+                "devPropValue": 2
+            },
+            {
+                "devPropName": "VCC",
+                "devPropValue": [
+                    "mid_csp_cbf/vcc/001",
+                    "mid_csp_cbf/vcc/002",
+                    "mid_csp_cbf/vcc/003",
+                    "mid_csp_cbf/vcc/004"
+                ]
+            },
+            {
+                "devPropName": "CbfMasterAddress",
+                "devPropValue": "mid_csp_cbf/sub_elt/master"
+            },
+            {
+                "devPropName": "CbfSubarrayAddress",
+                "devPropValue": "mid_csp_cbf/sub_elt/subarray_02"
+            }
+        ]
+    },
+    {
+        "class": "FspSubarray",
         "serverName": "FspMulti/fsp-03",
         "devName": "mid_csp_cbf/fspSubarray/03_01",
         "deviceProperties": [
@@ -3116,6 +1221,38 @@
             {
                 "devPropName": "CbfSubarrayAddress",
                 "devPropValue": "mid_csp_cbf/sub_elt/subarray_01"
+            }
+        ]
+    },
+    {
+        "class": "FspSubarray",
+        "serverName": "FspMulti/fsp-03",
+        "devName": "mid_csp_cbf/fspSubarray/03_02",
+        "deviceProperties": [
+            {
+                "devPropName": "SubID",
+                "devPropValue": 2
+            },
+            {
+                "devPropName": "FspID",
+                "devPropValue": 3
+            },
+            {
+                "devPropName": "VCC",
+                "devPropValue": [
+                    "mid_csp_cbf/vcc/001",
+                    "mid_csp_cbf/vcc/002",
+                    "mid_csp_cbf/vcc/003",
+                    "mid_csp_cbf/vcc/004"
+                ]
+            },
+            {
+                "devPropName": "CbfMasterAddress",
+                "devPropValue": "mid_csp_cbf/sub_elt/master"
+            },
+            {
+                "devPropName": "CbfSubarrayAddress",
+                "devPropValue": "mid_csp_cbf/sub_elt/subarray_02"
             }
         ]
     },
@@ -3153,16 +1290,16 @@
     },
     {
         "class": "FspSubarray",
-        "serverName": "FspMulti/fsp-05",
-        "devName": "mid_csp_cbf/fspSubarray/05_01",
+        "serverName": "FspMulti/fsp-04",
+        "devName": "mid_csp_cbf/fspSubarray/04_02",
         "deviceProperties": [
             {
                 "devPropName": "SubID",
-                "devPropValue": 1
+                "devPropValue": 2
             },
             {
                 "devPropName": "FspID",
-                "devPropValue": 5
+                "devPropValue": 4
             },
             {
                 "devPropName": "VCC",
@@ -3179,711 +1316,7 @@
             },
             {
                 "devPropName": "CbfSubarrayAddress",
-                "devPropValue": "mid_csp_cbf/sub_elt/subarray_01"
-            }
-        ]
-    },
-    {
-        "class": "FspSubarray",
-        "serverName": "FspMulti/fsp-06",
-        "devName": "mid_csp_cbf/fspSubarray/06_01",
-        "deviceProperties": [
-            {
-                "devPropName": "SubID",
-                "devPropValue": 1
-            },
-            {
-                "devPropName": "FspID",
-                "devPropValue": 6
-            },
-            {
-                "devPropName": "VCC",
-                "devPropValue": [
-                    "mid_csp_cbf/vcc/001",
-                    "mid_csp_cbf/vcc/002",
-                    "mid_csp_cbf/vcc/003",
-                    "mid_csp_cbf/vcc/004"
-                ]
-            },
-            {
-                "devPropName": "CbfMasterAddress",
-                "devPropValue": "mid_csp_cbf/sub_elt/master"
-            },
-            {
-                "devPropName": "CbfSubarrayAddress",
-                "devPropValue": "mid_csp_cbf/sub_elt/subarray_01"
-            }
-        ]
-    },
-    {
-        "class": "FspSubarray",
-        "serverName": "FspMulti/fsp-07",
-        "devName": "mid_csp_cbf/fspSubarray/07_01",
-        "deviceProperties": [
-            {
-                "devPropName": "SubID",
-                "devPropValue": 1
-            },
-            {
-                "devPropName": "FspID",
-                "devPropValue": 7
-            },
-            {
-                "devPropName": "VCC",
-                "devPropValue": [
-                    "mid_csp_cbf/vcc/001",
-                    "mid_csp_cbf/vcc/002",
-                    "mid_csp_cbf/vcc/003",
-                    "mid_csp_cbf/vcc/004"
-                ]
-            },
-            {
-                "devPropName": "CbfMasterAddress",
-                "devPropValue": "mid_csp_cbf/sub_elt/master"
-            },
-            {
-                "devPropName": "CbfSubarrayAddress",
-                "devPropValue": "mid_csp_cbf/sub_elt/subarray_01"
-            }
-        ]
-    },
-    {
-        "class": "FspSubarray",
-        "serverName": "FspMulti/fsp-08",
-        "devName": "mid_csp_cbf/fspSubarray/08_01",
-        "deviceProperties": [
-            {
-                "devPropName": "SubID",
-                "devPropValue": 1
-            },
-            {
-                "devPropName": "FspID",
-                "devPropValue": 8
-            },
-            {
-                "devPropName": "VCC",
-                "devPropValue": [
-                    "mid_csp_cbf/vcc/001",
-                    "mid_csp_cbf/vcc/002",
-                    "mid_csp_cbf/vcc/003",
-                    "mid_csp_cbf/vcc/004"
-                ]
-            },
-            {
-                "devPropName": "CbfMasterAddress",
-                "devPropValue": "mid_csp_cbf/sub_elt/master"
-            },
-            {
-                "devPropName": "CbfSubarrayAddress",
-                "devPropValue": "mid_csp_cbf/sub_elt/subarray_01"
-            }
-        ]
-    },
-    {
-        "class": "FspSubarray",
-        "serverName": "FspMulti/fsp-09",
-        "devName": "mid_csp_cbf/fspSubarray/09_01",
-        "deviceProperties": [
-            {
-                "devPropName": "SubID",
-                "devPropValue": 1
-            },
-            {
-                "devPropName": "FspID",
-                "devPropValue": 9
-            },
-            {
-                "devPropName": "VCC",
-                "devPropValue": [
-                    "mid_csp_cbf/vcc/001",
-                    "mid_csp_cbf/vcc/002",
-                    "mid_csp_cbf/vcc/003",
-                    "mid_csp_cbf/vcc/004"
-                ]
-            },
-            {
-                "devPropName": "CbfMasterAddress",
-                "devPropValue": "mid_csp_cbf/sub_elt/master"
-            },
-            {
-                "devPropName": "CbfSubarrayAddress",
-                "devPropValue": "mid_csp_cbf/sub_elt/subarray_01"
-            }
-        ]
-    },
-    {
-        "class": "FspSubarray",
-        "serverName": "FspMulti/fsp-10",
-        "devName": "mid_csp_cbf/fspSubarray/10_01",
-        "deviceProperties": [
-            {
-                "devPropName": "SubID",
-                "devPropValue": 1
-            },
-            {
-                "devPropName": "FspID",
-                "devPropValue": 10
-            },
-            {
-                "devPropName": "VCC",
-                "devPropValue": [
-                    "mid_csp_cbf/vcc/001",
-                    "mid_csp_cbf/vcc/002",
-                    "mid_csp_cbf/vcc/003",
-                    "mid_csp_cbf/vcc/004"
-                ]
-            },
-            {
-                "devPropName": "CbfMasterAddress",
-                "devPropValue": "mid_csp_cbf/sub_elt/master"
-            },
-            {
-                "devPropName": "CbfSubarrayAddress",
-                "devPropValue": "mid_csp_cbf/sub_elt/subarray_01"
-            }
-        ]
-    },
-    {
-        "class": "FspSubarray",
-        "serverName": "FspMulti/fsp-11",
-        "devName": "mid_csp_cbf/fspSubarray/11_01",
-        "deviceProperties": [
-            {
-                "devPropName": "SubID",
-                "devPropValue": 1
-            },
-            {
-                "devPropName": "FspID",
-                "devPropValue": 11
-            },
-            {
-                "devPropName": "VCC",
-                "devPropValue": [
-                    "mid_csp_cbf/vcc/001",
-                    "mid_csp_cbf/vcc/002",
-                    "mid_csp_cbf/vcc/003",
-                    "mid_csp_cbf/vcc/004"
-                ]
-            },
-            {
-                "devPropName": "CbfMasterAddress",
-                "devPropValue": "mid_csp_cbf/sub_elt/master"
-            },
-            {
-                "devPropName": "CbfSubarrayAddress",
-                "devPropValue": "mid_csp_cbf/sub_elt/subarray_01"
-            }
-        ]
-    },
-    {
-        "class": "FspSubarray",
-        "serverName": "FspMulti/fsp-12",
-        "devName": "mid_csp_cbf/fspSubarray/12_01",
-        "deviceProperties": [
-            {
-                "devPropName": "SubID",
-                "devPropValue": 1
-            },
-            {
-                "devPropName": "FspID",
-                "devPropValue": 12
-            },
-            {
-                "devPropName": "VCC",
-                "devPropValue": [
-                    "mid_csp_cbf/vcc/001",
-                    "mid_csp_cbf/vcc/002",
-                    "mid_csp_cbf/vcc/003",
-                    "mid_csp_cbf/vcc/004"
-                ]
-            },
-            {
-                "devPropName": "CbfMasterAddress",
-                "devPropValue": "mid_csp_cbf/sub_elt/master"
-            },
-            {
-                "devPropName": "CbfSubarrayAddress",
-                "devPropValue": "mid_csp_cbf/sub_elt/subarray_01"
-            }
-        ]
-    },
-    {
-        "class": "FspSubarray",
-        "serverName": "FspMulti/fsp-13",
-        "devName": "mid_csp_cbf/fspSubarray/13_01",
-        "deviceProperties": [
-            {
-                "devPropName": "SubID",
-                "devPropValue": 1
-            },
-            {
-                "devPropName": "FspID",
-                "devPropValue": 13
-            },
-            {
-                "devPropName": "VCC",
-                "devPropValue": [
-                    "mid_csp_cbf/vcc/001",
-                    "mid_csp_cbf/vcc/002",
-                    "mid_csp_cbf/vcc/003",
-                    "mid_csp_cbf/vcc/004"
-                ]
-            },
-            {
-                "devPropName": "CbfMasterAddress",
-                "devPropValue": "mid_csp_cbf/sub_elt/master"
-            },
-            {
-                "devPropName": "CbfSubarrayAddress",
-                "devPropValue": "mid_csp_cbf/sub_elt/subarray_01"
-            }
-        ]
-    },
-    {
-        "class": "FspSubarray",
-        "serverName": "FspMulti/fsp-14",
-        "devName": "mid_csp_cbf/fspSubarray/14_01",
-        "deviceProperties": [
-            {
-                "devPropName": "SubID",
-                "devPropValue": 1
-            },
-            {
-                "devPropName": "FspID",
-                "devPropValue": 14
-            },
-            {
-                "devPropName": "VCC",
-                "devPropValue": [
-                    "mid_csp_cbf/vcc/001",
-                    "mid_csp_cbf/vcc/002",
-                    "mid_csp_cbf/vcc/003",
-                    "mid_csp_cbf/vcc/004"
-                ]
-            },
-            {
-                "devPropName": "CbfMasterAddress",
-                "devPropValue": "mid_csp_cbf/sub_elt/master"
-            },
-            {
-                "devPropName": "CbfSubarrayAddress",
-                "devPropValue": "mid_csp_cbf/sub_elt/subarray_01"
-            }
-        ]
-    },
-    {
-        "class": "FspSubarray",
-        "serverName": "FspMulti/fsp-15",
-        "devName": "mid_csp_cbf/fspSubarray/15_01",
-        "deviceProperties": [
-            {
-                "devPropName": "SubID",
-                "devPropValue": 1
-            },
-            {
-                "devPropName": "FspID",
-                "devPropValue": 15
-            },
-            {
-                "devPropName": "VCC",
-                "devPropValue": [
-                    "mid_csp_cbf/vcc/001",
-                    "mid_csp_cbf/vcc/002",
-                    "mid_csp_cbf/vcc/003",
-                    "mid_csp_cbf/vcc/004"
-                ]
-            },
-            {
-                "devPropName": "CbfMasterAddress",
-                "devPropValue": "mid_csp_cbf/sub_elt/master"
-            },
-            {
-                "devPropName": "CbfSubarrayAddress",
-                "devPropValue": "mid_csp_cbf/sub_elt/subarray_01"
-            }
-        ]
-    },
-    {
-        "class": "FspSubarray",
-        "serverName": "FspMulti/fsp-16",
-        "devName": "mid_csp_cbf/fspSubarray/16_01",
-        "deviceProperties": [
-            {
-                "devPropName": "SubID",
-                "devPropValue": 1
-            },
-            {
-                "devPropName": "FspID",
-                "devPropValue": 16
-            },
-            {
-                "devPropName": "VCC",
-                "devPropValue": [
-                    "mid_csp_cbf/vcc/001",
-                    "mid_csp_cbf/vcc/002",
-                    "mid_csp_cbf/vcc/003",
-                    "mid_csp_cbf/vcc/004"
-                ]
-            },
-            {
-                "devPropName": "CbfMasterAddress",
-                "devPropValue": "mid_csp_cbf/sub_elt/master"
-            },
-            {
-                "devPropName": "CbfSubarrayAddress",
-                "devPropValue": "mid_csp_cbf/sub_elt/subarray_01"
-            }
-        ]
-    },
-    {
-        "class": "FspSubarray",
-        "serverName": "FspMulti/fsp-17",
-        "devName": "mid_csp_cbf/fspSubarray/17_01",
-        "deviceProperties": [
-            {
-                "devPropName": "SubID",
-                "devPropValue": 1
-            },
-            {
-                "devPropName": "FspID",
-                "devPropValue": 17
-            },
-            {
-                "devPropName": "VCC",
-                "devPropValue": [
-                    "mid_csp_cbf/vcc/001",
-                    "mid_csp_cbf/vcc/002",
-                    "mid_csp_cbf/vcc/003",
-                    "mid_csp_cbf/vcc/004"
-                ]
-            },
-            {
-                "devPropName": "CbfMasterAddress",
-                "devPropValue": "mid_csp_cbf/sub_elt/master"
-            },
-            {
-                "devPropName": "CbfSubarrayAddress",
-                "devPropValue": "mid_csp_cbf/sub_elt/subarray_01"
-            }
-        ]
-    },
-    {
-        "class": "FspSubarray",
-        "serverName": "FspMulti/fsp-18",
-        "devName": "mid_csp_cbf/fspSubarray/18_01",
-        "deviceProperties": [
-            {
-                "devPropName": "SubID",
-                "devPropValue": 1
-            },
-            {
-                "devPropName": "FspID",
-                "devPropValue": 18
-            },
-            {
-                "devPropName": "VCC",
-                "devPropValue": [
-                    "mid_csp_cbf/vcc/001",
-                    "mid_csp_cbf/vcc/002",
-                    "mid_csp_cbf/vcc/003",
-                    "mid_csp_cbf/vcc/004"
-                ]
-            },
-            {
-                "devPropName": "CbfMasterAddress",
-                "devPropValue": "mid_csp_cbf/sub_elt/master"
-            },
-            {
-                "devPropName": "CbfSubarrayAddress",
-                "devPropValue": "mid_csp_cbf/sub_elt/subarray_01"
-            }
-        ]
-    },
-    {
-        "class": "FspSubarray",
-        "serverName": "FspMulti/fsp-19",
-        "devName": "mid_csp_cbf/fspSubarray/19_01",
-        "deviceProperties": [
-            {
-                "devPropName": "SubID",
-                "devPropValue": 1
-            },
-            {
-                "devPropName": "FspID",
-                "devPropValue": 19
-            },
-            {
-                "devPropName": "VCC",
-                "devPropValue": [
-                    "mid_csp_cbf/vcc/001",
-                    "mid_csp_cbf/vcc/002",
-                    "mid_csp_cbf/vcc/003",
-                    "mid_csp_cbf/vcc/004"
-                ]
-            },
-            {
-                "devPropName": "CbfMasterAddress",
-                "devPropValue": "mid_csp_cbf/sub_elt/master"
-            },
-            {
-                "devPropName": "CbfSubarrayAddress",
-                "devPropValue": "mid_csp_cbf/sub_elt/subarray_01"
-            }
-        ]
-    },
-    {
-        "class": "FspSubarray",
-        "serverName": "FspMulti/fsp-20",
-        "devName": "mid_csp_cbf/fspSubarray/20_01",
-        "deviceProperties": [
-            {
-                "devPropName": "SubID",
-                "devPropValue": 1
-            },
-            {
-                "devPropName": "FspID",
-                "devPropValue": 20
-            },
-            {
-                "devPropName": "VCC",
-                "devPropValue": [
-                    "mid_csp_cbf/vcc/001",
-                    "mid_csp_cbf/vcc/002",
-                    "mid_csp_cbf/vcc/003",
-                    "mid_csp_cbf/vcc/004"
-                ]
-            },
-            {
-                "devPropName": "CbfMasterAddress",
-                "devPropValue": "mid_csp_cbf/sub_elt/master"
-            },
-            {
-                "devPropName": "CbfSubarrayAddress",
-                "devPropValue": "mid_csp_cbf/sub_elt/subarray_01"
-            }
-        ]
-    },
-    {
-        "class": "FspSubarray",
-        "serverName": "FspMulti/fsp-21",
-        "devName": "mid_csp_cbf/fspSubarray/21_01",
-        "deviceProperties": [
-            {
-                "devPropName": "SubID",
-                "devPropValue": 1
-            },
-            {
-                "devPropName": "FspID",
-                "devPropValue": 21
-            },
-            {
-                "devPropName": "VCC",
-                "devPropValue": [
-                    "mid_csp_cbf/vcc/001",
-                    "mid_csp_cbf/vcc/002",
-                    "mid_csp_cbf/vcc/003",
-                    "mid_csp_cbf/vcc/004"
-                ]
-            },
-            {
-                "devPropName": "CbfMasterAddress",
-                "devPropValue": "mid_csp_cbf/sub_elt/master"
-            },
-            {
-                "devPropName": "CbfSubarrayAddress",
-                "devPropValue": "mid_csp_cbf/sub_elt/subarray_01"
-            }
-        ]
-    },
-    {
-        "class": "FspSubarray",
-        "serverName": "FspMulti/fsp-22",
-        "devName": "mid_csp_cbf/fspSubarray/22_01",
-        "deviceProperties": [
-            {
-                "devPropName": "SubID",
-                "devPropValue": 1
-            },
-            {
-                "devPropName": "FspID",
-                "devPropValue": 22
-            },
-            {
-                "devPropName": "VCC",
-                "devPropValue": [
-                    "mid_csp_cbf/vcc/001",
-                    "mid_csp_cbf/vcc/002",
-                    "mid_csp_cbf/vcc/003",
-                    "mid_csp_cbf/vcc/004"
-                ]
-            },
-            {
-                "devPropName": "CbfMasterAddress",
-                "devPropValue": "mid_csp_cbf/sub_elt/master"
-            },
-            {
-                "devPropName": "CbfSubarrayAddress",
-                "devPropValue": "mid_csp_cbf/sub_elt/subarray_01"
-            }
-        ]
-    },
-    {
-        "class": "FspSubarray",
-        "serverName": "FspMulti/fsp-23",
-        "devName": "mid_csp_cbf/fspSubarray/23_01",
-        "deviceProperties": [
-            {
-                "devPropName": "SubID",
-                "devPropValue": 1
-            },
-            {
-                "devPropName": "FspID",
-                "devPropValue": 23
-            },
-            {
-                "devPropName": "VCC",
-                "devPropValue": [
-                    "mid_csp_cbf/vcc/001",
-                    "mid_csp_cbf/vcc/002",
-                    "mid_csp_cbf/vcc/003",
-                    "mid_csp_cbf/vcc/004"
-                ]
-            },
-            {
-                "devPropName": "CbfMasterAddress",
-                "devPropValue": "mid_csp_cbf/sub_elt/master"
-            },
-            {
-                "devPropName": "CbfSubarrayAddress",
-                "devPropValue": "mid_csp_cbf/sub_elt/subarray_01"
-            }
-        ]
-    },
-    {
-        "class": "FspSubarray",
-        "serverName": "FspMulti/fsp-24",
-        "devName": "mid_csp_cbf/fspSubarray/24_01",
-        "deviceProperties": [
-            {
-                "devPropName": "SubID",
-                "devPropValue": 1
-            },
-            {
-                "devPropName": "FspID",
-                "devPropValue": 24
-            },
-            {
-                "devPropName": "VCC",
-                "devPropValue": [
-                    "mid_csp_cbf/vcc/001",
-                    "mid_csp_cbf/vcc/002",
-                    "mid_csp_cbf/vcc/003",
-                    "mid_csp_cbf/vcc/004"
-                ]
-            },
-            {
-                "devPropName": "CbfMasterAddress",
-                "devPropValue": "mid_csp_cbf/sub_elt/master"
-            },
-            {
-                "devPropName": "CbfSubarrayAddress",
-                "devPropValue": "mid_csp_cbf/sub_elt/subarray_01"
-            }
-        ]
-    },
-    {
-        "class": "FspSubarray",
-        "serverName": "FspMulti/fsp-25",
-        "devName": "mid_csp_cbf/fspSubarray/25_01",
-        "deviceProperties": [
-            {
-                "devPropName": "SubID",
-                "devPropValue": 1
-            },
-            {
-                "devPropName": "FspID",
-                "devPropValue": 25
-            },
-            {
-                "devPropName": "VCC",
-                "devPropValue": [
-                    "mid_csp_cbf/vcc/001",
-                    "mid_csp_cbf/vcc/002",
-                    "mid_csp_cbf/vcc/003",
-                    "mid_csp_cbf/vcc/004"
-                ]
-            },
-            {
-                "devPropName": "CbfMasterAddress",
-                "devPropValue": "mid_csp_cbf/sub_elt/master"
-            },
-            {
-                "devPropName": "CbfSubarrayAddress",
-                "devPropValue": "mid_csp_cbf/sub_elt/subarray_01"
-            }
-        ]
-    },
-    {
-        "class": "FspSubarray",
-        "serverName": "FspMulti/fsp-26",
-        "devName": "mid_csp_cbf/fspSubarray/26_01",
-        "deviceProperties": [
-            {
-                "devPropName": "SubID",
-                "devPropValue": 1
-            },
-            {
-                "devPropName": "FspID",
-                "devPropValue": 26
-            },
-            {
-                "devPropName": "VCC",
-                "devPropValue": [
-                    "mid_csp_cbf/vcc/001",
-                    "mid_csp_cbf/vcc/002",
-                    "mid_csp_cbf/vcc/003",
-                    "mid_csp_cbf/vcc/004"
-                ]
-            },
-            {
-                "devPropName": "CbfMasterAddress",
-                "devPropValue": "mid_csp_cbf/sub_elt/master"
-            },
-            {
-                "devPropName": "CbfSubarrayAddress",
-                "devPropValue": "mid_csp_cbf/sub_elt/subarray_01"
-            }
-        ]
-    },
-    {
-        "class": "FspSubarray",
-        "serverName": "FspMulti/fsp-27",
-        "devName": "mid_csp_cbf/fspSubarray/27_01",
-        "deviceProperties": [
-            {
-                "devPropName": "SubID",
-                "devPropValue": 1
-            },
-            {
-                "devPropName": "FspID",
-                "devPropValue": 27
-            },
-            {
-                "devPropName": "VCC",
-                "devPropValue": [
-                    "mid_csp_cbf/vcc/001",
-                    "mid_csp_cbf/vcc/002",
-                    "mid_csp_cbf/vcc/003",
-                    "mid_csp_cbf/vcc/004"
-                ]
-            },
-            {
-                "devPropName": "CbfMasterAddress",
-                "devPropValue": "mid_csp_cbf/sub_elt/master"
-            },
-            {
-                "devPropName": "CbfSubarrayAddress",
-                "devPropValue": "mid_csp_cbf/sub_elt/subarray_01"
+                "devPropValue": "mid_csp_cbf/sub_elt/subarray_02"
             }
         ]
     }
