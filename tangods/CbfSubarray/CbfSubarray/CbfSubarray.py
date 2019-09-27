@@ -998,7 +998,14 @@ class CbfSubarray(SKASubarray):
                         # change subarray membership of vcc
                         vccProxy.subarrayMembership = self._subarray_id
 
-                        self._receptors.append(receptorID)
+                        # !!!!!!!!!!!!!
+                        # Change done on 09/27/2109 as a consequence of the new TANGO and PyTango images release
+                        # Note:json does not recognize NumPy data types. Convert the number to a Python int 
+                        # before serializing the object.
+                        # The list of receptors is serialized when the FSPs are configured for a scan.
+                        # !!!!!!!!!!!!!
+
+                        self._receptors.append(int(receptorID))
                         self._proxies_assigned_vcc.append(vccProxy)
                         self._group_vcc.add(self._fqdn_vcc[vccID - 1])
 
