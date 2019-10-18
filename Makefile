@@ -47,7 +47,7 @@ CONTAINER_NAME_PREFIX := $(PROJECT)-$(CI_JOB_ID)-
 else
 # CONTAINER_NAME_PREFIX := $(PROJECT)-
 CONTAINER_NAME_PREFIX := midcbf-
-NETWORK_MODE := tangonet
+NETWORK_MODE := host
 endif
 
 ifeq ($(OS),Windows_NT)
