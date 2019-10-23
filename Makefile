@@ -11,7 +11,7 @@
 # nexus.engageska-portugal.pt/ska-docker/mid-cbf-mcs
 #
 DOCKER_REGISTRY_USER:=ska-docker
-PROJECT = mid-cbf-mcs
+PROJECT = mid-cbf-mcs-fault
 
 #
 # include makefile to pick up the standard Make targets, e.g., 'make build'
@@ -47,7 +47,7 @@ CONTAINER_NAME_PREFIX := $(PROJECT)-$(CI_JOB_ID)-
 else
 # CONTAINER_NAME_PREFIX := $(PROJECT)-
 CONTAINER_NAME_PREFIX := midcbf-
-NETWORK_MODE := host
+NETWORK_MODE := tangonet
 endif
 
 ifeq ($(OS),Windows_NT)

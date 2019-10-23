@@ -37,6 +37,7 @@ from random import randint
 import heapq
 from threading import Thread, Lock
 import time
+import datetime
 
 file_path = os.path.dirname(os.path.abspath(__file__))
 commons_pkg_path = os.path.abspath(os.path.join(file_path, "../../commons"))
@@ -153,6 +154,10 @@ class CbfSubarray(SKASubarray):
                 destination_addresses = json.loads(value)
 
                 # No exception should technically ever be raised here.
+                if self._injectFailConfigure:
+                    # inject failure during configuration modifying the scanId received!
+                    self.dev_logging("Injecting failure!!", PyTango.LogLevel.LOG_WARN)
+                    destination_addresses["scanId"] = self._scan_ID + 11
                 if destination_addresses["scanId"] != self._scan_ID:
                     raise ValueError("scan ID is not correct")
                 for fsp in destination_addresses["receiveAddresses"]:
@@ -755,6 +760,11 @@ class CbfSubarray(SKASubarray):
         doc="Report the health state of the assigned FSPs.",
     )
 
+    injectFailConfigure = attribute(
+        dtype='bool',
+        access=AttrWriteType.READ_WRITE,
+    )
+
     # ---------------
     # General methods
     # ---------------
@@ -775,6 +785,7 @@ class CbfSubarray(SKASubarray):
             self._subarray_id = int(self.get_name()[-2:])  # last two chars of FQDN
 
         # initialize attribute values
+        self._injectFailConfigure = False
         self._receptors = []
         self._frequency_band = 0
         self._scan_ID = 0
@@ -836,6 +847,8 @@ class CbfSubarray(SKASubarray):
 
         self._obs_state = ObsState.IDLE.value
         self.set_state(PyTango.DevState.DISABLE)
+        starting_time = datetime.datetime.now()
+        self.dev_logging("CbfSubarray{} started at time:{}".format(self._subarray_id, starting_time), PyTango.LogLevel.LOG_ERROR)
 
         # don't need this anymore (since everything is reset when the device is deleted)
         """
@@ -866,6 +879,7 @@ class CbfSubarray(SKASubarray):
 
     def delete_device(self):
         # PROTECTED REGION ID(CbfSubarray.delete_device) ENABLED START #
+        self.dev_logging("Deleting device...", PyTango.LogLevel.LOG_WARN)
         self.EndSB()
         self.RemoveAllReceptors()
         self.set_state(PyTango.DevState.DISABLE)
@@ -895,6 +909,16 @@ class CbfSubarray(SKASubarray):
         self.RemoveAllReceptors()
         self.AddReceptors(value)
         # PROTECTED REGION END #    //  CbfSubarray.receptors_write
+
+    def read_injectFailConfigure(self):
+        # PROTECTED REGION ID(CbfSubarray.read_injectFailConfigure) ENABLED START #
+        return self._injectFailConfigure
+        # PROTECTED REGION END #    //  CbfSubarray.read_injectFailConfigure
+
+    def write_injectFailConfigure(self, value):
+        # PROTECTED REGION ID(CbfSubarray.write_injectFailConfigure) ENABLED START #
+        self._injectFailConfigure = value
+        # PROTECTED REGION END #    //  CbfSubarray.write_injectFailConfigure
 
     def read_outputLinksDistribution(self):
         # PROTECTED REGION ID(CbfSubarray.outputLinksDistribution_read) ENABLED START #

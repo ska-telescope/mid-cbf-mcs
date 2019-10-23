@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="ASCII"?>
 <pogoDsl:PogoSystem xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:pogoDsl="http://www.esrf.fr/tango/pogo/PogoDsl">
   <classes name="CbfSubarray" pogoRevision="9.4">
-    <description description="CBFSubarray TANGO device class for the CBFSubarray prototype" title="CbfSubarray Tango device prototype" sourcePath="/home/osboxes/Documents/mid-cbf-mcs/csplmc/CbfSubarray/CbfSubarray" language="PythonHL" filestogenerate="XMI   file,Code files,Protected Regions" license="GPL" copyright="" hasMandatoryProperty="false" hasConcreteProperty="false" hasAbstractCommand="false" hasAbstractAttribute="false">
+    <description description="CBFSubarray TANGO device class for the CBFSubarray prototype" title="CbfSubarray Tango device prototype" sourcePath="/home/softir/src/ska-git/mid-cbf-mcs/tangods/CbfSubarray/CbfSubarray" language="PythonHL" filestogenerate="XMI   file,Code files,Protected Regions" license="GPL" copyright="" hasMandatoryProperty="false" hasConcreteProperty="false" hasAbstractCommand="false" hasAbstractAttribute="false">
       <inheritances classname="Device_Impl" sourcePath=""/>
       <inheritances classname="SKAObsDevice" sourcePath="../../../../lmc-base-classes/skabase/SKAObsDevice"/>
-      <inheritances classname="SKASubarray" sourcePath="/home/osboxes/Documents/lmc-base-classes/skabase/SKASubarray"/>
+      <inheritances classname="SKASubarray" sourcePath="/home/softir/src/ska-git/lmc-base-classes/skabase/SKASubarray"/>
       <identification contact="at nrc-cnrc.gc.ca - james.jiang" author="james.jiang" emailDomain="nrc-cnrc.gc.ca" classFamily="SkaCsp" siteSpecific="" platform="All Platforms" bus="Not Applicable" manufacturer="none" reference=""/>
     </description>
     <deviceProperties name="CapabilityTypes" description="List of Capability types e.g. capCorr, capPss,&#xA;capPstBf, capVlbi, this will be used to dynamically&#xA;define groups for subarray.">
@@ -181,7 +181,7 @@
       </argout>
       <status abstract="false" inherited="true" concrete="true"/>
     </commands>
-    <commands name="Scan" description="Starts the scan." execMethod="scan" displayLevel="OPERATOR" polledPeriod="0" isDynamic="false">
+    <commands name="Scan" description="Starts the scan." execMethod="scan" displayLevel="OPERATOR" polledPeriod="0">
       <argin description="">
         <type xsi:type="pogoDsl:StringArrayType"/>
       </argin>
@@ -297,6 +297,14 @@
       <dataReadyEvent fire="false" libCheckCriteria="true"/>
       <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
       <properties description="Scan ID" label="Scan ID" unit="" standardUnit="" displayUnit="" format="" maxValue="" minValue="" maxAlarm="" minAlarm="" maxWarning="" minWarning="" deltaTime="" deltaValue=""/>
+    </attributes>
+    <attributes name="injectFailConfigure" attType="Scalar" rwType="READ_WRITE" displayLevel="OPERATOR" polledPeriod="0" maxX="" maxY="" allocReadMember="true" isDynamic="false">
+      <dataType xsi:type="pogoDsl:BooleanType"/>
+      <changeEvent fire="false" libCheckCriteria="false"/>
+      <archiveEvent fire="false" libCheckCriteria="false"/>
+      <dataReadyEvent fire="false" libCheckCriteria="true"/>
+      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
+      <properties description="" label="" unit="" standardUnit="" displayUnit="" format="" maxValue="" minValue="" maxAlarm="" minAlarm="" maxWarning="" minWarning="" deltaTime="" deltaValue=""/>
     </attributes>
     <attributes name="assignedResources" attType="Spectrum" rwType="READ" displayLevel="OPERATOR" polledPeriod="1000" maxX="100" maxY="" allocReadMember="true">
       <dataType xsi:type="pogoDsl:StringType"/>
