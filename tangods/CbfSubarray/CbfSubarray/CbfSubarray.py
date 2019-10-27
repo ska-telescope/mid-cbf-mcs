@@ -161,6 +161,7 @@ class CbfSubarray(SKASubarray):
                 if destination_addresses["scanId"] != self._scan_ID:
                     raise ValueError("scan ID is not correct")
                 for fsp in destination_addresses["receiveAddresses"]:
+                    self.dev_logging("receivedAddresses:{}".format(self._last_received_vis_destination_address), PyTango.LogLevel.LOG_ERROR)
                     proxy_fsp_subarray = self._proxies_fsp_subarray[fsp["fspId"] - 1]
                     if proxy_fsp_subarray not in self._proxies_assigned_fsp_subarray:
                         raise ValueError("FSP {} does not belong to subarray {}.".format(
@@ -777,6 +778,7 @@ class CbfSubarray(SKASubarray):
         self._storage_logging_level = PyTango.LogLevel.LOG_DEBUG
         self._element_logging_level = PyTango.LogLevel.LOG_DEBUG
         self._central_logging_level = PyTango.LogLevel.LOG_DEBUG
+        self.dev_logging("Init device...", PyTango.LogLevel.LOG_WARN)
 
         # get subarray ID
         if self.SubID:
