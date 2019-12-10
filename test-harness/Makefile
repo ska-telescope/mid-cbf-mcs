@@ -13,21 +13,19 @@ all: test
 # then be extracted to form the CI summary for the test procedure.
 test:
 	echo Pinging mid_csp_cbf/sub_elt/master...;
-	retry --max=10 -- tango_admin --ping-device mid_csp_cbf/master/main
-	for i in $$(seq -w 1 197); \
-	do \
+	retry --max=10 -- tango_admin --ping-device mid_csp_cbf/sub_elt/master
+	for i in $$(seq -w 1 4); do \
 		echo Pinging mid_csp_cbf/vcc/$$i...; \
-		retry --max=10 -- tango_admin --ping-device mid_csp_cbf/vcc/$$i && \
-	done
-	for i in $$(seq -w 1 27); \
-	do \
+		retry --max=10 -- tango_admin --ping-device mid_csp_cbf/vcc/00$$i; \
+        done 		
+	for i in $$(seq -w 1 4); do \
 		echo Pinging mid_csp_cbf/fsp/$$i...; \
-		retry --max=10 -- tango_admin --ping-device mid_csp_cbf/fsp/$$i && \
+		retry --max=10 -- tango_admin --ping-device mid_csp_cbf/fsp/0$$i;  \
 	done
-	for i in $$(seq -w 1 16); \
+	for i in $$(seq -w 1 2); \
 	do \
 		echo Pinging mid_csp_cbf/sub_elt/subarray_$$i...; \
-		retry --max=10 -- tango_admin --ping-device mid_csp_cbf/cbfSubarray/$$i && \
+		retry --max=10 -- tango_admin --ping-device mid_csp_cbf/sub_elt/subarray_0$$i;  \
 	done
 	cd /app/tangods/CbfMaster && python setup.py test | tee setup_py_test.stdout
 	cd /app/tangods/CbfSubarray && python setup.py test | tee setup_py_test.stdout

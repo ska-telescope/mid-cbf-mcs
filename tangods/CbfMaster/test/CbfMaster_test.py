@@ -185,7 +185,7 @@ class TestCbfMaster:
         assert create_fsp_2_subarray_1_proxy.State() == DevState.OFF
 
         # send the On command
-        create_cbf_master_proxy.On("")
+        create_cbf_master_proxy.On()
         time.sleep(3)
 
         # check states
@@ -241,7 +241,7 @@ class TestCbfMaster:
         assert create_fsp_2_subarray_1_proxy.State() == DevState.OFF
 
         # send the Off command
-        create_cbf_master_proxy.Off("")
+        create_cbf_master_proxy.Off()
         time.sleep(3)
 
         # check states
@@ -303,7 +303,7 @@ class TestCbfMaster:
         assert create_fsp_2_subarray_1_proxy.State() == DevState.ON
 
         # send the Standby command
-        create_cbf_master_proxy.Standby("")
+        create_cbf_master_proxy.Standby()
         time.sleep(3)
 
         # check states
