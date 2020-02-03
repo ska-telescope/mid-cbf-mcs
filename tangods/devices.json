@@ -1322,8 +1322,8 @@
     },
     {
         "class": "CbfConfigurationPSS",
-        "serverName": "mid_csp_cbf/fsp-PSS",
-        "devName": "mid_csp_cbf/fsp/fsp-PSS",
+        "serverName": "FspMulti/fsp-PSS",
+        "devName": "mid_csp_cbf/fspSubarray/fsp-PSS",
         "deviceProperties": []
     }
 ]

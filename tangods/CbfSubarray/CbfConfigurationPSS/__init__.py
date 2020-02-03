@@ -13,7 +13,6 @@ A generic base device for Observations for SKA.
 """
 
 from . import release
-from .SKAObsDevice import CbfConfigurationPSS, main
 
 __version__ = release.version
 __version_info__ = release.version_info

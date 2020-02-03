@@ -21,7 +21,7 @@ from PyTango.server import attribute, command
 from PyTango.server import device_property
 from PyTango import AttrQuality, DispLevel, DevState
 from PyTango import AttrWriteType, PipeWriteType
-from SKABaseDevice import SKABaseDevice
+from skabase.SKASubarray.SKASubarray import SKASubarray
 # Additional import
 # PROTECTED REGION ID(CbfConfigurationPSS.additionnal_import) ENABLED START #
 # PROTECTED REGION END #    //  CbfConfigurationPSS.additionnal_import
@@ -29,7 +29,7 @@ from SKABaseDevice import SKABaseDevice
 __all__ = ["CbfConfigurationPSS", "main"]
 
 
-class CbfConfigurationPSS(SKABaseDevice):
+class CbfConfigurationPSS(SKASubarray):
     """
     A generic base device for Observations for SKA.
     """
