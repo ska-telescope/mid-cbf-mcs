@@ -159,6 +159,7 @@ services:
       sh -c "wait-for-it.sh ${TANGO_HOST} --timeout=60 --strict --
              tango_admin --check-device mid_csp_cbf/sw1/01 &&\
              tango_admin --check-device mid_csp_cbf/sw2/01 &&\
+             tango_admin --check-device mid_csp_cbf/pssConfig/01 &&\
              tango_admin --check-device mid_csp_cbf/sub_elt/subarray_01 &&\
              retry --max=5 -- tango_admin --ping-device mid_csp_cbf/sub_elt/master &&\
              /venv/bin/python /app/tangods/CbfSubarray/CbfSubarrayMulti/CbfSubarrayMulti.py cbfSubarray-01"
@@ -180,6 +181,7 @@ services:
       sh -c "wait-for-it.sh ${TANGO_HOST} --timeout=60 --strict --
              tango_admin --check-device mid_csp_cbf/sw1/02 &&\
              tango_admin --check-device mid_csp_cbf/sw2/02 &&\
+             tango_admin --check-device mid_csp_cbf/pssConfig/01 &&\
              tango_admin --check-device mid_csp_cbf/sub_elt/subarray_02 &&\
              retry --max=5 -- tango_admin --ping-device mid_csp_cbf/sub_elt/master &&\
              /venv/bin/python /app/tangods/CbfSubarray/CbfSubarrayMulti/CbfSubarrayMulti.py cbfSubarray-02"

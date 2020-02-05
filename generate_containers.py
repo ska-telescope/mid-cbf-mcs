@@ -72,6 +72,7 @@ with open("mid-cbf-mcs.yml", "w+") as f:
                   "      sh -c \"wait-for-it.sh ${{TANGO_HOST}} --timeout=60 --strict --\n" \
                   "             tango_admin --check-device mid_csp_cbf/sw1/{0:02d} &&\\\n" \
                   "             tango_admin --check-device mid_csp_cbf/sw2/{0:02d} &&\\\n" \
+                  "             tango_admin --check-device mid_csp_cbf/pssConfig/{0:02d}&&\\\n" \
                   "             tango_admin --check-device mid_csp_cbf/sub_elt/subarray_{0:02d} &&\\\n" \
                   "             /venv/bin/python /app/tangods/CbfSubarray/CbfSubarrayMulti/CbfSubarrayMulti.py cbfSubarray-{0:02d}\"\n\n".format(i, depends_on_vcc, depends_on_fsp)
 

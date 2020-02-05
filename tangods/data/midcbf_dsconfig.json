@@ -172,6 +172,9 @@
                 "SearchWindow": {
                     "mid_csp_cbf/sw1/01": {}, 
                     "mid_csp_cbf/sw2/01": {}
+                },
+                "CbfSubarrayPssConfig": {
+                    "mid_csp_cbf/pssConfig/01": {}
                 }
             }, 
             "cbfSubarray-02": {
@@ -262,6 +265,9 @@
                 "SearchWindow": {
                     "mid_csp_cbf/sw1/02": {}, 
                     "mid_csp_cbf/sw2/02": {}
+                },
+                "CbfSubarrayPssConfig": {
+                    "mid_csp_cbf/pssConfig/01": {}
                 }
             }
         }, 

@@ -1319,5 +1319,17 @@
                 "devPropValue": "mid_csp_cbf/sub_elt/subarray_02"
             }
         ]
+    },
+    {
+        "class": "CbfSubarrayPssConfig",
+        "serverName": "CbfSubarrayMulti/cbfSubarray-01",
+        "devName": "mid_csp_cbf/pssConfig/01",
+        "deviceProperties": []
+    },
+    {
+        "class": "CbfSubarrayPssConfig",
+        "serverName": "CbfSubarrayMulti/cbfSubarray-02",
+        "devName": "mid_csp_cbf/pssConfig/02",
+        "deviceProperties": []
     }
 ]
