@@ -23,18 +23,17 @@ with open('/app/tangods/devices.json', 'r') as file:
 
 # Loading devices.json file and creating an object
 json_devices = json.loads(jsonDevices)
-
+print(db)
 for device in json_devices:
     dev_info = DbDevInfo()
     dev_info._class = device["class"]
     dev_info.server = device["serverName"]
     dev_info.name = device["devName"]
-
     print("Adding {}...".format(device["devName"]))
 
     # Adding device
     db.add_device(dev_info)
-
+	
     # Adding device properties
     for deviceProperty in device["deviceProperties"]:
         # Adding device property: deviceProperty["devPropValue"]

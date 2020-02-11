@@ -284,7 +284,7 @@ class TestCbfSubarray:
         create_fsp_1_subarray_1_proxy.Init()
         create_fsp_2_subarray_1_proxy.Init()
         create_fsp_1_proxy.Init()
-        create_fsp_2_proxy.Init()
+        create_fsp_2_proxyInit()
         create_subarray_1_proxy.set_timeout_millis(60000)  # since the command takes a while
         create_subarray_1_proxy.Init()
         time.sleep(3)
@@ -349,6 +349,7 @@ class TestCbfSubarray:
 
         # check configured attributes of search windows
         # first for search window 1...
+
         assert create_sw_1_proxy.State() == DevState.ON
         assert create_sw_1_proxy.searchWindowTuning == 6000000000
         assert create_sw_1_proxy.tdcEnable == True
@@ -634,6 +635,7 @@ class TestCbfSubarray:
         for proxy in create_vcc_proxies:
             proxy.Init()
         create_fsp_1_subarray_1_proxy.Init()
+        
         create_fsp_2_subarray_1_proxy.Init()
         create_fsp_1_proxy.Init()
         create_fsp_2_proxy.Init()
@@ -648,7 +650,7 @@ class TestCbfSubarray:
 
         receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
                                create_cbf_master_proxy.receptorToVcc)
-
+        print("Hello World")
         create_cbf_master_proxy.On()
         time.sleep(3)
 
