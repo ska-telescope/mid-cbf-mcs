@@ -342,6 +342,15 @@ with open("tangods/devices.json", "w+") as f:
                   "        \"deviceProperties\": []\n" \
                   "    }},\n".format(i)
 
+    # Generate CBF Subarray PssConfig (1 for each CBF Subarray)
+    for i in range(1, num_subarray + 1):
+        string += "    {{\n" \
+                  "        \"class\": \"CbfSubarrayPssConfig\",\n" \
+                  "        \"serverName\": \"CbfSubarrayMulti/cbfSubarray-{0:02d}\",\n" \
+                  "        \"devName\": \"mid_csp_cbf/pssconfig/{0:02d}\",\n" \
+                  "        \"deviceProperties\": []\n" \
+                  "    }},\n".format(i)
+
     # Generate VCC band 1 and 2 Capabilities (for each VCC)
     for i in range(1, num_vcc + 1):
         string += "    {{\n" \

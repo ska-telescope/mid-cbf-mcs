@@ -7,4 +7,4 @@ RUN ipython profile create
 USER root
 RUN DEBIAN_FRONTEND=noninteractive pip3 install https://nexus.engageska-portugal.pt/repository/pypi/packages/lmcbaseclasses/0.2.0+6bb55a6e/lmcbaseclasses-0.2.0+6bb55a6e.tar.gz
 
-CMD ["/venv/bin/python", "-m"," csp_lmc_common.CspMaster" ]
+CMD ["/venv/bin/python", "/app/tangods/CbfMaster/CbfMaster/CbfMaster.py", "master"]

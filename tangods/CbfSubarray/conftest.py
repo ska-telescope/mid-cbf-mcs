@@ -35,12 +35,12 @@ def create_sw_2_proxy():
     return DeviceProxy("mid_csp_cbf/sw2/01")
 
 @pytest.fixture(scope="class")
-def create_sw_1_proxy():
-    return DeviceProxy("mid_csp_cbf/pssConfig/01")
+def create_pssconfig_1_proxy():
+    return DeviceProxy("mid_csp_cbf/pssconfig/01")
 
 @pytest.fixture(scope="class")
-def create_sw_2_proxy():
-    return DeviceProxy("mid_csp_cbf/pssConfig/02")
+def create_pssconfig_2_proxy():
+    return DeviceProxy("mid_csp_cbf/pssconfig/02")
 
 @pytest.fixture(scope="class")
 def create_vcc_proxies():
