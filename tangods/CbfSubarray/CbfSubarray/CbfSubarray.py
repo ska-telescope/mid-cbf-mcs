@@ -48,6 +48,15 @@ from skabase.SKASubarray.SKASubarray import SKASubarray
 
 __all__ = ["CbfSubarray", "main"]
 
+class PssConfig:
+    def __init__(self, searchWindowID, searchBeamID, receptors, enableOutput, averagingInterval, searchBeamAddress):
+        self.searchWindowID = swID
+        self.searchBeamID = sbID
+        self.receptors = recpt
+        self.enableOutput = enableOut
+        self.averagingInterval = averageInter
+        self.searchBeamAddress = beamDestAddress
+
 
 class CbfSubarray(SKASubarray):
     """
@@ -560,7 +569,11 @@ class CbfSubarray(SKASubarray):
                     if "fspID" in fsp:
                         if int(fsp["fspID"]) in list(range(1, self._count_fsp + 1)):
                             fspID = int(fsp["fspID"])
+                            # a proxy to the index fspID in the _proxies_fsp attribute, which uses Fsp
+                            # property list which contains addresses of all Fsp in order from 1 -> capability
                             proxy_fsp = self._proxies_fsp[fspID - 1]
+                            # a proxy to the index fspID in the _proxies_fsp_subarray attribute, which uses FspSubarray
+                            # property list which contains addresses of all FspSubarrays in order from 1 -> capability
                             proxy_fsp_subarray = self._proxies_fsp_subarray[fspID - 1]
                         else:
                             msg = "'fspID' must be an integer in the range [1, {}]. "\
@@ -581,10 +594,27 @@ class CbfSubarray(SKASubarray):
                         )
                         self.__raise_configure_scan_fatal_error(msg)
 
+                    # validate frequency band
+                    fsp["frequencyBand"] = argin["frequencyBand"]
+                    if "frequencyBandOffsetStream1" in argin:
+                        fsp["frequencyBandOffsetStream1"] = argin["frequencyBandOffsetStream1"]
+                    else:
+                        fsp["frequencyBandOffsetStream1"] = 0
+                    if "frequencyBandOffsetStream2" in argin:
+                        fsp["frequencyBandOffsetStream2"] = argin["frequencyBandOffsetStream2"]
+                    else:
+                        fsp["frequencyBandOffsetStream2"] = 0
+                    if "receptors" not in fsp:
+                        fsp["receptors"] = self._receptors
+                    if argin["frequencyBand"] in ["5a", "5b"]:
+                        fsp["band5Tuning"] = argin["band5Tuning"]
+
                     # Validate functionMode.
                     function_modes = ["CORR", "PSS-BF", "PST-BF", "VLBI"]
                     if "functionMode" in fsp:
                         if fsp["functionMode"] in function_modes:
+                            # Checks to see if the current functionMode of the
+                            # FSPID listed in either matching or open for new function mode
                             if function_modes.index(fsp["functionMode"]) + 1 == \
                                     proxy_fsp.functionMode or\
                                     proxy_fsp.functionMode == 0:
@@ -606,19 +636,12 @@ class CbfSubarray(SKASubarray):
                             "Aborting configuration."
                         self.__raise_configure_scan_fatal_error(msg)
 
-                    fsp["frequencyBand"] = argin["frequencyBand"]
-                    if "frequencyBandOffsetStream1" in argin:
-                        fsp["frequencyBandOffsetStream1"] = argin["frequencyBandOffsetStream1"]
-                    else:
-                        fsp["frequencyBandOffsetStream1"] = 0
-                    if "frequencyBandOffsetStream2" in argin:
-                        fsp["frequencyBandOffsetStream2"] = argin["frequencyBandOffsetStream2"]
-                    else:
-                        fsp["frequencyBandOffsetStream2"] = 0
-                    if "receptors" not in fsp:
-                        fsp["receptors"] = self._receptors
-                    if argin["frequencyBand"] in ["5a", "5b"]:
-                        fsp["band5Tuning"] = argin["band5Tuning"]
+                    # Send FSP to CbfSubarrayPssConfig Device to validate the rest of the fsp config and configure fsps
+                    if fsp["functionMode"] == "PSS-BF":
+                        self._proxy_pss_config.ConfigureFSP(json.dumps(fsp))
+
+                    # This currently is what happens for CORR eventually it will be removed and sent to
+                    # CbfSubarrayCORRConfig class to validate and then get sent to fsp_subarray
 
                     # pass on configuration to FSP Subarray
                     proxy_fsp_subarray.ValidateScan(json.dumps(fsp))
@@ -666,6 +689,9 @@ class CbfSubarray(SKASubarray):
         dtype='str',
         doc="FQDN of CBF Master",
         default_value="mid_csp_cbf/sub_elt/master"
+    )
+    PssConfigAddress = device_property(
+        dtype='str'
     )
 
     SW1Address = device_property(
@@ -800,6 +826,9 @@ class CbfSubarray(SKASubarray):
 
         self._proxy_sw_1 = PyTango.DeviceProxy(self.SW1Address)
         self._proxy_sw_2 = PyTango.DeviceProxy(self.SW2Address)
+
+        # JSON FSP configurations for PSS, COR, PST, VLBI
+        self._proxy_pss_config = PyTango.DeviceProxy(self.PssConfigAddress)
 
         self._master_max_capabilities = dict(
             pair.split(":") for pair in
