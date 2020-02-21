@@ -56,24 +56,24 @@ class TmCspSubarrayLeafNodeTest(SKABaseDevice):
         if not event.err:
             try:
                 log_msg = "Received output links."
-                self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+                self.logger.warn(log_msg)
 
                 output_links = json.loads(str(event.attr_value.value))
                 scan_ID = int(output_links["scanID"])
 
                 if not scan_ID or self._received_output_links:
                     log_msg = "Skipped assigning destination addresses."
-                    self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+                    self.logger.warn(log_msg)
                     return
 
                 self._scan_ID = scan_ID
                 self.__generate_visibilities_destination_addresses(output_links)
             except Exception as e:
-                self.dev_logging(str(e), PyTango.LogLevel.LOG_ERROR)
+                self.logger.error(str(e))
         else:
             for item in event.errors:
                 log_msg = item.reason + ": on attribute " + str(event.attr_name)
-                self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
+                self.logger.error(log_msg)
 
     def __generate_visibilities_destination_addresses(self, output_links):
         destination_addresses = {
@@ -108,7 +108,7 @@ class TmCspSubarrayLeafNodeTest(SKABaseDevice):
             destination_addresses["receiveAddresses"].append(fsp)
 
         log_msg = "Done assigning destination addresses."
-        self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+        self.logger.warn(log_msg)
         # publish the destination addresses
         self._vis_destination_address = destination_addresses
         self.push_change_event("visDestinationAddress", json.dumps(self._vis_destination_address))
@@ -236,10 +236,10 @@ class TmCspSubarrayLeafNodeTest(SKABaseDevice):
             else:
                 log_msg = "Writing to dopplerPhaseCorrection attribute expected 4 elements, \
                     but received {}. Ignoring.".format(len(value))
-                self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
+                self.logger.error(log_msg)
         except TypeError:  # value is not an array
             log_msg = "dopplerPhaseCorrection attribute must be an array of length 4. Ignoring."
-            self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
+            self.logger.error(log_msg)
         # PROTECTED REGION END #    //  TmCspSubarrayLeafNodeTest.dopplerPhaseCorrection_write
 
     def read_delayModel(self):

@@ -504,8 +504,7 @@ class Vcc(SKACapability):
             self._proxy_band_5.SetState(PyTango.DevState.ON)
 
         # shouldn't happen
-        self.dev_logging("frequencyBand not in valid range. Ignoring.",
-                         PyTango.LogLevel.LOG_WARN)
+        self.logger.warn("frequencyBand not in valid range. Ignoring.")
         # PROTECTED REGION END #    // Vcc.SetFrequencyBand
 
     def is_SetObservingState_allowed(self):
@@ -530,8 +529,7 @@ class Vcc(SKACapability):
             self._obs_state = argin
         else:
             # shouldn't happen
-            self.dev_logging("obsState must be CONFIGURING or READY. Ignoring.",
-                             PyTango.LogLevel.LOG_WARN)
+            self.logger.warn("obsState must be CONFIGURING or READY. Ignoring.")
         # PROTECTED REGION END #    // Vcc.SetFrequencyBand
 
     def is_UpdateDelayModel_allowed(self):
@@ -558,12 +556,12 @@ class Vcc(SKACapability):
                         else:
                             log_msg = "'delayCoeff' not valid for frequency slice {} of "\
                                 "receptor {}".format(frequency_slice["fsid"], self._receptor_ID)
-                            self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
+                            self.logger.error(log_msg)
                     else:
                         log_msg = "'fsid' {} not valid for receptor {}".format(
                             frequency_slice["fsid"], self._receptor_ID
                         )
-                        self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
+                        self.logger.error(log_msg)
         # PROTECTED REGION END #    // Vcc.UpdateDelayModel
 
     def is_ValidateSearchWindow_allowed(self):
@@ -580,7 +578,7 @@ class Vcc(SKACapability):
             argin = json.loads(argin)
         except json.JSONDecodeError:  # argument not a valid JSON object
             msg = "Search window configuration object is not a valid JSON object."
-            self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+            self.logger.error(msg)
             PyTango.Except.throw_exception("Command failed", msg, "ConfigureSearchWindow execution",
                                            PyTango.ErrSeverity.ERR)
 
@@ -592,13 +590,13 @@ class Vcc(SKACapability):
                 msg = "'searchWindowID' must be one of [1, 2] (received {}).".format(
                     str(argin["searchWindowID"])
                 )
-                self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+                self.logger.error(msg)
                 PyTango.Except.throw_exception("Command failed", msg,
                                                "ConfigureSearchWindow execution",
                                                PyTango.ErrSeverity.ERR)
         else:
             msg = "Search window specified, but 'searchWindowID' not given."
-            self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+            self.logger.error(msg)
             PyTango.Except.throw_exception("Command failed", msg, "ConfigureSearchWindow execution",
                                            PyTango.ErrSeverity.ERR)
 
@@ -618,7 +616,7 @@ class Vcc(SKACapability):
                     pass
                 else:
                     msg = "'searchWindowTuning' must be within observed band."
-                    self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+                    self.logger.error(msg)
                     PyTango.Except.throw_exception("Command failed", msg,
                                                    "ConfigureSearchWindow execution",
                                                    PyTango.ErrSeverity.ERR)
@@ -646,13 +644,13 @@ class Vcc(SKACapability):
                     pass
                 else:
                     msg = "'searchWindowTuning' must be within observed band."
-                    self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+                    self.logger.error(msg)
                     PyTango.Except.throw_exception("Command failed", msg,
                                                    "ConfigureSearchWindow execution",
                                                    PyTango.ErrSeverity.ERR)
         else:
             msg = "Search window specified, but 'searchWindowTuning' not given."
-            self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+            self.logger.error(msg)
             PyTango.Except.throw_exception("Command failed", msg, "ConfigureSearchWindow execution",
                                            PyTango.ErrSeverity.ERR)
 
@@ -662,13 +660,13 @@ class Vcc(SKACapability):
                 pass
             else:
                 msg = "Search window specified, but 'tdcEnable' not given."
-                self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+                self.logger.error(msg)
                 PyTango.Except.throw_exception("Command failed", msg,
                                                "ConfigureSearchWindow execution",
                                                PyTango.ErrSeverity.ERR)
         else:
             msg = "Search window specified, but 'tdcEnable' not given."
-            self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+            self.logger.error(msg)
             PyTango.Except.throw_exception("Command failed", msg, "ConfigureSearchWindow execution",
                                            PyTango.ErrSeverity.ERR)
 
@@ -681,13 +679,13 @@ class Vcc(SKACapability):
                     msg = "'tdcNumBits' must be one of [2, 4, 8] (received {}).".format(
                         str(argin["tdcNumBits"])
                     )
-                    self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+                    self.logger.error(msg)
                     PyTango.Except.throw_exception("Command failed", msg,
                                                    "ConfigureSearchWindow execution",
                                                    PyTango.ErrSeverity.ERR)
             else:
                 msg = "Search window specified with TDC enabled, but 'tdcNumBits' not given."
-                self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+                self.logger.error(msg)
                 PyTango.Except.throw_exception("Command failed", msg,
                                                "ConfigureSearchWindow execution",
                                                PyTango.ErrSeverity.ERR)
@@ -700,7 +698,7 @@ class Vcc(SKACapability):
                 msg = "'tdcPeriodBeforeEpoch' must be a positive integer (received {}).".format(
                     str(argin["tdcPeriodBeforeEpoch"])
                 )
-                self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+                self.logger.error(msg)
                 PyTango.Except.throw_exception("Command failed", msg,
                                                "ConfigureSearchWindow execution",
                                                PyTango.ErrSeverity.ERR)
@@ -715,7 +713,7 @@ class Vcc(SKACapability):
                 msg = "'tdcPeriodAfterEpoch' must be a positive integer (received {}).".format(
                     str(argin["tdcPeriodAfterEpoch"])
                 )
-                self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
+                self.logger.error(log_msg)
                 PyTango.Except.throw_exception("Command failed", msg,
                                                "ConfigureSearchWindow execution",
                                                PyTango.ErrSeverity.ERR)
@@ -736,7 +734,7 @@ class Vcc(SKACapability):
                 # tdcDestinationAddress not given or receptorID not in tdcDestinationAddress
                 msg = "Search window specified with TDC enabled, but 'tdcDestinationAddress' "\
                     "not given or missing receptors."
-                self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+                self.logger.error(msg)
                 PyTango.Except.throw_exception("Command failed", msg,
                                                "ConfigureSearchWindow execution",
                                                PyTango.ErrSeverity.ERR)
@@ -789,7 +787,7 @@ class Vcc(SKACapability):
                 # log a warning message
                 log_msg = "'searchWindowTuning' partially out of observed band. "\
                     "Proceeding."
-                self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+                self.logger.warn(log_msg)
         else:  # frequency band 5a or 5b (two streams with bandwidth 2.5 GHz)
             proxy_sw.searchWindowTuning = argin["searchWindowTuning"]
 
@@ -823,7 +821,7 @@ class Vcc(SKACapability):
                 # log a warning message
                 log_msg = "'searchWindowTuning' partially out of observed band. "\
                     "Proceeding."
-                self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+                self.logger.warn(log_msg)
 
         # Configure tdcEnable.
         proxy_sw.tdcEnable = argin["tdcEnable"]
@@ -844,7 +842,7 @@ class Vcc(SKACapability):
             proxy_sw.tdcPeriodBeforeEpoch = 2
             log_msg = "Search window specified, but 'tdcPeriodBeforeEpoch' not given. "\
                 "Defaulting to 2."
-            self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+            self.logger.warn(log_msg)
 
         # Configure tdcPeriodAfterEpoch.
         if "tdcPeriodAfterEpoch" in argin:
@@ -853,7 +851,7 @@ class Vcc(SKACapability):
             proxy_sw.tdcPeriodAfterEpoch = 22
             log_msg = "Search window specified, but 'tdcPeriodAfterEpoch' not given. "\
                 "Defaulting to 22."
-            self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+            self.logger.warn(log_msg)
 
         # Configure tdcDestinationAddress.
         if argin["tdcEnable"]:

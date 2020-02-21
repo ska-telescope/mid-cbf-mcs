@@ -268,7 +268,8 @@ class Fsp(SKACapability):
             self._proxy_vlbi.SetState(PyTango.DevState.ON)
 
         # shouldn't happen
-        self.dev_logging("functionMode not valid. Ignoring.", PyTango.LogLevel.LOG_WARN)
+        self.logger.error(msg)("functionMode not valid. Ignoring.", PyTango.LogLevel.LOG_WARN)
+        self.logger.warn("functionMode not valid. Ignoring.")
         # PROTECTED REGION END #    //  Fsp.SetFunctionMode
 
     def is_AddSubarrayMembership_allowed(self):
@@ -286,7 +287,7 @@ class Fsp(SKACapability):
             self._subarray_membership.append(argin)
         else:
             log_msg = "FSP already belongs to subarray {}.".format(argin)
-            self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+            self.logger.warn(log_msg)
         # PROTECTED REGION END #    //  Fsp.AddSubarrayMembership
 
     def is_RemoveSubarrayMembership_allowed(self):
@@ -307,7 +308,7 @@ class Fsp(SKACapability):
                 self._function_mode = 0
         else:
             log_msg = "FSP does not belong to subarray {}.".format(argin)
-            self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+            self.logger.warn(log_msg)
         # PROTECTED REGION END #    //  Fsp.RemoveSubarrayMembership
 
 # ----------

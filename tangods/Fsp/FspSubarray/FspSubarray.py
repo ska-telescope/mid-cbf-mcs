@@ -369,14 +369,14 @@ class FspSubarray(SKASubarray):
                     else:
                         log_msg = "Receptor {} already assigned to current FSP subarray.".format(
                             str(receptorID))
-                        self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+                        self.logger.warn(log_msg)
 
             except KeyError:  # invalid receptor ID
                 errs.append("Invalid receptor ID: {}".format(receptorID))
 
         if errs:
             msg = "\n".join(errs)
-            self.dev_logging(msg, int(PyTango.LogLevel.LOG_ERROR))
+            self.logger.error(msg)
             PyTango.Except.throw_exception("Command failed", msg, "AddReceptors execution",
                                            PyTango.ErrSeverity.ERR)
         # PROTECTED REGION END #    //  FspSubarray.AddReceptors
@@ -403,7 +403,7 @@ class FspSubarray(SKASubarray):
             else:
                 log_msg = "Receptor {} not assigned to FSP subarray. "\
                     "Skipping.".format(str(receptorID))
-                self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+                self.logger.warn(log_msg)
         # PROTECTED REGION END #    //  FspSubarray.RemoveReceptors
 
     def is_RemoveAllReceptors_allowed(self):
@@ -492,7 +492,7 @@ class FspSubarray(SKASubarray):
                         except Exception as e:
                             msg = "An error occurred while configuring destination addresses:"\
                                 "\n{}\n".format(str(e))
-                            self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+                            self.logger.error(msg)
                             PyTango.Except.throw_exception("Command failed", msg,
                                                            "AddChannelAddresses execution",
                                                            PyTango.ErrSeverity.ERR)
@@ -505,7 +505,7 @@ class FspSubarray(SKASubarray):
             msg = "The following channels are missing destination addresses:\n{}".format(
                 unconfigured_channels
             )
-            self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+            self.logger.error(msg)
             PyTango.Except.throw_exception("Command failed", msg,
                                            "AddChannelAddressInfo execution",
                                            PyTango.ErrSeverity.ERR)
@@ -529,7 +529,7 @@ class FspSubarray(SKASubarray):
             argin = json.loads(argin)
         except json.JSONDecodeError:  # argument not a valid JSON object
             msg = "Scan configuration object is not a valid JSON object."
-            self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+            self.logger.error(msg)
             PyTango.Except.throw_exception("Command failed", msg,
                                            "ConfigureScan execution", PyTango.ErrSeverity.ERR)
 
@@ -542,7 +542,7 @@ class FspSubarray(SKASubarray):
         except PyTango.DevFailed as df:  # error in AddReceptors()
             self.RemoveAllReceptors()
             msg = sys.exc_info()[1].args[0].desc + "\n'receptors' was malformed."
-            self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+            self.logger.error(msg)
             PyTango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
                                             PyTango.ErrSeverity.ERR)
 
@@ -560,12 +560,12 @@ class FspSubarray(SKASubarray):
                         str(num_frequency_slices[frequencyBand]),
                         str(argin["frequencyBand"])
                     )
-                self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+                self.logger.error(msg)
                 PyTango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
                                                PyTango.ErrSeverity.ERR)
         else:
             msg = "FSP specified, but 'frequencySliceID' not given."
-            self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+            self.logger.error(msg)
             PyTango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
                                            PyTango.ErrSeverity.ERR)
 
@@ -576,12 +576,12 @@ class FspSubarray(SKASubarray):
             else:
                 msg = "'corrBandwidth' must be an integer in the range [0, 6]."
                 # this is a fatal error
-                self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+                self.logger.error(msg)
                 PyTango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
                                                PyTango.ErrSeverity.ERR)
         else:
             msg = "FSP specified, but 'corrBandwidth' not given."
-            self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+            self.logger.error(msg)
             PyTango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
                                            PyTango.ErrSeverity.ERR)
 
@@ -608,7 +608,7 @@ class FspSubarray(SKASubarray):
                         pass
                     else:
                         msg = "'zoomWindowTuning' must be within observed frequency slice."
-                        self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+                        self.logger.error(msg)
                         PyTango.Except.throw_exception("Command failed", msg,
                                                        "ConfigureScan execution",
                                                        PyTango.ErrSeverity.ERR)
@@ -640,13 +640,13 @@ class FspSubarray(SKASubarray):
                         pass
                     else:
                         msg = "'zoomWindowTuning' must be within observed frequency slice."
-                        self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+                        self.logger.error(msg)
                         PyTango.Except.throw_exception("Command failed", msg,
                                                        "ConfigureScan execution",
                                                        PyTango.ErrSeverity.ERR)
             else:
                 msg = "FSP specified, but 'zoomWindowTuning' not given."
-                self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+                self.logger.error(msg)
                 PyTango.Except.throw_exception("Command failed", msg,
                                                 "ConfigureScan execution",
                                                 PyTango.ErrSeverity.ERR)
@@ -660,12 +660,12 @@ class FspSubarray(SKASubarray):
             else:
                 msg = "'integrationTime' must be an integer in the range [1, 10] multiplied "\
                     "by {}.".format(self.MIN_INT_TIME)
-                self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+                self.logger.error(msg)
                 PyTango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
                                                PyTango.ErrSeverity.ERR)
         else:
             msg = "FSP specified, but 'integrationTime' not given."
-            self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+            self.logger.error(msg)
             PyTango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
                                            PyTango.ErrSeverity.ERR)
 
@@ -688,7 +688,7 @@ class FspSubarray(SKASubarray):
                                 i,
                                 argin["channelAveragingMap"][i][0]
                             )
-                        self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+                        self.logger.error(msg)
                         PyTango.Except.throw_exception("Command failed", msg,
                                                        "ConfigureScan execution",
                                                        PyTango.ErrSeverity.ERR)
@@ -702,7 +702,7 @@ class FspSubarray(SKASubarray):
                                 i,
                                 argin["channelAveragingMap"][i][1]
                             )
-                        self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+                        self.logger.error(msg)
                         PyTango.Except.throw_exception("Command failed", msg,
                                                        "ConfigureScan execution",
                                                        PyTango.ErrSeverity.ERR)
@@ -710,7 +710,7 @@ class FspSubarray(SKASubarray):
                 msg = "'channelAveragingMap' must be an 2D array of dimensions 2x{}.".format(
                         self.NUM_CHANNEL_GROUPS
                     )
-                self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
+                self.logger.error(log_msg)
                 PyTango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
                                                PyTango.ErrSeverity.ERR)
         else:
@@ -794,7 +794,7 @@ class FspSubarray(SKASubarray):
                     # log a warning message
                     log_msg = "'zoomWindowTuning' partially out of observed frequency slice. "\
                         "Proceeding."
-                    self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+                    self.logger.warn(log_msg)
             else:  # frequency band 5a or 5b (two streams with bandwidth 2.5 GHz)
                 self._zoom_window_tuning = argin["zoomWindowTuning"]
 
@@ -832,7 +832,7 @@ class FspSubarray(SKASubarray):
                     # log a warning message
                     log_msg = "'zoomWindowTuning' partially out of observed frequency slice. "\
                         "Proceeding."
-                    self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+                    self.logger.warn(log_msg)
 
         # Configure integrationTime.
         self._integration_time = int(argin["integrationTime"])
@@ -848,7 +848,7 @@ class FspSubarray(SKASubarray):
             ]
             log_msg = "FSP specified, but 'channelAveragingMap not given. Default to averaging "\
                 "factor = 0 for all channel groups."
-            self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+            self.logger.warn(log_msg)
 
         # This state transition will be later
         # self._obs_state = ObsState.READY.value

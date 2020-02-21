@@ -72,35 +72,35 @@ class CbfSubarray(SKASubarray):
         else:
             for item in event.errors:
                 log_msg = item.reason + ": on attribute " + str(event.attr_name)
-                self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
+                self.logger.error(log_msg)
 
     def __doppler_phase_correction_event_callback(self, event):
         if not event.err:
             try:
                 self._group_vcc.write_attribute("dopplerPhaseCorrection", event.attr_value.value)
                 log_msg = "Value of " + str(event.attr_name) + " is " + str(event.attr_value.value)
-                self.dev_logging(log_msg, PyTango.LogLevel.LOG_DEBUG)
+                self.logger.debug(log_msg)
             except Exception as e:
-                self.dev_logging(str(e), PyTango.LogLevel.LOG_ERROR)
+                self.logger.error(str(e))
         else:
             for item in event.errors:
                 log_msg = item.reason + ": on attribute " + str(event.attr_name)
-                self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
+                self.logger.error(log_msg)
 
     def __delay_model_event_callback(self, event):
         if not event.err:
             if self._obs_state not in [ObsState.READY.value, ObsState.SCANNING.value]:
                 log_msg = "Ignoring delay model (obsState not correct)."
-                self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+                self.logger.warn(log_msg)
                 return
             try:
                 log_msg = "Received delay model update."
-                self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+                self.logger.warn(log_msg)
 
                 value = str(event.attr_value.value)
                 if value == self._last_received_delay_model:
                     log_msg = "Ignoring delay model (identical to previous)."
-                    self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+                    self.logger.warn(log_msg)
                     return
 
                 self._last_received_delay_model = value
@@ -113,22 +113,23 @@ class CbfSubarray(SKASubarray):
                     )
                     t.start()
             except Exception as e:
-                self.dev_logging(str(e), PyTango.LogLevel.LOG_ERROR)
+                self.logger.error(str(e))
         else:
             for item in event.errors:
                 log_msg = item.reason + ": on attribute " + str(event.attr_name)
-                self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
+                self.logger.error(log_msg)
 
     def __update_delay_model(self, epoch, model):
         # This method is always called on a separate thread
         log_msg = "Delay model active at {} (currently {})...".format(epoch, int(time.time()))
-        self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+        self.logger.warn(log_msg)
 
         if epoch > time.time():
             time.sleep(epoch - time.time())
 
         log_msg = "Updating delay model at specified epoch {}...".format(epoch)
-        self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+        self.logger.warn(log_msg)
+
 
         data = PyTango.DeviceData()
         data.insert(PyTango.DevString, model)
@@ -142,20 +143,20 @@ class CbfSubarray(SKASubarray):
         if not event.err:
             if self._obs_state not in [ObsState.CONFIGURING.value, ObsState.READY.value]:
                 log_msg = "Ignoring destination addresses (obsState not correct)."
-                self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+                self.logger.warn(log_msg)
                 return
             if not self._published_output_links:
                 log_msg = "Ignoring destination addresses (output links not published yet)."
-                self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+                self.logger.warn(log_msg)
                 return
             try:
                 log_msg = "Received destination addresses for visibilities."
-                self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+                self.logger.warn(log_msg)
 
                 value = str(event.attr_value.value)
                 if value == self._last_received_vis_destination_address:
                     log_msg = "Ignoring destination addresses (identical to previous)."
-                    self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+                    self.logger.warn(log_msg)
                     return
 
                 self._last_received_vis_destination_address = value
@@ -174,20 +175,20 @@ class CbfSubarray(SKASubarray):
                     log_msg = "Configuring destination addresses for FSP {}...".format(
                         fsp["fspId"]
                     )
-                    self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+                    self.logger.warn(log_msg)
                     proxy_fsp_subarray.AddChannelAddresses(value)
 
                 log_msg = "Done configuring destination addresses."
-                self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+                self.logger.warn(log_msg)
 
                 # transition to obsState=READY
                 self._obs_state = ObsState.READY.value
             except Exception as e:
-                self.dev_logging(str(e), PyTango.LogLevel.LOG_ERROR)
+                self.logger.error(str(e))
         else:
             for item in event.errors:
                 log_msg = item.reason + ": on attribute " + str(event.attr_name)
-                self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
+                self.logger.error(log_msg)
 
     def __state_change_event_callback(self, event):
         if not event.err:
@@ -202,7 +203,7 @@ class CbfSubarray(SKASubarray):
                         # should NOT happen!
                         log_msg = "Received health state change for unknown device " + str(
                             event.attr_name)
-                        self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+                        self.logger.warn(log_msg)
                         return
                 elif "state" in event.attr_name:
                     if "vcc" in device_name:
@@ -212,19 +213,19 @@ class CbfSubarray(SKASubarray):
                     else:
                         # should NOT happen!
                         log_msg = "Received state change for unknown device " + str(event.attr_name)
-                        self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+                        self.logger.warn(log_msg)
                         return
 
                 log_msg = "New value for " + str(event.attr_name) + " of device " + device_name + \
                           " is " + str(event.attr_value.value)
-                self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+                self.logger.warn(log_msg)
 
             except Exception as except_occurred:
-                self.dev_logging(str(except_occurred), PyTango.LogLevel.LOG_ERROR)
+                self.logger.error(str(except_occurred))
         else:
             for item in event.errors:
                 log_msg = item.reason + ": on attribute " + str(event.attr_name)
-                self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
+                self.logger.error(log_msg)
 
     def __generate_output_links(self, scan_cfg):
         # At this point, we can assume that the scan configuration is valid and that the FSP
@@ -299,7 +300,7 @@ class CbfSubarray(SKASubarray):
                         log_msg = "Assigning output link for channel {} of FSP {}...".format(
                             channel_ID, fsp["fspID"]
                         )
-                        self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+                        self.logger.warn(log_msg)
 
                         channel = {
                             "chanID": channel_ID,
@@ -326,7 +327,7 @@ class CbfSubarray(SKASubarray):
         self._group_fsp_subarray.command_inout("AddChannels", data)
 
         log_msg = "Done assigning output links."
-        self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+        self.logger.warn(log_msg)
         # publish the output links
         self._output_links_distribution = output_links_all
         self.push_change_event("outputLinksDistribution", json_output_links)
@@ -671,7 +672,7 @@ class CbfSubarray(SKASubarray):
         # At this point, everything has been validated.
 
     def __raise_configure_scan_fatal_error(self, msg):
-        self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+        self.logger.error(msg)
         PyTango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
                                        PyTango.ErrSeverity.ERR)
 
@@ -964,7 +965,7 @@ class CbfSubarray(SKASubarray):
         # PROTECTED REGION ID(CbfSubarray.On) ENABLED START #
         if self._obs_state != ObsState.IDLE.value:
             msg = "Device not in IDLE obsState."
-            self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+            self.logger.error(msg)
             PyTango.Except.throw_exception("Command failed", msg, "On execution",
                                            PyTango.ErrSeverity.ERR)
 
@@ -983,7 +984,7 @@ class CbfSubarray(SKASubarray):
         # PROTECTED REGION ID(CbfSubarray.Off) ENABLED START #
         if self._obs_state != ObsState.IDLE.value:
             msg = "Device not in IDLE obsState."
-            self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+            self.logger.error(msg)
             PyTango.Except.throw_exception("Command failed", msg, "Off execution",
                                            PyTango.ErrSeverity.ERR)
 
@@ -1005,7 +1006,7 @@ class CbfSubarray(SKASubarray):
         # PROTECTED REGION ID(CbfSubarray.AddReceptors) ENABLED START #
         if self._obs_state != ObsState.IDLE.value:
             msg = "Device not in IDLE obsState."
-            self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+            self.logger.error(msg)
             PyTango.Except.throw_exception("Command failed", msg, "AddReceptors execution",
                                            PyTango.ErrSeverity.ERR)
 
@@ -1053,7 +1054,7 @@ class CbfSubarray(SKASubarray):
                     else:
                         log_msg = "Receptor {} already assigned to current subarray.".format(
                             str(receptorID))
-                        self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+                        self.logger.warn(log_msg)
 
             except KeyError:  # invalid receptor ID
                 errs.append("Invalid receptor ID: {}".format(receptorID))
@@ -1064,7 +1065,7 @@ class CbfSubarray(SKASubarray):
 
         if errs:
             msg = "\n".join(errs)
-            self.dev_logging(msg, int(PyTango.LogLevel.LOG_ERROR))
+            self.logger.error(msg)
             PyTango.Except.throw_exception("Command failed", msg, "AddReceptors execution",
                                            PyTango.ErrSeverity.ERR)
         # PROTECTED REGION END #    //  CbfSubarray.AddReceptors
@@ -1082,7 +1083,7 @@ class CbfSubarray(SKASubarray):
         # PROTECTED REGION ID(CbfSubarray.RemoveReceptors) ENABLED START #
         if self._obs_state != ObsState.IDLE.value:
             msg = "Device not in IDLE obsState."
-            self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+            self.logger.error(msg)
             PyTango.Except.throw_exception("Command failed", msg, "RemoveReceptors execution",
                                            PyTango.ErrSeverity.ERR)
 
@@ -1107,7 +1108,7 @@ class CbfSubarray(SKASubarray):
                 self._group_vcc.remove(self._fqdn_vcc[vccID - 1])
             else:
                 log_msg = "Receptor {} not assigned to subarray. Skipping.".format(str(receptorID))
-                self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+                self.logger.warn(log_msg)
 
         # transitions to OFF if not assigned any receptors
         if not self._receptors:
@@ -1124,7 +1125,7 @@ class CbfSubarray(SKASubarray):
         # PROTECTED REGION ID(CbfSubarray.RemoveAllReceptors) ENABLED START #
         if self._obs_state != ObsState.IDLE.value:
             msg = "Device not in IDLE obsState."
-            self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+            self.logger.error(msg)
             PyTango.Except.throw_exception("Command failed", msg, "RemoveAllReceptors execution",
                                            PyTango.ErrSeverity.ERR)
 
@@ -1203,7 +1204,7 @@ class CbfSubarray(SKASubarray):
         """
         if self._obs_state not in [ObsState.IDLE.value, ObsState.READY.value]:
             msg = "Device not in IDLE or READY obsState."
-            self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+            self.logger.error(msg)
             PyTango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
                                            PyTango.ErrSeverity.ERR)
 
@@ -1249,7 +1250,7 @@ class CbfSubarray(SKASubarray):
             self._frequency_band_offset_stream_1 = 0
             self._group_vcc.write_attribute("frequencyBandOffsetStream1", 0)
             log_msg = "'frequencyBandOffsetStream1' not specified. Defaulting to 0."
-            self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+            self.logger.warn(log_msg)
 
         # Validate frequencyBandOffsetStream2.
         # If not given, use a default value.
@@ -1265,7 +1266,7 @@ class CbfSubarray(SKASubarray):
                 self._frequency_band_offset_stream_2 = 0
                 self._group_vcc.write_attribute("frequencyBandOffsetStream2", 0)
                 log_msg = "'frequencyBandOffsetStream2' not specified. Defaulting to 0."
-                self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+                self.logger.warn(log_msg)
         else:
             self._frequency_band_offset_stream_2 = 0
             self._group_vcc.write_attribute("frequencyBandOffsetStream2", 0)
@@ -1309,7 +1310,7 @@ class CbfSubarray(SKASubarray):
             )
         else:
             log_msg = "'rfiFlaggingMask' not given. Proceeding."
-            self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+            self.logger.warn(log_msg)
 
         # Configure searchWindow.
         if "searchWindow" in argin:
@@ -1321,7 +1322,7 @@ class CbfSubarray(SKASubarray):
                 self.ConfigureSearchWindow(json.dumps(search_window))
         else:
             log_msg = "'searchWindow' not given."
-            self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+            self.logger.warn(log_msg)
 
         # The VCCs are done configuring at this point
         data = PyTango.DeviceData()
@@ -1398,7 +1399,7 @@ class CbfSubarray(SKASubarray):
         # so the checks here have been removed to reduce overhead.
         if self._obs_state != ObsState.CONFIGURING.value:
             msg = "Device not in CONFIGURING obsState."
-            self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+            self.logger.error(msg)
             PyTango.Except.throw_exception("Command failed", msg, "ConfigureSearchWindow execution",
                                            PyTango.ErrSeverity.ERR)
 
@@ -1435,7 +1436,7 @@ class CbfSubarray(SKASubarray):
                 # log a warning message
                 log_msg = "'searchWindowTuning' partially out of observed band. "\
                     "Proceeding."
-                self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+                self.logger.warn(log_msg)
         else:  # frequency band 5a or 5b (two streams with bandwidth 2.5 GHz)
             proxy_sw.searchWindowTuning = argin["searchWindowTuning"]
 
@@ -1469,7 +1470,7 @@ class CbfSubarray(SKASubarray):
                 # log a warning message
                 log_msg = "'searchWindowTuning' partially out of observed band. "\
                     "Proceeding."
-                self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+                self.logger.warn(log_msg)
 
         # Configure tdcEnable.
         proxy_sw.tdcEnable = argin["tdcEnable"]
@@ -1490,7 +1491,7 @@ class CbfSubarray(SKASubarray):
             proxy_sw.tdcPeriodBeforeEpoch = 2
             log_msg = "Search window specified, but 'tdcPeriodBeforeEpoch' not given. "\
                 "Defaulting to 2."
-            self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+            self.logger.warn(log_msg)
 
         # Configure tdcPeriodAfterEpoch.
         if "tdcPeriodAfterEpoch" in argin:
@@ -1499,7 +1500,7 @@ class CbfSubarray(SKASubarray):
             proxy_sw.tdcPeriodAfterEpoch = 22
             log_msg = "Search window specified, but 'tdcPeriodAfterEpoch' not given. "\
                 "Defaulting to 22."
-            self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+            self.logger.warn(log_msg)
 
         # Configure tdcDestinationAddress.
         if argin["tdcEnable"]:
@@ -1519,7 +1520,7 @@ class CbfSubarray(SKASubarray):
         # PROTECTED REGION ID(CbfSubarray.EndScan) ENABLED START #
         if self._obs_state != ObsState.SCANNING.value:
             msg = "Device not in SCANNING obsState."
-            self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+            self.logger.error(msg)
             PyTango.Except.throw_exception("Command failed", msg, "EndScan execution",
                                            PyTango.ErrSeverity.ERR)
 
@@ -1543,13 +1544,13 @@ class CbfSubarray(SKASubarray):
         """
         if self._obs_state != ObsState.READY.value:
             msg = "A scan is not ready to be started."
-            self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+            self.logger.error(msg)
             PyTango.Except.throw_exception("Command failed", msg, "Scan execution",
                                            PyTango.ErrSeverity.ERR)
         """
         if self._obs_state != ObsState.READY.value:
             msg = "Device not in READY obsState."
-            self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+            self.logger.error(msg)
             PyTango.Except.throw_exception("Command failed", msg, "Scan execution",
                                            PyTango.ErrSeverity.ERR)
 
@@ -1571,7 +1572,7 @@ class CbfSubarray(SKASubarray):
         # PROTECTED REGION ID(CbfSubarray.EndSB) ENABLED START #
         if self._obs_state not in [ObsState.IDLE.value, ObsState.READY.value]:
             msg = "Device not in IDLE or READY obsState."
-            self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+            self.logger.error(msg)
             PyTango.Except.throw_exception("Command failed", msg, "EndSB execution",
                                            PyTango.ErrSeverity.ERR)
 

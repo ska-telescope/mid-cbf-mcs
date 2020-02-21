@@ -71,7 +71,7 @@ class CbfMaster(SKAMaster):
                         # should NOT happen!
                         log_msg = "Received health state change for unknown device " + \
                                   str(event.attr_name)
-                        self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+                        self.logger.warn(log_msg)
                         return
                 elif "state" in event.attr_name:
                     if "subarray" in device_name:
@@ -87,7 +87,7 @@ class CbfMaster(SKAMaster):
                         # should NOT happen!
                         log_msg = "Received state change for unknown device " + \
                                   str(event.attr_name)
-                        self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+                        self.logger.warn(log_msg)
                         return
                 elif "adminmode" in event.attr_name:
                     if "subarray" in device_name:
@@ -103,18 +103,18 @@ class CbfMaster(SKAMaster):
                         # should NOT happen!
                         log_msg = "Received admin mode change for unknown device " + \
                                   str(event.attr_name)
-                        self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+                        self.logger.warn(log_msg)
                         return
 
                 log_msg = "New value for " + str(event.attr_name) + " is " + \
                           str(event.attr_value.value)
-                self.dev_logging(log_msg, PyTango.LogLevel.LOG_DEBUG)
+                self.logger.debug(log_msg)
             except Exception as except_occurred:
-                self.dev_logging(str(except_occurred), PyTango.LogLevel.LOG_ERROR)
+                self.logger.error(str(except_occurred))
         else:
             for item in event.errors:
                 log_msg = item.reason + ": on attribute " + str(event.attr_name)
-                self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
+                self.logger.error(log_msg)
 
     def __membership_event_callback(self, event):
         if not event.err:
@@ -133,19 +133,19 @@ class CbfMaster(SKAMaster):
                     # should NOT happen!
                     log_msg = "Received event for unknown device " + str(
                         event.attr_name)
-                    self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+                    self.logger.warn(log_msg)
                     return
 
                 log_msg = "New value for " + str(event.attr_name) + " of device " + \
                           device_name + " is " + str(event.attr_value.value)
-                self.dev_logging(log_msg, PyTango.LogLevel.LOG_DEBUG)
+                self.logger.debug(log_msg)
 
             except Exception as except_occurred:
-                self.dev_logging(str(except_occurred), PyTango.LogLevel.LOG_ERROR)
+                self.logger.error(str(except_occurred))
         else:
             for item in event.errors:
                 log_msg = item.reason + ": on attribute " + str(event.attr_name)
-                self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
+                self.logger.error(log_msg)
 
     def __scan_ID_event_callback(self, event):
         if not event.err:
@@ -153,11 +153,11 @@ class CbfMaster(SKAMaster):
                 self._subarray_scan_ID[self._fqdn_subarray.index(event.device.dev_name())] = \
                     event.attr_value.value
             except Exception as except_occurred:
-                self.dev_logging(str(except_occurred), PyTango.LogLevel.LOG_ERROR)
+                self.logger.error(str(except_occurred))
         else:
             for item in event.errors:
                 log_msg = item.reason + ": on attribute " + str(event.attr_name)
-                self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
+                self.logger.error(log_msg)
 
     def __get_num_capabilities(self):
         # self._max_capabilities inherited from SKAMaster
@@ -178,8 +178,7 @@ class CbfMaster(SKAMaster):
             except KeyError:  # not found in DB
                 self._count_subarray = 16
         else:
-            self.dev_logging("MaxCapabilities device property not defined",
-                             PyTango.LogLevel.LOG_WARN)
+            self.logger.warn("MaxCapabilities device property not defined")
 
     # PROTECTED REGION END #    //  CbfMaster.class_variable
 
@@ -426,7 +425,7 @@ class CbfMaster(SKAMaster):
         for fqdn in self._fqdn_vcc + self._fqdn_fsp + self._fqdn_subarray:
             try:
                 log_msg = "Trying connection to " + fqdn + " device"
-                self.dev_logging(log_msg, int(PyTango.LogLevel.LOG_INFO))
+                self.logger.info(log_msg)
                 device_proxy = PyTango.DeviceProxy(fqdn)
                 device_proxy.ping()
 
@@ -464,7 +463,7 @@ class CbfMaster(SKAMaster):
             except PyTango.DevFailed as df:
                 for item in df.args:
                     log_msg = "Failure in connection to " + fqdn + " device: " + str(item.reason)
-                    self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
+                    self.logger.error(log_msg)
 
         self.set_state(PyTango.DevState.STANDBY)
         # PROTECTED REGION END #    //  CbfMaster.init_device
@@ -563,7 +562,7 @@ class CbfMaster(SKAMaster):
         else:
             log_msg = "Skipped writing to frequencyOffsetK attribute (expected {} arguments, "\
                 "but received {}.".format(self._count_vcc, len(value))
-            self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+            self.logger.warn(log_msg)
         # PROTECTED REGION END #    //  CbfMaster.frequencyOffsetK_write
 
     def read_frequencyOffsetDeltaF(self):
@@ -578,7 +577,7 @@ class CbfMaster(SKAMaster):
         else:
             log_msg = "Skipped writing to frequencyOffsetDeltaF attribute (expected {} arguments, "\
                 "but received {}.".format(self._count_vcc, len(value))
-            self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+            self.logger.warn(log_msg)
         # PROTECTED REGION END #    //  CbfMaster.frequencyOffsetDeltaF_write
 
     def read_reportSubarrayState(self):
