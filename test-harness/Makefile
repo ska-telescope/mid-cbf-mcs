@@ -14,6 +14,8 @@ all: test
 test:
 	echo Pinging mid_csp_cbf/sub_elt/master...;
 	retry --max=10 -- tango_admin --ping-device mid_csp_cbf/sub_elt/master
+	echo Pinging ska_mid/tm_leaf_node/csp_subarray_01...;
+	retry --max=10 -- tango_admin --ping-device ska_mid/tm_leaf_node/csp_subarray_01
 	for i in $$(seq -w 1 4); do \
 		echo Pinging mid_csp_cbf/vcc/$$i...; \
 		retry --max=10 -- tango_admin --ping-device mid_csp_cbf/vcc/00$$i; \
