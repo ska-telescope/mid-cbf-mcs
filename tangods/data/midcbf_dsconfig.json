@@ -1130,37 +1130,6 @@
                         }
                     }
                 }
-            },
-            "tm2": {
-                "TmCspSubarrayLeafNodeTest": {
-                    "ska_mid/tm_leaf_node/csp_subarray_02": {
-                        "attribute_properties": {
-                            "dopplerPhaseCorrection": {
-                                "abs_change": [
-                                    "-1", 
-                                    "1"
-                                ] 
-                            } 
-                        }, 
-                        "properties": {
-			    "CspMasterAddress": [
-		                "mid_csp/elt/master"
-			    ],
-			    "CspSubarrayAddress": [
-		                "mid_csp/elt/subarray_02"
-			    ],
-
-                            "polled_attr": [
-                                "delaymodel", 
-                                "1000", 
-                                "visdestinationaddress", 
-                                "1000", 
-                                "dopplerphasecorrection", 
-                                "1000"
-                            ]
-                        }
-                    }
-                }
             }
         } 
     }

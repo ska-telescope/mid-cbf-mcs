@@ -29,7 +29,7 @@ test:
 		echo Pinging mid_csp_cbf/sub_elt/subarray_$$i...; \
 		retry --max=10 -- tango_admin --ping-device mid_csp_cbf/sub_elt/subarray_0$$i;  \
 	done
-	cd /app/tangods/CbfMaster && python setup.py test | tee setup_py_test.stdout
+	#cd /app/tangods/CbfMaster && python setup.py test | tee setup_py_test.stdout
 	cd /app/tangods/CbfSubarray && python setup.py test | tee setup_py_test.stdout
 	cd /app && ./code-analysis.sh | tee code_analysis.stdout
 	if [ -d /build ]; then \

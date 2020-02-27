@@ -1380,7 +1380,7 @@ class CbfSubarray(SKASubarray):
         self.__generate_output_links(argin)  # published output links to outputLinksDistribution
 
         # This state transition will be later
-        # self._obs_state = ObsState.READY.value
+        self._obs_state = ObsState.READY.value
 
         # PROTECTED REGION END #    //  CbfSubarray.ConfigureScan
 

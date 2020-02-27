@@ -128,7 +128,6 @@ class TmCspSubarrayLeafNodeTest(SKABaseDevice):
         dtype='str'
     )
 
-
     # ----------
     # Attributes
     # ----------
@@ -141,7 +140,7 @@ class TmCspSubarrayLeafNodeTest(SKABaseDevice):
     )
 
     dopplerPhaseCorrection = attribute(
-        dtype=('double',),
+        dtype=('float',),
         access=AttrWriteType.READ_WRITE,
         max_dim_x=4,
         label="Doppler phase correction",
@@ -188,18 +187,18 @@ class TmCspSubarrayLeafNodeTest(SKABaseDevice):
         self._vis_destination_address = {}  # this is interpreted as a JSON object
         self._received_output_links = False
 
-        self._proxy_csp_master = PyTango.DeviceProxy(self.CspMasterAddress)
-        self._proxy_cbf_master = PyTango.DeviceProxy(
-            self._proxy_csp_master.get_property("CspMidCbf")["CspMidCbf"][0]
-        )
-        self._proxy_csp_subarray = PyTango.DeviceProxy(self.CspSubarrayAddress)
+      #  self._proxy_csp_master = PyTango.DeviceProxy(self.CspMasterAddress)
+      #  self._proxy_cbf_master = PyTango.DeviceProxy(
+      #      self._proxy_csp_master.get_property("CspMidCbf")["CspMidCbf"][0]
+      #  )
+      #  self._proxy_csp_subarray = PyTango.DeviceProxy(self.CspSubarrayAddress)
 
-        self._proxy_csp_subarray.subscribe_event(
-            "cbfOutputLink",
-            PyTango.EventType.CHANGE_EVENT,
-            self.__output_links_event_callback,
-            stateless=True
-        )
+      #  self._proxy_csp_subarray.subscribe_event(
+      #      "cbfOutputLink",
+      #      PyTango.EventType.CHANGE_EVENT,
+      #      self.__output_links_event_callback,
+      #      stateless=True
+      #  )
 
         self.set_state(DevState.STANDBY)
         # PROTECTED REGION END #    //  TmCspSubarrayLeafNodeTest.init_device

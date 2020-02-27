@@ -74,6 +74,13 @@
         ],
         "attributeProperties": [
             {
+                "attributeName": "scanID",
+                "attrPropName": "",
+                "attrPropValue": "",
+                "pollingPeriod": 1000,
+                "changeEventAbs": "1"
+            },
+            {
                 "attributeName": "delayModel",
                 "attrPropName": "",
                 "attrPropValue": "",

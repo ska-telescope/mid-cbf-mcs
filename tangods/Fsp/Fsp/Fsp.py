@@ -268,7 +268,7 @@ class Fsp(SKACapability):
             self._proxy_vlbi.SetState(PyTango.DevState.ON)
 
         # shouldn't happen
-        self.logger.error(msg)("functionMode not valid. Ignoring.", PyTango.LogLevel.LOG_WARN)
+        self.logger.error("functionMode not valid. Ignoring.")
         self.logger.warn("functionMode not valid. Ignoring.")
         # PROTECTED REGION END #    //  Fsp.SetFunctionMode
 

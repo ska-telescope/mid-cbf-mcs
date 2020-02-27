@@ -851,7 +851,7 @@ class FspSubarray(SKASubarray):
             self.logger.warn(log_msg)
 
         # This state transition will be later
-        # self._obs_state = ObsState.READY.value
+        self._obs_state = ObsState.READY.value
 
         # PROTECTED REGION END #    //  FspSubarray.ConfigureScan
 
