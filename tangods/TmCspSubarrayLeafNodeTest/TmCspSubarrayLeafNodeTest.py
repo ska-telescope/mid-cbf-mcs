@@ -140,7 +140,7 @@ class TmCspSubarrayLeafNodeTest(SKABaseDevice):
     )
 
     dopplerPhaseCorrection = attribute(
-        dtype=('float',),
+        dtype='float',
         access=AttrWriteType.READ_WRITE,
         max_dim_x=4,
         label="Doppler phase correction",

@@ -196,6 +196,15 @@
                             ]
                         }
                     }
+                },
+                "SendConfig": {
+                    "mid_csp_cbf/SendConfig/01": {
+                        "properties": {
+                            "SubarrayAddress": [
+                                "mid_csp_cbf/sub_elt/subarray_01"
+                            ]
+                        }
+                    }
                 }
             }, 
             "cbfSubarray-02": {

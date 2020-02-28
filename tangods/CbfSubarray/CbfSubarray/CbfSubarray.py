@@ -1502,7 +1502,7 @@ class CbfSubarray(SKASubarray):
                 "Defaulting to 22."
             self.logger.warn(log_msg)
 
-        # Configure tdcDestinationAddress.
+        # `Configure tdcDestinationAddress.`
         if argin["tdcEnable"]:
             # TODO: validate input
             proxy_sw.tdcDestinationAddress = \

@@ -74,13 +74,6 @@
         ],
         "attributeProperties": [
             {
-                "attributeName": "scanID",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": "1"
-            },
-            {
                 "attributeName": "delayModel",
                 "attrPropName": "",
                 "attrPropValue": "",
@@ -89,13 +82,6 @@
             },
             {
                 "attributeName": "visDestinationAddress",
-                "attrPropName": "",
-                "attrPropValue": "",
-                "pollingPeriod": 1000,
-                "changeEventAbs": "1"
-            },
-            {
-                "attributeName": "dopplerPhaseCorrection",
                 "attrPropName": "",
                 "attrPropValue": "",
                 "pollingPeriod": 1000,
@@ -1390,6 +1376,17 @@
   	        {
                 "devPropName": "CbfMasterAddress",
                 "devPropValue": "mid_csp_cbf/sub_elt/master"
+            }
+        ]
+    },
+    {
+        "class": "SendConfig",
+        "serverName": "CbfSubarrayMulti/cbfSubarray-01",
+        "devName": "mid_csp_cbf/SendConfig/01",
+        "deviceProperties": [
+  	        {
+                "devPropName": "SubarrayAddress",
+                "devPropValue": "mid_csp_cbf/sub_elt/subarray_01"
             }
         ]
     }

@@ -724,7 +724,7 @@ class Vcc(SKACapability):
         if argin["tdcEnable"]:
             try:
                 for receptor in argin["tdcDestinationAddress"]:
-                    if int(receptor["receptorID"]) == self._receptor_ID:
+                   # if int(receptor["receptorID"]) == self._receptor_ID:
                         # TODO: validate input
                         pass
                         break

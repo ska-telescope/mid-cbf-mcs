@@ -561,8 +561,8 @@ class TestCbfSubarray:
         time.sleep(3)
 
         assert create_subarray_1_proxy.obsState.value == ObsState.IDLE.value
-      #  assert create_tm_telstate_proxy.visDestinationAddress == "{}"
-      #  assert create_tm_telstate_proxy.receivedOutputLinks == False
+        assert create_tm_telstate_proxy.visDestinationAddress == "{}"
+        assert create_tm_telstate_proxy.receivedOutputLinks == False
 
         # add receptors
         create_subarray_1_proxy.RemoveAllReceptors()
