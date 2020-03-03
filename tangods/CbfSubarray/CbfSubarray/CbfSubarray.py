@@ -48,14 +48,17 @@ from skabase.SKASubarray.SKASubarray import SKASubarray
 
 __all__ = ["CbfSubarray", "main"]
 
-class PssConfig:
-    def __init__(self, searchWindowID, searchBeamID, receptors, enableOutput, averagingInterval, searchBeamAddress):
-        self.searchWindowID = swID
-        self.searchBeamID = sbID
-        self.receptors = recpt
-        self.enableOutput = enableOut
-        self.averagingInterval = averageInter
-        self.searchBeamAddress = beamDestAddress
+def validate_ip(ip):
+    splitip = ip.split('.')
+    if len(splitip) != 4:
+        return False
+    for ipparts in splitip:
+        if not ipparts.isdigit():
+            return False
+        ipval = int(ipparts)
+        if ipval < 0 or ipval > 255:
+            return False
+    return True
 
 
 class CbfSubarray(SKASubarray):
@@ -267,7 +270,7 @@ class CbfSubarray(SKASubarray):
                     ])][self._frequency_band] + \
                         (int(fsp["frequencySliceID"]) - 1)*const.FREQUENCY_SLICE_BW*10**6 + \
                         self._frequency_band_offset_stream_1
-                
+
                 else:  # frequency band 5a or 5b (two streams with bandwidth 2.5 GHz)
                     if int(fsp["frequencySliceID"]) <= 13:  # stream 1
                         frequency_slice_start = scan_cfg["band5Tuning"][0]*10**9 - \
@@ -335,6 +338,7 @@ class CbfSubarray(SKASubarray):
 
     def __validate_scan_configuration(self, argin):
         # try to deserialize input string to a JSON object
+        pssConfigs = {}
         try:
             argin = json.loads(argin)
         except json.JSONDecodeError:  # argument not a valid JSON object
@@ -570,8 +574,6 @@ class CbfSubarray(SKASubarray):
                     if "fspID" in fsp:
                         if int(fsp["fspID"]) in list(range(1, self._count_fsp + 1)):
                             fspID = int(fsp["fspID"])
-                            # a proxy to the index fspID in the _proxies_fsp attribute, which uses Fsp
-                            # property list which contains addresses of all Fsp in order from 1 -> capability
                             proxy_fsp = self._proxies_fsp[fspID - 1]
                             # a proxy to the index fspID in the _proxies_fsp_subarray attribute, which uses FspSubarray
                             # property list which contains addresses of all FspSubarrays in order from 1 -> capability
@@ -637,16 +639,82 @@ class CbfSubarray(SKASubarray):
                             "Aborting configuration."
                         self.__raise_configure_scan_fatal_error(msg)
 
-                    # Send FSP to CbfSubarrayPssConfig Device to validate the rest of the fsp config and configure fsps
                     if fsp["functionMode"] == "PSS-BF":
-                        self._proxy_pss_config.ConfigureFSP(json.dumps(fsp))
+                        if "searchWindowID" in fsp:
+                            if int(fsp["searchWindowID"]) in [1, 2]:
+                                pass
+                            else:  # searchWindowID not in valid range
+                                msg = "'searchWindowID' must be one of [1, 2] (received {}).".format(
+                                    str(fsp["searchWindowID"])
+                                )
+                                self.__raise_configure_scan_fatal_error(msg)
+                        else:
+                            msg = "Search window not specified for Fsp PSS config"
+                            self.__raise_configure_scan_fatal_error(msg)
+
+                        if "searchBeamID" in fsp:
+                            if 1 <= int(fsp["searchBeamID"]) <= 1500:
+                                # Set searchBeamID attribute
+                                pass
+                            else:  # searchWindowID not in valid range
+                                msg = "'searchBeamID' must be within range 1-1500 (received {}).".format(
+                                    str(fsp["searchBeamID"])
+                                )
+                                self.__raise_configure_scan_fatal_error(msg)
+                        else:
+                            msg = "Search beam ID not specified for Fsp PSS config"
+                            self.__raise_configure_scan_fatal_error(msg)
+
+                            # Validate receptors.
+                            # This is always given, due to implementation details.
+                        if "receptors" in fsp:
+                            try:
+                                proxy_fsp_subarray.RemoveAllReceptors()
+                                proxy_fsp_subarray.AddReceptors(list(map(int, fsp["receptors"])))
+                                proxy_fsp_subarray.RemoveAllReceptors()
+                            except PyTango.DevFailed as df:  # error in AddReceptors()
+                                proxy_fsp_subarray.RemoveAllReceptors()
+                                msg = sys.exc_info()[1].args[0].desc + "\n'receptors' was malformed."
+                                self.logger.error(msg)
+                                PyTango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
+                                                               PyTango.ErrSeverity.ERR)
+                            pass
+                        else:
+                            msg = "'receptors' not specified for Fsp PSS config"
+                            self.__raise_configure_scan_fatal_error(msg)
+                        if "outputEnable" in fsp:
+                            if fsp["outputEnable"] is False or fsp["outputEnable"] is True:
+                                pass
+                            else:
+                                msg = "'outputEnabled' is not a valid boolean"
+                                self.__raise_configure_scan_fatal_error(msg)
+                        else:
+                            msg = "'outputEnable' not specified for Fsp PSS config"
+                            self.__raise_configure_scan_fatal_error(msg)
+                        if "averagingInterval" in fsp:
+                            if isinstance(fsp["averagingInterval"], int):
+                                pass
+                            else:
+                                msg = "'averagingInterval' is not a valid integer"
+                                self.__raise_configure_scan_fatal_error(msg)
+                        else:
+                            msg = "'averagingInterval' not specified for Fsp PSS config"
+                            self.__raise_configure_scan_fatal_error(msg)
+                        if "searchBeamDestinationAddress" in fsp:
+                            if validate_ip(fsp["searchBeamDestinationAddress"]):
+                                pass
+                            else:
+                                msg = "'searchBeamDestinationAddress' is not a valid IP address"
+                                self.__raise_configure_scan_fatal_error(msg)
+                        else:
+                            msg = "'searchBeamDestinationAddress' not specified for Fsp PSS config"
+                            self.__raise_configure_scan_fatal_error(msg)
+                        pssConfigs.update(fsp)
 
                     # This currently is what happens for CORR eventually it will be removed and sent to
                     # CbfSubarrayCORRConfig class to validate and then get sent to fsp_subarray
-
                     # pass on configuration to FSP Subarray
-                    proxy_fsp_subarray.ValidateScan(json.dumps(fsp))
-
+                    # proxy_fsp_subarray.ValidateScan(json.dumps(fsp))
                     proxy_fsp.unsubscribe_event(
                         proxy_fsp.subscribe_event(
                             "State",
@@ -668,8 +736,10 @@ class CbfSubarray(SKASubarray):
         else:
             msg = "'fsp' not given. Aborting configuration."
             self.__raise_configure_scan_fatal_error(msg)
-
         # At this point, everything has been validated.
+
+        # Send FSP to CbfSubarrayPssConfig Device to validate the rest of the fsp config and configure fsps
+        self._proxy_pss_config.ConfigureFSP(json.dumps(pssConfigs))
 
     def __raise_configure_scan_fatal_error(self, msg):
         self.logger.error(msg)
@@ -1361,7 +1431,8 @@ class CbfSubarray(SKASubarray):
                 fsp["band5Tuning"] = self._stream_tuning
 
             # pass on configuration to FSP Subarray
-            proxy_fsp_subarray.ConfigureScan(json.dumps(fsp))
+            # This has been phased out, now passing to function mode classes first
+            # proxy_fsp_subarray.ConfigureScan(json.dumps(fsp))
 
             # subscribe to FSP state and healthState changes
             event_id_state, event_id_health_state = proxy_fsp.subscribe_event(
@@ -1377,7 +1448,8 @@ class CbfSubarray(SKASubarray):
                                                                 event_id_health_state]
 
         # At this point, we can basically assume everything is properly configured
-        self.__generate_output_links(argin)  # published output links to outputLinksDistribution
+        # This has been phased out, now passing to function mode classes first
+        #self.__generate_output_links(argin)  # published output links to outputLinksDistribution
 
         # This state transition will be later
         self._obs_state = ObsState.READY.value

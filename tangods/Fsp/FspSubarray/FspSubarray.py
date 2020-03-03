@@ -537,7 +537,7 @@ class FspSubarray(SKASubarray):
         # This is always given, due to implementation details.
         try:
             self.RemoveAllReceptors()
-            self.AddReceptors(map(int, argin["receptors"]))
+            self.AddReceptors(list(map(int, argin["receptors"])))
             self.RemoveAllReceptors()
         except PyTango.DevFailed as df:  # error in AddReceptors()
             self.RemoveAllReceptors()
@@ -757,7 +757,6 @@ class FspSubarray(SKASubarray):
         # Configure receptors.
         self.RemoveAllReceptors()
         self.AddReceptors(map(int, argin["receptors"]))
-
         # Configure frequencySliceID.
         self._frequency_slice_ID = int(argin["frequencySliceID"])
 

@@ -188,78 +188,6 @@ class CbfSubarrayPssConfig(SKACapability):
             return True
         return False
 
-    def validate_pss_configuration(self, argin):
-        # try to deserialize input string to a JSON object
-        try:
-            argin = json.loads(argin)
-        except json.JSONDecodeError:  # argument not a valid JSON object
-            msg = "PSS configuration object is not a valid JSON object."
-            self.logger.error(msg)
-            PyTango.Except.throw_exception("Command failed", msg, "CbfSubarrayPssConfig execution",
-                                           PyTango.ErrSeverity.ERR)
-        if "searchWindowID" in argin:
-            if int(argin["searchWindowID"]) in [1, 2]:
-                # Set searchWindowID attribute
-                self._search_window_id = int(argin["searchWindowID"])
-                pass
-            else:  # searchWindowID not in valid range
-                msg = "'searchWindowID' must be one of [1, 2] (received {}).".format(
-                    str(argin["searchWindowID"])
-                )
-                self.logger.error(msg)
-                PyTango.Except.throw_exception("Command failed", msg,
-                                               "ConfigureSearchWindow execution",
-                                               PyTango.ErrSeverity.ERR)
-        else:
-            msg = "Search window specified, but 'searchWindowID' not given."
-            self.logger.error(msg)
-            PyTango.Except.throw_exception("Command failed", msg, "ConfigureSearchWindow execution",
-                                           PyTango.ErrSeverity.ERR)
-
-        if "searchBeamID" in argin:
-            if int(argin["searchBeamID"]) >= 1 and int(argin["searchBeamID"]) <= 1500:
-                # Set searchBeamID attribute
-                self._search_beam_id = int(argin["searchBeamID"])
-                pass
-            else:  # searchWindowID not in valid range
-                msg = "'searchBeamID' must be within range 1-1500 (received {}).".format(
-                    str(argin["searchBeamID"])
-                )
-                self.logger.error(msg)
-                PyTango.Except.throw_exception("Command failed", msg,
-                                               "ValidatePssConfiguration execution",
-                                               PyTango.ErrSeverity.ERR)
-        else:
-            msg = "Search beam ID specified, but 'searchBeamID' not given."
-            self.logger.error(msg)
-            PyTango.Except.throw_exception("Command failed", msg, "ValidatePssConfiguration execution",
-                                           PyTango.ErrSeverity.ERR)
-
-        # Validate receptors.
-        # This is always given, due to implementation details.
-        if "receptors" in argin:
-            try:
-                self.RemoveAllReceptors()
-                self.AddReceptors(map(int, argin["receptors"]))
-                self.RemoveAllReceptors()
-            except PyTango.DevFailed as df:  # error in AddReceptors()
-                self.RemoveAllReceptors()
-                msg = sys.exc_info()[1].args[0].desc + "\n'receptors' was malformed."
-                self.logger.error(msg)
-                PyTango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
-                                               PyTango.ErrSeverity.ERR)
-            pass
-            self._receptors = map(int, argin["receptors"])
-        else:
-            msg = "receptors specified, but 'receptors' not given."
-            self.logger.error(msg)
-            PyTango.Except.throw_exception("Command failed", msg, "ValidatePssConfiguration execution",
-                                           PyTango.ErrSeverity.ERR)
-
-        self._output_enable = 0
-        self._averaging_interval = 0
-        self._search_beam_address = 0
-
     # ------------------
     # Attributes methods
     # ------------------
@@ -357,55 +285,14 @@ class CbfSubarrayPssConfig(SKACapability):
     # --------
     # Commands
     # --------
-    @command()
-    def RemoveAllReceptors(self):
-        # PROTECTED REGION ID(CbfSubarrayPssConfig.RemoveAllReceptors) ENABLED START #
-        self.RemoveReceptors(self._receptors[:])
-        # PROTECTED REGION END #    //  CbfSubarrayPssConfig.RemoveAllReceptors
-
-    @command(
-        dtype_in=('uint16',),
-        doc_in="List of receptor IDs",
-    )
-    def AddReceptors(self, argin):
-        # PROTECTED REGION ID(CbfSubarrayPssConfig.AddReceptors) ENABLED START #
-        errs = []  # list of error messages
-        receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
-                               self._proxy_cbf_master.receptorToVcc)
-        for receptorID in argin:
-            try:
-                vccID = receptor_to_vcc[receptorID]
-                subarrayID = self._proxies_vcc[vccID - 1].subarrayMembership
-
-                # only add receptor if it belongs to the CBF subarray
-                if subarrayID != self._subarray_id:
-                    errs.append("Receptor {} does not belong to subarray {}.".format(
-                        str(receptorID), str(self._subarray_id)))
-                else:
-                    if receptorID not in self._receptors:
-                        self._receptors.append(receptorID)
-                    else:
-                        log_msg = "Receptor {} already assigned to current FSP subarray.".format(
-                            str(receptorID))
-                        self.logger.warn(log_msg)
-
-            except KeyError:  # invalid receptor ID
-                errs.append("Invalid receptor ID: {}".format(receptorID))
-
-        if errs:
-            msg = "\n".join(errs)
-            self.logger.error(msg)
-            PyTango.Except.throw_exception("Command failed", msg, "AddReceptors execution",
-                                           PyTango.ErrSeverity.ERR)
-        # PROTECTED REGION END #    // CbfSubarrayPssConfig.AddReceptors
-
     @command(
         dtype_in='str',
         doc_in='JSON object to configure a fsp'
     )
     def ConfigureFSP(self, argin):
         # input configuration has already been checked in CbfSubarray device for FspID configuration type = PSS or 0
-        self.ValidatePssConfiguration(argin)
+        argin = json.loads(argin)
+        self._fsp_id = argin["fspID"]
 
     @command(
         dtype_in='DevState',
