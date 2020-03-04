@@ -18,15 +18,15 @@ Copyright (c) 2019 National Research Council of Canada
 CBFMaster TANGO device class for the CBFMaster prototype
 """
 
-# PyTango imports
-import PyTango
-from PyTango import DebugIt
-from PyTango.server import run
-from PyTango.server import Device, DeviceMeta
-from PyTango.server import attribute, command
-from PyTango.server import device_property
-from PyTango import AttrQuality, DispLevel, DevState
-from PyTango import AttrWriteType, PipeWriteType
+# tango imports
+import tango
+from tango import DebugIt
+from tango.server import run
+from tango.server import Device
+from tango.server import attribute, command
+from tango.server import device_property
+from tango import AttrQuality, DispLevel, DevState
+from tango import AttrWriteType, PipeWriteType
 # Additional import
 # PROTECTED REGION ID(CbfMaster.additionnal_import) ENABLED START #
 # add the path to import global_enum package.
@@ -39,7 +39,7 @@ commons_pkg_path = os.path.abspath(os.path.join(file_path, "../../commons"))
 sys.path.insert(0, commons_pkg_path)
 
 from skabase.SKAMaster.SKAMaster import SKAMaster
-from global_enum import HealthState, AdminMode
+from skabase.control_model import HealthState, AdminMode
 # PROTECTED REGION END #    //  CbfMaster.additionnal_import
 
 __all__ = ["CbfMaster", "main"]
@@ -49,7 +49,6 @@ class CbfMaster(SKAMaster):
     """
     CBFMaster TANGO device class for the CBFMaster prototype
     """
-    __metaclass__ = DeviceMeta
     # PROTECTED REGION ID(CbfMaster.class_variable) ENABLED START #
 
     def __state_change_event_callback(self, event):
@@ -71,7 +70,7 @@ class CbfMaster(SKAMaster):
                         # should NOT happen!
                         log_msg = "Received health state change for unknown device " + \
                                   str(event.attr_name)
-                        self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+                        self.logger.warn(log_msg)
                         return
                 elif "state" in event.attr_name:
                     if "subarray" in device_name:
@@ -87,7 +86,7 @@ class CbfMaster(SKAMaster):
                         # should NOT happen!
                         log_msg = "Received state change for unknown device " + \
                                   str(event.attr_name)
-                        self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+                        self.logger.warn(log_msg)
                         return
                 elif "adminmode" in event.attr_name:
                     if "subarray" in device_name:
@@ -103,18 +102,18 @@ class CbfMaster(SKAMaster):
                         # should NOT happen!
                         log_msg = "Received admin mode change for unknown device " + \
                                   str(event.attr_name)
-                        self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+                        self.logger.warn(log_msg)
                         return
 
                 log_msg = "New value for " + str(event.attr_name) + " is " + \
                           str(event.attr_value.value)
-                self.dev_logging(log_msg, PyTango.LogLevel.LOG_DEBUG)
+                self.logger.debug(log_msg)
             except Exception as except_occurred:
-                self.dev_logging(str(except_occurred), PyTango.LogLevel.LOG_ERROR)
+                self.logger.error(str(except_occurred))
         else:
             for item in event.errors:
                 log_msg = item.reason + ": on attribute " + str(event.attr_name)
-                self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
+                self.logger.error(log_msg)
 
     def __membership_event_callback(self, event):
         if not event.err:
@@ -133,19 +132,19 @@ class CbfMaster(SKAMaster):
                     # should NOT happen!
                     log_msg = "Received event for unknown device " + str(
                         event.attr_name)
-                    self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+                    self.logger.warn(log_msg)
                     return
 
                 log_msg = "New value for " + str(event.attr_name) + " of device " + \
                           device_name + " is " + str(event.attr_value.value)
-                self.dev_logging(log_msg, PyTango.LogLevel.LOG_DEBUG)
+                self.logger.debug(log_msg)
 
             except Exception as except_occurred:
-                self.dev_logging(str(except_occurred), PyTango.LogLevel.LOG_ERROR)
+                self.logger.error(str(except_occurred))
         else:
             for item in event.errors:
                 log_msg = item.reason + ": on attribute " + str(event.attr_name)
-                self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
+                self.logger.error(log_msg)
 
     def __scan_ID_event_callback(self, event):
         if not event.err:
@@ -153,11 +152,11 @@ class CbfMaster(SKAMaster):
                 self._subarray_scan_ID[self._fqdn_subarray.index(event.device.dev_name())] = \
                     event.attr_value.value
             except Exception as except_occurred:
-                self.dev_logging(str(except_occurred), PyTango.LogLevel.LOG_ERROR)
+                self.logger.error(str(except_occurred))
         else:
             for item in event.errors:
                 log_msg = item.reason + ": on attribute " + str(event.attr_name)
-                self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
+                self.logger.error(log_msg)
 
     def __get_num_capabilities(self):
         # self._max_capabilities inherited from SKAMaster
@@ -178,8 +177,7 @@ class CbfMaster(SKAMaster):
             except KeyError:  # not found in DB
                 self._count_subarray = 16
         else:
-            self.dev_logging("MaxCapabilities device property not defined",
-                             PyTango.LogLevel.LOG_WARN)
+            self.logger.warn("MaxCapabilities device property not defined")
 
     # PROTECTED REGION END #    //  CbfMaster.class_variable
 
@@ -358,26 +356,26 @@ class CbfMaster(SKAMaster):
     def init_device(self):
         SKAMaster.init_device(self)
         # PROTECTED REGION ID(CbfMaster.init_device) ENABLED START #
-        self.set_state(PyTango.DevState.INIT)
+        self.set_state(tango.DevState.INIT)
 
         # defines self._count_vcc, self._count_fsp, and self._count_subarray
         self.__get_num_capabilities()
 
-        self._storage_logging_level = PyTango.LogLevel.LOG_DEBUG
-        self._element_logging_level = PyTango.LogLevel.LOG_DEBUG
-        self._central_logging_level = PyTango.LogLevel.LOG_DEBUG
+        self._storage_logging_level = tango.LogLevel.LOG_DEBUG
+        self._element_logging_level = tango.LogLevel.LOG_DEBUG
+        self._central_logging_level = tango.LogLevel.LOG_DEBUG
 
         # initialize attribute values
         self._command_progress = 0
-        self._report_vcc_state = [PyTango.DevState.UNKNOWN]*self._count_vcc
+        self._report_vcc_state = [tango.DevState.UNKNOWN]*self._count_vcc
         self._report_vcc_health_state = [HealthState.UNKNOWN.value]*self._count_vcc
         self._report_vcc_admin_mode = [AdminMode.ONLINE.value]*self._count_vcc
         self._report_vcc_subarray_membership = [0]*self._count_vcc
-        self._report_fsp_state = [PyTango.DevState.UNKNOWN]*self._count_fsp
+        self._report_fsp_state = [tango.DevState.UNKNOWN]*self._count_fsp
         self._report_fsp_health_state = [HealthState.UNKNOWN.value]*self._count_fsp
         self._report_fsp_admin_mode = [AdminMode.ONLINE.value]*self._count_fsp
         self._report_fsp_subarray_membership = [[] for i in range(self._count_fsp)]
-        self._report_subarray_state = [PyTango.DevState.UNKNOWN]*self._count_subarray
+        self._report_subarray_state = [tango.DevState.UNKNOWN]*self._count_subarray
         self._report_subarray_health_state = [HealthState.UNKNOWN.value]*self._count_subarray
         self._report_subarray_admin_mode = [AdminMode.ONLINE.value]*self._count_subarray
         self._frequency_offset_k = [0]*self._count_vcc
@@ -401,7 +399,7 @@ class CbfMaster(SKAMaster):
             receptorID = remaining[receptorIDIndex]
             self._receptor_to_vcc.append("{}:{}".format(receptorID, i))
             self._vcc_to_receptor.append("{}:{}".format(i, receptorID))
-            vcc_proxy = PyTango.DeviceProxy(self._fqdn_vcc[i - 1])
+            vcc_proxy = tango.DeviceProxy(self._fqdn_vcc[i - 1])
             vcc_proxy.receptorID = receptorID
             del remaining[receptorIDIndex]
 
@@ -412,13 +410,13 @@ class CbfMaster(SKAMaster):
         self._event_id = {}  # proxy:[eventID]
 
         # initialize groups
-        self._group_vcc = PyTango.Group("VCC")
+        self._group_vcc = tango.Group("VCC")
         for fqdn in self._fqdn_vcc:
             self._group_vcc.add(fqdn)
-        self._group_fsp = PyTango.Group("FSP")
+        self._group_fsp = tango.Group("FSP")
         for fqdn in self._fqdn_fsp:
             self._group_fsp.add(fqdn)
-        self._group_subarray = PyTango.Group("CBF Subarray")
+        self._group_subarray = tango.Group("CBF Subarray")
         for fqdn in self._fqdn_subarray:
             self._group_subarray.add(fqdn)
 
@@ -426,8 +424,8 @@ class CbfMaster(SKAMaster):
         for fqdn in self._fqdn_vcc + self._fqdn_fsp + self._fqdn_subarray:
             try:
                 log_msg = "Trying connection to " + fqdn + " device"
-                self.dev_logging(log_msg, int(PyTango.LogLevel.LOG_INFO))
-                device_proxy = PyTango.DeviceProxy(fqdn)
+                self.logger.info(log_msg)
+                device_proxy = tango.DeviceProxy(fqdn)
                 device_proxy.ping()
 
                 self._proxies[fqdn] = device_proxy
@@ -437,7 +435,7 @@ class CbfMaster(SKAMaster):
                 for attribute in ["adminMode", "healthState", "State"]:
                     events.append(
                         device_proxy.subscribe_event(
-                            attribute, PyTango.EventType.CHANGE_EVENT,
+                            attribute, tango.EventType.CHANGE_EVENT,
                             self.__state_change_event_callback, stateless=True
                         )
                     )
@@ -446,7 +444,7 @@ class CbfMaster(SKAMaster):
                 if "vcc" in fqdn or "fsp" in fqdn:
                     events.append(
                         device_proxy.subscribe_event(
-                            "subarrayMembership", PyTango.EventType.CHANGE_EVENT,
+                            "subarrayMembership", tango.EventType.CHANGE_EVENT,
                             self.__membership_event_callback, stateless=True
                         )
                     )
@@ -455,18 +453,18 @@ class CbfMaster(SKAMaster):
                 if "subarray" in fqdn:
                     events.append(
                         device_proxy.subscribe_event(
-                            "scanID", PyTango.EventType.CHANGE_EVENT,
+                            "scanID", tango.EventType.CHANGE_EVENT,
                             self.__scan_ID_event_callback, stateless=True
                         )
                     )
 
                 self._event_id[device_proxy] = events
-            except PyTango.DevFailed as df:
+            except tango.DevFailed as df:
                 for item in df.args:
                     log_msg = "Failure in connection to " + fqdn + " device: " + str(item.reason)
-                    self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
+                    self.logger.error(log_msg)
 
-        self.set_state(PyTango.DevState.STANDBY)
+        self.set_state(tango.DevState.STANDBY)
         # PROTECTED REGION END #    //  CbfMaster.init_device
 
     def always_executed_hook(self):
@@ -484,7 +482,7 @@ class CbfMaster(SKAMaster):
         self._group_subarray.command_inout("Off")
         self._group_vcc.command_inout("Off")
         self._group_fsp.command_inout("Off")
-        self.set_state(PyTango.DevState.OFF)
+        self.set_state(tango.DevState.OFF)
         # PROTECTED REGION END #    //  CbfMaster.delete_device
 
     # ------------------
@@ -563,7 +561,7 @@ class CbfMaster(SKAMaster):
         else:
             log_msg = "Skipped writing to frequencyOffsetK attribute (expected {} arguments, "\
                 "but received {}.".format(self._count_vcc, len(value))
-            self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+            self.logger.warn(log_msg)
         # PROTECTED REGION END #    //  CbfMaster.frequencyOffsetK_write
 
     def read_frequencyOffsetDeltaF(self):
@@ -578,7 +576,7 @@ class CbfMaster(SKAMaster):
         else:
             log_msg = "Skipped writing to frequencyOffsetDeltaF attribute (expected {} arguments, "\
                 "but received {}.".format(self._count_vcc, len(value))
-            self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+            self.logger.warn(log_msg)
         # PROTECTED REGION END #    //  CbfMaster.frequencyOffsetDeltaF_write
 
     def read_reportSubarrayState(self):
@@ -601,7 +599,7 @@ class CbfMaster(SKAMaster):
     # --------
 
     def is_On_allowed(self):
-        if self.dev_state() == PyTango.DevState.STANDBY:
+        if self.dev_state() == tango.DevState.STANDBY:
             return True
         return False
 
@@ -611,11 +609,11 @@ class CbfMaster(SKAMaster):
         self._group_subarray.command_inout("On")
         self._group_vcc.command_inout("On")
         self._group_fsp.command_inout("On")
-        self.set_state(PyTango.DevState.ON)
+        self.set_state(tango.DevState.ON)
         # PROTECTED REGION END #    //  CbfMaster.On
 
     def is_Off_allowed(self):
-        if self.dev_state() == PyTango.DevState.STANDBY:
+        if self.dev_state() == tango.DevState.STANDBY:
             return True
         return False
 
@@ -625,11 +623,11 @@ class CbfMaster(SKAMaster):
         self._group_subarray.command_inout("Off")
         self._group_vcc.command_inout("Off")
         self._group_fsp.command_inout("Off")
-        self.set_state(PyTango.DevState.OFF)
+        self.set_state(tango.DevState.OFF)
         # PROTECTED REGION END #    //  CbfMaster.Off
 
     def is_Standby_allowed(self):
-        if self.dev_state() == PyTango.DevState.ON:
+        if self.dev_state() == tango.DevState.ON:
             return True
         return False
 
@@ -639,7 +637,7 @@ class CbfMaster(SKAMaster):
         self._group_subarray.command_inout("Off")
         self._group_vcc.command_inout("Off")
         self._group_fsp.command_inout("Off")
-        self.set_state(PyTango.DevState.STANDBY)
+        self.set_state(tango.DevState.STANDBY)
         # PROTECTED REGION END #    //  CbfMaster.Standby
 
 # ----------

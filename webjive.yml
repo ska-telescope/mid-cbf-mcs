@@ -5,7 +5,7 @@ volumes:
 
 services:
   webjive:
-    image: nexus.engageska-portugal.pt/ska-docker/webjive-develop_webjive:0.1.1
+    image: nexus.engageska-portugal.pt/ska-docker/webjive-develop_webjive:latest
     container_name: webjive
     network_mode: ${NETWORK_MODE}
     depends_on:

@@ -18,15 +18,15 @@ Copyright (c) 2019 National Research Council of Canada
 TmCspSubarrayLeafNodeTest TANGO device class for the CBF prototype
 """
 
-# PyTango imports
-import PyTango
-from PyTango import DebugIt
-from PyTango.server import run
-from PyTango.server import Device, DeviceMeta
-from PyTango.server import attribute, command
-from PyTango.server import device_property
-from PyTango import AttrQuality, DispLevel, DevState
-from PyTango import AttrWriteType, PipeWriteType
+# tango imports
+import tango
+from tango import DebugIt
+from tango.server import run
+from tango.server import Device
+from tango.server import attribute, command
+from tango.server import device_property
+from tango import AttrQuality, DispLevel, DevState
+from tango import AttrWriteType, PipeWriteType
 # Additional import
 # PROTECTED REGION ID(TmCspSubarrayLeafNodeTest.additionnal_import) ENABLED START #
 import os
@@ -39,7 +39,7 @@ commons_pkg_path = os.path.abspath(os.path.join(file_path, "../commons"))
 sys.path.insert(0, commons_pkg_path)
 
 from skabase.SKABaseDevice.SKABaseDevice import SKABaseDevice
-from global_enum import HealthState, AdminMode
+from skabase.control_model import HealthState, AdminMode
 # PROTECTED REGION END #    //  TmCspSubarrayLeafNodeTest.additionnal_import
 
 __all__ = ["TmCspSubarrayLeafNodeTest", "main"]
@@ -49,31 +49,30 @@ class TmCspSubarrayLeafNodeTest(SKABaseDevice):
     """
     TmCspSubarrayLeafNodeTest TANGO device class for the CBF prototype
     """
-    __metaclass__ = DeviceMeta
     # PROTECTED REGION ID(TmCspSubarrayLeafNodeTest.class_variable) ENABLED START #
 
     def __output_links_event_callback(self, event):
         if not event.err:
             try:
                 log_msg = "Received output links."
-                self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+                self.logger.warn(log_msg)
 
                 output_links = json.loads(str(event.attr_value.value))
                 scan_ID = int(output_links["scanID"])
 
                 if not scan_ID or self._received_output_links:
                     log_msg = "Skipped assigning destination addresses."
-                    self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+                    self.logger.warn(log_msg)
                     return
 
                 self._scan_ID = scan_ID
                 self.__generate_visibilities_destination_addresses(output_links)
             except Exception as e:
-                self.dev_logging(str(e), PyTango.LogLevel.LOG_ERROR)
+                self.logger.error(str(e))
         else:
             for item in event.errors:
                 log_msg = item.reason + ": on attribute " + str(event.attr_name)
-                self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
+                self.logger.error(log_msg)
 
     def __generate_visibilities_destination_addresses(self, output_links):
         destination_addresses = {
@@ -108,7 +107,7 @@ class TmCspSubarrayLeafNodeTest(SKABaseDevice):
             destination_addresses["receiveAddresses"].append(fsp)
 
         log_msg = "Done assigning destination addresses."
-        self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+        self.logger.warn(log_msg)
         # publish the destination addresses
         self._vis_destination_address = destination_addresses
         self.push_change_event("visDestinationAddress", json.dumps(self._vis_destination_address))
@@ -178,9 +177,9 @@ class TmCspSubarrayLeafNodeTest(SKABaseDevice):
         # PROTECTED REGION ID(TmCspSubarrayLeafNodeTest.init_device) ENABLED START #
         self.set_state(DevState.INIT)
 
-        self._storage_logging_level = PyTango.LogLevel.LOG_DEBUG
-        self._element_logging_level = PyTango.LogLevel.LOG_DEBUG
-        self._central_logging_level = PyTango.LogLevel.LOG_DEBUG
+        self._storage_logging_level = tango.LogLevel.LOG_DEBUG
+        self._element_logging_level = tango.LogLevel.LOG_DEBUG
+        self._central_logging_level = tango.LogLevel.LOG_DEBUG
 
         self._scan_ID = 0
         self._doppler_phase_correction = [0, 0, 0, 0]
@@ -188,15 +187,15 @@ class TmCspSubarrayLeafNodeTest(SKABaseDevice):
         self._vis_destination_address = {}  # this is interpreted as a JSON object
         self._received_output_links = False
 
-        self._proxy_csp_master = PyTango.DeviceProxy(self.CspMasterAddress)
-        self._proxy_cbf_master = PyTango.DeviceProxy(
+        self._proxy_csp_master = tango.DeviceProxy(self.CspMasterAddress)
+        self._proxy_cbf_master = tango.DeviceProxy(
             self._proxy_csp_master.get_property("CspMidCbf")["CspMidCbf"][0]
         )
-        self._proxy_csp_subarray = PyTango.DeviceProxy(self.CspSubarrayAddress)
+        self._proxy_csp_subarray = tango.DeviceProxy(self.CspSubarrayAddress)
 
         self._proxy_csp_subarray.subscribe_event(
             "cbfOutputLink",
-            PyTango.EventType.CHANGE_EVENT,
+            tango.EventType.CHANGE_EVENT,
             self.__output_links_event_callback,
             stateless=True
         )
@@ -236,10 +235,10 @@ class TmCspSubarrayLeafNodeTest(SKABaseDevice):
             else:
                 log_msg = "Writing to dopplerPhaseCorrection attribute expected 4 elements, \
                     but received {}. Ignoring.".format(len(value))
-                self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
+                self.logger.error(log_msg)
         except TypeError:  # value is not an array
             log_msg = "dopplerPhaseCorrection attribute must be an array of length 4. Ignoring."
-            self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
+            self.logger.error(log_msg)
         # PROTECTED REGION END #    //  TmCspSubarrayLeafNodeTest.dopplerPhaseCorrection_write
 
     def read_delayModel(self):

@@ -18,15 +18,15 @@ Copyright (c) 2019 National Research Council of Canada
 SearchWindow TANGO device class for the prototype
 """
 
-# PyTango imports
-import PyTango
-from PyTango import DebugIt
-from PyTango.server import run
-from PyTango.server import Device, DeviceMeta
-from PyTango.server import attribute, command
-from PyTango.server import device_property
-from PyTango import AttrQuality, DispLevel, DevState
-from PyTango import AttrWriteType, PipeWriteType
+# tango imports
+import tango
+from tango import DebugIt
+from tango.server import run
+from tango.server import Device
+from tango.server import attribute, command
+from tango.server import device_property
+from tango import AttrQuality, DispLevel, DevState
+from tango import AttrWriteType, PipeWriteType
 # Additional import
 # PROTECTED REGION ID(SearchWindow.additionnal_import) ENABLED START #
 import os
@@ -37,7 +37,7 @@ file_path = os.path.dirname(os.path.abspath(__file__))
 commons_pkg_path = os.path.abspath(os.path.join(file_path, "../../commons"))
 sys.path.insert(0, commons_pkg_path)
 
-from global_enum import HealthState, AdminMode
+from skabase.control_model import HealthState, AdminMode
 from skabase.SKACapability.SKACapability import SKACapability
 # PROTECTED REGION END #    //  SearchWindow.additionnal_import
 
@@ -48,7 +48,6 @@ class SearchWindow(SKACapability):
     """
     SearchWindow TANGO device class for the prototype
     """
-    __metaclass__ = DeviceMeta
     # PROTECTED REGION ID(SearchWindow.class_variable) ENABLED START #
     # PROTECTED REGION END #    //  SearchWindow.class_variable
 
@@ -109,7 +108,7 @@ class SearchWindow(SKACapability):
     def init_device(self):
         SKACapability.init_device(self)
         # PROTECTED REGION ID(SearchWindow.init_device) ENABLED START #
-        self.set_state(PyTango.DevState.INIT)
+        self.set_state(tango.DevState.INIT)
 
         # initialize attribute values
         self._search_window_tuning = 0
@@ -119,7 +118,7 @@ class SearchWindow(SKACapability):
         self._period_after_epoch = 0
         self._destination_address = {}  # this is interpreted as a JSON object
 
-        self.set_state(PyTango.DevState.OFF)
+        self.set_state(tango.DevState.OFF)
         # PROTECTED REGION END #    //  SearchWindow.init_device
 
     def always_executed_hook(self):
