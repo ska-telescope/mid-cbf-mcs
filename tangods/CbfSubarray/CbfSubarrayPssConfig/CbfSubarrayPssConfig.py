@@ -149,8 +149,8 @@ class CbfSubarrayPssConfig(SKACapability):
         self.set_state(PyTango.DevState.INIT)
 
         # initialize attribute values
-        self._enable_Pss = False
-        self._pss_Config = {}  # this is interpreted as a JSON object
+        self._pss_enable = False
+        self._pss_config = {}  # this is interpreted as a JSON object
 
         self._fsp_id = 0
         self._search_window_id = 0
@@ -187,6 +187,11 @@ class CbfSubarrayPssConfig(SKACapability):
                 self._obs_state in [ObsState.IDLE.value, ObsState.READY.value]:
             return True
         return False
+
+    def __raise_configure_scan_fatal_error(self, msg):
+        self.logger.error(msg)
+        PyTango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
+                                       PyTango.ErrSeverity.ERR)
 
     # ------------------
     # Attributes methods
@@ -263,23 +268,23 @@ class CbfSubarrayPssConfig(SKACapability):
 
     def read_PssEnable(self):
         # PROTECTED REGION ID(CbfSubarrayPssConfig.read_PssEnable) ENABLED START #
-        return self._enable_Pss
+        return self._pss_enable
         # PROTECTED REGION END #    // CbfSubarrayPssConfig.read_PssEnable
 
     def write_PssEnable(self, value):
         # PROTECTED REGION ID(CbfSubarrayPssConfig.write_PssEnable) ENABLED START #
-        self._enable_Pss = value
+        self._pss_enable = value
         # PROTECTED REGION END #    //  CbfSubarrayPssConfig.write_PssEnable
 
     def read_PssConfig(self):
         # PROTECTED REGION ID(CbfSubarrayPssConfig.read_PssConfig) ENABLED START #
-        return json.dumps(self._pss_Config)
+        return json.dumps(self._pss_config)
         # PROTECTED REGION END #    //  CbfSubarrayPssConfig.read_PssConfig
 
     def write_PssConfig(self, value):
         # PROTECTED REGION ID(CbfSubarrayPssConfig.write_PssConfig) ENABLED START #
         # if value is not valid JSON, the exception is caught by CbfSubarray.ConfigureScan()
-        self._pss_Config = json.loads(value)
+        self._pss_config = json.loads(value)
         # PROTECTED REGION END #    //  CbfSubarrayPssConfig.write_PssConfig
 
     # --------
@@ -291,8 +296,26 @@ class CbfSubarrayPssConfig(SKACapability):
     )
     def ConfigureFSP(self, argin):
         # input configuration has already been checked in CbfSubarray device for FspID configuration type = PSS or 0
-        argin = json.loads(argin)
-        self._fsp_id = argin["fspID"]
+        try:
+            argin = json.loads(argin)
+            self._pss_config = argin
+        except json.JSONDecodeError:  # argument not a valid JSON object
+            msg = "Configuration object is not a valid JSON object. Aborting configuration."
+            self.__raise_configure_scan_fatal_error(msg)
+
+        for fsp in argin:
+            try:
+                self._fsp_id = fsp["fspID"]
+                self._search_window_id = int(fsp["searchWindowID"])
+                self._search_beam_id = int(fsp["searchBeamID"])
+                self._receptors = fsp["receptors"]
+                self._output_enable = bool(fsp["outputEnable"])
+                self._averaging_interval = int(fsp["averagingInterval"])
+                self._search_beam_address = fsp["searchBeamDestinationAddress"]
+            except PyTango.DevFailed:  # exception in ConfigureScan
+                msg = "An exception occurred while configuring CbfSubarrayPssConfig attributes:\n{}\n" \
+                  "Aborting configuration".format(sys.exc_info()[1].args[0].desc)
+                self.__raise_configure_scan_fatal_error(msg)
 
     @command(
         dtype_in='DevState',
@@ -306,7 +329,6 @@ class CbfSubarrayPssConfig(SKACapability):
 # ----------
 # Run server
 # ----------
-
 
 def main(args=None, **kwargs):
     # PROTECTED REGION ID(CbfSubarrayPssConfig.main) ENABLED START #

@@ -338,7 +338,7 @@ class CbfSubarray(SKASubarray):
 
     def __validate_scan_configuration(self, argin):
         # try to deserialize input string to a JSON object
-        pssConfigs = {}
+        pssConfigs = []
         try:
             argin = json.loads(argin)
         except json.JSONDecodeError:  # argument not a valid JSON object
@@ -565,7 +565,6 @@ class CbfSubarray(SKASubarray):
                 self.__raise_configure_scan_fatal_error(msg)
         else:
             pass
-
         # Validate fsp.
         if "fsp" in argin:
             for fsp in argin["fsp"]:
@@ -709,7 +708,8 @@ class CbfSubarray(SKASubarray):
                         else:
                             msg = "'searchBeamDestinationAddress' not specified for Fsp PSS config"
                             self.__raise_configure_scan_fatal_error(msg)
-                        pssConfigs.update(fsp)
+                        pssConfigs.append(fsp)
+
 
                     # This currently is what happens for CORR eventually it will be removed and sent to
                     # CbfSubarrayCORRConfig class to validate and then get sent to fsp_subarray
