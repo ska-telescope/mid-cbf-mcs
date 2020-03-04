@@ -5,7 +5,7 @@ image: nexus.engageska-portugal.pt/ska-docker/tango-builder:latest
 
 variables:
   DOCKER_DRIVER: overlay2
-  DOCKER_HOST: tcp://docker:2375
+  # DOCKER_HOST: tcp://docker:2375
 
 
 services:
@@ -27,13 +27,13 @@ before_script:
 # It is also specified that only the master branch will be subject of this job.
 
 stages:
-  - test        
+  - test
   - publish
   - pages
 
 test:
-#  tags:
-#    - docker-executor
+  tags:
+    - docker-executor
   stage: test
   script:
     - sudo make build
@@ -52,7 +52,7 @@ publish image:
 
 pages:
   stage: pages
-  dependencies: 
+  dependencies:
      - test
   script:
    - mkdir .public
