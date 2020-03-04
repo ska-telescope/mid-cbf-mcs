@@ -189,7 +189,7 @@ class TmCspSubarrayLeafNodeTest(SKABaseDevice):
 
         self._proxy_csp_master = tango.DeviceProxy(self.CspMasterAddress)
         self._proxy_cbf_master = tango.DeviceProxy(
-            self._proxy_csp_master.get_property("CspMidCbf")["CspMidCbf"][0]
+            self._proxy_csp_master.cbfMasterAddress
         )
         self._proxy_csp_subarray = tango.DeviceProxy(self.CspSubarrayAddress)
 

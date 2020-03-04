@@ -132,7 +132,7 @@ test: build up ## test the application
 	$(call make,test); \
 	  status=$$?; \
 	  rm -fr build; \
-	  #docker-compose $(COMPOSE_FILE_ARGS) logs;
+	  docker-compose -f mid-cbf-mcs.yml -f tango.yml logs;
 	  docker cp $(BUILD):/build .; \
 	  docker rm -f -v $(BUILD); \
 	  $(MAKE) down; \
