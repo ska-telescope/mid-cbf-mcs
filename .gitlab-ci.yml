@@ -1,20 +1,20 @@
 # GitLab CI in conjunction with GitLab Runner can use Docker Engine to test and build any application.
 # Docker, when used with GitLab CI, runs each job in a separate and isolated container using the predefined image that is set up in .gitlab-ci.yml.
 # In this case we use the latest python docker image to build and test this project.
+image: nexus.engageska-portugal.pt/ska-docker/tango-builder:latest
+
 variables:
   DOCKER_DRIVER: overlay2
+  DOCKER_HOST: tcp://docker:2375
+
 
 services:
-   - docker:dind
-include:
-  - local: csp-lmc-common/.gitlab-ci.yml
-  - local: csp-lmc-mid/.gitlab-ci.yml
+  - docker:dind
 
 # cache is used to specify a list of files and directories which should be cached between jobs. You can only use paths that are within the project workspace.
 # If cache is defined outside the scope of jobs, it means it is set globally and all jobs will use that definition
 cache:
   paths:
-
 
 # before_script is used to define the command that should be run before all jobs, including deploy jobs, but after the restoration of artifacts.
 # This can be an array or a multi-line string.
@@ -30,34 +30,6 @@ stages:
   - test        
   - publish
   - pages
-
-.install_pip: &install_pip |-
-  apt-get -y update && apt-get install -yq curl python3-distutils
-  curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py && python3 get-pip.py
-
-clean shell runner:
-  stage: .pre
-  tags:
-    - docker-executor
-  script:
-    # Gitlab CI badges creation
-    - rm -rf build/*
-
-create ci metrics:
-  stage: .post
-  image: nexus.engageska-portugal.pt/ska-docker/ska-python-buildenv:latest
-  when: always
-  tags:
-    - docker-executor
-  script:
-    # Gitlab CI badges creation: START
-    - apt-get -y update
-    - apt-get install -y curl --no-install-recommends
-    - curl -s https://gitlab.com/ska-telescope/ci-metrics-utilities/raw/master/scripts/ci-badges-func.sh | sh
-    # Gitlab CI badges creation: END
-  artifacts:
-    paths:
-      - ./build
 
 test:
 #  tags:
