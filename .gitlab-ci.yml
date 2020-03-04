@@ -32,8 +32,8 @@ stages:
   - pages
 
 test:
-#  tags:
-#    - docker-executor
+  tags:
+    - docker-executor
   stage: test
   script:
     - make build
