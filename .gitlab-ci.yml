@@ -36,8 +36,8 @@ test:
 #    - docker-executor
   stage: test
   script:
-    - make build
-    - make test
+    - sudo make build
+    - sudo make test
   artifacts:
     paths:
       - build
@@ -47,7 +47,7 @@ publish image:
 #    - docker-executor
   stage: publish
   script:
-    - make push
+    - sudo make push
   when: manual
 
 pages:
@@ -56,10 +56,10 @@ pages:
      - test
   script:
    - mkdir .public
-   - cp build/cbf*.* .public
-   - cp -r build/cbf_master_htmlcov/* .public
-   - cp -r build/cbf_subarray_htmlcov/* .public
-   - mv .public public
+   - sudo cp build/cbf*.* .public
+   - sudo cp -r build/cbf_master_htmlcov/* .public
+   - sudo cp -r build/cbf_subarray_htmlcov/* .public
+   - sudo mv .public public
   artifacts:
     paths:
       - public

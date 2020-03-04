@@ -710,10 +710,8 @@ class CbfSubarray(SKASubarray):
                             self.__raise_configure_scan_fatal_error(msg)
                         pssConfigs.append(fsp)
 
-
                     # This currently is what happens for CORR eventually it will be removed and sent to
                     # CbfSubarrayCORRConfig class to validate and then get sent to fsp_subarray
-                    # pass on configuration to FSP Subarray
                     # proxy_fsp_subarray.ValidateScan(json.dumps(fsp))
                     proxy_fsp.unsubscribe_event(
                         proxy_fsp.subscribe_event(

@@ -125,13 +125,6 @@ class CbfSubarrayPssConfig(SKACapability):
         doc="Destination addresses (MAC address, IP address, port) for Mid.CBF output products. ",
     )
 
-    PssEnable = attribute(
-        dtype='bool',
-        access=AttrWriteType.READ_WRITE,
-        label="Enable transient data capture",
-        doc="Enable transient data capture"
-    )
-
     PssConfig = attribute(
         dtype='str',
         access=AttrWriteType.READ_WRITE,
@@ -149,9 +142,7 @@ class CbfSubarrayPssConfig(SKACapability):
         self.set_state(PyTango.DevState.INIT)
 
         # initialize attribute values
-        self._pss_enable = False
         self._pss_config = {}  # this is interpreted as a JSON object
-
         self._fsp_id = 0
         self._search_window_id = 0
         self._search_beam_id = 0
@@ -265,16 +256,6 @@ class CbfSubarrayPssConfig(SKACapability):
         # PROTECTED REGION ID(CbfSubarrayPssConfig.write_searchBeamAddress) ENABLED START #
         self._search_beam_address = value
         # PROTECTED REGION END #    //  CbfSubarrayPssConfig.write_searchBeamAddress
-
-    def read_PssEnable(self):
-        # PROTECTED REGION ID(CbfSubarrayPssConfig.read_PssEnable) ENABLED START #
-        return self._pss_enable
-        # PROTECTED REGION END #    // CbfSubarrayPssConfig.read_PssEnable
-
-    def write_PssEnable(self, value):
-        # PROTECTED REGION ID(CbfSubarrayPssConfig.write_PssEnable) ENABLED START #
-        self._pss_enable = value
-        # PROTECTED REGION END #    //  CbfSubarrayPssConfig.write_PssEnable
 
     def read_PssConfig(self):
         # PROTECTED REGION ID(CbfSubarrayPssConfig.read_PssConfig) ENABLED START #
