@@ -38,7 +38,7 @@ file_path = os.path.dirname(os.path.abspath(__file__))
 commons_pkg_path = os.path.abspath(os.path.join(file_path, "../../commons"))
 sys.path.insert(0, commons_pkg_path)
 
-from global_enum import HealthState, AdminMode
+from global_enum import HealthState, AdminMode, ObsState, const
 from skabase.SKACapability.SKACapability import SKACapability
 # PROTECTED REGION END #    //  CbfSubarrayPssConfig.additionnal_import
 
@@ -151,7 +151,7 @@ class CbfSubarrayPssConfig(SKACapability):
         self._averaging_interval = 0
         self._search_beam_address = ""
 
-        # Getting Proxies for FSP and FSP Subarray
+        # Getting Proxies for FSP and FSP Subarrays
         self._proxy_cbf_master = PyTango.DeviceProxy(self.CbfMasterAddress)
         self._master_max_capabilities = dict(
             pair.split(":") for pair in
@@ -160,7 +160,8 @@ class CbfSubarrayPssConfig(SKACapability):
         self._proxies_fsp = [*map(PyTango.DeviceProxy, list(self.FSP)[:int(self._master_max_capabilities["FSP"])])]
         self._proxies_fsp_subarray = [*map(PyTango.DeviceProxy, list(self.FspSubarray))]
 
-        self.set_state(PyTango.DevState.OFF)
+        self._obs_state = ObsState.IDLE.value
+        self.set_state(PyTango.DevState.ON)
         # PROTECTED REGION END #    //  CbfSubarrayPssConfig.init_device
 
     def always_executed_hook(self):
@@ -277,12 +278,18 @@ class CbfSubarrayPssConfig(SKACapability):
     )
     def ConfigureFSP(self, argin):
         # input configuration has already been checked in CbfSubarray device for FspID configuration type = PSS or 0
+        if self._obs_state not in [ObsState.IDLE.value, ObsState.READY.value]:
+            msg = "Device not in IDLE or READY obsState."
+            self.logger.error(msg)
+            PyTango.Except.throw_exception("Command failed", msg, "ConfigureFSP execution",
+                                           PyTango.ErrSeverity.ERR)
         try:
             argin = json.loads(argin)
             self._pss_config = argin
         except json.JSONDecodeError:  # argument not a valid JSON object
             msg = "Configuration object is not a valid JSON object. Aborting configuration."
             self.__raise_configure_scan_fatal_error(msg)
+        self._obs_state = ObsState.CONFIGURING.value
 
         for fsp in argin:
             try:
@@ -297,6 +304,43 @@ class CbfSubarrayPssConfig(SKACapability):
                 msg = "An exception occurred while configuring CbfSubarrayPssConfig attributes:\n{}\n" \
                   "Aborting configuration".format(sys.exc_info()[1].args[0].desc)
                 self.__raise_configure_scan_fatal_error(msg)
+
+        self._obs_state = ObsState.READY.value
+
+    def is_EndScan_allowed(self):
+        if self.dev_state() == PyTango.DevState.ON:
+            return True
+        return False
+
+    @command()
+    def EndScan(self):
+        # PROTECTED REGION ID(CbfSubarrayPssConfig.EndScan) ENABLED START #
+        if self._obs_state != ObsState.SCANNING.value:
+            msg = "Device not in SCANNING obsState."
+            self.logger.error(msg)
+            PyTango.Except.throw_exception("Command failed", msg, "EndScan execution",
+                                           PyTango.ErrSeverity.ERR)
+
+        self._obs_state = ObsState.READY.value
+        # PROTECTED REGION END #    //  CbfSubarrayPssConfig.EndScan
+
+    def is_Scan_allowed(self):
+        if self.dev_state() == PyTango.DevState.ON:
+            return True
+        return False
+
+    @command()
+    def Scan(self, argin):
+        # PROTECTED REGION ID(CbfSubarrayPssConfig.Scan) ENABLED START #
+        if self._obs_state != ObsState.READY.value:
+            msg = "Device not in READY obsState."
+            self.logger.error(msg)
+            PyTango.Except.throw_exception("Command failed", msg, "Scan execution",
+                                           PyTango.ErrSeverity.ERR)
+        # TODO: actually use argin
+        # For MVP, ignore argin (activation time)
+        self._obs_state = ObsState.SCANNING.value
+        # PROTECTED REGION END #    //  CbfSubarrayPssConfig.Scan
 
     @command(
         dtype_in='DevState',

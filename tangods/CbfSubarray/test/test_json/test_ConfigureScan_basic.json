@@ -71,6 +71,16 @@
             "frequencySliceID": 20,
             "corrBandwidth": 0,
             "integrationTime": 1400
+        },
+        {
+            "fspID": 3,
+            "functionMode": "PSS-BF",
+            "searchWindowID": 2,
+            "searchBeamID": 300,
+            "receptors": [3],
+            "outputEnable": true,
+            "averagingInterval": 4,
+            "searchBeamDestinationAddress": "10.1.1.1"
         }
     ]
 }

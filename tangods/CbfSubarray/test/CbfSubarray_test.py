@@ -319,10 +319,11 @@ class TestCbfSubarray:
 
         # add receptors
         create_subarray_1_proxy.RemoveAllReceptors()
-        create_subarray_1_proxy.AddReceptors([1, 4])
+        create_subarray_1_proxy.AddReceptors([1, 3, 4])
         time.sleep(1)
         assert create_subarray_1_proxy.receptors[0] == 1
-        assert create_subarray_1_proxy.receptors[1] == 4
+        assert create_subarray_1_proxy.receptors[1] == 3
+        assert create_subarray_1_proxy.receptors[2] == 4
 
         # configure scan
         f = open(file_path + "/test_json/test_ConfigureScan_basic.json")
@@ -422,7 +423,7 @@ class TestCbfSubarray:
 
         # check configured attributes of FSP subarrays
         # first for FSP 1...
-        assert create_fsp_1_subarray_1_proxy.receptors == (4,)
+        assert create_fsp_1_subarray_1_proxy.receptors == 4
         assert create_fsp_1_subarray_1_proxy.frequencyBand == 4
         assert create_fsp_1_subarray_1_proxy.band5Tuning[0] == 5.85
         assert create_fsp_1_subarray_1_proxy.band5Tuning[1] == 7.25
@@ -475,7 +476,7 @@ class TestCbfSubarray:
 
         # then for FSP 2...
         assert create_fsp_2_subarray_1_proxy.receptors[0] == 1
-        assert create_fsp_2_subarray_1_proxy.receptors[1] == 4
+        assert create_fsp_2_subarray_1_proxy.receptors[2] == 4
         assert create_fsp_2_subarray_1_proxy.frequencyBand == 4
         assert create_fsp_2_subarray_1_proxy.band5Tuning[0] == 5.85
         assert create_fsp_2_subarray_1_proxy.band5Tuning[1] == 7.25
@@ -566,10 +567,11 @@ class TestCbfSubarray:
 
         # add receptors
         create_subarray_1_proxy.RemoveAllReceptors()
-        create_subarray_1_proxy.AddReceptors([1, 4])
+        create_subarray_1_proxy.AddReceptors([1, 3, 4])
         time.sleep(1)
         assert create_subarray_1_proxy.receptors[0] == 1
-        assert create_subarray_1_proxy.receptors[1] == 4
+        assert create_subarray_1_proxy.receptors[1] == 3
+        assert create_subarray_1_proxy.receptors[2] == 4
 
         # configure scan
         f = open(file_path + "/test_json/test_ConfigureScan_basic.json")
@@ -643,10 +645,11 @@ class TestCbfSubarray:
 
         # add receptors
         create_subarray_1_proxy.RemoveAllReceptors()
-        create_subarray_1_proxy.AddReceptors([1, 4])
+        create_subarray_1_proxy.AddReceptors([1, 3, 4])
         time.sleep(1)
         assert create_subarray_1_proxy.receptors[0] == 1
-        assert create_subarray_1_proxy.receptors[1] == 4
+        assert create_subarray_1_proxy.receptors[1] == 3
+        assert create_subarray_1_proxy.receptors[2] == 4
 
         # configure scan
         f = open(file_path + "/test_json/test_ConfigureScan_basic.json")
@@ -801,10 +804,11 @@ class TestCbfSubarray:
 
         # add receptors
         create_subarray_1_proxy.RemoveAllReceptors()
-        create_subarray_1_proxy.AddReceptors([1, 4])
+        create_subarray_1_proxy.AddReceptors([1, 3, 4])
         time.sleep(1)
         assert create_subarray_1_proxy.receptors[0] == 1
-        assert create_subarray_1_proxy.receptors[1] == 4
+        assert create_subarray_1_proxy.receptors[1] == 3
+        assert create_subarray_1_proxy.receptors[2] == 4
 
         # configure scan
         f = open(file_path + "/test_json/test_ConfigureScan_basic.json")
