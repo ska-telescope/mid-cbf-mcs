@@ -288,7 +288,7 @@ class TestCbfMaster:
         assert create_cbf_master_proxy.State() == DevState.STANDBY
 
         # send the On command
-        create_cbf_master_proxy.On("")
+        create_cbf_master_proxy.On()
         time.sleep(3)
 
         # check initial states

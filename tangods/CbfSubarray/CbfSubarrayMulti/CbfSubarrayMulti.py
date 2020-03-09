@@ -14,9 +14,11 @@ sys.path.insert(0, pkg_path)
 
 from CbfSubarray.CbfSubarray import CbfSubarray
 from SearchWindow.SearchWindow import SearchWindow
+from CbfSubarrayPssConfig.CbfSubarrayPssConfig import CbfSubarrayPssConfig
+from SendConfig.SendConfig import SendConfig
 
 def main(args=None, **kwargs):
-    return run(classes=(SearchWindow, CbfSubarray), args=args, **kwargs)
+    return run(classes=(SearchWindow, CbfSubarrayPssConfig, CbfSubarray, SendConfig), args=args, **kwargs)
 
 
 if __name__ == '__main__':

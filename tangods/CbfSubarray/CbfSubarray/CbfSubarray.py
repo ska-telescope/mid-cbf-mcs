@@ -48,6 +48,18 @@ from skabase.SKASubarray.SKASubarray import SKASubarray
 
 __all__ = ["CbfSubarray", "main"]
 
+def validate_ip(ip):
+    splitip = ip.split('.')
+    if len(splitip) != 4:
+        return False
+    for ipparts in splitip:
+        if not ipparts.isdigit():
+            return False
+        ipval = int(ipparts)
+        if ipval < 0 or ipval > 255:
+            return False
+    return True
+
 
 class CbfSubarray(SKASubarray):
     """
@@ -63,35 +75,35 @@ class CbfSubarray(SKASubarray):
         else:
             for item in event.errors:
                 log_msg = item.reason + ": on attribute " + str(event.attr_name)
-                self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
+                self.logger.error(log_msg)
 
     def __doppler_phase_correction_event_callback(self, event):
         if not event.err:
             try:
                 self._group_vcc.write_attribute("dopplerPhaseCorrection", event.attr_value.value)
                 log_msg = "Value of " + str(event.attr_name) + " is " + str(event.attr_value.value)
-                self.dev_logging(log_msg, PyTango.LogLevel.LOG_DEBUG)
+                self.logger.debug(log_msg)
             except Exception as e:
-                self.dev_logging(str(e), PyTango.LogLevel.LOG_ERROR)
+                self.logger.error(str(e))
         else:
             for item in event.errors:
                 log_msg = item.reason + ": on attribute " + str(event.attr_name)
-                self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
+                self.logger.error(log_msg)
 
     def __delay_model_event_callback(self, event):
         if not event.err:
             if self._obs_state not in [ObsState.READY.value, ObsState.SCANNING.value]:
                 log_msg = "Ignoring delay model (obsState not correct)."
-                self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+                self.logger.warn(log_msg)
                 return
             try:
                 log_msg = "Received delay model update."
-                self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+                self.logger.warn(log_msg)
 
                 value = str(event.attr_value.value)
                 if value == self._last_received_delay_model:
                     log_msg = "Ignoring delay model (identical to previous)."
-                    self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+                    self.logger.warn(log_msg)
                     return
 
                 self._last_received_delay_model = value
@@ -104,22 +116,23 @@ class CbfSubarray(SKASubarray):
                     )
                     t.start()
             except Exception as e:
-                self.dev_logging(str(e), PyTango.LogLevel.LOG_ERROR)
+                self.logger.error(str(e))
         else:
             for item in event.errors:
                 log_msg = item.reason + ": on attribute " + str(event.attr_name)
-                self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
+                self.logger.error(log_msg)
 
     def __update_delay_model(self, epoch, model):
         # This method is always called on a separate thread
         log_msg = "Delay model active at {} (currently {})...".format(epoch, int(time.time()))
-        self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+        self.logger.warn(log_msg)
 
         if epoch > time.time():
             time.sleep(epoch - time.time())
 
         log_msg = "Updating delay model at specified epoch {}...".format(epoch)
-        self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+        self.logger.warn(log_msg)
+
 
         data = PyTango.DeviceData()
         data.insert(PyTango.DevString, model)
@@ -133,20 +146,20 @@ class CbfSubarray(SKASubarray):
         if not event.err:
             if self._obs_state not in [ObsState.CONFIGURING.value, ObsState.READY.value]:
                 log_msg = "Ignoring destination addresses (obsState not correct)."
-                self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+                self.logger.warn(log_msg)
                 return
             if not self._published_output_links:
                 log_msg = "Ignoring destination addresses (output links not published yet)."
-                self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+                self.logger.warn(log_msg)
                 return
             try:
                 log_msg = "Received destination addresses for visibilities."
-                self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+                self.logger.warn(log_msg)
 
                 value = str(event.attr_value.value)
                 if value == self._last_received_vis_destination_address:
                     log_msg = "Ignoring destination addresses (identical to previous)."
-                    self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+                    self.logger.warn(log_msg)
                     return
 
                 self._last_received_vis_destination_address = value
@@ -165,20 +178,20 @@ class CbfSubarray(SKASubarray):
                     log_msg = "Configuring destination addresses for FSP {}...".format(
                         fsp["fspId"]
                     )
-                    self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+                    self.logger.warn(log_msg)
                     proxy_fsp_subarray.AddChannelAddresses(value)
 
                 log_msg = "Done configuring destination addresses."
-                self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+                self.logger.warn(log_msg)
 
                 # transition to obsState=READY
                 self._obs_state = ObsState.READY.value
             except Exception as e:
-                self.dev_logging(str(e), PyTango.LogLevel.LOG_ERROR)
+                self.logger.error(str(e))
         else:
             for item in event.errors:
                 log_msg = item.reason + ": on attribute " + str(event.attr_name)
-                self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
+                self.logger.error(log_msg)
 
     def __state_change_event_callback(self, event):
         if not event.err:
@@ -193,7 +206,7 @@ class CbfSubarray(SKASubarray):
                         # should NOT happen!
                         log_msg = "Received health state change for unknown device " + str(
                             event.attr_name)
-                        self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+                        self.logger.warn(log_msg)
                         return
                 elif "state" in event.attr_name:
                     if "vcc" in device_name:
@@ -203,127 +216,129 @@ class CbfSubarray(SKASubarray):
                     else:
                         # should NOT happen!
                         log_msg = "Received state change for unknown device " + str(event.attr_name)
-                        self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+                        self.logger.warn(log_msg)
                         return
 
                 log_msg = "New value for " + str(event.attr_name) + " of device " + device_name + \
                           " is " + str(event.attr_value.value)
-                self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+                self.logger.warn(log_msg)
 
             except Exception as except_occurred:
-                self.dev_logging(str(except_occurred), PyTango.LogLevel.LOG_ERROR)
+                self.logger.error(str(except_occurred))
         else:
             for item in event.errors:
                 log_msg = item.reason + ": on attribute " + str(event.attr_name)
-                self.dev_logging(log_msg, PyTango.LogLevel.LOG_ERROR)
+                self.logger.error(log_msg)
 
     def __generate_output_links(self, scan_cfg):
         # At this point, we can assume that the scan configuration is valid and that the FSP
         # attributes have been set properly.
-
         output_links_all = {
             "scanID": self._scan_ID,
             "fsp": []
         }
 
         for fsp in scan_cfg["fsp"]:
-            output_links = {
-                "fspID": int(fsp["fspID"]),
-                "frequencySliceID": int(fsp["frequencySliceID"]),
-                "cbfOutLink": []
-            }
+            if fsp["functionMode"] == "CORR":
+                output_links = {
+                    "fspID": int(fsp["fspID"]),
+                    "frequencySliceID": int(fsp["frequencySliceID"]),
+                    "cbfOutLink": []
+                }
 
-            links = [[] for i in range(const.NUM_OUTPUT_LINKS)]
+                links = [[] for i in range(const.NUM_OUTPUT_LINKS)]
 
-            channel_averaging_map_default = [
-                [int(i*const.NUM_FINE_CHANNELS/const.NUM_CHANNEL_GROUPS) + 1, 0]
-                for i in range(const.NUM_CHANNEL_GROUPS)
-            ]
+                channel_averaging_map_default = [
+                    [int(i*const.NUM_FINE_CHANNELS/const.NUM_CHANNEL_GROUPS) + 1, 0]
+                    for i in range(const.NUM_CHANNEL_GROUPS)
+                ]
 
-            if "channelAveragingMap" in fsp:
-                channel_averaging_map = fsp["channelAveragingMap"]
-            else:
-                channel_averaging_map = channel_averaging_map_default
+                if "channelAveragingMap" in fsp:
+                    channel_averaging_map = fsp["channelAveragingMap"]
+                else:
+                    channel_averaging_map = channel_averaging_map_default
 
-            bandwidth = const.FREQUENCY_SLICE_BW*10**6/2**int(fsp["corrBandwidth"])
+                bandwidth = const.FREQUENCY_SLICE_BW*10**6/2**int(fsp["corrBandwidth"])
 
-            if not int(fsp["corrBandwidth"]):  # correlate the full bandwidth
-                if self._frequency_band in list(range(4)):  # frequency band is not band 5
-                    frequency_slice_start = [*map(lambda j: j[0]*10**9, [
-                        const.FREQUENCY_BAND_1_RANGE,
-                        const.FREQUENCY_BAND_2_RANGE,
-                        const.FREQUENCY_BAND_3_RANGE,
-                        const.FREQUENCY_BAND_4_RANGE
-                    ])][self._frequency_band] + \
-                        (int(fsp["frequencySliceID"]) - 1)*const.FREQUENCY_SLICE_BW*10**6 + \
-                        self._frequency_band_offset_stream_1
-                
-                else:  # frequency band 5a or 5b (two streams with bandwidth 2.5 GHz)
-                    if int(fsp["frequencySliceID"]) <= 13:  # stream 1
-                        frequency_slice_start = scan_cfg["band5Tuning"][0]*10**9 - \
-                            const.BAND_5_STREAM_BANDWIDTH*10**9/2 + \
+                if not int(fsp["corrBandwidth"]):  # correlate the full bandwidth
+                    if self._frequency_band in list(range(4)):  # frequency band is not band 5
+                        frequency_slice_start = [*map(lambda j: j[0]*10**9, [
+                            const.FREQUENCY_BAND_1_RANGE,
+                            const.FREQUENCY_BAND_2_RANGE,
+                            const.FREQUENCY_BAND_3_RANGE,
+                            const.FREQUENCY_BAND_4_RANGE
+                        ])][self._frequency_band] + \
                             (int(fsp["frequencySliceID"]) - 1)*const.FREQUENCY_SLICE_BW*10**6 + \
                             self._frequency_band_offset_stream_1
-                    else:  # 14 <= self._frequency_slice <= 26  # stream 2
-                        frequency_slice_start = scan_cfg["band5Tuning"][1]*10**9 - \
-                            const.BAND_5_STREAM_BANDWIDTH*10**9/2 + \
-                            (int(fsp["frequencySliceID"]) - 14)*const.FREQUENCY_SLICE_BW*10**6 + \
-                            self._frequency_band_offset_stream_2
-            else:  # correlate a portion of the full bandwidth
-                # since the checks were already done, this is actually simpler
-                frequency_slice_start = int(fsp["zoomWindowTuning"])*10**3 - bandwidth/2
 
-            next_channel_start = frequency_slice_start
+                    else:  # frequency band 5a or 5b (two streams with bandwidth 2.5 GHz)
+                        if int(fsp["frequencySliceID"]) <= 13:  # stream 1
+                            frequency_slice_start = scan_cfg["band5Tuning"][0]*10**9 - \
+                                const.BAND_5_STREAM_BANDWIDTH*10**9/2 + \
+                                (int(fsp["frequencySliceID"]) - 1)*const.FREQUENCY_SLICE_BW*10**6 + \
+                                self._frequency_band_offset_stream_1
+                        else:  # 14 <= self._frequency_slice <= 26  # stream 2
+                            frequency_slice_start = scan_cfg["band5Tuning"][1]*10**9 - \
+                                const.BAND_5_STREAM_BANDWIDTH*10**9/2 + \
+                                (int(fsp["frequencySliceID"]) - 14)*const.FREQUENCY_SLICE_BW*10**6 + \
+                                self._frequency_band_offset_stream_2
+                else:  # correlate a portion of the full bandwidth
+                    # since the checks were already done, this is actually simpler
+                    frequency_slice_start = int(fsp["zoomWindowTuning"])*10**3 - bandwidth/2
 
-            for channel_group_ID in range(const.NUM_CHANNEL_GROUPS):
-                channel_avg = channel_averaging_map[channel_group_ID][1]
+                next_channel_start = frequency_slice_start
 
-                if channel_avg:  # send channels to SDP
-                    channel_bandwidth = bandwidth/const.NUM_FINE_CHANNELS*channel_avg
+                for channel_group_ID in range(const.NUM_CHANNEL_GROUPS):
+                    channel_avg = channel_averaging_map[channel_group_ID][1]
 
-                    for channel_ID in range(
-                        int(channel_group_ID*const.NUM_FINE_CHANNELS/const.NUM_CHANNEL_GROUPS) + 1,
-                        int((channel_group_ID + 1)*const.NUM_FINE_CHANNELS/const.NUM_CHANNEL_GROUPS) \
-                            + 1,
-                        channel_avg
-                    ):
-                        log_msg = "Assigning output link for channel {} of FSP {}...".format(
-                            channel_ID, fsp["fspID"]
-                        )
-                        self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+                    if channel_avg:  # send channels to SDP
+                        channel_bandwidth = bandwidth/const.NUM_FINE_CHANNELS*channel_avg
 
-                        channel = {
-                            "chanID": channel_ID,
-                            "bw": int(channel_bandwidth),
-                            "cf": int(next_channel_start + channel_bandwidth/2)
-                        }
-                        links[randint(0, const.NUM_OUTPUT_LINKS - 1)].append(channel)
-                        next_channel_start += channel_bandwidth
-                else:  # don't send channels to SDP
-                    next_channel_start += bandwidth/const.NUM_CHANNEL_GROUPS
+                        for channel_ID in range(
+                            int(channel_group_ID*const.NUM_FINE_CHANNELS/const.NUM_CHANNEL_GROUPS) + 1,
+                            int((channel_group_ID + 1)*const.NUM_FINE_CHANNELS/const.NUM_CHANNEL_GROUPS) \
+                                + 1,
+                            channel_avg
+                        ):
+                            log_msg = "Assigning output link for channel {} of FSP {}...".format(
+                                channel_ID, fsp["fspID"]
+                            )
+                            self.logger.warn(log_msg)
 
-            for link_ID in range(1, const.NUM_OUTPUT_LINKS + 1):
-                if links[link_ID - 1]:
-                    output_links["cbfOutLink"].append({
-                        "linkID": link_ID,
-                        "channel": links[link_ID - 1]
-                    })
+                            channel = {
+                                "chanID": channel_ID,
+                                "bw": int(channel_bandwidth),
+                                "cf": int(next_channel_start + channel_bandwidth/2)
+                            }
+                            links[randint(0, const.NUM_OUTPUT_LINKS - 1)].append(channel)
+                            next_channel_start += channel_bandwidth
+                    else:  # don't send channels to SDP
+                        next_channel_start += bandwidth/const.NUM_CHANNEL_GROUPS
 
-            output_links_all["fsp"].append(output_links)
+                for link_ID in range(1, const.NUM_OUTPUT_LINKS + 1):
+                    if links[link_ID - 1]:
+                        output_links["cbfOutLink"].append({
+                            "linkID": link_ID,
+                            "channel": links[link_ID - 1]
+                        })
 
-        json_output_links = json.dumps(output_links_all)
-        data = PyTango.DeviceData()
-        data.insert(PyTango.DevString, json_output_links)
-        self._group_fsp_subarray.command_inout("AddChannels", data)
+                output_links_all["fsp"].append(output_links)
 
-        log_msg = "Done assigning output links."
-        self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
-        # publish the output links
-        self._output_links_distribution = output_links_all
-        self.push_change_event("outputLinksDistribution", json_output_links)
-        self._published_output_links = True
+            json_output_links = json.dumps(output_links_all)
+            data = PyTango.DeviceData()
+            data.insert(PyTango.DevString, json_output_links)
+            self._group_fsp_subarray.command_inout("AddChannels", data)
+
+            log_msg = "Done assigning output links."
+            self.logger.warn(log_msg)
+            # publish the output links
+            self._output_links_distribution = output_links_all
+            self.push_change_event("outputLinksDistribution", json_output_links)
+            self._published_output_links = True
 
     def __validate_scan_configuration(self, argin):
+
+        pssConfigs = []
         # try to deserialize input string to a JSON object
         try:
             argin = json.loads(argin)
@@ -341,14 +356,14 @@ class CbfSubarray(SKASubarray):
         # Validate scanID.
         if "scanID" in argin:
             if int(argin["scanID"]) <= 0:  # scanID not positive
-                msg = "'scanID' must be positive (received {}). "\
-                    "Aborting configuration.".format(int(argin["scanID"]))
+                msg = "'scanID' must be positive (received {}). " \
+                      "Aborting configuration.".format(int(argin["scanID"]))
                 self.__raise_configure_scan_fatal_error(msg)
             elif any(map(lambda i: i == int(argin["scanID"]),
-                         self._proxy_cbf_master.subarrayScanID)) and\
-                         int(argin["scanID"]) != self._scan_ID:  # scanID already taken
-                msg = "'scanID' must be unique (received {}). "\
-                    "Aborting configuration.".format(int(argin["scanID"]))
+                         self._proxy_cbf_master.subarrayScanID)) and \
+                    int(argin["scanID"]) != self._scan_ID:  # scanID already taken
+                msg = "'scanID' must be unique (received {}). " \
+                      "Aborting configuration.".format(int(argin["scanID"]))
                 self.__raise_configure_scan_fatal_error(msg)
             else:
                 pass
@@ -362,8 +377,8 @@ class CbfSubarray(SKASubarray):
             if argin["frequencyBand"] in frequency_bands:
                 pass
             else:
-                msg = "'frequencyBand' must be one of {} (received {}). "\
-                    "Aborting configuration.".format(frequency_bands, argin["frequency_band"])
+                msg = "'frequencyBand' must be one of {} (received {}). " \
+                      "Aborting configuration.".format(frequency_bands, argin["frequency_band"])
                 self.__raise_configure_scan_fatal_error(msg)
         else:
             msg = "'frequencyBand' must be given. Aborting configuration."
@@ -382,48 +397,48 @@ class CbfSubarray(SKASubarray):
                 stream_tuning = [*map(float, argin["band5Tuning"])]
                 if argin["frequencyBand"] == "5a":
                     if all(
-                        [const.FREQUENCY_BAND_5a_TUNING_BOUNDS[0] <= stream_tuning[i]
-                            <= const.FREQUENCY_BAND_5a_TUNING_BOUNDS[1] for i in [0, 1]]
+                            [const.FREQUENCY_BAND_5a_TUNING_BOUNDS[0] <= stream_tuning[i]
+                             <= const.FREQUENCY_BAND_5a_TUNING_BOUNDS[1] for i in [0, 1]]
                     ):
                         pass
                     else:
-                        msg = "Elements in 'band5Tuning must be floats between {} and {} "\
-                            "(received {} and {}) for a 'frequencyBand' of 5a. "\
-                            "Aborting configuration.".format(
-                                const.FREQUENCY_BAND_5a_TUNING_BOUNDS[0],
-                                const.FREQUENCY_BAND_5a_TUNING_BOUNDS[1],
-                                stream_tuning[0],
-                                stream_tuning[1]
-                            )
+                        msg = "Elements in 'band5Tuning must be floats between {} and {} " \
+                              "(received {} and {}) for a 'frequencyBand' of 5a. " \
+                              "Aborting configuration.".format(
+                            const.FREQUENCY_BAND_5a_TUNING_BOUNDS[0],
+                            const.FREQUENCY_BAND_5a_TUNING_BOUNDS[1],
+                            stream_tuning[0],
+                            stream_tuning[1]
+                        )
                         self.__raise_configure_scan_fatal_error(msg)
                 else:  # argin["frequencyBand"] == "5b"
                     if all(
-                        [const.FREQUENCY_BAND_5b_TUNING_BOUNDS[0] <= stream_tuning[i]
-                            <= const.FREQUENCY_BAND_5b_TUNING_BOUNDS[1] for i in [0, 1]]
+                            [const.FREQUENCY_BAND_5b_TUNING_BOUNDS[0] <= stream_tuning[i]
+                             <= const.FREQUENCY_BAND_5b_TUNING_BOUNDS[1] for i in [0, 1]]
                     ):
                         pass
                     else:
-                        msg = "Elements in 'band5Tuning must be floats between {} and {} "\
-                            "(received {} and {}) for a 'frequencyBand' of 5b. "\
-                            "Aborting configuration.".format(
-                                const.FREQUENCY_BAND_5b_TUNING_BOUNDS[0],
-                                const.FREQUENCY_BAND_5b_TUNING_BOUNDS[1],
-                                stream_tuning[0],
-                                stream_tuning[1]
-                            )
+                        msg = "Elements in 'band5Tuning must be floats between {} and {} " \
+                              "(received {} and {}) for a 'frequencyBand' of 5b. " \
+                              "Aborting configuration.".format(
+                            const.FREQUENCY_BAND_5b_TUNING_BOUNDS[0],
+                            const.FREQUENCY_BAND_5b_TUNING_BOUNDS[1],
+                            stream_tuning[0],
+                            stream_tuning[1]
+                        )
                         self.__raise_configure_scan_fatal_error(msg)
             else:
-                msg = "'band5Tuning' must be given for a 'frequencyBand' of {}. "\
-                    "Aborting configuration".format(argin["frequencyBand"])
+                msg = "'band5Tuning' must be given for a 'frequencyBand' of {}. " \
+                      "Aborting configuration".format(argin["frequencyBand"])
                 self.__raise_configure_scan_fatal_error(msg)
 
         # Validate frequencyBandOffsetStream1.
         if "frequencyBandOffsetStream1" in argin:
-            if abs(int(argin["frequencyBandOffsetStream1"])) <= const.FREQUENCY_SLICE_BW*10**6/2:
+            if abs(int(argin["frequencyBandOffsetStream1"])) <= const.FREQUENCY_SLICE_BW * 10 ** 6 / 2:
                 pass
             else:
-                msg = "Absolute value of 'frequencyBandOffsetStream1' must be at most half "\
-                    "of the frequency slice bandwidth. Aborting configuration."
+                msg = "Absolute value of 'frequencyBandOffsetStream1' must be at most half " \
+                      "of the frequency slice bandwidth. Aborting configuration."
                 self.__raise_configure_scan_fatal_error(msg)
         else:
             pass
@@ -432,11 +447,11 @@ class CbfSubarray(SKASubarray):
         if argin["frequencyBand"] in ["5a", "5b"]:
             if "frequencyBandOffsetStream2" in argin:
                 if abs(int(argin["frequencyBandOffsetStream2"])) <= \
-                        const.FREQUENCY_SLICE_BW*10**6/2:
+                        const.FREQUENCY_SLICE_BW * 10 ** 6 / 2:
                     pass
                 else:
-                    msg = "Absolute value of 'frequencyBandOffsetStream2' must be at most "\
-                        "half of the frequency slice bandwidth. Aborting configuration."
+                    msg = "Absolute value of 'frequencyBandOffsetStream2' must be at most " \
+                          "half of the frequency slice bandwidth. Aborting configuration."
                     self.__raise_configure_scan_fatal_error(msg)
             else:
                 pass
@@ -455,10 +470,10 @@ class CbfSubarray(SKASubarray):
                     )
                 )
             except PyTango.DevFailed:  # attribute doesn't exist or is not set up correctly
-                msg = "Attribute {} not found or not set up correctly for "\
-                    "'dopplerPhaseCorrSubscriptionPoint'. Aborting configuration.".format(
-                        argin["dopplerPhaseCorrSubscriptionPoint"]
-                    )
+                msg = "Attribute {} not found or not set up correctly for " \
+                      "'dopplerPhaseCorrSubscriptionPoint'. Aborting configuration.".format(
+                    argin["dopplerPhaseCorrSubscriptionPoint"]
+                )
                 self.__raise_configure_scan_fatal_error(msg)
         else:
             pass
@@ -475,10 +490,10 @@ class CbfSubarray(SKASubarray):
                     )
                 )
             except PyTango.DevFailed:  # attribute doesn't exist or is not set up correctly
-                msg = "Attribute {} not found or not set up correctly for "\
-                    "'delayModelSubscriptionPoint'. Aborting configuration.".format(
-                        argin["delayModelSubscriptionPoint"]
-                    )
+                msg = "Attribute {} not found or not set up correctly for " \
+                      "'delayModelSubscriptionPoint'. Aborting configuration.".format(
+                    argin["delayModelSubscriptionPoint"]
+                )
                 self.__raise_configure_scan_fatal_error(msg)
         else:
             msg = "'delayModelSubscriptionPoint' not given. Aborting configuration."
@@ -498,10 +513,10 @@ class CbfSubarray(SKASubarray):
                     )
                 )
             except PyTango.DevFailed:  # attribute doesn't exist or is not set up correctly
-                msg = "Attribute {} not found or not set up correctly for "\
-                    "'visDestinationAddressSubscriptionPoint'. Aborting configuration.".format(
-                        argin["visDestinationAddressSubscriptionPoint"]
-                    )
+                msg = "Attribute {} not found or not set up correctly for " \
+                      "'visDestinationAddressSubscriptionPoint'. Aborting configuration.".format(
+                    argin["visDestinationAddressSubscriptionPoint"]
+                )
                 self.__raise_configure_scan_fatal_error(msg)
         else:
             msg = "'visDestinationAddressSubscriptionPoint' not given. Aborting configuration."
@@ -536,18 +551,18 @@ class CbfSubarray(SKASubarray):
                             # pass on configuration to VCC
                             vcc.ValidateSearchWindow(json.dumps(search_window))
                         except PyTango.DevFailed:  # exception in Vcc.ConfigureSearchWindow
-                            msg = "An exception occurred while configuring VCC search "\
-                                "windows:\n{}\n. Aborting configuration.".format(
-                                    str(sys.exc_info()[1].args[0].desc)
-                                )
+                            msg = "An exception occurred while configuring VCC search " \
+                                  "windows:\n{}\n. Aborting configuration.".format(
+                                str(sys.exc_info()[1].args[0].desc)
+                            )
                             self.__raise_configure_scan_fatal_error(msg)
                     # If the search window configuration is valid for all VCCs,
                     # is is guaranteed to be valid for the CBF Subarray.
                     # self.ConfigureSearchWindow(json.dumps(search_window))
 
             except (TypeError, AssertionError):  # searchWindow not the right length or not an array
-                msg = "'searchWindow' must be an array of maximum length 2. "\
-                    "Aborting configuration."
+                msg = "'searchWindow' must be an array of maximum length 2. " \
+                      "Aborting configuration."
                 self.__raise_configure_scan_fatal_error(msg)
         else:
             pass
@@ -563,12 +578,12 @@ class CbfSubarray(SKASubarray):
                             proxy_fsp = self._proxies_fsp[fspID - 1]
                             proxy_fsp_subarray = self._proxies_fsp_subarray[fspID - 1]
                         else:
-                            msg = "'fspID' must be an integer in the range [1, {}]. "\
-                                "Aborting configuration.".format(str(self._count_fsp))
+                            msg = "'fspID' must be an integer in the range [1, {}]. " \
+                                  "Aborting configuration.".format(str(self._count_fsp))
                             self.__raise_configure_scan_fatal_error(msg)
                     else:
-                        msg = "FSP specified, but 'fspID' not given. "\
-                            "Aborting configuration."
+                        msg = "FSP specified, but 'fspID' not given. " \
+                              "Aborting configuration."
                         self.__raise_configure_scan_fatal_error(msg)
 
                     if proxy_fsp.State() != PyTango.DevState.ON:
@@ -586,24 +601,24 @@ class CbfSubarray(SKASubarray):
                     if "functionMode" in fsp:
                         if fsp["functionMode"] in function_modes:
                             if function_modes.index(fsp["functionMode"]) + 1 == \
-                                    proxy_fsp.functionMode or\
+                                    proxy_fsp.functionMode or \
                                     proxy_fsp.functionMode == 0:
                                 pass
                             else:
-                                msg = "A different subarray is using FSP {} for a "\
-                                    "different function mode. Aborting configuration.".format(
-                                        fsp["fspID"]
-                                    )
+                                msg = "A different subarray is using FSP {} for a " \
+                                      "different function mode. Aborting configuration.".format(
+                                    fsp["fspID"]
+                                )
                                 self.__raise_configure_scan_fatal_error(msg)
                         else:
-                            msg = "'functionMode' must be one of {} (received {}). "\
-                                "Aborting configuration.".format(
-                                    function_modes, fsp["functionMode"]
-                                )
+                            msg = "'functionMode' must be one of {} (received {}). " \
+                                  "Aborting configuration.".format(
+                                function_modes, fsp["functionMode"]
+                            )
                             self.__raise_configure_scan_fatal_error(msg)
                     else:
-                        msg = "FSP specified, but 'functionMode' not given. "\
-                            "Aborting configuration."
+                        msg = "FSP specified, but 'functionMode' not given. " \
+                              "Aborting configuration."
                         self.__raise_configure_scan_fatal_error(msg)
 
                     fsp["frequencyBand"] = argin["frequencyBand"]
@@ -623,6 +638,78 @@ class CbfSubarray(SKASubarray):
                     # pass on configuration to FSP Subarray
                     proxy_fsp_subarray.ValidateScan(json.dumps(fsp))
 
+                    if fsp["functionMode"] == "PSS-BF":
+                        if "searchWindowID" in fsp:
+                            if int(fsp["searchWindowID"]) in [1, 2]:
+                                pass
+                            else:  # searchWindowID not in valid range
+                                msg = "'searchWindowID' must be one of [1, 2] (received {}).".format(
+                                    str(fsp["searchWindowID"])
+                                )
+                                self.__raise_configure_scan_fatal_error(msg)
+                        else:
+                            msg = "Search window not specified for Fsp PSS config"
+                            self.__raise_configure_scan_fatal_error(msg)
+
+                        if "searchBeamID" in fsp:
+                            if 1 <= int(fsp["searchBeamID"]) <= 1500:
+                                # Set searchBeamID attribute
+                                pass
+                            else:  # searchWindowID not in valid range
+                                msg = "'searchBeamID' must be within range 1-1500 (received {}).".format(
+                                    str(fsp["searchBeamID"])
+                                )
+                                self.__raise_configure_scan_fatal_error(msg)
+                        else:
+                            msg = "Search beam ID not specified for Fsp PSS config"
+                            self.__raise_configure_scan_fatal_error(msg)
+
+                            # Validate receptors.
+                            # This is always given, due to implementation details.
+                        if "receptors" in fsp:
+                            try:
+                                proxy_fsp_subarray.RemoveAllReceptors()
+                                proxy_fsp_subarray.AddReceptors(list(map(int, fsp["receptors"])))
+                                proxy_fsp_subarray.RemoveAllReceptors()
+                            except PyTango.DevFailed as df:  # error in AddReceptors()
+                                proxy_fsp_subarray.RemoveAllReceptors()
+                                msg = sys.exc_info()[1].args[0].desc + "\n'receptors' was malformed."
+                                self.logger.error(msg)
+                                PyTango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
+                                                               PyTango.ErrSeverity.ERR)
+                            pass
+                        else:
+                            msg = "'receptors' not specified for Fsp PSS config"
+                            self.__raise_configure_scan_fatal_error(msg)
+                        if "outputEnable" in fsp:
+                            if fsp["outputEnable"] is False or fsp["outputEnable"] is True:
+                                pass
+                            else:
+                                msg = "'outputEnabled' is not a valid boolean"
+                                self.__raise_configure_scan_fatal_error(msg)
+                        else:
+                            msg = "'outputEnable' not specified for Fsp PSS config"
+                            self.__raise_configure_scan_fatal_error(msg)
+                        if "averagingInterval" in fsp:
+                            if isinstance(fsp["averagingInterval"], int):
+                                pass
+                            else:
+                                msg = "'averagingInterval' is not a valid integer"
+                                self.__raise_configure_scan_fatal_error(msg)
+                        else:
+                            msg = "'averagingInterval' not specified for Fsp PSS config"
+                            self.__raise_configure_scan_fatal_error(msg)
+                        if "searchBeamDestinationAddress" in fsp:
+                            if validate_ip(fsp["searchBeamDestinationAddress"]):
+                                pass
+                            else:
+                                msg = "'searchBeamDestinationAddress' is not a valid IP address"
+                                self.__raise_configure_scan_fatal_error(msg)
+                        else:
+                            msg = "'searchBeamDestinationAddress' not specified for Fsp PSS config"
+                            self.__raise_configure_scan_fatal_error(msg)
+                        pssConfigs.append(fsp)
+
                     proxy_fsp.unsubscribe_event(
                         proxy_fsp.subscribe_event(
                             "State",
@@ -638,17 +725,18 @@ class CbfSubarray(SKASubarray):
                         )
                     )
                 except PyTango.DevFailed:  # exception in ConfigureScan
-                    msg = "An exception occurred while configuring FSPs:\n{}\n"\
-                        "Aborting configuration".format(sys.exc_info()[1].args[0].desc)
+                    msg = "An exception occurred while configuring FSPs:\n{}\n" \
+                          "Aborting configuration".format(sys.exc_info()[1].args[0].desc)
                     self.__raise_configure_scan_fatal_error(msg)
         else:
             msg = "'fsp' not given. Aborting configuration."
             self.__raise_configure_scan_fatal_error(msg)
 
         # At this point, everything has been validated.
+        self._proxy_pss_config.ConfigureFSP(json.dumps(pssConfigs))
 
     def __raise_configure_scan_fatal_error(self, msg):
-        self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+        self.logger.error(msg)
         PyTango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
                                        PyTango.ErrSeverity.ERR)
 
@@ -666,6 +754,9 @@ class CbfSubarray(SKASubarray):
         dtype='str',
         doc="FQDN of CBF Master",
         default_value="mid_csp_cbf/sub_elt/master"
+    )
+    PssConfigAddress = device_property(
+        dtype='str'
     )
 
     SW1Address = device_property(
@@ -801,6 +892,9 @@ class CbfSubarray(SKASubarray):
         self._proxy_sw_1 = PyTango.DeviceProxy(self.SW1Address)
         self._proxy_sw_2 = PyTango.DeviceProxy(self.SW2Address)
 
+        # JSON FSP configurations for PSS, COR, PST, VLBI
+        self._proxy_pss_config = PyTango.DeviceProxy(self.PssConfigAddress)
+
         self._master_max_capabilities = dict(
             pair.split(":") for pair in
             self._proxy_cbf_master.get_property("MaxCapabilities")["MaxCapabilities"]
@@ -935,7 +1029,7 @@ class CbfSubarray(SKASubarray):
         # PROTECTED REGION ID(CbfSubarray.On) ENABLED START #
         if self._obs_state != ObsState.IDLE.value:
             msg = "Device not in IDLE obsState."
-            self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+            self.logger.error(msg)
             PyTango.Except.throw_exception("Command failed", msg, "On execution",
                                            PyTango.ErrSeverity.ERR)
 
@@ -954,7 +1048,7 @@ class CbfSubarray(SKASubarray):
         # PROTECTED REGION ID(CbfSubarray.Off) ENABLED START #
         if self._obs_state != ObsState.IDLE.value:
             msg = "Device not in IDLE obsState."
-            self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+            self.logger.error(msg)
             PyTango.Except.throw_exception("Command failed", msg, "Off execution",
                                            PyTango.ErrSeverity.ERR)
 
@@ -976,7 +1070,7 @@ class CbfSubarray(SKASubarray):
         # PROTECTED REGION ID(CbfSubarray.AddReceptors) ENABLED START #
         if self._obs_state != ObsState.IDLE.value:
             msg = "Device not in IDLE obsState."
-            self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+            self.logger.error(msg)
             PyTango.Except.throw_exception("Command failed", msg, "AddReceptors execution",
                                            PyTango.ErrSeverity.ERR)
 
@@ -1024,7 +1118,7 @@ class CbfSubarray(SKASubarray):
                     else:
                         log_msg = "Receptor {} already assigned to current subarray.".format(
                             str(receptorID))
-                        self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+                        self.logger.warn(log_msg)
 
             except KeyError:  # invalid receptor ID
                 errs.append("Invalid receptor ID: {}".format(receptorID))
@@ -1035,7 +1129,7 @@ class CbfSubarray(SKASubarray):
 
         if errs:
             msg = "\n".join(errs)
-            self.dev_logging(msg, int(PyTango.LogLevel.LOG_ERROR))
+            self.logger.error(msg)
             PyTango.Except.throw_exception("Command failed", msg, "AddReceptors execution",
                                            PyTango.ErrSeverity.ERR)
         # PROTECTED REGION END #    //  CbfSubarray.AddReceptors
@@ -1053,7 +1147,7 @@ class CbfSubarray(SKASubarray):
         # PROTECTED REGION ID(CbfSubarray.RemoveReceptors) ENABLED START #
         if self._obs_state != ObsState.IDLE.value:
             msg = "Device not in IDLE obsState."
-            self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+            self.logger.error(msg)
             PyTango.Except.throw_exception("Command failed", msg, "RemoveReceptors execution",
                                            PyTango.ErrSeverity.ERR)
 
@@ -1078,7 +1172,7 @@ class CbfSubarray(SKASubarray):
                 self._group_vcc.remove(self._fqdn_vcc[vccID - 1])
             else:
                 log_msg = "Receptor {} not assigned to subarray. Skipping.".format(str(receptorID))
-                self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+                self.logger.warn(log_msg)
 
         # transitions to OFF if not assigned any receptors
         if not self._receptors:
@@ -1095,7 +1189,7 @@ class CbfSubarray(SKASubarray):
         # PROTECTED REGION ID(CbfSubarray.RemoveAllReceptors) ENABLED START #
         if self._obs_state != ObsState.IDLE.value:
             msg = "Device not in IDLE obsState."
-            self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+            self.logger.error(msg)
             PyTango.Except.throw_exception("Command failed", msg, "RemoveAllReceptors execution",
                                            PyTango.ErrSeverity.ERR)
 
@@ -1174,7 +1268,7 @@ class CbfSubarray(SKASubarray):
         """
         if self._obs_state not in [ObsState.IDLE.value, ObsState.READY.value]:
             msg = "Device not in IDLE or READY obsState."
-            self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+            self.logger.error(msg)
             PyTango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
                                            PyTango.ErrSeverity.ERR)
 
@@ -1220,7 +1314,7 @@ class CbfSubarray(SKASubarray):
             self._frequency_band_offset_stream_1 = 0
             self._group_vcc.write_attribute("frequencyBandOffsetStream1", 0)
             log_msg = "'frequencyBandOffsetStream1' not specified. Defaulting to 0."
-            self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+            self.logger.warn(log_msg)
 
         # Validate frequencyBandOffsetStream2.
         # If not given, use a default value.
@@ -1236,7 +1330,7 @@ class CbfSubarray(SKASubarray):
                 self._frequency_band_offset_stream_2 = 0
                 self._group_vcc.write_attribute("frequencyBandOffsetStream2", 0)
                 log_msg = "'frequencyBandOffsetStream2' not specified. Defaulting to 0."
-                self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+                self.logger.warn(log_msg)
         else:
             self._frequency_band_offset_stream_2 = 0
             self._group_vcc.write_attribute("frequencyBandOffsetStream2", 0)
@@ -1280,7 +1374,7 @@ class CbfSubarray(SKASubarray):
             )
         else:
             log_msg = "'rfiFlaggingMask' not given. Proceeding."
-            self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+            self.logger.warn(log_msg)
 
         # Configure searchWindow.
         if "searchWindow" in argin:
@@ -1292,7 +1386,7 @@ class CbfSubarray(SKASubarray):
                 self.ConfigureSearchWindow(json.dumps(search_window))
         else:
             log_msg = "'searchWindow' not given."
-            self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+            self.logger.warn(log_msg)
 
         # The VCCs are done configuring at this point
         data = PyTango.DeviceData()
@@ -1331,6 +1425,7 @@ class CbfSubarray(SKASubarray):
                 fsp["band5Tuning"] = self._stream_tuning
 
             # pass on configuration to FSP Subarray
+            # This has been phased out, now passing to function mode classes first
             proxy_fsp_subarray.ConfigureScan(json.dumps(fsp))
 
             # subscribe to FSP state and healthState changes
@@ -1347,10 +1442,11 @@ class CbfSubarray(SKASubarray):
                                                                 event_id_health_state]
 
         # At this point, we can basically assume everything is properly configured
+        # This has been phased out, now passing to function mode classes first
         self.__generate_output_links(argin)  # published output links to outputLinksDistribution
 
         # This state transition will be later
-        # self._obs_state = ObsState.READY.value
+        self._obs_state = ObsState.READY.value
 
         # PROTECTED REGION END #    //  CbfSubarray.ConfigureScan
 
@@ -1369,7 +1465,7 @@ class CbfSubarray(SKASubarray):
         # so the checks here have been removed to reduce overhead.
         if self._obs_state != ObsState.CONFIGURING.value:
             msg = "Device not in CONFIGURING obsState."
-            self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+            self.logger.error(msg)
             PyTango.Except.throw_exception("Command failed", msg, "ConfigureSearchWindow execution",
                                            PyTango.ErrSeverity.ERR)
 
@@ -1406,7 +1502,7 @@ class CbfSubarray(SKASubarray):
                 # log a warning message
                 log_msg = "'searchWindowTuning' partially out of observed band. "\
                     "Proceeding."
-                self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+                self.logger.warn(log_msg)
         else:  # frequency band 5a or 5b (two streams with bandwidth 2.5 GHz)
             proxy_sw.searchWindowTuning = argin["searchWindowTuning"]
 
@@ -1440,7 +1536,7 @@ class CbfSubarray(SKASubarray):
                 # log a warning message
                 log_msg = "'searchWindowTuning' partially out of observed band. "\
                     "Proceeding."
-                self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+                self.logger.warn(log_msg)
 
         # Configure tdcEnable.
         proxy_sw.tdcEnable = argin["tdcEnable"]
@@ -1461,7 +1557,7 @@ class CbfSubarray(SKASubarray):
             proxy_sw.tdcPeriodBeforeEpoch = 2
             log_msg = "Search window specified, but 'tdcPeriodBeforeEpoch' not given. "\
                 "Defaulting to 2."
-            self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+            self.logger.warn(log_msg)
 
         # Configure tdcPeriodAfterEpoch.
         if "tdcPeriodAfterEpoch" in argin:
@@ -1470,9 +1566,9 @@ class CbfSubarray(SKASubarray):
             proxy_sw.tdcPeriodAfterEpoch = 22
             log_msg = "Search window specified, but 'tdcPeriodAfterEpoch' not given. "\
                 "Defaulting to 22."
-            self.dev_logging(log_msg, PyTango.LogLevel.LOG_WARN)
+            self.logger.warn(log_msg)
 
-        # Configure tdcDestinationAddress.
+        # `Configure tdcDestinationAddress.`
         if argin["tdcEnable"]:
             # TODO: validate input
             proxy_sw.tdcDestinationAddress = \
@@ -1490,7 +1586,7 @@ class CbfSubarray(SKASubarray):
         # PROTECTED REGION ID(CbfSubarray.EndScan) ENABLED START #
         if self._obs_state != ObsState.SCANNING.value:
             msg = "Device not in SCANNING obsState."
-            self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+            self.logger.error(msg)
             PyTango.Except.throw_exception("Command failed", msg, "EndScan execution",
                                            PyTango.ErrSeverity.ERR)
 
@@ -1514,13 +1610,13 @@ class CbfSubarray(SKASubarray):
         """
         if self._obs_state != ObsState.READY.value:
             msg = "A scan is not ready to be started."
-            self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+            self.logger.error(msg)
             PyTango.Except.throw_exception("Command failed", msg, "Scan execution",
                                            PyTango.ErrSeverity.ERR)
         """
         if self._obs_state != ObsState.READY.value:
             msg = "Device not in READY obsState."
-            self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+            self.logger.error(msg)
             PyTango.Except.throw_exception("Command failed", msg, "Scan execution",
                                            PyTango.ErrSeverity.ERR)
 
@@ -1542,7 +1638,7 @@ class CbfSubarray(SKASubarray):
         # PROTECTED REGION ID(CbfSubarray.EndSB) ENABLED START #
         if self._obs_state not in [ObsState.IDLE.value, ObsState.READY.value]:
             msg = "Device not in IDLE or READY obsState."
-            self.dev_logging(msg, PyTango.LogLevel.LOG_ERROR)
+            self.logger.error(msg)
             PyTango.Except.throw_exception("Command failed", msg, "EndSB execution",
                                            PyTango.ErrSeverity.ERR)
 
