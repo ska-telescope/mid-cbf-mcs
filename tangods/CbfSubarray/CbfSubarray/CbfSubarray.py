@@ -44,9 +44,11 @@ sys.path.insert(0, commons_pkg_path)
 
 from global_enum import HealthState, AdminMode, ObsState, const
 from skabase.SKASubarray.SKASubarray import SKASubarray
+
 # PROTECTED REGION END #    //  CbfSubarray.additionnal_import
 
 __all__ = ["CbfSubarray", "main"]
+
 
 def validate_ip(ip):
     splitip = ip.split('.')
@@ -66,6 +68,7 @@ class CbfSubarray(SKASubarray):
     CBFSubarray TANGO device class for the CBFSubarray prototype
     """
     __metaclass__ = DeviceMeta
+
     # PROTECTED REGION ID(CbfSubarray.class_variable) ENABLED START #
 
     def __void_callback(self, event):
@@ -133,7 +136,6 @@ class CbfSubarray(SKASubarray):
         log_msg = "Updating delay model at specified epoch {}...".format(epoch)
         self.logger.warn(log_msg)
 
-
         data = PyTango.DeviceData()
         data.insert(PyTango.DevString, model)
 
@@ -172,8 +174,8 @@ class CbfSubarray(SKASubarray):
                     proxy_fsp_subarray = self._proxies_fsp_subarray[fsp["fspId"] - 1]
                     if proxy_fsp_subarray not in self._proxies_assigned_fsp_subarray:
                         raise ValueError("FSP {} does not belong to subarray {}.".format(
-                                fsp["fspId"], self._subarray_id
-                            )
+                            fsp["fspId"], self._subarray_id
+                        )
                         )
                     log_msg = "Configuring destination addresses for FSP {}...".format(
                         fsp["fspId"]
@@ -249,7 +251,7 @@ class CbfSubarray(SKASubarray):
                 links = [[] for i in range(const.NUM_OUTPUT_LINKS)]
 
                 channel_averaging_map_default = [
-                    [int(i*const.NUM_FINE_CHANNELS/const.NUM_CHANNEL_GROUPS) + 1, 0]
+                    [int(i * const.NUM_FINE_CHANNELS / const.NUM_CHANNEL_GROUPS) + 1, 0]
                     for i in range(const.NUM_CHANNEL_GROUPS)
                 ]
 
@@ -258,33 +260,36 @@ class CbfSubarray(SKASubarray):
                 else:
                     channel_averaging_map = channel_averaging_map_default
 
-                bandwidth = const.FREQUENCY_SLICE_BW*10**6/2**int(fsp["corrBandwidth"])
+                bandwidth = const.FREQUENCY_SLICE_BW * 10 ** 6 / 2 ** int(fsp["corrBandwidth"])
 
                 if not int(fsp["corrBandwidth"]):  # correlate the full bandwidth
                     if self._frequency_band in list(range(4)):  # frequency band is not band 5
-                        frequency_slice_start = [*map(lambda j: j[0]*10**9, [
+                        frequency_slice_start = [*map(lambda j: j[0] * 10 ** 9, [
                             const.FREQUENCY_BAND_1_RANGE,
                             const.FREQUENCY_BAND_2_RANGE,
                             const.FREQUENCY_BAND_3_RANGE,
                             const.FREQUENCY_BAND_4_RANGE
                         ])][self._frequency_band] + \
-                            (int(fsp["frequencySliceID"]) - 1)*const.FREQUENCY_SLICE_BW*10**6 + \
-                            self._frequency_band_offset_stream_1
+                                                (int(
+                                                    fsp["frequencySliceID"]) - 1) * const.FREQUENCY_SLICE_BW * 10 ** 6 + \
+                                                self._frequency_band_offset_stream_1
 
                     else:  # frequency band 5a or 5b (two streams with bandwidth 2.5 GHz)
                         if int(fsp["frequencySliceID"]) <= 13:  # stream 1
-                            frequency_slice_start = scan_cfg["band5Tuning"][0]*10**9 - \
-                                const.BAND_5_STREAM_BANDWIDTH*10**9/2 + \
-                                (int(fsp["frequencySliceID"]) - 1)*const.FREQUENCY_SLICE_BW*10**6 + \
-                                self._frequency_band_offset_stream_1
+                            frequency_slice_start = scan_cfg["band5Tuning"][0] * 10 ** 9 - \
+                                                    const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2 + \
+                                                    (int(fsp[
+                                                             "frequencySliceID"]) - 1) * const.FREQUENCY_SLICE_BW * 10 ** 6 + \
+                                                    self._frequency_band_offset_stream_1
                         else:  # 14 <= self._frequency_slice <= 26  # stream 2
-                            frequency_slice_start = scan_cfg["band5Tuning"][1]*10**9 - \
-                                const.BAND_5_STREAM_BANDWIDTH*10**9/2 + \
-                                (int(fsp["frequencySliceID"]) - 14)*const.FREQUENCY_SLICE_BW*10**6 + \
-                                self._frequency_band_offset_stream_2
+                            frequency_slice_start = scan_cfg["band5Tuning"][1] * 10 ** 9 - \
+                                                    const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2 + \
+                                                    (int(fsp[
+                                                             "frequencySliceID"]) - 14) * const.FREQUENCY_SLICE_BW * 10 ** 6 + \
+                                                    self._frequency_band_offset_stream_2
                 else:  # correlate a portion of the full bandwidth
                     # since the checks were already done, this is actually simpler
-                    frequency_slice_start = int(fsp["zoomWindowTuning"])*10**3 - bandwidth/2
+                    frequency_slice_start = int(fsp["zoomWindowTuning"]) * 10 ** 3 - bandwidth / 2
 
                 next_channel_start = frequency_slice_start
 
@@ -292,13 +297,13 @@ class CbfSubarray(SKASubarray):
                     channel_avg = channel_averaging_map[channel_group_ID][1]
 
                     if channel_avg:  # send channels to SDP
-                        channel_bandwidth = bandwidth/const.NUM_FINE_CHANNELS*channel_avg
+                        channel_bandwidth = bandwidth / const.NUM_FINE_CHANNELS * channel_avg
 
                         for channel_ID in range(
-                            int(channel_group_ID*const.NUM_FINE_CHANNELS/const.NUM_CHANNEL_GROUPS) + 1,
-                            int((channel_group_ID + 1)*const.NUM_FINE_CHANNELS/const.NUM_CHANNEL_GROUPS) \
+                                int(channel_group_ID * const.NUM_FINE_CHANNELS / const.NUM_CHANNEL_GROUPS) + 1,
+                                int((channel_group_ID + 1) * const.NUM_FINE_CHANNELS / const.NUM_CHANNEL_GROUPS) \
                                 + 1,
-                            channel_avg
+                                channel_avg
                         ):
                             log_msg = "Assigning output link for channel {} of FSP {}...".format(
                                 channel_ID, fsp["fspID"]
@@ -308,12 +313,12 @@ class CbfSubarray(SKASubarray):
                             channel = {
                                 "chanID": channel_ID,
                                 "bw": int(channel_bandwidth),
-                                "cf": int(next_channel_start + channel_bandwidth/2)
+                                "cf": int(next_channel_start + channel_bandwidth / 2)
                             }
                             links[randint(0, const.NUM_OUTPUT_LINKS - 1)].append(channel)
                             next_channel_start += channel_bandwidth
                     else:  # don't send channels to SDP
-                        next_channel_start += bandwidth/const.NUM_CHANNEL_GROUPS
+                        next_channel_start += bandwidth / const.NUM_CHANNEL_GROUPS
 
                 for link_ID in range(1, const.NUM_OUTPUT_LINKS + 1):
                     if links[link_ID - 1]:
@@ -337,8 +342,6 @@ class CbfSubarray(SKASubarray):
             self._published_output_links = True
 
     def __validate_scan_configuration(self, argin):
-
-        pssConfigs = []
         # try to deserialize input string to a JSON object
         try:
             argin = json.loads(argin)
@@ -671,6 +674,13 @@ class CbfSubarray(SKASubarray):
                                 proxy_fsp_subarray.RemoveAllReceptors()
                                 proxy_fsp_subarray.AddReceptors(list(map(int, fsp["receptors"])))
                                 proxy_fsp_subarray.RemoveAllReceptors()
+                                for receptorCheck in fsp["receptors"]:
+                                    if receptorCheck not in self._receptors:
+                                        msg = ("Receptor {} does not belong to subarray {}.".format(
+                                            str(self._receptors[receptorCheck]), str(self._subarray_id)))
+                                        self.logger.error(msg)
+                                        PyTango.Except.throw_exception("Command failed", msg, "AddReceptors execution",
+                                                                       PyTango.ErrSeverity.ERR)
                             except PyTango.DevFailed as df:  # error in AddReceptors()
                                 proxy_fsp_subarray.RemoveAllReceptors()
                                 msg = sys.exc_info()[1].args[0].desc + "\n'receptors' was malformed."
@@ -708,7 +718,7 @@ class CbfSubarray(SKASubarray):
                         else:
                             msg = "'searchBeamDestinationAddress' not specified for Fsp PSS config"
                             self.__raise_configure_scan_fatal_error(msg)
-                        pssConfigs.append(fsp)
+                        self._pss_config.append(fsp)
 
                     proxy_fsp.unsubscribe_event(
                         proxy_fsp.subscribe_event(
@@ -733,7 +743,7 @@ class CbfSubarray(SKASubarray):
             self.__raise_configure_scan_fatal_error(msg)
 
         # At this point, everything has been validated.
-        self._proxy_pss_config.ConfigureFSP(json.dumps(pssConfigs))
+
 
     def __raise_configure_scan_fatal_error(self, msg):
         self.logger.error(msg)
@@ -874,7 +884,7 @@ class CbfSubarray(SKASubarray):
         self._vcc_health_state = {}  # device_name:healthState
         self._fsp_state = {}  # device_name:state
         self._fsp_health_state = {}  # device_name:healthState
-
+        self._pss_config = []
         self._published_output_links = False
         self._last_received_vis_destination_address = "{}"
         self._last_received_delay_model = "{}"
@@ -1273,7 +1283,7 @@ class CbfSubarray(SKASubarray):
                                            PyTango.ErrSeverity.ERR)
 
         self.__validate_scan_configuration(argin)
-
+        self._proxy_pss_config.ConfigureFSP(json.dumps(self._pss_config))
         # Call this just to release all FSPs and unsubscribe to events.
         # We transition to obsState=CONFIGURING immediately after anyways.
         self.EndSB()
@@ -1491,51 +1501,51 @@ class CbfSubarray(SKASubarray):
                 const.FREQUENCY_BAND_4_RANGE
             ][self._frequency_band]
 
-            if frequency_band_range[0]*10**9 + self._frequency_band_offset_stream_1 + \
-                    const.SEARCH_WINDOW_BW*10**6/2 <= \
+            if frequency_band_range[0] * 10 ** 9 + self._frequency_band_offset_stream_1 + \
+                    const.SEARCH_WINDOW_BW * 10 ** 6 / 2 <= \
                     int(argin["searchWindowTuning"]) <= \
-                    frequency_band_range[1]*10**9 + self._frequency_band_offset_stream_1 - \
-                    const.SEARCH_WINDOW_BW*10**6/2:
+                    frequency_band_range[1] * 10 ** 9 + self._frequency_band_offset_stream_1 - \
+                    const.SEARCH_WINDOW_BW * 10 ** 6 / 2:
                 # this is the acceptable range
                 pass
             else:
                 # log a warning message
-                log_msg = "'searchWindowTuning' partially out of observed band. "\
-                    "Proceeding."
+                log_msg = "'searchWindowTuning' partially out of observed band. " \
+                          "Proceeding."
                 self.logger.warn(log_msg)
         else:  # frequency band 5a or 5b (two streams with bandwidth 2.5 GHz)
             proxy_sw.searchWindowTuning = argin["searchWindowTuning"]
 
             frequency_band_range_1 = (
-                self._stream_tuning[0]*10**9 + self._frequency_band_offset_stream_1 - \
-                    const.BAND_5_STREAM_BANDWIDTH*10**9/2,
-                self._stream_tuning[0]*10**9 + self._frequency_band_offset_stream_1 + \
-                    const.BAND_5_STREAM_BANDWIDTH*10**9/2
+                self._stream_tuning[0] * 10 ** 9 + self._frequency_band_offset_stream_1 - \
+                const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2,
+                self._stream_tuning[0] * 10 ** 9 + self._frequency_band_offset_stream_1 + \
+                const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2
             )
 
             frequency_band_range_2 = (
-                self._stream_tuning[1]*10**9 + self._frequency_band_offset_stream_2 - \
-                    const.BAND_5_STREAM_BANDWIDTH*10**9/2,
-                self._stream_tuning[1]*10**9 + self._frequency_band_offset_stream_2 + \
-                    const.BAND_5_STREAM_BANDWIDTH*10**9/2
+                self._stream_tuning[1] * 10 ** 9 + self._frequency_band_offset_stream_2 - \
+                const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2,
+                self._stream_tuning[1] * 10 ** 9 + self._frequency_band_offset_stream_2 + \
+                const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2
             )
 
             if (frequency_band_range_1[0] + \
-                    const.SEARCH_WINDOW_BW*10**6/2 <= \
-                    int(argin["searchWindowTuning"]) <= \
-                    frequency_band_range_1[1] - \
-                    const.SEARCH_WINDOW_BW*10**6/2) or\
+                const.SEARCH_WINDOW_BW * 10 ** 6 / 2 <= \
+                int(argin["searchWindowTuning"]) <= \
+                frequency_band_range_1[1] - \
+                const.SEARCH_WINDOW_BW * 10 ** 6 / 2) or \
                     (frequency_band_range_2[0] + \
-                    const.SEARCH_WINDOW_BW*10**6/2 <= \
-                    int(argin["searchWindowTuning"]) <= \
-                    frequency_band_range_2[1] - \
-                    const.SEARCH_WINDOW_BW*10**6/2):
+                     const.SEARCH_WINDOW_BW * 10 ** 6 / 2 <= \
+                     int(argin["searchWindowTuning"]) <= \
+                     frequency_band_range_2[1] - \
+                     const.SEARCH_WINDOW_BW * 10 ** 6 / 2):
                 # this is the acceptable range
                 pass
             else:
                 # log a warning message
-                log_msg = "'searchWindowTuning' partially out of observed band. "\
-                    "Proceeding."
+                log_msg = "'searchWindowTuning' partially out of observed band. " \
+                          "Proceeding."
                 self.logger.warn(log_msg)
 
         # Configure tdcEnable.
@@ -1555,8 +1565,8 @@ class CbfSubarray(SKASubarray):
             proxy_sw.tdcPeriodBeforeEpoch = int(argin["tdcPeriodBeforeEpoch"])
         else:
             proxy_sw.tdcPeriodBeforeEpoch = 2
-            log_msg = "Search window specified, but 'tdcPeriodBeforeEpoch' not given. "\
-                "Defaulting to 2."
+            log_msg = "Search window specified, but 'tdcPeriodBeforeEpoch' not given. " \
+                      "Defaulting to 2."
             self.logger.warn(log_msg)
 
         # Configure tdcPeriodAfterEpoch.
@@ -1564,8 +1574,8 @@ class CbfSubarray(SKASubarray):
             proxy_sw.tdcPeriodAfterEpoch = int(argin["tdcPeriodAfterEpoch"])
         else:
             proxy_sw.tdcPeriodAfterEpoch = 22
-            log_msg = "Search window specified, but 'tdcPeriodAfterEpoch' not given. "\
-                "Defaulting to 22."
+            log_msg = "Search window specified, but 'tdcPeriodAfterEpoch' not given. " \
+                      "Defaulting to 22."
             self.logger.warn(log_msg)
 
         # `Configure tdcDestinationAddress.`
@@ -1681,6 +1691,8 @@ class CbfSubarray(SKASubarray):
         # transition to obsState=IDLE
         self._obs_state = ObsState.IDLE.value
         # PROTECTED REGION END #    //  CbfSubarray.EndSB
+
+
 # ----------
 # Run server
 # ----------
@@ -1690,6 +1702,7 @@ def main(args=None, **kwargs):
     # PROTECTED REGION ID(CbfSubarray.main) ENABLED START #
     return run((CbfSubarray,), args=args, **kwargs)
     # PROTECTED REGION END #    //  CbfSubarray.main
+
 
 if __name__ == '__main__':
     main()
