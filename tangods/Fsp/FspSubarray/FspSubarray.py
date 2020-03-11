@@ -18,15 +18,15 @@ Copyright (c) 2019 National Research Council of Canada
 FspSubarray TANGO device class for the FspSubarray prototype
 """
 
-# PyTango imports
-import PyTango
-from PyTango import DebugIt
-from PyTango.server import run
-from PyTango.server import Device, DeviceMeta
-from PyTango.server import attribute, command
-from PyTango.server import device_property
-from PyTango import AttrQuality, DispLevel, DevState
-from PyTango import AttrWriteType, PipeWriteType
+# tango imports
+import tango
+from tango import DebugIt
+from tango.server import run
+from tango.server import Device
+from tango.server import attribute, command
+from tango.server import device_property
+from tango import AttrQuality, DispLevel, DevState
+from tango import AttrWriteType, PipeWriteType
 # Additional import
 # PROTECTED REGION ID(FspSubarray.additionnal_import) ENABLED START #
 import os
@@ -38,7 +38,8 @@ file_path = os.path.dirname(os.path.abspath(__file__))
 commons_pkg_path = os.path.abspath(os.path.join(file_path, "../../commons"))
 sys.path.insert(0, commons_pkg_path)
 
-from global_enum import HealthState, AdminMode, ObsState, const
+from global_enum import const
+from skabase.control_model import HealthState, AdminMode, ObsState
 from skabase.SKASubarray.SKASubarray import SKASubarray
 
 # PROTECTED REGION END #    //  FspSubarray.additionnal_import
@@ -50,7 +51,6 @@ class FspSubarray(SKASubarray):
     """
     FspSubarray TANGO device class for the FspSubarray prototype
     """
-    __metaclass__ = DeviceMeta
     # PROTECTED REGION ID(FspSubarray.class_variable) ENABLED START #
     # PROTECTED REGION END #    //  FspSubarray.class_variable
 
@@ -174,7 +174,7 @@ class FspSubarray(SKASubarray):
     def init_device(self):
         SKASubarray.init_device(self)
         # PROTECTED REGION ID(FspSubarray.init_device) ENABLED START #
-        self.set_state(PyTango.DevState.INIT)
+        self.set_state(tango.DevState.INIT)
 
         # get relevant IDs
         self._subarray_id = self.SubID
@@ -205,7 +205,7 @@ class FspSubarray(SKASubarray):
         self._channel_info = []
 
         # device proxy for easy reference to CBF Master
-        self._proxy_cbf_master = PyTango.DeviceProxy(self.CbfMasterAddress)
+        self._proxy_cbf_master = tango.DeviceProxy(self.CbfMasterAddress)
 
         self._master_max_capabilities = dict(
             pair.split(":") for pair in
@@ -213,13 +213,13 @@ class FspSubarray(SKASubarray):
         )
         self._count_vcc = int(self._master_max_capabilities["VCC"])
         self._fqdn_vcc = list(self.VCC)[:self._count_vcc]
-        self._proxies_vcc = [*map(PyTango.DeviceProxy, self._fqdn_vcc)]
+        self._proxies_vcc = [*map(tango.DeviceProxy, self._fqdn_vcc)]
 
         # device proxy for easy reference to CBF Subarray
-        self._proxy_cbf_subarray = PyTango.DeviceProxy(self.CbfSubarrayAddress)
+        self._proxy_cbf_subarray = tango.DeviceProxy(self.CbfSubarrayAddress)
 
         self._obs_state = ObsState.IDLE.value
-        self.set_state(PyTango.DevState.OFF)
+        self.set_state(tango.DevState.OFF)
         # PROTECTED REGION END #    //  FspSubarray.init_device
 
     def always_executed_hook(self):
@@ -231,7 +231,7 @@ class FspSubarray(SKASubarray):
         # PROTECTED REGION ID(FspSubarray.delete_device) ENABLED START #
         self.GoToIdle()
         self.RemoveAllReceptors()
-        self.set_state(PyTango.DevState.OFF)
+        self.set_state(tango.DevState.OFF)
         # PROTECTED REGION END #    //  FspSubarray.delete_device
 
     # ------------------
@@ -309,7 +309,7 @@ class FspSubarray(SKASubarray):
     # --------
 
     def is_On_allowed(self):
-        if self.dev_state() == PyTango.DevState.OFF and\
+        if self.dev_state() == tango.DevState.OFF and\
                 self._obs_state == ObsState.IDLE.value:
             return True
         return False
@@ -317,11 +317,11 @@ class FspSubarray(SKASubarray):
     @command()
     def On(self):
         # PROTECTED REGION ID(FspSubarray.On) ENABLED START #
-        self.set_state(PyTango.DevState.ON)
+        self.set_state(tango.DevState.ON)
         # PROTECTED REGION END #    //  FspSubarray.On
 
     def is_Off_allowed(self):
-        if self.dev_state() == PyTango.DevState.ON and\
+        if self.dev_state() == tango.DevState.ON and\
                 self._obs_state == ObsState.IDLE.value:
             return True
         return False
@@ -332,11 +332,11 @@ class FspSubarray(SKASubarray):
         # This command can only be called when obsState=IDLE
         # self.GoToIdle()
         self.RemoveAllReceptors()
-        self.set_state(PyTango.DevState.OFF)
+        self.set_state(tango.DevState.OFF)
         # PROTECTED REGION END #    //  FspSubarray.Off
 
     def is_AddReceptors_allowed(self):
-        if self.dev_state() == PyTango.DevState.ON and\
+        if self.dev_state() == tango.DevState.ON and\
                 self._obs_state in [
                     ObsState.IDLE.value,
                     ObsState.CONFIGURING.value,
@@ -377,12 +377,12 @@ class FspSubarray(SKASubarray):
         if errs:
             msg = "\n".join(errs)
             self.logger.error(msg)
-            PyTango.Except.throw_exception("Command failed", msg, "AddReceptors execution",
-                                           PyTango.ErrSeverity.ERR)
+            tango.Except.throw_exception("Command failed", msg, "AddReceptors execution",
+                                           tango.ErrSeverity.ERR)
         # PROTECTED REGION END #    //  FspSubarray.AddReceptors
 
     def is_RemoveReceptors_allowed(self):
-        if self.dev_state() == PyTango.DevState.ON and\
+        if self.dev_state() == tango.DevState.ON and\
                 self._obs_state in [
                     ObsState.IDLE.value,
                     ObsState.CONFIGURING.value,
@@ -407,7 +407,7 @@ class FspSubarray(SKASubarray):
         # PROTECTED REGION END #    //  FspSubarray.RemoveReceptors
 
     def is_RemoveAllReceptors_allowed(self):
-        if self.dev_state() == PyTango.DevState.ON and\
+        if self.dev_state() == tango.DevState.ON and\
                 self._obs_state in [
                     ObsState.IDLE.value,
                     ObsState.CONFIGURING.value,
@@ -423,7 +423,7 @@ class FspSubarray(SKASubarray):
         # PROTECTED REGION END #    //  FspSubarray.RemoveAllReceptors
 
     def is_AddChannels_allowed(self):
-        if self.dev_state() == PyTango.DevState.ON and\
+        if self.dev_state() == tango.DevState.ON and\
                 self._obs_state == ObsState.CONFIGURING.value:
             return True
         return False
@@ -459,7 +459,7 @@ class FspSubarray(SKASubarray):
         # PROTECTED REGION END #    //  FspSubarray.AddChannels
 
     def is_AddChannelAddresses_allowed(self):
-        if self.dev_state() == PyTango.DevState.ON and\
+        if self.dev_state() == tango.DevState.ON and\
                 self._obs_state == ObsState.CONFIGURING.value:
             return True
         return False
@@ -493,9 +493,9 @@ class FspSubarray(SKASubarray):
                             msg = "An error occurred while configuring destination addresses:"\
                                 "\n{}\n".format(str(e))
                             self.logger.error(msg)
-                            PyTango.Except.throw_exception("Command failed", msg,
+                            tango.Except.throw_exception("Command failed", msg,
                                                            "AddChannelAddresses execution",
-                                                           PyTango.ErrSeverity.ERR)
+                                                           tango.ErrSeverity.ERR)
                 self._vis_destination_address = fsp["hosts"]
 
         # get list of unconfigured channels
@@ -506,9 +506,9 @@ class FspSubarray(SKASubarray):
                 unconfigured_channels
             )
             self.logger.error(msg)
-            PyTango.Except.throw_exception("Command failed", msg,
+            tango.Except.throw_exception("Command failed", msg,
                                            "AddChannelAddressInfo execution",
-                                           PyTango.ErrSeverity.ERR)
+                                           tango.ErrSeverity.ERR)
 
         # transition to obsState=READY
         self._obs_state = ObsState.READY.value
@@ -530,8 +530,9 @@ class FspSubarray(SKASubarray):
         except json.JSONDecodeError:  # argument not a valid JSON object
             msg = "Scan configuration object is not a valid JSON object."
             self.logger.error(msg)
-            PyTango.Except.throw_exception("Command failed", msg,
-                                           "ConfigureScan execution", PyTango.ErrSeverity.ERR)
+<<<<<<< tangods/Fsp/FspSubarray/FspSubarray.py
+            tango.Except.throw_exception("Command failed", msg,
+                                           "ConfigureScan execution", tango.ErrSeverity.ERR)
         if argin["functionMode"] == "CORR":
             # Validate receptors.
             # This is always given, due to implementation details.
@@ -539,12 +540,12 @@ class FspSubarray(SKASubarray):
                 self.RemoveAllReceptors()
                 self.AddReceptors(list(map(int, argin["receptors"])))
                 self.RemoveAllReceptors()
-            except PyTango.DevFailed as df:  # error in AddReceptors()
+            except tango.DevFailed as df:  # error in AddReceptors()
                 self.RemoveAllReceptors()
                 msg = sys.exc_info()[1].args[0].desc + "\n'receptors' was malformed."
                 self.logger.error(msg)
-                PyTango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
-                                                PyTango.ErrSeverity.ERR)
+                tango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
+                                                tango.ErrSeverity.ERR)
             frequencyBand = ["1", "2", "3", "4", "5a", "5b"].index(argin["frequencyBand"])
 
             # Validate frequencySliceID.
@@ -560,13 +561,13 @@ class FspSubarray(SKASubarray):
                             str(argin["frequencyBand"])
                         )
                     self.logger.error(msg)
-                    PyTango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
-                                                   PyTango.ErrSeverity.ERR)
+                    tango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
+                                                   tango.ErrSeverity.ERR)
             else:
                 msg = "FSP specified, but 'frequencySliceID' not given."
                 self.logger.error(msg)
-                PyTango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
-                                               PyTango.ErrSeverity.ERR)
+                tango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
+                                               tango.ErrSeverity.ERR)
 
             # Validate corrBandwidth.
             if "corrBandwidth" in argin:
@@ -576,13 +577,13 @@ class FspSubarray(SKASubarray):
                     msg = "'corrBandwidth' must be an integer in the range [0, 6]."
                     # this is a fatal error
                     self.logger.error(msg)
-                    PyTango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
-                                                   PyTango.ErrSeverity.ERR)
+                    tango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
+                                                   tango.ErrSeverity.ERR)
             else:
                 msg = "FSP specified, but 'corrBandwidth' not given."
                 self.logger.error(msg)
-                PyTango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
-                                               PyTango.ErrSeverity.ERR)
+                tango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
+                                               tango.ErrSeverity.ERR)
 
             # Validate zoomWindowTuning.
             if argin["corrBandwidth"]:  # zoomWindowTuning is required
@@ -608,9 +609,9 @@ class FspSubarray(SKASubarray):
                         else:
                             msg = "'zoomWindowTuning' must be within observed frequency slice."
                             self.logger.error(msg)
-                            PyTango.Except.throw_exception("Command failed", msg,
+                            tango.Except.throw_exception("Command failed", msg,
                                                            "ConfigureScan execution",
-                                                           PyTango.ErrSeverity.ERR)
+                                                           tango.ErrSeverity.ERR)
                     else:  # frequency band 5a or 5b (two streams with bandwidth 2.5 GHz)
                         frequency_slice_range_1 = (
                             argin["band5Tuning"][0]*10**9 + argin["frequencyBandOffsetStream1"] - \
@@ -640,15 +641,15 @@ class FspSubarray(SKASubarray):
                         else:
                             msg = "'zoomWindowTuning' must be within observed frequency slice."
                             self.logger.error(msg)
-                            PyTango.Except.throw_exception("Command failed", msg,
+                            tango.Except.throw_exception("Command failed", msg,
                                                            "ConfigureScan execution",
-                                                           PyTango.ErrSeverity.ERR)
+                                                           tango.ErrSeverity.ERR)
                 else:
                     msg = "FSP specified, but 'zoomWindowTuning' not given."
                     self.logger.error(msg)
-                    PyTango.Except.throw_exception("Command failed", msg,
+                    tango.Except.throw_exception("Command failed", msg,
                                                     "ConfigureScan execution",
-                                                    PyTango.ErrSeverity.ERR)
+                                                    tango.ErrSeverity.ERR)
 
             # Validate integrationTime.
             if "integrationTime" in argin:
@@ -660,13 +661,13 @@ class FspSubarray(SKASubarray):
                     msg = "'integrationTime' must be an integer in the range [1, 10] multiplied "\
                         "by {}.".format(self.MIN_INT_TIME)
                     self.logger.error(msg)
-                    PyTango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
-                                                   PyTango.ErrSeverity.ERR)
+                    tango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
+                                                   tango.ErrSeverity.ERR)
             else:
                 msg = "FSP specified, but 'integrationTime' not given."
                 self.logger.error(msg)
-                PyTango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
-                                               PyTango.ErrSeverity.ERR)
+                tango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
+                                               tango.ErrSeverity.ERR)
 
             # Validate channelAveragingMap.
             if "channelAveragingMap" in argin:
@@ -688,9 +689,9 @@ class FspSubarray(SKASubarray):
                                     argin["channelAveragingMap"][i][0]
                                 )
                             self.logger.error(msg)
-                            PyTango.Except.throw_exception("Command failed", msg,
+                            tango.Except.throw_exception("Command failed", msg,
                                                            "ConfigureScan execution",
-                                                           PyTango.ErrSeverity.ERR)
+                                                           tango.ErrSeverity.ERR)
 
                         # validate averaging factor
                         if int(argin["channelAveragingMap"][i][1]) in [0, 1, 2, 3, 4, 6, 8]:
@@ -702,23 +703,23 @@ class FspSubarray(SKASubarray):
                                     argin["channelAveragingMap"][i][1]
                                 )
                             self.logger.error(msg)
-                            PyTango.Except.throw_exception("Command failed", msg,
+                            tango.Except.throw_exception("Command failed", msg,
                                                            "ConfigureScan execution",
-                                                           PyTango.ErrSeverity.ERR)
+                                                           tango.ErrSeverity.ERR)
                 except (TypeError, AssertionError):  # dimensions not correct
                     msg = "'channelAveragingMap' must be an 2D array of dimensions 2x{}.".format(
                             self.NUM_CHANNEL_GROUPS
                         )
                     self.logger.error(log_msg)
-                    PyTango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
-                                                   PyTango.ErrSeverity.ERR)
+                    tango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
+                                                   tango.ErrSeverity.ERR)
             else:
                 pass
 
         # PROTECTED REGION END #    //  FspSubarray.ValidateScan
 
     def is_ConfigureScan_allowed(self):
-        if self.dev_state() == PyTango.DevState.ON and\
+        if self.dev_state() == tango.DevState.ON and\
                 self._obs_state in [ObsState.IDLE.value, ObsState.READY.value]:
             return True
         return False
@@ -858,7 +859,7 @@ class FspSubarray(SKASubarray):
         # PROTECTED REGION END #    //  FspSubarray.ConfigureScan
 
     def is_EndScan_allowed(self):
-        if self.dev_state() == PyTango.DevState.ON and\
+        if self.dev_state() == tango.DevState.ON and\
                 self._obs_state == ObsState.SCANNING.value:
             return True
         return False
@@ -871,7 +872,7 @@ class FspSubarray(SKASubarray):
         # PROTECTED REGION END #    //  FspSubarray.EndScan
 
     def is_Scan_allowed(self):
-        if self.dev_state() == PyTango.DevState.ON and\
+        if self.dev_state() == tango.DevState.ON and\
                 self._obs_state == ObsState.READY.value:
             return True
         return False
@@ -884,7 +885,7 @@ class FspSubarray(SKASubarray):
         # PROTECTED REGION END #    //  FspSubarray.Scan
 
     def is_GoToIdle_allowed(self):
-        if self.dev_state() == PyTango.DevState.ON and\
+        if self.dev_state() == tango.DevState.ON and\
                 self._obs_state in [ObsState.IDLE.value, ObsState.READY.value]:
             return True
         return False

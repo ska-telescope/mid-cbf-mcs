@@ -18,15 +18,15 @@ Copyright (c) 2019 National Research Council of Canada
 TmCspSubarrayLeafNodeTest TANGO device class for the CBF prototype
 """
 
-# PyTango imports
-import PyTango
-from PyTango import DebugIt
-from PyTango.server import run
-from PyTango.server import Device, DeviceMeta
-from PyTango.server import attribute, command
-from PyTango.server import device_property
-from PyTango import AttrQuality, DispLevel, DevState
-from PyTango import AttrWriteType, PipeWriteType
+# tango imports
+import tango
+from tango import DebugIt
+from tango.server import run
+from tango.server import Device
+from tango.server import attribute, command
+from tango.server import device_property
+from tango import AttrQuality, DispLevel, DevState
+from tango import AttrWriteType, PipeWriteType
 # Additional import
 # PROTECTED REGION ID(TmCspSubarrayLeafNodeTest.additionnal_import) ENABLED START #
 import os
@@ -39,7 +39,7 @@ commons_pkg_path = os.path.abspath(os.path.join(file_path, "../commons"))
 sys.path.insert(0, commons_pkg_path)
 
 from skabase.SKABaseDevice.SKABaseDevice import SKABaseDevice
-from global_enum import HealthState, AdminMode
+from skabase.control_model import HealthState, AdminMode
 # PROTECTED REGION END #    //  TmCspSubarrayLeafNodeTest.additionnal_import
 
 __all__ = ["TmCspSubarrayLeafNodeTest", "main"]
@@ -49,7 +49,6 @@ class TmCspSubarrayLeafNodeTest(SKABaseDevice):
     """
     TmCspSubarrayLeafNodeTest TANGO device class for the CBF prototype
     """
-    __metaclass__ = DeviceMeta
     # PROTECTED REGION ID(TmCspSubarrayLeafNodeTest.class_variable) ENABLED START #
 
     def __output_links_event_callback(self, event):
@@ -177,9 +176,9 @@ class TmCspSubarrayLeafNodeTest(SKABaseDevice):
         # PROTECTED REGION ID(TmCspSubarrayLeafNodeTest.init_device) ENABLED START #
         self.set_state(DevState.INIT)
 
-        self._storage_logging_level = PyTango.LogLevel.LOG_DEBUG
-        self._element_logging_level = PyTango.LogLevel.LOG_DEBUG
-        self._central_logging_level = PyTango.LogLevel.LOG_DEBUG
+        self._storage_logging_level = tango.LogLevel.LOG_DEBUG
+        self._element_logging_level = tango.LogLevel.LOG_DEBUG
+        self._central_logging_level = tango.LogLevel.LOG_DEBUG
 
         self._scan_ID = 0
         self._doppler_phase_correction = [0, 0, 0, 0]
@@ -187,11 +186,11 @@ class TmCspSubarrayLeafNodeTest(SKABaseDevice):
         self._vis_destination_address = {}  # this is interpreted as a JSON object
         self._received_output_links = False
 
-      #  self._proxy_csp_master = PyTango.DeviceProxy(self.CspMasterAddress)
-      #  self._proxy_cbf_master = PyTango.DeviceProxy(
+      #  self._proxy_csp_master = tango.DeviceProxy(self.CspMasterAddress)
+      #  self._proxy_cbf_master = tango.DeviceProxy(
       #      self._proxy_csp_master.get_property("CspMidCbf")["CspMidCbf"][0]
       #  )
-      #  self._proxy_csp_subarray = PyTango.DeviceProxy(self.CspSubarrayAddress)
+      #  self._proxy_csp_subarray = tango.DeviceProxy(self.CspSubarrayAddress)
 
       #  self._proxy_csp_subarray.subscribe_event(
       #      "cbfOutputLink",

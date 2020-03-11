@@ -33,7 +33,7 @@ import pytest
 #Local imports
 
 from FspSubarray.FspSubarray import FspSubarray
-from global_enum import HealthState, AdminMode, ObsState
+from skabase.control_model import HealthState, AdminMode, ObsState
 
 @pytest.mark.usefixtures(
     "create_cbf_master_proxy",

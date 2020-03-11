@@ -31,7 +31,7 @@ import pytest
 
 #Local imports
 from CbfMaster.CbfMaster import CbfMaster
-from global_enum import HealthState, AdminMode
+from skabase.control_model import HealthState, AdminMode
 
 @pytest.mark.usefixtures(
     "create_cbf_master_proxy",
@@ -166,12 +166,10 @@ class TestCbfMaster:
         create_fsp_2_proxy.Init()
         create_sw_1_proxy.Init()
         create_sw_2_proxy.Init()
-        create_subarray_1_proxy.set_timeout_millis(60000)  # since the command takes a while
         create_subarray_1_proxy.Init()
         time.sleep(3)
-        create_cbf_master_proxy.set_timeout_millis(60000)
         create_cbf_master_proxy.Init()
-        time.sleep(60)  # takes pretty long for CBF Master to initialize
+        time.sleep(3)  # takes pretty long for CBF Master to initialize
 
         # check initial states
         assert create_cbf_master_proxy.State() == DevState.STANDBY
@@ -222,12 +220,10 @@ class TestCbfMaster:
         create_fsp_2_proxy.Init()
         create_sw_1_proxy.Init()
         create_sw_2_proxy.Init()
-        create_subarray_1_proxy.set_timeout_millis(60000)  # since the command takes a while
         create_subarray_1_proxy.Init()
         time.sleep(3)
-        create_cbf_master_proxy.set_timeout_millis(60000)
         create_cbf_master_proxy.Init()
-        time.sleep(60)  # takes pretty long for CBF Master to initialize
+        time.sleep(3)  # takes pretty long for CBF Master to initialize
 
         # check initial states
         assert create_cbf_master_proxy.State() == DevState.STANDBY
@@ -278,12 +274,10 @@ class TestCbfMaster:
         create_fsp_2_proxy.Init()
         create_sw_1_proxy.Init()
         create_sw_2_proxy.Init()
-        create_subarray_1_proxy.set_timeout_millis(60000)  # since the command takes a while
         create_subarray_1_proxy.Init()
         time.sleep(3)
-        create_cbf_master_proxy.set_timeout_millis(60000)
         create_cbf_master_proxy.Init()
-        time.sleep(60)  # takes pretty long for CBF Master to initialize
+        time.sleep(3)  # takes pretty long for CBF Master to initialize
 
         assert create_cbf_master_proxy.State() == DevState.STANDBY
 

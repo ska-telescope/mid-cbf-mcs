@@ -18,15 +18,15 @@ Copyright (c) 2019 National Research Council of Canada
 Vcc TANGO device class for the prototype
 """
 
-# PyTango imports
-import PyTango
-from PyTango import DebugIt
-from PyTango.server import run
-from PyTango.server import Device, DeviceMeta
-from PyTango.server import attribute, command
-from PyTango.server import device_property
-from PyTango import AttrQuality, DispLevel, DevState
-from PyTango import AttrWriteType, PipeWriteType
+# tango imports
+import tango
+from tango import DebugIt
+from tango.server import run
+from tango.server import Device
+from tango.server import attribute, command
+from tango.server import device_property
+from tango import AttrQuality, DispLevel, DevState
+from tango import AttrWriteType, PipeWriteType
 # Additional import
 # PROTECTED REGION ID(Vcc.additionnal_import) ENABLED START #
 import os
@@ -37,7 +37,8 @@ file_path = os.path.dirname(os.path.abspath(__file__))
 commons_pkg_path = os.path.abspath(os.path.join(file_path, "../../commons"))
 sys.path.insert(0, commons_pkg_path)
 
-from global_enum import HealthState, AdminMode, ObsState, const
+from global_enum import const
+from skabase.control_model import HealthState, AdminMode, ObsState
 from skabase.SKACapability.SKACapability import SKACapability
 # PROTECTED REGION END #    //  Vcc.additionnal_import
 
@@ -48,23 +49,22 @@ class Vcc(SKACapability):
     """
     Vcc TANGO device class for the prototype
     """
-    __metaclass__ = DeviceMeta
     # PROTECTED REGION ID(Vcc.class_variable) ENABLED START #
 
     def __get_capability_proxies(self):
         # for now, assume that given addresses are valid
         if self.Band1And2Address:
-            self._proxy_band_12 = PyTango.DeviceProxy(self.Band1And2Address)
+            self._proxy_band_12 = tango.DeviceProxy(self.Band1And2Address)
         if self.Band3Address:
-            self._proxy_band_3 = PyTango.DeviceProxy(self.Band3Address)
+            self._proxy_band_3 = tango.DeviceProxy(self.Band3Address)
         if self.Band4Address:
-            self._proxy_band_4 = PyTango.DeviceProxy(self.Band4Address)
+            self._proxy_band_4 = tango.DeviceProxy(self.Band4Address)
         if self.Band5Address:
-            self._proxy_band_5 = PyTango.DeviceProxy(self.Band5Address)
+            self._proxy_band_5 = tango.DeviceProxy(self.Band5Address)
         if self.SW1Address:
-            self._proxy_sw_1 = PyTango.DeviceProxy(self.SW1Address)
+            self._proxy_sw_1 = tango.DeviceProxy(self.SW1Address)
         if self.SW2Address:
-            self._proxy_sw_2 = PyTango.DeviceProxy(self.SW2Address)
+            self._proxy_sw_2 = tango.DeviceProxy(self.SW2Address)
 
     # PROTECTED REGION END #    //  Vcc.class_variable
 
@@ -221,7 +221,7 @@ class Vcc(SKACapability):
     def init_device(self):
         SKACapability.init_device(self)
         # PROTECTED REGION ID(Vcc.init_device) ENABLED START #
-        self.set_state(PyTango.DevState.INIT)
+        self.set_state(tango.DevState.INIT)
 
         # defines self._proxy_band_12, self._proxy_band_3, self._proxy_band_4, self._proxy_band_5,
         # self._proxy_sw_1, and self._proxy_sw_2
@@ -230,12 +230,12 @@ class Vcc(SKACapability):
         self._vcc_id = self.VccID
 
         # the bands are already disabled on initialization
-        # self._proxy_band_12.SetState(PyTango.DevState.DISABLE)
-        # self._proxy_band_3.SetState(PyTango.DevState.DISABLE)
-        # self._proxy_band_4.SetState(PyTango.DevState.DISABLE)
-        # self._proxy_band_5.SetState(PyTango.DevState.DISABLE)
-        # self._proxy_tdc_1.SetState(PyTango.DevState.DISABLE)
-        # self._proxy_tdc_2.SetState(PyTango.DevSTate.DISABLE)
+        # self._proxy_band_12.SetState(tango.DevState.DISABLE)
+        # self._proxy_band_3.SetState(tango.DevState.DISABLE)
+        # self._proxy_band_4.SetState(tango.DevState.DISABLE)
+        # self._proxy_band_5.SetState(tango.DevState.DISABLE)
+        # self._proxy_tdc_1.SetState(tango.DevState.DISABLE)
+        # self._proxy_tdc_2.SetState(tango.DevSTate.DISABLE)
 
         # initialize attribute values
         self._receptor_ID = 0
@@ -255,7 +255,7 @@ class Vcc(SKACapability):
         self._delay_model = [[0]*6 for i in range(26)]
 
         self._obs_state = ObsState.IDLE.value
-        self.set_state(PyTango.DevState.OFF)
+        self.set_state(tango.DevState.OFF)
         # PROTECTED REGION END #    //  Vcc.init_device
 
     def always_executed_hook(self):
@@ -265,15 +265,15 @@ class Vcc(SKACapability):
 
     def delete_device(self):
         # PROTECTED REGION ID(Vcc.delete_device) ENABLED START #
-        self._proxy_band_12.SetState(PyTango.DevState.OFF)
-        self._proxy_band_3.SetState(PyTango.DevState.OFF)
-        self._proxy_band_4.SetState(PyTango.DevState.OFF)
-        self._proxy_band_5.SetState(PyTango.DevState.OFF)
-        self._proxy_sw_1.SetState(PyTango.DevState.OFF)
-        self._proxy_sw_2.SetState(PyTango.DevState.OFF)
+        self._proxy_band_12.SetState(tango.DevState.OFF)
+        self._proxy_band_3.SetState(tango.DevState.OFF)
+        self._proxy_band_4.SetState(tango.DevState.OFF)
+        self._proxy_band_5.SetState(tango.DevState.OFF)
+        self._proxy_sw_1.SetState(tango.DevState.OFF)
+        self._proxy_sw_2.SetState(tango.DevState.OFF)
 
         self.GoToIdle()
-        self.set_state(PyTango.DevState.OFF)
+        self.set_state(tango.DevState.OFF)
         # PROTECTED REGION END #    //  Vcc.delete_device
 
     # ------------------
@@ -427,7 +427,7 @@ class Vcc(SKACapability):
     # --------
 
     def is_On_allowed(self):
-        if self.dev_state() == PyTango.DevState.OFF and\
+        if self.dev_state() == tango.DevState.OFF and\
                 self._obs_state == ObsState.IDLE.value:
             return True
         return False
@@ -435,18 +435,18 @@ class Vcc(SKACapability):
     @command()
     def On(self):
         # PROTECTED REGION ID(Vcc.On) ENABLED START #
-        self._proxy_band_12.SetState(PyTango.DevState.DISABLE)
-        self._proxy_band_3.SetState(PyTango.DevState.DISABLE)
-        self._proxy_band_4.SetState(PyTango.DevState.DISABLE)
-        self._proxy_band_5.SetState(PyTango.DevState.DISABLE)
-        self._proxy_sw_1.SetState(PyTango.DevState.DISABLE)
-        self._proxy_sw_2.SetState(PyTango.DevState.DISABLE)
+        self._proxy_band_12.SetState(tango.DevState.DISABLE)
+        self._proxy_band_3.SetState(tango.DevState.DISABLE)
+        self._proxy_band_4.SetState(tango.DevState.DISABLE)
+        self._proxy_band_5.SetState(tango.DevState.DISABLE)
+        self._proxy_sw_1.SetState(tango.DevState.DISABLE)
+        self._proxy_sw_2.SetState(tango.DevState.DISABLE)
 
-        self.set_state(PyTango.DevState.ON)
+        self.set_state(tango.DevState.ON)
         # PROTECTED REGION END #    //  Vcc.On
 
     def is_Off_allowed(self):
-        if self.dev_state() == PyTango.DevState.ON and\
+        if self.dev_state() == tango.DevState.ON and\
                 self._obs_state == ObsState.IDLE.value:
             return True
         return False
@@ -454,20 +454,20 @@ class Vcc(SKACapability):
     @command()
     def Off(self):
         # PROTECTED REGION ID(Vcc.Off) ENABLED START #
-        self._proxy_band_12.SetState(PyTango.DevState.OFF)
-        self._proxy_band_3.SetState(PyTango.DevState.OFF)
-        self._proxy_band_4.SetState(PyTango.DevState.OFF)
-        self._proxy_band_5.SetState(PyTango.DevState.OFF)
-        self._proxy_sw_1.SetState(PyTango.DevState.OFF)
-        self._proxy_sw_2.SetState(PyTango.DevState.OFF)
+        self._proxy_band_12.SetState(tango.DevState.OFF)
+        self._proxy_band_3.SetState(tango.DevState.OFF)
+        self._proxy_band_4.SetState(tango.DevState.OFF)
+        self._proxy_band_5.SetState(tango.DevState.OFF)
+        self._proxy_sw_1.SetState(tango.DevState.OFF)
+        self._proxy_sw_2.SetState(tango.DevState.OFF)
 
         # This command can only be called when obsState=IDLE
         # self.GoToIdle()
-        self.set_state(PyTango.DevState.OFF)
+        self.set_state(tango.DevState.OFF)
         # PROTECTED REGION END #    //  Vcc.Off
 
     def is_SetFrequencyBand_allowed(self):
-        if self.dev_state() == PyTango.DevState.ON and\
+        if self.dev_state() == tango.DevState.ON and\
                 self._obs_state == ObsState.CONFIGURING.value:
             return True
         return False
@@ -480,35 +480,35 @@ class Vcc(SKACapability):
         # PROTECTED REGION ID(Vcc.SetFrequencyBand) ENABLED START #
         if argin in ["1", "2"]:
             self._frequency_band = ["1", "2"].index(argin)
-            self._proxy_band_12.SetState(PyTango.DevState.ON)
-            self._proxy_band_3.SetState(PyTango.DevState.DISABLE)
-            self._proxy_band_4.SetState(PyTango.DevState.DISABLE)
-            self._proxy_band_5.SetState(PyTango.DevState.DISABLE)
+            self._proxy_band_12.SetState(tango.DevState.ON)
+            self._proxy_band_3.SetState(tango.DevState.DISABLE)
+            self._proxy_band_4.SetState(tango.DevState.DISABLE)
+            self._proxy_band_5.SetState(tango.DevState.DISABLE)
         elif argin == "3":
             self._frequency_band = 2
-            self._proxy_band_12.SetState(PyTango.DevState.DISABLE)
-            self._proxy_band_3.SetState(PyTango.DevState.ON)
-            self._proxy_band_4.SetState(PyTango.DevState.DISABLE)
-            self._proxy_band_5.SetState(PyTango.DevState.DISABLE)
+            self._proxy_band_12.SetState(tango.DevState.DISABLE)
+            self._proxy_band_3.SetState(tango.DevState.ON)
+            self._proxy_band_4.SetState(tango.DevState.DISABLE)
+            self._proxy_band_5.SetState(tango.DevState.DISABLE)
         elif argin == "4":
             self._frequency_band = 3
-            self._proxy_band_12.SetState(PyTango.DevState.DISABLE)
-            self._proxy_band_3.SetState(PyTango.DevState.DISABLE)
-            self._proxy_band_4.SetState(PyTango.DevState.ON)
-            self._proxy_band_5.SetState(PyTango.DevState.DISABLE)
+            self._proxy_band_12.SetState(tango.DevState.DISABLE)
+            self._proxy_band_3.SetState(tango.DevState.DISABLE)
+            self._proxy_band_4.SetState(tango.DevState.ON)
+            self._proxy_band_5.SetState(tango.DevState.DISABLE)
         elif argin in ["5a", "5b"]:
             self._frequency_band = ["5a", "5b"].index(argin) + 4
-            self._proxy_band_12.SetState(PyTango.DevState.DISABLE)
-            self._proxy_band_3.SetState(PyTango.DevState.DISABLE)
-            self._proxy_band_4.SetState(PyTango.DevState.DISABLE)
-            self._proxy_band_5.SetState(PyTango.DevState.ON)
+            self._proxy_band_12.SetState(tango.DevState.DISABLE)
+            self._proxy_band_3.SetState(tango.DevState.DISABLE)
+            self._proxy_band_4.SetState(tango.DevState.DISABLE)
+            self._proxy_band_5.SetState(tango.DevState.ON)
 
         # shouldn't happen
         self.logger.warn("frequencyBand not in valid range. Ignoring.")
         # PROTECTED REGION END #    // Vcc.SetFrequencyBand
 
     def is_SetObservingState_allowed(self):
-        if self.dev_state() == PyTango.DevState.ON and\
+        if self.dev_state() == tango.DevState.ON and\
                 self._obs_state in [
                     ObsState.IDLE.value,
                     ObsState.CONFIGURING.value,
@@ -533,7 +533,7 @@ class Vcc(SKACapability):
         # PROTECTED REGION END #    // Vcc.SetFrequencyBand
 
     def is_UpdateDelayModel_allowed(self):
-        if self.dev_state() == PyTango.DevState.ON and\
+        if self.dev_state() == tango.DevState.ON and\
                 self._obs_state in [ObsState.READY.value, ObsState.SCANNING.value]:
             return True
         return False
@@ -579,8 +579,8 @@ class Vcc(SKACapability):
         except json.JSONDecodeError:  # argument not a valid JSON object
             msg = "Search window configuration object is not a valid JSON object."
             self.logger.error(msg)
-            PyTango.Except.throw_exception("Command failed", msg, "ConfigureSearchWindow execution",
-                                           PyTango.ErrSeverity.ERR)
+            tango.Except.throw_exception("Command failed", msg, "ConfigureSearchWindow execution",
+                                           tango.ErrSeverity.ERR)
 
         # Validate searchWindowID.
         if "searchWindowID" in argin:
@@ -591,14 +591,14 @@ class Vcc(SKACapability):
                     str(argin["searchWindowID"])
                 )
                 self.logger.error(msg)
-                PyTango.Except.throw_exception("Command failed", msg,
+                tango.Except.throw_exception("Command failed", msg,
                                                "ConfigureSearchWindow execution",
-                                               PyTango.ErrSeverity.ERR)
+                                               tango.ErrSeverity.ERR)
         else:
             msg = "Search window specified, but 'searchWindowID' not given."
             self.logger.error(msg)
-            PyTango.Except.throw_exception("Command failed", msg, "ConfigureSearchWindow execution",
-                                           PyTango.ErrSeverity.ERR)
+            tango.Except.throw_exception("Command failed", msg, "ConfigureSearchWindow execution",
+                                           tango.ErrSeverity.ERR)
 
         # Validate searchWindowTuning.
         if "searchWindowTuning" in argin:
@@ -617,9 +617,9 @@ class Vcc(SKACapability):
                 else:
                     msg = "'searchWindowTuning' must be within observed band."
                     self.logger.error(msg)
-                    PyTango.Except.throw_exception("Command failed", msg,
+                    tango.Except.throw_exception("Command failed", msg,
                                                    "ConfigureSearchWindow execution",
-                                                   PyTango.ErrSeverity.ERR)
+                                                   tango.ErrSeverity.ERR)
             else:  # frequency band 5a or 5b (two streams with bandwidth 2.5 GHz)
                 frequency_band_range_1 = (
                     argin["band5Tuning"][0]*10**9 + argin["frequencyBandOffsetStream1"] - \
@@ -645,14 +645,14 @@ class Vcc(SKACapability):
                 else:
                     msg = "'searchWindowTuning' must be within observed band."
                     self.logger.error(msg)
-                    PyTango.Except.throw_exception("Command failed", msg,
+                    tango.Except.throw_exception("Command failed", msg,
                                                    "ConfigureSearchWindow execution",
-                                                   PyTango.ErrSeverity.ERR)
+                                                   tango.ErrSeverity.ERR)
         else:
             msg = "Search window specified, but 'searchWindowTuning' not given."
             self.logger.error(msg)
-            PyTango.Except.throw_exception("Command failed", msg, "ConfigureSearchWindow execution",
-                                           PyTango.ErrSeverity.ERR)
+            tango.Except.throw_exception("Command failed", msg, "ConfigureSearchWindow execution",
+                                           tango.ErrSeverity.ERR)
 
         # Validate tdcEnable.
         if "tdcEnable" in argin:
@@ -661,14 +661,14 @@ class Vcc(SKACapability):
             else:
                 msg = "Search window specified, but 'tdcEnable' not given."
                 self.logger.error(msg)
-                PyTango.Except.throw_exception("Command failed", msg,
+                tango.Except.throw_exception("Command failed", msg,
                                                "ConfigureSearchWindow execution",
-                                               PyTango.ErrSeverity.ERR)
+                                               tango.ErrSeverity.ERR)
         else:
             msg = "Search window specified, but 'tdcEnable' not given."
             self.logger.error(msg)
-            PyTango.Except.throw_exception("Command failed", msg, "ConfigureSearchWindow execution",
-                                           PyTango.ErrSeverity.ERR)
+            tango.Except.throw_exception("Command failed", msg, "ConfigureSearchWindow execution",
+                                           tango.ErrSeverity.ERR)
 
         # Validate tdcNumBits.
         if argin["tdcEnable"]:
@@ -680,15 +680,15 @@ class Vcc(SKACapability):
                         str(argin["tdcNumBits"])
                     )
                     self.logger.error(msg)
-                    PyTango.Except.throw_exception("Command failed", msg,
+                    tango.Except.throw_exception("Command failed", msg,
                                                    "ConfigureSearchWindow execution",
-                                                   PyTango.ErrSeverity.ERR)
+                                                   tango.ErrSeverity.ERR)
             else:
                 msg = "Search window specified with TDC enabled, but 'tdcNumBits' not given."
                 self.logger.error(msg)
-                PyTango.Except.throw_exception("Command failed", msg,
+                tango.Except.throw_exception("Command failed", msg,
                                                "ConfigureSearchWindow execution",
-                                               PyTango.ErrSeverity.ERR)
+                                               tango.ErrSeverity.ERR)
 
         # Validate tdcPeriodBeforeEpoch.
         if "tdcPeriodBeforeEpoch" in argin:
@@ -699,9 +699,9 @@ class Vcc(SKACapability):
                     str(argin["tdcPeriodBeforeEpoch"])
                 )
                 self.logger.error(msg)
-                PyTango.Except.throw_exception("Command failed", msg,
+                tango.Except.throw_exception("Command failed", msg,
                                                "ConfigureSearchWindow execution",
-                                               PyTango.ErrSeverity.ERR)
+                                               tango.ErrSeverity.ERR)
         else:
             pass
 
@@ -714,9 +714,9 @@ class Vcc(SKACapability):
                     str(argin["tdcPeriodAfterEpoch"])
                 )
                 self.logger.error(log_msg)
-                PyTango.Except.throw_exception("Command failed", msg,
+                tango.Except.throw_exception("Command failed", msg,
                                                "ConfigureSearchWindow execution",
-                                               PyTango.ErrSeverity.ERR)
+                                               tango.ErrSeverity.ERR)
         else:
             pass
 
@@ -735,12 +735,12 @@ class Vcc(SKACapability):
                 msg = "Search window specified with TDC enabled, but 'tdcDestinationAddress' "\
                     "not given or missing receptors."
                 self.logger.error(msg)
-                PyTango.Except.throw_exception("Command failed", msg,
+                tango.Except.throw_exception("Command failed", msg,
                                                "ConfigureSearchWindow execution",
-                                               PyTango.ErrSeverity.ERR)
+                                               tango.ErrSeverity.ERR)
 
     def is_ConfigureSearchWindow_allowed(self):
-        if self.dev_state() == PyTango.DevState.ON and\
+        if self.dev_state() == tango.DevState.ON and\
                 self._obs_state == ObsState.CONFIGURING.value:
             return True
         return False
@@ -827,9 +827,9 @@ class Vcc(SKACapability):
         proxy_sw.tdcEnable = argin["tdcEnable"]
         if argin["tdcEnable"]:
             # transition to ON if TDC is enabled
-            proxy_sw.SetState(PyTango.DevState.ON)
+            proxy_sw.SetState(tango.DevState.ON)
         else:
-            proxy_sw.SetState(PyTango.DevState.DISABLE)
+            proxy_sw.SetState(tango.DevState.DISABLE)
 
         # Configure tdcNumBits.
         if argin["tdcEnable"]:
@@ -865,7 +865,7 @@ class Vcc(SKACapability):
         # PROTECTED REGION END #    //  Vcc.ConfigureSearchWindow
 
     def is_EndScan_allowed(self):
-        if self.dev_state() == PyTango.DevState.ON and\
+        if self.dev_state() == tango.DevState.ON and\
                 self._obs_state == ObsState.SCANNING.value:
             return True
         return False
@@ -878,7 +878,7 @@ class Vcc(SKACapability):
         # PROTECTED REGION END #    //  Vcc.EndScan
 
     def is_Scan_allowed(self):
-        if self.dev_state() == PyTango.DevState.ON and\
+        if self.dev_state() == tango.DevState.ON and\
                 self._obs_state == ObsState.READY.value:
             return True
         return False
@@ -891,7 +891,7 @@ class Vcc(SKACapability):
         # PROTECTED REGION END #    //  Vcc.Scan
 
     def is_GoToIdle_allowed(self):
-        if self.dev_state() == PyTango.DevState.ON and\
+        if self.dev_state() == tango.DevState.ON and\
                 self._obs_state in [ObsState.IDLE.value, ObsState.READY.value]:
             return True
         return False

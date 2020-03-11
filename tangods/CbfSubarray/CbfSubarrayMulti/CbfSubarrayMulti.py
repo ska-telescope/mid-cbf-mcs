@@ -4,7 +4,7 @@ Herzberg Astronomy and Astrophysics, National Research Council of Canada
 Copyright (c) 2019 National Research Council of Canada
 """
 
-from PyTango.server import run
+from tango.server import run
 import os
 import sys
 

@@ -33,7 +33,7 @@ import pytest
 #Local imports
 
 from Vcc.Vcc import Vcc
-from global_enum import HealthState, AdminMode, ObsState
+from skabase.control_model import HealthState, AdminMode, ObsState
 
 @pytest.mark.usefixtures(
     "create_vcc_proxy",

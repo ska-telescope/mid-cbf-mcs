@@ -18,15 +18,15 @@ Copyright (c) 2019 National Research Council of Canada
 Fsp TANGO device class for the prototype
 """
 
-# PyTango imports
-import PyTango
-from PyTango import DebugIt
-from PyTango.server import run
-from PyTango.server import Device, DeviceMeta
-from PyTango.server import attribute, command
-from PyTango.server import device_property
-from PyTango import AttrQuality, DispLevel, DevState
-from PyTango import AttrWriteType, PipeWriteType
+# tango imports
+import tango
+from tango import DebugIt
+from tango.server import run
+from tango.server import Device
+from tango.server import attribute, command
+from tango.server import device_property
+from tango import AttrQuality, DispLevel, DevState
+from tango import AttrWriteType, PipeWriteType
 # Additional import
 # PROTECTED REGION ID(Fsp.additionnal_import) ENABLED START #
 import os
@@ -36,7 +36,7 @@ file_path = os.path.dirname(os.path.abspath(__file__))
 commons_pkg_path = os.path.abspath(os.path.join(file_path, "../../commons"))
 sys.path.insert(0, commons_pkg_path)
 
-from global_enum import HealthState, AdminMode, ObsState
+from skabase.control_model import HealthState, AdminMode, ObsState
 from skabase.SKACapability.SKACapability import SKACapability
 # PROTECTED REGION END #    //  Fsp.additionnal_import
 
@@ -47,22 +47,21 @@ class Fsp(SKACapability):
     """
     Fsp TANGO device class for the prototype
     """
-    __metaclass__ = DeviceMeta
     # PROTECTED REGION ID(Fsp.class_variable) ENABLED START #
 
     def __get_capability_proxies(self):
         # for now, assume that given addresses are valid
         if self.CorrelationAddress:
-            self._proxy_correlation = PyTango.DeviceProxy(self.CorrelationAddress)
+            self._proxy_correlation = tango.DeviceProxy(self.CorrelationAddress)
         if self.PSSAddress:
-            self._proxy_pss = PyTango.DeviceProxy(self.PSSAddress)
+            self._proxy_pss = tango.DeviceProxy(self.PSSAddress)
         if self.PSTAddress:
-            self._proxy_pst = PyTango.DeviceProxy(self.PSTAddress)
+            self._proxy_pst = tango.DeviceProxy(self.PSTAddress)
         if self.VLBIAddress:
-            self._proxy_vlbi = PyTango.DeviceProxy(self.VLBIAddress)
+            self._proxy_vlbi = tango.DeviceProxy(self.VLBIAddress)
         if self.FspSubarray:
             self._proxy_fsp_subarray = [*map(
-                lambda i: PyTango.DeviceProxy(i),
+                lambda i: tango.DeviceProxy(i),
                 list(self.FspSubarray)
             )]
 
@@ -123,17 +122,17 @@ class Fsp(SKACapability):
     def init_device(self):
         SKACapability.init_device(self)
         # PROTECTED REGION ID(Fsp.init_device) ENABLED START #
-        self.set_state(PyTango.DevState.INIT)
+        self.set_state(tango.DevState.INIT)
 
         # defines self._proxy_correlation, self._proxy_pss, self._proxy_pst, self._proxy_vlbi,
         # and self._proxy_fsp_subarray
         self.__get_capability_proxies()
 
         # the modes are already disabled on initialization,
-        # self._proxy_correlation.SetState(PyTango.DevState.DISABLE)
-        # self._proxy_pss.SetState(PyTango.DevState.DISABLE)
-        # self._proxy_pst.SetState(PyTango.DevState.DISABLE)
-        # self._proxy_vlbi.SetState(PyTango.DevState.DISABLE)
+        # self._proxy_correlation.SetState(tango.DevState.DISABLE)
+        # self._proxy_pss.SetState(tango.DevState.DISABLE)
+        # self._proxy_pst.SetState(tango.DevState.DISABLE)
+        # self._proxy_vlbi.SetState(tango.DevState.DISABLE)
 
         self._fsp_id = self.FspID
 
@@ -142,11 +141,11 @@ class Fsp(SKACapability):
         self._subarray_membership = []
 
         # initialize FSP subarray group
-        self._group_fsp_subarray = PyTango.Group("FSP Subarray")
+        self._group_fsp_subarray = tango.Group("FSP Subarray")
         for fqdn in list(self.FspSubarray):
             self._group_fsp_subarray.add(fqdn)
 
-        self.set_state(PyTango.DevState.OFF)
+        self.set_state(tango.DevState.OFF)
         # PROTECTED REGION END #    //  Fsp.init_device
 
     def always_executed_hook(self):
@@ -156,17 +155,17 @@ class Fsp(SKACapability):
 
     def delete_device(self):
         # PROTECTED REGION ID(Fsp.delete_device) ENABLED START #
-        self._proxy_correlation.SetState(PyTango.DevState.OFF)
-        self._proxy_pss.SetState(PyTango.DevState.OFF)
-        self._proxy_pst.SetState(PyTango.DevState.OFF)
-        self._proxy_vlbi.SetState(PyTango.DevState.OFF)
+        self._proxy_correlation.SetState(tango.DevState.OFF)
+        self._proxy_pss.SetState(tango.DevState.OFF)
+        self._proxy_pst.SetState(tango.DevState.OFF)
+        self._proxy_vlbi.SetState(tango.DevState.OFF)
         self._group_fsp_subarray.command_inout("Off")
 
         # remove all subarray membership
         for subarray_ID in self._subarray_membership[:]:
             self.RemoveSubarrayMembership(subarray_ID)
 
-        self.set_state(PyTango.DevState.OFF)
+        self.set_state(tango.DevState.OFF)
         # PROTECTED REGION END #    //  Fsp.delete_device
 
     # ------------------
@@ -188,45 +187,45 @@ class Fsp(SKACapability):
     # --------
 
     def is_On_allowed(self):
-        if self.dev_state() == PyTango.DevState.OFF:
+        if self.dev_state() == tango.DevState.OFF:
             return True
         return False
 
     @command()
     def On(self):
         # PROTECTED REGION ID(Fsp.On) ENABLED START #
-        self._proxy_correlation.SetState(PyTango.DevState.DISABLE)
-        self._proxy_pss.SetState(PyTango.DevState.DISABLE)
-        self._proxy_pst.SetState(PyTango.DevState.DISABLE)
-        self._proxy_vlbi.SetState(PyTango.DevState.DISABLE)
+        self._proxy_correlation.SetState(tango.DevState.DISABLE)
+        self._proxy_pss.SetState(tango.DevState.DISABLE)
+        self._proxy_pst.SetState(tango.DevState.DISABLE)
+        self._proxy_vlbi.SetState(tango.DevState.DISABLE)
         self._group_fsp_subarray.command_inout("On")
 
-        self.set_state(PyTango.DevState.ON)
+        self.set_state(tango.DevState.ON)
         # PROTECTED REGION END #    //  Fsp.On
 
     def is_Off_allowed(self):
-        if self.dev_state() == PyTango.DevState.ON:
+        if self.dev_state() == tango.DevState.ON:
             return True
         return False
 
     @command()
     def Off(self):
         # PROTECTED REGION ID(Fsp.Off) ENABLED START #
-        self._proxy_correlation.SetState(PyTango.DevState.OFF)
-        self._proxy_pss.SetState(PyTango.DevState.OFF)
-        self._proxy_pst.SetState(PyTango.DevState.OFF)
-        self._proxy_vlbi.SetState(PyTango.DevState.OFF)
+        self._proxy_correlation.SetState(tango.DevState.OFF)
+        self._proxy_pss.SetState(tango.DevState.OFF)
+        self._proxy_pst.SetState(tango.DevState.OFF)
+        self._proxy_vlbi.SetState(tango.DevState.OFF)
         self._group_fsp_subarray.command_inout("Off")
 
         # remove all subarray membership
         for subarray_ID in self._subarray_membership[:]:
             self.RemoveSubarrayMembership(subarray_ID)
 
-        self.set_state(PyTango.DevState.OFF)
+        self.set_state(tango.DevState.OFF)
         # PROTECTED REGION END #    //  Fsp.Off
 
     def is_SetFunctionMode_allowed(self):
-        if self.dev_state() == PyTango.DevState.ON:
+        if self.dev_state() == tango.DevState.ON:
             return True
         return False
 
@@ -238,42 +237,41 @@ class Fsp(SKACapability):
         # PROTECTED REGION ID(Fsp.SetFunctionMode) ENABLED START #
         if argin == "IDLE":
             self._function_mode = 0
-            self._proxy_correlation.SetState(PyTango.DevState.DISABLE)
-            self._proxy_pss.SetState(PyTango.DevState.DISABLE)
-            self._proxy_pst.SetState(PyTango.DevState.DISABLE)
-            self._proxy_vlbi.SetState(PyTango.DevState.DISABLE)
+            self._proxy_correlation.SetState(tango.DevState.DISABLE)
+            self._proxy_pss.SetState(tango.DevState.DISABLE)
+            self._proxy_pst.SetState(tango.DevState.DISABLE)
+            self._proxy_vlbi.SetState(tango.DevState.DISABLE)
         if argin == "CORR":
             self._function_mode = 1
-            self._proxy_correlation.SetState(PyTango.DevState.ON)
-            self._proxy_pss.SetState(PyTango.DevState.DISABLE)
-            self._proxy_pst.SetState(PyTango.DevState.DISABLE)
-            self._proxy_vlbi.SetState(PyTango.DevState.DISABLE)
+            self._proxy_correlation.SetState(tango.DevState.ON)
+            self._proxy_pss.SetState(tango.DevState.DISABLE)
+            self._proxy_pst.SetState(tango.DevState.DISABLE)
+            self._proxy_vlbi.SetState(tango.DevState.DISABLE)
         if argin == "PSS-BF":
             self._function_mode = 2
-            self._proxy_correlation.SetState(PyTango.DevState.DISABLE)
-            self._proxy_pss.SetState(PyTango.DevState.ON)
-            self._proxy_pst.SetState(PyTango.DevState.DISABLE)
-            self._proxy_vlbi.SetState(PyTango.DevState.DISABLE)
+            self._proxy_correlation.SetState(tango.DevState.DISABLE)
+            self._proxy_pss.SetState(tango.DevState.ON)
+            self._proxy_pst.SetState(tango.DevState.DISABLE)
+            self._proxy_vlbi.SetState(tango.DevState.DISABLE)
         if argin == "PST-BF":
             self._function_mode = 3
-            self._proxy_correlation.SetState(PyTango.DevState.DISABLE)
-            self._proxy_pss.SetState(PyTango.DevState.DISABLE)
-            self._proxy_pst.SetState(PyTango.DevState.ON)
-            self._proxy_vlbi.SetState(PyTango.DevState.DISABLE)
+            self._proxy_correlation.SetState(tango.DevState.DISABLE)
+            self._proxy_pss.SetState(tango.DevState.DISABLE)
+            self._proxy_pst.SetState(tango.DevState.ON)
+            self._proxy_vlbi.SetState(tango.DevState.DISABLE)
         if argin == "VLBI":
             self._function_mode = 4
-            self._proxy_correlation.SetState(PyTango.DevState.DISABLE)
-            self._proxy_pss.SetState(PyTango.DevState.DISABLE)
-            self._proxy_pst.SetState(PyTango.DevState.DISABLE)
-            self._proxy_vlbi.SetState(PyTango.DevState.ON)
+            self._proxy_correlation.SetState(tango.DevState.DISABLE)
+            self._proxy_pss.SetState(tango.DevState.DISABLE)
+            self._proxy_pst.SetState(tango.DevState.DISABLE)
+            self._proxy_vlbi.SetState(tango.DevState.ON)
 
         # shouldn't happen
-        self.logger.error("functionMode not valid. Ignoring.")
         self.logger.warn("functionMode not valid. Ignoring.")
         # PROTECTED REGION END #    //  Fsp.SetFunctionMode
 
     def is_AddSubarrayMembership_allowed(self):
-        if self.dev_state() == PyTango.DevState.ON:
+        if self.dev_state() == tango.DevState.ON:
             return True
         return False
 
@@ -291,7 +289,7 @@ class Fsp(SKACapability):
         # PROTECTED REGION END #    //  Fsp.AddSubarrayMembership
 
     def is_RemoveSubarrayMembership_allowed(self):
-        if self.dev_state() == PyTango.DevState.ON:
+        if self.dev_state() == tango.DevState.ON:
             return True
         return False
 
