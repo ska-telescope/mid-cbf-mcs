@@ -13,28 +13,23 @@ Herzberg Astronomy and Astrophysics, National Research Council of Canada
 Copyright (c) 2019 National Research Council of Canada
 """
 
-""" CbfSubarray Tango device prototype
+# CbfSubarray Tango device prototype
+# CBFSubarray TANGO device class for the CBFSubarray prototype
 
-CBFSubarray TANGO device class for the CBFSubarray prototype
-"""
 
 # tango imports
 import tango
-from tango import DebugIt
 from tango.server import run
-from tango.server import Device
 from tango.server import attribute, command
 from tango.server import device_property
-from tango import AttrQuality, DispLevel, DevState
-from tango import AttrWriteType, PipeWriteType
+from tango import DevState
+from tango import AttrWriteType
 # Additional import
 # PROTECTED REGION ID(CbfSubarray.additionnal_import) ENABLED START #
 import os
 import sys
 import json
-import copy
 from random import randint
-import heapq
 from threading import Thread, Lock
 import time
 
@@ -43,7 +38,7 @@ commons_pkg_path = os.path.abspath(os.path.join(file_path, "../../commons"))
 sys.path.insert(0, commons_pkg_path)
 
 from global_enum import const
-from skabase.control_model import HealthState, AdminMode, ObsState
+from skabase.control_model import ObsState
 from skabase.SKASubarray.SKASubarray import SKASubarray
 
 # PROTECTED REGION END #    //  CbfSubarray.additionnal_import
@@ -471,10 +466,10 @@ class CbfSubarray(SKASubarray):
                     )
                 )
             except tango.DevFailed:  # attribute doesn't exist or is not set up correctly
-                msg = "Attribute {} not found or not set up correctly for "\
-                    "'dopplerPhaseCorrSubscriptionPoint'. Aborting configuration.".format(
-                        argin["dopplerPhaseCorrSubscriptionPoint"]
-                    )
+                msg = "Attribute {} not found or not set up correctly for " \
+                      "'dopplerPhaseCorrSubscriptionPoint'. Aborting configuration.".format(
+                    argin["dopplerPhaseCorrSubscriptionPoint"]
+                )
                 self.__raise_configure_scan_fatal_error(msg)
         else:
             pass
@@ -492,10 +487,10 @@ class CbfSubarray(SKASubarray):
                 )
 
             except tango.DevFailed:  # attribute doesn't exist or is not set up correctly
-                msg = "Attribute {} not found or not set up correctly for "\
-                    "'delayModelSubscriptionPoint'. Aborting configuration.".format(
-                        argin["delayModelSubscriptionPoint"]
-                    )
+                msg = "Attribute {} not found or not set up correctly for " \
+                      "'delayModelSubscriptionPoint'. Aborting configuration.".format(
+                    argin["delayModelSubscriptionPoint"]
+                )
                 self.__raise_configure_scan_fatal_error(msg)
         else:
             msg = "'delayModelSubscriptionPoint' not given. Aborting configuration."
@@ -515,17 +510,16 @@ class CbfSubarray(SKASubarray):
                     )
                 )
             except tango.DevFailed:  # attribute doesn't exist or is not set up correctly
-                msg = "Attribute {} not found or not set up correctly for "\
-                    "'visDestinationAddressSubscriptionPoint'. Aborting configuration.".format(
-                        argin["visDestinationAddressSubscriptionPoint"]
-                    )
+                msg = "Attribute {} not found or not set up correctly for " \
+                      "'visDestinationAddressSubscriptionPoint'. Aborting configuration.".format(
+                    argin["visDestinationAddressSubscriptionPoint"]
+                )
                 self.__raise_configure_scan_fatal_error(msg)
         else:
             msg = "'visDestinationAddressSubscriptionPoint' not given. Aborting configuration."
             self.__raise_configure_scan_fatal_error(msg)
 
         # Validate rfiFlaggingMask.
-        pass
 
         # Validate searchWindow.
         if "searchWindow" in argin:
@@ -554,10 +548,10 @@ class CbfSubarray(SKASubarray):
                             vcc.ValidateSearchWindow(json.dumps(search_window))
 
                         except tango.DevFailed:  # exception in Vcc.ConfigureSearchWindow
-                            msg = "An exception occurred while configuring VCC search "\
-                                "windows:\n{}\n. Aborting configuration.".format(
-                                    str(sys.exc_info()[1].args[0].desc)
-                                )
+                            msg = "An exception occurred while configuring VCC search " \
+                                  "windows:\n{}\n. Aborting configuration.".format(
+                                str(sys.exc_info()[1].args[0].desc)
+                            )
 
                             self.__raise_configure_scan_fatal_error(msg)
                     # If the search window configuration is valid for all VCCs,
@@ -681,14 +675,13 @@ class CbfSubarray(SKASubarray):
                                             str(self._receptors[receptorCheck]), str(self._subarray_id)))
                                         self.logger.error(msg)
                                         tango.Except.throw_exception("Command failed", msg, "AddReceptors execution",
-                                                                       tango.ErrSeverity.ERR)
-                            except tango.DevFailed as df:  # error in AddReceptors()
+                                                                     tango.ErrSeverity.ERR)
+                            except tango.DevFailed:  # error in AddReceptors()
                                 proxy_fsp_subarray.RemoveAllReceptors()
                                 msg = sys.exc_info()[1].args[0].desc + "\n'receptors' was malformed."
                                 self.logger.error(msg)
                                 tango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
-                                                               tango.ErrSeverity.ERR)
-                            pass
+                                                             tango.ErrSeverity.ERR)
                         else:
                             msg = "'receptors' not specified for Fsp PSS config"
                             self.__raise_configure_scan_fatal_error(msg)
@@ -737,8 +730,8 @@ class CbfSubarray(SKASubarray):
                     )
 
                 except tango.DevFailed:  # exception in ConfigureScan
-                    msg = "An exception occurred while configuring FSPs:\n{}\n"\
-                        "Aborting configuration".format(sys.exc_info()[1].args[0].desc)
+                    msg = "An exception occurred while configuring FSPs:\n{}\n" \
+                          "Aborting configuration".format(sys.exc_info()[1].args[0].desc)
 
                     self.__raise_configure_scan_fatal_error(msg)
         else:
@@ -747,11 +740,10 @@ class CbfSubarray(SKASubarray):
 
         # At this point, everything has been validated.
 
-
     def __raise_configure_scan_fatal_error(self, msg):
         self.logger.error(msg)
         tango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
-                                       tango.ErrSeverity.ERR)
+                                     tango.ErrSeverity.ERR)
 
     # PROTECTED REGION END #    //  CbfSubarray.class_variable
 
@@ -945,25 +937,25 @@ class CbfSubarray(SKASubarray):
         self.set_state(tango.DevState.DISABLE)
 
         # don't need this anymore (since everything is reset when the device is deleted)
-        """
+
         # to match VCC and CBF Master configuration
         # needed if device is re-initialized after adding receptors
         # (which technically should never happen)
         # I'm not sure how event subscriptions work when the device is re-initialized.
-        try:
-            self._proxy_cbf_master.ping()
-            vcc_subarray_membership = self._proxy_cbf_master.reportVCCSubarrayMembership
-            vcc_to_receptor = dict([*map(int, pair.split(":"))] for pair in
-                                   self._proxy_cbf_master.vccToReceptor)
-            receptors_to_add = [
-                vcc_to_receptor[i + 1] for i in range(len(vcc_subarray_membership))
-                if vcc_subarray_membership[i] == self._subarray_id
-            ]
-            self.AddReceptors(receptors_to_add)
-            self._scan_ID = self._proxy_cbf_master.subarrayScanID[self._subarray_id - 1]
-        except tango.DevFailed:
-            pass  # CBF Master not available, so just leave receptors and scanID alone
-        """
+        # try:
+        # self._proxy_cbf_master.ping()
+        # vcc_subarray_membership = self._proxy_cbf_master.reportVCCSubarrayMembership
+        # vcc_to_receptor = dict([*map(int, pair.split(":"))] for pair in
+        # self._proxy_cbf_master.vccToReceptor)
+        # receptors_to_add = [
+        # vcc_to_receptor[i + 1] for i in range(len(vcc_subarray_membership))
+        # if vcc_subarray_membership[i] == self._subarray_id
+        # ]
+        # self.AddReceptors(receptors_to_add)
+        # self._scan_ID = self._proxy_cbf_master.subarrayScanID[self._subarray_id - 1]
+        # except tango.DevFailed:
+        # pass  # CBF Master not available, so just leave receptors and scanID alone
+
         # PROTECTED REGION END #    //  CbfSubarray.init_device
 
     def always_executed_hook(self):
@@ -1044,7 +1036,7 @@ class CbfSubarray(SKASubarray):
             msg = "Device not in IDLE obsState."
             self.logger.error(msg)
             tango.Except.throw_exception("Command failed", msg, "On execution",
-                                           tango.ErrSeverity.ERR)
+                                         tango.ErrSeverity.ERR)
 
         self._proxy_sw_1.SetState(tango.DevState.DISABLE)
         self._proxy_sw_2.SetState(tango.DevState.DISABLE)
@@ -1063,7 +1055,7 @@ class CbfSubarray(SKASubarray):
             msg = "Device not in IDLE obsState."
             self.logger.error(msg)
             tango.Except.throw_exception("Command failed", msg, "Off execution",
-                                           tango.ErrSeverity.ERR)
+                                         tango.ErrSeverity.ERR)
 
         self._proxy_sw_1.SetState(tango.DevState.OFF)
         self._proxy_sw_2.SetState(tango.DevState.OFF)
@@ -1085,7 +1077,7 @@ class CbfSubarray(SKASubarray):
             msg = "Device not in IDLE obsState."
             self.logger.error(msg)
             tango.Except.throw_exception("Command failed", msg, "AddReceptors execution",
-                                           tango.ErrSeverity.ERR)
+                                         tango.ErrSeverity.ERR)
 
         errs = []  # list of error messages
         receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
@@ -1144,7 +1136,7 @@ class CbfSubarray(SKASubarray):
             msg = "\n".join(errs)
             self.logger.error(msg)
             tango.Except.throw_exception("Command failed", msg, "AddReceptors execution",
-                                           tango.ErrSeverity.ERR)
+                                         tango.ErrSeverity.ERR)
         # PROTECTED REGION END #    //  CbfSubarray.AddReceptors
 
     def is_RemoveReceptors_allowed(self):
@@ -1162,7 +1154,7 @@ class CbfSubarray(SKASubarray):
             msg = "Device not in IDLE obsState."
             self.logger.error(msg)
             tango.Except.throw_exception("Command failed", msg, "RemoveReceptors execution",
-                                           tango.ErrSeverity.ERR)
+                                         tango.ErrSeverity.ERR)
 
         receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
                                self._proxy_cbf_master.receptorToVcc)
@@ -1204,7 +1196,7 @@ class CbfSubarray(SKASubarray):
             msg = "Device not in IDLE obsState."
             self.logger.error(msg)
             tango.Except.throw_exception("Command failed", msg, "RemoveAllReceptors execution",
-                                           tango.ErrSeverity.ERR)
+                                         tango.ErrSeverity.ERR)
 
         self.RemoveReceptors(self._receptors[:])
         # PROTECTED REGION END #    //  CbfSubarray.RemoveAllReceptors
@@ -1283,7 +1275,7 @@ class CbfSubarray(SKASubarray):
             msg = "Device not in IDLE or READY obsState."
             self.logger.error(msg)
             tango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
-                                           tango.ErrSeverity.ERR)
+                                         tango.ErrSeverity.ERR)
 
         self.__validate_scan_configuration(argin)
         self._proxy_pss_config.ConfigureFSP(json.dumps(self._pss_config))
@@ -1480,7 +1472,7 @@ class CbfSubarray(SKASubarray):
             msg = "Device not in CONFIGURING obsState."
             self.logger.error(msg)
             tango.Except.throw_exception("Command failed", msg, "ConfigureSearchWindow execution",
-                                           tango.ErrSeverity.ERR)
+                                         tango.ErrSeverity.ERR)
 
         argin = json.loads(argin)
 
@@ -1513,8 +1505,8 @@ class CbfSubarray(SKASubarray):
                 pass
             else:
                 # log a warning message
-                log_msg = "'searchWindowTuning' partially out of observed band. "\
-                    "Proceeding."
+                log_msg = "'searchWindowTuning' partially out of observed band. " \
+                          "Proceeding."
                 self.logger.warn(log_msg)
         else:  # frequency band 5a or 5b (two streams with bandwidth 2.5 GHz)
             proxy_sw.searchWindowTuning = argin["searchWindowTuning"]
@@ -1547,8 +1539,8 @@ class CbfSubarray(SKASubarray):
                 pass
             else:
                 # log a warning message
-                log_msg = "'searchWindowTuning' partially out of observed band. "\
-                    "Proceeding."
+                log_msg = "'searchWindowTuning' partially out of observed band. " \
+                          "Proceeding."
                 self.logger.warn(log_msg)
 
         # Configure tdcEnable.
@@ -1568,8 +1560,8 @@ class CbfSubarray(SKASubarray):
             proxy_sw.tdcPeriodBeforeEpoch = int(argin["tdcPeriodBeforeEpoch"])
         else:
             proxy_sw.tdcPeriodBeforeEpoch = 2
-            log_msg = "Search window specified, but 'tdcPeriodBeforeEpoch' not given. "\
-                "Defaulting to 2."
+            log_msg = "Search window specified, but 'tdcPeriodBeforeEpoch' not given. " \
+                      "Defaulting to 2."
             self.logger.warn(log_msg)
 
         # Configure tdcPeriodAfterEpoch.
@@ -1577,8 +1569,8 @@ class CbfSubarray(SKASubarray):
             proxy_sw.tdcPeriodAfterEpoch = int(argin["tdcPeriodAfterEpoch"])
         else:
             proxy_sw.tdcPeriodAfterEpoch = 22
-            log_msg = "Search window specified, but 'tdcPeriodAfterEpoch' not given. "\
-                "Defaulting to 22."
+            log_msg = "Search window specified, but 'tdcPeriodAfterEpoch' not given. " \
+                      "Defaulting to 22."
             self.logger.warn(log_msg)
 
         # `Configure tdcDestinationAddress.`
@@ -1601,7 +1593,7 @@ class CbfSubarray(SKASubarray):
             msg = "Device not in SCANNING obsState."
             self.logger.error(msg)
             tango.Except.throw_exception("Command failed", msg, "EndScan execution",
-                                           tango.ErrSeverity.ERR)
+                                         tango.ErrSeverity.ERR)
 
         self._group_vcc.command_inout("EndScan")
         self._group_fsp_subarray.command_inout("EndScan")
@@ -1631,7 +1623,7 @@ class CbfSubarray(SKASubarray):
             msg = "Device not in READY obsState."
             self.logger.error(msg)
             tango.Except.throw_exception("Command failed", msg, "Scan execution",
-                                           tango.ErrSeverity.ERR)
+                                         tango.ErrSeverity.ERR)
 
         # TODO: actually use argin
         # For MVP, ignore argin (activation time)
@@ -1653,7 +1645,7 @@ class CbfSubarray(SKASubarray):
             msg = "Device not in IDLE or READY obsState."
             self.logger.error(msg)
             tango.Except.throw_exception("Command failed", msg, "EndSB execution",
-                                           tango.ErrSeverity.ERR)
+                                         tango.ErrSeverity.ERR)
 
         # unsubscribe from TMC events
         for event_id in list(self._events_telstate.keys()):

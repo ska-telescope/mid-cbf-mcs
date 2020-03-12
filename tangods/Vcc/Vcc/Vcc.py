@@ -13,20 +13,15 @@ Herzberg Astronomy and Astrophysics, National Research Council of Canada
 Copyright (c) 2019 National Research Council of Canada
 """
 
-""" Vcc Tango device prototype
-
-Vcc TANGO device class for the prototype
-"""
+# Vcc Tango device prototype
+# Vcc TANGO device class for the prototype
 
 # tango imports
 import tango
-from tango import DebugIt
 from tango.server import run
-from tango.server import Device
 from tango.server import attribute, command
 from tango.server import device_property
-from tango import AttrQuality, DispLevel, DevState
-from tango import AttrWriteType, PipeWriteType
+from tango import AttrWriteType
 # Additional import
 # PROTECTED REGION ID(Vcc.additionnal_import) ENABLED START #
 import os
@@ -38,8 +33,9 @@ commons_pkg_path = os.path.abspath(os.path.join(file_path, "../../commons"))
 sys.path.insert(0, commons_pkg_path)
 
 from global_enum import const
-from skabase.control_model import HealthState, AdminMode, ObsState
+from skabase.control_model import ObsState
 from skabase.SKACapability.SKACapability import SKACapability
+
 # PROTECTED REGION END #    //  Vcc.additionnal_import
 
 __all__ = ["Vcc", "main"]
@@ -49,6 +45,7 @@ class Vcc(SKACapability):
     """
     Vcc TANGO device class for the prototype
     """
+
     # PROTECTED REGION ID(Vcc.class_variable) ENABLED START #
 
     def __get_capability_proxies(self):
@@ -252,7 +249,7 @@ class Vcc(SKACapability):
         self._scfo_band_4 = 0
         self._scfo_band_5a = 0
         self._scfo_band_5b = 0
-        self._delay_model = [[0]*6 for i in range(26)]
+        self._delay_model = [[0] * 6 for i in range(26)]
 
         self._obs_state = ObsState.IDLE.value
         self.set_state(tango.DevState.OFF)
@@ -427,7 +424,7 @@ class Vcc(SKACapability):
     # --------
 
     def is_On_allowed(self):
-        if self.dev_state() == tango.DevState.OFF and\
+        if self.dev_state() == tango.DevState.OFF and \
                 self._obs_state == ObsState.IDLE.value:
             return True
         return False
@@ -446,7 +443,7 @@ class Vcc(SKACapability):
         # PROTECTED REGION END #    //  Vcc.On
 
     def is_Off_allowed(self):
-        if self.dev_state() == tango.DevState.ON and\
+        if self.dev_state() == tango.DevState.ON and \
                 self._obs_state == ObsState.IDLE.value:
             return True
         return False
@@ -467,7 +464,7 @@ class Vcc(SKACapability):
         # PROTECTED REGION END #    //  Vcc.Off
 
     def is_SetFrequencyBand_allowed(self):
-        if self.dev_state() == tango.DevState.ON and\
+        if self.dev_state() == tango.DevState.ON and \
                 self._obs_state == ObsState.CONFIGURING.value:
             return True
         return False
@@ -508,12 +505,12 @@ class Vcc(SKACapability):
         # PROTECTED REGION END #    // Vcc.SetFrequencyBand
 
     def is_SetObservingState_allowed(self):
-        if self.dev_state() == tango.DevState.ON and\
+        if self.dev_state() == tango.DevState.ON and \
                 self._obs_state in [
-                    ObsState.IDLE.value,
-                    ObsState.CONFIGURING.value,
-                    ObsState.READY.value
-                ]:
+            ObsState.IDLE.value,
+            ObsState.CONFIGURING.value,
+            ObsState.READY.value
+        ]:
             return True
         return False
 
@@ -533,7 +530,7 @@ class Vcc(SKACapability):
         # PROTECTED REGION END #    // Vcc.SetFrequencyBand
 
     def is_UpdateDelayModel_allowed(self):
-        if self.dev_state() == tango.DevState.ON and\
+        if self.dev_state() == tango.DevState.ON and \
                 self._obs_state in [ObsState.READY.value, ObsState.SCANNING.value]:
             return True
         return False
@@ -554,8 +551,8 @@ class Vcc(SKACapability):
                             self._delay_model[frequency_slice["fsid"] - 1] = \
                                 frequency_slice["delayCoeff"]
                         else:
-                            log_msg = "'delayCoeff' not valid for frequency slice {} of "\
-                                "receptor {}".format(frequency_slice["fsid"], self._receptor_ID)
+                            log_msg = "'delayCoeff' not valid for frequency slice {} of " \
+                                      "receptor {}".format(frequency_slice["fsid"], self._receptor_ID)
                             self.logger.error(log_msg)
                     else:
                         log_msg = "'fsid' {} not valid for receptor {}".format(
@@ -580,7 +577,7 @@ class Vcc(SKACapability):
             msg = "Search window configuration object is not a valid JSON object."
             self.logger.error(msg)
             tango.Except.throw_exception("Command failed", msg, "ConfigureSearchWindow execution",
-                                           tango.ErrSeverity.ERR)
+                                         tango.ErrSeverity.ERR)
 
         # Validate searchWindowID.
         if "searchWindowID" in argin:
@@ -592,13 +589,13 @@ class Vcc(SKACapability):
                 )
                 self.logger.error(msg)
                 tango.Except.throw_exception("Command failed", msg,
-                                               "ConfigureSearchWindow execution",
-                                               tango.ErrSeverity.ERR)
+                                             "ConfigureSearchWindow execution",
+                                             tango.ErrSeverity.ERR)
         else:
             msg = "Search window specified, but 'searchWindowID' not given."
             self.logger.error(msg)
             tango.Except.throw_exception("Command failed", msg, "ConfigureSearchWindow execution",
-                                           tango.ErrSeverity.ERR)
+                                         tango.ErrSeverity.ERR)
 
         # Validate searchWindowTuning.
         if "searchWindowTuning" in argin:
@@ -610,49 +607,49 @@ class Vcc(SKACapability):
                     const.FREQUENCY_BAND_4_RANGE
                 ][argin["frequencyBand"]]
 
-                if frequency_band_range[0]*10**9 + argin["frequencyBandOffsetStream1"] <= \
+                if frequency_band_range[0] * 10 ** 9 + argin["frequencyBandOffsetStream1"] <= \
                         int(argin["searchWindowTuning"]) <= \
-                        frequency_band_range[1]*10**9 + argin["frequencyBandOffsetStream1"]:
+                        frequency_band_range[1] * 10 ** 9 + argin["frequencyBandOffsetStream1"]:
                     pass
                 else:
                     msg = "'searchWindowTuning' must be within observed band."
                     self.logger.error(msg)
                     tango.Except.throw_exception("Command failed", msg,
-                                                   "ConfigureSearchWindow execution",
-                                                   tango.ErrSeverity.ERR)
+                                                 "ConfigureSearchWindow execution",
+                                                 tango.ErrSeverity.ERR)
             else:  # frequency band 5a or 5b (two streams with bandwidth 2.5 GHz)
                 frequency_band_range_1 = (
-                    argin["band5Tuning"][0]*10**9 + argin["frequencyBandOffsetStream1"] - \
-                        const.BAND_5_STREAM_BANDWIDTH*10**9/2,
-                    argin["band5Tuning"][0]*10**9 + argin["frequencyBandOffsetStream1"] + \
-                        const.BAND_5_STREAM_BANDWIDTH*10**9/2
+                    argin["band5Tuning"][0] * 10 ** 9 + argin["frequencyBandOffsetStream1"] - \
+                    const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2,
+                    argin["band5Tuning"][0] * 10 ** 9 + argin["frequencyBandOffsetStream1"] + \
+                    const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2
                 )
 
                 frequency_band_range_2 = (
-                    argin["band5Tuning"][1]*10**9 + argin["frequencyBandOffsetStream2"] - \
-                        const.BAND_5_STREAM_BANDWIDTH*10**9/2,
-                    argin["band5Tuning"][1]*10**9 + argin["frequencyBandOffsetStream2"] + \
-                        const.BAND_5_STREAM_BANDWIDTH*10**9/2
+                    argin["band5Tuning"][1] * 10 ** 9 + argin["frequencyBandOffsetStream2"] - \
+                    const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2,
+                    argin["band5Tuning"][1] * 10 ** 9 + argin["frequencyBandOffsetStream2"] + \
+                    const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2
                 )
 
                 if (frequency_band_range_1[0] <= \
-                        int(argin["searchWindowTuning"]) <= \
-                        frequency_band_range_1[1]) or\
+                    int(argin["searchWindowTuning"]) <= \
+                    frequency_band_range_1[1]) or \
                         (frequency_band_range_2[0] <= \
-                        int(argin["searchWindowTuning"]) <= \
-                        frequency_band_range_2[1]):
+                         int(argin["searchWindowTuning"]) <= \
+                         frequency_band_range_2[1]):
                     pass
                 else:
                     msg = "'searchWindowTuning' must be within observed band."
                     self.logger.error(msg)
                     tango.Except.throw_exception("Command failed", msg,
-                                                   "ConfigureSearchWindow execution",
-                                                   tango.ErrSeverity.ERR)
+                                                 "ConfigureSearchWindow execution",
+                                                 tango.ErrSeverity.ERR)
         else:
             msg = "Search window specified, but 'searchWindowTuning' not given."
             self.logger.error(msg)
             tango.Except.throw_exception("Command failed", msg, "ConfigureSearchWindow execution",
-                                           tango.ErrSeverity.ERR)
+                                         tango.ErrSeverity.ERR)
 
         # Validate tdcEnable.
         if "tdcEnable" in argin:
@@ -662,13 +659,13 @@ class Vcc(SKACapability):
                 msg = "Search window specified, but 'tdcEnable' not given."
                 self.logger.error(msg)
                 tango.Except.throw_exception("Command failed", msg,
-                                               "ConfigureSearchWindow execution",
-                                               tango.ErrSeverity.ERR)
+                                             "ConfigureSearchWindow execution",
+                                             tango.ErrSeverity.ERR)
         else:
             msg = "Search window specified, but 'tdcEnable' not given."
             self.logger.error(msg)
             tango.Except.throw_exception("Command failed", msg, "ConfigureSearchWindow execution",
-                                           tango.ErrSeverity.ERR)
+                                         tango.ErrSeverity.ERR)
 
         # Validate tdcNumBits.
         if argin["tdcEnable"]:
@@ -681,14 +678,14 @@ class Vcc(SKACapability):
                     )
                     self.logger.error(msg)
                     tango.Except.throw_exception("Command failed", msg,
-                                                   "ConfigureSearchWindow execution",
-                                                   tango.ErrSeverity.ERR)
+                                                 "ConfigureSearchWindow execution",
+                                                 tango.ErrSeverity.ERR)
             else:
                 msg = "Search window specified with TDC enabled, but 'tdcNumBits' not given."
                 self.logger.error(msg)
                 tango.Except.throw_exception("Command failed", msg,
-                                               "ConfigureSearchWindow execution",
-                                               tango.ErrSeverity.ERR)
+                                             "ConfigureSearchWindow execution",
+                                             tango.ErrSeverity.ERR)
 
         # Validate tdcPeriodBeforeEpoch.
         if "tdcPeriodBeforeEpoch" in argin:
@@ -700,8 +697,8 @@ class Vcc(SKACapability):
                 )
                 self.logger.error(msg)
                 tango.Except.throw_exception("Command failed", msg,
-                                               "ConfigureSearchWindow execution",
-                                               tango.ErrSeverity.ERR)
+                                             "ConfigureSearchWindow execution",
+                                             tango.ErrSeverity.ERR)
         else:
             pass
 
@@ -713,10 +710,10 @@ class Vcc(SKACapability):
                 msg = "'tdcPeriodAfterEpoch' must be a positive integer (received {}).".format(
                     str(argin["tdcPeriodAfterEpoch"])
                 )
-                self.logger.error(log_msg)
+                self.logger.error(msg)
                 tango.Except.throw_exception("Command failed", msg,
-                                               "ConfigureSearchWindow execution",
-                                               tango.ErrSeverity.ERR)
+                                             "ConfigureSearchWindow execution",
+                                             tango.ErrSeverity.ERR)
         else:
             pass
 
@@ -724,23 +721,22 @@ class Vcc(SKACapability):
         if argin["tdcEnable"]:
             try:
                 for receptor in argin["tdcDestinationAddress"]:
-                   # if int(receptor["receptorID"]) == self._receptor_ID:
-                        # TODO: validate input
-                        pass
-                        break
+                    # if int(receptor["receptorID"]) == self._receptor_ID:
+                    # TODO: validate input
+                    break
                 else:  # receptorID not found
                     raise KeyError  # just handle all the errors in one place
             except KeyError:
                 # tdcDestinationAddress not given or receptorID not in tdcDestinationAddress
-                msg = "Search window specified with TDC enabled, but 'tdcDestinationAddress' "\
-                    "not given or missing receptors."
+                msg = "Search window specified with TDC enabled, but 'tdcDestinationAddress' " \
+                      "not given or missing receptors."
                 self.logger.error(msg)
                 tango.Except.throw_exception("Command failed", msg,
-                                               "ConfigureSearchWindow execution",
-                                               tango.ErrSeverity.ERR)
+                                             "ConfigureSearchWindow execution",
+                                             tango.ErrSeverity.ERR)
 
     def is_ConfigureSearchWindow_allowed(self):
-        if self.dev_state() == tango.DevState.ON and\
+        if self.dev_state() == tango.DevState.ON and \
                 self._obs_state == ObsState.CONFIGURING.value:
             return True
         return False
@@ -776,51 +772,51 @@ class Vcc(SKACapability):
                 const.FREQUENCY_BAND_4_RANGE
             ][self._frequency_band]
 
-            if frequency_band_range[0]*10**9 + self._frequency_band_offset_stream_1 + \
-                    const.SEARCH_WINDOW_BW*10**6/2 <= \
+            if frequency_band_range[0] * 10 ** 9 + self._frequency_band_offset_stream_1 + \
+                    const.SEARCH_WINDOW_BW * 10 ** 6 / 2 <= \
                     int(argin["searchWindowTuning"]) <= \
-                    frequency_band_range[1]*10**9 + self._frequency_band_offset_stream_1 - \
-                    const.SEARCH_WINDOW_BW*10**6/2:
+                    frequency_band_range[1] * 10 ** 9 + self._frequency_band_offset_stream_1 - \
+                    const.SEARCH_WINDOW_BW * 10 ** 6 / 2:
                 # this is the acceptable range
                 pass
             else:
                 # log a warning message
-                log_msg = "'searchWindowTuning' partially out of observed band. "\
-                    "Proceeding."
+                log_msg = "'searchWindowTuning' partially out of observed band. " \
+                          "Proceeding."
                 self.logger.warn(log_msg)
         else:  # frequency band 5a or 5b (two streams with bandwidth 2.5 GHz)
             proxy_sw.searchWindowTuning = argin["searchWindowTuning"]
 
             frequency_band_range_1 = (
-                self._stream_tuning[0]*10**9 + self._frequency_band_offset_stream_1 - \
-                    const.BAND_5_STREAM_BANDWIDTH*10**9/2,
-                self._stream_tuning[0]*10**9 + self._frequency_band_offset_stream_1 + \
-                    const.BAND_5_STREAM_BANDWIDTH*10**9/2
+                self._stream_tuning[0] * 10 ** 9 + self._frequency_band_offset_stream_1 - \
+                const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2,
+                self._stream_tuning[0] * 10 ** 9 + self._frequency_band_offset_stream_1 + \
+                const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2
             )
 
             frequency_band_range_2 = (
-                self._stream_tuning[1]*10**9 + self._frequency_band_offset_stream_2 - \
-                    const.BAND_5_STREAM_BANDWIDTH*10**9/2,
-                self._stream_tuning[1]*10**9 + self._frequency_band_offset_stream_2 + \
-                    const.BAND_5_STREAM_BANDWIDTH*10**9/2
+                self._stream_tuning[1] * 10 ** 9 + self._frequency_band_offset_stream_2 - \
+                const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2,
+                self._stream_tuning[1] * 10 ** 9 + self._frequency_band_offset_stream_2 + \
+                const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2
             )
 
             if (frequency_band_range_1[0] + \
-                    const.SEARCH_WINDOW_BW*10**6/2 <= \
-                    int(argin["searchWindowTuning"]) <= \
-                    frequency_band_range_1[1] - \
-                    const.SEARCH_WINDOW_BW*10**6/2) or\
+                const.SEARCH_WINDOW_BW * 10 ** 6 / 2 <= \
+                int(argin["searchWindowTuning"]) <= \
+                frequency_band_range_1[1] - \
+                const.SEARCH_WINDOW_BW * 10 ** 6 / 2) or \
                     (frequency_band_range_2[0] + \
-                    const.SEARCH_WINDOW_BW*10**6/2 <= \
-                    int(argin["searchWindowTuning"]) <= \
-                    frequency_band_range_2[1] - \
-                    const.SEARCH_WINDOW_BW*10**6/2):
+                     const.SEARCH_WINDOW_BW * 10 ** 6 / 2 <= \
+                     int(argin["searchWindowTuning"]) <= \
+                     frequency_band_range_2[1] - \
+                     const.SEARCH_WINDOW_BW * 10 ** 6 / 2):
                 # this is the acceptable range
                 pass
             else:
                 # log a warning message
-                log_msg = "'searchWindowTuning' partially out of observed band. "\
-                    "Proceeding."
+                log_msg = "'searchWindowTuning' partially out of observed band. " \
+                          "Proceeding."
                 self.logger.warn(log_msg)
 
         # Configure tdcEnable.
@@ -840,8 +836,8 @@ class Vcc(SKACapability):
             proxy_sw.tdcPeriodBeforeEpoch = int(argin["tdcPeriodBeforeEpoch"])
         else:
             proxy_sw.tdcPeriodBeforeEpoch = 2
-            log_msg = "Search window specified, but 'tdcPeriodBeforeEpoch' not given. "\
-                "Defaulting to 2."
+            log_msg = "Search window specified, but 'tdcPeriodBeforeEpoch' not given. " \
+                      "Defaulting to 2."
             self.logger.warn(log_msg)
 
         # Configure tdcPeriodAfterEpoch.
@@ -849,8 +845,8 @@ class Vcc(SKACapability):
             proxy_sw.tdcPeriodAfterEpoch = int(argin["tdcPeriodAfterEpoch"])
         else:
             proxy_sw.tdcPeriodAfterEpoch = 22
-            log_msg = "Search window specified, but 'tdcPeriodAfterEpoch' not given. "\
-                "Defaulting to 22."
+            log_msg = "Search window specified, but 'tdcPeriodAfterEpoch' not given. " \
+                      "Defaulting to 22."
             self.logger.warn(log_msg)
 
         # Configure tdcDestinationAddress.
@@ -865,7 +861,7 @@ class Vcc(SKACapability):
         # PROTECTED REGION END #    //  Vcc.ConfigureSearchWindow
 
     def is_EndScan_allowed(self):
-        if self.dev_state() == tango.DevState.ON and\
+        if self.dev_state() == tango.DevState.ON and \
                 self._obs_state == ObsState.SCANNING.value:
             return True
         return False
@@ -878,7 +874,7 @@ class Vcc(SKACapability):
         # PROTECTED REGION END #    //  Vcc.EndScan
 
     def is_Scan_allowed(self):
-        if self.dev_state() == tango.DevState.ON and\
+        if self.dev_state() == tango.DevState.ON and \
                 self._obs_state == ObsState.READY.value:
             return True
         return False
@@ -891,7 +887,7 @@ class Vcc(SKACapability):
         # PROTECTED REGION END #    //  Vcc.Scan
 
     def is_GoToIdle_allowed(self):
-        if self.dev_state() == tango.DevState.ON and\
+        if self.dev_state() == tango.DevState.ON and \
                 self._obs_state in [ObsState.IDLE.value, ObsState.READY.value]:
             return True
         return False
@@ -903,6 +899,7 @@ class Vcc(SKACapability):
         self._obs_state = ObsState.IDLE.value
         # PROTECTED REGION END #    //  Vcc.GoToIdle
 
+
 # ----------
 # Run server
 # ----------
@@ -912,6 +909,7 @@ def main(args=None, **kwargs):
     # PROTECTED REGION ID(Vcc.main) ENABLED START #
     return run((Vcc,), args=args, **kwargs)
     # PROTECTED REGION END #    //  Vcc.main
+
 
 if __name__ == '__main__':
     main()

@@ -13,20 +13,15 @@ Herzberg Astronomy and Astrophysics, National Research Council of Canada
 Copyright (c) 2019 National Research Council of Canada
 """
 
-""" Fsp Tango device prototype
-
-Fsp TANGO device class for the prototype
-"""
+# Fsp Tango device prototype
+# Fsp TANGO device class for the prototype
 
 # tango imports
 import tango
-from tango import DebugIt
 from tango.server import run
-from tango.server import Device
 from tango.server import attribute, command
 from tango.server import device_property
-from tango import AttrQuality, DispLevel, DevState
-from tango import AttrWriteType, PipeWriteType
+from tango import AttrWriteType
 # Additional import
 # PROTECTED REGION ID(Fsp.additionnal_import) ENABLED START #
 import os
@@ -36,7 +31,6 @@ file_path = os.path.dirname(os.path.abspath(__file__))
 commons_pkg_path = os.path.abspath(os.path.join(file_path, "../../commons"))
 sys.path.insert(0, commons_pkg_path)
 
-from skabase.control_model import HealthState, AdminMode, ObsState
 from skabase.SKACapability.SKACapability import SKACapability
 # PROTECTED REGION END #    //  Fsp.additionnal_import
 
@@ -61,7 +55,7 @@ class Fsp(SKACapability):
             self._proxy_vlbi = tango.DeviceProxy(self.VLBIAddress)
         if self.FspSubarray:
             self._proxy_fsp_subarray = [*map(
-                lambda i: tango.DeviceProxy(i),
+                tango.DeviceProxy,
                 list(self.FspSubarray)
             )]
 
