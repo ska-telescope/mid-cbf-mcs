@@ -505,6 +505,7 @@ class Vcc(SKACapability):
 
         # shouldn't happen
         self.logger.warn("frequencyBand not in valid range. Ignoring.")
+                         
         # PROTECTED REGION END #    // Vcc.SetFrequencyBand
 
     def is_SetObservingState_allowed(self):
@@ -724,7 +725,7 @@ class Vcc(SKACapability):
         if argin["tdcEnable"]:
             try:
                 for receptor in argin["tdcDestinationAddress"]:
-                   # if int(receptor["receptorID"]) == self._receptor_ID:
+                    if int(receptor["receptorID"]) == self._receptor_ID:
                         # TODO: validate input
                         pass
                         break
