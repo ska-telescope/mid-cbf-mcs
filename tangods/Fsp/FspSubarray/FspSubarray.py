@@ -530,7 +530,6 @@ class FspSubarray(SKASubarray):
         except json.JSONDecodeError:  # argument not a valid JSON object
             msg = "Scan configuration object is not a valid JSON object."
             self.logger.error(msg)
-<<<<<<< tangods/Fsp/FspSubarray/FspSubarray.py
             tango.Except.throw_exception("Command failed", msg,
                                            "ConfigureScan execution", tango.ErrSeverity.ERR)
         if argin["functionMode"] == "CORR":
