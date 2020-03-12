@@ -45,15 +45,30 @@ sys.path.insert(0, commons_pkg_path)
 from global_enum import const
 from skabase.control_model import HealthState, AdminMode, ObsState
 from skabase.SKASubarray.SKASubarray import SKASubarray
+
 # PROTECTED REGION END #    //  CbfSubarray.additionnal_import
 
 __all__ = ["CbfSubarray", "main"]
+
+
+def validate_ip(ip):
+    splitip = ip.split('.')
+    if len(splitip) != 4:
+        return False
+    for ipparts in splitip:
+        if not ipparts.isdigit():
+            return False
+        ipval = int(ipparts)
+        if ipval < 0 or ipval > 255:
+            return False
+    return True
 
 
 class CbfSubarray(SKASubarray):
     """
     CBFSubarray TANGO device class for the CBFSubarray prototype
     """
+
     # PROTECTED REGION ID(CbfSubarray.class_variable) ENABLED START #
 
     def __void_callback(self, event):
@@ -63,14 +78,14 @@ class CbfSubarray(SKASubarray):
         else:
             for item in event.errors:
                 log_msg = item.reason + ": on attribute " + str(event.attr_name)
-                self.loggererror(log_msg)
+                self.logger.error(log_msg)
 
     def __doppler_phase_correction_event_callback(self, event):
         if not event.err:
             try:
                 self._group_vcc.write_attribute("dopplerPhaseCorrection", event.attr_value.value)
                 log_msg = "Value of " + str(event.attr_name) + " is " + str(event.attr_value.value)
-                self.loggerdebug(log_msg)
+                self.logger.debug(log_msg)
             except Exception as e:
                 self.logger.error(str(e))
         else:
@@ -159,8 +174,8 @@ class CbfSubarray(SKASubarray):
                     proxy_fsp_subarray = self._proxies_fsp_subarray[fsp["fspId"] - 1]
                     if proxy_fsp_subarray not in self._proxies_assigned_fsp_subarray:
                         raise ValueError("FSP {} does not belong to subarray {}.".format(
-                                fsp["fspId"], self._subarray_id
-                            )
+                            fsp["fspId"], self._subarray_id
+                        )
                         )
                     log_msg = "Configuring destination addresses for FSP {}...".format(
                         fsp["fspId"]
@@ -220,108 +235,109 @@ class CbfSubarray(SKASubarray):
     def __generate_output_links(self, scan_cfg):
         # At this point, we can assume that the scan configuration is valid and that the FSP
         # attributes have been set properly.
-
         output_links_all = {
             "scanID": self._scan_ID,
             "fsp": []
         }
 
         for fsp in scan_cfg["fsp"]:
-            output_links = {
-                "fspID": int(fsp["fspID"]),
-                "frequencySliceID": int(fsp["frequencySliceID"]),
-                "cbfOutLink": []
-            }
+            if fsp["functionMode"] == "CORR":
+                output_links = {
+                    "fspID": int(fsp["fspID"]),
+                    "frequencySliceID": int(fsp["frequencySliceID"]),
+                    "cbfOutLink": []
+                }
+                links = [[] for i in range(const.NUM_OUTPUT_LINKS)]
+                channel_averaging_map_default = [
+                    [int(i * const.NUM_FINE_CHANNELS / const.NUM_CHANNEL_GROUPS) + 1, 0]
+                    for i in range(const.NUM_CHANNEL_GROUPS)
+                ]
 
-            links = [[] for i in range(const.NUM_OUTPUT_LINKS)]
+                if "channelAveragingMap" in fsp:
+                    channel_averaging_map = fsp["channelAveragingMap"]
+                else:
+                    channel_averaging_map = channel_averaging_map_default
 
-            channel_averaging_map_default = [
-                [int(i*const.NUM_FINE_CHANNELS/const.NUM_CHANNEL_GROUPS) + 1, 0]
-                for i in range(const.NUM_CHANNEL_GROUPS)
-            ]
+                bandwidth = const.FREQUENCY_SLICE_BW * 10 ** 6 / 2 ** int(fsp["corrBandwidth"])
 
-            if "channelAveragingMap" in fsp:
-                channel_averaging_map = fsp["channelAveragingMap"]
-            else:
-                channel_averaging_map = channel_averaging_map_default
+                if not int(fsp["corrBandwidth"]):  # correlate the full bandwidth
+                    if self._frequency_band in list(range(4)):  # frequency band is not band 5
+                        frequency_slice_start = [*map(lambda j: j[0] * 10 ** 9, [
+                            const.FREQUENCY_BAND_1_RANGE,
+                            const.FREQUENCY_BAND_2_RANGE,
+                            const.FREQUENCY_BAND_3_RANGE,
+                            const.FREQUENCY_BAND_4_RANGE
+                        ])][self._frequency_band] + \
+                                                (int(
+                                                    fsp["frequencySliceID"]) - 1) * const.FREQUENCY_SLICE_BW * 10 ** 6 + \
+                                                self._frequency_band_offset_stream_1
 
-            bandwidth = const.FREQUENCY_SLICE_BW*10**6/2**int(fsp["corrBandwidth"])
+                    else:  # frequency band 5a or 5b (two streams with bandwidth 2.5 GHz)
+                        if int(fsp["frequencySliceID"]) <= 13:  # stream 1
+                            frequency_slice_start = scan_cfg["band5Tuning"][0] * 10 ** 9 - \
+                                                    const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2 + \
+                                                    (int(fsp[
+                                                             "frequencySliceID"]) - 1) * const.FREQUENCY_SLICE_BW * 10 ** 6 + \
+                                                    self._frequency_band_offset_stream_1
+                        else:  # 14 <= self._frequency_slice <= 26  # stream 2
+                            frequency_slice_start = scan_cfg["band5Tuning"][1] * 10 ** 9 - \
+                                                    const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2 + \
+                                                    (int(fsp[
+                                                             "frequencySliceID"]) - 14) * const.FREQUENCY_SLICE_BW * 10 ** 6 + \
+                                                    self._frequency_band_offset_stream_2
+                else:  # correlate a portion of the full bandwidth
+                    # since the checks were already done, this is actually simpler
+                    frequency_slice_start = int(fsp["zoomWindowTuning"]) * 10 ** 3 - bandwidth / 2
 
-            if not int(fsp["corrBandwidth"]):  # correlate the full bandwidth
-                if self._frequency_band in list(range(4)):  # frequency band is not band 5
-                    frequency_slice_start = [*map(lambda j: j[0]*10**9, [
-                        const.FREQUENCY_BAND_1_RANGE,
-                        const.FREQUENCY_BAND_2_RANGE,
-                        const.FREQUENCY_BAND_3_RANGE,
-                        const.FREQUENCY_BAND_4_RANGE
-                    ])][self._frequency_band] + \
-                        (int(fsp["frequencySliceID"]) - 1)*const.FREQUENCY_SLICE_BW*10**6 + \
-                        self._frequency_band_offset_stream_1
-                
-                else:  # frequency band 5a or 5b (two streams with bandwidth 2.5 GHz)
-                    if int(fsp["frequencySliceID"]) <= 13:  # stream 1
-                        frequency_slice_start = scan_cfg["band5Tuning"][0]*10**9 - \
-                            const.BAND_5_STREAM_BANDWIDTH*10**9/2 + \
-                            (int(fsp["frequencySliceID"]) - 1)*const.FREQUENCY_SLICE_BW*10**6 + \
-                            self._frequency_band_offset_stream_1
-                    else:  # 14 <= self._frequency_slice <= 26  # stream 2
-                        frequency_slice_start = scan_cfg["band5Tuning"][1]*10**9 - \
-                            const.BAND_5_STREAM_BANDWIDTH*10**9/2 + \
-                            (int(fsp["frequencySliceID"]) - 14)*const.FREQUENCY_SLICE_BW*10**6 + \
-                            self._frequency_band_offset_stream_2
-            else:  # correlate a portion of the full bandwidth
-                # since the checks were already done, this is actually simpler
-                frequency_slice_start = int(fsp["zoomWindowTuning"])*10**3 - bandwidth/2
+                next_channel_start = frequency_slice_start
 
-            next_channel_start = frequency_slice_start
+                for channel_group_ID in range(const.NUM_CHANNEL_GROUPS):
+                    channel_avg = channel_averaging_map[channel_group_ID][1]
 
-            for channel_group_ID in range(const.NUM_CHANNEL_GROUPS):
-                channel_avg = channel_averaging_map[channel_group_ID][1]
+                    if channel_avg:  # send channels to SDP
+                        channel_bandwidth = bandwidth / const.NUM_FINE_CHANNELS * channel_avg
 
-                if channel_avg:  # send channels to SDP
-                    channel_bandwidth = bandwidth/const.NUM_FINE_CHANNELS*channel_avg
+                        for channel_ID in range(
+                                int(channel_group_ID * const.NUM_FINE_CHANNELS / const.NUM_CHANNEL_GROUPS) + 1,
+                                int((channel_group_ID + 1) * const.NUM_FINE_CHANNELS / const.NUM_CHANNEL_GROUPS) \
+                                + 1,
+                                channel_avg
+                        ):
+                            log_msg = "Assigning output link for channel {} of FSP {}...".format(
+                                channel_ID, fsp["fspID"]
+                            )
+                            self.logger.warn(log_msg)
 
-                    for channel_ID in range(
-                        int(channel_group_ID*const.NUM_FINE_CHANNELS/const.NUM_CHANNEL_GROUPS) + 1,
-                        int((channel_group_ID + 1)*const.NUM_FINE_CHANNELS/const.NUM_CHANNEL_GROUPS) \
-                            + 1,
-                        channel_avg
-                    ):
-                        log_msg = "Assigning output link for channel {} of FSP {}...".format(
-                            channel_ID, fsp["fspID"]
-                        )
-                        self.logger.warn(log_msg)
+                            channel = {
+                                "chanID": channel_ID,
+                                "bw": int(channel_bandwidth),
+                                "cf": int(next_channel_start + channel_bandwidth / 2)
+                            }
+                            links[randint(0, const.NUM_OUTPUT_LINKS - 1)].append(channel)
+                            next_channel_start += channel_bandwidth
+                    else:  # don't send channels to SDP
+                        next_channel_start += bandwidth / const.NUM_CHANNEL_GROUPS
 
-                        channel = {
-                            "chanID": channel_ID,
-                            "bw": int(channel_bandwidth),
-                            "cf": int(next_channel_start + channel_bandwidth/2)
-                        }
-                        links[randint(0, const.NUM_OUTPUT_LINKS - 1)].append(channel)
-                        next_channel_start += channel_bandwidth
-                else:  # don't send channels to SDP
-                    next_channel_start += bandwidth/const.NUM_CHANNEL_GROUPS
+                for link_ID in range(1, const.NUM_OUTPUT_LINKS + 1):
+                    if links[link_ID - 1]:
+                        output_links["cbfOutLink"].append({
+                            "linkID": link_ID,
+                            "channel": links[link_ID - 1]
+                        })
 
-            for link_ID in range(1, const.NUM_OUTPUT_LINKS + 1):
-                if links[link_ID - 1]:
-                    output_links["cbfOutLink"].append({
-                        "linkID": link_ID,
-                        "channel": links[link_ID - 1]
-                    })
+                output_links_all["fsp"].append(output_links)
 
-            output_links_all["fsp"].append(output_links)
+            json_output_links = json.dumps(output_links_all)
+            data = tango.DeviceData()
+            data.insert(tango.DevString, json_output_links)
+            self._group_fsp_subarray.command_inout("AddChannels", data)
 
-        json_output_links = json.dumps(output_links_all)
-        data = tango.DeviceData()
-        data.insert(tango.DevString, json_output_links)
-        self._group_fsp_subarray.command_inout("AddChannels", data)
-
-        log_msg = "Done assigning output links."
-        self.logger.warn(log_msg)
-        # publish the output links
-        self._output_links_distribution = output_links_all
-        self.push_change_event("outputLinksDistribution", json_output_links)
-        self._published_output_links = True
+            log_msg = "Done assigning output links."
+            self.logger.warn(log_msg)
+            # publish the output links
+            self._output_links_distribution = output_links_all
+            self.push_change_event("outputLinksDistribution", json_output_links)
+            self._published_output_links = True
 
     def __validate_scan_configuration(self, argin):
         # try to deserialize input string to a JSON object
@@ -341,14 +357,14 @@ class CbfSubarray(SKASubarray):
         # Validate scanID.
         if "scanID" in argin:
             if int(argin["scanID"]) <= 0:  # scanID not positive
-                msg = "'scanID' must be positive (received {}). "\
-                    "Aborting configuration.".format(int(argin["scanID"]))
+                msg = "'scanID' must be positive (received {}). " \
+                      "Aborting configuration.".format(int(argin["scanID"]))
                 self.__raise_configure_scan_fatal_error(msg)
             elif any(map(lambda i: i == int(argin["scanID"]),
-                         self._proxy_cbf_master.subarrayScanID)) and\
-                         int(argin["scanID"]) != self._scan_ID:  # scanID already taken
-                msg = "'scanID' must be unique (received {}). "\
-                    "Aborting configuration.".format(int(argin["scanID"]))
+                         self._proxy_cbf_master.subarrayScanID)) and \
+                    int(argin["scanID"]) != self._scan_ID:  # scanID already taken
+                msg = "'scanID' must be unique (received {}). " \
+                      "Aborting configuration.".format(int(argin["scanID"]))
                 self.__raise_configure_scan_fatal_error(msg)
             else:
                 pass
@@ -362,8 +378,8 @@ class CbfSubarray(SKASubarray):
             if argin["frequencyBand"] in frequency_bands:
                 pass
             else:
-                msg = "'frequencyBand' must be one of {} (received {}). "\
-                    "Aborting configuration.".format(frequency_bands, argin["frequency_band"])
+                msg = "'frequencyBand' must be one of {} (received {}). " \
+                      "Aborting configuration.".format(frequency_bands, argin["frequency_band"])
                 self.__raise_configure_scan_fatal_error(msg)
         else:
             msg = "'frequencyBand' must be given. Aborting configuration."
@@ -382,48 +398,48 @@ class CbfSubarray(SKASubarray):
                 stream_tuning = [*map(float, argin["band5Tuning"])]
                 if argin["frequencyBand"] == "5a":
                     if all(
-                        [const.FREQUENCY_BAND_5a_TUNING_BOUNDS[0] <= stream_tuning[i]
-                            <= const.FREQUENCY_BAND_5a_TUNING_BOUNDS[1] for i in [0, 1]]
+                            [const.FREQUENCY_BAND_5a_TUNING_BOUNDS[0] <= stream_tuning[i]
+                             <= const.FREQUENCY_BAND_5a_TUNING_BOUNDS[1] for i in [0, 1]]
                     ):
                         pass
                     else:
-                        msg = "Elements in 'band5Tuning must be floats between {} and {} "\
-                            "(received {} and {}) for a 'frequencyBand' of 5a. "\
-                            "Aborting configuration.".format(
-                                const.FREQUENCY_BAND_5a_TUNING_BOUNDS[0],
-                                const.FREQUENCY_BAND_5a_TUNING_BOUNDS[1],
-                                stream_tuning[0],
-                                stream_tuning[1]
-                            )
+                        msg = "Elements in 'band5Tuning must be floats between {} and {} " \
+                              "(received {} and {}) for a 'frequencyBand' of 5a. " \
+                              "Aborting configuration.".format(
+                            const.FREQUENCY_BAND_5a_TUNING_BOUNDS[0],
+                            const.FREQUENCY_BAND_5a_TUNING_BOUNDS[1],
+                            stream_tuning[0],
+                            stream_tuning[1]
+                        )
                         self.__raise_configure_scan_fatal_error(msg)
                 else:  # argin["frequencyBand"] == "5b"
                     if all(
-                        [const.FREQUENCY_BAND_5b_TUNING_BOUNDS[0] <= stream_tuning[i]
-                            <= const.FREQUENCY_BAND_5b_TUNING_BOUNDS[1] for i in [0, 1]]
+                            [const.FREQUENCY_BAND_5b_TUNING_BOUNDS[0] <= stream_tuning[i]
+                             <= const.FREQUENCY_BAND_5b_TUNING_BOUNDS[1] for i in [0, 1]]
                     ):
                         pass
                     else:
-                        msg = "Elements in 'band5Tuning must be floats between {} and {} "\
-                            "(received {} and {}) for a 'frequencyBand' of 5b. "\
-                            "Aborting configuration.".format(
-                                const.FREQUENCY_BAND_5b_TUNING_BOUNDS[0],
-                                const.FREQUENCY_BAND_5b_TUNING_BOUNDS[1],
-                                stream_tuning[0],
-                                stream_tuning[1]
-                            )
+                        msg = "Elements in 'band5Tuning must be floats between {} and {} " \
+                              "(received {} and {}) for a 'frequencyBand' of 5b. " \
+                              "Aborting configuration.".format(
+                            const.FREQUENCY_BAND_5b_TUNING_BOUNDS[0],
+                            const.FREQUENCY_BAND_5b_TUNING_BOUNDS[1],
+                            stream_tuning[0],
+                            stream_tuning[1]
+                        )
                         self.__raise_configure_scan_fatal_error(msg)
             else:
-                msg = "'band5Tuning' must be given for a 'frequencyBand' of {}. "\
-                    "Aborting configuration".format(argin["frequencyBand"])
+                msg = "'band5Tuning' must be given for a 'frequencyBand' of {}. " \
+                      "Aborting configuration".format(argin["frequencyBand"])
                 self.__raise_configure_scan_fatal_error(msg)
 
         # Validate frequencyBandOffsetStream1.
         if "frequencyBandOffsetStream1" in argin:
-            if abs(int(argin["frequencyBandOffsetStream1"])) <= const.FREQUENCY_SLICE_BW*10**6/2:
+            if abs(int(argin["frequencyBandOffsetStream1"])) <= const.FREQUENCY_SLICE_BW * 10 ** 6 / 2:
                 pass
             else:
-                msg = "Absolute value of 'frequencyBandOffsetStream1' must be at most half "\
-                    "of the frequency slice bandwidth. Aborting configuration."
+                msg = "Absolute value of 'frequencyBandOffsetStream1' must be at most half " \
+                      "of the frequency slice bandwidth. Aborting configuration."
                 self.__raise_configure_scan_fatal_error(msg)
         else:
             pass
@@ -432,11 +448,11 @@ class CbfSubarray(SKASubarray):
         if argin["frequencyBand"] in ["5a", "5b"]:
             if "frequencyBandOffsetStream2" in argin:
                 if abs(int(argin["frequencyBandOffsetStream2"])) <= \
-                        const.FREQUENCY_SLICE_BW*10**6/2:
+                        const.FREQUENCY_SLICE_BW * 10 ** 6 / 2:
                     pass
                 else:
-                    msg = "Absolute value of 'frequencyBandOffsetStream2' must be at most "\
-                        "half of the frequency slice bandwidth. Aborting configuration."
+                    msg = "Absolute value of 'frequencyBandOffsetStream2' must be at most " \
+                          "half of the frequency slice bandwidth. Aborting configuration."
                     self.__raise_configure_scan_fatal_error(msg)
             else:
                 pass
@@ -474,6 +490,7 @@ class CbfSubarray(SKASubarray):
                         self.__void_callback
                     )
                 )
+
             except tango.DevFailed:  # attribute doesn't exist or is not set up correctly
                 msg = "Attribute {} not found or not set up correctly for "\
                     "'delayModelSubscriptionPoint'. Aborting configuration.".format(
@@ -535,19 +552,21 @@ class CbfSubarray(SKASubarray):
 
                             # pass on configuration to VCC
                             vcc.ValidateSearchWindow(json.dumps(search_window))
+
                         except tango.DevFailed:  # exception in Vcc.ConfigureSearchWindow
                             msg = "An exception occurred while configuring VCC search "\
                                 "windows:\n{}\n. Aborting configuration.".format(
                                     str(sys.exc_info()[1].args[0].desc)
                                 )
+
                             self.__raise_configure_scan_fatal_error(msg)
                     # If the search window configuration is valid for all VCCs,
                     # is is guaranteed to be valid for the CBF Subarray.
                     # self.ConfigureSearchWindow(json.dumps(search_window))
 
             except (TypeError, AssertionError):  # searchWindow not the right length or not an array
-                msg = "'searchWindow' must be an array of maximum length 2. "\
-                    "Aborting configuration."
+                msg = "'searchWindow' must be an array of maximum length 2. " \
+                      "Aborting configuration."
                 self.__raise_configure_scan_fatal_error(msg)
         else:
             pass
@@ -563,12 +582,12 @@ class CbfSubarray(SKASubarray):
                             proxy_fsp = self._proxies_fsp[fspID - 1]
                             proxy_fsp_subarray = self._proxies_fsp_subarray[fspID - 1]
                         else:
-                            msg = "'fspID' must be an integer in the range [1, {}]. "\
-                                "Aborting configuration.".format(str(self._count_fsp))
+                            msg = "'fspID' must be an integer in the range [1, {}]. " \
+                                  "Aborting configuration.".format(str(self._count_fsp))
                             self.__raise_configure_scan_fatal_error(msg)
                     else:
-                        msg = "FSP specified, but 'fspID' not given. "\
-                            "Aborting configuration."
+                        msg = "FSP specified, but 'fspID' not given. " \
+                              "Aborting configuration."
                         self.__raise_configure_scan_fatal_error(msg)
 
                     if proxy_fsp.State() != tango.DevState.ON:
@@ -586,24 +605,24 @@ class CbfSubarray(SKASubarray):
                     if "functionMode" in fsp:
                         if fsp["functionMode"] in function_modes:
                             if function_modes.index(fsp["functionMode"]) + 1 == \
-                                    proxy_fsp.functionMode or\
+                                    proxy_fsp.functionMode or \
                                     proxy_fsp.functionMode == 0:
                                 pass
                             else:
-                                msg = "A different subarray is using FSP {} for a "\
-                                    "different function mode. Aborting configuration.".format(
-                                        fsp["fspID"]
-                                    )
+                                msg = "A different subarray is using FSP {} for a " \
+                                      "different function mode. Aborting configuration.".format(
+                                    fsp["fspID"]
+                                )
                                 self.__raise_configure_scan_fatal_error(msg)
                         else:
-                            msg = "'functionMode' must be one of {} (received {}). "\
-                                "Aborting configuration.".format(
-                                    function_modes, fsp["functionMode"]
-                                )
+                            msg = "'functionMode' must be one of {} (received {}). " \
+                                  "Aborting configuration.".format(
+                                function_modes, fsp["functionMode"]
+                            )
                             self.__raise_configure_scan_fatal_error(msg)
                     else:
-                        msg = "FSP specified, but 'functionMode' not given. "\
-                            "Aborting configuration."
+                        msg = "FSP specified, but 'functionMode' not given. " \
+                              "Aborting configuration."
                         self.__raise_configure_scan_fatal_error(msg)
 
                     fsp["frequencyBand"] = argin["frequencyBand"]
@@ -623,6 +642,85 @@ class CbfSubarray(SKASubarray):
                     # pass on configuration to FSP Subarray
                     proxy_fsp_subarray.ValidateScan(json.dumps(fsp))
 
+                    if fsp["functionMode"] == "PSS-BF":
+                        if "searchWindowID" in fsp:
+                            if int(fsp["searchWindowID"]) in [1, 2]:
+                                pass
+                            else:  # searchWindowID not in valid range
+                                msg = "'searchWindowID' must be one of [1, 2] (received {}).".format(
+                                    str(fsp["searchWindowID"])
+                                )
+                                self.__raise_configure_scan_fatal_error(msg)
+                        else:
+                            msg = "Search window not specified for Fsp PSS config"
+                            self.__raise_configure_scan_fatal_error(msg)
+
+                        if "searchBeamID" in fsp:
+                            if 1 <= int(fsp["searchBeamID"]) <= 1500:
+                                # Set searchBeamID attribute
+                                pass
+                            else:  # searchWindowID not in valid range
+                                msg = "'searchBeamID' must be within range 1-1500 (received {}).".format(
+                                    str(fsp["searchBeamID"])
+                                )
+                                self.__raise_configure_scan_fatal_error(msg)
+                        else:
+                            msg = "Search beam ID not specified for Fsp PSS config"
+                            self.__raise_configure_scan_fatal_error(msg)
+
+                            # Validate receptors.
+                            # This is always given, due to implementation details.
+                        if "receptors" in fsp:
+                            try:
+                                proxy_fsp_subarray.RemoveAllReceptors()
+                                proxy_fsp_subarray.AddReceptors(list(map(int, fsp["receptors"])))
+                                proxy_fsp_subarray.RemoveAllReceptors()
+                                for receptorCheck in fsp["receptors"]:
+                                    if receptorCheck not in self._receptors:
+                                        msg = ("Receptor {} does not belong to subarray {}.".format(
+                                            str(self._receptors[receptorCheck]), str(self._subarray_id)))
+                                        self.logger.error(msg)
+                                        tango.Except.throw_exception("Command failed", msg, "AddReceptors execution",
+                                                                       tango.ErrSeverity.ERR)
+                            except tango.DevFailed as df:  # error in AddReceptors()
+                                proxy_fsp_subarray.RemoveAllReceptors()
+                                msg = sys.exc_info()[1].args[0].desc + "\n'receptors' was malformed."
+                                self.logger.error(msg)
+                                tango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
+                                                               tango.ErrSeverity.ERR)
+                            pass
+                        else:
+                            msg = "'receptors' not specified for Fsp PSS config"
+                            self.__raise_configure_scan_fatal_error(msg)
+                        if "outputEnable" in fsp:
+                            if fsp["outputEnable"] is False or fsp["outputEnable"] is True:
+                                pass
+                            else:
+                                msg = "'outputEnabled' is not a valid boolean"
+                                self.__raise_configure_scan_fatal_error(msg)
+                        else:
+                            msg = "'outputEnable' not specified for Fsp PSS config"
+                            self.__raise_configure_scan_fatal_error(msg)
+                        if "averagingInterval" in fsp:
+                            if isinstance(fsp["averagingInterval"], int):
+                                pass
+                            else:
+                                msg = "'averagingInterval' is not a valid integer"
+                                self.__raise_configure_scan_fatal_error(msg)
+                        else:
+                            msg = "'averagingInterval' not specified for Fsp PSS config"
+                            self.__raise_configure_scan_fatal_error(msg)
+                        if "searchBeamDestinationAddress" in fsp:
+                            if validate_ip(fsp["searchBeamDestinationAddress"]):
+                                pass
+                            else:
+                                msg = "'searchBeamDestinationAddress' is not a valid IP address"
+                                self.__raise_configure_scan_fatal_error(msg)
+                        else:
+                            msg = "'searchBeamDestinationAddress' not specified for Fsp PSS config"
+                            self.__raise_configure_scan_fatal_error(msg)
+                        self._pss_config.append(fsp)
+
                     proxy_fsp.unsubscribe_event(
                         proxy_fsp.subscribe_event(
                             "State",
@@ -637,15 +735,18 @@ class CbfSubarray(SKASubarray):
                             self.__state_change_event_callback
                         )
                     )
+
                 except tango.DevFailed:  # exception in ConfigureScan
                     msg = "An exception occurred while configuring FSPs:\n{}\n"\
                         "Aborting configuration".format(sys.exc_info()[1].args[0].desc)
+
                     self.__raise_configure_scan_fatal_error(msg)
         else:
             msg = "'fsp' not given. Aborting configuration."
             self.__raise_configure_scan_fatal_error(msg)
 
         # At this point, everything has been validated.
+
 
     def __raise_configure_scan_fatal_error(self, msg):
         self.logger.error(msg)
@@ -666,6 +767,9 @@ class CbfSubarray(SKASubarray):
         dtype='str',
         doc="FQDN of CBF Master",
         default_value="mid_csp_cbf/sub_elt/master"
+    )
+    PssConfigAddress = device_property(
+        dtype='str'
     )
 
     SW1Address = device_property(
@@ -783,7 +887,7 @@ class CbfSubarray(SKASubarray):
         self._vcc_health_state = {}  # device_name:healthState
         self._fsp_state = {}  # device_name:state
         self._fsp_health_state = {}  # device_name:healthState
-
+        self._pss_config = []
         self._published_output_links = False
         self._last_received_vis_destination_address = "{}"
         self._last_received_delay_model = "{}"
@@ -800,6 +904,9 @@ class CbfSubarray(SKASubarray):
 
         self._proxy_sw_1 = tango.DeviceProxy(self.SW1Address)
         self._proxy_sw_2 = tango.DeviceProxy(self.SW2Address)
+
+        # JSON FSP configurations for PSS, COR, PST, VLBI
+        self._proxy_pss_config = tango.DeviceProxy(self.PssConfigAddress)
 
         self._master_max_capabilities = dict(
             pair.split(":") for pair in
@@ -1179,7 +1286,7 @@ class CbfSubarray(SKASubarray):
                                            tango.ErrSeverity.ERR)
 
         self.__validate_scan_configuration(argin)
-
+        self._proxy_pss_config.ConfigureFSP(json.dumps(self._pss_config))
         # Call this just to release all FSPs and unsubscribe to events.
         # We transition to obsState=CONFIGURING immediately after anyways.
         self.EndSB()
@@ -1331,6 +1438,7 @@ class CbfSubarray(SKASubarray):
                 fsp["band5Tuning"] = self._stream_tuning
 
             # pass on configuration to FSP Subarray
+            # This has been phased out, now passing to function mode classes first
             proxy_fsp_subarray.ConfigureScan(json.dumps(fsp))
 
             # subscribe to FSP state and healthState changes
@@ -1347,10 +1455,11 @@ class CbfSubarray(SKASubarray):
                                                                 event_id_health_state]
 
         # At this point, we can basically assume everything is properly configured
+        # This has been phased out, now passing to function mode classes first
         self.__generate_output_links(argin)  # published output links to outputLinksDistribution
 
         # This state transition will be later
-        # self._obs_state = ObsState.READY.value
+        self._obs_state = ObsState.READY.value
 
         # PROTECTED REGION END #    //  CbfSubarray.ConfigureScan
 
@@ -1395,11 +1504,11 @@ class CbfSubarray(SKASubarray):
                 const.FREQUENCY_BAND_4_RANGE
             ][self._frequency_band]
 
-            if frequency_band_range[0]*10**9 + self._frequency_band_offset_stream_1 + \
-                    const.SEARCH_WINDOW_BW*10**6/2 <= \
+            if frequency_band_range[0] * 10 ** 9 + self._frequency_band_offset_stream_1 + \
+                    const.SEARCH_WINDOW_BW * 10 ** 6 / 2 <= \
                     int(argin["searchWindowTuning"]) <= \
-                    frequency_band_range[1]*10**9 + self._frequency_band_offset_stream_1 - \
-                    const.SEARCH_WINDOW_BW*10**6/2:
+                    frequency_band_range[1] * 10 ** 9 + self._frequency_band_offset_stream_1 - \
+                    const.SEARCH_WINDOW_BW * 10 ** 6 / 2:
                 # this is the acceptable range
                 pass
             else:
@@ -1411,29 +1520,29 @@ class CbfSubarray(SKASubarray):
             proxy_sw.searchWindowTuning = argin["searchWindowTuning"]
 
             frequency_band_range_1 = (
-                self._stream_tuning[0]*10**9 + self._frequency_band_offset_stream_1 - \
-                    const.BAND_5_STREAM_BANDWIDTH*10**9/2,
-                self._stream_tuning[0]*10**9 + self._frequency_band_offset_stream_1 + \
-                    const.BAND_5_STREAM_BANDWIDTH*10**9/2
+                self._stream_tuning[0] * 10 ** 9 + self._frequency_band_offset_stream_1 - \
+                const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2,
+                self._stream_tuning[0] * 10 ** 9 + self._frequency_band_offset_stream_1 + \
+                const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2
             )
 
             frequency_band_range_2 = (
-                self._stream_tuning[1]*10**9 + self._frequency_band_offset_stream_2 - \
-                    const.BAND_5_STREAM_BANDWIDTH*10**9/2,
-                self._stream_tuning[1]*10**9 + self._frequency_band_offset_stream_2 + \
-                    const.BAND_5_STREAM_BANDWIDTH*10**9/2
+                self._stream_tuning[1] * 10 ** 9 + self._frequency_band_offset_stream_2 - \
+                const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2,
+                self._stream_tuning[1] * 10 ** 9 + self._frequency_band_offset_stream_2 + \
+                const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2
             )
 
             if (frequency_band_range_1[0] + \
-                    const.SEARCH_WINDOW_BW*10**6/2 <= \
-                    int(argin["searchWindowTuning"]) <= \
-                    frequency_band_range_1[1] - \
-                    const.SEARCH_WINDOW_BW*10**6/2) or\
+                const.SEARCH_WINDOW_BW * 10 ** 6 / 2 <= \
+                int(argin["searchWindowTuning"]) <= \
+                frequency_band_range_1[1] - \
+                const.SEARCH_WINDOW_BW * 10 ** 6 / 2) or \
                     (frequency_band_range_2[0] + \
-                    const.SEARCH_WINDOW_BW*10**6/2 <= \
-                    int(argin["searchWindowTuning"]) <= \
-                    frequency_band_range_2[1] - \
-                    const.SEARCH_WINDOW_BW*10**6/2):
+                     const.SEARCH_WINDOW_BW * 10 ** 6 / 2 <= \
+                     int(argin["searchWindowTuning"]) <= \
+                     frequency_band_range_2[1] - \
+                     const.SEARCH_WINDOW_BW * 10 ** 6 / 2):
                 # this is the acceptable range
                 pass
             else:
@@ -1472,7 +1581,7 @@ class CbfSubarray(SKASubarray):
                 "Defaulting to 22."
             self.logger.warn(log_msg)
 
-        # Configure tdcDestinationAddress.
+        # `Configure tdcDestinationAddress.`
         if argin["tdcEnable"]:
             # TODO: validate input
             proxy_sw.tdcDestinationAddress = \
@@ -1585,6 +1694,8 @@ class CbfSubarray(SKASubarray):
         # transition to obsState=IDLE
         self._obs_state = ObsState.IDLE.value
         # PROTECTED REGION END #    //  CbfSubarray.EndSB
+
+
 # ----------
 # Run server
 # ----------
@@ -1594,6 +1705,7 @@ def main(args=None, **kwargs):
     # PROTECTED REGION ID(CbfSubarray.main) ENABLED START #
     return run((CbfSubarray,), args=args, **kwargs)
     # PROTECTED REGION END #    //  CbfSubarray.main
+
 
 if __name__ == '__main__':
     main()

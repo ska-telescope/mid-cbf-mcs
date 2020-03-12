@@ -530,191 +530,191 @@ class FspSubarray(SKASubarray):
         except json.JSONDecodeError:  # argument not a valid JSON object
             msg = "Scan configuration object is not a valid JSON object."
             self.logger.error(msg)
+<<<<<<< tangods/Fsp/FspSubarray/FspSubarray.py
             tango.Except.throw_exception("Command failed", msg,
                                            "ConfigureScan execution", tango.ErrSeverity.ERR)
-
-        # Validate receptors.
-        # This is always given, due to implementation details.
-        try:
-            self.RemoveAllReceptors()
-            self.AddReceptors(map(int, argin["receptors"]))
-            self.RemoveAllReceptors()
-        except tango.DevFailed as df:  # error in AddReceptors()
-            self.RemoveAllReceptors()
-            msg = sys.exc_info()[1].args[0].desc + "\n'receptors' was malformed."
-            self.logger.error(msg)
-            tango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
-                                            tango.ErrSeverity.ERR)
-
-        frequencyBand = ["1", "2", "3", "4", "5a", "5b"].index(argin["frequencyBand"])
-
-        # Validate frequencySliceID.
-        if "frequencySliceID" in argin:
-            num_frequency_slices = [4, 5, 7, 12, 26, 26]
-            if int(argin["frequencySliceID"]) in list(
-                    range(1, num_frequency_slices[frequencyBand] + 1)):
-                pass
-            else:
-                msg = "'frequencySliceID' must be an integer in the range [1, {}] "\
-                    "for a 'frequencyBand' of {}.".format(
-                        str(num_frequency_slices[frequencyBand]),
-                        str(argin["frequencyBand"])
-                    )
-                self.logger.error(msg)
-                tango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
-                                               tango.ErrSeverity.ERR)
-        else:
-            msg = "FSP specified, but 'frequencySliceID' not given."
-            self.logger.error(msg)
-            tango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
-                                           tango.ErrSeverity.ERR)
-
-        # Validate corrBandwidth.
-        if "corrBandwidth" in argin:
-            if int(argin["corrBandwidth"]) in list(range(0, 7)):
-                pass
-            else:
-                msg = "'corrBandwidth' must be an integer in the range [0, 6]."
-                # this is a fatal error
-                self.logger.error(msg)
-                tango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
-                                               tango.ErrSeverity.ERR)
-        else:
-            msg = "FSP specified, but 'corrBandwidth' not given."
-            self.logger.error(msg)
-            tango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
-                                           tango.ErrSeverity.ERR)
-
-        # Validate zoomWindowTuning.
-        if argin["corrBandwidth"]:  # zoomWindowTuning is required
-            if "zoomWindowTuning" in argin:
-                if argin["frequencyBand"] in list(range(4)):  # frequency band is not band 5
-                    frequency_band_start = [*map(lambda j: j[0]*10**9, [
-                        const.FREQUENCY_BAND_1_RANGE,
-                        const.FREQUENCY_BAND_2_RANGE,
-                        const.FREQUENCY_BAND_3_RANGE,
-                        const.FREQUENCY_BAND_4_RANGE
-                    ])][argin["frequencyBand"]] + argin["frequencyBandOffsetStream1"]
-                    frequency_slice_range = (
-                        frequency_band_start + \
-                            (argin["frequencySliceID"] - 1)*const.FREQUENCY_SLICE_BW*10**6,
-                        frequency_band_start +
-                            argin["frequencySliceID"]*const.FREQUENCY_SLICE_BW*10**6
-                    )
-
-                    if frequency_slice_range[0] <= \
-                            int(argin["zoomWindowTuning"])*10**3 <= \
-                            frequency_slice_range[1]:
-                        pass
-                    else:
-                        msg = "'zoomWindowTuning' must be within observed frequency slice."
-                        self.logger.error(msg)
-                        tango.Except.throw_exception("Command failed", msg,
-                                                       "ConfigureScan execution",
-                                                       tango.ErrSeverity.ERR)
-                else:  # frequency band 5a or 5b (two streams with bandwidth 2.5 GHz)
-                    frequency_slice_range_1 = (
-                        argin["band5Tuning"][0]*10**9 + argin["frequencyBandOffsetStream1"] - \
-                            const.BAND_5_STREAM_BANDWIDTH*10**9/2 + \
-                            (argin["frequencySliceID"] - 1)*const.FREQUENCY_SLICE_BW*10**6,
-                        argin["band5Tuning"][0]*10**9 + argin["frequencyBandOffsetStream1"] - \
-                            const.BAND_5_STREAM_BANDWIDTH*10**9/2 + \
-                            argin["frequencySliceID"]*const.FREQUENCY_SLICE_BW*10**6
-                    )
-
-                    frequency_slice_range_2 = (
-                        argin["band5Tuning"][1]*10**9 + argin["frequencyBandOffsetStream2"] - \
-                            const.BAND_5_STREAM_BANDWIDTH*10**9/2 + \
-                            (argin["frequencySliceID"] - 1)*const.FREQUENCY_SLICE_BW*10**6,
-                        argin["band5Tuning"][1]*10**9 + argin["frequencyBandOffsetStream2"] - \
-                            const.BAND_5_STREAM_BANDWIDTH*10**9/2 + \
-                            argin["frequencySliceID"]*const.FREQUENCY_SLICE_BW*10**6
-                    )
-
-                    if (frequency_slice_range_1[0] <= \
-                            int(argin["zoomWindowTuning"])*10**3 <= \
-                            frequency_slice_range_1[1]) or\
-                            (frequency_slice_range_2[0] <= \
-                            int(argin["zoomWindowTuning"])*10**3 <= \
-                            frequency_slice_range_2[1]):
-                        pass
-                    else:
-                        msg = "'zoomWindowTuning' must be within observed frequency slice."
-                        self.logger.error(msg)
-                        tango.Except.throw_exception("Command failed", msg,
-                                                       "ConfigureScan execution",
-                                                       tango.ErrSeverity.ERR)
-            else:
-                msg = "FSP specified, but 'zoomWindowTuning' not given."
-                self.logger.error(msg)
-                tango.Except.throw_exception("Command failed", msg,
-                                                "ConfigureScan execution",
-                                                tango.ErrSeverity.ERR)
-
-        # Validate integrationTime.
-        if "integrationTime" in argin:
-            if int(argin["integrationTime"]) in list(
-                range(self.MIN_INT_TIME, 10*self.MIN_INT_TIME + 1, self.MIN_INT_TIME)
-            ):
-                pass
-            else:
-                msg = "'integrationTime' must be an integer in the range [1, 10] multiplied "\
-                    "by {}.".format(self.MIN_INT_TIME)
-                self.logger.error(msg)
-                tango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
-                                               tango.ErrSeverity.ERR)
-        else:
-            msg = "FSP specified, but 'integrationTime' not given."
-            self.logger.error(msg)
-            tango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
-                                           tango.ErrSeverity.ERR)
-
-        # Validate channelAveragingMap.
-        if "channelAveragingMap" in argin:
+        if argin["functionMode"] == "CORR":
+            # Validate receptors.
+            # This is always given, due to implementation details.
             try:
-                # validate dimensions
-                assert len(argin["channelAveragingMap"]) == self.NUM_CHANNEL_GROUPS
-                for i in range(20):
-                    assert len(argin["channelAveragingMap"][i]) == 2
+                self.RemoveAllReceptors()
+                self.AddReceptors(list(map(int, argin["receptors"])))
+                self.RemoveAllReceptors()
+            except tango.DevFailed as df:  # error in AddReceptors()
+                self.RemoveAllReceptors()
+                msg = sys.exc_info()[1].args[0].desc + "\n'receptors' was malformed."
+                self.logger.error(msg)
+                tango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
+                                                tango.ErrSeverity.ERR)
+            frequencyBand = ["1", "2", "3", "4", "5a", "5b"].index(argin["frequencyBand"])
 
-                for i in range(20):
-                    # validate channel ID of first channel in group
-                    if int(argin["channelAveragingMap"][i][0]) == \
-                            i*self.NUM_FINE_CHANNELS/self.NUM_CHANNEL_GROUPS + 1:
-                        pass  # the default value is already correct
-                    else:
-                        msg = "'channelAveragingMap'[{0}][0] is not the channel ID of the "\
-                            "first channel in a group (received {1}).".format(
-                                i,
-                                argin["channelAveragingMap"][i][0]
-                            )
-                        self.logger.error(msg)
-                        tango.Except.throw_exception("Command failed", msg,
-                                                       "ConfigureScan execution",
-                                                       tango.ErrSeverity.ERR)
-
-                    # validate averaging factor
-                    if int(argin["channelAveragingMap"][i][1]) in [0, 1, 2, 3, 4, 6, 8]:
-                        pass
-                    else:
-                        msg = "'channelAveragingMap'[{0}][1] must be one of "\
-                            "[0, 1, 2, 3, 4, 6, 8] (received {1}).".format(
-                                i,
-                                argin["channelAveragingMap"][i][1]
-                            )
-                        self.logger.error(msg)
-                        tango.Except.throw_exception("Command failed", msg,
-                                                       "ConfigureScan execution",
-                                                       tango.ErrSeverity.ERR)
-            except (TypeError, AssertionError):  # dimensions not correct
-                msg = "'channelAveragingMap' must be an 2D array of dimensions 2x{}.".format(
-                        self.NUM_CHANNEL_GROUPS
-                    )
-                self.logger.error(log_msg)
+            # Validate frequencySliceID.
+            if "frequencySliceID" in argin:
+                num_frequency_slices = [4, 5, 7, 12, 26, 26]
+                if int(argin["frequencySliceID"]) in list(
+                        range(1, num_frequency_slices[frequencyBand] + 1)):
+                    pass
+                else:
+                    msg = "'frequencySliceID' must be an integer in the range [1, {}] "\
+                        "for a 'frequencyBand' of {}.".format(
+                            str(num_frequency_slices[frequencyBand]),
+                            str(argin["frequencyBand"])
+                        )
+                    self.logger.error(msg)
+                    tango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
+                                                   tango.ErrSeverity.ERR)
+            else:
+                msg = "FSP specified, but 'frequencySliceID' not given."
+                self.logger.error(msg)
                 tango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
                                                tango.ErrSeverity.ERR)
-        else:
-            pass
+
+            # Validate corrBandwidth.
+            if "corrBandwidth" in argin:
+                if int(argin["corrBandwidth"]) in list(range(0, 7)):
+                    pass
+                else:
+                    msg = "'corrBandwidth' must be an integer in the range [0, 6]."
+                    # this is a fatal error
+                    self.logger.error(msg)
+                    tango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
+                                                   tango.ErrSeverity.ERR)
+            else:
+                msg = "FSP specified, but 'corrBandwidth' not given."
+                self.logger.error(msg)
+                tango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
+                                               tango.ErrSeverity.ERR)
+
+            # Validate zoomWindowTuning.
+            if argin["corrBandwidth"]:  # zoomWindowTuning is required
+                if "zoomWindowTuning" in argin:
+                    if argin["frequencyBand"] in list(range(4)):  # frequency band is not band 5
+                        frequency_band_start = [*map(lambda j: j[0]*10**9, [
+                            const.FREQUENCY_BAND_1_RANGE,
+                            const.FREQUENCY_BAND_2_RANGE,
+                            const.FREQUENCY_BAND_3_RANGE,
+                            const.FREQUENCY_BAND_4_RANGE
+                        ])][argin["frequencyBand"]] + argin["frequencyBandOffsetStream1"]
+                        frequency_slice_range = (
+                            frequency_band_start + \
+                                (argin["frequencySliceID"] - 1)*const.FREQUENCY_SLICE_BW*10**6,
+                            frequency_band_start +
+                                argin["frequencySliceID"]*const.FREQUENCY_SLICE_BW*10**6
+                        )
+
+                        if frequency_slice_range[0] <= \
+                                int(argin["zoomWindowTuning"])*10**3 <= \
+                                frequency_slice_range[1]:
+                            pass
+                        else:
+                            msg = "'zoomWindowTuning' must be within observed frequency slice."
+                            self.logger.error(msg)
+                            tango.Except.throw_exception("Command failed", msg,
+                                                           "ConfigureScan execution",
+                                                           tango.ErrSeverity.ERR)
+                    else:  # frequency band 5a or 5b (two streams with bandwidth 2.5 GHz)
+                        frequency_slice_range_1 = (
+                            argin["band5Tuning"][0]*10**9 + argin["frequencyBandOffsetStream1"] - \
+                                const.BAND_5_STREAM_BANDWIDTH*10**9/2 + \
+                                (argin["frequencySliceID"] - 1)*const.FREQUENCY_SLICE_BW*10**6,
+                            argin["band5Tuning"][0]*10**9 + argin["frequencyBandOffsetStream1"] - \
+                                const.BAND_5_STREAM_BANDWIDTH*10**9/2 + \
+                                argin["frequencySliceID"]*const.FREQUENCY_SLICE_BW*10**6
+                        )
+
+                        frequency_slice_range_2 = (
+                            argin["band5Tuning"][1]*10**9 + argin["frequencyBandOffsetStream2"] - \
+                                const.BAND_5_STREAM_BANDWIDTH*10**9/2 + \
+                                (argin["frequencySliceID"] - 1)*const.FREQUENCY_SLICE_BW*10**6,
+                            argin["band5Tuning"][1]*10**9 + argin["frequencyBandOffsetStream2"] - \
+                                const.BAND_5_STREAM_BANDWIDTH*10**9/2 + \
+                                argin["frequencySliceID"]*const.FREQUENCY_SLICE_BW*10**6
+                        )
+
+                        if (frequency_slice_range_1[0] <= \
+                                int(argin["zoomWindowTuning"])*10**3 <= \
+                                frequency_slice_range_1[1]) or\
+                                (frequency_slice_range_2[0] <= \
+                                int(argin["zoomWindowTuning"])*10**3 <= \
+                                frequency_slice_range_2[1]):
+                            pass
+                        else:
+                            msg = "'zoomWindowTuning' must be within observed frequency slice."
+                            self.logger.error(msg)
+                            tango.Except.throw_exception("Command failed", msg,
+                                                           "ConfigureScan execution",
+                                                           tango.ErrSeverity.ERR)
+                else:
+                    msg = "FSP specified, but 'zoomWindowTuning' not given."
+                    self.logger.error(msg)
+                    tango.Except.throw_exception("Command failed", msg,
+                                                    "ConfigureScan execution",
+                                                    tango.ErrSeverity.ERR)
+
+            # Validate integrationTime.
+            if "integrationTime" in argin:
+                if int(argin["integrationTime"]) in list(
+                    range(self.MIN_INT_TIME, 10*self.MIN_INT_TIME + 1, self.MIN_INT_TIME)
+                ):
+                    pass
+                else:
+                    msg = "'integrationTime' must be an integer in the range [1, 10] multiplied "\
+                        "by {}.".format(self.MIN_INT_TIME)
+                    self.logger.error(msg)
+                    tango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
+                                                   tango.ErrSeverity.ERR)
+            else:
+                msg = "FSP specified, but 'integrationTime' not given."
+                self.logger.error(msg)
+                tango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
+                                               tango.ErrSeverity.ERR)
+
+            # Validate channelAveragingMap.
+            if "channelAveragingMap" in argin:
+                try:
+                    # validate dimensions
+                    assert len(argin["channelAveragingMap"]) == self.NUM_CHANNEL_GROUPS
+                    for i in range(20):
+                        assert len(argin["channelAveragingMap"][i]) == 2
+
+                    for i in range(20):
+                        # validate channel ID of first channel in group
+                        if int(argin["channelAveragingMap"][i][0]) == \
+                                i*self.NUM_FINE_CHANNELS/self.NUM_CHANNEL_GROUPS + 1:
+                            pass  # the default value is already correct
+                        else:
+                            msg = "'channelAveragingMap'[{0}][0] is not the channel ID of the "\
+                                "first channel in a group (received {1}).".format(
+                                    i,
+                                    argin["channelAveragingMap"][i][0]
+                                )
+                            self.logger.error(msg)
+                            tango.Except.throw_exception("Command failed", msg,
+                                                           "ConfigureScan execution",
+                                                           tango.ErrSeverity.ERR)
+
+                        # validate averaging factor
+                        if int(argin["channelAveragingMap"][i][1]) in [0, 1, 2, 3, 4, 6, 8]:
+                            pass
+                        else:
+                            msg = "'channelAveragingMap'[{0}][1] must be one of "\
+                                "[0, 1, 2, 3, 4, 6, 8] (received {1}).".format(
+                                    i,
+                                    argin["channelAveragingMap"][i][1]
+                                )
+                            self.logger.error(msg)
+                            tango.Except.throw_exception("Command failed", msg,
+                                                           "ConfigureScan execution",
+                                                           tango.ErrSeverity.ERR)
+                except (TypeError, AssertionError):  # dimensions not correct
+                    msg = "'channelAveragingMap' must be an 2D array of dimensions 2x{}.".format(
+                            self.NUM_CHANNEL_GROUPS
+                        )
+                    self.logger.error(log_msg)
+                    tango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
+                                                   tango.ErrSeverity.ERR)
+            else:
+                pass
 
         # PROTECTED REGION END #    //  FspSubarray.ValidateScan
 
@@ -739,119 +739,122 @@ class FspSubarray(SKASubarray):
 
         argin = json.loads(argin)
 
-        # Configure frequencyBand.
-        frequency_bands = ["1", "2", "3", "4", "5a", "5b"]
-        self._frequency_band = frequency_bands.index(argin["frequencyBand"])
+        # TODO: Make output links work with PSS and PST
+        if argin["functionMode"] == "CORR":
 
-        # Configure band5Tuning.
-        if self._frequency_band in [4, 5]:
-            self._stream_tuning = argin["band5Tuning"]
+            # Configure frequencyBand.
+            frequency_bands = ["1", "2", "3", "4", "5a", "5b"]
+            self._frequency_band = frequency_bands.index(argin["frequencyBand"])
 
-        # Configure frequencyBandOffsetStream1.
-        self._frequency_band_offset_stream_1 = int(argin["frequencyBandOffsetStream1"])
+            # Configure band5Tuning.
+            if self._frequency_band in [4, 5]:
+                self._stream_tuning = argin["band5Tuning"]
 
-        # Configure frequencyBandOffsetStream2.
-        if self._frequency_band in [4, 5]:
-            self._frequency_band_offset_stream_2 = int(argin["frequencyBandOffsetStream2"])
+            # Configure frequencyBandOffsetStream1.
+            self._frequency_band_offset_stream_1 = int(argin["frequencyBandOffsetStream1"])
+
+            # Configure frequencyBandOffsetStream2.
+            if self._frequency_band in [4, 5]:
+                self._frequency_band_offset_stream_2 = int(argin["frequencyBandOffsetStream2"])
 
         # Configure receptors.
         self.RemoveAllReceptors()
         self.AddReceptors(map(int, argin["receptors"]))
-
         # Configure frequencySliceID.
-        self._frequency_slice_ID = int(argin["frequencySliceID"])
 
-        # Configure corrBandwidth.
-        self._bandwidth = int(argin["corrBandwidth"])
-        self._bandwidth_actual = int(const.FREQUENCY_SLICE_BW/2**int(argin["corrBandwidth"]))
+        if argin["functionMode"] == "CORR":
+            self._frequency_slice_ID = int(argin["frequencySliceID"])
+            # Configure corrBandwidth.
+            self._bandwidth = int(argin["corrBandwidth"])
+            self._bandwidth_actual = int(const.FREQUENCY_SLICE_BW/2**int(argin["corrBandwidth"]))
 
-        # Configure zoomWindowTuning.
-        if self._bandwidth != 0:  # zoomWindowTuning is required
-            if self._frequency_band in list(range(4)):  # frequency band is not band 5
-                self._zoom_window_tuning = int(argin["zoomWindowTuning"])
+            # Configure zoomWindowTuning.
+            if self._bandwidth != 0:  # zoomWindowTuning is required
+                if self._frequency_band in list(range(4)):  # frequency band is not band 5
+                    self._zoom_window_tuning = int(argin["zoomWindowTuning"])
 
-                frequency_band_start = [*map(lambda j: j[0]*10**9, [
-                    const.FREQUENCY_BAND_1_RANGE,
-                    const.FREQUENCY_BAND_2_RANGE,
-                    const.FREQUENCY_BAND_3_RANGE,
-                    const.FREQUENCY_BAND_4_RANGE
-                ])][self._frequency_band] + self._frequency_band_offset_stream_1
-                frequency_slice_range = (
-                    frequency_band_start + \
-                        (self._frequency_slice_ID - 1)*const.FREQUENCY_SLICE_BW*10**6,
-                    frequency_band_start +
-                        self._frequency_slice_ID*const.FREQUENCY_SLICE_BW*10**6
-                )
+                    frequency_band_start = [*map(lambda j: j[0]*10**9, [
+                        const.FREQUENCY_BAND_1_RANGE,
+                        const.FREQUENCY_BAND_2_RANGE,
+                        const.FREQUENCY_BAND_3_RANGE,
+                        const.FREQUENCY_BAND_4_RANGE
+                    ])][self._frequency_band] + self._frequency_band_offset_stream_1
+                    frequency_slice_range = (
+                        frequency_band_start + \
+                            (self._frequency_slice_ID - 1)*const.FREQUENCY_SLICE_BW*10**6,
+                        frequency_band_start +
+                            self._frequency_slice_ID*const.FREQUENCY_SLICE_BW*10**6
+                    )
 
-                if frequency_slice_range[0] + \
-                        self._bandwidth_actual*10**6/2 <= \
-                        int(argin["zoomWindowTuning"])*10**3 <= \
-                        frequency_slice_range[1] - \
-                        self._bandwidth_actual*10**6/2:
-                    # this is the acceptable range
-                    pass
-                else:
-                    # log a warning message
-                    log_msg = "'zoomWindowTuning' partially out of observed frequency slice. "\
-                        "Proceeding."
-                    self.logger.warn(log_msg)
-            else:  # frequency band 5a or 5b (two streams with bandwidth 2.5 GHz)
-                self._zoom_window_tuning = argin["zoomWindowTuning"]
+                    if frequency_slice_range[0] + \
+                            self._bandwidth_actual*10**6/2 <= \
+                            int(argin["zoomWindowTuning"])*10**3 <= \
+                            frequency_slice_range[1] - \
+                            self._bandwidth_actual*10**6/2:
+                        # this is the acceptable range
+                        pass
+                    else:
+                        # log a warning message
+                        log_msg = "'zoomWindowTuning' partially out of observed frequency slice. "\
+                            "Proceeding."
+                        self.logger.warn(log_msg)
+                else:  # frequency band 5a or 5b (two streams with bandwidth 2.5 GHz)
+                    self._zoom_window_tuning = argin["zoomWindowTuning"]
 
-                frequency_slice_range_1 = (
-                    self._stream_tuning[0]*10**9 + self._frequency_band_offset_stream_1 - \
-                        const.BAND_5_STREAM_BANDWIDTH*10**9/2 + \
-                        (self._frequency_slice_ID - 1)*const.FREQUENCY_SLICE_BW*10**6,
-                    self._stream_tuning[0]*10**9 + self._frequency_band_offset_stream_1 - \
-                        const.BAND_5_STREAM_BANDWIDTH*10**9/2 + \
-                        self._frequency_slice_ID*const.FREQUENCY_SLICE_BW*10**6
-                )
+                    frequency_slice_range_1 = (
+                        self._stream_tuning[0]*10**9 + self._frequency_band_offset_stream_1 - \
+                            const.BAND_5_STREAM_BANDWIDTH*10**9/2 + \
+                            (self._frequency_slice_ID - 1)*const.FREQUENCY_SLICE_BW*10**6,
+                        self._stream_tuning[0]*10**9 + self._frequency_band_offset_stream_1 - \
+                            const.BAND_5_STREAM_BANDWIDTH*10**9/2 + \
+                            self._frequency_slice_ID*const.FREQUENCY_SLICE_BW*10**6
+                    )
 
-                frequency_slice_range_2 = (
-                    self._stream_tuning[1]*10**9 + self._frequency_band_offset_stream_2 - \
-                        const.BAND_5_STREAM_BANDWIDTH*10**9/2 + \
-                        (self._frequency_slice_ID - 1)*const.FREQUENCY_SLICE_BW*10**6,
-                    self._stream_tuning[1]*10**9 + self._frequency_band_offset_stream_2 - \
-                        const.BAND_5_STREAM_BANDWIDTH*10**9/2 + \
-                        self._frequency_slice_ID*const.FREQUENCY_SLICE_BW*10**6
-                )
+                    frequency_slice_range_2 = (
+                        self._stream_tuning[1]*10**9 + self._frequency_band_offset_stream_2 - \
+                            const.BAND_5_STREAM_BANDWIDTH*10**9/2 + \
+                            (self._frequency_slice_ID - 1)*const.FREQUENCY_SLICE_BW*10**6,
+                        self._stream_tuning[1]*10**9 + self._frequency_band_offset_stream_2 - \
+                            const.BAND_5_STREAM_BANDWIDTH*10**9/2 + \
+                            self._frequency_slice_ID*const.FREQUENCY_SLICE_BW*10**6
+                    )
 
-                if (frequency_slice_range_1[0] + \
-                        self._bandwidth_actual*10**6/2 <= \
-                        int(argin["zoomWindowTuning"])*10**3 <= \
-                        frequency_slice_range_1[1] - \
-                        self._bandwidth_actual*10**6/2) or\
-                        (frequency_slice_range_2[0] + \
-                        self._bandwidth_actual*10**6/2 <= \
-                        int(argin["zoomWindowTuning"])*10**3 <= \
-                        frequency_slice_range_2[1] - \
-                        self._bandwidth_actual*10**6/2):
-                    # this is the acceptable range
-                    pass
-                else:
-                    # log a warning message
-                    log_msg = "'zoomWindowTuning' partially out of observed frequency slice. "\
-                        "Proceeding."
-                    self.logger.warn(log_msg)
+                    if (frequency_slice_range_1[0] + \
+                            self._bandwidth_actual*10**6/2 <= \
+                            int(argin["zoomWindowTuning"])*10**3 <= \
+                            frequency_slice_range_1[1] - \
+                            self._bandwidth_actual*10**6/2) or\
+                            (frequency_slice_range_2[0] + \
+                            self._bandwidth_actual*10**6/2 <= \
+                            int(argin["zoomWindowTuning"])*10**3 <= \
+                            frequency_slice_range_2[1] - \
+                            self._bandwidth_actual*10**6/2):
+                        # this is the acceptable range
+                        pass
+                    else:
+                        # log a warning message
+                        log_msg = "'zoomWindowTuning' partially out of observed frequency slice. "\
+                            "Proceeding."
+                        self.logger.warn(log_msg)
 
-        # Configure integrationTime.
-        self._integration_time = int(argin["integrationTime"])
+            # Configure integrationTime.
+            self._integration_time = int(argin["integrationTime"])
 
-        # Configure channelAveragingMap.
-        if "channelAveragingMap" in argin:
-            for i in range(20):
-                self._channel_averaging_map[i][1] = int(argin["channelAveragingMap"][i][1])
-        else:
-            self._channel_averaging_map = [
-                [int(i*self.NUM_FINE_CHANNELS/self.NUM_CHANNEL_GROUPS) + 1, 0]
-                for i in range(self.NUM_CHANNEL_GROUPS)
-            ]
-            log_msg = "FSP specified, but 'channelAveragingMap not given. Default to averaging "\
-                "factor = 0 for all channel groups."
-            self.logger.warn(log_msg)
+            # Configure channelAveragingMap.
+            if "channelAveragingMap" in argin:
+                for i in range(20):
+                    self._channel_averaging_map[i][1] = int(argin["channelAveragingMap"][i][1])
+            else:
+                self._channel_averaging_map = [
+                    [int(i*self.NUM_FINE_CHANNELS/self.NUM_CHANNEL_GROUPS) + 1, 0]
+                    for i in range(self.NUM_CHANNEL_GROUPS)
+                ]
+                log_msg = "FSP specified, but 'channelAveragingMap not given. Default to averaging "\
+                    "factor = 0 for all channel groups."
+                self.logger.warn(log_msg)
 
         # This state transition will be later
-        # self._obs_state = ObsState.READY.value
+        self._obs_state = ObsState.READY.value
 
         # PROTECTED REGION END #    //  FspSubarray.ConfigureScan
 

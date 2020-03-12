@@ -79,34 +79,39 @@ class TestCbfSubarray:
         time.sleep(3)
 
         # receptor list should be empty right after initialization
-        assert create_subarray_1_proxy.receptors == ()
+        assert len(create_subarray_1_proxy.receptors) == 0
         assert all([proxy.subarrayMembership == 0 for proxy in create_vcc_proxies])
         assert create_subarray_1_proxy.State() == DevState.OFF
 
         # add some receptors
         create_subarray_1_proxy.AddReceptors([1, 3, 4])
         time.sleep(1)
-        assert create_subarray_1_proxy.receptors == (1, 3, 4)
+        assert create_subarray_1_proxy.receptors[0] == 1
+        assert create_subarray_1_proxy.receptors[1] == 3
+        assert create_subarray_1_proxy.receptors[2] == 4
         assert all([create_vcc_proxies[receptor_to_vcc[i] - 1].subarrayMembership == 1 for i in [1, 3, 4]])
         assert create_subarray_1_proxy.State() == DevState.ON
 
         # add more receptors...
         create_subarray_1_proxy.AddReceptors([2])
         time.sleep(1)
-        assert create_subarray_1_proxy.receptors == (1, 3, 4, 2)
+        assert create_subarray_1_proxy.receptors[0] == 1
+        assert create_subarray_1_proxy.receptors[1] == 3
+        assert create_subarray_1_proxy.receptors[2] == 4
+        assert create_subarray_1_proxy.receptors[3] == 2
         assert create_vcc_proxies[receptor_to_vcc[2] - 1].subarrayMembership == 1
 
         # remove some receptors
         create_subarray_1_proxy.RemoveReceptors([2, 1, 4])
         time.sleep(1)
-        assert create_subarray_1_proxy.receptors == (3,)
+        assert create_subarray_1_proxy.receptors == ([3])
         assert all([create_vcc_proxies[receptor_to_vcc[i] - 1].subarrayMembership == 0 for i in [1, 2, 4]])
         assert create_vcc_proxies[receptor_to_vcc[3] - 1].subarrayMembership == 1
 
         # remove remaining receptors
         create_subarray_1_proxy.RemoveReceptors([3])
         time.sleep(1)
-        assert create_subarray_1_proxy.receptors == ()
+        assert len(create_subarray_1_proxy.receptors) == 0
         assert create_vcc_proxies[receptor_to_vcc[3] - 1].subarrayMembership == 0
         assert create_subarray_1_proxy.State() == DevState.OFF
 
@@ -137,14 +142,15 @@ class TestCbfSubarray:
         time.sleep(3)
 
         # receptor list should be empty right after initialization
-        assert create_subarray_1_proxy.receptors == ()
+        assert len(create_subarray_1_proxy.receptors) == 0
         assert all([proxy.subarrayMembership == 0 for proxy in create_vcc_proxies])
         assert create_subarray_1_proxy.State() == DevState.OFF
 
         # add some receptors to subarray 1
         create_subarray_1_proxy.AddReceptors([1, 3])
         time.sleep(1)
-        assert create_subarray_1_proxy.receptors == (1, 3)
+        assert create_subarray_1_proxy.receptors[0] == 1
+        assert create_subarray_1_proxy.receptors[1] == 3
         assert all([create_vcc_proxies[receptor_to_vcc[i] - 1].subarrayMembership == 1 for i in [1, 3]])
         assert create_subarray_1_proxy.State() == DevState.ON
 
@@ -157,7 +163,8 @@ class TestCbfSubarray:
         # try removing a receptor not assigned to subarray 1
         # doing this doesn't actually throw an error
         create_subarray_1_proxy.RemoveReceptors([2])
-        assert create_subarray_1_proxy.receptors == (1, 3)
+        assert create_subarray_1_proxy.receptors[0] == 1
+        assert create_subarray_1_proxy.receptors[1] == 3
 
     # Since there's only a single subarray, this test is currently broken.
     """
@@ -241,21 +248,23 @@ class TestCbfSubarray:
         time.sleep(3)
 
         # receptor list should be empty right after initialization
-        assert create_subarray_1_proxy.receptors == ()
+        assert len(create_subarray_1_proxy.receptors) == 0
         assert all([proxy.subarrayMembership == 0 for proxy in create_vcc_proxies])
         assert create_subarray_1_proxy.State() == DevState.OFF
 
         # add some receptors
         create_subarray_1_proxy.AddReceptors([1, 3, 4])
         time.sleep(1)
-        assert create_subarray_1_proxy.receptors == (1, 3, 4)
+        assert create_subarray_1_proxy.receptors[0] == 1
+        assert create_subarray_1_proxy.receptors[1] == 3
+        assert create_subarray_1_proxy.receptors[2] == 4
         assert all([create_vcc_proxies[receptor_to_vcc[i] - 1].subarrayMembership == 1 for i in [1, 3, 4]])
         assert create_subarray_1_proxy.State() == DevState.ON
 
         # remove all receptors
         create_subarray_1_proxy.RemoveAllReceptors()
         time.sleep(1)
-        assert create_subarray_1_proxy.receptors == ()
+        assert len(create_subarray_1_proxy.receptors) == 0
         assert all([create_vcc_proxies[receptor_to_vcc[i] - 1].subarrayMembership == 0 for i in [1, 3, 4]])
         assert create_subarray_1_proxy.State() == DevState.OFF
 
@@ -310,9 +319,11 @@ class TestCbfSubarray:
 
         # add receptors
         create_subarray_1_proxy.RemoveAllReceptors()
-        create_subarray_1_proxy.AddReceptors([1, 4])
+        create_subarray_1_proxy.AddReceptors([1, 3, 4])
         time.sleep(1)
-        assert create_subarray_1_proxy.receptors == (1, 4)
+        assert create_subarray_1_proxy.receptors[0] == 1
+        assert create_subarray_1_proxy.receptors[1] == 3
+        assert create_subarray_1_proxy.receptors[2] == 4
 
         # configure scan
         f = open(file_path + "/test_json/test_ConfigureScan_basic.json")
@@ -336,13 +347,15 @@ class TestCbfSubarray:
         # check the rest of the configured attributes of VCCs
         # first for VCC belonging to receptor 10...
         assert create_vcc_proxies[receptor_to_vcc[4] - 1].subarrayMembership == 1
-        assert create_vcc_proxies[receptor_to_vcc[4] - 1].band5Tuning == (5.85, 7.25)
+        assert create_vcc_proxies[receptor_to_vcc[4] - 1].band5Tuning[0] == 5.85
+        assert create_vcc_proxies[receptor_to_vcc[4] - 1].band5Tuning[1] == 7.25
         assert create_vcc_proxies[receptor_to_vcc[4] - 1].frequencyBandOffsetStream1 == 0
         assert create_vcc_proxies[receptor_to_vcc[4] - 1].frequencyBandOffsetStream2 == 0
         assert create_vcc_proxies[receptor_to_vcc[4] - 1].rfiFlaggingMask == "{}"
         # then for VCC belonging to receptor 1...
         assert create_vcc_proxies[receptor_to_vcc[1] - 1].subarrayMembership == 1
-        assert create_vcc_proxies[receptor_to_vcc[1] - 1].band5Tuning == (5.85, 7.25)
+        assert create_vcc_proxies[receptor_to_vcc[1] - 1].band5Tuning[0] == 5.85
+        assert create_vcc_proxies[receptor_to_vcc[1] - 1].band5Tuning[1] == 7.25
         assert create_vcc_proxies[receptor_to_vcc[1] - 1].frequencyBandOffsetStream1 == 0
         assert create_vcc_proxies[receptor_to_vcc[1] - 1].frequencyBandOffsetStream2 == 0
         assert create_vcc_proxies[receptor_to_vcc[1] - 1].rfiFlaggingMask == "{}"
@@ -410,137 +423,108 @@ class TestCbfSubarray:
 
         # check configured attributes of FSP subarrays
         # first for FSP 1...
-        assert create_fsp_1_subarray_1_proxy.receptors == (4,)
+        assert create_fsp_1_subarray_1_proxy.receptors == 4
         assert create_fsp_1_subarray_1_proxy.frequencyBand == 4
-        assert create_fsp_1_subarray_1_proxy.band5Tuning == (5.85, 7.25)
+        assert create_fsp_1_subarray_1_proxy.band5Tuning[0] == 5.85
+        assert create_fsp_1_subarray_1_proxy.band5Tuning[1] == 7.25
         assert create_fsp_1_subarray_1_proxy.frequencyBandOffsetStream1 == 0
         assert create_fsp_1_subarray_1_proxy.frequencyBandOffsetStream2 == 0
         assert create_fsp_1_subarray_1_proxy.frequencySliceID == 1
         assert create_fsp_1_subarray_1_proxy.corrBandwidth == 1
         assert create_fsp_1_subarray_1_proxy.zoomWindowTuning == 4700000
         assert create_fsp_1_subarray_1_proxy.integrationTime == 140
-        assert create_fsp_1_subarray_1_proxy.channelAveragingMap == (
-            (1, 8),
-            (745, 0),
-            (1489, 0),
-            (2233, 0),
-            (2977, 0),
-            (3721, 0),
-            (4465, 0),
-            (5209, 0),
-            (5953, 0),
-            (6697, 0),
-            (7441, 0),
-            (8185, 0),
-            (8929, 0),
-            (9673, 0),
-            (10417, 0),
-            (11161, 0),
-            (11905, 0),
-            (12649, 0),
-            (13393, 0),
-            (14137, 0)
-        )
+        assert create_fsp_1_subarray_1_proxy.channelAveragingMap[0][0] == 1
+        assert create_fsp_1_subarray_1_proxy.channelAveragingMap[0][1] == 8
+        assert create_fsp_1_subarray_1_proxy.channelAveragingMap[1][0] == 745
+        assert create_fsp_1_subarray_1_proxy.channelAveragingMap[1][1] == 0
+        assert create_fsp_1_subarray_1_proxy.channelAveragingMap[2][0] == 1489
+        assert create_fsp_1_subarray_1_proxy.channelAveragingMap[2][1] == 0
+        assert create_fsp_1_subarray_1_proxy.channelAveragingMap[3][0] == 2233
+        assert create_fsp_1_subarray_1_proxy.channelAveragingMap[3][1] == 0
+        assert create_fsp_1_subarray_1_proxy.channelAveragingMap[4][0] == 2977
+        assert create_fsp_1_subarray_1_proxy.channelAveragingMap[4][1] == 0
+        assert create_fsp_1_subarray_1_proxy.channelAveragingMap[5][0] == 3721
+        assert create_fsp_1_subarray_1_proxy.channelAveragingMap[5][1] == 0
+        assert create_fsp_1_subarray_1_proxy.channelAveragingMap[6][0] == 4465
+        assert create_fsp_1_subarray_1_proxy.channelAveragingMap[6][1] == 0
+        assert create_fsp_1_subarray_1_proxy.channelAveragingMap[7][0] == 5209
+        assert create_fsp_1_subarray_1_proxy.channelAveragingMap[7][1] == 0
+        assert create_fsp_1_subarray_1_proxy.channelAveragingMap[8][0] == 5953
+        assert create_fsp_1_subarray_1_proxy.channelAveragingMap[8][1] == 0
+        assert create_fsp_1_subarray_1_proxy.channelAveragingMap[9][0] == 6697
+        assert create_fsp_1_subarray_1_proxy.channelAveragingMap[9][1] == 0
+        assert create_fsp_1_subarray_1_proxy.channelAveragingMap[10][0] == 7441
+        assert create_fsp_1_subarray_1_proxy.channelAveragingMap[10][1] == 0
+        assert create_fsp_1_subarray_1_proxy.channelAveragingMap[11][0] == 8185
+        assert create_fsp_1_subarray_1_proxy.channelAveragingMap[11][1] == 0
+        assert create_fsp_1_subarray_1_proxy.channelAveragingMap[12][0] == 8929
+        assert create_fsp_1_subarray_1_proxy.channelAveragingMap[12][1] == 0
+        assert create_fsp_1_subarray_1_proxy.channelAveragingMap[13][0] == 9673
+        assert create_fsp_1_subarray_1_proxy.channelAveragingMap[13][1] == 0
+        assert create_fsp_1_subarray_1_proxy.channelAveragingMap[14][0] == 10417
+        assert create_fsp_1_subarray_1_proxy.channelAveragingMap[14][1] == 0
+        assert create_fsp_1_subarray_1_proxy.channelAveragingMap[15][0] == 11161
+        assert create_fsp_1_subarray_1_proxy.channelAveragingMap[15][1] == 0
+        assert create_fsp_1_subarray_1_proxy.channelAveragingMap[16][0] == 11905
+        assert create_fsp_1_subarray_1_proxy.channelAveragingMap[16][1] == 0
+        assert create_fsp_1_subarray_1_proxy.channelAveragingMap[17][0] == 12649
+        assert create_fsp_1_subarray_1_proxy.channelAveragingMap[17][1] == 0
+        assert create_fsp_1_subarray_1_proxy.channelAveragingMap[18][0] == 13393
+        assert create_fsp_1_subarray_1_proxy.channelAveragingMap[18][1] == 0
+        assert create_fsp_1_subarray_1_proxy.channelAveragingMap[19][0] == 14137
+        assert create_fsp_1_subarray_1_proxy.channelAveragingMap[19][1] == 0
+
         # then for FSP 2...
-        assert create_fsp_2_subarray_1_proxy.receptors == (1, 4)
+        assert create_fsp_2_subarray_1_proxy.receptors[0] == 1
+        assert create_fsp_2_subarray_1_proxy.receptors[2] == 4
         assert create_fsp_2_subarray_1_proxy.frequencyBand == 4
-        assert create_fsp_2_subarray_1_proxy.band5Tuning == (5.85, 7.25)
+        assert create_fsp_2_subarray_1_proxy.band5Tuning[0] == 5.85
+        assert create_fsp_2_subarray_1_proxy.band5Tuning[1] == 7.25
         assert create_fsp_2_subarray_1_proxy.frequencyBandOffsetStream1 == 0
         assert create_fsp_2_subarray_1_proxy.frequencyBandOffsetStream2 == 0
         assert create_fsp_2_subarray_1_proxy.frequencySliceID == 20
         assert create_fsp_2_subarray_1_proxy.corrBandwidth == 0
         assert create_fsp_2_subarray_1_proxy.integrationTime == 1400
-        assert create_fsp_2_subarray_1_proxy.channelAveragingMap == (
-            (1, 0),
-            (745, 0),
-            (1489, 0),
-            (2233, 0),
-            (2977, 0),
-            (3721, 0),
-            (4465, 0),
-            (5209, 0),
-            (5953, 0),
-            (6697, 0),
-            (7441, 0),
-            (8185, 0),
-            (8929, 0),
-            (9673, 0),
-            (10417, 0),
-            (11161, 0),
-            (11905, 0),
-            (12649, 0),
-            (13393, 0),
-            (14137, 0)
-        )
-
-    def test_Scan(
-            self,
-            create_cbf_master_proxy,
-            create_subarray_1_proxy,
-            create_vcc_proxies,
-            create_fsp_1_proxy,
-            create_fsp_2_proxy,
-            create_fsp_1_subarray_1_proxy,
-            create_fsp_2_subarray_1_proxy,
-            create_tm_telstate_proxy
-    ):
-        """
-        Test the Scan command
-        """
-        for proxy in create_vcc_proxies:
-            proxy.Init()
-        create_fsp_1_subarray_1_proxy.Init()
-        create_fsp_2_subarray_1_proxy.Init()
-        create_fsp_1_proxy.Init()
-        create_fsp_2_proxy.Init()
-        create_subarray_1_proxy.set_timeout_millis(60000)  # since the command takes a while
-        create_subarray_1_proxy.Init()
-        time.sleep(3)
-        create_cbf_master_proxy.set_timeout_millis(60000)
-        create_cbf_master_proxy.Init()
-        time.sleep(60)  # takes pretty long for CBF Master to initialize
-        create_tm_telstate_proxy.Init()
-        time.sleep(1)
-
-        receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
-                               create_cbf_master_proxy.receptorToVcc)
-
-        create_cbf_master_proxy.On()
-        time.sleep(3)
-
-        assert create_subarray_1_proxy.obsState.value == ObsState.IDLE.value
-        assert create_tm_telstate_proxy.visDestinationAddress == "{}"
-        assert create_tm_telstate_proxy.receivedOutputLinks == False
-
-        # add receptors
-        create_subarray_1_proxy.RemoveAllReceptors()
-        create_subarray_1_proxy.AddReceptors([1, 4])
-        time.sleep(1)
-        assert create_subarray_1_proxy.receptors == (1, 4)
-
-        # configure scan
-        f = open(file_path + "/test_json/test_ConfigureScan_basic.json")
-        create_subarray_1_proxy.ConfigureScan(f.read().replace("\n", ""))
-        f.close()
-        time.sleep(10)
-
-        # check initial states
-        assert create_subarray_1_proxy.obsState.value == ObsState.READY.value
-        assert create_vcc_proxies[receptor_to_vcc[1] - 1].obsState.value == ObsState.READY.value
-        assert create_vcc_proxies[receptor_to_vcc[4] - 1].obsState.value == ObsState.READY.value
-        assert create_fsp_1_subarray_1_proxy.obsState.value == ObsState.READY.value
-        assert create_fsp_2_subarray_1_proxy.obsState.value == ObsState.READY.value
-
-        # send the Scan command
-        create_subarray_1_proxy.Scan("")
-        time.sleep(1)
-
-        # check states
-        assert create_subarray_1_proxy.obsState.value == ObsState.SCANNING
-        assert create_vcc_proxies[receptor_to_vcc[1] - 1].obsState.value == ObsState.SCANNING.value
-        assert create_vcc_proxies[receptor_to_vcc[4] - 1].obsState.value == ObsState.SCANNING.value
-        assert create_fsp_1_subarray_1_proxy.obsState.value == ObsState.SCANNING.value
-        assert create_fsp_2_subarray_1_proxy.obsState.value == ObsState.SCANNING.value
+        assert create_fsp_2_subarray_1_proxy.channelAveragingMap[0][0] == 1
+        assert create_fsp_2_subarray_1_proxy.channelAveragingMap[0][1] == 0
+        assert create_fsp_2_subarray_1_proxy.channelAveragingMap[1][0] == 745
+        assert create_fsp_2_subarray_1_proxy.channelAveragingMap[1][1] == 0
+        assert create_fsp_2_subarray_1_proxy.channelAveragingMap[2][0] == 1489
+        assert create_fsp_2_subarray_1_proxy.channelAveragingMap[2][1] == 0
+        assert create_fsp_2_subarray_1_proxy.channelAveragingMap[3][0] == 2233
+        assert create_fsp_2_subarray_1_proxy.channelAveragingMap[3][1] == 0
+        assert create_fsp_2_subarray_1_proxy.channelAveragingMap[4][0] == 2977
+        assert create_fsp_2_subarray_1_proxy.channelAveragingMap[4][1] == 0
+        assert create_fsp_2_subarray_1_proxy.channelAveragingMap[5][0] == 3721
+        assert create_fsp_2_subarray_1_proxy.channelAveragingMap[5][1] == 0
+        assert create_fsp_2_subarray_1_proxy.channelAveragingMap[6][0] == 4465
+        assert create_fsp_2_subarray_1_proxy.channelAveragingMap[6][1] == 0
+        assert create_fsp_2_subarray_1_proxy.channelAveragingMap[7][0] == 5209
+        assert create_fsp_2_subarray_1_proxy.channelAveragingMap[7][1] == 0
+        assert create_fsp_2_subarray_1_proxy.channelAveragingMap[8][0] == 5953
+        assert create_fsp_2_subarray_1_proxy.channelAveragingMap[8][1] == 0
+        assert create_fsp_2_subarray_1_proxy.channelAveragingMap[9][0] == 6697
+        assert create_fsp_2_subarray_1_proxy.channelAveragingMap[9][1] == 0
+        assert create_fsp_2_subarray_1_proxy.channelAveragingMap[10][0] == 7441
+        assert create_fsp_2_subarray_1_proxy.channelAveragingMap[10][1] == 0
+        assert create_fsp_2_subarray_1_proxy.channelAveragingMap[11][0] == 8185
+        assert create_fsp_2_subarray_1_proxy.channelAveragingMap[11][1] == 0
+        assert create_fsp_2_subarray_1_proxy.channelAveragingMap[12][0] == 8929
+        assert create_fsp_2_subarray_1_proxy.channelAveragingMap[12][1] == 0
+        assert create_fsp_2_subarray_1_proxy.channelAveragingMap[13][0] == 9673
+        assert create_fsp_2_subarray_1_proxy.channelAveragingMap[13][1] == 0
+        assert create_fsp_2_subarray_1_proxy.channelAveragingMap[14][0] == 10417
+        assert create_fsp_2_subarray_1_proxy.channelAveragingMap[14][1] == 0
+        assert create_fsp_2_subarray_1_proxy.channelAveragingMap[15][0] == 11161
+        assert create_fsp_2_subarray_1_proxy.channelAveragingMap[15][1] == 0
+        assert create_fsp_2_subarray_1_proxy.channelAveragingMap[16][0] == 11905
+        assert create_fsp_2_subarray_1_proxy.channelAveragingMap[16][1] == 0
+        assert create_fsp_2_subarray_1_proxy.channelAveragingMap[17][0] == 12649
+        assert create_fsp_2_subarray_1_proxy.channelAveragingMap[17][1] == 0
+        assert create_fsp_2_subarray_1_proxy.channelAveragingMap[18][0] == 13393
+        assert create_fsp_2_subarray_1_proxy.channelAveragingMap[18][1] == 0
+        assert create_fsp_2_subarray_1_proxy.channelAveragingMap[19][0] == 14137
+        assert create_fsp_2_subarray_1_proxy.channelAveragingMap[19][1] == 0
 
     def test_EndScan(
             self,
@@ -583,16 +567,21 @@ class TestCbfSubarray:
 
         # add receptors
         create_subarray_1_proxy.RemoveAllReceptors()
-        create_subarray_1_proxy.AddReceptors([1, 4])
+        create_subarray_1_proxy.AddReceptors([1, 3, 4])
         time.sleep(1)
-        assert create_subarray_1_proxy.receptors == (1, 4)
+        assert create_subarray_1_proxy.receptors[0] == 1
+        assert create_subarray_1_proxy.receptors[1] == 3
+        assert create_subarray_1_proxy.receptors[2] == 4
 
         # configure scan
         f = open(file_path + "/test_json/test_ConfigureScan_basic.json")
         create_subarray_1_proxy.ConfigureScan(f.read().replace("\n", ""))
         f.close()
-        time.sleep(10)
+        time.sleep(15)
 
+        # check configured attributes of CBF subarray
+        assert create_subarray_1_proxy.scanID == 1
+        assert create_subarray_1_proxy.frequencyBand == 4
         assert create_subarray_1_proxy.obsState.value == ObsState.READY.value
 
         # send the Scan command
@@ -656,9 +645,11 @@ class TestCbfSubarray:
 
         # add receptors
         create_subarray_1_proxy.RemoveAllReceptors()
-        create_subarray_1_proxy.AddReceptors([1, 4])
+        create_subarray_1_proxy.AddReceptors([1, 3, 4])
         time.sleep(1)
-        assert create_subarray_1_proxy.receptors == (1, 4)
+        assert create_subarray_1_proxy.receptors[0] == 1
+        assert create_subarray_1_proxy.receptors[1] == 3
+        assert create_subarray_1_proxy.receptors[2] == 4
 
         # configure scan
         f = open(file_path + "/test_json/test_ConfigureScan_basic.json")
@@ -678,10 +669,33 @@ class TestCbfSubarray:
         # update delay model
         create_tm_telstate_proxy.delayModel = json.dumps(delay_model)
         time.sleep(1)
-        assert create_vcc_proxies[receptor_to_vcc[1] - 1].delayModel[0] == (1.1, 1.2, 1.3, 1.4, 1.5, 1.6)
-        assert create_vcc_proxies[receptor_to_vcc[1] - 1].delayModel[1] == (1.7, 1.8, 1.9, 2.0, 2.1, 2.2)
-        assert create_vcc_proxies[receptor_to_vcc[4] - 1].delayModel[0] == (2.3, 2.4, 2.5, 2.6, 2.7, 2.8)
-        assert create_vcc_proxies[receptor_to_vcc[4] - 1].delayModel[1] == (2.9, 3.0, 3.1, 3.2, 3.3, 3.4)
+        assert create_vcc_proxies[receptor_to_vcc[1] - 1].delayModel[0][0] == 1.1
+        assert create_vcc_proxies[receptor_to_vcc[1] - 1].delayModel[0][1] == 1.2
+        assert create_vcc_proxies[receptor_to_vcc[1] - 1].delayModel[0][2] == 1.3
+        assert create_vcc_proxies[receptor_to_vcc[1] - 1].delayModel[0][3] == 1.4
+        assert create_vcc_proxies[receptor_to_vcc[1] - 1].delayModel[0][4] == 1.5
+        assert create_vcc_proxies[receptor_to_vcc[1] - 1].delayModel[0][5] == 1.6
+
+        assert create_vcc_proxies[receptor_to_vcc[1] - 1].delayModel[1][0] == 1.7
+        assert create_vcc_proxies[receptor_to_vcc[1] - 1].delayModel[1][1] == 1.8
+        assert create_vcc_proxies[receptor_to_vcc[1] - 1].delayModel[1][2] == 1.9
+        assert create_vcc_proxies[receptor_to_vcc[1] - 1].delayModel[1][3] == 2.0
+        assert create_vcc_proxies[receptor_to_vcc[1] - 1].delayModel[1][4] == 2.1
+        assert create_vcc_proxies[receptor_to_vcc[1] - 1].delayModel[1][5] == 2.2
+
+        assert create_vcc_proxies[receptor_to_vcc[4] - 1].delayModel[0][0] == 2.3
+        assert create_vcc_proxies[receptor_to_vcc[4] - 1].delayModel[0][1] == 2.4
+        assert create_vcc_proxies[receptor_to_vcc[4] - 1].delayModel[0][2] == 2.5
+        assert create_vcc_proxies[receptor_to_vcc[4] - 1].delayModel[0][3] == 2.6
+        assert create_vcc_proxies[receptor_to_vcc[4] - 1].delayModel[0][4] == 2.7
+        assert create_vcc_proxies[receptor_to_vcc[4] - 1].delayModel[0][5] == 2.8
+
+        assert create_vcc_proxies[receptor_to_vcc[4] - 1].delayModel[1][0] == 2.9
+        assert create_vcc_proxies[receptor_to_vcc[4] - 1].delayModel[1][1] == 3.0
+        assert create_vcc_proxies[receptor_to_vcc[4] - 1].delayModel[1][2] == 3.1
+        assert create_vcc_proxies[receptor_to_vcc[4] - 1].delayModel[1][3] == 3.2
+        assert create_vcc_proxies[receptor_to_vcc[4] - 1].delayModel[1][4] == 3.3
+        assert create_vcc_proxies[receptor_to_vcc[4] - 1].delayModel[1][5] == 3.4
 
         # transition to obsState=SCANNING
         create_subarray_1_proxy.Scan("")
@@ -689,12 +703,137 @@ class TestCbfSubarray:
         assert create_subarray_1_proxy.obsState.value == ObsState.SCANNING.value
 
         time.sleep(10)
-        assert create_vcc_proxies[receptor_to_vcc[1] - 1].delayModel[0] == (2.1, 2.2, 2.3, 2.4, 2.5, 2.6)
-        assert create_vcc_proxies[receptor_to_vcc[1] - 1].delayModel[1] == (2.7, 2.8, 2.9, 3.0, 3.1, 3.2)
-        assert create_vcc_proxies[receptor_to_vcc[4] - 1].delayModel[0] == (3.3, 3.4, 3.5, 3.6, 3.7, 3.8)
-        assert create_vcc_proxies[receptor_to_vcc[4] - 1].delayModel[1] == (3.9, 4.0, 4.1, 4.2, 4.3, 4.4)
+        assert create_vcc_proxies[receptor_to_vcc[1] - 1].delayModel[0][0] == 2.1
+        assert create_vcc_proxies[receptor_to_vcc[1] - 1].delayModel[0][1] == 2.2
+        assert create_vcc_proxies[receptor_to_vcc[1] - 1].delayModel[0][2] == 2.3
+        assert create_vcc_proxies[receptor_to_vcc[1] - 1].delayModel[0][3] == 2.4
+        assert create_vcc_proxies[receptor_to_vcc[1] - 1].delayModel[0][4] == 2.5
+        assert create_vcc_proxies[receptor_to_vcc[1] - 1].delayModel[0][5] == 2.6
+
+        assert create_vcc_proxies[receptor_to_vcc[1] - 1].delayModel[1][0] == 2.7
+        assert create_vcc_proxies[receptor_to_vcc[1] - 1].delayModel[1][1] == 2.8
+        assert create_vcc_proxies[receptor_to_vcc[1] - 1].delayModel[1][2] == 2.9
+        assert create_vcc_proxies[receptor_to_vcc[1] - 1].delayModel[1][3] == 3.0
+        assert create_vcc_proxies[receptor_to_vcc[1] - 1].delayModel[1][4] == 3.1
+        assert create_vcc_proxies[receptor_to_vcc[1] - 1].delayModel[1][5] == 3.2
+
+        assert create_vcc_proxies[receptor_to_vcc[4] - 1].delayModel[0][0] == 3.3
+        assert create_vcc_proxies[receptor_to_vcc[4] - 1].delayModel[0][1] == 3.4
+        assert create_vcc_proxies[receptor_to_vcc[4] - 1].delayModel[0][2] == 3.5
+        assert create_vcc_proxies[receptor_to_vcc[4] - 1].delayModel[0][3] == 3.6
+        assert create_vcc_proxies[receptor_to_vcc[4] - 1].delayModel[0][4] == 3.7
+        assert create_vcc_proxies[receptor_to_vcc[4] - 1].delayModel[0][5] == 3.8
+
+        assert create_vcc_proxies[receptor_to_vcc[4] - 1].delayModel[1][0] == 3.9
+        assert create_vcc_proxies[receptor_to_vcc[4] - 1].delayModel[1][1] == 4.0
+        assert create_vcc_proxies[receptor_to_vcc[4] - 1].delayModel[1][2] == 4.1
+        assert create_vcc_proxies[receptor_to_vcc[4] - 1].delayModel[1][3] == 4.2
+        assert create_vcc_proxies[receptor_to_vcc[4] - 1].delayModel[1][4] == 4.3
+        assert create_vcc_proxies[receptor_to_vcc[4] - 1].delayModel[1][5] == 4.4
+
         time.sleep(10)
-        assert create_vcc_proxies[receptor_to_vcc[1] - 1].delayModel[0] == (0.1, 0.2, 0.3, 0.4, 0.5, 0.6)
-        assert create_vcc_proxies[receptor_to_vcc[1] - 1].delayModel[1] == (0.7, 0.8, 0.9, 1.0, 1.1, 1.2)
-        assert create_vcc_proxies[receptor_to_vcc[4] - 1].delayModel[0] == (1.3, 1.4, 1.5, 1.6, 1.7, 1.8)
-        assert create_vcc_proxies[receptor_to_vcc[4] - 1].delayModel[1] == (1.9, 2.0, 2.1, 2.2, 2.3, 2.4)
+        assert create_vcc_proxies[receptor_to_vcc[1] - 1].delayModel[0][0] == 0.1
+        assert create_vcc_proxies[receptor_to_vcc[1] - 1].delayModel[0][1] == 0.2
+        assert create_vcc_proxies[receptor_to_vcc[1] - 1].delayModel[0][2] == 0.3
+        assert create_vcc_proxies[receptor_to_vcc[1] - 1].delayModel[0][3] == 0.4
+        assert create_vcc_proxies[receptor_to_vcc[1] - 1].delayModel[0][4] == 0.5
+        assert create_vcc_proxies[receptor_to_vcc[1] - 1].delayModel[0][5] == 0.6
+
+        assert create_vcc_proxies[receptor_to_vcc[1] - 1].delayModel[1][0] == 0.7
+        assert create_vcc_proxies[receptor_to_vcc[1] - 1].delayModel[1][1] == 0.8
+        assert create_vcc_proxies[receptor_to_vcc[1] - 1].delayModel[1][2] == 0.9
+        assert create_vcc_proxies[receptor_to_vcc[1] - 1].delayModel[1][3] == 1.0
+        assert create_vcc_proxies[receptor_to_vcc[1] - 1].delayModel[1][4] == 1.1
+        assert create_vcc_proxies[receptor_to_vcc[1] - 1].delayModel[1][5] == 1.2
+
+        assert create_vcc_proxies[receptor_to_vcc[4] - 1].delayModel[0][0] == 1.3
+        assert create_vcc_proxies[receptor_to_vcc[4] - 1].delayModel[0][1] == 1.4
+        assert create_vcc_proxies[receptor_to_vcc[4] - 1].delayModel[0][2] == 1.5
+        assert create_vcc_proxies[receptor_to_vcc[4] - 1].delayModel[0][3] == 1.6
+        assert create_vcc_proxies[receptor_to_vcc[4] - 1].delayModel[0][4] == 1.7
+        assert create_vcc_proxies[receptor_to_vcc[4] - 1].delayModel[0][5] == 1.8
+
+        assert create_vcc_proxies[receptor_to_vcc[4] - 1].delayModel[1][0] == 1.9
+        assert create_vcc_proxies[receptor_to_vcc[4] - 1].delayModel[1][1] == 2.0
+        assert create_vcc_proxies[receptor_to_vcc[4] - 1].delayModel[1][2] == 2.1
+        assert create_vcc_proxies[receptor_to_vcc[4] - 1].delayModel[1][3] == 2.2
+        assert create_vcc_proxies[receptor_to_vcc[4] - 1].delayModel[1][4] == 2.3
+        assert create_vcc_proxies[receptor_to_vcc[4] - 1].delayModel[1][5] == 2.4
+
+        create_subarray_1_proxy.EndScan()
+        time.sleep(1)
+
+    def test_Scan(
+            self,
+            create_cbf_master_proxy,
+            create_subarray_1_proxy,
+            create_vcc_proxies,
+            create_fsp_1_proxy,
+            create_fsp_2_proxy,
+            create_fsp_1_subarray_1_proxy,
+            create_fsp_2_subarray_1_proxy,
+            create_tm_telstate_proxy
+    ):
+        """
+        Test the Scan command
+        """
+        for proxy in create_vcc_proxies:
+            proxy.Init()
+        create_fsp_1_subarray_1_proxy.Init()
+        create_fsp_2_subarray_1_proxy.Init()
+        create_fsp_1_proxy.Init()
+        create_fsp_2_proxy.Init()
+        create_subarray_1_proxy.set_timeout_millis(60000)  # since the command takes a while
+        create_subarray_1_proxy.Init()
+        time.sleep(3)
+        create_cbf_master_proxy.set_timeout_millis(60000)
+        create_cbf_master_proxy.Init()
+        time.sleep(60)  # takes pretty long for CBF Master to initialize
+        create_tm_telstate_proxy.Init()
+        time.sleep(1)
+
+        receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
+                               create_cbf_master_proxy.receptorToVcc)
+
+        create_cbf_master_proxy.On()
+        time.sleep(4)
+
+        assert create_subarray_1_proxy.obsState.value == ObsState.IDLE.value
+       # assert create_tm_telstate_proxy.visDestinationAddress == "{}"
+      #  assert create_tm_telstate_proxy.receivedOutputLinks == False
+
+        # add receptors
+        create_subarray_1_proxy.RemoveAllReceptors()
+        create_subarray_1_proxy.AddReceptors([1, 3, 4])
+        time.sleep(1)
+        assert create_subarray_1_proxy.receptors[0] == 1
+        assert create_subarray_1_proxy.receptors[1] == 3
+        assert create_subarray_1_proxy.receptors[2] == 4
+
+        # configure scan
+        f = open(file_path + "/test_json/test_ConfigureScan_basic.json")
+        create_subarray_1_proxy.ConfigureScan(f.read().replace("\n", ""))
+        f.close()
+        time.sleep(15)
+
+        # check initial states
+        assert create_subarray_1_proxy.obsState.value == ObsState.READY.value
+        assert create_vcc_proxies[receptor_to_vcc[1] - 1].obsState.value == ObsState.READY.value
+        assert create_vcc_proxies[receptor_to_vcc[4] - 1].obsState.value == ObsState.READY.value
+        assert create_fsp_1_subarray_1_proxy.obsState.value == ObsState.READY.value
+        assert create_fsp_2_subarray_1_proxy.obsState.value == ObsState.READY.value
+
+        # send the Scan command
+        create_subarray_1_proxy.Scan("")
+        time.sleep(1)
+
+        # check states
+        assert create_subarray_1_proxy.obsState.value == ObsState.SCANNING
+        assert create_vcc_proxies[receptor_to_vcc[1] - 1].obsState.value == ObsState.SCANNING.value
+        assert create_vcc_proxies[receptor_to_vcc[4] - 1].obsState.value == ObsState.SCANNING.value
+        assert create_fsp_1_subarray_1_proxy.obsState.value == ObsState.SCANNING.value
+        assert create_fsp_2_subarray_1_proxy.obsState.value == ObsState.SCANNING.value
+        create_subarray_1_proxy.EndScan()
+        time.sleep(1)
+
+

@@ -19,11 +19,11 @@
             "tdcDestinationAddress": [
                 {
                     "receptorID": 4,
-                    "tdcDestinationAddress": ["foo", "bar", "8080"]
+                    "tdcDestinationAddress": ["192.168.0.1", "00:00:00:00:00:00", "8080"]
                 },
                 {
                     "receptorID": 1,
-                    "tdcDestinationAddress": ["fizz", "buzz", "80"]
+                    "tdcDestinationAddress": ["192.168.0.1", "00:00:00:00:00:00", "80"]
                 }
             ]
         },
