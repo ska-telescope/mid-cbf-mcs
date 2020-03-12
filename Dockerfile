@@ -6,5 +6,6 @@ RUN ipython profile create
 
 #install lmc-base-classes
 USER root
+RUN DEBIAN_FRONTEND=noninteractive pip3 install https://nexus.engageska-portugal.pt/repository/pypi/packages/ska-logging/0.2.1/ska_logging-0.2.1.tar.gz
 RUN DEBIAN_FRONTEND=noninteractive pip3 install https://nexus.engageska-portugal.pt/repository/pypi/packages/lmcbaseclasses/0.4.0+5bdedbed/lmcbaseclasses-0.4.0+5bdedbed.tar.gz
 CMD ["/venv/bin/python", "/app/tangods/CbfMaster/CbfMaster/CbfMaster.py", "master"]
