@@ -272,7 +272,7 @@ class Vcc(SKACapability):
         self._proxy_sw_1.SetState(tango.DevState.OFF)
         self._proxy_sw_2.SetState(tango.DevState.OFF)
 
-        self.GoToIdle()
+        self.goToIdle()
         self.set_state(tango.DevState.OFF)
         # PROTECTED REGION END #    //  Vcc.delete_device
 
@@ -462,7 +462,7 @@ class Vcc(SKACapability):
         self._proxy_sw_2.SetState(tango.DevState.OFF)
 
         # This command can only be called when obsState=IDLE
-        # self.GoToIdle()
+        # self.goToIdle()
         self.set_state(tango.DevState.OFF)
         # PROTECTED REGION END #    //  Vcc.Off
 
@@ -890,18 +890,18 @@ class Vcc(SKACapability):
         # nothing else is supposed to happen
         # PROTECTED REGION END #    //  Vcc.Scan
 
-    def is_GoToIdle_allowed(self):
+    def is_goToIdle_allowed(self):
         if self.dev_state() == tango.DevState.ON and\
                 self._obs_state in [ObsState.IDLE.value, ObsState.READY.value]:
             return True
         return False
 
     @command()
-    def GoToIdle(self):
-        # PROTECTED REGION ID(Vcc.GoToIdle) ENABLED START #
+    def goToIdle(self):
+        # PROTECTED REGION ID(Vcc.goToIdle) ENABLED START #
         # transition to obsState=IDLE
         self._obs_state = ObsState.IDLE.value
-        # PROTECTED REGION END #    //  Vcc.GoToIdle
+        # PROTECTED REGION END #    //  Vcc.goToIdle
 
 # ----------
 # Run server
