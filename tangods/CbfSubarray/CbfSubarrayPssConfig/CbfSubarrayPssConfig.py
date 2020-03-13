@@ -13,11 +13,8 @@ Herzberg Astronomy and Astrophysics, National Research Council of Canada
 Copyright (c) 2020 National Research Council of Canada
 """
 
-"""
-CbfSubarrayPssConfig Tango device prototype
-
-CbfSubarrayPssConfig TANGO device class for the prototype
-"""
+# CbfSubarrayPssConfig Tango device prototype
+# CbfSubarrayPssConfig TANGO device class for the prototype
 
 # PyTango imports
 import PyTango
