@@ -229,7 +229,7 @@ class FspSubarray(SKASubarray):
 
     def delete_device(self):
         # PROTECTED REGION ID(FspSubarray.delete_device) ENABLED START #
-        self.goToIdle()
+        self.GoToIdle()
         self.RemoveAllReceptors()
         self.set_state(tango.DevState.OFF)
         # PROTECTED REGION END #    //  FspSubarray.delete_device
@@ -330,7 +330,7 @@ class FspSubarray(SKASubarray):
     def Off(self):
         # PROTECTED REGION ID(FspSubarray.Off) ENABLED START #
         # This command can only be called when obsState=IDLE
-        # self.goToIdle()
+        # self.GoToIdle()
         self.RemoveAllReceptors()
         self.set_state(tango.DevState.OFF)
         # PROTECTED REGION END #    //  FspSubarray.Off
@@ -883,19 +883,19 @@ class FspSubarray(SKASubarray):
         # nothing else is supposed to happen
         # PROTECTED REGION END #    //  FspSubarray.Scan
 
-    def is_goToIdle_allowed(self):
+    def is_GoToIdle_allowed(self):
         if self.dev_state() == tango.DevState.ON and\
                 self._obs_state in [ObsState.IDLE.value, ObsState.READY.value]:
             return True
         return False
 
     @command()
-    def goToIdle(self):
-        # PROTECTED REGION ID(FspSubarray.goToIdle) ENABLED START #
+    def GoToIdle(self):
+        # PROTECTED REGION ID(FspSubarray.GoToIdle) ENABLED START #
         # transition to obsState=IDLE
         self._channel_info.clear()
         self._obs_state = ObsState.IDLE.value
-        # PROTECTED REGION END #    //  FspSubarray.goToIdle
+        # PROTECTED REGION END #    //  FspSubarray.GoToIdle
 
 # ----------
 # Run server
