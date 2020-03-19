@@ -16,15 +16,15 @@ Copyright (c) 2020 National Research Council of Canada
 # CbfSubarrayCorrConfig Tango device prototype
 # CbfSubarrayCorrConfig TANGO device class for the prototype
 
-# PyTango imports
-import PyTango
-from PyTango import DebugIt
-from PyTango.server import run
-from PyTango.server import Device, DeviceMeta
-from PyTango.server import attribute, command
-from PyTango.server import device_property
-from PyTango import AttrQuality, DispLevel, DevState
-from PyTango import AttrWriteType, PipeWriteType
+# tango imports
+import tango
+from tango import DebugIt
+from tango.server import run
+from tango.server import Device, DeviceMeta
+from tango.server import attribute, command
+from tango.server import device_property
+from tango import AttrQuality, DispLevel, DevState
+from tango import AttrWriteType, PipeWriteType
 # Additional import
 # PROTECTED REGION ID(CbfSubarrayCorrConfig.additionnal_import) ENABLED START #
 import os
@@ -102,7 +102,6 @@ class CbfSubarrayCorrConfig(SKACapability):
     channelAveragingMap = attribute(
         dtype='uint16',
         access=AttrWriteType.READ_WRITE,
-        dformat='image'
     )
 
     CorrConfig = attribute(
@@ -119,7 +118,7 @@ class CbfSubarrayCorrConfig(SKACapability):
     def init_device(self):
         SKACapability.init_device(self)
         # PROTECTED REGION ID(CbfSubarrayCorrConfig.init_device) ENABLED START #
-        self.set_state(PyTango.DevState.INIT)
+        self.set_state(tango.DevState.INIT)
 
         # initialize attribute values
         self._corr_config = {}  # this is interpreted as a JSON object
@@ -131,16 +130,16 @@ class CbfSubarrayCorrConfig(SKACapability):
         self._channel_averaging_map = {}
 
         # Getting Proxies for FSP and FSP Subarrays
-        self._proxy_cbf_master = PyTango.DeviceProxy(self.CbfMasterAddress)
+        self._proxy_cbf_master = tango.DeviceProxy(self.CbfMasterAddress)
         self._master_max_capabilities = dict(
             pair.split(":") for pair in
             self._proxy_cbf_master.get_property("MaxCapabilities")["MaxCapabilities"]
         )
-        self._proxies_fsp = [*map(PyTango.DeviceProxy, list(self.FSP)[:int(self._master_max_capabilities["FSP"])])]
-        self._proxies_fsp_subarray = [*map(PyTango.DeviceProxy, list(self.FspSubarray))]
+        self._proxies_fsp = [*map(tango.DeviceProxy, list(self.FSP)[:int(self._master_max_capabilities["FSP"])])]
+        self._proxies_fsp_subarray = [*map(tango.DeviceProxy, list(self.FspSubarray))]
 
         self._obs_state = ObsState.IDLE.value
-        self.set_state(PyTango.DevState.ON)
+        self.set_state(tango.DevState.ON)
         # PROTECTED REGION END #    //  CbfSubarrayCorrConfig.init_device
 
     def always_executed_hook(self):
@@ -154,15 +153,15 @@ class CbfSubarrayCorrConfig(SKACapability):
         # PROTECTED REGION END #    //  CbfSubarrayCorrConfig.delete_device
 
     def is_configure_scan_allowed(self):
-        if self.dev_state() == PyTango.DevState.ON and \
+        if self.dev_state() == tango.DevState.ON and \
                 self._obs_state in [ObsState.IDLE.value, ObsState.READY.value]:
             return True
         return False
 
     def __raise_configure_scan_fatal_error(self, msg):
         self.logger.error(msg)
-        PyTango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
-                                       PyTango.ErrSeverity.ERR)
+        tango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
+                                       tango.ErrSeverity.ERR)
 
     # ------------------
     # Attributes methods
@@ -260,8 +259,8 @@ class CbfSubarrayCorrConfig(SKACapability):
         if self._obs_state not in [ObsState.IDLE.value, ObsState.READY.value]:
             msg = "Device not in IDLE or READY obsState."
             self.logger.error(msg)
-            PyTango.Except.throw_exception("Command failed", msg, "ConfigureFSP execution",
-                                           PyTango.ErrSeverity.ERR)
+            tango.Except.throw_exception("Command failed", msg, "ConfigureFSP execution",
+                                           tango.ErrSeverity.ERR)
         try:
             argin = json.loads(argin)
             self._corr_config = argin
@@ -278,7 +277,7 @@ class CbfSubarrayCorrConfig(SKACapability):
                 self._zoom_window_tuning = fsp["zoomWindowTuning"]
                 self._integration_time = fsp["integrationTime"]
                 self._channel_averaging_map = fsp["channelAveragingMap"]
-            except PyTango.DevFailed:  # exception in ConfigureScan
+            except tango.DevFailed:  # exception in ConfigureScan
                 msg = "An exception occurred while configuring CbfSubarrayCorrConfig attributes:\n{}\n" \
                   "Aborting configuration".format(sys.exc_info()[1].args[0].desc)
                 self.__raise_configure_scan_fatal_error(msg)
@@ -286,7 +285,7 @@ class CbfSubarrayCorrConfig(SKACapability):
         self._obs_state = ObsState.READY.value
 
     def is_EndScan_allowed(self):
-        if self.dev_state() == PyTango.DevState.ON:
+        if self.dev_state() == tango.DevState.ON:
             return True
         return False
 
@@ -296,14 +295,14 @@ class CbfSubarrayCorrConfig(SKACapability):
         if self._obs_state != ObsState.SCANNING.value:
             msg = "Device not in SCANNING obsState."
             self.logger.error(msg)
-            PyTango.Except.throw_exception("Command failed", msg, "EndScan execution",
-                                           PyTango.ErrSeverity.ERR)
+            tango.Except.throw_exception("Command failed", msg, "EndScan execution",
+                                           tango.ErrSeverity.ERR)
 
         self._obs_state = ObsState.READY.value
         # PROTECTED REGION END #    //  CbfSubarrayCorrConfig.EndScan
 
     def is_Scan_allowed(self):
-        if self.dev_state() == PyTango.DevState.ON:
+        if self.dev_state() == tango.DevState.ON:
             return True
         return False
 
@@ -313,8 +312,8 @@ class CbfSubarrayCorrConfig(SKACapability):
         if self._obs_state != ObsState.READY.value:
             msg = "Device not in READY obsState."
             self.logger.error(msg)
-            PyTango.Except.throw_exception("Command failed", msg, "Scan execution",
-                                           PyTango.ErrSeverity.ERR)
+            tango.Except.throw_exception("Command failed", msg, "Scan execution",
+                                           tango.ErrSeverity.ERR)
         # TODO: actually use argin
         # For MVP, ignore argin (activation time)
         self._obs_state = ObsState.SCANNING.value
