@@ -973,7 +973,7 @@ class CbfSubarray(SKASubarray):
 
     def delete_device(self):
         # PROTECTED REGION ID(CbfSubarray.delete_device) ENABLED START #
-        self.EndSB()
+        self.GoToIdle()
         self.RemoveAllReceptors()
         self.set_state(tango.DevState.DISABLE)
         # PROTECTED REGION END #    //  CbfSubarray.delete_device
@@ -1289,7 +1289,7 @@ class CbfSubarray(SKASubarray):
         self._proxy_pss_config.ConfigureFSP(json.dumps(self._pss_config))
         # Call this just to release all FSPs and unsubscribe to events.
         # We transition to obsState=CONFIGURING immediately after anyways.
-        self.EndSB()
+        self.GoToIdle()
 
         # transition to obsState=CONFIGURING
         self._obs_state = ObsState.CONFIGURING.value
@@ -1641,18 +1641,18 @@ class CbfSubarray(SKASubarray):
         self._obs_state = ObsState.SCANNING.value
         # PROTECTED REGION END #    //  CbfSubarray.Scan
 
-    def is_EndSB_allowed(self):
+    def is_GoToIdle_allowed(self):
         if self.dev_state() in [tango.DevState.OFF, tango.DevState.ON]:
             return True
         return False
 
     @command()
-    def EndSB(self):
-        # PROTECTED REGION ID(CbfSubarray.EndSB) ENABLED START #
+    def GoToIdle(self):
+        # PROTECTED REGION ID(CbfSubarray.GoToIdle) ENABLED START #
         if self._obs_state not in [ObsState.IDLE.value, ObsState.READY.value]:
             msg = "Device not in IDLE or READY obsState."
             self.logger.error(msg)
-            tango.Except.throw_exception("Command failed", msg, "EndSB execution",
+            tango.Except.throw_exception("Command failed", msg, "GoToIdle execution",
                                            tango.ErrSeverity.ERR)
 
         # unsubscribe from TMC events

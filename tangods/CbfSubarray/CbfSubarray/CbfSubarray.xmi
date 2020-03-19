@@ -109,7 +109,7 @@
       </argout>
       <status abstract="false" inherited="true" concrete="true"/>
     </commands>
-    <commands name="EndSB" description="Change obsState to IDLE." execMethod="end_sb" displayLevel="OPERATOR" polledPeriod="0">
+    <commands name="goToIdle" description="Change obsState to IDLE." execMethod="end_sb" displayLevel="OPERATOR" polledPeriod="0">
       <argin description="">
         <type xsi:type="pogoDsl:VoidType"/>
       </argin>
