@@ -13,20 +13,16 @@ Herzberg Astronomy and Astrophysics, National Research Council of Canada
 Copyright (c) 2019 National Research Council of Canada
 """
 
-""" CbfMaster Tango device prototype
+# CbfMaster Tango device prototype
+# CBFMaster TANGO device class for the CBFMaster prototype
 
-CBFMaster TANGO device class for the CBFMaster prototype
-"""
 
 # tango imports
 import tango
-from tango import DebugIt
 from tango.server import run
-from tango.server import Device
 from tango.server import attribute, command
 from tango.server import device_property
-from tango import AttrQuality, DispLevel, DevState
-from tango import AttrWriteType, PipeWriteType
+from tango import AttrWriteType
 # Additional import
 # PROTECTED REGION ID(CbfMaster.additionnal_import) ENABLED START #
 # add the path to import global_enum package.
@@ -40,6 +36,7 @@ sys.path.insert(0, commons_pkg_path)
 
 from skabase.SKAMaster.SKAMaster import SKAMaster
 from skabase.control_model import HealthState, AdminMode
+
 # PROTECTED REGION END #    //  CbfMaster.additionnal_import
 
 __all__ = ["CbfMaster", "main"]
@@ -49,6 +46,7 @@ class CbfMaster(SKAMaster):
     """
     CBFMaster TANGO device class for the CBFMaster prototype
     """
+
     # PROTECTED REGION ID(CbfMaster.class_variable) ENABLED START #
 
     def __state_change_event_callback(self, event):
@@ -124,7 +122,7 @@ class CbfMaster(SKAMaster):
                         event.attr_value.value
                 elif "fsp" in device_name:
                     if event.attr_value.value not in self._report_fsp_subarray_membership[
-                            self._fqdn_fsp.index(device_name)]:
+                        self._fqdn_fsp.index(device_name)]:
                         self._report_fsp_subarray_membership[
                             self._fqdn_fsp.index(device_name)
                         ].append(event.attr_value.value)
@@ -367,20 +365,20 @@ class CbfMaster(SKAMaster):
 
         # initialize attribute values
         self._command_progress = 0
-        self._report_vcc_state = [tango.DevState.UNKNOWN]*self._count_vcc
-        self._report_vcc_health_state = [HealthState.UNKNOWN.value]*self._count_vcc
-        self._report_vcc_admin_mode = [AdminMode.ONLINE.value]*self._count_vcc
-        self._report_vcc_subarray_membership = [0]*self._count_vcc
-        self._report_fsp_state = [tango.DevState.UNKNOWN]*self._count_fsp
-        self._report_fsp_health_state = [HealthState.UNKNOWN.value]*self._count_fsp
-        self._report_fsp_admin_mode = [AdminMode.ONLINE.value]*self._count_fsp
+        self._report_vcc_state = [tango.DevState.UNKNOWN] * self._count_vcc
+        self._report_vcc_health_state = [HealthState.UNKNOWN.value] * self._count_vcc
+        self._report_vcc_admin_mode = [AdminMode.ONLINE.value] * self._count_vcc
+        self._report_vcc_subarray_membership = [0] * self._count_vcc
+        self._report_fsp_state = [tango.DevState.UNKNOWN] * self._count_fsp
+        self._report_fsp_health_state = [HealthState.UNKNOWN.value] * self._count_fsp
+        self._report_fsp_admin_mode = [AdminMode.ONLINE.value] * self._count_fsp
         self._report_fsp_subarray_membership = [[] for i in range(self._count_fsp)]
-        self._report_subarray_state = [tango.DevState.UNKNOWN]*self._count_subarray
-        self._report_subarray_health_state = [HealthState.UNKNOWN.value]*self._count_subarray
-        self._report_subarray_admin_mode = [AdminMode.ONLINE.value]*self._count_subarray
-        self._frequency_offset_k = [0]*self._count_vcc
-        self._frequency_offset_delta_f = [0]*self._count_vcc
-        self._subarray_scan_ID = [0]*self._count_subarray
+        self._report_subarray_state = [tango.DevState.UNKNOWN] * self._count_subarray
+        self._report_subarray_health_state = [HealthState.UNKNOWN.value] * self._count_subarray
+        self._report_subarray_admin_mode = [AdminMode.ONLINE.value] * self._count_subarray
+        self._frequency_offset_k = [0] * self._count_vcc
+        self._frequency_offset_delta_f = [0] * self._count_vcc
+        self._subarray_scan_ID = [0] * self._count_subarray
 
         # initialize lists with subarray/capability FQDNs
         self._fqdn_vcc = list(self.VCC)[:self._count_vcc]
@@ -432,10 +430,10 @@ class CbfMaster(SKAMaster):
                 events = []
 
                 # subscribe to change events on subarrays/capabilities
-                for attribute in ["adminMode", "healthState", "State"]:
+                for attribute_val in ["adminMode", "healthState", "State"]:
                     events.append(
                         device_proxy.subscribe_event(
-                            attribute, tango.EventType.CHANGE_EVENT,
+                            attribute_val, tango.EventType.CHANGE_EVENT,
                             self.__state_change_event_callback, stateless=True
                         )
                     )
@@ -559,8 +557,8 @@ class CbfMaster(SKAMaster):
         if len(value) == self._count_vcc:
             self._frequency_offset_k = value
         else:
-            log_msg = "Skipped writing to frequencyOffsetK attribute (expected {} arguments, "\
-                "but received {}.".format(self._count_vcc, len(value))
+            log_msg = "Skipped writing to frequencyOffsetK attribute (expected {} arguments, " \
+                      "but received {}.".format(self._count_vcc, len(value))
             self.logger.warn(log_msg)
         # PROTECTED REGION END #    //  CbfMaster.frequencyOffsetK_write
 
@@ -574,8 +572,8 @@ class CbfMaster(SKAMaster):
         if len(value) == self._count_vcc:
             self._frequency_offset_delta_f = value
         else:
-            log_msg = "Skipped writing to frequencyOffsetDeltaF attribute (expected {} arguments, "\
-                "but received {}.".format(self._count_vcc, len(value))
+            log_msg = "Skipped writing to frequencyOffsetDeltaF attribute (expected {} arguments, " \
+                      "but received {}.".format(self._count_vcc, len(value))
             self.logger.warn(log_msg)
         # PROTECTED REGION END #    //  CbfMaster.frequencyOffsetDeltaF_write
 
@@ -640,6 +638,7 @@ class CbfMaster(SKAMaster):
         self.set_state(tango.DevState.STANDBY)
         # PROTECTED REGION END #    //  CbfMaster.Standby
 
+
 # ----------
 # Run server
 # ----------
@@ -649,6 +648,7 @@ def main(args=None, **kwargs):
     # PROTECTED REGION ID(CbfMaster.main) ENABLED START #
     return run((CbfMaster,), args=args, **kwargs)
     # PROTECTED REGION END #    //  CbfMaster.main
+
 
 if __name__ == '__main__':
     main()
