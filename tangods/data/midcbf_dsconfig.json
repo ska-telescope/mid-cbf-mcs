@@ -1121,10 +1121,10 @@
                             } 
                         }, 
                         "properties": {
-			    "CspMasterAddress": [
+			    "CbfMasterAddress": [
 		                "mid_csp_cbf/sub_elt/master"
 			    ],
-			    "CspSubarrayAddress": [
+			    "CbfSubarrayAddress": [
 		                "mid_csp_cbf/sub_elt/subarray_01"
 			    ],
 
@@ -1152,10 +1152,10 @@
                             }
                         },
                         "properties": {
-			    "CspMasterAddress": [
+			    "CbfMasterAddress": [
 		                "mid_csp_cbf/sub_elt/master"
 			    ],
-			    "CspSubarrayAddress": [
+			    "CbfSubarrayAddress": [
 		                "mid_csp_cbf/sub_elt/subarray_02"
 			    ],
 

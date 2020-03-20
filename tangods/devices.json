@@ -64,11 +64,11 @@
         "devName": "ska_mid/tm_leaf_node/csp_subarray_01",
         "deviceProperties": [
             {
-                "devPropName": "CspMasterAddress",
+                "devPropName": "CbfMasterAddress",
                 "devPropValue": "mid_csp_cbf/sub_elt/master"
             },
             {
-                "devPropName": "CspSubarrayAddress",
+                "devPropName": "CbfSubarrayAddress",
                 "devPropValue": "mid_csp_cbf/sub_elt/subarray_01"
             }
         ],
@@ -95,11 +95,11 @@
         "devName": "ska_mid/tm_leaf_node/csp_subarray_02",
         "deviceProperties": [
             {
-                "devPropName": "CspMasterAddress",
+                "devPropName": "CbfMasterAddress",
                 "devPropValue": "mid_csp_cbf/sub_elt/master"
             },
             {
-                "devPropName": "CspSubarrayAddress",
+                "devPropName": "CbfSubarrayAddress",
                 "devPropValue": "mid_csp_cbf/sub_elt/subarray_02"
             }
         ],

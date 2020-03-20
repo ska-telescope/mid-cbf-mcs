@@ -6,7 +6,7 @@ with open("tangods/devices.json", "w+") as f:
     fqdn_vcc = [*map(lambda j: "\"mid_csp_cbf/vcc/{:03d}\"".format(j), range(1, num_vcc + 1))]
     fqdn_fsp = [*map(lambda j: "\"mid_csp_cbf/fsp/{:02d}\"".format(j), range(1, num_fsp + 1))]
     fqdn_cbf_subarray = [*map(lambda j: "\"mid_csp_cbf/sub_elt/subarray_{:02d}\"".format(j), range(1, num_subarray + 1))]
-    fqdn_csp_telstate_output_links = [*map(lambda j: "\"mid_csp/elt/telstate/cbfOutputLinks{}\"".format(j), range(1, num_subarray + 1))]
+    fqdn_csp_telstate_output_links = [*map(lambda j: "\"mid_csp/elt/telstate/outputLinksDistribution{}\"".format(j), range(1, num_subarray + 1))]
     string_vcc = "\n                    " + \
                  ",\n                    ".join(fqdn_vcc) + \
                  "\n                "
@@ -72,11 +72,11 @@ with open("tangods/devices.json", "w+") as f:
               "        \"devName\": \"ska_mid/tm_leaf_node/csp_subarray_01\",\n" \
               "        \"deviceProperties\": [\n" \
               "            {\n" \
-              "                \"devPropName\": \"CspMasterAddress\",\n" \
+              "                \"devPropName\": \"CbfMasterAddress\",\n" \
               "                \"devPropValue\": \"mid_csp_cbf/sub_elt/master\"\n" \
               "            },\n" \
               "            {\n" \
-              "                \"devPropName\": \"CspSubarrayAddress\",\n" \
+              "                \"devPropName\": \"CbfSubarrayAddress\",\n" \
               "                \"devPropValue\": \"mid_csp_cbf/sub_elt/subarray_01\"\n" \
               "            }\n" \
               "        ],\n" \
@@ -111,11 +111,11 @@ with open("tangods/devices.json", "w+") as f:
               "        \"devName\": \"ska_mid/tm_leaf_node/csp_subarray_02\",\n" \
               "        \"deviceProperties\": [\n" \
               "            {\n" \
-              "                \"devPropName\": \"CspMasterAddress\",\n" \
+              "                \"devPropName\": \"CbfMasterAddress\",\n" \
               "                \"devPropValue\": \"mid_csp_cbf/sub_elt/master\"\n" \
               "            },\n" \
               "            {\n" \
-              "                \"devPropName\": \"CspSubarrayAddress\",\n" \
+              "                \"devPropName\": \"CbfSubarrayAddress\",\n" \
               "                \"devPropValue\": \"mid_csp_cbf/sub_elt/subarray_02\"\n" \
               "            }\n" \
               "        ],\n" \

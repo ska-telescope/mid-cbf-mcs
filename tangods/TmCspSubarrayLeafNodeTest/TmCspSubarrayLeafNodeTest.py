@@ -40,6 +40,7 @@ sys.path.insert(0, commons_pkg_path)
 
 from skabase.SKABaseDevice.SKABaseDevice import SKABaseDevice
 from skabase.control_model import HealthState, AdminMode
+
 # PROTECTED REGION END #    //  TmCspSubarrayLeafNodeTest.additionnal_import
 
 __all__ = ["TmCspSubarrayLeafNodeTest", "main"]
@@ -49,6 +50,7 @@ class TmCspSubarrayLeafNodeTest(SKABaseDevice):
     """
     TmCspSubarrayLeafNodeTest TANGO device class for the CBF prototype
     """
+
     # PROTECTED REGION ID(TmCspSubarrayLeafNodeTest.class_variable) ENABLED START #
 
     def __output_links_event_callback(self, event):
@@ -119,11 +121,11 @@ class TmCspSubarrayLeafNodeTest(SKABaseDevice):
     # Device Properties
     # -----------------
 
-    CspMasterAddress = device_property(
+    CbfMasterAddress = device_property(
         dtype='str'
     )
 
-    CspSubarrayAddress = device_property(
+    CbfSubarrayAddress = device_property(
         dtype='str'
     )
 
@@ -186,18 +188,19 @@ class TmCspSubarrayLeafNodeTest(SKABaseDevice):
         self._vis_destination_address = {}  # this is interpreted as a JSON object
         self._received_output_links = False
 
-      #  self._proxy_csp_master = tango.DeviceProxy(self.CspMasterAddress)
-      #  self._proxy_cbf_master = tango.DeviceProxy(
-      #      self._proxy_csp_master.get_property("CspMidCbf")["CspMidCbf"][0]
-      #  )
-      #  self._proxy_csp_subarray = tango.DeviceProxy(self.CspSubarrayAddress)
+        # these properties do not exist anymore and are not used anywhere in this file so they have been commented out
+        # self._proxy_cbf_master = tango.DeviceProxy(self.CbfMasterAddress)
+        # self._proxy_cbf_master = tango.DeviceProxy(
+        #    self._proxy_cbf_master.get_property("CspMidCbf")["CspMidCbf"][0]
+        # )
 
-      #  self._proxy_csp_subarray.subscribe_event(
-      #      "cbfOutputLink",
-      #      PyTango.EventType.CHANGE_EVENT,
-      #      self.__output_links_event_callback,
-      #      stateless=True
-      #  )
+        self._proxy_cbf_subarray = tango.DeviceProxy(self.CbfSubarrayAddress)
+        self._proxy_cbf_subarray.subscribe_event(
+            "outputLinksDistribution",
+            tango.EventType.CHANGE_EVENT,
+            self.__output_links_event_callback,
+            stateless=True
+        )
 
         self.set_state(DevState.STANDBY)
         # PROTECTED REGION END #    //  TmCspSubarrayLeafNodeTest.init_device
@@ -281,6 +284,7 @@ def main(args=None, **kwargs):
     # PROTECTED REGION ID(TmCspSubarrayLeafNodeTest.main) ENABLED START #
     return run((TmCspSubarrayLeafNodeTest,), args=args, **kwargs)
     # PROTECTED REGION END #    //  TmCspSubarrayLeafNodeTest.main
+
 
 if __name__ == '__main__':
     main()
