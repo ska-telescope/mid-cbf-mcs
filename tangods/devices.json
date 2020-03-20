@@ -65,11 +65,42 @@
         "deviceProperties": [
             {
                 "devPropName": "CspMasterAddress",
-                "devPropValue": "mid_csp/elt/master"
+                "devPropValue": "mid_csp_cbf/sub_elt/master"
             },
             {
                 "devPropName": "CspSubarrayAddress",
-                "devPropValue": "mid_csp/elt/subarray_01"
+                "devPropValue": "mid_csp_cbf/sub_elt/subarray_01"
+            }
+        ],
+        "attributeProperties": [
+            {
+                "attributeName": "delayModel",
+                "attrPropName": "",
+                "attrPropValue": "",
+                "pollingPeriod": 1000,
+                "changeEventAbs": "1"
+            },
+            {
+                "attributeName": "visDestinationAddress",
+                "attrPropName": "",
+                "attrPropValue": "",
+                "pollingPeriod": 1000,
+                "changeEventAbs": "1"
+            }
+        ]
+    },
+    {
+        "class": "TmCspSubarrayLeafNodeTest",
+        "serverName": "TmCspSubarrayLeafNodeTest/tm2",
+        "devName": "ska_mid/tm_leaf_node/csp_subarray_02",
+        "deviceProperties": [
+            {
+                "devPropName": "CspMasterAddress",
+                "devPropValue": "mid_csp_cbf/sub_elt/master"
+            },
+            {
+                "devPropName": "CspSubarrayAddress",
+                "devPropValue": "mid_csp_cbf/sub_elt/subarray_02"
             }
         ],
         "attributeProperties": [

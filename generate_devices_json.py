@@ -73,11 +73,50 @@ with open("tangods/devices.json", "w+") as f:
               "        \"deviceProperties\": [\n" \
               "            {\n" \
               "                \"devPropName\": \"CspMasterAddress\",\n" \
-              "                \"devPropValue\": \"mid_csp/elt/master\"\n" \
+              "                \"devPropValue\": \"mid_csp_cbf/sub_elt/master\"\n" \
               "            },\n" \
               "            {\n" \
               "                \"devPropName\": \"CspSubarrayAddress\",\n" \
-              "                \"devPropValue\": \"mid_csp/elt/subarray_01\"\n" \
+              "                \"devPropValue\": \"mid_csp_cbf/sub_elt/subarray_01\"\n" \
+              "            }\n" \
+              "        ],\n" \
+              "        \"attributeProperties\": [\n" \
+              "            {\n" \
+              "                \"attributeName\": \"delayModel\",\n" \
+              "                \"attrPropName\": \"\",\n" \
+              "                \"attrPropValue\": \"\",\n" \
+              "                \"pollingPeriod\": 1000,\n" \
+              "                \"changeEventAbs\": \"1\"\n" \
+              "            },\n" \
+              "            {\n" \
+              "                \"attributeName\": \"visDestinationAddress\",\n" \
+              "                \"attrPropName\": \"\",\n" \
+              "                \"attrPropValue\": \"\",\n" \
+              "                \"pollingPeriod\": 1000,\n" \
+              "                \"changeEventAbs\": \"1\"\n" \
+              "            },\n" \
+              "            {\n" \
+              "                \"attributeName\": \"dopplerPhaseCorrection\",\n" \
+              "                \"attrPropName\": \"\",\n" \
+              "                \"attrPropValue\": \"\",\n" \
+              "                \"pollingPeriod\": 1000,\n" \
+              "                \"changeEventAbs\": \"1\"\n" \
+              "            }\n" \
+              "        ]\n" \
+              "    },\n"
+
+    string += "    {\n" \
+              "        \"class\": \"TmCspSubarrayLeafNodeTest\",\n" \
+              "        \"serverName\": \"TmCspSubarrayLeafNodeTest/tm2\",\n" \
+              "        \"devName\": \"ska_mid/tm_leaf_node/csp_subarray_02\",\n" \
+              "        \"deviceProperties\": [\n" \
+              "            {\n" \
+              "                \"devPropName\": \"CspMasterAddress\",\n" \
+              "                \"devPropValue\": \"mid_csp_cbf/sub_elt/master\"\n" \
+              "            },\n" \
+              "            {\n" \
+              "                \"devPropName\": \"CspSubarrayAddress\",\n" \
+              "                \"devPropValue\": \"mid_csp_cbf/sub_elt/subarray_02\"\n" \
               "            }\n" \
               "        ],\n" \
               "        \"attributeProperties\": [\n" \

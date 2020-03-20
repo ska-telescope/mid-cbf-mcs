@@ -107,6 +107,21 @@ with open("mid-cbf-mcs.yml", "w+") as f:
               "             tango_admin --check-device ska_mid/tm_leaf_node/csp_subarray_01 &&\\\n" \
               "             /venv/bin/python /app/tangods/TmCspSubarrayLeafNodeTest/TmCspSubarrayLeafNodeTest.py tm\"\n\n"
 
+    string += "  tmcspsubarrayleafnodetest:\n" \
+              "    image: ${DOCKER_REGISTRY_HOST}/${DOCKER_REGISTRY_USER}/${PROJECT}:latest\n" \
+              "    network_mode: ${NETWORK_MODE}\n" \
+              "    container_name: ${CONTAINER_NAME_PREFIX}tmcspsubarrayleafnodetest\n" \
+              "    depends_on:\n" \
+              "      - cbfmaster\n" \
+              "      - databaseds\n" \
+              "      - rsyslog\n" \
+              "    environment:\n" \
+              "      - TANGO_HOST=${TANGO_HOST}\n" \
+              "    command: >\n" \
+              "      sh -c \"wait-for-it.sh ${TANGO_HOST} --timeout=60 --strict --\n" \
+              "             tango_admin --check-device ska_mid/tm_leaf_node/csp_subarray_02 &&\\\n" \
+              "             /venv/bin/python /app/tangods/TmCspSubarrayLeafNodeTest/TmCspSubarrayLeafNodeTest.py tm2\"\n\n"
+
     string += "  rsyslog:\n" \
               "    image: jumanjiman/rsyslog\n" \
               "    network_mode: ${NETWORK_MODE}\n" \
