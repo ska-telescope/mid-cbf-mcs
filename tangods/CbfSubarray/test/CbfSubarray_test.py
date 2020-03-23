@@ -423,6 +423,7 @@ class TestCbfSubarray:
 
         # check configured attributes of FSP subarrays
         # first for FSP 1...
+        assert create_fsp_1_subarray_1_proxy.obsState == ObsState.READY
         assert create_fsp_1_subarray_1_proxy.receptors == 4
         assert create_fsp_1_subarray_1_proxy.frequencyBand == 4
         assert create_fsp_1_subarray_1_proxy.band5Tuning[0] == 5.85
@@ -475,6 +476,7 @@ class TestCbfSubarray:
         assert create_fsp_1_subarray_1_proxy.channelAveragingMap[19][1] == 0
 
         # then for FSP 2...
+        assert create_fsp_2_subarray_1_proxy.obsState == ObsState.READY
         assert create_fsp_2_subarray_1_proxy.receptors[0] == 1
         assert create_fsp_2_subarray_1_proxy.receptors[2] == 4
         assert create_fsp_2_subarray_1_proxy.frequencyBand == 4
@@ -525,6 +527,12 @@ class TestCbfSubarray:
         assert create_fsp_2_subarray_1_proxy.channelAveragingMap[18][1] == 0
         assert create_fsp_2_subarray_1_proxy.channelAveragingMap[19][0] == 14137
         assert create_fsp_2_subarray_1_proxy.channelAveragingMap[19][1] == 0
+        create_subarray_1_proxy.GoToIdle()
+        time.sleep(3)
+        assert create_subarray_1_proxy.obsState == ObsState.IDLE
+        create_subarray_1_proxy.RemoveAllReceptors()
+        time.sleep(3)
+        assert create_subarray_1_proxy.state() == tango.DevState.OFF
 
     def test_EndScan(
             self,
@@ -548,11 +556,13 @@ class TestCbfSubarray:
         create_fsp_2_proxy.Init()
         create_subarray_1_proxy.set_timeout_millis(60000)  # since the command takes a while
         create_subarray_1_proxy.Init()
+        assert create_subarray_1_proxy.state() == tango.DevState.DISABLE
         time.sleep(3)
         create_cbf_master_proxy.set_timeout_millis(60000)
         create_cbf_master_proxy.Init()
         time.sleep(60)  # takes pretty long for CBF Master to initialize
         create_tm_telstate_proxy.Init()
+        assert create_tm_telstate_proxy.state() == tango.DevState.STANDBY
         time.sleep(1)
 
         receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
@@ -568,11 +578,15 @@ class TestCbfSubarray:
         # add receptors
         create_subarray_1_proxy.RemoveAllReceptors()
         create_subarray_1_proxy.AddReceptors([1, 3, 4])
-        time.sleep(1)
+        time.sleep(6)
         assert create_subarray_1_proxy.receptors[0] == 1
         assert create_subarray_1_proxy.receptors[1] == 3
         assert create_subarray_1_proxy.receptors[2] == 4
 
+        assert create_subarray_1_proxy.state() == tango.DevState.ON
+        assert create_subarray_1_proxy.obsState == ObsState.IDLE
+        assert create_fsp_2_subarray_1_proxy.obsState == ObsState.IDLE
+        assert create_fsp_1_subarray_1_proxy.obsState == ObsState.IDLE
         # configure scan
         f = open(file_path + "/test_json/test_ConfigureScan_basic.json")
         create_subarray_1_proxy.ConfigureScan(f.read().replace("\n", ""))
