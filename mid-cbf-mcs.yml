@@ -214,13 +214,14 @@ services:
     depends_on:
       - databaseds
       - cbf_dsconfig
-      - cbfmaster
+      - cbfsubarray01
       - rsyslog
     environment:
       - TANGO_HOST=${TANGO_HOST}
     command: >
       sh -c "wait-for-it.sh ${TANGO_HOST} --timeout=60 --strict --
              tango_admin --check-device ska_mid/tm_leaf_node/csp_subarray_01 &&\
+             retry --max=10 -- tango_admin --ping-device mid_csp_cbf/sub_elt/subarray_01 &&\
              /venv/bin/python /app/tangods/TmCspSubarrayLeafNodeTest/TmCspSubarrayLeafNodeTest.py tm"
 
   tmcspsubarrayleafnodetest2:
@@ -230,13 +231,14 @@ services:
     depends_on:
       - databaseds
       - cbf_dsconfig
-      - cbfmaster
+      - cbfsubarray02
       - rsyslog
     environment:
       - TANGO_HOST=${TANGO_HOST}
     command: >
       sh -c "wait-for-it.sh ${TANGO_HOST} --timeout=60 --strict --
              tango_admin --check-device ska_mid/tm_leaf_node/csp_subarray_02 &&\
+             retry --max=10 -- tango_admin --ping-device mid_csp_cbf/sub_elt/subarray_02 &&\
              /venv/bin/python /app/tangods/TmCspSubarrayLeafNodeTest/TmCspSubarrayLeafNodeTest.py tm2"
 
 
