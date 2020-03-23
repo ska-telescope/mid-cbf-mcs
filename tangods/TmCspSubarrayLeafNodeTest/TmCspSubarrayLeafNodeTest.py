@@ -33,7 +33,6 @@ import os
 import sys
 import json
 from random import randint
-
 file_path = os.path.dirname(os.path.abspath(__file__))
 commons_pkg_path = os.path.abspath(os.path.join(file_path, "../commons"))
 sys.path.insert(0, commons_pkg_path)
@@ -54,6 +53,7 @@ class TmCspSubarrayLeafNodeTest(SKABaseDevice):
     # PROTECTED REGION ID(TmCspSubarrayLeafNodeTest.class_variable) ENABLED START #
 
     def __output_links_event_callback(self, event):
+        self.logger.info("__output_links_event_callback: {}".format(self._received_output_links))
         if not event.err:
             try:
                 log_msg = "Received output links."
@@ -178,12 +178,8 @@ class TmCspSubarrayLeafNodeTest(SKABaseDevice):
         # PROTECTED REGION ID(TmCspSubarrayLeafNodeTest.init_device) ENABLED START #
         self.set_state(DevState.INIT)
 
-        self._storage_logging_level = tango.LogLevel.LOG_DEBUG
-        self._element_logging_level = tango.LogLevel.LOG_DEBUG
-        self._central_logging_level = tango.LogLevel.LOG_DEBUG
-
         self._scan_ID = 0
-        self._doppler_phase_correction = [0, 0, 0, 0]
+        self._doppler_phase_correction = [0., 0., 0., 0.]
         self._delay_model = {}  # this is interpreted as a JSON object
         self._vis_destination_address = {}  # this is interpreted as a JSON object
         self._received_output_links = False
@@ -194,6 +190,9 @@ class TmCspSubarrayLeafNodeTest(SKABaseDevice):
         #    self._proxy_cbf_master.get_property("CspMidCbf")["CspMidCbf"][0]
         # )
 
+        # decoupling mif-cbf-mcs from csp-mid-lmc so that it can be tested  standalone
+        # TmCspSubarrayLeafNodeTest device subscribes directly to the CbfSubarray 
+        # outputLinksDistribution attribute to received the outputlinks.
         self._proxy_cbf_subarray = tango.DeviceProxy(self.CbfSubarrayAddress)
         self._proxy_cbf_subarray.subscribe_event(
             "outputLinksDistribution",
@@ -231,6 +230,7 @@ class TmCspSubarrayLeafNodeTest(SKABaseDevice):
 
     def write_dopplerPhaseCorrection(self, value):
         # PROTECTED REGION ID(TmCspSubarrayLeafNodeTest.dopplerPhaseCorrection_write) ENABLED START #
+        self.logger.info("write_dopplerPhaseCorrection: type(value) {}".format(type(value)))
         try:
             if len(value) == 4:
                 self._doppler_phase_correction = value
