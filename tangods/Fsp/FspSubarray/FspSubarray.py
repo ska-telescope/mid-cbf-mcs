@@ -853,7 +853,9 @@ class FspSubarray(SKASubarray):
                 self.logger.warn(log_msg)
 
         # This state transition will be later
-        self._obs_state = ObsState.READY.value
+        # 03-23-2020: FspSubarray moves to READY after configuration of the 
+        # channels addresses sent by SDP.
+        #self._obs_state = ObsState.READY.value
 
         # PROTECTED REGION END #    //  FspSubarray.ConfigureScan
 
