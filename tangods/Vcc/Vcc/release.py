@@ -10,7 +10,7 @@
 """Release information for Python Package"""
 
 name = """tangods-vcc"""
-version = "0.0.1"
+version = "0.4.0"
 version_info = version.split(".")
 description = """SKA Vcc TANGO Device Server"""
 author = "James Jiang"
