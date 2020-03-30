@@ -217,16 +217,6 @@ class CbfSubarrayCorrConfig(SKACapability):
         self._integration_time = value
         # PROTECTED REGION END #    //  CbfSubarrayCorrConfig.write_outputEnable
 
-    def read_averagingInterval(self):
-        # PROTECTED REGION ID(CbfSubarrayCorrConfig.read_averagingInterval) ENABLED START #
-        return self._averaging_interval
-        # PROTECTED REGION END #    //  CbfSubarrayCorrConfig.read_averagingInterval
-
-    def write_averagingInterval(self, value):
-        # PROTECTED REGION ID(CbfSubarrayCorrConfig.write_averagingInterval) ENABLED START #
-        self._averaging_interval = value
-        # PROTECTED REGION END #    //  CbfSubarrayCorrConfig.write_averagingInterval
-
     def read_channelAveragingMap(self):
         # PROTECTED REGION ID(CbfSubarrayCorrConfig.read_searchBeamAddress) ENABLED START #
         return self._channel_averaging_map
