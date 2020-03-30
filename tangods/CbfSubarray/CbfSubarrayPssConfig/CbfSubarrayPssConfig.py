@@ -290,10 +290,13 @@ class CbfSubarrayPssConfig(SKACapability):
 
         for fsp in argin:
             try:
-                self._fsp_id = fsp["fspID"]
+                self._fsp_id = int(fsp["fspID"])
                 self._search_window_id = int(fsp["searchWindowID"])
                 self._search_beam_id = int(fsp["searchBeamID"])
-                self._receptors = fsp["receptors"]
+
+                if "receptors" in fsp:
+                    self._receptors = fsp["receptors"]
+
                 self._output_enable = bool(fsp["outputEnable"])
                 self._averaging_interval = int(fsp["averagingInterval"])
                 self._search_beam_address = fsp["searchBeamDestinationAddress"]

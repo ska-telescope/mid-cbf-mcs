@@ -121,6 +121,7 @@ class CbfSubarrayCorrConfig(SKACapability):
         self.set_state(tango.DevState.INIT)
 
         # initialize attribute values
+        self._fsp_id = 0
         self._corr_config = {}  # this is interpreted as a JSON object
         self._frequency_slice_id = 0
         self._corr_bandwidth = 0
@@ -271,12 +272,25 @@ class CbfSubarrayCorrConfig(SKACapability):
 
         for fsp in argin:
             try:
-                self._receptors = fsp["receptors"]
-                self._frequency_slice_id = fsp["frequencySliceID"]
-                self._corr_bandwidth = fsp["corrBandwidth"]
-                self._zoom_window_tuning = fsp["zoomWindowTuning"]
-                self._integration_time = fsp["integrationTime"]
-                self._channel_averaging_map = fsp["channelAveragingMap"]
+                self._fsp_id = int(fsp["fspID"])
+
+                if "receptors" in fsp:
+                    self._receptors = fsp["receptors"]
+
+                self._frequency_slice_id = int(fsp["frequencySliceID"])
+                self._corr_bandwidth = int(fsp["corrBandwidth"])
+
+                if "zoomWindowTuning" in fsp:
+                    self._zoom_window_tuning = int(fsp["zoomWindowTuning"])
+
+                self._integration_time = int(fsp["integrationTime"])
+
+                if "channelAveragingMap" in fsp:
+                    self._channel_averaging_map = fsp["channelAveragingMap"]
+
+                # Send config to FspSubarray for Fsp configuration
+                proxy_fsp_subarray = self._proxies_fsp_subarray[self._fsp_id - 1]
+                proxy_fsp_subarray.ConfigureScan(json.dumps(fsp))
             except tango.DevFailed:  # exception in ConfigureScan
                 msg = "An exception occurred while configuring CbfSubarrayCorrConfig attributes:\n{}\n" \
                   "Aborting configuration".format(sys.exc_info()[1].args[0].desc)

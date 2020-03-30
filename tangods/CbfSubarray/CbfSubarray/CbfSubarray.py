@@ -1486,8 +1486,6 @@ class CbfSubarray(SKASubarray):
                                          tango.ErrSeverity.ERR)
 
         self.__validate_scan_configuration(argin)
-        self._proxy_pss_config.ConfigureFSP(json.dumps(self._pss_config))
-        self._proxy_corr_config.ConfigureFSP(json.dumps(self._corr_config))
 
         # Call this just to release all FSPs and unsubscribe to events.
         # We transition to obsState=CONFIGURING immediately after anyways.
@@ -1608,6 +1606,10 @@ class CbfSubarray(SKASubarray):
         data.insert(tango.DevUShort, ObsState.READY.value)
         self._group_vcc.command_inout("SetObservingState", data)
 
+        # pass on configuration to individual function mode class to configure the FSP Subarray
+        self._proxy_pss_config.ConfigureFSP(json.dumps(self._pss_config))
+        self._proxy_corr_config.ConfigureFSP(json.dumps(self._corr_config))
+
         # Configure FSP.
         for fsp in argin["fsp"]:
             # Configure fspID.
@@ -1638,10 +1640,6 @@ class CbfSubarray(SKASubarray):
                 fsp["receptors"] = self._receptors
             if self._frequency_band in [4, 5]:
                 fsp["band5Tuning"] = self._stream_tuning
-
-            # pass on configuration to FSP Subarray
-            # This has been phased out, now passing to function mode classes first
-            proxy_fsp_subarray.ConfigureScan(json.dumps(fsp))
 
             # subscribe to FSP state and healthState changes
             event_id_state, event_id_health_state = proxy_fsp.subscribe_event(
