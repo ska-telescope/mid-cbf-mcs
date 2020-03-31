@@ -200,12 +200,6 @@
                 "CbfSubarrayCorrConfig": {
                     "mid_csp_cbf/corrConfig/01": {
                         "properties": {
-                            "FSP": [
-                                "mid_csp_cbf/fsp/01",
-                                "mid_csp_cbf/fsp/02",
-                                "mid_csp_cbf/fsp/03",
-                                "mid_csp_cbf/fsp/04"
-                            ],
                             "FspSubarray": [
                                 "mid_csp_cbf/fspSubarray/01_01",
                                 "mid_csp_cbf/fspSubarray/02_01",
@@ -344,12 +338,6 @@
                 "CbfSubarrayCorrConfig": {
                     "mid_csp_cbf/corrConfig/02": {
                         "properties": {
-                            "FSP": [
-                                "mid_csp_cbf/fsp/01",
-                                "mid_csp_cbf/fsp/02",
-                                "mid_csp_cbf/fsp/03",
-                                "mid_csp_cbf/fsp/04"
-                            ],
                             "FspSubarray": [
                                 "mid_csp_cbf/fspSubarray/01_02",
                                 "mid_csp_cbf/fspSubarray/02_02",

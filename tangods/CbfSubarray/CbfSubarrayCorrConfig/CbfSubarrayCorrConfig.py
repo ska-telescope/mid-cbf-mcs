@@ -44,19 +44,14 @@ __all__ = ["CbfSubarrayCorrConfig", "main"]
 
 class CbfSubarrayCorrConfig(SKACapability):
 
-    # SearchWindow TANGO device class for the prototype
-
     __metaclass__ = DeviceMeta
     # PROTECTED REGION ID(CbfSubarrayCorrConfig.class_variable) ENABLED START #
+
     # PROTECTED REGION END #    //  CbfSubarrayCorrConfig.class_variable
 
     # -----------------
     # Device Properties
     # -----------------
-
-    FSP = device_property(
-        dtype=('str',)
-    )
 
     FspSubarray = device_property(
         dtype=('str',)
@@ -72,39 +67,12 @@ class CbfSubarrayCorrConfig(SKACapability):
     # Attributes
     # ----------
 
-    receptors = attribute(
+    fspID = attribute(
         dtype=('uint16',),
         access=AttrWriteType.READ_WRITE,
-        max_dim_x=197,
     )
 
-    frequencySliceID = attribute(
-        dtype='uint16',
-        access=AttrWriteType.READ_WRITE,
-    )
-
-    corrBandwidth = attribute(
-        dtype='uint16',
-        access=AttrWriteType.READ_WRITE,
-    )
-
-    zoomWindowTuning = attribute(
-        dtype='uint16',
-        access=AttrWriteType.READ_WRITE,
-    )
-
-    integrationTime = attribute(
-        dtype='uint16',
-        access=AttrWriteType.READ_WRITE,
-
-    )
-
-    channelAveragingMap = attribute(
-        dtype='uint16',
-        access=AttrWriteType.READ_WRITE,
-    )
-
-    CorrConfig = attribute(
+    corrConfig = attribute(
         dtype='str',
         access=AttrWriteType.READ_WRITE,
         label="Fst Corr Configuration",
@@ -121,22 +89,11 @@ class CbfSubarrayCorrConfig(SKACapability):
         self.set_state(tango.DevState.INIT)
 
         # initialize attribute values
-        self._fsp_id = 0
+        self._fsp_id = []
         self._corr_config = {}  # this is interpreted as a JSON object
-        self._frequency_slice_id = 0
-        self._corr_bandwidth = 0
-        self._zoom_window_tuning = 0
-        self._receptors = []
-        self._integration_time = 0
-        self._channel_averaging_map = {}
 
         # Getting Proxies for FSP and FSP Subarrays
         self._proxy_cbf_master = tango.DeviceProxy(self.CbfMasterAddress)
-        self._master_max_capabilities = dict(
-            pair.split(":") for pair in
-            self._proxy_cbf_master.get_property("MaxCapabilities")["MaxCapabilities"]
-        )
-        self._proxies_fsp = [*map(tango.DeviceProxy, list(self.FSP)[:int(self._master_max_capabilities["FSP"])])]
         self._proxies_fsp_subarray = [*map(tango.DeviceProxy, list(self.FspSubarray))]
 
         self._obs_state = ObsState.IDLE.value
@@ -167,72 +124,24 @@ class CbfSubarrayCorrConfig(SKACapability):
     # ------------------
     # Attributes methods
     # ------------------
-    def read_receptors(self):
-        # PROTECTED REGION ID(CbfSubarrayCorrConfig.read_receptors) ENABLED START #
-        return self._receptors
-        # PROTECTED REGION END #    //  CbfSubarrayCorrConfig.read_receptors
 
-    def write_receptors(self, value):
-        # PROTECTED REGION ID(CbfSubarrayCorrConfig.write_receptors) ENABLED START #
-        self._receptors = value
-        # PROTECTED REGION END #    //  CbfSubarrayCorrConfig.write_receptors
+    def read_fspID(self):
+        # PROTECTED REGION ID(CbfSubarrayCorrConfig.read_PssConfig) ENABLED START #
+        return self._fsp_id
+        # PROTECTED REGION END #    //  CbfSubarrayCorrConfig.read_PssConfig
 
-    def read_frequencySliceID(self):
-        # PROTECTED REGION ID(CbfSubarrayCorrConfig.read_fspID) ENABLED START #
-        return self._frequency_slice_id
-        # PROTECTED REGION END #    //  CbfSubarrayCorrConfig.read_fspID
+    def write_fspID(self, value):
+        # PROTECTED REGION ID(CbfSubarrayCorrConfig.write_PssConfig) ENABLED START #
+        # if value is not valid JSON, the exception is caught by CbfSubarray.ConfigureScan()
+        self._fsp_id = value
+        # PROTECTED REGION END #    //  CbfSubarrayCorrConfig.write_PssConfig
 
-    def write_frequencySliceID(self, value):
-        # PROTECTED REGION ID(CbfSubarrayCorrConfig.write_fspID) ENABLED START #
-        self._frequency_slice_id = value
-        # PROTECTED REGION END #    //  CbfSubarrayCorrConfig.write_fspID
-
-    def read_corrBandwidth(self):
-        # PROTECTED REGION ID(CbfSubarrayCorrConfig.read_searchWindowID) ENABLED START #
-        return self._corr_bandwidth
-        # PROTECTED REGION END #    //  CbfSubarrayCorrConfig.read_searchWindowID
-
-    def write_corrBandwidth(self, value):
-        # PROTECTED REGION ID(CbfSubarrayCorrConfig.write_searchWindowID) ENABLED START #
-        self._corr_bandwidth = value
-        # PROTECTED REGION END #    //  CbfSubarrayCorrConfig.write_searchWindowID
-
-    def read_zoomWindowTuning(self):
-        # PROTECTED REGION ID(CbfSubarrayCorrConfig.read_searchBeamID) ENABLED START #
-        return self._zoom_window_tuning
-        # PROTECTED REGION END #    //  CbfSubarrayCorrConfig.read_searchBeamID
-
-    def write_zoomWindowTuning(self, value):
-        # PROTECTED REGION ID(CbfSubarrayCorrConfig.write_searchBeamID) ENABLED START #
-        self._zoom_window_tuning = value
-        # PROTECTED REGION END #    //  CbfSubarrayCorrConfig.write_searchBeamID
-
-    def read_integrationTime(self):
-        # PROTECTED REGION ID(CbfSubarrayCorrConfig.read_outputEnable) ENABLED START #
-        return self._integration_time
-        # PROTECTED REGION END #    //  CbfSubarrayCorrConfig.read_outputEnable
-
-    def write_integrationTime(self, value):
-        # PROTECTED REGION ID(CbfSubarrayCorrConfig.write_outputEnable) ENABLED START #
-        self._integration_time = value
-        # PROTECTED REGION END #    //  CbfSubarrayCorrConfig.write_outputEnable
-
-    def read_channelAveragingMap(self):
-        # PROTECTED REGION ID(CbfSubarrayCorrConfig.read_searchBeamAddress) ENABLED START #
-        return self._channel_averaging_map
-        # PROTECTED REGION END #    //  CbfSubarrayCorrConfig.read_searchBeamAddress
-
-    def write_channelAveragingMap(self, value):
-        # PROTECTED REGION ID(CbfSubarrayCorrConfig.write_searchBeamAddress) ENABLED START #
-        self._channel_averaging_map = value
-        # PROTECTED REGION END #    //  CbfSubarrayCorrConfig.write_searchBeamAddress
-
-    def read_CorrConfig(self):
+    def read_corrConfig(self):
         # PROTECTED REGION ID(CbfSubarrayCorrConfig.read_PssConfig) ENABLED START #
         return json.dumps(self._corr_config)
         # PROTECTED REGION END #    //  CbfSubarrayCorrConfig.read_PssConfig
 
-    def write_CorrConfig(self, value):
+    def write_corrConfig(self, value):
         # PROTECTED REGION ID(CbfSubarrayCorrConfig.write_PssConfig) ENABLED START #
         # if value is not valid JSON, the exception is caught by CbfSubarray.ConfigureScan()
         self._corr_config = json.loads(value)
@@ -262,21 +171,7 @@ class CbfSubarrayCorrConfig(SKACapability):
 
         for fsp in argin:
             try:
-                self._fsp_id = int(fsp["fspID"])
-
-                if "receptors" in fsp:
-                    self._receptors = fsp["receptors"]
-
-                self._frequency_slice_id = int(fsp["frequencySliceID"])
-                self._corr_bandwidth = int(fsp["corrBandwidth"])
-
-                if "zoomWindowTuning" in fsp:
-                    self._zoom_window_tuning = int(fsp["zoomWindowTuning"])
-
-                self._integration_time = int(fsp["integrationTime"])
-
-                if "channelAveragingMap" in fsp:
-                    self._channel_averaging_map = fsp["channelAveragingMap"]
+                self._fsp_id.append(int(fsp["fspID"]))
 
                 # Send config to FspSubarray for Fsp configuration
                 proxy_fsp_subarray = self._proxies_fsp_subarray[self._fsp_id - 1]

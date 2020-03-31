@@ -43,9 +43,7 @@ __all__ = ["CbfSubarrayPssConfig", "main"]
 
 
 class CbfSubarrayPssConfig(SKACapability):
-    """
-    SearchWindow TANGO device class for the prototype
-    """
+
     __metaclass__ = DeviceMeta
     # PROTECTED REGION ID(CbfSubarrayPssConfig.class_variable) ENABLED START #
     # PROTECTED REGION END #    //  CbfSubarrayPssConfig.class_variable
