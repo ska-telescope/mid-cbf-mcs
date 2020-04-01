@@ -32,7 +32,7 @@ import pytest
 
 #Local imports
 
-from FspSubarray.FspSubarray import FspSubarray
+from FspSubarrayCorr.FspSubarrayCorr import FspSubarrayCorr
 from skabase.control_model import HealthState, AdminMode, ObsState
 
 @pytest.mark.usefixtures(
@@ -43,7 +43,7 @@ from skabase.control_model import HealthState, AdminMode, ObsState
     "create_fsp_subarray_1_1_proxy"
 )
 
-class TestFspSubarray:
+class TestFspSubarrayCorr:
     """
     @classmethod
     def mocking(cls):

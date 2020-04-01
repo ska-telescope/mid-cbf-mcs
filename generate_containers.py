@@ -51,7 +51,7 @@ with open("mid-cbf-mcs.yml", "w+") as f:
                   "             tango_admin --check-device mid_csp_cbf/fsp_pst/{0:02d} &&\\\n" \
                   "             tango_admin --check-device mid_csp_cbf/fsp_vlbi/{0:02d} &&\\\n" \
                   "             for j in $$(seq -w 1 16); do \\\n" \
-                  "             tango_admin --check-device mid_csp_cbf/fspSubarray/{0:02d}\_$$j; done &&\\\n" \
+                  "             tango_admin --check-device mid_csp_cbf/fspSubarrayCorr/{0:02d}\_$$j; done &&\\\n" \
                   "             tango_admin --check-device mid_csp_cbf/fsp/{0:02d} &&\\\n" \
                   "             /venv/bin/python /app/tangods/Fsp/FspMulti/FspMulti.py fsp-{0:02d}\"\n\n".format(i, depends_on_vcc)
 

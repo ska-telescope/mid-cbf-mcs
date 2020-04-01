@@ -52,7 +52,7 @@ class CbfSubarrayPssConfig(SKACapability):
     # Device Properties
     # -----------------
 
-    fspSubarray = device_property(
+    fspSubarrayCorr = device_property(
         dtype=('str',)
     )
 
@@ -93,7 +93,7 @@ class CbfSubarrayPssConfig(SKACapability):
 
         # Getting Proxies for FSP and FSP Subarrays
         self._proxy_cbf_master = tango.DeviceProxy(self.CbfMasterAddress)
-        self._proxies_fsp_subarray = [*map(tango.DeviceProxy, list(self.fspSubarray))]
+        self._proxies_fsp_subarray = [*map(tango.DeviceProxy, list(self.fspSubarrayCorr))]
 
         self._obs_state = ObsState.IDLE.value
         self.set_state(tango.DevState.ON)
@@ -172,7 +172,7 @@ class CbfSubarrayPssConfig(SKACapability):
         for fsp in argin:
             try:
                 self._fsp_id.append(int(fsp["fspID"]))
-                # TODO: Add passing configuration to PssfspSubarray
+                # TODO: Add passing configuration to PssfspSubarrayCorr
 
             except tango.DevFailed:  # exception in ConfigureScan
                 msg = "An exception occurred while configuring CbfSubarrayPssConfig attributes:\n{}\n" \

@@ -982,7 +982,7 @@ class CbfSubarray(SKASubarray):
         dtype=('str',)
     )
 
-    fspSubarray = device_property(
+    fspSubarrayCorr = device_property(
         dtype=('str',)
     )
 
@@ -1117,7 +1117,7 @@ class CbfSubarray(SKASubarray):
         self._count_fsp = int(self._master_max_capabilities["FSP"])
         self._fqdn_vcc = list(self.VCC)[:self._count_vcc]
         self._fqdn_fsp = list(self.FSP)[:self._count_fsp]
-        self._fqdn_fsp_subarray = list(self.fspSubarray)
+        self._fqdn_fsp_subarray = list(self.fspSubarrayCorr)
 
         self._proxies_vcc = [*map(tango.DeviceProxy, self._fqdn_vcc)]
         self._proxies_fsp = [*map(tango.DeviceProxy, self._fqdn_fsp)]
