@@ -137,7 +137,7 @@
                 ]
             },
             {
-                "devPropName": "FspSubarray",
+                "devPropName": "fspSubarray",
                 "devPropValue": [
                     "mid_csp_cbf/fspSubarray/01_01",
                     "mid_csp_cbf/fspSubarray/02_01",
@@ -1343,15 +1343,6 @@
                     "mid_csp_cbf/fspSubarray/04_01"
                 ]
             },
-   	        {
-                "devPropName": "FSP",
-                "devPropValue": [
-                    "mid_csp_cbf/fsp/01",
-                    "mid_csp_cbf/fsp/02",
-                    "mid_csp_cbf/fsp/03",
-                    "mid_csp_cbf/fsp/04"
-                ]
-            },
   	        {
                 "devPropName": "CbfMasterAddress",
                 "devPropValue": "mid_csp_cbf/sub_elt/master"
@@ -1370,15 +1361,6 @@
                     "mid_csp_cbf/fspSubarray/02_02",
                     "mid_csp_cbf/fspSubarray/03_02",
                     "mid_csp_cbf/fspSubarray/04_02"
-                ]
-            },
-   	        {
-                "devPropName": "FSP",
-                "devPropValue": [
-                    "mid_csp_cbf/fsp/01",
-                    "mid_csp_cbf/fsp/02",
-                    "mid_csp_cbf/fsp/03",
-                    "mid_csp_cbf/fsp/04"
                 ]
             },
   	        {

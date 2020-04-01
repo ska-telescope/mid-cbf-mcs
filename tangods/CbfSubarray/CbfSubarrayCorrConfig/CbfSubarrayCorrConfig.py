@@ -53,7 +53,7 @@ class CbfSubarrayCorrConfig(SKACapability):
     # Device Properties
     # -----------------
 
-    FspSubarray = device_property(
+    fspSubarray = device_property(
         dtype=('str',)
     )
 
@@ -94,7 +94,7 @@ class CbfSubarrayCorrConfig(SKACapability):
 
         # Getting Proxies for FSP and FSP Subarrays
         self._proxy_cbf_master = tango.DeviceProxy(self.CbfMasterAddress)
-        self._proxies_fsp_subarray = [*map(tango.DeviceProxy, list(self.FspSubarray))]
+        self._proxies_fsp_subarray = [*map(tango.DeviceProxy, list(self.fspSubarray))]
 
         self._obs_state = ObsState.IDLE.value
         self.set_state(tango.DevState.ON)
@@ -167,13 +167,15 @@ class CbfSubarrayCorrConfig(SKACapability):
         except json.JSONDecodeError:  # argument not a valid JSON object
             msg = "Configuration object is not a valid JSON object. Aborting configuration."
             self.__raise_configure_scan_fatal_error(msg)
+
         self._obs_state = ObsState.CONFIGURING.value
+        self._fsp_id = []
 
         for fsp in argin:
             try:
                 self._fsp_id.append(int(fsp["fspID"]))
 
-                # Send config to FspSubarray for Fsp configuration
+                # Send config to fspSubarray for Fsp configuration
                 proxy_fsp_subarray = self._proxies_fsp_subarray[self._fsp_id - 1]
                 proxy_fsp_subarray.ConfigureScan(json.dumps(fsp))
             except tango.DevFailed:  # exception in ConfigureScan

@@ -52,11 +52,7 @@ class CbfSubarrayPssConfig(SKACapability):
     # Device Properties
     # -----------------
 
-    FSP = device_property(
-        dtype=('str',)
-    )
-
-    FspSubarray = device_property(
+    fspSubarray = device_property(
         dtype=('str',)
     )
 
@@ -70,57 +66,12 @@ class CbfSubarrayPssConfig(SKACapability):
     # Attributes
     # ----------
 
-    receptors = attribute(
+    fspID = attribute(
         dtype=('uint16',),
         access=AttrWriteType.READ_WRITE,
-        label="Fst PSS Configuration",
-        doc="Fst PSS Configuration JSON",
-        max_dim_x=197,
     )
 
-    fspID = attribute(
-        dtype='uint16',
-        access=AttrWriteType.READ_WRITE,
-    )
-
-    searchWindowID = attribute(
-        dtype='uint16',
-        access=AttrWriteType.READ_WRITE,
-        max_dim_x=2,
-        label="ID for 300MHz Search Window",
-        doc="Identifier of the Search Window to be used as input for beamforming on this FSP.",
-    )
-
-    searchBeamID = attribute(
-        dtype='uint16',
-        access=AttrWriteType.READ_WRITE,
-        max_dim_x=1500,
-        label="Search Beam ID",
-        doc="Search Beam ID as specified by TM/LMC.",
-    )
-
-    outputEnable = attribute(
-        dtype='bool',
-        access=AttrWriteType.READ_WRITE,
-        label="Enable Output",
-        doc="Enable/disable transmission of output products.",
-    )
-
-    averagingInterval = attribute(
-        dtype='uint16',
-        access=AttrWriteType.READ_WRITE,
-        label="Interval for averaging in time",
-        doc="averaging interval aligned across all beams within the sub-array",
-    )
-
-    searchBeamAddress = attribute(
-        dtype='str',
-        access=AttrWriteType.READ_WRITE,
-        label="Search Beam Destination Addresses",
-        doc="Destination addresses (MAC address, IP address, port) for Mid.CBF output products. ",
-    )
-
-    PssConfig = attribute(
+    pssConfig = attribute(
         dtype='str',
         access=AttrWriteType.READ_WRITE,
         label="Fst PSS Configuration",
@@ -139,21 +90,10 @@ class CbfSubarrayPssConfig(SKACapability):
         # initialize attribute values
         self._pss_config = {}  # this is interpreted as a JSON object
         self._fsp_id = 0
-        self._search_window_id = 0
-        self._search_beam_id = 0
-        self._receptors = []
-        self._output_enable = 0
-        self._averaging_interval = 0
-        self._search_beam_address = ""
 
         # Getting Proxies for FSP and FSP Subarrays
         self._proxy_cbf_master = tango.DeviceProxy(self.CbfMasterAddress)
-        self._master_max_capabilities = dict(
-            pair.split(":") for pair in
-            self._proxy_cbf_master.get_property("MaxCapabilities")["MaxCapabilities"]
-        )
-        self._proxies_fsp = [*map(tango.DeviceProxy, list(self.FSP)[:int(self._master_max_capabilities["FSP"])])]
-        self._proxies_fsp_subarray = [*map(tango.DeviceProxy, list(self.FspSubarray))]
+        self._proxies_fsp_subarray = [*map(tango.DeviceProxy, list(self.fspSubarray))]
 
         self._obs_state = ObsState.IDLE.value
         self.set_state(tango.DevState.ON)
@@ -183,15 +123,6 @@ class CbfSubarrayPssConfig(SKACapability):
     # ------------------
     # Attributes methods
     # ------------------
-    def read_receptors(self):
-        # PROTECTED REGION ID(CbfSubarrayPssConfig.read_receptors) ENABLED START #
-        return self._receptors
-        # PROTECTED REGION END #    //  CbfSubarrayPssConfig.read_receptors
-
-    def write_receptors(self, value):
-        # PROTECTED REGION ID(CbfSubarrayPssConfig.write_receptors) ENABLED START #
-        self._receptors = value
-        # PROTECTED REGION END #    //  CbfSubarrayPssConfig.write_receptors
 
     def read_fspID(self):
         # PROTECTED REGION ID(CbfSubarrayPssConfig.read_fspID) ENABLED START #
@@ -203,62 +134,12 @@ class CbfSubarrayPssConfig(SKACapability):
         self._fsp_id = value
         # PROTECTED REGION END #    //  CbfSubarrayPssConfig.write_fspID
 
-    def read_searchWindowID(self):
-        # PROTECTED REGION ID(CbfSubarrayPssConfig.read_searchWindowID) ENABLED START #
-        return self._search_window_id
-        # PROTECTED REGION END #    //  CbfSubarrayPssConfig.read_searchWindowID
-
-    def write_searchWindowID(self, value):
-        # PROTECTED REGION ID(CbfSubarrayPssConfig.write_searchWindowID) ENABLED START #
-        self._search_window_id = value
-        # PROTECTED REGION END #    //  CbfSubarrayPssConfig.write_searchWindowID
-
-    def read_searchBeamID(self):
-        # PROTECTED REGION ID(CbfSubarrayPssConfig.read_searchBeamID) ENABLED START #
-        return self._search_beam_id
-        # PROTECTED REGION END #    //  CbfSubarrayPssConfig.read_searchBeamID
-
-    def write_searchBeamID(self, value):
-        # PROTECTED REGION ID(CbfSubarrayPssConfig.write_searchBeamID) ENABLED START #
-        self._search_beam_id = value
-        # PROTECTED REGION END #    //  CbfSubarrayPssConfig.write_searchBeamID
-
-    def read_outputEnable(self):
-        # PROTECTED REGION ID(CbfSubarrayPssConfig.read_outputEnable) ENABLED START #
-        return self._output_enable
-        # PROTECTED REGION END #    //  CbfSubarrayPssConfig.read_outputEnable
-
-    def write_outputEnable(self, value):
-        # PROTECTED REGION ID(CbfSubarrayPssConfig.write_outputEnable) ENABLED START #
-        self._output_enable = value
-        # PROTECTED REGION END #    //  CbfSubarrayPssConfig.write_outputEnable
-
-    def read_averagingInterval(self):
-        # PROTECTED REGION ID(CbfSubarrayPssConfig.read_averagingInterval) ENABLED START #
-        return self._averaging_interval
-        # PROTECTED REGION END #    //  CbfSubarrayPssConfig.read_averagingInterval
-
-    def write_averagingInterval(self, value):
-        # PROTECTED REGION ID(CbfSubarrayPssConfig.write_averagingInterval) ENABLED START #
-        self._averaging_interval = value
-        # PROTECTED REGION END #    //  CbfSubarrayPssConfig.write_averagingInterval
-
-    def read_searchBeamAddress(self):
-        # PROTECTED REGION ID(CbfSubarrayPssConfig.read_searchBeamAddress) ENABLED START #
-        return self._search_beam_address
-        # PROTECTED REGION END #    //  CbfSubarrayPssConfig.read_searchBeamAddress
-
-    def write_searchBeamAddress(self, value):
-        # PROTECTED REGION ID(CbfSubarrayPssConfig.write_searchBeamAddress) ENABLED START #
-        self._search_beam_address = value
-        # PROTECTED REGION END #    //  CbfSubarrayPssConfig.write_searchBeamAddress
-
-    def read_PssConfig(self):
+    def read_pssConfig(self):
         # PROTECTED REGION ID(CbfSubarrayPssConfig.read_PssConfig) ENABLED START #
         return json.dumps(self._pss_config)
         # PROTECTED REGION END #    //  CbfSubarrayPssConfig.read_PssConfig
 
-    def write_PssConfig(self, value):
+    def write_pssConfig(self, value):
         # PROTECTED REGION ID(CbfSubarrayPssConfig.write_PssConfig) ENABLED START #
         # if value is not valid JSON, the exception is caught by CbfSubarray.ConfigureScan()
         self._pss_config = json.loads(value)
@@ -284,20 +165,15 @@ class CbfSubarrayPssConfig(SKACapability):
         except json.JSONDecodeError:  # argument not a valid JSON object
             msg = "Configuration object is not a valid JSON object. Aborting configuration."
             self.__raise_configure_scan_fatal_error(msg)
+
         self._obs_state = ObsState.CONFIGURING.value
+        self._fsp_id = []
 
         for fsp in argin:
             try:
-                self._fsp_id = int(fsp["fspID"])
-                self._search_window_id = int(fsp["searchWindowID"])
-                self._search_beam_id = int(fsp["searchBeamID"])
+                self._fsp_id.append(int(fsp["fspID"]))
+                # TODO: Add passing configuration to PssfspSubarray
 
-                if "receptors" in fsp:
-                    self._receptors = fsp["receptors"]
-
-                self._output_enable = bool(fsp["outputEnable"])
-                self._averaging_interval = int(fsp["averagingInterval"])
-                self._search_beam_address = fsp["searchBeamDestinationAddress"]
             except tango.DevFailed:  # exception in ConfigureScan
                 msg = "An exception occurred while configuring CbfSubarrayPssConfig attributes:\n{}\n" \
                   "Aborting configuration".format(sys.exc_info()[1].args[0].desc)

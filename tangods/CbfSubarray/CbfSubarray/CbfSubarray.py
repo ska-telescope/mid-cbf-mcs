@@ -982,7 +982,7 @@ class CbfSubarray(SKASubarray):
         dtype=('str',)
     )
 
-    FspSubarray = device_property(
+    fspSubarray = device_property(
         dtype=('str',)
     )
 
@@ -1117,7 +1117,7 @@ class CbfSubarray(SKASubarray):
         self._count_fsp = int(self._master_max_capabilities["FSP"])
         self._fqdn_vcc = list(self.VCC)[:self._count_vcc]
         self._fqdn_fsp = list(self.FSP)[:self._count_fsp]
-        self._fqdn_fsp_subarray = list(self.FspSubarray)
+        self._fqdn_fsp_subarray = list(self.fspSubarray)
 
         self._proxies_vcc = [*map(tango.DeviceProxy, self._fqdn_vcc)]
         self._proxies_fsp = [*map(tango.DeviceProxy, self._fqdn_fsp)]
@@ -1485,6 +1485,8 @@ class CbfSubarray(SKASubarray):
             tango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
                                          tango.ErrSeverity.ERR)
 
+        self._pss_config = []
+        self._corr_config = []
         self.__validate_scan_configuration(argin)
 
         # Call this just to release all FSPs and unsubscribe to events.
@@ -1607,8 +1609,12 @@ class CbfSubarray(SKASubarray):
         self._group_vcc.command_inout("SetObservingState", data)
 
         # pass on configuration to individual function mode class to configure the FSP Subarray
-        self._proxy_pss_config.ConfigureFSP(json.dumps(self._pss_config))
-        self._proxy_corr_config.ConfigureFSP(json.dumps(self._corr_config))
+
+        if self._pss_config.len() != 0:
+            self._proxy_pss_config.ConfigureFSP(json.dumps(self._pss_config))
+
+        if self._corr_config.len() != 0:
+            self._proxy_corr_config.ConfigureFSP(json.dumps(self._corr_config))
 
         # Configure FSP.
         for fsp in argin["fsp"]:
