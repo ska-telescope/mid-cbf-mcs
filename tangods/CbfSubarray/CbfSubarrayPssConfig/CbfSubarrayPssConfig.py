@@ -69,6 +69,7 @@ class CbfSubarrayPssConfig(SKACapability):
     fspID = attribute(
         dtype=('uint16',),
         access=AttrWriteType.READ_WRITE,
+        max_dim_x=27,
     )
 
     pssConfig = attribute(
@@ -89,7 +90,7 @@ class CbfSubarrayPssConfig(SKACapability):
 
         # initialize attribute values
         self._pss_config = {}  # this is interpreted as a JSON object
-        self._fsp_id = 0
+        self._fsp_id = []
 
         # Getting Proxies for FSP and FSP Subarrays
         self._proxy_cbf_master = tango.DeviceProxy(self.CbfMasterAddress)
@@ -160,6 +161,7 @@ class CbfSubarrayPssConfig(SKACapability):
             tango.Except.throw_exception("Command failed", msg, "ConfigureFSP execution",
                                            tango.ErrSeverity.ERR)
         try:
+            # set pss_config to the most recent fsp configuration JSON
             argin = json.loads(argin)
             self._pss_config = argin
         except json.JSONDecodeError:  # argument not a valid JSON object
@@ -168,12 +170,12 @@ class CbfSubarrayPssConfig(SKACapability):
 
         self._obs_state = ObsState.CONFIGURING.value
         self._fsp_id = []
-
+        count = 0
         for fsp in argin:
             try:
                 self._fsp_id.append(int(fsp["fspID"]))
                 # TODO: Add passing configuration to PssfspSubarrayCorr
-
+                count = count + 1
             except tango.DevFailed:  # exception in ConfigureScan
                 msg = "An exception occurred while configuring CbfSubarrayPssConfig attributes:\n{}\n" \
                   "Aborting configuration".format(sys.exc_info()[1].args[0].desc)

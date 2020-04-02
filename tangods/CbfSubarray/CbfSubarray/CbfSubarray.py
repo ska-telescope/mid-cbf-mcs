@@ -1610,10 +1610,10 @@ class CbfSubarray(SKASubarray):
 
         # pass on configuration to individual function mode class to configure the FSP Subarray
 
-        if self._pss_config.len() != 0:
+        if len(self._pss_config) != 0:
             self._proxy_pss_config.ConfigureFSP(json.dumps(self._pss_config))
 
-        if self._corr_config.len() != 0:
+        if len(self._corr_config) != 0:
             self._proxy_corr_config.ConfigureFSP(json.dumps(self._corr_config))
 
         # Configure FSP.

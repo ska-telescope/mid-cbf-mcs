@@ -70,6 +70,7 @@ class CbfSubarrayCorrConfig(SKACapability):
     fspID = attribute(
         dtype=('uint16',),
         access=AttrWriteType.READ_WRITE,
+        max_dim_x=27,
     )
 
     corrConfig = attribute(
@@ -126,15 +127,14 @@ class CbfSubarrayCorrConfig(SKACapability):
     # ------------------
 
     def read_fspID(self):
-        # PROTECTED REGION ID(CbfSubarrayCorrConfig.read_PssConfig) ENABLED START #
+        # PROTECTED REGION ID(CbfSubarrayCorrConfig.read_fspID) ENABLED START #
         return self._fsp_id
-        # PROTECTED REGION END #    //  CbfSubarrayCorrConfig.read_PssConfig
+        # PROTECTED REGION END #    //  CbfSubarrayCorrConfig.read_fspID
 
     def write_fspID(self, value):
-        # PROTECTED REGION ID(CbfSubarrayCorrConfig.write_PssConfig) ENABLED START #
-        # if value is not valid JSON, the exception is caught by CbfSubarray.ConfigureScan()
+        # PROTECTED REGION ID(CbfSubarrayCorrConfig.write_fspID) ENABLED START #
         self._fsp_id = value
-        # PROTECTED REGION END #    //  CbfSubarrayCorrConfig.write_PssConfig
+        # PROTECTED REGION END #    //  CbfSubarrayCorrConfig.write_fspID
 
     def read_corrConfig(self):
         # PROTECTED REGION ID(CbfSubarrayCorrConfig.read_PssConfig) ENABLED START #
@@ -162,6 +162,7 @@ class CbfSubarrayCorrConfig(SKACapability):
             tango.Except.throw_exception("Command failed", msg, "ConfigureFSP execution",
                                            tango.ErrSeverity.ERR)
         try:
+            # set corr_config to the most recent fsp configuration JSON
             argin = json.loads(argin)
             self._corr_config = argin
         except json.JSONDecodeError:  # argument not a valid JSON object
@@ -170,14 +171,14 @@ class CbfSubarrayCorrConfig(SKACapability):
 
         self._obs_state = ObsState.CONFIGURING.value
         self._fsp_id = []
-
+        count = 0
         for fsp in argin:
             try:
                 self._fsp_id.append(int(fsp["fspID"]))
-
                 # Send config to fspSubarrayCorr for Fsp configuration
-                proxy_fsp_subarray = self._proxies_fsp_subarray[self._fsp_id - 1]
+                proxy_fsp_subarray = self._proxies_fsp_subarray[self._fsp_id[count] - 1]
                 proxy_fsp_subarray.ConfigureScan(json.dumps(fsp))
+                count = count + 1
             except tango.DevFailed:  # exception in ConfigureScan
                 msg = "An exception occurred while configuring CbfSubarrayCorrConfig attributes:\n{}\n" \
                   "Aborting configuration".format(sys.exc_info()[1].args[0].desc)
