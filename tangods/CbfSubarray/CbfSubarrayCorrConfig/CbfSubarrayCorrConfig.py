@@ -13,8 +13,8 @@ Herzberg Astronomy and Astrophysics, National Research Council of Canada
 Copyright (c) 2020 National Research Council of Canada
 """
 
-# CbfSubarrayPssConfig Tango device prototype
-# CbfSubarrayPssConfig TANGO device class for the prototype
+# CbfSubarrayCorrConfig Tango device prototype
+# CbfSubarrayCorrConfig TANGO device class for the prototype
 
 # tango imports
 import tango
@@ -26,7 +26,7 @@ from tango.server import device_property
 from tango import AttrQuality, DispLevel, DevState
 from tango import AttrWriteType, PipeWriteType
 # Additional import
-# PROTECTED REGION ID(CbfSubarrayPssConfig.additionnal_import) ENABLED START #
+# PROTECTED REGION ID(CbfSubarrayCorrConfig.additionnal_import) ENABLED START #
 import os
 import sys
 import json
@@ -37,16 +37,17 @@ sys.path.insert(0, commons_pkg_path)
 
 from global_enum import HealthState, AdminMode, ObsState, const
 from skabase.SKACapability.SKACapability import SKACapability
-# PROTECTED REGION END #    //  CbfSubarrayPssConfig.additionnal_import
+# PROTECTED REGION END #    //  CbfSubarrayCorrConfig.additionnal_import
 
-__all__ = ["CbfSubarrayPssConfig", "main"]
+__all__ = ["CbfSubarrayCorrConfig", "main"]
 
 
-class CbfSubarrayPssConfig(SKACapability):
+class CbfSubarrayCorrConfig(SKACapability):
 
     __metaclass__ = DeviceMeta
-    # PROTECTED REGION ID(CbfSubarrayPssConfig.class_variable) ENABLED START #
-    # PROTECTED REGION END #    //  CbfSubarrayPssConfig.class_variable
+    # PROTECTED REGION ID(CbfSubarrayCorrConfig.class_variable) ENABLED START #
+
+    # PROTECTED REGION END #    //  CbfSubarrayCorrConfig.class_variable
 
     # -----------------
     # Device Properties
@@ -72,11 +73,11 @@ class CbfSubarrayPssConfig(SKACapability):
         max_dim_x=27,
     )
 
-    pssConfig = attribute(
+    corrConfig = attribute(
         dtype='str',
         access=AttrWriteType.READ_WRITE,
-        label="Fst PSS Configuration",
-        doc="Fst PSS Configuration JSON"
+        label="Fst Corr Configuration",
+        doc="Fst Corr Configuration JSON"
     )
 
     # ---------------
@@ -85,12 +86,12 @@ class CbfSubarrayPssConfig(SKACapability):
 
     def init_device(self):
         SKACapability.init_device(self)
-        # PROTECTED REGION ID(CbfSubarrayPssConfig.init_device) ENABLED START #
+        # PROTECTED REGION ID(CbfSubarrayCorrConfig.init_device) ENABLED START #
         self.set_state(tango.DevState.INIT)
 
         # initialize attribute values
-        self._pss_config = {}  # this is interpreted as a JSON object
         self._fsp_id = []
+        self._corr_config = {}  # this is interpreted as a JSON object
 
         # Getting Proxies for FSP and FSP Subarrays
         self._proxy_cbf_master = tango.DeviceProxy(self.CbfMasterAddress)
@@ -98,17 +99,17 @@ class CbfSubarrayPssConfig(SKACapability):
 
         self._obs_state = ObsState.IDLE.value
         self.set_state(tango.DevState.ON)
-        # PROTECTED REGION END #    //  CbfSubarrayPssConfig.init_device
+        # PROTECTED REGION END #    //  CbfSubarrayCorrConfig.init_device
 
     def always_executed_hook(self):
-        # PROTECTED REGION ID(CbfSubarrayPssConfig.always_executed_hook) ENABLED START #
+        # PROTECTED REGION ID(CbfSubarrayCorrConfig.always_executed_hook) ENABLED START #
         pass
-        # PROTECTED REGION END #    //  CbfSubarrayPssConfig.always_executed_hook
+        # PROTECTED REGION END #    //  CbfSubarrayCorrConfig.always_executed_hook
 
     def delete_device(self):
-        # PROTECTED REGION ID(CbfSubarrayPssConfig.delete_device) ENABLED START #
+        # PROTECTED REGION ID(CbfSubarrayCorrConfig.delete_device) ENABLED START #
         pass
-        # PROTECTED REGION END #    //  CbfSubarrayPssConfig.delete_device
+        # PROTECTED REGION END #    //  CbfSubarrayCorrConfig.delete_device
 
     def is_configure_scan_allowed(self):
         if self.dev_state() == tango.DevState.ON and \
@@ -126,25 +127,25 @@ class CbfSubarrayPssConfig(SKACapability):
     # ------------------
 
     def read_fspID(self):
-        # PROTECTED REGION ID(CbfSubarrayPssConfig.read_fspID) ENABLED START #
+        # PROTECTED REGION ID(CbfSubarrayCorrConfig.read_fspID) ENABLED START #
         return self._fsp_id
-        # PROTECTED REGION END #    //  CbfSubarrayPssConfig.read_fspID
+        # PROTECTED REGION END #    //  CbfSubarrayCorrConfig.read_fspID
 
     def write_fspID(self, value):
-        # PROTECTED REGION ID(CbfSubarrayPssConfig.write_fspID) ENABLED START #
+        # PROTECTED REGION ID(CbfSubarrayCorrConfig.write_fspID) ENABLED START #
         self._fsp_id = value
-        # PROTECTED REGION END #    //  CbfSubarrayPssConfig.write_fspID
+        # PROTECTED REGION END #    //  CbfSubarrayCorrConfig.write_fspID
 
-    def read_pssConfig(self):
-        # PROTECTED REGION ID(CbfSubarrayPssConfig.read_PssConfig) ENABLED START #
-        return json.dumps(self._pss_config)
-        # PROTECTED REGION END #    //  CbfSubarrayPssConfig.read_PssConfig
+    def read_corrConfig(self):
+        # PROTECTED REGION ID(CbfSubarrayCorrConfig.read_PssConfig) ENABLED START #
+        return json.dumps(self._corr_config)
+        # PROTECTED REGION END #    //  CbfSubarrayCorrConfig.read_PssConfig
 
-    def write_pssConfig(self, value):
-        # PROTECTED REGION ID(CbfSubarrayPssConfig.write_PssConfig) ENABLED START #
+    def write_corrConfig(self, value):
+        # PROTECTED REGION ID(CbfSubarrayCorrConfig.write_PssConfig) ENABLED START #
         # if value is not valid JSON, the exception is caught by CbfSubarray.ConfigureScan()
-        self._pss_config = json.loads(value)
-        # PROTECTED REGION END #    //  CbfSubarrayPssConfig.write_PssConfig
+        self._corr_config = json.loads(value)
+        # PROTECTED REGION END #    //  CbfSubarrayCorrConfig.write_PssConfig
 
     # --------
     # Commands
@@ -161,9 +162,9 @@ class CbfSubarrayPssConfig(SKACapability):
             tango.Except.throw_exception("Command failed", msg, "ConfigureFSP execution",
                                            tango.ErrSeverity.ERR)
         try:
-            # set pss_config to the most recent fsp configuration JSON
+            # set corr_config to the most recent fsp configuration JSON
             argin = json.loads(argin)
-            self._pss_config = argin
+            self._corr_config = argin
         except json.JSONDecodeError:  # argument not a valid JSON object
             msg = "Configuration object is not a valid JSON object. Aborting configuration."
             self.__raise_configure_scan_fatal_error(msg)
@@ -174,10 +175,12 @@ class CbfSubarrayPssConfig(SKACapability):
         for fsp in argin:
             try:
                 self._fsp_id.append(int(fsp["fspID"]))
-                # TODO: Add passing configuration to PssfspSubarrayCorr
+                # Send config to fspSubarrayCorr for Fsp configuration
+                proxy_fsp_subarray = self._proxies_fsp_subarray[self._fsp_id[count] - 1]
+                proxy_fsp_subarray.ConfigureScan(json.dumps(fsp))
                 count = count + 1
             except tango.DevFailed:  # exception in ConfigureScan
-                msg = "An exception occurred while configuring CbfSubarrayPssConfig attributes:\n{}\n" \
+                msg = "An exception occurred while configuring CbfSubarrayCorrConfig attributes:\n{}\n" \
                   "Aborting configuration".format(sys.exc_info()[1].args[0].desc)
                 self.__raise_configure_scan_fatal_error(msg)
 
@@ -190,7 +193,7 @@ class CbfSubarrayPssConfig(SKACapability):
 
     @command()
     def EndScan(self):
-        # PROTECTED REGION ID(CbfSubarrayPssConfig.EndScan) ENABLED START #
+        # PROTECTED REGION ID(CbfSubarrayCorrConfig.EndScan) ENABLED START #
         if self._obs_state != ObsState.SCANNING.value:
             msg = "Device not in SCANNING obsState."
             self.logger.error(msg)
@@ -198,7 +201,7 @@ class CbfSubarrayPssConfig(SKACapability):
                                            tango.ErrSeverity.ERR)
 
         self._obs_state = ObsState.READY.value
-        # PROTECTED REGION END #    //  CbfSubarrayPssConfig.EndScan
+        # PROTECTED REGION END #    //  CbfSubarrayCorrConfig.EndScan
 
     def is_Scan_allowed(self):
         if self.dev_state() == tango.DevState.ON:
@@ -207,7 +210,7 @@ class CbfSubarrayPssConfig(SKACapability):
 
     @command()
     def Scan(self, argin):
-        # PROTECTED REGION ID(CbfSubarrayPssConfig.Scan) ENABLED START #
+        # PROTECTED REGION ID(CbfSubarrayCorrConfig.Scan) ENABLED START #
         if self._obs_state != ObsState.READY.value:
             msg = "Device not in READY obsState."
             self.logger.error(msg)
@@ -216,25 +219,25 @@ class CbfSubarrayPssConfig(SKACapability):
         # TODO: actually use argin
         # For MVP, ignore argin (activation time)
         self._obs_state = ObsState.SCANNING.value
-        # PROTECTED REGION END #    //  CbfSubarrayPssConfig.Scan
+        # PROTECTED REGION END #    //  CbfSubarrayCorrConfig.Scan
 
     @command(
         dtype_in='DevState',
         doc_in='New state'
     )
     def SetState(self, argin):
-        # PROTECTED REGION ID(CbfSubarrayPssConfig.SetState) ENABLED START #
+        # PROTECTED REGION ID(CbfSubarrayCorrConfig.SetState) ENABLED START #
         self.set_state(argin)
-        # PROTECTED REGION END #    //  CbfSubarrayPssConfig.SetState
+        # PROTECTED REGION END #    //  CbfSubarrayCorrConfig.SetState
 
 # ----------
 # Run server
 # ----------
 
 def main(args=None, **kwargs):
-    # PROTECTED REGION ID(CbfSubarrayPssConfig.main) ENABLED START #
-    return run((CbfSubarrayPssConfig,), args=args, **kwargs)
-    # PROTECTED REGION END #    //  CbfSubarrayPssConfig.main
+    # PROTECTED REGION ID(CbfSubarrayCorrConfig.main) ENABLED START #
+    return run((CbfSubarrayCorrConfig,), args=args, **kwargs)
+    # PROTECTED REGION END #    //  CbfSubarrayCorrConfig.main
 
 if __name__ == '__main__':
     main()
