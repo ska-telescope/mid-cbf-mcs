@@ -61,7 +61,7 @@ class CbfSubarrayPssConfig(SKACapability):
         dtype=('str',)
     )
 
-    FspSubarray = device_property(
+    FspSubarrayCorr = device_property(
         dtype=('str',)
     )
 
@@ -158,7 +158,7 @@ class CbfSubarrayPssConfig(SKACapability):
             self._proxy_cbf_master.get_property("MaxCapabilities")["MaxCapabilities"]
         )
         self._proxies_fsp = [*map(PyTango.DeviceProxy, list(self.FSP)[:int(self._master_max_capabilities["FSP"])])]
-        self._proxies_fsp_subarray = [*map(PyTango.DeviceProxy, list(self.FspSubarray))]
+        self._proxies_fsp_subarray = [*map(PyTango.DeviceProxy, list(self.FspSubarrayCorr))]
 
         self._obs_state = ObsState.IDLE.value
         self.set_state(PyTango.DevState.ON)

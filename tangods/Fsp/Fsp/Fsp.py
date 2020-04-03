@@ -53,10 +53,10 @@ class Fsp(SKACapability):
             self._proxy_pst = tango.DeviceProxy(self.PSTAddress)
         if self.VLBIAddress:
             self._proxy_vlbi = tango.DeviceProxy(self.VLBIAddress)
-        if self.FspSubarray:
+        if self.FspSubarrayCorr:
             self._proxy_fsp_subarray = [*map(
                 tango.DeviceProxy,
-                list(self.FspSubarray)
+                list(self.FspSubarrayCorr)
             )]
 
     # PROTECTED REGION END #    //  Fsp.class_variable
@@ -85,7 +85,7 @@ class Fsp(SKACapability):
         dtype='str'
     )
 
-    FspSubarray = device_property(
+    FspSubarrayCorr = device_property(
         dtype=('str',)
     )
 
@@ -136,7 +136,7 @@ class Fsp(SKACapability):
 
         # initialize FSP subarray group
         self._group_fsp_subarray = tango.Group("FSP Subarray")
-        for fqdn in list(self.FspSubarray):
+        for fqdn in list(self.FspSubarrayCorr):
             self._group_fsp_subarray.add(fqdn)
 
         self.set_state(tango.DevState.OFF)
