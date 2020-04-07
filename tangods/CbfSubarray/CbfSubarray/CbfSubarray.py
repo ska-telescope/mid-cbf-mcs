@@ -38,7 +38,7 @@ commons_pkg_path = os.path.abspath(os.path.join(file_path, "../../commons"))
 sys.path.insert(0, commons_pkg_path)
 
 from global_enum import const
-from skabase.control_model import ObsState
+from skabase.control_model import ObsState, AdminMode
 from skabase.SKASubarray.SKASubarray import SKASubarray
 
 # PROTECTED REGION END #    //  CbfSubarray.additionnal_import
@@ -605,11 +605,14 @@ class CbfSubarray(SKASubarray):
                                     proxy_fsp.functionMode == 0:
                                 pass
                             else:
-                                msg = "A different subarray is using FSP {} for a " \
-                                      "different function mode. Aborting configuration.".format(
-                                    fsp["fspID"]
-                                )
-                                self.__raise_configure_scan_fatal_error(msg)
+                                #TODO need to add this check for fspSubarrayPSS and VLBI and PST once implemented
+                                for fsp_subarray_corr_proxy in self._proxies_fsp_subarray:
+                                    if fsp_subarray_corr_proxy.obsState != ObsState.IDLE:
+                                        msg = "A different subarray is using FSP {} for a " \
+                                              "different function mode. Aborting configuration.".format(
+                                               fsp["fspID"]
+                                               )
+                                        self.__raise_configure_scan_fatal_error(msg)
                         else:
                             msg = "'functionMode' must be one of {} (received {}). " \
                                   "Aborting configuration.".format(
@@ -827,6 +830,7 @@ class CbfSubarray(SKASubarray):
                                                              tango.ErrSeverity.ERR)
 
                         self._corr_config.append(fsp)
+                        self._corr_fsp_list = [fsp["fspID"]]
 
                     if fsp["functionMode"] == "PSS-BF":
                         if "searchWindowID" in fsp:
@@ -905,6 +909,7 @@ class CbfSubarray(SKASubarray):
                             msg = "'searchBeamDestinationAddress' not specified for Fsp PSS config"
                             self.__raise_configure_scan_fatal_error(msg)
                         self._pss_config.append(fsp)
+                        self._pss_fsp_list.append(fsp["fspID"])
 
                     proxy_fsp.unsubscribe_event(
                         proxy_fsp.subscribe_event(
@@ -1047,6 +1052,14 @@ class CbfSubarray(SKASubarray):
         doc="Report the health state of the assigned FSPs.",
     )
 
+    fspList = attribute(
+        dtype=(('uint16',),),
+        max_dim_x=4,
+        max_dim_y=27,
+        label="List of FSP's used by subarray",
+        doc="fsp[1][x] = CORR [2[x] = PSS [1][x] = PST [1][x] = VLBI",
+    )
+
     # ---------------
     # General methods
     # ---------------
@@ -1066,17 +1079,22 @@ class CbfSubarray(SKASubarray):
         else:
             self._subarray_id = int(self.get_name()[-2:])  # last two chars of FQDN
 
-        # initialize attribute values
+     # initialize attribute values
         self._receptors = []
         self._frequency_band = 0
         self._scan_ID = 0
+        self._fsp_list = [[], [], [], []]
         self._output_links_distribution = {"scanID": 0}
         self._vcc_state = {}  # device_name:state
         self._vcc_health_state = {}  # device_name:healthState
         self._fsp_state = {}  # device_name:state
         self._fsp_health_state = {}  # device_name:healthState
+        # store list of fsp configs being used for each function mode
         self._pss_config = []
         self._corr_config = []
+        # store list of fsp being used for each function mode
+        self._corr_fsp_list = []
+        self._pss_fsp_list = []
         self._published_output_links = False
         self._last_received_vis_destination_address = "{}"
         self._last_received_delay_model = "{}"
@@ -1136,7 +1154,8 @@ class CbfSubarray(SKASubarray):
         self._group_fsp_subarray = tango.Group("FSP Subarray")
 
         self._obs_state = ObsState.IDLE.value
-        self.set_state(tango.DevState.DISABLE)
+        self._admin_mode = AdminMode.ONLINE.value
+        self.set_state(tango.DevState.OFF)
 
         # don't need this anymore (since everything is reset when the device is deleted)
 
@@ -1221,6 +1240,12 @@ class CbfSubarray(SKASubarray):
         # PROTECTED REGION ID(CbfSubarray.fspHealthState_read) ENABLED START #
         return list(self._fsp_health_state.values())
         # PROTECTED REGION END #    //  CbfSubarray.fspHealthState_read
+
+    def read_fspList(self):
+        # PROTECTED REGION ID(CbfSubarray.fspList_read) ENABLED START #
+        return self._fsp_list
+        # PROTECTED REGION END #    //  CbfSubarray.fspList_read
+
 
     # --------
     # Commands
@@ -1483,6 +1508,11 @@ class CbfSubarray(SKASubarray):
         # subarray is configured.
         self._pss_config = []
         self._corr_config = []
+        self._corr_fsp_list = []
+        self._pss_fsp_list = []
+        self._corr_fsp_list = []
+        self._fsp_list = [[], [], [], []]
+
         self.__validate_scan_configuration(argin)
 
         # Call this just to release all FSPs and unsubscribe to events.
@@ -1611,6 +1641,10 @@ class CbfSubarray(SKASubarray):
 
         if len(self._corr_config) != 0:
             self._proxy_corr_config.ConfigureFSP(json.dumps(self._corr_config))
+
+        #TODO add PST and VLBI to this once they are implemented
+        self._fsp_list[0].append(self._corr_fsp_list)
+        self._fsp_list[1].append(self._pss_fsp_list)
 
         # Configure FSP.
         for fsp in argin["fsp"]:
@@ -1894,6 +1928,10 @@ class CbfSubarray(SKASubarray):
         self._last_received_vis_destination_address = "{}"
         self._last_received_delay_model = "{}"
         self._published_output_links = False
+
+        # TODO need to add this check for fspSubarrayPSS and VLBI and PST once implemented
+        for fsp_subarray_corr_proxy in self._proxies_fsp_subarray:
+            fsp_subarray_corr_proxy.GoToIdle()
 
         # transition to obsState=IDLE
         self._obs_state = ObsState.IDLE.value

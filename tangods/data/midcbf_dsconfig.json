@@ -169,6 +169,8 @@
                                 "1000",
                                 "scanid",
                                 "1000",
+                                "fspList",
+                                "1000",
 				"outputLinksDistribution",
 				"1000"
                             ]
@@ -299,6 +301,8 @@
                                 "adminmode",
                                 "1000",
                                 "fspstate",
+                                "1000",
+                                "fspList",
                                 "1000",
                                 "fsphealthstate",
                                 "1000",
