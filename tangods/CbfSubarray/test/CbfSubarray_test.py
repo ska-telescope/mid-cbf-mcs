@@ -329,7 +329,7 @@ class TestCbfSubarray:
         f = open(file_path + "/test_json/test_ConfigureScan_basic.json")
         create_subarray_1_proxy.ConfigureScan(f.read().replace("\n", ""))
         f.close()
-        time.sleep(10)
+        time.sleep(15)
 
         # check configured attributes of CBF subarray
         assert create_subarray_1_proxy.scanID == 1
@@ -556,7 +556,7 @@ class TestCbfSubarray:
         create_fsp_2_proxy.Init()
         create_subarray_1_proxy.set_timeout_millis(60000)  # since the command takes a while
         create_subarray_1_proxy.Init()
-        assert create_subarray_1_proxy.state() == tango.DevState.DISABLE
+        assert create_subarray_1_proxy.state() == tango.DevState.OFF
         time.sleep(3)
         create_cbf_master_proxy.set_timeout_millis(60000)
         create_cbf_master_proxy.Init()
@@ -669,7 +669,7 @@ class TestCbfSubarray:
         f = open(file_path + "/test_json/test_ConfigureScan_basic.json")
         create_subarray_1_proxy.ConfigureScan(f.read().replace("\n", ""))
         f.close()
-        time.sleep(10)
+        time.sleep(30)
 
         assert create_subarray_1_proxy.obsState.value == ObsState.READY.value
 

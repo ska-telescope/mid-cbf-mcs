@@ -295,7 +295,7 @@ class CbfMaster(SKAMaster):
         doc="Report the administration mode of the FSP capabilities as an array of unsigned short.\nfor ex:\n[0,0,2,..]",
     )
 
-    reportFSPSubarrayMembership = attribute(
+    reportFSPSubarrayCorrMembership = attribute(
         dtype=(('uint16',),),
         max_dim_x=16,
         max_dim_y=27,
@@ -542,10 +542,10 @@ class CbfMaster(SKAMaster):
         return self._report_fsp_admin_mode
         # PROTECTED REGION END #    //  CbfMaster.reportFSPAdminMode_read
 
-    def read_reportFSPSubarrayMembership(self):
-        # PROTECTED REGION ID(CbfMaster.reportFSPSubarrayMembership_read) ENABLED START #
+    def read_reportFSPSubarrayCorrMembership(self):
+        # PROTECTED REGION ID(CbfMaster.reportFSPSubarrayCorrMembership_read) ENABLED START #
         return self._report_fsp_subarray_membership
-        # PROTECTED REGION END #    //  CbfMaster.reportFSPSubarrayMembership_read
+        # PROTECTED REGION END #    //  CbfMaster.reportFSPSubarrayCorrMembership_read
 
     def read_frequencyOffsetK(self):
         # PROTECTED REGION ID(CbfMaster.frequencyOffsetK_read) ENABLED START #
