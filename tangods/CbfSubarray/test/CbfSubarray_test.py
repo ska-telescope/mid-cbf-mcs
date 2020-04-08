@@ -329,7 +329,7 @@ class TestCbfSubarray:
         f = open(file_path + "/test_json/test_ConfigureScan_basic.json")
         create_subarray_1_proxy.ConfigureScan(f.read().replace("\n", ""))
         f.close()
-        time.sleep(10)
+        time.sleep(15)
 
         # check configured attributes of CBF subarray
         assert create_subarray_1_proxy.scanID == 1
@@ -669,7 +669,7 @@ class TestCbfSubarray:
         f = open(file_path + "/test_json/test_ConfigureScan_basic.json")
         create_subarray_1_proxy.ConfigureScan(f.read().replace("\n", ""))
         f.close()
-        time.sleep(10)
+        time.sleep(30)
 
         assert create_subarray_1_proxy.obsState.value == ObsState.READY.value
 

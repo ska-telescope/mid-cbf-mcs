@@ -1931,7 +1931,8 @@ class CbfSubarray(SKASubarray):
 
         # TODO need to add this check for fspSubarrayPSS and VLBI and PST once implemented
         for fsp_subarray_corr_proxy in self._proxies_fsp_subarray:
-            fsp_subarray_corr_proxy.GoToIdle()
+             if fsp_subarray_corr_proxy.State() == tango.DevState.ON:
+                fsp_subarray_corr_proxy.GoToIdle()
 
         # transition to obsState=IDLE
         self._obs_state = ObsState.IDLE.value
