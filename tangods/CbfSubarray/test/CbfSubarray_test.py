@@ -556,7 +556,7 @@ class TestCbfSubarray:
         create_fsp_2_proxy.Init()
         create_subarray_1_proxy.set_timeout_millis(60000)  # since the command takes a while
         create_subarray_1_proxy.Init()
-        assert create_subarray_1_proxy.state() == tango.DevState.DISABLE
+        assert create_subarray_1_proxy.state() == tango.DevState.OFF
         time.sleep(3)
         create_cbf_master_proxy.set_timeout_millis(60000)
         create_cbf_master_proxy.Init()
