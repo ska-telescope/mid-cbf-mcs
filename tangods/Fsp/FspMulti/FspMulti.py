@@ -18,10 +18,11 @@ from FspPss.FspPss import FspPss
 from FspPst.FspPst import FspPst
 from FspVlbi.FspVlbi import FspVlbi
 from FspSubarrayCorr.FspSubarrayCorr import FspSubarrayCorr
+from FspSubarrayPss.FspSubarrayPss import FspSubarrayPss
 
 def main(args=None, **kwargs):
     return run(
-        classes=(FspCorr, FspPss, FspPst, FspVlbi, FspSubarrayCorr, Fsp), 
+        classes=(FspCorr, FspPss, FspPst, FspVlbi, FspSubarrayCorr, FspSubarrayPss, Fsp),
         args=args, 
         **kwargs
     )

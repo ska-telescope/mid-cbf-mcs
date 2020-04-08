@@ -1331,6 +1331,262 @@
         ]
     },
     {
+        "class": "FspSubarrayPss",
+        "serverName": "FspMulti/fsp-01",
+        "devName": "mid_csp_cbf/fspSubarrayPss/01_01",
+        "deviceProperties": [
+            {
+                "devPropName": "SubID",
+                "devPropValue": 1
+            },
+            {
+                "devPropName": "FspID",
+                "devPropValue": 1
+            },
+            {
+                "devPropName": "VCC",
+                "devPropValue": [
+                    "mid_csp_cbf/vcc/001",
+                    "mid_csp_cbf/vcc/002",
+                    "mid_csp_cbf/vcc/003",
+                    "mid_csp_cbf/vcc/004"
+                ]
+            },
+            {
+                "devPropName": "CbfMasterAddress",
+                "devPropValue": "mid_csp_cbf/sub_elt/master"
+            },
+            {
+                "devPropName": "CbfSubarrayAddress",
+                "devPropValue": "mid_csp_cbf/sub_elt/subarray_01"
+            }
+        ]
+    },
+    {
+        "class": "FspSubarrayPss",
+        "serverName": "FspMulti/fsp-01",
+        "devName": "mid_csp_cbf/fspSubarrayPss/01_02",
+        "deviceProperties": [
+            {
+                "devPropName": "SubID",
+                "devPropValue": 2
+            },
+            {
+                "devPropName": "FspID",
+                "devPropValue": 1
+            },
+            {
+                "devPropName": "VCC",
+                "devPropValue": [
+                    "mid_csp_cbf/vcc/001",
+                    "mid_csp_cbf/vcc/002",
+                    "mid_csp_cbf/vcc/003",
+                    "mid_csp_cbf/vcc/004"
+                ]
+            },
+            {
+                "devPropName": "CbfMasterAddress",
+                "devPropValue": "mid_csp_cbf/sub_elt/master"
+            },
+            {
+                "devPropName": "CbfSubarrayAddress",
+                "devPropValue": "mid_csp_cbf/sub_elt/subarray_02"
+            }
+        ]
+    },
+    {
+        "class": "FspSubarrayPss",
+        "serverName": "FspMulti/fsp-02",
+        "devName": "mid_csp_cbf/fspSubarrayPss/02_01",
+        "deviceProperties": [
+            {
+                "devPropName": "SubID",
+                "devPropValue": 1
+            },
+            {
+                "devPropName": "FspID",
+                "devPropValue": 2
+            },
+            {
+                "devPropName": "VCC",
+                "devPropValue": [
+                    "mid_csp_cbf/vcc/001",
+                    "mid_csp_cbf/vcc/002",
+                    "mid_csp_cbf/vcc/003",
+                    "mid_csp_cbf/vcc/004"
+                ]
+            },
+            {
+                "devPropName": "CbfMasterAddress",
+                "devPropValue": "mid_csp_cbf/sub_elt/master"
+            },
+            {
+                "devPropName": "CbfSubarrayAddress",
+                "devPropValue": "mid_csp_cbf/sub_elt/subarray_01"
+            }
+        ]
+    },
+    {
+        "class": "FspSubarrayPss",
+        "serverName": "FspMulti/fsp-02",
+        "devName": "mid_csp_cbf/fspSubarrayPss/02_02",
+        "deviceProperties": [
+            {
+                "devPropName": "SubID",
+                "devPropValue": 2
+            },
+            {
+                "devPropName": "FspID",
+                "devPropValue": 2
+            },
+            {
+                "devPropName": "VCC",
+                "devPropValue": [
+                    "mid_csp_cbf/vcc/001",
+                    "mid_csp_cbf/vcc/002",
+                    "mid_csp_cbf/vcc/003",
+                    "mid_csp_cbf/vcc/004"
+                ]
+            },
+            {
+                "devPropName": "CbfMasterAddress",
+                "devPropValue": "mid_csp_cbf/sub_elt/master"
+            },
+            {
+                "devPropName": "CbfSubarrayAddress",
+                "devPropValue": "mid_csp_cbf/sub_elt/subarray_02"
+            }
+        ]
+    },
+    {
+        "class": "FspSubarrayPss",
+        "serverName": "FspMulti/fsp-03",
+        "devName": "mid_csp_cbf/fspSubarrayPss/03_01",
+        "deviceProperties": [
+            {
+                "devPropName": "SubID",
+                "devPropValue": 1
+            },
+            {
+                "devPropName": "FspID",
+                "devPropValue": 3
+            },
+            {
+                "devPropName": "VCC",
+                "devPropValue": [
+                    "mid_csp_cbf/vcc/001",
+                    "mid_csp_cbf/vcc/002",
+                    "mid_csp_cbf/vcc/003",
+                    "mid_csp_cbf/vcc/004"
+                ]
+            },
+            {
+                "devPropName": "CbfMasterAddress",
+                "devPropValue": "mid_csp_cbf/sub_elt/master"
+            },
+            {
+                "devPropName": "CbfSubarrayAddress",
+                "devPropValue": "mid_csp_cbf/sub_elt/subarray_01"
+            }
+        ]
+    },
+    {
+        "class": "FspSubarrayPss",
+        "serverName": "FspMulti/fsp-03",
+        "devName": "mid_csp_cbf/fspSubarrayPss/03_02",
+        "deviceProperties": [
+            {
+                "devPropName": "SubID",
+                "devPropValue": 2
+            },
+            {
+                "devPropName": "FspID",
+                "devPropValue": 3
+            },
+            {
+                "devPropName": "VCC",
+                "devPropValue": [
+                    "mid_csp_cbf/vcc/001",
+                    "mid_csp_cbf/vcc/002",
+                    "mid_csp_cbf/vcc/003",
+                    "mid_csp_cbf/vcc/004"
+                ]
+            },
+            {
+                "devPropName": "CbfMasterAddress",
+                "devPropValue": "mid_csp_cbf/sub_elt/master"
+            },
+            {
+                "devPropName": "CbfSubarrayAddress",
+                "devPropValue": "mid_csp_cbf/sub_elt/subarray_02"
+            }
+        ]
+    },
+    {
+        "class": "FspSubarrayPss",
+        "serverName": "FspMulti/fsp-04",
+        "devName": "mid_csp_cbf/fspSubarrayPss/04_01",
+        "deviceProperties": [
+            {
+                "devPropName": "SubID",
+                "devPropValue": 1
+            },
+            {
+                "devPropName": "FspID",
+                "devPropValue": 4
+            },
+            {
+                "devPropName": "VCC",
+                "devPropValue": [
+                    "mid_csp_cbf/vcc/001",
+                    "mid_csp_cbf/vcc/002",
+                    "mid_csp_cbf/vcc/003",
+                    "mid_csp_cbf/vcc/004"
+                ]
+            },
+            {
+                "devPropName": "CbfMasterAddress",
+                "devPropValue": "mid_csp_cbf/sub_elt/master"
+            },
+            {
+                "devPropName": "CbfSubarrayAddress",
+                "devPropValue": "mid_csp_cbf/sub_elt/subarray_01"
+            }
+        ]
+    },
+    {
+        "class": "FspSubarrayPss",
+        "serverName": "FspMulti/fsp-04",
+        "devName": "mid_csp_cbf/fspSubarrayPss/04_02",
+        "deviceProperties": [
+            {
+                "devPropName": "SubID",
+                "devPropValue": 2
+            },
+            {
+                "devPropName": "FspID",
+                "devPropValue": 4
+            },
+            {
+                "devPropName": "VCC",
+                "devPropValue": [
+                    "mid_csp_cbf/vcc/001",
+                    "mid_csp_cbf/vcc/002",
+                    "mid_csp_cbf/vcc/003",
+                    "mid_csp_cbf/vcc/004"
+                ]
+            },
+            {
+                "devPropName": "CbfMasterAddress",
+                "devPropValue": "mid_csp_cbf/sub_elt/master"
+            },
+            {
+                "devPropName": "CbfSubarrayAddress",
+                "devPropValue": "mid_csp_cbf/sub_elt/subarray_02"
+            }
+        ]
+    },
+    {
         "class": "CbfSubarrayPssConfig",
         "serverName": "CbfSubarrayMulti/cbfSubarray-01",
         "devName": "mid_csp_cbf/pssConfig/01",
