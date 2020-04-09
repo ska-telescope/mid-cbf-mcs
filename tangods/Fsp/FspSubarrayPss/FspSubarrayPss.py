@@ -520,11 +520,20 @@ class FspSubarrayPss(SKASubarray):
         # Configure receptors.
         self.RemoveAllReceptors()
         self.AddReceptors(map(int, argin["receptors"]))
+        self._fsp_id = argin["fspID"]
+        self._search_window_id = int(argin["searchWindowID"])
+
+        for searchBeam in argin["searchBeam"]:
+            self._search_beam_id = int(searchBeam["searchBeamID"])
+            self._receptors = searchBeam["receptors"]
+            self._output_enable = bool(searchBeam["outputEnable"])
+            self._averaging_interval = int(searchBeam["averagingInterval"])
+            self._search_beam_address = searchBeam["searchBeamDestinationAddress"]
 
         # This state transition will be later
         # 03-23-2020: FspSubarrayPss moves to READY after configuration of the
         # channels addresses sent by SDP.
-        #self._obs_state = ObsState.READY.value
+        self._obs_state = ObsState.READY.value
 
         # PROTECTED REGION END #    //  FspSubarrayPss.ConfigureScan
 

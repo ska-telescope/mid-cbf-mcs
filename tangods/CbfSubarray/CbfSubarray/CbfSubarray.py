@@ -844,70 +844,79 @@ class CbfSubarray(SKASubarray):
                         else:
                             msg = "Search window not specified for Fsp PSS config"
                             self.__raise_configure_scan_fatal_error(msg)
+                        if "searchBeam" in fsp:
+                            if len(fsp["searchBeam"]) <= 192:
+                                for searchBeam in fsp["searchBeam"]:
+                                    if "searchBeamID" in searchBeam:
+                                        if 1 <= int(searchBeam["searchBeamID"]) <= 1500:
+                                            # Set searchBeamID attribute
+                                            pass
+                                        else:  # searchWindowID not in valid range
+                                            msg = "'searchBeamID' must be within range 1-1500 (received {}).".format(
+                                                str(fsp["searchBeamID"])
+                                            )
+                                            self.__raise_configure_scan_fatal_error(msg)
+                                    else:
+                                        msg = "Search beam ID not specified for Fsp PSS config"
+                                        self.__raise_configure_scan_fatal_error(msg)
 
-                        if "searchBeamID" in fsp:
-                            if 1 <= int(fsp["searchBeamID"]) <= 1500:
-                                # Set searchBeamID attribute
-                                pass
-                            else:  # searchWindowID not in valid range
-                                msg = "'searchBeamID' must be within range 1-1500 (received {}).".format(
-                                    str(fsp["searchBeamID"])
-                                )
+                                        # Validate receptors.
+                                        # This is always given, due to implementation details.
+                                    if "receptors" in searchBeam:
+                                        try:
+                                            proxy_fsp_subarray.RemoveAllReceptors()
+                                            proxy_fsp_subarray.AddReceptors(list(map(int, searchBeam["receptors"])))
+                                            proxy_fsp_subarray.RemoveAllReceptors()
+                                            for receptorCheck in searchBeam["receptors"]:
+                                                if receptorCheck not in self._receptors:
+                                                    msg = ("Receptor {} does not belong to subarray {}.".format(
+                                                        str(self._receptors[receptorCheck]), str(self._subarray_id)))
+                                                    self.logger.error(msg)
+                                                    tango.Except.throw_exception("Command failed", msg, "AddReceptors execution",
+                                                                                 tango.ErrSeverity.ERR)
+                                        except tango.DevFailed:  # error in AddReceptors()
+                                            proxy_fsp_subarray.RemoveAllReceptors()
+                                            msg = sys.exc_info()[1].args[0].desc + "\n'receptors' was malformed."
+                                            self.logger.error(msg)
+                                            tango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
+                                                                         tango.ErrSeverity.ERR)
+                                    else:
+                                        msg = "'receptors' not specified for Fsp PSS config"
+                                        self.__raise_configure_scan_fatal_error(msg)
+                                    if "outputEnable" in searchBeam:
+                                        if searchBeam["outputEnable"] is False or searchBeam["outputEnable"] is True:
+                                            pass
+                                        else:
+                                            msg = "'outputEnabled' is not a valid boolean"
+                                            self.__raise_configure_scan_fatal_error(msg)
+                                    else:
+                                        msg = "'outputEnable' not specified for Fsp PSS config"
+                                        self.__raise_configure_scan_fatal_error(msg)
+                                    if "averagingInterval" in searchBeam:
+                                        if isinstance(searchBeam["averagingInterval"], int):
+                                            pass
+                                        else:
+                                            msg = "'averagingInterval' is not a valid integer"
+                                            self.__raise_configure_scan_fatal_error(msg)
+                                    else:
+                                        msg = "'averagingInterval' not specified for Fsp PSS config"
+                                        self.__raise_configure_scan_fatal_error(msg)
+                                    if "searchBeamDestinationAddress" in searchBeam:
+                                        if validate_ip(searchBeam["searchBeamDestinationAddress"]):
+                                            pass
+                                        else:
+                                            msg = "'searchBeamDestinationAddress' is not a valid IP address"
+                                            self.__raise_configure_scan_fatal_error(msg)
+                                    else:
+                                        msg = "'searchBeamDestinationAddress' not specified for Fsp PSS config"
+                                        self.__raise_configure_scan_fatal_error(msg)
+                            else:
+                                msg = "More than 192 SearchBeams defined in PSS-BF config"
                                 self.__raise_configure_scan_fatal_error(msg)
                         else:
-                            msg = "Search beam ID not specified for Fsp PSS config"
+                            msg = "'searchBeam' not defined in PSS-BF config"
                             self.__raise_configure_scan_fatal_error(msg)
 
-                            # Validate receptors.
-                            # This is always given, due to implementation details.
-                        if "receptors" in fsp:
-                            try:
-                                proxy_fsp_subarray.RemoveAllReceptors()
-                                proxy_fsp_subarray.AddReceptors(list(map(int, fsp["receptors"])))
-                                proxy_fsp_subarray.RemoveAllReceptors()
-                                for receptorCheck in fsp["receptors"]:
-                                    if receptorCheck not in self._receptors:
-                                        msg = ("Receptor {} does not belong to subarray {}.".format(
-                                            str(self._receptors[receptorCheck]), str(self._subarray_id)))
-                                        self.logger.error(msg)
-                                        tango.Except.throw_exception("Command failed", msg, "AddReceptors execution",
-                                                                     tango.ErrSeverity.ERR)
-                            except tango.DevFailed:  # error in AddReceptors()
-                                proxy_fsp_subarray.RemoveAllReceptors()
-                                msg = sys.exc_info()[1].args[0].desc + "\n'receptors' was malformed."
-                                self.logger.error(msg)
-                                tango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
-                                                             tango.ErrSeverity.ERR)
-                        else:
-                            msg = "'receptors' not specified for Fsp PSS config"
-                            self.__raise_configure_scan_fatal_error(msg)
-                        if "outputEnable" in fsp:
-                            if fsp["outputEnable"] is False or fsp["outputEnable"] is True:
-                                pass
-                            else:
-                                msg = "'outputEnabled' is not a valid boolean"
-                                self.__raise_configure_scan_fatal_error(msg)
-                        else:
-                            msg = "'outputEnable' not specified for Fsp PSS config"
-                            self.__raise_configure_scan_fatal_error(msg)
-                        if "averagingInterval" in fsp:
-                            if isinstance(fsp["averagingInterval"], int):
-                                pass
-                            else:
-                                msg = "'averagingInterval' is not a valid integer"
-                                self.__raise_configure_scan_fatal_error(msg)
-                        else:
-                            msg = "'averagingInterval' not specified for Fsp PSS config"
-                            self.__raise_configure_scan_fatal_error(msg)
-                        if "searchBeamDestinationAddress" in fsp:
-                            if validate_ip(fsp["searchBeamDestinationAddress"]):
-                                pass
-                            else:
-                                msg = "'searchBeamDestinationAddress' is not a valid IP address"
-                                self.__raise_configure_scan_fatal_error(msg)
-                        else:
-                            msg = "'searchBeamDestinationAddress' not specified for Fsp PSS config"
-                            self.__raise_configure_scan_fatal_error(msg)
                         self._pss_config.append(fsp)
                         self._pss_fsp_list.append(fsp["fspID"])
 
@@ -1491,6 +1500,27 @@ class CbfSubarray(SKASubarray):
                         ...
                     ]
                 },
+                {
+                    "fspID": 3,
+                    "functionMode": "PSS-BF",
+                    "searchWindowID": 2,
+                    "searchBeam": [
+                        {
+                            "searchBeamID": 300,
+                            "receptors": [3],
+                            "outputEnable": true,
+                            "averagingInterval": 4,
+                            "searchBeamDestinationAddress": "10.1.1.1"
+                        },
+                        {
+                            "searchBeamID": 400,
+                            "receptors": [1],
+                            "outputEnable": true,
+                            "averagingInterval": 2,
+                            "searchBeamDestinationAddress": "10.1.2.1"
+                        }
+                    ]
+                }
                 {
                     ...
                 },

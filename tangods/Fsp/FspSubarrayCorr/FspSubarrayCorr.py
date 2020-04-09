@@ -534,7 +534,6 @@ class FspSubarrayCorr(SKASubarray):
 
         argin = json.loads(argin)
 
-        # TODO: Make output links work with PSS and PST
         if argin["functionMode"] == "CORR":
 
             # Configure frequencyBand.
