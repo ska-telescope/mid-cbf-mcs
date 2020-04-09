@@ -46,6 +46,13 @@ from skabase.SKASubarray.SKASubarray import SKASubarray
 
 __all__ = ["FspSubarrayPss", "main"]
 
+class SearchBeam:
+  def __init__(self, search_beam_id, receptors, output_enable, averaging_interval, search_beam_address):
+      self._search_beam_id = search_beam_id
+      self._receptors = receptors
+      self._output_enable = output_enable
+      self._averaging_interval = averaging_interval
+      self._search_beam_address = search_beam_address
 
 class FspSubarrayPss(SKASubarray):
     """
@@ -92,35 +99,12 @@ class FspSubarrayPss(SKASubarray):
         label="Receptors",
         doc="List of receptors assigned to subarray",
     )
-
-    frequencyBand = attribute(
-        dtype='DevEnum',
+    searchBeams = attribute(
+        dtype=('uint16',),
         access=AttrWriteType.READ,
-        label="Frequency band",
-        doc="Frequency band; an int in the range [0, 5]",
-        enum_labels=["1", "2", "3", "4", "5a", "5b", ],
-    )
-
-    band5Tuning = attribute(
-        dtype=('float',),
-        max_dim_x=2,
-        access=AttrWriteType.READ,
-        label="Stream tuning (GHz)",
-        doc="Stream tuning (GHz)"
-    )
-
-    frequencyBandOffsetStream1 = attribute(
-        dtype='int',
-        access=AttrWriteType.READ,
-        label="Frequency offset for stream 1 (Hz)",
-        doc="Frequency offset for stream 1 (Hz)"
-    )
-
-    frequencyBandOffsetStream2 = attribute(
-        dtype='int',
-        access=AttrWriteType.READ,
-        label="Frequency offset for stream 2 (Hz)",
-        doc="Frequency offset for stream 2 (Hz)"
+        max_dim_x=192,
+        label="SearchBeams",
+        doc="List of searchBeams assigned to fspsubarray",
     )
 
     searchWindowID = attribute(
@@ -172,16 +156,7 @@ class FspSubarrayPss(SKASubarray):
         # get relevant IDs
         self._subarray_id = self.SubID
         self._fsp_id = self.FspID
-
-        self.NUM_CHANNEL_GROUPS = const.NUM_CHANNEL_GROUPS
-        self.NUM_FINE_CHANNELS = const.NUM_FINE_CHANNELS
-
-        # initialize attribute values
-        self._receptors = []
-        self._frequency_band = 0
-        self._stream_tuning = (0, 0)
-        self._frequency_band_offset_stream_1 = 0
-        self._frequency_band_offset_stream_2 = 0
+        self._search_beams = []
 
         # initialize attribute values
         self._search_window_id = 0
@@ -190,9 +165,6 @@ class FspSubarrayPss(SKASubarray):
         self._output_enable = 0
         self._averaging_interval = 0
         self._search_beam_address = ""
-
-        # For each channel sent to SDP: [chanID, bw, cf, cbfOutLink, sdpIp, sdpPort]
-        self._channel_info = []
 
         # device proxy for easy reference to CBF Master
         self._proxy_cbf_master = tango.DeviceProxy(self.CbfMasterAddress)
@@ -239,25 +211,10 @@ class FspSubarrayPss(SKASubarray):
         self.AddReceptors(value)
         # PROTECTED REGION END #    //  FspSubarrayPss.receptors_write
 
-    def read_frequencyBand(self):
-        # PROTECTED REGION ID(FspSubarrayPss.frequencyBand_read) ENABLED START #
-        return self._frequency_band
-        # PROTECTED REGION END #    //  FspSubarrayPss.frequencyBand_read
-
-    def read_band5Tuning(self):
-        # PROTECTED REGION ID(FspSubarrayPss.band5Tuning_read) ENABLED START #
-        return self._stream_tuning
-        # PROTECTED REGION END #    //  FspSubarrayPss.band5Tuning_read
-
-    def read_frequencyBandOffsetStream1(self):
-        # PROTECTED REGION ID(FspSubarrayPss.frequencyBandOffsetStream1) ENABLED START #
-        return self._frequency_band_offset_stream_1
-        # PROTECTED REGION END #    //  FspSubarrayPss.frequencyBandOffsetStream1
-
-    def read_frequencyBandOffsetStream2(self):
-        # PROTECTED REGION ID(FspSubarrayPss.frequencyBandOffsetStream2) ENABLED START #
-        return self._frequency_band_offset_stream_2
-        # PROTECTED REGION END #    //  FspSubarrayPss.frequencyBandOffsetStream2
+    def read_searchBeams(self):
+        # PROTECTED REGION ID(FspSubarrayPss.searchBeams_read) ENABLED START #
+        return self._search_beams
+        # PROTECTED REGION END #    //  FspSubarrayPss.searchBeams_read
 
     def read_searchWindowID(self):
         # PROTECTED REGION ID(CbfSubarrayPssConfig.read_searchWindowID) ENABLED START #
@@ -402,98 +359,6 @@ class FspSubarrayPss(SKASubarray):
         self.RemoveReceptors(self._receptors[:])
         # PROTECTED REGION END #    //  FspSubarrayPss.RemoveAllReceptors
 
-    def is_AddChannels_allowed(self):
-        if self.dev_state() == tango.DevState.ON and\
-                self._obs_state == ObsState.CONFIGURING.value:
-            return True
-        return False
-
-    @command(
-        dtype_in='str',
-        doc_in="Channel frequency info"
-    )
-    def AddChannels(self, argin):
-        # PROTECTED REGION ID(FspSubarrayPss.AddChannels) ENABLED START #
-        # obsState should already be CONFIGURING
-
-        self._channel_info.clear()
-        argin = json.loads(argin)
-
-        for fsp in argin["fsp"]:
-            if fsp["fspID"] == self._fsp_id:
-                for link in fsp["cbfOutLink"]:
-                    for channel in link["channel"]:
-                        self._channel_info.append([
-                            channel["chanID"],
-                            channel["bw"],
-                            channel["cf"],
-                            link["linkID"],
-                            # configure the addresses later
-                            "",
-                            0
-                        ])
-
-        # I'm pretty sure the list is sorted by first element anyway,
-        # but specify that just in case, I guess.
-        self._channel_info.sort(key=lambda x: x[0])
-        # PROTECTED REGION END #    //  FspSubarrayPss.AddChannels
-
-    def is_AddChannelAddresses_allowed(self):
-        if self.dev_state() == tango.DevState.ON and\
-                self._obs_state == ObsState.CONFIGURING.value:
-            return True
-        return False
-
-    @command(
-        dtype_in='str',
-        doc_in="Channel address info"
-    )
-    def AddChannelAddresses(self, argin):
-        # PROTECTED REGION ID(FspSubarrayPss.AddChannelAddresses) ENABLED START #
-        # obsState should already be CONFIGURING
-
-        argin = json.loads(argin)
-
-        for fsp in argin["receiveAddresses"]:
-            if fsp["fspId"] == self._fsp_id:
-                channel_ID_list = [*map(lambda x: x[0], self._channel_info)]
-                for host in fsp["hosts"]:
-                    for channel in host["channels"]:
-                        try:
-                            i = channel_ID_list.index(channel["startChannel"])
-                            for j in range(i, i + channel["numChannels"]):
-                                self._channel_info[j][4] = host["host"]
-                                self._channel_info[j][5] = \
-                                    channel["portOffset"] + self._channel_info[j][0]
-                        # Possible errors:
-                        #     Channel ID not found.
-                        #     Number of channels exceeds configured channels.
-                        # (probably among others)
-                        except Exception as e:
-                            msg = "An error occurred while configuring destination addresses:"\
-                                "\n{}\n".format(str(e))
-                            self.logger.error(msg)
-                            tango.Except.throw_exception("Command failed", msg,
-                                                           "AddChannelAddresses execution",
-                                                           tango.ErrSeverity.ERR)
-                self._vis_destination_address = fsp["hosts"]
-
-        # get list of unconfigured channels
-        unconfigured_channels = [channel[0] for channel in self._channel_info if channel[4] == ""]
-        if unconfigured_channels:
-            # raise an error if some channels are unconfigured
-            msg = "The following channels are missing destination addresses:\n{}".format(
-                unconfigured_channels
-            )
-            self.logger.error(msg)
-            tango.Except.throw_exception("Command failed", msg,
-                                           "AddChannelAddressInfo execution",
-                                           tango.ErrSeverity.ERR)
-
-        # transition to obsState=READY
-        self._obs_state = ObsState.READY.value
-        # PROTECTED REGION END #    //  FspSubarrayPss.AddChannelAddresses
-
     def is_ConfigureScan_allowed(self):
         if self.dev_state() == tango.DevState.ON and\
                 self._obs_state in [ObsState.IDLE.value, ObsState.READY.value]:
@@ -515,24 +380,21 @@ class FspSubarrayPss(SKASubarray):
 
         argin = json.loads(argin)
 
-        # TODO: Make output links work with PSS and PST
-
         # Configure receptors.
         self.RemoveAllReceptors()
         self.AddReceptors(map(int, argin["receptors"]))
         self._fsp_id = argin["fspID"]
         self._search_window_id = int(argin["searchWindowID"])
+        self._search_beams = []
 
         for searchBeam in argin["searchBeam"]:
-            self._search_beam_id = int(searchBeam["searchBeamID"])
-            self._receptors = searchBeam["receptors"]
-            self._output_enable = bool(searchBeam["outputEnable"])
-            self._averaging_interval = int(searchBeam["averagingInterval"])
-            self._search_beam_address = searchBeam["searchBeamDestinationAddress"]
+            single_beam = SearchBeam(int(searchBeam["searchBeamID"]), searchBeam["receptors"],
+                                     bool(searchBeam["outputEnable"]), int(searchBeam["averagingInterval"]),
+                                     searchBeam["searchBeamDestinationAddress"])
 
-        # This state transition will be later
-        # 03-23-2020: FspSubarrayPss moves to READY after configuration of the
-        # channels addresses sent by SDP.
+            self._search_beams.append(single_beam)
+
+        # fspSubarrayPss moves to READY after configuration
         self._obs_state = ObsState.READY.value
 
         # PROTECTED REGION END #    //  FspSubarrayPss.ConfigureScan

@@ -121,9 +121,9 @@ class CbfMaster(SKAMaster):
                     self._report_vcc_subarray_membership[self._fqdn_vcc.index(device_name)] = \
                         event.attr_value.value
                 elif "fsp" in device_name:
-                    if event.attr_value.value not in self._report_fsp_subarray_membership[
+                    if event.attr_value.value not in self._report_fsp_subarray_corr_membership[
                         self._fqdn_fsp.index(device_name)]:
-                        self._report_fsp_subarray_membership[
+                        self._report_fsp_subarray_corr_membership[
                             self._fqdn_fsp.index(device_name)
                         ].append(event.attr_value.value)
                 else:
@@ -372,7 +372,7 @@ class CbfMaster(SKAMaster):
         self._report_fsp_state = [tango.DevState.UNKNOWN] * self._count_fsp
         self._report_fsp_health_state = [HealthState.UNKNOWN.value] * self._count_fsp
         self._report_fsp_admin_mode = [AdminMode.ONLINE.value] * self._count_fsp
-        self._report_fsp_subarray_membership = [[] for i in range(self._count_fsp)]
+        self._report_fsp_subarray_corr_membership = [[] for i in range(self._count_fsp)]
         self._report_subarray_state = [tango.DevState.UNKNOWN] * self._count_subarray
         self._report_subarray_health_state = [HealthState.UNKNOWN.value] * self._count_subarray
         self._report_subarray_admin_mode = [AdminMode.ONLINE.value] * self._count_subarray
@@ -544,7 +544,7 @@ class CbfMaster(SKAMaster):
 
     def read_reportFSPSubarrayCorrMembership(self):
         # PROTECTED REGION ID(CbfMaster.reportFSPSubarrayCorrMembership_read) ENABLED START #
-        return self._report_fsp_subarray_membership
+        return self._report_fsp_subarray_corr_membership
         # PROTECTED REGION END #    //  CbfMaster.reportFSPSubarrayCorrMembership_read
 
     def read_frequencyOffsetK(self):

@@ -146,9 +146,9 @@ with open("tangods/devices.json", "w+") as f:
 
     # Generate CBF Subarrays
     for i in range(1, num_subarray + 1):
-        fqdn_fsp_subarray = [*map(lambda j: "\"mid_csp_cbf/fspSubarrayCorr/{0:02d}_{1:02d}\"".format(j, i), range(1, num_fsp + 1))]
-        string_fsp_subarray = "\n                    " + \
-                              ",\n                    ".join(fqdn_fsp_subarray) + \
+        fqdn_fsp_subarray_corr = [*map(lambda j: "\"mid_csp_cbf/fspSubarrayCorr/{0:02d}_{1:02d}\"".format(j, i), range(1, num_fsp + 1))]
+        string_fsp_subarray_corr = "\n                    " + \
+                              ",\n                    ".join(fqdn_fsp_subarray_corr) + \
                               "\n                "
         string += "    {{\n" \
                   "        \"class\": \"CbfSubarray\",\n" \
@@ -228,7 +228,7 @@ with open("tangods/devices.json", "w+") as f:
                   "                \"changeEventAbs\": \"1\"\n" \
                   "            }}\n" \
                   "        ]\n" \
-                  "    }},\n".format(i, string_vcc, string_fsp, string_fsp_subarray)
+                  "    }},\n".format(i, string_vcc, string_fsp, string_fsp_subarray_corr)
 
     # Generate VCCs
     for i in range(1, num_vcc + 1):
@@ -300,9 +300,9 @@ with open("tangods/devices.json", "w+") as f:
 
     # Generate FSPs
     for i in range(1, num_fsp + 1):
-        fqdn_fsp_subarray = [*map(lambda j: "\"mid_csp_cbf/fspSubarrayCorr/{0:02d}_{1:02d}\"".format(i, j), range(1, num_subarray + 1))]
-        string_fsp_subarray = "\n                    " + \
-                            ",\n                    ".join(fqdn_fsp_subarray) + \
+        fqdn_fsp_subarray_corr = [*map(lambda j: "\"mid_csp_cbf/fspSubarrayCorr/{0:02d}_{1:02d}\"".format(i, j), range(1, num_subarray + 1))]
+        string_fsp_subarray_corr = "\n                    " + \
+                            ",\n                    ".join(fqdn_fsp_subarray_corr) + \
                             "\n                "
         string += "    {{\n" \
                   "        \"class\": \"Fsp\",\n" \
@@ -364,7 +364,7 @@ with open("tangods/devices.json", "w+") as f:
                   "                \"changeEventAbs\": \"1\"\n" \
                   "            }}\n" \
                   "        ]\n" \
-                  "    }},\n".format(i, string_fsp_subarray)
+                  "    }},\n".format(i, string_fsp_subarray_corr)
 
     # Generate CBF Subarray search windows (2 for each CBF Subarray)
     for i in range(1, num_subarray + 1):
