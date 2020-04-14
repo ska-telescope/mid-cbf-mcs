@@ -138,12 +138,21 @@
                 ]
             },
             {
-                "devPropName": "fspSubarrayCorr",
+                "devPropName": "FspSubarrayCorr",
                 "devPropValue": [
                     "mid_csp_cbf/fspSubarrayCorr/01_01",
                     "mid_csp_cbf/fspSubarrayCorr/02_01",
                     "mid_csp_cbf/fspSubarrayCorr/03_01",
                     "mid_csp_cbf/fspSubarrayCorr/04_01"
+                ]
+            },
+            {
+                "devPropName": "FspSubarrayPss",
+                "devPropValue": [
+                    "mid_csp_cbf/fspSubarrayPss/01_01",
+                    "mid_csp_cbf/fspSubarrayPss/02_01",
+                    "mid_csp_cbf/fspSubarrayPss/03_01",
+                    "mid_csp_cbf/fspSubarrayPss/04_01"
                 ]
             }
         ],
@@ -246,6 +255,15 @@
                     "mid_csp_cbf/fspSubarrayCorr/02_02",
                     "mid_csp_cbf/fspSubarrayCorr/03_02",
                     "mid_csp_cbf/fspSubarrayCorr/04_02"
+                ]
+            },
+            {
+                "devPropName": "FspSubarrayPss",
+                "devPropValue": [
+                    "mid_csp_cbf/fspSubarrayPss/01_02",
+                    "mid_csp_cbf/fspSubarrayPss/02_02",
+                    "mid_csp_cbf/fspSubarrayPss/03_02",
+                    "mid_csp_cbf/fspSubarrayPss/04_02"
                 ]
             }
         ],
@@ -585,6 +603,13 @@
                     "mid_csp_cbf/fspSubarrayCorr/01_01",
                     "mid_csp_cbf/fspSubarrayCorr/01_02"
                 ]
+            },
+            {
+                "devPropName": "FspSubarrayPss",
+                "devPropValue": [
+                    "mid_csp_cbf/fspSubarrayPss/01_01",
+                    "mid_csp_cbf/fspSubarrayPss/01_02"
+                ]
             }
         ],
         "attributeProperties": [
@@ -648,6 +673,13 @@
                 "devPropValue": [
                     "mid_csp_cbf/fspSubarrayCorr/02_01",
                     "mid_csp_cbf/fspSubarrayCorr/02_02"
+                ]
+            },
+            {
+                "devPropName": "FspSubarrayPss",
+                "devPropValue": [
+                    "mid_csp_cbf/fspSubarrayPss/02_01",
+                    "mid_csp_cbf/fspSubarrayPss/02_02"
                 ]
             }
         ],
@@ -713,6 +745,13 @@
                     "mid_csp_cbf/fspSubarrayCorr/03_01",
                     "mid_csp_cbf/fspSubarrayCorr/03_02"
                 ]
+            },
+            {
+                "devPropName": "FspSubarrayPss",
+                "devPropValue": [
+                    "mid_csp_cbf/fspSubarrayPss/03_01",
+                    "mid_csp_cbf/fspSubarrayPss/03_02"
+                ]
             }
         ],
         "attributeProperties": [
@@ -776,6 +815,13 @@
                 "devPropValue": [
                     "mid_csp_cbf/fspSubarrayCorr/04_01",
                     "mid_csp_cbf/fspSubarrayCorr/04_02"
+                ]
+            },
+            {
+                "devPropName": "FspSubarrayPss",
+                "devPropValue": [
+                    "mid_csp_cbf/fspSubarrayPss/04_01",
+                    "mid_csp_cbf/fspSubarrayPss/04_02"
                 ]
             }
         ],
@@ -1594,10 +1640,10 @@
             {
                 "devPropName": "FspSubarrayCorr",
                 "devPropValue": [
-                    "mid_csp_cbf/fspSubarrayCorr/01_01",
-                    "mid_csp_cbf/fspSubarrayCorr/02_01",
-                    "mid_csp_cbf/fspSubarrayCorr/03_01",
-                    "mid_csp_cbf/fspSubarrayCorr/04_01"
+                    "mid_csp_cbf/fspSubarrayPss/01_01",
+                    "mid_csp_cbf/fspSubarrayPss/02_01",
+                    "mid_csp_cbf/fspSubarrayPss/03_01",
+                    "mid_csp_cbf/fspSubarrayPss/04_01"
                 ]
             },
   	        {
@@ -1614,10 +1660,10 @@
             {
                 "devPropName": "FspSubarrayCorr",
                 "devPropValue": [
-                    "mid_csp_cbf/fspSubarrayCorr/01_02",
-                    "mid_csp_cbf/fspSubarrayCorr/02_02",
-                    "mid_csp_cbf/fspSubarrayCorr/03_02",
-                    "mid_csp_cbf/fspSubarrayCorr/04_02"
+                    "mid_csp_cbf/fspSubarrayPss/01_02",
+                    "mid_csp_cbf/fspSubarrayPss/02_02",
+                    "mid_csp_cbf/fspSubarrayPss/03_02",
+                    "mid_csp_cbf/fspSubarrayPss/04_02"
                 ]
             },
   	        {

@@ -576,7 +576,10 @@ class CbfSubarray(SKASubarray):
                         if int(fsp["fspID"]) in list(range(1, self._count_fsp + 1)):
                             fspID = int(fsp["fspID"])
                             proxy_fsp = self._proxies_fsp[fspID - 1]
-                            proxy_fsp_subarray_corr = self._proxies_fsp_subarray_corr[fspID - 1]
+                            if fsp["functionMode"] == "CORR":
+                                proxy_fsp_subarray = self._proxies_fsp_subarray_corr[fspID - 1]
+                            elif fsp["functionMode"] == "PSS-BF":
+                                proxy_fsp_subarray = self._proxies_fsp_subarray_pss[fspID - 1]
                         else:
                             msg = "'fspID' must be an integer in the range [1, {}]. " \
                                   "Aborting configuration.".format(str(self._count_fsp))
@@ -590,7 +593,7 @@ class CbfSubarray(SKASubarray):
                         msg = "FSP {} is not ON. Aborting configuration.".format(fspID)
                         self.__raise_configure_scan_fatal_error(msg)
 
-                    if proxy_fsp_subarray_corr.State() != tango.DevState.ON:
+                    if proxy_fsp_subarray.State() != tango.DevState.ON:
                         msg = "Subarray {} of FSP {} is not ON. Aborting configuration.".format(
                             self._subarray_id, fspID
                         )
@@ -605,9 +608,16 @@ class CbfSubarray(SKASubarray):
                                     proxy_fsp.functionMode == 0:
                                 pass
                             else:
-                                #TODO need to add this check for fspSubarrayPSS and VLBI and PST once implemented
-                                for fsp_subarray_corr_corr_proxy in self._proxies_fsp_subarray_corr:
-                                    if fsp_subarray_corr_corr_proxy.obsState != ObsState.IDLE:
+                                #TODO need to add this check for VLBI and PST once implemented
+                                for fsp_subarray_corr_proxy in self._proxies_fsp_subarray_corr:
+                                    if fsp_subarray_corr_proxy.obsState != ObsState.IDLE:
+                                        msg = "A different subarray is using FSP {} for a " \
+                                              "different function mode. Aborting configuration.".format(
+                                               fsp["fspID"]
+                                               )
+                                        self.__raise_configure_scan_fatal_error(msg)
+                                for fsp_subarray_pss_proxy in self._proxies_fsp_subarray_pss:
+                                    if fsp_subarray_pss_proxy.obsState != ObsState.IDLE:
                                         msg = "A different subarray is using FSP {} for a " \
                                               "different function mode. Aborting configuration.".format(
                                                fsp["fspID"]
@@ -642,9 +652,9 @@ class CbfSubarray(SKASubarray):
                     if fsp["functionMode"] == "CORR":
                         if "receptors" in fsp:
                             try:
-                                proxy_fsp_subarray_corr.RemoveAllReceptors()
-                                proxy_fsp_subarray_corr.AddReceptors(list(map(int, fsp["receptors"])))
-                                proxy_fsp_subarray_corr.RemoveAllReceptors()
+                                proxy_fsp_subarray.RemoveAllReceptors()
+                                proxy_fsp_subarray.AddReceptors(list(map(int, fsp["receptors"])))
+                                proxy_fsp_subarray.RemoveAllReceptors()
                                 for receptorCheck in fsp["receptors"]:
                                     if receptorCheck not in self._receptors:
                                         msg = ("Receptor {} does not belong to subarray {}.".format(
@@ -653,7 +663,7 @@ class CbfSubarray(SKASubarray):
                                         tango.Except.throw_exception("Command failed", msg, "AddReceptors execution",
                                                                      tango.ErrSeverity.ERR)
                             except tango.DevFailed:  # error in AddReceptors()
-                                proxy_fsp_subarray_corr.RemoveAllReceptors()
+                                proxy_fsp_subarray.RemoveAllReceptors()
                                 msg = sys.exc_info()[1].args[0].desc + "\n'receptors' was malformed."
                                 self.logger.error(msg)
                                 tango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
@@ -864,9 +874,9 @@ class CbfSubarray(SKASubarray):
                                         # This is always given, due to implementation details.
                                     if "receptors" in searchBeam:
                                         try:
-                                            proxy_fsp_subarray_corr.RemoveAllReceptors()
-                                            proxy_fsp_subarray_corr.AddReceptors(list(map(int, searchBeam["receptors"])))
-                                            proxy_fsp_subarray_corr.RemoveAllReceptors()
+                                            proxy_fsp_subarray.RemoveAllReceptors()
+                                            proxy_fsp_subarray.AddReceptors(list(map(int, searchBeam["receptors"])))
+                                            proxy_fsp_subarray.RemoveAllReceptors()
                                             for receptorCheck in searchBeam["receptors"]:
                                                 if receptorCheck not in self._receptors:
                                                     msg = ("Receptor {} does not belong to subarray {}.".format(
@@ -875,7 +885,7 @@ class CbfSubarray(SKASubarray):
                                                     tango.Except.throw_exception("Command failed", msg, "AddReceptors execution",
                                                                                  tango.ErrSeverity.ERR)
                                         except tango.DevFailed:  # error in AddReceptors()
-                                            proxy_fsp_subarray_corr.RemoveAllReceptors()
+                                            proxy_fsp_subarray.RemoveAllReceptors()
                                             msg = sys.exc_info()[1].args[0].desc + "\n'receptors' was malformed."
                                             self.logger.error(msg)
                                             tango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
@@ -991,6 +1001,10 @@ class CbfSubarray(SKASubarray):
     )
 
     FspSubarrayCorr = device_property(
+        dtype=('str',)
+    )
+
+    FspSubarrayPss = device_property(
         dtype=('str',)
     )
 
@@ -1139,14 +1153,18 @@ class CbfSubarray(SKASubarray):
         self._fqdn_vcc = list(self.VCC)[:self._count_vcc]
         self._fqdn_fsp = list(self.FSP)[:self._count_fsp]
         self._fqdn_fsp_subarray_corr = list(self.FspSubarrayCorr)
+        self._fqdn_fsp_subarray_pss = list(self.FspSubarrayPss)
+
 
         self._proxies_vcc = [*map(tango.DeviceProxy, self._fqdn_vcc)]
         self._proxies_fsp = [*map(tango.DeviceProxy, self._fqdn_fsp)]
         self._proxies_fsp_subarray_corr = [*map(tango.DeviceProxy, self._fqdn_fsp_subarray_corr)]
+        self._proxies_fsp_subarray_pss = [*map(tango.DeviceProxy, self._fqdn_fsp_subarray_pss)]
 
         self._proxies_assigned_vcc = []
         self._proxies_assigned_fsp = []
         self._proxies_assigned_fsp_subarray_corr = []
+        self._proxies_assigned_fsp_subarray_pss = []
 
         # store the subscribed telstate events as event_ID:attribute_proxy key:value pairs
         self._events_telstate = {}
@@ -1682,8 +1700,10 @@ class CbfSubarray(SKASubarray):
             fspID = int(fsp["fspID"])
             proxy_fsp = self._proxies_fsp[fspID - 1]
             proxy_fsp_subarray_corr = self._proxies_fsp_subarray_corr[fspID - 1]
+            proxy_fsp_subarray_pss = self._proxies_fsp_subarray_pss[fspID - 1]
             self._proxies_assigned_fsp.append(proxy_fsp)
             self._proxies_assigned_fsp_subarray_corr.append(proxy_fsp_subarray_corr)
+            self._proxies_assigned_fsp_subarray_pss.append(proxy_fsp_subarray_pss)
             self._group_fsp.add(self._fqdn_fsp[fspID - 1])
             self._group_fsp_subarray_corr.add(self._fqdn_fsp_subarray_corr[fspID - 1])
 
@@ -1960,9 +1980,12 @@ class CbfSubarray(SKASubarray):
         self._published_output_links = False
 
         # TODO need to add this check for fspSubarrayPSS and VLBI and PST once implemented
-        for fsp_subarray_corr_corr_proxy in self._proxies_fsp_subarray_corr:
-             if fsp_subarray_corr_corr_proxy.State() == tango.DevState.ON:
-                fsp_subarray_corr_corr_proxy.GoToIdle()
+        for fsp_subarray_corr_proxy in self._proxies_fsp_subarray_corr:
+             if fsp_subarray_corr_proxy.State() == tango.DevState.ON:
+                fsp_subarray_corr_proxy.GoToIdle()
+        for fsp_subarray_pss_proxy in self._proxies_fsp_subarray_pss:
+             if fsp_subarray_pss_proxy.State() == tango.DevState.ON:
+                fsp_subarray_pss_proxy.GoToIdle()
 
         # transition to obsState=IDLE
         self._obs_state = ObsState.IDLE.value

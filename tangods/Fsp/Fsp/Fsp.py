@@ -88,6 +88,9 @@ class Fsp(SKACapability):
     FspSubarrayCorr = device_property(
         dtype=('str',)
     )
+    FspSubarrayPss = device_property(
+        dtype=('str',)
+    )
 
     # ----------
     # Attributes
@@ -135,9 +138,13 @@ class Fsp(SKACapability):
         self._subarray_membership = []
 
         # initialize FSP subarray group
-        self._group_fsp_subarray_corr = tango.Group("FSP Subarray")
+        self._group_fsp_subarray_corr = tango.Group("FSP Subarray Corr")
         for fqdn in list(self.FspSubarrayCorr):
             self._group_fsp_subarray_corr.add(fqdn)
+
+        self._group_fsp_subarray_pss = tango.Group("FSP Subarray Pss")
+        for fqdn in list(self.FspSubarrayPss):
+            self._group_fsp_subarray_pss.add(fqdn)
 
         self.set_state(tango.DevState.OFF)
         # PROTECTED REGION END #    //  Fsp.init_device
@@ -154,6 +161,7 @@ class Fsp(SKACapability):
         self._proxy_pst.SetState(tango.DevState.OFF)
         self._proxy_vlbi.SetState(tango.DevState.OFF)
         self._group_fsp_subarray_corr.command_inout("Off")
+        self._group_fsp_subarray_pss.command_inout("Off")
 
         # remove all subarray membership
         for subarray_ID in self._subarray_membership[:]:
@@ -193,6 +201,7 @@ class Fsp(SKACapability):
         self._proxy_pst.SetState(tango.DevState.DISABLE)
         self._proxy_vlbi.SetState(tango.DevState.DISABLE)
         self._group_fsp_subarray_corr.command_inout("On")
+        self._group_fsp_subarray_pss.command_inout("On")
 
         self.set_state(tango.DevState.ON)
         # PROTECTED REGION END #    //  Fsp.On
@@ -210,6 +219,7 @@ class Fsp(SKACapability):
         self._proxy_pst.SetState(tango.DevState.OFF)
         self._proxy_vlbi.SetState(tango.DevState.OFF)
         self._group_fsp_subarray_corr.command_inout("Off")
+        self._group_fsp_subarray_pss.command_inout("Off")
 
         # remove all subarray membership
         for subarray_ID in self._subarray_membership[:]:

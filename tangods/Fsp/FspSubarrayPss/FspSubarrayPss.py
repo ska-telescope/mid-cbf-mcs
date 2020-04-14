@@ -435,7 +435,6 @@ class FspSubarrayPss(SKASubarray):
     def GoToIdle(self):
         # PROTECTED REGION ID(FspSubarrayPss.GoToIdle) ENABLED START #
         # transition to obsState=IDLE
-        self._channel_info.clear()
         self._obs_state = ObsState.IDLE.value
         # PROTECTED REGION END #    //  FspSubarrayPss.GoToIdle
 

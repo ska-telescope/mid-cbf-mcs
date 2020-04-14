@@ -53,7 +53,7 @@ class CbfSubarrayCorrConfig(SKACapability):
     # Device Properties
     # -----------------
 
-    fspSubarrayCorr = device_property(
+    FspSubarrayCorr = device_property(
         dtype=('str',)
     )
 
@@ -95,7 +95,7 @@ class CbfSubarrayCorrConfig(SKACapability):
 
         # Getting Proxies for FSP and FSP Subarrays
         self._proxy_cbf_master = tango.DeviceProxy(self.CbfMasterAddress)
-        self._proxies_fsp_subarray_corr = [*map(tango.DeviceProxy, list(self.fspSubarrayCorr))]
+        self._proxies_fsp_subarray_corr = [*map(tango.DeviceProxy, list(self.FspSubarrayCorr))]
 
         self._obs_state = ObsState.IDLE.value
         self.set_state(tango.DevState.ON)
