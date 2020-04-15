@@ -116,11 +116,11 @@ class FspPssSubarray(SKASubarray):
     )
 
     searchBeamID = attribute(
-        dtype='uint16',
+        dtype=('uint16',),
         access=AttrWriteType.READ,
-        max_dim_x=1500,
-        label="Search Beam ID",
-        doc="Search Beam ID as specified by TM/LMC.",
+        max_dim_x=192,
+        label="ID for 300MHz Search Window",
+        doc="Identifier of the Search Window to be used as input for beamforming on this FSP.",
     )
 
     outputEnable = attribute(
@@ -160,7 +160,7 @@ class FspPssSubarray(SKASubarray):
 
         # initialize attribute values
         self._search_window_id = 0
-        self._search_beam_id = 0
+        self._search_beam_id = []
         self._receptors = []
         self._output_enable = 0
         self._averaging_interval = 0
@@ -216,15 +216,15 @@ class FspPssSubarray(SKASubarray):
         return self._search_beams
         # PROTECTED REGION END #    //  FspPssSubarray.searchBeams_read
 
+    def read_searchBeamID(self):
+        # PROTECTED REGION ID(FspPssSubarray.read_searchBeamID ENABLED START #
+        return self._search_beam_id
+        # PROTECTED REGION END #    //  FspPssSubarray.read_searchBeamID
+
     def read_searchWindowID(self):
         # PROTECTED REGION ID(CbfSubarrayPssConfig.read_searchWindowID) ENABLED START #
         return self._search_window_id
         # PROTECTED REGION END #    //  CbfSubarrayPssConfig.read_searchWindowID
-
-    def read_searchBeamID(self):
-        # PROTECTED REGION ID(CbfSubarrayPssConfig.read_searchBeamID) ENABLED START #
-        return self._search_beam_id
-        # PROTECTED REGION END #    //  CbfSubarrayPssConfig.read_searchBeamID
 
     def read_outputEnable(self):
         # PROTECTED REGION ID(CbfSubarrayPssConfig.read_outputEnable) ENABLED START #
@@ -267,7 +267,7 @@ class FspPssSubarray(SKASubarray):
     def Off(self):
         # PROTECTED REGION ID(FspPssSubarray.Off) ENABLED START #
         # This command can only be called when obsState=IDLE
-        # self.GoToIdle()
+        self.GoToIdle()
         self.RemoveAllReceptors()
         self.set_state(tango.DevState.OFF)
         # PROTECTED REGION END #    //  FspPssSubarray.Off
@@ -386,6 +386,7 @@ class FspPssSubarray(SKASubarray):
         self._fsp_id = argin["fspID"]
         self._search_window_id = int(argin["searchWindowID"])
         self._search_beams = []
+        self._search_beam_id = []
 
         for searchBeam in argin["searchBeam"]:
             single_beam = SearchBeam(int(searchBeam["searchBeamID"]), searchBeam["receptors"],
@@ -393,6 +394,7 @@ class FspPssSubarray(SKASubarray):
                                      searchBeam["searchBeamDestinationAddress"])
 
             self._search_beams.append(single_beam)
+            self._search_beam_id.append(int(searchBeam["searchBeamID"]))
 
         # fspPssSubarray moves to READY after configuration
         self._obs_state = ObsState.READY.value

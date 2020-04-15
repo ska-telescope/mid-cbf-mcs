@@ -329,7 +329,7 @@ class FspCorrSubarray(SKASubarray):
     def Off(self):
         # PROTECTED REGION ID(FspCorrSubarray.Off) ENABLED START #
         # This command can only be called when obsState=IDLE
-        # self.GoToIdle()
+        self.GoToIdle()
         self.RemoveAllReceptors()
         self.set_state(tango.DevState.OFF)
         # PROTECTED REGION END #    //  FspCorrSubarray.Off

@@ -861,11 +861,24 @@ class CbfSubarray(SKASubarray):
                                         if 1 <= int(searchBeam["searchBeamID"]) <= 1500:
                                             # Set searchBeamID attribute
                                             pass
-                                        else:  # searchWindowID not in valid range
+                                        else:  # searchbeamID not in valid range
                                             msg = "'searchBeamID' must be within range 1-1500 (received {}).".format(
-                                                str(fsp["searchBeamID"])
+                                                str(searchBeam["searchBeamID"])
                                             )
                                             self.__raise_configure_scan_fatal_error(msg)
+                                        for fsp_pss_subarray_proxy in self._proxies_fsp_pss_subarray:
+                                            searchBeamID = fsp_pss_subarray_proxy.searchBeamID
+                                            if searchBeamID is None:
+                                                pass
+                                            else:
+                                                for search_beam_ID in searchBeamID:
+                                                    if int(searchBeam["searchBeamID"]) == search_beam_ID:
+                                                        pass
+                                                    else:
+                                                        msg = "'searchBeamID' {} is already being used on another fspSubarray.".format(
+                                                            str(searchBeam["searchBeamID"])
+                                                        )
+                                                        self.__raise_configure_scan_fatal_error(msg)
                                     else:
                                         msg = "Search beam ID not specified for Fsp PSS config"
                                         self.__raise_configure_scan_fatal_error(msg)
