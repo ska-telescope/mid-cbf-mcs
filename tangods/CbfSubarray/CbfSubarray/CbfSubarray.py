@@ -166,8 +166,8 @@ class CbfSubarray(SKASubarray):
                 if destination_addresses["scanId"] != self._scan_ID:
                     raise ValueError("scan ID is not correct")
                 for fsp in destination_addresses["receiveAddresses"]:
-                    proxy_fsp_subarray_corr = self._proxies_fsp_subarray_corr[fsp["fspId"] - 1]
-                    if proxy_fsp_subarray_corr not in self._proxies_assigned_fsp_subarray_corr:
+                    proxy_fsp_corr_subarray = self._proxies_fsp_corr_subarray[fsp["fspId"] - 1]
+                    if proxy_fsp_corr_subarray not in self._proxies_assigned_fsp_corr_subarray:
                         raise ValueError("FSP {} does not belong to subarray {}.".format(
                             fsp["fspId"], self._subarray_id
                         )
@@ -176,7 +176,7 @@ class CbfSubarray(SKASubarray):
                         fsp["fspId"]
                     )
                     self.logger.info(log_msg)
-                    proxy_fsp_subarray_corr.AddChannelAddresses(value)
+                    proxy_fsp_corr_subarray.AddChannelAddresses(value)
 
                 log_msg = "Done configuring destination addresses."
                 self.logger.info(log_msg)
@@ -327,7 +327,7 @@ class CbfSubarray(SKASubarray):
         json_output_links = json.dumps(output_links_all)
         data = tango.DeviceData()
         data.insert(tango.DevString, json_output_links)
-        self._group_fsp_subarray_corr.command_inout("AddChannels", data)
+        self._group_fsp_corr_subarray.command_inout("AddChannels", data)
 
         log_msg = "Done assigning output links."
         self.logger.info(log_msg)
@@ -577,9 +577,9 @@ class CbfSubarray(SKASubarray):
                             fspID = int(fsp["fspID"])
                             proxy_fsp = self._proxies_fsp[fspID - 1]
                             if fsp["functionMode"] == "CORR":
-                                proxy_fsp_subarray = self._proxies_fsp_subarray_corr[fspID - 1]
+                                proxy_fsp_subarray = self._proxies_fsp_corr_subarray[fspID - 1]
                             elif fsp["functionMode"] == "PSS-BF":
-                                proxy_fsp_subarray = self._proxies_fsp_subarray_pss[fspID - 1]
+                                proxy_fsp_subarray = self._proxies_fsp_pss_subarray[fspID - 1]
                         else:
                             msg = "'fspID' must be an integer in the range [1, {}]. " \
                                   "Aborting configuration.".format(str(self._count_fsp))
@@ -609,15 +609,15 @@ class CbfSubarray(SKASubarray):
                                 pass
                             else:
                                 #TODO need to add this check for VLBI and PST once implemented
-                                for fsp_subarray_corr_proxy in self._proxies_fsp_subarray_corr:
-                                    if fsp_subarray_corr_proxy.obsState != ObsState.IDLE:
+                                for fsp_corr_subarray_proxy in self._proxies_fsp_corr_subarray:
+                                    if fsp_corr_subarray_proxy.obsState != ObsState.IDLE:
                                         msg = "A different subarray is using FSP {} for a " \
                                               "different function mode. Aborting configuration.".format(
                                                fsp["fspID"]
                                                )
                                         self.__raise_configure_scan_fatal_error(msg)
-                                for fsp_subarray_pss_proxy in self._proxies_fsp_subarray_pss:
-                                    if fsp_subarray_pss_proxy.obsState != ObsState.IDLE:
+                                for fsp_pss_subarray_proxy in self._proxies_fsp_pss_subarray:
+                                    if fsp_pss_subarray_proxy.obsState != ObsState.IDLE:
                                         msg = "A different subarray is using FSP {} for a " \
                                               "different function mode. Aborting configuration.".format(
                                                fsp["fspID"]
@@ -1000,11 +1000,11 @@ class CbfSubarray(SKASubarray):
         dtype=('str',)
     )
 
-    FspSubarrayCorr = device_property(
+    FspCorrSubarray = device_property(
         dtype=('str',)
     )
 
-    FspSubarrayPss = device_property(
+    FspPssSubarray = device_property(
         dtype=('str',)
     )
 
@@ -1152,19 +1152,19 @@ class CbfSubarray(SKASubarray):
         self._count_fsp = int(self._master_max_capabilities["FSP"])
         self._fqdn_vcc = list(self.VCC)[:self._count_vcc]
         self._fqdn_fsp = list(self.FSP)[:self._count_fsp]
-        self._fqdn_fsp_subarray_corr = list(self.FspSubarrayCorr)
-        self._fqdn_fsp_subarray_pss = list(self.FspSubarrayPss)
+        self._fqdn_fsp_corr_subarray = list(self.FspCorrSubarray)
+        self._fqdn_fsp_pss_subarray = list(self.FspPssSubarray)
 
 
         self._proxies_vcc = [*map(tango.DeviceProxy, self._fqdn_vcc)]
         self._proxies_fsp = [*map(tango.DeviceProxy, self._fqdn_fsp)]
-        self._proxies_fsp_subarray_corr = [*map(tango.DeviceProxy, self._fqdn_fsp_subarray_corr)]
-        self._proxies_fsp_subarray_pss = [*map(tango.DeviceProxy, self._fqdn_fsp_subarray_pss)]
+        self._proxies_fsp_corr_subarray = [*map(tango.DeviceProxy, self._fqdn_fsp_corr_subarray)]
+        self._proxies_fsp_pss_subarray = [*map(tango.DeviceProxy, self._fqdn_fsp_pss_subarray)]
 
         self._proxies_assigned_vcc = []
         self._proxies_assigned_fsp = []
-        self._proxies_assigned_fsp_subarray_corr = []
-        self._proxies_assigned_fsp_subarray_pss = []
+        self._proxies_assigned_fsp_corr_subarray = []
+        self._proxies_assigned_fsp_pss_subarray = []
 
         # store the subscribed telstate events as event_ID:attribute_proxy key:value pairs
         self._events_telstate = {}
@@ -1178,7 +1178,7 @@ class CbfSubarray(SKASubarray):
         # initialize groups
         self._group_vcc = tango.Group("VCC")
         self._group_fsp = tango.Group("FSP")
-        self._group_fsp_subarray_corr = tango.Group("FSP Subarray")
+        self._group_fsp_corr_subarray = tango.Group("FSP Subarray")
 
         self._obs_state = ObsState.IDLE.value
         self._admin_mode = AdminMode.ONLINE.value
@@ -1699,13 +1699,13 @@ class CbfSubarray(SKASubarray):
             # Configure fspID.
             fspID = int(fsp["fspID"])
             proxy_fsp = self._proxies_fsp[fspID - 1]
-            proxy_fsp_subarray_corr = self._proxies_fsp_subarray_corr[fspID - 1]
-            proxy_fsp_subarray_pss = self._proxies_fsp_subarray_pss[fspID - 1]
+            proxy_fsp_corr_subarray = self._proxies_fsp_corr_subarray[fspID - 1]
+            proxy_fsp_pss_subarray = self._proxies_fsp_pss_subarray[fspID - 1]
             self._proxies_assigned_fsp.append(proxy_fsp)
-            self._proxies_assigned_fsp_subarray_corr.append(proxy_fsp_subarray_corr)
-            self._proxies_assigned_fsp_subarray_pss.append(proxy_fsp_subarray_pss)
+            self._proxies_assigned_fsp_corr_subarray.append(proxy_fsp_corr_subarray)
+            self._proxies_assigned_fsp_pss_subarray.append(proxy_fsp_pss_subarray)
             self._group_fsp.add(self._fqdn_fsp[fspID - 1])
-            self._group_fsp_subarray_corr.add(self._fqdn_fsp_subarray_corr[fspID - 1])
+            self._group_fsp_corr_subarray.add(self._fqdn_fsp_corr_subarray[fspID - 1])
 
             # change FSP subarray membership
             proxy_fsp.AddSubarrayMembership(self._subarray_id)
@@ -1893,7 +1893,7 @@ class CbfSubarray(SKASubarray):
                                          tango.ErrSeverity.ERR)
 
         self._group_vcc.command_inout("EndScan")
-        self._group_fsp_subarray_corr.command_inout("EndScan")
+        self._group_fsp_corr_subarray.command_inout("EndScan")
 
         self._obs_state = ObsState.READY.value
         # PROTECTED REGION END #    //  CbfSubarray.EndScan
@@ -1925,7 +1925,7 @@ class CbfSubarray(SKASubarray):
         # TODO: actually use argin
         # For MVP, ignore argin (activation time)
         self._group_vcc.command_inout("Scan")
-        self._group_fsp_subarray_corr.command_inout("Scan")
+        self._group_fsp_corr_subarray.command_inout("Scan")
 
         self._obs_state = ObsState.SCANNING.value
         # PROTECTED REGION END #    //  CbfSubarray.Scan
@@ -1959,7 +1959,7 @@ class CbfSubarray(SKASubarray):
 
         # send assigned VCCs and FSP subarrays to IDLE state
         self._group_vcc.command_inout("GoToIdle")
-        self._group_fsp_subarray_corr.command_inout("GoToIdle")
+        self._group_fsp_corr_subarray.command_inout("GoToIdle")
 
         # change FSP subarray membership
         data = tango.DeviceData()
@@ -1970,8 +1970,8 @@ class CbfSubarray(SKASubarray):
 
         # remove channel info from FSP subarrays
         # already done in GoToIdle
-        self._group_fsp_subarray_corr.remove_all()
-        self._proxies_assigned_fsp_subarray_corr.clear()
+        self._group_fsp_corr_subarray.remove_all()
+        self._proxies_assigned_fsp_corr_subarray.clear()
 
         self._scan_ID = 0
         self._output_links_distribution = {"scanID": 0}
@@ -1980,12 +1980,12 @@ class CbfSubarray(SKASubarray):
         self._published_output_links = False
 
         # TODO need to add this check for fspSubarrayPSS and VLBI and PST once implemented
-        for fsp_subarray_corr_proxy in self._proxies_fsp_subarray_corr:
-             if fsp_subarray_corr_proxy.State() == tango.DevState.ON:
-                fsp_subarray_corr_proxy.GoToIdle()
-        for fsp_subarray_pss_proxy in self._proxies_fsp_subarray_pss:
-             if fsp_subarray_pss_proxy.State() == tango.DevState.ON:
-                fsp_subarray_pss_proxy.GoToIdle()
+        for fsp_corr_subarray_proxy in self._proxies_fsp_corr_subarray:
+             if fsp_corr_subarray_proxy.State() == tango.DevState.ON:
+                fsp_corr_subarray_proxy.GoToIdle()
+        for fsp_pss_subarray_proxy in self._proxies_fsp_pss_subarray:
+             if fsp_pss_subarray_proxy.State() == tango.DevState.ON:
+                fsp_pss_subarray_proxy.GoToIdle()
 
         # transition to obsState=IDLE
         self._obs_state = ObsState.IDLE.value

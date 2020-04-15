@@ -146,9 +146,9 @@ with open("tangods/devices.json", "w+") as f:
 
     # Generate CBF Subarrays
     for i in range(1, num_subarray + 1):
-        fqdn_fsp_subarray_corr = [*map(lambda j: "\"mid_csp_cbf/fspSubarrayCorr/{0:02d}_{1:02d}\"".format(j, i), range(1, num_fsp + 1))]
-        string_fsp_subarray_corr = "\n                    " + \
-                              ",\n                    ".join(fqdn_fsp_subarray_corr) + \
+        fqdn_fsp_corr_subarray = [*map(lambda j: "\"mid_csp_cbf/fspCorrSubarray/{0:02d}_{1:02d}\"".format(j, i), range(1, num_fsp + 1))]
+        string_fsp_corr_subarray = "\n                    " + \
+                              ",\n                    ".join(fqdn_fsp_corr_subarray) + \
                               "\n                "
         string += "    {{\n" \
                   "        \"class\": \"CbfSubarray\",\n" \
@@ -180,7 +180,7 @@ with open("tangods/devices.json", "w+") as f:
                   "                \"devPropValue\": [{2}]\n" \
                   "            }},\n" \
                   "            {{\n" \
-                  "                \"devPropName\": \"FspSubarrayCorr\",\n" \
+                  "                \"devPropName\": \"FspCorrSubarray\",\n" \
                   "                \"devPropValue\": [{3}]\n" \
                   "            }}\n" \
                   "        ],\n" \
@@ -228,7 +228,7 @@ with open("tangods/devices.json", "w+") as f:
                   "                \"changeEventAbs\": \"1\"\n" \
                   "            }}\n" \
                   "        ]\n" \
-                  "    }},\n".format(i, string_vcc, string_fsp, string_fsp_subarray_corr)
+                  "    }},\n".format(i, string_vcc, string_fsp, string_fsp_corr_subarray)
 
     # Generate VCCs
     for i in range(1, num_vcc + 1):
@@ -300,9 +300,9 @@ with open("tangods/devices.json", "w+") as f:
 
     # Generate FSPs
     for i in range(1, num_fsp + 1):
-        fqdn_fsp_subarray_corr = [*map(lambda j: "\"mid_csp_cbf/fspSubarrayCorr/{0:02d}_{1:02d}\"".format(i, j), range(1, num_subarray + 1))]
-        string_fsp_subarray_corr = "\n                    " + \
-                            ",\n                    ".join(fqdn_fsp_subarray_corr) + \
+        fqdn_fsp_corr_subarray = [*map(lambda j: "\"mid_csp_cbf/fspCorrSubarray/{0:02d}_{1:02d}\"".format(i, j), range(1, num_subarray + 1))]
+        string_fsp_corr_subarray = "\n                    " + \
+                            ",\n                    ".join(fqdn_fsp_corr_subarray) + \
                             "\n                "
         string += "    {{\n" \
                   "        \"class\": \"Fsp\",\n" \
@@ -330,7 +330,7 @@ with open("tangods/devices.json", "w+") as f:
                   "                \"devPropValue\": \"mid_csp_cbf/fsp_vlbi/{0:02d}\"\n" \
                   "            }},\n" \
                   "            {{\n" \
-                  "                \"devPropName\": \"FspSubarrayCorr\",\n" \
+                  "                \"devPropName\": \"FspCorrSubarray\",\n" \
                   "                \"devPropValue\": [{1}]\n" \
                   "            }}\n" \
                   "        ],\n" \
@@ -364,7 +364,7 @@ with open("tangods/devices.json", "w+") as f:
                   "                \"changeEventAbs\": \"1\"\n" \
                   "            }}\n" \
                   "        ]\n" \
-                  "    }},\n".format(i, string_fsp_subarray_corr)
+                  "    }},\n".format(i, string_fsp_corr_subarray)
 
     # Generate CBF Subarray search windows (2 for each CBF Subarray)
     for i in range(1, num_subarray + 1):
@@ -472,9 +472,9 @@ with open("tangods/devices.json", "w+") as f:
     for i in range(1, num_fsp + 1):
         for j in range(1, num_subarray + 1):
             string += "    {{\n" \
-                      "        \"class\": \"FspSubarrayCorr\",\n" \
+                      "        \"class\": \"FspCorrSubarray\",\n" \
                       "        \"serverName\": \"FspMulti/fsp-{0:02d}\",\n" \
-                      "        \"devName\": \"mid_csp_cbf/fspSubarrayCorr/{0:02d}_{1:02d}\",\n" \
+                      "        \"devName\": \"mid_csp_cbf/fspCorrSubarray/{0:02d}_{1:02d}\",\n" \
                       "        \"deviceProperties\": [\n" \
                       "            {{\n" \
                       "                \"devPropName\": \"SubID\",\n" \

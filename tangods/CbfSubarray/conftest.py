@@ -64,11 +64,11 @@ def create_fsp_2_function_mode_proxy():
 
 @pytest.fixture(scope="class")
 def create_fsp_1_subarray_1_proxy():
-    return DeviceProxy("mid_csp_cbf/fspSubarrayCorr/01_01")
+    return DeviceProxy("mid_csp_cbf/fspCorrSubarray/01_01")
 
 @pytest.fixture(scope="class")
 def create_fsp_2_subarray_1_proxy():
-    return DeviceProxy("mid_csp_cbf/fspSubarrayCorr/02_01")
+    return DeviceProxy("mid_csp_cbf/fspCorrSubarray/02_01")
 
 @pytest.fixture(scope="class")
 def create_tm_telstate_proxy():

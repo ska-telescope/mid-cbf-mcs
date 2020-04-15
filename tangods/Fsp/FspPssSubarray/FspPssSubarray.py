@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# This file is part of the FspSubarrayPss project
+# This file is part of the FspPssSubarray project
 #
 #
 #
@@ -13,9 +13,9 @@ Herzberg Astronomy and Astrophysics, National Research Council of Canada
 Copyright (c) 2019 National Research Council of Canada
 """
 
-""" FspSubarrayPss Tango device prototype
+""" FspPssSubarray Tango device prototype
 
-FspSubarrayPss TANGO device class for the FspSubarrayPss prototype
+FspPssSubarray TANGO device class for the FspPssSubarray prototype
 """
 
 # tango imports
@@ -28,7 +28,7 @@ from tango.server import device_property
 from tango import AttrQuality, DispLevel, DevState
 from tango import AttrWriteType, PipeWriteType
 # Additional import
-# PROTECTED REGION ID(FspSubarrayPss.additionnal_import) ENABLED START #
+# PROTECTED REGION ID(FspPssSubarray.additionnal_import) ENABLED START #
 import os
 import sys
 import json
@@ -42,9 +42,9 @@ from global_enum import const
 from skabase.control_model import HealthState, AdminMode, ObsState
 from skabase.SKASubarray.SKASubarray import SKASubarray
 
-# PROTECTED REGION END #    //  FspSubarrayPss.additionnal_import
+# PROTECTED REGION END #    //  FspPssSubarray.additionnal_import
 
-__all__ = ["FspSubarrayPss", "main"]
+__all__ = ["FspPssSubarray", "main"]
 
 class SearchBeam:
   def __init__(self, search_beam_id, receptors, output_enable, averaging_interval, search_beam_address):
@@ -54,12 +54,12 @@ class SearchBeam:
       self._averaging_interval = averaging_interval
       self._search_beam_address = search_beam_address
 
-class FspSubarrayPss(SKASubarray):
+class FspPssSubarray(SKASubarray):
     """
-    FspSubarrayPss TANGO device class for the FspSubarrayPss prototype
+    FspPssSubarray TANGO device class for the FspPssSubarray prototype
     """
-    # PROTECTED REGION ID(FspSubarrayPss.class_variable) ENABLED START #
-    # PROTECTED REGION END #    //  FspSubarrayPss.class_variable
+    # PROTECTED REGION ID(FspPssSubarray.class_variable) ENABLED START #
+    # PROTECTED REGION END #    //  FspPssSubarray.class_variable
 
     # -----------------
     # Device Properties
@@ -150,7 +150,7 @@ class FspSubarrayPss(SKASubarray):
 
     def init_device(self):
         SKASubarray.init_device(self)
-        # PROTECTED REGION ID(FspSubarrayPss.init_device) ENABLED START #
+        # PROTECTED REGION ID(FspPssSubarray.init_device) ENABLED START #
         self.set_state(tango.DevState.INIT)
 
         # get relevant IDs
@@ -182,39 +182,39 @@ class FspSubarrayPss(SKASubarray):
 
         self._obs_state = ObsState.IDLE.value
         self.set_state(tango.DevState.OFF)
-        # PROTECTED REGION END #    //  FspSubarrayPss.init_device
+        # PROTECTED REGION END #    //  FspPssSubarray.init_device
 
     def always_executed_hook(self):
-        # PROTECTED REGION ID(FspSubarrayPss.always_executed_hook) ENABLED START #
+        # PROTECTED REGION ID(FspPssSubarray.always_executed_hook) ENABLED START #
         pass
-        # PROTECTED REGION END #    //  FspSubarrayPss.always_executed_hook
+        # PROTECTED REGION END #    //  FspPssSubarray.always_executed_hook
 
     def delete_device(self):
-        # PROTECTED REGION ID(FspSubarrayPss.delete_device) ENABLED START #
+        # PROTECTED REGION ID(FspPssSubarray.delete_device) ENABLED START #
         self.GoToIdle()
         self.RemoveAllReceptors()
         self.set_state(tango.DevState.OFF)
-        # PROTECTED REGION END #    //  FspSubarrayPss.delete_device
+        # PROTECTED REGION END #    //  FspPssSubarray.delete_device
 
     # ------------------
     # Attributes methods
     # ------------------
 
     def read_receptors(self):
-        # PROTECTED REGION ID(FspSubarrayPss.receptors_read) ENABLED START #
+        # PROTECTED REGION ID(FspPssSubarray.receptors_read) ENABLED START #
         return self._receptors
-        # PROTECTED REGION END #    //  FspSubarrayPss.receptors_read
+        # PROTECTED REGION END #    //  FspPssSubarray.receptors_read
 
     def write_receptors(self, value):
-        # PROTECTED REGION ID(FspSubarrayPss.receptors_write) ENABLED START #
+        # PROTECTED REGION ID(FspPssSubarray.receptors_write) ENABLED START #
         self.RemoveAllReceptors()
         self.AddReceptors(value)
-        # PROTECTED REGION END #    //  FspSubarrayPss.receptors_write
+        # PROTECTED REGION END #    //  FspPssSubarray.receptors_write
 
     def read_searchBeams(self):
-        # PROTECTED REGION ID(FspSubarrayPss.searchBeams_read) ENABLED START #
+        # PROTECTED REGION ID(FspPssSubarray.searchBeams_read) ENABLED START #
         return self._search_beams
-        # PROTECTED REGION END #    //  FspSubarrayPss.searchBeams_read
+        # PROTECTED REGION END #    //  FspPssSubarray.searchBeams_read
 
     def read_searchWindowID(self):
         # PROTECTED REGION ID(CbfSubarrayPssConfig.read_searchWindowID) ENABLED START #
@@ -253,9 +253,9 @@ class FspSubarrayPss(SKASubarray):
 
     @command()
     def On(self):
-        # PROTECTED REGION ID(FspSubarrayPss.On) ENABLED START #
+        # PROTECTED REGION ID(FspPssSubarray.On) ENABLED START #
         self.set_state(tango.DevState.ON)
-        # PROTECTED REGION END #    //  FspSubarrayPss.On
+        # PROTECTED REGION END #    //  FspPssSubarray.On
 
     def is_Off_allowed(self):
         if self.dev_state() == tango.DevState.ON and\
@@ -265,12 +265,12 @@ class FspSubarrayPss(SKASubarray):
 
     @command()
     def Off(self):
-        # PROTECTED REGION ID(FspSubarrayPss.Off) ENABLED START #
+        # PROTECTED REGION ID(FspPssSubarray.Off) ENABLED START #
         # This command can only be called when obsState=IDLE
         # self.GoToIdle()
         self.RemoveAllReceptors()
         self.set_state(tango.DevState.OFF)
-        # PROTECTED REGION END #    //  FspSubarrayPss.Off
+        # PROTECTED REGION END #    //  FspPssSubarray.Off
 
     def is_AddReceptors_allowed(self):
         if self.dev_state() == tango.DevState.ON and\
@@ -287,7 +287,7 @@ class FspSubarrayPss(SKASubarray):
         doc_in="List of receptor IDs",
     )
     def AddReceptors(self, argin):
-        # PROTECTED REGION ID(FspSubarrayPss.AddReceptors) ENABLED START #
+        # PROTECTED REGION ID(FspPssSubarray.AddReceptors) ENABLED START #
         errs = []  # list of error messages
         receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
                                self._proxy_cbf_master.receptorToVcc)
@@ -316,7 +316,7 @@ class FspSubarrayPss(SKASubarray):
             self.logger.error(msg)
             tango.Except.throw_exception("Command failed", msg, "AddReceptors execution",
                                            tango.ErrSeverity.ERR)
-        # PROTECTED REGION END #    //  FspSubarrayPss.AddReceptors
+        # PROTECTED REGION END #    //  FspPssSubarray.AddReceptors
 
     def is_RemoveReceptors_allowed(self):
         if self.dev_state() == tango.DevState.ON and\
@@ -333,7 +333,7 @@ class FspSubarrayPss(SKASubarray):
         doc_in="List of receptor IDs",
     )
     def RemoveReceptors(self, argin):
-        # PROTECTED REGION ID(FspSubarrayPss.RemoveReceptors) ENABLED START #
+        # PROTECTED REGION ID(FspPssSubarray.RemoveReceptors) ENABLED START #
         for receptorID in argin:
             if receptorID in self._receptors:
                 self._receptors.remove(receptorID)
@@ -341,7 +341,7 @@ class FspSubarrayPss(SKASubarray):
                 log_msg = "Receptor {} not assigned to FSP subarray. "\
                     "Skipping.".format(str(receptorID))
                 self.logger.warn(log_msg)
-        # PROTECTED REGION END #    //  FspSubarrayPss.RemoveReceptors
+        # PROTECTED REGION END #    //  FspPssSubarray.RemoveReceptors
 
     def is_RemoveAllReceptors_allowed(self):
         if self.dev_state() == tango.DevState.ON and\
@@ -355,9 +355,9 @@ class FspSubarrayPss(SKASubarray):
 
     @command()
     def RemoveAllReceptors(self):
-        # PROTECTED REGION ID(FspSubarrayPss.RemoveAllReceptors) ENABLED START #
+        # PROTECTED REGION ID(FspPssSubarray.RemoveAllReceptors) ENABLED START #
         self.RemoveReceptors(self._receptors[:])
-        # PROTECTED REGION END #    //  FspSubarrayPss.RemoveAllReceptors
+        # PROTECTED REGION END #    //  FspPssSubarray.RemoveAllReceptors
 
     def is_ConfigureScan_allowed(self):
         if self.dev_state() == tango.DevState.ON and\
@@ -370,7 +370,7 @@ class FspSubarrayPss(SKASubarray):
         doc_in="Scan configuration",
     )
     def ConfigureScan(self, argin):
-        # PROTECTED REGION ID(FspSubarrayPss.ConfigureScan) ENABLED START #
+        # PROTECTED REGION ID(FspPssSubarray.ConfigureScan) ENABLED START #
         # This function is called after the configuration has already been validated,
         # so the checks here have been removed to reduce overhead.
 
@@ -394,10 +394,10 @@ class FspSubarrayPss(SKASubarray):
 
             self._search_beams.append(single_beam)
 
-        # fspSubarrayPss moves to READY after configuration
+        # fspPssSubarray moves to READY after configuration
         self._obs_state = ObsState.READY.value
 
-        # PROTECTED REGION END #    //  FspSubarrayPss.ConfigureScan
+        # PROTECTED REGION END #    //  FspPssSubarray.ConfigureScan
 
     def is_EndScan_allowed(self):
         if self.dev_state() == tango.DevState.ON and\
@@ -407,10 +407,10 @@ class FspSubarrayPss(SKASubarray):
 
     @command()
     def EndScan(self):
-        # PROTECTED REGION ID(FspSubarrayPss.EndScan) ENABLED START #
+        # PROTECTED REGION ID(FspPssSubarray.EndScan) ENABLED START #
         self._obs_state = ObsState.READY.value
         # nothing else is supposed to happen
-        # PROTECTED REGION END #    //  FspSubarrayPss.EndScan
+        # PROTECTED REGION END #    //  FspPssSubarray.EndScan
 
     def is_Scan_allowed(self):
         if self.dev_state() == tango.DevState.ON and\
@@ -420,10 +420,10 @@ class FspSubarrayPss(SKASubarray):
 
     @command()
     def Scan(self):
-        # PROTECTED REGION ID(FspSubarrayPss.Scan) ENABLED START #
+        # PROTECTED REGION ID(FspPssSubarray.Scan) ENABLED START #
         self._obs_state = ObsState.SCANNING.value
         # nothing else is supposed to happen
-        # PROTECTED REGION END #    //  FspSubarrayPss.Scan
+        # PROTECTED REGION END #    //  FspPssSubarray.Scan
 
     def is_GoToIdle_allowed(self):
         if self.dev_state() == tango.DevState.ON and\
@@ -433,10 +433,10 @@ class FspSubarrayPss(SKASubarray):
 
     @command()
     def GoToIdle(self):
-        # PROTECTED REGION ID(FspSubarrayPss.GoToIdle) ENABLED START #
+        # PROTECTED REGION ID(FspPssSubarray.GoToIdle) ENABLED START #
         # transition to obsState=IDLE
         self._obs_state = ObsState.IDLE.value
-        # PROTECTED REGION END #    //  FspSubarrayPss.GoToIdle
+        # PROTECTED REGION END #    //  FspPssSubarray.GoToIdle
 
 # ----------
 # Run server
@@ -444,9 +444,9 @@ class FspSubarrayPss(SKASubarray):
 
 
 def main(args=None, **kwargs):
-    # PROTECTED REGION ID(FspSubarrayPss.main) ENABLED START #
-    return run((FspSubarrayPss,), args=args, **kwargs)
-    # PROTECTED REGION END #    //  FspSubarrayPss.main
+    # PROTECTED REGION ID(FspPssSubarray.main) ENABLED START #
+    return run((FspPssSubarray,), args=args, **kwargs)
+    # PROTECTED REGION END #    //  FspPssSubarray.main
 
 
 if __name__ == '__main__':
