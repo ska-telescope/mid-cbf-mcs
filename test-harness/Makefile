@@ -31,6 +31,7 @@ test:
 	done
 	cd /app/tangods/CbfMaster && python setup.py test | tee setup_py_test.stdout
 	cd /app/tangods/CbfSubarray && python setup.py test | tee setup_py_test.stdout
+	cd /app/tangods/Fsp && python setup.py test | tee setup_py_test.stdout
 	cd /app && ./code-analysis.sh | tee code_analysis.stdout
 	if [ -d /build ]; then \
 		mv /app/tangods/CbfMaster/setup_py_test.stdout /build/cbf_master_setup_test.stdout; \

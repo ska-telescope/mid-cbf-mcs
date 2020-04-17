@@ -58,12 +58,14 @@ class TestFspCorrSubarray:
             create_cbf_master_proxy,
             create_vcc_proxies,
             create_cbf_subarray_1_proxy,
-            create_fsp_corr_subarray_1_1_proxy
+            create_fsp_corr_subarray_1_1_proxy,
+            create_fsp_pss_subarray_2_1_proxy
     ):
         """
         Test valid AddReceptors and RemoveReceptors commands
         """
         create_fsp_corr_subarray_1_1_proxy.Init()
+        create_fsp_pss_subarray_2_1_proxy.Init()
         create_cbf_subarray_1_proxy.Init()
         for proxy in create_vcc_proxies:
             proxy.Init()
@@ -73,13 +75,16 @@ class TestFspCorrSubarray:
         # receptor list should be empty right after initialization
         assert create_cbf_subarray_1_proxy.receptors == ()
         assert create_fsp_corr_subarray_1_1_proxy.receptors == ()
+        assert create_fsp_pss_subarray_2_1_proxy.receptors == ()
 
         # add some receptors
         create_cbf_subarray_1_proxy.AddReceptors([1, 10, 197])
         time.sleep(1)
         assert create_cbf_subarray_1_proxy.receptors == (1, 10, 197)
         create_fsp_corr_subarray_1_1_proxy.AddReceptors([1, 10])
+        create_fsp_pss_subarray_2_1_proxy.AddReceptors([2, 9])
         assert create_fsp_corr_subarray_1_1_proxy.receptors == (1, 10)
+        assert create_fsp_pss_subarray_2_1_proxy.receptors == (2, 9)
 
         # add more receptors
         create_fsp_corr_subarray_1_1_proxy.AddReceptors([197])
@@ -87,18 +92,21 @@ class TestFspCorrSubarray:
 
         # remove some receptors
         create_fsp_corr_subarray_1_1_proxy.RemoveReceptors([10, 197])
+        create_fsp_pss_subarray_2_1_proxy.RemoveReceptors([2, 9])
         assert create_fsp_corr_subarray_1_1_proxy.receptors == (1,)
 
         # remove remaining receptors
         create_fsp_corr_subarray_1_1_proxy.RemoveReceptors([1])
         assert create_fsp_corr_subarray_1_1_proxy.receptors == ()
+        assert create_fsp_pss_subarray_2_1_proxy.receptors == ()
 
     def test_AddRemoveReceptors_invalid(
             self,
             create_vcc_proxies,
             create_cbf_master_proxy,
             create_cbf_subarray_1_proxy,
-            create_fsp_corr_subarray_1_1_proxy
+            create_fsp_corr_subarray_1_1_proxy,
+            create_fsp_pss_subarray_2_1_proxy
     ):
         """
         Test invalid AddReceptors and RemoveReceptors commands:
@@ -107,6 +115,7 @@ class TestFspCorrSubarray:
             - when a receptor to be removed is not assigned to the subarray
         """
         create_fsp_corr_subarray_1_1_proxy.Init()
+        create_fsp_pss_subarray_2_1_proxy.Init()
         create_cbf_subarray_1_proxy.Init()
         for proxy in create_vcc_proxies:
             proxy.Init()
@@ -118,13 +127,16 @@ class TestFspCorrSubarray:
         # receptor list should be empty right after initialization
         assert create_cbf_subarray_1_proxy.receptors == ()
         assert create_fsp_corr_subarray_1_1_proxy.receptors == ()
+        assert create_fsp_pss_subarray_2_1_proxy.receptors == ()
 
         # add some receptors
         create_cbf_subarray_1_proxy.AddReceptors([1, 10, 197])
         time.sleep(1)
         assert create_cbf_subarray_1_proxy.receptors == (1, 10, 197)
         create_fsp_corr_subarray_1_1_proxy.AddReceptors([1, 10])
+        create_fsp_pss_subarray_2_1_proxy.AddReceptors([2, 9])
         assert create_fsp_corr_subarray_1_1_proxy.receptors == (1, 10)
+        assert create_fsp_pss_subarray_2_1_proxy.receptors == (2, 9)
 
         # try adding a receptor not in use by the subarray
         assert create_vcc_proxies[receptor_to_vcc[17] - 1].subarrayMembership == 0
@@ -183,12 +195,14 @@ class TestFspCorrSubarray:
             self,
             create_vcc_proxies,
             create_cbf_subarray_1_proxy,
-            create_fsp_corr_subarray_1_1_proxy
+            create_fsp_corr_subarray_1_1_proxy,
+            create_fsp_pss_subarray_2_1_proxy
     ):
         """
         Test a minimal successful scan configuration.
         """
         create_fsp_corr_subarray_1_1_proxy.Init()
+        create_fsp_pss_subarray_2_1_proxy.Init()
         create_cbf_subarray_1_proxy.Init()
         for proxy in create_vcc_proxies:
             proxy.Init()
@@ -206,6 +220,12 @@ class TestFspCorrSubarray:
         assert create_fsp_corr_subarray_1_1_proxy.channelAveragingMap == \
             tuple([(0, 0) for i in range(20)])
 
+        assert create_fsp_pss_subarray_2_1_proxy.receptors == ()
+        assert create_fsp_pss_subarray_2_1_proxy.searchBeams == ()
+        assert create_fsp_pss_subarray_2_1_proxy.searchWindowID == 0
+        assert create_fsp_pss_subarray_2_1_proxy.searchBeamID == ()
+        assert create_fsp_pss_subarray_2_1_proxy.outputEnable == 0
+
         create_cbf_subarray_1_proxy.AddReceptors([1, 10, 197])
         time.sleep(1)
 
@@ -213,6 +233,10 @@ class TestFspCorrSubarray:
         f = open(file_path + "/test_json/test_ConfigureScan_basic.json")
         create_fsp_corr_subarray_1_1_proxy.ConfigureScan(f.read().replace("\n", ""))
         f.close()
+
+        assert create_fsp_pss_subarray_2_1_proxy.receptors == (3, )
+        assert create_fsp_pss_subarray_2_1_proxy.searchWindowID == 2
+        assert create_fsp_pss_subarray_2_1_proxy.searchBeamID == (300, 400)
 
         assert create_fsp_corr_subarray_1_1_proxy.receptors == (10, 197)
         assert create_fsp_corr_subarray_1_1_proxy.frequencyBand == 4

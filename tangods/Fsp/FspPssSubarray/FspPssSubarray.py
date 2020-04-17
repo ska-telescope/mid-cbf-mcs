@@ -130,20 +130,6 @@ class FspPssSubarray(SKASubarray):
         doc="Enable/disable transmission of output products.",
     )
 
-    averagingInterval = attribute(
-        dtype='uint16',
-        access=AttrWriteType.READ,
-        label="Interval for averaging in time",
-        doc="averaging interval aligned across all beams within the sub-array",
-    )
-
-    searchBeamAddress = attribute(
-        dtype='str',
-        access=AttrWriteType.READ,
-        label="Search Beam Destination Addresses",
-        doc="Destination addresses (MAC address, IP address, port) for Mid.CBF output products. ",
-    )
-
     # ---------------
     # General methods
     # ---------------
@@ -163,8 +149,6 @@ class FspPssSubarray(SKASubarray):
         self._search_beam_id = []
         self._receptors = []
         self._output_enable = 0
-        self._averaging_interval = 0
-        self._search_beam_address = ""
 
         # device proxy for easy reference to CBF Master
         self._proxy_cbf_master = tango.DeviceProxy(self.CbfMasterAddress)
@@ -230,16 +214,6 @@ class FspPssSubarray(SKASubarray):
         # PROTECTED REGION ID(CbfSubarrayPssConfig.read_outputEnable) ENABLED START #
         return self._output_enable
         # PROTECTED REGION END #    //  CbfSubarrayPssConfig.read_outputEnable
-
-    def read_averagingInterval(self):
-        # PROTECTED REGION ID(CbfSubarrayPssConfig.read_averagingInterval) ENABLED START #
-        return self._averaging_interval
-        # PROTECTED REGION END #    //  CbfSubarrayPssConfig.read_averagingInterval
-
-    def read_searchBeamAddress(self):
-        # PROTECTED REGION ID(CbfSubarrayPssConfig.read_searchBeamAddress) ENABLED START #
-        return self._search_beam_address
-        # PROTECTED REGION END #    //  CbfSubarrayPssConfig.read_searchBeamAddress
 
     # --------
     # Commands
