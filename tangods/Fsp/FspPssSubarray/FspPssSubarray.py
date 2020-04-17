@@ -356,7 +356,7 @@ class FspPssSubarray(SKASubarray):
 
         for searchBeam in argin["searchBeam"]:
             self._search_beams.append(json.dumps(searchBeam))
-            self._receptors.append(searchBeam["receptors"])
+            self._receptors.extend(searchBeam["receptors"])
             self._search_beam_id.append(int(searchBeam["searchBeamID"]))
 
         # fspPssSubarray moves to READY after configuration
