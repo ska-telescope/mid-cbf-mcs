@@ -71,5 +71,9 @@ def create_fsp_2_subarray_1_proxy():
     return DeviceProxy("mid_csp_cbf/fspCorrSubarray/02_01")
 
 @pytest.fixture(scope="class")
+def create_fsp_3_subarray_1_proxy():
+    return DeviceProxy("mid_csp_cbf/fspPssSubarray/03_01")
+
+@pytest.fixture(scope="class")
 def create_tm_telstate_proxy():
     return DeviceProxy("ska_mid/tm_leaf_node/csp_subarray_01")

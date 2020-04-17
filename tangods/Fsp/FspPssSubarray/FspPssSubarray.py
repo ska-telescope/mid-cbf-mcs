@@ -46,14 +46,6 @@ from skabase.SKASubarray.SKASubarray import SKASubarray
 
 __all__ = ["FspPssSubarray", "main"]
 
-class SearchBeam:
-  def __init__(self, search_beam_id, receptors, output_enable, averaging_interval, search_beam_address):
-      self._search_beam_id = search_beam_id
-      self._receptors = receptors
-      self._output_enable = output_enable
-      self._averaging_interval = averaging_interval
-      self._search_beam_address = search_beam_address
-
 class FspPssSubarray(SKASubarray):
     """
     FspPssSubarray TANGO device class for the FspPssSubarray prototype
@@ -100,13 +92,12 @@ class FspPssSubarray(SKASubarray):
         doc="List of receptors assigned to subarray",
     )
     searchBeams = attribute(
-        dtype=('uint16',),
+        dtype=('str',),
         access=AttrWriteType.READ,
         max_dim_x=192,
         label="SearchBeams",
         doc="List of searchBeams assigned to fspsubarray",
     )
-
     searchWindowID = attribute(
         dtype='uint16',
         access=AttrWriteType.READ,
@@ -361,13 +352,11 @@ class FspPssSubarray(SKASubarray):
         self._search_window_id = int(argin["searchWindowID"])
         self._search_beams = []
         self._search_beam_id = []
+        self._receptors = []
 
         for searchBeam in argin["searchBeam"]:
-            single_beam = SearchBeam(int(searchBeam["searchBeamID"]), searchBeam["receptors"],
-                                     bool(searchBeam["outputEnable"]), int(searchBeam["averagingInterval"]),
-                                     searchBeam["searchBeamDestinationAddress"])
-
-            self._search_beams.append(single_beam)
+            self._search_beams.append(json.dumps(searchBeam))
+            self._receptors.append(searchBeam["receptors"])
             self._search_beam_id.append(int(searchBeam["searchBeamID"]))
 
         # fspPssSubarray moves to READY after configuration

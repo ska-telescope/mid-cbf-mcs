@@ -283,6 +283,7 @@ class TestCbfSubarray:
             create_fsp_2_function_mode_proxy,
             create_fsp_1_subarray_1_proxy,
             create_fsp_2_subarray_1_proxy,
+            create_fsp_3_subarray_1_proxy,
             create_tm_telstate_proxy
     ):
         """
@@ -292,6 +293,7 @@ class TestCbfSubarray:
             proxy.Init()
         create_fsp_1_subarray_1_proxy.Init()
         create_fsp_2_subarray_1_proxy.Init()
+        create_fsp_3_subarray_1_proxy.Init()
         create_fsp_1_proxy.Init()
         create_fsp_2_proxy.Init()
         create_subarray_1_proxy.set_timeout_millis(60000)  # since the command takes a while
@@ -527,6 +529,29 @@ class TestCbfSubarray:
         assert create_fsp_2_subarray_1_proxy.channelAveragingMap[18][1] == 0
         assert create_fsp_2_subarray_1_proxy.channelAveragingMap[19][0] == 14137
         assert create_fsp_2_subarray_1_proxy.channelAveragingMap[19][1] == 0
+
+        assert create_fsp_3_subarray_1_proxy.receptors[0] == 3
+        assert create_fsp_3_subarray_1_proxy.receptors[1] == 1
+        assert create_fsp_3_subarray_1_proxy.searchWindowID == 2
+        assert create_fsp_3_subarray_1_proxy.searchBeamID[0] == 300
+        assert create_fsp_3_subarray_1_proxy.searchBeamID[1] == 400
+
+        searchBeam = create_fsp_3_subarray_1_proxy.searchBeams
+        searchBeam300 = json.loads(searchBeam[0])
+        searchBeam400 = json.loads(searchBeam[1])
+
+        assert searchBeam300["searchBeamID"] == 300
+        assert searchBeam300["receptors"][0] == 3
+        assert searchBeam300["outputEnable"] == True
+        assert searchBeam300["averagingInterval"] == 4
+        assert searchBeam300["searchBeamDestinationAddress"] == "10.1.1.1"
+
+        assert searchBeam400["searchBeamID"] == 400
+        assert searchBeam400["receptors"][0] == 1
+        assert searchBeam400["outputEnable"] == True
+        assert searchBeam400["averagingInterval"] == 2
+        assert searchBeam400["searchBeamDestinationAddress"] == "10.1.2.1"
+
         create_subarray_1_proxy.GoToIdle()
         time.sleep(3)
         assert create_subarray_1_proxy.obsState == ObsState.IDLE

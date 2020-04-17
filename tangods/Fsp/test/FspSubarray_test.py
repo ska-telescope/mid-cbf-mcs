@@ -83,17 +83,19 @@ class TestFspCorrSubarray:
         assert create_cbf_subarray_1_proxy.receptors == (1, 10, 197)
         create_fsp_corr_subarray_1_1_proxy.AddReceptors([1, 10])
         create_fsp_pss_subarray_2_1_proxy.AddReceptors([2, 9])
-        assert create_fsp_corr_subarray_1_1_proxy.receptors == (1, 10)
-        assert create_fsp_pss_subarray_2_1_proxy.receptors == (2, 9)
+        assert create_fsp_corr_subarray_1_1_proxy.receptors[0] == 1
+        assert create_fsp_corr_subarray_1_1_proxy.receptors[1] == 10
+        assert create_fsp_pss_subarray_2_1_proxy.receptors[0] == 2
+        assert create_fsp_pss_subarray_2_1_proxy.receptors[1] == 9
 
         # add more receptors
         create_fsp_corr_subarray_1_1_proxy.AddReceptors([197])
-        assert create_fsp_corr_subarray_1_1_proxy.receptors == (1, 10, 197)
+        assert create_fsp_corr_subarray_1_1_proxy.receptors[2] == 197
 
         # remove some receptors
         create_fsp_corr_subarray_1_1_proxy.RemoveReceptors([10, 197])
         create_fsp_pss_subarray_2_1_proxy.RemoveReceptors([2, 9])
-        assert create_fsp_corr_subarray_1_1_proxy.receptors == (1,)
+        assert create_fsp_corr_subarray_1_1_proxy.receptors[0] == 1
 
         # remove remaining receptors
         create_fsp_corr_subarray_1_1_proxy.RemoveReceptors([1])
@@ -135,15 +137,18 @@ class TestFspCorrSubarray:
         assert create_cbf_subarray_1_proxy.receptors == (1, 10, 197)
         create_fsp_corr_subarray_1_1_proxy.AddReceptors([1, 10])
         create_fsp_pss_subarray_2_1_proxy.AddReceptors([2, 9])
-        assert create_fsp_corr_subarray_1_1_proxy.receptors == (1, 10)
-        assert create_fsp_pss_subarray_2_1_proxy.receptors == (2, 9)
+        assert create_fsp_corr_subarray_1_1_proxy.receptors[0] == 1
+        assert create_fsp_corr_subarray_1_1_proxy.receptors[1] == 10
+        assert create_fsp_pss_subarray_2_1_proxy.receptors[0] == 2
+        assert create_fsp_pss_subarray_2_1_proxy.receptors[1] == 9
 
         # try adding a receptor not in use by the subarray
         assert create_vcc_proxies[receptor_to_vcc[17] - 1].subarrayMembership == 0
         with pytest.raises(tango.DevFailed) as df:
             create_fsp_corr_subarray_1_1_proxy.AddReceptors([17])
         assert "does not belong" in str(df.value.args[0].desc)
-        assert create_fsp_corr_subarray_1_1_proxy.receptors == (1, 10)
+        assert create_fsp_corr_subarray_1_1_proxy.receptors[0] == 1
+        assert create_fsp_corr_subarray_1_1_proxy.receptors[1] == 10
 
         # try adding an invalid receptor ID
         with pytest.raises(tango.DevFailed) as df:
@@ -154,7 +159,8 @@ class TestFspCorrSubarray:
         # try removing a receptor not assigned to subarray 2
         # doing this doesn't actually throw an error
         create_fsp_corr_subarray_1_1_proxy.RemoveReceptors([5])
-        assert create_fsp_corr_subarray_1_1_proxy.receptors == (1, 10)
+        assert create_fsp_corr_subarray_1_1_proxy.receptors[0] == 1
+        assert create_fsp_corr_subarray_1_1_proxy.receptors[1] == 10
 
         # remove all receptors
         create_fsp_corr_subarray_1_1_proxy.RemoveReceptors([1, 10])
@@ -185,7 +191,8 @@ class TestFspCorrSubarray:
         time.sleep(1)
         assert create_cbf_subarray_1_proxy.receptors == (1, 10, 197)
         create_fsp_corr_subarray_1_1_proxy.AddReceptors([1, 10])
-        assert create_fsp_corr_subarray_1_1_proxy.receptors == (1, 10)
+        assert create_fsp_corr_subarray_1_1_proxy.receptors[0] == 1
+        assert create_fsp_corr_subarray_1_1_proxy.receptors[1] == 10
 
         # remove all receptors
         create_fsp_corr_subarray_1_1_proxy.RemoveAllReceptors()
