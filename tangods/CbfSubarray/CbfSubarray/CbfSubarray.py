@@ -1722,6 +1722,7 @@ class CbfSubarray(SKASubarray):
             self._proxies_assigned_fsp_pss_subarray.append(proxy_fsp_pss_subarray)
             self._group_fsp.add(self._fqdn_fsp[fspID - 1])
             self._group_fsp_corr_subarray.add(self._fqdn_fsp_corr_subarray[fspID - 1])
+            self._group_fsp_pss_subarray.add(self._fqdn_fsp_pss_subarray[fspID - 1])
 
             # change FSP subarray membership
             proxy_fsp.AddSubarrayMembership(self._subarray_id)
