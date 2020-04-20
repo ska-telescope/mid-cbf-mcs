@@ -872,7 +872,9 @@ class CbfSubarray(SKASubarray):
                                                 pass
                                             else:
                                                 for search_beam_ID in searchBeamID:
-                                                    if int(searchBeam["searchBeamID"]) == search_beam_ID:
+                                                    if int(searchBeam["searchBeamID"]) != search_beam_ID:
+                                                        pass
+                                                    elif fsp_pss_subarray_proxy.obsState == ObsState.IDLE:
                                                         pass
                                                     else:
                                                         msg = "'searchBeamID' {} is already being used on another fspSubarray.".format(
