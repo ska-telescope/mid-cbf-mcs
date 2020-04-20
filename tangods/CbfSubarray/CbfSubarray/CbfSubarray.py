@@ -1193,7 +1193,8 @@ class CbfSubarray(SKASubarray):
         # initialize groups
         self._group_vcc = tango.Group("VCC")
         self._group_fsp = tango.Group("FSP")
-        self._group_fsp_corr_subarray = tango.Group("FSP Subarray")
+        self._group_fsp_corr_subarray = tango.Group("FSP Subarray Corr")
+        self._group_fsp_pss_subarray = tango.Group("FSP Subarray Pss")
 
         self._obs_state = ObsState.IDLE.value
         self._admin_mode = AdminMode.ONLINE.value
@@ -1909,6 +1910,7 @@ class CbfSubarray(SKASubarray):
 
         self._group_vcc.command_inout("EndScan")
         self._group_fsp_corr_subarray.command_inout("EndScan")
+        self._group_fsp_pss_subarray.command_inout("EndScan")
 
         self._obs_state = ObsState.READY.value
         # PROTECTED REGION END #    //  CbfSubarray.EndScan
@@ -1941,6 +1943,7 @@ class CbfSubarray(SKASubarray):
         # For MVP, ignore argin (activation time)
         self._group_vcc.command_inout("Scan")
         self._group_fsp_corr_subarray.command_inout("Scan")
+        self._group_fsp_pss_subarray.command_inout("Scan")
 
         self._obs_state = ObsState.SCANNING.value
         # PROTECTED REGION END #    //  CbfSubarray.Scan
@@ -1975,6 +1978,7 @@ class CbfSubarray(SKASubarray):
         # send assigned VCCs and FSP subarrays to IDLE state
         self._group_vcc.command_inout("GoToIdle")
         self._group_fsp_corr_subarray.command_inout("GoToIdle")
+        self._group_fsp_pss_subarray.command_inout("GoToIdle")
 
         # change FSP subarray membership
         data = tango.DeviceData()
@@ -1986,6 +1990,7 @@ class CbfSubarray(SKASubarray):
         # remove channel info from FSP subarrays
         # already done in GoToIdle
         self._group_fsp_corr_subarray.remove_all()
+        self._group_fsp_pss_subarray.remove_all()
         self._proxies_assigned_fsp_corr_subarray.clear()
 
         self._scan_ID = 0

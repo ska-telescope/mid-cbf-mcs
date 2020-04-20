@@ -279,6 +279,7 @@ class TestCbfSubarray:
             create_vcc_tdc_proxies,
             create_fsp_1_proxy,
             create_fsp_2_proxy,
+            create_fsp_3_proxy,
             create_fsp_1_function_mode_proxy,
             create_fsp_2_function_mode_proxy,
             create_fsp_1_subarray_1_proxy,
@@ -296,6 +297,7 @@ class TestCbfSubarray:
         create_fsp_3_subarray_1_proxy.Init()
         create_fsp_1_proxy.Init()
         create_fsp_2_proxy.Init()
+        create_fsp_3_proxy.Init()
         create_subarray_1_proxy.set_timeout_millis(60000)  # since the command takes a while
         create_subarray_1_proxy.Init()
         time.sleep(3)
@@ -414,8 +416,10 @@ class TestCbfSubarray:
         # check configured attributes of FSPs, including states of function mode capabilities
         assert create_fsp_1_proxy.functionMode == 1
         assert create_fsp_2_proxy.functionMode == 1
+        assert create_fsp_3_proxy.functionMode == 1
         assert 1 in create_fsp_1_proxy.subarrayMembership
         assert 1 in create_fsp_2_proxy.subarrayMembership
+        assert 1 in create_fsp_3_proxy.subarrayMembership
         assert [proxy.State() for proxy in create_fsp_1_function_mode_proxy] == [
             DevState.ON, DevState.DISABLE, DevState.DISABLE, DevState.DISABLE
         ]
@@ -536,10 +540,10 @@ class TestCbfSubarray:
         assert create_fsp_3_subarray_1_proxy.searchBeamID[0] == 300
         assert create_fsp_3_subarray_1_proxy.searchBeamID[1] == 400
 
+
         searchBeam = create_fsp_3_subarray_1_proxy.searchBeams
         searchBeam300 = json.loads(searchBeam[0])
         searchBeam400 = json.loads(searchBeam[1])
-
         assert searchBeam300["searchBeamID"] == 300
         assert searchBeam300["receptors"][0] == 3
         assert searchBeam300["outputEnable"] == True
@@ -566,8 +570,10 @@ class TestCbfSubarray:
             create_vcc_proxies,
             create_fsp_1_proxy,
             create_fsp_2_proxy,
+            create_fsp_3_proxy,
             create_fsp_1_subarray_1_proxy,
             create_fsp_2_subarray_1_proxy,
+            create_fsp_3_subarray_1_proxy,
             create_tm_telstate_proxy
     ):
         """
@@ -577,8 +583,10 @@ class TestCbfSubarray:
             proxy.Init()
         create_fsp_1_subarray_1_proxy.Init()
         create_fsp_2_subarray_1_proxy.Init()
+        create_fsp_3_subarray_1_proxy.Init()
         create_fsp_1_proxy.Init()
         create_fsp_2_proxy.Init()
+        create_fsp_3_proxy.Init()
         create_subarray_1_proxy.set_timeout_millis(60000)  # since the command takes a while
         create_subarray_1_proxy.Init()
         assert create_subarray_1_proxy.state() == tango.DevState.OFF
@@ -612,6 +620,7 @@ class TestCbfSubarray:
         assert create_subarray_1_proxy.obsState == ObsState.IDLE
         assert create_fsp_2_subarray_1_proxy.obsState == ObsState.IDLE
         assert create_fsp_1_subarray_1_proxy.obsState == ObsState.IDLE
+        assert create_fsp_3_subarray_1_proxy.obsState == ObsState.IDLE
         # configure scan
         f = open(file_path + "/test_json/test_ConfigureScan_basic.json")
         create_subarray_1_proxy.ConfigureScan(f.read().replace("\n", ""))
@@ -633,6 +642,7 @@ class TestCbfSubarray:
         assert create_vcc_proxies[receptor_to_vcc[4] - 1].obsState.value == ObsState.SCANNING.value
         assert create_fsp_1_subarray_1_proxy.obsState.value == ObsState.SCANNING.value
         assert create_fsp_2_subarray_1_proxy.obsState.value == ObsState.SCANNING.value
+        assert create_fsp_3_subarray_1_proxy.obsState.value == ObsState.SCANNING.value
 
         # send the EndScan command
         create_subarray_1_proxy.EndScan()
@@ -644,6 +654,7 @@ class TestCbfSubarray:
         assert create_vcc_proxies[receptor_to_vcc[4] - 1].obsState.value == ObsState.READY.value
         assert create_fsp_1_subarray_1_proxy.obsState.value == ObsState.READY.value
         assert create_fsp_2_subarray_1_proxy.obsState.value == ObsState.READY.value
+        assert create_fsp_3_subarray_1_proxy.obsState.value == ObsState.READY.value
 
     def test_ConfigureScan_delayModel(
             self,
@@ -809,8 +820,10 @@ class TestCbfSubarray:
             create_vcc_proxies,
             create_fsp_1_proxy,
             create_fsp_2_proxy,
+            create_fsp_3_proxy,
             create_fsp_1_subarray_1_proxy,
             create_fsp_2_subarray_1_proxy,
+            create_fsp_3_subarray_1_proxy,
             create_tm_telstate_proxy
     ):
         """
@@ -820,8 +833,10 @@ class TestCbfSubarray:
             proxy.Init()
         create_fsp_1_subarray_1_proxy.Init()
         create_fsp_2_subarray_1_proxy.Init()
+        create_fsp_3_subarray_1_proxy.Init()
         create_fsp_1_proxy.Init()
         create_fsp_2_proxy.Init()
+        create_fsp_3_proxy.Init()
         create_subarray_1_proxy.set_timeout_millis(60000)  # since the command takes a while
         create_subarray_1_proxy.Init()
         time.sleep(3)
@@ -861,6 +876,7 @@ class TestCbfSubarray:
         assert create_vcc_proxies[receptor_to_vcc[4] - 1].obsState.value == ObsState.READY.value
         assert create_fsp_1_subarray_1_proxy.obsState.value == ObsState.READY.value
         assert create_fsp_2_subarray_1_proxy.obsState.value == ObsState.READY.value
+        assert create_fsp_3_subarray_1_proxy.obsState.value == ObsState.READY.value
 
         # send the Scan command
         create_subarray_1_proxy.Scan("")
@@ -872,6 +888,7 @@ class TestCbfSubarray:
         assert create_vcc_proxies[receptor_to_vcc[4] - 1].obsState.value == ObsState.SCANNING.value
         assert create_fsp_1_subarray_1_proxy.obsState.value == ObsState.SCANNING.value
         assert create_fsp_2_subarray_1_proxy.obsState.value == ObsState.SCANNING.value
+        assert create_fsp_3_subarray_1_proxy.obsState.value == ObsState.SCANNING.value
         create_subarray_1_proxy.EndScan()
         time.sleep(1)
 
