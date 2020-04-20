@@ -279,7 +279,6 @@ class TestCbfSubarray:
             create_vcc_tdc_proxies,
             create_fsp_1_proxy,
             create_fsp_2_proxy,
-            create_fsp_3_proxy,
             create_fsp_1_function_mode_proxy,
             create_fsp_2_function_mode_proxy,
             create_fsp_1_subarray_1_proxy,
@@ -297,7 +296,6 @@ class TestCbfSubarray:
         create_fsp_3_subarray_1_proxy.Init()
         create_fsp_1_proxy.Init()
         create_fsp_2_proxy.Init()
-        create_fsp_3_proxy.Init()
         create_subarray_1_proxy.set_timeout_millis(60000)  # since the command takes a while
         create_subarray_1_proxy.Init()
         time.sleep(3)
@@ -416,10 +414,8 @@ class TestCbfSubarray:
         # check configured attributes of FSPs, including states of function mode capabilities
         assert create_fsp_1_proxy.functionMode == 1
         assert create_fsp_2_proxy.functionMode == 1
-        assert create_fsp_3_proxy.functionMode == 1
         assert 1 in create_fsp_1_proxy.subarrayMembership
         assert 1 in create_fsp_2_proxy.subarrayMembership
-        assert 1 in create_fsp_3_proxy.subarrayMembership
         assert [proxy.State() for proxy in create_fsp_1_function_mode_proxy] == [
             DevState.ON, DevState.DISABLE, DevState.DISABLE, DevState.DISABLE
         ]
@@ -570,7 +566,6 @@ class TestCbfSubarray:
             create_vcc_proxies,
             create_fsp_1_proxy,
             create_fsp_2_proxy,
-            create_fsp_3_proxy,
             create_fsp_1_subarray_1_proxy,
             create_fsp_2_subarray_1_proxy,
             create_fsp_3_subarray_1_proxy,
@@ -586,7 +581,6 @@ class TestCbfSubarray:
         create_fsp_3_subarray_1_proxy.Init()
         create_fsp_1_proxy.Init()
         create_fsp_2_proxy.Init()
-        create_fsp_3_proxy.Init()
         create_subarray_1_proxy.set_timeout_millis(60000)  # since the command takes a while
         create_subarray_1_proxy.Init()
         assert create_subarray_1_proxy.state() == tango.DevState.OFF
@@ -820,7 +814,6 @@ class TestCbfSubarray:
             create_vcc_proxies,
             create_fsp_1_proxy,
             create_fsp_2_proxy,
-            create_fsp_3_proxy,
             create_fsp_1_subarray_1_proxy,
             create_fsp_2_subarray_1_proxy,
             create_fsp_3_subarray_1_proxy,
@@ -836,7 +829,6 @@ class TestCbfSubarray:
         create_fsp_3_subarray_1_proxy.Init()
         create_fsp_1_proxy.Init()
         create_fsp_2_proxy.Init()
-        create_fsp_3_proxy.Init()
         create_subarray_1_proxy.set_timeout_millis(60000)  # since the command takes a while
         create_subarray_1_proxy.Init()
         time.sleep(3)
