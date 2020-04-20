@@ -31,8 +31,12 @@ def create_cbf_subarray_1_proxy():
     return DeviceProxy("mid_csp_cbf/sub_elt/subarray_01")
 
 @pytest.fixture(scope="class")
-def create_fsp_subarray_1_1_proxy():
-    return DeviceProxy("mid_csp_cbf/fspSubarrayCorr/01_01")
+def create_fsp_corr_subarray_1_1_proxy():
+    return DeviceProxy("mid_csp_cbf/fspCorrSubarray/01_01")
+
+@pytest.fixture(scope="class")
+def create_fsp_pss_subarray_2_1_proxy():
+    return DeviceProxy("mid_csp_cbf/fspPssSubarray/02_01")
 
 @pytest.fixture(scope="class")
 def create_corr_proxy():

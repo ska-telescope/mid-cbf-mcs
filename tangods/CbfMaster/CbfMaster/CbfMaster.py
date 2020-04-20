@@ -121,9 +121,9 @@ class CbfMaster(SKAMaster):
                     self._report_vcc_subarray_membership[self._fqdn_vcc.index(device_name)] = \
                         event.attr_value.value
                 elif "fsp" in device_name:
-                    if event.attr_value.value not in self._report_fsp_subarray_membership[
+                    if event.attr_value.value not in self._report_fsp_corr_subarray_membership[
                         self._fqdn_fsp.index(device_name)]:
-                        self._report_fsp_subarray_membership[
+                        self._report_fsp_corr_subarray_membership[
                             self._fqdn_fsp.index(device_name)
                         ].append(event.attr_value.value)
                 else:
@@ -295,7 +295,7 @@ class CbfMaster(SKAMaster):
         doc="Report the administration mode of the FSP capabilities as an array of unsigned short.\nfor ex:\n[0,0,2,..]",
     )
 
-    reportFSPSubarrayCorrMembership = attribute(
+    reportFSPCorrSubarrayMembership = attribute(
         dtype=(('uint16',),),
         max_dim_x=16,
         max_dim_y=27,
@@ -372,7 +372,7 @@ class CbfMaster(SKAMaster):
         self._report_fsp_state = [tango.DevState.UNKNOWN] * self._count_fsp
         self._report_fsp_health_state = [HealthState.UNKNOWN.value] * self._count_fsp
         self._report_fsp_admin_mode = [AdminMode.ONLINE.value] * self._count_fsp
-        self._report_fsp_subarray_membership = [[] for i in range(self._count_fsp)]
+        self._report_fsp_corr_subarray_membership = [[] for i in range(self._count_fsp)]
         self._report_subarray_state = [tango.DevState.UNKNOWN] * self._count_subarray
         self._report_subarray_health_state = [HealthState.UNKNOWN.value] * self._count_subarray
         self._report_subarray_admin_mode = [AdminMode.ONLINE.value] * self._count_subarray
@@ -542,10 +542,10 @@ class CbfMaster(SKAMaster):
         return self._report_fsp_admin_mode
         # PROTECTED REGION END #    //  CbfMaster.reportFSPAdminMode_read
 
-    def read_reportFSPSubarrayCorrMembership(self):
-        # PROTECTED REGION ID(CbfMaster.reportFSPSubarrayCorrMembership_read) ENABLED START #
-        return self._report_fsp_subarray_membership
-        # PROTECTED REGION END #    //  CbfMaster.reportFSPSubarrayCorrMembership_read
+    def read_reportFSPCorrSubarrayMembership(self):
+        # PROTECTED REGION ID(CbfMaster.reportFSPCorrSubarrayMembership_read) ENABLED START #
+        return self._report_fsp_corr_subarray_membership
+        # PROTECTED REGION END #    //  CbfMaster.reportFSPCorrSubarrayMembership_read
 
     def read_frequencyOffsetK(self):
         # PROTECTED REGION ID(CbfMaster.frequencyOffsetK_read) ENABLED START #
