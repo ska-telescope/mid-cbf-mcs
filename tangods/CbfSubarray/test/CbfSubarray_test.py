@@ -786,7 +786,7 @@ class TestCbfSubarray:
         time.sleep(3)
         assert create_subarray_1_proxy.state() == tango.DevState.OFF
 
-    def test_ConfigureScan_basic(
+    def test_ConfigureScan_onlyPss_basic(
             self,
             create_cbf_master_proxy,
             create_subarray_1_proxy,
@@ -842,7 +842,7 @@ class TestCbfSubarray:
         assert create_subarray_1_proxy.receptors[2] == 4
 
         # configure scan
-        f = open(file_path + "/test_json/test_ConfigureScan_basic.json")
+        f = open(file_path + "/test_json/test_ConfigureScan_onlyPss_basic.json")
         create_subarray_1_proxy.ConfigureScan(f.read().replace("\n", ""))
         f.close()
         time.sleep(15)
