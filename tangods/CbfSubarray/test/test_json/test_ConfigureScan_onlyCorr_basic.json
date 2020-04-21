@@ -68,7 +68,7 @@
         {
             "fspID": 2,
             "functionMode": "CORR",
-            "frequencySliceID": 30,
+            "frequencySliceID": 18,
             "corrBandwidth": 0,
             "integrationTime": 1400
         }

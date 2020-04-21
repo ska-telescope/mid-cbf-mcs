@@ -774,7 +774,7 @@ class TestCbfSubarray:
         assert create_fsp_2_subarray_1_proxy.band5Tuning[1] == 7.25
         assert create_fsp_2_subarray_1_proxy.frequencyBandOffsetStream1 == 0
         assert create_fsp_2_subarray_1_proxy.frequencyBandOffsetStream2 == 0
-        assert create_fsp_2_subarray_1_proxy.frequencySliceID == 20
+        assert create_fsp_2_subarray_1_proxy.frequencySliceID == 18
         assert create_fsp_2_subarray_1_proxy.corrBandwidth == 0
         assert create_fsp_2_subarray_1_proxy.integrationTime == 1400
         assert create_fsp_2_subarray_1_proxy.channelAveragingMap[0][0] == 1
