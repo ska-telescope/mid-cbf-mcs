@@ -711,7 +711,6 @@ class TestCbfSubarray:
         assert [proxy.State() for proxy in create_fsp_2_function_mode_proxy] == [
             DevState.ON, DevState.DISABLE, DevState.DISABLE, DevState.DISABLE
         ]
-
         # check configured attributes of FSP subarrays
         # first for FSP 1...
         assert create_fsp_1_subarray_1_proxy.obsState == ObsState.READY
@@ -745,6 +744,26 @@ class TestCbfSubarray:
         assert create_fsp_1_subarray_1_proxy.channelAveragingMap[8][1] == 0
         assert create_fsp_1_subarray_1_proxy.channelAveragingMap[9][0] == 6697
         assert create_fsp_1_subarray_1_proxy.channelAveragingMap[9][1] == 0
+        assert create_fsp_1_subarray_1_proxy.channelAveragingMap[10][0] == 7441
+        assert create_fsp_1_subarray_1_proxy.channelAveragingMap[10][1] == 0
+        assert create_fsp_1_subarray_1_proxy.channelAveragingMap[11][0] == 8185
+        assert create_fsp_1_subarray_1_proxy.channelAveragingMap[11][1] == 0
+        assert create_fsp_1_subarray_1_proxy.channelAveragingMap[12][0] == 8929
+        assert create_fsp_1_subarray_1_proxy.channelAveragingMap[12][1] == 0
+        assert create_fsp_1_subarray_1_proxy.channelAveragingMap[13][0] == 9673
+        assert create_fsp_1_subarray_1_proxy.channelAveragingMap[13][1] == 0
+        assert create_fsp_1_subarray_1_proxy.channelAveragingMap[14][0] == 10417
+        assert create_fsp_1_subarray_1_proxy.channelAveragingMap[14][1] == 0
+        assert create_fsp_1_subarray_1_proxy.channelAveragingMap[15][0] == 11161
+        assert create_fsp_1_subarray_1_proxy.channelAveragingMap[15][1] == 0
+        assert create_fsp_1_subarray_1_proxy.channelAveragingMap[16][0] == 11905
+        assert create_fsp_1_subarray_1_proxy.channelAveragingMap[16][1] == 0
+        assert create_fsp_1_subarray_1_proxy.channelAveragingMap[17][0] == 12649
+        assert create_fsp_1_subarray_1_proxy.channelAveragingMap[17][1] == 0
+        assert create_fsp_1_subarray_1_proxy.channelAveragingMap[18][0] == 13393
+        assert create_fsp_1_subarray_1_proxy.channelAveragingMap[18][1] == 0
+        assert create_fsp_1_subarray_1_proxy.channelAveragingMap[19][0] == 14137
+        assert create_fsp_1_subarray_1_proxy.channelAveragingMap[19][1] == 0
 
         # then for FSP 2...
         assert create_fsp_2_subarray_1_proxy.obsState == ObsState.READY
@@ -755,7 +774,7 @@ class TestCbfSubarray:
         assert create_fsp_2_subarray_1_proxy.band5Tuning[1] == 7.25
         assert create_fsp_2_subarray_1_proxy.frequencyBandOffsetStream1 == 0
         assert create_fsp_2_subarray_1_proxy.frequencyBandOffsetStream2 == 0
-        assert create_fsp_2_subarray_1_proxy.frequencySliceID == 30
+        assert create_fsp_2_subarray_1_proxy.frequencySliceID == 20
         assert create_fsp_2_subarray_1_proxy.corrBandwidth == 0
         assert create_fsp_2_subarray_1_proxy.integrationTime == 1400
         assert create_fsp_2_subarray_1_proxy.channelAveragingMap[0][0] == 1
@@ -778,6 +797,26 @@ class TestCbfSubarray:
         assert create_fsp_2_subarray_1_proxy.channelAveragingMap[8][1] == 0
         assert create_fsp_2_subarray_1_proxy.channelAveragingMap[9][0] == 6697
         assert create_fsp_2_subarray_1_proxy.channelAveragingMap[9][1] == 0
+        assert create_fsp_2_subarray_1_proxy.channelAveragingMap[10][0] == 7441
+        assert create_fsp_2_subarray_1_proxy.channelAveragingMap[10][1] == 0
+        assert create_fsp_2_subarray_1_proxy.channelAveragingMap[11][0] == 8185
+        assert create_fsp_2_subarray_1_proxy.channelAveragingMap[11][1] == 0
+        assert create_fsp_2_subarray_1_proxy.channelAveragingMap[12][0] == 8929
+        assert create_fsp_2_subarray_1_proxy.channelAveragingMap[12][1] == 0
+        assert create_fsp_2_subarray_1_proxy.channelAveragingMap[13][0] == 9673
+        assert create_fsp_2_subarray_1_proxy.channelAveragingMap[13][1] == 0
+        assert create_fsp_2_subarray_1_proxy.channelAveragingMap[14][0] == 10417
+        assert create_fsp_2_subarray_1_proxy.channelAveragingMap[14][1] == 0
+        assert create_fsp_2_subarray_1_proxy.channelAveragingMap[15][0] == 11161
+        assert create_fsp_2_subarray_1_proxy.channelAveragingMap[15][1] == 0
+        assert create_fsp_2_subarray_1_proxy.channelAveragingMap[16][0] == 11905
+        assert create_fsp_2_subarray_1_proxy.channelAveragingMap[16][1] == 0
+        assert create_fsp_2_subarray_1_proxy.channelAveragingMap[17][0] == 12649
+        assert create_fsp_2_subarray_1_proxy.channelAveragingMap[17][1] == 0
+        assert create_fsp_2_subarray_1_proxy.channelAveragingMap[18][0] == 13393
+        assert create_fsp_2_subarray_1_proxy.channelAveragingMap[18][1] == 0
+        assert create_fsp_2_subarray_1_proxy.channelAveragingMap[19][0] == 14137
+        assert create_fsp_2_subarray_1_proxy.channelAveragingMap[19][1] == 0
 
         create_subarray_1_proxy.GoToIdle()
         time.sleep(3)
@@ -924,18 +963,6 @@ class TestCbfSubarray:
         assert create_vcc_tdc_proxies[receptor_to_vcc[1] - 1][1].State() == DevState.DISABLE
         assert create_vcc_tdc_proxies[receptor_to_vcc[1] - 1][1].searchWindowTuning == 7000000000
         assert create_vcc_tdc_proxies[receptor_to_vcc[1] - 1][1].tdcEnable == False
-
-        # check configured attributes of FSPs, including states of function mode capabilities
-        assert create_fsp_1_proxy.functionMode == 1
-        assert create_fsp_2_proxy.functionMode == 1
-        assert 1 in create_fsp_1_proxy.subarrayMembership
-        assert 1 in create_fsp_2_proxy.subarrayMembership
-        assert [proxy.State() for proxy in create_fsp_1_function_mode_proxy] == [
-            DevState.ON, DevState.DISABLE, DevState.DISABLE, DevState.DISABLE
-        ]
-        assert [proxy.State() for proxy in create_fsp_2_function_mode_proxy] == [
-            DevState.ON, DevState.DISABLE, DevState.DISABLE, DevState.DISABLE
-        ]
 
         assert create_fsp_3_subarray_1_proxy.receptors[0] == 3
         assert create_fsp_3_subarray_1_proxy.receptors[1] == 1
