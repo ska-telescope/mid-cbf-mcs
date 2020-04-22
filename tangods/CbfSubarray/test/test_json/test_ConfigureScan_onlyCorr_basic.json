@@ -19,11 +19,11 @@
             "tdcDestinationAddress": [
                 {
                     "receptorID": 4,
-                    "tdcDestinationAddress": ["192.168.0.1", "00:00:00:00:00:00", "8080"]
+                    "tdcDestinationAddress": ["foo", "bar", "8080"]
                 },
                 {
                     "receptorID": 1,
-                    "tdcDestinationAddress": ["192.168.0.1", "00:00:00:00:00:00", "80"]
+                    "tdcDestinationAddress": ["fizz", "buzz", "80"]
                 }
             ]
         },
@@ -68,30 +68,9 @@
         {
             "fspID": 2,
             "functionMode": "CORR",
-            "frequencySliceID": 20,
+            "frequencySliceID": 18,
             "corrBandwidth": 0,
             "integrationTime": 1400
-        },
-        {
-            "fspID": 3,
-            "functionMode": "PSS-BF",
-            "searchWindowID": 2,
-            "searchBeam": [
-                {
-                    "searchBeamID": 300,
-                    "receptors": [3],
-                    "outputEnable": true,
-                    "averagingInterval": 4,
-                    "searchBeamDestinationAddress": "10.1.1.1"
-                },
-                {
-                    "searchBeamID": 400,
-                    "receptors": [1],
-                    "outputEnable": true,
-                    "averagingInterval": 2,
-                    "searchBeamDestinationAddress": "10.1.2.1"
-                }
-            ]
         }
     ]
 }
