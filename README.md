@@ -133,6 +133,30 @@ This prototype provides a graphical user interface, using WebJive, that runs in 
 
 The device tree can be viewed and explored. In addition, device attributes can be seen and modified, and device commands can be sent, by creating and saving a new dashboard.
 
+## JIVE
+
+JIVE is a graphical user interface that visualizes the devices, servers, and executes device commands. It has more information than the WebJIVE. Here is the procedure to use JIVE:
+ 
+1. From the project root directory:
+```
+$ make up
+```
+2. Run the following command
+
+```
+$ docker network inspect tangonet
+```
+3. Find “midcbf-databaseds”, then copy the first part of its IPv4Address 
+
+4. Run the following command:
+```
+$ export TANGO_HOST=<the address from step 3>:100000
+```
+5. Run JIVE:
+```
+$ JIVE
+```
+
 ## License
 
 See the `LICENSE` file for details.
