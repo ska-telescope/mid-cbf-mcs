@@ -1370,11 +1370,11 @@
                             }
                         },
                         "properties": {
-			    "CspMasterAddress": [
-		                "mid_csp/elt/master"
+			    "CbfMasterAddress": [
+		                "mid_csp_cbf/sub_elt/master"
 			    ],
-			    "CspSubarrayAddress": [
-		                "mid_csp/elt/subarray_01"
+			    "CbfSubarrayAddress": [
+		                "mid_csp_cbf/sub_elt/subarray_01"
 			    ],
 
                             "polled_attr": [
