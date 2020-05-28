@@ -7,11 +7,11 @@
 # Distributed under the terms of the GPL license.
 # See LICENSE.txt for more info.
 
-"""
-Author: James Jiang James.Jiang@nrc-cnrc.gc.ca,
-Herzberg Astronomy and Astrophysics, National Research Council of Canada
-Copyright (c) 2019 National Research Council of Canada
-"""
+# """
+# Author: James Jiang James.Jiang@nrc-cnrc.gc.ca,
+# Herzberg Astronomy and Astrophysics, National Research Council of Canada
+# Copyright (c) 2019 National Research Council of Canada
+# """
 
 # CbfMaster Tango device prototype
 # CBFMaster TANGO device class for the CBFMaster prototype
@@ -43,9 +43,29 @@ __all__ = ["CbfMaster", "main"]
 
 
 class CbfMaster(SKAMaster):
+
     """
     CBFMaster TANGO device class for the CBFMaster prototype
+    CSP subarray functionality is modeled via a TANGCSP.LMC Common Class for the CSPSubarray TANGO Device.
+
+    **Properties:**
+
+    - Class Property
+        PSTBeams
+            - PST sub-element PSTBeams TANGO devices FQDNs
+            - Type:'DevVarStringArray'
+    
+    - Device Property
+    
+        CspMaster
+            - The TANGO address of the CspMaster.
+            - Type:'DevString'
+    
+
+    
     """
+    """here are the Device Properties"""
+    """ssss"""
 
     # PROTECTED REGION ID(CbfMaster.class_variable) ENABLED START #
 
@@ -179,6 +199,7 @@ class CbfMaster(SKAMaster):
 
     # PROTECTED REGION END #    //  CbfMaster.class_variable
 
+    
     # -----------------
     # Device Properties
     # -----------------
