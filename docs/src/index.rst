@@ -22,17 +22,17 @@ mid-cbf-mcs Prototype's documentation
 
 
 
-.. .. toctree::
-..    :maxdepth: 2
-..    :caption: VCC:
+.. toctree::
+   :maxdepth: 2
+   :caption: VCC:
 
-..    VCC
+   VCC
    
-.. .. toctree::
-..    :maxdepth: 2
-..    :caption: FSP:
+.. toctree::
+   :maxdepth: 2
+   :caption: FSP:
 
-..    FSP
+   FSP
 
 
 Indices and tables
