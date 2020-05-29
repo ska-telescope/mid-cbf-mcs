@@ -64,12 +64,14 @@ class CbfMaster(SKAMaster):
 
     
     """
-    """here are the Device Properties"""
-    """ssss"""
+
+
+
 
     # PROTECTED REGION ID(CbfMaster.class_variable) ENABLED START #
 
     def __state_change_event_callback(self, event):
+
         if not event.err:
             try:
                 device_name = event.device.dev_name()
@@ -509,6 +511,7 @@ class CbfMaster(SKAMaster):
     # ------------------
 
     def read_commandProgress(self):
+        """ssssss"""
         # PROTECTED REGION ID(CbfMaster.commandProgress_read) ENABLED START #
         return self._command_progress
         # PROTECTED REGION END #    //  CbfMaster.commandProgress_read

@@ -1,12 +1,12 @@
 .. Documentation
 
 Mid-Cbf-Subarray Device(subarray multi) Documentation 
-================================
+======================================================
 
 CbfSubarray Class
 -----------------
 
-.. automodule:: tangods.CbfSubarray.CbfSubarray.CbfSubarray.CbfSubarray
+.. automodule:: tangods.CbfSubarray.CbfSubarray.CbfSubarray
    :members:
    :undoc-members:
    :show-inheritance:

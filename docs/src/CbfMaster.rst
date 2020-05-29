@@ -8,3 +8,4 @@ CbfMaster Class Documentation
    :undoc-members:
    :show-inheritance:
    :member-order:
+   :private-members:
