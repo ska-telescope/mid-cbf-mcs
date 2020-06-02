@@ -1482,86 +1482,86 @@ class CbfSubarray(SKASubarray):
     )
     def ConfigureScan(self, argin):
         # PROTECTED REGION ID(CbfSubarray.ConfigureScan) ENABLED START #
-        """
-        The input JSON object has the following schema:
-        {
-            "scanID": int,
-            "frequencyBand": str,
-            "band5Tuning: [float, float],
-            "frequencyBandOffsetStream1": int,
-            "frequencyBandOffsetStream2": int,
-            "dopplerPhaseCorrSubscriptionPoint": str,
-            "delayModelSubscriptionPoint": str,
-            "visDestinationAddressSubscriptionPoint": str,
-            "rfiFlaggingMask": {
-                ...
-            },
-            "searchWindow": [
-                {
-                    "searchWindowID": int,
-                    "searchWindowTuning": int,
-                    "tdcEnable": bool,
-                    "tdcNumBits": int,
-                    "tdcPeriodBeforeEpoch": int,
-                    "tdcPeriodAfterEpoch": int,
-                    "tdcDestinationAddress": [
-                        {
-                            "receptorID": int,
-                            "tdcDestinationAddress": ["str", "str", "str"]
-                        },
-                        {
-                            ...
-                        }
-                    ]
-                },
-                {
-                    ...
-                }
-            ],
-            "fsp": [
-                {
-                    "fspID": int,
-                    "functionMode": str,
-                    "receptors": [int, int, int, ...],
-                    "frequencySliceID": int,
-                    "corrBandwidth": int,
-                    "zoomWindowTuning": int,
-                    "integrationTime": int,
-                    "channelAveragingMap": [
-                        [int, int],
-                        [int, int],
-                        [int, int],
-                        ...
-                    ]
-                },
-                {
-                    "fspID": 3,
-                    "functionMode": "PSS-BF",
-                    "searchWindowID": 2,
-                    "searchBeam": [
-                        {
-                            "searchBeamID": 300,
-                            "receptors": [3],
-                            "outputEnable": true,
-                            "averagingInterval": 4,
-                            "searchBeamDestinationAddress": "10.1.1.1"
-                        },
-                        {
-                            "searchBeamID": 400,
-                            "receptors": [1],
-                            "outputEnable": true,
-                            "averagingInterval": 2,
-                            "searchBeamDestinationAddress": "10.1.2.1"
-                        }
-                    ]
-                }
-                {
-                    ...
-                },
-                ...
-            ]
-        }
-        """
+        # """
+        # The input JSON object has the following schema:
+        # {
+        #     "scanID": int,
+        #     "frequencyBand": str,
+        #     "band5Tuning: [float, float],
+        #     "frequencyBandOffsetStream1": int,
+        #     "frequencyBandOffsetStream2": int,
+        #     "dopplerPhaseCorrSubscriptionPoint": str,
+        #     "delayModelSubscriptionPoint": str,
+        #     "visDestinationAddressSubscriptionPoint": str,
+        #     "rfiFlaggingMask": {
+        #         ...
+        #     },
+        #     "searchWindow": [
+        #         {
+        #             "searchWindowID": int,
+        #             "searchWindowTuning": int,
+        #             "tdcEnable": bool,
+        #             "tdcNumBits": int,
+        #             "tdcPeriodBeforeEpoch": int,
+        #             "tdcPeriodAfterEpoch": int,
+        #             "tdcDestinationAddress": [
+        #                 {
+        #                     "receptorID": int,
+        #                     "tdcDestinationAddress": ["str", "str", "str"]
+        #                 },
+        #                 {
+        #                     ...
+        #                 }
+        #             ]
+        #         },
+        #         {
+        #             ...
+        #         }
+        #     ],
+        #     "fsp": [
+        #         {
+        #             "fspID": int,
+        #             "functionMode": str,
+        #             "receptors": [int, int, int, ...],
+        #             "frequencySliceID": int,
+        #             "corrBandwidth": int,
+        #             "zoomWindowTuning": int,
+        #             "integrationTime": int,
+        #             "channelAveragingMap": [
+        #                 [int, int],
+        #                 [int, int],
+        #                 [int, int],
+        #                 ...
+        #             ]
+        #         },
+        #         {
+        #             "fspID": 3,
+        #             "functionMode": "PSS-BF",
+        #             "searchWindowID": 2,
+        #             "searchBeam": [
+        #                 {
+        #                     "searchBeamID": 300,
+        #                     "receptors": [3],
+        #                     "outputEnable": true,
+        #                     "averagingInterval": 4,
+        #                     "searchBeamDestinationAddress": "10.1.1.1"
+        #                 },
+        #                 {
+        #                     "searchBeamID": 400,
+        #                     "receptors": [1],
+        #                     "outputEnable": true,
+        #                     "averagingInterval": 2,
+        #                     "searchBeamDestinationAddress": "10.1.2.1"
+        #                 }
+        #             ]
+        #         }
+        #         {
+        #             ...
+        #         },
+        #         ...
+        #     ]
+        # }
+        # """
         if self._obs_state not in [ObsState.IDLE.value, ObsState.READY.value]:
             msg = "Device not in IDLE or READY obsState."
             self.logger.error(msg)
@@ -1931,8 +1931,7 @@ class CbfSubarray(SKASubarray):
         if self._obs_state != ObsState.READY.value:
             msg = "A scan is not ready to be started."
             self.logger(msg, tango.LogLevel.LOG_ERROR)
-            tango.Except.throw_exception("Command failed", msg, "Scan execution",
-                                           tango.ErrSeverity.ERR)
+            tango.Except.throw_exception("Command failed", msg, "Scan execution", tango.ErrSeverity.ERR)
         """
         if self._obs_state != ObsState.READY.value:
             msg = "Device not in READY obsState."
