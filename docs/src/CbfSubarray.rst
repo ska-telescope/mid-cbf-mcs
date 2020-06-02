@@ -1,6 +1,6 @@
 .. Documentation
 
-Mid-Cbf-Subarray Device(subarray multi) Documentation 
+Mid-Cbf-Subarray Device Server (Subarraymulti)
 ======================================================
 
 CbfSubarray Class

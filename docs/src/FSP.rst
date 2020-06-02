@@ -1,6 +1,6 @@
 .. Documentation
 
-Mid-Cbf-FSP Device(FSP multi) Documentation 
+Mid-Cbf-FSP Device Server (FSPmulti)  
 ===========================================
 
 Fsp Class

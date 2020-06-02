@@ -1,6 +1,6 @@
 .. Documentation
 
-Mid-Cbf-VCC Device(VCC multi) Documentation 
+Mid-Cbf-VCC Device Server (VCCmulti)
 ===========================================
 
 VCC Class

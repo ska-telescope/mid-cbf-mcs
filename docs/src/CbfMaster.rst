@@ -1,6 +1,6 @@
 .. Documentation
 
-CbfMaster Class Documentation 
+CbfMaster Class
 ================================
 
 .. automodule:: tangods.CbfMaster.CbfMaster.CbfMaster

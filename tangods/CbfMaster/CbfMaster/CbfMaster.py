@@ -166,6 +166,7 @@ class CbfMaster(SKAMaster):
     def __get_num_capabilities(self):
         # self._max_capabilities inherited from SKAMaster
         # check first if property exists in DB
+        """get number of capabilities for _init_Device. If property not found in db, then assign a default amount(197,27,16)"""
         if self._max_capabilities:
             try:
                 self._count_vcc = self._max_capabilities["VCC"]
@@ -335,18 +336,18 @@ class CbfMaster(SKAMaster):
     reportSubarrayState = attribute(
         dtype=('DevState',),
         max_dim_x=16,
-        label="FSP state",
+        label="Subarray state",
         polling_period=3000,
-        doc="Report the state of the FSP capabilities.",
+        doc="Report the state of the Subarray",
     )
 
     reportSubarrayHealthState = attribute(
         dtype=('uint16',),
         max_dim_x=16,
-        label="FSP health status",
+        label="Subarray health status",
         polling_period=3000,
         abs_change=1,
-        doc="Report the health status of the FSP capabilities.",
+        doc="Report the health status of the Subarray.",
     )
 
     reportSubarrayAdminMode = attribute(
@@ -355,7 +356,7 @@ class CbfMaster(SKAMaster):
         label="FSP admin mode",
         polling_period=3000,
         abs_change=1,
-        doc="Report the administration mode of the FSP capabilities as an array of unsigned short.\nfor ex:\n[0,0,2,..]",
+        doc="Report the administration mode of the Subarray as an array of unsigned short.\nfor ex:\n[0,0,2,..]",
     )
 
     # ---------------
@@ -574,12 +575,13 @@ class CbfMaster(SKAMaster):
 
     def read_frequencyOffsetK(self):
         # PROTECTED REGION ID(CbfMaster.frequencyOffsetK_read) ENABLED START #
-        """Return reportVCCSubarrayMembership attribute: """
+        """Return frequencyOffsetK attribute: array of integers reporting receptors in subarray"""
         return self._frequency_offset_k
         # PROTECTED REGION END #    //  CbfMaster.frequencyOffsetK_read
 
     def write_frequencyOffsetK(self, value):
         # PROTECTED REGION ID(CbfMaster.frequencyOffsetK_write) ENABLED START #
+        """Set frequencyOffsetK attribute"""
         if len(value) == self._count_vcc:
             self._frequency_offset_k = value
         else:
@@ -590,12 +592,13 @@ class CbfMaster(SKAMaster):
 
     def read_frequencyOffsetDeltaF(self):
         # PROTECTED REGION ID(CbfMaster.frequencyOffsetDeltaF_read) ENABLED START #
-        """Return reportVCCSubarrayMembership attribute: """
+        """Return frequencyOffsetDeltaF attribute: Frequency offset (delta f) of all 197 receptors as an array of ints."""
         return self._frequency_offset_delta_f
         # PROTECTED REGION END #    //  CbfMaster.frequencyOffsetDeltaF_read
 
     def write_frequencyOffsetDeltaF(self, value):
         # PROTECTED REGION ID(CbfMaster.frequencyOffsetDeltaF_write) ENABLED START #
+        """Set the frequencyOffsetDeltaF attribute"""
         if len(value) == self._count_vcc:
             self._frequency_offset_delta_f = value
         else:
@@ -606,19 +609,19 @@ class CbfMaster(SKAMaster):
 
     def read_reportSubarrayState(self):
         # PROTECTED REGION ID(CbfMaster.reportSubarrayState_read) ENABLED START #
-        """Return reportVCCSubarrayMembership attribute: """
+        """Return reportSubarrayState attribute: report the state of the Subarray with an array of DevState"""
         return self._report_subarray_state
         # PROTECTED REGION END #    //  CbfMaster.reportSubarrayState_read
 
     def read_reportSubarrayHealthState(self):
         # PROTECTED REGION ID(CbfMaster.reportSubarrayHealthState_read) ENABLED START #
-        """Return reportVCCSubarrayMembership attribute: """
+        """Return reportSubarrayHealthState attribute: subarray healthstate in an array of unsigned short"""
         return self._report_subarray_health_state
         # PROTECTED REGION END #    //  CbfMaster.reportSubarrayHealthState_read
 
     def read_reportSubarrayAdminMode(self):
         # PROTECTED REGION ID(CbfMaster.reportSubarrayAdminMode_read) ENABLED START #
-        """Return reportVCCSubarrayMembership attribute: """
+        """Return reportSubarrayAdminMode attribute: Report the administration mode of the Subarray as an array of unsigned short.\nfor ex:\n[0,0,2,..]"""
         return self._report_subarray_admin_mode
         # PROTECTED REGION END #    //  CbfMaster.reportSubarrayAdminMode_read
 
