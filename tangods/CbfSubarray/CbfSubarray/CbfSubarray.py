@@ -7,11 +7,11 @@
 # Distributed under the terms of the GPL license.
 # See LICENSE.txt for more info.
 
-"""
-Author: James Jiang James.Jiang@nrc-cnrc.gc.ca,
-Herzberg Astronomy and Astrophysics, National Research Council of Canada
-Copyright (c) 2019 National Research Council of Canada
-"""
+# """
+# Author: James Jiang James.Jiang@nrc-cnrc.gc.ca,
+# Herzberg Astronomy and Astrophysics, National Research Council of Canada
+# Copyright (c) 2019 National Research Council of Canada
+# """
 
 # CbfSubarray Tango device prototype
 # CBFSubarray TANGO device class for the CBFSubarray prototype
@@ -1103,6 +1103,10 @@ class CbfSubarray(SKASubarray):
     # ---------------
 
     def init_device(self):
+        """
+        entry point; 
+        initialize the attributes and the properties of the CbfSubarray
+        """
         SKASubarray.init_device(self)
         # PROTECTED REGION ID(CbfSubarray.init_device) ENABLED START #
         self.set_state(DevState.INIT)
@@ -1224,6 +1228,7 @@ class CbfSubarray(SKASubarray):
 
     def always_executed_hook(self):
         # PROTECTED REGION ID(CbfSubarray.always_executed_hook) ENABLED START #
+        """methods always executed before any TANGO command is executed"""
         pass
         # PROTECTED REGION END #    //  CbfSubarray.always_executed_hook
 
@@ -1240,52 +1245,62 @@ class CbfSubarray(SKASubarray):
 
     def read_frequencyBand(self):
         # PROTECTED REGION ID(CbfSubarray.frequencyBand_read) ENABLED START #
+        """Return frequency band assigned to this subarray. one of ["1", "2", "3", "4", "5a", "5b", ]"""
         return self._frequency_band
         # PROTECTED REGION END #    //  CbfSubarray.frequencyBand_read
 
     def read_scanID(self):
         # PROTECTED REGION ID(CbfSubarray.scanID_read) ENABLED START #
+        """Return attribute scanID"""
         return self._scan_ID
         # PROTECTED REGION END #    //  CbfSubarray.scanID_read
 
     def read_receptors(self):
         # PROTECTED REGION ID(CbfSubarray.receptors_read) ENABLED START #
+        """Return list of receptors assgined to subarray"""
         return self._receptors
         # PROTECTED REGION END #    //  CbfSubarray.receptors_read
 
     def write_receptors(self, value):
         # PROTECTED REGION ID(CbfSubarray.receptors_write) ENABLED START #
+        """Set receptors of this array to the input value. Input should be an array of int"""
         self.RemoveAllReceptors()
         self.AddReceptors(value)
         # PROTECTED REGION END #    //  CbfSubarray.receptors_write
 
     def read_outputLinksDistribution(self):
         # PROTECTED REGION ID(CbfSubarray.outputLinksDistribution_read) ENABLED START #
+        """?return outputLinksDistribution attribute: a JSON object"""
         return json.dumps(self._output_links_distribution)
         # PROTECTED REGION END #    //  CbfSubarray.outputLinksDistribution_read
 
     def read_vccState(self):
         # PROTECTED REGION ID(CbfSubarray.vccState_read) ENABLED START #
+        """Return the attribute vccState": array of DevState"""
         return list(self._vcc_state.values())
         # PROTECTED REGION END #    //  CbfSubarray.vccState_read
 
     def read_vccHealthState(self):
         # PROTECTED REGION ID(CbfSubarray.vccHealthState_read) ENABLED START #
+        """returns vccHealthState attribute: an array of unsigned short"""
         return list(self._vcc_health_state.values())
         # PROTECTED REGION END #    //  CbfSubarray.vccHealthState_read
 
     def read_fspState(self):
         # PROTECTED REGION ID(CbfSubarray.fspState_read) ENABLED START #
+        """Return the attribute fspState": array of DevState"""
         return list(self._fsp_state.values())
         # PROTECTED REGION END #    //  CbfSubarray.fspState_read
 
     def read_fspHealthState(self):
         # PROTECTED REGION ID(CbfSubarray.fspHealthState_read) ENABLED START #
+        """returns fspHealthState attribute: an array of unsigned short"""
         return list(self._fsp_health_state.values())
         # PROTECTED REGION END #    //  CbfSubarray.fspHealthState_read
 
     def read_fspList(self):
         # PROTECTED REGION ID(CbfSubarray.fspList_read) ENABLED START #
+        """return fspList attribute: 2 dimentioanl array the fsp used by all the subarrays"""
         return self._fsp_list
         # PROTECTED REGION END #    //  CbfSubarray.fspList_read
 
@@ -1472,6 +1487,7 @@ class CbfSubarray(SKASubarray):
         # PROTECTED REGION END #    //  CbfSubarray.RemoveAllReceptors
 
     def is_ConfigureScan_allowed(self):
+        """checks if the state is on. On -> True"""
         if self.dev_state() == tango.DevState.ON:
             return True
         return False
@@ -1770,6 +1786,7 @@ class CbfSubarray(SKASubarray):
         # PROTECTED REGION END #    //  CbfSubarray.ConfigureScan
 
     def is_ConfigureSearchWindow_allowed(self):
+        """subarray has to be On to configure searchwindow"""
         if self.dev_state() == tango.DevState.ON:
             return True
         return False
@@ -1949,6 +1966,7 @@ class CbfSubarray(SKASubarray):
         # PROTECTED REGION END #    //  CbfSubarray.Scan
 
     def is_GoToIdle_allowed(self):
+        """allowed if state is ON or OFF"""
         if self.dev_state() in [tango.DevState.OFF, tango.DevState.ON]:
             return True
         return False

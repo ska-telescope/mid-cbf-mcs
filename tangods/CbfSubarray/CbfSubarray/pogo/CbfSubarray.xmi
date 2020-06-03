@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="ASCII"?>
 <pogoDsl:PogoSystem xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:pogoDsl="http://www.esrf.fr/tango/pogo/PogoDsl">
-  <classes name="CbfSubarray" pogoRevision="9.4">
-    <description description="CBFSubarray TANGO device class for the CBFSubarray prototype" title="CbfSubarray Tango device prototype" sourcePath="/home/osboxes/Documents/mid-cbf-mcs/csplmc/CbfSubarray/CbfSubarray" language="PythonHL" filestogenerate="XMI   file,Code files,Protected Regions" license="GPL" copyright="" hasMandatoryProperty="false" hasConcreteProperty="false" hasAbstractCommand="false" hasAbstractAttribute="false">
+  <classes name="CbfSubarray" pogoRevision="9.6">
+    <description description="CBFSubarray TANGO device class for the CBFSubarray prototype" title="CbfSubarray Tango device prototype" sourcePath="/home/jerry/Documents/ska/mid-cbf-mcs/tangods/CbfSubarray/CbfSubarray/pogo" language="PythonHL" filestogenerate="XMI   file,Code files,Protected Regions" license="GPL" copyright="" hasMandatoryProperty="false" hasConcreteProperty="false" hasAbstractCommand="false" hasAbstractAttribute="false">
       <inheritances classname="Device_Impl" sourcePath=""/>
-      <inheritances classname="SKAObsDevice" sourcePath="../../../../lmc-base-classes/skabase/SKAObsDevice"/>
-      <inheritances classname="SKASubarray" sourcePath="/home/osboxes/Documents/lmc-base-classes/skabase/SKASubarray"/>
+      <inheritances classname="SKAObsDevice" sourcePath="../../../../../lmc-base-classes/pogo"/>
+      <inheritances classname="SKASubarray" sourcePath="/home/jerry/Documents/ska/lmc-base-classes/pogo"/>
       <identification contact="at nrc-cnrc.gc.ca - james.jiang" author="james.jiang" emailDomain="nrc-cnrc.gc.ca" classFamily="SkaCsp" siteSpecific="" platform="All Platforms" bus="Not Applicable" manufacturer="none" reference=""/>
     </description>
     <deviceProperties name="CapabilityTypes" description="List of Capability types e.g. capCorr, capPss,&#xA;capPstBf, capVlbi, this will be used to dynamically&#xA;define groups for subarray.">
@@ -35,6 +35,15 @@
     </deviceProperties>
     <deviceProperties name="SubID" description="Unique identifier of the subarray device.">
       <type xsi:type="pogoDsl:StringType"/>
+      <status abstract="false" inherited="true" concrete="true"/>
+    </deviceProperties>
+    <deviceProperties name="LoggingLevelDefault" description="Default logging level at device startup.&#xA;(0=OFF, 1=FATAL, 2=ERROR, 3=WARNING, 4=INFO, 5=DEBUG)">
+      <type xsi:type="pogoDsl:UShortType"/>
+      <status abstract="false" inherited="true" concrete="true"/>
+      <DefaultPropValue>4</DefaultPropValue>
+    </deviceProperties>
+    <deviceProperties name="LoggingTargetsDefault" description="Default logging targets at device startup.&#xA;Each item has the format:  target_type::target_name.&#xA;To log to stdout, use 'console::cout'.&#xA;To log to syslog, use 'syslog::&lt;address>',&#xA;  where &lt;address> is a file path,&#xA;  for example 'syslog::/var/run/rsyslog/dev/log'.&#xA;To log to a file, use 'file::&lt;path>',&#xA;  where &lt;path> is a file path,&#xA;  for example 'file::/tmp/my_dev.log'.">
+      <type xsi:type="pogoDsl:StringVectorType"/>
       <status abstract="false" inherited="true" concrete="true"/>
     </deviceProperties>
     <commands name="Abort" description="Change obsState to ABORTED." execMethod="abort" displayLevel="OPERATOR" polledPeriod="0">
@@ -109,7 +118,7 @@
       </argout>
       <status abstract="false" inherited="true" concrete="true"/>
     </commands>
-    <commands name="goToIdle" description="Change obsState to IDLE." execMethod="end_sb" displayLevel="OPERATOR" polledPeriod="0">
+    <commands name="goToIdle" description="Change obsState to IDLE." execMethod="go_to_idle" displayLevel="OPERATOR" polledPeriod="0">
       <argin description="">
         <type xsi:type="pogoDsl:VoidType"/>
       </argin>
@@ -181,7 +190,7 @@
       </argout>
       <status abstract="false" inherited="true" concrete="true"/>
     </commands>
-    <commands name="Scan" description="Starts the scan." execMethod="scan" displayLevel="OPERATOR" polledPeriod="0" isDynamic="false">
+    <commands name="Scan" description="Starts the scan." execMethod="scan" displayLevel="OPERATOR" polledPeriod="0">
       <argin description="">
         <type xsi:type="pogoDsl:StringArrayType"/>
       </argin>
@@ -198,6 +207,15 @@
         <type xsi:type="pogoDsl:StringType"/>
       </argout>
       <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
+    </commands>
+    <commands name="EndSB" description="Change obsState to IDLE." execMethod="end_sb" displayLevel="OPERATOR" polledPeriod="0">
+      <argin description="">
+        <type xsi:type="pogoDsl:VoidType"/>
+      </argin>
+      <argout description="">
+        <type xsi:type="pogoDsl:VoidType"/>
+      </argout>
+      <status abstract="false" inherited="true" concrete="true"/>
     </commands>
     <attributes name="activationTime" attType="Scalar" rwType="READ" displayLevel="OPERATOR" polledPeriod="1000" maxX="" maxY="" allocReadMember="true">
       <dataType xsi:type="pogoDsl:DoubleType"/>
@@ -257,7 +275,7 @@
       <properties description="Observing State" label="" unit="" standardUnit="" displayUnit="" format="" maxValue="" minValue="" maxAlarm="" minAlarm="" maxWarning="" minWarning="" deltaTime="" deltaValue=""/>
     </attributes>
     <attributes name="simulationMode" attType="Scalar" rwType="READ_WRITE" displayLevel="OPERATOR" polledPeriod="0" maxX="" maxY="" memorized="true" allocReadMember="true">
-      <dataType xsi:type="pogoDsl:BooleanType"/>
+      <dataType xsi:type="pogoDsl:EnumType"/>
       <status abstract="false" inherited="true" concrete="true"/>
       <properties description="Reports the simulation mode of the device. Some devices may implement both modes,&#xA;while others will have simulators that set simulationMode to True while the real&#xA;devices always set simulationMode to False." label="" unit="" standardUnit="" displayUnit="" format="" maxValue="" minValue="" maxAlarm="" minAlarm="" maxWarning="" minWarning="" deltaTime="" deltaValue=""/>
     </attributes>
@@ -267,7 +285,7 @@
       <properties description="Current logging level to Syslog for this device - &#xA;initialises from  StorageLoggingLevelDefault on first execution of device.&#xA;Needs to be READ_WRITE To make it memorized - but writing this attribute should &#xA;do the same as command SetStorageLoggingLevel to ensure the targets and adjustments&#xA;are made correctly" label="" unit="" standardUnit="" displayUnit="" format="" maxValue="" minValue="" maxAlarm="" minAlarm="" maxWarning="" minWarning="" deltaTime="" deltaValue=""/>
     </attributes>
     <attributes name="testMode" attType="Scalar" rwType="READ_WRITE" displayLevel="OPERATOR" polledPeriod="0" maxX="" maxY="" memorized="true" allocReadMember="true">
-      <dataType xsi:type="pogoDsl:StringType"/>
+      <dataType xsi:type="pogoDsl:EnumType"/>
       <status abstract="false" inherited="true" concrete="true"/>
       <properties description="The test mode of the device. &#xA;Either no test mode (empty string) or an indication of the test mode." label="" unit="" standardUnit="" displayUnit="" format="" maxValue="" minValue="" maxAlarm="" minAlarm="" maxWarning="" minWarning="" deltaTime="" deltaValue=""/>
     </attributes>
@@ -298,6 +316,13 @@
       <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
       <properties description="Scan ID" label="Scan ID" unit="" standardUnit="" displayUnit="" format="" maxValue="" minValue="" maxAlarm="" minAlarm="" maxWarning="" minWarning="" deltaTime="" deltaValue=""/>
     </attributes>
+    <attributes name="loggingLevel" attType="Scalar" rwType="READ_WRITE" displayLevel="OPERATOR" polledPeriod="1000" maxX="" maxY="" allocReadMember="true">
+      <dataType xsi:type="pogoDsl:EnumType"/>
+      <changeEvent fire="false" libCheckCriteria="false"/>
+      <archiveEvent fire="false" libCheckCriteria="false"/>
+      <status abstract="false" inherited="true" concrete="true"/>
+      <properties description="Current logging level for this device - initialises to LoggingLevelDefault on startup" label="" unit="" standardUnit="" displayUnit="" format="" maxValue="" minValue="" maxAlarm="" minAlarm="" maxWarning="" minWarning="" deltaTime="" deltaValue=""/>
+    </attributes>
     <attributes name="assignedResources" attType="Spectrum" rwType="READ" displayLevel="OPERATOR" polledPeriod="1000" maxX="100" maxY="" allocReadMember="true">
       <dataType xsi:type="pogoDsl:StringType"/>
       <changeEvent fire="false" libCheckCriteria="false"/>
@@ -312,13 +337,20 @@
       <status abstract="false" inherited="true" concrete="true"/>
       <properties description="A list of capability types with no. of instances in use on this subarray; e.g.&#xA;Correlators:512, PssBeams:4, PstBeams:4, VlbiBeams:0." label="" unit="" standardUnit="" displayUnit="" format="" maxValue="" minValue="" maxAlarm="" minAlarm="" maxWarning="" minWarning="" deltaTime="" deltaValue=""/>
     </attributes>
-    <attributes name="receptors" attType="Spectrum" rwType="READ_WRITE" displayLevel="OPERATOR" polledPeriod="0" maxX="197" maxY="" allocReadMember="true" isDynamic="false">
+    <attributes name="receptors" attType="Spectrum" rwType="READ_WRITE" displayLevel="EXPERT" polledPeriod="0" maxX="197" maxY="" allocReadMember="true" isDynamic="false">
       <dataType xsi:type="pogoDsl:IntType"/>
       <changeEvent fire="false" libCheckCriteria="false"/>
       <archiveEvent fire="false" libCheckCriteria="false"/>
       <dataReadyEvent fire="false" libCheckCriteria="true"/>
       <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
       <properties description="List of receptors assigned to subarray" label="Receptors" unit="" standardUnit="" displayUnit="" format="" maxValue="" minValue="" maxAlarm="" minAlarm="" maxWarning="" minWarning="" deltaTime="" deltaValue=""/>
+    </attributes>
+    <attributes name="loggingTargets" attType="Spectrum" rwType="READ_WRITE" displayLevel="OPERATOR" polledPeriod="0" maxX="3" maxY="" allocReadMember="true">
+      <dataType xsi:type="pogoDsl:StringType"/>
+      <changeEvent fire="false" libCheckCriteria="false"/>
+      <archiveEvent fire="false" libCheckCriteria="false"/>
+      <status abstract="false" inherited="true" concrete="true"/>
+      <properties description="Logging targets for this device, excluding ska_logging defaults - &#xA;initialises to LoggingTargetsDefault on startup" label="" unit="" standardUnit="" displayUnit="" format="" maxValue="" minValue="" maxAlarm="" minAlarm="" maxWarning="" minWarning="" deltaTime="" deltaValue=""/>
     </attributes>
     <states name="ON" description="This state could have been called OK or OPERATIONAL. It means that the device is in its operational state. (E.g. the power supply is giving its nominal current, th motor is ON and ready to move, the instrument is operating). This state is modified by the Attribute alarm checking of the DeviceImpl:dev_state method. i.e. if the State is ON and one attribute has its quality factor to ATTR_WARNING or ATTR_ALARM, then the State is modified to ALARM.">
       <status abstract="false" inherited="true" concrete="true"/>
@@ -346,16 +378,13 @@
     </states>
     <preferences docHome="./doc_html" makefileHome="/usr/local/share/pogo/preferences"/>
     <overlodedPollPeriodObject name="adminMode" type="attribute" pollPeriod="0"/>
-    <overlodedPollPeriodObject name="centralLoggingLevel" type="attribute" pollPeriod="0"/>
     <overlodedPollPeriodObject name="configurationDelayExpected" type="attribute" pollPeriod="0"/>
     <overlodedPollPeriodObject name="configurationProgress" type="attribute" pollPeriod="0"/>
     <overlodedPollPeriodObject name="controlMode" type="attribute" pollPeriod="0"/>
-    <overlodedPollPeriodObject name="elementLoggingLevel" type="attribute" pollPeriod="0"/>
     <overlodedPollPeriodObject name="healthState" type="attribute" pollPeriod="0"/>
     <overlodedPollPeriodObject name="obsMode" type="attribute" pollPeriod="0"/>
     <overlodedPollPeriodObject name="obsState" type="attribute" pollPeriod="0"/>
     <overlodedPollPeriodObject name="simulationMode" type="attribute" pollPeriod="0"/>
-    <overlodedPollPeriodObject name="storageLoggingLevel" type="attribute" pollPeriod="0"/>
     <overlodedPollPeriodObject name="testMode" type="attribute" pollPeriod="0"/>
   </classes>
 </pogoDsl:PogoSystem>
