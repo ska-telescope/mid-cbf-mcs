@@ -221,6 +221,7 @@ class SearchWindow(SKACapability):
     )
     def SetState(self, argin):
         # PROTECTED REGION ID(SearchWindow.SetState) ENABLED START #
+        """set state(tango.DevState)"""
         self.set_state(argin)
         # PROTECTED REGION END #    //  SearchWindow.SetState
 
