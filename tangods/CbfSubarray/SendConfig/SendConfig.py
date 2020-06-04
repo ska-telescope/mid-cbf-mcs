@@ -7,15 +7,13 @@
 # Distributed under the terms of the GPL license.
 # See LICENSE.txt for more info.
 
-"""
-Author: Ryan Voigt Ryan.Voigt@nrc-cnrc.gc.ca,
-Herzberg Astronomy and Astrophysics, National Research Council of Canada
-Copyright (c) 2020 National Research Council of Canada
-"""
+# """
+# Author: Ryan Voigt Ryan.Voigt@nrc-cnrc.gc.ca,
+# Herzberg Astronomy and Astrophysics, National Research Council of Canada
+# Copyright (c) 2020 National Research Council of Canada
+# """
 
 """
-SendConfig Tango device prototype
-
 SendConfig TANGO device class for the prototype
 """
 
