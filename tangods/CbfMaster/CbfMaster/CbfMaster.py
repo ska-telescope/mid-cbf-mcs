@@ -364,7 +364,7 @@ class CbfMaster(SKAMaster):
     # ---------------
 
     def init_device(self):
-        """initiate device, entry point"""
+        """initiate device and attributes"""
         SKAMaster.init_device(self)
         # PROTECTED REGION ID(CbfMaster.init_device) ENABLED START #
         self.set_state(tango.DevState.INIT)
@@ -480,11 +480,12 @@ class CbfMaster(SKAMaster):
 
     def always_executed_hook(self):
         # PROTECTED REGION ID(CbfMaster.always_executed_hook) ENABLED START #
+        """hook to be executed before any command"""
         pass
         # PROTECTED REGION END #    //  CbfMaster.always_executed_hook
 
     def delete_device(self):
-        """Delete resources resources? turn group device off""" 
+        """Unsubscribe to sevens, turn all the subarrays, VCCs and FSPs off""" 
         # PROTECTED REGION ID(CbfMaster.delete_device) ENABLED START #
         # unsubscribe to events
         for proxy in list(self._event_id.keys()):

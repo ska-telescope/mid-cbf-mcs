@@ -7,16 +7,16 @@
 # Distributed under the terms of the GPL license.
 # See LICENSE.txt for more info.
 
-"""
-Author: James Jiang James.Jiang@nrc-cnrc.gc.ca,
-Herzberg Astronomy and Astrophysics, National Research Council of Canada
-Copyright (c) 2019 National Research Council of Canada
-"""
+# """
+# Author: James Jiang James.Jiang@nrc-cnrc.gc.ca,
+# Herzberg Astronomy and Astrophysics, National Research Council of Canada
+# Copyright (c) 2019 National Research Council of Canada
+# """
 
-""" SearchWindow Tango device prototype
+# """ SearchWindow Tango device prototype
 
-SearchWindow TANGO device class for the prototype
-"""
+# SearchWindow TANGO device class for the prototype
+# """
 
 # tango imports
 import tango

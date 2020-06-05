@@ -608,7 +608,7 @@ class Vcc(SKACapability):
         doc_in='JSON object to configure a search window'
     )
     def ValidateSearchWindow(self, argin):
-        """validate a search window configuration. The input is JSON object with the search window parameters"""
+        """validate a search window configuration. The input is JSON object with the search window parameters. Called by the subarray"""
         # try to deserialize input string to a JSON object
         try:
             argin = json.loads(argin)
@@ -787,9 +787,12 @@ class Vcc(SKACapability):
     )
     def ConfigureSearchWindow(self, argin):
         # PROTECTED REGION ID(Vcc.ConfigureSearchWindow) ENABLED START #
-        # This function is called after the configuration has already been validated,
-        # so the checks here have been removed to reduce overhead.
-        """configure SearchWindow by sending parameters from the input(JSON) to SearchWindow device"""
+        # 
+        """
+        configure SearchWindow by sending parameters from the input(JSON) to SearchWindow device.
+        
+        This function is called by the subarray after the configuration has already been validated, so the checks here have been removed to reduce overhead.
+        """
 
         argin = json.loads(argin)
 
@@ -902,6 +905,7 @@ class Vcc(SKACapability):
         # PROTECTED REGION END #    //  Vcc.ConfigureSearchWindow
 
     def is_EndScan_allowed(self):
+        """allowed when VCC is ON and ObsState is SCANNING"""
         if self.dev_state() == tango.DevState.ON and \
                 self._obs_state == ObsState.SCANNING.value:
             return True
@@ -910,11 +914,13 @@ class Vcc(SKACapability):
     @command()
     def EndScan(self):
         # PROTECTED REGION ID(Vcc.EndScan) ENABLED START #
+        """End the scan: Set the obsState to READY"""
         self._obs_state = ObsState.READY.value
         # nothing else is supposed to happen
         # PROTECTED REGION END #    //  Vcc.EndScan
 
     def is_Scan_allowed(self):
+        """scan is allowed when VCC is on, ObsState is READY"""
         if self.dev_state() == tango.DevState.ON and \
                 self._obs_state == ObsState.READY.value:
             return True
@@ -923,11 +929,13 @@ class Vcc(SKACapability):
     @command()
     def Scan(self):
         # PROTECTED REGION ID(Vcc.Scan) ENABLED START #
+        """set VCC ObsState to SCANNING"""
         self._obs_state = ObsState.SCANNING.value
         # nothing else is supposed to happen
         # PROTECTED REGION END #    //  Vcc.Scan
 
     def is_GoToIdle_allowed(self):
+        """allowed if VCC is ON and obsState is IDLE or READY"""
         if self.dev_state() == tango.DevState.ON and \
                 self._obs_state in [ObsState.IDLE.value, ObsState.READY.value]:
             return True

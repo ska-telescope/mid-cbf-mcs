@@ -44,11 +44,11 @@ SearchWindow Class
    :member-order:
 
 
-SendConfig Class
-----------------
+.. SendConfig Class
+.. ----------------
 
-.. automodule:: tangods.CbfSubarray.SendConfig.SendConfig
-   :members:
-   :undoc-members:
-   :show-inheritance:
-   :member-order:
+.. .. automodule:: tangods.CbfSubarray.SendConfig.SendConfig
+..    :members:
+..    :undoc-members:
+..    :show-inheritance:
+..    :member-order:
