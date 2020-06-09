@@ -1,7 +1,7 @@
 # Mid CBF MCS
 
 Documentation on the Developer's portal:
-[![Documentation Status](https://developer.skatelescope.org/projects/mid-cbf-mcs/en/latest/?badge=latest)](https://developer.skatelescope.org/projects/mid-cbf-mcs/en/latest/?badge=latest)
+[![ReadTheDoc](https://developer.skatelescope.org/projects/mid-cbf-mcs/en/latest/?badge=latest)](https://developer.skatelescope.org/projects/mid-cbf-mcs/en/latest/?badge=latest)
 
 ## Table of contents
 * [Description](#description)
