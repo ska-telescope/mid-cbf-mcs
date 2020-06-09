@@ -65,16 +65,19 @@ class FspCorr(SKACapability):
     def init_device(self):
         SKACapability.init_device(self)
         # PROTECTED REGION ID(FspCorr.init_device) ENABLED START #
+        """Set state to OFF."""
         self.set_state(tango.DevState.OFF)
         # PROTECTED REGION END #    //  FspCorr.init_device
 
     def always_executed_hook(self):
         # PROTECTED REGION ID(FspCorr.always_executed_hook) ENABLED START #
+        """Hook before any commands"""
         pass
         # PROTECTED REGION END #    //  FspCorr.always_executed_hook
 
     def delete_device(self):
         # PROTECTED REGION ID(FspCorr.delete_device) ENABLED START #
+        """hook before delete device"""
         pass
         # PROTECTED REGION END #    //  FspCorr.delete_device
 
@@ -92,6 +95,7 @@ class FspCorr(SKACapability):
     )
     def SetState(self, argin):
         # PROTECTED REGION ID(FspCorr.SetState) ENABLED START #
+        """Set state to argin(DevState)."""
         self.set_state(argin)
         # PROTECTED REGION END #    //  FspCorr.SetState
 
