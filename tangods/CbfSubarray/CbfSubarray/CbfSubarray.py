@@ -7,11 +7,11 @@
 # Distributed under the terms of the GPL license.
 # See LICENSE.txt for more info.
 
-"""
-Author: James Jiang James.Jiang@nrc-cnrc.gc.ca,
-Herzberg Astronomy and Astrophysics, National Research Council of Canada
-Copyright (c) 2019 National Research Council of Canada
-"""
+# """
+# Author: James Jiang James.Jiang@nrc-cnrc.gc.ca,
+# Herzberg Astronomy and Astrophysics, National Research Council of Canada
+# Copyright (c) 2019 National Research Council of Canada
+# """
 
 # CbfSubarray Tango device prototype
 # CBFSubarray TANGO device class for the CBFSubarray prototype
@@ -1103,6 +1103,10 @@ class CbfSubarray(SKASubarray):
     # ---------------
 
     def init_device(self):
+        """
+        entry point; 
+        initialize the attributes and the properties of the CbfSubarray
+        """
         SKASubarray.init_device(self)
         # PROTECTED REGION ID(CbfSubarray.init_device) ENABLED START #
         self.set_state(DevState.INIT)
@@ -1224,11 +1228,13 @@ class CbfSubarray(SKASubarray):
 
     def always_executed_hook(self):
         # PROTECTED REGION ID(CbfSubarray.always_executed_hook) ENABLED START #
+        """methods always executed before any TANGO command is executed"""
         pass
         # PROTECTED REGION END #    //  CbfSubarray.always_executed_hook
 
     def delete_device(self):
         # PROTECTED REGION ID(CbfSubarray.delete_device) ENABLED START #
+        """hook to delete device. Set State to DISABLE, romove all receptors, go to OBsState IDLE"""
         self.GoToIdle()
         self.RemoveAllReceptors()
         self.set_state(tango.DevState.DISABLE)
@@ -1240,52 +1246,62 @@ class CbfSubarray(SKASubarray):
 
     def read_frequencyBand(self):
         # PROTECTED REGION ID(CbfSubarray.frequencyBand_read) ENABLED START #
+        """Return frequency band assigned to this subarray. one of ["1", "2", "3", "4", "5a", "5b", ]"""
         return self._frequency_band
         # PROTECTED REGION END #    //  CbfSubarray.frequencyBand_read
 
     def read_scanID(self):
         # PROTECTED REGION ID(CbfSubarray.scanID_read) ENABLED START #
+        """Return attribute scanID"""
         return self._scan_ID
         # PROTECTED REGION END #    //  CbfSubarray.scanID_read
 
     def read_receptors(self):
         # PROTECTED REGION ID(CbfSubarray.receptors_read) ENABLED START #
+        """Return list of receptors assgined to subarray"""
         return self._receptors
         # PROTECTED REGION END #    //  CbfSubarray.receptors_read
 
     def write_receptors(self, value):
         # PROTECTED REGION ID(CbfSubarray.receptors_write) ENABLED START #
+        """Set receptors of this array to the input value. Input should be an array of int"""
         self.RemoveAllReceptors()
         self.AddReceptors(value)
         # PROTECTED REGION END #    //  CbfSubarray.receptors_write
 
     def read_outputLinksDistribution(self):
         # PROTECTED REGION ID(CbfSubarray.outputLinksDistribution_read) ENABLED START #
+        """Return outputLinksDistribution attribute: a JSON object containning info about the fine channels configured to be sent to SDP, including output links."""
         return json.dumps(self._output_links_distribution)
         # PROTECTED REGION END #    //  CbfSubarray.outputLinksDistribution_read
 
     def read_vccState(self):
         # PROTECTED REGION ID(CbfSubarray.vccState_read) ENABLED START #
+        """Return the attribute vccState": array of DevState"""
         return list(self._vcc_state.values())
         # PROTECTED REGION END #    //  CbfSubarray.vccState_read
 
     def read_vccHealthState(self):
         # PROTECTED REGION ID(CbfSubarray.vccHealthState_read) ENABLED START #
+        """returns vccHealthState attribute: an array of unsigned short"""
         return list(self._vcc_health_state.values())
         # PROTECTED REGION END #    //  CbfSubarray.vccHealthState_read
 
     def read_fspState(self):
         # PROTECTED REGION ID(CbfSubarray.fspState_read) ENABLED START #
+        """Return the attribute fspState": array of DevState"""
         return list(self._fsp_state.values())
         # PROTECTED REGION END #    //  CbfSubarray.fspState_read
 
     def read_fspHealthState(self):
         # PROTECTED REGION ID(CbfSubarray.fspHealthState_read) ENABLED START #
+        """returns fspHealthState attribute: an array of unsigned short"""
         return list(self._fsp_health_state.values())
         # PROTECTED REGION END #    //  CbfSubarray.fspHealthState_read
 
     def read_fspList(self):
         # PROTECTED REGION ID(CbfSubarray.fspList_read) ENABLED START #
+        """return fspList attribute: 2 dimentioanl array the fsp used by all the subarrays"""
         return self._fsp_list
         # PROTECTED REGION END #    //  CbfSubarray.fspList_read
 
@@ -1295,6 +1311,7 @@ class CbfSubarray(SKASubarray):
     # --------
 
     def is_On_allowed(self):
+        """allowed if DevState is DISABLE"""
         if self.dev_state() == tango.DevState.DISABLE:
             return True
         return False
@@ -1302,6 +1319,7 @@ class CbfSubarray(SKASubarray):
     @command()
     def On(self):
         # PROTECTED REGION ID(CbfSubarray.On) ENABLED START #
+        """Turn on Subarray. Set 2 search windows to DISABLE. Set Subarray from DISABLE to OFF"""
         if self._obs_state != ObsState.IDLE.value:
             msg = "Device not in IDLE obsState."
             self.logger.error(msg)
@@ -1314,12 +1332,14 @@ class CbfSubarray(SKASubarray):
         # PROTECTED REGION END #    //  CbfSubarray.On
 
     def is_Off_allowed(self):
+        """allowed if DevState is OFF"""
         if self.dev_state() == tango.DevState.OFF:
             return True
         return False
 
     @command()
     def Off(self):
+        """Set subarray from OFF to DISABLE. Set 2 search windows to OFF"""
         # PROTECTED REGION ID(CbfSubarray.Off) ENABLED START #
         if self._obs_state != ObsState.IDLE.value:
             msg = "Device not in IDLE obsState."
@@ -1333,6 +1353,7 @@ class CbfSubarray(SKASubarray):
         # PROTECTED REGION END #    //  CbfSubarray.Off
 
     def is_AddReceptors_allowed(self):
+        """allowed if DevState is OFF or ON"""
         if self.dev_state() in [tango.DevState.OFF, tango.DevState.ON]:
             return True
         return False
@@ -1343,6 +1364,7 @@ class CbfSubarray(SKASubarray):
     )
     def AddReceptors(self, argin):
         # PROTECTED REGION ID(CbfSubarray.AddReceptors) ENABLED START #
+        """add list of receptors to the current subarray. Turn Subarray ON"""
         if self._obs_state != ObsState.IDLE.value:
             msg = "Device not in IDLE obsState."
             self.logger.error(msg)
@@ -1410,6 +1432,7 @@ class CbfSubarray(SKASubarray):
         # PROTECTED REGION END #    //  CbfSubarray.AddReceptors
 
     def is_RemoveReceptors_allowed(self):
+        """allowd if state is OFF or ON"""
         if self.dev_state() in [tango.DevState.OFF, tango.DevState.ON]:
             return True
         return False
@@ -1420,6 +1443,7 @@ class CbfSubarray(SKASubarray):
     )
     def RemoveReceptors(self, argin):
         # PROTECTED REGION ID(CbfSubarray.RemoveReceptors) ENABLED START #
+        """remove from list of receptors. Turn Subarray OFF if no receptors assigned"""
         if self._obs_state != ObsState.IDLE.value:
             msg = "Device not in IDLE obsState."
             self.logger.error(msg)
@@ -1455,6 +1479,7 @@ class CbfSubarray(SKASubarray):
         # PROTECTED REGION END #    //  CbfSubarray.RemoveReceptors
 
     def is_RemoveAllReceptors_allowed(self):
+        """allowed if state is ON or OFF"""
         if self.dev_state() in [tango.DevState.OFF, tango.DevState.ON]:
             return True
         return False
@@ -1462,6 +1487,7 @@ class CbfSubarray(SKASubarray):
     @command()
     def RemoveAllReceptors(self):
         # PROTECTED REGION ID(CbfSubarray.RemoveAllReceptors) ENABLED START #
+        """Remove all receptors. Turn Subarray OFF if no receptors assigned"""
         if self._obs_state != ObsState.IDLE.value:
             msg = "Device not in IDLE obsState."
             self.logger.error(msg)
@@ -1472,6 +1498,7 @@ class CbfSubarray(SKASubarray):
         # PROTECTED REGION END #    //  CbfSubarray.RemoveAllReceptors
 
     def is_ConfigureScan_allowed(self):
+        """allowed if state is ON"""
         if self.dev_state() == tango.DevState.ON:
             return True
         return False
@@ -1482,85 +1509,89 @@ class CbfSubarray(SKASubarray):
     )
     def ConfigureScan(self, argin):
         # PROTECTED REGION ID(CbfSubarray.ConfigureScan) ENABLED START #
-        """
-        The input JSON object has the following schema:
-        {
-            "scanID": int,
-            "frequencyBand": str,
-            "band5Tuning: [float, float],
-            "frequencyBandOffsetStream1": int,
-            "frequencyBandOffsetStream2": int,
-            "dopplerPhaseCorrSubscriptionPoint": str,
-            "delayModelSubscriptionPoint": str,
-            "visDestinationAddressSubscriptionPoint": str,
-            "rfiFlaggingMask": {
-                ...
-            },
-            "searchWindow": [
-                {
-                    "searchWindowID": int,
-                    "searchWindowTuning": int,
-                    "tdcEnable": bool,
-                    "tdcNumBits": int,
-                    "tdcPeriodBeforeEpoch": int,
-                    "tdcPeriodAfterEpoch": int,
-                    "tdcDestinationAddress": [
-                        {
-                            "receptorID": int,
-                            "tdcDestinationAddress": ["str", "str", "str"]
-                        },
-                        {
-                            ...
-                        }
-                    ]
-                },
-                {
-                    ...
-                }
-            ],
-            "fsp": [
-                {
-                    "fspID": int,
-                    "functionMode": str,
-                    "receptors": [int, int, int, ...],
-                    "frequencySliceID": int,
-                    "corrBandwidth": int,
-                    "zoomWindowTuning": int,
-                    "integrationTime": int,
-                    "channelAveragingMap": [
-                        [int, int],
-                        [int, int],
-                        [int, int],
-                        ...
-                    ]
-                },
-                {
-                    "fspID": 3,
-                    "functionMode": "PSS-BF",
-                    "searchWindowID": 2,
-                    "searchBeam": [
-                        {
-                            "searchBeamID": 300,
-                            "receptors": [3],
-                            "outputEnable": true,
-                            "averagingInterval": 4,
-                            "searchBeamDestinationAddress": "10.1.1.1"
-                        },
-                        {
-                            "searchBeamID": 400,
-                            "receptors": [1],
-                            "outputEnable": true,
-                            "averagingInterval": 2,
-                            "searchBeamDestinationAddress": "10.1.2.1"
-                        }
-                    ]
-                }
-                {
-                    ...
-                },
-                ...
-            ]
-        }
+        # """
+        # The input JSON object has the following schema:
+        # {
+        #     "scanID": int,
+        #     "frequencyBand": str,
+        #     "band5Tuning: [float, float],
+        #     "frequencyBandOffsetStream1": int,
+        #     "frequencyBandOffsetStream2": int,
+        #     "dopplerPhaseCorrSubscriptionPoint": str,
+        #     "delayModelSubscriptionPoint": str,
+        #     "visDestinationAddressSubscriptionPoint": str,
+        #     "rfiFlaggingMask": {
+        #         ...
+        #     },
+        #     "searchWindow": [
+        #         {
+        #             "searchWindowID": int,
+        #             "searchWindowTuning": int,
+        #             "tdcEnable": bool,
+        #             "tdcNumBits": int,
+        #             "tdcPeriodBeforeEpoch": int,
+        #             "tdcPeriodAfterEpoch": int,
+        #             "tdcDestinationAddress": [
+        #                 {
+        #                     "receptorID": int,
+        #                     "tdcDestinationAddress": ["str", "str", "str"]
+        #                 },
+        #                 {
+        #                     ...
+        #                 }
+        #             ]
+        #         },
+        #         {
+        #             ...
+        #         }
+        #     ],
+        #     "fsp": [
+        #         {
+        #             "fspID": int,
+        #             "functionMode": str,
+        #             "receptors": [int, int, int, ...],
+        #             "frequencySliceID": int,
+        #             "corrBandwidth": int,
+        #             "zoomWindowTuning": int,
+        #             "integrationTime": int,
+        #             "channelAveragingMap": [
+        #                 [int, int],
+        #                 [int, int],
+        #                 [int, int],
+        #                 ...
+        #             ]
+        #         },
+        #         {
+        #             "fspID": 3,
+        #             "functionMode": "PSS-BF",
+        #             "searchWindowID": 2,
+        #             "searchBeam": [
+        #                 {
+        #                     "searchBeamID": 300,
+        #                     "receptors": [3],
+        #                     "outputEnable": true,
+        #                     "averagingInterval": 4,
+        #                     "searchBeamDestinationAddress": "10.1.1.1"
+        #                 },
+        #                 {
+        #                     "searchBeamID": 400,
+        #                     "receptors": [1],
+        #                     "outputEnable": true,
+        #                     "averagingInterval": 2,
+        #                     "searchBeamDestinationAddress": "10.1.2.1"
+        #                 }
+        #             ]
+        #         }
+        #         {
+        #             ...
+        #         },
+        #         ...
+        #     ]
+        # }
+        # """
+        """Change state to CONFIGURING.
+        Configure attributes from input JSON. Subscribe events. COnfigure VCC and FSP. 
+        publish output links.
         """
         if self._obs_state not in [ObsState.IDLE.value, ObsState.READY.value]:
             msg = "Device not in IDLE or READY obsState."
@@ -1770,6 +1801,7 @@ class CbfSubarray(SKASubarray):
         # PROTECTED REGION END #    //  CbfSubarray.ConfigureScan
 
     def is_ConfigureSearchWindow_allowed(self):
+        """subarray has to be On to configure searchwindow"""
         if self.dev_state() == tango.DevState.ON:
             return True
         return False
@@ -1782,6 +1814,7 @@ class CbfSubarray(SKASubarray):
         # PROTECTED REGION ID(CbfSubarray.ConfigureSearchWindow) ENABLED START #
         # This function is called after the configuration has already been validated,
         # so the checks here have been removed to reduce overhead.
+        """revceives a JSON object to configure a search window"""
         if self._obs_state != ObsState.CONFIGURING.value:
             msg = "Device not in CONFIGURING obsState."
             self.logger.error(msg)
@@ -1896,12 +1929,14 @@ class CbfSubarray(SKASubarray):
         # PROTECTED REGION END #    //  CbfSubarray.ConfigureSearchWindow
 
     def is_EndScan_allowed(self):
+        """allowed if SUbarray is ON, obsState is SCANNING(checked in ENDScan)."""
         if self.dev_state() == tango.DevState.ON:
             return True
         return False
 
     @command()
     def EndScan(self):
+        """Send endscan to VCC and FSP. Set state to ready"""
         # PROTECTED REGION ID(CbfSubarray.EndScan) ENABLED START #
         if self._obs_state != ObsState.SCANNING.value:
             msg = "Device not in SCANNING obsState."
@@ -1926,14 +1961,14 @@ class CbfSubarray(SKASubarray):
         doc_in="Activation time of the scan, as seconds since the Linux epoch"
     )
     def Scan(self, argin):
+        """set state to scanning. Send Scan signal to VCC and FSP."""
         # PROTECTED REGION ID(CbfSubarray.Scan) ENABLED START #
-        """
-        if self._obs_state != ObsState.READY.value:
-            msg = "A scan is not ready to be started."
-            self.logger(msg, tango.LogLevel.LOG_ERROR)
-            tango.Except.throw_exception("Command failed", msg, "Scan execution",
-                                           tango.ErrSeverity.ERR)
-        """
+        # """
+        # if self._obs_state != ObsState.READY.value:
+        #     msg = "A scan is not ready to be started."
+        #     self.logger(msg, tango.LogLevel.LOG_ERROR)
+        #     tango.Except.throw_exception("Command failed", msg, "Scan execution", tango.ErrSeverity.ERR)
+        # """
         if self._obs_state != ObsState.READY.value:
             msg = "Device not in READY obsState."
             self.logger.error(msg)
@@ -1950,6 +1985,7 @@ class CbfSubarray(SKASubarray):
         # PROTECTED REGION END #    //  CbfSubarray.Scan
 
     def is_GoToIdle_allowed(self):
+        """allowed if state is ON or OFF"""
         if self.dev_state() in [tango.DevState.OFF, tango.DevState.ON]:
             return True
         return False
@@ -1957,6 +1993,7 @@ class CbfSubarray(SKASubarray):
     @command()
     def GoToIdle(self):
         # PROTECTED REGION ID(CbfSubarray.GoToIdle) ENABLED START #
+        """deconfigure a scan, set ObsState to IDLE"""
         if self._obs_state not in [ObsState.IDLE.value, ObsState.READY.value]:
             msg = "Device not in IDLE or READY obsState."
             self.logger.error(msg)

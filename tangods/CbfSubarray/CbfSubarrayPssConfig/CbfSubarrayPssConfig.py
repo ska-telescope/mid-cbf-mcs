@@ -7,11 +7,11 @@
 # Distributed under the terms of the GPL license.
 # See LICENSE.txt for more info.
 
-"""
-Author: Ryan Voigt Ryan.Voigt@nrc-cnrc.gc.ca,
-Herzberg Astronomy and Astrophysics, National Research Council of Canada
-Copyright (c) 2020 National Research Council of Canada
-"""
+# """
+# Author: Ryan Voigt Ryan.Voigt@nrc-cnrc.gc.ca,
+# Herzberg Astronomy and Astrophysics, National Research Council of Canada
+# Copyright (c) 2020 National Research Council of Canada
+# """
 
 # CbfSubarrayPssConfig Tango device prototype
 # CbfSubarrayPssConfig TANGO device class for the prototype
@@ -85,6 +85,7 @@ class CbfSubarrayPssConfig(SKACapability):
 
     def init_device(self):
         SKACapability.init_device(self)
+        """initialize attribtues"""
         # PROTECTED REGION ID(CbfSubarrayPssConfig.init_device) ENABLED START #
         self.set_state(tango.DevState.INIT)
 
@@ -102,15 +103,18 @@ class CbfSubarrayPssConfig(SKACapability):
 
     def always_executed_hook(self):
         # PROTECTED REGION ID(CbfSubarrayPssConfig.always_executed_hook) ENABLED START #
+        """methods always executed before any TANGO command is executed"""
         pass
         # PROTECTED REGION END #    //  CbfSubarrayPssConfig.always_executed_hook
 
     def delete_device(self):
+        """hook to delete device""" 
         # PROTECTED REGION ID(CbfSubarrayPssConfig.delete_device) ENABLED START #
         pass
         # PROTECTED REGION END #    //  CbfSubarrayPssConfig.delete_device
 
     def is_configure_scan_allowed(self):
+        """allowed when cbfSubarrayPssConfig is On, and ObsState is idle or ready"""
         if self.dev_state() == tango.DevState.ON and \
                 self._obs_state in [ObsState.IDLE.value, ObsState.READY.value]:
             return True
@@ -127,22 +131,26 @@ class CbfSubarrayPssConfig(SKACapability):
 
     def read_fspID(self):
         # PROTECTED REGION ID(CbfSubarrayPssConfig.read_fspID) ENABLED START #
+        """Return fspID attribute: array of int"""
         return self._fsp_id
         # PROTECTED REGION END #    //  CbfSubarrayPssConfig.read_fspID
 
     def write_fspID(self, value):
         # PROTECTED REGION ID(CbfSubarrayPssConfig.write_fspID) ENABLED START #
+        """Set fspID attribute: array of int"""
         self._fsp_id = value
         # PROTECTED REGION END #    //  CbfSubarrayPssConfig.write_fspID
 
     def read_pssConfig(self):
         # PROTECTED REGION ID(CbfSubarrayPssConfig.read_PssConfig) ENABLED START #
+        """Return pssConfig attribute: JSON"""
         return json.dumps(self._pss_config)
         # PROTECTED REGION END #    //  CbfSubarrayPssConfig.read_PssConfig
 
     def write_pssConfig(self, value):
         # PROTECTED REGION ID(CbfSubarrayPssConfig.write_PssConfig) ENABLED START #
         # if value is not valid JSON, the exception is caught by CbfSubarray.ConfigureScan()
+        """Set pssConfig attribute: JSON"""
         self._pss_config = json.loads(value)
         # PROTECTED REGION END #    //  CbfSubarrayPssConfig.write_PssConfig
 
@@ -154,6 +162,7 @@ class CbfSubarrayPssConfig(SKACapability):
         doc_in='JSON object to configure a fsp'
     )
     def ConfigureFSP(self, argin):
+        """Set pssConfig attribute; Set CbfSubarraypssConfig to configuring; Set fspID attribute; Send config to fspCorrSubarray for Fsp configuration"""
         # input configuration has already been checked in CbfSubarray device for FspID configuration type = PSS or 0
         if self._obs_state not in [ObsState.IDLE.value, ObsState.READY.value]:
             msg = "Device not in IDLE or READY obsState."
@@ -186,6 +195,7 @@ class CbfSubarrayPssConfig(SKACapability):
         self._obs_state = ObsState.READY.value
 
     def is_EndScan_allowed(self):
+        """allowed if CbfSubarrayPssConfig device is ON"""
         if self.dev_state() == tango.DevState.ON:
             return True
         return False
@@ -193,6 +203,7 @@ class CbfSubarrayPssConfig(SKACapability):
     @command()
     def EndScan(self):
         # PROTECTED REGION ID(CbfSubarrayPssConfig.EndScan) ENABLED START #
+        """Set ObsState of CbfsubarrayPssConfig to READY if it is cuurently SCANNING"""
         if self._obs_state != ObsState.SCANNING.value:
             msg = "Device not in SCANNING obsState."
             self.logger.error(msg)
@@ -203,6 +214,7 @@ class CbfSubarrayPssConfig(SKACapability):
         # PROTECTED REGION END #    //  CbfSubarrayPssConfig.EndScan
 
     def is_Scan_allowed(self):
+        """allowed if CbfSubarraypssrConfig is ON"""
         if self.dev_state() == tango.DevState.ON:
             return True
         return False
@@ -210,6 +222,7 @@ class CbfSubarrayPssConfig(SKACapability):
     @command()
     def Scan(self, argin):
         # PROTECTED REGION ID(CbfSubarrayPssConfig.Scan) ENABLED START #
+        """Set ObsState of CbfsubarraypssConfig to SCANNING if it is cuurently READY"""
         if self._obs_state != ObsState.READY.value:
             msg = "Device not in READY obsState."
             self.logger.error(msg)
@@ -226,6 +239,7 @@ class CbfSubarrayPssConfig(SKACapability):
     )
     def SetState(self, argin):
         # PROTECTED REGION ID(CbfSubarrayPssConfig.SetState) ENABLED START #
+        """set state(tango.DevState)"""
         self.set_state(argin)
         # PROTECTED REGION END #    //  CbfSubarrayPssConfig.SetState
 

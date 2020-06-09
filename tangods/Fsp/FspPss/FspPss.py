@@ -7,16 +7,16 @@
 # Distributed under the terms of the GPL license.
 # See LICENSE.txt for more info.
 
-"""
-Author: James Jiang James.Jiang@nrc-cnrc.gc.ca,
-Herzberg Astronomy and Astrophysics, National Research Council of Canada
-Copyright (c) 2019 National Research Council of Canada
-"""
+# """
+# Author: James Jiang James.Jiang@nrc-cnrc.gc.ca,
+# Herzberg Astronomy and Astrophysics, National Research Council of Canada
+# Copyright (c) 2019 National Research Council of Canada
+# """
 
-""" FspPss Tango device prototype
+# """ FspPss Tango device prototype
 
-FspPss TANGO device class for the prototype
-"""
+# FspPss TANGO device class for the prototype
+# """
 
 # tango imports
 import tango
@@ -65,16 +65,19 @@ class FspPss(SKACapability):
     def init_device(self):
         SKACapability.init_device(self)
         # PROTECTED REGION ID(FspPss.init_device) ENABLED START #
+        """Set state to OFF"""
         self.set_state(tango.DevState.OFF)
         # PROTECTED REGION END #    //  FspPss.init_device
 
     def always_executed_hook(self):
         # PROTECTED REGION ID(FspPss.always_executed_hook) ENABLED START #
+        """hook before commands"""
         pass
         # PROTECTED REGION END #    //  FspPss.always_executed_hook
 
     def delete_device(self):
         # PROTECTED REGION ID(FspPss.delete_device) ENABLED START #
+        """hook to delelte device"""
         pass
         # PROTECTED REGION END #    //  FspPss.delete_device
 
@@ -92,6 +95,7 @@ class FspPss(SKACapability):
     )
     def SetState(self, argin):
         # PROTECTED REGION ID(FspPss.SetState) ENABLED START #
+        """Input is DevState."""
         self.set_state(argin)
         # PROTECTED REGION END #    //  FspPss.SetState
 

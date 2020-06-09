@@ -7,16 +7,16 @@
 # Distributed under the terms of the GPL license.
 # See LICENSE.txt for more info.
 
-"""
-Author: James Jiang James.Jiang@nrc-cnrc.gc.ca,
-Herzberg Astronomy and Astrophysics, National Research Council of Canada
-Copyright (c) 2019 National Research Council of Canada
-"""
+# """
+# Author: James Jiang James.Jiang@nrc-cnrc.gc.ca,
+# Herzberg Astronomy and Astrophysics, National Research Council of Canada
+# Copyright (c) 2019 National Research Council of Canada
+# """
 
-""" VccSearchWindow Tango device prototype
+# """ VccSearchWindow Tango device prototype
 
-VccSearchWindow TANGO device class for the prototype
-"""
+# VccSearchWindow TANGO device class for the prototype
+# """
 
 # tango imports
 import tango
@@ -106,6 +106,7 @@ class VccSearchWindow(SKACapability):
     # ---------------
 
     def init_device(self):
+        """entry point; inherit from SKACApability; initialize attribute values"""
         SKACapability.init_device(self)
         # PROTECTED REGION ID(VccSearchWindow.init_device) ENABLED START #
         self.set_state(tango.DevState.INIT)
@@ -123,11 +124,13 @@ class VccSearchWindow(SKACapability):
 
     def always_executed_hook(self):
         # PROTECTED REGION ID(VccSearchWindow.always_executed_hook) ENABLED START #
+        """hook to be executed before any TANGO command is executed"""
         pass
         # PROTECTED REGION END #    //  VccSearchWindow.always_executed_hook
 
     def delete_device(self):
         # PROTECTED REGION ID(VccSearchWindow.delete_device) ENABLED START #
+        """hook to delete resoures allocated in init_device"""
         pass
         # PROTECTED REGION END #    //  VccSearchWindow.delete_device
 
@@ -137,61 +140,73 @@ class VccSearchWindow(SKACapability):
 
     def read_searchWindowTuning(self):
         # PROTECTED REGION ID(VccSearchWindow.searchWindowTuning_read) ENABLED START #
+        """Return searchWindowTuning attribute"""
         return self._search_window_tuning
         # PROTECTED REGION END #    //  VccSearchWindow.searchWindowTuning_read
 
     def write_searchWindowTuning(self, value):
         # PROTECTED REGION ID(VccSearchWindow.searchWindowTuning_write) ENABLED START #
+        """Set searchWindowTuning attribute(int)"""
         self._search_window_tuning = value
         # PROTECTED REGION END #    //  VccSearchWindow.searchWindowTuning_write
 
     def read_tdcEnable(self):
         # PROTECTED REGION ID(VccSearchWindow.tdcEnable_read) ENABLED START #
+        """Return the tdcEnable attribute: Enable transient data capture"""
         return self._enable_TDC
         # PROTECTED REGION END #    //  VccSearchWindow.tdcEnable_read
 
     def write_tdcEnable(self, value):
         # PROTECTED REGION ID(VccSearchWindow.tdcEnable_write) ENABLED START #
+        """Set the tdcEnable attribute: Enable transient data capture"""
         self._enable_TDC = value
         # PROTECTED REGION END #    //  VccSearchWindow.tdcEnable_write
 
     def read_tdcNumBits(self):
         # PROTECTED REGION ID(VccSearchWindow.tdcNumBits_read) ENABLED START #
+        """Return the tdcEnable attribute: transient data capture bits"""
         return self._number_bits
         # PROTECTED REGION END #    //  VccSearchWindow.tdcNumBits_read
 
     def write_tdcNumBits(self, value):
         # PROTECTED REGION ID(VccSearchWindow.tdcNumBits_write) ENABLED START #
+        """set the tdcNumBits attribute: transient data capture bits"""
         self._number_bits = value
         # PROTECTED REGION END #    //  VccSearchWindow.tdcNumBits_write
 
     def read_tdcPeriodBeforeEpoch(self):
         # PROTECTED REGION ID(VccSearchWindow.tdcPeriodBeforeEpoch_read) ENABLED START #
+        """Return the tdcPeriodBeforeEpoch attribute: Period before the epoch for which data is saved"""
         return self._period_before_epoch
         # PROTECTED REGION END #    //  VccSearchWindow.tdcPeriodBeforeEpoch_read
 
     def write_tdcPeriodBeforeEpoch(self, value):
         # PROTECTED REGION ID(VccSearchWindow.tdcPeriodBeforeEpoch_write) ENABLED START #
+        """Set the tdcPeriodBeforeEpoch attribute: Period before the epoch for which data is saved"""
         self._period_before_epoch = value
         # PROTECTED REGION END #    //  VccSearchWindow.tdcPeriodBeforeEpoch_write
 
     def read_tdcPeriodAfterEpoch(self):
         # PROTECTED REGION ID(VccSearchWindow.tdcPeriodAfterEpoch_read) ENABLED START #
+        """Return the tdcPeriodAfterEpoch attribute: Period after the epoch for which data is saved"""
         return self._period_after_epoch
         # PROTECTED REGION END #    //  VccSearchWindow.tdcPeriodAfterEpoch_read
 
     def write_tdcPeriodAfterEpoch(self, value):
         # PROTECTED REGION ID(VccSearchWindow.tdcPeriodAfterEpoch_write) ENABLED START #
+        """Set the tdcPeriodAfterEpoch attribute: Period after the epoch for which data is saved"""
         self._period_after_epoch = value
         # PROTECTED REGION END #    //  VccSearchWindow.tdcPeriodAfterEpoch_write
 
     def read_tdcDestinationAddress(self):
         # PROTECTED REGION ID(VccSearchWindow.tdcDestinationAddress_read) ENABLED START #
+        """Return the tdcDestinationAddress attribute:Destination addresses for transient data(str/json)"""
         return self._destination_address
         # PROTECTED REGION END #    //  VccSearchWindow.tdcDestinationAddress_read
 
     def write_tdcDestinationAddress(self, value):
         # PROTECTED REGION ID(VccSearchWindow.tdcDestinationAddress_write) ENABLED START #
+        """Set the tdcDestinationAddress attribute:Destination addresses for transient data(str/json)"""
         self._destination_address = value
         # PROTECTED REGION END #    //  VccSearchWindow.tdcDestinationAddress_write
 
@@ -205,6 +220,7 @@ class VccSearchWindow(SKACapability):
     )
     def SetState(self, argin):
         # PROTECTED REGION ID(VccSearchWindow.SetState) ENABLED START #
+        """set state(tango.DevState)"""
         self.set_state(argin)
         # PROTECTED REGION END #    //  VccSearchWindow.SetState
 

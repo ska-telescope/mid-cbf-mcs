@@ -7,11 +7,11 @@
 # Distributed under the terms of the GPL license.
 # See LICENSE.txt for more info.
 
-"""
-Author: James Jiang James.Jiang@nrc-cnrc.gc.ca,
-Herzberg Astronomy and Astrophysics, National Research Council of Canada
-Copyright (c) 2019 National Research Council of Canada
-"""
+# """
+# Author: James Jiang James.Jiang@nrc-cnrc.gc.ca,
+# Herzberg Astronomy and Astrophysics, National Research Council of Canada
+# Copyright (c) 2019 National Research Council of Canada
+# """
 
 # Vcc Tango device prototype
 # Vcc TANGO device class for the prototype
@@ -216,6 +216,7 @@ class Vcc(SKACapability):
     # ---------------
 
     def init_device(self):
+        """Inherit from SKACapability; initialze attributes"""
         SKACapability.init_device(self)
         # PROTECTED REGION ID(Vcc.init_device) ENABLED START #
         self.set_state(tango.DevState.INIT)
@@ -262,6 +263,7 @@ class Vcc(SKACapability):
 
     def delete_device(self):
         # PROTECTED REGION ID(Vcc.delete_device) ENABLED START #
+        """Turn off all the VCCBands; turn off this VCC"""
         self._proxy_band_12.SetState(tango.DevState.OFF)
         self._proxy_band_3.SetState(tango.DevState.OFF)
         self._proxy_band_4.SetState(tango.DevState.OFF)
@@ -279,21 +281,25 @@ class Vcc(SKACapability):
 
     def read_receptorID(self):
         # PROTECTED REGION ID(Vcc.receptorID_read) ENABLED START #
+        """Return recptorID attribut(int)"""
         return self._receptor_ID
         # PROTECTED REGION END #    //  Vcc.receptorID_read
 
     def write_receptorID(self, value):
         # PROTECTED REGION ID(Vcc.receptorID_write) ENABLED START #
+        """Set receptor ID attribute(int)"""
         self._receptor_ID = value
         # PROTECTED REGION END #    //  Vcc.receptorID_write
 
     def read_subarrayMembership(self):
         # PROTECTED REGION ID(Vcc.subarrayMembership_read) ENABLED START #
+        """Return subarrayMembership attribute: sub-array affiliation of the VCC(0 of no affliation)"""
         return self._subarray_membership
         # PROTECTED REGION END #    //  Vcc.subarrayMembership_read
 
     def write_subarrayMembership(self, value):
         # PROTECTED REGION ID(Vcc.subarrayMembership_write) ENABLED START #
+        """Set subarrayMembership attribute: sub-array affiliation of the VCC(0 of no affliation)"""
         self._subarray_membership = value
         if not value:
             self._obs_state = ObsState.IDLE.value
@@ -301,121 +307,145 @@ class Vcc(SKACapability):
 
     def read_frequencyBand(self):
         # PROTECTED REGION ID(Vcc.frequencyBand_read) ENABLED START #
+        """Return frequencyBand attribute: frequency band being observed by the current scan (one of ["1", "2", "3", "4", "5a", "5b", ])"""
         return self._frequency_band
         # PROTECTED REGION END #    //  Vcc.frequencyBand_read
 
     def read_band5Tuning(self):
         # PROTECTED REGION ID(Vcc.band5Tuning_read) ENABLED START #
+        """Return band5Tuning attribute: Stream tuning (GHz) in float"""
         return self._stream_tuning
         # PROTECTED REGION END #    //  Vcc.band5Tuning_read
 
     def write_band5Tuning(self, value):
         # PROTECTED REGION ID(Vcc.band5Tuning_write) ENABLED START #
+        """Set band5Tuning attribute: Stream tuning (GHz) in float"""
         self._stream_tuning = value
         # PROTECTED REGION END #    //  Vcc.band5Tuning_write
 
     def read_frequencyBandOffsetStream1(self):
         # PROTECTED REGION ID(Vcc.frequencyBandOffsetStream1_read) ENABLED START #
+        """Return frequecyBandOffsetStream1 attribute(int)"""
         return self._frequency_band_offset_stream_1
         # PROTECTED REGION END #    //  Vcc.frequencyBandOffsetStream1_read
 
     def write_frequencyBandOffsetStream1(self, value):
         # PROTECTED REGION ID(Vcc.frequencyBandOffsetStream1_write) ENABLED START #
+        """Set frequecyBandOffsetStream1 attribute(int)"""
         self._frequency_band_offset_stream_1 = value
         # PROTECTED REGION END #    //  Vcc.frequencyBandOffsetStream1_write
 
     def read_frequencyBandOffsetStream2(self):
         # PROTECTED REGION ID(Vcc.frequencyBandOffsetStream2_read) ENABLED START #
+        """Return frequecyBandOffsetStream2 attribute(int)"""
         return self._frequency_band_offset_stream_2
         # PROTECTED REGION END #    //  Vcc.frequencyBandOffsetStream2_read
 
     def write_frequencyBandOffsetStream2(self, value):
         # PROTECTED REGION ID(Vcc.frequencyBandOffsetStream2_write) ENABLED START #
+        """Set frequecyBandOffsetStream2 attribute(int)"""
         self._frequency_band_offset_stream_2 = value
         # PROTECTED REGION END #    //  Vcc.frequencyBandOffsetStream2_write
 
     def read_dopplerPhaseCorrection(self):
         # PROTECTED REGION ID(Vcc.dopplerPhaseCorrection_read) ENABLED START #
+        """Return dopplerPhaseCorrection attribute(float)"""
         return self._doppler_phase_correction
         # PROTECTED REGION END #    //  Vcc.dopplerPhaseCorrection_read
 
     def write_dopplerPhaseCorrection(self, value):
         # PROTECTED REGION ID(Vcc.dopplerPhaseCorrection_write) ENABLED START #
+        """Set dopplerPhaseCorrection attribute(float)"""
         self._doppler_phase_correction = value
         # PROTECTED REGION END #    //  Vcc.dopplerPhaseCorrection_write
 
     def read_rfiFlaggingMask(self):
         # PROTECTED REGION ID(Vcc.rfiFlaggingMask_read) ENABLED START #
+        """Return rfiFlaggingMask attribute(str/JSON)"""
         return self._rfi_flagging_mask
         # PROTECTED REGION END #    //  Vcc.rfiFlaggingMask_read
 
     def write_rfiFlaggingMask(self, value):
         # PROTECTED REGION ID(Vcc.rfiFlaggingMask_write) ENABLED START #
+        """Set rfiFlaggingMask attribute(str/JSON)"""
         self._rfi_flagging_mask = value
         # PROTECTED REGION END #    //  Vcc.rfiFlaggingMask_write
 
     def read_scfoBand1(self):
         # PROTECTED REGION ID(Vcc.scfoBand1_read) ENABLED START #
+        """Return scfoBand1 attribute(int): Sample clock frequency offset for band 1"""
         return self._scfo_band_1
         # PROTECTED REGION END #    //  Vcc.scfoBand1_read
 
     def write_scfoBand1(self, value):
         # PROTECTED REGION ID(Vcc.scfoBand1_write) ENABLED START #
+        """Set scfoBand1 attribute(int): Sample clock frequency offset for band 1"""
         self._scfo_band_1 = value
         # PROTECTED REGION END #    //  Vcc.scfoBand1_write
 
     def read_scfoBand2(self):
         # PROTECTED REGION ID(Vcc.scfoBand2_read) ENABLED START #
+        """Return scfoBand2 attribute(int): Sample clock frequency offset for band 2"""
         return self._scfo_band_2
         # PROTECTED REGION END #    //  Vcc.scfoBand2_read
 
     def write_scfoBand2(self, value):
         # PROTECTED REGION ID(Vcc.scfoBand2_write) ENABLED START #
+        """Set scfoBand2 attribute(int): Sample clock frequency offset for band 2"""
         self._scfo_band_2 = value
         # PROTECTED REGION END #    //  Vcc.scfoBand2_write
 
     def read_scfoBand3(self):
         # PROTECTED REGION ID(Vcc.scfoBand3_read) ENABLED START #
+        """Return scfoBand3 attribute(int): Sample clock frequency offset for band 3"""        
         return self._scfo_band_3
         # PROTECTED REGION END #    //  Vcc.scfoBand3_read
 
     def write_scfoBand3(self, value):
         # PROTECTED REGION ID(Vcc.scfoBand3_write) ENABLED START #
+        """Set scfoBand3 attribute(int): Sample clock frequency offset for band 3"""        
         self._scfo_band_3 = value
         # PROTECTED REGION END #    //  Vcc.scfoBand3_write
 
     def read_scfoBand4(self):
         # PROTECTED REGION ID(Vcc.scfoBand4_read) ENABLED START #
+        """Return scfoBand4 attribute(int): Sample clock frequency offset for band 4"""        
         return self._scfo_band_4
         # PROTECTED REGION END #    //  Vcc.scfoBand4_read
 
     def write_scfoBand4(self, value):
         # PROTECTED REGION ID(Vcc.scfoBand4_write) ENABLED START #
+        """Set scfoBand4 attribute(int): Sample clock frequency offset for band 4"""        
         self._scfo_band_4 = value
         # PROTECTED REGION END #    //  Vcc.scfoBand4_write
 
     def read_scfoBand5a(self):
         # PROTECTED REGION ID(Vcc.scfoBand5a_read) ENABLED START #
+        """Return scfoBand5a attribute(int): Sample clock frequency offset for band 5a"""        
         return self._scfo_band_5a
         # PROTECTED REGION END #    //  Vcc.scfoBand5a_read
 
     def write_scfoBand5a(self, value):
         # PROTECTED REGION ID(Vcc.scfoBand5a_write) ENABLED START #
+        """Set scfoBand5a attribute(int): Sample clock frequency offset for band 5a"""        
         self._scfo_band_5a = value
         # PROTECTED REGION END #    //  Vcc.scfoBand5a_write
 
     def read_scfoBand5b(self):
         # PROTECTED REGION ID(Vcc.scfoBand5b_read) ENABLED START #
+        """Return scfoBand5b attribute(int): Sample clock frequency offset for band 5b"""        
         return self._scfo_band_5b
         # PROTECTED REGION END #    //  Vcc.scfoBand5b_read
 
     def write_scfoBand5b(self, value):
         # PROTECTED REGION ID(Vcc.scfoBand5b_write) ENABLED START #
+        """Set scfoBand5b attribute(int): Sample clock frequency offset for band 5b"""        
         self._scfo_band_5b = value
         # PROTECTED REGION END #    //  Vcc.scfoBand5b_write
 
     def read_delayModel(self):
         # PROTECTED REGION ID(Vcc.delayModel_read) ENABLED START #
+        """Return delayModel attribute(2 dim, max=6*26 array): Delay model coefficients, given per frequency slice"""
         return self._delay_model
         # PROTECTED REGION END #    //  Vcc.delayModel_read
 
@@ -424,6 +454,7 @@ class Vcc(SKACapability):
     # --------
 
     def is_On_allowed(self):
+        """allowed if it's in OFF state and obsState is IDLE"""
         if self.dev_state() == tango.DevState.OFF and \
                 self._obs_state == ObsState.IDLE.value:
             return True
@@ -432,6 +463,7 @@ class Vcc(SKACapability):
     @command()
     def On(self):
         # PROTECTED REGION ID(Vcc.On) ENABLED START #
+        """turn ON VCC; send DISABLE signal to all the band and search window"""
         self._proxy_band_12.SetState(tango.DevState.DISABLE)
         self._proxy_band_3.SetState(tango.DevState.DISABLE)
         self._proxy_band_4.SetState(tango.DevState.DISABLE)
@@ -443,6 +475,7 @@ class Vcc(SKACapability):
         # PROTECTED REGION END #    //  Vcc.On
 
     def is_Off_allowed(self):
+        """allowed if devState is ON, ObsState is IDLE"""
         if self.dev_state() == tango.DevState.ON and \
                 self._obs_state == ObsState.IDLE.value:
             return True
@@ -451,6 +484,7 @@ class Vcc(SKACapability):
     @command()
     def Off(self):
         # PROTECTED REGION ID(Vcc.Off) ENABLED START #
+        """turn VCC off, send OFF signal to all the bands and search window capabilities"""
         self._proxy_band_12.SetState(tango.DevState.OFF)
         self._proxy_band_3.SetState(tango.DevState.OFF)
         self._proxy_band_4.SetState(tango.DevState.OFF)
@@ -464,6 +498,7 @@ class Vcc(SKACapability):
         # PROTECTED REGION END #    //  Vcc.Off
 
     def is_SetFrequencyBand_allowed(self):
+        """allowed if devState is ON and ObsState is Configuring"""
         if self.dev_state() == tango.DevState.ON and \
                 self._obs_state == ObsState.CONFIGURING.value:
             return True
@@ -475,6 +510,7 @@ class Vcc(SKACapability):
     )
     def SetFrequencyBand(self, argin):
         # PROTECTED REGION ID(Vcc.SetFrequencyBand) ENABLED START #
+        """set corresponding band of this VCC. Send ON signal to the corresponding band, and DISABLE signal to all others"""
         if argin in ["1", "2"]:
             self._frequency_band = ["1", "2"].index(argin)
             self._proxy_band_12.SetState(tango.DevState.ON)
@@ -505,6 +541,7 @@ class Vcc(SKACapability):
         # PROTECTED REGION END #    // Vcc.SetFrequencyBand
 
     def is_SetObservingState_allowed(self):
+        """allowed if VCC is ON and ObsState is IDLE,CONFIGURING,READY, not SCANNING"""
         if self.dev_state() == tango.DevState.ON and \
                 self._obs_state in [
             ObsState.IDLE.value,
@@ -520,8 +557,7 @@ class Vcc(SKACapability):
     )
     def SetObservingState(self, argin):
         # PROTECTED REGION ID(Vcc.SetObservingState) ENABLED START #
-        # Since obsState is read-only, CBF Subarray needs a way to change the obsState
-        # of a VCC, BUT ONLY TO CONFIGURING OR READY, during a scan configuration.
+        """Since obsState is read-only, CBF Subarray needs a way to change the obsState of a VCC, BUT ONLY TO CONFIGURING OR READY, during a scan configuration."""
         if argin in [ObsState.CONFIGURING.value, ObsState.READY.value]:
             self._obs_state = argin
         else:
@@ -530,6 +566,7 @@ class Vcc(SKACapability):
         # PROTECTED REGION END #    // Vcc.SetFrequencyBand
 
     def is_UpdateDelayModel_allowed(self):
+        """allowed when Devstate is ON and ObsState is READY OR SCANNIGN"""
         if self.dev_state() == tango.DevState.ON and \
                 self._obs_state in [ObsState.READY.value, ObsState.SCANNING.value]:
             return True
@@ -541,6 +578,7 @@ class Vcc(SKACapability):
     )
     def UpdateDelayModel(self, argin):
         # PROTECTED REGION ID(Vcc.UpdateDelayModel) ENABLED START #
+        """update VCC's delay model(serialized JSON object)"""
         argin = json.loads(argin)
 
         for receptor in argin:
@@ -570,6 +608,7 @@ class Vcc(SKACapability):
         doc_in='JSON object to configure a search window'
     )
     def ValidateSearchWindow(self, argin):
+        """validate a search window configuration. The input is JSON object with the search window parameters. Called by the subarray"""
         # try to deserialize input string to a JSON object
         try:
             argin = json.loads(argin)
@@ -736,6 +775,7 @@ class Vcc(SKACapability):
                                              tango.ErrSeverity.ERR)
 
     def is_ConfigureSearchWindow_allowed(self):
+        """allowed if DevState is ON and ObsState is CONFIGURING"""
         if self.dev_state() == tango.DevState.ON and \
                 self._obs_state == ObsState.CONFIGURING.value:
             return True
@@ -747,8 +787,12 @@ class Vcc(SKACapability):
     )
     def ConfigureSearchWindow(self, argin):
         # PROTECTED REGION ID(Vcc.ConfigureSearchWindow) ENABLED START #
-        # This function is called after the configuration has already been validated,
-        # so the checks here have been removed to reduce overhead.
+        # 
+        """
+        configure SearchWindow by sending parameters from the input(JSON) to SearchWindow device.
+        
+        This function is called by the subarray after the configuration has already been validated, so the checks here have been removed to reduce overhead.
+        """
 
         argin = json.loads(argin)
 
@@ -861,6 +905,7 @@ class Vcc(SKACapability):
         # PROTECTED REGION END #    //  Vcc.ConfigureSearchWindow
 
     def is_EndScan_allowed(self):
+        """allowed when VCC is ON and ObsState is SCANNING"""
         if self.dev_state() == tango.DevState.ON and \
                 self._obs_state == ObsState.SCANNING.value:
             return True
@@ -869,11 +914,13 @@ class Vcc(SKACapability):
     @command()
     def EndScan(self):
         # PROTECTED REGION ID(Vcc.EndScan) ENABLED START #
+        """End the scan: Set the obsState to READY"""
         self._obs_state = ObsState.READY.value
         # nothing else is supposed to happen
         # PROTECTED REGION END #    //  Vcc.EndScan
 
     def is_Scan_allowed(self):
+        """scan is allowed when VCC is on, ObsState is READY"""
         if self.dev_state() == tango.DevState.ON and \
                 self._obs_state == ObsState.READY.value:
             return True
@@ -882,11 +929,13 @@ class Vcc(SKACapability):
     @command()
     def Scan(self):
         # PROTECTED REGION ID(Vcc.Scan) ENABLED START #
+        """set VCC ObsState to SCANNING"""
         self._obs_state = ObsState.SCANNING.value
         # nothing else is supposed to happen
         # PROTECTED REGION END #    //  Vcc.Scan
 
     def is_GoToIdle_allowed(self):
+        """allowed if VCC is ON and obsState is IDLE or READY"""
         if self.dev_state() == tango.DevState.ON and \
                 self._obs_state in [ObsState.IDLE.value, ObsState.READY.value]:
             return True
@@ -895,6 +944,7 @@ class Vcc(SKACapability):
     @command()
     def GoToIdle(self):
         # PROTECTED REGION ID(Vcc.GoToIdle) ENABLED START #
+        """Set OBsState IDLE for this VCC"""
         # transition to obsState=IDLE
         self._obs_state = ObsState.IDLE.value
         # PROTECTED REGION END #    //  Vcc.GoToIdle

@@ -7,16 +7,16 @@
 # Distributed under the terms of the GPL license.
 # See LICENSE.txt for more info.
 
-"""
-Author: James Jiang James.Jiang@nrc-cnrc.gc.ca,
-Herzberg Astronomy and Astrophysics, National Research Council of Canada
-Copyright (c) 2019 National Research Council of Canada
-"""
+# """
+# Author: James Jiang James.Jiang@nrc-cnrc.gc.ca,
+# Herzberg Astronomy and Astrophysics, National Research Council of Canada
+# Copyright (c) 2019 National Research Council of Canada
+# """
 
-""" VccBand1And2 Tango device prototype
+# """ VccBand1And2 Tango device prototype
 
-VccBand1And2 TANGO device class for the prototype
-"""
+# VccBand1And2 TANGO device class for the prototype
+# """
 
 # tango imports
 import tango
@@ -63,6 +63,7 @@ class VccBand1And2(SKACapability):
     # ---------------
 
     def init_device(self):
+        """initialize device and set DevState to OFF"""
         SKACapability.init_device(self)
         # PROTECTED REGION ID(VccBand1And2.init_device) ENABLED START #
         self.set_state(tango.DevState.OFF)
@@ -70,11 +71,13 @@ class VccBand1And2(SKACapability):
 
     def always_executed_hook(self):
         # PROTECTED REGION ID(VccBand1And2.always_executed_hook) ENABLED START #
+        """hook to be executed before commands"""
         pass
         # PROTECTED REGION END #    //  VccBand1And2.always_executed_hook
 
     def delete_device(self):
         # PROTECTED REGION ID(VccBand1And2.delete_device) ENABLED START #
+        """hook to delete device"""
         pass
         # PROTECTED REGION END #    //  VccBand1And2.delete_device
 
@@ -92,6 +95,7 @@ class VccBand1And2(SKACapability):
     )
     def SetState(self, argin):
         # PROTECTED REGION ID(VccBand1And2.SetState) ENABLED START #
+        """Set the state of this Device(dtype_in='DevState'); called by VCC"""
         self.set_state(argin)
         # PROTECTED REGION END #    //  VccBand1And2.SetState
 

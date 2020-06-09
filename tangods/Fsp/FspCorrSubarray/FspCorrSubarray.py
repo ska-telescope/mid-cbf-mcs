@@ -7,16 +7,16 @@
 # Distributed under the terms of the GPL license.
 # See LICENSE.txt for more info.
 
-"""
-Author: James Jiang James.Jiang@nrc-cnrc.gc.ca,
-Herzberg Astronomy and Astrophysics, National Research Council of Canada
-Copyright (c) 2019 National Research Council of Canada
-"""
+# """
+# Author: James Jiang James.Jiang@nrc-cnrc.gc.ca,
+# Herzberg Astronomy and Astrophysics, National Research Council of Canada
+# Copyright (c) 2019 National Research Council of Canada
+# """
 
-""" FspCorrSubarray Tango device prototype
+# """ FspCorrSubarray Tango device prototype
 
-FspCorrSubarray TANGO device class for the FspCorrSubarray prototype
-"""
+# FspCorrSubarray TANGO device class for the FspCorrSubarray prototype
+# """
 
 # tango imports
 import tango
@@ -174,6 +174,7 @@ class FspCorrSubarray(SKASubarray):
     def init_device(self):
         SKASubarray.init_device(self)
         # PROTECTED REGION ID(FspCorrSubarray.init_device) ENABLED START #
+        """Initialize attributes. ObsState=IDLE, state=OFF"""
         self.set_state(tango.DevState.INIT)
 
         # get relevant IDs
@@ -223,11 +224,13 @@ class FspCorrSubarray(SKASubarray):
 
     def always_executed_hook(self):
         # PROTECTED REGION ID(FspCorrSubarray.always_executed_hook) ENABLED START #
+        """hook before any commands"""
         pass
         # PROTECTED REGION END #    //  FspCorrSubarray.always_executed_hook
 
     def delete_device(self):
         # PROTECTED REGION ID(FspCorrSubarray.delete_device) ENABLED START #
+        """set ObsState IDLE, remove all receptors, set state OFF."""
         self.GoToIdle()
         self.RemoveAllReceptors()
         self.set_state(tango.DevState.OFF)
@@ -239,67 +242,82 @@ class FspCorrSubarray(SKASubarray):
 
     def read_receptors(self):
         # PROTECTED REGION ID(FspCorrSubarray.receptors_read) ENABLED START #
+        """return receptros attribute.(array of int)"""
         return self._receptors
         # PROTECTED REGION END #    //  FspCorrSubarray.receptors_read
 
     def write_receptors(self, value):
         # PROTECTED REGION ID(FspCorrSubarray.receptors_write) ENABLED START #
+        """Set receptors attribute; set receptors to a new list of receptors."""
         self.RemoveAllReceptors()
         self.AddReceptors(value)
         # PROTECTED REGION END #    //  FspCorrSubarray.receptors_write
 
     def read_frequencyBand(self):
         # PROTECTED REGION ID(FspCorrSubarray.frequencyBand_read) ENABLED START #
+        """Return frequencyBand attribute(DevEnum)."""
         return self._frequency_band
         # PROTECTED REGION END #    //  FspCorrSubarray.frequencyBand_read
 
     def read_band5Tuning(self):
         # PROTECTED REGION ID(FspCorrSubarray.band5Tuning_read) ENABLED START #
+        """Return band5Tuning attribute(array of float, first element corresponds to the first stream, second to the second stream).""" 
         return self._stream_tuning
         # PROTECTED REGION END #    //  FspCorrSubarray.band5Tuning_read
 
     def read_frequencyBandOffsetStream1(self):
         # PROTECTED REGION ID(FspCorrSubarray.frequencyBandOffsetStream1) ENABLED START #
+        """Return frequencyBandOffsetStream1 attribute"""
         return self._frequency_band_offset_stream_1
         # PROTECTED REGION END #    //  FspCorrSubarray.frequencyBandOffsetStream1
 
     def read_frequencyBandOffsetStream2(self):
         # PROTECTED REGION ID(FspCorrSubarray.frequencyBandOffsetStream2) ENABLED START #
+        """Return frequencyBandOffsetStream2 attribute"""
         return self._frequency_band_offset_stream_2
         # PROTECTED REGION END #    //  FspCorrSubarray.frequencyBandOffsetStream2
 
     def read_frequencySliceID(self):
         # PROTECTED REGION ID(FspCorrSubarray.frequencySliceID_read) ENABLED START #
+        """Return frequencySliceID attribute"""
         return self._frequency_slice_ID
         # PROTECTED REGION END #    //  FspCorrSubarray.frequencySliceID_read
 
     def read_corrBandwidth(self):
         # PROTECTED REGION ID(FspCorrSubarray.corrBandwidth_read) ENABLED START #
+        """Return corrBandwidth attribute(Bandwidth to be correlated is <Full Bandwidth>/2^bandwidth)."""
         return self._bandwidth
         # PROTECTED REGION END #    //  FspCorrSubarray.corrBandwidth_read
 
     def read_zoomWindowTuning(self):
         # PROTECTED REGION ID(FspCorrSubarray.zoomWindowTuning_read) ENABLED START #
+        """Return zoomWindowTuning attribute."""
         return self._zoom_window_tuning
         # PROTECTED REGION END #    //  FspCorrSubarray.zoomWindowTuning_read
 
     def read_integrationTime(self):
         # PROTECTED REGION ID(FspCorrSubarray.integrationTime_read) ENABLED START #
+        """Return integrationTime attribute(millisecond)."""
         return self._integration_time
         # PROTECTED REGION END #    //  FspCorrSubarray.integrationTime_read
 
     def read_channelAveragingMap(self):
         # PROTECTED REGION ID(FspCorrSubarray.channelAveragingMap_read) ENABLED START #
+        """Return channelAveragingMap. 
+           Consists of 2*20 array of integers(20 tupples representing 20* 744 channels). 
+           The first element is the ID of the first channel in a channel group. The second element is the averaging factor"""
         return self._channel_averaging_map
         # PROTECTED REGION END #    //  FspCorrSubarray.channelAveragingMap_read
 
     def read_visDestinationAddress(self):
         # PROTECTED REGION ID(FspCorrSubarray.visDestinationAddress_read) ENABLED START #
+        """Return VisDestinationAddress attribute(JSON object containing info about current SDP destination addresses being used)."""
         return json.dumps(self._vis_destination_address)
         # PROTECTED REGION END #    //  FspCorrSubarray.visDestinationAddress_read
 
     def write_visDestinationAddress(self, value):
         # PROTECTED REGION ID(FspCorrSubarray.visDestinationAddress_write) ENABLED START #
+        """Set VisDestinationAddress attribute(JSON object containing info about current SDP destination addresses being used)."""
         self._vis_destination_address = json.loads(value)
         # PROTECTED REGION END #    //  FspCorrSubarray.visDestinationAddress_write
 
@@ -335,6 +353,7 @@ class FspCorrSubarray(SKASubarray):
         # PROTECTED REGION END #    //  FspCorrSubarray.Off
 
     def is_AddReceptors_allowed(self):
+        """allowed if FSPPssSubarry is ON, ObsState is not SCANNING"""
         if self.dev_state() == tango.DevState.ON and\
                 self._obs_state in [
                     ObsState.IDLE.value,
@@ -350,6 +369,7 @@ class FspCorrSubarray(SKASubarray):
     )
     def AddReceptors(self, argin):
         # PROTECTED REGION ID(FspCorrSubarray.AddReceptors) ENABLED START #
+        """add specified receptors to the FSP subarray. Input is array of int."""
         errs = []  # list of error messages
         receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
                                self._proxy_cbf_master.receptorToVcc)
@@ -381,6 +401,7 @@ class FspCorrSubarray(SKASubarray):
         # PROTECTED REGION END #    //  FspCorrSubarray.AddReceptors
 
     def is_RemoveReceptors_allowed(self):
+        """allowed if FSPPssSubarry is ON, ObsState is not SCANNING"""
         if self.dev_state() == tango.DevState.ON and\
                 self._obs_state in [
                     ObsState.IDLE.value,
@@ -396,6 +417,7 @@ class FspCorrSubarray(SKASubarray):
     )
     def RemoveReceptors(self, argin):
         # PROTECTED REGION ID(FspCorrSubarray.RemoveReceptors) ENABLED START #
+        """Remove Receptors. Input is array of int"""
         for receptorID in argin:
             if receptorID in self._receptors:
                 self._receptors.remove(receptorID)
@@ -406,6 +428,7 @@ class FspCorrSubarray(SKASubarray):
         # PROTECTED REGION END #    //  FspCorrSubarray.RemoveReceptors
 
     def is_RemoveAllReceptors_allowed(self):
+        """allowed if FSPPssSubarry is ON, ObsState is not SCANNING"""
         if self.dev_state() == tango.DevState.ON and\
                 self._obs_state in [
                     ObsState.IDLE.value,
@@ -418,10 +441,12 @@ class FspCorrSubarray(SKASubarray):
     @command()
     def RemoveAllReceptors(self):
         # PROTECTED REGION ID(FspCorrSubarray.RemoveAllReceptors) ENABLED START #
+        """Remove all Receptors of this subarray"""
         self.RemoveReceptors(self._receptors[:])
         # PROTECTED REGION END #    //  FspCorrSubarray.RemoveAllReceptors
 
     def is_AddChannels_allowed(self):
+        """Allowed when devState is ON, obsState is CONFIGURING"""
         if self.dev_state() == tango.DevState.ON and\
                 self._obs_state == ObsState.CONFIGURING.value:
             return True
@@ -434,7 +459,7 @@ class FspCorrSubarray(SKASubarray):
     def AddChannels(self, argin):
         # PROTECTED REGION ID(FspCorrSubarray.AddChannels) ENABLED START #
         # obsState should already be CONFIGURING
-
+        """Add/replace channel frequency information to an FSP subarray. Input is JSON object"""
         self._channel_info.clear()
         argin = json.loads(argin)
 
@@ -458,6 +483,7 @@ class FspCorrSubarray(SKASubarray):
         # PROTECTED REGION END #    //  FspCorrSubarray.AddChannels
 
     def is_AddChannelAddresses_allowed(self):
+        """Allowed when devState is ON, obsState is CONFIGURING"""
         if self.dev_state() == tango.DevState.ON and\
                 self._obs_state == ObsState.CONFIGURING.value:
             return True
@@ -470,7 +496,7 @@ class FspCorrSubarray(SKASubarray):
     def AddChannelAddresses(self, argin):
         # PROTECTED REGION ID(FspCorrSubarray.AddChannelAddresses) ENABLED START #
         # obsState should already be CONFIGURING
-
+        """Add channel address information to an FSP Subarray. Input is JSON."""
         argin = json.loads(argin)
 
         for fsp in argin["receiveAddresses"]:
@@ -514,6 +540,7 @@ class FspCorrSubarray(SKASubarray):
         # PROTECTED REGION END #    //  FspCorrSubarray.AddChannelAddresses
 
     def is_ConfigureScan_allowed(self):
+        """Allowed if FSP subarray is ON, obsState is IDLE."""
         if self.dev_state() == tango.DevState.ON and\
                 self._obs_state in [ObsState.IDLE.value, ObsState.READY.value]:
             return True
@@ -527,7 +554,7 @@ class FspCorrSubarray(SKASubarray):
         # PROTECTED REGION ID(FspCorrSubarray.ConfigureScan) ENABLED START #
         # This function is called after the configuration has already been validated,
         # so the checks here have been removed to reduce overhead.
-
+        """Input a JSON. Configure scan for fsp. Called by CbfSubarrayCoorConfig(proxy_fsp_corr_subarray.ConfigureScan(json.dumps(fsp)))"""
         # transition to obsState=CONFIGURING
         self._obs_state = ObsState.CONFIGURING.value
         self.push_change_event("obsState", self._obs_state)
@@ -655,6 +682,7 @@ class FspCorrSubarray(SKASubarray):
         # PROTECTED REGION END #    //  FspCorrSubarray.ConfigureScan
 
     def is_EndScan_allowed(self):
+        """allowed if ON nd ObsState is SCANNING"""
         if self.dev_state() == tango.DevState.ON and\
                 self._obs_state == ObsState.SCANNING.value:
             return True
@@ -662,12 +690,14 @@ class FspCorrSubarray(SKASubarray):
 
     @command()
     def EndScan(self):
+        """Set ObsState to READY"""
         # PROTECTED REGION ID(FspCorrSubarray.EndScan) ENABLED START #
         self._obs_state = ObsState.READY.value
         # nothing else is supposed to happen
         # PROTECTED REGION END #    //  FspCorrSubarray.EndScan
 
     def is_Scan_allowed(self):
+        """Allowed if DevState ON, ObsState READY"""
         if self.dev_state() == tango.DevState.ON and\
                 self._obs_state == ObsState.READY.value:
             return True
@@ -676,11 +706,13 @@ class FspCorrSubarray(SKASubarray):
     @command()
     def Scan(self):
         # PROTECTED REGION ID(FspCorrSubarray.Scan) ENABLED START #
+        """Set ObsState to READY"""
         self._obs_state = ObsState.SCANNING.value
         # nothing else is supposed to happen
         # PROTECTED REGION END #    //  FspCorrSubarray.Scan
 
     def is_GoToIdle_allowed(self):
+        """ON and ObsState IDLE or READY"""
         if self.dev_state() == tango.DevState.ON and\
                 self._obs_state in [ObsState.IDLE.value, ObsState.READY.value]:
             return True
@@ -690,6 +722,7 @@ class FspCorrSubarray(SKASubarray):
     def GoToIdle(self):
         # PROTECTED REGION ID(FspCorrSubarray.GoToIdle) ENABLED START #
         # transition to obsState=IDLE
+        """Clear channel. Set Obsstate to IDLE"""
         self._channel_info.clear()
         self._obs_state = ObsState.IDLE.value
         # PROTECTED REGION END #    //  FspCorrSubarray.GoToIdle

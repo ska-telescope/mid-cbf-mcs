@@ -7,11 +7,11 @@
 # Distributed under the terms of the GPL license.
 # See LICENSE.txt for more info.
 
-"""
-Author: James Jiang James.Jiang@nrc-cnrc.gc.ca,
-Herzberg Astronomy and Astrophysics, National Research Council of Canada
-Copyright (c) 2019 National Research Council of Canada
-"""
+# """
+# Author: James Jiang James.Jiang@nrc-cnrc.gc.ca,
+# Herzberg Astronomy and Astrophysics, National Research Council of Canada
+# Copyright (c) 2019 National Research Council of Canada
+# """
 
 # Fsp Tango device prototype
 # Fsp TANGO device class for the prototype
@@ -119,6 +119,7 @@ class Fsp(SKACapability):
     def init_device(self):
         SKACapability.init_device(self)
         # PROTECTED REGION ID(Fsp.init_device) ENABLED START #
+        """Inherit from SKA Capability; Initialize attributes. Set state to OFF."""
         self.set_state(tango.DevState.INIT)
 
         # defines self._proxy_correlation, self._proxy_pss, self._proxy_pst, self._proxy_vlbi,
@@ -151,11 +152,13 @@ class Fsp(SKACapability):
 
     def always_executed_hook(self):
         # PROTECTED REGION ID(Fsp.always_executed_hook) ENABLED START #
+        """Hook to be executed before any commands."""
         pass
         # PROTECTED REGION END #    //  Fsp.always_executed_hook
 
     def delete_device(self):
         # PROTECTED REGION ID(Fsp.delete_device) ENABLED START #
+        """Hook to delete device. Turn corr, pss, pst, vlbi, corr and pss subarray OFF. Remove membership; """
         self._proxy_correlation.SetState(tango.DevState.OFF)
         self._proxy_pss.SetState(tango.DevState.OFF)
         self._proxy_pst.SetState(tango.DevState.OFF)
@@ -176,11 +179,13 @@ class Fsp(SKACapability):
 
     def read_functionMode(self):
         # PROTECTED REGION ID(Fsp.functionMode_read) ENABLED START #
+        """Return functionMode attribute (DevEnum representing mode)."""
         return self._function_mode
         # PROTECTED REGION END #    //  Fsp.functionMode_read
 
     def read_subarrayMembership(self):
         # PROTECTED REGION ID(Fsp.subarrayMembership_read) ENABLED START #
+        """Return subarrayMembership attribute (an array of affiliations of the FSP)."""
         return self._subarray_membership
         # PROTECTED REGION END #    //  Fsp.subarrayMembership_read
 
@@ -189,6 +194,7 @@ class Fsp(SKACapability):
     # --------
 
     def is_On_allowed(self):
+        """allowed if FSP state is OFF."""
         if self.dev_state() == tango.DevState.OFF:
             return True
         return False
@@ -196,6 +202,7 @@ class Fsp(SKACapability):
     @command()
     def On(self):
         # PROTECTED REGION ID(Fsp.On) ENABLED START #
+        """Set corr, pss, pst, vlbi to 'DISABLE'. Set corr and pss subarray to 'On'. Set FSP device to 'On'."""
         self._proxy_correlation.SetState(tango.DevState.DISABLE)
         self._proxy_pss.SetState(tango.DevState.DISABLE)
         self._proxy_pst.SetState(tango.DevState.DISABLE)
@@ -207,6 +214,7 @@ class Fsp(SKACapability):
         # PROTECTED REGION END #    //  Fsp.On
 
     def is_Off_allowed(self):
+        """allowed if FSP state is ON"""
         if self.dev_state() == tango.DevState.ON:
             return True
         return False
@@ -214,6 +222,7 @@ class Fsp(SKACapability):
     @command()
     def Off(self):
         # PROTECTED REGION ID(Fsp.Off) ENABLED START #
+        """Send OFF signal to all the subordinates in the FSP'. Turn Off FSP device. Remove all Subarray membership. """
         self._proxy_correlation.SetState(tango.DevState.OFF)
         self._proxy_pss.SetState(tango.DevState.OFF)
         self._proxy_pst.SetState(tango.DevState.OFF)
@@ -229,6 +238,7 @@ class Fsp(SKACapability):
         # PROTECTED REGION END #    //  Fsp.Off
 
     def is_SetFunctionMode_allowed(self):
+        """allowed if FSP state is ON"""
         if self.dev_state() == tango.DevState.ON:
             return True
         return False
@@ -239,6 +249,10 @@ class Fsp(SKACapability):
     )
     def SetFunctionMode(self, argin):
         # PROTECTED REGION ID(Fsp.SetFunctionMode) ENABLED START #
+        """argin should be one of ('IDLE','CORR','PSS-BF','PST-BF','VLBI'). 
+        If IDLE set the pss, pst, corr, Vlbi to 'DISABLE'.
+        OTherwise, turn one of them ON according to argin, and all others DISABLE.
+        """
         if argin == "IDLE":
             self._function_mode = 0
             self._proxy_correlation.SetState(tango.DevState.DISABLE)
@@ -275,6 +289,7 @@ class Fsp(SKACapability):
         # PROTECTED REGION END #    //  Fsp.SetFunctionMode
 
     def is_AddSubarrayMembership_allowed(self):
+        """allowed if the FSP state is ON"""
         if self.dev_state() == tango.DevState.ON:
             return True
         return False
@@ -285,6 +300,7 @@ class Fsp(SKACapability):
     )
     def AddSubarrayMembership(self, argin):
         # PROTECTED REGION ID(Fsp.AddSubarrayMembership) ENABLED START #
+        """Input should be an integer representing the subarray affiliation. Add a subarray to the subarrayMembership list"""
         if argin not in self._subarray_membership:
             self._subarray_membership.append(argin)
         else:
@@ -293,6 +309,7 @@ class Fsp(SKACapability):
         # PROTECTED REGION END #    //  Fsp.AddSubarrayMembership
 
     def is_RemoveSubarrayMembership_allowed(self):
+        """allowed if FSP state is ON"""
         if self.dev_state() == tango.DevState.ON:
             return True
         return False
@@ -303,6 +320,8 @@ class Fsp(SKACapability):
     )
     def RemoveSubarrayMembership(self, argin):
         # PROTECTED REGION ID(Fsp.RemoveSubarrayMembership) ENABLED START #
+        """Input should be an integer representing the subarray number. 
+        If subarrayMembership is empty after removing (no subarray is using this FSP), set function mode to empty"""
         if argin in self._subarray_membership:
             self._subarray_membership.remove(argin)
             # change function mode to IDLE if no subarrays are using it.
