@@ -1234,6 +1234,7 @@ class CbfSubarray(SKASubarray):
 
     def delete_device(self):
         # PROTECTED REGION ID(CbfSubarray.delete_device) ENABLED START #
+        """hook to delete device. Set State to DISABLE, romove all receptors, go to OBsState IDLE"""
         self.GoToIdle()
         self.RemoveAllReceptors()
         self.set_state(tango.DevState.DISABLE)
@@ -1270,7 +1271,7 @@ class CbfSubarray(SKASubarray):
 
     def read_outputLinksDistribution(self):
         # PROTECTED REGION ID(CbfSubarray.outputLinksDistribution_read) ENABLED START #
-        """?return outputLinksDistribution attribute: a JSON object"""
+        """Return outputLinksDistribution attribute: a JSON object containning info about the fine channels configured to be sent to SDP, including output links."""
         return json.dumps(self._output_links_distribution)
         # PROTECTED REGION END #    //  CbfSubarray.outputLinksDistribution_read
 
@@ -1310,6 +1311,7 @@ class CbfSubarray(SKASubarray):
     # --------
 
     def is_On_allowed(self):
+        """allowed if DevState is DISABLE"""
         if self.dev_state() == tango.DevState.DISABLE:
             return True
         return False
@@ -1317,6 +1319,7 @@ class CbfSubarray(SKASubarray):
     @command()
     def On(self):
         # PROTECTED REGION ID(CbfSubarray.On) ENABLED START #
+        """Turn on Subarray. Set 2 search windows to DISABLE. Set Subarray from DISABLE to OFF"""
         if self._obs_state != ObsState.IDLE.value:
             msg = "Device not in IDLE obsState."
             self.logger.error(msg)
@@ -1329,12 +1332,14 @@ class CbfSubarray(SKASubarray):
         # PROTECTED REGION END #    //  CbfSubarray.On
 
     def is_Off_allowed(self):
+        """allowed if DevState is OFF"""
         if self.dev_state() == tango.DevState.OFF:
             return True
         return False
 
     @command()
     def Off(self):
+        """Set subarray from OFF to DISABLE. Set 2 search windows to OFF"""
         # PROTECTED REGION ID(CbfSubarray.Off) ENABLED START #
         if self._obs_state != ObsState.IDLE.value:
             msg = "Device not in IDLE obsState."
@@ -1348,6 +1353,7 @@ class CbfSubarray(SKASubarray):
         # PROTECTED REGION END #    //  CbfSubarray.Off
 
     def is_AddReceptors_allowed(self):
+        """allowed if DevState is OFF or ON"""
         if self.dev_state() in [tango.DevState.OFF, tango.DevState.ON]:
             return True
         return False
@@ -1358,6 +1364,7 @@ class CbfSubarray(SKASubarray):
     )
     def AddReceptors(self, argin):
         # PROTECTED REGION ID(CbfSubarray.AddReceptors) ENABLED START #
+        """add list of receptors to the current subarray. Turn Subarray ON"""
         if self._obs_state != ObsState.IDLE.value:
             msg = "Device not in IDLE obsState."
             self.logger.error(msg)
@@ -1425,6 +1432,7 @@ class CbfSubarray(SKASubarray):
         # PROTECTED REGION END #    //  CbfSubarray.AddReceptors
 
     def is_RemoveReceptors_allowed(self):
+        """allowd if state is OFF or ON"""
         if self.dev_state() in [tango.DevState.OFF, tango.DevState.ON]:
             return True
         return False
@@ -1435,6 +1443,7 @@ class CbfSubarray(SKASubarray):
     )
     def RemoveReceptors(self, argin):
         # PROTECTED REGION ID(CbfSubarray.RemoveReceptors) ENABLED START #
+        """remove from list of receptors. Turn Subarray OFF if no receptors assigned"""
         if self._obs_state != ObsState.IDLE.value:
             msg = "Device not in IDLE obsState."
             self.logger.error(msg)
@@ -1470,6 +1479,7 @@ class CbfSubarray(SKASubarray):
         # PROTECTED REGION END #    //  CbfSubarray.RemoveReceptors
 
     def is_RemoveAllReceptors_allowed(self):
+        """allowed if state is ON or OFF"""
         if self.dev_state() in [tango.DevState.OFF, tango.DevState.ON]:
             return True
         return False
@@ -1477,6 +1487,7 @@ class CbfSubarray(SKASubarray):
     @command()
     def RemoveAllReceptors(self):
         # PROTECTED REGION ID(CbfSubarray.RemoveAllReceptors) ENABLED START #
+        """Remove all receptors. Turn Subarray OFF if no receptors assigned"""
         if self._obs_state != ObsState.IDLE.value:
             msg = "Device not in IDLE obsState."
             self.logger.error(msg)
@@ -1487,7 +1498,7 @@ class CbfSubarray(SKASubarray):
         # PROTECTED REGION END #    //  CbfSubarray.RemoveAllReceptors
 
     def is_ConfigureScan_allowed(self):
-        """checks if the state is on. On -> True"""
+        """allowed if state is ON"""
         if self.dev_state() == tango.DevState.ON:
             return True
         return False
@@ -1578,6 +1589,10 @@ class CbfSubarray(SKASubarray):
         #     ]
         # }
         # """
+        """Change state to CONFIGURING.
+        Configure attributes from input JSON. Subscribe events. COnfigure VCC and FSP. 
+        publish output links.
+        """
         if self._obs_state not in [ObsState.IDLE.value, ObsState.READY.value]:
             msg = "Device not in IDLE or READY obsState."
             self.logger.error(msg)
@@ -1799,6 +1814,7 @@ class CbfSubarray(SKASubarray):
         # PROTECTED REGION ID(CbfSubarray.ConfigureSearchWindow) ENABLED START #
         # This function is called after the configuration has already been validated,
         # so the checks here have been removed to reduce overhead.
+        """revceives a JSON object to configure a search window"""
         if self._obs_state != ObsState.CONFIGURING.value:
             msg = "Device not in CONFIGURING obsState."
             self.logger.error(msg)
@@ -1913,12 +1929,14 @@ class CbfSubarray(SKASubarray):
         # PROTECTED REGION END #    //  CbfSubarray.ConfigureSearchWindow
 
     def is_EndScan_allowed(self):
+        """allowed if SUbarray is ON, obsState is SCANNING(checked in ENDScan)."""
         if self.dev_state() == tango.DevState.ON:
             return True
         return False
 
     @command()
     def EndScan(self):
+        """Send endscan to VCC and FSP. Set state to ready"""
         # PROTECTED REGION ID(CbfSubarray.EndScan) ENABLED START #
         if self._obs_state != ObsState.SCANNING.value:
             msg = "Device not in SCANNING obsState."
@@ -1943,13 +1961,14 @@ class CbfSubarray(SKASubarray):
         doc_in="Activation time of the scan, as seconds since the Linux epoch"
     )
     def Scan(self, argin):
+        """set state to scanning. Send Scan signal to VCC and FSP."""
         # PROTECTED REGION ID(CbfSubarray.Scan) ENABLED START #
-        """
-        if self._obs_state != ObsState.READY.value:
-            msg = "A scan is not ready to be started."
-            self.logger(msg, tango.LogLevel.LOG_ERROR)
-            tango.Except.throw_exception("Command failed", msg, "Scan execution", tango.ErrSeverity.ERR)
-        """
+        # """
+        # if self._obs_state != ObsState.READY.value:
+        #     msg = "A scan is not ready to be started."
+        #     self.logger(msg, tango.LogLevel.LOG_ERROR)
+        #     tango.Except.throw_exception("Command failed", msg, "Scan execution", tango.ErrSeverity.ERR)
+        # """
         if self._obs_state != ObsState.READY.value:
             msg = "Device not in READY obsState."
             self.logger.error(msg)
@@ -1974,6 +1993,7 @@ class CbfSubarray(SKASubarray):
     @command()
     def GoToIdle(self):
         # PROTECTED REGION ID(CbfSubarray.GoToIdle) ENABLED START #
+        """deconfigure a scan, set ObsState to IDLE"""
         if self._obs_state not in [ObsState.IDLE.value, ObsState.READY.value]:
             msg = "Device not in IDLE or READY obsState."
             self.logger.error(msg)

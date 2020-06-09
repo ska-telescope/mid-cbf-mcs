@@ -631,6 +631,7 @@ class CbfMaster(SKAMaster):
     # --------
 
     def is_On_allowed(self):
+        """allowed if DevState is STANDBY"""
         if self.dev_state() == tango.DevState.STANDBY:
             return True
         return False
@@ -646,6 +647,7 @@ class CbfMaster(SKAMaster):
         # PROTECTED REGION END #    //  CbfMaster.On
 
     def is_Off_allowed(self):
+        """allowed if DevState is STANDBY"""
         if self.dev_state() == tango.DevState.STANDBY:
             return True
         return False
@@ -661,6 +663,7 @@ class CbfMaster(SKAMaster):
         # PROTECTED REGION END #    //  CbfMaster.Off
 
     def is_Standby_allowed(self):
+        """allowed if state is ON"""
         if self.dev_state() == tango.DevState.ON:
             return True
         return False
