@@ -7,16 +7,16 @@
 # Distributed under the terms of the GPL license.
 # See LICENSE.txt for more info.
 
-"""
-Author: James Jiang James.Jiang@nrc-cnrc.gc.ca,
-Herzberg Astronomy and Astrophysics, National Research Council of Canada
-Copyright (c) 2019 National Research Council of Canada
-"""
+# """
+# Author: James Jiang James.Jiang@nrc-cnrc.gc.ca,
+# Herzberg Astronomy and Astrophysics, National Research Council of Canada
+# Copyright (c) 2019 National Research Council of Canada
+# """
 
-""" FspCorrSubarray Tango device prototype
+# """ FspCorrSubarray Tango device prototype
 
-FspCorrSubarray TANGO device class for the FspCorrSubarray prototype
-"""
+# FspCorrSubarray TANGO device class for the FspCorrSubarray prototype
+# """
 
 # tango imports
 import tango
@@ -353,6 +353,7 @@ class FspCorrSubarray(SKASubarray):
         # PROTECTED REGION END #    //  FspCorrSubarray.Off
 
     def is_AddReceptors_allowed(self):
+        """allowed if FSPPssSubarry is ON, ObsState is not SCANNING"""
         if self.dev_state() == tango.DevState.ON and\
                 self._obs_state in [
                     ObsState.IDLE.value,
@@ -400,6 +401,7 @@ class FspCorrSubarray(SKASubarray):
         # PROTECTED REGION END #    //  FspCorrSubarray.AddReceptors
 
     def is_RemoveReceptors_allowed(self):
+        """allowed if FSPPssSubarry is ON, ObsState is not SCANNING"""
         if self.dev_state() == tango.DevState.ON and\
                 self._obs_state in [
                     ObsState.IDLE.value,
@@ -426,6 +428,7 @@ class FspCorrSubarray(SKASubarray):
         # PROTECTED REGION END #    //  FspCorrSubarray.RemoveReceptors
 
     def is_RemoveAllReceptors_allowed(self):
+        """allowed if FSPPssSubarry is ON, ObsState is not SCANNING"""
         if self.dev_state() == tango.DevState.ON and\
                 self._obs_state in [
                     ObsState.IDLE.value,
@@ -679,6 +682,7 @@ class FspCorrSubarray(SKASubarray):
         # PROTECTED REGION END #    //  FspCorrSubarray.ConfigureScan
 
     def is_EndScan_allowed(self):
+        """allowed if ON nd ObsState is SCANNING"""
         if self.dev_state() == tango.DevState.ON and\
                 self._obs_state == ObsState.SCANNING.value:
             return True
@@ -693,6 +697,7 @@ class FspCorrSubarray(SKASubarray):
         # PROTECTED REGION END #    //  FspCorrSubarray.EndScan
 
     def is_Scan_allowed(self):
+        """Allowed if DevState ON, ObsState READY"""
         if self.dev_state() == tango.DevState.ON and\
                 self._obs_state == ObsState.READY.value:
             return True
@@ -707,6 +712,7 @@ class FspCorrSubarray(SKASubarray):
         # PROTECTED REGION END #    //  FspCorrSubarray.Scan
 
     def is_GoToIdle_allowed(self):
+        """ON and ObsState IDLE or READY"""
         if self.dev_state() == tango.DevState.ON and\
                 self._obs_state in [ObsState.IDLE.value, ObsState.READY.value]:
             return True

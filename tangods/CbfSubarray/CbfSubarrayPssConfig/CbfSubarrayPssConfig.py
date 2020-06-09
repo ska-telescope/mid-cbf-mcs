@@ -85,6 +85,7 @@ class CbfSubarrayPssConfig(SKACapability):
 
     def init_device(self):
         SKACapability.init_device(self)
+        """initialize attribtues"""
         # PROTECTED REGION ID(CbfSubarrayPssConfig.init_device) ENABLED START #
         self.set_state(tango.DevState.INIT)
 
