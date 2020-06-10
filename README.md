@@ -21,7 +21,7 @@ The Mid CBF MCS prototype implements at the moment these TANGO device classes:
 
 * `CbfMaster`: Based on the `SKAMaster` class. It represents a primary point of contact for CBF Monitor and Control. It implements CBF state and mode indicators and a set of housekeeping commands.
 * `CbfSubarray`: Based on the `SKASubarray` class. It implements commands needed for scan configuration.
-* `SearchWindow`: Based on the `SKACapability` class. It implements attributes to configure a search window during a scan.
+    * `SearchWindow`(for SubarrayMulti): Based on the `SKACapability` class. It implements attributes to configure a search window during a scan.
 * `Vcc` and `Fsp`: Based on the `SKACapability` class. These implement commands and attributes needed for scan configuration.
 * `Vcc` and `Fsp` Capabilities: Based on the `SKACapability` class. These implement state machines to enable/disable certain VCC and FSP functionality for a scan.
     * `VccBand1And2`, `VccBand3`, `VccBand4`, and `VccBand5` specify the operative frequency band of a VCC.
@@ -38,9 +38,9 @@ To cut down on the number of TANGO device servers, some multi-class servers are 
 
 At the moment, the device servers implemented are:
 
-* One instance of `CbfMaster`.
-* One instance of `CbfSubarrayMulti`.
-* 27 instances of `FspMulti`.
+* 1 instance of `CbfMaster`.
+* 2 instance of `CbfSubarrayMulti`.
+* 4 instances of `FspMulti`.
 * 4 instances of `VccMulti`.
 * One instance of `TmCspSubarrayLeafNodeTest`.
 
