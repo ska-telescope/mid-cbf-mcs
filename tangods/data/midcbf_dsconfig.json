@@ -173,7 +173,7 @@
                                 "1000",
                                 "obsstate",
                                 "1000",
-                                "configID",
+                                "configid",
                                 "1000",
                                 "fspList",
                                 "1000",
@@ -300,7 +300,7 @@
                                 "mid_csp_cbf/vcc/004"
                             ],
                             "polled_attr": [
-                                "configID",
+                                "configid",
                                 "1000",
                                 "healthstate",
                                 "1000",
