@@ -50,7 +50,7 @@ The project can be found in the SKA GitHub repository.
 
 To get a local copy of the project
 ```
-$ git clone https://github.com/ska-telescope/mid-cbf-mcs.git
+$ git clone https://gitlab.com/ska-telescope/mid-cbf-mcs.git
 ```
 
 ## Prerequisities
@@ -119,9 +119,9 @@ $ docker ps -a
 shows the list of the running containers:
 
 * `midcbf-cbfmaster`: The `CbfMaster` TANGO device server.
-* `midcbf-cbfsubarray01`: The first instance of the `CbfSubarrayMulti` TANGO device server.
-* `midcbf-fspxx`: `xx` ranges from `01` to `27`. The 27 instances of the `FspMulti` TANGO device servers.
-* `midcbf-vcc00x`: `x` ranges from `1` to `4`. The 4 instances of the `VccMulti` TANGO device servers.
+* `midcbf-cbfsubarrayxx`ranges from `01` to `02` The 2 instances of the `CbfSubarrayMulti` TANGO device server.
+* `midcbf-fspxx`: `xx` ranges from `01` to `04`. The 4 instances of the `FspMulti` TANGO device servers.
+* `midcbf-vccxx`: `x` ranges from `01` to `04`. The 4 instances of the `VccMulti` TANGO device servers.
 * `midcbf-tmcspsubarrayleafnodetest`: The `TmCspSubarrayLeafNodeTest` TANGO device server.
 * `midcbf-rsyslog`: The rsyslog container for the TANGO devices.
 * `midcbf-databaseds`: The TANGO DB device server.
