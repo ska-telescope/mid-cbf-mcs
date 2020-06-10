@@ -186,7 +186,7 @@
                 "changeEventAbs": "1"
             },
             {
-                "attributeName": "scanID",
+                "attributeName": "configID",
                 "attrPropName": "",
                 "attrPropValue": "",
                 "pollingPeriod": 1000,
@@ -297,7 +297,7 @@
                 "changeEventAbs": "1"
             },
             {
-                "attributeName": "scanID",
+                "attributeName": "configID",
                 "attrPropName": "",
                 "attrPropValue": "",
                 "pollingPeriod": 1000,

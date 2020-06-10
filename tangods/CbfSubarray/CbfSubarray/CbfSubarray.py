@@ -163,8 +163,8 @@ class CbfSubarray(SKASubarray):
                 destination_addresses = json.loads(value)
 
                 # No exception should technically ever be raised here.
-                if destination_addresses["scanId"] != self._scan_ID:
-                    raise ValueError("scan ID is not correct")
+                if destination_addresses["configID"] != self._config_ID:
+                    raise ValueError("config ID is not correct")
                 for fsp in destination_addresses["receiveAddresses"]:
                     proxy_fsp_corr_subarray = self._proxies_fsp_corr_subarray[fsp["fspId"] - 1]
                     if proxy_fsp_corr_subarray not in self._proxies_assigned_fsp_corr_subarray:
@@ -231,7 +231,7 @@ class CbfSubarray(SKASubarray):
         # At this point, we can assume that the scan configuration is valid and that the FSP
         # attributes have been set properly.
         output_links_all = {
-            "scanID": self._scan_ID,
+            "configID": self._config_ID,
             "fsp": []
         }
 
@@ -351,22 +351,22 @@ class CbfSubarray(SKASubarray):
                 )
                 self.__raise_configure_scan_fatal_error(msg)
 
-        # Validate scanID.
-        if "scanID" in argin:
-            if int(argin["scanID"]) <= 0:  # scanID not positive
-                msg = "'scanID' must be positive (received {}). " \
-                      "Aborting configuration.".format(int(argin["scanID"]))
+        # Validate configID.
+        if "configID" in argin:
+            if int(argin["configID"]) <= 0:  # configID not positive
+                msg = "'configID' must be positive (received {}). " \
+                      "Aborting configuration.".format(int(argin["configID"]))
                 self.__raise_configure_scan_fatal_error(msg)
-            elif any(map(lambda i: i == int(argin["scanID"]),
-                         self._proxy_cbf_master.subarrayScanID)) and \
-                    int(argin["scanID"]) != self._scan_ID:  # scanID already taken
-                msg = "'scanID' must be unique (received {}). " \
-                      "Aborting configuration.".format(int(argin["scanID"]))
+            elif any(map(lambda i: i == int(argin["configID"]),
+                         self._proxy_cbf_master.subarrayconfigID)) and \
+                    int(argin["configID"]) != self._config_ID:  # configID already taken
+                msg = "'configID' must be unique (received {}). " \
+                      "Aborting configuration.".format(int(argin["configID"]))
                 self.__raise_configure_scan_fatal_error(msg)
             else:
                 pass
         else:
-            msg = "'scanID' must be given. Aborting configuration."
+            msg = "'configID' must be given. Aborting configuration."
             self.__raise_configure_scan_fatal_error(msg)
 
         # Validate frequencyBand.
@@ -1035,11 +1035,11 @@ class CbfSubarray(SKASubarray):
         enum_labels=["1", "2", "3", "4", "5a", "5b", ],
     )
 
-    scanID = attribute(
+    configID = attribute(
         dtype='uint',
         access=AttrWriteType.READ,
-        label="Scan ID",
-        doc="Scan ID",
+        label="Config ID",
+        doc="config ID",
     )
 
     receptors = attribute(
@@ -1124,9 +1124,9 @@ class CbfSubarray(SKASubarray):
      # initialize attribute values
         self._receptors = []
         self._frequency_band = 0
-        self._scan_ID = 0
+        self._config_ID = 0
         self._fsp_list = [[], [], [], []]
-        self._output_links_distribution = {"scanID": 0}
+        self._output_links_distribution = {"configID": 0}
         self._vcc_state = {}  # device_name:state
         self._vcc_health_state = {}  # device_name:healthState
         self._fsp_state = {}  # device_name:state
@@ -1220,9 +1220,9 @@ class CbfSubarray(SKASubarray):
         # if vcc_subarray_membership[i] == self._subarray_id
         # ]
         # self.AddReceptors(receptors_to_add)
-        # self._scan_ID = self._proxy_cbf_master.subarrayScanID[self._subarray_id - 1]
+        # self._config_ID = self._proxy_cbf_master.subarrayconfigID[self._subarray_id - 1]
         # except tango.DevFailed:
-        # pass  # CBF Master not available, so just leave receptors and scanID alone
+        # pass  # CBF Master not available, so just leave receptors and configID alone
 
         # PROTECTED REGION END #    //  CbfSubarray.init_device
 
@@ -1250,11 +1250,11 @@ class CbfSubarray(SKASubarray):
         return self._frequency_band
         # PROTECTED REGION END #    //  CbfSubarray.frequencyBand_read
 
-    def read_scanID(self):
-        # PROTECTED REGION ID(CbfSubarray.scanID_read) ENABLED START #
-        """Return attribute scanID"""
-        return self._scan_ID
-        # PROTECTED REGION END #    //  CbfSubarray.scanID_read
+    def read_configID(self):
+        # PROTECTED REGION ID(CbfSubarray.configID_read) ENABLED START #
+        """Return attribute configID"""
+        return self._config_ID
+        # PROTECTED REGION END #    //  CbfSubarray.configID_read
 
     def read_receptors(self):
         # PROTECTED REGION ID(CbfSubarray.receptors_read) ENABLED START #
@@ -1512,7 +1512,7 @@ class CbfSubarray(SKASubarray):
         # """
         # The input JSON object has the following schema:
         # {
-        #     "scanID": int,
+        #     "configID": int,
         #     "frequencyBand": str,
         #     "band5Tuning: [float, float],
         #     "frequencyBandOffsetStream1": int,
@@ -1623,8 +1623,8 @@ class CbfSubarray(SKASubarray):
 
         argin = json.loads(argin)
 
-        # Configure scanID.
-        self._scan_ID = int(argin["scanID"])
+        # Configure configID.
+        self._config_ID = int(argin["configID"])
 
         # Configure frequencyBand.
         frequency_bands = ["1", "2", "3", "4", "5a", "5b"]
@@ -2031,8 +2031,8 @@ class CbfSubarray(SKASubarray):
         self._group_fsp_pss_subarray.remove_all()
         self._proxies_assigned_fsp_corr_subarray.clear()
 
-        self._scan_ID = 0
-        self._output_links_distribution = {"scanID": 0}
+        self._config_ID = 0
+        self._output_links_distribution = {"configID": 0}
         self._last_received_vis_destination_address = "{}"
         self._last_received_delay_model = "{}"
         self._published_output_links = False

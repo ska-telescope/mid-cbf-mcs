@@ -60,14 +60,14 @@ class TmCspSubarrayLeafNodeTest(SKABaseDevice):
                 self.logger.warn(log_msg)
 
                 output_links = json.loads(str(event.attr_value.value))
-                scan_ID = int(output_links["scanID"])
+                config_ID = int(output_links["configID"])
 
-                if not scan_ID or self._received_output_links:
+                if not config_ID or self._received_output_links:
                     log_msg = "Skipped assigning destination addresses."
                     self.logger.warn(log_msg)
                     return
 
-                self._scan_ID = scan_ID
+                self._config_ID = config_ID
                 self.__generate_visibilities_destination_addresses(output_links)
             except Exception as e:
                 self.logger.error(str(e))
@@ -78,7 +78,7 @@ class TmCspSubarrayLeafNodeTest(SKABaseDevice):
 
     def __generate_visibilities_destination_addresses(self, output_links):
         destination_addresses = {
-            "scanId": output_links["scanID"],
+            "configID": output_links["configID"],
             "receiveAddresses": []
         }
 
@@ -133,11 +133,11 @@ class TmCspSubarrayLeafNodeTest(SKABaseDevice):
     # Attributes
     # ----------
 
-    scanID = attribute(
+    configID = attribute(
         dtype='uint',
         access=AttrWriteType.READ,
-        label="Scan ID",
-        doc="Scan ID",
+        label="Config ID",
+        doc="Config ID",
     )
 
     dopplerPhaseCorrection = attribute(
@@ -178,7 +178,7 @@ class TmCspSubarrayLeafNodeTest(SKABaseDevice):
         # PROTECTED REGION ID(TmCspSubarrayLeafNodeTest.init_device) ENABLED START #
         self.set_state(DevState.INIT)
 
-        self._scan_ID = 0
+        self._config_ID = 0
         self._doppler_phase_correction = [0., 0., 0., 0.]
         self._delay_model = {}  # this is interpreted as a JSON object
         self._vis_destination_address = {}  # this is interpreted as a JSON object
@@ -218,10 +218,10 @@ class TmCspSubarrayLeafNodeTest(SKABaseDevice):
     # Attributes methods
     # ------------------
 
-    def read_scanID(self):
-        # PROTECTED REGION ID(TmCspSubarrayLeafNodeTest.scanID_read) ENABLED START #
-        return self._scan_ID
-        # PROTECTED REGION END #    //  TmCspSubarrayLeafNodeTest.scanID_read
+    def read_configID(self):
+        # PROTECTED REGION ID(TmCspSubarrayLeafNodeTest.configID_read) ENABLED START #
+        return self._config_ID
+        # PROTECTED REGION END #    //  TmCspSubarrayLeafNodeTest.configID_read
 
     def read_dopplerPhaseCorrection(self):
         # PROTECTED REGION ID(TmCspSubarrayLeafNodeTest.dopplerPhaseCorrection_read) ENABLED START #

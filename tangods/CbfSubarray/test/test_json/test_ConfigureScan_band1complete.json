@@ -1,5 +1,5 @@
 {
-    "scanID": 1,
+    "configID": 1,
     "frequencyBand": "1",
     "delayModelSubscriptionPoint": "ska_mid/tm_leaf_node/csp_subarray_01/delayModel",
     "visDestinationAddressSubscriptionPoint": "ska_mid/tm_leaf_node/csp_subarray_01/visDestinationAddress",

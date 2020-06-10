@@ -214,7 +214,7 @@ with open("tangods/devices.json", "w+") as f:
                   "                \"changeEventAbs\": \"1\"\n" \
                   "            }},\n" \
                   "            {{\n" \
-                  "                \"attributeName\": \"scanID\",\n" \
+                  "                \"attributeName\": \"configID\",\n" \
                   "                \"attrPropName\": \"\",\n" \
                   "                \"attrPropValue\": \"\",\n" \
                   "                \"pollingPeriod\": 1000,\n" \

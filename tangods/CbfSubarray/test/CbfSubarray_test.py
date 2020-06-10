@@ -313,7 +313,7 @@ class TestCbfSubarray:
 
         # check initial value of attributes of CBF subarray
         # assert create_subarray_1_proxy.receptors == ()
-        # assert create_subarray_1_proxy.scanID == 0
+        # assert create_subarray_1_proxy.configID == 0
         assert create_subarray_1_proxy.frequencyBand == 0
         assert create_subarray_1_proxy.obsState.value == ObsState.IDLE.value
         assert create_tm_telstate_proxy.visDestinationAddress == "{}"
@@ -334,7 +334,7 @@ class TestCbfSubarray:
         time.sleep(15)
 
         # check configured attributes of CBF subarray
-        assert create_subarray_1_proxy.scanID == 1
+        assert create_subarray_1_proxy.configID == 1
         assert create_subarray_1_proxy.frequencyBand == 4
         assert create_subarray_1_proxy.obsState.value == ObsState.READY.value
 
@@ -602,7 +602,7 @@ class TestCbfSubarray:
 
         # check initial value of attributes of CBF subarray
         # assert create_subarray_1_proxy.receptors == ()
-        # assert create_subarray_1_proxy.scanID == 0
+        # assert create_subarray_1_proxy.configID == 0
         assert create_subarray_1_proxy.frequencyBand == 0
         assert create_subarray_1_proxy.obsState.value == ObsState.IDLE.value
         assert create_tm_telstate_proxy.visDestinationAddress == "{}"
@@ -623,7 +623,7 @@ class TestCbfSubarray:
         time.sleep(15)
 
         # check configured attributes of CBF subarray
-        assert create_subarray_1_proxy.scanID == 1
+        assert create_subarray_1_proxy.configID == 1
         assert create_subarray_1_proxy.frequencyBand == 4
         assert create_subarray_1_proxy.obsState.value == ObsState.READY.value
 
@@ -866,7 +866,7 @@ class TestCbfSubarray:
 
         # check initial value of attributes of CBF subarray
         # assert create_subarray_1_proxy.receptors == ()
-        # assert create_subarray_1_proxy.scanID == 0
+        # assert create_subarray_1_proxy.configID == 0
         assert create_subarray_1_proxy.frequencyBand == 0
         assert create_subarray_1_proxy.obsState.value == ObsState.IDLE.value
         assert create_tm_telstate_proxy.visDestinationAddress == "{}"
@@ -887,7 +887,7 @@ class TestCbfSubarray:
         time.sleep(15)
 
         # check configured attributes of CBF subarray
-        assert create_subarray_1_proxy.scanID == 1
+        assert create_subarray_1_proxy.configID == 1
         assert create_subarray_1_proxy.frequencyBand == 4
         assert create_subarray_1_proxy.obsState.value == ObsState.READY.value
 
@@ -1056,7 +1056,7 @@ class TestCbfSubarray:
         time.sleep(15)
 
         # check configured attributes of CBF subarray
-        assert create_subarray_1_proxy.scanID == 1
+        assert create_subarray_1_proxy.configID == 1
         assert create_subarray_1_proxy.frequencyBand == 4
         assert create_subarray_1_proxy.obsState.value == ObsState.READY.value
 

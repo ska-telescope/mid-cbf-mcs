@@ -59,7 +59,7 @@
                                 "1000",
                                 "adminmode",
                                 "1000",
-                                "subarrayscanid",
+                                "subarrayconfigid",
                                 "1000",
                                 "reportfspadminmode",
                                 "1000",
@@ -106,7 +106,7 @@
                                     "1"
                                 ]
                             },
-                            "scanID": {
+                            "configID": {
                                 "abs_change": [
                                     "-1",
                                     "1"
@@ -173,7 +173,7 @@
                                 "1000",
                                 "obsstate",
                                 "1000",
-                                "scanid",
+                                "configID",
                                 "1000",
                                 "fspList",
                                 "1000",
@@ -249,7 +249,7 @@
                                     "1"
                                 ]
                             },
-                            "scanID": {
+                            "configID": {
                                 "abs_change": [
                                     "-1",
                                     "1"
@@ -300,7 +300,7 @@
                                 "mid_csp_cbf/vcc/004"
                             ],
                             "polled_attr": [
-                                "scanid",
+                                "configID",
                                 "1000",
                                 "healthstate",
                                 "1000",
