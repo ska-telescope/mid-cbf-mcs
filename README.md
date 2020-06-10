@@ -27,7 +27,7 @@ The Mid CBF MCS prototype implements at the moment these TANGO device classes:
     * `VccBand1And2`, `VccBand3`, `VccBand4`, and `VccBand5` specify the operative frequency band of a VCC.
     * `VccSearchWindow` defines a search window for a VCC.
     * `FspCorr`, `FspPss`, `FspPst`, and `FspVlbi` specify the function mode of an FSP.
-* `FspCorrSubarray`: Based on the `SKASubarray` class. It implements commands and attributes needed for scan configuration.
+    * `FspCorrSubarray`: Based on the `SKASubarray` class. It implements commands and attributes needed for scan configuration.
 * `TmCspSubarrayLeafNodeTest`: Based on the `SKABaseDevice` class. It simulates a TM CSP Subarray Leaf Node, providing regular updates to parameters during scans using a publish-subscribe mechanism.
 
 To cut down on the number of TANGO device servers, some multi-class servers are implemented to run devices of different classes:
