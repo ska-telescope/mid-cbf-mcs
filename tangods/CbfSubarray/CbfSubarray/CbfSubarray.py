@@ -1972,8 +1972,8 @@ class CbfSubarray(SKASubarray):
         return False
 
     @command(
-        dtype_in='str',
-        doc_in="Activation time of the scan, as seconds since the Linux epoch"
+        dtype_in='uint',
+        doc_in="Scan ID"
     )
     def Scan(self, argin):
         """set state to scanning. Send Scan signal to VCC and FSP."""
@@ -1984,6 +1984,16 @@ class CbfSubarray(SKASubarray):
         #     self.logger(msg, tango.LogLevel.LOG_ERROR)
         #     tango.Except.throw_exception("Command failed", msg, "Scan execution", tango.ErrSeverity.ERR)
         # """
+
+        #takes in scanID as arguement, test valid int
+        try:
+            self._scan_ID=int(argin)
+        except:
+            msg="The input scanID is not integer."
+            self.logger.error(msg)
+            tango.Except.throw_exception("Command failed", msg, "Scan execution",
+                                         tango.ErrSeverity.ERR)
+
         if self._obs_state != ObsState.READY.value:
             msg = "Device not in READY obsState."
             self.logger.error(msg)
