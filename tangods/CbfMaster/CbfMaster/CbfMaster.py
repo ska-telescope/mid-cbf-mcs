@@ -151,17 +151,17 @@ class CbfMaster(SKAMaster):
                 log_msg = item.reason + ": on attribute " + str(event.attr_name)
                 self.logger.error(log_msg)
 
-    def __config_ID_event_callback(self, event):
-        if not event.err:
-            try:
-                self._subarray_config_ID[self._fqdn_subarray.index(event.device.dev_name())] = \
-                    event.attr_value.value
-            except Exception as except_occurred:
-                self.logger.error(str(except_occurred))
-        else:
-            for item in event.errors:
-                log_msg = item.reason + ": on attribute " + str(event.attr_name)
-                self.logger.error(log_msg)
+    # def __config_ID_event_callback(self, event):
+    #     if not event.err:
+    #         try:
+    #             self._subarray_config_ID[self._fqdn_subarray.index(event.device.dev_name())] = \
+    #                 event.attr_value.value
+    #         except Exception as except_occurred:
+    #             self.logger.error(str(except_occurred))
+    #     else:
+    #         for item in event.errors:
+    #             log_msg = item.reason + ": on attribute " + str(event.attr_name)
+    #             self.logger.error(log_msg)
 
     def __get_num_capabilities(self):
         # self._max_capabilities inherited from SKAMaster
@@ -239,11 +239,11 @@ class CbfMaster(SKAMaster):
     )
 
     subarrayconfigID = attribute(
-        dtype=('uint',),
+        dtype=('str',),
         max_dim_x=16,
         label="Subarray config IDs",
         polling_period=3000,
-        doc="ID of subarray configuration. 0 if subarray is not configured for a scan."
+        doc="ID of subarray configuration. empty string if subarray is not configured for a scan."
     )
 
     reportVCCState = attribute(
@@ -461,13 +461,13 @@ class CbfMaster(SKAMaster):
                     )
 
                 # subscribe to subarray config ID change events
-                if "subarray" in fqdn:
-                    events.append(
-                        device_proxy.subscribe_event(
-                            "configID", tango.EventType.CHANGE_EVENT,
-                            self.__config_ID_event_callback, stateless=True
-                        )
-                    )
+                # if "subarray" in fqdn:
+                #     events.append(
+                #         device_proxy.subscribe_event(
+                #             "configID", tango.EventType.CHANGE_EVENT,
+                #             self.__config_ID_event_callback, stateless=True
+                #         )
+                #     )
 
                 self._event_id[device_proxy] = events
             except tango.DevFailed as df:
@@ -522,7 +522,7 @@ class CbfMaster(SKAMaster):
 
     def read_subarrayconfigID(self):
         # PROTECTED REGION ID(CbfMaster.subarrayconfigID_read) ENABLED START #
-        """Return subarrayconfigID atrribute: ID of subarray scans. 0 if subarray is not configured for a scan"""
+        """Return subarrayconfigID atrribute: ID of subarray config. USed for debug purposes. empty string if subarray is not configured for a scan"""
         return self._subarray_config_ID
         # PROTECTED REGION END #    //  CbfMaster.subarrayconfigID_read
 

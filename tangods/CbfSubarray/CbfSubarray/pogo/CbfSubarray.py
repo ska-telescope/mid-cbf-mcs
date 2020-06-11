@@ -97,7 +97,7 @@ class CbfSubarray(SKASubarray):
         SKASubarray.init_device(self)
         # PROTECTED REGION ID(CbfSubarray.init_device) ENABLED START #
         self._frequency_band = FrequencyBand.1
-        self._config_ID = 0
+        self._config_ID = ""
         self._receptors = (0,)
         # PROTECTED REGION END #    //  CbfSubarray.init_device
 

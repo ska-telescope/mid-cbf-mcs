@@ -60,7 +60,7 @@ class TmCspSubarrayLeafNodeTest(SKABaseDevice):
                 self.logger.warn(log_msg)
 
                 output_links = json.loads(str(event.attr_value.value))
-                config_ID = int(output_links["configID"])
+                config_ID = output_links["configID"]
 
                 if not config_ID or self._received_output_links:
                     log_msg = "Skipped assigning destination addresses."
@@ -134,10 +134,10 @@ class TmCspSubarrayLeafNodeTest(SKABaseDevice):
     # ----------
 
     configID = attribute(
-        dtype='uint',
+        dtype='str',
         access=AttrWriteType.READ,
         label="Config ID",
-        doc="Config ID",
+        doc="Config ID. Takes in 'id' in the input JSON file",
     )
 
     dopplerPhaseCorrection = attribute(
@@ -178,7 +178,7 @@ class TmCspSubarrayLeafNodeTest(SKABaseDevice):
         # PROTECTED REGION ID(TmCspSubarrayLeafNodeTest.init_device) ENABLED START #
         self.set_state(DevState.INIT)
 
-        self._config_ID = 0
+        self._config_ID = ""
         self._doppler_phase_correction = [0., 0., 0., 0.]
         self._delay_model = {}  # this is interpreted as a JSON object
         self._vis_destination_address = {}  # this is interpreted as a JSON object
