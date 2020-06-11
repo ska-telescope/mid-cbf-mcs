@@ -370,7 +370,7 @@ class CbfSubarray(SKASubarray):
             #     pass
             pass
         else:
-            msg = "'configID' must be given. Aborting configuration."
+            msg = "'id'(configID attribute) must be given. Aborting configuration."
             self.__raise_configure_scan_fatal_error(msg)
 
         # Validate frequencyBand.

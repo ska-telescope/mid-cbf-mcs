@@ -334,7 +334,7 @@ class TestCbfSubarray:
         time.sleep(15)
 
         # check configured attributes of CBF subarray
-        assert create_subarray_1_proxy.configID == 1
+        assert create_subarray_1_proxy.configID == "1"
         assert create_subarray_1_proxy.frequencyBand == 4
         assert create_subarray_1_proxy.obsState.value == ObsState.READY.value
 
@@ -623,7 +623,7 @@ class TestCbfSubarray:
         time.sleep(15)
 
         # check configured attributes of CBF subarray
-        assert create_subarray_1_proxy.configID == 1
+        assert create_subarray_1_proxy.configID == "1"
         assert create_subarray_1_proxy.frequencyBand == 4
         assert create_subarray_1_proxy.obsState.value == ObsState.READY.value
 
@@ -887,7 +887,7 @@ class TestCbfSubarray:
         time.sleep(15)
 
         # check configured attributes of CBF subarray
-        assert create_subarray_1_proxy.configID == 1
+        assert create_subarray_1_proxy.configID == "1"
         assert create_subarray_1_proxy.frequencyBand == 4
         assert create_subarray_1_proxy.obsState.value == ObsState.READY.value
 
@@ -1056,12 +1056,12 @@ class TestCbfSubarray:
         time.sleep(15)
 
         # check configured attributes of CBF subarray
-        assert create_subarray_1_proxy.configID == 1
+        assert create_subarray_1_proxy.configID == "1"
         assert create_subarray_1_proxy.frequencyBand == 4
         assert create_subarray_1_proxy.obsState.value == ObsState.READY.value
 
         # send the Scan command
-        create_subarray_1_proxy.Scan("")
+        create_subarray_1_proxy.Scan(1)
         time.sleep(1)
 
         # check initial states
@@ -1176,7 +1176,7 @@ class TestCbfSubarray:
         assert create_vcc_proxies[receptor_to_vcc[4] - 1].delayModel[1][5] == 3.4
 
         # transition to obsState=SCANNING
-        create_subarray_1_proxy.Scan("")
+        create_subarray_1_proxy.Scan(1)
         time.sleep(1)
         assert create_subarray_1_proxy.obsState.value == ObsState.SCANNING.value
 
@@ -1305,7 +1305,7 @@ class TestCbfSubarray:
         assert create_fsp_3_subarray_1_proxy.obsState.value == ObsState.READY.value
 
         # send the Scan command
-        create_subarray_1_proxy.Scan("")
+        create_subarray_1_proxy.Scan(1)
         time.sleep(1)
 
         # check states
