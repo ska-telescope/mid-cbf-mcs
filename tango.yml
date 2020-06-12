@@ -11,7 +11,7 @@
 version: "2.2"
 
 volumes:
-  test_tangodb: {}
+  tangodb: {}
         
 services:
   tangodb:
@@ -24,7 +24,7 @@ services:
       - MYSQL_USER=tango
       - MYSQL_PASSWORD=tango
     volumes:
-      - test_tangodb:/var/lib/mysql
+      - tangodb:/var/lib/mysql
 
   databaseds:
     image: nexus.engageska-portugal.pt/ska-docker/tango-cpp:latest
