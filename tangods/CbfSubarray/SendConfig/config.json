@@ -1,5 +1,5 @@
 {
-    "scanID": 1,
+    "id": 1,
     "frequencyBand": "5a",
     "band5Tuning": [5.85, 7.25],
     "frequencyBandOffsetStream1": 0,

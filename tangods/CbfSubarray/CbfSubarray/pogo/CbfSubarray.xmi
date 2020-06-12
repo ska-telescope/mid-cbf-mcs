@@ -308,13 +308,13 @@
       <enumLabels>5a</enumLabels>
       <enumLabels>5b</enumLabels>
     </attributes>
-    <attributes name="scanID" attType="Scalar" rwType="READ_WRITE" displayLevel="OPERATOR" polledPeriod="0" maxX="" maxY="" memorized="true" allocReadMember="true" isDynamic="false">
+    <attributes name="configID" attType="Scalar" rwType="READ_WRITE" displayLevel="OPERATOR" polledPeriod="0" maxX="" maxY="" memorized="true" allocReadMember="true" isDynamic="false">
       <dataType xsi:type="pogoDsl:ULongType"/>
       <changeEvent fire="false" libCheckCriteria="false"/>
       <archiveEvent fire="false" libCheckCriteria="false"/>
       <dataReadyEvent fire="false" libCheckCriteria="true"/>
       <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
-      <properties description="Scan ID" label="Scan ID" unit="" standardUnit="" displayUnit="" format="" maxValue="" minValue="" maxAlarm="" minAlarm="" maxWarning="" minWarning="" deltaTime="" deltaValue=""/>
+      <properties description="Config ID" label="Config ID" unit="" standardUnit="" displayUnit="" format="" maxValue="" minValue="" maxAlarm="" minAlarm="" maxWarning="" minWarning="" deltaTime="" deltaValue=""/>
     </attributes>
     <attributes name="loggingLevel" attType="Scalar" rwType="READ_WRITE" displayLevel="OPERATOR" polledPeriod="1000" maxX="" maxY="" allocReadMember="true">
       <dataType xsi:type="pogoDsl:EnumType"/>

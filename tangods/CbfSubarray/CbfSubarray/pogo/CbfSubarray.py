@@ -71,12 +71,12 @@ class CbfSubarray(SKASubarray):
         doc="One of {1, 2, 3, 4, 5a, 5b}",
     )
 
-    scanID = attribute(
+    configID = attribute(
         dtype='DevULong64',
         access=AttrWriteType.READ_WRITE,
-        label="Scan ID",
+        label="config ID",
         memorized=True,
-        doc="Scan ID",
+        doc="config ID",
     )
 
     receptors = attribute(
@@ -97,7 +97,7 @@ class CbfSubarray(SKASubarray):
         SKASubarray.init_device(self)
         # PROTECTED REGION ID(CbfSubarray.init_device) ENABLED START #
         self._frequency_band = FrequencyBand.1
-        self._scan_id = 0
+        self._config_ID = ""
         self._receptors = (0,)
         # PROTECTED REGION END #    //  CbfSubarray.init_device
 
@@ -131,17 +131,17 @@ class CbfSubarray(SKASubarray):
         pass
         # PROTECTED REGION END #    //  CbfSubarray.frequencyBand_write
 
-    def read_scanID(self):
-        # PROTECTED REGION ID(CbfSubarray.scanID_read) ENABLED START #
-        """Return the scanID attribute."""
-        return self._scan_id
-        # PROTECTED REGION END #    //  CbfSubarray.scanID_read
+    def read_configID(self):
+        # PROTECTED REGION ID(CbfSubarray.configID_read) ENABLED START #
+        """Return the configID attribute."""
+        return self._config_ID
+        # PROTECTED REGION END #    //  CbfSubarray.configID_read
 
-    def write_scanID(self, value):
-        # PROTECTED REGION ID(CbfSubarray.scanID_write) ENABLED START #
-        """Set the scanID attribute."""
+    def write_configID(self, value):
+        # PROTECTED REGION ID(CbfSubarray.configID_write) ENABLED START #
+        """Set the configID attribute."""
         pass
-        # PROTECTED REGION END #    //  CbfSubarray.scanID_write
+        # PROTECTED REGION END #    //  CbfSubarray.configID_write
 
     def read_receptors(self):
         # PROTECTED REGION ID(CbfSubarray.receptors_read) ENABLED START #

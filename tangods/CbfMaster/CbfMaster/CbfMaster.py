@@ -151,17 +151,17 @@ class CbfMaster(SKAMaster):
                 log_msg = item.reason + ": on attribute " + str(event.attr_name)
                 self.logger.error(log_msg)
 
-    def __scan_ID_event_callback(self, event):
-        if not event.err:
-            try:
-                self._subarray_scan_ID[self._fqdn_subarray.index(event.device.dev_name())] = \
-                    event.attr_value.value
-            except Exception as except_occurred:
-                self.logger.error(str(except_occurred))
-        else:
-            for item in event.errors:
-                log_msg = item.reason + ": on attribute " + str(event.attr_name)
-                self.logger.error(log_msg)
+    # def __config_ID_event_callback(self, event):
+    #     if not event.err:
+    #         try:
+    #             self._subarray_config_ID[self._fqdn_subarray.index(event.device.dev_name())] = \
+    #                 event.attr_value.value
+    #         except Exception as except_occurred:
+    #             self.logger.error(str(except_occurred))
+    #     else:
+    #         for item in event.errors:
+    #             log_msg = item.reason + ": on attribute " + str(event.attr_name)
+    #             self.logger.error(log_msg)
 
     def __get_num_capabilities(self):
         # self._max_capabilities inherited from SKAMaster
@@ -238,12 +238,12 @@ class CbfMaster(SKAMaster):
         doc="Maps VCC IDs to receptor IDs, in the form \"vccID:receptorID\"",
     )
 
-    subarrayScanID = attribute(
-        dtype=('uint',),
+    subarrayconfigID = attribute(
+        dtype=('str',),
         max_dim_x=16,
-        label="Subarray scan IDs",
+        label="Subarray config IDs",
         polling_period=3000,
-        doc="ID of subarray scans. 0 if subarray is not configured for a scan."
+        doc="ID of subarray configuration. empty string if subarray is not configured for a scan."
     )
 
     reportVCCState = attribute(
@@ -391,7 +391,7 @@ class CbfMaster(SKAMaster):
         self._report_subarray_admin_mode = [AdminMode.ONLINE.value] * self._count_subarray
         self._frequency_offset_k = [0] * self._count_vcc
         self._frequency_offset_delta_f = [0] * self._count_vcc
-        self._subarray_scan_ID = [0] * self._count_subarray
+        self._subarray_config_ID = [0] * self._count_subarray
 
         # initialize lists with subarray/capability FQDNs
         self._fqdn_vcc = list(self.VCC)[:self._count_vcc]
@@ -460,14 +460,14 @@ class CbfMaster(SKAMaster):
                         )
                     )
 
-                # subscribe to subarray scan ID change events
-                if "subarray" in fqdn:
-                    events.append(
-                        device_proxy.subscribe_event(
-                            "scanID", tango.EventType.CHANGE_EVENT,
-                            self.__scan_ID_event_callback, stateless=True
-                        )
-                    )
+                # subscribe to subarray config ID change events
+                # if "subarray" in fqdn:
+                #     events.append(
+                #         device_proxy.subscribe_event(
+                #             "configID", tango.EventType.CHANGE_EVENT,
+                #             self.__config_ID_event_callback, stateless=True
+                #         )
+                #     )
 
                 self._event_id[device_proxy] = events
             except tango.DevFailed as df:
@@ -520,11 +520,11 @@ class CbfMaster(SKAMaster):
         return self._vcc_to_receptor
         # PROTECTED REGION END #    //  CbfMaster.vccToReceptor_read
 
-    def read_subarrayScanID(self):
-        # PROTECTED REGION ID(CbfMaster.subarrayScanID_read) ENABLED START #
-        """Return subarrayScanID atrribute: ID of subarray scans. 0 if subarray is not configured for a scan"""
-        return self._subarray_scan_ID
-        # PROTECTED REGION END #    //  CbfMaster.subarrayScanID_read
+    def read_subarrayconfigID(self):
+        # PROTECTED REGION ID(CbfMaster.subarrayconfigID_read) ENABLED START #
+        """Return subarrayconfigID atrribute: ID of subarray config. USed for debug purposes. empty string if subarray is not configured for a scan"""
+        return self._subarray_config_ID
+        # PROTECTED REGION END #    //  CbfMaster.subarrayconfigID_read
 
     def read_reportVCCState(self):
         # PROTECTED REGION ID(CbfMaster.reportVCCState_read) ENABLED START #
