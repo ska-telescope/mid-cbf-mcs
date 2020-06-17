@@ -167,6 +167,14 @@ class FspCorrSubarray(SKASubarray):
         doc="Destination addresses for visibilities, given as a JSON object"
     )
 
+
+    fspChannelOffset = attribute(
+        dtype='DevLong',
+        access=AttrWriteType.READ_WRITE,
+        label="fspChannelOffset",
+        doc="fsp Channel offset, integer, multiple of 14480",
+    )
+
     # ---------------
     # General methods
     # ---------------
@@ -200,6 +208,7 @@ class FspCorrSubarray(SKASubarray):
             for i in range(self.NUM_CHANNEL_GROUPS)
         ]
         self._vis_destination_address = []
+        self._fsp_channel_offset = 0
 
         # For each channel sent to SDP: [chanID, bw, cf, cbfOutLink, sdpIp, sdpPort]
         self._channel_info = []
@@ -321,6 +330,17 @@ class FspCorrSubarray(SKASubarray):
         self._vis_destination_address = json.loads(value)
         # PROTECTED REGION END #    //  FspCorrSubarray.visDestinationAddress_write
 
+    def read_fspChannelOffset(self):
+        # PROTECTED REGION ID(Fsp.fspChannelOffset_read) ENABLED START #
+        """Return the fspChannelOffset attribute."""
+        return self._fsp_channel_offset
+        # PROTECTED REGION END #    //  Fsp.fspChannelOffset_read
+
+    def write_fspChannelOffset(self, value):
+        # PROTECTED REGION ID(Fsp.fspChannelOffset_write) ENABLED START #
+        """Set the fspChannelOffset attribute."""
+        self._fsp_channel_offset=value
+        # PROTECTED REGION END #    //  Fsp.fspChannelOffset_write
     # --------
     # Commands
     # --------
@@ -554,7 +574,7 @@ class FspCorrSubarray(SKASubarray):
         # PROTECTED REGION ID(FspCorrSubarray.ConfigureScan) ENABLED START #
         # This function is called after the configuration has already been validated,
         # so the checks here have been removed to reduce overhead.
-        """Input a JSON. Configure scan for fsp. Called by CbfSubarrayCoorConfig(proxy_fsp_corr_subarray.ConfigureScan(json.dumps(fsp)))"""
+        """Input a JSON. Configure scan for fsp. Called by CbfSubarrayCorrConfig(proxy_fsp_corr_subarray.ConfigureScan(json.dumps(fsp)))"""
         # transition to obsState=CONFIGURING
         self._obs_state = ObsState.CONFIGURING.value
         self.push_change_event("obsState", self._obs_state)
@@ -660,6 +680,11 @@ class FspCorrSubarray(SKASubarray):
 
             # Configure integrationTime.
             self._integration_time = int(argin["integrationTime"])
+
+
+            # Configure fspChannelOffset
+            self._fsp_channel_offset= int(argin["fspChannelOffset"])
+                
 
             # Configure channelAveragingMap.
             if "channelAveragingMap" in argin:

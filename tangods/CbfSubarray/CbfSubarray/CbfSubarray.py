@@ -797,6 +797,27 @@ class CbfSubarray(SKASubarray):
                             self.logger.error(msg)
                             tango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
                                                          tango.ErrSeverity.ERR)
+                        # Validate fspChannelOffset
+                        if "fspChannelOffset" in fsp:
+                            try: 
+                                if int(fsp["fspChannelOffset"])%14880==0: 
+                                    pass
+                                #has to be a multiple of 14880
+                                else:
+                                    msg="fspChannelOffset must be a multiple of 14880"
+                                    self.logger.error(msg)
+                                    tango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
+                                                             tango.ErrSeverity.ERR)
+                            except:
+                                msg="fspChannelOffset must be an integer"
+                                self.logger.error(msg)
+                                tango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
+                                                             tango.ErrSeverity.ERR)
+                        else:
+                            msg = "FSP specified, but 'fspChannelOffset' not given."
+                            self.logger.error(msg)
+                            tango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
+                                                         tango.ErrSeverity.ERR)
 
                         # Validate channelAveragingMap.
                         if "channelAveragingMap" in fsp:
@@ -1172,7 +1193,7 @@ class CbfSubarray(SKASubarray):
 
         # JSON FSP configurations for PSS, COR, PST, VLBI
         self._proxy_pss_config = tango.DeviceProxy(self.PssConfigAddress)
-        self._proxy_corr_config = tango.DeviceProxy(self.CorrConfigAddress)
+        self._proxy_corr_config = tango.DeviceProxy(self.CorrConfigAddress) # address of CbfSubarrayCoorConfig device in Subarray Multi
 
         self._master_max_capabilities = dict(
             pair.split(":") for pair in
@@ -1608,7 +1629,7 @@ class CbfSubarray(SKASubarray):
         # }
         # """
         """Change state to CONFIGURING.
-        Configure attributes from input JSON. Subscribe events. COnfigure VCC and FSP. 
+        Configure attributes from input JSON. Subscribe events. Configure VCC, VCC subarray, FSP, FSP Subarray. 
         publish output links.
         """
         if self._obs_state not in [ObsState.IDLE.value, ObsState.READY.value]:
@@ -1626,6 +1647,7 @@ class CbfSubarray(SKASubarray):
         self._corr_fsp_list = []
         self._fsp_list = [[], [], [], []]
 
+        ################# validate scan configuration first ##########################
         self.__validate_scan_configuration(argin)
 
         # Call this just to release all FSPs and unsubscribe to events.
@@ -1709,16 +1731,16 @@ class CbfSubarray(SKASubarray):
         )
         self._events_telstate[event_id] = attribute_proxy
 
-        # Configure visDestinationAddressSubscriptionPoint.
-        self._published_output_links = False
-        self._last_received_vis_destination_address = "{}"
-        attribute_proxy = tango.AttributeProxy(argin["visDestinationAddressSubscriptionPoint"])
-        attribute_proxy.ping()
-        event_id = attribute_proxy.subscribe_event(
-            tango.EventType.CHANGE_EVENT,
-            self.__vis_destination_address_event_callback
-        )
-        self._events_telstate[event_id] = attribute_proxy
+        # # Configure visDestinationAddressSubscriptionPoint.
+        # self._published_output_links = False
+        # self._last_received_vis_destination_address = "{}"
+        # attribute_proxy = tango.AttributeProxy(argin["visDestinationAddressSubscriptionPoint"])
+        # attribute_proxy.ping()
+        # event_id = attribute_proxy.subscribe_event(
+        #     tango.EventType.CHANGE_EVENT,
+        #     self.__vis_destination_address_event_callback
+        # )
+        # self._events_telstate[event_id] = attribute_proxy
 
         # Configure rfiFlaggingMask.
         if "rfiFlaggingMask" in argin:
@@ -1747,18 +1769,23 @@ class CbfSubarray(SKASubarray):
         data.insert(tango.DevUShort, ObsState.READY.value)
         self._group_vcc.command_inout("SetObservingState", data)
 
+        ###################### FSP Subarray ####################
         # pass on configuration to individual function mode class to configure the FSP Subarray
 
         if len(self._pss_config) != 0:
             self._proxy_pss_config.ConfigureFSP(json.dumps(self._pss_config))
 
-        if len(self._corr_config) != 0:
-            self._proxy_corr_config.ConfigureFSP(json.dumps(self._corr_config))
+        if len(self._corr_config) != 0: 
+            #_proxy_corr_config is address of CbfSubarrayCoorConfig device in Subarray Multi
+            #_corr_config is fsp part of the JSON, formed by the function _validate_scan_configuration
+            self._proxy_corr_config.ConfigureFSP(json.dumps(self._corr_config)) 
 
         #TODO add PST and VLBI to this once they are implemented
         self._fsp_list[0].append(self._corr_fsp_list)
         self._fsp_list[1].append(self._pss_fsp_list)
 
+
+        ####################### FSP ############################
         # Configure FSP.
         for fsp in argin["fsp"]:
             # Configure fspID.
@@ -1808,7 +1835,7 @@ class CbfSubarray(SKASubarray):
 
         # At this point, we can basically assume everything is properly configured
         # This has been phased out, now passing to function mode classes first
-        self.__generate_output_links(argin)  # published output links to outputLinksDistribution
+        # self.__generate_output_links(argin)  # published output links to outputLinksDistribution???
 
         # This state transition will be later
         # 03-23-2020:
