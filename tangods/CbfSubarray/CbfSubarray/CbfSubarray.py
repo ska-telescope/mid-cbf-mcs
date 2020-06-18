@@ -139,56 +139,56 @@ class CbfSubarray(SKASubarray):
         self._group_vcc.command_inout("UpdateDelayModel", data)
         self._mutex_delay_model_config.release()
 
-    def __vis_destination_address_event_callback(self, event):
-        if not event.err:
-            if self._obs_state not in [ObsState.CONFIGURING.value, ObsState.READY.value]:
-                log_msg = "Ignoring destination addresses (obsState not correct)."
-                self.logger.info(log_msg)
-                return
-            if not self._published_output_links:
-                log_msg = "Ignoring destination addresses (output links not published yet)."
-                self.logger.warn(log_msg)
-                return
-            try:
-                log_msg = "Received destination addresses for visibilities."
-                self.logger.info(log_msg)
+    # def __vis_destination_address_event_callback(self, event):???
+    #     if not event.err:
+    #         if self._obs_state not in [ObsState.CONFIGURING.value, ObsState.READY.value]:
+    #             log_msg = "Ignoring destination addresses (obsState not correct)."
+    #             self.logger.info(log_msg)
+    #             return
+    #         if not self._published_output_links:
+    #             log_msg = "Ignoring destination addresses (output links not published yet)."
+    #             self.logger.warn(log_msg)
+    #             return
+    #         try:
+    #             log_msg = "Received destination addresses for visibilities."
+    #             self.logger.info(log_msg)
 
-                value = str(event.attr_value.value)
-                if value == self._last_received_vis_destination_address:
-                    log_msg = "Ignoring destination addresses (identical to previous)."
-                    self.logger.info(log_msg)
-                    return
+    #             value = str(event.attr_value.value)
+    #             if value == self._last_received_vis_destination_address:
+    #                 log_msg = "Ignoring destination addresses (identical to previous)."
+    #                 self.logger.info(log_msg)
+    #                 return
 
-                self._last_received_vis_destination_address = value
-                destination_addresses = json.loads(value)
+    #             self._last_received_vis_destination_address = value
+    #             destination_addresses = json.loads(value)
 
-                # No exception should technically ever be raised here.
-                if destination_addresses["configID"] != self._config_ID:
-                    raise ValueError("config ID is not correct")
-                for fsp in destination_addresses["receiveAddresses"]:
-                    proxy_fsp_corr_subarray = self._proxies_fsp_corr_subarray[fsp["fspId"] - 1]
-                    if proxy_fsp_corr_subarray not in self._proxies_assigned_fsp_corr_subarray:
-                        raise ValueError("FSP {} does not belong to subarray {}.".format(
-                            fsp["fspId"], self._subarray_id
-                        )
-                        )
-                    log_msg = "Configuring destination addresses for FSP {}...".format(
-                        fsp["fspId"]
-                    )
-                    self.logger.info(log_msg)
-                    proxy_fsp_corr_subarray.AddChannelAddresses(value)
+    #             # No exception should technically ever be raised here.
+    #             if destination_addresses["configID"] != self._config_ID:
+    #                 raise ValueError("config ID is not correct")
+    #             for fsp in destination_addresses["receiveAddresses"]:
+    #                 proxy_fsp_corr_subarray = self._proxies_fsp_corr_subarray[fsp["fspId"] - 1]
+    #                 if proxy_fsp_corr_subarray not in self._proxies_assigned_fsp_corr_subarray:
+    #                     raise ValueError("FSP {} does not belong to subarray {}.".format(
+    #                         fsp["fspId"], self._subarray_id
+    #                     )
+    #                     )
+    #                 log_msg = "Configuring destination addresses for FSP {}...".format(
+    #                     fsp["fspId"]
+    #                 )
+    #                 self.logger.info(log_msg)
+    #                 proxy_fsp_corr_subarray.AddChannelAddresses(value)
 
-                log_msg = "Done configuring destination addresses."
-                self.logger.info(log_msg)
+    #             log_msg = "Done configuring destination addresses."
+    #             self.logger.info(log_msg)
 
-                # transition to obsState=READY
-                self._obs_state = ObsState.READY.value
-            except Exception as e:
-                self.logger.error(str(e))
-        else:
-            for item in event.errors:
-                log_msg = item.reason + ": on attribute " + str(event.attr_name)
-                self.logger.error(log_msg)
+    #             # transition to obsState=READY
+    #             self._obs_state = ObsState.READY.value
+    #         except Exception as e:
+    #             self.logger.error(str(e))
+    #     else:
+    #         for item in event.errors:
+    #             log_msg = item.reason + ": on attribute " + str(event.attr_name)
+    #             self.logger.error(log_msg)
 
     def __state_change_event_callback(self, event):
         if not event.err:
@@ -502,28 +502,28 @@ class CbfSubarray(SKASubarray):
             msg = "'delayModelSubscriptionPoint' not given. Aborting configuration."
             self.__raise_configure_scan_fatal_error(msg)
 
-        # Validate visDestinationAddressSubscriptionPoint.
-        if "visDestinationAddressSubscriptionPoint" in argin:
-            try:
-                attribute_proxy = tango.AttributeProxy(
-                    argin["visDestinationAddressSubscriptionPoint"]
-                )
-                attribute_proxy.ping()
-                attribute_proxy.unsubscribe_event(
-                    attribute_proxy.subscribe_event(
-                        tango.EventType.CHANGE_EVENT,
-                        self.__void_callback
-                    )
-                )
-            except tango.DevFailed:  # attribute doesn't exist or is not set up correctly
-                msg = "Attribute {} not found or not set up correctly for " \
-                      "'visDestinationAddressSubscriptionPoint'. Aborting configuration.".format(
-                    argin["visDestinationAddressSubscriptionPoint"]
-                )
-                self.__raise_configure_scan_fatal_error(msg)
-        else:
-            msg = "'visDestinationAddressSubscriptionPoint' not given. Aborting configuration."
-            self.__raise_configure_scan_fatal_error(msg)
+        # # Validate visDestinationAddressSubscriptionPoint.???
+        # if "visDestinationAddressSubscriptionPoint" in argin:
+        #     try:
+        #         attribute_proxy = tango.AttributeProxy(
+        #             argin["visDestinationAddressSubscriptionPoint"]
+        #         )
+        #         attribute_proxy.ping()
+        #         attribute_proxy.unsubscribe_event(
+        #             attribute_proxy.subscribe_event(
+        #                 tango.EventType.CHANGE_EVENT,
+        #                 self.__void_callback
+        #             )
+        #         )
+        #     except tango.DevFailed:  # attribute doesn't exist or is not set up correctly
+        #         msg = "Attribute {} not found or not set up correctly for " \
+        #               "'visDestinationAddressSubscriptionPoint'. Aborting configuration.".format(
+        #             argin["visDestinationAddressSubscriptionPoint"]
+        #         )
+        #         self.__raise_configure_scan_fatal_error(msg)
+        # else:
+        #     msg = "'visDestinationAddressSubscriptionPoint' not given. Aborting configuration."
+        #     self.__raise_configure_scan_fatal_error(msg)
 
         # Validate rfiFlaggingMask.
 
@@ -1171,7 +1171,7 @@ class CbfSubarray(SKASubarray):
         self._corr_fsp_list = []
         self._pss_fsp_list = []
         self._published_output_links = False
-        self._last_received_vis_destination_address = "{}"
+        # self._last_received_vis_destination_address = "{}"#???
         self._last_received_delay_model = "{}"
 
         self._mutex_delay_model_config = Lock()
@@ -2088,7 +2088,7 @@ class CbfSubarray(SKASubarray):
 
         self._config_ID = ""
         self._output_links_distribution = {"configID": ""}
-        self._last_received_vis_destination_address = "{}"
+        # self._last_received_vis_destination_address = "{}"#???
         self._last_received_delay_model = "{}"
         self._published_output_links = False
 
