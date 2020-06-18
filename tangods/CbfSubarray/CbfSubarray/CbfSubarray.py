@@ -820,6 +820,24 @@ class CbfSubarray(SKASubarray):
                             tango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
                                                          tango.ErrSeverity.ERR)
 
+                        # validate outputlink
+                        if "outputLinkMap" in fsp:
+                            
+                            # check the format
+                            try:
+                                for element in fsp["outputLinkMap"]:
+                                    a=int(element[0])
+                            except:
+                                msg = "'outputLinkMap' format not correct."
+                                self.logger.error(msg)
+                                tango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
+                                                            tango.ErrSeverity.ERR)
+                        else:
+                            msg = "FSP specified for Correlation, but 'outputLinkMap' not given."
+                            self.logger.error(msg)
+                            tango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
+                                                         tango.ErrSeverity.ERR)
+
                         # Validate channelAveragingMap.
                         if "channelAveragingMap" in fsp:
                             try:
@@ -864,9 +882,10 @@ class CbfSubarray(SKASubarray):
                                 self.logger.error(msg)
                                 tango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
                                                              tango.ErrSeverity.ERR)
+
+                        # validate destination addresses: outputHost, outputMac, outputPort
                         if "outputHost" in fsp:
                             pass
-
                         else:
                             msg = "FSP specified for Correlation, but 'outputHost' not given."
                             self.logger.error(msg)

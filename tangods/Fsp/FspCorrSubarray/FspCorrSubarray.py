@@ -175,6 +175,12 @@ class FspCorrSubarray(SKASubarray):
         doc="fsp Channel offset, integer, multiple of 14480",
     )
 
+    outputLinkMap = attribute(
+        dtype=(('DevULong64',),),
+        access=AttrWriteType.READ,
+        max_dim_x=2, max_dim_y=40,
+    )
+
     # ---------------
     # General methods
     # ---------------
@@ -210,8 +216,10 @@ class FspCorrSubarray(SKASubarray):
         # destination addresses includes the following three
         self._vis_destination_address = {"outputHost":[], "outputMac": [], "outputPort":[]}
         self._fsp_channel_offset = 0
+        # outputLinkMap is a 2*40 array. Pogo generates tuple. I changed into list to facilitate writing
+        self._output_link_map = [[0,0] for i in range(40)]
 
-        # For each channel sent to SDP: [chanID, bw, cf, cbfOutLink, sdpIp, sdpPort]
+        # For each channel sent to SDP: [chanID, bw, cf, cbfOutLink, sdpIp, sdpPort] # ???
         self._channel_info = []
 
         # device proxy for easy reference to CBF Master
@@ -342,6 +350,19 @@ class FspCorrSubarray(SKASubarray):
         """Set the fspChannelOffset attribute."""
         self._fsp_channel_offset=value
         # PROTECTED REGION END #    //  Fsp.fspChannelOffset_write
+
+    def read_outputLinkMap(self):
+        # PROTECTED REGION ID(FspCorrSubarray.outputLinkMap_read) ENABLED START #
+        """Return the outputLinkMap attribute."""
+        return self._output_link_map
+        # PROTECTED REGION END #    //  FspCorrSubarray.outputLinkMap_read
+
+    # def write_outputLinkMap(self, value):
+    #     # PROTECTED REGION ID(FspCorrSubarray.outputLinkMap_write) ENABLED START #
+    #     """Set the outputLinkMap attribute."""
+    #     self._output_link_map=value
+    #     # PROTECTED REGION END #    //  FspCorrSubarray.outputLinkMap_write
+        
     # --------
     # Commands
     # --------
@@ -687,17 +708,10 @@ class FspCorrSubarray(SKASubarray):
             # Configure fspChannelOffset
             self._fsp_channel_offset= int(argin["fspChannelOffset"])
                 
-            # Configure destination addresses # ???
-            self.logger.info(argin["outputHost"])
-            self.logger.info(type(argin["outputHost"]))
-            self.logger.info(type(self._vis_destination_address))
-            try:
-                self._vis_destination_address["outputHost"]=argin["outputHost"]
-                self._vis_destination_address["outputMac"]=argin["outputMac"]
-                self._vis_destination_address["outputPort"]=argin["outputPort"]
-
-            except:
-                self.logger.warn("ops, doesnt work")
+            # Configure destination addresses
+            self._vis_destination_address["outputHost"]=argin["outputHost"]
+            self._vis_destination_address["outputMac"]=argin["outputMac"]
+            self._vis_destination_address["outputPort"]=argin["outputPort"]
 
             # Configure channelAveragingMap.
             if "channelAveragingMap" in argin:
@@ -711,6 +725,23 @@ class FspCorrSubarray(SKASubarray):
                 log_msg = "FSP specified, but 'channelAveragingMap not given. Default to averaging "\
                     "factor = 0 for all channel groups."
                 self.logger.warn(log_msg)
+
+            # Configure outputLinkMap
+
+            # self.logger.info(argin)
+            # self.logger.info(argin["outputLinkMap"])
+
+            if "outputLinkMap" in argin:
+                for i in range(len(argin["outputLinkMap"])):
+                    self._output_link_map[i][0] = int(argin["outputLinkMap"][i][0])
+                    self._output_link_map[i][1] = int(argin["outputLinkMap"][i][1])
+            else:
+                self.logger.info("not in!!!")
+            self.logger.info(self._output_link_map)
+            self._output_link_map=argin["outputLinkMap"]
+            self.logger.info(self._output_link_map)
+
+
 
         # This state transition will be later 
         # 03-23-2020: FspCorrSubarray moves to READY after configuration of the 
