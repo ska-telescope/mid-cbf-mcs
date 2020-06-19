@@ -797,6 +797,12 @@ class FspCorrSubarray(SKASubarray):
         self._obs_state = ObsState.IDLE.value
         # PROTECTED REGION END #    //  FspCorrSubarray.GoToIdle
 
+
+    def is_getLinkAndAddress_allowed(self):
+        """Allowed if destination addresses are received, meaning outputLinkMap also received (checked in subarray validate scan)."""
+        if self._vis_destination_address["outputHost"]==[]:
+            return False
+        return True
     @command(
         dtype_in='DevULong',
         doc_in="channel ID",
@@ -815,7 +821,50 @@ class FspCorrSubarray(SKASubarray):
         :return:'DevString'
         output link and destination addresses in JSON
         """
+        if argin<0 or argin >14479:
+            msg="channelID should be between 0 to 14479"
+            tango.Except.throw_exception("Command failed", msg, "getLinkAndAddress",
+                                           tango.ErrSeverity.ERR)
+            return
+
+
         result={"outputLink": 0, "outputHost": "109.1", "outputMac": "06-00", "outputPort": 0}
+        # Get output link by finding the first element[1] that's greater than argin
+        link=0
+        for element in self._output_link_map:
+            if argin>=element[0]:
+                link=element[1]
+            else:
+                break
+        result["outputLink"]=link
+        # Get 3 addresses by finding the first element[1] that's greater than argin
+        host=""
+        for element in self._vis_destination_address["outputHost"]:
+            if argin>=element[0]:
+                host=element[1]
+            else:
+                break
+        result["outputHost"]=host        
+        
+        mac=""
+        for element in self._vis_destination_address["outputMac"]:
+            if argin>=element[0]:
+                mac=element[1]
+            else:
+                break
+        result["outputMac"]=mac
+        
+        # Port is different. the array is given as [[start_channel, start_value, increment],[start_channel, start_value, increment],.....]
+        # value = start_value + (channel - start_channel)*increment
+        triple=[] # find the triple with correct start_value
+        for element in self._vis_destination_address["outputPort"]:
+            if argin>=element[0]:
+                triple=element
+            else:
+                break
+        
+        result["outputPort"]= triple[1] + (argin - triple[0])* triple[2]
+
         return str(result)
         # PROTECTED REGION END #    //  FspCorrSubarray.getLinkAndAddress
 # ----------
