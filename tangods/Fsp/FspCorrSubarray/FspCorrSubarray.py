@@ -797,6 +797,27 @@ class FspCorrSubarray(SKASubarray):
         self._obs_state = ObsState.IDLE.value
         # PROTECTED REGION END #    //  FspCorrSubarray.GoToIdle
 
+    @command(
+        dtype_in='DevULong',
+        doc_in="channel ID",
+        dtype_out='DevString',
+        doc_out="output link and destination addresses in JSON",
+    )
+    @DebugIt()
+    def getLinkAndAddress(self, argin):
+        # PROTECTED REGION ID(FspCorrSubarray.getLinkAndAddress) ENABLED START #
+        """
+        get output link and destination addresses in JSON based on a channel ID
+
+        :param argin: 'DevULong'
+        channel ID
+
+        :return:'DevString'
+        output link and destination addresses in JSON
+        """
+        result={"outputLink": 0, "outputHost": "109.1", "outputMac": "06-00", "outputPort": 0}
+        return str(result)
+        # PROTECTED REGION END #    //  FspCorrSubarray.getLinkAndAddress
 # ----------
 # Run server
 # ----------
