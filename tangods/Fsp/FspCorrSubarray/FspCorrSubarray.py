@@ -389,7 +389,7 @@ class FspCorrSubarray(SKASubarray):
     def write_scanID(self, value):
         # PROTECTED REGION ID(FspCorrSubarray.scanID_write) ENABLED START #
         """Set the scanID attribute."""
-        pass
+        self._scan_id=value
         # PROTECTED REGION END #    //  FspCorrSubarray.scanID_write
 
     def read_configID(self):
@@ -401,7 +401,7 @@ class FspCorrSubarray(SKASubarray):
     def write_configID(self, value):
         # PROTECTED REGION ID(FspCorrSubarray.configID_write) ENABLED START #
         """Set the configID attribute."""
-        pass
+        self._config_id=value
         # PROTECTED REGION END #    //  FspCorrSubarray.configID_write
 
 
@@ -771,6 +771,8 @@ class FspCorrSubarray(SKASubarray):
             # Configure outputLinkMap
             self._output_link_map=argin["outputLinkMap"]
 
+            # Configure configID. This is not initally in the FSP portion of the input JSON, but added in function CbfSuarray._validate_configScan
+            self._config_id=argin["configID"]
 
 
 

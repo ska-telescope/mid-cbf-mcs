@@ -908,6 +908,9 @@ class CbfSubarray(SKASubarray):
                             tango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
                                                          tango.ErrSeverity.ERR)
 
+                        # Add configID to fsp. It is not included in the "FSP" portion in configScan JSON
+                        fsp["configID"]=argin["id"]
+
                         
                         self._corr_config.append(fsp)
                         self._corr_fsp_list = [fsp["fspID"]]
