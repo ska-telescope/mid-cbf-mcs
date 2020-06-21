@@ -56,6 +56,20 @@ class FspCorrSubarray(SKACapability):
         doc="fsp Channel offset, integer, multiple of 14480",
     )
 
+    scanID = attribute(
+        dtype='DevLong64',
+        access=AttrWriteType.READ_WRITE,
+        label="scanID",
+        doc="scan ID, set when transition to SCANNING is performed",
+    )
+
+    configID = attribute(
+        dtype='DevULong64',
+        access=AttrWriteType.READ_WRITE,
+        label="config ID",
+        doc="set when transition to READY is performed",
+    )
+
     outputLinkMap = attribute(
         dtype=(('DevULong64',),),
         access=AttrWriteType.READ_WRITE,
@@ -103,6 +117,30 @@ class FspCorrSubarray(SKACapability):
         """Set the fspChannelOffset attribute."""
         pass
         # PROTECTED REGION END #    //  FspCorrSubarray.fspChannelOffset_write
+
+    def read_scanID(self):
+        # PROTECTED REGION ID(FspCorrSubarray.scanID_read) ENABLED START #
+        """Return the scanID attribute."""
+        return self._scan_id
+        # PROTECTED REGION END #    //  FspCorrSubarray.scanID_read
+
+    def write_scanID(self, value):
+        # PROTECTED REGION ID(FspCorrSubarray.scanID_write) ENABLED START #
+        """Set the scanID attribute."""
+        pass
+        # PROTECTED REGION END #    //  FspCorrSubarray.scanID_write
+
+    def read_configID(self):
+        # PROTECTED REGION ID(FspCorrSubarray.configID_read) ENABLED START #
+        """Return the configID attribute."""
+        return self._config_id
+        # PROTECTED REGION END #    //  FspCorrSubarray.configID_read
+
+    def write_configID(self, value):
+        # PROTECTED REGION ID(FspCorrSubarray.configID_write) ENABLED START #
+        """Set the configID attribute."""
+        pass
+        # PROTECTED REGION END #    //  FspCorrSubarray.configID_write
 
     def read_outputLinkMap(self):
         # PROTECTED REGION ID(FspCorrSubarray.outputLinkMap_read) ENABLED START #

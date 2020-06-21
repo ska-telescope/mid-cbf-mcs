@@ -2029,7 +2029,7 @@ class CbfSubarray(SKASubarray):
 
     @command()
     def EndScan(self):
-        """Send endscan to VCC and FSP. Set state to ready"""
+        """Send endscan to VCC and FSP. Set state to ready. Set ScanID to zero"""
         # PROTECTED REGION ID(CbfSubarray.EndScan) ENABLED START #
         if self._obs_state != ObsState.SCANNING.value:
             msg = "Device not in SCANNING obsState."
@@ -2040,6 +2040,7 @@ class CbfSubarray(SKASubarray):
         self._group_vcc.command_inout("EndScan")
         self._group_fsp_corr_subarray.command_inout("EndScan")
         self._group_fsp_pss_subarray.command_inout("EndScan")
+        self._scan_ID=0
 
         self._obs_state = ObsState.READY.value
         # PROTECTED REGION END #    //  CbfSubarray.EndScan
@@ -2080,7 +2081,9 @@ class CbfSubarray(SKASubarray):
 
         # TODO: actually use argin
         # For MVP, ignore argin (activation time)
+        # self._group_fsp.command_inout("Scan")
         self._group_vcc.command_inout("Scan")
+        # self._group_fsp_corr_subarray.command_inout(cmd_name="Scan",param=argin)
         self._group_fsp_corr_subarray.command_inout("Scan")
         self._group_fsp_pss_subarray.command_inout("Scan")
 

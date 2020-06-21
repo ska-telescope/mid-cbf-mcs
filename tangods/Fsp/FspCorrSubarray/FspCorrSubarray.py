@@ -181,6 +181,21 @@ class FspCorrSubarray(SKASubarray):
         max_dim_x=2, max_dim_y=40,
     )
 
+    scanID = attribute(
+        dtype='DevLong64',
+        access=AttrWriteType.READ_WRITE,
+        label="scanID",
+        doc="scan ID, set when transition to SCANNING is performed",
+    )
+
+
+    configID = attribute(
+        dtype='str',
+        access=AttrWriteType.READ_WRITE,
+        label="Config ID",
+        doc="set when transition to READY is performed",
+    )
+
     # ---------------
     # General methods
     # ---------------
@@ -209,6 +224,8 @@ class FspCorrSubarray(SKASubarray):
         self._bandwidth_actual = const.FREQUENCY_SLICE_BW
         self._zoom_window_tuning = 0
         self._integration_time = 0
+        self._scan_id = 0
+        self._config_id = ""
         self._channel_averaging_map = [
             [int(i*self.NUM_FINE_CHANNELS/self.NUM_CHANNEL_GROUPS) + 1, 0]
             for i in range(self.NUM_CHANNEL_GROUPS)
@@ -357,12 +374,37 @@ class FspCorrSubarray(SKASubarray):
         return self._output_link_map
         # PROTECTED REGION END #    //  FspCorrSubarray.outputLinkMap_read
 
-    # def write_outputLinkMap(self, value):
-    #     # PROTECTED REGION ID(FspCorrSubarray.outputLinkMap_write) ENABLED START #
-    #     """Set the outputLinkMap attribute."""
-    #     self._output_link_map=value
-    #     # PROTECTED REGION END #    //  FspCorrSubarray.outputLinkMap_write
-        
+    def write_outputLinkMap(self, value):
+        # PROTECTED REGION ID(FspCorrSubarray.outputLinkMap_write) ENABLED START #
+        """Set the outputLinkMap attribute."""
+        self._output_link_map=value
+        # PROTECTED REGION END #    //  FspCorrSubarray.outputLinkMap_write
+
+    def read_scanID(self):
+        # PROTECTED REGION ID(FspCorrSubarray.scanID_read) ENABLED START #
+        """Return the scanID attribute."""
+        return self._scan_id
+        # PROTECTED REGION END #    //  FspCorrSubarray.scanID_read
+
+    def write_scanID(self, value):
+        # PROTECTED REGION ID(FspCorrSubarray.scanID_write) ENABLED START #
+        """Set the scanID attribute."""
+        pass
+        # PROTECTED REGION END #    //  FspCorrSubarray.scanID_write
+
+    def read_configID(self):
+        # PROTECTED REGION ID(FspCorrSubarray.configID_read) ENABLED START #
+        """Return the configID attribute."""
+        return self._config_id
+        # PROTECTED REGION END #    //  FspCorrSubarray.configID_read
+
+    def write_configID(self, value):
+        # PROTECTED REGION ID(FspCorrSubarray.configID_write) ENABLED START #
+        """Set the configID attribute."""
+        pass
+        # PROTECTED REGION END #    //  FspCorrSubarray.configID_write
+
+
     # --------
     # Commands
     # --------
@@ -727,19 +769,8 @@ class FspCorrSubarray(SKASubarray):
                 self.logger.warn(log_msg)
 
             # Configure outputLinkMap
-
-            # self.logger.info(argin)
-            # self.logger.info(argin["outputLinkMap"])
-
-            if "outputLinkMap" in argin:
-                for i in range(len(argin["outputLinkMap"])):
-                    self._output_link_map[i][0] = int(argin["outputLinkMap"][i][0])
-                    self._output_link_map[i][1] = int(argin["outputLinkMap"][i][1])
-            else:
-                self.logger.info("not in!!!")
-            self.logger.info(self._output_link_map)
             self._output_link_map=argin["outputLinkMap"]
-            self.logger.info(self._output_link_map)
+
 
 
 
@@ -760,9 +791,10 @@ class FspCorrSubarray(SKASubarray):
 
     @command()
     def EndScan(self):
-        """Set ObsState to READY"""
+        """Set ObsState to READY. Set ScanID to zero"""
         # PROTECTED REGION ID(FspCorrSubarray.EndScan) ENABLED START #
         self._obs_state = ObsState.READY.value
+        self._scan_id = 0
         # nothing else is supposed to happen
         # PROTECTED REGION END #    //  FspCorrSubarray.EndScan
 
@@ -773,11 +805,22 @@ class FspCorrSubarray(SKASubarray):
             return True
         return False
 
-    @command()
-    def Scan(self):
+    @command(
+        # dtype_in='uint',
+        # doc_in="Scan ID"
+    )
+    def Scan(self): #def Scan(self, argin):
         # PROTECTED REGION ID(FspCorrSubarray.Scan) ENABLED START #
-        """Set ObsState to READY"""
+        """Set ObsState to READY, set scanID"""
         self._obs_state = ObsState.SCANNING.value
+        try:
+            self._scan_ID=int(argin)
+        except:
+            msg="The input scanID is not integer."
+            self.logger.error(msg)
+            tango.Except.throw_exception("Command failed", msg, "FspCorrSubarray Scan execution",
+                                         tango.ErrSeverity.ERR)
+        
         # nothing else is supposed to happen
         # PROTECTED REGION END #    //  FspCorrSubarray.Scan
 
@@ -795,6 +838,7 @@ class FspCorrSubarray(SKASubarray):
         """Clear channel. Set Obsstate to IDLE"""
         self._channel_info.clear()
         self._obs_state = ObsState.IDLE.value
+        self._config_id=""
         # PROTECTED REGION END #    //  FspCorrSubarray.GoToIdle
 
 
