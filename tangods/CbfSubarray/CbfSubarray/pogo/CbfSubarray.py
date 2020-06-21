@@ -74,9 +74,15 @@ class CbfSubarray(SKASubarray):
     configID = attribute(
         dtype='DevULong64',
         access=AttrWriteType.READ_WRITE,
-        label="config ID",
+        label="Config ID",
         memorized=True,
-        doc="config ID",
+        doc="Config ID",
+    )
+
+    latestScanConfig = attribute(
+        dtype='DevString',
+        label="lastest Scan Configuration",
+        doc="for storing lastest scan configuration",
     )
 
     receptors = attribute(
@@ -142,6 +148,12 @@ class CbfSubarray(SKASubarray):
         """Set the configID attribute."""
         pass
         # PROTECTED REGION END #    //  CbfSubarray.configID_write
+
+    def read_latestScanConfig(self):
+        # PROTECTED REGION ID(CbfSubarray.latestScanConfig_read) ENABLED START #
+        """Return the latestScanConfig attribute."""
+        return self._latest_scan_config
+        # PROTECTED REGION END #    //  CbfSubarray.latestScanConfig_read
 
     def read_receptors(self):
         # PROTECTED REGION ID(CbfSubarray.receptors_read) ENABLED START #
