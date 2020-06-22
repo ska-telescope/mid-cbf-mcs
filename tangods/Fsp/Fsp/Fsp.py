@@ -385,7 +385,6 @@ class Fsp(SKACapability):
         result ={}
         for proxy in self._fsp_corr_proxies:
             result[str(proxy)]=proxy.configID
-        self.logger.info(result)
         return str(result)
         # PROTECTED REGION END #    //  Fsp.getConfigID
 

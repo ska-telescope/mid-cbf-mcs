@@ -808,15 +808,16 @@ class FspCorrSubarray(SKASubarray):
         return False
 
     @command(
-        # dtype_in='uint',
-        # doc_in="Scan ID"
+        dtype_in='uint16',
+        doc_in="Scan ID"
     )
-    def Scan(self): #def Scan(self, argin):
+    def Scan(self, argin):
         # PROTECTED REGION ID(FspCorrSubarray.Scan) ENABLED START #
         """Set ObsState to READY, set scanID"""
+        self.logger.info("scan in fspcorrsubarray")
         self._obs_state = ObsState.SCANNING.value
         try:
-            self._scan_ID=int(argin)
+            self._scan_id=int(argin)
         except:
             msg="The input scanID is not integer."
             self.logger.error(msg)

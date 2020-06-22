@@ -849,7 +849,7 @@ class CbfSubarray(SKASubarray):
                                 for i in range(20):
                                     # validate channel ID of first channel in group
                                     if int(fsp["channelAveragingMap"][i][0]) == \
-                                            i * self.NUM_FINE_CHANNELS / self.NUM_CHANNEL_GROUPS + 1:
+                                            i * self.NUM_FINE_CHANNELS / self.NUM_CHANNEL_GROUPS:
                                         pass  # the default value is already correct
                                     else:
                                         msg = "'channelAveragingMap'[{0}][0] is not the channel ID of the " \
@@ -1294,7 +1294,7 @@ class CbfSubarray(SKASubarray):
 
         self._obs_state = ObsState.IDLE.value
         self._admin_mode = AdminMode.ONLINE.value
-        self.set_state(tango.DevState.OFF)
+        self.set_state(tango.DevState.DISABLE)
 
         # don't need this anymore (since everything is reset when the device is deleted)
 
@@ -2102,10 +2102,10 @@ class CbfSubarray(SKASubarray):
         # For MVP, ignore argin (activation time)
         # self._group_fsp.command_inout("Scan")
         self._group_vcc.command_inout("Scan")
-        # data = tango.DeviceData()
-        # data.insert(tango.DevUShort, argin)
-        # self._group_fsp_corr_subarray.command_inout("Scan", argin)
-        self._group_fsp_corr_subarray.command_inout("Scan")
+        data = tango.DeviceData()
+        data.insert(tango.DevUShort, argin)
+        self._group_fsp_corr_subarray.command_inout("Scan", data)
+        # self._group_fsp_corr_subarray.command_inout("Scan")
         self._group_fsp_pss_subarray.command_inout("Scan")
 
         self._obs_state = ObsState.SCANNING.value
@@ -2148,6 +2148,7 @@ class CbfSubarray(SKASubarray):
         # change FSP subarray membership
         data = tango.DeviceData()
         data.insert(tango.DevUShort, self._subarray_id)
+        self.logger.info(data)
         self._group_fsp.command_inout("RemoveSubarrayMembership", data)
         self._group_fsp.remove_all()
         self._proxies_assigned_fsp.clear()
