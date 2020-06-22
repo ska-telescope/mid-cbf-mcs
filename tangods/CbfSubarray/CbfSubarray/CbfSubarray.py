@@ -2102,7 +2102,9 @@ class CbfSubarray(SKASubarray):
         # For MVP, ignore argin (activation time)
         # self._group_fsp.command_inout("Scan")
         self._group_vcc.command_inout("Scan")
-        # self._group_fsp_corr_subarray.command_inout(cmd_name="Scan",param=argin)
+        # data = tango.DeviceData()
+        # data.insert(tango.DevUShort, argin)
+        # self._group_fsp_corr_subarray.command_inout("Scan", argin)
         self._group_fsp_corr_subarray.command_inout("Scan")
         self._group_fsp_pss_subarray.command_inout("Scan")
 
