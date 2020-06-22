@@ -1828,6 +1828,9 @@ class CbfSubarray(SKASubarray):
             log_msg = "'searchWindow' not given."
             self.logger.warn(log_msg)
 
+        # Configure configID
+        self._group_vcc.write_attribute("configID",argin["id"])
+
         # The VCCs are done configuring at this point
         data = tango.DeviceData()
         data.insert(tango.DevUShort, ObsState.READY.value)
@@ -2098,12 +2101,9 @@ class CbfSubarray(SKASubarray):
             tango.Except.throw_exception("Command failed", msg, "Scan execution",
                                          tango.ErrSeverity.ERR)
 
-        # TODO: actually use argin
-        # For MVP, ignore argin (activation time)
-        # self._group_fsp.command_inout("Scan")
-        self._group_vcc.command_inout("Scan")
         data = tango.DeviceData()
         data.insert(tango.DevUShort, argin)
+        self._group_vcc.command_inout("Scan", data)
         self._group_fsp_corr_subarray.command_inout("Scan", data)
         # self._group_fsp_corr_subarray.command_inout("Scan")
         self._group_fsp_pss_subarray.command_inout("Scan")
@@ -2159,7 +2159,10 @@ class CbfSubarray(SKASubarray):
         self._group_fsp_pss_subarray.remove_all()
         self._proxies_assigned_fsp_corr_subarray.clear()
 
+        # configID needs to set to empty string (FSPCorrSubarray's configID set to empty automatically by calling gotoIDLE)
         self._config_ID = ""
+        self._group_vcc.write_attribute("configID","")
+
         # self._output_links_distribution = {"configID": ""} #???
         # self._last_received_vis_destination_address = "{}"#???
         self._last_received_delay_model = "{}"

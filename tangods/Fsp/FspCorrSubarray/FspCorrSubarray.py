@@ -816,6 +816,7 @@ class FspCorrSubarray(SKASubarray):
         """Set ObsState to READY, set scanID"""
         self.logger.info("scan in fspcorrsubarray")
         self._obs_state = ObsState.SCANNING.value
+        # set scanID
         try:
             self._scan_id=int(argin)
         except:
