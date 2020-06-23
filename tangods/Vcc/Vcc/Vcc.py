@@ -211,6 +211,20 @@ class Vcc(SKACapability):
         doc="Delay model coefficients, given per frequency slice"
     )
 
+    scanID = attribute(
+        dtype='DevULong',
+        access=AttrWriteType.READ_WRITE,
+        label="scanID",
+        doc="scan ID",
+    )
+
+    configID = attribute(
+        dtype='DevString',
+        access=AttrWriteType.READ_WRITE,
+        label="config ID",
+        doc="config ID",
+    )
+
     # ---------------
     # General methods
     # ---------------
@@ -251,7 +265,8 @@ class Vcc(SKACapability):
         self._scfo_band_5a = 0
         self._scfo_band_5b = 0
         self._delay_model = [[0] * 6 for i in range(26)]
-
+        self._config_id = ""
+        self._scan_id = 0
         self._obs_state = ObsState.IDLE.value
         self.set_state(tango.DevState.OFF)
         # PROTECTED REGION END #    //  Vcc.init_device
@@ -448,6 +463,30 @@ class Vcc(SKACapability):
         """Return delayModel attribute(2 dim, max=6*26 array): Delay model coefficients, given per frequency slice"""
         return self._delay_model
         # PROTECTED REGION END #    //  Vcc.delayModel_read
+
+    def read_scanID(self):
+        # PROTECTED REGION ID(Vcc.scanID_read) ENABLED START #
+        """Return the scanID attribute."""
+        return self._scan_id
+        # PROTECTED REGION END #    //  Vcc.scanID_read
+
+    def write_scanID(self, value):
+        # PROTECTED REGION ID(Vcc.scanID_write) ENABLED START #
+        """Set the scanID attribute."""
+        self._scan_id=value
+        # PROTECTED REGION END #    //  Vcc.scanID_write
+
+    def read_configID(self):
+        # PROTECTED REGION ID(Vcc.configID_read) ENABLED START #
+        """Return the configID attribute."""
+        return self._config_id
+        # PROTECTED REGION END #    //  Vcc.configID_read
+
+    def write_configID(self, value):
+        # PROTECTED REGION ID(Vcc.configID_write) ENABLED START #
+        """Set the configID attribute."""
+        self._config_id = value
+        # PROTECTED REGION END #    //  Vcc.configID_write
 
     # --------
     # Commands
@@ -914,8 +953,9 @@ class Vcc(SKACapability):
     @command()
     def EndScan(self):
         # PROTECTED REGION ID(Vcc.EndScan) ENABLED START #
-        """End the scan: Set the obsState to READY"""
+        """End the scan: Set the obsState to READY. Set ScanID to 0"""
         self._obs_state = ObsState.READY.value
+        self._scan_id = 0
         # nothing else is supposed to happen
         # PROTECTED REGION END #    //  Vcc.EndScan
 
@@ -926,11 +966,22 @@ class Vcc(SKACapability):
             return True
         return False
 
-    @command()
-    def Scan(self):
+    @command(
+        dtype_in='uint16',
+        doc_in="Scan ID"
+    )
+    def Scan(self, argin):
         # PROTECTED REGION ID(Vcc.Scan) ENABLED START #
         """set VCC ObsState to SCANNING"""
         self._obs_state = ObsState.SCANNING.value
+        # Set scanID
+        try:
+            self._scan_id=int(argin)
+        except:
+            msg="The input scanID is not integer."
+            self.logger.error(msg)
+            tango.Except.throw_exception("Command failed", msg, "FspCorrSubarray Scan execution",
+                                         tango.ErrSeverity.ERR)
         # nothing else is supposed to happen
         # PROTECTED REGION END #    //  Vcc.Scan
 

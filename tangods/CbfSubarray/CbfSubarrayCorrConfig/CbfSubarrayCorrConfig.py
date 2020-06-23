@@ -163,7 +163,8 @@ class CbfSubarrayCorrConfig(SKACapability):
         doc_in='JSON object to configure a fsp'
     )
     def ConfigureFSP(self, argin):
-        """Set corrConfig attribute; Set CbfSubarrayCorrConfig to configuring; Set fspID attribute; Send config to fspCorrSubarray for Fsp configuration"""
+        """ Send config(argin) to FSPCorrSubarray to ConfigureScan.
+        Set corrConfig attribute; Set CbfSubarrayCorrConfig to configuring; Set fspID attribute;"""
         # input configuration has already been checked in CbfSubarray device for FspID configuration type = PSS or 0
         if self._obs_state not in [ObsState.IDLE.value, ObsState.READY.value]:
             msg = "Device not in IDLE or READY obsState."
@@ -184,7 +185,7 @@ class CbfSubarrayCorrConfig(SKACapability):
         for fsp in argin:
             try:
                 self._fsp_id.append(int(fsp["fspID"]))
-                # Send config to fspCorrSubarray for Fsp configuration
+                ###################### Send config to fspCorrSubarray for Fsp configuration ####################
                 proxy_fsp_corr_subarray = self._proxies_fsp_corr_subarray[self._fsp_id[count] - 1]
                 proxy_fsp_corr_subarray.ConfigureScan(json.dumps(fsp))
                 count = count + 1

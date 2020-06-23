@@ -167,6 +167,35 @@ class FspCorrSubarray(SKASubarray):
         doc="Destination addresses for visibilities, given as a JSON object"
     )
 
+
+    fspChannelOffset = attribute(
+        dtype='DevLong',
+        access=AttrWriteType.READ_WRITE,
+        label="fspChannelOffset",
+        doc="fsp Channel offset, integer, multiple of 14480",
+    )
+
+    outputLinkMap = attribute(
+        dtype=(('DevULong64',),),
+        access=AttrWriteType.READ,
+        max_dim_x=2, max_dim_y=40,
+    )
+
+    scanID = attribute(
+        dtype='DevLong64',
+        access=AttrWriteType.READ_WRITE,
+        label="scanID",
+        doc="scan ID, set when transition to SCANNING is performed",
+    )
+
+
+    configID = attribute(
+        dtype='str',
+        access=AttrWriteType.READ_WRITE,
+        label="Config ID",
+        doc="set when transition to READY is performed",
+    )
+
     # ---------------
     # General methods
     # ---------------
@@ -195,13 +224,19 @@ class FspCorrSubarray(SKASubarray):
         self._bandwidth_actual = const.FREQUENCY_SLICE_BW
         self._zoom_window_tuning = 0
         self._integration_time = 0
+        self._scan_id = 0
+        self._config_id = ""
         self._channel_averaging_map = [
             [int(i*self.NUM_FINE_CHANNELS/self.NUM_CHANNEL_GROUPS) + 1, 0]
             for i in range(self.NUM_CHANNEL_GROUPS)
         ]
-        self._vis_destination_address = []
+        # destination addresses includes the following three
+        self._vis_destination_address = {"outputHost":[], "outputMac": [], "outputPort":[]}
+        self._fsp_channel_offset = 0
+        # outputLinkMap is a 2*40 array. Pogo generates tuple. I changed into list to facilitate writing
+        self._output_link_map = [[0,0] for i in range(40)]
 
-        # For each channel sent to SDP: [chanID, bw, cf, cbfOutLink, sdpIp, sdpPort]
+        # For each channel sent to SDP: [chanID, bw, cf, cbfOutLink, sdpIp, sdpPort] # ???
         self._channel_info = []
 
         # device proxy for easy reference to CBF Master
@@ -320,6 +355,55 @@ class FspCorrSubarray(SKASubarray):
         """Set VisDestinationAddress attribute(JSON object containing info about current SDP destination addresses being used)."""
         self._vis_destination_address = json.loads(value)
         # PROTECTED REGION END #    //  FspCorrSubarray.visDestinationAddress_write
+
+    def read_fspChannelOffset(self):
+        # PROTECTED REGION ID(Fsp.fspChannelOffset_read) ENABLED START #
+        """Return the fspChannelOffset attribute."""
+        return self._fsp_channel_offset
+        # PROTECTED REGION END #    //  Fsp.fspChannelOffset_read
+
+    def write_fspChannelOffset(self, value):
+        # PROTECTED REGION ID(Fsp.fspChannelOffset_write) ENABLED START #
+        """Set the fspChannelOffset attribute."""
+        self._fsp_channel_offset=value
+        # PROTECTED REGION END #    //  Fsp.fspChannelOffset_write
+
+    def read_outputLinkMap(self):
+        # PROTECTED REGION ID(FspCorrSubarray.outputLinkMap_read) ENABLED START #
+        """Return the outputLinkMap attribute."""
+        return self._output_link_map
+        # PROTECTED REGION END #    //  FspCorrSubarray.outputLinkMap_read
+
+    def write_outputLinkMap(self, value):
+        # PROTECTED REGION ID(FspCorrSubarray.outputLinkMap_write) ENABLED START #
+        """Set the outputLinkMap attribute."""
+        self._output_link_map=value
+        # PROTECTED REGION END #    //  FspCorrSubarray.outputLinkMap_write
+
+    def read_scanID(self):
+        # PROTECTED REGION ID(FspCorrSubarray.scanID_read) ENABLED START #
+        """Return the scanID attribute."""
+        return self._scan_id
+        # PROTECTED REGION END #    //  FspCorrSubarray.scanID_read
+
+    def write_scanID(self, value):
+        # PROTECTED REGION ID(FspCorrSubarray.scanID_write) ENABLED START #
+        """Set the scanID attribute."""
+        self._scan_id=value
+        # PROTECTED REGION END #    //  FspCorrSubarray.scanID_write
+
+    def read_configID(self):
+        # PROTECTED REGION ID(FspCorrSubarray.configID_read) ENABLED START #
+        """Return the configID attribute."""
+        return self._config_id
+        # PROTECTED REGION END #    //  FspCorrSubarray.configID_read
+
+    def write_configID(self, value):
+        # PROTECTED REGION ID(FspCorrSubarray.configID_write) ENABLED START #
+        """Set the configID attribute."""
+        self._config_id=value
+        # PROTECTED REGION END #    //  FspCorrSubarray.configID_write
+
 
     # --------
     # Commands
@@ -445,99 +529,100 @@ class FspCorrSubarray(SKASubarray):
         self.RemoveReceptors(self._receptors[:])
         # PROTECTED REGION END #    //  FspCorrSubarray.RemoveAllReceptors
 
-    def is_AddChannels_allowed(self):
-        """Allowed when devState is ON, obsState is CONFIGURING"""
-        if self.dev_state() == tango.DevState.ON and\
-                self._obs_state == ObsState.CONFIGURING.value:
-            return True
-        return False
+    # def is_AddChannels_allowed(self): # ???
+    #     pass
+    #     """Allowed when devState is ON, obsState is CONFIGURING"""
+    #     if self.dev_state() == tango.DevState.ON and\
+    #             self._obs_state == ObsState.CONFIGURING.value:
+    #         return True
+    #     return False
 
-    @command(
-        dtype_in='str',
-        doc_in="Channel frequency info"
-    )
-    def AddChannels(self, argin):
-        # PROTECTED REGION ID(FspCorrSubarray.AddChannels) ENABLED START #
-        # obsState should already be CONFIGURING
-        """Add/replace channel frequency information to an FSP subarray. Input is JSON object"""
-        self._channel_info.clear()
-        argin = json.loads(argin)
+    # @command(
+    #     dtype_in='str',
+    #     doc_in="Channel frequency info"
+    # )
+    # def AddChannels(self, argin):
+    #     # PROTECTED REGION ID(FspCorrSubarray.AddChannels) ENABLED START #
+    #     # obsState should already be CONFIGURING
+    #     """Add/replace channel frequency information to an FSP subarray. Input is JSON object"""
+    #     self._channel_info.clear()
+    #     argin = json.loads(argin)
 
-        for fsp in argin["fsp"]:
-            if fsp["fspID"] == self._fsp_id:
-                for link in fsp["cbfOutLink"]:
-                    for channel in link["channel"]:
-                        self._channel_info.append([
-                            channel["chanID"],
-                            channel["bw"],
-                            channel["cf"],
-                            link["linkID"],
-                            # configure the addresses later
-                            "",
-                            0
-                        ])
+    #     for fsp in argin["fsp"]:
+    #         if fsp["fspID"] == self._fsp_id:
+    #             for link in fsp["cbfOutLink"]:
+    #                 for channel in link["channel"]:
+    #                     self._channel_info.append([
+    #                         channel["chanID"],
+    #                         channel["bw"],
+    #                         channel["cf"],
+    #                         link["linkID"],
+    #                         # configure the addresses later
+    #                         "",
+    #                         0
+    #                     ])
 
-        # I'm pretty sure the list is sorted by first element anyway,
-        # but specify that just in case, I guess.
-        self._channel_info.sort(key=lambda x: x[0])
-        # PROTECTED REGION END #    //  FspCorrSubarray.AddChannels
+    #     # I'm pretty sure the list is sorted by first element anyway,
+    #     # but specify that just in case, I guess.
+    #     self._channel_info.sort(key=lambda x: x[0])
+    #     # PROTECTED REGION END #    //  FspCorrSubarray.AddChannels
 
-    def is_AddChannelAddresses_allowed(self):
-        """Allowed when devState is ON, obsState is CONFIGURING"""
-        if self.dev_state() == tango.DevState.ON and\
-                self._obs_state == ObsState.CONFIGURING.value:
-            return True
-        return False
+    # def is_AddChannelAddresses_allowed(self):
+    #     """Allowed when devState is ON, obsState is CONFIGURING"""
+    #     if self.dev_state() == tango.DevState.ON and\
+    #             self._obs_state == ObsState.CONFIGURING.value:
+    #         return True
+    #     return False
 
-    @command(
-        dtype_in='str',
-        doc_in="Channel address info"
-    )
-    def AddChannelAddresses(self, argin):
-        # PROTECTED REGION ID(FspCorrSubarray.AddChannelAddresses) ENABLED START #
-        # obsState should already be CONFIGURING
-        """Add channel address information to an FSP Subarray. Input is JSON."""
-        argin = json.loads(argin)
+    # @command(
+    #     dtype_in='str',
+    #     doc_in="Channel address info"
+    # )
+    # def AddChannelAddresses(self, argin):
+    #     # PROTECTED REGION ID(FspCorrSubarray.AddChannelAddresses) ENABLED START #
+    #     # obsState should already be CONFIGURING
+    #     """Called by CbfSubarray. Add channel address information to an FSP Subarray. Input is JSON."""
+    #     argin = json.loads(argin)
 
-        for fsp in argin["receiveAddresses"]:
-            if fsp["fspId"] == self._fsp_id:
-                channel_ID_list = [*map(lambda x: x[0], self._channel_info)]
-                for host in fsp["hosts"]:
-                    for channel in host["channels"]:
-                        try:
-                            i = channel_ID_list.index(channel["startChannel"])
-                            for j in range(i, i + channel["numChannels"]):
-                                self._channel_info[j][4] = host["host"]
-                                self._channel_info[j][5] = \
-                                    channel["portOffset"] + self._channel_info[j][0]
-                        # Possible errors:
-                        #     Channel ID not found.
-                        #     Number of channels exceeds configured channels.
-                        # (probably among others)
-                        except Exception as e:
-                            msg = "An error occurred while configuring destination addresses:"\
-                                "\n{}\n".format(str(e))
-                            self.logger.error(msg)
-                            tango.Except.throw_exception("Command failed", msg,
-                                                           "AddChannelAddresses execution",
-                                                           tango.ErrSeverity.ERR)
-                self._vis_destination_address = fsp["hosts"]
+    #     for fsp in argin["receiveAddresses"]:
+    #         if fsp["fspId"] == self._fsp_id:
+    #             channel_ID_list = [*map(lambda x: x[0], self._channel_info)]
+    #             for host in fsp["hosts"]:
+    #                 for channel in host["channels"]:
+    #                     try:
+    #                         i = channel_ID_list.index(channel["startChannel"])
+    #                         for j in range(i, i + channel["numChannels"]):
+    #                             self._channel_info[j][4] = host["host"]
+    #                             self._channel_info[j][5] = \
+    #                                 channel["portOffset"] + self._channel_info[j][0]
+    #                     # Possible errors:
+    #                     #     Channel ID not found.
+    #                     #     Number of channels exceeds configured channels.
+    #                     # (probably among others)
+    #                     except Exception as e:
+    #                         msg = "An error occurred while configuring destination addresses:"\
+    #                             "\n{}\n".format(str(e))
+    #                         self.logger.error(msg)
+    #                         tango.Except.throw_exception("Command failed", msg,
+    #                                                        "AddChannelAddresses execution",
+    #                                                        tango.ErrSeverity.ERR)
+    #             self._vis_destination_address = fsp["hosts"]
 
         # get list of unconfigured channels
-        unconfigured_channels = [channel[0] for channel in self._channel_info if channel[4] == ""]
-        if unconfigured_channels:
-            # raise an error if some channels are unconfigured
-            msg = "The following channels are missing destination addresses:\n{}".format(
-                unconfigured_channels
-            )
-            self.logger.error(msg)
-            tango.Except.throw_exception("Command failed", msg,
-                                           "AddChannelAddressInfo execution",
-                                           tango.ErrSeverity.ERR)
+        # unconfigured_channels = [channel[0] for channel in self._channel_info if channel[4] == ""]
+        # if unconfigured_channels:
+        #     # raise an error if some channels are unconfigured
+        #     msg = "The following channels are missing destination addresses:\n{}".format(
+        #         unconfigured_channels
+        #     )
+        #     self.logger.error(msg)
+        #     tango.Except.throw_exception("Command failed", msg,
+        #                                    "AddChannelAddressInfo execution",
+        #                                    tango.ErrSeverity.ERR)
 
-        # transition to obsState=READY
-        self._obs_state = ObsState.READY.value
-        # PROTECTED REGION END #    //  FspCorrSubarray.AddChannelAddresses
+        # # transition to obsState=READY
+        # self._obs_state = ObsState.READY.value
+        # # PROTECTED REGION END #    //  FspCorrSubarray.AddChannelAddresses
 
     def is_ConfigureScan_allowed(self):
         """Allowed if FSP subarray is ON, obsState is IDLE."""
@@ -554,7 +639,7 @@ class FspCorrSubarray(SKASubarray):
         # PROTECTED REGION ID(FspCorrSubarray.ConfigureScan) ENABLED START #
         # This function is called after the configuration has already been validated,
         # so the checks here have been removed to reduce overhead.
-        """Input a JSON. Configure scan for fsp. Called by CbfSubarrayCoorConfig(proxy_fsp_corr_subarray.ConfigureScan(json.dumps(fsp)))"""
+        """Input a JSON. Configure scan for fsp. Called by CbfSubarrayCorrConfig(proxy_fsp_corr_subarray.ConfigureScan(json.dumps(fsp)))"""
         # transition to obsState=CONFIGURING
         self._obs_state = ObsState.CONFIGURING.value
         self.push_change_event("obsState", self._obs_state)
@@ -661,10 +746,20 @@ class FspCorrSubarray(SKASubarray):
             # Configure integrationTime.
             self._integration_time = int(argin["integrationTime"])
 
+
+            # Configure fspChannelOffset
+            self._fsp_channel_offset= int(argin["fspChannelOffset"])
+                
+            # Configure destination addresses
+            self._vis_destination_address["outputHost"]=argin["outputHost"]
+            self._vis_destination_address["outputMac"]=argin["outputMac"]
+            self._vis_destination_address["outputPort"]=argin["outputPort"]
+
             # Configure channelAveragingMap.
             if "channelAveragingMap" in argin:
-                for i in range(20):
-                    self._channel_averaging_map[i][1] = int(argin["channelAveragingMap"][i][1])
+                # for i in range(20):
+                #     self._channel_averaging_map[i][1] = int(argin["channelAveragingMap"][i][1])
+                self._channel_averaging_map=argin["channelAveragingMap"]
             else:
                 self._channel_averaging_map = [
                     [int(i*self.NUM_FINE_CHANNELS/self.NUM_CHANNEL_GROUPS) + 1, 0]
@@ -674,10 +769,19 @@ class FspCorrSubarray(SKASubarray):
                     "factor = 0 for all channel groups."
                 self.logger.warn(log_msg)
 
-        # This state transition will be later
+            # Configure outputLinkMap
+            self._output_link_map=argin["outputLinkMap"]
+
+            # Configure configID. This is not initally in the FSP portion of the input JSON, but added in function CbfSuarray._validate_configScan
+            self._config_id=argin["configID"]
+
+
+
+        # This state transition will be later 
         # 03-23-2020: FspCorrSubarray moves to READY after configuration of the 
-        # channels addresses sent by SDP.
-        #self._obs_state = ObsState.READY.value
+        # channels addresses sent by SDP. (ADDChannelAddresses funtion, which is called by the subarray)
+        # 06-18-2020: seems like it's not necessary for SDP to trigger ready anymore
+        self._obs_state = ObsState.READY.value
 
         # PROTECTED REGION END #    //  FspCorrSubarray.ConfigureScan
 
@@ -690,9 +794,10 @@ class FspCorrSubarray(SKASubarray):
 
     @command()
     def EndScan(self):
-        """Set ObsState to READY"""
+        """Set ObsState to READY. Set ScanID to zero"""
         # PROTECTED REGION ID(FspCorrSubarray.EndScan) ENABLED START #
         self._obs_state = ObsState.READY.value
+        self._scan_id = 0
         # nothing else is supposed to happen
         # PROTECTED REGION END #    //  FspCorrSubarray.EndScan
 
@@ -703,11 +808,24 @@ class FspCorrSubarray(SKASubarray):
             return True
         return False
 
-    @command()
-    def Scan(self):
+    @command(
+        dtype_in='uint16',
+        doc_in="Scan ID"
+    )
+    def Scan(self, argin):
         # PROTECTED REGION ID(FspCorrSubarray.Scan) ENABLED START #
-        """Set ObsState to READY"""
+        """Set ObsState to READY, set scanID"""
+        self.logger.info("scan in fspcorrsubarray")
         self._obs_state = ObsState.SCANNING.value
+        # set scanID
+        try:
+            self._scan_id=int(argin)
+        except:
+            msg="The input scanID is not integer."
+            self.logger.error(msg)
+            tango.Except.throw_exception("Command failed", msg, "FspCorrSubarray Scan execution",
+                                         tango.ErrSeverity.ERR)
+        
         # nothing else is supposed to happen
         # PROTECTED REGION END #    //  FspCorrSubarray.Scan
 
@@ -725,8 +843,79 @@ class FspCorrSubarray(SKASubarray):
         """Clear channel. Set Obsstate to IDLE"""
         self._channel_info.clear()
         self._obs_state = ObsState.IDLE.value
+        self._config_id=""
         # PROTECTED REGION END #    //  FspCorrSubarray.GoToIdle
 
+
+    def is_getLinkAndAddress_allowed(self):
+        """Allowed if destination addresses are received, meaning outputLinkMap also received (checked in subarray validate scan)."""
+        if self._vis_destination_address["outputHost"]==[]:
+            return False
+        return True
+    @command(
+        dtype_in='DevULong',
+        doc_in="channel ID",
+        dtype_out='DevString',
+        doc_out="output link and destination addresses in JSON",
+    )
+    @DebugIt()
+    def getLinkAndAddress(self, argin):
+        # PROTECTED REGION ID(FspCorrSubarray.getLinkAndAddress) ENABLED START #
+        """
+        get output link and destination addresses in JSON based on a channel ID
+
+        :param argin: 'DevULong'
+        channel ID
+
+        :return:'DevString'
+        output link and destination addresses in JSON
+        """
+        if argin<0 or argin >14479:
+            msg="channelID should be between 0 to 14479"
+            tango.Except.throw_exception("Command failed", msg, "getLinkAndAddress",
+                                           tango.ErrSeverity.ERR)
+            return
+
+
+        result={"outputLink": 0, "outputHost": "109.1", "outputMac": "06-00", "outputPort": 0}
+        # Get output link by finding the first element[1] that's greater than argin
+        link=0
+        for element in self._output_link_map:
+            if argin>=element[0]:
+                link=element[1]
+            else:
+                break
+        result["outputLink"]=link
+        # Get 3 addresses by finding the first element[1] that's greater than argin
+        host=""
+        for element in self._vis_destination_address["outputHost"]:
+            if argin>=element[0]:
+                host=element[1]
+            else:
+                break
+        result["outputHost"]=host        
+        
+        mac=""
+        for element in self._vis_destination_address["outputMac"]:
+            if argin>=element[0]:
+                mac=element[1]
+            else:
+                break
+        result["outputMac"]=mac
+        
+        # Port is different. the array is given as [[start_channel, start_value, increment],[start_channel, start_value, increment],.....]
+        # value = start_value + (channel - start_channel)*increment
+        triple=[] # find the triple with correct start_value
+        for element in self._vis_destination_address["outputPort"]:
+            if argin>=element[0]:
+                triple=element
+            else:
+                break
+        
+        result["outputPort"]= triple[1] + (argin - triple[0])* triple[2]
+
+        return str(result)
+        # PROTECTED REGION END #    //  FspCorrSubarray.getLinkAndAddress
 # ----------
 # Run server
 # ----------

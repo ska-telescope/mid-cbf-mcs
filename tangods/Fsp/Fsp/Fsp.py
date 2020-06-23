@@ -112,6 +112,19 @@ class Fsp(SKACapability):
         doc="Subarray membership"
     )
 
+    scanID = attribute(
+        dtype='DevLong64',
+        label="scanID",
+        doc="scan ID, set when transition to SCANNING is performed",
+    )
+
+    configID = attribute(
+        dtype='str',
+        access=AttrWriteType.READ_WRITE,
+        label="Config ID",
+        doc="set when transition to READY is performed",
+    )
+    
     # ---------------
     # General methods
     # ---------------
@@ -137,6 +150,8 @@ class Fsp(SKACapability):
         # initialize attribute values
         self._function_mode = 0  # IDLE
         self._subarray_membership = []
+        self._scan_id = 0
+        self._config_id = ""
 
         # initialize FSP subarray group
         self._group_fsp_corr_subarray = tango.Group("FSP Subarray Corr")
@@ -146,6 +161,11 @@ class Fsp(SKACapability):
         self._group_fsp_pss_subarray = tango.Group("FSP Subarray Pss")
         for fqdn in list(self.FspPssSubarray):
             self._group_fsp_pss_subarray.add(fqdn)
+
+        # 
+        self._fsp_corr_proxies =[]
+        for fqdn in list(self.FspCorrSubarray):
+            self._fsp_corr_proxies.append(tango.DeviceProxy(fqdn))
 
         self.set_state(tango.DevState.OFF)
         # PROTECTED REGION END #    //  Fsp.init_device
@@ -188,6 +208,25 @@ class Fsp(SKACapability):
         """Return subarrayMembership attribute (an array of affiliations of the FSP)."""
         return self._subarray_membership
         # PROTECTED REGION END #    //  Fsp.subarrayMembership_read
+
+    def read_scanID(self):
+        # PROTECTED REGION ID(FspCorrSubarray.scanID_read) ENABLED START #
+        """Return the scanID attribute."""
+        return self._scan_id
+        # PROTECTED REGION END #    //  FspCorrSubarray.scanID_read
+
+    def read_configID(self):
+        # PROTECTED REGION ID(Fsp.configID_read) ENABLED START #
+        """Return the configID attribute."""
+        return self._config_id
+        # PROTECTED REGION END #    //  Fsp.configID_read
+
+
+    def write_configID(self, value):
+        # PROTECTED REGION ID(Fsp.configID_write) ENABLED START #
+        """Set the configID attribute."""
+        self._config_id=value
+        # PROTECTED REGION END #    //  Fsp.configID_write
 
     # --------
     # Commands
@@ -331,6 +370,23 @@ class Fsp(SKACapability):
             log_msg = "FSP does not belong to subarray {}.".format(argin)
             self.logger.warn(log_msg)
         # PROTECTED REGION END #    //  Fsp.RemoveSubarrayMembership
+
+    @command(
+        dtype_out='DevString',
+        doc_out="returns configID for all the fspCorrSubarray",
+    )
+    def getConfigID(self):
+        # PROTECTED REGION ID(Fsp.getConfigID) ENABLED START #
+        """
+        returns configID for all the fspCorrSubarray
+
+        :return:None
+        """
+        result ={}
+        for proxy in self._fsp_corr_proxies:
+            result[str(proxy)]=proxy.configID
+        return str(result)
+        # PROTECTED REGION END #    //  Fsp.getConfigID
 
 # ----------
 # Run server
