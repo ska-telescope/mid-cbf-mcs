@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# This file is part of the CSP.LMC prototype project
+# This file is part of the Mid.CBF prototype project
 #
 #
 # Distributed under the terms of the BSD-3-Clause license.
@@ -9,14 +9,14 @@
 """Release information for Python Package"""
 
 name = """tangods-mid-cbf"""
-version = "0.4.0"
+version = "0.4.1"
 version_info = version.split(".")
 description = """SKA CbfMaster TANGO Device Server"""
-author = "James Jiang"
-author_email = "james.jiang@nrc-cnrc.gc.ca"
+author = "An Yu"
+author_email = "an.yu@nrc-cnrc.gc.ca"
 license = """BSD-3-Clause"""
 url = """www.tango-controls.org"""
 copyright = """"""
 
-release=0.4.0
-tag=midcbf-prototype-0.4.0
+release=0.4.1
+tag=midcbf-prototype-0.4.1
