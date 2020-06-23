@@ -7,6 +7,31 @@
     "dopplerPhaseCorrSubscriptionPoint": "ska_mid/tm_leaf_node/csp_subarray_01/dopplerPhaseCorrection",
     "delayModelSubscriptionPoint": "ska_mid/tm_leaf_node/csp_subarray_01/delayModel",
     "rfiFlaggingMask": {},
+    "searchWindow": [
+        {
+            "searchWindowID": 1,
+            "searchWindowTuning": 6000000000,
+            "tdcEnable": true,
+            "tdcNumBits": 8,
+            "tdcPeriodBeforeEpoch": 5,
+            "tdcPeriodAfterEpoch": 25,
+            "tdcDestinationAddress": [
+                {
+                    "receptorID": 4,
+                    "tdcDestinationAddress": ["foo", "bar", "8080"]
+                },
+                {
+                    "receptorID": 1,
+                    "tdcDestinationAddress": ["fizz", "buzz", "80"]
+                }
+            ]
+        },
+        {
+            "searchWindowID": 2,
+            "searchWindowTuning": 7000000000,
+            "tdcEnable": false
+        }
+    ],
     "fsp": [
         {
             "fspID": 1,
@@ -64,6 +89,27 @@
             "outputHost": [[0, "192.168.0.1"], [8184, "192.168.0.2"]],
             "outputMac": [[0, "06-00-00-00-00-01"]],
             "outputPort": [[0, 9000, 1], [8184, 9000, 1]]
+        },
+        {
+            "fspID": 3,
+            "functionMode": "PSS-BF",
+            "searchWindowID": 2,
+            "searchBeam": [
+                {
+                    "searchBeamID": 300,
+                    "receptors": [3],
+                    "outputEnable": true,
+                    "averagingInterval": 4,
+                    "searchBeamDestinationAddress": "10.1.1.1"
+                },
+                {
+                    "searchBeamID": 400,
+                    "receptors": [1],
+                    "outputEnable": true,
+                    "averagingInterval": 2,
+                    "searchBeamDestinationAddress": "10.1.2.1"
+                }
+            ]
         }
     ]
 }

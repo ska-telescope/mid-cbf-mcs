@@ -757,8 +757,9 @@ class FspCorrSubarray(SKASubarray):
 
             # Configure channelAveragingMap.
             if "channelAveragingMap" in argin:
-                for i in range(20):
-                    self._channel_averaging_map[i][1] = int(argin["channelAveragingMap"][i][1])
+                # for i in range(20):
+                #     self._channel_averaging_map[i][1] = int(argin["channelAveragingMap"][i][1])
+                self._channel_averaging_map=argin["channelAveragingMap"]
             else:
                 self._channel_averaging_map = [
                     [int(i*self.NUM_FINE_CHANNELS/self.NUM_CHANNEL_GROUPS) + 1, 0]

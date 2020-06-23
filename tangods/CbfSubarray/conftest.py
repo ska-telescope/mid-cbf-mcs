@@ -55,6 +55,14 @@ def create_fsp_2_proxy():
     return DeviceProxy("mid_csp_cbf/fsp/02")
 
 @pytest.fixture(scope="class")
+def create_fsp_3_proxy():
+    return DeviceProxy("mid_csp_cbf/fsp/03")
+
+@pytest.fixture(scope="class")
+def create_fsp_4_proxy():
+    return DeviceProxy("mid_csp_cbf/fsp/04")
+
+@pytest.fixture(scope="class")
 def create_fsp_1_function_mode_proxy():
     return [*map(DeviceProxy, ["mid_csp_cbf/fsp_{}/01".format(i) for i in ["corr", "pss", "pst", "vlbi"]])]
 
@@ -73,6 +81,10 @@ def create_fsp_2_subarray_1_proxy():
 @pytest.fixture(scope="class")
 def create_fsp_3_subarray_1_proxy():
     return DeviceProxy("mid_csp_cbf/fspPssSubarray/03_01")
+
+@pytest.fixture(scope="class")
+def create_fsp_4_subarray_1_proxy():
+    return DeviceProxy("mid_csp_cbf/fspPssSubarray/04_01")
 
 @pytest.fixture(scope="class")
 def create_tm_telstate_proxy():
