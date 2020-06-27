@@ -31,7 +31,7 @@ import pytest
 
 #Local imports
 from CbfMaster.CbfMaster import CbfMaster
-from skabase.control_model import HealthState, AdminMode
+from ska.base.control_model import HealthState, AdminMode
 
 @pytest.mark.usefixtures(
     "create_cbf_master_proxy",

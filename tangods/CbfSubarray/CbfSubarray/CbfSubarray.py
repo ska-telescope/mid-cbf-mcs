@@ -38,8 +38,8 @@ commons_pkg_path = os.path.abspath(os.path.join(file_path, "../../commons"))
 sys.path.insert(0, commons_pkg_path)
 
 from global_enum import const
-from skabase.control_model import ObsState, AdminMode
-from skabase.SKASubarray.SKASubarray import SKASubarray
+from ska.base.control_model import ObsState, AdminMode
+from ska.base.SKASubarray.SKASubarray import SKASubarray
 
 # PROTECTED REGION END #    //  CbfSubarray.additionnal_import
 

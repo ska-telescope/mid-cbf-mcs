@@ -1,9 +1,20 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from setuptools import setup
+# from setuptools import setup
 
-with open('README.rst') as readme_file:
+
+import os
+import sys
+from setuptools import setup, find_packages
+
+setup_dir = os.path.dirname(os.path.abspath(__file__))
+# make sure we use latest info from local code
+sys.path.insert(0, setup_dir)
+
+INFO = {}
+
+with open('README.md') as readme_file:
     readme = readme_file.read()
 
 setup(
@@ -37,7 +48,9 @@ setup(
         'Programming Language :: Python :: 3.6',
     ],
     test_suite='tests',
-    install_requires=['pytango'],
+    install_requires=['pytango',
+                    'lmcbaseclasses == 0.6.0'
+    ],
     setup_requires=[
         # dependency for `python setup.py test`
         'pytest-runner',

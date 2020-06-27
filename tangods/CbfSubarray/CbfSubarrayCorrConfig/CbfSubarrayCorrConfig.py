@@ -36,7 +36,7 @@ commons_pkg_path = os.path.abspath(os.path.join(file_path, "../../commons"))
 sys.path.insert(0, commons_pkg_path)
 
 from global_enum import HealthState, AdminMode, ObsState, const
-from skabase.SKACapability.SKACapability import SKACapability
+from ska.base.SKACapability.SKACapability import SKACapability
 # PROTECTED REGION END #    //  CbfSubarrayCorrConfig.additionnal_import
 
 __all__ = ["CbfSubarrayCorrConfig", "main"]
