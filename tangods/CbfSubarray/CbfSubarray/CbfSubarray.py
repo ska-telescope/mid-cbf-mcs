@@ -801,11 +801,11 @@ class CbfSubarray(SKASubarray):
                         # Validate fspChannelOffset
                         if "fspChannelOffset" in fsp:
                             try: 
-                                if int(fsp["fspChannelOffset"])%14880==0: 
+                                if int(fsp["fspChannelOffset"])>=0: 
                                     pass
                                 #has to be a multiple of 14880
                                 else:
-                                    msg="fspChannelOffset must be a multiple of 14880"
+                                    msg="fspChannelOffset must be greater than or equal to zero"
                                     self.logger.error(msg)
                                     tango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
                                                              tango.ErrSeverity.ERR)
@@ -842,25 +842,25 @@ class CbfSubarray(SKASubarray):
                         if "channelAveragingMap" in fsp:
                             try:
                                 # validate dimensions
-                                assert len(fsp["channelAveragingMap"]) == self.NUM_CHANNEL_GROUPS
-                                for i in range(20):
+                                for i in range(0,len(fsp["channelAveragingMap"])):
                                     assert len(fsp["channelAveragingMap"][i]) == 2
 
-                                for i in range(20):
+                                # validate averaging factor
+                                for i in range(0,len(fsp["channelAveragingMap"])):
                                     # validate channel ID of first channel in group
-                                    if int(fsp["channelAveragingMap"][i][0]) == \
-                                            i * self.NUM_FINE_CHANNELS / self.NUM_CHANNEL_GROUPS:
-                                        pass  # the default value is already correct
-                                    else:
-                                        msg = "'channelAveragingMap'[{0}][0] is not the channel ID of the " \
-                                              "first channel in a group (received {1}).".format(
-                                            i,
-                                            fsp["channelAveragingMap"][i][0]
-                                        )
-                                        self.logger.error(msg)
-                                        tango.Except.throw_exception("Command failed", msg,
-                                                                     "ConfigureScan execution",
-                                                                     tango.ErrSeverity.ERR)
+                                    # if int(fsp["channelAveragingMap"][i][0]) == \
+                                    #         i * self.NUM_FINE_CHANNELS / self.NUM_CHANNEL_GROUPS:
+                                    #     pass  # the default value is already correct
+                                    # else:
+                                    #     msg = "'channelAveragingMap'[{0}][0] is not the channel ID of the " \
+                                    #           "first channel in a group (received {1}).".format(
+                                    #         i,
+                                    #         fsp["channelAveragingMap"][i][0]
+                                    #     )
+                                    #     self.logger.error(msg)
+                                    #     tango.Except.throw_exception("Command failed", msg,
+                                    #                                  "ConfigureScan execution",
+                                    #                                  tango.ErrSeverity.ERR)
 
                                     # validate averaging factor
                                     if int(fsp["channelAveragingMap"][i][1]) in [0, 1, 2, 3, 4, 6, 8]:
@@ -876,7 +876,7 @@ class CbfSubarray(SKASubarray):
                                                                      "ConfigureScan execution",
                                                                      tango.ErrSeverity.ERR)
                             except (TypeError, AssertionError):  # dimensions not correct
-                                msg = "'channelAveragingMap' must be an 2D array of dimensions 2x{}.".format(
+                                msg = "'channelAveragingMap' must be an 2D array of dimensions 2xN.".format(
                                     self.NUM_CHANNEL_GROUPS
                                 )
                                 self.logger.error(msg)
