@@ -40,7 +40,7 @@ sys.path.insert(0, commons_pkg_path)
 
 from global_enum import const
 from ska.base.control_model import HealthState, AdminMode, ObsState
-from ska.base.SKASubarray.SKASubarray import SKASubarray
+from ska.base import SKASubarray
 
 # PROTECTED REGION END #    //  FspCorrSubarray.additionnal_import
 

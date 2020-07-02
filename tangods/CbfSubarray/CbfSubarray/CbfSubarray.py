@@ -39,7 +39,7 @@ sys.path.insert(0, commons_pkg_path)
 
 from global_enum import const
 from ska.base.control_model import ObsState, AdminMode
-from ska.base.SKASubarray.SKASubarray import SKASubarray
+from ska.base import SKASubarray
 
 # PROTECTED REGION END #    //  CbfSubarray.additionnal_import
 

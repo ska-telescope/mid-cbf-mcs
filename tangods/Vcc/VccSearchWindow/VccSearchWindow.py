@@ -37,7 +37,7 @@ commons_pkg_path = os.path.abspath(os.path.join(file_path, "../../commons"))
 sys.path.insert(0, commons_pkg_path)
 
 from ska.base.control_model import HealthState, AdminMode
-from ska.base.SKACapability.SKACapability import SKACapability
+from ska.base import SKACapability
 # PROTECTED REGION END #    //  VccSearchWindow.additionnal_import
 
 __all__ = ["VccSearchWindow", "main"]
