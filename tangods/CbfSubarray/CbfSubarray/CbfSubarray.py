@@ -139,56 +139,7 @@ class CbfSubarray(SKASubarray):
         self._group_vcc.command_inout("UpdateDelayModel", data)
         self._mutex_delay_model_config.release()
 
-    # def __vis_destination_address_event_callback(self, event):???
-    #     if not event.err:
-    #         if self._obs_state not in [ObsState.CONFIGURING.value, ObsState.READY.value]:
-    #             log_msg = "Ignoring destination addresses (obsState not correct)."
-    #             self.logger.info(log_msg)
-    #             return
-    #         if not self._published_output_links:
-    #             log_msg = "Ignoring destination addresses (output links not published yet)."
-    #             self.logger.warn(log_msg)
-    #             return
-    #         try:
-    #             log_msg = "Received destination addresses for visibilities."
-    #             self.logger.info(log_msg)
 
-    #             value = str(event.attr_value.value)
-    #             if value == self._last_received_vis_destination_address:
-    #                 log_msg = "Ignoring destination addresses (identical to previous)."
-    #                 self.logger.info(log_msg)
-    #                 return
-
-    #             self._last_received_vis_destination_address = value
-    #             destination_addresses = json.loads(value)
-
-    #             # No exception should technically ever be raised here.
-    #             if destination_addresses["configID"] != self._config_ID:
-    #                 raise ValueError("config ID is not correct")
-    #             for fsp in destination_addresses["receiveAddresses"]:
-    #                 proxy_fsp_corr_subarray = self._proxies_fsp_corr_subarray[fsp["fspId"] - 1]
-    #                 if proxy_fsp_corr_subarray not in self._proxies_assigned_fsp_corr_subarray:
-    #                     raise ValueError("FSP {} does not belong to subarray {}.".format(
-    #                         fsp["fspId"], self._subarray_id
-    #                     )
-    #                     )
-    #                 log_msg = "Configuring destination addresses for FSP {}...".format(
-    #                     fsp["fspId"]
-    #                 )
-    #                 self.logger.info(log_msg)
-    #                 proxy_fsp_corr_subarray.AddChannelAddresses(value)
-
-    #             log_msg = "Done configuring destination addresses."
-    #             self.logger.info(log_msg)
-
-    #             # transition to obsState=READY
-    #             self._obs_state = ObsState.READY.value
-    #         except Exception as e:
-    #             self.logger.error(str(e))
-    #     else:
-    #         for item in event.errors:
-    #             log_msg = item.reason + ": on attribute " + str(event.attr_name)
-    #             self.logger.error(log_msg)
 
     def __state_change_event_callback(self, event):
         if not event.err:
@@ -227,114 +178,7 @@ class CbfSubarray(SKASubarray):
                 log_msg = item.reason + ": on attribute " + str(event.attr_name)
                 self.logger.error(log_msg)
 
-    # def __generate_output_links(self, scan_cfg): ???
-    #     # At this point, we can assume that the scan configuration is valid and that the FSP
-    #     # attributes have been set properly.
-    #     output_links_all = {
-    #         "configID": self._config_ID,
-    #         "fsp": []
-    #     }
 
-    #     for fsp in scan_cfg["fsp"]:
-    #         if fsp["functionMode"] == "CORR":
-    #             output_links = {
-    #                 "fspID": int(fsp["fspID"]),
-    #                 "frequencySliceID": int(fsp["frequencySliceID"]),
-    #                 "cbfOutLink": []
-    #             }
-    #             links = [[] for i in range(const.NUM_OUTPUT_LINKS)]
-    #             channel_averaging_map_default = [
-    #                 [int(i * const.NUM_FINE_CHANNELS / const.NUM_CHANNEL_GROUPS) + 1, 0]
-    #                 for i in range(const.NUM_CHANNEL_GROUPS)
-    #             ]
-
-    #             if "channelAveragingMap" in fsp:
-    #                 channel_averaging_map = fsp["channelAveragingMap"]
-    #             else:
-    #                 channel_averaging_map = channel_averaging_map_default
-
-    #             bandwidth = const.FREQUENCY_SLICE_BW * 10 ** 6 / 2 ** int(fsp["corrBandwidth"])
-
-    #             if not int(fsp["corrBandwidth"]):  # correlate the full bandwidth
-    #                 if self._frequency_band in list(range(4)):  # frequency band is not band 5
-    #                     frequency_slice_start = [*map(lambda j: j[0] * 10 ** 9, [
-    #                         const.FREQUENCY_BAND_1_RANGE,
-    #                         const.FREQUENCY_BAND_2_RANGE,
-    #                         const.FREQUENCY_BAND_3_RANGE,
-    #                         const.FREQUENCY_BAND_4_RANGE
-    #                     ])][self._frequency_band] + \
-    #                                             (int(
-    #                                                 fsp["frequencySliceID"]) - 1) * const.FREQUENCY_SLICE_BW * 10 ** 6 + \
-    #                                             self._frequency_band_offset_stream_1
-
-    #                 else:  # frequency band 5a or 5b (two streams with bandwidth 2.5 GHz)
-    #                     if int(fsp["frequencySliceID"]) <= 13:  # stream 1
-    #                         frequency_slice_start = scan_cfg["band5Tuning"][0] * 10 ** 9 - \
-    #                                                 const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2 + \
-    #                                                 (int(fsp[
-    #                                                          "frequencySliceID"]) - 1) * const.FREQUENCY_SLICE_BW * 10 ** 6 + \
-    #                                                 self._frequency_band_offset_stream_1
-    #                     else:  # 14 <= self._frequency_slice <= 26  # stream 2
-    #                         frequency_slice_start = scan_cfg["band5Tuning"][1] * 10 ** 9 - \
-    #                                                 const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2 + \
-    #                                                 (int(fsp[
-    #                                                          "frequencySliceID"]) - 14) * const.FREQUENCY_SLICE_BW * 10 ** 6 + \
-    #                                                 self._frequency_band_offset_stream_2
-    #             else:  # correlate a portion of the full bandwidth
-    #                 # since the checks were already done, this is actually simpler
-    #                 frequency_slice_start = int(fsp["zoomWindowTuning"]) * 10 ** 3 - bandwidth / 2
-
-    #             next_channel_start = frequency_slice_start
-
-    #             for channel_group_ID in range(const.NUM_CHANNEL_GROUPS):
-    #                 channel_avg = channel_averaging_map[channel_group_ID][1]
-
-    #                 if channel_avg:  # send channels to SDP
-    #                     channel_bandwidth = bandwidth / const.NUM_FINE_CHANNELS * channel_avg
-
-    #                     for channel_ID in range(
-    #                             int(channel_group_ID * const.NUM_FINE_CHANNELS / const.NUM_CHANNEL_GROUPS) + 1,
-    #                             int((channel_group_ID + 1) * const.NUM_FINE_CHANNELS / const.NUM_CHANNEL_GROUPS) \
-    #                             + 1,
-    #                             channel_avg
-    #                     ):
-    #                         log_msg = "Assigning output link for channel {} of FSP {}...".format(
-    #                             channel_ID, fsp["fspID"]
-    #                         )
-    #                         self.logger.warn(log_msg)
-
-    #                         channel = {
-    #                             "chanID": channel_ID,
-    #                             "bw": int(channel_bandwidth),
-    #                             "cf": int(next_channel_start + channel_bandwidth / 2)
-    #                         }
-    #                         links[randint(0, const.NUM_OUTPUT_LINKS - 1)].append(channel)
-    #                         next_channel_start += channel_bandwidth
-    #                 else:  # don't send channels to SDP
-    #                     next_channel_start += bandwidth / const.NUM_CHANNEL_GROUPS
-
-    #             for link_ID in range(1, const.NUM_OUTPUT_LINKS + 1):
-    #                 if links[link_ID - 1]:
-    #                     output_links["cbfOutLink"].append({
-    #                         "linkID": link_ID,
-    #                         "channel": links[link_ID - 1]
-    #                     })
-
-    #             output_links_all["fsp"].append(output_links)
-
-    #     # output_links_all has the outputlinks information for all the FSP
-    #     # assigned to the subarray.
-    #     json_output_links = json.dumps(output_links_all)
-    #     data = tango.DeviceData()
-    #     data.insert(tango.DevString, json_output_links)
-    #     self._group_fsp_corr_subarray.command_inout("AddChannels", data)
-
-    #     log_msg = "Done assigning output links."
-    #     self.logger.info(log_msg)
-    #     # publish the output links
-    #     self._output_links_distribution = output_links_all
-    #     self.push_change_event("outputLinksDistribution", json_output_links)
-    #     self._published_output_links = True
 
     def __validate_scan_configuration(self, argin):
         # try to deserialize input string to a JSON object
@@ -502,30 +346,7 @@ class CbfSubarray(SKASubarray):
             msg = "'delayModelSubscriptionPoint' not given. Aborting configuration."
             self.__raise_configure_scan_fatal_error(msg)
 
-        # # Validate visDestinationAddressSubscriptionPoint.???
-        # if "visDestinationAddressSubscriptionPoint" in argin:
-        #     try:
-        #         attribute_proxy = tango.AttributeProxy(
-        #             argin["visDestinationAddressSubscriptionPoint"]
-        #         )
-        #         attribute_proxy.ping()
-        #         attribute_proxy.unsubscribe_event(
-        #             attribute_proxy.subscribe_event(
-        #                 tango.EventType.CHANGE_EVENT,
-        #                 self.__void_callback
-        #             )
-        #         )
-        #     except tango.DevFailed:  # attribute doesn't exist or is not set up correctly
-        #         msg = "Attribute {} not found or not set up correctly for " \
-        #               "'visDestinationAddressSubscriptionPoint'. Aborting configuration.".format(
-        #             argin["visDestinationAddressSubscriptionPoint"]
-        #         )
-        #         self.__raise_configure_scan_fatal_error(msg)
-        # else:
-        #     msg = "'visDestinationAddressSubscriptionPoint' not given. Aborting configuration."
-        #     self.__raise_configure_scan_fatal_error(msg)
 
-        # Validate rfiFlaggingMask.
 
         # Validate searchWindow.
         if "searchWindow" in argin:
@@ -1317,6 +1138,7 @@ class CbfSubarray(SKASubarray):
         # pass  # CBF Master not available, so just leave receptors and configID alone
 
         # PROTECTED REGION END #    //  CbfSubarray.init_device
+
 
     def always_executed_hook(self):
         # PROTECTED REGION ID(CbfSubarray.always_executed_hook) ENABLED START #
