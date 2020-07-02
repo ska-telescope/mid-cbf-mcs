@@ -719,7 +719,7 @@ class CbfSubarray(SKASubarray):
                         # Validate zoomWindowTuning.
                         if fsp["corrBandwidth"]:  # zoomWindowTuning is required
                             if "zoomWindowTuning" in fsp:
-                                if fsp["frequencyBand"] in list(range(4)):  # frequency band is not band 5
+                                if fsp["frequencyBand"] not in ["5a", "5b"]:  # frequency band is not band 5
                                     frequency_band_start = [*map(lambda j: j[0] * 10 ** 9, [
                                         const.FREQUENCY_BAND_1_RANGE,
                                         const.FREQUENCY_BAND_2_RANGE,
