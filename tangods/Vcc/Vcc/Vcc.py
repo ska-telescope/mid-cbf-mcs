@@ -696,33 +696,36 @@ class Vcc(SKACapability):
                                                  "ConfigureSearchWindow execution",
                                                  tango.ErrSeverity.ERR)
             else:  # frequency band 5a or 5b (two streams with bandwidth 2.5 GHz)
-                frequency_band_range_1 = (
-                    argin["band5Tuning"][0] * 10 ** 9 + argin["frequencyBandOffsetStream1"] - \
-                    const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2,
-                    argin["band5Tuning"][0] * 10 ** 9 + argin["frequencyBandOffsetStream1"] + \
-                    const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2
-                )
-
-                frequency_band_range_2 = (
-                    argin["band5Tuning"][1] * 10 ** 9 + argin["frequencyBandOffsetStream2"] - \
-                    const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2,
-                    argin["band5Tuning"][1] * 10 ** 9 + argin["frequencyBandOffsetStream2"] + \
-                    const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2
-                )
-
-                if (frequency_band_range_1[0] <= \
-                    int(argin["searchWindowTuning"]) <= \
-                    frequency_band_range_1[1]) or \
-                        (frequency_band_range_2[0] <= \
-                         int(argin["searchWindowTuning"]) <= \
-                         frequency_band_range_2[1]):
+                if argin["band5Tuning"]==[0,0]: # band 5 tuning not specified in configuration
                     pass
                 else:
-                    msg = "'searchWindowTuning' must be within observed band."
-                    self.logger.error(msg)
-                    tango.Except.throw_exception("Command failed", msg,
-                                                 "ConfigureSearchWindow execution",
-                                                 tango.ErrSeverity.ERR)
+                    frequency_band_range_1 = (
+                        argin["band5Tuning"][0] * 10 ** 9 + argin["frequencyBandOffsetStream1"] - \
+                        const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2,
+                        argin["band5Tuning"][0] * 10 ** 9 + argin["frequencyBandOffsetStream1"] + \
+                        const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2
+                    )
+
+                    frequency_band_range_2 = (
+                        argin["band5Tuning"][1] * 10 ** 9 + argin["frequencyBandOffsetStream2"] - \
+                        const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2,
+                        argin["band5Tuning"][1] * 10 ** 9 + argin["frequencyBandOffsetStream2"] + \
+                        const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2
+                    )
+
+                    if (frequency_band_range_1[0] <= \
+                        int(argin["searchWindowTuning"]) <= \
+                        frequency_band_range_1[1]) or \
+                            (frequency_band_range_2[0] <= \
+                            int(argin["searchWindowTuning"]) <= \
+                            frequency_band_range_2[1]):
+                        pass
+                    else:
+                        msg = "'searchWindowTuning' must be within observed band."
+                        self.logger.error(msg)
+                        tango.Except.throw_exception("Command failed", msg,
+                                                    "ConfigureSearchWindow execution",
+                                                    tango.ErrSeverity.ERR)
         else:
             msg = "Search window specified, but 'searchWindowTuning' not given."
             self.logger.error(msg)
