@@ -40,6 +40,7 @@ sys.path.insert(0, commons_pkg_path)
 from global_enum import const
 from ska.base.control_model import ObsState, AdminMode
 from ska.base import SKASubarray
+from ska.base.commands import ResultCode, BaseCommand, ResponseCommand, ActionCommand
 
 # PROTECTED REGION END #    //  CbfSubarray.additionnal_import
 
@@ -1012,132 +1013,225 @@ class CbfSubarray(SKASubarray):
     # ---------------
     # General methods
     # ---------------
+    class InitCommand(SKASubarray.InitCommand):
+        def do(self):
+            """
+            entry point; 
+            initialize the attributes and the properties of the CbfSubarray
+            """
+            # SKASubarray.init_device(self)
+            # PROTECTED REGION ID(CbfSubarray.init_device) ENABLED START #
+            # self.set_state(DevState.INIT)
+            (result_code, message) = super().do()
 
-    def init_device(self):
-        """
-        entry point; 
-        initialize the attributes and the properties of the CbfSubarray
-        """
-        SKASubarray.init_device(self)
-        # PROTECTED REGION ID(CbfSubarray.init_device) ENABLED START #
-        self.set_state(DevState.INIT)
+            device=self.target
 
-        self._storage_logging_level = tango.LogLevel.LOG_DEBUG
-        self._element_logging_level = tango.LogLevel.LOG_DEBUG
-        self._central_logging_level = tango.LogLevel.LOG_DEBUG
+            
+            device._storage_logging_level = tango.LogLevel.LOG_DEBUG
+            device._element_logging_level = tango.LogLevel.LOG_DEBUG
+            device._central_logging_level = tango.LogLevel.LOG_DEBUG
 
-        # get subarray ID
-        if self.SubID:
-            self._subarray_id = self.SubID
-        else:
-            self._subarray_id = int(self.get_name()[-2:])  # last two chars of FQDN
+            # get subarray ID
+            if device.SubID:
+                device._subarray_id = device.SubID
+            else:
+                device._subarray_id = int(device.get_name()[-2:])  # last two chars of FQDN
 
-     # initialize attribute values
-        self._receptors = []
-        self._frequency_band = 0
-        self._config_ID = ""
-        self._scan_ID = 0
-        self._fsp_list = [[], [], [], []]
-        # self._output_links_distribution = {"configID": ""}# ???
-        self._vcc_state = {}  # device_name:state
-        self._vcc_health_state = {}  # device_name:healthState
-        self._fsp_state = {}  # device_name:state
-        self._fsp_health_state = {}  # device_name:healthState
-        # store list of fsp configs being used for each function mode
-        self._pss_config = []
-        self._corr_config = []
-        # store list of fsp being used for each function mode
-        self._corr_fsp_list = []
-        self._pss_fsp_list = []
-        self._latest_scan_config=""
-        # self._published_output_links = False# ???
-        # self._last_received_vis_destination_address = "{}"#???
-        self._last_received_delay_model = "{}"
+        # initialize attribute values
+            device._receptors = []
+            device._frequency_band = 0
+            device._config_ID = ""
+            device._scan_ID = 0
+            device._fsp_list = [[], [], [], []]
+            # device._output_links_distribution = {"configID": ""}# ???
+            device._vcc_state = {}  # device_name:state
+            device._vcc_health_state = {}  # device_name:healthState
+            device._fsp_state = {}  # device_name:state
+            device._fsp_health_state = {}  # device_name:healthState
+            # store list of fsp configs being used for each function mode
+            device._pss_config = []
+            device._corr_config = []
+            # store list of fsp being used for each function mode
+            device._corr_fsp_list = []
+            device._pss_fsp_list = []
+            device._latest_scan_config=""
+            # device._published_output_links = False# ???
+            # device._last_received_vis_destination_address = "{}"#???
+            device._last_received_delay_model = "{}"
 
-        self._mutex_delay_model_config = Lock()
+            device._mutex_delay_model_config = Lock()
 
-        # for easy self-reference
-        self._frequency_band_offset_stream_1 = 0
-        self._frequency_band_offset_stream_2 = 0
-        self._stream_tuning = [0, 0]
+            # for easy device-reference
+            device._frequency_band_offset_stream_1 = 0
+            device._frequency_band_offset_stream_2 = 0
+            device._stream_tuning = [0, 0]
 
-        # device proxy for easy reference to CBF Master
-        self._proxy_cbf_master = tango.DeviceProxy(self.CbfMasterAddress)
+            # device proxy for easy reference to CBF Master
+            device._proxy_cbf_master = tango.DeviceProxy(device.CbfMasterAddress)
 
-        self.MIN_INT_TIME = const.MIN_INT_TIME
-        self.NUM_CHANNEL_GROUPS = const.NUM_CHANNEL_GROUPS
-        self.NUM_FINE_CHANNELS = const.NUM_FINE_CHANNELS
+            device.MIN_INT_TIME = const.MIN_INT_TIME
+            device.NUM_CHANNEL_GROUPS = const.NUM_CHANNEL_GROUPS
+            device.NUM_FINE_CHANNELS = const.NUM_FINE_CHANNELS
 
-        self._proxy_sw_1 = tango.DeviceProxy(self.SW1Address)
-        self._proxy_sw_2 = tango.DeviceProxy(self.SW2Address)
+            device._proxy_sw_1 = tango.DeviceProxy(device.SW1Address)
+            device._proxy_sw_2 = tango.DeviceProxy(device.SW2Address)
 
-        # JSON FSP configurations for PSS, COR, PST, VLBI
-        self._proxy_pss_config = tango.DeviceProxy(self.PssConfigAddress)
-        self._proxy_corr_config = tango.DeviceProxy(self.CorrConfigAddress) # address of CbfSubarrayCoorConfig device in Subarray Multi
+            # JSON FSP configurations for PSS, COR, PST, VLBI
+            device._proxy_pss_config = tango.DeviceProxy(device.PssConfigAddress)
+            device._proxy_corr_config = tango.DeviceProxy(device.CorrConfigAddress) # address of CbfSubarrayCoorConfig device in Subarray Multi
 
-        self._master_max_capabilities = dict(
-            pair.split(":") for pair in
-            self._proxy_cbf_master.get_property("MaxCapabilities")["MaxCapabilities"]
-        )
+            device._master_max_capabilities = dict(
+                pair.split(":") for pair in
+                device._proxy_cbf_master.get_property("MaxCapabilities")["MaxCapabilities"]
+            )
 
-        self._count_vcc = int(self._master_max_capabilities["VCC"])
-        self._count_fsp = int(self._master_max_capabilities["FSP"])
-        self._fqdn_vcc = list(self.VCC)[:self._count_vcc]
-        self._fqdn_fsp = list(self.FSP)[:self._count_fsp]
-        self._fqdn_fsp_corr_subarray = list(self.FspCorrSubarray)
-        self._fqdn_fsp_pss_subarray = list(self.FspPssSubarray)
+            device._count_vcc = int(device._master_max_capabilities["VCC"])
+            device._count_fsp = int(device._master_max_capabilities["FSP"])
+            device._fqdn_vcc = list(device.VCC)[:device._count_vcc]
+            device._fqdn_fsp = list(device.FSP)[:device._count_fsp]
+            device._fqdn_fsp_corr_subarray = list(device.FspCorrSubarray)
+            device._fqdn_fsp_pss_subarray = list(device.FspPssSubarray)
 
 
-        self._proxies_vcc = [*map(tango.DeviceProxy, self._fqdn_vcc)]
-        self._proxies_fsp = [*map(tango.DeviceProxy, self._fqdn_fsp)]
-        self._proxies_fsp_corr_subarray = [*map(tango.DeviceProxy, self._fqdn_fsp_corr_subarray)]
-        self._proxies_fsp_pss_subarray = [*map(tango.DeviceProxy, self._fqdn_fsp_pss_subarray)]
+            device._proxies_vcc = [*map(tango.DeviceProxy, device._fqdn_vcc)]
+            device._proxies_fsp = [*map(tango.DeviceProxy, device._fqdn_fsp)]
+            device._proxies_fsp_corr_subarray = [*map(tango.DeviceProxy, device._fqdn_fsp_corr_subarray)]
+            device._proxies_fsp_pss_subarray = [*map(tango.DeviceProxy, device._fqdn_fsp_pss_subarray)]
 
-        self._proxies_assigned_vcc = []
-        self._proxies_assigned_fsp = []
-        self._proxies_assigned_fsp_corr_subarray = []
-        self._proxies_assigned_fsp_pss_subarray = []
+            device._proxies_assigned_vcc = []
+            device._proxies_assigned_fsp = []
+            device._proxies_assigned_fsp_corr_subarray = []
+            device._proxies_assigned_fsp_pss_subarray = []
 
-        # store the subscribed telstate events as event_ID:attribute_proxy key:value pairs
-        self._events_telstate = {}
+            # store the subscribed telstate events as event_ID:attribute_proxy key:value pairs
+            device._events_telstate = {}
 
-        # store the subscribed state change events as vcc_ID:[event_ID, event_ID] key:value pairs
-        self._events_state_change_vcc = {}
+            # store the subscribed state change events as vcc_ID:[event_ID, event_ID] key:value pairs
+            device._events_state_change_vcc = {}
 
-        # store the subscribed state change events as fsp_ID:[event_ID, event_ID] key:value pairs
-        self._events_state_change_fsp = {}
+            # store the subscribed state change events as fsp_ID:[event_ID, event_ID] key:value pairs
+            device._events_state_change_fsp = {}
 
-        # initialize groups
-        self._group_vcc = tango.Group("VCC")
-        self._group_fsp = tango.Group("FSP")
-        self._group_fsp_corr_subarray = tango.Group("FSP Subarray Corr")
-        self._group_fsp_pss_subarray = tango.Group("FSP Subarray Pss")
+            # initialize groups
+            device._group_vcc = tango.Group("VCC")
+            device._group_fsp = tango.Group("FSP")
+            device._group_fsp_corr_subarray = tango.Group("FSP Subarray Corr")
+            device._group_fsp_pss_subarray = tango.Group("FSP Subarray Pss")
 
-        self._obs_state = ObsState.IDLE.value
-        self._admin_mode = AdminMode.ONLINE.value
-        self.set_state(tango.DevState.DISABLE)
 
-        # don't need this anymore (since everything is reset when the device is deleted)
+            return (ResultCode.OK, "successfull")
+            # self._obs_state = ObsState.IDLE.value
+            # self._admin_mode = AdminMode.ONLINE.value
+            # self.set_state(tango.DevState.DISABLE)
 
-        # to match VCC and CBF Master configuration
-        # needed if device is re-initialized after adding receptors
-        # (which technically should never happen)
-        # I'm not sure how event subscriptions work when the device is re-initialized.
-        # try:
-        # self._proxy_cbf_master.ping()
-        # vcc_subarray_membership = self._proxy_cbf_master.reportVCCSubarrayMembership
-        # vcc_to_receptor = dict([*map(int, pair.split(":"))] for pair in
-        # self._proxy_cbf_master.vccToReceptor)
-        # receptors_to_add = [
-        # vcc_to_receptor[i + 1] for i in range(len(vcc_subarray_membership))
-        # if vcc_subarray_membership[i] == self._subarray_id
-        # ]
-        # self.AddReceptors(receptors_to_add)
-        # self._config_ID = self._proxy_cbf_master.subarrayconfigID[self._subarray_id - 1]
-        # except tango.DevFailed:
-        # pass  # CBF Master not available, so just leave receptors and configID alone
 
-        # PROTECTED REGION END #    //  CbfSubarray.init_device
+
+    # def init_device(self):
+    #     """
+    #     entry point; 
+    #     initialize the attributes and the properties of the CbfSubarray
+    #     """
+    #     SKASubarray.init_device(self)
+    #     # PROTECTED REGION ID(CbfSubarray.init_device) ENABLED START #
+    #     self.set_state(DevState.INIT)
+
+    #     self._storage_logging_level = tango.LogLevel.LOG_DEBUG
+    #     self._element_logging_level = tango.LogLevel.LOG_DEBUG
+    #     self._central_logging_level = tango.LogLevel.LOG_DEBUG
+
+    #     # get subarray ID
+    #     if self.SubID:
+    #         self._subarray_id = self.SubID
+    #     else:
+    #         self._subarray_id = int(self.get_name()[-2:])  # last two chars of FQDN
+
+    #  # initialize attribute values
+    #     self._receptors = []
+    #     self._frequency_band = 0
+    #     self._config_ID = ""
+    #     self._scan_ID = 0
+    #     self._fsp_list = [[], [], [], []]
+    #     # self._output_links_distribution = {"configID": ""}# ???
+    #     self._vcc_state = {}  # device_name:state
+    #     self._vcc_health_state = {}  # device_name:healthState
+    #     self._fsp_state = {}  # device_name:state
+    #     self._fsp_health_state = {}  # device_name:healthState
+    #     # store list of fsp configs being used for each function mode
+    #     self._pss_config = []
+    #     self._corr_config = []
+    #     # store list of fsp being used for each function mode
+    #     self._corr_fsp_list = []
+    #     self._pss_fsp_list = []
+    #     self._latest_scan_config=""
+    #     # self._published_output_links = False# ???
+    #     # self._last_received_vis_destination_address = "{}"#???
+    #     self._last_received_delay_model = "{}"
+
+    #     self._mutex_delay_model_config = Lock()
+
+    #     # for easy self-reference
+    #     self._frequency_band_offset_stream_1 = 0
+    #     self._frequency_band_offset_stream_2 = 0
+    #     self._stream_tuning = [0, 0]
+
+    #     # device proxy for easy reference to CBF Master
+    #     self._proxy_cbf_master = tango.DeviceProxy(self.CbfMasterAddress)
+
+    #     self.MIN_INT_TIME = const.MIN_INT_TIME
+    #     self.NUM_CHANNEL_GROUPS = const.NUM_CHANNEL_GROUPS
+    #     self.NUM_FINE_CHANNELS = const.NUM_FINE_CHANNELS
+
+    #     self._proxy_sw_1 = tango.DeviceProxy(self.SW1Address)
+    #     self._proxy_sw_2 = tango.DeviceProxy(self.SW2Address)
+
+    #     # JSON FSP configurations for PSS, COR, PST, VLBI
+    #     self._proxy_pss_config = tango.DeviceProxy(self.PssConfigAddress)
+    #     self._proxy_corr_config = tango.DeviceProxy(self.CorrConfigAddress) # address of CbfSubarrayCoorConfig device in Subarray Multi
+
+    #     self._master_max_capabilities = dict(
+    #         pair.split(":") for pair in
+    #         self._proxy_cbf_master.get_property("MaxCapabilities")["MaxCapabilities"]
+    #     )
+
+    #     self._count_vcc = int(self._master_max_capabilities["VCC"])
+    #     self._count_fsp = int(self._master_max_capabilities["FSP"])
+    #     self._fqdn_vcc = list(self.VCC)[:self._count_vcc]
+    #     self._fqdn_fsp = list(self.FSP)[:self._count_fsp]
+    #     self._fqdn_fsp_corr_subarray = list(self.FspCorrSubarray)
+    #     self._fqdn_fsp_pss_subarray = list(self.FspPssSubarray)
+
+
+    #     self._proxies_vcc = [*map(tango.DeviceProxy, self._fqdn_vcc)]
+    #     self._proxies_fsp = [*map(tango.DeviceProxy, self._fqdn_fsp)]
+    #     self._proxies_fsp_corr_subarray = [*map(tango.DeviceProxy, self._fqdn_fsp_corr_subarray)]
+    #     self._proxies_fsp_pss_subarray = [*map(tango.DeviceProxy, self._fqdn_fsp_pss_subarray)]
+
+    #     self._proxies_assigned_vcc = []
+    #     self._proxies_assigned_fsp = []
+    #     self._proxies_assigned_fsp_corr_subarray = []
+    #     self._proxies_assigned_fsp_pss_subarray = []
+
+    #     # store the subscribed telstate events as event_ID:attribute_proxy key:value pairs
+    #     self._events_telstate = {}
+
+    #     # store the subscribed state change events as vcc_ID:[event_ID, event_ID] key:value pairs
+    #     self._events_state_change_vcc = {}
+
+    #     # store the subscribed state change events as fsp_ID:[event_ID, event_ID] key:value pairs
+    #     self._events_state_change_fsp = {}
+
+    #     # initialize groups
+    #     self._group_vcc = tango.Group("VCC")
+    #     self._group_fsp = tango.Group("FSP")
+    #     self._group_fsp_corr_subarray = tango.Group("FSP Subarray Corr")
+    #     self._group_fsp_pss_subarray = tango.Group("FSP Subarray Pss")
+
+    #     self._obs_state = ObsState.IDLE.value
+    #     self._admin_mode = AdminMode.ONLINE.value
+    #     self.set_state(tango.DevState.DISABLE)
+
+
+    #     # PROTECTED REGION END #    //  CbfSubarray.init_device
 
 
     def always_executed_hook(self):
