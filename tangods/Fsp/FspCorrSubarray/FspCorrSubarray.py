@@ -752,7 +752,12 @@ class FspCorrSubarray(SKASubarray):
                 
             # Configure destination addresses
             self._vis_destination_address["outputHost"]=argin["outputHost"]
-            self._vis_destination_address["outputMac"]=argin["outputMac"]
+            # ouputMac is optional
+            if "outputMac" in argin:
+                self._vis_destination_address["outputMac"]=argin["outputMac"]
+            else: # not specified, so set default or keep the previous one
+                if self._vis_destination_address["outputMac"]==[]:
+                    self._vis_destination_address["outputMac"]=[[0, "06-00-00-00-00-01"]]
             self._vis_destination_address["outputPort"]=argin["outputPort"]
 
             # Configure channelAveragingMap.
@@ -877,7 +882,7 @@ class FspCorrSubarray(SKASubarray):
             return
 
 
-        result={"outputLink": 0, "outputHost": "109.1", "outputMac": "06-00", "outputPort": 0}
+        result={"outputLink": 0, "outputHost": "", "outputMac": "", "outputPort": 0}
         # Get output link by finding the first element[1] that's greater than argin
         link=0
         for element in self._output_link_map:

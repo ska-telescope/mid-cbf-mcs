@@ -213,7 +213,7 @@ class CbfSubarray(SKASubarray):
             #     self.__raise_configure_scan_fatal_error(msg)
             # else:
             #     pass
-            pass
+
         else:
             msg = "'id'(configID attribute) must be given. Aborting configuration."
             self.__raise_configure_scan_fatal_error(msg)
@@ -233,6 +233,7 @@ class CbfSubarray(SKASubarray):
 
         # Validate band5Tuning, if frequencyBand is 5a or 5b.
         if argin["frequencyBand"] in ["5a", "5b"]:
+            # band5Tuning is optional
             if "band5Tuning" in argin:
                 # check if streamTuning is an array of length 2
                 try:
@@ -275,9 +276,8 @@ class CbfSubarray(SKASubarray):
                         )
                         self.__raise_configure_scan_fatal_error(msg)
             else:
-                msg = "'band5Tuning' must be given for a 'frequencyBand' of {}. " \
-                      "Aborting configuration".format(argin["frequencyBand"])
-                self.__raise_configure_scan_fatal_error(msg)
+                # set band5Tuning to zero for the rest of the test. This won't change the argin in function "configureScan(argin)"
+                argin["band5Tuning"]=[0,0]
 
         # Validate frequencyBandOffsetStream1.
         if "frequencyBandOffsetStream1" in argin:
@@ -541,7 +541,7 @@ class CbfSubarray(SKASubarray):
                         # Validate zoomWindowTuning.
                         if fsp["corrBandwidth"]:  # zoomWindowTuning is required
                             if "zoomWindowTuning" in fsp:
-                                if fsp["frequencyBand"] in list(range(4)):  # frequency band is not band 5
+                                if fsp["frequencyBand"] not in ["5a", "5b"]:  # frequency band is not band 5
                                     frequency_band_start = [*map(lambda j: j[0] * 10 ** 9, [
                                         const.FREQUENCY_BAND_1_RANGE,
                                         const.FREQUENCY_BAND_2_RANGE,
@@ -566,36 +566,39 @@ class CbfSubarray(SKASubarray):
                                                                      "ConfigureScan execution",
                                                                      tango.ErrSeverity.ERR)
                                 else:  # frequency band 5a or 5b (two streams with bandwidth 2.5 GHz)
-                                    frequency_slice_range_1 = (
-                                        fsp["band5Tuning"][0] * 10 ** 9 + fsp["frequencyBandOffsetStream1"] - \
-                                        const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2 + \
-                                        (fsp["frequencySliceID"] - 1) * const.FREQUENCY_SLICE_BW * 10 ** 6,
-                                        fsp["band5Tuning"][0] * 10 ** 9 + fsp["frequencyBandOffsetStream1"] - \
-                                        const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2 + \
-                                        fsp["frequencySliceID"] * const.FREQUENCY_SLICE_BW * 10 ** 6
-                                    )
-
-                                    frequency_slice_range_2 = (
-                                        fsp["band5Tuning"][1] * 10 ** 9 + fsp["frequencyBandOffsetStream2"] - \
-                                        const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2 + \
-                                        (fsp["frequencySliceID"] - 1) * const.FREQUENCY_SLICE_BW * 10 ** 6,
-                                        fsp["band5Tuning"][1] * 10 ** 9 + fsp["frequencyBandOffsetStream2"] - \
-                                        const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2 + \
-                                        fsp["frequencySliceID"] * const.FREQUENCY_SLICE_BW * 10 ** 6
-                                    )
-
-                                    if (frequency_slice_range_1[0] <= int(fsp["zoomWindowTuning"]) * 10 ** 3 <=
-                                        frequency_slice_range_1[1]) or \
-                                            (frequency_slice_range_2[0] <=
-                                             int(fsp["zoomWindowTuning"]) * 10 ** 3 <=
-                                             frequency_slice_range_2[1]):
+                                    if argin["band5Tuning"] == [0,0]: # band5Tuning not specified
                                         pass
                                     else:
-                                        msg = "'zoomWindowTuning' must be within observed frequency slice."
-                                        self.logger.error(msg)
-                                        tango.Except.throw_exception("Command failed", msg,
-                                                                     "ConfigureScan execution",
-                                                                     tango.ErrSeverity.ERR)
+                                        frequency_slice_range_1 = (
+                                            fsp["band5Tuning"][0] * 10 ** 9 + fsp["frequencyBandOffsetStream1"] - \
+                                            const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2 + \
+                                            (fsp["frequencySliceID"] - 1) * const.FREQUENCY_SLICE_BW * 10 ** 6,
+                                            fsp["band5Tuning"][0] * 10 ** 9 + fsp["frequencyBandOffsetStream1"] - \
+                                            const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2 + \
+                                            fsp["frequencySliceID"] * const.FREQUENCY_SLICE_BW * 10 ** 6
+                                        )
+
+                                        frequency_slice_range_2 = (
+                                            fsp["band5Tuning"][1] * 10 ** 9 + fsp["frequencyBandOffsetStream2"] - \
+                                            const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2 + \
+                                            (fsp["frequencySliceID"] - 1) * const.FREQUENCY_SLICE_BW * 10 ** 6,
+                                            fsp["band5Tuning"][1] * 10 ** 9 + fsp["frequencyBandOffsetStream2"] - \
+                                            const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2 + \
+                                            fsp["frequencySliceID"] * const.FREQUENCY_SLICE_BW * 10 ** 6
+                                        )
+
+                                        if (frequency_slice_range_1[0] <= int(fsp["zoomWindowTuning"]) * 10 ** 3 <=
+                                            frequency_slice_range_1[1]) or \
+                                                (frequency_slice_range_2[0] <=
+                                                int(fsp["zoomWindowTuning"]) * 10 ** 3 <=
+                                                frequency_slice_range_2[1]):
+                                            pass
+                                        else:
+                                            msg = "'zoomWindowTuning' must be within observed frequency slice."
+                                            self.logger.error(msg)
+                                            tango.Except.throw_exception("Command failed", msg,
+                                                                        "ConfigureScan execution",
+                                                                        tango.ErrSeverity.ERR)
                             else:
                                 msg = "FSP specified, but 'zoomWindowTuning' not given."
                                 self.logger.error(msg)
@@ -623,11 +626,11 @@ class CbfSubarray(SKASubarray):
                         # Validate fspChannelOffset
                         if "fspChannelOffset" in fsp:
                             try: 
-                                if int(fsp["fspChannelOffset"])%14880==0: 
+                                if int(fsp["fspChannelOffset"])>=0: 
                                     pass
                                 #has to be a multiple of 14880
                                 else:
-                                    msg="fspChannelOffset must be a multiple of 14880"
+                                    msg="fspChannelOffset must be greater than or equal to zero"
                                     self.logger.error(msg)
                                     tango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
                                                              tango.ErrSeverity.ERR)
@@ -664,25 +667,25 @@ class CbfSubarray(SKASubarray):
                         if "channelAveragingMap" in fsp:
                             try:
                                 # validate dimensions
-                                assert len(fsp["channelAveragingMap"]) == self.NUM_CHANNEL_GROUPS
-                                for i in range(20):
+                                for i in range(0,len(fsp["channelAveragingMap"])):
                                     assert len(fsp["channelAveragingMap"][i]) == 2
 
-                                for i in range(20):
+                                # validate averaging factor
+                                for i in range(0,len(fsp["channelAveragingMap"])):
                                     # validate channel ID of first channel in group
-                                    if int(fsp["channelAveragingMap"][i][0]) == \
-                                            i * self.NUM_FINE_CHANNELS / self.NUM_CHANNEL_GROUPS:
-                                        pass  # the default value is already correct
-                                    else:
-                                        msg = "'channelAveragingMap'[{0}][0] is not the channel ID of the " \
-                                              "first channel in a group (received {1}).".format(
-                                            i,
-                                            fsp["channelAveragingMap"][i][0]
-                                        )
-                                        self.logger.error(msg)
-                                        tango.Except.throw_exception("Command failed", msg,
-                                                                     "ConfigureScan execution",
-                                                                     tango.ErrSeverity.ERR)
+                                    # if int(fsp["channelAveragingMap"][i][0]) == \
+                                    #         i * self.NUM_FINE_CHANNELS / self.NUM_CHANNEL_GROUPS:
+                                    #     pass  # the default value is already correct
+                                    # else:
+                                    #     msg = "'channelAveragingMap'[{0}][0] is not the channel ID of the " \
+                                    #           "first channel in a group (received {1}).".format(
+                                    #         i,
+                                    #         fsp["channelAveragingMap"][i][0]
+                                    #     )
+                                    #     self.logger.error(msg)
+                                    #     tango.Except.throw_exception("Command failed", msg,
+                                    #                                  "ConfigureScan execution",
+                                    #                                  tango.ErrSeverity.ERR)
 
                                     # validate averaging factor
                                     if int(fsp["channelAveragingMap"][i][1]) in [0, 1, 2, 3, 4, 6, 8]:
@@ -698,9 +701,7 @@ class CbfSubarray(SKASubarray):
                                                                      "ConfigureScan execution",
                                                                      tango.ErrSeverity.ERR)
                             except (TypeError, AssertionError):  # dimensions not correct
-                                msg = "'channelAveragingMap' must be an 2D array of dimensions 2x{}.".format(
-                                    self.NUM_CHANNEL_GROUPS
-                                )
+                                msg = "channel Averaging Map dimensions not correct"
                                 self.logger.error(msg)
                                 tango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
                                                              tango.ErrSeverity.ERR)
@@ -713,14 +714,14 @@ class CbfSubarray(SKASubarray):
                             self.logger.error(msg)
                             tango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
                                                          tango.ErrSeverity.ERR)
+                        # outputMac is optional
                         if "outputMac" in fsp:
                             pass
 
                         else:
                             msg = "FSP specified for Correlation, but 'outputMac' not given."
-                            self.logger.error(msg)
-                            tango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
-                                                         tango.ErrSeverity.ERR)
+                            self.logger.warn(msg)
+                            
                         if "outputPort" in fsp:
                             pass
 
@@ -1650,6 +1651,7 @@ class CbfSubarray(SKASubarray):
         ################# validate scan configuration first ##########################
         self.__validate_scan_configuration(argin)
 
+
         # Call this just to release all FSPs and unsubscribe to events.
         # We transition to obsState=CONFIGURING immediately after anyways.
         self.GoToIdle()
@@ -1662,6 +1664,9 @@ class CbfSubarray(SKASubarray):
         self._group_vcc.command_inout("SetObservingState", data)
 
         argin = json.loads(argin)
+        # set band5Tuning to [0,0] if not specified
+        if "band5Tuning" not in argin: 
+            argin["band5Tuning"]=[0,0]
 
         # Configure configID.
         self._config_ID = str(argin["id"])
@@ -2106,10 +2111,10 @@ class CbfSubarray(SKASubarray):
 
         # TODO need to add this check for fspSubarrayPSS and VLBI and PST once implemented
         for fsp_corr_subarray_proxy in self._proxies_fsp_corr_subarray:
-             if fsp_corr_subarray_proxy.State() == tango.DevState.ON:
+            if fsp_corr_subarray_proxy.State() == tango.DevState.ON:
                 fsp_corr_subarray_proxy.GoToIdle()
         for fsp_pss_subarray_proxy in self._proxies_fsp_pss_subarray:
-             if fsp_pss_subarray_proxy.State() == tango.DevState.ON:
+            if fsp_pss_subarray_proxy.State() == tango.DevState.ON:
                 fsp_pss_subarray_proxy.GoToIdle()
 
         # transition to obsState=IDLE
