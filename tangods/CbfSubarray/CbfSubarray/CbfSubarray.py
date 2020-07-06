@@ -1120,9 +1120,7 @@ class CbfSubarray(SKASubarray):
 
 
             return (ResultCode.OK, "successfull")
-            # self._obs_state = ObsState.IDLE.value
-            # self._admin_mode = AdminMode.ONLINE.value
-            # self.set_state(tango.DevState.DISABLE)
+
 
 
 
@@ -1234,6 +1232,9 @@ class CbfSubarray(SKASubarray):
     #     # PROTECTED REGION END #    //  CbfSubarray.init_device
 
 
+     ####################################################################################################
+
+
     def always_executed_hook(self):
         # PROTECTED REGION ID(CbfSubarray.always_executed_hook) ENABLED START #
         """methods always executed before any TANGO command is executed"""
@@ -1330,46 +1331,65 @@ class CbfSubarray(SKASubarray):
     # --------
 
     def is_On_allowed(self):
-        """allowed if DevState is DISABLE"""
-        if self.dev_state() == tango.DevState.DISABLE:
-            return True
-        return False
-
-    @command()
-    def On(self):
-        # PROTECTED REGION ID(CbfSubarray.On) ENABLED START #
-        """Turn on Subarray. Set 2 search windows to DISABLE. Set Subarray from DISABLE to OFF"""
-        if self._obs_state != ObsState.IDLE.value:
-            msg = "Device not in IDLE obsState."
-            self.logger.error(msg)
-            tango.Except.throw_exception("Command failed", msg, "On execution",
-                                         tango.ErrSeverity.ERR)
-
-        self._proxy_sw_1.SetState(tango.DevState.DISABLE)
-        self._proxy_sw_2.SetState(tango.DevState.DISABLE)
-        self.set_state(tango.DevState.OFF)
-        # PROTECTED REGION END #    //  CbfSubarray.On
-
-    def is_Off_allowed(self):
         """allowed if DevState is OFF"""
         if self.dev_state() == tango.DevState.OFF:
             return True
         return False
 
-    @command()
-    def Off(self):
-        """Set subarray from OFF to DISABLE. Set 2 search windows to OFF"""
-        # PROTECTED REGION ID(CbfSubarray.Off) ENABLED START #
-        if self._obs_state != ObsState.IDLE.value:
-            msg = "Device not in IDLE obsState."
-            self.logger.error(msg)
-            tango.Except.throw_exception("Command failed", msg, "Off execution",
-                                         tango.ErrSeverity.ERR)
+    class OnCommand(SKASubarray.OnCommand):
+        def do(self):
+            (result_code,message)=super().do()
+            device = self.target
+            device._proxy_sw_1.SetState(tango.DevState.DISABLE)
+            device._proxy_sw_2.SetState(tango.DevState.DISABLE)
+            return (result_code,message)
 
-        self._proxy_sw_1.SetState(tango.DevState.OFF)
-        self._proxy_sw_2.SetState(tango.DevState.OFF)
-        self.set_state(tango.DevState.DISABLE)
-        # PROTECTED REGION END #    //  CbfSubarray.Off
+
+    # @command()
+    # def On(self):
+    #     # PROTECTED REGION ID(CbfSubarray.On) ENABLED START #
+    #     """Turn on Subarray. Set 2 search windows to DISABLE. Set Subarray from DISABLE to OFF"""
+    #     if self._obs_state != ObsState.IDLE.value:
+    #         msg = "Device not in IDLE obsState."
+    #         self.logger.error(msg)
+    #         tango.Except.throw_exception("Command failed", msg, "On execution",
+    #                                      tango.ErrSeverity.ERR)
+
+    #     self._proxy_sw_1.SetState(tango.DevState.DISABLE)
+    #     self._proxy_sw_2.SetState(tango.DevState.DISABLE)
+    #     self.set_state(tango.DevState.OFF)
+    #     # PROTECTED REGION END #    //  CbfSubarray.On
+
+
+
+    def is_Off_allowed(self):
+        """allowed if DevState is ON"""
+        if self.dev_state() == tango.DevState.ON:
+            return True
+        return False
+
+    class OffCommand(SKASubarray.OffCommand):
+        def do(self):
+            (result_code,message)=super().do()
+            device = self.target
+            device._proxy_sw_1.SetState(tango.DevState.OFF)
+            device._proxy_sw_2.SetState(tango.DevState.OFF)
+            return (result_code,message)
+
+    # @command()
+    # def Off(self):
+    #     """Set subarray from OFF to DISABLE. Set 2 search windows to OFF"""
+    #     # PROTECTED REGION ID(CbfSubarray.Off) ENABLED START #
+    #     if self._obs_state != ObsState.IDLE.value:
+    #         msg = "Device not in IDLE obsState."
+    #         self.logger.error(msg)
+    #         tango.Except.throw_exception("Command failed", msg, "Off execution",
+    #                                      tango.ErrSeverity.ERR)
+
+    #     self._proxy_sw_1.SetState(tango.DevState.OFF)
+    #     self._proxy_sw_2.SetState(tango.DevState.OFF)
+    #     self.set_state(tango.DevState.DISABLE)
+    #     # PROTECTED REGION END #    //  CbfSubarray.Off
 
     def is_AddReceptors_allowed(self):
         """allowed if DevState is OFF or ON"""
@@ -1384,11 +1404,11 @@ class CbfSubarray(SKASubarray):
     def AddReceptors(self, argin):
         # PROTECTED REGION ID(CbfSubarray.AddReceptors) ENABLED START #
         """add list of receptors to the current subarray. Turn Subarray ON"""
-        if self._obs_state != ObsState.IDLE.value:
-            msg = "Device not in IDLE obsState."
-            self.logger.error(msg)
-            tango.Except.throw_exception("Command failed", msg, "AddReceptors execution",
-                                         tango.ErrSeverity.ERR)
+        # if self._obs_state != ObsState.IDLE.value:
+        #     msg = "Device not in IDLE obsState."
+        #     self.logger.error(msg)
+        #     tango.Except.throw_exception("Command failed", msg, "AddReceptors execution",
+        #                                  tango.ErrSeverity.ERR)
 
         errs = []  # list of error messages
         receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
