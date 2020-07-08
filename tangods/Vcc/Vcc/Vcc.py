@@ -677,13 +677,14 @@ class Vcc(SKACapability):
 
         # Validate searchWindowTuning.
         if "searchWindowTuning" in argin:
-            if argin["frequencyBand"] in list(range(4)):  # frequency band is not band 5
+            if argin["frequencyBand"] not in ["5a", "5b"]:  # frequency band is not band 5
+                frequencyBand = ["1", "2", "3", "4", "5a", "5b"].index(argin["frequencyBand"])
                 frequency_band_range = [
                     const.FREQUENCY_BAND_1_RANGE,
                     const.FREQUENCY_BAND_2_RANGE,
                     const.FREQUENCY_BAND_3_RANGE,
                     const.FREQUENCY_BAND_4_RANGE
-                ][argin["frequencyBand"]]
+                ][frequencyBand]
 
                 if frequency_band_range[0] * 10 ** 9 + argin["frequencyBandOffsetStream1"] <= \
                         int(argin["searchWindowTuning"]) <= \
