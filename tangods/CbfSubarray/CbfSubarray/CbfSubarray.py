@@ -720,12 +720,14 @@ class CbfSubarray(SKASubarray):
                         if fsp["corrBandwidth"]:  # zoomWindowTuning is required
                             if "zoomWindowTuning" in fsp:
                                 if fsp["frequencyBand"] not in ["5a", "5b"]:  # frequency band is not band 5
+                                    frequencyBand = ["1", "2", "3", "4", "5a", "5b"].index(fsp["frequencyBand"])
                                     frequency_band_start = [*map(lambda j: j[0] * 10 ** 9, [
                                         const.FREQUENCY_BAND_1_RANGE,
                                         const.FREQUENCY_BAND_2_RANGE,
                                         const.FREQUENCY_BAND_3_RANGE,
                                         const.FREQUENCY_BAND_4_RANGE
-                                    ])][fsp["frequencyBand"]] + fsp["frequencyBandOffsetStream1"]
+                                    ])][frequencyBand] + fsp["frequencyBandOffsetStream1"]
+                                    # ])][fsp["frequencyBand"]] + fsp["frequencyBandOffsetStream1"]
                                     frequency_slice_range = (
                                         frequency_band_start + \
                                         (fsp["frequencySliceID"] - 1) * const.FREQUENCY_SLICE_BW * 10 ** 6,
