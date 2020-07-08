@@ -165,7 +165,8 @@ endif
 
 down:  ## stop develop/test environment and any interactive session
 	docker ps | grep $(CONTAINER_NAME_PREFIX)dev && docker stop $(PROJECT)-dev || true
-	$(DOCKER_COMPOSE_ARGS) docker-compose down
+	$(DOCKER_COMPOSE_ARGS) docker-compose -f tango.yml $(WEBJIVE_COMPOSE_FILE_ARGS) down
+	$(DOCKER_COMPOSE_ARGS) docker-compose $(COMPOSE_FILE_ARGS) down
 ifneq ($(NETWORK_MODE),host)
 	docker network inspect $(NETWORK_MODE) &> /dev/null && ([ $$? -eq 0 ] && docker network rm $(NETWORK_MODE)) || true
 endif
