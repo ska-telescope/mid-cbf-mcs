@@ -49,7 +49,7 @@ setup(
     ],
     test_suite='tests',
     install_requires=['pytango',
-                    'lmcbaseclasses == 0.6.0'
+                    'lmcbaseclasses == 0.6.2'
     ],
     setup_requires=[
         # dependency for `python setup.py test`

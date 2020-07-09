@@ -1435,63 +1435,63 @@ class CbfSubarray(SKASubarray):
             device=self.target
             # Code here
             errs = []  # list of error messages
-            # receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
-            #                     device._proxy_cbf_master.receptorToVcc)
-            # for receptorID in argin:
-            #     try:
-            #         vccID = receptor_to_vcc[receptorID]
-            #         vccProxy = device._proxies_vcc[vccID - 1]
-            #         subarrayID = vccProxy.subarrayMembership
+            receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
+                                device._proxy_cbf_master.receptorToVcc)
+            for receptorID in argin:
+                try:
+                    vccID = receptor_to_vcc[receptorID]
+                    vccProxy = device._proxies_vcc[vccID - 1]
+                    subarrayID = vccProxy.subarrayMembership
 
-            #         # only add receptor if it does not already belong to a different subarray
-            #         if subarrayID not in [0, device._subarray_id]:
-            #             errs.append("Receptor {} already in use by subarray {}.".format(
-            #                 str(receptorID), str(subarrayID)))
-            #         else:
-            #             if receptorID not in device._receptors:
-            #                 # change subarray membership of vcc
-            #                 vccProxy.subarrayMembership = device._subarray_id
+                    # only add receptor if it does not already belong to a different subarray
+                    if subarrayID not in [0, device._subarray_id]:
+                        errs.append("Receptor {} already in use by subarray {}.".format(
+                            str(receptorID), str(subarrayID)))
+                    else:
+                        if receptorID not in device._receptors:
+                            # change subarray membership of vcc
+                            vccProxy.subarrayMembership = device._subarray_id
 
-            #                 # !!!!!!!!!!!!!
-            #                 # Change done on 09/27/2109 as a consequence of the new TANGO and tango images release
-            #                 # Note:json does not recognize NumPy data types. Convert the number to a Python int 
-            #                 # before serializing the object.
-            #                 # The list of receptors is serialized when the FSPs are configured for a scan.
-            #                 # !!!!!!!!!!!!!
+                            # !!!!!!!!!!!!!
+                            # Change done on 09/27/2109 as a consequence of the new TANGO and tango images release
+                            # Note:json does not recognize NumPy data types. Convert the number to a Python int 
+                            # before serializing the object.
+                            # The list of receptors is serialized when the FSPs are configured for a scan.
+                            # !!!!!!!!!!!!!
 
-            #                 device._receptors.append(int(receptorID))
-            #                 device._proxies_assigned_vcc.append(vccProxy)
-            #                 device._group_vcc.add(device._fqdn_vcc[vccID - 1])
+                            device._receptors.append(int(receptorID))
+                            device._proxies_assigned_vcc.append(vccProxy)
+                            device._group_vcc.add(device._fqdn_vcc[vccID - 1])
 
-            #                 # subscribe to VCC state and healthState changes
-            #                 event_id_state, event_id_health_state = vccProxy.subscribe_event(
-            #                     "State",
-            #                     tango.EventType.CHANGE_EVENT,
-            #                     device.__state_change_event_callback
-            #                 ), vccProxy.subscribe_event(
-            #                     "healthState",
-            #                     tango.EventType.CHANGE_EVENT,
-            #                     device.__state_change_event_callback
-            #                 )
-            #                 device._events_state_change_vcc[vccID] = [event_id_state,
-            #                                                         event_id_health_state]
-            #             else:
-            #                 log_msg = "Receptor {} already assigned to current subarray.".format(
-            #                     str(receptorID))
-            #                 device.logger.warn(log_msg)
+                            # subscribe to VCC state and healthState changes
+                            event_id_state, event_id_health_state = vccProxy.subscribe_event(
+                                "State",
+                                tango.EventType.CHANGE_EVENT,
+                                device.__state_change_event_callback
+                            ), vccProxy.subscribe_event(
+                                "healthState",
+                                tango.EventType.CHANGE_EVENT,
+                                device.__state_change_event_callback
+                            )
+                            device._events_state_change_vcc[vccID] = [event_id_state,
+                                                                    event_id_health_state]
+                        else:
+                            log_msg = "Receptor {} already assigned to current subarray.".format(
+                                str(receptorID))
+                            device.logger.warn(log_msg)
 
-            #     except KeyError:  # invalid receptor ID
-            #         errs.append("Invalid receptor ID: {}".format(receptorID))
+                except KeyError:  # invalid receptor ID
+                    errs.append("Invalid receptor ID: {}".format(receptorID))
 
-            # # transition to ON if at least one receptor is assigned
-            # if device._receptors:
-            #     device.set_state(DevState.ON)
+            # transition to ON if at least one receptor is assigned
+            if device._receptors:
+                device.set_state(DevState.ON)
 
-            # if errs:
-            #     msg = "\n".join(errs)
-            #     device.logger.error(msg)
-            #     tango.Except.throw_exception("Command failed", msg, "AddReceptors execution",
-            #                                 tango.ErrSeverity.ERR)
+            if errs:
+                msg = "\n".join(errs)
+                device.logger.error(msg)
+                tango.Except.throw_exception("Command failed", msg, "AddReceptors execution",
+                                            tango.ErrSeverity.ERR)
 
 
             message = "CBFSubarray AssignResources command completed OK"
