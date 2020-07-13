@@ -83,6 +83,14 @@ class CbfSubarray(SKASubarray):
             self.AddReceptorsCommand(*device_args)
         )
         self.register_command_object(
+            "RemoveReceptors",
+            self.RemoveReceptorsCommand(*device_args)
+        )
+        self.register_command_object(
+            "RemoveAllReceptors",
+            self.RemoveAllReceptorsCommand(*device_args)
+        )
+        self.register_command_object(
             "ConfigureScan",
             self.ConfigureScanCommand(*device_args)
         )
@@ -1522,120 +1530,63 @@ class CbfSubarray(SKASubarray):
             return (ResultCode.OK,message)
 
     ##########################################  Receptors   ####################################################
-    # @command(
-    #     dtype_in=('uint16',),
-    #     doc_in="List of receptor IDs",
-    # )
-    # def AddReceptors(self, argin):
-    #     # PROTECTED REGION ID(CbfSubarray.AddReceptors) ENABLED START #
-    #     """add list of receptors to the current subarray. Turn Subarray ON"""
-    #     if self.state_model._obs_state != ObsState.EMPTY:
-    #         msg = "Device not in IDLE obsState."
-    #         self.logger.error(msg)
-    #         tango.Except.throw_exception("Command failed", msg, "AddReceptors execution",
-    #                                      tango.ErrSeverity.ERR)
+    class RemoveReceptorsCommand(SKASubarray.ReleaseResourcesCommand):
+        def do(self, argin):
+            device=self.target
+            # if self.state_model._obs_state != ObsState.IDLE.value:
+            #     msg = "Device not in IDLE obsState."
+            #     self.logger.error(msg)
+            #     tango.Except.throw_exception("Command failed", msg, "RemoveReceptors execution",
+            #                                 tango.ErrSeverity.ERR)
 
-    #     errs = []  # list of error messages
-    #     receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
-    #                            self._proxy_cbf_master.receptorToVcc)
-    #     for receptorID in argin:
-    #         try:
-    #             vccID = receptor_to_vcc[receptorID]
-    #             vccProxy = self._proxies_vcc[vccID - 1]
-    #             subarrayID = vccProxy.subarrayMembership
+            receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
+                                device._proxy_cbf_master.receptorToVcc)
+            for receptorID in argin:
+                if receptorID in device._receptors:
+                    vccID = receptor_to_vcc[receptorID]
+                    vccProxy = device._proxies_vcc[vccID - 1]
 
-    #             # only add receptor if it does not already belong to a different subarray
-    #             if subarrayID not in [0, self._subarray_id]:
-    #                 errs.append("Receptor {} already in use by subarray {}.".format(
-    #                     str(receptorID), str(subarrayID)))
-    #             else:
-    #                 if receptorID not in self._receptors:
-    #                     # change subarray membership of vcc
-    #                     vccProxy.subarrayMembership = self._subarray_id
+                    # unsubscribe from events
+                    self.logger.info(vccID)
+                    self.logger.info(device._events_state_change_vcc[vccID][0])
+                    vccProxy.unsubscribe_event(device._events_state_change_vcc[vccID][0])  # state
+                    vccProxy.unsubscribe_event(device._events_state_change_vcc[vccID][1])  # healthState
+                    del device._events_state_change_vcc[vccID]
+                    del device._vcc_state[device._fqdn_vcc[vccID - 1]]
+                    del device._vcc_health_state[device._fqdn_vcc[vccID - 1]]
 
-    #                     # !!!!!!!!!!!!!
-    #                     # Change done on 09/27/2109 as a consequence of the new TANGO and tango images release
-    #                     # Note:json does not recognize NumPy data types. Convert the number to a Python int 
-    #                     # before serializing the object.
-    #                     # The list of receptors is serialized when the FSPs are configured for a scan.
-    #                     # !!!!!!!!!!!!!
+                    vccProxy.subarrayMembership = 0
 
-    #                     self._receptors.append(int(receptorID))
-    #                     self._proxies_assigned_vcc.append(vccProxy)
-    #                     self._group_vcc.add(self._fqdn_vcc[vccID - 1])
+                    device._receptors.remove(receptorID)
+                    device._proxies_assigned_vcc.remove(vccProxy)
+                    device._group_vcc.remove(device._fqdn_vcc[vccID - 1])
+                else:
+                    log_msg = "Receptor {} not assigned to subarray. Skipping.".format(str(receptorID))
+                    self.logger.warn(log_msg)
 
-    #                     # subscribe to VCC state and healthState changes
-    #                     event_id_state, event_id_health_state = vccProxy.subscribe_event(
-    #                         "State",
-    #                         tango.EventType.CHANGE_EVENT,
-    #                         self._state_change_event_callback
-    #                     ), vccProxy.subscribe_event(
-    #                         "healthState",
-    #                         tango.EventType.CHANGE_EVENT,
-    #                         self._state_change_event_callback
-    #                     )
-    #                     self._events_state_change_vcc[vccID] = [event_id_state,
-    #                                                             event_id_health_state]
-    #                 else:
-    #                     log_msg = "Receptor {} already assigned to current subarray.".format(
-    #                         str(receptorID))
-    #                     self.logger.warn(log_msg)
+            # transitions to EMPTY if not assigned any receptors
+            if not device._receptors:
+                device.state_model._set_obs_state(ObsState.EMPTY)
 
-    #         except KeyError:  # invalid receptor ID
-    #             errs.append("Invalid receptor ID: {}".format(receptorID))
+            message = "CBFSubarray RemoveReceptors command completed OK"
+            self.logger.info(message)
+            return (ResultCode.OK, message)
+            # PROTECTED REGION END #    //  CbfSubarray.RemoveReceptors
 
-    #     # transition to ON if at least one receptor is assigned
-    #     if self._receptors:
-    #         self.state_model._set_obs_state(ObsState.IDLE)
-
-    #     if errs:
-    #         msg = "\n".join(errs)
-    #         self.logger.error(msg)
-    #         tango.Except.throw_exception("Command failed", msg, "AddReceptors execution",
-    #                                      tango.ErrSeverity.ERR)
-    #     # PROTECTED REGION END #    //  CbfSubarray.AddReceptors
+    @command(
+        dtype_in=('uint16',),
+        doc_in="List of receptor IDs",
+        dtype_out='DevVarLongStringArray',
+        doc_out="(ReturnType, 'informational message')"
+    )
+    def RemoveReceptors(self, argin):
+        # PROTECTED REGION ID(CbfSubarray.RemoveReceptors) ENABLED START #
+        """remove from list of receptors. Turn Subarray OFF if no receptors assigned"""
+        command = self.get_command_object("RemoveReceptors")
+        (return_code, message) = command(argin)
+        return [[return_code], [message]]
 
 
-    # @command(
-    #     dtype_in=('uint16',),
-    #     doc_in="List of receptor IDs",
-    # )
-    # def RemoveReceptors(self, argin):
-    #     # PROTECTED REGION ID(CbfSubarray.RemoveReceptors) ENABLED START #
-    #     """remove from list of receptors. Turn Subarray OFF if no receptors assigned"""
-    #     if self.state_model._obs_state != ObsState.IDLE.value:
-    #         msg = "Device not in IDLE obsState."
-    #         self.logger.error(msg)
-    #         tango.Except.throw_exception("Command failed", msg, "RemoveReceptors execution",
-    #                                      tango.ErrSeverity.ERR)
-
-    #     receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
-    #                            self._proxy_cbf_master.receptorToVcc)
-    #     for receptorID in argin:
-    #         if receptorID in self._receptors:
-    #             vccID = receptor_to_vcc[receptorID]
-    #             vccProxy = self._proxies_vcc[vccID - 1]
-
-    #             # unsubscribe from events
-    #             vccProxy.unsubscribe_event(self._events_state_change_vcc[vccID][0])  # state
-    #             vccProxy.unsubscribe_event(self._events_state_change_vcc[vccID][1])  # healthState
-    #             del self._events_state_change_vcc[vccID]
-    #             del self._vcc_state[self._fqdn_vcc[vccID - 1]]
-    #             del self._vcc_health_state[self._fqdn_vcc[vccID - 1]]
-
-    #             vccProxy.subarrayMembership = 0
-
-    #             self._receptors.remove(receptorID)
-    #             self._proxies_assigned_vcc.remove(vccProxy)
-    #             self._group_vcc.remove(self._fqdn_vcc[vccID - 1])
-    #         else:
-    #             log_msg = "Receptor {} not assigned to subarray. Skipping.".format(str(receptorID))
-    #             self.logger.warn(log_msg)
-
-    #     # transitions to OFF if not assigned any receptors
-    #     if not self._receptors:
-    #         self.state_model._set_obs_state(ObsState.EMPTY)
-    #     # PROTECTED REGION END #    //  CbfSubarray.RemoveReceptors
 
     # def is_RemoveAllReceptors_allowed(self):
     #     """allowed if state is ON or OFF"""
@@ -1643,20 +1594,31 @@ class CbfSubarray(SKASubarray):
     #         return True
     #     return False
 
-    @command()
+    @command(
+        dtype_out='DevVarLongStringArray',
+        doc_out="(ReturnType, 'informational message')"
+    )
     def RemoveAllReceptors(self):
         # PROTECTED REGION ID(CbfSubarray.RemoveAllReceptors) ENABLED START #
         """Remove all receptors. Turn Subarray OFF if no receptors assigned"""
-        if self.state_model._obs_state != ObsState.IDLE.value:
-            msg = "Device not in IDLE obsState."
-            self.logger.error(msg)
-            tango.Except.throw_exception("Command failed", msg, "RemoveAllReceptors execution",
-                                         tango.ErrSeverity.ERR)
+        # if self.state_model._obs_state != ObsState.IDLE.value:
+        #     msg = "Device not in IDLE obsState."
+        #     self.logger.error(msg)
+        #     tango.Except.throw_exception("Command failed", msg, "RemoveAllReceptors execution",
+        #                                  tango.ErrSeverity.ERR)
 
-        self.RemoveReceptors(self._receptors[:])
+        command = self.get_command_object("RemoveAllReceptors")
+        (return_code, message) = command()
+        return [[return_code], [message]]  
         # PROTECTED REGION END #    //  CbfSubarray.RemoveAllReceptors
 
-
+    class RemoveAllReceptorsCommand(SKASubarray.ReleaseAllResourcesCommand):
+        def do(self):
+            device=self.target
+            device.RemoveReceptors(device._receptors[:])
+            message = "CBFSubarray RemoveAllReceptors command completed OK"
+            self.logger.info(message)
+            return (ResultCode.OK, message)
 
     def __len__(self):
         """
@@ -1726,17 +1688,17 @@ class CbfSubarray(SKASubarray):
                             device._group_vcc.add(device._fqdn_vcc[vccID - 1])
 
                             # subscribe to VCC state and healthState changes
-                            # event_id_state, event_id_health_state = vccProxy.subscribe_event(
-                            #     "State",
-                            #     tango.EventType.CHANGE_EVENT,
-                            #     device._state_change_event_callback
-                            # ), vccProxy.subscribe_event(
-                            #     "healthState",
-                            #     tango.EventType.CHANGE_EVENT,
-                            #     device._state_change_event_callback
-                            # )
-                            # device._events_state_change_vcc[vccID] = [event_id_state,
-                            #                                         event_id_health_state]
+                            event_id_state, event_id_health_state = vccProxy.subscribe_event(
+                                "State",
+                                tango.EventType.CHANGE_EVENT,
+                                device._state_change_event_callback
+                            ), vccProxy.subscribe_event(
+                                "healthState",
+                                tango.EventType.CHANGE_EVENT,
+                                device._state_change_event_callback
+                            )
+                            device._events_state_change_vcc[vccID] = [event_id_state,
+                                                                    event_id_health_state]
                         else:
                             log_msg = "Receptor {} already assigned to current subarray.".format(
                                 str(receptorID))
