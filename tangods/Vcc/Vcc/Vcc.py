@@ -316,6 +316,7 @@ class Vcc(SKACapability):
         # PROTECTED REGION ID(Vcc.subarrayMembership_write) ENABLED START #
         """Set subarrayMembership attribute: sub-array affiliation of the VCC(0 of no affliation)"""
         self._subarray_membership = value
+        self.push_change_event("subarrayMembership",value)
         if not value:
             self._obs_state = ObsState.IDLE.value
         # PROTECTED REGION END #    //  Vcc.subarrayMembership_write
