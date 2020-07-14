@@ -94,6 +94,10 @@ class CbfSubarray(SKASubarray):
             "ConfigureScan",
             self.ConfigureScanCommand(*device_args)
         )
+        self.register_command_object(
+            "StartScan",
+            self.StartScanCommand(*device_args)
+        )
         
 
     def _void_callback(self, event):
@@ -1423,111 +1427,7 @@ class CbfSubarray(SKASubarray):
     #     self.set_state(tango.DevState.DISABLE)
     #     # PROTECTED REGION END #    //  CbfSubarray.Off
 
-    #######################################    resource related ############################################
-
-        
-    def is_AssignResources_allowed(self):
-        """allowed if DevState is ON"""
-        if self.dev_state() == tango.DevState.ON:
-            return True
-        return False
-    
-    @command(
-        dtype_in=('uint16',),
-        doc_in="List of receptor IDs",
-    )
-    def AssignResources(self, argin):
-        """
-        Assign resources to this subarray
-        """
-        command = self.get_command_object("AssignResources")
-        (return_code, message) = command(argin)
-        return [[return_code], [message]]
-
-    # should take in:      "{\"example\":\"1\"}"
-    class AssignResourcesCommand(SKASubarray.AssignResourcesCommand):
-        def do(self, argin):
-            # (result_code,message)=super().do(argin)
-            device=self.target
-            # Code here
-            errs = []  # list of error messages
-            receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
-                                device._proxy_cbf_master.receptorToVcc)
-            for receptorID in argin:
-                try:
-                    vccID = receptor_to_vcc[receptorID]
-                    vccProxy = device._proxies_vcc[vccID - 1]
-                    subarrayID = vccProxy.subarrayMembership
-
-                    # only add receptor if it does not already belong to a different subarray
-                    if subarrayID not in [0, device._subarray_id]:
-                        errs.append("Receptor {} already in use by subarray {}.".format(
-                            str(receptorID), str(subarrayID)))
-                    else:
-                        if receptorID not in device._receptors:
-                            # change subarray membership of vcc
-                            vccProxy.subarrayMembership = device._subarray_id
-
-                            # !!!!!!!!!!!!!
-                            # Change done on 09/27/2109 as a consequence of the new TANGO and tango images release
-                            # Note:json does not recognize NumPy data types. Convert the number to a Python int 
-                            # before serializing the object.
-                            # The list of receptors is serialized when the FSPs are configured for a scan.
-                            # !!!!!!!!!!!!!
-
-                            device._receptors.append(int(receptorID))
-                            device._proxies_assigned_vcc.append(vccProxy)
-                            device._group_vcc.add(device._fqdn_vcc[vccID - 1])
-
-                            # subscribe to VCC state and healthState changes
-                            event_id_state, event_id_health_state = vccProxy.subscribe_event(
-                                "State",
-                                tango.EventType.CHANGE_EVENT,
-                                device._state_change_event_callback
-                            ), vccProxy.subscribe_event(
-                                "healthState",
-                                tango.EventType.CHANGE_EVENT,
-                                device._state_change_event_callback
-                            )
-                            device._events_state_change_vcc[vccID] = [event_id_state,
-                                                                    event_id_health_state]
-                        else:
-                            log_msg = "Receptor {} already assigned to current subarray.".format(
-                                str(receptorID))
-                            device.logger.warn(log_msg)
-
-                except KeyError:  # invalid receptor ID
-                    errs.append("Invalid receptor ID: {}".format(receptorID))
-
-            # # transition to ON if at least one receptor is assigned
-            # if device._receptors:
-            #     device.set_state(DevState.ON)
-
-            if errs:
-                msg = "\n".join(errs)
-                device.logger.error(msg)
-                tango.Except.throw_exception("Command failed", msg, "AddReceptors execution",
-                                            tango.ErrSeverity.ERR)
-
-
-            message = "CBFSubarray AssignResources command completed OK"
-            self.logger.info(message)
-            return (ResultCode.OK, message)
-
-    def is_ReleaseAllResources_allowed(self):
-        """allowed if DevState is ON"""
-        if self.dev_state() == tango.DevState.ON:
-            return True
-        return False
-    class ReleaseAllResourcesCommand(SKASubarray.ReleaseResourcesCommand):
-        def do(self):
-            # (result_code,message)=super().do()
-            device=self.target
-            # Code here
-            device.RemoveReceptors(self._receptors[:])
-            message ="CBFSubarray ReleaseAllResources command completed OK"
-            self.logger.info(message)
-            return (ResultCode.OK,message)
+ 
 
     ##########################################  Receptors   ####################################################
     class RemoveReceptorsCommand(SKASubarray.ReleaseResourcesCommand):
@@ -1719,7 +1619,6 @@ class CbfSubarray(SKASubarray):
                 
                 return (ResultCode.FAILED, msg)
 
-
             message = "CBFSubarray AddReceptors command completed OK"
             self.logger.info(message)
             return (ResultCode.OK, message)
@@ -1754,13 +1653,12 @@ class CbfSubarray(SKASubarray):
                 device._validate_scan_configuration(argin)
             except tango.DevFailed as df:
                 self.logger.error(str(df.args[0].desc))
-                device._raise_configure_scan_fatal_error(msg)
+                self.logger.warn("validate scan configuration error")
+                # device._raise_configure_scan_fatal_error(msg)
                 
 
 
-            # Call this just to release all FSPs and unsubscribe to events.
-            # We transition to obsState=CONFIGURING immediately after anyways.
-            self.logger.info(device.state_model._obs_state)
+            # Call this just to release all FSPs and unsubscribe to events. Can't call GoToIdle, otherwise there will be state transition problem. 
             device._go_to_idle_helper()
 
             # transition to obsState=CONFIGURING - don't have to do
@@ -2125,22 +2023,25 @@ class CbfSubarray(SKASubarray):
     ###################### Scan ######################### 
     @command(
         dtype_in='uint',
-        doc_in="Scan ID"
+        doc_in="Scan ID",
+        dtype_out='DevVarLongStringArray',
+        doc_out="(ReturnType, 'informational message')",
     )
     def Scan(self, argin):
         """
         Start Scan
         """
-        command = self.get_command_object("Scan")
+        command = self.get_command_object("StartScan")
         (return_code, message) = command(argin)
         return [[return_code], [message]]
 
-    class ScanCommand(SKASubarray.ScanCommand):
-        def do(self):
-            (result_code,message)=super().do()
+    class StartScanCommand(SKASubarray.ScanCommand):
+        def do(self, argin):
+            # (result_code,message)=super().do()
             device=self.target
             # Code here
-            message = "Scan command STARTED - config"
+            device._scan_ID=int(argin)
+            message = "Scan command successfull"
             self.logger.info(message)
             return (ResultCode.STARTED, message)
 
@@ -2154,26 +2055,15 @@ class CbfSubarray(SKASubarray):
         return False
 
 
-    class EndScanCommand(SKASubarray.EndScanCommand):
-        def do(self):
-            (result_code,message)=super().do()
-            device=self.target
-            # Code here
-            message = "EndScan command OK"
-            self.logger.info(message)
-            return (ResultCode.OK, message)
+    # class EndScanCommand(SKASubarray.EndScanCommand):
+    #     def do(self):
+    #         (result_code,message)=super().do()
+    #         device=self.target
+    #         # Code here
+    #         message = "EndScan command OK"
+    #         self.logger.info(message)
+    #         return (ResultCode.OK, message)
 
-    ##################### End ######################### 
-
-
-    class EndCommand(SKASubarray.EndCommand):
-        def do(self):
-            # (result_code,message)=super().do()
-            # device=self.target
-            # Code here
-            message = "End Scan OK"
-            self.logger.info(message)
-            return (ResultCode.OK, message)
 
 
 
