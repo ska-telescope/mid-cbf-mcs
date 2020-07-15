@@ -640,7 +640,8 @@ class CbfMaster(SKAMaster):
     def On(self):
         """turn CbfMaster on, also turn on subarray, vcc, fsp"""
         # PROTECTED REGION ID(CbfMaster.On) ENABLED START #
-        self._group_subarray.command_inout("On")
+        # 2020-07-14: don't turn Subarray on with ADR8 update
+        # self._group_subarray.command_inout("On")
         self._group_vcc.command_inout("On")
         self._group_fsp.command_inout("On")
         self.set_state(tango.DevState.ON)
