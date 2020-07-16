@@ -166,14 +166,14 @@ class TestCbfMaster:
         create_fsp_2_proxy.Init()
         create_sw_1_proxy.Init()
         create_sw_2_proxy.Init()
-        create_subarray_1_proxy.Init()
+        # create_subarray_1_proxy.Init()
         time.sleep(3)
         create_cbf_master_proxy.Init()
         time.sleep(3)  # takes pretty long for CBF Master to initialize
 
         # check initial states
         assert create_cbf_master_proxy.State() == DevState.STANDBY
-        assert create_subarray_1_proxy.State() == DevState.DISABLE
+        assert create_subarray_1_proxy.State() == DevState.OFF
         assert create_sw_1_proxy.State() == DevState.OFF
         assert create_sw_1_proxy.State() == DevState.OFF
         assert [proxy.State() for proxy in create_vcc_proxies] == [DevState.OFF]*4
@@ -189,8 +189,8 @@ class TestCbfMaster:
         # check states
         assert create_cbf_master_proxy.State() == DevState.ON
         assert create_subarray_1_proxy.State() == DevState.OFF
-        assert create_sw_1_proxy.State() == DevState.DISABLE
-        assert create_sw_1_proxy.State() == DevState.DISABLE
+        assert create_sw_1_proxy.State() == DevState.OFF
+        assert create_sw_2_proxy.State() == DevState.OFF
         assert [proxy.State() for proxy in create_vcc_proxies] == [DevState.ON]*4
         assert create_fsp_1_proxy.State() == DevState.ON
         assert create_fsp_2_proxy.State() == DevState.ON
@@ -220,14 +220,14 @@ class TestCbfMaster:
         create_fsp_2_proxy.Init()
         create_sw_1_proxy.Init()
         create_sw_2_proxy.Init()
-        create_subarray_1_proxy.Init()
+        # create_subarray_1_proxy.Init()
         time.sleep(3)
         create_cbf_master_proxy.Init()
         time.sleep(3)  # takes pretty long for CBF Master to initialize
 
         # check initial states
         assert create_cbf_master_proxy.State() == DevState.STANDBY
-        assert create_subarray_1_proxy.State() == DevState.DISABLE
+        assert create_subarray_1_proxy.State() == DevState.OFF
         assert create_sw_1_proxy.State() == DevState.OFF
         assert create_sw_1_proxy.State() == DevState.OFF
         assert [proxy.State() for proxy in create_vcc_proxies] == [DevState.OFF]*4
@@ -242,7 +242,7 @@ class TestCbfMaster:
 
         # check states
         assert create_cbf_master_proxy.State() == DevState.OFF
-        assert create_subarray_1_proxy.State() == DevState.DISABLE
+        assert create_subarray_1_proxy.State() == DevState.OFF
         assert create_sw_1_proxy.State() == DevState.OFF
         assert create_sw_1_proxy.State() == DevState.OFF
         assert [proxy.State() for proxy in create_vcc_proxies] == [DevState.OFF]*4
@@ -274,7 +274,7 @@ class TestCbfMaster:
         create_fsp_2_proxy.Init()
         create_sw_1_proxy.Init()
         create_sw_2_proxy.Init()
-        create_subarray_1_proxy.Init()
+        # create_subarray_1_proxy.Init()
         time.sleep(3)
         create_cbf_master_proxy.Init()
         time.sleep(3)  # takes pretty long for CBF Master to initialize
@@ -288,8 +288,8 @@ class TestCbfMaster:
         # check initial states
         assert create_cbf_master_proxy.State() == DevState.ON
         assert create_subarray_1_proxy.State() == DevState.OFF
-        assert create_sw_1_proxy.State() == DevState.DISABLE
-        assert create_sw_1_proxy.State() == DevState.DISABLE
+        assert create_sw_1_proxy.State() == DevState.OFF
+        assert create_sw_2_proxy.State() == DevState.OFF
         assert [proxy.State() for proxy in create_vcc_proxies] == [DevState.ON]*4
         assert create_fsp_1_proxy.State() == DevState.ON
         assert create_fsp_2_proxy.State() == DevState.ON
@@ -302,7 +302,7 @@ class TestCbfMaster:
 
         # check states
         assert create_cbf_master_proxy.State() == DevState.STANDBY
-        assert create_subarray_1_proxy.State() == DevState.DISABLE
+        assert create_subarray_1_proxy.State() == DevState.OFF
         assert create_sw_1_proxy.State() == DevState.OFF
         assert create_sw_1_proxy.State() == DevState.OFF
         assert [proxy.State() for proxy in create_vcc_proxies] == [DevState.OFF]*4

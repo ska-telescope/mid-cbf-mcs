@@ -2038,6 +2038,13 @@ class CbfSubarray(SKASubarray):
         # PROTECTED REGION END #    //  CbfSubarray.ConfigureSearchWindow
 
     ###################### Scan ######################### 
+    def is_Scan_allowed(self):
+        """allowed if Subarray is ON, and ObsState Ready."""
+        if self.dev_state() == tango.DevState.ON:
+            if self.state_model._obs_state==ObsState.READY.value:
+                return True
+        return False
+
     @command(
         dtype_in='uint',
         doc_in="Scan ID",
@@ -2075,7 +2082,7 @@ class CbfSubarray(SKASubarray):
     ###################### EndScan ######################### 
     def is_EndScan_allowed(self):
         """allowed if SUbarray is ON"""
-        if self.dev_state() == tango.DevState.ON:
+        if self.dev_state() == tango.DevState.ON and self.state_model._obs_state==ObsState.SCANNING:
             return True
         return False
 
