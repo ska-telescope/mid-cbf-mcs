@@ -276,8 +276,7 @@ class CbfMaster(SKAMaster):
         dtype=('uint16',),
         max_dim_x=197,
         label="VCC subarray membership",
-        polling_period=3000,
-        abs_change=1,
+        # no polling period so it reads the true value and not the one in cache
         doc="Report the subarray membership of VCCs (each can only belong to a single subarray), 0 if not assigned."
     )
 
