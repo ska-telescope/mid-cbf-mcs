@@ -366,7 +366,7 @@ class TestCbfSubarray:
 
         # check configured attributes of CBF subarray
         assert create_subarray_1_proxy.configID == "band:5a, fsp1, 744 channels average factor 8"
-        assert create_subarray_1_proxy.frequencyBand == 4 # means 5a?
+        assert create_subarray_1_proxy.frequencyBand == 4 # means 5a
         assert create_subarray_1_proxy.obsState.value == ObsState.READY.value
 
         # check frequency band of VCCs, including states of frequency band capabilities
@@ -389,7 +389,7 @@ class TestCbfSubarray:
         assert create_vcc_proxies[receptor_to_vcc[1] - 1].subarrayMembership == 1
         assert create_vcc_proxies[receptor_to_vcc[1] - 1].band5Tuning[0] == 5.85
         assert create_vcc_proxies[receptor_to_vcc[1] - 1].band5Tuning[1] == 7.25
-        assert create_vcc_proxies[receptor_to_vcc[1] - 1].frequencyBandOffse    #     assert create_subarray_1_proxy.state() == tango.DevState.OFF
+       
 
         # check configured attributes of search windows
         # first for search window 1...
@@ -443,7 +443,6 @@ class TestCbfSubarray:
         # check configured attributes of FSPs, including states of function mode capabilities
         assert create_fsp_1_proxy.functionMode == 1
         assert 1 in create_fsp_1_proxy.subarrayMembership
-        # assert 1 in create_fsp_2_proxy.subarrayMembership
         assert [proxy.State() for proxy in create_fsp_1_function_mode_proxy] == [
             DevState.ON, DevState.DISABLE, DevState.DISABLE, DevState.DISABLE
         ]
@@ -453,7 +452,7 @@ class TestCbfSubarray:
 
         # check configured attributes of FSP subarrays
         # first for FSP 1...
-        # assert create_fsp_1_subarray_1_proxy.obsState == ObsState.EMPTY
+        assert create_fsp_1_subarray_1_proxy.obsState == ObsState.READY
         assert create_fsp_1_subarray_1_proxy.receptors == 4
         assert create_fsp_1_subarray_1_proxy.frequencyBand == 4
         assert create_fsp_1_subarray_1_proxy.band5Tuning[0] == 5.85
@@ -510,128 +509,6 @@ class TestCbfSubarray:
  
 
 
-
-
-
-    # def test_band1(
-    #         self,
-    #         create_cbf_master_proxy,
-    #         create_subarray_1_proxy,
-    #         create_sw_1_proxy,
-    #         create_sw_2_proxy,
-    #         create_vcc_proxies,
-    #         create_vcc_band_proxies,
-    #         create_vcc_tdc_proxies,
-    #         create_fsp_1_proxy,
-    #         create_fsp_2_proxy,
-    #         create_fsp_1_function_mode_proxy,
-    #         create_fsp_2_function_mode_proxy,
-    #         create_fsp_1_subarray_1_proxy,
-    #         create_fsp_2_subarray_1_proxy,
-    #         create_fsp_3_subarray_1_proxy,
-    #         create_tm_telstate_proxy
-    # ):
-    #     """
-    #     Test a minimal successful configuration
-    #     """
-    #     for proxy in create_vcc_proxies:
-    #         proxy.Init()
-    #     create_fsp_1_subarray_1_proxy.Init()
-    #     create_fsp_2_subarray_1_proxy.Init()
-    #     create_fsp_3_subarray_1_proxy.Init()
-    #     create_fsp_1_proxy.Init()
-    #     create_fsp_2_proxy.Init()
-
-    #     time.sleep(3)
-    #     create_cbf_master_proxy.set_timeout_millis(60000)
-    #     create_cbf_master_proxy.Init()
-    #     time.sleep(60)  # takes pretty long for CBF Master to initialize
-    #     create_tm_telstate_proxy.Init()
-    #     time.sleep(1)
-
-    #     receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
-    #                            create_cbf_master_proxy.receptorToVcc)
-
-    #     create_cbf_master_proxy.On()
-    #     time.sleep(3)
-
-    #     # check initial value of attributes of CBF subarray
-    #     assert len(create_subarray_1_proxy.receptors) == 0
-    #     assert create_subarray_1_proxy.configID == ''
-    #     assert create_subarray_1_proxy.frequencyBand == 0
-    #     assert create_subarray_1_proxy.obsState.value == ObsState.IDLE.value
-    #     # assert create_tm_telstate_proxy.visDestinationAddress == "{}"
-    #     assert create_tm_telstate_proxy.receivedOutputLinks == False
-
-    #     # add receptors
-    #     create_subarray_1_proxy.AddReceptors([1, 3, 4])
-    #     time.sleep(1)
-    #     assert create_subarray_1_proxy.receptors[0] == 1
-    #     assert create_subarray_1_proxy.receptors[1] == 3
-    #     assert create_subarray_1_proxy.receptors[2] == 4
-
-    #     # configure scan
-    #     f = open(file_path + "/test_json/data_model_confluence.json")
-    #     create_subarray_1_proxy.ConfigureScan(f.read().replace("\n", ""))
-    #     f.close()
-    #     time.sleep(15)
-
-    #     # check configured attributes of CBF subarray
-    #     assert create_subarray_1_proxy.configID == "sbi-mvp01-20200325-00001-science_A"
-    #     assert create_subarray_1_proxy.frequencyBand == 0 # means 1
-    #     assert create_subarray_1_proxy.obsState.value == ObsState.READY.value
-
-    #     # check frequency band of VCCs, including states of frequency band capabilities
-    #     assert create_vcc_proxies[receptor_to_vcc[4] - 1].frequencyBand == 0
-    #     assert create_vcc_proxies[receptor_to_vcc[1] - 1].frequencyBand == 0
-
-
-    #     # check the rest of the configured attributes of VCCs
-    #     # first for VCC belonging to receptor 10...
-    #     assert create_vcc_proxies[receptor_to_vcc[4] - 1].subarrayMembership == 1
-
-    #     # then for VCC belonging to receptor 1...
-    #     assert create_vcc_proxies[receptor_to_vcc[1] - 1].subarrayMembership == 1
-
-
-
-    #     # check configured attributes of FSPs, including states of function mode capabilities
-    #     assert create_fsp_1_proxy.functionMode == 1
-    #     assert 1 in create_fsp_1_proxy.subarrayMembership
-    #     # assert 1 in create_fsp_2_proxy.subarrayMembership
-    #     assert [proxy.State() for proxy in create_fsp_1_function_mode_proxy] == [
-    #         DevState.ON, DevState.DISABLE, DevState.DISABLE, DevState.DISABLE
-    #     ]
-    #     # assert [proxy.State() for proxy in create_fsp_2_function_mode_proxy] == [
-    #     #     DevState.ON, DevState.DISABLE, DevState.DISABLE, DevState.DISABLE
-    #     # ]
-
-    #     # check configured attributes of FSP subarrays
-    #     # first for FSP 1...
-    #     assert create_fsp_1_subarray_1_proxy.obsState == ObsState.READY
-    #     assert create_fsp_1_subarray_1_proxy.frequencyBand == 0
-    #     assert create_fsp_1_subarray_1_proxy.frequencySliceID == 1
-    #     assert create_fsp_1_subarray_1_proxy.corrBandwidth == 0
-    #     assert create_fsp_1_subarray_1_proxy.integrationTime == 1400
-
-    #     assert create_fsp_1_subarray_1_proxy.outputLinkMap[0][0] == 1
-    #     assert create_fsp_1_subarray_1_proxy.outputLinkMap[0][1] == 0
-    #     assert create_fsp_1_subarray_1_proxy.outputLinkMap[1][0] == 201
-    #     assert create_fsp_1_subarray_1_proxy.outputLinkMap[1][1] == 1
-    #     # assert str(create_fsp_1_subarray_1_proxy.visDestinationAddress).replace('"',"'") == \
-    #     #     str({"outputHost": [[0, "192.168.0.1"], [8184, "192.168.0.2"]], "outputMac": [[0, "06-00-00-00-00-01"]], "outputPort": [[0, 9000, 1], [8184, 9000, 1]]}).replace('"',"'")
-         
-
-
-    #     create_subarray_1_proxy.GoToIdle()
-    #     time.sleep(3)
-    #     assert create_subarray_1_proxy.obsState == ObsState.IDLE
-    #     create_subarray_1_proxy.RemoveAllReceptors()
-    #     time.sleep(1)
-    #     create_subarray_1_proxy.Off()
-    #     assert create_subarray_1_proxy.state() == tango.DevState.OFF
-
-
     def test_EndScan(
             self,
             create_cbf_master_proxy,
@@ -686,8 +563,8 @@ class TestCbfSubarray:
 
         assert create_subarray_1_proxy.obsState == ObsState.IDLE
         # TODO: fsp subarray is EMPTY, why?
-        # assert create_fsp_1_subarray_1_proxy.obsState == ObsState.IDLE
-        # assert create_fsp_3_subarray_1_proxy.obsState == ObsState.IDLE
+        assert create_fsp_1_subarray_1_proxy.obsState == ObsState.IDLE
+        assert create_fsp_3_subarray_1_proxy.obsState == ObsState.IDLE
         # configure scan
         f = open(file_path + "/test_json/test_ConfigureScan_basic.json")
         create_subarray_1_proxy.ConfigureScan(f.read().replace("\n", ""))
@@ -708,7 +585,6 @@ class TestCbfSubarray:
         assert create_vcc_proxies[receptor_to_vcc[1] - 1].obsState.value == ObsState.SCANNING.value
         assert create_vcc_proxies[receptor_to_vcc[4] - 1].obsState.value == ObsState.SCANNING.value
         assert create_fsp_1_subarray_1_proxy.obsState.value == ObsState.SCANNING.value
-        # assert create_fsp_2_subarray_1_proxy.obsState.value == ObsState.SCANNING.value
         assert create_fsp_3_subarray_1_proxy.obsState.value == ObsState.SCANNING.value
 
         # send the EndScan command
@@ -720,7 +596,6 @@ class TestCbfSubarray:
         assert create_vcc_proxies[receptor_to_vcc[1] - 1].obsState.value == ObsState.READY.value
         assert create_vcc_proxies[receptor_to_vcc[4] - 1].obsState.value == ObsState.READY.value
         assert create_fsp_1_subarray_1_proxy.obsState.value == ObsState.READY.value
-        # assert create_fsp_2_subarray_1_proxy.obsState.value == ObsState.READY.value
         assert create_fsp_3_subarray_1_proxy.obsState.value == ObsState.READY.value
 
         # check ScanID to zero
@@ -757,7 +632,6 @@ class TestCbfSubarray:
         create_fsp_1_proxy.Init()
         create_fsp_2_proxy.Init()
         create_subarray_1_proxy.set_timeout_millis(80000)  # since the command takes a while
-        # create_subarray_1_proxy.Init()
         time.sleep(3)
         create_cbf_master_proxy.set_timeout_millis(60000)
         create_cbf_master_proxy.Init()
@@ -982,7 +856,6 @@ class TestCbfSubarray:
         assert create_vcc_proxies[receptor_to_vcc[1] - 1].obsState.value == ObsState.SCANNING.value
         assert create_vcc_proxies[receptor_to_vcc[4] - 1].obsState.value == ObsState.SCANNING.value
         assert create_fsp_1_subarray_1_proxy.obsState.value == ObsState.SCANNING.value
-        # assert create_fsp_2_subarray_1_proxy.obsState.value == ObsState.SCANNING.value
         assert create_fsp_3_subarray_1_proxy.obsState.value == ObsState.SCANNING.value
         create_subarray_1_proxy.EndScan()
         time.sleep(1)
@@ -1063,116 +936,7 @@ class TestCbfSubarray:
         f.close()
         time.sleep(15)
 
-        # check configured attributes of CBF subarray
-        assert create_subarray_1_proxy.configID == "pss_test"
-        assert create_subarray_1_proxy.frequencyBand == 4
-        assert create_subarray_1_proxy.obsState.value == ObsState.READY.value
-
-        # check frequency band of VCCs, including states of frequency band capabilities
-        assert create_vcc_proxies[receptor_to_vcc[4] - 1].frequencyBand == 4
-        assert create_vcc_proxies[receptor_to_vcc[1] - 1].frequencyBand == 4
-        assert [proxy.State() for proxy in create_vcc_band_proxies[receptor_to_vcc[4] - 1]] == [
-            DevState.DISABLE, DevState.DISABLE, DevState.DISABLE, DevState.ON]
-        assert [proxy.State() for proxy in create_vcc_band_proxies[receptor_to_vcc[1] - 1]] == [
-            DevState.DISABLE, DevState.DISABLE, DevState.DISABLE, DevState.ON]
-
-        # check the rest of the configured attributes of VCCs
-        # first for VCC belonging to receptor 10...
-        assert create_vcc_proxies[receptor_to_vcc[4] - 1].subarrayMembership == 1
-        assert create_vcc_proxies[receptor_to_vcc[4] - 1].band5Tuning[0] == 5.85
-        assert create_vcc_proxies[receptor_to_vcc[4] - 1].band5Tuning[1] == 7.25
-        assert create_vcc_proxies[receptor_to_vcc[4] - 1].frequencyBandOffsetStream1 == 0
-        assert create_vcc_proxies[receptor_to_vcc[4] - 1].frequencyBandOffsetStream2 == 0
-        assert create_vcc_proxies[receptor_to_vcc[4] - 1].rfiFlaggingMask == "{}"
-        # then for VCC belonging to receptor 1...
-        assert create_vcc_proxies[receptor_to_vcc[1] - 1].subarrayMembership == 1
-        assert create_vcc_proxies[receptor_to_vcc[1] - 1].band5Tuning[0] == 5.85
-        assert create_vcc_proxies[receptor_to_vcc[1] - 1].band5Tuning[1] == 7.25
-        assert create_vcc_proxies[receptor_to_vcc[1] - 1].frequencyBandOffsetStream1 == 0
-        assert create_vcc_proxies[receptor_to_vcc[1] - 1].frequencyBandOffsetStream2 == 0
-        assert create_vcc_proxies[receptor_to_vcc[1] - 1].rfiFlaggingMask == "{}"
-
-        # check configured attributes of search windows
-        # first for search window 1...
-        assert create_sw_1_proxy.State() == DevState.ON
-        assert create_sw_1_proxy.searchWindowTuning == 6000000000
-        assert create_sw_1_proxy.tdcEnable == True
-        assert create_sw_1_proxy.tdcNumBits == 8
-        assert create_sw_1_proxy.tdcPeriodBeforeEpoch == 5
-        assert create_sw_1_proxy.tdcPeriodAfterEpoch == 25
-        assert "".join(create_sw_1_proxy.tdcDestinationAddress.split()) in [
-            "[{\"receptorID\":4,\"tdcDestinationAddress\":[\"foo\",\"bar\",\"8080\"]},{\"receptorID\":1,\"tdcDestinationAddress\":[\"fizz\",\"buzz\",\"80\"]}]",
-            "[{\"tdcDestinationAddress\":[\"foo\",\"bar\",\"8080\"],\"receptorID\":4},{\"receptorID\":1,\"tdcDestinationAddress\":[\"fizz\",\"buzz\",\"80\"]}]",
-            "[{\"receptorID\":4,\"tdcDestinationAddress\":[\"foo\",\"bar\",\"8080\"]},{\"tdcDestinationAddress\":[\"fizz\",\"buzz\",\"80\"],\"receptorID\":1}]",
-            "[{\"tdcDestinationAddress\":[\"foo\",\"bar\",\"8080\"],\"receptorID\":4},{\"tdcDestinationAddress\":[\"fizz\",\"buzz\",\"80\"],\"receptorID\":1}]",
-        ]
-        # then for search window 2...
-        assert create_sw_2_proxy.State() == DevState.DISABLE
-        assert create_sw_2_proxy.searchWindowTuning == 7000000000
-        assert create_sw_2_proxy.tdcEnable == False
-
-        # check configured attributes of VCC search windows
-        # first for search window 1 of VCC belonging to receptor 10...
-        assert create_vcc_tdc_proxies[receptor_to_vcc[4] - 1][0].State() == DevState.ON
-        assert create_vcc_tdc_proxies[receptor_to_vcc[4] - 1][0].searchWindowTuning == 6000000000
-        assert create_vcc_tdc_proxies[receptor_to_vcc[4] - 1][0].tdcEnable == True
-        assert create_vcc_tdc_proxies[receptor_to_vcc[4] - 1][0].tdcNumBits == 8
-        assert create_vcc_tdc_proxies[receptor_to_vcc[4] - 1][0].tdcPeriodBeforeEpoch == 5
-        assert create_vcc_tdc_proxies[receptor_to_vcc[4] - 1][0].tdcPeriodAfterEpoch == 25
-        assert create_vcc_tdc_proxies[receptor_to_vcc[4] - 1][0].tdcDestinationAddress == (
-            "foo", "bar", "8080"
-        )
-        # then for search window 1 of VCC belonging to receptor 1...
-        assert create_vcc_tdc_proxies[receptor_to_vcc[1] - 1][0].State() == DevState.ON
-        assert create_vcc_tdc_proxies[receptor_to_vcc[1] - 1][0].searchWindowTuning == 6000000000
-        assert create_vcc_tdc_proxies[receptor_to_vcc[1] - 1][0].tdcEnable == True
-        assert create_vcc_tdc_proxies[receptor_to_vcc[1] - 1][0].tdcNumBits == 8
-        assert create_vcc_tdc_proxies[receptor_to_vcc[1] - 1][0].tdcPeriodBeforeEpoch == 5
-        assert create_vcc_tdc_proxies[receptor_to_vcc[1] - 1][0].tdcPeriodAfterEpoch == 25
-        assert create_vcc_tdc_proxies[receptor_to_vcc[1] - 1][0].tdcDestinationAddress == (
-            "fizz", "buzz", "80"
-        )
-        # then for search window 2 of VCC belonging to receptor 10...
-        assert create_vcc_tdc_proxies[receptor_to_vcc[4] - 1][1].State() == DevState.DISABLE
-        assert create_vcc_tdc_proxies[receptor_to_vcc[4] - 1][1].searchWindowTuning == 7000000000
-        assert create_vcc_tdc_proxies[receptor_to_vcc[4] - 1][1].tdcEnable == False
-        # and lastly for search window 2 of VCC belonging to receptor 1...
-        assert create_vcc_tdc_proxies[receptor_to_vcc[1] - 1][1].State() == DevState.DISABLE
-        assert create_vcc_tdc_proxies[receptor_to_vcc[1] - 1][1].searchWindowTuning == 7000000000
-        assert create_vcc_tdc_proxies[receptor_to_vcc[1] - 1][1].tdcEnable == False
-
-        assert create_fsp_3_subarray_1_proxy.receptors[0] == 3
-        assert create_fsp_3_subarray_1_proxy.receptors[1] == 1
-        assert create_fsp_3_subarray_1_proxy.searchWindowID == 2
-        assert create_fsp_3_subarray_1_proxy.searchBeamID[0] == 300
-        assert create_fsp_3_subarray_1_proxy.searchBeamID[1] == 400
-
-
-        searchBeam = create_fsp_3_subarray_1_proxy.searchBeams
-        searchBeam300 = json.loads(searchBeam[0])
-        searchBeam400 = json.loads(searchBeam[1])
-        assert searchBeam300["searchBeamID"] == 300
-        assert searchBeam300["receptors"][0] == 3
-        assert searchBeam300["outputEnable"] == True
-        assert searchBeam300["averagingInterval"] == 4
-        assert searchBeam300["searchBeamDestinationAddress"] == "10.1.1.1"
-
-        assert searchBeam400["searchBeamID"] == 400
-        assert searchBeam400["receptors"][0] == 1
-        assert searchBeam400["outputEnable"] == True
-        assert searchBeam400["averagingInterval"] == 2
-        assert searchBeam400["searchBeamDestinationAddress"] == "10.1.2.1"
-
-        create_subarray_1_proxy.GoToIdle()
-        time.sleep(3)
-        assert create_subarray_1_proxy.obsState == ObsState.IDLE
-        create_subarray_1_proxy.RemoveAllReceptors()
-        time.sleep(3)
-        assert create_subarray_1_proxy.state() == tango.DevState.OFF
-'''
-
-
-    # def test_ConfigureScan_basic(
+        # check configured attributes of CBF subarray    # def test_ConfigureScan_basic(
     #         self,
     #         create_cbf_master_proxy,
     #         create_subarray_1_proxy,
@@ -1471,4 +1235,229 @@ class TestCbfSubarray:
     #     assert create_subarray_1_proxy.obsState == ObsState.IDLE
     #     create_subarray_1_proxy.RemoveAllReceptors()
     #     time.sleep(3)
-    #     assert create_subarray_1_proxy.state() == tango.DevState.OFF
+    #     assert create_subarray_1_proxy.state() == tango.DevState.OFFequency band capabilities
+        assert create_vcc_proxies[receptor_to_vcc[4] - 1].frequencyBand == 4
+        assert create_vcc_proxies[receptor_to_vcc[1] - 1].frequencyBand == 4
+        assert [proxy.State() for proxy in create_vcc_band_proxies[receptor_to_vcc[4] - 1]] == [
+            DevState.DISABLE, DevState.DISABLE, DevState.DISABLE, DevState.ON]
+        assert [proxy.State() for proxy in create_vcc_band_proxies[receptor_to_vcc[1] - 1]] == [
+            DevState.DISABLE, DevState.DISABLE, DevState.DISABLE, DevState.ON]
+
+        # check the rest of the configured attributes of VCCs
+        # first for VCC belonging to receptor 10...
+        assert create_vcc_proxies[receptor_to_vcc[4] - 1].subarrayMembership == 1
+        assert create_vcc_proxies[receptor_to_vcc[4] - 1].band5Tuning[0] == 5.85
+        assert create_vcc_proxies[receptor_to_vcc[4] - 1].band5Tuning[1] == 7.25
+        assert create_vcc_proxies[receptor_to_vcc[4] - 1].frequencyBandOffsetStream1 == 0
+        assert create_vcc_proxies[receptor_to_vcc[4] - 1].frequencyBandOffsetStream2 == 0
+        assert create_vcc_proxies[receptor_to_vcc[4] - 1].rfiFlaggingMask == "{}"
+        # then for VCC belonging to receptor 1...
+        assert create_vcc_proxies[receptor_to_vcc[1] - 1].subarrayMembership == 1
+        assert create_vcc_proxies[receptor_to_vcc[1] - 1].band5Tuning[0] == 5.85
+        assert create_vcc_proxies[receptor_to_vcc[1] - 1].band5Tuning[1] == 7.25
+        assert create_vcc_proxies[receptor_to_vcc[1] - 1].frequencyBandOffsetStream1 == 0
+        assert create_vcc_proxies[receptor_to_vcc[1] - 1].frequencyBandOffsetStream2 == 0
+        assert create_vcc_proxies[receptor_to_vcc[1] - 1].rfiFlaggingMask == "{}"
+
+        # check configured attributes of search windows
+        # first for search window 1...
+        assert create_sw_1_proxy.State() == DevState.ON
+        assert create_sw_1_proxy.searchWindowTuning == 6000000000
+        assert create_sw_1_proxy.tdcEnable == True
+        assert create_sw_1_proxy.tdcNumBits == 8
+        assert create_sw_1_proxy.tdcPeriodBeforeEpoch == 5
+        assert create_sw_1_proxy.tdcPeriodAfterEpoch == 25
+        assert "".join(create_sw_1_proxy.tdcDestinationAddress.split()) in [
+            "[{\"receptorID\":4,\"tdcDestinationAddress\":[\"foo\",\"bar\",\"8080\"]},{\"receptorID\":1,\"tdcDestinationAddress\":[\"fizz\",\"buzz\",\"80\"]}]",
+            "[{\"tdcDestinationAddress\":[\"foo\",\"bar\",\"8080\"],\"receptorID\":4},{\"receptorID\":1,\"tdcDestinationAddress\":[\"fizz\",\"buzz\",\"80\"]}]",
+            "[{\"receptorID\":4,\"tdcDestinationAddress\":[\"foo\",\"bar\",\"8080\"]},{\"tdcDestinationAddress\":[\"fizz\",\"buzz\",\"80\"],\"receptorID\":1}]",
+            "[{\"tdcDestinationAddress\":[\"foo\",\"bar\",\"8080\"],\"receptorID\":4},{\"tdcDestinationAddress\":[\"fizz\",\"buzz\",\"80\"],\"receptorID\":1}]",
+        ]
+        # then for search window 2...
+        assert create_sw_2_proxy.State() == DevState.DISABLE
+        assert create_sw_2_proxy.searchWindowTuning == 7000000000
+        assert create_sw_2_proxy.tdcEnable == False
+
+        # check configured attributes of VCC search windows
+        # first for search window 1 of VCC belonging to receptor 10...
+        assert create_vcc_tdc_proxies[receptor_to_vcc[4] - 1][0].State() == DevState.ON
+        assert create_vcc_tdc_proxies[receptor_to_vcc[4] - 1][0].searchWindowTuning == 6000000000
+        assert create_vcc_tdc_proxies[receptor_to_vcc[4] - 1][0].tdcEnable == True
+        assert create_vcc_tdc_proxies[receptor_to_vcc[4] - 1][0].tdcNumBits == 8
+        assert create_vcc_tdc_proxies[receptor_to_vcc[4] - 1][0].tdcPeriodBeforeEpoch == 5
+        assert create_vcc_tdc_proxies[receptor_to_vcc[4] - 1][0].tdcPeriodAfterEpoch == 25
+        assert create_vcc_tdc_proxies[receptor_to_vcc[4] - 1][0].tdcDestinationAddress == (
+            "foo", "bar", "8080"
+        )
+        # then for search window 1 of VCC belonging to receptor 1...
+        assert create_vcc_tdc_proxies[receptor_to_vcc[1] - 1][0].State() == DevState.ON
+        assert create_vcc_tdc_proxies[receptor_to_vcc[1] - 1][0].searchWindowTuning == 6000000000
+        assert create_vcc_tdc_proxies[receptor_to_vcc[1] - 1][0].tdcEnable == True
+        assert create_vcc_tdc_proxies[receptor_to_vcc[1] - 1][0].tdcNumBits == 8
+        assert create_vcc_tdc_proxies[receptor_to_vcc[1] - 1][0].tdcPeriodBeforeEpoch == 5
+        assert create_vcc_tdc_proxies[receptor_to_vcc[1] - 1][0].tdcPeriodAfterEpoch == 25
+        assert create_vcc_tdc_proxies[receptor_to_vcc[1] - 1][0].tdcDestinationAddress == (
+            "fizz", "buzz", "80"
+        )
+        # then for search window 2 of VCC belonging to receptor 10...
+        assert create_vcc_tdc_proxies[receptor_to_vcc[4] - 1][1].State() == DevState.DISABLE
+        assert create_vcc_tdc_proxies[receptor_to_vcc[4] - 1][1].searchWindowTuning == 7000000000
+        assert create_vcc_tdc_proxies[receptor_to_vcc[4] - 1][1].tdcEnable == False
+        # and lastly for search window 2 of VCC belonging to receptor 1...
+        assert create_vcc_tdc_proxies[receptor_to_vcc[1] - 1][1].State() == DevState.DISABLE
+        assert create_vcc_tdc_proxies[receptor_to_vcc[1] - 1][1].searchWindowTuning == 7000000000
+        assert create_vcc_tdc_proxies[receptor_to_vcc[1] - 1][1].tdcEnable == False
+
+        assert create_fsp_3_subarray_1_proxy.receptors[0] == 3
+        assert create_fsp_3_subarray_1_proxy.receptors[1] == 1
+        assert create_fsp_3_subarray_1_proxy.searchWindowID == 2
+        assert create_fsp_3_subarray_1_proxy.searchBeamID[0] == 300
+        assert create_fsp_3_subarray_1_proxy.searchBeamID[1] == 400
+
+
+        searchBeam = create_fsp_3_subarray_1_proxy.searchBeams
+        searchBeam300 = json.loads(searchBeam[0])
+        searchBeam400 = json.loads(searchBeam[1])
+        assert searchBeam300["searchBeamID"] == 300
+        assert searchBeam300["receptors"][0] == 3
+        assert searchBeam300["outputEnable"] == True
+        assert searchBeam300["averagingInterval"] == 4
+        assert searchBeam300["searchBeamDestinationAddress"] == "10.1.1.1"
+
+        assert searchBeam400["searchBeamID"] == 400
+        assert searchBeam400["receptors"][0] == 1
+        assert searchBeam400["outputEnable"] == True
+        assert searchBeam400["averagingInterval"] == 2
+        assert searchBeam400["searchBeamDestinationAddress"] == "10.1.2.1"
+
+        create_subarray_1_proxy.GoToIdle()
+        time.sleep(3)
+        assert create_subarray_1_proxy.obsState == ObsState.IDLE
+        create_subarray_1_proxy.RemoveAllReceptors()
+        time.sleep(3)
+        assert create_subarray_1_proxy.state() == tango.DevState.OFF
+
+
+
+
+
+
+
+    def test_band1(
+            self,
+            create_cbf_master_proxy,
+            create_subarray_1_proxy,
+            create_sw_1_proxy,
+            create_sw_2_proxy,
+            create_vcc_proxies,
+            create_vcc_band_proxies,
+            create_vcc_tdc_proxies,
+            create_fsp_1_proxy,
+            create_fsp_2_proxy,
+            create_fsp_1_function_mode_proxy,
+            create_fsp_2_function_mode_proxy,
+            create_fsp_1_subarray_1_proxy,
+            create_fsp_2_subarray_1_proxy,
+            create_fsp_3_subarray_1_proxy,
+            create_tm_telstate_proxy
+    ):
+        """
+        Test a minimal successful configuration
+        """
+        for proxy in create_vcc_proxies:
+            proxy.Init()
+        create_fsp_1_subarray_1_proxy.Init()
+        create_fsp_2_subarray_1_proxy.Init()
+        create_fsp_3_subarray_1_proxy.Init()
+        create_fsp_1_proxy.Init()
+        create_fsp_2_proxy.Init()
+
+        time.sleep(3)
+        create_cbf_master_proxy.set_timeout_millis(60000)
+        create_cbf_master_proxy.Init()
+        time.sleep(60)  # takes pretty long for CBF Master to initialize
+        create_tm_telstate_proxy.Init()
+        time.sleep(1)
+
+        receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
+                               create_cbf_master_proxy.receptorToVcc)
+
+        create_cbf_master_proxy.On()
+        time.sleep(3)
+
+        # check initial value of attributes of CBF subarray
+        assert len(create_subarray_1_proxy.receptors) == 0
+        assert create_subarray_1_proxy.configID == ''
+        assert create_subarray_1_proxy.frequencyBand == 0
+        assert create_subarray_1_proxy.obsState.value == ObsState.IDLE.value
+        # assert create_tm_telstate_proxy.visDestinationAddress == "{}"
+        assert create_tm_telstate_proxy.receivedOutputLinks == False
+
+        # add receptors
+        create_subarray_1_proxy.AddReceptors([1, 3, 4])
+        time.sleep(1)
+        assert create_subarray_1_proxy.receptors[0] == 1
+        assert create_subarray_1_proxy.receptors[1] == 3
+        assert create_subarray_1_proxy.receptors[2] == 4
+
+        # configure scan
+        f = open(file_path + "/test_json/data_model_confluence.json")
+        create_subarray_1_proxy.ConfigureScan(f.read().replace("\n", ""))
+        f.close()
+        time.sleep(15)
+
+        # check configured attributes of CBF subarray
+        assert create_subarray_1_proxy.configID == "sbi-mvp01-20200325-00001-science_A"
+        assert create_subarray_1_proxy.frequencyBand == 0 # means 1
+        assert create_subarray_1_proxy.obsState.value == ObsState.READY.value
+
+        # check frequency band of VCCs, including states of frequency band capabilities
+        assert create_vcc_proxies[receptor_to_vcc[4] - 1].frequencyBand == 0
+        assert create_vcc_proxies[receptor_to_vcc[1] - 1].frequencyBand == 0
+
+
+        # check the rest of the configured attributes of VCCs
+        # first for VCC belonging to receptor 10...
+        assert create_vcc_proxies[receptor_to_vcc[4] - 1].subarrayMembership == 1
+
+        # then for VCC belonging to receptor 1...
+        assert create_vcc_proxies[receptor_to_vcc[1] - 1].subarrayMembership == 1
+
+
+
+        # check configured attributes of FSPs, including states of function mode capabilities
+        assert create_fsp_1_proxy.functionMode == 1
+        assert 1 in create_fsp_1_proxy.subarrayMembership
+        # assert 1 in create_fsp_2_proxy.subarrayMembership
+        assert [proxy.State() for proxy in create_fsp_1_function_mode_proxy] == [
+            DevState.ON, DevState.DISABLE, DevState.DISABLE, DevState.DISABLE
+        ]
+        # assert [proxy.State() for proxy in create_fsp_2_function_mode_proxy] == [
+        #     DevState.ON, DevState.DISABLE, DevState.DISABLE, DevState.DISABLE
+        # ]
+
+        # check configured attributes of FSP subarrays
+        # first for FSP 1...
+        assert create_fsp_1_subarray_1_proxy.obsState == ObsState.READY
+        assert create_fsp_1_subarray_1_proxy.frequencyBand == 0
+        assert create_fsp_1_subarray_1_proxy.frequencySliceID == 1
+        assert create_fsp_1_subarray_1_proxy.corrBandwidth == 0
+        assert create_fsp_1_subarray_1_proxy.integrationTime == 1400
+
+        assert create_fsp_1_subarray_1_proxy.outputLinkMap[0][0] == 1
+        assert create_fsp_1_subarray_1_proxy.outputLinkMap[0][1] == 0
+        assert create_fsp_1_subarray_1_proxy.outputLinkMap[1][0] == 201
+        assert create_fsp_1_subarray_1_proxy.outputLinkMap[1][1] == 1
+
+
+
+        create_subarray_1_proxy.GoToIdle()
+        time.sleep(3)
+        assert create_subarray_1_proxy.obsState == ObsState.IDLE
+        create_subarray_1_proxy.RemoveAllReceptors()
+        time.sleep(1)
+        create_subarray_1_proxy.Off()
+        assert create_subarray_1_proxy.state() == tango.DevState.OFF
+'''
+
+
