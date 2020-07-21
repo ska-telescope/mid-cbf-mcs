@@ -267,6 +267,8 @@ class Vcc(SKACapability):
         self._delay_model = [[0] * 6 for i in range(26)]
         self._config_id = ""
         self._scan_id = 0
+        self.set_change_event("subarrayMembership", True, True)
+
         self.state_model._obs_state = ObsState.IDLE.value
         self.set_state(tango.DevState.OFF)
         # PROTECTED REGION END #    //  Vcc.init_device

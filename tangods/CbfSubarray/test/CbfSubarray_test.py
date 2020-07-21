@@ -54,7 +54,7 @@ from ska.base.control_model import HealthState, AdminMode, ObsState
 )
 
 class TestCbfSubarray:
-    '''
+    
     def test_AddRemoveReceptors_valid(
             self,
             create_cbf_master_proxy,
@@ -504,7 +504,7 @@ class TestCbfSubarray:
             create_subarray_1_proxy.Off()
             assert create_subarray_1_proxy.state() == tango.DevState.OFF
 
-    '''
+    
 
 
  
@@ -942,7 +942,7 @@ class TestCbfSubarray:
 
         create_cbf_master_proxy.On()
         time.sleep(3)
-        if create_subarray_1_proxy.State != DevState.ON:
+        if create_subarray_1_proxy.state() != DevState.ON:
             create_subarray_1_proxy.On()
         create_subarray_1_proxy.set_timeout_millis(60000)
         time.sleep(3)
