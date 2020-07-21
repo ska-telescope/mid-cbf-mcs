@@ -253,7 +253,7 @@ class FspCorrSubarray(SKASubarray):
         # device proxy for easy reference to CBF Subarray
         self._proxy_cbf_subarray = tango.DeviceProxy(self.CbfSubarrayAddress)
 
-        self._obs_state = ObsState.IDLE.value
+        self.state_model._obs_state = ObsState.IDLE.value
         self.set_state(tango.DevState.OFF)
         # PROTECTED REGION END #    //  FspCorrSubarray.init_device
 
@@ -411,7 +411,7 @@ class FspCorrSubarray(SKASubarray):
 
     def is_On_allowed(self):
         if self.dev_state() == tango.DevState.OFF and\
-                self._obs_state == ObsState.IDLE.value:
+                self.state_model._obs_state == ObsState.IDLE.value:
             return True
         return False
 
@@ -423,7 +423,7 @@ class FspCorrSubarray(SKASubarray):
 
     def is_Off_allowed(self):
         if self.dev_state() == tango.DevState.ON and\
-                self._obs_state == ObsState.IDLE.value:
+                self.state_model._obs_state == ObsState.IDLE.value:
             return True
         return False
 
@@ -439,7 +439,7 @@ class FspCorrSubarray(SKASubarray):
     def is_AddReceptors_allowed(self):
         """allowed if FSPPssSubarry is ON, ObsState is not SCANNING"""
         if self.dev_state() == tango.DevState.ON and\
-                self._obs_state in [
+                self.state_model._obs_state in [
                     ObsState.IDLE.value,
                     ObsState.CONFIGURING.value,
                     ObsState.READY.value
@@ -487,7 +487,7 @@ class FspCorrSubarray(SKASubarray):
     def is_RemoveReceptors_allowed(self):
         """allowed if FSPPssSubarry is ON, ObsState is not SCANNING"""
         if self.dev_state() == tango.DevState.ON and\
-                self._obs_state in [
+                self.state_model._obs_state in [
                     ObsState.IDLE.value,
                     ObsState.CONFIGURING.value,
                     ObsState.READY.value
@@ -514,7 +514,7 @@ class FspCorrSubarray(SKASubarray):
     def is_RemoveAllReceptors_allowed(self):
         """allowed if FSPPssSubarry is ON, ObsState is not SCANNING"""
         if self.dev_state() == tango.DevState.ON and\
-                self._obs_state in [
+                self.state_model._obs_state in [
                     ObsState.IDLE.value,
                     ObsState.CONFIGURING.value,
                     ObsState.READY.value
@@ -533,7 +533,7 @@ class FspCorrSubarray(SKASubarray):
     #     pass
     #     """Allowed when devState is ON, obsState is CONFIGURING"""
     #     if self.dev_state() == tango.DevState.ON and\
-    #             self._obs_state == ObsState.CONFIGURING.value:
+    #             self.state_model._obs_state == ObsState.CONFIGURING.value:
     #         return True
     #     return False
 
@@ -570,7 +570,7 @@ class FspCorrSubarray(SKASubarray):
     # def is_AddChannelAddresses_allowed(self):
     #     """Allowed when devState is ON, obsState is CONFIGURING"""
     #     if self.dev_state() == tango.DevState.ON and\
-    #             self._obs_state == ObsState.CONFIGURING.value:
+    #             self.state_model._obs_state == ObsState.CONFIGURING.value:
     #         return True
     #     return False
 
@@ -621,13 +621,13 @@ class FspCorrSubarray(SKASubarray):
         #                                    tango.ErrSeverity.ERR)
 
         # # transition to obsState=READY
-        # self._obs_state = ObsState.READY.value
+        # self.state_model._obs_state = ObsState.READY.value
         # # PROTECTED REGION END #    //  FspCorrSubarray.AddChannelAddresses
 
     def is_ConfigureScan_allowed(self):
         """Allowed if FSP subarray is ON, obsState is IDLE."""
         if self.dev_state() == tango.DevState.ON and\
-                self._obs_state in [ObsState.IDLE.value, ObsState.READY.value]:
+                self.state_model._obs_state in [ObsState.IDLE.value, ObsState.READY.value]:
             return True
         return False
 
@@ -641,8 +641,8 @@ class FspCorrSubarray(SKASubarray):
         # so the checks here have been removed to reduce overhead.
         """Input a JSON. Configure scan for fsp. Called by CbfSubarrayCorrConfig(proxy_fsp_corr_subarray.ConfigureScan(json.dumps(fsp)))"""
         # transition to obsState=CONFIGURING
-        self._obs_state = ObsState.CONFIGURING.value
-        self.push_change_event("obsState", self._obs_state)
+        self.state_model._obs_state = ObsState.CONFIGURING.value
+        self.push_change_event("obsState", self.state_model._obs_state)
 
         argin = json.loads(argin)
 
@@ -786,14 +786,14 @@ class FspCorrSubarray(SKASubarray):
         # 03-23-2020: FspCorrSubarray moves to READY after configuration of the 
         # channels addresses sent by SDP. (ADDChannelAddresses funtion, which is called by the subarray)
         # 06-18-2020: seems like it's not necessary for SDP to trigger ready anymore
-        self._obs_state = ObsState.READY.value
+        self.state_model._obs_state = ObsState.READY.value
 
         # PROTECTED REGION END #    //  FspCorrSubarray.ConfigureScan
 
     def is_EndScan_allowed(self):
         """allowed if ON nd ObsState is SCANNING"""
         if self.dev_state() == tango.DevState.ON and\
-                self._obs_state == ObsState.SCANNING.value:
+                self.state_model._obs_state == ObsState.SCANNING.value:
             return True
         return False
 
@@ -801,7 +801,7 @@ class FspCorrSubarray(SKASubarray):
     def EndScan(self):
         """Set ObsState to READY. Set ScanID to zero"""
         # PROTECTED REGION ID(FspCorrSubarray.EndScan) ENABLED START #
-        self._obs_state = ObsState.READY.value
+        self.state_model._obs_state = ObsState.READY.value
         self._scan_id = 0
         # nothing else is supposed to happen
         # PROTECTED REGION END #    //  FspCorrSubarray.EndScan
@@ -809,7 +809,7 @@ class FspCorrSubarray(SKASubarray):
     def is_Scan_allowed(self):
         """Allowed if DevState ON, ObsState READY"""
         if self.dev_state() == tango.DevState.ON and\
-                self._obs_state == ObsState.READY.value:
+                self.state_model._obs_state == ObsState.READY.value:
             return True
         return False
 
@@ -821,7 +821,7 @@ class FspCorrSubarray(SKASubarray):
         # PROTECTED REGION ID(FspCorrSubarray.Scan) ENABLED START #
         """Set ObsState to READY, set scanID"""
         self.logger.info("scan in fspcorrsubarray")
-        self._obs_state = ObsState.SCANNING.value
+        self.state_model._obs_state = ObsState.SCANNING.value
         # set scanID
         try:
             self._scan_id=int(argin)
@@ -837,7 +837,7 @@ class FspCorrSubarray(SKASubarray):
     def is_GoToIdle_allowed(self):
         """ON and ObsState IDLE or READY"""
         if self.dev_state() == tango.DevState.ON and\
-                self._obs_state in [ObsState.IDLE.value, ObsState.READY.value]:
+                self.state_model._obs_state in [ObsState.IDLE.value, ObsState.READY.value]:
             return True
         return False
 
@@ -847,7 +847,7 @@ class FspCorrSubarray(SKASubarray):
         # transition to obsState=IDLE
         """Clear channel. Set Obsstate to IDLE"""
         self._channel_info.clear()
-        self._obs_state = ObsState.IDLE.value
+        self.state_model._obs_state = ObsState.IDLE.value
         self._config_id=""
         # PROTECTED REGION END #    //  FspCorrSubarray.GoToIdle
 
