@@ -34,8 +34,8 @@ file_path = os.path.dirname(os.path.abspath(__file__))
 commons_pkg_path = os.path.abspath(os.path.join(file_path, "../../commons"))
 sys.path.insert(0, commons_pkg_path)
 
-from skabase.SKAMaster.SKAMaster import SKAMaster
-from skabase.control_model import HealthState, AdminMode
+from ska.base import SKAMaster
+from ska.base.control_model import HealthState, AdminMode
 
 # PROTECTED REGION END #    //  CbfMaster.additionnal_import
 
@@ -276,8 +276,7 @@ class CbfMaster(SKAMaster):
         dtype=('uint16',),
         max_dim_x=197,
         label="VCC subarray membership",
-        polling_period=3000,
-        abs_change=1,
+        # no polling period so it reads the true value and not the one in cache
         doc="Report the subarray membership of VCCs (each can only belong to a single subarray), 0 if not assigned."
     )
 
@@ -640,7 +639,8 @@ class CbfMaster(SKAMaster):
     def On(self):
         """turn CbfMaster on, also turn on subarray, vcc, fsp"""
         # PROTECTED REGION ID(CbfMaster.On) ENABLED START #
-        self._group_subarray.command_inout("On")
+        # 2020-07-14: don't turn Subarray on with ADR8 update
+        # self._group_subarray.command_inout("On")
         self._group_vcc.command_inout("On")
         self._group_fsp.command_inout("On")
         self.set_state(tango.DevState.ON)

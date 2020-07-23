@@ -66,45 +66,8 @@ class CbfSubarray(SKASubarray):
     """
 
     # PROTECTED REGION ID(CbfSubarray.class_variable) ENABLED START #
-    def init_command_objects(self):
-        """
-        Sets up the command objects
-        """
-        super().init_command_objects()
-        device_args = (self, self.state_model, self.logger)
-        # resource_args = (self.resource_manager, self.state_model, self.logger) 
-        # only use resource_args if we want to have separate resource_manager object
-        self.register_command_object(
-            "Configure",
-            self.ConfigureCommand(*device_args)
-        )       
-        self.register_command_object(
-            "AddReceptors",
-            self.AddReceptorsCommand(*device_args)
-        )
-        self.register_command_object(
-            "RemoveReceptors",
-            self.RemoveReceptorsCommand(*device_args)
-        )
-        self.register_command_object(
-            "RemoveAllReceptors",
-            self.RemoveAllReceptorsCommand(*device_args)
-        )
-        self.register_command_object(
-            "ConfigureScan",
-            self.ConfigureScanCommand(*device_args)
-        )
-        self.register_command_object(
-            "StartScan",
-            self.StartScanCommand(*device_args)
-        )
-        self.register_command_object(
-            "GoToIdle",
-            self.GoToIdleCommand(*device_args)
-        )
-        
 
-    def _void_callback(self, event):
+    def __void_callback(self, event):
         # This callback is only meant to be used to test if a subscription is valid
         if not event.err:
             pass
@@ -113,7 +76,7 @@ class CbfSubarray(SKASubarray):
                 log_msg = item.reason + ": on attribute " + str(event.attr_name)
                 self.logger.error(log_msg)
 
-    def _doppler_phase_correction_event_callback(self, event):
+    def __doppler_phase_correction_event_callback(self, event):
         if not event.err:
             try:
                 self._group_vcc.write_attribute("dopplerPhaseCorrection", event.attr_value.value)
@@ -126,9 +89,9 @@ class CbfSubarray(SKASubarray):
                 log_msg = item.desc + item.reason + ": on attribute " + str(event.attr_name)
                 self.logger.error(log_msg)
 
-    def _delay_model_event_callback(self, event):
+    def __delay_model_event_callback(self, event):
         if not event.err:
-            if self.state_model._obs_state not in [ObsState.READY.value, ObsState.SCANNING.value]:
+            if self._obs_state not in [ObsState.READY.value, ObsState.SCANNING.value]:
                 log_msg = "Ignoring delay model (obsState not correct)."
                 self.logger.warn(log_msg)
                 return
@@ -147,7 +110,7 @@ class CbfSubarray(SKASubarray):
 
                 for delay_model in delay_model_all["delayModel"]:
                     t = Thread(
-                        target=self._update_delay_model,
+                        target=self.__update_delay_model,
                         args=(int(delay_model["epoch"]), json.dumps(delay_model["delayDetails"]))
                     )
                     t.start()
@@ -158,7 +121,7 @@ class CbfSubarray(SKASubarray):
                 log_msg = item.reason + ": on attribute " + str(event.attr_name)
                 self.logger.error(log_msg)
 
-    def _update_delay_model(self, epoch, model):
+    def __update_delay_model(self, epoch, model):
         # This method is always called on a separate thread
         log_msg = "Delay model active at {} (currently {})...".format(epoch, int(time.time()))
         self.logger.warn(log_msg)
@@ -179,7 +142,7 @@ class CbfSubarray(SKASubarray):
 
 
 
-    def _state_change_event_callback(self, event):
+    def __state_change_event_callback(self, event):
         if not event.err:
             try:
                 device_name = event.device.dev_name()
@@ -218,20 +181,20 @@ class CbfSubarray(SKASubarray):
 
 
 
-    def _validate_scan_configuration(self, argin):
+    def __validate_scan_configuration(self, argin):
         # try to deserialize input string to a JSON object
         try:
             argin = json.loads(argin)
         except json.JSONDecodeError:  # argument not a valid JSON object
             msg = "Scan configuration object is not a valid JSON object. Aborting configuration."
-            self._raise_configure_scan_fatal_error(msg)
+            self.__raise_configure_scan_fatal_error(msg)
 
         for proxy in self._proxies_assigned_vcc:
             if proxy.State() != tango.DevState.ON:
                 msg = "VCC {} is not ON. Aborting configuration.".format(
                     self._proxies_vcc.index(proxy) + 1
                 )
-                self._raise_configure_scan_fatal_error(msg)
+                self.__raise_configure_scan_fatal_error(msg)
 
         # Validate configID.
         # Note!!! this is an exception in the JSON input. in the input it is called "id", 
@@ -241,19 +204,19 @@ class CbfSubarray(SKASubarray):
             # if int(argin["configID"]) <= 0:  # configID not positive
             #     msg = "'configID' must be positive (received {}). " \
             #           "Aborting configuration.".format(int(argin["configID"]))
-            #     self._raise_configure_scan_fatal_error(msg)
+            #     self.__raise_configure_scan_fatal_error(msg)
             # elif any(map(lambda i: i == int(argin["configID"]),
             #              self._proxy_cbf_master.subarrayconfigID)) and \
             #         int(argin["configID"]) != self._config_ID:  # configID already taken
             #     msg = "'configID' must be unique (received {}). " \
             #           "Aborting configuration.".format(int(argin["configID"]))
-            #     self._raise_configure_scan_fatal_error(msg)
+            #     self.__raise_configure_scan_fatal_error(msg)
             # else:
             #     pass
 
         else:
             msg = "'id'(configID attribute) must be given. Aborting configuration."
-            self._raise_configure_scan_fatal_error(msg)
+            self.__raise_configure_scan_fatal_error(msg)
 
         # Validate frequencyBand.
         if "frequencyBand" in argin:
@@ -263,10 +226,10 @@ class CbfSubarray(SKASubarray):
             else:
                 msg = "'frequencyBand' must be one of {} (received {}). " \
                       "Aborting configuration.".format(frequency_bands, argin["frequency_band"])
-                self._raise_configure_scan_fatal_error(msg)
+                self.__raise_configure_scan_fatal_error(msg)
         else:
             msg = "'frequencyBand' must be given. Aborting configuration."
-            self._raise_configure_scan_fatal_error(msg)
+            self.__raise_configure_scan_fatal_error(msg)
 
         # Validate band5Tuning, if frequencyBand is 5a or 5b.
         if argin["frequencyBand"] in ["5a", "5b"]:
@@ -277,7 +240,7 @@ class CbfSubarray(SKASubarray):
                     assert len(argin["band5Tuning"]) == 2
                 except (TypeError, AssertionError):
                     msg = "'band5Tuning' must be an array of length 2. Aborting configuration."
-                    self._raise_configure_scan_fatal_error(msg)
+                    self.__raise_configure_scan_fatal_error(msg)
 
                 stream_tuning = [*map(float, argin["band5Tuning"])]
                 if argin["frequencyBand"] == "5a":
@@ -295,7 +258,7 @@ class CbfSubarray(SKASubarray):
                             stream_tuning[0],
                             stream_tuning[1]
                         )
-                        self._raise_configure_scan_fatal_error(msg)
+                        self.__raise_configure_scan_fatal_error(msg)
                 else:  # argin["frequencyBand"] == "5b"
                     if all(
                             [const.FREQUENCY_BAND_5b_TUNING_BOUNDS[0] <= stream_tuning[i]
@@ -311,7 +274,7 @@ class CbfSubarray(SKASubarray):
                             stream_tuning[0],
                             stream_tuning[1]
                         )
-                        self._raise_configure_scan_fatal_error(msg)
+                        self.__raise_configure_scan_fatal_error(msg)
             else:
                 # set band5Tuning to zero for the rest of the test. This won't change the argin in function "configureScan(argin)"
                 argin["band5Tuning"]=[0,0]
@@ -323,7 +286,7 @@ class CbfSubarray(SKASubarray):
             else:
                 msg = "Absolute value of 'frequencyBandOffsetStream1' must be at most half " \
                       "of the frequency slice bandwidth. Aborting configuration."
-                self._raise_configure_scan_fatal_error(msg)
+                self.__raise_configure_scan_fatal_error(msg)
         else:
             pass
 
@@ -336,7 +299,7 @@ class CbfSubarray(SKASubarray):
                 else:
                     msg = "Absolute value of 'frequencyBandOffsetStream2' must be at most " \
                           "half of the frequency slice bandwidth. Aborting configuration."
-                    self._raise_configure_scan_fatal_error(msg)
+                    self.__raise_configure_scan_fatal_error(msg)
             else:
                 pass
         else:
@@ -350,7 +313,7 @@ class CbfSubarray(SKASubarray):
                 attribute_proxy.unsubscribe_event(
                     attribute_proxy.subscribe_event(
                         tango.EventType.CHANGE_EVENT,
-                        self._void_callback
+                        self.__void_callback
                     )
                 )
             except tango.DevFailed:  # attribute doesn't exist or is not set up correctly
@@ -358,7 +321,7 @@ class CbfSubarray(SKASubarray):
                       "'dopplerPhaseCorrSubscriptionPoint'. Aborting configuration.".format(
                     argin["dopplerPhaseCorrSubscriptionPoint"]
                 )
-                self._raise_configure_scan_fatal_error(msg)
+                self.__raise_configure_scan_fatal_error(msg)
         else:
             pass
 
@@ -370,7 +333,7 @@ class CbfSubarray(SKASubarray):
                 attribute_proxy.unsubscribe_event(
                     attribute_proxy.subscribe_event(
                         tango.EventType.CHANGE_EVENT,
-                        self._void_callback
+                        self.__void_callback
                     )
                 )
 
@@ -379,10 +342,10 @@ class CbfSubarray(SKASubarray):
                       "'delayModelSubscriptionPoint'. Aborting configuration.".format(
                     argin["delayModelSubscriptionPoint"]
                 )
-                self._raise_configure_scan_fatal_error(msg)
+                self.__raise_configure_scan_fatal_error(msg)
         else:
             msg = "'delayModelSubscriptionPoint' not given. Aborting configuration."
-            self._raise_configure_scan_fatal_error(msg)
+            self.__raise_configure_scan_fatal_error(msg)
 
 
 
@@ -418,7 +381,7 @@ class CbfSubarray(SKASubarray):
                                 str(sys.exc_info()[1].args[0].desc)
                             )
 
-                            self._raise_configure_scan_fatal_error(msg)
+                            self.__raise_configure_scan_fatal_error(msg)
                     # If the search window configuration is valid for all VCCs,
                     # is is guaranteed to be valid for the CBF Subarray.
                     # self.ConfigureSearchWindow(json.dumps(search_window))
@@ -426,7 +389,7 @@ class CbfSubarray(SKASubarray):
             except (TypeError, AssertionError):  # searchWindow not the right length or not an array
                 msg = "'searchWindow' must be an array of maximum length 2. " \
                       "Aborting configuration."
-                self._raise_configure_scan_fatal_error(msg)
+                self.__raise_configure_scan_fatal_error(msg)
         else:
             pass
 
@@ -446,21 +409,21 @@ class CbfSubarray(SKASubarray):
                         else:
                             msg = "'fspID' must be an integer in the range [1, {}]. " \
                                   "Aborting configuration.".format(str(self._count_fsp))
-                            self._aise_configure_scan_fatal_error(msg)
+                            self.__raise_configure_scan_fatal_error(msg)
                     else:
                         msg = "FSP specified, but 'fspID' not given. " \
                               "Aborting configuration."
-                        self._raise_configure_scan_fatal_error(msg)
+                        self.__raise_configure_scan_fatal_error(msg)
 
                     if proxy_fsp.State() != tango.DevState.ON:
                         msg = "FSP {} is not ON. Aborting configuration.".format(fspID)
-                        self._raise_configure_scan_fatal_error(msg)
+                        self.__raise_configure_scan_fatal_error(msg)
 
                     if proxy_fsp_subarray.State() != tango.DevState.ON:
                         msg = "Subarray {} of FSP {} is not ON. Aborting configuration.".format(
                             self._subarray_id, fspID
                         )
-                        self._raise_configure_scan_fatal_error(msg)
+                        self.__raise_configure_scan_fatal_error(msg)
 
                     # Validate functionMode.
                     function_modes = ["CORR", "PSS-BF", "PST-BF", "VLBI"]
@@ -478,24 +441,24 @@ class CbfSubarray(SKASubarray):
                                               "different function mode. Aborting configuration.".format(
                                                fsp["fspID"]
                                                )
-                                        self._raise_configure_scan_fatal_error(msg)
+                                        self.__raise_configure_scan_fatal_error(msg)
                                 for fsp_pss_subarray_proxy in self._proxies_fsp_pss_subarray:
                                     if fsp_pss_subarray_proxy.obsState != ObsState.IDLE:
                                         msg = "A different subarray is using FSP {} for a " \
                                               "different function mode. Aborting configuration.".format(
                                                fsp["fspID"]
                                                )
-                                        self._raise_configure_scan_fatal_error(msg)
+                                        self.__raise_configure_scan_fatal_error(msg)
                         else:
                             msg = "'functionMode' must be one of {} (received {}). " \
                                   "Aborting configuration.".format(
                                 function_modes, fsp["functionMode"]
                             )
-                            self._raise_configure_scan_fatal_error(msg)
+                            self.__raise_configure_scan_fatal_error(msg)
                     else:
                         msg = "FSP specified, but 'functionMode' not given. " \
                               "Aborting configuration."
-                        self._raise_configure_scan_fatal_error(msg)
+                        self.__raise_configure_scan_fatal_error(msg)
 
                     fsp["frequencyBand"] = argin["frequencyBand"]
                     if "frequencyBandOffsetStream1" in argin:
@@ -534,7 +497,7 @@ class CbfSubarray(SKASubarray):
                                                              tango.ErrSeverity.ERR)
                         else:
                             msg = "'receptors' not specified for Fsp PSS config"
-                            self._raise_configure_scan_fatal_error(msg)
+                            self.__raise_configure_scan_fatal_error(msg)
 
                         frequencyBand = ["1", "2", "3", "4", "5a", "5b"].index(fsp["frequencyBand"])
 
@@ -579,14 +542,12 @@ class CbfSubarray(SKASubarray):
                         if fsp["corrBandwidth"]:  # zoomWindowTuning is required
                             if "zoomWindowTuning" in fsp:
                                 if fsp["frequencyBand"] not in ["5a", "5b"]:  # frequency band is not band 5
-                                    frequencyBand = ["1", "2", "3", "4", "5a", "5b"].index(fsp["frequencyBand"])
                                     frequency_band_start = [*map(lambda j: j[0] * 10 ** 9, [
                                         const.FREQUENCY_BAND_1_RANGE,
                                         const.FREQUENCY_BAND_2_RANGE,
                                         const.FREQUENCY_BAND_3_RANGE,
                                         const.FREQUENCY_BAND_4_RANGE
-                                    ])][frequencyBand] + fsp["frequencyBandOffsetStream1"]
-                                    # ])][fsp["frequencyBand"]] + fsp["frequencyBandOffsetStream1"]
+                                    ])][fsp["frequencyBand"]] + fsp["frequencyBandOffsetStream1"]
                                     frequency_slice_range = (
                                         frequency_band_start + \
                                         (fsp["frequencySliceID"] - 1) * const.FREQUENCY_SLICE_BW * 10 ** 6,
@@ -788,10 +749,10 @@ class CbfSubarray(SKASubarray):
                                 msg = "'searchWindowID' must be one of [1, 2] (received {}).".format(
                                     str(fsp["searchWindowID"])
                                 )
-                                self._raise_configure_scan_fatal_error(msg)
+                                self.__raise_configure_scan_fatal_error(msg)
                         else:
                             msg = "Search window not specified for Fsp PSS config"
-                            self._raise_configure_scan_fatal_error(msg)
+                            self.__raise_configure_scan_fatal_error(msg)
                         if "searchBeam" in fsp:
                             if len(fsp["searchBeam"]) <= 192:
                                 for searchBeam in fsp["searchBeam"]:
@@ -803,7 +764,7 @@ class CbfSubarray(SKASubarray):
                                             msg = "'searchBeamID' must be within range 1-1500 (received {}).".format(
                                                 str(searchBeam["searchBeamID"])
                                             )
-                                            self._raise_configure_scan_fatal_error(msg)
+                                            self.__raise_configure_scan_fatal_error(msg)
                                         for fsp_pss_subarray_proxy in self._proxies_fsp_pss_subarray:
                                             searchBeamID = fsp_pss_subarray_proxy.searchBeamID
                                             if searchBeamID is None:
@@ -818,10 +779,10 @@ class CbfSubarray(SKASubarray):
                                                         msg = "'searchBeamID' {} is already being used on another fspSubarray.".format(
                                                             str(searchBeam["searchBeamID"])
                                                         )
-                                                        self._raise_configure_scan_fatal_error(msg)
+                                                        self.__raise_configure_scan_fatal_error(msg)
                                     else:
                                         msg = "Search beam ID not specified for Fsp PSS config"
-                                        self._raise_configure_scan_fatal_error(msg)
+                                        self.__raise_configure_scan_fatal_error(msg)
 
                                         # Validate receptors.
                                         # This is always given, due to implementation details.
@@ -845,40 +806,40 @@ class CbfSubarray(SKASubarray):
                                                                          tango.ErrSeverity.ERR)
                                     else:
                                         msg = "'receptors' not specified for Fsp PSS config"
-                                        self._raise_configure_scan_fatal_error(msg)
+                                        self.__raise_configure_scan_fatal_error(msg)
                                     if "outputEnable" in searchBeam:
                                         if searchBeam["outputEnable"] is False or searchBeam["outputEnable"] is True:
                                             pass
                                         else:
                                             msg = "'outputEnabled' is not a valid boolean"
-                                            self._raise_configure_scan_fatal_error(msg)
+                                            self.__raise_configure_scan_fatal_error(msg)
                                     else:
                                         msg = "'outputEnable' not specified for Fsp PSS config"
-                                        self._raise_configure_scan_fatal_error(msg)
+                                        self.__raise_configure_scan_fatal_error(msg)
                                     if "averagingInterval" in searchBeam:
                                         if isinstance(searchBeam["averagingInterval"], int):
                                             pass
                                         else:
                                             msg = "'averagingInterval' is not a valid integer"
-                                            self._raise_configure_scan_fatal_error(msg)
+                                            self.__raise_configure_scan_fatal_error(msg)
                                     else:
                                         msg = "'averagingInterval' not specified for Fsp PSS config"
-                                        self._raise_configure_scan_fatal_error(msg)
+                                        self.__raise_configure_scan_fatal_error(msg)
                                     if "searchBeamDestinationAddress" in searchBeam:
                                         if validate_ip(searchBeam["searchBeamDestinationAddress"]):
                                             pass
                                         else:
                                             msg = "'searchBeamDestinationAddress' is not a valid IP address"
-                                            self._raise_configure_scan_fatal_error(msg)
+                                            self.__raise_configure_scan_fatal_error(msg)
                                     else:
                                         msg = "'searchBeamDestinationAddress' not specified for Fsp PSS config"
-                                        self._raise_configure_scan_fatal_error(msg)
+                                        self.__raise_configure_scan_fatal_error(msg)
                             else:
                                 msg = "More than 192 SearchBeams defined in PSS-BF config"
-                                self._raise_configure_scan_fatal_error(msg)
+                                self.__raise_configure_scan_fatal_error(msg)
                         else:
                             msg = "'searchBeam' not defined in PSS-BF config"
-                            self._raise_configure_scan_fatal_error(msg)
+                            self.__raise_configure_scan_fatal_error(msg)
 
                         self._pss_config.append(fsp)
                         self._pss_fsp_list.append(fsp["fspID"])
@@ -887,14 +848,14 @@ class CbfSubarray(SKASubarray):
                         proxy_fsp.subscribe_event(
                             "State",
                             tango.EventType.CHANGE_EVENT,
-                            self._state_change_event_callback
+                            self.__state_change_event_callback
                         )
                     )
                     proxy_fsp.unsubscribe_event(
                         proxy_fsp.subscribe_event(
                             "healthState",
                             tango.EventType.CHANGE_EVENT,
-                            self._state_change_event_callback
+                            self.__state_change_event_callback
                         )
                     )
 
@@ -902,14 +863,14 @@ class CbfSubarray(SKASubarray):
                     msg = "An exception occurred while configuring FSPs:\n{}\n" \
                           "Aborting configuration".format(sys.exc_info()[1].args[0].desc)
 
-                    self._raise_configure_scan_fatal_error(msg)
+                    self.__raise_configure_scan_fatal_error(msg)
         else:
             msg = "'fsp' not given. Aborting configuration."
-            self._raise_configure_scan_fatal_error(msg)
+            self.__raise_configure_scan_fatal_error(msg)
 
         # At this point, everything has been validated.
 
-    def _raise_configure_scan_fatal_error(self, msg):
+    def __raise_configure_scan_fatal_error(self, msg):
         self.logger.error(msg)
         tango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
                                      tango.ErrSeverity.ERR)
@@ -1053,117 +1014,116 @@ class CbfSubarray(SKASubarray):
     # ---------------
     # General methods
     # ---------------
-    class InitCommand(SKASubarray.InitCommand):
-        def do(self):
-            """
-            entry point; 
-            initialize the attributes and the properties of the CbfSubarray
-            """
-            # SKASubarray.init_device(self)
-            # PROTECTED REGION ID(CbfSubarray.init_device) ENABLED START #
-            # self.set_state(DevState.INIT)
-            (result_code, message) = super().do()
 
-            device=self.target
+    def init_device(self):
+        """
+        entry point; 
+        initialize the attributes and the properties of the CbfSubarray
+        """
+        SKASubarray.init_device(self)
+        # PROTECTED REGION ID(CbfSubarray.init_device) ENABLED START #
+        self.set_state(DevState.INIT)
 
-            
-            device._storage_logging_level = tango.LogLevel.LOG_DEBUG
-            device._element_logging_level = tango.LogLevel.LOG_DEBUG
-            device._central_logging_level = tango.LogLevel.LOG_DEBUG
+        self._storage_logging_level = tango.LogLevel.LOG_DEBUG
+        self._element_logging_level = tango.LogLevel.LOG_DEBUG
+        self._central_logging_level = tango.LogLevel.LOG_DEBUG
 
-            # get subarray ID
-            if device.SubID:
-                device._subarray_id = device.SubID
-            else:
-                device._subarray_id = int(device.get_name()[-2:])  # last two chars of FQDN
+        # get subarray ID
+        if self.SubID:
+            self._subarray_id = self.SubID
+        else:
+            self._subarray_id = int(self.get_name()[-2:])  # last two chars of FQDN
 
-        # initialize attribute values
-            device._receptors = []
-            device._frequency_band = 0
-            device._config_ID = ""
-            device._scan_ID = 0
-            device._fsp_list = [[], [], [], []]
-            # device._output_links_distribution = {"configID": ""}# ???
-            device._vcc_state = {}  # device_name:state
-            device._vcc_health_state = {}  # device_name:healthState
-            device._fsp_state = {}  # device_name:state
-            device._fsp_health_state = {}  # device_name:healthState
-            # store list of fsp configs being used for each function mode
-            device._pss_config = []
-            device._corr_config = []
-            # store list of fsp being used for each function mode
-            device._corr_fsp_list = []
-            device._pss_fsp_list = []
-            device._latest_scan_config=""
-            # device._published_output_links = False# ???
-            # device._last_received_vis_destination_address = "{}"#???
-            device._last_received_delay_model = "{}"
+     # initialize attribute values
+        self._receptors = []
+        self._frequency_band = 0
+        self._config_ID = ""
+        self._scan_ID = 0
+        self._fsp_list = [[], [], [], []]
+        # self._output_links_distribution = {"configID": ""}# ???
+        self._vcc_state = {}  # device_name:state
+        self._vcc_health_state = {}  # device_name:healthState
+        self._fsp_state = {}  # device_name:state
+        self._fsp_health_state = {}  # device_name:healthState
+        # store list of fsp configs being used for each function mode
+        self._pss_config = []
+        self._corr_config = []
+        # store list of fsp being used for each function mode
+        self._corr_fsp_list = []
+        self._pss_fsp_list = []
+        self._latest_scan_config=""
+        # self._published_output_links = False# ???
+        # self._last_received_vis_destination_address = "{}"#???
+        self._last_received_delay_model = "{}"
 
-            device._mutex_delay_model_config = Lock()
+        self._mutex_delay_model_config = Lock()
 
-            # for easy device-reference
-            device._frequency_band_offset_stream_1 = 0
-            device._frequency_band_offset_stream_2 = 0
-            device._stream_tuning = [0, 0]
+        # for easy self-reference
+        self._frequency_band_offset_stream_1 = 0
+        self._frequency_band_offset_stream_2 = 0
+        self._stream_tuning = [0, 0]
 
-            # device proxy for easy reference to CBF Master
-            device._proxy_cbf_master = tango.DeviceProxy(device.CbfMasterAddress)
+        # device proxy for easy reference to CBF Master
+        self._proxy_cbf_master = tango.DeviceProxy(self.CbfMasterAddress)
 
-            device.MIN_INT_TIME = const.MIN_INT_TIME
-            device.NUM_CHANNEL_GROUPS = const.NUM_CHANNEL_GROUPS
-            device.NUM_FINE_CHANNELS = const.NUM_FINE_CHANNELS
+        self.MIN_INT_TIME = const.MIN_INT_TIME
+        self.NUM_CHANNEL_GROUPS = const.NUM_CHANNEL_GROUPS
+        self.NUM_FINE_CHANNELS = const.NUM_FINE_CHANNELS
 
-            device._proxy_sw_1 = tango.DeviceProxy(device.SW1Address)
-            device._proxy_sw_2 = tango.DeviceProxy(device.SW2Address)
+        self._proxy_sw_1 = tango.DeviceProxy(self.SW1Address)
+        self._proxy_sw_2 = tango.DeviceProxy(self.SW2Address)
 
-            # JSON FSP configurations for PSS, COR, PST, VLBI
-            device._proxy_pss_config = tango.DeviceProxy(device.PssConfigAddress)
-            device._proxy_corr_config = tango.DeviceProxy(device.CorrConfigAddress) # address of CbfSubarrayCoorConfig device in Subarray Multi
+        # JSON FSP configurations for PSS, COR, PST, VLBI
+        self._proxy_pss_config = tango.DeviceProxy(self.PssConfigAddress)
+        self._proxy_corr_config = tango.DeviceProxy(self.CorrConfigAddress) # address of CbfSubarrayCoorConfig device in Subarray Multi
 
-            device._master_max_capabilities = dict(
-                pair.split(":") for pair in
-                device._proxy_cbf_master.get_property("MaxCapabilities")["MaxCapabilities"]
-            )
+        self._master_max_capabilities = dict(
+            pair.split(":") for pair in
+            self._proxy_cbf_master.get_property("MaxCapabilities")["MaxCapabilities"]
+        )
 
-            device._count_vcc = int(device._master_max_capabilities["VCC"])
-            device._count_fsp = int(device._master_max_capabilities["FSP"])
-            device._fqdn_vcc = list(device.VCC)[:device._count_vcc]
-            device._fqdn_fsp = list(device.FSP)[:device._count_fsp]
-            device._fqdn_fsp_corr_subarray = list(device.FspCorrSubarray)
-            device._fqdn_fsp_pss_subarray = list(device.FspPssSubarray)
+        self._count_vcc = int(self._master_max_capabilities["VCC"])
+        self._count_fsp = int(self._master_max_capabilities["FSP"])
+        self._fqdn_vcc = list(self.VCC)[:self._count_vcc]
+        self._fqdn_fsp = list(self.FSP)[:self._count_fsp]
+        self._fqdn_fsp_corr_subarray = list(self.FspCorrSubarray)
+        self._fqdn_fsp_pss_subarray = list(self.FspPssSubarray)
 
 
-            device._proxies_vcc = [*map(tango.DeviceProxy, device._fqdn_vcc)]
-            device._proxies_fsp = [*map(tango.DeviceProxy, device._fqdn_fsp)]
-            device._proxies_fsp_corr_subarray = [*map(tango.DeviceProxy, device._fqdn_fsp_corr_subarray)]
-            device._proxies_fsp_pss_subarray = [*map(tango.DeviceProxy, device._fqdn_fsp_pss_subarray)]
+        self._proxies_vcc = [*map(tango.DeviceProxy, self._fqdn_vcc)]
+        self._proxies_fsp = [*map(tango.DeviceProxy, self._fqdn_fsp)]
+        self._proxies_fsp_corr_subarray = [*map(tango.DeviceProxy, self._fqdn_fsp_corr_subarray)]
+        self._proxies_fsp_pss_subarray = [*map(tango.DeviceProxy, self._fqdn_fsp_pss_subarray)]
 
-            device._proxies_assigned_vcc = []
-            device._proxies_assigned_fsp = []
-            device._proxies_assigned_fsp_corr_subarray = []
-            device._proxies_assigned_fsp_pss_subarray = []
+        self._proxies_assigned_vcc = []
+        self._proxies_assigned_fsp = []
+        self._proxies_assigned_fsp_corr_subarray = []
+        self._proxies_assigned_fsp_pss_subarray = []
 
-            # store the subscribed telstate events as event_ID:attribute_proxy key:value pairs
-            device._events_telstate = {}
+        # store the subscribed telstate events as event_ID:attribute_proxy key:value pairs
+        self._events_telstate = {}
 
-            # store the subscribed state change events as vcc_ID:[event_ID, event_ID] key:value pairs
-            device._events_state_change_vcc = {}
+        # store the subscribed state change events as vcc_ID:[event_ID, event_ID] key:value pairs
+        self._events_state_change_vcc = {}
 
-            # store the subscribed state change events as fsp_ID:[event_ID, event_ID] key:value pairs
-            device._events_state_change_fsp = {}
+        # store the subscribed state change events as fsp_ID:[event_ID, event_ID] key:value pairs
+        self._events_state_change_fsp = {}
 
-            # initialize groups
-            device._group_vcc = tango.Group("VCC")
-            device._group_fsp = tango.Group("FSP")
-            device._group_fsp_corr_subarray = tango.Group("FSP Subarray Corr")
-            device._group_fsp_pss_subarray = tango.Group("FSP Subarray Pss")
+        # initialize groups
+        self._group_vcc = tango.Group("VCC")
+        self._group_fsp = tango.Group("FSP")
+        self._group_fsp_corr_subarray = tango.Group("FSP Subarray Corr")
+        self._group_fsp_pss_subarray = tango.Group("FSP Subarray Pss")
+
+        self._obs_state = ObsState.IDLE.value
+        self._admin_mode = AdminMode.ONLINE.value
+        self.set_state(tango.DevState.DISABLE)
 
 
-            return (ResultCode.OK, "successfull")
+        # PROTECTED REGION END #    //  CbfSubarray.init_device
 
 
-
-
+     ####################################################################################################
 
 
     def always_executed_hook(self):
@@ -1267,14 +1227,21 @@ class CbfSubarray(SKASubarray):
             return True
         return False
 
-    class OnCommand(SKASubarray.OnCommand):
-        def do(self):
-            (result_code,message)=super().do()
-            device = self.target
-            device._proxy_sw_1.SetState(tango.DevState.DISABLE)
-            device._proxy_sw_2.SetState(tango.DevState.DISABLE)
-            return (result_code,message)
 
+    @command()
+    def On(self):
+        # PROTECTED REGION ID(CbfSubarray.On) ENABLED START #
+        """Turn on Subarray. Set 2 search windows to DISABLE. Set Subarray from DISABLE to OFF"""
+        if self._obs_state != ObsState.IDLE.value:
+            msg = "Device not in IDLE obsState."
+            self.logger.error(msg)
+            tango.Except.throw_exception("Command failed", msg, "On execution",
+                                         tango.ErrSeverity.ERR)
+
+        self._proxy_sw_1.SetState(tango.DevState.DISABLE)
+        self._proxy_sw_2.SetState(tango.DevState.DISABLE)
+        self.set_state(tango.DevState.OFF)
+        # PROTECTED REGION END #    //  CbfSubarray.On
 
 
 
@@ -1284,21 +1251,136 @@ class CbfSubarray(SKASubarray):
             return True
         return False
 
-    class OffCommand(SKASubarray.OffCommand):
-        def do(self):
-            (result_code,message)=super().do()
-            device = self.target
-            device._proxy_sw_1.SetState(tango.DevState.OFF)
-            device._proxy_sw_2.SetState(tango.DevState.OFF)
-            return (result_code,message)
 
- 
+    @command()
+    def Off(self):
+        """Set subarray from OFF to DISABLE. Set 2 search windows to OFF"""
+        # PROTECTED REGION ID(CbfSubarray.Off) ENABLED START #
+        if self._obs_state != ObsState.IDLE.value:
+            msg = "Device not in IDLE obsState."
+            self.logger.error(msg)
+            tango.Except.throw_exception("Command failed", msg, "Off execution",
+                                         tango.ErrSeverity.ERR)
 
-    ##########################################  Receptors   ####################################################
-    def remove_repectors_helper(self, argin):
-        """Helper function to remove receptors for removeAllReceptors. Takes in a list of integers.
-        RemoveAllReceptors can't call RemoveReceptors anymore for lmc 0.6.0 because RemoveAllReceptors enters resourcing state before calling RemoveReceptors.
-        Therefore this helper is useful."""
+        self._proxy_sw_1.SetState(tango.DevState.OFF)
+        self._proxy_sw_2.SetState(tango.DevState.OFF)
+        self.set_state(tango.DevState.DISABLE)
+        # PROTECTED REGION END #    //  CbfSubarray.Off
+
+
+    def is_AssignResources_allowed(self):
+        """allowed if DevState is ON"""
+        if self.dev_state() == tango.DevState.ON:
+            return True
+        return False
+
+    # # should take in:      "{\"example\":\"1\"}"
+    # class AssignResourcesCommand(SKASubarray.AssignResourcesCommand):
+    #     def do(self, argin):
+    #         (result_code,message)=super().do(argin)
+    #         # Code here
+
+    #         return (result_code,message)
+
+
+    def is_AddReceptors_allowed(self):
+        """allowed if DevState is OFF or ON"""
+        if self.dev_state() in [tango.DevState.OFF, tango.DevState.ON]:
+            return True
+        return False
+
+    @command(
+        dtype_in=('uint16',),
+        doc_in="List of receptor IDs",
+    )
+    def AddReceptors(self, argin):
+        # PROTECTED REGION ID(CbfSubarray.AddReceptors) ENABLED START #
+        """add list of receptors to the current subarray. Turn Subarray ON"""
+        # if self._obs_state != ObsState.IDLE.value:
+        #     msg = "Device not in IDLE obsState."
+        #     self.logger.error(msg)
+        #     tango.Except.throw_exception("Command failed", msg, "AddReceptors execution",
+        #                                  tango.ErrSeverity.ERR)
+
+        errs = []  # list of error messages
+        receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
+                               self._proxy_cbf_master.receptorToVcc)
+        for receptorID in argin:
+            try:
+                vccID = receptor_to_vcc[receptorID]
+                vccProxy = self._proxies_vcc[vccID - 1]
+                subarrayID = vccProxy.subarrayMembership
+
+                # only add receptor if it does not already belong to a different subarray
+                if subarrayID not in [0, self._subarray_id]:
+                    errs.append("Receptor {} already in use by subarray {}.".format(
+                        str(receptorID), str(subarrayID)))
+                else:
+                    if receptorID not in self._receptors:
+                        # change subarray membership of vcc
+                        vccProxy.subarrayMembership = self._subarray_id
+
+                        # !!!!!!!!!!!!!
+                        # Change done on 09/27/2109 as a consequence of the new TANGO and tango images release
+                        # Note:json does not recognize NumPy data types. Convert the number to a Python int 
+                        # before serializing the object.
+                        # The list of receptors is serialized when the FSPs are configured for a scan.
+                        # !!!!!!!!!!!!!
+
+                        self._receptors.append(int(receptorID))
+                        self._proxies_assigned_vcc.append(vccProxy)
+                        self._group_vcc.add(self._fqdn_vcc[vccID - 1])
+
+                        # subscribe to VCC state and healthState changes
+                        event_id_state, event_id_health_state = vccProxy.subscribe_event(
+                            "State",
+                            tango.EventType.CHANGE_EVENT,
+                            self.__state_change_event_callback
+                        ), vccProxy.subscribe_event(
+                            "healthState",
+                            tango.EventType.CHANGE_EVENT,
+                            self.__state_change_event_callback
+                        )
+                        self._events_state_change_vcc[vccID] = [event_id_state,
+                                                                event_id_health_state]
+                    else:
+                        log_msg = "Receptor {} already assigned to current subarray.".format(
+                            str(receptorID))
+                        self.logger.warn(log_msg)
+
+            except KeyError:  # invalid receptor ID
+                errs.append("Invalid receptor ID: {}".format(receptorID))
+
+        # transition to ON if at least one receptor is assigned
+        if self._receptors:
+            self.set_state(DevState.ON)
+
+        if errs:
+            msg = "\n".join(errs)
+            self.logger.error(msg)
+            tango.Except.throw_exception("Command failed", msg, "AddReceptors execution",
+                                         tango.ErrSeverity.ERR)
+        # PROTECTED REGION END #    //  CbfSubarray.AddReceptors
+
+    def is_RemoveReceptors_allowed(self):
+        """allowd if state is OFF or ON"""
+        if self.dev_state() in [tango.DevState.OFF, tango.DevState.ON]:
+            return True
+        return False
+
+    @command(
+        dtype_in=('uint16',),
+        doc_in="List of receptor IDs",
+    )
+    def RemoveReceptors(self, argin):
+        # PROTECTED REGION ID(CbfSubarray.RemoveReceptors) ENABLED START #
+        """remove from list of receptors. Turn Subarray OFF if no receptors assigned"""
+        if self._obs_state != ObsState.IDLE.value:
+            msg = "Device not in IDLE obsState."
+            self.logger.error(msg)
+            tango.Except.throw_exception("Command failed", msg, "RemoveReceptors execution",
+                                         tango.ErrSeverity.ERR)
+
         receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
                                self._proxy_cbf_master.receptorToVcc)
         for receptorID in argin:
@@ -1322,453 +1404,348 @@ class CbfSubarray(SKASubarray):
                 log_msg = "Receptor {} not assigned to subarray. Skipping.".format(str(receptorID))
                 self.logger.warn(log_msg)
 
-        # transitions to EMPTY if not assigned any receptors
+        # transitions to OFF if not assigned any receptors
         if not self._receptors:
-            self.state_model._set_obs_state(ObsState.EMPTY)
-        
+            self.set_state(DevState.OFF)
+        # PROTECTED REGION END #    //  CbfSubarray.RemoveReceptors
 
-    class RemoveReceptorsCommand(SKASubarray.ReleaseResourcesCommand):
-        def do(self, argin):
-            device=self.target
-            # if self.state_model._obs_state != ObsState.IDLE.value:
-            #     msg = "Device not in IDLE obsState."
-            #     self.logger.error(msg)
-            #     tango.Except.throw_exception("Command failed", msg, "RemoveReceptors execution",
-            #                                 tango.ErrSeverity.ERR)
+    def is_RemoveAllReceptors_allowed(self):
+        """allowed if state is ON or OFF"""
+        if self.dev_state() in [tango.DevState.OFF, tango.DevState.ON]:
+            return True
+        return False
 
-            device.remove_repectors_helper(argin)
-
-
-
-            message = "CBFSubarray RemoveReceptors command completed OK"
-            self.logger.info(message)
-            return (ResultCode.OK, message)
-            # PROTECTED REGION END #    //  CbfSubarray.RemoveReceptors
-
-    @command(
-        dtype_in=('uint16',),
-        doc_in="List of receptor IDs",
-        dtype_out='DevVarLongStringArray',
-        doc_out="(ReturnType, 'informational message')"
-    )
-    def RemoveReceptors(self, argin):
-        # PROTECTED REGION ID(CbfSubarray.RemoveReceptors) ENABLED START #
-        """remove from list of receptors. Turn Subarray OFF if no receptors assigned"""
-        command = self.get_command_object("RemoveReceptors")
-        (return_code, message) = command(argin)
-        return [[return_code], [message]]
-
-
-
-    # def is_RemoveAllReceptors_allowed(self):
-    #     """allowed if state is ON or OFF"""
-    #     if self.dev_state() in [tango.DevState.OFF, tango.DevState.ON]:
-    #         return True
-    #     return False
-
-    @command(
-        dtype_out='DevVarLongStringArray',
-        doc_out="(ReturnType, 'informational message')"
-    )
+    @command()
     def RemoveAllReceptors(self):
         # PROTECTED REGION ID(CbfSubarray.RemoveAllReceptors) ENABLED START #
         """Remove all receptors. Turn Subarray OFF if no receptors assigned"""
-        # if self.state_model._obs_state != ObsState.IDLE.value:
-        #     msg = "Device not in IDLE obsState."
-        #     self.logger.error(msg)
-        #     tango.Except.throw_exception("Command failed", msg, "RemoveAllReceptors execution",
-        #                                  tango.ErrSeverity.ERR)
+        if self._obs_state != ObsState.IDLE.value:
+            msg = "Device not in IDLE obsState."
+            self.logger.error(msg)
+            tango.Except.throw_exception("Command failed", msg, "RemoveAllReceptors execution",
+                                         tango.ErrSeverity.ERR)
 
-        command = self.get_command_object("RemoveAllReceptors")
-        (return_code, message) = command()
-        return [[return_code], [message]]  
+        self.RemoveReceptors(self._receptors[:])
         # PROTECTED REGION END #    //  CbfSubarray.RemoveAllReceptors
 
-    class RemoveAllReceptorsCommand(SKASubarray.ReleaseResourcesCommand):
-        def do(self):
-            device=self.target
-            self.logger.info("removeAllReceptors")
-
-            # For LMC0.6.0: use a helper instead of a command so that it doesn't care about the obsState
-            device.remove_repectors_helper(device._receptors[:])
-
-
-            message = "CBFSubarray RemoveAllReceptors command completed OK"
-            self.logger.info(message)
-            return (ResultCode.OK, message)
-
-
-
-
-    # Used by AddReceptors command. The base class define len as len(resource_manager), so we need to change that here.
-    def __len__(self):
-        """
-        Returns the number of resources currently assigned. Note that
-        this also functions as a boolean method for whether there are
-        any assigned resources: ``if len()``.
-
-        :return: number of resources assigned
-        :rtype: int
-        """
-
-        return len(self._receptors)
-
-
-    @command(
-        dtype_in=('uint16',),
-        doc_in="List of receptor IDs",
-        dtype_out='DevVarLongStringArray',
-        doc_out="(ReturnType, 'informational message')"
-    )
-    def AddReceptors(self, argin):
-        """
-        Assign resources to this subarray
-        """
-        command = self.get_command_object("AddReceptors")
-        (return_code, message) = command(argin)
-        return [[return_code], [message]]    
-
-    # didn't inherit SKASubarray._ResourcingCommand because will give error on len(self.target)
-    class AddReceptorsCommand(SKASubarray.AssignResourcesCommand):
-        # def __init__(self,target,state_model,logger=None):
-        #     super().__init__(target, state_model, "assign", logger=logger)
-
-        def do(self, argin):
-            device=self.target
-            # Code here
-            errs = []  # list of error messages
-            receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
-                                device._proxy_cbf_master.receptorToVcc)
-            for receptorID in argin:
-                try:
-                    vccID = receptor_to_vcc[receptorID]
-                    vccProxy = device._proxies_vcc[vccID - 1]
-                    subarrayID = vccProxy.subarrayMembership
-
-                    # only add receptor if it does not already belong to a different subarray
-                    if subarrayID not in [0, device._subarray_id]:
-                        errs.append("Receptor {} already in use by subarray {}.".format(
-                            str(receptorID), str(subarrayID)))
-                    else:
-                        if receptorID not in device._receptors:
-                            # change subarray membership of vcc
-                            vccProxy.subarrayMembership = device._subarray_id
-
-                            # !!!!!!!!!!!!!
-                            # Change done on 09/27/2109 as a consequence of the new TANGO and tango images release
-                            # Note:json does not recognize NumPy data types. Convert the number to a Python int 
-                            # before serializing the object.
-                            # The list of receptors is serialized when the FSPs are configured for a scan.
-                            # !!!!!!!!!!!!!
-
-                            device._receptors.append(int(receptorID))
-                            device._proxies_assigned_vcc.append(vccProxy)
-                            device._group_vcc.add(device._fqdn_vcc[vccID - 1])
-
-                            # subscribe to VCC state and healthState changes
-                            event_id_state, event_id_health_state = vccProxy.subscribe_event(
-                                "State",
-                                tango.EventType.CHANGE_EVENT,
-                                device._state_change_event_callback
-                            ), vccProxy.subscribe_event(
-                                "healthState",
-                                tango.EventType.CHANGE_EVENT,
-                                device._state_change_event_callback
-                            )
-                            device._events_state_change_vcc[vccID] = [event_id_state,
-                                                                    event_id_health_state]
-                        else:
-                            log_msg = "Receptor {} already assigned to current subarray.".format(
-                                str(receptorID))
-                            self.logger.warn(log_msg)
-
-                except KeyError:  # invalid receptor ID
-                    errs.append("Invalid receptor ID: {}".format(receptorID))
-
-            # # transition to ON if at least one receptor is assigned
-            # if device._receptors:
-            #     device.set_state(DevState.ON)
-
-            if errs:
-                msg = "\n".join(errs)
-                self.logger.error(msg)
-                # tango.Except.throw_exception("Command failed", msg, "AddReceptors execution",
-                #                             tango.ErrSeverity.ERR)
-                
-                return (ResultCode.FAILED, msg)
-
-            message = "CBFSubarray AddReceptors command completed OK"
-            self.logger.info(message)
-            return (ResultCode.OK, message)
-
-
-
-
-
-
-
-    ###################### Configure #########################
-
-    # def is_Configure_allowed(self):
-    #     """allowed if DevState is ON"""
-    #     if self.dev_state() == tango.DevState.ON:
-    #         return True
-    #     return False
-    class ConfigureScanCommand(SKASubarray.ConfigureCommand):
-        def do(self, argin):
-            # (result_code,message)=super().do(argin)
-            device=self.target
-            # Code here
-            device._pss_config = []
-            device._corr_config = []
-            device._corr_fsp_list = []
-            device._pss_fsp_list = []
-            device._corr_fsp_list = []
-            device._fsp_list = [[], [], [], []]
-
-            ################# validate scan configuration first ##########################
-            try:
-                device._validate_scan_configuration(argin)
-            except tango.DevFailed as df:
-                self.logger.error(str(df.args[0].desc))
-                self.logger.warn("validate scan configuration error")
-                # device._raise_configure_scan_fatal_error(msg)
-                
-
-
-            # Call this just to release all FSPs and unsubscribe to events. Can't call GoToIdle, otherwise there will be state transition problem. 
-            device._go_to_idle_helper()
-
-            # transition to obsState=CONFIGURING - don't have to do
-            
-            
-            data = tango.DeviceData()
-            data.insert(tango.DevUShort, ObsState.CONFIGURING.value)
-            device._group_vcc.command_inout("SetObservingState", data)
-
-            argin = json.loads(argin)
-            # set band5Tuning to [0,0] if not specified
-            if "band5Tuning" not in argin: 
-                argin["band5Tuning"]=[0,0]
-
-            # Configure configID.
-            device._config_ID = str(argin["id"])
-
-            # Configure frequencyBand.
-            frequency_bands = ["1", "2", "3", "4", "5a", "5b"]
-            device._frequency_band = frequency_bands.index(argin["frequencyBand"])
-            data = tango.DeviceData()
-            data.insert(tango.DevString, argin["frequencyBand"])
-            device._group_vcc.command_inout("SetFrequencyBand", data)
-
-            # Configure band5Tuning, if frequencyBand is 5a or 5b.
-            if device._frequency_band in [4, 5]:
-                stream_tuning = [*map(float, argin["band5Tuning"])]
-                device._stream_tuning = stream_tuning
-                device._group_vcc.write_attribute("band5Tuning", stream_tuning)
-
-            # Configure frequencyBandOffsetStream1.
-            if "frequencyBandOffsetStream1" in argin:
-                device._frequency_band_offset_stream_1 = int(argin["frequencyBandOffsetStream1"])
-                device._group_vcc.write_attribute(
-                    "frequencyBandOffsetStream1",
-                    int(argin["frequencyBandOffsetStream1"])
-                )
-            else:
-                device._frequency_band_offset_stream_1 = 0
-                device._group_vcc.write_attribute("frequencyBandOffsetStream1", 0)
-                log_msg = "'frequencyBandOffsetStream1' not specified. Defaulting to 0."
-                self.logger.warn(log_msg)
-
-            # Validate frequencyBandOffsetStream2.
-            # If not given, use a default value.
-            # If malformed, use a default value, but append an error.
-            if device._frequency_band in [4, 5]:
-                if "frequencyBandOffsetStream2" in argin:
-                    device._frequency_band_offset_stream_2 = int(argin["frequencyBandOffsetStream2"])
-                    device._group_vcc.write_attribute(
-                        "frequencyBandOffsetStream2",
-                        int(argin["frequencyBandOffsetStream2"])
-                    )
-                else:
-                    device._frequency_band_offset_stream_2 = 0
-                    device._group_vcc.write_attribute("frequencyBandOffsetStream2", 0)
-                    log_msg = "'frequencyBandOffsetStream2' not specified. Defaulting to 0."
-                    self.logger.warn(log_msg)
-            else:
-                device._frequency_band_offset_stream_2 = 0
-                device._group_vcc.write_attribute("frequencyBandOffsetStream2", 0)
-
-            # Configure dopplerPhaseCorrSubscriptionPoint.
-            if "dopplerPhaseCorrSubscriptionPoint" in argin:
-                attribute_proxy = tango.AttributeProxy(argin["dopplerPhaseCorrSubscriptionPoint"])
-                attribute_proxy.ping()
-                event_id = attribute_proxy.subscribe_event(
-                    tango.EventType.CHANGE_EVENT,
-                    device._doppler_phase_correction_event_callback
-                )
-                device._events_telstate[event_id] = attribute_proxy
-
-            # Configure delayModelSubscriptionPoint.
-            device._last_received_delay_model = "{}"
-            attribute_proxy = tango.AttributeProxy(argin["delayModelSubscriptionPoint"])
-            attribute_proxy.ping() #To be sure the connection is good(don't know if the device is running)
-            event_id = attribute_proxy.subscribe_event(
-                tango.EventType.CHANGE_EVENT,
-                device._delay_model_event_callback
-            )
-            device._events_telstate[event_id] = attribute_proxy
-
-
-
-            # Configure rfiFlaggingMask.
-            if "rfiFlaggingMask" in argin:
-                device._group_vcc.write_attribute(
-                    "rfiFlaggingMask",
-                    json.dumps(argin["rfiFlaggingMask"])
-                )
-            else:
-                log_msg = "'rfiFlaggingMask' not given. Proceeding."
-                self.logger.warn(log_msg)
-
-            # Configure searchWindow.
-            if "searchWindow" in argin:
-                for search_window in argin["searchWindow"]:
-                    # pass on configuration to VCC
-                    data = tango.DeviceData()
-                    data.insert(tango.DevString, json.dumps(search_window))
-                    device._group_vcc.command_inout("ConfigureSearchWindow", data)
-                    device.ConfigureSearchWindow(json.dumps(search_window))
-            else:
-                log_msg = "'searchWindow' not given."
-                self.logger.warn(log_msg)
-
-            # Configure configID
-            device._group_vcc.write_attribute("configID",argin["id"])
-
-            # The VCCs are done configuring at this point
-            data = tango.DeviceData()
-            data.insert(tango.DevUShort, ObsState.READY.value)
-            device._group_vcc.command_inout("SetObservingState", data)
-
-            ###################### FSP Subarray ####################
-            # pass on configuration to individual function mode class to configure the FSP Subarray
-
-            if len(device._pss_config) != 0:
-                device._proxy_pss_config.ConfigureFSP(json.dumps(device._pss_config))
-
-            if len(device._corr_config) != 0: 
-                #_proxy_corr_config is address of CbfSubarrayCoorConfig device in Subarray Multi
-                #_corr_config is fsp part of the JSON, formed by the function _validate_scan_configuration
-                device._proxy_corr_config.ConfigureFSP(json.dumps(device._corr_config)) 
-
-            #TODO add PST and VLBI to this once they are implemented
-            device._fsp_list[0].append(device._corr_fsp_list)
-            device._fsp_list[1].append(device._pss_fsp_list)
-
-
-            ####################### FSP ############################
-            # Configure FSP.
-            for fsp in argin["fsp"]:
-                # Configure fspID.
-                fspID = int(fsp["fspID"])
-                proxy_fsp = device._proxies_fsp[fspID - 1]
-                proxy_fsp_corr_subarray = device._proxies_fsp_corr_subarray[fspID - 1]
-                proxy_fsp_pss_subarray = device._proxies_fsp_pss_subarray[fspID - 1]
-                device._proxies_assigned_fsp.append(proxy_fsp)
-                device._proxies_assigned_fsp_corr_subarray.append(proxy_fsp_corr_subarray)
-                device._proxies_assigned_fsp_pss_subarray.append(proxy_fsp_pss_subarray)
-                device._group_fsp.add(device._fqdn_fsp[fspID - 1])
-                device._group_fsp_corr_subarray.add(device._fqdn_fsp_corr_subarray[fspID - 1])
-                device._group_fsp_pss_subarray.add(device._fqdn_fsp_pss_subarray[fspID - 1])
-
-                # change FSP subarray membership
-                proxy_fsp.AddSubarrayMembership(device._subarray_id)
-
-                # Configure functionMode.
-                proxy_fsp.SetFunctionMode(fsp["functionMode"])
-
-                fsp["frequencyBand"] = argin["frequencyBand"]
-                if "frequencyBandOffsetStream1" in argin:
-                    fsp["frequencyBandOffsetStream1"] = device._frequency_band_offset_stream_1
-                else:
-                    fsp["frequencyBandOffsetStream1"] = 0
-                if "frequencyBandOffsetStream2" in argin:
-                    fsp["frequencyBandOffsetStream2"] = device._frequency_band_offset_stream_2
-                else:
-                    fsp["frequencyBandOffsetStream2"] = 0
-                if "receptors" not in fsp:
-                    fsp["receptors"] = device._receptors
-                if device._frequency_band in [4, 5]:
-                    fsp["band5Tuning"] = device._stream_tuning
-
-                # subscribe to FSP state and healthState changes
-                event_id_state, event_id_health_state = proxy_fsp.subscribe_event(
-                    "State",
-                    tango.EventType.CHANGE_EVENT,
-                    device._state_change_event_callback
-                ), proxy_fsp.subscribe_event(
-                    "healthState",
-                    tango.EventType.CHANGE_EVENT,
-                    device._state_change_event_callback
-                )
-                device._events_state_change_fsp[int(fsp["fspID"])] = [event_id_state,
-                                                                    event_id_health_state]
-
-           
-            # This state transition will be later
-            # 03-23-2020:
-            # CbfSubarray moves to READY only after the publication of the visibilities
-            # addresses generated by SDP.
-
-
-            #save it into lastestScanConfig
-            device._latest_scan_config=str(argin)
-            message = "CBFSubarray Configure command completed OK"
-            self.logger.info(message)
-            return (ResultCode.OK, message)
-
-
-
-
-    # def is_ConfigureScan_allowed(self):
-    #     """allowed if state is ON"""
-    #     if self.dev_state() == tango.DevState.ON:
-    #         return True
-    #     return False
+    def is_ConfigureScan_allowed(self):
+        """allowed if state is ON"""
+        if self.dev_state() == tango.DevState.ON:
+            return True
+        return False
 
     @command(
         dtype_in='str',
         doc_in="Scan configuration",
-        dtype_out='DevVarLongStringArray',
-        doc_out="(ReturnType, 'informational message')",
     )
     def ConfigureScan(self, argin):
         # PROTECTED REGION ID(CbfSubarray.ConfigureScan) ENABLED START #
+        # """
+        # The input JSON object has the following schema:
+        # {
+        #     "configID": int,
+        #     "frequencyBand": str,
+        #     "band5Tuning: [float, float],
+        #     "frequencyBandOffsetStream1": int,
+        #     "frequencyBandOffsetStream2": int,
+        #     "dopplerPhaseCorrSubscriptionPoint": str,
+        #     "delayModelSubscriptionPoint": str,
+        #     "visDestinationAddressSubscriptionPoint": str,
+        #     "rfiFlaggingMask": {
+        #         ...
+        #     },
+        #     "searchWindow": [
+        #         {
+        #             "searchWindowID": int,
+        #             "searchWindowTuning": int,
+        #             "tdcEnable": bool,
+        #             "tdcNumBits": int,
+        #             "tdcPeriodBeforeEpoch": int,
+        #             "tdcPeriodAfterEpoch": int,
+        #             "tdcDestinationAddress": [
+        #                 {
+        #                     "receptorID": int,
+        #                     "tdcDestinationAddress": ["str", "str", "str"]
+        #                 },
+        #                 {
+        #                     ...
+        #                 }
+        #             ]
+        #         },
+        #         {
+        #             ...
+        #         }
+        #     ],
+        #     "fsp": [
+        #         {
+        #             "fspID": int,
+        #             "functionMode": str,
+        #             "receptors": [int, int, int, ...],
+        #             "frequencySliceID": int,
+        #             "corrBandwidth": int,
+        #             "zoomWindowTuning": int,
+        #             "integrationTime": int,
+        #             "channelAveragingMap": [
+        #                 [int, int],
+        #                 [int, int],
+        #                 [int, int],
+        #                 ...
+        #             ]
+        #         },
+        #         {
+        #             "fspID": 3,
+        #             "functionMode": "PSS-BF",
+        #             "searchWindowID": 2,
+        #             "searchBeam": [
+        #                 {
+        #                     "searchBeamID": 300,
+        #                     "receptors": [3],
+        #                     "outputEnable": true,
+        #                     "averagingInterval": 4,
+        #                     "searchBeamDestinationAddress": "10.1.1.1"
+        #                 },
+        #                 {
+        #                     "searchBeamID": 400,
+        #                     "receptors": [1],
+        #                     "outputEnable": true,
+        #                     "averagingInterval": 2,
+        #                     "searchBeamDestinationAddress": "10.1.2.1"
+        #                 }
+        #             ]
+        #         }
+        #         {
+        #             ...
+        #         },
+        #         ...
+        #     ]
+        # }
         # """
         """Change state to CONFIGURING.
         Configure attributes from input JSON. Subscribe events. Configure VCC, VCC subarray, FSP, FSP Subarray. 
         publish output links.
         """
-        # if self.state_model._obs_state not in [ObsState.IDLE.value, ObsState.READY.value]:
-        #     msg = "Device not in IDLE or READY obsState."
-        #     self.logger.error(msg)
-        #     tango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
-        #                                  tango.ErrSeverity.ERR)
+        if self._obs_state not in [ObsState.IDLE.value, ObsState.READY.value]:
+            msg = "Device not in IDLE or READY obsState."
+            self.logger.error(msg)
+            tango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
+                                         tango.ErrSeverity.ERR)
 
         # Only after successful validation of the received configuration,
         # subarray is configured.
-        command = self.get_command_object("ConfigureScan")
-        (return_code, message) = command(argin)
-        return [[return_code], [message]]    
+        self._pss_config = []
+        self._corr_config = []
+        self._corr_fsp_list = []
+        self._pss_fsp_list = []
+        self._corr_fsp_list = []
+        self._fsp_list = [[], [], [], []]
+
+        ################# validate scan configuration first ##########################
+        self.__validate_scan_configuration(argin)
 
 
+        # Call this just to release all FSPs and unsubscribe to events.
+        # We transition to obsState=CONFIGURING immediately after anyways.
+        self.GoToIdle()
+
+        # transition to obsState=CONFIGURING
+        self._obs_state = ObsState.CONFIGURING.value
+        self.push_change_event("obsState", self._obs_state)
+        data = tango.DeviceData()
+        data.insert(tango.DevUShort, ObsState.CONFIGURING.value)
+        self._group_vcc.command_inout("SetObservingState", data)
+
+        argin = json.loads(argin)
+        # set band5Tuning to [0,0] if not specified
+        if "band5Tuning" not in argin: 
+            argin["band5Tuning"]=[0,0]
+
+        # Configure configID.
+        self._config_ID = str(argin["id"])
+
+        # Configure frequencyBand.
+        frequency_bands = ["1", "2", "3", "4", "5a", "5b"]
+        self._frequency_band = frequency_bands.index(argin["frequencyBand"])
+        data = tango.DeviceData()
+        data.insert(tango.DevString, argin["frequencyBand"])
+        self._group_vcc.command_inout("SetFrequencyBand", data)
+
+        # Configure band5Tuning, if frequencyBand is 5a or 5b.
+        if self._frequency_band in [4, 5]:
+            stream_tuning = [*map(float, argin["band5Tuning"])]
+            self._stream_tuning = stream_tuning
+            self._group_vcc.write_attribute("band5Tuning", stream_tuning)
+
+        # Configure frequencyBandOffsetStream1.
+        if "frequencyBandOffsetStream1" in argin:
+            self._frequency_band_offset_stream_1 = int(argin["frequencyBandOffsetStream1"])
+            self._group_vcc.write_attribute(
+                "frequencyBandOffsetStream1",
+                int(argin["frequencyBandOffsetStream1"])
+            )
+        else:
+            self._frequency_band_offset_stream_1 = 0
+            self._group_vcc.write_attribute("frequencyBandOffsetStream1", 0)
+            log_msg = "'frequencyBandOffsetStream1' not specified. Defaulting to 0."
+            self.logger.warn(log_msg)
+
+        # Validate frequencyBandOffsetStream2.
+        # If not given, use a default value.
+        # If malformed, use a default value, but append an error.
+        if self._frequency_band in [4, 5]:
+            if "frequencyBandOffsetStream2" in argin:
+                self._frequency_band_offset_stream_2 = int(argin["frequencyBandOffsetStream2"])
+                self._group_vcc.write_attribute(
+                    "frequencyBandOffsetStream2",
+                    int(argin["frequencyBandOffsetStream2"])
+                )
+            else:
+                self._frequency_band_offset_stream_2 = 0
+                self._group_vcc.write_attribute("frequencyBandOffsetStream2", 0)
+                log_msg = "'frequencyBandOffsetStream2' not specified. Defaulting to 0."
+                self.logger.warn(log_msg)
+        else:
+            self._frequency_band_offset_stream_2 = 0
+            self._group_vcc.write_attribute("frequencyBandOffsetStream2", 0)
+
+        # Configure dopplerPhaseCorrSubscriptionPoint.
+        if "dopplerPhaseCorrSubscriptionPoint" in argin:
+            attribute_proxy = tango.AttributeProxy(argin["dopplerPhaseCorrSubscriptionPoint"])
+            attribute_proxy.ping()
+            event_id = attribute_proxy.subscribe_event(
+                tango.EventType.CHANGE_EVENT,
+                self.__doppler_phase_correction_event_callback
+            )
+            self._events_telstate[event_id] = attribute_proxy
+
+        # Configure delayModelSubscriptionPoint.
+        self._last_received_delay_model = "{}"
+        attribute_proxy = tango.AttributeProxy(argin["delayModelSubscriptionPoint"])
+        attribute_proxy.ping() #To be sure the connection is good(don't know if the device is running)
+        event_id = attribute_proxy.subscribe_event(
+            tango.EventType.CHANGE_EVENT,
+            self.__delay_model_event_callback
+        )
+        self._events_telstate[event_id] = attribute_proxy
+
+        # # Configure visDestinationAddressSubscriptionPoint.
+        # self._published_output_links = False
+        # self._last_received_vis_destination_address = "{}"
+        # attribute_proxy = tango.AttributeProxy(argin["visDestinationAddressSubscriptionPoint"])
+        # attribute_proxy.ping()
+        # event_id = attribute_proxy.subscribe_event(
+        #     tango.EventType.CHANGE_EVENT,
+        #     self.__vis_destination_address_event_callback
+        # )
+        # self._events_telstate[event_id] = attribute_proxy
+
+        # Configure rfiFlaggingMask.
+        if "rfiFlaggingMask" in argin:
+            self._group_vcc.write_attribute(
+                "rfiFlaggingMask",
+                json.dumps(argin["rfiFlaggingMask"])
+            )
+        else:
+            log_msg = "'rfiFlaggingMask' not given. Proceeding."
+            self.logger.warn(log_msg)
+
+        # Configure searchWindow.
+        if "searchWindow" in argin:
+            for search_window in argin["searchWindow"]:
+                # pass on configuration to VCC
+                data = tango.DeviceData()
+                data.insert(tango.DevString, json.dumps(search_window))
+                self._group_vcc.command_inout("ConfigureSearchWindow", data)
+                self.ConfigureSearchWindow(json.dumps(search_window))
+        else:
+            log_msg = "'searchWindow' not given."
+            self.logger.warn(log_msg)
+
+        # Configure configID
+        self._group_vcc.write_attribute("configID",argin["id"])
+
+        # The VCCs are done configuring at this point
+        data = tango.DeviceData()
+        data.insert(tango.DevUShort, ObsState.READY.value)
+        self._group_vcc.command_inout("SetObservingState", data)
+
+        ###################### FSP Subarray ####################
+        # pass on configuration to individual function mode class to configure the FSP Subarray
+
+        if len(self._pss_config) != 0:
+            self._proxy_pss_config.ConfigureFSP(json.dumps(self._pss_config))
+
+        if len(self._corr_config) != 0: 
+            #_proxy_corr_config is address of CbfSubarrayCoorConfig device in Subarray Multi
+            #_corr_config is fsp part of the JSON, formed by the function _validate_scan_configuration
+            self._proxy_corr_config.ConfigureFSP(json.dumps(self._corr_config)) 
+
+        #TODO add PST and VLBI to this once they are implemented
+        self._fsp_list[0].append(self._corr_fsp_list)
+        self._fsp_list[1].append(self._pss_fsp_list)
 
 
+        ####################### FSP ############################
+        # Configure FSP.
+        for fsp in argin["fsp"]:
+            # Configure fspID.
+            fspID = int(fsp["fspID"])
+            proxy_fsp = self._proxies_fsp[fspID - 1]
+            proxy_fsp_corr_subarray = self._proxies_fsp_corr_subarray[fspID - 1]
+            proxy_fsp_pss_subarray = self._proxies_fsp_pss_subarray[fspID - 1]
+            self._proxies_assigned_fsp.append(proxy_fsp)
+            self._proxies_assigned_fsp_corr_subarray.append(proxy_fsp_corr_subarray)
+            self._proxies_assigned_fsp_pss_subarray.append(proxy_fsp_pss_subarray)
+            self._group_fsp.add(self._fqdn_fsp[fspID - 1])
+            self._group_fsp_corr_subarray.add(self._fqdn_fsp_corr_subarray[fspID - 1])
+            self._group_fsp_pss_subarray.add(self._fqdn_fsp_pss_subarray[fspID - 1])
 
+            # change FSP subarray membership
+            proxy_fsp.AddSubarrayMembership(self._subarray_id)
 
+            # Configure functionMode.
+            proxy_fsp.SetFunctionMode(fsp["functionMode"])
 
+            fsp["frequencyBand"] = argin["frequencyBand"]
+            if "frequencyBandOffsetStream1" in argin:
+                fsp["frequencyBandOffsetStream1"] = self._frequency_band_offset_stream_1
+            else:
+                fsp["frequencyBandOffsetStream1"] = 0
+            if "frequencyBandOffsetStream2" in argin:
+                fsp["frequencyBandOffsetStream2"] = self._frequency_band_offset_stream_2
+            else:
+                fsp["frequencyBandOffsetStream2"] = 0
+            if "receptors" not in fsp:
+                fsp["receptors"] = self._receptors
+            if self._frequency_band in [4, 5]:
+                fsp["band5Tuning"] = self._stream_tuning
 
+            # subscribe to FSP state and healthState changes
+            event_id_state, event_id_health_state = proxy_fsp.subscribe_event(
+                "State",
+                tango.EventType.CHANGE_EVENT,
+                self.__state_change_event_callback
+            ), proxy_fsp.subscribe_event(
+                "healthState",
+                tango.EventType.CHANGE_EVENT,
+                self.__state_change_event_callback
+            )
+            self._events_state_change_fsp[int(fsp["fspID"])] = [event_id_state,
+                                                                event_id_health_state]
+
+        # At this point, we can basically assume everything is properly configured
+        # This has been phased out, now passing to function mode classes first
+        # self.__generate_output_links(argin)  # published output links to outputLinksDistribution???
+
+        # This state transition will be later
+        # 03-23-2020:
+        # CbfSubarray moves to READY only after the publication of the visibilities
+        # addresses generated by SDP.
+        self._obs_state = ObsState.READY.value
+
+        #save it into lastestScanConfig
+        self._latest_scan_config=str(argin)
+
+        # PROTECTED REGION END #    //  CbfSubarray.ConfigureScan
 
     def is_ConfigureSearchWindow_allowed(self):
         """subarray has to be On to configure searchwindow"""
@@ -1785,11 +1762,11 @@ class CbfSubarray(SKASubarray):
         # This function is called after the configuration has already been validated,
         # so the checks here have been removed to reduce overhead.
         """revceives a JSON object to configure a search window"""
-        # if self.state_model._obs_state != ObsState.CONFIGURING.value:
-        #     msg = "Device not in CONFIGURING obsState."
-        #     self.logger.error(msg)
-        #     tango.Except.throw_exception("Command failed", msg, "ConfigureSearchWindow execution",
-        #                                  tango.ErrSeverity.ERR)
+        if self._obs_state != ObsState.CONFIGURING.value:
+            msg = "Device not in CONFIGURING obsState."
+            self.logger.error(msg)
+            tango.Except.throw_exception("Command failed", msg, "ConfigureSearchWindow execution",
+                                         tango.ErrSeverity.ERR)
 
         argin = json.loads(argin)
 
@@ -1898,77 +1875,90 @@ class CbfSubarray(SKASubarray):
 
         # PROTECTED REGION END #    //  CbfSubarray.ConfigureSearchWindow
 
-    ###################### Scan ######################### 
-    def is_Scan_allowed(self):
-        """allowed if Subarray is ON, and ObsState Ready."""
+    def is_EndScan_allowed(self):
+        """allowed if SUbarray is ON, obsState is SCANNING(checked in ENDScan)."""
         if self.dev_state() == tango.DevState.ON:
-            if self.state_model._obs_state==ObsState.READY.value:
-                return True
+            return True
+        return False
+
+    @command()
+    def EndScan(self):
+        """Send endscan to VCC and FSP. Set state to ready. Set ScanID to zero"""
+        # PROTECTED REGION ID(CbfSubarray.EndScan) ENABLED START #
+        if self._obs_state != ObsState.SCANNING.value:
+            msg = "Device not in SCANNING obsState."
+            self.logger.error(msg)
+            tango.Except.throw_exception("Command failed", msg, "EndScan execution",
+                                         tango.ErrSeverity.ERR)
+
+        self._group_vcc.command_inout("EndScan")
+        self._group_fsp_corr_subarray.command_inout("EndScan")
+        self._group_fsp_pss_subarray.command_inout("EndScan")
+        self._scan_ID=0
+
+        self._obs_state = ObsState.READY.value
+        # PROTECTED REGION END #    //  CbfSubarray.EndScan
+
+    def is_Scan_allowed(self):
+        if self.dev_state() == tango.DevState.ON:
+            return True
         return False
 
     @command(
         dtype_in='uint',
-        doc_in="Scan ID",
-        dtype_out='DevVarLongStringArray',
-        doc_out="(ReturnType, 'informational message')",
+        doc_in="Scan ID"
     )
     def Scan(self, argin):
-        """
-        Start Scan
-        """
-        command = self.get_command_object("StartScan")
-        (return_code, message) = command(argin)
-        return [[return_code], [message]]
+        """set state to scanning. Send Scan signal to VCC and FSP."""
+        # PROTECTED REGION ID(CbfSubarray.Scan) ENABLED START #
+        # """
+        # if self._obs_state != ObsState.READY.value:
+        #     msg = "A scan is not ready to be started."
+        #     self.logger(msg, tango.LogLevel.LOG_ERROR)
+        #     tango.Except.throw_exception("Command failed", msg, "Scan execution", tango.ErrSeverity.ERR)
+        # """
 
-    class StartScanCommand(SKASubarray.ScanCommand):
-        def do(self, argin):
-            # overwrites the do hook
-            # (result_code,message)=super().do() 
-            device=self.target
+        #takes in scanID as arguement, test valid int
+        try:
+            self._scan_ID=int(argin)
+        except:
+            msg="The input scanID is not integer."
+            self.logger.error(msg)
+            tango.Except.throw_exception("Command failed", msg, "Scan execution",
+                                         tango.ErrSeverity.ERR)
 
-            # Do the following
-            device._scan_ID=int(argin)
-            data = tango.DeviceData()
-            data.insert(tango.DevUShort, argin)
-            device._group_vcc.command_inout("Scan", data)
-            device._group_fsp_corr_subarray.command_inout("Scan", data)
-            device._group_fsp_pss_subarray.command_inout("Scan")
+        if self._obs_state != ObsState.READY.value:
+            msg = "Device not in READY obsState."
+            self.logger.error(msg)
+            tango.Except.throw_exception("Command failed", msg, "Scan execution",
+                                         tango.ErrSeverity.ERR)
 
-            message = "Scan command successfull"
-            self.logger.info(message)
-            return (ResultCode.STARTED, message)
+        data = tango.DeviceData()
+        data.insert(tango.DevUShort, argin)
+        self._group_vcc.command_inout("Scan", data)
+        self._group_fsp_corr_subarray.command_inout("Scan", data)
+        # self._group_fsp_corr_subarray.command_inout("Scan")
+        self._group_fsp_pss_subarray.command_inout("Scan")
 
+        self._obs_state = ObsState.SCANNING.value
+        # PROTECTED REGION END #    //  CbfSubarray.Scan
 
-
-    ###################### EndScan ######################### 
-    def is_EndScan_allowed(self):
-        """allowed if SUbarray is ON"""
-        if self.dev_state() == tango.DevState.ON and self.state_model._obs_state==ObsState.SCANNING:
+    def is_GoToIdle_allowed(self):
+        """allowed if state is ON or OFF"""
+        if self.dev_state() in [tango.DevState.OFF, tango.DevState.ON]:
             return True
         return False
 
-
-    class EndScanCommand(SKASubarray.EndScanCommand):
-        def do(self):
-            (result_code,message)=super().do()
-            device=self.target
-            # Code here
-            device._group_vcc.command_inout("EndScan")
-            device._group_fsp_corr_subarray.command_inout("EndScan")
-            device._group_fsp_pss_subarray.command_inout("EndScan")
-            device._scan_ID=0
-
-            message = "EndScan command OK"
-            self.logger.info(message)
-            return (ResultCode.OK, message)
-
-
-
-
-    ###############################################
-    def _go_to_idle_helper(self):
-        """Helper function to unsubscribe events and release resources."""
-                # unsubscribe from TMC events
+    @command()
+    def GoToIdle(self):
+        # PROTECTED REGION ID(CbfSubarray.GoToIdle) ENABLED START #
+        """deconfigure a scan, set ObsState to IDLE"""
+        if self._obs_state not in [ObsState.IDLE.value, ObsState.READY.value]:
+            msg = "Device not in IDLE or READY obsState."
+            self.logger.error(msg)
+            tango.Except.throw_exception("Command failed", msg, "GoToIdle execution",
+                                           tango.ErrSeverity.ERR)
+        # unsubscribe from TMC events
         for event_id in list(self._events_telstate.keys()):
             self._events_telstate[event_id].unsubscribe_event(event_id)
         self._events_telstate = {}
@@ -2018,52 +2008,10 @@ class CbfSubarray(SKASubarray):
             if fsp_pss_subarray_proxy.State() == tango.DevState.ON:
                 fsp_pss_subarray_proxy.GoToIdle()
 
+        # transition to obsState=IDLE
+        self._obs_state = ObsState.IDLE.value
+        # PROTECTED REGION END #    //  CbfSubarray.EndSB
 
-
-    # def is_GoToIdle_allowed(self):
-    #     """allowed if state is ON or OFF"""
-    #     if self.dev_state() in [tango.DevState.OFF, tango.DevState.ON]:
-    #         return True
-    #     return False
-
-
-
-    # @command()
-    # def GoToIdle(self):
-    #     # PROTECTED REGION ID(CbfSubarray.GoToIdle) ENABLED START #
-    #     if self.state_model._obs_state not in [ObsState.IDLE.value, ObsState.READY.value]:
-    #         msg = "Device not in IDLE or READY obsState."
-    #         self.logger.error(msg)
-    #         tango.Except.throw_exception("Command failed", msg, "GoToIdle execution",
-    #                                        tango.ErrSeverity.ERR)        
-
-
-    #     self._go_to_idle_helper()
-
-    #     # transition to obsState=IDLE
-    #     self.state_model._set_obs_state(ObsState.IDLE)
-    #     # PROTECTED REGION END #    //  CbfSubarray.EndSB
-
-    @command(
-        dtype_out='DevVarLongStringArray',
-        doc_out="(ReturnType, 'informational message')",
-    )
-    def GoToIdle(self):
-        
-        """deconfigure a scan, set ObsState to IDLE"""
-        
-        command = self.get_command_object("GoToIdle")
-        (return_code, message) = command()
-        return [[return_code], [message]]
-
-    class GoToIdleCommand(SKASubarray.EndCommand):
-        def do(self):
-            device=self.target
-            device._go_to_idle_helper()
-
-            message = "GoToIdle command completed OK"
-            self.logger.info(message)
-            return (ResultCode.OK, message)
 
 # ----------
 # Run server

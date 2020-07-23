@@ -39,8 +39,8 @@ commons_pkg_path = os.path.abspath(os.path.join(file_path, "../../commons"))
 sys.path.insert(0, commons_pkg_path)
 
 from global_enum import const
-from skabase.control_model import HealthState, AdminMode, ObsState
-from skabase.SKASubarray.SKASubarray import SKASubarray
+from ska.base.control_model import HealthState, AdminMode, ObsState
+from ska.base import SKASubarray
 
 # PROTECTED REGION END #    //  FspPssSubarray.additionnal_import
 
@@ -156,7 +156,7 @@ class FspPssSubarray(SKASubarray):
         # device proxy for easy reference to CBF Subarray
         self._proxy_cbf_subarray = tango.DeviceProxy(self.CbfSubarrayAddress)
 
-        self._obs_state = ObsState.IDLE.value
+        self.state_model._obs_state = ObsState.IDLE.value
         self.set_state(tango.DevState.OFF)
         # PROTECTED REGION END #    //  FspPssSubarray.init_device
 
@@ -221,7 +221,7 @@ class FspPssSubarray(SKASubarray):
 
     def is_On_allowed(self):
         if self.dev_state() == tango.DevState.OFF and\
-                self._obs_state == ObsState.IDLE.value:
+                self.state_model._obs_state == ObsState.IDLE.value:
             return True
         return False
 
@@ -233,7 +233,7 @@ class FspPssSubarray(SKASubarray):
 
     def is_Off_allowed(self):
         if self.dev_state() == tango.DevState.ON and\
-                self._obs_state == ObsState.IDLE.value:
+                self.state_model._obs_state == ObsState.IDLE.value:
             return True
         return False
 
@@ -249,7 +249,7 @@ class FspPssSubarray(SKASubarray):
     def is_AddReceptors_allowed(self):
         """allowed if FSPPssSubarry is ON, ObsState is not SCANNING"""
         if self.dev_state() == tango.DevState.ON and\
-                self._obs_state in [
+                self.state_model._obs_state in [
                     ObsState.IDLE.value,
                     ObsState.CONFIGURING.value,
                     ObsState.READY.value
@@ -297,7 +297,7 @@ class FspPssSubarray(SKASubarray):
     def is_RemoveReceptors_allowed(self):
         """allowed if FSPPssSubarry is ON, ObsState is not SCANNING"""
         if self.dev_state() == tango.DevState.ON and\
-                self._obs_state in [
+                self.state_model._obs_state in [
                     ObsState.IDLE.value,
                     ObsState.CONFIGURING.value,
                     ObsState.READY.value
@@ -324,7 +324,7 @@ class FspPssSubarray(SKASubarray):
     def is_RemoveAllReceptors_allowed(self):
         """allowed if FSPPssSubarry is ON, ObsState is not SCANNING"""
         if self.dev_state() == tango.DevState.ON and\
-                self._obs_state in [
+                self.state_model._obs_state in [
                     ObsState.IDLE.value,
                     ObsState.CONFIGURING.value,
                     ObsState.READY.value
@@ -341,7 +341,7 @@ class FspPssSubarray(SKASubarray):
 
     def is_ConfigureScan_allowed(self):
         if self.dev_state() == tango.DevState.ON and\
-                self._obs_state in [ObsState.IDLE.value, ObsState.READY.value]:
+                self.state_model._obs_state in [ObsState.IDLE.value, ObsState.READY.value]:
             return True
         return False
 
@@ -355,8 +355,8 @@ class FspPssSubarray(SKASubarray):
         # so the checks here have been removed to reduce overhead.
         """Input a JSON. Configure scan for fsp. Called by CbfSubarrayPssConfig(proxy_fsp_pss_subarray.ConfigureScan(json.dumps(fsp)))"""
         # transition to obsState=CONFIGURING
-        self._obs_state = ObsState.CONFIGURING.value
-        self.push_change_event("obsState", self._obs_state)
+        self.state_model._obs_state = ObsState.CONFIGURING.value
+        self.push_change_event("obsState", self.state_model._obs_state)
 
         argin = json.loads(argin)
 
@@ -375,14 +375,14 @@ class FspPssSubarray(SKASubarray):
             self._search_beam_id.append(int(searchBeam["searchBeamID"]))
 
         # fspPssSubarray moves to READY after configuration
-        self._obs_state = ObsState.READY.value
+        self.state_model._obs_state = ObsState.READY.value
 
         # PROTECTED REGION END #    //  FspPssSubarray.ConfigureScan
 
     def is_EndScan_allowed(self):
         """allowed if ON nd ObsState is SCANNING"""
         if self.dev_state() == tango.DevState.ON and\
-                self._obs_state == ObsState.SCANNING.value:
+                self.state_model._obs_state == ObsState.SCANNING.value:
             return True
         return False
 
@@ -390,14 +390,14 @@ class FspPssSubarray(SKASubarray):
     def EndScan(self):
         # PROTECTED REGION ID(FspPssSubarray.EndScan) ENABLED START #
         """Set ObsState to READY"""
-        self._obs_state = ObsState.READY.value
+        self.state_model._obs_state = ObsState.READY.value
         # nothing else is supposed to happen
         # PROTECTED REGION END #    //  FspPssSubarray.EndScan
 
     def is_Scan_allowed(self):
         """allowed if ON and ObsState READY"""
         if self.dev_state() == tango.DevState.ON and\
-                self._obs_state == ObsState.READY.value:
+                self.state_model._obs_state == ObsState.READY.value:
             return True
         return False
 
@@ -405,13 +405,13 @@ class FspPssSubarray(SKASubarray):
     def Scan(self):
         # PROTECTED REGION ID(FspPssSubarray.Scan) ENABLED START #
         """Set ObsState to SCANNING"""
-        self._obs_state = ObsState.SCANNING.value
+        self.state_model._obs_state = ObsState.SCANNING.value
         # nothing else is supposed to happen
         # PROTECTED REGION END #    //  FspPssSubarray.Scan
 
     def is_GoToIdle_allowed(self):
         if self.dev_state() == tango.DevState.ON and\
-                self._obs_state in [ObsState.IDLE.value, ObsState.READY.value]:
+                self.state_model._obs_state in [ObsState.IDLE.value, ObsState.READY.value]:
             return True
         return False
 
@@ -420,7 +420,7 @@ class FspPssSubarray(SKASubarray):
         """ObsState to IDLE"""
         # PROTECTED REGION ID(FspPssSubarray.GoToIdle) ENABLED START #
         # transition to obsState=IDLE
-        self._obs_state = ObsState.IDLE.value
+        self.state_model._obs_state = ObsState.IDLE.value
         # PROTECTED REGION END #    //  FspPssSubarray.GoToIdle
 
 # ----------

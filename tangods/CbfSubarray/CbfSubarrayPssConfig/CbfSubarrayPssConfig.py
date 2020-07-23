@@ -36,7 +36,7 @@ commons_pkg_path = os.path.abspath(os.path.join(file_path, "../../commons"))
 sys.path.insert(0, commons_pkg_path)
 
 from global_enum import HealthState, AdminMode, ObsState, const
-from skabase.SKACapability.SKACapability import SKACapability
+from ska.base import SKACapability
 # PROTECTED REGION END #    //  CbfSubarrayPssConfig.additionnal_import
 
 __all__ = ["CbfSubarrayPssConfig", "main"]
@@ -97,7 +97,7 @@ class CbfSubarrayPssConfig(SKACapability):
         self._proxy_cbf_master = tango.DeviceProxy(self.CbfMasterAddress)
         self._proxies_fsp_pss_subarray = [*map(tango.DeviceProxy, list(self.FspPssSubarray))]
 
-        self._obs_state = ObsState.IDLE.value
+        self.state_model._obs_state = ObsState.IDLE.value
         self.set_state(tango.DevState.ON)
         # PROTECTED REGION END #    //  CbfSubarrayPssConfig.init_device
 
@@ -116,7 +116,7 @@ class CbfSubarrayPssConfig(SKACapability):
     def is_configure_scan_allowed(self):
         """allowed when cbfSubarrayPssConfig is On, and ObsState is idle or ready"""
         if self.dev_state() == tango.DevState.ON and \
-                self._obs_state in [ObsState.IDLE.value, ObsState.READY.value]:
+                self.state_model._obs_state in [ObsState.IDLE.value, ObsState.READY.value]:
             return True
         return False
 
@@ -164,7 +164,7 @@ class CbfSubarrayPssConfig(SKACapability):
     def ConfigureFSP(self, argin):
         """Set pssConfig attribute; Set CbfSubarraypssConfig to configuring; Set fspID attribute; Send config to fspCorrSubarray for Fsp configuration"""
         # input configuration has already been checked in CbfSubarray device for FspID configuration type = PSS or 0
-        if self._obs_state not in [ObsState.IDLE.value, ObsState.READY.value]:
+        if self.state_model._obs_state not in [ObsState.IDLE.value, ObsState.READY.value]:
             msg = "Device not in IDLE or READY obsState."
             self.logger.error(msg)
             tango.Except.throw_exception("Command failed", msg, "ConfigureFSP execution",
@@ -177,7 +177,7 @@ class CbfSubarrayPssConfig(SKACapability):
             msg = "Configuration object is not a valid JSON object. Aborting configuration."
             self.__raise_configure_scan_fatal_error(msg)
 
-        self._obs_state = ObsState.CONFIGURING.value
+        self.state_model._obs_state = ObsState.CONFIGURING.value
         self._fsp_id = []
         count = 0
         for fsp in argin:
@@ -192,7 +192,7 @@ class CbfSubarrayPssConfig(SKACapability):
                   "Aborting configuration".format(sys.exc_info()[1].args[0].desc)
                 self.__raise_configure_scan_fatal_error(msg)
 
-        self._obs_state = ObsState.READY.value
+        self.state_model._obs_state = ObsState.READY.value
 
     def is_EndScan_allowed(self):
         """allowed if CbfSubarrayPssConfig device is ON"""
@@ -204,13 +204,13 @@ class CbfSubarrayPssConfig(SKACapability):
     def EndScan(self):
         # PROTECTED REGION ID(CbfSubarrayPssConfig.EndScan) ENABLED START #
         """Set ObsState of CbfsubarrayPssConfig to READY if it is cuurently SCANNING"""
-        if self._obs_state != ObsState.SCANNING.value:
+        if self.state_model._obs_state != ObsState.SCANNING.value:
             msg = "Device not in SCANNING obsState."
             self.logger.error(msg)
             tango.Except.throw_exception("Command failed", msg, "EndScan execution",
                                            tango.ErrSeverity.ERR)
 
-        self._obs_state = ObsState.READY.value
+        self.state_model._obs_state = ObsState.READY.value
         # PROTECTED REGION END #    //  CbfSubarrayPssConfig.EndScan
 
     def is_Scan_allowed(self):
@@ -223,14 +223,14 @@ class CbfSubarrayPssConfig(SKACapability):
     def Scan(self, argin):
         # PROTECTED REGION ID(CbfSubarrayPssConfig.Scan) ENABLED START #
         """Set ObsState of CbfsubarraypssConfig to SCANNING if it is cuurently READY"""
-        if self._obs_state != ObsState.READY.value:
+        if self.state_model._obs_state != ObsState.READY.value:
             msg = "Device not in READY obsState."
             self.logger.error(msg)
             tango.Except.throw_exception("Command failed", msg, "Scan execution",
                                            tango.ErrSeverity.ERR)
         # TODO: actually use argin
         # For MVP, ignore argin (activation time)
-        self._obs_state = ObsState.SCANNING.value
+        self.state_model._obs_state = ObsState.SCANNING.value
         # PROTECTED REGION END #    //  CbfSubarrayPssConfig.Scan
 
     @command(
