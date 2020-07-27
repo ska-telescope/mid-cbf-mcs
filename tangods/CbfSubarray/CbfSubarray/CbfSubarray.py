@@ -922,7 +922,9 @@ class CbfSubarray(SKASubarray):
 
     def _deconfigure(self):
         """Helper function to unsubscribe events and release resources."""
-                # unsubscribe from TMC events
+        # reset scanID in case it's not reset
+        self._scan_ID = 0
+        # unsubscribe from TMC events
         for event_id in list(self._events_telstate.keys()):
             self._events_telstate[event_id].unsubscribe_event(event_id)
         self._events_telstate = {}
@@ -937,6 +939,7 @@ class CbfSubarray(SKASubarray):
             del self._fsp_health_state[self._fqdn_fsp[fspID - 1]]
 
         # send assigned VCCs and FSP subarrays to IDLE state
+        # check if vcc and fsp is in scanning state (subarray could be aborted in scanning state)
         self._group_vcc.command_inout("GoToIdle")
         self._group_fsp_corr_subarray.command_inout("GoToIdle")
         self._group_fsp_pss_subarray.command_inout("GoToIdle")
@@ -970,8 +973,7 @@ class CbfSubarray(SKASubarray):
             if fsp_pss_subarray_proxy.State() == tango.DevState.ON:
                 fsp_pss_subarray_proxy.GoToIdle()
 
-        # reset scanID in case it's not reset
-        self.scanID = 0
+
 
     def _remove_repectors_helper(self, argin):
         """Helper function to remove receptors for removeAllReceptors. Takes in a list of integers.
@@ -1469,7 +1471,7 @@ class CbfSubarray(SKASubarray):
 
             message = "CBFSubarray RemoveAllReceptors command completed OK"
             self.logger.info(message)
-            return (ResultCode.OK, message
+            return (ResultCode.OK, message)
 
 
     @command(
@@ -2058,8 +2060,18 @@ class CbfSubarray(SKASubarray):
 
     class AbortCommand(SKASubarray.AbortCommand):
         def do(self):
-            (result_code,message)=super().do()
             device = self.target
+
+            # if aborted from SCANNING, needs to set VCC and PSS subarray to READY state
+            # otherwise when 
+            if device.scanID != 0:
+                self.logger.info("scanning")
+                device._group_vcc.command_inout("EndScan")
+                device._group_fsp_corr_subarray.command_inout("EndScan")
+                device._group_fsp_pss_subarray.command_inout("EndScan")
+            
+            (result_code,message)=super().do()
+            
             return (result_code,message)
 
     
