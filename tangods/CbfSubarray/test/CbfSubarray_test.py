@@ -719,7 +719,6 @@ class TestCbfSubarray:
         assert create_vcc_proxies[receptor_to_vcc[1] - 1].delayModel[1][0] == 2.7
         assert create_vcc_proxies[receptor_to_vcc[1] - 1].delayModel[1][1] == 2.8
         assert create_vcc_proxies[receptor_to_vcc[1] - 1].delayModel[1][2] == 2.9    #     assert create_fsp_1_subarray_1_proxy.obsState == ObsState.IDLE
-        assert create_fsp_3_subarray_1_proxy.obsState == ObsState.IDLE
         assert create_vcc_proxies[receptor_to_vcc[1] - 1].delayModel[1][3] == 3.0
         assert create_vcc_proxies[receptor_to_vcc[1] - 1].delayModel[1][4] == 3.1
         assert create_vcc_proxies[receptor_to_vcc[1] - 1].delayModel[1][5] == 3.2
