@@ -271,7 +271,7 @@ class TestCbfSubarray:
         assert all([proxy.subarrayMembership == 0 for proxy in create_vcc_proxies])
 
         # turn on Subarray
-        if create_subarray_1_proxy.State != DevState.ON:
+        if create_subarray_1_proxy.State() != DevState.ON:
             create_subarray_1_proxy.On()
         time.sleep(1)
         assert create_subarray_1_proxy.State() == DevState.ON
