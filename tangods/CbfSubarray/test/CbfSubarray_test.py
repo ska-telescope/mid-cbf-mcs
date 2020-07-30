@@ -84,7 +84,7 @@ class TestCbfSubarray:
         
 
         # turn on Subarray
-        if create_subarray_1_proxy.State != DevState.ON:
+        if create_subarray_1_proxy.State() != DevState.ON:
             create_subarray_1_proxy.On()
         time.sleep(1)
         assert create_subarray_1_proxy.State() == DevState.ON
@@ -152,10 +152,9 @@ class TestCbfSubarray:
         # receptor list should be empty right after initialization
         assert len(create_subarray_1_proxy.receptors) == 0
         assert all([proxy.subarrayMembership == 0 for proxy in create_vcc_proxies])
-        assert create_subarray_1_proxy.State() == DevState.OFF
 
         # turn on Subarray
-        if create_subarray_1_proxy.State != DevState.ON:
+        if create_subarray_1_proxy.State() != DevState.ON:
             create_subarray_1_proxy.On()
         time.sleep(1)
         assert create_subarray_1_proxy.State() == DevState.ON
@@ -270,7 +269,6 @@ class TestCbfSubarray:
         # receptor list should be empty right after initialization
         assert len(create_subarray_1_proxy.receptors) == 0
         assert all([proxy.subarrayMembership == 0 for proxy in create_vcc_proxies])
-        assert create_subarray_1_proxy.State() == DevState.OFF
 
         # turn on Subarray
         if create_subarray_1_proxy.State != DevState.ON:
@@ -342,7 +340,7 @@ class TestCbfSubarray:
         time.sleep(3)
 
         # turn on Subarray
-        if create_subarray_1_proxy.State != DevState.ON:
+        if create_subarray_1_proxy.State() != DevState.ON:
             create_subarray_1_proxy.On()
         time.sleep(1)
         # check initial value of attributes of CBF subarray
@@ -548,7 +546,7 @@ class TestCbfSubarray:
         assert create_subarray_1_proxy.obsState.value == ObsState.IDLE.EMPTY
 
         # turn on Subarray
-        if create_subarray_1_proxy.State != DevState.ON:
+        if create_subarray_1_proxy.State() != DevState.ON:
             create_subarray_1_proxy.On()
         time.sleep(1)
 
@@ -643,10 +641,7 @@ class TestCbfSubarray:
 
         create_cbf_master_proxy.On()
         time.sleep(3)
-        # turn on Subarray
 
-        create_subarray_1_proxy.On()
-        time.sleep(1)
 
         assert create_subarray_1_proxy.obsState.value == ObsState.EMPTY.value
 
@@ -912,9 +907,9 @@ class TestCbfSubarray:
 
         create_cbf_master_proxy.On()
         time.sleep(3)
-        # turn on Subarray
-        create_subarray_1_proxy.On()
-        time.sleep(1)
+        # # turn on Subarray
+        # create_subarray_1_proxy.On()
+        # time.sleep(1)
 
         ############################# abort from READY ###########################
         # add receptors
@@ -1034,9 +1029,9 @@ class TestCbfSubarray:
 
         create_cbf_master_proxy.On()
         time.sleep(3)
-        # turn on Subarray
-        create_subarray_1_proxy.On()
-        time.sleep(1)
+        # # turn on Subarray
+        # create_subarray_1_proxy.On()
+        # time.sleep(1)
 
         ############################# abort from IDLE ###########################
         # add receptors
