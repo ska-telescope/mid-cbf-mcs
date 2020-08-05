@@ -103,6 +103,9 @@ class CbfSubarray(SKASubarray):
             self.GoToIdleCommand(*device_args)
         )
         
+    # ----------
+    # Helper functions
+    # ----------
 
     def _void_callback(self, event):
         # This callback is only meant to be used to test if a subscription is valid
@@ -916,6 +919,112 @@ class CbfSubarray(SKASubarray):
 
     # PROTECTED REGION END #    //  CbfSubarray.class_variable
 
+
+    def _deconfigure(self):
+        """Helper function to unsubscribe events and release resources."""
+        # reset scanID in case it's not reset
+        self._scan_ID = 0
+        # unsubscribe from TMC events
+        for event_id in list(self._events_telstate.keys()):
+            self._events_telstate[event_id].unsubscribe_event(event_id)
+        self._events_telstate = {}
+
+        # unsubscribe from FSP state change events
+        for fspID in list(self._events_state_change_fsp.keys()):
+            proxy_fsp = self._proxies_fsp[fspID - 1]
+            proxy_fsp.unsubscribe_event(self._events_state_change_fsp[fspID][0])  # state
+            proxy_fsp.unsubscribe_event(self._events_state_change_fsp[fspID][1])  # healthState
+            del self._events_state_change_fsp[fspID]
+            del self._fsp_state[self._fqdn_fsp[fspID - 1]]
+            del self._fsp_health_state[self._fqdn_fsp[fspID - 1]]
+
+        # send assigned VCCs and FSP subarrays to IDLE state
+        # check if vcc and fsp is in scanning state (subarray could be aborted in scanning state)
+        self._group_vcc.command_inout("GoToIdle")
+        self._group_fsp_corr_subarray.command_inout("GoToIdle")
+        self._group_fsp_pss_subarray.command_inout("GoToIdle")
+
+        # change FSP subarray membership
+        data = tango.DeviceData()
+        data.insert(tango.DevUShort, self._subarray_id)
+        self.logger.info(data)
+        self._group_fsp.command_inout("RemoveSubarrayMembership", data)
+        self._group_fsp.remove_all()
+        self._proxies_assigned_fsp.clear()
+
+        # remove channel info from FSP subarrays
+        # already done in GoToIdle
+        self._group_fsp_corr_subarray.remove_all()
+        self._group_fsp_pss_subarray.remove_all()
+        self._proxies_assigned_fsp_corr_subarray.clear()
+
+        # configID needs to set to empty string (FSPCorrSubarray's configID set to empty automatically by calling gotoIDLE)
+        self._config_ID = ""
+        self._group_vcc.write_attribute("configID","")
+
+
+        self._last_received_delay_model = "{}"
+
+        # TODO need to add this check for fspSubarrayPSS and VLBI and PST once implemented
+        for fsp_corr_subarray_proxy in self._proxies_fsp_corr_subarray:
+            if fsp_corr_subarray_proxy.State() == tango.DevState.ON:
+                fsp_corr_subarray_proxy.GoToIdle()
+        for fsp_pss_subarray_proxy in self._proxies_fsp_pss_subarray:
+            if fsp_pss_subarray_proxy.State() == tango.DevState.ON:
+                fsp_pss_subarray_proxy.GoToIdle()
+
+
+
+    def _remove_repectors_helper(self, argin):
+        """Helper function to remove receptors for removeAllReceptors. Takes in a list of integers.
+        RemoveAllReceptors can't call RemoveReceptors anymore for lmc 0.6.0 because RemoveAllReceptors enters resourcing state before calling RemoveReceptors.
+        Therefore this helper is useful."""
+        receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
+                               self._proxy_cbf_master.receptorToVcc)
+        for receptorID in argin:
+            if receptorID in self._receptors:
+                vccID = receptor_to_vcc[receptorID]
+                vccProxy = self._proxies_vcc[vccID - 1]
+
+                # unsubscribe from events
+                vccProxy.unsubscribe_event(self._events_state_change_vcc[vccID][0])  # state
+                vccProxy.unsubscribe_event(self._events_state_change_vcc[vccID][1])  # healthState
+                del self._events_state_change_vcc[vccID]
+                del self._vcc_state[self._fqdn_vcc[vccID - 1]]
+                del self._vcc_health_state[self._fqdn_vcc[vccID - 1]]
+
+                vccProxy.subarrayMembership = 0
+
+                self._receptors.remove(receptorID)
+                self._proxies_assigned_vcc.remove(vccProxy)
+                self._group_vcc.remove(self._fqdn_vcc[vccID - 1])
+            else:
+                log_msg = "Receptor {} not assigned to subarray. Skipping.".format(str(receptorID))
+                self.logger.warn(log_msg)
+
+        # transitions to EMPTY if not assigned any receptors
+        if not self._receptors:
+            self.state_model._set_obs_state(ObsState.EMPTY)
+
+
+    # Used by commands that needs resource manager in SKASubarray base class (for example AddReceptors command). 
+    # The base class define len as len(resource_manager), so we need to change that here.
+    def __len__(self):
+        """
+        Returns the number of resources currently assigned. Note that
+        this also functions as a boolean method for whether there are
+        any assigned resources: ``if len()``.
+
+        :return: number of resources assigned
+        :rtype: int
+        """
+
+        return len(self._receptors)
+
+
+
+
+
     # -----------------
     # Device Properties
     # -----------------
@@ -1295,36 +1404,6 @@ class CbfSubarray(SKASubarray):
  
 
     ##########################################  Receptors   ####################################################
-    def remove_repectors_helper(self, argin):
-        """Helper function to remove receptors for removeAllReceptors. Takes in a list of integers.
-        RemoveAllReceptors can't call RemoveReceptors anymore for lmc 0.6.0 because RemoveAllReceptors enters resourcing state before calling RemoveReceptors.
-        Therefore this helper is useful."""
-        receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
-                               self._proxy_cbf_master.receptorToVcc)
-        for receptorID in argin:
-            if receptorID in self._receptors:
-                vccID = receptor_to_vcc[receptorID]
-                vccProxy = self._proxies_vcc[vccID - 1]
-
-                # unsubscribe from events
-                vccProxy.unsubscribe_event(self._events_state_change_vcc[vccID][0])  # state
-                vccProxy.unsubscribe_event(self._events_state_change_vcc[vccID][1])  # healthState
-                del self._events_state_change_vcc[vccID]
-                del self._vcc_state[self._fqdn_vcc[vccID - 1]]
-                del self._vcc_health_state[self._fqdn_vcc[vccID - 1]]
-
-                vccProxy.subarrayMembership = 0
-
-                self._receptors.remove(receptorID)
-                self._proxies_assigned_vcc.remove(vccProxy)
-                self._group_vcc.remove(self._fqdn_vcc[vccID - 1])
-            else:
-                log_msg = "Receptor {} not assigned to subarray. Skipping.".format(str(receptorID))
-                self.logger.warn(log_msg)
-
-        # transitions to EMPTY if not assigned any receptors
-        if not self._receptors:
-            self.state_model._set_obs_state(ObsState.EMPTY)
         
 
     class RemoveReceptorsCommand(SKASubarray.ReleaseResourcesCommand):
@@ -1336,10 +1415,7 @@ class CbfSubarray(SKASubarray):
             #     tango.Except.throw_exception("Command failed", msg, "RemoveReceptors execution",
             #                                 tango.ErrSeverity.ERR)
 
-            device.remove_repectors_helper(argin)
-
-
-
+            device._remove_repectors_helper(argin)
             message = "CBFSubarray RemoveReceptors command completed OK"
             self.logger.info(message)
             return (ResultCode.OK, message)
@@ -1390,28 +1466,12 @@ class CbfSubarray(SKASubarray):
             self.logger.info("removeAllReceptors")
 
             # For LMC0.6.0: use a helper instead of a command so that it doesn't care about the obsState
-            device.remove_repectors_helper(device._receptors[:])
+            device._remove_repectors_helper(device._receptors[:])
 
 
             message = "CBFSubarray RemoveAllReceptors command completed OK"
             self.logger.info(message)
             return (ResultCode.OK, message)
-
-
-
-
-    # Used by AddReceptors command. The base class define len as len(resource_manager), so we need to change that here.
-    def __len__(self):
-        """
-        Returns the number of resources currently assigned. Note that
-        this also functions as a boolean method for whether there are
-        any assigned resources: ``if len()``.
-
-        :return: number of resources assigned
-        :rtype: int
-        """
-
-        return len(self._receptors)
 
 
     @command(
@@ -1537,10 +1597,9 @@ class CbfSubarray(SKASubarray):
 
 
             # Call this just to release all FSPs and unsubscribe to events. Can't call GoToIdle, otherwise there will be state transition problem. 
-            device._go_to_idle_helper()
+            device._deconfigure()
 
             # transition to obsState=CONFIGURING - don't have to do
-            
             
             data = tango.DeviceData()
             data.insert(tango.DevUShort, ObsState.CONFIGURING.value)
@@ -1965,59 +2024,7 @@ class CbfSubarray(SKASubarray):
 
 
 
-    ###############################################
-    def _go_to_idle_helper(self):
-        """Helper function to unsubscribe events and release resources."""
-                # unsubscribe from TMC events
-        for event_id in list(self._events_telstate.keys()):
-            self._events_telstate[event_id].unsubscribe_event(event_id)
-        self._events_telstate = {}
-
-        # unsubscribe from FSP state change events
-        for fspID in list(self._events_state_change_fsp.keys()):
-            proxy_fsp = self._proxies_fsp[fspID - 1]
-            proxy_fsp.unsubscribe_event(self._events_state_change_fsp[fspID][0])  # state
-            proxy_fsp.unsubscribe_event(self._events_state_change_fsp[fspID][1])  # healthState
-            del self._events_state_change_fsp[fspID]
-            del self._fsp_state[self._fqdn_fsp[fspID - 1]]
-            del self._fsp_health_state[self._fqdn_fsp[fspID - 1]]
-
-        # send assigned VCCs and FSP subarrays to IDLE state
-        self._group_vcc.command_inout("GoToIdle")
-        self._group_fsp_corr_subarray.command_inout("GoToIdle")
-        self._group_fsp_pss_subarray.command_inout("GoToIdle")
-
-        # change FSP subarray membership
-        data = tango.DeviceData()
-        data.insert(tango.DevUShort, self._subarray_id)
-        self.logger.info(data)
-        self._group_fsp.command_inout("RemoveSubarrayMembership", data)
-        self._group_fsp.remove_all()
-        self._proxies_assigned_fsp.clear()
-
-        # remove channel info from FSP subarrays
-        # already done in GoToIdle
-        self._group_fsp_corr_subarray.remove_all()
-        self._group_fsp_pss_subarray.remove_all()
-        self._proxies_assigned_fsp_corr_subarray.clear()
-
-        # configID needs to set to empty string (FSPCorrSubarray's configID set to empty automatically by calling gotoIDLE)
-        self._config_ID = ""
-        self._group_vcc.write_attribute("configID","")
-
-        # self._output_links_distribution = {"configID": ""} #???
-        # self._last_received_vis_destination_address = "{}"#???
-        self._last_received_delay_model = "{}"
-        # self._published_output_links = False#???
-
-        # TODO need to add this check for fspSubarrayPSS and VLBI and PST once implemented
-        for fsp_corr_subarray_proxy in self._proxies_fsp_corr_subarray:
-            if fsp_corr_subarray_proxy.State() == tango.DevState.ON:
-                fsp_corr_subarray_proxy.GoToIdle()
-        for fsp_pss_subarray_proxy in self._proxies_fsp_pss_subarray:
-            if fsp_pss_subarray_proxy.State() == tango.DevState.ON:
-                fsp_pss_subarray_proxy.GoToIdle()
-
+    ############################## GO To Idle #########################
 
 
     # def is_GoToIdle_allowed(self):
@@ -2026,23 +2033,6 @@ class CbfSubarray(SKASubarray):
     #         return True
     #     return False
 
-
-
-    # @command()
-    # def GoToIdle(self):
-    #     # PROTECTED REGION ID(CbfSubarray.GoToIdle) ENABLED START #
-    #     if self.state_model._obs_state not in [ObsState.IDLE.value, ObsState.READY.value]:
-    #         msg = "Device not in IDLE or READY obsState."
-    #         self.logger.error(msg)
-    #         tango.Except.throw_exception("Command failed", msg, "GoToIdle execution",
-    #                                        tango.ErrSeverity.ERR)        
-
-
-    #     self._go_to_idle_helper()
-
-    #     # transition to obsState=IDLE
-    #     self.state_model._set_obs_state(ObsState.IDLE)
-    #     # PROTECTED REGION END #    //  CbfSubarray.EndSB
 
     @command(
         dtype_out='DevVarLongStringArray',
@@ -2059,11 +2049,75 @@ class CbfSubarray(SKASubarray):
     class GoToIdleCommand(SKASubarray.EndCommand):
         def do(self):
             device=self.target
-            device._go_to_idle_helper()
+            device._deconfigure()
 
             message = "GoToIdle command completed OK"
             self.logger.info(message)
             return (ResultCode.OK, message)
+
+
+############################### abort, restart and reset ###########################################
+
+    class AbortCommand(SKASubarray.AbortCommand):
+        def do(self):
+            device = self.target
+
+            # if aborted from SCANNING, needs to set VCC and PSS subarray to READY state
+            # otherwise when 
+            if device.scanID != 0:
+                self.logger.info("scanning")
+                device._group_vcc.command_inout("EndScan")
+                device._group_fsp_corr_subarray.command_inout("EndScan")
+                device._group_fsp_pss_subarray.command_inout("EndScan")
+            
+            (result_code,message)=super().do()
+            
+            return (result_code,message)
+
+    
+    # RestartCommand already registered in SKASubarray, so no "def restart" needed
+    class RestartCommand(SKASubarray.RestartCommand):
+        def do(self):
+            device = self.target
+
+            # We might have interrupted a long-running command such as a Configure
+            # or a Scan, so we need to clean up from that.
+
+            # Now totally deconfigure
+            device._deconfigure()
+
+            # and release all receptors
+            device._remove_repectors_helper(device._receptors[:])
+
+            message = "Restart command completed OK"
+            self.logger.info(message)
+            return (ResultCode.OK,message)
+
+
+    class ObsResetCommand(SKASubarray.ObsResetCommand):
+        def do(self):
+            """
+            Stateless hook for ObsReset() command functionality.
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
+            device = self.target
+            # We might have interrupted a long-running command such as a Configure
+            # or a Scan, so we need to clean up from that.
+
+            # Now totally deconfigure
+            device._deconfigure()
+
+            message = "ObsReset command completed OK"
+            self.logger.info(message)
+            return (ResultCode.OK, message)
+
+
+
+
 
 # ----------
 # Run server

@@ -188,9 +188,9 @@ class TestCbfMaster:
 
         # check states
         assert create_cbf_master_proxy.State() == DevState.ON
-        assert create_subarray_1_proxy.State() == DevState.OFF
-        assert create_sw_1_proxy.State() == DevState.OFF
-        assert create_sw_2_proxy.State() == DevState.OFF
+        assert create_subarray_1_proxy.State() == DevState.ON
+        assert create_sw_1_proxy.State() == DevState.DISABLE
+        assert create_sw_2_proxy.State() == DevState.DISABLE
         assert [proxy.State() for proxy in create_vcc_proxies] == [DevState.ON]*4
         assert create_fsp_1_proxy.State() == DevState.ON
         assert create_fsp_2_proxy.State() == DevState.ON
@@ -244,7 +244,7 @@ class TestCbfMaster:
         assert create_cbf_master_proxy.State() == DevState.OFF
         assert create_subarray_1_proxy.State() == DevState.OFF
         assert create_sw_1_proxy.State() == DevState.OFF
-        assert create_sw_1_proxy.State() == DevState.OFF
+        assert create_sw_2_proxy.State() == DevState.OFF
         assert [proxy.State() for proxy in create_vcc_proxies] == [DevState.OFF]*4
         assert create_fsp_1_proxy.State() == DevState.OFF
         assert create_fsp_2_proxy.State() == DevState.OFF
@@ -287,9 +287,8 @@ class TestCbfMaster:
 
         # check initial states
         assert create_cbf_master_proxy.State() == DevState.ON
-        assert create_subarray_1_proxy.State() == DevState.OFF
-        assert create_sw_1_proxy.State() == DevState.OFF
-        assert create_sw_2_proxy.State() == DevState.OFF
+        assert create_subarray_1_proxy.State() == DevState.ON
+        assert create_sw_1_proxy.State() == DevState.DISABLE
         assert [proxy.State() for proxy in create_vcc_proxies] == [DevState.ON]*4
         assert create_fsp_1_proxy.State() == DevState.ON
         assert create_fsp_2_proxy.State() == DevState.ON

@@ -84,7 +84,7 @@ class TestCbfSubarray:
         
 
         # turn on Subarray
-        if create_subarray_1_proxy.State != DevState.ON:
+        if create_subarray_1_proxy.State() != DevState.ON:
             create_subarray_1_proxy.On()
         time.sleep(1)
         assert create_subarray_1_proxy.State() == DevState.ON
@@ -152,10 +152,9 @@ class TestCbfSubarray:
         # receptor list should be empty right after initialization
         assert len(create_subarray_1_proxy.receptors) == 0
         assert all([proxy.subarrayMembership == 0 for proxy in create_vcc_proxies])
-        assert create_subarray_1_proxy.State() == DevState.OFF
 
         # turn on Subarray
-        if create_subarray_1_proxy.State != DevState.ON:
+        if create_subarray_1_proxy.State() != DevState.ON:
             create_subarray_1_proxy.On()
         time.sleep(1)
         assert create_subarray_1_proxy.State() == DevState.ON
@@ -270,10 +269,9 @@ class TestCbfSubarray:
         # receptor list should be empty right after initialization
         assert len(create_subarray_1_proxy.receptors) == 0
         assert all([proxy.subarrayMembership == 0 for proxy in create_vcc_proxies])
-        assert create_subarray_1_proxy.State() == DevState.OFF
 
         # turn on Subarray
-        if create_subarray_1_proxy.State != DevState.ON:
+        if create_subarray_1_proxy.State() != DevState.ON:
             create_subarray_1_proxy.On()
         time.sleep(1)
         assert create_subarray_1_proxy.State() == DevState.ON
@@ -342,7 +340,7 @@ class TestCbfSubarray:
         time.sleep(3)
 
         # turn on Subarray
-        if create_subarray_1_proxy.State != DevState.ON:
+        if create_subarray_1_proxy.State() != DevState.ON:
             create_subarray_1_proxy.On()
         time.sleep(1)
         # check initial value of attributes of CBF subarray
@@ -548,7 +546,7 @@ class TestCbfSubarray:
         assert create_subarray_1_proxy.obsState.value == ObsState.IDLE.EMPTY
 
         # turn on Subarray
-        if create_subarray_1_proxy.State != DevState.ON:
+        if create_subarray_1_proxy.State() != DevState.ON:
             create_subarray_1_proxy.On()
         time.sleep(1)
 
@@ -562,7 +560,6 @@ class TestCbfSubarray:
 
 
         assert create_subarray_1_proxy.obsState == ObsState.IDLE
-        # TODO: fsp subarray is EMPTY, why?
         assert create_fsp_1_subarray_1_proxy.obsState == ObsState.IDLE
         assert create_fsp_3_subarray_1_proxy.obsState == ObsState.IDLE
         # configure scan
@@ -598,7 +595,7 @@ class TestCbfSubarray:
         assert create_fsp_1_subarray_1_proxy.obsState.value == ObsState.READY.value
         assert create_fsp_3_subarray_1_proxy.obsState.value == ObsState.READY.value
 
-        # check ScanID to zero
+        # check scanID to zero
         assert create_fsp_1_subarray_1_proxy.scanID == 0
 
         # Clean Up
@@ -644,10 +641,7 @@ class TestCbfSubarray:
 
         create_cbf_master_proxy.On()
         time.sleep(3)
-        # turn on Subarray
 
-        create_subarray_1_proxy.On()
-        time.sleep(1)
 
         assert create_subarray_1_proxy.obsState.value == ObsState.EMPTY.value
 
@@ -719,7 +713,7 @@ class TestCbfSubarray:
 
         assert create_vcc_proxies[receptor_to_vcc[1] - 1].delayModel[1][0] == 2.7
         assert create_vcc_proxies[receptor_to_vcc[1] - 1].delayModel[1][1] == 2.8
-        assert create_vcc_proxies[receptor_to_vcc[1] - 1].delayModel[1][2] == 2.9
+        assert create_vcc_proxies[receptor_to_vcc[1] - 1].delayModel[1][2] == 2.9    #     assert create_fsp_1_subarray_1_proxy.obsState == ObsState.IDLE
         assert create_vcc_proxies[receptor_to_vcc[1] - 1].delayModel[1][3] == 3.0
         assert create_vcc_proxies[receptor_to_vcc[1] - 1].delayModel[1][4] == 3.1
         assert create_vcc_proxies[receptor_to_vcc[1] - 1].delayModel[1][5] == 3.2
@@ -847,7 +841,7 @@ class TestCbfSubarray:
         create_subarray_1_proxy.Scan(1)
         time.sleep(1)
 
-        # check ScanID on VCC and FSP
+        # check scanID on VCC and FSP
         assert create_fsp_1_subarray_1_proxy.scanID == 1
         assert create_vcc_proxies[receptor_to_vcc[4] - 1].scanID ==1
 
@@ -871,9 +865,266 @@ class TestCbfSubarray:
         create_subarray_1_proxy.Off()
         assert create_subarray_1_proxy.state() == tango.DevState.OFF
 
+    def test_Abort_Reset(
+            self,
+            create_cbf_master_proxy,
+            create_subarray_1_proxy,
+            create_sw_1_proxy,
+            create_sw_2_proxy,
+            create_vcc_proxies,
+            create_vcc_band_proxies,
+            create_vcc_tdc_proxies,
+            create_fsp_1_proxy,
+            create_fsp_2_proxy,
+            create_fsp_1_function_mode_proxy,
+            create_fsp_2_function_mode_proxy,
+            create_fsp_1_subarray_1_proxy,
+            create_fsp_2_subarray_1_proxy,
+            create_fsp_3_subarray_1_proxy,
+            create_tm_telstate_proxy
+    ):
+        """
+        Test a minimal successful configuration
+        """
+        for proxy in create_vcc_proxies:
+            proxy.Init()
+        create_fsp_1_subarray_1_proxy.Init()
+        create_fsp_2_subarray_1_proxy.Init()
+        create_fsp_3_subarray_1_proxy.Init()
+        create_fsp_1_proxy.Init()
+        create_fsp_2_proxy.Init()
+        create_subarray_1_proxy.set_timeout_millis(60000)  # since the command takes a while
+        # create_subarray_1_proxy.Init()
+        time.sleep(3)
+        create_cbf_master_proxy.set_timeout_millis(60000)
+        create_cbf_master_proxy.Init()
+        time.sleep(60)  # takes pretty long for CBF Master to initialize
+        create_tm_telstate_proxy.Init()
+        time.sleep(1)
+
+        receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
+                               create_cbf_master_proxy.receptorToVcc)
+
+        create_cbf_master_proxy.On()
+        time.sleep(3)
+        # # turn on Subarray
+        # create_subarray_1_proxy.On()
+        # time.sleep(1)
+
+        ############################# abort from READY ###########################
+        # add receptors
+        create_subarray_1_proxy.AddReceptors([1, 3, 4])
+        time.sleep(1)
+        # configure scan
+        f = open(file_path + "/test_json/test_ConfigureScan_basic.json")
+        create_subarray_1_proxy.ConfigureScan(f.read().replace("\n", ""))
+        f.close()
+        time.sleep(5)
+        assert create_subarray_1_proxy.obsState == ObsState.READY
+        assert create_fsp_1_subarray_1_proxy.obsState == ObsState.READY
+        assert create_fsp_3_subarray_1_proxy.obsState == ObsState.READY
+        assert create_vcc_proxies[receptor_to_vcc[1] - 1].obsState.value == ObsState.READY.value
+        assert create_vcc_proxies[receptor_to_vcc[4] - 1].obsState.value == ObsState.READY.value
+        # abort
+        create_subarray_1_proxy.Abort()
+        time.sleep(1)
+        assert create_subarray_1_proxy.obsState == ObsState.ABORTED
+        # ObsReset
+        create_subarray_1_proxy.ObsReset()
+        time.sleep(1)
+        assert create_subarray_1_proxy.obsState == ObsState.IDLE
+        assert create_subarray_1_proxy.receptors[0] == 1
+        assert create_subarray_1_proxy.receptors[1] == 3
+        assert create_subarray_1_proxy.receptors[2] == 4
+        assert create_fsp_1_subarray_1_proxy.obsState == ObsState.IDLE
+        assert create_fsp_3_subarray_1_proxy.obsState == ObsState.IDLE
+        assert create_vcc_proxies[receptor_to_vcc[1] - 1].obsState.value == ObsState.IDLE.value
+        assert create_vcc_proxies[receptor_to_vcc[4] - 1].obsState.value == ObsState.IDLE.value
+
+
+        ############################# abort from SCANNING ###########################
+        # add receptors
+        create_subarray_1_proxy.AddReceptors([1, 3, 4])
+        time.sleep(1)
+        # configure scan
+        f = open(file_path + "/test_json/test_ConfigureScan_basic.json")
+        create_subarray_1_proxy.ConfigureScan(f.read().replace("\n", ""))
+        f.close()
+        time.sleep(5)
+        # scan
+        create_subarray_1_proxy.Scan(2)
+        time.sleep(1)
+        assert create_subarray_1_proxy.obsState == ObsState.SCANNING
+        assert create_subarray_1_proxy.scanID == 2
+        assert create_fsp_1_subarray_1_proxy.obsState == ObsState.SCANNING
+        assert create_fsp_3_subarray_1_proxy.obsState == ObsState.SCANNING
+        assert create_vcc_proxies[receptor_to_vcc[1] - 1].obsState.value == ObsState.SCANNING
+        assert create_vcc_proxies[receptor_to_vcc[4] - 1].obsState.value == ObsState.SCANNING
+        # abort
+        create_subarray_1_proxy.Abort()
+        time.sleep(1)
+        assert create_subarray_1_proxy.obsState == ObsState.ABORTED
+        assert create_fsp_1_subarray_1_proxy.obsState == ObsState.READY
+        assert create_fsp_3_subarray_1_proxy.obsState == ObsState.READY
+        assert create_vcc_proxies[receptor_to_vcc[1] - 1].obsState.value == ObsState.READY.value
+        assert create_vcc_proxies[receptor_to_vcc[4] - 1].obsState.value == ObsState.READY.value
+        # ObsReset
+        create_subarray_1_proxy.ObsReset()
+        time.sleep(1)
+        assert create_subarray_1_proxy.obsState == ObsState.IDLE
+        assert create_subarray_1_proxy.scanID == 0
+        assert create_fsp_1_subarray_1_proxy.obsState == ObsState.IDLE
+        assert create_fsp_3_subarray_1_proxy.obsState == ObsState.IDLE
+        assert create_vcc_proxies[receptor_to_vcc[1] - 1].obsState.value == ObsState.IDLE.value
+        assert create_vcc_proxies[receptor_to_vcc[4] - 1].obsState.value == ObsState.IDLE.value
+
+        # Clean Up
+        create_subarray_1_proxy.RemoveAllReceptors()     
+        time.sleep(1)
+        assert create_subarray_1_proxy.obsState == ObsState.EMPTY  
+        time.sleep(1)
+        create_subarray_1_proxy.Off()
+        assert create_subarray_1_proxy.state() == tango.DevState.OFF
+
+
+    def test_Abort_Restart(
+            self,
+            create_cbf_master_proxy,
+            create_subarray_1_proxy,
+            create_sw_1_proxy,
+            create_sw_2_proxy,
+            create_vcc_proxies,
+            create_vcc_band_proxies,
+            create_vcc_tdc_proxies,
+            create_fsp_1_proxy,
+            create_fsp_2_proxy,
+            create_fsp_1_function_mode_proxy,
+            create_fsp_2_function_mode_proxy,
+            create_fsp_1_subarray_1_proxy,
+            create_fsp_2_subarray_1_proxy,
+            create_fsp_3_subarray_1_proxy,
+            create_tm_telstate_proxy
+    ):
+        """
+        Test a minimal successful configuration
+        """
+        for proxy in create_vcc_proxies:
+            proxy.Init()
+        create_fsp_1_subarray_1_proxy.Init()
+        create_fsp_2_subarray_1_proxy.Init()
+        create_fsp_3_subarray_1_proxy.Init()
+        create_fsp_1_proxy.Init()
+        create_fsp_2_proxy.Init()
+        create_subarray_1_proxy.set_timeout_millis(60000)  # since the command takes a while
+        # create_subarray_1_proxy.Init()
+        time.sleep(3)
+        create_cbf_master_proxy.set_timeout_millis(60000)
+        create_cbf_master_proxy.Init()
+        time.sleep(60)  # takes pretty long for CBF Master to initialize
+        create_tm_telstate_proxy.Init()
+        time.sleep(1)
+
+        receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
+                               create_cbf_master_proxy.receptorToVcc)
+
+        create_cbf_master_proxy.On()
+        time.sleep(3)
+        # # turn on Subarray
+        # create_subarray_1_proxy.On()
+        # time.sleep(1)
+
+        ############################# abort from IDLE ###########################
+        # add receptors
+        create_subarray_1_proxy.AddReceptors([1, 3, 4])
+        time.sleep(1)
+        assert create_subarray_1_proxy.obsState == ObsState.IDLE
+        # abort
+        create_subarray_1_proxy.Abort()
+        time.sleep(1)
+        assert create_subarray_1_proxy.obsState == ObsState.ABORTED
+        # Restart: receptors should be empty
+        create_subarray_1_proxy.Restart()
+        time.sleep(1)
+        assert create_subarray_1_proxy.obsState == ObsState.EMPTY
+        assert len(create_subarray_1_proxy.receptors) == 0
+        assert create_fsp_1_subarray_1_proxy.obsState == ObsState.IDLE
+        assert create_fsp_3_subarray_1_proxy.obsState == ObsState.IDLE
+        assert create_vcc_proxies[receptor_to_vcc[1] - 1].obsState.value == ObsState.IDLE.value
+        assert create_vcc_proxies[receptor_to_vcc[4] - 1].obsState.value == ObsState.IDLE.value
 
 
 
+
+        ############################# abort from READY ###########################
+        # add receptors
+        create_subarray_1_proxy.AddReceptors([1, 3, 4])
+        time.sleep(1)
+        # configure scan
+        f = open(file_path + "/test_json/test_ConfigureScan_basic.json")
+        create_subarray_1_proxy.ConfigureScan(f.read().replace("\n", ""))
+        f.close()
+        time.sleep(5)
+        assert create_subarray_1_proxy.obsState == ObsState.READY
+        assert create_fsp_1_subarray_1_proxy.obsState == ObsState.READY
+        assert create_fsp_3_subarray_1_proxy.obsState == ObsState.READY
+        assert create_vcc_proxies[receptor_to_vcc[1] - 1].obsState.value == ObsState.READY
+        assert create_vcc_proxies[receptor_to_vcc[4] - 1].obsState.value == ObsState.READY
+        # abort
+        create_subarray_1_proxy.Abort()
+        time.sleep(1)
+        assert create_subarray_1_proxy.obsState == ObsState.ABORTED
+        # ObsReset
+        create_subarray_1_proxy.Restart()
+        time.sleep(1)
+        assert create_subarray_1_proxy.obsState == ObsState.EMPTY
+        assert len(create_subarray_1_proxy.receptors) == 0
+        assert create_fsp_1_subarray_1_proxy.obsState == ObsState.IDLE
+        assert create_fsp_3_subarray_1_proxy.obsState == ObsState.IDLE
+        assert create_vcc_proxies[receptor_to_vcc[1] - 1].obsState.value == ObsState.IDLE.value
+        assert create_vcc_proxies[receptor_to_vcc[4] - 1].obsState.value == ObsState.IDLE.value
+
+
+        ############################# abort from SCANNING ###########################
+        # add receptors
+        create_subarray_1_proxy.AddReceptors([1, 3, 4])
+        time.sleep(1)
+        # configure scan
+        f = open(file_path + "/test_json/test_ConfigureScan_basic.json")
+        create_subarray_1_proxy.ConfigureScan(f.read().replace("\n", ""))
+        f.close()
+        time.sleep(5)
+        # scan
+        create_subarray_1_proxy.Scan(2)
+        time.sleep(1)
+        assert create_subarray_1_proxy.obsState == ObsState.SCANNING
+        assert create_subarray_1_proxy.scanID == 2
+        assert create_fsp_1_subarray_1_proxy.obsState == ObsState.SCANNING
+        assert create_fsp_3_subarray_1_proxy.obsState == ObsState.SCANNING
+        assert create_vcc_proxies[receptor_to_vcc[1] - 1].obsState.value == ObsState.SCANNING
+        assert create_vcc_proxies[receptor_to_vcc[4] - 1].obsState.value == ObsState.SCANNING
+        # abort
+        create_subarray_1_proxy.Abort()
+        time.sleep(1)
+        assert create_subarray_1_proxy.obsState == ObsState.ABORTED
+        assert create_fsp_1_subarray_1_proxy.obsState == ObsState.READY
+        assert create_fsp_3_subarray_1_proxy.obsState == ObsState.READY
+        assert create_vcc_proxies[receptor_to_vcc[1] - 1].obsState.value == ObsState.READY
+        assert create_vcc_proxies[receptor_to_vcc[4] - 1].obsState.value == ObsState.READY
+        # ObsReset
+        create_subarray_1_proxy.Restart()
+        time.sleep(1)
+        assert len(create_subarray_1_proxy.receptors) == 0
+        assert create_fsp_1_subarray_1_proxy.obsState == ObsState.IDLE
+        assert create_fsp_3_subarray_1_proxy.obsState == ObsState.IDLE
+        assert create_vcc_proxies[receptor_to_vcc[1] - 1].obsState.value == ObsState.IDLE.value
+        assert create_vcc_proxies[receptor_to_vcc[4] - 1].obsState.value == ObsState.IDLE.value
+
+
+        # Clean Up
+        assert create_subarray_1_proxy.obsState == ObsState.EMPTY  
+        time.sleep(1)
+        create_subarray_1_proxy.Off()
+        assert create_subarray_1_proxy.state() == tango.DevState.OFF
 '''    
     def test_ConfigureScan_onlyPss_basic(
             self,
