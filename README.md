@@ -127,18 +127,9 @@ shows the list of the running containers:
 * `midcbf-databaseds`: The TANGO DB device server.
 * `midcbf-tangodb`: The MySQL database with the TANGO database tables.
 
-## GUI
+## JIVE GUI
 
-This prototype provides a graphical user interface, using WebJive, that runs in Docker containers defined in the configuration files `tangogql.yml`, `traefik.yml`, and `webjive.yml`. To use, start the Docker containers, then navigate to `localhost:22484/testdb`. The following credentials can be used:
-
-* Username: `user1`
-* Password: `abc123`
-
-The device tree can be viewed and explored. In addition, device attributes can be seen and modified, and device commands can be sent, by creating and saving a new dashboard.
-
-## JIVE
-
-JIVE is a graphical user interface that visualizes the devices, servers, and executes device commands. It has more information than the WebJIVE. Here is the procedure to use JIVE:
+For developer use. JIVE is a graphical user interface that visualizes the devices, servers, and executes device commands. It has more information than the WebJIVE. Here is the procedure to use JIVE:
  
 1. From the project root directory:
 ```
@@ -159,6 +150,18 @@ $ export TANGO_HOST=<the address from step 3>:100000
 ```
 $ JIVE
 ```
+Note: step 2-3 can be done by running "configJive.py" script in the main folder
+
+## WebJive GUI
+
+This prototype provides a graphical user interface, using WebJive, that runs in Docker containers defined in the configuration files `tangogql.yml`, `traefik.yml`, and `webjive.yml`. To use, start the Docker containers, then navigate to `localhost:22484/testdb`. The following credentials can be used:
+
+* Username: `user1`
+* Password: `abc123`
+
+The device tree can be viewed and explored. In addition, device attributes can be seen and modified, and device commands can be sent, by creating and saving a new dashboard.
+
+
 
 ## License
 
