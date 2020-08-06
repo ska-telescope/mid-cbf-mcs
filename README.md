@@ -61,6 +61,20 @@ $ git clone https://gitlab.com/ska-telescope/mid-cbf-mcs.git
 
 The Mid CBF MCS prototype runs in a containerised environment; the YAML configuration files ``tango.yml`` and ``mid-cbf-mcs.yml`` define the services needed to run the TANGO devices inside separate Docker containers.
 
+### Start device servers
+
+To build a new image, issue the following command. If the existing image is adequate, this step may be skipped.
+```
+$ make build
+```
+
+To start the containers, run
+```
+$ make up
+```
+
+You can then view the devices with JIVE. See below on how to activate JIVE.
+
 ### Add devices
 
 From the project root directory, issue the command
@@ -77,18 +91,6 @@ $ python addDevicesAndProperties.py
 The interactive session can then be exited by the command
 ```
 $ exit
-```
-
-### Start device servers
-
-To build a new image, issue the following command. If the existing image is adequate, this step may be skipped.
-```
-$ make build
-```
-
-To start the containers, run
-```
-$ make up
 ```
 
 ### Configure attribute polling and events
