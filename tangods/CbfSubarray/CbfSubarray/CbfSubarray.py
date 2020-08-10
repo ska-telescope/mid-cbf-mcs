@@ -8,7 +8,7 @@
 # See LICENSE.txt for more info.
 
 # """
-# Author: James Jiang James.Jiang@nrc-cnrc.gc.ca,
+# Author: An Yu An.Yu@nrc-cnrc.gc.ca,
 # Herzberg Astronomy and Astrophysics, National Research Council of Canada
 # Copyright (c) 2019 National Research Council of Canada
 # """
@@ -68,12 +68,13 @@ class CbfSubarray(SKASubarray):
     # PROTECTED REGION ID(CbfSubarray.class_variable) ENABLED START #
     def init_command_objects(self):
         """
-        Sets up the command objects
+        Sets up the command objects. Register the new Commands here.
         """
         super().init_command_objects()
         device_args = (self, self.state_model, self.logger)
         # resource_args = (self.resource_manager, self.state_model, self.logger) 
         # only use resource_args if we want to have separate resource_manager object
+
         self.register_command_object(
             "Configure",
             self.ConfigureCommand(*device_args)
@@ -241,18 +242,6 @@ class CbfSubarray(SKASubarray):
         # the corresponding attribute in the code is configID(to avoid having an attribute name too short).
         if "id" in argin:
             self._config_ID=str(argin["id"])
-            # if int(argin["configID"]) <= 0:  # configID not positive
-            #     msg = "'configID' must be positive (received {}). " \
-            #           "Aborting configuration.".format(int(argin["configID"]))
-            #     self._raise_configure_scan_fatal_error(msg)
-            # elif any(map(lambda i: i == int(argin["configID"]),
-            #              self._proxy_cbf_master.subarrayconfigID)) and \
-            #         int(argin["configID"]) != self._config_ID:  # configID already taken
-            #     msg = "'configID' must be unique (received {}). " \
-            #           "Aborting configuration.".format(int(argin["configID"]))
-            #     self._raise_configure_scan_fatal_error(msg)
-            # else:
-            #     pass
 
         else:
             msg = "'id'(configID attribute) must be given. Aborting configuration."
@@ -1104,11 +1093,6 @@ class CbfSubarray(SKASubarray):
         doc="List of receptors assigned to subarray",
     )
 
-    # outputLinksDistribution = attribute( #???
-    #     dtype='str',
-    #     label="Distribution of output links",
-    #     doc="Distribution of output links, given as a JSON object",
-    # )
 
     vccState = attribute(
         dtype=('DevState',),
@@ -1163,10 +1147,18 @@ class CbfSubarray(SKASubarray):
     # General methods
     # ---------------
     class InitCommand(SKASubarray.InitCommand):
+        """
+        A class for the CbfSubarray's init_device() "command".
+        """
         def do(self):
             """
-            entry point; 
-            initialize the attributes and the properties of the CbfSubarray
+            Stateless hook for device initialisation. Initialize the attributes and the properties of the CbfSubarray.
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            
             """
             # SKASubarray.init_device(self)
             # PROTECTED REGION ID(CbfSubarray.init_device) ENABLED START #
@@ -1324,11 +1316,6 @@ class CbfSubarray(SKASubarray):
         self.AddReceptors(value)
         # PROTECTED REGION END #    //  CbfSubarray.receptors_write
 
-    # def read_outputLinksDistribution(self):# ???
-    #     # PROTECTED REGION ID(CbfSubarray.outputLinksDistribution_read) ENABLED START #
-    #     """Return outputLinksDistribution attribute: a JSON object containning info about the fine channels configured to be sent to SDP, including output links."""
-    #     return json.dumps(self._output_links_distribution)
-    #     # PROTECTED REGION END #    //  CbfSubarray.outputLinksDistribution_read
 
     def read_vccState(self):
         # PROTECTED REGION ID(CbfSubarray.vccState_read) ENABLED START #
@@ -1377,7 +1364,18 @@ class CbfSubarray(SKASubarray):
         return False
 
     class OnCommand(SKASubarray.OnCommand):
+        """
+        A class for the SKASubarray's On() command.
+        """
         def do(self):
+            """
+            Stateless hook for On() command functionality.
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
             (result_code,message)=super().do()
             device = self.target
             device._proxy_sw_1.SetState(tango.DevState.DISABLE)
@@ -1387,14 +1385,20 @@ class CbfSubarray(SKASubarray):
 
 
 
-    def is_Off_allowed(self):
-        """allowed if DevState is ON"""
-        if self.dev_state() == tango.DevState.ON:
-            return True
-        return False
 
     class OffCommand(SKASubarray.OffCommand):
+        """
+        A class for the SKASubarray's Off() command.
+        """
         def do(self):
+            """
+            Stateless hook for Off() command functionality.
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
             (result_code,message)=super().do()
             device = self.target
             device._proxy_sw_1.SetState(tango.DevState.OFF)
@@ -1403,23 +1407,30 @@ class CbfSubarray(SKASubarray):
 
  
 
-    ##########################################  Receptors   ####################################################
+    ##########################################  Receptors Related Commands  ####################################################
         
 
     class RemoveReceptorsCommand(SKASubarray.ReleaseResourcesCommand):
+        """
+        A class for CbfSubarray's ReleaseReceptors() command.
+        """
         def do(self, argin):
+            """
+            Stateless hook for RemoveReceptors() command functionality.
+
+            :param argin: The receptors to be released
+            :type argin: list of int
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
             device=self.target
-            # if self.state_model._obs_state != ObsState.IDLE.value:
-            #     msg = "Device not in IDLE obsState."
-            #     self.logger.error(msg)
-            #     tango.Except.throw_exception("Command failed", msg, "RemoveReceptors execution",
-            #                                 tango.ErrSeverity.ERR)
 
             device._remove_repectors_helper(argin)
             message = "CBFSubarray RemoveReceptors command completed OK"
             self.logger.info(message)
             return (ResultCode.OK, message)
-            # PROTECTED REGION END #    //  CbfSubarray.RemoveReceptors
 
     @command(
         dtype_in=('uint16',),
@@ -1428,19 +1439,13 @@ class CbfSubarray(SKASubarray):
         doc_out="(ReturnType, 'informational message')"
     )
     def RemoveReceptors(self, argin):
-        # PROTECTED REGION ID(CbfSubarray.RemoveReceptors) ENABLED START #
-        """remove from list of receptors. Turn Subarray OFF if no receptors assigned"""
+        """remove from list of receptors. Turn Subarray to ObsState = EMPTY if no receptors assigned"""
         command = self.get_command_object("RemoveReceptors")
         (return_code, message) = command(argin)
         return [[return_code], [message]]
 
 
 
-    # def is_RemoveAllReceptors_allowed(self):
-    #     """allowed if state is ON or OFF"""
-    #     if self.dev_state() in [tango.DevState.OFF, tango.DevState.ON]:
-    #         return True
-    #     return False
 
     @command(
         dtype_out='DevVarLongStringArray',
@@ -1449,11 +1454,6 @@ class CbfSubarray(SKASubarray):
     def RemoveAllReceptors(self):
         # PROTECTED REGION ID(CbfSubarray.RemoveAllReceptors) ENABLED START #
         """Remove all receptors. Turn Subarray OFF if no receptors assigned"""
-        # if self.state_model._obs_state != ObsState.IDLE.value:
-        #     msg = "Device not in IDLE obsState."
-        #     self.logger.error(msg)
-        #     tango.Except.throw_exception("Command failed", msg, "RemoveAllReceptors execution",
-        #                                  tango.ErrSeverity.ERR)
 
         command = self.get_command_object("RemoveAllReceptors")
         (return_code, message) = command()
@@ -1461,7 +1461,18 @@ class CbfSubarray(SKASubarray):
         # PROTECTED REGION END #    //  CbfSubarray.RemoveAllReceptors
 
     class RemoveAllReceptorsCommand(SKASubarray.ReleaseResourcesCommand):
+        """
+        A class for CbfSubarray's ReleaseAllReceptors() command.
+        """
         def do(self):
+            """
+            Stateless hook for ReleaseAllReceptors() command functionality.
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
             device=self.target
             self.logger.info("removeAllReceptors")
 
@@ -1482,18 +1493,30 @@ class CbfSubarray(SKASubarray):
     )
     def AddReceptors(self, argin):
         """
-        Assign resources to this subarray
+        Assign Receptors to this subarray. 
+        Turn subarray to ObsState = IDLE if previously no receptor is assigned.
         """
         command = self.get_command_object("AddReceptors")
         (return_code, message) = command(argin)
         return [[return_code], [message]]    
 
-    # didn't inherit SKASubarray._ResourcingCommand because will give error on len(self.target)
+    
     class AddReceptorsCommand(SKASubarray.AssignResourcesCommand):
-        # def __init__(self,target,state_model,logger=None):
-        #     super().__init__(target, state_model, "assign", logger=logger)
-
+        # doesn't inherit SKASubarray._ResourcingCommand because will give error on len(self.target)
+        """
+        A class for CbfSubarray's AddReceptors() command.
+        """
         def do(self, argin):
+            """
+            Stateless hook for AddReceptors() command functionality.
+
+            :param argin: The receptors to be assigned
+            :type argin: list of int
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
             device=self.target
             # Code here
             errs = []  # list of error messages
@@ -1545,9 +1568,6 @@ class CbfSubarray(SKASubarray):
                 except KeyError:  # invalid receptor ID
                     errs.append("Invalid receptor ID: {}".format(receptorID))
 
-            # # transition to ON if at least one receptor is assigned
-            # if device._receptors:
-            #     device.set_state(DevState.ON)
 
             if errs:
                 msg = "\n".join(errs)
@@ -1567,16 +1587,23 @@ class CbfSubarray(SKASubarray):
 
 
 
-    ###################### Configure #########################
+    ############################################  Configure Related Commands   ###############################################
 
-    # def is_Configure_allowed(self):
-    #     """allowed if DevState is ON"""
-    #     if self.dev_state() == tango.DevState.ON:
-    #         return True
-    #     return False
     class ConfigureScanCommand(SKASubarray.ConfigureCommand):
+        """
+        A class for CbfSubarray's ConfigureScan() command.
+        """
         def do(self, argin):
-            # (result_code,message)=super().do(argin)
+            """
+            Stateless hook for ConfigureScan() command functionality.
+
+            :param argin: The configuration as JSON
+            :type argin: str
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
             device=self.target
             # Code here
             device._pss_config = []
@@ -1586,7 +1613,7 @@ class CbfSubarray(SKASubarray):
             device._corr_fsp_list = []
             device._fsp_list = [[], [], [], []]
 
-            ################# validate scan configuration first ##########################
+            # validate scan configuration first 
             try:
                 device._validate_scan_configuration(argin)
             except tango.DevFailed as df:
@@ -1596,11 +1623,10 @@ class CbfSubarray(SKASubarray):
                 
 
 
-            # Call this just to release all FSPs and unsubscribe to events. Can't call GoToIdle, otherwise there will be state transition problem. 
+            # Call this just to release all FSPs and unsubscribe to events. 
+            # Can't call GoToIdle, otherwise there will be state transition problem. 
             device._deconfigure()
 
-            # transition to obsState=CONFIGURING - don't have to do
-            
             data = tango.DeviceData()
             data.insert(tango.DevUShort, ObsState.CONFIGURING.value)
             device._group_vcc.command_inout("SetObservingState", data)
@@ -1678,8 +1704,6 @@ class CbfSubarray(SKASubarray):
             )
             device._events_telstate[event_id] = attribute_proxy
 
-
-
             # Configure rfiFlaggingMask.
             if "rfiFlaggingMask" in argin:
                 device._group_vcc.write_attribute(
@@ -1710,9 +1734,8 @@ class CbfSubarray(SKASubarray):
             data.insert(tango.DevUShort, ObsState.READY.value)
             device._group_vcc.command_inout("SetObservingState", data)
 
-            ###################### FSP Subarray ####################
+            ####### FSP Subarray ######
             # pass on configuration to individual function mode class to configure the FSP Subarray
-
             if len(device._pss_config) != 0:
                 device._proxy_pss_config.ConfigureFSP(json.dumps(device._pss_config))
 
@@ -1726,7 +1749,7 @@ class CbfSubarray(SKASubarray):
             device._fsp_list[1].append(device._pss_fsp_list)
 
 
-            ####################### FSP ############################
+            ######## FSP #######
             # Configure FSP.
             for fsp in argin["fsp"]:
                 # Configure fspID.
@@ -1774,27 +1797,12 @@ class CbfSubarray(SKASubarray):
                 device._events_state_change_fsp[int(fsp["fspID"])] = [event_id_state,
                                                                     event_id_health_state]
 
-           
-            # This state transition will be later
-            # 03-23-2020:
-            # CbfSubarray moves to READY only after the publication of the visibilities
-            # addresses generated by SDP.
-
-
             #save it into lastestScanConfig
             device._latest_scan_config=str(argin)
             message = "CBFSubarray Configure command completed OK"
             self.logger.info(message)
             return (ResultCode.OK, message)
 
-
-
-
-    # def is_ConfigureScan_allowed(self):
-    #     """allowed if state is ON"""
-    #     if self.dev_state() == tango.DevState.ON:
-    #         return True
-    #     return False
 
     @command(
         dtype_in='str',
@@ -1809,14 +1817,7 @@ class CbfSubarray(SKASubarray):
         Configure attributes from input JSON. Subscribe events. Configure VCC, VCC subarray, FSP, FSP Subarray. 
         publish output links.
         """
-        # if self.state_model._obs_state not in [ObsState.IDLE.value, ObsState.READY.value]:
-        #     msg = "Device not in IDLE or READY obsState."
-        #     self.logger.error(msg)
-        #     tango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
-        #                                  tango.ErrSeverity.ERR)
 
-        # Only after successful validation of the received configuration,
-        # subarray is configured.
         command = self.get_command_object("ConfigureScan")
         (return_code, message) = command(argin)
         return [[return_code], [message]]    
@@ -1844,11 +1845,6 @@ class CbfSubarray(SKASubarray):
         # This function is called after the configuration has already been validated,
         # so the checks here have been removed to reduce overhead.
         """revceives a JSON object to configure a search window"""
-        # if self.state_model._obs_state != ObsState.CONFIGURING.value:
-        #     msg = "Device not in CONFIGURING obsState."
-        #     self.logger.error(msg)
-        #     tango.Except.throw_exception("Command failed", msg, "ConfigureSearchWindow execution",
-        #                                  tango.ErrSeverity.ERR)
 
         argin = json.loads(argin)
 
@@ -1957,13 +1953,15 @@ class CbfSubarray(SKASubarray):
 
         # PROTECTED REGION END #    //  CbfSubarray.ConfigureSearchWindow
 
-    ###################### Scan ######################### 
-    def is_Scan_allowed(self):
-        """allowed if Subarray is ON, and ObsState Ready."""
-        if self.dev_state() == tango.DevState.ON:
-            if self.state_model._obs_state==ObsState.READY.value:
-                return True
-        return False
+
+
+    ############################################   Scan Related Commands  ###############################################
+    # def is_Scan_allowed(self):
+    #     """allowed if Subarray is ON, and ObsState Ready."""
+    #     if self.dev_state() == tango.DevState.ON:
+    #         if self.state_model._obs_state==ObsState.READY.value:
+    #             return True
+    #     return False
 
     @command(
         dtype_in='uint',
@@ -1980,9 +1978,22 @@ class CbfSubarray(SKASubarray):
         return [[return_code], [message]]
 
     class StartScanCommand(SKASubarray.ScanCommand):
+        """
+        A class for CbfSubarray's Scan() command.
+        """
         def do(self, argin):
+            """
+            Stateless hook for Scan() command functionality.
+
+            :param argin: Scan info
+            :type argin: str
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
             # overwrites the do hook
-            # (result_code,message)=super().do() 
+
             device=self.target
 
             # Do the following
@@ -1993,13 +2004,11 @@ class CbfSubarray(SKASubarray):
             device._group_fsp_corr_subarray.command_inout("Scan", data)
             device._group_fsp_pss_subarray.command_inout("Scan")
 
+            # return message
             message = "Scan command successfull"
             self.logger.info(message)
             return (ResultCode.STARTED, message)
 
-
-
-    ###################### EndScan ######################### 
     def is_EndScan_allowed(self):
         """allowed if SUbarray is ON"""
         if self.dev_state() == tango.DevState.ON and self.state_model._obs_state==ObsState.SCANNING:
@@ -2008,10 +2017,13 @@ class CbfSubarray(SKASubarray):
 
 
     class EndScanCommand(SKASubarray.EndScanCommand):
+        """
+        A class for CbfSubarray's EndScan() command.
+        """
         def do(self):
             (result_code,message)=super().do()
             device=self.target
-            # Code here
+            # Do the following
             device._group_vcc.command_inout("EndScan")
             device._group_fsp_corr_subarray.command_inout("EndScan")
             device._group_fsp_pss_subarray.command_inout("EndScan")
@@ -2020,18 +2032,6 @@ class CbfSubarray(SKASubarray):
             message = "EndScan command OK"
             self.logger.info(message)
             return (ResultCode.OK, message)
-
-
-
-
-    ############################## GO To Idle #########################
-
-
-    # def is_GoToIdle_allowed(self):
-    #     """allowed if state is ON or OFF"""
-    #     if self.dev_state() in [tango.DevState.OFF, tango.DevState.ON]:
-    #         return True
-    #     return False
 
 
     @command(
@@ -2047,7 +2047,20 @@ class CbfSubarray(SKASubarray):
         return [[return_code], [message]]
 
     class GoToIdleCommand(SKASubarray.EndCommand):
+        """
+        A class for SKASubarray's GoToIdle() command.
+        """
         def do(self):
+            """
+            Stateless hook for GoToIdle() command functionality.
+
+            :param argin: Scan info
+            :type argin: str
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
             device=self.target
             device._deconfigure()
 
@@ -2059,7 +2072,18 @@ class CbfSubarray(SKASubarray):
 ############################### abort, restart and reset ###########################################
 
     class AbortCommand(SKASubarray.AbortCommand):
+        """
+        A class for SKASubarray's Abort() command.
+        """
         def do(self):
+            """
+            Stateless hook for Abort() command functionality.
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
             device = self.target
 
             # if aborted from SCANNING, needs to set VCC and PSS subarray to READY state
@@ -2077,7 +2101,18 @@ class CbfSubarray(SKASubarray):
     
     # RestartCommand already registered in SKASubarray, so no "def restart" needed
     class RestartCommand(SKASubarray.RestartCommand):
+        """
+        A class for CbfSubarray's Restart() command.
+        """
         def do(self):
+            """
+            Stateless hook for Restart() command functionality.
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
             device = self.target
 
             # We might have interrupted a long-running command such as a Configure
@@ -2095,6 +2130,9 @@ class CbfSubarray(SKASubarray):
 
 
     class ObsResetCommand(SKASubarray.ObsResetCommand):
+        """
+        A class for CbfSubarray's ObsReset() command.
+        """
         def do(self):
             """
             Stateless hook for ObsReset() command functionality.
@@ -2108,7 +2146,7 @@ class CbfSubarray(SKASubarray):
             # We might have interrupted a long-running command such as a Configure
             # or a Scan, so we need to clean up from that.
 
-            # Now totally deconfigure
+            # totally deconfigure
             device._deconfigure()
 
             message = "ObsReset command completed OK"
