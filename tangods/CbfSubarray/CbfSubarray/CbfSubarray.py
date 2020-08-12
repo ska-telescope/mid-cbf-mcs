@@ -1413,6 +1413,7 @@ class CbfSubarray(SKASubarray):
     class RemoveReceptorsCommand(SKASubarray.ReleaseResourcesCommand):
         """
         A class for CbfSubarray's ReleaseReceptors() command.
+        Equivalent to the ReleaseResourcesCommand in ADR-8.
         """
         def do(self, argin):
             """
@@ -1439,7 +1440,10 @@ class CbfSubarray(SKASubarray):
         doc_out="(ReturnType, 'informational message')"
     )
     def RemoveReceptors(self, argin):
-        """remove from list of receptors. Turn Subarray to ObsState = EMPTY if no receptors assigned"""
+        """
+        Remove from list of receptors. Turn Subarray to ObsState = EMPTY if no receptors assigned.
+        Uses RemoveReceptorsCommand class.
+        """
         command = self.get_command_object("RemoveReceptors")
         (return_code, message) = command(argin)
         return [[return_code], [message]]
@@ -1985,8 +1989,8 @@ class CbfSubarray(SKASubarray):
             """
             Stateless hook for Scan() command functionality.
 
-            :param argin: Scan info
-            :type argin: str
+            :param argin: ScanID
+            :type argin: int
             :return: A tuple containing a return code and a string
                 message indicating status. The message is for
                 information purpose only.
@@ -2053,9 +2057,7 @@ class CbfSubarray(SKASubarray):
         def do(self):
             """
             Stateless hook for GoToIdle() command functionality.
-
-            :param argin: Scan info
-            :type argin: str
+            
             :return: A tuple containing a return code and a string
                 message indicating status. The message is for
                 information purpose only.

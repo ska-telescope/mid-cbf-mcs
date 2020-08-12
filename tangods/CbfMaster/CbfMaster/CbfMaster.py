@@ -46,12 +46,8 @@ class CbfMaster(SKAMaster):
 
     """
     CBFMaster TANGO device class.
-
     Primary point of contact for monitoring and control of Mid.CBF. Implements state and mode indicators, and a set of state transition commmands.
     """
-
-
-
 
     # PROTECTED REGION ID(CbfMaster.class_variable) ENABLED START #
 
@@ -484,7 +480,7 @@ class CbfMaster(SKAMaster):
         # PROTECTED REGION END #    //  CbfMaster.always_executed_hook
 
     def delete_device(self):
-        """Unsubscribe to sevens, turn all the subarrays, VCCs and FSPs off""" 
+        """Unsubscribe to events, turn all the subarrays, VCCs and FSPs off""" 
         # PROTECTED REGION ID(CbfMaster.delete_device) ENABLED START #
         # unsubscribe to events
         for proxy in list(self._event_id.keys()):

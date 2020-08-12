@@ -242,12 +242,6 @@ class Vcc(SKACapability):
         self._vcc_id = self.VccID
 
         # the bands are already disabled on initialization
-        # self._proxy_band_12.SetState(tango.DevState.DISABLE)
-        # self._proxy_band_3.SetState(tango.DevState.DISABLE)
-        # self._proxy_band_4.SetState(tango.DevState.DISABLE)
-        # self._proxy_band_5.SetState(tango.DevState.DISABLE)
-        # self._proxy_tdc_1.SetState(tango.DevState.DISABLE)
-        # self._proxy_tdc_2.SetState(tango.DevSTate.DISABLE)
 
         # initialize attribute values
         self._receptor_ID = 0
@@ -274,6 +268,7 @@ class Vcc(SKACapability):
         # PROTECTED REGION END #    //  Vcc.init_device
 
     def always_executed_hook(self):
+        """Hook always execeted before any commands"""
         # PROTECTED REGION ID(Vcc.always_executed_hook) ENABLED START #
         pass
         # PROTECTED REGION END #    //  Vcc.always_executed_hook
@@ -836,7 +831,6 @@ class Vcc(SKACapability):
         # 
         """
         configure SearchWindow by sending parameters from the input(JSON) to SearchWindow device.
-        
         This function is called by the subarray after the configuration has already been validated, so the checks here have been removed to reduce overhead.
         """
 
