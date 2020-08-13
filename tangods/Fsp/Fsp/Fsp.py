@@ -379,8 +379,6 @@ class Fsp(SKACapability):
         # PROTECTED REGION ID(Fsp.getConfigID) ENABLED START #
         """
         returns configID for all the fspCorrSubarray
-
-        :return:None
         """
         result ={}
         for proxy in self._fsp_corr_proxies:

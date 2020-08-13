@@ -418,6 +418,7 @@ class FspCorrSubarray(SKASubarray):
     @command()
     def On(self):
         # PROTECTED REGION ID(FspCorrSubarray.On) ENABLED START #
+        """Turn FSPCorrSubarray ON"""
         self.set_state(tango.DevState.ON)
         # PROTECTED REGION END #    //  FspCorrSubarray.On
 
@@ -429,6 +430,7 @@ class FspCorrSubarray(SKASubarray):
 
     @command()
     def Off(self):
+        """Turn FSPCorrSubarray OFF"""
         # PROTECTED REGION ID(FspCorrSubarray.Off) ENABLED START #
         # This command can only be called when obsState=IDLE
         self.GoToIdle()
@@ -863,7 +865,6 @@ class FspCorrSubarray(SKASubarray):
         dtype_out='DevString',
         doc_out="output link and destination addresses in JSON",
     )
-    @DebugIt()
     def getLinkAndAddress(self, argin):
         # PROTECTED REGION ID(FspCorrSubarray.getLinkAndAddress) ENABLED START #
         """
