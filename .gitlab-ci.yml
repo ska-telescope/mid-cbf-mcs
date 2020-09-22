@@ -27,9 +27,21 @@ before_script:
 # It is also specified that only the master branch will be subject of this job.
 
 stages:
+  - build
+  - linting
   - test
   - publish
   - pages
+
+clean shell runner:
+  stage: .pre
+  tags:
+    - docker-executor
+  script:
+    # Gitlab CI badges creation
+    - pwd
+    - ls -lR
+    - rm -rf build/*
 
 test:
   tags:
@@ -42,13 +54,54 @@ test:
     paths:
       - build
 
-publish image:
-#  tags:
-#    - docker-executor
-  stage: publish
+build:
+  stage: build
+  image: nexus.engageska-portugal.pt/ska-docker/tango-builder:latest
+  before_script:
+  - docker login -u $DOCKER_REGISTRY_USERNAME -p $DOCKER_REGISTRY_PASSWORD $DOCKER_REGISTRY_HOST
+  tags:
+    - docker-executor
   script:
-    - sudo make push
-  when: manual
+    - make build
+    - make push
+
+integration:
+  stage: test
+  tags:
+    - docker-executor
+  image: nexus.engageska-portugal.pt/ska-docker/deploy:0.4.1
+  script:
+    - export KUBE_NAMESPACE="ci-csp-proto-$CI_COMMIT_SHORT_SHA"
+    - cd $BUILD_PATH
+    - make k8s_test
+  environment:
+      name: test
+  after_script:
+    - export KUBE_NAMESPACE="ci-cbf-proto-$CI_COMMIT_SHORT_SHA"
+    - ls -lR
+    - pwd
+    - make delete
+    - make delete_namespace      
+
+# linting stage
+#
+linting:csp-lmc-mid:
+  image: nexus.engageska-portugal.pt/ska-docker/ska-python-buildenv:latest
+  stage: linting
+  tags:
+    - docker-executor
+  artifacts:
+    paths:
+      - ./build/
+  script:
+    - apt-get -y update
+    - apt-get install -y python3-pip python3-setuptools python3-wheel --no-install-recommends
+    - python3 -m  pip install pylint2junit
+    - python3 -m pip install --extra-index-url https://nexus.engageska-portugal.pt/repository/pypi/simple -r requirements.txt
+    - mkdir -p build/reports      
+    - pylint --output-format=parseable mid_cbf| tee ./build/mid-cbf-code-analysis.stdout
+    - pylint --output-format=pylint2junit.JunitReporter mid-cbf > ./build/reports/mid-cbf-linting.xml
+    - ls -alR
 
 pages:
   stage: pages
@@ -64,3 +117,34 @@ pages:
     paths:
       - public
     expire_in: 30 days
+
+publish_chart:
+  variables:
+    CHARTS_TO_PUBLISH: cbf-proto
+  stage: publish
+  tags:
+  - docker-executor
+  image: nexus.engageska-portugal.pt/ska-docker/deploy:0.4.2
+  script:
+    - curl -s https://gitlab.com/ska-telescope/stupid/raw/master/scripts/publish-charts.sh | bash
+
+create ci metrics:
+  stage: .post
+  image: nexus.engageska-portugal.pt/ska-docker/ska-python-buildenv:latest
+  when: always
+  tags:
+    - docker-executor
+  script:
+    - ls -lR
+    # copy public in build because ci-metrics scripts look for files in build
+    - cp -R public build
+    - ls -lR 
+    # Gitlab CI badges creation: START
+    - apt-get -y update
+    - apt-get install -y curl --no-install-recommends
+    - curl -s https://gitlab.com/ska-telescope/ci-metrics-utilities/raw/master/scripts/ci-badges-func.sh | sh
+    # Gitlab CI badges creation: END
+  artifacts:
+    paths:
+      - ./build
+

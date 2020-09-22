@@ -17,16 +17,16 @@
 SendConfig TANGO device class for the prototype
 """
 
-# PyTango imports
-import PyTango
-from PyTango import DebugIt
-from PyTango import DeviceProxy
-from PyTango.server import run
-from PyTango.server import Device, DeviceMeta
-from PyTango.server import attribute, command
-from PyTango.server import device_property
-from PyTango import AttrQuality, DispLevel, DevState
-from PyTango import AttrWriteType, PipeWriteType
+# tango imports
+import tango
+from tango import DebugIt
+from tango import DeviceProxy
+from tango.server import run
+from tango.server import Device, DeviceMeta
+from tango.server import attribute, command
+from tango.server import device_property
+from tango import AttrQuality, DispLevel, DevState
+from tango import AttrWriteType, PipeWriteType
 # Additional import
 # PROTECTED REGION ID(SendConfig.additionnal_import) ENABLED START #
 import os
@@ -37,7 +37,7 @@ file_path = os.path.dirname(os.path.abspath(__file__))
 commons_pkg_path = os.path.abspath(os.path.join(file_path, "../../commons"))
 sys.path.insert(0, commons_pkg_path)
 
-from global_enum import HealthState, AdminMode
+from ska.base.control_model import HealthState, AdminMode
 from ska.base import SKACapability
 # PROTECTED REGION END #    //  SendConfig.additionnal_import
 
@@ -69,11 +69,11 @@ class SendConfig(SKACapability):
     def init_device(self):
         SKACapability.init_device(self)
         # PROTECTED REGION ID(SendConfig.init_device) ENABLED START #
-        self.set_state(PyTango.DevState.INIT)
+        self.set_state(tango.DevState.INIT)
         self.subarray_proxy = DeviceProxy(self.SubarrayAddress),
         # initialize attribute values
 
-        self.set_state(PyTango.DevState.ON)
+        self.set_state(tango.DevState.ON)
         # PROTECTED REGION END #    //  SendConfig.init_device
 
     def always_executed_hook(self):

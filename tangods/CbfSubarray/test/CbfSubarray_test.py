@@ -70,7 +70,7 @@ class TestCbfSubarray:
         time.sleep(3)
         create_cbf_master_proxy.set_timeout_millis(60000)
         create_cbf_master_proxy.Init()
-        time.sleep(60)  # takes pretty long for CBF Master to initialize
+        time.sleep(5)  # takes pretty long for CBF Master to initialize
 
         receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
                                create_cbf_master_proxy.receptorToVcc)
@@ -141,7 +141,7 @@ class TestCbfSubarray:
         time.sleep(3)
         create_cbf_master_proxy.set_timeout_millis(60000)
         create_cbf_master_proxy.Init()
-        time.sleep(60)  # takes pretty long for CBF Master to initialize
+        time.sleep(5)  # takes pretty long for CBF Master to initialize
 
         receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
                                create_cbf_master_proxy.receptorToVcc)
@@ -256,7 +256,7 @@ class TestCbfSubarray:
         time.sleep(3)
         create_cbf_master_proxy.set_timeout_millis(60000)
         create_cbf_master_proxy.Init()
-        time.sleep(60)  # takes pretty long for CBF Master to initialize
+        time.sleep(5)  # takes pretty long for CBF Master to initialize
 
         receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
                                create_cbf_master_proxy.receptorToVcc)
@@ -329,7 +329,7 @@ class TestCbfSubarray:
         time.sleep(3)
         create_cbf_master_proxy.set_timeout_millis(60000)
         create_cbf_master_proxy.Init()
-        time.sleep(60)  # takes pretty long for CBF Master to initialize
+        time.sleep(5)  # takes pretty long for CBF Master to initialize
         create_tm_telstate_proxy.Init()
         time.sleep(1)
 
@@ -532,7 +532,7 @@ class TestCbfSubarray:
         time.sleep(3)
         create_cbf_master_proxy.set_timeout_millis(60000)
         create_cbf_master_proxy.Init()
-        time.sleep(60)  # takes pretty long for CBF Master to initialize
+        time.sleep(5)  # takes pretty long for CBF Master to initialize
         create_tm_telstate_proxy.Init()
         assert create_tm_telstate_proxy.state() == tango.DevState.STANDBY
         time.sleep(1)
@@ -632,7 +632,7 @@ class TestCbfSubarray:
         time.sleep(3)
         create_cbf_master_proxy.set_timeout_millis(60000)
         create_cbf_master_proxy.Init()
-        time.sleep(60)  # takes pretty long for CBF Master to initialize
+        time.sleep(5)  # takes pretty long for CBF Master to initialize
         create_tm_telstate_proxy.Init()
         time.sleep(1)
 
@@ -801,7 +801,7 @@ class TestCbfSubarray:
         time.sleep(3)
         create_cbf_master_proxy.set_timeout_millis(60000)
         create_cbf_master_proxy.Init()
-        time.sleep(60)  # takes pretty long for CBF Master to initialize
+        time.sleep(5)  # takes pretty long for CBF Master to initialize
         create_tm_telstate_proxy.Init()
         time.sleep(1)
 
@@ -898,7 +898,7 @@ class TestCbfSubarray:
         time.sleep(3)
         create_cbf_master_proxy.set_timeout_millis(60000)
         create_cbf_master_proxy.Init()
-        time.sleep(60)  # takes pretty long for CBF Master to initialize
+        time.sleep(5)  # takes pretty long for CBF Master to initialize
         create_tm_telstate_proxy.Init()
         time.sleep(1)
 
@@ -1020,7 +1020,7 @@ class TestCbfSubarray:
         time.sleep(3)
         create_cbf_master_proxy.set_timeout_millis(60000)
         create_cbf_master_proxy.Init()
-        time.sleep(60)  # takes pretty long for CBF Master to initialize
+        time.sleep(5)  # takes pretty long for CBF Master to initialize
         create_tm_telstate_proxy.Init()
         time.sleep(1)
 

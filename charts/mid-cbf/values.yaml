@@ -1,0 +1,11 @@
+# Default values for mid-csp.
+cbf-proto:
+  midcbfmcs:
+     enabled: true
+tmleafnode:
+  tmleafnodesimulator:
+     enabled: true
+tango-base:
+  tangodb:
+     enabled: true
+     use_pv: false
