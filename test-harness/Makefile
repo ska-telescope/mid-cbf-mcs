@@ -41,7 +41,8 @@ test:
 		mv /app/tangods/CbfSubarray/htmlcov ./build/cbf_subarray_htmlcov; \
 		mv /app/tangods/CbfSubarray/coverage.xml ./build/cbf_subarray_coverage.xml; \
 		mv /app/code_analysis.stdout ./build/cbf_code_analysis.stdout; \
-		cp /app/build/reports/mid-cbf-unit-tests.xml ./build/reports; \
+		cp /app/build/reports/cbf-master-unit-tests.xml ./build/reports; \
+		cp /app/build/reports/cbf-subarray-unit-tests.xml ./build/reports; \
 	fi;
 
 .PHONY: all test
