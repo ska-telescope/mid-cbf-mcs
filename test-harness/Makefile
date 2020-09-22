@@ -32,14 +32,16 @@ test:
 	cd /app/tangods/CbfMaster && python3 setup.py test | tee setup_py_test.stdout
 	cd /app/tangods/CbfSubarray && python3 setup.py test | tee setup_py_test.stdout
 	cd /app && ./code-analysis.sh | tee code_analysis.stdout
-	if [ -d /build ]; then \
-		mv /app/tangods/CbfMaster/setup_py_test.stdout /build/cbf_master_setup_test.stdout; \
-		mv /app/tangods/CbfMaster/htmlcov /build/cbf_master_htmlcov; \
-		mv /app/tangods/CbfMaster/coverage.xml /build/cbf_master_coverage.xml; \
-		mv /app/tangods/CbfSubarray/setup_py_test.stdout /build/cbf_subarray_setup_test.stdout; \
-		mv /app/tangods/CbfSubarray/htmlcov /build/cbf_subarray_htmlcov; \
-		mv /app/tangods/CbfSubarray/coverage.xml /build/cbf_subarray_coverage.xml; \
-		mv /app/code_analysis.stdout /build/cbf_code_analysis.stdout; \
+	mkdir -p build/reports && \
+	if [ -d build ]; then \
+		mv /app/tangods/CbfMaster/setup_py_test.stdout ./build/cbf_master_setup_test.stdout; \
+		mv /app/tangods/CbfMaster/htmlcov ./build/cbf_master_htmlcov; \
+		mv /app/tangods/CbfMaster/coverage.xml ./build/cbf_master_coverage.xml; \
+		mv /app/tangods/CbfSubarray/setup_py_test.stdout ./build/cbf_subarray_setup_test.stdout; \
+		mv /app/tangods/CbfSubarray/htmlcov ./build/cbf_subarray_htmlcov; \
+		mv /app/tangods/CbfSubarray/coverage.xml ./build/cbf_subarray_coverage.xml; \
+		mv /app/code_analysis.stdout ./build/cbf_code_analysis.stdout; \
+		cp /app/build/reports/mid-cbf-unit-tests.xml ./build/reports; \
 	fi;
 
 .PHONY: all test
