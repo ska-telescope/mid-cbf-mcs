@@ -1,7 +1,7 @@
 # GitLab CI in conjunction with GitLab Runner can use Docker Engine to test and build any application.
 # Docker, when used with GitLab CI, runs each job in a separate and isolated container using the predefined image that is set up in .gitlab-ci.yml.
 # In this case we use the latest python docker image to build and test this project.
-image: nexus.engageska-portugal.pt/ska-docker/tango-builder:latest
+image: nexus.engageska-portugal.pt/ska-docker/ska-python-buildenv:latest
 
 variables:
   DOCKER_DRIVER: overlay2
@@ -69,9 +69,12 @@ integration:
   stage: test
   tags:
     - docker-executor
+  artifacts:
+    paths:
+      - ./build/    
   image: nexus.engageska-portugal.pt/ska-docker/deploy:0.4.1
   script:
-    - export KUBE_NAMESPACE="ci-csp-proto-$CI_COMMIT_SHORT_SHA"
+    - export KUBE_NAMESPACE="ci-cbf-proto-$CI_COMMIT_SHORT_SHA"
     - make k8s_test
   environment:
       name: test
@@ -84,7 +87,7 @@ integration:
 
 # linting stage
 #
-linting:csp-lmc-mid:
+linting:
   image: nexus.engageska-portugal.pt/ska-docker/ska-python-buildenv:latest
   stage: linting
   tags:
@@ -104,8 +107,6 @@ linting:csp-lmc-mid:
 
 pages:
   stage: pages
-  dependencies:
-     - test
   script:
    - mkdir .public
    - sudo cp build/cbf*.* .public
