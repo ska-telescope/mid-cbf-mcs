@@ -99,8 +99,8 @@ linting:csp-lmc-mid:
     - python3 -m  pip install pylint2junit
     - python3 -m pip install --extra-index-url https://nexus.engageska-portugal.pt/repository/pypi/simple -r requirements.txt
     - mkdir -p build/reports      
-    - pylint --output-format=parseable mid_cbf| tee ./build/mid-cbf-code-analysis.stdout
-    - pylint --output-format=pylint2junit.JunitReporter mid-cbf > ./build/reports/mid-cbf-linting.xml
+    - pylint --output-format=parseable tangods| tee ./build/mid-cbf-code-analysis.stdout
+    - pylint --output-format=pylint2junit.JunitReporter tangods > ./build/reports/mid-cbf-linting.xml
     - ls -alR
 
 pages:
