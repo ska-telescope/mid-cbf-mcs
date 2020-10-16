@@ -64,6 +64,8 @@ build:
   script:
     - make build
     - make push
+  when: manual
+
 
 integration:
   stage: test
