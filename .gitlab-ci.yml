@@ -36,7 +36,7 @@ stages:
 clean shell runner:
   stage: .pre
   tags:
-    - docker-executor
+    - k8srunner
   script:
     # Gitlab CI badges creation
     - pwd
@@ -45,7 +45,7 @@ clean shell runner:
 
 #test:
 #  tags:
-#    - docker-executor
+#    - k8srunner
 #  stage: test
 #  script:
 #    - sudo make build
@@ -60,7 +60,7 @@ build:
   before_script:
   - docker login -u $DOCKER_REGISTRY_USERNAME -p $DOCKER_REGISTRY_PASSWORD $DOCKER_REGISTRY_HOST
   tags:
-    - docker-executor
+    - k8srunner
   script:
     - make build
     - make push
@@ -68,18 +68,18 @@ build:
 integration:
   stage: test
   tags:
-    - docker-executor
+    - k8srunner
   artifacts:
     paths:
       - ./build/    
-  image: nexus.engageska-portugal.pt/ska-docker/deploy:0.4.1
+  image: nexus.engageska-portugal.pt/ska-docker/deploy:0.4.3
   script:
-    - export KUBE_NAMESPACE="ci-cbf-proto-$CI_COMMIT_SHORT_SHA"
     - make k8s_test
   environment:
       name: test
+      kubernetes:
+        namespace: ci-$CI_PROJECT_NAME-$CI_COMMIT_SHORT_SHA
   after_script:
-    - export KUBE_NAMESPACE="ci-cbf-proto-$CI_COMMIT_SHORT_SHA"
     - ls -lR
     - pwd
     - make delete
@@ -91,7 +91,7 @@ linting:
   image: nexus.engageska-portugal.pt/ska-docker/ska-python-buildenv:latest
   stage: linting
   tags:
-    - docker-executor
+    - k8srunner
   artifacts:
     paths:
       - ./build/
@@ -107,10 +107,20 @@ linting:
 
 pages:
   stage: pages
+  tags:
+    - k8srunner
   script:
+   - pwd
+   - python3 -m pip install junitparser
+   - ls -lR
    - mkdir .public
    - sudo cp -R build .public
    - sudo mv .public public
+   - ls -lR public
+   - junitparser merge public/reports/cbf-master-unit-tests.xml public/reports/cbf-subarray-unit-tests.xml public/reports/unit-tests.xml
+   - ls -lR
+   - rm public/reports/cbf-master-unit-tests.xml
+   - rm public/reports/cbf-subarray-unit-tests.xml
   artifacts:
     paths:
       - public
@@ -121,7 +131,7 @@ publish_chart:
     CHARTS_TO_PUBLISH: cbf-proto
   stage: publish
   tags:
-  - docker-executor
+  - k8srunner
   image: nexus.engageska-portugal.pt/ska-docker/deploy:0.4.2
   script:
     - curl -s https://gitlab.com/ska-telescope/stupid/raw/master/scripts/publish-charts.sh | bash
@@ -131,7 +141,7 @@ create ci metrics:
   image: nexus.engageska-portugal.pt/ska-docker/ska-python-buildenv:latest
   when: always
   tags:
-    - docker-executor
+    - k8srunner
   script:
     - ls -lR
     # copy public in build because ci-metrics scripts look for files in build
