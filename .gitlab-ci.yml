@@ -108,7 +108,7 @@ linting:
 pages:
   stage: pages
   dependencies:
-      - test
+      - integration 
   tags:
     - k8srunner
   script:
