@@ -65,7 +65,7 @@ build:
     - make build
 
 publish_image:
-    stage: publish
+  stage: publish
   script:
     - make push
   when: manual
