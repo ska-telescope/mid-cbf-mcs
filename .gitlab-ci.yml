@@ -121,7 +121,7 @@ pages:
    - python3 -m pip install junitparser
    - ls -lR
    - mkdir .public
-   - sudo cp -R build/ .public
+   - sudo cp -R build/* .public
    - sudo mv .public public
    - ls -lR public
    - junitparser merge public/reports/cbf-master-unit-tests.xml public/reports/cbf-subarray-unit-tests.xml public/reports/unit-tests.xml
