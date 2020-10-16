@@ -63,9 +63,12 @@ build:
     - k8srunner
   script:
     - make build
+
+publish_image:
+    stage: publish
+  script:
     - make push
   when: manual
-
 
 integration:
   stage: test
