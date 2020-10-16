@@ -10,7 +10,7 @@ dependencies:
   repository: https://gitlab.com/ska-telescope/skampi/-/raw/master/repository
   condition: tango-base.enabled
 - name: cbf-proto
-  version: 0.1.0
+  version: 0.1.1
   repository: "file://../cbf-proto"
   condition: cbf-proto.enabled
 - name: tmleafnode
