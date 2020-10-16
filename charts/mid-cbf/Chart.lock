@@ -1,0 +1,12 @@
+dependencies:
+- name: tango-base
+  repository: https://gitlab.com/ska-telescope/skampi/-/raw/master/repository
+  version: 0.1.2
+- name: cbf-proto
+  repository: file://../cbf-proto
+  version: 0.1.0
+- name: tmleafnode
+  repository: file://../tmleafnode
+  version: 0.1.0
+digest: sha256:b63789225d0160db0aaf8f17ba4d8574a3cc4039b7607e350562564360a54215
+generated: "2020-09-21T16:33:59.447803414+02:00"

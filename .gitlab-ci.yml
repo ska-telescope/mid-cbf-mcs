@@ -1,7 +1,7 @@
 # GitLab CI in conjunction with GitLab Runner can use Docker Engine to test and build any application.
 # Docker, when used with GitLab CI, runs each job in a separate and isolated container using the predefined image that is set up in .gitlab-ci.yml.
 # In this case we use the latest python docker image to build and test this project.
-image: nexus.engageska-portugal.pt/ska-docker/tango-builder:latest
+image: nexus.engageska-portugal.pt/ska-docker/ska-python-buildenv:latest
 
 variables:
   DOCKER_DRIVER: overlay2
@@ -18,8 +18,8 @@ cache:
 
 # before_script is used to define the command that should be run before all jobs, including deploy jobs, but after the restoration of artifacts.
 # This can be an array or a multi-line string.
-before_script:
-  - docker login --username $DOCKER_REGISTRY_USERNAME --password $DOCKER_REGISTRY_PASSWORD $DOCKER_REGISTRY_HOST
+#before_script:
+#  - docker login --username $DOCKER_REGISTRY_USERNAME --password $DOCKER_REGISTRY_PASSWORD $DOCKER_REGISTRY_HOST
 
 # The YAML file defines a set of jobs with constraints stating when they should be run.
 # You can specify an unlimited number of jobs which are defined as top-level elements with an arbitrary name and always have to contain at least the script clause.
@@ -27,40 +27,138 @@ before_script:
 # It is also specified that only the master branch will be subject of this job.
 
 stages:
+  - build
+  - linting
   - test
   - publish
   - pages
 
-test:
+clean shell runner:
+  stage: .pre
   tags:
-    - docker-executor
-  stage: test
+    - k8srunner
   script:
-    - sudo make build
-    - sudo make test
-  artifacts:
-    paths:
-      - build
+    # Gitlab CI badges creation
+    - pwd
+    - ls -lR
+    - rm -rf build/*
 
-publish image:
+#test:
 #  tags:
-#    - docker-executor
+#    - k8srunner
+#  stage: test
+#  script:
+#    - sudo make build
+#    - sudo make test
+#  artifacts:
+#    paths:
+#      - build
+
+build:
+  stage: build
+  image: nexus.engageska-portugal.pt/ska-docker/tango-builder:latest
+  before_script:
+  - docker login -u $DOCKER_REGISTRY_USERNAME -p $DOCKER_REGISTRY_PASSWORD $DOCKER_REGISTRY_HOST
+  tags:
+    - k8srunner
+  script:
+    - make build
+
+publish_image:
   stage: publish
   script:
-    - sudo make push
+    - make push
   when: manual
+
+integration:
+  stage: test
+  tags:
+    - k8srunner
+  artifacts:
+    paths:
+      - ./build/    
+  image: nexus.engageska-portugal.pt/ska-docker/deploy:0.4.3
+  script:
+    - make k8s_test
+  environment:
+      name: test
+      kubernetes:
+        namespace: ci-$CI_PROJECT_NAME-$CI_COMMIT_SHORT_SHA
+  after_script:
+    - ls -lR
+    - pwd
+    - make delete
+    - make delete_namespace      
+
+# linting stage
+#
+linting:
+  image: nexus.engageska-portugal.pt/ska-docker/ska-python-buildenv:latest
+  stage: linting
+  tags:
+    - k8srunner
+  artifacts:
+    paths:
+      - ./build/
+  script:
+    - apt-get -y update
+    - apt-get install -y python3-pip python3-setuptools python3-wheel --no-install-recommends
+    - python3 -m  pip install pylint2junit
+    - python3 -m pip install --extra-index-url https://nexus.engageska-portugal.pt/repository/pypi/simple -r requirements.txt
+    - mkdir -p build/reports      
+    - pylint --output-format=parseable tangods| tee ./build/mid-cbf-code-analysis.stdout
+    - pylint --output-format=pylint2junit.JunitReporter tangods > ./build/reports/mid-cbf-linting.xml
+    - ls -alR
 
 pages:
   stage: pages
   dependencies:
-     - test
+      - integration 
+  tags:
+    - k8srunner
   script:
+   - pwd
+   - python3 -m pip install junitparser
+   - ls -lR
    - mkdir .public
-   - sudo cp build/cbf*.* .public
-   - sudo cp -r build/cbf_master_htmlcov/* .public
-   - sudo cp -r build/cbf_subarray_htmlcov/* .public
+   - sudo cp -R build/* .public
    - sudo mv .public public
+   - ls -lR public
+   - junitparser merge public/reports/cbf-master-unit-tests.xml public/reports/cbf-subarray-unit-tests.xml public/reports/unit-tests.xml
+   - ls -lR
+   - rm public/reports/cbf-master-unit-tests.xml
+   - rm public/reports/cbf-subarray-unit-tests.xml
   artifacts:
     paths:
       - public
     expire_in: 30 days
+
+publish_chart:
+  variables:
+    CHARTS_TO_PUBLISH: cbf-proto
+  stage: publish
+  tags:
+  - docker-executor
+  image: nexus.engageska-portugal.pt/ska-docker/deploy:0.4.2
+  script:
+    - curl -s https://gitlab.com/ska-telescope/stupid/raw/master/scripts/publish-charts.sh | bash
+
+create ci metrics:
+  stage: .post
+  image: nexus.engageska-portugal.pt/ska-docker/ska-python-buildenv:latest
+  when: always
+  tags:
+    - k8srunner
+  script:
+    - ls -lR
+    # copy public in build because ci-metrics scripts look for files in build
+    - cp -R public build
+    - ls -lR 
+    # Gitlab CI badges creation: START
+    - apt-get -y update
+    - apt-get install -y curl --no-install-recommends
+    - curl -s https://gitlab.com/ska-telescope/ci-metrics-utilities/raw/master/scripts/ci-badges-func.sh | sh
+    # Gitlab CI badges creation: END
+  artifacts:
+    paths:
+      - ./build
