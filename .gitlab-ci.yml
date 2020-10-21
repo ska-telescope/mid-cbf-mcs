@@ -83,13 +83,13 @@ integration:
     - docker image ls
     - make install-chart
     - make wait
-    - make describe
     - make test
   environment:
       name: test
       kubernetes:
         namespace: ci-$CI_PROJECT_NAME-$CI_COMMIT_SHORT_SHA
   after_script:
+    - make describe
     - ls -lR
     - pwd
     - make uninstall-chart
