@@ -108,7 +108,7 @@ chart_lint: ## lint check the helm chart
 		--namespace $(KUBE_NAMESPACE) 
 
 describe: ## describe Pods executed from Helm chart
-	@for i in `kubectl -n $(KUBE_NAMESPACE) get pods -l release=$(HELM_RELEASE) -o=name`; \
+	@for i in `kubectl -n $(KUBE_NAMESPACE) get pods -l app=mid-cbf-mcs -o=name`; \
 	do echo "---------------------------------------------------"; \
 	echo "Describe for $${i}"; \
 	echo kubectl -n $(KUBE_NAMESPACE) describe $${i}; \
@@ -227,7 +227,7 @@ k8s_test = tar -c . | \
 # base64 payload is given a boundary "~~~~BOUNDARY~~~~" and extracted using perl
 # clean up the run to completion container
 # exit the saved status
-local_test: dep-up install-chart wait ## test the application on K8s
+local_test: install-chart wait ## test the application on K8s
 	@echo "KUBE_NAMESPACE: $(KUBE_NAMESPACE)"
 	$(call k8s_test,test); \
 	  status=$$?; \
