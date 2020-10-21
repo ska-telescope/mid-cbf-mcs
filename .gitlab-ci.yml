@@ -72,8 +72,6 @@ publish_image:
 
 integration:
   stage: test
-  dependencies:
-      - build
   tags:
     - k8srunner
   artifacts:
@@ -85,6 +83,7 @@ integration:
     - docker image ls
     - make install-chart
     - make wait
+    - make describe
     - make test
   environment:
       name: test
