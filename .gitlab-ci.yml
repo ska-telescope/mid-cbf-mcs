@@ -79,7 +79,7 @@ integration:
       - ./build/    
   image: nexus.engageska-portugal.pt/ska-docker/deploy:0.4.3
   script:
-    - make k8s_test
+    - make test
   environment:
       name: test
       kubernetes:
@@ -135,7 +135,7 @@ pages:
 
 publish_chart:
   variables:
-    CHARTS_TO_PUBLISH: cbf-proto
+    CHARTS_TO_PUBLISH: mid-cbf
   stage: publish
   tags:
   - docker-executor
@@ -162,3 +162,12 @@ create ci metrics:
   artifacts:
     paths:
       - ./build
+
+# Standardised included jobs
+variables:
+  CHARTS_TO_PUBLISH: mid-cbf mid-cbf-tmleafnode
+include:
+# Helm Chart Publish
+# https://developer.skatelescope.org/en/latest/development/software_package_release_procedure.html#package-and-publish-helm-charts-to-the-ska-helm-chart-repository
+- project: 'ska-telescope/templates-repository'
+  file: 'gitlab-ci/includes/helm_publish.yml'

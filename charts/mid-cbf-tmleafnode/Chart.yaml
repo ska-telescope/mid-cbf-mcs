@@ -1,9 +1,12 @@
 apiVersion: v2
-name: mid-cbf
-description: A Helm chart for deploying the CSP_Mid.LMC CBF prototype on Kubernetes
+name: mid-cbf-tmleafnode
+description: A Helm chart to deploy tmleafnode simulators for Mid CBF for testing purposes.
+type: application
+# Versions are expected to follow Semantic Versioning (https://semver.org/)
+# Version is set equal to the mid-cbf-mcs image version.
 version: 0.4.5
-appVersion: "0.4.5"
 icon: https://www.skatelescope.org/wp-content/uploads/2016/07/09545_NEW_LOGO_2014.png
+appVersion: 0.4.5  
 dependencies:
 - name: tango-util
   version: 0.2.0

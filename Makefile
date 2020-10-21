@@ -1,5 +1,5 @@
 #
-# Project makefile for a Tango project. You should normally only need to modify
+# Project makefile for mid-cbf-mcs project. You should normally only need to modify
 # DOCKER_REGISTRY_USER and PROJECT below.
 #
 
@@ -8,40 +8,34 @@
 # the Docker tag for this project. The definition below inherits the standard
 # value for DOCKER_REGISTRY_HOST (=rnexus.engageska-portugal.pt) and overwrites
 # DOCKER_REGISTRY_USER and PROJECT to give a final Docker tag of
-# nexus.engageska-portugal.pt/tango-example/powersupply
+# nexus.engageska-portugal.pt/tmc-prototype/tmcprototype
 #
+DOCKER_REGISTRY_USER:=ska-docker
 PROJECT = mid-cbf-mcs
-DSCONFIG_JSON_FILE ?= csp-lmc-mid/charts/csp-lmc-mid/data/configuration.json
-
 
 # KUBE_NAMESPACE defines the Kubernetes Namespace that will be deployed to
 # using Helm.  If this does not already exist it will be created
-KUBE_NAMESPACE ?= cbf-proto
+KUBE_NAMESPACE ?= mid-cbf
+SDP_KUBE_NAMESPACE ?= sdp#namespace to be used
+DASHBOARD ?= webjive-dash.dump
 
 # HELM_RELEASE is the release that all Kubernetes resources will be labelled
 # with
 HELM_RELEASE ?= test
 
 # HELM_CHART the chart name
-HELM_CHART ?= mid-cbf
+HELM_CHART ?= mid-cbf-umbrella
 
-# HELM CHART PACKAGE
-HELM_PACKAGE ?= charts/cbf-proto
-
-# INGRESS_HOST is the host name used in the Ingress resource definition for
-# publishing services via the Ingress Controller
-INGRESS_HOST ?= $(HELM_RELEASE).$(HELM_CHART).local
-
-# Optional creation of the tango-base dependency
-ENABLE_TANGO_BASE ?= true
+# UMBRELLA_CHART_PATH Path of the umbrella chart to work with
+UMBRELLA_CHART_PATH ?= charts/mid-cbf-umbrella/
 
 # Fixed variables
 # Timeout for gitlab-runner when run locally
 TIMEOUT = 86400
 # Helm version
-HELM_VERSION = v3.2.4
+HELM_VERSION = v3.3.1
 # kubectl version
-KUBERNETES_VERSION = v1.14.1
+KUBERNETES_VERSION = v1.19.2
 
 # Docker, K8s and Gitlab CI variables
 # gitlab-runner debug mode - turn on with non-empty value
@@ -55,7 +49,7 @@ DOCKER_VOLUMES ?= /var/run/docker.sock:/var/run/docker.sock
 # registry credentials - user/pass/registry - set these in PrivateRules.mak
 DOCKER_REGISTRY_USER_LOGIN ?=  ## registry credentials - user - set in PrivateRules.mak
 CI_REGISTRY_PASS_LOGIN ?=  ## registry credentials - pass - set in PrivateRules.mak
-CI_REGISTRY ?= gitlab.com/ska-telescope/csp-lmc
+CI_REGISTRY ?= gitlab.com/ska-telescope/mid-cbf-mcs
 
 CI_PROJECT_DIR ?= .
 
@@ -63,16 +57,15 @@ KUBE_CONFIG_BASE64 ?=  ## base64 encoded kubectl credentials for KUBECONFIG
 KUBECONFIG ?= /etc/deploy/config ## KUBECONFIG location
 
 XAUTHORITYx ?= ${XAUTHORITY}
-ifneq ($(CI_JOB_ID),)
 THIS_HOST := $(shell ifconfig | sed -En 's/127.0.0.1//;s/.*inet (addr:)?(([0-9]*\.){3}[0-9]*).*/\2/p' | head -n1)
 DISPLAY := $(THIS_HOST):0
-endif
 
 # define private overrides for above variables in here
 -include PrivateRules.mak
 
 # Test runner - run to completion job in K8s
-TEST_RUNNER = test-runner-$(HELM_CHART)-$(HELM_RELEASE)
+# name of the pod running the k8s_tests
+TEST_RUNNER = test-makefile-runner-$(CI_JOB_ID)-$(KUBE_NAMESPACE)-$(HELM_RELEASE)
 
 #
 # include makefile to pick up the standard Make targets, e.g., 'make build'
@@ -80,12 +73,13 @@ TEST_RUNNER = test-runner-$(HELM_CHART)-$(HELM_RELEASE)
 # ('make interactive', 'make test', etc.) are defined in this file.
 #
 include .make/release.mk
+include .make/docker.mk
 include .make/k8s.mk
-#include .make/postdeploy.mk
 
-package: ## package all existing charts into a git based repo
-	mkdir -p helm-repo
-	helm package $(HELM_PACKAGE) --destination ./helm-repo ; \
-	cd ./helm-repo && helm repo index .
+#
+# Defines a default make target so that help is printed if make is called
+# without a target
+#
+.DEFAULT_GOAL := help
 
-.PHONY: all test up down help k8s show lint deploy delete logs describe mkcerts localip namespace delete_namespace ingress_check kubeconfig kubectl_dependencies helm_dependencies rk8s_test k8s_test rlint
+.PHONY: all test up down help k8s show lint logs describe mkcerts localip namespace delete_namespace ingress_check kubeconfig kubectl_dependencies helm_dependencies rk8s_test k8s_test rlint

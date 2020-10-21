@@ -1,11 +1,16 @@
-IMAGE_TO_RUN_TEST ?=  nexus.engageska-portugal.pt/ska-docker/ska-python-buildenv:latest
-TEST_RUNNER = test-makefile-runner-$(CI_JOB_ID)-$(KUBE_NAMESPACE)-$(HELM_RELEASE)##name of the pod running the k8s_tests
-#
-# defines a function to copy the ./test-harness directory into the K8s TEST_RUNNER
-# and then runs the requested make target in the container.
-# capture the output of the test in a build folder inside the container 
-# 
-TANGO_HOST = databaseds-tango-base-$(HELM_RELEASE):10000
+HELM_HOST ?= https://nexus.engageska-portugal.pt## helm host url https
+MINIKUBE ?= true## Minikube or not
+MARK ?= all
+IMAGE_TO_TEST ?= $(DOCKER_REGISTRY_HOST)/$(DOCKER_REGISTRY_USER)/$(PROJECT):latest## docker image that will be run for testing purpose
+#TANGO_HOST=$(shell helm get values ${HELM_RELEASE} -a -n ${KUBE_NAMESPACE} | grep tango_host | head -1 | cut -d':' -f2 | cut -d' ' -f2):10000
+
+CHARTS ?= mid-cbf-umbrella mid-cbf mid-cbf-tmleafnode ## list of charts to be published on gitlab -- umbrella charts for testing purpose
+
+CI_PROJECT_PATH_SLUG ?= mid-cbf
+CI_ENVIRONMENT_SLUG ?= mid-cbf
+
+.DEFAULT_GOAL := help
+
 k8s: ## Which kubernetes are we connected to
 	@echo "Kubernetes cluster-info:"
 	@kubectl cluster-info
@@ -16,8 +21,19 @@ k8s: ## Which kubernetes are we connected to
 	@echo "Helm version:"
 	@helm version --client
 
+clean: ## clean out references to chart tgz's
+	@rm -f ./charts/*/charts/*.tgz ./charts/*/Chart.lock ./charts/*/requirements.lock ./repository/*
+
+watch:
+	watch kubectl get all,pv,pvc,ingress -n $(KUBE_NAMESPACE)
+
 namespace: ## create the kubernetes namespace
-	kubectl describe namespace $(KUBE_NAMESPACE) || kubectl create namespace $(KUBE_NAMESPACE)
+	@kubectl describe namespace $(KUBE_NAMESPACE) > /dev/null 2>&1 ; \
+		K_DESC=$$? ; \
+		if [ $$K_DESC -eq 0 ] ; \
+		then kubectl describe namespace $(KUBE_NAMESPACE); \
+		else kubectl create namespace $(KUBE_NAMESPACE); \
+		fi
 
 delete_namespace: ## delete the kubernetes namespace
 	@if [ "default" == "$(KUBE_NAMESPACE)" ] || [ "kube-system" == "$(KUBE_NAMESPACE)" ]; then \
@@ -27,63 +43,69 @@ delete_namespace: ## delete the kubernetes namespace
 	kubectl describe namespace $(KUBE_NAMESPACE) && kubectl delete namespace $(KUBE_NAMESPACE); \
 	fi
 
-deploy: namespace mkcerts depends ## deploy the helm chart
-	@helm install $(HELM_RELEASE) charts/$(HELM_CHART)/ \
-		--namespace $(KUBE_NAMESPACE) \
-		--set xauthority="$(XAUTHORITYx)" \
-		--set display="$(DISPLAY)" \
-		--set ingress.hostname=$(INGRESS_HOST) \
-		--set helmTests=false 
+# To package a chart directory into a chart archive
+package: ## package charts
+	@echo "Packaging helm charts. Any existing file won't be overwritten."; \
+	mkdir -p ../tmp
+	@for i in $(CHARTS); do \
+	helm package charts/$${i} --destination ../tmp > /dev/null; \
+	done; \
+	mkdir -p ../repository && cp -n ../tmp/* ../repository; \
+	cd ../repository && helm repo index .; \
+	rm -rf ../tmp
 
-delete: ## delete the helm chart release
-	@helm uninstall $(HELM_RELEASE) --namespace $(KUBE_NAMESPACE)
+dep-up: ## update dependencies for every charts in the env var CHARTS
+	@cd charts; \
+	for i in $(CHARTS); do \
+	echo "+++ Updating $${i} chart +++"; \
+	helm dependency update $${i}; \
+	done;
 
-install: namespace mkcerts  ## install the helm chart
-	@helm install $(HELM_RELEASE) charts/$(HELM_CHART)/ \
-		--namespace $(KUBE_NAMESPACE) \
-		--set xauthority="$(XAUTHORITYx)" \
-		--set display="$(DISPLAY)" \
-		--set ingress.hostname=$(INGRESS_HOST)
+# This job is used to create a deployment of tmc-mid charts
+# Currently umbreall chart for tmc-mid path is given
+install-chart: dep-up namespace ## install the helm chart with name HELM_RELEASE and path UMBRELLA_CHART_PATH on the namespace KUBE_NAMESPACE 
+	## Understand this better
+	@sed -e 's/CI_PROJECT_PATH_SLUG/$(CI_PROJECT_PATH_SLUG)/' $(UMBRELLA_CHART_PATH)values.yaml > generated_values.yaml; \
+	sed -e 's/CI_ENVIRONMENT_SLUG/$(CI_ENVIRONMENT_SLUG)/' generated_values.yaml > values.yaml; \
+	helm dependency update $(UMBRELLA_CHART_PATH); \
+	helm install $(HELM_RELEASE) \
+	--set minikube=$(MINIKUBE) \
+	--values values.yaml \
+	 $(UMBRELLA_CHART_PATH) --namespace $(KUBE_NAMESPACE); \
+	rm generated_values.yaml; \
+	rm values.yaml
 
-show: mkcerts ## show the helm chart
+
+# This job is used to delete a deployment of tmc-mid charts
+# Currently umbreall chart for tmc-mid path is given
+uninstall-chart: ## uninstall the tmc-mid helm chart on the namespace tmcprototype
+	helm template  $(HELM_RELEASE) $(UMBRELLA_CHART_PATH) --namespace $(KUBE_NAMESPACE)  | kubectl delete -f - ; \
+	helm uninstall  $(HELM_RELEASE) --namespace $(KUBE_NAMESPACE) 
+
+reinstall-chart: uninstall-chart install-chart ## reinstall the tmc-mid helm chart on the namespace tmcprototype
+
+upgrade-chart: ## upgrade the tmc-mid helm chart on the namespace tmcprototype
+	helm upgrade --set minikube=$(MINIKUBE) $(HELM_RELEASE) $(UMBRELLA_CHART_PATH) --namespace $(KUBE_NAMESPACE) 
+
+wait:## wait for pods to be ready
+	@echo "Waiting for pods to be ready"
+	@date
+	@kubectl -n $(KUBE_NAMESPACE) get pods
+	@jobs=$$(kubectl get job --output=jsonpath={.items..metadata.name} -n $(KUBE_NAMESPACE)); kubectl wait job --for=condition=complete --timeout=120s $$jobs -n $(KUBE_NAMESPACE)
+	@kubectl -n $(KUBE_NAMESPACE) wait --for=condition=ready -l app=mid-cbf-mcs --timeout=120s pods || exit 1
+	@date
+
+# Error in --set
+show: ## show the helm chart
 	@helm template $(HELM_RELEASE) charts/$(HELM_CHART)/ \
 		--namespace $(KUBE_NAMESPACE) \
 		--set xauthority="$(XAUTHORITYx)" \
-		--set display="$(DISPLAY)" \
-		--set ingress.hostname=$(INGRESS_HOST)
+		--set display="$(DISPLAY)" 
 
+# Linting chart tmc-mid
 chart_lint: ## lint check the helm chart
-	@for i in `ls charts/`; \
-	do echo " char dir$${i}"; \
-	helm lint charts/$${i}/ \
-		--namespace $(KUBE_NAMESPACE) \
-		--set ingress.hostname=$(INGRESS_HOST) \
-		--set xauthority="$(XAUTHORITYx)" \
-		--set display="$(DISPLAY)";\
-	done
-
-helm_delete: ## delete the helm chart release (with Tiller)
-	@helm delete $(HELM_RELEASE) --purge \
-
-
-traefik: ## install the helm chart for traefik (in the kube-system namespace). @param: EXTERNAL_IP (i.e. private ip of the master node).
-	@TMP=`mktemp -d`; \
-	$(helm_add_stable_repo) && \
-	helm fetch stable/traefik --untar --untardir $$TMP && \
-	helm template $(helm_install_shim) $$TMP/traefik -n traefik0 --namespace kube-system \
-		--set externalIP="$(EXTERNAL_IP)" \
-		| kubectl apply -n kube-system -f - && \
-		rm -rf $$TMP ; \
-
-
-delete_traefik: ## delete the helm chart for traefik. @param: EXTERNAL_IP
-	@TMP=`mktemp -d`; \
-	$(helm_add_stable_repo) && \
-	helm fetch stable/traefik --untar --untardir $$TMP && \
-	helm template $(helm_install_shim) $$TMP/traefik -n traefik0 --namespace kube-system \
-		--set externalIP="$(EXTERNAL_IP)" \
-		| kubectl delete -n kube-system -f - && \
-		rm -rf $$TMP
+	@helm lint $(UMBRELLA_CHART_PATH) \
+		--namespace $(KUBE_NAMESPACE) 
 
 describe: ## describe Pods executed from Helm chart
 	@for i in `kubectl -n $(KUBE_NAMESPACE) get pods -l release=$(HELM_RELEASE) -o=name`; \
@@ -119,30 +141,9 @@ logs: ## show Helm chart POD logs
 	echo "---------------------------------------------------"; \
 	echo ""; echo ""; echo ""; \
 	done
+log: 	# get the logs of pods @param: $POD_NAME
+	kubectl logs -n $(KUBE_NAMESPACE) $(POD_NAME)
 
-localip:  ## set local Minikube IP in /etc/hosts file for Ingress $(INGRESS_HOST)
-	@new_ip=`minikube ip` && \
-	existing_ip=`grep $(INGRESS_HOST) /etc/hosts || true` && \
-	echo "New IP is: $${new_ip}" && \
-	echo "Existing IP: $${existing_ip}" && \
-	if [ -z "$${existing_ip}" ]; then echo "$${new_ip} $(INGRESS_HOST)" | sudo tee -a /etc/hosts; \
-	else sudo perl -i -ne "s/\d+\.\d+.\d+\.\d+/$${new_ip}/ if /$(INGRESS_HOST)/; print" /etc/hosts; fi && \
-	echo "/etc/hosts is now: " `grep $(INGRESS_HOST) /etc/hosts`
-
-mkcerts:  ## Make dummy certificates for $(INGRESS_HOST) and Ingress
-	@if [ ! -d charts/$(HELM_CHART)/secrets ]; then \
-            mkdir -p charts/$(HELM_CHART)/secrets; \
-        else \
-        echo "Creating secrets directory in  $(HELM_CHART)"; \
-        fi
-	@if [ ! -f charts/$(HELM_CHART)/secrets/tls.key ]; then \
-	openssl req -x509 -sha256 -nodes -days 365 -newkey rsa:2048 \
-	   -keyout charts/$(HELM_CHART)/secrets/tls.key \
-		 -out charts/$(HELM_CHART)/secrets/tls.crt \
-		 -subj "/CN=$(INGRESS_HOST)/O=Minikube"; \
-	else \
-	echo "SSL cert already exits in charts/$(HELM_CHART)/secrets ... skipping"; \
-	fi
 
 # Utility target to install Helm dependencies
 helm_dependencies:
@@ -174,18 +175,28 @@ kubectl_dependencies:
 	@kubectl version
 
 kubeconfig: ## export current KUBECONFIG as base64 ready for KUBE_CONFIG_BASE64
-	@KUBE_CONFIG_BASE64=`kubectl config view --flatten | base64 -w 0`; \
+	@KUBE_CONFIG_BASE64=`kubectl config view --flatten | base64`; \
 	echo "KUBE_CONFIG_BASE64: $$(echo $${KUBE_CONFIG_BASE64} | cut -c 1-40)..."; \
 	echo "appended to: PrivateRules.mak"; \
 	echo -e "\n\n# base64 encoded from: kubectl config view --flatten\nKUBE_CONFIG_BASE64 = $${KUBE_CONFIG_BASE64}" >> PrivateRules.mak
 
-wait:
-	@echo "Waiting for device servers to be ready"
-	@date
-	@kubectl -n $(KUBE_NAMESPACE) get pods -l cspServer
-	@jobs=$$(kubectl get job --output=jsonpath={.items..metadata.name} -n $(KUBE_NAMESPACE)); kubectl wait job --for=condition=complete --timeout=300s $$jobs -n $(KUBE_NAMESPACE)
-	@kubectl -n $(KUBE_NAMESPACE) wait --for=condition=ready --timeout=300s -l cspServer pods
-	@date
+# run the test function
+# save the status
+# clean out charts/build dir
+# print the logs minus the base64 encoded payload
+# pull out the base64 payload and unpack to charts/build/ dir
+# base64 payload is given a boundary "~~~~BOUNDARY~~~~" and extracted using perl
+# clean up the run to completion container
+# exit the saved status
+test: ## test the application on K8s
+	$(call k8s_test,test); \
+		status=$$?; \
+		rm -rf charts/build; \
+		kubectl --namespace $(KUBE_NAMESPACE) logs $(TEST_RUNNER) | \
+		perl -ne 'BEGIN {$$on=0;}; if (index($$_, "~~~~BOUNDARY~~~~")!=-1){$$on+=1;next;}; print if $$on % 2;' | \
+		base64 -d | tar -xzf - --directory charts; \
+		kubectl --namespace $(KUBE_NAMESPACE) delete pod $(TEST_RUNNER); \
+		exit $$status
 
 #
 # defines a function to copy the ./test-harness directory into the K8s TEST_RUNNER
@@ -197,7 +208,7 @@ k8s_test = tar -c . | \
 		kubectl run $(TEST_RUNNER) \
 		--namespace $(KUBE_NAMESPACE) -i --wait --restart=Never \
 		--image-pull-policy=IfNotPresent \
-		--image=$(IMAGE_TO_RUN_TEST) -- \
+		--image=$(IMAGE_TO_TEST) -- \
 		/bin/bash -c "tar xv --strip-components 1 --warning=all && \
 		python3 -m pip install . &&\
 		cd test-harness &&\
@@ -216,7 +227,7 @@ k8s_test = tar -c . | \
 # base64 payload is given a boundary "~~~~BOUNDARY~~~~" and extracted using perl
 # clean up the run to completion container
 # exit the saved status
-k8s_test: deploy wait## test the application on K8s
+local_test: dep-up install-chart wait ## test the application on K8s
 	@echo "KUBE_NAMESPACE: $(KUBE_NAMESPACE)"
 	$(call k8s_test,test); \
 	  status=$$?; \
@@ -227,7 +238,6 @@ k8s_test: deploy wait## test the application on K8s
 		base64 -d | tar -xzf -; \
 		kubectl --namespace $(KUBE_NAMESPACE) delete pod $(TEST_RUNNER); \
 	  exit $$status
-
 
 rlint:  ## run lint check on Helm Chart using gitlab-runner
 	if [ -n "$(RDEBUG)" ]; then DEBUG_LEVEL=debug; else DEBUG_LEVEL=warn; fi && \
@@ -278,21 +288,61 @@ rk8s_test:  ## run k8s_test on K8s using gitlab-runner
 helm_tests:  ## run Helm chart tests 
 	helm test $(HELM_RELEASE) --cleanup
 
-ingress_check:  ## curl test Tango REST API - https://tango-controls.readthedocs.io/en/latest/development/advanced/rest-api.html#tango-rest-api-implementations
-	@echo "---------------------------------------------------"
-	@echo "Test HTTP:"; echo ""
-	curl -u "tango-cs:tango" -XGET http://$(INGRESS_HOST)/tango/rest/rc4/hosts/databaseds-tango-example-$(HELM_RELEASE)/10000 | json_pp
-	@echo "", echo ""
-	@echo "---------------------------------------------------"
-	@echo "Test HTTPS:"; echo ""
-	curl -k -u "tango-cs:tango" -XGET https://$(INGRESS_HOST)/tango/rest/rc4/hosts/databaseds-tango-example-$(HELM_RELEASE)/10000 | json_pp
-	@echo ""
-
 help:  ## show this help.
 	@echo "make targets:"
 	@grep -hE '^[0-9a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 	@echo ""; echo "make vars (+defaults):"
 	@grep -hE '^[0-9a-zA-Z_-]+ \?=.*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = " \?\= "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}' | sed -e 's/\#\#/  \#/'
 
-depends:
-	helm dependency update charts/$(HELM_CHART)/
+smoketest: ## check that the number of waiting containers is zero (10 attempts, wait time 30s).
+	@echo "Smoke test START"; \
+ 	n=10; \
+ 	while [ $$n -gt 0 ]; do \
+ 		waiting=`kubectl get pods -n $(KUBE_NAMESPACE) -o=jsonpath='{.items[*].status.containerStatuses[*].state.waiting.reason}' | wc -w`; \
+ 		echo "Waiting containers=$$waiting"; \
+ 		if [ $$waiting -ne 0 ]; then \
+ 			echo "Waiting 30s for pods to become running...#$$n"; \
+ 			sleep 30s; \
+ 		fi; \
+ 		if [ $$waiting -eq 0 ]; then \
+ 			echo "Smoke test SUCCESS"; \
+ 			exit 0; \
+ 		fi; \
+ 		if [ $$n -eq 1 ]; then \
+ 			waiting=`kubectl get pods -n $(KUBE_NAMESPACE) -o=jsonpath='{.items[*].status.containerStatuses[*].state.waiting.reason}' | wc -w`; \
+ 			echo "Smoke test FAILS"; \
+ 			echo "Found $$waiting waiting containers: "; \
+ 			kubectl get pods -n $(KUBE_NAMESPACE) -o=jsonpath='{range .items[*].status.containerStatuses[?(.state.waiting)]}{.state.waiting.message}{"\n"}{end}'; \
+ 			exit 1; \
+ 		fi; \
+ 		n=`expr $$n - 1`; \
+ 	done
+traefik: ## install the helm chart for traefik (in the kube-system namespace). @param: EXTERNAL_IP (i.e. private ip of the master node).
+	@TMP=`mktemp -d`; \
+	$(helm_add_stable_repo) && \
+	helm fetch stable/traefik --untar --untardir $$TMP && \
+	helm template $(helm_install_shim) $$TMP/traefik -n traefik0 --namespace kube-system \
+		--set externalIP="$(EXTERNAL_IP)" \
+		| kubectl apply -n kube-system -f - && \
+		rm -rf $$TMP ; \
+
+
+delete_traefik: ## delete the helm chart for traefik. @param: EXTERNAL_IP
+	@TMP=`mktemp -d`; \
+	$(helm_add_stable_repo) && \
+	helm fetch stable/traefik --untar --untardir $$TMP && \
+	helm template $(helm_install_shim) $$TMP/traefik -n traefik0 --namespace kube-system \
+		--set externalIP="$(EXTERNAL_IP)" \
+		| kubectl delete -n kube-system -f - && \
+		rm -rf $$TMP
+
+#this is so that you can load dashboards previously saved, TODO: make the name of the pod variable
+dump_dashboards: # @param: name of the dashborad
+	kubectl exec -i pod/mongodb-webjive-test-0 -n $(KUBE_NAMESPACE) -- mongodump --archive > $(DASHBOARD)
+
+load_dashboards: # @param: name of the dashborad
+	kubectl exec -i pod/mongodb-webjive-test-0 -n $(KUBE_NAMESPACE) -- mongorestore --archive < $(DASHBOARD)
+
+
+
+
