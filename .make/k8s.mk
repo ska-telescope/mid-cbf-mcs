@@ -10,6 +10,8 @@ CHARTS ?= mid-cbf-umbrella mid-cbf mid-cbf-tmleafnode ## list of charts to be pu
 CI_PROJECT_PATH_SLUG ?= mid-cbf
 CI_ENVIRONMENT_SLUG ?= mid-cbf
 
+# in release.mk it's defined the value of the variable IMAGE_TAG
+SET_IMAGE_TAG ?= --set mid-cbf.midcbf.image.tag=$(IMAGE_TAG)
 .DEFAULT_GOAL := help
 
 k8s: ## Which kubernetes are we connected to
@@ -22,6 +24,8 @@ k8s: ## Which kubernetes are we connected to
 	@echo "Helm version:"
 	@helm version --client
 	@echo $(TANGO_HOST)
+	@echo $(BRANCH_NAME)
+	@echo $(IMAGE_TAG)
 
 clean: ## clean out references to chart tgz's
 	@rm -f ./charts/*/charts/*.tgz ./charts/*/Chart.lock ./charts/*/requirements.lock ./repository/*
@@ -73,9 +77,10 @@ install-chart: dep-up namespace ## install the helm chart with name HELM_RELEASE
 	helm install $(HELM_RELEASE) \
 	--set global.minikube=$(MINIKUBE) \
 	--set global.tango_host=$(TANGO_HOST) \
-	--values values.yaml \
-	 $(UMBRELLA_CHART_PATH) --namespace $(KUBE_NAMESPACE); \
+	--values values.yaml $(SET_IMAGE_TAG) \
+         $(UMBRELLA_CHART_PATH) --namespace $(KUBE_NAMESPACE); \
 	rm generated_values.yaml; \
+	rm values.yaml
 
 template-chart: clean dep-up## install the helm chart with name RELEASE_NAME and path UMBRELLA_CHART_PATH on the namespace KUBE_NAMESPACE
 	@sed -e 's/CI_PROJECT_PATH_SLUG/$(CI_PROJECT_PATH_SLUG)/' $(UMBRELLA_CHART_PATH)values.yaml > generated_values.yaml; \
@@ -83,7 +88,7 @@ template-chart: clean dep-up## install the helm chart with name RELEASE_NAME and
 	helm template $(RELEASE_NAME) \
 	--set global.minikube=$(MINIKUBE) \
 	--set global.tango_host=$(TANGO_HOST) \
-	--values values.yaml \
+	--values values.yaml $(SET_IMAGE_TAG) \
 	--debug \
 	 $(UMBRELLA_CHART_PATH) --namespace $(KUBE_NAMESPACE); \
 	 rm generated_values.yaml; \
@@ -97,7 +102,7 @@ uninstall-chart: ## uninstall the tmc-mid helm chart on the namespace tmcprototy
 
 reinstall-chart: uninstall-chart install-chart ## reinstall the tmc-mid helm chart on the namespace tmcprototype
 
-upgrade-chart: ## upgrade the tmc-mid helm chart on the namespace tmcprototype
+upgrade-chart: ## upgrade the mid-cbf-umbrella helm chart on the namespace mid-cbf 
 	helm upgrade --set global.minikube=$(MINIKUBE) --set global.tango_host=$(TANGO_HOST) $(HELM_RELEASE) $(UMBRELLA_CHART_PATH) --namespace $(KUBE_NAMESPACE) 
 
 wait:## wait for pods to be ready

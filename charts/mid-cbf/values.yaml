@@ -33,6 +33,23 @@ itango:
       tag: 9.3.1
       pullPolicy: IfNotPresent
 
+midcbf:
+  image:
+    registry: nexus.engageska-portugal.pt/ska-docker
+    image: mid-cbf-mcs
+    tag: 0.4.5
+    pullPolicy: IfNotPresent
+
+resources:
+  limits:
+    cpu: 200m
+    memory: 256Mi
+    ephemeral-storage: 512Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi  
+    ephemeral-storage: 256Mi
+
 deviceServers:
   - name: cbfmaster
     function: cbf-central-control
@@ -49,20 +66,10 @@ deviceServers:
       - device: mid_csp_cbf/fsp/03 
       - device: mid_csp_cbf/fsp/04 
     image:
-      registry: nexus.engageska-portugal.pt/ska-docker    
-      image: mid-cbf-mcs
-      tag: 0.4.5
-      pullPolicy: IfNotPresent
-    resources:
-      limits:
-        cpu: 200m
-        memory: 256Mi
-        ephemeral-storage: 512Mi
-      requests:
-        cpu: 100m
-        memory: 128Mi  
-        ephemeral-storage: 256Mi
-
+      registry: "{{.Values.midcbf.image.registry}}"
+      image: "{{.Values.midcbf.image.image}}"
+      tag: "{{.Values.midcbf.image.tag}}"
+      pullPolicy: "{{.Values.midcbf.image.pullPolicy}}"
   - name: cbfsubarray01
     function: cbf-subarray-observation
     domain: subarray
@@ -71,20 +78,10 @@ deviceServers:
     depends_on:
       - device: mid_csp_cbf/sub_elt/master
     image:
-      registry: nexus.engageska-portugal.pt/ska-docker    
-      image: mid-cbf-mcs
-      tag: 0.4.5
-      pullPolicy: IfNotPresent
-    resources:
-      limits:
-        cpu: 200m
-        memory: 256Mi
-        ephemeral-storage: 512Mi
-      requests:
-        cpu: 100m
-        memory: 128Mi  
-        ephemeral-storage: 256Mi
-
+      registry: "{{.Values.midcbf.image.registry}}"
+      image: "{{.Values.midcbf.image.image}}"
+      tag: "{{.Values.midcbf.image.tag}}"
+      pullPolicy: "{{.Values.midcbf.image.pullPolicy}}"
   - name: cbfsubarray02
     function: cbf-subarray-observation
     domain: subarray
@@ -93,20 +90,10 @@ deviceServers:
     depends_on:
       - device: mid_csp_cbf/sub_elt/master
     image:
-      registry: nexus.engageska-portugal.pt/ska-docker    
-      image: mid-cbf-mcs
-      tag: 0.4.5
-      pullPolicy: IfNotPresent
-    resources:
-      limits:
-        cpu: 200m
-        memory: 256Mi
-        ephemeral-storage: 512Mi
-      requests:
-        cpu: 100m
-        memory: 128Mi  
-        ephemeral-storage: 256Mi
-
+      registry: "{{.Values.midcbf.image.registry}}"
+      image: "{{.Values.midcbf.image.image}}"
+      tag: "{{.Values.midcbf.image.tag}}"
+      pullPolicy: "{{.Values.midcbf.image.pullPolicy}}"
   - name: cbfsubarray03
     function: cbf-subarray-observation
     domain: subarray
@@ -115,20 +102,10 @@ deviceServers:
     depends_on:
       - device: mid_csp_cbf/sub_elt/master
     image:
-      registry: nexus.engageska-portugal.pt/ska-docker    
-      image: mid-cbf-mcs
-      tag: 0.4.5
-      pullPolicy: IfNotPresent
-    resources:
-      limits:
-        cpu: 200m
-        memory: 256Mi
-        ephemeral-storage: 512Mi
-      requests:
-        cpu: 100m
-        memory: 128Mi  
-        ephemeral-storage: 256Mi
-
+      registry: "{{.Values.midcbf.image.registry}}"
+      image: "{{.Values.midcbf.image.image}}"
+      tag: "{{.Values.midcbf.image.tag}}"
+      pullPolicy: "{{.Values.midcbf.image.pullPolicy}}"
   - name: vcc001
     function: coarse-channelisation
     domain: sensing
@@ -137,20 +114,10 @@ deviceServers:
     depends_on:
       - device: sys/database/2
     image:
-      registry: nexus.engageska-portugal.pt/ska-docker    
-      image: mid-cbf-mcs
-      tag: 0.4.5
-      pullPolicy: IfNotPresent
-    resources:
-      limits:
-        cpu: 200m
-        memory: 256Mi
-        ephemeral-storage: 512Mi
-      requests:
-        cpu: 100m
-        memory: 128Mi  
-        ephemeral-storage: 256Mi
-
+      registry: "{{.Values.midcbf.image.registry}}"
+      image: "{{.Values.midcbf.image.image}}"
+      tag: "{{.Values.midcbf.image.tag}}"
+      pullPolicy: "{{.Values.midcbf.image.pullPolicy}}"
   - name: vcc002
     function: coarse-channelisation
     domain: sensing
@@ -159,20 +126,10 @@ deviceServers:
     depends_on:
       - device: sys/database/2
     image:
-      registry: nexus.engageska-portugal.pt/ska-docker    
-      image: mid-cbf-mcs
-      tag: 0.4.5
-      pullPolicy: IfNotPresent
-    resources:
-      limits:
-        cpu: 200m
-        memory: 256Mi
-        ephemeral-storage: 512Mi
-      requests:
-        cpu: 100m
-        memory: 128Mi  
-        ephemeral-storage: 256Mi
-
+      registry: "{{.Values.midcbf.image.registry}}"
+      image: "{{.Values.midcbf.image.image}}"
+      tag: "{{.Values.midcbf.image.tag}}"
+      pullPolicy: "{{.Values.midcbf.image.pullPolicy}}"
   - name: vcc003
     function: coarse-channelisation
     domain: sensing
@@ -181,20 +138,10 @@ deviceServers:
     depends_on:
       - device: sys/database/2
     image:
-      registry: nexus.engageska-portugal.pt/ska-docker    
-      image: mid-cbf-mcs
-      tag: 0.4.5
-      pullPolicy: IfNotPresent
-    resources:
-      limits:
-        cpu: 200m
-        memory: 256Mi
-        ephemeral-storage: 512Mi
-      requests:
-        cpu: 100m
-        memory: 128Mi  
-        ephemeral-storage: 256Mi
-
+      registry: "{{.Values.midcbf.image.registry}}"
+      image: "{{.Values.midcbf.image.image}}"
+      tag: "{{.Values.midcbf.image.tag}}"
+      pullPolicy: "{{.Values.midcbf.image.pullPolicy}}"
   - name: vcc004
     function: coarse-channelisation
     domain: sensing
@@ -203,20 +150,10 @@ deviceServers:
     depends_on:
       - device: sys/database/2
     image:
-      registry: nexus.engageska-portugal.pt/ska-docker    
-      image: mid-cbf-mcs
-      tag: 0.4.5
-      pullPolicy: IfNotPresent
-    resources:
-      limits:
-        cpu: 200m
-        memory: 256Mi
-        ephemeral-storage: 512Mi
-      requests:
-        cpu: 100m
-        memory: 128Mi  
-        ephemeral-storage: 256Mi
-
+      registry: "{{.Values.midcbf.image.registry}}"
+      image: "{{.Values.midcbf.image.image}}"
+      tag: "{{.Values.midcbf.image.tag}}"
+      pullPolicy: "{{.Values.midcbf.image.pullPolicy}}"
   - name: fsp01
     function: fsp-processing
     domain: signal-processing
@@ -228,20 +165,10 @@ deviceServers:
       - device: mid_csp_cbf/vcc/003
       - device: mid_csp_cbf/vcc/004
     image:
-      registry: nexus.engageska-portugal.pt/ska-docker    
-      image: mid-cbf-mcs
-      tag: 0.4.5
-      pullPolicy: IfNotPresent
-    resources:
-      limits:
-        cpu: 200m
-        memory: 256Mi
-        ephemeral-storage: 512Mi
-      requests:
-        cpu: 100m
-        memory: 128Mi  
-        ephemeral-storage: 256Mi
-
+      registry: "{{.Values.midcbf.image.registry}}"
+      image: "{{.Values.midcbf.image.image}}"
+      tag: "{{.Values.midcbf.image.tag}}"
+      pullPolicy: "{{.Values.midcbf.image.pullPolicy}}"
   - name: fsp02
     function: fsp-processing
     domain: signal-processing
@@ -253,19 +180,10 @@ deviceServers:
       - device: mid_csp_cbf/vcc/003
       - device: mid_csp_cbf/vcc/004
     image:
-      registry: nexus.engageska-portugal.pt/ska-docker    
-      image: mid-cbf-mcs
-      tag: 0.4.5
-      pullPolicy: IfNotPresent
-    resources:
-      limits:
-        cpu: 200m
-        memory: 256Mi
-        ephemeral-storage: 512Mi
-      requests:
-        cpu: 100m
-        memory: 128Mi  
-        ephemeral-storage: 256Mi
+      registry: "{{.Values.midcbf.image.registry}}"
+      image: "{{.Values.midcbf.image.image}}"
+      tag: "{{.Values.midcbf.image.tag}}"
+      pullPolicy: "{{.Values.midcbf.image.pullPolicy}}"
   - name: fsp03
     function: fsp-processing
     domain: signal-processing
@@ -277,19 +195,10 @@ deviceServers:
       - device: mid_csp_cbf/vcc/003
       - device: mid_csp_cbf/vcc/004
     image:
-      registry: nexus.engageska-portugal.pt/ska-docker    
-      image: mid-cbf-mcs
-      tag: 0.4.5
-      pullPolicy: IfNotPresent
-    resources:
-      limits:
-        cpu: 200m
-        memory: 256Mi
-        ephemeral-storage: 512Mi
-      requests:
-        cpu: 100m
-        memory: 128Mi  
-        ephemeral-storage: 256Mi
+      registry: "{{.Values.midcbf.image.registry}}"
+      image: "{{.Values.midcbf.image.image}}"
+      tag: "{{.Values.midcbf.image.tag}}"
+      pullPolicy: "{{.Values.midcbf.image.pullPolicy}}"
   - name: fsp04
     function: fsp-processing
     domain: signal-processing
@@ -301,19 +210,10 @@ deviceServers:
       - device: mid_csp_cbf/vcc/003
       - device: mid_csp_cbf/vcc/004
     image:
-      registry: nexus.engageska-portugal.pt/ska-docker    
-      image: mid-cbf-mcs
-      tag: 0.4.5
-      pullPolicy: IfNotPresent
-    resources:
-      limits:
-        cpu: 200m
-        memory: 256Mi
-        ephemeral-storage: 512Mi
-      requests:
-        cpu: 100m
-        memory: 128Mi  
-        ephemeral-storage: 256Mi
+      registry: "{{.Values.midcbf.image.registry}}"
+      image: "{{.Values.midcbf.image.image}}"
+      tag: "{{.Values.midcbf.image.tag}}"
+      pullPolicy: "{{.Values.midcbf.image.pullPolicy}}"
 
 nodeSelector: {}
 

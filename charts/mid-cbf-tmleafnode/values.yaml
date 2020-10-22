@@ -11,7 +11,7 @@ subsystem: tmsimulator-mid
 telescope: SKA-mid
 
 labels:
-  app: mid-cbf-tmleafnode
+  app: mid-cbf-mcs
 annotations:
   app.gitlab.com/app: CI_PROJECT_PATH_SLUG
   app.gitlab.com/env: CI_ENVIRONMENT_SLUG
@@ -35,7 +35,6 @@ itango:
     tag: 9.3.1
     pullPolicy: IfNotPresent
 
-
 resources:
   limits:
     cpu: 200m
@@ -46,6 +45,13 @@ resources:
     memory: 128Mi  
     ephemeral-storage: 256Mi
 
+midcbf:
+  image:
+    registry: nexus.engageska-portugal.pt/ska-docker
+    image: mid-cbf-mcs
+    tag: 0.4.5
+    pullPolicy: IfNotPresent
+
 deviceServers:
   - name: tmcspsubarrayleafnodetest
     function: simul-observation
@@ -55,10 +61,10 @@ deviceServers:
     depends_on:
       - device: mid_csp_cbf/sub_elt/subarray_01
     image:
-      registry: nexus.engageska-portugal.pt/ska-docker
-      image: mid-cbf-mcs
-      tag: 0.4.5
-      pullPolicy: IfNotPresent
+      registry: "{{.Values.midcbf.image.registry}}"
+      image: "{{.Values.midcbf.image.image}}"
+      tag: "{{.Values.midcbf.image.tag}}"
+      pullPolicy: "{{.Values.midcbf.image.pullPolicy}}"
   - name: tmcspsubarrayleafnodetest2
     function: simul-observation
     domain: telstate
@@ -67,10 +73,10 @@ deviceServers:
     depends_on:
       - device: mid_csp_cbf/sub_elt/subarray_02
     image:
-      registry: nexus.engageska-portugal.pt/ska-docker
-      image: mid-cbf-mcs
-      tag: 0.4.5
-      pullPolicy: IfNotPresent
+      registry: "{{.Values.midcbf.image.registry}}"
+      image: "{{.Values.midcbf.image.image}}"
+      tag: "{{.Values.midcbf.image.tag}}"
+      pullPolicy: "{{.Values.midcbf.image.pullPolicy}}"
 
 nodeSelector: {}
 
