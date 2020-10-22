@@ -140,15 +140,15 @@ pages:
       - public
     expire_in: 30 days
 
-publish_chart:
-  variables:
-    CHARTS_TO_PUBLISH: mid-cbf
-  stage: publish
-  tags:
-  - docker-executor
-  image: nexus.engageska-portugal.pt/ska-docker/deploy:0.4.2
-  script:
-    - curl -s https://gitlab.com/ska-telescope/stupid/raw/master/scripts/publish-charts.sh | bash
+#publish_chart:
+#  variables:
+#    CHARTS_TO_PUBLISH: mid-cbf
+#  stage: publish
+#  tags:
+#  - docker-executor
+#  image: nexus.engageska-portugal.pt/ska-docker/deploy:0.4.2
+#  script:
+#    - curl -s https://gitlab.com/ska-telescope/stupid/raw/master/scripts/publish-charts.sh | bash
 
 create ci metrics:
   stage: .post
