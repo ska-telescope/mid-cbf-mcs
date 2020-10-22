@@ -56,6 +56,17 @@ CI_PROJECT_DIR ?= .
 KUBE_CONFIG_BASE64 ?=  ## base64 encoded kubectl credentials for KUBECONFIG
 KUBECONFIG ?= /etc/deploy/config ## KUBECONFIG location
 
+IMAGE_TAG ?= --set mid-cbf.deviceServers.image.pullPolicy=IfNotPresent \
+        --set mid-cbf.deviceServers.image.tag=0.4.6
+
+ifneq ($(CI_JOB_ID),)
+CI_PROJECT_IMAGE :=
+IMAGE_TAG = --set set mid-cbf.deviceServers.image.registry=$(CI_REGISTRY)/ska-telescope \
+        --set mid-cbf.deviceServers.image.tag=$(CI_COMMIT_SHORT_SHA) \
+        -f values-gitlab-ci.yaml
+else
+endif
+
 XAUTHORITYx ?= ${XAUTHORITY}
 THIS_HOST := $(shell ifconfig | sed -En 's/127.0.0.1//;s/.*inet (addr:)?(([0-9]*\.){3}[0-9]*).*/\2/p' | head -n1)
 DISPLAY := $(THIS_HOST):0

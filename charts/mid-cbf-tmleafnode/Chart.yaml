@@ -1,17 +1,16 @@
 apiVersion: v2
 name: mid-cbf-tmleafnode
 description: A Helm chart to deploy tmleafnode simulators for Mid CBF for testing purposes.
-type: application
 # Versions are expected to follow Semantic Versioning (https://semver.org/)
 # Version is set equal to the mid-cbf-mcs image version.
-version: 0.4.5
+version: 0.0.1
 icon: https://www.skatelescope.org/wp-content/uploads/2016/07/09545_NEW_LOGO_2014.png
 appVersion: 0.4.5  
 dependencies:
 - name: tango-util
-  version: 0.2.0
+  version: 0.2.2
   repository: https://nexus.engageska-portugal.pt/repository/helm-chart
 - name: tango-base
-  version: 0.2.2
+  version: 0.2.5
   repository: https://nexus.engageska-portugal.pt/repository/helm-chart
   condition: tango-base.enabled,global.sub-system.tango-base.enabled

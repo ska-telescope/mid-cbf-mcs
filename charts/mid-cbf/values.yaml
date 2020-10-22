@@ -11,37 +11,34 @@ system: csp
 subsystem: cbfmcs-mid
 telescope: SKA-mid
 
-globals:
+global:
+  minikube: true
+  tango_host: databaseds-tango-base-test:10000
   labels:
     app: mid-cbf-mcs
-  annotations:
+annotations:
     app.gitlab.com/app: CI_PROJECT_PATH_SLUG
     app.gitlab.com/env: CI_ENVIRONMENT_SLUG  
-  tango_host: databaseds-tango-base-test:10000
-  environment_variables: []
-  dsconfig:
+dsconfig:
+    configuration_file: data/midcbfconfig.json
     image:
       registry: nexus.engageska-portugal.pt/ska-docker
       image: tango-dsconfig
       tag: 1.5.0
       pullPolicy: IfNotPresent
-  itango:
+itango:
     image:
       registry: nexus.engageska-portugal.pt/ska-docker
       image: tango-itango
       tag: 9.3.1
       pullPolicy: IfNotPresent
 
-dsconfig:
-  configuration_file: data/midcbfconfig.json
-
 deviceServers:
   - name: cbfmaster
     function: cbf-central-control
     domain: csp-monitoring
-    args:
-      - -c
-      - "/venv/bin/python /app/tangods/CbfMaster/CbfMaster/CbfMaster.py master"
+    command: "/venv/bin/python "
+    instances: ["/app/tangods/CbfMaster/CbfMaster/CbfMaster.py master"]
     depends_on:
       - device: mid_csp_cbf/vcc/001   
       - device: mid_csp_cbf/vcc/002  
@@ -69,9 +66,8 @@ deviceServers:
   - name: cbfsubarray01
     function: cbf-subarray-observation
     domain: subarray
-    args:
-      - -c
-      - "/venv/bin/python /app/tangods/CbfSubarray/CbfSubarrayMulti/CbfSubarrayMulti.py cbfSubarray-01"
+    command: "/venv/bin/python /app/tangods/CbfSubarray/CbfSubarrayMulti/CbfSubarrayMulti.py "
+    instances: ["cbfSubarray-01"]
     depends_on:
       - device: mid_csp_cbf/sub_elt/master
     image:
@@ -92,9 +88,8 @@ deviceServers:
   - name: cbfsubarray02
     function: cbf-subarray-observation
     domain: subarray
-    args:
-      - -c
-      - "/venv/bin/python /app/tangods/CbfSubarray/CbfSubarrayMulti/CbfSubarrayMulti.py cbfSubarray-02"
+    command: "/venv/bin/python /app/tangods/CbfSubarray/CbfSubarrayMulti/CbfSubarrayMulti.py "
+    instances: ["cbfSubarray-02"]
     depends_on:
       - device: mid_csp_cbf/sub_elt/master
     image:
@@ -115,9 +110,8 @@ deviceServers:
   - name: cbfsubarray03
     function: cbf-subarray-observation
     domain: subarray
-    args:
-      - -c
-      - "/venv/bin/python /app/tangods/CbfSubarray/CbfSubarrayMulti/CbfSubarrayMulti.py cbfSubarray-03"
+    command: "/venv/bin/python /app/tangods/CbfSubarray/CbfSubarrayMulti/CbfSubarrayMulti.py "
+    instances: ["cbfSubarray-03"]
     depends_on:
       - device: mid_csp_cbf/sub_elt/master
     image:
@@ -138,9 +132,8 @@ deviceServers:
   - name: vcc001
     function: coarse-channelisation
     domain: sensing
-    args:
-      - -c
-      - "/venv/bin/python /app/tangods/Vcc/VccMulti/VccMulti.py vcc-001"
+    command: "/venv/bin/python /app/tangods/Vcc/VccMulti/VccMulti.py "
+    instances: ["vcc-001"]
     depends_on:
       - device: sys/database/2
     image:
@@ -161,9 +154,8 @@ deviceServers:
   - name: vcc002
     function: coarse-channelisation
     domain: sensing
-    args:
-      - -c
-      - "/venv/bin/python /app/tangods/Vcc/VccMulti/VccMulti.py vcc-002"
+    command: "/venv/bin/python /app/tangods/Vcc/VccMulti/VccMulti.py "
+    instances: ["vcc-002"]
     depends_on:
       - device: sys/database/2
     image:
@@ -184,9 +176,8 @@ deviceServers:
   - name: vcc003
     function: coarse-channelisation
     domain: sensing
-    args:
-      - -c
-      - "/venv/bin/python /app/tangods/Vcc/VccMulti/VccMulti.py vcc-003"
+    command: "/venv/bin/python /app/tangods/Vcc/VccMulti/VccMulti.py "
+    instances: ["vcc-003"]
     depends_on:
       - device: sys/database/2
     image:
@@ -207,9 +198,8 @@ deviceServers:
   - name: vcc004
     function: coarse-channelisation
     domain: sensing
-    args:
-      - -c
-      - "/venv/bin/python /app/tangods/Vcc/VccMulti/VccMulti.py vcc-004"
+    command: "/venv/bin/python /app/tangods/Vcc/VccMulti/VccMulti.py "
+    instances: ["vcc-004"]
     depends_on:
       - device: sys/database/2
     image:
@@ -230,9 +220,8 @@ deviceServers:
   - name: fsp01
     function: fsp-processing
     domain: signal-processing
-    args:
-      - -c
-      - "/venv/bin/python /app/tangods/Fsp/FspMulti/FspMulti.py fsp-01"
+    command: "/venv/bin/python /app/tangods/Fsp/FspMulti/FspMulti.py "
+    instances: ["fsp-01"]
     depends_on:
       - device: mid_csp_cbf/vcc/001
       - device: mid_csp_cbf/vcc/002
@@ -256,9 +245,8 @@ deviceServers:
   - name: fsp02
     function: fsp-processing
     domain: signal-processing
-    args:
-      - -c
-      - "/venv/bin/python /app/tangods/Fsp/FspMulti/FspMulti.py fsp-02"
+    command: "/venv/bin/python /app/tangods/Fsp/FspMulti/FspMulti.py "
+    instances: ["fsp-02"]
     depends_on:
       - device: mid_csp_cbf/vcc/001
       - device: mid_csp_cbf/vcc/002
@@ -278,13 +266,11 @@ deviceServers:
         cpu: 100m
         memory: 128Mi  
         ephemeral-storage: 256Mi
-
   - name: fsp03
     function: fsp-processing
     domain: signal-processing
-    args:
-      - -c
-      - "/venv/bin/python /app/tangods/Fsp/FspMulti/FspMulti.py fsp-03"
+    command: "/venv/bin/python /app/tangods/Fsp/FspMulti/FspMulti.py "
+    instances: ["fsp-03"]
     depends_on:
       - device: mid_csp_cbf/vcc/001
       - device: mid_csp_cbf/vcc/002
@@ -304,13 +290,11 @@ deviceServers:
         cpu: 100m
         memory: 128Mi  
         ephemeral-storage: 256Mi
-
   - name: fsp04
     function: fsp-processing
     domain: signal-processing
-    args:
-      - -c
-      - "/venv/bin/python /app/tangods/Fsp/FspMulti/FspMulti.py fsp-04"
+    command: "/venv/bin/python /app/tangods/Fsp/FspMulti/FspMulti.py "
+    instances: ["fsp-04"]
     depends_on:
       - device: mid_csp_cbf/vcc/001
       - device: mid_csp_cbf/vcc/002

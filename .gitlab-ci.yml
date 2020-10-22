@@ -74,6 +74,8 @@ publish_image:
 
 integration:
   stage: test
+  variables:
+    MINIKUBE: "false"
   tags:
     - k8srunner
   artifacts:
