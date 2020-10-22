@@ -24,8 +24,8 @@ k8s: ## Which kubernetes are we connected to
 	@echo "Helm version:"
 	@helm version --client
 	@echo $(TANGO_HOST)
-	@echo $(BRANCH_NAME)
-	@echo $(IMAGE_TAG)
+	@echo "git branch: $(BRANCH_NAME)"
+	@echo "image tag: $(IMAGE_TAG)"
 
 clean: ## clean out references to chart tgz's
 	@rm -f ./charts/*/charts/*.tgz ./charts/*/Chart.lock ./charts/*/requirements.lock ./repository/*

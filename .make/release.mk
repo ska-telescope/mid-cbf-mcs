@@ -39,11 +39,12 @@ IMAGE=$(DOCKER_REGISTRY_HOST)/$(DOCKER_REGISTRY_USER)/$(NAME)
 VERSION=$(shell . $(RELEASE_SUPPORT) ; getVersion)
 TAG=$(shell . $(RELEASE_SUPPORT); getTag)
 BASE_RELEASE=$(shell . $(RELEASE_SUPPORT) ;getRelease)
+BASE_VERSION=$(shell . $(RELEASE_SUPPORT) ;getBaseVersion)
 
 ifeq ($(BRANCH_NAME), master)
-IMAGE_TAG ?= $(VERSION)
+IMAGE_TAG ?= $(BASE_VERSION)
 else
-IMAGE_TAG ?= $(VERSION)-dev
+IMAGE_TAG ?= $(BASE_VERSION)-dev
 endif
 
 SHELL=/bin/bash
