@@ -42,7 +42,7 @@ BASE_RELEASE=$(shell . $(RELEASE_SUPPORT) ;getRelease)
 BASE_VERSION=$(shell . $(RELEASE_SUPPORT) ;getBaseVersion)
 
 ifeq ($(BRANCH_NAME), master)
-IMAGE_TAG ?= $(BASE_VERSION)
+IMAGE_TAG ?= $(BASE_RELEASE)
 else
 IMAGE_TAG ?= $(BASE_VERSION)-dev
 endif

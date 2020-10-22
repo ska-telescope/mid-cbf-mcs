@@ -1,7 +1,7 @@
 HELM_HOST ?= https://nexus.engageska-portugal.pt## helm host url https
 MINIKUBE ?= true## Minikube or not
 MARK ?= all
-IMAGE_TO_TEST ?= $(DOCKER_REGISTRY_HOST)/$(DOCKER_REGISTRY_USER)/$(PROJECT):latest## docker image that will be run for testing purpose	
+IMAGE_TO_TEST ?= $(DOCKER_REGISTRY_HOST)/$(DOCKER_REGISTRY_USER)/$(PROJECT):$(IMAGE_TAG)## docker image that will be run for testing purpose	
 TANGO_HOST = tango-host-databaseds-from-makefile-$(HELM_RELEASE):10000## TANGO_HOST is an input!
 LINTING_OUTPUT=$(shell helm lint charts/* | grep ERROR -c | tail -1)
 
@@ -26,6 +26,7 @@ k8s: ## Which kubernetes are we connected to
 	@echo $(TANGO_HOST)
 	@echo "git branch: $(BRANCH_NAME)"
 	@echo "image tag: $(IMAGE_TAG)"
+	@echo "image tag: $(IMAGE_TO_TEST)"
 
 clean: ## clean out references to chart tgz's
 	@rm -f ./charts/*/charts/*.tgz ./charts/*/Chart.lock ./charts/*/requirements.lock ./repository/*
