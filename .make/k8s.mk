@@ -11,7 +11,7 @@ CI_PROJECT_PATH_SLUG ?= mid-cbf
 CI_ENVIRONMENT_SLUG ?= mid-cbf
 
 # in release.mk it's defined the value of the variable IMAGE_TAG
-SET_IMAGE_TAG ?= --set mid-cbf.midcbf.image.tag=$(IMAGE_TAG)
+SET_IMAGE_TAG ?= --set mid-cbf.midcbf.image.tag=$(IMAGE_TAG) --set mid-cbf-tmleafnode.midcbf.image.tag=$(IMAGE_TAG)
 .DEFAULT_GOAL := help
 
 k8s: ## Which kubernetes are we connected to
@@ -230,7 +230,7 @@ k8s_test = tar -c . | \
 		/bin/bash -c "tar xv --strip-components 1 --warning=all && \
 		python3 -m pip install . &&\
 		cd test-harness &&\
-		make TANGO_HOST=databaseds-tango-base-$(HELM_RELEASE):10000 $1 && \
+		make TANGO_HOST=$(TANGO_HOST) $1 && \
 		tar -czvf /tmp/build.tgz build && \
                 echo '~~~~BOUNDARY~~~~' && \
                 cat /tmp/build.tgz | base64 && \
