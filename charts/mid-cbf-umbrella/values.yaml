@@ -25,4 +25,4 @@ tango-base:
 #     image:
 #       registry: nexus.engageska-portugal.pt/ska-docker
 #       image: mid-cbf-mcs
-#       tag: 0.4.7
+#       tag: 0.4.5

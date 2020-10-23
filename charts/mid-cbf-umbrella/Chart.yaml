@@ -1,16 +1,16 @@
 apiVersion: v2
-appVersion: 0.4.5
-description: A iumbrella Helm chart for deploying the whole Mid_CBF prototype.
 name: mid-cbf-umbrella
-version: 0.0.1
+description: An umbrella Helm chart for deploying the whole Mid_CBF prototype.
+appVersion: 0.4.5
+version: 0.1.0
 icon: https://www.skatelescope.org/wp-content/uploads/2016/07/09545_NEW_LOGO_2014.png
 dependencies:
 - name: tango-base
-  version: 0.2.5
+  version: 0.2.6
   repository: https://nexus.engageska-portugal.pt/repository/helm-chart
 - name: mid-cbf
-  version: 0.0.1
+  version: 0.1.0
   repository: "file://../mid-cbf"
 - name: mid-cbf-tmleafnode
-  version: 0.0.1
+  version: 0.1.0
   repository: "file://../mid-cbf-tmleafnode"
