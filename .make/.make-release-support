@@ -69,6 +69,13 @@ function differsFromRelease() {
 	! tagExists $tag || test -n "$(git diff --shortstat -r $tag .)"
 }
 
+function getBaseVersion() {
+	result=$(getRelease)
+
+	result="$result-$(git log -n 1 --format=%h .)"
+	echo $result
+}
+
 function getVersion() {
 	result=$(getRelease)
 

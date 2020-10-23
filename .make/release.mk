@@ -39,6 +39,13 @@ IMAGE=$(DOCKER_REGISTRY_HOST)/$(DOCKER_REGISTRY_USER)/$(NAME)
 VERSION=$(shell . $(RELEASE_SUPPORT) ; getVersion)
 TAG=$(shell . $(RELEASE_SUPPORT); getTag)
 BASE_RELEASE=$(shell . $(RELEASE_SUPPORT) ;getRelease)
+BASE_VERSION=$(shell . $(RELEASE_SUPPORT) ;getBaseVersion)
+
+ifeq ($(BRANCH_NAME), master)
+IMAGE_TAG ?= $(BASE_RELEASE)
+else
+IMAGE_TAG ?= $(BASE_VERSION)-dev
+endif
 
 SHELL=/bin/bash
 
@@ -68,11 +75,12 @@ docker-build: .release
 		echo docker tag $(IMAGE):$(VERSION) $(IMAGE):$(BASE_RELEASE) ;\
 		docker tag $(IMAGE):$(VERSION) $(IMAGE):$(BASE_RELEASE) ;\
 	else \
-		echo docker tag $(IMAGE):$(VERSION) $(IMAGE):latest ;\
-		echo docker tag $(IMAGE):$(VERSION) $(IMAGE):$(BASE_RELEASE) ;\
-		docker tag $(IMAGE):$(VERSION) $(IMAGE):$(BASE_RELEASE) ;\
+               	echo "Image tag: $(IMAGE):$(VERSION) $(IMAGE):$(IMAGE_TAG)" ;\
+               	docker tag $(IMAGE):$(VERSION) $(IMAGE):$(IMAGE_TAG) ;\
+		echo "Image tag $(IMAGE):$(VERSION) $(IMAGE):latest ";\
 		docker tag $(IMAGE):$(VERSION) $(IMAGE):latest ; \
 	fi
+
 
 .release:
 	@echo "release=0.0.0" > .release
@@ -86,15 +94,8 @@ push: pre-push do-push post-push  ## push the image to the Docker registry
 
 do-push:
 	@echo "Git branch: $(BRANCH_NAME)"; \
-	if [ $(BRANCH_NAME) == "master" ]; then \
-	echo "Image tag: $(IMAGE):$(VERSION) $(IMAGE):$(BASE_RELEASE)" ;\
-	docker tag $(IMAGE):$(VERSION) $(IMAGE):$(BASE_RELEASE);\
-	docker push $(IMAGE):$(BASE_RELEASE); \
-	else \
-	echo "Image tag: $(IMAGE):$(VERSION) $(IMAGE):$(BASE_RELEASE)-dev" ;\
-	docker tag $(IMAGE):$(VERSION) $(IMAGE):$(BASE_RELEASE)-dev ;\
-	docker push $(IMAGE):$(BASE_RELEASE)-dev ;\
-	fi
+	echo "Pushing image : $(IMAGE):$(IMAGE_TAG)" ;\
+	docker push $(IMAGE):$(IMAGE_TAG)
 
 snapshot: build push
 
