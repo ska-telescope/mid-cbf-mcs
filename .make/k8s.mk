@@ -201,19 +201,19 @@ kubeconfig: ## export current KUBECONFIG as base64 ready for KUBE_CONFIG_BASE64
 
 # run the test function
 # save the status
-# clean out charts/build dir
+# clean out build dir
 # print the logs minus the base64 encoded payload
-# pull out the base64 payload and unpack to charts/build/ dir
+# pull out the base64 payload and unpack build/ dir
 # base64 payload is given a boundary "~~~~BOUNDARY~~~~" and extracted using perl
 # clean up the run to completion container
 # exit the saved status
-test: ## test the application on K8s
+test: install-chart wait ## test the application on K8s
 	$(call k8s_test,test); \
 		status=$$?; \
-		rm -rf charts/build; \
+		rm -rf build; \
 		kubectl --namespace $(KUBE_NAMESPACE) logs $(TEST_RUNNER) | \
 		perl -ne 'BEGIN {$$on=0;}; if (index($$_, "~~~~BOUNDARY~~~~")!=-1){$$on+=1;next;}; print if $$on % 2;' | \
-		base64 -d | tar -xzf - --directory charts; \
+		base64 -d | tar -xzf -; \
 		kubectl --namespace $(KUBE_NAMESPACE) delete pod $(TEST_RUNNER); \
 		exit $$status
 
@@ -237,26 +237,6 @@ k8s_test = tar -c . | \
                 cat /tmp/build.tgz | base64 && \
                 echo '~~~~BOUNDARY~~~~'" \
                 2>&1
-
-# run the test function
-# save the status
-# clean out build dir
-# print the logs minus the base64 encoded payload
-# pull out the base64 payload and unpack build/ dir
-# base64 payload is given a boundary "~~~~BOUNDARY~~~~" and extracted using perl
-# clean up the run to completion container
-# exit the saved status
-local_test: install-chart wait ## test the application on K8s
-	@echo "KUBE_NAMESPACE: $(KUBE_NAMESPACE)"
-	$(call k8s_test,test); \
-	  status=$$?; \
-	  rm -fr build; \
-	  kubectl --namespace $(KUBE_NAMESPACE) logs $(TEST_RUNNER) | perl -ne 'BEGIN {$$on=1;}; if (index($$_, "~~~~BOUNDARY~~~~")!=-1){$$on+=1;next;}; print if $$on % 2;'; \
-		kubectl --namespace $(KUBE_NAMESPACE) logs $(TEST_RUNNER) | \
-		perl -ne 'BEGIN {$$on=0;}; if (index($$_, "~~~~BOUNDARY~~~~")!=-1){$$on+=1;next;}; print if $$on % 2;' | \
-		base64 -d | tar -xzf -; \
-		kubectl --namespace $(KUBE_NAMESPACE) delete pod $(TEST_RUNNER); \
-	  exit $$status
 
 rlint:  ## run lint check on Helm Chart using gitlab-runner
 	if [ -n "$(RDEBUG)" ]; then DEBUG_LEVEL=debug; else DEBUG_LEVEL=warn; fi && \
