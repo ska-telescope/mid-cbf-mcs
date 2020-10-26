@@ -83,7 +83,7 @@
             }
         },
         "CbfSubarrayMulti": {
-            "cbfSubarray-01": {
+            "cbfsubarray-01": {
                 "CbfSubarray": {
                     "mid_csp_cbf/sub_elt/subarray_01": {
                         "attribute_properties": {
@@ -226,7 +226,7 @@
                     }
                 }
             },
-            "cbfSubarray-02": {
+            "cbfsubarray-02": {
                 "CbfSubarray": {
                     "mid_csp_cbf/sub_elt/subarray_02": {
                         "attribute_properties": {
@@ -370,7 +370,7 @@
                 }
 
             },
-            "cbfSubarray-03": {
+            "cbfsubarray-03": {
                 "CbfSubarray": {
                     "mid_csp_cbf/sub_elt/subarray_03": {
                         "attribute_properties": {

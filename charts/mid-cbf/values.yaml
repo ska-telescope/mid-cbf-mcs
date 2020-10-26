@@ -54,8 +54,8 @@ deviceServers:
   - name: cbfmaster
     function: cbf-central-control
     domain: csp-monitoring
-    command: "/venv/bin/python "
-    instances: ["/app/tangods/CbfMaster/CbfMaster/CbfMaster.py master"]
+    command: "/venv/bin/python /app/tangods/CbfMaster/CbfMaster/CbfMaster.py "
+    instances: ["master"]
     depends_on:
       - device: mid_csp_cbf/vcc/001   
       - device: mid_csp_cbf/vcc/002  
@@ -74,7 +74,7 @@ deviceServers:
     function: cbf-subarray-observation
     domain: subarray
     command: "/venv/bin/python /app/tangods/CbfSubarray/CbfSubarrayMulti/CbfSubarrayMulti.py "
-    instances: ["cbfSubarray-01"]
+    instances: ["cbfsubarray-01"]
     depends_on:
       - device: mid_csp_cbf/sub_elt/master
     image:
@@ -86,7 +86,7 @@ deviceServers:
     function: cbf-subarray-observation
     domain: subarray
     command: "/venv/bin/python /app/tangods/CbfSubarray/CbfSubarrayMulti/CbfSubarrayMulti.py "
-    instances: ["cbfSubarray-02"]
+    instances: ["cbfsubarray-02"]
     depends_on:
       - device: mid_csp_cbf/sub_elt/master
     image:
@@ -98,7 +98,7 @@ deviceServers:
     function: cbf-subarray-observation
     domain: subarray
     command: "/venv/bin/python /app/tangods/CbfSubarray/CbfSubarrayMulti/CbfSubarrayMulti.py "
-    instances: ["cbfSubarray-03"]
+    instances: ["cbfsubarray-03"]
     depends_on:
       - device: mid_csp_cbf/sub_elt/master
     image:
