@@ -20,6 +20,8 @@ tango-base:
   tangodb:
     use_pv: false
 
+webjive:
+    enabled: false
 #mid-cbf:
 #   midcbf:
 #     image:

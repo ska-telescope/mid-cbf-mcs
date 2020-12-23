@@ -7,8 +7,7 @@
 # DOCKER_REGISTRY_HOST, DOCKER_REGISTRY_USER and PROJECT are combined to define
 # the Docker tag for this project. The definition below inherits the standard
 # value for DOCKER_REGISTRY_HOST (=rnexus.engageska-portugal.pt) and overwrites
-# DOCKER_REGISTRY_USER and PROJECT to give a final Docker tag of
-# nexus.engageska-portugal.pt/tmc-prototype/tmcprototype
+# DOCKER_REGISTRY_USER and PROJECT
 #
 DOCKER_REGISTRY_USER:=ska-docker
 PROJECT = mid-cbf-mcs
