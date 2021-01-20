@@ -68,8 +68,7 @@ dep-up: ## update dependencies for every charts in the env var CHARTS
 	helm dependency update $${i}; \
 	done;
 
-# This job is used to create a deployment of tmc-mid charts
-# Currently umbreall chart for tmc-mid path is given
+# install mid-cbf-umbrella chart
 install-chart: dep-up namespace ## install the helm chart with name HELM_RELEASE and path UMBRELLA_CHART_PATH on the namespace KUBE_NAMESPACE 
 	@echo $(TANGO_HOST)
 	@sed -e 's/CI_PROJECT_PATH_SLUG/$(CI_PROJECT_PATH_SLUG)/' $(UMBRELLA_CHART_PATH)values.yaml > generated_values.yaml; \
@@ -80,6 +79,19 @@ install-chart: dep-up namespace ## install the helm chart with name HELM_RELEASE
 	--set global.tango_host=$(TANGO_HOST) \
 	--values values.yaml $(SET_IMAGE_TAG) \
          $(UMBRELLA_CHART_PATH) --namespace $(KUBE_NAMESPACE); \
+	rm generated_values.yaml; \
+	rm values.yaml
+
+install-chart-with-taranta: dep-up namespace ## install the helm chart with name HELM_RELEASE and path UMBRELLA_CHART_PATH on the namespace KUBE_NAMESPACE 
+	@echo $(TANGO_HOST)
+	@sed -e 's/CI_PROJECT_PATH_SLUG/$(CI_PROJECT_PATH_SLUG)/' $(UMBRELLA_CHART_PATH)values.yaml > generated_values.yaml; \
+	sed -e 's/CI_ENVIRONMENT_SLUG/$(CI_ENVIRONMENT_SLUG)/' generated_values.yaml > values.yaml; \
+	helm dependency update $(UMBRELLA_CHART_PATH); \
+	helm install $(HELM_RELEASE) \
+	--set global.minikube=$(MINIKUBE) \
+	--set global.tango_host=$(TANGO_HOST) \
+	--values taranta-values.yaml $(SET_IMAGE_TAG) \
+        $(UMBRELLA_CHART_PATH) --namespace $(KUBE_NAMESPACE); \
 	rm generated_values.yaml; \
 	rm values.yaml
 
@@ -95,13 +107,12 @@ template-chart: clean dep-up## install the helm chart with name RELEASE_NAME and
 	 rm generated_values.yaml; \
 	 rm values.yaml
 
-# This job is used to delete a deployment of tmc-mid charts
-# Currently umbreall chart for tmc-mid path is given
-uninstall-chart: ## uninstall the tmc-mid helm chart on the namespace tmcprototype
+# This job is used to delete a deployment of mid-cbf-umbrella charts
+uninstall-chart: ## uninstall the mid-cbf-umbrella helm chart on the namespace mid-cbf
 	helm template  $(HELM_RELEASE) $(UMBRELLA_CHART_PATH) --set global.minikube=$(MINIKUBE) --set global.tango_host=$(TANGO_HOST) --namespace $(KUBE_NAMESPACE)  | kubectl delete -f - ; \
 	helm uninstall  $(HELM_RELEASE) --namespace $(KUBE_NAMESPACE) 
 
-reinstall-chart: uninstall-chart install-chart ## reinstall the tmc-mid helm chart on the namespace tmcprototype
+reinstall-chart: uninstall-chart install-chart ## reinstall mid-cbf-umbreall helm chart
 
 upgrade-chart: ## upgrade the mid-cbf-umbrella helm chart on the namespace mid-cbf 
 	helm upgrade --set global.minikube=$(MINIKUBE) --set global.tango_host=$(TANGO_HOST) $(HELM_RELEASE) $(UMBRELLA_CHART_PATH) --namespace $(KUBE_NAMESPACE) 
@@ -121,7 +132,7 @@ show: ## show the helm chart
 		--set xauthority="$(XAUTHORITYx)" \
 		--set display="$(DISPLAY)" 
 
-# Linting chart tmc-mid
+# Linting mid-cbf-umbrella chart
 chart_lint: ## lint check the helm chart
 	@helm lint $(UMBRELLA_CHART_PATH) \
 		--namespace $(KUBE_NAMESPACE) 
