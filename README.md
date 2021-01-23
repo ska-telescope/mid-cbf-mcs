@@ -3,15 +3,22 @@
 Documentation on the Developer's portal:
 [![ReadTheDoc](https://developer.skatelescope.org/projects/mid-cbf-mcs/en/latest/?badge=latest)](https://developer.skatelescope.org/projects/mid-cbf-mcs/en/latest/?badge=latest)
 
-## Table of contents
+## Table of contents (TODO)
 * [Description](#description)
 * [Getting started](#getting-started)
-* [JIVE GUI - How to Run](#jive-gui---how-to-run)
-* [Other ways to run](#Other-ways-to-run)
+  * [Install a Virtual Machine](#install_VM)
+  * [Install Ubuntu](#install_Ubuntu)
+  * [Create a Development Environment](#setup_Tango)
+  * [Setup Kubernetes](#setup_Kubernetes)
+  * [Setup the MCS Software](#setup_MCS)
+* [Running the MCS](#run_MCS)
+  * [Running Using Kubernetes](#run_Kubernetes)
+  * [Running Using Docker Compose](#run_Docker_Compose)
   * [Add devices](#add-devices)
   * [Start device servers](#start-device-servers)
   * [Configure attribute polling and events](#configure-attribute-polling-and-events)
   * [View containers](#view-containers)
+* [JIVE GUI - How to Run](#jive-gui)
 * [WebJive GUI](#WebJive GUI)
 * [License](#license)
 
@@ -46,92 +53,193 @@ At the moment, the device servers implemented are:
 
 ## Getting started
 
-### Virtual machine
-Virtualbox Download: https://www.virtualbox.org/wiki/Downloads
+The following instruction follow the instructions on the SKA developer’s portal: 
 
-Ubuntu Image Download: https://sourceforge.net/projects/osboxes/files/v/vb/55-U-u/18.04/18.04.2/18042.64.7z/download
+* https://developer.skatelescope.org/en/latest/tools/tango-devenv-setup.html
+
+and
+
+* https://developer.skatelescope.org/en/latest/development/getting_started.html
+
+
+### Install a Virtual Machine
+
+1.  Download Virtualbox from: https://www.virtualbox.org/wiki/Downloads
+
+2.  Install Virtualbox
+
+
+### Install Ubuntu
+
+Download an image of ubuntu 18.04, for example like the following one:
+
+https://sourceforge.net/projects/osboxes/files/v/vb/55-U-u/18.04/18.04.2/18042.64.7z/download
 
 Steps:
 
-1.  Install virtual box
+1.  Open up the file downloaded from sourceforge for the ubuntu image with 7-zip and extract the “Ubuntu 18.04.2 (64bit).vdi” file into a known directory
 
-2.  Open up file downloaded from sourceforge for the ubuntu image with 7-zip and extract the “Ubuntu 18.04.2 (64bit).vdi” file into a known directory
+2.  Open up the virtual box software and click “new” and run through the setup process, on the Hard Disk option screen choose “use and existing virtual hard disk file” and then choose the VDI file that you extracted in step two.
 
-3.  Open up the virtual box software and click “new” and run through the setup process, on the Hard Disk option screen choose “use and existing virtual hard disk file” and then choose the VDI file that you extracted in step two.
+3.  Run the OS in virtualbox and login to the ubuntu OS. The login screen should show the account “osboxes.org” it will ask for a password, this is a default account the virtual machine creates for you and the password is **“osboxes.org”** (you can change the name and password in account settings once you are logged in”)
 
-4.  Run the OS in virtualbox and login to the ubuntu OS. The login screen should show the account “osboxes.org” it will ask for a password, this is a default account the virtual machine creates for you and the password is **“osboxes.org”** (you can change the name and password in account settings once you are logged in”)
+*Note* : If you set your own password for the virtual machine, change "ansible_become_pass=osboxes.org" to "ansible_become_pass=your_own_password"
 
-The project can be found in the SKA GitHub repository.
+### Create a Development Environment 
 
-To get a local copy of the project
+Setting up the Development environment, including Tango environment,  is performed using the ansible playbook script. Follow the commands in the yellow box under the 'Creating a Development Environment' section of the https://developer.skatelescope.org/en/latest/tools/tango-devenv-setup.html web page.
+
+See that page for a list of the applications installed in this way.
+
+#### Notes and Troubleshooting:
+
+*Note 1*: If you already have an older installation don't forget to first to update your local version of the ansible-playbooks repo (pull, checkout or delete and clone again), before running the ansible-playbooks command.
+
+*Note 2*: You may need to precede the ``ansible-playbook`` command (from the commands sequence at the link above) by ``sudo``.
+
+*Note 3*:  Depending on your system, the ``ansible-playbook`` command may take more than one hour to complete.
+
+*Note 4*: If you encounter Python installation problem with the ansible command, try to explicitly specify the python version in the ansible command, for example:
+```
+$ ansible-playbook -i hosts deploy_tangoenv.yml --extra-vars "ansible_become_pass=osboxes.org" -e ansible_python_interpreter=/usr/bin/python3
+```
+
+*Note 5*: If you experience other issues with the script ask questions in the #team-system-support slack channel.
+
+### Start the Tango system
+
+Follow the instruction in the section with the same name at https://developer.skatelescope.org/en/latest/tools/tango-devenv-setup.html.
+
+### Verifyiing and/or Setting up Kubernetes
+
+For verifying that Kubernetes and Helm have aready been isntall (or possibly install), follow the instructions at https://developer.skatelescope.org/en/latest/development/getting_started.html.
+
+Note that Kubernetes does not need to be launched (via ``minikube start ...``) at this time (see launching Kubernetes under the 'Running using Kubernetes' section).
+
+### Setting Up The MCS Software
+
+The following projects are required:
+* mid-cbf-mcs
+* lmc-base-classes
+
+To get a local copy of the mid-cbf-mcs project:
 ```
 $ git clone https://gitlab.com/ska-telescope/mid-cbf-mcs.git
 ```
 
-### Setting up Tango Enviroment
-
-Setting up the tango enviroment is the next step in this starting guide. Most of the enviroment set up is automated and is installed and configured using the ansible playbook script and the docker compose script. These scripts will install the programs and modules listed below:
-- python version 3.7
-- TANGO-controls ‘9.3.3’
-- Visual Studio Code, PyCharm Community Edition
-- ZEROMQ ‘4.3.2’
-- OMNIORB ‘4.2.3’
-Run the following commands in your terminal, it will clone the ansible playbook repository, install it, and then run the script and set up the enviroment, if you experience issues with the script ask questions in the #team-system-support slack channel. The following instruction can be also found at the developer’s portal: https://developer.skatelescope.org/en/latest/tools/tango-devenv-setup.html
-```
-$ sudo apt -y install git                                                                         
-$ git clone https://gitlab.com/ska-telescope/ansible-playbooks                                         
-$  cd ansible-playbooks                                                                                        
-$  sudo apt-add-repository --yes --update ppa:ansible/ansible && sudo apt -y install ansible                                                                                  
-$ ansible-playbook -i hosts deploy_tangoenv.yml --extra-vars "ansible_become_pass=osboxes.org"                                                        $ $ sudo reboot
-```
-
-Trouble shooting:
-- If you set your own password for the virtual machine, change "ansible_become_pass=osboxes.org" to "ansible_become_pass=<your own password"  
-- If you encounter python related problem with the ansible command, try to specify the python version with anisible script, for example:
-```
-$ ansible-playbook -i hosts deploy_tangoenv.yml --extra-vars "ansible_become_pass=osboxes.org" -e ansible_python_interpreter=/usr/bin/python2
-Using python2 like above may solve the problem for you.
-```
-### Setting Up LMC Base Classes
-LMC Base Classes are needed if you want to use Pogo to generate code. Pogo will ask you for Base class pogo files. 
-Find in the Base class folder when it is ask(typically when you run "pogo xxx", and the base class file is not configured)
-Install https://gitlab.com/ska-telescope/lmc-base-classes in your /venv/bin/pip directory
-> $ git clone https://gitlab.com/ska-telescope/lmc-base-classes                                   
-> $ cd lmc-base-classes                                                                                     
-> $ sudo /venv/bin/pip install                                                        
-
-## JIVE GUI - How to Run
-
-### starting JIVE
-For developer use. JIVE is a graphical user interface that visualizes the devices, servers, and executes device commands. It has more information than the WebJIVE. Here is the procedure to use JIVE:
- 
-1. From the project root directory:
-```
-$ make up
-```
-2. Run the following command
+To install a local copy of the lmc-base-classes project follow the 'Installation steps' of the README in that project:
 
 ```
-$ docker network inspect tangonet
+$ git clone https://gitlab.com/ska-telescope/lmc-base-classes
+$ cd lmc-base-classes
+$ sudo 'python3 -m pip install . --extra-index-url https://nexus.engageska-portugal.pt/repository/pypi/simple
 ```
-3. Find “midcbf-databaseds”, then copy the first part of its IPv4Address 
 
-4. Run the following command:
-```
-$ export TANGO_HOST=<the address from step 3>:100000
-```
-5. Run JIVE:
-```
-$ JIVE
-```
-**Note: step 2-3 can be automated by running "python configJive.py" script in the main folder**
+Note that LMC Base Classes are needed for example if you want to use Pogo to automatically generate code. Pogo will ask for the Base class pogo (.xmi) files. 
+Find in the Base class folder when it is ask (typically when you run "pogo xxx", and the base class file is not configured)
 
-### Configuring scan
+## Running the Mid CBF MCS
+
+The Mid CBF MCS Tango servers run in a containerised environment.
+The default way of running the mid-cbf-mcs Tango device servers is via Kubernetes. Kubernetes replaced Docker Compose as the containers orchestrator of choice for SKA in mid 2020. However, for convenience, this repository still supports Docker Compose as a way of running the servers (see Section Running Using Docker Compose) (as this approach is more lightweight and may be useful as an alternative for development).
+
+### Running Using Kubernetes
+
+Make sure Kubernetes and Helm have been installed (and verified) as described in the 'Setup Kubernetes' section.
+
+1. Launch Kubernetes using the command:
+
+```sudo -E minikube start --vm-driver=none --extra-config=kubelet.resolv-conf=/var/run/systemd/resolve/resolv.conf```
+
+2. From the root of the project, run:
+
+```$ make build```  
+```$ cd docker && make up  && make down```
+```$ cd ../  && make install-chart```
+
+#### Set the TANGO_HOST
+
+The TANGO_HOST is required in order to run Jive.
+
+1. Display the Kubernetes nodes and images that have been started up:
+
+```$ kubectl get all -n mid-cbf```
+
+2. Use whatever port is displayed in the line generated from the previous command, containing the string ```tango-host-databaseds-from-makefile-test```, for example:
+
+```service/tango-host-databaseds-from-makefile-test   NodePort    10.103.194.174   <none>        10000:30333/TCP ```
+
+3. Set the TANGO_HOST environment variable using the port number in the line above:
+
+```$ export TANGO_HOST=localhost:30333```
+
+Now Jive can be started and the devices inspected (see the 'JIVE GUI' section)
+
+### Running Using Docker Compose
+
+Running the docker containers using Docker Compose requires the following (see https://docs.docker.com/compose/):
+
+* A ``Dockerfile`` file; this file is located in the root of the project.
+* One or more ``docker-compose.yml`` types of files: these files are located in the ``docker`` folder. 
+* Running one ``docker-compose up`` command for each of the ``.yml`` files in the docker folder; all the  docker-compose commands are defined in the ``Makefile`` and executed via a ``make up`` command (see steps below).
+
+### Start the device servers
+
+To build new images, issue the following command. If the existing image is adequate, this step may be skipped.
+
+```cd docker```
+```$ make build```
+
+To start the containers (inside which will run the Tango servers), issue (from the docker directory):
+
+```$ make up```
+
+### View containers
+
+To list the running containers issue:
+
+``` $ docker ps -a ```
+
+shows the list of the running containers:
+
+* `midcbf-cbfmaster`: The `CbfMaster` TANGO device server.
+* `midcbf-cbfsubarrayxx`ranges from `01` to `02` The 2 instances of the `CbfSubarrayMulti` TANGO device server.
+* `midcbf-fspxx`: `xx` ranges from `01` to `04`. The 4 instances of the `FspMulti` TANGO device servers.
+* `midcbf-vccxx`: `x` ranges from `01` to `04`. The 4 instances of the `VccMulti` TANGO device servers.
+* `midcbf-tmcspsubarrayleafnodetest`: The `TmCspSubarrayLeafNodeTest` TANGO device server.
+* `midcbf-rsyslog`: The rsyslog container for the TANGO devices.
+* `midcbf-databaseds`: The TANGO DB device server.
+* `midcbf-tangodb`: The MySQL database with the TANGO database tables.
+
+#### Set the TANGO_HOST
+
+The TANGO_HOST is required in order to run Jive (see bellow)
+
+1. Run the following command
+
+```$ docker network inspect tangonet ```
+
+2. Find “midcbf-databaseds”, then copy the first part of its IPv4Address; for example if "IPv4Address": "172.18.0.20/16", then copy 172.18.0.20.
+
+3. Run the following command:
+```$ export TANGO_HOST=<the address from step 3>:10000```
+
+*Note*: Setting the TANGO_HOST can be automated by running "python configJive.py" script in the main folder.
+
+Now Jive can be started and the devices inspected (see the 'JIVE GUI' section).
+
+## Running JIVE
+
+JIVE is a graphical user interface with which one can browse the Tango Database and visualize the devices, servers, and execute device commands. (Note that via Jive one can get access to more information than with WebJIVE). Here is the procedure to use JIVE:
+
+```$ jive&```
+
+### Configuring scan (todo)
 
 To configure scan with JIVE, the input needs “\” before each quotation mark. Normal JSON file wouldn’t work.
-To solve this probelm, there are three options:
+To solve this problem, there are three options:
 1. Use a script to generate this specific input. 
-Put your JSON file in tangods/CbfSubarray/JIVEconfigscan/scanconfig.JSON.
+Put your JSON file in tangods/CbfSubarray/JIVEconfigscan/scanconfig.json.
 Run 
 `Python generateJIVE.py`
 
@@ -139,27 +247,18 @@ Run
 3. Manually insert “\” before each quotation mark (not recommended...)
 
 
+## WebJive GUI (TODO)
+
+Note: WebJive GUI is currently out of date.
+This prototype provides a graphical user interface, using WebJive, that runs in Docker containers defined in the configuration files `tangogql.yml`, `traefik.yml`, and `webjive.yml`. To use, start the Docker containers, then navigate to `localhost:22484/testdb`. The following credentials can be used:
+
+* Username: `user1`
+* Password: `abc123`
+
+The device tree can be viewed and explored. In addition, device attributes can be seen and modified, and device commands can be sent, by creating and saving a new dashboard.
 
 
-## Other ways to run
-
-The Mid CBF MCS prototype runs in a containerised environment; the YAML configuration files ``tango.yml`` and ``mid-cbf-mcs.yml`` define the services needed to run the TANGO devices inside separate Docker containers.
-
-### Start device servers
-
-To build a new image, issue the following command. If the existing image is adequate, this step may be skipped.
-```
-$ make build
-```
-
-To start the containers, run
-```
-$ make up
-```
-
-You can then view the devices with JIVE. See below on how to activate JIVE.
-
-### Add devices
+### Add devices (no longer required  - TODO, update)
 
 From the project root directory, issue the command
 ```
@@ -177,7 +276,7 @@ The interactive session can then be exited by the command
 $ exit
 ```
 
-### Configure attribute polling and events
+### Configure attribute polling and events TODO - update
 
 From the project root directory, again issue the command
 ```
@@ -194,38 +293,6 @@ The interactive session may then be exited.
 ```
 $ exit
 ```
-
-### View containers
-
-At the end of the procedure the command
-```
-$ docker ps -a
-```
-
-shows the list of the running containers:
-
-* `midcbf-cbfmaster`: The `CbfMaster` TANGO device server.
-* `midcbf-cbfsubarrayxx`ranges from `01` to `02` The 2 instances of the `CbfSubarrayMulti` TANGO device server.
-* `midcbf-fspxx`: `xx` ranges from `01` to `04`. The 4 instances of the `FspMulti` TANGO device servers.
-* `midcbf-vccxx`: `x` ranges from `01` to `04`. The 4 instances of the `VccMulti` TANGO device servers.
-* `midcbf-tmcspsubarrayleafnodetest`: The `TmCspSubarrayLeafNodeTest` TANGO device server.
-* `midcbf-rsyslog`: The rsyslog container for the TANGO devices.
-* `midcbf-databaseds`: The TANGO DB device server.
-* `midcbf-tangodb`: The MySQL database with the TANGO database tables.
-
-
-
-## WebJive GUI
-
-Note: WebJive GUI is currently out of date.
-This prototype provides a graphical user interface, using WebJive, that runs in Docker containers defined in the configuration files `tangogql.yml`, `traefik.yml`, and `webjive.yml`. To use, start the Docker containers, then navigate to `localhost:22484/testdb`. The following credentials can be used:
-
-* Username: `user1`
-* Password: `abc123`
-
-The device tree can be viewed and explored. In addition, device attributes can be seen and modified, and device commands can be sent, by creating and saving a new dashboard.
-
-
 
 ## License
 
