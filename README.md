@@ -61,6 +61,10 @@ and
 
 * https://developer.skatelescope.org/en/latest/development/getting_started.html
 
+*Note*: For the entire skatelescope.org developer's documentation in PDF format see: 
+
+https://developer.skatelescope.org/_/downloads/en/latest/pdf/
+
 
 ### Install a Virtual Machine
 
@@ -110,11 +114,11 @@ $ ansible-playbook -i hosts deploy_tangoenv.yml --extra-vars "ansible_become_pas
 
 Follow the instruction in the section with the same name at https://developer.skatelescope.org/en/latest/tools/tango-devenv-setup.html.
 
-### Verifyiing and/or Setting up Kubernetes
+### Verifying and/or Setting up Kubernetes
 
-For verifying that Kubernetes and Helm have aready been isntall (or possibly install), follow the instructions at https://developer.skatelescope.org/en/latest/development/getting_started.html.
+For verifying that Kubernetes and Helm have already been install (or for installing), follow the instructions at https://developer.skatelescope.org/en/latest/development/getting_started.html.
 
-Note that Kubernetes does not need to be launched (via ``minikube start ...``) at this time (see launching Kubernetes under the 'Running using Kubernetes' section).
+Note that Kubernetes does not need to be launched (i.e. execute the command ``minikube start ...``) at this time (see launching Kubernetes under the 'Running using Kubernetes' section).
 
 ### Setting Up The MCS Software
 
@@ -127,7 +131,7 @@ To get a local copy of the mid-cbf-mcs project:
 $ git clone https://gitlab.com/ska-telescope/mid-cbf-mcs.git
 ```
 
-To install a local copy of the lmc-base-classes project follow the 'Installation steps' of the README in that project:
+To install a local copy of the lmc-base-classes project follow the 'Installation steps' of the README in that project, i.e.:
 
 ```
 $ git clone https://gitlab.com/ska-telescope/lmc-base-classes
@@ -135,8 +139,8 @@ $ cd lmc-base-classes
 $ sudo 'python3 -m pip install . --extra-index-url https://nexus.engageska-portugal.pt/repository/pypi/simple
 ```
 
-Note that LMC Base Classes are needed for example if you want to use Pogo to automatically generate code. Pogo will ask for the Base class pogo (.xmi) files. 
-Find in the Base class folder when it is ask (typically when you run "pogo xxx", and the base class file is not configured)
+Note that LMC Base Classes are needed for example when using Pogo to automatically generate Python TANGO code. Pogo will ask for the Base class pogo (.xmi) files. 
+Navigate to the Base class folder when it is ask (typically when you run "pogo xxx", and the base class file is not configured). TODO
 
 ## Running the Mid CBF MCS
 
@@ -180,10 +184,10 @@ Now Jive can be started and the devices inspected (see the 'JIVE GUI' section)
 Running the docker containers using Docker Compose requires the following (see https://docs.docker.com/compose/):
 
 * A ``Dockerfile`` file; this file is located in the root of the project.
-* One or more ``docker-compose.yml`` types of files: these files are located in the ``docker`` folder. 
-* Running one ``docker-compose up`` command for each of the ``.yml`` files in the docker folder; all the  docker-compose commands are defined in the ``Makefile`` and executed via a ``make up`` command (see steps below).
+* One or more ``docker-compose.yml`` type of files: these files are located in the ``docker`` folder. 
+* Running one ``docker-compose up`` command for each of the ``.yml`` files in the docker folder; all the  ``docker-compose`` commands are defined in the ``Makefile`` and executed via a ``make up`` command (see steps below).
 
-### Start the device servers
+#### *Start the containers*
 
 To build new images, issue the following command. If the existing image is adequate, this step may be skipped.
 
@@ -194,13 +198,22 @@ To start the containers (inside which will run the Tango servers), issue (from t
 
 ```$ make up```
 
-### View containers
+#### *View the containers*
 
 To list the running containers issue:
 
-``` $ docker ps -a ```
+``` $ docker ps```
 
-shows the list of the running containers:
+To list all created containers (not only running):
+
+```docker ps -a``` 
+
+To list all created containers but less verbose, run for ex.:
+
+```docker ps -a --format "table {{.ID}}\t{{.Status}}\t{{.Names}}"``` 
+
+
+This should list the running containers:
 
 * `midcbf-cbfmaster`: The `CbfMaster` TANGO device server.
 * `midcbf-cbfsubarrayxx`ranges from `01` to `02` The 2 instances of the `CbfSubarrayMulti` TANGO device server.
@@ -210,21 +223,20 @@ shows the list of the running containers:
 * `midcbf-rsyslog`: The rsyslog container for the TANGO devices.
 * `midcbf-databaseds`: The TANGO DB device server.
 * `midcbf-tangodb`: The MySQL database with the TANGO database tables.
+* etc.
 
-#### Set the TANGO_HOST
+#### *Set the TANGO_HOST*
 
-The TANGO_HOST is required in order to run Jive (see bellow)
+The TANGO_HOST environment variable is required in order to run Jive (see bellow). To set TANGO HOST, navigate to teh root of the project and run:
+```python configJive.py```
 
-1. Run the following command
+Then run the printed command at the command line.
 
-```$ docker network inspect tangonet ```
+*Note* : This script executes the following:
 
-2. Find “midcbf-databaseds”, then copy the first part of its IPv4Address; for example if "IPv4Address": "172.18.0.20/16", then copy 172.18.0.20.
+1. runs: ``$ docker network inspect tangonet``
 
-3. Run the following command:
-```$ export TANGO_HOST=<the address from step 3>:10000```
-
-*Note*: Setting the TANGO_HOST can be automated by running "python configJive.py" script in the main folder.
+2. extracts the first part of its IPv4Address of the "midcbf-databaseds"  and concatenates the TANG)_HOST value and esport command.
 
 Now Jive can be started and the devices inspected (see the 'JIVE GUI' section).
 
@@ -258,7 +270,7 @@ This prototype provides a graphical user interface, using WebJive, that runs in 
 The device tree can be viewed and explored. In addition, device attributes can be seen and modified, and device commands can be sent, by creating and saving a new dashboard.
 
 
-### Add devices (no longer required  - TODO, update)
+### Add devices (no longer required- TODO, update)
 
 From the project root directory, issue the command
 ```
@@ -276,7 +288,7 @@ The interactive session can then be exited by the command
 $ exit
 ```
 
-### Configure attribute polling and events TODO - update
+### Configure attribute polling and events (not required TODO - update)
 
 From the project root directory, again issue the command
 ```
