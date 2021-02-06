@@ -148,6 +148,13 @@ class TmCspSubarrayLeafNodeTest(SKABaseDevice):
         doc="Doppler phase correction coefficients",
     )
 
+    jonesMatrix = attribute(
+        dtype='str',
+        access=AttrWriteType.READ_WRITE,
+        label="Jones matrix",
+        doc="Jones matrix"
+    )
+
     delayModel = attribute(
         dtype='str',
         access=AttrWriteType.READ_WRITE,
@@ -180,6 +187,7 @@ class TmCspSubarrayLeafNodeTest(SKABaseDevice):
 
         self._config_ID = ""
         self._doppler_phase_correction = [0., 0., 0., 0.]
+        self._jones_matrix = {}
         self._delay_model = {}  # this is interpreted as a JSON object
         self._vis_destination_address = {}  # this is interpreted as a JSON object
         self._received_output_links = False
@@ -242,6 +250,16 @@ class TmCspSubarrayLeafNodeTest(SKABaseDevice):
             log_msg = "dopplerPhaseCorrection attribute must be an array of length 4. Ignoring."
             self.logger.error(log_msg)
         # PROTECTED REGION END #    //  TmCspSubarrayLeafNodeTest.dopplerPhaseCorrection_write
+
+    def read_jonesMatrix(self):  
+        # PROTECTED REGION ID(TmCspSubarrayLeafNodeTest.delayModel_read) ENABLED START #
+        return json.dumps(self._jones_matrix)
+        # PROTECTED REGION END #    //  TmCspSubarrayLeafNodeTest.delayModel_read
+
+    def write_jonesMatrix(self, value):
+        # PROTECTED REGION ID(TmCspSubarrayLeafNodeTest.delayModel_write) ENABLED START #
+        self._jones_matrix = json.loads(str(value))
+        # PROTECTED REGION END #    //  TmCspSubarrayLeafNodeTest.delayModel_writedelay
 
     def read_delayModel(self):
         # PROTECTED REGION ID(TmCspSubarrayLeafNodeTest.delayModel_read) ENABLED START #

@@ -181,7 +181,56 @@ class CbfSubarray(SKASubarray):
         self._group_vcc.command_inout("UpdateDelayModel", data)
         self._mutex_delay_model_config.release()
 
+    def _jones_matrix_event_callback(self, event):
+        if not event.err:
+            if self.state_model._obs_state not in [ObsState.READY.value, ObsState.SCANNING.value]:
+                log_msg = "Ignoring Jones matrix (obsState not correct)."
+                self.logger.warn(log_msg)
+                return
+            try:
+                log_msg = "Received Jones Matrix update."
+                self.logger.warn(log_msg)
 
+                value = str(event.attr_value.value)
+                if value == self._last_received_jones_matrix:
+                    log_msg = "Ignoring Jones matrix (identical to previous)."
+                    self.logger.warn(log_msg)
+                    return
+
+                self._last_received_jones_matrix = value
+                jones_matrix_all = json.loads(value)
+
+                for jones_matrix in jones_matrix_all["jonesMatrix"]:
+                    t = Thread(
+                        target=self._update_jones_matrix,
+                        args=(int(jones_matrix["epoch"]), json.dumps(jones_matrix["jonesDetails"]))
+                    )
+                    t.start()
+            except Exception as e:
+                self.logger.error(str(e))
+        else:
+            for item in event.errors:
+                log_msg = item.reason + ": on attribute " + str(event.attr_name)
+                self.logger.error(log_msg)
+
+    def _update_jones_matrix(self, epoch, matrix):
+        # This method is always called on a separate thread
+        log_msg = "Jones matrix active at {} (currently {})...".format(epoch, int(time.time()))
+        self.logger.warn(log_msg)
+
+        if epoch > time.time():
+            time.sleep(epoch - time.time())
+
+        log_msg = "Updating Jones Matrix at specified epoch {}...".format(epoch)
+        self.logger.warn(log_msg)
+
+        data = tango.DeviceData()
+        data.insert(tango.DevString, matrix)
+
+        # we lock the mutex, forward the configuration, then immediately unlock it
+        self._mutex_jones_matrix_config.acquire()
+        self._group_vcc.command_inout("UpdateJonesMatrix", data)
+        self._mutex_jones_matrix_config.release()
 
     def _state_change_event_callback(self, event):
         if not event.err:
@@ -376,6 +425,27 @@ class CbfSubarray(SKASubarray):
             msg = "'delayModelSubscriptionPoint' not given. Aborting configuration."
             self._raise_configure_scan_fatal_error(msg)
 
+        # Validate jonesMatrixSubscriptionPoint.
+        if "jonesMatrixSubscriptionPoint" in argin:
+            try:
+                attribute_proxy = tango.AttributeProxy(argin["jonesMatrixSubscriptionPoint"])
+                attribute_proxy.ping()
+                attribute_proxy.unsubscribe_event(
+                    attribute_proxy.subscribe_event(
+                        tango.EventType.CHANGE_EVENT,
+                        self._void_callback
+                    )
+                )
+
+            except tango.DevFailed:  # attribute doesn't exist or is not set up correctly
+                msg = "Attribute {} not found or not set up correctly for " \
+                      "'jonesMatrixSubscriptionPoint'. Aborting configuration.".format(
+                    argin["jonesMatrixSubscriptionPoint"]
+                )
+                self._raise_configure_scan_fatal_error(msg)
+        else:
+            msg = "'jonesMatrixSubscriptionPoint' not given. Aborting configuration."
+            self._raise_configure_scan_fatal_error(msg)
 
 
         # Validate searchWindow.
@@ -954,6 +1024,8 @@ class CbfSubarray(SKASubarray):
 
         self._last_received_delay_model = "{}"
 
+        self._last_received_jones_matrix = "{}"
+
         # TODO need to add this check for fspSubarrayPSS and VLBI and PST once implemented
         for fsp_corr_subarray_proxy in self._proxies_fsp_corr_subarray:
             if fsp_corr_subarray_proxy.State() == tango.DevState.ON:
@@ -1199,8 +1271,10 @@ class CbfSubarray(SKASubarray):
             # device._published_output_links = False# ???
             # device._last_received_vis_destination_address = "{}"#???
             device._last_received_delay_model = "{}"
+            device._last_received_jones_matrix = "{}"
 
             device._mutex_delay_model_config = Lock()
+            device._mutex_jones_matrix_config = Lock()
 
             # for easy device-reference
             device._frequency_band_offset_stream_1 = 0
@@ -1707,6 +1781,16 @@ class CbfSubarray(SKASubarray):
                 device._delay_model_event_callback
             )
             device._events_telstate[event_id] = attribute_proxy
+
+            # Configure jonesMatrixSubscriptionPoint
+            device._last_received_jones_matrix = "{}"
+            attribute_proxy = tango.AttributeProxy(argin["jonesMatrixSubscriptionPoint"])
+            attribute_proxy.ping()
+            event_id = attribute_proxy.subscribe_event(
+                tango.EventType.CHANGE_EVENT,
+                device._jones_matrix_event_callback
+            )
+            device.events_telstate[event_id] = attribute_proxy
 
             # Configure rfiFlaggingMask.
             if "rfiFlaggingMask" in argin:

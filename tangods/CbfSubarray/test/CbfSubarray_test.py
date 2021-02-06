@@ -774,6 +774,77 @@ class TestCbfSubarray:
         create_subarray_1_proxy.Off()
         assert create_subarray_1_proxy.state() == tango.DevState.OFF
 
+    def test_ConfigureScan_jonesMatrix(
+            self,
+            create_cbf_master_proxy,
+            create_subarray_1_proxy,
+            create_vcc_proxies,
+            create_fsp_1_proxy,
+            create_fsp_2_proxy,
+            create_fsp_1_subarray_1_proxy,
+            create_fsp_2_subarray_1_proxy,
+            create_tm_telstate_proxy
+    ):
+        """
+        Test the reception of Jones matrices
+        """
+        for proxy in create_vcc_proxies:
+            proxy.Init()
+        create_fsp_1_subarray_1_proxy.Init()
+        create_fsp_2_subarray_1_proxy.Init()
+        create_fsp_1_proxy.Init()
+        create_fsp_2_proxy.Init()
+        create_subarray_1_proxy.set_timeout_millis(80000)  # since the command takes a while
+        time.sleep(3)
+        create_cbf_master_proxy.set_timeout_millis(60000)
+        create_cbf_master_proxy.Init()
+        time.sleep(5)  # takes pretty long for CBF Master to initialize
+        create_tm_telstate_proxy.Init()
+        time.sleep(1)
+
+        receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
+                               create_cbf_master_proxy.receptorToVcc)
+
+        create_cbf_master_proxy.On()
+        time.sleep(3)
+
+        assert create_subarray_1_proxy.obsState.value == ObsState.EMPTY.value
+
+        # add receptors
+        create_subarray_1_proxy.AddReceptors([1, 3, 4])
+        time.sleep(1)
+        assert create_subarray_1_proxy.receptors[0] == 1
+        assert create_subarray_1_proxy.receptors[1] == 3
+        assert create_subarray_1_proxy.receptors[2] == 4
+
+        # configure scan
+        f = open(file_path + "/test_json/test_ConfigureScan_basic.json")
+        create_subarray_1_proxy.ConfigureScan(f.read().replace("\n", ""))
+        f.close()
+        time.sleep(30)
+
+        assert create_subarray_1_proxy.obsState.value == ObsState.READY.value
+
+        f = open(file_path + "/test_json/jonesmatrix.json")
+        jones_matrix = json.loads(f.read().replace("\n", ""))
+
+        create_subarray_1_proxy.Scan(1)
+        time.sleep(1)
+        assert create_subarray_1_proxy.obsState.value == ObsState.SCANNING.value
+
+        create_subarray_1_proxy.EndScan()
+        time.sleep(1)
+
+        # Clean Up
+        create_subarray_1_proxy.GoToIdle()
+        time.sleep(1)
+        assert create_subarray_1_proxy.obsState == ObsState.IDLE
+        create_subarray_1_proxy.RemoveAllReceptors()     
+        time.sleep(1)
+        assert create_subarray_1_proxy.obsState == ObsState.EMPTY  
+        create_subarray_1_proxy.Off()
+        assert create_subarray_1_proxy.state() == tango.DevState.OFF
+
     def test_Scan(
             self,
             create_cbf_master_proxy,
