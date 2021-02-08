@@ -54,7 +54,7 @@ clean shell runner:
 #    paths:
 #      - build
 
-build:
+build-image:
   stage: build
   image: nexus.engageska-portugal.pt/ska-docker/deploy:0.4.3
   tags:
@@ -67,7 +67,7 @@ build:
 
 publish_image:
   stage: publish
-  mage: nexus.engageska-portugal.pt/ska-docker/deploy:0.4.3
+  image: nexus.engageska-portugal.pt/ska-docker/deploy:0.4.3
   before_script:
     - docker login -u $DOCKER_REGISTRY_USERNAME -p $DOCKER_REGISTRY_PASSWORD $DOCKER_REGISTRY_HOST
   tags:
