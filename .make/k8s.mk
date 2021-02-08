@@ -17,8 +17,8 @@ ifneq ($(CI_JOB_ID),)
 CI_PROJECT_IMAGE :=
 SET_IMAGE_TAG = --set mid-cbf.midcbf.image.registry=$(CI_REGISTRY)/ska-telescope \
                 --set mid-cbf.midcbf.image.tag=$(CI_COMMIT_SHORT_SHA) \
-                --set mid-cbf.tmleafnode.image.registry=$(CI_REGISTRY)/ska-telescope \
-                --set mid-cbf.tmleafnode.image.tag=$(CI_COMMIT_SHORT_SHA) \
+                --set mid-cbf-tmleafnode.midcbf.image.registry=$(CI_REGISTRY)/ska-telescope \
+                --set mid-cbf-tmleafnode.midcbf.image.tag=$(CI_COMMIT_SHORT_SHA)
 IMAGE_TO_TEST = $(CI_REGISTRY_IMAGE):$(CI_COMMIT_SHORT_SHA)
 endif
 .DEFAULT_GOAL := help
