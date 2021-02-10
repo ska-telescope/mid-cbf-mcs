@@ -59,7 +59,8 @@ The following instruction follow the instructions on the SKA developer’s porta
 
 and
 
-* https://developer.skatelescope.org/en/latest/development/getting_started.html
+* https://developer.skatelescope.org/en/latest/tools/dev-faq.html
+
 
 *Note*: For the entire skatelescope.org developer's documentation in PDF format see: 
 
@@ -112,13 +113,13 @@ $ ansible-playbook -i hosts deploy_tangoenv.yml --extra-vars "ansible_become_pas
 
 ### Start the Tango system
 
-Follow the instruction in the section with the same name at https://developer.skatelescope.org/en/latest/tools/tango-devenv-setup.html.
+Follow the instruction in the section with the same name at https://developer.skatelescope.org/en/latest/tools/dev-faq.html
 
 ### Verifying and/or Setting up Kubernetes
 
-For verifying that Kubernetes and Helm have already been install (or for installing), follow the instructions at https://developer.skatelescope.org/en/latest/development/getting_started.html.
+For installing Docker, Kubernetes, Minikube and Helm, follow the instructions at https://developer.skatelescope.org/en/latest/development/getting_started.html.
 
-Note that Kubernetes does not need to be launched (i.e. execute the command ``minikube start ...``) at this time (see launching Kubernetes under the 'Running using Kubernetes' section).
+Note that Kubernetes does not need to be launched (i.e. no need to execute the command ``minikube start ...``) at this time (see launching Kubernetes under the 'Running using Kubernetes' section).
 
 ### Setting Up The MCS Software
 
@@ -140,32 +141,37 @@ $ sudo 'python3 -m pip install . --extra-index-url https://nexus.engageska-portu
 ```
 
 Note that LMC Base Classes are needed for example when using Pogo to automatically generate Python TANGO code. Pogo will ask for the Base class pogo (.xmi) files. 
-Navigate to the Base class folder when it is ask (typically when you run "pogo xxx", and the base class file is not configured). TODO
+Navigate to the Base class folder (typically when you run "pogo xxx", and the base class file is not configured). TODO
 
 ## Running the Mid CBF MCS
 
 The Mid CBF MCS Tango servers run in a containerised environment.
-The default way of running the mid-cbf-mcs Tango device servers is via Kubernetes. Kubernetes replaced Docker Compose as the containers orchestrator of choice for SKA in mid 2020. However, for convenience, this repository still supports Docker Compose as a way of running the servers (see Section Running Using Docker Compose) (as this approach is more lightweight and may be useful as an alternative for development).
+The default way of running the mid-cbf-mcs Tango device servers is via Kubernetes. Kubernetes replaced Docker Compose as the containers orchestrator of choice for SKA in mid 2020. This repository still contains Docker Compose specific code (mainly under the ``docker`` directory).
 
 ### Running Using Kubernetes
 
 Make sure Kubernetes and Helm have been installed (and verified) as described in the 'Setup Kubernetes' section.
 
-1. Launch Kubernetes using the command:
+0. You may need to change permission to the .minikube and .kube files in your home directory:
 
-```sudo -E minikube start --vm-driver=none --extra-config=kubelet.resolv-conf=/var/run/systemd/resolve/resolv.conf```
+sudo chown -R <user_name>:<user_name> ~/.minikube/
+sudo chown -R m <user_name>:<user_name> ~/.kube/
+
+1. Launch Kubernetes using the command (reproduced here from https://developer.skatelescope.org/en/latest/development/getting_started.html):
+
+```$ sudo -E minikube start --vm-driver=none --extra-config=kubelet.resolv-conf=/var/run/systemd/resolve/resolv.conf```
 
 2. From the root of the project, run:
 
 ```$ make build```  
-```$ cd docker && make up  && make down```
+```$ cd docker && make up  && make down - TODO - not clear this step is needed - to confirm```
 ```$ cd ../  && make install-chart```
 
-#### Set the TANGO_HOST
+#### *Set the TANGO_HOST*
 
 The TANGO_HOST is required in order to run Jive.
 
-1. Display the Kubernetes nodes and images that have been started up:
+1. Display the Kubernetes nodes and images that have been started up and grep:
 
 ```$ kubectl get all -n mid-cbf```
 
@@ -177,9 +183,16 @@ The TANGO_HOST is required in order to run Jive.
 
 ```$ export TANGO_HOST=localhost:30333```
 
-Now Jive can be started and the devices inspected (see the 'JIVE GUI' section)
+Now Jive can be started and the devices inspected (see the 'Running JIVE' section)
 
-### Running Using Docker Compose
+#### *Shutdown*
+
+After finishing work, uninstall/shutdown in reverse, first the charts, then the minikube, run from the root:
+
+```$ make uninstall-chart```
+```$ minikube stop```
+
+### Running Using Docker Compose (deprecated)
 
 Running the docker containers using Docker Compose requires the following (see https://docs.docker.com/compose/):
 
@@ -202,16 +215,15 @@ To start the containers (inside which will run the Tango servers), issue (from t
 
 To list the running containers issue:
 
-``` $ docker ps```
+```$ docker ps```
 
 To list all created containers (not only running):
 
-```docker ps -a``` 
+```$ docker ps -a``` 
 
 To list all created containers but less verbose, run for ex.:
 
-```docker ps -a --format "table {{.ID}}\t{{.Status}}\t{{.Names}}"``` 
-
+```$ docker ps -a --format "table {{.ID}}\t{{.Status}}\t{{.Names}}"``` 
 
 This should list the running containers:
 
@@ -228,7 +240,7 @@ This should list the running containers:
 #### *Set the TANGO_HOST*
 
 The TANGO_HOST environment variable is required in order to run Jive (see bellow). To set TANGO HOST, navigate to teh root of the project and run:
-```python configJive.py```
+```$ python configJive.py```
 
 Then run the printed command at the command line.
 
@@ -238,7 +250,13 @@ Then run the printed command at the command line.
 
 2. extracts the first part of its IPv4Address of the "midcbf-databaseds"  and concatenates the TANG)_HOST value and esport command.
 
-Now Jive can be started and the devices inspected (see the 'JIVE GUI' section).
+Now Jive can be started and the devices inspected (see the 'Running JIVE' section).
+
+#### *Shutdown*
+
+After finishing work, to shutdown the containers and the Docker network, run from the root:
+
+```$ cd docker; make down```
 
 ## Running JIVE
 
@@ -246,22 +264,20 @@ JIVE is a graphical user interface with which one can browse the Tango Database 
 
 ```$ jive&```
 
-### Configuring scan (todo)
+### Configuring scan (todo )
 
-To configure scan with JIVE, the input needs “\” before each quotation mark. Normal JSON file wouldn’t work.
-To solve this problem, there are three options:
-1. Use a script to generate this specific input. 
-Put your JSON file in tangods/CbfSubarray/JIVEconfigscan/scanconfig.json.
-Run 
-`Python generateJIVE.py`
+To configure scan with JIVE, the input file needs “\” before each quotation mark. Normal JSON file wouldn’t work.
+To solve this problem, there are 2 options:
+1. Use a script to generate this specific input as follows:
+Copy your JSON file into the tangods/CbfSubarray/JIVEconfigscan/scanconfig.json file; then run:
 
-2. Use the sendConfig device to trigger configure scan with the subarray. Put configuration JSON in tangods/CbfSubarray/sendConfig/config.JSON
-3. Manually insert “\” before each quotation mark (not recommended...)
+```$ Python generateJIVE.py```
 
+2. Use the sendConfig device to trigger configure scan with the subarray. Copy the configuration JSON file into tangods/CbfSubarray/sendConfig/config.JSON.
 
 ## WebJive GUI (TODO)
 
-Note: WebJive GUI is currently out of date.
+Note: WebJive GUI is currently out of date. TODO
 This prototype provides a graphical user interface, using WebJive, that runs in Docker containers defined in the configuration files `tangogql.yml`, `traefik.yml`, and `webjive.yml`. To use, start the Docker containers, then navigate to `localhost:22484/testdb`. The following credentials can be used:
 
 * Username: `user1`
@@ -270,7 +286,7 @@ This prototype provides a graphical user interface, using WebJive, that runs in 
 The device tree can be viewed and explored. In addition, device attributes can be seen and modified, and device commands can be sent, by creating and saving a new dashboard.
 
 
-### Add devices (no longer required- TODO, update)
+### Add devices (deprecated TODO - remove)
 
 From the project root directory, issue the command
 ```
@@ -288,7 +304,7 @@ The interactive session can then be exited by the command
 $ exit
 ```
 
-### Configure attribute polling and events (not required TODO - update)
+### Configure attribute polling and events (deprecated - TODO remove)
 
 From the project root directory, again issue the command
 ```
