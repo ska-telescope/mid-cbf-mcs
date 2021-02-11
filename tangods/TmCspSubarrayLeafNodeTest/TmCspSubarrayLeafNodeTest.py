@@ -252,14 +252,14 @@ class TmCspSubarrayLeafNodeTest(SKABaseDevice):
         # PROTECTED REGION END #    //  TmCspSubarrayLeafNodeTest.dopplerPhaseCorrection_write
 
     def read_jonesMatrix(self):  
-        # PROTECTED REGION ID(TmCspSubarrayLeafNodeTest.delayModel_read) ENABLED START #
+        # PROTECTED REGION ID(TmCspSubarrayLeafNodeTest.jonesMatrix_read) ENABLED START #
         return json.dumps(self._jones_matrix)
-        # PROTECTED REGION END #    //  TmCspSubarrayLeafNodeTest.delayModel_read
+        # PROTECTED REGION END #    //  TmCspSubarrayLeafNodeTest.jonesMatrix_read
 
     def write_jonesMatrix(self, value):
-        # PROTECTED REGION ID(TmCspSubarrayLeafNodeTest.delayModel_write) ENABLED START #
+        # PROTECTED REGION ID(TmCspSubarrayLeafNodeTest.jonesMatrix_write) ENABLED START #
         self._jones_matrix = json.loads(str(value))
-        # PROTECTED REGION END #    //  TmCspSubarrayLeafNodeTest.delayModel_writedelay
+        # PROTECTED REGION END #    //  TmCspSubarrayLeafNodeTest.jonesMatrix_write
 
     def read_delayModel(self):
         # PROTECTED REGION ID(TmCspSubarrayLeafNodeTest.delayModel_read) ENABLED START #

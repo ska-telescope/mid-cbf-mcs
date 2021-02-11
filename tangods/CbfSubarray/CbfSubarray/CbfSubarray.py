@@ -1790,7 +1790,7 @@ class CbfSubarray(SKASubarray):
                 tango.EventType.CHANGE_EVENT,
                 device._jones_matrix_event_callback
             )
-            device.events_telstate[event_id] = attribute_proxy
+            device._events_telstate[event_id] = attribute_proxy
 
             # Configure rfiFlaggingMask.
             if "rfiFlaggingMask" in argin:

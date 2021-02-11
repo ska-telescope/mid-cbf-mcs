@@ -825,9 +825,17 @@ class TestCbfSubarray:
 
         assert create_subarray_1_proxy.obsState.value == ObsState.READY.value
 
+        #create a Jones matrix
         f = open(file_path + "/test_json/jonesmatrix.json")
         jones_matrix = json.loads(f.read().replace("\n", ""))
 
+        # update Jones Matrix
+        create_tm_telstate_proxy.jonesMatrix = json.dumps(jones_matrix)
+        time.sleep(1)
+
+        
+
+        # transition to obsState=SCANNING
         create_subarray_1_proxy.Scan(1)
         time.sleep(1)
         assert create_subarray_1_proxy.obsState.value == ObsState.SCANNING.value
