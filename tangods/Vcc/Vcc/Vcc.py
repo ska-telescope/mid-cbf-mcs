@@ -211,6 +211,14 @@ class Vcc(SKACapability):
         doc="Delay model coefficients, given per frequency slice"
     )
 
+    jonesMatrix = attribute(
+        dtype=('double',),
+        max_dim_x=16,
+        access=AttrWriteType.READ,
+        label='Jones Matrix',
+        doc='Jones Matrix, given per frequency slice'
+    )
+
     scanID = attribute(
         dtype='DevULong',
         access=AttrWriteType.READ_WRITE,
@@ -259,6 +267,7 @@ class Vcc(SKACapability):
         self._scfo_band_5a = 0
         self._scfo_band_5b = 0
         self._delay_model = [[0] * 6 for i in range(26)]
+        self._jones_matrix = [0.0 for i in range(16)]
         self._config_id = ""
         self._scan_id = 0
         self.set_change_event("subarrayMembership", True, True)
@@ -462,6 +471,12 @@ class Vcc(SKACapability):
         return self._delay_model
         # PROTECTED REGION END #    //  Vcc.delayModel_read
 
+    def read_jonesMatrix(self):
+        # PROTECTED REGION ID(Vcc.jonesMatrix_read) ENABLED START #
+        """Return jonesMatrix attribute(max=16 array): Jones Matrix, given per frequency slice"""
+        return self._jones_matrix
+        # PROTECTED REGION END #    //  Vcc.jonesMatrix_read
+
     def read_scanID(self):
         # PROTECTED REGION ID(Vcc.scanID_read) ENABLED START #
         """Return the scanID attribute."""
@@ -635,6 +650,34 @@ class Vcc(SKACapability):
                         )
                         self.logger.error(log_msg)
         # PROTECTED REGION END #    // Vcc.UpdateDelayModel
+
+    def is_UpdateJonesMatrix_allowed(self):
+            """allowed when Devstate is ON and ObsState is READY OR SCANNINNG"""
+            if self.dev_state() == tango.DevState.ON and \
+                    self.state_model._obs_state in [ObsState.READY.value, ObsState.SCANNING.value]:
+                return True
+            return False
+
+    @command(
+        dtype_in='str',
+        doc_in="Jones Matrix, given per frequency slice"
+    )
+    def UpdateJonesMatrix(self, argin):
+        # PROTECTED REGION ID(Vcc.UpdateJonesMatrix) ENABLED START #
+        """update FSP's Jones matrix (serialized JSON object)"""
+        argin = json.loads(argin)
+
+        for frequency_slice in argin:
+            if 1 <= frequency_slice["fsid"] <= 26:
+                    if len(frequency_slice["matrix"]) == 16 or len(frequency_slice["matrix"]) == 4:  # Jones matrix will be 4x4 or 2x2 depending on mode of operation
+                        self._jones_matrix = frequency_slice["matrix"]
+                    else:
+                        log_msg = "'matrix' not valid for frequency slice {}".format(frequency_slice["fsid"])
+                        self.logger.error(log_msg)
+            else:
+                log_msg = "'fsid' {} not valid".format(fsid["fsid"])
+                self.logger.error(log_msg)
+        # PROTECTED REGION END #    // Vcc.UpdateJonesMatrix
 
     def is_ValidateSearchWindow_allowed(self):
         # This command has no side effects, so just allow it anytime

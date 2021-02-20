@@ -187,7 +187,7 @@ class TmCspSubarrayLeafNodeTest(SKABaseDevice):
 
         self._config_ID = ""
         self._doppler_phase_correction = [0., 0., 0., 0.]
-        self._jones_matrix = {}
+        self._jones_matrix = {}  # this is interpreted as a JSON object
         self._delay_model = {}  # this is interpreted as a JSON object
         self._vis_destination_address = {}  # this is interpreted as a JSON object
         self._received_output_links = False

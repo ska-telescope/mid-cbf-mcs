@@ -24,21 +24,16 @@ def main(argv):
 
     jones_dict_list = []
 
-    for number_of_tests in range(3): # number of receptor tests generated
-        jones_details_list_receptor = []
-        for number_of_receptors in range(4):
-            receptor_details = []
-            for fsid in range(2):
-                jones_matrix = []
-                for entry in range(16): # number of entries in Jones matrix; 16 = 4x4 matrix
-                    jones_matrix.append(float(entry)) # fill the matrix with known data
-                receptor_details.append({'fsid': fsid, 'receptorMatrix': jones_matrix})
-            jones_details_list_receptor.append({'receptor': number_of_receptors+1, 'receptorDetails': receptor_details}) # number of receptor to be tested
-        jones_dict_list.append({'jonesDetails': jones_details_list_receptor})
+    for number_of_tests in range(3): # number of frquency slice tests generated
+        jones_details_list_fs = []
+        for fsid in range(2):
+            jones_matrix = []
+            for entry in range(16): # number of entries in Jones matrix; 16 = 4x4 matrix
+                jones_matrix.append(float(entry)) # fill the matrix with known data
+            jones_details_list_fs.append({'fsid': fsid+1, 'matrix': jones_matrix})
+        jones_dict_list.append({'jonesMatrixDetails': jones_details_list_fs})
 
-    #jones_matrix_file_name = json_file_path + json_file_name
-
-    jones_dict = {'jonesModel': jones_dict_list}
+    jones_dict = {'jonesMatrix': jones_dict_list}
 
     with open(json_file_name, 'w') as json_file:
         json.dump(jones_dict, json_file, indent=4, sort_keys=True)

@@ -828,17 +828,22 @@ class TestCbfSubarray:
         #create a Jones matrix
         f = open(file_path + "/test_json/jonesmatrix.json")
         jones_matrix = json.loads(f.read().replace("\n", ""))
+        # jones_matrix["jonesMatrix"][0]["epoch"] = str(int(time.time()) + 20)
+        # jones_matrix["jonesMatrix"][1]["epoch"] = "0"
+        # jones_matrix["jonesMatrix"][2]["epoch"] = str(int(time.time()) + 10)
 
         # update Jones Matrix
         create_tm_telstate_proxy.jonesMatrix = json.dumps(jones_matrix)
         time.sleep(1)
-
+        assert create_vcc_proxies[receptor_to_vcc[1] - 1].jonesMatrix[2] == 2.0
         
 
         # transition to obsState=SCANNING
         create_subarray_1_proxy.Scan(1)
         time.sleep(1)
         assert create_subarray_1_proxy.obsState.value == ObsState.SCANNING.value
+        time.sleep(10)
+        assert create_vcc_proxies[receptor_to_vcc[1] - 1].jonesMatrix[1] == 1.0
 
         create_subarray_1_proxy.EndScan()
         time.sleep(1)
