@@ -82,6 +82,13 @@ with open("tangods/devices.json", "w+") as f:
               "        ],\n" \
               "        \"attributeProperties\": [\n" \
               "            {\n" \
+              "                \"attributeName\": \"jonesMatrix\",\n" \
+              "                \"attrPropName\": \"\",\n" \
+              "                \"attrPropValue\": \"\",\n" \
+              "                \"pollingPeriod\": 1000,\n" \
+              "                \"changeEventAbs\": \"1\"\n" \
+              "            },\n" \
+              "            {\n" \
               "                \"attributeName\": \"delayModel\",\n" \
               "                \"attrPropName\": \"\",\n" \
               "                \"attrPropValue\": \"\",\n" \
@@ -120,6 +127,13 @@ with open("tangods/devices.json", "w+") as f:
               "            }\n" \
               "        ],\n" \
               "        \"attributeProperties\": [\n" \
+              "            {\n" \
+              "                \"attributeName\": \"jonesMatrix\",\n" \
+              "                \"attrPropName\": \"\",\n" \
+              "                \"attrPropValue\": \"\",\n" \
+              "                \"pollingPeriod\": 1000,\n" \
+              "                \"changeEventAbs\": \"1\"\n" \
+              "            },\n" \
               "            {\n" \
               "                \"attributeName\": \"delayModel\",\n" \
               "                \"attrPropName\": \"\",\n" \

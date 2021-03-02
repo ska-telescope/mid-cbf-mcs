@@ -182,6 +182,8 @@ class CbfSubarray(SKASubarray):
         self._mutex_delay_model_config.release()
 
     def _jones_matrix_event_callback(self, event):
+        self.logger.info("\n\nCbfSubarray._jones_matrix_event_callback\n\n")
+        self.logger.info("\n\n\n--------------------test--------------------\n\n\n")
         if not event.err:
             if self.state_model._obs_state not in [ObsState.READY.value, ObsState.SCANNING.value]:
                 log_msg = "Ignoring Jones matrix (obsState not correct)."
@@ -203,7 +205,7 @@ class CbfSubarray(SKASubarray):
                 for jones_matrix in jones_matrix_all["jonesMatrix"]:
                     t = Thread(
                         target=self._update_jones_matrix,
-                        args=(json.dumps(jones_matrix["jonesMatrixDetails"]))
+                        args=(int(jones_matrix["epoch"]), json.dumps(jones_matrix["matrixDetails"]))
                     )
                     t.start()
             except Exception as e:
@@ -213,16 +215,17 @@ class CbfSubarray(SKASubarray):
                 log_msg = item.reason + ": on attribute " + str(event.attr_name)
                 self.logger.error(log_msg)
 
-    def _update_jones_matrix(self, matrix):
-        # This method is always called on a separate thread
-        #log_msg = "Jones matrix active at {} (currently {})...".format(epoch, int(time.time()))
-        #self.logger.warn(log_msg)
+    def _update_jones_matrix(self, epoch, matrix):
+        #This method is always called on a separate thread
+        self.logger.debug("CbfSubarray._update_jones_matrix")
+        log_msg = "Jones matrix active at {} (currently {})...".format(epoch, int(time.time()))
+        self.logger.warn(log_msg)
 
-        #if epoch > time.time():
-            #time.sleep(epoch - time.time())
+        if epoch > time.time():
+            time.sleep(epoch - time.time())
 
-        #log_msg = "Updating Jones Matrix at specified epoch {}...".format(epoch)
-        #self.logger.warn(log_msg)
+        log_msg = "Updating Jones Matrix at specified epoch {}...".format(epoch)
+        self.logger.warn(log_msg)
 
         data = tango.DeviceData()
         data.insert(tango.DevString, matrix)

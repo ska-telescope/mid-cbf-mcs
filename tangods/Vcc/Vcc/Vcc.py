@@ -212,11 +212,12 @@ class Vcc(SKACapability):
     )
 
     jonesMatrix = attribute(
-        dtype=('double',),
+        dtype=(('double',),),
         max_dim_x=16,
+        max_dim_y=26,
         access=AttrWriteType.READ,
-        label='Jones Matrix',
-        doc='Jones Matrix, given per frequency slice'
+        label='Jones Matrix elements',
+        doc='Jones Matrix elements, given per frequency slice'
     )
 
     scanID = attribute(
@@ -267,7 +268,7 @@ class Vcc(SKACapability):
         self._scfo_band_5a = 0
         self._scfo_band_5b = 0
         self._delay_model = [[0] * 6 for i in range(26)]
-        self._jones_matrix = [0.0 for i in range(16)]
+        self._jones_matrix = [[0] * 16 for i in range(26)]
         self._config_id = ""
         self._scan_id = 0
         self.set_change_event("subarrayMembership", True, True)
@@ -516,6 +517,7 @@ class Vcc(SKACapability):
     def On(self):
         # PROTECTED REGION ID(Vcc.On) ENABLED START #
         """turn ON VCC; send DISABLE signal to all the band and search window"""
+        self.logger.debug("\nVcc.On\n")
         self._proxy_band_12.SetState(tango.DevState.DISABLE)
         self._proxy_band_3.SetState(tango.DevState.DISABLE)
         self._proxy_band_4.SetState(tango.DevState.DISABLE)
@@ -665,18 +667,43 @@ class Vcc(SKACapability):
     def UpdateJonesMatrix(self, argin):
         # PROTECTED REGION ID(Vcc.UpdateJonesMatrix) ENABLED START #
         """update FSP's Jones matrix (serialized JSON object)"""
+        self.logger.debug("Vcc.UpdateJonesMatrix\n")
+
         argin = json.loads(argin)
 
-        for frequency_slice in argin:
-            if 1 <= frequency_slice["fsid"] <= 26:
-                    if len(frequency_slice["matrix"]) == 16 or len(frequency_slice["matrix"]) == 4:  # Jones matrix will be 4x4 or 2x2 depending on mode of operation
-                        self._jones_matrix = frequency_slice["matrix"]
+        for receptor in argin:
+            if receptor["receptor"] == self._receptor_ID:
+                for frequency_slice in receptor["receptorMatrix"]:
+                    if 1 <= frequency_slice["fsid"] <= 26:
+                        if len(frequency_slice["matrix"]) == 16:
+                            self._jones_matrix[frequency_slice["fsid"] - 1] = \
+                                frequency_slice["matrix"]
+                            self.logger.error("_jones_matrix[frequency_slice[fsid] - 1] = {}".format(_jones_matrix[frequency_slice["fsid"] - 1]))
+                        else:
+                            log_msg = "'matrix' not valid for frequency slice {} of " \
+                                      "receptor {}".format(frequency_slice["fsid"], self._receptor_ID)
+                            self.logger.error(log_msg)
                     else:
-                        log_msg = "'matrix' not valid for frequency slice {}".format(frequency_slice["fsid"])
+                        log_msg = "'fsid' {} not valid for receptor {}".format(
+                            frequency_slice["fsid"], self._receptor_ID
+                        )
                         self.logger.error(log_msg)
-            else:
-                log_msg = "'fsid' {} not valid".format(fsid["fsid"])
-                self.logger.error(log_msg)
+
+        # for receptor in argin:
+        #     for i in range(16):
+        #         self._jones_matrix[i] = receptor["matrix"][i]
+            # if receptor["receptor"] == self._receptor_ID:
+            #         if len(receptor["matrix"]) == 16:  # Jones matrix will be 4x4 or 2x2 depending on mode of operation
+            #             for i in range(16):
+            #                 self._jones_matrix[i] = receptor["matrix"][i]
+            #         elif len(receptor["matrix"]) == 4:
+            #             self._jones_matrix = receptor["matrix"]
+            #         else:
+            #             log_msg = "'matrix' not valid for frequency slice {}".format(frequency_slice["fsid"])
+            #             self.logger.error(log_msg)
+            # else:
+            #     log_msg = "'fsid' {} not valid".format(fsid["fsid"])
+            #     self.logger.error(log_msg)
         # PROTECTED REGION END #    // Vcc.UpdateJonesMatrix
 
     def is_ValidateSearchWindow_allowed(self):

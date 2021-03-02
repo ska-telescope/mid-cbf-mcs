@@ -83,6 +83,20 @@ install-chart: dep-up namespace ## install the helm chart with name HELM_RELEASE
 	rm generated_values.yaml; \
 	rm values.yaml
 
+install-chart-with-taranta: dep-up namespace ## install the helm chart with name HELM_RELEASE and path UMBRELLA_CHART_PATH on the namespace KUBE_NAMESPACE 
+	@echo $(TANGO_HOST)
+	@sed -e 's/CI_PROJECT_PATH_SLUG/$(CI_PROJECT_PATH_SLUG)/' $(UMBRELLA_CHART_PATH)values.yaml > generated_values.yaml; \
+	sed -e 's/CI_ENVIRONMENT_SLUG/$(CI_ENVIRONMENT_SLUG)/' generated_values.yaml > values.yaml; \
+	helm dependency update $(UMBRELLA_CHART_PATH); \
+	helm install $(HELM_RELEASE) \
+	--set global.minikube=$(MINIKUBE) \
+	--set global.tango_host=$(TANGO_HOST) \
+	--values taranta-values.yaml $(SET_IMAGE_TAG) \
+        $(UMBRELLA_CHART_PATH) --namespace $(KUBE_NAMESPACE); \
+	rm generated_values.yaml; \
+	rm values.yaml
+
+
 template-chart: clean dep-up## install the helm chart with name RELEASE_NAME and path UMBRELLA_CHART_PATH on the namespace KUBE_NAMESPACE
 	@sed -e 's/CI_PROJECT_PATH_SLUG/$(CI_PROJECT_PATH_SLUG)/' $(UMBRELLA_CHART_PATH)values.yaml > generated_values.yaml; \
 	sed -e 's/CI_ENVIRONMENT_SLUG/$(CI_ENVIRONMENT_SLUG)/' generated_values.yaml > values.yaml; \

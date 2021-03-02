@@ -1,0 +1,48 @@
+# Kubernetes values.yaml file to be used to enable taranta (webjive) with
+# the mid-cbf-mcs umbrella chart.
+# If you use the umbrella-chart with the defaul values.yaml file (running
+# make install-chart) taranta pods are not started.
+# If the `make install-chart-with-taranta` command is issued, the
+# values.yaml file is overwirtten with the current configuraiton file
+
+display: ":0"
+xauthority: "~/.Xauthority"
+minikube: true
+
+global:
+  minikube: true
+  tango_host: databaseds-tango-base-test:10000
+  environment_variables: []
+  sub-system:
+    tango-base:
+      enabled: false
+
+tango-base:
+  vnc:
+    enabled: false
+  tangorest:
+    enabled: false
+  ingress:
+    enabled: false
+  tangodb:
+    use_pv: false
+
+webjive:
+    enabled: true
+    minikube: true
+    ingress:
+       enabled: true
+       nginx: true
+       hostname: integration.engageska-portugal.pt
+
+webjive-dashboard:   
+    ingress:
+       enabled: true     
+       nginx: true     
+       hostname: integration.engageska-portugal.pt 
+
+webjive-auth:   
+    ingress:     
+        enabled: true     
+        nginx: true     
+        hostname: integration.engageska-portugal.pt
