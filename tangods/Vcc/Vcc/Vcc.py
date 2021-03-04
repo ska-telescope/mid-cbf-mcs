@@ -677,7 +677,7 @@ class Vcc(SKACapability):
                     if 1 <= frequency_slice["fsid"] <= 26:
                         if len(frequency_slice["matrix"]) == 16:
                             self._jones_matrix[frequency_slice["fsid"] - 1] = \
-                                frequency_slice["matrix"]
+                                frequency_slice["matrix"].copy()
                             self.logger.error("_jones_matrix[frequency_slice[fsid] - 1] = {}".format(_jones_matrix[frequency_slice["fsid"] - 1]))
                         else:
                             log_msg = "'matrix' not valid for frequency slice {} of " \
@@ -688,22 +688,6 @@ class Vcc(SKACapability):
                             frequency_slice["fsid"], self._receptor_ID
                         )
                         self.logger.error(log_msg)
-
-        # for receptor in argin:
-        #     for i in range(16):
-        #         self._jones_matrix[i] = receptor["matrix"][i]
-            # if receptor["receptor"] == self._receptor_ID:
-            #         if len(receptor["matrix"]) == 16:  # Jones matrix will be 4x4 or 2x2 depending on mode of operation
-            #             for i in range(16):
-            #                 self._jones_matrix[i] = receptor["matrix"][i]
-            #         elif len(receptor["matrix"]) == 4:
-            #             self._jones_matrix = receptor["matrix"]
-            #         else:
-            #             log_msg = "'matrix' not valid for frequency slice {}".format(frequency_slice["fsid"])
-            #             self.logger.error(log_msg)
-            # else:
-            #     log_msg = "'fsid' {} not valid".format(fsid["fsid"])
-            #     self.logger.error(log_msg)
         # PROTECTED REGION END #    // Vcc.UpdateJonesMatrix
 
     def is_ValidateSearchWindow_allowed(self):

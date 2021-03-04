@@ -33,7 +33,7 @@ test:
 	cd /app/tangods/CbfSubarray && python3 setup.py test | tee setup_py_test.stdout
 	cd /app && ./code-analysis.sh | tee code_analysis.stdout
 	mkdir -p build/reports && \
-	if [-d build ]; then \
+	if [ -d build ]; then \
 		mv /app/tangods/CbfSubarray/setup_py_test.stdout ./build/cbf_subarray_setup_test.stdout; \
 		mv /app/tangods/CbfSubarray/htmlcov ./build/cbf_subarray_htmlcov; \
 		mv /app/tangods/CbfSubarray/coverage.xml ./build/cbf_subarray_coverage.xml; \

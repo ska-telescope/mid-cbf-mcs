@@ -841,23 +841,34 @@ class TestCbfSubarray:
         # update Jones Matrix
         create_tm_telstate_proxy.jonesMatrix = json.dumps(jones_matrix)
         time.sleep(1)
-        for i in range(16):
-            logging.info("receptor_to_vcc[1] - 1 = {}".format(receptor_to_vcc[1] - 1))
-            try:
-                logging.info("{}".format(create_vcc_proxies[0].jonesMatrix[0][i]))
-            except IndexError:
-                logging.info("IndexError")
-            except:
-                pass
-        for i in range(16):
-            try:
-                assert create_vcc_proxies[receptor_to_vcc[1] - 1].jonesMatrix[0][i] == float(i)
-            except AssertionError as error:
-                logging.info("Assertion Error at JM entry {}; {} != {}".format(i, create_vcc_proxies[receptor_to_vcc[1] - 1].jonesMatrix[0][i], float(i)))
-                #raise error
-            except Exception:
-                logging.info("IndexError")
-                pass
+
+        for receptor in jones_matrix["jonesMatrix"][0]["matrixDetails"]:
+            for frequency_slice in receptor["receptorMatrix"]:
+                for i in range(16):
+                    try:
+                        assert create_vcc_proxies[receptor_to_vcc[receptor["receptor"]] - 1].jonesMatrix[frequency_slice["fsid"]-1][i] == (2*float(i))
+                    except AssertionError:
+                        logging.error("AssertionError; incorrect Jones matrix entry: VCC {}, jonesMatrix[{}][{}] = {}".format(receptor_to_vcc[receptor["receptor"]] - 1, frequency_slice["fsid"]-1, i, create_vcc_proxies[receptor_to_vcc[receptor["receptor"]] - 1].jonesMatrix[frequency_slice["fsid"]-1][i]))
+                    except Exception:
+                        pass
+
+        # logging.info("receptor_to_vcc[1] - 1 = {}".format(receptor_to_vcc[1] - 1))
+        # for i in range(16):
+        #     try:
+        #         logging.info("{}".format(create_vcc_proxies[receptor_to_vcc[1] - 1].jonesMatrix[0][i]))
+        #     except IndexError:
+        #         logging.info("IndexError")
+        #     except Exception:
+        #         pass
+        #     try:
+        #         assert create_vcc_proxies[receptor_to_vcc[1] - 1].jonesMatrix[0][i] == float(i)
+        #     except AssertionError as error:
+        #         logging.info("Assertion Error at JM entry {}; {} != {}".format(i, create_vcc_proxies[receptor_to_vcc[1] - 1].jonesMatrix[0][i], float(i)))
+        #         #raise error
+        #     except IndexError:
+        #         logging.info("IndexError")
+        #     except Exception:
+        #         pass
 
         # transition to obsState=SCANNING
         create_subarray_1_proxy.Scan(1)

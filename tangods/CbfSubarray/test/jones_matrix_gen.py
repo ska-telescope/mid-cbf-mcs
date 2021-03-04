@@ -31,12 +31,12 @@ def main(argv):
             for fsid in range(2):
                 jones_matrix = []
                 for entry in range(16): # number of entries in Jones matrix; 16 = 4x4 matrix
-                    jones_matrix.append(float(entry)) # fill the matrix with known data
+                    jones_matrix.append(float(entry*(number_of_tests+1))) # fill the matrix with known data
                 receptor_details.append({'fsid': fsid+1, 'matrix': jones_matrix})
             if number_of_receptors == 0:
-                jones_details_list_receptor.append({'receptor': number_of_receptors+1, 'receptorMatrix': receptor_details}) # number of receptor to be tested
+                jones_details_list_receptor.append({'receptor': 1, 'receptorMatrix': receptor_details}) # number of receptor to be tested
             else:
-                jones_details_list_receptor.append({'receptor': number_of_receptors+3, 'receptorMatrix': receptor_details}) # number of receptor to be tested
+                jones_details_list_receptor.append({'receptor': 4, 'receptorMatrix': receptor_details}) # number of receptor to be tested
 
         jones_dict_list.append({'matrixDetails': jones_details_list_receptor})
 
