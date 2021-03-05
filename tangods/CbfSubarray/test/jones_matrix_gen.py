@@ -3,6 +3,7 @@
 
 import sys, os, getopt
 import json
+from random import randint
 
 def main(argv):
     json_file_path = ''
@@ -32,7 +33,7 @@ def main(argv):
                 jones_matrix = []
                 for entry in range(16): # number of entries in Jones matrix; 16 = 4x4 matrix
                     jones_matrix.append(float(entry*(number_of_tests+1))) # fill the matrix with known data
-                receptor_details.append({'fsid': fsid+1, 'matrix': jones_matrix})
+                receptor_details.append({'fsid': randint(1, 26), 'matrix': jones_matrix})
             if number_of_receptors == 0:
                 jones_details_list_receptor.append({'receptor': 1, 'receptorMatrix': receptor_details}) # number of receptor to be tested
             else:

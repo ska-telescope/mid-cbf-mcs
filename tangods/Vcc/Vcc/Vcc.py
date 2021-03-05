@@ -516,8 +516,8 @@ class Vcc(SKACapability):
     @command()
     def On(self):
         # PROTECTED REGION ID(Vcc.On) ENABLED START #
+        self.logger.debug("Vcc.On")
         """turn ON VCC; send DISABLE signal to all the band and search window"""
-        self.logger.debug("\nVcc.On\n")
         self._proxy_band_12.SetState(tango.DevState.DISABLE)
         self._proxy_band_3.SetState(tango.DevState.DISABLE)
         self._proxy_band_4.SetState(tango.DevState.DISABLE)
@@ -538,6 +538,7 @@ class Vcc(SKACapability):
     @command()
     def Off(self):
         # PROTECTED REGION ID(Vcc.Off) ENABLED START #
+        self.logger.debug("Vcc.Off")
         """turn VCC off, send OFF signal to all the bands and search window capabilities"""
         self._proxy_band_12.SetState(tango.DevState.OFF)
         self._proxy_band_3.SetState(tango.DevState.OFF)
@@ -666,19 +667,20 @@ class Vcc(SKACapability):
     )
     def UpdateJonesMatrix(self, argin):
         # PROTECTED REGION ID(Vcc.UpdateJonesMatrix) ENABLED START #
+        self.logger.debug("Vcc.UpdateJonesMatrix")
         """update FSP's Jones matrix (serialized JSON object)"""
-        self.logger.debug("Vcc.UpdateJonesMatrix\n")
 
         argin = json.loads(argin)
 
         for receptor in argin:
             if receptor["receptor"] == self._receptor_ID:
                 for frequency_slice in receptor["receptorMatrix"]:
+                    self.logger.debug("receptor: {}, fsid: {}".format(receptor["receptor"], frequency_slice["fsid"]))
                     if 1 <= frequency_slice["fsid"] <= 26:
                         if len(frequency_slice["matrix"]) == 16:
                             self._jones_matrix[frequency_slice["fsid"] - 1] = \
                                 frequency_slice["matrix"].copy()
-                            self.logger.error("_jones_matrix[frequency_slice[fsid] - 1] = {}".format(_jones_matrix[frequency_slice["fsid"] - 1]))
+                            self.logger.debug("_jones_matrix[frequency_slice[fsid] - 1] = {}".format(_jones_matrix[frequency_slice["fsid"] - 1]))
                         else:
                             log_msg = "'matrix' not valid for frequency slice {} of " \
                                       "receptor {}".format(frequency_slice["fsid"], self._receptor_ID)

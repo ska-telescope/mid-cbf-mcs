@@ -182,8 +182,7 @@ class CbfSubarray(SKASubarray):
         self._mutex_delay_model_config.release()
 
     def _jones_matrix_event_callback(self, event):
-        self.logger.info("\n\nCbfSubarray._jones_matrix_event_callback\n\n")
-        self.logger.info("\n\n\n--------------------test--------------------\n\n\n")
+        self.logger.debug("CbfSubarray._jones_matrix_event_callback")
         if not event.err:
             if self.state_model._obs_state not in [ObsState.READY.value, ObsState.SCANNING.value]:
                 log_msg = "Ignoring Jones matrix (obsState not correct)."
