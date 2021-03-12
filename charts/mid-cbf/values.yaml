@@ -37,7 +37,7 @@ midcbf:
   image:
     registry: nexus.engageska-portugal.pt/ska-docker
     image: mid-cbf-mcs
-    tag: 0.4.5
+    tag: 0.4.6
     pullPolicy: IfNotPresent
 
 resources:
