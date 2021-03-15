@@ -34,7 +34,7 @@ import pytest
 #Local imports
 
 from CbfSubarray.CbfSubarray import CbfSubarray
-from ska.base.control_model import HealthState, AdminMode, ObsState
+from ska_tango_base.control_model import HealthState, AdminMode, ObsState
 
 @pytest.mark.usefixtures(
     "create_cbf_master_proxy",
@@ -544,7 +544,7 @@ class TestCbfSubarray:
         create_cbf_master_proxy.On()
         time.sleep(3)
 
-        assert create_subarray_1_proxy.obsState.value == ObsState.IDLE.EMPTY
+        assert create_subarray_1_proxy.obsState.value == ObsState.EMPTY.value
 
         # turn on Subarray
         if create_subarray_1_proxy.State() != DevState.ON:
@@ -849,6 +849,7 @@ class TestCbfSubarray:
                         assert create_vcc_proxies[receptor_to_vcc[receptor["receptor"]]-1].jonesMatrix[frequency_slice["fsid"]-1][i] == i
                     except AssertionError:
                         logging.error("AssertionError; incorrect Jones matrix entry: epoch {}, VCC {}, i = {}, jonesMatrix[{}] = {}".format(jones_matrix["jonesMatrix"][1]["epoch"], receptor_to_vcc[receptor["receptor"]], i, frequency_slice["fsid"]-1, create_vcc_proxies[receptor_to_vcc[receptor["receptor"]]-1].jonesMatrix[frequency_slice["fsid"]-1]))
+                        return AssertionError
                     except Exception:
                         pass
 
@@ -864,6 +865,7 @@ class TestCbfSubarray:
                         assert create_vcc_proxies[receptor_to_vcc[receptor["receptor"]]-1].jonesMatrix[frequency_slice["fsid"]-1][i] == i
                     except AssertionError:
                         logging.error("AssertionError; incorrect Jones matrix entry: epoch {}, VCC {}, i = {}, jonesMatrix[{}] = {}".format(jones_matrix["jonesMatrix"][2]["epoch"], receptor_to_vcc[receptor["receptor"]], i, frequency_slice["fsid"]-1, create_vcc_proxies[receptor_to_vcc[receptor["receptor"]]-1].jonesMatrix[frequency_slice["fsid"]-1]))
+                        return AssertionError
                     except Exception:
                         pass
         
@@ -875,6 +877,7 @@ class TestCbfSubarray:
                         assert create_vcc_proxies[receptor_to_vcc[receptor["receptor"]]-1].jonesMatrix[frequency_slice["fsid"]-1][i] == i
                     except AssertionError:
                         logging.error("AssertionError; incorrect Jones matrix entry: epoch {}, VCC {}, i = {}, jonesMatrix[{}] = {}".format(jones_matrix["jonesMatrix"][0]["epoch"], receptor_to_vcc[receptor["receptor"]], i, frequency_slice["fsid"]-1, create_vcc_proxies[receptor_to_vcc[receptor["receptor"]]-1].jonesMatrix[frequency_slice["fsid"]-1]))
+                        return AssertionError
                     except Exception:
                         pass
 

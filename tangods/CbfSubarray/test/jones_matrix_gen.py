@@ -41,8 +41,6 @@ def main(argv):
 
         jones_dict_list.append({'matrixDetails': jones_details_list_receptor})
 
-    #jones_matrix_file_name = json_file_path + json_file_name
-
     jones_dict = {'jonesMatrix': jones_dict_list}
 
     with open(json_file_name, 'w') as json_file:
