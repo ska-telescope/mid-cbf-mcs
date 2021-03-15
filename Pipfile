@@ -13,7 +13,7 @@ name = "nexus-hosted"
 # otherwise pytango will be recompiled.
 numpy = "==1.17.2"
 pytango = "==9.3.1"
-#lmcbaseclasses= ">=0.4.0"
+# lmcbaseclasses= ">=0.4.0"
 ska-tango-base= ">=0.9.0"
 # itango is added to make it easier to exercise the device in a CLI session,
 # but it's not mandatory. If you remove itango, you should also remove the
