@@ -227,7 +227,7 @@ class CbfSubarrayCorrConfig(SKACapability):
     def Scan(self, argin):
         # PROTECTED REGION ID(CbfSubarrayCorrConfig.Scan) ENABLED START #
         """Set ObsState of CbfsubarrayCorrConfig to SCANNING if it is cuurently READY"""
-        if self._obs_state != ObsState.READY
+        if self._obs_state != ObsState.READY:
             msg = "Device not in READY obsState."
             self.logger.error(msg)
             tango.Except.throw_exception("Command failed", msg, "Scan execution",
