@@ -132,7 +132,7 @@ class CbfSubarray(SKASubarray):
 
     def _delay_model_event_callback(self, event):
         if not event.err:
-            if self.state_model._obs_state not in [ObsState.READY.value, ObsState.SCANNING.value]:
+            if self._obs_state not in [ObsState.READY, ObsState.SCANNING]:
                 log_msg = "Ignoring delay model (obsState not correct)."
                 self.logger.warn(log_msg)
                 return
@@ -184,7 +184,7 @@ class CbfSubarray(SKASubarray):
     def _jones_matrix_event_callback(self, event):
         self.logger.debug("CbfSubarray._jones_matrix_event_callback")
         if not event.err:
-            if self.state_model._obs_state not in [ObsState.READY.value, ObsState.SCANNING.value]:
+            if self._obs_state not in [ObsState.READY, ObsState.SCANNING]:
                 log_msg = "Ignoring Jones matrix (obsState not correct)."
                 self.logger.warn(log_msg)
                 return
@@ -1067,7 +1067,7 @@ class CbfSubarray(SKASubarray):
 
         # transitions to EMPTY if not assigned any receptors
         if not self._receptors:
-            self.state_model._update_obs_state('EMPTY')
+            self._update_obs_state(ObsState.EMPTY)
 
 
     # Used by commands that needs resource manager in SKASubarray base class (for example AddReceptors command). 
@@ -1708,7 +1708,7 @@ class CbfSubarray(SKASubarray):
             device._deconfigure()
 
             data = tango.DeviceData()
-            data.insert(tango.DevUShort, ObsState.CONFIGURING.value)
+            data.insert(tango.DevUShort, ObsState.CONFIGURING)
             device._group_vcc.command_inout("SetObservingState", data)
 
             argin = json.loads(argin)
@@ -1821,7 +1821,7 @@ class CbfSubarray(SKASubarray):
 
             # The VCCs are done configuring at this point
             data = tango.DeviceData()
-            data.insert(tango.DevUShort, ObsState.READY.value)
+            data.insert(tango.DevUShort, ObsState.READY)
             device._group_vcc.command_inout("SetObservingState", data)
 
             ####### FSP Subarray ######
@@ -2101,7 +2101,7 @@ class CbfSubarray(SKASubarray):
 
     def is_EndScan_allowed(self):
         """allowed if SUbarray is ON"""
-        if self.dev_state() == tango.DevState.ON and self.state_model._obs_state==ObsState.SCANNING:
+        if self.dev_state() == tango.DevState.ON and self._obs_state==ObsState.SCANNING:
             return True
         return False
 

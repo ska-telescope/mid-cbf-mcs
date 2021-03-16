@@ -273,7 +273,7 @@ class Vcc(SKACapability):
         self._scan_id = 0
         self.set_change_event("subarrayMembership", True, True)
 
-        self.state_model._obs_state = ObsState.IDLE.value
+        self._update_obs_state(ObsState.IDLE)
         self.set_state(tango.DevState.OFF)
         # PROTECTED REGION END #    //  Vcc.init_device
 
@@ -325,7 +325,7 @@ class Vcc(SKACapability):
         self._subarray_membership = value
         self.push_change_event("subarrayMembership",value)
         if not value:
-            self.state_model._obs_state = ObsState.IDLE.value
+            self._update_obs_state(ObsState.IDLE)
         # PROTECTED REGION END #    //  Vcc.subarrayMembership_write
 
     def read_frequencyBand(self):
@@ -509,7 +509,7 @@ class Vcc(SKACapability):
     def is_On_allowed(self):
         """allowed if it's in OFF state and obsState is IDLE"""
         if self.dev_state() == tango.DevState.OFF and \
-                self.state_model._obs_state == ObsState.IDLE.value:
+                self._obs_state == ObsState.IDLE:
             return True
         return False
 
@@ -531,7 +531,7 @@ class Vcc(SKACapability):
     def is_Off_allowed(self):
         """allowed if devState is ON, ObsState is IDLE"""
         if self.dev_state() == tango.DevState.ON and \
-                self.state_model._obs_state == ObsState.IDLE.value:
+                self._obs_state == ObsState.IDLE:
             return True
         return False
 
@@ -555,7 +555,7 @@ class Vcc(SKACapability):
     def is_SetFrequencyBand_allowed(self):
         """allowed if devState is ON and ObsState is Configuring"""
         if self.dev_state() == tango.DevState.ON and \
-                self.state_model._obs_state == ObsState.CONFIGURING.value:
+                self._obs_state == ObsState.CONFIGURING:
             return True
         return False
 
@@ -598,10 +598,10 @@ class Vcc(SKACapability):
     def is_SetObservingState_allowed(self):
         """allowed if VCC is ON and ObsState is IDLE,CONFIGURING,READY, not SCANNING"""
         if self.dev_state() == tango.DevState.ON and \
-                self.state_model._obs_state in [
-            ObsState.IDLE.value,
-            ObsState.CONFIGURING.value,
-            ObsState.READY.value
+                self._obs_state in [
+            ObsState.IDLE,
+            ObsState.CONFIGURING,
+            ObsState.READY
         ]:
             return True
         return False
@@ -614,7 +614,7 @@ class Vcc(SKACapability):
         # PROTECTED REGION ID(Vcc.SetObservingState) ENABLED START #
         """Since obsState is read-only, CBF Subarray needs a way to change the obsState of a VCC, BUT ONLY TO CONFIGURING OR READY, during a scan configuration."""
         if argin in [ObsState.CONFIGURING.value, ObsState.READY.value]:
-            self.state_model._obs_state = argin
+            self._update_obs_state(argin)
         else:
             # shouldn't happen
             self.logger.warn("obsState must be CONFIGURING or READY. Ignoring.")
@@ -623,7 +623,7 @@ class Vcc(SKACapability):
     def is_UpdateDelayModel_allowed(self):
         """allowed when Devstate is ON and ObsState is READY OR SCANNIGN"""
         if self.dev_state() == tango.DevState.ON and \
-                self.state_model._obs_state in [ObsState.READY.value, ObsState.SCANNING.value]:
+                self._obs_state in [ObsState.READY, ObsState.SCANNING]:
             return True
         return False
 
@@ -657,7 +657,7 @@ class Vcc(SKACapability):
     def is_UpdateJonesMatrix_allowed(self):
             """allowed when Devstate is ON and ObsState is READY OR SCANNINNG"""
             if self.dev_state() == tango.DevState.ON and \
-                    self.state_model._obs_state in [ObsState.READY.value, ObsState.SCANNING.value]:
+                    self._obs_state in [ObsState.READY, ObsState.SCANNING]:
                 return True
             return False
 
@@ -874,7 +874,7 @@ class Vcc(SKACapability):
     def is_ConfigureSearchWindow_allowed(self):
         """allowed if DevState is ON and ObsState is CONFIGURING"""
         if self.dev_state() == tango.DevState.ON and \
-                self.state_model._obs_state == ObsState.CONFIGURING.value:
+                self._obs_state == ObsState.CONFIGURING:
             return True
         return False
 
@@ -1003,7 +1003,7 @@ class Vcc(SKACapability):
     def is_EndScan_allowed(self):
         """allowed when VCC is ON and ObsState is SCANNING"""
         if self.dev_state() == tango.DevState.ON and \
-                self.state_model._obs_state == ObsState.SCANNING.value:
+                self._obs_state == ObsState.SCANNING:
             return True
         return False
 
@@ -1011,7 +1011,7 @@ class Vcc(SKACapability):
     def EndScan(self):
         # PROTECTED REGION ID(Vcc.EndScan) ENABLED START #
         """End the scan: Set the obsState to READY. Set ScanID to 0"""
-        self.state_model._obs_state = ObsState.READY.value
+        self._obs_state = ObsState.READY
         self._scan_id = 0
         # nothing else is supposed to happen
         # PROTECTED REGION END #    //  Vcc.EndScan
@@ -1019,7 +1019,7 @@ class Vcc(SKACapability):
     def is_Scan_allowed(self):
         """scan is allowed when VCC is on, ObsState is READY"""
         if self.dev_state() == tango.DevState.ON and \
-                self.state_model._obs_state == ObsState.READY.value:
+                self._obs_state == ObsState.READY:
             return True
         return False
 
@@ -1030,7 +1030,7 @@ class Vcc(SKACapability):
     def Scan(self, argin):
         # PROTECTED REGION ID(Vcc.Scan) ENABLED START #
         """set VCC ObsState to SCANNING"""
-        self.state_model._obs_state = ObsState.SCANNING.value
+        self._update_obs_state(ObsState.SCANNING)
         # Set scanID
         try:
             self._scan_id=int(argin)
@@ -1045,7 +1045,7 @@ class Vcc(SKACapability):
     def is_GoToIdle_allowed(self):
         """allowed if VCC is ON and obsState is IDLE or READY"""
         if self.dev_state() == tango.DevState.ON and \
-                self.state_model._obs_state in [ObsState.IDLE.value, ObsState.READY.value]:
+                self._obs_state in [ObsState.IDLE, ObsState.READY]:
             return True
         return False
 
@@ -1054,7 +1054,7 @@ class Vcc(SKACapability):
         # PROTECTED REGION ID(Vcc.GoToIdle) ENABLED START #
         """Set OBsState IDLE for this VCC"""
         # transition to obsState=IDLE
-        self.state_model._obs_state = ObsState.IDLE.value
+        self._update_obs_state(ObsState.IDLE)
         # PROTECTED REGION END #    //  Vcc.GoToIdle
 
 
