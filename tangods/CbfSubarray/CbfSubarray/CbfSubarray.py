@@ -1038,7 +1038,7 @@ class CbfSubarray(SKASubarray):
 
 
 
-    def _remove_repectors_helper(self, argin):
+    def _remove_receptors_helper(self, argin):
         """Helper function to remove receptors for removeAllReceptors. Takes in a list of integers.
         RemoveAllReceptors can't call RemoveReceptors anymore for lmc 0.6.0 because RemoveAllReceptors enters resourcing state before calling RemoveReceptors.
         Therefore this helper is useful."""
@@ -1067,7 +1067,7 @@ class CbfSubarray(SKASubarray):
 
         # transitions to EMPTY if not assigned any receptors
         if not self._receptors:
-            self.state_model._update_obs_state(ObsState.EMPTY)
+            self.state_model._update_obs_state(ObsState.EMPTY.value)
 
 
     # Used by commands that needs resource manager in SKASubarray base class (for example AddReceptors command). 
@@ -1504,7 +1504,7 @@ class CbfSubarray(SKASubarray):
             """
             device=self.target
 
-            device._remove_repectors_helper(argin)
+            device._remove_receptors_helper(argin)
             message = "CBFSubarray RemoveReceptors command completed OK"
             self.logger.info(message)
             return (ResultCode.OK, message)
@@ -1557,7 +1557,7 @@ class CbfSubarray(SKASubarray):
             self.logger.info("removeAllReceptors")
 
             # For LMC0.6.0: use a helper instead of a command so that it doesn't care about the obsState
-            device._remove_repectors_helper(device._receptors[:])
+            device._remove_receptors_helper(device._receptors[:])
 
 
             message = "CBFSubarray RemoveAllReceptors command completed OK"
@@ -2210,7 +2210,7 @@ class CbfSubarray(SKASubarray):
             device._deconfigure()
 
             # and release all receptors
-            device._remove_repectors_helper(device._receptors[:])
+            device._remove_receptors_helper(device._receptors[:])
 
             message = "Restart command completed OK"
             self.logger.info(message)
