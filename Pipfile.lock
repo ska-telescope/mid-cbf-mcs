@@ -162,14 +162,6 @@
             ],
             "version": "==1.14.0"
         },
-        "ska-tango-base": {
-            "hashes": [
-                "sha256:5972ff9527c267acae1dd9c4d025fb89bec7733d0d2475a3d84e0dd2727c48e4",
-                "sha256:c3dbeedc35557c6642bb987a15a8cb86792397446c371dfcdda4c0a9066d43b8"
-            ],
-            "index": "pypi",
-            "version": "==0.9.1+15c449f6"
-        },
         "ska-ser-logging": {
             "hashes": [
                 "sha256:f656bd25adc7a4a6dcabb29b9730ab61604c9172f2b21a304eca59f0647b6b9a",
@@ -177,6 +169,14 @@
             ],
             "index": "pypi",
             "version": "==0.4.0"
+        },
+        "ska-tango-base": {
+            "hashes": [
+                "sha256:5972ff9527c267acae1dd9c4d025fb89bec7733d0d2475a3d84e0dd2727c48e4",
+                "sha256:c3dbeedc35557c6642bb987a15a8cb86792397446c371dfcdda4c0a9066d43b8"
+            ],
+            "index": "pypi",
+            "version": "==0.9.1+15c449f6"
         },
         "traitlets": {
             "hashes": [
