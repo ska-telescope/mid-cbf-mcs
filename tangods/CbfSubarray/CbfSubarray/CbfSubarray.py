@@ -1067,7 +1067,7 @@ class CbfSubarray(SKASubarray):
 
         # transitions to EMPTY if not assigned any receptors
         if not self._receptors:
-            self.state_model._obs_state = ObsState.EMPTY
+            self.state_model._update_obs_state('EMPTY')
 
 
     # Used by commands that needs resource manager in SKASubarray base class (for example AddReceptors command). 
