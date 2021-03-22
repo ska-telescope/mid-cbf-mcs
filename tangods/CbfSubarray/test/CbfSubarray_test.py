@@ -334,6 +334,8 @@ class TestCbfSubarray:
         create_tm_telstate_proxy.Init()
         time.sleep(1)
 
+        create_subarray_1_proxy.loggingLevel = "DEBUG"
+
         receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
                                create_cbf_master_proxy.receptorToVcc)
 
@@ -637,6 +639,8 @@ class TestCbfSubarray:
         create_tm_telstate_proxy.Init()
         time.sleep(1)
 
+        create_subarray_1_proxy.loggingLevel = "DEBUG"
+
         receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
                                create_cbf_master_proxy.receptorToVcc)
 
@@ -924,6 +928,8 @@ class TestCbfSubarray:
         time.sleep(5)  # takes pretty long for CBF Master to initialize
         create_tm_telstate_proxy.Init()
         time.sleep(1)
+
+        create_subarray_1_proxy.loggingLevel = "DEBUG"
 
         receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
                                create_cbf_master_proxy.receptorToVcc)

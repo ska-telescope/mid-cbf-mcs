@@ -32,6 +32,7 @@ import json
 from random import randint
 from threading import Thread, Lock
 import time
+import debugpy
 
 file_path = os.path.dirname(os.path.abspath(__file__))
 commons_pkg_path = os.path.abspath(os.path.join(file_path, "../../commons"))
@@ -70,6 +71,7 @@ class CbfSubarray(SKASubarray):
         """
         Sets up the command objects. Register the new Commands here.
         """
+        self.logger.debug("Entering " + sys._getframe().f_code.co_name)
         super().init_command_objects()
         device_args = (self, self.state_model, self.logger)
         # resource_args = (self.resource_manager, self.state_model, self.logger) 
@@ -275,6 +277,8 @@ class CbfSubarray(SKASubarray):
 
     def _validate_scan_configuration(self, argin):
         # try to deserialize input string to a JSON object
+        self.logger.debug("Entering " + sys._getframe().f_code.co_name)
+        debugpy.debug_this_thread()
         try:
             argin = json.loads(argin)
         except json.JSONDecodeError:  # argument not a valid JSON object
@@ -2252,6 +2256,7 @@ class CbfSubarray(SKASubarray):
 
 def main(args=None, **kwargs):
     # PROTECTED REGION ID(CbfSubarray.main) ENABLED START #
+    debugpy.listen(5678)
     return run((CbfSubarray,), args=args, **kwargs)
     # PROTECTED REGION END #    //  CbfSubarray.main
 

@@ -49,7 +49,8 @@ setup(
     ],
     test_suite='tests',
     install_requires=['pytango',
-                    'ska-tango-base == 0.9.1'
+                    'ska-tango-base == 0.9.1',
+                    'debugpy == 1.2.1'
     ],
     setup_requires=[
         # dependency for `python setup.py test`

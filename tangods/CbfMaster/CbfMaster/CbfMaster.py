@@ -29,6 +29,7 @@ from tango import AttrWriteType
 import os
 import sys
 from random import randint
+import debugpy
 
 file_path = os.path.dirname(os.path.abspath(__file__))
 commons_pkg_path = os.path.abspath(os.path.join(file_path, "../../commons"))
@@ -682,6 +683,7 @@ class CbfMaster(SKAMaster):
 
 def main(args=None, **kwargs):
     # PROTECTED REGION ID(CbfMaster.main) ENABLED START #
+    debugpy.listen(5678)
     return run((CbfMaster,), args=args, **kwargs)
     # PROTECTED REGION END #    //  CbfMaster.main
 
