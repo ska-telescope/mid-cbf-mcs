@@ -104,10 +104,6 @@ install-chart-with-taranta: dep-up namespace ## install the helm chart with name
 	rm generated_values.yaml; \
 	rm values.yaml
 
-<<<<<<< HEAD
-
-=======
->>>>>>> update_pipeline
 template-chart: clean dep-up## install the helm chart with name RELEASE_NAME and path UMBRELLA_CHART_PATH on the namespace KUBE_NAMESPACE
 	@sed -e 's/CI_PROJECT_PATH_SLUG/$(CI_PROJECT_PATH_SLUG)/' $(UMBRELLA_CHART_PATH)values.yaml > generated_values.yaml; \
 	sed -e 's/CI_ENVIRONMENT_SLUG/$(CI_ENVIRONMENT_SLUG)/' generated_values.yaml > values.yaml; \
