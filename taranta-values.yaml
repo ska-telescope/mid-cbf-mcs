@@ -30,7 +30,6 @@ tango-base:
 webjive:
     enabled: true
     minikube: true
-<<<<<<< HEAD
     ingress:
        enabled: true
        nginx: true
@@ -47,5 +46,3 @@ webjive-auth:
         enabled: true     
         nginx: true     
         hostname: integration.engageska-portugal.pt
-=======
->>>>>>> update_pipeline

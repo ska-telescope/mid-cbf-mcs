@@ -65,7 +65,7 @@ build-image:
     - echo -n "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin $CI_REGISTRY
     - docker push $IMG
 
-publish_image:
+publish-image:
   stage: publish
   image: nexus.engageska-portugal.pt/ska-docker/deploy:0.4.3
   before_script:
