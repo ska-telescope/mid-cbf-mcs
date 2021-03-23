@@ -148,7 +148,7 @@ pages:
       - public
     expire_in: 30 days
 
-create ci metrics:
+ci-metrics:
   stage: .post
   image: nexus.engageska-portugal.pt/ska-docker/ska-python-buildenv:latest
   when: always
