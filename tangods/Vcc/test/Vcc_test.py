@@ -33,7 +33,7 @@ import pytest
 #Local imports
 
 from Vcc.Vcc import Vcc
-from ska.base.control_model import HealthState, AdminMode, ObsState
+from ska_tango_base.control_model import HealthState, AdminMode, ObsState
 
 @pytest.mark.usefixtures(
     "create_vcc_proxy",

@@ -14,6 +14,7 @@ import sys
 import os
 import time
 import json
+import logging
 
 # Path
 file_path = os.path.dirname(os.path.abspath(__file__))
@@ -33,7 +34,7 @@ import pytest
 #Local imports
 
 from CbfSubarray.CbfSubarray import CbfSubarray
-from ska.base.control_model import HealthState, AdminMode, ObsState
+from ska_tango_base.control_model import HealthState, AdminMode, ObsState
 
 @pytest.mark.usefixtures(
     "create_cbf_master_proxy",
@@ -544,7 +545,7 @@ class TestCbfSubarray:
         create_cbf_master_proxy.On()
         time.sleep(3)
 
-        assert create_subarray_1_proxy.obsState.value == ObsState.IDLE.EMPTY
+        assert create_subarray_1_proxy.obsState.value == ObsState.EMPTY.value
 
         # turn on Subarray
         if create_subarray_1_proxy.State() != DevState.ON:
@@ -761,6 +762,125 @@ class TestCbfSubarray:
         assert create_vcc_proxies[receptor_to_vcc[4] - 1].delayModel[1][3] == 2.2
         assert create_vcc_proxies[receptor_to_vcc[4] - 1].delayModel[1][4] == 2.3
         assert create_vcc_proxies[receptor_to_vcc[4] - 1].delayModel[1][5] == 2.4
+
+        create_subarray_1_proxy.EndScan()
+        time.sleep(1)
+
+        # Clean Up
+        create_subarray_1_proxy.GoToIdle()
+        time.sleep(1)
+        assert create_subarray_1_proxy.obsState == ObsState.IDLE
+        create_subarray_1_proxy.RemoveAllReceptors()     
+        time.sleep(1)
+        assert create_subarray_1_proxy.obsState == ObsState.EMPTY  
+        create_subarray_1_proxy.Off()
+        assert create_subarray_1_proxy.state() == tango.DevState.OFF
+
+    def test_ConfigureScan_jonesMatrix(
+            self,
+            create_cbf_master_proxy,
+            create_subarray_1_proxy,
+            create_vcc_proxies,
+            create_fsp_1_proxy,
+            create_fsp_2_proxy,
+            create_fsp_1_subarray_1_proxy,
+            create_fsp_2_subarray_1_proxy,
+            create_tm_telstate_proxy
+    ):
+        """
+        Test the reception of Jones matrices
+        """
+        for proxy in create_vcc_proxies:
+            proxy.Init()
+        create_fsp_1_subarray_1_proxy.Init()
+        create_fsp_2_subarray_1_proxy.Init()
+        create_fsp_1_proxy.Init()
+        create_fsp_2_proxy.Init()
+        create_subarray_1_proxy.set_timeout_millis(80000)  # since the command takes a while
+        time.sleep(3)
+        create_cbf_master_proxy.set_timeout_millis(60000)
+        create_cbf_master_proxy.Init()
+        time.sleep(5)  # takes pretty long for CBF Master to initialize
+        create_tm_telstate_proxy.Init()
+        time.sleep(1)
+
+        #reveal debug level logging in Vcc, CbfSubarray
+        for proxy in create_vcc_proxies:
+            proxy.loggingLevel = "DEBUG"
+        create_subarray_1_proxy.loggingLevel = "DEBUG"
+
+        receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
+                               create_cbf_master_proxy.receptorToVcc)
+
+        create_cbf_master_proxy.On()
+        time.sleep(3)
+
+        assert create_subarray_1_proxy.obsState.value == ObsState.EMPTY.value
+
+        # add receptors
+        create_subarray_1_proxy.AddReceptors([1, 3, 4])
+        time.sleep(1)
+        assert create_subarray_1_proxy.receptors[0] == 1
+        assert create_subarray_1_proxy.receptors[1] == 3
+        assert create_subarray_1_proxy.receptors[2] == 4
+
+        # configure scan
+        f = open(file_path + "/test_json/test_ConfigureScan_basic.json")
+        create_subarray_1_proxy.ConfigureScan(f.read().replace("\n", ""))
+        f.close()
+        time.sleep(30)
+
+        assert create_subarray_1_proxy.obsState.value == ObsState.READY.value
+
+        #create a Jones matrix
+        f = open(file_path + "/test_json/jonesmatrix.json")
+        jones_matrix = json.loads(f.read().replace("\n", ""))
+        jones_matrix["jonesMatrix"][0]["epoch"] = str(int(time.time()) + 20)
+        jones_matrix["jonesMatrix"][1]["epoch"] = "0"
+        jones_matrix["jonesMatrix"][2]["epoch"] = str(int(time.time()) + 10)
+
+        # update Jones Matrix
+        create_tm_telstate_proxy.jonesMatrix = json.dumps(jones_matrix)
+        time.sleep(1)
+
+        for receptor in jones_matrix["jonesMatrix"][1]["matrixDetails"]:
+            for frequency_slice in receptor["receptorMatrix"]:
+                for i in frequency_slice["matrix"]:
+                    try:
+                        assert create_vcc_proxies[receptor_to_vcc[receptor["receptor"]]-1].jonesMatrix[frequency_slice["fsid"]-1][i] == i
+                    except AssertionError:
+                        logging.error("AssertionError; incorrect Jones matrix entry: epoch {}, VCC {}, i = {}, jonesMatrix[{}] = {}".format(jones_matrix["jonesMatrix"][1]["epoch"], receptor_to_vcc[receptor["receptor"]], i, frequency_slice["fsid"]-1, create_vcc_proxies[receptor_to_vcc[receptor["receptor"]]-1].jonesMatrix[frequency_slice["fsid"]-1]))
+                        return AssertionError
+                    except Exception:
+                        pass
+
+        create_subarray_1_proxy.Scan(1)
+        time.sleep(1)
+        assert create_subarray_1_proxy.obsState.value == ObsState.SCANNING.value
+        
+        time.sleep(10)
+        for receptor in jones_matrix["jonesMatrix"][2]["matrixDetails"]:
+            for frequency_slice in receptor["receptorMatrix"]:
+                for i in frequency_slice["matrix"]:
+                    try:
+                        assert create_vcc_proxies[receptor_to_vcc[receptor["receptor"]]-1].jonesMatrix[frequency_slice["fsid"]-1][i] == i
+                    except AssertionError:
+                        logging.error("AssertionError; incorrect Jones matrix entry: epoch {}, VCC {}, i = {}, jonesMatrix[{}] = {}".format(jones_matrix["jonesMatrix"][2]["epoch"], receptor_to_vcc[receptor["receptor"]], i, frequency_slice["fsid"]-1, create_vcc_proxies[receptor_to_vcc[receptor["receptor"]]-1].jonesMatrix[frequency_slice["fsid"]-1]))
+                        return AssertionError
+                    except Exception:
+                        pass
+        
+        time.sleep(10)
+        for receptor in jones_matrix["jonesMatrix"][0]["matrixDetails"]:
+            for frequency_slice in receptor["receptorMatrix"]:
+                for i in frequency_slice["matrix"]:
+                    try:
+                        assert create_vcc_proxies[receptor_to_vcc[receptor["receptor"]]-1].jonesMatrix[frequency_slice["fsid"]-1][i] == i
+                    except AssertionError:
+                        logging.error("AssertionError; incorrect Jones matrix entry: epoch {}, VCC {}, i = {}, jonesMatrix[{}] = {}".format(jones_matrix["jonesMatrix"][0]["epoch"], receptor_to_vcc[receptor["receptor"]], i, frequency_slice["fsid"]-1, create_vcc_proxies[receptor_to_vcc[receptor["receptor"]]-1].jonesMatrix[frequency_slice["fsid"]-1]))
+                        return AssertionError
+                    except Exception:
+                        pass
 
         create_subarray_1_proxy.EndScan()
         time.sleep(1)

@@ -44,5 +44,14 @@ test:
 		cp /app/tangods/CbfMaster/build/reports/cbf-master-unit-tests.xml ./build/reports; \
 		cp /app/tangods/CbfSubarray/build/reports/cbf-subarray-unit-tests.xml ./build/reports; \
 	fi;
-
 .PHONY: all test
+# test subarray only
+# 	if [ -d build ]; then \
+# 		mv /app/tangods/CbfSubarray/setup_py_test.stdout ./build/cbf_subarray_setup_test.stdout; \
+# 		mv /app/tangods/CbfSubarray/htmlcov ./build/cbf_subarray_htmlcov; \
+# 		mv /app/tangods/CbfSubarray/coverage.xml ./build/cbf_subarray_coverage.xml; \
+# 		mv /app/code_analysis.stdout ./build/cbf_code_analysis.stdout; \
+# 		cp /app/tangods/CbfMaster/build/reports/cbf-master-unit-tests.xml ./build/reports; \
+# 		cp /app/tangods/CbfSubarray/build/reports/cbf-subarray-unit-tests.xml ./build/reports; \
+# 	fi;
+# .PHONY: all test

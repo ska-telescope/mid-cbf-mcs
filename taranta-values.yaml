@@ -30,3 +30,19 @@ tango-base:
 webjive:
     enabled: true
     minikube: true
+    ingress:
+       enabled: true
+       nginx: true
+       hostname: integration.engageska-portugal.pt
+
+webjive-dashboard:   
+    ingress:
+       enabled: true     
+       nginx: true     
+       hostname: integration.engageska-portugal.pt 
+
+webjive-auth:   
+    ingress:     
+        enabled: true     
+        nginx: true     
+        hostname: integration.engageska-portugal.pt

@@ -34,8 +34,8 @@ file_path = os.path.dirname(os.path.abspath(__file__))
 commons_pkg_path = os.path.abspath(os.path.join(file_path, "../../commons"))
 sys.path.insert(0, commons_pkg_path)
 
-from ska.base import SKAMaster
-from ska.base.control_model import HealthState, AdminMode
+from ska_tango_base import SKAMaster
+from ska_tango_base.control_model import HealthState, AdminMode
 
 # PROTECTED REGION END #    //  CbfMaster.additionnal_import
 

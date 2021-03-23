@@ -21,6 +21,8 @@
 			    ],
 
                             "polled_attr": [
+                                "jonesmatrix",
+                                "1000",
                                 "delaymodel",
                                 "1000",
                                 "visdestinationaddress",
@@ -52,6 +54,8 @@
 			    ],
 
                             "polled_attr": [
+                                "jonesmatrix",
+                                "1000",
                                 "delaymodel",
                                 "1000",
                                 "visdestinationaddress",

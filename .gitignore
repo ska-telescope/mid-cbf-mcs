@@ -102,3 +102,13 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+.swp
+
+# helm charts
+charts/mid-cbf-tmleafnode/Chart.lock
+charts/mid-cbf-tmleafnode/charts/
+charts/mid-cbf-umbrella/Chart.lock
+charts/mid-cbf-umbrella/charts/
+charts/mid-cbf/Chart.lock
+charts/mid-cbf/charts/
