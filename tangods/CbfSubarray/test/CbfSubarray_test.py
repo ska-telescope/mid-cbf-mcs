@@ -242,6 +242,7 @@ class TestCbfSubarray:
         assert create_subarray_2_proxy.State() == DevState.ON
     """
 
+    @pytest.mark.only_this
     def test_RemoveAllReceptors(
             self,
             create_cbf_master_proxy,

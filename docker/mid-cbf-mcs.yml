@@ -13,7 +13,7 @@ services:
       sh -c "wait-for-it.sh ${TANGO_HOST} --timeout=60 --strict --
              json2tango -w -a -u tangods/tangods/data/midcbf_dsconfig.json  && sleep infinity"
     volumes:
-      - .:/tangods
+      - ..:/tangods
   vcc001:
     image: ${DOCKER_REGISTRY_HOST}/${DOCKER_REGISTRY_USER}/${PROJECT}:latest
     network_mode: ${NETWORK_MODE}

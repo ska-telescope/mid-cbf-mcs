@@ -30,7 +30,7 @@ test:
 		retry --max=10 -- tango_admin --ping-device mid_csp_cbf/sub_elt/subarray_0$$i;  \
 	done
 	cd /app/tangods/CbfMaster && python3 setup.py test | tee setup_py_test.stdout
-	cd /app/tangods/CbfSubarray && python3 setup.py test | tee setup_py_test.stdout
+	cd /app/tangods/CbfSubarray && pytest $(if $(findstring all,$(MARK)),, -m '$(MARK)') | tee setup_py_test.stdout
 	cd /app && ./code-analysis.sh | tee code_analysis.stdout
 	mkdir -p build/reports && \
 	if [ -d build ]; then \
