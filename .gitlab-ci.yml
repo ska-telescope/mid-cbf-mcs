@@ -96,6 +96,7 @@ integration:
       kubernetes:
         namespace: ci-$CI_PROJECT_NAME-$CI_COMMIT_SHORT_SHA
   after_script:
+    - python3 -m pip install junitparser
     - junitparser merge build/cbf_master_coverage.xml build/cbf_subarray_coverage.xml build/reports/code-coverage.xml
     - make describe
     - ls -lR
