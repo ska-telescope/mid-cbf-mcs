@@ -96,6 +96,7 @@ integration:
       kubernetes:
         namespace: ci-$CI_PROJECT_NAME-$CI_COMMIT_SHORT_SHA
   after_script:
+    - junitparser merge build/cbf_master_coverage.xml build/cbf_subarray_coverage.xml build/reports/code-coverage.xml
     - make describe
     - ls -lR
     - pwd
@@ -122,7 +123,7 @@ linting:
     - python3 -m pip install --extra-index-url https://nexus.engageska-portugal.pt/repository/pypi/simple -r requirements.txt
     - mkdir -p build/reports      
     - pylint --output-format=parseable tangods| tee ./build/mid-cbf-code-analysis.stdout
-    - pylint --output-format=pylint2junit.JunitReporter tangods > ./build/reports/mid-cbf-linting.xml
+    - pylint --output-format=pylint2junit.JunitReporter tangods > ./build/reports/linting.xml
     - ls -alR
 
 pages:
@@ -148,9 +149,10 @@ pages:
       - public
     expire_in: 30 days
 
-ci-metrics:
+create-ci-metrics:
   stage: .post
   image: nexus.engageska-portugal.pt/ska-docker/ska-python-buildenv:latest
+  cache: {}
   when: always
   tags:
     - k8srunner
@@ -167,6 +169,7 @@ ci-metrics:
   artifacts:
     paths:
       - ./build
+  allow_failure: true
 
 # Standardised included jobs
 variables:
@@ -176,6 +179,11 @@ include:
 # https://developer.skatelescope.org/en/latest/development/software_package_release_procedure.html#package-and-publish-helm-charts-to-the-ska-helm-chart-repository
 - project: 'ska-telescope/templates-repository'
   file: 'gitlab-ci/includes/helm_publish.yml'
+
+# Create Gitlab CI badges from CI metrics
+# https://developer.skatelescope.org/en/latest/tools/continuousintegration.html#automated-collection-of-ci-health-metrics-as-part-of-the-ci-pipeline
+# - project: 'ska-telescope/templates-repository'
+#   file: 'gitlab-ci/includes/post_step.yml'
 
 publish-chart:
   when: on_success
