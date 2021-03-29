@@ -43,17 +43,6 @@ clean shell runner:
     - ls -lR
     - rm -rf build/*
 
-#test:
-#  tags:
-#    - k8srunner
-#  stage: test
-#  script:
-#    - sudo make build
-#    - sudo make test
-#  artifacts:
-#    paths:
-#      - build
-
 build-image:
   stage: build
   image: nexus.engageska-portugal.pt/ska-docker/deploy:0.4.3
@@ -103,10 +92,8 @@ integration:
     - make delete_namespace      
   artifacts:
     paths:
-      - ./build/    
+      - ./build/
 
-# linting stage
-#
 linting:
   image: nexus.engageska-portugal.pt/ska-docker/ska-python-buildenv:latest
   stage: linting
@@ -133,6 +120,10 @@ pages:
     - k8srunner
   script:
    - pwd
+   - ls -lR
+   - mkdir .public
+   - sudo cp -R build/* .public
+   - sudo mv .public public
    - ls -lR
   artifacts:
     paths:
