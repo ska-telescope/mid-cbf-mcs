@@ -39,6 +39,7 @@ test:
 		mv /app/htmlcov ./build/htmlcov; \
 		mv /app/coverage.xml ./build/reports/code-coverage.xml; \
 		mv /app/code_analysis.stdout ./build/cbf_code_analysis.stdout; \
+		cp /app/build/reports/unit-tests.xml ./build/reports; \
 	fi;
 .PHONY: all test
 
