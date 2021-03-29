@@ -197,115 +197,115 @@ class TestCbfMaster:
         assert create_fsp_1_subarray_1_proxy.State() == DevState.ON
         assert create_fsp_2_subarray_1_proxy.State() == DevState.ON
 
-    def test_Off_valid(
-            self,
-            create_cbf_master_proxy,
-            create_subarray_1_proxy,
-            create_sw_1_proxy,
-            create_sw_2_proxy,
-            create_vcc_proxies,
-            create_fsp_1_proxy,
-            create_fsp_2_proxy,
-            create_fsp_1_subarray_1_proxy,
-            create_fsp_2_subarray_1_proxy
-    ):
-        """
-        Test a valid use of the "Off" command
-        """
-        for proxy in create_vcc_proxies:
-            proxy.Init()
-        create_fsp_1_subarray_1_proxy.Init()
-        create_fsp_2_subarray_1_proxy.Init()
-        create_fsp_1_proxy.Init()
-        create_fsp_2_proxy.Init()
-        create_sw_1_proxy.Init()
-        create_sw_2_proxy.Init()
-        # create_subarray_1_proxy.Init()
-        time.sleep(3)
-        create_cbf_master_proxy.Init()
-        time.sleep(3)  # takes pretty long for CBF Master to initialize
+    # def test_Off_valid(
+    #         self,
+    #         create_cbf_master_proxy,
+    #         create_subarray_1_proxy,
+    #         create_sw_1_proxy,
+    #         create_sw_2_proxy,
+    #         create_vcc_proxies,
+    #         create_fsp_1_proxy,
+    #         create_fsp_2_proxy,
+    #         create_fsp_1_subarray_1_proxy,
+    #         create_fsp_2_subarray_1_proxy
+    # ):
+    #     """
+    #     Test a valid use of the "Off" command
+    #     """
+    #     for proxy in create_vcc_proxies:
+    #         proxy.Init()
+    #     create_fsp_1_subarray_1_proxy.Init()
+    #     create_fsp_2_subarray_1_proxy.Init()
+    #     create_fsp_1_proxy.Init()
+    #     create_fsp_2_proxy.Init()
+    #     create_sw_1_proxy.Init()
+    #     create_sw_2_proxy.Init()
+    #     # create_subarray_1_proxy.Init()
+    #     time.sleep(3)
+    #     create_cbf_master_proxy.Init()
+    #     time.sleep(3)  # takes pretty long for CBF Master to initialize
 
-        # check initial states
-        assert create_cbf_master_proxy.State() == DevState.STANDBY
-        assert create_subarray_1_proxy.State() == DevState.OFF
-        assert create_sw_1_proxy.State() == DevState.OFF
-        assert create_sw_1_proxy.State() == DevState.OFF
-        assert [proxy.State() for proxy in create_vcc_proxies] == [DevState.OFF]*4
-        assert create_fsp_1_proxy.State() == DevState.OFF
-        assert create_fsp_2_proxy.State() == DevState.OFF
-        assert create_fsp_1_subarray_1_proxy.State() == DevState.OFF
-        assert create_fsp_2_subarray_1_proxy.State() == DevState.OFF
+    #     # check initial states
+    #     assert create_cbf_master_proxy.State() == DevState.STANDBY
+    #     assert create_subarray_1_proxy.State() == DevState.OFF
+    #     assert create_sw_1_proxy.State() == DevState.OFF
+    #     assert create_sw_1_proxy.State() == DevState.OFF
+    #     assert [proxy.State() for proxy in create_vcc_proxies] == [DevState.OFF]*4
+    #     assert create_fsp_1_proxy.State() == DevState.OFF
+    #     assert create_fsp_2_proxy.State() == DevState.OFF
+    #     assert create_fsp_1_subarray_1_proxy.State() == DevState.OFF
+    #     assert create_fsp_2_subarray_1_proxy.State() == DevState.OFF
 
-        # send the Off command
-        create_cbf_master_proxy.Off()
-        time.sleep(3)
+    #     # send the Off command
+    #     create_cbf_master_proxy.Off()
+    #     time.sleep(3)
 
-        # check states
-        assert create_cbf_master_proxy.State() == DevState.OFF
-        assert create_subarray_1_proxy.State() == DevState.OFF
-        assert create_sw_1_proxy.State() == DevState.OFF
-        assert create_sw_2_proxy.State() == DevState.OFF
-        assert [proxy.State() for proxy in create_vcc_proxies] == [DevState.OFF]*4
-        assert create_fsp_1_proxy.State() == DevState.OFF
-        assert create_fsp_2_proxy.State() == DevState.OFF
-        assert create_fsp_1_subarray_1_proxy.State() == DevState.OFF
-        assert create_fsp_2_subarray_1_proxy.State() == DevState.OFF
+    #     # check states
+    #     assert create_cbf_master_proxy.State() == DevState.OFF
+    #     assert create_subarray_1_proxy.State() == DevState.OFF
+    #     assert create_sw_1_proxy.State() == DevState.OFF
+    #     assert create_sw_2_proxy.State() == DevState.OFF
+    #     assert [proxy.State() for proxy in create_vcc_proxies] == [DevState.OFF]*4
+    #     assert create_fsp_1_proxy.State() == DevState.OFF
+    #     assert create_fsp_2_proxy.State() == DevState.OFF
+    #     assert create_fsp_1_subarray_1_proxy.State() == DevState.OFF
+    #     assert create_fsp_2_subarray_1_proxy.State() == DevState.OFF
 
-    def test_Standby_valid(
-            self,
-            create_cbf_master_proxy,
-            create_subarray_1_proxy,
-            create_sw_1_proxy,
-            create_sw_2_proxy,
-            create_vcc_proxies,
-            create_fsp_1_proxy,
-            create_fsp_2_proxy,
-            create_fsp_1_subarray_1_proxy,
-            create_fsp_2_subarray_1_proxy
-    ):
-        """
-        Test a valid use of the "Standby" command
-        """
-        for proxy in create_vcc_proxies:
-            proxy.Init()
-        create_fsp_1_subarray_1_proxy.Init()
-        create_fsp_2_subarray_1_proxy.Init()
-        create_fsp_1_proxy.Init()
-        create_fsp_2_proxy.Init()
-        create_sw_1_proxy.Init()
-        create_sw_2_proxy.Init()
-        # create_subarray_1_proxy.Init()
-        time.sleep(3)
-        create_cbf_master_proxy.Init()
-        time.sleep(3)  # takes pretty long for CBF Master to initialize
+    # def test_Standby_valid(
+    #         self,
+    #         create_cbf_master_proxy,
+    #         create_subarray_1_proxy,
+    #         create_sw_1_proxy,
+    #         create_sw_2_proxy,
+    #         create_vcc_proxies,
+    #         create_fsp_1_proxy,
+    #         create_fsp_2_proxy,
+    #         create_fsp_1_subarray_1_proxy,
+    #         create_fsp_2_subarray_1_proxy
+    # ):
+    #     """
+    #     Test a valid use of the "Standby" command
+    #     """
+    #     for proxy in create_vcc_proxies:
+    #         proxy.Init()
+    #     create_fsp_1_subarray_1_proxy.Init()
+    #     create_fsp_2_subarray_1_proxy.Init()
+    #     create_fsp_1_proxy.Init()
+    #     create_fsp_2_proxy.Init()
+    #     create_sw_1_proxy.Init()
+    #     create_sw_2_proxy.Init()
+    #     # create_subarray_1_proxy.Init()
+    #     time.sleep(3)
+    #     create_cbf_master_proxy.Init()
+    #     time.sleep(3)  # takes pretty long for CBF Master to initialize
 
-        assert create_cbf_master_proxy.State() == DevState.STANDBY
+    #     assert create_cbf_master_proxy.State() == DevState.STANDBY
 
-        # send the On command
-        create_cbf_master_proxy.On()
-        time.sleep(3)
+    #     # send the On command
+    #     create_cbf_master_proxy.On()
+    #     time.sleep(3)
 
-        # check initial states
-        assert create_cbf_master_proxy.State() == DevState.ON
-        assert create_subarray_1_proxy.State() == DevState.ON
-        assert create_sw_1_proxy.State() == DevState.DISABLE
-        assert [proxy.State() for proxy in create_vcc_proxies] == [DevState.ON]*4
-        assert create_fsp_1_proxy.State() == DevState.ON
-        assert create_fsp_2_proxy.State() == DevState.ON
-        assert create_fsp_1_subarray_1_proxy.State() == DevState.ON
-        assert create_fsp_2_subarray_1_proxy.State() == DevState.ON
+    #     # check initial states
+    #     assert create_cbf_master_proxy.State() == DevState.ON
+    #     assert create_subarray_1_proxy.State() == DevState.ON
+    #     assert create_sw_1_proxy.State() == DevState.DISABLE
+    #     assert [proxy.State() for proxy in create_vcc_proxies] == [DevState.ON]*4
+    #     assert create_fsp_1_proxy.State() == DevState.ON
+    #     assert create_fsp_2_proxy.State() == DevState.ON
+    #     assert create_fsp_1_subarray_1_proxy.State() == DevState.ON
+    #     assert create_fsp_2_subarray_1_proxy.State() == DevState.ON
 
-        # send the Standby command
-        create_cbf_master_proxy.Standby()
-        time.sleep(3)
+    #     # send the Standby command
+    #     create_cbf_master_proxy.Standby()
+    #     time.sleep(3)
 
-        # check states
-        assert create_cbf_master_proxy.State() == DevState.STANDBY
-        assert create_subarray_1_proxy.State() == DevState.OFF
-        assert create_sw_1_proxy.State() == DevState.OFF
-        assert create_sw_1_proxy.State() == DevState.OFF
-        assert [proxy.State() for proxy in create_vcc_proxies] == [DevState.OFF]*4
-        assert create_fsp_1_proxy.State() == DevState.OFF
-        assert create_fsp_2_proxy.State() == DevState.OFF
-        assert create_fsp_1_subarray_1_proxy.State() == DevState.OFF
-        assert create_fsp_2_subarray_1_proxy.State() == DevState.OFF
+    #     # check states
+    #     assert create_cbf_master_proxy.State() == DevState.STANDBY
+    #     assert create_subarray_1_proxy.State() == DevState.OFF
+    #     assert create_sw_1_proxy.State() == DevState.OFF
+    #     assert create_sw_1_proxy.State() == DevState.OFF
+    #     assert [proxy.State() for proxy in create_vcc_proxies] == [DevState.OFF]*4
+    #     assert create_fsp_1_proxy.State() == DevState.OFF
+    #     assert create_fsp_2_proxy.State() == DevState.OFF
+    #     assert create_fsp_1_subarray_1_proxy.State() == DevState.OFF
+    #     assert create_fsp_2_subarray_1_proxy.State() == DevState.OFF

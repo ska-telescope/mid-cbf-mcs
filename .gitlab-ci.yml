@@ -96,8 +96,6 @@ integration:
       kubernetes:
         namespace: ci-$CI_PROJECT_NAME-$CI_COMMIT_SHORT_SHA
   after_script:
-    - python3 -m pip install junitparser
-    - junitparser merge build/cbf_master_coverage.xml build/cbf_subarray_coverage.xml build/reports/code-coverage.xml
     - make describe
     - ls -lR
     - pwd
@@ -135,16 +133,7 @@ pages:
     - k8srunner
   script:
    - pwd
-   - python3 -m pip install junitparser
    - ls -lR
-   - mkdir .public
-   - sudo cp -R build/* .public
-   - sudo mv .public public
-   - ls -lR public
-   - junitparser merge public/reports/cbf-master-unit-tests.xml public/reports/cbf-subarray-unit-tests.xml public/reports/unit-tests.xml
-   - ls -lR
-   - rm public/reports/cbf-master-unit-tests.xml
-   - rm public/reports/cbf-subarray-unit-tests.xml
   artifacts:
     paths:
       - public
@@ -159,9 +148,6 @@ create-ci-metrics:
     - k8srunner
   script:
     - ls -lR
-    # copy public in build because ci-metrics scripts look for files in build
-    - cp -R public build
-    - ls -lR 
     # Gitlab CI badges creation: START
     - apt-get -y update
     - apt-get install -y curl --no-install-recommends

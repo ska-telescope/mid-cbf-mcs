@@ -17,6 +17,8 @@ INFO = {}
 with open('README.md') as readme_file:
     readme = readme_file.read()
 
+pack = ['mid-cbf-mcs']
+
 setup(
     name='Mid CBF',
     version='0.0.0',

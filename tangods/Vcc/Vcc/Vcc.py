@@ -675,19 +675,19 @@ class Vcc(SKACapability):
         for receptor in argin:
             if receptor["receptor"] == self._receptor_ID:
                 for frequency_slice in receptor["receptorMatrix"]:
-                    self.logger.debug("receptor: {}, fsid: {}".format(receptor["receptor"], frequency_slice["fsid"]))
-                    if 1 <= frequency_slice["fsid"] <= 26:
-                        if len(frequency_slice["matrix"]) == 16:
-                            self._jones_matrix[frequency_slice["fsid"] - 1] = \
-                                frequency_slice["matrix"].copy()
-                            self.logger.debug("_jones_matrix[frequency_slice[fsid] - 1] = {}".format(_jones_matrix[frequency_slice["fsid"] - 1]))
+                    receptor_id = receptor["receptor"]
+                    fs_id = frequency_slice["fsid"]
+                    matrix = frequency_slice["matrix"]
+                    if 1 <= fs_id <= 26:
+                        if len(matrix) == 16:
+                            self._jones_matrix[fs_id-1] = matrix
                         else:
                             log_msg = "'matrix' not valid for frequency slice {} of " \
-                                      "receptor {}".format(frequency_slice["fsid"], self._receptor_ID)
+                                      "receptor {}".format(fs_id, self._receptor_ID)
                             self.logger.error(log_msg)
                     else:
                         log_msg = "'fsid' {} not valid for receptor {}".format(
-                            frequency_slice["fsid"], self._receptor_ID
+                            fs_id, self._receptor_ID
                         )
                         self.logger.error(log_msg)
         # PROTECTED REGION END #    // Vcc.UpdateJonesMatrix
