@@ -130,25 +130,6 @@ pages:
       - public
     expire_in: 30 days
 
-create-ci-metrics:
-  stage: .post
-  image: nexus.engageska-portugal.pt/ska-docker/ska-python-buildenv:latest
-  cache: {}
-  when: always
-  tags:
-    - k8srunner
-  script:
-    - ls -lR
-    # Gitlab CI badges creation: START
-    - apt-get -y update
-    - apt-get install -y curl --no-install-recommends
-    - curl -s https://gitlab.com/ska-telescope/ci-metrics-utilities/raw/master/scripts/ci-badges-func.sh | sh
-    # Gitlab CI badges creation: END
-  artifacts:
-    paths:
-      - ./build
-  allow_failure: true
-
 # Standardised included jobs
 variables:
   CHARTS_TO_PUBLISH: mid-cbf mid-cbf-tmleafnode
@@ -160,8 +141,8 @@ include:
 
 # Create Gitlab CI badges from CI metrics
 # https://developer.skatelescope.org/en/latest/tools/continuousintegration.html#automated-collection-of-ci-health-metrics-as-part-of-the-ci-pipeline
-# - project: 'ska-telescope/templates-repository'
-#   file: 'gitlab-ci/includes/post_step.yml'
+- project: 'ska-telescope/templates-repository'
+  file: 'gitlab-ci/includes/post_step.yml'
 
 publish-chart:
   when: on_success
