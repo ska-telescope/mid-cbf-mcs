@@ -17,6 +17,8 @@ INFO = {}
 with open('README.md') as readme_file:
     readme = readme_file.read()
 
+pack = ['mid-cbf-mcs']
+
 setup(
     name='Mid CBF',
     version='0.0.0',
@@ -49,7 +51,7 @@ setup(
     ],
     test_suite='tests',
     install_requires=['pytango',
-                    'lmcbaseclasses == 0.6.2'
+                    'ska-tango-base == 0.9.1'
     ],
     setup_requires=[
         # dependency for `python setup.py test`

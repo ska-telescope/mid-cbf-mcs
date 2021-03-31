@@ -31,7 +31,7 @@ file_path = os.path.dirname(os.path.abspath(__file__))
 commons_pkg_path = os.path.abspath(os.path.join(file_path, "../../commons"))
 sys.path.insert(0, commons_pkg_path)
 
-from ska.base import SKACapability
+from ska_tango_base import SKACapability
 # PROTECTED REGION END #    //  Fsp.additionnal_import
 
 __all__ = ["Fsp", "main"]
@@ -124,7 +124,15 @@ class Fsp(SKACapability):
         label="Config ID",
         doc="set when transition to READY is performed",
     )
-    
+
+    # jonesMatrix = attribute(
+    #     dtype=(double,),
+    #     max_dim_x=16,
+    #     access=AttrWriteType.READ,
+    #     label='Jones Matrix',
+    #     doc='Jones Matrix, given per frequency slice'
+    # )
+   
     # ---------------
     # General methods
     # ---------------
@@ -152,6 +160,7 @@ class Fsp(SKACapability):
         self._subarray_membership = []
         self._scan_id = 0
         self._config_id = ""
+        #self._jones_matrix = [0.0 for i in range(16)]
 
         # initialize FSP subarray group
         self._group_fsp_corr_subarray = tango.Group("FSP Subarray Corr")
@@ -228,12 +237,18 @@ class Fsp(SKACapability):
         self._config_id=value
         # PROTECTED REGION END #    //  Fsp.configID_write
 
+    # def read_jonesMatrix(self):
+    #     # PROTECTED REGION ID(Fsp.jonesMatrix_read) ENABLED START #
+    #     """Return jonesMatrix attribute(max=16 array): Jones Matrix, given per frequency slice"""
+    #     return self._jones_matrix
+    #     # PROTECTED REGION END #    //  Fsp.jonesMatrix_read
+
     # --------
     # Commands
     # --------
 
     def is_On_allowed(self):
-        """allowed if FSP state is OFF."""
+        """allowed if FSP state is OFF"""
         if self.dev_state() == tango.DevState.OFF:
             return True
         return False

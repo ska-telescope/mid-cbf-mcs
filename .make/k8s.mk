@@ -12,6 +12,15 @@ CI_ENVIRONMENT_SLUG ?= mid-cbf
 
 # in release.mk it's defined the value of the variable IMAGE_TAG
 SET_IMAGE_TAG ?= --set mid-cbf.midcbf.image.tag=$(IMAGE_TAG) --set mid-cbf-tmleafnode.midcbf.image.tag=$(IMAGE_TAG)
+
+ifneq ($(CI_JOB_ID),)
+CI_PROJECT_IMAGE :=
+SET_IMAGE_TAG = --set mid-cbf.midcbf.image.registry=$(CI_REGISTRY)/ska-telescope \
+                --set mid-cbf.midcbf.image.tag=$(CI_COMMIT_SHORT_SHA) \
+                --set mid-cbf-tmleafnode.midcbf.image.registry=$(CI_REGISTRY)/ska-telescope \
+                --set mid-cbf-tmleafnode.midcbf.image.tag=$(CI_COMMIT_SHORT_SHA)
+IMAGE_TO_TEST = $(CI_REGISTRY_IMAGE):$(CI_COMMIT_SHORT_SHA)
+endif
 .DEFAULT_GOAL := help
 
 k8s: ## Which kubernetes are we connected to
@@ -242,7 +251,7 @@ k8s_test = tar -c . | \
 		/bin/bash -c "tar xv --strip-components 1 --warning=all && \
 		python3 -m pip install . &&\
 		cd test-harness &&\
-		make TANGO_HOST=$(TANGO_HOST) $1 && \
+		make TANGO_HOST=$(TANGO_HOST) MARK='$(MARK)' $1 && \
 		tar -czvf /tmp/build.tgz build && \
                 echo '~~~~BOUNDARY~~~~' && \
                 cat /tmp/build.tgz | base64 && \

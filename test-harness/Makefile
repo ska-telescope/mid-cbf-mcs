@@ -29,20 +29,14 @@ test:
 		echo Pinging mid_csp_cbf/sub_elt/subarray_$$i...; \
 		retry --max=10 -- tango_admin --ping-device mid_csp_cbf/sub_elt/subarray_0$$i;  \
 	done
-	cd /app/tangods/CbfMaster && python3 setup.py test | tee setup_py_test.stdout
-	cd /app/tangods/CbfSubarray && python3 setup.py test | tee setup_py_test.stdout
+	cd /app && pytest $(if $(findstring all,$(MARK)),, -m '$(MARK)') | tee setup_py_test.stdout
 	cd /app && ./code-analysis.sh | tee code_analysis.stdout
 	mkdir -p build/reports && \
 	if [ -d build ]; then \
-		mv /app/tangods/CbfMaster/setup_py_test.stdout ./build/cbf_master_setup_test.stdout; \
-		mv /app/tangods/CbfMaster/htmlcov ./build/cbf_master_htmlcov; \
-		mv /app/tangods/CbfMaster/coverage.xml ./build/cbf_master_coverage.xml; \
-		mv /app/tangods/CbfSubarray/setup_py_test.stdout ./build/cbf_subarray_setup_test.stdout; \
-		mv /app/tangods/CbfSubarray/htmlcov ./build/cbf_subarray_htmlcov; \
-		mv /app/tangods/CbfSubarray/coverage.xml ./build/cbf_subarray_coverage.xml; \
+		mv /app/setup_py_test.stdout ./build/setup_test.stdout; \
+		mv /app/htmlcov ./build/htmlcov; \
+		mv /app/coverage.xml ./build/reports/code-coverage.xml; \
 		mv /app/code_analysis.stdout ./build/cbf_code_analysis.stdout; \
-		cp /app/tangods/CbfMaster/build/reports/cbf-master-unit-tests.xml ./build/reports; \
-		cp /app/tangods/CbfSubarray/build/reports/cbf-subarray-unit-tests.xml ./build/reports; \
+		cp /app/build/reports/unit-tests.xml ./build/reports; \
 	fi;
-
 .PHONY: all test

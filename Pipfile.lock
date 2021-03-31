@@ -77,14 +77,6 @@
             ],
             "version": "==0.16.0"
         },
-        "lmcbaseclasses": {
-            "hashes": [
-                "sha256:3ac6551c36993100f68393000cf1d2fd6f73531bfbf93fc1a7baac6891535238",
-                "sha256:9476822b37fe9173ace8e385ac723645e71ee3c0b08d8f3914b37891c2cf7c66"
-            ],
-            "index": "pypi",
-            "version": "==0.4.0+5bdedbed"
-        },
         "numpy": {
             "hashes": [
                 "sha256:05dbfe72684cc14b92568de1bc1f41e5f62b00f714afc9adee42f6311738091f",
@@ -170,12 +162,21 @@
             ],
             "version": "==1.14.0"
         },
-        "ska-logging": {
+        "ska-ser-logging": {
             "hashes": [
-                "sha256:1c9ea6bc9342c9851e241312386b4964c6c178501fbe9b8ff865e04908ed4e3f",
-                "sha256:7ddb0c25d848d486c733a394e9b24af1de93a91689981b72ba21091eea4052b9"
+                "sha256:f656bd25adc7a4a6dcabb29b9730ab61604c9172f2b21a304eca59f0647b6b9a",
+                "sha256:47a74fcb5cbdb704669b0bc04e51e17af8ae1491f0040e46afb734122266082e"
             ],
-            "version": "==0.2.1"
+            "index": "pypi",
+            "version": "==0.4.0"
+        },
+        "ska-tango-base": {
+            "hashes": [
+                "sha256:5972ff9527c267acae1dd9c4d025fb89bec7733d0d2475a3d84e0dd2727c48e4",
+                "sha256:c3dbeedc35557c6642bb987a15a8cb86792397446c371dfcdda4c0a9066d43b8"
+            ],
+            "index": "pypi",
+            "version": "==0.9.1+15c449f6"
         },
         "traitlets": {
             "hashes": [

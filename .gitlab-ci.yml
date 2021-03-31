@@ -43,45 +43,41 @@ clean shell runner:
     - ls -lR
     - rm -rf build/*
 
-#test:
-#  tags:
-#    - k8srunner
-#  stage: test
-#  script:
-#    - sudo make build
-#    - sudo make test
-#  artifacts:
-#    paths:
-#      - build
-
-build:
+build-image:
   stage: build
-  image: nexus.engageska-portugal.pt/ska-docker/tango-builder:latest
+  image: nexus.engageska-portugal.pt/ska-docker/deploy:0.4.3
+  tags:
+    - k8srunner
+  script:
+    - export IMG="$CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA"
+    - docker build -t "$IMG" .
+    - echo -n "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin $CI_REGISTRY
+    - docker push $IMG
+
+publish-image:
+  stage: publish
+  image: nexus.engageska-portugal.pt/ska-docker/deploy:0.4.3
   before_script:
-  - docker login -u $DOCKER_REGISTRY_USERNAME -p $DOCKER_REGISTRY_PASSWORD $DOCKER_REGISTRY_HOST
+    - docker login -u $DOCKER_REGISTRY_USERNAME -p $DOCKER_REGISTRY_PASSWORD $DOCKER_REGISTRY_HOST
   tags:
     - k8srunner
   script:
     - make build
-    - docker image ls
     - make push
-
-publish_image:
-  stage: publish
-  script:
-    - make push
-  when: manual
+  when: on_success
+  only:
+    refs:
+      - tags
 
 integration:
   stage: test
+  image: nexus.engageska-portugal.pt/ska-docker/deploy:0.4.3
   variables:
     MINIKUBE: "false"
+  dependencies:
+    - build-image 
   tags:
     - k8srunner
-  artifacts:
-    paths:
-      - ./build/    
-  image: nexus.engageska-portugal.pt/ska-docker/deploy:0.4.3
   script:
     - make test
   environment:
@@ -94,9 +90,10 @@ integration:
     - pwd
     - make uninstall-chart
     - make delete_namespace      
+  artifacts:
+    paths:
+      - ./build/
 
-# linting stage
-#
 linting:
   image: nexus.engageska-portugal.pt/ska-docker/ska-python-buildenv:latest
   stage: linting
@@ -112,7 +109,7 @@ linting:
     - python3 -m pip install --extra-index-url https://nexus.engageska-portugal.pt/repository/pypi/simple -r requirements.txt
     - mkdir -p build/reports      
     - pylint --output-format=parseable tangods| tee ./build/mid-cbf-code-analysis.stdout
-    - pylint --output-format=pylint2junit.JunitReporter tangods > ./build/reports/mid-cbf-linting.xml
+    - pylint --output-format=pylint2junit.JunitReporter tangods > ./build/reports/linting.xml
     - ls -alR
 
 pages:
@@ -123,50 +120,15 @@ pages:
     - k8srunner
   script:
    - pwd
-   - python3 -m pip install junitparser
    - ls -lR
    - mkdir .public
    - sudo cp -R build/* .public
    - sudo mv .public public
-   - ls -lR public
-   - junitparser merge public/reports/cbf-master-unit-tests.xml public/reports/cbf-subarray-unit-tests.xml public/reports/unit-tests.xml
    - ls -lR
-   - rm public/reports/cbf-master-unit-tests.xml
-   - rm public/reports/cbf-subarray-unit-tests.xml
   artifacts:
     paths:
       - public
     expire_in: 30 days
-
-#publish_chart:
-#  variables:
-#    CHARTS_TO_PUBLISH: mid-cbf
-#  stage: publish
-#  tags:
-#  - docker-executor
-#  image: nexus.engageska-portugal.pt/ska-docker/deploy:0.4.2
-#  script:
-#    - curl -s https://gitlab.com/ska-telescope/stupid/raw/master/scripts/publish-charts.sh | bash
-
-create ci metrics:
-  stage: .post
-  image: nexus.engageska-portugal.pt/ska-docker/ska-python-buildenv:latest
-  when: always
-  tags:
-    - k8srunner
-  script:
-    - ls -lR
-    # copy public in build because ci-metrics scripts look for files in build
-    - cp -R public build
-    - ls -lR 
-    # Gitlab CI badges creation: START
-    - apt-get -y update
-    - apt-get install -y curl --no-install-recommends
-    - curl -s https://gitlab.com/ska-telescope/ci-metrics-utilities/raw/master/scripts/ci-badges-func.sh | sh
-    # Gitlab CI badges creation: END
-  artifacts:
-    paths:
-      - ./build
 
 # Standardised included jobs
 variables:
@@ -176,3 +138,14 @@ include:
 # https://developer.skatelescope.org/en/latest/development/software_package_release_procedure.html#package-and-publish-helm-charts-to-the-ska-helm-chart-repository
 - project: 'ska-telescope/templates-repository'
   file: 'gitlab-ci/includes/helm_publish.yml'
+
+# Create Gitlab CI badges from CI metrics
+# https://developer.skatelescope.org/en/latest/tools/continuousintegration.html#automated-collection-of-ci-health-metrics-as-part-of-the-ci-pipeline
+- project: 'ska-telescope/templates-repository'
+  file: 'gitlab-ci/includes/post_step.yml'
+
+publish-chart:
+  when: on_success
+  only:
+    refs:
+      - tags
