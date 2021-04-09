@@ -39,6 +39,7 @@ midcbf:
     image: mid-cbf-mcs
     tag: 0.4.6
     pullPolicy: IfNotPresent
+  use_emulator: false
 
 resources:
   limits:
@@ -82,6 +83,9 @@ deviceServers:
       image: "{{.Values.midcbf.image.image}}"
       tag: "{{.Values.midcbf.image.tag}}"
       pullPolicy: "{{.Values.midcbf.image.pullPolicy}}"
+    environment_variables:
+      - name: CBF_USE_EMULATOR
+        value: "\"{{.Values.midcbf.use_emulator}}\""
   - name: cbfsubarray02
     function: cbf-subarray-observation
     domain: subarray
@@ -94,6 +98,9 @@ deviceServers:
       image: "{{.Values.midcbf.image.image}}"
       tag: "{{.Values.midcbf.image.tag}}"
       pullPolicy: "{{.Values.midcbf.image.pullPolicy}}"
+    environment_variables:
+      - name: CBF_USE_EMULATOR
+        value: "\"{{.Values.midcbf.use_emulator}}\""
   - name: cbfsubarray03
     function: cbf-subarray-observation
     domain: subarray
@@ -106,6 +113,9 @@ deviceServers:
       image: "{{.Values.midcbf.image.image}}"
       tag: "{{.Values.midcbf.image.tag}}"
       pullPolicy: "{{.Values.midcbf.image.pullPolicy}}"
+    environment_variables:
+      - name: CBF_USE_EMULATOR
+        value: "\"{{.Values.midcbf.use_emulator}}\""
   - name: vcc001
     function: coarse-channelisation
     domain: sensing
