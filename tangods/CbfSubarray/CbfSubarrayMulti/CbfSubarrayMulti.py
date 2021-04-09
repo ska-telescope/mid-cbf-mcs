@@ -12,13 +12,16 @@ file_path = os.path.dirname(os.path.abspath(__file__))
 pkg_path = os.path.abspath(os.path.join(file_path, "../"))
 sys.path.insert(0, pkg_path)
 
-from CbfSubarray.CbfSubarray import CbfSubarray
 from SearchWindow.SearchWindow import SearchWindow
 from CbfSubarrayPssConfig.CbfSubarrayPssConfig import CbfSubarrayPssConfig
 from CbfSubarrayCorrConfig.CbfSubarrayCorrConfig import CbfSubarrayCorrConfig
 from SendConfig.SendConfig import SendConfig
 
 def main(args=None, **kwargs):
+    if os.environ.get('CBF_USE_EMULATOR', 'false') == 'true':
+        from ska.cbf.tango_device import CbfSubarray
+    else:
+        from CbfSubarray.CbfSubarray import CbfSubarray
     return run(classes=(SearchWindow, CbfSubarrayCorrConfig, CbfSubarrayPssConfig, CbfSubarray, SendConfig), args=args, **kwargs)
 
 
