@@ -15,6 +15,6 @@ RUN ipython profile create
 
 ENV PATH=/home/tango/.local/bin:$PATH
 #install csp-lmc-common with dependencies
-RUN python3 -m pip install -e . --user --extra-index-url https://nexus.engageska-portugal.pt/repository/pypi/simple
+RUN python3 -m pip install -e .[emulator] --user --extra-index-url https://nexus.engageska-portugal.pt/repository/pypi/simple
 
 CMD ["/venv/bin/python", "/app/csp_lmc_common/CspMaster.py" ]

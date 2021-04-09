@@ -106,7 +106,7 @@ linting:
     - apt-get -y update
     - apt-get install -y python3-pip python3-setuptools python3-wheel --no-install-recommends
     - python3 -m  pip install pylint2junit
-    - python3 -m pip install --extra-index-url https://nexus.engageska-portugal.pt/repository/pypi/simple -r requirements.txt
+    - python3 -m pip install --extra-index-url https://nexus.engageska-portugal.pt/repository/pypi/simple .[emulator]
     - mkdir -p build/reports      
     - pylint --output-format=parseable tangods| tee ./build/mid-cbf-code-analysis.stdout
     - pylint --output-format=pylint2junit.JunitReporter tangods > ./build/reports/linting.xml

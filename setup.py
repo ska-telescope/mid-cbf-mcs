@@ -67,6 +67,9 @@ setup(
         'pycodestyle',
     ],
     extras_require={
-        'dev':  ['prospector[with_pyroma]', 'yapf', 'isort']
+        'dev':  ['prospector[with_pyroma]', 'yapf', 'isort'],
+        'emulator': [
+            'cbf-sdp-emulator-tango-device >= 0.3',
+        ]
     }
 )
