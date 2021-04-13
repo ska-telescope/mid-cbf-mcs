@@ -172,11 +172,11 @@
         },
         "ska-tango-base": {
             "hashes": [
-                "sha256:5972ff9527c267acae1dd9c4d025fb89bec7733d0d2475a3d84e0dd2727c48e4",
-                "sha256:c3dbeedc35557c6642bb987a15a8cb86792397446c371dfcdda4c0a9066d43b8"
+                "sha256:797c525d17c76ba1113d82957a5bd38fce0bac373c6c75b473840444680f9e82",
+                "sha256:fa60e238f363ad9ca38a10873498e6b2ddb5e1bc65f2603d931f67dcf23b6488"
             ],
             "index": "pypi",
-            "version": "==0.9.1+15c449f6"
+            "version": "0.10.0+c7503270"
         },
         "traitlets": {
             "hashes": [
