@@ -33,19 +33,11 @@ import pytest
 from CbfMaster.CbfMaster import CbfMaster
 from ska_tango_base.control_model import HealthState, AdminMode
 
-@pytest.mark.usefixtures(
-    "proxies",
-    "clean_proxies",
-    "wait_timeout"
-)
+@pytest.mark.usefixtures("proxies")
 
 class TestCbfMaster:
 
-    def test_On_valid(
-            self,
-            proxies,
-            wait_timeout
-    ):
+    def test_On_valid(self, proxies):
         """
         Test a valid use of the "On" command
         """
@@ -65,34 +57,30 @@ class TestCbfMaster:
         proxies.master.On()
 
         #check states
-        wait_timeout([proxies.master], DevState.ON, 3_000_000_000, 0.1)
+        proxies.wait_timeout_dev([proxies.master], DevState.ON, 3, 0.1)
         assert proxies.master.State() == DevState.ON
 
-        wait_timeout([proxies.subarray[1]], DevState.ON, 3_000_000_000, 0.1)
+        proxies.wait_timeout_dev([proxies.subarray[1]], DevState.ON, 3, 0.1)
         assert proxies.subarray[1].State() == DevState.ON
 
-        wait_timeout([proxies.sw[i + 1] for i in range(2)], DevState.DISABLE, 1_000_000_000, 0.1)
+        proxies.wait_timeout_dev([proxies.sw[i + 1] for i in range(2)], DevState.DISABLE, 1, 0.1)
         for i in range(2):
             assert proxies.sw[i + 1].State() == DevState.DISABLE
 
-        wait_timeout([proxies.vcc[i + 1] for i in range(4)], DevState.ON, 1_000_000_000, 0.1)
+        proxies.wait_timeout_dev([proxies.vcc[i + 1] for i in range(4)], DevState.ON, 1, 0.1)
         for i in range(4):
             assert proxies.vcc[i + 1].State() == DevState.ON
 
-        wait_timeout([proxies.fsp[i + 1] for i in range(2)], DevState.ON, 1_000_000_000, 0.1)
+        proxies.wait_timeout_dev([proxies.fsp[i + 1] for i in range(2)], DevState.ON, 1, 0.1)
         for i in range(2):
             assert proxies.fsp[i + 1].State() == DevState.ON
 
-        wait_timeout([proxies.fspSubarray[i + 1] for i in range(2)], DevState.ON, 1_000_000_000, 0.1)
+        proxies.wait_timeout_dev([proxies.fspSubarray[i + 1] for i in range(2)], DevState.ON, 1, 0.1)
         for i in range(2):
             assert proxies.fspSubarray[i + 1].State() == DevState.ON
         
 
-    def test_Standby_valid(
-            self,
-            proxies,
-            wait_timeout
-    ):
+    def test_Standby_valid(self, proxies):
         """
         Test a valid use of the "Standby" command
         """
@@ -100,33 +88,29 @@ class TestCbfMaster:
         proxies.master.Standby()
 
         # check states
-        wait_timeout([proxies.master], DevState.STANDBY, 3_000_000_000, 0.1)
+        proxies.wait_timeout_dev([proxies.master], DevState.STANDBY, 3, 0.1)
         assert proxies.master.State() == DevState.STANDBY
 
-        wait_timeout([proxies.subarray[1]], DevState.OFF, 3_000_000_000, 0.1)
+        proxies.wait_timeout_dev([proxies.subarray[1]], DevState.OFF, 3, 0.1)
         assert proxies.subarray[1].State() == DevState.OFF
 
-        wait_timeout([proxies.sw[i + 1] for i in range(2)], DevState.OFF, 1_000_000_000, 0.1)
+        proxies.wait_timeout_dev([proxies.sw[i + 1] for i in range(2)], DevState.OFF, 1, 0.1)
         for i in range(2):
             assert proxies.sw[i + 1].State() == DevState.OFF
 
-        wait_timeout([proxies.vcc[i + 1] for i in range(4)], DevState.OFF, 1_000_000_000, 0.1)
+        proxies.wait_timeout_dev([proxies.vcc[i + 1] for i in range(4)], DevState.OFF, 1, 0.1)
         for i in range(4):
             assert proxies.vcc[i + 1].State() == DevState.OFF
 
-        wait_timeout([proxies.fsp[i + 1] for i in range(2)], DevState.OFF, 1_000_000_000, 0.1)
+        proxies.wait_timeout_dev([proxies.fsp[i + 1] for i in range(2)], DevState.OFF, 1, 0.1)
         for i in range(2):
             assert proxies.fsp[i + 1].State() == DevState.OFF
 
-        wait_timeout([proxies.fspSubarray[i + 1] for i in range(2)], DevState.OFF, 1_000_000_000, 0.1)
+        proxies.wait_timeout_dev([proxies.fspSubarray[i + 1] for i in range(2)], DevState.OFF, 1, 0.1)
         for i in range(2):
             assert proxies.fspSubarray[i + 1].State() == DevState.OFF
 
-    def test_Off_valid(
-            self,
-            proxies,
-            wait_timeout
-    ):
+    def test_Off_valid(self, proxies):
         """
         Test a valid use of the "Off" command
         """
@@ -135,25 +119,25 @@ class TestCbfMaster:
         proxies.master.Off()
 
         # check states
-        wait_timeout([proxies.master], DevState.OFF, 3_000_000_000, 0.1)
+        proxies.wait_timeout_dev([proxies.master], DevState.OFF, 3, 0.1)
         assert proxies.master.State() == DevState.OFF
 
-        wait_timeout([proxies.subarray[1]], DevState.OFF, 3_000_000_000, 0.1)
+        proxies.wait_timeout_dev([proxies.subarray[1]], DevState.OFF, 3, 0.1)
         assert proxies.subarray[1].State() == DevState.OFF
 
-        wait_timeout([proxies.sw[i + 1] for i in range(2)], DevState.OFF, 1_000_000_000, 0.1)
+        proxies.wait_timeout_dev([proxies.sw[i + 1] for i in range(2)], DevState.OFF, 1, 0.1)
         for i in range(2):
             assert proxies.sw[i + 1].State() == DevState.OFF
 
-        wait_timeout([proxies.vcc[i + 1] for i in range(4)], DevState.OFF, 1_000_000_000, 0.1)
+        proxies.wait_timeout_dev([proxies.vcc[i + 1] for i in range(4)], DevState.OFF, 1, 0.1)
         for i in range(4):
             assert proxies.vcc[i + 1].State() == DevState.OFF
 
-        wait_timeout([proxies.fsp[i + 1] for i in range(2)], DevState.OFF, 1_000_000_000, 0.1)
+        proxies.wait_timeout_dev([proxies.fsp[i + 1] for i in range(2)], DevState.OFF, 1, 0.1)
         for i in range(2):
             assert proxies.fsp[i + 1].State() == DevState.OFF
 
-        wait_timeout([proxies.fspSubarray[i + 1] for i in range(2)], DevState.OFF, 1_000_000_000, 0.1)
+        proxies.wait_timeout_dev([proxies.fspSubarray[i + 1] for i in range(2)], DevState.OFF, 1, 0.1)
         for i in range(2):
             assert proxies.fspSubarray[i + 1].State() == DevState.OFF
 

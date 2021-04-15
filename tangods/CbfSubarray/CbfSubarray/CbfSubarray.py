@@ -2117,7 +2117,8 @@ class CbfSubarray(SKASubarray):
             device._group_vcc.command_inout("EndScan")
             device._group_fsp_corr_subarray.command_inout("EndScan")
             device._group_fsp_pss_subarray.command_inout("EndScan")
-            device._scan_ID=0
+            device._scan_ID = 0
+            device._frequency_band = 0
 
             message = "EndScan command OK"
             self.logger.info(message)
