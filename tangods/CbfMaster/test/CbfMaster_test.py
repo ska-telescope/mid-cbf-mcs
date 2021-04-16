@@ -41,6 +41,7 @@ class TestCbfMaster:
         """
         Test a valid use of the "On" command
         """
+        proxies.master.DebugDevice()
         # check initial states
         assert proxies.master.State() == DevState.STANDBY
         assert proxies.subarray[1].State() == DevState.OFF
