@@ -29,6 +29,7 @@ from tango import AttrWriteType
 import os
 import sys
 from random import randint
+import debugpy
 
 file_path = os.path.dirname(os.path.abspath(__file__))
 commons_pkg_path = os.path.abspath(os.path.join(file_path, "../../commons"))
@@ -636,6 +637,7 @@ class CbfMaster(SKAMaster):
         """turn CbfMaster on, also turn on subarray, vcc, fsp"""
         # PROTECTED REGION ID(CbfMaster.On) ENABLED START #
         # 2020-07-14: don't turn Subarray on with ADR8 update
+        debugpy.debug_this_thread()
         self._group_subarray.command_inout("On")
         self._group_vcc.command_inout("On")
         self._group_fsp.command_inout("On")
