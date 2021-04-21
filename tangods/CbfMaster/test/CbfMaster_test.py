@@ -48,6 +48,7 @@ from ska_tango_base.base_device import (
 )
 from ska_tango_base.faults import CommandError
 import socket
+from tango.test_context import DeviceTestContext
 
 
 @pytest.mark.usefixtures("proxies")
