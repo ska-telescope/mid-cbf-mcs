@@ -29,7 +29,6 @@ from tango import AttrWriteType
 import os
 import sys
 from random import randint
-import debugpy
 
 file_path = os.path.dirname(os.path.abspath(__file__))
 commons_pkg_path = os.path.abspath(os.path.join(file_path, "../../commons"))

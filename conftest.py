@@ -94,6 +94,7 @@ def init_proxies_fixture():
             
         
         def wait_timeout_dev(self, proxygroup, state, time_s, sleep_time_s):
+            #time.sleep(time_s)
             timeout = time.time_ns() + (time_s * 1_000_000_000)
             while time.time_ns() < timeout:
                 for proxy in proxygroup:
@@ -101,6 +102,7 @@ def init_proxies_fixture():
                 time.sleep(sleep_time_s)
 
         def wait_timeout_obs(self, proxygroup, state, time_s, sleep_time_s):
+            #time.sleep(time_s)
             timeout = time.time_ns() + (time_s * 1_000_000_000)
             while time.time_ns() < timeout:
                 for proxy in proxygroup:
