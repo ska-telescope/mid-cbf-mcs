@@ -55,12 +55,13 @@ from tango.test_context import DeviceTestContext
 
 class TestCbfMaster:
 
-    # def test_DebugDevice(self, proxies):
-    #     port = proxies.master.DebugDevice()
-    #     assert port == _DEBUGGER_PORT
-    #     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-    #         s.connect(("localhost", _DEBUGGER_PORT))
-    #     proxies.master.On()
+    @pytest.mark.skip(reason="enable to test DebugDevice")
+    def test_DebugDevice(self, proxies):
+        port = proxies.master.DebugDevice()
+        assert port == _DEBUGGER_PORT
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.connect(("localhost", _DEBUGGER_PORT))
+        proxies.master.On()
 
     def test_On_valid(self, proxies):
         """

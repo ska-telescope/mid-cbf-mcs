@@ -507,6 +507,8 @@ class CbfSubarray(SKASubarray):
                                 proxy_fsp_subarray = self._proxies_fsp_corr_subarray[fspID - 1]
                             elif fsp["functionMode"] == "PSS-BF":
                                 proxy_fsp_subarray = self._proxies_fsp_pss_subarray[fspID - 1]
+                            elif fsp["functionMode"] == "PST-BF":
+                                proxy_fsp_subarray = self._proxies_fsp_pst_subarray[fspID - 1]
                         else:
                             msg = "'fspID' must be an integer in the range [1, {}]. " \
                                   "Aborting configuration.".format(str(self._count_fsp))
@@ -545,6 +547,13 @@ class CbfSubarray(SKASubarray):
                                         self._raise_configure_scan_fatal_error(msg)
                                 for fsp_pss_subarray_proxy in self._proxies_fsp_pss_subarray:
                                     if fsp_pss_subarray_proxy.obsState != ObsState.IDLE:
+                                        msg = "A different subarray is using FSP {} for a " \
+                                              "different function mode. Aborting configuration.".format(
+                                               fsp["fspID"]
+                                               )
+                                        self._raise_configure_scan_fatal_error(msg)
+                                for fsp_pst_subarray_proxy in self._proxies_fsp_pst_subarray:
+                                    if fsp_pst_subarray_proxy.obsState != ObsState.IDLE:
                                         msg = "A different subarray is using FSP {} for a " \
                                               "different function mode. Aborting configuration.".format(
                                                fsp["fspID"]
@@ -842,8 +851,7 @@ class CbfSubarray(SKASubarray):
                         self._corr_fsp_list = [fsp["fspID"]]
 
 
-
-
+                    ########## PSS-BF ##########
                     if fsp["functionMode"] == "PSS-BF":
                         if "searchWindowID" in fsp:
                             if int(fsp["searchWindowID"]) in [1, 2]:
@@ -946,6 +954,91 @@ class CbfSubarray(SKASubarray):
 
                         self._pss_config.append(fsp)
                         self._pss_fsp_list.append(fsp["fspID"])
+                    
+
+                    ########## PST-BF ##########
+                    if fsp["functionMode"] == "PST-BF":
+                        if "timingBeam" in fsp:
+                            if len(fsp["timingBeam"]) <= 16:
+                                for timingBeam in fsp["timingBeam"]:
+                                    if "timingBeamID" in timingBeam:
+                                        if 1 <= int(searchBeam["searchBeamID"]) <= 16:
+                                            # Set searchBeamID attribute
+                                            pass
+                                        else:  # searchbeamID not in valid range
+                                            msg = "'timingBeamID' must be within range 1-16 (received {}).".format(
+                                                str(searchBeam["timingBeamID"])
+                                            )
+                                            self._raise_configure_scan_fatal_error(msg)
+                                        for fsp_pst_subarray_proxy in self._proxies_fsp_pst_subarray:
+                                            timingBeamID = fsp_pst_subarray_proxy.timingBeamID
+                                            if timingBeamID is None:
+                                                pass
+                                            else:
+                                                for timing_beam_ID in timingBeamID:
+                                                    if int(timingBeam["timingBeamID"]) != timing_beam_ID:
+                                                        pass
+                                                    elif fsp_pst_subarray_proxy.obsState == ObsState.IDLE:
+                                                        pass
+                                                    else:
+                                                        msg = "'timingBeamID' {} is already being used on another fspSubarray.".format(
+                                                            str(timingBeam["timingBeamID"])
+                                                        )
+                                                        self._raise_configure_scan_fatal_error(msg)
+                                    else:
+                                        msg = "Timing beam ID not specified for Fsp PST config"
+                                        self._raise_configure_scan_fatal_error(msg)
+
+                                        # Validate receptors.
+                                        # This is always given, due to implementation details.
+                                    if "receptors" in timingBeam:
+                                        try:
+                                            proxy_fsp_subarray.RemoveAllReceptors()
+                                            proxy_fsp_subarray.AddReceptors(list(map(int, searchBeam["receptors"])))
+                                            proxy_fsp_subarray.RemoveAllReceptors()
+                                            for receptorCheck in searchBeam["receptors"]:
+                                                if receptorCheck not in self._receptors:
+                                                    msg = ("Receptor {} does not belong to subarray {}.".format(
+                                                        str(self._receptors[receptorCheck]), str(self._subarray_id)))
+                                                    self.logger.error(msg)
+                                                    tango.Except.throw_exception("Command failed", msg, "AddReceptors execution",
+                                                                                 tango.ErrSeverity.ERR)
+                                        except tango.DevFailed:  # error in AddReceptors()
+                                            proxy_fsp_subarray.RemoveAllReceptors()
+                                            msg = sys.exc_info()[1].args[0].desc + "\n'receptors' was malformed."
+                                            self.logger.error(msg)
+                                            tango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
+                                                                         tango.ErrSeverity.ERR)
+                                    else:
+                                        msg = "'receptors' not specified for Fsp PST config"
+                                        self._raise_configure_scan_fatal_error(msg)
+                                    if "outputEnable" in timingBeam:
+                                        if timingBeam["outputEnable"] is False or timingBeam["outputEnable"] is True:
+                                            pass
+                                        else:
+                                            msg = "'outputEnabled' is not a valid boolean"
+                                            self._raise_configure_scan_fatal_error(msg)
+                                    else:
+                                        msg = "'outputEnable' not specified for Fsp PST config"
+                                        self._raise_configure_scan_fatal_error(msg)
+                                    if "timingBeamDestinationAddress" in searchBeam:
+                                        if validate_ip(searchBeam["timingBeamDestinationAddress"]):
+                                            pass
+                                        else:
+                                            msg = "'timingBeamDestinationAddress' is not a valid IP address"
+                                            self._raise_configure_scan_fatal_error(msg)
+                                    else:
+                                        msg = "'timingBeamDestinationAddress' not specified for Fsp PST config"
+                                        self._raise_configure_scan_fatal_error(msg)
+                            else:
+                                msg = "More than 16 TimingBeams defined in PST-BF config"
+                                self._raise_configure_scan_fatal_error(msg)
+                        else:
+                            msg = "'timingBeam' not defined in PST-BF config"
+                            self._raise_configure_scan_fatal_error(msg)
+
+                        self._pst_config.append(fsp)
+                        self._pst_fsp_list.append(fsp["fspID"])
 
                     proxy_fsp.unsubscribe_event(
                         proxy_fsp.subscribe_event(
@@ -983,8 +1076,9 @@ class CbfSubarray(SKASubarray):
 
     def _deconfigure(self):
         """Helper function to unsubscribe events and release resources."""
-        # reset scanID in case it's not reset
+        # reset scanID, frequencyBand in case they're not reset
         self._scan_ID = 0
+        self._frequency_band = 0
         # unsubscribe from TMC events
         for event_id in list(self._events_telstate.keys()):
             self._events_telstate[event_id].unsubscribe_event(event_id)
@@ -1004,6 +1098,7 @@ class CbfSubarray(SKASubarray):
         self._group_vcc.command_inout("GoToIdle")
         self._group_fsp_corr_subarray.command_inout("GoToIdle")
         self._group_fsp_pss_subarray.command_inout("GoToIdle")
+        self._group_fsp_pst_subarray.command_inout("GoToIdle")
 
         # change FSP subarray membership
         data = tango.DeviceData()
@@ -1017,6 +1112,7 @@ class CbfSubarray(SKASubarray):
         # already done in GoToIdle
         self._group_fsp_corr_subarray.remove_all()
         self._group_fsp_pss_subarray.remove_all()
+        self._group_fsp_pst_subarray.remove_all()
         self._proxies_assigned_fsp_corr_subarray.clear()
 
         # configID needs to set to empty string (FSPCorrSubarray's configID set to empty automatically by calling gotoIDLE)
@@ -1035,6 +1131,9 @@ class CbfSubarray(SKASubarray):
         for fsp_pss_subarray_proxy in self._proxies_fsp_pss_subarray:
             if fsp_pss_subarray_proxy.State() == tango.DevState.ON:
                 fsp_pss_subarray_proxy.GoToIdle()
+        for fsp_pst_subarray_proxy in self._proxies_fsp_pst_subarray:
+            if fsp_pst_subarray_proxy.State() == tango.DevState.ON:
+                fsp_pst_subarray_proxy.GoToIdle()
 
 
 
@@ -1101,11 +1200,16 @@ class CbfSubarray(SKASubarray):
         doc="FQDN of CBF Master",
         default_value="mid_csp_cbf/sub_elt/master"
     )
+
+    CorrConfigAddress = device_property(
+        dtype='str'
+    )
+
     PssConfigAddress = device_property(
         dtype='str'
     )
 
-    CorrConfigAddress = device_property(
+    PstConfigAddress = device_property(
         dtype='str'
     )
 
@@ -1130,6 +1234,10 @@ class CbfSubarray(SKASubarray):
     )
 
     FspPssSubarray = device_property(
+        dtype=('str',)
+    )
+
+    FspPstSubarray = device_property(
         dtype=('str',)
     )
 
@@ -1207,7 +1315,7 @@ class CbfSubarray(SKASubarray):
         max_dim_x=4,
         max_dim_y=27,
         label="List of FSP's used by subarray",
-        doc="fsp[1][x] = CORR [2[x] = PSS [1][x] = PST [1][x] = VLBI",
+        doc="fsp[1][x] = CORR [2][x] = PSS [1][x] = PST [1][x] = VLBI",
     )
 
     latestScanConfig = attribute(
@@ -1264,11 +1372,13 @@ class CbfSubarray(SKASubarray):
             device._fsp_state = {}  # device_name:state
             device._fsp_health_state = {}  # device_name:healthState
             # store list of fsp configs being used for each function mode
-            device._pss_config = []
             device._corr_config = []
+            device._pss_config = []
+            device._pst_config = []
             # store list of fsp being used for each function mode
             device._corr_fsp_list = []
             device._pss_fsp_list = []
+            device._pst_fsp_list = []
             device._latest_scan_config=""
             # device._published_output_links = False# ???
             # device._last_received_vis_destination_address = "{}"#???
@@ -1294,8 +1404,9 @@ class CbfSubarray(SKASubarray):
             device._proxy_sw_2 = tango.DeviceProxy(device.SW2Address)
 
             # JSON FSP configurations for PSS, COR, PST, VLBI
-            device._proxy_pss_config = tango.DeviceProxy(device.PssConfigAddress)
             device._proxy_corr_config = tango.DeviceProxy(device.CorrConfigAddress) # address of CbfSubarrayCoorConfig device in Subarray Multi
+            device._proxy_pss_config = tango.DeviceProxy(device.PssConfigAddress)
+            device._proxy_pst_config = tango.DeviceProxy(device.PstConfigAddress)
 
             device._master_max_capabilities = dict(
                 pair.split(":") for pair in
@@ -1308,17 +1419,19 @@ class CbfSubarray(SKASubarray):
             device._fqdn_fsp = list(device.FSP)[:device._count_fsp]
             device._fqdn_fsp_corr_subarray = list(device.FspCorrSubarray)
             device._fqdn_fsp_pss_subarray = list(device.FspPssSubarray)
-
+            device._fqdn_fsp_pst_subarray = list(device.FspPstSubarray)
 
             device._proxies_vcc = [*map(tango.DeviceProxy, device._fqdn_vcc)]
             device._proxies_fsp = [*map(tango.DeviceProxy, device._fqdn_fsp)]
             device._proxies_fsp_corr_subarray = [*map(tango.DeviceProxy, device._fqdn_fsp_corr_subarray)]
             device._proxies_fsp_pss_subarray = [*map(tango.DeviceProxy, device._fqdn_fsp_pss_subarray)]
+            device._proxies_fsp_pst_subarray = [*map(tango.DeviceProxy, device._fqdn_fsp_pst_subarray)]
 
             device._proxies_assigned_vcc = []
             device._proxies_assigned_fsp = []
             device._proxies_assigned_fsp_corr_subarray = []
             device._proxies_assigned_fsp_pss_subarray = []
+            device._proxies_assigned_fsp_pst_subarray = []
 
             # store the subscribed telstate events as event_ID:attribute_proxy key:value pairs
             device._events_telstate = {}
@@ -1334,13 +1447,9 @@ class CbfSubarray(SKASubarray):
             device._group_fsp = tango.Group("FSP")
             device._group_fsp_corr_subarray = tango.Group("FSP Subarray Corr")
             device._group_fsp_pss_subarray = tango.Group("FSP Subarray Pss")
-
+            device._group_fsp_pst_subarray = tango.Group("FSP Subarray Pst")
 
             return (ResultCode.OK, "successfull")
-
-
-
-
 
 
     def always_executed_hook(self):
@@ -1686,11 +1795,12 @@ class CbfSubarray(SKASubarray):
             """
             device=self.target
             # Code here
-            device._pss_config = []
             device._corr_config = []
+            device._pss_config = []
+            device._pst_config = []
             device._corr_fsp_list = []
             device._pss_fsp_list = []
-            device._corr_fsp_list = []
+            device._pst_fsp_list = []
             device._fsp_list = [[], [], [], []]
 
             # validate scan configuration first 
@@ -1829,6 +1939,9 @@ class CbfSubarray(SKASubarray):
             if len(device._pss_config) != 0:
                 device._proxy_pss_config.ConfigureFSP(json.dumps(device._pss_config))
 
+            if len(device._pst_config) != 0:
+                device._proxy_pst_config.ConfigureFSP(json.dumps(device._pst_config))
+
             if len(device._corr_config) != 0: 
                 #_proxy_corr_config is address of CbfSubarrayCoorConfig device in Subarray Multi
                 #_corr_config is fsp part of the JSON, formed by the function _validate_scan_configuration
@@ -1837,6 +1950,7 @@ class CbfSubarray(SKASubarray):
             #TODO add PST and VLBI to this once they are implemented
             device._fsp_list[0].append(device._corr_fsp_list)
             device._fsp_list[1].append(device._pss_fsp_list)
+            device._fsp_list[2].append(device._pst_fsp_list)
 
 
             ######## FSP #######
@@ -1847,12 +1961,15 @@ class CbfSubarray(SKASubarray):
                 proxy_fsp = device._proxies_fsp[fspID - 1]
                 proxy_fsp_corr_subarray = device._proxies_fsp_corr_subarray[fspID - 1]
                 proxy_fsp_pss_subarray = device._proxies_fsp_pss_subarray[fspID - 1]
+                proxy_fsp_pst_subarray = device._proxies_fsp_pst_subarray[fspID - 1]
                 device._proxies_assigned_fsp.append(proxy_fsp)
                 device._proxies_assigned_fsp_corr_subarray.append(proxy_fsp_corr_subarray)
                 device._proxies_assigned_fsp_pss_subarray.append(proxy_fsp_pss_subarray)
+                device._proxies_assigned_fsp_pst_subarray.append(proxy_fsp_pst_subarray)
                 device._group_fsp.add(device._fqdn_fsp[fspID - 1])
                 device._group_fsp_corr_subarray.add(device._fqdn_fsp_corr_subarray[fspID - 1])
                 device._group_fsp_pss_subarray.add(device._fqdn_fsp_pss_subarray[fspID - 1])
+                device._group_fsp_pss_subarray.add(device._fqdn_fsp_pst_subarray[fspID - 1])
 
                 # change FSP subarray membership
                 proxy_fsp.AddSubarrayMembership(device._subarray_id)
@@ -2093,6 +2210,7 @@ class CbfSubarray(SKASubarray):
             device._group_vcc.command_inout("Scan", data)
             device._group_fsp_corr_subarray.command_inout("Scan", data)
             device._group_fsp_pss_subarray.command_inout("Scan")
+            device._group_fsp_pst_subarray.command_inout("Scan")
 
             # return message
             message = "Scan command successfull"
@@ -2117,6 +2235,7 @@ class CbfSubarray(SKASubarray):
             device._group_vcc.command_inout("EndScan")
             device._group_fsp_corr_subarray.command_inout("EndScan")
             device._group_fsp_pss_subarray.command_inout("EndScan")
+            device._group_fsp_pst_subarray.command_inout("EndScan")
             device._scan_ID = 0
             device._frequency_band = 0
 
@@ -2182,6 +2301,7 @@ class CbfSubarray(SKASubarray):
                 device._group_vcc.command_inout("EndScan")
                 device._group_fsp_corr_subarray.command_inout("EndScan")
                 device._group_fsp_pss_subarray.command_inout("EndScan")
+                device._group_fsp_pst_subarray.command_inout("EndScan")
             
             (result_code,message)=super().do()
             
