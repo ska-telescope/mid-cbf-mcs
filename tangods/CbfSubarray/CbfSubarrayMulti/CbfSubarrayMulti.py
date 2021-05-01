@@ -20,8 +20,7 @@ from CbfSubarrayPstConfig.CbfSubarrayPstConfig import CbfSubarrayPstConfig
 from SendConfig.SendConfig import SendConfig
 
 def main(args=None, **kwargs):
-    return run(classes=(SearchWindow, CbfSubarrayCorrConfig, CbfSubarrayPssConfig, CbfSubarrayPstConfig, CbfSubarray, SendConfig),
-               args=args, **kwargs)
+    return run(classes=(SearchWindow, CbfSubarrayCorrConfig, CbfSubarrayPssConfig, CbfSubarrayPstConfig, CbfSubarray, SendConfig), args=args, **kwargs)
 
 
 

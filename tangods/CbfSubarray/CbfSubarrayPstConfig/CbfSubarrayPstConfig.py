@@ -113,7 +113,7 @@ class CbfSubarrayPstConfig(SKACapability):
 
     def read_pstConfig(self):
         # PROTECTED REGION ID(CbfSubarrayPstConfig.pstConfig_read) ENABLED START #
-         """Return pstConfig attribute: JSON"""
+        """Return pstConfig attribute: JSON"""
         return json.dumps(self._pst_config)
         # PROTECTED REGION END #    //  CbfSubarrayPstConfig.pstConfig_read
 
