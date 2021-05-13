@@ -153,7 +153,7 @@ class CbfSubarrayPstConfig(SKACapability):
             tango.Except.throw_exception("Command failed", msg, "ConfigureFSP execution",
                                            tango.ErrSeverity.ERR)
         try:
-            # set pss_config to the most recent fsp configuration JSON
+            # set pst_config to the most recent fsp configuration JSON
             argin = json.loads(argin)
             self._pst_config = argin
         except json.JSONDecodeError:  # argument not a valid JSON object
@@ -167,11 +167,11 @@ class CbfSubarrayPstConfig(SKACapability):
             try:
                 self._fsp_id.append(int(fsp["fspID"]))
                 # Send config to fspPstSubarray for Fsp configuration
-                proxy_fsp_pst_subarray = self._proxies_fsp_pst_subarray[self._fsp_id[count] - 1]
-                proxy_fsp_pst_subarray.ConfigureScan(json.dumps(fsp))
+                proxy= self._proxy_fsp_pst_subarray[self._fsp_id[count] - 1]
+                proxy.ConfigureScan(json.dumps(fsp))
                 count = count + 1
             except tango.DevFailed:  # exception in ConfigureScan
-                msg = "An exception occurred while configuring CbfSubarrayPssConfig attributes:\n{}\n" \
+                msg = "An exception occurred while configuring CbfSubarrayPstConfig attributes:\n{}\n" \
                   "Aborting configuration".format(sys.exc_info()[1].args[0].desc)
                 self.__raise_configure_scan_fatal_error(msg)
 

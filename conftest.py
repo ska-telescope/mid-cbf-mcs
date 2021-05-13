@@ -32,16 +32,21 @@ def init_proxies_fixture():
             self.vccBand = [[DeviceProxy("mid_csp_cbf/vcc_band{0}/{1:03d}".format(j, k + 1)) for j in ["12", "3", "4", "5"]] for k in range(4)]
             self.vccTdc = [[DeviceProxy("mid_csp_cbf/vcc_sw{0}/{1:03d}".format(j, i + 1)) for j in ["1", "2"]] for i in range(4)] 
             
-            self.fspSubarray = {}
+            self.fspSubarray = {} # index 1, 2 = corr (01_01, 02_01); index 3, 4 = pss (03_01, 04_01); index 5, 6 = pst (03_01, 04_01)
             for i, proxy in enumerate([DeviceProxy("mid_csp_cbf/fspCorrSubarray/" + str(j + 1).zfill(2) + "_01") for j in range(2)]):
                 proxy.Init()
                 self.fspSubarray[i + 1] = proxy
             for i ,proxy in enumerate([DeviceProxy("mid_csp_cbf/fspPssSubarray/" + str(j + 3).zfill(2) + "_01") for j in range(2)]):
                 proxy.Init()
                 self.fspSubarray[i + 3] = proxy
+            for i ,proxy in enumerate([DeviceProxy("mid_csp_cbf/fspPstSubarray/" + str(j + 3).zfill(2) + "_01") for j in range(2)]):
+                proxy.Init()
+                self.fspSubarray[i + 5] = proxy
 
             self.fsp1FunctionMode = [*map(DeviceProxy, ["mid_csp_cbf/fsp_{}/01".format(i) for i in ["corr", "pss", "pst", "vlbi"]])]
             self.fsp2FunctionMode = [*map(DeviceProxy, ["mid_csp_cbf/fsp_{}/02".format(i) for i in ["corr", "pss", "pst", "vlbi"]])]
+            self.fsp3FunctionMode = [*map(DeviceProxy, ["mid_csp_cbf/fsp_{}/03".format(i) for i in ["corr", "pss", "pst", "vlbi"]])]
+            self.fsp4FunctionMode = [*map(DeviceProxy, ["mid_csp_cbf/fsp_{}/04".format(i) for i in ["corr", "pss", "pst", "vlbi"]])]
 
             self.fsp = {}
             for i, proxy in enumerate([DeviceProxy("mid_csp_cbf/fsp/" + str(j + 1).zfill(2)) for j in range(4)]):

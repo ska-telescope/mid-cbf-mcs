@@ -1,6 +1,6 @@
 {
     "id": "pst_test",
-    "frequencyBand": "1",
+    "frequencyBand": "2",
     "frequencyBandOffsetStream1": 0,
     "frequencyBandOffsetStream2": 0,
     "dopplerPhaseCorrSubscriptionPoint": "ska_mid/tm_leaf_node/csp_subarray_01/dopplerPhaseCorrection",

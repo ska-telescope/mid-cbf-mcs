@@ -202,9 +202,14 @@ class CbfSubarray(SKASubarray):
                 jones_matrix_all = json.loads(value)
 
                 for jones_matrix in jones_matrix_all["jonesMatrix"]:
+                    log_msg = "starting jm thread for " + json.dumps(jones_matrix["destinationType"])
+                    self.logger.warn(log_msg)
                     t = Thread(
                         target=self._update_jones_matrix,
-                        args=(int(jones_matrix["epoch"]), json.dumps(jones_matrix["matrixDetails"]))
+                        args=(json.dumps(jones_matrix["destinationType"]), 
+                              int(jones_matrix["epoch"]), 
+                              json.dumps(jones_matrix["matrixDetails"])
+                        )
                     )
                     t.start()
             except Exception as e:
@@ -214,7 +219,7 @@ class CbfSubarray(SKASubarray):
                 log_msg = item.reason + ": on attribute " + str(event.attr_name)
                 self.logger.error(log_msg)
 
-    def _update_jones_matrix(self, epoch, matrix):
+    def _update_jones_matrix(self, destination_type, epoch, matrix_details):
         #This method is always called on a separate thread
         self.logger.debug("CbfSubarray._update_jones_matrix")
         log_msg = "Jones matrix active at {} (currently {})...".format(epoch, int(time.time()))
@@ -223,15 +228,20 @@ class CbfSubarray(SKASubarray):
         if epoch > time.time():
             time.sleep(epoch - time.time())
 
-        log_msg = "Updating Jones Matrix at specified epoch {}...".format(epoch)
+        log_msg = "Updating Jones Matrix at specified epoch {}, destination ".format(epoch) + destination_type
         self.logger.warn(log_msg)
 
         data = tango.DeviceData()
-        data.insert(tango.DevString, matrix)
+        data.insert(tango.DevString, matrix_details)
 
         # we lock the mutex, forward the configuration, then immediately unlock it
         self._mutex_jones_matrix_config.acquire()
-        self._group_vcc.command_inout("UpdateJonesMatrix", data)
+        if destination_type == "\"vcc\"":
+            self.logger.warn("jm to vcc")
+            self._group_vcc.command_inout("UpdateJonesMatrix", data)
+        elif destination_type == "\"fsp\"":
+            self.logger.warn("jm to fsp")
+            self._group_fsp.command_inout("UpdateJonesMatrix", data)
         self._mutex_jones_matrix_config.release()
 
     def _state_change_event_callback(self, event):
@@ -962,12 +972,12 @@ class CbfSubarray(SKASubarray):
                             if len(fsp["timingBeam"]) <= 16:
                                 for timingBeam in fsp["timingBeam"]:
                                     if "timingBeamID" in timingBeam:
-                                        if 1 <= int(searchBeam["searchBeamID"]) <= 16:
+                                        if 1 <= int(timingBeam["timingBeamID"]) <= 16:
                                             # Set searchBeamID attribute
                                             pass
                                         else:  # searchbeamID not in valid range
                                             msg = "'timingBeamID' must be within range 1-16 (received {}).".format(
-                                                str(searchBeam["timingBeamID"])
+                                                str(timingBeam["timingBeamID"])
                                             )
                                             self._raise_configure_scan_fatal_error(msg)
                                         for fsp_pst_subarray_proxy in self._proxies_fsp_pst_subarray:
@@ -994,9 +1004,9 @@ class CbfSubarray(SKASubarray):
                                     if "receptors" in timingBeam:
                                         try:
                                             proxy_fsp_subarray.RemoveAllReceptors()
-                                            proxy_fsp_subarray.AddReceptors(list(map(int, searchBeam["receptors"])))
+                                            proxy_fsp_subarray.AddReceptors(list(map(int, timingBeam["receptors"])))
                                             proxy_fsp_subarray.RemoveAllReceptors()
-                                            for receptorCheck in searchBeam["receptors"]:
+                                            for receptorCheck in timingBeam["receptors"]:
                                                 if receptorCheck not in self._receptors:
                                                     msg = ("Receptor {} does not belong to subarray {}.".format(
                                                         str(self._receptors[receptorCheck]), str(self._subarray_id)))
@@ -1021,8 +1031,8 @@ class CbfSubarray(SKASubarray):
                                     else:
                                         msg = "'outputEnable' not specified for Fsp PST config"
                                         self._raise_configure_scan_fatal_error(msg)
-                                    if "timingBeamDestinationAddress" in searchBeam:
-                                        if validate_ip(searchBeam["timingBeamDestinationAddress"]):
+                                    if "timingBeamDestinationAddress" in timingBeam:
+                                        if validate_ip(timingBeam["timingBeamDestinationAddress"]):
                                             pass
                                         else:
                                             msg = "'timingBeamDestinationAddress' is not a valid IP address"
@@ -1103,7 +1113,7 @@ class CbfSubarray(SKASubarray):
         # change FSP subarray membership
         data = tango.DeviceData()
         data.insert(tango.DevUShort, self._subarray_id)
-        self.logger.info(data)
+        # self.logger.info(data)
         self._group_fsp.command_inout("RemoveSubarrayMembership", data)
         self._group_fsp.remove_all()
         self._proxies_assigned_fsp.clear()

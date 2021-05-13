@@ -55,7 +55,7 @@ class FspPstSubarray(SKASubarray):
     )
 
     FspID = device_property(
-        dtype='uint16',
+        dtype='uint16'
     )
 
     CbfMasterAddress = device_property(
@@ -64,11 +64,11 @@ class FspPstSubarray(SKASubarray):
     )
 
     CbfSubarrayAddress = device_property(
-        dtype='str',
+        dtype='str'
     )
 
     VCC = device_property(
-        dtype='str',
+        dtype=('str',)
     )
 
     # ----------
@@ -78,7 +78,7 @@ class FspPstSubarray(SKASubarray):
     outputEnable = attribute(
         dtype='bool',
         label="Enable Output",
-        doc="Enable/disable transmission of output products.",
+        doc="Enable/disable transmission of output products."
     )
 
     receptors = attribute(
@@ -86,21 +86,21 @@ class FspPstSubarray(SKASubarray):
         access=AttrWriteType.READ_WRITE,
         max_dim_x=197,
         label="Receptors",
-        doc="List of receptors assigned to the subarray.",
+        doc="List of receptors assigned to the subarray."
     )
 
     timingBeams = attribute(
         dtype=('str',),
         max_dim_x=16,
         label="TimingBeams",
-        doc="List of timing beams assigned to FSP PST Subarray.",
+        doc="List of timing beams assigned to FSP PST Subarray."
     )
 
     timingBeamID = attribute(
         dtype=('uint16',),
         max_dim_x=16,
         label="TimingBeamID",
-        doc="Identifiers of timing beams assigned to FSP PST Subarray",
+        doc="Identifiers of timing beams assigned to FSP PST Subarray"
     )
 
     # ---------------
@@ -109,11 +109,13 @@ class FspPstSubarray(SKASubarray):
 
     def init_device(self):
         SKASubarray.init_device(self)
-        self.set_change_event("adminMode", True, True)
-        self.set_archive_event("adminMode", True, True)
-        self.set_change_event("obsState", True, True)
-        self.set_archive_event("obsState", True, True)
+        # self.set_change_event("adminMode", True, True)
+        # self.set_archive_event("adminMode", True, True)
+        # self.set_change_event("obsState", True, True)
+        # self.set_archive_event("obsState", True, True)
         # PROTECTED REGION ID(FspPstSubarray.init_device) ENABLED START #
+        self.set_state(tango.DevState.INIT)
+
         #get relevant IDs
         self._subarray_id = self.SubID
         self._fsp_id = self.FspID
@@ -138,6 +140,8 @@ class FspPstSubarray(SKASubarray):
         # device proxy for easy reference to CBF Subarray
         self._proxy_cbf_subarray = tango.DeviceProxy(self.CbfSubarrayAddress)
 
+        self._update_obs_state(ObsState.IDLE)
+        self.set_state(tango.DevState.OFF)
         # PROTECTED REGION END #    //  FspPstSubarray.init_device
 
     def always_executed_hook(self):
@@ -311,6 +315,14 @@ class FspPstSubarray(SKASubarray):
         self._obs_state = ObsState.SCANNING
         # nothing else is supposed to happen
         # PROTECTED REGION END #    //  FspPstSubarray.Scan
+
+    @command()
+    def GoToIdle(self):
+        """ObsState to IDLE"""
+        # PROTECTED REGION ID(FspPstSubarray.GoToIdle) ENABLED START #
+        # transition to obsState=IDLE
+        self._obs_state = ObsState.IDLE
+        # PROTECTED REGION END #    //  FspPstSubarray.GoToIdle
 
 # ----------
 # Run server

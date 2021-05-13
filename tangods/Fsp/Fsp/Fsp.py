@@ -26,6 +26,7 @@ from tango import AttrWriteType
 # PROTECTED REGION ID(Fsp.additionnal_import) ENABLED START #
 import os
 import sys
+import json
 
 file_path = os.path.dirname(os.path.abspath(__file__))
 commons_pkg_path = os.path.abspath(os.path.join(file_path, "../../commons"))
@@ -58,7 +59,11 @@ class Fsp(SKACapability):
                 tango.DeviceProxy,
                 list(self.FspCorrSubarray)
             )]
-        
+        if self.FspPssSubarray:
+            self._proxy_fsp_pss_subarray = [*map(
+                tango.DeviceProxy,
+                list(self.FspPssSubarray)
+            )]
         if self.FspPstSubarray:
             self._proxy_fsp_pst_subarray = [*map(
                 tango.DeviceProxy,
@@ -136,13 +141,13 @@ class Fsp(SKACapability):
         doc="set when transition to READY is performed",
     )
 
-    # jonesMatrix = attribute(
-    #     dtype=(double,),
-    #     max_dim_x=16,
-    #     access=AttrWriteType.READ,
-    #     label='Jones Matrix',
-    #     doc='Jones Matrix, given per frequency slice'
-    # )
+    jonesMatrix = attribute(
+        dtype=('double',),
+        max_dim_x=4,
+        access=AttrWriteType.READ,
+        label='Jones Matrix',
+        doc='Jones Matrix, given per frequency slice'
+    )
    
     # ---------------
     # General methods
@@ -171,7 +176,7 @@ class Fsp(SKACapability):
         self._subarray_membership = []
         self._scan_id = 0
         self._config_id = ""
-        #self._jones_matrix = [0.0 for i in range(16)]
+        self._jones_matrix = [0.0 for i in range(4)]
 
         # initialize FSP subarray group
         self._group_fsp_corr_subarray = tango.Group("FSP Subarray Corr")
@@ -214,7 +219,7 @@ class Fsp(SKACapability):
         # remove all subarray membership
         for subarray_ID in self._subarray_membership[:]:
             self.RemoveSubarrayMembership(subarray_ID)
-
+        
         self.set_state(tango.DevState.OFF)
         # PROTECTED REGION END #    //  Fsp.delete_device
 
@@ -253,11 +258,11 @@ class Fsp(SKACapability):
         self._config_id=value
         # PROTECTED REGION END #    //  Fsp.configID_write
 
-    # def read_jonesMatrix(self):
-    #     # PROTECTED REGION ID(Fsp.jonesMatrix_read) ENABLED START #
-    #     """Return jonesMatrix attribute(max=16 array): Jones Matrix, given per frequency slice"""
-    #     return self._jones_matrix
-    #     # PROTECTED REGION END #    //  Fsp.jonesMatrix_read
+    def read_jonesMatrix(self):
+        # PROTECTED REGION ID(Fsp.jonesMatrix_read) ENABLED START #
+        """Return the jonesMatrix attribute."""
+        return self._jones_matrix
+        # PROTECTED REGION END #    //  Fsp.jonesMatrix_read
 
     # --------
     # Commands
@@ -418,6 +423,54 @@ class Fsp(SKACapability):
             result[str(proxy)]=proxy.configID
         return str(result)
         # PROTECTED REGION END #    //  Fsp.getConfigID
+
+    def is_UpdateJonesMatrix_allowed(self):
+        """allowed when Devstate is ON and ObsState is READY OR SCANNINNG"""
+        #TODO implement obsstate in FSP
+        if self.dev_state() == tango.DevState.ON:
+            return True
+        return False
+
+    @command(
+        dtype_in='str',
+        doc_in="Jones Matrix, given per frequency slice"
+    )
+    def UpdateJonesMatrix(self, argin):
+        # PROTECTED REGION ID(Fsp.UpdateJonesMatrix) ENABLED START #
+        self.logger.debug("Fsp.UpdateJonesMatrix")
+        """update FSP's Jones matrix (serialized JSON object)"""
+        if self._function_mode in [2, 3]:
+            argin = json.loads(argin)
+
+            for i in self._subarray_membership:
+                self.logger.debug(str(i))
+                for receptor in argin:
+                    for j in len(self._proxy_fsp_pst_subarray[i].receptors):
+                        self.logger.debug(str(self._proxy_fsp_pst_subarray[i].receptors[j]))
+                    if int(receptor["receptor"]) in self._proxy_fsp_pst_subarray[i].receptors:
+                        self.logger.debug("Fsp.UpdateJonesMatrix; receptor: {}".format(receptor["receptor"]))
+                        for frequency_slice in receptor["receptorMatrix"]:
+                            fs_id = frequency_slice["fsid"]
+                            matrix = frequency_slice["matrix"]
+                            self.logger.debug("Fsp.UpdateJonesMatrix; fs: {}, fsp: {}".format(frequency_slice["fsid"], self._fsp_id))
+                            if fs_id == self._fsp_id:
+                                self.logger.debug("Fsp.UpdateJonesMatrix; fsp: {}, len: {}".format(self._fsp_id, len(matrix)))
+                                if len(matrix) == 4:
+                                    self._jones_matrix = matrix
+                                    self.logger.debug("{}, {}".format(self._jones_matrix[0], matrix[0]))
+                                else:
+                                    log_msg = "'matrix' not valid length for frequency slice {} of " \
+                                            "receptor {}".format(fs_id, self._receptor_ID)
+                                    self.logger.error(log_msg)
+                            else:
+                                log_msg = "'fsid' {} not valid for receptor {}".format(
+                                    fs_id, self._receptor_ID
+                                )
+                                self.logger.error(log_msg)
+        else:
+            log_msg = "matrix not usable in function mode {}".format(self._function_mode)
+            self.logger.error(log_msg)
+        # PROTECTED REGION END #    // Vcc.UpdateJonesMatrix
 
 # ----------
 # Run server
