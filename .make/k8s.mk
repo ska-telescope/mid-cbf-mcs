@@ -10,17 +10,7 @@ CHARTS ?= mid-cbf-umbrella mid-cbf mid-cbf-tmleafnode ## list of charts to be pu
 CI_PROJECT_PATH_SLUG ?= mid-cbf
 CI_ENVIRONMENT_SLUG ?= mid-cbf
 
-# in release.mk it's defined the value of the variable IMAGE_TAG
 SET_IMAGE_TAG ?= --set mid-cbf.midcbf.image.tag=$(IMAGE_TAG) --set mid-cbf-tmleafnode.midcbf.image.tag=$(IMAGE_TAG)
-
-ifneq ($(CI_JOB_ID),)
-CI_PROJECT_IMAGE :=
-SET_IMAGE_TAG = --set mid-cbf.midcbf.image.registry=$(CI_REGISTRY)/ska-telescope \
-                --set mid-cbf.midcbf.image.tag=$(CI_COMMIT_SHORT_SHA) \
-                --set mid-cbf-tmleafnode.midcbf.image.registry=$(CI_REGISTRY)/ska-telescope \
-                --set mid-cbf-tmleafnode.midcbf.image.tag=$(CI_COMMIT_SHORT_SHA)
-IMAGE_TO_TEST = $(CI_REGISTRY_IMAGE):$(CI_COMMIT_SHORT_SHA)
-endif
 .DEFAULT_GOAL := help
 
 k8s: ## Which kubernetes are we connected to
@@ -32,10 +22,12 @@ k8s: ## Which kubernetes are we connected to
 	@echo ""
 	@echo "Helm version:"
 	@helm version --client
-	@echo $(TANGO_HOST)
-	@echo "git branch: $(BRANCH_NAME)"
-	@echo "image tag: $(IMAGE_TAG)"
-	@echo "image tag: $(IMAGE_TO_TEST)"
+	@echo "TANGO_HOST=$(TANGO_HOST)""
+	@echo "BRANCH_NAME=$(BRANCH_NAME)"
+	@echo "IMAGE_TAG=$(IMAGE_TAG)"
+	@echo "IMAGE_TO_TEST: $(IMAGE_TO_TEST)"
+	@echo "TEST_RUNNER=$(TEST_RUNNER)"
+	@echo "KUBECONFIG=$(KUBECONFIG)"
 
 clean: ## clean out references to chart tgz's
 	@rm -f ./charts/*/charts/*.tgz ./charts/*/Chart.lock ./charts/*/requirements.lock ./repository/*
@@ -90,7 +82,8 @@ install-chart: dep-up namespace ## install the helm chart with name HELM_RELEASE
          $(UMBRELLA_CHART_PATH) --namespace $(KUBE_NAMESPACE); \
 	rm generated_values.yaml; \
 	rm values.yaml
-
+	@date
+	
 install-chart-with-taranta: dep-up namespace ## install the helm chart with name HELM_RELEASE and path UMBRELLA_CHART_PATH on the namespace KUBE_NAMESPACE 
 	@echo $(TANGO_HOST)
 	@sed -e 's/CI_PROJECT_PATH_SLUG/$(CI_PROJECT_PATH_SLUG)/' $(UMBRELLA_CHART_PATH)values.yaml > generated_values.yaml; \
@@ -133,6 +126,12 @@ wait:## wait for pods to be ready
 	@jobs=$$(kubectl get job --output=jsonpath={.items..metadata.name} -n $(KUBE_NAMESPACE)); kubectl wait job --for=condition=complete --timeout=120s $$jobs -n $(KUBE_NAMESPACE)
 	@kubectl -n $(KUBE_NAMESPACE) wait --for=condition=ready -l app=mid-cbf-mcs --timeout=120s pods || exit 1
 	@date
+
+rm-build:
+	rm -rf build
+
+rm-test-runner:
+	kubectl --namespace $(KUBE_NAMESPACE) delete pod $(TEST_RUNNER)
 
 # Error in --set
 show: ## show the helm chart
@@ -227,17 +226,25 @@ kubeconfig: ## export current KUBECONFIG as base64 ready for KUBE_CONFIG_BASE64
 # base64 payload is given a boundary "~~~~BOUNDARY~~~~" and extracted using perl
 # clean up the run to completion container
 # exit the saved status
-test: install-chart wait ## test the application on K8s
+test: rm-build install-chart wait  ## test the application on K8s
 	$(call k8s_test,test); \
 		status=$$?; \
-		rm -rf build; \
 		kubectl --namespace $(KUBE_NAMESPACE) logs $(TEST_RUNNER) | \
 		perl -ne 'BEGIN {$$on=0;}; if (index($$_, "~~~~BOUNDARY~~~~")!=-1){$$on+=1;next;}; print if $$on % 2;' | \
 		base64 -d | tar -xzf -; \
 		kubectl --namespace $(KUBE_NAMESPACE) delete pod $(TEST_RUNNER); \
 		exit $$status
 
-#
+test-only: rm-build ## test the application on K8s
+	$(call k8s_test,test); \
+		status=$$?; \
+		kubectl --namespace $(KUBE_NAMESPACE) logs $(TEST_RUNNER) | \
+		perl -ne 'BEGIN {$$on=0;}; if (index($$_, "~~~~BOUNDARY~~~~")!=-1){$$on+=1;next;}; print if $$on % 2;' | \
+		base64 -d | tar -xzf -; \
+		kubectl --namespace $(KUBE_NAMESPACE) delete pod $(TEST_RUNNER); \
+		exit $$status
+
+
 # defines a function to copy the ./test-harness directory into the K8s TEST_RUNNER
 # and then runs the requested make target in the container.
 # capture the output of the test in a tar file
@@ -246,17 +253,20 @@ test: install-chart wait ## test the application on K8s
 k8s_test = tar -c . | \
 		kubectl run $(TEST_RUNNER) \
 		--namespace $(KUBE_NAMESPACE) -i --wait --restart=Never \
-		--image-pull-policy=IfNotPresent \
+		--image-pull-policy=Never \
 		--image=$(IMAGE_TO_TEST) -- \
 		/bin/bash -c "tar xv --strip-components 1 --warning=all && \
 		python3 -m pip install . &&\
 		cd test-harness &&\
-		make TANGO_HOST=$(TANGO_HOST) MARK='$(MARK)' $1 && \
+		make TANGO_HOST=$(TANGO_HOST) $1 && \
 		tar -czvf /tmp/build.tgz build && \
                 echo '~~~~BOUNDARY~~~~' && \
-                cat /tmp/build.tgz | base64 && \
                 echo '~~~~BOUNDARY~~~~'" \
                 2>&1
+
+# echo 'TODO Disabled: cat /tmp/build.tgz | base64' && \
+# cat /tmp/build.tgz | base64 && \ # TODO - insert this line back 
+# between the 2 echo 'BOUNDARY'
 
 rlint:  ## run lint check on Helm Chart using gitlab-runner
 	if [ -n "$(RDEBUG)" ]; then DEBUG_LEVEL=debug; else DEBUG_LEVEL=warn; fi && \

@@ -13,13 +13,13 @@ pkg_path = os.path.abspath(os.path.join(file_path, "../"))
 sys.path.insert(0, pkg_path)
 
 from CbfSubarray.CbfSubarray import CbfSubarray
-from SearchWindow.SearchWindow import SearchWindow
+#from SearchWindow.SearchWindow import SearchWindow
 from CbfSubarrayPssConfig.CbfSubarrayPssConfig import CbfSubarrayPssConfig
 from CbfSubarrayCorrConfig.CbfSubarrayCorrConfig import CbfSubarrayCorrConfig
 from SendConfig.SendConfig import SendConfig
 
 def main(args=None, **kwargs):
-    return run(classes=(SearchWindow, CbfSubarrayCorrConfig, CbfSubarrayPssConfig, CbfSubarray, SendConfig), args=args, **kwargs)
+    return run(classes=(CbfSubarrayCorrConfig, CbfSubarrayPssConfig, CbfSubarray, SendConfig), args=args, **kwargs)
 
 
 

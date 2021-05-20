@@ -1,4 +1,17 @@
 {
     "restructuredtext.confPath": "${workspaceFolder}/docs/src",
-    "python.pythonPath": "/venv/bin/python"
+    "python.pythonPath": "/venv/bin/python",
+    "editor.tokenColorCustomizations": {
+        "[Code Blue]": {
+            "comments": "#baced3"
+        },
+        "textMateRules":[
+            {
+            "scope": "string.quoted.docstring.multi.python",
+                "settings":{
+                    "foreground": "#baced3"
+                }
+            }
+        ]
+    }
 }

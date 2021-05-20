@@ -35,7 +35,8 @@ file_path = os.path.dirname(os.path.abspath(__file__))
 commons_pkg_path = os.path.abspath(os.path.join(file_path, "../../commons"))
 sys.path.insert(0, commons_pkg_path)
 
-from global_enum import HealthState, AdminMode, ObsState, const
+from global_enum import const
+from ska_tango_base.control_model import ObsState, AdminMode, HealthState
 from ska_tango_base import SKACapability
 # PROTECTED REGION END #    //  CbfSubarrayCorrConfig.additionnal_import
 
@@ -95,7 +96,10 @@ class CbfSubarrayCorrConfig(SKACapability):
         self._corr_config = {}  # this is interpreted as a JSON object
 
         # Getting Proxies for FSP and FSP Subarrays
+
+        # TODO - master proxy and CbfMasterAddress not needed - to remove
         self._proxy_cbf_master = tango.DeviceProxy(self.CbfMasterAddress)
+
         self._proxies_fsp_corr_subarray = [*map(tango.DeviceProxy, list(self.FspCorrSubarray))]
 
         self._update_obs_state(ObsState.IDLE)
