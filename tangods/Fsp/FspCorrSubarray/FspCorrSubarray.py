@@ -38,16 +38,17 @@ file_path = os.path.dirname(os.path.abspath(__file__))
 commons_pkg_path = os.path.abspath(os.path.join(file_path, "../../commons"))
 sys.path.insert(0, commons_pkg_path)
 
-from global_enum import const
+from global_enum import const, freq_band_dict
 from ska_tango_base.control_model import HealthState, AdminMode, ObsState
-from ska_tango_base import SKASubarray
+from ska_tango_base import SKASubarray, CspSubElementObsDevice
+from ska_tango_base.commands import ResultCode
 
 # PROTECTED REGION END #    //  FspCorrSubarray.additionnal_import
 
 __all__ = ["FspCorrSubarray", "main"]
 
 
-class FspCorrSubarray(SKASubarray):
+class FspCorrSubarray(CspSubElementObsDevice):
     """
     FspCorrSubarray TANGO device class for the FspCorrSubarray prototype
     """
@@ -72,6 +73,8 @@ class FspCorrSubarray(SKASubarray):
         default_value="mid_csp_cbf/master/main"
     )
 
+    # TODO - note the connection to the CbfSubarray device 
+    #        is not being used
     CbfSubarrayAddress = device_property(
         dtype='str',
         doc="FQDN of CBF Subarray"
@@ -87,7 +90,7 @@ class FspCorrSubarray(SKASubarray):
 
     receptors = attribute(
         dtype=('uint16',),
-        access=AttrWriteType.READ_WRITE,
+        access=AttrWriteType.READ,
         max_dim_x=197,
         label="Receptors",
         doc="List of receptors assigned to subarray",
@@ -188,7 +191,6 @@ class FspCorrSubarray(SKASubarray):
         doc="scan ID, set when transition to SCANNING is performed",
     )
 
-
     configID = attribute(
         dtype='str',
         access=AttrWriteType.READ_WRITE,
@@ -200,62 +202,93 @@ class FspCorrSubarray(SKASubarray):
     # General methods
     # ---------------
 
-    def init_device(self):
-        SKASubarray.init_device(self)
-        # PROTECTED REGION ID(FspCorrSubarray.init_device) ENABLED START #
-        """Initialize attributes. ObsState=IDLE, state=OFF"""
-        self.set_state(tango.DevState.INIT)
+    def init_command_objects(self):
+        """
+        Sets up the command objects
+        """
+        super().init_command_objects()
 
-        # get relevant IDs
-        self._subarray_id = self.SubID
-        self._fsp_id = self.FspID
-
-        self.NUM_CHANNEL_GROUPS = const.NUM_CHANNEL_GROUPS
-        self.NUM_FINE_CHANNELS = const.NUM_FINE_CHANNELS
-
-        # initialize attribute values
-        self._receptors = []
-        self._frequency_band = 0
-        self._stream_tuning = (0, 0)
-        self._frequency_band_offset_stream_1 = 0
-        self._frequency_band_offset_stream_2 = 0
-        self._frequency_slice_ID = 0
-        self._bandwidth = 0
-        self._bandwidth_actual = const.FREQUENCY_SLICE_BW
-        self._zoom_window_tuning = 0
-        self._integration_time = 0
-        self._scan_id = 0
-        self._config_id = ""
-        self._channel_averaging_map = [
-            [int(i*self.NUM_FINE_CHANNELS/self.NUM_CHANNEL_GROUPS) + 1, 0]
-            for i in range(self.NUM_CHANNEL_GROUPS)
-        ]
-        # destination addresses includes the following three
-        self._vis_destination_address = {"outputHost":[], "outputMac": [], "outputPort":[]}
-        self._fsp_channel_offset = 0
-        # outputLinkMap is a 2*40 array. Pogo generates tuple. I changed into list to facilitate writing
-        self._output_link_map = [[0,0] for i in range(40)]
-
-        # For each channel sent to SDP: [chanID, bw, cf, cbfOutLink, sdpIp, sdpPort] # ???
-        self._channel_info = []
-
-        # device proxy for easy reference to CBF Master
-        self._proxy_cbf_master = tango.DeviceProxy(self.CbfMasterAddress)
-
-        self._master_max_capabilities = dict(
-            pair.split(":") for pair in
-            self._proxy_cbf_master.get_property("MaxCapabilities")["MaxCapabilities"]
+        device_args = (self, self.state_model, self.logger)
+        self.register_command_object(
+            "ConfigureScan", self.ConfigureScanCommand(*device_args)
         )
-        self._count_vcc = int(self._master_max_capabilities["VCC"])
-        self._fqdn_vcc = list(self.VCC)[:self._count_vcc]
-        self._proxies_vcc = [*map(tango.DeviceProxy, self._fqdn_vcc)]
+        self.register_command_object(
+            "GoToIdle", self.GoToIdleCommand(*device_args)
+        )
 
-        # device proxy for easy reference to CBF Subarray
-        self._proxy_cbf_subarray = tango.DeviceProxy(self.CbfSubarrayAddress)
+    class InitCommand(CspSubElementObsDevice.InitCommand):
+        """
+        A class for the Vcc's init_device() "command".
+        """
 
-        self._update_obs_state(ObsState.IDLE)
-        self.set_state(tango.DevState.OFF)
-        # PROTECTED REGION END #    //  FspCorrSubarray.init_device
+        def do(self):
+            """
+            Stateless hook for device initialisation.
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
+
+            self.logger.debug("Entering InitCommand()")
+
+            device = self.target
+
+            # Make a private copy of the device properties:
+            device._subarray_id = device.SubID
+            device._fsp_id = device.FspID
+
+            # initialize attribute values
+            device._receptors = []
+            device._freq_band_name = ""
+            device._frequency_band = 0
+            device._stream_tuning = (0, 0)
+            device._frequency_band_offset_stream_1 = 0
+            device._frequency_band_offset_stream_2 = 0
+            device._frequency_slice_ID = 0
+            device._bandwidth = 0
+            device._bandwidth_actual = const.FREQUENCY_SLICE_BW
+            device._zoom_window_tuning = 0
+            device._integration_time = 0
+            device._scan_id = 0
+            device._config_id = ""
+            device._channel_averaging_map = [
+                [int(i*const.NUM_FINE_CHANNELS/const.NUM_CHANNEL_GROUPS) + 1, 0]
+                for i in range(const.NUM_CHANNEL_GROUPS)
+            ]
+            # destination addresses includes the following three
+            device._vis_destination_address = {"outputHost":[], "outputMac": [], "outputPort":[]}
+            device._fsp_channel_offset = 0
+            # outputLinkMap is a 2*40 array. Pogo generates tuple;
+            # Changed into list to facilitate writing
+            device._output_link_map = [[0,0] for i in range(40)]
+
+            # For each channel sent to SDP: [chanID, bw, cf, cbfOutLink, sdpIp, sdpPort] # TODO - ???
+            device._channel_info = []
+
+            # device proxy for connection to CBFMaster
+            device._proxy_cbf_master = tango.DeviceProxy(device.CbfMasterAddress)
+
+            device._master_max_capabilities = dict(
+                pair.split(":") for pair in
+                device._proxy_cbf_master.get_property("MaxCapabilities")["MaxCapabilities"]
+            )
+
+            # Connet to all VCC devices turned on by CbfMaster:
+            device._count_vcc = int(device._master_max_capabilities["VCC"])
+            device._fqdn_vcc = list(device.VCC)[:device._count_vcc]
+            device._proxies_vcc = [*map(tango.DeviceProxy, device._fqdn_vcc)]
+
+            # TODO - remove
+            # self._update_obs_state(ObsState.IDLE)
+            # self.set_state(tango.DevState.OFF)
+
+            message = "FspCorrSubarry Init command completed OK"
+            self.logger.info(message)
+            return (ResultCode.OK, message)
+            
+            # PROTECTED REGION END #    //  FspCorrSubarray.init_device
 
     def always_executed_hook(self):
         # PROTECTED REGION ID(FspCorrSubarray.always_executed_hook) ENABLED START #
@@ -265,10 +298,12 @@ class FspCorrSubarray(SKASubarray):
 
     def delete_device(self):
         # PROTECTED REGION ID(FspCorrSubarray.delete_device) ENABLED START #
-        """set ObsState IDLE, remove all receptors, set state OFF."""
-        self.GoToIdle()
-        self.RemoveAllReceptors()
-        self.set_state(tango.DevState.OFF)
+        
+        # TODO - these are not necessary; double-check and remove.
+        # self.GoToIdle()
+        # self._RemoveAllReceptors()
+        # self.set_state(tango.DevState.OFF)
+        pass
         # PROTECTED REGION END #    //  FspCorrSubarray.delete_device
 
     # ------------------
@@ -280,13 +315,6 @@ class FspCorrSubarray(SKASubarray):
         """return receptros attribute.(array of int)"""
         return self._receptors
         # PROTECTED REGION END #    //  FspCorrSubarray.receptors_read
-
-    def write_receptors(self, value):
-        # PROTECTED REGION ID(FspCorrSubarray.receptors_write) ENABLED START #
-        """Set receptors attribute; set receptors to a new list of receptors."""
-        self.RemoveAllReceptors()
-        self.AddReceptors(value)
-        # PROTECTED REGION END #    //  FspCorrSubarray.receptors_write
 
     def read_frequencyBand(self):
         # PROTECTED REGION ID(FspCorrSubarray.frequencyBand_read) ENABLED START #
@@ -409,52 +437,54 @@ class FspCorrSubarray(SKASubarray):
     # Commands
     # --------
 
-    def is_On_allowed(self):
-        if self.dev_state() == tango.DevState.OFF and\
-                self._obs_state == ObsState.IDLE:
-            return True
-        return False
+    # TODO - go by super On() command
+    # def is_On_allowed(self):
+    #     if self.dev_state() == tango.DevState.OFF and\
+    #             self._obs_state == ObsState.IDLE:
+    #         return True
+    #     return False
 
-    @command()
-    def On(self):
-        # PROTECTED REGION ID(FspCorrSubarray.On) ENABLED START #
-        """Turn FSPCorrSubarray ON"""
-        self.set_state(tango.DevState.ON)
-        # PROTECTED REGION END #    //  FspCorrSubarray.On
+    # @command()
+    # def On(self):
+    #     # PROTECTED REGION ID(FspCorrSubarray.On) ENABLED START #
+    #     """Turn FSPCorrSubarray ON"""
+    #     self.set_state(tango.DevState.ON)
+    #     # PROTECTED REGION END #    //  FspCorrSubarray.On
 
-    def is_Off_allowed(self):
-        if self.dev_state() == tango.DevState.ON and\
-                self._obs_state == ObsState.IDLE:
-            return True
-        return False
+    # def is_Off_allowed(self):
+    #     if self.dev_state() == tango.DevState.ON and\
+    #             self._obs_state == ObsState.IDLE:
+    #         return True
+    #     return False
 
-    @command()
-    def Off(self):
-        """Turn FSPCorrSubarray OFF"""
-        # PROTECTED REGION ID(FspCorrSubarray.Off) ENABLED START #
-        # This command can only be called when obsState=IDLE
-        self.GoToIdle()
-        self.RemoveAllReceptors()
-        self.set_state(tango.DevState.OFF)
-        # PROTECTED REGION END #    //  FspCorrSubarray.Off
+    # @command()
+    # def Off(self):
+    #     """Turn FSPCorrSubarray OFF"""
+    #     # PROTECTED REGION ID(FspCorrSubarray.Off) ENABLED START #
+    #     # This command can only be called when obsState=IDLE
+    #     self.GoToIdle()
+    #     self._RemoveAllReceptors()
+    #     self.set_state(tango.DevState.OFF)
+    #     # PROTECTED REGION END #    //  FspCorrSubarray.Off
 
-    def is_AddReceptors_allowed(self):
-        """allowed if FSPPssSubarry is ON, ObsState is not SCANNING"""
-        if self.dev_state() == tango.DevState.ON and\
-                self._obs_state in [
-                    ObsState.IDLE,
-                    ObsState.CONFIGURING,
-                    ObsState.READY
-                ]:
-            return True
-        return False
+    # TODO - make it local
+    # def is_AddReceptors_allowed(self):
+    #     """allowed if FSPPssSubarry is ON, ObsState is not SCANNING"""
+    #     if self.dev_state() == tango.DevState.ON and\
+    #             self._obs_state in [
+    #                 ObsState.IDLE,
+    #                 ObsState.CONFIGURING,
+    #                 ObsState.READY
+    #             ]:
+    #         return True
+    #     return False
 
-    @command(
-        dtype_in=('uint16',),
-        doc_in="List of receptor IDs",
-    )
-    def AddReceptors(self, argin):
-        # PROTECTED REGION ID(FspCorrSubarray.AddReceptors) ENABLED START #
+    # @command(
+    #     dtype_in=('uint16',),
+    #     doc_in="List of receptor IDs",
+    # )
+    def _AddReceptors(self, argin):
+        # PROTECTED REGION ID(FspCorrSubarray._AddReceptors) ENABLED START #
         """add specified receptors to the FSP subarray. Input is array of int."""
         errs = []  # list of error messages
         receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
@@ -482,27 +512,28 @@ class FspCorrSubarray(SKASubarray):
         if errs:
             msg = "\n".join(errs)
             self.logger.error(msg)
-            tango.Except.throw_exception("Command failed", msg, "AddReceptors execution",
+            tango.Except.throw_exception("Command failed", msg, "_AddReceptors execution",
                                            tango.ErrSeverity.ERR)
-        # PROTECTED REGION END #    //  FspCorrSubarray.AddReceptors
+        # PROTECTED REGION END #    //  FspCorrSubarray._AddReceptors
 
-    def is_RemoveReceptors_allowed(self):
-        """allowed if FSPPssSubarry is ON, ObsState is not SCANNING"""
-        if self.dev_state() == tango.DevState.ON and\
-                self._obs_state in [
-                    ObsState.IDLE,
-                    ObsState.CONFIGURING,
-                    ObsState.READY
-                ]:
-            return True
-        return False
+    # TODO -  remove 
+    # def is_remove_receptors_allowed(self):
+    #     """allowed if FSPPssSubarry is ON, ObsState is not SCANNING"""
+    #     if self.dev_state() == tango.DevState.ON and\
+    #             self._obs_state in [
+    #                 ObsState.IDLE,
+    #                 ObsState.CONFIGURING,
+    #                 ObsState.READY
+    #             ]:
+    #         return True
+    #     return False
 
-    @command(
-        dtype_in=('uint16',),
-        doc_in="List of receptor IDs",
-    )
-    def RemoveReceptors(self, argin):
-        # PROTECTED REGION ID(FspCorrSubarray.RemoveReceptors) ENABLED START #
+    # @command(
+    #     dtype_in=('uint16',),
+    #     doc_in="List of receptor IDs",
+    # )
+
+    def _remove_receptors(self, argin):
         """Remove Receptors. Input is array of int"""
         for receptorID in argin:
             if receptorID in self._receptors:
@@ -511,25 +542,25 @@ class FspCorrSubarray(SKASubarray):
                 log_msg = "Receptor {} not assigned to FSP subarray. "\
                     "Skipping.".format(str(receptorID))
                 self.logger.warn(log_msg)
-        # PROTECTED REGION END #    //  FspCorrSubarray.RemoveReceptors
 
-    def is_RemoveAllReceptors_allowed(self):
-        """allowed if FSPPssSubarry is ON, ObsState is not SCANNING"""
-        if self.dev_state() == tango.DevState.ON and\
-                self._obs_state in [
-                    ObsState.IDLE,
-                    ObsState.CONFIGURING,
-                    ObsState.READY
-                ]:
-            return True
-        return False
+    # TODO
+    # def is_RemoveAllReceptors_allowed(self):
+    #     """allowed if FSPPssSubarry is ON, ObsState is not SCANNING"""
+    #     if self.dev_state() == tango.DevState.ON and\
+    #             self._obs_state in [
+    #                 ObsState.IDLE,
+    #                 ObsState.CONFIGURING,
+    #                 ObsState.READY
+    #             ]:
+    #         return True
+    #     return False
+    # @command()
 
-    @command()
-    def RemoveAllReceptors(self):
-        # PROTECTED REGION ID(FspCorrSubarray.RemoveAllReceptors) ENABLED START #
+    def _RemoveAllReceptors(self):
+        # PROTECTED REGION ID(FspCorrSubarray._RemoveAllReceptors) ENABLED START #
         """Remove all Receptors of this subarray"""
-        self.RemoveReceptors(self._receptors[:])
-        # PROTECTED REGION END #    //  FspCorrSubarray.RemoveAllReceptors
+        self._remove_receptors(self._receptors[:])
+        # PROTECTED REGION END #    //  FspCorrSubarray._RemoveAllReceptors
 
     # def is_AddChannels_allowed(self): # ???
     #     pass
@@ -610,249 +641,323 @@ class FspCorrSubarray(SKASubarray):
     #                                                        tango.ErrSeverity.ERR)
     #             self._vis_destination_address = fsp["hosts"]
 
-        # get list of unconfigured channels
-        # unconfigured_channels = [channel[0] for channel in self._channel_info if channel[4] == ""]
-        # if unconfigured_channels:
-        #     # raise an error if some channels are unconfigured
-        #     msg = "The following channels are missing destination addresses:\n{}".format(
-        #         unconfigured_channels
-        #     )
-        #     self.logger.error(msg)
-        #     tango.Except.throw_exception("Command failed", msg,
-        #                                    "AddChannelAddressInfo execution",
-        #                                    tango.ErrSeverity.ERR)
+    # get list of unconfigured channels
+    # unconfigured_channels = [channel[0] for channel in self._channel_info if channel[4] == ""]
+    # if unconfigured_channels:
+    #     # raise an error if some channels are unconfigured
+    #     msg = "The following channels are missing destination addresses:\n{}".format(
+    #         unconfigured_channels
+    #     )
+    #     self.logger.error(msg)
+    #     tango.Except.throw_exception("Command failed", msg,
+    #                                    "AddChannelAddressInfo execution",
+    #                                    tango.ErrSeverity.ERR)
 
-        # # transition to obsState=READY
-        # self.state_model._obs_state = ObsState.READY.value
-        # # PROTECTED REGION END #    //  FspCorrSubarray.AddChannelAddresses
+    # # transition to obsState=READY
+    # self.state_model._obs_state = ObsState.READY.value
+    # # PROTECTED REGION END #    //  FspCorrSubarray.AddChannelAddresses
 
-    def is_ConfigureScan_allowed(self):
-        """Allowed if FSP subarray is ON, obsState is IDLE."""
-        if self.dev_state() == tango.DevState.ON and\
-                self._obs_state in [ObsState.IDLE, ObsState.READY]:
-            return True
-        return False
+    # TODO - use this class
+    class ConfigureScanCommand(CspSubElementObsDevice.ConfigureScanCommand):
+        """
+        A class for the FspCorrSubarray's ConfigureScan() command.
+        """
 
-    @command(
-        dtype_in='str',
-        doc_in="Scan configuration",
-    )
-    def ConfigureScan(self, argin):
-        # PROTECTED REGION ID(FspCorrSubarray.ConfigureScan) ENABLED START #
-        # This function is called after the configuration has already been validated,
-        # so the checks here have been removed to reduce overhead.
         """Input a JSON. Configure scan for fsp. Called by CbfSubarrayCorrConfig(proxy_fsp_corr_subarray.ConfigureScan(json.dumps(fsp)))"""
         # transition to obsState=CONFIGURING
-        self._update_obs_state(ObsState.CONFIGURING)
+        def do(self, argin):
+            """
+            Stateless hook for ConfigureScan() command functionality.
 
-        argin = json.loads(argin)
+            :param argin: The configuration as JSON formatted string
+            :type argin: str
 
-        if argin["functionMode"] == "CORR":
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            :raises: ``CommandError`` if the configuration data validation fails.
+            """
 
-            # Configure frequencyBand.
-            frequency_bands = ["1", "2", "3", "4", "5a", "5b"]
-            self._frequency_band = frequency_bands.index(argin["frequencyBand"])
+            self.logger.debug("Entering ConfigureScanCommand()")
 
-            # Configure band5Tuning.
-            if self._frequency_band in [4, 5]:
-                self._stream_tuning = argin["band5Tuning"]
+            device = self.target
 
-            # Configure frequencyBandOffsetStream1.
-            self._frequency_band_offset_stream_1 = int(argin["frequencyBandOffsetStream1"])
+            # validate the input args
 
-            # Configure frequencyBandOffsetStream2.
-            if self._frequency_band in [4, 5]:
-                self._frequency_band_offset_stream_2 = int(argin["frequencyBandOffsetStream2"])
+            # TODO: is this still valid? This function is called after 
+            # the configuration has already  been validated, so the checks here 
+            # have been removed to reduce overhead.
 
-        # Configure receptors.
-        self.RemoveAllReceptors()
-        self.AddReceptors(map(int, argin["receptors"]))
-        # Configure frequencySliceID.
+            argin = json.loads(argin)
 
-        if argin["functionMode"] == "CORR":
-            self._frequency_slice_ID = int(argin["frequencySliceID"])
-            # Configure corrBandwidth.
-            self._bandwidth = int(argin["corrBandwidth"])
-            self._bandwidth_actual = int(const.FREQUENCY_SLICE_BW/2**int(argin["corrBandwidth"]))
+            if argin["functionMode"] == "CORR":
 
-            # Configure zoomWindowTuning.
-            if self._bandwidth != 0:  # zoomWindowTuning is required
-                if self._frequency_band in list(range(4)):  # frequency band is not band 5
-                    self._zoom_window_tuning = int(argin["zoomWindowTuning"])
+                # Configure frequencyBand.
+                device._freq_band_name = argin['frequencyBand']
+                device._frequency_band = freq_band_dict()[device._freq_band_name]
 
-                    frequency_band_start = [*map(lambda j: j[0]*10**9, [
-                        const.FREQUENCY_BAND_1_RANGE,
-                        const.FREQUENCY_BAND_2_RANGE,
-                        const.FREQUENCY_BAND_3_RANGE,
-                        const.FREQUENCY_BAND_4_RANGE
-                    ])][self._frequency_band] + self._frequency_band_offset_stream_1
-                    frequency_slice_range = (
-                        frequency_band_start + \
-                            (self._frequency_slice_ID - 1)*const.FREQUENCY_SLICE_BW*10**6,
-                        frequency_band_start +
-                            self._frequency_slice_ID*const.FREQUENCY_SLICE_BW*10**6
-                    )
+                # Configure band5Tuning.
+                if device._frequency_band in [4, 5]:
+                    device._stream_tuning = argin["band5Tuning"]
 
-                    if frequency_slice_range[0] + \
-                            self._bandwidth_actual*10**6/2 <= \
-                            int(argin["zoomWindowTuning"])*10**3 <= \
-                            frequency_slice_range[1] - \
-                            self._bandwidth_actual*10**6/2:
-                        # this is the acceptable range
-                        pass
-                    else:
-                        # log a warning message
-                        log_msg = "'zoomWindowTuning' partially out of observed frequency slice. "\
-                            "Proceeding."
-                        self.logger.warn(log_msg)
-                else:  # frequency band 5a or 5b (two streams with bandwidth 2.5 GHz)
-                    self._zoom_window_tuning = argin["zoomWindowTuning"]
+                # Configure frequencyBandOffsetStream1.
+                device._frequency_band_offset_stream_1 = int(argin["frequencyBandOffsetStream1"])
 
-                    frequency_slice_range_1 = (
-                        self._stream_tuning[0]*10**9 + self._frequency_band_offset_stream_1 - \
-                            const.BAND_5_STREAM_BANDWIDTH*10**9/2 + \
-                            (self._frequency_slice_ID - 1)*const.FREQUENCY_SLICE_BW*10**6,
-                        self._stream_tuning[0]*10**9 + self._frequency_band_offset_stream_1 - \
-                            const.BAND_5_STREAM_BANDWIDTH*10**9/2 + \
-                            self._frequency_slice_ID*const.FREQUENCY_SLICE_BW*10**6
-                    )
+                # Configure frequencyBandOffsetStream2.
+                if device._frequency_band in [4, 5]:
+                    device._frequency_band_offset_stream_2 = int(argin["frequencyBandOffsetStream2"])
 
-                    frequency_slice_range_2 = (
-                        self._stream_tuning[1]*10**9 + self._frequency_band_offset_stream_2 - \
-                            const.BAND_5_STREAM_BANDWIDTH*10**9/2 + \
-                            (self._frequency_slice_ID - 1)*const.FREQUENCY_SLICE_BW*10**6,
-                        self._stream_tuning[1]*10**9 + self._frequency_band_offset_stream_2 - \
-                            const.BAND_5_STREAM_BANDWIDTH*10**9/2 + \
-                            self._frequency_slice_ID*const.FREQUENCY_SLICE_BW*10**6
-                    )
+            # Configure receptors.
+            
+            # TODO: _RemoveAllReceptors shoud not be needed because ot is
+            #        applied when GoToIdle()
+            # TODO: to rename to _remove_fsp_receptors
+            device._RemoveAllReceptors()
+            device._AddReceptors(map(int, argin["receptors"]))
 
-                    if (frequency_slice_range_1[0] + \
-                            self._bandwidth_actual*10**6/2 <= \
-                            int(argin["zoomWindowTuning"])*10**3 <= \
-                            frequency_slice_range_1[1] - \
-                            self._bandwidth_actual*10**6/2) or\
-                            (frequency_slice_range_2[0] + \
-                            self._bandwidth_actual*10**6/2 <= \
-                            int(argin["zoomWindowTuning"])*10**3 <= \
-                            frequency_slice_range_2[1] - \
-                            self._bandwidth_actual*10**6/2):
-                        # this is the acceptable range
-                        pass
-                    else:
-                        # log a warning message
-                        log_msg = "'zoomWindowTuning' partially out of observed frequency slice. "\
-                            "Proceeding."
-                        self.logger.warn(log_msg)
+            # Configure frequencySliceID.
+            if argin["functionMode"] == "CORR":
+                device._frequency_slice_ID = int(argin["frequencySliceID"])
+                # Configure corrBandwidth.
+                device._bandwidth = int(argin["corrBandwidth"])
+                device._bandwidth_actual = int(const.FREQUENCY_SLICE_BW/2**int(argin["corrBandwidth"]))
 
-            # Configure integrationTime.
-            self._integration_time = int(argin["integrationTime"])
+                # Configure zoomWindowTuning.
+                if device._bandwidth != 0:  # zoomWindowTuning is required
+                    if device._frequency_band in list(range(4)):  # frequency band is not band 5
+                        device._zoom_window_tuning = int(argin["zoomWindowTuning"])
 
+                        frequency_band_start = [*map(lambda j: j[0]*10**9, [
+                            const.FREQUENCY_BAND_1_RANGE,
+                            const.FREQUENCY_BAND_2_RANGE,
+                            const.FREQUENCY_BAND_3_RANGE,
+                            const.FREQUENCY_BAND_4_RANGE
+                        ])][device._frequency_band] + device._frequency_band_offset_stream_1
+                        frequency_slice_range = (
+                            frequency_band_start + \
+                                (device._frequency_slice_ID - 1)*const.FREQUENCY_SLICE_BW*10**6,
+                            frequency_band_start +
+                                device._frequency_slice_ID*const.FREQUENCY_SLICE_BW*10**6
+                        )
 
-            # Configure fspChannelOffset
-            self._fsp_channel_offset= int(argin["fspChannelOffset"])
-                
-            # Configure destination addresses
-            self._vis_destination_address["outputHost"]=argin["outputHost"]
-            # ouputMac is optional
-            if "outputMac" in argin:
-                self._vis_destination_address["outputMac"]=argin["outputMac"]
-            else: # not specified, so set default or keep the previous one
-                if self._vis_destination_address["outputMac"]==[]:
-                    self._vis_destination_address["outputMac"]=[[0, "06-00-00-00-00-01"]]
-            self._vis_destination_address["outputPort"]=argin["outputPort"]
+                        if frequency_slice_range[0] + \
+                                device._bandwidth_actual*10**6/2 <= \
+                                int(argin["zoomWindowTuning"])*10**3 <= \
+                                frequency_slice_range[1] - \
+                                device._bandwidth_actual*10**6/2:
+                            # this is the acceptable range
+                            pass
+                        else:
+                            # log a warning message
+                            log_msg = "'zoomWindowTuning' partially out of observed frequency slice. "\
+                                "Proceeding."
+                            self.logger.warn(log_msg)
+                    else:  # frequency band 5a or 5b (two streams with bandwidth 2.5 GHz)
+                        device._zoom_window_tuning = argin["zoomWindowTuning"]
 
-            # Configure channelAveragingMap.
-            if "channelAveragingMap" in argin:
-                # for i in range(20):
-                #     self._channel_averaging_map[i][1] = int(argin["channelAveragingMap"][i][1])
-                self._channel_averaging_map=argin["channelAveragingMap"]
-            else:
-                self._channel_averaging_map = [
-                    [int(i*self.NUM_FINE_CHANNELS/self.NUM_CHANNEL_GROUPS) + 1, 0]
-                    for i in range(self.NUM_CHANNEL_GROUPS)
-                ]
-                log_msg = "FSP specified, but 'channelAveragingMap not given. Default to averaging "\
-                    "factor = 0 for all channel groups."
-                self.logger.warn(log_msg)
+                        frequency_slice_range_1 = (
+                            device._stream_tuning[0]*10**9 + device._frequency_band_offset_stream_1 - \
+                                const.BAND_5_STREAM_BANDWIDTH*10**9/2 + \
+                                (device._frequency_slice_ID - 1)*const.FREQUENCY_SLICE_BW*10**6,
+                            device._stream_tuning[0]*10**9 + device._frequency_band_offset_stream_1 - \
+                                const.BAND_5_STREAM_BANDWIDTH*10**9/2 + \
+                                device._frequency_slice_ID*const.FREQUENCY_SLICE_BW*10**6
+                        )
 
-            # Configure outputLinkMap
-            self._output_link_map=argin["outputLinkMap"]
+                        frequency_slice_range_2 = (
+                            device._stream_tuning[1]*10**9 + device._frequency_band_offset_stream_2 - \
+                                const.BAND_5_STREAM_BANDWIDTH*10**9/2 + \
+                                (device._frequency_slice_ID - 1)*const.FREQUENCY_SLICE_BW*10**6,
+                            device._stream_tuning[1]*10**9 + device._frequency_band_offset_stream_2 - \
+                                const.BAND_5_STREAM_BANDWIDTH*10**9/2 + \
+                                device._frequency_slice_ID*const.FREQUENCY_SLICE_BW*10**6
+                        )
 
-            # Configure configID. This is not initally in the FSP portion of the input JSON, but added in function CbfSuarray._validate_configScan
-            self._config_id=argin["configID"]
+                        if (frequency_slice_range_1[0] + \
+                                device._bandwidth_actual*10**6/2 <= \
+                                int(argin["zoomWindowTuning"])*10**3 <= \
+                                frequency_slice_range_1[1] - \
+                                device._bandwidth_actual*10**6/2) or\
+                                (frequency_slice_range_2[0] + \
+                                device._bandwidth_actual*10**6/2 <= \
+                                int(argin["zoomWindowTuning"])*10**3 <= \
+                                frequency_slice_range_2[1] - \
+                                device._bandwidth_actual*10**6/2):
+                            # this is the acceptable range
+                            pass
+                        else:
+                            # log a warning message
+                            log_msg = "'zoomWindowTuning' partially out of observed frequency slice. "\
+                                "Proceeding."
+                            self.logger.warn(log_msg)
 
+                # Configure integrationTime.
+                device._integration_time = int(argin["integrationTime"])
 
+                # Configure fspChannelOffset
+                device._fsp_channel_offset= int(argin["fspChannelOffset"])
+                    
+                # Configure destination addresses
+                device._vis_destination_address["outputHost"]=argin["outputHost"]
+                # ouputMac is optional
+                if "outputMac" in argin:
+                    device._vis_destination_address["outputMac"]=argin["outputMac"]
+                else: # not specified, so set default or keep the previous one
+                    if device._vis_destination_address["outputMac"]==[]:
+                        device._vis_destination_address["outputMac"]=[[0, "06-00-00-00-00-01"]]
+                device._vis_destination_address["outputPort"]=argin["outputPort"]
 
-        # This state transition will be later 
-        # 03-23-2020: FspCorrSubarray moves to READY after configuration of the 
-        # channels addresses sent by SDP. (ADDChannelAddresses funtion, which is called by the subarray)
-        # 06-18-2020: seems like it's not necessary for SDP to trigger ready anymore
-        self._update_obs_state(ObsState.READY)
+                # Configure channelAveragingMap.
+                if "channelAveragingMap" in argin:
+                    # for i in range(20):
+                    #     device._channel_averaging_map[i][1] = int(argin["channelAveragingMap"][i][1])
+                    device._channel_averaging_map=argin["channelAveragingMap"]
+                else:
+                    device._channel_averaging_map = [
+                        [int(i*const.NUM_FINE_CHANNELS/const.NUM_CHANNEL_GROUPS) + 1, 0]
+                        for i in range(const.NUM_CHANNEL_GROUPS)
+                    ]
+                    log_msg = "FSP specified, but 'channelAveragingMap not given. Default to averaging "\
+                        "factor = 0 for all channel groups."
+                    self.logger.warn(log_msg)
 
-        # PROTECTED REGION END #    //  FspCorrSubarray.ConfigureScan
+                # Configure outputLinkMap
+                device._output_link_map=argin["outputLinkMap"]
 
-    def is_EndScan_allowed(self):
-        """allowed if ON nd ObsState is SCANNING"""
-        if self.dev_state() == tango.DevState.ON and\
-                self._obs_state == ObsState.SCANNING:
-            return True
-        return False
+                # Configure configID. This is not initally in the FSP portion of the input JSON, but added in function CbfSuarray._validate_configScan
+                device._config_id=argin["configID"]
 
-    @command()
-    def EndScan(self):
-        """Set ObsState to READY. Set ScanID to zero"""
-        # PROTECTED REGION ID(FspCorrSubarray.EndScan) ENABLED START #
-        self._obs_state = ObsState.READY
-        self._scan_id = 0
-        # nothing else is supposed to happen
-        # PROTECTED REGION END #    //  FspCorrSubarray.EndScan
+            # TODO - reinstate validate()
+            # (result_code, msg) = self.validate_input(argin)
+            result_code = ResultCode.OK # TODO  - temp - remove
+            msg = "Configure command completed OK" # TODO temp, remove
 
-    def is_Scan_allowed(self):
-        """Allowed if DevState ON, ObsState READY"""
-        if self.dev_state() == tango.DevState.ON and\
-                self._obs_state == ObsState.READY:
-            return True
-        return False
+            if result_code == ResultCode.OK:
+                # store the configuration on command success
+                device._last_scan_configuration = argin
+                msg = "Configure command completed OK"
+
+            return(result_code, msg)
+
+        def validate_input(self, argin):
+            """
+            Validate the configuration parameters against allowed values, as needed.
+
+            :param argin: The JSON formatted string with configuration for the device.
+            :type argin: 'DevString'
+            :return: A tuple containing a return code and a string message.
+            :rtype: (ResultCode, str)
+            """
+            device = self.target
+            return (ResultCode.OK, "ConfigureScan arguments validation successfull")
+            
+            # TODO -add validation
+
+            # try:
+            #     config_dict = json.loads(argin)
+            #     device._config_id = config_dict['id']
+
+            #     freq_band_name = config_dict['frequency_band']
+            #     device._freq_band_name = freq_band_name
+            #     device._frequency_band = freq_band_dict()[freq_band_name]
+
+            #     # call the method to validate the data sent with
+            #     # the configuration, as needed.
+            #     return (ResultCode.OK, "ConfigureScan arguments validation successfull")
+
+            # except (KeyError, JSONDecodeError) as err:
+            #     msg = "Validate configuration failed with error:{}".format(err)
+            # except Exception as other_errs:
+            #     msg = "Validate configuration failed with unknown error:{}".format(
+            #         other_errs)
+            #     self.logger.error(msg)
+            # return (ResultCode.FAILED, msg)
 
     @command(
-        dtype_in='uint16',
-        doc_in="Scan ID"
+        dtype_in='DevString',
+        doc_in="JSON formatted string with the scan configuration.",
+        dtype_out='DevVarLongStringArray',
+        doc_out="A tuple containing a return code and a string message indicating status. "
+                "The message is for information purpose only.",
     )
-    def Scan(self, argin):
-        # PROTECTED REGION ID(FspCorrSubarray.Scan) ENABLED START #
-        """Set ObsState to READY, set scanID"""
-        self.logger.info("scan in fspcorrsubarray")
-        self._obs_state = ObsState.SCANNING
-        # set scanID
-        try:
-            self._scan_id=int(argin)
-        except:
-            msg="The input scanID is not integer."
-            self.logger.error(msg)
-            tango.Except.throw_exception("Command failed", msg, "FspCorrSubarray Scan execution",
-                                         tango.ErrSeverity.ERR)
-        
-        # nothing else is supposed to happen
-        # PROTECTED REGION END #    //  FspCorrSubarray.Scan
+    
+    @DebugIt()
+    def ConfigureScan(self, argin):
+        # PROTECTED REGION ID(Vcc.ConfigureScan) ENABLED START #
+        """
+        Configure the observing device parameters for the current scan.
 
-    def is_GoToIdle_allowed(self):
-        """ON and ObsState IDLE or READY"""
-        if self.dev_state() == tango.DevState.ON and\
-                self._obs_state in [ObsState.IDLE, ObsState.READY]:
-            return True
-        return False
+        :param argin: JSON formatted string with the scan configuration.
+        :type argin: 'DevString'
 
-    @command()
-    def GoToIdle(self):
-        # PROTECTED REGION ID(FspCorrSubarray.GoToIdle) ENABLED START #
-        # transition to obsState=IDLE
-        """Clear channel. Set Obsstate to IDLE"""
-        self._channel_info.clear()
-        self._obs_state = ObsState.IDLE
-        self._config_id=""
-        # PROTECTED REGION END #    //  FspCorrSubarray.GoToIdle
+        :return: A tuple containing a return code and a string message indicating status.
+            The message is for information purpose only.
+        :rtype: (ResultCode, str)
+        """
+        command = self.get_command_object("ConfigureScan")
+        (return_code, message) = command(argin)
+        return [[return_code], [message]]
+        # PROTECTED REGION END #    //  Vcc.ConfigureScan
 
+    class GoToIdleCommand(CspSubElementObsDevice.GoToIdleCommand):
+        """
+        A class for the FspCorrSubarray's GoToIdle command.
+        """
 
+        def do(self):
+            """
+            Stateless hook for GoToIdle() command functionality.
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
+
+            self.logger.debug("Entering GoToIdleCommand()")
+
+            device = self.target
+
+            # Reset all private data defined in InitCommand.do()
+            # and which are then set via ConfigureScan()
+
+            # self._receptors = []
+
+            device._freq_band_name = ""
+            device._frequency_band = 0
+            device._stream_tuning = (0, 0)
+            device._frequency_band_offset_stream_1 = 0
+            device._frequency_band_offset_stream_2 = 0
+            device._frequency_slice_ID = 0
+            device._bandwidth = 0
+            device._bandwidth_actual = const.FREQUENCY_SLICE_BW
+            device._zoom_window_tuning = 0
+            device._integration_time = 0
+            device._scan_id = 0
+            device._config_id = ""
+
+            device._channel_averaging_map = [
+                [int(i*const.NUM_FINE_CHANNELS/const.NUM_CHANNEL_GROUPS) + 1, 0]
+                for i in range(const.NUM_CHANNEL_GROUPS)
+            ]
+            # destination addresses includes the following three
+            device._vis_destination_address = {"outputHost":[], "outputMac": [], "outputPort":[]}
+            device._fsp_channel_offset = 0
+            # outputLinkMap is a 2*40 array. Pogo generates tuple;
+            # Changed into list to facilitate writing
+            device._output_link_map = [[0,0] for i in range(40)]
+
+            device._channel_info = []
+            #device._channel_info.clear() #TODO  not yet populated
+
+            if device.state_model.obs_state == ObsState.IDLE:
+                return (ResultCode.OK, 
+                "GoToIdle command completed OK. Device already IDLE")
+
+            return (ResultCode.OK, "GoToIdle command completed OK")
+            
+    # TODO - currently not used
     def is_getLinkAndAddress_allowed(self):
         """Allowed if destination addresses are received, meaning outputLinkMap also received (checked in subarray validate scan)."""
         if self._vis_destination_address["outputHost"]==[]:

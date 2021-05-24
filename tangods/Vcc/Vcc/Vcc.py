@@ -36,11 +36,6 @@ commons_pkg_path = os.path.abspath(os.path.join(file_path, "../../commons"))
 sys.path.insert(0, commons_pkg_path)
 
 from global_enum import const, freq_band_dict
-from VccBand1And2 import VccBand1And2
-from VccBand3 import VccBand3
-from VccBand4 import VccBand4
-from VccBand5 import VccBand5
-from VccSearchWindow import VccSearchWindow
 
 from ska_tango_base.control_model import ObsState
 from ska_tango_base import SKAObsDevice, CspSubElementObsDevice
@@ -280,7 +275,8 @@ class Vcc(CspSubElementObsDevice):
             device._stream_tuning = (0, 0)
             device._frequency_band_offset_stream_1 = 0
             device._frequency_band_offset_stream_2 = 0
-            device._doppler_phase_correction = (0, 0, 0, 0)
+            device._doppler_phase_correction = (0, 
+            0, 0, 0)
             device._rfi_flagging_mask = ""
             device._scfo_band_1 = 0
             device._scfo_band_2 = 0
@@ -291,7 +287,7 @@ class Vcc(CspSubElementObsDevice):
             device._delay_model = [[0] * 6 for i in range(26)]
             device._jones_matrix = [[0] * 16 for i in range(26)]
 
-            device._scan_id = 0
+            device._scan_id = ""
             device._config_id = ""
 
             device._fqdns = [
@@ -581,11 +577,15 @@ class Vcc(CspSubElementObsDevice):
 
             device = self.target
 
+            # By this time, the receptor_ID should be set:
+            self.logger.debug(("device._receptor_ID = {}".
+            format(device._receptor_ID)))
+
             # validate the input args
             (result_code, msg) = self.validate_input(argin)
 
             if result_code == ResultCode.OK:
-                # TODO: it mght be better to turn_on the selected band device
+                # TODO: cosider to turn_on the selected band device
                 #       via a separate command
                 self.turn_on_band_device(device._freq_band_name)
                 # store the configuration on command success
@@ -612,20 +612,6 @@ class Vcc(CspSubElementObsDevice):
                 freq_band_name = config_dict['frequency_band']
                 device._freq_band_name = freq_band_name
                 device._frequency_band = freq_band_dict()[freq_band_name]
-
-                # # TODO -create a function or a map
-                # if freq_band_name in ["1", "2"]:
-                #     device._frequency_band = ["1", "2"].index(freq_band_name)
-                # elif freq_band_name == "3":
-                #     device._frequency_band = 2
-                # elif freq_band_name == "4":
-                #     device._frequency_band = 3
-                # elif freq_band_name in ["5a", "5b"]:
-                #     device._frequency_band = ["5a", "5b"].index(freq_band_name) + 4
-                # else:
-                #     # shouldn't happen
-                #     self.logger.warn("frequencyBand not in valid range. Ignoring.")
-                #     # TODO - an error should be logged
 
                 # call the method to validate the data sent with
                 # the configuration, as needed.
@@ -721,13 +707,15 @@ class Vcc(CspSubElementObsDevice):
 
             # Reset all values intialized in InitCommand.do():
 
-            # _init_private_data(device)
-            # def _init_private_data(self): TODO
-            device._receptor_ID = 0
             device._freq_band_name = ""
             device._frequency_band = 0
             
-            # device._subarray_membership -  DO not reset! 
+            # device._receptor_ID  - DO NOT reset!
+            # _receptor_ID is set via an explicit write
+            # BEFORE ConfigureScan() is executed; 
+
+            # device._subarray_membership -  DO NOT reset! 
+            
             device._stream_tuning = (0, 0)
             device._frequency_band_offset_stream_1 = 0
             device._frequency_band_offset_stream_2 = 0
@@ -753,6 +741,8 @@ class Vcc(CspSubElementObsDevice):
 
     def is_UpdateDelayModel_allowed(self):
         """allowed when Devstate is ON and ObsState is READY OR SCANNIGN"""
+        self.logger.debug("Entering is_UpdateDelayModel_allowed()")
+        self.logger.debug("self._obs_state = {}.format(self.dev_state())")
         if self.dev_state() == tango.DevState.ON and \
                 self._obs_state in [ObsState.READY, ObsState.SCANNING]:
             return True
@@ -765,12 +755,20 @@ class Vcc(CspSubElementObsDevice):
     def UpdateDelayModel(self, argin):
         # PROTECTED REGION ID(Vcc.UpdateDelayModel) ENABLED START #
         """update VCC's delay model(serialized JSON object)"""
+
+        self.logger.debug("Entering UpdateDelayModel()")
         argin = json.loads(argin)
 
-        for receptor in argin:
-            if receptor["receptor"] != self._receptor_ID:
+        self.logger.debug(("self._receptor_ID = {}".
+            format(self._receptor_ID)))
+
+        for delayDetails in argin:
+            self.logger.debug(("delayDetails[receptor] = {}".
+            format(delayDetails["receptor"])))
+
+            if delayDetails["receptor"] != self._receptor_ID:
                 continue
-            for frequency_slice in receptor["receptorDelayDetails"]:
+            for frequency_slice in delayDetails["receptorDelayDetails"]:
                 if 1 <= frequency_slice["fsid"] <= 26:
                     if len(frequency_slice["delayCoeff"]) == 6:
                         self._delay_model[frequency_slice["fsid"] - 1] = \
@@ -866,18 +864,28 @@ class Vcc(CspSubElementObsDevice):
 
         # Validate searchWindowTuning.
         if "searchWindowTuning" in argin:
-            if argin["frequencyBand"] not in ["5a", "5b"]:  # frequency band is not band 5
+            freq_band_name = argin["frequencyBand"]
+            if freq_band_name not in ["5a", "5b"]:  # frequency band is not band 5
+                
+                frequencyBand_mi = freq_band_dict()[freq_band_name]
+                
                 frequencyBand = ["1", "2", "3", "4", "5a", "5b"].index(argin["frequencyBand"])
-                frequency_band_range = [
-                    const.FREQUENCY_BAND_1_RANGE,
-                    const.FREQUENCY_BAND_2_RANGE,
-                    const.FREQUENCY_BAND_3_RANGE,
-                    const.FREQUENCY_BAND_4_RANGE
+
+                assert frequencyBand_mi == frequencyBand
+                
+                start_freq_Hz, stop_freq_Hz = [
+                    const.FREQUENCY_BAND_1_RANGE_HZ,
+                    const.FREQUENCY_BAND_2_RANGE_HZ,
+                    const.FREQUENCY_BAND_3_RANGE_HZ,
+                    const.FREQUENCY_BAND_4_RANGE_HZ
                 ][frequencyBand]
 
-                if frequency_band_range[0] * 10 ** 9 + argin["frequencyBandOffsetStream1"] <= \
+                self.logger.debug("start_freq_Hz = {}".format(start_freq_Hz)) 
+                self.logger.debug("stop_freq_Hz = {}".format(stop_freq_Hz)) 
+
+                if start_freq_Hz + argin["frequencyBandOffsetStream1"] <= \
                         int(argin["searchWindowTuning"]) <= \
-                        frequency_band_range[1] * 10 ** 9 + argin["frequencyBandOffsetStream1"]:
+                        stop_freq_Hz + argin["frequencyBandOffsetStream1"]:
                     pass
                 else:
                     msg = "'searchWindowTuning' must be within observed band."
@@ -1042,18 +1050,18 @@ class Vcc(CspSubElementObsDevice):
         if self._frequency_band in list(range(4)):  # frequency band is not band 5
             proxy_sw.searchWindowTuning = argin["searchWindowTuning"]
 
-            frequency_band_range = [
-                const.FREQUENCY_BAND_1_RANGE,
-                const.FREQUENCY_BAND_2_RANGE,
-                const.FREQUENCY_BAND_3_RANGE,
-                const.FREQUENCY_BAND_4_RANGE
+            start_freq_Hz, stop_freq_Hz = [
+                const.FREQUENCY_BAND_1_RANGE_HZ,
+                const.FREQUENCY_BAND_2_RANGE_HZ,
+                const.FREQUENCY_BAND_3_RANGE_HZ,
+                const.FREQUENCY_BAND_4_RANGE_HZ
             ][self._frequency_band]
 
-            if frequency_band_range[0] * 10 ** 9 + self._frequency_band_offset_stream_1 + \
-                    const.SEARCH_WINDOW_BW * 10 ** 6 / 2 <= \
+            if start_freq_Hz + self._frequency_band_offset_stream_1 + \
+                    const.SEARCH_WINDOW_BW_HZ / 2 <= \
                     int(argin["searchWindowTuning"]) <= \
-                    frequency_band_range[1] * 10 ** 9 + self._frequency_band_offset_stream_1 - \
-                    const.SEARCH_WINDOW_BW * 10 ** 6 / 2:
+                    bw_stop_freq_Hz + self._frequency_band_offset_stream_1 - \
+                    const.SEARCH_WINDOW_BW_HZ / 2:
                 # this is the acceptable range
                 pass
             else:
@@ -1134,105 +1142,6 @@ class Vcc(CspSubElementObsDevice):
                         receptor["tdcDestinationAddress"]
                     break
 
-        # PROTECTED REGION END #    //  Vcc.ConfigureSearchWindow
-
-    # def is_EndScan_allowed(self):
-    #     """allowed when VCC is ON and ObsState is SCANNING"""
-    #     if self.dev_state() == tango.DevState.ON and \
-    #             self._obs_state == ObsState.SCANNING:
-    #         return True
-    #     return False
-
-    # @command()
-    # def EndScan(self):
-    #     # PROTECTED REGION ID(Vcc.EndScan) ENABLED START #
-    #     """End the scan: Set the obsState to READY. Set ScanID to 0"""
-    #     self._obs_state = ObsState.READY
-    #     self._scan_id = 0
-    #     # nothing else is supposed to happen
-    #     # PROTECTED REGION END #    //  Vcc.EndScan
-
-    # def is_Scan_allowed(self):
-    #     """scan is allowed when VCC is on, ObsState is READY"""
-    #     if self.dev_state() == tango.DevState.ON and \
-    #             self._obs_state == ObsState.READY:
-    #         return True
-    #     return False
-
-    # class ScanCommand(CspSubElementObsDevice.ScanCommand):
-    #     """
-    #     A class for the CspSubElementObsDevices's Scan command.
-    #     """
-
-    #     def do(self, argin):
-    #         """
-    #         Stateless hook for Scan() command functionality.
-
-    #         :param argin: The scan ID.
-    #         :type argin: str
-
-    #         :return: A tuple containing a return code and a string
-    #             message indicating status. The message is for
-    #             information purpose only.
-    #         :rtype: (ResultCode, str)
-    #         """
-
-    #         super().do()
-    #         device = self.target
-
-    #         # TODO: VCC Specific code
-    #         """
-    #         (result_code, msg) = self.validate_input(argin)
-    #         if result_code == ResultCode.OK:
-    #             # store the configuration on command success
-    #             device._scan_id = int(argin)
-    #             return (ResultCode.STARTED, "Scan command started")
-    #         return(result_code, msg)
-    #         """
-    #         # TODO remove xxxxxxxxxxxx
-    #         message = "Vcc Scan command completed OK   xxxxxxxxxxxxx"
-    #         self.logger.info(message)
-    #         return (ResultCode.OK, message)
-
-    #     def validate_input(self, argin):
-    #         """
-    #         Validate the command input argument.
-
-    #         :param argin: the scan id
-    #         :type argin: string
-    #         :return: A tuple containing a return code and a string
-    #             message indicating status. The message is for
-    #             information purpose only.
-    #         :rtype: (ResultCode, str)
-    #         """
-    #         # TODO: remove this warning
-    #         self.logger.warn("Entered Vcc validate_input xxxxxxxxxxxxxxxxx")
-    #         if not argin.isdigit():
-    #             msg = f"Input argument '{argin}' is not an integer"
-    #             self.logger.error(msg)
-    #             return (ResultCode.FAILED, msg)
-    #         return (ResultCode.OK, "Scan arguments validation successfull")
-
-    # TODO - remove this command
-    # @command(
-    #     dtype_in='uint16',
-    #     doc_in="Scan ID"
-    # )
-    # def Scan(self, argin):
-    #     # PROTECTED REGION ID(Vcc.Scan) ENABLED START #
-    #     """set VCC ObsState to SCANNING"""
-    #     self._update_obs_state(ObsState.SCANNING)
-    #     # Set scanID
-    #     try:
-    #         self._scan_id=int(argin)
-    #     except:
-    #         msg="The input scanID is not integer."
-    #         self.logger.error(msg)
-    #         tango.Except.throw_exception("Command failed", msg, "FspCorrSubarray Scan execution",
-    #                                      tango.ErrSeverity.ERR)
-    #     # nothing else is supposed to happen
-    #     # PROTECTED REGION END #    //  Vcc.Scan
-
 # ----------
 # Run server
 # ----------
@@ -1241,7 +1150,6 @@ def main(args=None, **kwargs):
     # PROTECTED REGION ID(Vcc.main) ENABLED START #
     return run((Vcc,), args=args, **kwargs)
     # PROTECTED REGION END #    //  Vcc.main
-
 
 if __name__ == '__main__':
     main()

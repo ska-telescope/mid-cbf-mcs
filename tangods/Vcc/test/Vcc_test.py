@@ -28,17 +28,6 @@ sys.path.insert(0, commons_pkg_path)
 path = os.path.join(os.path.dirname(__file__), os.pardir)
 sys.path.insert(0, os.path.abspath(path))
 
-this_path = os.path.abspath(os.path.join(file_path, "../VccBand1And2"))
-sys.path.insert(0, this_path)
-this_path = os.path.abspath(os.path.join(file_path, "../VccBand3"))
-sys.path.insert(0, this_path)
-this_path = os.path.abspath(os.path.join(file_path, "../VccBand4"))
-sys.path.insert(0, this_path)
-this_path = os.path.abspath(os.path.join(file_path, "../VccBand5"))
-sys.path.insert(0, this_path)
-this_path = os.path.abspath(os.path.join(file_path, "../VccSearchWindow"))
-sys.path.insert(0, this_path)
-
 # Tango imports
 import tango
 from tango import DevState

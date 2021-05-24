@@ -280,7 +280,7 @@ class TestCbfSubarray:
         Test a minimal successful configuration
         """
 
-        proxies.subarray[1].loggingLevel = LoggingLevel.INFO
+        proxies.subarray[1].loggingLevel = LoggingLevel.DEBUG
         try:
             # turn on Subarray
             if proxies.subarray[1].State() != DevState.ON:
@@ -331,23 +331,16 @@ class TestCbfSubarray:
 
             vcc_band_proxies = proxies.vccBand[vcc_index - 1]
 
-            # logging.info( ("vcc_band_proxies[0].State() = {}".
-            # format( vcc_band_proxies[0].State())) )
-
             assert proxies.vcc[proxies.receptor_to_vcc[4]].frequencyBand == 4
             assert proxies.vcc[proxies.receptor_to_vcc[1]].frequencyBand == 4
 
             for proxy in proxies.vccBand[proxies.receptor_to_vcc[4] - 1]:
-                logging.info("proxy.State() = {}".format(proxy.State()))
+                logging.info("VCC proxy.State() = {}".format(proxy.State()))
 
-            time.sleep(5)
-            for proxy in proxies.vccBand[proxies.receptor_to_vcc[4] - 1]:
-                print("proxy.State() after sleep = {}".format(proxy.State()))
-
-            # assert [proxy.State() for proxy in proxies.vccBand[proxies.receptor_to_vcc[4] - 1]] == [
-            #     DevState.DISABLE, DevState.DISABLE, DevState.DISABLE, DevState.ON]
-            # assert [proxy.State() for proxy in proxies.vccBand[proxies.receptor_to_vcc[1] - 1]] == [
-            #     DevState.DISABLE, DevState.DISABLE, DevState.DISABLE, DevState.ON]
+            assert [proxy.State() for proxy in proxies.vccBand[proxies.receptor_to_vcc[4] - 1]] == [
+                DevState.DISABLE, DevState.DISABLE, DevState.DISABLE, DevState.ON]
+            assert [proxy.State() for proxy in proxies.vccBand[proxies.receptor_to_vcc[1] - 1]] == [
+                DevState.DISABLE, DevState.DISABLE, DevState.DISABLE, DevState.ON]
 
             # check the rest of the configured attributes of VCCs
             # first for VCC belonging to receptor 10...
@@ -366,6 +359,8 @@ class TestCbfSubarray:
             # first for search window 1...
             time.sleep(5)
             
+            # TODO - SearchWidow device is disabled since the same functionality
+            # is implemented by the VccSearchWindow device; to decide which one to keep
             # print("proxies.sw[1].State() = {}".format(proxies.sw[1].State()))
             # print("proxies.sw[2].State() = {}".format(proxies.sw[2].State()))
 
@@ -411,7 +406,7 @@ class TestCbfSubarray:
             # assert proxies.vccTdc[proxies.receptor_to_vcc[1] - 1][0].tdcDestinationAddress == (
             #     "fizz", "buzz", "80"
             # )
-            
+
             # then for search window 2 of VCC belonging to receptor 10...
             assert proxies.vccTdc[proxies.receptor_to_vcc[4] - 1][1].State() == DevState.DISABLE
             assert proxies.vccTdc[proxies.receptor_to_vcc[4] - 1][1].searchWindowTuning == 7000000000
@@ -427,12 +422,44 @@ class TestCbfSubarray:
             assert [proxy.State() for proxy in proxies.fsp1FunctionMode] == [
                 DevState.ON, DevState.DISABLE, DevState.DISABLE, DevState.DISABLE
             ]
+
+            # TODO - 
             # assert [proxy.State() for proxy in fsp_2_function_mode_proxy] == [
             #     DevState.ON, DevState.DISABLE, DevState.DISABLE, DevState.DISABLE
             # ]
 
+
+            assert proxies.fspSubarray[3].receptors[0] == 3
+            assert proxies.fspSubarray[3].receptors[1] == 1
+            assert proxies.fspSubarray[3].searchWindowID == 2
+            assert proxies.fspSubarray[3].searchBeamID[0] == 300
+            assert proxies.fspSubarray[3].searchBeamID[1] == 400
+
+            # TODO: currently searchBeams is storied by the device
+            #       as a json string ( via attribute 'searchBeams');  
+            #       this has to be updated in FspCorrSubarray
+            #       to read/write individual members
+            searchBeam = proxies.fspSubarray[3].searchBeams
+            searchBeam0 = json.loads(searchBeam[0])
+            searchBeam1 = json.loads(searchBeam[1])
+            assert searchBeam0["searchBeamID"] == 300
+            assert searchBeam0["receptors"][0] == 3
+            assert searchBeam0["outputEnable"] == True
+            assert searchBeam0["averagingInterval"] == 4
+
+            # TODO - this does not pass - to debug & fix
+            #assert searchBeam0["searchBeamDestinationAddress"] == "10.05.1.1"
+
+            assert searchBeam1["searchBeamID"] == 400
+            assert searchBeam1["receptors"][0] == 1
+            assert searchBeam1["outputEnable"] == True
+            assert searchBeam1["averagingInterval"] == 2
+
+            # TODO - this does not pass - to debug & fix
+            #assert searchBeam1["searchBeamDestinationAddress"] == "10.05.2.1"
+
             # check configured attributes of FSP subarrays
-            # first for FSP 1...
+            # first for FSP 1... (this is a CORR fsp device)
             assert proxies.fspSubarray[1].obsState == ObsState.READY
             assert proxies.fspSubarray[1].receptors == 4
             assert proxies.fspSubarray[1].frequencyBand == 4
@@ -464,9 +491,15 @@ class TestCbfSubarray:
             assert proxies.fspSubarray[1].outputLinkMap[2][1] == 12
             assert proxies.fspSubarray[1].outputLinkMap[3][0] == 2232
             assert proxies.fspSubarray[1].outputLinkMap[3][1] == 16
+
             assert str(proxies.fspSubarray[1].visDestinationAddress).replace('"',"'") == \
                 str({"outputHost": [[0, "192.168.0.1"], [8184, "192.168.0.2"]], "outputMac": [[0, "06-00-00-00-00-01"]], "outputPort": [[0, 9000, 1], [8184, 9000, 1]]}).replace('"',"'")
-            
+
+            logging.info(("proxies.fspSubarray[1].receptors = {}".
+            format(proxies.fspSubarray[1].receptors)))
+            logging.info(("proxies.fspSubarray[3].receptors = {}".
+            format(proxies.fspSubarray[3].receptors)))
+
             # Clean Up
             proxies.clean_proxies()
         
@@ -507,20 +540,27 @@ class TestCbfSubarray:
             logging.info( "vcc 1 obsState BEFORE ConfigureScan = {}".
             format(proxies.vcc[proxies.receptor_to_vcc[1]].obsState) )
 
+            f = open(file_path + "/test_json/test_ConfigureScan_basic.json")
+            test_config_dict = json.loads(f.read().replace("\n", ""))
+            f.close()
+
             # configure scan
             f = open(file_path + "/test_json/test_ConfigureScan_basic.json")
             proxies.subarray[1].ConfigureScan(f.read().replace("\n", ""))
             f.close()
+
             proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.READY, 15, 1)
 
-            sleep_seconds = 3
+            sleep_seconds = 3 # TODO
             time.sleep(sleep_seconds)
+
+            logging.info( "test_config_dict[id] = {}".format(test_config_dict["id"]))
 
             logging.info( "vcc 1 obsState AFTER ConfigureScan & sleep = {}".
             format(proxies.vcc[proxies.receptor_to_vcc[1]].obsState) )
 
             # check configured attributes of CBF subarray
-            assert proxies.subarray[1].configID == "band:5a, fsp1, 744 channels average factor 8"
+            assert proxies.subarray[1].configID == test_config_dict["id"]
             assert proxies.subarray[1].frequencyBand == 4
             assert proxies.subarray[1].obsState == ObsState.READY
 
@@ -560,9 +600,6 @@ class TestCbfSubarray:
             assert proxies.fspSubarray[1].obsState == ObsState.READY
             assert proxies.fspSubarray[3].obsState == ObsState.READY
 
-            # check scanID to zero
-            assert proxies.fspSubarray[1].scanID == 0
-
             proxies.clean_proxies()
 
         except AssertionError as ae:
@@ -576,6 +613,17 @@ class TestCbfSubarray:
         """
         Test the reception of delay models
         """
+        
+        # Read delay model data from file
+        f = open(file_path + "/test_json/delaymodel.json")
+        delay_model = json.loads(f.read().replace("\n", ""))
+        f.close()
+
+        aa = delay_model["delayModel"][0]["delayDetails"][0]["receptorDelayDetails"]
+        num_fsp_IDs = len(aa)
+        for jj in range(num_fsp_IDs):      
+            logging.info( "delayCoeff = {}".format( aa[jj]["delayCoeff"]) )
+
         try:
             # turn on Subarray
             if proxies.subarray[1].State() != DevState.ON:
@@ -605,8 +653,8 @@ class TestCbfSubarray:
             assert proxies.subarray[1].obsState == ObsState.READY
 
             # create a delay model
-            f = open(file_path + "/test_json/delaymodel.json")
-            delay_model = json.loads(f.read().replace("\n", ""))
+            
+            # Insert the epoch TODO - should be added to the json file itself?
             delay_model["delayModel"][0]["epoch"] = str(int(time.time()) + 20)
             delay_model["delayModel"][1]["epoch"] = "0"
             delay_model["delayModel"][2]["epoch"] = str(int(time.time()) + 10)
@@ -614,6 +662,16 @@ class TestCbfSubarray:
             # update delay model
             proxies.tm.delayModel = json.dumps(delay_model)
             time.sleep(1)
+
+            for jj in range(4):
+                logging.info((" proxies.vcc[{}].receptorID = {}".
+                format(jj+1, proxies.vcc[jj+1].receptorID)))
+
+            logging.info( ("Vcc, receptor 1, ObsState = {}".
+            format(proxies.vcc[proxies.receptor_to_vcc[1]].ObsState)) )
+
+            #proxies.vcc[0].receptorID
+
             assert proxies.vcc[proxies.receptor_to_vcc[1]].delayModel[0][0] == 1.1
             assert proxies.vcc[proxies.receptor_to_vcc[1]].delayModel[0][1] == 1.2
             assert proxies.vcc[proxies.receptor_to_vcc[1]].delayModel[0][2] == 1.3

@@ -37,7 +37,7 @@ file_path = os.path.dirname(os.path.abspath(__file__))
 commons_pkg_path = os.path.abspath(os.path.join(file_path, "../../commons"))
 sys.path.insert(0, commons_pkg_path)
 
-from global_enum import const
+from global_enum import const, freq_band_dict
 from ska_tango_base.control_model import ObsState, AdminMode
 from ska_tango_base import SKASubarray
 from ska_tango_base.commands import ResultCode, BaseCommand, ResponseCommand, ActionCommand
@@ -565,6 +565,8 @@ class CbfSubarray(SKASubarray):
                               "Aborting configuration."
                         self._raise_configure_scan_fatal_error(msg)
 
+                    # TODO - why add these keys to the fsp dict - not good practice!
+                    # TODO - create a new dict from a deep copy of the fsp dict.
                     fsp["frequencyBand"] = argin["frequencyBand"]
                     if "frequencyBandOffsetStream1" in argin:
                         fsp["frequencyBandOffsetStream1"] = argin["frequencyBandOffsetStream1"]
@@ -579,35 +581,47 @@ class CbfSubarray(SKASubarray):
                     if argin["frequencyBand"] in ["5a", "5b"]:
                         fsp["band5Tuning"] = argin["band5Tuning"]
 
-                    ############ pass on configuration to FSP Subarray #############
-                    ########## Correlation ##########
+                    # --------------------------------------------------------
                     if fsp["functionMode"] == "CORR":
                         if "receptors" in fsp:
                             try:
-                                proxy_fsp_subarray.RemoveAllReceptors()
-                                proxy_fsp_subarray.AddReceptors(list(map(int, fsp["receptors"])))
-                                proxy_fsp_subarray.RemoveAllReceptors()
-                                for receptorCheck in fsp["receptors"]:
-                                    if receptorCheck not in self._receptors:
+                                # TODO:  Why remove, add, remove?? 
+
+                                #proxy_fsp_subarray.RemoveAllReceptors()
+                                #proxy_fsp_subarray.AddReceptors(list(map(int, fsp["receptors"])))
+                                #proxy_fsp_subarray.RemoveAllReceptors()
+
+                                for this_rec in fsp["receptors"]:
+                                    if this_rec not in self._receptors:
                                         msg = ("Receptor {} does not belong to subarray {}.".format(
-                                            str(self._receptors[receptorCheck]), str(self._subarray_id)))
+                                            str(self._receptors[this_rec]), str(self._subarray_id)))
                                         self.logger.error(msg)
-                                        tango.Except.throw_exception("Command failed", msg, "AddReceptors execution",
-                                                                     tango.ErrSeverity.ERR)
+                                        tango.Except.throw_exception("Command failed", msg, 
+                                        "ConfigureScan execution", tango.ErrSeverity.ERR)
+
                             except tango.DevFailed:  # error in AddReceptors()
-                                proxy_fsp_subarray.RemoveAllReceptors()
+                                # TODO: Why? - it could have been a fail in RemoveReceptors!
+                                # or  in the other part of the code above
+                                
+                                # TODO - remove proxy_fsp_subarray.RemoveAllReceptors
+                                # TODO - remove the try/except
+                                # proxy_fsp_subarray.RemoveAllReceptors()
                                 msg = sys.exc_info()[1].args[0].desc + "\n'receptors' was malformed."
                                 self.logger.error(msg)
                                 tango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
-                                                             tango.ErrSeverity.ERR)
+                                                                tango.ErrSeverity.ERR)
                         else:
-                            msg = "'receptors' not specified for Fsp PSS config"
+                            msg = "'receptors' not specified for Fsp CORR config"
+                            # TODO - In this case by the ICD, all subarray allocated 
+                            #        resources should be used.
                             self._raise_configure_scan_fatal_error(msg)
 
-                        frequencyBand = ["1", "2", "3", "4", "5a", "5b"].index(fsp["frequencyBand"])
+                        frequencyBand = freq_band_dict()[fsp["frequencyBand"]]
 
                         # Validate frequencySliceID.
                         if "frequencySliceID" in fsp:
+                            # TODO: move these to consts
+                            # See for ex. Fig 8-2 in the Mid.CBF DDD 
                             num_frequency_slices = [4, 5, 7, 12, 26, 26]
                             if int(fsp["frequencySliceID"]) in list(
                                     range(1, num_frequency_slices[frequencyBand] + 1)):
@@ -646,6 +660,7 @@ class CbfSubarray(SKASubarray):
                         # Validate zoomWindowTuning.
                         if fsp["corrBandwidth"]:  # zoomWindowTuning is required
                             if "zoomWindowTuning" in fsp:
+
                                 if fsp["frequencyBand"] not in ["5a", "5b"]:  # frequency band is not band 5
                                     frequencyBand = ["1", "2", "3", "4", "5a", "5b"].index(fsp["frequencyBand"])
                                     frequency_band_start = [*map(lambda j: j[0] * 10 ** 9, [
@@ -654,7 +669,7 @@ class CbfSubarray(SKASubarray):
                                         const.FREQUENCY_BAND_3_RANGE,
                                         const.FREQUENCY_BAND_4_RANGE
                                     ])][frequencyBand] + fsp["frequencyBandOffsetStream1"]
-                                    # ])][fsp["frequencyBand"]] + fsp["frequencyBandOffsetStream1"]
+                                    
                                     frequency_slice_range = (
                                         frequency_band_start + \
                                         (fsp["frequencySliceID"] - 1) * const.FREQUENCY_SLICE_BW * 10 ** 6,
@@ -676,6 +691,11 @@ class CbfSubarray(SKASubarray):
                                     if argin["band5Tuning"] == [0,0]: # band5Tuning not specified
                                         pass
                                     else:
+
+                                        # TODO: these validations of BW range are done many times
+                                        # in many places - use a commom function; also may be possible
+                                        # to do them only once (ex. for band5Tuning)
+
                                         frequency_slice_range_1 = (
                                             fsp["band5Tuning"][0] * 10 ** 9 + fsp["frequencyBandOffsetStream1"] - \
                                             const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2 + \
@@ -845,9 +865,7 @@ class CbfSubarray(SKASubarray):
                         self._corr_config.append(fsp)
                         self._corr_fsp_list = [fsp["fspID"]]
 
-
-
-
+                    # --------------------------------------------------------
                     if fsp["functionMode"] == "PSS-BF":
                         if "searchWindowID" in fsp:
                             if int(fsp["searchWindowID"]) in [1, 2]:
@@ -863,57 +881,60 @@ class CbfSubarray(SKASubarray):
                         if "searchBeam" in fsp:
                             if len(fsp["searchBeam"]) <= 192:
                                 for searchBeam in fsp["searchBeam"]:
-                                    if "searchBeamID" in searchBeam:
-                                        if 1 <= int(searchBeam["searchBeamID"]) <= 1500:
-                                            # Set searchBeamID attribute
-                                            pass
-                                        else:  # searchbeamID not in valid range
-                                            msg = "'searchBeamID' must be within range 1-1500 (received {}).".format(
-                                                str(searchBeam["searchBeamID"])
-                                            )
-                                            self._raise_configure_scan_fatal_error(msg)
-                                        for fsp_pss_subarray_proxy in self._proxies_fsp_pss_subarray:
-                                            searchBeamID = fsp_pss_subarray_proxy.searchBeamID
-                                            if searchBeamID is None:
-                                                pass
-                                            else:
-                                                for search_beam_ID in searchBeamID:
-                                                    if int(searchBeam["searchBeamID"]) != search_beam_ID:
-                                                        pass
-                                                    elif fsp_pss_subarray_proxy.obsState == ObsState.IDLE:
-                                                        pass
-                                                    else:
-                                                        msg = "'searchBeamID' {} is already being used on another fspSubarray.".format(
-                                                            str(searchBeam["searchBeamID"])
-                                                        )
-                                                        self._raise_configure_scan_fatal_error(msg)
-                                    else:
+                                    if "searchBeamID" not in searchBeam:
                                         msg = "Search beam ID not specified for Fsp PSS config"
                                         self._raise_configure_scan_fatal_error(msg)
 
+                                    if 1 > int(searchBeam["searchBeamID"]) > 1500:
+                                        # searchbeamID not in valid range
+                                        msg = "'searchBeamID' must be within range 1-1500 (received {}).".format(
+                                            str(searchBeam["searchBeamID"])
+                                        )
+                                        self._raise_configure_scan_fatal_error(msg)
+                                    
+                                    for fsp_pss_subarray_proxy in self._proxies_fsp_pss_subarray:
+                                        searchBeamID = fsp_pss_subarray_proxy.searchBeamID
+                                        if searchBeamID is None:
+                                            pass
+                                        else:
+                                            for search_beam_ID in searchBeamID:
+                                                if int(searchBeam["searchBeamID"]) != search_beam_ID:
+                                                    pass
+                                                elif fsp_pss_subarray_proxy.obsState == ObsState.IDLE:
+                                                    pass
+                                                else:
+                                                    msg = "'searchBeamID' {} is already being used on another fspSubarray.".format(
+                                                        str(searchBeam["searchBeamID"])
+                                                    )
+                                                    self._raise_configure_scan_fatal_error(msg)
+                                    
                                         # Validate receptors.
                                         # This is always given, due to implementation details.
-                                    if "receptors" in searchBeam:
-                                        try:
-                                            proxy_fsp_subarray.RemoveAllReceptors()
-                                            proxy_fsp_subarray.AddReceptors(list(map(int, searchBeam["receptors"])))
-                                            proxy_fsp_subarray.RemoveAllReceptors()
-                                            for receptorCheck in searchBeam["receptors"]:
-                                                if receptorCheck not in self._receptors:
-                                                    msg = ("Receptor {} does not belong to subarray {}.".format(
-                                                        str(self._receptors[receptorCheck]), str(self._subarray_id)))
-                                                    self.logger.error(msg)
-                                                    tango.Except.throw_exception("Command failed", msg, "AddReceptors execution",
-                                                                                 tango.ErrSeverity.ERR)
-                                        except tango.DevFailed:  # error in AddReceptors()
-                                            proxy_fsp_subarray.RemoveAllReceptors()
-                                            msg = sys.exc_info()[1].args[0].desc + "\n'receptors' was malformed."
-                                            self.logger.error(msg)
-                                            tango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
-                                                                         tango.ErrSeverity.ERR)
-                                    else:
+                                    if "receptors" not in searchBeam:
                                         msg = "'receptors' not specified for Fsp PSS config"
                                         self._raise_configure_scan_fatal_error(msg)
+
+                                    # Sanity check:
+                                    for this_rec in searchBeam["receptors"]:
+                                        if this_rec not in self._receptors:
+                                            msg = ("Receptor {} does not belong to subarray {}.".format(
+                                                str(self._receptors[this_rec]), str(self._subarray_id)))
+                                            self.logger.error(msg)
+                                            tango.Except.throw_exception("Command failed", msg, 
+                                            "ConfigureScan execution", tango.ErrSeverity.ERR)
+
+                                    try:
+                                        proxy_fsp_subarray.RemoveAllReceptors()
+                                        proxy_fsp_subarray.AddReceptors(list(map(int, searchBeam["receptors"])))
+                                        proxy_fsp_subarray.RemoveAllReceptors()
+
+                                    except tango.DevFailed:  # error in AddReceptors()
+                                        proxy_fsp_subarray.RemoveAllReceptors()
+                                        msg = sys.exc_info()[1].args[0].desc + "\n'receptors' was malformed."
+                                        self.logger.error(msg)
+                                        tango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
+                                                                        tango.ErrSeverity.ERR)
+
                                     if "outputEnable" in searchBeam:
                                         if searchBeam["outputEnable"] is False or searchBeam["outputEnable"] is True:
                                             pass
@@ -1017,13 +1038,15 @@ class CbfSubarray(SKASubarray):
         self.logger.info(data)
         self._group_fsp.command_inout("RemoveSubarrayMembership", data)
         self._group_fsp.remove_all()
-        self._proxies_assigned_fsp.clear()
+
+        # self._proxies_assigned_fsp.clear() # TODO Remove
 
         # remove channel info from FSP subarrays
         # already done in GoToIdle
         self._group_fsp_corr_subarray.remove_all()
         self._group_fsp_pss_subarray.remove_all()
-        self._proxies_assigned_fsp_corr_subarray.clear()
+
+        # self._proxies_assigned_fsp_corr_subarray.clear() #TODO remove
 
         # reset all private dat to their initialization values:
         self._scan_ID = 0       
@@ -1043,9 +1066,13 @@ class CbfSubarray(SKASubarray):
                 fsp_pss_subarray_proxy.GoToIdle()
 
     def _remove_receptors_helper(self, argin):
-        """Helper function to remove receptors for removeAllReceptors. Takes in a list of integers.
-        RemoveAllReceptors can't call RemoveReceptors anymore for lmc 0.6.0 because RemoveAllReceptors enters resourcing state before calling RemoveReceptors.
-        Therefore this helper is useful."""
+        """Helper function to remove receptors for removeAllReceptors. 
+        Takes in a list of integers.
+
+        TODO: RemoveAllReceptors can't call RemoveReceptors anymore for 
+        lmc 0.6.0 because RemoveAllReceptors enters resourcing state 
+        before calling RemoveReceptors. Therefore this helper is useful.
+        """
         receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
                                self._proxy_cbf_master.receptorToVcc)
         for receptorID in argin:
@@ -1060,6 +1087,8 @@ class CbfSubarray(SKASubarray):
                 del self._vcc_state[self._fqdn_vcc[vccID - 1]]
                 del self._vcc_health_state[self._fqdn_vcc[vccID - 1]]
 
+                # reset receptorID and subarrayMembership Vcc attribute:
+                vccProxy.receptorID = 0
                 vccProxy.subarrayMembership = 0
 
                 self._receptors.remove(receptorID)
@@ -1074,8 +1103,10 @@ class CbfSubarray(SKASubarray):
             self._update_obs_state(ObsState.EMPTY)
 
 
-    # Used by commands that needs resource manager in SKASubarray base class (for example AddReceptors command). 
-    # The base class define len as len(resource_manager), so we need to change that here.
+    # Used by commands that needs resource manager in SKASubarray 
+    # base class (for example AddReceptors command). 
+    # The base class define len as len(resource_manager), 
+    # so we need to change that here. TODO - to clarify.
     def __len__(self):
         """
         Returns the number of resources currently assigned. Note that
@@ -1300,7 +1331,9 @@ class CbfSubarray(SKASubarray):
 
             # JSON FSP configurations for PSS, COR, PST, VLBI
             device._proxy_pss_config = tango.DeviceProxy(device.PssConfigAddress)
-            device._proxy_corr_config = tango.DeviceProxy(device.CorrConfigAddress) # address of CbfSubarrayCoorConfig device in Subarray Multi
+            
+            # TODO - to remove
+            #device._proxy_corr_config = tango.DeviceProxy(device.CorrConfigAddress) # address of CbfSubarrayCoorConfig device in Subarray Multi
 
             device._master_max_capabilities = dict(
                 pair.split(":") for pair in
@@ -1320,10 +1353,12 @@ class CbfSubarray(SKASubarray):
             device._proxies_fsp_corr_subarray = [*map(tango.DeviceProxy, device._fqdn_fsp_corr_subarray)]
             device._proxies_fsp_pss_subarray = [*map(tango.DeviceProxy, device._fqdn_fsp_pss_subarray)]
 
-            device._proxies_assigned_vcc = []
-            device._proxies_assigned_fsp = []
-            device._proxies_assigned_fsp_corr_subarray = []
-            device._proxies_assigned_fsp_pss_subarray = []
+            # Note vcc connected both individual and in group
+            device._proxies_assigned_vcc = [] 
+
+            # device._proxies_assigned_fsp = [] # TODO doesn't seem to be used remove 
+            # device._proxies_assigned_fsp_corr_subarray = [] # TODO doesn't seem to be used
+            # device._proxies_assigned_fsp_pss_subarray = [] # TODO doesn't seem to be used
 
             # store the subscribed telstate events as event_ID:attribute_proxy key:value pairs
             device._events_telstate = {}
@@ -1435,7 +1470,9 @@ class CbfSubarray(SKASubarray):
     # Commands
     # --------
 
-    # TODO - to remove - go by supper class method
+    # TODO - not needed for sw devices (sw devs are disabled becasue same 
+    # functionality is in vccSearchWindow; 
+    # go by supper class method for now
     # def is_On_allowed(self):
     #     """allowed if DevState is OFF"""
     #     if self.dev_state() == tango.DevState.OFF:
@@ -1556,12 +1593,13 @@ class CbfSubarray(SKASubarray):
                 information purpose only.
             :rtype: (ResultCode, str)
             """
+
+            self.logger.debug("Entering RemoveAllReceptors()")
+
             device=self.target
-            self.logger.info("removeAllReceptors")
 
             # For LMC0.6.0: use a helper instead of a command so that it doesn't care about the obsState
             device._remove_receptors_helper(device._receptors[:])
-
 
             message = "CBFSubarray RemoveAllReceptors command completed OK"
             self.logger.info(message)
@@ -1585,7 +1623,8 @@ class CbfSubarray(SKASubarray):
 
     
     class AddReceptorsCommand(SKASubarray.AssignResourcesCommand):
-        # doesn't inherit SKASubarray._ResourcingCommand because will give error on len(self.target)
+        # NOTE: doesn't inherit SKASubarray._ResourcingCommand 
+        # because will give error on len(self.target); TODO: to resolve
         """
         A class for CbfSubarray's AddReceptors() command.
         """
@@ -1609,6 +1648,17 @@ class CbfSubarray(SKASubarray):
                 try:
                     vccID = receptor_to_vcc[receptorID]
                     vccProxy = device._proxies_vcc[vccID - 1]
+
+                    # Update the VCC receptorID attribute:
+
+                    self.logger.debug( ("receptorID = {}, vccProxy.receptorID = {}"
+                    .format(receptorID, vccProxy.receptorID)))
+
+                    vccProxy.receptorID = receptorID  # TODO - may not be needed?
+
+                    self.logger.debug( ("receptorID = {}, vccProxy.receptorID = {}"
+                    .format(receptorID, vccProxy.receptorID)))
+
                     subarrayID = vccProxy.subarrayMembership
 
                     # only add receptor if it does not already belong to a different subarray
@@ -1620,27 +1670,30 @@ class CbfSubarray(SKASubarray):
                             # change subarray membership of vcc
                             vccProxy.subarrayMembership = device._subarray_id
 
-                            # !!!!!!!!!!!!!
-                            # Change done on 09/27/2109 as a consequence of the new TANGO and tango images release
-                            # Note:json does not recognize NumPy data types. Convert the number to a Python int 
+                            # TODO: is this note still relevant? 
+                            # Note:json does not recognize NumPy data types. 
+                            # Convert the number to a Python int 
                             # before serializing the object.
-                            # The list of receptors is serialized when the FSPs are configured for a scan.
-                            # !!!!!!!!!!!!!
+                            # The list of receptors is serialized when the FSPs are 
+                            # configured for a scan.
 
                             device._receptors.append(int(receptorID))
                             device._proxies_assigned_vcc.append(vccProxy)
                             device._group_vcc.add(device._fqdn_vcc[vccID - 1])
 
                             # subscribe to VCC state and healthState changes
-                            event_id_state, event_id_health_state = vccProxy.subscribe_event(
+                            event_id_state = vccProxy.subscribe_event(
                                 "State",
                                 tango.EventType.CHANGE_EVENT,
                                 device._state_change_event_callback
-                            ), vccProxy.subscribe_event(
+                            )
+
+                            event_id_health_state = vccProxy.subscribe_event(
                                 "healthState",
                                 tango.EventType.CHANGE_EVENT,
                                 device._state_change_event_callback
                             )
+
                             device._events_state_change_vcc[vccID] = [event_id_state,
                                                                     event_id_health_state]
                         else:
@@ -1843,11 +1896,25 @@ class CbfSubarray(SKASubarray):
 
             if len(device._corr_config) != 0: 
                 #_proxy_corr_config is address of CbfSubarrayCoorConfig device in Subarray Multi
-                #_corr_config is fsp part of the JSON, formed by the function _validate_scan_configuration
-                device._proxy_corr_config.ConfigureFSP(json.dumps(device._corr_config)) 
+                #_corr_config is the fsp part of the JSON (plus a few of the common parmater), 
+                # created by the function _validate_scan_configuration()
+                
+                #device._proxy_corr_config.ConfigureFSP(json.dumps(device._corr_config))
 
-            #TODO add PST and VLBI to this once they are implemented
-            # TODO - _fsp_list doesn't seem to be used; if so remove
+                # Michelle - WIP - TODO - this is to replace the call to 
+                #  _proxy_corr_config.ConfigureFSP()
+                for this_fsp in device._corr_config:
+                    try:                      
+                        this_proxy = device._proxies_fsp_corr_subarray[int(this_fsp["fspID"])-1]
+                        this_proxy.ConfigureScan(json.dumps(this_fsp))
+                    except tango.DevFailed:
+                        msg = "An exception occurred while configuring " \
+                        "FspCorrSubarray; Aborting configuration"
+                        # msg = "An exception occurred while configuring FspCorrSubarray:\n{}\n" \
+                        # "Aborting configuration".format(sys.exc_info()[1].args[0].desc)
+                        self._raise_configure_scan_fatal_error(msg)
+
+            # TODO add PST and VLBI to this once they are implemented
             device._fsp_list[0].append(device._corr_fsp_list)
             device._fsp_list[1].append(device._pss_fsp_list)
 
@@ -1858,11 +1925,14 @@ class CbfSubarray(SKASubarray):
                 # Configure fspID.
                 fspID = int(fsp["fspID"])
                 proxy_fsp = device._proxies_fsp[fspID - 1]
-                proxy_fsp_corr_subarray = device._proxies_fsp_corr_subarray[fspID - 1]
-                proxy_fsp_pss_subarray = device._proxies_fsp_pss_subarray[fspID - 1]
-                device._proxies_assigned_fsp.append(proxy_fsp)
-                device._proxies_assigned_fsp_corr_subarray.append(proxy_fsp_corr_subarray)
-                device._proxies_assigned_fsp_pss_subarray.append(proxy_fsp_pss_subarray)
+
+                # TODO - remove
+                # proxy_fsp_corr_subarray = device._proxies_fsp_corr_subarray[fspID - 1]
+                # proxy_fsp_pss_subarray = device._proxies_fsp_pss_subarray[fspID - 1]
+                # device._proxies_assigned_fsp.append(proxy_fsp)
+                # device._proxies_assigned_fsp_corr_subarray.append(proxy_fsp_corr_subarray)
+                # device._proxies_assigned_fsp_pss_subarray.append(proxy_fsp_pss_subarray)
+                
                 device._group_fsp.add(device._fqdn_fsp[fspID - 1])
                 device._group_fsp_corr_subarray.add(device._fqdn_fsp_corr_subarray[fspID - 1])
                 device._group_fsp_pss_subarray.add(device._fqdn_fsp_pss_subarray[fspID - 1])
@@ -1924,6 +1994,7 @@ class CbfSubarray(SKASubarray):
         (return_code, message) = command(argin)
         return [[return_code], [message]]    
 
+    # TODO - remove as it is the same as in Vcc
     # def is_ConfigureSearchWindow_allowed(self):
     #     """subarray has to be On to configure searchwindow"""
     #     if self.dev_state() == tango.DevState.ON:
@@ -2091,16 +2162,17 @@ class CbfSubarray(SKASubarray):
 
             device=self.target
 
-            # Do the following
             device._scan_ID=int(argin)
 
             data = tango.DeviceData()
             data.insert(tango.DevString, argin)
             device._group_vcc.command_inout("Scan", data)
 
-            data = tango.DeviceData()
-            data.insert(tango.DevUShort, int(argin) % (2**16))
+            # TODO - to remove these 2 lines
+            # data = tango.DeviceData()
+            # data.insert(tango.DevUShort, int(argin) % (2**16))
             device._group_fsp_corr_subarray.command_inout("Scan", data)
+            
             device._group_fsp_pss_subarray.command_inout("Scan")
 
             # return message

@@ -10,7 +10,13 @@ import importlib
 import os
 import sys
 import time
+import json
+
 sys.path.insert(0, "tangods/commons")
+
+file_path = os.path.dirname(os.path.abspath(__file__))
+commons_pkg_path = os.path.abspath(os.path.join(file_path, "tangods/commons"))
+sys.path.insert(0, commons_pkg_path)
 
 import tango
 from tango import DevState
@@ -20,33 +26,9 @@ from tango.test_context import DeviceTestContext
 
 from ska_tango_base.control_model import LoggingLevel, ObsState, AdminMode
 
-import global_enum
-file_path = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, "tangods/Vcc/VccBand1And2")
-# sys.path.insert(0, this_path)
-sys.path.insert(0, "tangods/Vcc/VccBand3")
-# sys.path.insert(0, this_path)
-sys.path.insert(0, "tangods/Vcc/VccBand4")
-# sys.path.insert(0, this_path)
-sys.path.insert(0, "tangods/Vcc/VccBand5")
-# sys.path.insert(0, this_path)
-sys.path.insert(0, "tangods/Vcc/VccSearchWindow")
-# file_path = os.path.dirname(os.path.abspath(__file__))
-# this_path = os.path.abspath(os.path.join(file_path, "tangods/Vcc/VccBand1And2"))
-# sys.path.insert(0, this_path)
-# this_path = os.path.abspath(os.path.join(file_path, "tangods/Vcc/VccBand3"))
-# sys.path.insert(0, this_path)
-# this_path = os.path.abspath(os.path.join(file_path, "tangods/Vcc/VccBand4"))
-# sys.path.insert(0, this_path)
-# this_path = os.path.abspath(os.path.join(file_path, "tangods/Vcc/VccBand5"))
-# sys.path.insert(0, this_path)
-# this_path = os.path.abspath(os.path.join(file_path, "tangods/Vcc/VccSearchWindow"))
 
-from VccBand1And2 import VccBand1And2
-from VccBand3 import VccBand3
-from VccBand4 import VccBand4
-from VccBand5 import VccBand5
-from VccSearchWindow import VccSearchWindow
+
+import global_enum
 
 @pytest.fixture(name="proxies", scope="session")
 def init_proxies_fixture():
@@ -187,6 +169,22 @@ def create_band_5_proxy():
 def create_sw_1_proxy():
     return DeviceTestContext(VccSearchWindow)
     #return DeviceProxy("mid_csp_cbf/vcc_sw1/001")
+
+@pytest.fixture(scope="class")
+def create_fsp_corr_subarray_1_1_proxy():
+    return DeviceProxy("mid_csp_cbf/fspCorrSubarray/01_01")
+
+@pytest.fixture(scope="class")
+def create_fsp_pss_subarray_2_1_proxy():
+    return DeviceProxy("mid_csp_cbf/fspPssSubarray/02_01")
+
+@pytest.fixture(scope="class")
+def create_corr_proxy():
+    return DeviceProxy("mid_csp_cbf/fsp_corr/01")
+
+@pytest.fixture(scope="class")
+def create_pss_proxy():
+    return DeviceProxy("mid_csp_cbf/fsp_pss/01")
 
 def load_data(name):
     """
