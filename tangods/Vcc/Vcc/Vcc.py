@@ -267,8 +267,8 @@ class Vcc(SKACapability):
         self._scfo_band_4 = 0
         self._scfo_band_5a = 0
         self._scfo_band_5b = 0
-        self._delay_model = [[0] * 6 for i in range(26)]
-        self._jones_matrix = [[0] * 16 for i in range(26)]
+        self._delay_model = [[0.0] * 6 for _ in range(26)]
+        self._jones_matrix = [[0.0] * 16 for _ in range(26)]
         self._config_id = ""
         self._scan_id = 0
         self.set_change_event("subarrayMembership", True, True)
@@ -642,7 +642,7 @@ class Vcc(SKACapability):
                     if 1 <= frequency_slice["fsid"] <= 26:
                         if len(frequency_slice["delayCoeff"]) == 6:
                             self._delay_model[frequency_slice["fsid"] - 1] = \
-                                frequency_slice["delayCoeff"]
+                                frequency_slice["delayCoeff"].copy()
                         else:
                             log_msg = "'delayCoeff' not valid for frequency slice {} of " \
                                       "receptor {}".format(frequency_slice["fsid"], self._receptor_ID)
@@ -679,7 +679,7 @@ class Vcc(SKACapability):
                     matrix = frequency_slice["matrix"]
                     if 1 <= fs_id <= 26:
                         if len(matrix) == 16:
-                            self._jones_matrix[fs_id-1] = matrix
+                            self._jones_matrix[fs_id-1] = matrix.copy()
                         else:
                             log_msg = "'matrix' not valid for frequency slice {} of " \
                                       "receptor {}".format(fs_id, self._receptor_ID)

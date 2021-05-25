@@ -6,6 +6,7 @@
     "dopplerPhaseCorrSubscriptionPoint": "ska_mid/tm_leaf_node/csp_subarray_01/dopplerPhaseCorrection",
     "delayModelSubscriptionPoint": "ska_mid/tm_leaf_node/csp_subarray_01/delayModel",
     "jonesMatrixSubscriptionPoint": "ska_mid/tm_leaf_node/csp_subarray_01/jonesMatrix",
+    "beamWeightsSubscriptionPoint": "ska_mid/tm_leaf_node/csp_subarray_01/beamWeights",
     "rfiFlaggingMask": {},
     "fsp": [
         {

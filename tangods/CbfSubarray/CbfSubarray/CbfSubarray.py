@@ -152,7 +152,10 @@ class CbfSubarray(SKASubarray):
                 for delay_model in delay_model_all["delayModel"]:
                     t = Thread(
                         target=self._update_delay_model,
-                        args=(int(delay_model["epoch"]), json.dumps(delay_model["delayDetails"]))
+                        args=(delay_model["destinationType"], 
+                              int(delay_model["epoch"]), 
+                              json.dumps(delay_model["delayDetails"])
+                        )
                     )
                     t.start()
             except Exception as e:
@@ -162,7 +165,7 @@ class CbfSubarray(SKASubarray):
                 log_msg = item.reason + ": on attribute " + str(event.attr_name)
                 self.logger.error(log_msg)
 
-    def _update_delay_model(self, epoch, model):
+    def _update_delay_model(self, destination_type, epoch, model):
         # This method is always called on a separate thread
         log_msg = "Delay model active at {} (currently {})...".format(epoch, int(time.time()))
         self.logger.warn(log_msg)
@@ -178,7 +181,10 @@ class CbfSubarray(SKASubarray):
 
         # we lock the mutex, forward the configuration, then immediately unlock it
         self._mutex_delay_model_config.acquire()
-        self._group_vcc.command_inout("UpdateDelayModel", data)
+        if destination_type == "vcc":
+            self._group_vcc.command_inout("UpdateDelayModel", data)
+        elif destination_type == "fsp":
+            self._group_fsp.command_inout("UpdateDelayModel", data)
         self._mutex_delay_model_config.release()
 
     def _jones_matrix_event_callback(self, event):
@@ -202,11 +208,9 @@ class CbfSubarray(SKASubarray):
                 jones_matrix_all = json.loads(value)
 
                 for jones_matrix in jones_matrix_all["jonesMatrix"]:
-                    log_msg = "starting jm thread for " + json.dumps(jones_matrix["destinationType"])
-                    self.logger.warn(log_msg)
                     t = Thread(
                         target=self._update_jones_matrix,
-                        args=(json.dumps(jones_matrix["destinationType"]), 
+                        args=(jones_matrix["destinationType"], 
                               int(jones_matrix["epoch"]), 
                               json.dumps(jones_matrix["matrixDetails"])
                         )
@@ -236,13 +240,66 @@ class CbfSubarray(SKASubarray):
 
         # we lock the mutex, forward the configuration, then immediately unlock it
         self._mutex_jones_matrix_config.acquire()
-        if destination_type == "\"vcc\"":
-            self.logger.warn("jm to vcc")
+        if destination_type == "vcc":
             self._group_vcc.command_inout("UpdateJonesMatrix", data)
-        elif destination_type == "\"fsp\"":
-            self.logger.warn("jm to fsp")
+        elif destination_type == "fsp":
             self._group_fsp.command_inout("UpdateJonesMatrix", data)
         self._mutex_jones_matrix_config.release()
+
+    def _beam_weights_event_callback(self, event):
+        self.logger.debug("CbfSubarray._beam_weights_event_callback")
+        if not event.err:
+            if self._obs_state not in [ObsState.READY, ObsState.SCANNING]:
+                log_msg = "Ignoring beam weights (obsState not correct)."
+                self.logger.warn(log_msg)
+                return
+            try:
+                log_msg = "Received beam weights update."
+                self.logger.warn(log_msg)
+
+                value = str(event.attr_value.value)
+                if value == self._last_received_beam_weights:
+                    log_msg = "Ignoring beam weights (identical to previous)."
+                    self.logger.warn(log_msg)
+                    return
+
+                self._last_received_beam_weights = value
+                beam_weights_all = json.loads(value)
+
+                for beam_weights in beam_weights_all["beamWeights"]:
+                    t = Thread(
+                        target=self._update_beam_weights,
+                        args=(int(beam_weights["epoch"]), 
+                              json.dumps(beam_weights["beamWeightsDetails"])
+                        )
+                    )
+                    t.start()
+            except Exception as e:
+                self.logger.error(str(e))
+        else:
+            for item in event.errors:
+                log_msg = item.reason + ": on attribute " + str(event.attr_name)
+                self.logger.error(log_msg)
+
+    def _update_beam_weights(self, epoch, weights_details):
+        #This method is always called on a separate thread
+        self.logger.debug("CbfSubarray._update_beam_weights")
+        log_msg = "Beam weights active at {} (currently {})...".format(epoch, int(time.time()))
+        self.logger.warn(log_msg)
+
+        if epoch > time.time():
+            time.sleep(epoch - time.time())
+
+        log_msg = "Updating beam weights at specified epoch {}".format(epoch)
+        self.logger.warn(log_msg)
+
+        data = tango.DeviceData()
+        data.insert(tango.DevString, weights_details)
+
+        # we lock the mutex, forward the configuration, then immediately unlock it
+        self._mutex_beam_weights_config.acquire()
+        self._group_fsp.command_inout("UpdateBeamWeights", data)
+        self._mutex_beam_weights_config.release()
 
     def _state_change_event_callback(self, event):
         if not event.err:
@@ -457,6 +514,28 @@ class CbfSubarray(SKASubarray):
                 self._raise_configure_scan_fatal_error(msg)
         else:
             msg = "'jonesMatrixSubscriptionPoint' not given. Aborting configuration."
+            self._raise_configure_scan_fatal_error(msg)
+        
+        # Validate beamWeightsSubscriptionPoint.
+        if "beamWeightsSubscriptionPoint" in argin:
+            try:
+                attribute_proxy = tango.AttributeProxy(argin["beamWeightsSubscriptionPoint"])
+                attribute_proxy.ping()
+                attribute_proxy.unsubscribe_event(
+                    attribute_proxy.subscribe_event(
+                        tango.EventType.CHANGE_EVENT,
+                        self._void_callback
+                    )
+                )
+
+            except tango.DevFailed:  # attribute doesn't exist or is not set up correctly
+                msg = "Attribute {} not found or not set up correctly for " \
+                      "'beamWeightsSubscriptionPoint'. Aborting configuration.".format(
+                    argin["beamWeightsSubscriptionPoint"]
+                )
+                self._raise_configure_scan_fatal_error(msg)
+        else:
+            msg = "'beamWeightsSubscriptionPoint' not given. Aborting configuration."
             self._raise_configure_scan_fatal_error(msg)
 
 
@@ -1131,8 +1210,8 @@ class CbfSubarray(SKASubarray):
 
 
         self._last_received_delay_model = "{}"
-
         self._last_received_jones_matrix = "{}"
+        self._last_received_beam_weights = "{}"
 
         # TODO need to add this check for fspSubarrayPSS and VLBI and PST once implemented
         for fsp_corr_subarray_proxy in self._proxies_fsp_corr_subarray:
@@ -1394,9 +1473,11 @@ class CbfSubarray(SKASubarray):
             # device._last_received_vis_destination_address = "{}"#???
             device._last_received_delay_model = "{}"
             device._last_received_jones_matrix = "{}"
+            device._last_received_beam_weights = "{}"
 
             device._mutex_delay_model_config = Lock()
             device._mutex_jones_matrix_config = Lock()
+            device._mutex_beam_weights_config = Lock()
 
             # for easy device-reference
             device._frequency_band_offset_stream_1 = 0
@@ -1911,6 +1992,16 @@ class CbfSubarray(SKASubarray):
             event_id = attribute_proxy.subscribe_event(
                 tango.EventType.CHANGE_EVENT,
                 device._jones_matrix_event_callback
+            )
+            device._events_telstate[event_id] = attribute_proxy
+
+            # Configure beamWeightsSubscriptionPoint
+            device._last_received_beam_weights= "{}"
+            attribute_proxy = tango.AttributeProxy(argin["beamWeightsSubscriptionPoint"])
+            attribute_proxy.ping()
+            event_id = attribute_proxy.subscribe_event(
+                tango.EventType.CHANGE_EVENT,
+                device._beam_weights_event_callback
             )
             device._events_telstate[event_id] = attribute_proxy
 
