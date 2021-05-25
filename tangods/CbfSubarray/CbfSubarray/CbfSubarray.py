@@ -1976,26 +1976,29 @@ class CbfSubarray(SKASubarray):
                 device._events_telstate[event_id] = attribute_proxy
 
             # Configure delayModelSubscriptionPoint.
-            device._last_received_delay_model = "{}"
-            attribute_proxy = tango.AttributeProxy(argin["delayModelSubscriptionPoint"])
-            attribute_proxy.ping() #To be sure the connection is good(don't know if the device is running)
-            event_id = attribute_proxy.subscribe_event(
-                tango.EventType.CHANGE_EVENT,
-                device._delay_model_event_callback
-            )
-            device._events_telstate[event_id] = attribute_proxy
+            if "delayModelSubscriptionPoint" in argin:
+                device._last_received_delay_model = "{}"
+                attribute_proxy = tango.AttributeProxy(argin["delayModelSubscriptionPoint"])
+                attribute_proxy.ping() #To be sure the connection is good(don't know if the device is running)
+                event_id = attribute_proxy.subscribe_event(
+                    tango.EventType.CHANGE_EVENT,
+                    device._delay_model_event_callback
+                )
+                device._events_telstate[event_id] = attribute_proxy
 
             # Configure jonesMatrixSubscriptionPoint
-            device._last_received_jones_matrix = "{}"
-            attribute_proxy = tango.AttributeProxy(argin["jonesMatrixSubscriptionPoint"])
-            attribute_proxy.ping()
-            event_id = attribute_proxy.subscribe_event(
-                tango.EventType.CHANGE_EVENT,
-                device._jones_matrix_event_callback
-            )
-            device._events_telstate[event_id] = attribute_proxy
+            if "jonesMatrixSubscriptionPoint" in argin:
+                device._last_received_jones_matrix = "{}"
+                attribute_proxy = tango.AttributeProxy(argin["jonesMatrixSubscriptionPoint"])
+                attribute_proxy.ping()
+                event_id = attribute_proxy.subscribe_event(
+                    tango.EventType.CHANGE_EVENT,
+                    device._jones_matrix_event_callback
+                )
+                device._events_telstate[event_id] = attribute_proxy
 
             # Configure beamWeightsSubscriptionPoint
+            if "beamWeightsSubscriptionPoint" in argin:
             device._last_received_beam_weights= "{}"
             attribute_proxy = tango.AttributeProxy(argin["beamWeightsSubscriptionPoint"])
             attribute_proxy.ping()
