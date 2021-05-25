@@ -1999,14 +1999,14 @@ class CbfSubarray(SKASubarray):
 
             # Configure beamWeightsSubscriptionPoint
             if "beamWeightsSubscriptionPoint" in argin:
-            device._last_received_beam_weights= "{}"
-            attribute_proxy = tango.AttributeProxy(argin["beamWeightsSubscriptionPoint"])
-            attribute_proxy.ping()
-            event_id = attribute_proxy.subscribe_event(
-                tango.EventType.CHANGE_EVENT,
-                device._beam_weights_event_callback
-            )
-            device._events_telstate[event_id] = attribute_proxy
+                device._last_received_beam_weights= "{}"
+                attribute_proxy = tango.AttributeProxy(argin["beamWeightsSubscriptionPoint"])
+                attribute_proxy.ping()
+                event_id = attribute_proxy.subscribe_event(
+                    tango.EventType.CHANGE_EVENT,
+                    device._beam_weights_event_callback
+                )
+                device._events_telstate[event_id] = attribute_proxy
 
             # Configure rfiFlaggingMask.
             if "rfiFlaggingMask" in argin:
