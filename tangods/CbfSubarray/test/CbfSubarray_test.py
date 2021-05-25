@@ -501,6 +501,8 @@ class TestCbfSubarray:
             proxies.clean_proxies()
             raise e
     
+    #TODO: remove hard-coded assert checks
+    @pytest.mark.skip(reason="currently disabled until hard-coded checks are replaced")
     def test_ConfigureScan_delayModel(self, proxies):
         """
         Test the reception of delay models
