@@ -923,17 +923,18 @@ class CbfSubarray(SKASubarray):
                                             tango.Except.throw_exception("Command failed", msg, 
                                             "ConfigureScan execution", tango.ErrSeverity.ERR)
 
-                                    try:
-                                        proxy_fsp_subarray.RemoveAllReceptors()
-                                        proxy_fsp_subarray.AddReceptors(list(map(int, searchBeam["receptors"])))
-                                        proxy_fsp_subarray.RemoveAllReceptors()
+                                    # TODO: remove!
+                                    # try:
+                                    #     proxy_fsp_subarray.RemoveAllReceptors()
+                                    #     proxy_fsp_subarray.AddReceptors(list(map(int, searchBeam["receptors"])))
+                                    #     proxy_fsp_subarray.RemoveAllReceptors()
 
-                                    except tango.DevFailed:  # error in AddReceptors()
-                                        proxy_fsp_subarray.RemoveAllReceptors()
-                                        msg = sys.exc_info()[1].args[0].desc + "\n'receptors' was malformed."
-                                        self.logger.error(msg)
-                                        tango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
-                                                                        tango.ErrSeverity.ERR)
+                                    # except tango.DevFailed:  # error in AddReceptors()
+                                    #     proxy_fsp_subarray.RemoveAllReceptors()
+                                    #     msg = sys.exc_info()[1].args[0].desc + "\n'receptors' was malformed."
+                                    #     self.logger.error(msg)
+                                    #     tango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
+                                    #                                    tango.ErrSeverity.ERR)
 
                                     if "outputEnable" in searchBeam:
                                         if searchBeam["outputEnable"] is False or searchBeam["outputEnable"] is True:
@@ -1329,10 +1330,8 @@ class CbfSubarray(SKASubarray):
             # device._proxy_sw_1 = tango.DeviceProxy(device.SW1Address)
             # device._proxy_sw_2 = tango.DeviceProxy(device.SW2Address)
 
-            # JSON FSP configurations for PSS, COR, PST, VLBI
-            device._proxy_pss_config = tango.DeviceProxy(device.PssConfigAddress)
-            
-            # TODO - to remove
+            # TODO: remove JSON FSP configurations for PSS, COR, PST, VLBI
+            #device._proxy_pss_config = tango.DeviceProxy(device.PssConfigAddress)
             #device._proxy_corr_config = tango.DeviceProxy(device.CorrConfigAddress) # address of CbfSubarrayCoorConfig device in Subarray Multi
 
             device._master_max_capabilities = dict(
@@ -1884,21 +1883,28 @@ class CbfSubarray(SKASubarray):
             # TODO - remove - now  the id is configured with ConfigureScan
             # device._group_vcc.write_attribute("configID",argin["id"])
 
-            # TODO - the entire vcc configuration should move to Vcc
+            # TODO: the entire vcc configuration should move to Vcc
             # for now, run ConfigScan only wih the following data, so that
             # the obsState are properly (implicitly) updated by the command
             # (And not manually by SetObservingState as before)
 
-            ####### FSP Subarray ######
-            # pass on configuration to individual function mode class to configure the FSP Subarray
-            if len(device._pss_config) != 0:
-                device._proxy_pss_config.ConfigureFSP(json.dumps(device._pss_config))
+            # Call ConfigreScan for all FSP Subarray devices (CORR and PSS)
 
+            # NOTE:_pss_config is a list of fsp config JSON objects, each 
+            #      augmented by a number of vcc-fsp common parameters 
+            #      created by the function _validate_scan_configuration()
+            if len(device._pss_config) != 0:
+                for this_fsp in device._pss_config:
+                    try:
+                        this_proxy = device._proxies_fsp_pss_subarray[int(this_fsp["fspID"])-1]
+                        this_proxy.ConfigureScan(json.dumps(this_fsp))
+                    except tango.DevFailed:
+                        msg = "An exception occurred while configuring  " \
+                        "FspPssSubarray; Aborting configuration"
+                        self.__raise_configure_scan_fatal_error(msg)
+
+            # NOTE: _corr_config is costructed similarly to _pss_config
             if len(device._corr_config) != 0: 
-                #_proxy_corr_config is address of CbfSubarrayCoorConfig device in Subarray Multi
-                #_corr_config is the fsp part of the JSON (plus a few of the common parmater), 
-                # created by the function _validate_scan_configuration()
-                
                 #device._proxy_corr_config.ConfigureFSP(json.dumps(device._corr_config))
 
                 # Michelle - WIP - TODO - this is to replace the call to 
