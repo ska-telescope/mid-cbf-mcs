@@ -26,8 +26,6 @@ from tango.test_context import DeviceTestContext
 
 from ska_tango_base.control_model import LoggingLevel, ObsState, AdminMode
 
-
-
 import global_enum
 
 @pytest.fixture(name="proxies", scope="session")
@@ -55,10 +53,10 @@ def init_proxies_fixture():
             
             self.fspSubarray = {}
             for i, proxy in enumerate([DeviceProxy("mid_csp_cbf/fspCorrSubarray/" + str(j + 1).zfill(2) + "_01") for j in range(2)]):
-                proxy.Init()
+                proxy.loggingLevel = LoggingLevel.DEBUG
                 self.fspSubarray[i + 1] = proxy
             for i ,proxy in enumerate([DeviceProxy("mid_csp_cbf/fspPssSubarray/" + str(j + 3).zfill(2) + "_01") for j in range(2)]):
-                proxy.Init()
+                proxy.loggingLevel = LoggingLevel.DEBUG
                 self.fspSubarray[i + 3] = proxy
 
             self.fsp1FunctionMode = [*map(DeviceProxy, ["mid_csp_cbf/fsp_{}/01".format(i) for i in ["corr", "pss", "pst", "vlbi"]])]
@@ -66,6 +64,7 @@ def init_proxies_fixture():
 
             self.fsp = {}
             for i, proxy in enumerate([DeviceProxy("mid_csp_cbf/fsp/" + str(j + 1).zfill(2)) for j in range(4)]):
+                proxy.loggingLevel = LoggingLevel.DEBUG
                 proxy.Init()
                 self.fsp[i + 1] = proxy
 
@@ -147,28 +146,28 @@ def create_vcc_proxy():
 
 @pytest.fixture(scope="class")
 def create_band_12_proxy():
-    return DeviceTestContext(VccBand1And2)
-    #return DeviceProxy("mid_csp_cbf/vcc_band12/001")
+    #return DeviceTestContext(VccBand1And2)
+    return DeviceProxy("mid_csp_cbf/vcc_band12/001")
 
 @pytest.fixture(scope="class")
 def create_band_3_proxy():
-    return DeviceTestContext(VccBand3)
-    #return DeviceProxy("mid_csp_cbf/vcc_band3/001")
+    #return DeviceTestContext(VccBand3)
+    return DeviceProxy("mid_csp_cbf/vcc_band3/001")
 
 @pytest.fixture(scope="class")
 def create_band_4_proxy():
-    return DeviceTestContext(VccBand4)
-    #return DeviceProxy("mid_csp_cbf/vcc_band4/001")
+    #return DeviceTestContext(VccBand4)
+    return DeviceProxy("mid_csp_cbf/vcc_band4/001")
 
 @pytest.fixture(scope="class")
 def create_band_5_proxy():
-    return DeviceTestContext(VccBand5)
-    #return DeviceProxy("mid_csp_cbf/vcc_band5/001")
+    #return DeviceTestContext(VccBand5)
+    return DeviceProxy("mid_csp_cbf/vcc_band5/001")
 
 @pytest.fixture(scope="class")
 def create_sw_1_proxy():
-    return DeviceTestContext(VccSearchWindow)
-    #return DeviceProxy("mid_csp_cbf/vcc_sw1/001")
+    #return DeviceTestContext(VccSearchWindow)
+    return DeviceProxy("mid_csp_cbf/vcc_sw1/001")
 
 @pytest.fixture(scope="class")
 def create_fsp_corr_subarray_1_1_proxy():
