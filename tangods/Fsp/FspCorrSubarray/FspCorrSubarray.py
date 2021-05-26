@@ -40,7 +40,7 @@ sys.path.insert(0, commons_pkg_path)
 
 from global_enum import const, freq_band_dict
 from ska_tango_base.control_model import HealthState, AdminMode, ObsState
-from ska_tango_base import SKASubarray, CspSubElementObsDevice
+from ska_tango_base import CspSubElementObsDevice
 from ska_tango_base.commands import ResultCode
 
 # PROTECTED REGION END #    //  FspCorrSubarray.additionnal_import
@@ -275,14 +275,10 @@ class FspCorrSubarray(CspSubElementObsDevice):
                 device._proxy_cbf_master.get_property("MaxCapabilities")["MaxCapabilities"]
             )
 
-            # Connet to all VCC devices turned on by CbfMaster:
+            # Connect to all VCC devices turned on by CbfMaster:
             device._count_vcc = int(device._master_max_capabilities["VCC"])
             device._fqdn_vcc = list(device.VCC)[:device._count_vcc]
             device._proxies_vcc = [*map(tango.DeviceProxy, device._fqdn_vcc)]
-
-            # TODO - remove
-            # self._update_obs_state(ObsState.IDLE)
-            # self.set_state(tango.DevState.OFF)
 
             message = "FspCorrSubarry Init command completed OK"
             self.logger.info(message)
@@ -432,57 +428,6 @@ class FspCorrSubarray(CspSubElementObsDevice):
         self._config_id=value
         # PROTECTED REGION END #    //  FspCorrSubarray.configID_write
 
-
-    # --------
-    # Commands
-    # --------
-
-    # TODO - go by super On() command
-    # def is_On_allowed(self):
-    #     if self.dev_state() == tango.DevState.OFF and\
-    #             self._obs_state == ObsState.IDLE:
-    #         return True
-    #     return False
-
-    # @command()
-    # def On(self):
-    #     # PROTECTED REGION ID(FspCorrSubarray.On) ENABLED START #
-    #     """Turn FSPCorrSubarray ON"""
-    #     self.set_state(tango.DevState.ON)
-    #     # PROTECTED REGION END #    //  FspCorrSubarray.On
-
-    # def is_Off_allowed(self):
-    #     if self.dev_state() == tango.DevState.ON and\
-    #             self._obs_state == ObsState.IDLE:
-    #         return True
-    #     return False
-
-    # @command()
-    # def Off(self):
-    #     """Turn FSPCorrSubarray OFF"""
-    #     # PROTECTED REGION ID(FspCorrSubarray.Off) ENABLED START #
-    #     # This command can only be called when obsState=IDLE
-    #     self.GoToIdle()
-    #     self._RemoveAllReceptors()
-    #     self.set_state(tango.DevState.OFF)
-    #     # PROTECTED REGION END #    //  FspCorrSubarray.Off
-
-    # TODO - make it local
-    # def is_AddReceptors_allowed(self):
-    #     """allowed if FSPPssSubarry is ON, ObsState is not SCANNING"""
-    #     if self.dev_state() == tango.DevState.ON and\
-    #             self._obs_state in [
-    #                 ObsState.IDLE,
-    #                 ObsState.CONFIGURING,
-    #                 ObsState.READY
-    #             ]:
-    #         return True
-    #     return False
-
-    # @command(
-    #     dtype_in=('uint16',),
-    #     doc_in="List of receptor IDs",
-    # )
     def _AddReceptors(self, argin):
         # PROTECTED REGION ID(FspCorrSubarray._AddReceptors) ENABLED START #
         """add specified receptors to the FSP subarray. Input is array of int."""
@@ -516,23 +461,6 @@ class FspCorrSubarray(CspSubElementObsDevice):
                                            tango.ErrSeverity.ERR)
         # PROTECTED REGION END #    //  FspCorrSubarray._AddReceptors
 
-    # TODO -  remove 
-    # def is_remove_receptors_allowed(self):
-    #     """allowed if FSPPssSubarry is ON, ObsState is not SCANNING"""
-    #     if self.dev_state() == tango.DevState.ON and\
-    #             self._obs_state in [
-    #                 ObsState.IDLE,
-    #                 ObsState.CONFIGURING,
-    #                 ObsState.READY
-    #             ]:
-    #         return True
-    #     return False
-
-    # @command(
-    #     dtype_in=('uint16',),
-    #     doc_in="List of receptor IDs",
-    # )
-
     def _remove_receptors(self, argin):
         """Remove Receptors. Input is array of int"""
         for receptorID in argin:
@@ -542,19 +470,6 @@ class FspCorrSubarray(CspSubElementObsDevice):
                 log_msg = "Receptor {} not assigned to FSP subarray. "\
                     "Skipping.".format(str(receptorID))
                 self.logger.warn(log_msg)
-
-    # TODO
-    # def is_RemoveAllReceptors_allowed(self):
-    #     """allowed if FSPPssSubarry is ON, ObsState is not SCANNING"""
-    #     if self.dev_state() == tango.DevState.ON and\
-    #             self._obs_state in [
-    #                 ObsState.IDLE,
-    #                 ObsState.CONFIGURING,
-    #                 ObsState.READY
-    #             ]:
-    #         return True
-    #     return False
-    # @command()
 
     def _RemoveAllReceptors(self):
         # PROTECTED REGION ID(FspCorrSubarray._RemoveAllReceptors) ENABLED START #
@@ -657,14 +572,17 @@ class FspCorrSubarray(CspSubElementObsDevice):
     # self.state_model._obs_state = ObsState.READY.value
     # # PROTECTED REGION END #    //  FspCorrSubarray.AddChannelAddresses
 
-    # TODO - use this class
+    # --------
+    # Commands
+    # --------
+
     class ConfigureScanCommand(CspSubElementObsDevice.ConfigureScanCommand):
         """
         A class for the FspCorrSubarray's ConfigureScan() command.
         """
 
-        """Input a JSON. Configure scan for fsp. Called by CbfSubarrayCorrConfig(proxy_fsp_corr_subarray.ConfigureScan(json.dumps(fsp)))"""
-        # transition to obsState=CONFIGURING
+        """Input a serilized JSON object. """
+
         def do(self, argin):
             """
             Stateless hook for ConfigureScan() command functionality.
@@ -685,12 +603,15 @@ class FspCorrSubarray(CspSubElementObsDevice):
 
             # validate the input args
 
-            # TODO: is this still valid? This function is called after 
-            # the configuration has already  been validated, so the checks here 
-            # have been removed to reduce overhead.
+            # NOTE: This function is called after the
+            # configuration has already  been validated, 
+            # so the checks here have been removed to
+            #  reduce overhead TODO:  to change where the
+            # validation is done
 
             argin = json.loads(argin)
 
+            # TODO:  why this check? This IS "CORR" function
             if argin["functionMode"] == "CORR":
 
                 # Configure frequencyBand.
@@ -710,9 +631,9 @@ class FspCorrSubarray(CspSubElementObsDevice):
 
             # Configure receptors.
             
-            # TODO: _RemoveAllReceptors shoud not be needed because ot is
-            #        applied when GoToIdle()
-            # TODO: to rename to _remove_fsp_receptors
+            # TODO: _RemoveAllReceptors shoud not be needed because it is
+            #        applied in GoToIdle()
+            # TODO: to rename to _remove_all_receptors
             device._RemoveAllReceptors()
             device._AddReceptors(map(int, argin["receptors"]))
 
@@ -828,8 +749,10 @@ class FspCorrSubarray(CspSubElementObsDevice):
                 # Configure configID. This is not initally in the FSP portion of the input JSON, but added in function CbfSuarray._validate_configScan
                 device._config_id=argin["configID"]
 
-            # TODO - reinstate validate()
-            # (result_code, msg) = self.validate_input(argin)
+            # TODO - reinstate validate() and move all the 
+            #        validations to it
+            # (result_code, msg) = self.validate_input(argin) # TODO
+
             result_code = ResultCode.OK # TODO  - temp - remove
             msg = "Configure command completed OK" # TODO temp, remove
 
@@ -898,7 +821,6 @@ class FspCorrSubarray(CspSubElementObsDevice):
         command = self.get_command_object("ConfigureScan")
         (return_code, message) = command(argin)
         return [[return_code], [message]]
-        # PROTECTED REGION END #    //  Vcc.ConfigureScan
 
     class GoToIdleCommand(CspSubElementObsDevice.GoToIdleCommand):
         """
@@ -921,8 +843,6 @@ class FspCorrSubarray(CspSubElementObsDevice):
 
             # Reset all private data defined in InitCommand.do()
             # and which are then set via ConfigureScan()
-
-            # self._receptors = []
 
             device._freq_band_name = ""
             device._frequency_band = 0
@@ -950,6 +870,9 @@ class FspCorrSubarray(CspSubElementObsDevice):
 
             device._channel_info = []
             #device._channel_info.clear() #TODO  not yet populated
+
+            # Reset self._receptors
+            device._RemoveAllReceptors()
 
             if device.state_model.obs_state == ObsState.IDLE:
                 return (ResultCode.OK, 
@@ -982,8 +905,8 @@ class FspCorrSubarray(CspSubElementObsDevice):
         """
         if argin<0 or argin >14479:
             msg="channelID should be between 0 to 14479"
-            tango.Except.throw_exception("Command failed", msg, "getLinkAndAddress",
-                                           tango.ErrSeverity.ERR)
+            tango.Except.throw_exception("Command failed", msg, 
+            "getLinkAndAddress", tango.ErrSeverity.ERR)
             return
 
 
