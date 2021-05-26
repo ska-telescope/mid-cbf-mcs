@@ -19,6 +19,7 @@
 
 # tango imports
 import tango
+from tango import DebugIt
 from tango.server import run
 from tango.server import attribute, command
 from tango.server import device_property
@@ -572,17 +573,28 @@ class CbfSubarray(SKASubarray):
                         fsp["frequencyBandOffsetStream1"] = argin["frequencyBandOffsetStream1"]
                     else:
                         fsp["frequencyBandOffsetStream1"] = 0
+
                     if "frequencyBandOffsetStream2" in argin:
                         fsp["frequencyBandOffsetStream2"] = argin["frequencyBandOffsetStream2"]
                     else:
                         fsp["frequencyBandOffsetStream2"] = 0
-                    if "receptors" not in fsp:
-                        fsp["receptors"] = self._receptors
+
+                    # TODO: 
+                    # if "receptors" not in fsp:
+                    #     fsp["receptors"] = self._receptors
+
                     if argin["frequencyBand"] in ["5a", "5b"]:
                         fsp["band5Tuning"] = argin["band5Tuning"]
 
                     # --------------------------------------------------------
                     if fsp["functionMode"] == "CORR":
+                        if "receptors" not in fsp:
+                            fsp["receptors"] = self._receptors
+
+                        # TODO remove
+                        # if "receptors" not in fsp:
+                        #     fsp["receptors"] = self._receptors
+
                         if "receptors" in fsp:
                             try:
                                 # TODO:  Why remove, add, remove?? 
@@ -867,6 +879,10 @@ class CbfSubarray(SKASubarray):
 
                     # --------------------------------------------------------
                     if fsp["functionMode"] == "PSS-BF":
+                        # TODO 
+                        # if "receptors" not in fsp:
+                        #     fsp["receptors"] = []  # not used in this case
+
                         if "searchWindowID" in fsp:
                             if int(fsp["searchWindowID"]) in [1, 2]:
                                 pass
@@ -1563,13 +1579,12 @@ class CbfSubarray(SKASubarray):
         (return_code, message) = command(argin)
         return [[return_code], [message]]
 
-
-
-
     @command(
         dtype_out='DevVarLongStringArray',
         doc_out="(ReturnType, 'informational message')"
     )
+
+    @DebugIt()
     def RemoveAllReceptors(self):
         # PROTECTED REGION ID(CbfSubarray.RemoveAllReceptors) ENABLED START #
         """Remove all receptors. Turn Subarray OFF if no receptors assigned"""
@@ -1611,6 +1626,8 @@ class CbfSubarray(SKASubarray):
         dtype_out='DevVarLongStringArray',
         doc_out="(ReturnType, 'informational message')"
     )
+
+    @DebugIt()
     def AddReceptors(self, argin):
         """
         Assign Receptors to this subarray. 
@@ -1733,8 +1750,6 @@ class CbfSubarray(SKASubarray):
                 information purpose only.
             :rtype: (ResultCode, str)
             """
-
-            self.logger.debug("Entering ConfigureScanCommand()")
 
             device=self.target
 
@@ -1949,19 +1964,21 @@ class CbfSubarray(SKASubarray):
                 # Configure functionMode.
                 proxy_fsp.SetFunctionMode(fsp["functionMode"])
 
-                fsp["frequencyBand"] = argin["frequencyBand"]
-                if "frequencyBandOffsetStream1" in argin:
-                    fsp["frequencyBandOffsetStream1"] = device._frequency_band_offset_stream_1
-                else:
-                    fsp["frequencyBandOffsetStream1"] = 0
-                if "frequencyBandOffsetStream2" in argin:
-                    fsp["frequencyBandOffsetStream2"] = device._frequency_band_offset_stream_2
-                else:
-                    fsp["frequencyBandOffsetStream2"] = 0
-                if "receptors" not in fsp:
-                    fsp["receptors"] = device._receptors
-                if device._frequency_band in [4, 5]:
-                    fsp["band5Tuning"] = device._stream_tuning
+                # TODO - Why are the next ~ lines needed??? Michelle xxxxxxxxxxxxxxxxx
+                        
+                # fsp["frequencyBand"] = argin["frequencyBand"]
+                # if "frequencyBandOffsetStream1" in argin:
+                #     fsp["frequencyBandOffsetStream1"] = device._frequency_band_offset_stream_1
+                # else:
+                #     fsp["frequencyBandOffsetStream1"] = 0
+                # if "frequencyBandOffsetStream2" in argin:
+                #     fsp["frequencyBandOffsetStream2"] = device._frequency_band_offset_stream_2
+                # else:
+                #     fsp["frequencyBandOffsetStream2"] = 0
+                # if "receptors" not in fsp:
+                #     fsp["receptors"] = device._receptors
+                # if device._frequency_band in [4, 5]:
+                #     fsp["band5Tuning"] = device._stream_tuning
 
                 # subscribe to FSP state and healthState changes
                 event_id_state, event_id_health_state = proxy_fsp.subscribe_event(
@@ -1988,6 +2005,8 @@ class CbfSubarray(SKASubarray):
         dtype_out='DevVarLongStringArray',
         doc_out="(ReturnType, 'informational message')",
     )
+
+    @DebugIt()
     def ConfigureScan(self, argin):
         # PROTECTED REGION ID(CbfSubarray.ConfigureScan) ENABLED START #
         # """
@@ -2179,7 +2198,7 @@ class CbfSubarray(SKASubarray):
             # data.insert(tango.DevUShort, int(argin) % (2**16))
             device._group_fsp_corr_subarray.command_inout("Scan", data)
             
-            device._group_fsp_pss_subarray.command_inout("Scan")
+            device._group_fsp_pss_subarray.command_inout("Scan", data)
 
             # return message
             message = "Scan command successfull"
@@ -2249,7 +2268,7 @@ class CbfSubarray(SKASubarray):
             self.logger.info(message)
             return (ResultCode.OK, message)
 
-############### abort, restart and reset #####################################
+    ############### abort, restart and reset #####################
 
     class AbortCommand(SKASubarray.AbortCommand):
         """

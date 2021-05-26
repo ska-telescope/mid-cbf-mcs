@@ -33,9 +33,9 @@ def init_proxies_fixture():
 
     class Proxies:
         def __init__(self):
-            # set debug_device_is_on to True in orde to allow
-            # device debugging under VScode
-            self.debug_device_is_on = True
+            # NOTE: set debug_device_is_on to True in order
+            #       to allow device debugging under VScode
+            self.debug_device_is_on = False
             if self.debug_device_is_on:
                 # Increase the timeout in order to allow  time for debugging
                 timeout_millis = 500000
@@ -132,10 +132,12 @@ def init_proxies_fixture():
 
 @pytest.fixture(scope="class")
 def debug_device_is_on():
+    # NOTE: set debug_device_is_on to True in order
+    #       to allow device debugging under VScode
     debug_device_is_on = False
     if debug_device_is_on:
         # Increase the timeout in order to allow  time for debugging
-        timeout_millis = 500000 # TODO
+        timeout_millis = 500000
     return debug_device_is_on
 
 @pytest.fixture(scope="class")

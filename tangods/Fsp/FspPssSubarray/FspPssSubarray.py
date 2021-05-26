@@ -165,6 +165,8 @@ class FspPssSubarray(CspSubElementObsDevice):
             device._search_window_id = 0
             device._search_beam_id = []
             device._output_enable = 0
+            device._scan_id = 0
+            device._config_id = ""
 
             # device proxy for easy reference to CBF Master
             device._proxy_cbf_master = tango.DeviceProxy(device.CbfMasterAddress)
@@ -310,11 +312,8 @@ class FspPssSubarray(CspSubElementObsDevice):
             argin = json.loads(argin)
 
             # Configure receptors.
-            # TODO - to take out this removeALl as it is done in GoToIdle()
+            # TODO - this removeAll can be taken out as it is done in GoToIdle()
             device._RemoveAllReceptors()
-            self.logger.debug("_receptors = {}".format(device._receptors))
-            
-            self.logger.debug("argin[receptors] = {}".format(argin["receptors"]))
             self.logger.debug("_receptors = {}".format(device._receptors))
 
             device._fsp_id = argin["fspID"]
@@ -325,19 +324,24 @@ class FspPssSubarray(CspSubElementObsDevice):
             for searchBeam in argin["searchBeam"]:
 
                 if len(searchBeam["receptors"]) != 1:
+                    # TODO - to add support for multiple receptors
                     msg = "Currently only 1 receptor per searchBeam is supported"
                     self.logger.error(msg) 
                     return (ResultCode.FAILED, msg)
 
                 device._AddReceptors(map(int, searchBeam["receptors"]))
+                self.logger.debug("device._receptors = {}".format(device._receptors))
                 device._search_beams.append(json.dumps(searchBeam))
-                device._receptors.extend(searchBeam["receptors"])
+                
+                # TODO: remove
+                # device._receptors.extend(searchBeam["receptors"])
+
                 device._search_beam_id.append(int(searchBeam["searchBeamID"]))
             
             # TODO: _output_enable is not currently set
 
-            # TODO - possibly mkove validation of params to here 
-            #        validations to it
+            # TODO - possibly move validation of params to  
+            #        validate_input()
             # (result_code, msg) = self.validate_input(argin) # TODO
 
             result_code = ResultCode.OK # TODO  - temp - remove
@@ -411,6 +415,8 @@ class FspPssSubarray(CspSubElementObsDevice):
             device._search_window_id = 0
             device._search_beam_id = []
             device._output_enable = 0
+            device._scan_id = 0
+            device._config_id = ""
 
             device._RemoveAllReceptors()
 

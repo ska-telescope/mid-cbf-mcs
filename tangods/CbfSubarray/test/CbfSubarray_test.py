@@ -302,7 +302,7 @@ class TestCbfSubarray:
 
             assert len(proxies.subarray[1].receptors) == 0
             assert proxies.subarray[1].configID == ''
-            # TODO in CbfSubarray, at end of scan, clear all private  
+            # TODO in CbfSubarray, at end of scan, clear all private data
             #assert proxies.subarray[1].frequencyBand == 0
             assert proxies.subarray[1].obsState == ObsState.EMPTY
 
@@ -324,7 +324,8 @@ class TestCbfSubarray:
 
             proxies.wait_timeout_obs([proxies.vcc[i + 1] for i in range(4)], ObsState.READY, 1, 1)
 
-            # check frequency band of VCCs, including states of frequency band capabilities
+            # check frequency band of VCCs, including states of 
+            # frequency band capabilities
 
             logging.info( ("proxies.vcc[vcc_index].frequencyBand  = {}".
             format( proxies.vcc[vcc_index].frequencyBand)) )
@@ -357,10 +358,11 @@ class TestCbfSubarray:
 
             # check configured attributes of search windows
             # first for search window 1...
-            time.sleep(5)
             
-            # TODO - SearchWidow device is disabled since the same functionality
-            # is implemented by the VccSearchWindow device; to decide which one to keep
+            # TODO - SearchWidow device test is disabled since the same 
+            # functionality is implemented by the VccSearchWindow device; 
+            # to be decide which one to keep.
+
             # print("proxies.sw[1].State() = {}".format(proxies.sw[1].State()))
             # print("proxies.sw[2].State() = {}".format(proxies.sw[2].State()))
 
@@ -381,6 +383,7 @@ class TestCbfSubarray:
             # assert proxies.sw[2].searchWindowTuning == 7000000000
             # assert proxies.sw[2].tdcEnable == False
 
+            time.sleep(1)
             # check configured attributes of VCC search windows
             # first for search window 1 of VCC belonging to receptor 10...
             assert proxies.vccTdc[proxies.receptor_to_vcc[4] - 1][0].State() == DevState.ON
@@ -428,6 +431,15 @@ class TestCbfSubarray:
             #     DevState.ON, DevState.DISABLE, DevState.DISABLE, DevState.DISABLE
             # ]
 
+            # check configured attributes of FSP subarrays
+            # first for FSP 3 ... (this is a PSS fsp device)
+            logging.info( ("proxies.vcc[vcc_index].frequencyBand  = {}".
+            format( proxies.vcc[vcc_index].frequencyBand)) )
+
+            logging.info(("proxies.fspSubarray[1].receptors = {}".
+            format(proxies.fspSubarray[1].receptors)))
+            logging.info(("proxies.fspSubarray[3].receptors = {}".
+            format(proxies.fspSubarray[3].receptors)))
 
             assert proxies.fspSubarray[3].receptors[0] == 3
             assert proxies.fspSubarray[3].receptors[1] == 1
@@ -435,7 +447,7 @@ class TestCbfSubarray:
             assert proxies.fspSubarray[3].searchBeamID[0] == 300
             assert proxies.fspSubarray[3].searchBeamID[1] == 400
 
-            # TODO: currently searchBeams is storied by the device
+            # TODO: currently searchBeams is stored by the device
             #       as a json string ( via attribute 'searchBeams');  
             #       this has to be updated in FspCorrSubarray
             #       to read/write individual members
@@ -493,12 +505,9 @@ class TestCbfSubarray:
             assert proxies.fspSubarray[1].outputLinkMap[3][1] == 16
 
             assert str(proxies.fspSubarray[1].visDestinationAddress).replace('"',"'") == \
-                str({"outputHost": [[0, "192.168.0.1"], [8184, "192.168.0.2"]], "outputMac": [[0, "06-00-00-00-00-01"]], "outputPort": [[0, 9000, 1], [8184, 9000, 1]]}).replace('"',"'")
-
-            logging.info(("proxies.fspSubarray[1].receptors = {}".
-            format(proxies.fspSubarray[1].receptors)))
-            logging.info(("proxies.fspSubarray[3].receptors = {}".
-            format(proxies.fspSubarray[3].receptors)))
+                str({"outputHost": [[0, "192.168.0.1"], [8184, "192.168.0.2"]], 
+                "outputMac": [[0, "06-00-00-00-00-01"]], 
+                "outputPort": [[0, 9000, 1], [8184, 9000, 1]]}).replace('"',"'")
 
             # Clean Up
             proxies.clean_proxies()
@@ -654,7 +663,7 @@ class TestCbfSubarray:
 
             # create a delay model
             
-            # Insert the epoch TODO - should be added to the json file itself?
+            # Insert the epoch
             delay_model["delayModel"][0]["epoch"] = str(int(time.time()) + 20)
             delay_model["delayModel"][1]["epoch"] = "0"
             delay_model["delayModel"][2]["epoch"] = str(int(time.time()) + 10)
@@ -715,7 +724,7 @@ class TestCbfSubarray:
 
             assert proxies.vcc[proxies.receptor_to_vcc[1]].delayModel[1][0] == 2.7
             assert proxies.vcc[proxies.receptor_to_vcc[1]].delayModel[1][1] == 2.8
-            assert proxies.vcc[proxies.receptor_to_vcc[1]].delayModel[1][2] == 2.9    #     assert fsp_1_proxies.subarray[1].obsState == ObsState.IDLE
+            assert proxies.vcc[proxies.receptor_to_vcc[1]].delayModel[1][2] == 2.9
             assert proxies.vcc[proxies.receptor_to_vcc[1]].delayModel[1][3] == 3.0
             assert proxies.vcc[proxies.receptor_to_vcc[1]].delayModel[1][4] == 3.1
             assert proxies.vcc[proxies.receptor_to_vcc[1]].delayModel[1][5] == 3.2
@@ -810,13 +819,15 @@ class TestCbfSubarray:
             #create a Jones matrix
             f = open(file_path + "/test_json/jonesmatrix.json")
             jones_matrix = json.loads(f.read().replace("\n", ""))
+            f.close()
+
             jones_matrix["jonesMatrix"][0]["epoch"] = str(int(time.time()) + 20)
             jones_matrix["jonesMatrix"][1]["epoch"] = "0"
             jones_matrix["jonesMatrix"][2]["epoch"] = str(int(time.time()) + 10)
 
             # update Jones Matrix
             proxies.tm.jonesMatrix = json.dumps(jones_matrix)
-            time.sleep(1)
+            time.sleep(5)
 
             for receptor in jones_matrix["jonesMatrix"][1]["matrixDetails"]:
                 for frequency_slice in receptor["receptorMatrix"]:

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# This file is part of the csp-lmc-prototype project
+# This file is part of the mid-cbf-mcs project
 #
 #
 #
@@ -51,14 +51,6 @@ from ska_tango_base.commands import ResultCode
 )
 
 class TestVcc:
-    """
-    @classmethod
-    def mocking(cls):
-    """#Mock external libraries.
-    """
-        # Example : Mock numpy
-        # cls.numpy = CspMaster.numpy = MagicMock()
-    """
 
     def test_SetFrequencyBand(
             self,
@@ -72,19 +64,12 @@ class TestVcc:
         """
         Test SetFrequencyBand command state changes.
         """
-        fqdn_list = [
-            'a',
-            'b',
-            'c'
-        ]
 
         logging.info("debug_device_is_on = {}".format(debug_device_is_on))       
         if debug_device_is_on == True:
             timeout_millis = 700000 
             create_vcc_proxy.set_timeout_millis(timeout_millis)
             port = create_vcc_proxy.DebugDevice()
-
-        logging.info( "fqdn_list = {}". format(fqdn_list) )
 
         # NOTE: this check is needed only while debugging this test TODO - remove
         if create_vcc_proxy.obsState  == ObsState.SCANNING:
@@ -334,12 +319,12 @@ class TestVcc:
 
         """
 
-    def test_ConfigureSearchWindow_basic(self, create_vcc_proxy, create_tdc_1_proxy):
+    def test_ConfigureSearchWindow_basic(self, create_vcc_proxy, 
+                                        create_sw_1_proxy):
         """
         Test a minimal successful search window configuration.
         """
         create_sw_1_proxy.Init()
-        create_vcc_proxy.Init()
         time.sleep(3)
 
         # check initial values of attributes

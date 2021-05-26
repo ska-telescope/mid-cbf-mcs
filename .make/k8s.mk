@@ -28,6 +28,7 @@ k8s: ## Which kubernetes are we connected to
 	@echo "IMAGE_TO_TEST: $(IMAGE_TO_TEST)"
 	@echo "TEST_RUNNER=$(TEST_RUNNER)"
 	@echo "KUBECONFIG=$(KUBECONFIG)"
+	@echo "HELM_RELEASE=$(HELM_RELEASE)"
 
 clean: ## clean out references to chart tgz's
 	@rm -f ./charts/*/charts/*.tgz ./charts/*/Chart.lock ./charts/*/requirements.lock ./repository/*
@@ -82,7 +83,21 @@ install-chart: dep-up namespace ## install the helm chart with name HELM_RELEASE
          $(UMBRELLA_CHART_PATH) --namespace $(KUBE_NAMESPACE); \
 	rm generated_values.yaml; \
 	rm values.yaml
-	@date
+
+# Same as 'install-chart' but without 'dep-up'
+install-only: ## install the helm chart with name HELM_RELEASE and path UMBRELLA_CHART_PATH on the namespace KUBE_NAMESPACE 
+	@echo $(TANGO_HOST)
+	@echo "HELM_RELEASE=$(HELM_RELEASE)"
+	@sed -e 's/CI_PROJECT_PATH_SLUG/$(CI_PROJECT_PATH_SLUG)/' $(UMBRELLA_CHART_PATH)values.yaml > generated_values.yaml; \
+	sed -e 's/CI_ENVIRONMENT_SLUG/$(CI_ENVIRONMENT_SLUG)/' generated_values.yaml > values.yaml; \
+	helm dependency update $(UMBRELLA_CHART_PATH); \
+	helm install $(HELM_RELEASE) \
+	--set global.minikube=$(MINIKUBE) \
+	--set global.tango_host=$(TANGO_HOST) \
+	--values values.yaml $(SET_IMAGE_TAG) \
+         $(UMBRELLA_CHART_PATH) --namespace $(KUBE_NAMESPACE); \
+	rm generated_values.yaml; \
+	rm values.yaml
 	
 install-chart-with-taranta: dep-up namespace ## install the helm chart with name HELM_RELEASE and path UMBRELLA_CHART_PATH on the namespace KUBE_NAMESPACE 
 	@echo $(TANGO_HOST)
@@ -115,6 +130,8 @@ uninstall-chart: ## uninstall the mid-cbf-umbrella helm chart on the namespace m
 	helm uninstall  $(HELM_RELEASE) --namespace $(KUBE_NAMESPACE) 
 
 reinstall-chart: uninstall-chart install-chart ## reinstall mid-cbf-umbreall helm chart
+
+reinstall-only: uninstall-chart install-only ## reinstall mid-cbf-umbreall helm chart
 
 upgrade-chart: ## upgrade the mid-cbf-umbrella helm chart on the namespace mid-cbf 
 	helm upgrade --set global.minikube=$(MINIKUBE) --set global.tango_host=$(TANGO_HOST) $(HELM_RELEASE) $(UMBRELLA_CHART_PATH) --namespace $(KUBE_NAMESPACE) 
@@ -253,20 +270,34 @@ test-only: rm-build ## test the application on K8s
 k8s_test = tar -c . | \
 		kubectl run $(TEST_RUNNER) \
 		--namespace $(KUBE_NAMESPACE) -i --wait --restart=Never \
-		--image-pull-policy=Never \
+		--image-pull-policy=IfNotPresent \
 		--image=$(IMAGE_TO_TEST) -- \
 		/bin/bash -c "tar xv --strip-components 1 --warning=all && \
 		python3 -m pip install . &&\
 		cd test-harness &&\
-		make TANGO_HOST=$(TANGO_HOST) $1 && \
+		make TANGO_HOST=$(TANGO_HOST) MARK='$(MARK)' $1 && \
 		tar -czvf /tmp/build.tgz build && \
-                echo '~~~~BOUNDARY~~~~' && \
-                echo '~~~~BOUNDARY~~~~'" \
-                2>&1
+		echo '~~~~BOUNDARY~~~~' && \
+		cat /tmp/build.tgz | base64 && \
+		echo '~~~~BOUNDARY~~~~'" \
+		2>&1
 
-# echo 'TODO Disabled: cat /tmp/build.tgz | base64' && \
-# cat /tmp/build.tgz | base64 && \ # TODO - insert this line back 
-# between the 2 echo 'BOUNDARY'
+# NOTE: For a faster run:
+#       Replace (only locally, do not check in!) 
+#       '--image-pull-policy=IfNotPresent \' 
+#       with
+#       '--image-pull-policy=Never'
+# 
+# Note that if the 'IfNotPresent' pull policy is used then,
+# in order to get the local updates into the build (pods), one
+# needs to run BEFORE any 'make build' (at the command line):
+#
+# 'eval $(minikube docker-env)'
+#
+# NOTE: to speed it up a bit furher (for testing/debugging only)  
+# remove 'cat /tmp/build.tgz | base64 && \' from the command 
+# above (and insert it back, between the 2 
+# "echo '~~~~BOUNDARY~~~~'" lines, before checking in)
 
 rlint:  ## run lint check on Helm Chart using gitlab-runner
 	if [ -n "$(RDEBUG)" ]; then DEBUG_LEVEL=debug; else DEBUG_LEVEL=warn; fi && \
