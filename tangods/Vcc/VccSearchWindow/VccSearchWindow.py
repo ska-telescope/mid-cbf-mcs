@@ -117,8 +117,7 @@ class VccSearchWindow(SKACapability):
                 information purpose only.
             :rtype: (ResultCode, str)
             """
-
-            self.logger.warn("Entering InitCommand() (warning) TODO")
+            self.logger.debug("Entering InitCommand()")
 
             super().do()
 
@@ -228,15 +227,7 @@ class VccSearchWindow(SKACapability):
     # Commands
     # --------
 
-    @command(
-        dtype_in='DevState',
-        doc_in='New state'
-    )
-    def SetState(self, argin):
-        # PROTECTED REGION ID(VccSearchWindow.SetState) ENABLED START #
-        """set state(tango.DevState)"""
-        self.set_state(argin)
-        # PROTECTED REGION END #    //  VccSearchWindow.SetState
+    # None
 
 # ----------
 # Run server
