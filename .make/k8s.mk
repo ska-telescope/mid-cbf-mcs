@@ -10,7 +10,17 @@ CHARTS ?= mid-cbf-umbrella mid-cbf mid-cbf-tmleafnode ## list of charts to be pu
 CI_PROJECT_PATH_SLUG ?= mid-cbf
 CI_ENVIRONMENT_SLUG ?= mid-cbf
 
+# in release.mk it's defined the value of the variable IMAGE_TAG
 SET_IMAGE_TAG ?= --set mid-cbf.midcbf.image.tag=$(IMAGE_TAG) --set mid-cbf-tmleafnode.midcbf.image.tag=$(IMAGE_TAG)
+
+ifneq ($(CI_JOB_ID),)
+CI_PROJECT_IMAGE :=
+SET_IMAGE_TAG = --set mid-cbf.midcbf.image.registry=$(CI_REGISTRY)/ska-telescope \
+                --set mid-cbf.midcbf.image.tag=$(CI_COMMIT_SHORT_SHA) \
+                --set mid-cbf-tmleafnode.midcbf.image.registry=$(CI_REGISTRY)/ska-telescope \
+                --set mid-cbf-tmleafnode.midcbf.image.tag=$(CI_COMMIT_SHORT_SHA)
+IMAGE_TO_TEST = $(CI_REGISTRY_IMAGE):$(CI_COMMIT_SHORT_SHA)
+endif
 .DEFAULT_GOAL := help
 
 k8s: ## Which kubernetes are we connected to
