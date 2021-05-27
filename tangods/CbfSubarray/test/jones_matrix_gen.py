@@ -3,15 +3,16 @@
 
 import sys, os, getopt
 import json
-from random import randint
+from random import choice, randint
 
 def main(argv):
     json_file_path = ''
     json_file_name = ''
+    num_tests = 0
     try:
-        opts, args = getopt.getopt(argv,'hp:n:',['help', 'path=','name='])
+        opts, args = getopt.getopt(argv,'hp:n:t:',['help', 'path=','name=', 'tests='])
     except getopt.GetoptError:
-        print('jones_matrix_gen.py -p <file path> -n <file name>')
+        print('jones_matrix_gen.py -p <file path> -n <file name> -t <number of tests>')
         sys.exit(2)
     for opt, arg in opts:
         if opt in ('-h', '--help'):
@@ -22,24 +23,27 @@ def main(argv):
             os.chdir(json_file_path)
         elif opt in ('-n', '--name'):
             json_file_name = arg
+        elif opt in ('-t', '--tests'):
+            num_tests = int(arg)
 
     jones_dict_list = []
 
-    for number_of_tests in range(3): # number of receptor tests generated
+    for number_of_tests in range(num_tests): # number of receptor tests generated
+        length = choice([4, 16])
         jones_details_list_receptor = []
-        for number_of_receptors in range(2):
+        for number_of_receptors in [1, 3]:
             receptor_details = []
-            for fsid in range(2):
+            for fsid in range(1):
                 jones_matrix = []
-                for entry in range(16): # number of entries in Jones matrix; 16 = 4x4 matrix
+                for entry in range(length): # number of entries in Jones matrix; 16 = 4x4 matrix
                     jones_matrix.append(float(entry*(number_of_tests+1))) # fill the matrix with known data
-                receptor_details.append({'fsid': randint(1, 26), 'matrix': jones_matrix})
-            if number_of_receptors == 0:
-                jones_details_list_receptor.append({'receptor': 1, 'receptorMatrix': receptor_details}) # number of receptor to be tested
-            else:
-                jones_details_list_receptor.append({'receptor': 4, 'receptorMatrix': receptor_details}) # number of receptor to be tested
+                receptor_details.append({'fsid': 3, 'matrix': jones_matrix})
+            jones_details_list_receptor.append({'receptor': number_of_receptors, 'receptorMatrix': receptor_details}) # number of receptor to be tested
 
-        jones_dict_list.append({'matrixDetails': jones_details_list_receptor})
+        if length == 4:
+            jones_dict_list.append({'destinationType': 'fsp', 'matrixDetails': jones_details_list_receptor})
+        elif length == 16:
+            jones_dict_list.append({'destinationType': 'vcc', 'matrixDetails': jones_details_list_receptor})
 
     jones_dict = {'jonesMatrix': jones_dict_list}
 

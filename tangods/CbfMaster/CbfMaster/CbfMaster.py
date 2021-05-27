@@ -126,6 +126,7 @@ class CbfMaster(SKAMaster):
                 elif "fsp" in device_name:
                     if event.attr_value.value not in self._report_fsp_corr_subarray_membership[
                         self._fqdn_fsp.index(device_name)]:
+                        logging.warning("{}".format(event.attr_value.value))
                         self._report_fsp_corr_subarray_membership[
                             self._fqdn_fsp.index(device_name)
                         ].append(event.attr_value.value)
@@ -386,7 +387,7 @@ class CbfMaster(SKAMaster):
         self._report_subarray_admin_mode = [AdminMode.ONLINE.value] * self._count_subarray
         self._frequency_offset_k = [0] * self._count_vcc
         self._frequency_offset_delta_f = [0] * self._count_vcc
-        self._subarray_config_ID = [0] * self._count_subarray
+        self._subarray_config_ID = [""] * self._count_subarray
 
         # initialize lists with subarray/capability FQDNs
         self._fqdn_vcc = list(self.VCC)[:self._count_vcc]

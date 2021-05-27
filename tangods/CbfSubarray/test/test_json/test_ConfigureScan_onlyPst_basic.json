@@ -1,0 +1,31 @@
+{
+    "id": "pst_test",
+    "frequencyBand": "2",
+    "frequencyBandOffsetStream1": 0,
+    "frequencyBandOffsetStream2": 0,
+    "dopplerPhaseCorrSubscriptionPoint": "ska_mid/tm_leaf_node/csp_subarray_01/dopplerPhaseCorrection",
+    "delayModelSubscriptionPoint": "ska_mid/tm_leaf_node/csp_subarray_01/delayModel",
+    "jonesMatrixSubscriptionPoint": "ska_mid/tm_leaf_node/csp_subarray_01/jonesMatrix",
+    "beamWeightsSubscriptionPoint": "ska_mid/tm_leaf_node/csp_subarray_01/beamWeights",
+    "rfiFlaggingMask": {},
+    "fsp": [
+        {
+            "fspID": 3,
+            "functionMode": "PST-BF",
+            "timingBeam": [
+                {
+                    "timingBeamID": 10,
+                    "receptors": [3],
+                    "outputEnable": true,
+                    "timingBeamDestinationAddress": "10.1.1.1"
+                },
+                {
+                    "timingBeamID": 5,
+                    "receptors": [1],
+                    "outputEnable": true,
+                    "timingBeamDestinationAddress": "10.1.2.1"
+                }
+            ]
+        }
+    ]
+}

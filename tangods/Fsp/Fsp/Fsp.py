@@ -26,6 +26,7 @@ from tango import AttrWriteType
 # PROTECTED REGION ID(Fsp.additionnal_import) ENABLED START #
 import os
 import sys
+import json
 
 file_path = os.path.dirname(os.path.abspath(__file__))
 commons_pkg_path = os.path.abspath(os.path.join(file_path, "../../commons"))
@@ -58,6 +59,16 @@ class Fsp(SKACapability):
                 tango.DeviceProxy,
                 list(self.FspCorrSubarray)
             )]
+        if self.FspPssSubarray:
+            self._proxy_fsp_pss_subarray = [*map(
+                tango.DeviceProxy,
+                list(self.FspPssSubarray)
+            )]
+        if self.FspPstSubarray:
+            self._proxy_fsp_pst_subarray = [*map(
+                tango.DeviceProxy,
+                list(self.FspPstSubarray)
+            )]
 
     # PROTECTED REGION END #    //  Fsp.class_variable
 
@@ -88,7 +99,12 @@ class Fsp(SKACapability):
     FspCorrSubarray = device_property(
         dtype=('str',)
     )
+
     FspPssSubarray = device_property(
+        dtype=('str',)
+    )
+
+    FspPstSubarray = device_property(
         dtype=('str',)
     )
 
@@ -125,13 +141,32 @@ class Fsp(SKACapability):
         doc="set when transition to READY is performed",
     )
 
-    # jonesMatrix = attribute(
-    #     dtype=(double,),
-    #     max_dim_x=16,
-    #     access=AttrWriteType.READ,
-    #     label='Jones Matrix',
-    #     doc='Jones Matrix, given per frequency slice'
-    # )
+    jonesMatrix = attribute(
+        dtype=(('double',),),
+        max_dim_x=4,
+        max_dim_y=16,
+        access=AttrWriteType.READ,
+        label='Jones Matrix',
+        doc='Jones Matrix, given per frequency slice'
+    )
+
+    delayModel = attribute(
+        dtype = (('double',),),
+        max_dim_x=6,
+        max_dim_y=16,
+        access=AttrWriteType.READ,
+        label='Delay Model',
+        doc='Differential off-boresight beam delay model'
+    )
+
+    timingBeamWeights = attribute(
+        dtype = (('double',),),
+        max_dim_x=6,
+        max_dim_y=16,
+        access=AttrWriteType.READ,
+        label='Timing Beam Weights',
+        doc='Amplitude weights used in the tied-array beamforming'
+    )
    
     # ---------------
     # General methods
@@ -147,12 +182,6 @@ class Fsp(SKACapability):
         # and self._proxy_fsp_corr_subarray
         self.__get_capability_proxies()
 
-        # the modes are already disabled on initialization,
-        # self._proxy_correlation.SetState(tango.DevState.DISABLE)
-        # self._proxy_pss.SetState(tango.DevState.DISABLE)
-        # self._proxy_pst.SetState(tango.DevState.DISABLE)
-        # self._proxy_vlbi.SetState(tango.DevState.DISABLE)
-
         self._fsp_id = self.FspID
 
         # initialize attribute values
@@ -160,7 +189,9 @@ class Fsp(SKACapability):
         self._subarray_membership = []
         self._scan_id = 0
         self._config_id = ""
-        #self._jones_matrix = [0.0 for i in range(16)]
+        self._jones_matrix = [[0.0] * 4 for _ in range(4)]
+        self._delay_model = [[0.0] * 6 for _ in range(4)]
+        self._timing_beam_weights = [[0.0] * 6 for _ in range(4)]
 
         # initialize FSP subarray group
         self._group_fsp_corr_subarray = tango.Group("FSP Subarray Corr")
@@ -171,10 +202,9 @@ class Fsp(SKACapability):
         for fqdn in list(self.FspPssSubarray):
             self._group_fsp_pss_subarray.add(fqdn)
 
-        # 
-        self._fsp_corr_proxies =[]
-        for fqdn in list(self.FspCorrSubarray):
-            self._fsp_corr_proxies.append(tango.DeviceProxy(fqdn))
+        self._group_fsp_pst_subarray = tango.Group("FSP Subarray Pst")
+        for fqdn in list(self.FspPstSubarray):
+            self._group_fsp_pst_subarray.add(fqdn)
 
         self.set_state(tango.DevState.OFF)
         # PROTECTED REGION END #    //  Fsp.init_device
@@ -194,11 +224,12 @@ class Fsp(SKACapability):
         self._proxy_vlbi.SetState(tango.DevState.OFF)
         self._group_fsp_corr_subarray.command_inout("Off")
         self._group_fsp_pss_subarray.command_inout("Off")
+        self._group_fsp_pst_subarray.command_inout("Off")
 
         # remove all subarray membership
         for subarray_ID in self._subarray_membership[:]:
             self.RemoveSubarrayMembership(subarray_ID)
-
+        
         self.set_state(tango.DevState.OFF)
         # PROTECTED REGION END #    //  Fsp.delete_device
 
@@ -230,18 +261,29 @@ class Fsp(SKACapability):
         return self._config_id
         # PROTECTED REGION END #    //  Fsp.configID_read
 
-
     def write_configID(self, value):
         # PROTECTED REGION ID(Fsp.configID_write) ENABLED START #
         """Set the configID attribute."""
         self._config_id=value
         # PROTECTED REGION END #    //  Fsp.configID_write
 
-    # def read_jonesMatrix(self):
-    #     # PROTECTED REGION ID(Fsp.jonesMatrix_read) ENABLED START #
-    #     """Return jonesMatrix attribute(max=16 array): Jones Matrix, given per frequency slice"""
-    #     return self._jones_matrix
-    #     # PROTECTED REGION END #    //  Fsp.jonesMatrix_read
+    def read_jonesMatrix(self):
+        # PROTECTED REGION ID(Fsp.jonesMatrix_read) ENABLED START #
+        """Return the jonesMatrix attribute."""
+        return self._jones_matrix
+        # PROTECTED REGION END #    //  Fsp.jonesMatrix_read
+
+    def read_delayModel(self):
+        # PROTECTED REGION ID(Fsp.delayModel_read) ENABLED START #
+        """Return the delayModel attribute."""
+        return self._delay_model
+        # PROTECTED REGION END #    //  Fsp.delayModel_read
+    
+    def read_timingBeamWeights(self):
+        # PROTECTED REGION ID(Fsp.timingBeamWeights_read) ENABLED START #
+        """Return the timingBeamWeights attribute."""
+        return self._timing_beam_weights
+        # PROTECTED REGION END #    //  Fsp.timingBeamWeights_read
 
     # --------
     # Commands
@@ -263,6 +305,7 @@ class Fsp(SKACapability):
         self._proxy_vlbi.SetState(tango.DevState.DISABLE)
         self._group_fsp_corr_subarray.command_inout("On")
         self._group_fsp_pss_subarray.command_inout("On")
+        self._group_fsp_pst_subarray.command_inout("On")
 
         self.set_state(tango.DevState.ON)
         # PROTECTED REGION END #    //  Fsp.On
@@ -283,6 +326,7 @@ class Fsp(SKACapability):
         self._proxy_vlbi.SetState(tango.DevState.OFF)
         self._group_fsp_corr_subarray.command_inout("Off")
         self._group_fsp_pss_subarray.command_inout("Off")
+        self._group_fsp_pst_subarray.command_inout("Off")
 
         # remove all subarray membership
         for subarray_ID in self._subarray_membership[:]:
@@ -313,33 +357,33 @@ class Fsp(SKACapability):
             self._proxy_pss.SetState(tango.DevState.DISABLE)
             self._proxy_pst.SetState(tango.DevState.DISABLE)
             self._proxy_vlbi.SetState(tango.DevState.DISABLE)
-        if argin == "CORR":
+        elif argin == "CORR":
             self._function_mode = 1
             self._proxy_correlation.SetState(tango.DevState.ON)
             self._proxy_pss.SetState(tango.DevState.DISABLE)
             self._proxy_pst.SetState(tango.DevState.DISABLE)
             self._proxy_vlbi.SetState(tango.DevState.DISABLE)
-        if argin == "PSS-BF":
+        elif argin == "PSS-BF":
             self._function_mode = 2
             self._proxy_correlation.SetState(tango.DevState.DISABLE)
             self._proxy_pss.SetState(tango.DevState.ON)
             self._proxy_pst.SetState(tango.DevState.DISABLE)
             self._proxy_vlbi.SetState(tango.DevState.DISABLE)
-        if argin == "PST-BF":
+        elif argin == "PST-BF":
             self._function_mode = 3
             self._proxy_correlation.SetState(tango.DevState.DISABLE)
             self._proxy_pss.SetState(tango.DevState.DISABLE)
             self._proxy_pst.SetState(tango.DevState.ON)
             self._proxy_vlbi.SetState(tango.DevState.DISABLE)
-        if argin == "VLBI":
+        elif argin == "VLBI":
             self._function_mode = 4
             self._proxy_correlation.SetState(tango.DevState.DISABLE)
             self._proxy_pss.SetState(tango.DevState.DISABLE)
             self._proxy_pst.SetState(tango.DevState.DISABLE)
             self._proxy_vlbi.SetState(tango.DevState.ON)
-
-        # shouldn't happen
-        self.logger.warn("functionMode not valid. Ignoring.")
+        else:
+            # shouldn't happen
+            self.logger.warn("functionMode not valid. Ignoring.")
         # PROTECTED REGION END #    //  Fsp.SetFunctionMode
 
     def is_AddSubarrayMembership_allowed(self):
@@ -396,10 +440,154 @@ class Fsp(SKACapability):
         returns configID for all the fspCorrSubarray
         """
         result ={}
-        for proxy in self._fsp_corr_proxies:
+        for proxy in self._proxy_fsp_corr_subarray:
             result[str(proxy)]=proxy.configID
         return str(result)
         # PROTECTED REGION END #    //  Fsp.getConfigID
+
+    def is_UpdateJonesMatrix_allowed(self):
+        """allowed when Devstate is ON and ObsState is READY OR SCANNINNG"""
+        #TODO implement obsstate in FSP
+        if self.dev_state() == tango.DevState.ON:
+            return True
+        return False
+
+    @command(
+        dtype_in='str',
+        doc_in="Jones Matrix, given per frequency slice"
+    )
+    def UpdateJonesMatrix(self, argin):
+        # PROTECTED REGION ID(Fsp.UpdateJonesMatrix) ENABLED START #
+        self.logger.debug("Fsp.UpdateJonesMatrix")
+        """update FSP's Jones matrix (serialized JSON object)"""
+        if self._function_mode in [2, 3]:
+            argin = json.loads(argin)
+
+            for i in self._subarray_membership:
+                if self._function_mode == 2:
+                    proxy = self._proxy_fsp_pss_subarray[i - 1]
+                else:
+                    proxy = self._proxy_fsp_pst_subarray[i - 1]
+                for receptor in argin:
+                    rec_id = int(receptor["receptor"])
+                    if rec_id in proxy.receptors:
+                        for frequency_slice in receptor["receptorMatrix"]:
+                            fs_id = frequency_slice["fsid"]
+                            matrix = frequency_slice["matrix"]
+                            if fs_id == self._fsp_id:
+                                if len(matrix) == 4:
+                                    self._jones_matrix[rec_id - 1] = matrix.copy()
+                                else:
+                                    log_msg = "'matrix' not valid length for frequency slice {} of " \
+                                            "receptor {}".format(fs_id, self._receptor_ID)
+                                    self.logger.error(log_msg)
+                            else:
+                                log_msg = "'fsid' {} not valid for receptor {}".format(
+                                    fs_id, self._receptor_ID
+                                )
+                                self.logger.error(log_msg)
+        else:
+            log_msg = "matrix not usable in function mode {}".format(self._function_mode)
+            self.logger.error(log_msg)
+        # PROTECTED REGION END #    // Fsp.UpdateJonesMatrix
+
+    def is_UpdateDelayModel_allowed(self):
+        """allowed when Devstate is ON and ObsState is READY OR SCANNINNG"""
+        #TODO implement obsstate in FSP
+        if self.dev_state() == tango.DevState.ON:
+            return True
+        return False
+
+    @command(
+        dtype_in='str',
+        doc_in="Delay Model, per receptor per polarization per timing beam"
+    )
+    def UpdateDelayModel(self, argin):
+        # PROTECTED REGION ID(Fsp.UpdateDelayModel) ENABLED START #
+        self.logger.debug("Fsp.UpdateDelayModel")
+        """update FSP's delay model (serialized JSON object)"""
+
+        # update if current function mode is either PSS-BF or PST-BF
+        if self._function_mode in [2, 3]:
+            argin = json.loads(argin)
+            for i in self._subarray_membership:
+                if self._function_mode == 2:
+                    proxy = self._proxy_fsp_pss_subarray[i - 1]
+                else:
+                    proxy = self._proxy_fsp_pst_subarray[i - 1]
+                for receptor in argin:
+                    rec_id = int(receptor["receptor"])
+                    if rec_id in proxy.receptors:
+                        for frequency_slice in receptor["receptorDelayDetails"]:
+                            fs_id = frequency_slice["fsid"]
+                            model = frequency_slice["delayCoeff"]
+                            if fs_id == self._fsp_id:
+                                if len(model) == 6:
+                                    self._delay_model[rec_id - 1] = model.copy()
+                                else:
+                                    log_msg = "'model' not valid length for frequency slice {} of " \
+                                            "receptor {}".format(fs_id, self._receptor_ID)
+                                    self.logger.error(log_msg)
+                            else:
+                                log_msg = "'fsid' {} not valid for receptor {}".format(
+                                    fs_id, self._receptor_ID
+                                )
+                                self.logger.error(log_msg)
+        else:
+            log_msg = "model not usable in function mode {}".format(self._function_mode)
+            self.logger.error(log_msg)
+        # PROTECTED REGION END #    // Fsp.UpdateDelayModel
+
+    def is_UpdateTimingBeamWeights_allowed(self):
+        """allowed when Devstate is ON and ObsState is READY OR SCANNINNG"""
+        #TODO implement obsstate in FSP
+        if self.dev_state() == tango.DevState.ON:
+            return True
+        return False
+
+    @command(
+        dtype_in='str',
+        doc_in="Timing Beam Weights, per beam per receptor per group of 8 channels"
+    )
+    def UpdateBeamWeights(self, argin):
+        # PROTECTED REGION ID(Fsp.UpdateTimingBeamWeights) ENABLED START #
+        self.logger.debug("Fsp.UpdateBeamWeights")
+        """update FSP's timing beam weights (serialized JSON object)"""
+
+        # update if current function mode is PST-BF
+        if self._function_mode == 3:
+            self.logger.debug("function mode PST")
+            argin = json.loads(argin)
+            for i in self._subarray_membership:
+                self.logger.debug("subarray membership")
+                proxy = self._proxy_fsp_pst_subarray[i - 1]
+                for receptor in argin:
+                    self.logger.debug("receptor")
+                    rec_id = int(receptor["receptor"])
+                    if rec_id in proxy.receptors:
+                        self.logger.debug("rec id")
+                        for frequency_slice in receptor["receptorWeightsDetails"]:
+                            self.logger.debug("freq slice")
+                            fs_id = frequency_slice["fsid"]
+                            weights = frequency_slice["weights"]
+                            if fs_id == self._fsp_id:
+                                self.logger.debug("fsid")
+                                if len(weights) == 6:
+                                    self.logger.debug("len")
+                                    self._timing_beam_weights[rec_id - 1] = weights.copy()
+                                else:
+                                    log_msg = "'weights' not valid length for frequency slice {} of " \
+                                            "receptor {}".format(fs_id, self._receptor_ID)
+                                    self.logger.error(log_msg)
+                            else:
+                                log_msg = "'fsid' {} not valid for receptor {}".format(
+                                    fs_id, self._receptor_ID
+                                )
+                                self.logger.error(log_msg)
+        else:
+            log_msg = "weights not usable in function mode {}".format(self._function_mode)
+            self.logger.error(log_msg)
+        # PROTECTED REGION END #    // Fsp.UpdateTimingBeamWeights
 
 # ----------
 # Run server

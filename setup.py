@@ -50,8 +50,8 @@ setup(
         'Programming Language :: Python :: 3.6',
     ],
     test_suite='tests',
-    install_requires=['pytango',
-                    'ska-tango-base == 0.9.1'
+    install_requires=['pytango == 9.3.2',
+                    'ska-tango-base == 0.10.0'
     ],
     setup_requires=[
         # dependency for `python setup.py test`
