@@ -36,7 +36,7 @@ import pytest
 from CbfSubarray.CbfSubarray import CbfSubarray
 from ska_tango_base.control_model import LoggingLevel, HealthState
 from ska_tango_base.control_model import AdminMode, ObsState
-from ska_tango_base.base_device import _DEBUGGER_PORT
+from ska_tango_base.base.base_device import _DEBUGGER_PORT
 
 
 @pytest.mark.usefixtures("proxies")

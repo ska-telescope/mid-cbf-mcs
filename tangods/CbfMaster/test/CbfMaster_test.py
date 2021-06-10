@@ -37,7 +37,7 @@ from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import (
     AdminMode, ControlMode, HealthState, LoggingLevel, SimulationMode, TestMode
 )
-from ska_tango_base.base_device import (
+from ska_tango_base.base.base_device import (
     _DEBUGGER_PORT,
     _Log4TangoLoggingLevel,
     _PYTHON_TO_TANGO_LOGGING_LEVEL,
