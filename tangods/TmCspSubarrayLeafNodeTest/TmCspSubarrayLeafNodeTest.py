@@ -162,6 +162,13 @@ class TmCspSubarrayLeafNodeTest(SKABaseDevice):
         doc="Delay model coefficients"
     )
 
+    beamWeights = attribute(
+        dtype='str',
+        access=AttrWriteType.READ_WRITE,
+        label="Search/timing beam weights",
+        doc="Search/timing beam weights"
+    )
+
     visDestinationAddress = attribute(
         dtype='str',
         access=AttrWriteType.READ_WRITE,
@@ -186,9 +193,10 @@ class TmCspSubarrayLeafNodeTest(SKABaseDevice):
         self.set_state(DevState.INIT)
 
         self._config_ID = ""
-        self._doppler_phase_correction = [0., 0., 0., 0.]
+        self._doppler_phase_correction = [0.0, 0.0, 0.0, 0.0]
         self._jones_matrix = {}  # this is interpreted as a JSON object
         self._delay_model = {}  # this is interpreted as a JSON object
+        self._beam_weights = {}  # this is interpreted as a JSON object
         self._vis_destination_address = {}  # this is interpreted as a JSON object
         self._received_output_links = False
 
@@ -271,6 +279,17 @@ class TmCspSubarrayLeafNodeTest(SKABaseDevice):
         # since this is just a test device, assume that the JSON schema is always what we expect
         self._delay_model = json.loads(str(value))
         # PROTECTED REGION END #    //  TmCspSubarrayLeafNodeTest.delayModel_write
+
+    def read_beamWeights(self):
+        # PROTECTED REGION ID(TmCspSubarrayLeafNodeTest.beamWeights_read) ENABLED START #
+        return json.dumps(self._beam_weights)
+        # PROTECTED REGION END #    //  TmCspSubarrayLeafNodeTest.beamWeights_read
+
+    def write_beamWeights(self, value):
+        # PROTECTED REGION ID(TmCspSubarrayLeafNodeTest.beamWeights_write) ENABLED START #
+        # since this is just a test device, assume that the JSON schema is always what we expect
+        self._beam_weights = json.loads(str(value))
+        # PROTECTED REGION END #    //  TmCspSubarrayLeafNodeTest.beamWeights_write
 
     def read_visDestinationAddress(self):
         # PROTECTED REGION ID(TmCspSubarrayLeafNodeTest.visDestinationAddress_read) ENABLED START #

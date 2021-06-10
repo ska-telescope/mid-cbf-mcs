@@ -16,11 +16,11 @@ dependencies:
   version: 0.1.1
   repository: "file://../mid-cbf-tmleafnode"
 - name: webjive
-  version: 1.0.11
+  version: 1.0.19
   repository: https://nexus.engageska-portugal.pt/repository/helm-chart
 - name: webjive-auth
-  version: 0.1.0
+  version: 0.1.1
   repository: https://nexus.engageska-portugal.pt/repository/helm-chart
 - name: webjive-dashboard
-  version: 0.1.0
+  version: 0.1.2
   repository: https://nexus.engageska-portugal.pt/repository/helm-chart

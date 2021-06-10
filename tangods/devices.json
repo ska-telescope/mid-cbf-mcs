@@ -161,6 +161,15 @@
                     "mid_csp_cbf/fspPssSubarray/03_01",
                     "mid_csp_cbf/fspPssSubarray/04_01"
                 ]
+            },
+            {
+                "devPropName": "FspPstSubarray",
+                "devPropValue": [
+                    "mid_csp_cbf/fspPstSubarray/01_01",
+                    "mid_csp_cbf/fspPstSubarray/02_01",
+                    "mid_csp_cbf/fspPstSubarray/03_01",
+                    "mid_csp_cbf/fspPstSubarray/04_01"
+                ]
             }
         ],
         "attributeProperties": [
@@ -271,6 +280,15 @@
                     "mid_csp_cbf/fspPssSubarray/02_02",
                     "mid_csp_cbf/fspPssSubarray/03_02",
                     "mid_csp_cbf/fspPssSubarray/04_02"
+                ]
+            },
+            {
+                "devPropName": "FspPstSubarray",
+                "devPropValue": [
+                    "mid_csp_cbf/fspPstSubarray/01_02",
+                    "mid_csp_cbf/fspPstSubarray/02_02",
+                    "mid_csp_cbf/fspPstSubarray/03_02",
+                    "mid_csp_cbf/fspPstSubarray/04_02"
                 ]
             }
         ],
@@ -617,6 +635,13 @@
                     "mid_csp_cbf/fspPssSubarray/01_01",
                     "mid_csp_cbf/fspPssSubarray/01_02"
                 ]
+            },
+            {
+                "devPropName": "FspPstSubarray",
+                "devPropValue": [
+                    "mid_csp_cbf/fspPstSubarray/01_01",
+                    "mid_csp_cbf/fspPstSubarray/01_02"
+                ]
             }
         ],
         "attributeProperties": [
@@ -687,6 +712,13 @@
                 "devPropValue": [
                     "mid_csp_cbf/fspPssSubarray/02_01",
                     "mid_csp_cbf/fspPssSubarray/02_02"
+                ]
+            },
+            {
+                "devPropName": "FspPstSubarray",
+                "devPropValue": [
+                    "mid_csp_cbf/fspPstSubarray/02_01",
+                    "mid_csp_cbf/fspPstSubarray/02_02"
                 ]
             }
         ],
@@ -759,6 +791,13 @@
                     "mid_csp_cbf/fspPssSubarray/03_01",
                     "mid_csp_cbf/fspPssSubarray/03_02"
                 ]
+            },
+            {
+                "devPropName": "FspPstSubarray",
+                "devPropValue": [
+                    "mid_csp_cbf/fspPstSubarray/03_01",
+                    "mid_csp_cbf/fspPstSubarray/03_02"
+                ]
             }
         ],
         "attributeProperties": [
@@ -829,6 +868,13 @@
                 "devPropValue": [
                     "mid_csp_cbf/fspPssSubarray/04_01",
                     "mid_csp_cbf/fspPssSubarray/04_02"
+                ]
+            },
+            {
+                "devPropName": "FspPstSubarray",
+                "devPropValue": [
+                    "mid_csp_cbf/fspPstSubarray/04_01",
+                    "mid_csp_cbf/fspPstSubarray/04_02"
                 ]
             }
         ],
@@ -1640,6 +1686,302 @@
         ]
     },
     {
+        "class": "FspPstSubarray",
+        "serverName": "FspMulti/fsp-01",
+        "devName": "mid_csp_cbf/fspPstSubarray/01_01",
+        "deviceProperties": [
+            {
+                "devPropName": "SubID",
+                "devPropValue": 1
+            },
+            {
+                "devPropName": "FspID",
+                "devPropValue": 1
+            },
+            {
+                "devPropName": "VccAddress",
+                "devPropValue": [
+                    "mid_csp_cbf/vcc/001",
+                    "mid_csp_cbf/vcc/002",
+                    "mid_csp_cbf/vcc/003",
+                    "mid_csp_cbf/vcc/004"
+                ]
+            },
+            {
+                "devPropName": "CbfMasterAddress",
+                "devPropValue": "mid_csp_cbf/sub_elt/master"
+            },
+            {
+                "devPropName": "CbfSubarrayAddress",
+                "devPropValue": "mid_csp_cbf/sub_elt/subarray_01"
+            }
+        ]
+    },
+    {
+        "class": "FspPstSubarray",
+        "serverName": "FspMulti/fsp-01",
+        "devName": "mid_csp_cbf/fspPstSubarray/01_02",
+        "deviceProperties": [
+            {
+                "devPropName": "SubID",
+                "devPropValue": 2
+            },
+            {
+                "devPropName": "FspID",
+                "devPropValue": 1
+            },
+            {
+                "devPropName": "VccAddress",
+                "devPropValue": [
+                    "mid_csp_cbf/vcc/001",
+                    "mid_csp_cbf/vcc/002",
+                    "mid_csp_cbf/vcc/003",
+                    "mid_csp_cbf/vcc/004"
+                ]
+            },
+            {
+                "devPropName": "CbfMasterAddress",
+                "devPropValue": "mid_csp_cbf/sub_elt/master"
+            },
+            {
+                "devPropName": "CbfSubarrayAddress",
+                "devPropValue": "mid_csp_cbf/sub_elt/subarray_02"
+            }
+        ]
+    },
+    {
+        "class": "FspPstSubarray",
+        "serverName": "FspMulti/fsp-02",
+        "devName": "mid_csp_cbf/fspPstSubarray/02_01",
+        "deviceProperties": [
+            {
+                "devPropName": "SubID",
+                "devPropValue": 1
+            },
+            {
+                "devPropName": "FspID",
+                "devPropValue": 2
+            },
+            {
+                "devPropName": "VccAddress",
+                "devPropValue": [
+                    "mid_csp_cbf/vcc/001",
+                    "mid_csp_cbf/vcc/002",
+                    "mid_csp_cbf/vcc/003",
+                    "mid_csp_cbf/vcc/004"
+                ]
+            },
+            {
+                "devPropName": "CbfMasterAddress",
+                "devPropValue": "mid_csp_cbf/sub_elt/master"
+            },
+            {
+                "devPropName": "CbfSubarrayAddress",
+                "devPropValue": "mid_csp_cbf/sub_elt/subarray_01"
+            }
+        ]
+    },
+    {
+        "class": "FspPstSubarray",
+        "serverName": "FspMulti/fsp-02",
+        "devName": "mid_csp_cbf/fspPstSubarray/02_02",
+        "deviceProperties": [
+            {
+                "devPropName": "SubID",
+                "devPropValue": 2
+            },
+            {
+                "devPropName": "FspID",
+                "devPropValue": 2
+            },
+            {
+                "devPropName": "VccAddress",
+                "devPropValue": [
+                    "mid_csp_cbf/vcc/001",
+                    "mid_csp_cbf/vcc/002",
+                    "mid_csp_cbf/vcc/003",
+                    "mid_csp_cbf/vcc/004"
+                ]
+            },
+            {
+                "devPropName": "CbfMasterAddress",
+                "devPropValue": "mid_csp_cbf/sub_elt/master"
+            },
+            {
+                "devPropName": "CbfSubarrayAddress",
+                "devPropValue": "mid_csp_cbf/sub_elt/subarray_02"
+            }
+        ]
+    },
+    {
+        "class": "FspPstSubarray",
+        "serverName": "FspMulti/fsp-03",
+        "devName": "mid_csp_cbf/fspPstSubarray/03_01",
+        "deviceProperties": [
+            {
+                "devPropName": "SubID",
+                "devPropValue": 1
+            },
+            {
+                "devPropName": "FspID",
+                "devPropValue": 3
+            },
+            {
+                "devPropName": "VccAddress",
+                "devPropValue": [
+                    "mid_csp_cbf/vcc/001",
+                    "mid_csp_cbf/vcc/002",
+                    "mid_csp_cbf/vcc/003",
+                    "mid_csp_cbf/vcc/004"
+                ]
+            },
+            {
+                "devPropName": "CbfMasterAddress",
+                "devPropValue": "mid_csp_cbf/sub_elt/master"
+            },
+            {
+                "devPropName": "CbfSubarrayAddress",
+                "devPropValue": "mid_csp_cbf/sub_elt/subarray_01"
+            }
+        ]
+    },
+    {
+        "class": "FspPstSubarray",
+        "serverName": "FspMulti/fsp-03",
+        "devName": "mid_csp_cbf/fspPstSubarray/03_02",
+        "deviceProperties": [
+            {
+                "devPropName": "SubID",
+                "devPropValue": 2
+            },
+            {
+                "devPropName": "FspID",
+                "devPropValue": 3
+            },
+            {
+                "devPropName": "VccAddress",
+                "devPropValue": [
+                    "mid_csp_cbf/vcc/001",
+                    "mid_csp_cbf/vcc/002",
+                    "mid_csp_cbf/vcc/003",
+                    "mid_csp_cbf/vcc/004"
+                ]
+            },
+            {
+                "devPropName": "CbfMasterAddress",
+                "devPropValue": "mid_csp_cbf/sub_elt/master"
+            },
+            {
+                "devPropName": "CbfSubarrayAddress",
+                "devPropValue": "mid_csp_cbf/sub_elt/subarray_02"
+            }
+        ]
+    },
+    {
+        "class": "FspPstSubarray",
+        "serverName": "FspMulti/fsp-04",
+        "devName": "mid_csp_cbf/fspPstSubarray/04_01",
+        "deviceProperties": [
+            {
+                "devPropName": "SubID",
+                "devPropValue": 1
+            },
+            {
+                "devPropName": "FspID",
+                "devPropValue": 4
+            },
+            {
+                "devPropName": "VccAddress",
+                "devPropValue": [
+                    "mid_csp_cbf/vcc/001",
+                    "mid_csp_cbf/vcc/002",
+                    "mid_csp_cbf/vcc/003",
+                    "mid_csp_cbf/vcc/004"
+                ]
+            },
+            {
+                "devPropName": "CbfMasterAddress",
+                "devPropValue": "mid_csp_cbf/sub_elt/master"
+            },
+            {
+                "devPropName": "CbfSubarrayAddress",
+                "devPropValue": "mid_csp_cbf/sub_elt/subarray_01"
+            }
+        ]
+    },
+    {
+        "class": "FspPstSubarray",
+        "serverName": "FspMulti/fsp-04",
+        "devName": "mid_csp_cbf/fspPstSubarray/04_02",
+        "deviceProperties": [
+            {
+                "devPropName": "SubID",
+                "devPropValue": 2
+            },
+            {
+                "devPropName": "FspID",
+                "devPropValue": 4
+            },
+            {
+                "devPropName": "VccAddress",
+                "devPropValue": [
+                    "mid_csp_cbf/vcc/001",
+                    "mid_csp_cbf/vcc/002",
+                    "mid_csp_cbf/vcc/003",
+                    "mid_csp_cbf/vcc/004"
+                ]
+            },
+            {
+                "devPropName": "CbfMasterAddress",
+                "devPropValue": "mid_csp_cbf/sub_elt/master"
+            },
+            {
+                "devPropName": "CbfSubarrayAddress",
+                "devPropValue": "mid_csp_cbf/sub_elt/subarray_02"
+            }
+        ]
+    },
+    {
+        "class": "CbfSubarrayCorrConfig",
+        "serverName": "CbfSubarrayMulti/cbfSubarray-01",
+        "devName": "mid_csp_cbf/corrConfig/01",
+        "deviceProperties": [
+            {
+                "devPropName": "FspCorrSubarray",
+                "devPropValue": [
+                    "mid_csp_cbf/fspCorrSubarray/01_01",
+                    "mid_csp_cbf/fspCorrSubarray/02_01",
+                    "mid_csp_cbf/fspCorrSubarray/03_01",
+                    "mid_csp_cbf/fspCorrSubarray/04_01"
+                ]
+            },
+  	        {
+                "devPropName": "CbfMasterAddress",
+                "devPropValue": "mid_csp_cbf/sub_elt/master"
+            }
+        ]
+    },
+    {
+        "class": "CbfSubarrayCorrConfig",
+        "serverName": "CbfSubarrayMulti/cbfSubarray-02",
+        "devName": "mid_csp_cbf/corrConfig/02",
+        "deviceProperties": [
+            {
+                "devPropName": "FspCorrSubarray",
+                "devPropValue": [
+                    "mid_csp_cbf/fspCorrSubarray/01_02",
+                    "mid_csp_cbf/fspCorrSubarray/02_02",
+                    "mid_csp_cbf/fspCorrSubarray/03_02",
+                    "mid_csp_cbf/fspCorrSubarray/04_02"
+                ]
+            },
+  	        {
+                "devPropName": "CbfMasterAddress",
+                "devPropValue": "mid_csp_cbf/sub_elt/master"
+            }
+        ]
+    },
+    {
         "class": "CbfSubarrayPssConfig",
         "serverName": "CbfSubarrayMulti/cbfSubarray-01",
         "devName": "mid_csp_cbf/pssConfig/01",
@@ -1680,17 +2022,17 @@
         ]
     },
     {
-        "class": "CbfSubarrayCorrConfig",
+        "class": "CbfSubarrayPstConfig",
         "serverName": "CbfSubarrayMulti/cbfSubarray-01",
-        "devName": "mid_csp_cbf/corrConfig/01",
+        "devName": "mid_csp_cbf/pstConfig/01",
         "deviceProperties": [
             {
-                "devPropName": "FspCorrSubarray",
+                "devPropName": "FspPstSubarray",
                 "devPropValue": [
-                    "mid_csp_cbf/fspCorrSubarray/01_01",
-                    "mid_csp_cbf/fspCorrSubarray/02_01",
-                    "mid_csp_cbf/fspCorrSubarray/03_01",
-                    "mid_csp_cbf/fspCorrSubarray/04_01"
+                    "mid_csp_cbf/fspPstSubarray/01_01",
+                    "mid_csp_cbf/fspPstSubarray/02_01",
+                    "mid_csp_cbf/fspPstSubarray/03_01",
+                    "mid_csp_cbf/fspPstSubarray/04_01"
                 ]
             },
   	        {
@@ -1700,17 +2042,17 @@
         ]
     },
     {
-        "class": "CbfSubarrayCorrConfig",
+        "class": "CbfSubarrayPstConfig",
         "serverName": "CbfSubarrayMulti/cbfSubarray-02",
-        "devName": "mid_csp_cbf/corrConfig/02",
+        "devName": "mid_csp_cbf/pstConfig/02",
         "deviceProperties": [
             {
-                "devPropName": "FspCorrSubarray",
+                "devPropName": "FspPstSubarray",
                 "devPropValue": [
-                    "mid_csp_cbf/fspCorrSubarray/01_02",
-                    "mid_csp_cbf/fspCorrSubarray/02_02",
-                    "mid_csp_cbf/fspCorrSubarray/03_02",
-                    "mid_csp_cbf/fspCorrSubarray/04_02"
+                    "mid_csp_cbf/fspPstSubarray/01_02",
+                    "mid_csp_cbf/fspPstSubarray/02_02",
+                    "mid_csp_cbf/fspPstSubarray/03_02",
+                    "mid_csp_cbf/fspPstSubarray/04_02"
                 ]
             },
   	        {

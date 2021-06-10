@@ -1,6 +1,7 @@
 {
     "jonesMatrix": [
         {
+            "destinationType": "vcc",
             "matrixDetails": [
                 {
                     "receptor": 1,
@@ -99,6 +100,7 @@
             ]
         },
         {
+            "destinationType": "vcc",
             "matrixDetails": [
                 {
                     "receptor": 1,
@@ -197,6 +199,7 @@
             ]
         },
         {
+            "destinationType": "vcc",
             "matrixDetails": [
                 {
                     "receptor": 1,

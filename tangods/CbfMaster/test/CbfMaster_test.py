@@ -31,11 +31,37 @@ import pytest
 
 #Local imports
 from CbfMaster.CbfMaster import CbfMaster
-from ska_tango_base.control_model import HealthState, AdminMode
+
+from ska_tango_base import SKABaseDevice
+from ska_tango_base.commands import ResultCode
+from ska_tango_base.control_model import (
+    AdminMode, ControlMode, HealthState, LoggingLevel, SimulationMode, TestMode
+)
+from ska_tango_base.base_device import (
+    _DEBUGGER_PORT,
+    _Log4TangoLoggingLevel,
+    _PYTHON_TO_TANGO_LOGGING_LEVEL,
+    LoggingUtils,
+    LoggingTargetError,
+    DeviceStateModel,
+    TangoLoggingServiceHandler,
+)
+from ska_tango_base.faults import CommandError
+import socket
+from tango.test_context import DeviceTestContext
+
 
 @pytest.mark.usefixtures("proxies")
 
 class TestCbfMaster:
+
+    @pytest.mark.skip(reason="enable to test DebugDevice")
+    def test_DebugDevice(self, proxies):
+        port = proxies.master.DebugDevice()
+        assert port == _DEBUGGER_PORT
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.connect(("localhost", _DEBUGGER_PORT))
+        proxies.master.On()
 
     def test_On_valid(self, proxies):
         """

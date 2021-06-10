@@ -785,11 +785,11 @@ class Vcc(CspSubElementObsDevice):
         # PROTECTED REGION END #    // Vcc.UpdateDelayModel
 
     def is_UpdateJonesMatrix_allowed(self):
-            """allowed when Devstate is ON and ObsState is READY OR SCANNINNG"""
-            if self.dev_state() == tango.DevState.ON and \
-                    self._obs_state in [ObsState.READY, ObsState.SCANNING]:
-                return True
-            return False
+        """allowed when Devstate is ON and ObsState is READY OR SCANNINNG"""
+        if self.dev_state() == tango.DevState.ON and \
+                self._obs_state in [ObsState.READY, ObsState.SCANNING]:
+            return True
+        return False
 
     @command(
         dtype_in='str',
@@ -805,12 +805,11 @@ class Vcc(CspSubElementObsDevice):
         for receptor in argin:
             if receptor["receptor"] == self._receptor_ID:
                 for frequency_slice in receptor["receptorMatrix"]:
-                    receptor_id = receptor["receptor"]
                     fs_id = frequency_slice["fsid"]
                     matrix = frequency_slice["matrix"]
                     if 1 <= fs_id <= 26:
                         if len(matrix) == 16:
-                            self._jones_matrix[fs_id-1] = matrix
+                            self._jones_matrix[fs_id-1] = matrix.copy()
                         else:
                             log_msg = "'matrix' not valid for frequency slice {} of " \
                                       "receptor {}".format(fs_id, self._receptor_ID)

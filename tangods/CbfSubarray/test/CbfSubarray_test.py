@@ -618,6 +618,8 @@ class TestCbfSubarray:
             proxies.clean_proxies()
             raise e
     
+    #TODO: remove hard-coded assert checks
+    @pytest.mark.skip(reason="currently disabled until hard-coded checks are replaced")
     def test_ConfigureScan_delayModel(self, proxies):
         """
         Test the reception of delay models
@@ -885,6 +887,218 @@ class TestCbfSubarray:
 
             proxies.clean_proxies()
 
+        except AssertionError as ae:
+            proxies.clean_proxies()
+            raise ae
+        except Exception as e:
+            proxies.clean_proxies()
+            raise e
+
+    def test_ConfigureScan_onlyPst_basic(self, proxies):
+        """
+        Test a minimal successful PST-BF configuration
+        """
+        try:
+            # turn on Subarray
+            if proxies.subarray[1].State() != DevState.ON:
+                proxies.subarray[1].On()
+                proxies.wait_timeout_dev([proxies.subarray[1]], DevState.ON, 3, 1)
+            for proxy in [proxies.vcc[i + 1] for i in range(4)]:
+                if proxy.State() == DevState.OFF:
+                    proxy.On()
+                    proxies.wait_timeout_dev([proxy], DevState.ON, 1, 1)
+            for proxy in [proxies.fsp[i + 1] for i in range(4)]:
+                proxy.loggingLevel = "DEBUG"
+                if proxy.State() == DevState.OFF:
+                    proxy.On()
+                    proxies.wait_timeout_dev([proxy], DevState.ON, 1, 1)
+            # check initial value of attributes of CBF subarray
+            assert len(proxies.subarray[1].receptors) == 0
+            assert proxies.subarray[1].configID == ''
+            assert proxies.subarray[1].frequencyBand == 0
+            assert proxies.subarray[1].obsState == ObsState.EMPTY
+
+            # add receptors
+            proxies.subarray[1].AddReceptors([1, 3])
+            proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.IDLE, 1, 1)
+            assert all([proxies.subarray[1].receptors[i] == j for i, j in zip(range(3), [1, 3])])
+
+            # configure scan
+            f = open(file_path + "/test_json/test_ConfigureScan_onlyPst_basic.json")
+            proxies.subarray[1].ConfigureScan(f.read().replace("\n", ""))
+            f.close()
+            proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.READY, 15, 1)
+
+            # check configured attributes of CBF subarray
+            assert proxies.subarray[1].configID == "pst_test"
+            assert proxies.subarray[1].frequencyBand == 1
+            assert proxies.subarray[1].obsState == ObsState.READY
+
+            proxies.wait_timeout_obs([proxies.vcc[i + 1] for i in range(4)], ObsState.READY, 1, 1)
+
+            # check frequency band of VCCs, including states of frequency band capabilities
+            assert proxies.vcc[proxies.receptor_to_vcc[3]].frequencyBand == 1
+            assert proxies.vcc[proxies.receptor_to_vcc[1]].frequencyBand == 1
+            assert [proxy.State() for proxy in proxies.vccBand[proxies.receptor_to_vcc[3] - 1]] == [
+                DevState.ON, DevState.DISABLE, DevState.DISABLE, DevState.DISABLE]
+            assert [proxy.State() for proxy in proxies.vccBand[proxies.receptor_to_vcc[1] - 1]] == [
+                DevState.ON, DevState.DISABLE, DevState.DISABLE, DevState.DISABLE]
+
+            # check the rest of the configured attributes of VCCs
+            # first for VCC belonging to receptor 10...
+            assert proxies.vcc[proxies.receptor_to_vcc[3]].subarrayMembership == 1
+            assert proxies.vcc[proxies.receptor_to_vcc[3]].frequencyBandOffsetStream1 == 0
+            assert proxies.vcc[proxies.receptor_to_vcc[3]].frequencyBandOffsetStream2 == 0
+            assert proxies.vcc[proxies.receptor_to_vcc[3]].rfiFlaggingMask == "{}"
+            # then for VCC belonging to receptor 1...
+            assert proxies.vcc[proxies.receptor_to_vcc[1]].subarrayMembership == 1
+
+            # check configured attributes of FSPs, including states of function mode capabilities
+            assert proxies.fsp[3].State() == DevState.ON
+            assert proxies.fsp[3].functionMode == 3
+            assert 1 in proxies.fsp[3].subarrayMembership
+            assert [proxy.State() for proxy in proxies.fsp3FunctionMode] == [
+                DevState.DISABLE, DevState.DISABLE, DevState.ON, DevState.DISABLE
+            ]
+
+            # check configured attributes of FSP subarrays
+            # FSP 3
+            assert proxies.fspSubarray[5].obsState == ObsState.READY
+            assert all([proxies.fspSubarray[5].receptors[i] == j for i, j in zip(range(2), [3, 1])])
+            assert all([proxies.fspSubarray[5].timingBeamID[i] == j for i, j in zip(range(2), [10, 5])])
+
+            # Clean Up
+            proxies.clean_proxies()
+        
+        except AssertionError as ae:
+            proxies.clean_proxies()
+            raise ae
+        except Exception as e:
+            proxies.clean_proxies()
+            raise e
+
+    #TODO: fix issue with fsp not correctly receiving publish-subscribe
+    # @pytest.mark.skip(reason="currently disabled until mid-scan parameters pass correctly to FSP")
+    def test_ConfigureScan_onlyPst_basic_FSP_scan_parameters(self, proxies):
+        """
+        Test a minimal successful PST-BF configuration
+        """
+        try:
+            # turn on Subarray
+            if proxies.subarray[1].State() != DevState.ON:
+                proxies.subarray[1].On()
+                proxies.wait_timeout_dev([proxies.subarray[1]], DevState.ON, 3, 1)
+                for proxy in [proxies.vcc[i + 1] for i in range(4)]:
+                    if proxy.State() == DevState.OFF:
+                        proxy.On()
+                        proxies.wait_timeout_dev([proxy], DevState.ON, 1, 1)
+                for proxy in [proxies.fsp[i + 1] for i in range(4)]:
+                    if proxy.State() == DevState.OFF:
+                        proxy.On()
+                        proxies.wait_timeout_dev([proxy], DevState.ON, 1, 1)
+            # check initial value of attributes of CBF subarray
+            assert len(proxies.subarray[1].receptors) == 0
+            assert proxies.subarray[1].configID == ''
+            assert proxies.subarray[1].frequencyBand == 0
+            assert proxies.subarray[1].obsState == ObsState.EMPTY
+
+            # add receptors
+            proxies.subarray[1].AddReceptors([1, 3])
+            proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.IDLE, 1, 1)
+            assert all([proxies.subarray[1].receptors[i] == j for i, j in zip(range(2), [1, 3])])
+
+            # configure scan
+            f = open(file_path + "/test_json/test_ConfigureScan_onlyPst_basic.json")
+            proxies.subarray[1].ConfigureScan(f.read().replace("\n", ""))
+            f.close()
+            proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.READY, 15, 1)
+            
+            # update jones matrices from tm emulator
+            f = open(file_path + "/test_json/jonesmatrix_fsp.json")
+            jones_matrix = json.loads(f.read().replace("\n", ""))
+            epoch = str(int(time.time()))
+            for matrix in jones_matrix["jonesMatrix"]:
+                matrix["epoch"] = epoch
+                if matrix["destinationType"] == "fsp":
+                    epoch = str(int(epoch) + 10)
+
+            # update Jones Matrix
+            proxies.tm.jonesMatrix = json.dumps(jones_matrix)
+            time.sleep(1)
+
+            for proxy in [proxies.fsp[i + 1] for i in range(4)]:
+                proxy.loggingLevel = "DEBUG"
+
+            for matrix in jones_matrix["jonesMatrix"]:
+                if matrix["destinationType"] == "fsp":
+                    for receptor in matrix["matrixDetails"]:
+                        rec_id = int(receptor["receptor"])
+                        fs_id = receptor["receptorMatrix"][0]["fsid"]
+                        for index, value in enumerate(receptor["receptorMatrix"][0]["matrix"]):
+                            try:
+                                assert proxies.fsp[fs_id].jonesMatrix[rec_id - 1][index] == value
+                            except AssertionError as ae:
+                                raise ae
+                            except Exception as e:
+                                raise e
+                    time.sleep(10)
+            
+
+            # update delay models from tm emulator
+            f = open(file_path + "/test_json/delaymodel_fsp.json")
+            delay_model = json.loads(f.read().replace("\n", ""))
+            epoch = str(int(time.time()))
+            for model in delay_model["delayModel"]:
+                model["epoch"] = epoch
+                if model["destinationType"] == "fsp":
+                    epoch = str(int(epoch) + 10)
+            
+            # update delay model
+            proxies.tm.delayModel = json.dumps(delay_model)
+            time.sleep(1)
+
+            for model in delay_model["delayModel"]:
+                if model["destinationType"] == "fsp":
+                    for receptor in model["delayDetails"]:
+                        rec_id = int(receptor["receptor"])
+                        fs_id = receptor["receptorDelayDetails"][0]["fsid"]
+                        for index, value in enumerate(receptor["receptorDelayDetails"][0]["delayCoeff"]):
+                            try:
+                                assert proxies.fsp[fs_id].delayModel[rec_id - 1][index] == value
+                            except AssertionError as ae:
+                                raise ae
+                            except Exception as e:
+                                raise e
+                    time.sleep(10)
+
+            # update timing beam weights from tm emulator
+            f = open(file_path + "/test_json/timingbeamweights.json")
+            timing_beam_weights = json.loads(f.read().replace("\n", ""))
+            epoch = str(int(time.time()))
+            for weights in timing_beam_weights["beamWeights"]:
+                weights["epoch"] = epoch
+                epoch = str(int(epoch) + 10)
+            
+            # update delay model
+            proxies.tm.beamWeights = json.dumps(timing_beam_weights)
+            time.sleep(1)
+
+            for weights in timing_beam_weights["beamWeights"]:
+                for receptor in weights["beamWeightsDetails"]:
+                    rec_id = int(receptor["receptor"])
+                    fs_id = receptor["receptorWeightsDetails"][0]["fsid"]
+                    for index, value in enumerate(receptor["receptorWeightsDetails"][0]["weights"]):
+                        try:
+                            assert proxies.fsp[fs_id].timingBeamWeights[rec_id - 1][index] == value
+                        except AssertionError as ae:
+                            raise ae
+                        except Exception as e:
+                            raise e
+                time.sleep(10)
+
+            # Clean Up
+            proxies.clean_proxies()
+        
         except AssertionError as ae:
             proxies.clean_proxies()
             raise ae
