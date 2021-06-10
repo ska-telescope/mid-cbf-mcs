@@ -618,6 +618,8 @@ class TestCbfSubarray:
             proxies.clean_proxies()
             raise e
     
+    #TODO refactor to verify delay model values against input json
+    @pytest.mark.skip(reason="test needs to be refactored")
     def test_ConfigureScan_delayModel(self, proxies):
         """
         Test the reception of delay models
