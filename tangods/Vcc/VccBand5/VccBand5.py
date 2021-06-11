@@ -13,10 +13,13 @@
 # Copyright (c) 2019 National Research Council of Canada
 # """
 
-# """ VccBand5 Tango device prototype
-
+# """ 
 # VccBand5 TANGO device class for the prototype
 # """
+
+import os
+import sys
+import json
 
 # tango imports
 import tango
@@ -27,10 +30,8 @@ from tango.server import attribute, command
 from tango.server import device_property
 from tango import AttrQuality, DispLevel, DevState
 from tango import AttrWriteType, PipeWriteType
-# Additional import
-# PROTECTED REGION ID(VccBand5.additionnal_import) ENABLED START #
-import os
-import sys
+
+# SKA import
 
 file_path = os.path.dirname(os.path.abspath(__file__))
 commons_pkg_path = os.path.abspath(os.path.join(file_path, "../../commons"))
@@ -38,7 +39,7 @@ sys.path.insert(0, commons_pkg_path)
 
 from ska_tango_base.control_model import HealthState, AdminMode
 from ska_tango_base import SKACapability
-# PROTECTED REGION END #    //  VccBand5.additionnal_import
+from ska_tango_base.commands import ResultCode
 
 __all__ = ["VccBand5", "main"]
 
@@ -62,12 +63,27 @@ class VccBand5(SKACapability):
     # General methods
     # ---------------
 
-    def init_device(self):
-        SKACapability.init_device(self)
-        # PROTECTED REGION ID(VccBand5.init_device) ENABLED START #
-        """initialize device and set DevState to OFF"""
-        self.set_state(tango.DevState.OFF)
-        # PROTECTED REGION END #    //  VccBand5.init_device
+    class InitCommand(SKACapability.InitCommand):
+
+        def do(self):
+            """
+            Stateless hook for device initialisation.
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
+
+            self.logger.warn("Entering InitCommand() (warning) TODO")
+
+            super().do()
+
+            device = self.target
+
+            #self.logger.warn("State() = {}".format(device.get_state()))
+            message = "VccBand5 Init command completed OK"
+            self.logger.info(message)
+            return (ResultCode.OK, message)
 
     def always_executed_hook(self):
         # PROTECTED REGION ID(VccBand5.always_executed_hook) ENABLED START #
@@ -93,6 +109,7 @@ class VccBand5(SKACapability):
         dtype_in='DevState',
         doc_in='New state'
     )
+
     def SetState(self, argin):
         # PROTECTED REGION ID(VccBand5.SetState) ENABLED START #
         """Set the state of this Device; called by VCC"""

@@ -1,52 +1,12 @@
 from enum import IntEnum, unique
 
-@unique
-class HealthState(IntEnum):
-    OK       = 0
-    DEGRADED = 1
-    FAILED   = 2
-    UNKNOWN  = 3
-
-@unique
-class AdminMode(IntEnum):
-    ONLINE      = 0
-    OFFLINE     = 1
-    MAINTENANCE = 2
-    NOTFITTED   = 3
-
-@unique
-class ControlMode(IntEnum):
-    REMOTE = 0
-    LOCAL  = 1
-
-@unique
-class ObsMode(IntEnum):
-    IDLE             = 0
-    IMAGING          = 1
-    PULSARSEARCH     = 2
-    PULSARTIMING     = 3
-    DYNAMICSPECTRUM  = 4
-    TRANSIENTSEARCH  = 5
-    VLBI             = 6
-    CALIBRATION      = 7
-
-@unique
-class ObsState(IntEnum):
-    IDLE        = 0
-    CONFIGURING = 1
-    READY       = 2
-    SCANNING    = 3
-    PAUSED      = 4
-    ABORTED     = 5
-    FAULT       = 6
-
-
-# Temporary class. These values should be retrieved from their respective devices.
+# TODO - Temporary class. These values should be retrieved 
+#        from their respective devices (?)
 class Const:
     def __init__(self):
         self.MIN_INT_TIME = 140  # ms
         self.FREQUENCY_SLICE_BW = 200  # MHz
-        self.SEARCH_WINDOW_BW = 300  # MHz
+        self.SEARCH_WINDOW_BW   = 300  # MHz
         self.FREQUENCY_BAND_1_RANGE = (0.35, 1.05)  # GHz
         self.FREQUENCY_BAND_2_RANGE = (0.95, 1.76)  # GHz
         self.FREQUENCY_BAND_3_RANGE = (1.65, 3.05)  # GHz
@@ -59,5 +19,17 @@ class Const:
         self.NUM_PHASE_BINS = 1024
         self.NUM_OUTPUT_LINKS = 80
 
+        # TODO - remove the consts in MHZ/GHz eventually
+        self.FREQUENCY_SLICE_BW_HZ = 200 * 10 ** 6
+        self.SEARCH_WINDOW_BW_HZ   = 300 * 10 ** 6 
+        self.FREQUENCY_BAND_1_RANGE_HZ = (0.35* 10**9, 1.05 * 10**9)
+        self.FREQUENCY_BAND_2_RANGE_HZ = (0.95* 10**9, 1.76 * 10**9)
+        self.FREQUENCY_BAND_3_RANGE_HZ = (1.65* 10**9, 3.05 * 10**9)
+        self.FREQUENCY_BAND_4_RANGE_Hz = (2.80* 10**9, 5.18 * 10**9)
 
 const = Const()
+
+def freq_band_dict():
+    freq_band_labels = ["1", "2", "3", "4", "5a", "5b"]
+    freq_bands = dict(zip(freq_band_labels, range(len(freq_band_labels))))
+    return freq_bands

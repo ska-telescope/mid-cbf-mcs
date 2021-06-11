@@ -38,6 +38,8 @@ sys.path.insert(0, commons_pkg_path)
 
 from ska_tango_base.control_model import HealthState, AdminMode
 from ska_tango_base import SKACapability
+from ska_tango_base.commands import ResultCode
+
 # PROTECTED REGION END #    //  VccSearchWindow.additionnal_import
 
 __all__ = ["VccSearchWindow", "main"]
@@ -105,22 +107,33 @@ class VccSearchWindow(SKACapability):
     # General methods
     # ---------------
 
-    def init_device(self):
-        """entry point; inherit from SKACApability; initialize attribute values"""
-        SKACapability.init_device(self)
-        # PROTECTED REGION ID(VccSearchWindow.init_device) ENABLED START #
-        self.set_state(tango.DevState.INIT)
+    class InitCommand(SKACapability.InitCommand):
+        def do(self):
+            """
+            Stateless hook for device initialisation.
 
-        # initialize attribute values
-        self._search_window_tuning = 0
-        self._enable_TDC = False
-        self._number_bits = 0
-        self._period_before_epoch = 0
-        self._period_after_epoch = 0
-        self._destination_address = ["", "", ""]
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
+            self.logger.debug("Entering InitCommand()")
 
-        self.set_state(tango.DevState.OFF)
-        # PROTECTED REGION END #    //  VccSearchWindow.init_device
+            super().do()
+
+            device = self.target
+
+            # initialize attribute values
+            device._search_window_tuning = 0
+            device._enable_TDC = False
+            device._number_bits = 0
+            device._period_before_epoch = 0
+            device._period_after_epoch = 0
+            device._destination_address = ["", "", ""]
+            #self.logger.warn("State() = {}".format(device.get_state()))
+            message = "VccSearchWindow Init command completed OK"
+            self.logger.info(message)
+            return (ResultCode.OK, message)
 
     def always_executed_hook(self):
         # PROTECTED REGION ID(VccSearchWindow.always_executed_hook) ENABLED START #
@@ -214,15 +227,7 @@ class VccSearchWindow(SKACapability):
     # Commands
     # --------
 
-    @command(
-        dtype_in='DevState',
-        doc_in='New state'
-    )
-    def SetState(self, argin):
-        # PROTECTED REGION ID(VccSearchWindow.SetState) ENABLED START #
-        """set state(tango.DevState)"""
-        self.set_state(argin)
-        # PROTECTED REGION END #    //  VccSearchWindow.SetState
+    # None
 
 # ----------
 # Run server

@@ -37,13 +37,15 @@ commons_pkg_path = os.path.abspath(os.path.join(file_path, "../../commons"))
 sys.path.insert(0, commons_pkg_path)
 
 from ska_tango_base.control_model import HealthState, AdminMode
-from ska_tango_base import SKACapability
+from ska_tango_base import SKAObsDevice 
+from ska_tango_base.commands import ResultCode
+
 # PROTECTED REGION END #    //  VccBand1And2.additionnal_import
 
 __all__ = ["VccBand1And2", "main"]
 
 
-class VccBand1And2(SKACapability):
+class VccBand1And2(SKAObsDevice):
     """
     VccBand1And2 TANGO device class for the prototype
     """
@@ -62,12 +64,27 @@ class VccBand1And2(SKACapability):
     # General methods
     # ---------------
 
-    def init_device(self):
-        """initialize device and set DevState to OFF"""
-        SKACapability.init_device(self)
-        # PROTECTED REGION ID(VccBand1And2.init_device) ENABLED START #
-        self.set_state(tango.DevState.OFF)
-        # PROTECTED REGION END #    //  VccBand1And2.init_device
+    class InitCommand(SKAObsDevice.InitCommand):
+        
+        def do(self):
+            """
+            Stateless hook for device initialisation.
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
+
+            self.logger.warn("Entering InitCommand() (warning) TODO")
+
+            super().do()
+
+            device = self.target
+
+            #self.logger.warn("State() = {}".format(device.get_state()))
+            message = "VccBand1And2 Init command completed OK"
+            self.logger.info(message)
+            return (ResultCode.OK, message)
 
     def always_executed_hook(self):
         # PROTECTED REGION ID(VccBand1And2.always_executed_hook) ENABLED START #

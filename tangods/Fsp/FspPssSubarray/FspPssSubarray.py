@@ -34,19 +34,15 @@ import sys
 import json
 from random import randint
 
-file_path = os.path.dirname(os.path.abspath(__file__))
-commons_pkg_path = os.path.abspath(os.path.join(file_path, "../../commons"))
-sys.path.insert(0, commons_pkg_path)
-
-from global_enum import const
 from ska_tango_base.control_model import HealthState, AdminMode, ObsState
-from ska_tango_base import SKASubarray
+from ska_tango_base import CspSubElementObsDevice
+from ska_tango_base.commands import ResultCode
 
 # PROTECTED REGION END #    //  FspPssSubarray.additionnal_import
 
 __all__ = ["FspPssSubarray", "main"]
 
-class FspPssSubarray(SKASubarray):
+class FspPssSubarray(CspSubElementObsDevice):
     """
     FspPssSubarray TANGO device class for the FspPssSubarray prototype
     """
@@ -71,6 +67,7 @@ class FspPssSubarray(SKASubarray):
         default_value="mid_csp_cbf/master/main"
     )
 
+    # TODO: CbfSubarrayAddress prop not being used
     CbfSubarrayAddress = device_property(
         dtype='str',
         doc="FQDN of CBF Subarray"
@@ -86,7 +83,7 @@ class FspPssSubarray(SKASubarray):
 
     receptors = attribute(
         dtype=('uint16',),
-        access=AttrWriteType.READ_WRITE,
+        access=AttrWriteType.READ,
         max_dim_x=197,
         label="Receptors",
         doc="List of receptors assigned to subarray",
@@ -125,39 +122,67 @@ class FspPssSubarray(SKASubarray):
     # General methods
     # ---------------
 
-    def init_device(self):
-        SKASubarray.init_device(self)
-        # PROTECTED REGION ID(FspPssSubarray.init_device) ENABLED START #
-        """Initialize attribtues. Get proxy as reference to other elements."""
-        self.set_state(tango.DevState.INIT)
+    def init_command_objects(self):
+        """
+        Sets up the command objects
+        """
+        super().init_command_objects()
 
-        # get relevant IDs
-        self._subarray_id = self.SubID
-        self._fsp_id = self.FspID
-        self._search_beams = []
-
-        # initialize attribute values
-        self._search_window_id = 0
-        self._search_beam_id = []
-        self._receptors = []
-        self._output_enable = 0
-
-        # device proxy for easy reference to CBF Master
-        self._proxy_cbf_master = tango.DeviceProxy(self.CbfMasterAddress)
-
-        self._master_max_capabilities = dict(
-            pair.split(":") for pair in
-            self._proxy_cbf_master.get_property("MaxCapabilities")["MaxCapabilities"]
+        device_args = (self, self.state_model, self.logger)
+        self.register_command_object(
+            "ConfigureScan", self.ConfigureScanCommand(*device_args)
         )
-        self._count_vcc = int(self._master_max_capabilities["VCC"])
-        self._fqdn_vcc = list(self.VCC)[:self._count_vcc]
-        self._proxies_vcc = [*map(tango.DeviceProxy, self._fqdn_vcc)]
+        self.register_command_object(
+            "GoToIdle", self.GoToIdleCommand(*device_args)
+        )
 
-        # device proxy for easy reference to CBF Subarray
-        self._proxy_cbf_subarray = tango.DeviceProxy(self.CbfSubarrayAddress)
+    class InitCommand(CspSubElementObsDevice.InitCommand):
+        """
+        A class for the Vcc's init_device() "command".
+        """
 
-        self._update_obs_state(ObsState.IDLE)
-        self.set_state(tango.DevState.OFF)
+        def do(self):
+            """
+            Stateless hook for device initialisation.
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
+
+            self.logger.debug("Entering InitCommand()")
+
+            device = self.target
+
+            # Make a private copy of the device properties:
+            device._subarray_id = device.SubID
+            device._fsp_id = device.FspID
+
+            # initialize attribute values
+            device._receptors = []
+            device._search_beams = []
+            device._search_window_id = 0
+            device._search_beam_id = []
+            device._output_enable = 0
+            device._scan_id = 0
+            device._config_id = ""
+
+            # device proxy for easy reference to CBF Master
+            device._proxy_cbf_master = tango.DeviceProxy(device.CbfMasterAddress)
+
+            device._master_max_capabilities = dict(
+                pair.split(":") for pair in
+                device._proxy_cbf_master.get_property("MaxCapabilities")["MaxCapabilities"]
+            )
+            device._count_vcc = int(device._master_max_capabilities["VCC"])
+            device._fqdn_vcc = list(device.VCC)[:device._count_vcc]
+            device._proxies_vcc = [*map(tango.DeviceProxy, device._fqdn_vcc)]
+
+            message = "FspPssSubarry Init command completed OK"
+            self.logger.info(message)
+            return (ResultCode.OK, message)
+
         # PROTECTED REGION END #    //  FspPssSubarray.init_device
 
     def always_executed_hook(self):
@@ -169,9 +194,7 @@ class FspPssSubarray(SKASubarray):
     def delete_device(self):
         # PROTECTED REGION ID(FspPssSubarray.delete_device) ENABLED START #
         """Set Idle, remove all receptors, turn device OFF"""
-        self.GoToIdle()
-        self.RemoveAllReceptors()
-        self.set_state(tango.DevState.OFF)
+        pass
         # PROTECTED REGION END #    //  FspPssSubarray.delete_device
 
     # ------------------
@@ -183,13 +206,6 @@ class FspPssSubarray(SKASubarray):
         """return receptros attribute.(array of int)"""
         return self._receptors
         # PROTECTED REGION END #    //  FspPssSubarray.receptors_read
-
-    def write_receptors(self, value):
-        # PROTECTED REGION ID(FspPssSubarray.receptors_write) ENABLED START #
-        """Set/replcace receptros attribute.(array of int)"""
-        self.RemoveAllReceptors()
-        self.AddReceptors(value)
-        # PROTECTED REGION END #    //  FspPssSubarray.receptors_write
 
     def read_searchBeams(self):
         # PROTECTED REGION ID(FspPssSubarray.searchBeams_read) ENABLED START #
@@ -219,55 +235,12 @@ class FspPssSubarray(SKASubarray):
     # Commands
     # --------
 
-    def is_On_allowed(self):
-        if self.dev_state() == tango.DevState.OFF and\
-                self._obs_state == ObsState.IDLE:
-            return True
-        return False
-
-    @command()
-    def On(self):
-        # PROTECTED REGION ID(FspPssSubarray.On) ENABLED START #
-        self.set_state(tango.DevState.ON)
-        # PROTECTED REGION END #    //  FspPssSubarray.On
-
-    def is_Off_allowed(self):
-        if self.dev_state() == tango.DevState.ON and\
-                self._obs_state == ObsState.IDLE:
-            return True
-        return False
-
-    @command()
-    def Off(self):
-        # PROTECTED REGION ID(FspPssSubarray.Off) ENABLED START #
-        # This command can only be called when obsState=IDLE
-        self.GoToIdle()
-        self.RemoveAllReceptors()
-        self.set_state(tango.DevState.OFF)
-        # PROTECTED REGION END #    //  FspPssSubarray.Off
-
-    def is_AddReceptors_allowed(self):
-        """allowed if FSPPssSubarry is ON, ObsState is not SCANNING"""
-        if self.dev_state() == tango.DevState.ON and\
-                self._obs_state in [
-                    ObsState.IDLE,
-                    ObsState.CONFIGURING,
-                    ObsState.READY
-                ]:
-            return True
-        return False
-
-    @command(
-        dtype_in=('uint16',),
-        doc_in="List of receptor IDs",
-    )
-    def AddReceptors(self, argin):
-        # PROTECTED REGION ID(FspPssSubarray.AddReceptors) ENABLED START #
+    def _AddReceptors(self, receptorIDs):
         """add specified receptors to the FSP subarray. Input is array of int."""
         errs = []  # list of error messages
         receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
                                self._proxy_cbf_master.receptorToVcc)
-        for receptorID in argin:
+        for receptorID in receptorIDs:
             try:
                 vccID = receptor_to_vcc[receptorID]
                 subarrayID = self._proxies_vcc[vccID - 1].subarrayMembership
@@ -280,6 +253,8 @@ class FspPssSubarray(SKASubarray):
                     if receptorID not in self._receptors:
                         self._receptors.append(receptorID)
                     else:
+                        # TODO: this is not true if more receptors can be 
+                        #       specified for the same search beam
                         log_msg = "Receptor {} already assigned to current FSP subarray.".format(
                             str(receptorID))
                         self.logger.warn(log_msg)
@@ -294,23 +269,7 @@ class FspPssSubarray(SKASubarray):
                                            tango.ErrSeverity.ERR)
         # PROTECTED REGION END #    //  FspPssSubarray.AddReceptors
 
-    def is_RemoveReceptors_allowed(self):
-        """allowed if FSPPssSubarry is ON, ObsState is not SCANNING"""
-        if self.dev_state() == tango.DevState.ON and\
-                self._obs_state in [
-                    ObsState.IDLE,
-                    ObsState.CONFIGURING,
-                    ObsState.READY
-                ]:
-            return True
-        return False
-
-    @command(
-        dtype_in=('uint16',),
-        doc_in="List of receptor IDs",
-    )
-    def RemoveReceptors(self, argin):
-        # PROTECTED REGION ID(FspPssSubarray.RemoveReceptors) ENABLED START #
+    def _remove_receptors(self, argin):
         """Remove Receptors. Input is array of int"""
         for receptorID in argin:
             if receptorID in self._receptors:
@@ -319,108 +278,153 @@ class FspPssSubarray(SKASubarray):
                 log_msg = "Receptor {} not assigned to FSP subarray. "\
                     "Skipping.".format(str(receptorID))
                 self.logger.warn(log_msg)
-        # PROTECTED REGION END #    //  FspPssSubarray.RemoveReceptors
 
-    def is_RemoveAllReceptors_allowed(self):
-        """allowed if FSPPssSubarry is ON, ObsState is not SCANNING"""
-        if self.dev_state() == tango.DevState.ON and\
-                self._obs_state in [
-                    ObsState.IDLE,
-                    ObsState.CONFIGURING,
-                    ObsState.READY
-                ]:
-            return True
-        return False
+    def _RemoveAllReceptors(self):
+        self._remove_receptors(self._receptors[:])
 
-    @command()
-    def RemoveAllReceptors(self):
-        """Remove all Receptors of this subarray"""
-        # PROTECTED REGION ID(FspPssSubarray.RemoveAllReceptors) ENABLED START #
-        self.RemoveReceptors(self._receptors[:])
-        # PROTECTED REGION END #    //  FspPssSubarray.RemoveAllReceptors
+    # --------
+    # Commands
+    # --------
 
-    def is_ConfigureScan_allowed(self):
-        if self.dev_state() == tango.DevState.ON and\
-                self._obs_state in [ObsState.IDLE, ObsState.READY]:
-            return True
-        return False
+    class ConfigureScanCommand(CspSubElementObsDevice.ConfigureScanCommand):
+        """
+        A class for the FspPssSubarray's ConfigureScan() command.
+        """
+
+        """Input a serilized JSON object. """
+
+        def do(self, argin):
+            """
+            Stateless hook for ConfigureScan() command functionality.
+
+            :param argin: The configuration as JSON formatted string
+            :type argin: str
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            :raises: ``CommandError`` if the configuration data validation fails.
+            """
+
+            device = self.target
+
+            argin = json.loads(argin)
+
+            # Configure receptors.
+            # TODO - this removeAll can be taken out as it is done in GoToIdle()
+            device._RemoveAllReceptors()
+            self.logger.debug("_receptors = {}".format(device._receptors))
+
+            device._fsp_id = argin["fspID"]
+            device._search_window_id = int(argin["searchWindowID"])
+
+            self.logger.debug("_search_window_id = {}".format(device._search_window_id))
+
+            for searchBeam in argin["searchBeam"]:
+
+                if len(searchBeam["receptors"]) != 1:
+                    # TODO - to add support for multiple receptors
+                    msg = "Currently only 1 receptor per searchBeam is supported"
+                    self.logger.error(msg) 
+                    return (ResultCode.FAILED, msg)
+
+                device._AddReceptors(map(int, searchBeam["receptors"]))
+                self.logger.debug("device._receptors = {}".format(device._receptors))
+                device._search_beams.append(json.dumps(searchBeam))
+                
+                # TODO: remove
+                # device._receptors.extend(searchBeam["receptors"])
+
+                device._search_beam_id.append(int(searchBeam["searchBeamID"]))
+            
+            # TODO: _output_enable is not currently set
+
+            # TODO - possibly move validation of params to  
+            #        validate_input()
+            # (result_code, msg) = self.validate_input(argin) # TODO
+
+            result_code = ResultCode.OK # TODO  - temp - remove
+            msg = "Configure command completed OK" # TODO temp, remove
+
+            if result_code == ResultCode.OK:
+                # store the configuration on command success
+                device._last_scan_configuration = argin
+                msg = "Configure command completed OK"
+
+            return(result_code, msg)
+
+        def validate_input(self, argin):
+            """
+            Validate the configuration parameters against allowed values, as needed.
+
+            :param argin: The JSON formatted string with configuration for the device.
+            :type argin: 'DevString'
+            :return: A tuple containing a return code and a string message.
+            :rtype: (ResultCode, str)
+            """
+            device = self.target
+            return (ResultCode.OK, "ConfigureScan arguments validation successfull") 
 
     @command(
-        dtype_in='str',
-        doc_in="Scan configuration",
+    dtype_in='DevString',
+    doc_in="JSON formatted string with the scan configuration.",
+    dtype_out='DevVarLongStringArray',
+    doc_out="A tuple containing a return code and a string message indicating status. "
+            "The message is for information purpose only.",
     )
+
+    @DebugIt()
     def ConfigureScan(self, argin):
-        # PROTECTED REGION ID(FspPssSubarray.ConfigureScan) ENABLED START #
-        # This function is called after the configuration has already been validated,
-        # so the checks here have been removed to reduce overhead.
-        """Input a JSON. Configure scan for fsp. Called by CbfSubarrayPssConfig(proxy_fsp_pss_subarray.ConfigureScan(json.dumps(fsp)))"""
-        # transition to obsState=CONFIGURING
-        self._update_obs_state(ObsState.CONFIGURING)
+        # PROTECTED REGION ID(Vcc.ConfigureScan) ENABLED START #
+        """
+        Configure the observing device parameters for the current scan.
 
-        argin = json.loads(argin)
+        :param argin: JSON formatted string with the scan configuration.
+        :type argin: 'DevString'
 
-        # Configure receptors.
-        self.RemoveAllReceptors()
-        self.AddReceptors(map(int, argin["receptors"]))
-        self._fsp_id = argin["fspID"]
-        self._search_window_id = int(argin["searchWindowID"])
-        self._search_beams = []
-        self._search_beam_id = []
-        self._receptors = []
+        :return: A tuple containing a return code and a string message indicating status.
+            The message is for information purpose only.
+        :rtype: (ResultCode, str)
+        """
+        command = self.get_command_object("ConfigureScan")
+        (return_code, message) = command(argin)
+        return [[return_code], [message]]
 
-        for searchBeam in argin["searchBeam"]:
-            self._search_beams.append(json.dumps(searchBeam))
-            self._receptors.extend(searchBeam["receptors"])
-            self._search_beam_id.append(int(searchBeam["searchBeamID"]))
+    class GoToIdleCommand(CspSubElementObsDevice.GoToIdleCommand):
+        """
+        A class for the FspPssSubarray's GoToIdle command.
+        """
 
-        # fspPssSubarray moves to READY after configuration
-        self._update_obs_state(ObsState.READY)
+        def do(self):
+            """
+            Stateless hook for GoToIdle() command functionality.
 
-        # PROTECTED REGION END #    //  FspPssSubarray.ConfigureScan
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
 
-    def is_EndScan_allowed(self):
-        """allowed if ON nd ObsState is SCANNING"""
-        if self.dev_state() == tango.DevState.ON and\
-                self._obs_state == ObsState.SCANNING:
-            return True
-        return False
+            self.logger.debug("Entering GoToIdleCommand()")
 
-    @command()
-    def EndScan(self):
-        # PROTECTED REGION ID(FspPssSubarray.EndScan) ENABLED START #
-        """Set ObsState to READY"""
-        self._obs_state = ObsState.READY
-        # nothing else is supposed to happen
-        # PROTECTED REGION END #    //  FspPssSubarray.EndScan
+            device = self.target
 
-    def is_Scan_allowed(self):
-        """allowed if ON and ObsState READY"""
-        if self.dev_state() == tango.DevState.ON and\
-                self._obs_state == ObsState.READY:
-            return True
-        return False
+            # initialize attribute values
+            device._search_beams = []
+            device._search_window_id = 0
+            device._search_beam_id = []
+            device._output_enable = 0
+            device._scan_id = 0
+            device._config_id = ""
 
-    @command()
-    def Scan(self):
-        # PROTECTED REGION ID(FspPssSubarray.Scan) ENABLED START #
-        """Set ObsState to SCANNING"""
-        self._obs_state = ObsState.SCANNING
-        # nothing else is supposed to happen
-        # PROTECTED REGION END #    //  FspPssSubarray.Scan
+            device._RemoveAllReceptors()
 
-    def is_GoToIdle_allowed(self):
-        if self.dev_state() == tango.DevState.ON and\
-                self._obs_state in [ObsState.IDLE, ObsState.READY]:
-            return True
-        return False
+            if device.state_model.obs_state == ObsState.IDLE:
+                return (ResultCode.OK, 
+                "GoToIdle command completed OK. Device already IDLE")
 
-    @command()
-    def GoToIdle(self):
-        """ObsState to IDLE"""
-        # PROTECTED REGION ID(FspPssSubarray.GoToIdle) ENABLED START #
-        # transition to obsState=IDLE
-        self._obs_state = ObsState.IDLE
-        # PROTECTED REGION END #    //  FspPssSubarray.GoToIdle
+            return (ResultCode.OK, "GoToIdle command completed OK")
 
 # ----------
 # Run server

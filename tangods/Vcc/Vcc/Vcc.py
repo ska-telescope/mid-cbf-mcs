@@ -16,61 +16,47 @@
 # Vcc Tango device prototype
 # Vcc TANGO device class for the prototype
 
-# tango imports
-import tango
-from tango.server import run
-from tango.server import attribute, command
-from tango.server import device_property
-from tango import AttrWriteType
-# Additional import
 # PROTECTED REGION ID(Vcc.additionnal_import) ENABLED START #
 import os
 import sys
 import json
 
+# tango imports
+import tango
+from tango.server import run
+from tango.server import attribute, command
+from tango.server import device_property
+from tango import DebugIt, DevState, AttrWriteType
+from tango.test_context import DeviceTestContext
+
+# SKA Specific imports
+#TODO - find a solution for not including these paths here
 file_path = os.path.dirname(os.path.abspath(__file__))
 commons_pkg_path = os.path.abspath(os.path.join(file_path, "../../commons"))
 sys.path.insert(0, commons_pkg_path)
 
-from global_enum import const
+from global_enum import const, freq_band_dict
+
 from ska_tango_base.control_model import ObsState
-from ska_tango_base import SKACapability
+from ska_tango_base import SKAObsDevice, CspSubElementObsDevice
+from ska_tango_base.commands import ResultCode
 
 # PROTECTED REGION END #    //  Vcc.additionnal_import
 
 __all__ = ["Vcc", "main"]
 
 
-class Vcc(SKACapability):
+class Vcc(CspSubElementObsDevice):
     """
     Vcc TANGO device class for the prototype
     """
-
-    # PROTECTED REGION ID(Vcc.class_variable) ENABLED START #
-
-    def __get_capability_proxies(self):
-        # for now, assume that given addresses are valid
-        if self.Band1And2Address:
-            self._proxy_band_12 = tango.DeviceProxy(self.Band1And2Address)
-        if self.Band3Address:
-            self._proxy_band_3 = tango.DeviceProxy(self.Band3Address)
-        if self.Band4Address:
-            self._proxy_band_4 = tango.DeviceProxy(self.Band4Address)
-        if self.Band5Address:
-            self._proxy_band_5 = tango.DeviceProxy(self.Band5Address)
-        if self.SW1Address:
-            self._proxy_sw_1 = tango.DeviceProxy(self.SW1Address)
-        if self.SW2Address:
-            self._proxy_sw_2 = tango.DeviceProxy(self.SW2Address)
-
-    # PROTECTED REGION END #    //  Vcc.class_variable
 
     # -----------------
     # Device Properties
     # -----------------
 
     VccID = device_property(
-        dtype='uint16'
+        dtype='DevUShort'
     )
 
     Band1And2Address = device_property(
@@ -111,7 +97,7 @@ class Vcc(SKACapability):
     subarrayMembership = attribute(
         dtype='uint16',
         access=AttrWriteType.READ_WRITE,
-        label="Subarray membership",
+        label="subarrayMembership",
         doc="Subarray membership",
     )
 
@@ -238,64 +224,124 @@ class Vcc(SKACapability):
     # General methods
     # ---------------
 
-    def init_device(self):
-        """Inherit from SKACapability; initialze attributes"""
-        SKACapability.init_device(self)
-        # PROTECTED REGION ID(Vcc.init_device) ENABLED START #
-        self.set_state(tango.DevState.INIT)
+    # PROTECTED REGION ID(Vcc.class_variable) ENABLED START #
 
-        # defines self._proxy_band_12, self._proxy_band_3, self._proxy_band_4, self._proxy_band_5,
-        # self._proxy_sw_1, and self._proxy_sw_2
-        self.__get_capability_proxies()
+    def init_command_objects(self):
+        """
+        Sets up the command objects
+        """
+        super().init_command_objects()
 
-        self._vcc_id = self.VccID
+        device_args = (self, self.state_model, self.logger)
+        self.register_command_object(
+            "ConfigureScan", self.ConfigureScanCommand(*device_args)
+        )
+        self.register_command_object(
+            "GoToIdle", self.GoToIdleCommand(*device_args)
+        )
 
-        # the bands are already disabled on initialization
+    # PROTECTED REGION END #    //  Vcc.class_variable
 
-        # initialize attribute values
-        self._receptor_ID = 0
-        self._frequency_band = 0
-        self._subarray_membership = 0
-        self._stream_tuning = (0, 0)
-        self._frequency_band_offset_stream_1 = 0
-        self._frequency_band_offset_stream_2 = 0
-        self._doppler_phase_correction = (0, 0, 0, 0)
-        self._rfi_flagging_mask = ""
-        self._scfo_band_1 = 0
-        self._scfo_band_2 = 0
-        self._scfo_band_3 = 0
-        self._scfo_band_4 = 0
-        self._scfo_band_5a = 0
-        self._scfo_band_5b = 0
-        self._delay_model = [[0.0] * 6 for _ in range(26)]
-        self._jones_matrix = [[0.0] * 16 for _ in range(26)]
-        self._config_id = ""
-        self._scan_id = 0
-        self.set_change_event("subarrayMembership", True, True)
+    class InitCommand(CspSubElementObsDevice.InitCommand):
+        """
+        A class for the Vcc's init_device() "command".
+        """
 
-        self._update_obs_state(ObsState.IDLE)
-        self.set_state(tango.DevState.OFF)
-        # PROTECTED REGION END #    //  Vcc.init_device
+        def do(self):
+            """
+            Stateless hook for device initialisation.
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
+
+            self.logger.debug("Entering InitCommand()")
+
+            super().do()
+
+            device = self.target
+
+            # Make a private copy of the device properties:
+            self._vcc_id = device.VccID
+
+            # initialize attribute values        
+
+            device._receptor_ID = 0
+            device._freq_band_name = ""
+            device._frequency_band = 0
+            device._subarray_membership = 0
+            device._stream_tuning = (0, 0)
+            device._frequency_band_offset_stream_1 = 0
+            device._frequency_band_offset_stream_2 = 0
+            device._doppler_phase_correction = (0, 
+            0, 0, 0)
+            device._rfi_flagging_mask = ""
+            device._scfo_band_1 = 0
+            device._scfo_band_2 = 0
+            device._scfo_band_3 = 0
+            device._scfo_band_4 = 0
+            device._scfo_band_5a = 0
+            device._scfo_band_5b = 0
+            device._delay_model = [[0] * 6 for i in range(26)]
+            device._jones_matrix = [[0] * 16 for i in range(26)]
+
+            device._scan_id = ""
+            device._config_id = ""
+
+            device._fqdns = [
+               device.Band1And2Address,
+               device.Band3Address,
+               device.Band4Address,
+               device.Band5Address,
+               device.SW1Address,
+               device.SW2Address 
+            ] # TODO 
+
+            device._func_devices = [
+                tango.DeviceProxy(fqdn) for fqdn in device._fqdns
+            ]
+
+            device.set_change_event("subarrayMembership", True, True)
+
+            # TODO - create a command for the proxy connections
+            #        similar to InitialSetup() in ska-low-mccs stations.py
+            
+            #self.__get_capability_proxies()
+
+            # TODO - To support unit testing, use a wrapper class for the  
+            # connection instead of directly DeviceProxy (see MccsDeviceProxy)
+            device._proxy_band_12 = tango.DeviceProxy(device.Band1And2Address)
+            device._proxy_band_3  = tango.DeviceProxy(device.Band3Address)
+            device._proxy_band_4  = tango.DeviceProxy(device.Band4Address)
+            device._proxy_band_5  = tango.DeviceProxy(device.Band5Address)
+            device._proxy_sw_1    = tango.DeviceProxy(device.SW1Address)
+            device._proxy_sw_2    = tango.DeviceProxy(device.SW2Address)
+
+            message = "Vcc Init command completed OK"
+            device.logger.info(message)
+            return (ResultCode.OK, message)
 
     def always_executed_hook(self):
-        """Hook always execeted before any commands"""
+        """Method always executed before any TANGO command is executed."""
         # PROTECTED REGION ID(Vcc.always_executed_hook) ENABLED START #
         pass
         # PROTECTED REGION END #    //  Vcc.always_executed_hook
 
     def delete_device(self):
-        # PROTECTED REGION ID(Vcc.delete_device) ENABLED START #
-        """Turn off all the VCCBands; turn off this VCC"""
-        self._proxy_band_12.SetState(tango.DevState.OFF)
-        self._proxy_band_3.SetState(tango.DevState.OFF)
-        self._proxy_band_4.SetState(tango.DevState.OFF)
-        self._proxy_band_5.SetState(tango.DevState.OFF)
-        self._proxy_sw_1.SetState(tango.DevState.OFF)
-        self._proxy_sw_2.SetState(tango.DevState.OFF)
+        """
+        Hook to delete resources allocated in the
+        :py:meth:`~.Vcc.InitCommand.do` method of
+        the nested :py:class:`~.Vcc.InitCommand`
+        class.
 
-        self.GoToIdle()
-        self.set_state(tango.DevState.OFF)
-        # PROTECTED REGION END #    //  Vcc.delete_device
+        This method allows for any memory or other resources allocated
+        in the :py:meth:`~.Vcc.InitCommand.do` method to be
+        released. This method is called by the device destructor, and by
+        the Init command when the Tango device server is re-initialised.
+        """
+        pass
 
     # ------------------
     # Attributes methods
@@ -316,12 +362,14 @@ class Vcc(SKACapability):
     def read_subarrayMembership(self):
         # PROTECTED REGION ID(Vcc.subarrayMembership_read) ENABLED START #
         """Return subarrayMembership attribute: sub-array affiliation of the VCC(0 of no affliation)"""
+        self.logger.debug("Entering read_subarrayMembership(), _subarray_membership = {}".format(self._subarray_membership))
         return self._subarray_membership
         # PROTECTED REGION END #    //  Vcc.subarrayMembership_read
 
     def write_subarrayMembership(self, value):
         # PROTECTED REGION ID(Vcc.subarrayMembership_write) ENABLED START #
         """Set subarrayMembership attribute: sub-array affiliation of the VCC(0 of no affliation)"""
+        self.logger.debug("Entering write_subarrayMembership(), value = {}".format(value))
         self._subarray_membership = value
         self.push_change_event("subarrayMembership",value)
         if not value:
@@ -506,122 +554,195 @@ class Vcc(SKACapability):
     # Commands
     # --------
 
-    def is_On_allowed(self):
-        """allowed if it's in OFF state and obsState is IDLE"""
-        if self.dev_state() == tango.DevState.OFF and \
-                self._obs_state == ObsState.IDLE:
-            return True
-        return False
+    class ConfigureScanCommand(CspSubElementObsDevice.ConfigureScanCommand):
+        """
+        A class for the Vcc's ConfigureScan() command.
+        """
 
-    @command()
-    def On(self):
-        # PROTECTED REGION ID(Vcc.On) ENABLED START #
-        self.logger.debug("Vcc.On")
-        """turn ON VCC; send DISABLE signal to all the band and search window"""
-        self._proxy_band_12.SetState(tango.DevState.DISABLE)
-        self._proxy_band_3.SetState(tango.DevState.DISABLE)
-        self._proxy_band_4.SetState(tango.DevState.DISABLE)
-        self._proxy_band_5.SetState(tango.DevState.DISABLE)
-        self._proxy_sw_1.SetState(tango.DevState.DISABLE)
-        self._proxy_sw_2.SetState(tango.DevState.DISABLE)
+        def do(self, argin):
+            """
+            Stateless hook for ConfigureScan() command functionality.
 
-        self.set_state(tango.DevState.ON)
-        # PROTECTED REGION END #    //  Vcc.On
+            :param argin: The configuration as JSON formatted string
+            :type argin: str
 
-    def is_Off_allowed(self):
-        """allowed if devState is ON, ObsState is IDLE"""
-        if self.dev_state() == tango.DevState.ON and \
-                self._obs_state == ObsState.IDLE:
-            return True
-        return False
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            :raises: ``CommandError`` if the configuration data validation fails.
+            """
 
-    @command()
-    def Off(self):
-        # PROTECTED REGION ID(Vcc.Off) ENABLED START #
-        self.logger.debug("Vcc.Off")
-        """turn VCC off, send OFF signal to all the bands and search window capabilities"""
-        self._proxy_band_12.SetState(tango.DevState.OFF)
-        self._proxy_band_3.SetState(tango.DevState.OFF)
-        self._proxy_band_4.SetState(tango.DevState.OFF)
-        self._proxy_band_5.SetState(tango.DevState.OFF)
-        self._proxy_sw_1.SetState(tango.DevState.OFF)
-        self._proxy_sw_2.SetState(tango.DevState.OFF)
+            self.logger.debug("Entering ConfigureScanCommand()")
 
-        # This command can only be called when obsState=IDLE
-        # self.GoToIdle()
-        self.set_state(tango.DevState.OFF)
-        # PROTECTED REGION END #    //  Vcc.Off
+            device = self.target
 
-    def is_SetFrequencyBand_allowed(self):
-        """allowed if devState is ON and ObsState is Configuring"""
-        if self.dev_state() == tango.DevState.ON and \
-                self._obs_state == ObsState.CONFIGURING:
-            return True
-        return False
+            # By this time, the receptor_ID should be set:
+            self.logger.debug(("device._receptor_ID = {}".
+            format(device._receptor_ID)))
+
+            # validate the input args
+            (result_code, msg) = self.validate_input(argin)
+
+            if result_code == ResultCode.OK:
+                # TODO: cosider to turn_on the selected band device
+                #       via a separate command
+                self.turn_on_band_device(device._freq_band_name)
+                # store the configuration on command success
+                device._last_scan_configuration = argin
+                msg = "Configure command completed OK"
+
+            return(result_code, msg)
+            
+        def validate_input(self, argin):
+            """
+            Validate the configuration parameters against allowed values, as needed.
+
+            :param argin: The JSON formatted string with configuration for the device.
+            :type argin: 'DevString'
+            :return: A tuple containing a return code and a string message.
+            :rtype: (ResultCode, str)
+            """
+            device = self.target
+
+            try:
+                config_dict = json.loads(argin)
+                device._config_id = config_dict['id']
+
+                freq_band_name = config_dict['frequency_band']
+                device._freq_band_name = freq_band_name
+                device._frequency_band = freq_band_dict()[freq_band_name]
+
+                # call the method to validate the data sent with
+                # the configuration, as needed.
+                return (ResultCode.OK, "ConfigureScan arguments validation successfull")
+
+            except (KeyError, JSONDecodeError) as err:
+                msg = "Validate configuration failed with error:{}".format(err)
+            except Exception as other_errs:
+                msg = "Validate configuration failed with unknown error:{}".format(
+                    other_errs)
+                self.logger.error(msg)
+            return (ResultCode.FAILED, msg)
+
+        def turn_on_band_device(self, freq_band_name):
+            """
+            Constraint: Must be called AFTER validate_input()
+            Set corresponding band of this VCC. # TODO - remove this
+            Send ON signal to the corresponding band, and DISABLE signal 
+            to all others
+            """
+
+            device = self.target
+
+            # TODO: can be done in a more Pythonian way
+            if freq_band_name in ["1", "2"]:
+                device._proxy_band_12.On()
+                device._proxy_band_3.Disable()
+                device._proxy_band_4.Disable()
+                device._proxy_band_5.Disable()
+            elif freq_band_name == "3":
+                device._proxy_band_12.Disable()
+                device._proxy_band_3.On()
+                device._proxy_band_4.Disable()
+                device._proxy_band_5.Disable()
+            elif freq_band_name == "4":
+                device._proxy_band_12.Disable()
+                device._proxy_band_3.Disable()
+                device._proxy_band_4.On()
+                device._proxy_band_5.Disable()
+            elif freq_band_name in ["5a", "5b"]:
+                device._proxy_band_12.Disable()
+                device._proxy_band_3.Disable()
+                device._proxy_band_4.Disable()
+                device._proxy_band_5.On()
+            else:
+                # The frequnecy band name has been validated at this point
+                # so this shouldn't happen
+                pass
 
     @command(
-        dtype_in='str',
-        doc_in='New frequency band'
+        dtype_in='DevString',
+        doc_in="JSON formatted string with the scan configuration.",
+        dtype_out='DevVarLongStringArray',
+        doc_out="A tuple containing a return code and a string message indicating status. "
+                "The message is for information purpose only.",
     )
-    def SetFrequencyBand(self, argin):
-        # PROTECTED REGION ID(Vcc.SetFrequencyBand) ENABLED START #
-        """set corresponding band of this VCC. Send ON signal to the corresponding band, and DISABLE signal to all others"""
-        if argin in ["1", "2"]:
-            self._frequency_band = ["1", "2"].index(argin)
-            self._proxy_band_12.SetState(tango.DevState.ON)
-            self._proxy_band_3.SetState(tango.DevState.DISABLE)
-            self._proxy_band_4.SetState(tango.DevState.DISABLE)
-            self._proxy_band_5.SetState(tango.DevState.DISABLE)
-        elif argin == "3":
-            self._frequency_band = 2
-            self._proxy_band_12.SetState(tango.DevState.DISABLE)
-            self._proxy_band_3.SetState(tango.DevState.ON)
-            self._proxy_band_4.SetState(tango.DevState.DISABLE)
-            self._proxy_band_5.SetState(tango.DevState.DISABLE)
-        elif argin == "4":
-            self._frequency_band = 3
-            self._proxy_band_12.SetState(tango.DevState.DISABLE)
-            self._proxy_band_3.SetState(tango.DevState.DISABLE)
-            self._proxy_band_4.SetState(tango.DevState.ON)
-            self._proxy_band_5.SetState(tango.DevState.DISABLE)
-        elif argin in ["5a", "5b"]:
-            self._frequency_band = ["5a", "5b"].index(argin) + 4
-            self._proxy_band_12.SetState(tango.DevState.DISABLE)
-            self._proxy_band_3.SetState(tango.DevState.DISABLE)
-            self._proxy_band_4.SetState(tango.DevState.DISABLE)
-            self._proxy_band_5.SetState(tango.DevState.ON)
-        else:
-            # shouldn't happen
-            self.logger.warn("frequencyBand not in valid range. Ignoring.")
-        # PROTECTED REGION END #    // Vcc.SetFrequencyBand
+    @DebugIt()
+    def ConfigureScan(self, argin):
+        # PROTECTED REGION ID(Vcc.ConfigureScan) ENABLED START #
+        """
+        Configure the observing device parameters for the current scan.
 
-    def is_SetObservingState_allowed(self):
-        """allowed if VCC is ON and ObsState is IDLE,CONFIGURING,READY, not SCANNING"""
-        if self.dev_state() == tango.DevState.ON and \
-                self._obs_state in [
-            ObsState.IDLE,
-            ObsState.CONFIGURING,
-            ObsState.READY
-        ]:
-            return True
-        return False
+        :param argin: JSON formatted string with the scan configuration.
+        :type argin: 'DevString'
 
-    @command(
-        dtype_in='uint16',
-        doc_in="New obsState (CONFIGURING OR READY)"
-    )
-    def SetObservingState(self, argin):
-        # PROTECTED REGION ID(Vcc.SetObservingState) ENABLED START #
-        """Since obsState is read-only, CBF Subarray needs a way to change the obsState of a VCC, BUT ONLY TO CONFIGURING OR READY, during a scan configuration."""
-        if argin in [ObsState.CONFIGURING.value, ObsState.READY.value]:
-            self._update_obs_state(argin)
-        else:
-            # shouldn't happen
-            self.logger.warn("obsState must be CONFIGURING or READY. Ignoring.")
-        # PROTECTED REGION END #    // Vcc.SetFrequencyBand
+        :return: A tuple containing a return code and a string message indicating status.
+            The message is for information purpose only.
+        :rtype: (ResultCode, str)
+        """
+        command = self.get_command_object("ConfigureScan")
+        (return_code, message) = command(argin)
+        return [[return_code], [message]]
+        # PROTECTED REGION END #    //  Vcc.ConfigureScan
+
+    class GoToIdleCommand(CspSubElementObsDevice.GoToIdleCommand):
+        """
+        A class for the Vcc's GoToIdle command.
+        """
+
+        def do(self):
+            """
+            Stateless hook for GoToIdle() command functionality.
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
+
+            self.logger.debug("Entering GoToIdleCommand()")
+
+            device = self.target
+
+            # Reset all values intialized in InitCommand.do():
+
+            device._freq_band_name = ""
+            device._frequency_band = 0
+            
+            # device._receptor_ID  - DO NOT reset!
+            # _receptor_ID is set via an explicit write
+            # BEFORE ConfigureScan() is executed; 
+
+            # device._subarray_membership -  DO NOT reset! 
+            
+            device._stream_tuning = (0, 0)
+            device._frequency_band_offset_stream_1 = 0
+            device._frequency_band_offset_stream_2 = 0
+            device._doppler_phase_correction = (0, 0, 0, 0)
+            device._rfi_flagging_mask = ""
+            device._scfo_band_1 = 0
+            device._scfo_band_2 = 0
+            device._scfo_band_3 = 0
+            device._scfo_band_4 = 0
+            device._scfo_band_5a = 0
+            device._scfo_band_5b = 0
+            device._delay_model = [[0] * 6 for i in range(26)]
+            device._jones_matrix = [[0] * 16 for i in range(26)]
+
+            device._scan_id = 0
+            device._config_id = ""
+
+            if device.state_model.obs_state == ObsState.IDLE:
+                return (ResultCode.OK, 
+                "GoToIdle command completed OK. Device already IDLE")
+
+            return (ResultCode.OK, "GoToIdle command completed OK")
 
     def is_UpdateDelayModel_allowed(self):
         """allowed when Devstate is ON and ObsState is READY OR SCANNIGN"""
+        self.logger.debug("Entering is_UpdateDelayModel_allowed()")
+        self.logger.debug("self._obs_state = {}.format(self.dev_state())")
         if self.dev_state() == tango.DevState.ON and \
                 self._obs_state in [ObsState.READY, ObsState.SCANNING]:
             return True
@@ -634,24 +755,33 @@ class Vcc(SKACapability):
     def UpdateDelayModel(self, argin):
         # PROTECTED REGION ID(Vcc.UpdateDelayModel) ENABLED START #
         """update VCC's delay model(serialized JSON object)"""
+
+        self.logger.debug("Entering UpdateDelayModel()")
         argin = json.loads(argin)
 
-        for receptor in argin:
-            if receptor["receptor"] == self._receptor_ID:
-                for frequency_slice in receptor["receptorDelayDetails"]:
-                    if 1 <= frequency_slice["fsid"] <= 26:
-                        if len(frequency_slice["delayCoeff"]) == 6:
-                            self._delay_model[frequency_slice["fsid"] - 1] = \
-                                frequency_slice["delayCoeff"].copy()
-                        else:
-                            log_msg = "'delayCoeff' not valid for frequency slice {} of " \
-                                      "receptor {}".format(frequency_slice["fsid"], self._receptor_ID)
-                            self.logger.error(log_msg)
+        self.logger.debug(("self._receptor_ID = {}".
+            format(self._receptor_ID)))
+
+        for delayDetails in argin:
+            self.logger.debug(("delayDetails[receptor] = {}".
+            format(delayDetails["receptor"])))
+
+            if delayDetails["receptor"] != self._receptor_ID:
+                continue
+            for frequency_slice in delayDetails["receptorDelayDetails"]:
+                if 1 <= frequency_slice["fsid"] <= 26:
+                    if len(frequency_slice["delayCoeff"]) == 6:
+                        self._delay_model[frequency_slice["fsid"] - 1] = \
+                            frequency_slice["delayCoeff"]
                     else:
-                        log_msg = "'fsid' {} not valid for receptor {}".format(
-                            frequency_slice["fsid"], self._receptor_ID
-                        )
+                        log_msg = "'delayCoeff' not valid for frequency slice {} of " \
+                                    "receptor {}".format(frequency_slice["fsid"], self._receptor_ID)
                         self.logger.error(log_msg)
+                else:
+                    log_msg = "'fsid' {} not valid for receptor {}".format(
+                        frequency_slice["fsid"], self._receptor_ID
+                    )
+                    self.logger.error(log_msg)
         # PROTECTED REGION END #    // Vcc.UpdateDelayModel
 
     def is_UpdateJonesMatrix_allowed(self):
@@ -692,7 +822,7 @@ class Vcc(SKACapability):
         # PROTECTED REGION END #    // Vcc.UpdateJonesMatrix
 
     def is_ValidateSearchWindow_allowed(self):
-        # This command has no side effects, so just allow it anytime
+        # This command has no constraints:
         return True
 
     @command(
@@ -702,6 +832,9 @@ class Vcc(SKACapability):
     def ValidateSearchWindow(self, argin):
         """validate a search window configuration. The input is JSON object with the search window parameters. Called by the subarray"""
         # try to deserialize input string to a JSON object
+
+        self.logger.debug("Entering ValidateSearchWindow()") 
+
         try:
             argin = json.loads(argin)
         except json.JSONDecodeError:  # argument not a valid JSON object
@@ -730,18 +863,28 @@ class Vcc(SKACapability):
 
         # Validate searchWindowTuning.
         if "searchWindowTuning" in argin:
-            if argin["frequencyBand"] not in ["5a", "5b"]:  # frequency band is not band 5
+            freq_band_name = argin["frequencyBand"]
+            if freq_band_name not in ["5a", "5b"]:  # frequency band is not band 5
+                
+                frequencyBand_mi = freq_band_dict()[freq_band_name]
+                
                 frequencyBand = ["1", "2", "3", "4", "5a", "5b"].index(argin["frequencyBand"])
-                frequency_band_range = [
-                    const.FREQUENCY_BAND_1_RANGE,
-                    const.FREQUENCY_BAND_2_RANGE,
-                    const.FREQUENCY_BAND_3_RANGE,
-                    const.FREQUENCY_BAND_4_RANGE
+
+                assert frequencyBand_mi == frequencyBand
+                
+                start_freq_Hz, stop_freq_Hz = [
+                    const.FREQUENCY_BAND_1_RANGE_HZ,
+                    const.FREQUENCY_BAND_2_RANGE_HZ,
+                    const.FREQUENCY_BAND_3_RANGE_HZ,
+                    const.FREQUENCY_BAND_4_RANGE_HZ
                 ][frequencyBand]
 
-                if frequency_band_range[0] * 10 ** 9 + argin["frequencyBandOffsetStream1"] <= \
+                self.logger.debug("start_freq_Hz = {}".format(start_freq_Hz)) 
+                self.logger.debug("stop_freq_Hz = {}".format(stop_freq_Hz)) 
+
+                if start_freq_Hz + argin["frequencyBandOffsetStream1"] <= \
                         int(argin["searchWindowTuning"]) <= \
-                        frequency_band_range[1] * 10 ** 9 + argin["frequencyBandOffsetStream1"]:
+                        stop_freq_Hz + argin["frequencyBandOffsetStream1"]:
                     pass
                 else:
                     msg = "'searchWindowTuning' must be within observed band."
@@ -873,7 +1016,8 @@ class Vcc(SKACapability):
     def is_ConfigureSearchWindow_allowed(self):
         """allowed if DevState is ON and ObsState is CONFIGURING"""
         if self.dev_state() == tango.DevState.ON and \
-                self._obs_state == ObsState.CONFIGURING:
+            (self._obs_state == ObsState.CONFIGURING or \
+            self._obs_state == ObsState.READY):
             return True
         return False
 
@@ -889,6 +1033,7 @@ class Vcc(SKACapability):
         This function is called by the subarray after the configuration has already been validated, so the checks here have been removed to reduce overhead.
         """
 
+        self.logger.debug("Entering ConfigureSearchWindow()") 
         argin = json.loads(argin)
 
         # variable to use as SW proxy
@@ -904,18 +1049,18 @@ class Vcc(SKACapability):
         if self._frequency_band in list(range(4)):  # frequency band is not band 5
             proxy_sw.searchWindowTuning = argin["searchWindowTuning"]
 
-            frequency_band_range = [
-                const.FREQUENCY_BAND_1_RANGE,
-                const.FREQUENCY_BAND_2_RANGE,
-                const.FREQUENCY_BAND_3_RANGE,
-                const.FREQUENCY_BAND_4_RANGE
+            start_freq_Hz, stop_freq_Hz = [
+                const.FREQUENCY_BAND_1_RANGE_HZ,
+                const.FREQUENCY_BAND_2_RANGE_HZ,
+                const.FREQUENCY_BAND_3_RANGE_HZ,
+                const.FREQUENCY_BAND_4_RANGE_HZ
             ][self._frequency_band]
 
-            if frequency_band_range[0] * 10 ** 9 + self._frequency_band_offset_stream_1 + \
-                    const.SEARCH_WINDOW_BW * 10 ** 6 / 2 <= \
+            if start_freq_Hz + self._frequency_band_offset_stream_1 + \
+                    const.SEARCH_WINDOW_BW_HZ / 2 <= \
                     int(argin["searchWindowTuning"]) <= \
-                    frequency_band_range[1] * 10 ** 9 + self._frequency_band_offset_stream_1 - \
-                    const.SEARCH_WINDOW_BW * 10 ** 6 / 2:
+                    bw_stop_freq_Hz + self._frequency_band_offset_stream_1 - \
+                    const.SEARCH_WINDOW_BW_HZ / 2:
                 # this is the acceptable range
                 pass
             else:
@@ -961,10 +1106,9 @@ class Vcc(SKACapability):
         # Configure tdcEnable.
         proxy_sw.tdcEnable = argin["tdcEnable"]
         if argin["tdcEnable"]:
-            # transition to ON if TDC is enabled
-            proxy_sw.SetState(tango.DevState.ON)
+            proxy_sw.On()
         else:
-            proxy_sw.SetState(tango.DevState.DISABLE)
+            proxy_sw.Disable()
 
         # Configure tdcNumBits.
         if argin["tdcEnable"]:
@@ -997,76 +1141,14 @@ class Vcc(SKACapability):
                         receptor["tdcDestinationAddress"]
                     break
 
-        # PROTECTED REGION END #    //  Vcc.ConfigureSearchWindow
-
-    def is_EndScan_allowed(self):
-        """allowed when VCC is ON and ObsState is SCANNING"""
-        if self.dev_state() == tango.DevState.ON and \
-                self._obs_state == ObsState.SCANNING:
-            return True
-        return False
-
-    @command()
-    def EndScan(self):
-        # PROTECTED REGION ID(Vcc.EndScan) ENABLED START #
-        """End the scan: Set the obsState to READY. Set ScanID to 0"""
-        self._obs_state = ObsState.READY
-        self._scan_id = 0
-        # nothing else is supposed to happen
-        # PROTECTED REGION END #    //  Vcc.EndScan
-
-    def is_Scan_allowed(self):
-        """scan is allowed when VCC is on, ObsState is READY"""
-        if self.dev_state() == tango.DevState.ON and \
-                self._obs_state == ObsState.READY:
-            return True
-        return False
-
-    @command(
-        dtype_in='uint16',
-        doc_in="Scan ID"
-    )
-    def Scan(self, argin):
-        # PROTECTED REGION ID(Vcc.Scan) ENABLED START #
-        """set VCC ObsState to SCANNING"""
-        self._update_obs_state(ObsState.SCANNING)
-        # Set scanID
-        try:
-            self._scan_id=int(argin)
-        except:
-            msg="The input scanID is not integer."
-            self.logger.error(msg)
-            tango.Except.throw_exception("Command failed", msg, "FspCorrSubarray Scan execution",
-                                         tango.ErrSeverity.ERR)
-        # nothing else is supposed to happen
-        # PROTECTED REGION END #    //  Vcc.Scan
-
-    def is_GoToIdle_allowed(self):
-        """allowed if VCC is ON and obsState is IDLE or READY"""
-        if self.dev_state() == tango.DevState.ON and \
-                self._obs_state in [ObsState.IDLE, ObsState.READY]:
-            return True
-        return False
-
-    @command()
-    def GoToIdle(self):
-        # PROTECTED REGION ID(Vcc.GoToIdle) ENABLED START #
-        """Set OBsState IDLE for this VCC"""
-        # transition to obsState=IDLE
-        self._update_obs_state(ObsState.IDLE)
-        # PROTECTED REGION END #    //  Vcc.GoToIdle
-
-
 # ----------
 # Run server
 # ----------
-
 
 def main(args=None, **kwargs):
     # PROTECTED REGION ID(Vcc.main) ENABLED START #
     return run((Vcc,), args=args, **kwargs)
     # PROTECTED REGION END #    //  Vcc.main
-
 
 if __name__ == '__main__':
     main()

@@ -70,8 +70,11 @@ class TestCbfMaster:
         # check initial states
         assert proxies.master.State() == DevState.STANDBY
         assert proxies.subarray[1].State() == DevState.OFF
-        for i in range(2):
-            assert proxies.sw[i + 1].State() == DevState.OFF
+
+        # TODO - to remove
+        # for i in range(2):
+        #     assert proxies.sw[i + 1].State() == DevState.OFF
+
         for i in range(4):
             assert proxies.vcc[i + 1].State() == DevState.OFF
         for i in range(2):
@@ -89,9 +92,10 @@ class TestCbfMaster:
         proxies.wait_timeout_dev([proxies.subarray[1]], DevState.ON, 3, 0.1)
         assert proxies.subarray[1].State() == DevState.ON
 
-        proxies.wait_timeout_dev([proxies.sw[i + 1] for i in range(2)], DevState.DISABLE, 1, 0.1)
-        for i in range(2):
-            assert proxies.sw[i + 1].State() == DevState.DISABLE
+        # TODO - to remove
+        # proxies.wait_timeout_dev([proxies.sw[i + 1] for i in range(2)], DevState.DISABLE, 1, 0.1)
+        # for i in range(2):
+        #     assert proxies.sw[i + 1].State() == DevState.DISABLE
 
         proxies.wait_timeout_dev([proxies.vcc[i + 1] for i in range(4)], DevState.ON, 1, 0.1)
         for i in range(4):
@@ -120,9 +124,13 @@ class TestCbfMaster:
         proxies.wait_timeout_dev([proxies.subarray[1]], DevState.OFF, 3, 0.1)
         assert proxies.subarray[1].State() == DevState.OFF
 
-        proxies.wait_timeout_dev([proxies.sw[i + 1] for i in range(2)], DevState.OFF, 1, 0.1)
-        for i in range(2):
-            assert proxies.sw[i + 1].State() == DevState.OFF
+        # The SearchWindow (SW) servers are currently not running
+        # as their functionality is covered by the  VCCSearchWindow server
+        # TODO: to remove from devices.json.
+
+        # proxies.wait_timeout_dev([proxies.sw[i + 1] for i in range(2)], DevState.OFF, 1, 0.1)
+        # for i in range(2):
+        #     assert proxies.sw[i + 1].State() == DevState.OFF
 
         proxies.wait_timeout_dev([proxies.vcc[i + 1] for i in range(4)], DevState.OFF, 1, 0.1)
         for i in range(4):
@@ -151,9 +159,10 @@ class TestCbfMaster:
         proxies.wait_timeout_dev([proxies.subarray[1]], DevState.OFF, 3, 0.1)
         assert proxies.subarray[1].State() == DevState.OFF
 
-        proxies.wait_timeout_dev([proxies.sw[i + 1] for i in range(2)], DevState.OFF, 1, 0.1)
-        for i in range(2):
-            assert proxies.sw[i + 1].State() == DevState.OFF
+        # TODO - to remove
+        # proxies.wait_timeout_dev([proxies.sw[i + 1] for i in range(2)], DevState.OFF, 1, 0.1)
+        # for i in range(2):
+        #     assert proxies.sw[i + 1].State() == DevState.OFF
 
         proxies.wait_timeout_dev([proxies.vcc[i + 1] for i in range(4)], DevState.OFF, 1, 0.1)
         for i in range(4):
