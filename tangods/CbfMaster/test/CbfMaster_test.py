@@ -236,9 +236,9 @@ class TestCbfMaster:
         assert cbf_master_proxy.reportVCCState == (DevState.OFF,)*197
 
         # change some states
-        vcc_proxies[10].SetState(DevState.ON)
-        vcc_proxies[17].SetState(DevState.DISABLE)
-        vcc_proxies[196].SetState(DevState.STANDBY)
+        vcc_proxies[10].On()
+        vcc_proxies[17].Disable()
+        vcc_proxies[196].Standby()
         time.sleep(3)
         assert cbf_master_proxy.reportVCCState[10] == DevState.ON
         assert cbf_master_proxy.reportVCCState[17] == DevState.DISABLE

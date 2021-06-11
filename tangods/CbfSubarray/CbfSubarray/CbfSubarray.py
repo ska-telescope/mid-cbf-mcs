@@ -579,7 +579,6 @@ class CbfSubarray(SKASubarray):
                             self._raise_configure_scan_fatal_error(msg)
                     # If the search window configuration is valid for all VCCs,
                     # is is guaranteed to be valid for the CBF Subarray.
-                    # self.ConfigureSearchWindow(json.dumps(search_window))
 
             except (TypeError, AssertionError):  # searchWindow not the right length or not an array
                 msg = "'searchWindow' must be an array of maximum length 2. " \
@@ -677,10 +676,6 @@ class CbfSubarray(SKASubarray):
                     else:
                         fsp["frequencyBandOffsetStream2"] = 0
 
-                    # TODO: 
-                    # if "receptors" not in fsp:
-                    #     fsp["receptors"] = self._receptors
-
                     if argin["frequencyBand"] in ["5a", "5b"]:
                         fsp["band5Tuning"] = argin["band5Tuning"]
 
@@ -689,18 +684,9 @@ class CbfSubarray(SKASubarray):
                         if "receptors" not in fsp:
                             fsp["receptors"] = self._receptors
 
-                        # TODO remove
-                        # if "receptors" not in fsp:
-                        #     fsp["receptors"] = self._receptors
-
                         if "receptors" in fsp:
                             try:
-                                # TODO:  Why remove, add, remove?? 
-
-                                #proxy_fsp_subarray.RemoveAllReceptors()
-                                #proxy_fsp_subarray.AddReceptors(list(map(int, fsp["receptors"])))
-                                #proxy_fsp_subarray.RemoveAllReceptors()
-
+                                # TODO:  this 'try' is no longer needed
                                 for this_rec in fsp["receptors"]:
                                     if this_rec not in self._receptors:
                                         msg = ("Receptor {} does not belong to subarray {}.".format(
@@ -710,12 +696,6 @@ class CbfSubarray(SKASubarray):
                                         "ConfigureScan execution", tango.ErrSeverity.ERR)
 
                             except tango.DevFailed:  # error in AddReceptors()
-                                # TODO: Why? - it could have been a fail in RemoveReceptors!
-                                # or  in the other part of the code above
-                                
-                                # TODO - remove proxy_fsp_subarray.RemoveAllReceptors
-                                # TODO - remove the try/except
-                                # proxy_fsp_subarray.RemoveAllReceptors()
                                 msg = sys.exc_info()[1].args[0].desc + "\n'receptors' was malformed."
                                 self.logger.error(msg)
                                 tango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
@@ -977,14 +957,7 @@ class CbfSubarray(SKASubarray):
 
 
                     # --------------------------------------------------------
-
-
-                    ########## PSS-BF ##########
-
                     if fsp["functionMode"] == "PSS-BF":
-                        # TODO 
-                        # if "receptors" not in fsp:
-                        #     fsp["receptors"] = []  # not used in this case
 
                         if "searchWindowID" in fsp:
                             if int(fsp["searchWindowID"]) in [1, 2]:
@@ -1041,19 +1014,6 @@ class CbfSubarray(SKASubarray):
                                             self.logger.error(msg)
                                             tango.Except.throw_exception("Command failed", msg, 
                                             "ConfigureScan execution", tango.ErrSeverity.ERR)
-
-                                    # TODO: remove!
-                                    # try:
-                                    #     proxy_fsp_subarray.RemoveAllReceptors()
-                                    #     proxy_fsp_subarray.AddReceptors(list(map(int, searchBeam["receptors"])))
-                                    #     proxy_fsp_subarray.RemoveAllReceptors()
-
-                                    # except tango.DevFailed:  # error in AddReceptors()
-                                    #     proxy_fsp_subarray.RemoveAllReceptors()
-                                    #     msg = sys.exc_info()[1].args[0].desc + "\n'receptors' was malformed."
-                                    #     self.logger.error(msg)
-                                    #     tango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
-                                    #                                    tango.ErrSeverity.ERR)
 
                                     if "outputEnable" in searchBeam:
                                         if searchBeam["outputEnable"] is False or searchBeam["outputEnable"] is True:
@@ -1250,15 +1210,12 @@ class CbfSubarray(SKASubarray):
         self._group_fsp.command_inout("RemoveSubarrayMembership", data)
         self._group_fsp.remove_all()
 
-        # self._proxies_assigned_fsp.clear() # TODO Remove
 
         # remove channel info from FSP subarrays
         # already done in GoToIdle
         self._group_fsp_corr_subarray.remove_all()
         self._group_fsp_pss_subarray.remove_all()
         self._group_fsp_pst_subarray.remove_all()
-
-        # self._proxies_assigned_fsp_corr_subarray.clear() #TODO remove
 
         # reset all private dat to their initialization values:
         self._scan_ID = 0       
@@ -1284,10 +1241,6 @@ class CbfSubarray(SKASubarray):
     def _remove_receptors_helper(self, argin):
         """Helper function to remove receptors for removeAllReceptors. 
         Takes in a list of integers.
-
-        TODO: RemoveAllReceptors can't call RemoveReceptors anymore for 
-        lmc 0.6.0 because RemoveAllReceptors enters resourcing state 
-        before calling RemoveReceptors. Therefore this helper is useful.
         """
         receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
                                self._proxy_cbf_master.receptorToVcc)
@@ -1351,10 +1304,6 @@ class CbfSubarray(SKASubarray):
         dtype='str',
         doc="FQDN of CBF Master",
         default_value="mid_csp_cbf/sub_elt/master"
-    )
-
-    CorrConfigAddress = device_property(
-        dtype='str'
     )
 
     PssConfigAddress = device_property(
@@ -1554,15 +1503,6 @@ class CbfSubarray(SKASubarray):
             device.NUM_CHANNEL_GROUPS = const.NUM_CHANNEL_GROUPS
             device.NUM_FINE_CHANNELS = const.NUM_FINE_CHANNELS
 
-            # TODO - remove
-            # device._proxy_sw_1 = tango.DeviceProxy(device.SW1Address)
-            # device._proxy_sw_2 = tango.DeviceProxy(device.SW2Address)
-
-            # TODO: remove JSON FSP configurations for PSS, COR, PST, VLBI
-            #device._proxy_pss_config = tango.DeviceProxy(device.PssConfigAddress)
-            #device._proxy_corr_config = tango.DeviceProxy(device.CorrConfigAddress) # address of CbfSubarrayCoorConfig device in Subarray Multi
-            #device._proxy_pst_config = tango.DeviceProxy(device.PstConfigAddress)
-
             device._master_max_capabilities = dict(
                 pair.split(":") for pair in
                 device._proxy_cbf_master.get_property("MaxCapabilities")["MaxCapabilities"]
@@ -1585,10 +1525,6 @@ class CbfSubarray(SKASubarray):
             # Note vcc connected both individual and in group
             device._proxies_assigned_vcc = [] 
             device._proxies_assigned_fsp = []
-            # device._proxies_assigned_fsp = [] # TODO doesn't seem to be used remove 
-            # device._proxies_assigned_fsp_corr_subarray = [] # TODO doesn't seem to be used
-            # device._proxies_assigned_fsp_pss_subarray = [] # TODO doesn't seem to be used
-            # device._proxies_assigned_fsp_pst_subarray = []
 
             # store the subscribed telstate events as event_ID:attribute_proxy key:value pairs
             device._events_telstate = {}
@@ -1617,12 +1553,8 @@ class CbfSubarray(SKASubarray):
     def delete_device(self):
         # PROTECTED REGION ID(CbfSubarray.delete_device) ENABLED START #
         """hook to delete device. Set State to DISABLE, romove all receptors, go to OBsState IDLE"""
-        
-        #  TODO: I don't think these are necessary - to confirm
+
         pass
-        # self.GoToIdle()
-        # self.RemoveAllReceptors()
-        # self.set_state(tango.DevState.DISABLE)
         # PROTECTED REGION END #    //  CbfSubarray.delete_device
 
     # ------------------
@@ -1991,11 +1923,6 @@ class CbfSubarray(SKASubarray):
             # TODO - to clarify why can't call GoToIdle
             device._deconfigure()
 
-            # TODO - to remove
-            # data = tango.DeviceData()
-            # data.insert(tango.DevUShort, ObsState.CONFIGURING)
-            # device._group_vcc.command_inout("SetObservingState", data)
-
             argin = json.loads(argin)
             # set band5Tuning to [0,0] if not specified
             if "band5Tuning" not in argin: 
@@ -2015,12 +1942,8 @@ class CbfSubarray(SKASubarray):
             device._group_vcc.command_inout("ConfigureScan", data)
 
             time.sleep(3) # TODO - to remove
-
-            #  TODO - remove
-            # data = tango.DeviceData()
-            # data.insert(tango.DevString, argin["frequencyBand"])
-            # device._group_vcc.command_inout("SetFrequencyBand", data)
-
+            
+            # TODO: all these VCC params should be passed in via ConfigureScan()
             # Configure band5Tuning, if frequencyBand is 5a or 5b.
             if device._frequency_band in [4, 5]:
                 stream_tuning = [*map(float, argin["band5Tuning"])]
@@ -2119,14 +2042,9 @@ class CbfSubarray(SKASubarray):
                     data = tango.DeviceData()
                     data.insert(tango.DevString, json.dumps(search_window))
                     device._group_vcc.command_inout("ConfigureSearchWindow", data)
-                    #device.ConfigureSearchWindow(json.dumps(search_window)) #TODO remove
             else:
                 log_msg = "'searchWindow' not given."
                 self.logger.warn(log_msg)
-
-            # Configure configID
-            # TODO - remove - now  the id is configured with ConfigureScan
-            # device._group_vcc.write_attribute("configID",argin["id"])
 
             # TODO: the entire vcc configuration should move to Vcc
             # for now, run ConfigScan only wih the following data, so that
@@ -2189,15 +2107,6 @@ class CbfSubarray(SKASubarray):
                 fspID = int(fsp["fspID"])
                 proxy_fsp = device._proxies_fsp[fspID - 1]
 
-                # TODO - remove
-                # proxy_fsp_corr_subarray = device._proxies_fsp_corr_subarray[fspID - 1]
-                # proxy_fsp_pss_subarray = device._proxies_fsp_pss_subarray[fspID - 1]
-                # proxy_fsp_pst_subarray = device._proxies_fsp_pst_subarray[fspID - 1]
-                # device._proxies_assigned_fsp.append(proxy_fsp)
-                # device._proxies_assigned_fsp_corr_subarray.append(proxy_fsp_corr_subarray)
-                # device._proxies_assigned_fsp_pss_subarray.append(proxy_fsp_pss_subarray)
-                # device._proxies_assigned_fsp_pst_subarray.append(proxy_fsp_pst_subarray)
-
                 device._group_fsp.add(device._fqdn_fsp[fspID - 1])
                 device._group_fsp_corr_subarray.add(device._fqdn_fsp_corr_subarray[fspID - 1])
                 device._group_fsp_pss_subarray.add(device._fqdn_fsp_pss_subarray[fspID - 1])
@@ -2208,22 +2117,6 @@ class CbfSubarray(SKASubarray):
 
                 # Configure functionMode.
                 proxy_fsp.SetFunctionMode(fsp["functionMode"])
-
-                # TODO - Why are the next ~ lines needed??? Michelle xxxxxxxxxxxxxxxxx
-                        
-                # fsp["frequencyBand"] = argin["frequencyBand"]
-                # if "frequencyBandOffsetStream1" in argin:
-                #     fsp["frequencyBandOffsetStream1"] = device._frequency_band_offset_stream_1
-                # else:
-                #     fsp["frequencyBandOffsetStream1"] = 0
-                # if "frequencyBandOffsetStream2" in argin:
-                #     fsp["frequencyBandOffsetStream2"] = device._frequency_band_offset_stream_2
-                # else:
-                #     fsp["frequencyBandOffsetStream2"] = 0
-                # if "receptors" not in fsp:
-                #     fsp["receptors"] = device._receptors
-                # if device._frequency_band in [4, 5]:
-                #     fsp["band5Tuning"] = device._stream_tuning
 
                 # subscribe to FSP state and healthState changes
                 event_id_state, event_id_health_state = proxy_fsp.subscribe_event(
@@ -2238,7 +2131,7 @@ class CbfSubarray(SKASubarray):
                 device._events_state_change_fsp[int(fsp["fspID"])] = [event_id_state,
                                                                     event_id_health_state]
 
-            #save it into lastestScanConfig
+            #save it into latest_scan_config
             device._latest_scan_config=str(argin)
             message = "CBFSubarray Configure command completed OK"
             self.logger.info(message)
@@ -2263,155 +2156,6 @@ class CbfSubarray(SKASubarray):
         command = self.get_command_object("ConfigureScan")
         (return_code, message) = command(argin)
         return [[return_code], [message]]    
-
-    # TODO - remove as it is the same as in Vcc
-    # def is_ConfigureSearchWindow_allowed(self):
-    #     """subarray has to be On to configure searchwindow"""
-    #     if self.dev_state() == tango.DevState.ON:
-    #         return True
-    #     return False
-
-    # @command(
-    #     dtype_in='str',
-    #     doc_in='JSON object to configure a search window'
-    # )
-    # def ConfigureSearchWindow(self, argin):
-    #     # PROTECTED REGION ID(CbfSubarray.ConfigureSearchWindow) ENABLED START #
-    #     # This function is called after the configuration has already been validated,
-    #     # so the checks here have been removed to reduce overhead.
-    #     """revceives a JSON object to configure a search window"""
-
-    #     argin = json.loads(argin)
-
-    #     # variable to use as SW proxy
-    #     proxy_sw = 0
-
-    #     # Configure searchWindowID.
-    #     if int(argin["searchWindowID"]) == 1:
-    #         proxy_sw = self._proxy_sw_1
-    #     elif int(argin["searchWindowID"]) == 2:
-    #         proxy_sw = self._proxy_sw_2
-
-    #     # Configure searchWindowTuning.
-    #     if self._frequency_band in list(range(4)):  # frequency band is not band 5
-    #         proxy_sw.searchWindowTuning = argin["searchWindowTuning"]
-
-    #         frequency_band_range = [
-    #             const.FREQUENCY_BAND_1_RANGE,
-    #             const.FREQUENCY_BAND_2_RANGE,
-    #             const.FREQUENCY_BAND_3_RANGE,
-    #             const.FREQUENCY_BAND_4_RANGE
-    #         ][self._frequency_band]
-
-    #         if frequency_band_range[0] * 10 ** 9 + self._frequency_band_offset_stream_1 + \
-    #                 const.SEARCH_WINDOW_BW * 10 ** 6 / 2 <= \
-    #                 int(argin["searchWindowTuning"]) <= \
-    #                 frequency_band_range[1] * 10 ** 9 + self._frequency_band_offset_stream_1 - \
-    #                 const.SEARCH_WINDOW_BW * 10 ** 6 / 2:
-    #             # this is the acceptable range
-    #             pass
-    #         else:
-    #             # log a warning message
-    #             log_msg = "'searchWindowTuning' partially out of observed band. " \
-    #                       "Proceeding."
-    #             self.logger.warn(log_msg)
-    #     else:  # frequency band 5a or 5b (two streams with bandwidth 2.5 GHz)
-    #         proxy_sw.searchWindowTuning = argin["searchWindowTuning"]
-
-    #         frequency_band_range_1 = (
-    #             self._stream_tuning[0] * 10 ** 9 + self._frequency_band_offset_stream_1 - \
-    #             const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2,
-    #             self._stream_tuning[0] * 10 ** 9 + self._frequency_band_offset_stream_1 + \
-    #             const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2
-    #         )
-
-    #         frequency_band_range_2 = (
-    #             self._stream_tuning[1] * 10 ** 9 + self._frequency_band_offset_stream_2 - \
-    #             const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2,
-    #             self._stream_tuning[1] * 10 ** 9 + self._frequency_band_offset_stream_2 + \
-    #             const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2
-    #         )
-
-    #         if (frequency_band_range_1[0] + \
-    #             const.SEARCH_WINDOW_BW * 10 ** 6 / 2 <= \
-    #             int(argin["searchWindowTuning"]) <= \
-    #             frequency_band_range_1[1] - \
-    #             const.SEARCH_WINDOW_BW * 10 ** 6 / 2) or \
-    #                 (frequency_band_range_2[0] + \
-    #                  const.SEARCH_WINDOW_BW * 10 ** 6 / 2 <= \
-    #                  int(argin["searchWindowTuning"]) <= \
-    #                  frequency_band_range_2[1] - \
-    #                  const.SEARCH_WINDOW_BW * 10 ** 6 / 2):
-    #             # this is the acceptable range
-    #             pass
-    #         else:
-    #             # log a warning message
-    #             log_msg = "'searchWindowTuning' partially out of observed band. " \
-    #                       "Proceeding."
-    #             self.logger.warn(log_msg)
-
-    #     # Configure tdcEnable.
-    #     proxy_sw.tdcEnable = argin["tdcEnable"]
-    #     if argin["tdcEnable"]:
-    #         # transition to ON if TDC is enabled
-    #         proxy_sw.SetState(tango.DevState.ON)
-    #     else:
-    #         proxy_sw.SetState(tango.DevState.DISABLE)
-
-    #     # Configure tdcNumBits.
-    #     if argin["tdcEnable"]:
-    #         proxy_sw.tdcNumBits = int(argin["tdcNumBits"])
-
-    #     # Configure tdcPeriodBeforeEpoch.
-    #     if "tdcPeriodBeforeEpoch" in argin:
-    #         proxy_sw.tdcPeriodBeforeEpoch = int(argin["tdcPeriodBeforeEpoch"])
-    #     else:
-    #         proxy_sw.tdcPeriodBeforeEpoch = 2
-    #         log_msg = "Search window specified, but 'tdcPeriodBeforeEpoch' not given. " \
-    #                   "Defaulting to 2."
-    #         self.logger.warn(log_msg)
-
-    #     # Configure tdcPeriodAfterEpoch.
-    #     if "tdcPeriodAfterEpoch" in argin:
-    #         proxy_sw.tdcPeriodAfterEpoch = int(argin["tdcPeriodAfterEpoch"])
-    #     else:
-    #         proxy_sw.tdcPeriodAfterEpoch = 22
-    #         log_msg = "Search window specified, but 'tdcPeriodAfterEpoch' not given. " \
-    #                   "Defaulting to 22."
-    #         self.logger.warn(log_msg)
-
-    #     # `Configure tdcDestinationAddress.`
-    #     if argin["tdcEnable"]:
-    #         # TODO: validate input
-    #         proxy_sw.tdcDestinationAddress = \
-    #             json.dumps(argin["tdcDestinationAddress"])
-
-    #     # PROTECTED REGION END #    //  CbfSubarray.ConfigureSearchWindow
-
-
-
-    ############################################   Scan Related Commands  ###############################################
-    # def is_Scan_allowed(self):
-    #     """allowed if Subarray is ON, and ObsState Ready."""
-    #     if self.dev_state() == tango.DevState.ON:
-    #         if self.state_model._obs_state==ObsState.READY.value:
-    #             return True
-    #     return False
-
-    # TODO - remove
-    # @command(
-    #     dtype_in='uint',
-    #     doc_in="Scan ID",
-    #     dtype_out='DevVarLongStringArray',
-    #     doc_out="(ReturnType, 'informational message')",
-    # )
-    # def Scan(self, argin):
-    #     """
-    #     Start Scan
-    #     """
-    #     command = self.get_command_object("StartScan")
-    #     (return_code, message) = command(argin)
-    #     return [[return_code], [message]]
 
     class ScanCommand(SKASubarray.ScanCommand):
         """
@@ -2438,9 +2182,6 @@ class CbfSubarray(SKASubarray):
             data.insert(tango.DevString, argin)
             device._group_vcc.command_inout("Scan", data)
 
-            # TODO - to remove these 2 lines
-            # data = tango.DeviceData()
-            # data.insert(tango.DevUShort, int(argin) % (2**16))
             device._group_fsp_corr_subarray.command_inout("Scan", data)
             device._group_fsp_pss_subarray.command_inout("Scan", data)
             device._group_fsp_pst_subarray.command_inout("Scan", data)
