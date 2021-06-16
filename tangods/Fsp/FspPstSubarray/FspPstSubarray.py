@@ -283,16 +283,14 @@ class FspPstSubarray(SKASubarray):
         argin = json.loads(argin)
 
         # Configure receptors.
-        self.RemoveAllReceptors()
-        self.AddReceptors(map(int, argin["receptors"]))
         self._fsp_id = argin["fspID"]
         self._timing_beams = []
         self._timing_beam_id = []
         self._receptors = []
 
         for timingBeam in argin["timingBeam"]:
+            self.AddReceptors(map(int, timingBeam["receptors"]))
             self._timing_beams.append(json.dumps(timingBeam))
-            self._receptors.extend(timingBeam["receptors"])
             self._timing_beam_id.append(int(timingBeam["timingBeamID"]))
 
         # fspPstSubarray moves to READY after configuration
@@ -320,6 +318,11 @@ class FspPstSubarray(SKASubarray):
     def GoToIdle(self):
         """ObsState to IDLE"""
         # PROTECTED REGION ID(FspPstSubarray.GoToIdle) ENABLED START #
+        # initialize attribute values
+        self._timing_beams = []
+        self._timing_beam_id = []
+        self._output_enable = 0
+        self.RemoveAllReceptors()
         # transition to obsState=IDLE
         self._obs_state = ObsState.IDLE
         # PROTECTED REGION END #    //  FspPstSubarray.GoToIdle

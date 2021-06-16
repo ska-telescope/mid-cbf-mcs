@@ -631,8 +631,6 @@ class FspCorrSubarray(CspSubElementObsDevice):
 
             # Configure receptors.
             
-            # TODO: _RemoveAllReceptors shoud not be needed because it is
-            #        applied in GoToIdle()
             # TODO: to rename to _remove_all_receptors
             device._RemoveAllReceptors()
             device._AddReceptors(map(int, argin["receptors"]))

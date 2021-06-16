@@ -1,0 +1,135 @@
+{
+    "common": 
+    {
+        "id": "band:5a, fsp1, 744 channels average factor 8",
+        "frequencyBand": "5a",
+        "band5Tuning": [5.85, 7.25]
+    },
+    "cbf": 
+    {
+        "frequencyBandOffsetStream1": 0,
+        "frequencyBandOffsetStream2": 0,
+        "dopplerPhaseCorrSubscriptionPoint": "ska_mid/tm_leaf_node/csp_subarray_01/dopplerPhaseCorrection",
+        "jonesMatrixSubscriptionPoint": "ska_mid/tm_leaf_node/csp_subarray_01/jonesMatrix",
+        "delayModelSubscriptionPoint": "ska_mid/tm_leaf_node/csp_subarray_01/delayModel",
+        "beamWeightsSubscriptionPoint": "ska_mid/tm_leaf_node/csp_subarray_01/beamWeights",
+        "rfiFlaggingMask": {},
+        "searchWindow": [
+            {
+                "searchWindowID": 1,
+                "searchWindowTuning": 6000000000,
+                "tdcEnable": true,
+                "tdcNumBits": 8,
+                "tdcPeriodBeforeEpoch": 5,
+                "tdcPeriodAfterEpoch": 25,
+                "tdcDestinationAddress": [
+                    {
+                        "receptorID": 4,
+                        "tdcDestinationAddress": ["foo", "bar", "8080"]
+                    },
+                    {
+                        "receptorID": 1,
+                        "tdcDestinationAddress": ["fizz", "buzz", "80"]
+                    }
+                ]
+            },
+            {
+                "searchWindowID": 2,
+                "searchWindowTuning": 7000000000,
+                "tdcEnable": false
+            }
+        ],
+        "fsp": [
+            {
+                "fspID": 1,
+                "functionMode": "CORR",
+                "receptors": [4],
+                "frequencySliceID": 1,
+                "corrBandwidth": 1,
+                "zoomWindowTuning": 4700000,
+                "integrationTime": 140,
+                "fspChannelOffset": 14880,
+                "channelAveragingMap": [
+                    [0, 8],
+                    [744, 8],
+                    [1488, 8],
+                    [2232, 8],
+                    [2976, 8],
+                    [3720, 8],
+                    [4464, 8],
+                    [5208, 8],
+                    [5952, 8],
+                    [6696, 8],
+                    [7440, 8],
+                    [8184, 8],
+                    [8928, 8],
+                    [9672, 8],
+                    [10416,8],
+                    [11160, 8],
+                    [11904, 8],
+                    [12648, 8],
+                    [13392, 8],
+                    [14136, 8]
+                ],
+                "outputLinkMap": [ 
+                    [0, 4],
+                    [744, 8],
+                    [1488, 12],
+                    [2232, 16],
+                    [2976, 20],
+                    [3720, 24],
+                    [4464, 28],
+                    [5206, 32],
+                    [5952, 36],
+                    [6696, 40],
+                    [7440, 44],
+                    [8184, 48],
+                    [8928, 52],
+                    [9672, 56],
+                    [10416, 60],
+                    [11160, 64],
+                    [11904, 68],
+                    [12648, 72],
+                    [13392, 76],
+                    [14136, 80]
+                ],
+                "outputHost": [[0, "192.168.0.1"], [8184, "192.168.0.2"]],
+                "outputMac": [[0, "06-00-00-00-00-01"]],
+                "outputPort": [[0, 9000, 1], [8184, 9000, 1]]
+            },
+            {
+                "fspID": 3,
+                "functionMode": "PSS-BF",
+                "searchWindowID": 2,
+                "searchBeam": [
+                    {
+                        "searchBeamID": 300,
+                        "receptors": [3],
+                        "outputEnable": true,
+                        "averagingInterval": 4,
+                        "searchBeamDestinationAddress": "10.1.1.1"
+                    },
+                    {
+                        "searchBeamID": 400,
+                        "receptors": [1],
+                        "outputEnable": true,
+                        "averagingInterval": 2,
+                        "searchBeamDestinationAddress": "10.1.2.1"
+                    }
+                ]
+            },
+            {
+                "fspID": 2,
+                "functionMode": "PST-BF",
+                "timingBeam": [
+                    {
+                        "timingBeamID": 10,
+                        "receptors": [4],
+                        "outputEnable": true,
+                        "timingBeamDestinationAddress": "10.1.1.1"
+                    }
+                ]
+            }
+        ]
+    }
+}

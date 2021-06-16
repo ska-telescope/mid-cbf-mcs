@@ -237,6 +237,7 @@ class FspPssSubarray(CspSubElementObsDevice):
 
     def _AddReceptors(self, receptorIDs):
         """add specified receptors to the FSP subarray. Input is array of int."""
+        self.logger.debug("_AddReceptors")
         errs = []  # list of error messages
         receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
                                self._proxy_cbf_master.receptorToVcc)
@@ -271,6 +272,7 @@ class FspPssSubarray(CspSubElementObsDevice):
 
     def _remove_receptors(self, argin):
         """Remove Receptors. Input is array of int"""
+        self.logger.debug("_remove_receptors")
         for receptorID in argin:
             if receptorID in self._receptors:
                 self._receptors.remove(receptorID)
@@ -312,8 +314,6 @@ class FspPssSubarray(CspSubElementObsDevice):
             argin = json.loads(argin)
 
             # Configure receptors.
-            # TODO - this removeAll can be taken out as it is done in GoToIdle()
-            device._RemoveAllReceptors()
             self.logger.debug("_receptors = {}".format(device._receptors))
 
             device._fsp_id = argin["fspID"]

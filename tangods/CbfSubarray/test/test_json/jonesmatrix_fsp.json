@@ -7,7 +7,7 @@
                     "receptor": 1,
                     "receptorMatrix": [
                         {
-                            "fsid": 3,
+                            "fsid": 2,
                             "matrix": [
                                 0.0,
                                 1.0,
@@ -33,7 +33,7 @@
                     "receptor": 3,
                     "receptorMatrix": [
                         {
-                            "fsid": 3,
+                            "fsid": 2,
                             "matrix": [
                                 0.0,
                                 1.0,
@@ -61,24 +61,10 @@
             "destinationType": "fsp",
             "matrixDetails": [
                 {
-                    "receptor": 1,
+                    "receptor": 2,
                     "receptorMatrix": [
                         {
-                            "fsid": 3,
-                            "matrix": [
-                                0.0,
-                                2.0,
-                                4.0,
-                                6.0
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "receptor": 3,
-                    "receptorMatrix": [
-                        {
-                            "fsid": 3,
+                            "fsid": 2,
                             "matrix": [
                                 0.0,
                                 2.0,
@@ -97,7 +83,7 @@
                     "receptor": 1,
                     "receptorMatrix": [
                         {
-                            "fsid": 3,
+                            "fsid": 2,
                             "matrix": [
                                 0.0,
                                 3.0,
@@ -123,7 +109,7 @@
                     "receptor": 3,
                     "receptorMatrix": [
                         {
-                            "fsid": 3,
+                            "fsid": 2,
                             "matrix": [
                                 0.0,
                                 3.0,
@@ -151,24 +137,10 @@
             "destinationType": "fsp",
             "matrixDetails": [
                 {
-                    "receptor": 1,
+                    "receptor": 2,
                     "receptorMatrix": [
                         {
-                            "fsid": 3,
-                            "matrix": [
-                                0.0,
-                                4.0,
-                                8.0,
-                                12.0
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "receptor": 3,
-                    "receptorMatrix": [
-                        {
-                            "fsid": 3,
+                            "fsid": 2,
                             "matrix": [
                                 0.0,
                                 4.0,
@@ -184,24 +156,10 @@
             "destinationType": "fsp",
             "matrixDetails": [
                 {
-                    "receptor": 1,
+                    "receptor": 2,
                     "receptorMatrix": [
                         {
-                            "fsid": 3,
-                            "matrix": [
-                                0.0,
-                                5.0,
-                                10.0,
-                                15.0
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "receptor": 3,
-                    "receptorMatrix": [
-                        {
-                            "fsid": 3,
+                            "fsid": 2,
                             "matrix": [
                                 0.0,
                                 5.0,

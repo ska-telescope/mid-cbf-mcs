@@ -844,174 +844,174 @@ class Vcc(CspSubElementObsDevice):
                                          tango.ErrSeverity.ERR)
 
         # Validate searchWindowID.
-        if "searchWindowID" in argin:
-            if int(argin["searchWindowID"]) in [1, 2]:
-                pass
-            else:  # searchWindowID not in valid range
-                msg = "'searchWindowID' must be one of [1, 2] (received {}).".format(
-                    str(argin["searchWindowID"])
-                )
-                self.logger.error(msg)
-                tango.Except.throw_exception("Command failed", msg,
-                                             "ConfigureSearchWindow execution",
-                                             tango.ErrSeverity.ERR)
-        else:
-            msg = "Search window specified, but 'searchWindowID' not given."
-            self.logger.error(msg)
-            tango.Except.throw_exception("Command failed", msg, "ConfigureSearchWindow execution",
-                                         tango.ErrSeverity.ERR)
+        # if "searchWindowID" in argin:
+        #     if int(argin["searchWindowID"]) in [1, 2]:
+        #         pass
+        #     else:  # searchWindowID not in valid range
+        #         msg = "'searchWindowID' must be one of [1, 2] (received {}).".format(
+        #             str(argin["searchWindowID"])
+        #         )
+        #         self.logger.error(msg)
+        #         tango.Except.throw_exception("Command failed", msg,
+        #                                      "ConfigureSearchWindow execution",
+        #                                      tango.ErrSeverity.ERR)
+        # else:
+        #     msg = "Search window specified, but 'searchWindowID' not given."
+        #     self.logger.error(msg)
+        #     tango.Except.throw_exception("Command failed", msg, "ConfigureSearchWindow execution",
+        #                                  tango.ErrSeverity.ERR)
 
         # Validate searchWindowTuning.
-        if "searchWindowTuning" in argin:
-            freq_band_name = argin["frequencyBand"]
-            if freq_band_name not in ["5a", "5b"]:  # frequency band is not band 5
+        # if "searchWindowTuning" in argin:
+        #     freq_band_name = argin["frequencyBand"]
+        #     if freq_band_name not in ["5a", "5b"]:  # frequency band is not band 5
                 
-                frequencyBand_mi = freq_band_dict()[freq_band_name]
+        #         frequencyBand_mi = freq_band_dict()[freq_band_name]
                 
-                frequencyBand = ["1", "2", "3", "4", "5a", "5b"].index(argin["frequencyBand"])
+        #         frequencyBand = ["1", "2", "3", "4", "5a", "5b"].index(argin["frequencyBand"])
 
-                assert frequencyBand_mi == frequencyBand
+        #         assert frequencyBand_mi == frequencyBand
                 
-                start_freq_Hz, stop_freq_Hz = [
-                    const.FREQUENCY_BAND_1_RANGE_HZ,
-                    const.FREQUENCY_BAND_2_RANGE_HZ,
-                    const.FREQUENCY_BAND_3_RANGE_HZ,
-                    const.FREQUENCY_BAND_4_RANGE_HZ
-                ][frequencyBand]
+        #         start_freq_Hz, stop_freq_Hz = [
+        #             const.FREQUENCY_BAND_1_RANGE_HZ,
+        #             const.FREQUENCY_BAND_2_RANGE_HZ,
+        #             const.FREQUENCY_BAND_3_RANGE_HZ,
+        #             const.FREQUENCY_BAND_4_RANGE_HZ
+        #         ][frequencyBand]
 
-                self.logger.debug("start_freq_Hz = {}".format(start_freq_Hz)) 
-                self.logger.debug("stop_freq_Hz = {}".format(stop_freq_Hz)) 
+        #         self.logger.debug("start_freq_Hz = {}".format(start_freq_Hz)) 
+        #         self.logger.debug("stop_freq_Hz = {}".format(stop_freq_Hz)) 
 
-                if start_freq_Hz + argin["frequencyBandOffsetStream1"] <= \
-                        int(argin["searchWindowTuning"]) <= \
-                        stop_freq_Hz + argin["frequencyBandOffsetStream1"]:
-                    pass
-                else:
-                    msg = "'searchWindowTuning' must be within observed band."
-                    self.logger.error(msg)
-                    tango.Except.throw_exception("Command failed", msg,
-                                                 "ConfigureSearchWindow execution",
-                                                 tango.ErrSeverity.ERR)
-            else:  # frequency band 5a or 5b (two streams with bandwidth 2.5 GHz)
-                if argin["band5Tuning"]==[0,0]: # band 5 tuning not specified in configuration
-                    pass
-                else:
-                    frequency_band_range_1 = (
-                        argin["band5Tuning"][0] * 10 ** 9 + argin["frequencyBandOffsetStream1"] - \
-                        const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2,
-                        argin["band5Tuning"][0] * 10 ** 9 + argin["frequencyBandOffsetStream1"] + \
-                        const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2
-                    )
+        #         if start_freq_Hz + argin["frequencyBandOffsetStream1"] <= \
+        #                 int(argin["searchWindowTuning"]) <= \
+        #                 stop_freq_Hz + argin["frequencyBandOffsetStream1"]:
+        #             pass
+        #         else:
+        #             msg = "'searchWindowTuning' must be within observed band."
+        #             self.logger.error(msg)
+        #             tango.Except.throw_exception("Command failed", msg,
+        #                                          "ConfigureSearchWindow execution",
+        #                                          tango.ErrSeverity.ERR)
+        #     else:  # frequency band 5a or 5b (two streams with bandwidth 2.5 GHz)
+        #         if argin["band5Tuning"]==[0,0]: # band 5 tuning not specified in configuration
+        #             pass
+        #         else:
+        #             frequency_band_range_1 = (
+        #                 argin["band5Tuning"][0] * 10 ** 9 + argin["frequencyBandOffsetStream1"] - \
+        #                 const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2,
+        #                 argin["band5Tuning"][0] * 10 ** 9 + argin["frequencyBandOffsetStream1"] + \
+        #                 const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2
+        #             )
 
-                    frequency_band_range_2 = (
-                        argin["band5Tuning"][1] * 10 ** 9 + argin["frequencyBandOffsetStream2"] - \
-                        const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2,
-                        argin["band5Tuning"][1] * 10 ** 9 + argin["frequencyBandOffsetStream2"] + \
-                        const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2
-                    )
+        #             frequency_band_range_2 = (
+        #                 argin["band5Tuning"][1] * 10 ** 9 + argin["frequencyBandOffsetStream2"] - \
+        #                 const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2,
+        #                 argin["band5Tuning"][1] * 10 ** 9 + argin["frequencyBandOffsetStream2"] + \
+        #                 const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2
+        #             )
 
-                    if (frequency_band_range_1[0] <= \
-                        int(argin["searchWindowTuning"]) <= \
-                        frequency_band_range_1[1]) or \
-                            (frequency_band_range_2[0] <= \
-                            int(argin["searchWindowTuning"]) <= \
-                            frequency_band_range_2[1]):
-                        pass
-                    else:
-                        msg = "'searchWindowTuning' must be within observed band."
-                        self.logger.error(msg)
-                        tango.Except.throw_exception("Command failed", msg,
-                                                    "ConfigureSearchWindow execution",
-                                                    tango.ErrSeverity.ERR)
-        else:
-            msg = "Search window specified, but 'searchWindowTuning' not given."
-            self.logger.error(msg)
-            tango.Except.throw_exception("Command failed", msg, "ConfigureSearchWindow execution",
-                                         tango.ErrSeverity.ERR)
+        #             if (frequency_band_range_1[0] <= \
+        #                 int(argin["searchWindowTuning"]) <= \
+        #                 frequency_band_range_1[1]) or \
+        #                     (frequency_band_range_2[0] <= \
+        #                     int(argin["searchWindowTuning"]) <= \
+        #                     frequency_band_range_2[1]):
+        #                 pass
+        #             else:
+        #                 msg = "'searchWindowTuning' must be within observed band."
+        #                 self.logger.error(msg)
+        #                 tango.Except.throw_exception("Command failed", msg,
+        #                                             "ConfigureSearchWindow execution",
+        #                                             tango.ErrSeverity.ERR)
+        # else:
+        #     msg = "Search window specified, but 'searchWindowTuning' not given."
+        #     self.logger.error(msg)
+        #     tango.Except.throw_exception("Command failed", msg, "ConfigureSearchWindow execution",
+        #                                  tango.ErrSeverity.ERR)
 
         # Validate tdcEnable.
-        if "tdcEnable" in argin:
-            if argin["tdcEnable"] in [True, False]:
-                pass
-            else:
-                msg = "Search window specified, but 'tdcEnable' not given."
-                self.logger.error(msg)
-                tango.Except.throw_exception("Command failed", msg,
-                                             "ConfigureSearchWindow execution",
-                                             tango.ErrSeverity.ERR)
-        else:
-            msg = "Search window specified, but 'tdcEnable' not given."
-            self.logger.error(msg)
-            tango.Except.throw_exception("Command failed", msg, "ConfigureSearchWindow execution",
-                                         tango.ErrSeverity.ERR)
+        # if "tdcEnable" in argin:
+        #     if argin["tdcEnable"] in [True, False]:
+        #         pass
+        #     else:
+        #         msg = "Search window specified, but 'tdcEnable' not given."
+        #         self.logger.error(msg)
+        #         tango.Except.throw_exception("Command failed", msg,
+        #                                      "ConfigureSearchWindow execution",
+        #                                      tango.ErrSeverity.ERR)
+        # else:
+        #     msg = "Search window specified, but 'tdcEnable' not given."
+        #     self.logger.error(msg)
+        #     tango.Except.throw_exception("Command failed", msg, "ConfigureSearchWindow execution",
+        #                                  tango.ErrSeverity.ERR)
 
         # Validate tdcNumBits.
-        if argin["tdcEnable"]:
-            if "tdcNumBits" in argin:
-                if int(argin["tdcNumBits"]) in [2, 4, 8]:
-                    pass
-                else:
-                    msg = "'tdcNumBits' must be one of [2, 4, 8] (received {}).".format(
-                        str(argin["tdcNumBits"])
-                    )
-                    self.logger.error(msg)
-                    tango.Except.throw_exception("Command failed", msg,
-                                                 "ConfigureSearchWindow execution",
-                                                 tango.ErrSeverity.ERR)
-            else:
-                msg = "Search window specified with TDC enabled, but 'tdcNumBits' not given."
-                self.logger.error(msg)
-                tango.Except.throw_exception("Command failed", msg,
-                                             "ConfigureSearchWindow execution",
-                                             tango.ErrSeverity.ERR)
+        # if argin["tdcEnable"]:
+        #     if "tdcNumBits" in argin:
+        #         if int(argin["tdcNumBits"]) in [2, 4, 8]:
+        #             pass
+        #         else:
+        #             msg = "'tdcNumBits' must be one of [2, 4, 8] (received {}).".format(
+        #                 str(argin["tdcNumBits"])
+        #             )
+        #             self.logger.error(msg)
+        #             tango.Except.throw_exception("Command failed", msg,
+        #                                          "ConfigureSearchWindow execution",
+        #                                          tango.ErrSeverity.ERR)
+        #     else:
+        #         msg = "Search window specified with TDC enabled, but 'tdcNumBits' not given."
+        #         self.logger.error(msg)
+        #         tango.Except.throw_exception("Command failed", msg,
+        #                                      "ConfigureSearchWindow execution",
+        #                                      tango.ErrSeverity.ERR)
 
         # Validate tdcPeriodBeforeEpoch.
-        if "tdcPeriodBeforeEpoch" in argin:
-            if int(argin["tdcPeriodBeforeEpoch"]) > 0:
-                pass
-            else:
-                msg = "'tdcPeriodBeforeEpoch' must be a positive integer (received {}).".format(
-                    str(argin["tdcPeriodBeforeEpoch"])
-                )
-                self.logger.error(msg)
-                tango.Except.throw_exception("Command failed", msg,
-                                             "ConfigureSearchWindow execution",
-                                             tango.ErrSeverity.ERR)
-        else:
-            pass
+        # if "tdcPeriodBeforeEpoch" in argin:
+        #     if int(argin["tdcPeriodBeforeEpoch"]) > 0:
+        #         pass
+        #     else:
+        #         msg = "'tdcPeriodBeforeEpoch' must be a positive integer (received {}).".format(
+        #             str(argin["tdcPeriodBeforeEpoch"])
+        #         )
+        #         self.logger.error(msg)
+        #         tango.Except.throw_exception("Command failed", msg,
+        #                                      "ConfigureSearchWindow execution",
+        #                                      tango.ErrSeverity.ERR)
+        # else:
+        #     pass
 
         # Validate tdcPeriodAfterEpoch.
-        if "tdcPeriodAfterEpoch" in argin:
-            if int(argin["tdcPeriodAfterEpoch"]) > 0:
-                pass
-            else:
-                msg = "'tdcPeriodAfterEpoch' must be a positive integer (received {}).".format(
-                    str(argin["tdcPeriodAfterEpoch"])
-                )
-                self.logger.error(msg)
-                tango.Except.throw_exception("Command failed", msg,
-                                             "ConfigureSearchWindow execution",
-                                             tango.ErrSeverity.ERR)
-        else:
-            pass
+        # if "tdcPeriodAfterEpoch" in argin:
+        #     if int(argin["tdcPeriodAfterEpoch"]) > 0:
+        #         pass
+        #     else:
+        #         msg = "'tdcPeriodAfterEpoch' must be a positive integer (received {}).".format(
+        #             str(argin["tdcPeriodAfterEpoch"])
+        #         )
+        #         self.logger.error(msg)
+        #         tango.Except.throw_exception("Command failed", msg,
+        #                                      "ConfigureSearchWindow execution",
+        #                                      tango.ErrSeverity.ERR)
+        # else:
+        #     pass
 
         # Validate tdcDestinationAddress.
-        if argin["tdcEnable"]:
-            try:
-                for receptor in argin["tdcDestinationAddress"]:
-                    # if int(receptor["receptorID"]) == self._receptor_ID:
-                    # TODO: validate input
-                    break
-                else:  # receptorID not found
-                    raise KeyError  # just handle all the errors in one place
-            except KeyError:
-                # tdcDestinationAddress not given or receptorID not in tdcDestinationAddress
-                msg = "Search window specified with TDC enabled, but 'tdcDestinationAddress' " \
-                      "not given or missing receptors."
-                self.logger.error(msg)
-                tango.Except.throw_exception("Command failed", msg,
-                                             "ConfigureSearchWindow execution",
-                                             tango.ErrSeverity.ERR)
+        # if argin["tdcEnable"]:
+        #     try:
+        #         for receptor in argin["tdcDestinationAddress"]:
+        #             # if int(receptor["receptorID"]) == self._receptor_ID:
+        #             # TODO: validate input
+        #             break
+        #         else:  # receptorID not found
+        #             raise KeyError  # just handle all the errors in one place
+        #     except KeyError:
+        #         # tdcDestinationAddress not given or receptorID not in tdcDestinationAddress
+        #         msg = "Search window specified with TDC enabled, but 'tdcDestinationAddress' " \
+        #               "not given or missing receptors."
+        #         self.logger.error(msg)
+        #         tango.Except.throw_exception("Command failed", msg,
+        #                                      "ConfigureSearchWindow execution",
+        #                                      tango.ErrSeverity.ERR)
 
     def is_ConfigureSearchWindow_allowed(self):
         """allowed if DevState is ON and ObsState is CONFIGURING"""

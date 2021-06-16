@@ -479,11 +479,11 @@ class Fsp(SKACapability):
                                     self._jones_matrix[rec_id - 1] = matrix.copy()
                                 else:
                                     log_msg = "'matrix' not valid length for frequency slice {} of " \
-                                            "receptor {}".format(fs_id, self._receptor_ID)
+                                            "receptor {}".format(fs_id, rec_id)
                                     self.logger.error(log_msg)
                             else:
                                 log_msg = "'fsid' {} not valid for receptor {}".format(
-                                    fs_id, self._receptor_ID
+                                    fs_id, rec_id
                                 )
                                 self.logger.error(log_msg)
         else:
@@ -526,11 +526,11 @@ class Fsp(SKACapability):
                                     self._delay_model[rec_id - 1] = model.copy()
                                 else:
                                     log_msg = "'model' not valid length for frequency slice {} of " \
-                                            "receptor {}".format(fs_id, self._receptor_ID)
+                                            "receptor {}".format(fs_id, rec_id)
                                     self.logger.error(log_msg)
                             else:
                                 log_msg = "'fsid' {} not valid for receptor {}".format(
-                                    fs_id, self._receptor_ID
+                                    fs_id, rec_id
                                 )
                                 self.logger.error(log_msg)
         else:
@@ -556,32 +556,25 @@ class Fsp(SKACapability):
 
         # update if current function mode is PST-BF
         if self._function_mode == 3:
-            self.logger.debug("function mode PST")
             argin = json.loads(argin)
             for i in self._subarray_membership:
-                self.logger.debug("subarray membership")
                 proxy = self._proxy_fsp_pst_subarray[i - 1]
                 for receptor in argin:
-                    self.logger.debug("receptor")
                     rec_id = int(receptor["receptor"])
                     if rec_id in proxy.receptors:
-                        self.logger.debug("rec id")
                         for frequency_slice in receptor["receptorWeightsDetails"]:
-                            self.logger.debug("freq slice")
                             fs_id = frequency_slice["fsid"]
                             weights = frequency_slice["weights"]
                             if fs_id == self._fsp_id:
-                                self.logger.debug("fsid")
                                 if len(weights) == 6:
-                                    self.logger.debug("len")
                                     self._timing_beam_weights[rec_id - 1] = weights.copy()
                                 else:
                                     log_msg = "'weights' not valid length for frequency slice {} of " \
-                                            "receptor {}".format(fs_id, self._receptor_ID)
+                                            "receptor {}".format(fs_id, rec_id)
                                     self.logger.error(log_msg)
                             else:
                                 log_msg = "'fsid' {} not valid for receptor {}".format(
-                                    fs_id, self._receptor_ID
+                                    fs_id, rec_id
                                 )
                                 self.logger.error(log_msg)
         else:
