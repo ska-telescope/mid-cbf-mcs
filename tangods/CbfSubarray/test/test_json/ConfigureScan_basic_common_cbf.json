@@ -1,55 +1,54 @@
 {
-    "common": 
-    {
-        "id": "band:5a, fsp1, 744 channels average factor 8",
-        "frequencyBand": "5a",
-        "band5Tuning": [5.85, 7.25]
+    "common": {
+        "sbi_id": "band:5a, fsp1, 744 channels average factor 8",
+        "frequency_band": "5a",
+        "band_5_tuning": [5.85, 7.25],
+        "subarray_id": 1
     },
-    "cbf": 
-    {
-        "frequencyBandOffsetStream1": 0,
-        "frequencyBandOffsetStream2": 0,
-        "dopplerPhaseCorrSubscriptionPoint": "ska_mid/tm_leaf_node/csp_subarray_01/dopplerPhaseCorrection",
-        "jonesMatrixSubscriptionPoint": "ska_mid/tm_leaf_node/csp_subarray_01/jonesMatrix",
-        "delayModelSubscriptionPoint": "ska_mid/tm_leaf_node/csp_subarray_01/delayModel",
-        "beamWeightsSubscriptionPoint": "ska_mid/tm_leaf_node/csp_subarray_01/beamWeights",
-        "rfiFlaggingMask": {},
-        "searchWindow": [
+    "cbf": {
+        "frequency_band_offset_stream_1": 0,
+        "frequency_band_offset_stream_2": 0,
+        "doppler_phase_corr_subscription_point": "ska_mid/tm_leaf_node/csp_subarray_01/dopplerPhaseCorrection",
+        "jones_matrix_subscription_point": "ska_mid/tm_leaf_node/csp_subarray_01/jonesMatrix",
+        "delay_model_subscription_point": "ska_mid/tm_leaf_node/csp_subarray_01/delayModel",
+        "timing_beam_weights_subscription_point": "ska_mid/tm_leaf_node/csp_subarray_01/beamWeights",
+        "rfi_flagging_mask": {},
+        "search_window": [
             {
-                "searchWindowID": 1,
-                "searchWindowTuning": 6000000000,
-                "tdcEnable": true,
-                "tdcNumBits": 8,
-                "tdcPeriodBeforeEpoch": 5,
-                "tdcPeriodAfterEpoch": 25,
-                "tdcDestinationAddress": [
+                "search_window_id": 1,
+                "search_window_tuning": 6000000000,
+                "tdc_enable": true,
+                "tdc_num_bits": 8,
+                "tdc_period_before_epoch": 5,
+                "tdc_period_after_epoch": 25,
+                "tdc_destination_address": [
                     {
-                        "receptorID": 4,
-                        "tdcDestinationAddress": ["foo", "bar", "8080"]
+                        "receptor_id": 4,
+                        "tdc_destination_address": ["foo", "bar", "8080"]
                     },
                     {
-                        "receptorID": 1,
-                        "tdcDestinationAddress": ["fizz", "buzz", "80"]
+                        "receptor_id": 1,
+                        "tdc_destination_address": ["fizz", "buzz", "80"]
                     }
                 ]
             },
             {
-                "searchWindowID": 2,
-                "searchWindowTuning": 7000000000,
-                "tdcEnable": false
+                "search_window_id": 2,
+                "search_window_tuning": 7000000000,
+                "tdc_enable": false
             }
         ],
         "fsp": [
             {
-                "fspID": 1,
-                "functionMode": "CORR",
+                "fsp_id": 1,
+                "function_mode": "CORR",
                 "receptors": [4],
-                "frequencySliceID": 1,
-                "corrBandwidth": 1,
-                "zoomWindowTuning": 4700000,
-                "integrationTime": 140,
-                "fspChannelOffset": 14880,
-                "channelAveragingMap": [
+                "frequency_slice_id": 1,
+                "corr_bandwidth": 1,
+                "zoom_window_tuning": 4700000,
+                "integration_time": 140,
+                "channel_offset": 14880,
+                "channel_averaging_map": [
                     [0, 8],
                     [744, 8],
                     [1488, 8],
@@ -71,7 +70,7 @@
                     [13392, 8],
                     [14136, 8]
                 ],
-                "outputLinkMap": [ 
+                "output_link_map": [ 
                     [0, 4],
                     [744, 8],
                     [1488, 12],
@@ -93,40 +92,40 @@
                     [13392, 76],
                     [14136, 80]
                 ],
-                "outputHost": [[0, "192.168.0.1"], [8184, "192.168.0.2"]],
-                "outputMac": [[0, "06-00-00-00-00-01"]],
-                "outputPort": [[0, 9000, 1], [8184, 9000, 1]]
+                "output_host": [[0, "192.168.0.1"], [8184, "192.168.0.2"]],
+                "output_mac": [[0, "06-00-00-00-00-01"]],
+                "output_port": [[0, 9000, 1], [8184, 9000, 1]]
             },
             {
-                "fspID": 3,
-                "functionMode": "PSS-BF",
-                "searchWindowID": 2,
-                "searchBeam": [
+                "fsp_id": 3,
+                "function_mode": "PSS-BF",
+                "search_window_id": 2,
+                "search_beam": [
                     {
-                        "searchBeamID": 300,
+                        "search_beam_id": 300,
                         "receptors": [3],
-                        "outputEnable": true,
+                        "enable_output": true,
                         "averagingInterval": 4,
-                        "searchBeamDestinationAddress": "10.1.1.1"
+                        "search_beam_destination_address": "10.1.1.1"
                     },
                     {
-                        "searchBeamID": 400,
+                        "search_beam_id": 400,
                         "receptors": [1],
-                        "outputEnable": true,
+                        "enable_output": true,
                         "averagingInterval": 2,
-                        "searchBeamDestinationAddress": "10.1.2.1"
+                        "search_beam_destination_address": "10.1.2.1"
                     }
                 ]
             },
             {
-                "fspID": 2,
-                "functionMode": "PST-BF",
-                "timingBeam": [
+                "fsp_id": 2,
+                "function_mode": "PST-BF",
+                "timing_beam": [
                     {
-                        "timingBeamID": 10,
-                        "receptors": [4],
-                        "outputEnable": true,
-                        "timingBeamDestinationAddress": "10.1.1.1"
+                        "timing_beam_id": 10,
+                        "receptors": [2],
+                        "enable_output": true,
+                        "timing_beam_destination_address": "10.1.1.1"
                     }
                 ]
             }
