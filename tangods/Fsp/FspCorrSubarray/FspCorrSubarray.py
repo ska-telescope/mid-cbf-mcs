@@ -73,8 +73,7 @@ class FspCorrSubarray(CspSubElementObsDevice):
         default_value="mid_csp_cbf/master/main"
     )
 
-    # TODO - note the connection to the CbfSubarray device 
-    #        is not being used
+    # TODO - note the connection to the CbfSubarray device is not being used
     CbfSubarrayAddress = device_property(
         dtype='str',
         doc="FQDN of CBF Subarray"
@@ -264,7 +263,8 @@ class FspCorrSubarray(CspSubElementObsDevice):
             # Changed into list to facilitate writing
             device._output_link_map = [[0,0] for i in range(40)]
 
-            # For each channel sent to SDP: [chanID, bw, cf, cbfOutLink, sdpIp, sdpPort] # TODO - ???
+            # For each channel sent to SDP: 
+            # [chanID, bw, cf, cbfOutLink, sdpIp, sdpPort] # TODO
             device._channel_info = []
 
             # device proxy for connection to CBFMaster
@@ -294,11 +294,6 @@ class FspCorrSubarray(CspSubElementObsDevice):
 
     def delete_device(self):
         # PROTECTED REGION ID(FspCorrSubarray.delete_device) ENABLED START #
-        
-        # TODO - these are not necessary; double-check and remove.
-        # self.GoToIdle()
-        # self._RemoveAllReceptors()
-        # self.set_state(tango.DevState.OFF)
         pass
         # PROTECTED REGION END #    //  FspCorrSubarray.delete_device
 
@@ -428,8 +423,7 @@ class FspCorrSubarray(CspSubElementObsDevice):
         self._config_id=value
         # PROTECTED REGION END #    //  FspCorrSubarray.configID_write
 
-    def _AddReceptors(self, argin):
-        # PROTECTED REGION ID(FspCorrSubarray._AddReceptors) ENABLED START #
+    def _add_receptors(self, argin):
         """add specified receptors to the FSP subarray. Input is array of int."""
         errs = []  # list of error messages
         receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
@@ -457,9 +451,8 @@ class FspCorrSubarray(CspSubElementObsDevice):
         if errs:
             msg = "\n".join(errs)
             self.logger.error(msg)
-            tango.Except.throw_exception("Command failed", msg, "_AddReceptors execution",
+            tango.Except.throw_exception("Command failed", msg, "_add_receptors execution",
                                            tango.ErrSeverity.ERR)
-        # PROTECTED REGION END #    //  FspCorrSubarray._AddReceptors
 
     def _remove_receptors(self, argin):
         """Remove Receptors. Input is array of int"""
@@ -471,12 +464,11 @@ class FspCorrSubarray(CspSubElementObsDevice):
                     "Skipping.".format(str(receptorID))
                 self.logger.warn(log_msg)
 
-    def _RemoveAllReceptors(self):
-        # PROTECTED REGION ID(FspCorrSubarray._RemoveAllReceptors) ENABLED START #
+    def _remove_all_receptors(self):
         """Remove all Receptors of this subarray"""
         self._remove_receptors(self._receptors[:])
-        # PROTECTED REGION END #    //  FspCorrSubarray._RemoveAllReceptors
 
+    # TODO: Reinstate AddChannels?
     # def is_AddChannels_allowed(self): # ???
     #     pass
     #     """Allowed when devState is ON, obsState is CONFIGURING"""
@@ -631,9 +623,10 @@ class FspCorrSubarray(CspSubElementObsDevice):
 
             # Configure receptors.
             
-            # TODO: to rename to _remove_all_receptors
-            device._RemoveAllReceptors()
-            device._AddReceptors(map(int, argin["receptors"]))
+            # TODO: _remove_all_receptors should not be needed because it is
+            #        applied in GoToIdle()
+            device._remove_all_receptors()
+            device._add_receptors(map(int, argin["receptors"]))
 
             # Configure frequencySliceID.
             if argin["functionMode"] == "CORR":
@@ -747,7 +740,7 @@ class FspCorrSubarray(CspSubElementObsDevice):
                 # Configure configID. This is not initally in the FSP portion of the input JSON, but added in function CbfSuarray._validate_configScan
                 device._config_id=argin["configID"]
 
-            # TODO - reinstate validate() and move all the 
+            # TODO - reinstate the validate_input() and move all the 
             #        validations to it
             # (result_code, msg) = self.validate_input(argin) # TODO
 
@@ -771,29 +764,9 @@ class FspCorrSubarray(CspSubElementObsDevice):
             :rtype: (ResultCode, str)
             """
             device = self.target
+
+            # TODO -add the actual validation
             return (ResultCode.OK, "ConfigureScan arguments validation successfull")
-            
-            # TODO -add validation
-
-            # try:
-            #     config_dict = json.loads(argin)
-            #     device._config_id = config_dict['id']
-
-            #     freq_band_name = config_dict['frequency_band']
-            #     device._freq_band_name = freq_band_name
-            #     device._frequency_band = freq_band_dict()[freq_band_name]
-
-            #     # call the method to validate the data sent with
-            #     # the configuration, as needed.
-            #     return (ResultCode.OK, "ConfigureScan arguments validation successfull")
-
-            # except (KeyError, JSONDecodeError) as err:
-            #     msg = "Validate configuration failed with error:{}".format(err)
-            # except Exception as other_errs:
-            #     msg = "Validate configuration failed with unknown error:{}".format(
-            #         other_errs)
-            #     self.logger.error(msg)
-            # return (ResultCode.FAILED, msg)
 
     @command(
         dtype_in='DevString',
@@ -867,10 +840,10 @@ class FspCorrSubarray(CspSubElementObsDevice):
             device._output_link_map = [[0,0] for i in range(40)]
 
             device._channel_info = []
-            #device._channel_info.clear() #TODO  not yet populated
+            #device._channel_info.clear() #TODO:  not yet populated
 
             # Reset self._receptors
-            device._RemoveAllReceptors()
+            device._remove_all_receptors()
 
             if device.state_model.obs_state == ObsState.IDLE:
                 return (ResultCode.OK, 

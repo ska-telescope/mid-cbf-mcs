@@ -1010,15 +1010,12 @@ class CbfSubarray(SKASubarray):
         self._group_fsp.command_inout("RemoveSubarrayMembership", data)
         self._group_fsp.remove_all()
 
-        # self._proxies_assigned_fsp.clear() # TODO Remove
 
         # remove channel info from FSP subarrays
         # already done in GoToIdle
         self._group_fsp_corr_subarray.remove_all()
         self._group_fsp_pss_subarray.remove_all()
         self._group_fsp_pst_subarray.remove_all()
-
-        # self._proxies_assigned_fsp_corr_subarray.clear() #TODO remove
 
         # reset all private dat to their initialization values:
         self._scan_ID = 0       
@@ -1044,10 +1041,6 @@ class CbfSubarray(SKASubarray):
     def _remove_receptors_helper(self, argin):
         """Helper function to remove receptors for removeAllReceptors. 
         Takes in a list of integers.
-
-        TODO: RemoveAllReceptors can't call RemoveReceptors anymore for 
-        lmc 0.6.0 because RemoveAllReceptors enters resourcing state 
-        before calling RemoveReceptors. Therefore this helper is useful.
         """
         receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
                                self._proxy_cbf_master.receptorToVcc)
@@ -1111,10 +1104,6 @@ class CbfSubarray(SKASubarray):
         dtype='str',
         doc="FQDN of CBF Master",
         default_value="mid_csp_cbf/sub_elt/master"
-    )
-
-    CorrConfigAddress = device_property(
-        dtype='str'
     )
 
     PssConfigAddress = device_property(
@@ -1314,15 +1303,6 @@ class CbfSubarray(SKASubarray):
             device.NUM_CHANNEL_GROUPS = const.NUM_CHANNEL_GROUPS
             device.NUM_FINE_CHANNELS = const.NUM_FINE_CHANNELS
 
-            # TODO - remove
-            # device._proxy_sw_1 = tango.DeviceProxy(device.SW1Address)
-            # device._proxy_sw_2 = tango.DeviceProxy(device.SW2Address)
-
-            # TODO: remove JSON FSP configurations for PSS, COR, PST, VLBI
-            #device._proxy_pss_config = tango.DeviceProxy(device.PssConfigAddress)
-            #device._proxy_corr_config = tango.DeviceProxy(device.CorrConfigAddress) # address of CbfSubarrayCoorConfig device in Subarray Multi
-            #device._proxy_pst_config = tango.DeviceProxy(device.PstConfigAddress)
-
             device._master_max_capabilities = dict(
                 pair.split(":") for pair in
                 device._proxy_cbf_master.get_property("MaxCapabilities")["MaxCapabilities"]
@@ -1345,10 +1325,6 @@ class CbfSubarray(SKASubarray):
             # Note vcc connected both individual and in group
             device._proxies_assigned_vcc = [] 
             device._proxies_assigned_fsp = []
-            # device._proxies_assigned_fsp = [] # TODO doesn't seem to be used remove 
-            # device._proxies_assigned_fsp_corr_subarray = [] # TODO doesn't seem to be used
-            # device._proxies_assigned_fsp_pss_subarray = [] # TODO doesn't seem to be used
-            # device._proxies_assigned_fsp_pst_subarray = []
 
             # store the subscribed telstate events as event_ID:attribute_proxy key:value pairs
             device._events_telstate = {}
@@ -1377,12 +1353,8 @@ class CbfSubarray(SKASubarray):
     def delete_device(self):
         # PROTECTED REGION ID(CbfSubarray.delete_device) ENABLED START #
         """hook to delete device. Set State to DISABLE, romove all receptors, go to OBsState IDLE"""
-        
-        #  TODO: I don't think these are necessary - to confirm
+
         pass
-        # self.GoToIdle()
-        # self.RemoveAllReceptors()
-        # self.set_state(tango.DevState.DISABLE)
         # PROTECTED REGION END #    //  CbfSubarray.delete_device
 
     # ------------------
@@ -1771,12 +1743,8 @@ class CbfSubarray(SKASubarray):
             device._group_vcc.command_inout("ConfigureScan", data)
 
             time.sleep(3) # TODO - to remove
-
-            #  TODO - remove
-            # data = tango.DeviceData()
-            # data.insert(tango.DevString, argin["frequencyBand"])
-            # device._group_vcc.command_inout("SetFrequencyBand", data)
-
+            
+            # TODO: all these VCC params should be passed in via ConfigureScan()
             # Configure band5Tuning, if frequencyBand is 5a or 5b.
             if device._frequency_band in [4, 5]:
                 stream_tuning = [*map(float, configuration["band5Tuning"])]
@@ -2062,9 +2030,6 @@ class CbfSubarray(SKASubarray):
             data.insert(tango.DevString, argin)
             device._group_vcc.command_inout("Scan", data)
 
-            # TODO - to remove these 2 lines
-            # data = tango.DeviceData()
-            # data.insert(tango.DevUShort, int(argin) % (2**16))
             device._group_fsp_corr_subarray.command_inout("Scan", data)
             device._group_fsp_pss_subarray.command_inout("Scan", data)
             device._group_fsp_pst_subarray.command_inout("Scan", data)

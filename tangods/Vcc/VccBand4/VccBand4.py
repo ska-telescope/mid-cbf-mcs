@@ -73,9 +73,8 @@ class VccBand4(SKACapability):
                 information purpose only.
             :rtype: (ResultCode, str)
             """
-
-            self.logger.warn("Entering InitCommand() (warning) TODO")
-
+            self.logger.debug("Entering InitCommand()")
+            
             super().do()
 
             device = self.target
@@ -105,16 +104,7 @@ class VccBand4(SKACapability):
     # Commands
     # --------
 
-    @command(
-        dtype_in='DevState',
-        doc_in='New state'
-    )
-
-    def SetState(self, argin):
-        # PROTECTED REGION ID(VccBand4.SetState) ENABLED START #
-        """Set the state of this Device; called by VCC"""
-        self.set_state(argin)
-        # PROTECTED REGION END #    //  VccBand4.SetState
+    # None
 
 # ----------
 # Run server
