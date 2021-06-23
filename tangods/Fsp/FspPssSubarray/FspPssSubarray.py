@@ -235,7 +235,7 @@ class FspPssSubarray(CspSubElementObsDevice):
     # Commands
     # --------
 
-    def _AddReceptors(self, receptorIDs):
+    def _add_receptors(self, receptorIDs):
         """add specified receptors to the FSP subarray. Input is array of int."""
         self.logger.debug("_AddReceptors")
         errs = []  # list of error messages
@@ -281,7 +281,7 @@ class FspPssSubarray(CspSubElementObsDevice):
                     "Skipping.".format(str(receptorID))
                 self.logger.warn(log_msg)
 
-    def _RemoveAllReceptors(self):
+    def _remove_all_receptors(self):
         self._remove_receptors(self._receptors[:])
 
     # --------
@@ -329,12 +329,9 @@ class FspPssSubarray(CspSubElementObsDevice):
                     self.logger.error(msg) 
                     return (ResultCode.FAILED, msg)
 
-                device._AddReceptors(map(int, searchBeam["receptors"]))
+                device._add_receptors(map(int, searchBeam["receptors"]))
                 self.logger.debug("device._receptors = {}".format(device._receptors))
                 device._search_beams.append(json.dumps(searchBeam))
-                
-                # TODO: remove
-                # device._receptors.extend(searchBeam["receptors"])
 
                 device._search_beam_id.append(int(searchBeam["searchBeamID"]))
             
@@ -418,7 +415,7 @@ class FspPssSubarray(CspSubElementObsDevice):
             device._scan_id = 0
             device._config_id = ""
 
-            device._RemoveAllReceptors()
+            device._remove_all_receptors()
 
             if device.state_model.obs_state == ObsState.IDLE:
                 return (ResultCode.OK, 
@@ -429,7 +426,6 @@ class FspPssSubarray(CspSubElementObsDevice):
 # ----------
 # Run server
 # ----------
-
 
 def main(args=None, **kwargs):
     # PROTECTED REGION ID(FspPssSubarray.main) ENABLED START #
