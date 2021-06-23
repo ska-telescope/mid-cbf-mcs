@@ -617,7 +617,7 @@ class Vcc(CspSubElementObsDevice):
                 # the configuration, as needed.
                 return (ResultCode.OK, "ConfigureScan arguments validation successfull")
 
-            except (KeyError, JSONDecodeError) as err:
+            except (KeyError, json.JSONDecodeError) as err:
                 msg = "Validate configuration failed with error:{}".format(err)
             except Exception as other_errs:
                 msg = "Validate configuration failed with unknown error:{}".format(
@@ -999,11 +999,11 @@ class Vcc(CspSubElementObsDevice):
         if argin["tdcEnable"]:
             try:
                 for receptor in argin["tdcDestinationAddress"]:
-                    # if int(receptor["receptorID"]) == self._receptor_ID:
+                    if int(receptor["receptorID"]) == self._receptor_ID:
                     # TODO: validate input
-                    break
-                else:  # receptorID not found
-                    raise KeyError  # just handle all the errors in one place
+                        break
+                    else:  # receptorID not found
+                        raise KeyError  # just handle all the errors in one place
             except KeyError:
                 # tdcDestinationAddress not given or receptorID not in tdcDestinationAddress
                 msg = "Search window specified with TDC enabled, but 'tdcDestinationAddress' " \
@@ -1059,7 +1059,7 @@ class Vcc(CspSubElementObsDevice):
             if start_freq_Hz + self._frequency_band_offset_stream_1 + \
                     const.SEARCH_WINDOW_BW_HZ / 2 <= \
                     int(argin["searchWindowTuning"]) <= \
-                    bw_stop_freq_Hz + self._frequency_band_offset_stream_1 - \
+                    stop_freq_Hz + self._frequency_band_offset_stream_1 - \
                     const.SEARCH_WINDOW_BW_HZ / 2:
                 # this is the acceptable range
                 pass
