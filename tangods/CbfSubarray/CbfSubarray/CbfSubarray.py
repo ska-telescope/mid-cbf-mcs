@@ -344,7 +344,6 @@ class CbfSubarray(SKASubarray):
                 self.logger.error(log_msg)
 
 
-    #TODO: currently unused; trim to keep only necessary validation
     def _validate_scan_configuration(self, argin):
         # try to deserialize input string to a JSON object
         try:
@@ -359,15 +358,6 @@ class CbfSubarray(SKASubarray):
                     self._proxies_vcc.index(proxy) + 1
                 )
                 self._raise_configure_scan_fatal_error(msg)
-
-        # Validate frequencyBand.
-        frequency_bands = ["1", "2", "3", "4", "5a", "5b"]
-        if configuration["frequencyBand"] in frequency_bands:
-            pass
-        else:
-            msg = "'frequencyBand' must be one of {} (received {}). " \
-                    "Aborting configuration.".format(frequency_bands, configuration["frequency_band"])
-            self._raise_configure_scan_fatal_error(msg)
         
         # Validate frequencyBandOffsetStream1.
         if abs(int(configuration["frequencyBandOffsetStream1"])) <= const.FREQUENCY_SLICE_BW * 10 ** 6 / 2:
@@ -510,6 +500,7 @@ class CbfSubarray(SKASubarray):
             msg = "'searchWindow' must be an array of maximum length 2. " \
                     "Aborting configuration."
             self._raise_configure_scan_fatal_error(msg)
+        #TODO consider moving the search_window object validation to Vcc
         for search_window in configuration["searchWindow"]:
             for vcc in self._proxies_assigned_vcc:
                 try:
