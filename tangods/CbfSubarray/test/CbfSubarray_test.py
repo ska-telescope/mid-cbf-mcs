@@ -734,7 +734,7 @@ class TestCbfSubarray:
             assert proxies.subarray[1].obsState == ObsState.EMPTY
 
             # add receptors
-            proxies.subarray[1].AddReceptors([1, 3, 4])
+            proxies.subarray[1].AddReceptors([1, 3, 4, 2])
             proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.IDLE, 1, 1)
             assert all([proxies.subarray[1].receptors[i] == j for i, j in zip(range(3), [1, 3, 4])])
             assert proxies.subarray[1].obsState == ObsState.IDLE
@@ -758,13 +758,13 @@ class TestCbfSubarray:
             sleep_seconds = 3 # TODO
             time.sleep(sleep_seconds)
 
-            logging.info( "test_config_dict[id] = {}".format(test_config_dict["id"]))
+            logging.info( "test_config_dict[common][config_id] = {}".format(test_config_dict["common"]["config_id"]))
 
             logging.info( "vcc 1 obsState AFTER ConfigureScan & sleep = {}".
             format(proxies.vcc[proxies.receptor_to_vcc[1]].obsState) )
 
             # check configured attributes of CBF subarray
-            assert proxies.subarray[1].configID == test_config_dict["id"]
+            assert proxies.subarray[1].configID == test_config_dict["common"]["config_id"]
             assert proxies.subarray[1].frequencyBand == 4
             assert proxies.subarray[1].obsState == ObsState.READY
 
@@ -846,7 +846,7 @@ class TestCbfSubarray:
             assert proxies.subarray[1].obsState == ObsState.EMPTY
 
             # add receptors
-            proxies.subarray[1].AddReceptors([1, 3, 4])
+            proxies.subarray[1].AddReceptors([1, 3, 4, 2])
             proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.IDLE, 1, 1)
             assert all([proxies.subarray[1].receptors[i] == j for i, j in zip(range(3), [1, 3, 4])])
 
@@ -1001,7 +1001,7 @@ class TestCbfSubarray:
             assert proxies.subarray[1].obsState == ObsState.EMPTY
 
             # add receptors
-            proxies.subarray[1].AddReceptors([1, 3, 4])
+            proxies.subarray[1].AddReceptors([1, 3, 4, 2])
             proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.IDLE, 1, 1)
             assert all([proxies.subarray[1].receptors[i] == j for i, j in zip(range(3), [1, 3, 4])])
 
@@ -1109,7 +1109,7 @@ class TestCbfSubarray:
             assert proxies.subarray[1].obsState == ObsState.EMPTY
 
             # add receptors
-            proxies.subarray[1].AddReceptors([1, 3, 4])
+            proxies.subarray[1].AddReceptors([1, 3, 4, 2])
             proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.IDLE, 1, 1)
             assert all([proxies.subarray[1].receptors[i] == j for i, j in zip(range(3), [1, 3, 4])])
 
@@ -1175,7 +1175,7 @@ class TestCbfSubarray:
             
             ############################# abort from READY ###########################
             # add receptors
-            proxies.subarray[1].AddReceptors([1, 3, 4])
+            proxies.subarray[1].AddReceptors([1, 3, 4, 2])
             proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.IDLE, 1, 1)
             # configure scan
             f = open(file_path + "/test_json/ConfigureScan_basic.json")
@@ -1204,7 +1204,7 @@ class TestCbfSubarray:
 
             ############################# abort from SCANNING ###########################
             # add receptors
-            proxies.subarray[1].AddReceptors([1, 3, 4])
+            proxies.subarray[1].AddReceptors([1, 3, 4, 2])
             proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.IDLE, 1, 1)
             # configure scan
             f = open(file_path + "/test_json/ConfigureScan_basic.json")
@@ -1269,7 +1269,7 @@ class TestCbfSubarray:
             
             ############################# abort from IDLE ###########################
             # add receptors
-            proxies.subarray[1].AddReceptors([1, 3, 4])
+            proxies.subarray[1].AddReceptors([1, 3, 4, 2])
             proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.IDLE, 1, 1)
             assert proxies.subarray[1].obsState == ObsState.IDLE
             # abort
@@ -1291,7 +1291,7 @@ class TestCbfSubarray:
 
             ############################# abort from READY ###########################
             # add receptors
-            proxies.subarray[1].AddReceptors([1, 3, 4])
+            proxies.subarray[1].AddReceptors([1, 3, 4, 2])
             proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.IDLE, 1, 1)
             # configure scan
             f = open(file_path + "/test_json/ConfigureScan_basic.json")
@@ -1320,7 +1320,7 @@ class TestCbfSubarray:
 
             ############################# abort from SCANNING ###########################
             # add receptors
-            proxies.subarray[1].AddReceptors([1, 3, 4])
+            proxies.subarray[1].AddReceptors([1, 3, 4, 2])
             proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.IDLE, 1, 1)
             # configure scan
             f = open(file_path + "/test_json/ConfigureScan_basic.json")
