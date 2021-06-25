@@ -4,7 +4,7 @@ from enum import IntEnum, unique
 #        from their respective devices (?)
 class Const:
     def __init__(self):
-        self.MIN_INT_TIME = 140  # ms
+        self.MIN_INT_TIME = 1  #ADR-35: changed from 140 ms to 1 (factor)
         self.FREQUENCY_SLICE_BW = 200  # MHz
         self.SEARCH_WINDOW_BW   = 300  # MHz
         self.FREQUENCY_BAND_1_RANGE = (0.35, 1.05)  # GHz

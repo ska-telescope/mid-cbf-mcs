@@ -283,15 +283,15 @@ class FspPstSubarray(SKASubarray):
         argin = json.loads(argin)
 
         # Configure receptors.
-        self._fsp_id = argin["fspID"]
+        self._fsp_id = argin["fsp_id"]
         self._timing_beams = []
         self._timing_beam_id = []
         self._receptors = []
 
-        for timingBeam in argin["timingBeam"]:
-            self.AddReceptors(map(int, timingBeam["receptors"]))
+        for timingBeam in argin["timing_beam"]:
+            self.AddReceptors(map(int, timingBeam["receptor_ids"]))
             self._timing_beams.append(json.dumps(timingBeam))
-            self._timing_beam_id.append(int(timingBeam["timingBeamID"]))
+            self._timing_beam_id.append(int(timingBeam["timing_beam_id"]))
 
         # fspPstSubarray moves to READY after configuration
         self._update_obs_state(ObsState.READY)

@@ -316,24 +316,24 @@ class FspPssSubarray(CspSubElementObsDevice):
             # Configure receptors.
             self.logger.debug("_receptors = {}".format(device._receptors))
 
-            device._fsp_id = argin["fspID"]
-            device._search_window_id = int(argin["searchWindowID"])
+            device._fsp_id = argin["fsp_id"]
+            device._search_window_id = int(argin["search_window_id"])
 
             self.logger.debug("_search_window_id = {}".format(device._search_window_id))
 
-            for searchBeam in argin["searchBeam"]:
+            for searchBeam in argin["search_beam"]:
 
-                if len(searchBeam["receptors"]) != 1:
+                if len(searchBeam["receptor_ids"]) != 1:
                     # TODO - to add support for multiple receptors
                     msg = "Currently only 1 receptor per searchBeam is supported"
                     self.logger.error(msg) 
                     return (ResultCode.FAILED, msg)
 
-                device._add_receptors(map(int, searchBeam["receptors"]))
+                device._add_receptors(map(int, searchBeam["receptor_ids"]))
                 self.logger.debug("device._receptors = {}".format(device._receptors))
                 device._search_beams.append(json.dumps(searchBeam))
 
-                device._search_beam_id.append(int(searchBeam["searchBeamID"]))
+                device._search_beam_id.append(int(searchBeam["search_beam_id"]))
             
             # TODO: _output_enable is not currently set
 

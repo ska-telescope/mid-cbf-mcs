@@ -607,7 +607,7 @@ class Vcc(CspSubElementObsDevice):
 
             try:
                 config_dict = json.loads(argin)
-                device._config_id = config_dict['id']
+                device._config_id = config_dict['config_id']
 
                 freq_band_name = config_dict['frequency_band']
                 device._freq_band_name = freq_band_name
@@ -844,12 +844,12 @@ class Vcc(CspSubElementObsDevice):
                                          tango.ErrSeverity.ERR)
 
         # Validate searchWindowID.
-        if "searchWindowID" in argin:
-            if int(argin["searchWindowID"]) in [1, 2]:
+        if "search_window_id" in argin:
+            if int(argin["search_window_id"]) in [1, 2]:
                 pass
             else:  # searchWindowID not in valid range
                 msg = "'searchWindowID' must be one of [1, 2] (received {}).".format(
-                    str(argin["searchWindowID"])
+                    str(argin["search_window_id"])
                 )
                 self.logger.error(msg)
                 tango.Except.throw_exception("Command failed", msg,
@@ -862,13 +862,13 @@ class Vcc(CspSubElementObsDevice):
                                          tango.ErrSeverity.ERR)
 
         # Validate searchWindowTuning.
-        if "searchWindowTuning" in argin:
-            freq_band_name = argin["frequencyBand"]
+        if "search_window_tuning" in argin:
+            freq_band_name = argin["frequency_band"]
             if freq_band_name not in ["5a", "5b"]:  # frequency band is not band 5
                 
                 frequencyBand_mi = freq_band_dict()[freq_band_name]
                 
-                frequencyBand = ["1", "2", "3", "4", "5a", "5b"].index(argin["frequencyBand"])
+                frequencyBand = ["1", "2", "3", "4", "5a", "5b"].index(argin["frequency_band"])
 
                 assert frequencyBand_mi == frequencyBand
                 
@@ -882,9 +882,9 @@ class Vcc(CspSubElementObsDevice):
                 self.logger.debug("start_freq_Hz = {}".format(start_freq_Hz)) 
                 self.logger.debug("stop_freq_Hz = {}".format(stop_freq_Hz)) 
 
-                if start_freq_Hz + argin["frequencyBandOffsetStream1"] <= \
-                        int(argin["searchWindowTuning"]) <= \
-                        stop_freq_Hz + argin["frequencyBandOffsetStream1"]:
+                if start_freq_Hz + argin["frequency_band_offset_stream_1"] <= \
+                        int(argin["search_window_tuning"]) <= \
+                        stop_freq_Hz + argin["frequency_band_offset_stream_1"]:
                     pass
                 else:
                     msg = "'searchWindowTuning' must be within observed band."
@@ -893,28 +893,28 @@ class Vcc(CspSubElementObsDevice):
                                                  "ConfigureSearchWindow execution",
                                                  tango.ErrSeverity.ERR)
             else:  # frequency band 5a or 5b (two streams with bandwidth 2.5 GHz)
-                if argin["band5Tuning"]==[0,0]: # band 5 tuning not specified in configuration
+                if argin["band_5_tuning"] == [0,0]: # band 5 tuning not specified in configuration
                     pass
                 else:
                     frequency_band_range_1 = (
-                        argin["band5Tuning"][0] * 10 ** 9 + argin["frequencyBandOffsetStream1"] - \
+                        argin["band_5_tuning"][0] * 10 ** 9 + argin["frequency_band_offset_stream_1"] - \
                         const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2,
-                        argin["band5Tuning"][0] * 10 ** 9 + argin["frequencyBandOffsetStream1"] + \
+                        argin["band_5_tuning"][0] * 10 ** 9 + argin["frequency_band_offset_stream_1"] + \
                         const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2
                     )
 
                     frequency_band_range_2 = (
-                        argin["band5Tuning"][1] * 10 ** 9 + argin["frequencyBandOffsetStream2"] - \
+                        argin["band_5_tuning"][1] * 10 ** 9 + argin["frequency_band_offset_stream_2"] - \
                         const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2,
-                        argin["band5Tuning"][1] * 10 ** 9 + argin["frequencyBandOffsetStream2"] + \
+                        argin["band_5_tuning"][1] * 10 ** 9 + argin["frequency_band_offset_stream_2"] + \
                         const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2
                     )
 
                     if (frequency_band_range_1[0] <= \
-                        int(argin["searchWindowTuning"]) <= \
+                        int(argin["search_window_tuning"]) <= \
                         frequency_band_range_1[1]) or \
                             (frequency_band_range_2[0] <= \
-                            int(argin["searchWindowTuning"]) <= \
+                            int(argin["search_window_tuning"]) <= \
                             frequency_band_range_2[1]):
                         pass
                     else:
@@ -930,8 +930,8 @@ class Vcc(CspSubElementObsDevice):
                                          tango.ErrSeverity.ERR)
 
         # Validate tdcEnable.
-        if "tdcEnable" in argin:
-            if argin["tdcEnable"] in [True, False]:
+        if "tdc_enable" in argin:
+            if argin["tdc_enable"] in [True, False]:
                 pass
             else:
                 msg = "Search window specified, but 'tdcEnable' not given."
@@ -946,13 +946,13 @@ class Vcc(CspSubElementObsDevice):
                                          tango.ErrSeverity.ERR)
 
         # Validate tdcNumBits.
-        if argin["tdcEnable"]:
-            if "tdcNumBits" in argin:
-                if int(argin["tdcNumBits"]) in [2, 4, 8]:
+        if argin["tdc_enable"]:
+            if "tdc_num_bits" in argin:
+                if int(argin["tdc_num_bits"]) in [2, 4, 8]:
                     pass
                 else:
                     msg = "'tdcNumBits' must be one of [2, 4, 8] (received {}).".format(
-                        str(argin["tdcNumBits"])
+                        str(argin["tdc_num_bits"])
                     )
                     self.logger.error(msg)
                     tango.Except.throw_exception("Command failed", msg,
@@ -966,12 +966,12 @@ class Vcc(CspSubElementObsDevice):
                                              tango.ErrSeverity.ERR)
 
         # Validate tdcPeriodBeforeEpoch.
-        if "tdcPeriodBeforeEpoch" in argin:
-            if int(argin["tdcPeriodBeforeEpoch"]) > 0:
+        if "tdc_period_before_epoch" in argin:
+            if int(argin["tdc_period_before_epoch"]) > 0:
                 pass
             else:
                 msg = "'tdcPeriodBeforeEpoch' must be a positive integer (received {}).".format(
-                    str(argin["tdcPeriodBeforeEpoch"])
+                    str(argin["tdc_period_before_epoch"])
                 )
                 self.logger.error(msg)
                 tango.Except.throw_exception("Command failed", msg,
@@ -981,12 +981,12 @@ class Vcc(CspSubElementObsDevice):
             pass
 
         # Validate tdcPeriodAfterEpoch.
-        if "tdcPeriodAfterEpoch" in argin:
-            if int(argin["tdcPeriodAfterEpoch"]) > 0:
+        if "tdc_period_after_epoch" in argin:
+            if int(argin["tdc_period_after_epoch"]) > 0:
                 pass
             else:
                 msg = "'tdcPeriodAfterEpoch' must be a positive integer (received {}).".format(
-                    str(argin["tdcPeriodAfterEpoch"])
+                    str(argin["tdc_period_after_epoch"])
                 )
                 self.logger.error(msg)
                 tango.Except.throw_exception("Command failed", msg,
@@ -996,10 +996,10 @@ class Vcc(CspSubElementObsDevice):
             pass
 
         # Validate tdcDestinationAddress.
-        if argin["tdcEnable"]:
+        if argin["tdc_enable"]:
             try:
-                for receptor in argin["tdcDestinationAddress"]:
-                    if int(receptor["receptorID"]) == self._receptor_ID:
+                for receptor in argin["tdc_destination_address"]:
+                    if int(receptor["receptor_id"]) == self._receptor_ID:
                     # TODO: validate input
                         break
                     else:  # receptorID not found
@@ -1040,14 +1040,14 @@ class Vcc(CspSubElementObsDevice):
         proxy_sw = 0
 
         # Configure searchWindowID.
-        if int(argin["searchWindowID"]) == 1:
+        if int(argin["search_window_id"]) == 1:
             proxy_sw = self._proxy_sw_1
-        elif int(argin["searchWindowID"]) == 2:
+        elif int(argin["search_window_id"]) == 2:
             proxy_sw = self._proxy_sw_2
 
         # Configure searchWindowTuning.
         if self._frequency_band in list(range(4)):  # frequency band is not band 5
-            proxy_sw.searchWindowTuning = argin["searchWindowTuning"]
+            proxy_sw.searchWindowTuning = argin["search_window_tuning"]
 
             start_freq_Hz, stop_freq_Hz = [
                 const.FREQUENCY_BAND_1_RANGE_HZ,
@@ -1058,7 +1058,7 @@ class Vcc(CspSubElementObsDevice):
 
             if start_freq_Hz + self._frequency_band_offset_stream_1 + \
                     const.SEARCH_WINDOW_BW_HZ / 2 <= \
-                    int(argin["searchWindowTuning"]) <= \
+                    int(argin["search_window_tuning"]) <= \
                     stop_freq_Hz + self._frequency_band_offset_stream_1 - \
                     const.SEARCH_WINDOW_BW_HZ / 2:
                 # this is the acceptable range
@@ -1069,7 +1069,7 @@ class Vcc(CspSubElementObsDevice):
                           "Proceeding."
                 self.logger.warn(log_msg)
         else:  # frequency band 5a or 5b (two streams with bandwidth 2.5 GHz)
-            proxy_sw.searchWindowTuning = argin["searchWindowTuning"]
+            proxy_sw.searchWindowTuning = argin["search_window_tuning"]
 
             frequency_band_range_1 = (
                 self._stream_tuning[0] * 10 ** 9 + self._frequency_band_offset_stream_1 - \
@@ -1087,12 +1087,12 @@ class Vcc(CspSubElementObsDevice):
 
             if (frequency_band_range_1[0] + \
                 const.SEARCH_WINDOW_BW * 10 ** 6 / 2 <= \
-                int(argin["searchWindowTuning"]) <= \
+                int(argin["search_window_tuning"]) <= \
                 frequency_band_range_1[1] - \
                 const.SEARCH_WINDOW_BW * 10 ** 6 / 2) or \
                     (frequency_band_range_2[0] + \
                      const.SEARCH_WINDOW_BW * 10 ** 6 / 2 <= \
-                     int(argin["searchWindowTuning"]) <= \
+                     int(argin["search_window_tuning"]) <= \
                      frequency_band_range_2[1] - \
                      const.SEARCH_WINDOW_BW * 10 ** 6 / 2):
                 # this is the acceptable range
@@ -1104,19 +1104,19 @@ class Vcc(CspSubElementObsDevice):
                 self.logger.warn(log_msg)
 
         # Configure tdcEnable.
-        proxy_sw.tdcEnable = argin["tdcEnable"]
-        if argin["tdcEnable"]:
+        proxy_sw.tdcEnable = argin["tdc_enable"]
+        if argin["tdc_enable"]:
             proxy_sw.On()
         else:
             proxy_sw.Disable()
 
         # Configure tdcNumBits.
-        if argin["tdcEnable"]:
-            proxy_sw.tdcNumBits = int(argin["tdcNumBits"])
+        if argin["tdc_enable"]:
+            proxy_sw.tdcNumBits = int(argin["tdc_num_bits"])
 
         # Configure tdcPeriodBeforeEpoch.
-        if "tdcPeriodBeforeEpoch" in argin:
-            proxy_sw.tdcPeriodBeforeEpoch = int(argin["tdcPeriodBeforeEpoch"])
+        if "tdc_period_before_epoch" in argin:
+            proxy_sw.tdcPeriodBeforeEpoch = int(argin["tdc_period_before_epoch"])
         else:
             proxy_sw.tdcPeriodBeforeEpoch = 2
             log_msg = "Search window specified, but 'tdcPeriodBeforeEpoch' not given. " \
@@ -1124,8 +1124,8 @@ class Vcc(CspSubElementObsDevice):
             self.logger.warn(log_msg)
 
         # Configure tdcPeriodAfterEpoch.
-        if "tdcPeriodAfterEpoch" in argin:
-            proxy_sw.tdcPeriodAfterEpoch = int(argin["tdcPeriodAfterEpoch"])
+        if "tdc_period_after_epoch" in argin:
+            proxy_sw.tdcPeriodAfterEpoch = int(argin["tdc_period_after_epoch"])
         else:
             proxy_sw.tdcPeriodAfterEpoch = 22
             log_msg = "Search window specified, but 'tdcPeriodAfterEpoch' not given. " \
@@ -1133,12 +1133,12 @@ class Vcc(CspSubElementObsDevice):
             self.logger.warn(log_msg)
 
         # Configure tdcDestinationAddress.
-        if argin["tdcEnable"]:
-            for receptor in argin["tdcDestinationAddress"]:
-                if int(receptor["receptorID"]) == self._receptor_ID:
+        if argin["tdc_enable"]:
+            for receptor in argin["tdc_destination_address"]:
+                if int(receptor["receptor_id"]) == self._receptor_ID:
                     # TODO: validate input
                     proxy_sw.tdcDestinationAddress = \
-                        receptor["tdcDestinationAddress"]
+                        receptor["tdc_destination_address"]
                     break
 
 # ----------
