@@ -479,21 +479,21 @@ class TestCbfSubarray:
 
             assert proxies.fspSubarray[1].channelAveragingMap[0][0] == 0
             assert proxies.fspSubarray[1].channelAveragingMap[0][1] == 8
-            assert proxies.fspSubarray[1].channelAveragingMap[1][0] == 1
+            assert proxies.fspSubarray[1].channelAveragingMap[1][0] == 744
             assert proxies.fspSubarray[1].channelAveragingMap[1][1] == 8
-            assert proxies.fspSubarray[1].channelAveragingMap[2][0] == 2
+            assert proxies.fspSubarray[1].channelAveragingMap[2][0] == 1488
             assert proxies.fspSubarray[1].channelAveragingMap[2][1] == 8
-            assert proxies.fspSubarray[1].channelAveragingMap[3][0] == 3
+            assert proxies.fspSubarray[1].channelAveragingMap[3][0] == 2232
             assert proxies.fspSubarray[1].channelAveragingMap[3][1] == 8
-            assert proxies.fspSubarray[1].channelAveragingMap[4][0] == 4
+            assert proxies.fspSubarray[1].channelAveragingMap[4][0] == 2976
 
             assert proxies.fspSubarray[1].outputLinkMap[0][0] == 0
             assert proxies.fspSubarray[1].outputLinkMap[0][1] == 4
-            assert proxies.fspSubarray[1].outputLinkMap[1][0] == 1
-            assert proxies.fspSubarray[1].outputLinkMap[1][1] == 8        
-            assert proxies.fspSubarray[1].outputLinkMap[2][0] == 2
+            assert proxies.fspSubarray[1].outputLinkMap[1][0] == 744
+            assert proxies.fspSubarray[1].outputLinkMap[1][1] == 8      
+            assert proxies.fspSubarray[1].outputLinkMap[2][0] == 1488
             assert proxies.fspSubarray[1].outputLinkMap[2][1] == 12
-            assert proxies.fspSubarray[1].outputLinkMap[3][0] == 3
+            assert proxies.fspSubarray[1].outputLinkMap[3][0] == 2232
             assert proxies.fspSubarray[1].outputLinkMap[3][1] == 16
 
             assert str(proxies.fspSubarray[1].visDestinationAddress).replace('"',"'") == \
