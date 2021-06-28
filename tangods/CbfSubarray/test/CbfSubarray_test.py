@@ -769,7 +769,9 @@ class TestCbfSubarray:
             assert proxies.subarray[1].obsState == ObsState.READY
 
             # Send the Scan command
-            proxies.subarray[1].Scan('1')
+            f2 = open(file_path + "/test_json/Scan1_basic.json")
+            proxies.subarray[1].Scan(f2.read().replace("\n", ""))
+            f2.close()
             proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.SCANNING, 1, 1)
 
             # check initial states
@@ -907,7 +909,9 @@ class TestCbfSubarray:
             assert proxies.vcc[proxies.receptor_to_vcc[4]].delayModel[1][5] == 3.4
 
             # transition to obsState=SCANNING
-            proxies.subarray[1].Scan('1')
+            f2 = open(file_path + "/test_json/Scan1_basic.json")
+            proxies.subarray[1].Scan(f2.read().replace("\n", ""))
+            f2.close()
             proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.SCANNING, 1, 1)
             assert proxies.subarray[1].obsState == ObsState.SCANNING
 
@@ -1041,7 +1045,10 @@ class TestCbfSubarray:
                         except Exception as e:
                             raise e
 
-            proxies.subarray[1].Scan('1')
+            # transition to obsState == SCANNING
+            f2 = open(file_path + "/test_json/Scan1_basic.json")
+            proxies.subarray[1].Scan(f2.read().replace("\n", ""))
+            f2.close()
             proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.SCANNING, 1, 1)
             assert proxies.subarray[1].obsState == ObsState.SCANNING
             
@@ -1114,9 +1121,9 @@ class TestCbfSubarray:
             assert all([proxies.subarray[1].receptors[i] == j for i, j in zip(range(3), [1, 3, 4])])
 
             # configure scan
-            f = open(file_path + "/test_json/ConfigureScan_basic.json")
-            proxies.subarray[1].ConfigureScan(f.read().replace("\n", ""))
-            f.close()
+            f1 = open(file_path + "/test_json/ConfigureScan_basic.json")
+            proxies.subarray[1].ConfigureScan(f1.read().replace("\n", ""))
+            f1.close()
             proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.READY, 30, 1)
 
             # check initial states
@@ -1127,7 +1134,9 @@ class TestCbfSubarray:
             assert proxies.fspSubarray[3].obsState == ObsState.READY
 
             # send the Scan command
-            proxies.subarray[1].Scan('1')
+            f2 = open(file_path + "/test_json/Scan1_basic.json")
+            proxies.subarray[1].Scan(f2.read().replace("\n", ""))
+            f2.close()
             proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.SCANNING, 1, 1)
 
             # check scanID on VCC and FSP
@@ -1212,7 +1221,9 @@ class TestCbfSubarray:
             f.close()
             proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.READY, 30, 1)
             # scan
-            proxies.subarray[1].Scan('2')
+            f2 = open(file_path + "/test_json/Scan2_basic.json")
+            proxies.subarray[1].Scan(f2.read().replace("\n", ""))
+            f2.close()
             proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.SCANNING, 1, 1)
             assert proxies.subarray[1].obsState == ObsState.SCANNING
             assert proxies.subarray[1].scanID == 2
@@ -1328,7 +1339,9 @@ class TestCbfSubarray:
             f.close()
             proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.READY, 30, 1)
             # scan
-            proxies.subarray[1].Scan('2')
+            f2 = open(file_path + "/test_json/Scan2_basic.json")
+            proxies.subarray[1].Scan(f2.read().replace("\n", ""))
+            f2.close()
             proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.SCANNING, 1, 1)
             assert proxies.subarray[1].obsState == ObsState.SCANNING
             assert proxies.subarray[1].scanID == 2

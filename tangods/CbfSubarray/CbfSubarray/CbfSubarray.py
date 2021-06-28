@@ -2014,12 +2014,14 @@ class CbfSubarray(SKASubarray):
             """
             # overwrites the do hook
 
-            device=self.target
+            device = self.target
 
-            device._scan_ID=int(argin)
+            scan = json.loads(argin)
+
+            device._scan_ID = int(scan["scan_id"])
 
             data = tango.DeviceData()
-            data.insert(tango.DevString, argin)
+            data.insert(tango.DevString, str(device._scan_ID))
             device._group_vcc.command_inout("Scan", data)
 
             device._group_fsp_corr_subarray.command_inout("Scan", data)
@@ -2027,7 +2029,7 @@ class CbfSubarray(SKASubarray):
             device._group_fsp_pst_subarray.command_inout("Scan", data)
 
             # return message
-            message = "Scan command successfull"
+            message = "Scan command successful"
             self.logger.info(message)
             return (ResultCode.STARTED, message)
 
