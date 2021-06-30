@@ -257,7 +257,7 @@ class FspCorrSubarray(CspSubElementObsDevice):
                 for i in range(const.NUM_CHANNEL_GROUPS)
             ]
             # destination addresses includes the following three
-            device._vis_destination_address = {"outputHost":[], "outputMac": [], "outputPort":[]}
+            device._vis_destination_address = {"outputHost": [], "outputMac": [], "outputPort": []}
             device._fsp_channel_offset = 0
             # outputLinkMap is a 2*40 array. Pogo generates tuple;
             # Changed into list to facilitate writing
@@ -607,16 +607,14 @@ class FspCorrSubarray(CspSubElementObsDevice):
             device._freq_band_name = argin["frequency_band"]
             device._frequency_band = freq_band_dict()[device._freq_band_name]
 
-            # Configure band5Tuning.
-            if device._frequency_band in [4, 5]:
-                device._stream_tuning = argin["band_5_tuning"]
+            # Configure streamTuning.
+            device._stream_tuning = argin["band_5_tuning"]
 
             # Configure frequencyBandOffsetStream1.
             device._frequency_band_offset_stream_1 = int(argin["frequency_band_offset_stream_1"])
 
             # Configure frequencyBandOffsetStream2.
-            if device._frequency_band in [4, 5]:
-                device._frequency_band_offset_stream_2 = int(argin["frequency_band_offset_stream_2"])
+            device._frequency_band_offset_stream_2 = int(argin["frequency_band_offset_stream_2"])
 
             # Configure receptors.
             
@@ -704,17 +702,28 @@ class FspCorrSubarray(CspSubElementObsDevice):
             device._integration_time = int(argin["integration_factor"])
 
             # Configure fspChannelOffset
-            device._fsp_channel_offset= int(argin["channel_offset"])
+            device._fsp_channel_offset = int(argin["channel_offset"])
                 
+            #TODO implement output products transmission
+
             # Configure destination addresses
-            device._vis_destination_address["outputHost"] = argin["output_host"]
+            if "output_host" in argin:
+                device._vis_destination_address["outputHost"] = argin["output_host"]
+            # not specified, so set default or keep the previous one
+            elif device._vis_destination_address["outputHost"] == []:
+                device._vis_destination_address["outputHost"] = [[0, "192.168.0.1"]]
+
             # ouputMac is optional
             if "output_mac" in argin:
                 device._vis_destination_address["outputMac"] = argin["output_mac"]
-            else: # not specified, so set default or keep the previous one
-                if device._vis_destination_address["outputMac"] == []:
-                    device._vis_destination_address["outputMac"] = [[0, "06-00-00-00-00-01"]]
-            device._vis_destination_address["outputPort"] = argin["output_port"]
+            # not specified, so set default or keep the previous one
+            elif device._vis_destination_address["outputMac"] == []:
+                device._vis_destination_address["outputMac"] = [[0, "06-00-00-00-00-01"]]
+
+            if "output_port" in argin:
+                device._vis_destination_address["outputPort"] = argin["output_port"]
+            elif device._vis_destination_address["outputPort"] == []:
+                device._vis_destination_address["outputPort"] = [[0, 9000, 1]]
 
             # Configure channelAveragingMap.
             if "channel_averaging_map" in argin:
@@ -736,7 +745,7 @@ class FspCorrSubarray(CspSubElementObsDevice):
             # Configure configID. This is not initally in the FSP portion of the input JSON, but added in function CbfSuarray._validate_configScan
             device._config_id = argin["config_id"]
 
-            # TODO - reinstate the validate_input() and move all the 
+            # TODO - reinstate the validate_input() and move all the
             #        validations to it
             # (result_code, msg) = self.validate_input(argin) # TODO
 
