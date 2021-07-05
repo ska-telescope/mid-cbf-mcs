@@ -347,7 +347,9 @@ class CbfSubarray(SKASubarray):
     def _validate_scan_configuration(self, argin):
         # try to deserialize input string to a JSON object
         try:
-            configuration = json.loads(argin)
+            full_configuration = json.loads(argin)
+            common_configuration = copy.deepcopy(full_configuration["common"])
+            configuration = copy.deepcopy(full_configuration["cbf"])
         except json.JSONDecodeError:  # argument not a valid JSON object
             msg = "Scan configuration object is not a valid JSON object. Aborting configuration."
             self._raise_configure_scan_fatal_error(msg)
@@ -360,27 +362,39 @@ class CbfSubarray(SKASubarray):
                 self._raise_configure_scan_fatal_error(msg)
         
         # Validate frequencyBandOffsetStream1.
-        if abs(int(configuration["frequencyBandOffsetStream1"])) <= const.FREQUENCY_SLICE_BW * 10 ** 6 / 2:
+        if "frequency_band_offset_stream_1" not in configuration:
+            configuration["frequency_band_offset_stream_1"] = 0
+        if abs(int(configuration["frequency_band_offset_stream_1"])) <= const.FREQUENCY_SLICE_BW * 10 ** 6 / 2:
             pass
         else:
             msg = "Absolute value of 'frequencyBandOffsetStream1' must be at most half " \
                     "of the frequency slice bandwidth. Aborting configuration."
             self._raise_configure_scan_fatal_error(msg)
 
+        # Validate frequencyBandOffsetStream2.
+        if "frequency_band_offset_stream_2" not in configuration:
+            configuration["frequency_band_offset_stream_2"] = 0
+        if abs(int(configuration["frequency_band_offset_stream_2"])) <= const.FREQUENCY_SLICE_BW * 10 ** 6 / 2:
+            pass
+        else:
+            msg = "Absolute value of 'frequencyBandOffsetStream2' must be at most " \
+                    "half of the frequency slice bandwidth. Aborting configuration."
+            self._raise_configure_scan_fatal_error(msg)
+
         # Validate band5Tuning, frequencyBandOffsetStream2 if frequencyBand is 5a or 5b.
-        if configuration["frequencyBand"] in ["5a", "5b"]:
+        if common_configuration["frequency_band"] in ["5a", "5b"]:
             # band5Tuning is optional
-            if "band5Tuning" in configuration:
+            if "band_5_tuning" in common_configuration:
                 pass
                 # check if streamTuning is an array of length 2
                 try:
-                    assert len(configuration["band5Tuning"]) == 2
+                    assert len(common_configuration["band_5_tuning"]) == 2
                 except (TypeError, AssertionError):
                     msg = "'band5Tuning' must be an array of length 2. Aborting configuration."
                     self._raise_configure_scan_fatal_error(msg)
 
-                stream_tuning = [*map(float, configuration["band5Tuning"])]
-                if configuration["frequencyBand"] == "5a":
+                stream_tuning = [*map(float, common_configuration["band_5_tuning"])]
+                if common_configuration["frequency_band"] == "5a":
                     if all(
                             [const.FREQUENCY_BAND_5a_TUNING_BOUNDS[0] <= stream_tuning[i]
                              <= const.FREQUENCY_BAND_5a_TUNING_BOUNDS[1] for i in [0, 1]]
@@ -396,7 +410,7 @@ class CbfSubarray(SKASubarray):
                             stream_tuning[1]
                         )
                         self._raise_configure_scan_fatal_error(msg)
-                else:  # configuration["frequencyBand"] == "5b"
+                else:  # configuration["frequency_band"] == "5b"
                     if all(
                             [const.FREQUENCY_BAND_5b_TUNING_BOUNDS[0] <= stream_tuning[i]
                              <= const.FREQUENCY_BAND_5b_TUNING_BOUNDS[1] for i in [0, 1]]
@@ -415,131 +429,128 @@ class CbfSubarray(SKASubarray):
             else:
                 # set band5Tuning to zero for the rest of the test. This won't 
                 # change the argin in function "configureScan(argin)"
-                configuration["band5Tuning"] = [0, 0]
-            # Validate frequencyBandOffsetStream2.
-            if abs(int(configuration["frequencyBandOffsetStream2"])) <= \
-                    const.FREQUENCY_SLICE_BW * 10 ** 6 / 2:
-                pass
-            else:
-                msg = "Absolute value of 'frequencyBandOffsetStream2' must be at most " \
-                        "half of the frequency slice bandwidth. Aborting configuration."
-                self._raise_configure_scan_fatal_error(msg)
+                common_configuration["band_5_tuning"] = [0, 0]
 
         # Validate dopplerPhaseCorrSubscriptionPoint.
-        try:
-            attribute_proxy = tango.AttributeProxy(configuration["dopplerPhaseCorrSubscriptionPoint"])
-            attribute_proxy.ping()
-            attribute_proxy.unsubscribe_event(
-                attribute_proxy.subscribe_event(
-                    tango.EventType.CHANGE_EVENT,
-                    self._void_callback
+        if "doppler_phase_corr_subscription_point" in configuration:
+            try:
+                attribute_proxy = tango.AttributeProxy(configuration["doppler_phase_corr_subscription_point"])
+                attribute_proxy.ping()
+                # TODO is this unsubscribe needed for validation?
+                # attribute_proxy.unsubscribe_event(
+                #     attribute_proxy.subscribe_event(
+                #         tango.EventType.CHANGE_EVENT,
+                #         self._void_callback
+                #     )
+                # )
+            except tango.DevFailed:  # attribute doesn't exist or is not set up correctly
+                msg = "Attribute {} not found or not set up correctly for " \
+                        "'dopplerPhaseCorrSubscriptionPoint'. Aborting configuration.".format(
+                    configuration["doppler_phase_corr_subscription_point"]
                 )
-            )
-        except tango.DevFailed:  # attribute doesn't exist or is not set up correctly
-            msg = "Attribute {} not found or not set up correctly for " \
-                    "'dopplerPhaseCorrSubscriptionPoint'. Aborting configuration.".format(
-                configuration["dopplerPhaseCorrSubscriptionPoint"]
-            )
-            self._raise_configure_scan_fatal_error(msg)
+                self._raise_configure_scan_fatal_error(msg)
 
         # Validate delayModelSubscriptionPoint.
-        try:
-            attribute_proxy = tango.AttributeProxy(configuration["delayModelSubscriptionPoint"])
-            attribute_proxy.ping()
-            attribute_proxy.unsubscribe_event(
-                attribute_proxy.subscribe_event(
-                    tango.EventType.CHANGE_EVENT,
-                    self._void_callback
+        if "delay_model_subscription_point" in configuration:
+            try:
+                attribute_proxy = tango.AttributeProxy(configuration["delay_model_subscription_point"])
+                attribute_proxy.ping()
+                # TODO is this unsubscribe needed for validation?
+                # attribute_proxy.unsubscribe_event(
+                #     attribute_proxy.subscribe_event(
+                #         tango.EventType.CHANGE_EVENT,
+                #         self._void_callback
+                #     )
+                # )
+            except tango.DevFailed:  # attribute doesn't exist or is not set up correctly
+                msg = "Attribute {} not found or not set up correctly for " \
+                        "'delayModelSubscriptionPoint'. Aborting configuration.".format(
+                    configuration["delay_model_subscription_point"]
                 )
-            )
-        except tango.DevFailed:  # attribute doesn't exist or is not set up correctly
-            msg = "Attribute {} not found or not set up correctly for " \
-                    "'delayModelSubscriptionPoint'. Aborting configuration.".format(
-                configuration["delayModelSubscriptionPoint"]
-            )
-            self._raise_configure_scan_fatal_error(msg)
+                self._raise_configure_scan_fatal_error(msg)
 
         # Validate jonesMatrixSubscriptionPoint.
-        try:
-            attribute_proxy = tango.AttributeProxy(configuration["jonesMatrixSubscriptionPoint"])
-            attribute_proxy.ping()
-            attribute_proxy.unsubscribe_event(
-                attribute_proxy.subscribe_event(
-                    tango.EventType.CHANGE_EVENT,
-                    self._void_callback
+        if "jones_matrix_subscription_point" in configuration:
+            try:
+                attribute_proxy = tango.AttributeProxy(configuration["jones_matrix_subscription_point"])
+                attribute_proxy.ping()
+                # TODO is this unsubscribe needed for validation?
+                # attribute_proxy.unsubscribe_event(
+                #     attribute_proxy.subscribe_event(
+                #         tango.EventType.CHANGE_EVENT,
+                #         self._void_callback
+                #     )
+                # )
+            except tango.DevFailed:  # attribute doesn't exist or is not set up correctly
+                msg = "Attribute {} not found or not set up correctly for " \
+                        "'jonesMatrixSubscriptionPoint'. Aborting configuration.".format(
+                    configuration["jones_matrix_subscription_point"]
                 )
-            )
-        except tango.DevFailed:  # attribute doesn't exist or is not set up correctly
-            msg = "Attribute {} not found or not set up correctly for " \
-                    "'jonesMatrixSubscriptionPoint'. Aborting configuration.".format(
-                configuration["jonesMatrixSubscriptionPoint"]
-            )
-            self._raise_configure_scan_fatal_error(msg)
+                self._raise_configure_scan_fatal_error(msg)
         
         # Validate beamWeightsSubscriptionPoint.
-        try:
-            attribute_proxy = tango.AttributeProxy(configuration["beamWeightsSubscriptionPoint"])
-            attribute_proxy.ping()
-            attribute_proxy.unsubscribe_event(
-                attribute_proxy.subscribe_event(
-                    tango.EventType.CHANGE_EVENT,
-                    self._void_callback
+        if "timing_beam_weights_subscription_point" in configuration:
+            try:
+                attribute_proxy = tango.AttributeProxy(configuration["timing_beam_weights_subscription_point"])
+                attribute_proxy.ping()
+                # TODO is this unsubscribe needed for validation?
+                # attribute_proxy.unsubscribe_event(
+                #     attribute_proxy.subscribe_event(
+                #         tango.EventType.CHANGE_EVENT,
+                #         self._void_callback
+                #     )
+                # )
+            except tango.DevFailed:  # attribute doesn't exist or is not set up correctly
+                msg = "Attribute {} not found or not set up correctly for " \
+                        "'beamWeightsSubscriptionPoint'. Aborting configuration.".format(
+                    configuration["timing_beam_weights_subscription_point"]
                 )
-            )
-        except tango.DevFailed:  # attribute doesn't exist or is not set up correctly
-            msg = "Attribute {} not found or not set up correctly for " \
-                    "'beamWeightsSubscriptionPoint'. Aborting configuration.".format(
-                configuration["beamWeightsSubscriptionPoint"]
-            )
-            self._raise_configure_scan_fatal_error(msg)
+                self._raise_configure_scan_fatal_error(msg)
 
 
         # Validate searchWindow.
-        # check if searchWindow is an array of maximum length 2
-        if len(configuration["searchWindow"]) > 2:
-            msg = "'searchWindow' must be an array of maximum length 2. " \
-                    "Aborting configuration."
-            self._raise_configure_scan_fatal_error(msg)
-        #TODO consider moving the search_window object validation to Vcc
-        for search_window in configuration["searchWindow"]:
-            for vcc in self._proxies_assigned_vcc:
-                try:
-                    search_window["frequencyBand"] = configuration["frequencyBand"]
-                    if "frequencyBandOffsetStream1" in configuration:
-                        search_window["frequencyBandOffsetStream1"] = \
-                            configuration["frequencyBandOffsetStream1"]
-                    else:
-                        search_window["frequencyBandOffsetStream1"] = 0
-                    if "frequencyBandOffsetStream2" in configuration:
-                        search_window["frequencyBandOffsetStream2"] = \
-                            configuration["frequencyBandOffsetStream2"]
-                    else:
-                        search_window["frequencyBandOffsetStream2"] = 0
-                    if configuration["frequencyBand"] in ["5a", "5b"]:
-                        search_window["band5Tuning"] = configuration["band5Tuning"]
+        if "search_window" in configuration:
+            # check if searchWindow is an array of maximum length 2
+            if len(configuration["search_window"]) > 2:
+                msg = "'searchWindow' must be an array of maximum length 2. " \
+                        "Aborting configuration."
+                self._raise_configure_scan_fatal_error(msg)
+            #TODO consider moving the search_window object validation to Vcc
+            for search_window in configuration["search_window"]:
+                for vcc in self._proxies_assigned_vcc:
+                    try:
+                        search_window["frequency_band"] = common_configuration["frequency_band"]
+                        search_window["frequency_band_offset_stream_1"] = \
+                            configuration["frequency_band_offset_stream_1"]
+                        search_window["frequency_band_offset_stream_2"] = \
+                            configuration["frequency_band_offset_stream_2"]
+                        if search_window["frequency_band"] in ["5a", "5b"]:
+                            search_window["band_5_tuning"] = common_configuration["band_5_tuning"]
 
-                    # pass on configuration to VCC
-                    vcc.ValidateSearchWindow(json.dumps(search_window))
+                        # pass on configuration to VCC
+                        vcc.ValidateSearchWindow(json.dumps(search_window))
 
-                except tango.DevFailed:  # exception in Vcc.ValidateSearchWindow
-                    msg = "An exception occurred while configuring VCC search " \
-                            "windows:\n{}\n. Aborting configuration.".format(
-                        str(sys.exc_info()[1].args[0].desc)
-                    )
-                    self._raise_configure_scan_fatal_error(msg)
+                    except tango.DevFailed:  # exception in Vcc.ValidateSearchWindow
+                        msg = "An exception occurred while configuring VCC search " \
+                                "windows:\n{}\n. Aborting configuration.".format(
+                            str(sys.exc_info()[1].args[0].desc)
+                        )
+                        self._raise_configure_scan_fatal_error(msg)
+        else:
+            pass
 
         # Validate fsp.
         for fsp in configuration["fsp"]:
             try:
                 # Validate fspID.
-                if int(fsp["fspID"]) in list(range(1, self._count_fsp + 1)):
-                    fspID = int(fsp["fspID"])
+                if int(fsp["fsp_id"]) in list(range(1, self._count_fsp + 1)):
+                    fspID = int(fsp["fsp_id"])
                     proxy_fsp = self._proxies_fsp[fspID - 1]
-                    if fsp["functionMode"] == "CORR":
+                    if fsp["function_mode"] == "CORR":
                         proxy_fsp_subarray = self._proxies_fsp_corr_subarray[fspID - 1]
-                    elif fsp["functionMode"] == "PSS-BF":
+                    elif fsp["function_mode"] == "PSS-BF":
                         proxy_fsp_subarray = self._proxies_fsp_pss_subarray[fspID - 1]
-                    elif fsp["functionMode"] == "PST-BF":
+                    elif fsp["function_mode"] == "PST-BF":
                         proxy_fsp_subarray = self._proxies_fsp_pst_subarray[fspID - 1]
                 else:
                     msg = "'fspID' must be an integer in the range [1, {}]. " \
@@ -558,8 +569,8 @@ class CbfSubarray(SKASubarray):
 
                 # Validate functionMode.
                 function_modes = ["CORR", "PSS-BF", "PST-BF", "VLBI"]
-                if fsp["functionMode"] in function_modes:
-                    if function_modes.index(fsp["functionMode"]) + 1 == \
+                if fsp["function_mode"] in function_modes:
+                    if function_modes.index(fsp["function_mode"]) + 1 == \
                             proxy_fsp.functionMode or \
                             proxy_fsp.functionMode == 0:
                         pass
@@ -569,52 +580,46 @@ class CbfSubarray(SKASubarray):
                             if fsp_corr_subarray_proxy.obsState != ObsState.IDLE:
                                 msg = "A different subarray is using FSP {} for a " \
                                         "different function mode. Aborting configuration.".format(
-                                        fsp["fspID"]
+                                        fsp["fsp_id"]
                                         )
                                 self._raise_configure_scan_fatal_error(msg)
                         for fsp_pss_subarray_proxy in self._proxies_fsp_pss_subarray:
                             if fsp_pss_subarray_proxy.obsState != ObsState.IDLE:
                                 msg = "A different subarray is using FSP {} for a " \
                                         "different function mode. Aborting configuration.".format(
-                                        fsp["fspID"]
+                                        fsp["fsp_id"]
                                         )
                                 self._raise_configure_scan_fatal_error(msg)
                         for fsp_pst_subarray_proxy in self._proxies_fsp_pst_subarray:
                             if fsp_pst_subarray_proxy.obsState != ObsState.IDLE:
                                 msg = "A different subarray is using FSP {} for a " \
                                         "different function mode. Aborting configuration.".format(
-                                        fsp["fspID"]
+                                        fsp["fsp_id"]
                                         )
                                 self._raise_configure_scan_fatal_error(msg)
                 else:
                     msg = "'functionMode' must be one of {} (received {}). " \
                             "Aborting configuration.".format(
-                        function_modes, fsp["functionMode"]
+                        function_modes, fsp["function_mode"]
                     )
                     self._raise_configure_scan_fatal_error(msg)
 
                 # TODO - why add these keys to the fsp dict - not good practice!
                 # TODO - create a new dict from a deep copy of the fsp dict.
-                fsp["frequencyBand"] = configuration["frequencyBand"]
-                if "frequencyBandOffsetStream1" in configuration:
-                    fsp["frequencyBandOffsetStream1"] = configuration["frequencyBandOffsetStream1"]
-                else:
-                    fsp["frequencyBandOffsetStream1"] = 0
-                if "frequencyBandOffsetStream2" in configuration:
-                    fsp["frequencyBandOffsetStream2"] = configuration["frequencyBandOffsetStream2"]
-                else:
-                    fsp["frequencyBandOffsetStream2"] = 0
-                if configuration["frequencyBand"] in ["5a", "5b"]:
-                    fsp["band5Tuning"] = configuration["band5Tuning"]
+                fsp["frequency_band"] = common_configuration["frequency_band"]
+                fsp["frequency_band_offset_stream_1"] = configuration["frequency_band_offset_stream_1"]
+                fsp["frequency_band_offset_stream_2"] = configuration["frequency_band_offset_stream_2"]
+                if fsp["frequency_band"] in ["5a", "5b"]:
+                    fsp["band_5_tuning"] = common_configuration["band_5_tuning"]
 
                 # --------------------------------------------------------
 
                 ########## CORR ##########
 
-                if fsp["functionMode"] == "CORR":
+                if fsp["function_mode"] == "CORR":
 
-                    if "receptors" in fsp:
-                        for this_rec in fsp["receptors"]:
+                    if "receptor_ids" in fsp:
+                        for this_rec in fsp["receptor_ids"]:
                             if this_rec not in self._receptors:
                                 msg = ("Receptor {} does not belong to subarray {}.".format(
                                     str(self._receptors[this_rec]), str(self._subarray_id)))
@@ -622,60 +627,61 @@ class CbfSubarray(SKASubarray):
                                 self._raise_configure_scan_fatal_error(msg)
                     else:
                         msg = "'receptors' not specified for Fsp CORR config"
-                        # TODO - In this case by the ICD, all subarray allocated 
-                        #        resources should be used.
-                        fsp["receptors"] = self._receptors
+                        # TODO - In this case by the ICD, all subarray allocated resources should be used.
+                        # TODO add support for more than one receptor per fsp
+                        # fsp["receptor_ids"] = self._receptors
+                        fsp["receptor_ids"] = self._receptors[0]
 
-                    frequencyBand = freq_band_dict()[fsp["frequencyBand"]]
+                    frequencyBand = freq_band_dict()[fsp["frequency_band"]]
                     # Validate frequencySliceID.
                     # TODO: move these to consts
                     # See for ex. Fig 8-2 in the Mid.CBF DDD 
                     num_frequency_slices = [4, 5, 7, 12, 26, 26]
-                    if int(fsp["frequencySliceID"]) in list(
+                    if int(fsp["frequency_slice_id"]) in list(
                             range(1, num_frequency_slices[frequencyBand] + 1)):
                         pass
                     else:
                         msg = "'frequencySliceID' must be an integer in the range [1, {}] " \
                                 "for a 'frequencyBand' of {}.".format(
                             str(num_frequency_slices[frequencyBand]),
-                            str(fsp["frequencyBand"])
+                            str(fsp["frequency_band"])
                         )
                         self.logger.error(msg)
                         tango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
                                                         tango.ErrSeverity.ERR)
 
-                    # Validate corrBandwidth.
-                    if int(fsp["corrBandwidth"]) in list(range(0, 7)):
+                    # Validate zoom_factor.
+                    if int(fsp["zoom_factor"]) in list(range(0, 7)):
                         pass
                     else:
-                        msg = "'corrBandwidth' must be an integer in the range [0, 6]."
+                        msg = "'zoom_factor' must be an integer in the range [0, 6]."
                         # this is a fatal error
                         self.logger.error(msg)
                         tango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
                                                         tango.ErrSeverity.ERR)
 
                     # Validate zoomWindowTuning.
-                    if int(fsp["corrBandwidth"]) > 0:  # zoomWindowTuning is required
-                        if "zoomWindowTuning" in fsp:
+                    if int(fsp["zoom_factor"]) > 0:  # zoomWindowTuning is required
+                        if "zoom_window_tuning" in fsp:
 
-                            if fsp["frequencyBand"] not in ["5a", "5b"]:  # frequency band is not band 5
-                                frequencyBand = ["1", "2", "3", "4", "5a", "5b"].index(fsp["frequencyBand"])
+                            if fsp["frequency_band"] not in ["5a", "5b"]:  # frequency band is not band 5
+                                frequencyBand = ["1", "2", "3", "4", "5a", "5b"].index(fsp["frequency_band"])
                                 frequency_band_start = [*map(lambda j: j[0] * 10 ** 9, [
                                     const.FREQUENCY_BAND_1_RANGE,
                                     const.FREQUENCY_BAND_2_RANGE,
                                     const.FREQUENCY_BAND_3_RANGE,
                                     const.FREQUENCY_BAND_4_RANGE
-                                ])][frequencyBand] + fsp["frequencyBandOffsetStream1"]
+                                ])][frequencyBand] + fsp["frequency_band_offset_stream_1"]
                                 
                                 frequency_slice_range = (
                                     frequency_band_start + \
-                                    (fsp["frequencySliceID"] - 1) * const.FREQUENCY_SLICE_BW * 10 ** 6,
+                                    (fsp["frequency_slice_id"] - 1) * const.FREQUENCY_SLICE_BW * 10 ** 6,
                                     frequency_band_start +
-                                    fsp["frequencySliceID"] * const.FREQUENCY_SLICE_BW * 10 ** 6
+                                    fsp["frequency_slice_id"] * const.FREQUENCY_SLICE_BW * 10 ** 6
                                 )
 
                                 if frequency_slice_range[0] <= \
-                                        int(fsp["zoomWindowTuning"]) * 10 ** 3 <= \
+                                        int(fsp["zoom_window_tuning"]) * 10 ** 3 <= \
                                         frequency_slice_range[1]:
                                     pass
                                 else:
@@ -685,7 +691,7 @@ class CbfSubarray(SKASubarray):
                                                                     "ConfigureScan execution",
                                                                     tango.ErrSeverity.ERR)
                             else:  # frequency band 5a or 5b (two streams with bandwidth 2.5 GHz)
-                                if configuration["band5Tuning"] == [0,0]: # band5Tuning not specified
+                                if common_configuration["band_5_tuning"] == [0,0]: # band5Tuning not specified
                                     pass
                                 else:
 
@@ -694,27 +700,27 @@ class CbfSubarray(SKASubarray):
                                     # to do them only once (ex. for band5Tuning)
 
                                     frequency_slice_range_1 = (
-                                        fsp["band5Tuning"][0] * 10 ** 9 + fsp["frequencyBandOffsetStream1"] - \
+                                        fsp["band_5_tuning"][0] * 10 ** 9 + fsp["frequency_band_offset_stream_1"] - \
                                         const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2 + \
-                                        (fsp["frequencySliceID"] - 1) * const.FREQUENCY_SLICE_BW * 10 ** 6,
-                                        fsp["band5Tuning"][0] * 10 ** 9 + fsp["frequencyBandOffsetStream1"] - \
+                                        (fsp["frequency_slice_id"] - 1) * const.FREQUENCY_SLICE_BW * 10 ** 6,
+                                        fsp["band_5_tuning"][0] * 10 ** 9 + fsp["frequency_band_offset_stream_1"] - \
                                         const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2 + \
-                                        fsp["frequencySliceID"] * const.FREQUENCY_SLICE_BW * 10 ** 6
+                                        fsp["frequency_slice_id"] * const.FREQUENCY_SLICE_BW * 10 ** 6
                                     )
 
                                     frequency_slice_range_2 = (
-                                        fsp["band5Tuning"][1] * 10 ** 9 + fsp["frequencyBandOffsetStream2"] - \
+                                        fsp["band_5_tuning"][1] * 10 ** 9 + fsp["frequency_band_offset_stream_2"] - \
                                         const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2 + \
-                                        (fsp["frequencySliceID"] - 1) * const.FREQUENCY_SLICE_BW * 10 ** 6,
-                                        fsp["band5Tuning"][1] * 10 ** 9 + fsp["frequencyBandOffsetStream2"] - \
+                                        (fsp["frequency_slice_id"] - 1) * const.FREQUENCY_SLICE_BW * 10 ** 6,
+                                        fsp["band_5_tuning"][1] * 10 ** 9 + fsp["frequency_band_offset_stream_2"] - \
                                         const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2 + \
-                                        fsp["frequencySliceID"] * const.FREQUENCY_SLICE_BW * 10 ** 6
+                                        fsp["frequency_slice_id"] * const.FREQUENCY_SLICE_BW * 10 ** 6
                                     )
 
-                                    if (frequency_slice_range_1[0] <= int(fsp["zoomWindowTuning"]) * 10 ** 3 <=
+                                    if (frequency_slice_range_1[0] <= int(fsp["zoom_window_tuning"]) * 10 ** 3 <=
                                         frequency_slice_range_1[1]) or \
                                             (frequency_slice_range_2[0] <=
-                                            int(fsp["zoomWindowTuning"]) * 10 ** 3 <=
+                                            int(fsp["zoom_window_tuning"]) * 10 ** 3 <=
                                             frequency_slice_range_2[1]):
                                         pass
                                     else:
@@ -731,7 +737,7 @@ class CbfSubarray(SKASubarray):
                                                             tango.ErrSeverity.ERR)
 
                     # Validate integrationTime.
-                    if int(fsp["integrationTime"]) in list(
+                    if int(fsp["integration_factor"]) in list(
                             range (self.MIN_INT_TIME, 10 * self.MIN_INT_TIME + 1, self.MIN_INT_TIME)
                     ):
                         pass
@@ -744,7 +750,7 @@ class CbfSubarray(SKASubarray):
 
                     # Validate fspChannelOffset
                     try: 
-                        if int(fsp["fspChannelOffset"])>=0: 
+                        if int(fsp["channel_offset"])>=0: 
                             pass
                         #TODO has to be a multiple of 14880
                         else:
@@ -761,7 +767,7 @@ class CbfSubarray(SKASubarray):
                     # validate outputlink
                     # check the format
                     try:
-                        for element in fsp["outputLinkMap"]:
+                        for element in fsp["output_link_map"]:
                             a, b = (int(element[0]), int(element[1]))
                     except:
                         msg = "'outputLinkMap' format not correct."
@@ -770,23 +776,23 @@ class CbfSubarray(SKASubarray):
                                                     tango.ErrSeverity.ERR)
 
                     # Validate channelAveragingMap.
-                    if "channelAveragingMap" in fsp:
+                    if "channel_averaging_map" in fsp:
                         try:
                             # validate dimensions
-                            for i in range(0,len(fsp["channelAveragingMap"])):
-                                assert len(fsp["channelAveragingMap"][i]) == 2
+                            for i in range(0,len(fsp["channel_averaging_map"])):
+                                assert len(fsp["channel_averaging_map"][i]) == 2
 
                             # validate averaging factor
-                            for i in range(0,len(fsp["channelAveragingMap"])):
+                            for i in range(0,len(fsp["channel_averaging_map"])):
                                 # validate channel ID of first channel in group
-                                if int(fsp["channelAveragingMap"][i][0]) == \
+                                if int(fsp["channel_averaging_map"][i][0]) == \
                                         i * self.NUM_FINE_CHANNELS / self.NUM_CHANNEL_GROUPS:
                                     pass  # the default value is already correct
                                 else:
                                     msg = "'channelAveragingMap'[{0}][0] is not the channel ID of the " \
                                           "first channel in a group (received {1}).".format(
                                         i,
-                                        fsp["channelAveragingMap"][i][0]
+                                        fsp["channel_averaging_map"][i][0]
                                     )
                                     self.logger.error(msg)
                                     tango.Except.throw_exception("Command failed", msg,
@@ -794,13 +800,13 @@ class CbfSubarray(SKASubarray):
                                                                  tango.ErrSeverity.ERR)
 
                                 # validate averaging factor
-                                if int(fsp["channelAveragingMap"][i][1]) in [0, 1, 2, 3, 4, 6, 8]:
+                                if int(fsp["channel_averaging_map"][i][1]) in [0, 1, 2, 3, 4, 6, 8]:
                                     pass
                                 else:
                                     msg = "'channelAveragingMap'[{0}][1] must be one of " \
                                             "[0, 1, 2, 3, 4, 6, 8] (received {1}).".format(
                                         i,
-                                        fsp["channelAveragingMap"][i][1]
+                                        fsp["channel_averaging_map"][i][1]
                                     )
                                     self.logger.error(msg)
                                     tango.Except.throw_exception("Command failed", msg,
@@ -817,21 +823,21 @@ class CbfSubarray(SKASubarray):
                 # --------------------------------------------------------
 
                 ########## PSS-BF ##########
-
-                if fsp["functionMode"] == "PSS-BF":
-                    if int(fsp["searchWindowID"]) in [1, 2]:
+                # TODO currently only CORR function mode is supported outside of Mid.CBF MCS
+                if fsp["function_mode"] == "PSS-BF":
+                    if int(fsp["search_window_id"]) in [1, 2]:
                         pass
                     else:  # searchWindowID not in valid range
                         msg = "'searchWindowID' must be one of [1, 2] (received {}).".format(
-                            str(fsp["searchWindowID"])
+                            str(fsp["search_window_id"])
                         )
                         self._raise_configure_scan_fatal_error(msg)
-                    if len(fsp["searchBeam"]) <= 192:
-                        for searchBeam in fsp["searchBeam"]:
-                            if 1 > int(searchBeam["searchBeamID"]) > 1500:
+                    if len(fsp["search_beam"]) <= 192:
+                        for searchBeam in fsp["search_beam"]:
+                            if 1 > int(searchBeam["search_beam_id"]) > 1500:
                                 # searchbeamID not in valid range
                                 msg = "'searchBeamID' must be within range 1-1500 (received {}).".format(
-                                    str(searchBeam["searchBeamID"])
+                                    str(searchBeam["search_beam_id"])
                                 )
                                 self._raise_configure_scan_fatal_error(msg)
                             
@@ -841,24 +847,24 @@ class CbfSubarray(SKASubarray):
                                     pass
                                 else:
                                     for search_beam_ID in searchBeamID:
-                                        if int(searchBeam["searchBeamID"]) != search_beam_ID:
+                                        if int(searchBeam["search_beam_id"]) != search_beam_ID:
                                             pass
                                         elif fsp_pss_subarray_proxy.obsState == ObsState.IDLE:
                                             pass
                                         else:
                                             msg = "'searchBeamID' {} is already being used on another fspSubarray.".format(
-                                                str(searchBeam["searchBeamID"])
+                                                str(searchBeam["search_beam_id"])
                                             )
                                             self._raise_configure_scan_fatal_error(msg)
                             
                                 # Validate receptors.
                                 # This is always given, due to implementation details.
                                 #TODO assume always given, as there is currently only support for 1 receptor/beam
-                            if "receptors" not in searchBeam:
-                                searchBeam["receptors"] = self._receptors
+                            if "receptor_ids" not in searchBeam:
+                                searchBeam["receptor_ids"] = self._receptors
 
                             # Sanity check:
-                            for this_rec in searchBeam["receptors"]:
+                            for this_rec in searchBeam["receptor_ids"]:
                                 if this_rec not in self._receptors:
                                     msg = ("Receptor {} does not belong to subarray {}.".format(
                                         str(self._receptors[this_rec]), str(self._subarray_id)))
@@ -866,19 +872,19 @@ class CbfSubarray(SKASubarray):
                                     tango.Except.throw_exception("Command failed", msg, 
                                     "ConfigureScan execution", tango.ErrSeverity.ERR)
 
-                            if searchBeam["outputEnable"] is False or searchBeam["outputEnable"] is True:
+                            if searchBeam["enable_output"] is False or searchBeam["enable_output"] is True:
                                 pass
                             else:
                                 msg = "'outputEnabled' is not a valid boolean"
                                 self._raise_configure_scan_fatal_error(msg)
 
-                            if isinstance(searchBeam["averagingInterval"], int):
+                            if isinstance(searchBeam["averaging_interval"], int):
                                 pass
                             else:
                                 msg = "'averagingInterval' is not a valid integer"
                                 self._raise_configure_scan_fatal_error(msg)
 
-                            if validate_ip(searchBeam["searchBeamDestinationAddress"]):
+                            if validate_ip(searchBeam["search_beam_destination_address"]):
                                 pass
                             else:
                                 msg = "'searchBeamDestinationAddress' is not a valid IP address"
@@ -891,15 +897,15 @@ class CbfSubarray(SKASubarray):
                 # --------------------------------------------------------
 
                 ########## PST-BF ##########
-
-                if fsp["functionMode"] == "PST-BF":
-                    if len(fsp["timingBeam"]) <= 16:
-                        for timingBeam in fsp["timingBeam"]:
-                            if 1 <= int(timingBeam["timingBeamID"]) <= 16:
+                # TODO currently only CORR function mode is supported outside of Mid.CBF MCS
+                if fsp["function_mode"] == "PST-BF":
+                    if len(fsp["timing_beam"]) <= 16:
+                        for timingBeam in fsp["timing_beam"]:
+                            if 1 <= int(timingBeam["timing_beam_id"]) <= 16:
                                 pass
                             else:  # timingBeamID not in valid range
                                 msg = "'timingBeamID' must be within range 1-16 (received {}).".format(
-                                    str(timingBeam["timingBeamID"])
+                                    str(timingBeam["timing_beam_id"])
                                 )
                                 self._raise_configure_scan_fatal_error(msg)
                             for fsp_pst_subarray_proxy in self._proxies_fsp_pst_subarray:
@@ -908,35 +914,35 @@ class CbfSubarray(SKASubarray):
                                     pass
                                 else:
                                     for timing_beam_ID in timingBeamID:
-                                        if int(timingBeam["timingBeamID"]) != timing_beam_ID:
+                                        if int(timingBeam["timing_beam_id"]) != timing_beam_ID:
                                             pass
                                         elif fsp_pst_subarray_proxy.obsState == ObsState.IDLE:
                                             pass
                                         else:
                                             msg = "'timingBeamID' {} is already being used on another fspSubarray.".format(
-                                                str(timingBeam["timingBeamID"])
+                                                str(timingBeam["timing_beam_id"])
                                             )
                                             self._raise_configure_scan_fatal_error(msg)
 
                             # Validate receptors.
                             # This is always given, due to implementation details.
-                            if "receptors" in timingBeam:
-                                for this_rec in timingBeam["receptors"]:
+                            if "receptor_ids" in timingBeam:
+                                for this_rec in timingBeam["receptor_ids"]:
                                     if this_rec not in self._receptors:
                                         msg = ("Receptor {} does not belong to subarray {}.".format(
                                             str(self._receptors[this_rec]), str(self._subarray_id)))
                                         self.logger.error(msg)
                                         self._raise_configure_scan_fatal_error(msg)
                             else:
-                                timingBeam["receptors"] = self._receptors
+                                timingBeam["receptor_ids"] = self._receptors
 
-                            if timingBeam["outputEnable"] is False or timingBeam["outputEnable"] is True:
+                            if timingBeam["enable_output"] is False or timingBeam["enable_output"] is True:
                                 pass
                             else:
                                 msg = "'outputEnabled' is not a valid boolean"
                                 self._raise_configure_scan_fatal_error(msg)
 
-                            if validate_ip(timingBeam["timingBeamDestinationAddress"]):
+                            if validate_ip(timingBeam["timing_beam_destination_address"]):
                                 pass
                             else:
                                 msg = "'timingBeamDestinationAddress' is not a valid IP address"
@@ -1163,7 +1169,7 @@ class CbfSubarray(SKASubarray):
         dtype=('uint16',),
         access=AttrWriteType.READ_WRITE,
         max_dim_x=197,
-        label="Receptors",
+        label="receptor_ids",
         doc="List of receptors assigned to subarray",
     )
 
@@ -1685,7 +1691,7 @@ class CbfSubarray(SKASubarray):
             :rtype: (ResultCode, str)
             """
 
-            device=self.target
+            device = self.target
 
             # Code here
             device._corr_config = []
@@ -1696,7 +1702,6 @@ class CbfSubarray(SKASubarray):
             device._pst_fsp_list = []
             device._fsp_list = [[], [], [], []]
 
-            #TODO: reimplement once _validate_scan_configuration is refactored
             # validate scan configuration first 
             try:
                 device._validate_scan_configuration(argin)
@@ -1715,19 +1720,22 @@ class CbfSubarray(SKASubarray):
             # data.insert(tango.DevUShort, ObsState.CONFIGURING)
             # device._group_vcc.command_inout("SetObservingState", data)
 
-            configuration = json.loads(argin)
+            full_configuration = json.loads(argin)
+            common_configuration = copy.deepcopy(full_configuration["common"])
+            configuration = copy.deepcopy(full_configuration["cbf"])
             # set band5Tuning to [0,0] if not specified
-            if "band5Tuning" not in configuration: 
-                configuration["band5Tuning"] = [0,0]
+            if "band_5_tuning" not in common_configuration: 
+                common_configuration["band_5_tuning"] = [0,0]
 
             # Configure configID.
-            device._config_ID = str(configuration["id"])
+            device._config_ID = str(common_configuration["config_id"])
 
             # Configure frequencyBand.
             frequency_bands = ["1", "2", "3", "4", "5a", "5b"]
-            device._frequency_band = frequency_bands.index(configuration["frequencyBand"])
+            device._frequency_band = frequency_bands.index(common_configuration["frequency_band"])
 
-            config_dict = {"id":configuration["id"], "frequency_band":configuration["frequencyBand"],}
+            config_dict = { "config_id": common_configuration["config_id"], 
+                            "frequency_band": common_configuration["frequency_band"] }
             json_str = json.dumps(config_dict)
             data = tango.DeviceData()
             data.insert(tango.DevString, json_str)
@@ -1738,45 +1746,33 @@ class CbfSubarray(SKASubarray):
             # TODO: all these VCC params should be passed in via ConfigureScan()
             # Configure band5Tuning, if frequencyBand is 5a or 5b.
             if device._frequency_band in [4, 5]:
-                stream_tuning = [*map(float, configuration["band5Tuning"])]
+                stream_tuning = [*map(float, common_configuration["band_5_tuning"])]
                 device._stream_tuning = stream_tuning
                 device._group_vcc.write_attribute("band5Tuning", stream_tuning)
 
             # Configure frequencyBandOffsetStream1.
-            if "frequencyBandOffsetStream1" in configuration:
-                device._frequency_band_offset_stream_1 = int(configuration["frequencyBandOffsetStream1"])
-                device._group_vcc.write_attribute(
-                    "frequencyBandOffsetStream1",
-                    int(configuration["frequencyBandOffsetStream1"])
-                )
+            if "frequency_band_offset_stream_1" in configuration:
+                device._frequency_band_offset_stream_1 = int(configuration["frequency_band_offset_stream_1"])
             else:
                 device._frequency_band_offset_stream_1 = 0
-                device._group_vcc.write_attribute("frequencyBandOffsetStream1", 0)
                 log_msg = "'frequencyBandOffsetStream1' not specified. Defaulting to 0."
                 self.logger.warn(log_msg)
+            device._group_vcc.write_attribute("frequencyBandOffsetStream1", device._frequency_band_offset_stream_1)
 
             # Validate frequencyBandOffsetStream2.
             # If not given, use a default value.
             # If malformed, use a default value, but append an error.
-            if device._frequency_band in [4, 5]:
-                if "frequencyBandOffsetStream2" in configuration:
-                    device._frequency_band_offset_stream_2 = int(configuration["frequencyBandOffsetStream2"])
-                    device._group_vcc.write_attribute(
-                        "frequencyBandOffsetStream2",
-                        int(configuration["frequencyBandOffsetStream2"])
-                    )
-                else:
-                    device._frequency_band_offset_stream_2 = 0
-                    device._group_vcc.write_attribute("frequencyBandOffsetStream2", 0)
-                    log_msg = "'frequencyBandOffsetStream2' not specified. Defaulting to 0."
-                    self.logger.warn(log_msg)
+            if "frequency_band_offset_stream_2" in configuration:
+                device._frequency_band_offset_stream_2 = int(configuration["frequency_band_offset_stream_2"])
             else:
                 device._frequency_band_offset_stream_2 = 0
-                device._group_vcc.write_attribute("frequencyBandOffsetStream2", 0)
+                log_msg = "'frequencyBandOffsetStream2' not specified. Defaulting to 0."
+                self.logger.warn(log_msg)
+            device._group_vcc.write_attribute("frequencyBandOffsetStream2", device._frequency_band_offset_stream_2)
 
             # Configure dopplerPhaseCorrSubscriptionPoint.
-            if "dopplerPhaseCorrSubscriptionPoint" in configuration:
-                attribute_proxy = tango.AttributeProxy(configuration["dopplerPhaseCorrSubscriptionPoint"])
+            if "doppler_phase_corr_subscription_point" in configuration:
+                attribute_proxy = tango.AttributeProxy(configuration["doppler_phase_corr_subscription_point"])
                 attribute_proxy.ping()
                 event_id = attribute_proxy.subscribe_event(
                     tango.EventType.CHANGE_EVENT,
@@ -1785,9 +1781,9 @@ class CbfSubarray(SKASubarray):
                 device._events_telstate[event_id] = attribute_proxy
 
             # Configure delayModelSubscriptionPoint.
-            if "delayModelSubscriptionPoint" in configuration:
+            if "delay_model_subscription_point" in configuration:
                 device._last_received_delay_model = "{}"
-                attribute_proxy = tango.AttributeProxy(configuration["delayModelSubscriptionPoint"])
+                attribute_proxy = tango.AttributeProxy(configuration["delay_model_subscription_point"])
                 attribute_proxy.ping() #To be sure the connection is good(don't know if the device is running)
                 event_id = attribute_proxy.subscribe_event(
                     tango.EventType.CHANGE_EVENT,
@@ -1796,9 +1792,9 @@ class CbfSubarray(SKASubarray):
                 device._events_telstate[event_id] = attribute_proxy
 
             # Configure jonesMatrixSubscriptionPoint
-            if "jonesMatrixSubscriptionPoint" in configuration:
+            if "jones_matrix_subscription_point" in configuration:
                 device._last_received_jones_matrix = "{}"
-                attribute_proxy = tango.AttributeProxy(configuration["jonesMatrixSubscriptionPoint"])
+                attribute_proxy = tango.AttributeProxy(configuration["jones_matrix_subscription_point"])
                 attribute_proxy.ping()
                 event_id = attribute_proxy.subscribe_event(
                     tango.EventType.CHANGE_EVENT,
@@ -1807,9 +1803,9 @@ class CbfSubarray(SKASubarray):
                 device._events_telstate[event_id] = attribute_proxy
 
             # Configure beamWeightsSubscriptionPoint
-            if "beamWeightsSubscriptionPoint" in configuration:
+            if "timing_beam_weights_subscription_point" in configuration:
                 device._last_received_beam_weights= "{}"
-                attribute_proxy = tango.AttributeProxy(configuration["beamWeightsSubscriptionPoint"])
+                attribute_proxy = tango.AttributeProxy(configuration["timing_beam_weights_subscription_point"])
                 attribute_proxy.ping()
                 event_id = attribute_proxy.subscribe_event(
                     tango.EventType.CHANGE_EVENT,
@@ -1818,31 +1814,25 @@ class CbfSubarray(SKASubarray):
                 device._events_telstate[event_id] = attribute_proxy
 
             # Configure rfiFlaggingMask.
-            if "rfiFlaggingMask" in configuration:
+            if "rfi_flagging_mask" in configuration:
                 device._group_vcc.write_attribute(
                     "rfiFlaggingMask",
-                    json.dumps(configuration["rfiFlaggingMask"])
+                    json.dumps(configuration["rfi_flagging_mask"])
                 )
             else:
                 log_msg = "'rfiFlaggingMask' not given. Proceeding."
                 self.logger.warn(log_msg)
 
             # Configure searchWindow.
-            if "searchWindow" in configuration:
-                for search_window in configuration["searchWindow"]:
-                    search_window["frequencyBand"] = configuration["frequencyBand"]
-                    if "frequencyBandOffsetStream1" in configuration:
-                        search_window["frequencyBandOffsetStream1"] = \
-                            configuration["frequencyBandOffsetStream1"]
-                    else:
-                        search_window["frequencyBandOffsetStream1"] = 0
-                    if "frequencyBandOffsetStream2" in configuration:
-                        search_window["frequencyBandOffsetStream2"] = \
-                            configuration["frequencyBandOffsetStream2"]
-                    else:
-                        search_window["frequencyBandOffsetStream2"] = 0
-                    if configuration["frequencyBand"] in ["5a", "5b"]:
-                        search_window["band5Tuning"] = configuration["band5Tuning"]
+            if "search_window" in configuration:
+                for search_window in configuration["search_window"]:
+                    search_window["frequency_band"] = common_configuration["frequency_band"]
+                    search_window["frequency_band_offset_stream_1"] = \
+                        device._frequency_band_offset_stream_1
+                    search_window["frequency_band_offset_stream_2"] = \
+                        device._frequency_band_offset_stream_2
+                    if search_window["frequency_band"] in ["5a", "5b"]:
+                        search_window["band_5_tuning"] = common_configuration["band_5_tuning"]
                     # pass on configuration to VCC
                     data = tango.DeviceData()
                     data.insert(tango.DevString, json.dumps(search_window))
@@ -1860,7 +1850,7 @@ class CbfSubarray(SKASubarray):
             # Configure FSP.
             for fsp in configuration["fsp"]:
                 # Configure fspID.
-                fspID = int(fsp["fspID"])
+                fspID = int(fsp["fsp_id"])
                 proxy_fsp = device._proxies_fsp[fspID - 1]
 
                 device._group_fsp.add(device._fqdn_fsp[fspID - 1])
@@ -1872,7 +1862,7 @@ class CbfSubarray(SKASubarray):
                 proxy_fsp.AddSubarrayMembership(device._subarray_id)
 
                 # Configure functionMode.
-                proxy_fsp.SetFunctionMode(fsp["functionMode"])
+                proxy_fsp.SetFunctionMode(fsp["function_mode"])
 
                 # subscribe to FSP state and healthState changes
                 event_id_state, event_id_health_state = proxy_fsp.subscribe_event(
@@ -1884,87 +1874,80 @@ class CbfSubarray(SKASubarray):
                     tango.EventType.CHANGE_EVENT,
                     device._state_change_event_callback
                 )
-                device._events_state_change_fsp[int(fsp["fspID"])] = [event_id_state,
+                device._events_state_change_fsp[int(fsp["fsp_id"])] = [event_id_state,
                                                                     event_id_health_state]
                 
                 # Add configID to fsp. It is not included in the "FSP" portion in configScan JSON
-                fsp["configID"] = configuration["id"]
-                fsp["frequencyBand"] = configuration["frequencyBand"]
-                fsp["band5Tuning"] = configuration["band5Tuning"]
-                if "frequencyBandOffsetStream1" in configuration:
-                    fsp["frequencyBandOffsetStream1"] = configuration["frequencyBandOffsetStream1"]
-                else:
-                    fsp["frequencyBandOffsetStream1"] = 0
-                if "frequencyBandOffsetStream2" in configuration:
-                    fsp["frequencyBandOffsetStream2"] = configuration["frequencyBandOffsetStream2"]
-                else:
-                    fsp["frequencyBandOffsetStream2"] = 0
+                fsp["config_id"] = common_configuration["config_id"]
+                fsp["frequency_band"] = common_configuration["frequency_band"]
+                fsp["band_5_tuning"] = common_configuration["band_5_tuning"]
+                fsp["frequency_band_offset_stream_1"] = device._frequency_band_offset_stream_1
+                fsp["frequency_band_offset_stream_2"] = device._frequency_band_offset_stream_2
 
-                if fsp["functionMode"] == "CORR":
-                    if "receptors" not in fsp:
-                        # In this case by the ICD, all subarray allocated resources should be used.
-                        fsp["receptors"] = device._receptors
+                if fsp["function_mode"] == "CORR":
+                    if "receptor_ids" not in fsp:
+                        # TODO In this case by the ICD, all subarray allocated resources should be used.
+                        fsp["receptor_ids"] = device._receptors[0]
                     device._corr_config.append(fsp)
-                    device._corr_fsp_list.append(fsp["fspID"])
-                elif fsp["functionMode"] == "PSS-BF":
-                    for searchBeam in fsp["searchBeam"]:
-                        if "receptors" not in searchBeam:
+                    device._corr_fsp_list.append(fsp["fsp_id"])
+                
+                # TODO currently only CORR function mode is supported outside of Mid.CBF MCS
+                elif fsp["function_mode"] == "PSS-BF":
+                    for searchBeam in fsp["search_beam"]:
+                        if "receptor_ids" not in searchBeam:
                             # In this case by the ICD, all subarray allocated resources should be used.
-                            searchBeam["receptors"] = device._receptors
+                            searchBeam["receptor_ids"] = device._receptors
                     device._pss_config.append(fsp)
-                    device._pss_fsp_list.append(fsp["fspID"])
-                elif fsp["functionMode"] == "PST-BF":
-                    for timingBeam in fsp["timingBeam"]:
-                        if "receptors" not in timingBeam:
+                    device._pss_fsp_list.append(fsp["fsp_id"])
+                elif fsp["function_mode"] == "PST-BF":
+                    for timingBeam in fsp["timing_beam"]:
+                        if "receptor_ids" not in timingBeam:
                             # In this case by the ICD, all subarray allocated resources should be used.
-                            timingBeam["receptors"] = device._receptors
+                            timingBeam["receptor_ids"] = device._receptors
                     device._pst_config.append(fsp)
-                    device._pst_fsp_list.append(fsp["fspID"])
+                    device._pst_fsp_list.append(fsp["fsp_id"])
 
-            # Call ConfigureScan for all FSP Subarray devices (CORR and PSS)
+            # Call ConfigureScan for all FSP Subarray devices (CORR/PSS/PST)
 
-            # NOTE:_pss_config is a list of fsp config JSON objects, each 
+            # NOTE:_corr_config is a list of fsp config JSON objects, each 
             #      augmented by a number of vcc-fsp common parameters 
             #      created by the function _validate_scan_configuration()
+            if len(device._corr_config) != 0: 
+                #device._proxy_corr_config.ConfigureFSP(json.dumps(device._corr_config))
+                # Michelle - WIP - TODO - this is to replace the call to 
+                #  _proxy_corr_config.ConfigureFSP()
+                for this_fsp in device._corr_config:
+                    try:                      
+                        this_proxy = device._proxies_fsp_corr_subarray[int(this_fsp["fsp_id"])-1]
+                        this_proxy.ConfigureScan(json.dumps(this_fsp))
+                    except tango.DevFailed:
+                        msg = "An exception occurred while configuring " \
+                        "FspCorrSubarray; Aborting configuration"
+                        device._raise_configure_scan_fatal_error(msg)
+
+            # NOTE: _pss_config is costructed similarly to _corr_config
             if len(device._pss_config) != 0:
                 for this_fsp in device._pss_config:
                     try:
-                        this_proxy = device._proxies_fsp_pss_subarray[int(this_fsp["fspID"])-1]
+                        this_proxy = device._proxies_fsp_pss_subarray[int(this_fsp["fsp_id"])-1]
                         this_proxy.ConfigureScan(json.dumps(this_fsp))
                     except tango.DevFailed:
                         msg = "An exception occurred while configuring  " \
                         "FspPssSubarray; Aborting configuration"
                         device._raise_configure_scan_fatal_error(msg)
 
-            # NOTE: _pst_config is costructed similarly to _pss_config
+            # NOTE: _pst_config is costructed similarly to _corr_config
             if len(device._pst_config) != 0:
                 for this_fsp in device._pst_config:
                     try:
-                        this_proxy = device._proxies_fsp_pst_subarray[int(this_fsp["fspID"])-1]
+                        this_proxy = device._proxies_fsp_pst_subarray[int(this_fsp["fsp_id"])-1]
                         this_proxy.ConfigureScan(json.dumps(this_fsp))
                     except tango.DevFailed:
                         msg = "An exception occurred while configuring  " \
                         "FspPstSubarray; Aborting configuration"
                         device._raise_configure_scan_fatal_error(msg)
 
-            # NOTE: _corr_config is costructed similarly to _pss_config
-            if len(device._corr_config) != 0: 
-                #device._proxy_corr_config.ConfigureFSP(json.dumps(device._corr_config))
-
-                # Michelle - WIP - TODO - this is to replace the call to 
-                #  _proxy_corr_config.ConfigureFSP()
-                for this_fsp in device._corr_config:
-                    try:                      
-                        this_proxy = device._proxies_fsp_corr_subarray[int(this_fsp["fspID"])-1]
-                        this_proxy.ConfigureScan(json.dumps(this_fsp))
-                    except tango.DevFailed:
-                        msg = "An exception occurred while configuring " \
-                        "FspCorrSubarray; Aborting configuration"
-                        # msg = "An exception occurred while configuring FspCorrSubarray:\n{}\n" \
-                        # "Aborting configuration".format(sys.exc_info()[1].args[0].desc)
-                        device._raise_configure_scan_fatal_error(msg)
-
-            # TODO add PST and VLBI to this once they are implemented
+            # TODO add VLBI to this once they are implemented
             # what are these for?
             device._fsp_list[0].append(device._corr_fsp_list)
             device._fsp_list[1].append(device._pss_fsp_list)
@@ -2013,12 +1996,14 @@ class CbfSubarray(SKASubarray):
             """
             # overwrites the do hook
 
-            device=self.target
+            device = self.target
 
-            device._scan_ID=int(argin)
+            scan = json.loads(argin)
+
+            device._scan_ID = int(scan["scan_id"])
 
             data = tango.DeviceData()
-            data.insert(tango.DevString, argin)
+            data.insert(tango.DevString, str(device._scan_ID))
             device._group_vcc.command_inout("Scan", data)
 
             device._group_fsp_corr_subarray.command_inout("Scan", data)
@@ -2026,7 +2011,7 @@ class CbfSubarray(SKASubarray):
             device._group_fsp_pst_subarray.command_inout("Scan", data)
 
             # return message
-            message = "Scan command successfull"
+            message = "Scan command successful"
             self.logger.info(message)
             return (ResultCode.STARTED, message)
 

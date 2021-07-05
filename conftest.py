@@ -22,7 +22,6 @@ import tango
 from tango import DevState
 from tango import DeviceProxy
 from tango.test_context import DeviceTestContext
-from tango.test_context import DeviceTestContext
 
 from ska_tango_base.control_model import LoggingLevel, ObsState, AdminMode
 

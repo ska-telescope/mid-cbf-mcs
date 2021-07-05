@@ -257,7 +257,7 @@ class FspCorrSubarray(CspSubElementObsDevice):
                 for i in range(const.NUM_CHANNEL_GROUPS)
             ]
             # destination addresses includes the following three
-            device._vis_destination_address = {"outputHost":[], "outputMac": [], "outputPort":[]}
+            device._vis_destination_address = {"outputHost": [], "outputMac": [], "outputPort": []}
             device._fsp_channel_offset = 0
             # outputLinkMap is a 2*40 array. Pogo generates tuple;
             # Changed into list to facilitate writing
@@ -603,144 +603,149 @@ class FspCorrSubarray(CspSubElementObsDevice):
 
             argin = json.loads(argin)
 
-            # TODO:  why this check? This IS "CORR" function
-            if argin["functionMode"] == "CORR":
+            # Configure frequencyBand.
+            device._freq_band_name = argin["frequency_band"]
+            device._frequency_band = freq_band_dict()[device._freq_band_name]
 
-                # Configure frequencyBand.
-                device._freq_band_name = argin['frequencyBand']
-                device._frequency_band = freq_band_dict()[device._freq_band_name]
+            # Configure streamTuning.
+            device._stream_tuning = argin["band_5_tuning"]
 
-                # Configure band5Tuning.
-                if device._frequency_band in [4, 5]:
-                    device._stream_tuning = argin["band5Tuning"]
+            # Configure frequencyBandOffsetStream1.
+            device._frequency_band_offset_stream_1 = int(argin["frequency_band_offset_stream_1"])
 
-                # Configure frequencyBandOffsetStream1.
-                device._frequency_band_offset_stream_1 = int(argin["frequencyBandOffsetStream1"])
-
-                # Configure frequencyBandOffsetStream2.
-                if device._frequency_band in [4, 5]:
-                    device._frequency_band_offset_stream_2 = int(argin["frequencyBandOffsetStream2"])
+            # Configure frequencyBandOffsetStream2.
+            device._frequency_band_offset_stream_2 = int(argin["frequency_band_offset_stream_2"])
 
             # Configure receptors.
             
             # TODO: _remove_all_receptors should not be needed because it is
             #        applied in GoToIdle()
             device._remove_all_receptors()
-            device._add_receptors(map(int, argin["receptors"]))
+            device._add_receptors(map(int, argin["receptor_ids"]))
 
             # Configure frequencySliceID.
-            if argin["functionMode"] == "CORR":
-                device._frequency_slice_ID = int(argin["frequencySliceID"])
-                # Configure corrBandwidth.
-                device._bandwidth = int(argin["corrBandwidth"])
-                device._bandwidth_actual = int(const.FREQUENCY_SLICE_BW/2**int(argin["corrBandwidth"]))
+            device._frequency_slice_ID = int(argin["frequency_slice_id"])
+            # Configure corrBandwidth.
+            device._bandwidth = int(argin["zoom_factor"])
+            device._bandwidth_actual = int(const.FREQUENCY_SLICE_BW/2**int(argin["zoom_factor"]))
 
-                # Configure zoomWindowTuning.
-                if device._bandwidth != 0:  # zoomWindowTuning is required
-                    if device._frequency_band in list(range(4)):  # frequency band is not band 5
-                        device._zoom_window_tuning = int(argin["zoomWindowTuning"])
+            # Configure zoomWindowTuning.
+            if device._bandwidth != 0:  # zoomWindowTuning is required
+                if device._frequency_band in list(range(4)):  # frequency band is not band 5
+                    device._zoom_window_tuning = int(argin["zoom_window_tuning"])
 
-                        frequency_band_start = [*map(lambda j: j[0]*10**9, [
-                            const.FREQUENCY_BAND_1_RANGE,
-                            const.FREQUENCY_BAND_2_RANGE,
-                            const.FREQUENCY_BAND_3_RANGE,
-                            const.FREQUENCY_BAND_4_RANGE
-                        ])][device._frequency_band] + device._frequency_band_offset_stream_1
-                        frequency_slice_range = (
-                            frequency_band_start + \
-                                (device._frequency_slice_ID - 1)*const.FREQUENCY_SLICE_BW*10**6,
-                            frequency_band_start +
-                                device._frequency_slice_ID*const.FREQUENCY_SLICE_BW*10**6
-                        )
+                    frequency_band_start = [*map(lambda j: j[0]*10**9, [
+                        const.FREQUENCY_BAND_1_RANGE,
+                        const.FREQUENCY_BAND_2_RANGE,
+                        const.FREQUENCY_BAND_3_RANGE,
+                        const.FREQUENCY_BAND_4_RANGE
+                    ])][device._frequency_band] + device._frequency_band_offset_stream_1
+                    frequency_slice_range = (
+                        frequency_band_start + \
+                            (device._frequency_slice_ID - 1)*const.FREQUENCY_SLICE_BW*10**6,
+                        frequency_band_start +
+                            device._frequency_slice_ID*const.FREQUENCY_SLICE_BW*10**6
+                    )
 
-                        if frequency_slice_range[0] + \
-                                device._bandwidth_actual*10**6/2 <= \
-                                int(argin["zoomWindowTuning"])*10**3 <= \
-                                frequency_slice_range[1] - \
-                                device._bandwidth_actual*10**6/2:
-                            # this is the acceptable range
-                            pass
-                        else:
-                            # log a warning message
-                            log_msg = "'zoomWindowTuning' partially out of observed frequency slice. "\
-                                "Proceeding."
-                            self.logger.warn(log_msg)
-                    else:  # frequency band 5a or 5b (two streams with bandwidth 2.5 GHz)
-                        device._zoom_window_tuning = argin["zoomWindowTuning"]
+                    if frequency_slice_range[0] + \
+                            device._bandwidth_actual*10**6/2 <= \
+                            int(argin["zoom_window_tuning"])*10**3 <= \
+                            frequency_slice_range[1] - \
+                            device._bandwidth_actual*10**6/2:
+                        # this is the acceptable range
+                        pass
+                    else:
+                        # log a warning message
+                        log_msg = "'zoomWindowTuning' partially out of observed frequency slice. "\
+                            "Proceeding."
+                        self.logger.warn(log_msg)
+                else:  # frequency band 5a or 5b (two streams with bandwidth 2.5 GHz)
+                    device._zoom_window_tuning = argin["zoom_window_tuning"]
 
-                        frequency_slice_range_1 = (
-                            device._stream_tuning[0]*10**9 + device._frequency_band_offset_stream_1 - \
-                                const.BAND_5_STREAM_BANDWIDTH*10**9/2 + \
-                                (device._frequency_slice_ID - 1)*const.FREQUENCY_SLICE_BW*10**6,
-                            device._stream_tuning[0]*10**9 + device._frequency_band_offset_stream_1 - \
-                                const.BAND_5_STREAM_BANDWIDTH*10**9/2 + \
-                                device._frequency_slice_ID*const.FREQUENCY_SLICE_BW*10**6
-                        )
+                    frequency_slice_range_1 = (
+                        device._stream_tuning[0]*10**9 + device._frequency_band_offset_stream_1 - \
+                            const.BAND_5_STREAM_BANDWIDTH*10**9/2 + \
+                            (device._frequency_slice_ID - 1)*const.FREQUENCY_SLICE_BW*10**6,
+                        device._stream_tuning[0]*10**9 + device._frequency_band_offset_stream_1 - \
+                            const.BAND_5_STREAM_BANDWIDTH*10**9/2 + \
+                            device._frequency_slice_ID*const.FREQUENCY_SLICE_BW*10**6
+                    )
 
-                        frequency_slice_range_2 = (
-                            device._stream_tuning[1]*10**9 + device._frequency_band_offset_stream_2 - \
-                                const.BAND_5_STREAM_BANDWIDTH*10**9/2 + \
-                                (device._frequency_slice_ID - 1)*const.FREQUENCY_SLICE_BW*10**6,
-                            device._stream_tuning[1]*10**9 + device._frequency_band_offset_stream_2 - \
-                                const.BAND_5_STREAM_BANDWIDTH*10**9/2 + \
-                                device._frequency_slice_ID*const.FREQUENCY_SLICE_BW*10**6
-                        )
+                    frequency_slice_range_2 = (
+                        device._stream_tuning[1]*10**9 + device._frequency_band_offset_stream_2 - \
+                            const.BAND_5_STREAM_BANDWIDTH*10**9/2 + \
+                            (device._frequency_slice_ID - 1)*const.FREQUENCY_SLICE_BW*10**6,
+                        device._stream_tuning[1]*10**9 + device._frequency_band_offset_stream_2 - \
+                            const.BAND_5_STREAM_BANDWIDTH*10**9/2 + \
+                            device._frequency_slice_ID*const.FREQUENCY_SLICE_BW*10**6
+                    )
 
-                        if (frequency_slice_range_1[0] + \
-                                device._bandwidth_actual*10**6/2 <= \
-                                int(argin["zoomWindowTuning"])*10**3 <= \
-                                frequency_slice_range_1[1] - \
-                                device._bandwidth_actual*10**6/2) or\
-                                (frequency_slice_range_2[0] + \
-                                device._bandwidth_actual*10**6/2 <= \
-                                int(argin["zoomWindowTuning"])*10**3 <= \
-                                frequency_slice_range_2[1] - \
-                                device._bandwidth_actual*10**6/2):
-                            # this is the acceptable range
-                            pass
-                        else:
-                            # log a warning message
-                            log_msg = "'zoomWindowTuning' partially out of observed frequency slice. "\
-                                "Proceeding."
-                            self.logger.warn(log_msg)
+                    if (frequency_slice_range_1[0] + \
+                            device._bandwidth_actual*10**6/2 <= \
+                            int(argin["zoom_window_tuning"])*10**3 <= \
+                            frequency_slice_range_1[1] - \
+                            device._bandwidth_actual*10**6/2) or\
+                            (frequency_slice_range_2[0] + \
+                            device._bandwidth_actual*10**6/2 <= \
+                            int(argin["zoom_window_tuning"])*10**3 <= \
+                            frequency_slice_range_2[1] - \
+                            device._bandwidth_actual*10**6/2):
+                        # this is the acceptable range
+                        pass
+                    else:
+                        # log a warning message
+                        log_msg = "'zoomWindowTuning' partially out of observed frequency slice. "\
+                            "Proceeding."
+                        self.logger.warn(log_msg)
 
-                # Configure integrationTime.
-                device._integration_time = int(argin["integrationTime"])
+            # Configure integrationTime.
+            device._integration_time = int(argin["integration_factor"])
 
-                # Configure fspChannelOffset
-                device._fsp_channel_offset= int(argin["fspChannelOffset"])
-                    
-                # Configure destination addresses
-                device._vis_destination_address["outputHost"]=argin["outputHost"]
-                # ouputMac is optional
-                if "outputMac" in argin:
-                    device._vis_destination_address["outputMac"]=argin["outputMac"]
-                else: # not specified, so set default or keep the previous one
-                    if device._vis_destination_address["outputMac"]==[]:
-                        device._vis_destination_address["outputMac"]=[[0, "06-00-00-00-00-01"]]
-                device._vis_destination_address["outputPort"]=argin["outputPort"]
+            # Configure fspChannelOffset
+            device._fsp_channel_offset = int(argin["channel_offset"])
+                
+            #TODO implement output products transmission
 
-                # Configure channelAveragingMap.
-                if "channelAveragingMap" in argin:
-                    # for i in range(20):
-                    #     device._channel_averaging_map[i][1] = int(argin["channelAveragingMap"][i][1])
-                    device._channel_averaging_map=argin["channelAveragingMap"]
-                else:
-                    device._channel_averaging_map = [
-                        [int(i*const.NUM_FINE_CHANNELS/const.NUM_CHANNEL_GROUPS) + 1, 0]
-                        for i in range(const.NUM_CHANNEL_GROUPS)
-                    ]
-                    log_msg = "FSP specified, but 'channelAveragingMap not given. Default to averaging "\
-                        "factor = 0 for all channel groups."
-                    self.logger.warn(log_msg)
+            # Configure destination addresses
+            if "output_host" in argin:
+                device._vis_destination_address["outputHost"] = argin["output_host"]
+            # not specified, so set default or keep the previous one
+            elif device._vis_destination_address["outputHost"] == []:
+                device._vis_destination_address["outputHost"] = [[0, "192.168.0.1"]]
 
-                # Configure outputLinkMap
-                device._output_link_map=argin["outputLinkMap"]
+            # ouputMac is optional
+            if "output_mac" in argin:
+                device._vis_destination_address["outputMac"] = argin["output_mac"]
+            # not specified, so set default or keep the previous one
+            elif device._vis_destination_address["outputMac"] == []:
+                device._vis_destination_address["outputMac"] = [[0, "06-00-00-00-00-01"]]
 
-                # Configure configID. This is not initally in the FSP portion of the input JSON, but added in function CbfSuarray._validate_configScan
-                device._config_id=argin["configID"]
+            if "output_port" in argin:
+                device._vis_destination_address["outputPort"] = argin["output_port"]
+            elif device._vis_destination_address["outputPort"] == []:
+                device._vis_destination_address["outputPort"] = [[0, 9000, 1]]
 
-            # TODO - reinstate the validate_input() and move all the 
+            # Configure channelAveragingMap.
+            if "channel_averaging_map" in argin:
+                # for i in range(20):
+                #     device._channel_averaging_map[i][1] = int(argin["channelAveragingMap"][i][1])
+                device._channel_averaging_map = argin["channel_averaging_map"]
+            else:
+                device._channel_averaging_map = [
+                    [int(i*const.NUM_FINE_CHANNELS/const.NUM_CHANNEL_GROUPS) + 1, 0]
+                    for i in range(const.NUM_CHANNEL_GROUPS)
+                ]
+                log_msg = "FSP specified, but 'channelAveragingMap not given. Default to averaging "\
+                    "factor = 0 for all channel groups."
+                self.logger.warn(log_msg)
+
+            # Configure outputLinkMap
+            device._output_link_map = argin["output_link_map"]
+
+            # Configure configID. This is not initally in the FSP portion of the input JSON, but added in function CbfSuarray._validate_configScan
+            device._config_id = argin["config_id"]
+
+            # TODO - reinstate the validate_input() and move all the
             #        validations to it
             # (result_code, msg) = self.validate_input(argin) # TODO
 
