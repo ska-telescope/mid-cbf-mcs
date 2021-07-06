@@ -1,5 +1,5 @@
 #
-# Project makefile for mid-cbf-mcs project. You should normally only need to modify
+# Project makefile for ska-mid-cbf-mcs project. You should normally only need to modify
 # DOCKER_REGISTRY_USER and PROJECT below.
 #
 
@@ -10,12 +10,13 @@
 # DOCKER_REGISTRY_USER and PROJECT
 #
 DOCKER_REGISTRY_USER:=ska-docker
-PROJECT = mid-cbf-mcs
+PROJECT = ska-mid-cbf-mcs
 
 # KUBE_NAMESPACE defines the Kubernetes Namespace that will be deployed to
 # using Helm.  If this does not already exist it will be created
+# TODO: rename namespace? (ADR-25) 
 KUBE_NAMESPACE ?= mid-cbf
-SDP_KUBE_NAMESPACE ?= sdp#namespace to be used
+SDP_KUBE_NAMESPACE ?= sdp #namespace to be used
 DASHBOARD ?= webjive-dash.dump
 
 # HELM_RELEASE is the release that all Kubernetes resources will be labelled
@@ -23,10 +24,10 @@ DASHBOARD ?= webjive-dash.dump
 HELM_RELEASE ?= test
 
 # HELM_CHART the chart name
-HELM_CHART ?= mid-cbf-umbrella
+HELM_CHART ?= ska-mid-cbf-umbrella
 
 # UMBRELLA_CHART_PATH Path of the umbrella chart to work with
-UMBRELLA_CHART_PATH ?= charts/mid-cbf-umbrella/
+UMBRELLA_CHART_PATH ?= charts/ska-mid-cbf-umbrella/
 
 # Fixed variables
 # Timeout for gitlab-runner when run locally
@@ -48,7 +49,7 @@ DOCKER_VOLUMES ?= /var/run/docker.sock:/var/run/docker.sock
 # registry credentials - user/pass/registry - set these in PrivateRules.mak
 DOCKER_REGISTRY_USER_LOGIN ?=  ## registry credentials - user - set in PrivateRules.mak
 CI_REGISTRY_PASS_LOGIN ?=  ## registry credentials - pass - set in PrivateRules.mak
-CI_REGISTRY ?= gitlab.com/ska-telescope/mid-cbf-mcs
+CI_REGISTRY ?= gitlab.com/ska-telescope/ska-mid-cbf-mcs
 
 CI_PROJECT_DIR ?= .
 

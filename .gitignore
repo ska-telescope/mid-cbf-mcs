@@ -106,9 +106,12 @@ venv.bak/
 .swp
 
 # helm charts
-charts/mid-cbf-tmleafnode/Chart.lock
-charts/mid-cbf-tmleafnode/charts/
-charts/mid-cbf-umbrella/Chart.lock
-charts/mid-cbf-umbrella/charts/
-charts/mid-cbf/Chart.lock
-charts/mid-cbf/charts/
+charts/ska-mid-cbf-tmleafnode/Chart.lock
+charts/ska-mid-cbf-tmleafnode/charts/
+charts/ska-mid-cbf-umbrella/Chart.lock
+charts/ska-mid-cbf-umbrella/charts/
+charts/ska-mid-cbf/Chart.lock
+charts/ska-mid-cbf/charts/
+
+# ssl certs
+certs/

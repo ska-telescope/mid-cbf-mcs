@@ -1,5 +1,5 @@
 # Kubernetes values.yaml file to be used to enable taranta (webjive) with
-# the mid-cbf-mcs umbrella chart.
+# the ska-mid-cbf-mcs umbrella chart.
 # If you use the umbrella-chart with the defaul values.yaml file (running
 # make install-chart) taranta pods are not started.
 # If the `make install-chart-with-taranta` command is issued, the

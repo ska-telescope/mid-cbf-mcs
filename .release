@@ -9,14 +9,14 @@
 """Release information for Python Package"""
 
 name = """tangods-mid-cbf"""
-version = "0.4.7"
+version = "0.5.0"
 version_info = version.split(".")
 description = """SKA CbfMaster TANGO Device Server"""
-author = "An Yu"
-author_email = "an.yu@nrc-cnrc.gc.ca"
+author = "Taylor Huang"
+author_email = "taylor.huang@mda.space"
 license = """BSD-3-Clause"""
 url = """www.tango-controls.org"""
 copyright = """"""
 
-release=0.4.7
-tag=midcbf-prototype-0.4.7
+release=0.5.0
+tag=midcbf-prototype-0.5.0
