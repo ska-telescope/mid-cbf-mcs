@@ -26,7 +26,7 @@ setup(
     long_description=readme + '\n\n',
     author="Taylor Huang",
     author_email='taylor.huang@mda.space',
-    url='https://gitlab.com/ska-telescope/ska-mid-cbf-mcs',
+    url='https://gitlab.com/ska-telescope/mid-cbf-mcs',
     packages=[
         'CbfMaster',
 	    'CbfSubarray'
