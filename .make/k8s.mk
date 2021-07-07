@@ -17,6 +17,7 @@ ifneq ($(CI_JOB_ID),)
 CI_PROJECT_IMAGE :=
 SET_IMAGE_TAG = --set ska-mid-cbf.midcbf.image.registry=$(CI_REGISTRY)/ska-telescope \
                 --set ska-mid-cbf.midcbf.image.tag=$(CI_COMMIT_SHORT_SHA) \
+                --set ska-mid-cbf.midcbf.image=$(CI_PROJECT_NAME) \
                 --set ska-mid-cbf-tmleafnode.midcbf.image.registry=$(CI_REGISTRY)/ska-telescope \
                 --set ska-mid-cbf-tmleafnode.midcbf.image.tag=$(CI_COMMIT_SHORT_SHA)
 IMAGE_TO_TEST = $(CI_REGISTRY_IMAGE):$(CI_COMMIT_SHORT_SHA)
@@ -28,6 +29,7 @@ k8s: ## Which kubernetes are we connected to
 	@kubectl cluster-info
 	@echo ""
 	@echo "kubectl version:"
+	@echo "image tag=$(IMAGE_TAG)"
 	@kubectl version
 	@echo ""
 	@echo "Helm version:"
