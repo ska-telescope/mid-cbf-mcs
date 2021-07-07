@@ -15,7 +15,7 @@ PROJECT = ska-mid-cbf-mcs
 # KUBE_NAMESPACE defines the Kubernetes Namespace that will be deployed to
 # using Helm.  If this does not already exist it will be created
 # TODO: rename namespace? (ADR-25) 
-KUBE_NAMESPACE ?= mid-cbf
+KUBE_NAMESPACE ?= ska-mid-cbf
 SDP_KUBE_NAMESPACE ?= sdp #namespace to be used
 DASHBOARD ?= webjive-dash.dump
 
