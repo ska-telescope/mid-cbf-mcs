@@ -79,6 +79,7 @@ integration:
   tags:
     - k8srunner
   script:
+    - make clean
     - make test
   environment:
       name: test
