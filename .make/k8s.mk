@@ -16,9 +16,10 @@ SET_IMAGE_TAG ?= --set ska-mid-cbf.midcbf.image.tag=$(IMAGE_TAG) --set ska-mid-c
 ifneq ($(CI_JOB_ID),)
 CI_PROJECT_IMAGE :=
 SET_IMAGE_TAG = --set ska-mid-cbf.midcbf.image.registry=$(CI_REGISTRY)/ska-telescope \
+                --set ska-mid-cbf.midcbf.image.image=$(CI_PROJECT_NAME) \
                 --set ska-mid-cbf.midcbf.image.tag=$(CI_COMMIT_SHORT_SHA) \
-                --set ska-mid-cbf.midcbf.image=$(CI_PROJECT_NAME) \
                 --set ska-mid-cbf-tmleafnode.midcbf.image.registry=$(CI_REGISTRY)/ska-telescope \
+                --set ska-mid-cbf-tmleafnode.midcbf.image.image=$(CI_PROJECT_NAME)
                 --set ska-mid-cbf-tmleafnode.midcbf.image.tag=$(CI_COMMIT_SHORT_SHA)
 IMAGE_TO_TEST = $(CI_REGISTRY_IMAGE):$(CI_COMMIT_SHORT_SHA)
 endif
