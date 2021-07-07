@@ -22,9 +22,3 @@ tango-base:
 
 webjive:
     enabled: false
-#mid-cbf:
-#   midcbf:
-#     image:
-#       registry: nexus.engageska-portugal.pt/ska-docker
-#       image: mid-cbf-mcs
-#       tag: 0.4.5

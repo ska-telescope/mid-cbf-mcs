@@ -38,9 +38,9 @@ def setup(app):
 
 # -- Project information -----------------------------------------------------
 
-project = 'mid-cbf-mcs Software'
+project = 'ska-mid-cbf-mcs Software'
 copyright = '2020, NRC - SKA Organization'
-author = 'An Yu'
+author = 'Taylor Huang'
 
 def setup(app):
     app.add_stylesheet('css/custom.css')

@@ -1,4 +1,4 @@
-mid-cbf-mcs Prototype's documentation
+ska-mid-cbf-mcs Prototype's documentation
 =============================================
 
 .. toctree::

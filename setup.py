@@ -17,23 +17,23 @@ INFO = {}
 with open('README.md') as readme_file:
     readme = readme_file.read()
 
-pack = ['mid-cbf-mcs']
+pack = ['ska-mid-cbf-mcs']
 
 setup(
-    name='Mid CBF',
-    version='0.0.0',
+    name='Mid CBF MCS',
+    version='0.5.0',
     description="",
     long_description=readme + '\n\n',
-    author="James Jiang",
-    author_email='james.jiang@nrc-cnrc.gc.ca',
-    url='https://github.com/ska-telescope/mid-cbf-mcs',
+    author="Taylor Huang",
+    author_email='taylor.huang@mda.space',
+    url='https://gitlab.com/ska-telescope/mid-cbf-mcs',
     packages=[
         'CbfMaster',
-	'CbfSubarray'
+	    'CbfSubarray'
     ],
     package_dir={
-	'CbfMaster': 'tangods/CbfMaster',
-	'CbfSubarray': 'tangods/CbfSubarray'
+	    'CbfMaster': 'tangods/CbfMaster',
+	    'CbfSubarray': 'tangods/CbfSubarray'
     },
     include_package_data=True,
     license="BSD license",

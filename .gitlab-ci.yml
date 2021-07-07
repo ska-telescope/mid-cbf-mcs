@@ -51,6 +51,9 @@ build-image:
   script:
     - export IMG="$CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA"
     - docker build -t "$IMG" .
+    - echo $IMG
+    - echo $CI_REGISTRY
+    - echo $CI_REGISTRY_IMAGE
     - echo -n "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin $CI_REGISTRY
     - docker push $IMG
 
@@ -79,6 +82,7 @@ integration:
   tags:
     - k8srunner
   script:
+    - make clean
     - make test
   environment:
       name: test
@@ -132,7 +136,7 @@ pages:
 
 # Standardised included jobs
 variables:
-  CHARTS_TO_PUBLISH: mid-cbf mid-cbf-tmleafnode
+  CHARTS_TO_PUBLISH: ska-mid-cbf ska-mid-cbf-tmleafnode
 include:
 # Helm Chart Publish
 # https://developer.skatelescope.org/en/latest/development/software_package_release_procedure.html#package-and-publish-helm-charts-to-the-ska-helm-chart-repository

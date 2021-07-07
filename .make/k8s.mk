@@ -5,20 +5,22 @@ IMAGE_TO_TEST ?= $(DOCKER_REGISTRY_HOST)/$(DOCKER_REGISTRY_USER)/$(PROJECT):$(IM
 TANGO_HOST = tango-host-databaseds-from-makefile-$(HELM_RELEASE):10000## TANGO_HOST is an input!
 LINTING_OUTPUT=$(shell helm lint charts/* | grep ERROR -c | tail -1)
 
-CHARTS ?= mid-cbf-umbrella mid-cbf mid-cbf-tmleafnode ## list of charts to be published on gitlab -- umbrella charts for testing purpose
+CHARTS ?= ska-mid-cbf-umbrella ska-mid-cbf ska-mid-cbf-tmleafnode ## list of charts to be published on gitlab -- umbrella charts for testing purpose
 
-CI_PROJECT_PATH_SLUG ?= mid-cbf
-CI_ENVIRONMENT_SLUG ?= mid-cbf
+CI_PROJECT_PATH_SLUG ?= ska-mid-cbf
+CI_ENVIRONMENT_SLUG ?= ska-mid-cbf
 
 # in release.mk it's defined the value of the variable IMAGE_TAG
-SET_IMAGE_TAG ?= --set mid-cbf.midcbf.image.tag=$(IMAGE_TAG) --set mid-cbf-tmleafnode.midcbf.image.tag=$(IMAGE_TAG)
+SET_IMAGE_TAG ?= --set ska-mid-cbf.midcbf.image.tag=$(IMAGE_TAG) --set ska-mid-cbf-tmleafnode.midcbf.image.tag=$(IMAGE_TAG)
 
 ifneq ($(CI_JOB_ID),)
 CI_PROJECT_IMAGE :=
-SET_IMAGE_TAG = --set mid-cbf.midcbf.image.registry=$(CI_REGISTRY)/ska-telescope \
-                --set mid-cbf.midcbf.image.tag=$(CI_COMMIT_SHORT_SHA) \
-                --set mid-cbf-tmleafnode.midcbf.image.registry=$(CI_REGISTRY)/ska-telescope \
-                --set mid-cbf-tmleafnode.midcbf.image.tag=$(CI_COMMIT_SHORT_SHA)
+SET_IMAGE_TAG = --set ska-mid-cbf.midcbf.image.registry=$(CI_REGISTRY)/ska-telescope \
+                --set ska-mid-cbf.midcbf.image.image=$(CI_PROJECT_NAME) \
+                --set ska-mid-cbf.midcbf.image.tag=$(CI_COMMIT_SHORT_SHA) \
+                --set ska-mid-cbf-tmleafnode.midcbf.image.registry=$(CI_REGISTRY)/ska-telescope \
+                --set ska-mid-cbf-tmleafnode.midcbf.image.image=$(CI_PROJECT_NAME) \
+                --set ska-mid-cbf-tmleafnode.midcbf.image.tag=$(CI_COMMIT_SHORT_SHA)
 IMAGE_TO_TEST = $(CI_REGISTRY_IMAGE):$(CI_COMMIT_SHORT_SHA)
 endif
 .DEFAULT_GOAL := help
@@ -28,6 +30,7 @@ k8s: ## Which kubernetes are we connected to
 	@kubectl cluster-info
 	@echo ""
 	@echo "kubectl version:"
+	@echo "image tag=$(IMAGE_TAG)"
 	@kubectl version
 	@echo ""
 	@echo "Helm version:"
@@ -80,7 +83,7 @@ dep-up: ## update dependencies for every charts in the env var CHARTS
 	helm dependency update $${i}; \
 	done;
 
-# install mid-cbf-umbrella chart
+# install ska-mid-cbf-umbrella chart
 install-chart: dep-up namespace ## install the helm chart with name HELM_RELEASE and path UMBRELLA_CHART_PATH on the namespace KUBE_NAMESPACE 
 	@echo $(TANGO_HOST)
 	@sed -e 's/CI_PROJECT_PATH_SLUG/$(CI_PROJECT_PATH_SLUG)/' $(UMBRELLA_CHART_PATH)values.yaml > generated_values.yaml; \
@@ -134,16 +137,16 @@ template-chart: clean dep-up## install the helm chart with name RELEASE_NAME and
 	 rm generated_values.yaml; \
 	 rm values.yaml
 
-# This job is used to delete a deployment of mid-cbf-umbrella charts
-uninstall-chart: ## uninstall the mid-cbf-umbrella helm chart on the namespace mid-cbf
+# This job is used to delete a deployment of ska-mid-cbf-umbrella charts
+uninstall-chart: ## uninstall the ska-mid-cbf-umbrella helm chart on the namespace mid-cbf
 	helm template  $(HELM_RELEASE) $(UMBRELLA_CHART_PATH) --set global.minikube=$(MINIKUBE) --set global.tango_host=$(TANGO_HOST) --namespace $(KUBE_NAMESPACE)  | kubectl delete -f - ; \
 	helm uninstall  $(HELM_RELEASE) --namespace $(KUBE_NAMESPACE) 
 
-reinstall-chart: uninstall-chart install-chart ## reinstall mid-cbf-umbreall helm chart
+reinstall-chart: uninstall-chart install-chart ## reinstall ska-mid-cbf-umbrella helm chart
 
-reinstall-only: uninstall-chart install-only ## reinstall mid-cbf-umbreall helm chart
+reinstall-only: uninstall-chart install-only ## reinstall ska-mid-cbf-umbrella helm chart
 
-upgrade-chart: ## upgrade the mid-cbf-umbrella helm chart on the namespace mid-cbf 
+upgrade-chart: ## upgrade the ska-mid-cbf-umbrella helm chart on the namespace mid-cbf 
 	helm upgrade --set global.minikube=$(MINIKUBE) --set global.tango_host=$(TANGO_HOST) $(HELM_RELEASE) $(UMBRELLA_CHART_PATH) --namespace $(KUBE_NAMESPACE) 
 
 wait:## wait for pods to be ready
@@ -151,7 +154,7 @@ wait:## wait for pods to be ready
 	@date
 	@kubectl -n $(KUBE_NAMESPACE) get pods
 	@jobs=$$(kubectl get job --output=jsonpath={.items..metadata.name} -n $(KUBE_NAMESPACE)); kubectl wait job --for=condition=complete --timeout=120s $$jobs -n $(KUBE_NAMESPACE)
-	@kubectl -n $(KUBE_NAMESPACE) wait --for=condition=ready -l app=mid-cbf-mcs --timeout=120s pods || exit 1
+	@kubectl -n $(KUBE_NAMESPACE) wait --for=condition=ready -l app=ska-mid-cbf-mcs --timeout=120s pods || exit 1
 	@date
 
 rm-build:
@@ -167,13 +170,13 @@ show: ## show the helm chart
 		--set xauthority="$(XAUTHORITYx)" \
 		--set display="$(DISPLAY)" 
 
-# Linting mid-cbf-umbrella chart
+# Linting ska-mid-cbf-umbrella chart
 chart_lint: ## lint check the helm chart
 	@helm lint $(UMBRELLA_CHART_PATH) \
 		--namespace $(KUBE_NAMESPACE) 
 
 describe: ## describe Pods executed from Helm chart
-	@for i in `kubectl -n $(KUBE_NAMESPACE) get pods -l app=mid-cbf-mcs -o=name`; \
+	@for i in `kubectl -n $(KUBE_NAMESPACE) get pods -l app=ska-mid-cbf-mcs -o=name`; \
 	do echo "---------------------------------------------------"; \
 	echo "Describe for $${i}"; \
 	echo kubectl -n $(KUBE_NAMESPACE) describe $${i}; \

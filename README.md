@@ -1,7 +1,7 @@
 # Mid CBF MCS
 
 Documentation on the Developer's portal:
-[![ReadTheDoc](https://developer.skatelescope.org/projects/mid-cbf-mcs/en/latest/?badge=latest)](https://developer.skatelescope.org/projects/mid-cbf-mcs/en/latest/?badge=latest)
+[![ReadTheDoc](https://developer.skatelescope.org/projects/ska-mid-cbf-mcs/en/latest/?badge=latest)](https://developer.skatelescope.org/projects/ska-mid-cbf-mcs/en/latest/?badge=latest)
 
 ## Table of contents
 * [Description](#description)
@@ -65,7 +65,7 @@ The project can be found in the SKA GitHub repository.
 
 To get a local copy of the project
 ```
-$ git clone https://gitlab.com/ska-telescope/mid-cbf-mcs.git
+$ git clone https://gitlab.com/ska-telescope/ska-mid-cbf-mcs.git
 ```
 
 ### Setting up Tango Enviroment
@@ -143,7 +143,7 @@ Run
 
 ## Other ways to run
 
-The Mid CBF MCS prototype runs in a containerised environment; the YAML configuration files ``tango.yml`` and ``mid-cbf-mcs.yml`` define the services needed to run the TANGO devices inside separate Docker containers.
+The Mid CBF MCS prototype runs in a containerised environment; the YAML configuration files ``tango.yml`` and ``ska-mid-cbf-mcs.yml`` define the services needed to run the TANGO devices inside separate Docker containers.
 
 ### Start device servers
 

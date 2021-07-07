@@ -11,7 +11,7 @@ subsystem: tmsimulator-mid
 telescope: SKA-mid
 
 labels:
-  app: mid-cbf-mcs
+  app: ska-mid-cbf-mcs
 annotations:
   app.gitlab.com/app: CI_PROJECT_PATH_SLUG
   app.gitlab.com/env: CI_ENVIRONMENT_SLUG
@@ -48,8 +48,8 @@ resources:
 midcbf:
   image:
     registry: nexus.engageska-portugal.pt/ska-docker
-    image: mid-cbf-mcs
-    tag: 0.4.5
+    image: ska-mid-cbf-mcs
+    tag: 0.5.0
     pullPolicy: IfNotPresent
 
 deviceServers:
