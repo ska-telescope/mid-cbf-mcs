@@ -554,10 +554,12 @@ class TestCbfSubarray:
             proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.READY, 15, 1)
             configuration = json.loads(configuration)
 
+            band_index = int(configuration["common"]["frequency_band"]) - 1
+
             # check configured attributes of CBF subarray
             assert sub_id == int(configuration["common"]["subarray_id"])
             assert proxies.subarray[sub_id].configID == configuration["common"]["config_id"]
-            assert proxies.subarray[sub_id].frequencyBand == int(configuration["common"]["frequency_band"]) - 1
+            assert proxies.subarray[sub_id].frequencyBand == band_index
             assert proxies.subarray[sub_id].obsState == ObsState.READY
 
             proxies.wait_timeout_obs([proxies.vcc[i + 1] for i in range(4)], ObsState.READY, 1, 1)
@@ -568,13 +570,16 @@ class TestCbfSubarray:
             format( proxies.vcc[vcc_index].frequencyBand)) )
 
             assert proxies.vcc[vcc_index].configID == configuration["common"]["config_id"]
-            assert proxies.vcc[vcc_index].frequencyBand == int(configuration["common"]["frequency_band"]) - 1
+            assert proxies.vcc[vcc_index].frequencyBand == band_index
             assert proxies.vcc[vcc_index].subarrayMembership == sub_id
 
             for proxy in vcc_band_proxies:
                 logging.info("VCC proxy.State() = {}".format(proxy.State()))
-            assert [proxy.State() for proxy in vcc_band_proxies] == [
-                DevState.DISABLE, DevState.DISABLE, DevState.DISABLE, DevState.ON]
+            for i in range(4):
+                if (i == 0 and band_index == 0) or i == (band_index - 1):
+                    assert vcc_band_proxies[i].State() == DevState.ON
+                else:
+                    assert vcc_band_proxies[i].State() == DevState.DISABLE
 
             # check configured attributes of FSPs, including states of function mode capabilities
             fsp_function_mode_proxies = [proxies.fsp1FunctionMode, proxies.fsp2FunctionMode, 
@@ -595,7 +600,7 @@ class TestCbfSubarray:
                 #TODO align IDs of fspSubarrays to fsp_id in conftest; currently works for fsps 1 and 2
                 assert proxies.fspSubarray[fsp_id].obsState == ObsState.READY
                 assert proxies.fspSubarray[fsp_id].receptors == test_receptor_ids[0]
-                assert proxies.fspSubarray[fsp_id].frequencyBand == int(configuration["common"]["frequency_band"]) - 1
+                assert proxies.fspSubarray[fsp_id].frequencyBand == band_index
                 assert proxies.fspSubarray[fsp_id].frequencySliceID == fsp["frequency_slice_id"]
                 assert proxies.fspSubarray[fsp_id].integrationTime == fsp["integration_factor"]
                 assert proxies.fspSubarray[fsp_id].corrBandwidth == fsp["zoom_factor"]
