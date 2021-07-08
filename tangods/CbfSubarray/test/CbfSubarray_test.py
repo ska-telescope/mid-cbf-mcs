@@ -595,7 +595,7 @@ class TestCbfSubarray:
                 #TODO align IDs of fspSubarrays to fsp_id in conftest; currently works for fsps 1 and 2
                 assert proxies.fspSubarray[fsp_id].obsState == ObsState.READY
                 assert proxies.fspSubarray[fsp_id].receptors == test_receptor_ids[0]
-                assert proxies.fspSubarray[fsp_id].frequencyBand == int(configuration["common"]["frequency_band"])
+                assert proxies.fspSubarray[fsp_id].frequencyBand == int(configuration["common"]["frequency_band"]) - 1
                 assert proxies.fspSubarray[fsp_id].frequencySliceID == fsp["frequency_slice_id"]
                 assert proxies.fspSubarray[fsp_id].integrationTime == fsp["integration_factor"]
                 assert proxies.fspSubarray[fsp_id].corrBandwidth == fsp["zoom_factor"]
@@ -610,13 +610,6 @@ class TestCbfSubarray:
                 for i in range(len(fsp["output_link_map"])):
                     for j in range(len(fsp["output_link_map"][i])):
                         assert proxies.fspSubarray[fsp_id].outputLinkMap[i][j] == fsp["output_link_map"][i][j]
-                
-                for i in range(len(fsp["output_host"])):
-                    for j in range(len(fsp["output_host"][i])):
-                        assert proxies.fspSubarray[fsp_id].visDestinationAddress["outputHost"][i][j] == fsp["output_host"][i][j]
-                for i in range(len(fsp["output_port"])):
-                    for j in range(len(fsp["output_port"][i])):
-                        assert proxies.fspSubarray[fsp_id].visDestinationAddress["outputPort"][i][j] == fsp["output_port"][i][j]
 
         except AssertionError as ae:
             proxies.clean_proxies()

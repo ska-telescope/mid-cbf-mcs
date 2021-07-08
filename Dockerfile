@@ -6,6 +6,8 @@ RUN ipython profile create
 
 ENV PATH=/home/tango/.local/bin:$PATH
 #install csp-lmc-common with dependencies
-RUN python3 -m pip install -e . --user --extra-index-url https://nexus.engageska-portugal.pt/repository/pypi/simple
+ADD pipconfig pipconfig
+ENV PIP_CONFIG_FILE pipconfig/pip.conf
+RUN python3 -m pip install -e . --user
 
-CMD ["/venv/bin/python", "/app/tangods/CbfMaster/CbfMaster.py" ]
+CMD ["/venv/bin/python", "/app/tangods/CbfMaster/CbfMaster.py"]

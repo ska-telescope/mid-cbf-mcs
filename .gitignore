@@ -113,7 +113,5 @@ charts/ska-mid-cbf-umbrella/charts/
 charts/ska-mid-cbf/Chart.lock
 charts/ska-mid-cbf/charts/
 
-# ssl certs
-certs/
-# pip config
-pip.conf
+# ssl certs for MDA network workaround
+pipconfig/*.crt
