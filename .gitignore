@@ -115,3 +115,5 @@ charts/ska-mid-cbf/charts/
 
 # ssl certs
 certs/
+# pip config
+pip.conf

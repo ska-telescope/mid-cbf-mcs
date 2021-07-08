@@ -1887,7 +1887,7 @@ class CbfSubarray(SKASubarray):
                 if fsp["function_mode"] == "CORR":
                     if "receptor_ids" not in fsp:
                         # TODO In this case by the ICD, all subarray allocated resources should be used.
-                        fsp["receptor_ids"] = device._receptors[0]
+                        fsp["receptor_ids"] = [device._receptors[0]]
                     device._corr_config.append(fsp)
                     device._corr_fsp_list.append(fsp["fsp_id"])
                 
