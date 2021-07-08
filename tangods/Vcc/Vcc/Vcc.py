@@ -730,6 +730,11 @@ class Vcc(CspSubElementObsDevice):
             device._delay_model = [[0] * 6 for i in range(26)]
             device._jones_matrix = [[0] * 16 for i in range(26)]
 
+            device._proxy_band_12.Disable()
+            device._proxy_band_3.Disable()
+            device._proxy_band_4.Disable()
+            device._proxy_band_5.Disable()
+
             device._scan_id = 0
             device._config_id = ""
 

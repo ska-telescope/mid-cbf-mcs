@@ -23,6 +23,7 @@ file_path = os.path.dirname(os.path.abspath(__file__))
 # module in commons folder
 commons_pkg_path = os.path.abspath(os.path.join(file_path, "../../commons"))
 sys.path.insert(0, commons_pkg_path)
+from global_enum import freq_band_dict
 
 path = os.path.join(os.path.dirname(__file__), os.pardir)
 sys.path.insert(0, os.path.abspath(path))
@@ -515,7 +516,7 @@ class TestCbfSubarray:
         try:
             sub_id = 1
             #TODO currently only support for 1 receptor per fsp
-            test_receptor_ids = [4]
+            test_receptor_ids = [4, 1]
             vcc_index = proxies.receptor_to_vcc[test_receptor_ids[0]]
             logging.info("vcc_index  = {}".format(vcc_index))
             vcc_band_proxies = proxies.vccBand[vcc_index - 1]
@@ -554,7 +555,7 @@ class TestCbfSubarray:
             proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.READY, 15, 1)
             configuration = json.loads(configuration)
 
-            band_index = int(configuration["common"]["frequency_band"]) - 1
+            band_index = freq_band_dict()[configuration["common"]["frequency_band"]]
 
             # check configured attributes of CBF subarray
             assert sub_id == int(configuration["common"]["subarray_id"])
@@ -576,7 +577,7 @@ class TestCbfSubarray:
             for proxy in vcc_band_proxies:
                 logging.info("VCC proxy.State() = {}".format(proxy.State()))
             for i in range(4):
-                if (i == 0 and band_index == 0) or i == (band_index - 1):
+                if (i == 0 and band_index == 0) or (i == (band_index - 1)):
                     assert vcc_band_proxies[i].State() == DevState.ON
                 else:
                     assert vcc_band_proxies[i].State() == DevState.DISABLE
