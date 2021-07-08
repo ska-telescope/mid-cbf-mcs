@@ -557,7 +557,7 @@ class TestCbfSubarray:
             # check configured attributes of CBF subarray
             assert sub_id == int(configuration["common"]["subarray_id"])
             assert proxies.subarray[sub_id].configID == configuration["common"]["config_id"]
-            assert proxies.subarray[sub_id].frequencyBand == int(configuration["common"]["frequency_band"])
+            assert proxies.subarray[sub_id].frequencyBand == int(configuration["common"]["frequency_band"]) - 1
             assert proxies.subarray[sub_id].obsState == ObsState.READY
 
             proxies.wait_timeout_obs([proxies.vcc[i + 1] for i in range(4)], ObsState.READY, 1, 1)
@@ -568,7 +568,7 @@ class TestCbfSubarray:
             format( proxies.vcc[vcc_index].frequencyBand)) )
 
             assert proxies.vcc[vcc_index].configID == configuration["common"]["config_id"]
-            assert proxies.vcc[vcc_index].frequencyBand == int(configuration["common"]["frequency_band"])
+            assert proxies.vcc[vcc_index].frequencyBand == int(configuration["common"]["frequency_band"]) - 1
             assert proxies.vcc[vcc_index].subarrayMembership == sub_id
 
             for proxy in vcc_band_proxies:
