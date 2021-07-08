@@ -1740,8 +1740,6 @@ class CbfSubarray(SKASubarray):
             data = tango.DeviceData()
             data.insert(tango.DevString, json_str)
             device._group_vcc.command_inout("ConfigureScan", data)
-
-            time.sleep(3) # TODO - to remove
             
             # TODO: all these VCC params should be passed in via ConfigureScan()
             # Configure band5Tuning, if frequencyBand is 5a or 5b.
