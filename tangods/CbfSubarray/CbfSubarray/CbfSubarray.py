@@ -1741,8 +1741,6 @@ class CbfSubarray(SKASubarray):
             data.insert(tango.DevString, json_str)
             device._group_vcc.command_inout("ConfigureScan", data)
 
-            time.sleep(3) # TODO - to remove
-            
             # TODO: all these VCC params should be passed in via ConfigureScan()
             # Configure band5Tuning, if frequencyBand is 5a or 5b.
             if device._frequency_band in [4, 5]:
@@ -1887,7 +1885,7 @@ class CbfSubarray(SKASubarray):
                 if fsp["function_mode"] == "CORR":
                     if "receptor_ids" not in fsp:
                         # TODO In this case by the ICD, all subarray allocated resources should be used.
-                        fsp["receptor_ids"] = device._receptors[0]
+                        fsp["receptor_ids"] = [device._receptors[0]]
                     device._corr_config.append(fsp)
                     device._corr_fsp_list.append(fsp["fsp_id"])
                 

@@ -21,7 +21,7 @@ pack = ['ska-mid-cbf-mcs']
 
 setup(
     name='Mid CBF MCS',
-    version='0.5.0',
+    version='0.5.1',
     description="",
     long_description=readme + '\n\n',
     author="Taylor Huang",
