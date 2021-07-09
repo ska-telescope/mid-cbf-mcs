@@ -44,7 +44,7 @@ from ska_tango_base.base_device import _DEBUGGER_PORT
 
 class TestCbfSubarray:
 
-    @pytest.mark.skip(reason="test disabled due to reversal to old json config file for ADR-35")
+    #@pytest.mark.skip(reason="test disabled due to reversal to old json config file for ADR-35")
     def test_AddRemoveReceptors_valid(self, proxies):
         """
         Test valid AddReceptors and RemoveReceptors commands
@@ -131,7 +131,7 @@ class TestCbfSubarray:
             proxies.clean_proxies()
             raise e
 
-    @pytest.mark.skip(reason="test disabled due to reversal to old json config file for ADR-35")
+    #@pytest.mark.skip(reason="test disabled due to reversal to old json config file for ADR-35")
     def test_AddRemoveReceptors_invalid_single(self, proxies):
         """
         Test invalid AddReceptors commands involving a single subarray:

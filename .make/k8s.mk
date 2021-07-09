@@ -149,12 +149,15 @@ reinstall-only: uninstall-chart install-only ## reinstall ska-mid-cbf-umbrella h
 upgrade-chart: ## upgrade the ska-mid-cbf-umbrella helm chart on the namespace mid-cbf 
 	helm upgrade --set global.minikube=$(MINIKUBE) --set global.tango_host=$(TANGO_HOST) $(HELM_RELEASE) $(UMBRELLA_CHART_PATH) --namespace $(KUBE_NAMESPACE) 
 
-wait:## wait for pods to be ready
+wait: ## wait for pods to be ready
 	@echo "Waiting for pods to be ready"
 	@date
 	@kubectl -n $(KUBE_NAMESPACE) get pods
-	@jobs=$$(kubectl get job --output=jsonpath={.items..metadata.name} -n $(KUBE_NAMESPACE)); kubectl wait job --for=condition=complete --timeout=120s $$jobs -n $(KUBE_NAMESPACE)
-	@kubectl -n $(KUBE_NAMESPACE) wait --for=condition=ready -l app=ska-mid-cbf-mcs --timeout=120s pods || exit 1
+	@date
+	@jobs=$$(kubectl get job --output=jsonpath={.items..metadata.name} -n $(KUBE_NAMESPACE)); \
+	kubectl -n $(KUBE_NAMESPACE) wait job --for=condition=complete --timeout=180s $$jobs
+	@date
+	@kubectl -n $(KUBE_NAMESPACE) wait --for=condition=ready -l 'app=$(PROJECT)' --timeout=180s pods || exit 1
 	@date
 
 rm-build:
