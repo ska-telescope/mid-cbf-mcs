@@ -1441,6 +1441,8 @@ class TestCbfSubarray:
             assert proxies.vcc[vcc_index].frequencyBand == band_index
             assert proxies.vcc[vcc_index].subarrayMembership == sub_id
 
+            #TODO fix these tests; issue with VccBand devices either not reconfiguring in between
+            #     configurations or causing a fault within the Vcc device
             # for proxy in vcc_band_proxies:
             #     logging.info("VCC proxy.State() = {}".format(proxy.State()))
             # for i in range(4):
