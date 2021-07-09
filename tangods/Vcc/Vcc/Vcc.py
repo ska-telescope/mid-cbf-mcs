@@ -635,7 +635,7 @@ class Vcc(CspSubElementObsDevice):
 
             device = self.target
 
-            # TODO: can be done in a more Pythonian way
+            # TODO: can be done in a more Pythonian way; broken?
             if freq_band_name in ["1", "2"]:
                 device._proxy_band_12.On()
                 device._proxy_band_3.Disable()
