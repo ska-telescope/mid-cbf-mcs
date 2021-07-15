@@ -27,7 +27,6 @@ from tango.server import run
 from tango.server import attribute, command
 from tango.server import device_property
 from tango import DebugIt, DevState, AttrWriteType
-from tango.test_context import DeviceTestContext
 
 # SKA Specific imports
 #TODO - find a solution for not including these paths here

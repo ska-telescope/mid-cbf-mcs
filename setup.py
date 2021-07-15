@@ -18,7 +18,7 @@ with open('README.md') as readme_file:
     readme = readme_file.read()
 
 pack = ['ska-mid-cbf-mcs']
-
+# TODO: ADR-25 rename project url to ska-mid-cbf-mcs
 setup(
     name='Mid CBF MCS',
     version='0.5.2',
@@ -29,11 +29,15 @@ setup(
     url='https://gitlab.com/ska-telescope/mid-cbf-mcs',
     packages=[
         'CbfMaster',
-	    'CbfSubarray'
+	    'CbfSubarray',
+        'Vcc',
+        'DeviceFactory'
     ],
     package_dir={
 	    'CbfMaster': 'tangods/CbfMaster',
-	    'CbfSubarray': 'tangods/CbfSubarray'
+	    'CbfSubarray': 'tangods/CbfSubarray',
+        'Vcc': 'tangods/Vcc',
+        'DeviceFactory': 'tangods/DeviceFactory'
     },
     include_package_data=True,
     license="BSD license",

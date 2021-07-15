@@ -49,7 +49,7 @@ DOCKER_VOLUMES ?= /var/run/docker.sock:/var/run/docker.sock
 # registry credentials - user/pass/registry - set these in PrivateRules.mak
 DOCKER_REGISTRY_USER_LOGIN ?=  ## registry credentials - user - set in PrivateRules.mak
 CI_REGISTRY_PASS_LOGIN ?=  ## registry credentials - pass - set in PrivateRules.mak
-CI_REGISTRY ?= gitlab.com/ska-telescope/ska-mid-cbf-mcs
+CI_REGISTRY ?= gitlab.com/ska-telescope/mid-cbf-mcs # TODO: ADR-25 rename project url to ska-mid-cbf-mcs
 
 CI_PROJECT_DIR ?= .
 

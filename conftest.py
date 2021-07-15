@@ -6,26 +6,64 @@ tests.
 from __future__ import absolute_import
 #import mock
 import pytest
+import logging
 import importlib
 import os
 import sys
 import time
 import json
 
-sys.path.insert(0, "tangods/commons")
+# sys.path.insert(0, "tangods/commons")
 
-file_path = os.path.dirname(os.path.abspath(__file__))
-commons_pkg_path = os.path.abspath(os.path.join(file_path, "tangods/commons"))
-sys.path.insert(0, commons_pkg_path)
+# file_path = os.path.dirname(os.path.abspath(__file__))
+# commons_pkg_path = os.path.abspath(os.path.join(file_path, "tangods/commons"))
+# sys.path.insert(0, commons_pkg_path)
+
+# import global_enum
 
 import tango
 from tango import DevState
 from tango import DeviceProxy
-from tango.test_context import DeviceTestContext
+from tango.test_context import MultiDeviceTestContext
 
 from ska_tango_base.control_model import LoggingLevel, ObsState, AdminMode
 
-import global_enum
+#TODO clean up file path navigation with proper packaging
+
+path = os.path.join(os.path.dirname(__file__), "tangods/")
+sys.path.insert(0, os.path.abspath(path))
+
+from DeviceFactory.DeviceFactory import DeviceFactory
+
+def pytest_addoption(parser):
+    """
+    Pytest hook; implemented to add the `--true-context` option, used to
+    indicate that a true Tango subsystem is available, so there is no
+    need for a :py:class:`tango.test_context.MultiDeviceTestContext`.
+
+    :param parser: the command line options parser
+    :type parser: :py:class:`argparse.ArgumentParser`
+    """
+    parser.addoption(
+        "--true-context",
+        action="store_true",
+        default=False,
+        help=(
+            "Tell pytest that you have a true Tango context and don't "
+            "need to spin up a Tango test context"
+        ),
+    )
+
+@pytest.fixture
+def tango_context(devices_to_load, request):
+    true_context = request.config.getoption("--true-context")
+    logging.info("true context: %s", true_context)
+    if not true_context:
+        with MultiDeviceTestContext(devices_to_load, process=False) as context:
+            DeviceFactory._test_context = context
+            yield context
+    else:
+        yield None
 
 @pytest.fixture(name="proxies", scope="session")
 def init_proxies_fixture():

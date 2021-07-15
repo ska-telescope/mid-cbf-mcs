@@ -7,7 +7,7 @@
 #
 # Distributed under the terms of the BSD-3-Clause license.
 # See LICENSE.txt for more info.
-"""Contain the tests for the CbfMaster."""
+"""Contain the tests for the Vcc."""
 
 # Standard imports
 import sys
@@ -15,8 +15,8 @@ import os
 import time
 import json
 import copy
-
 import logging
+import pytest
 
 # Path
 file_path = os.path.dirname(os.path.abspath(__file__))
@@ -31,11 +31,14 @@ sys.path.insert(0, os.path.abspath(path))
 # Tango imports
 import tango
 from tango import DevState
-import pytest
+from tango.test_context import DeviceTestContext, MultiDeviceTestContext
 
 #Local imports
 
 from Vcc.Vcc import Vcc
+from Fsp.Fsp import Fsp
+from CbfSubarray.CbfSubarray import CbfSubarray
+from DeviceFactory.DeviceFactory import DeviceFactory
 from ska_tango_base.control_model import HealthState, AdminMode, ObsState
 from ska_tango_base import SKABaseDevice, DeviceStateModel
 from ska_tango_base.commands import ResultCode
@@ -47,10 +50,33 @@ from ska_tango_base.commands import ResultCode
     "create_band_3_proxy",
     "create_band_4_proxy",
     "create_band_5_proxy",
-    "create_sw_1_proxy"
+    "create_sw_1_proxy",
+    "proxies",
+    "tango_context"
 )
 
+@pytest.fixture()
+def devices_to_load():
+    return (
+        {
+            "class": Vcc,
+            "devices": [
+                {
+                    "name": "mid_csp_cbf/vcc/001",
+                    "attributes": {"receptorID": 0}
+                },
+                {"name": "mid_csp_cbf/vcc/002"},
+                {"name": "mid_csp_cbf/vcc/003"},
+                {"name": "mid_csp_cbf/vcc/004"}
+            ]
+        },
+    )
+
 class TestVcc:
+
+    def test_Vcc_DeviceTestContext(self, tango_context):
+        device_factory = DeviceFactory()
+        proxy = device_factory.get_device("mid_csp_cbf/vcc/001")
 
     def test_SetFrequencyBand(
             self,
