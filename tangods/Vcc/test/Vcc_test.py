@@ -61,20 +61,27 @@ def devices_to_load():
         {
             "class": Vcc,
             "devices": [
-                {
-                    "name": "mid_csp_cbf/vcc/001",
-                    "attributes": {"receptorID": 0}
-                },
+                {"name": "mid_csp_cbf/vcc/001"},
                 {"name": "mid_csp_cbf/vcc/002"},
                 {"name": "mid_csp_cbf/vcc/003"},
                 {"name": "mid_csp_cbf/vcc/004"}
             ]
         },
+        # {
+        #     "class": Fsp,
+        #     "devices": [
+        #         {"name": "mid_csp_cbf/fsp/01"},
+        #         {"name": "mid_csp_cbf/fsp/02"},
+        #         {"name": "mid_csp_cbf/fsp/03"},
+        #         {"name": "mid_csp_cbf/fsp/04"}
+        #     ]
+        # },
     )
 
 class TestVcc:
 
     def test_Vcc_DeviceTestContext(self, tango_context):
+        logging.info("%s", tango_context)
         device_factory = DeviceFactory()
         proxy = device_factory.get_device("mid_csp_cbf/vcc/001")
 

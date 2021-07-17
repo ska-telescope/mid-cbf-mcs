@@ -83,4 +83,10 @@ include .make/k8s.mk
 #
 .DEFAULT_GOAL := help
 
+unit_test: ## Run simulation mode unit tests
+	@mkdir -p build; \
+	PYTHONPATH=src:tangods pytest $(FILE)
+
+#pytest $(if $(findstring all,$(MARK)),, -m '$(MARK)')
+
 .PHONY: all test up down help k8s show lint logs describe mkcerts localip namespace delete_namespace ingress_check kubeconfig kubectl_dependencies helm_dependencies rk8s_test k8s_test rlint
