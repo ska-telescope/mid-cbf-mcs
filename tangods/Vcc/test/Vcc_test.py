@@ -35,9 +35,9 @@ from tango.test_context import DeviceTestContext, MultiDeviceTestContext
 
 #Local imports
 
-from Vcc.Vcc import Vcc
-from Fsp.Fsp import Fsp
-from CbfSubarray.CbfSubarray import CbfSubarray
+from Vcc.Vcc.Vcc import Vcc
+from Fsp.Fsp.Fsp import Fsp
+from CbfSubarray.CbfSubarray.CbfSubarray import CbfSubarray
 from DeviceFactory.DeviceFactory import DeviceFactory
 from ska_tango_base.control_model import HealthState, AdminMode, ObsState
 from ska_tango_base import SKABaseDevice, DeviceStateModel
@@ -67,15 +67,15 @@ def devices_to_load():
                 {"name": "mid_csp_cbf/vcc/004"}
             ]
         },
-        # {
-        #     "class": Fsp,
-        #     "devices": [
-        #         {"name": "mid_csp_cbf/fsp/01"},
-        #         {"name": "mid_csp_cbf/fsp/02"},
-        #         {"name": "mid_csp_cbf/fsp/03"},
-        #         {"name": "mid_csp_cbf/fsp/04"}
-        #     ]
-        # },
+        {
+            "class": Fsp,
+            "devices": [
+                {"name": "mid_csp_cbf/fsp/01"},
+                {"name": "mid_csp_cbf/fsp/02"},
+                {"name": "mid_csp_cbf/fsp/03"},
+                {"name": "mid_csp_cbf/fsp/04"}
+            ]
+        },
     )
 
 class TestVcc:
@@ -84,6 +84,8 @@ class TestVcc:
         logging.info("%s", tango_context)
         device_factory = DeviceFactory()
         proxy = device_factory.get_device("mid_csp_cbf/vcc/001")
+        proxy.receptorID = 1
+        assert proxy.receptorID == 1
 
     def test_SetFrequencyBand(
             self,
