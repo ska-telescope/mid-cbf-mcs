@@ -14,7 +14,6 @@ PROJECT = ska-mid-cbf-mcs
 
 # KUBE_NAMESPACE defines the Kubernetes Namespace that will be deployed to
 # using Helm.  If this does not already exist it will be created
-# TODO: rename namespace? (ADR-25) 
 KUBE_NAMESPACE ?= ska-mid-cbf
 SDP_KUBE_NAMESPACE ?= sdp #namespace to be used
 DASHBOARD ?= webjive-dash.dump
@@ -49,7 +48,7 @@ DOCKER_VOLUMES ?= /var/run/docker.sock:/var/run/docker.sock
 # registry credentials - user/pass/registry - set these in PrivateRules.mak
 CAR_OCI_REGISTRY_USER_LOGIN ?=  ## registry credentials - user - set in PrivateRules.mak
 CI_REGISTRY_PASS_LOGIN ?=  ## registry credentials - pass - set in PrivateRules.mak
-CI_REGISTRY ?= gitlab.com/ska-telescope/mid-cbf-mcs
+CI_REGISTRY ?= gitlab.com/ska-telescope/ska-mid-cbf-mcs
 
 CI_PROJECT_DIR ?= .
 
