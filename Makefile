@@ -65,7 +65,9 @@ DISPLAY := $(THIS_HOST):0
 
 # Test runner - run to completion job in K8s
 # name of the pod running the k8s_tests
-TEST_RUNNER = test-makefile-runner-$(CI_JOB_ID)-$(KUBE_NAMESPACE)-$(HELM_RELEASE)
+# TODO: test-makefile-runner-$(CI_JOB_ID)-$(KUBE_NAMESPACE)-$(HELM_RELEASE) 
+#		old name is 64 characters, too long for container name
+TEST_RUNNER = test-runner-$(CI_JOB_ID)-$(KUBE_NAMESPACE)-$(HELM_RELEASE)
 
 #
 # include makefile to pick up the standard Make targets, e.g., 'make build'
