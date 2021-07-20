@@ -9,7 +9,7 @@
 # value for DOCKER_REGISTRY_HOST (=rnexus.engageska-portugal.pt) and overwrites
 # DOCKER_REGISTRY_USER and PROJECT
 #
-DOCKER_REGISTRY_USER:=ska-docker
+#DOCKER_REGISTRY_USER:=ska-docker
 PROJECT = ska-mid-cbf-mcs
 
 # KUBE_NAMESPACE defines the Kubernetes Namespace that will be deployed to
@@ -47,9 +47,9 @@ DOCKER_HOST ?= unix:///var/run/docker.sock
 # DOCKER_VOLUMES pass in local domain socket for DOCKER_HOST
 DOCKER_VOLUMES ?= /var/run/docker.sock:/var/run/docker.sock
 # registry credentials - user/pass/registry - set these in PrivateRules.mak
-DOCKER_REGISTRY_USER_LOGIN ?=  ## registry credentials - user - set in PrivateRules.mak
+CAR_OCI_REGISTRY_USER_LOGIN ?=  ## registry credentials - user - set in PrivateRules.mak
 CI_REGISTRY_PASS_LOGIN ?=  ## registry credentials - pass - set in PrivateRules.mak
-CI_REGISTRY ?= gitlab.com/ska-telescope/ska-mid-cbf-mcs
+CI_REGISTRY ?= gitlab.com/ska-telescope/mid-cbf-mcs
 
 CI_PROJECT_DIR ?= .
 
@@ -74,7 +74,7 @@ TEST_RUNNER = test-makefile-runner-$(CI_JOB_ID)-$(KUBE_NAMESPACE)-$(HELM_RELEASE
 # ('make interactive', 'make test', etc.) are defined in this file.
 #
 include .make/release.mk
-include .make/docker.mk
+#include .make/docker.mk
 include .make/k8s.mk
 
 #
