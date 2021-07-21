@@ -51,15 +51,23 @@ def init_proxies_fixture():
             self.vccTdc = [[DeviceProxy("mid_csp_cbf/vcc_sw{0}/{1:03d}".format(j, i + 1)) for j in ["1", "2"]] for i in range(4)] 
             
             self.fspSubarray = {} # index 1, 2 = corr (01_01, 02_01); index 3, 4 = pss (03_01, 04_01); index 5, 6 = pst (01_01, 02_01)
+            self.fspCorrSubarray = {}
             for i, proxy in enumerate([DeviceProxy("mid_csp_cbf/fspCorrSubarray/" + str(j + 1).zfill(2) + "_01") for j in range(2)]):
                 proxy.loggingLevel = LoggingLevel.DEBUG
                 self.fspSubarray[i + 1] = proxy
+                self.fspCorrSubarray[i] = proxy
+
+            self.fspPssSubarray = {}    
             for i ,proxy in enumerate([DeviceProxy("mid_csp_cbf/fspPssSubarray/" + str(j + 3).zfill(2) + "_01") for j in range(2)]):
                 proxy.loggingLevel = LoggingLevel.DEBUG
                 self.fspSubarray[i + 3] = proxy
+                self.fspPssSubarray[i] = proxy
+
+            self.fspPstSubarray = {}      
             for i ,proxy in enumerate([DeviceProxy("mid_csp_cbf/fspPstSubarray/" + str(j + 1).zfill(2) + "_01") for j in range(2)]):
                 proxy.Init()
                 self.fspSubarray[i + 5] = proxy
+                self.fspPstSubarray[i] = proxy
 
             self.fsp1FunctionMode = [*map(DeviceProxy, ["mid_csp_cbf/fsp_{}/01".format(i) for i in ["corr", "pss", "pst", "vlbi"]])]
             self.fsp2FunctionMode = [*map(DeviceProxy, ["mid_csp_cbf/fsp_{}/02".format(i) for i in ["corr", "pss", "pst", "vlbi"]])]
@@ -135,6 +143,19 @@ def init_proxies_fixture():
                 time.sleep(sleep_time_s)
     
     return Proxies()
+
+@pytest.fixture(name="input_test_data", scope="class", \
+    params = [
+       ([1, 3, 4, 2], "/test_json/ConfigureScan_basic.json") ] )
+    #params = [
+    #    ([4, 1, 2],    "/test_json/Configure_TM-CSP_v2.json") ] )
+    # params = [
+    #     ([1, 3, 4, 2], "/test_json/ConfigureScan_basic.json"),
+    #     ([4, 1, 2],    "/test_json/Configure_TM-CSP_v2.json") ] )
+
+def input_test_data(request):
+    file_name = request.param
+    yield  file_name
 
 @pytest.fixture(scope="class")
 def debug_device_is_on():
