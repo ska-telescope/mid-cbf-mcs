@@ -8,15 +8,15 @@
 
 """Release information for Python Package"""
 
-name = """tangods-mid-cbf"""
-version = "0.5.0"
+name = """Mid.CBF MCS"""
+version = "0.5.4"
 version_info = version.split(".")
-description = """SKA CbfMaster TANGO Device Server"""
+description = """SKA Mid.CBF MCS Classes"""
 author = "Taylor Huang"
 author_email = "taylor.huang@mda.space"
 license = """BSD-3-Clause"""
 url = """www.tango-controls.org"""
 copyright = """"""
 
-release=0.5.0
-tag=midcbf-prototype-0.5.0
+release=0.5.4
+tag=ska-mid-cbf-mcs-0.5.4

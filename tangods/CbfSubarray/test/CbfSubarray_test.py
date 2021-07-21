@@ -1478,6 +1478,7 @@ class TestCbfSubarray:
                                          proxies.fsp3FunctionMode, proxies.fsp4FunctionMode]
             for fsp in configuration["cbf"]["fsp"]:
                 fsp_id = fsp["fsp_id"]
+                logging.info("{}".format(fsp_id))
                 #TODO add function mode to enum or edit attribute to accept string in FSP
                 if fsp["function_mode"] == "CORR": function_mode = 1
                 elif fsp["function_mode"] == "PSS-BF": function_mode = 2
