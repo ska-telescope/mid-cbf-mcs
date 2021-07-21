@@ -114,4 +114,4 @@ charts/ska-mid-cbf/Chart.lock
 charts/ska-mid-cbf/charts/
 
 # ssl certs for MDA network workaround
-pipconfig/*.crt
+certs/*.crt
