@@ -20,5 +20,5 @@ ska-tango-base:
   tangodb:
     use_pv: false
 
-webjive:
+ska-webjive:
     enabled: false
