@@ -157,9 +157,9 @@ wait: ## wait for pods to be ready
 	@kubectl -n $(KUBE_NAMESPACE) get pods
 	@date
 	@jobs=$$(kubectl get job --output=jsonpath={.items..metadata.name} -n $(KUBE_NAMESPACE)); \
-	kubectl -n $(KUBE_NAMESPACE) wait job --for=condition=complete --timeout=180s $$jobs
+	kubectl -n $(KUBE_NAMESPACE) wait job --for=condition=complete --timeout=${MAX_WAIT} $$jobs
 	@date
-	@kubectl -n $(KUBE_NAMESPACE) wait --for=condition=ready -l 'app=$(PROJECT)' --timeout=180s pods || exit 1
+	@kubectl -n $(KUBE_NAMESPACE) wait --for=condition=ready -l 'app=$(PROJECT)' --timeout=${MAX_WAIT} pods || exit 1
 	@date
 
 rm-build:
