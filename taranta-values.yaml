@@ -27,7 +27,7 @@ ska-tango-base:
   tangodb:
     use_pv: false
 
-webjive:
+ska-webjive:
     enabled: true
     minikube: true
     ingress:
@@ -41,7 +41,7 @@ webjive-dashboard:
        nginx: true     
        hostname: integration.engageska-portugal.pt 
 
-webjive-auth:   
+ska-webjive-auth:   
     ingress:     
         enabled: true     
         nginx: true     

@@ -1,8 +1,7 @@
---extra-index-url https://nexus.engageska-portugal.pt/repository/pypi/simple
 --extra-index-url https://artefact.skao.int/repository/pypi-internal/simple
 numpy == 1.17.2
 pytango >= 9.3.3
 jsonschema >= 3.2.0
-ska-tango-base == 0.10.0
+ska-tango-base >= 0.10.1
 ska-ser-logging
 ska-ser-log-transactions
