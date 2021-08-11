@@ -20,10 +20,11 @@
 import os
 import sys
 import json
+from tangods.DeviceFactory.DeviceFactory import DeviceFactory
 
 # tango imports
 import tango
-from tango.server import run
+from tango.server import Device, run
 from tango.server import attribute, command
 from tango.server import device_property
 from tango import DebugIt, DevState, AttrWriteType
@@ -289,18 +290,18 @@ class Vcc(CspSubElementObsDevice):
             device._scan_id = ""
             device._config_id = ""
 
-            device._fqdns = [
-               device.Band1And2Address,
-               device.Band3Address,
-               device.Band4Address,
-               device.Band5Address,
-               device.SW1Address,
-               device.SW2Address 
-            ] # TODO 
+            # device._fqdns = [
+            #    device.Band1And2Address,
+            #    device.Band3Address,
+            #    device.Band4Address,
+            #    device.Band5Address,
+            #    device.SW1Address,
+            #    device.SW2Address 
+            # ] # TODO 
 
-            device._func_devices = [
-                tango.DeviceProxy(fqdn) for fqdn in device._fqdns
-            ]
+            # device._func_devices = [
+            #     tango.DeviceProxy(fqdn) for fqdn in device._fqdns
+            # ]
 
             device.set_change_event("subarrayMembership", True, True)
 
@@ -311,12 +312,13 @@ class Vcc(CspSubElementObsDevice):
 
             # TODO - To support unit testing, use a wrapper class for the  
             # connection instead of directly DeviceProxy (see MccsDeviceProxy)
-            device._proxy_band_12 = tango.DeviceProxy(device.Band1And2Address)
-            device._proxy_band_3  = tango.DeviceProxy(device.Band3Address)
-            device._proxy_band_4  = tango.DeviceProxy(device.Band4Address)
-            device._proxy_band_5  = tango.DeviceProxy(device.Band5Address)
-            device._proxy_sw_1    = tango.DeviceProxy(device.SW1Address)
-            device._proxy_sw_2    = tango.DeviceProxy(device.SW2Address)
+            device._device_factory = DeviceFactory()
+            device._proxy_band_12 = device._device_factory.get_device(device.Band1And2Address)
+            # device._proxy_band_3  = tango.DeviceProxy(device.Band3Address)
+            # device._proxy_band_4  = tango.DeviceProxy(device.Band4Address)
+            # device._proxy_band_5  = tango.DeviceProxy(device.Band5Address)
+            # device._proxy_sw_1    = tango.DeviceProxy(device.SW1Address)
+            # device._proxy_sw_2    = tango.DeviceProxy(device.SW2Address)
 
             message = "Vcc Init command completed OK"
             device.logger.info(message)
