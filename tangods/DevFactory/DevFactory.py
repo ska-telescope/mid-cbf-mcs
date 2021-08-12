@@ -1,9 +1,9 @@
 import logging
 import tango
 
-__all__ = ["DeviceFactory"]
+__all__ = ["DevFactory"]
 
-class DeviceFactory:
+class DevFactory:
     """
     Ported from ska_tango_base; 
     https://gitlab.com/ska-telescope/ska-tango-examples/-/blob/master/src/ska_tango_examples/DevFactory.py
@@ -44,7 +44,7 @@ class DeviceFactory:
         if green_mode is None:
             green_mode = self.default_green_mode
 
-        if DeviceFactory._test_context is None:
+        if DevFactory._test_context is None:
             if device_name not in self.device_proxys:
                 self.logger.info("Creating Proxy for %s", device_name)
                 self.device_proxys[device_name] = tango.DeviceProxy(
@@ -52,4 +52,4 @@ class DeviceFactory:
                 )
             return self.device_proxys[device_name]
         else:
-            return DeviceFactory._test_context.get_device(device_name)
+            return DevFactory._test_context.get_device(device_name)

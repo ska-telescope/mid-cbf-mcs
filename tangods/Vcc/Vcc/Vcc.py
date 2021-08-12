@@ -20,7 +20,7 @@
 import os
 import sys
 import json
-from tangods.DeviceFactory.DeviceFactory import DeviceFactory
+from tangods.DevFactory.DevFactory import DevFactory
 
 # tango imports
 import tango
@@ -28,6 +28,7 @@ from tango.server import Device, run
 from tango.server import attribute, command
 from tango.server import device_property
 from tango import DebugIt, DevState, AttrWriteType
+from tango.test_context import MultiDeviceTestContext
 
 # SKA Specific imports
 #TODO - find a solution for not including these paths here
@@ -312,8 +313,8 @@ class Vcc(CspSubElementObsDevice):
 
             # TODO - To support unit testing, use a wrapper class for the  
             # connection instead of directly DeviceProxy (see MccsDeviceProxy)
-            device._device_factory = DeviceFactory()
-            device._proxy_band_12 = device._device_factory.get_device(device.Band1And2Address)
+            device._dev_factory = DevFactory()
+            device._proxy_band_12 = None
             # device._proxy_band_3  = tango.DeviceProxy(device.Band3Address)
             # device._proxy_band_4  = tango.DeviceProxy(device.Band4Address)
             # device._proxy_band_5  = tango.DeviceProxy(device.Band5Address)
@@ -327,7 +328,18 @@ class Vcc(CspSubElementObsDevice):
     def always_executed_hook(self):
         """Method always executed before any TANGO command is executed."""
         # PROTECTED REGION ID(Vcc.always_executed_hook) ENABLED START #
-        pass
+        self.logger.info("ALWAYS EXECUTED HOOK")
+        self.logger.info("%s", self._dev_factory._test_context)
+        try:
+            if self._proxy_band_12 is None:
+                self.logger.info("Connect to band proxy device")
+                self._proxy_band_12 = self._dev_factory.get_device(
+                    self.Band1And2Address
+                )
+        except Exception as ex:
+            self.logger.info(
+                "Unexpected error on DeviceProxy creation %s", str(ex)
+            )
         # PROTECTED REGION END #    //  Vcc.always_executed_hook
 
     def delete_device(self):

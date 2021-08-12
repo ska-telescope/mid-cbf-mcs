@@ -46,6 +46,7 @@ coverage.xml
 *.cover
 .hypothesis/
 .pytest_cache/
+pytest-logs.txt
 
 # Translations
 *.mo
@@ -114,4 +115,4 @@ charts/ska-mid-cbf/Chart.lock
 charts/ska-mid-cbf/charts/
 
 # ssl certs for MDA network workaround
-pipconfig/*.crt
+certs/*.crt

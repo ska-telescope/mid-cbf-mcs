@@ -31,13 +31,13 @@ setup(
         'CbfMaster',
 	    'CbfSubarray',
         'Vcc',
-        'DeviceFactory'
+        'DevFactory'
     ],
     package_dir={
 	    'CbfMaster': 'tangods/CbfMaster',
 	    'CbfSubarray': 'tangods/CbfSubarray',
         'Vcc': 'tangods/Vcc',
-        'DeviceFactory': 'tangods/DeviceFactory'
+        'DevFactory': 'tangods/DevFactory'
     },
     include_package_data=True,
     license="BSD license",

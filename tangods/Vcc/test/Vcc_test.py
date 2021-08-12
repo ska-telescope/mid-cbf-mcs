@@ -10,6 +10,7 @@
 """Contain the tests for the Vcc."""
 
 # Standard imports
+from conftest import devices_to_test
 import sys
 import os
 import time
@@ -40,7 +41,7 @@ from Vcc.VccBand1And2.VccBand1And2 import VccBand1And2
 from Vcc.VccBand3.VccBand3 import VccBand3
 from Vcc.VccBand4.VccBand4 import VccBand4
 from Vcc.VccBand5.VccBand5 import VccBand5
-from DeviceFactory.DeviceFactory import DeviceFactory
+from DevFactory.DevFactory import DevFactory
 from ska_tango_base.control_model import HealthState, AdminMode, ObsState
 from ska_tango_base import SKABaseDevice
 from ska_tango_base.commands import ResultCode
@@ -120,28 +121,90 @@ def devices_to_load():
         },
     )
 
+devices_to_test = [
+    {
+        "class": Vcc,
+        "devices": [
+            {
+                "name": "mid_csp_cbf/vcc/001",
+                "properties": {
+                        "Band1And2Address": [
+                            "mid_csp_cbf/vcc_band12/001"
+                        ],
+                        "Band3Address": [
+                            "mid_csp_cbf/vcc_band3/001"
+                        ],
+                        "Band4Address": [
+                            "mid_csp_cbf/vcc_band4/001"
+                        ],
+                        "Band5Address": [
+                            "mid_csp_cbf/vcc_band5/001"
+                        ],
+                        "SW1Address": [
+                            "mid_csp_cbf/vcc_sw1/001"
+                        ],
+                        "SW2Address": [
+                            "mid_csp_cbf/vcc_sw2/001"
+                        ],
+                        "VccID": [
+                            "1"
+                        ],
+                }
+            },
+            {"name": "mid_csp_cbf/vcc/002"},
+            {"name": "mid_csp_cbf/vcc/003"},
+            {"name": "mid_csp_cbf/vcc/004"}
+        ]
+    },
+    {
+        "class": VccBand1And2,
+        "devices": [
+            {"name": "mid_csp_cbf/vcc_band12/001"},
+        ]
+    },
+    {
+        "class": VccBand3,
+        "devices": [
+            {"name": "mid_csp_cbf/vcc_band3/001"},
+        ]
+    },
+    {
+        "class": VccBand4,
+        "devices": [
+            {"name": "mid_csp_cbf/vcc_band4/001"},
+        ]
+    },
+    {
+        "class": VccBand5,
+        "devices": [
+            {"name": "mid_csp_cbf/vcc_band5/001"},
+        ]
+    },
+]
+
 class TestVcc:
 
     def test_Vcc_DeviceTestContext(self, tango_context):
         logging.info("%s", tango_context)
-        device_factory = DeviceFactory()
-        proxy = device_factory.get_device("mid_csp_cbf/vcc/001")
+        dev_factory = DevFactory()
+        proxy = dev_factory.get_device("mid_csp_cbf/vcc/001")
         proxy.On()
         assert proxy.State() == DevState.ON
 
     def test_SetFrequencyBand(
             self,
             debug_device_is_on,
-            tango_context
+            multi_device_tango_context
     ):
         """
         Test SetFrequencyBand command state changes.
         """
-        logging.info("%s", tango_context)
-        device_factory = DeviceFactory()
-        vcc_proxy = device_factory.get_device("mid_csp_cbf/vcc/001")
-        band_12_proxy = device_factory.get_device("mid_csp_cbf/vcc_band12/001")
-        band_3_proxy = device_factory.get_device("mid_csp_cbf/vcc_band3/001")
+        logging.info("%s", multi_device_tango_context)
+        dev_factory = DevFactory()
+        logging.info("%s", dev_factory._test_context)
+        vcc_proxy = multi_device_tango_context.get_device("mid_csp_cbf/vcc/001")
+        band_12_proxy = multi_device_tango_context.get_device("mid_csp_cbf/vcc_band12/001")
+        band_3_proxy = multi_device_tango_context.get_device("mid_csp_cbf/vcc_band3/001")
 
         logging.info("debug_device_is_on = {}".format(debug_device_is_on))       
         if debug_device_is_on == True:
