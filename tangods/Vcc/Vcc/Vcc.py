@@ -314,6 +314,7 @@ class Vcc(CspSubElementObsDevice):
             # TODO - To support unit testing, use a wrapper class for the  
             # connection instead of directly DeviceProxy (see MccsDeviceProxy)
             device._dev_factory = DevFactory()
+            device.logger.info("{}".format(device.Band1And2Address))
             device._proxy_band_12 = None
             # device._proxy_band_3  = tango.DeviceProxy(device.Band3Address)
             # device._proxy_band_4  = tango.DeviceProxy(device.Band4Address)
@@ -597,13 +598,13 @@ class Vcc(CspSubElementObsDevice):
             # validate the input args
             (result_code, msg) = self.validate_input(argin)
 
-            if result_code == ResultCode.OK:
-                # TODO: cosider to turn_on the selected band device
-                #       via a separate command
-                self.turn_on_band_device(device._freq_band_name)
-                # store the configuration on command success
-                device._last_scan_configuration = argin
-                msg = "Configure command completed OK"
+            # if result_code == ResultCode.OK:
+            #     # TODO: cosider to turn_on the selected band device
+            #     #       via a separate command
+            #     self.turn_on_band_device(device._freq_band_name)
+            #     # store the configuration on command success
+            #     device._last_scan_configuration = argin
+            #     msg = "Configure command completed OK"
 
             return(result_code, msg)
             

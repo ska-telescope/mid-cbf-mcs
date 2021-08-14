@@ -10,7 +10,6 @@
 """Contain the tests for the Vcc."""
 
 # Standard imports
-from conftest import devices_to_test
 import sys
 import os
 import time
@@ -121,100 +120,60 @@ def devices_to_load():
         },
     )
 
-devices_to_test = [
-    {
-        "class": Vcc,
-        "devices": [
-            {
-                "name": "mid_csp_cbf/vcc/001",
-                "properties": {
-                        "Band1And2Address": [
-                            "mid_csp_cbf/vcc_band12/001"
-                        ],
-                        "Band3Address": [
-                            "mid_csp_cbf/vcc_band3/001"
-                        ],
-                        "Band4Address": [
-                            "mid_csp_cbf/vcc_band4/001"
-                        ],
-                        "Band5Address": [
-                            "mid_csp_cbf/vcc_band5/001"
-                        ],
-                        "SW1Address": [
-                            "mid_csp_cbf/vcc_sw1/001"
-                        ],
-                        "SW2Address": [
-                            "mid_csp_cbf/vcc_sw2/001"
-                        ],
-                        "VccID": [
-                            "1"
-                        ],
-                }
-            },
-            {"name": "mid_csp_cbf/vcc/002"},
-            {"name": "mid_csp_cbf/vcc/003"},
-            {"name": "mid_csp_cbf/vcc/004"}
-        ]
-    },
-    {
-        "class": VccBand1And2,
-        "devices": [
-            {"name": "mid_csp_cbf/vcc_band12/001"},
-        ]
-    },
-    {
-        "class": VccBand3,
-        "devices": [
-            {"name": "mid_csp_cbf/vcc_band3/001"},
-        ]
-    },
-    {
-        "class": VccBand4,
-        "devices": [
-            {"name": "mid_csp_cbf/vcc_band4/001"},
-        ]
-    },
-    {
-        "class": VccBand5,
-        "devices": [
-            {"name": "mid_csp_cbf/vcc_band5/001"},
-        ]
-    },
-]
+# @pytest.fixture
+# def vcc(tango_context):
+#     """Create DeviceProxy for tests"""
+#     logging.info("%s", tango_context)
+#     dev_factory = DevFactory()
+#     logging.info("%s", dev_factory._test_context)
+#     return dev_factory.get_device("mid_csp_cbf/vcc/001")
+
+# @pytest.fixture
+# def band_12_proxy(tango_context):
+#     """Create DeviceProxy for tests"""
+#     logging.info("%s", tango_context)
+#     dev_factory = DevFactory()
+#     logging.info("%s", dev_factory._test_context)
+#     return dev_factory.get_device("mid_csp_cbf/vcc_band12/001")
+
+# @pytest.fixture
+# def band_3_proxy(tango_context):
+#     """Create DeviceProxy for tests"""
+#     logging.info("%s", tango_context)
+#     dev_factory = DevFactory()
+#     logging.info("%s", dev_factory._test_context)
+#     return dev_factory.get_device("mid_csp_cbf/vcc_band3/001")
 
 class TestVcc:
 
     def test_Vcc_DeviceTestContext(self, tango_context):
         logging.info("%s", tango_context)
         dev_factory = DevFactory()
-        proxy = dev_factory.get_device("mid_csp_cbf/vcc/001")
-        proxy.On()
-        assert proxy.State() == DevState.ON
+        logging.info("%s", dev_factory._test_context)
+        vcc_proxy = dev_factory.get_device("mid_csp_cbf/vcc/001")
+        vcc_proxy.On()
+        assert vcc_proxy.State() == DevState.ON
 
     def test_SetFrequencyBand(
             self,
             debug_device_is_on,
-            multi_device_tango_context
+            tango_context
     ):
         """
         Test SetFrequencyBand command state changes.
         """
-        logging.info("%s", multi_device_tango_context)
+        logging.info("%s", tango_context)
         dev_factory = DevFactory()
         logging.info("%s", dev_factory._test_context)
-        vcc_proxy = multi_device_tango_context.get_device("mid_csp_cbf/vcc/001")
-        band_12_proxy = multi_device_tango_context.get_device("mid_csp_cbf/vcc_band12/001")
-        band_3_proxy = multi_device_tango_context.get_device("mid_csp_cbf/vcc_band3/001")
+        vcc_proxy = dev_factory.get_device("mid_csp_cbf/vcc/001")
+        band_12_proxy = dev_factory.get_device("mid_csp_cbf/vcc_band12/001")
+        band_3_proxy = dev_factory.get_device("mid_csp_cbf/vcc_band3/001")
 
         logging.info("debug_device_is_on = {}".format(debug_device_is_on))       
         if debug_device_is_on == True:
             timeout_millis = 700000 
             vcc_proxy.set_timeout_millis(timeout_millis)
             port = vcc_proxy.DebugDevice()
-
-        # NOTE: this check is needed only while debugging this test TODO - remove
-        if vcc_proxy.obsState  == ObsState.SCANNING:
-            vcc_proxy.EndScan() 
         
         logging.info( ("band_12_proxy.State() = {}".
         format( band_12_proxy.State())) )
@@ -231,8 +190,8 @@ class TestVcc:
         # format( band_3_proxy.State())) )
 
         # Can use the callable version or the 'command_inout' version of the 'On' command
-        #band_12_proxy.On()
-        band_12_proxy.command_inout("On")
+        band_12_proxy.On()
+        #band_12_proxy.command_inout("On")
         band_3_proxy.Disable()
         time.sleep(sleep_seconds)
         logging.info( ("band_12_proxy.State() after On() = {}".
@@ -264,9 +223,9 @@ class TestVcc:
         logging.info( ("vcc_proxy.State()  = {}".
         format( vcc_proxy.State())) )
 
-        logging.info( ("vcc_proxy.obsState  = {}".
-        format( vcc_proxy.obsState)) )
-        time.sleep(sleep_seconds)
+        # logging.info( ("vcc_proxy.obsState  = {}".
+        # format( vcc_proxy.obsState)) )
+        # time.sleep(sleep_seconds)
 
         vcc_proxy.write_attribute("scfoBand1", 1222)
         logging.info( ("vcc scfoBand1 = {}".
@@ -340,13 +299,13 @@ class TestVcc:
 
         vcc_proxy.ConfigureScan(json_str)
         
-        logging.info( ("vcc_proxy.obsState AFTER VCC ConfigureScan(() = {}".
-        format( vcc_proxy.obsState)) )
+        # logging.info( ("vcc_proxy.obsState AFTER VCC ConfigureScan(() = {}".
+        # format( vcc_proxy.obsState)) )
 
         time.sleep(sleep_seconds)
 
-        logging.info( ("vcc_proxy.obsState AFTER VCC ConfigureScan(() & sleep = {}".
-        format( vcc_proxy.obsState)) )
+        # logging.info( ("vcc_proxy.obsState AFTER VCC ConfigureScan(() & sleep = {}".
+        # format( vcc_proxy.obsState)) )
 
         # TODO use the base class tango_change_event_helper() function
         # TODO -use the base class test  assert_calls()
@@ -361,15 +320,15 @@ class TestVcc:
 
         vcc_proxy.command_inout("Scan", scan_id_device_data)
 
-        logging.info( ("vcc_proxy.obsState AFTER VCC Scan(DeviceData) = {}".
-        format( vcc_proxy.obsState)) )
-        time.sleep(sleep_seconds)
-        logging.info( ("vcc_proxy.obsState AFTER VCC Scan(DeviceData) & sleep = {}".
-        format( vcc_proxy.obsState)) )
+        # logging.info( ("vcc_proxy.obsState AFTER VCC Scan(DeviceData) = {}".
+        # format( vcc_proxy.obsState)) )
+        # time.sleep(sleep_seconds)
+        # logging.info( ("vcc_proxy.obsState AFTER VCC Scan(DeviceData) & sleep = {}".
+        # format( vcc_proxy.obsState)) )
 
-        obs_state_is_valid = (
-            vcc_proxy.obsState ==  ObsState.READY or
-            vcc_proxy.obsState ==  ObsState.SCANNING )
+        # obs_state_is_valid = (
+        #     vcc_proxy.obsState ==  ObsState.READY or
+        #     vcc_proxy.obsState ==  ObsState.SCANNING )
 
         logging.info( (" vcc_proxy.scanID =  {}".
         format(vcc_proxy.scanID)) )
@@ -377,19 +336,20 @@ class TestVcc:
         logging.info( (" vcc_proxy.frequencyBand =  {}".
         format(vcc_proxy.frequencyBand)) )
 
-        assert vcc_proxy.frequencyBand == config_dict["frequency_band"]
+        #TODO fix hardcoded value
+        assert vcc_proxy.frequencyBand == 2 # index 2 == freq band 3
         
         assert vcc_proxy.scanID == int(scan_id)
         vcc_proxy.EndScan()
         time.sleep(sleep_seconds)
 
-        logging.info( ("vcc_proxy.obsState AFTER VCC EndScan() and sleep = {}".
-        format( vcc_proxy.obsState)) )
+        # logging.info( ("vcc_proxy.obsState AFTER VCC EndScan() and sleep = {}".
+        # format( vcc_proxy.obsState)) )
 
         vcc_proxy.GoToIdle()
         
-        logging.info( ("vcc_proxy.obsState AFTER GoToIdle() = {}".
-        format( vcc_proxy.obsState)) )
+        # logging.info( ("vcc_proxy.obsState AFTER GoToIdle() = {}".
+        # format( vcc_proxy.obsState)) )
 
         # VCC Off() command
         vcc_proxy.Off()
