@@ -88,7 +88,7 @@ requirements: ## Install Dependencies
 
 unit_test: ## Run simulation mode unit tests
 	@mkdir -p build; \
-	PYTHONPATH=src:tangods pytest $(FILE)
+	PYTHONPATH=src:tangods pytest $(FILE) --test-context
 
 #pytest $(if $(findstring all,$(MARK)),, -m '$(MARK)')
 

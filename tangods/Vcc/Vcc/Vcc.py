@@ -52,6 +52,10 @@ class Vcc(CspSubElementObsDevice):
     Vcc TANGO device class for the prototype
     """
 
+    #TODO: remove temporary manual flag for unit testing
+    #set True to bypass band and search window device proxies
+    TEST_CONTEXT = False
+
     # -----------------
     # Device Properties
     # -----------------
@@ -314,13 +318,12 @@ class Vcc(CspSubElementObsDevice):
             # TODO - To support unit testing, use a wrapper class for the  
             # connection instead of directly DeviceProxy (see MccsDeviceProxy)
             device._dev_factory = DevFactory()
-            device.logger.info("{}".format(device.Band1And2Address))
             device._proxy_band_12 = None
-            # device._proxy_band_3  = tango.DeviceProxy(device.Band3Address)
-            # device._proxy_band_4  = tango.DeviceProxy(device.Band4Address)
-            # device._proxy_band_5  = tango.DeviceProxy(device.Band5Address)
-            # device._proxy_sw_1    = tango.DeviceProxy(device.SW1Address)
-            # device._proxy_sw_2    = tango.DeviceProxy(device.SW2Address)
+            device._proxy_band_3  = None
+            device._proxy_band_4  = None
+            device._proxy_band_5  = None
+            device._proxy_sw_1    = None
+            device._proxy_sw_2    = None
 
             message = "Vcc Init command completed OK"
             device.logger.info(message)
@@ -332,11 +335,38 @@ class Vcc(CspSubElementObsDevice):
         self.logger.info("ALWAYS EXECUTED HOOK")
         self.logger.info("%s", self._dev_factory._test_context)
         try:
-            if self._proxy_band_12 is None:
-                self.logger.info("Connect to band proxy device")
-                self._proxy_band_12 = self._dev_factory.get_device(
-                    self.Band1And2Address
-                )
+            #TODO: remove temporary flag to disable Vcc proxies for unit testing
+            if Vcc.TEST_CONTEXT is False:
+                if self._proxy_band_12 is None:
+                    self.logger.info("Connect to band proxy device")
+                    self._proxy_band_12 = self._dev_factory.get_device(
+                        self.Band1And2Address
+                    )
+                if self._proxy_band_3 is None:
+                    self.logger.info("Connect to band proxy device")
+                    self._proxy_band_3 = self._dev_factory.get_device(
+                        self.Band3Address
+                    )
+                if self._proxy_band_4 is None:
+                    self.logger.info("Connect to band proxy device")
+                    self._proxy_band_4 = self._dev_factory.get_device(
+                        self.Band4Address
+                    )
+                if self._proxy_band_5 is None:
+                    self.logger.info("Connect to band proxy device")
+                    self._proxy_band_5 = self._dev_factory.get_device(
+                        self.Band5Address
+                    )
+                if self._proxy_sw_1 is None:
+                    self.logger.info("Connect to search window proxy device")
+                    self._proxy_sw_1 = self._dev_factory.get_device(
+                        self.SW1Address
+                    )
+                if self._proxy_sw_2 is None:
+                    self.logger.info("Connect to search window proxy device")
+                    self._proxy_sw_2 = self._dev_factory.get_device(
+                        self.SW2Address
+                    )
         except Exception as ex:
             self.logger.info(
                 "Unexpected error on DeviceProxy creation %s", str(ex)
@@ -598,13 +628,14 @@ class Vcc(CspSubElementObsDevice):
             # validate the input args
             (result_code, msg) = self.validate_input(argin)
 
-            # if result_code == ResultCode.OK:
-            #     # TODO: cosider to turn_on the selected band device
-            #     #       via a separate command
-            #     self.turn_on_band_device(device._freq_band_name)
-            #     # store the configuration on command success
-            #     device._last_scan_configuration = argin
-            #     msg = "Configure command completed OK"
+            if result_code == ResultCode.OK:
+                # TODO: cosider to turn_on the selected band device
+                #       via a separate command
+                if Vcc.TEST_CONTEXT is False:
+                    self.turn_on_band_device(device._freq_band_name)
+                # store the configuration on command success
+                device._last_scan_configuration = argin
+                msg = "Configure command completed OK"
 
             return(result_code, msg)
             
@@ -1054,10 +1085,12 @@ class Vcc(CspSubElementObsDevice):
         proxy_sw = 0
 
         # Configure searchWindowID.
-        if int(argin["search_window_id"]) == 1:
-            proxy_sw = self._proxy_sw_1
-        elif int(argin["search_window_id"]) == 2:
-            proxy_sw = self._proxy_sw_2
+        #TODO: remove temporary flag to disable Vcc proxies for unit testing
+        if Vcc.TEST_CONTEXT is False:
+            if int(argin["search_window_id"]) == 1:
+                proxy_sw = self._proxy_sw_1
+            elif int(argin["search_window_id"]) == 2:
+                proxy_sw = self._proxy_sw_2
 
         # Configure searchWindowTuning.
         if self._frequency_band in list(range(4)):  # frequency band is not band 5

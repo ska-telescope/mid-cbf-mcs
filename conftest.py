@@ -38,15 +38,15 @@ from DevFactory.DevFactory import DevFactory
 
 def pytest_addoption(parser):
     """
-    Pytest hook; implemented to add the `--true-context` option, used to
-    indicate that a true Tango subsystem is available, so there is no
+    Pytest hook; implemented to add the `--test-context` option, used to
+    indicate that a test Tango subsystem is available; otherwise there is no
     need for a :py:class:`tango.test_context.MultiDeviceTestContext`.
 
     :param parser: the command line options parser
     :type parser: :py:class:`argparse.ArgumentParser`
     """
     parser.addoption(
-        "--true-context",
+        "--test-context",
         action="store_true",
         default=False,
         help=(
@@ -57,15 +57,16 @@ def pytest_addoption(parser):
 
 @pytest.fixture
 def tango_context(devices_to_load, request):
-    true_context = request.config.getoption("--true-context")
-    logging.info("true context: %s", true_context)
-    if not true_context:
-        with MultiDeviceTestContext(devices_to_load, process=True, host=None) as context:
+    test_context = request.config.getoption("--test-context")
+    logging.info("test context: %s", test_context)
+    if test_context:
+        with MultiDeviceTestContext(devices_to_load, process=False) as context:
             DevFactory._test_context = context
             yield context
     else:
         yield None
 
+#TODO: mocker patch may allow for DeviceProxy workaround in test context usage
 # @pytest.fixture(scope="module")
 # def devices_to_test(request):
 #     yield getattr(request.module, "devices_to_test")
