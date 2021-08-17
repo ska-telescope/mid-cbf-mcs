@@ -11,11 +11,7 @@ ENV PATH=/home/tango/.local/bin:$PATH
 # ENV PIP_CONFIG_FILE pip.conf
 USER root
 # RUN update-ca-certificates
-
-# workaround to install ska-tango-base v0.10 from gitlab until project can support v.0.11
-RUN apt-get update && apt-get install -y git
-USER tango
+# USER tango
 RUN python3 -m pip install -r requirements.txt .
-RUN python3 -m pip install git+https://gitlab.com/ska-telescope/ska-tango-base@0.10.1#egg=ska-tango-base
 
 CMD ["/venv/bin/python", "/app/tangods/CbfMaster/CbfMaster.py"]
