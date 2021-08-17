@@ -72,6 +72,20 @@ publish-image:
     refs:
       - tags
 
+unit:
+  stage: test
+  tags:
+    - k8srunner
+  image: artefact.skao.int/ska-tango-images-tango-itango:9.3.5
+  script:
+    - make requirements
+    - make unit_test
+  artifacts:
+    paths:
+      - build/
+    when: always
+
+
 integration:
   stage: test
   image: nexus.engageska-portugal.pt/ska-docker/deploy:0.4.3

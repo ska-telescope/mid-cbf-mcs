@@ -40,6 +40,7 @@ from Vcc.VccBand1And2.VccBand1And2 import VccBand1And2
 from Vcc.VccBand3.VccBand3 import VccBand3
 from Vcc.VccBand4.VccBand4 import VccBand4
 from Vcc.VccBand5.VccBand5 import VccBand5
+from Vcc.VccSearchWindow.VccSearchWindow import VccSearchWindow
 from DevFactory.DevFactory import DevFactory
 from ska_tango_base.control_model import HealthState, AdminMode, ObsState
 from ska_tango_base import SKABaseDevice
@@ -47,13 +48,6 @@ from ska_tango_base.commands import ResultCode
 
 @pytest.mark.usefixtures(
     "debug_device_is_on",
-    "create_vcc_proxy",
-    "create_band_12_proxy",
-    "create_band_3_proxy",
-    "create_band_4_proxy",
-    "create_band_5_proxy",
-    "create_sw_1_proxy",
-    "proxies",
     "tango_context"
 )
 
@@ -88,10 +82,7 @@ def devices_to_load():
                                 "1"
                             ],
                     }
-                },
-                {"name": "mid_csp_cbf/vcc/002"},
-                {"name": "mid_csp_cbf/vcc/003"},
-                {"name": "mid_csp_cbf/vcc/004"}
+                }
             ]
         },
         {
@@ -116,6 +107,12 @@ def devices_to_load():
             "class": VccBand5,
             "devices": [
                 {"name": "mid_csp_cbf/vcc_band5/001"},
+            ]
+        },
+        {
+            "class": VccSearchWindow,
+            "devices": [
+                {"name": "mid_csp_cbf/vcc_sw1/001"},
             ]
         },
     )
@@ -145,19 +142,11 @@ def devices_to_load():
 #     return dev_factory.get_device("mid_csp_cbf/vcc_band3/001")
 
 class TestVcc:
-
-    def test_Vcc_DeviceTestContext(self, tango_context):
-        logging.info("%s", tango_context)
-        dev_factory = DevFactory()
-        logging.info("%s", dev_factory._test_context)
-        vcc_proxy = dev_factory.get_device("mid_csp_cbf/vcc/001")
-        vcc_proxy.On()
-        assert vcc_proxy.State() == DevState.ON
-
+    
     def test_SetFrequencyBand(
-            self,
-            debug_device_is_on,
-            tango_context
+        self,
+        debug_device_is_on,
+        tango_context
     ):
         """
         Test SetFrequencyBand command state changes.
@@ -420,41 +409,48 @@ class TestVcc:
 
         """
 
-    def test_ConfigureSearchWindow_basic(self, create_vcc_proxy, 
-                                        create_sw_1_proxy):
+    def test_ConfigureSearchWindow_basic(
+        self,
+    ):
         """
         Test a minimal successful search window configuration.
         """
-        create_sw_1_proxy.Init()
-        time.sleep(3)
+        if Vcc.TEST_CONTEXT is False:
+            dev_factory = DevFactory()
+            logging.info("%s", dev_factory._test_context)
+            vcc_proxy = dev_factory.get_device("mid_csp_cbf/vcc/001")
+            sw_1_proxy = dev_factory.get_device("mid_csp_cbf/vcc_sw1/001")
+            sw_1_proxy.Init()
+            time.sleep(3)
 
-        # check initial values of attributes
-        assert create_sw_1_proxy.searchWindowTuning == 0
-        assert create_sw_1_proxy.tdcEnable == False
-        assert create_sw_1_proxy.tdcNumBits == 0
-        assert create_sw_1_proxy.tdcPeriodBeforeEpoch == 0
-        assert create_sw_1_proxy.tdcPeriodAfterEpoch == 0
-        assert create_sw_1_proxy.tdcDestinationAddress == ("", "", "")
+            # check initial values of attributes
+            assert sw_1_proxy.searchWindowTuning == 0
+            assert sw_1_proxy.tdcEnable == False
+            assert sw_1_proxy.tdcNumBits == 0
+            assert sw_1_proxy.tdcPeriodBeforeEpoch == 0
+            assert sw_1_proxy.tdcPeriodAfterEpoch == 0
+            assert sw_1_proxy.tdcDestinationAddress == ("", "", "")
 
-        # check initial state
-        assert create_sw_1_proxy.State() == DevState.DISABLE
+            # check initial state
+            assert sw_1_proxy.State() == DevState.DISABLE
 
-        # set receptorID to 1 to correctly test tdcDestinationAddress
-        create_vcc_proxy.receptorID = 1
+            # set receptorID to 1 to correctly test tdcDestinationAddress
+            vcc_proxy.receptorID = 1
 
-        # configure search window
-        f = open(file_path + "/test_json/test_ConfigureSearchWindow_basic.json")
-        create_vcc_proxy.ConfigureSearchWindow(f.read().replace("\n", ""))
-        f.close()
-        time.sleep(1)
+        
+            # configure search window
+            f = open(file_path + "/test_json/test_ConfigureSearchWindow_basic.json")
+            vcc_proxy.ConfigureSearchWindow(f.read().replace("\n", ""))
+            f.close()
+            time.sleep(1)
 
-        # check configured values
-        assert create_sw_1_proxy.searchWindowTuning == 1000000000
-        assert create_sw_1_proxy.tdcEnable == True
-        assert create_sw_1_proxy.tdcNumBits == 8
-        assert create_sw_1_proxy.tdcPeriodBeforeEpoch == 5
-        assert create_sw_1_proxy.tdcPeriodAfterEpoch == 25
-        assert create_sw_1_proxy.tdcDestinationAddress == ("", "", "")
+            # check configured values
+            assert sw_1_proxy.searchWindowTuning == 1000000000
+            assert sw_1_proxy.tdcEnable == True
+            assert sw_1_proxy.tdcNumBits == 8
+            assert sw_1_proxy.tdcPeriodBeforeEpoch == 5
+            assert sw_1_proxy.tdcPeriodAfterEpoch == 25
+            assert sw_1_proxy.tdcDestinationAddress == ("", "", "")
 
-        # check state
-        assert create_sw_1_proxy.State() == DevState.ON
+            # check state
+            assert sw_1_proxy.State() == DevState.ON

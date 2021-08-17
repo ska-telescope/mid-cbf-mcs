@@ -35,6 +35,7 @@ path = os.path.join(os.path.dirname(__file__), "tangods/")
 sys.path.insert(0, os.path.abspath(path))
 
 from DevFactory.DevFactory import DevFactory
+from Vcc.Vcc.Vcc import Vcc
 
 def pytest_addoption(parser):
     """
@@ -62,8 +63,10 @@ def tango_context(devices_to_load, request):
     if test_context:
         with MultiDeviceTestContext(devices_to_load, process=False) as context:
             DevFactory._test_context = context
+            Vcc.TEST_CONTEXT = True
             yield context
     else:
+        Vcc.TEST_CONTEXT = False
         yield None
 
 #TODO: mocker patch may allow for DeviceProxy workaround in test context usage

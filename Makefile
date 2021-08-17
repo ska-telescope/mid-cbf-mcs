@@ -86,9 +86,9 @@ include .make/k8s.mk
 requirements: ## Install Dependencies
 	python3 -m pip install -r requirements.txt
 
-unit_test: ## Run simulation mode unit tests
+unit_test: ## Run simulation mode unit tests; currently only Vcc tests are supported, with TEST_CONTEXT flag set True in Vcc.py
 	@mkdir -p build; \
-	PYTHONPATH=src:tangods pytest $(FILE) --test-context
+	PYTHONPATH=src:tangods pytest -v ./tangods/Vcc/test/Vcc_test.py $(FILE) --test-context
 
 #pytest $(if $(findstring all,$(MARK)),, -m '$(MARK)')
 
