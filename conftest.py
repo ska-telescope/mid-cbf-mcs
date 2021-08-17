@@ -4,7 +4,7 @@ tests.
 """
 
 from __future__ import absolute_import
-from unittest import mock
+# from unittest import mock
 import pytest
 import logging
 import importlib

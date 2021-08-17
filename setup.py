@@ -18,7 +18,7 @@ with open('README.md') as readme_file:
     readme = readme_file.read()
 
 pack = ['ska-mid-cbf-mcs']
-# TODO: ADR-25 rename project url to ska-mid-cbf-mcs
+
 setup(
     name='ska-mid-cbf-mcs',
     version='0.5.4',
