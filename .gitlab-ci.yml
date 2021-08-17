@@ -1,3 +1,10 @@
+# GitLab CI in conjunction with GitLab Runner can use Docker Engine to test and build any application.
+# Docker, when used with GitLab CI, runs each job in a separate and isolated container using the predefined image that is set up in .gitlab-ci.yml.
+# In this case we use the latest python docker image to build and test this project.
+image: $SKA_K8S_TOOLS_DOCKER_BUILDER_IMAGE
+
+variables:
+  CHARTS_TO_PUBLISH: ska-mid-cbf ska-mid-cbf-tmleafnode
 # Standardised included jobs
 include:
 # Helm Chart Publish
@@ -140,10 +147,10 @@ integration:
 
 # Build the docker image and push to artefact repository
 # Use script given by System Team
-build:
-  only:
-    refs:
-      - tags
+# build:
+#   only:
+#     refs:
+#       - tags
 
 # publish-image:
 #   stage: publish
@@ -161,19 +168,25 @@ build:
 #       - tags
 
 # publish helm charts, runs only for tags
-publish-chart:
-  variables:
-    CHARTS_TO_PUBLISH: ska-mid-cbf ska-mid-cbf-tmleafnode
-  when: manual
-  only:
-    refs:
-      - tags
+# publish-chart:
+#   variables:
+#     CHARTS_TO_PUBLISH: ska-mid-cbf ska-mid-cbf-tmleafnode
+#   when: manual
+#   only:
+#     refs:
+#       - tags
 
 pages:
   stage: pages
   dependencies:
     - integration 
-  tags:
+  tags:publish-chart:
+#   variables:
+#     CHARTS_TO_PUBLISH: ska-mid-cbf ska-mid-cbf-tmleafnode
+#   when: manual
+#   only:
+#     refs:
+#       - tags
     - k8srunner
   script:
    - pwd
