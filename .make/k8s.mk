@@ -1,7 +1,9 @@
-HELM_HOST ?= https://artefact.skao.int## helm host url https
+CAR_HELM_REPOSITORY_URL ?= artefact.skao.int
+CAR_OCI_REGISTRY_HOST ?= artefact.skao.int
 MINIKUBE ?= true## Minikube or not
-MARK ?= all
-IMAGE_TO_TEST ?= $(DOCKER_REGISTRY_HOST)/$(DOCKER_REGISTRY_USER)/$(PROJECT):$(IMAGE_TAG)## docker image that will be run for testing purpose	
+MARK ?= all## mark tests to be executed
+IMAGE_TO_TEST ?= $(CAR_OCI_REGISTRY_HOST)/$(PROJECT):$(IMAGE_TAG)## docker image that will be run for testing purpose	
+MAX_WAIT ?= 180s##wait timeout
 TANGO_HOST = tango-host-databaseds-from-makefile-$(HELM_RELEASE):10000## TANGO_HOST is an input!
 LINTING_OUTPUT=$(shell helm lint charts/* | grep ERROR -c | tail -1)
 
@@ -35,7 +37,7 @@ k8s: ## Which kubernetes are we connected to
 	@echo ""
 	@echo "Helm version:"
 	@helm version --client
-	@echo "TANGO_HOST=$(TANGO_HOST)""
+	@echo "TANGO_HOST=$(TANGO_HOST)"
 	@echo "BRANCH_NAME=$(BRANCH_NAME)"
 	@echo "IMAGE_TAG=$(IMAGE_TAG)"
 	@echo "IMAGE_TO_TEST: $(IMAGE_TO_TEST)"
@@ -154,8 +156,10 @@ wait: ## wait for pods to be ready
 	@date
 	@kubectl -n $(KUBE_NAMESPACE) get pods
 	@date
-	@jobs=$$(kubectl get job --output=jsonpath={.items..metadata.name} -n $(KUBE_NAMESPACE)); kubectl wait job --for=condition=complete --timeout=180s $$jobs -n $(KUBE_NAMESPACE)
-	@kubectl -n $(KUBE_NAMESPACE) wait --for=condition=ready -l app=ska-mid-cbf-mcs --timeout=180s pods || exit 1
+	@jobs=$$(kubectl get job --output=jsonpath={.items..metadata.name} -n $(KUBE_NAMESPACE)); \
+	kubectl -n $(KUBE_NAMESPACE) wait job --for=condition=complete --timeout=${MAX_WAIT} $$jobs
+	@date
+	@kubectl -n $(KUBE_NAMESPACE) wait --for=condition=ready -l 'app=$(PROJECT)' --timeout=${MAX_WAIT} pods || exit 1
 	@date
 
 rm-build:

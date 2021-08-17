@@ -20,13 +20,13 @@ with open('README.md') as readme_file:
 pack = ['ska-mid-cbf-mcs']
 # TODO: ADR-25 rename project url to ska-mid-cbf-mcs
 setup(
-    name='Mid CBF MCS',
-    version='0.5.2',
-    description="",
+    name='ska-mid-cbf-mcs',
+    version='0.5.4',
+    description="SKA Mid.CBF MCS",
     long_description=readme + '\n\n',
     author="Taylor Huang",
     author_email='taylor.huang@mda.space',
-    url='https://gitlab.com/ska-telescope/mid-cbf-mcs',
+    url='https://gitlab.com/ska-telescope/ska-mid-cbf-mcs',
     packages=[
         'CbfMaster',
 	    'CbfSubarray',
@@ -54,8 +54,9 @@ setup(
         'Programming Language :: Python :: 3.6',
     ],
     test_suite='tests',
-    install_requires=['pytango == 9.3.2',
-                    'ska-tango-base == 0.10.0'
+    install_requires=[
+        'pytango >= 9.3.2',
+        'ska-tango-base >= 0.10.0'
     ],
     setup_requires=[
         # dependency for `python setup.py test`

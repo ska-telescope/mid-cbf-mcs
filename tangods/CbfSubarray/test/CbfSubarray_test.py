@@ -39,20 +39,17 @@ from ska_tango_base.control_model import LoggingLevel, HealthState
 from ska_tango_base.control_model import AdminMode, ObsState
 from ska_tango_base.base_device import _DEBUGGER_PORT
 
-
-@pytest.mark.usefixtures("proxies")
-
+@pytest.mark.usefixtures("proxies", "input_test_data")
 class TestCbfSubarray:
 
     def test_AddRemoveReceptors_valid(self, proxies):
         """
         Test valid AddReceptors and RemoveReceptors commands
         """
-         
-        logging.info("Entering test_AddRemoveReceptors_valid")
+
         timeout_millis = proxies.subarray[1].get_timeout_millis()
         log_msg = "timeout_millis = {} ".format(timeout_millis)
-        logging.info(log_msg)
+        #logging.info(log_msg)
         #logging.info("start_time = {}".format(time.time()))
         logging.info("start datetime = {}".format(datetime.now()))
         
@@ -87,11 +84,12 @@ class TestCbfSubarray:
             assert len(proxies.subarray[1].receptors) == 0
             assert all([proxies.vcc[i + 1].subarrayMembership == 0 for i in range(4)])
 
+            input_receptors = [1, 3, 4]
             # add some receptors
-            proxies.subarray[1].AddReceptors([1, 3, 4])
+            proxies.subarray[1].AddReceptors(input_receptors)
             proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.IDLE, 1, 1)
-            assert [proxies.subarray[1].receptors[i] for i in range(3)] == [1, 3, 4]
-            assert all([proxies.vcc[proxies.receptor_to_vcc[i]].subarrayMembership == 1 for i in [1, 3, 4]])
+            assert [proxies.subarray[1].receptors[i] for i in range(3)] == input_receptors
+            assert all([proxies.vcc[proxies.receptor_to_vcc[i]].subarrayMembership == 1 for i in input_receptors])
             assert proxies.subarray[1].obsState == ObsState.IDLE
 
             # add more receptors...
@@ -314,7 +312,8 @@ class TestCbfSubarray:
             assert all([proxies.subarray[1].receptors[i] == j for i, j in zip(range(3), [1, 3, 4])])
 
             # configure scan
-            f = open(file_path + "/test_json/ConfigureScan_basic.json")
+            config_file_name = "/test_json/ConfigureScan_basic.json"
+            f = open(file_path + config_file_name)
             proxies.subarray[1].ConfigureScan(f.read().replace("\n", ""))
             f.close()
             proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.READY, 15, 1)
@@ -717,8 +716,7 @@ class TestCbfSubarray:
             proxies.clean_proxies()
             raise e
 
-
-    def test_EndScan(self, proxies):
+    def test_EndScan(self, proxies, input_test_data):
         """
         Test the EndScan command
         """
@@ -737,78 +735,101 @@ class TestCbfSubarray:
                         proxies.wait_timeout_dev([proxy], DevState.ON, 1, 1)
             assert proxies.subarray[1].obsState == ObsState.EMPTY
 
-            # add receptors
-            proxies.subarray[1].AddReceptors([1, 3, 4, 2])
-            proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.IDLE, 1, 1)
-            assert all([proxies.subarray[1].receptors[i] == j for i, j in zip(range(3), [1, 3, 4])])
-            assert proxies.subarray[1].obsState == ObsState.IDLE
-            assert proxies.fspSubarray[1].obsState == ObsState.IDLE
-            assert proxies.fspSubarray[3].obsState == ObsState.IDLE
+            # Input test data:
+            input_receptors  = input_test_data[0] 
+            config_file_name = input_test_data[1]
 
-            logging.info( "vcc 1 obsState BEFORE ConfigureScan = {}".
-            format(proxies.vcc[proxies.receptor_to_vcc[1]].obsState) )
+            subarr_index = 1;
+            logging.info( "input_receptors  = {}".format(input_receptors) )
+            logging.info( "config_file_name = {}".format(config_file_name) )
 
-            f = open(file_path + "/test_json/ConfigureScan_basic.json")
-            test_config_dict = json.loads(f.read().replace("\n", ""))
+            num_receptors = len(input_receptors)
+
+            vcc_ids = [None for _ in range(num_receptors)]
+            for receptor_id, ii in zip(input_receptors, range(num_receptors)):
+                vcc_ids[ii] = proxies.receptor_to_vcc[receptor_id]
+
+            proxies.subarray[subarr_index].AddReceptors(input_receptors)
+            proxies.wait_timeout_obs([proxies.subarray[subarr_index]], ObsState.IDLE, 1, 1)
+            assert all([proxies.subarray[subarr_index].receptors[i] == j for i, j in zip(range(num_receptors), input_receptors)])
+            assert proxies.subarray[subarr_index].obsState == ObsState.IDLE
+
+            # Check fsp obsState BEFORE scan configuration:
+            assert proxies.fspCorrSubarray[subarr_index-1].obsState == ObsState.IDLE
+            assert proxies.fspPssSubarray[subarr_index-1].obsState == ObsState.IDLE
+            assert proxies.fspPstSubarray[subarr_index-1].obsState == ObsState.IDLE
+
+            logging.info( "First vcc obsState BEFORE ConfigureScan = {}".
+            format(proxies.vcc[vcc_ids[0]].obsState) )
+
+            f = open(file_path + config_file_name)
+            json_string = f.read().replace("\n", "")
+            input_config_dict = json.loads(json_string)
+            proxies.subarray[subarr_index].ConfigureScan(json_string)
             f.close()
 
-            # configure scan
-            f = open(file_path + "/test_json/ConfigureScan_basic.json")
-            proxies.subarray[1].ConfigureScan(f.read().replace("\n", ""))
-            f.close()
+            proxies.wait_timeout_obs([proxies.subarray[subarr_index]], ObsState.READY, 15, 1)
 
-            proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.READY, 15, 1)
+            logging.info( "First vcc obsState AFTER ConfigureScan = {}".
+            format(proxies.vcc[vcc_ids[0]].obsState) )
 
-            sleep_seconds = 3 # TODO
-            time.sleep(sleep_seconds)
+            # check some configured attributes of CBF subarray           
+            frequency_band   = input_config_dict["common"]["frequency_band"]
+            input_band_index = freq_band_dict()[frequency_band]
 
-            logging.info( "test_config_dict[common][config_id] = {}".format(test_config_dict["common"]["config_id"]))
-
-            logging.info( "vcc 1 obsState AFTER ConfigureScan & sleep = {}".
-            format(proxies.vcc[proxies.receptor_to_vcc[1]].obsState) )
-
-            # check configured attributes of CBF subarray
-            assert proxies.subarray[1].configID == test_config_dict["common"]["config_id"]
-            assert proxies.subarray[1].frequencyBand == 4
-            assert proxies.subarray[1].obsState == ObsState.READY
+            assert proxies.subarray[subarr_index].configID == input_config_dict["common"]["config_id"]
+            assert proxies.subarray[subarr_index].frequencyBand == input_band_index
+            assert proxies.subarray[subarr_index].obsState == ObsState.READY
 
             # Send the Scan command
             f2 = open(file_path + "/test_json/Scan1_basic.json")
-            proxies.subarray[1].Scan(f2.read().replace("\n", ""))
+            json_string = f2.read().replace("\n", "")
+            input_scan_dict = json.loads(json_string)
+            proxies.subarray[subarr_index].Scan(json_string)
             f2.close()
-            proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.SCANNING, 1, 1)
+            proxies.wait_timeout_obs([proxies.subarray[subarr_index]], ObsState.SCANNING, 1, 1)
 
-            # check initial states
-            sleep_seconds = 3
-            time.sleep(sleep_seconds)
-            logging.info( "vcc 1 obsState after sleep = {}".
-            format(proxies.vcc[proxies.receptor_to_vcc[1]].obsState) )
+            # Note: scan_id is 1-based and of 'string' type 
+            #       scan_index is an index into an array, therefore 0-based       
+            scan_index = int(input_scan_dict["scan_id"]) - 1
+            logging.info( "proxies.fspCorrSubarray[subarr_index-1].obsState = {}".
+            format(proxies.fspCorrSubarray[subarr_index-1].obsState) )
+            logging.info( "proxies.fspPssSubarray[subarr_index-1].obsState = {}".
+            format(proxies.fspPssSubarray[subarr_index-1].obsState) )
+            logging.info( "proxies.fspPstSubarray[subarr_index-1].obsState = {}".
+            format(proxies.fspPstSubarray[subarr_index-1].obsState) )
 
-            logging.info( "vcc 4 obsState = {}".
-            format(proxies.vcc[proxies.receptor_to_vcc[4]].obsState) )
+            # Check obsStates BEFORE the EndScan() command
+            assert proxies.subarray[subarr_index].obsState == ObsState.SCANNING
+            assert proxies.vcc[vcc_ids[0]].obsState == ObsState.SCANNING
+            assert proxies.vcc[vcc_ids[num_receptors-1]].obsState == ObsState.SCANNING
 
-            logging.info( "proxies.fspSubarray[1].obsState = {}".
-            format(proxies.fspSubarray[1].obsState) )
+            for fsp in input_config_dict["cbf"]["fsp"]:
+                if fsp["function_mode"] == "CORR":
+                   assert proxies.fspCorrSubarray[subarr_index-1].obsState == ObsState.SCANNING
+                elif fsp["function_mode"] == "PSS-BF":
+                    assert proxies.fspPssSubarray[subarr_index-1].obsState == ObsState.SCANNING
+                # TODO: this check does not pass, to fix
+                #elif fsp["function_mode"] == "PST-BF":
+                #    assert proxies.fspPstSubarray[subarr_index-1].obsState == ObsState.SCANNING
 
-            logging.info( "proxies.fspSubarray[3].obsState = {}".
-            format(proxies.fspSubarray[3].obsState) )
+            proxies.subarray[subarr_index].EndScan()
+            proxies.wait_timeout_obs([proxies.subarray[subarr_index]], ObsState.READY, 1, 1)
 
-            assert proxies.subarray[1].obsState == ObsState.SCANNING
-            assert proxies.vcc[proxies.receptor_to_vcc[1]].obsState == ObsState.SCANNING
-            assert proxies.vcc[proxies.receptor_to_vcc[4]].obsState == ObsState.SCANNING
-            assert proxies.fspSubarray[1].obsState == ObsState.SCANNING
-            assert proxies.fspSubarray[3].obsState == ObsState.SCANNING
+            # Check obsStates AFTER the EndScan() command
+            assert proxies.subarray[subarr_index].obsState  == ObsState.READY
+            assert proxies.vcc[vcc_ids[0]].obsState         == ObsState.READY
+            assert proxies.vcc[vcc_ids[num_receptors -1]].obsState == ObsState.READY
+            assert proxies.fspCorrSubarray[subarr_index-1].obsState == ObsState.READY
 
-            # send the EndScan command
-            proxies.subarray[1].EndScan()
-            proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.READY, 1, 1)
-
-            # check states
-            assert proxies.subarray[1].obsState == ObsState.READY
-            assert proxies.vcc[proxies.receptor_to_vcc[1]].obsState == ObsState.READY
-            assert proxies.vcc[proxies.receptor_to_vcc[4]].obsState == ObsState.READY
-            assert proxies.fspSubarray[1].obsState == ObsState.READY
-            assert proxies.fspSubarray[3].obsState == ObsState.READY
+            for fsp in input_config_dict["cbf"]["fsp"]:
+                if fsp["function_mode"] == "CORR":
+                   assert proxies.fspCorrSubarray[subarr_index-1].obsState == ObsState.READY 
+                elif fsp["function_mode"] == "PSS-BF":
+                    assert proxies.fspPssSubarray[subarr_index-1].obsState == ObsState.READY
+                # TODO: this check does not pass, to  fix
+                #elif fsp["function_mode"] == "PST-BF":
+                #    assert proxies.fspPstSubarray[subarr_index-1].obsState == ObsState.READY
 
             proxies.clean_proxies()
 
@@ -1384,6 +1405,7 @@ class TestCbfSubarray:
             sub_id = 1
             #TODO currently only support for 1 receptor per fsp
             test_receptor_ids = [4, 1]
+            #test_receptor_ids = [1]
             vcc_index = proxies.receptor_to_vcc[test_receptor_ids[0]]
             logging.info("vcc_index  = {}".format(vcc_index))
             vcc_band_proxies = proxies.vccBand[vcc_index - 1]
@@ -1414,7 +1436,7 @@ class TestCbfSubarray:
             assert all([proxies.subarray[sub_id].receptors[i] == j 
                        for i, j in zip(range(len(test_receptor_ids)), test_receptor_ids)])
 
-            # configure scan
+            # configure scan 
             f = open(file_path + "/test_json/Configure_TM-CSP_v2.json")
             configuration = f.read().replace("\n", "")
             f.close()
@@ -1495,7 +1517,6 @@ class TestCbfSubarray:
         except Exception as e:
             proxies.clean_proxies()
             raise e
-
 
 '''    
     def test_ConfigureScan_onlyPss_basic(
@@ -1959,12 +1980,6 @@ class TestCbfSubarray:
         proxies.subarray[1].RemoveAllReceptors()
         time.sleep(3)
         assert proxies.subarray[1].state() == tango.DevState.OFF
-
-
-
-
-
-
 
     def test_band1(
             self,

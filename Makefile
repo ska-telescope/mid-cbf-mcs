@@ -9,12 +9,11 @@
 # value for DOCKER_REGISTRY_HOST (=rnexus.engageska-portugal.pt) and overwrites
 # DOCKER_REGISTRY_USER and PROJECT
 #
-DOCKER_REGISTRY_USER:=ska-docker
+#DOCKER_REGISTRY_USER:=ska-docker
 PROJECT = ska-mid-cbf-mcs
 
 # KUBE_NAMESPACE defines the Kubernetes Namespace that will be deployed to
 # using Helm.  If this does not already exist it will be created
-# TODO: rename namespace? (ADR-25) 
 KUBE_NAMESPACE ?= ska-mid-cbf
 SDP_KUBE_NAMESPACE ?= sdp #namespace to be used
 DASHBOARD ?= webjive-dash.dump
@@ -47,7 +46,7 @@ DOCKER_HOST ?= unix:///var/run/docker.sock
 # DOCKER_VOLUMES pass in local domain socket for DOCKER_HOST
 DOCKER_VOLUMES ?= /var/run/docker.sock:/var/run/docker.sock
 # registry credentials - user/pass/registry - set these in PrivateRules.mak
-DOCKER_REGISTRY_USER_LOGIN ?=  ## registry credentials - user - set in PrivateRules.mak
+CAR_OCI_REGISTRY_USER_LOGIN ?=  ## registry credentials - user - set in PrivateRules.mak
 CI_REGISTRY_PASS_LOGIN ?=  ## registry credentials - pass - set in PrivateRules.mak
 CI_REGISTRY ?= gitlab.com/ska-telescope/mid-cbf-mcs # TODO: ADR-25 rename project url to ska-mid-cbf-mcs
 
@@ -66,7 +65,9 @@ DISPLAY := $(THIS_HOST):0
 
 # Test runner - run to completion job in K8s
 # name of the pod running the k8s_tests
-TEST_RUNNER = test-makefile-runner-$(CI_JOB_ID)-$(KUBE_NAMESPACE)-$(HELM_RELEASE)
+# TODO: test-makefile-runner-$(CI_JOB_ID)-$(KUBE_NAMESPACE)-$(HELM_RELEASE) 
+#		old name is 64 characters, too long for container name
+TEST_RUNNER = test-runner-$(CI_JOB_ID)-$(KUBE_NAMESPACE)-$(HELM_RELEASE)
 
 #
 # include makefile to pick up the standard Make targets, e.g., 'make build'
@@ -74,7 +75,7 @@ TEST_RUNNER = test-makefile-runner-$(CI_JOB_ID)-$(KUBE_NAMESPACE)-$(HELM_RELEASE
 # ('make interactive', 'make test', etc.) are defined in this file.
 #
 include .make/release.mk
-include .make/docker.mk
+#include .make/docker.mk
 include .make/k8s.mk
 
 #
