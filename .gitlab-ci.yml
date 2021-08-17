@@ -180,13 +180,14 @@ pages:
   stage: pages
   dependencies:
     - integration 
-  tags:publish-chart:
+#  tags:publish-chart:
 #   variables:
 #     CHARTS_TO_PUBLISH: ska-mid-cbf ska-mid-cbf-tmleafnode
 #   when: manual
 #   only:
 #     refs:
 #       - tags
+  tags:
     - k8srunner
   script:
    - pwd
