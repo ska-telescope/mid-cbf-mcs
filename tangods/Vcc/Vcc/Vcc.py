@@ -20,7 +20,6 @@
 import os
 import sys
 import json
-from tangods.DevFactory.DevFactory import DevFactory
 
 # tango imports
 import tango
@@ -37,6 +36,8 @@ commons_pkg_path = os.path.abspath(os.path.join(file_path, "../../commons"))
 sys.path.insert(0, commons_pkg_path)
 
 from global_enum import const, freq_band_dict
+
+from DevFactory.DevFactory import DevFactory
 
 from ska_tango_base.control_model import ObsState
 from ska_tango_base import SKAObsDevice, CspSubElementObsDevice
