@@ -409,6 +409,7 @@ class TestVcc:
 
         """
 
+    @pytest.mark.skip
     def test_ConfigureSearchWindow_basic(
         self,
     ):
