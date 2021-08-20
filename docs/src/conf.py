@@ -33,7 +33,7 @@ sys.path.append(os.path.abspath('../../'))
 
 
 def setup(app):
-    app.add_stylesheet('css/custom.css')
+    app.add_css_file('css/custom.css')
     app.add_javascript('js/github.js')
 
 # -- Project information -----------------------------------------------------
@@ -43,7 +43,7 @@ copyright = '2020, NRC - SKA Organization'
 author = 'Taylor Huang'
 
 def setup(app):
-    app.add_stylesheet('css/custom.css')
+    app.add_css_file('css/custom.css')
     app.add_javascript('js/github.js')
 
 # -- General configuration ------------------------------------------------

@@ -18,7 +18,7 @@ dependencies:
   version: 0.2.4
   repository: "file://../ska-mid-cbf-tmleafnode"
 # - name: ska-webjive
-#   version: 1.0.24
+#   version: 1.0.25
 #   repository: https://artefact.skao.int/repository/helm-internal
 # - name: ska-webjive-auth
 #   version: 0.1.3

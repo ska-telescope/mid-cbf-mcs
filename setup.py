@@ -29,11 +29,15 @@ setup(
     url='https://gitlab.com/ska-telescope/ska-mid-cbf-mcs',
     packages=[
         'CbfMaster',
-	    'CbfSubarray'
+	    'CbfSubarray',
+        'Vcc',
+        'DevFactory'
     ],
     package_dir={
 	    'CbfMaster': 'tangods/CbfMaster',
-	    'CbfSubarray': 'tangods/CbfSubarray'
+	    'CbfSubarray': 'tangods/CbfSubarray',
+        'Vcc': 'tangods/Vcc',
+        'DevFactory': 'tangods/DevFactory'
     },
     include_package_data=True,
     license="BSD license",

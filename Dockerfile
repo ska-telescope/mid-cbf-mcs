@@ -9,13 +9,9 @@ ENV PATH=/home/tango/.local/bin:$PATH
 # uncomment commented lines in Dockerfile and in pip.conf to fix ssl cert verification issue (CIPA team - MDA network)
 # ADD certs /usr/local/share/ca-certificates/
 # ENV PIP_CONFIG_FILE pip.conf
-USER root
+# USER root
 # RUN update-ca-certificates
-
-# workaround to install ska-tango-base v0.10 from gitlab until project can support v.0.11
-RUN apt-get update && apt-get install -y git
-USER tango
+# USER tango
 RUN python3 -m pip install -r requirements.txt .
-RUN python3 -m pip install git+https://gitlab.com/ska-telescope/ska-tango-base@0.10.1#egg=ska-tango-base
 
 CMD ["/venv/bin/python", "/app/tangods/CbfMaster/CbfMaster.py"]
