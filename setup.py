@@ -34,10 +34,10 @@ setup(
         'DevFactory'
     ],
     package_dir={
-	    'CbfMaster': 'tangods/CbfMaster',
-	    'CbfSubarray': 'tangods/CbfSubarray',
-        'Vcc': 'tangods/Vcc',
-        'DevFactory': 'tangods/DevFactory'
+	    'CbfMaster': 'src/ska_mid_cbf_mcs/CbfMaster',
+	    'CbfSubarray': 'src/ska_mid_cbf_mcs/CbfSubarray',
+        'Vcc': 'src/ska_mid_cbf_mcs/Vcc',
+        'DevFactory': 'src/ska_mid_cbf_mcs/DevFactory'
     },
     include_package_data=True,
     license="BSD license",

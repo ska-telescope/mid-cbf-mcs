@@ -3,7 +3,7 @@ CAR_OCI_REGISTRY_HOST ?= artefact.skao.int
 MINIKUBE ?= true## Minikube or not
 MARK ?= all## mark tests to be executed
 IMAGE_TO_TEST ?= $(CAR_OCI_REGISTRY_HOST)/$(PROJECT):$(IMAGE_TAG)## docker image that will be run for testing purpose	
-MAX_WAIT ?= 180s##wait timeout
+MAX_WAIT ?= 300s##wait timeout
 TANGO_HOST = tango-host-databaseds-from-makefile-$(HELM_RELEASE):10000## TANGO_HOST is an input!
 LINTING_OUTPUT=$(shell helm lint charts/* | grep ERROR -c | tail -1)
 

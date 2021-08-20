@@ -54,7 +54,7 @@ deviceServers:
   - name: cbfmaster
     function: cbf-central-control
     domain: csp-monitoring
-    command: "/venv/bin/python /app/tangods/CbfMaster/CbfMaster/CbfMaster.py "
+    command: "/venv/bin/python /app/src/ska_mid_cbf_mcs/CbfMaster/CbfMaster/CbfMaster.py "
     instances: ["master"]
     depends_on:
       - device: mid_csp_cbf/vcc/001   
@@ -73,7 +73,7 @@ deviceServers:
   - name: cbfsubarray01
     function: cbf-subarray-observation
     domain: subarray
-    command: "/venv/bin/python /app/tangods/CbfSubarray/CbfSubarrayMulti/CbfSubarrayMulti.py "
+    command: "/venv/bin/python /app/src/ska_mid_cbf_mcs/CbfSubarray/CbfSubarrayMulti/CbfSubarrayMulti.py "
     instances: ["cbfsubarray-01"]
     depends_on:
       - device: mid_csp_cbf/sub_elt/master
@@ -85,7 +85,7 @@ deviceServers:
   - name: cbfsubarray02
     function: cbf-subarray-observation
     domain: subarray
-    command: "/venv/bin/python /app/tangods/CbfSubarray/CbfSubarrayMulti/CbfSubarrayMulti.py "
+    command: "/venv/bin/python /app/src/ska_mid_cbf_mcs/CbfSubarray/CbfSubarrayMulti/CbfSubarrayMulti.py "
     instances: ["cbfsubarray-02"]
     depends_on:
       - device: mid_csp_cbf/sub_elt/master
@@ -97,7 +97,7 @@ deviceServers:
   - name: cbfsubarray03
     function: cbf-subarray-observation
     domain: subarray
-    command: "/venv/bin/python /app/tangods/CbfSubarray/CbfSubarrayMulti/CbfSubarrayMulti.py "
+    command: "/venv/bin/python /app/src/ska_mid_cbf_mcs/CbfSubarray/CbfSubarrayMulti/CbfSubarrayMulti.py "
     instances: ["cbfsubarray-03"]
     depends_on:
       - device: mid_csp_cbf/sub_elt/master
@@ -109,7 +109,7 @@ deviceServers:
   - name: vcc001
     function: coarse-channelisation
     domain: sensing
-    command: "/venv/bin/python /app/tangods/Vcc/VccMulti/VccMulti.py "
+    command: "/venv/bin/python /app/src/ska_mid_cbf_mcs/Vcc/VccMulti/VccMulti.py "
     instances: ["vcc-001"]
     depends_on:
       - device: sys/database/2
@@ -121,7 +121,7 @@ deviceServers:
   - name: vcc002
     function: coarse-channelisation
     domain: sensing
-    command: "/venv/bin/python /app/tangods/Vcc/VccMulti/VccMulti.py "
+    command: "/venv/bin/python /app/src/ska_mid_cbf_mcs/Vcc/VccMulti/VccMulti.py "
     instances: ["vcc-002"]
     depends_on:
       - device: sys/database/2
@@ -133,7 +133,7 @@ deviceServers:
   - name: vcc003
     function: coarse-channelisation
     domain: sensing
-    command: "/venv/bin/python /app/tangods/Vcc/VccMulti/VccMulti.py "
+    command: "/venv/bin/python /app/src/ska_mid_cbf_mcs/Vcc/VccMulti/VccMulti.py "
     instances: ["vcc-003"]
     depends_on:
       - device: sys/database/2
@@ -145,7 +145,7 @@ deviceServers:
   - name: vcc004
     function: coarse-channelisation
     domain: sensing
-    command: "/venv/bin/python /app/tangods/Vcc/VccMulti/VccMulti.py "
+    command: "/venv/bin/python /app/src/ska_mid_cbf_mcs/Vcc/VccMulti/VccMulti.py "
     instances: ["vcc-004"]
     depends_on:
       - device: sys/database/2
@@ -157,7 +157,7 @@ deviceServers:
   - name: fsp01
     function: fsp-processing
     domain: signal-processing
-    command: "/venv/bin/python /app/tangods/Fsp/FspMulti/FspMulti.py "
+    command: "/venv/bin/python /app/src/ska_mid_cbf_mcs/Fsp/FspMulti/FspMulti.py "
     instances: ["fsp-01"]
     depends_on:
       - device: mid_csp_cbf/vcc/001
@@ -172,7 +172,7 @@ deviceServers:
   - name: fsp02
     function: fsp-processing
     domain: signal-processing
-    command: "/venv/bin/python /app/tangods/Fsp/FspMulti/FspMulti.py "
+    command: "/venv/bin/python /app/src/ska_mid_cbf_mcs/Fsp/FspMulti/FspMulti.py "
     instances: ["fsp-02"]
     depends_on:
       - device: mid_csp_cbf/vcc/001
@@ -187,7 +187,7 @@ deviceServers:
   - name: fsp03
     function: fsp-processing
     domain: signal-processing
-    command: "/venv/bin/python /app/tangods/Fsp/FspMulti/FspMulti.py "
+    command: "/venv/bin/python /app/src/ska_mid_cbf_mcs/Fsp/FspMulti/FspMulti.py "
     instances: ["fsp-03"]
     depends_on:
       - device: mid_csp_cbf/vcc/001
@@ -202,7 +202,7 @@ deviceServers:
   - name: fsp04
     function: fsp-processing
     domain: signal-processing
-    command: "/venv/bin/python /app/tangods/Fsp/FspMulti/FspMulti.py "
+    command: "/venv/bin/python /app/src/ska_mid_cbf_mcs/Fsp/FspMulti/FspMulti.py "
     instances: ["fsp-04"]
     depends_on:
       - device: mid_csp_cbf/vcc/001

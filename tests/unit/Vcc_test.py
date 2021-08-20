@@ -440,7 +440,7 @@ class TestVcc:
 
         
             # configure search window
-            f = open(file_path + "/test_json/test_ConfigureSearchWindow_basic.json")
+            f = open(file_path + "/../data/test_ConfigureSearchWindow_basic.json")
             vcc_proxy.ConfigureSearchWindow(f.read().replace("\n", ""))
             f.close()
             time.sleep(1)

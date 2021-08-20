@@ -14,12 +14,11 @@
 # """
 
 # """ 
-# VccBand4 TANGO device class for the prototype
+# VccBand5 TANGO device class for the prototype
 # """
 
 import os
 import sys
-import json
 
 # tango imports
 import tango
@@ -41,15 +40,15 @@ from ska_tango_base.control_model import HealthState, AdminMode
 from ska_tango_base import SKACapability
 from ska_tango_base.commands import ResultCode
 
-__all__ = ["VccBand4", "main"]
+__all__ = ["VccBand5", "main"]
 
 
-class VccBand4(SKACapability):
+class VccBand5(SKACapability):
     """
-    VccBand4 TANGO device class for the prototype
+    VccBand5 TANGO device class for the prototype
     """
-    # PROTECTED REGION ID(VccBand4.class_variable) ENABLED START #
-    # PROTECTED REGION END #    //  VccBand4.class_variable
+    # PROTECTED REGION ID(VccBand5.class_variable) ENABLED START #
+    # PROTECTED REGION END #    //  VccBand5.class_variable
 
     # -----------------
     # Device Properties
@@ -73,28 +72,29 @@ class VccBand4(SKACapability):
                 information purpose only.
             :rtype: (ResultCode, str)
             """
+
             self.logger.debug("Entering InitCommand()")
-            
+
             super().do()
 
             device = self.target
 
             #self.logger.warn("State() = {}".format(device.get_state()))
-            message = "VccBand4 Init command completed OK"
+            message = "VccBand5 Init command completed OK"
             self.logger.info(message)
             return (ResultCode.OK, message)
 
     def always_executed_hook(self):
-        # PROTECTED REGION ID(VccBand4.always_executed_hook) ENABLED START #
+        # PROTECTED REGION ID(VccBand5.always_executed_hook) ENABLED START #
         """hook to be executed before commands"""
         pass
-        # PROTECTED REGION END #    //  VccBand4.always_executed_hook
+        # PROTECTED REGION END #    //  VccBand5.always_executed_hook
 
     def delete_device(self):
-        # PROTECTED REGION ID(VccBand4.delete_device) ENABLED START #
+        # PROTECTED REGION ID(VccBand5.delete_device) ENABLED START #
         """hook to delete device"""
         pass
-        # PROTECTED REGION END #    //  VccBand4.delete_device
+        # PROTECTED REGION END #    //  VccBand5.delete_device
 
     # ------------------
     # Attributes methods
@@ -112,9 +112,9 @@ class VccBand4(SKACapability):
 
 
 def main(args=None, **kwargs):
-    # PROTECTED REGION ID(VccBand4.main) ENABLED START #
-    return run((VccBand4,), args=args, **kwargs)
-    # PROTECTED REGION END #    //  VccBand4.main
+    # PROTECTED REGION ID(VccBand5.main) ENABLED START #
+    return run((VccBand5,), args=args, **kwargs)
+    # PROTECTED REGION END #    //  VccBand5.main
 
 if __name__ == '__main__':
     main()

@@ -13,14 +13,6 @@ import sys
 import time
 import json
 
-# sys.path.insert(0, "tangods/commons")
-
-# file_path = os.path.dirname(os.path.abspath(__file__))
-# commons_pkg_path = os.path.abspath(os.path.join(file_path, "tangods/commons"))
-# sys.path.insert(0, commons_pkg_path)
-
-# import global_enum
-
 import tango
 from tango import DevState
 from tango import DeviceProxy
@@ -31,7 +23,7 @@ from ska_tango_base.control_model import LoggingLevel, ObsState, AdminMode
 
 #TODO clean up file path navigation with proper packaging
 
-path = os.path.join(os.path.dirname(__file__), "tangods/")
+path = os.path.join(os.path.dirname(__file__), "src/ska_mid_cbf_mcs/")
 sys.path.insert(0, os.path.abspath(path))
 
 from DevFactory.DevFactory import DevFactory
