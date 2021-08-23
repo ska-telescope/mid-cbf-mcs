@@ -23,11 +23,8 @@ from ska_tango_base.control_model import LoggingLevel, ObsState, AdminMode
 
 #TODO clean up file path navigation with proper packaging
 
-path = os.path.join(os.path.dirname(__file__), "src/ska_mid_cbf_mcs/")
-sys.path.insert(0, os.path.abspath(path))
-
-from DevFactory.DevFactory import DevFactory
-from Vcc.Vcc.Vcc import Vcc
+from src.ska_mid_cbf_mcs.dev_factory import DevFactory
+from src.ska_mid_cbf_mcs.vcc.vcc import Vcc
 
 def pytest_addoption(parser):
     """

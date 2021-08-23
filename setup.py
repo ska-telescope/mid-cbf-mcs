@@ -6,7 +6,7 @@
 
 import os
 import sys
-from setuptools import setup, find_packages
+import setuptools
 
 setup_dir = os.path.dirname(os.path.abspath(__file__))
 # make sure we use latest info from local code
@@ -19,7 +19,7 @@ with open('README.md') as readme_file:
 
 pack = ['ska-mid-cbf-mcs']
 
-setup(
+setuptools.setup(
     name='ska-mid-cbf-mcs',
     version='0.5.4',
     description="SKA Mid.CBF MCS",
@@ -27,18 +27,8 @@ setup(
     author="Taylor Huang",
     author_email='taylor.huang@mda.space',
     url='https://gitlab.com/ska-telescope/ska-mid-cbf-mcs',
-    packages=[
-        'CbfMaster',
-	    'CbfSubarray',
-        'Vcc',
-        'DevFactory'
-    ],
-    package_dir={
-	    'CbfMaster': 'src/ska_mid_cbf_mcs/CbfMaster',
-	    'CbfSubarray': 'src/ska_mid_cbf_mcs/CbfSubarray',
-        'Vcc': 'src/ska_mid_cbf_mcs/Vcc',
-        'DevFactory': 'src/ska_mid_cbf_mcs/DevFactory'
-    },
+    package_dir={"": "src"},
+    packages=setuptools.find_packages(where="src"),
     include_package_data=True,
     license="BSD license",
     zip_safe=False,

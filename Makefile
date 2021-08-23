@@ -88,7 +88,7 @@ requirements: ## Install Dependencies
 
 unit_test: ## Run simulation mode unit tests; currently only Vcc tests are supported, with TEST_CONTEXT flag set True in Vcc.py
 	@mkdir -p build; \
-	PYTHONPATH=src:tests pytest -v ./tests/unit/Vcc_test.py $(FILE) --test-context
+	PYTHONPATH=src:tests pytest -v ./tests/unit/Vcc_test.py $(FILE) --test-context --cov=src/ska_mid_cbf_mcs/Vcc
 
 # pull and interactive preserved from docker.mk
 # pull:  ## download the application image

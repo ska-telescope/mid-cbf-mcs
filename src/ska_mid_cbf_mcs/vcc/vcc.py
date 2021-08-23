@@ -30,14 +30,10 @@ from tango import DebugIt, DevState, AttrWriteType
 from tango.test_context import MultiDeviceTestContext
 
 # SKA Specific imports
-#TODO - find a solution for not including these paths here
-file_path = os.path.dirname(os.path.abspath(__file__))
-commons_pkg_path = os.path.abspath(os.path.join(file_path, "../../commons"))
-sys.path.insert(0, commons_pkg_path)
 
-from global_enum import const, freq_band_dict
+from ska_mid_cbf_mcs.commons import const, freq_band_dict
 
-from DevFactory.DevFactory import DevFactory
+from ska_mid_cbf_mcs.dev_factory import DevFactory
 
 from ska_tango_base.control_model import ObsState
 from ska_tango_base import SKAObsDevice, CspSubElementObsDevice

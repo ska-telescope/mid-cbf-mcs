@@ -22,7 +22,7 @@ import pytest
 file_path = os.path.dirname(os.path.abspath(__file__))
 # insert base package directory to import global_enum 
 # module in commons folder
-commons_pkg_path = os.path.abspath(os.path.join(file_path, "../../commons"))
+commons_pkg_path = os.path.abspath(os.path.join(file_path, "../../src/ska_mid_cbf_mcs/commons"))
 sys.path.insert(0, commons_pkg_path)
 
 path = os.path.join(os.path.dirname(__file__), os.pardir)
@@ -35,13 +35,13 @@ from tango.test_context import DeviceTestContext, MultiDeviceTestContext
 
 #Local imports
 
-from Vcc.Vcc.Vcc import Vcc
-from Vcc.VccBand1And2.VccBand1And2 import VccBand1And2
-from Vcc.VccBand3.VccBand3 import VccBand3
-from Vcc.VccBand4.VccBand4 import VccBand4
-from Vcc.VccBand5.VccBand5 import VccBand5
-from Vcc.VccSearchWindow.VccSearchWindow import VccSearchWindow
-from DevFactory.DevFactory import DevFactory
+from src.ska_mid_cbf_mcs.vcc.vcc import Vcc
+from src.ska_mid_cbf_mcs.vcc.band_1_and_2 import VccBand1And2
+from src.ska_mid_cbf_mcs.vcc.band_3 import VccBand3
+from src.ska_mid_cbf_mcs.vcc.band_4 import VccBand4
+from src.ska_mid_cbf_mcs.vcc.band_5 import VccBand5
+from src.ska_mid_cbf_mcs.vcc.search_window import VccSearchWindow
+from src.ska_mid_cbf_mcs.dev_factory import DevFactory
 from ska_tango_base.control_model import HealthState, AdminMode, ObsState
 from ska_tango_base import SKABaseDevice
 from ska_tango_base.commands import ResultCode
