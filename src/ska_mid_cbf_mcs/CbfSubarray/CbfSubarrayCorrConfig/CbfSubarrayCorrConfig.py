@@ -32,10 +32,7 @@ import sys
 import json
 
 file_path = os.path.dirname(os.path.abspath(__file__))
-commons_pkg_path = os.path.abspath(os.path.join(file_path, "../../commons"))
-sys.path.insert(0, commons_pkg_path)
 
-from global_enum import const
 from ska_tango_base.control_model import ObsState, AdminMode, HealthState
 from ska_tango_base import SKACapability
 # PROTECTED REGION END #    //  CbfSubarrayCorrConfig.additionnal_import
