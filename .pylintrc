@@ -9,7 +9,7 @@ init-hook='
     import sys;
     sys.path.append("./src/ska_mid_cbf_mcs");
     sys.path.append("./src/ska_mid_cbf_mcs/controller");
-    sys.path.append("./src/ska_mid_cbf_mcs/CbfSubarray");
+    sys.path.append("./src/ska_mid_cbf_mcs/subarray");
     sys.path.append("./src/ska_mid_cbf_mcs/vcc");
     sys.path.append("./src/ska_mid_cbf_mcs/fsp");
     sys.path.append("./src/ska_mid_cbf_mcs/commons");

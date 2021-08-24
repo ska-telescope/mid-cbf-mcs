@@ -216,7 +216,7 @@ def init_proxies_fixture():
 
 @pytest.fixture(name="input_test_data", scope="class", \
     params = [
-       ([1, 3, 4, 2], "/test_json/ConfigureScan_basic.json") ] )
+       ([1, 3, 4, 2], "/../data/ConfigureScan_basic.json") ] )
     #params = [
     #    ([4, 1, 2],    "/test_json/Configure_TM-CSP_v2.json") ] )
     # params = [
