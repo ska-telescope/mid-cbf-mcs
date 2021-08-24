@@ -82,7 +82,7 @@
                 }
             }
         },
-        "CbfSubarrayMulti": {
+        "subarray": {
             "cbfsubarray-01": {
                 "CbfSubarray": {
                     "mid_csp_cbf/sub_elt/subarray_01": {
@@ -187,64 +187,6 @@
                                 "1000",
                                 "outputLinksDistribution",
                                 "1000"
-                            ]
-                        }
-                    }
-                },
-                "SearchWindow": {
-                    "mid_csp_cbf/sw1/01": {},
-                    "mid_csp_cbf/sw2/01": {}
-                },
-                "CbfSubarrayPssConfig": {
-                    "mid_csp_cbf/pssConfig/01": {
-                        "properties": {
-                            "FspPssSubarray": [
-                                "mid_csp_cbf/fspPssSubarray/01_01",
-                                "mid_csp_cbf/fspPssSubarray/02_01",
-                                "mid_csp_cbf/fspPssSubarray/03_01",
-                                "mid_csp_cbf/fspPssSubarray/04_01"
-                            ],
-                            "CbfControllerAddress": [
-                                "mid_csp_cbf/sub_elt/controller"
-                            ]
-                        }
-                    }
-                },
-                "CbfSubarrayCorrConfig": {
-                    "mid_csp_cbf/corrConfig/01": {
-                        "properties": {
-                            "FspCorrSubarray": [
-                                "mid_csp_cbf/fspCorrSubarray/01_01",
-                                "mid_csp_cbf/fspCorrSubarray/02_01",
-                                "mid_csp_cbf/fspCorrSubarray/03_01",
-                                "mid_csp_cbf/fspCorrSubarray/04_01"
-                            ],
-                            "CbfControllerAddress": [
-                                "mid_csp_cbf/sub_elt/controller"
-                            ]
-                        }
-                    }
-                },
-                "CbfSubarrayPstConfig": {
-                    "mid_csp_cbf/pstConfig/01": {
-                        "properties": {
-                            "FspPstSubarray": [
-                                "mid_csp_cbf/fspPstSubarray/01_01",
-                                "mid_csp_cbf/fspPstSubarray/02_01",
-                                "mid_csp_cbf/fspPstSubarray/03_01",
-                                "mid_csp_cbf/fspPstSubarray/04_01"
-                            ],
-                            "CbfControllerAddress": [
-                                "mid_csp_cbf/sub_elt/controller"
-                            ]
-                        }
-                    }
-                },
-                "SendConfig": {
-                    "mid_csp_cbf/SendConfig/01": {
-                        "properties": {
-                            "SubarrayAddress": [
-                                "mid_csp_cbf/sub_elt/subarray_01"
                             ]
                         }
                     }
@@ -357,66 +299,7 @@
                             ]
                         }
                     }
-                },
-                "SearchWindow": {
-                    "mid_csp_cbf/sw1/02": {},
-                    "mid_csp_cbf/sw2/02": {}
-                },
-                "CbfSubarrayPssConfig": {
-                    "mid_csp_cbf/pssConfig/02": {
-                        "properties": {
-                            "FspPssSubarray": [
-                                "mid_csp_cbf/fspPssSubarray/01_02",
-                                "mid_csp_cbf/fspPssSubarray/02_02",
-                                "mid_csp_cbf/fspPssSubarray/03_02",
-                                "mid_csp_cbf/fspPssSubarray/04_02"
-                            ],
-                            "CbfControllerAddress": [
-                                "mid_csp_cbf/sub_elt/controller"
-                            ]
-                        }
-                    }
-                },
-                "CbfSubarrayCorrConfig": {
-                    "mid_csp_cbf/corrConfig/02": {
-                        "properties": {
-                            "FspCorrSubarray": [
-                                "mid_csp_cbf/fspCorrSubarray/01_02",
-                                "mid_csp_cbf/fspCorrSubarray/02_02",
-                                "mid_csp_cbf/fspCorrSubarray/03_02",
-                                "mid_csp_cbf/fspCorrSubarray/04_02"
-                            ],
-                            "CbfControllerAddress": [
-                                "mid_csp_cbf/sub_elt/controller"
-                            ]
-                        }
-                    }
-                },
-                "CbfSubarrayPstConfig": {
-                    "mid_csp_cbf/pstConfig/02": {
-                        "properties": {
-                            "FspPstSubarray": [
-                                "mid_csp_cbf/fspPstSubarray/01_02",
-                                "mid_csp_cbf/fspPstSubarray/02_02",
-                                "mid_csp_cbf/fspPstSubarray/03_02",
-                                "mid_csp_cbf/fspPstSubarray/04_02"
-                            ],
-                            "CbfControllerAddress": [
-                                "mid_csp_cbf/sub_elt/controller"
-                            ]
-                        }
-                    }
-                },
-                "SendConfig": {
-                    "mid_csp_cbf/SendConfig/02": {
-                        "properties": {
-                            "SubarrayAddress": [
-                                "mid_csp_cbf/sub_elt/subarray_02"
-                            ]
-                        }
-                    }
                 }
-
             },
             "cbfsubarray-03": {
                 "CbfSubarray": {
@@ -522,64 +405,6 @@
                                 "1000",
                                 "outputLinksDistribution",
                                 "1000"
-                            ]
-                        }
-                    }
-                },
-                "SearchWindow": {
-                    "mid_csp_cbf/sw1/03": {},
-                    "mid_csp_cbf/sw2/03": {}
-                },
-                "CbfSubarrayPssConfig": {
-                    "mid_csp_cbf/pssConfig/03": {
-                        "properties": {
-                            "FspPssSubarray": [
-                                "mid_csp_cbf/fspPssSubarray/01_03",
-                                "mid_csp_cbf/fspPssSubarray/02_03",
-                                "mid_csp_cbf/fspPssSubarray/03_03",
-                                "mid_csp_cbf/fspPssSubarray/04_03"
-                            ],
-                            "CbfControllerAddress": [
-                                "mid_csp_cbf/sub_elt/controller"
-                            ]
-                        }
-                    }
-                },
-                "CbfSubarrayCorrConfig": {
-                    "mid_csp_cbf/corrConfig/03": {
-                        "properties": {
-                            "FspCorrSubarray": [
-                                "mid_csp_cbf/fspCorrSubarray/01_03",
-                                "mid_csp_cbf/fspCorrSubarray/02_03",
-                                "mid_csp_cbf/fspCorrSubarray/03_03",
-                                "mid_csp_cbf/fspCorrSubarray/04_03"
-                            ],
-                            "CbfControllerAddress": [
-                                "mid_csp_cbf/sub_elt/controller"
-                            ]
-                        }
-                    }
-                },
-                "CbfSubarrayPstConfig": {
-                    "mid_csp_cbf/pstConfig/03": {
-                        "properties": {
-                            "FspPstSubarray": [
-                                "mid_csp_cbf/fspPstSubarray/01_03",
-                                "mid_csp_cbf/fspPstSubarray/02_03",
-                                "mid_csp_cbf/fspPstSubarray/03_03",
-                                "mid_csp_cbf/fspPstSubarray/04_03"
-                            ],
-                            "CbfControllerAddress": [
-                                "mid_csp_cbf/sub_elt/controller"
-                            ]
-                        }
-                    }
-                },
-                "SendConfig": {
-                    "mid_csp_cbf/SendConfig/03": {
-                        "properties": {
-                            "SubarrayAddress": [
-                                "mid_csp_cbf/sub_elt/subarray_03"
                             ]
                         }
                     }
