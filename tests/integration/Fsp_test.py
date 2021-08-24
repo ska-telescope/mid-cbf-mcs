@@ -34,7 +34,7 @@ from ska_tango_base.control_model import HealthState, AdminMode, ObsState
 #     "create_vlbi_proxy"
 # )
 
-@pytest.skip(reason="this class is currently untested")
+@pytest.mark.skip(reason="this class is currently untested")
 class TestFsp:
     """
     @classmethod

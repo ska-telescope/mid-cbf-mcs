@@ -35,7 +35,7 @@ from ska_tango_base.control_model import HealthState, AdminMode, ObsState
 #     "create_fsp_corr_subarray_1_1_proxy"
 # )
 
-@pytest.skip(reason="this class is currently untested")
+@pytest.mark.skip(reason="this class is currently untested")
 class TestFspCorrSubarray:
     """
     @classmethod

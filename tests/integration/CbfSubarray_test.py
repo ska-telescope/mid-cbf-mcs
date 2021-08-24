@@ -26,7 +26,7 @@ from tango import DevState
 import pytest
 
 # SKA specific imports
-from src.ska_mid_cbf_mcs.commons.global_enum import freq_band_dict
+from ska_mid_cbf_mcs.commons.global_enum import freq_band_dict
 from ska_tango_base.control_model import LoggingLevel, HealthState
 from ska_tango_base.control_model import AdminMode, ObsState
 from ska_tango_base.base_device import _DEBUGGER_PORT
