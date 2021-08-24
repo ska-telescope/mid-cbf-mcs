@@ -16,13 +16,6 @@ import time
 
 # Path
 file_path = os.path.dirname(os.path.abspath(__file__))
-# insert base package directory to import global_enum 
-# module in commons folder
-commons_pkg_path = os.path.abspath(os.path.join(file_path, "../../src/ska_mid_cbf_mcs/commons"))
-sys.path.insert(0, commons_pkg_path)
-
-path = os.path.join(os.path.dirname(__file__), os.pardir)
-sys.path.insert(0, os.path.abspath(path))
 
 # Tango imports
 import tango
@@ -30,7 +23,6 @@ from tango import DevState
 import pytest
 
 #Local imports
-from src.ska_mid_cbf_mcs.controller.controller import CbfController
 
 from ska_tango_base import SKABaseDevice
 from ska_tango_base.commands import ResultCode

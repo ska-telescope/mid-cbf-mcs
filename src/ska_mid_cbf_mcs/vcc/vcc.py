@@ -31,8 +31,7 @@ from tango.test_context import MultiDeviceTestContext
 
 # SKA Specific imports
 
-from ska_mid_cbf_mcs.commons import const, freq_band_dict
-
+from ska_mid_cbf_mcs.commons.global_enum import const, freq_band_dict
 from ska_mid_cbf_mcs.dev_factory import DevFactory
 
 from ska_tango_base.control_model import ObsState

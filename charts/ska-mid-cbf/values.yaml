@@ -109,7 +109,7 @@ deviceServers:
   - name: vcc001
     function: coarse-channelisation
     domain: sensing
-    command: "/venv/bin/python /app/src/ska_mid_cbf_mcs/vcc/multi.py"
+    command: "/venv/bin/python /app/src/ska_mid_cbf_mcs/vcc/vcc_multi.py"
     instances: ["vcc-001"]
     depends_on:
       - device: sys/database/2
@@ -121,7 +121,7 @@ deviceServers:
   - name: vcc002
     function: coarse-channelisation
     domain: sensing
-    command: "/venv/bin/python /app/src/ska_mid_cbf_mcs/vcc/multi.py"
+    command: "/venv/bin/python /app/src/ska_mid_cbf_mcs/vcc/vcc_multi.py"
     instances: ["vcc-002"]
     depends_on:
       - device: sys/database/2
@@ -133,7 +133,7 @@ deviceServers:
   - name: vcc003
     function: coarse-channelisation
     domain: sensing
-    command: "/venv/bin/python /app/src/ska_mid_cbf_mcs/vcc/multi.py"
+    command: "/venv/bin/python /app/src/ska_mid_cbf_mcs/vcc/vcc_multi.py"
     instances: ["vcc-003"]
     depends_on:
       - device: sys/database/2
@@ -145,7 +145,7 @@ deviceServers:
   - name: vcc004
     function: coarse-channelisation
     domain: sensing
-    command: "/venv/bin/python /app/src/ska_mid_cbf_mcs/vcc/multi.py"
+    command: "/venv/bin/python /app/src/ska_mid_cbf_mcs/vcc/vcc_multi.py"
     instances: ["vcc-004"]
     depends_on:
       - device: sys/database/2

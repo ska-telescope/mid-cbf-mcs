@@ -1,6 +1,6 @@
 {
     "servers": {
-        "TmCspSubarrayLeafNodeTest": {
+        "tm_leaf_node": {
             "tm": {
                 "TmCspSubarrayLeafNodeTest": {
                     "ska_mid/tm_leaf_node/csp_subarray_01": {

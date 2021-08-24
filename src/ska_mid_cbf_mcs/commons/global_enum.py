@@ -1,5 +1,10 @@
 from enum import IntEnum, unique
 
+__all__ = [
+    "const",
+    "freq_band_dict"
+]
+
 # TODO - Temporary class. These values should be retrieved 
 #        from their respective devices (?)
 class Const:

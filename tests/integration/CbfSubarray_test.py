@@ -19,14 +19,6 @@ import logging
 
 # Path
 file_path = os.path.dirname(os.path.abspath(__file__))
-# insert base package directory to import global_enum 
-# module in commons folder
-commons_pkg_path = os.path.abspath(os.path.join(file_path, "../../src/ska_mid_cbf_mcs/commons"))
-sys.path.insert(0, commons_pkg_path)
-from global_enum import freq_band_dict
-
-path = os.path.join(os.path.dirname(__file__), os.pardir)
-sys.path.insert(0, os.path.abspath(path))
 
 # Tango imports
 import tango
@@ -34,7 +26,7 @@ from tango import DevState
 import pytest
 
 # SKA specific imports
-from CbfSubarray.CbfSubarray import CbfSubarray
+from src.ska_mid_cbf_mcs.commons.global_enum import freq_band_dict
 from ska_tango_base.control_model import LoggingLevel, HealthState
 from ska_tango_base.control_model import AdminMode, ObsState
 from ska_tango_base.base_device import _DEBUGGER_PORT

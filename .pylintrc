@@ -7,15 +7,13 @@
 # pygtk.require().
 init-hook='
     import sys;
-    sys.path.append("./src/ska_mid_cbf_mcs/TmCspSubarrayLeafNodeTest");
+    sys.path.append("./src/ska_mid_cbf_mcs");
     sys.path.append("./src/ska_mid_cbf_mcs/controller");
     sys.path.append("./src/ska_mid_cbf_mcs/CbfSubarray");
     sys.path.append("./src/ska_mid_cbf_mcs/vcc");
     sys.path.append("./src/ska_mid_cbf_mcs/Fsp");
     sys.path.append("./src/ska_mid_cbf_mcs/commons");
-    sys.path.append("./src/ska_mid_cbf_mcs/controller");
     sys.path.append("./src/ska_mid_cbf_mcs/CbfSubarray/CbfSubarray");
-    sys.path.append("./src/ska_mid_cbf_mcs/Vcc/Vcc");
     sys.path.append("./src/ska_mid_cbf_mcs/Fsp/Fsp");
     sys.path.append("/usr/local/lib/python3.5/dist-packages");
     sys.path.append("/venv/lib/python3.5/site-packages")'

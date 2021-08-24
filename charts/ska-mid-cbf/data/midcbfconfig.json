@@ -1,6 +1,6 @@
 {
     "servers": {
-        "CbfController": {
+        "controller": {
             "controller": {
                 "CbfController": {
                     "mid_csp_cbf/sub_elt/controller": {
@@ -1745,7 +1745,7 @@
                 }
             }
         },
-        "VccMulti": {
+        "vcc_multi": {
             "vcc-001": {
                 "Vcc": {
                     "mid_csp_cbf/vcc/001": {
