@@ -91,6 +91,7 @@ unit_test: ## Run simulation mode unit tests; currently only Vcc tests are supp
 	PYTHONPATH=src:tests pytest -v ./tests/unit/Vcc_test.py $(FILE) --test-context --cov=src/ska_mid_cbf_mcs/Vcc
 
 # pull and interactive preserved from docker.mk
+###############################################
 # pull:  ## download the application image
 # 	docker pull $(IMAGE_TO_TEST)
 
@@ -99,6 +100,7 @@ unit_test: ## Run simulation mode unit tests; currently only Vcc tests are supp
 
 # interactive:  ## start an interactive session 
 # 	docker run --rm -it -p 3000:3000 --name=$(CONTAINER_NAME_PREFIX)dev -e TANGO_HOST=$(TANGO_HOST)  -v $(CURDIR):/app $(IMAGE_TO_TEST) /bin/bash
+###############################################
 
 #pytest $(if $(findstring all,$(MARK)),, -m '$(MARK)')
 
