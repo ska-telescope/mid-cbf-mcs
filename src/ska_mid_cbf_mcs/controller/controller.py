@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# This file is part of the CbfMaster project
+# This file is part of the CbfController project
 #
 #
 #
@@ -13,8 +13,8 @@
 # Copyright (c) 2019 National Research Council of Canada
 # """
 
-# CbfMaster Tango device prototype
-# CBFMaster TANGO device class for the CBFMaster prototype
+# CbfController Tango device prototype
+# CbfController TANGO device class for the CbfController prototype
 
 
 # tango imports
@@ -24,7 +24,7 @@ from tango.server import attribute, command
 from tango.server import device_property
 from tango import AttrWriteType
 # Additional import
-# PROTECTED REGION ID(CbfMaster.additionnal_import) ENABLED START #
+# PROTECTED REGION ID(CbfController.additionnal_import) ENABLED START #
 # add the path to import global_enum package.
 import os
 import sys
@@ -37,19 +37,19 @@ sys.path.insert(0, commons_pkg_path)
 from ska_tango_base import SKAMaster
 from ska_tango_base.control_model import HealthState, AdminMode
 
-# PROTECTED REGION END #    //  CbfMaster.additionnal_import
+# PROTECTED REGION END #    //  CbfController.additionnal_import
 
-__all__ = ["CbfMaster", "main"]
+__all__ = ["CbfController", "main"]
 
 
-class CbfMaster(SKAMaster):
+class CbfController(SKAMaster):
 
     """
-    CBFMaster TANGO device class.
+    CbfController TANGO device class.
     Primary point of contact for monitoring and control of Mid.CBF. Implements state and mode indicators, and a set of state transition commmands.
     """
 
-    # PROTECTED REGION ID(CbfMaster.class_variable) ENABLED START #
+    # PROTECTED REGION ID(CbfController.class_variable) ENABLED START #
 
     def __state_change_event_callback(self, event):
 
@@ -182,7 +182,7 @@ class CbfMaster(SKAMaster):
         else:
             self.logger.warn("MaxCapabilities device property not defined")
 
-    # PROTECTED REGION END #    //  CbfMaster.class_variable
+    # PROTECTED REGION END #    //  CbfController.class_variable
 
     
     # -----------------
@@ -362,7 +362,7 @@ class CbfMaster(SKAMaster):
     def init_device(self):
         """initiate device and attributes"""
         SKAMaster.init_device(self)
-        # PROTECTED REGION ID(CbfMaster.init_device) ENABLED START #
+        # PROTECTED REGION ID(CbfController.init_device) ENABLED START #
         self.set_state(tango.DevState.INIT)
 
         # defines self._count_vcc, self._count_fsp, and self._count_subarray
@@ -472,17 +472,17 @@ class CbfMaster(SKAMaster):
                     self.logger.error(log_msg)
 
         self.set_state(tango.DevState.STANDBY)
-        # PROTECTED REGION END #    //  CbfMaster.init_device
+        # PROTECTED REGION END #    //  CbfController.init_device
 
     def always_executed_hook(self):
-        # PROTECTED REGION ID(CbfMaster.always_executed_hook) ENABLED START #
+        # PROTECTED REGION ID(CbfController.always_executed_hook) ENABLED START #
         """hook to be executed before any command"""
         pass
-        # PROTECTED REGION END #    //  CbfMaster.always_executed_hook
+        # PROTECTED REGION END #    //  CbfController.always_executed_hook
 
     def delete_device(self):
         """Unsubscribe to events, turn all the subarrays, VCCs and FSPs off""" 
-        # PROTECTED REGION ID(CbfMaster.delete_device) ENABLED START #
+        # PROTECTED REGION ID(CbfController.delete_device) ENABLED START #
         # unsubscribe to events
         for proxy in list(self._event_id.keys()):
             for event_id in self._event_id[proxy]:
@@ -492,92 +492,92 @@ class CbfMaster(SKAMaster):
         self._group_vcc.command_inout("Off")
         self._group_fsp.command_inout("Off")
         self.set_state(tango.DevState.OFF)
-        # PROTECTED REGION END #    //  CbfMaster.delete_device
+        # PROTECTED REGION END #    //  CbfController.delete_device
 
     # ------------------
     # Attributes methods
     # ------------------
 
     def read_commandProgress(self):
-        # PROTECTED REGION ID(CbfMaster.commandProgress_read) ENABLED START #
+        # PROTECTED REGION ID(CbfController.commandProgress_read) ENABLED START #
         """Return commandProgress attribute: percentage progress implemented for commands that result in state/mode transitions for a large \nnumber of components and/or are executed in stages (e.g power up, power down)"""
         return self._command_progress
-        # PROTECTED REGION END #    //  CbfMaster.commandProgress_read
+        # PROTECTED REGION END #    //  CbfController.commandProgress_read
 
     def read_receptorToVcc(self):
-        # PROTECTED REGION ID(CbfMaster.receptorToVcc_read) ENABLED START #
+        # PROTECTED REGION ID(CbfController.receptorToVcc_read) ENABLED START #
         """Return 'receptorID:vccID'"""
         return self._receptor_to_vcc
-        # PROTECTED REGION END #    //  CbfMaster.receptorToVcc_read
+        # PROTECTED REGION END #    //  CbfController.receptorToVcc_read
 
     def read_vccToReceptor(self):
-        # PROTECTED REGION ID(CbfMaster.vccToReceptor_read) ENABLED START #
+        # PROTECTED REGION ID(CbfController.vccToReceptor_read) ENABLED START #
         """Return receptorToVcc attribute: 'vccID:receptorID'"""
         return self._vcc_to_receptor
-        # PROTECTED REGION END #    //  CbfMaster.vccToReceptor_read
+        # PROTECTED REGION END #    //  CbfController.vccToReceptor_read
 
     def read_subarrayconfigID(self):
-        # PROTECTED REGION ID(CbfMaster.subarrayconfigID_read) ENABLED START #
+        # PROTECTED REGION ID(CbfController.subarrayconfigID_read) ENABLED START #
         """Return subarrayconfigID atrribute: ID of subarray config. USed for debug purposes. empty string if subarray is not configured for a scan"""
         return self._subarray_config_ID
-        # PROTECTED REGION END #    //  CbfMaster.subarrayconfigID_read
+        # PROTECTED REGION END #    //  CbfController.subarrayconfigID_read
 
     def read_reportVCCState(self):
-        # PROTECTED REGION ID(CbfMaster.reportVCCState_read) ENABLED START #
+        # PROTECTED REGION ID(CbfController.reportVCCState_read) ENABLED START #
         """Return reportVCCState attribute: the state of the VCC capabilities as an array of DevState"""
         return self._report_vcc_state
-        # PROTECTED REGION END #    //  CbfMaster.reportVCCState_read
+        # PROTECTED REGION END #    //  CbfController.reportVCCState_read
 
     def read_reportVCCHealthState(self):
-        # PROTECTED REGION ID(CbfMaster.reportVCCHealthState_read) ENABLED START #
+        # PROTECTED REGION ID(CbfController.reportVCCHealthState_read) ENABLED START #
         """Return reportVCCHealthState attribute: health status of VCC capabilities as an array of unsigned short.\nEx:\n[0,0,0,2,0...3]"""
         return self._report_vcc_health_state
-        # PROTECTED REGION END #    //  CbfMaster.reportVCCHealthState_read
+        # PROTECTED REGION END #    //  CbfController.reportVCCHealthState_read
 
     def read_reportVCCAdminMode(self):
-        # PROTECTED REGION ID(CbfMaster.reportVCCAdminMode_read) ENABLED START #
+        # PROTECTED REGION ID(CbfController.reportVCCAdminMode_read) ENABLED START #
         """Return reportVCCAdminMode attribute: report the administration mode of the VCC capabilities as an array of unsigned short.\nFor ex.:\n[0,0,0,...1,2]"""
         return self._report_vcc_admin_mode
-        # PROTECTED REGION END #    //  CbfMaster.reportVCCAdminMode_read
+        # PROTECTED REGION END #    //  CbfController.reportVCCAdminMode_read
 
     def read_reportVCCSubarrayMembership(self):
         """Return reportVCCSubarrayMembership attribute: report the subarray membership of VCCs (each can only belong to a single subarray), 0 if not assigned."""
-        # PROTECTED REGION ID(CbfMaster.reportVCCSubarrayMembership_read) ENABLED START #
+        # PROTECTED REGION ID(CbfController.reportVCCSubarrayMembership_read) ENABLED START #
         return self._report_vcc_subarray_membership
-        # PROTECTED REGION END #    //  CbfMaster.reportVCCSubarrayMembership_read
+        # PROTECTED REGION END #    //  CbfController.reportVCCSubarrayMembership_read
 
     def read_reportFSPState(self):
-        # PROTECTED REGION ID(CbfMaster.reportFSPState_read) ENABLED START #
+        # PROTECTED REGION ID(CbfController.reportFSPState_read) ENABLED START #
         """Return reportFSPState attribute: state of all the FSP capabilities in the form of array"""
         return self._report_fsp_state
-        # PROTECTED REGION END #    //  CbfMaster.reportFSPState_read
+        # PROTECTED REGION END #    //  CbfController.reportFSPState_read
 
     def read_reportFSPHealthState(self):
-        # PROTECTED REGION ID(CbfMaster.reportFSPHealthState_read) ENABLED START #
+        # PROTECTED REGION ID(CbfController.reportFSPHealthState_read) ENABLED START #
         """Return reportFspHealthState attribute: Report the health status of the FSP capabilities"""
         return self._report_fsp_health_state
-        # PROTECTED REGION END #    //  CbfMaster.reportFSPHealthState_read
+        # PROTECTED REGION END #    //  CbfController.reportFSPHealthState_read
 
     def read_reportFSPAdminMode(self):
-        # PROTECTED REGION ID(CbfMaster.reportFSPAdminMode_read) ENABLED START #
+        # PROTECTED REGION ID(CbfController.reportFSPAdminMode_read) ENABLED START #
         """Return reportFSPAdminMode attribute: Report the administration mode of the FSP capabilities as an array of unsigned short.\nfor ex:\n[0,0,2,..]"""
         return self._report_fsp_admin_mode
-        # PROTECTED REGION END #    //  CbfMaster.reportFSPAdminMode_read
+        # PROTECTED REGION END #    //  CbfController.reportFSPAdminMode_read
 
     def read_reportFSPCorrSubarrayMembership(self):
-        # PROTECTED REGION ID(CbfMaster.reportFSPCorrSubarrayMembership_read) ENABLED START #
+        # PROTECTED REGION ID(CbfController.reportFSPCorrSubarrayMembership_read) ENABLED START #
         """Return reportVCCSubarrayMembership attribute: Report the subarray membership of FSPs (each can only belong to at most 16 subarrays), 0 if not assigned."""
         return self._report_fsp_corr_subarray_membership
-        # PROTECTED REGION END #    //  CbfMaster.reportFSPCorrSubarrayMembership_read
+        # PROTECTED REGION END #    //  CbfController.reportFSPCorrSubarrayMembership_read
 
     def read_frequencyOffsetK(self):
-        # PROTECTED REGION ID(CbfMaster.frequencyOffsetK_read) ENABLED START #
+        # PROTECTED REGION ID(CbfController.frequencyOffsetK_read) ENABLED START #
         """Return frequencyOffsetK attribute: array of integers reporting receptors in subarray"""
         return self._frequency_offset_k
-        # PROTECTED REGION END #    //  CbfMaster.frequencyOffsetK_read
+        # PROTECTED REGION END #    //  CbfController.frequencyOffsetK_read
 
     def write_frequencyOffsetK(self, value):
-        # PROTECTED REGION ID(CbfMaster.frequencyOffsetK_write) ENABLED START #
+        # PROTECTED REGION ID(CbfController.frequencyOffsetK_write) ENABLED START #
         """Set frequencyOffsetK attribute"""
         if len(value) == self._count_vcc:
             self._frequency_offset_k = value
@@ -585,16 +585,16 @@ class CbfMaster(SKAMaster):
             log_msg = "Skipped writing to frequencyOffsetK attribute (expected {} arguments, " \
                       "but received {}.".format(self._count_vcc, len(value))
             self.logger.warn(log_msg)
-        # PROTECTED REGION END #    //  CbfMaster.frequencyOffsetK_write
+        # PROTECTED REGION END #    //  CbfController.frequencyOffsetK_write
 
     def read_frequencyOffsetDeltaF(self):
-        # PROTECTED REGION ID(CbfMaster.frequencyOffsetDeltaF_read) ENABLED START #
+        # PROTECTED REGION ID(CbfController.frequencyOffsetDeltaF_read) ENABLED START #
         """Return frequencyOffsetDeltaF attribute: Frequency offset (delta f) of all 197 receptors as an array of ints."""
         return self._frequency_offset_delta_f
-        # PROTECTED REGION END #    //  CbfMaster.frequencyOffsetDeltaF_read
+        # PROTECTED REGION END #    //  CbfController.frequencyOffsetDeltaF_read
 
     def write_frequencyOffsetDeltaF(self, value):
-        # PROTECTED REGION ID(CbfMaster.frequencyOffsetDeltaF_write) ENABLED START #
+        # PROTECTED REGION ID(CbfController.frequencyOffsetDeltaF_write) ENABLED START #
         """Set the frequencyOffsetDeltaF attribute"""
         if len(value) == self._count_vcc:
             self._frequency_offset_delta_f = value
@@ -602,25 +602,25 @@ class CbfMaster(SKAMaster):
             log_msg = "Skipped writing to frequencyOffsetDeltaF attribute (expected {} arguments, " \
                       "but received {}.".format(self._count_vcc, len(value))
             self.logger.warn(log_msg)
-        # PROTECTED REGION END #    //  CbfMaster.frequencyOffsetDeltaF_write
+        # PROTECTED REGION END #    //  CbfController.frequencyOffsetDeltaF_write
 
     def read_reportSubarrayState(self):
-        # PROTECTED REGION ID(CbfMaster.reportSubarrayState_read) ENABLED START #
+        # PROTECTED REGION ID(CbfController.reportSubarrayState_read) ENABLED START #
         """Return reportSubarrayState attribute: report the state of the Subarray with an array of DevState"""
         return self._report_subarray_state
-        # PROTECTED REGION END #    //  CbfMaster.reportSubarrayState_read
+        # PROTECTED REGION END #    //  CbfController.reportSubarrayState_read
 
     def read_reportSubarrayHealthState(self):
-        # PROTECTED REGION ID(CbfMaster.reportSubarrayHealthState_read) ENABLED START #
+        # PROTECTED REGION ID(CbfController.reportSubarrayHealthState_read) ENABLED START #
         """Return reportSubarrayHealthState attribute: subarray healthstate in an array of unsigned short"""
         return self._report_subarray_health_state
-        # PROTECTED REGION END #    //  CbfMaster.reportSubarrayHealthState_read
+        # PROTECTED REGION END #    //  CbfController.reportSubarrayHealthState_read
 
     def read_reportSubarrayAdminMode(self):
-        # PROTECTED REGION ID(CbfMaster.reportSubarrayAdminMode_read) ENABLED START #
+        # PROTECTED REGION ID(CbfController.reportSubarrayAdminMode_read) ENABLED START #
         """Return reportSubarrayAdminMode attribute: Report the administration mode of the Subarray as an array of unsigned short.\nfor ex:\n[0,0,2,..]"""
         return self._report_subarray_admin_mode
-        # PROTECTED REGION END #    //  CbfMaster.reportSubarrayAdminMode_read
+        # PROTECTED REGION END #    //  CbfController.reportSubarrayAdminMode_read
 
     # --------
     # Commands
@@ -634,14 +634,14 @@ class CbfMaster(SKAMaster):
 
     @command()
     def On(self):
-        """turn CbfMaster on, also turn on subarray, vcc, fsp"""
-        # PROTECTED REGION ID(CbfMaster.On) ENABLED START #
+        """turn CbfController on, also turn on subarray, vcc, fsp"""
+        # PROTECTED REGION ID(CbfController.On) ENABLED START #
         # 2020-07-14: don't turn Subarray on with ADR8 update
         self._group_subarray.command_inout("On")
         self._group_vcc.command_inout("On")
         self._group_fsp.command_inout("On")
         self.set_state(tango.DevState.ON)
-        # PROTECTED REGION END #    //  CbfMaster.On
+        # PROTECTED REGION END #    //  CbfController.On
 
     def is_Off_allowed(self):
         """allowed if DevState is STANDBY"""
@@ -651,13 +651,13 @@ class CbfMaster(SKAMaster):
 
     @command()
     def Off(self):
-        # PROTECTED REGION ID(CbfMaster.Off) ENABLED START #
-        """turn off subarray, vcc, fsp, cbfmaster"""
+        # PROTECTED REGION ID(CbfController.Off) ENABLED START #
+        """turn off subarray, vcc, fsp, CbfController"""
         self._group_subarray.command_inout("Off")
         self._group_vcc.command_inout("Off")
         self._group_fsp.command_inout("Off")
         self.set_state(tango.DevState.OFF)
-        # PROTECTED REGION END #    //  CbfMaster.Off
+        # PROTECTED REGION END #    //  CbfController.Off
 
     def is_Standby_allowed(self):
         """allowed if state is ON"""
@@ -667,13 +667,13 @@ class CbfMaster(SKAMaster):
 
     @command()
     def Standby(self):
-        # PROTECTED REGION ID(CbfMaster.Standby) ENABLED START #
-        """turn off subarray, vcc, fsp, turn cbfmaster to standby"""
+        # PROTECTED REGION ID(CbfController.Standby) ENABLED START #
+        """turn off subarray, vcc, fsp, turn CbfController to standby"""
         self._group_subarray.command_inout("Off")
         self._group_vcc.command_inout("Off")
         self._group_fsp.command_inout("Off")
         self.set_state(tango.DevState.STANDBY)
-        # PROTECTED REGION END #    //  CbfMaster.Standby
+        # PROTECTED REGION END #    //  CbfController.Standby
 
 
 # ----------
@@ -682,9 +682,9 @@ class CbfMaster(SKAMaster):
 
 
 def main(args=None, **kwargs):
-    # PROTECTED REGION ID(CbfMaster.main) ENABLED START #
-    return run((CbfMaster,), args=args, **kwargs)
-    # PROTECTED REGION END #    //  CbfMaster.main
+    # PROTECTED REGION ID(CbfController.main) ENABLED START #
+    return run((CbfController,), args=args, **kwargs)
+    # PROTECTED REGION END #    //  CbfController.main
 
 
 if __name__ == '__main__':

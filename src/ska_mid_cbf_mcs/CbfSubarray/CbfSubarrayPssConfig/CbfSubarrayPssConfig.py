@@ -58,10 +58,10 @@ class CbfSubarrayPssConfig(SKACapability):
         dtype=('str',)
     )
 
-    CbfMasterAddress = device_property(
+    CbfControllerAddress = device_property(
         dtype='str',
-        doc="FQDN of CBF Master",
-        default_value="mid_csp_cbf/sub_elt/master"
+        doc="FQDN of CBF Controller",
+        default_value="mid_csp_cbf/sub_elt/controller"
     )
 
     # ----------
@@ -96,7 +96,7 @@ class CbfSubarrayPssConfig(SKACapability):
         self._fsp_id = []
 
         # Getting Proxies for FSP and FSP Subarrays
-        self._proxy_cbf_master = tango.DeviceProxy(self.CbfMasterAddress)
+        self._proxy_cbf_controller = tango.DeviceProxy(self.CbfControllerAddress)
         self._proxies_fsp_pss_subarray = [*map(tango.DeviceProxy, list(self.FspPssSubarray))]
 
         self._update_obs_state(ObsState.IDLE)

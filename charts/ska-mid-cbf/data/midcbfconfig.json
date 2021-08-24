@@ -1,9 +1,9 @@
 {
     "servers": {
-        "CbfMaster": {
-            "master": {
-                "CbfMaster": {
-                    "mid_csp_cbf/sub_elt/master": {
+        "CbfController": {
+            "controller": {
+                "CbfController": {
+                    "mid_csp_cbf/sub_elt/controller": {
                         "attribute_properties": {
                             "adminMode": {
                                 "abs_change": [
@@ -113,8 +113,8 @@
                             }
                         },
                         "properties": {
-                            "CbfMasterAddress": [
-                                "mid_csp_cbf/sub_elt/master"
+                            "CbfControllerAddress": [
+                                "mid_csp_cbf/sub_elt/controller"
                             ],
                             "FSP": [
                                 "mid_csp_cbf/fsp/01",
@@ -204,8 +204,8 @@
                                 "mid_csp_cbf/fspPssSubarray/03_01",
                                 "mid_csp_cbf/fspPssSubarray/04_01"
                             ],
-                            "CbfMasterAddress": [
-                                "mid_csp_cbf/sub_elt/master"
+                            "CbfControllerAddress": [
+                                "mid_csp_cbf/sub_elt/controller"
                             ]
                         }
                     }
@@ -219,8 +219,8 @@
                                 "mid_csp_cbf/fspCorrSubarray/03_01",
                                 "mid_csp_cbf/fspCorrSubarray/04_01"
                             ],
-                            "CbfMasterAddress": [
-                                "mid_csp_cbf/sub_elt/master"
+                            "CbfControllerAddress": [
+                                "mid_csp_cbf/sub_elt/controller"
                             ]
                         }
                     }
@@ -234,8 +234,8 @@
                                 "mid_csp_cbf/fspPstSubarray/03_01",
                                 "mid_csp_cbf/fspPstSubarray/04_01"
                             ],
-                            "CbfMasterAddress": [
-                                "mid_csp_cbf/sub_elt/master"
+                            "CbfControllerAddress": [
+                                "mid_csp_cbf/sub_elt/controller"
                             ]
                         }
                     }
@@ -280,8 +280,8 @@
                             }
                         },
                         "properties": {
-                            "CbfMasterAddress": [
-                                "mid_csp_cbf/sub_elt/master"
+                            "CbfControllerAddress": [
+                                "mid_csp_cbf/sub_elt/controller"
                             ],
                             "FSP": [
                                 "mid_csp_cbf/fsp/01",
@@ -371,8 +371,8 @@
                                 "mid_csp_cbf/fspPssSubarray/03_02",
                                 "mid_csp_cbf/fspPssSubarray/04_02"
                             ],
-                            "CbfMasterAddress": [
-                                "mid_csp_cbf/sub_elt/master"
+                            "CbfControllerAddress": [
+                                "mid_csp_cbf/sub_elt/controller"
                             ]
                         }
                     }
@@ -386,8 +386,8 @@
                                 "mid_csp_cbf/fspCorrSubarray/03_02",
                                 "mid_csp_cbf/fspCorrSubarray/04_02"
                             ],
-                            "CbfMasterAddress": [
-                                "mid_csp_cbf/sub_elt/master"
+                            "CbfControllerAddress": [
+                                "mid_csp_cbf/sub_elt/controller"
                             ]
                         }
                     }
@@ -401,8 +401,8 @@
                                 "mid_csp_cbf/fspPstSubarray/03_02",
                                 "mid_csp_cbf/fspPstSubarray/04_02"
                             ],
-                            "CbfMasterAddress": [
-                                "mid_csp_cbf/sub_elt/master"
+                            "CbfControllerAddress": [
+                                "mid_csp_cbf/sub_elt/controller"
                             ]
                         }
                     }
@@ -448,8 +448,8 @@
                             }
                         },
                         "properties": {
-                            "CbfMasterAddress": [
-                                "mid_csp_cbf/sub_elt/master"
+                            "CbfControllerAddress": [
+                                "mid_csp_cbf/sub_elt/controller"
                             ],
                             "FSP": [
                                 "mid_csp_cbf/fsp/01",
@@ -539,8 +539,8 @@
                                 "mid_csp_cbf/fspPssSubarray/03_03",
                                 "mid_csp_cbf/fspPssSubarray/04_03"
                             ],
-                            "CbfMasterAddress": [
-                                "mid_csp_cbf/sub_elt/master"
+                            "CbfControllerAddress": [
+                                "mid_csp_cbf/sub_elt/controller"
                             ]
                         }
                     }
@@ -554,8 +554,8 @@
                                 "mid_csp_cbf/fspCorrSubarray/03_03",
                                 "mid_csp_cbf/fspCorrSubarray/04_03"
                             ],
-                            "CbfMasterAddress": [
-                                "mid_csp_cbf/sub_elt/master"
+                            "CbfControllerAddress": [
+                                "mid_csp_cbf/sub_elt/controller"
                             ]
                         }
                     }
@@ -569,8 +569,8 @@
                                 "mid_csp_cbf/fspPstSubarray/03_03",
                                 "mid_csp_cbf/fspPstSubarray/04_03"
                             ],
-                            "CbfMasterAddress": [
-                                "mid_csp_cbf/sub_elt/master"
+                            "CbfControllerAddress": [
+                                "mid_csp_cbf/sub_elt/controller"
                             ]
                         }
                     }
@@ -676,8 +676,8 @@
                 "FspCorrSubarray": {
                     "mid_csp_cbf/fspCorrSubarray/01_01": {
                         "properties": {
-                            "CbfMasterAddress": [
-                                "mid_csp_cbf/sub_elt/master"
+                            "CbfControllerAddress": [
+                                "mid_csp_cbf/sub_elt/controller"
                             ],
                             "CbfSubarrayAddress": [
                                 "mid_csp_cbf/sub_elt/subarray_01"
@@ -698,8 +698,8 @@
                     },
                     "mid_csp_cbf/fspCorrSubarray/01_02": {
                         "properties": {
-                            "CbfMasterAddress": [
-                                "mid_csp_cbf/sub_elt/master"
+                            "CbfControllerAddress": [
+                                "mid_csp_cbf/sub_elt/controller"
                             ],
                             "CbfSubarrayAddress": [
                                 "mid_csp_cbf/sub_elt/subarray_02"
@@ -720,8 +720,8 @@
                     },
                     "mid_csp_cbf/fspCorrSubarray/01_03": {
                         "properties": {
-                            "CbfMasterAddress": [
-                                "mid_csp_cbf/sub_elt/master"
+                            "CbfControllerAddress": [
+                                "mid_csp_cbf/sub_elt/controller"
                             ],
                             "CbfSubarrayAddress": [
                                 "mid_csp_cbf/sub_elt/subarray_03"
@@ -744,8 +744,8 @@
                 "FspPssSubarray": {
                     "mid_csp_cbf/fspPssSubarray/01_01": {
                         "properties": {
-                            "CbfMasterAddress": [
-                                "mid_csp_cbf/sub_elt/master"
+                            "CbfControllerAddress": [
+                                "mid_csp_cbf/sub_elt/controller"
                             ],
                             "CbfSubarrayAddress": [
                                 "mid_csp_cbf/sub_elt/subarray_01"
@@ -766,8 +766,8 @@
                     },
                     "mid_csp_cbf/fspPssSubarray/01_02": {
                         "properties": {
-                            "CbfMasterAddress": [
-                                "mid_csp_cbf/sub_elt/master"
+                            "CbfControllerAddress": [
+                                "mid_csp_cbf/sub_elt/controller"
                             ],
                             "CbfSubarrayAddress": [
                                 "mid_csp_cbf/sub_elt/subarray_02"
@@ -788,8 +788,8 @@
                     },
                     "mid_csp_cbf/fspPssSubarray/01_03": {
                         "properties": {
-                            "CbfMasterAddress": [
-                                "mid_csp_cbf/sub_elt/master"
+                            "CbfControllerAddress": [
+                                "mid_csp_cbf/sub_elt/controller"
                             ],
                             "CbfSubarrayAddress": [
                                 "mid_csp_cbf/sub_elt/subarray_03"
@@ -812,8 +812,8 @@
                 "FspPstSubarray": {
                     "mid_csp_cbf/fspPstSubarray/01_01": {
                         "properties": {
-                            "CbfMasterAddress": [
-                                "mid_csp_cbf/sub_elt/master"
+                            "CbfControllerAddress": [
+                                "mid_csp_cbf/sub_elt/controller"
                             ],
                             "CbfSubarrayAddress": [
                                 "mid_csp_cbf/sub_elt/subarray_01"
@@ -834,8 +834,8 @@
                     },
                     "mid_csp_cbf/fspPstSubarray/01_02": {
                         "properties": {
-                            "CbfMasterAddress": [
-                                "mid_csp_cbf/sub_elt/master"
+                            "CbfControllerAddress": [
+                                "mid_csp_cbf/sub_elt/controller"
                             ],
                             "CbfSubarrayAddress": [
                                 "mid_csp_cbf/sub_elt/subarray_02"
@@ -856,8 +856,8 @@
                     },
                     "mid_csp_cbf/fspPstSubarray/01_03": {
                         "properties": {
-                            "CbfMasterAddress": [
-                                "mid_csp_cbf/sub_elt/master"
+                            "CbfControllerAddress": [
+                                "mid_csp_cbf/sub_elt/controller"
                             ],
                             "CbfSubarrayAddress": [
                                 "mid_csp_cbf/sub_elt/subarray_03"
@@ -960,8 +960,8 @@
                 "FspCorrSubarray": {
                     "mid_csp_cbf/fspCorrSubarray/02_01": {
                         "properties": {
-                            "CbfMasterAddress": [
-                                "mid_csp_cbf/sub_elt/master"
+                            "CbfControllerAddress": [
+                                "mid_csp_cbf/sub_elt/controller"
                             ],
                             "CbfSubarrayAddress": [
                                 "mid_csp_cbf/sub_elt/subarray_01"
@@ -982,8 +982,8 @@
                     },
                     "mid_csp_cbf/fspCorrSubarray/02_02": {
                         "properties": {
-                            "CbfMasterAddress": [
-                                "mid_csp_cbf/sub_elt/master"
+                            "CbfControllerAddress": [
+                                "mid_csp_cbf/sub_elt/controller"
                             ],
                             "CbfSubarrayAddress": [
                                 "mid_csp_cbf/sub_elt/subarray_02"
@@ -1004,8 +1004,8 @@
                     },
                     "mid_csp_cbf/fspCorrSubarray/02_03": {
                         "properties": {
-                            "CbfMasterAddress": [
-                                "mid_csp_cbf/sub_elt/master"
+                            "CbfControllerAddress": [
+                                "mid_csp_cbf/sub_elt/controller"
                             ],
                             "CbfSubarrayAddress": [
                                 "mid_csp_cbf/sub_elt/subarray_03"
@@ -1028,8 +1028,8 @@
                 "FspPssSubarray": {
                     "mid_csp_cbf/fspPssSubarray/02_01": {
                         "properties": {
-                            "CbfMasterAddress": [
-                                "mid_csp_cbf/sub_elt/master"
+                            "CbfControllerAddress": [
+                                "mid_csp_cbf/sub_elt/controller"
                             ],
                             "CbfSubarrayAddress": [
                                 "mid_csp_cbf/sub_elt/subarray_01"
@@ -1050,8 +1050,8 @@
                     },
                     "mid_csp_cbf/fspPssSubarray/02_02": {
                         "properties": {
-                            "CbfMasterAddress": [
-                                "mid_csp_cbf/sub_elt/master"
+                            "CbfControllerAddress": [
+                                "mid_csp_cbf/sub_elt/controller"
                             ],
                             "CbfSubarrayAddress": [
                                 "mid_csp_cbf/sub_elt/subarray_02"
@@ -1072,8 +1072,8 @@
                     },
                     "mid_csp_cbf/fspPssSubarray/02_03": {
                         "properties": {
-                            "CbfMasterAddress": [
-                                "mid_csp_cbf/sub_elt/master"
+                            "CbfControllerAddress": [
+                                "mid_csp_cbf/sub_elt/controller"
                             ],
                             "CbfSubarrayAddress": [
                                 "mid_csp_cbf/sub_elt/subarray_03"
@@ -1096,8 +1096,8 @@
                 "FspPstSubarray": {
                     "mid_csp_cbf/fspPstSubarray/02_01": {
                         "properties": {
-                            "CbfMasterAddress": [
-                                "mid_csp_cbf/sub_elt/master"
+                            "CbfControllerAddress": [
+                                "mid_csp_cbf/sub_elt/controller"
                             ],
                             "CbfSubarrayAddress": [
                                 "mid_csp_cbf/sub_elt/subarray_01"
@@ -1118,8 +1118,8 @@
                     },
                     "mid_csp_cbf/fspPstSubarray/02_02": {
                         "properties": {
-                            "CbfMasterAddress": [
-                                "mid_csp_cbf/sub_elt/master"
+                            "CbfControllerAddress": [
+                                "mid_csp_cbf/sub_elt/controller"
                             ],
                             "CbfSubarrayAddress": [
                                 "mid_csp_cbf/sub_elt/subarray_02"
@@ -1140,8 +1140,8 @@
                     },
                     "mid_csp_cbf/fspPstSubarray/02_03": {
                         "properties": {
-                            "CbfMasterAddress": [
-                                "mid_csp_cbf/sub_elt/master"
+                            "CbfControllerAddress": [
+                                "mid_csp_cbf/sub_elt/controller"
                             ],
                             "CbfSubarrayAddress": [
                                 "mid_csp_cbf/sub_elt/subarray_03"
@@ -1244,8 +1244,8 @@
                 "FspCorrSubarray": {
                     "mid_csp_cbf/fspCorrSubarray/03_01": {
                         "properties": {
-                            "CbfMasterAddress": [
-                                "mid_csp_cbf/sub_elt/master"
+                            "CbfControllerAddress": [
+                                "mid_csp_cbf/sub_elt/controller"
                             ],
                             "CbfSubarrayAddress": [
                                 "mid_csp_cbf/sub_elt/subarray_01"
@@ -1266,8 +1266,8 @@
                     },
                     "mid_csp_cbf/fspCorrSubarray/03_02": {
                         "properties": {
-                            "CbfMasterAddress": [
-                                "mid_csp_cbf/sub_elt/master"
+                            "CbfControllerAddress": [
+                                "mid_csp_cbf/sub_elt/controller"
                             ],
                             "CbfSubarrayAddress": [
                                 "mid_csp_cbf/sub_elt/subarray_02"
@@ -1288,8 +1288,8 @@
                     },
                     "mid_csp_cbf/fspCorrSubarray/03_03": {
                         "properties": {
-                            "CbfMasterAddress": [
-                                "mid_csp_cbf/sub_elt/master"
+                            "CbfControllerAddress": [
+                                "mid_csp_cbf/sub_elt/controller"
                             ],
                             "CbfSubarrayAddress": [
                                 "mid_csp_cbf/sub_elt/subarray_03"
@@ -1312,8 +1312,8 @@
                 "FspPssSubarray": {
                     "mid_csp_cbf/fspPssSubarray/03_01": {
                         "properties": {
-                            "CbfMasterAddress": [
-                                "mid_csp_cbf/sub_elt/master"
+                            "CbfControllerAddress": [
+                                "mid_csp_cbf/sub_elt/controller"
                             ],
                             "CbfSubarrayAddress": [
                                 "mid_csp_cbf/sub_elt/subarray_01"
@@ -1334,8 +1334,8 @@
                     },
                     "mid_csp_cbf/fspPssSubarray/03_02": {
                         "properties": {
-                            "CbfMasterAddress": [
-                                "mid_csp_cbf/sub_elt/master"
+                            "CbfControllerAddress": [
+                                "mid_csp_cbf/sub_elt/controller"
                             ],
                             "CbfSubarrayAddress": [
                                 "mid_csp_cbf/sub_elt/subarray_02"
@@ -1356,8 +1356,8 @@
                     },
                     "mid_csp_cbf/fspPssSubarray/03_03": {
                         "properties": {
-                            "CbfMasterAddress": [
-                                "mid_csp_cbf/sub_elt/master"
+                            "CbfControllerAddress": [
+                                "mid_csp_cbf/sub_elt/controller"
                             ],
                             "CbfSubarrayAddress": [
                                 "mid_csp_cbf/sub_elt/subarray_03"
@@ -1380,8 +1380,8 @@
                 "FspPstSubarray": {
                     "mid_csp_cbf/fspPstSubarray/03_01": {
                         "properties": {
-                            "CbfMasterAddress": [
-                                "mid_csp_cbf/sub_elt/master"
+                            "CbfControllerAddress": [
+                                "mid_csp_cbf/sub_elt/controller"
                             ],
                             "CbfSubarrayAddress": [
                                 "mid_csp_cbf/sub_elt/subarray_01"
@@ -1402,8 +1402,8 @@
                     },
                     "mid_csp_cbf/fspPstSubarray/03_02": {
                         "properties": {
-                            "CbfMasterAddress": [
-                                "mid_csp_cbf/sub_elt/master"
+                            "CbfControllerAddress": [
+                                "mid_csp_cbf/sub_elt/controller"
                             ],
                             "CbfSubarrayAddress": [
                                 "mid_csp_cbf/sub_elt/subarray_02"
@@ -1424,8 +1424,8 @@
                     },
                     "mid_csp_cbf/fspPstSubarray/03_03": {
                         "properties": {
-                            "CbfMasterAddress": [
-                                "mid_csp_cbf/sub_elt/master"
+                            "CbfControllerAddress": [
+                                "mid_csp_cbf/sub_elt/controller"
                             ],
                             "CbfSubarrayAddress": [
                                 "mid_csp_cbf/sub_elt/subarray_03"
@@ -1528,8 +1528,8 @@
                 "FspCorrSubarray": {
                     "mid_csp_cbf/fspCorrSubarray/04_01": {
                         "properties": {
-                            "CbfMasterAddress": [
-                                "mid_csp_cbf/sub_elt/master"
+                            "CbfControllerAddress": [
+                                "mid_csp_cbf/sub_elt/controller"
                             ],
                             "CbfSubarrayAddress": [
                                 "mid_csp_cbf/sub_elt/subarray_01"
@@ -1550,8 +1550,8 @@
                     },
                     "mid_csp_cbf/fspCorrSubarray/04_02": {
                         "properties": {
-                            "CbfMasterAddress": [
-                                "mid_csp_cbf/sub_elt/master"
+                            "CbfControllerAddress": [
+                                "mid_csp_cbf/sub_elt/controller"
                             ],
                             "CbfSubarrayAddress": [
                                 "mid_csp_cbf/sub_elt/subarray_02"
@@ -1572,8 +1572,8 @@
                     },
                     "mid_csp_cbf/fspCorrSubarray/04_03": {
                         "properties": {
-                            "CbfMasterAddress": [
-                                "mid_csp_cbf/sub_elt/master"
+                            "CbfControllerAddress": [
+                                "mid_csp_cbf/sub_elt/controller"
                             ],
                             "CbfSubarrayAddress": [
                                 "mid_csp_cbf/sub_elt/subarray_03"
@@ -1596,8 +1596,8 @@
                 "FspPssSubarray": {
                     "mid_csp_cbf/fspPssSubarray/04_01": {
                         "properties": {
-                            "CbfMasterAddress": [
-                                "mid_csp_cbf/sub_elt/master"
+                            "CbfControllerAddress": [
+                                "mid_csp_cbf/sub_elt/controller"
                             ],
                             "CbfSubarrayAddress": [
                                 "mid_csp_cbf/sub_elt/subarray_01"
@@ -1618,8 +1618,8 @@
                     },
                     "mid_csp_cbf/fspPssSubarray/04_02": {
                         "properties": {
-                            "CbfMasterAddress": [
-                                "mid_csp_cbf/sub_elt/master"
+                            "CbfControllerAddress": [
+                                "mid_csp_cbf/sub_elt/controller"
                             ],
                             "CbfSubarrayAddress": [
                                 "mid_csp_cbf/sub_elt/subarray_02"
@@ -1640,8 +1640,8 @@
                     },
                     "mid_csp_cbf/fspPssSubarray/04_03": {
                         "properties": {
-                            "CbfMasterAddress": [
-                                "mid_csp_cbf/sub_elt/master"
+                            "CbfControllerAddress": [
+                                "mid_csp_cbf/sub_elt/controller"
                             ],
                             "CbfSubarrayAddress": [
                                 "mid_csp_cbf/sub_elt/subarray_03"
@@ -1664,8 +1664,8 @@
                 "FspPstSubarray": {
                     "mid_csp_cbf/fspPstSubarray/04_01": {
                         "properties": {
-                            "CbfMasterAddress": [
-                                "mid_csp_cbf/sub_elt/master"
+                            "CbfControllerAddress": [
+                                "mid_csp_cbf/sub_elt/controller"
                             ],
                             "CbfSubarrayAddress": [
                                 "mid_csp_cbf/sub_elt/subarray_01"
@@ -1686,8 +1686,8 @@
                     },
                     "mid_csp_cbf/fspPstSubarray/04_02": {
                         "properties": {
-                            "CbfMasterAddress": [
-                                "mid_csp_cbf/sub_elt/master"
+                            "CbfControllerAddress": [
+                                "mid_csp_cbf/sub_elt/controller"
                             ],
                             "CbfSubarrayAddress": [
                                 "mid_csp_cbf/sub_elt/subarray_02"
@@ -1708,8 +1708,8 @@
                     },
                     "mid_csp_cbf/fspPstSubarray/04_03": {
                         "properties": {
-                            "CbfMasterAddress": [
-                                "mid_csp_cbf/sub_elt/master"
+                            "CbfControllerAddress": [
+                                "mid_csp_cbf/sub_elt/controller"
                             ],
                             "CbfSubarrayAddress": [
                                 "mid_csp_cbf/sub_elt/subarray_03"

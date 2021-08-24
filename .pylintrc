@@ -8,12 +8,12 @@
 init-hook='
     import sys;
     sys.path.append("./src/ska_mid_cbf_mcs/TmCspSubarrayLeafNodeTest");
-    sys.path.append("./src/ska_mid_cbf_mcs/CbfMaster");
+    sys.path.append("./src/ska_mid_cbf_mcs/controller");
     sys.path.append("./src/ska_mid_cbf_mcs/CbfSubarray");
-    sys.path.append("./src/ska_mid_cbf_mcs/Vcc");
+    sys.path.append("./src/ska_mid_cbf_mcs/vcc");
     sys.path.append("./src/ska_mid_cbf_mcs/Fsp");
     sys.path.append("./src/ska_mid_cbf_mcs/commons");
-    sys.path.append("./src/ska_mid_cbf_mcs/CbfMaster/CbfMaster");
+    sys.path.append("./src/ska_mid_cbf_mcs/controller");
     sys.path.append("./src/ska_mid_cbf_mcs/CbfSubarray/CbfSubarray");
     sys.path.append("./src/ska_mid_cbf_mcs/Vcc/Vcc");
     sys.path.append("./src/ska_mid_cbf_mcs/Fsp/Fsp");

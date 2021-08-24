@@ -155,13 +155,13 @@ def init_proxies_fixture():
             #     proxy.Init()
             #     self.sw[i + 1] = proxy
             
-            self.master = DeviceProxy("mid_csp_cbf/sub_elt/master")
-            self.master.loggingLevel = LoggingLevel.DEBUG
-            self.master.set_timeout_millis(timeout_millis)
-            self.master.Init()
-            self.wait_timeout_dev([self.master], DevState.STANDBY, 3, 0.05)
+            self.controller = DeviceProxy("mid_csp_cbf/sub_elt/controller")
+            self.controller.loggingLevel = LoggingLevel.DEBUG
+            self.controller.set_timeout_millis(timeout_millis)
+            self.controller.Init()
+            self.wait_timeout_dev([self.controller], DevState.STANDBY, 3, 0.05)
             
-            self.receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in self.master.receptorToVcc)
+            self.receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in self.controller.receptorToVcc)
             
             self.subarray = {}
             for i, proxy in enumerate([DeviceProxy("mid_csp_cbf/sub_elt/subarray_" + str(i + 1).zfill(2)) for i in range(3)]):
@@ -173,7 +173,7 @@ def init_proxies_fixture():
             self.tm.Init()
 
         def clean_proxies(self):
-            self.receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in self.master.receptorToVcc)
+            self.receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in self.controller.receptorToVcc)
             for proxy in [self.subarray[i + 1] for i in range(1)]:
                 if proxy.obsState == ObsState.SCANNING:
                     proxy.EndScan()

@@ -9,10 +9,11 @@ import sys
 import setuptools
 
 setup_dir = os.path.dirname(os.path.abspath(__file__))
-# make sure we use latest info from local code
-sys.path.insert(0, setup_dir)
+release_module = {}
+release_filename = os.path.join(setup_dir, "src", "ska_mid_cbf_mcs", "release.py")
+# pylint: disable=exec-used
+exec(open(release_filename).read(), release_module)
 
-INFO = {}
 
 with open('README.md') as readme_file:
     readme = readme_file.read()
@@ -20,19 +21,19 @@ with open('README.md') as readme_file:
 pack = ['ska-mid-cbf-mcs']
 
 setuptools.setup(
-    name='ska-mid-cbf-mcs',
-    version='0.5.4',
-    description="SKA Mid.CBF MCS",
+    name=release_module["name"],
+    description=release_module["description"],
+    version=release_module["version"],
+    author=release_module["author"],
+    author_email=release_module["author_email"],
+    license=release_module["license"],
+    url=release_module["url"],
     long_description=readme + '\n\n',
-    author="Taylor Huang",
-    author_email='taylor.huang@mda.space',
-    url='https://gitlab.com/ska-telescope/ska-mid-cbf-mcs',
     package_dir={"": "src"},
     packages=setuptools.find_packages(where="src"),
     include_package_data=True,
-    license="BSD license",
     zip_safe=False,
-    keywords='ska cbf',
+    keywords='ska mid cbf mcs',
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
         'Intended Audience :: Developers',

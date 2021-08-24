@@ -7,7 +7,7 @@
 #
 # Distributed under the terms of the BSD-3-Clause license.
 # See LICENSE.txt for more info.
-"""Contain the tests for the CbfMaster."""
+"""Contain the tests for the CbfController."""
 
 # Standard imports
 import sys
@@ -30,7 +30,7 @@ from tango import DevState
 import pytest
 
 #Local imports
-from CbfMaster.CbfMaster import CbfMaster
+from src.ska_mid_cbf_mcs.controller.controller import CbfController
 
 from ska_tango_base import SKABaseDevice
 from ska_tango_base.commands import ResultCode
@@ -53,22 +53,22 @@ from tango.test_context import DeviceTestContext
 
 @pytest.mark.usefixtures("proxies")
 
-class TestCbfMaster:
+class TestCbfController:
 
     @pytest.mark.skip(reason="enable to test DebugDevice")
     def test_DebugDevice(self, proxies):
-        port = proxies.master.DebugDevice()
+        port = proxies.controller.DebugDevice()
         assert port == _DEBUGGER_PORT
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.connect(("localhost", _DEBUGGER_PORT))
-        proxies.master.On()
+        proxies.controller.On()
 
     def test_On_valid(self, proxies):
         """
         Test a valid use of the "On" command
         """
         # check initial states
-        assert proxies.master.State() == DevState.STANDBY
+        assert proxies.controller.State() == DevState.STANDBY
         assert proxies.subarray[1].State() == DevState.OFF
 
         # TODO - to remove
@@ -83,11 +83,11 @@ class TestCbfMaster:
             assert proxies.fspSubarray[i + 1].State() == DevState.OFF
 
         # send the On command
-        proxies.master.On()
+        proxies.controller.On()
 
         #check states
-        proxies.wait_timeout_dev([proxies.master], DevState.ON, 3, 0.1)
-        assert proxies.master.State() == DevState.ON
+        proxies.wait_timeout_dev([proxies.controller], DevState.ON, 3, 0.1)
+        assert proxies.controller.State() == DevState.ON
 
         proxies.wait_timeout_dev([proxies.subarray[1]], DevState.ON, 3, 0.1)
         assert proxies.subarray[1].State() == DevState.ON
@@ -115,11 +115,11 @@ class TestCbfMaster:
         Test a valid use of the "Standby" command
         """
         # send the Standby command
-        proxies.master.Standby()
+        proxies.controller.Standby()
 
         # check states
-        proxies.wait_timeout_dev([proxies.master], DevState.STANDBY, 3, 0.1)
-        assert proxies.master.State() == DevState.STANDBY
+        proxies.wait_timeout_dev([proxies.controller], DevState.STANDBY, 3, 0.1)
+        assert proxies.controller.State() == DevState.STANDBY
 
         proxies.wait_timeout_dev([proxies.subarray[1]], DevState.OFF, 3, 0.1)
         assert proxies.subarray[1].State() == DevState.OFF
@@ -150,11 +150,11 @@ class TestCbfMaster:
         """
 
         # send the Off command
-        proxies.master.Off()
+        proxies.controller.Off()
 
         # check states
-        proxies.wait_timeout_dev([proxies.master], DevState.OFF, 3, 0.1)
-        assert proxies.master.State() == DevState.OFF
+        proxies.wait_timeout_dev([proxies.controller], DevState.OFF, 3, 0.1)
+        assert proxies.controller.State() == DevState.OFF
 
         proxies.wait_timeout_dev([proxies.subarray[1]], DevState.OFF, 3, 0.1)
         assert proxies.subarray[1].State() == DevState.OFF

@@ -1040,7 +1040,7 @@ class CbfSubarray(SKASubarray):
         Takes in a list of integers.
         """
         receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
-                               self._proxy_cbf_master.receptorToVcc)
+                               self._proxy_cbf_controller.receptorToVcc)
         for receptorID in argin:
             if receptorID in self._receptors:
                 vccID = receptor_to_vcc[receptorID]
@@ -1097,10 +1097,10 @@ class CbfSubarray(SKASubarray):
         dtype='uint16',
     )
 
-    CbfMasterAddress = device_property(
+    CbfControllerAddress = device_property(
         dtype='str',
-        doc="FQDN of CBF Master",
-        default_value="mid_csp_cbf/sub_elt/master"
+        doc="FQDN of CBF CController",
+        default_value="mid_csp_cbf/sub_elt/controller"
     )
 
     PssConfigAddress = device_property(
@@ -1293,20 +1293,20 @@ class CbfSubarray(SKASubarray):
             device._frequency_band_offset_stream_2 = 0
             device._stream_tuning = [0, 0]
 
-            # device proxy for easy reference to CBF Master
-            device._proxy_cbf_master = tango.DeviceProxy(device.CbfMasterAddress)
+            # device proxy for easy reference to CBF controller
+            device._proxy_cbf_controller = tango.DeviceProxy(device.CbfControllerAddress)
 
             device.MIN_INT_TIME = const.MIN_INT_TIME
             device.NUM_CHANNEL_GROUPS = const.NUM_CHANNEL_GROUPS
             device.NUM_FINE_CHANNELS = const.NUM_FINE_CHANNELS
 
-            device._master_max_capabilities = dict(
+            device._controller_max_capabilities = dict(
                 pair.split(":") for pair in
-                device._proxy_cbf_master.get_property("MaxCapabilities")["MaxCapabilities"]
+                device._proxy_cbf_controller.get_property("MaxCapabilities")["MaxCapabilities"]
             )
 
-            device._count_vcc = int(device._master_max_capabilities["VCC"])
-            device._count_fsp = int(device._master_max_capabilities["FSP"])
+            device._count_vcc = int(device._controller_max_capabilities["VCC"])
+            device._count_fsp = int(device._controller_max_capabilities["FSP"])
             device._fqdn_vcc = list(device.VCC)[:device._count_vcc]
             device._fqdn_fsp = list(device.FSP)[:device._count_fsp]
             device._fqdn_fsp_corr_subarray = list(device.FspCorrSubarray)
@@ -1599,7 +1599,7 @@ class CbfSubarray(SKASubarray):
             # Code here
             errs = []  # list of error messages
             receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
-                                device._proxy_cbf_master.receptorToVcc)
+                                device._proxy_cbf_controller.receptorToVcc)
             for receptorID in argin:
                 try:
                     vccID = receptor_to_vcc[receptorID]

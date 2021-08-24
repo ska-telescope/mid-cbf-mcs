@@ -7,7 +7,7 @@
 #
 # Distributed under the terms of the BSD-3-Clause license.
 # See LICENSE.txt for more info.
-"""Contain the tests for the CbfMaster."""
+"""Contain the tests for the CbfController."""
 
 # Standard imports
 import sys
@@ -36,7 +36,7 @@ from FspCorrSubarray.FspCorrSubarray import FspCorrSubarray
 from ska_tango_base.control_model import HealthState, AdminMode, ObsState
 
 @pytest.mark.usefixtures(
-    "create_cbf_master_proxy",
+    "create_cbf_controller_proxy",
     "create_vcc_proxies",
     "create_fsp_proxy",
     "create_cbf_subarray_1_proxy",
@@ -50,12 +50,12 @@ class TestFspCorrSubarray:
     """#Mock external libraries.
     """
         # Example : Mock numpy
-        # cls.numpy = CspMaster.numpy = MagicMock()
+        # cls.numpy = CspController.numpy = MagicMock()
     """
 
     def test_AddRemoveReceptors_valid(
             self,
-            create_cbf_master_proxy,
+            create_cbf_controller_proxy,
             create_vcc_proxies,
             create_cbf_subarray_1_proxy,
             create_fsp_corr_subarray_1_1_proxy,
@@ -105,7 +105,7 @@ class TestFspCorrSubarray:
     def test_AddRemoveReceptors_invalid(
             self,
             create_vcc_proxies,
-            create_cbf_master_proxy,
+            create_cbf_controller_proxy,
             create_cbf_subarray_1_proxy,
             create_fsp_corr_subarray_1_1_proxy,
             create_fsp_pss_subarray_2_1_proxy
@@ -122,7 +122,7 @@ class TestFspCorrSubarray:
         for proxy in create_vcc_proxies:
             proxy.Init()
         receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
-                               create_cbf_master_proxy.receptorToVcc)
+                               create_cbf_controller_proxy.receptorToVcc)
 
         time.sleep(3)
 

@@ -1,9 +1,9 @@
 .. Documentation
 
-CbfMaster Class
+CbfController Class
 ================================
 
-.. automodule:: tangods.CbfMaster.CbfMaster.CbfMaster
+.. automodule:: tangods.CbfController.CbfController.CbfController
    :members:
    :undoc-members:
    :show-inheritance:

@@ -37,7 +37,7 @@ midcbf:
   image:
     registry: artefact.skao.int
     image: ska-mid-cbf-mcs
-    tag: 0.5.4
+    tag: 0.5.5
     pullPolicy: IfNotPresent
 
 resources:
@@ -51,11 +51,11 @@ resources:
     ephemeral-storage: 256Mi
 
 deviceServers:
-  - name: cbfmaster
+  - name: cbfcontroller
     function: cbf-central-control
     domain: csp-monitoring
-    command: "/venv/bin/python /app/src/ska_mid_cbf_mcs/CbfMaster/CbfMaster/CbfMaster.py "
-    instances: ["master"]
+    command: "/venv/bin/python /app/src/ska_mid_cbf_mcs/controller/controller.py "
+    instances: ["controller"]
     depends_on:
       - device: mid_csp_cbf/vcc/001   
       - device: mid_csp_cbf/vcc/002  
@@ -76,7 +76,7 @@ deviceServers:
     command: "/venv/bin/python /app/src/ska_mid_cbf_mcs/CbfSubarray/CbfSubarrayMulti/CbfSubarrayMulti.py "
     instances: ["cbfsubarray-01"]
     depends_on:
-      - device: mid_csp_cbf/sub_elt/master
+      - device: mid_csp_cbf/sub_elt/controller
     image:
       registry: "{{.Values.midcbf.image.registry}}"
       image: "{{.Values.midcbf.image.image}}"
@@ -88,7 +88,7 @@ deviceServers:
     command: "/venv/bin/python /app/src/ska_mid_cbf_mcs/CbfSubarray/CbfSubarrayMulti/CbfSubarrayMulti.py "
     instances: ["cbfsubarray-02"]
     depends_on:
-      - device: mid_csp_cbf/sub_elt/master
+      - device: mid_csp_cbf/sub_elt/controller
     image:
       registry: "{{.Values.midcbf.image.registry}}"
       image: "{{.Values.midcbf.image.image}}"
@@ -100,7 +100,7 @@ deviceServers:
     command: "/venv/bin/python /app/src/ska_mid_cbf_mcs/CbfSubarray/CbfSubarrayMulti/CbfSubarrayMulti.py "
     instances: ["cbfsubarray-03"]
     depends_on:
-      - device: mid_csp_cbf/sub_elt/master
+      - device: mid_csp_cbf/sub_elt/controller
     image:
       registry: "{{.Values.midcbf.image.registry}}"
       image: "{{.Values.midcbf.image.image}}"
@@ -109,7 +109,7 @@ deviceServers:
   - name: vcc001
     function: coarse-channelisation
     domain: sensing
-    command: "/venv/bin/python /app/src/ska_mid_cbf_mcs/Vcc/VccMulti/VccMulti.py "
+    command: "/venv/bin/python /app/src/ska_mid_cbf_mcs/vcc/multi.py"
     instances: ["vcc-001"]
     depends_on:
       - device: sys/database/2
@@ -121,7 +121,7 @@ deviceServers:
   - name: vcc002
     function: coarse-channelisation
     domain: sensing
-    command: "/venv/bin/python /app/src/ska_mid_cbf_mcs/Vcc/VccMulti/VccMulti.py "
+    command: "/venv/bin/python /app/src/ska_mid_cbf_mcs/vcc/multi.py"
     instances: ["vcc-002"]
     depends_on:
       - device: sys/database/2
@@ -133,7 +133,7 @@ deviceServers:
   - name: vcc003
     function: coarse-channelisation
     domain: sensing
-    command: "/venv/bin/python /app/src/ska_mid_cbf_mcs/Vcc/VccMulti/VccMulti.py "
+    command: "/venv/bin/python /app/src/ska_mid_cbf_mcs/vcc/multi.py"
     instances: ["vcc-003"]
     depends_on:
       - device: sys/database/2
@@ -145,7 +145,7 @@ deviceServers:
   - name: vcc004
     function: coarse-channelisation
     domain: sensing
-    command: "/venv/bin/python /app/src/ska_mid_cbf_mcs/Vcc/VccMulti/VccMulti.py "
+    command: "/venv/bin/python /app/src/ska_mid_cbf_mcs/vcc/multi.py"
     instances: ["vcc-004"]
     depends_on:
       - device: sys/database/2

@@ -7,7 +7,7 @@
 #
 # Distributed under the terms of the BSD-3-Clause license.
 # See LICENSE.txt for more info.
-"""Contain the tests for the CbfMaster."""
+"""Contain the tests for the CbfSubarray."""
 
 # Standard imports
 import sys
@@ -58,11 +58,11 @@ class TestCbfSubarray:
 
         try:
             proxies.clean_proxies()
-            if proxies.master.State() == DevState.OFF:
-                proxies.master.Init()
-                proxies.wait_timeout_dev([proxies.master], DevState.STANDBY, 3, 1)
-                proxies.master.On()
-                proxies.wait_timeout_dev([proxies.master], DevState.ON, 3, 1)
+            if proxies.controller.State() == DevState.OFF:
+                proxies.controller.Init()
+                proxies.wait_timeout_dev([proxies.controller], DevState.STANDBY, 3, 1)
+                proxies.controller.On()
+                proxies.wait_timeout_dev([proxies.controller], DevState.ON, 3, 1)
             proxies.clean_proxies()
 
             # turn on Subarray
@@ -193,14 +193,14 @@ class TestCbfSubarray:
         # proxies.subarray[1].Init()
         # subarray_2_proxy.Init()
         # time.sleep(3)
-        # cbf_master_proxy.set_timeout_millis(60000)
-        # cbf_master_proxy.Init()
-        # time.sleep(60)  # takes pretty long for CBF Master to initialize
+        # cbf_controller_proxy.set_timeout_millis(60000)
+        # cbf_controller_proxy.Init()
+        # time.sleep(60)  # takes pretty long for CBF controller to initialize
 
         # receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
-        #                        cbf_master_proxy.receptorToVcc)
+        #                        cbf_controller_proxy.receptorToVcc)
 
-        # cbf_master_proxy.On()
+        # cbf_controller_proxy.On()
         # time.sleep(3)
 
         # # receptor list should be empty right after initialization

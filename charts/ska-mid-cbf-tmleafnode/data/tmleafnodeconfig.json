@@ -13,8 +13,8 @@
                             }
                         },
                         "properties": {
-			    "CbfMasterAddress": [
-		                "mid_csp_cbf/sub_elt/master"
+			    "CbfControllerAddress": [
+		                "mid_csp_cbf/sub_elt/controller"
 			    ],
 			    "CbfSubarrayAddress": [
 		                "mid_csp_cbf/sub_elt/subarray_01"
@@ -48,8 +48,8 @@
                             }
                         },
                         "properties": {
-			    "CbfMasterAddress": [
-		                "mid_csp_cbf/sub_elt/master"
+			    "CbfControllerAddress": [
+		                "mid_csp_cbf/sub_elt/controller"
 			    ],
 			    "CbfSubarrayAddress": [
 		                "mid_csp_cbf/sub_elt/subarray_02"

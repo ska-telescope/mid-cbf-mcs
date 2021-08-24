@@ -7,7 +7,7 @@
 #
 # Distributed under the terms of the BSD-3-Clause license.
 # See LICENSE.txt for more info.
-"""Contain the tests for the CbfMaster."""
+"""Contain the tests for the CbfController."""
 
 # Standard imports
 import sys
@@ -50,7 +50,7 @@ class TestFsp:
     """#Mock external libraries.
     """
         # Example : Mock numpy
-        # cls.numpy = CspMaster.numpy = MagicMock()
+        # cls.numpy = CspController.numpy = MagicMock()
     """
 
     def test_SetFunctionMode(

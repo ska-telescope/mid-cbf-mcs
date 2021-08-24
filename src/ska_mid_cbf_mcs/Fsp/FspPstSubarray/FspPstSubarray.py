@@ -58,9 +58,9 @@ class FspPstSubarray(SKASubarray):
         dtype='uint16'
     )
 
-    CbfMasterAddress = device_property(
+    CbfControllerAddress = device_property(
         dtype='str', 
-        default_value="mid_csp_cbf/master/main"
+        default_value="mid_csp_cbf/controller/main"
     )
 
     CbfSubarrayAddress = device_property(
@@ -126,14 +126,14 @@ class FspPstSubarray(SKASubarray):
         self._receptors = []
         self._output_enable = 0
 
-        # device proxy for easy reference to CBF Master
-        self._proxy_cbf_master = tango.DeviceProxy(self.CbfMasterAddress)
+        # device proxy for easy reference to CBF Controller
+        self._proxy_cbf_controller = tango.DeviceProxy(self.CbfControllerAddress)
 
-        self._master_max_capabilities = dict(
+        self._controller_max_capabilities = dict(
             pair.split(":") for pair in
-            self._proxy_cbf_master.get_property("MaxCapabilities")["MaxCapabilities"]
+            self._proxy_cbf_controller.get_property("MaxCapabilities")["MaxCapabilities"]
         )
-        self._count_vcc = int(self._master_max_capabilities["VCC"])
+        self._count_vcc = int(self._controller_max_capabilities["VCC"])
         self._fqdn_vcc = list(self.VCC)[:self._count_vcc]
         self._proxies_vcc = [*map(tango.DeviceProxy, self._fqdn_vcc)]
 
@@ -217,7 +217,7 @@ class FspPstSubarray(SKASubarray):
         """add specified receptors to the FSP subarray. Input is array of int."""
         errs = []  # list of error messages
         receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
-                               self._proxy_cbf_master.receptorToVcc)
+                               self._proxy_cbf_controller.receptorToVcc)
         for receptorID in argin:
             try:
                 vccID = receptor_to_vcc[receptorID]

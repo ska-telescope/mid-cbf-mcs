@@ -67,10 +67,10 @@ class FspCorrSubarray(CspSubElementObsDevice):
         dtype='uint16'
     )
 
-    CbfMasterAddress = device_property(
+    CbfControllerAddress = device_property(
         dtype='str',
-        doc="FQDN of CBF Master",
-        default_value="mid_csp_cbf/master/main"
+        doc="FQDN of CBF Controller",
+        default_value="mid_csp_cbf/controller/main"
     )
 
     # TODO - note the connection to the CbfSubarray device is not being used
@@ -267,16 +267,16 @@ class FspCorrSubarray(CspSubElementObsDevice):
             # [chanID, bw, cf, cbfOutLink, sdpIp, sdpPort] # TODO
             device._channel_info = []
 
-            # device proxy for connection to CBFMaster
-            device._proxy_cbf_master = tango.DeviceProxy(device.CbfMasterAddress)
+            # device proxy for connection to CbfController
+            device._proxy_cbf_controller = tango.DeviceProxy(device.CbfControllerAddress)
 
-            device._master_max_capabilities = dict(
+            device._controller_max_capabilities = dict(
                 pair.split(":") for pair in
-                device._proxy_cbf_master.get_property("MaxCapabilities")["MaxCapabilities"]
+                device._proxy_cbf_controller.get_property("MaxCapabilities")["MaxCapabilities"]
             )
 
-            # Connect to all VCC devices turned on by CbfMaster:
-            device._count_vcc = int(device._master_max_capabilities["VCC"])
+            # Connect to all VCC devices turned on by CbfController:
+            device._count_vcc = int(device._controller_max_capabilities["VCC"])
             device._fqdn_vcc = list(device.VCC)[:device._count_vcc]
             device._proxies_vcc = [*map(tango.DeviceProxy, device._fqdn_vcc)]
 
@@ -427,7 +427,7 @@ class FspCorrSubarray(CspSubElementObsDevice):
         """add specified receptors to the FSP subarray. Input is array of int."""
         errs = []  # list of error messages
         receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
-                               self._proxy_cbf_master.receptorToVcc)
+                               self._proxy_cbf_controller.receptorToVcc)
         for receptorID in argin:
             try:
                 vccID = receptor_to_vcc[receptorID]

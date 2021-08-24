@@ -121,7 +121,7 @@ class TmCspSubarrayLeafNodeTest(SKABaseDevice):
     # Device Properties
     # -----------------
 
-    CbfMasterAddress = device_property(
+    CbfControllerAddress = device_property(
         dtype='str'
     )
 
@@ -201,9 +201,9 @@ class TmCspSubarrayLeafNodeTest(SKABaseDevice):
         self._received_output_links = False
 
         # these properties do not exist anymore and are not used anywhere in this file so they have been commented out
-        # self._proxy_cbf_master = tango.DeviceProxy(self.CbfMasterAddress)
-        # self._proxy_cbf_master = tango.DeviceProxy(
-        #    self._proxy_cbf_master.get_property("CspMidCbf")["CspMidCbf"][0]
+        # self._proxy_cbf_controller = tango.DeviceProxy(self.CbfControllerAddress)
+        # self._proxy_cbf_controller = tango.DeviceProxy(
+        #    self._proxy_cbf_controller.get_property("CspMidCbf")["CspMidCbf"][0]
         # )
 
         # decoupling mif-cbf-mcs from csp-mid-lmc so that it can be tested  standalone
