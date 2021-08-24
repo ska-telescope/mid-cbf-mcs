@@ -7,11 +7,11 @@ RUN ipython profile create
 ENV PATH=/home/tango/.local/bin:$PATH
 
 # uncomment commented lines in Dockerfile and in pip.conf to fix ssl cert verification issue (CIPA team - MDA network)
-ADD certs /usr/local/share/ca-certificates/
-ENV PIP_CONFIG_FILE pip.conf
-USER root
-RUN update-ca-certificates
-USER tango
+# ADD certs /usr/local/share/ca-certificates/
+# ENV PIP_CONFIG_FILE pip.conf
+# USER root
+# RUN update-ca-certificates
+# USER tango
 RUN python3 -m pip install -r requirements.txt .
 
 CMD ["/venv/bin/python", "/app/src/ska_mid_cbf_mcs/controller/controller.py"]

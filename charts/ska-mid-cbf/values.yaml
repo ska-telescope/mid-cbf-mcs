@@ -157,7 +157,7 @@ deviceServers:
   - name: fsp01
     function: fsp-processing
     domain: signal-processing
-    command: "/venv/bin/python /app/src/ska_mid_cbf_mcs/Fsp/FspMulti/FspMulti.py "
+    command: "/venv/bin/python /app/src/ska_mid_cbf_mcs/fsp/fsp_multi.py "
     instances: ["fsp-01"]
     depends_on:
       - device: mid_csp_cbf/vcc/001
@@ -172,7 +172,7 @@ deviceServers:
   - name: fsp02
     function: fsp-processing
     domain: signal-processing
-    command: "/venv/bin/python /app/src/ska_mid_cbf_mcs/Fsp/FspMulti/FspMulti.py "
+    command: "/venv/bin/python /app/src/ska_mid_cbf_mcs/fsp/fsp_multi.py "
     instances: ["fsp-02"]
     depends_on:
       - device: mid_csp_cbf/vcc/001
@@ -187,7 +187,7 @@ deviceServers:
   - name: fsp03
     function: fsp-processing
     domain: signal-processing
-    command: "/venv/bin/python /app/src/ska_mid_cbf_mcs/Fsp/FspMulti/FspMulti.py "
+    command: "/venv/bin/python /app/src/ska_mid_cbf_mcs/fsp/fsp_multi.py "
     instances: ["fsp-03"]
     depends_on:
       - device: mid_csp_cbf/vcc/001
@@ -202,7 +202,7 @@ deviceServers:
   - name: fsp04
     function: fsp-processing
     domain: signal-processing
-    command: "/venv/bin/python /app/src/ska_mid_cbf_mcs/Fsp/FspMulti/FspMulti.py "
+    command: "/venv/bin/python /app/src/ska_mid_cbf_mcs/fsp/fsp_multi.py "
     instances: ["fsp-04"]
     depends_on:
       - device: mid_csp_cbf/vcc/001

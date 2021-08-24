@@ -9,17 +9,17 @@ import os
 import sys
 
 file_path = os.path.dirname(os.path.abspath(__file__))
-pkg_path = os.path.abspath(os.path.join(file_path, "../"))
-sys.path.insert(0, pkg_path)
 
-from Fsp.Fsp import Fsp
-from FspCorr.FspCorr import FspCorr
-from FspPss.FspPss import FspPss
-from FspPst.FspPst import FspPst
-from FspVlbi.FspVlbi import FspVlbi
-from FspCorrSubarray.FspCorrSubarray import FspCorrSubarray
-from FspPssSubarray.FspPssSubarray import FspPssSubarray
-from FspPstSubarray.FspPstSubarray import FspPstSubarray
+from ska_mid_cbf_mcs.fsp.fsp import Fsp
+from ska_mid_cbf_mcs.fsp.corr import FspCorr
+from ska_mid_cbf_mcs.fsp.pss import FspPss
+from ska_mid_cbf_mcs.fsp.pst import FspPst
+from ska_mid_cbf_mcs.fsp.vlbi import FspVlbi
+from ska_mid_cbf_mcs.fsp.corr_subarray import FspCorrSubarray
+from ska_mid_cbf_mcs.fsp.pss_subarray import FspPssSubarray
+from ska_mid_cbf_mcs.fsp.pst_subarray import FspPstSubarray
+
+__all__ = ["main"]
 
 def main(args=None, **kwargs):
     return run(

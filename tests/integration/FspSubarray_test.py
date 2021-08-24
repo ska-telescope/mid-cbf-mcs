@@ -17,13 +17,6 @@ import json
 
 # Path
 file_path = os.path.dirname(os.path.abspath(__file__))
-# insert base package directory to import global_enum 
-# module in commons folder
-commons_pkg_path = os.path.abspath(os.path.join(file_path, "../../commons"))
-sys.path.insert(0, commons_pkg_path)
-
-path = os.path.join(os.path.dirname(__file__), os.pardir)
-sys.path.insert(0, os.path.abspath(path))
 
 # Tango imports
 import tango
@@ -32,17 +25,17 @@ import pytest
 
 #Local imports
 
-from FspCorrSubarray.FspCorrSubarray import FspCorrSubarray
 from ska_tango_base.control_model import HealthState, AdminMode, ObsState
 
-@pytest.mark.usefixtures(
-    "create_cbf_controller_proxy",
-    "create_vcc_proxies",
-    "create_fsp_proxy",
-    "create_cbf_subarray_1_proxy",
-    "create_fsp_corr_subarray_1_1_proxy"
-)
+# @pytest.mark.usefixtures(
+#     "create_cbf_controller_proxy",
+#     "create_vcc_proxies",
+#     "create_fsp_proxy",
+#     "create_cbf_subarray_1_proxy",
+#     "create_fsp_corr_subarray_1_1_proxy"
+# )
 
+@pytest.skip(reason="this class is currently untested")
 class TestFspCorrSubarray:
     """
     @classmethod
@@ -237,7 +230,7 @@ class TestFspCorrSubarray:
         time.sleep(1)
 
         # configure search window
-        f = open(file_path + "/test_json/test_ConfigureScan_basic.json")
+        f = open(file_path + "/../data/FspSubarray_ConfigureScan_basic.json")
         create_fsp_corr_subarray_1_1_proxy.ConfigureScan(f.read().replace("\n", ""))
         f.close()
 

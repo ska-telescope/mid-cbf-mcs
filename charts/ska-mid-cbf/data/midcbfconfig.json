@@ -593,7 +593,7 @@
                 }
             }
         },
-        "FspMulti": {
+        "fsp_multi": {
             "fsp-01": {
                 "Fsp": {
                     "mid_csp_cbf/fsp/01": {
