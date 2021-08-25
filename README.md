@@ -19,7 +19,7 @@ Documentation on the Developer's portal:
 
 The Mid CBF MCS prototype implements at the moment these TANGO device classes:
 
-* `CbfMaster`: Based on the `SKAMaster` class. It represents a primary point of contact for CBF Monitor and Control. It implements CBF state and mode indicators and a set of housekeeping commands.
+* `CbfController`: Based on the `SKAMaster` class. It represents a primary point of contact for CBF Monitor and Control. It implements CBF state and mode indicators and a set of housekeeping commands.
 * `CbfSubarray`: Based on the `SKASubarray` class. It implements commands needed for scan configuration.
     * `SearchWindow`(for SubarrayMulti): Based on the `SKACapability` class. It implements attributes to configure a search window during a scan.
 * `Vcc` and `Fsp`: Based on the `SKACapability` class. These implement commands and attributes needed for scan configuration.
@@ -38,7 +38,7 @@ To cut down on the number of TANGO device servers, some multi-class servers are 
 
 At the moment, the device servers implemented are:
 
-* 1 instance of `CbfMaster`.
+* 1 instance of `CbfController`.
 * 2 instance of `CbfSubarrayMulti`.
 * 4 instances of `FspMulti`.
 * 4 instances of `VccMulti`.
@@ -204,7 +204,7 @@ $ docker ps -a
 
 shows the list of the running containers:
 
-* `midcbf-cbfmaster`: The `CbfMaster` TANGO device server.
+* `midcbf-cbfcontroller`: The `CbfController` TANGO device server.
 * `midcbf-cbfsubarrayxx`ranges from `01` to `02` The 2 instances of the `CbfSubarrayMulti` TANGO device server.
 * `midcbf-fspxx`: `xx` ranges from `01` to `04`. The 4 instances of the `FspMulti` TANGO device servers.
 * `midcbf-vccxx`: `x` ranges from `01` to `04`. The 4 instances of the `VccMulti` TANGO device servers.

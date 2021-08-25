@@ -75,7 +75,6 @@ TEST_RUNNER = test-runner-$(CI_JOB_ID)-$(KUBE_NAMESPACE)-$(HELM_RELEASE)
 # ('make interactive', 'make test', etc.) are defined in this file.
 #
 include .make/release.mk
-#include .make/docker.mk
 include .make/k8s.mk
 
 #
@@ -89,7 +88,19 @@ requirements: ## Install Dependencies
 
 unit_test: ## Run simulation mode unit tests; currently only Vcc tests are supported, with TEST_CONTEXT flag set True in Vcc.py
 	@mkdir -p build; \
-	PYTHONPATH=src:tangods pytest -v ./tangods/Vcc/test/Vcc_test.py $(FILE) --test-context
+	PYTHONPATH=src:tests pytest -v ./tests/unit/Vcc_test.py $(FILE) --test-context --cov=src/ska_mid_cbf_mcs/Vcc
+
+# pull and interactive preserved from docker.mk
+###############################################
+# pull:  ## download the application image
+# 	docker pull $(IMAGE_TO_TEST)
+
+# # piplock: build  ## overwrite Pipfile.lock with the image version
+# # 	docker run $(IMAGE_TO_TEST) cat /app/Pipfile.lock > $(CURDIR)/Pipfile.lock
+
+# interactive:  ## start an interactive session 
+# 	docker run --rm -it -p 3000:3000 --name=$(CONTAINER_NAME_PREFIX)dev -e TANGO_HOST=$(TANGO_HOST)  -v $(CURDIR):/app $(IMAGE_TO_TEST) /bin/bash
+###############################################
 
 #pytest $(if $(findstring all,$(MARK)),, -m '$(MARK)')
 

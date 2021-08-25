@@ -12,8 +12,8 @@ all: test
 # The following steps copy across useful output to this volume which can
 # then be extracted to form the CI summary for the test procedure.
 test:
-	echo Pinging mid_csp_cbf/sub_elt/master...;
-	retry --max=10 -- tango_admin --ping-device mid_csp_cbf/sub_elt/master
+	echo Pinging mid_csp_cbf/sub_elt/controller...;
+	retry --max=10 -- tango_admin --ping-device mid_csp_cbf/sub_elt/controller
 	echo Pinging ska_mid/tm_leaf_node/csp_subarray_01...;
 	retry --max=10 -- tango_admin --ping-device ska_mid/tm_leaf_node/csp_subarray_01
 	for i in $$(seq -w 1 4); do \

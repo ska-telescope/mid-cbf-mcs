@@ -1,22 +1,2 @@
-# -*- coding: utf-8 -*-
-#
-# This file is part of the Mid.CBF prototype project
-#
-#
-# Distributed under the terms of the BSD-3-Clause license.
-# See LICENSE.txt for more info.
-
-"""Release information for Python Package"""
-
-name = """Mid.CBF MCS"""
-version = "0.5.4"
-version_info = version.split(".")
-description = """SKA Mid.CBF MCS Classes"""
-author = "Taylor Huang"
-author_email = "taylor.huang@mda.space"
-license = """BSD-3-Clause"""
-url = """www.tango-controls.org"""
-copyright = """"""
-
-release=0.5.4
-tag=ska-mid-cbf-mcs-0.5.4
+release=0.5.5
+tag=ska-mid-cbf-mcs-0.5.5

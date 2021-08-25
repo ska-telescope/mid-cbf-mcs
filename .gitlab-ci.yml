@@ -74,8 +74,8 @@ linting:
     - python3 -m  pip install pylint2junit
     - python3 -m pip install -r requirements.txt
     - mkdir -p build/reports      
-    - pylint --output-format=parseable tangods | tee ./build/mid-cbf-code-analysis.stdout
-    - pylint --output-format=pylint2junit.JunitReporter tangods > ./build/reports/linting.xml
+    - pylint --output-format=parseable src | tee ./build/mid-cbf-code-analysis.stdout
+    - pylint --output-format=pylint2junit.JunitReporter src > ./build/reports/linting.xml
     - ls -alR
 
 # build and push image on gitlab container registry

@@ -46,14 +46,14 @@ midcbf:
   image:
     registry: artefact.skao.int
     image: ska-mid-cbf-mcs
-    tag: 0.5.4
+    tag: 0.5.5
     pullPolicy: IfNotPresent
 
 deviceServers:
   - name: tmcspsubarrayleafnodetest
     function: simul-observation
     domain: telstate
-    command: "/venv/bin/python /app/tangods/TmCspSubarrayLeafNodeTest/TmCspSubarrayLeafNodeTest.py "
+    command: "/venv/bin/python /app/src/ska_mid_cbf_mcs/tm_leaf_node.py "
     instances: ["tm"]
     depends_on:
       - device: mid_csp_cbf/sub_elt/subarray_01
@@ -65,7 +65,7 @@ deviceServers:
   - name: tmcspsubarrayleafnodetest2
     function: simul-observation
     domain: telstate
-    command: "/venv/bin/python /app/tangods/TmCspSubarrayLeafNodeTest/TmCspSubarrayLeafNodeTest.py "
+    command: "/venv/bin/python /app/src/ska_mid_cbf_mcs/tm_leaf_node.py "
     instances: ["tm2"]
     depends_on:
       - device: mid_csp_cbf/sub_elt/subarray_02
