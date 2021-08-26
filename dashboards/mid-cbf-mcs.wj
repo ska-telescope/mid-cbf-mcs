@@ -1,0 +1,253 @@
+{
+  "id": "60a3f5db88c0ee0018ffb778",
+  "name": "Untitled dashboard",
+  "version": "1.0.8",
+  "user": "CIPA",
+  "insertTime": "2021-05-18T17:14:03.421Z",
+  "updateTime": "2021-05-18T17:34:29.315Z",
+  "group": null,
+  "groupWriteAccess": false,
+  "lastUpdatedBy": "CIPA",
+  "widget": [
+    {
+      "id": "1",
+      "x": 9,
+      "y": 15,
+      "canvas": "0",
+      "width": 17,
+      "height": 5,
+      "type": "LABEL",
+      "inputs": {
+        "text": "CbfMaster",
+        "textColor": "#000000",
+        "backgroundColor": "#ffffff",
+        "size": 2,
+        "borderWidth": 0,
+        "borderColor": "#000000",
+        "font": "Helvetica",
+        "linkTo": "",
+        "customCss": ""
+      },
+      "order": 0
+    },
+    {
+      "id": "2",
+      "x": 9,
+      "y": 20,
+      "canvas": "0",
+      "width": 10,
+      "height": 4,
+      "type": "DEVICE_STATUS",
+      "inputs": {
+        "device": "dserver/cbfmaster/master",
+        "state": {
+          "device": null,
+          "attribute": null
+        },
+        "showDeviceName": false,
+        "showStateString": true,
+        "showStateLED": true,
+        "LEDSize": 1,
+        "textSize": 1
+      },
+      "order": 1
+    },
+    {
+      "id": "3",
+      "x": 9,
+      "y": 24,
+      "canvas": "0",
+      "width": 8,
+      "height": 5,
+      "type": "COMMAND_ARRAY",
+      "inputs": {
+        "title": "",
+        "buttonText": "INIT",
+        "command": {
+          "device": "mid_csp_cbf/sub_elt/master",
+          "command": "Init",
+          "acceptedType": "DevVoid"
+        },
+        "showDevice": false,
+        "showCommand": false,
+        "requireConfirmation": true,
+        "displayOutput": true,
+        "OutputMaxSize": 20,
+        "timeDisplayOutput": 3000,
+        "textColor": "#000000",
+        "backgroundColor": "#ffffff",
+        "size": 1,
+        "font": "Helvetica"
+      },
+      "order": 2
+    },
+    {
+      "id": "4",
+      "x": 9,
+      "y": 29,
+      "canvas": "0",
+      "width": 8,
+      "height": 5,
+      "type": "COMMAND_ARRAY",
+      "inputs": {
+        "buttonText": "ON",
+        "command": {
+          "device": "mid_csp_cbf/sub_elt/master",
+          "command": "On",
+          "acceptedType": "DevVoid"
+        },
+        "showDevice": false,
+        "showCommand": false,
+        "requireConfirmation": true,
+        "displayOutput": true,
+        "OutputMaxSize": 20,
+        "timeDisplayOutput": 3000,
+        "textColor": "#000000",
+        "backgroundColor": "#ffffff",
+        "size": 1,
+        "font": "Helvetica"
+      },
+      "order": 3
+    },
+    {
+      "id": "5",
+      "x": 9,
+      "y": 34,
+      "canvas": "0",
+      "width": 8,
+      "height": 5,
+      "type": "COMMAND_ARRAY",
+      "inputs": {
+        "buttonText": "OFF",
+        "command": {
+          "device": "mid_csp_cbf/sub_elt/master",
+          "command": "Off",
+          "acceptedType": "DevVoid"
+        },
+        "showDevice": false,
+        "showCommand": false,
+        "requireConfirmation": true,
+        "displayOutput": true,
+        "OutputMaxSize": 20,
+        "timeDisplayOutput": 3000,
+        "textColor": "#000000",
+        "backgroundColor": "#ffffff",
+        "size": 1,
+        "font": "Helvetica"
+      },
+      "order": 4
+    },
+    {
+      "id": "6",
+      "x": 70,
+      "y": 13,
+      "canvas": "0",
+      "width": 30,
+      "height": 6,
+      "type": "LABEL",
+      "inputs": {
+        "text": "CbfSubarray",
+        "textColor": "#000000",
+        "backgroundColor": "#ffffff",
+        "size": 2,
+        "borderWidth": 0,
+        "borderColor": "#000000",
+        "font": "Helvetica",
+        "linkTo": "",
+        "customCss": ""
+      },
+      "order": 5
+    },
+    {
+      "id": "7",
+      "x": 70,
+      "y": 19,
+      "canvas": "0",
+      "width": 10,
+      "height": 4,
+      "type": "LABEL",
+      "inputs": {
+        "text": "Subarray 1",
+        "textColor": "#000000",
+        "backgroundColor": "#ffffff",
+        "size": 1,
+        "borderWidth": 0,
+        "borderColor": "#000000",
+        "font": "Helvetica",
+        "linkTo": "",
+        "customCss": ""
+      },
+      "order": 6
+    },
+    {
+      "id": "8",
+      "x": 80,
+      "y": 19,
+      "canvas": "0",
+      "width": 10,
+      "height": 4,
+      "type": "LABEL",
+      "inputs": {
+        "text": "Subarray 2",
+        "textColor": "#000000",
+        "backgroundColor": "#ffffff",
+        "size": 1,
+        "borderWidth": 0,
+        "borderColor": "#000000",
+        "font": "Helvetica",
+        "linkTo": "",
+        "customCss": ""
+      },
+      "order": 7
+    },
+    {
+      "id": "9",
+      "x": 90,
+      "y": 19,
+      "canvas": "0",
+      "width": 10,
+      "height": 4,
+      "type": "LABEL",
+      "inputs": {
+        "text": "Subarray 3",
+        "textColor": "#000000",
+        "backgroundColor": "#ffffff",
+        "size": 1,
+        "borderWidth": 0,
+        "borderColor": "#000000",
+        "font": "Helvetica",
+        "linkTo": "",
+        "customCss": ""
+      },
+      "order": 8
+    },
+    {
+      "id": "10",
+      "x": 90,
+      "y": 23,
+      "canvas": "0",
+      "width": 10,
+      "height": 6,
+      "type": "COMMAND_ARRAY",
+      "inputs": {
+        "buttonText": "INIT",
+        "command": {
+          "device": "mid_csp_cbf/sub_elt/subarray_03",
+          "command": "Init",
+          "acceptedType": "DevVoid"
+        },
+        "showDevice": false,
+        "showCommand": false,
+        "requireConfirmation": true,
+        "displayOutput": true,
+        "OutputMaxSize": 20,
+        "timeDisplayOutput": 3000,
+        "textColor": "#000000",
+        "backgroundColor": "#ffffff",
+        "size": 1,
+        "font": "Helvetica"
+      },
+      "order": 9
+    }
+  ]
+}
