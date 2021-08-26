@@ -110,23 +110,24 @@ For installing Kubernetes, Minikube and Helm, follow the instructions at ```http
 Individual installation instructions:
 * [Docker Engine](https://docs.docker.com/engine/install/ubuntu/)
 * [minikube](https://minikube.sigs.k8s.io/docs/start/)
+  * Follow the instructions in the README of `https://gitlab.com/ska-telescope/ska-cicd-deploy-minikube`
 * [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/)
 * [Helm](https://helm.sh/docs/intro/install/)
 
-Follow the instructions in the README of ``ska-cicd-deploy-minikube``
 
 ## 2.6 Setup the Mid.CBF MCS Software
 
 The following projects are required:
 * ska-mid-cbf-mcs
 * ska-tango-base
+* ska-cicd-deploy-minikube
 
 To get a local copy of the ska-mid-cbf-mcs project:
 ```
 git clone https://gitlab.com/ska-telescope/ska-mid-cbf-mcs.git
 ```
 
-To install ska-tango-base (as a Python package)  follow the 'Installation steps' of the README at: ```https://gitlab.com/ska-telescope/ska-tango-base```
+To install ska-tango-base (as a Python package)  follow the 'Installation steps' of the README at: `https://gitlab.com/ska-telescope/ska-tango-base`
 
 
 *Note*:SKA Tango base classes are needed when using Pogo to automatically generate Python TANGO code. Pogo will ask for the Base class pogo (.xmi) files, which are located in the ska-tango-base folder.
@@ -143,19 +144,26 @@ sudo chown -R <user_name>:<user_name> ~/.minikube/
 sudo chown -R m <user_name>:<user_name> ~/.kube/
 ```
 
+
 1.  Make sure minikube is up and running; use ```minikube start``` and ```minikube stop``` to start and stop the local kubernetes node.
 
-2.  From the root of the project, run:
+2.  From the root of the project, run `make build` to build the application image.
 
+*Note 1*: `make build` is required only if a local image needs to be built, for example every time the SW has been updated.
+*Note 2*: For development, in order to get local changes to build, run `eval $(minikube docker-env)` before `make build`; see https://stackoverflow.com/questions/52310599/what-does-minikube-docker-env-mean
+
+3.  Install the umbrella chart.
 ```
-make build 
 make install-chart
 make watch
 ```
-*Note*: ``make build`` is required only if a local image needs to be built, for example every time the SW has been updated.
-```make watch``` will list all of the pods' status in 'real time'; wait until all pods have status 'Completed' or 'Running'.
+*Note*: `make watch` will list all of the pods' status in 'real time'; wait until all pods have status 'Completed' or 'Running'.
 
-3.  To tear down the deployment, run ```make uninstall-chart```
+4.  (optional) Create python virtual environment to isolate project specific packages from your host environment: in the project root run `virtualenv venv` to create then `source venv/bin/activate` to run (to exit run `deactivate`) 
+
+5.  Run `make requirements` for linting and testing.
+
+6.  To tear down the deployment, run ```make uninstall-chart```
 
 ## 4.0 WebJive GUI
 
