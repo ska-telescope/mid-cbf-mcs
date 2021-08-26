@@ -4,17 +4,17 @@ Documentation on the Developer's portal:
 [![ReadTheDoc](https://developer.skao.int/projects/ska-mid-cbf-mcs/en/latest/?badge=latest)](https://developer.skao.int/projects/ska-mid-cbf-mcs/en/latest/?badge=latest)
 
 # TABLE OF CONTENTS
-* 1.0 - [Introduction](#description)
+* 1.0 - [Introduction](#introduction)
 * 2.0 - [Getting started](#getting-started)
-  * 2.1 - [Hardware and OS requirements](#hw_req)
-  * 2.2 - [Install a virtual vachine](#install_VM)
-  * 2.3 - [Install Ubuntu](#install_Ubuntu)
-  * 2.4 - [Set up development environment](#setup_Tango)
-  * 2.5 - [Setup Kubernetes](#setup_Kubernetes)
-  * 2.6 - [Setup the Mid.CBF MCS Software](#setup_MCS)
-* 3.0 - [Running the Mid.CBF MCS](#run_MCS)
-* 4.0 - [WebJIVE GUI](#jive-gui)
-* 5.0 - [Development resources](#dev-resources)
+  * 2.1 - [Hardware and OS requirements](#hardware-and-os-requirements)
+  * 2.2 - [Install a virtual vachine](#install-a-virtual-machine)
+  * 2.3 - [Install Ubuntu](#install-ubuntu)
+  * 2.4 - [Set up development environment](#set-up-development-envionment)
+  * 2.5 - [Setup Kubernetes](#set-up-kubernetes)
+  * 2.6 - [Setup the Mid.CBF MCS Software](#set-up-the-midcbf-mcs-software)
+* 3.0 - [Running the Mid.CBF MCS](#running-the-midcbf-mcs)
+* 4.0 - [WebJIVE GUI](#webjive-gui)
+* 5.0 - [Development resources](#development-resources)
   * 5.1 - [Other resources](#other-resources)
   * 5.2 - [Useful commands](#commands)
 * 6.0 - [Release](#release)
@@ -46,7 +46,7 @@ At the moment, the device servers implemented are:
 * 3 instance of `CbfSubarray`.
 * 4 instances of `FspMulti`.
 * 4 instances of `VccMulti`.
-* 2 instance of `TmCspSubarrayLeafNodeTest`.
+* 2 instances of `TmCspSubarrayLeafNodeTest`.
 
 # 2.0 - Getting started
 
@@ -156,11 +156,17 @@ sudo chown -R m <user_name>:<user_name> ~/.kube/
 make install-chart
 make watch
 ```
-*Note*: `make watch` will list all of the pods' status in 'real time'; wait until all pods have status 'Completed' or 'Running'.
+*Note*: `make watch` will list all of the pods' status in 'real time' using kubectl; wait until all pods have status 'Completed' or 'Running'.
 
 ### 4.  (optional) Create python virtual environment to isolate project specific packages from your host environment: in the project root run `virtualenv venv` to create then `source venv/bin/activate` to run (to exit run `deactivate`) 
 
-### 5.  Run `make requirements` for linting and testing.
+### 5.  Install linting and testing requirements with `make requirements`
+
+### 6.  Run a test.
+```
+make test
+make unit_test
+```
 
 ### 6.  To tear down the deployment, run ```make uninstall-chart```
 
