@@ -107,7 +107,7 @@ ansible-playbook -i hosts deploy_tangoenv.yml --extra-vars "ansible_become_pass=
 
 For installing Kubernetes, Minikube and Helm, follow the instructions at ```https://developer.skatelescope.org/en/latest/tools/dev-faq.html```.
 
-Individual installation instructions:
+### Individual installation instructions:
 * [Docker Engine](https://docs.docker.com/engine/install/ubuntu/)
 * [minikube](https://minikube.sigs.k8s.io/docs/start/)
   * Follow the instructions in the README of `https://gitlab.com/ska-telescope/ska-cicd-deploy-minikube`
@@ -136,7 +136,7 @@ To install ska-tango-base (as a Python package)  follow the 'Installation steps'
 
 The ska-mid-cbf-mcs Tango device servers are started and run via Kubernetes. 
 
-Make sure Kubernetes, Helm and Minikube have been installed (and verified) as described in the 'Setup Kubernetes' section.
+Make sure Kubernetes, Helm and Minikube have been installed (and verified) as described in the 'Set up Kubernetes' section.
 
 *Note*: You may need to change permission to the .minikube and .kube files in your home directory:
 ```
@@ -145,27 +145,26 @@ sudo chown -R m <user_name>:<user_name> ~/.kube/
 ```
 
 
-1.  Make sure minikube is up and running; use ```minikube start``` and ```minikube stop``` to start and stop the local kubernetes node.
+### 1.  Make sure minikube is up and running; use ```minikube start``` and ```minikube stop``` to start and stop the local kubernetes node.
 
-2.  From the root of the project, run `make build` to build the application image.
+### 2.  From the root of the project, run `make build` to build the application image.
 
-*Note 1*: `make build` is required only if a local image needs to be built, for example every time the SW has been updated.
-*Note 2*: For development, in order to get local changes to build, run `eval $(minikube docker-env)` before `make build`; see https://stackoverflow.com/questions/52310599/what-does-minikube-docker-env-mean
+`make build` is required only if a local image needs to be built, for example every time the SW has been updated. For development, in order to get local changes to build, run `eval $(minikube docker-env)` before `make build`; see https://stackoverflow.com/questions/52310599/what-does-minikube-docker-env-mean
 
-3.  Install the umbrella chart.
+### 3.  Install the umbrella chart.
 ```
 make install-chart
 make watch
 ```
 *Note*: `make watch` will list all of the pods' status in 'real time'; wait until all pods have status 'Completed' or 'Running'.
 
-4.  (optional) Create python virtual environment to isolate project specific packages from your host environment: in the project root run `virtualenv venv` to create then `source venv/bin/activate` to run (to exit run `deactivate`) 
+### 4.  (optional) Create python virtual environment to isolate project specific packages from your host environment: in the project root run `virtualenv venv` to create then `source venv/bin/activate` to run (to exit run `deactivate`) 
 
-5.  Run `make requirements` for linting and testing.
+### 5.  Run `make requirements` for linting and testing.
 
-6.  To tear down the deployment, run ```make uninstall-chart```
+### 6.  To tear down the deployment, run ```make uninstall-chart```
 
-## 4.0 WebJive GUI
+# 4.0 WebJive GUI
 
 This prototype provides a graphical user interface, using WebJive; to use, deploy with ```make install-chart-with-taranta```, then navigate to `integration.engageska-portugal.pt` in a browser. The following credentials can be used:
 
@@ -174,7 +173,7 @@ This prototype provides a graphical user interface, using WebJive; to use, deplo
 
 The device tree can be viewed and explored. In addition, device attributes can be seen and modified, and device commands can be sent, by creating and saving a new dashboard.
 
-## 5.0 Development resources
+# 5.0 Development resources
 
 ### 5.1 Other resources
 
@@ -214,7 +213,7 @@ These commands should list the following running containers:
 * `midcbf-tangodb`: The MySQL database with the TANGO database tables.
 * etc.
 
-## 6.0 Release
+# 6.0 Release
 
 For a new release (i.e. prior to merging a branch into master) update the following fields by incrementing version/release/tag numbers to conform to the semantic versioning convention:
 * `.release`: `release=` and `tag=`
@@ -231,6 +230,6 @@ For a new release (i.e. prior to merging a branch into master) update the follow
 
 Once a new release has been merged into master, create a new tag on GitLab and run the manual "publish-chart" stage of the tag pipeline to publish the Helm charts.
 
-## 7.0 License
+# 7.0 License
 
 See the `LICENSE` file for details.
