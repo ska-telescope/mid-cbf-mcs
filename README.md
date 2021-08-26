@@ -2,25 +2,26 @@
 
 Documentation on the Developer's portal:
 [![ReadTheDoc](https://developer.skao.int/projects/ska-mid-cbf-mcs/en/latest/?badge=latest)](https://developer.skao.int/projects/ska-mid-cbf-mcs/en/latest/?badge=latest)
+#TODO: ReadTheDocs build currently broken
 
-# TABLE OF CONTENTS
-* 1.0 - [Introduction](#introduction)
-* 2.0 - [Getting started](#getting-started)
-  * 2.1 - [Hardware and OS requirements](#hardware-and-os-requirements)
-  * 2.2 - [Install a virtual vachine](#install-a-virtual-machine)
-  * 2.3 - [Install Ubuntu](#install-ubuntu)
-  * 2.4 - [Set up development environment](#set-up-development-envionment)
-  * 2.5 - [Setup Kubernetes](#set-up-kubernetes)
-  * 2.6 - [Setup the Mid.CBF MCS Software](#set-up-the-midcbf-mcs-software)
-* 3.0 - [Running the Mid.CBF MCS](#running-the-midcbf-mcs)
-* 4.0 - [WebJIVE GUI](#webjive-gui)
-* 5.0 - [Development resources](#development-resources)
-  * 5.1 - [Other resources](#other-resources)
-  * 5.2 - [Useful commands](#commands)
-* 6.0 - [Release](#release)
-* 7.0 - [License](#license)
+# Table Of Contents
+* [Introduction](#introduction)
+* [Getting started](#getting-started)
+  * [Hardware and OS requirements](#hardware-and-os-requirements)
+  * [Install a virtual vachine](#install-a-virtual-machine)
+  * [Install Ubuntu](#install-ubuntu)
+  * [Set up development environment (DEPRECATED)](#set-up-development-environment) 
+  * [Set up Kubernetes](#set-up-kubernetes)
+  * [Set up the Mid CBF MCS Software](#set-up-the-mid-cbf-mcs-software)
+* [Running the Mid CBF MCS](#running-the-mid-cbf-mcs)
+* [WebJIVE GUI](#webjive-gui)
+* [Releasing](#releasing)
+* [Development resources](#development-resources)
+  * [Other resources](#other-resources)
+  * [Useful commands](#commands)
+* [License](#license)
 
-# 1.0 - Introduction
+# Introduction
 
 The Mid CBF MCS prototype implements at the moment these TANGO device classes:
 
@@ -48,25 +49,25 @@ At the moment, the device servers implemented are:
 * 4 instances of `VccMulti`.
 * 2 instances of `TmCspSubarrayLeafNodeTest`.
 
-# 2.0 - Getting started
+# Getting started
 
 This section follows the instructions on the SKA developer’s portal: 
 
 * https://developer.skao.int/en/latest/getting-started/devenv-setup.html
 * https://developer.skao.int/en/latest/tools/dev-faq.html
 
-## 2.1 - Hardware and OS requirements
+## Hardware and OS requirements
 
 The following settings are needed for the virtual machine, running on a Windows 10 host:
 * 4 CPUs
 * 8 GB RAM
 * ~40 GB storage
 
-## 2.2 - Install a virtual machine
+## Install a virtual machine
 
 Download and install VirtualBox from: https://www.virtualbox.org/wiki/Downloads
 
-## 2.3 - Install Ubuntu
+## Install Ubuntu
 
 Download an image of Ubuntu 18.04 like the following one:
 
@@ -82,7 +83,9 @@ Steps:
 
 *Note* : If you set your own password for the virtual machine, change "ansible_become_pass=osboxes.org" to "ansible_become_pass=your_own_password"
 
-## 2.4 - Set up development environment 
+## Set up development environment 
+
+### DEPRECATION NOTICE: ansible-playbooks repository no longer supported; MCS required installations detailed in subsequent sections, though this step may be useful in setting up a new virtual machine for SKA development
 
 Setting up the Development environment, including Tango environment,  is performed using the ansible playbook script. Follow the commands in the yellow box under the 'Creating a Development Environment' section of the https://developer.skatelescope.org/en/latest/getting-started/devenv-setup/tango-devenv-setup.html web page.
 
@@ -103,74 +106,95 @@ ansible-playbook -i hosts deploy_tangoenv.yml --extra-vars "ansible_become_pass=
 
 *Note 5*: If you experience other issues with the script ask questions in the #team-system-support slack channel.
 
-## 2.5 Set up Kubernetes
+## Set up Kubernetes
 
 For installing Kubernetes, Minikube and Helm, follow the instructions at ```https://developer.skatelescope.org/en/latest/tools/dev-faq.html```.
 
-### Individual installation instructions:
+### Individual installation instructions
 * [Docker Engine](https://docs.docker.com/engine/install/ubuntu/)
 * [minikube](https://minikube.sigs.k8s.io/docs/start/)
-  * Follow the instructions in the README of `https://gitlab.com/ska-telescope/ska-cicd-deploy-minikube`
+  * Clone the `https://gitlab.com/ska-telescope/ska-cicd-deploy-minikube` project and follow the README instructions to configure the minikube deployment.
 * [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/)
 * [Helm](https://helm.sh/docs/intro/install/)
 
-
-## 2.6 Setup the Mid.CBF MCS Software
+## Set up the Mid CBF MCS Software
 
 The following projects are required:
 * ska-mid-cbf-mcs
 * ska-tango-base
-* ska-cicd-deploy-minikube
+
+The basic requirements are:
+* Python 3.5
+* pip
 
 To get a local copy of the ska-mid-cbf-mcs project:
 ```
 git clone https://gitlab.com/ska-telescope/ska-mid-cbf-mcs.git
 ```
 
-To install ska-tango-base (as a Python package)  follow the 'Installation steps' of the README at: `https://gitlab.com/ska-telescope/ska-tango-base`
-
+To install ska-tango-base (as a Python package), follow the 'Installation steps' of the README at: `https://gitlab.com/ska-telescope/ska-tango-base`
 
 *Note*:SKA Tango base classes are needed when using Pogo to automatically generate Python TANGO code. Pogo will ask for the Base class pogo (.xmi) files, which are located in the ska-tango-base folder.
 
-# 3.0 Running the Mid.CBF MCS
+# Running the Mid CBF MCS
 
 The ska-mid-cbf-mcs Tango device servers are started and run via Kubernetes. 
 
-Make sure Kubernetes, Helm and Minikube have been installed (and verified) as described in the 'Set up Kubernetes' section.
+Make sure Kubernetes/minikube and Helm have been installed (and verified) as described in the 'Set up Kubernetes' section.
 
 *Note*: You may need to change permission to the .minikube and .kube files in your home directory:
 ```
 sudo chown -R <user_name>:<user_name> ~/.minikube/
-sudo chown -R m <user_name>:<user_name> ~/.kube/
+sudo chown -R <user_name>:<user_name> ~/.kube/
 ```
 
-
-### 1.  Make sure minikube is up and running; use ```minikube start``` and ```minikube stop``` to start and stop the local kubernetes node.
-
-### 2.  From the root of the project, run `make build` to build the application image.
-
-`make build` is required only if a local image needs to be built, for example every time the SW has been updated. For development, in order to get local changes to build, run `eval $(minikube docker-env)` before `make build`; see https://stackoverflow.com/questions/52310599/what-does-minikube-docker-env-mean
-
-### 3.  Install the umbrella chart.
+#### 1.  Make sure minikube is up and running
 ```
-make install-chart
-make watch
-```
-*Note*: `make watch` will list all of the pods' status in 'real time' using kubectl; wait until all pods have status 'Completed' or 'Running'.
-
-### 4.  (optional) Create python virtual environment to isolate project specific packages from your host environment: in the project root run `virtualenv venv` to create then `source venv/bin/activate` to run (to exit run `deactivate`) 
-
-### 5.  Install linting and testing requirements with `make requirements`
-
-### 6.  Run a test.
-```
-make test
-make unit_test
+minikube start    # start minikube (local kubernetes node)
+minikube status   # check current status of minikube
 ```
 
-### 6.  To tear down the deployment, run ```make uninstall-chart```
+#### 2.  From the root of the project, build the application image.
+```
+cd ska-mid-cbf-mcs
+eval $(minikube docker-env)  # if building from local source and not artefact repository
+make build
+```
 
-# 4.0 WebJive GUI
+`make build` is required only if a local image needs to be built, for example every time the SW has been updated. [For development, in order to get local changes to build, run `eval $(minikube docker-env)` before `make build`](https://v1-18.docs.kubernetes.io/docs/setup/learning-environment/minikube/#use-local-images-by-re-using-the-docker-daemon)
+
+#### 3.  Install the umbrella chart.
+```
+make install-chart  # deploy from Helm charts
+```
+*Note*: `make watch` will list all of the pods' status in every 2 seconds using kubectl; `make wait` will wait until all jobs are 'Completed' and pods are 'Running'.
+
+#### 4.  (Optional) Create python virtual environment to isolate project specific packages from your host environment.
+```
+virtualenv venv           # create python virtualenv 'venv'
+source venv/bin/activate  # activate venv
+```
+
+#### 5.  Install linting and testing requirements.
+```
+make requirements
+```
+
+#### 6.  Run a test.
+```
+make test       # functional tests, needs a running deployment
+make unit_test  # unit tests, deployment does not need to be running
+```
+
+#### 6.  Tear down the deployment.
+```
+make uninstall-chart                  # uninstall deployment from Helm charts
+deactivate                            # if in active virtualenv
+eval $(minikube docker-env --unset)   # if docker-env variables were set previously
+minikube stop                         # stop minikube
+```
+
+# WebJive GUI
 
 This prototype provides a graphical user interface, using WebJive; to use, deploy with ```make install-chart-with-taranta```, then navigate to `integration.engageska-portugal.pt` in a browser. The following credentials can be used:
 
@@ -179,13 +203,30 @@ This prototype provides a graphical user interface, using WebJive; to use, deplo
 
 The device tree can be viewed and explored. In addition, device attributes can be seen and modified, and device commands can be sent, by creating and saving a new dashboard.
 
-# 5.0 Development resources
+# Releasing
 
-### 5.1 Other resources
+For a new release (i.e. prior to merging a branch into master) update the following files by incrementing version/release/tag number fields to conform to the semantic versioning convention:
+* `.release`: `release=` and `tag=`
+* `src/ska_mid_cbf_mcs/release.py`: `version = `
+* `charts/ska-mid-cbf/Chart.yaml`: `version:` and `appVersion:`
+* `charts/ska-mid-cbf/values.yaml`: `midcbf:image:tag:`
+* `charts/ska-mid-cbf-tmleafnode/Chart.yaml`: `version:` and `appVersion:`
+* `charts/ska-mid-cbf-tmleafnode/values.yaml`: `midcbf:image:tag:`
+* `charts/mid-cbf-umbrella/Chart.yaml`: 
+  * `version:` and `appVersion:`
+  * `version:` under `ska-mid-cbf` and `ska-mid-cbf-tmleafnode`
+
+*Note*: `appVersion` represents the version of the application running, so it corresponds to the ska-mid-cbf-mcs docker image version.
+
+Once a new release has been merged into master, create a new tag on GitLab and run the manual "publish-chart" stage of the tag pipeline to publish the Helm charts.
+
+# Development resources
+
+### Other resources
 
 See more tango device guidelines and examples in the `ska-tango-examples` repository
 
-### 5.2 Useful commands
+### Useful commands
 
 For Kubernetes basic kubectl commands see: https://kubernetes.io/docs/reference/kubectl/cheatsheet/
 
@@ -219,23 +260,6 @@ These commands should list the following running containers:
 * `midcbf-tangodb`: The MySQL database with the TANGO database tables.
 * etc.
 
-# 6.0 Release
-
-For a new release (i.e. prior to merging a branch into master) update the following fields by incrementing version/release/tag numbers to conform to the semantic versioning convention:
-* `.release`: `release=` and `tag=`
-* `src/ska_mid_cbf_mcs/release.py`: `version = `
-* `charts/ska-mid-cbf/Chart.yaml`: `version:` and `appVersion:`
-* `charts/ska-mid-cbf/values.yaml`: `tag:` field under `midcbf: image:`
-* `charts/ska-mid-cbf-tmleafnode/Chart.yaml`: `version:` and `appVersion:`
-* `charts/ska-mid-cbf-tmleafnode/values.yaml`: `tag:` field under `midcbf: image:`
-* `charts/mid-cbf-umbrella/Chart.yaml`: 
-  * `version:`, `appVersion:`
-  * `version:` under `ska-mid-cbf` and `ska-mid-cbf-tmleafnode`.
-
-*Note*: `appVersion` represents the version of the application running, so it corresponds to the ska-mid-cbf-mcs docker image version.
-
-Once a new release has been merged into master, create a new tag on GitLab and run the manual "publish-chart" stage of the tag pipeline to publish the Helm charts.
-
-# 7.0 License
+# License
 
 See the `LICENSE` file for details.
