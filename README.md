@@ -11,8 +11,8 @@ Documentation on the Developer's portal:
   * [Install a virtual vachine](#install-a-virtual-machine)
   * [Install Ubuntu](#install-ubuntu)
   * [Set up development environment (DEPRECATED)](#set-up-development-environment) 
-  * [Set up Kubernetes](#set-up-kubernetes)
   * [Set up the Mid CBF MCS Software](#set-up-the-mid-cbf-mcs-software)
+  * [Set up Kubernetes](#set-up-kubernetes)
 * [Running the Mid CBF MCS](#running-the-mid-cbf-mcs)
 * [WebJIVE GUI](#webjive-gui)
 * [Releasing](#releasing)
@@ -60,12 +60,12 @@ This section follows the instructions on the SKA developer’s portal:
 
 The following settings are needed for the virtual machine, running on a Windows 10 host:
 * 4 CPUs
-* 8 GB RAM
+* 8 GB RAM (ideally more, maximum that VirtualBox recommends)
 * ~40 GB storage
 
 ## Install a virtual machine
 
-Download and install VirtualBox from: https://www.virtualbox.org/wiki/Downloads
+Download and install VirtualBox and the extension pack from: https://www.virtualbox.org/wiki/Downloads
 
 ## Install Ubuntu
 
@@ -85,7 +85,7 @@ Steps:
 
 ## Set up development environment 
 
-### DEPRECATION NOTICE: ansible-playbooks repository no longer supported; MCS required installations detailed in subsequent sections, though this step may be useful in setting up a new virtual machine for SKA development
+### DEPRECATION NOTICE: ansible-playbooks repository no longer supported; MCS required installations detailed in subsequent sections, though this step is not recommended anymore it may be useful in setting up a new virtual machine for SKA development
 
 Setting up the Development environment, including Tango environment,  is performed using the ansible playbook script. Follow the commands in the yellow box under the 'Creating a Development Environment' section of the https://developer.skatelescope.org/en/latest/getting-started/devenv-setup/tango-devenv-setup.html web page.
 
@@ -106,6 +106,26 @@ ansible-playbook -i hosts deploy_tangoenv.yml --extra-vars "ansible_become_pass=
 
 *Note 5*: If you experience other issues with the script ask questions in the #team-system-support slack channel.
 
+## Set up the Mid CBF MCS Software
+
+The basic requirements are:
+* Python 3.5
+* pip
+
+The following projects are required:
+* ska-mid-cbf-mcs
+* ska-tango-base
+
+To get a local copy of the ska-mid-cbf-mcs project:
+```
+sudo apt -y install git                                         # if git not yet installed
+git clone https://gitlab.com/ska-telescope/ska-mid-cbf-mcs.git  # clone the MCS repository locally
+```
+
+To install ska-tango-base (as a Python package), follow the 'Installation steps' of the README at: `https://gitlab.com/ska-telescope/ska-tango-base`
+
+*Note*:SKA Tango base classes are needed when using Pogo to automatically generate Python TANGO code. Pogo will ask for the Base class pogo (.xmi) files, which are located in the ska-tango-base folder.
+
 ## Set up Kubernetes
 
 For installing Kubernetes, Minikube and Helm, follow the instructions at ```https://developer.skatelescope.org/en/latest/tools/dev-faq.html```.
@@ -113,28 +133,9 @@ For installing Kubernetes, Minikube and Helm, follow the instructions at ```http
 ### Individual installation instructions
 * [Docker Engine](https://docs.docker.com/engine/install/ubuntu/)
 * [minikube](https://minikube.sigs.k8s.io/docs/start/)
-  * Clone the `https://gitlab.com/ska-telescope/ska-cicd-deploy-minikube` project and follow the README instructions to configure the minikube deployment.
+  * Clone the `https://gitlab.com/ska-telescope/ska-cicd-deploy-minikube` project and follow the README instructions to configure minikube correctly.
 * [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/)
 * [Helm](https://helm.sh/docs/intro/install/)
-
-## Set up the Mid CBF MCS Software
-
-The following projects are required:
-* ska-mid-cbf-mcs
-* ska-tango-base
-
-The basic requirements are:
-* Python 3.5
-* pip
-
-To get a local copy of the ska-mid-cbf-mcs project:
-```
-git clone https://gitlab.com/ska-telescope/ska-mid-cbf-mcs.git
-```
-
-To install ska-tango-base (as a Python package), follow the 'Installation steps' of the README at: `https://gitlab.com/ska-telescope/ska-tango-base`
-
-*Note*:SKA Tango base classes are needed when using Pogo to automatically generate Python TANGO code. Pogo will ask for the Base class pogo (.xmi) files, which are located in the ska-tango-base folder.
 
 # Running the Mid CBF MCS
 
