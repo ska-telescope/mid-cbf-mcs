@@ -90,6 +90,9 @@ unit_test: ## Run simulation mode unit tests; currently only Vcc tests are supp
 	@mkdir -p build; \
 	PYTHONPATH=src:tests pytest -v ./tests/unit/Vcc_test.py $(FILE) --test-context --cov=src/ska_mid_cbf_mcs/Vcc
 
+jive: ## configure TANGO_HOST to enable Jive
+	export TANGO_HOST=$$(minikube ip):$$(kubectl describe service -n $(KUBE_NAMESPACE) $(TANGO_DATABASE) | grep -i 'NodePort:' | awk '{print $$3}' | sed 's;/TCP;;')
+
 # pull and interactive preserved from docker.mk
 ###############################################
 # pull:  ## download the application image
@@ -104,4 +107,4 @@ unit_test: ## Run simulation mode unit tests; currently only Vcc tests are supp
 
 #pytest $(if $(findstring all,$(MARK)),, -m '$(MARK)')
 
-.PHONY: all unit_test requirements test up down help k8s show lint logs describe mkcerts localip namespace delete_namespace ingress_check kubeconfig kubectl_dependencies helm_dependencies rk8s_test k8s_test rlint
+.PHONY: all jive unit_test requirements test up down help k8s show lint logs describe mkcerts localip namespace delete_namespace ingress_check kubeconfig kubectl_dependencies helm_dependencies rk8s_test k8s_test rlint

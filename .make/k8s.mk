@@ -4,7 +4,8 @@ MINIKUBE ?= true## Minikube or not
 MARK ?= all## mark tests to be executed
 IMAGE_TO_TEST ?= $(CAR_OCI_REGISTRY_HOST)/$(PROJECT):$(IMAGE_TAG)## docker image that will be run for testing purpose	
 MAX_WAIT ?= 300s##wait timeout
-TANGO_HOST = tango-host-databaseds-from-makefile-$(HELM_RELEASE):10000## TANGO_HOST is an input!
+TANGO_DATABASE = tango-host-databaseds-from-makefile-$(HELM_RELEASE)
+TANGO_HOST = $(TANGO_DATABASE):10000## TANGO_HOST is an input!
 LINTING_OUTPUT=$(shell helm lint charts/* | grep ERROR -c | tail -1)
 
 CHARTS ?= ska-mid-cbf-umbrella ska-mid-cbf ska-mid-cbf-tmleafnode ## list of charts to be published on gitlab -- umbrella charts for testing purpose
