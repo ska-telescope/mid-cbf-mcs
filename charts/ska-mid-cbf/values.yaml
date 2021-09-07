@@ -54,7 +54,7 @@ deviceServers:
   - name: cbfcontroller
     function: cbf-central-control
     domain: csp-monitoring
-    command: "/venv/bin/python /app/src/ska_mid_cbf_mcs/controller/controller.py "
+    command: "/venv/bin/python /app/src/ska_mid_cbf_mcs/controller/controller_device.py "
     instances: ["controller"]
     depends_on:
       - device: mid_csp_cbf/vcc/001   
@@ -73,7 +73,7 @@ deviceServers:
   - name: cbfsubarray01
     function: cbf-subarray-observation
     domain: subarray
-    command: "/venv/bin/python /app/src/ska_mid_cbf_mcs/subarray/subarray.py "
+    command: "/venv/bin/python /app/src/ska_mid_cbf_mcs/subarray/subarray_device.py "
     instances: ["cbfsubarray-01"]
     depends_on:
       - device: mid_csp_cbf/sub_elt/controller
@@ -85,7 +85,7 @@ deviceServers:
   - name: cbfsubarray02
     function: cbf-subarray-observation
     domain: subarray
-    command: "/venv/bin/python /app/src/ska_mid_cbf_mcs/subarray/subarray.py "
+    command: "/venv/bin/python /app/src/ska_mid_cbf_mcs/subarray/subarray_device.py "
     instances: ["cbfsubarray-02"]
     depends_on:
       - device: mid_csp_cbf/sub_elt/controller
@@ -97,7 +97,7 @@ deviceServers:
   - name: cbfsubarray03
     function: cbf-subarray-observation
     domain: subarray
-    command: "/venv/bin/python /app/src/ska_mid_cbf_mcs/subarray/subarray.py "
+    command: "/venv/bin/python /app/src/ska_mid_cbf_mcs/subarray/subarray_device.py "
     instances: ["cbfsubarray-03"]
     depends_on:
       - device: mid_csp_cbf/sub_elt/controller
