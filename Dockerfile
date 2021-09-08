@@ -14,4 +14,4 @@ ENV PATH=/home/tango/.local/bin:$PATH
 # USER tango
 RUN python3 -m pip install -r requirements.txt .
 
-CMD ["/venv/bin/python", "/app/src/ska_mid_cbf_mcs/controller/controller_device.py"]
+# CMD ["/venv/bin/python", "/app/src/ska_mid_cbf_mcs/controller/controller_device.py"]

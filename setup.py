@@ -44,6 +44,15 @@ setuptools.setup(
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
     ],
+    entry_points={
+        "console_scripts": [
+            "CbfController=ska_mid_cbf_mcs.controller.controller_device:main",
+            "CbfSubarray=ska_mid_cbf_mcs.subarray.subarray_device:main",
+            "FspMulti=ska_mid_cbf_mcs.fsp.fsp_multi:main",
+            "VccMulti=ska_mid_cbf_mcs.vcc.vcc_multi:main",
+            "TmCspSubarrayLeafNodeTest=ska_mid_cbf_mcs.tm_leaf_node:main",
+        ]
+    },
     test_suite='tests',
     install_requires=[
         'pytango >= 9.3.2',
