@@ -1431,49 +1431,40 @@ class CbfSubarray(SKASubarray):
     # TODO - not needed for sw devices (sw devs are disabled becasue same 
     # functionality is in vccSearchWindow; 
     # go by supper class method for now
-    # def is_On_allowed(self):
-    #     """allowed if DevState is OFF"""
-    #     if self.dev_state() == tango.DevState.OFF:
-    #         return True
-    #     return False
+    
 
-    # class OnCommand(SKASubarray.OnCommand):
-    #     """
-    #     A class for the SKASubarray's On() command.
-    #     """
-    #     def do(self):
-    #         """
-    #         Stateless hook for On() command functionality.
+    class OnCommand(SKASubarray.OnCommand):
+        """
+        A class for the SKASubarray's On() command.
+        """
+        def do(self):
+            """
+            Stateless hook for On() command functionality.
 
-    #         :return: A tuple containing a return code and a string
-    #             message indicating status. The message is for
-    #             information purpose only.
-    #         :rtype: (ResultCode, str)
-    #         """
-    #         (result_code,message)=super().do()
-    #         device = self.target
-    #         device._proxy_sw_1.SetState(tango.DevState.DISABLE)
-    #         device._proxy_sw_2.SetState(tango.DevState.DISABLE)
-    #         return (result_code,message)
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
+            return super().do()
 
-    # class OffCommand(SKASubarray.OffCommand):
-    #     """
-    #     A class for the SKASubarray's Off() command.
-    #     """
-    #     def do(self):
-    #         """
-    #         Stateless hook for Off() command functionality.
+    class OffCommand(SKASubarray.OffCommand):
+        """
+        A class for the SKASubarray's Off() command.
+        """
+        def do(self):
+            """
+            Stateless hook for Off() command functionality.
 
-    #         :return: A tuple containing a return code and a string
-    #             message indicating status. The message is for
-    #             information purpose only.
-    #         :rtype: (ResultCode, str)
-    #         """
-    #         (result_code,message)=super().do()
-    #         device = self.target
-    #         device._proxy_sw_1.SetState(tango.DevState.OFF)
-    #         device._proxy_sw_2.SetState(tango.DevState.OFF)
-    #         return (result_code,message)
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
+            (result_code,message)=super().do()
+            device = self.target
+            device.RemoveAllReceptors()
+            return (result_code,message)
 
 
     ##################  Receptors Related Commands  ###################
