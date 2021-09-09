@@ -358,9 +358,8 @@ class CbfController(SKAMaster):
     # General methods
     # ---------------
 
-    # def init_device(self):
     class InitCommand(SKAMaster.InitCommand):
-        """initiate device and attributes"""
+
         def do(self):
             """
             Stateless hook for device initialisation.
@@ -370,6 +369,7 @@ class CbfController(SKAMaster):
                 information purpose only.
             :rtype: (ResultCode, str)
             """
+            self.logger.debug("Entering InitCommand()")
 
             device = self.target
 
