@@ -358,124 +358,8 @@ class CbfController(SKAMaster):
     # ---------------
 
     # def init_device(self):
-    #     """initiate device and attributes"""
-    #     SKAMaster.init_device(self)
-        # PROTECTED REGION ID(CbfController.init_device) ENABLED START #
-    #     self.set_state(tango.DevState.INIT)
-
-    #     # defines self._count_vcc, self._count_fsp, and self._count_subarray
-    #     self.__get_num_capabilities()
-
-    #     self._storage_logging_level = tango.LogLevel.LOG_DEBUG
-    #     self._element_logging_level = tango.LogLevel.LOG_DEBUG
-    #     self._central_logging_level = tango.LogLevel.LOG_DEBUG
-
-    #     # initialize attribute values
-    #     self._command_progress = 0
-    #     self._report_vcc_state = [tango.DevState.UNKNOWN] * self._count_vcc
-    #     self._report_vcc_health_state = [HealthState.UNKNOWN.value] * self._count_vcc
-    #     self._report_vcc_admin_mode = [AdminMode.ONLINE.value] * self._count_vcc
-    #     self._report_vcc_subarray_membership = [0] * self._count_vcc
-    #     self._report_fsp_state = [tango.DevState.UNKNOWN] * self._count_fsp
-    #     self._report_fsp_health_state = [HealthState.UNKNOWN.value] * self._count_fsp
-    #     self._report_fsp_admin_mode = [AdminMode.ONLINE.value] * self._count_fsp
-    #     self._report_fsp_corr_subarray_membership = [[] for i in range(self._count_fsp)]
-    #     self._report_subarray_state = [tango.DevState.UNKNOWN] * self._count_subarray
-    #     self._report_subarray_health_state = [HealthState.UNKNOWN.value] * self._count_subarray
-    #     self._report_subarray_admin_mode = [AdminMode.ONLINE.value] * self._count_subarray
-    #     self._frequency_offset_k = [0] * self._count_vcc
-    #     self._frequency_offset_delta_f = [0] * self._count_vcc
-    #     self._subarray_config_ID = [""] * self._count_subarray
-
-    #     # initialize lists with subarray/capability FQDNs
-    #     self._fqdn_vcc = list(self.VCC)[:self._count_vcc]
-    #     self._fqdn_fsp = list(self.FSP)[:self._count_fsp]
-    #     self._fqdn_subarray = list(self.CbfSubarray)[:self._count_subarray]
-
-    #     # initialize dicts with maps receptorID <=> vccID (randomly for now, for testing purposes)
-    #     # maps receptor IDs to VCC IDs, in the form "receptorID:vccID"
-    #     self._receptor_to_vcc = []
-    #     # maps VCC IDs to receptor IDs, in the form "vccID:receptorID"
-    #     self._vcc_to_receptor = []
-
-    #     remaining = list(range(1, self._count_vcc + 1))
-    #     for i in range(1, self._count_vcc + 1):
-    #         receptorIDIndex = randint(0, len(remaining) - 1)
-    #         receptorID = remaining[receptorIDIndex]
-    #         self._receptor_to_vcc.append("{}:{}".format(receptorID, i))
-    #         self._vcc_to_receptor.append("{}:{}".format(i, receptorID))
-    #         vcc_proxy = tango.DeviceProxy(self._fqdn_vcc[i - 1])
-    #         vcc_proxy.receptorID = receptorID
-    #         del remaining[receptorIDIndex]
-
-    #     # initialize the dict with subarray/capability proxies
-    #     self._proxies = {}  # device_name:proxy
-
-    #     # initialize the dict with the subscribed event IDs
-    #     self._event_id = {}  # proxy:[eventID]
-
-    #     # initialize groups
-    #     self._group_vcc = tango.Group("VCC")
-    #     for fqdn in self._fqdn_vcc:
-    #         self._group_vcc.add(fqdn)
-    #     self._group_fsp = tango.Group("FSP")
-    #     for fqdn in self._fqdn_fsp:
-    #         self._group_fsp.add(fqdn)
-    #     self._group_subarray = tango.Group("CBF Subarray")
-    #     for fqdn in self._fqdn_subarray:
-    #         self._group_subarray.add(fqdn)
-
-    #     # Try connection with each subarray/capability
-    #     for fqdn in self._fqdn_vcc + self._fqdn_fsp + self._fqdn_subarray:
-    #         try:
-    #             log_msg = "Trying connection to " + fqdn + " device"
-    #             self.logger.info(log_msg)
-    #             device_proxy = tango.DeviceProxy(fqdn)
-    #             device_proxy.ping()
-
-    #             self._proxies[fqdn] = device_proxy
-    #             events = []
-
-    #             # subscribe to change events on subarrays/capabilities
-    #             for attribute_val in ["adminMode", "healthState", "State"]:
-    #                 events.append(
-    #                     device_proxy.subscribe_event(
-    #                         attribute_val, tango.EventType.CHANGE_EVENT,
-    #                         self.__state_change_event_callback, stateless=True
-    #                     )
-    #                 )
-
-    #             # subscribe to VCC/FSP subarray membership change events
-    #             if "vcc" in fqdn or "fsp" in fqdn:
-    #                 events.append(
-    #                     device_proxy.subscribe_event(
-    #                         "subarrayMembership", tango.EventType.CHANGE_EVENT,
-    #                         self.__membership_event_callback, stateless=True
-    #                     )
-    #                 )
-
-    #             # subscribe to subarray config ID change events
-    #             # if "subarray" in fqdn:
-    #             #     events.append(
-    #             #         device_proxy.subscribe_event(
-    #             #             "configID", tango.EventType.CHANGE_EVENT,
-    #             #             self.__config_ID_event_callback, stateless=True
-    #             #         )
-    #             #     )
-
-    #             self._event_id[device_proxy] = events
-    #         except tango.DevFailed as df:
-    #             for item in df.args:
-    #                 log_msg = "Failure in connection to " + fqdn + " device: " + str(item.reason)
-    #                 self.logger.error(log_msg)
-
-    #     self.set_state(tango.DevState.STANDBY)
-
     class InitCommand(SKAMaster.InitCommand):
-        """
-        A class for the CbfController's init_device() "command".
-        """
-
+        """initiate device and attributes"""
         def do(self):
             """
             Stateless hook for device initialisation.
@@ -486,8 +370,8 @@ class CbfController(SKAMaster):
             :rtype: (ResultCode, str)
             """
 
-            self.logger.debug("Entering InitCommand()")
-
+            # SKAMaster.init_device(self)
+            # PROTECTED REGION ID(CbfController.init_device) ENABLED START #
             self.set_state(tango.DevState.INIT)
 
             # defines self._count_vcc, self._count_fsp, and self._count_subarray
@@ -599,6 +483,25 @@ class CbfController(SKAMaster):
             self.set_state(tango.DevState.STANDBY)
         # PROTECTED REGION END #    //  CbfController.init_device
 
+    def always_executed_hook(self):
+        # PROTECTED REGION ID(CbfController.always_executed_hook) ENABLED START #
+        """hook to be executed before any command"""
+        pass
+        # PROTECTED REGION END #    //  CbfController.always_executed_hook
+
+    def delete_device(self):
+        """Unsubscribe to events, turn all the subarrays, VCCs and FSPs off""" 
+        # PROTECTED REGION ID(CbfController.delete_device) ENABLED START #
+        # unsubscribe to events
+        for proxy in list(self._event_id.keys()):
+            for event_id in self._event_id[proxy]:
+                proxy.unsubscribe_event(event_id)
+
+        self._group_subarray.command_inout("Off")
+        self._group_vcc.command_inout("Off")
+        self._group_fsp.command_inout("Off")
+        self.set_state(tango.DevState.OFF)
+        # PROTECTED REGION END #    //  CbfController.delete_device
 
     # ------------------
     # Attributes methods
