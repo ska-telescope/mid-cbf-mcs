@@ -358,6 +358,15 @@ class CbfController(SKAMaster):
     # General methods
     # ---------------
 
+    def init_command_objects(self):
+        """
+        Sets up the command objects
+        """
+        super().init_command_objects()
+
+        device_args = (self, self.state_model, self.logger)
+
+
     def init_device(self):
         """initiate device and attributes"""
         SKAMaster.init_device(self)
