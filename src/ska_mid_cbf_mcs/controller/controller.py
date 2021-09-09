@@ -34,6 +34,7 @@ file_path = os.path.dirname(os.path.abspath(__file__))
 
 from ska_tango_base import SKAMaster
 from ska_tango_base.control_model import HealthState, AdminMode
+from ska_tango_base.commands import ResultCode
 
 # PROTECTED REGION END #    //  CbfController.additionnal_import
 
