@@ -595,6 +595,8 @@ class CbfController(SKAMaster):
                     for item in df.args:
                         log_msg = "Failure in connection to " + fqdn + " device: " + str(item.reason)
                         self.logger.error(log_msg)
+
+                device.set_state(tango.DevState.STANDBY)
         # PROTECTED REGION END #    //  CbfController.init_device
 
 
