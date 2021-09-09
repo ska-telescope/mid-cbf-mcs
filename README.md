@@ -85,9 +85,21 @@ Steps:
 
 ## Set up development environment 
 
-### DEPRECATION NOTICE: ansible-playbooks repository no longer supported; MCS required installations detailed in subsequent sections, though this step is not recommended anymore it may be useful in setting up a new virtual machine for SKA development
+### DEPRECATION NOTICE: ansible-playbooks repository no longer supported; MCS required installations detailed in subsequent sections. Although this repository is not supported anymore it is still useful in setting up a new virtual machine for SKA development
 
 Setting up the Development environment, including Tango environment,  is performed using the ansible playbook script. Follow the commands in the yellow box under the 'Creating a Development Environment' section of the https://developer.skatelescope.org/en/latest/getting-started/devenv-setup/tango-devenv-setup.html web page.
+
+```
+sudo apt -y install git
+git clone https://gitlab.com/ska-telescope/ansible-playbooks
+cd ansible-playbooks
+sudo apt-add-repository --yes --update ppa:ansible/ansible && \
+    sudo apt -y install ansible
+ansible-playbook -i hosts deploy_tangoenv.yml \
+    --extra-vars "ansible_become_pass=osboxes.org" \
+    -e ansible_python_interpreter=/usr/bin/python
+sudo reboot
+```
 
 See that page for a list of the applications installed in this way.
 
@@ -118,7 +130,6 @@ The following projects are required:
 
 To get a local copy of the ska-mid-cbf-mcs project:
 ```
-sudo apt -y install git                                         # if git not yet installed
 git clone https://gitlab.com/ska-telescope/ska-mid-cbf-mcs.git  # clone the MCS repository locally
 ```
 
@@ -132,10 +143,8 @@ For installing Kubernetes, Minikube and Helm, follow the instructions at ```http
 
 ### Individual installation instructions
 * [Docker Engine](https://docs.docker.com/engine/install/ubuntu/)
-* [minikube](https://minikube.sigs.k8s.io/docs/start/)
-  * Clone the `https://gitlab.com/ska-telescope/ska-cicd-deploy-minikube` project and follow the README instructions to configure minikube correctly.
-* [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/)
-* [Helm](https://helm.sh/docs/intro/install/)
+* [minikube](https://minikube.sigs.k8s.io/docs/start/), [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/) and [Helm](https://helm.sh/docs/intro/install/)
+  * Clone the `https://gitlab.com/ska-telescope/ska-cicd-deploy-minikube` project and follow the README instructions to install and configure minikube, kubectl and Helm correctly.
 
 # Running the Mid CBF MCS
 
@@ -166,11 +175,12 @@ make build
 
 #### 3.  Install the umbrella chart.
 ```
-make install-chart  # deploy from Helm charts
+make install-chart        # deploy from Helm charts
+make install-chart-only   # deploy from Helm charts without updating dependencies
 ```
 *Note*: `make watch` will list all of the pods' status in every 2 seconds using kubectl; `make wait` will wait until all jobs are 'Completed' and pods are 'Running'.
 
-#### 4.  (Optional) Create python virtual environment to isolate project specific packages from your host environment.
+#### 4.  (Optional) Create python virtual environment to isolate project specific dependencies from your host environment.
 ```
 virtualenv venv           # create python virtualenv 'venv'
 source venv/bin/activate  # activate venv
@@ -183,9 +193,11 @@ make requirements
 
 #### 6.  Run a test.
 ```
-make test       # functional tests, needs a running deployment
+make test       # functional tests, creates a running deployment
+make test-only  # functional tests with an already running deployment
 make unit_test  # unit tests, deployment does not need to be running
 ```
+*Note*: add `-k` pytest flags in `setup.cfg` in the project root to limit which tests are run
 
 #### 6.  Tear down the deployment.
 ```
@@ -195,8 +207,12 @@ eval $(minikube docker-env --unset)   # if docker-env variables were set previou
 minikube stop                         # stop minikube
 ```
 
-# WebJive GUI
+# Jive and WebJive
 
+## Jive
+Run `make jive` with the deployment active to get a command useful for configuring local Jive.
+
+## WebJive
 This prototype provides a graphical user interface, using WebJive; to use, deploy with ```make install-chart-with-taranta```, then navigate to `integration.engageska-portugal.pt` in a browser. The following credentials can be used:
 
 * Username: `CIPA`

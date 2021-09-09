@@ -101,7 +101,7 @@ install-chart: dep-up namespace ## install the helm chart with name HELM_RELEASE
 	rm values.yaml
 
 # Same as 'install-chart' but without 'dep-up'
-install-only: ## install the helm chart with name HELM_RELEASE and path UMBRELLA_CHART_PATH on the namespace KUBE_NAMESPACE 
+install-chart-only: ## install the helm chart with name HELM_RELEASE and path UMBRELLA_CHART_PATH on the namespace KUBE_NAMESPACE 
 	@echo $(TANGO_HOST)
 	@echo "HELM_RELEASE=$(HELM_RELEASE)"
 	@sed -e 's/CI_PROJECT_PATH_SLUG/$(CI_PROJECT_PATH_SLUG)/' $(UMBRELLA_CHART_PATH)values.yaml > generated_values.yaml; \
@@ -147,7 +147,7 @@ uninstall-chart: ## uninstall the ska-mid-cbf-umbrella helm chart on the namespa
 
 reinstall-chart: uninstall-chart install-chart ## reinstall ska-mid-cbf-umbrella helm chart
 
-reinstall-only: uninstall-chart install-only ## reinstall ska-mid-cbf-umbrella helm chart
+reinstall-chart-only: uninstall-chart install-chart-only ## reinstall ska-mid-cbf-umbrella helm chart
 
 upgrade-chart: ## upgrade the ska-mid-cbf-umbrella helm chart on the namespace mid-cbf 
 	helm upgrade --set global.minikube=$(MINIKUBE) --set global.tango_host=$(TANGO_HOST) $(HELM_RELEASE) $(UMBRELLA_CHART_PATH) --namespace $(KUBE_NAMESPACE) 

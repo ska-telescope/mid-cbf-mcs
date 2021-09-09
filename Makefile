@@ -91,6 +91,9 @@ unit_test: ## Run simulation mode unit tests; currently only Vcc tests are supp
 	PYTHONPATH=src:tests pytest -v ./tests/unit/Vcc_test.py $(FILE) --test-context --cov=src/ska_mid_cbf_mcs/Vcc
 
 jive: ## configure TANGO_HOST to enable Jive
+	@echo
+	@echo 'With the deployment active, copy and run the following command to configure TANGO_HOST for local jive:'
+	@echo
 	export TANGO_HOST=$$(minikube ip):$$(kubectl describe service -n $(KUBE_NAMESPACE) $(TANGO_DATABASE) | grep -i 'NodePort:' | awk '{print $$3}' | sed 's;/TCP;;')
 
 # pull and interactive preserved from docker.mk
