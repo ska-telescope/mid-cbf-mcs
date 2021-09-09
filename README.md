@@ -2,7 +2,6 @@
 
 Documentation on the Developer's portal:
 [![ReadTheDoc](https://developer.skao.int/projects/ska-mid-cbf-mcs/en/latest/?badge=latest)](https://developer.skao.int/projects/ska-mid-cbf-mcs/en/latest/?badge=latest)
-#TODO: ReadTheDocs build currently broken
 
 # Table Of Contents
 * [Introduction](#introduction)
@@ -10,7 +9,7 @@ Documentation on the Developer's portal:
   * [Hardware and OS requirements](#hardware-and-os-requirements)
   * [Install a virtual vachine](#install-a-virtual-machine)
   * [Install Ubuntu](#install-ubuntu)
-  * [Set up development environment (DEPRECATED)](#set-up-development-environment) 
+  * [Set up development environment](#set-up-development-environment) 
   * [Set up the Mid CBF MCS Software](#set-up-the-mid-cbf-mcs-software)
   * [Set up Kubernetes](#set-up-kubernetes)
 * [Running the Mid CBF MCS](#running-the-mid-cbf-mcs)
@@ -245,14 +244,34 @@ See more tango device guidelines and examples in the `ska-tango-examples` reposi
 
 ### Useful commands
 
+#### Kubernetes
 For Kubernetes basic kubectl commands see: https://kubernetes.io/docs/reference/kubectl/cheatsheet/
 
-To display all components of the Kubernetes system:
+To display components of the MCS Kubernetes system:
 
 ```
 kubectl get all -n ska-mid-cbf
+kubectl describe <component-name> -n ska-mid-cbf  # info on a particular component
 ```
+This should list the following running pods:
 
+* `cbfcontroller-controller-0 `: The `CbfController` TANGO device server.
+* `cbfsubarrayxx-cbf-subarray-xx-0`: `xx` ranges from `01` to `03`. The 3 instances of the `CbfSubarray` TANGO device server.
+* `fspxx-fsp-xx-0`: `xx` ranges from `01` to `04`. The 4 instances of the `FspMulti` TANGO device servers.
+* `vccxxx-vcc-xxx-0`: `xxx` ranges from `001` to `004`. The 4 instances of the `VccMulti` TANGO device servers.
+* `tmcspsubarrayleafnodetestx-tmx-0`: `x` ranges from `1` to `2`. The 2 instances of the `TmCspSubarrayLeafNodeTest` TANGO device servers.
+* `tango-host-databaseds-from-makefile-test-0`: The TANGO DB device server.
+* etc.
+
+#### Docker
+System info and cleanup
+```
+docker system info
+docker system prune
+docker images
+docker image rm <image-ID(s)>
+docker volume ls
+```
 To list the running containers issue:
 ```
 docker ps
@@ -265,17 +284,6 @@ To list all created containers but less verbose, run for example:
 ```
 docker ps -a --format "table {{.ID}}\t{{.Status}}\t{{.Names}}"
 ``` 
-These commands should list the following running containers:
-
-* `midcbf-cbfcontroller`: The `CbfController` TANGO device server.
-* `midcbf-cbfsubarrayxx`ranges from `01` to `02` The 2 instances of the `CbfSubarray` TANGO device server.
-* `midcbf-fspxx`: `xx` ranges from `01` to `04`. The 4 instances of the `FspMulti` TANGO device servers.
-* `midcbf-vccxx`: `x` ranges from `01` to `04`. The 4 instances of the `VccMulti` TANGO device servers.
-* `midcbf-tmcspsubarrayleafnodetest`: The `TmCspSubarrayLeafNodeTest` TANGO device server.
-* `midcbf-rsyslog`: The rsyslog container for the TANGO devices.
-* `midcbf-databaseds`: The TANGO DB device server.
-* `midcbf-tangodb`: The MySQL database with the TANGO database tables.
-* etc.
 
 # License
 
