@@ -366,6 +366,29 @@ class CbfController(SKAMaster):
 
         device_args = (self, self.state_model, self.logger)
 
+    class InitCommand(SKAMaster.InitCommand):
+        """
+        A class for the CbfController's init_device() "command".
+        """
+
+        def do(self):
+            """
+            Stateless hook for device initialisation.
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
+
+            self.logger.debug("Entering InitCommand()")
+
+            super().do()
+
+            device = self.target
+
+            message = "CbfController Init command completed OK"
+            self.logger.info(message)
+            return (ResultCode.OK, message)
 
     def init_device(self):
         """initiate device and attributes"""
