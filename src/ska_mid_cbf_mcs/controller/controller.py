@@ -628,9 +628,9 @@ class CbfController(SKAMaster):
     # Commands
     # --------
 
-    class OnCommand(SKASubarray.OnCommand):
+    class OnCommand(SKAMaster.OnCommand):
         """
-        A class for the SKASubarray's On() command.
+        A class for the CbfController's On() command.
         """
         def do(self):
             """
