@@ -365,8 +365,9 @@ class CbfController(SKAMaster):
         super().init_command_objects()
 
         device_args = (self, self.state_model, self.logger)
+
         self.register_command_object(
-            "ConfigureScan", self.OnCommand(*device_args)
+            "OnCommand", self.OnCommand(*device_args)
         )
 
     def init_device(self):
