@@ -34,6 +34,7 @@ file_path = os.path.dirname(os.path.abspath(__file__))
 
 from ska_tango_base import SKAMaster
 from ska_tango_base.control_model import HealthState, AdminMode
+from ska_tango_base.commands import ResultCode
 
 # PROTECTED REGION END #    //  CbfController.additionnal_import
 
@@ -481,15 +482,7 @@ class CbfController(SKAMaster):
     def delete_device(self):
         """Unsubscribe to events, turn all the subarrays, VCCs and FSPs off""" 
         # PROTECTED REGION ID(CbfController.delete_device) ENABLED START #
-        # unsubscribe to events
-        for proxy in list(self._event_id.keys()):
-            for event_id in self._event_id[proxy]:
-                proxy.unsubscribe_event(event_id)
-
-        self._group_subarray.command_inout("Off")
-        self._group_vcc.command_inout("Off")
-        self._group_fsp.command_inout("Off")
-        self.set_state(tango.DevState.OFF)
+        pass
         # PROTECTED REGION END #    //  CbfController.delete_device
 
     # ------------------
@@ -651,6 +644,10 @@ class CbfController(SKAMaster):
     def Off(self):
         # PROTECTED REGION ID(CbfController.Off) ENABLED START #
         """turn off subarray, vcc, fsp, CbfController"""
+        # unsubscribe to events
+        for proxy in list(self._event_id.keys()):
+            for event_id in self._event_id[proxy]:
+                proxy.unsubscribe_event(event_id)
         self._group_subarray.command_inout("Off")
         self._group_vcc.command_inout("Off")
         self._group_fsp.command_inout("Off")
