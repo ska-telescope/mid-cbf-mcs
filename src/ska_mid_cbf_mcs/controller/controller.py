@@ -364,7 +364,11 @@ class CbfController(SKAMaster):
         """
         super().init_command_objects()
 
-        device_args = (self, self.state_model, self.logger)
+        device_args = (self, self.op_state_model, self.logger)
+
+        self.register_command_object(
+            "On", self.OnCommand(*device_args)
+        )
 
         self.register_command_object(
             "Off", self.OffCommand(*device_args)
@@ -643,23 +647,35 @@ class CbfController(SKAMaster):
     # Commands
     # --------
 
+    class OnCommand(SKAMaster.OnCommand):
+        """
+        A class for the CbfController's On() command.
+        """
+        def do(self):
+            """
+            Stateless hook for On() command functionality.
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
+            (result_code,message)=super().do()
+
+            device = self.target
+
+            self._group_subarray.command_inout("On")
+            self._group_vcc.command_inout("On")
+            self._group_fsp.command_inout("On")
+            self.set_state(tango.DevState.ON)
+
+            return (result_code,message)
+
     def is_On_allowed(self):
         """allowed if DevState is STANDBY"""
         if self.dev_state() == tango.DevState.STANDBY:
             return True
         return False
-        
-    @command()
-    def On(self):
-        """turn CbfController on, also turn on subarray, vcc, fsp"""
-        # PROTECTED REGION ID(CbfController.On) ENABLED START #
-        # 2020-07-14: don't turn Subarray on with ADR8 update
-        self._group_subarray.command_inout("On")
-        self._group_vcc.command_inout("On")
-        self._group_fsp.command_inout("On")
-        self.set_state(tango.DevState.ON)
-        # PROTECTED REGION END #    //  CbfController.On
-
 
     class OffCommand(SKAMaster.OffCommand):
         """
