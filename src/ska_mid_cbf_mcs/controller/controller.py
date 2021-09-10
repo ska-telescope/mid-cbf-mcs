@@ -367,11 +367,11 @@ class CbfController(SKAMaster):
         device_args = (self, self.state_model, self.logger)
 
         self.register_command_object(
-            "OnCommand", self.OnCommand(*device_args)
+            "On", self.OnCommand(*device_args)
         )
 
         self.register_command_object(
-            "OffCommand", self.OffCommand(*device_args)
+            "Off", self.OffCommand(*device_args)
         )
 
     class InitCommand(SKAMaster.InitCommand):
@@ -390,8 +390,6 @@ class CbfController(SKAMaster):
             super().do()
 
             device = self.target
-
-            device.set_state(tango.DevState.INIT)
 
             # defines self._count_vcc, self._count_fsp, and self._count_subarray
             device.__get_num_capabilities()
@@ -681,11 +679,11 @@ class CbfController(SKAMaster):
 
     class OffCommand(SKAMaster.OffCommand):
         """
-        A class for the CbfController's On() command.
+        A class for the CbfController's Off() command.
         """
         def do(self):
             """
-            Stateless hook for On() command functionality.
+            Stateless hook for Off() command functionality.
 
             :return: A tuple containing a return code and a string
                 message indicating status. The message is for
