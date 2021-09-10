@@ -628,31 +628,29 @@ class CbfController(SKAMaster):
     # Commands
     # --------
 
-    class OnCommand(SKAMaster.OnCommand):
+    class OnCommand(SKASubarray.OnCommand):
         """
-        A class for the CbfController's On() command.
+        A class for the SKASubarray's On() command.
         """
-
-        def do(  # type: ignore[override]
-            self: CbfController.OnCommand,
-        ) -> tuple[ResultCode, str]:
+        def do(self):
             """
             Stateless hook for On() command functionality.
 
             :return: A tuple containing a return code and a string
                 message indicating status. The message is for
                 information purpose only.
+            :rtype: (ResultCode, str)
             """
-            device = self.target 
+            (result_code,message)=super().do()
+
+            device = self.target
 
             self._group_subarray.command_inout("On")
             self._group_vcc.command_inout("On")
             self._group_fsp.command_inout("On")
             self.set_state(tango.DevState.ON)
-            
-            message = "On command completed OK"
-            return (ResultCode.OK, message)
 
+            return (result_code,message)
 
     def is_On_allowed(self):
         """allowed if DevState is STANDBY"""
