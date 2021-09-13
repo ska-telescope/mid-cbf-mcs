@@ -32,7 +32,7 @@ from random import randint
 
 file_path = os.path.dirname(os.path.abspath(__file__))
 
-from ska_tango_base import SKAMaster
+from ska_tango_base import SKAMaster, SKABaseDevice
 from ska_tango_base.control_model import HealthState, AdminMode
 from ska_tango_base.commands import ResultCode
 
@@ -364,7 +364,7 @@ class CbfController(SKAMaster):
         """
         super().init_command_objects()
 
-        device_args = (self, self.op_state_model, self.logger)
+        device_args = (self, self.state_model, self.logger)
 
         self.register_command_object(
             "On", self.OnCommand(*device_args)
@@ -390,6 +390,8 @@ class CbfController(SKAMaster):
             super().do()
 
             device = self.target
+
+            self.set_state(tango.DevState.INIT)
 
             # defines self._count_vcc, self._count_fsp, and self._count_subarray
             device.__get_num_capabilities()
@@ -647,7 +649,7 @@ class CbfController(SKAMaster):
     # Commands
     # --------
 
-    class OnCommand(SKAMaster.OnCommand):
+    class OnCommand(SKABaseDevice.OnCommand):
         """
         A class for the CbfController's On() command.
         """
@@ -677,7 +679,7 @@ class CbfController(SKAMaster):
             return True
         return False
 
-    class OffCommand(SKAMaster.OffCommand):
+    class OffCommand(SKABaseDevice.OffCommand):
         """
         A class for the CbfController's Off() command.
         """
