@@ -39,7 +39,7 @@ file_path = os.path.dirname(os.path.abspath(__file__))
 
 from ska_mid_cbf_mcs.commons.global_enum import const, freq_band_dict
 from ska_tango_base.control_model import ObsState, AdminMode
-from ska_tango_base import SKASubarray
+from ska_tango_base import SKASubarray, SKABaseDevice
 from ska_tango_base.commands import ResultCode, BaseCommand, ResponseCommand, ActionCommand
 
 # PROTECTED REGION END #    //  CbfSubarray.additionnal_import
@@ -75,6 +75,14 @@ class CbfSubarray(SKASubarray):
         # resource_args = (self.resource_manager, self.state_model, self.logger) 
         # only use resource_args if we want to have separate resource_manager object
 
+        # self.register_command_object(
+        #     "On",
+        #     self.OnCommand(*device_args)
+        # )
+        self.register_command_object(
+            "Off",
+            self.OffCommand(*device_args)
+        )
         self.register_command_object(
             "Configure",
             self.ConfigureCommand(*device_args)
@@ -1433,22 +1441,22 @@ class CbfSubarray(SKASubarray):
     # go by supper class method for now
     
 
-    class OnCommand(SKASubarray.OnCommand):
-        """
-        A class for the SKASubarray's On() command.
-        """
-        def do(self):
-            """
-            Stateless hook for On() command functionality.
+    # class OnCommand(SKASubarray.OnCommand):
+    #     """
+    #     A class for the SKASubarray's On() command.
+    #     """
+    #     def do(self):
+    #         """
+    #         Stateless hook for On() command functionality.
 
-            :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-            :rtype: (ResultCode, str)
-            """
-            return super().do()
+    #         :return: A tuple containing a return code and a string
+    #             message indicating status. The message is for
+    #             information purpose only.
+    #         :rtype: (ResultCode, str)
+    #         """
+    #         return super().do()
 
-    class OffCommand(SKASubarray.OffCommand):
+    class OffCommand(SKABaseDevice.OffCommand):
         """
         A class for the SKASubarray's Off() command.
         """
@@ -1463,6 +1471,14 @@ class CbfSubarray(SKASubarray):
             """
             (result_code,message)=super().do()
             device = self.target
+            # if SCANNING, needs to set VCC and FSP subarray to READY
+            if device.scanID != 0:
+                self.logger.info("scanning")
+                device._group_vcc.command_inout("EndScan")
+                device._group_fsp_corr_subarray.command_inout("EndScan")
+                device._group_fsp_pss_subarray.command_inout("EndScan")
+                device._group_fsp_pst_subarray.command_inout("EndScan")
+            device._deconfigure()
             device.RemoveAllReceptors()
             return (result_code,message)
 

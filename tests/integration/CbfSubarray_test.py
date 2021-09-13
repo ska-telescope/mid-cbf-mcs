@@ -1509,6 +1509,61 @@ class TestCbfSubarray:
         except Exception as e:
             proxies.clean_proxies()
             raise e
+    
+    def test_OffCommand_Resourcing_Configuring(self, proxies):
+        try:
+            if proxies.controller.State() == DevState.OFF:
+                proxies.controller.Init()
+                proxies.wait_timeout_dev([proxies.controller], DevState.STANDBY, 3, 1)
+                proxies.controller.On()
+                proxies.wait_timeout_dev([proxies.controller], DevState.ON, 3, 1)
+            # turn on Subarray
+            if proxies.subarray[1].State() != DevState.ON:
+                proxies.subarray[1].On()
+                proxies.wait_timeout_dev([proxies.subarray[1]], DevState.ON, 3, 1)
+                for proxy in [proxies.vcc[i + 1] for i in range(4)]:
+                    if proxy.State() == DevState.OFF:
+                        proxy.On()
+                        proxies.wait_timeout_dev([proxy], DevState.ON, 1, 1)
+                for proxy in [proxies.fsp[i + 1] for i in range(4)]:
+                    if proxy.State() == DevState.OFF:
+                        proxy.On()
+                        proxies.wait_timeout_dev([proxy], DevState.ON, 1, 1)
+            assert proxies.subarray[1].State() == DevState.ON
+            assert proxies.subarray[1].obsState == ObsState.EMPTY
+
+            input_receptors = [1, 3, 4]
+
+            # add some receptors and turn subarray off 
+            proxies.subarray[1].AddReceptors(input_receptors)
+            proxies.subarray[1].Off()
+            proxies.wait_timeout_dev([proxies.subarray[1]], DevState.OFF, 3, 1)
+            assert proxies.subarray[1].State() == DevState.OFF
+            assert len(proxies.subarray[1].receptors) == 0
+            assert all([proxies.vcc[i + 1].subarrayMembership == 0 for i in range(4)])
+
+            proxies.subarray[1].On()
+            proxies.wait_timeout_dev([proxies.subarray[1]], DevState.ON, 3, 1)
+            proxies.subarray[1].AddReceptors(input_receptors)
+            proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.IDLE, 1, 1)
+            # configure scan 
+            f = open(file_path + "/../data/Configure_TM-CSP_v2.json")
+            configuration = f.read().replace("\n", "")
+            f.close()
+            proxies.subarray[1].ConfigureScan(configuration)
+            proxies.subarray[1].Off()
+            proxies.wait_timeout_dev([proxies.subarray[1]], DevState.OFF, 3, 1)
+            assert proxies.subarray[1].State() == DevState.OFF
+            assert len(proxies.subarray[1].receptors) == 0
+            assert all([proxies.vcc[i + 1].subarrayMembership == 0 for i in range(4)])
+            
+            
+        except AssertionError as ae:
+            proxies.clean_proxies()
+            raise ae
+        except Exception as e:
+            proxies.clean_proxies()
+            raise e
 
 '''    
     def test_ConfigureScan_onlyPss_basic(
