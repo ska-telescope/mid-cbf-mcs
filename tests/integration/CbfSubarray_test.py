@@ -1512,11 +1512,6 @@ class TestCbfSubarray:
     
     def test_OffCommand_Resourcing_Configuring(self, proxies):
         try:
-            if proxies.controller.State() == DevState.OFF:
-                proxies.controller.Init()
-                proxies.wait_timeout_dev([proxies.controller], DevState.STANDBY, 3, 1)
-                proxies.controller.On()
-                proxies.wait_timeout_dev([proxies.controller], DevState.ON, 3, 1)
             # turn on Subarray
             if proxies.subarray[1].State() != DevState.ON:
                 proxies.subarray[1].On()

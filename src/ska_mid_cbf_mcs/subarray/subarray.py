@@ -1436,11 +1436,6 @@ class CbfSubarray(SKASubarray):
     # Commands
     # --------
 
-    # TODO - not needed for sw devices (sw devs are disabled becasue same 
-    # functionality is in vccSearchWindow; 
-    # go by supper class method for now
-    
-
     # class OnCommand(SKASubarray.OnCommand):
     #     """
     #     A class for the SKASubarray's On() command.
@@ -1479,7 +1474,8 @@ class CbfSubarray(SKASubarray):
                 device._group_fsp_pss_subarray.command_inout("EndScan")
                 device._group_fsp_pst_subarray.command_inout("EndScan")
             device._deconfigure()
-            device.RemoveAllReceptors()
+            if len(device._receptors) > 0:
+                device._remove_receptors_helper(device._receptors[:])
             return (result_code,message)
 
 
