@@ -183,9 +183,11 @@ make requirements
 
 #### 6.  Run a test.
 ```
-make test       # functional tests, needs a running deployment
+make test       # functional tests, creates a running deployment
+make test-only  # functional tests with an already running deployment
 make unit_test  # unit tests, deployment does not need to be running
 ```
+*Note*: add `-k` pytest flags in `setup.cfg` in the project root to limit which tests are run
 
 #### 6.  Tear down the deployment.
 ```
