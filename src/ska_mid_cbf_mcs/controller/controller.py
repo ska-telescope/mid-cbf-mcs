@@ -16,6 +16,9 @@
 # CbfController Tango device prototype
 # CbfController TANGO device class for the CbfController prototype
 
+from __future__ import annotations  # allow forward references in type hints
+
+from typing import Tuple
 
 # tango imports
 import tango
@@ -239,7 +242,7 @@ class CbfController(SKAMaster):
     # General methods
     # ---------------
 
-    def init_command_objects(self):
+    def init_command_objects(self: CbfController) -> None:
         """
         Sets up the command objects
         """
@@ -257,7 +260,10 @@ class CbfController(SKAMaster):
 
     class InitCommand(SKAMaster.InitCommand):
 
-        def __state_change_event_callback(self, event):
+        def __state_change_event_callback(
+            self: CbfController.InitCommand, 
+            event
+        ) -> None:
 
             device = self.target
 
@@ -324,7 +330,10 @@ class CbfController(SKAMaster):
                     log_msg = item.reason + ": on attribute " + str(event.attr_name)
                     self.logger.error(log_msg)
 
-        def __membership_event_callback(self, event):
+        def __membership_event_callback(
+            self: CbfController.InitCommand, 
+            event
+        ) -> None:
 
             device = self.target
 
@@ -359,7 +368,9 @@ class CbfController(SKAMaster):
                     log_msg = item.reason + ": on attribute " + str(event.attr_name)
                     self.logger.error(log_msg)
 
-        def __get_num_capabilities(self):
+        def __get_num_capabilities(
+            self: CbfController.InitCommand, 
+        ) -> None:
             # self._max_capabilities inherited from SKAMaster
             # check first if property exists in DB
             """get number of capabilities for _init_Device. If property not found in db, then assign a default amount(197,27,16)"""
@@ -384,7 +395,9 @@ class CbfController(SKAMaster):
             else:
                 self.logger.warn("MaxCapabilities device property not defined")
 
-        def do(self):
+        def do(
+            self: CbfController.InitCommand,
+        ) -> Tuple[ResultCode, str]:
             """
             Stateless hook for device initialisation.
             :return: A tuple containing a return code and a string
@@ -509,13 +522,13 @@ class CbfController(SKAMaster):
             self.logger.info(message)
             return (ResultCode.OK, message)
 
-    def always_executed_hook(self):
+    def always_executed_hook(self: CbfController) -> None:
         # PROTECTED REGION ID(CbfController.always_executed_hook) ENABLED START #
         """hook to be executed before any command"""
         pass
         # PROTECTED REGION END #    //  CbfController.always_executed_hook
 
-    def delete_device(self):
+    def delete_device(self: CbfController) -> None:
         """Unsubscribe to events, turn all the subarrays, VCCs and FSPs off""" 
         # PROTECTED REGION ID(CbfController.delete_device) ENABLED START #
         pass
@@ -525,85 +538,85 @@ class CbfController(SKAMaster):
     # Attributes methods
     # ------------------
 
-    def read_commandProgress(self):
+    def read_commandProgress(self: CbfController) -> int:
         # PROTECTED REGION ID(CbfController.commandProgress_read) ENABLED START #
         """Return commandProgress attribute: percentage progress implemented for commands that result in state/mode transitions for a large \nnumber of components and/or are executed in stages (e.g power up, power down)"""
         return self._command_progress
         # PROTECTED REGION END #    //  CbfController.commandProgress_read
 
-    def read_receptorToVcc(self):
+    def read_receptorToVcc(self: CbfController) -> str:
         # PROTECTED REGION ID(CbfController.receptorToVcc_read) ENABLED START #
         """Return 'receptorID:vccID'"""
         return self._receptor_to_vcc
         # PROTECTED REGION END #    //  CbfController.receptorToVcc_read
 
-    def read_vccToReceptor(self):
+    def read_vccToReceptor(self: CbfController) -> str:
         # PROTECTED REGION ID(CbfController.vccToReceptor_read) ENABLED START #
         """Return receptorToVcc attribute: 'vccID:receptorID'"""
         return self._vcc_to_receptor
         # PROTECTED REGION END #    //  CbfController.vccToReceptor_read
 
-    def read_subarrayconfigID(self):
+    def read_subarrayconfigID(self: CbfController) -> str:
         # PROTECTED REGION ID(CbfController.subarrayconfigID_read) ENABLED START #
         """Return subarrayconfigID atrribute: ID of subarray config. USed for debug purposes. empty string if subarray is not configured for a scan"""
         return self._subarray_config_ID
         # PROTECTED REGION END #    //  CbfController.subarrayconfigID_read
 
-    def read_reportVCCState(self):
+    def read_reportVCCState(self: CbfController) -> tango.DevState:
         # PROTECTED REGION ID(CbfController.reportVCCState_read) ENABLED START #
         """Return reportVCCState attribute: the state of the VCC capabilities as an array of DevState"""
         return self._report_vcc_state
         # PROTECTED REGION END #    //  CbfController.reportVCCState_read
 
-    def read_reportVCCHealthState(self):
+    def read_reportVCCHealthState(self: CbfController) -> int:
         # PROTECTED REGION ID(CbfController.reportVCCHealthState_read) ENABLED START #
         """Return reportVCCHealthState attribute: health status of VCC capabilities as an array of unsigned short.\nEx:\n[0,0,0,2,0...3]"""
         return self._report_vcc_health_state
         # PROTECTED REGION END #    //  CbfController.reportVCCHealthState_read
 
-    def read_reportVCCAdminMode(self):
+    def read_reportVCCAdminMode(self: CbfController) -> int:
         # PROTECTED REGION ID(CbfController.reportVCCAdminMode_read) ENABLED START #
         """Return reportVCCAdminMode attribute: report the administration mode of the VCC capabilities as an array of unsigned short.\nFor ex.:\n[0,0,0,...1,2]"""
         return self._report_vcc_admin_mode
         # PROTECTED REGION END #    //  CbfController.reportVCCAdminMode_read
 
-    def read_reportVCCSubarrayMembership(self):
+    def read_reportVCCSubarrayMembership(self: CbfController) -> int:
         """Return reportVCCSubarrayMembership attribute: report the subarray membership of VCCs (each can only belong to a single subarray), 0 if not assigned."""
         # PROTECTED REGION ID(CbfController.reportVCCSubarrayMembership_read) ENABLED START #
         return self._report_vcc_subarray_membership
         # PROTECTED REGION END #    //  CbfController.reportVCCSubarrayMembership_read
 
-    def read_reportFSPState(self):
+    def read_reportFSPState(self: CbfController) -> tango.DevState:
         # PROTECTED REGION ID(CbfController.reportFSPState_read) ENABLED START #
         """Return reportFSPState attribute: state of all the FSP capabilities in the form of array"""
         return self._report_fsp_state
         # PROTECTED REGION END #    //  CbfController.reportFSPState_read
 
-    def read_reportFSPHealthState(self):
+    def read_reportFSPHealthState(self: CbfController) -> int:
         # PROTECTED REGION ID(CbfController.reportFSPHealthState_read) ENABLED START #
         """Return reportFspHealthState attribute: Report the health status of the FSP capabilities"""
         return self._report_fsp_health_state
         # PROTECTED REGION END #    //  CbfController.reportFSPHealthState_read
 
-    def read_reportFSPAdminMode(self):
+    def read_reportFSPAdminMode(self: CbfController) -> int:
         # PROTECTED REGION ID(CbfController.reportFSPAdminMode_read) ENABLED START #
         """Return reportFSPAdminMode attribute: Report the administration mode of the FSP capabilities as an array of unsigned short.\nfor ex:\n[0,0,2,..]"""
         return self._report_fsp_admin_mode
         # PROTECTED REGION END #    //  CbfController.reportFSPAdminMode_read
 
-    def read_reportFSPCorrSubarrayMembership(self):
+    def read_reportFSPCorrSubarrayMembership(self: CbfController) -> int:
         # PROTECTED REGION ID(CbfController.reportFSPCorrSubarrayMembership_read) ENABLED START #
         """Return reportVCCSubarrayMembership attribute: Report the subarray membership of FSPs (each can only belong to at most 16 subarrays), 0 if not assigned."""
         return self._report_fsp_corr_subarray_membership
         # PROTECTED REGION END #    //  CbfController.reportFSPCorrSubarrayMembership_read
 
-    def read_frequencyOffsetK(self):
+    def read_frequencyOffsetK(self: CbfController) -> int:
         # PROTECTED REGION ID(CbfController.frequencyOffsetK_read) ENABLED START #
         """Return frequencyOffsetK attribute: array of integers reporting receptors in subarray"""
         return self._frequency_offset_k
         # PROTECTED REGION END #    //  CbfController.frequencyOffsetK_read
 
-    def write_frequencyOffsetK(self, value):
+    def write_frequencyOffsetK(self: CbfController, value: frequencyOffsetK) -> int:
         # PROTECTED REGION ID(CbfController.frequencyOffsetK_write) ENABLED START #
         """Set frequencyOffsetK attribute"""
         if len(value) == self._count_vcc:
@@ -614,13 +627,13 @@ class CbfController(SKAMaster):
             self.logger.warn(log_msg)
         # PROTECTED REGION END #    //  CbfController.frequencyOffsetK_write
 
-    def read_frequencyOffsetDeltaF(self):
+    def read_frequencyOffsetDeltaF(self: CbfController) -> int:
         # PROTECTED REGION ID(CbfController.frequencyOffsetDeltaF_read) ENABLED START #
         """Return frequencyOffsetDeltaF attribute: Frequency offset (delta f) of all 197 receptors as an array of ints."""
         return self._frequency_offset_delta_f
         # PROTECTED REGION END #    //  CbfController.frequencyOffsetDeltaF_read
 
-    def write_frequencyOffsetDeltaF(self, value):
+    def write_frequencyOffsetDeltaF(self: CbfController, value: frequencyOffsetDeltaF) -> int:
         # PROTECTED REGION ID(CbfController.frequencyOffsetDeltaF_write) ENABLED START #
         """Set the frequencyOffsetDeltaF attribute"""
         if len(value) == self._count_vcc:
@@ -631,19 +644,19 @@ class CbfController(SKAMaster):
             self.logger.warn(log_msg)
         # PROTECTED REGION END #    //  CbfController.frequencyOffsetDeltaF_write
 
-    def read_reportSubarrayState(self):
+    def read_reportSubarrayState(self: CbfController) -> tango.DevState:
         # PROTECTED REGION ID(CbfController.reportSubarrayState_read) ENABLED START #
         """Return reportSubarrayState attribute: report the state of the Subarray with an array of DevState"""
         return self._report_subarray_state
         # PROTECTED REGION END #    //  CbfController.reportSubarrayState_read
 
-    def read_reportSubarrayHealthState(self):
+    def read_reportSubarrayHealthState(self: CbfController) -> int:
         # PROTECTED REGION ID(CbfController.reportSubarrayHealthState_read) ENABLED START #
         """Return reportSubarrayHealthState attribute: subarray healthstate in an array of unsigned short"""
         return self._report_subarray_health_state
         # PROTECTED REGION END #    //  CbfController.reportSubarrayHealthState_read
 
-    def read_reportSubarrayAdminMode(self):
+    def read_reportSubarrayAdminMode(self: CbfController) -> int:
         # PROTECTED REGION ID(CbfController.reportSubarrayAdminMode_read) ENABLED START #
         """Return reportSubarrayAdminMode attribute: Report the administration mode of the Subarray as an array of unsigned short.\nfor ex:\n[0,0,2,..]"""
         return self._report_subarray_admin_mode
@@ -657,7 +670,9 @@ class CbfController(SKAMaster):
         """
         A class for the CbfController's On() command.
         """
-        def do(self):
+        def do(            
+            self: CbfController.OnCommand,
+        ) -> Tuple[ResultCode, str]:
             """
             Stateless hook for On() command functionality.
 
@@ -667,8 +682,6 @@ class CbfController(SKAMaster):
             :rtype: (ResultCode, str)
             """
             (result_code,message)=super().do()
-
-            self.logger.info("Entering OnCommand()")
 
             device = self.target
 
@@ -680,7 +693,7 @@ class CbfController(SKAMaster):
             return (result_code,message)
 
     # TODO - Verify that the state must be OFF before it can transition to ON
-    def is_On_allowed(self):
+    def is_On_allowed(self: CbfController) -> bool:
         """allowed if DevState is OFF"""
         if self.dev_state() == tango.DevState.OFF:
             return True
@@ -690,7 +703,9 @@ class CbfController(SKAMaster):
         """
         A class for the CbfController's Off() command.
         """
-        def do(self):
+        def do(            
+            self: CbfController.OffCommand,
+        ) -> Tuple[ResultCode, str]:
             """
             Stateless hook for Off() command functionality.
 
@@ -713,20 +728,20 @@ class CbfController(SKAMaster):
 
             return (result_code,message)
 
-    def is_Off_allowed(self):
+    def is_Off_allowed(self: CbfController) -> bool:
         """allowed if DevState is STANDBY"""
         if self.dev_state() == tango.DevState.STANDBY:
             return True
         return False
 
-    def is_Standby_allowed(self):
+    def is_Standby_allowed(self: CbfController) -> bool:
         """allowed if state is ON"""
         if self.dev_state() == tango.DevState.ON:
             return True
         return False
 
     @command()
-    def Standby(self):
+    def Standby(self: CbfController) -> None:
         # PROTECTED REGION ID(CbfController.Standby) ENABLED START #
         """turn off subarray, vcc, fsp, turn CbfController to standby"""
         self._group_subarray.command_inout("Off")
