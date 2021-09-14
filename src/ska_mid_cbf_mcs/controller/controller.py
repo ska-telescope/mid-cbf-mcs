@@ -505,8 +505,6 @@ class CbfController(SKAMaster):
                         log_msg = "Failure in connection to " + fqdn + " device: " + str(item.reason)
                         device.logger.error(log_msg)
 
-            device.set_state(tango.DevState.STANDBY)
-
             message = "CbfController Init command completed OK"
             self.logger.info(message)
             return (ResultCode.OK, message)
@@ -670,18 +668,21 @@ class CbfController(SKAMaster):
             """
             (result_code,message)=super().do()
 
+            self.logger.info("Entering OnCommand()")
+
             device = self.target
 
-            self._group_subarray.command_inout("On")
-            self._group_vcc.command_inout("On")
-            self._group_fsp.command_inout("On")
-            self.set_state(tango.DevState.ON)
+            device._group_subarray.command_inout("On")
+            device._group_vcc.command_inout("On")
+            device._group_fsp.command_inout("On")
+            device.set_state(tango.DevState.ON)
 
             return (result_code,message)
 
+    # TODO - Verify that the state must be OFF before it can transition to ON
     def is_On_allowed(self):
-        """allowed if DevState is STANDBY"""
-        if self.dev_state() == tango.DevState.STANDBY:
+        """allowed if DevState is OFF"""
+        if self.dev_state() == tango.DevState.OFF:
             return True
         return False
 
@@ -702,13 +703,13 @@ class CbfController(SKAMaster):
 
             device = self.target
 
-            for proxy in list(self._event_id.keys()):
-                for event_id in self._event_id[proxy]:
+            for proxy in list(device._event_id.keys()):
+                for event_id in device._event_id[proxy]:
                     proxy.unsubscribe_event(event_id)
-            self._group_subarray.command_inout("Off")
-            self._group_vcc.command_inout("Off")
-            self._group_fsp.command_inout("Off")
-            self.set_state(tango.DevState.OFF)
+            device._group_subarray.command_inout("Off")
+            device._group_vcc.command_inout("Off")
+            device._group_fsp.command_inout("Off")
+            device.set_state(tango.DevState.OFF)
 
             return (result_code,message)
 

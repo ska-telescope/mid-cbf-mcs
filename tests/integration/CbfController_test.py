@@ -60,7 +60,7 @@ class TestCbfController:
         Test a valid use of the "On" command
         """
         # check initial states
-        assert proxies.controller.State() == DevState.STANDBY
+        assert proxies.controller.State() == DevState.OFF
         assert proxies.subarray[1].State() == DevState.OFF
 
         # TODO - to remove
