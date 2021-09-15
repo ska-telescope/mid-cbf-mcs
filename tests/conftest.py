@@ -1,6 +1,6 @@
 """
-A module defining a list of fixture functions that are shared across all the skabase
-tests.
+A module defining a list of fixture functions that are shared across all the 
+ska-mid-cbf-mcs tests.
 """
 
 from __future__ import absolute_import
