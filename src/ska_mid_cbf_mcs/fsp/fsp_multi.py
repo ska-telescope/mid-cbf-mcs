@@ -10,14 +10,14 @@ import sys
 
 file_path = os.path.dirname(os.path.abspath(__file__))
 
-from ska_mid_cbf_mcs.fsp.fsp import Fsp
-from ska_mid_cbf_mcs.fsp.corr import FspCorr
-from ska_mid_cbf_mcs.fsp.pss import FspPss
-from ska_mid_cbf_mcs.fsp.pst import FspPst
-from ska_mid_cbf_mcs.fsp.vlbi import FspVlbi
-from ska_mid_cbf_mcs.fsp.corr_subarray import FspCorrSubarray
-from ska_mid_cbf_mcs.fsp.pss_subarray import FspPssSubarray
-from ska_mid_cbf_mcs.fsp.pst_subarray import FspPstSubarray
+from ska_mid_cbf_mcs.fsp.fsp_device import Fsp
+from ska_mid_cbf_mcs.fsp.fsp_corr import FspCorr
+from ska_mid_cbf_mcs.fsp.fsp_pss import FspPss
+from ska_mid_cbf_mcs.fsp.fsp_pst import FspPst
+from ska_mid_cbf_mcs.fsp.fsp_vlbi import FspVlbi
+from ska_mid_cbf_mcs.fsp.fsp_corr_subarray import FspCorrSubarray
+from ska_mid_cbf_mcs.fsp.fsp_pss_subarray import FspPssSubarray
+from ska_mid_cbf_mcs.fsp.fsp_pst_subarray import FspPstSubarray
 
 __all__ = ["main"]
 

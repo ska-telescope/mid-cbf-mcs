@@ -1,6 +1,6 @@
 {
     "servers": {
-        "controller": {
+        "CbfController": {
             "controller": {
                 "CbfController": {
                     "mid_csp_cbf/sub_elt/controller": {
@@ -82,7 +82,7 @@
                 }
             }
         },
-        "subarray": {
+        "CbfSubarray": {
             "cbfsubarray-01": {
                 "CbfSubarray": {
                     "mid_csp_cbf/sub_elt/subarray_01": {
@@ -418,7 +418,7 @@
                 }
             }
         },
-        "fsp_multi": {
+        "FspMulti": {
             "fsp-01": {
                 "Fsp": {
                     "mid_csp_cbf/fsp/01": {
@@ -1570,7 +1570,7 @@
                 }
             }
         },
-        "vcc_multi": {
+        "VccMulti": {
             "vcc-001": {
                 "Vcc": {
                     "mid_csp_cbf/vcc/001": {

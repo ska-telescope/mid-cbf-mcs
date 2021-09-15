@@ -2,7 +2,6 @@
 
 Documentation on the Developer's portal:
 [![ReadTheDoc](https://developer.skao.int/projects/ska-mid-cbf-mcs/en/latest/?badge=latest)](https://developer.skao.int/projects/ska-mid-cbf-mcs/en/latest/?badge=latest)
-#TODO: ReadTheDocs build currently broken
 
 # Table Of Contents
 * [Introduction](#introduction)
@@ -10,11 +9,11 @@ Documentation on the Developer's portal:
   * [Hardware and OS requirements](#hardware-and-os-requirements)
   * [Install a virtual vachine](#install-a-virtual-machine)
   * [Install Ubuntu](#install-ubuntu)
-  * [Set up development environment (DEPRECATED)](#set-up-development-environment) 
+  * [Set up development environment](#set-up-development-environment) 
   * [Set up the Mid CBF MCS Software](#set-up-the-mid-cbf-mcs-software)
   * [Set up Kubernetes](#set-up-kubernetes)
 * [Running the Mid CBF MCS](#running-the-mid-cbf-mcs)
-* [WebJIVE GUI](#webjive-gui)
+* [Jive and WebJive](#jive-and-webjive)
 * [Releasing](#releasing)
 * [Development resources](#development-resources)
   * [Other resources](#other-resources)
@@ -25,21 +24,39 @@ Documentation on the Developer's portal:
 
 The Mid CBF MCS prototype implements at the moment these TANGO device classes:
 
-* `CbfController`: Based on the `SKAMaster` class. It represents a primary point of contact for CBF Monitor and Control. It implements CBF state and mode indicators and a set of housekeeping commands.
-* `CbfSubarray`: Based on the `SKASubarray` class. It implements commands needed for scan configuration.
+* `CbfController`: Based on the `SKAMaster` class. It represents a primary point 
+of contact for CBF Monitor and Control. It implements CBF state and mode 
+indicators 
+and a set of housekeeping commands.
+* `CbfSubarray`: Based on the `SKASubarray` class. It implements commands needed 
+for scan configuration.
 
-* `Vcc` and `Fsp`: Based on the `SKACapability` and `CspSubelementObsDevice` classes, respectfully. These implement commands and attributes needed for scan configuration.
-* `Vcc` and `Fsp` Capabilities: Based on the `SKACapability` class. These implement state machines to enable/disable certain VCC and FSP functionality for a scan.
-    * `VccBand1And2`, `VccBand3`, `VccBand4`, and `VccBand5` specify the operative frequency band of a VCC.
+* `Vcc` and `Fsp`: Based on the `SKACapability` and `CspSubelementObsDevice` 
+classes, respectfully. These implement commands and attributes needed for scan 
+configuration.
+* `Vcc` and `Fsp` Capabilities: Based on the `SKACapability` class. These 
+implement state machines to enable/disable certain VCC and FSP functionality for 
+a scan.
+    * `VccBand1And2`, `VccBand3`, `VccBand4`, and `VccBand5` specify the 
+    operative frequency band of a VCC.
     * `VccSearchWindow` defines a search window for a VCC.
-    * `FspCorr`, `FspPss`, `FspPst`, and `FspVlbi` specify the function mode of an FSP.
-    * `FspCorrSubarray`, `FspPssSubarray` and `FspPssSubarray`: Based on the `SKASubarray` class. It implements commands and attributes needed for scan configuration.
-* `TmCspSubarrayLeafNodeTest`: Based on the `SKABaseDevice` class. It simulates a TM CSP Subarray Leaf Node, providing regular updates to parameters during scans using a publish-subscribe mechanism.
+    * `FspCorr`, `FspPss`, `FspPst`, and `FspVlbi` specify the function mode of 
+    an FSP.
+    * `FspCorrSubarray`, `FspPssSubarray` and `FspPssSubarray`: Based on the 
+    `SKASubarray` class. It implements commands and attributes needed for scan 
+    configuration.
+* `TmCspSubarrayLeafNodeTest`: Based on the `SKABaseDevice` class. It simulates 
+a TM CSP Subarray Leaf Node, providing regular updates to parameters during 
+scans using a publish-subscribe mechanism.
 
-To cut down on the number of TANGO device servers, some multi-class servers are implemented to run devices of different classes:
+To cut down on the number of TANGO device servers, some multi-class servers are 
+implemented to run devices of different classes:
 
-* `VccMulti`: Runs a single instance of `Vcc`, one instance each of the VCC frequency band capabilities, and two instances of ``VccSearchWindow``.
-* `FspMulti`: Runs a single instance of `Fsp`, one instance each of the FSP function mode capabilities, and 4 instances each of `FspCorrSubarray`, `FspPssSubarray` and `FspPssSubarray`.
+* `VccMulti`: Runs a single instance of `Vcc`, one instance each of the VCC 
+frequency band capabilities, and two instances of ``VccSearchWindow``.
+* `FspMulti`: Runs a single instance of `Fsp`, one instance each of the FSP 
+function mode capabilities, and 4 instances each of `FspCorrSubarray`, 
+`FspPssSubarray` and `FspPssSubarray`.
 
 At the moment, the device servers implemented are:
 
@@ -58,14 +75,16 @@ This section follows the instructions on the SKA developer’s portal:
 
 ## Hardware and OS requirements
 
-The following settings are needed for the virtual machine, running on a Windows 10 host:
+The following settings are needed for the virtual machine, running on a Windows 
+10 host:
 * 4 CPUs
 * 8 GB RAM (ideally more, maximum that VirtualBox recommends)
 * ~40 GB storage
 
 ## Install a virtual machine
 
-Download and install VirtualBox and the extension pack from: https://www.virtualbox.org/wiki/Downloads
+Download and install VirtualBox and the extension pack from: 
+https://www.virtualbox.org/wiki/Downloads
 
 ## Install Ubuntu
 
@@ -75,36 +94,67 @@ https://sourceforge.net/projects/osboxes/files/v/vb/55-U-u/18.04/18.04.2/18042.6
 
 Steps:
 
-1.  Open up the file downloaded from SourceForge for the Ubuntu image with 7-Zip and extract the “Ubuntu 18.04.2 (64bit).vdi” file into a known directory.
+1.  Open up the file downloaded from SourceForge for the Ubuntu image with 7-Zip 
+and extract the “Ubuntu 18.04.2 (64bit).vdi” file into a known directory.
 
-2.  Open up the VirtualBox software and click “new” and run through the setup process, on the Hard Disk option screen choose “use and existing virtual hard disk file” and then choose the VDI file that you extracted in step two.
+2.  Open up the VirtualBox software and click “new” and run through the setup 
+process, on the Hard Disk option screen choose “use and existing virtual hard 
+disk file” and then choose the VDI file that you extracted in step two.
 
-3.  Run the OS in VirtualBox and login to the Ubuntu OS. The login screen should show the account “osboxes.org” it will ask for a password, this is a default account the virtual machine creates for you and the password is **“osboxes.org”** (you can change the name and password in account settings once you are logged in”).
+3.  Run the OS in VirtualBox and login to the Ubuntu OS. The login screen should 
+show the account `osboxes.org`; this is a default account the virtual machine 
+creates for you and the password is **`osboxes.org`** (you can change the name 
+and password in account settings once you are logged in”).
 
-*Note* : If you set your own password for the virtual machine, change "ansible_become_pass=osboxes.org" to "ansible_become_pass=your_own_password"
+*Note* : If you set your own password for the virtual machine, change 
+"ansible_become_pass=osboxes.org" to "ansible_become_pass=your_own_password"
 
 ## Set up development environment 
 
-### DEPRECATION NOTICE: ansible-playbooks repository no longer supported; MCS required installations detailed in subsequent sections, though this step is not recommended anymore it may be useful in setting up a new virtual machine for SKA development
+### DEPRECATION NOTICE
+`ansible-playbooks` repository no longer supported, however it is still useful 
+to set up a new development environment.
 
-Setting up the Development environment, including Tango environment,  is performed using the ansible playbook script. Follow the commands in the yellow box under the 'Creating a Development Environment' section of the https://developer.skatelescope.org/en/latest/getting-started/devenv-setup/tango-devenv-setup.html web page.
+Setting up the Development environment, including Tango environment,  is 
+performed using the ansible playbook script. Follow the commands in the yellow 
+box under the 'Creating a Development Environment' section of the 
+https://developer.skatelescope.org/en/latest/getting-started/devenv-setup/tango-devenv-setup.html 
+web page.
+
+```
+sudo apt -y install git
+git clone https://gitlab.com/ska-telescope/ansible-playbooks
+cd ansible-playbooks
+sudo apt-add-repository --yes --update ppa:ansible/ansible && \
+    sudo apt -y install ansible
+ansible-playbook -i hosts deploy_tangoenv.yml \
+    --extra-vars "ansible_become_pass=osboxes.org" \
+    -e ansible_python_interpreter=/usr/bin/python
+sudo reboot
+```
 
 See that page for a list of the applications installed in this way.
 
 ### Notes and troubleshooting
 
-*Note 1*: If you already have an older installation don't forget to first update your local version of the ansible-playbooks repo (pull, checkout or delete and clone again), before running the ansible-playbooks command.
+*Note 1*: If you already have an older installation don't forget to first update 
+your local version of the ansible-playbooks repo (pull, checkout or delete and 
+clone again), before running the ansible-playbooks command.
 
-*Note 2*: You may need to precede the ``ansible-playbook`` command (from the commands sequence at the link above) by ``sudo``.
+*Note 2*: You may need to precede the ``ansible-playbook`` command (from the 
+commands sequence at the link above) by ``sudo``.
 
-*Note 3*:  Depending on your system, the ``ansible-playbook`` command may take more than one hour to complete.
+*Note 3*:  Depending on your system, the ``ansible-playbook`` command may take 
+more than one hour to complete.
 
-*Note 4*: If you encounter Python installation problem with the ansible command, try to explicitly specify the python version in the ansible command, for example:
+*Note 4*: If you encounter Python installation problem with the ansible command, 
+try to explicitly specify the python version in the ansible command, for example:
 ```
 ansible-playbook -i hosts deploy_tangoenv.yml --extra-vars "ansible_become_pass=osboxes.org" -e ansible_python_interpreter=/usr/bin/python3
 ```
 
-*Note 5*: If you experience other issues with the script ask questions in the #team-system-support slack channel.
+*Note 5*: If you experience other issues with the script ask questions in the 
+[#team-system-support](https://skao.slack.com/archives/CEMF9HXUZ) slack channel.
 
 ## Set up the Mid CBF MCS Software
 
@@ -118,32 +168,40 @@ The following projects are required:
 
 To get a local copy of the ska-mid-cbf-mcs project:
 ```
-sudo apt -y install git                                         # if git not yet installed
-git clone https://gitlab.com/ska-telescope/ska-mid-cbf-mcs.git  # clone the MCS repository locally
+git clone https://gitlab.com/ska-telescope/ska-mid-cbf-mcs.git  # clone the MCS 
+repository locally
 ```
 
-To install ska-tango-base (as a Python package), follow the 'Installation steps' of the README at: `https://gitlab.com/ska-telescope/ska-tango-base`
+To install ska-tango-base (as a Python package), follow the 'Installation steps' 
+of the README at https://gitlab.com/ska-telescope/ska-tango-base
 
-*Note*:SKA Tango base classes are needed when using Pogo to automatically generate Python TANGO code. Pogo will ask for the Base class pogo (.xmi) files, which are located in the ska-tango-base folder.
+*Note*:SKA Tango base classes are needed when using Pogo to automatically 
+generate Python TANGO code. Pogo will ask for the Base class pogo (.xmi) files, 
+which are located in the ska-tango-base folder.
 
 ## Set up Kubernetes
 
-For installing Kubernetes, Minikube and Helm, follow the instructions at ```https://developer.skatelescope.org/en/latest/tools/dev-faq.html```.
+For installing Kubernetes, Minikube and Helm, follow the instructions at 
+```https://developer.skatelescope.org/en/latest/tools/dev-faq.html```.
 
 ### Individual installation instructions
 * [Docker Engine](https://docs.docker.com/engine/install/ubuntu/)
-* [minikube](https://minikube.sigs.k8s.io/docs/start/)
-  * Clone the `https://gitlab.com/ska-telescope/ska-cicd-deploy-minikube` project and follow the README instructions to configure minikube correctly.
-* [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/)
-* [Helm](https://helm.sh/docs/intro/install/)
+* [minikube](https://minikube.sigs.k8s.io/docs/start/), 
+[kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/) 
+and [Helm](https://helm.sh/docs/intro/install/)
+  * Clone the `https://gitlab.com/ska-telescope/ska-cicd-deploy-minikube` 
+  project and follow the README instructions to install and configure minikube, 
+  kubectl and Helm correctly.
 
 # Running the Mid CBF MCS
 
 The ska-mid-cbf-mcs Tango device servers are started and run via Kubernetes. 
 
-Make sure Kubernetes/minikube and Helm have been installed (and verified) as described in the 'Set up Kubernetes' section.
+Make sure Kubernetes/minikube and Helm have been installed (and verified) as 
+described in the 'Set up Kubernetes' section.
 
-*Note*: You may need to change permission to the .minikube and .kube files in your home directory:
+*Note*: You may need to change permission to the .minikube and .kube files in 
+your home directory:
 ```
 sudo chown -R <user_name>:<user_name> ~/.minikube/
 sudo chown -R <user_name>:<user_name> ~/.kube/
@@ -162,15 +220,20 @@ eval $(minikube docker-env)  # if building from local source and not artefact re
 make build
 ```
 
-`make build` is required only if a local image needs to be built, for example every time the SW has been updated. [For development, in order to get local changes to build, run `eval $(minikube docker-env)` before `make build`](https://v1-18.docs.kubernetes.io/docs/setup/learning-environment/minikube/#use-local-images-by-re-using-the-docker-daemon)
+`make build` is required only if a local image needs to be built, for example 
+every time the SW has been updated. 
+[For development, in order to get local changes to build, run `eval $(minikube docker-env)` before `make build`](https://v1-18.docs.kubernetes.io/docs/setup/learning-environment/minikube/#use-local-images-by-re-using-the-docker-daemon)
 
 #### 3.  Install the umbrella chart.
 ```
-make install-chart  # deploy from Helm charts
+make install-chart        # deploy from Helm charts
+make install-chart-only   # deploy from Helm charts without updating dependencies
 ```
-*Note*: `make watch` will list all of the pods' status in every 2 seconds using kubectl; `make wait` will wait until all jobs are 'Completed' and pods are 'Running'.
+*Note*: `make watch` will list all of the pods' status in every 2 seconds using 
+kubectl; `make wait` will wait until all jobs are 'Completed' and pods are 
+'Running'.
 
-#### 4.  (Optional) Create python virtual environment to isolate project specific packages from your host environment.
+#### 4.  (Optional) Create python virtual environment to isolate project specific dependencies from your host environment.
 ```
 virtualenv venv           # create python virtualenv 'venv'
 source venv/bin/activate  # activate venv
@@ -183,9 +246,12 @@ make requirements
 
 #### 6.  Run a test.
 ```
-make test       # functional tests, needs a running deployment
+make test       # functional tests, creates a running deployment
+make test-only  # functional tests with an already running deployment
 make unit_test  # unit tests, deployment does not need to be running
 ```
+*Note*: add `-k` pytest flags in `setup.cfg` in the project root to limit which 
+tests are run
 
 #### 6.  Tear down the deployment.
 ```
@@ -195,18 +261,43 @@ eval $(minikube docker-env --unset)   # if docker-env variables were set previou
 minikube stop                         # stop minikube
 ```
 
-# WebJive GUI
+# Jive and WebJive
 
-This prototype provides a graphical user interface, using WebJive; to use, deploy with ```make install-chart-with-taranta```, then navigate to `integration.engageska-portugal.pt` in a browser. The following credentials can be used:
+## Jive
+Run `make jive` with the deployment active to get a command useful for configuring 
+local Jive; this command sets the TANGO_HOST environment variable equal to 
+```<minikube-IP-address>:<database-pod-TCP-port>```.
+```
+make jive   # copy and paste the output
+jive&       # run Jive
+```
 
-* Username: `CIPA`
-* Password: `CIPA_SKA`
+## WebJive
+This prototype provides a graphical user interface using WebJive; to set it up:
 
-The device tree can be viewed and explored. In addition, device attributes can be seen and modified, and device commands can be sent, by creating and saving a new dashboard.
+* Uncomment WebJive-related dependencies in `charts/ska-mid-cbf-umbrella/Chart.yaml`
+* Add the following line to `/etc/hosts`:
+```
+192.168.49.2  integration.engageska-portugal.pt
+```
+*Note*: 192.168.49.2 is the minikube IP address, obtainable with the command `minikube ip`
+* Deploy with `make install-chart-with-taranta`
+* Navigate to `integration.engageska-portugal.pt` in a browser. 
+
+The following credentials can be used to operate the system:
+
+* Username: `user1`
+* Password: `abc123`
+
+The device tree can be viewed and explored. In addition, device attributes can 
+be seen and modified, and device commands can be sent, by creating and saving a 
+new dashboard.
 
 # Releasing
 
-For a new release (i.e. prior to merging a branch into master) update the following files by incrementing version/release/tag number fields to conform to the semantic versioning convention:
+For a new release (i.e. prior to merging a branch into master) update the 
+following files by incrementing version/release/tag number fields to conform to 
+the semantic versioning convention:
 * `.release`: `release=` and `tag=`
 * `src/ska_mid_cbf_mcs/release.py`: `version = `
 * `charts/ska-mid-cbf/Chart.yaml`: `version:` and `appVersion:`
@@ -217,26 +308,62 @@ For a new release (i.e. prior to merging a branch into master) update the follow
   * `version:` and `appVersion:`
   * `version:` under `ska-mid-cbf` and `ska-mid-cbf-tmleafnode`
 
-*Note*: `appVersion` represents the version of the application running, so it corresponds to the ska-mid-cbf-mcs docker image version.
+*Note*: `appVersion` represents the version of the application running, so it 
+corresponds to the ska-mid-cbf-mcs docker image version.
 
-Once a new release has been merged into master, create a new tag on GitLab and run the manual "publish-chart" stage of the tag pipeline to publish the Helm charts.
+Once a new release has been merged into master, create a new tag on GitLab and 
+run the manual "publish-chart" stage of the tag pipeline to publish the 
+Helm charts.
 
 # Development resources
 
 ### Other resources
 
-See more tango device guidelines and examples in the `ska-tango-examples` repository
+See more tango device guidelines and examples in the `ska-tango-examples` 
+repository
 
 ### Useful commands
 
-For Kubernetes basic kubectl commands see: https://kubernetes.io/docs/reference/kubectl/cheatsheet/
+#### Kubernetes
+For Kubernetes basic kubectl commands see: 
+https://kubernetes.io/docs/reference/kubectl/cheatsheet/
 
-To display all components of the Kubernetes system:
+To display components of the MCS Kubernetes system:
 
 ```
 kubectl get all -n ska-mid-cbf
+kubectl describe <component-name> -n ska-mid-cbf  # info on a particular component
 ```
+This should list the following running pods:
 
+* `cbfcontroller-controller-0 `: The `CbfController` TANGO device server.
+* `cbfsubarrayxx-cbf-subarray-xx-0`: `xx` ranges from `01` to `03`. 
+The 3 instances of the `CbfSubarray` TANGO device server.
+* `fspxx-fsp-xx-0`: `xx` ranges from `01` to `04`. 
+The 4 instances of the `FspMulti` TANGO device servers.
+* `vccxxx-vcc-xxx-0`: `xxx` ranges from `001` to `004`. 
+The 4 instances of the `VccMulti` TANGO device servers.
+* `tmcspsubarrayleafnodetestx-tmx-0`: `x` ranges from `1` to `2`. 
+The 2 instances of the `TmCspSubarrayLeafNodeTest` TANGO device servers.
+* `tango-host-databaseds-from-makefile-test-0`: The TANGO DB device server.
+* etc.
+
+#### Docker
+Set up Docker run without `sudo`:
+```
+sudo groupadd docker
+sudo usermod -aG docker $USER
+newgrp docker
+docker run hello-world
+```
+System info and cleanup:
+```
+docker system info
+docker system prune
+docker images
+docker image rm <image-ID(s)>
+docker volume ls
+```
 To list the running containers issue:
 ```
 docker ps
@@ -249,17 +376,6 @@ To list all created containers but less verbose, run for example:
 ```
 docker ps -a --format "table {{.ID}}\t{{.Status}}\t{{.Names}}"
 ``` 
-These commands should list the following running containers:
-
-* `midcbf-cbfcontroller`: The `CbfController` TANGO device server.
-* `midcbf-cbfsubarrayxx`ranges from `01` to `02` The 2 instances of the `CbfSubarray` TANGO device server.
-* `midcbf-fspxx`: `xx` ranges from `01` to `04`. The 4 instances of the `FspMulti` TANGO device servers.
-* `midcbf-vccxx`: `x` ranges from `01` to `04`. The 4 instances of the `VccMulti` TANGO device servers.
-* `midcbf-tmcspsubarrayleafnodetest`: The `TmCspSubarrayLeafNodeTest` TANGO device server.
-* `midcbf-rsyslog`: The rsyslog container for the TANGO devices.
-* `midcbf-databaseds`: The TANGO DB device server.
-* `midcbf-tangodb`: The MySQL database with the TANGO database tables.
-* etc.
 
 # License
 

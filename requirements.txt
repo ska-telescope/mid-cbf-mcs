@@ -5,3 +5,7 @@ jsonschema >= 3.2.0
 ska-tango-base == 0.10.1
 ska-ser-logging
 ska-ser-log-transactions
+pytest
+pytest-cov
+pytest-json-report
+pytest-pylint

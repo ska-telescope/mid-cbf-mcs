@@ -4,7 +4,8 @@ MINIKUBE ?= true## Minikube or not
 MARK ?= all## mark tests to be executed
 IMAGE_TO_TEST ?= $(CAR_OCI_REGISTRY_HOST)/$(PROJECT):$(IMAGE_TAG)## docker image that will be run for testing purpose	
 MAX_WAIT ?= 300s##wait timeout
-TANGO_HOST = tango-host-databaseds-from-makefile-$(HELM_RELEASE):10000## TANGO_HOST is an input!
+TANGO_DATABASE = tango-host-databaseds-from-makefile-$(HELM_RELEASE)
+TANGO_HOST = $(TANGO_DATABASE):10000## TANGO_HOST is an input!
 LINTING_OUTPUT=$(shell helm lint charts/* | grep ERROR -c | tail -1)
 
 CHARTS ?= ska-mid-cbf-umbrella ska-mid-cbf ska-mid-cbf-tmleafnode ## list of charts to be published on gitlab -- umbrella charts for testing purpose
@@ -100,7 +101,7 @@ install-chart: dep-up namespace ## install the helm chart with name HELM_RELEASE
 	rm values.yaml
 
 # Same as 'install-chart' but without 'dep-up'
-install-only: ## install the helm chart with name HELM_RELEASE and path UMBRELLA_CHART_PATH on the namespace KUBE_NAMESPACE 
+install-chart-only: ## install the helm chart with name HELM_RELEASE and path UMBRELLA_CHART_PATH on the namespace KUBE_NAMESPACE 
 	@echo $(TANGO_HOST)
 	@echo "HELM_RELEASE=$(HELM_RELEASE)"
 	@sed -e 's/CI_PROJECT_PATH_SLUG/$(CI_PROJECT_PATH_SLUG)/' $(UMBRELLA_CHART_PATH)values.yaml > generated_values.yaml; \
@@ -146,7 +147,7 @@ uninstall-chart: ## uninstall the ska-mid-cbf-umbrella helm chart on the namespa
 
 reinstall-chart: uninstall-chart install-chart ## reinstall ska-mid-cbf-umbrella helm chart
 
-reinstall-only: uninstall-chart install-only ## reinstall ska-mid-cbf-umbrella helm chart
+reinstall-chart-only: uninstall-chart install-chart-only ## reinstall ska-mid-cbf-umbrella helm chart
 
 upgrade-chart: ## upgrade the ska-mid-cbf-umbrella helm chart on the namespace mid-cbf 
 	helm upgrade --set global.minikube=$(MINIKUBE) --set global.tango_host=$(TANGO_HOST) $(HELM_RELEASE) $(UMBRELLA_CHART_PATH) --namespace $(KUBE_NAMESPACE) 
