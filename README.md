@@ -13,7 +13,7 @@ Documentation on the Developer's portal:
   * [Set up the Mid CBF MCS Software](#set-up-the-mid-cbf-mcs-software)
   * [Set up Kubernetes](#set-up-kubernetes)
 * [Running the Mid CBF MCS](#running-the-mid-cbf-mcs)
-* [WebJIVE GUI](#webjive-gui)
+* [Jive and WebJive](#jive-and-webjive)
 * [Releasing](#releasing)
 * [Development resources](#development-resources)
   * [Other resources](#other-resources)
@@ -266,20 +266,28 @@ minikube stop                         # stop minikube
 ## Jive
 Run `make jive` with the deployment active to get a command useful for configuring 
 local Jive; this command sets the TANGO_HOST environment variable equal to 
-```<minikube-IP>:<database-pod-port>```.
+```<minikube-IP-address>:<database-pod-TCP-port>```.
 ```
 make jive   # copy and paste the output
 jive&       # run Jive
 ```
 
 ## WebJive
-This prototype provides a graphical user interface, using WebJive; to use, 
-deploy with ```make install-chart-with-taranta```, then navigate to 
-`integration.engageska-portugal.pt` in a browser. 
-The following credentials can be used:
+This prototype provides a graphical user interface using WebJive; to set it up:
 
-* Username: `CIPA`
-* Password: `CIPA_SKA`
+* Uncomment WebJive-related dependencies in `charts/ska-mid-cbf-umbrella/Chart.yaml`
+* Add the following line to `/etc/hosts`:
+```
+192.168.49.2  integration.engageska-portugal.pt
+```
+*Note*: 192.168.49.2 is the minikube IP address, obtainable with the command `minikube ip`
+* Deploy with `make install-chart-with-taranta`
+* Navigate to `integration.engageska-portugal.pt` in a browser. 
+
+The following credentials can be used to operate the system:
+
+* Username: `user1`
+* Password: `abc123`
 
 The device tree can be viewed and explored. In addition, device attributes can 
 be seen and modified, and device commands can be sent, by creating and saving a 
