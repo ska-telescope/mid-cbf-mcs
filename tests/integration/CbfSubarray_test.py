@@ -1531,6 +1531,7 @@ class TestCbfSubarray:
 
             # add some receptors and turn subarray off 
             proxies.subarray[1].AddReceptors(input_receptors)
+            proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.RESOURCING, 1, 1)
             proxies.subarray[1].Off()
             proxies.wait_timeout_dev([proxies.subarray[1]], DevState.OFF, 3, 1)
             assert proxies.subarray[1].State() == DevState.OFF
@@ -1541,11 +1542,13 @@ class TestCbfSubarray:
             proxies.wait_timeout_dev([proxies.subarray[1]], DevState.ON, 3, 1)
             proxies.subarray[1].AddReceptors(input_receptors)
             proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.IDLE, 1, 1)
-            # configure scan 
+
+            # end configuration with off command
             f = open(file_path + "/../data/Configure_TM-CSP_v2.json")
             configuration = f.read().replace("\n", "")
             f.close()
             proxies.subarray[1].ConfigureScan(configuration)
+            proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.CONFIGURING, 1, 1)
             proxies.subarray[1].Off()
             proxies.wait_timeout_dev([proxies.subarray[1]], DevState.OFF, 3, 1)
             assert proxies.subarray[1].State() == DevState.OFF
