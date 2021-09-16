@@ -282,7 +282,7 @@ This prototype provides a graphical user interface using WebJive; to set it up:
 ```
 *Note*: 192.168.49.2 is the minikube IP address, obtainable with the command `minikube ip`
 * Deploy with `make install-chart-with-taranta`
-* Navigate to `integration.engageska-portugal.pt` in a browser. 
+* Navigate to `integration.engageska-portugal.pt/ska-mid-cbf/taranta/devices` in a browser (works best with Google Chrome).
 
 The following credentials can be used to operate the system:
 
