@@ -1,21 +1,16 @@
 # -*- coding: utf-8 -*-
 #
-# This file is part of the CbfSubarray project
+# This file is part of the Mid.CBF MCS project
 #
 #
 #
 # Distributed under the terms of the GPL license.
 # See LICENSE.txt for more info.
 
-# """
-# Author: An Yu An.Yu@nrc-cnrc.gc.ca,
-# Herzberg Astronomy and Astrophysics, National Research Council of Canada
-# Copyright (c) 2019 National Research Council of Canada
-# """
-
-# CbfSubarray Tango device prototype
-# CBFSubarray TANGO device class for the CBFSubarray prototype
-
+"""
+CbfSubarray
+Sub-element subarray device for Mid.CBF
+"""
 
 # tango imports
 import tango
@@ -974,7 +969,7 @@ class CbfSubarray(SKASubarray):
     # PROTECTED REGION END #    //  CbfSubarray.class_variable
 
 
-    def _deconfigure(self):
+    def _deconfigure_scan(self):
         """Helper function to unsubscribe events and release resources."""
         
         # TODO: the deconfiguration should happen in reverse order of the
@@ -1466,16 +1461,19 @@ class CbfSubarray(SKASubarray):
             """
             (result_code,message)=super().do()
             device = self.target
-            # if SCANNING, needs to set VCC and FSP subarray to READY
-            if device.scanID != 0:
-                self.logger.info("scanning")
+            self.logger.info("Subarray ObsState is {}".format(device._obs_state))
+
+            if device._obs_state == ObsState.SCANNING:
                 device._group_vcc.command_inout("EndScan")
                 device._group_fsp_corr_subarray.command_inout("EndScan")
                 device._group_fsp_pss_subarray.command_inout("EndScan")
                 device._group_fsp_pst_subarray.command_inout("EndScan")
-            device._deconfigure()
+
+            device._deconfigure_scan()
+
             if len(device._receptors) > 0:
                 device._remove_receptors_helper(device._receptors[:])
+
             return (result_code,message)
 
 
@@ -1714,7 +1712,7 @@ class CbfSubarray(SKASubarray):
             # Call this just to release all FSPs and unsubscribe to events. 
             # Can't call GoToIdle, otherwise there will be state transition problem. 
             # TODO - to clarify why can't call GoToIdle
-            device._deconfigure()
+            device._deconfigure_scan()
 
             # TODO - to remove
             # data = tango.DeviceData()
@@ -2072,7 +2070,7 @@ class CbfSubarray(SKASubarray):
             self.logger.debug("Entering GoToIdleCommand()")
             
             device=self.target
-            device._deconfigure()
+            device._deconfigure_scan()
 
             message = "GoToIdle command completed OK"
             self.logger.info(message)
@@ -2097,8 +2095,8 @@ class CbfSubarray(SKASubarray):
 
             # if aborted from SCANNING, needs to set VCC and PSS subarray 
             # to READY state otherwise when 
-            if device.scanID != 0:
-                self.logger.info("scanning")
+            if device._obs_state == ObsState.SCANNING:
+                self.logger.info("Aborting from scanning")
                 device._group_vcc.command_inout("EndScan")
                 device._group_fsp_corr_subarray.command_inout("EndScan")
                 device._group_fsp_pss_subarray.command_inout("EndScan")
@@ -2129,7 +2127,7 @@ class CbfSubarray(SKASubarray):
             # or a Scan, so we need to clean up from that.
 
             # Now totally deconfigure
-            device._deconfigure()
+            device._deconfigure_scan()
 
             # and release all receptors
             device._remove_receptors_helper(device._receptors[:])
@@ -2157,7 +2155,7 @@ class CbfSubarray(SKASubarray):
             # or a Scan, so we need to clean up from that.
 
             # totally deconfigure
-            device._deconfigure()
+            device._deconfigure_scan()
 
             message = "ObsReset command completed OK"
             self.logger.info(message)

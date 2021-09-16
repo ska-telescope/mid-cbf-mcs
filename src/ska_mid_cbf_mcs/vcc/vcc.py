@@ -328,8 +328,6 @@ class Vcc(CspSubElementObsDevice):
     def always_executed_hook(self):
         """Method always executed before any TANGO command is executed."""
         # PROTECTED REGION ID(Vcc.always_executed_hook) ENABLED START #
-        self.logger.info("ALWAYS EXECUTED HOOK")
-        self.logger.info("%s", self._dev_factory._test_context)
         try:
             #TODO: remove temporary flag to disable Vcc proxies for unit testing
             if Vcc.TEST_CONTEXT is False:
