@@ -20,6 +20,7 @@
 import os
 import sys
 import json
+import copy
 
 # tango imports
 import tango
@@ -613,17 +614,47 @@ class Vcc(CspSubElementObsDevice):
             :raises: ``CommandError`` if the configuration data validation fails.
             """
 
-            self.logger.debug("Entering ConfigureScanCommand()")
-
             device = self.target
 
             # By this time, the receptor_ID should be set:
             self.logger.debug(("device._receptor_ID = {}".
             format(device._receptor_ID)))
 
-            # validate the input args
-            (result_code, msg) = self.validate_input(argin)
+            # validate scan configuration first 
+            try:
+                (result_code, msg) = self._validate_scan_configuration(argin)
+            except tango.DevFailed as df:
+                self.logger.error(str(df.args[0].desc))
+                self.logger.warn("validate scan configuration error")
+            
+            full_configuration = json.loads(argin)
+            common_configuration = copy.deepcopy(full_configuration["common"])
+            cbf_configuration = copy.deepcopy(full_configuration["cbf"])
 
+            device._config_id = str(common_configuration["config_id"])
+            device._freq_band_name = str(common_configuration["frequency_band"])
+            device._frequency_band = freq_band_dict()[device._freq_band_name]
+            if device._frequency_band in [4, 5]:
+                stream_tuning = [*map(float, common_configuration["band_5_tuning"])]
+                device._stream_tuning = stream_tuning
+
+            if "rfi_flagging_mask" in cbf_configuration:
+                device._rfi_flagging_mask = str(cbf_configuration["rfi_flagging_mask"])
+            else:
+                self.logger.warn("'rfiFlaggingMask' not given. Proceeding.")
+
+            if "frequency_band_offset_stream_1" in cbf_configuration:
+                device._frequency_band_offset_stream_1 = int(cbf_configuration["frequency_band_offset_stream_1"])
+            else:
+                device._frequency_band_offset_stream_1 = 0
+                self.logger.warn("'frequencyBandOffsetStream1' not specified. Defaulting to 0.")
+
+            if "frequency_band_offset_stream_2" in cbf_configuration:
+                device._frequency_band_offset_stream_2 = int(cbf_configuration["frequency_band_offset_stream_2"])
+            else:
+                device._frequency_band_offset_stream_2 = 0
+                self.logger.warn("'frequencyBandOffsetStream2' not specified. Defaulting to 0.")
+            
             if result_code == ResultCode.OK:
                 # TODO: cosider to turn_on the selected band device
                 #       via a separate command
@@ -635,7 +666,7 @@ class Vcc(CspSubElementObsDevice):
 
             return(result_code, msg)
             
-        def validate_input(self, argin):
+        def _validate_scan_configuration(self, argin):
             """
             Validate the configuration parameters against allowed values, as needed.
 
@@ -644,27 +675,38 @@ class Vcc(CspSubElementObsDevice):
             :return: A tuple containing a return code and a string message.
             :rtype: (ResultCode, str)
             """
-            device = self.target
-
             try:
-                config_dict = json.loads(argin)
-                device._config_id = config_dict['config_id']
+                full_configuration = json.loads(argin)
+                common_configuration = copy.deepcopy(full_configuration["common"])
+                configuration = copy.deepcopy(full_configuration["cbf"])
+            except json.JSONDecodeError:  # argument not a valid JSON object
+                msg = "Scan configuration object is not a valid JSON object. Aborting configuration."
+                self._raise_configure_scan_fatal_error(msg)
+            
+            return (ResultCode.OK, "Configure command completed OK")
 
-                freq_band_name = config_dict['frequency_band']
-                device._freq_band_name = freq_band_name
-                device._frequency_band = freq_band_dict()[freq_band_name]
 
-                # call the method to validate the data sent with
-                # the configuration, as needed.
-                return (ResultCode.OK, "ConfigureScan arguments validation successfull")
+            # device = self.target
 
-            except (KeyError, json.JSONDecodeError) as err:
-                msg = "Validate configuration failed with error:{}".format(err)
-            except Exception as other_errs:
-                msg = "Validate configuration failed with unknown error:{}".format(
-                    other_errs)
-                self.logger.error(msg)
-            return (ResultCode.FAILED, msg)
+            # try:
+            #     config_dict = json.loads(argin)
+            #     device._config_id = config_dict['config_id']
+
+                # freq_band_name = config_dict['frequency_band']
+                # device._freq_band_name = freq_band_name
+                # device._frequency_band = freq_band_dict()[freq_band_name]
+
+            #     # call the method to validate the data sent with
+            #     # the configuration, as needed.
+            #     return (ResultCode.OK, "ConfigureScan arguments validation successfull")
+
+            # except (KeyError, json.JSONDecodeError) as err:
+            #     msg = "Validate configuration failed with error:{}".format(err)
+            # except Exception as other_errs:
+            #     msg = "Validate configuration failed with unknown error:{}".format(
+            #         other_errs)
+            #     self.logger.error(msg)
+            # return (ResultCode.FAILED, msg)
 
         def turn_on_band_device(self, freq_band_name):
             """

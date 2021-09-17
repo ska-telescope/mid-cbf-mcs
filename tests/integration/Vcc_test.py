@@ -170,48 +170,56 @@ class TestVcc:
         # check state
         assert create_sw_1_proxy.State() == DevState.ON
 
-    def test_ConfigureScan_basic(
+    def test_VCC_ConfigureScan_basic(
         self,
         create_vcc_proxy
     ):
         """
-        Test ConfigureScanCommand.
+        Test a minimal successful scan configuration.
         """
 
         create_vcc_proxy.On()
 
-        config_dict = {
-            "config_id": "vcc_unit_test",
-            "frequency_band": "3",
-        }
+        # config_dict = {
+        #     "config_id": "vcc_integration_test",
+        #     "frequency_band": "3",
+        #     "band_5_tuning": [5.85, 7.25],
+        # }
 
-        json_str = json.dumps(config_dict)
+        config_file_name = "/../data/ConfigureScan_basic.json"
+        f = open(file_path + config_file_name)
+        create_vcc_proxy.ConfigureScan(f.read().replace("\n", ""))
+        f.close()
 
-        logging.info("json_str = {}".format(json_str))
+        assert create_vcc_proxy.configID == "band:5a, fsp1, 744 channels average factor 8"
 
-        create_vcc_proxy.ConfigureScan(json_str)
+        # json_str = json.dumps(config_dict)
+
+        # logging.info("json_str = {}".format(json_str))
+
+        # create_vcc_proxy.ConfigureScan(json_str)
 
         time.sleep(2)
 
-        scan_id = '1'
+        # scan_id = '1'
 
-        scan_id_device_data = tango.DeviceData()
-        scan_id_device_data.insert(tango.DevString, scan_id)
+        # scan_id_device_data = tango.DeviceData()
+        # scan_id_device_data.insert(tango.DevString, scan_id)
 
-        create_vcc_proxy.command_inout("Scan", scan_id_device_data)
+        # create_vcc_proxy.command_inout("Scan", scan_id_device_data)
 
-        logging.info( (" create_vcc_proxy.scanID =  {}".
-        format(create_vcc_proxy.scanID)) )
+        # logging.info( (" create_vcc_proxy.scanID =  {}".
+        # format(create_vcc_proxy.scanID)) )
 
-        logging.info( (" create_vcc_proxy.frequencyBand =  {}".
-        format(create_vcc_proxy.frequencyBand)) )
+        # logging.info( (" create_vcc_proxy.frequencyBand =  {}".
+        # format(create_vcc_proxy.frequencyBand)) )
 
-        #TODO fix hardcoded value
-        assert create_vcc_proxy.frequencyBand == 2 # index 2 == freq band 3
+        # #TODO fix hardcoded value
+        # assert create_vcc_proxy.frequencyBand == 2 # index 2 == freq band 3
         
-        assert create_vcc_proxy.scanID == int(scan_id)
-        create_vcc_proxy.EndScan()
-        time.sleep(2)
+        # assert create_vcc_proxy.scanID == int(scan_id)
+        # create_vcc_proxy.EndScan()
+        # time.sleep(2)
 
         create_vcc_proxy.GoToIdle()
 
