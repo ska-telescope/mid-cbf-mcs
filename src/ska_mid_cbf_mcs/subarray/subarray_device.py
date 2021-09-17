@@ -1732,19 +1732,15 @@ class CbfSubarray(SKASubarray):
             frequency_bands = ["1", "2", "3", "4", "5a", "5b"]
             device._frequency_band = frequency_bands.index(common_configuration["frequency_band"])
 
-            config_dict = { "config_id": common_configuration["config_id"], 
-                            "frequency_band": common_configuration["frequency_band"] }
-            json_str = json.dumps(config_dict)
+            json_str = json.dumps(full_configuration)
             data = tango.DeviceData()
             data.insert(tango.DevString, json_str)
             device._group_vcc.command_inout("ConfigureScan", data)
 
-            # TODO: all these VCC params should be passed in via ConfigureScan()
             # Configure band5Tuning, if frequencyBand is 5a or 5b.
             if device._frequency_band in [4, 5]:
                 stream_tuning = [*map(float, common_configuration["band_5_tuning"])]
                 device._stream_tuning = stream_tuning
-                device._group_vcc.write_attribute("band5Tuning", stream_tuning)
 
             # Configure frequencyBandOffsetStream1.
             if "frequency_band_offset_stream_1" in configuration:
@@ -1753,7 +1749,6 @@ class CbfSubarray(SKASubarray):
                 device._frequency_band_offset_stream_1 = 0
                 log_msg = "'frequencyBandOffsetStream1' not specified. Defaulting to 0."
                 self.logger.warn(log_msg)
-            device._group_vcc.write_attribute("frequencyBandOffsetStream1", device._frequency_band_offset_stream_1)
 
             # Validate frequencyBandOffsetStream2.
             # If not given, use a default value.
@@ -1764,7 +1759,6 @@ class CbfSubarray(SKASubarray):
                 device._frequency_band_offset_stream_2 = 0
                 log_msg = "'frequencyBandOffsetStream2' not specified. Defaulting to 0."
                 self.logger.warn(log_msg)
-            device._group_vcc.write_attribute("frequencyBandOffsetStream2", device._frequency_band_offset_stream_2)
 
             # Configure dopplerPhaseCorrSubscriptionPoint.
             if "doppler_phase_corr_subscription_point" in configuration:
@@ -1808,16 +1802,6 @@ class CbfSubarray(SKASubarray):
                     device._beam_weights_event_callback
                 )
                 device._events_telstate[event_id] = attribute_proxy
-
-            # Configure rfiFlaggingMask.
-            if "rfi_flagging_mask" in configuration:
-                device._group_vcc.write_attribute(
-                    "rfiFlaggingMask",
-                    json.dumps(configuration["rfi_flagging_mask"])
-                )
-            else:
-                log_msg = "'rfiFlaggingMask' not given. Proceeding."
-                self.logger.warn(log_msg)
 
             # Configure searchWindow.
             if "search_window" in configuration:
