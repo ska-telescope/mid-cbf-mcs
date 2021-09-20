@@ -189,7 +189,7 @@ For installing Kubernetes, Minikube and Helm, follow the instructions at
 * [minikube](https://minikube.sigs.k8s.io/docs/start/), 
 [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/) 
 and [Helm](https://helm.sh/docs/intro/install/)
-  * Clone the `https://gitlab.com/ska-telescope/ska-cicd-deploy-minikube` 
+  * Clone the `https://gitlab.com/ska-telescope/sdi/ska-cicd-deploy-minikube` 
   project and follow the README instructions to install and configure minikube, 
   kubectl and Helm correctly.
 
