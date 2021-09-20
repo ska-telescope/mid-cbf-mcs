@@ -595,6 +595,48 @@ class Vcc(CspSubElementObsDevice):
     # Commands
     # --------
 
+    def is_TurnOnBandDevice_allowed(self):
+        """allowed when Devstate is ON"""
+        pass
+
+    @command(
+        dtype_in='str',
+        doc_in="Frequency band name"
+    )
+    def TurnOnBandDevice(self, freq_band_name):
+        """
+        Constraint: Must be called AFTER validate_input()
+        Set corresponding band of this VCC. # TODO - remove this
+        Send ON signal to the corresponding band, and DISABLE signal 
+        to all others
+        """
+
+        # TODO: can be done in a more Pythonian way; broken?
+        if freq_band_name in ["1", "2"]:
+            self._proxy_band_12.On()
+            self._proxy_band_3.Disable()
+            self._proxy_band_4.Disable()
+            self._proxy_band_5.Disable()
+        elif freq_band_name == "3":
+            self._proxy_band_12.Disable()
+            self._proxy_band_3.On()
+            self._proxy_band_4.Disable()
+            self._proxy_band_5.Disable()
+        elif freq_band_name == "4":
+            self._proxy_band_12.Disable()
+            self._proxy_band_3.Disable()
+            self._proxy_band_4.On()
+            self._proxy_band_5.Disable()
+        elif freq_band_name in ["5a", "5b"]:
+            self._proxy_band_12.Disable()
+            self._proxy_band_3.Disable()
+            self._proxy_band_4.Disable()
+            self._proxy_band_5.On()
+        else:
+            # The frequency band name has been validated at this point
+            # so this shouldn't happen
+            pass
+
     class ConfigureScanCommand(CspSubElementObsDevice.ConfigureScanCommand):
         """
         A class for the Vcc's ConfigureScan() command.
@@ -628,38 +670,47 @@ class Vcc(CspSubElementObsDevice):
                 self.logger.warn("validate scan configuration error")
             
             full_configuration = json.loads(argin)
-            common_configuration = copy.deepcopy(full_configuration["common"])
-            cbf_configuration = copy.deepcopy(full_configuration["cbf"])
 
-            device._config_id = str(common_configuration["config_id"])
-            device._freq_band_name = str(common_configuration["frequency_band"])
-            device._frequency_band = freq_band_dict()[device._freq_band_name]
-            if device._frequency_band in [4, 5]:
-                stream_tuning = [*map(float, common_configuration["band_5_tuning"])]
-                device._stream_tuning = stream_tuning
+            if "common" in full_configuration:
+                common_configuration = copy.deepcopy(full_configuration["common"])
+                if "config_id" in common_configuration:
+                    device._config_id = str(common_configuration["config_id"])
+                if "frequency_band" in common_configuration:
+                    device._freq_band_name = str(common_configuration["frequency_band"])
+                    device._frequency_band = freq_band_dict()[device._freq_band_name]
+                    if device._frequency_band in [4, 5]:
+                        stream_tuning = [*map(float, common_configuration["band_5_tuning"])]
+                        device._stream_tuning = stream_tuning
 
-            if "rfi_flagging_mask" in cbf_configuration:
-                device._rfi_flagging_mask = str(cbf_configuration["rfi_flagging_mask"])
-            else:
-                self.logger.warn("'rfiFlaggingMask' not given. Proceeding.")
-
-            if "frequency_band_offset_stream_1" in cbf_configuration:
-                device._frequency_band_offset_stream_1 = int(cbf_configuration["frequency_band_offset_stream_1"])
-            else:
-                device._frequency_band_offset_stream_1 = 0
-                self.logger.warn("'frequencyBandOffsetStream1' not specified. Defaulting to 0.")
-
-            if "frequency_band_offset_stream_2" in cbf_configuration:
-                device._frequency_band_offset_stream_2 = int(cbf_configuration["frequency_band_offset_stream_2"])
-            else:
-                device._frequency_band_offset_stream_2 = 0
-                self.logger.warn("'frequencyBandOffsetStream2' not specified. Defaulting to 0.")
+            if "cbf" in full_configuration:
+                cbf_configuration = copy.deepcopy(full_configuration["cbf"])
+                if "rfi_flagging_mask" in cbf_configuration:
+                    device._rfi_flagging_mask = str(cbf_configuration["rfi_flagging_mask"])
+                else:
+                    self.logger.warn("'rfiFlaggingMask' not given. Proceeding.")
+                if "frequency_band_offset_stream_1" in cbf_configuration:
+                    device._frequency_band_offset_stream_1 = int(cbf_configuration["frequency_band_offset_stream_1"])
+                else:
+                    device._frequency_band_offset_stream_1 = 0
+                    self.logger.warn("'frequencyBandOffsetStream1' not specified. Defaulting to 0.")
+                if "frequency_band_offset_stream_2" in cbf_configuration:
+                    device._frequency_band_offset_stream_2 = int(cbf_configuration["frequency_band_offset_stream_2"])
+                else:
+                    device._frequency_band_offset_stream_2 = 0
+                    self.logger.warn("'frequencyBandOffsetStream2' not specified. Defaulting to 0.")
+                if "scfo_band_1" in cbf_configuration:
+                    device._scfo_band_1 = int(cbf_configuration["scfo_band_1"])
+                else:
+                    device._scfo_band_1 = 0
+                    self.logger.warn("'scfoBand1' not specified. Defaulting to 0.")
             
             if result_code == ResultCode.OK:
                 # TODO: cosider to turn_on the selected band device
                 #       via a separate command
                 if Vcc.TEST_CONTEXT is False:
-                    self.turn_on_band_device(device._freq_band_name)
+                    # self.turn_on_band_device(device._freq_band_name)
+                    self.logger.info("Turning on band device")
+                    device.TurnOnBandDevice(device._freq_band_name)
                 # store the configuration on command success
                 device._last_scan_configuration = argin
                 msg = "Configure command completed OK"
@@ -684,65 +735,6 @@ class Vcc(CspSubElementObsDevice):
                 self._raise_configure_scan_fatal_error(msg)
             
             return (ResultCode.OK, "Configure command completed OK")
-
-
-            # device = self.target
-
-            # try:
-            #     config_dict = json.loads(argin)
-            #     device._config_id = config_dict['config_id']
-
-                # freq_band_name = config_dict['frequency_band']
-                # device._freq_band_name = freq_band_name
-                # device._frequency_band = freq_band_dict()[freq_band_name]
-
-            #     # call the method to validate the data sent with
-            #     # the configuration, as needed.
-            #     return (ResultCode.OK, "ConfigureScan arguments validation successfull")
-
-            # except (KeyError, json.JSONDecodeError) as err:
-            #     msg = "Validate configuration failed with error:{}".format(err)
-            # except Exception as other_errs:
-            #     msg = "Validate configuration failed with unknown error:{}".format(
-            #         other_errs)
-            #     self.logger.error(msg)
-            # return (ResultCode.FAILED, msg)
-
-        def turn_on_band_device(self, freq_band_name):
-            """
-            Constraint: Must be called AFTER validate_input()
-            Set corresponding band of this VCC. # TODO - remove this
-            Send ON signal to the corresponding band, and DISABLE signal 
-            to all others
-            """
-
-            device = self.target
-
-            # TODO: can be done in a more Pythonian way; broken?
-            if freq_band_name in ["1", "2"]:
-                device._proxy_band_12.On()
-                device._proxy_band_3.Disable()
-                device._proxy_band_4.Disable()
-                device._proxy_band_5.Disable()
-            elif freq_band_name == "3":
-                device._proxy_band_12.Disable()
-                device._proxy_band_3.On()
-                device._proxy_band_4.Disable()
-                device._proxy_band_5.Disable()
-            elif freq_band_name == "4":
-                device._proxy_band_12.Disable()
-                device._proxy_band_3.Disable()
-                device._proxy_band_4.On()
-                device._proxy_band_5.Disable()
-            elif freq_band_name in ["5a", "5b"]:
-                device._proxy_band_12.Disable()
-                device._proxy_band_3.Disable()
-                device._proxy_band_4.Disable()
-                device._proxy_band_5.On()
-            else:
-                # The frequnecy band name has been validated at this point
-                # so this shouldn't happen
-                pass
 
     @command(
         dtype_in='DevString',
