@@ -1724,6 +1724,12 @@ class CbfSubarray(SKASubarray):
             # set band5Tuning to [0,0] if not specified
             if "band_5_tuning" not in common_configuration: 
                 common_configuration["band_5_tuning"] = [0,0]
+            if "frequency_band_offset_stream_1" not in common_configuration: 
+                configuration["frequency_band_offset_stream_1"] = 0
+            if "frequency_band_offset_stream_2" not in common_configuration: 
+                configuration["frequency_band_offset_stream_2"] = 0
+            if "rfi_flagging_mask" not in configuration: 
+                configuration["rfi_flagging_mask"] = {}
 
             # Configure configID.
             device._config_ID = str(common_configuration["config_id"])
@@ -1732,162 +1738,16 @@ class CbfSubarray(SKASubarray):
             frequency_bands = ["1", "2", "3", "4", "5a", "5b"]
             device._frequency_band = frequency_bands.index(common_configuration["frequency_band"])
 
-            # config_dict = { "config_id": common_configuration["config_id"], 
-            #                 "frequency_band": common_configuration["frequency_band"] }
             config_dict = {
-                "interface": "https://schema.skao.int/ska-csp-configure/2.0",
-                "transaction_id": "txn-00001",
-                "subarray": {
-                    "subarray_name": "science period 23"
-                },
                 "common": {
                     "config_id": common_configuration["config_id"],
                     "frequency_band": common_configuration["frequency_band"],
                     "band_5_tuning": common_configuration["band_5_tuning"],
-                    "subarray_id": common_configuration["subarray_id"]
                 },
                 "cbf": {
-                    "frequency_band_offset_stream_1": 0,
-                    "frequency_band_offset_stream_2": 0,
-                    "doppler_phase_corr_subscription_point": "ska_mid/tm_leaf_node/csp_subarray_01/dopplerPhaseCorrection",
-                    "jones_matrix_subscription_point": "ska_mid/tm_leaf_node/csp_subarray_01/jonesMatrix",
-                    "delay_model_subscription_point": "ska_mid/tm_leaf_node/csp_subarray_01/delayModel",
-                    "timing_beam_weights_subscription_point": "ska_mid/tm_leaf_node/csp_subarray_01/beamWeights",
-                    "rfi_flagging_mask": {},
-                    "search_window": [
-                        {
-                            "search_window_id": 1,
-                            "search_window_tuning": 6000000000,
-                            "tdc_enable": True,
-                            "tdc_num_bits": 8,
-                            "tdc_period_before_epoch": 5,
-                            "tdc_period_after_epoch": 25,
-                            "tdc_destination_address": [
-                                {
-                                    "receptor_id": 4,
-                                    "tdc_destination_address": ["foo", "bar", "8080"]
-                                },
-                                {
-                                    "receptor_id": 1,
-                                    "tdc_destination_address": ["fizz", "buzz", "80"]
-                                }
-                            ]
-                        },
-                        {
-                            "search_window_id": 2,
-                            "search_window_tuning": 7000000000,
-                            "tdc_enable": False
-                        }
-                    ],
-                    "fsp": [
-                        {
-                            "fsp_id": 1,
-                            "function_mode": "CORR",
-                            "receptor_ids": [4],
-                            "frequency_slice_id": 1,
-                            "zoom_factor": 1,
-                            "zoom_window_tuning": 4700000,
-                            "integration_factor": 1,
-                            "channel_offset": 14880,
-                            "channel_averaging_map": [
-                                [0, 8],
-                                [744, 8],
-                                [1488, 8],
-                                [2232, 8],
-                                [2976, 8],
-                                [3720, 8],
-                                [4464, 8],
-                                [5208, 8],
-                                [5952, 8],
-                                [6696, 8],
-                                [7440, 8],
-                                [8184, 8],
-                                [8928, 8],
-                                [9672, 8],
-                                [10416,8],
-                                [11160, 8],
-                                [11904, 8],
-                                [12648, 8],
-                                [13392, 8],
-                                [14136, 8]
-                            ],
-                            "output_link_map": [ 
-                                [0, 4],
-                                [744, 8],
-                                [1488, 12],
-                                [2232, 16],
-                                [2976, 20],
-                                [3720, 24],
-                                [4464, 28],
-                                [5206, 32],
-                                [5952, 36],
-                                [6696, 40],
-                                [7440, 44],
-                                [8184, 48],
-                                [8928, 52],
-                                [9672, 56],
-                                [10416, 60],
-                                [11160, 64],
-                                [11904, 68],
-                                [12648, 72],
-                                [13392, 76],
-                                [14136, 80]
-                            ],
-                            "output_host": [[0, "192.168.0.1"], [8184, "192.168.0.2"]],
-                            "output_mac": [[0, "06-00-00-00-00-01"]],
-                            "output_port": [[0, 9000, 1], [8184, 9000, 1]]
-                        },
-                        {
-                            "fsp_id": 3,
-                            "function_mode": "PSS-BF",
-                            "search_window_id": 2,
-                            "search_beam": [
-                                {
-                                    "search_beam_id": 300,
-                                    "receptor_ids": [3],
-                                    "enable_output": True,
-                                    "averaging_interval": 4,
-                                    "search_beam_destination_address": "10.1.1.1"
-                                },
-                                {
-                                    "search_beam_id": 400,
-                                    "receptor_ids": [1],
-                                    "enable_output": True,
-                                    "averaging_interval": 2,
-                                    "search_beam_destination_address": "10.1.2.1"
-                                }
-                            ]
-                        },
-                        {
-                            "fsp_id": 2,
-                            "function_mode": "PST-BF",
-                            "timing_beam": [
-                                {
-                                    "timing_beam_id": 10,
-                                    "receptor_ids": [2],
-                                    "enable_output": True,
-                                    "timing_beam_destination_address": "10.1.1.1"
-                                }
-                            ]
-                        }
-                    ],
-                    "vlbi": {
-
-                    }
-                },
-                "pss": {
-
-                },
-                "pst": {
-
-                },
-                "pointing": {
-                    "target": {
-                        "system": "ICRS",
-                        "target_name": "Polaris Australis",
-                        "ra": "21:08:47.92",
-                        "dec": "-88:57:22.9"
-                    }
+                    "frequency_band_offset_stream_1": configuration["frequency_band_offset_stream_1"],
+                    "frequency_band_offset_stream_2": configuration["frequency_band_offset_stream_2"],
+                    "rfi_flagging_mask": configuration["rfi_flagging_mask"],
                 }
             }
             json_str = json.dumps(config_dict)
