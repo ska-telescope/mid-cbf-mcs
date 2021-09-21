@@ -1738,6 +1738,10 @@ class CbfSubarray(SKASubarray):
             frequency_bands = ["1", "2", "3", "4", "5a", "5b"]
             device._frequency_band = frequency_bands.index(common_configuration["frequency_band"])
 
+            data = tango.DeviceData()
+            data.insert(tango.DevString, common_configuration["frequency_band"])
+            device._group_vcc.command_inout("TurnOnBandDevice", data)
+
             config_dict = {
                 "common": {
                     "config_id": common_configuration["config_id"],

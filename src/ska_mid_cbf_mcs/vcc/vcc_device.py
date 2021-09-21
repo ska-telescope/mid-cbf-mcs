@@ -265,8 +265,6 @@ class Vcc(CspSubElementObsDevice):
             :rtype: (ResultCode, str)
             """
 
-            self.logger.debug("Entering InitCommand()")
-
             super().do()
 
             device = self.target
@@ -710,12 +708,6 @@ class Vcc(CspSubElementObsDevice):
                     self.logger.warn("'scfoBand1' not specified. Defaulting to 0.")
             
             if result_code == ResultCode.OK:
-                # TODO: cosider to turn_on the selected band device
-                #       via a separate command
-                if Vcc.TEST_CONTEXT is False:
-                    # self.turn_on_band_device(device._freq_band_name)
-                    self.logger.info("Turning on band device")
-                    device.TurnOnBandDevice(device._freq_band_name)
                 # store the configuration on command success
                 device._last_scan_configuration = argin
                 msg = "Configure command completed OK"
