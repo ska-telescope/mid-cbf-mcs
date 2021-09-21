@@ -18,7 +18,7 @@ import tango
 
 from ska_tango_base.commands import ResultCode
 
-from ska_mid_cbf_mcs.testing.mock import MockCallable
+from ska_mid_cbf_mcs.testing.mock.mock_callable import MockCallable
 
 
 __all__ = ["MockDeviceBuilder"]

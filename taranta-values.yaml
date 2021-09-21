@@ -33,16 +33,16 @@ ska-webjive:
     ingress:
        enabled: true
        nginx: true
-       hostname: integration.engageska-portugal.pt
+       hostname: taranta
 
 webjive-dashboard:   
     ingress:
        enabled: true     
        nginx: true     
-       hostname: integration.engageska-portugal.pt 
+       hostname: taranta
 
 ska-webjive-auth:   
     ingress:     
         enabled: true     
         nginx: true     
-        hostname: integration.engageska-portugal.pt
+        hostname: taranta
