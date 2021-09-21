@@ -46,7 +46,7 @@ midcbf:
   image:
     registry: artefact.skao.int
     image: ska-mid-cbf-mcs
-    tag: 0.5.7
+    tag: 0.5.6
     pullPolicy: IfNotPresent
 
 deviceServers:

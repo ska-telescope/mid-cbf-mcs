@@ -623,7 +623,7 @@ class CbfController(SKAMaster):
         return self._frequency_offset_k
         # PROTECTED REGION END #    //  CbfController.frequencyOffsetK_read
 
-    def write_frequencyOffsetK(self: CbfController, value: frequencyOffsetK) -> int:
+    def write_frequencyOffsetK(self: CbfController, value: frequencyOffsetK) -> None:
         # PROTECTED REGION ID(CbfController.frequencyOffsetK_write) ENABLED START #
         """Set frequencyOffsetK attribute"""
         if len(value) == self._count_vcc:
@@ -641,7 +641,7 @@ class CbfController(SKAMaster):
         return self._frequency_offset_delta_f
         # PROTECTED REGION END #    //  CbfController.frequencyOffsetDeltaF_read
 
-    def write_frequencyOffsetDeltaF(self: CbfController, value: frequencyOffsetDeltaF) -> int:
+    def write_frequencyOffsetDeltaF(self: CbfController, value: frequencyOffsetDeltaF) -> None:
         # PROTECTED REGION ID(CbfController.frequencyOffsetDeltaF_write) ENABLED START #
         """Set the frequencyOffsetDeltaF attribute"""
         if len(value) == self._count_vcc:
