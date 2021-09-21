@@ -10,23 +10,22 @@
 """Contain the tests for the Vcc."""
 
 # Standard imports
-import sys
-import os
 import time
 import json
-import copy
+from typing import Callable, Type
 import logging
 import pytest
-
-# Path
-file_path = os.path.dirname(os.path.abspath(__file__))
 
 # Tango imports
 import tango
 from tango import DevState
+from tango.server import command
 from tango.test_context import DeviceTestContext, MultiDeviceTestContext
 
 #Local imports
+from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
+from ska_mid_cbf_mcs.testing.mock.mock_callable import MockChangeEventCallback
+from ska_mid_cbf_mcs.testing.tango_harness import DeviceToLoadType, TangoHarness
 
 from ska_mid_cbf_mcs.vcc.vcc_device import Vcc
 from ska_mid_cbf_mcs.vcc.vcc_band_1_and_2 import VccBand1And2
@@ -44,98 +43,183 @@ from ska_tango_base.commands import ResultCode
     "tango_context"
 )
 
+# @pytest.fixture()
+# def devices_to_load():
+#     return (
+#         {
+#             "class": Vcc,
+#             "devices": [
+#                 {
+#                     "name": "mid_csp_cbf/vcc/001",
+#                     "properties": {
+#                             "Band1And2Address": [
+#                                 "mid_csp_cbf/vcc_band12/001"
+#                             ],
+#                             "Band3Address": [
+#                                 "mid_csp_cbf/vcc_band3/001"
+#                             ],
+#                             "Band4Address": [
+#                                 "mid_csp_cbf/vcc_band4/001"
+#                             ],
+#                             "Band5Address": [
+#                                 "mid_csp_cbf/vcc_band5/001"
+#                             ],
+#                             "SW1Address": [
+#                                 "mid_csp_cbf/vcc_sw1/001"
+#                             ],
+#                             "SW2Address": [
+#                                 "mid_csp_cbf/vcc_sw2/001"
+#                             ],
+#                             "VccID": [
+#                                 "1"
+#                             ],
+#                     }
+#                 }
+#             ]
+#         },
+#         {
+#             "class": VccBand1And2,
+#             "devices": [
+#                 {"name": "mid_csp_cbf/vcc_band12/001"},
+#             ]
+#         },
+#         {
+#             "class": VccBand3,
+#             "devices": [
+#                 {"name": "mid_csp_cbf/vcc_band3/001"},
+#             ]
+#         },
+#         {
+#             "class": VccBand4,
+#             "devices": [
+#                 {"name": "mid_csp_cbf/vcc_band4/001"},
+#             ]
+#         },
+#         {
+#             "class": VccBand5,
+#             "devices": [
+#                 {"name": "mid_csp_cbf/vcc_band5/001"},
+#             ]
+#         },
+#         {
+#             "class": VccSearchWindow,
+#             "devices": [
+#                 {"name": "mid_csp_cbf/vcc_sw1/001"},
+#             ]
+#         },
+#     )
+
 @pytest.fixture()
-def devices_to_load():
-    return (
-        {
-            "class": Vcc,
-            "devices": [
-                {
-                    "name": "mid_csp_cbf/vcc/001",
-                    "properties": {
-                            "Band1And2Address": [
-                                "mid_csp_cbf/vcc_band12/001"
-                            ],
-                            "Band3Address": [
-                                "mid_csp_cbf/vcc_band3/001"
-                            ],
-                            "Band4Address": [
-                                "mid_csp_cbf/vcc_band4/001"
-                            ],
-                            "Band5Address": [
-                                "mid_csp_cbf/vcc_band5/001"
-                            ],
-                            "SW1Address": [
-                                "mid_csp_cbf/vcc_sw1/001"
-                            ],
-                            "SW2Address": [
-                                "mid_csp_cbf/vcc_sw2/001"
-                            ],
-                            "VccID": [
-                                "1"
-                            ],
-                    }
-                }
-            ]
-        },
-        {
-            "class": VccBand1And2,
-            "devices": [
-                {"name": "mid_csp_cbf/vcc_band12/001"},
-            ]
-        },
-        {
-            "class": VccBand3,
-            "devices": [
-                {"name": "mid_csp_cbf/vcc_band3/001"},
-            ]
-        },
-        {
-            "class": VccBand4,
-            "devices": [
-                {"name": "mid_csp_cbf/vcc_band4/001"},
-            ]
-        },
-        {
-            "class": VccBand5,
-            "devices": [
-                {"name": "mid_csp_cbf/vcc_band5/001"},
-            ]
-        },
-        {
-            "class": VccSearchWindow,
-            "devices": [
-                {"name": "mid_csp_cbf/vcc_sw1/001"},
-            ]
-        },
-    )
+def patched_vcc_device_class() -> Type[Vcc]:
+    """
+    Return a subarray device class, patched with extra methods for testing.
 
-# @pytest.fixture
-# def vcc(tango_context):
-#     """Create DeviceProxy for tests"""
-#     logging.info("%s", tango_context)
-#     dev_factory = DevFactory()
-#     logging.info("%s", dev_factory._test_context)
-#     return dev_factory.get_device("mid_csp_cbf/vcc/001")
+    :return: a patched subarray device class, patched with extra methods
+        for testing
+    """
 
-# @pytest.fixture
-# def band_12_proxy(tango_context):
-#     """Create DeviceProxy for tests"""
-#     logging.info("%s", tango_context)
-#     dev_factory = DevFactory()
-#     logging.info("%s", dev_factory._test_context)
-#     return dev_factory.get_device("mid_csp_cbf/vcc_band12/001")
+    class PatchedVccDevice(Vcc):
+        """
+        Vcc patched with extra commands for testing purposes.
 
-# @pytest.fixture
-# def band_3_proxy(tango_context):
-#     """Create DeviceProxy for tests"""
-#     logging.info("%s", tango_context)
-#     dev_factory = DevFactory()
-#     logging.info("%s", dev_factory._test_context)
-#     return dev_factory.get_device("mid_csp_cbf/vcc_band3/001")
+        The extra commands allow us to mock the receipt of obs state
+        change events from subservient devices.
+        """
+
+        @command(dtype_in=int)
+        def FakeSubservientDevicesObsState(
+            self,
+            obs_state: ObsState
+        ) -> None:
+            obs_state = ObsState(obs_state)
+
+            # for fqdn in self.component_manager._device_obs_states:
+            #     self.component_manager._device_obs_state_changed(fqdn, obs_state)
+
+    return PatchedVccDevice
+
+
+# @pytest.fixture()
+# def devices_to_load(patched_vcc_device_class: Type[Vcc]) -> DeviceToLoadType:
+#     """
+#     Fixture that specifies the device to be loaded for testing.
+
+#     :param patched_tile_device_class: a device class for the tile device
+#         under test, patched with extra methods for testing.
+
+#     :return: specification of the device to be loaded
+#     """
+#     return {
+#         "path": "charts/ska-mid-cbf/data/midcbfconfig.json",
+#         "package": "ska_mid_cbf_mcs",
+#         "devices": [
+#                 { "name": "vcc-001", "proxy": CbfDeviceProxy },
+#                 { "name": "mid_csp_cbf/vcc_band12/001", "proxy": CbfDeviceProxy },
+#                 { "name": "mid_csp_cbf/vcc_band3/001", "proxy": CbfDeviceProxy },
+#                 { "name": "mid_csp_cbf/vcc_band4/001", "proxy": CbfDeviceProxy },
+#                 { "name": "mid_csp_cbf/vcc_band5/001", "proxy": CbfDeviceProxy },
+#                 { "name": "mid_csp_cbf/vcc_sw1/001", "proxy": CbfDeviceProxy },
+#             ]
+#     }
+
+@pytest.fixture()
+def device_to_load(
+    patched_vcc_device_class: Type[Vcc],
+) -> DeviceToLoadType:
+    """
+    Fixture that specifies the device to be loaded for testing.
+
+    :param patched_subarray_device_class: a class for a patched subarray
+        device with extra methods for testing purposes.
+
+    :return: specification of the device to be loaded
+    """
+    return {
+        "path": "charts/ska-mid-cbf/data/midcbfconfig.json",
+        "package": "ska_mid_cbf_mcs",
+        "device": "vcc-001",
+        "proxy": CbfDeviceProxy,
+        "patch": patched_vcc_device_class,
+    }
+
+
 
 class TestVcc:
+    """
+    Test class for Vcc tests.
+    """
+
+    @pytest.fixture()
+    def device_under_test(
+        self, 
+        tango_harness: TangoHarness
+    ) -> CbfDeviceProxy:
+        """
+        Fixture that returns the device under test.
+
+        :param tango_harness: a test harness for Tango devices
+
+        :return: the device under test
+        """
+        return tango_harness.get_device("mid_csp_cbf/vcc/001")
+
+
+    def test_VccBand(
+        self,
+        tango_harness: TangoHarness,
+        device_under_test: CbfDeviceProxy
+    ) -> None:
+        """
+        Test for VccBand device.
+
+        :param device_under_test: fixture that provides a
+            :py:class:`tango.DeviceProxy` to the device under test, in a
+            :py:class:`tango.test_context.DeviceTestContext`.
+        """
+        mock_band12 = tango_harness.get_device("mid_csp_cbf/vcc_band12/001")
+        assert device_under_test.obsState == ObsState.IDLE
     
+    @pytest.mark.skip
     def test_SetFrequencyBand(
         self,
         debug_device_is_on,

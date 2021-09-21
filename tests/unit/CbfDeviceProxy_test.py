@@ -19,9 +19,6 @@ from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 
 from ska_mid_cbf_mcs.testing.tango_harness import TangoHarness
 
-@pytest.fixture()
-def devices_to_load(): return None
-
 class TestCbfDeviceProxy:
     """This class contains unit tests for the CbfDeviceProxy class."""
 
