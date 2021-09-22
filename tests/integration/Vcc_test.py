@@ -79,6 +79,8 @@ class TestVcc:
         freq_band_name = common_configuration["frequency_band"]
         create_vcc_proxy.TurnOnBandDevice(freq_band_name)
 
+        time.sleep(2)
+
         if freq_band_name in ["1", "2"]:
             assert create_band_12_proxy.State() == DevState.ON
             assert create_band_3_proxy.State() == DevState.DISABLE
@@ -121,6 +123,25 @@ class TestVcc:
         if "scfo_band_1" in cbf_configuration:
             assert create_vcc_proxy.scfoBand1 == cbf_configuration["scfo_band_1"]
 
+        time.sleep(2)
+
+        create_vcc_proxy.TurnOffBandDevice(freq_band_name)
+
+        time.sleep(2)
+
+        if freq_band_name in ["1", "2"]:
+            assert create_band_12_proxy.State() == DevState.OFF
+        elif freq_band_name == "3":
+            assert create_band_3_proxy.State() == DevState.OFF
+        elif freq_band_name == "4":
+            assert create_band_4_proxy.State() == DevState.OFF
+        elif freq_band_name in ["5a", "5b"]:
+            assert create_band_5_proxy.State() == DevState.OFF
+        else:
+            # The frequency band name has been validated at this point
+            # so this shouldn't happen
+            logging.error("Incorrect frequency band: " + freq_band_name)
+        
         time.sleep(2)
 
         create_vcc_proxy.Off()

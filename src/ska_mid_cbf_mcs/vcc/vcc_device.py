@@ -605,8 +605,6 @@ class Vcc(CspSubElementObsDevice):
     )
     def TurnOnBandDevice(self: Vcc, freq_band_name: str) -> None:
         """
-        Constraint: Must be called AFTER validate_input()
-        Set corresponding band of this VCC. # TODO - remove this
         Send ON signal to the corresponding band, and DISABLE signal 
         to all others
         """
@@ -632,6 +630,29 @@ class Vcc(CspSubElementObsDevice):
             self._proxy_band_3.Disable()
             self._proxy_band_4.Disable()
             self._proxy_band_5.On()
+        else:
+            # The frequency band name has been validated at this point
+            # so this shouldn't happen
+            pass
+    
+    @command(
+        dtype_in='str',
+        doc_in="Frequency band name"
+    )
+    def TurnOffBandDevice(self: Vcc, freq_band_name: str) -> None:
+        """
+        Send OFF signal to the corresponding band
+        """
+
+        # TODO: can be done in a more Pythonian way; broken?
+        if freq_band_name in ["1", "2"]:
+            self._proxy_band_12.Off()
+        elif freq_band_name == "3":
+            self._proxy_band_3.Off()
+        elif freq_band_name == "4":
+            self._proxy_band_4.Off()
+        elif freq_band_name in ["5a", "5b"]:
+            self._proxy_band_5.Off()
         else:
             # The frequency band name has been validated at this point
             # so this shouldn't happen

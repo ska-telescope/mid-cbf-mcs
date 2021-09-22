@@ -972,10 +972,6 @@ class CbfSubarray(SKASubarray):
         # TODO: the deconfiguration should happen in reverse order of the
         #       initialization:
 
-        # reset scanID, frequencyBand in case they're not reset
-        self._scan_ID = 0
-        self._frequency_band = 0
-
         # unsubscribe from TMC events
         for event_id in list(self._events_telstate.keys()):
             self._events_telstate[event_id].unsubscribe_event(event_id)
@@ -993,10 +989,21 @@ class CbfSubarray(SKASubarray):
         # send assigned VCCs and FSP subarrays to IDLE state
         # TODO: check if vcc fsp is in scanning state (subarray 
         # could be aborted in scanning state) - is this needed?
+
         self._group_vcc.command_inout("GoToIdle")
         self._group_fsp_corr_subarray.command_inout("GoToIdle")
         self._group_fsp_pss_subarray.command_inout("GoToIdle")
         self._group_fsp_pst_subarray.command_inout("GoToIdle")
+
+        frequency_bands = ["1", "2", "3", "4", "5a", "5b"]
+        freq_band_name =  frequency_bands[self._frequency_band]
+        data = tango.DeviceData()
+        data.insert(tango.DevString, freq_band_name)
+        self._group_vcc.command_inout("TurnOffBandDevice", data)
+
+        # reset scanID, frequencyBand in case they're not reset
+        self._scan_ID = 0
+        self._frequency_band = 0
 
         # change FSP subarray membership
         data = tango.DeviceData()
@@ -1712,6 +1719,8 @@ class CbfSubarray(SKASubarray):
             # Can't call GoToIdle, otherwise there will be state transition problem. 
             # TODO - to clarify why can't call GoToIdle
             device._deconfigure()
+            # TODO: TurnOffBandDevice for Vcc called within deconfigure should be moved 
+            # moved out and called after Vcc GoToIdle 
 
             # TODO - to remove
             # data = tango.DeviceData()
