@@ -705,11 +705,6 @@ class Vcc(CspSubElementObsDevice):
                         stream_tuning = [*map(float, configuration["band_5_tuning"])]
                         device._stream_tuning = stream_tuning
 
-            if "rfi_flagging_mask" in configuration:
-                device._rfi_flagging_mask = str(configuration["rfi_flagging_mask"])
-            else:
-                self.logger.warn("'rfiFlaggingMask' not given. Proceeding.")
-
             if "frequency_band_offset_stream_1" in configuration:
                 device._frequency_band_offset_stream_1 = int(configuration["frequency_band_offset_stream_1"])
             else:
@@ -721,6 +716,11 @@ class Vcc(CspSubElementObsDevice):
             else:
                 device._frequency_band_offset_stream_2 = 0
                 self.logger.warn("'frequencyBandOffsetStream2' not specified. Defaulting to 0.")
+            
+            if "rfi_flagging_mask" in configuration:
+                device._rfi_flagging_mask = str(configuration["rfi_flagging_mask"])
+            else:
+                self.logger.warn("'rfiFlaggingMask' not given. Proceeding.")
 
             if "scfo_band_1" in configuration:
                 device._scfo_band_1 = int(configuration["scfo_band_1"])
@@ -764,6 +764,14 @@ class Vcc(CspSubElementObsDevice):
                 msg = "Configure command completed OK"
 
             return(result_code, msg)
+        
+        def _raise_configure_scan_fatal_error(
+            self: Vcc.ConfigureScanCommand, 
+            msg: str
+            ) -> None:
+            self.logger.error(msg)
+            tango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
+                                        tango.ErrSeverity.ERR)
             
         def _validate_scan_configuration(
             self: Vcc.ConfigureScanCommand, 
@@ -782,6 +790,82 @@ class Vcc(CspSubElementObsDevice):
             except json.JSONDecodeError:  # argument not a valid JSON object
                 msg = "Scan configuration object is not a valid JSON object. Aborting configuration."
                 self._raise_configure_scan_fatal_error(msg)
+            
+            # Validate frequencyBandOffsetStream1.
+            if "frequency_band_offset_stream_1" not in configuration:
+                configuration["frequency_band_offset_stream_1"] = 0
+            if abs(int(configuration["frequency_band_offset_stream_1"])) <= const.FREQUENCY_SLICE_BW * 10 ** 6 / 2:
+                pass
+            else:
+                msg = "Absolute value of 'frequencyBandOffsetStream1' must be at most half " \
+                        "of the frequency slice bandwidth. Aborting configuration."
+                self._raise_configure_scan_fatal_error(msg)
+
+            # Validate frequencyBandOffsetStream2.
+            if "frequency_band_offset_stream_2" not in configuration:
+                configuration["frequency_band_offset_stream_2"] = 0
+            if abs(int(configuration["frequency_band_offset_stream_2"])) <= const.FREQUENCY_SLICE_BW * 10 ** 6 / 2:
+                pass
+            else:
+                msg = "Absolute value of 'frequencyBandOffsetStream2' must be at most " \
+                        "half of the frequency slice bandwidth. Aborting configuration."
+                self._raise_configure_scan_fatal_error(msg)
+            
+            # Validate frequencyBand.
+            valid_freq_bands = ["1", "2", "3", "4", "5a", "5b"]
+            if configuration["frequency_band"] not in valid_freq_bands:
+                msg = "'band5Tuning' must be an array of length 2. Aborting configuration."
+                self._raise_configure_scan_fatal_error(msg)
+
+            # Validate band5Tuning, frequencyBandOffsetStream2 if frequencyBand is 5a or 5b.
+            if configuration["frequency_band"] in ["5a", "5b"]:
+                # band5Tuning is optional
+                if "band_5_tuning" in configuration:
+                    pass
+                    # check if streamTuning is an array of length 2
+                    try:
+                        assert len(configuration["band_5_tuning"]) == 2
+                    except (TypeError, AssertionError):
+                        msg = "'band5Tuning' must be an array of length 2. Aborting configuration."
+                        self._raise_configure_scan_fatal_error(msg)
+
+                    stream_tuning = [*map(float, configuration["band_5_tuning"])]
+                    if configuration["frequency_band"] == "5a":
+                        if all(
+                                [const.FREQUENCY_BAND_5a_TUNING_BOUNDS[0] <= stream_tuning[i]
+                                <= const.FREQUENCY_BAND_5a_TUNING_BOUNDS[1] for i in [0, 1]]
+                        ):
+                            pass
+                        else:
+                            msg = "Elements in 'band5Tuning must be floats between {} and {} " \
+                                "(received {} and {}) for a 'frequencyBand' of 5a. " \
+                                "Aborting configuration.".format(
+                                const.FREQUENCY_BAND_5a_TUNING_BOUNDS[0],
+                                const.FREQUENCY_BAND_5a_TUNING_BOUNDS[1],
+                                stream_tuning[0],
+                                stream_tuning[1]
+                            )
+                            self._raise_configure_scan_fatal_error(msg)
+                    else:  # configuration["frequency_band"] == "5b"
+                        if all(
+                                [const.FREQUENCY_BAND_5b_TUNING_BOUNDS[0] <= stream_tuning[i]
+                                <= const.FREQUENCY_BAND_5b_TUNING_BOUNDS[1] for i in [0, 1]]
+                        ):
+                            pass
+                        else:
+                            msg = "Elements in 'band5Tuning must be floats between {} and {} " \
+                                "(received {} and {}) for a 'frequencyBand' of 5b. " \
+                                "Aborting configuration.".format(
+                                const.FREQUENCY_BAND_5b_TUNING_BOUNDS[0],
+                                const.FREQUENCY_BAND_5b_TUNING_BOUNDS[1],
+                                stream_tuning[0],
+                                stream_tuning[1]
+                            )
+                            self._raise_configure_scan_fatal_error(msg)
+                else:
+                    # set band5Tuning to zero for the rest of the test. This won't 
+                    # change the argin in function "configureScan(argin)"
+                    configuration["band_5_tuning"] = [0, 0]
             
             return (ResultCode.OK, "Configure command completed OK")
 

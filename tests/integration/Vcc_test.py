@@ -71,7 +71,7 @@ class TestVcc:
         config_file_name = "/../data/Vcc_ConfigureScan_basic.json"
         f = open(file_path + config_file_name)
         json_str = f.read().replace("\n", "")
-        configuration = json.loads(json_str)
+        configuration = copy.deepcopy(json.loads(json_str))
         f.close()
 
         freq_band_name = configuration["frequency_band"]
