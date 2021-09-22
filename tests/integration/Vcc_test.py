@@ -14,27 +14,19 @@ import sys
 import os
 import time
 import json
+import copy
 import logging
 
 # Path
 file_path = os.path.dirname(os.path.abspath(__file__))
-# insert base package directory to import global_enum 
-# module in commons folder
-commons_pkg_path = os.path.abspath(os.path.join(file_path, "../../commons"))
-sys.path.insert(0, commons_pkg_path)
-
-path = os.path.join(os.path.dirname(__file__), os.pardir)
-sys.path.insert(0, os.path.abspath(path))
 
 # Tango imports
 import tango
 from tango import DevState
 import pytest
 
-#Local imports
-
-# from Vcc.Vcc import Vcc
-from ska.base.control_model import HealthState, AdminMode, ObsState
+# SKA specific imports
+from ska_mid_cbf_mcs.commons.global_enum import freq_band_dict
 
 @pytest.mark.usefixtures(
     "create_vcc_proxy",
@@ -55,175 +47,84 @@ class TestVcc:
         # cls.numpy = CspMaster.numpy = MagicMock()
     """
 
-    def test_SetFrequencyBand(
-            self,
-            create_vcc_proxy,
-            create_band_12_proxy,
-            create_band_3_proxy,
-            create_band_4_proxy,
-            create_band_5_proxy
-    ):
-        """
-        Test SetFrequencyBand command state changes.
-        """
-        create_band_12_proxy.Init()
-        create_band_3_proxy.Init()
-        create_band_4_proxy.Init()
-        create_band_5_proxy.Init()
-        create_vcc_proxy.Init()
-        time.sleep(3)
-
-        # TODO: Get following asserts passing 
-        # (after turn_on_band_device is decoupled from ConfigureScanCommand as its own command)
-        
-        # # all bands should be disabled after initialization
-        # assert create_band_12_proxy.State() == DevState.DISABLE
-        # assert create_band_3_proxy.State() == DevState.DISABLE
-        # assert create_band_4_proxy.State() == DevState.DISABLE
-        # assert create_band_5_proxy.State() == DevState.DISABLE
-
-        # # set frequency band to 1
-        # create_vcc_proxy.SetFrequencyBand("1")
-        # time.sleep(1)
-        # assert create_band_12_proxy.State() == DevState.ON
-        # assert create_band_3_proxy.State() == DevState.DISABLE
-        # assert create_band_4_proxy.State() == DevState.DISABLE
-        # assert create_band_5_proxy.State() == DevState.DISABLE
-
-        # # set frequency band to 3
-        # create_vcc_proxy.SetFrequencyBand("3")
-        # time.sleep(1)
-        # assert create_band_12_proxy.State() == DevState.DISABLE
-        # assert create_band_3_proxy.State() == DevState.ON
-        # assert create_band_4_proxy.State() == DevState.DISABLE
-        # assert create_band_5_proxy.State() == DevState.DISABLE
-
-        # # set frequency band to 2
-        # create_vcc_proxy.SetFrequencyBand("2")
-        # time.sleep(1)
-        # assert create_band_12_proxy.State() == DevState.ON
-        # assert create_band_3_proxy.State() == DevState.DISABLE
-        # assert create_band_4_proxy.State() == DevState.DISABLE
-        # assert create_band_5_proxy.State() == DevState.DISABLE
-
-        # # set frequency band to 5a
-        # create_vcc_proxy.SetFrequencyBand("5a")
-        # time.sleep(1)
-        # assert create_band_12_proxy.State() == DevState.DISABLE
-        # assert create_band_3_proxy.State() == DevState.DISABLE
-        # assert create_band_4_proxy.State() == DevState.DISABLE
-        # assert create_band_5_proxy.State() == DevState.ON
-
-        # # set frequency band to 4
-        # create_vcc_proxy.SetFrequencyBand("4")
-        # time.sleep(1)
-        # assert create_band_12_proxy.State() == DevState.DISABLE
-        # assert create_band_3_proxy.State() == DevState.DISABLE
-        # assert create_band_4_proxy.State() == DevState.ON
-        # assert create_band_5_proxy.State() == DevState.DISABLE
-
-        # # set frequency band to 5b
-        # create_vcc_proxy.SetFrequencyBand("5b")
-        # time.sleep(1)
-        # assert create_band_12_proxy.State() == DevState.DISABLE
-        # assert create_band_3_proxy.State() == DevState.DISABLE
-        # assert create_band_4_proxy.State() == DevState.DISABLE
-        # assert create_band_5_proxy.State() == DevState.ON
-
-    @pytest.mark.skip
-    def test_ConfigureSearchWindow_basic(self, create_vcc_proxy, create_sw_1_proxy):
-        """
-        Test a minimal successful search window configuration.
-        """
-        create_sw_1_proxy.Init()
-        create_vcc_proxy.Init()
-        time.sleep(3)
-
-        # check initial values of attributes
-        assert create_sw_1_proxy.searchWindowTuning == 0
-        assert create_sw_1_proxy.tdcEnable == False
-        assert create_sw_1_proxy.tdcNumBits == 0
-        assert create_sw_1_proxy.tdcPeriodBeforeEpoch == 0
-        assert create_sw_1_proxy.tdcPeriodAfterEpoch == 0
-        assert create_sw_1_proxy.tdcDestinationAddress == ("", "", "")
-
-        # check initial state
-        assert create_sw_1_proxy.State() == DevState.DISABLE
-
-        # set receptorID to 1 to correctly test tdcDestinationAddress
-        create_vcc_proxy.receptorID = 1
-
-        # configure search window
-        f = open(file_path + "/test_json/test_ConfigureSearchWindow_basic.json")
-        create_vcc_proxy.ConfigureSearchWindow(f.read().replace("\n", ""))
-        f.close()
-        time.sleep(1)
-
-        # check configured values
-        assert create_sw_1_proxy.searchWindowTuning == 1000000000
-        assert create_sw_1_proxy.tdcEnable == True
-        assert create_sw_1_proxy.tdcNumBits == 8
-        assert create_sw_1_proxy.tdcPeriodBeforeEpoch == 5
-        assert create_sw_1_proxy.tdcPeriodAfterEpoch == 25
-        assert create_sw_1_proxy.tdcDestinationAddress == ("", "", "")
-
-        # check state
-        assert create_sw_1_proxy.State() == DevState.ON
-
-    def test_VCC_ConfigureScan_basic(
+    def test_ConfigureScan(
         self,
-        create_vcc_proxy
+        create_vcc_proxy,
+        create_band_12_proxy,
+        create_band_3_proxy,
+        create_band_4_proxy,
+        create_band_5_proxy
     ):
         """
         Test a minimal successful scan configuration.
         """
 
+        assert create_vcc_proxy.State() == DevState.OFF
+
         create_vcc_proxy.On()
 
-        # config_dict = {
-        #     "config_id": "vcc_integration_test",
-        #     "frequency_band": "3",
-        #     "band_5_tuning": [5.85, 7.25],
-        # }
+        time.sleep(2)
+
+        assert create_vcc_proxy.State() == DevState.ON
+        
 
         config_file_name = "/../data/ConfigureScan_basic.json"
         f = open(file_path + config_file_name)
-        create_vcc_proxy.ConfigureScan(f.read().replace("\n", ""))
+        json_str = f.read().replace("\n", "")
+        full_configuration = json.loads(json_str)
+        common_configuration = copy.deepcopy(full_configuration["common"])
+        cbf_configuration = copy.deepcopy(full_configuration["cbf"])
         f.close()
 
-        assert create_vcc_proxy.configID == "band:5a, fsp1, 744 channels average factor 8"
+        freq_band_name = common_configuration["frequency_band"]
+        create_vcc_proxy.TurnOnBandDevice(freq_band_name)
 
-        # json_str = json.dumps(config_dict)
+        if freq_band_name in ["1", "2"]:
+            assert create_band_12_proxy.State() == DevState.ON
+            assert create_band_3_proxy.State() == DevState.DISABLE
+            assert create_band_4_proxy.State() == DevState.DISABLE
+            assert create_band_5_proxy.State() == DevState.DISABLE
+        elif freq_band_name == "3":
+            assert create_band_12_proxy.State() == DevState.DISABLE
+            assert create_band_3_proxy.State() == DevState.ON
+            assert create_band_4_proxy.State() == DevState.DISABLE
+            assert create_band_5_proxy.State() == DevState.DISABLE
+        elif freq_band_name == "4":
+            assert create_band_12_proxy.State() == DevState.DISABLE
+            assert create_band_3_proxy.State() == DevState.DISABLE
+            assert create_band_4_proxy.State() == DevState.ON
+            assert create_band_5_proxy.State() == DevState.DISABLE
+        elif freq_band_name in ["5a", "5b"]:
+            assert create_band_12_proxy.State() == DevState.DISABLE
+            assert create_band_3_proxy.State() == DevState.DISABLE
+            assert create_band_4_proxy.State() == DevState.DISABLE
+            assert create_band_5_proxy.State() == DevState.ON
+        else:
+            # The frequency band name has been validated at this point
+            # so this shouldn't happen
+            logging.error("Incorrect frequency band: " + freq_band_name)
 
-        # logging.info("json_str = {}".format(json_str))
 
-        # create_vcc_proxy.ConfigureScan(json_str)
+        create_vcc_proxy.ConfigureScan(json_str)
+
+        if "config_id" in common_configuration:
+            assert create_vcc_proxy.configID == common_configuration["config_id"]
+        if "frequency_band" in common_configuration:
+            assert create_vcc_proxy.frequencyBand == freq_band_dict()[common_configuration["frequency_band"]]
+        
+        if "rfi_flagging_mask" in cbf_configuration:
+            assert create_vcc_proxy.rfiFlaggingMask == str(cbf_configuration["rfi_flagging_mask"])
+        if "frequency_band_offset_stream_1" in cbf_configuration:
+            assert  create_vcc_proxy.frequencyBandOffsetStream1 == cbf_configuration["frequency_band_offset_stream_1"]
+        if "frequency_band_offset_stream_2" in cbf_configuration:
+            assert  create_vcc_proxy.frequencyBandOffsetStream2 == cbf_configuration["frequency_band_offset_stream_2"] 
+        if "scfo_band_1" in cbf_configuration:
+            assert create_vcc_proxy.scfoBand1 == cbf_configuration["scfo_band_1"]
 
         time.sleep(2)
-
-        # scan_id = '1'
-
-        # scan_id_device_data = tango.DeviceData()
-        # scan_id_device_data.insert(tango.DevString, scan_id)
-
-        # create_vcc_proxy.command_inout("Scan", scan_id_device_data)
-
-        # logging.info( (" create_vcc_proxy.scanID =  {}".
-        # format(create_vcc_proxy.scanID)) )
-
-        # logging.info( (" create_vcc_proxy.frequencyBand =  {}".
-        # format(create_vcc_proxy.frequencyBand)) )
-
-        # #TODO fix hardcoded value
-        # assert create_vcc_proxy.frequencyBand == 2 # index 2 == freq band 3
-        
-        # assert create_vcc_proxy.scanID == int(scan_id)
-        # create_vcc_proxy.EndScan()
-        # time.sleep(2)
-
-        create_vcc_proxy.GoToIdle()
 
         create_vcc_proxy.Off()
+
         time.sleep(2)
-        logging.info( ("vcc_proxy.State() AFTER VCC Off() & sleep = {}".
-        format( create_vcc_proxy.State())) )
+
+        assert create_vcc_proxy.State() == DevState.OFF
