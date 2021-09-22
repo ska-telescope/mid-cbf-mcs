@@ -693,40 +693,70 @@ class Vcc(CspSubElementObsDevice):
                 self.logger.error(str(df.args[0].desc))
                 self.logger.warn("validate scan configuration error")
             
-            full_configuration = json.loads(argin)
+            configuration = json.loads(argin)
 
-            if "common" in full_configuration:
-                common_configuration = copy.deepcopy(full_configuration["common"])
-                if "config_id" in common_configuration:
-                    device._config_id = str(common_configuration["config_id"])
-                if "frequency_band" in common_configuration:
-                    device._freq_band_name = str(common_configuration["frequency_band"])
-                    device._frequency_band = freq_band_dict()[device._freq_band_name]
-                    if device._frequency_band in [4, 5]:
-                        stream_tuning = [*map(float, common_configuration["band_5_tuning"])]
+            if "config_id" in configuration:
+                    device._config_id = configuration["config_id"]
+
+            if "frequency_band" in configuration:
+                device._freq_band_name = str(configuration["frequency_band"])
+                device._frequency_band = freq_band_dict()[device._freq_band_name]
+                if device._frequency_band in [4, 5]:
+                        stream_tuning = [*map(float, configuration["band_5_tuning"])]
                         device._stream_tuning = stream_tuning
 
-            if "cbf" in full_configuration:
-                cbf_configuration = copy.deepcopy(full_configuration["cbf"])
-                if "rfi_flagging_mask" in cbf_configuration:
-                    device._rfi_flagging_mask = str(cbf_configuration["rfi_flagging_mask"])
-                else:
-                    self.logger.warn("'rfiFlaggingMask' not given. Proceeding.")
-                if "frequency_band_offset_stream_1" in cbf_configuration:
-                    device._frequency_band_offset_stream_1 = int(cbf_configuration["frequency_band_offset_stream_1"])
-                else:
-                    device._frequency_band_offset_stream_1 = 0
-                    self.logger.warn("'frequencyBandOffsetStream1' not specified. Defaulting to 0.")
-                if "frequency_band_offset_stream_2" in cbf_configuration:
-                    device._frequency_band_offset_stream_2 = int(cbf_configuration["frequency_band_offset_stream_2"])
-                else:
-                    device._frequency_band_offset_stream_2 = 0
-                    self.logger.warn("'frequencyBandOffsetStream2' not specified. Defaulting to 0.")
-                if "scfo_band_1" in cbf_configuration:
-                    device._scfo_band_1 = int(cbf_configuration["scfo_band_1"])
-                else:
-                    device._scfo_band_1 = 0
-                    self.logger.warn("'scfoBand1' not specified. Defaulting to 0.")
+            if "rfi_flagging_mask" in configuration:
+                device._rfi_flagging_mask = str(configuration["rfi_flagging_mask"])
+            else:
+                self.logger.warn("'rfiFlaggingMask' not given. Proceeding.")
+
+            if "frequency_band_offset_stream_1" in configuration:
+                device._frequency_band_offset_stream_1 = int(configuration["frequency_band_offset_stream_1"])
+            else:
+                device._frequency_band_offset_stream_1 = 0
+                self.logger.warn("'frequencyBandOffsetStream1' not specified. Defaulting to 0.")
+
+            if "frequency_band_offset_stream_2" in configuration:
+                device._frequency_band_offset_stream_2 = int(configuration["frequency_band_offset_stream_2"])
+            else:
+                device._frequency_band_offset_stream_2 = 0
+                self.logger.warn("'frequencyBandOffsetStream2' not specified. Defaulting to 0.")
+
+            if "scfo_band_1" in configuration:
+                device._scfo_band_1 = int(configuration["scfo_band_1"])
+            else:
+                device._scfo_band_1 = 0
+                self.logger.warn("'scfoBand1' not specified. Defaulting to 0.")
+
+            if "scfo_band_2" in configuration:
+                device._scfo_band_2 = int(configuration["scfo_band_2"])
+            else:
+                device._scfo_band_2 = 0
+                self.logger.warn("'scfoBand2' not specified. Defaulting to 0.")
+
+            if "scfo_band_3" in configuration:
+                device._scfo_band_3 = int(configuration["scfo_band_3"])
+            else:
+                device._scfo_band_3 = 0
+                self.logger.warn("'scfoBand3' not specified. Defaulting to 0.")
+
+            if "scfo_band_4" in configuration:
+                device._scfo_band_4 = configuration["scfo_band_4"]
+            else:
+                device._scfo_band_4 = 0
+                self.logger.warn("'scfoBand4' not specified. Defaulting to 0.")
+
+            if "scfo_band_5a" in configuration:
+                device._scfo_band_5a = int(configuration["scfo_band_5a"])
+            else:
+                device._scfo_band_5a = 0
+                self.logger.warn("'scfoBand5a' not specified. Defaulting to 0.")
+
+            if "scfo_band_5b" in configuration:
+                device._scfo_band_5b = int(configuration["scfo_band_5b"])
+            else:
+                device._scfo_band_5b = 0
+                self.logger.warn("'scfoBand5b' not specified. Defaulting to 0.")
             
             if result_code == ResultCode.OK:
                 # store the configuration on command success
@@ -748,9 +778,7 @@ class Vcc(CspSubElementObsDevice):
             :rtype: (ResultCode, str)
             """
             try:
-                full_configuration = json.loads(argin)
-                common_configuration = copy.deepcopy(full_configuration["common"])
-                configuration = copy.deepcopy(full_configuration["cbf"])
+                configuration = json.loads(argin)
             except json.JSONDecodeError:  # argument not a valid JSON object
                 msg = "Scan configuration object is not a valid JSON object. Aborting configuration."
                 self._raise_configure_scan_fatal_error(msg)

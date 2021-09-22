@@ -1752,16 +1752,12 @@ class CbfSubarray(SKASubarray):
             device._group_vcc.command_inout("TurnOnBandDevice", data)
 
             config_dict = {
-                "common": {
-                    "config_id": common_configuration["config_id"],
-                    "frequency_band": common_configuration["frequency_band"],
-                    "band_5_tuning": common_configuration["band_5_tuning"],
-                },
-                "cbf": {
-                    "frequency_band_offset_stream_1": configuration["frequency_band_offset_stream_1"],
-                    "frequency_band_offset_stream_2": configuration["frequency_band_offset_stream_2"],
-                    "rfi_flagging_mask": configuration["rfi_flagging_mask"],
-                }
+                "config_id": common_configuration["config_id"],
+                "frequency_band": common_configuration["frequency_band"],
+                "band_5_tuning": common_configuration["band_5_tuning"],
+                "frequency_band_offset_stream_1": configuration["frequency_band_offset_stream_1"],
+                "frequency_band_offset_stream_2": configuration["frequency_band_offset_stream_2"],
+                "rfi_flagging_mask": configuration["rfi_flagging_mask"],
             }
             json_str = json.dumps(config_dict)
             data = tango.DeviceData()

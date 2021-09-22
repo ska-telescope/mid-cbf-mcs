@@ -47,7 +47,7 @@ class TestVcc:
         # cls.numpy = CspMaster.numpy = MagicMock()
     """
 
-    def test_ConfigureScan(
+    def test_Vcc_ConfigureScan_basic(
         self,
         create_vcc_proxy,
         create_band_12_proxy,
@@ -68,15 +68,13 @@ class TestVcc:
         assert create_vcc_proxy.State() == DevState.ON
         
 
-        config_file_name = "/../data/ConfigureScan_basic.json"
+        config_file_name = "/../data/Vcc_ConfigureScan_basic.json"
         f = open(file_path + config_file_name)
         json_str = f.read().replace("\n", "")
-        full_configuration = json.loads(json_str)
-        common_configuration = copy.deepcopy(full_configuration["common"])
-        cbf_configuration = copy.deepcopy(full_configuration["cbf"])
+        configuration = json.loads(json_str)
         f.close()
 
-        freq_band_name = common_configuration["frequency_band"]
+        freq_band_name = configuration["frequency_band"]
         create_vcc_proxy.TurnOnBandDevice(freq_band_name)
 
         time.sleep(2)
@@ -109,19 +107,28 @@ class TestVcc:
 
         create_vcc_proxy.ConfigureScan(json_str)
 
-        if "config_id" in common_configuration:
-            assert create_vcc_proxy.configID == common_configuration["config_id"]
-        if "frequency_band" in common_configuration:
-            assert create_vcc_proxy.frequencyBand == freq_band_dict()[common_configuration["frequency_band"]]
-        
-        if "rfi_flagging_mask" in cbf_configuration:
-            assert create_vcc_proxy.rfiFlaggingMask == str(cbf_configuration["rfi_flagging_mask"])
-        if "frequency_band_offset_stream_1" in cbf_configuration:
-            assert  create_vcc_proxy.frequencyBandOffsetStream1 == cbf_configuration["frequency_band_offset_stream_1"]
-        if "frequency_band_offset_stream_2" in cbf_configuration:
-            assert  create_vcc_proxy.frequencyBandOffsetStream2 == cbf_configuration["frequency_band_offset_stream_2"] 
-        if "scfo_band_1" in cbf_configuration:
-            assert create_vcc_proxy.scfoBand1 == cbf_configuration["scfo_band_1"]
+        if "config_id" in configuration:
+            assert create_vcc_proxy.configID == configuration["config_id"]
+        if "frequency_band" in configuration:
+            assert create_vcc_proxy.frequencyBand == freq_band_dict()[configuration["frequency_band"]]
+        if "rfi_flagging_mask" in configuration:
+            assert create_vcc_proxy.rfiFlaggingMask == str(configuration["rfi_flagging_mask"])
+        if "frequency_band_offset_stream_1" in configuration:
+            assert  create_vcc_proxy.frequencyBandOffsetStream1 == configuration["frequency_band_offset_stream_1"]
+        if "frequency_band_offset_stream_2" in configuration:
+            assert  create_vcc_proxy.frequencyBandOffsetStream2 == configuration["frequency_band_offset_stream_2"] 
+        if "scfo_band_1" in configuration:
+            assert create_vcc_proxy.scfoBand1 == configuration["scfo_band_1"]
+        if "scfo_band_2" in configuration:
+            assert create_vcc_proxy.scfoBand2 == configuration["scfo_band_2"]
+        if "scfo_band_3" in configuration:
+            assert create_vcc_proxy.scfoBand3 == configuration["scfo_band_3"]
+        if "scfo_band_4" in configuration:
+            assert create_vcc_proxy.scfoBand4 == configuration["scfo_band_4"]
+        if "scfo_band_5a" in configuration:
+            assert create_vcc_proxy.scfoBand5a == configuration["scfo_band_5a"]
+        if "scfo_band_5b" in configuration:
+            assert create_vcc_proxy.scfoBand5b == configuration["scfo_band_5b"]
 
         time.sleep(2)
 
