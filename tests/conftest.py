@@ -22,9 +22,6 @@ from tango import DeviceProxy
 # SKA imports
 from ska_tango_base.control_model import LoggingLevel, ObsState, AdminMode
 
-from ska_mid_cbf_mcs.dev_factory import DevFactory
-from ska_mid_cbf_mcs.vcc.vcc_device import Vcc
-
 from ska_mid_cbf_mcs.testing.mock.mock_callable import MockChangeEventCallback
 from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder
 from ska_mid_cbf_mcs.testing.tango_harness import (
@@ -319,18 +316,6 @@ def mock_change_event_callback_factory() -> Callable[[str], MockChangeEventCallb
         each time it is called with the name of a device attribute.
     """
     return MockChangeEventCallback
-
-
-# @pytest.fixture
-# def tango_context(device_context_to_load, request):
-#     test_context = request.config.getoption("--test-context")
-#     logging.info("test context: %s", test_context)
-#     if test_context:
-#         with MultiDeviceTestContext(device_context_to_load, process=False) as context:
-#             DevFactory._test_context = context
-#             yield context
-#     else:
-#         yield None
 
 
 @pytest.fixture(name="proxies", scope="session")

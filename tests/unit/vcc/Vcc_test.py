@@ -50,7 +50,7 @@ class TestVcc:
         return tango_harness.get_device("mid_csp_cbf/vcc/001")
 
 
-    def test_VccBand(
+    def test_ConfigureScan(
         self,
         device_under_test: CbfDeviceProxy
     ) -> None:
