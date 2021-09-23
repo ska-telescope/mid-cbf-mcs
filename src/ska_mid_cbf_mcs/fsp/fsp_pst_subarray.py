@@ -123,6 +123,10 @@ class FspPstSubarray(CspSubElementObsDevice):
         self.register_command_object(
             "Off", self.OffCommand(*device_args)
         )
+
+        self.register_command_object(
+            "GoToIdle", self.GoToIdleCommand(*device_args)
+        )
     
     class InitCommand(CspSubElementObsDevice.InitCommand):
         """
@@ -420,18 +424,48 @@ class FspPstSubarray(CspSubElementObsDevice):
         # nothing else is supposed to happen
         # PROTECTED REGION END #    //  FspPstSubarray.Scan
 
-    @command()
-    def GoToIdle(self):
-        """ObsState to IDLE"""
-        # PROTECTED REGION ID(FspPstSubarray.GoToIdle) ENABLED START #
-        # initialize attribute values
-        self._timing_beams = []
-        self._timing_beam_id = []
-        self._output_enable = 0
-        self.RemoveAllReceptors()
-        # transition to obsState=IDLE
-        self._obs_state = ObsState.IDLE
-        # PROTECTED REGION END #    //  FspPstSubarray.GoToIdle
+    # @command()
+    # def GoToIdle(self):
+    #     """ObsState to IDLE"""
+    #     # PROTECTED REGION ID(FspPstSubarray.GoToIdle) ENABLED START #
+    #     # initialize attribute values
+        # self._timing_beams = []
+        # self._timing_beam_id = []
+        # self._output_enable = 0
+        # self.RemoveAllReceptors()
+    #     # transition to obsState=IDLE
+    #     self._obs_state = ObsState.IDLE
+    #     # PROTECTED REGION END #    //  FspPstSubarray.GoToIdle
+
+    class GoToIdleCommand(CspSubElementObsDevice.GoToIdleCommand):
+        """
+        A class for the FspCorrSubarray's GoToIdle command.
+        """
+
+        def do(self):
+            """
+            Stateless hook for GoToIdle() command functionality.
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
+
+            self.logger.debug("Entering GoToIdleCommand()")
+
+            device = self.target
+
+            device._timing_beams = []
+            device._timing_beam_id = []
+            device._output_enable = 0
+            device.RemoveAllReceptors()
+
+            if device.state_model.obs_state == ObsState.IDLE:
+                return (ResultCode.OK, 
+                "GoToIdle command completed OK. Device already IDLE")
+
+            return (ResultCode.OK, "GoToIdle command completed OK")
 
 # ----------
 # Run server
