@@ -135,7 +135,7 @@ def init_proxies_fixture():
 
             self.fspPstSubarray = {}      
             for i ,proxy in enumerate([DeviceProxy("mid_csp_cbf/fspPstSubarray/" + str(j + 1).zfill(2) + "_01") for j in range(2)]):
-                proxy.Init()
+                # proxy.Init()
                 self.fspSubarray[i + 5] = proxy
                 self.fspPstSubarray[i] = proxy
 

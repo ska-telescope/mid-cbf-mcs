@@ -10,6 +10,9 @@
 """ Mid.CBF MCS
 
 """
+from __future__ import annotations  # allow forward references in type hints
+
+from typing import Tuple
 
 # PyTango imports
 import tango
@@ -30,13 +33,14 @@ from random import randint
 file_path = os.path.dirname(os.path.abspath(__file__))
 
 from ska_tango_base.control_model import HealthState, AdminMode, ObsState
-from ska_tango_base import SKASubarray
+from ska_tango_base import SKASubarray, CspSubElementObsDevice, SKABaseDevice
+from ska_tango_base.commands import ResultCode
 # PROTECTED REGION END #    //  FspPstSubarray.additionnal_import
 
 __all__ = ["FspPstSubarray", "main"]
 
 
-class FspPstSubarray(SKASubarray):
+class FspPstSubarray(CspSubElementObsDevice):
     """
     FspPstSubarray TANGO device class for the FspPstSubarray prototype
     """
@@ -104,41 +108,100 @@ class FspPstSubarray(SKASubarray):
     # General methods
     # ---------------
 
-    def init_device(self):
-        SKASubarray.init_device(self)
-        # self.set_change_event("adminMode", True, True)
-        # self.set_archive_event("adminMode", True, True)
-        # self.set_change_event("obsState", True, True)
-        # self.set_archive_event("obsState", True, True)
-        # PROTECTED REGION ID(FspPstSubarray.init_device) ENABLED START #
-        self.set_state(tango.DevState.INIT)
+    def init_command_objects(self: CspSubElementObsDevice) -> None:
+        """
+        Sets up the command objects
+        """
+        super().init_command_objects()
 
-        #get relevant IDs
-        self._subarray_id = self.SubID
-        self._fsp_id = self.FspID
+        device_args = (self, self.state_model, self.logger)
 
-        # initialize attribute values
-        self._timing_beams = []
-        self._timing_beam_id = []
-        self._receptors = []
-        self._output_enable = 0
-
-        # device proxy for easy reference to CBF Controller
-        self._proxy_cbf_controller = tango.DeviceProxy(self.CbfControllerAddress)
-
-        self._controller_max_capabilities = dict(
-            pair.split(":") for pair in
-            self._proxy_cbf_controller.get_property("MaxCapabilities")["MaxCapabilities"]
+        self.register_command_object(
+            "On", self.OnCommand(*device_args)
         )
-        self._count_vcc = int(self._controller_max_capabilities["VCC"])
-        self._fqdn_vcc = list(self.VCC)[:self._count_vcc]
-        self._proxies_vcc = [*map(tango.DeviceProxy, self._fqdn_vcc)]
 
-        # device proxy for easy reference to CBF Subarray
-        self._proxy_cbf_subarray = tango.DeviceProxy(self.CbfSubarrayAddress)
+        self.register_command_object(
+            "Off", self.OffCommand(*device_args)
+        )
+    
+    class InitCommand(CspSubElementObsDevice.InitCommand):
+        """
+        A class for the Vcc's init_device() "command".
+        """
 
-        self._update_obs_state(ObsState.IDLE)
-        self.set_state(tango.DevState.OFF)
+        def do(self):
+            """
+            Stateless hook for device initialisation.
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
+
+            self.logger.debug("Entering InitCommand()")
+
+            device = self.target
+
+            #get relevant IDs
+            device._subarray_id = device.SubID
+            device._fsp_id = device.FspID
+
+            # initialize attribute values
+            device._timing_beams = []
+            device._timing_beam_id = []
+            device._receptors = []
+            device._output_enable = 0
+
+            # device proxy for easy reference to CBF Controller
+            device._proxy_cbf_controller = tango.DeviceProxy(device.CbfControllerAddress)
+
+            device._controller_max_capabilities = dict(
+                pair.split(":") for pair in
+                device._proxy_cbf_controller.get_property("MaxCapabilities")["MaxCapabilities"]
+            )
+            device._count_vcc = int(device._controller_max_capabilities["VCC"])
+            device._fqdn_vcc = list(device.VCC)[:device._count_vcc]
+            device._proxies_vcc = [*map(tango.DeviceProxy, device._fqdn_vcc)]
+
+            # device proxy for easy reference to CBF Subarray
+            device._proxy_cbf_subarray = tango.DeviceProxy(device.CbfSubarrayAddress)
+
+    # def init_device(self):
+    #     SKASubarray.init_device(self)
+    #     # self.set_change_event("adminMode", True, True)
+    #     # self.set_archive_event("adminMode", True, True)
+    #     # self.set_change_event("obsState", True, True)
+    #     # self.set_archive_event("obsState", True, True)
+    #     # PROTECTED REGION ID(FspPstSubarray.init_device) ENABLED START #
+    #     self.set_state(tango.DevState.INIT)
+
+        # #get relevant IDs
+        # self._subarray_id = self.SubID
+        # self._fsp_id = self.FspID
+
+        # # initialize attribute values
+        # self._timing_beams = []
+        # self._timing_beam_id = []
+        # self._receptors = []
+        # self._output_enable = 0
+
+        # # device proxy for easy reference to CBF Controller
+        # self._proxy_cbf_controller = tango.DeviceProxy(self.CbfControllerAddress)
+
+        # self._controller_max_capabilities = dict(
+        #     pair.split(":") for pair in
+        #     self._proxy_cbf_controller.get_property("MaxCapabilities")["MaxCapabilities"]
+        # )
+        # self._count_vcc = int(self._controller_max_capabilities["VCC"])
+        # self._fqdn_vcc = list(self.VCC)[:self._count_vcc]
+        # self._proxies_vcc = [*map(tango.DeviceProxy, self._fqdn_vcc)]
+
+        # # device proxy for easy reference to CBF Subarray
+        # self._proxy_cbf_subarray = tango.DeviceProxy(self.CbfSubarrayAddress)
+
+    #     self._update_obs_state(ObsState.IDLE)
+    #     self.set_state(tango.DevState.OFF)
         # PROTECTED REGION END #    //  FspPstSubarray.init_device
 
     def always_executed_hook(self):
@@ -149,9 +212,10 @@ class FspPstSubarray(SKASubarray):
     def delete_device(self):
         # PROTECTED REGION ID(FspPstSubarray.delete_device) ENABLED START #
         """Set Idle, remove all receptors, turn device OFF"""
-        self.GoToIdle()
-        self.RemoveAllReceptors()
-        self.Off()
+        pass
+        # self.GoToIdle()
+        # self.RemoveAllReceptors()
+        # self.Off()
         # PROTECTED REGION END #    //  FspPstSubarray.delete_device
 
     # ------------------
@@ -192,18 +256,63 @@ class FspPstSubarray(SKASubarray):
     # Commands
     # --------
 
-    @command()
-    def On(self):
-        # PROTECTED REGION ID(FspPstSubarray.On) ENABLED START #
-        self.set_state(tango.DevState.ON)
-        # PROTECTED REGION END #    //  FspPstSubarray.On
+    # @command()
+    # def On(self):
+    #     # PROTECTED REGION ID(FspPstSubarray.On) ENABLED START #
+    #     self.set_state(tango.DevState.ON)
+    #     # PROTECTED REGION END #    //  FspPstSubarray.On
+    class OnCommand(SKABaseDevice.OnCommand):
+        """
+        A class for the FspPstSubarray's On() command.
+        """
+        def do(            
+            self: FspPstSubarray.OnCommand,
+        ) -> Tuple[ResultCode, str]:
+            """
+            Stateless hook for On() command functionality.
 
-    @command()
-    def Off(self):
-        # PROTECTED REGION ID(FspPstSubarray.Off) ENABLED START #
-        self.RemoveAllReceptors()
-        self.set_state(tango.DevState.OFF)
-        # PROTECTED REGION END #    //  FspPstSubarray.Off
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
+            (result_code,message)=super().do()
+
+            device = self.target
+
+            return (result_code,message)
+
+    # @command()
+    # def Off(self):
+    #     # PROTECTED REGION ID(FspPstSubarray.Off) ENABLED START #
+    #     self.RemoveAllReceptors()
+    #     self.set_state(tango.DevState.OFF)
+    #     # PROTECTED REGION END #    //  FspPstSubarray.Off
+
+    class OffCommand(SKABaseDevice.OffCommand):
+        """
+        A class for the FspPstSubarray's Off() command.
+        """
+        def do(            
+            self: FspPstSubarray.OffCommand,
+        ) -> Tuple[ResultCode, str]:
+            """
+            Stateless hook for Off() command functionality.
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
+            (result_code,message)=super().do()
+
+            device = self.target
+
+            device.RemoveAllReceptors()
+            device.GoToIdle()
+
+
+            return (result_code,message)
 
     @command(
         dtype_in=('uint16',),
