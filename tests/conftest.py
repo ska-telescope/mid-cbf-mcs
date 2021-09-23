@@ -18,8 +18,6 @@ import json
 import tango
 from tango import DevState
 from tango import DeviceProxy
-from tango.test_context import MultiDeviceTestContext, get_host_ip
-import socket
 
 # SKA imports
 from ska_tango_base.control_model import LoggingLevel, ObsState, AdminMode

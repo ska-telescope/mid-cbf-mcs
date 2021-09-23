@@ -86,9 +86,9 @@ include .make/k8s.mk
 requirements: ## Install Dependencies
 	python3 -m pip install -r requirements.txt
 
-unit_test: ## Run simulation mode unit tests; currently only Vcc tests are supported, with TEST_CONTEXT flag set True in Vcc.py
+unit-test: ## Run simulation mode unit tests; currently only Vcc tests are supported, with TEST_CONTEXT flag set True in Vcc.py
 	@mkdir -p build; \
-	PYTHONPATH=src:tests pytest -v ./tests/unit/vcc/Vcc_test.py $(FILE) --testbed test --cov=src/ska_mid_cbf_mcs/Vcc
+	PYTHONPATH=src:tests pytest -v ./tests/unit/ $(FILE) --testbed test --cov=src/ska_mid_cbf_mcs/Vcc
 
 jive: ## configure TANGO_HOST to enable Jive
 	@echo
@@ -110,4 +110,4 @@ jive: ## configure TANGO_HOST to enable Jive
 
 #pytest $(if $(findstring all,$(MARK)),, -m '$(MARK)')
 
-.PHONY: all jive unit_test requirements test up down help k8s show lint logs describe mkcerts localip namespace delete_namespace ingress_check kubeconfig kubectl_dependencies helm_dependencies rk8s_test k8s_test rlint
+.PHONY: all jive unit-test requirements test up down help k8s show lint logs describe mkcerts localip namespace delete_namespace ingress_check kubeconfig kubectl_dependencies helm_dependencies rk8s_test k8s_test rlint

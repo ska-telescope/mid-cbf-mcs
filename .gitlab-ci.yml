@@ -109,7 +109,7 @@ unit:
     - k8srunner
   script:
     - make requirements
-    - make unit_test
+    - make unit-test
   environment:
       name: test
   artifacts:
