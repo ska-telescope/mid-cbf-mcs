@@ -60,6 +60,21 @@ class TestVcc:
         """
 
         assert create_vcc_proxy.State() == DevState.OFF
+        
+        time.sleep(2)
+        create_band_12_proxy.Off()
+        time.sleep(2)
+        create_band_3_proxy.Off()
+        time.sleep(2)
+        create_band_4_proxy.Off()
+        time.sleep(2)
+        create_band_5_proxy.Off()
+        time.sleep(2)
+
+        assert create_band_12_proxy.State() == DevState.OFF
+        assert create_band_3_proxy.State() == DevState.OFF
+        assert create_band_4_proxy.State() == DevState.OFF
+        assert create_band_5_proxy.State() == DevState.OFF
 
         create_vcc_proxy.On()
 
