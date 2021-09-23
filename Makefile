@@ -5,8 +5,7 @@
 
 #
 # DOCKER_REGISTRY_HOST, DOCKER_REGISTRY_USER and PROJECT are combined to define
-# the Docker tag for this project. The definition below inherits the standard
-# value for DOCKER_REGISTRY_HOST (=rnexus.engageska-portugal.pt) and overwrites
+# the Docker tag for this project. The definition below overwrites
 # DOCKER_REGISTRY_USER and PROJECT
 #
 #DOCKER_REGISTRY_USER:=ska-docker

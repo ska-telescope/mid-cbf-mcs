@@ -261,8 +261,7 @@ class Vcc(CspSubElementObsDevice):
             # Make a private copy of the device properties:
             self._vcc_id = device.VccID
 
-            # initialize attribute values        
-
+            # initialize attribute values
             device._receptor_ID = 0
             device._freq_band_name = ""
             device._frequency_band = 0
@@ -285,28 +284,8 @@ class Vcc(CspSubElementObsDevice):
             device._scan_id = ""
             device._config_id = ""
 
-            # device._fqdns = [
-            #    device.Band1And2Address,
-            #    device.Band3Address,
-            #    device.Band4Address,
-            #    device.Band5Address,
-            #    device.SW1Address,
-            #    device.SW2Address 
-            # ] # TODO 
-
-            # device._func_devices = [
-            #     tango.DeviceProxy(fqdn) for fqdn in device._fqdns
-            # ]
-
             device.set_change_event("subarrayMembership", True, True)
 
-            # TODO - create a command for the proxy connections
-            #        similar to InitialSetup() in ska-low-mccs stations.py
-            
-            #self.__get_capability_proxies()
-
-            # TODO - To support unit testing, use a wrapper class for the  
-            # connection instead of directly DeviceProxy (see MccsDeviceProxy)
             try:
                 device._proxy_band_12 = CbfDeviceProxy(
                     device.Band1And2Address,
@@ -350,44 +329,6 @@ class Vcc(CspSubElementObsDevice):
     def always_executed_hook(self):
         """Method always executed before any TANGO command is executed."""
         # PROTECTED REGION ID(Vcc.always_executed_hook) ENABLED START #
-        # self.logger.info("%s", self._dev_factory._test_context)
-        # try:
-        #     if self._proxy_band_12 is None:
-        #         self.logger.info("Connect to band proxy device")
-        #         self._proxy_band_12 = CbfDeviceProxy(
-        #             self.Band1And2Address,
-        #             logger=None,
-        #             connection_factory=
-        #         )
-        #     if self._proxy_band_3 is None:
-        #         self.logger.info("Connect to band proxy device")
-        #         self._proxy_band_3 = CbfDeviceProxy(
-        #             self.Band3Address, logger=None
-        #         )
-        #     if self._proxy_band_4 is None:
-        #         self.logger.info("Connect to band proxy device")
-        #         self._proxy_band_4 = CbfDeviceProxy(
-        #             self.Band4Address, logger=None
-        #         )
-        #     if self._proxy_band_5 is None:
-        #         self.logger.info("Connect to band proxy device")
-        #         self._proxy_band_5 = CbfDeviceProxy(
-        #             self.Band5Address, logger=None
-        #         )
-        #     if self._proxy_sw_1 is None:
-        #         self.logger.info("Connect to search window proxy device")
-        #         self._proxy_sw_1 = CbfDeviceProxy(
-        #             self.SW1Address, logger=None
-        #         )
-        #     if self._proxy_sw_2 is None:
-        #         self.logger.info("Connect to search window proxy device")
-        #         self._proxy_sw_2 = CbfDeviceProxy(
-        #             self.SW2Address, logger=None
-        #         )
-        # except Exception as ex:
-        #     self.logger.info(
-        #         "Unexpected error on DeviceProxy creation %s", str(ex)
-        #     )
         # PROTECTED REGION END #    //  Vcc.always_executed_hook
 
     def delete_device(self):

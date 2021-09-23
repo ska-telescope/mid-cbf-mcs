@@ -2,10 +2,11 @@
 #
 # This file is part of the SKA Mid.CBF MCS project
 #
-#
+# Ported from the SKA Low MCCS project: 
+# https://gitlab.com/ska-telescope/ska-low-mccs/-/blob/main/src/ska_low_mccs/testing/mock/mock_callable.py
 #
 # Distributed under the terms of the GPL license.
-# See LICENSE.txt for more info.
+# See LICENSE for more info.
 
 """This module implements infrastructure for mocking callbacks and other callables."""
 from __future__ import annotations  # allow forward references in type hints

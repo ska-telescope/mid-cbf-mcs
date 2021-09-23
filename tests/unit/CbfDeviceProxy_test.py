@@ -3,10 +3,11 @@
 #
 # This file is part of the mid-cbf-mcs project
 #
-#
+# Ported from the SKA Low MCCS project:
+# https://gitlab.com/ska-telescope/ska-low-mccs/-/blob/main/testing/src/tests/unit/test_device_proxy.py
 #
 # Distributed under the terms of the BSD-3-Clause license.
-# See LICENSE.txt for more info.
+# See LICENSE for more info.
 """This module contains unit tests for the ska_mid_cbf_mcs.device_proxy module."""
 from __future__ import annotations  # allow forward references in type hints
 

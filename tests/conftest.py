@@ -1,3 +1,13 @@
+# -*- coding: utf-8 -*-
+#
+# This file is part of the SKA Mid.CBF MCS project
+#
+# Partially ported from the SKA Low MCCS project:
+# https://gitlab.com/ska-telescope/ska-low-mccs/-/blob/main/testing/src/tests/conftest.py
+#
+# Distributed under the terms of the GPL license.
+# See LICENSE for more info.
+
 """
 A module defining a list of fixture functions that are shared across all the 
 ska-mid-cbf-mcs tests.

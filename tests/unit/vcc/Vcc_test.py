@@ -94,7 +94,7 @@ class TestVcc:
         band_12_proxy = dev_factory.get_device("mid_csp_cbf/vcc_band12/001")
         band_3_proxy = dev_factory.get_device("mid_csp_cbf/vcc_band3/001")
 
-        logging.info("debug_device_is_on = {}".format(debug_device_is_on))       
+        logging.info("debug_device_is_on = {}".format(debug_device_is_on))
         if debug_device_is_on == True:
             timeout_millis = 700000 
             vcc_proxy.set_timeout_millis(timeout_millis)
