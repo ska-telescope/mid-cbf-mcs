@@ -59,6 +59,12 @@ class TestVcc:
         Test a minimal successful scan configuration.
         """
 
+        #TODO: The VCC and bands should be in the OFF state 
+        # after being initialised, should not have to manually
+        # turn off
+
+        create_vcc_proxy.Off()
+        time.sleep(2)
         assert create_vcc_proxy.State() == DevState.OFF
         
         time.sleep(2)

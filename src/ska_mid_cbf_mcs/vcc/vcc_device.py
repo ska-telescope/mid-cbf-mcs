@@ -427,7 +427,7 @@ class Vcc(CspSubElementObsDevice):
         return self._frequency_band
         # PROTECTED REGION END #    //  Vcc.frequencyBand_read
 
-    def read_band5Tuning(self: Vcc) -> float:
+    def read_band5Tuning(self: Vcc) -> List[float]:
         # PROTECTED REGION ID(Vcc.band5Tuning_read) ENABLED START #
         """Return band5Tuning attribute: Stream tuning (GHz) in float"""
         return self._stream_tuning
@@ -463,7 +463,7 @@ class Vcc(CspSubElementObsDevice):
         self._frequency_band_offset_stream_2 = value
         # PROTECTED REGION END #    //  Vcc.frequencyBandOffsetStream2_write
 
-    def read_dopplerPhaseCorrection(self: Vcc) -> float:
+    def read_dopplerPhaseCorrection(self: Vcc) -> List[float]:
         # PROTECTED REGION ID(Vcc.dopplerPhaseCorrection_read) ENABLED START #
         """Return dopplerPhaseCorrection attribute(float)"""
         return self._doppler_phase_correction
@@ -790,6 +790,7 @@ class Vcc(CspSubElementObsDevice):
             except json.JSONDecodeError:  # argument not a valid JSON object
                 msg = "Scan configuration object is not a valid JSON object. Aborting configuration."
                 self._raise_configure_scan_fatal_error(msg)
+                return (ResultCode.FAILED, msg)
             
             # Validate frequencyBandOffsetStream1.
             if "frequency_band_offset_stream_1" not in configuration:
@@ -800,6 +801,7 @@ class Vcc(CspSubElementObsDevice):
                 msg = "Absolute value of 'frequencyBandOffsetStream1' must be at most half " \
                         "of the frequency slice bandwidth. Aborting configuration."
                 self._raise_configure_scan_fatal_error(msg)
+                return (ResultCode.FAILED, msg)
 
             # Validate frequencyBandOffsetStream2.
             if "frequency_band_offset_stream_2" not in configuration:
@@ -810,12 +812,14 @@ class Vcc(CspSubElementObsDevice):
                 msg = "Absolute value of 'frequencyBandOffsetStream2' must be at most " \
                         "half of the frequency slice bandwidth. Aborting configuration."
                 self._raise_configure_scan_fatal_error(msg)
+                return (ResultCode.FAILED, msg)
             
             # Validate frequencyBand.
             valid_freq_bands = ["1", "2", "3", "4", "5a", "5b"]
             if configuration["frequency_band"] not in valid_freq_bands:
                 msg = "'band5Tuning' must be an array of length 2. Aborting configuration."
                 self._raise_configure_scan_fatal_error(msg)
+                return (ResultCode.FAILED, msg)
 
             # Validate band5Tuning, frequencyBandOffsetStream2 if frequencyBand is 5a or 5b.
             if configuration["frequency_band"] in ["5a", "5b"]:
@@ -828,6 +832,7 @@ class Vcc(CspSubElementObsDevice):
                     except (TypeError, AssertionError):
                         msg = "'band5Tuning' must be an array of length 2. Aborting configuration."
                         self._raise_configure_scan_fatal_error(msg)
+                        return (ResultCode.FAILED, msg)
 
                     stream_tuning = [*map(float, configuration["band_5_tuning"])]
                     if configuration["frequency_band"] == "5a":
@@ -846,6 +851,7 @@ class Vcc(CspSubElementObsDevice):
                                 stream_tuning[1]
                             )
                             self._raise_configure_scan_fatal_error(msg)
+                            return (ResultCode.FAILED, msg)
                     else:  # configuration["frequency_band"] == "5b"
                         if all(
                                 [const.FREQUENCY_BAND_5b_TUNING_BOUNDS[0] <= stream_tuning[i]
@@ -862,6 +868,7 @@ class Vcc(CspSubElementObsDevice):
                                 stream_tuning[1]
                             )
                             self._raise_configure_scan_fatal_error(msg)
+                            return (ResultCode.FAILED, msg)
                 else:
                     # set band5Tuning to zero for the rest of the test. This won't 
                     # change the argin in function "configureScan(argin)"
