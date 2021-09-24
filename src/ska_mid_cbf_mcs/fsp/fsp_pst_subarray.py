@@ -173,6 +173,10 @@ class FspPstSubarray(CspSubElementObsDevice):
             # device proxy for easy reference to CBF Subarray
             device._proxy_cbf_subarray = tango.DeviceProxy(device.CbfSubarrayAddress)
 
+            message = "FspPstSubarray Init command completed OK"
+            self.logger.info(message)
+            return (ResultCode.OK, message)
+
     def always_executed_hook(self: FspPstSubarray) -> None:
         # PROTECTED REGION ID(FspPstSubarray.always_executed_hook) ENABLED START #
         pass
