@@ -138,7 +138,7 @@ class CbfSubarray(SKASubarray):
         self.logger.debug("Entering _delay_model_event_callback()")
 
         if not event.err:
-            if self._obs_state not in [ObsState.READY, ObsState.SCANNING]:
+            if self.obsState not in [ObsState.READY, ObsState.SCANNING]:
                 log_msg = "Ignoring delay model (obsState not correct)."
                 self.logger.warn(log_msg)
                 return
@@ -196,7 +196,7 @@ class CbfSubarray(SKASubarray):
     def _jones_matrix_event_callback(self, event):
         self.logger.debug("CbfSubarray._jones_matrix_event_callback")
         if not event.err:
-            if self._obs_state not in [ObsState.READY, ObsState.SCANNING]:
+            if self.obsState not in [ObsState.READY, ObsState.SCANNING]:
                 log_msg = "Ignoring Jones matrix (obsState not correct)."
                 self.logger.warn(log_msg)
                 return
@@ -255,7 +255,7 @@ class CbfSubarray(SKASubarray):
     def _beam_weights_event_callback(self, event):
         self.logger.debug("CbfSubarray._beam_weights_event_callback")
         if not event.err:
-            if self._obs_state not in [ObsState.READY, ObsState.SCANNING]:
+            if self.obsState not in [ObsState.READY, ObsState.SCANNING]:
                 log_msg = "Ignoring beam weights (obsState not correct)."
                 self.logger.warn(log_msg)
                 return
@@ -1065,10 +1065,6 @@ class CbfSubarray(SKASubarray):
                 log_msg = "Receptor {} not assigned to subarray. Skipping.".format(str(receptorID))
                 self.logger.warn(log_msg)
 
-        # transitions to EMPTY if not assigned any receptors
-        if not self._receptors:
-            self._update_obs_state(ObsState.EMPTY)
-
 
     # Used by commands that needs resource manager in SKASubarray 
     # base class (for example AddReceptors command). 
@@ -1459,20 +1455,13 @@ class CbfSubarray(SKASubarray):
                 information purpose only.
             :rtype: (ResultCode, str)
             """
-            (result_code,message)=super().do()
+            (result_code,message) = super().do()
             device = self.target
-            self.logger.info("Subarray ObsState is {}".format(device._obs_state))
+            self.logger.info("Subarray ObsState is {}".format(device.obsState))
 
-            if device._obs_state == ObsState.SCANNING:
-                device._group_vcc.command_inout("EndScan")
-                device._group_fsp_corr_subarray.command_inout("EndScan")
-                device._group_fsp_pss_subarray.command_inout("EndScan")
-                device._group_fsp_pst_subarray.command_inout("EndScan")
-
-            device._deconfigure_scan()
-
-            if len(device._receptors) > 0:
-                device._remove_receptors_helper(device._receptors[:])
+            # if Off invoked while resourcing, remove all resources
+            if device.obsState == ObsState.RESOURCING:
+                device.RemoveAllReceptors()
 
             return (result_code,message)
 
@@ -1496,12 +1485,13 @@ class CbfSubarray(SKASubarray):
                 information purpose only.
             :rtype: (ResultCode, str)
             """
+            (result_code,message) = super().do()
             device=self.target
 
             device._remove_receptors_helper(argin)
             message = "CBFSubarray RemoveReceptors command completed OK"
             self.logger.info(message)
-            return (ResultCode.OK, message)
+            return (result_code,message)
 
     @command(
         dtype_in=('uint16',),
@@ -1546,7 +1536,7 @@ class CbfSubarray(SKASubarray):
                 information purpose only.
             :rtype: (ResultCode, str)
             """
-
+            (result_code,message) = super().do()
             self.logger.debug("Entering RemoveAllReceptors()")
 
             device=self.target
@@ -1556,7 +1546,7 @@ class CbfSubarray(SKASubarray):
 
             message = "CBFSubarray RemoveAllReceptors command completed OK"
             self.logger.info(message)
-            return (ResultCode.OK, message)
+            return (result_code,message)
 
 
     @command(
@@ -2014,7 +2004,7 @@ class CbfSubarray(SKASubarray):
 
     def is_EndScan_allowed(self):
         """allowed if SUbarray is ON"""
-        if self.dev_state() == tango.DevState.ON and self._obs_state==ObsState.SCANNING:
+        if self.dev_state() == tango.DevState.ON and self.obsState==ObsState.SCANNING:
             return True
         return False
 
@@ -2095,7 +2085,7 @@ class CbfSubarray(SKASubarray):
 
             # if aborted from SCANNING, needs to set VCC and PSS subarray 
             # to READY state otherwise when 
-            if device._obs_state == ObsState.SCANNING:
+            if device.obsState == ObsState.SCANNING:
                 self.logger.info("Aborting from scanning")
                 device._group_vcc.command_inout("EndScan")
                 device._group_fsp_corr_subarray.command_inout("EndScan")
