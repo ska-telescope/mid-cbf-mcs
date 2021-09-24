@@ -427,7 +427,7 @@ class Vcc(CspSubElementObsDevice):
         return self._frequency_band
         # PROTECTED REGION END #    //  Vcc.frequencyBand_read
 
-    def read_band5Tuning(self: Vcc) -> float:
+    def read_band5Tuning(self: Vcc) -> List[float]:
         # PROTECTED REGION ID(Vcc.band5Tuning_read) ENABLED START #
         """Return band5Tuning attribute: Stream tuning (GHz) in float"""
         return self._stream_tuning
@@ -463,7 +463,7 @@ class Vcc(CspSubElementObsDevice):
         self._frequency_band_offset_stream_2 = value
         # PROTECTED REGION END #    //  Vcc.frequencyBandOffsetStream2_write
 
-    def read_dopplerPhaseCorrection(self: Vcc) -> float:
+    def read_dopplerPhaseCorrection(self: Vcc) -> List[float]:
         # PROTECTED REGION ID(Vcc.dopplerPhaseCorrection_read) ENABLED START #
         """Return dopplerPhaseCorrection attribute(float)"""
         return self._doppler_phase_correction

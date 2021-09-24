@@ -12,7 +12,7 @@
 """
 from __future__ import annotations  # allow forward references in type hints
 
-from typing import Tuple
+from typing import List, Tuple
 
 # PyTango imports
 import tango
@@ -108,7 +108,7 @@ class FspPstSubarray(CspSubElementObsDevice):
     # General methods
     # ---------------
 
-    def init_command_objects(self: CspSubElementObsDevice) -> None:
+    def init_command_objects(self: FspPstSubarray) -> None:
         """
         Sets up the command objects
         """
@@ -130,10 +130,12 @@ class FspPstSubarray(CspSubElementObsDevice):
     
     class InitCommand(CspSubElementObsDevice.InitCommand):
         """
-        A class for the Vcc's init_device() "command".
+        A class for the FspPstSubarray's init_device() "command".
         """
 
-        def do(self):
+        def do(
+            self: FspPstSubarray.InitCommand,
+        ) -> Tuple[ResultCode, str]:
             """
             Stateless hook for device initialisation.
 
@@ -171,85 +173,45 @@ class FspPstSubarray(CspSubElementObsDevice):
             # device proxy for easy reference to CBF Subarray
             device._proxy_cbf_subarray = tango.DeviceProxy(device.CbfSubarrayAddress)
 
-    # def init_device(self):
-    #     SKASubarray.init_device(self)
-    #     # self.set_change_event("adminMode", True, True)
-    #     # self.set_archive_event("adminMode", True, True)
-    #     # self.set_change_event("obsState", True, True)
-    #     # self.set_archive_event("obsState", True, True)
-    #     # PROTECTED REGION ID(FspPstSubarray.init_device) ENABLED START #
-    #     self.set_state(tango.DevState.INIT)
-
-        # #get relevant IDs
-        # self._subarray_id = self.SubID
-        # self._fsp_id = self.FspID
-
-        # # initialize attribute values
-        # self._timing_beams = []
-        # self._timing_beam_id = []
-        # self._receptors = []
-        # self._output_enable = 0
-
-        # # device proxy for easy reference to CBF Controller
-        # self._proxy_cbf_controller = tango.DeviceProxy(self.CbfControllerAddress)
-
-        # self._controller_max_capabilities = dict(
-        #     pair.split(":") for pair in
-        #     self._proxy_cbf_controller.get_property("MaxCapabilities")["MaxCapabilities"]
-        # )
-        # self._count_vcc = int(self._controller_max_capabilities["VCC"])
-        # self._fqdn_vcc = list(self.VCC)[:self._count_vcc]
-        # self._proxies_vcc = [*map(tango.DeviceProxy, self._fqdn_vcc)]
-
-        # # device proxy for easy reference to CBF Subarray
-        # self._proxy_cbf_subarray = tango.DeviceProxy(self.CbfSubarrayAddress)
-
-    #     self._update_obs_state(ObsState.IDLE)
-    #     self.set_state(tango.DevState.OFF)
-        # PROTECTED REGION END #    //  FspPstSubarray.init_device
-
-    def always_executed_hook(self):
+    def always_executed_hook(self: FspPstSubarray) -> None:
         # PROTECTED REGION ID(FspPstSubarray.always_executed_hook) ENABLED START #
         pass
         # PROTECTED REGION END #    //  FspPstSubarray.always_executed_hook
 
-    def delete_device(self):
+    def delete_device(self: FspPstSubarray) -> None:
         # PROTECTED REGION ID(FspPstSubarray.delete_device) ENABLED START #
         """Set Idle, remove all receptors, turn device OFF"""
         pass
-        # self.GoToIdle()
-        # self.RemoveAllReceptors()
-        # self.Off()
         # PROTECTED REGION END #    //  FspPstSubarray.delete_device
 
     # ------------------
     # Attributes methods
     # ------------------
 
-    def read_outputEnable(self):
+    def read_outputEnable(self: FspPstSubarray) -> bool:
         # PROTECTED REGION ID(FspPstSubarray.outputEnable_read) ENABLED START #
         return self._output_enable
         # PROTECTED REGION END #    //  FspPstSubarray.outputEnable_read
 
-    def read_receptors(self):
+    def read_receptors(self: FspPstSubarray) -> List[int]:
         # PROTECTED REGION ID(FspPstSubarray.receptors_read) ENABLED START #
         return self._receptors
         # PROTECTED REGION END #    //  FspPstSubarray.receptors_read
 
-    def write_receptors(self, value):
+    def write_receptors(self: FspPstSubarray, value: receptors) -> None:
         # PROTECTED REGION ID(FspPstSubarray.receptors_write) ENABLED START #
         """Set/replace receptors attribute.(array of int)"""
         self.RemoveAllReceptors()
         self.AddReceptors(value)
         # PROTECTED REGION END #    //  FspPstSubarray.receptors_write
 
-    def read_timingBeams(self):
+    def read_timingBeams(self: FspPstSubarray) -> List[str]:
         # PROTECTED REGION ID(FspPstSubarray.timingBeams_read) ENABLED START #
         """Return timingBeams attribute (JSON)"""
         return self._timing_beams
         # PROTECTED REGION END #    //  FspPstSubarray.timingBeams_read
 
-    def read_timingBeamID(self):
+    def read_timingBeamID(self: FspPstSubarray) -> List[int]:
         # PROTECTED REGION ID(FspPstSubarray.timingBeamID_read) ENABLED START #
         """Return list of Timing Beam IDs(array of int). (From timingBeams JSON)"""
         return self._timing_beam_id
@@ -260,11 +222,6 @@ class FspPstSubarray(CspSubElementObsDevice):
     # Commands
     # --------
 
-    # @command()
-    # def On(self):
-    #     # PROTECTED REGION ID(FspPstSubarray.On) ENABLED START #
-    #     self.set_state(tango.DevState.ON)
-    #     # PROTECTED REGION END #    //  FspPstSubarray.On
     class OnCommand(SKABaseDevice.OnCommand):
         """
         A class for the FspPstSubarray's On() command.
@@ -285,13 +242,6 @@ class FspPstSubarray(CspSubElementObsDevice):
             device = self.target
 
             return (result_code,message)
-
-    # @command()
-    # def Off(self):
-    #     # PROTECTED REGION ID(FspPstSubarray.Off) ENABLED START #
-    #     self.RemoveAllReceptors()
-    #     self.set_state(tango.DevState.OFF)
-    #     # PROTECTED REGION END #    //  FspPstSubarray.Off
 
     class OffCommand(SKABaseDevice.OffCommand):
         """
@@ -322,7 +272,10 @@ class FspPstSubarray(CspSubElementObsDevice):
         dtype_in=('uint16',),
         doc_in="List of receptor IDs",
     )
-    def AddReceptors(self, argin):
+    def AddReceptors(
+        self: FspPstSubarray, 
+        argin: List[int]
+        ) -> None:
         # PROTECTED REGION ID(FspPstSubarray.AddReceptors) ENABLED START #
         """add specified receptors to the FSP subarray. Input is array of int."""
         errs = []  # list of error messages
@@ -359,7 +312,10 @@ class FspPstSubarray(CspSubElementObsDevice):
         dtype_in=('uint16',),
         doc_in="List of receptor IDs",
     )
-    def RemoveReceptors(self, argin):
+    def RemoveReceptors(
+        self: FspPstSubarray, 
+        argin: List[int]
+        ) -> None:
         # PROTECTED REGION ID(FspPstSubarray.RemoveReceptors) ENABLED START #
         """Remove Receptors. Input is array of int"""
         for receptorID in argin:
@@ -372,7 +328,7 @@ class FspPstSubarray(CspSubElementObsDevice):
         # PROTECTED REGION END #    //  FspPstSubarray.RemoveReceptors
     
     @command()
-    def RemoveAllReceptors(self):
+    def RemoveAllReceptors(self: FspPstSubarray) -> None:
         # PROTECTED REGION ID(FspPstSubarray.RemoveAllReceptors) ENABLED START #
         """Remove all Receptors of this subarray"""
         self.RemoveReceptors(self._receptors[:])
@@ -424,25 +380,14 @@ class FspPstSubarray(CspSubElementObsDevice):
         # nothing else is supposed to happen
         # PROTECTED REGION END #    //  FspPstSubarray.Scan
 
-    # @command()
-    # def GoToIdle(self):
-    #     """ObsState to IDLE"""
-    #     # PROTECTED REGION ID(FspPstSubarray.GoToIdle) ENABLED START #
-    #     # initialize attribute values
-        # self._timing_beams = []
-        # self._timing_beam_id = []
-        # self._output_enable = 0
-        # self.RemoveAllReceptors()
-    #     # transition to obsState=IDLE
-    #     self._obs_state = ObsState.IDLE
-    #     # PROTECTED REGION END #    //  FspPstSubarray.GoToIdle
-
     class GoToIdleCommand(CspSubElementObsDevice.GoToIdleCommand):
         """
         A class for the FspCorrSubarray's GoToIdle command.
         """
 
-        def do(self):
+        def do(
+            self: FspPstSubarray.InitCommand,
+        ) -> Tuple[ResultCode, str]:
             """
             Stateless hook for GoToIdle() command functionality.
 
