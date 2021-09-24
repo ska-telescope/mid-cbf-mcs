@@ -16,6 +16,7 @@ import time
 import json
 import logging
 import pytest
+from typing import Callable, Type, Dict
 
 # Tango imports
 import tango
@@ -24,7 +25,7 @@ from tango.server import command
 
 #SKA imports
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
-from ska_mid_cbf_mcs.testing.tango_harness import DeviceToLoadType, TangoHarness
+from ska_mid_cbf_mcs.testing.tango_harness import DeviceToLoadType
 
 from ska_mid_cbf_mcs.dev_factory import DevFactory
 from ska_tango_base.control_model import HealthState, AdminMode, ObsState
@@ -34,33 +35,20 @@ class TestVcc:
     """
     Test class for Vcc tests.
     """
-
-    @pytest.fixture()
-    def device_under_test(
-        self, 
-        tango_harness: TangoHarness
-    ) -> CbfDeviceProxy:
-        """
-        Fixture that returns the device under test.
-
-        :param tango_harness: a test harness for Tango devices
-
-        :return: the device under test
-        """
-        return tango_harness.get_device("mid_csp_cbf/vcc/001")
-
-
-    def test_ConfigureScan(
-        self,
+    
+    @pytest.mark.forked
+    def test_On_ConfigureScan_Off(
+        self: TestVcc,
         device_under_test: CbfDeviceProxy
     ) -> None:
         """
-        Test for VccBand device.
+        Test for Vcc device.
 
         :param device_under_test: fixture that provides a
             :py:class:`tango.DeviceProxy` to the device under test, in a
             :py:class:`tango.test_context.DeviceTestContext`.
         """
+        # to get the mock devices, use tango_harness.get_device("fqdn")
         # mock_band12 = tango_harness.get_device("mid_csp_cbf/vcc_band12/001")
         # mock_band3 = tango_harness.get_device("mid_csp_cbf/vcc_band3/001")
         # mock_band4 = tango_harness.get_device("mid_csp_cbf/vcc_band4/001")
@@ -78,159 +66,32 @@ class TestVcc:
         device_under_test.Off()
         assert device_under_test.State() == DevState.OFF
     
-    @pytest.mark.skip
+
+    @pytest.mark.forked
     def test_SetFrequencyBand(
-        self,
-        debug_device_is_on,
-        tango_context
-    ):
+        self: TestVcc,
+        device_under_test: CbfDeviceProxy
+    ) -> None:
         """
         Test SetFrequencyBand command state changes.
+
+        :param device_under_test: fixture that provides a
+            :py:class:`tango.DeviceProxy` to the device under test, in a
+            :py:class:`tango.test_context.DeviceTestContext`.
         """
-        logging.info("%s", tango_context)
-        dev_factory = DevFactory()
-        logging.info("%s", dev_factory._test_context)
-        vcc_proxy = dev_factory.get_device("mid_csp_cbf/vcc/001")
-        band_12_proxy = dev_factory.get_device("mid_csp_cbf/vcc_band12/001")
-        band_3_proxy = dev_factory.get_device("mid_csp_cbf/vcc_band3/001")
 
-        logging.info("debug_device_is_on = {}".format(debug_device_is_on))
-        if debug_device_is_on == True:
-            timeout_millis = 700000 
-            vcc_proxy.set_timeout_millis(timeout_millis)
-            port = vcc_proxy.DebugDevice()
-        
-        logging.info( ("band_12_proxy.State() = {}".
-        format( band_12_proxy.State())) )
-
-        logging.info( ("band_3_proxy.State() = {}".
-        format( band_3_proxy.State())) )
-
-        sleep_seconds = 2
-
-        #band_3_proxy.Init() # may not be needed ? TODO
-        # time.sleep(sleep_seconds)
-
-        # logging.info( ("band_3_proxy.State() after Init() and sleep = {}".
-        # format( band_3_proxy.State())) )
-
-        # Can use the callable version or the 'command_inout' version of the 'On' command
-        band_12_proxy.On()
-        #band_12_proxy.command_inout("On")
-        band_3_proxy.Disable()
-        time.sleep(sleep_seconds)
-        logging.info( ("band_12_proxy.State() after On() = {}".
-        format( band_12_proxy.State())) )
-
-        logging.info( ("band_3_proxy.State() after Disable() = {}".
-        format( band_3_proxy.State())) )
-
-        # From On, must go to Off state first:
-        band_12_proxy.Off()
-        time.sleep(sleep_seconds)
-        band_12_proxy.Disable()
-        logging.info( ("band_12_proxy.State() after Disable() = {}".
-        format( band_12_proxy.State())) )
-
-        # NOTE: this check is needed only while debugging this test TODO - remove
-        if band_12_proxy.State() == DevState.FAULT:
-            # This should not happen
-            band_12_proxy.Reset()
-
-            logging.info( ("band_12_proxy.State() after reset = {}".
-            format( band_12_proxy.State())) )
-
-            time.sleep(sleep_seconds)
-
-            logging.info( ("band_12_proxy.State() after reset and sleep = {}".
-            format( band_12_proxy.State())) )
-
-        logging.info( ("vcc_proxy.State()  = {}".
-        format( vcc_proxy.State())) )
-
-        # logging.info( ("vcc_proxy.obsState  = {}".
-        # format( vcc_proxy.obsState)) )
-        # time.sleep(sleep_seconds)
-
-        vcc_proxy.write_attribute("scfoBand1", 1222)
-        logging.info( ("vcc scfoBand1 = {}".
-        format(vcc_proxy.scfoBand1)) )
-
-        logging.info( ("type(vcc_proxy) = {}".
-        format(type(vcc_proxy))) )
-
-        vcc_proxy.On()
-        
+        device_under_test.On()
+        time.sleep(0.1)
         logging.info( ("vcc_proxy.State() AFTER VCC On() = {}".
-        format( vcc_proxy.State())) )
+        format( device_under_test.State())) )
 
-        time.sleep(sleep_seconds)
-        logging.info( ("vcc_proxy.State() AFTER VCC On() & sleep = {}".
-        format( vcc_proxy.State())) )
-
-        # configure scan
-        # with open("test_ConfigureScan_basic.json") as json_file:
-        #     config_scan_data = json.load(json_file)
-        
-        # logging.info("config_scan_data type = {}".format(type(config_scan_data)))
-
-        # config_scan_data_no_fsp = copy.deepcopy(config_scan_data)
-        # config_scan_data_no_fsp.pop('fsp', None)
-
-        # config_scan_json_str = json.dumps(config_scan_data_no_fsp)
-        # logging.info("config_scan_json_str = {}".format(config_scan_json_str))
-
-        # config_dict = {
-        #     "id": "band:1",
-        #     "frequency_band": "1",
-        #     "band5_tuning": [5.85, 7.25],
-        #     "frequencyBandOffsetStream1": 0,
-        #     "frequencyBandOffsetStream2": 0,
-        #     "searchWindow": [
-        #         {
-        #             "searchWindowID": 1,
-        #             "searchWindowTuning": 6000000000,
-        #             "tdcEnable": true,
-        #             "tdcNumBits": 8,
-        #             "tdcPeriodBeforeEpoch": 5,
-        #             "tdcPeriodAfterEpoch": 25,
-        #             "tdcDestinationAddress": [
-        #                 {
-        #                     "receptorID": 4,
-        #                     "tdcDestinationAddress": ["foo", "bar", "8080"]
-        #                 },
-        #                 {
-        #                     "receptorID": 1,
-        #                     "tdcDestinationAddress": ["fizz", "buzz", "80"]
-        #                 }
-        #             ]
-        #         },
-        #         {
-        #             "searchWindowID": 2,
-        #             "searchWindowTuning": 7000000000,
-        #             "tdcEnable": false
-        #         }
-        #     ]
-        # }
-
-        config_dict = {
+        config_str = json.dumps({
             "config_id": "vcc_unit_test",
             "frequency_band": "3",
-        }
-
-        json_str = json.dumps(config_dict)
-
-        logging.info("json_str = {}".format(json_str))
-
-        vcc_proxy.ConfigureScan(json_str)
-        
-        # logging.info( ("vcc_proxy.obsState AFTER VCC ConfigureScan(() = {}".
-        # format( vcc_proxy.obsState)) )
-
-        time.sleep(sleep_seconds)
-
-        # logging.info( ("vcc_proxy.obsState AFTER VCC ConfigureScan(() & sleep = {}".
-        # format( vcc_proxy.obsState)) )
+        })
+        logging.info("json_str = {}".format(config_str))
+        device_under_test.ConfigureScan(config_str)
+        time.sleep(0.1)
 
         # TODO use the base class tango_change_event_helper() function
         # TODO -use the base class test  assert_calls()
@@ -241,46 +102,30 @@ class TestVcc:
         scan_id_device_data.insert(tango.DevString, scan_id)
 
         # Use callable 'Scan'  API
-        #vcc_proxy.Scan(scan_id_device_data)
-
-        vcc_proxy.command_inout("Scan", scan_id_device_data)
-
-        # logging.info( ("vcc_proxy.obsState AFTER VCC Scan(DeviceData) = {}".
-        # format( vcc_proxy.obsState)) )
-        # time.sleep(sleep_seconds)
-        # logging.info( ("vcc_proxy.obsState AFTER VCC Scan(DeviceData) & sleep = {}".
-        # format( vcc_proxy.obsState)) )
-
-        # obs_state_is_valid = (
-        #     vcc_proxy.obsState ==  ObsState.READY or
-        #     vcc_proxy.obsState ==  ObsState.SCANNING )
+        device_under_test.Scan(scan_id_device_data)
+        time.sleep(0.1)
 
         logging.info( (" vcc_proxy.scanID =  {}".
-        format(vcc_proxy.scanID)) )
+        format(device_under_test.scanID)) )
 
         logging.info( (" vcc_proxy.frequencyBand =  {}".
-        format(vcc_proxy.frequencyBand)) )
+        format(device_under_test.frequencyBand)) )
 
         #TODO fix hardcoded value
-        assert vcc_proxy.frequencyBand == 2 # index 2 == freq band 3
+        assert device_under_test.frequencyBand == 2 # index 2 == freq band 3
         
-        assert vcc_proxy.scanID == int(scan_id)
-        vcc_proxy.EndScan()
-        time.sleep(sleep_seconds)
+        assert device_under_test.scanID == int(scan_id)
+        device_under_test.EndScan()
+        time.sleep(0.1)
 
-        # logging.info( ("vcc_proxy.obsState AFTER VCC EndScan() and sleep = {}".
-        # format( vcc_proxy.obsState)) )
-
-        vcc_proxy.GoToIdle()
-        
-        # logging.info( ("vcc_proxy.obsState AFTER GoToIdle() = {}".
-        # format( vcc_proxy.obsState)) )
+        device_under_test.GoToIdle()
+        time.sleep(0.1)
 
         # VCC Off() command
-        vcc_proxy.Off()
-        time.sleep(sleep_seconds)
+        device_under_test.Off()
+        time.sleep(0.1)
         logging.info( ("vcc_proxy.State() AFTER VCC Off() & sleep = {}".
-        format( vcc_proxy.State())) )
+        format( device_under_test.State())) )
 
 
         """

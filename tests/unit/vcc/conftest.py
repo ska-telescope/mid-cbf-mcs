@@ -58,6 +58,18 @@ def patched_vcc_device_class() -> Type[Vcc]:
 
     return PatchedVccDevice
 
+
+@pytest.fixture()
+def device_under_test(tango_harness: TangoHarness) -> CbfDeviceProxy:
+    """
+    Fixture that returns the device under test.
+
+    :param tango_harness: a test harness for Tango devices
+
+    :return: the device under test
+    """
+    return tango_harness.get_device("mid_csp_cbf/vcc/001")
+
 @pytest.fixture()
 def device_to_load(
     patched_vcc_device_class: Type[Vcc],

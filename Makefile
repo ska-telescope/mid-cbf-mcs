@@ -87,7 +87,7 @@ requirements: ## Install Dependencies
 
 unit-test: ## Run simulation mode unit tests; currently only Vcc tests are supported, with TEST_CONTEXT flag set True in Vcc.py
 	@mkdir -p build; \
-	PYTHONPATH=src:tests pytest -v ./tests/unit/ $(FILE) --testbed test --cov=src/ska_mid_cbf_mcs/Vcc
+	PYTHONPATH=src:tests pytest -v ./tests/unit/ $(FILE) --testbed test --cov=src/ska_mid_cbf_mcs/vcc
 
 jive: ## configure TANGO_HOST to enable Jive
 	@echo

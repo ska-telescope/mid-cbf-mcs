@@ -321,7 +321,6 @@ class Vcc(CspSubElementObsDevice):
                 self.logger.warn(
                     "Unexpected error on DeviceProxy creation %s", str(ex)
                 )
-
             message = "Vcc Init command completed OK"
             device.logger.info(message)
             return (ResultCode.OK, message)
