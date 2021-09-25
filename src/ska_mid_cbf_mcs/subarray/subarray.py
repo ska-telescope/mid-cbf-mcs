@@ -1485,7 +1485,7 @@ class CbfSubarray(SKASubarray):
                 information purpose only.
             :rtype: (ResultCode, str)
             """
-            (result_code,message) = super().do()
+            (result_code,message) = super().do(argin)
             device=self.target
 
             device._remove_receptors_helper(argin)
