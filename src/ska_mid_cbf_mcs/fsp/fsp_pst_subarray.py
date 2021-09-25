@@ -125,6 +125,10 @@ class FspPstSubarray(CspSubElementObsDevice):
         )
 
         self.register_command_object(
+            "GoToIdle", self.ConfigureScanCommand(*device_args)
+        )
+
+        self.register_command_object(
             "GoToIdle", self.GoToIdleCommand(*device_args)
         )
     
@@ -267,8 +271,6 @@ class FspPstSubarray(CspSubElementObsDevice):
             device = self.target
 
             device.RemoveAllReceptors()
-            device.GoToIdle()
-
 
             return (result_code,message)
 
@@ -338,35 +340,89 @@ class FspPstSubarray(CspSubElementObsDevice):
         self.RemoveReceptors(self._receptors[:])
         # PROTECTED REGION END #    //  FspPstSubarray.RemoveAllReceptors
 
-    @command(
-        dtype_in='str',
-        doc_in="Scan configuration",
-    )
-    def ConfigureScan(self, argin):
-        # PROTECTED REGION ID(FspPstSubarray.ConfigureScan) ENABLED START #
-        # This function is called after the configuration has already been validated,
-        # so the checks here have been removed to reduce overhead.
-        """Input a JSON. Configure scan for fsp. Called by CbfSubarrayPstConfig(proxy_fsp_pst_subarray.ConfigureScan(json.dumps(fsp)))"""
-        # transition to obsState=CONFIGURING
-        self._update_obs_state(ObsState.CONFIGURING)
+    class ConfigureScanCommand(CspSubElementObsDevice.ConfigureScanCommand):
+        """
+        A class for the FspCorrSubarray's ConfigureScan() command.
+        """
 
-        argin = json.loads(argin)
+        """Input a serilized JSON object. """
 
-        # Configure receptors.
-        self._fsp_id = argin["fsp_id"]
-        self._timing_beams = []
-        self._timing_beam_id = []
-        self._receptors = []
+        def do(self, argin):
+            """
+            Stateless hook for ConfigureScan() command functionality.
 
-        for timingBeam in argin["timing_beam"]:
-            self.AddReceptors(map(int, timingBeam["receptor_ids"]))
-            self._timing_beams.append(json.dumps(timingBeam))
-            self._timing_beam_id.append(int(timingBeam["timing_beam_id"]))
+            :param argin: The configuration as JSON formatted string
+            :type argin: str
 
-        # fspPstSubarray moves to READY after configuration
-        self._update_obs_state(ObsState.READY)
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            :raises: ``CommandError`` if the configuration data validation fails.
+            """
 
-        # PROTECTED REGION END #    //  FspPstSubarray.ConfigureScan
+            self.logger.debug("Entering ConfigureScanCommand()")
+
+            device = self.target
+
+            # validate the input args
+
+            # NOTE: This function is called after the
+            # configuration has already  been validated, 
+            # so the checks here have been removed to
+            #  reduce overhead TODO:  to change where the
+            # validation is done
+
+            argin = json.loads(argin)
+
+            # Configure receptors.
+            device._fsp_id = argin["fsp_id"]
+            device._timing_beams = []
+            device._timing_beam_id = []
+            device._receptors = []
+
+            for timingBeam in argin["timing_beam"]:
+                device.AddReceptors(map(int, timingBeam["receptor_ids"]))
+                device._timing_beams.append(json.dumps(timingBeam))
+                device._timing_beam_id.append(int(timingBeam["timing_beam_id"]))  
+
+            result_code = ResultCode.OK # TODO  - temp - remove
+            msg = "Configure command completed OK" # TODO temp, remove
+
+            if result_code == ResultCode.OK:
+                msg = "Configure command completed OK"
+
+            return(result_code, msg)
+
+    # @command(
+    #     dtype_in='str',
+    #     doc_in="Scan configuration",
+    # )
+    # def ConfigureScan(self, argin):
+    #     # PROTECTED REGION ID(FspPstSubarray.ConfigureScan) ENABLED START #
+    #     # This function is called after the configuration has already been validated,
+    #     # so the checks here have been removed to reduce overhead.
+    #     """Input a JSON. Configure scan for fsp. Called by CbfSubarrayPstConfig(proxy_fsp_pst_subarray.ConfigureScan(json.dumps(fsp)))"""
+    #     # transition to obsState=CONFIGURING
+    #     self._update_obs_state(ObsState.CONFIGURING)
+
+    #     argin = json.loads(argin)
+
+    #     # Configure receptors.
+    #     self._fsp_id = argin["fsp_id"]
+    #     self._timing_beams = []
+    #     self._timing_beam_id = []
+    #     self._receptors = []
+
+    #     for timingBeam in argin["timing_beam"]:
+    #         self.AddReceptors(map(int, timingBeam["receptor_ids"]))
+    #         self._timing_beams.append(json.dumps(timingBeam))
+    #         self._timing_beam_id.append(int(timingBeam["timing_beam_id"]))
+
+    #     # fspPstSubarray moves to READY after configuration
+    #     self._update_obs_state(ObsState.READY)
+
+    #     # PROTECTED REGION END #    //  FspPstSubarray.ConfigureScan
     
     @command()
     def EndScan(self):
