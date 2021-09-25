@@ -1523,7 +1523,7 @@ class CbfSubarray(SKASubarray):
         return [[return_code], [message]]  
         # PROTECTED REGION END #    //  CbfSubarray.RemoveAllReceptors
 
-    class RemoveAllReceptorsCommand(SKASubarray.ReleaseResourcesCommand):
+    class RemoveAllReceptorsCommand(SKASubarray.ReleaseAllResourcesCommand):
         """
         A class for CbfSubarray's ReleaseAllReceptors() command.
         """
