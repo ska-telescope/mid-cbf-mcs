@@ -68,12 +68,12 @@ class TestVcc:
     
 
     @pytest.mark.forked
-    def test_SetFrequencyBand(
+    def test_Scan(
         self: TestVcc,
         device_under_test: CbfDeviceProxy
     ) -> None:
         """
-        Test SetFrequencyBand command state changes.
+        Test Scan command state changes.
 
         :param device_under_test: fixture that provides a
             :py:class:`tango.DeviceProxy` to the device under test, in a
