@@ -17,13 +17,15 @@ dependencies:
 - name: ska-mid-cbf-tmleafnode
   version: 0.2.6
   repository: "file://../ska-mid-cbf-tmleafnode"
-# uncomment below for webjive
-# - name: ska-webjive
-#   version: 1.0.25
-#   repository: https://artefact.skao.int/repository/helm-internal
-# - name: ska-webjive-auth
-#   version: 0.1.3
-#   repository: https://artefact.skao.int/repository/helm-internal
-# - name: webjive-dashboard
-#   version: 0.1.2
-#   repository: https://nexus.engageska-portugal.pt/repository/helm-chart
+- name: ska-webjive
+  version: 1.0.25
+  repository: https://artefact.skao.int/repository/helm-internal
+  condition: ska-webjive.enabled
+- name: ska-webjive-auth
+  version: 0.1.3
+  repository: https://artefact.skao.int/repository/helm-internal
+  condition: ska-webjive.enabled
+- name: ska-dashboard-repo
+  version: 0.1.7
+  repository: https://artefact.skao.int/repository/helm-internal
+  condition: ska-webjive.enabled
