@@ -13,7 +13,7 @@ Documentation on the Developer's portal:
   * [Set up the Mid CBF MCS Software](#set-up-the-mid-cbf-mcs-software)
   * [Set up Kubernetes](#set-up-kubernetes)
 * [Running the Mid CBF MCS](#running-the-mid-cbf-mcs)
-* [Jive and WebJive](#jive-and-webjive)
+* [Jive and Taranta](#jive-and-taranta)
 * [Releasing](#releasing)
 * [Development resources](#development-resources)
   * [Other resources](#other-resources)
@@ -189,7 +189,7 @@ For installing Kubernetes, Minikube and Helm, follow the instructions at
 * [minikube](https://minikube.sigs.k8s.io/docs/start/), 
 [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/) 
 and [Helm](https://helm.sh/docs/intro/install/)
-  * Clone the `https://gitlab.com/ska-telescope/ska-cicd-deploy-minikube` 
+  * Clone the `https://gitlab.com/ska-telescope/sdi/ska-cicd-deploy-minikube` 
   project and follow the README instructions to install and configure minikube, 
   kubectl and Helm correctly.
 
@@ -261,7 +261,7 @@ eval $(minikube docker-env --unset)   # if docker-env variables were set previou
 minikube stop                         # stop minikube
 ```
 
-# Jive and WebJive
+# Jive and Taranta
 
 ## Jive
 Run `make jive` with the deployment active to get a command useful for configuring 
@@ -272,17 +272,15 @@ make jive   # copy and paste the output
 jive&       # run Jive
 ```
 
-## WebJive
-This prototype provides a graphical user interface using WebJive; to set it up:
-
-* Uncomment WebJive-related dependencies in `charts/ska-mid-cbf-umbrella/Chart.yaml`
+## Taranta
+This prototype provides a graphical user interface using Taranta (previously known as WebJive); to set it up:
 * Add the following line to `/etc/hosts`:
-```
-192.168.49.2  integration.engageska-portugal.pt
-```
-*Note*: 192.168.49.2 is the minikube IP address, obtainable with the command `minikube ip`
+    ```
+    192.168.49.2  taranta
+    ```
+    *Note*: 192.168.49.2 is the minikube IP address, obtainable with the command `minikube ip`
 * Deploy with `make install-chart-with-taranta`
-* Navigate to `integration.engageska-portugal.pt` in a browser. 
+* Navigate to `taranta/ska-mid-cbf/taranta/devices` in a browser (works best with Google Chrome).
 
 The following credentials can be used to operate the system:
 

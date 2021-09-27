@@ -39,7 +39,7 @@ webjive-dashboard:
     ingress:
        enabled: true     
        nginx: true     
-       hostname: taranta
+       hostname: taranta 
 
 ska-webjive-auth:   
     ingress:     

@@ -389,7 +389,6 @@ def init_proxies_fixture():
             self.controller = DeviceProxy("mid_csp_cbf/sub_elt/controller")
             self.controller.loggingLevel = LoggingLevel.DEBUG
             self.controller.set_timeout_millis(timeout_millis)
-            self.controller.Init()
             self.wait_timeout_dev([self.controller], DevState.STANDBY, 3, 0.05)
             
             self.receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in self.controller.receptorToVcc)
