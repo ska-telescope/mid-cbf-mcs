@@ -118,21 +118,21 @@ class Vcc(CspSubElementObsDevice):
     band5Tuning = attribute(
         dtype=('float',),
         max_dim_x=2,
-        access=AttrWriteType.READ_WRITE,
+        access=AttrWriteType.READ,
         label="Stream tuning (GHz)",
         doc="Stream tuning (GHz)"
     )
 
     frequencyBandOffsetStream1 = attribute(
         dtype='int',
-        access=AttrWriteType.READ_WRITE,
+        access=AttrWriteType.READ,
         label="Frequency band offset (stream 1) (Hz)",
         doc="Frequency band offset (stream 1) (Hz)"
     )
 
     frequencyBandOffsetStream2 = attribute(
         dtype='int',
-        access=AttrWriteType.READ_WRITE,
+        access=AttrWriteType.READ,
         label="Frequency band offset (stream 2) (Hz)",
         doc="Frequency band offset (stream 2) (Hz)"
     )
@@ -147,49 +147,49 @@ class Vcc(CspSubElementObsDevice):
 
     rfiFlaggingMask = attribute(
         dtype='str',
-        access=AttrWriteType.READ_WRITE,
+        access=AttrWriteType.READ,
         label="RFI Flagging Mask",
         doc="RFI Flagging Mask"
     )
 
     scfoBand1 = attribute(
         dtype='int',
-        access=AttrWriteType.READ_WRITE,
+        access=AttrWriteType.READ,
         label="SCFO (band 1)",
         doc="Sample clock frequency offset for band 1",
     )
 
     scfoBand2 = attribute(
         dtype='int',
-        access=AttrWriteType.READ_WRITE,
+        access=AttrWriteType.READ,
         label="SCFO (band 2)",
         doc="Sample clock frequency offset for band 2",
     )
 
     scfoBand3 = attribute(
         dtype='int',
-        access=AttrWriteType.READ_WRITE,
+        access=AttrWriteType.READ,
         label="SCFO (band 3)",
         doc="Sample clock frequency offset for band 3",
     )
 
     scfoBand4 = attribute(
         dtype='int',
-        access=AttrWriteType.READ_WRITE,
+        access=AttrWriteType.READ,
         label="SCFO (band 4)",
         doc="Sample clock frequency offset for band 4",
     )
 
     scfoBand5a = attribute(
         dtype='int',
-        access=AttrWriteType.READ_WRITE,
+        access=AttrWriteType.READ,
         label="SCFO (band 5a)",
         doc="Sample clock frequency offset for band 5a",
     )
 
     scfoBand5b = attribute(
         dtype='int',
-        access=AttrWriteType.READ_WRITE,
+        access=AttrWriteType.READ,
         label="SCFO (band 5b)",
         doc="Sample clock frequency offset for band 5b",
     )
@@ -221,7 +221,7 @@ class Vcc(CspSubElementObsDevice):
 
     configID = attribute(
         dtype='DevString',
-        access=AttrWriteType.READ_WRITE,
+        access=AttrWriteType.READ,
         label="config ID",
         doc="config ID",
     )
@@ -433,35 +433,17 @@ class Vcc(CspSubElementObsDevice):
         return self._stream_tuning
         # PROTECTED REGION END #    //  Vcc.band5Tuning_read
 
-    def write_band5Tuning(self: Vcc, value: band5Tuning) -> None:
-        # PROTECTED REGION ID(Vcc.band5Tuning_write) ENABLED START #
-        """Set band5Tuning attribute: Stream tuning (GHz) in float"""
-        self._stream_tuning = value
-        # PROTECTED REGION END #    //  Vcc.band5Tuning_write
-
     def read_frequencyBandOffsetStream1(self: Vcc) -> int:
         # PROTECTED REGION ID(Vcc.frequencyBandOffsetStream1_read) ENABLED START #
         """Return frequecyBandOffsetStream1 attribute(int)"""
         return self._frequency_band_offset_stream_1
         # PROTECTED REGION END #    //  Vcc.frequencyBandOffsetStream1_read
 
-    def write_frequencyBandOffsetStream1(self: Vcc, value: frequencyBandOffsetStream1) -> None:
-        # PROTECTED REGION ID(Vcc.frequencyBandOffsetStream1_write) ENABLED START #
-        """Set frequecyBandOffsetStream1 attribute(int)"""
-        self._frequency_band_offset_stream_1 = value
-        # PROTECTED REGION END #    //  Vcc.frequencyBandOffsetStream1_write
-
     def read_frequencyBandOffsetStream2(self: Vcc) -> int:
         # PROTECTED REGION ID(Vcc.frequencyBandOffsetStream2_read) ENABLED START #
         """Return frequecyBandOffsetStream2 attribute(int)"""
         return self._frequency_band_offset_stream_2
         # PROTECTED REGION END #    //  Vcc.frequencyBandOffsetStream2_read
-
-    def write_frequencyBandOffsetStream2(self: Vcc, value: frequencyBandOffsetStream2) -> None:
-        # PROTECTED REGION ID(Vcc.frequencyBandOffsetStream2_write) ENABLED START #
-        """Set frequecyBandOffsetStream2 attribute(int)"""
-        self._frequency_band_offset_stream_2 = value
-        # PROTECTED REGION END #    //  Vcc.frequencyBandOffsetStream2_write
 
     def read_dopplerPhaseCorrection(self: Vcc) -> List[float]:
         # PROTECTED REGION ID(Vcc.dopplerPhaseCorrection_read) ENABLED START #
@@ -481,23 +463,11 @@ class Vcc(CspSubElementObsDevice):
         return self._rfi_flagging_mask
         # PROTECTED REGION END #    //  Vcc.rfiFlaggingMask_read
 
-    def write_rfiFlaggingMask(self: Vcc, value: rfiFlaggingMask) -> None:
-        # PROTECTED REGION ID(Vcc.rfiFlaggingMask_write) ENABLED START #
-        """Set rfiFlaggingMask attribute(str/JSON)"""
-        self._rfi_flagging_mask = value
-        # PROTECTED REGION END #    //  Vcc.rfiFlaggingMask_write
-
     def read_scfoBand1(self: Vcc) -> int:
         # PROTECTED REGION ID(Vcc.scfoBand1_read) ENABLED START #
         """Return scfoBand1 attribute(int): Sample clock frequency offset for band 1"""
         return self._scfo_band_1
         # PROTECTED REGION END #    //  Vcc.scfoBand1_read
-
-    def write_scfoBand1(self: Vcc, value: scfoBand1) -> None:
-        # PROTECTED REGION ID(Vcc.scfoBand1_write) ENABLED START #
-        """Set scfoBand1 attribute(int): Sample clock frequency offset for band 1"""
-        self._scfo_band_1 = value
-        # PROTECTED REGION END #    //  Vcc.scfoBand1_write
 
     def read_scfoBand2(self: Vcc) -> int:
         # PROTECTED REGION ID(Vcc.scfoBand2_read) ENABLED START #
@@ -505,23 +475,11 @@ class Vcc(CspSubElementObsDevice):
         return self._scfo_band_2
         # PROTECTED REGION END #    //  Vcc.scfoBand2_read
 
-    def write_scfoBand2(self: Vcc, value: scfoBand2) -> None:
-        # PROTECTED REGION ID(Vcc.scfoBand2_write) ENABLED START #
-        """Set scfoBand2 attribute(int): Sample clock frequency offset for band 2"""
-        self._scfo_band_2 = value
-        # PROTECTED REGION END #    //  Vcc.scfoBand2_write
-
     def read_scfoBand3(self: Vcc) -> int:
         # PROTECTED REGION ID(Vcc.scfoBand3_read) ENABLED START #
         """Return scfoBand3 attribute(int): Sample clock frequency offset for band 3"""        
         return self._scfo_band_3
         # PROTECTED REGION END #    //  Vcc.scfoBand3_read
-
-    def write_scfoBand3(self: Vcc, value: scfoBand3) -> None:
-        # PROTECTED REGION ID(Vcc.scfoBand3_write) ENABLED START #
-        """Set scfoBand3 attribute(int): Sample clock frequency offset for band 3"""        
-        self._scfo_band_3 = value
-        # PROTECTED REGION END #    //  Vcc.scfoBand3_write
 
     def read_scfoBand4(self: Vcc) -> int:
         # PROTECTED REGION ID(Vcc.scfoBand4_read) ENABLED START #
@@ -529,35 +487,17 @@ class Vcc(CspSubElementObsDevice):
         return self._scfo_band_4
         # PROTECTED REGION END #    //  Vcc.scfoBand4_read
 
-    def write_scfoBand4(self: Vcc, value: scfoBand4) -> None:
-        # PROTECTED REGION ID(Vcc.scfoBand4_write) ENABLED START #
-        """Set scfoBand4 attribute(int): Sample clock frequency offset for band 4"""        
-        self._scfo_band_4 = value
-        # PROTECTED REGION END #    //  Vcc.scfoBand4_write
-
     def read_scfoBand5a(self: Vcc) -> int:
         # PROTECTED REGION ID(Vcc.scfoBand5a_read) ENABLED START #
         """Return scfoBand5a attribute(int): Sample clock frequency offset for band 5a"""        
         return self._scfo_band_5a
         # PROTECTED REGION END #    //  Vcc.scfoBand5a_read
 
-    def write_scfoBand5a(self: Vcc, value: scfoBand5a) -> None:
-        # PROTECTED REGION ID(Vcc.scfoBand5a_write) ENABLED START #
-        """Set scfoBand5a attribute(int): Sample clock frequency offset for band 5a"""        
-        self._scfo_band_5a = value
-        # PROTECTED REGION END #    //  Vcc.scfoBand5a_write
-
     def read_scfoBand5b(self: Vcc) -> int:
         # PROTECTED REGION ID(Vcc.scfoBand5b_read) ENABLED START #
         """Return scfoBand5b attribute(int): Sample clock frequency offset for band 5b"""        
         return self._scfo_band_5b
         # PROTECTED REGION END #    //  Vcc.scfoBand5b_read
-
-    def write_scfoBand5b(self: Vcc, value: scfoBand5b) -> None:
-        # PROTECTED REGION ID(Vcc.scfoBand5b_write) ENABLED START #
-        """Set scfoBand5b attribute(int): Sample clock frequency offset for band 5b"""        
-        self._scfo_band_5b = value
-        # PROTECTED REGION END #    //  Vcc.scfoBand5b_write
 
     def read_delayModel(self: Vcc) -> List[List[float]]:
         # PROTECTED REGION ID(Vcc.delayModel_read) ENABLED START #
@@ -588,12 +528,6 @@ class Vcc(CspSubElementObsDevice):
         """Return the configID attribute."""
         return self._config_id
         # PROTECTED REGION END #    //  Vcc.configID_read
-
-    def write_configID(self: Vcc, value: configID) -> None:
-        # PROTECTED REGION ID(Vcc.configID_write) ENABLED START #
-        """Set the configID attribute."""
-        self._config_id = value
-        # PROTECTED REGION END #    //  Vcc.configID_write
 
     # --------
     # Commands
@@ -685,7 +619,10 @@ class Vcc(CspSubElementObsDevice):
             self.logger.debug(("device._receptor_ID = {}".
             format(device._receptor_ID)))
 
-            # validate scan configuration first 
+            # This validation is already performed in the CbfSubbarray ConfigureScan.
+            # TODO: Improve validation (validation should only be done once,
+            # most of the validation can be done through a schema instead of manually
+            # through functions).
             try:
                 (result_code, msg) = self._validate_scan_configuration(argin)
             except tango.DevFailed as df:

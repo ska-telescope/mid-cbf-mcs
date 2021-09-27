@@ -128,28 +128,23 @@ class TestVcc:
 
         create_vcc_proxy.ConfigureScan(json_str)
 
-        if "config_id" in configuration:
-            assert create_vcc_proxy.configID == configuration["config_id"]
-        if "frequency_band" in configuration:
-            assert create_vcc_proxy.frequencyBand == freq_band_dict()[configuration["frequency_band"]]
-        if "rfi_flagging_mask" in configuration:
-            assert create_vcc_proxy.rfiFlaggingMask == str(configuration["rfi_flagging_mask"])
+        assert create_vcc_proxy.configID == configuration["config_id"]
+        assert create_vcc_proxy.frequencyBand == freq_band_dict()[configuration["frequency_band"]]
+        assert create_vcc_proxy.rfiFlaggingMask == str(configuration["rfi_flagging_mask"])
+        if "band_5_tuning" in configuration:
+                band5Tuning_config = [*map(float, configuration["band_5_tuning"])]
+                for i in range(0, len(band5Tuning_config)):
+                    assert create_vcc_proxy.band5Tuning[i] == band5Tuning_config[i]
         if "frequency_band_offset_stream_1" in configuration:
             assert  create_vcc_proxy.frequencyBandOffsetStream1 == configuration["frequency_band_offset_stream_1"]
         if "frequency_band_offset_stream_2" in configuration:
             assert  create_vcc_proxy.frequencyBandOffsetStream2 == configuration["frequency_band_offset_stream_2"] 
-        if "scfo_band_1" in configuration:
-            assert create_vcc_proxy.scfoBand1 == configuration["scfo_band_1"]
-        if "scfo_band_2" in configuration:
-            assert create_vcc_proxy.scfoBand2 == configuration["scfo_band_2"]
-        if "scfo_band_3" in configuration:
-            assert create_vcc_proxy.scfoBand3 == configuration["scfo_band_3"]
-        if "scfo_band_4" in configuration:
-            assert create_vcc_proxy.scfoBand4 == configuration["scfo_band_4"]
-        if "scfo_band_5a" in configuration:
-            assert create_vcc_proxy.scfoBand5a == configuration["scfo_band_5a"]
-        if "scfo_band_5b" in configuration:
-            assert create_vcc_proxy.scfoBand5b == configuration["scfo_band_5b"]
+        assert create_vcc_proxy.scfoBand1 == configuration["scfo_band_1"]
+        assert create_vcc_proxy.scfoBand2 == configuration["scfo_band_2"]
+        assert create_vcc_proxy.scfoBand3 == configuration["scfo_band_3"]
+        assert create_vcc_proxy.scfoBand4 == configuration["scfo_band_4"]
+        assert create_vcc_proxy.scfoBand5a == configuration["scfo_band_5a"]
+        assert create_vcc_proxy.scfoBand5b == configuration["scfo_band_5b"]
 
         time.sleep(2)
 
