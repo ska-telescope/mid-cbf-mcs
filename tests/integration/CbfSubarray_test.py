@@ -504,7 +504,6 @@ class TestCbfSubarray:
             proxies.clean_proxies()
             raise e
 
-    @pytest.mark.skip(reason="pst not currently supported")
     def test_ConfigureScan_onlyPst_basic(self, proxies):
         """
         Test a successful PST-BF scan configuration
@@ -583,7 +582,6 @@ class TestCbfSubarray:
             proxies.clean_proxies()
             raise e
 
-    @pytest.mark.skip(reason="pst not currently supported")
     def test_ConfigureScan_onlyPst_basic_FSP_scan_parameters(self, proxies):
         """
         Test a successful transmission of PST-BF parameters to FSP
