@@ -605,8 +605,7 @@ class Vcc(CspSubElementObsDevice):
     )
     def TurnOnBandDevice(self: Vcc, freq_band_name: str) -> None:
         """
-        Send ON signal to the corresponding band, and DISABLE signal 
-        to all others
+        Turn on the corresponding band device and disable all the others.
         """
 
         # TODO: can be done in a more Pythonian way; broken?

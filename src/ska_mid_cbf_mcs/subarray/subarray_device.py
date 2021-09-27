@@ -1,20 +1,18 @@
 # -*- coding: utf-8 -*-
 #
-# This file is part of the CbfSubarray project
+# This file is part of the SKA Mid.CBF MCS project
 #
 #
 #
 # Distributed under the terms of the GPL license.
 # See LICENSE.txt for more info.
 
-# """
-# Author: An Yu An.Yu@nrc-cnrc.gc.ca,
-# Herzberg Astronomy and Astrophysics, National Research Council of Canada
 # Copyright (c) 2019 National Research Council of Canada
-# """
 
-# CbfSubarray Tango device prototype
-# CBFSubarray TANGO device class for the CBFSubarray prototype
+"""
+CbfSubarray
+Subarray device for Mid.CBf
+"""
 
 
 # tango imports
@@ -967,7 +965,8 @@ class CbfSubarray(SKASubarray):
 
 
     def _deconfigure(self):
-        """Helper function to unsubscribe events and release resources."""
+        """Completely deconfigure the subarray; all initialization performed 
+        by by the ConfigureScan command must be 'undone' here."""
         
         # TODO: the deconfiguration should happen in reverse order of the
         #       initialization:
@@ -985,10 +984,6 @@ class CbfSubarray(SKASubarray):
             del self._events_state_change_fsp[fspID]
             del self._fsp_state[self._fqdn_fsp[fspID - 1]]
             del self._fsp_health_state[self._fqdn_fsp[fspID - 1]]
-
-        # send assigned VCCs and FSP subarrays to IDLE state
-        # TODO: check if vcc fsp is in scanning state (subarray 
-        # could be aborted in scanning state) - is this needed?
 
         self._group_vcc.command_inout("GoToIdle")
         self._group_fsp_corr_subarray.command_inout("GoToIdle")
@@ -1719,13 +1714,6 @@ class CbfSubarray(SKASubarray):
             # Can't call GoToIdle, otherwise there will be state transition problem. 
             # TODO - to clarify why can't call GoToIdle
             device._deconfigure()
-            # TODO: TurnOffBandDevice for Vcc called within deconfigure should be moved 
-            # moved out and called after Vcc GoToIdle 
-
-            # TODO - to remove
-            # data = tango.DeviceData()
-            # data.insert(tango.DevUShort, ObsState.CONFIGURING)
-            # device._group_vcc.command_inout("SetObservingState", data)
 
             full_configuration = json.loads(argin)
             common_configuration = copy.deepcopy(full_configuration["common"])
