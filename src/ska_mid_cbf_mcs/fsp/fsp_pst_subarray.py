@@ -135,6 +135,10 @@ class FspPstSubarray(CspSubElementObsDevice):
         self.register_command_object(
             "EndScan", self.EndScanCommand(*device_args)
         )
+
+        self.register_command_object(
+            "Scan", self.ScanCommand(*device_args)
+        )
     
     class InitCommand(CspSubElementObsDevice.InitCommand):
         """
@@ -419,13 +423,26 @@ class FspPstSubarray(CspSubElementObsDevice):
 
             return (result_code,message)
     
-    @command()
-    def Scan(self):
-        # PROTECTED REGION ID(FspPstSubarray.Scan) ENABLED START #
-        """Set ObsState to SCANNING"""
-        self._obs_state = ObsState.SCANNING
-        # nothing else is supposed to happen
-        # PROTECTED REGION END #    //  FspPstSubarray.Scan
+    class ScanCommand(SKABaseDevice.ScanCommand):
+        """
+        A class for the FspPstSubarray's Scan() command.
+        """
+        def do(            
+            self: FspPstSubarray.ScanCommand,
+        ) -> Tuple[ResultCode, str]:
+            """
+            Stateless hook for Scan() command functionality.
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
+            (result_code,message)=super().do()
+
+            device = self.target
+
+            return (result_code,message)
 
     class GoToIdleCommand(CspSubElementObsDevice.GoToIdleCommand):
         """
