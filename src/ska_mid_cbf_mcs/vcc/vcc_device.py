@@ -623,6 +623,7 @@ class Vcc(CspSubElementObsDevice):
             # TODO: Improve validation (validation should only be done once,
             # most of the validation can be done through a schema instead of manually
             # through functions).
+            result_code = ResultCode.OK
             try:
                 (result_code, msg) = self._validate_scan_configuration(argin)
             except tango.DevFailed as df:
@@ -631,27 +632,16 @@ class Vcc(CspSubElementObsDevice):
             
             configuration = json.loads(argin)
 
-            if "config_id" in configuration:
-                    device._config_id = configuration["config_id"]
+            device._config_id = configuration["config_id"]
 
-            if "frequency_band" in configuration:
-                device._freq_band_name = str(configuration["frequency_band"])
-                device._frequency_band = freq_band_dict()[device._freq_band_name]
-                if device._frequency_band in [4, 5]:
-                        stream_tuning = [*map(float, configuration["band_5_tuning"])]
-                        device._stream_tuning = stream_tuning
+            device._frequency_band = configuration["frequency_band"]
+            frequency_bands = ["1", "2", "3", "4", "5a", "5b"]
+            device._freq_band_name =  frequency_bands[device._frequency_band]
+            if device._frequency_band in [4, 5]:
+                    device._stream_tuning = configuration["band_5_tuning"]
 
-            if "frequency_band_offset_stream_1" in configuration:
-                device._frequency_band_offset_stream_1 = int(configuration["frequency_band_offset_stream_1"])
-            else:
-                device._frequency_band_offset_stream_1 = 0
-                self.logger.warn("'frequencyBandOffsetStream1' not specified. Defaulting to 0.")
-
-            if "frequency_band_offset_stream_2" in configuration:
-                device._frequency_band_offset_stream_2 = int(configuration["frequency_band_offset_stream_2"])
-            else:
-                device._frequency_band_offset_stream_2 = 0
-                self.logger.warn("'frequencyBandOffsetStream2' not specified. Defaulting to 0.")
+            device._frequency_band_offset_stream_1 = int(configuration["frequency_band_offset_stream_1"])
+            device._frequency_band_offset_stream_2 = int(configuration["frequency_band_offset_stream_2"])
             
             if "rfi_flagging_mask" in configuration:
                 device._rfi_flagging_mask = str(configuration["rfi_flagging_mask"])
@@ -705,7 +695,8 @@ class Vcc(CspSubElementObsDevice):
             self: Vcc.ConfigureScanCommand, 
             msg: str
             ) -> None:
-            self.logger.error(msg)
+            device = self.target
+            device.logger.error(msg)
             tango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
                                         tango.ErrSeverity.ERR)
             
@@ -726,7 +717,16 @@ class Vcc(CspSubElementObsDevice):
             except json.JSONDecodeError:  # argument not a valid JSON object
                 msg = "Scan configuration object is not a valid JSON object. Aborting configuration."
                 self._raise_configure_scan_fatal_error(msg)
-                return (ResultCode.FAILED, msg)
+
+            # Validate configID.
+            if "config_id" not in configuration:
+                msg = "'configID' attribute is required."
+                self._raise_configure_scan_fatal_error(msg)
+            
+            # Validate frequencyBand.
+            if "frequency_band" not in configuration:
+                msg = "'frequencyBand' attribute is required."
+                self._raise_configure_scan_fatal_error(msg)
             
             # Validate frequencyBandOffsetStream1.
             if "frequency_band_offset_stream_1" not in configuration:
@@ -737,7 +737,6 @@ class Vcc(CspSubElementObsDevice):
                 msg = "Absolute value of 'frequencyBandOffsetStream1' must be at most half " \
                         "of the frequency slice bandwidth. Aborting configuration."
                 self._raise_configure_scan_fatal_error(msg)
-                return (ResultCode.FAILED, msg)
 
             # Validate frequencyBandOffsetStream2.
             if "frequency_band_offset_stream_2" not in configuration:
@@ -748,14 +747,12 @@ class Vcc(CspSubElementObsDevice):
                 msg = "Absolute value of 'frequencyBandOffsetStream2' must be at most " \
                         "half of the frequency slice bandwidth. Aborting configuration."
                 self._raise_configure_scan_fatal_error(msg)
-                return (ResultCode.FAILED, msg)
             
             # Validate frequencyBand.
             valid_freq_bands = ["1", "2", "3", "4", "5a", "5b"]
             if configuration["frequency_band"] not in valid_freq_bands:
                 msg = "'band5Tuning' must be an array of length 2. Aborting configuration."
                 self._raise_configure_scan_fatal_error(msg)
-                return (ResultCode.FAILED, msg)
 
             # Validate band5Tuning, frequencyBandOffsetStream2 if frequencyBand is 5a or 5b.
             if configuration["frequency_band"] in ["5a", "5b"]:

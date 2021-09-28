@@ -95,7 +95,9 @@ class TestVcc:
         configuration = copy.deepcopy(json.loads(json_str))
         f.close()
 
-        freq_band_name = configuration["frequency_band"]
+        frequency_band = configuration["frequency_band"]
+        frequency_bands = ["1", "2", "3", "4", "5a", "5b"]
+        freq_band_name =  frequency_bands[frequency_band]
         create_vcc_proxy.TurnOnBandDevice(freq_band_name)
 
         time.sleep(2)
@@ -129,12 +131,13 @@ class TestVcc:
         create_vcc_proxy.ConfigureScan(json_str)
 
         assert create_vcc_proxy.configID == configuration["config_id"]
-        assert create_vcc_proxy.frequencyBand == freq_band_dict()[configuration["frequency_band"]]
+        assert create_vcc_proxy.frequencyBand == configuration["frequency_band"]
         assert create_vcc_proxy.rfiFlaggingMask == str(configuration["rfi_flagging_mask"])
         if "band_5_tuning" in configuration:
-                band5Tuning_config = [*map(float, configuration["band_5_tuning"])]
-                for i in range(0, len(band5Tuning_config)):
-                    assert create_vcc_proxy.band5Tuning[i] == band5Tuning_config[i]
+                if create_vcc_proxy.frequencyBand in [4, 5]:
+                    band5Tuning_config = configuration["band_5_tuning"]
+                    for i in range(0, len(band5Tuning_config)):
+                        assert create_vcc_proxy.band5Tuning[i] == band5Tuning_config[i]
         if "frequency_band_offset_stream_1" in configuration:
             assert  create_vcc_proxy.frequencyBandOffsetStream1 == configuration["frequency_band_offset_stream_1"]
         if "frequency_band_offset_stream_2" in configuration:

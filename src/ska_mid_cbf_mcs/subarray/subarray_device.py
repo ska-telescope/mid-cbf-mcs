@@ -1739,19 +1739,6 @@ class CbfSubarray(SKASubarray):
             data.insert(tango.DevString, common_configuration["frequency_band"])
             device._group_vcc.command_inout("TurnOnBandDevice", data)
 
-            config_dict = {
-                "config_id": common_configuration["config_id"],
-                "frequency_band": common_configuration["frequency_band"],
-                "band_5_tuning": common_configuration["band_5_tuning"],
-                "frequency_band_offset_stream_1": configuration["frequency_band_offset_stream_1"],
-                "frequency_band_offset_stream_2": configuration["frequency_band_offset_stream_2"],
-                "rfi_flagging_mask": configuration["rfi_flagging_mask"],
-            }
-            json_str = json.dumps(config_dict)
-            data = tango.DeviceData()
-            data.insert(tango.DevString, json_str)
-            device._group_vcc.command_inout("ConfigureScan", data)
-
             # Configure band5Tuning, if frequencyBand is 5a or 5b.
             if device._frequency_band in [4, 5]:
                 stream_tuning = [*map(float, common_configuration["band_5_tuning"])]
@@ -1774,6 +1761,19 @@ class CbfSubarray(SKASubarray):
                 device._frequency_band_offset_stream_2 = 0
                 log_msg = "'frequencyBandOffsetStream2' not specified. Defaulting to 0."
                 self.logger.warn(log_msg)
+
+            config_dict = {
+                "config_id": device._config_ID,
+                "frequency_band": device._frequency_band,
+                "band_5_tuning": device._stream_tuning,
+                "frequency_band_offset_stream_1": device._frequency_band_offset_stream_1,
+                "frequency_band_offset_stream_2": device._frequency_band_offset_stream_2,
+                "rfi_flagging_mask": configuration["rfi_flagging_mask"],
+            }
+            json_str = json.dumps(config_dict)
+            data = tango.DeviceData()
+            data.insert(tango.DevString, json_str)
+            device._group_vcc.command_inout("ConfigureScan", data)
 
             # Configure dopplerPhaseCorrSubscriptionPoint.
             if "doppler_phase_corr_subscription_point" in configuration:
