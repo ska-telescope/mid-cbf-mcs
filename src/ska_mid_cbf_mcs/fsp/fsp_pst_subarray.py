@@ -125,11 +125,15 @@ class FspPstSubarray(CspSubElementObsDevice):
         )
 
         self.register_command_object(
-            "GoToIdle", self.ConfigureScanCommand(*device_args)
+            "ConfigureScan", self.ConfigureScanCommand(*device_args)
         )
 
         self.register_command_object(
             "GoToIdle", self.GoToIdleCommand(*device_args)
+        )
+
+        self.register_command_object(
+            "EndScan", self.EndScanCommand(*device_args)
         )
     
     class InitCommand(CspSubElementObsDevice.InitCommand):
@@ -393,44 +397,27 @@ class FspPstSubarray(CspSubElementObsDevice):
                 msg = "Configure command completed OK"
 
             return(result_code, msg)
-
-    # @command(
-    #     dtype_in='str',
-    #     doc_in="Scan configuration",
-    # )
-    # def ConfigureScan(self, argin):
-    #     # PROTECTED REGION ID(FspPstSubarray.ConfigureScan) ENABLED START #
-    #     # This function is called after the configuration has already been validated,
-    #     # so the checks here have been removed to reduce overhead.
-    #     """Input a JSON. Configure scan for fsp. Called by CbfSubarrayPstConfig(proxy_fsp_pst_subarray.ConfigureScan(json.dumps(fsp)))"""
-    #     # transition to obsState=CONFIGURING
-    #     self._update_obs_state(ObsState.CONFIGURING)
-
-    #     argin = json.loads(argin)
-
-    #     # Configure receptors.
-    #     self._fsp_id = argin["fsp_id"]
-    #     self._timing_beams = []
-    #     self._timing_beam_id = []
-    #     self._receptors = []
-
-    #     for timingBeam in argin["timing_beam"]:
-    #         self.AddReceptors(map(int, timingBeam["receptor_ids"]))
-    #         self._timing_beams.append(json.dumps(timingBeam))
-    #         self._timing_beam_id.append(int(timingBeam["timing_beam_id"]))
-
-    #     # fspPstSubarray moves to READY after configuration
-    #     self._update_obs_state(ObsState.READY)
-
-    #     # PROTECTED REGION END #    //  FspPstSubarray.ConfigureScan
     
-    @command()
-    def EndScan(self):
-        # PROTECTED REGION ID(FspPstSubarray.EndScan) ENABLED START #
-        """Set ObsState to READY"""
-        self._obs_state = ObsState.READY
-        # nothing else is supposed to happen
-        # PROTECTED REGION END #    //  FspPstSubarray.EndScan
+    class EndScanCommand(SKABaseDevice.EndScanCommand):
+        """
+        A class for the FspPstSubarray's EndScan() command.
+        """
+        def do(            
+            self: FspPstSubarray.EndScanCommand,
+        ) -> Tuple[ResultCode, str]:
+            """
+            Stateless hook for EndScan() command functionality.
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
+            (result_code,message)=super().do()
+
+            device = self.target
+
+            return (result_code,message)
     
     @command()
     def Scan(self):
