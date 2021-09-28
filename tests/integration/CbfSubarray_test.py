@@ -800,8 +800,8 @@ class TestCbfSubarray:
                 elif fsp["function_mode"] == "PSS-BF":
                     assert proxies.fspPssSubarray[subarr_index-1].obsState == ObsState.SCANNING
                 # TODO: this check does not pass, to fix
-                #elif fsp["function_mode"] == "PST-BF":
-                #    assert proxies.fspPstSubarray[subarr_index-1].obsState == ObsState.SCANNING
+                elif fsp["function_mode"] == "PST-BF":
+                   assert proxies.fspPstSubarray[subarr_index-1].obsState == ObsState.SCANNING
 
             proxies.subarray[subarr_index].EndScan()
             proxies.wait_timeout_obs([proxies.subarray[subarr_index]], ObsState.READY, 1, 1)
@@ -811,6 +811,8 @@ class TestCbfSubarray:
             assert proxies.vcc[vcc_ids[0]].obsState         == ObsState.READY
             assert proxies.vcc[vcc_ids[num_receptors -1]].obsState == ObsState.READY
             assert proxies.fspCorrSubarray[subarr_index-1].obsState == ObsState.READY
+            assert proxies.fspPssSubarray[subarr_index-1].obsState == ObsState.READY
+            assert proxies.fspPstSubarray[subarr_index-1].obsState == ObsState.READY
 
             for fsp in input_config_dict["cbf"]["fsp"]:
                 if fsp["function_mode"] == "CORR":
@@ -1147,6 +1149,7 @@ class TestCbfSubarray:
             assert proxies.vcc[proxies.receptor_to_vcc[4]].obsState == ObsState.READY
             assert proxies.fspSubarray[1].obsState == ObsState.READY
             assert proxies.fspSubarray[3].obsState == ObsState.READY
+            assert proxies.fspSubarray[6].obsState == ObsState.READY
 
             # send the Scan command
             f2 = open(file_path + "/../data/Scan1_basic.json")
@@ -1164,6 +1167,7 @@ class TestCbfSubarray:
             assert proxies.vcc[proxies.receptor_to_vcc[4]].obsState == ObsState.SCANNING
             assert proxies.fspSubarray[1].obsState == ObsState.SCANNING
             assert proxies.fspSubarray[3].obsState == ObsState.SCANNING
+            assert proxies.fspSubarray[6].obsState == ObsState.SCANNING
             proxies.subarray[1].EndScan()
             proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.READY, 1, 1)
             assert proxies.subarray[1].obsState == ObsState.READY
@@ -1209,6 +1213,7 @@ class TestCbfSubarray:
             assert proxies.subarray[1].obsState == ObsState.READY
             assert proxies.fspSubarray[1].obsState == ObsState.READY
             assert proxies.fspSubarray[3].obsState == ObsState.READY
+            assert proxies.fspSubarray[6].obsState == ObsState.READY
             assert proxies.vcc[proxies.receptor_to_vcc[1]].obsState == ObsState.READY
             assert proxies.vcc[proxies.receptor_to_vcc[4]].obsState == ObsState.READY
             # abort
@@ -1222,6 +1227,7 @@ class TestCbfSubarray:
             assert all([proxies.subarray[1].receptors[i] == j for i, j in zip(range(3), [1, 3, 4])])
             assert proxies.fspSubarray[1].obsState == ObsState.IDLE
             assert proxies.fspSubarray[3].obsState == ObsState.IDLE
+            assert proxies.fspSubarray[6].obsState == ObsState.IDLE
             assert proxies.vcc[proxies.receptor_to_vcc[1]].obsState == ObsState.IDLE
             assert proxies.vcc[proxies.receptor_to_vcc[4]].obsState == ObsState.IDLE
 
@@ -1244,6 +1250,7 @@ class TestCbfSubarray:
             assert proxies.subarray[1].scanID == 2
             assert proxies.fspSubarray[1].obsState == ObsState.SCANNING
             assert proxies.fspSubarray[3].obsState == ObsState.SCANNING
+            assert proxies.fspSubarray[6].obsState == ObsState.SCANNING
             assert proxies.vcc[proxies.receptor_to_vcc[1]].obsState == ObsState.SCANNING
             assert proxies.vcc[proxies.receptor_to_vcc[4]].obsState == ObsState.SCANNING
             # abort
@@ -1252,6 +1259,7 @@ class TestCbfSubarray:
             assert proxies.subarray[1].obsState == ObsState.ABORTED
             assert proxies.fspSubarray[1].obsState == ObsState.READY
             assert proxies.fspSubarray[3].obsState == ObsState.READY
+            assert proxies.fspSubarray[6].obsState == ObsState.READY
             assert proxies.vcc[proxies.receptor_to_vcc[1]].obsState == ObsState.READY
             assert proxies.vcc[proxies.receptor_to_vcc[4]].obsState == ObsState.READY
             # ObsReset
@@ -1261,6 +1269,7 @@ class TestCbfSubarray:
             assert proxies.subarray[1].scanID == 0
             assert proxies.fspSubarray[1].obsState == ObsState.IDLE
             assert proxies.fspSubarray[3].obsState == ObsState.IDLE
+            assert proxies.fspSubarray[6].obsState == ObsState.IDLE
             assert proxies.vcc[proxies.receptor_to_vcc[1]].obsState == ObsState.IDLE
             assert proxies.vcc[proxies.receptor_to_vcc[4]].obsState == ObsState.IDLE
 
@@ -1309,6 +1318,7 @@ class TestCbfSubarray:
             assert len(proxies.subarray[1].receptors) == 0
             assert proxies.fspSubarray[1].obsState == ObsState.IDLE
             assert proxies.fspSubarray[3].obsState == ObsState.IDLE
+            assert proxies.fspSubarray[6].obsState == ObsState.IDLE
             assert proxies.vcc[proxies.receptor_to_vcc[1]].obsState == ObsState.IDLE
             assert proxies.vcc[proxies.receptor_to_vcc[4]].obsState == ObsState.IDLE
 
@@ -1327,6 +1337,7 @@ class TestCbfSubarray:
             assert proxies.subarray[1].obsState == ObsState.READY
             assert proxies.fspSubarray[1].obsState == ObsState.READY
             assert proxies.fspSubarray[3].obsState == ObsState.READY
+            assert proxies.fspSubarray[6].obsState == ObsState.READY
             assert proxies.vcc[proxies.receptor_to_vcc[1]].obsState == ObsState.READY
             assert proxies.vcc[proxies.receptor_to_vcc[4]].obsState == ObsState.READY
             # abort
@@ -1340,6 +1351,7 @@ class TestCbfSubarray:
             assert len(proxies.subarray[1].receptors) == 0
             assert proxies.fspSubarray[1].obsState == ObsState.IDLE
             assert proxies.fspSubarray[3].obsState == ObsState.IDLE
+            assert proxies.fspSubarray[6].obsState == ObsState.IDLE
             assert proxies.vcc[proxies.receptor_to_vcc[1]].obsState == ObsState.IDLE
             assert proxies.vcc[proxies.receptor_to_vcc[4]].obsState == ObsState.IDLE
 
@@ -1362,6 +1374,7 @@ class TestCbfSubarray:
             assert proxies.subarray[1].scanID == 2
             assert proxies.fspSubarray[1].obsState == ObsState.SCANNING
             assert proxies.fspSubarray[3].obsState == ObsState.SCANNING
+            assert proxies.fspSubarray[6].obsState == ObsState.SCANNING
             assert proxies.vcc[proxies.receptor_to_vcc[1]].obsState == ObsState.SCANNING
             assert proxies.vcc[proxies.receptor_to_vcc[4]].obsState == ObsState.SCANNING
             # abort
@@ -1370,6 +1383,7 @@ class TestCbfSubarray:
             assert proxies.subarray[1].obsState == ObsState.ABORTED
             assert proxies.fspSubarray[1].obsState == ObsState.READY
             assert proxies.fspSubarray[3].obsState == ObsState.READY
+            assert proxies.fspSubarray[6].obsState == ObsState.READY
             assert proxies.vcc[proxies.receptor_to_vcc[1]].obsState == ObsState.READY
             assert proxies.vcc[proxies.receptor_to_vcc[4]].obsState == ObsState.READY
             # ObsReset
@@ -1378,6 +1392,7 @@ class TestCbfSubarray:
             assert len(proxies.subarray[1].receptors) == 0
             assert proxies.fspSubarray[1].obsState == ObsState.IDLE
             assert proxies.fspSubarray[3].obsState == ObsState.IDLE
+            assert proxies.fspSubarray[6].obsState == ObsState.IDLE
             assert proxies.vcc[proxies.receptor_to_vcc[1]].obsState == ObsState.IDLE
             assert proxies.vcc[proxies.receptor_to_vcc[4]].obsState == ObsState.IDLE
 
