@@ -84,12 +84,15 @@ class TestFspPstSubarray:
         :param receptors_to_test: fixture that provides a random list of 
             receptor IDs
         """
+        # TODO implement proper reset of proxies for this test class
         if subarray.State() == DevState.OFF:
             subarray.On()
         if subarray.ObsState == ObsState.FAULT:
             subarray.Restart()
         elif len(subarray.receptors) != 0:
             subarray.RemoveAllReceptors()
+        if len(device_under_test.receptors) != 0:
+            device_under_test.RemoveAllReceptors()
 
         # receptor list should be empty right after initialization
         assert [device_under_test.receptors[i] \
