@@ -125,7 +125,7 @@ class FspPstSubarray(CspSubElementObsDevice):
         )
 
         self.register_command_object(
-            "GoToIdle", self.ConfigureScanCommand(*device_args)
+            "ConfigureScan", self.ConfigureScanCommand(*device_args)
         )
 
         self.register_command_object(

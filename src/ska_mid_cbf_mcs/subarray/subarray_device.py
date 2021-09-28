@@ -1863,7 +1863,7 @@ class CbfSubarray(SKASubarray):
                 device._group_fsp.add(device._fqdn_fsp[fspID - 1])
                 device._group_fsp_corr_subarray.add(device._fqdn_fsp_corr_subarray[fspID - 1])
                 device._group_fsp_pss_subarray.add(device._fqdn_fsp_pss_subarray[fspID - 1])
-                device._group_fsp_pss_subarray.add(device._fqdn_fsp_pst_subarray[fspID - 1])
+                device._group_fsp_pst_subarray.add(device._fqdn_fsp_pst_subarray[fspID - 1])
 
                 # change FSP subarray membership
                 proxy_fsp.AddSubarrayMembership(device._subarray_id)
