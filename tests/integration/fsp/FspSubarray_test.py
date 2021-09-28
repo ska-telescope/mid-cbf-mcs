@@ -28,20 +28,19 @@ import pytest
 
 from ska_tango_base.control_model import HealthState, AdminMode, ObsState
 
+@pytest.fixture(scope="class")
+def device_under_test() -> DeviceProxy:
+    """
+    Proxy to FspPstSubarray
+    
+    :return: a proxy to mid_csp_cbf/fspPstSubarray/01_01
+    """
+    return DeviceProxy("mid_csp_cbf/fspPstSubarray/01_01")
 
 class TestFspPstSubarray:
     """
     Test class for FspPstSubarray device class integration testing.
     """
-
-    @pytest.fixture(scope="class")
-    def device_under_test() -> DeviceProxy:
-        """
-        Proxy to FspPstSubarray
-        
-        :return: a proxy to mid_csp_cbf/fspPstSubarray/01_01
-        """
-        return DeviceProxy("mid_csp_cbf/fspPstSubarray/01_01")
 
     def test_On(
         self: TestFspPstSubarray,
@@ -219,7 +218,7 @@ class TestFspPstSubarray:
         assert [device_under_test.receptors[i] \
             for i in range(len(device_under_test.receptors))] == []
 
-
+# TODO: fix and move to its own test file
 @pytest.mark.skip(reason="this class is currently untested")
 class TestFspCorrSubarray:
     """
