@@ -22,7 +22,7 @@ import logging
 
 # tango imports
 import tango
-from tango.server import Device, run
+from tango.server import BaseDevice, Device, run
 from tango.server import attribute, command
 from tango.server import device_property
 from tango import DebugIt, DevState, AttrWriteType

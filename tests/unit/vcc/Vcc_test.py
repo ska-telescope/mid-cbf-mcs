@@ -36,7 +36,7 @@ class TestVcc:
     Test class for Vcc tests.
     """
     
-    @pytest.mark.forked
+    #@pytest.mark.forked
     def test_On_ConfigureScan_Off(
         self: TestVcc,
         device_under_test: CbfDeviceProxy
@@ -67,7 +67,6 @@ class TestVcc:
         assert device_under_test.State() == DevState.OFF
     
 
-    @pytest.mark.forked
     def test_Scan(
         self: TestVcc,
         device_under_test: CbfDeviceProxy
