@@ -634,6 +634,11 @@ class Vcc(CspSubElementObsDevice):
 
             device._config_id = configuration["config_id"]
 
+            # TODO: The frequency band attribute is optional but 
+            # if not specified the previous frequency band set should be used 
+            # (see Mid.CBF Scan Configuration in ICD). Therefore, the previous frequency 
+            # band value needs to be stored, and if the frequency band is not
+            # set in the config it should be replaced with the previous value.
             device._frequency_band = configuration["frequency_band"]
             frequency_bands = ["1", "2", "3", "4", "5a", "5b"]
             device._freq_band_name =  frequency_bands[device._frequency_band]
