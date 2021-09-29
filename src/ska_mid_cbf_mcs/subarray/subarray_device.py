@@ -25,7 +25,7 @@ from tango import DevState
 from tango import AttrWriteType
 # Additional import
 # PROTECTED REGION ID(CbfSubarray.additionnal_import) ENABLED START #
-import os
+import sys
 import json
 from random import randint
 from threading import Thread, Lock
