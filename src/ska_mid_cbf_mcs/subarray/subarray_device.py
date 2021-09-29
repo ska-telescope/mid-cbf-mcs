@@ -1462,7 +1462,7 @@ class CbfSubarray(SKASubarray):
             """
             (result_code,message) = super().do()
             device = self.target
-            self.logger.info("Subarray ObsState is {}".format(device.obsState))
+            self.logger.info("Subarray ObsState is {}".format(device._obs_state))
 
             return (result_code, message)
 
@@ -2069,7 +2069,7 @@ class CbfSubarray(SKASubarray):
         """
         A class for SKASubarray's Abort() command.
         """
-        def do(self):
+        def do(self: CbfSubarray.AbortCommand) -> Tuple[ResultCode, str]:
             """
             Stateless hook for Abort() command functionality.
 
@@ -2080,9 +2080,8 @@ class CbfSubarray(SKASubarray):
             """
             device = self.target
 
-            # if aborted from SCANNING, needs to set VCC and PSS subarray 
-            # to READY state otherwise when 
-            if device.obsState == ObsState.SCANNING:
+            # if aborted from SCANNING, end VCC and FSP Subarray scans
+            if device._scan_ID != 0:
                 self.logger.info("Aborting from scanning")
                 device._group_vcc.command_inout("EndScan")
                 device._group_fsp_corr_subarray.command_inout("EndScan")
@@ -2099,7 +2098,7 @@ class CbfSubarray(SKASubarray):
         """
         A class for CbfSubarray's Restart() command.
         """
-        def do(self):
+        def do(self: CbfSubarray.RestartCommand) -> Tuple[ResultCode, str]:
             """
             Stateless hook for Restart() command functionality.
 
