@@ -138,7 +138,7 @@ class CbfSubarray(SKASubarray):
         self.logger.debug("Entering _delay_model_event_callback()")
 
         if not event.err:
-            if self.obsState not in [ObsState.READY, ObsState.SCANNING]:
+            if self._obs_state not in [ObsState.READY, ObsState.SCANNING]:
                 log_msg = "Ignoring delay model (obsState not correct)."
                 self.logger.warn(log_msg)
                 return
@@ -196,7 +196,7 @@ class CbfSubarray(SKASubarray):
     def _jones_matrix_event_callback(self, event):
         self.logger.debug("CbfSubarray._jones_matrix_event_callback")
         if not event.err:
-            if self.obsState not in [ObsState.READY, ObsState.SCANNING]:
+            if self._obs_state not in [ObsState.READY, ObsState.SCANNING]:
                 log_msg = "Ignoring Jones matrix (obsState not correct)."
                 self.logger.warn(log_msg)
                 return
@@ -255,7 +255,7 @@ class CbfSubarray(SKASubarray):
     def _beam_weights_event_callback(self, event):
         self.logger.debug("CbfSubarray._beam_weights_event_callback")
         if not event.err:
-            if self.obsState not in [ObsState.READY, ObsState.SCANNING]:
+            if self._obs_state not in [ObsState.READY, ObsState.SCANNING]:
                 log_msg = "Ignoring beam weights (obsState not correct)."
                 self.logger.warn(log_msg)
                 return
