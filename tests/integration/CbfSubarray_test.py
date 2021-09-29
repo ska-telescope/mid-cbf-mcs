@@ -1510,6 +1510,11 @@ class TestCbfSubarray:
             proxies.clean_proxies()
             raise e
     
+    #TODO: remove entirely?
+    @pytest.mark.skip(
+        reason="OffCommand will not be invoked in this manner by CSP LMC Mid, \
+        rather a series of commands will be issued (Abort -> Restart/Reset)"
+    )
     def test_OffCommand_Resourcing_Configuring(self, proxies):
         try:
             # turn on Subarray
