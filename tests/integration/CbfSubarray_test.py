@@ -710,6 +710,12 @@ class TestCbfSubarray:
         """
         Test the EndScan command
         """
+        
+        subarr_index = 1
+        fsp_corr_index = 1
+        fsp_pss_index = 1
+        fsp_pst_index = 2
+
         try:
             # turn on Subarray
             if proxies.subarray[1].State() != DevState.ON:
@@ -729,7 +735,6 @@ class TestCbfSubarray:
             input_receptors  = input_test_data[0] 
             config_file_name = input_test_data[1]
 
-            subarr_index = 1;
             logging.info( "input_receptors  = {}".format(input_receptors) )
             logging.info( "config_file_name = {}".format(config_file_name) )
 
@@ -745,9 +750,9 @@ class TestCbfSubarray:
             assert proxies.subarray[subarr_index].obsState == ObsState.IDLE
 
             # Check fsp obsState BEFORE scan configuration:
-            assert proxies.fspCorrSubarray[subarr_index-1].obsState == ObsState.IDLE
-            assert proxies.fspPssSubarray[subarr_index-1].obsState == ObsState.IDLE
-            assert proxies.fspPstSubarray[subarr_index-1].obsState == ObsState.IDLE
+            assert proxies.fspCorrSubarray[fsp_corr_index-1].obsState == ObsState.IDLE
+            assert proxies.fspPssSubarray[fsp_pss_index-1].obsState == ObsState.IDLE
+            assert proxies.fspPstSubarray[fsp_pst_index-1].obsState == ObsState.IDLE
 
             logging.info( "First vcc obsState BEFORE ConfigureScan = {}".
             format(proxies.vcc[vcc_ids[0]].obsState) )
@@ -771,6 +776,10 @@ class TestCbfSubarray:
             assert proxies.subarray[subarr_index].frequencyBand == input_band_index
             assert proxies.subarray[subarr_index].obsState == ObsState.READY
 
+            assert proxies.fspCorrSubarray[fsp_corr_index-1].obsState == ObsState.READY
+            assert proxies.fspPssSubarray[fsp_pss_index-1].obsState == ObsState.READY
+            assert proxies.fspPstSubarray[fsp_pst_index-1].obsState == ObsState.READY
+
             # Send the Scan command
             f2 = open(file_path + "/../data/Scan1_basic.json")
             json_string = f2.read().replace("\n", "")
@@ -782,12 +791,12 @@ class TestCbfSubarray:
             # Note: scan_id is 1-based and of 'string' type 
             #       scan_index is an index into an array, therefore 0-based       
             scan_index = int(input_scan_dict["scan_id"]) - 1
-            logging.info( "proxies.fspCorrSubarray[subarr_index-1].obsState = {}".
-            format(proxies.fspCorrSubarray[subarr_index-1].obsState) )
-            logging.info( "proxies.fspPssSubarray[subarr_index-1].obsState = {}".
-            format(proxies.fspPssSubarray[subarr_index-1].obsState) )
-            logging.info( "proxies.fspPstSubarray[subarr_index-1].obsState = {}".
-            format(proxies.fspPstSubarray[subarr_index-1].obsState) )
+            logging.info( "proxies.fspCorrSubarray[fsp_corr_index-1].obsState = {}".
+            format(proxies.fspCorrSubarray[fsp_corr_index-1].obsState) )
+            logging.info( "proxies.fspPssSubarray[fsp_pss_index-1].obsState = {}".
+            format(proxies.fspPssSubarray[fsp_pss_index-1].obsState) )
+            logging.info( "proxies.fspPstSubarray[fsp_pst_index-1].obsState = {}".
+            format(proxies.fspPstSubarray[fsp_pst_index-1].obsState) )
 
             # Check obsStates BEFORE the EndScan() command
             assert proxies.subarray[subarr_index].obsState == ObsState.SCANNING
@@ -796,12 +805,12 @@ class TestCbfSubarray:
 
             for fsp in input_config_dict["cbf"]["fsp"]:
                 if fsp["function_mode"] == "CORR":
-                   assert proxies.fspCorrSubarray[subarr_index-1].obsState == ObsState.SCANNING
+                   assert proxies.fspCorrSubarray[fsp_corr_index-1].obsState == ObsState.SCANNING
                 elif fsp["function_mode"] == "PSS-BF":
-                    assert proxies.fspPssSubarray[subarr_index-1].obsState == ObsState.SCANNING
+                    assert proxies.fspPssSubarray[fsp_pss_index-1].obsState == ObsState.SCANNING
                 # TODO: this check does not pass, to fix
                 elif fsp["function_mode"] == "PST-BF":
-                   assert proxies.fspPstSubarray[subarr_index-1].obsState == ObsState.SCANNING
+                   assert proxies.fspPstSubarray[fsp_pst_index-1].obsState == ObsState.SCANNING
 
             proxies.subarray[subarr_index].EndScan()
             proxies.wait_timeout_obs([proxies.subarray[subarr_index]], ObsState.READY, 1, 1)
@@ -810,18 +819,18 @@ class TestCbfSubarray:
             assert proxies.subarray[subarr_index].obsState  == ObsState.READY
             assert proxies.vcc[vcc_ids[0]].obsState         == ObsState.READY
             assert proxies.vcc[vcc_ids[num_receptors -1]].obsState == ObsState.READY
-            assert proxies.fspCorrSubarray[subarr_index-1].obsState == ObsState.READY
-            assert proxies.fspPssSubarray[subarr_index-1].obsState == ObsState.READY
-            assert proxies.fspPstSubarray[subarr_index-1].obsState == ObsState.READY
+            assert proxies.fspCorrSubarray[fsp_corr_index-1].obsState == ObsState.READY
+            assert proxies.fspPssSubarray[fsp_pss_index-1].obsState == ObsState.READY
+            assert proxies.fspPstSubarray[fsp_pst_index-1].obsState == ObsState.READY
 
             for fsp in input_config_dict["cbf"]["fsp"]:
                 if fsp["function_mode"] == "CORR":
-                   assert proxies.fspCorrSubarray[subarr_index-1].obsState == ObsState.READY 
+                   assert proxies.fspCorrSubarray[fsp_corr_index-1].obsState == ObsState.READY 
                 elif fsp["function_mode"] == "PSS-BF":
-                    assert proxies.fspPssSubarray[subarr_index-1].obsState == ObsState.READY
+                    assert proxies.fspPssSubarray[fsp_pss_index-1].obsState == ObsState.READY
                 # TODO: this check does not pass, to  fix
-                #elif fsp["function_mode"] == "PST-BF":
-                #    assert proxies.fspPstSubarray[subarr_index-1].obsState == ObsState.READY
+                elif fsp["function_mode"] == "PST-BF":
+                   assert proxies.fspPstSubarray[fsp_pst_index-1].obsState == ObsState.READY
 
             proxies.clean_proxies()
 

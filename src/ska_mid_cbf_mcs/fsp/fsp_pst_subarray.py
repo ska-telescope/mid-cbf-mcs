@@ -350,7 +350,7 @@ class FspPstSubarray(CspSubElementObsDevice):
 
     class ConfigureScanCommand(CspSubElementObsDevice.ConfigureScanCommand):
         """
-        A class for the FspCorrSubarray's ConfigureScan() command.
+        A class for the FspPstSubarray's ConfigureScan() command.
         """
 
         """Input a serilized JSON object. """
