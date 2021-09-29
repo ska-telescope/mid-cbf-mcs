@@ -293,7 +293,7 @@ new dashboard.
 
 # Releasing
 
-For a new release (i.e. prior to merging a branch into master) update the 
+For a new release (i.e. prior to merging a branch into main) update the 
 following files by incrementing version/release/tag number fields to conform to 
 the semantic versioning convention:
 * `.release`: `release=` and `tag=`
@@ -309,7 +309,7 @@ the semantic versioning convention:
 *Note*: `appVersion` represents the version of the application running, so it 
 corresponds to the ska-mid-cbf-mcs docker image version.
 
-Once a new release has been merged into master, create a new tag on GitLab and 
+Once a new release has been merged into main, create a new tag on GitLab and 
 run the manual "publish-chart" stage of the tag pipeline to publish the 
 Helm charts.
 
