@@ -85,7 +85,7 @@ include .make/k8s.mk
 requirements: ## Install Dependencies
 	python3 -m pip install -r requirements.txt
 
-unit-test: ## Run simulation mode unit tests; currently only Vcc tests are supported, with TEST_CONTEXT flag set True in Vcc.py
+unit-test: ## Run simulation mode unit tests
 	@mkdir -p build; \
 	PYTHONPATH=src:tests pytest -v ./tests/unit/ $(FILE)
 

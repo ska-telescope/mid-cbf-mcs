@@ -82,23 +82,6 @@ def pytest_addoption(parser: pytest.config.ArgumentParser) -> None:
         default="test",
         help="Specify the testbed on which the tests are running.",
     )
-    """
-    Pytest hook; implemented to add the `--test-context` option, used to
-    indicate that a test Tango subsystem is available; otherwise there is no
-    need for a :py:class:`tango.test_context.MultiDeviceTestContext`.
-
-    :param parser: the command line options parser
-    :type parser: :py:class:`argparse.ArgumentParser`
-    """
-    parser.addoption(
-        "--test-context",
-        action="store_true",
-        default=False,
-        help=(
-            "Tell pytest that you have a true Tango context and don't "
-            "need to spin up a Tango test context"
-        ),
-    )
 
 
 def pytest_collection_modifyitems(

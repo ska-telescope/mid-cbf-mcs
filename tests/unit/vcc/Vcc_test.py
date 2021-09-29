@@ -31,7 +31,6 @@ from tango.server import command
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_mid_cbf_mcs.testing.tango_harness import DeviceToLoadType
 
-from ska_mid_cbf_mcs.dev_factory import DevFactory
 from ska_tango_base.control_model import HealthState, AdminMode, ObsState
 
 
@@ -114,9 +113,11 @@ class TestVcc:
         """
         
         device_under_test.On()
+        time.sleep(0.1)
         assert device_under_test.State() == DevState.ON
 
         device_under_test.Off()
+        time.sleep(0.1)
         assert device_under_test.State() == DevState.OFF
     
 
@@ -162,7 +163,7 @@ class TestVcc:
         assert device_under_test.obsState == ObsState.IDLE
 
 
-    #TODO refactor and enable this test
+    #TODO refactor and enable this test, move to search window test module
     @pytest.mark.skip
     def test_ConfigureSearchWindow_basic(
         self,
