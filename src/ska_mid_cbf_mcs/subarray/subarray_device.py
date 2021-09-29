@@ -1,20 +1,18 @@
 # -*- coding: utf-8 -*-
 #
-# This file is part of the CbfSubarray project
+# This file is part of the SKA Mid.CBF MCS project
 #
 #
 #
 # Distributed under the terms of the GPL license.
 # See LICENSE.txt for more info.
 
-# """
-# Author: An Yu An.Yu@nrc-cnrc.gc.ca,
-# Herzberg Astronomy and Astrophysics, National Research Council of Canada
 # Copyright (c) 2019 National Research Council of Canada
-# """
 
-# CbfSubarray Tango device prototype
-# CBFSubarray TANGO device class for the CBFSubarray prototype
+"""
+CbfSubarray
+Subarray device for Mid.CBf
+"""
 
 
 # tango imports
@@ -967,14 +965,11 @@ class CbfSubarray(SKASubarray):
 
 
     def _deconfigure(self):
-        """Helper function to unsubscribe events and release resources."""
+        """Completely deconfigure the subarray; all initialization performed 
+        by by the ConfigureScan command must be 'undone' here."""
         
         # TODO: the deconfiguration should happen in reverse order of the
         #       initialization:
-
-        # reset scanID, frequencyBand in case they're not reset
-        self._scan_ID = 0
-        self._frequency_band = 0
 
         # unsubscribe from TMC events
         for event_id in list(self._events_telstate.keys()):
@@ -990,13 +985,20 @@ class CbfSubarray(SKASubarray):
             del self._fsp_state[self._fqdn_fsp[fspID - 1]]
             del self._fsp_health_state[self._fqdn_fsp[fspID - 1]]
 
-        # send assigned VCCs and FSP subarrays to IDLE state
-        # TODO: check if vcc fsp is in scanning state (subarray 
-        # could be aborted in scanning state) - is this needed?
         self._group_vcc.command_inout("GoToIdle")
         self._group_fsp_corr_subarray.command_inout("GoToIdle")
         self._group_fsp_pss_subarray.command_inout("GoToIdle")
         self._group_fsp_pst_subarray.command_inout("GoToIdle")
+
+        frequency_bands = ["1", "2", "3", "4", "5a", "5b"]
+        freq_band_name =  frequency_bands[self._frequency_band]
+        data = tango.DeviceData()
+        data.insert(tango.DevString, freq_band_name)
+        self._group_vcc.command_inout("TurnOffBandDevice", data)
+
+        # reset scanID, frequencyBand in case they're not reset
+        self._scan_ID = 0
+        self._frequency_band = 0
 
         # change FSP subarray membership
         data = tango.DeviceData()
@@ -1713,17 +1715,18 @@ class CbfSubarray(SKASubarray):
             # TODO - to clarify why can't call GoToIdle
             device._deconfigure()
 
-            # TODO - to remove
-            # data = tango.DeviceData()
-            # data.insert(tango.DevUShort, ObsState.CONFIGURING)
-            # device._group_vcc.command_inout("SetObservingState", data)
-
             full_configuration = json.loads(argin)
             common_configuration = copy.deepcopy(full_configuration["common"])
             configuration = copy.deepcopy(full_configuration["cbf"])
             # set band5Tuning to [0,0] if not specified
             if "band_5_tuning" not in common_configuration: 
                 common_configuration["band_5_tuning"] = [0,0]
+            if "frequency_band_offset_stream_1" not in common_configuration: 
+                configuration["frequency_band_offset_stream_1"] = 0
+            if "frequency_band_offset_stream_2" not in common_configuration: 
+                configuration["frequency_band_offset_stream_2"] = 0
+            if "rfi_flagging_mask" not in configuration: 
+                configuration["rfi_flagging_mask"] = {}
 
             # Configure configID.
             device._config_ID = str(common_configuration["config_id"])
@@ -1732,19 +1735,14 @@ class CbfSubarray(SKASubarray):
             frequency_bands = ["1", "2", "3", "4", "5a", "5b"]
             device._frequency_band = frequency_bands.index(common_configuration["frequency_band"])
 
-            config_dict = { "config_id": common_configuration["config_id"], 
-                            "frequency_band": common_configuration["frequency_band"] }
-            json_str = json.dumps(config_dict)
             data = tango.DeviceData()
-            data.insert(tango.DevString, json_str)
-            device._group_vcc.command_inout("ConfigureScan", data)
+            data.insert(tango.DevString, common_configuration["frequency_band"])
+            device._group_vcc.command_inout("TurnOnBandDevice", data)
 
-            # TODO: all these VCC params should be passed in via ConfigureScan()
             # Configure band5Tuning, if frequencyBand is 5a or 5b.
             if device._frequency_band in [4, 5]:
                 stream_tuning = [*map(float, common_configuration["band_5_tuning"])]
                 device._stream_tuning = stream_tuning
-                device._group_vcc.write_attribute("band5Tuning", stream_tuning)
 
             # Configure frequencyBandOffsetStream1.
             if "frequency_band_offset_stream_1" in configuration:
@@ -1753,7 +1751,6 @@ class CbfSubarray(SKASubarray):
                 device._frequency_band_offset_stream_1 = 0
                 log_msg = "'frequencyBandOffsetStream1' not specified. Defaulting to 0."
                 self.logger.warn(log_msg)
-            device._group_vcc.write_attribute("frequencyBandOffsetStream1", device._frequency_band_offset_stream_1)
 
             # Validate frequencyBandOffsetStream2.
             # If not given, use a default value.
@@ -1764,7 +1761,19 @@ class CbfSubarray(SKASubarray):
                 device._frequency_band_offset_stream_2 = 0
                 log_msg = "'frequencyBandOffsetStream2' not specified. Defaulting to 0."
                 self.logger.warn(log_msg)
-            device._group_vcc.write_attribute("frequencyBandOffsetStream2", device._frequency_band_offset_stream_2)
+
+            config_dict = {
+                "config_id": device._config_ID,
+                "frequency_band": device._frequency_band,
+                "band_5_tuning": device._stream_tuning,
+                "frequency_band_offset_stream_1": device._frequency_band_offset_stream_1,
+                "frequency_band_offset_stream_2": device._frequency_band_offset_stream_2,
+                "rfi_flagging_mask": configuration["rfi_flagging_mask"],
+            }
+            json_str = json.dumps(config_dict)
+            data = tango.DeviceData()
+            data.insert(tango.DevString, json_str)
+            device._group_vcc.command_inout("ConfigureScan", data)
 
             # Configure dopplerPhaseCorrSubscriptionPoint.
             if "doppler_phase_corr_subscription_point" in configuration:
@@ -1808,16 +1817,6 @@ class CbfSubarray(SKASubarray):
                     device._beam_weights_event_callback
                 )
                 device._events_telstate[event_id] = attribute_proxy
-
-            # Configure rfiFlaggingMask.
-            if "rfi_flagging_mask" in configuration:
-                device._group_vcc.write_attribute(
-                    "rfiFlaggingMask",
-                    json.dumps(configuration["rfi_flagging_mask"])
-                )
-            else:
-                log_msg = "'rfiFlaggingMask' not given. Proceeding."
-                self.logger.warn(log_msg)
 
             # Configure searchWindow.
             if "search_window" in configuration:

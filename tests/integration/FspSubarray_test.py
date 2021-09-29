@@ -7,7 +7,7 @@
 #
 # Distributed under the terms of the BSD-3-Clause license.
 # See LICENSE.txt for more info.
-"""Contain the tests for the CbfController."""
+"""Contain the tests for the FspSubarray."""
 
 # Standard imports
 import sys
@@ -27,13 +27,13 @@ import pytest
 
 from ska_tango_base.control_model import HealthState, AdminMode, ObsState
 
-# @pytest.mark.usefixtures(
-#     "create_cbf_controller_proxy",
-#     "create_vcc_proxies",
-#     "create_fsp_proxy",
-#     "create_cbf_subarray_1_proxy",
-#     "create_fsp_corr_subarray_1_1_proxy"
-# )
+@pytest.mark.usefixtures(
+    "create_cbf_controller_proxy",
+    "create_vcc_proxies",
+    "create_fsp_proxy",
+    "create_cbf_subarray_1_proxy",
+    "create_fsp_corr_subarray_1_1_proxy"
+)
 
 @pytest.mark.skip(reason="this class is currently untested")
 class TestFspCorrSubarray:
