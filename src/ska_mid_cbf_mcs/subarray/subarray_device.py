@@ -12,6 +12,8 @@
 CbfSubarray
 Sub-element subarray device for Mid.CBF
 """
+from __future__ import annotations  # allow forward references in type hints
+from typing import List, Tuple
 
 # tango imports
 import tango
@@ -24,14 +26,11 @@ from tango import AttrWriteType
 # Additional import
 # PROTECTED REGION ID(CbfSubarray.additionnal_import) ENABLED START #
 import os
-import sys
 import json
 from random import randint
 from threading import Thread, Lock
 import time
 import copy
-
-file_path = os.path.dirname(os.path.abspath(__file__))
 
 from ska_mid_cbf_mcs.commons.global_enum import const, freq_band_dict
 from ska_tango_base.control_model import ObsState, AdminMode
@@ -1452,7 +1451,7 @@ class CbfSubarray(SKASubarray):
         """
         A class for the SKASubarray's Off() command.
         """
-        def do(self):
+        def do(self: CbfSubarray.OffCommand) -> Tuple[ResultCode, str]:
             """
             Stateless hook for Off() command functionality.
 
@@ -1465,11 +1464,7 @@ class CbfSubarray(SKASubarray):
             device = self.target
             self.logger.info("Subarray ObsState is {}".format(device.obsState))
 
-            # if Off invoked while resourcing, remove all resources
-            if device.obsState == ObsState.RESOURCING:
-                device.RemoveAllReceptors()
-
-            return (result_code,message)
+            return (result_code, message)
 
 
     ##################  Receptors Related Commands  ###################
@@ -1477,100 +1472,57 @@ class CbfSubarray(SKASubarray):
 
     class RemoveReceptorsCommand(SKASubarray.ReleaseResourcesCommand):
         """
-        A class for CbfSubarray's ReleaseReceptors() command.
+        A class for CbfSubarray's RemoveReceptors() command.
         Equivalent to the ReleaseResourcesCommand in ADR-8.
         """
-        def do(self, argin):
+        def do(
+            self: CbfSubarray.RemoveReceptorsCommand,
+            argin: List[int]
+        ) -> Tuple[ResultCode, str]:
             """
             Stateless hook for RemoveReceptors() command functionality.
 
             :param argin: The receptors to be released
-            :type argin: list of int
             :return: A tuple containing a return code and a string
                 message indicating status. The message is for
                 information purpose only.
             :rtype: (ResultCode, str)
             """
-            (result_code,message) = super().do(argin)
-            device=self.target
+            #(result_code,message) = super().do(argin)
+            device = self.target
 
             device._remove_receptors_helper(argin)
             message = "CBFSubarray RemoveReceptors command completed OK"
             self.logger.info(message)
-            return (result_code,message)
+            return (ResultCode.OK, message)
 
-    @command(
-        dtype_in=('uint16',),
-        doc_in="List of receptor IDs",
-        dtype_out='DevVarLongStringArray',
-        doc_out="(ReturnType, 'informational message')"
-    )
-    def RemoveReceptors(self, argin):
-        """
-        Remove from list of receptors. Turn Subarray to ObsState = EMPTY if no receptors assigned.
-        Uses RemoveReceptorsCommand class.
-        """
-        command = self.get_command_object("RemoveReceptors")
-        (return_code, message) = command(argin)
-        return [[return_code], [message]]
-
-    @command(
-        dtype_out='DevVarLongStringArray',
-        doc_out="(ReturnType, 'informational message')"
-    )
-
-    @DebugIt()
-    def RemoveAllReceptors(self):
-        # PROTECTED REGION ID(CbfSubarray.RemoveAllReceptors) ENABLED START #
-        """Remove all receptors. Turn Subarray OFF if no receptors assigned"""
-
-        command = self.get_command_object("RemoveAllReceptors")
-        (return_code, message) = command()
-        return [[return_code], [message]]  
-        # PROTECTED REGION END #    //  CbfSubarray.RemoveAllReceptors
 
     class RemoveAllReceptorsCommand(SKASubarray.ReleaseAllResourcesCommand):
         """
-        A class for CbfSubarray's ReleaseAllReceptors() command.
+        A class for CbfSubarray's RemoveAllReceptors() command.
         """
-        def do(self):
+        def do(
+            self: CbfSubarray.RemoveAllReceptorsCommand
+        ) -> Tuple[ResultCode, str]:
             """
-            Stateless hook for ReleaseAllReceptors() command functionality.
+            Stateless hook for RemoveAllReceptors() command functionality.
 
             :return: A tuple containing a return code and a string
                 message indicating status. The message is for
                 information purpose only.
             :rtype: (ResultCode, str)
             """
-            (result_code,message) = super().do()
+            # (result_code,message) = super().do()
             self.logger.debug("Entering RemoveAllReceptors()")
 
-            device=self.target
+            device = self.target
 
             # For LMC0.6.0: use a helper instead of a command so that it doesn't care about the obsState
             device._remove_receptors_helper(device._receptors[:])
 
             message = "CBFSubarray RemoveAllReceptors command completed OK"
             self.logger.info(message)
-            return (result_code,message)
-
-
-    @command(
-        dtype_in=('uint16',),
-        doc_in="List of receptor IDs",
-        dtype_out='DevVarLongStringArray',
-        doc_out="(ReturnType, 'informational message')"
-    )
-
-    @DebugIt()
-    def AddReceptors(self, argin):
-        """
-        Assign Receptors to this subarray. 
-        Turn subarray to ObsState = IDLE if previously no receptor is assigned.
-        """
-        command = self.get_command_object("AddReceptors")
-        (return_code, message) = command(argin)
-        return [[return_code], [message]]    
+            return (ResultCode.OK, message)
 
     
     class AddReceptorsCommand(SKASubarray.AssignResourcesCommand):
@@ -1579,18 +1531,20 @@ class CbfSubarray(SKASubarray):
         """
         A class for CbfSubarray's AddReceptors() command.
         """
-        def do(self, argin):
+        def do(
+            self: CbfSubarray.AddReceptorsCommand,
+            argin: List[int]
+        ) -> Tuple[ResultCode, str]:
             """
             Stateless hook for AddReceptors() command functionality.
 
             :param argin: The receptors to be assigned
-            :type argin: list of int
             :return: A tuple containing a return code and a string
                 message indicating status. The message is for
                 information purpose only.
             :rtype: (ResultCode, str)
             """
-            device=self.target
+            device = self.target
             # Code here
             errs = []  # list of error messages
             receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
