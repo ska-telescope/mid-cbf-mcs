@@ -1468,7 +1468,21 @@ class CbfSubarray(SKASubarray):
 
 
     ##################  Receptors Related Commands  ###################
-        
+
+    @command(
+        dtype_in=('uint16',),
+        doc_in="List of receptor IDs",
+        dtype_out='DevVarLongStringArray',
+        doc_out="(ReturnType, 'informational message')"
+    )
+    def RemoveReceptors(self, argin):
+        """
+        Remove from list of receptors. Turn Subarray to ObsState = EMPTY if no receptors assigned.
+        Uses RemoveReceptorsCommand class.
+        """
+        command = self.get_command_object("RemoveReceptors")
+        (return_code, message) = command(argin)
+        return [[return_code], [message]]
 
     class RemoveReceptorsCommand(SKASubarray.ReleaseResourcesCommand):
         """
@@ -1497,6 +1511,21 @@ class CbfSubarray(SKASubarray):
             return (ResultCode.OK, message)
 
 
+    @command(
+        dtype_out='DevVarLongStringArray',
+        doc_out="(ReturnType, 'informational message')"
+    )
+
+    @DebugIt()
+    def RemoveAllReceptors(self):
+        # PROTECTED REGION ID(CbfSubarray.RemoveAllReceptors) ENABLED START #
+        """Remove all receptors. Turn Subarray OFF if no receptors assigned"""
+
+        command = self.get_command_object("RemoveAllReceptors")
+        (return_code, message) = command()
+        return [[return_code], [message]]  
+        # PROTECTED REGION END #    //  CbfSubarray.RemoveAllReceptors
+
     class RemoveAllReceptorsCommand(SKASubarray.ReleaseAllResourcesCommand):
         """
         A class for CbfSubarray's RemoveAllReceptors() command.
@@ -1523,6 +1552,23 @@ class CbfSubarray(SKASubarray):
             message = "CBFSubarray RemoveAllReceptors command completed OK"
             self.logger.info(message)
             return (ResultCode.OK, message)
+
+    @command(
+        dtype_in=('uint16',),
+        doc_in="List of receptor IDs",
+        dtype_out='DevVarLongStringArray',
+        doc_out="(ReturnType, 'informational message')"
+    )
+
+    @DebugIt()
+    def AddReceptors(self, argin):
+        """
+        Assign Receptors to this subarray. 
+        Turn subarray to ObsState = IDLE if previously no receptor is assigned.
+        """
+        command = self.get_command_object("AddReceptors")
+        (return_code, message) = command(argin)
+        return [[return_code], [message]]  
 
     
     class AddReceptorsCommand(SKASubarray.AssignResourcesCommand):
