@@ -273,14 +273,12 @@ jive&       # run Jive
 ```
 
 ## Taranta
-This prototype provides a graphical user interface using Taranta; to set it up:
-
-* Uncomment Taranta/WebJive-related dependencies in `charts/ska-mid-cbf-umbrella/Chart.yaml`
+This prototype provides a graphical user interface using Taranta (previously known as WebJive); to set it up:
 * Add the following line to `/etc/hosts`:
-```
-192.168.49.2  taranta
-```
-*Note*: 192.168.49.2 is the minikube IP address, obtainable with the command `minikube ip`
+    ```
+    192.168.49.2  taranta
+    ```
+    *Note*: 192.168.49.2 is the minikube IP address, obtainable with the command `minikube ip`
 * Deploy with `make install-chart-with-taranta`
 * Navigate to `taranta/ska-mid-cbf/taranta/devices` in a browser (works best with Google Chrome).
 

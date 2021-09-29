@@ -174,6 +174,8 @@ def init_proxies_fixture():
         def clean_proxies(self):
             self.receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in self.controller.receptorToVcc)
             for proxy in [self.subarray[i + 1] for i in range(1)]:
+                if proxy.obsState == ObsState.FAULT:
+                    proxy.Restart()
                 if proxy.obsState == ObsState.SCANNING:
                     proxy.EndScan()
                     self.wait_timeout_obs([proxy], ObsState.READY, 3, 0.05)

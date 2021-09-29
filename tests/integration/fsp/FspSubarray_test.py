@@ -1,40 +1,227 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# This file is part of the csp-lmc-prototype project
+# This file is part of the Mid.CBF MCS project
 #
 #
 #
 # Distributed under the terms of the BSD-3-Clause license.
-# See LICENSE.txt for more info.
+# See LICENSE for more info.
 """Contain the tests for the FspSubarray."""
 
+from __future__ import annotations
+from re import sub
+
 # Standard imports
-import sys
-import os
+from typing import Any, Callable, Dict, Iterable, List, Optional, Type, cast
 import time
+from random import randint
 import json
 
-# Path
-file_path = os.path.dirname(os.path.abspath(__file__))
 
 # Tango imports
 import tango
-from tango import DevState
+from tango import DevState, DeviceProxy
 import pytest
 
-#Local imports
+# SKA imports
 
 from ska_tango_base.control_model import HealthState, AdminMode, ObsState
 
-@pytest.mark.usefixtures(
-    "create_cbf_controller_proxy",
-    "create_vcc_proxies",
-    "create_fsp_proxy",
-    "create_cbf_subarray_1_proxy",
-    "create_fsp_corr_subarray_1_1_proxy"
-)
+@pytest.fixture(scope="class")
+def device_under_test() -> DeviceProxy:
+    """
+    Proxy to FspPstSubarray
+    
+    :return: a proxy to mid_csp_cbf/fspPstSubarray/01_01
+    """
+    return DeviceProxy("mid_csp_cbf/fspPstSubarray/01_01")
 
+class TestFspPstSubarray:
+    """
+    Test class for FspPstSubarray device class integration testing.
+    """
+
+    def test_On(
+        self: TestFspPstSubarray,
+        device_under_test: DeviceProxy
+    ) -> None:
+        """
+        Test for FspPstSubarray device On command.
+
+        :param device_under_test: fixture that provides a
+            :py:class:`tango.DeviceProxy` to the FspPstSubarray under test.
+        """
+        device_under_test.On()
+        assert device_under_test.State() == DevState.ON
+
+    def test_Off(
+        self: TestFspPstSubarray,
+        device_under_test: DeviceProxy
+    ) -> None:
+        """
+        Test for FspPstSubarray device Off command.
+
+        :param device_under_test: fixture that provides a
+            :py:class:`tango.DeviceProxy` to the FspPstSubarray under test.
+        """
+        device_under_test.Off()
+        assert device_under_test.State() == DevState.OFF
+
+    def test_AddRemoveReceptors_valid(
+            self: TestFspPstSubarray,
+            subarray: DeviceProxy,
+            device_under_test: DeviceProxy,
+            receptors_to_test: List[int]
+    ) -> None:
+        """
+        Test valid AddReceptors and RemoveReceptors commands
+        
+        :param subarray: fixture that provides a
+            :py:class:`tango.DeviceProxy` to the CbfSubarray under test.
+        :param device_under_test: fixture that provides a
+            :py:class:`tango.DeviceProxy` to the FspPstSubarray under test.
+        :param receptors_to_test: fixture that provides a random list of 
+            receptor IDs
+        """
+        # TODO implement proper reset of proxies for this test class
+        if subarray.State() == DevState.OFF:
+            subarray.On()
+        if subarray.ObsState == ObsState.FAULT:
+            subarray.Restart()
+        elif len(subarray.receptors) != 0:
+            subarray.RemoveAllReceptors()
+        if len(device_under_test.receptors) != 0:
+            device_under_test.RemoveAllReceptors()
+
+        # receptor list should be empty right after initialization
+        assert [device_under_test.receptors[i] \
+            for i in range(len(device_under_test.receptors))] == []
+        device_under_test.On()
+
+        # add some receptors
+        subarray.AddReceptors(receptors_to_test)
+        time.sleep(1)
+        assert [subarray.receptors[i] for i in range(len(subarray.receptors))] \
+            == receptors_to_test
+        device_under_test.AddReceptors(receptors_to_test[0:-2])
+        assert [device_under_test.receptors[i] \
+            for i in range(len(device_under_test.receptors))] == receptors_to_test[0:-2]
+
+        # add more receptors
+        device_under_test.AddReceptors([receptors_to_test[-1]])
+        assert device_under_test.receptors[-1] == receptors_to_test[-1]
+
+        # remove some receptors
+        random_receptor = receptors_to_test[randint(0, len(receptors_to_test)-1)]
+        receptors_to_test.remove(random_receptor)
+        device_under_test.RemoveReceptors([random_receptor])
+        assert [device_under_test.receptors[i] \
+            for i in range(len(device_under_test.receptors))] == receptors_to_test
+
+        # remove remaining receptors
+        subarray.RemoveAllReceptors()
+        device_under_test.RemoveReceptors(receptors_to_test)
+        assert [device_under_test.receptors[i] \
+            for i in range(len(device_under_test.receptors))] == []
+
+    def test_AddRemoveReceptors_invalid(
+            self: TestFspPstSubarray,
+            subarray: DeviceProxy,
+            device_under_test: DeviceProxy,
+            receptors_to_test: List[int]
+    ) -> None:
+        """
+        Test invalid AddReceptors and RemoveReceptors commands:
+            - when a receptor to be added is not in use by the subarray
+            - when a receptor ID is invalid (e.g. out of range)
+            - when a receptor to be removed is not assigned to the subarray
+        
+        :param subarray: fixture that provides a
+            :py:class:`tango.DeviceProxy` to the CbfSubarray under test.
+        :param device_under_test: fixture that provides a
+            :py:class:`tango.DeviceProxy` to the FspPstSubarray under test.
+        :param receptors_to_test: fixture that provides a random list of 
+            receptor IDs
+        """
+
+        # receptor list should be empty right after initialization
+        assert [device_under_test.receptors[i] \
+            for i in range(len(device_under_test.receptors))] == []
+
+        # add some receptors
+        subarray.AddReceptors(receptors_to_test)
+        time.sleep(1)
+        assert [subarray.receptors[i] for i in range(len(subarray.receptors))] \
+            == receptors_to_test
+        device_under_test.AddReceptors(receptors_to_test)
+        assert [device_under_test.receptors[i] \
+            for i in range(len(device_under_test.receptors))] == receptors_to_test
+
+        # try adding a receptor not in use by the subarray
+        with pytest.raises(tango.DevFailed) as df:
+            device_under_test.AddReceptors([4])
+        assert "does not belong" in str(df.value.args[0].desc)
+        assert [device_under_test.receptors[i] \
+            for i in range(len(device_under_test.receptors))] == receptors_to_test
+
+        # try adding an invalid receptor ID
+        with pytest.raises(tango.DevFailed) as df:
+            device_under_test.AddReceptors([200])
+        time.sleep(1)
+        assert "Invalid receptor ID" in str(df.value.args[0].desc)
+        assert [device_under_test.receptors[i] \
+            for i in range(len(device_under_test.receptors))] == receptors_to_test
+
+        # try removing a receptor not assigned to subarray 2
+        # doing this doesn't actually throw an error
+        device_under_test.RemoveReceptors([197])
+        assert [device_under_test.receptors[i] \
+            for i in range(len(device_under_test.receptors))] == receptors_to_test
+
+        # remove all receptors
+        subarray.RemoveAllReceptors()
+        device_under_test.RemoveReceptors(receptors_to_test)
+        assert [device_under_test.receptors[i] \
+            for i in range(len(device_under_test.receptors))] == []
+
+    def test_RemoveAllReceptors(
+            self: TestFspPstSubarray,
+            subarray: DeviceProxy,
+            device_under_test: DeviceProxy,
+            receptors_to_test: List[int]
+    ) -> None:
+        """
+        Test RemoveAllReceptors command
+        
+        :param subarray: fixture that provides a
+            :py:class:`tango.DeviceProxy` to the CbfSubarray under test.
+        :param device_under_test: fixture that provides a
+            :py:class:`tango.DeviceProxy` to the FspPstSubarray under test.
+        :param receptors_to_test: fixture that provides a random list of 
+            receptor IDs
+        """
+
+        # receptor list should be empty right after initialization
+        assert [device_under_test.receptors[i] \
+            for i in range(len(device_under_test.receptors))] == []
+
+        # add some receptors
+        subarray.AddReceptors(receptors_to_test)
+        time.sleep(1)
+        assert [subarray.receptors[i] for i in range(len(subarray.receptors))] \
+            == receptors_to_test
+        device_under_test.AddReceptors(receptors_to_test)
+        assert [device_under_test.receptors[i] \
+            for i in range(len(device_under_test.receptors))] == receptors_to_test
+
+        # remove all receptors
+        subarray.RemoveAllReceptors()
+        device_under_test.RemoveAllReceptors()
+        assert [device_under_test.receptors[i] \
+            for i in range(len(device_under_test.receptors))] == []
+
+# TODO: fix and move to its own test file
 @pytest.mark.skip(reason="this class is currently untested")
 class TestFspCorrSubarray:
     """
