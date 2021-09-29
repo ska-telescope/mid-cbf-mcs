@@ -2005,12 +2005,6 @@ class CbfSubarray(SKASubarray):
             self.logger.info(message)
             return (ResultCode.STARTED, message)
 
-    def is_EndScan_allowed(self):
-        """allowed if SUbarray is ON"""
-        if self.dev_state() == tango.DevState.ON and self.obsState==ObsState.SCANNING:
-            return True
-        return False
-
 
     class EndScanCommand(SKASubarray.EndScanCommand):
         """
