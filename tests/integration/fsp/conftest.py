@@ -14,7 +14,6 @@ from __future__ import annotations
 # Standard imports
 from typing import List
 import random
-from random import randint
 
 
 # Tango imports

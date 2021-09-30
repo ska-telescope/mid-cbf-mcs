@@ -15,7 +15,7 @@ from re import sub
 # Standard imports
 from typing import Any, Callable, Dict, Iterable, List, Optional, Type, cast
 import time
-from random import randint
+import random
 import json
 
 
@@ -113,7 +113,7 @@ class TestFspPstSubarray:
         assert device_under_test.receptors[-1] == receptors_to_test[-1]
 
         # remove some receptors
-        random_receptor = receptors_to_test[randint(0, len(receptors_to_test)-1)]
+        random_receptor = random.choice(receptors_to_test)
         receptors_to_test.remove(random_receptor)
         device_under_test.RemoveReceptors([random_receptor])
         assert [device_under_test.receptors[i] \
