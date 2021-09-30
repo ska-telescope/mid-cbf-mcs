@@ -104,9 +104,9 @@ class TestFspPstSubarray:
         time.sleep(1)
         assert [subarray.receptors[i] for i in range(len(subarray.receptors))] \
             == receptors_to_test
-        device_under_test.AddReceptors(receptors_to_test[0:-2])
+        device_under_test.AddReceptors(receptors_to_test[:-1])
         assert [device_under_test.receptors[i] \
-            for i in range(len(device_under_test.receptors))] == receptors_to_test[0:-2]
+            for i in range(len(device_under_test.receptors))] == receptors_to_test[:-1]
 
         # add more receptors
         device_under_test.AddReceptors([receptors_to_test[-1]])
