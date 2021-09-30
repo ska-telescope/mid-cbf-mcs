@@ -1,0 +1,42 @@
+{
+    "name": "Mid CBF MCS Dev",
+    "dockerFile": "Dockerfile",
+    "context": "..",
+    "settings": {
+        "terminal.integrated.profiles.linux": {
+            "bash": {
+              "path": "/bin/bash",
+            }
+        },
+        "terminal.integration.defaultProfile.linux": "bash",
+        "python.pythonPath": "/usr/bin/python3",
+        "python.linting.enabled": true,
+        "python.linting.pylintEnabled": true,
+        "python.linting.pylintPath": "/usr/local/bin/pylint",
+        "files.exclude": {
+            ".coverage*": true,
+            "**/*.egg*": true,
+            "**/__pycache__": true
+        },
+        "files.watcherExclude": {
+            ".coverage*": true,
+            "**/*.egg*": true,
+            "**/__pycache__": true,
+            "**/venv": true
+        }
+    },
+    "extensions": [
+        "ms-azuretools.vscode-docker",
+        "ms-kubernetes-tools.vscode-kubernetes-tools",
+        "ms-python.python",
+        "davidanson.vscode-markdownlint",
+        "lextudio.restructuredtext",
+        "redhat.vscode-yaml",
+    ],
+    "forwardPorts": [],
+    "postCreateCommand": "python3 -m pip install -r requirements.txt",
+    "remoteUser": "tango",
+    "remoteEnv": {
+        "PATH": "/home/tango/.local/bin:${containerEnv:PATH}",
+    }
+}

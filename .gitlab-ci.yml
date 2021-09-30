@@ -109,7 +109,7 @@ unit:
     - k8srunner
   script:
     - make requirements
-    - make unit_test
+    - make unit-test
   environment:
       name: test
   artifacts:
@@ -121,9 +121,6 @@ unit:
 integration:
   extends: .test
   image: $SKA_K8S_TOOLS_DEPLOY_IMAGE
-  # stage: test
-  # variables:
-  #   MINIKUBE: "false"
   dependencies:
     - build-for-test 
   tags:
@@ -146,48 +143,10 @@ integration:
     paths:
       - ./build/
 
-# Build the docker image and push to artefact repository
-# Use script given by System Team
-# build:
-#   only:
-#     refs:
-#       - tags
-
-# publish-image:
-#   stage: publish
-#   image: nexus.engageska-portugal.pt/ska-docker/deploy:0.4.3
-#   before_script:
-#     - docker login -u $DOCKER_REGISTRY_USERNAME -p $DOCKER_REGISTRY_PASSWORD $DOCKER_REGISTRY_HOST
-#   tags:
-#     - k8srunner
-#   script:
-#     - make build
-#     - make push
-#   when: on_success
-#   only:
-#     refs:
-#       - tags
-
-# publish helm charts, runs only for tags
-# publish-chart:
-#   variables:
-#     CHARTS_TO_PUBLISH: ska-mid-cbf ska-mid-cbf-tmleafnode
-#   when: manual
-#   only:
-#     refs:
-#       - tags
-
 pages:
   stage: pages
   dependencies:
     - integration 
-#  tags:publish-chart:
-#   variables:
-#     CHARTS_TO_PUBLISH: ska-mid-cbf ska-mid-cbf-tmleafnode
-#   when: manual
-#   only:
-#     refs:
-#       - tags
   tags:
     - k8srunner
   script:

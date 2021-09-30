@@ -1,0 +1,13 @@
+# -*- coding: utf-8 -*-
+#
+# This file is part of the SKA Mid.CBF MCS project
+#
+# Ported from the SKA Low MCCS project:
+# https://gitlab.com/ska-telescope/ska-low-mccs/-/blob/main/testing/testbeds.yaml
+#
+# Distributed under the terms of the GPL license.
+# See LICENSE for more info.
+test: !!set {}
+local: !!set {tangodb}
+STFC: !!set {tangodb}
+PSI: !!set {tangodb, tpm}
