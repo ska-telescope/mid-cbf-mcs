@@ -349,7 +349,6 @@ def init_proxies_fixture():
 
             self.fspPstSubarray = {}      
             for i ,proxy in enumerate([DeviceProxy("mid_csp_cbf/fspPstSubarray/" + str(j + 1).zfill(2) + "_01") for j in range(2)]):
-                proxy.Init()
                 self.fspSubarray[i + 5] = proxy
                 self.fspPstSubarray[i] = proxy
 
@@ -361,13 +360,7 @@ def init_proxies_fixture():
             self.fsp = {}
             for i, proxy in enumerate([DeviceProxy("mid_csp_cbf/fsp/" + str(j + 1).zfill(2)) for j in range(4)]):
                 proxy.loggingLevel = LoggingLevel.DEBUG
-                proxy.Init()
                 self.fsp[i + 1] = proxy
-
-            # self.sw = {}
-            # for i, proxy in enumerate([DeviceProxy("mid_csp_cbf/sw" + str(j + 1) + "/01") for j in range(2)]):
-            #     proxy.Init()
-            #     self.sw[i + 1] = proxy
             
             self.controller = DeviceProxy("mid_csp_cbf/sub_elt/controller")
             self.controller.loggingLevel = LoggingLevel.DEBUG
@@ -383,7 +376,6 @@ def init_proxies_fixture():
                 self.subarray[i + 1].set_timeout_millis(timeout_millis)
 
             self.tm = DeviceProxy("ska_mid/tm_leaf_node/csp_subarray_01")
-            self.tm.Init()
 
         def clean_proxies(self):
             self.receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in self.controller.receptorToVcc)

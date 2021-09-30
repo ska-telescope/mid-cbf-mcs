@@ -308,7 +308,7 @@ class TestCbfSubarray:
             f = open(file_path + config_file_name)
             proxies.subarray[1].ConfigureScan(f.read().replace("\n", ""))
             f.close()
-            proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.READY, 15, 1)
+            proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.READY, 3, 1)
 
             # check configured attributes of CBF subarray
             assert proxies.subarray[1].configID == "band:5a, fsp1, 744 channels average factor 8"
@@ -538,7 +538,7 @@ class TestCbfSubarray:
             f = open(file_path + "/../data/ConfigureScan_basic.json")
             proxies.subarray[1].ConfigureScan(f.read().replace("\n", ""))
             f.close()
-            proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.READY, 15, 1)
+            proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.READY, 3, 1)
 
             # check configured attributes of CBF subarray
             assert proxies.subarray[1].configID == "band:5a, fsp1, 744 channels average factor 8"
@@ -616,7 +616,7 @@ class TestCbfSubarray:
             f = open(file_path + "/../data/ConfigureScan_basic.json")
             proxies.subarray[1].ConfigureScan(f.read().replace("\n", ""))
             f.close()
-            proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.READY, 15, 1)
+            proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.READY, 3, 1)
             
             # update jones matrices from tm emulator
             f = open(file_path + "/../data/jonesmatrix_fsp.json")
@@ -760,7 +760,7 @@ class TestCbfSubarray:
             proxies.subarray[subarr_index].ConfigureScan(json_string)
             f.close()
 
-            proxies.wait_timeout_obs([proxies.subarray[subarr_index]], ObsState.READY, 15, 1)
+            proxies.wait_timeout_obs([proxies.subarray[subarr_index]], ObsState.READY, 3, 1)
 
             logging.info( "First vcc obsState AFTER ConfigureScan = {}".
             format(proxies.vcc[vcc_ids[0]].obsState) )
@@ -873,7 +873,7 @@ class TestCbfSubarray:
             f = open(file_path + "/../data/ConfigureScan_basic.json")
             proxies.subarray[1].ConfigureScan(f.read().replace("\n", ""))
             f.close()
-            proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.READY, 30, 1)
+            proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.READY, 3, 1)
 
             assert proxies.subarray[1].obsState == ObsState.READY
 
@@ -1030,7 +1030,7 @@ class TestCbfSubarray:
             f = open(file_path + "/../data/ConfigureScan_basic.json")
             proxies.subarray[1].ConfigureScan(f.read().replace("\n", ""))
             f.close()
-            proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.READY, 30, 1)
+            proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.READY, 3, 1)
 
             assert proxies.subarray[1].obsState == ObsState.READY
 
@@ -1141,7 +1141,7 @@ class TestCbfSubarray:
             f1 = open(file_path + "/../data/ConfigureScan_basic.json")
             proxies.subarray[1].ConfigureScan(f1.read().replace("\n", ""))
             f1.close()
-            proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.READY, 30, 1)
+            proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.READY, 3, 1)
 
             # check initial states
             assert proxies.subarray[1].obsState == ObsState.READY
@@ -1207,7 +1207,7 @@ class TestCbfSubarray:
             f = open(file_path + "/../data/ConfigureScan_basic.json")
             proxies.subarray[1].ConfigureScan(f.read().replace("\n", ""))
             f.close()
-            proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.READY, 30, 1)
+            proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.READY, 3, 1)
             assert proxies.subarray[1].obsState == ObsState.READY
             assert proxies.fspSubarray[1].obsState == ObsState.READY
             assert proxies.fspSubarray[3].obsState == ObsState.READY
@@ -1236,7 +1236,7 @@ class TestCbfSubarray:
             f = open(file_path + "/../data/ConfigureScan_basic.json")
             proxies.subarray[1].ConfigureScan(f.read().replace("\n", ""))
             f.close()
-            proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.READY, 30, 1)
+            proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.READY, 3, 1)
             # scan
             f2 = open(file_path + "/../data/Scan2_basic.json")
             proxies.subarray[1].Scan(f2.read().replace("\n", ""))
@@ -1325,7 +1325,7 @@ class TestCbfSubarray:
             f = open(file_path + "/../data/ConfigureScan_basic.json")
             proxies.subarray[1].ConfigureScan(f.read().replace("\n", ""))
             f.close()
-            proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.READY, 30, 1)
+            proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.READY, 3, 1)
             assert proxies.subarray[1].obsState == ObsState.READY
             assert proxies.fspSubarray[1].obsState == ObsState.READY
             assert proxies.fspSubarray[3].obsState == ObsState.READY
@@ -1354,7 +1354,7 @@ class TestCbfSubarray:
             f = open(file_path + "/../data/ConfigureScan_basic.json")
             proxies.subarray[1].ConfigureScan(f.read().replace("\n", ""))
             f.close()
-            proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.READY, 30, 1)
+            proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.READY, 3, 1)
             # scan
             f2 = open(file_path + "/../data/Scan2_basic.json")
             proxies.subarray[1].Scan(f2.read().replace("\n", ""))
@@ -1433,7 +1433,7 @@ class TestCbfSubarray:
             configuration = f.read().replace("\n", "")
             f.close()
             proxies.subarray[sub_id].ConfigureScan(configuration)
-            proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.READY, 15, 1)
+            proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.READY, 3, 1)
             configuration = json.loads(configuration)
 
             band_index = freq_band_dict()[configuration["common"]["frequency_band"]]
@@ -1503,6 +1503,104 @@ class TestCbfSubarray:
                 
             proxies.clean_proxies()
 
+        except AssertionError as ae:
+            proxies.clean_proxies()
+            raise ae
+        except Exception as e:
+            proxies.clean_proxies()
+            raise e
+    
+    #TODO: remove entirely?
+    @pytest.mark.skip(
+        reason="OffCommand will not be invoked in this manner by CSP LMC Mid, \
+        rather a series of commands will be issued (Abort -> Restart/Reset)"
+    )
+    def test_OffCommand_Resourcing_Configuring(self, proxies):
+        try:
+            # turn on Subarray
+            if proxies.subarray[1].State() != DevState.ON:
+                proxies.subarray[1].On()
+                proxies.wait_timeout_dev([proxies.subarray[1]], DevState.ON, 3, 1)
+                for proxy in [proxies.vcc[i + 1] for i in range(4)]:
+                    if proxy.State() == DevState.OFF:
+                        proxy.On()
+                        proxies.wait_timeout_dev([proxy], DevState.ON, 1, 1)
+                for proxy in [proxies.fsp[i + 1] for i in range(4)]:
+                    if proxy.State() == DevState.OFF:
+                        proxy.On()
+                        proxies.wait_timeout_dev([proxy], DevState.ON, 1, 1)
+            assert proxies.subarray[1].State() == DevState.ON
+            assert proxies.subarray[1].obsState == ObsState.EMPTY
+
+            input_receptors = [1, 4]
+
+            # add some receptors and turn subarray off 
+            proxies.subarray[1].AddReceptors(input_receptors)
+            proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.RESOURCING, 1, 1)
+            proxies.subarray[1].Off()
+            proxies.wait_timeout_dev([proxies.subarray[1]], DevState.OFF, 3, 1)
+            assert proxies.subarray[1].State() == DevState.OFF
+            assert len(proxies.subarray[1].receptors) == 0
+            assert all([proxies.vcc[i + 1].subarrayMembership == 0 for i in range(4)])
+
+            proxies.subarray[1].On()
+            proxies.wait_timeout_dev([proxies.subarray[1]], DevState.ON, 3, 1)
+            proxies.subarray[1].AddReceptors(input_receptors)
+            proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.IDLE, 1, 1)
+
+            # end configuration with off command
+            f = open(file_path + "/../data/Configure_TM-CSP_v2.json")
+            configuration = f.read().replace("\n", "")
+            f.close()
+            proxies.subarray[1].ConfigureScan(configuration)
+            proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.CONFIGURING, 1, 1)
+            proxies.subarray[1].Off()
+            proxies.wait_timeout_dev([proxies.subarray[1]], DevState.OFF, 3, 1)
+            assert proxies.subarray[1].State() == DevState.OFF
+            assert len(proxies.subarray[1].receptors) == 0
+            assert all([proxies.vcc[i + 1].subarrayMembership == 0 for i in range(4)])
+
+            proxies.subarray[1].On()
+            proxies.wait_timeout_dev([proxies.subarray[1]], DevState.ON, 3, 1)
+            proxies.subarray[1].AddReceptors(input_receptors)
+            proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.IDLE, 1, 1)
+
+            # end scan with off command
+            f2 = open(file_path + "/../data/Scan2_basic.json")
+            scan = f2.read().replace("\n", "")
+            f2.close()
+            proxies.subarray[1].ConfigureScan(configuration)
+            proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.READY, 3, 1)
+            configuration = json.loads(configuration)
+            # scan
+            proxies.subarray[1].Scan(scan)
+            proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.SCANNING, 1, 1)
+            assert proxies.subarray[1].obsState == ObsState.SCANNING
+            assert proxies.subarray[1].scanID == 2
+            assert proxies.vcc[proxies.receptor_to_vcc[1]].obsState == ObsState.SCANNING
+            assert proxies.vcc[proxies.receptor_to_vcc[4]].obsState == ObsState.SCANNING
+            for fsp in configuration["cbf"]["fsp"]:
+                fsp_id = fsp["fsp_id"]
+                logging.info("{}".format(fsp_id))
+                # check configured attributes of FSP subarray
+                #TODO align IDs of fspSubarrays to fsp_id in conftest; currently works for fsps 1 and 2
+                assert proxies.fspSubarray[fsp_id].obsState == ObsState.SCANNING
+            proxies.subarray[1].Off()
+            proxies.wait_timeout_dev([proxies.subarray[1]], DevState.OFF, 3, 1)
+            assert proxies.subarray[1].scanID == 0
+            assert proxies.subarray[1].State() == DevState.OFF
+            assert len(proxies.subarray[1].receptors) == 0
+            assert proxies.vcc[proxies.receptor_to_vcc[1]].obsState == ObsState.IDLE
+            assert proxies.vcc[proxies.receptor_to_vcc[4]].obsState == ObsState.IDLE
+            assert all([proxies.vcc[i + 1].subarrayMembership == 0 for i in range(4)])
+            for fsp in configuration["cbf"]["fsp"]:
+                fsp_id = fsp["fsp_id"]
+                logging.info("{}".format(fsp_id))
+                # check configured attributes of FSP subarray
+                #TODO align IDs of fspSubarrays to fsp_id in conftest; currently works for fsps 1 and 2
+                assert proxies.fspSubarray[fsp_id].obsState == ObsState.IDLE
+            
+            
         except AssertionError as ae:
             proxies.clean_proxies()
             raise ae

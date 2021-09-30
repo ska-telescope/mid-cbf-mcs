@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 #
+
 # This file is part of the SKA Mid.CBF MCS project
 #
 #
@@ -7,13 +8,12 @@
 # Distributed under the terms of the GPL license.
 # See LICENSE.txt for more info.
 
-# Copyright (c) 2019 National Research Council of Canada
-
 """
 CbfSubarray
-Subarray device for Mid.CBf
+Sub-element subarray device for Mid.CBF
 """
-
+from __future__ import annotations  # allow forward references in type hints
+from typing import List, Tuple
 
 # tango imports
 import tango
@@ -25,7 +25,6 @@ from tango import DevState
 from tango import AttrWriteType
 # Additional import
 # PROTECTED REGION ID(CbfSubarray.additionnal_import) ENABLED START #
-import os
 import sys
 import json
 from random import randint
@@ -33,11 +32,9 @@ from threading import Thread, Lock
 import time
 import copy
 
-file_path = os.path.dirname(os.path.abspath(__file__))
-
 from ska_mid_cbf_mcs.commons.global_enum import const, freq_band_dict
 from ska_tango_base.control_model import ObsState, AdminMode
-from ska_tango_base import SKASubarray
+from ska_tango_base import SKASubarray, SKABaseDevice
 from ska_tango_base.commands import ResultCode, BaseCommand, ResponseCommand, ActionCommand
 
 # PROTECTED REGION END #    //  CbfSubarray.additionnal_import
@@ -73,6 +70,14 @@ class CbfSubarray(SKASubarray):
         # resource_args = (self.resource_manager, self.state_model, self.logger) 
         # only use resource_args if we want to have separate resource_manager object
 
+        # self.register_command_object(
+        #     "On",
+        #     self.OnCommand(*device_args)
+        # )
+        self.register_command_object(
+            "Off",
+            self.OffCommand(*device_args)
+        )
         self.register_command_object(
             "Configure",
             self.ConfigureCommand(*device_args)
@@ -964,6 +969,7 @@ class CbfSubarray(SKASubarray):
     # PROTECTED REGION END #    //  CbfSubarray.class_variable
 
 
+
     def _deconfigure(self):
         """Completely deconfigure the subarray; all initialization performed 
         by by the ConfigureScan command must be 'undone' here."""
@@ -1063,10 +1069,6 @@ class CbfSubarray(SKASubarray):
             else:
                 log_msg = "Receptor {} not assigned to subarray. Skipping.".format(str(receptorID))
                 self.logger.warn(log_msg)
-
-        # transitions to EMPTY if not assigned any receptors
-        if not self._receptors:
-            self._update_obs_state(ObsState.EMPTY)
 
 
     # Used by commands that needs resource manager in SKASubarray 
@@ -1430,15 +1432,6 @@ class CbfSubarray(SKASubarray):
     # Commands
     # --------
 
-    # TODO - not needed for sw devices (sw devs are disabled becasue same 
-    # functionality is in vccSearchWindow; 
-    # go by supper class method for now
-    # def is_On_allowed(self):
-    #     """allowed if DevState is OFF"""
-    #     if self.dev_state() == tango.DevState.OFF:
-    #         return True
-    #     return False
-
     # class OnCommand(SKASubarray.OnCommand):
     #     """
     #     A class for the SKASubarray's On() command.
@@ -1452,57 +1445,29 @@ class CbfSubarray(SKASubarray):
     #             information purpose only.
     #         :rtype: (ResultCode, str)
     #         """
-    #         (result_code,message)=super().do()
-    #         device = self.target
-    #         device._proxy_sw_1.SetState(tango.DevState.DISABLE)
-    #         device._proxy_sw_2.SetState(tango.DevState.DISABLE)
-    #         return (result_code,message)
+    #         return super().do()
 
-    # class OffCommand(SKASubarray.OffCommand):
-    #     """
-    #     A class for the SKASubarray's Off() command.
-    #     """
-    #     def do(self):
-    #         """
-    #         Stateless hook for Off() command functionality.
-
-    #         :return: A tuple containing a return code and a string
-    #             message indicating status. The message is for
-    #             information purpose only.
-    #         :rtype: (ResultCode, str)
-    #         """
-    #         (result_code,message)=super().do()
-    #         device = self.target
-    #         device._proxy_sw_1.SetState(tango.DevState.OFF)
-    #         device._proxy_sw_2.SetState(tango.DevState.OFF)
-    #         return (result_code,message)
-
-
-    ##################  Receptors Related Commands  ###################
-        
-
-    class RemoveReceptorsCommand(SKASubarray.ReleaseResourcesCommand):
+    class OffCommand(SKABaseDevice.OffCommand):
         """
-        A class for CbfSubarray's ReleaseReceptors() command.
-        Equivalent to the ReleaseResourcesCommand in ADR-8.
+        A class for the SKASubarray's Off() command.
         """
-        def do(self, argin):
+        def do(self: CbfSubarray.OffCommand) -> Tuple[ResultCode, str]:
             """
-            Stateless hook for RemoveReceptors() command functionality.
+            Stateless hook for Off() command functionality.
 
-            :param argin: The receptors to be released
-            :type argin: list of int
             :return: A tuple containing a return code and a string
                 message indicating status. The message is for
                 information purpose only.
             :rtype: (ResultCode, str)
             """
-            device=self.target
+            (result_code,message) = super().do()
+            device = self.target
+            self.logger.info("Subarray ObsState is {}".format(device._obs_state))
 
-            device._remove_receptors_helper(argin)
-            message = "CBFSubarray RemoveReceptors command completed OK"
-            self.logger.info(message)
-            return (ResultCode.OK, message)
+            return (result_code, message)
+
+
+    ##################  Receptors Related Commands  ###################
 
     @command(
         dtype_in=('uint16',),
@@ -1519,6 +1484,33 @@ class CbfSubarray(SKASubarray):
         (return_code, message) = command(argin)
         return [[return_code], [message]]
 
+    class RemoveReceptorsCommand(SKASubarray.ReleaseResourcesCommand):
+        """
+        A class for CbfSubarray's RemoveReceptors() command.
+        Equivalent to the ReleaseResourcesCommand in ADR-8.
+        """
+        def do(
+            self: CbfSubarray.RemoveReceptorsCommand,
+            argin: List[int]
+        ) -> Tuple[ResultCode, str]:
+            """
+            Stateless hook for RemoveReceptors() command functionality.
+
+            :param argin: The receptors to be released
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
+            #(result_code,message) = super().do(argin)
+            device = self.target
+
+            device._remove_receptors_helper(argin)
+            message = "CBFSubarray RemoveReceptors command completed OK"
+            self.logger.info(message)
+            return (ResultCode.OK, message)
+
+
     @command(
         dtype_out='DevVarLongStringArray',
         doc_out="(ReturnType, 'informational message')"
@@ -1534,23 +1526,25 @@ class CbfSubarray(SKASubarray):
         return [[return_code], [message]]  
         # PROTECTED REGION END #    //  CbfSubarray.RemoveAllReceptors
 
-    class RemoveAllReceptorsCommand(SKASubarray.ReleaseResourcesCommand):
+    class RemoveAllReceptorsCommand(SKASubarray.ReleaseAllResourcesCommand):
         """
-        A class for CbfSubarray's ReleaseAllReceptors() command.
+        A class for CbfSubarray's RemoveAllReceptors() command.
         """
-        def do(self):
+        def do(
+            self: CbfSubarray.RemoveAllReceptorsCommand
+        ) -> Tuple[ResultCode, str]:
             """
-            Stateless hook for ReleaseAllReceptors() command functionality.
+            Stateless hook for RemoveAllReceptors() command functionality.
 
             :return: A tuple containing a return code and a string
                 message indicating status. The message is for
                 information purpose only.
             :rtype: (ResultCode, str)
             """
-
+            # (result_code,message) = super().do()
             self.logger.debug("Entering RemoveAllReceptors()")
 
-            device=self.target
+            device = self.target
 
             # For LMC0.6.0: use a helper instead of a command so that it doesn't care about the obsState
             device._remove_receptors_helper(device._receptors[:])
@@ -1558,7 +1552,6 @@ class CbfSubarray(SKASubarray):
             message = "CBFSubarray RemoveAllReceptors command completed OK"
             self.logger.info(message)
             return (ResultCode.OK, message)
-
 
     @command(
         dtype_in=('uint16',),
@@ -1575,7 +1568,7 @@ class CbfSubarray(SKASubarray):
         """
         command = self.get_command_object("AddReceptors")
         (return_code, message) = command(argin)
-        return [[return_code], [message]]    
+        return [[return_code], [message]]  
 
     
     class AddReceptorsCommand(SKASubarray.AssignResourcesCommand):
@@ -1584,18 +1577,20 @@ class CbfSubarray(SKASubarray):
         """
         A class for CbfSubarray's AddReceptors() command.
         """
-        def do(self, argin):
+        def do(
+            self: CbfSubarray.AddReceptorsCommand,
+            argin: List[int]
+        ) -> Tuple[ResultCode, str]:
             """
             Stateless hook for AddReceptors() command functionality.
 
             :param argin: The receptors to be assigned
-            :type argin: list of int
             :return: A tuple containing a return code and a string
                 message indicating status. The message is for
                 information purpose only.
             :rtype: (ResultCode, str)
             """
-            device=self.target
+            device = self.target
             # Code here
             errs = []  # list of error messages
             receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
@@ -1851,7 +1846,7 @@ class CbfSubarray(SKASubarray):
                 device._group_fsp.add(device._fqdn_fsp[fspID - 1])
                 device._group_fsp_corr_subarray.add(device._fqdn_fsp_corr_subarray[fspID - 1])
                 device._group_fsp_pss_subarray.add(device._fqdn_fsp_pss_subarray[fspID - 1])
-                device._group_fsp_pss_subarray.add(device._fqdn_fsp_pst_subarray[fspID - 1])
+                device._group_fsp_pst_subarray.add(device._fqdn_fsp_pst_subarray[fspID - 1])
 
                 # change FSP subarray membership
                 proxy_fsp.AddSubarrayMembership(device._subarray_id)
@@ -2010,12 +2005,6 @@ class CbfSubarray(SKASubarray):
             self.logger.info(message)
             return (ResultCode.STARTED, message)
 
-    def is_EndScan_allowed(self):
-        """allowed if SUbarray is ON"""
-        if self.dev_state() == tango.DevState.ON and self._obs_state==ObsState.SCANNING:
-            return True
-        return False
-
 
     class EndScanCommand(SKASubarray.EndScanCommand):
         """
@@ -2080,7 +2069,7 @@ class CbfSubarray(SKASubarray):
         """
         A class for SKASubarray's Abort() command.
         """
-        def do(self):
+        def do(self: CbfSubarray.AbortCommand) -> Tuple[ResultCode, str]:
             """
             Stateless hook for Abort() command functionality.
 
@@ -2091,10 +2080,9 @@ class CbfSubarray(SKASubarray):
             """
             device = self.target
 
-            # if aborted from SCANNING, needs to set VCC and PSS subarray 
-            # to READY state otherwise when 
-            if device.scanID != 0:
-                self.logger.info("scanning")
+            # if aborted from SCANNING, end VCC and FSP Subarray scans
+            if device._scan_ID != 0:
+                self.logger.info("Aborting from scanning")
                 device._group_vcc.command_inout("EndScan")
                 device._group_fsp_corr_subarray.command_inout("EndScan")
                 device._group_fsp_pss_subarray.command_inout("EndScan")
@@ -2110,7 +2098,7 @@ class CbfSubarray(SKASubarray):
         """
         A class for CbfSubarray's Restart() command.
         """
-        def do(self):
+        def do(self: CbfSubarray.RestartCommand) -> Tuple[ResultCode, str]:
             """
             Stateless hook for Restart() command functionality.
 
