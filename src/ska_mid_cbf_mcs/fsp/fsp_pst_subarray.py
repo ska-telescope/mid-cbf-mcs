@@ -355,7 +355,10 @@ class FspPstSubarray(CspSubElementObsDevice):
 
         """Input a serilized JSON object. """
 
-        def do(self, argin):
+        def do(
+            self: FspPstSubarray, 
+            argin: str
+            ) -> Tuple[ResultCode, str]:
             """
             Stateless hook for ConfigureScan() command functionality.
 
@@ -419,8 +422,6 @@ class FspPstSubarray(CspSubElementObsDevice):
             """
             (result_code,message)=super().do()
 
-            device = self.target
-
             return (result_code,message)
 
     class ScanCommand(CspSubElementObsDevice.ScanCommand):
@@ -442,17 +443,13 @@ class FspPstSubarray(CspSubElementObsDevice):
             :rtype: (ResultCode, str)
             """
 
-            device = self.target
-
-            scan = json.loads(argin)
-
             message = "Scan command successful"
             self.logger.info(message)
             return (ResultCode.STARTED, message)
 
     class GoToIdleCommand(CspSubElementObsDevice.GoToIdleCommand):
         """
-        A class for the FspCorrSubarray's GoToIdle command.
+        A class for the FspPstSubarray's GoToIdle command.
         """
 
         def do(

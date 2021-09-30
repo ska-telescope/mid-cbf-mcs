@@ -710,7 +710,7 @@ class TestCbfSubarray:
         """
         Test the EndScan command
         """
-        
+
         subarr_index = 1
         fsp_corr_index = 1
         fsp_pss_index = 1
@@ -755,7 +755,7 @@ class TestCbfSubarray:
             assert proxies.fspPstSubarray[fsp_pst_index-1].obsState == ObsState.IDLE
 
             logging.info( "First vcc obsState BEFORE ConfigureScan = {}".
-            format(proxies.vcc[vcc_ids[0]].obsState) )
+            format(proxies.vcc[vcc_ids[0]].obsState.name) )
 
             f = open(file_path + config_file_name)
             json_string = f.read().replace("\n", "")
@@ -766,7 +766,7 @@ class TestCbfSubarray:
             proxies.wait_timeout_obs([proxies.subarray[subarr_index]], ObsState.READY, 15, 1)
 
             logging.info( "First vcc obsState AFTER ConfigureScan = {}".
-            format(proxies.vcc[vcc_ids[0]].obsState) )
+            format(proxies.vcc[vcc_ids[0]].obsState.name) )
 
             # check some configured attributes of CBF subarray           
             frequency_band   = input_config_dict["common"]["frequency_band"]
@@ -791,12 +791,12 @@ class TestCbfSubarray:
             # Note: scan_id is 1-based and of 'string' type 
             #       scan_index is an index into an array, therefore 0-based       
             scan_index = int(input_scan_dict["scan_id"]) - 1
-            logging.info( "proxies.fspCorrSubarray[fsp_corr_index-1].obsState = {}".
-            format(proxies.fspCorrSubarray[fsp_corr_index-1].obsState) )
-            logging.info( "proxies.fspPssSubarray[fsp_pss_index-1].obsState = {}".
-            format(proxies.fspPssSubarray[fsp_pss_index-1].obsState) )
-            logging.info( "proxies.fspPstSubarray[fsp_pst_index-1].obsState = {}".
-            format(proxies.fspPstSubarray[fsp_pst_index-1].obsState) )
+            logging.info( "fspCorrSubarray obsState = {}".
+            format(proxies.fspCorrSubarray[fsp_corr_index-1].obsState.name) )
+            logging.info( "fspPssSubarray obsState = {}".
+            format(proxies.fspPssSubarray[fsp_pss_index-1].obsState.name) )
+            logging.info( "fspPstSubarray obsState = {}".
+            format(proxies.fspPstSubarray[fsp_pst_index-1].obsState.name) )
 
             # Check obsStates BEFORE the EndScan() command
             assert proxies.subarray[subarr_index].obsState == ObsState.SCANNING
