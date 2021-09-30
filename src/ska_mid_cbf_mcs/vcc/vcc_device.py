@@ -28,16 +28,15 @@ import copy
 
 # tango imports
 import tango
-from tango.server import Device, run
+from tango.server import BaseDevice, Device, run
 from tango.server import attribute, command
 from tango.server import device_property
 from tango import DebugIt, DevState, AttrWriteType
-from tango.test_context import MultiDeviceTestContext
 
 # SKA Specific imports
 
 from ska_mid_cbf_mcs.commons.global_enum import const, freq_band_dict
-from ska_mid_cbf_mcs.dev_factory import DevFactory
+from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 
 from ska_tango_base.control_model import ObsState
 from ska_tango_base import SKAObsDevice, CspSubElementObsDevice
@@ -52,10 +51,6 @@ class Vcc(CspSubElementObsDevice):
     """
     Vcc TANGO device class for the prototype
     """
-
-    #TODO: remove temporary manual flag for unit testing
-    #set True to bypass band and search window device proxies
-    TEST_CONTEXT = False
 
     # -----------------
     # Device Properties
@@ -118,21 +113,21 @@ class Vcc(CspSubElementObsDevice):
     band5Tuning = attribute(
         dtype=('float',),
         max_dim_x=2,
-        access=AttrWriteType.READ_WRITE,
+        access=AttrWriteType.READ,
         label="Stream tuning (GHz)",
         doc="Stream tuning (GHz)"
     )
 
     frequencyBandOffsetStream1 = attribute(
         dtype='int',
-        access=AttrWriteType.READ_WRITE,
+        access=AttrWriteType.READ,
         label="Frequency band offset (stream 1) (Hz)",
         doc="Frequency band offset (stream 1) (Hz)"
     )
 
     frequencyBandOffsetStream2 = attribute(
         dtype='int',
-        access=AttrWriteType.READ_WRITE,
+        access=AttrWriteType.READ,
         label="Frequency band offset (stream 2) (Hz)",
         doc="Frequency band offset (stream 2) (Hz)"
     )
@@ -147,49 +142,49 @@ class Vcc(CspSubElementObsDevice):
 
     rfiFlaggingMask = attribute(
         dtype='str',
-        access=AttrWriteType.READ_WRITE,
+        access=AttrWriteType.READ,
         label="RFI Flagging Mask",
         doc="RFI Flagging Mask"
     )
 
     scfoBand1 = attribute(
         dtype='int',
-        access=AttrWriteType.READ_WRITE,
+        access=AttrWriteType.READ,
         label="SCFO (band 1)",
         doc="Sample clock frequency offset for band 1",
     )
 
     scfoBand2 = attribute(
         dtype='int',
-        access=AttrWriteType.READ_WRITE,
+        access=AttrWriteType.READ,
         label="SCFO (band 2)",
         doc="Sample clock frequency offset for band 2",
     )
 
     scfoBand3 = attribute(
         dtype='int',
-        access=AttrWriteType.READ_WRITE,
+        access=AttrWriteType.READ,
         label="SCFO (band 3)",
         doc="Sample clock frequency offset for band 3",
     )
 
     scfoBand4 = attribute(
         dtype='int',
-        access=AttrWriteType.READ_WRITE,
+        access=AttrWriteType.READ,
         label="SCFO (band 4)",
         doc="Sample clock frequency offset for band 4",
     )
 
     scfoBand5a = attribute(
         dtype='int',
-        access=AttrWriteType.READ_WRITE,
+        access=AttrWriteType.READ,
         label="SCFO (band 5a)",
         doc="Sample clock frequency offset for band 5a",
     )
 
     scfoBand5b = attribute(
         dtype='int',
-        access=AttrWriteType.READ_WRITE,
+        access=AttrWriteType.READ,
         label="SCFO (band 5b)",
         doc="Sample clock frequency offset for band 5b",
     )
@@ -221,7 +216,7 @@ class Vcc(CspSubElementObsDevice):
 
     configID = attribute(
         dtype='DevString',
-        access=AttrWriteType.READ_WRITE,
+        access=AttrWriteType.READ,
         label="config ID",
         doc="config ID",
     )
@@ -272,8 +267,7 @@ class Vcc(CspSubElementObsDevice):
             # Make a private copy of the device properties:
             self._vcc_id = device.VccID
 
-            # initialize attribute values        
-
+            # initialize attribute values
             device._receptor_ID = 0
             device._freq_band_name = ""
             device._frequency_band = 0
@@ -296,36 +290,43 @@ class Vcc(CspSubElementObsDevice):
             device._scan_id = ""
             device._config_id = ""
 
-            # device._fqdns = [
-            #    device.Band1And2Address,
-            #    device.Band3Address,
-            #    device.Band4Address,
-            #    device.Band5Address,
-            #    device.SW1Address,
-            #    device.SW2Address 
-            # ] # TODO 
-
-            # device._func_devices = [
-            #     tango.DeviceProxy(fqdn) for fqdn in device._fqdns
-            # ]
-
             device.set_change_event("subarrayMembership", True, True)
 
-            # TODO - create a command for the proxy connections
-            #        similar to InitialSetup() in ska-low-mccs stations.py
-            
-            #self.__get_capability_proxies()
-
-            # TODO - To support unit testing, use a wrapper class for the  
-            # connection instead of directly DeviceProxy (see MccsDeviceProxy)
-            device._dev_factory = DevFactory()
-            device._proxy_band_12 = None
-            device._proxy_band_3  = None
-            device._proxy_band_4  = None
-            device._proxy_band_5  = None
-            device._proxy_sw_1    = None
-            device._proxy_sw_2    = None
-
+            try:
+                device._proxy_band_12 = CbfDeviceProxy(
+                    device.Band1And2Address,
+                    logger=None,
+                    connection_factory=None
+                )
+                device._proxy_band_3  = CbfDeviceProxy(
+                    device.Band3Address,
+                    logger=None,
+                    connection_factory=None
+                )
+                device._proxy_band_4  = CbfDeviceProxy(
+                    device.Band4Address,
+                    logger=None,
+                    connection_factory=None
+                )
+                device._proxy_band_5  = CbfDeviceProxy(
+                    device.Band5Address,
+                    logger=None,
+                    connection_factory=None
+                )
+                device._proxy_sw_1    = CbfDeviceProxy(
+                    device.SW1Address,
+                    logger=None,
+                    connection_factory=None
+                )
+                device._proxy_sw_2    = CbfDeviceProxy(
+                    device.SW2Address,
+                    logger=None,
+                    connection_factory=None
+                )
+            except Exception as ex:
+                self.logger.warn(
+                    "Unexpected error on DeviceProxy creation %s", str(ex)
+                )
             message = "Vcc Init command completed OK"
             device.logger.info(message)
             return (ResultCode.OK, message)
@@ -333,45 +334,6 @@ class Vcc(CspSubElementObsDevice):
     def always_executed_hook(self: Vcc) -> None:
         """Method always executed before any TANGO command is executed."""
         # PROTECTED REGION ID(Vcc.always_executed_hook) ENABLED START #
-        self.logger.info("ALWAYS EXECUTED HOOK")
-        self.logger.info("%s", self._dev_factory._test_context)
-        try:
-            #TODO: remove temporary flag to disable Vcc proxies for unit testing
-            if Vcc.TEST_CONTEXT is False:
-                if self._proxy_band_12 is None:
-                    self.logger.info("Connect to band proxy device")
-                    self._proxy_band_12 = self._dev_factory.get_device(
-                        self.Band1And2Address
-                    )
-                if self._proxy_band_3 is None:
-                    self.logger.info("Connect to band proxy device")
-                    self._proxy_band_3 = self._dev_factory.get_device(
-                        self.Band3Address
-                    )
-                if self._proxy_band_4 is None:
-                    self.logger.info("Connect to band proxy device")
-                    self._proxy_band_4 = self._dev_factory.get_device(
-                        self.Band4Address
-                    )
-                if self._proxy_band_5 is None:
-                    self.logger.info("Connect to band proxy device")
-                    self._proxy_band_5 = self._dev_factory.get_device(
-                        self.Band5Address
-                    )
-                if self._proxy_sw_1 is None:
-                    self.logger.info("Connect to search window proxy device")
-                    self._proxy_sw_1 = self._dev_factory.get_device(
-                        self.SW1Address
-                    )
-                if self._proxy_sw_2 is None:
-                    self.logger.info("Connect to search window proxy device")
-                    self._proxy_sw_2 = self._dev_factory.get_device(
-                        self.SW2Address
-                    )
-        except Exception as ex:
-            self.logger.info(
-                "Unexpected error on DeviceProxy creation %s", str(ex)
-            )
         # PROTECTED REGION END #    //  Vcc.always_executed_hook
 
     def delete_device(self: Vcc) -> None:
@@ -433,35 +395,17 @@ class Vcc(CspSubElementObsDevice):
         return self._stream_tuning
         # PROTECTED REGION END #    //  Vcc.band5Tuning_read
 
-    def write_band5Tuning(self: Vcc, value: band5Tuning) -> None:
-        # PROTECTED REGION ID(Vcc.band5Tuning_write) ENABLED START #
-        """Set band5Tuning attribute: Stream tuning (GHz) in float"""
-        self._stream_tuning = value
-        # PROTECTED REGION END #    //  Vcc.band5Tuning_write
-
     def read_frequencyBandOffsetStream1(self: Vcc) -> int:
         # PROTECTED REGION ID(Vcc.frequencyBandOffsetStream1_read) ENABLED START #
         """Return frequecyBandOffsetStream1 attribute(int)"""
         return self._frequency_band_offset_stream_1
         # PROTECTED REGION END #    //  Vcc.frequencyBandOffsetStream1_read
 
-    def write_frequencyBandOffsetStream1(self: Vcc, value: frequencyBandOffsetStream1) -> None:
-        # PROTECTED REGION ID(Vcc.frequencyBandOffsetStream1_write) ENABLED START #
-        """Set frequecyBandOffsetStream1 attribute(int)"""
-        self._frequency_band_offset_stream_1 = value
-        # PROTECTED REGION END #    //  Vcc.frequencyBandOffsetStream1_write
-
     def read_frequencyBandOffsetStream2(self: Vcc) -> int:
         # PROTECTED REGION ID(Vcc.frequencyBandOffsetStream2_read) ENABLED START #
         """Return frequecyBandOffsetStream2 attribute(int)"""
         return self._frequency_band_offset_stream_2
         # PROTECTED REGION END #    //  Vcc.frequencyBandOffsetStream2_read
-
-    def write_frequencyBandOffsetStream2(self: Vcc, value: frequencyBandOffsetStream2) -> None:
-        # PROTECTED REGION ID(Vcc.frequencyBandOffsetStream2_write) ENABLED START #
-        """Set frequecyBandOffsetStream2 attribute(int)"""
-        self._frequency_band_offset_stream_2 = value
-        # PROTECTED REGION END #    //  Vcc.frequencyBandOffsetStream2_write
 
     def read_dopplerPhaseCorrection(self: Vcc) -> List[float]:
         # PROTECTED REGION ID(Vcc.dopplerPhaseCorrection_read) ENABLED START #
@@ -481,23 +425,11 @@ class Vcc(CspSubElementObsDevice):
         return self._rfi_flagging_mask
         # PROTECTED REGION END #    //  Vcc.rfiFlaggingMask_read
 
-    def write_rfiFlaggingMask(self: Vcc, value: rfiFlaggingMask) -> None:
-        # PROTECTED REGION ID(Vcc.rfiFlaggingMask_write) ENABLED START #
-        """Set rfiFlaggingMask attribute(str/JSON)"""
-        self._rfi_flagging_mask = value
-        # PROTECTED REGION END #    //  Vcc.rfiFlaggingMask_write
-
     def read_scfoBand1(self: Vcc) -> int:
         # PROTECTED REGION ID(Vcc.scfoBand1_read) ENABLED START #
         """Return scfoBand1 attribute(int): Sample clock frequency offset for band 1"""
         return self._scfo_band_1
         # PROTECTED REGION END #    //  Vcc.scfoBand1_read
-
-    def write_scfoBand1(self: Vcc, value: scfoBand1) -> None:
-        # PROTECTED REGION ID(Vcc.scfoBand1_write) ENABLED START #
-        """Set scfoBand1 attribute(int): Sample clock frequency offset for band 1"""
-        self._scfo_band_1 = value
-        # PROTECTED REGION END #    //  Vcc.scfoBand1_write
 
     def read_scfoBand2(self: Vcc) -> int:
         # PROTECTED REGION ID(Vcc.scfoBand2_read) ENABLED START #
@@ -505,23 +437,11 @@ class Vcc(CspSubElementObsDevice):
         return self._scfo_band_2
         # PROTECTED REGION END #    //  Vcc.scfoBand2_read
 
-    def write_scfoBand2(self: Vcc, value: scfoBand2) -> None:
-        # PROTECTED REGION ID(Vcc.scfoBand2_write) ENABLED START #
-        """Set scfoBand2 attribute(int): Sample clock frequency offset for band 2"""
-        self._scfo_band_2 = value
-        # PROTECTED REGION END #    //  Vcc.scfoBand2_write
-
     def read_scfoBand3(self: Vcc) -> int:
         # PROTECTED REGION ID(Vcc.scfoBand3_read) ENABLED START #
         """Return scfoBand3 attribute(int): Sample clock frequency offset for band 3"""        
         return self._scfo_band_3
         # PROTECTED REGION END #    //  Vcc.scfoBand3_read
-
-    def write_scfoBand3(self: Vcc, value: scfoBand3) -> None:
-        # PROTECTED REGION ID(Vcc.scfoBand3_write) ENABLED START #
-        """Set scfoBand3 attribute(int): Sample clock frequency offset for band 3"""        
-        self._scfo_band_3 = value
-        # PROTECTED REGION END #    //  Vcc.scfoBand3_write
 
     def read_scfoBand4(self: Vcc) -> int:
         # PROTECTED REGION ID(Vcc.scfoBand4_read) ENABLED START #
@@ -529,35 +449,17 @@ class Vcc(CspSubElementObsDevice):
         return self._scfo_band_4
         # PROTECTED REGION END #    //  Vcc.scfoBand4_read
 
-    def write_scfoBand4(self: Vcc, value: scfoBand4) -> None:
-        # PROTECTED REGION ID(Vcc.scfoBand4_write) ENABLED START #
-        """Set scfoBand4 attribute(int): Sample clock frequency offset for band 4"""        
-        self._scfo_band_4 = value
-        # PROTECTED REGION END #    //  Vcc.scfoBand4_write
-
     def read_scfoBand5a(self: Vcc) -> int:
         # PROTECTED REGION ID(Vcc.scfoBand5a_read) ENABLED START #
         """Return scfoBand5a attribute(int): Sample clock frequency offset for band 5a"""        
         return self._scfo_band_5a
         # PROTECTED REGION END #    //  Vcc.scfoBand5a_read
 
-    def write_scfoBand5a(self: Vcc, value: scfoBand5a) -> None:
-        # PROTECTED REGION ID(Vcc.scfoBand5a_write) ENABLED START #
-        """Set scfoBand5a attribute(int): Sample clock frequency offset for band 5a"""        
-        self._scfo_band_5a = value
-        # PROTECTED REGION END #    //  Vcc.scfoBand5a_write
-
     def read_scfoBand5b(self: Vcc) -> int:
         # PROTECTED REGION ID(Vcc.scfoBand5b_read) ENABLED START #
         """Return scfoBand5b attribute(int): Sample clock frequency offset for band 5b"""        
         return self._scfo_band_5b
         # PROTECTED REGION END #    //  Vcc.scfoBand5b_read
-
-    def write_scfoBand5b(self: Vcc, value: scfoBand5b) -> None:
-        # PROTECTED REGION ID(Vcc.scfoBand5b_write) ENABLED START #
-        """Set scfoBand5b attribute(int): Sample clock frequency offset for band 5b"""        
-        self._scfo_band_5b = value
-        # PROTECTED REGION END #    //  Vcc.scfoBand5b_write
 
     def read_delayModel(self: Vcc) -> List[List[float]]:
         # PROTECTED REGION ID(Vcc.delayModel_read) ENABLED START #
@@ -589,12 +491,6 @@ class Vcc(CspSubElementObsDevice):
         return self._config_id
         # PROTECTED REGION END #    //  Vcc.configID_read
 
-    def write_configID(self: Vcc, value: configID) -> None:
-        # PROTECTED REGION ID(Vcc.configID_write) ENABLED START #
-        """Set the configID attribute."""
-        self._config_id = value
-        # PROTECTED REGION END #    //  Vcc.configID_write
-
     # --------
     # Commands
     # --------
@@ -605,8 +501,7 @@ class Vcc(CspSubElementObsDevice):
     )
     def TurnOnBandDevice(self: Vcc, freq_band_name: str) -> None:
         """
-        Send ON signal to the corresponding band, and DISABLE signal 
-        to all others
+        Turn on the corresponding band device and disable all the others.
         """
 
         # TODO: can be done in a more Pythonian way; broken?
@@ -686,7 +581,11 @@ class Vcc(CspSubElementObsDevice):
             self.logger.debug(("device._receptor_ID = {}".
             format(device._receptor_ID)))
 
-            # validate scan configuration first 
+            # This validation is already performed in the CbfSubbarray ConfigureScan.
+            # TODO: Improve validation (validation should only be done once,
+            # most of the validation can be done through a schema instead of manually
+            # through functions).
+            result_code = ResultCode.OK
             try:
                 (result_code, msg) = self._validate_scan_configuration(argin)
             except tango.DevFailed as df:
@@ -695,27 +594,21 @@ class Vcc(CspSubElementObsDevice):
             
             configuration = json.loads(argin)
 
-            if "config_id" in configuration:
-                    device._config_id = configuration["config_id"]
+            device._config_id = configuration["config_id"]
 
-            if "frequency_band" in configuration:
-                device._freq_band_name = str(configuration["frequency_band"])
-                device._frequency_band = freq_band_dict()[device._freq_band_name]
-                if device._frequency_band in [4, 5]:
-                        stream_tuning = [*map(float, configuration["band_5_tuning"])]
-                        device._stream_tuning = stream_tuning
+            # TODO: The frequency band attribute is optional but 
+            # if not specified the previous frequency band set should be used 
+            # (see Mid.CBF Scan Configuration in ICD). Therefore, the previous frequency 
+            # band value needs to be stored, and if the frequency band is not
+            # set in the config it should be replaced with the previous value.
+            device._frequency_band = int(configuration["frequency_band"])
+            frequency_bands = ["1", "2", "3", "4", "5a", "5b"]
+            device._freq_band_name =  frequency_bands[device._frequency_band]
+            if device._frequency_band in [4, 5]:
+                    device._stream_tuning = configuration["band_5_tuning"]
 
-            if "frequency_band_offset_stream_1" in configuration:
-                device._frequency_band_offset_stream_1 = int(configuration["frequency_band_offset_stream_1"])
-            else:
-                device._frequency_band_offset_stream_1 = 0
-                self.logger.warn("'frequencyBandOffsetStream1' not specified. Defaulting to 0.")
-
-            if "frequency_band_offset_stream_2" in configuration:
-                device._frequency_band_offset_stream_2 = int(configuration["frequency_band_offset_stream_2"])
-            else:
-                device._frequency_band_offset_stream_2 = 0
-                self.logger.warn("'frequencyBandOffsetStream2' not specified. Defaulting to 0.")
+            device._frequency_band_offset_stream_1 = int(configuration["frequency_band_offset_stream_1"])
+            device._frequency_band_offset_stream_2 = int(configuration["frequency_band_offset_stream_2"])
             
             if "rfi_flagging_mask" in configuration:
                 device._rfi_flagging_mask = str(configuration["rfi_flagging_mask"])
@@ -769,7 +662,8 @@ class Vcc(CspSubElementObsDevice):
             self: Vcc.ConfigureScanCommand, 
             msg: str
             ) -> None:
-            self.logger.error(msg)
+            device = self.target
+            device.logger.error(msg)
             tango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
                                         tango.ErrSeverity.ERR)
             
@@ -789,6 +683,16 @@ class Vcc(CspSubElementObsDevice):
                 configuration = json.loads(argin)
             except json.JSONDecodeError:  # argument not a valid JSON object
                 msg = "Scan configuration object is not a valid JSON object. Aborting configuration."
+                self._raise_configure_scan_fatal_error(msg)
+
+            # Validate configID.
+            if "config_id" not in configuration:
+                msg = "'configID' attribute is required."
+                self._raise_configure_scan_fatal_error(msg)
+            
+            # Validate frequencyBand.
+            if "frequency_band" not in configuration:
+                msg = "'frequencyBand' attribute is required."
                 self._raise_configure_scan_fatal_error(msg)
             
             # Validate frequencyBandOffsetStream1.
@@ -828,6 +732,7 @@ class Vcc(CspSubElementObsDevice):
                     except (TypeError, AssertionError):
                         msg = "'band5Tuning' must be an array of length 2. Aborting configuration."
                         self._raise_configure_scan_fatal_error(msg)
+                        return (ResultCode.FAILED, msg)
 
                     stream_tuning = [*map(float, configuration["band_5_tuning"])]
                     if configuration["frequency_band"] == "5a":
@@ -846,6 +751,7 @@ class Vcc(CspSubElementObsDevice):
                                 stream_tuning[1]
                             )
                             self._raise_configure_scan_fatal_error(msg)
+                            return (ResultCode.FAILED, msg)
                     else:  # configuration["frequency_band"] == "5b"
                         if all(
                                 [const.FREQUENCY_BAND_5b_TUNING_BOUNDS[0] <= stream_tuning[i]
@@ -862,6 +768,7 @@ class Vcc(CspSubElementObsDevice):
                                 stream_tuning[1]
                             )
                             self._raise_configure_scan_fatal_error(msg)
+                            return (ResultCode.FAILED, msg)
                 else:
                     # set band5Tuning to zero for the rest of the test. This won't 
                     # change the argin in function "configureScan(argin)"
@@ -1265,70 +1172,68 @@ class Vcc(CspSubElementObsDevice):
         proxy_sw = None
 
         # Configure searchWindowID.
-        #TODO: remove temporary flag to disable Vcc proxies for unit testing
-        if Vcc.TEST_CONTEXT is False:
-            if int(argin["search_window_id"]) == 1:
-                proxy_sw = self._proxy_sw_1
-            elif int(argin["search_window_id"]) == 2:
-                proxy_sw = self._proxy_sw_2
+        if int(argin["search_window_id"]) == 1:
+            proxy_sw = self._proxy_sw_1
+        elif int(argin["search_window_id"]) == 2:
+            proxy_sw = self._proxy_sw_2
 
-            # Configure searchWindowTuning.
-            if self._frequency_band in list(range(4)):  # frequency band is not band 5
-                proxy_sw.searchWindowTuning = argin["search_window_tuning"]
+        # Configure searchWindowTuning.
+        if self._frequency_band in list(range(4)):  # frequency band is not band 5
+            proxy_sw.searchWindowTuning = argin["search_window_tuning"]
 
-                start_freq_Hz, stop_freq_Hz = [
-                    const.FREQUENCY_BAND_1_RANGE_HZ,
-                    const.FREQUENCY_BAND_2_RANGE_HZ,
-                    const.FREQUENCY_BAND_3_RANGE_HZ,
-                    const.FREQUENCY_BAND_4_RANGE_HZ
-                ][self._frequency_band]
+            start_freq_Hz, stop_freq_Hz = [
+                const.FREQUENCY_BAND_1_RANGE_HZ,
+                const.FREQUENCY_BAND_2_RANGE_HZ,
+                const.FREQUENCY_BAND_3_RANGE_HZ,
+                const.FREQUENCY_BAND_4_RANGE_HZ
+            ][self._frequency_band]
 
-                if start_freq_Hz + self._frequency_band_offset_stream_1 + \
-                        const.SEARCH_WINDOW_BW_HZ / 2 <= \
-                        int(argin["search_window_tuning"]) <= \
-                        stop_freq_Hz + self._frequency_band_offset_stream_1 - \
-                        const.SEARCH_WINDOW_BW_HZ / 2:
-                    # this is the acceptable range
-                    pass
-                else:
-                    # log a warning message
-                    log_msg = "'searchWindowTuning' partially out of observed band. " \
-                            "Proceeding."
-                    self.logger.warn(log_msg)
-            else:  # frequency band 5a or 5b (two streams with bandwidth 2.5 GHz)
-                proxy_sw.searchWindowTuning = argin["search_window_tuning"]
+            if start_freq_Hz + self._frequency_band_offset_stream_1 + \
+                    const.SEARCH_WINDOW_BW_HZ / 2 <= \
+                    int(argin["search_window_tuning"]) <= \
+                    stop_freq_Hz + self._frequency_band_offset_stream_1 - \
+                    const.SEARCH_WINDOW_BW_HZ / 2:
+                # this is the acceptable range
+                pass
+            else:
+                # log a warning message
+                log_msg = "'searchWindowTuning' partially out of observed band. " \
+                        "Proceeding."
+                self.logger.warn(log_msg)
+        else:  # frequency band 5a or 5b (two streams with bandwidth 2.5 GHz)
+            proxy_sw.searchWindowTuning = argin["search_window_tuning"]
 
-                frequency_band_range_1 = (
-                    self._stream_tuning[0] * 10 ** 9 + self._frequency_band_offset_stream_1 - \
-                    const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2,
-                    self._stream_tuning[0] * 10 ** 9 + self._frequency_band_offset_stream_1 + \
-                    const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2
-                )
+            frequency_band_range_1 = (
+                self._stream_tuning[0] * 10 ** 9 + self._frequency_band_offset_stream_1 - \
+                const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2,
+                self._stream_tuning[0] * 10 ** 9 + self._frequency_band_offset_stream_1 + \
+                const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2
+            )
 
-                frequency_band_range_2 = (
-                    self._stream_tuning[1] * 10 ** 9 + self._frequency_band_offset_stream_2 - \
-                    const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2,
-                    self._stream_tuning[1] * 10 ** 9 + self._frequency_band_offset_stream_2 + \
-                    const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2
-                )
+            frequency_band_range_2 = (
+                self._stream_tuning[1] * 10 ** 9 + self._frequency_band_offset_stream_2 - \
+                const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2,
+                self._stream_tuning[1] * 10 ** 9 + self._frequency_band_offset_stream_2 + \
+                const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2
+            )
 
-                if (frequency_band_range_1[0] + \
+            if (frequency_band_range_1[0] + \
+                const.SEARCH_WINDOW_BW * 10 ** 6 / 2 <= \
+                int(argin["search_window_tuning"]) <= \
+                frequency_band_range_1[1] - \
+                const.SEARCH_WINDOW_BW * 10 ** 6 / 2) or \
+                    (frequency_band_range_2[0] + \
                     const.SEARCH_WINDOW_BW * 10 ** 6 / 2 <= \
                     int(argin["search_window_tuning"]) <= \
-                    frequency_band_range_1[1] - \
-                    const.SEARCH_WINDOW_BW * 10 ** 6 / 2) or \
-                        (frequency_band_range_2[0] + \
-                        const.SEARCH_WINDOW_BW * 10 ** 6 / 2 <= \
-                        int(argin["search_window_tuning"]) <= \
-                        frequency_band_range_2[1] - \
-                        const.SEARCH_WINDOW_BW * 10 ** 6 / 2):
-                    # this is the acceptable range
-                    pass
-                else:
-                    # log a warning message
-                    log_msg = "'searchWindowTuning' partially out of observed band. " \
-                            "Proceeding."
-                    self.logger.warn(log_msg)
+                    frequency_band_range_2[1] - \
+                    const.SEARCH_WINDOW_BW * 10 ** 6 / 2):
+                # this is the acceptable range
+                pass
+            else:
+                # log a warning message
+                log_msg = "'searchWindowTuning' partially out of observed band. " \
+                        "Proceeding."
+                self.logger.warn(log_msg)
 
             # Configure tdcEnable.
             proxy_sw.tdcEnable = argin["tdc_enable"]
