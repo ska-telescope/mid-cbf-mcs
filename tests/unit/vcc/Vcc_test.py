@@ -113,11 +113,11 @@ class TestVcc:
         """
         
         device_under_test.On()
-        time.sleep(0.1)
+        time.sleep(1)
         assert device_under_test.State() == DevState.ON
 
         device_under_test.Off()
-        time.sleep(0.1)
+        time.sleep(1)
         assert device_under_test.State() == DevState.OFF
     
 
