@@ -40,6 +40,7 @@ from ska_mid_cbf_mcs.commons.global_enum import const, freq_band_dict
 from ska_tango_base.control_model import HealthState, AdminMode, ObsState
 from ska_tango_base import CspSubElementObsDevice
 from ska_tango_base.commands import ResultCode
+from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 
