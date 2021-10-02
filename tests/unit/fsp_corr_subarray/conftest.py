@@ -29,35 +29,7 @@ from ska_mid_cbf_mcs.fsp.fsp_corr_subarray import FspCorrSubarray
 from ska_tango_base.control_model import HealthState, AdminMode, ObsState
 from ska_tango_base.commands import ResultCode
 
-@pytest.fixture()
-def patched_fsp_corr_subarray_class() -> Type[FspCorrSubarray]:
-    """
-    Return a FspCorrSubarray device class, patched with extra methods for testing.
-
-    :return: a patched FspCorrSubarray device class, patched with extra methods
-        for testing
-    """
-
-    class PatchedFspCorrSubarrayDevice(FspCorrSubarray):
-        """
-        FspCorrSubarray patched with extra commands for testing purposes.
-
-        The extra commands allow us to mock the receipt of obs state
-        change events from subservient devices.
-        """
-
-        @command(dtype_in=int)
-        def FakeSubservientDevicesObsState(
-            self,
-            obs_state: ObsState
-        ) -> None:
-            obs_state = ObsState(obs_state)
-
-            # for fqdn in self.component_manager._device_obs_states:
-            #     self.component_manager._device_obs_state_changed(fqdn, obs_state)
-
-    return PatchedFspCorrSubarrayDevice
-
+import logging
 
 @pytest.fixture()
 def device_under_test(tango_harness: TangoHarness) -> CbfDeviceProxy:
@@ -70,15 +42,11 @@ def device_under_test(tango_harness: TangoHarness) -> CbfDeviceProxy:
     """
     return tango_harness.get_device("mid_csp_cbf/fspCorrSubarray/01_01")
 
+# TODO: see TODO in src/ska_mid_cbf_mcs/testing/tango_harness.py
 @pytest.fixture()
-def device_to_load(
-    patched_fsp_corr_subarray_class: Type[FspCorrSubarray],
-) -> DeviceToLoadType:
+def device_to_load() -> DeviceToLoadType:
     """
     Fixture that specifies the device to be loaded for testing.
-
-    :param patched_fsp_corr_subarray_class: a class for a patched FspCorrSubarray
-        device with extra methods for testing purposes.
 
     :return: specification of the device to be loaded
     """
@@ -87,9 +55,10 @@ def device_to_load(
         "package": "ska_mid_cbf_mcs",
         "device": "fsp-01",
         "proxy": CbfDeviceProxy,
-        "patch": patched_fsp_corr_subarray_class,
+        "patch": FspCorrSubarray
     }
 
+#TODO mock controller max capabilities
 @pytest.fixture()
 def mock_cbf_controller() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()

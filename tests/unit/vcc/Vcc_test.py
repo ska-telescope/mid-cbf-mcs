@@ -41,24 +41,17 @@ class TestVcc:
 
     def test_Vcc_ConfigureScan_basic(
         self,
-        tango_harness,
-        device_under_test
-    ):
+        device_under_test: CbfDeviceProxy
+    ) -> None:
         """
         Test a minimal successful scan configuration.
+
+        :param device_under_test: fixture that provides a
+            :py:class:`tango.DeviceProxy` to the device under test, in a
+            :py:class:`tango.test_context.DeviceTestContext`.
         """
 
         # to get the mock devices, use tango_harness.get_device("fqdn")
-
-        # mock_band12 = tango_harness.get_device("mid_csp_cbf/vcc_band12/001")
-        # mock_band3 = tango_harness.get_device("mid_csp_cbf/vcc_band3/001")
-        # mock_band4 = tango_harness.get_device("mid_csp_cbf/vcc_band4/001")
-        # mock_band5 = tango_harness.get_device("mid_csp_cbf/vcc_band5/001")
-
-        # assert mock_band12.State() == DevState.OFF
-        # assert mock_band3.State() == DevState.OFF
-        # assert mock_band4.State() == DevState.OFF
-        # assert mock_band5.State() == DevState.OFF
 
         device_under_test.On()
         time.sleep(1)
