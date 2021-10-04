@@ -91,6 +91,14 @@ class MockDeviceBuilder:
         :param state: the state of the mock
         """
         self.add_command("state", state)
+    
+    def add_property(self: MockDeviceBuilder, property: dict) -> None:
+        """
+        Tell this builder to build mocks with the state set as specified.
+
+        :param state: the state of the mock
+        """
+        self.add_command("get_property", property)
 
     def _setup_read_attribute(
         self: MockDeviceBuilder, mock_device: unittest.mock.Mock

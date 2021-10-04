@@ -273,16 +273,14 @@ class FspCorrSubarray(CspSubElementObsDevice):
                 fqdn=device.CbfControllerAddress,
                 logger=device.logger
             )
-
             device._controller_max_capabilities = dict(
-                pair.split(":") for pair in
+                pair.split(":") for pair in 
                 device._proxy_cbf_controller.get_property("MaxCapabilities")["MaxCapabilities"]
             )
 
             # Connect to all VCC devices turned on by CbfController:
             device._count_vcc = int(device._controller_max_capabilities["VCC"])
             device._fqdn_vcc = list(device.VCC)[:device._count_vcc]
-            #device._proxies_vcc = [*map(tango.DeviceProxy, device._fqdn_vcc)]
             device._proxies_vcc = [
                 CbfDeviceProxy(
                     logger=device.logger, 

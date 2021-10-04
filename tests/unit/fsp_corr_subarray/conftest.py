@@ -62,27 +62,22 @@ def device_to_load() -> DeviceToLoadType:
 @pytest.fixture()
 def mock_cbf_controller() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
-    builder.set_state(tango.DevState.ON)
+    builder.add_property({'MaxCapabilities': ['VCC:4', 'FSP:4', 'Subarray:2']})
     return builder()
 
 @pytest.fixture()
 def mock_vcc() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
-    builder.set_state(tango.DevState.ON)
     return builder()
 
 @pytest.fixture()
 def mock_cbf_subarray_1() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
-    builder.set_state(tango.DevState.ON)
-    builder.add_attribute("receptors", ())
     return builder()
 
 @pytest.fixture()
 def mock_fsp_pss_subarray_2_1() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
-    builder.set_state(tango.DevState.ON)
-    builder.add_attribute("receptors", ())
     return builder()
 
 @pytest.fixture()
