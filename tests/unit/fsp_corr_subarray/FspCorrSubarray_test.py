@@ -131,7 +131,9 @@ class TestFspCorrSubarray:
         assert device_under_test.visDestinationAddress == json.dumps({"outputHost":[], "outputMac": [], "outputPort":[]})
         assert device_under_test.fspChannelOffset == 0
         for i in range(40):
-            assert device_under_test.outputLinkMap[i] == (0,0) 
+            for j in range(2):
+                assert device_under_test.outputLinkMap[i][j] == 0 
+
         
         device_under_test.On()
         time.sleep(3)
