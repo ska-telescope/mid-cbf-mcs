@@ -17,12 +17,14 @@ from __future__ import absolute_import
 from __future__ import annotations
 
 import logging
-from typing import Any, Callable, Generator, Set, cast
 import pytest
 import unittest
 import yaml
+import pytest
+import logging
 import time
 import json
+from typing import Any, Callable, Generator, Set, cast
 
 # Tango imports
 import tango
@@ -30,7 +32,7 @@ from tango import DevState
 from tango import DeviceProxy
 
 # SKA imports
-from ska_tango_base.control_model import LoggingLevel, ObsState, AdminMode
+from ska_tango_base.control_model import LoggingLevel, ObsState
 
 from ska_mid_cbf_mcs.testing.mock.mock_callable import MockChangeEventCallback
 from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder
@@ -66,7 +68,6 @@ def pytest_configure(config: pytest.config.Config) -> None:
     all_tags: Set[str] = cast(Set[str], set()).union(*_testbeds.values())
     for tag in all_tags:
         config.addinivalue_line("markers", f"needs_{tag}")
-
 
 def pytest_addoption(parser: pytest.config.ArgumentParser) -> None:
     """
@@ -309,7 +310,6 @@ def mock_change_event_callback_factory() -> Callable[[str], MockChangeEventCallb
         each time it is called with the name of a device attribute.
     """
     return MockChangeEventCallback
-
 
 @pytest.fixture(name="proxies", scope="session")
 def init_proxies_fixture():

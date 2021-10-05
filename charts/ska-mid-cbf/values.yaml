@@ -214,6 +214,16 @@ deviceServers:
       image: "{{.Values.midcbf.image.image}}"
       tag: "{{.Values.midcbf.image.tag}}"
       pullPolicy: "{{.Values.midcbf.image.pullPolicy}}"
+  - name: powerswitch001
+    function: power-switch
+    domain: mid-csp-cbf
+    command: "PowerSwitch"
+    instances: ["powerswitch-001"]
+    image:
+      registry: "{{.Values.midcbf.image.registry}}"
+      image: "{{.Values.midcbf.image.image}}"
+      tag: "{{.Values.midcbf.image.tag}}"
+      pullPolicy: "{{.Values.midcbf.image.pullPolicy}}"
 
 nodeSelector: {}
 
