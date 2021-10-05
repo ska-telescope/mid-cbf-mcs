@@ -430,7 +430,11 @@ class FspCorrSubarray(CspSubElementObsDevice):
         self._config_id=value
         # PROTECTED REGION END #    //  FspCorrSubarray.configID_write
 
-    def _add_receptors(self, argin):
+    @command(
+        dtype_in=('uint16',),
+        doc_in="List of receptor IDs",
+    )
+    def AddReceptors(self, argin):
         """add specified receptors to the FSP subarray. Input is array of int."""
         errs = []  # list of error messages
         receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
@@ -458,10 +462,14 @@ class FspCorrSubarray(CspSubElementObsDevice):
         if errs:
             msg = "\n".join(errs)
             self.logger.error(msg)
-            tango.Except.throw_exception("Command failed", msg, "_add_receptors execution",
+            tango.Except.throw_exception("Command failed", msg, "AddReceptors execution",
                                            tango.ErrSeverity.ERR)
 
-    def _remove_receptors(self, argin):
+    @command(
+        dtype_in=('uint16',),
+        doc_in="List of receptor IDs",
+    )
+    def RemoveReceptors(self, argin):
         """Remove Receptors. Input is array of int"""
         for receptorID in argin:
             if receptorID in self._receptors:
@@ -471,9 +479,10 @@ class FspCorrSubarray(CspSubElementObsDevice):
                     "Skipping.".format(str(receptorID))
                 self.logger.warn(log_msg)
 
-    def _remove_all_receptors(self):
+    @command()
+    def RemoveAllReceptors(self):
         """Remove all Receptors of this subarray"""
-        self._remove_receptors(self._receptors[:])
+        self.RemoveReceptors(self._receptors[:])
 
     # TODO: Reinstate AddChannels?
     # def is_AddChannels_allowed(self): # ???
@@ -625,10 +634,10 @@ class FspCorrSubarray(CspSubElementObsDevice):
 
             # Configure receptors.
             
-            # TODO: _remove_all_receptors should not be needed because it is
+            # TODO: RemoveAllReceptors should not be needed because it is
             #        applied in GoToIdle()
-            device._remove_all_receptors()
-            device._add_receptors(map(int, argin["receptor_ids"]))
+            device.RemoveAllReceptors()
+            device.AddReceptors(map(int, argin["receptor_ids"]))
 
             # Configure frequencySliceID.
             device._frequency_slice_ID = int(argin["frequency_slice_id"])
@@ -855,7 +864,7 @@ class FspCorrSubarray(CspSubElementObsDevice):
             #device._channel_info.clear() #TODO:  not yet populated
 
             # Reset self._receptors
-            device._remove_all_receptors()
+            device.RemoveAllReceptors()
 
             if device.state_model.obs_state == ObsState.IDLE:
                 return (ResultCode.OK, 

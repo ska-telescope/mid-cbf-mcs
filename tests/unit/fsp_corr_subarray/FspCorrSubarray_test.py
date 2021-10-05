@@ -31,7 +31,7 @@ from tango.server import command
 from ska_mid_cbf_mcs.testing.tango_harness import DeviceToLoadType
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_tango_base.control_model import HealthState, AdminMode, ObsState
-
+from ska_mid_cbf_mcs.commons.global_enum import const, freq_band_dict
 
 class TestFspCorrSubarray:
     """
@@ -113,17 +113,26 @@ class TestFspCorrSubarray:
         assert device_under_test.State() == tango.DevState.OFF
         # check initial values of attributes
         # TODO: why does device_under_test.receptors return None?
-        # assert device_under_test.receptors == ()
+        assert device_under_test.receptors == None
         assert device_under_test.frequencyBand == 0
-        assert (device_under_test.band5Tuning[0],
-                device_under_test.band5Tuning[1]) == (0, 0)
+        assert [device_under_test.band5Tuning[0],
+                device_under_test.band5Tuning[1]] == [0, 0]
+        assert device_under_test.frequencyBandOffsetStream1 == 0
+        assert device_under_test.frequencyBandOffsetStream2 == 0
         assert device_under_test.frequencySliceID == 0
         assert device_under_test.corrBandwidth == 0
         assert device_under_test.zoomWindowTuning == 0
         assert device_under_test.integrationTime == 0
-        for i in range(20):
+        assert device_under_test.scanID == 0
+        assert device_under_test.configID == ""
+        for i in range(const.NUM_CHANNEL_GROUPS):
+            assert device_under_test.channelAveragingMap[i][0] == int(i*const.NUM_FINE_CHANNELS/const.NUM_CHANNEL_GROUPS) + 1
             assert device_under_test.channelAveragingMap[i][1] == 0
-
+        assert device_under_test.visDestinationAddress == json.dumps({"outputHost":[], "outputMac": [], "outputPort":[]})
+        assert device_under_test.fspChannelOffset == 0
+        for i in range(40):
+            assert device_under_test.outputLinkMap[i] == (0,0) 
+        
         device_under_test.On()
         time.sleep(3)
         assert device_under_test.State() == DevState.ON
@@ -137,9 +146,8 @@ class TestFspCorrSubarray:
         device_under_test.ConfigureScan(json_str)
         f.close()
 
-        # TODO: These asserts should pass
-        # assert device_under_test.receptors == (10, 197)
-        # assert device_under_test.frequencyBand == configuration["frequency_band"]
+        assert device_under_test.receptors == tuple(configuration["receptor_ids"])
+        assert device_under_test.frequencyBand == freq_band_dict()[configuration["frequency_band"]]
         assert device_under_test.frequencySliceID == configuration["frequency_slice_id"]
         if "band_5_tuning" in configuration:
             if device_under_test.frequencyBand in [4, 5]:
@@ -156,3 +164,96 @@ class TestFspCorrSubarray:
         for i, chan in enumerate(channelAveragingMap_config):
             for j in range(0,len(chan)):
                 assert device_under_test.channelAveragingMap[i][j] == channelAveragingMap_config[i][j]
+
+
+    def test_AddRemoveReceptors_valid(
+        self: TestFspCorrSubarray,
+        device_under_test: CbfDeviceProxy
+    ) -> None:
+        """
+        Test valid AddReceptors and RemoveReceptors commands
+        """
+
+        time.sleep(3)
+
+        # receptor list should be empty right after initialization
+        assert device_under_test.receptors == None
+
+        device_under_test.On()
+        time.sleep(3)
+        assert device_under_test.State() == DevState.ON
+
+        # add a receptor
+        time.sleep(1)
+        device_under_test.AddReceptors([1])
+        assert device_under_test.receptors[0] == 1
+
+        # remove the receptor
+        device_under_test.RemoveReceptors([1])
+        assert device_under_test.receptors == None
+
+    def test_AddRemoveReceptors_invalid(
+        self: TestFspCorrSubarray,
+        device_under_test: CbfDeviceProxy
+    ) -> None:
+        """
+        Test invalid AddReceptors and RemoveReceptors commands:
+            - when a receptor to be added is not in use by the subarray
+            - when a receptor ID is invalid (e.g. out of range)
+            - when a receptor to be removed is not assigned to the subarray
+        """
+
+        time.sleep(3)
+
+        # receptor list should be empty right after initialization
+        assert device_under_test.receptors == None
+
+        device_under_test.On()
+        time.sleep(3)
+        assert device_under_test.State() == DevState.ON
+
+        # add some receptors
+        time.sleep(1)
+        device_under_test.AddReceptors([1])
+        assert device_under_test.receptors[0] == 1
+
+        # try adding an invalid receptor ID
+        with pytest.raises(tango.DevFailed) as df:
+            device_under_test.AddReceptors([200])
+        time.sleep(1)
+        assert "Invalid receptor ID" in str(df.value.args[0].desc)
+
+        # try removing a receptor not assigned to subarray 2
+        # doing this doesn't actually throw an error
+        device_under_test.RemoveReceptors([5])
+        assert device_under_test.receptors[0] == 1
+
+        # remove all receptors
+        device_under_test.RemoveReceptors([1])
+        assert device_under_test.receptors == None
+
+    def test_RemoveAllReceptors(
+        self: TestFspCorrSubarray,
+        device_under_test: CbfDeviceProxy
+    ) -> None:
+        """
+        Test RemoveAllReceptors command
+        """
+
+        time.sleep(3)
+
+        # receptor list should be empty right after initialization
+        assert device_under_test.receptors == None
+
+        device_under_test.On()
+        time.sleep(3)
+        assert device_under_test.State() == DevState.ON
+
+        # add some receptors
+        time.sleep(1)
+        device_under_test.AddReceptors([1])
+        assert device_under_test.receptors[0] == 1
+
+        # remove all receptors
+        device_under_test.RemoveAllReceptors()
+        assert device_under_test.receptors == None
