@@ -31,7 +31,7 @@ import tango
 from tango.server import BaseDevice, Device, run
 from tango.server import attribute, command
 from tango.server import device_property
-from tango import DebugIt, DevState, AttrWriteType
+from tango import DevFailed, DebugIt, DevState, AttrWriteType
 
 # SKA Specific imports
 
@@ -294,39 +294,34 @@ class Vcc(CspSubElementObsDevice):
 
             try:
                 device._proxy_band_12 = CbfDeviceProxy(
-                    device.Band1And2Address,
-                    logger=None,
-                    connection_factory=None
+                    fqdn=device.Band1And2Address,
+                    logger=device.logger
                 )
                 device._proxy_band_3  = CbfDeviceProxy(
-                    device.Band3Address,
-                    logger=None,
-                    connection_factory=None
+                    fqdn=device.Band3Address,
+                    logger=device.logger
                 )
                 device._proxy_band_4  = CbfDeviceProxy(
-                    device.Band4Address,
-                    logger=None,
-                    connection_factory=None
+                    fqdn=device.Band4Address,
+                    logger=device.logger
                 )
                 device._proxy_band_5  = CbfDeviceProxy(
-                    device.Band5Address,
-                    logger=None,
-                    connection_factory=None
+                    fqdn=device.Band5Address,
+                    logger=device.logger
                 )
                 device._proxy_sw_1    = CbfDeviceProxy(
-                    device.SW1Address,
-                    logger=None,
-                    connection_factory=None
+                    fqdn=device.SW1Address,
+                    logger=device.logger
                 )
                 device._proxy_sw_2    = CbfDeviceProxy(
-                    device.SW2Address,
-                    logger=None,
-                    connection_factory=None
+                    fqdn=device.SW2Address,
+                    logger=device.logger
                 )
-            except Exception as ex:
-                self.logger.warn(
-                    "Unexpected error on DeviceProxy creation %s", str(ex)
-                )
+            except tango.DevFailed as dev_failed:
+                raise ConnectionError(
+                    f"Error in proxy connection."
+                ) from dev_failed
+
             message = "Vcc Init command completed OK"
             device.logger.info(message)
             return (ResultCode.OK, message)

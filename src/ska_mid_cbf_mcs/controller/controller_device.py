@@ -17,6 +17,7 @@ Sub-element controller device for Mid.CBf
 from __future__ import annotations  # allow forward references in type hints
 
 from typing import List, Tuple
+from random import randint
 
 # tango imports
 import tango
@@ -27,15 +28,12 @@ from tango import AttrWriteType
 # Additional import
 # PROTECTED REGION ID(CbfController.additionnal_import) ENABLED START #
 # add the path to import global_enum package.
-import os
-import sys
-from random import randint
 
-file_path = os.path.dirname(os.path.abspath(__file__))
-
+# SKA imports
 from ska_tango_base import SKAMaster, SKABaseDevice
 from ska_tango_base.control_model import HealthState, AdminMode
 from ska_tango_base.commands import ResultCode
+from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 
 # PROTECTED REGION END #    //  CbfController.additionnal_import
 
@@ -452,7 +450,10 @@ class CbfController(SKAMaster):
                 receptorID = remaining[receptorIDIndex]
                 device._receptor_to_vcc.append("{}:{}".format(receptorID, i))
                 device._vcc_to_receptor.append("{}:{}".format(i, receptorID))
-                vcc_proxy = tango.DeviceProxy(device._fqdn_vcc[i - 1])
+                vcc_proxy = CbfDeviceProxy(
+                    fqdn=device._fqdn_vcc[i - 1], 
+                    logger=device.logger
+                )
                 vcc_proxy.receptorID = receptorID
                 del remaining[receptorIDIndex]
 
@@ -478,7 +479,10 @@ class CbfController(SKAMaster):
                 try:
                     log_msg = "Trying connection to " + fqdn + " device"
                     device.logger.info(log_msg)
-                    device_proxy = tango.DeviceProxy(fqdn)
+                    device_proxy = CbfDeviceProxy(
+                        fqdn=fqdn, 
+                        logger=device.logger
+                    )
                     device_proxy.ping()
 
                     device._proxies[fqdn] = device_proxy

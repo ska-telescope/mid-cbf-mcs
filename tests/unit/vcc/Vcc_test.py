@@ -33,7 +33,7 @@ from ska_mid_cbf_mcs.testing.tango_harness import DeviceToLoadType
 
 from ska_tango_base.control_model import HealthState, AdminMode, ObsState
 
-
+@pytest.mark.skip
 class TestVcc:
     """
     Test class for Vcc tests.
@@ -74,6 +74,7 @@ class TestVcc:
         frequency_band = configuration["frequency_band"]
         frequency_bands = ["1", "2", "3", "4", "5a", "5b"]
         freq_band_name =  frequency_bands[frequency_band]
+        device_under_test.TurnOnBandDevice(freq_band_name)
 
         device_under_test.ConfigureScan(json_str)
         time.sleep(1)
@@ -98,6 +99,8 @@ class TestVcc:
         assert device_under_test.scfoBand5a == configuration["scfo_band_5a"]
         assert device_under_test.scfoBand5b == configuration["scfo_band_5b"]
 
+        device_under_test.TurnOffBandDevice(freq_band_name)
+
     
 
     def test_On_Off(
@@ -113,11 +116,11 @@ class TestVcc:
         """
         
         device_under_test.On()
-        time.sleep(0.1)
+        time.sleep(1)
         assert device_under_test.State() == DevState.ON
 
         device_under_test.Off()
-        time.sleep(0.1)
+        time.sleep(1)
         assert device_under_test.State() == DevState.OFF
     
 

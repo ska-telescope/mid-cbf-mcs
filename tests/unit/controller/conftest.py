@@ -25,40 +25,9 @@ from ska_mid_cbf_mcs.testing.mock.mock_callable import MockChangeEventCallback
 from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder
 from ska_mid_cbf_mcs.testing.tango_harness import DeviceToLoadType, TangoHarness
 
-from ska_mid_cbf_mcs.vcc.vcc_device import Vcc
+from ska_mid_cbf_mcs.controller.controller_device import CbfController
 from ska_tango_base.control_model import HealthState, AdminMode, ObsState
 from ska_tango_base.commands import ResultCode
-
-@pytest.fixture()
-def patched_vcc_device_class() -> Type[Vcc]:
-    """
-    Return a Vcc device class, patched with extra methods for testing.
-
-    :return: a patched Vcc device class, patched with extra methods
-        for testing
-    """
-
-    class PatchedVccDevice(Vcc):
-        """
-        Vcc patched with extra commands for testing purposes.
-
-        The extra commands allow us to mock the receipt of obs state
-        change events from subservient devices.
-        """
-
-        @command(dtype_in=int)
-        def FakeSubservientDevicesObsState(
-            self,
-            obs_state: ObsState
-        ) -> None:
-            obs_state = ObsState(obs_state)
-
-            # for fqdn in self.component_manager._device_obs_states:
-            #     self.component_manager._device_obs_state_changed(fqdn, obs_state)
-
-    # using patch for now to determine class to select from device server;
-    # see TODO in src/ska_mid_cbf_mcs/testing/tango_harness.py
-    return Vcc
 
 
 @pytest.fixture()
@@ -70,12 +39,10 @@ def device_under_test(tango_harness: TangoHarness) -> CbfDeviceProxy:
 
     :return: the device under test
     """
-    return tango_harness.get_device("mid_csp_cbf/vcc/001")
+    return tango_harness.get_device("mid_csp_cbf/sub_elt/controller")
 
 @pytest.fixture()
-def device_to_load(
-    patched_vcc_device_class: Type[Vcc],
-) -> DeviceToLoadType:
+def device_to_load() -> DeviceToLoadType:
     """
     Fixture that specifies the device to be loaded for testing.
 
@@ -87,9 +54,9 @@ def device_to_load(
     return {
         "path": "charts/ska-mid-cbf/data/midcbfconfig.json",
         "package": "ska_mid_cbf_mcs",
-        "device": "vcc-001",
+        "device": "controller",
         "proxy": CbfDeviceProxy,
-        "patch": patched_vcc_device_class,
+        "patch": CbfController,
     }
 
 @pytest.fixture()

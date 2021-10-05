@@ -2,36 +2,35 @@
 #
 # This file is part of the SKA Mid.CBF MCS project
 #
-# Ported from the SKA Low MCCS project:
-# https://gitlab.com/ska-telescope/ska-low-mccs/-/blob/main/src/ska_low_mccs/device_proxy.py
-#
 # Distributed under the terms of the GPL license.
 # See LICENSE for more info.
 
-"""This module implements a base device proxy for MCS devices."""
+"""This module implements a base group device proxy for MCS devices."""
 
 from __future__ import annotations  # allow forward references in type hints
 
-__all__ = ["CbfDeviceProxy"]
+__all__ = ["CbfGroupProxy"]
 
 import logging
 import threading
-from typing import Any, Callable, Optional, Type
+from typing import Any, Callable, Optional, Type, List
 from typing_extensions import TypedDict
 import warnings
-
 import backoff
+
 import tango
 from tango import DevFailed, DevState, AttrQuality
+
+from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 
 # type for the "details" dictionary that backoff calls its callbacks with
 BackoffDetailsType = TypedDict("BackoffDetailsType", {"args": list, "elapsed": float})
 ConnectionFactory = Callable[[str], tango.DeviceProxy]
 
 
-class CbfDeviceProxy:
+class CbfGroupProxy:
     """
-    This class implements a base device proxy for MCS devices.
+    This class implements a base group proxy for MCS devices.
 
     At present it supports:
 
@@ -46,11 +45,11 @@ class CbfDeviceProxy:
       :py:meth:``add_change_event_callback`` method.
     """
 
-    _default_connection_factory = tango.DeviceProxy
+    _default_connection_factory = tango.Group
 
     @classmethod
     def set_default_connection_factory(
-        cls: Type[CbfDeviceProxy], connection_factory: ConnectionFactory
+        cls: Type[CbfGroupProxy], connection_factory: ConnectionFactory
     ) -> None:
         """
         Set the default connection factory for this class.
@@ -65,8 +64,7 @@ class CbfDeviceProxy:
         cls._default_connection_factory = connection_factory
 
     def __init__(
-        self: CbfDeviceProxy,
-        fqdn: str,
+        self: CbfGroupProxy,
         logger: logging.Logger,
         connect: bool = True,
         connection_factory: Optional[ConnectionFactory] = None,
@@ -75,9 +73,9 @@ class CbfDeviceProxy:
         """
         Create a new instance.
 
-        :param fqdn: fqdn of the device to be proxied
+        :param fqdn: fqdns of the devices to be proxied
         :param logger: a logger for this proxy to use
-        :param connection_factory: how we obtain a connection to the
+        :param connection_factory: how we obtain a connection to the\
             device we are proxying. By default this is
             :py:class:`tango.DeviceProxy`, but occasionally this needs
             to be changed. For example, when testing against a
@@ -94,10 +92,10 @@ class CbfDeviceProxy:
         """
         # Directly accessing object dictionary because we are overriding
         # setattr and don't want to infinitely recurse.
-        self.__dict__["_fqdn"] = fqdn
+        self.__dict__["_fqdn"] = []
         self.__dict__["_logger"] = logger
         self.__dict__["_connection_factory"] = (
-            connection_factory or CbfDeviceProxy._default_connection_factory
+            connection_factory or CbfGroupProxy._default_connection_factory
         )
         self.__dict__["_pass_through"] = pass_through
         self.__dict__["_device"] = None
@@ -108,8 +106,25 @@ class CbfDeviceProxy:
 
         if connect:
             self.connect()
+    
+    def add(self: CbfGroupProxy, fqdn: str) -> None:
+        """
+        Add a device to the group.
 
-    def connect(self: CbfDeviceProxy, max_time: float = 120.0) -> None:
+        :param fqdn: FQDN of the device to be proxied.
+        """
+        self.__dict__["_fqdn"].add(fqdn)
+    
+    def remove(self: CbfGroupProxy, fqdn: str) -> None:
+        """
+        Add a device to the group.
+
+        :param fqdn: FQDN of the device to be proxied.
+        """
+        self.__dict__["_fqdn"].remove(fqdn)
+
+
+    def connect(self: CbfGroupProxy, max_time: float = 120.0) -> None:
         """
         Establish a connection to the device that we want to proxy.
 
@@ -176,7 +191,7 @@ class CbfDeviceProxy:
         else:
             self._device = _connect(self._connection_factory, self._fqdn)
 
-    def check_initialised(self: CbfDeviceProxy, max_time: float = 120.0) -> bool:
+    def check_initialised(self: CbfGroupProxy, max_time: float = 120.0) -> bool:
         """
         Check that the device has completed initialisation.
 
@@ -262,7 +277,7 @@ class CbfDeviceProxy:
             return _check_initialised(self._device)
 
     def add_change_event_callback(
-        self: CbfDeviceProxy,
+        self: CbfGroupProxy,
         attribute_name: str,
         callback: Callable[[str, Any, AttrQuality], None],
         stateless: bool = True,
@@ -289,7 +304,7 @@ class CbfDeviceProxy:
 
     @backoff.on_exception(backoff.expo, tango.DevFailed, factor=1, max_time=120)
     def _subscribe_change_event(
-        self: CbfDeviceProxy, attribute_name: str, stateless: bool = False
+        self: CbfGroupProxy, attribute_name: str, stateless: bool = False
     ) -> int:
         """
         Subscribe to a change event.
@@ -316,7 +331,7 @@ class CbfDeviceProxy:
             stateless=stateless,
         )
 
-    def _change_event_received(self: CbfDeviceProxy, event: tango.EventData) -> None:
+    def _change_event_received(self: CbfGroupProxy, event: tango.EventData) -> None:
         """
         Handle subscribe events from the Tango system with this callback.
 
@@ -335,7 +350,7 @@ class CbfDeviceProxy:
                     self._call_callback(callback, attribute_data)
 
     def _call_callback(
-        self: CbfDeviceProxy,
+        self: CbfGroupProxy,
         callback: Callable[[str, Any, AttrQuality], None],
         attribute_data: tango.DeviceAttribute,
     ) -> None:
@@ -349,7 +364,7 @@ class CbfDeviceProxy:
         callback(attribute_data.name, attribute_data.value, attribute_data.quality)
 
     def _process_event(
-        self: CbfDeviceProxy, event: tango.EventData
+        self: CbfGroupProxy, event: tango.EventData
     ) -> Optional[tango.DeviceAttribute]:
         """
         Process a received event.
@@ -379,7 +394,7 @@ class CbfDeviceProxy:
         else:
             return event.attr_value
 
-    def _read(self: CbfDeviceProxy, attribute_name: str) -> Any:
+    def _read(self: CbfGroupProxy, attribute_name: str) -> Any:
         """
         Read an attribute manually.
 
@@ -403,12 +418,12 @@ class CbfDeviceProxy:
     # clean up properly after ourselves, so we should find a better solution if
     # possible.
     #
-    # def __del__(self: CbfDeviceProxy) -> None:
+    # def __del__(self: CbfGroupProxy) -> None:
     #     """Cleanup before destruction."""
     #     for subscription_id in self._change_event_subscription_ids:
     #         self._device.unsubscribe_event(subscription_id)
 
-    def __setattr__(self: CbfDeviceProxy, name: str, value: Any) -> None:
+    def __setattr__(self: CbfGroupProxy, name: str, value: Any) -> None:
         """
         Handle the setting of attributes on this object.
 
@@ -426,10 +441,10 @@ class CbfDeviceProxy:
             self.__dict__[name] = value
         elif self._pass_through:
             if self._device is None:
-                raise ConnectionError("CbfDeviceProxy has not connected yet.")
+                raise ConnectionError("CbfGroupProxy has not connected yet.")
             setattr(self._device, name, value)
 
-    def __getattr__(self: CbfDeviceProxy, name: str, default_value: Any = None) -> Any:
+    def __getattr__(self: CbfGroupProxy, name: str, default_value: Any = None) -> Any:
         """
         Handle any requested attribute not found in the usual way.
 
@@ -451,3 +466,5 @@ class CbfDeviceProxy:
             return default_value
         else:
             raise AttributeError(f"No such attribute: {name}")
+
+    
