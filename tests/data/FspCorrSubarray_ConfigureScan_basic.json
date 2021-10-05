@@ -1,7 +1,7 @@
 {
     "fsp_id": 1, 
     "function_mode": "CORR", 
-    "receptor_ids": [4], 
+    "receptor_ids": [2], 
     "frequency_slice_id": 1, 
     "zoom_factor": 1, 
     "zoom_window_tuning": 4700000, 
