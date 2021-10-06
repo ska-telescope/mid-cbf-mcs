@@ -112,7 +112,7 @@ class TestFspCorrSubarray:
 
         assert device_under_test.State() == tango.DevState.OFF
         # check initial values of attributes
-        # TODO: why does device_under_test.receptors return None?
+        # TODO: device_under_test.receptors should be [] after Init not None
         assert device_under_test.receptors == None
         assert device_under_test.frequencyBand == 0
         assert [device_under_test.band5Tuning[0],
@@ -179,6 +179,7 @@ class TestFspCorrSubarray:
         time.sleep(3)
 
         # receptor list should be empty right after initialization
+        # TODO: device_under_test.receptors should be [] after Init not None
         assert device_under_test.receptors == None
 
         device_under_test.On()
@@ -192,6 +193,7 @@ class TestFspCorrSubarray:
 
         # remove the receptor
         device_under_test.RemoveReceptors([1])
+        # TODO: device_under_test.receptors should be [] after all removed not None
         assert device_under_test.receptors == None
 
     def test_AddRemoveReceptors_invalid(
@@ -208,6 +210,7 @@ class TestFspCorrSubarray:
         time.sleep(3)
 
         # receptor list should be empty right after initialization
+        # TODO: device_under_test.receptors should be [] after Init not None
         assert device_under_test.receptors == None
 
         device_under_test.On()
@@ -232,6 +235,7 @@ class TestFspCorrSubarray:
 
         # remove all receptors
         device_under_test.RemoveReceptors([1])
+        # TODO: device_under_test.receptors should be [] after all removed not None
         assert device_under_test.receptors == None
 
     def test_RemoveAllReceptors(
@@ -245,6 +249,7 @@ class TestFspCorrSubarray:
         time.sleep(3)
 
         # receptor list should be empty right after initialization
+        # TODO: device_under_test.receptors should be [] after Init not None
         assert device_under_test.receptors == None
 
         device_under_test.On()
@@ -258,4 +263,5 @@ class TestFspCorrSubarray:
 
         # remove all receptors
         device_under_test.RemoveAllReceptors()
+        # TODO: device_under_test.receptors should be [] after all removed not None
         assert device_under_test.receptors == None
