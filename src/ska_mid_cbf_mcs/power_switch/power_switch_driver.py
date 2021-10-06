@@ -82,6 +82,8 @@ class PowerSwitchDriver:
     def num_outlets(self: PowerSwitchDriver) -> int:
         """
         Get number of outlets present in this power switch.
+
+        :return: number of outlets
         """
         self.outlets = self.get_outlet_list()
         return len(self.outlets)
@@ -90,6 +92,8 @@ class PowerSwitchDriver:
     def is_communicating(self: PowerSwitchDriver) -> bool:
         """
         Returns whether or not the power switch can be communicated with.
+
+        :return: whether the power switch is communicating
         """
         try:
             response = requests.get(url=self.base_url, headers=self.header, auth=(user, password))
@@ -128,7 +132,8 @@ class PowerSwitchDriver:
         Tell the DLI power switch to turn on a specific outlet.
 
         :param outlet: outlet ID to turn on
-        :return: a result code
+        :return: a tuple containing a return code and a string
+                 message indicating status
 
         :raise AssertionError: if outlet ID is out of bounds
         """
@@ -159,7 +164,8 @@ class PowerSwitchDriver:
         Tell the DLI power switch to turn off a specific outlet.
 
         :param outlet: outlet ID to turn off
-        :return: a result code
+        :return: a tuple containing a return code and a string
+                 message indicating status
 
         :raise AssertionError: if outlet ID is out of bounds
         """

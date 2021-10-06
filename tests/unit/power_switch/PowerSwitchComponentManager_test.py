@@ -7,11 +7,13 @@
 #
 # Distributed under the terms of the BSD-3-Clause license.
 # See LICENSE.txt for more info.
+
 """Contain the tests for the power switch component manager."""
 
 # Standard imports
 import pytest
 from ska_mid_cbf_mcs.commons.global_enum import PowerMode
+from ska_mid_cbf_mcs.power_switch.power_switch_component_manager import PowerSwitchComponentManager
 
 # Local imports
 from ska_tango_base.commands import ResultCode
@@ -23,7 +25,9 @@ from ska_tango_base.commands import ResultCode
         "sim_get_error": False
     }],
     indirect=True)
-def test_get_outlet_state(power_switch_component_manager):
+def test_get_outlet_state(
+    power_switch_component_manager: PowerSwitchComponentManager
+) -> None:
     """
     Tests that we can get the state of every outlet.
     """
@@ -41,7 +45,9 @@ def test_get_outlet_state(power_switch_component_manager):
         "sim_get_error": False
     }],
     indirect=True)
-def test_turn_outlet_on_off(power_switch_component_manager):
+def test_turn_outlet_on_off(
+    power_switch_component_manager: PowerSwitchComponentManager
+) -> None:
     """
     Tests that the outlets can be turned on and off individually.
     """
@@ -82,7 +88,9 @@ def test_turn_outlet_on_off(power_switch_component_manager):
         "sim_get_error": False
     }],
     indirect=True)
-def test_outlet_out_of_bounds(power_switch_component_manager):
+def test_outlet_out_of_bounds(
+    power_switch_component_manager: PowerSwitchComponentManager
+) -> None:
     """
     Tests that the power switch driver does not query the power switch with
     an outlet number that is invalid.
@@ -108,7 +116,9 @@ def test_outlet_out_of_bounds(power_switch_component_manager):
         "sim_get_error": True
     }],
     indirect=True)
-def test_get_request_failure(power_switch_component_manager):
+def test_get_request_failure(
+    power_switch_component_manager: PowerSwitchComponentManager
+) -> None:
     """
     Tests that a GET request failure is appropriately handled.
     """
@@ -122,7 +132,9 @@ def test_get_request_failure(power_switch_component_manager):
         "sim_get_error": False
     }],
     indirect=True)
-def test_put_request_failure(power_switch_component_manager):
+def test_put_request_failure(
+    power_switch_component_manager: PowerSwitchComponentManager
+) -> None:
     """
     Tests that a PUT request failure is appropriately handled.
     """

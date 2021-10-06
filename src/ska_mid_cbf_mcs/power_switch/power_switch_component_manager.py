@@ -51,6 +51,8 @@ class PowerSwitchComponentManager:
     def num_outlets(self: PowerSwitchComponentManager) -> int:
         """
         Get number of outlets present in this power switch.
+
+        :return: number of outlets
         """
         if self.simulation_mode:
             return self.power_switch_simulator.num_outlets
@@ -61,6 +63,8 @@ class PowerSwitchComponentManager:
     def is_communicating(self: PowerSwitchComponentManager) -> bool:
         """
         Returns whether or not the power switch can be communicated with.
+
+        :return: whether the power switch is communicating
         """
         if self.simulation_mode:
             return self.power_switch_simulator.is_communicating
@@ -93,7 +97,7 @@ class PowerSwitchComponentManager:
 
         :param outlet: outlet ID to turn on
         :return: a tuple containing a return code and a string
-                message indicating status
+                 message indicating status
 
         :raise AssertionError: if outlet ID is out of bounds
         """

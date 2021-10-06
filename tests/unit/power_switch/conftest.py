@@ -5,7 +5,7 @@
 # Distributed under the terms of the GPL license.
 # See LICENSE.txt for more info.
 
-"""This module contains pytest-specific test harness for MCS unit tests."""
+"""This module contains pytest-specific test harness for power switch unit tests."""
 
 from __future__ import annotations
 
@@ -18,9 +18,8 @@ import requests
 from typing import List, Any
 
 # Local imports
-from ska_mid_cbf_mcs.power_switch.power_switch_device import PowerSwitch
 from ska_mid_cbf_mcs.power_switch.power_switch_component_manager import PowerSwitchComponentManager
-from ska_mid_cbf_mcs.testing.tango_harness import TangoHarness
+from ska_mid_cbf_mcs.testing.tango_harness import TangoHarness, DevicesToLoadType
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_tango_base.control_model import SimulationMode
 
@@ -140,7 +139,12 @@ def device_under_test(tango_harness: TangoHarness) -> CbfDeviceProxy:
     return tango_harness.get_device("mid_csp_cbf/power_switch/001")
 
 @pytest.fixture()
-def device_to_load():
+def device_to_load() -> DevicesToLoadType:
+    """
+    Fixture that specifies the device to be loaded for testing.
+
+    :return: specification of the device to be loaded
+    """
     return {
         "path": "charts/ska-mid-cbf/data/midcbfconfig.json",
         "package": "ska_mid_cbf_mcs.power_switch.power_switch_device",

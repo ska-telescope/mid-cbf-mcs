@@ -43,6 +43,8 @@ class PowerSwitchSimulator:
     def num_outlets(self: PowerSwitchSimulator) -> int:
         """
         Get number of outlets present in this power switch.
+
+        :return: number of outlets
         """
         self.outlets = self.get_outlet_list()
         return len(self.outlets)
@@ -51,6 +53,8 @@ class PowerSwitchSimulator:
     def is_communicating(self: PowerSwitchSimulator) -> bool:
         """
         Returns whether or not the power switch can be communicated with.
+
+        :return: whether the power switch is communicating
         """
         return True
 
