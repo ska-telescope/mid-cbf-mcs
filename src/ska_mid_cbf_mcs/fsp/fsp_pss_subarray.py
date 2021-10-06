@@ -37,6 +37,7 @@ from random import randint
 from ska_tango_base.control_model import HealthState, AdminMode, ObsState
 from ska_tango_base import CspSubElementObsDevice
 from ska_tango_base.commands import ResultCode
+from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 
 # PROTECTED REGION END #    //  FspPssSubarray.additionnal_import
 
@@ -168,16 +169,24 @@ class FspPssSubarray(CspSubElementObsDevice):
             device._scan_id = 0
             device._config_id = ""
 
-            # device proxy for easy reference to CBF Controller
-            device._proxy_cbf_controller = tango.DeviceProxy(device.CbfControllerAddress)
-
+            # device proxy for connection to CbfController
+            device._proxy_cbf_controller = CbfDeviceProxy(
+                fqdn=device.CbfControllerAddress,
+                logger=device.logger
+            )
             device._controller_max_capabilities = dict(
-                pair.split(":") for pair in
+                pair.split(":") for pair in 
                 device._proxy_cbf_controller.get_property("MaxCapabilities")["MaxCapabilities"]
             )
+
+            # Connect to all VCC devices turned on by CbfController:
             device._count_vcc = int(device._controller_max_capabilities["VCC"])
             device._fqdn_vcc = list(device.VCC)[:device._count_vcc]
-            device._proxies_vcc = [*map(tango.DeviceProxy, device._fqdn_vcc)]
+            device._proxies_vcc = [
+                CbfDeviceProxy(
+                    logger=device.logger, 
+                    fqdn=address) for address in device._fqdn_vcc
+            ]
 
             message = "FspPssSubarry Init command completed OK"
             self.logger.info(message)

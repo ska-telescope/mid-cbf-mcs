@@ -45,8 +45,6 @@ from ska_tango_base import CspSubElementObsDevice
 from ska_tango_base.commands import ResultCode
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 
-from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
-
 # PROTECTED REGION END #    //  FspCorrSubarray.additionnal_import
 
 __all__ = ["FspCorrSubarray", "main"]
