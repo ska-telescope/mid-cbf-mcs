@@ -151,7 +151,7 @@ def mock_factory() -> Callable[[], unittest.mock.Mock]:
     return MockDeviceBuilder()
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture()
 def tango_harness_factory(
     request: pytest.FixtureRequest, logger: logging.Logger
 ) -> Callable[

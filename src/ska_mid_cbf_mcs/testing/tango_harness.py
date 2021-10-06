@@ -175,7 +175,13 @@ class CbfDeviceInfo:
         for server in self._source_data["servers"]:
             if name in self._source_data["servers"][server]:
                 device_spec = self._source_data["servers"][server][name]
-                class_name = next(iter(device_spec))
+                # current workaround for loading a device that isn't listed
+                # first in the device server config json is to load via the
+                # patched device class name and inputting the desired class type
+                # in the device_spec object, however this prevents the use of a 
+                # patched device wrapper
+                # TODO: add a new field specifying class_name to device_spec ?
+                class_name = patch.__name__
                 fqdn = next(iter(device_spec[class_name]))
                 properties = device_spec[class_name][fqdn]["properties"]
 

@@ -25,7 +25,7 @@ from ska_mid_cbf_mcs.testing.mock.mock_callable import MockChangeEventCallback
 from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder
 from ska_mid_cbf_mcs.testing.tango_harness import DeviceToLoadType, TangoHarness
 
-from ska_mid_cbf_mcs.vcc.vcc_device import Vcc
+from ska_mid_cbf_mcs.fsp.fsp_corr_subarray import FspCorrSubarray
 from ska_tango_base.control_model import HealthState, AdminMode, ObsState
 from ska_tango_base.commands import ResultCode
 
@@ -40,7 +40,7 @@ def device_under_test(tango_harness: TangoHarness) -> CbfDeviceProxy:
 
     :return: the device under test
     """
-    return tango_harness.get_device("mid_csp_cbf/vcc/001")
+    return tango_harness.get_device("mid_csp_cbf/fspCorrSubarray/01_01")
 
 # TODO: see TODO in src/ska_mid_cbf_mcs/testing/tango_harness.py
 @pytest.fixture()
@@ -53,63 +53,38 @@ def device_to_load() -> DeviceToLoadType:
     return {
         "path": "charts/ska-mid-cbf/data/midcbfconfig.json",
         "package": "ska_mid_cbf_mcs",
-        "device": "vcc-001",
+        "device": "fsp-01",
         "proxy": CbfDeviceProxy,
-        "patch": Vcc
+        "patch": FspCorrSubarray
     }
 
 @pytest.fixture()
-def mock_vcc_band12() -> unittest.mock.Mock:
+def mock_cbf_controller() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
-    builder.set_state(tango.DevState.OFF)
-    builder.add_result_command("On", ResultCode.OK)
-    builder.add_result_command("Disable", ResultCode.OK)
+    builder.add_property({'MaxCapabilities': ['VCC:4', 'FSP:4', 'Subarray:2']})
+    builder.add_attribute("receptorToVcc", ["1:2", "1:1", "2:1"])
     return builder()
 
 @pytest.fixture()
-def mock_vcc_band3() -> unittest.mock.Mock:
+def mock_vcc() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
-    builder.set_state(tango.DevState.OFF)
-    builder.add_result_command("On", ResultCode.OK)
-    builder.add_result_command("Disable", ResultCode.OK)
-    return builder()
-
-@pytest.fixture()
-def mock_vcc_band4() -> unittest.mock.Mock:
-    builder = MockDeviceBuilder()
-    builder.set_state(tango.DevState.OFF)
-    builder.add_result_command("On", ResultCode.OK)
-    builder.add_result_command("Disable", ResultCode.OK)
-    return builder()
-
-@pytest.fixture()
-def mock_vcc_band5() -> unittest.mock.Mock:
-    builder = MockDeviceBuilder()
-    builder.set_state(tango.DevState.OFF)
-    builder.add_result_command("On", ResultCode.OK)
-    builder.add_result_command("Disable", ResultCode.OK)
+    builder.add_attribute("subarrayMembership", 1)
     return builder()
 
 @pytest.fixture()
 def initial_mocks(
-    mock_vcc_band12: unittest.mock.Mock,
-    mock_vcc_band3: unittest.mock.Mock,
-    mock_vcc_band4: unittest.mock.Mock,
-    mock_vcc_band5: unittest.mock.Mock,
+    mock_cbf_controller: unittest.mock.Mock,
+    mock_vcc: unittest.mock.Mock,
 ) -> Dict[str, unittest.mock.Mock]:
     """
     Return a dictionary of device proxy mocks to pre-register.
 
-    :param mock_vcc_band12: a mock VccBand1And2 that is powered off.
-    :param mock_vcc_band3: a mock VccBand3 that is powered off.
-    :param mock_vcc_band4: a mock VccBand4 that is powered off.
-    :param mock_vcc_band5: a mock VccBand5 that is powered off.
+    :param mock_cbf_controller: a mock CbfController.
+    :param mock_vcc: a mock Vcc.
 
     :return: a dictionary of device proxy mocks to pre-register.
     """
     return {
-        "mid_csp_cbf/vcc_band12/001": mock_vcc_band12,
-        "mid_csp_cbf/vcc_band3/001": mock_vcc_band3,
-        "mid_csp_cbf/vcc_band4/001": mock_vcc_band4,
-        "mid_csp_cbf/vcc_band5/001": mock_vcc_band5,
+        "mid_csp_cbf/sub_elt/controller": mock_cbf_controller,
+        "mid_csp_cbf/vcc/001": mock_vcc
     }
