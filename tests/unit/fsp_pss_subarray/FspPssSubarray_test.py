@@ -19,6 +19,8 @@ import logging
 import pytest
 from typing import Callable, Type, Dict
 
+from tango import server
+
 # Path
 file_path = os.path.dirname(os.path.abspath(__file__))
 
@@ -98,6 +100,52 @@ class TestFspPssSubarray:
         time.sleep(0.1)
         assert device_under_test.obsState == ObsState.IDLE
 
+    def test_ConfigureScan_basic(
+        self: TestFspPssSubarray,
+        device_under_test: CbfDeviceProxy
+    ) -> None:
+        """
+        Test a minimal successful scan configuration.
+
+        :param device_under_test: fixture that provides a
+            :py:class:`tango.DeviceProxy` to the device under test, in a
+            :py:class:`tango.test_context.DeviceTestContext`.
+        """
+
+        assert device_under_test.State() == tango.DevState.OFF
+        # check initial values of attributes
+        # TODO: device_under_test.receptors,
+        #       device_under_test.searchBeams 
+        #       and device_under_test.searchBeamID 
+        #       should be [] after Init not None
+        assert device_under_test.receptors == None
+        assert device_under_test.searchBeams == None
+        assert device_under_test.searchWindowID == 0
+        assert device_under_test.searchBeamID == None
+        assert device_under_test.outputEnable == 0
+        
+        device_under_test.On()
+        time.sleep(3)
+        assert device_under_test.State() == DevState.ON
+
+        # configure search window
+        config_file_name = "/../../data/FspPssSubarray_ConfigureScan_basic.json"
+        f = open(file_path + config_file_name)
+        json_str = f.read().replace("\n", "")
+        f.close()
+        configuration = json.loads(json_str)
+        device_under_test.ConfigureScan(json_str)
+        f.close()
+
+        assert device_under_test.searchWindowID == int(configuration["search_window_id"])
+        for i, searchBeam in enumerate(configuration["search_beam"]):
+            logging.info(device_under_test.searchBeams)
+            logging.info(type(device_under_test.searchBeams))
+            logging.info(searchBeam)
+            logging.info(type(searchBeam))
+            assert device_under_test.searchBeams[i] == json.dumps(searchBeam)
+            assert device_under_test.searchBeamID[i] == int(searchBeam["search_beam_id"])
+    
     def test_AddRemoveReceptors_valid(
         self: TestFspPssSubarray,
         device_under_test: CbfDeviceProxy
