@@ -315,7 +315,12 @@ class FspPssSubarray(CspSubElementObsDevice):
 
             # Configure receptors.
             self.logger.debug("_receptors = {}".format(device._receptors))
-
+            # TODO: Why are we overwriting the device property fsp ID
+            #       with the argument in the ConfigureScan json file
+            if device._fsp_id != argin["fsp_id"]:
+                device.logger.warning(
+                    "The Fsp ID from ConfigureScan {} does not equal the Fsp ID from the device properties {}"
+                    .format(device._fsp_id, argin["fsp_id"]))
             device._fsp_id = argin["fsp_id"]
             device._search_window_id = int(argin["search_window_id"])
 

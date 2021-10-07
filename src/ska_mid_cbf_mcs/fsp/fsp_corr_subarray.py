@@ -215,7 +215,7 @@ class FspCorrSubarray(CspSubElementObsDevice):
 
     class InitCommand(CspSubElementObsDevice.InitCommand):
         """
-        A class for the Vcc's init_device() "command".
+        A class for the FspCorrSubarray's init_device() "command".
         """
 
         def do(self):
