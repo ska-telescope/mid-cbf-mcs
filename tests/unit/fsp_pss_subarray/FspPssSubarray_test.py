@@ -139,10 +139,6 @@ class TestFspPssSubarray:
 
         assert device_under_test.searchWindowID == int(configuration["search_window_id"])
         for i, searchBeam in enumerate(configuration["search_beam"]):
-            logging.info(device_under_test.searchBeams)
-            logging.info(type(device_under_test.searchBeams))
-            logging.info(searchBeam)
-            logging.info(type(searchBeam))
             assert device_under_test.searchBeams[i] == json.dumps(searchBeam)
             assert device_under_test.searchBeamID[i] == int(searchBeam["search_beam_id"])
     
