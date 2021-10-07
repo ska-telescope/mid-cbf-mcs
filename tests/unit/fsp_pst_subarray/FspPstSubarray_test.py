@@ -111,8 +111,7 @@ class TestFspPstSubarray:
         time.sleep(3)
 
         # receptor list should be empty right after initialization
-        # TODO: device_under_test.receptors should be [] after Init not ()
-        assert device_under_test.receptors == ()
+        assert device_under_test.receptors == []
 
         device_under_test.On()
         time.sleep(3)
@@ -125,8 +124,7 @@ class TestFspPstSubarray:
 
         # remove the receptor
         device_under_test.RemoveReceptors([1])
-        # TODO: device_under_test.receptors should be [] after all removed not ()
-        assert device_under_test.receptors == ()
+        assert device_under_test.receptors == []
 
     def test_AddRemoveReceptors_invalid(
         self: TestFspPstSubarray,
@@ -142,8 +140,7 @@ class TestFspPstSubarray:
         time.sleep(3)
 
         # receptor list should be empty right after initialization
-        # TODO: device_under_test.receptors should be [] after Init not ()
-        assert device_under_test.receptors == ()
+        assert device_under_test.receptors == []
 
         device_under_test.On()
         time.sleep(3)
@@ -167,8 +164,7 @@ class TestFspPstSubarray:
 
         # remove all receptors
         device_under_test.RemoveReceptors([1])
-        # TODO: device_under_test.receptors should be [] after all removed not ()
-        assert device_under_test.receptors == ()
+        assert device_under_test.receptors == []
 
     def test_RemoveAllReceptors(
         self: TestFspPstSubarray,
@@ -181,8 +177,7 @@ class TestFspPstSubarray:
         time.sleep(3)
 
         # receptor list should be empty right after initialization
-        # TODO: device_under_test.receptors should be [] after Init not ()
-        assert device_under_test.receptors == ()
+        assert device_under_test.receptors == []
 
         device_under_test.On()
         time.sleep(3)
@@ -195,5 +190,4 @@ class TestFspPstSubarray:
 
         # remove all receptors
         device_under_test.RemoveAllReceptors()
-        # TODO: device_under_test.receptors should be [] after all removed not ()
-        assert device_under_test.receptors == ()
+        assert device_under_test.receptors == []
