@@ -456,9 +456,9 @@ class FspPstSubarray(CspSubElementObsDevice):
             :rtype: (ResultCode, str)
             """
 
-            message = "Scan command successful"
-            self.logger.info(message)
-            return (ResultCode.STARTED, message)
+            (result_code,message)=super().do(argin)
+
+            return (result_code, message)
 
     class GoToIdleCommand(CspSubElementObsDevice.GoToIdleCommand):
         """
