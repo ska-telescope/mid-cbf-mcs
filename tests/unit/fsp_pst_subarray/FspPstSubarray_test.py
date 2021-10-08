@@ -39,7 +39,6 @@ class TestFspPstSubarray:
     """
     Test class for FspPstSubarray tests.
     """
-
     def test_On_Off(
         self: TestFspPstSubarray,
         device_under_test: CbfDeviceProxy
@@ -59,7 +58,7 @@ class TestFspPstSubarray:
         device_under_test.Off()
         time.sleep(3)
         assert device_under_test.State() == DevState.OFF
-    
+
     def test_Scan_EndScan_GoToIdle(
         self: TestFspPstSubarray,
         device_under_test: CbfDeviceProxy
@@ -99,7 +98,7 @@ class TestFspPstSubarray:
         device_under_test.GoToIdle()
         time.sleep(0.1)
         assert device_under_test.obsState == ObsState.IDLE
-
+        
     def test_ConfigureScan_basic(
         self: TestFspPstSubarray,
         device_under_test: CbfDeviceProxy
@@ -118,9 +117,9 @@ class TestFspPstSubarray:
         #       device_under_test.timingBeams 
         #       and device_under_test.timingBeamID 
         #       should be [] after Init 
-        # assert device_under_test.receptors == []
-        # assert device_under_test.timingBeams == []
-        # assert device_under_test.timingBeamID == []
+        assert device_under_test.read_attribute("receptors", extract_as=tango.ExtractAs.List).value == []
+        assert device_under_test.read_attribute("timingBeams", extract_as=tango.ExtractAs.List).value == []
+        assert device_under_test.read_attribute("timingBeamID", extract_as=tango.ExtractAs.List).value == [] 
         assert device_under_test.outputEnable == 0
         
         device_under_test.On()
@@ -139,7 +138,7 @@ class TestFspPstSubarray:
         for i, timingBeam in enumerate(configuration["timing_beam"]):
             assert device_under_test.timingBeams[i] == json.dumps(timingBeam)
             assert device_under_test.timingBeamID[i] == int(timingBeam["timing_beam_id"])
-    
+
     def test_AddRemoveReceptors_valid(
         self: TestFspPstSubarray,
         device_under_test: CbfDeviceProxy
@@ -152,7 +151,7 @@ class TestFspPstSubarray:
 
         # receptor list should be empty right after initialization
         #TODO: this assert should pass
-        # assert device_under_test.receptors == []
+        assert device_under_test.read_attribute("receptors", extract_as=tango.ExtractAs.List).value == []
 
         device_under_test.On()
         time.sleep(3)
@@ -166,7 +165,7 @@ class TestFspPstSubarray:
         # remove the receptor
         device_under_test.RemoveReceptors([1])
         #TODO: this assert should pass
-        # assert device_under_test.receptors == []
+        assert device_under_test.read_attribute("receptors", extract_as=tango.ExtractAs.List).value == []
 
     def test_AddRemoveReceptors_invalid(
         self: TestFspPstSubarray,
@@ -183,7 +182,7 @@ class TestFspPstSubarray:
 
         # receptor list should be empty right after initialization
         #TODO: this assert should pass
-        # assert device_under_test.receptors == []
+        assert device_under_test.read_attribute("receptors", extract_as=tango.ExtractAs.List).value == []
 
         device_under_test.On()
         time.sleep(3)
@@ -208,7 +207,7 @@ class TestFspPstSubarray:
         # remove all receptors
         device_under_test.RemoveReceptors([1])
         #TODO: this assert should pass
-        # assert device_under_test.receptors == []
+        assert device_under_test.read_attribute("receptors", extract_as=tango.ExtractAs.List).value == []
 
     def test_RemoveAllReceptors(
         self: TestFspPstSubarray,
@@ -222,7 +221,7 @@ class TestFspPstSubarray:
 
         # receptor list should be empty right after initialization
         #TODO: this assert should pass
-        # assert device_under_test.receptors == []
+        assert device_under_test.read_attribute("receptors", extract_as=tango.ExtractAs.List).value == []
 
         device_under_test.On()
         time.sleep(3)
@@ -236,4 +235,4 @@ class TestFspPstSubarray:
         # remove all receptors
         device_under_test.RemoveAllReceptors()
         #TODO: this assert should pass
-        # assert device_under_test.receptors == []
+        assert device_under_test.read_attribute("receptors", extract_as=tango.ExtractAs.List).value == []
