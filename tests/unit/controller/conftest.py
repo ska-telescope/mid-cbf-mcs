@@ -60,57 +60,55 @@ def device_to_load() -> DeviceToLoadType:
     }
 
 @pytest.fixture()
-def mock_vcc_band12() -> unittest.mock.Mock:
+def mock_vcc() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.OFF)
     builder.add_result_command("On", ResultCode.OK)
-    builder.add_result_command("Disable", ResultCode.OK)
+    builder.add_result_command("Off", ResultCode.OK)
     return builder()
 
 @pytest.fixture()
-def mock_vcc_band3() -> unittest.mock.Mock:
+def mock_fsp() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.OFF)
     builder.add_result_command("On", ResultCode.OK)
-    builder.add_result_command("Disable", ResultCode.OK)
+    builder.add_result_command("Off", ResultCode.OK)
     return builder()
 
 @pytest.fixture()
-def mock_vcc_band4() -> unittest.mock.Mock:
+def mock_subarray() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.OFF)
     builder.add_result_command("On", ResultCode.OK)
-    builder.add_result_command("Disable", ResultCode.OK)
+    builder.add_result_command("Off", ResultCode.OK)
     return builder()
 
-@pytest.fixture()
-def mock_vcc_band5() -> unittest.mock.Mock:
-    builder = MockDeviceBuilder()
-    builder.set_state(tango.DevState.OFF)
-    builder.add_result_command("On", ResultCode.OK)
-    builder.add_result_command("Disable", ResultCode.OK)
-    return builder()
 
 @pytest.fixture()
 def initial_mocks(
-    mock_vcc_band12: unittest.mock.Mock,
-    mock_vcc_band3: unittest.mock.Mock,
-    mock_vcc_band4: unittest.mock.Mock,
-    mock_vcc_band5: unittest.mock.Mock,
+    mock_vcc: unittest.mock.Mock,
+    mock_fsp: unittest.mock.Mock,
+    mock_subarray: unittest.mock.Mock
 ) -> Dict[str, unittest.mock.Mock]:
     """
     Return a dictionary of device proxy mocks to pre-register.
 
-    :param mock_vcc_band12: a mock VccBand1And2 that is powered off.
-    :param mock_vcc_band3: a mock VccBand3 that is powered off.
-    :param mock_vcc_band4: a mock VccBand4 that is powered off.
-    :param mock_vcc_band5: a mock VccBand5 that is powered off.
+    :param mock_vcc: a mock Vcc that is powered off.
+    :param mock_fsp: a mock VccBand3 that is powered off.
+    :param mock_subarray: a mock VccBand4 that is powered off.
 
     :return: a dictionary of device proxy mocks to pre-register.
     """
     return {
-        "mid_csp_cbf/vcc_band12/001": mock_vcc_band12,
-        "mid_csp_cbf/vcc_band3/001": mock_vcc_band3,
-        "mid_csp_cbf/vcc_band4/001": mock_vcc_band4,
-        "mid_csp_cbf/vcc_band5/001": mock_vcc_band5,
+        "mid_csp_cbf/vcc/001": mock_vcc,
+        "mid_csp_cbf/vcc/002": mock_vcc,
+        "mid_csp_cbf/vcc/003": mock_vcc,
+        "mid_csp_cbf/vcc/004": mock_vcc,
+        "mid_csp_cbf/fsp/01": mock_fsp,
+        "mid_csp_cbf/fsp/02": mock_fsp,
+        "mid_csp_cbf/fsp/03": mock_fsp,
+        "mid_csp_cbf/fsp/04": mock_fsp,
+        "mid_csp_cbf/sub_elt/subarray_01": mock_subarray,
+        "mid_csp_cbf/sub_elt/subarray_02": mock_subarray,
+        "mid_csp_cbf/sub_elt/subarray_03": mock_subarray,
     }

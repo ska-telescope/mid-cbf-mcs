@@ -34,6 +34,7 @@ from ska_tango_base import SKAMaster, SKABaseDevice
 from ska_tango_base.control_model import HealthState, AdminMode
 from ska_tango_base.commands import ResultCode
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
+from ska_mid_cbf_mcs.group_proxy import CbfGroupProxy
 
 # PROTECTED REGION END #    //  CbfController.additionnal_import
 
@@ -464,13 +465,13 @@ class CbfController(SKAMaster):
             device._event_id = {}  # proxy:[eventID]
 
             # initialize groups
-            device._group_vcc = tango.Group("VCC")
+            device._group_vcc = CbfGroupProxy("VCC", logger=device.logger)
             for fqdn in device._fqdn_vcc:
                 device._group_vcc.add(fqdn)
-            device._group_fsp = tango.Group("FSP")
+            device._group_fsp = CbfGroupProxy("FSP", logger=device.logger)
             for fqdn in device._fqdn_fsp:
                 device._group_fsp.add(fqdn)
-            device._group_subarray = tango.Group("CBF Subarray")
+            device._group_subarray = CbfGroupProxy("CBF Subarray", logger=device.logger)
             for fqdn in device._fqdn_subarray:
                 device._group_subarray.add(fqdn)
 
@@ -698,10 +699,13 @@ class CbfController(SKAMaster):
 
             device = self.target
 
-            device._group_subarray.command_inout("On")
-            device._group_vcc.command_inout("On")
-            device._group_fsp.command_inout("On")
-            device.set_state(tango.DevState.ON)
+            # device._group_subarray.command_inout("On")
+            # device._group_vcc.command_inout("On")
+            # device._group_fsp.command_inout("On")
+            # device.set_state(tango.DevState.ON)
+            device._group_subarray.On()
+            device._group_vcc.On()
+            device._group_fsp.On()
 
             return (result_code,message)
 
@@ -727,10 +731,10 @@ class CbfController(SKAMaster):
             for proxy in list(device._event_id.keys()):
                 for event_id in device._event_id[proxy]:
                     proxy.unsubscribe_event(event_id)
-            device._group_subarray.command_inout("Off")
-            device._group_vcc.command_inout("Off")
-            device._group_fsp.command_inout("Off")
-            device.set_state(tango.DevState.OFF)
+            device._group_subarray.Off()
+            device._group_vcc.Off()
+            device._group_fsp.Off()
+            #device.set_state(tango.DevState.OFF)
 
             return (result_code,message)
 

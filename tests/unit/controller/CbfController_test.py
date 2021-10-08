@@ -54,5 +54,8 @@ class TestCbfController:
         device_under_test.On()
         time.sleep(1)
         assert device_under_test.State() == DevState.ON
-        pass
+
+        device_under_test.Off()
+        time.sleep(1)
+        assert device_under_test.State() == DevState.OFF
 

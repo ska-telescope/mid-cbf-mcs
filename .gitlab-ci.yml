@@ -115,7 +115,6 @@ unit:
   artifacts:
     paths:
       - build/
-  allow_failure: true
 
 
 integration:

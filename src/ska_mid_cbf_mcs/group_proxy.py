@@ -21,35 +21,28 @@ import backoff
 import tango
 from tango import DevFailed, DevState, AttrQuality
 
-from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
+import ska_mid_cbf_mcs.testing.tango_harness
 
 # type for the "details" dictionary that backoff calls its callbacks with
-BackoffDetailsType = TypedDict("BackoffDetailsType", {"args": list, "elapsed": float})
-ConnectionFactory = Callable[[str], tango.DeviceProxy]
+BackoffDetailsType = TypedDict(
+    "BackoffDetailsType", {"args": list, "elapsed": float}
+)
+ConnectionFactory = Callable[[str], tango.Group]
 
 
 class CbfGroupProxy:
     """
     This class implements a base group proxy for MCS devices.
 
-    At present it supports:
-
-    * deferred connection: we can create the proxy without immediately
-      trying to connect to the proxied device.
-    * a :py:meth:``connect`` method, for establishing that connection
-      later
-    * a :py:meth:``check_initialised`` method, for checking that /
-      waiting until the proxied device has transitioned out of INIT
-      state.
-    * Ability to subscribe to change events via the
-      :py:meth:``add_change_event_callback`` method.
+    Currently only used for providing mock group connections to devices during
+    unit testing.
     """
 
     _default_connection_factory = tango.Group
 
     @classmethod
     def set_default_connection_factory(
-        cls: Type[CbfGroupProxy], connection_factory: ConnectionFactory
+        cls: Type[CbfGroupProxy], group_connection_factory: ConnectionFactory
     ) -> None:
         """
         Set the default connection factory for this class.
@@ -58,33 +51,29 @@ class CbfGroupProxy:
         :py:class:`tango.DeviceProxy` altogether, by simply setting this
         class's default connection factory to a mock factory.
 
-        :param connection_factory: default factory to use to establish
+        :param group_connection_factory: default factory to use to establish
             a connection to the device
         """
-        cls._default_connection_factory = connection_factory
+        cls._default_connection_factory = group_connection_factory
 
     def __init__(
         self: CbfGroupProxy,
+        name: str,
         logger: logging.Logger,
-        connect: bool = True,
-        connection_factory: Optional[ConnectionFactory] = None,
+        group_connection_factory: Optional[ConnectionFactory] = None,
         pass_through: bool = True,
     ) -> None:
         """
         Create a new instance.
 
-        :param fqdn: fqdns of the devices to be proxied
         :param logger: a logger for this proxy to use
-        :param connection_factory: how we obtain a connection to the\
+        :param group_connection_factory: how we obtain a connection to the
             device we are proxying. By default this is
-            :py:class:`tango.DeviceProxy`, but occasionally this needs
+            :py:class:`tango.Group`, but occasionally this needs
             to be changed. For example, when testing against a
             :py:class:`tango.test_context.MultiDeviceTestContext`, we
             obtain connections to the devices under test via
             ``test_context.get_device(fqdn)``.
-        :param connect: whether to connect immediately to the device. If
-            False, then the device may be connected later by calling the
-            :py:meth:`.connect` method.
         :param pass_through: whether to pass unrecognised attribute
             accesses through to the underlying connection. Defaults to
             ``True`` but this will likely change in future once our
@@ -92,42 +81,29 @@ class CbfGroupProxy:
         """
         # Directly accessing object dictionary because we are overriding
         # setattr and don't want to infinitely recurse.
+        self.__dict__["_name"] = name
         self.__dict__["_fqdn"] = []
         self.__dict__["_logger"] = logger
-        self.__dict__["_connection_factory"] = (
-            connection_factory or CbfGroupProxy._default_connection_factory
+        self.__dict__["group_connection_factory"] = (
+            group_connection_factory or 
+            CbfGroupProxy._default_connection_factory
         )
         self.__dict__["_pass_through"] = pass_through
-        self.__dict__["_device"] = None
+        self.__dict__["_group"] = self.group_connection_factory(name)
 
         self.__dict__["_change_event_lock"] = threading.Lock()
         self.__dict__["_change_event_subscription_ids"] = {}
         self.__dict__["_change_event_callbacks"] = {}
 
-        if connect:
-            self.connect()
-    
-    def add(self: CbfGroupProxy, fqdn: str) -> None:
-        """
-        Add a device to the group.
 
-        :param fqdn: FQDN of the device to be proxied.
+    def add(self: CbfGroupProxy,
+        fqdn: str,
+        max_time: float = 120.0
+    ) -> None:
         """
-        self.__dict__["_fqdn"].add(fqdn)
-    
-    def remove(self: CbfGroupProxy, fqdn: str) -> None:
-        """
-        Add a device to the group.
+        Adds a connection to a device that we want to proxy to the group.
 
-        :param fqdn: FQDN of the device to be proxied.
-        """
-        self.__dict__["_fqdn"].remove(fqdn)
-
-
-    def connect(self: CbfGroupProxy, max_time: float = 120.0) -> None:
-        """
-        Establish a connection to the device that we want to proxy.
-
+        :param fqdn: FQDN of the device to be proxied
         :param max_time: the maximum time, in seconds, to wait for a
             connection to be established. The default is 120 i.e. two
             minutes. If set to 0 or None, a single connection attempt is
@@ -142,6 +118,7 @@ class CbfGroupProxy:
                 the call args and the elapsed time
             """
             fqdn = details["args"][1]
+            self.__dict__["_fqdn"].remove(fqdn)
             elapsed = details["elapsed"]
             self._logger.warning(
                 f"Gave up trying to connect to device {fqdn} after "
@@ -156,40 +133,54 @@ class CbfGroupProxy:
             max_time=max_time,
         )
         def _backoff_connect(
-            connection_factory: Callable[[str], tango.DeviceProxy], fqdn: str
-        ) -> tango.DeviceProxy:
+            group_connection_factory: Callable[[str], tango.Group],
+            fqdn: str
+        ) -> tango.Group:
             """
             Attempt connection to a specified device.
 
             Connection attribute use an exponential backoff-retry
             scheme in case of failure.
 
-            :param connection_factory: the factory to use to establish
+            :param group_connection_factory: the factory to use to establish
                 the connection
             :param fqdn: the fully qualified device name of the device
 
             :return: a proxy for the device
             """
-            return _connect(connection_factory, fqdn)
+            return _connect(group_connection_factory, fqdn)
 
         def _connect(
-            connection_factory: Callable[[str], tango.DeviceProxy], fqdn: str
-        ) -> tango.DeviceProxy:
+            group_connection_factory: Callable[[str], tango.Group], fqdn: str
+        ) -> tango.Group:
             """
             Make a single attempt to connect to a device.
 
-            :param connection_factory: the factory to use to establish
+            :param group_connection_factory: the factory to use to establish
                 the connection
             :param fqdn: the fully qualified device name of the device
 
             :return: a proxy for the device
             """
-            return connection_factory(fqdn)
+            self.__dict__["_fqdn"].append(fqdn)
+            return group_connection_factory(fqdn)
 
         if max_time:
-            self._device = _backoff_connect(self._connection_factory, self._fqdn)
+            self._group = _backoff_connect(
+                self.group_connection_factory, fqdn
+            )
         else:
-            self._device = _connect(self._connection_factory, self._fqdn)
+            self._group = _connect(self.group_connection_factory, fqdn)
+
+
+    def remove(self: CbfGroupProxy, fqdn: str) -> None:
+        """
+        Remove a device from the group.
+
+        :param fqdn: FQDN of the device to be proxied.
+        """
+        self.__dict__["_fqdn"].remove(fqdn)
+
 
     def check_initialised(self: CbfGroupProxy, max_time: float = 120.0) -> bool:
         """
@@ -272,9 +263,9 @@ class CbfGroupProxy:
                 return False
 
         if max_time:
-            return _backoff_check_initialised(self._device)
+            return _backoff_check_initialised(self._group)
         else:
-            return _check_initialised(self._device)
+            return _check_initialised(self._group)
 
     def add_change_event_callback(
         self: CbfGroupProxy,
@@ -324,7 +315,7 @@ class CbfGroupProxy:
 
         :return: the subscription id
         """
-        return self._device.subscribe_event(
+        return self._group.subscribe_event(
             attribute_name,
             tango.EventType.CHANGE_EVENT,
             self._change_event_received,
@@ -404,7 +395,7 @@ class CbfGroupProxy:
 
         :return: the attribute value
         """
-        return self._device.read_attribute(attribute_name)
+        return self._group.read_attribute(attribute_name)
 
     # TODO: This method is commented out because it is implicated in our segfault
     # issues:
@@ -421,7 +412,7 @@ class CbfGroupProxy:
     # def __del__(self: CbfGroupProxy) -> None:
     #     """Cleanup before destruction."""
     #     for subscription_id in self._change_event_subscription_ids:
-    #         self._device.unsubscribe_event(subscription_id)
+    #         self._group.unsubscribe_event(subscription_id)
 
     def __setattr__(self: CbfGroupProxy, name: str, value: Any) -> None:
         """
@@ -440,9 +431,9 @@ class CbfGroupProxy:
         if name in self.__dict__:
             self.__dict__[name] = value
         elif self._pass_through:
-            if self._device is None:
+            if self._group is None:
                 raise ConnectionError("CbfGroupProxy has not connected yet.")
-            setattr(self._device, name, value)
+            setattr(self._group, name, value)
 
     def __getattr__(self: CbfGroupProxy, name: str, default_value: Any = None) -> Any:
         """
@@ -460,11 +451,10 @@ class CbfGroupProxy:
 
         :return: the requested attribute
         """
-        if self._pass_through and self._device is not None:
-            return getattr(self._device, name, default_value)
+        if self._pass_through and self._group is not None:
+            return getattr(self._group, name, default_value)
         elif default_value is not None:
             return default_value
         else:
             raise AttributeError(f"No such attribute: {name}")
 
-    

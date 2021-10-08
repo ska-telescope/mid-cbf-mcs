@@ -33,7 +33,7 @@ from ska_mid_cbf_mcs.testing.tango_harness import DeviceToLoadType
 
 from ska_tango_base.control_model import HealthState, AdminMode, ObsState
 
-@pytest.mark.skip
+
 class TestVcc:
     """
     Test class for Vcc tests.

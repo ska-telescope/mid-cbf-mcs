@@ -265,143 +265,143 @@ class CbfDeviceInfo:
         ]
         return mdtc_device_info
 
-class CbfDeviceGroupInfo:
-    """
-    Data structure class that loads and holds information about devices,
-    and can provide that information in the format required by
-    :py:class:`tango.test_context.MultiDeviceTestContext`.
-    """
+# class CbfDeviceGroupInfo:
+#     """
+#     Data structure class that loads and holds information about devices,
+#     and can provide that information in the format required by
+#     :py:class:`tango.test_context.MultiDeviceTestContext`.
+#     """
 
-    def __init__(
-        self: CbfDeviceGroupInfo,
-        path: str,
-        package: str,
-        devices: Optional[list[DeviceSpecType]] = None,
-    ) -> None:
-        """
-        Create a new instance.
+#     def __init__(
+#         self: CbfDeviceGroupInfo,
+#         path: str,
+#         package: str,
+#         devices: Optional[list[DeviceSpecType]] = None,
+#     ) -> None:
+#         """
+#         Create a new instance.
 
-        :param path: the path to the configuration file that
-            contains information about all available devices.
-        :param package: name of the package from which to draw classes
-        :param devices: option specification of devices. If not
-            provided, then devices can be added via the
-            :py:meth:`.include_device` method.
-        """
-        with open(path, "r") as json_file:
-            self._source_data = json.load(json_file)
-        self._package = package
-        self._devices: dict[str, DeviceConfigType] = {}
-        self._proxies: dict[str, type[CbfGroupProxy]] = {}
+#         :param path: the path to the configuration file that
+#             contains information about all available devices.
+#         :param package: name of the package from which to draw classes
+#         :param devices: option specification of devices. If not
+#             provided, then devices can be added via the
+#             :py:meth:`.include_device` method.
+#         """
+#         with open(path, "r") as json_file:
+#             self._source_data = json.load(json_file)
+#         self._package = package
+#         self._devices: dict[str, DeviceConfigType] = {}
+#         self._proxies: dict[str, type[CbfGroupProxy]] = {}
 
-        if devices is not None:
-            for device_spec in devices:
-                self.include_device(**device_spec)
+#         if devices is not None:
+#             for device_spec in devices:
+#                 self.include_device(**device_spec)
 
-    def include_device(
-        self: CbfDeviceGroupInfo,
-        name: str,
-        proxy: type[CbfGroupProxy],
-        patch: Optional[type[SKABaseDevice]] = None,
-    ) -> None:
-        """
-        Include a device in this specification.
+#     def include_device(
+#         self: CbfDeviceGroupInfo,
+#         name: str,
+#         proxy: type[CbfGroupProxy],
+#         patch: Optional[type[SKABaseDevice]] = None,
+#     ) -> None:
+#         """
+#         Include a device in this specification.
 
-        :param name: the name of the device to be included. The
-            source data must contain configuration information for a
-            device listed under this name
-        :param proxy: the proxy class to use to access the device.
-        :param patch: an optional device class with which to patch the
-            named device
+#         :param name: the name of the device to be included. The
+#             source data must contain configuration information for a
+#             device listed under this name
+#         :param proxy: the proxy class to use to access the device.
+#         :param patch: an optional device class with which to patch the
+#             named device
 
-        :raises ValueError: if the named device does not exist in the
-            source configuration data
-        """
-        for server in self._source_data["servers"]:
-            if name in self._source_data["servers"][server]:
-                device_spec = self._source_data["servers"][server][name]
-                class_name = patch.__name__
-                fqdn = next(iter(device_spec[class_name]))
-                properties = device_spec[class_name][fqdn]["properties"]
+#         :raises ValueError: if the named device does not exist in the
+#             source configuration data
+#         """
+#         for server in self._source_data["servers"]:
+#             if name in self._source_data["servers"][server]:
+#                 device_spec = self._source_data["servers"][server][name]
+#                 class_name = patch.__name__
+#                 fqdn = next(iter(device_spec[class_name]))
+#                 properties = device_spec[class_name][fqdn]["properties"]
 
-                attribute_properties = device_spec[class_name][fqdn].get(
-                    "attribute_properties", {}
-                )
-                memorized = {
-                    name: value["__value"]
-                    for name, value in attribute_properties.items()
-                    if "__value" in value
-                }
+#                 attribute_properties = device_spec[class_name][fqdn].get(
+#                     "attribute_properties", {}
+#                 )
+#                 memorized = {
+#                     name: value["__value"]
+#                     for name, value in attribute_properties.items()
+#                     if "__value" in value
+#                 }
 
-                if patch is None:
-                    package = __import__(self._package, fromlist=[class_name])
-                    klass = getattr(package, class_name)
-                else:
-                    klass = patch
+#                 if patch is None:
+#                     package = __import__(self._package, fromlist=[class_name])
+#                     klass = getattr(package, class_name)
+#                 else:
+#                     klass = patch
 
-                self._devices[name] = {
-                    "server": server,
-                    "class": klass,
-                    "fqdn": fqdn,
-                    "properties": properties,
-                    "memorized": memorized,
-                }
-                self._proxies[fqdn] = proxy
-                break
-        else:
-            raise ValueError(f"Device {name} not found in source data.")
+#                 self._devices[name] = {
+#                     "server": server,
+#                     "class": klass,
+#                     "fqdn": fqdn,
+#                     "properties": properties,
+#                     "memorized": memorized,
+#                 }
+#                 self._proxies[fqdn] = proxy
+#                 break
+#         else:
+#             raise ValueError(f"Device {name} not found in source data.")
 
-    @property
-    def fqdns(self: CbfDeviceGroupInfo) -> Iterable[str]:
-        """
-        Return a list of device fqdns.
+#     @property
+#     def fqdns(self: CbfDeviceGroupInfo) -> Iterable[str]:
+#         """
+#         Return a list of device fqdns.
 
-        :returns: a list of device FQDNs
-        """
-        return self.fqdn_map.values()
+#         :returns: a list of device FQDNs
+#         """
+#         return self.fqdn_map.values()
 
-    @property
-    def fqdn_map(self: CbfDeviceGroupInfo) -> dict[str, str]:
-        """
-        A dictionary that maps device names onto FQDNs.
+#     @property
+#     def fqdn_map(self: CbfDeviceGroupInfo) -> dict[str, str]:
+#         """
+#         A dictionary that maps device names onto FQDNs.
 
-        :return: a mapping from device names to FQDNs
-        """
-        return {name: self._devices[name]["fqdn"] for name in self._devices}
+#         :return: a mapping from device names to FQDNs
+#         """
+#         return {name: self._devices[name]["fqdn"] for name in self._devices}
 
-    @property
-    def proxy_map(self: CbfDeviceGroupInfo) -> dict[str, type[CbfDeviceProxy]]:
-        """
-        Return a map from FQDN to proxy type.
+#     @property
+#     def proxy_map(self: CbfDeviceGroupInfo) -> dict[str, type[CbfDeviceProxy]]:
+#         """
+#         Return a map from FQDN to proxy type.
 
-        :return: a map from FQDN to proxy type
-        """
-        return dict(self._proxies)
+#         :return: a map from FQDN to proxy type
+#         """
+#         return dict(self._proxies)
 
-    def as_mdtc_device_info(self: CbfDeviceGroupInfo) -> list[MdtcInfoType]:
-        """
-        Return this device info in a format required by
-        :py:class:`tango.test_context.MultiDeviceTestContext`.
+#     def as_mdtc_device_info(self: CbfDeviceGroupInfo) -> list[MdtcInfoType]:
+#         """
+#         Return this device info in a format required by
+#         :py:class:`tango.test_context.MultiDeviceTestContext`.
 
-        :return: device info in a format required by
-            :py:class:`tango.test_context.MultiDeviceTestContext`.
-        """
-        devices_by_class: dict[
-            type[SKABaseDevice], list[MdtcDeviceInfoType]
-        ] = defaultdict(list)
-        for device in self._devices.values():
-            devices_by_class[device["class"]].append(
-                {
-                    "name": device["fqdn"],
-                    "properties": device["properties"],
-                    "memorized": device["memorized"],
-                }
-            )
-        mdtc_device_info: list[MdtcInfoType] = [
-            {"class": klass, "devices": devices}
-            for klass, devices in devices_by_class.items()
-        ]
-        return mdtc_device_info
+#         :return: device info in a format required by
+#             :py:class:`tango.test_context.MultiDeviceTestContext`.
+#         """
+#         devices_by_class: dict[
+#             type[SKABaseDevice], list[MdtcDeviceInfoType]
+#         ] = defaultdict(list)
+#         for device in self._devices.values():
+#             devices_by_class[device["class"]].append(
+#                 {
+#                     "name": device["fqdn"],
+#                     "properties": device["properties"],
+#                     "memorized": device["memorized"],
+#                 }
+#             )
+#         mdtc_device_info: list[MdtcInfoType] = [
+#             {"class": klass, "devices": devices}
+#             for klass, devices in devices_by_class.items()
+#         ]
+#         return mdtc_device_info
 
 
 class TangoHarness:
@@ -423,11 +423,21 @@ class TangoHarness:
         :param kwargs: additional keyword arguments
         """
         CbfDeviceProxy.set_default_connection_factory(self.connection_factory)
+        CbfGroupProxy.set_default_connection_factory(self.group_connection_factory)
 
     @property
     def connection_factory(self: TangoHarness) -> Callable[[str], tango.DeviceProxy]:
         """
         The connection factory to use when establishing connections to devices.
+
+        :raises NotImplementedError: because this method is abstract
+        """
+        raise NotImplementedError("TangoHarness is abstract.")
+    
+    @property
+    def group_connection_factory(self: TangoHarness) -> Callable[[str], tango.Group]:
+        """
+        The connection factory to use when establishing group connections to devices.
 
         :raises NotImplementedError: because this method is abstract
         """
@@ -523,6 +533,20 @@ class BaseTangoHarness(TangoHarness):
         :return: a DeviceProxy for use in establishing connections.
         """
         return tango.DeviceProxy
+    
+    @property
+    def group_connection_factory(
+        self: BaseTangoHarness,
+    ) -> Callable[[str], tango.Group]:
+        """
+        The connection factory to use when establishing group connections to devices.
+
+        This class uses :py:class:`tango.Group` as its connection
+        factory.
+
+        :return: a DeviceProxy for use in establishing connections.
+        """
+        return tango.Group
 
     @property
     def fqdns(self: BaseTangoHarness) -> list[str]:
@@ -771,6 +795,19 @@ class WrapperTangoHarness(TangoHarness):
         :return: a DeviceProxy for use in establishing connections.
         """
         return self._harness.connection_factory
+    
+    @property
+    def group_connection_factory(
+        self: WrapperTangoHarness,
+    ) -> Callable[[str], tango.Group]:
+        """
+        The connection factory to use when establishing connections to devices.
+
+        This just uses the connection factory of the wrapped harness.
+
+        :return: a DeviceProxy for use in establishing connections.
+        """
+        return self._harness.group_connection_factory
 
     @property
     def fqdns(self: WrapperTangoHarness) -> list[str]:
@@ -922,6 +959,37 @@ class MockingTangoHarness(WrapperTangoHarness):
             """
             if fqdn in self.fqdns:
                 return self._harness.connection_factory(fqdn)
+            else:
+                return self._mocks[fqdn]
+
+        return connect
+
+    @property
+    def group_connection_factory(
+        self: MockingTangoHarness,
+    ) -> Callable[[str], tango.Group]:
+        """
+        The connection factory to use when establishing connections to devices.
+
+        This is where we check whether the requested device is on our
+        list. Devices on the list are passed to the connection factory
+        of the wrapped harness. Devices not on the list are intercepted
+        and given a mock factory instead.
+
+        :return: a factory that putatively provides device connections,
+            but might actually provide mocks.
+        """
+
+        def connect(fqdn: str) -> tango.Group:
+            """
+            Connect to the device.
+
+            :param fqdn: the FQDN of the device to connect to
+
+            :return: a connection (possibly mocked) to the device
+            """
+            if fqdn in self.fqdns:
+                return self._harness.group_connection_factory(fqdn)
             else:
                 return self._mocks[fqdn]
 
