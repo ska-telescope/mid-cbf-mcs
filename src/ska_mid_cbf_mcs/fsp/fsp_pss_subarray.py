@@ -6,9 +6,6 @@
 #
 # Distributed under the terms of the GPL license.
 # See LICENSE.txt for more info.
-from __future__ import annotations  # allow forward references in type hints
-
-from typing import List, Tuple
 
 """
 Author: Ryam Voigt Ryan.Voigt@nrc-cnrc.gc.ca,
@@ -172,7 +169,7 @@ class FspPssSubarray(CspSubElementObsDevice):
             device._scan_id = 0
             device._config_id = ""
 
-           # device proxy for connection to CbfController
+            # device proxy for connection to CbfController
             device._proxy_cbf_controller = CbfDeviceProxy(
                 fqdn=device.CbfControllerAddress,
                 logger=device.logger
@@ -247,20 +244,13 @@ class FspPssSubarray(CspSubElementObsDevice):
     # Commands
     # --------
 
-    @command(
-        dtype_in=('uint16',),
-        doc_in="List of receptor IDs",
-    )
-    def AddReceptors(
-        self: FspPssSubarray, 
-        argin: List[int]
-        ) -> None:
+    def _add_receptors(self, receptorIDs):
         """add specified receptors to the FSP subarray. Input is array of int."""
-        self.logger.debug("AddReceptors")
+        self.logger.debug("_AddReceptors")
         errs = []  # list of error messages
         receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
                                self._proxy_cbf_controller.receptorToVcc)
-        for receptorID in argin:
+        for receptorID in receptorIDs:
             try:
                 vccID = receptor_to_vcc[receptorID]
                 subarrayID = self._proxies_vcc[vccID - 1].subarrayMembership
@@ -289,16 +279,9 @@ class FspPssSubarray(CspSubElementObsDevice):
                                            tango.ErrSeverity.ERR)
         # PROTECTED REGION END #    //  FspPssSubarray.AddReceptors
 
-    @command(
-        dtype_in=('uint16',),
-        doc_in="List of receptor IDs",
-    )
-    def RemoveReceptors(
-        self: FspPssSubarray, 
-        argin: List[int]
-        )-> None:
+    def _remove_receptors(self, argin):
         """Remove Receptors. Input is array of int"""
-        self.logger.debug("RemoveReceptors")
+        self.logger.debug("_remove_receptors")
         for receptorID in argin:
             if receptorID in self._receptors:
                 self._receptors.remove(receptorID)
@@ -307,9 +290,8 @@ class FspPssSubarray(CspSubElementObsDevice):
                     "Skipping.".format(str(receptorID))
                 self.logger.warn(log_msg)
 
-    @command()
-    def RemoveAllReceptors(self: FspPssSubarray) -> None:
-        self.RemoveReceptors(self._receptors[:])
+    def _remove_all_receptors(self):
+        self._remove_receptors(self._receptors[:])
 
     # --------
     # Commands
@@ -342,7 +324,12 @@ class FspPssSubarray(CspSubElementObsDevice):
 
             # Configure receptors.
             self.logger.debug("_receptors = {}".format(device._receptors))
-
+            # TODO: Why are we overwriting the device property fsp ID
+            #       with the argument in the ConfigureScan json file
+            if device._fsp_id != argin["fsp_id"]:
+                device.logger.warning(
+                    "The Fsp ID from ConfigureScan {} does not equal the Fsp ID from the device properties {}"
+                    .format(device._fsp_id, argin["fsp_id"]))
             device._fsp_id = argin["fsp_id"]
             device._search_window_id = int(argin["search_window_id"])
 
@@ -356,7 +343,7 @@ class FspPssSubarray(CspSubElementObsDevice):
                     self.logger.error(msg) 
                     return (ResultCode.FAILED, msg)
 
-                device.AddReceptors(map(int, searchBeam["receptor_ids"]))
+                device._add_receptors(map(int, searchBeam["receptor_ids"]))
                 self.logger.debug("device._receptors = {}".format(device._receptors))
                 device._search_beams.append(json.dumps(searchBeam))
 
@@ -442,7 +429,7 @@ class FspPssSubarray(CspSubElementObsDevice):
             device._scan_id = 0
             device._config_id = ""
 
-            device.RemoveAllReceptors()
+            device._remove_all_receptors()
 
             if device.state_model.obs_state == ObsState.IDLE:
                 return (ResultCode.OK, 

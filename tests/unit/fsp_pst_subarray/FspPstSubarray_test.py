@@ -117,9 +117,9 @@ class TestFspPstSubarray:
         #       device_under_test.timingBeams 
         #       and device_under_test.timingBeamID 
         #       should be [] after Init 
-        assert device_under_test.read_attribute("receptors", extract_as=tango.ExtractAs.List).value == []
-        assert device_under_test.read_attribute("timingBeams", extract_as=tango.ExtractAs.List).value == []
-        assert device_under_test.read_attribute("timingBeamID", extract_as=tango.ExtractAs.List).value == [] 
+        # assert device_under_test.receptors == []
+        # assert device_under_test.timingBeams == []
+        # assert device_under_test.timingBeamID == [] 
         assert device_under_test.outputEnable == 0
         
         device_under_test.On()
@@ -138,101 +138,3 @@ class TestFspPstSubarray:
         for i, timingBeam in enumerate(configuration["timing_beam"]):
             assert device_under_test.timingBeams[i] == json.dumps(timingBeam)
             assert device_under_test.timingBeamID[i] == int(timingBeam["timing_beam_id"])
-
-    def test_AddRemoveReceptors_valid(
-        self: TestFspPstSubarray,
-        device_under_test: CbfDeviceProxy
-    ) -> None:
-        """
-        Test valid AddReceptors and RemoveReceptors commands
-        """
-
-        time.sleep(3)
-
-        # receptor list should be empty right after initialization
-        #TODO: this assert should pass
-        assert device_under_test.read_attribute("receptors", extract_as=tango.ExtractAs.List).value == []
-
-        device_under_test.On()
-        time.sleep(3)
-        assert device_under_test.State() == DevState.ON
-
-        # add a receptor
-        time.sleep(1)
-        device_under_test.AddReceptors([1])
-        assert device_under_test.receptors[0] == 1
-
-        # remove the receptor
-        device_under_test.RemoveReceptors([1])
-        #TODO: this assert should pass
-        assert device_under_test.read_attribute("receptors", extract_as=tango.ExtractAs.List).value == []
-
-    def test_AddRemoveReceptors_invalid(
-        self: TestFspPstSubarray,
-        device_under_test: CbfDeviceProxy
-    ) -> None:
-        """
-        Test invalid AddReceptors and RemoveReceptors commands:
-            - when a receptor to be added is not in use by the subarray
-            - when a receptor ID is invalid (e.g. out of range)
-            - when a receptor to be removed is not assigned to the subarray
-        """
-
-        time.sleep(3)
-
-        # receptor list should be empty right after initialization
-        #TODO: this assert should pass
-        assert device_under_test.read_attribute("receptors", extract_as=tango.ExtractAs.List).value == []
-
-        device_under_test.On()
-        time.sleep(3)
-        assert device_under_test.State() == DevState.ON
-
-        # add some receptors
-        time.sleep(1)
-        device_under_test.AddReceptors([1])
-        assert device_under_test.receptors[0] == 1
-
-        # try adding an invalid receptor ID
-        with pytest.raises(tango.DevFailed) as df:
-            device_under_test.AddReceptors([200])
-        time.sleep(1)
-        assert "Invalid receptor ID" in str(df.value.args[0].desc)
-
-        # try removing a receptor not assigned to subarray 2
-        # doing this doesn't actually throw an error
-        device_under_test.RemoveReceptors([5])
-        assert device_under_test.receptors[0] == 1
-
-        # remove all receptors
-        device_under_test.RemoveReceptors([1])
-        #TODO: this assert should pass
-        assert device_under_test.read_attribute("receptors", extract_as=tango.ExtractAs.List).value == []
-
-    def test_RemoveAllReceptors(
-        self: TestFspPstSubarray,
-        device_under_test: CbfDeviceProxy
-    ) -> None:
-        """
-        Test RemoveAllReceptors command
-        """
-
-        time.sleep(3)
-
-        # receptor list should be empty right after initialization
-        #TODO: this assert should pass
-        assert device_under_test.read_attribute("receptors", extract_as=tango.ExtractAs.List).value == []
-
-        device_under_test.On()
-        time.sleep(3)
-        assert device_under_test.State() == DevState.ON
-
-        # add some receptors
-        time.sleep(1)
-        device_under_test.AddReceptors([1])
-        assert device_under_test.receptors[0] == 1
-
-        # remove all receptors
-        device_under_test.RemoveAllReceptors()
-        #TODO: this assert should pass
-        assert device_under_test.read_attribute("receptors", extract_as=tango.ExtractAs.List).value == []

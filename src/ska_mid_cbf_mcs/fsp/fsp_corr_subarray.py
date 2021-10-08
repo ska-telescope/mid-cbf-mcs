@@ -225,6 +225,7 @@ class FspCorrSubarray(CspSubElementObsDevice):
         def do(
             self: FspCorrSubarray.InitCommand,
         ) -> Tuple[ResultCode, str]:
+
             """
             Stateless hook for device initialisation.
 
@@ -433,11 +434,7 @@ class FspCorrSubarray(CspSubElementObsDevice):
         self._config_id=value
         # PROTECTED REGION END #    //  FspCorrSubarray.configID_write
 
-    @command(
-        dtype_in=('uint16',),
-        doc_in="List of receptor IDs",
-    )
-    def AddReceptors(
+    def _add_receptors(
         self: FspCorrSubarray, 
         argin: List[int]
         ) -> None:
@@ -468,14 +465,10 @@ class FspCorrSubarray(CspSubElementObsDevice):
         if errs:
             msg = "\n".join(errs)
             self.logger.error(msg)
-            tango.Except.throw_exception("Command failed", msg, "AddReceptors execution",
+            tango.Except.throw_exception("Command failed", msg, "_add_receptors execution",
                                            tango.ErrSeverity.ERR)
 
-    @command(
-        dtype_in=('uint16',),
-        doc_in="List of receptor IDs",
-    )
-    def RemoveReceptors(
+    def _remove_receptors(
         self: FspCorrSubarray, 
         argin: List[int]
         )-> None:
@@ -488,10 +481,9 @@ class FspCorrSubarray(CspSubElementObsDevice):
                     "Skipping.".format(str(receptorID))
                 self.logger.warn(log_msg)
 
-    @command()
-    def RemoveAllReceptors(self: FspCorrSubarray) -> None:
+    def _remove_all_receptors(self: FspCorrSubarray) -> None:
         """Remove all Receptors of this subarray"""
-        self.RemoveReceptors(self._receptors[:])
+        self._remove_receptors(self._receptors[:])
 
     # TODO: Reinstate AddChannels?
     # def is_AddChannels_allowed(self): # ???
@@ -646,10 +638,10 @@ class FspCorrSubarray(CspSubElementObsDevice):
 
             # Configure receptors.
             
-            # TODO: RemoveAllReceptors should not be needed because it is
+            # TODO: _remove_all_receptors should not be needed because it is
             #        applied in GoToIdle()
-            device.RemoveAllReceptors()
-            device.AddReceptors(map(int, argin["receptor_ids"]))
+            device._remove_all_receptors()
+            device._add_receptors(map(int, argin["receptor_ids"]))
 
             # Configure frequencySliceID.
             device._frequency_slice_ID = int(argin["frequency_slice_id"])
@@ -838,7 +830,7 @@ class FspCorrSubarray(CspSubElementObsDevice):
         """
 
         def do(
-            self: FspCorrSubarray.ConfigureScanCommand
+            self: FspCorrSubarray.GoToIdleCommand
         ) -> Tuple[ResultCode, str]:
             """
             Stateless hook for GoToIdle() command functionality.
@@ -884,7 +876,7 @@ class FspCorrSubarray(CspSubElementObsDevice):
             #device._channel_info.clear() #TODO:  not yet populated
 
             # Reset self._receptors
-            device.RemoveAllReceptors()
+            device._remove_all_receptors()
 
             if device.state_model.obs_state == ObsState.IDLE:
                 return (ResultCode.OK, 
@@ -894,8 +886,8 @@ class FspCorrSubarray(CspSubElementObsDevice):
             
     # TODO - currently not used
     def is_getLinkAndAddress_allowed(self: FspCorrSubarray) -> bool:
-        """Allowed if destination addresses are received, meaning outputLinkMap 
-        also received (checked in subarray validate scan)."""
+        """Allowed if destination addresses are received, 
+        meaning outputLinkMap also received (checked in subarray validate scan)."""
         if self._vis_destination_address["outputHost"]==[]:
             return False
         return True
