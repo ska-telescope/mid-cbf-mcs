@@ -1876,6 +1876,34 @@
                     }
                 }
             }
+        },
+        "TalonLRU": {
+            "talonlru-001": {
+                "TalonLRU": {
+                    "mid_csp_cbf/talon_lru/001": {
+                        "properties": {
+                            "TalonDxBoard1Address": [
+                                ""
+                            ],
+                            "TalonDxBoard2Address": [
+                                ""
+                            ],
+                            "PDU1Address": [
+                                "mid_csp_cbf/power_switch/001"
+                            ],
+                            "PDU1Outlet": [
+                                0
+                            ],
+                            "PDU2Address": [
+                                "mid_csp_cbf/power_switch/001"
+                            ],
+                            "PDU2Outlet": [
+                                1
+                            ]
+                        }
+                    }
+                }
+            }
         }
     }
 }
