@@ -255,6 +255,10 @@ class CbfController(SKAMaster):
             "Off", self.OffCommand(*device_args)
         )
 
+        self.register_command_object(
+            "Standby", self.StandbyCommand(*device_args)
+        )
+
     class InitCommand(SKAMaster.InitCommand):
 
         def __state_change_event_callback(
@@ -466,14 +470,11 @@ class CbfController(SKAMaster):
 
             # initialize groups
             device._group_vcc = CbfGroupProxy("VCC", logger=device.logger)
-            for fqdn in device._fqdn_vcc:
-                device._group_vcc.add(fqdn)
+            device._group_vcc.add(device._fqdn_vcc)
             device._group_fsp = CbfGroupProxy("FSP", logger=device.logger)
-            for fqdn in device._fqdn_fsp:
-                device._group_fsp.add(fqdn)
+            device._group_fsp.add(device._fqdn_fsp)
             device._group_subarray = CbfGroupProxy("CBF Subarray", logger=device.logger)
-            for fqdn in device._fqdn_subarray:
-                device._group_subarray.add(fqdn)
+            device._group_subarray.add(device._fqdn_subarray)
 
             # Try connection with each subarray/capability
             for fqdn in device._fqdn_vcc + device._fqdn_fsp + device._fqdn_subarray:
@@ -699,13 +700,9 @@ class CbfController(SKAMaster):
 
             device = self.target
 
-            # device._group_subarray.command_inout("On")
-            # device._group_vcc.command_inout("On")
-            # device._group_fsp.command_inout("On")
-            # device.set_state(tango.DevState.ON)
-            device._group_subarray.On()
-            device._group_vcc.On()
-            device._group_fsp.On()
+            device._group_subarray.command_inout("On")
+            device._group_vcc.command_inout("On")
+            device._group_fsp.command_inout("On")
 
             return (result_code,message)
 
@@ -713,7 +710,7 @@ class CbfController(SKAMaster):
         """
         A class for the CbfController's Off() command.
         """
-        def do(            
+        def do(
             self: CbfController.OffCommand,
         ) -> Tuple[ResultCode, str]:
             """
@@ -731,31 +728,55 @@ class CbfController(SKAMaster):
             for proxy in list(device._event_id.keys()):
                 for event_id in device._event_id[proxy]:
                     proxy.unsubscribe_event(event_id)
-            device._group_subarray.Off()
-            device._group_vcc.Off()
-            device._group_fsp.Off()
-            #device.set_state(tango.DevState.OFF)
+            device._group_subarray.command_inout("Off")
+            device._group_vcc.command_inout("Off")
+            device._group_fsp.command_inout("Off")
 
             return (result_code,message)
 
     # TODO: If the Standby command is needed: 
     # Convert it to the new base class StandbyCommand
     # Test it (can use integration test_standby_valid)
-    def is_Standby_allowed(self: CbfController) -> bool:
-        """allowed if state is ON"""
-        if self.dev_state() == tango.DevState.ON:
-            return True
-        return False
+    # def is_Standby_allowed(self: CbfController) -> bool:
+    #     """allowed if state is ON"""
+    #     if self.dev_state() == tango.DevState.ON:
+    #         return True
+    #     return False
 
-    @command()
-    def Standby(self: CbfController) -> None:
-        # PROTECTED REGION ID(CbfController.Standby) ENABLED START #
-        """turn off subarray, vcc, fsp, turn CbfController to standby"""
-        self._group_subarray.command_inout("Off")
-        self._group_vcc.command_inout("Off")
-        self._group_fsp.command_inout("Off")
-        self.set_state(tango.DevState.STANDBY)
-        # PROTECTED REGION END #    //  CbfController.Standby
+    # @command()
+    # def Standby(self: CbfController) -> None:
+    #     # PROTECTED REGION ID(CbfController.Standby) ENABLED START #
+    #     """turn off subarray, vcc, fsp, turn CbfController to standby"""
+    #     self._group_subarray.command_inout("Off")
+    #     self._group_vcc.command_inout("Off")
+    #     self._group_fsp.command_inout("Off")
+    #     self.set_state(tango.DevState.STANDBY)
+    #     # PROTECTED REGION END #    //  CbfController.Standby
+    
+    class StandbyCommand(SKABaseDevice.StandbyCommand):
+        """
+        A class for the CbfController's Standby() command.
+        """
+        def do(            
+            self: CbfController.StandbyCommand,
+        ) -> Tuple[ResultCode, str]:
+            """
+            Stateless hook for Standby() command functionality.
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
+            (result_code,message)=super().do()
+
+            device = self.target
+
+            device._group_subarray.command_inout("Off")
+            device._group_vcc.command_inout("Off")
+            device._group_fsp.command_inout("Off")
+
+            return (result_code,message)
 
 
 # ----------

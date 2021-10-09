@@ -544,7 +544,7 @@ class BaseTangoHarness(TangoHarness):
         This class uses :py:class:`tango.Group` as its connection
         factory.
 
-        :return: a DeviceProxy for use in establishing connections.
+        :return: a Group for use in establishing connections.
         """
         return tango.Group
 
@@ -696,6 +696,36 @@ class TestContextTangoHarness(BaseTangoHarness):
             return tango.DeviceProxy(
                 f"tango://{self._host}:{self._port}/{fqdn}#dbase=no"
             )
+
+        return connect
+    
+    @property
+    def group_connection_factory(
+        self: TestContextTangoHarness,
+    ) -> Callable[[str], tango.Group]:
+        """
+        The connection factory to use when establishing connections to devices.
+
+        This class uses :py:class:`tango.Group` but patches it to
+        use the long-form FQDN, as a workaround to an issue with
+        :py:class:`tango.test_context.MultiDeviceTestContext`.
+
+        :return: a Group for use in establishing connections.
+        """
+
+        def connect(name: str, fqdns: list[str]) -> tango.Group:
+            """
+            Connect to the device.
+
+            :param fqdn: the FQDN of the device to connect to
+
+            :return: a connection to the device
+            """
+            group =  tango.Group(name)
+            for fqdn in fqdns:
+                group.add(f"tango://{self._host}:{self._port}/{fqdn}#dbase=no")
+            
+            return group
 
         return connect
 
@@ -980,7 +1010,7 @@ class MockingTangoHarness(WrapperTangoHarness):
             but might actually provide mocks.
         """
 
-        def connect(fqdn: str) -> tango.Group:
+        def connect(name: str, fqdns: list[str]) -> tango.Group:
             """
             Connect to the device.
 
@@ -988,9 +1018,12 @@ class MockingTangoHarness(WrapperTangoHarness):
 
             :return: a connection (possibly mocked) to the device
             """
-            if fqdn in self.fqdns:
-                return self._harness.group_connection_factory(fqdn)
+            if set(fqdns).issubset(set(self.fqdns)):
+                return self._harness.group_connection_factory(name, fqdns)
             else:
-                return self._mocks[fqdn]
+                return self._harness.group_connection_factory(
+                    name,
+                    self._mocks[fqdns]
+                )
 
         return connect

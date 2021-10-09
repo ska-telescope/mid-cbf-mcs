@@ -21,8 +21,6 @@ import backoff
 import tango
 from tango import DevFailed, DevState, AttrQuality
 
-import ska_mid_cbf_mcs.testing.tango_harness
-
 # type for the "details" dictionary that backoff calls its callbacks with
 BackoffDetailsType = TypedDict(
     "BackoffDetailsType", {"args": list, "elapsed": float}
@@ -82,14 +80,14 @@ class CbfGroupProxy:
         # Directly accessing object dictionary because we are overriding
         # setattr and don't want to infinitely recurse.
         self.__dict__["_name"] = name
-        self.__dict__["_fqdn"] = []
+        self.__dict__["_fqdns"] = []
         self.__dict__["_logger"] = logger
         self.__dict__["group_connection_factory"] = (
             group_connection_factory or 
             CbfGroupProxy._default_connection_factory
         )
         self.__dict__["_pass_through"] = pass_through
-        self.__dict__["_group"] = self.group_connection_factory(name)
+        self.__dict__["_group"] = None
 
         self.__dict__["_change_event_lock"] = threading.Lock()
         self.__dict__["_change_event_subscription_ids"] = {}
@@ -97,13 +95,13 @@ class CbfGroupProxy:
 
 
     def add(self: CbfGroupProxy,
-        fqdn: str,
+        fqdns: list[str],
         max_time: float = 120.0
     ) -> None:
         """
-        Adds a connection to a device that we want to proxy to the group.
+        Adds connections to the devices that we want to proxy to the group.
 
-        :param fqdn: FQDN of the device to be proxied
+        :param fqdn: FQDNs of the devices to be proxied
         :param max_time: the maximum time, in seconds, to wait for a
             connection to be established. The default is 120 i.e. two
             minutes. If set to 0 or None, a single connection attempt is
@@ -118,7 +116,7 @@ class CbfGroupProxy:
                 the call args and the elapsed time
             """
             fqdn = details["args"][1]
-            self.__dict__["_fqdn"].remove(fqdn)
+            self.__dict__["_fqdns"].remove(fqdn)
             elapsed = details["elapsed"]
             self._logger.warning(
                 f"Gave up trying to connect to device {fqdn} after "
@@ -134,7 +132,7 @@ class CbfGroupProxy:
         )
         def _backoff_connect(
             group_connection_factory: Callable[[str], tango.Group],
-            fqdn: str
+            fqdns: list[str]
         ) -> tango.Group:
             """
             Attempt connection to a specified device.
@@ -148,10 +146,11 @@ class CbfGroupProxy:
 
             :return: a proxy for the device
             """
-            return _connect(group_connection_factory, fqdn)
+            return _connect(group_connection_factory, fqdns)
 
         def _connect(
-            group_connection_factory: Callable[[str], tango.Group], fqdn: str
+            group_connection_factory: Callable[[str], tango.Group],
+            fqdns: list[str]
         ) -> tango.Group:
             """
             Make a single attempt to connect to a device.
@@ -162,15 +161,15 @@ class CbfGroupProxy:
 
             :return: a proxy for the device
             """
-            self.__dict__["_fqdn"].append(fqdn)
-            return group_connection_factory(fqdn)
+            self.__dict__["_fqdns"].extend(fqdns)
+            return group_connection_factory(self._name, fqdns)
 
         if max_time:
             self._group = _backoff_connect(
-                self.group_connection_factory, fqdn
+                self.group_connection_factory, fqdns
             )
         else:
-            self._group = _connect(self.group_connection_factory, fqdn)
+            self._group = _connect(self.group_connection_factory, fqdns)
 
 
     def remove(self: CbfGroupProxy, fqdn: str) -> None:
@@ -179,7 +178,7 @@ class CbfGroupProxy:
 
         :param fqdn: FQDN of the device to be proxied.
         """
-        self.__dict__["_fqdn"].remove(fqdn)
+        self.__dict__["_fqdns"].remove(fqdn)
 
 
     def check_initialised(self: CbfGroupProxy, max_time: float = 120.0) -> bool:
