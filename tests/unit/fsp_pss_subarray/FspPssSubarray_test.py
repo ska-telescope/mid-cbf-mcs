@@ -118,6 +118,8 @@ class TestFspPssSubarray:
         #       device_under_test.searchBeams 
         #       and device_under_test.searchBeamID 
         #       should be [] after Init not None
+        # This is a bug in the tango library: 
+        # https://gitlab.com/tango-controls/pytango/-/issues/230
         assert device_under_test.receptors == None
         assert device_under_test.searchBeams == None
         assert device_under_test.searchWindowID == 0
