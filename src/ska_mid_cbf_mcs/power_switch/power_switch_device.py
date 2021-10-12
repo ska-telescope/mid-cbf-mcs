@@ -169,8 +169,12 @@ class PowerSwitch(SKABaseDevice):
             """
             super().do()
 
-            # TODO: remove once updating to new base class version
             device = self.target
+
+            # Set simulation mode to be default true (using the simulator)
+            device._simulation_mode = SimulationMode.TRUE
+
+            # TODO: remove once updating to new base class version
             device.component_manager = device.create_component_manager()
 
             return (ResultCode.OK, "PowerSwitch initialization OK")

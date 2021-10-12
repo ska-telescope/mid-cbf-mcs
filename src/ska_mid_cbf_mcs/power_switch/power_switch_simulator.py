@@ -11,7 +11,6 @@
 
 from __future__ import annotations
 
-import random
 import logging
 from typing import List
 from ska_mid_cbf_mcs.power_switch.power_switch_driver import Outlet
@@ -37,7 +36,6 @@ class PowerSwitchSimulator:
         """
         self.logger = logger
         self.outlets: List(Outlet) = []
-        random.seed()
 
     @property
     def num_outlets(self: PowerSwitchSimulator) -> int:
@@ -130,7 +128,7 @@ class PowerSwitchSimulator:
             outlets.append(Outlet(
                 outlet_ID = i,
                 outlet_name = f"Outlet {i}",
-                power_mode = PowerMode.ON if random.getrandbits(1) else PowerMode.OFF
+                power_mode = PowerMode.OFF
             ))
 
         return outlets

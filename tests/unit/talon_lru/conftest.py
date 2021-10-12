@@ -88,6 +88,7 @@ def get_mock_power_switch(param: str) -> unittest.mock.Mock:
     :param param: parameterization string that impacts the mocked behaviour
     """
     builder = MockDeviceBuilder()
+    builder.add_attribute("stimulusMode", param) # Attribute only used by tests
 
     if param == "conn_success":
         # Connection to power switch is working as expected

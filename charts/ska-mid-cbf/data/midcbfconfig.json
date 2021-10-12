@@ -1883,22 +1883,22 @@
                     "mid_csp_cbf/talon_lru/001": {
                         "properties": {
                             "TalonDxBoard1Address": [
-                                ""
+                                "tbd"
                             ],
                             "TalonDxBoard2Address": [
-                                ""
+                                "tbd"
                             ],
                             "PDU1Address": [
                                 "mid_csp_cbf/power_switch/001"
                             ],
-                            "PDU1Outlet": [
-                                0
+                            "PDU1PowerOutlet": [
+                                "0"
                             ],
                             "PDU2Address": [
                                 "mid_csp_cbf/power_switch/001"
                             ],
-                            "PDU2Outlet": [
-                                1
+                            "PDU2PowerOutlet": [
+                                "1"
                             ]
                         }
                     }

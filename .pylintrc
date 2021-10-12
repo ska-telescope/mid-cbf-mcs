@@ -14,6 +14,7 @@ init-hook='
     sys.path.append("./src/ska_mid_cbf_mcs/fsp");
     sys.path.append("./src/ska_mid_cbf_mcs/commons");
     sys.path.append("./src/ska_mid_cbf_mcs/power_switch");
+    sys.path.append("./src/ska_mid_cbf_mcs/talon_lru");
     sys.path.append("/usr/local/lib/python3.5/dist-packages");
     sys.path.append("/venv/lib/python3.5/site-packages")'
 
