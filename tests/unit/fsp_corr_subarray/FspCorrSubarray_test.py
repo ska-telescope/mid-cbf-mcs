@@ -111,7 +111,7 @@ class TestFspCorrSubarray:
         """
 
         assert device_under_test.State() == tango.DevState.OFF
-        # check initial values of attributes
+        # Check initial values of attributes
         # TODO: device_under_test.receptors should be [] after Init not None
         # This is a bug in the tango library: 
         # https://gitlab.com/tango-controls/pytango/-/issues/230
