@@ -360,7 +360,7 @@ class Vcc(CspSubElementObsDevice):
         return self._receptor_ID
         # PROTECTED REGION END #    //  Vcc.receptorID_read
 
-    def write_receptorID(self: Vcc, value: receptorID) -> None:
+    def write_receptorID(self: Vcc, value: int) -> None:
         # PROTECTED REGION ID(Vcc.receptorID_write) ENABLED START #
         """Set receptor ID attribute(int)"""
         self._receptor_ID = value
@@ -373,7 +373,7 @@ class Vcc(CspSubElementObsDevice):
         return self._subarray_membership
         # PROTECTED REGION END #    //  Vcc.subarrayMembership_read
 
-    def write_subarrayMembership(self: Vcc, value: subarrayMembership) -> None:
+    def write_subarrayMembership(self: Vcc, value: int) -> None:
         # PROTECTED REGION ID(Vcc.subarrayMembership_write) ENABLED START #
         """Set subarrayMembership attribute: sub-array affiliation of the VCC(0 of no affliation)"""
         self.logger.debug("Entering write_subarrayMembership(), value = {}".format(value))
@@ -413,7 +413,7 @@ class Vcc(CspSubElementObsDevice):
         return self._doppler_phase_correction
         # PROTECTED REGION END #    //  Vcc.dopplerPhaseCorrection_read
 
-    def write_dopplerPhaseCorrection(self: Vcc, value: dopplerPhaseCorrection) -> None:
+    def write_dopplerPhaseCorrection(self: Vcc, value: List[float]) -> None:
         # PROTECTED REGION ID(Vcc.dopplerPhaseCorrection_write) ENABLED START #
         """Set dopplerPhaseCorrection attribute(float)"""
         self._doppler_phase_correction = value
@@ -479,7 +479,7 @@ class Vcc(CspSubElementObsDevice):
         return self._scan_id
         # PROTECTED REGION END #    //  Vcc.scanID_read
 
-    def write_scanID(self: Vcc, value: scanID) -> None:
+    def write_scanID(self: Vcc, value: int) -> None:
         # PROTECTED REGION ID(Vcc.scanID_write) ENABLED START #
         """Set the scanID attribute."""
         self._scan_id=value

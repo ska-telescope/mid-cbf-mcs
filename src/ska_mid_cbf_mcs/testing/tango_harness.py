@@ -175,7 +175,14 @@ class CbfDeviceInfo:
         for server in self._source_data["servers"]:
             if name in self._source_data["servers"][server]:
                 device_spec = self._source_data["servers"][server][name]
-                class_name = next(iter(device_spec))
+                # current workaround for loading a device that isn't listed
+                # first in the device server config json is to load via the
+                # patched device class name and inputting the desired class type
+                # in the device_spec object, however this prevents the use of a 
+                # patched device wrapper
+                # Original code: class_name = next(iter(device_spec))
+                # TODO: add a new field specifying class_name to device_spec ?
+                class_name = patch.__name__
                 fqdn = next(iter(device_spec[class_name]))
                 properties = device_spec[class_name][fqdn]["properties"]
 
@@ -189,8 +196,10 @@ class CbfDeviceInfo:
                 }
 
                 if patch is None:
-                    package = __import__(self._package, fromlist=[class_name])
-                    klass = getattr(package, class_name)
+                    raise ValueError(f"patch cannot be None.")
+                    # TODO: Fails is patch is None, need to implement working default
+                    # package = __import__(self._package, fromlist=[class_name])
+                    # klass = getattr(package, class_name)
                 else:
                     klass = patch
 
