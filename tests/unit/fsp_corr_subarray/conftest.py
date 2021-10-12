@@ -68,6 +68,7 @@ def mock_cbf_controller() -> unittest.mock.Mock:
 @pytest.fixture()
 def mock_vcc() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
+    # The subarray ID for this unit test is hardcoded to 1
     builder.add_attribute("subarrayMembership", 1)
     return builder()
 
