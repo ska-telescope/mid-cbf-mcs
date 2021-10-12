@@ -268,8 +268,6 @@ class FspPstSubarray(CspSubElementObsDevice):
             """
             (result_code,message)=super().do()
 
-            device = self.target
-
             return (result_code,message)
 
     class OffCommand(SKABaseDevice.OffCommand):
@@ -400,6 +398,13 @@ class FspPstSubarray(CspSubElementObsDevice):
             argin = json.loads(argin)
 
             # Configure receptors.
+            # TODO: Why are we overwriting the device property fsp ID
+            #       with the argument in the ConfigureScan json file
+            if device._fsp_id != argin["fsp_id"]:
+                device.logger.warning(
+                    "The Fsp ID from ConfigureScan {} does not equal the Fsp ID from the device properties {}"
+                    .format(device._fsp_id, argin["fsp_id"]))
+
             device._fsp_id = argin["fsp_id"]
             device._timing_beams = []
             device._timing_beam_id = []
@@ -479,6 +484,8 @@ class FspPstSubarray(CspSubElementObsDevice):
 
             self.logger.debug("Entering GoToIdleCommand()")
 
+            (result_code,message)=super().do()
+
             device = self.target
 
             device._timing_beams = []
@@ -486,11 +493,7 @@ class FspPstSubarray(CspSubElementObsDevice):
             device._output_enable = 0
             device.RemoveAllReceptors()
 
-            if device.state_model.obs_state == ObsState.IDLE:
-                return (ResultCode.OK, 
-                "GoToIdle command completed OK. Device already IDLE")
-
-            return (ResultCode.OK, "GoToIdle command completed OK")
+            return (result_code,message)
 
 # ----------
 # Run server

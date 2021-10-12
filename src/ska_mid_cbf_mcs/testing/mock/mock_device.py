@@ -14,7 +14,6 @@ from __future__ import annotations  # allow forward references in type hints
 
 from typing import Any, Callable
 import unittest.mock
-
 import tango
 
 from ska_tango_base.commands import ResultCode
@@ -51,6 +50,15 @@ class MockDeviceBuilder:
 
         :param name: name of the attribute
         :param value: the value of the attribute
+        """
+        self._configuration[name] = value
+
+    def add_property(self: MockDeviceBuilder, name: str, value: Any) -> None:
+        """
+        Tell this builder to build mocks with a given device property.
+
+        :param name: name of the device property
+        :param value: the value of the device property
         """
         self._configuration[name] = value
 
@@ -91,14 +99,6 @@ class MockDeviceBuilder:
         :param state: the state of the mock
         """
         self.add_command("state", state)
-    
-    def add_property(self: MockDeviceBuilder, property: dict) -> None:
-        """
-        Tell this builder to build mocks with the state set as specified.
-
-        :param state: the state of the mock
-        """
-        self.add_command("get_property", property)
 
     def _setup_read_attribute(
         self: MockDeviceBuilder, mock_device: unittest.mock.Mock
@@ -137,6 +137,39 @@ class MockDeviceBuilder:
             return mock_attribute
 
         mock_device.read_attribute.side_effect = _mock_read_attribute
+
+    def _setup_get_property(
+        self: MockDeviceBuilder, mock_device: unittest.mock.Mock
+    ) -> None:
+        """
+        Set up property reads for a mock device.
+
+        Tango allows attributes to be read via a high-level API
+        (``device.voltage``) or a low-level API
+        (`device.get_property("voltage"`). This method sets that up.
+
+        :param mock_device: the mock being set up
+        """
+
+        def _mock_get_property(
+            name: str, *args: Any, **kwargs: Any
+        ) -> tango.DbData:
+            """
+            Mock side-effect for get_property method, which reads the
+            property value and packs it into a
+            :py:class:`tango.DeviceAttribute`.
+
+            :param name: the name of the property
+            :param args: positional args to ``get_property``
+            :param kwargs: keyword args to ``get_property``
+
+            :returns: a :py:class:`tango.DbData` A list of the
+                device properties
+            """
+
+            return getattr(mock_device, name)
+
+        mock_device.get_property.side_effect = _mock_get_property
 
     def _setup_command_inout(
         self: MockDeviceBuilder, mock_device: unittest.mock.Mock
@@ -272,6 +305,7 @@ class MockDeviceBuilder:
         mock_device.configure_mock(**self._configuration)
 
         self._setup_read_attribute(mock_device)
+        self._setup_get_property(mock_device)
         self._setup_subscribe_event(mock_device)
         self._setup_command_inout(mock_device)
         return mock_device

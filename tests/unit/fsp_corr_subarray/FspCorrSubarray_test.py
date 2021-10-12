@@ -136,12 +136,12 @@ class TestFspCorrSubarray:
             for j in range(2):
                 assert device_under_test.outputLinkMap[i][j] == 0 
 
-        
+        # turn device ON
         device_under_test.On()
         time.sleep(3)
         assert device_under_test.State() == DevState.ON
 
-        # configure search window
+        # run ConfigureScan
         config_file_name = "/../../data/FspCorrSubarray_ConfigureScan_basic.json"
         f = open(file_path + config_file_name)
         json_str = f.read().replace("\n", "")
@@ -150,7 +150,9 @@ class TestFspCorrSubarray:
         device_under_test.ConfigureScan(json_str)
         f.close()
 
-        assert device_under_test.receptors == tuple(configuration["receptor_ids"])
+        # verify correct attribute values are receieved 
+        for idx, receptorID in enumerate(device_under_test.receptors):
+            assert receptorID == configuration["receptor_ids"][idx]
         assert device_under_test.frequencyBand == freq_band_dict()[configuration["frequency_band"]]
         assert device_under_test.frequencySliceID == configuration["frequency_slice_id"]
         if "band_5_tuning" in configuration:
