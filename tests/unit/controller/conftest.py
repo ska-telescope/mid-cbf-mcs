@@ -68,11 +68,25 @@ def mock_vcc() -> unittest.mock.Mock:
     return builder()
 
 @pytest.fixture()
+def mock_vcc_group() -> unittest.mock.Mock:
+    builder = MockDeviceBuilder()
+    builder.add_command("On", tango.GroupCmdReplyList())
+    builder.add_command("Off", tango.GroupCmdReplyList())
+    return builder()
+
+@pytest.fixture()
 def mock_fsp() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.OFF)
     builder.add_result_command("On", ResultCode.OK)
     builder.add_result_command("Off", ResultCode.OK)
+    return builder()
+
+@pytest.fixture()
+def mock_fsp_group() -> unittest.mock.Mock:
+    builder = MockDeviceBuilder()
+    builder.add_command("On", tango.GroupCmdReplyList())
+    builder.add_command("Off", tango.GroupCmdReplyList())
     return builder()
 
 @pytest.fixture()
@@ -83,12 +97,21 @@ def mock_subarray() -> unittest.mock.Mock:
     builder.add_result_command("Off", ResultCode.OK)
     return builder()
 
+@pytest.fixture()
+def mock_subarray_group() -> unittest.mock.Mock:
+    builder = MockDeviceBuilder()
+    builder.add_command("On", tango.GroupCmdReplyList())
+    builder.add_command("Off", tango.GroupCmdReplyList())
+    return builder()
 
 @pytest.fixture()
 def initial_mocks(
     mock_vcc: unittest.mock.Mock,
+    mock_vcc_group: unittest.mock.Mock,
     mock_fsp: unittest.mock.Mock,
-    mock_subarray: unittest.mock.Mock
+    mock_fsp_group: unittest.mock.Mock,
+    mock_subarray: unittest.mock.Mock,
+    mock_subarray_group: unittest.mock.Mock,
 ) -> Dict[str, unittest.mock.Mock]:
     """
     Return a dictionary of device proxy mocks to pre-register.
@@ -99,16 +122,36 @@ def initial_mocks(
 
     :return: a dictionary of device proxy mocks to pre-register.
     """
+    vcc = [
+        "mid_csp_cbf/vcc/001",
+        "mid_csp_cbf/vcc/002",
+        "mid_csp_cbf/vcc/003",
+        "mid_csp_cbf/vcc/004",
+    ]
+    fsp = [
+        "mid_csp_cbf/fsp/01",
+        "mid_csp_cbf/fsp/02",
+        "mid_csp_cbf/fsp/03",
+        "mid_csp_cbf/fsp/04",
+    ]
+    subarray = [
+        "mid_csp_cbf/sub_elt/subarray_01",
+        "mid_csp_cbf/sub_elt/subarray_02",
+        "mid_csp_cbf/sub_elt/subarray_03",
+    ]
     return {
-        "mid_csp_cbf/vcc/001": mock_vcc,
-        "mid_csp_cbf/vcc/002": mock_vcc,
-        "mid_csp_cbf/vcc/003": mock_vcc,
-        "mid_csp_cbf/vcc/004": mock_vcc,
-        "mid_csp_cbf/fsp/01": mock_fsp,
-        "mid_csp_cbf/fsp/02": mock_fsp,
-        "mid_csp_cbf/fsp/03": mock_fsp,
-        "mid_csp_cbf/fsp/04": mock_fsp,
-        "mid_csp_cbf/sub_elt/subarray_01": mock_subarray,
-        "mid_csp_cbf/sub_elt/subarray_02": mock_subarray,
-        "mid_csp_cbf/sub_elt/subarray_03": mock_subarray,
+        vcc[0]: mock_vcc,
+        vcc[1]: mock_vcc,
+        vcc[2]: mock_vcc,
+        vcc[3]: mock_vcc,
+        fsp[0]: mock_fsp,
+        fsp[1]: mock_fsp,
+        fsp[2]: mock_fsp,
+        fsp[3]: mock_fsp,
+        subarray[0]: mock_subarray,
+        subarray[1]: mock_subarray,
+        subarray[2]: mock_subarray,
+        ''.join(vcc): mock_vcc_group,
+        ''.join(fsp): mock_fsp_group,
+        ''.join(subarray): mock_subarray_group,
     }

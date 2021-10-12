@@ -102,6 +102,8 @@ class TestCbfController:
             assert proxies.fspSubarray[i + 1].State() == DevState.ON
         
 
+    #TODO: test Standby command in a valid use case
+    @pytest.mark.skip(reason="base classes v0.10.1 Standby not allowed when ON")
     def test_Standby_valid(self, proxies):
         """
         Test a valid use of the "Standby" command

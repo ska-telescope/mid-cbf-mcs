@@ -77,7 +77,7 @@ class MockDeviceBuilder:
 
         :param name: the name of the command
         :param result_code: the
-            :py:class:`ska_tango_base.commands.ResultCode` that the\
+            :py:class:`ska_tango_base.commands.ResultCode` that the
             command should return
         :param status: an information-only message for the command to
             return
