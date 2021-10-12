@@ -61,13 +61,17 @@ def device_to_load() -> DeviceToLoadType:
 @pytest.fixture()
 def mock_cbf_controller() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
+    # Mock the MaxCapabilities Cbf Controller property
     builder.add_property("MaxCapabilities", {'MaxCapabilities': ['VCC:4', 'FSP:4', 'Subarray:2']})
-    builder.add_attribute("receptorToVcc", ["1:2", "1:1", "2:1"])
+    # Mock the receptortoVcc Cbf Controller attribute
+    # Note: Each receptor can only have one Vcc 
+    builder.add_attribute("receptorToVcc", ["1:1", "2:2", "3:3"])
     return builder()
 
 @pytest.fixture()
 def mock_vcc() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
+    # Mock the Vcc subarrayMembership attribute
     # The subarray ID for this unit test is hardcoded to 1
     builder.add_attribute("subarrayMembership", 1)
     return builder()
