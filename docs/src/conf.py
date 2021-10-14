@@ -34,7 +34,7 @@ sys.path.append(os.path.abspath('../../'))
 
 def setup(app):
     app.add_css_file('css/custom.css')
-    app.add_javascript('js/github.js')
+    app.add_js_file('js/github.js')
 
 # -- Project information -----------------------------------------------------
 
@@ -42,9 +42,6 @@ project = 'ska-mid-cbf-mcs Software'
 copyright = '2020, NRC - SKA Organization'
 author = 'Taylor Huang'
 
-def setup(app):
-    app.add_css_file('css/custom.css')
-    app.add_javascript('js/github.js')
 
 # -- General configuration ------------------------------------------------
 # 
@@ -56,16 +53,18 @@ def setup(app):
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    'sphinx_rtd_theme',
     'sphinx.ext.autodoc',
+    'sphinx.ext.napoleon',
     'sphinx.ext.doctest',
     'sphinx.ext.intersphinx',
     'sphinx.ext.todo',
     'sphinx.ext.coverage',
-    'sphinx.ext.githubpages',
-    'sphinx.ext.napoleon',
-    'sphinx.ext.viewcode',
+    'sphinx.ext.mathjax',
     'sphinx.ext.ifconfig',
-    'sphinx.ext.mathjax'
+    'sphinx.ext.viewcode',
+    'sphinx.ext.githubpages',
+    'recommonmark'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
