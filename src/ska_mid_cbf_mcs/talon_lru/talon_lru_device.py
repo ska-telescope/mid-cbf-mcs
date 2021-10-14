@@ -146,45 +146,24 @@ class TalonLRU(SKABaseDevice):
             device._proxy_power_switch1 = self.get_device_proxy(device.PDU1Address)
             device._proxy_power_switch2 = self.get_device_proxy(device.PDU2Address)
 
+            # Increase the access timeout of the power switch proxies, since the
+            # numOutlets attribute can take some time to read
             if device._proxy_power_switch1 is not None:
-                # Increase the access timeout of the power switch proxy, since the
-                # numOutlets attribute can take some time to read
                 device._proxy_power_switch1.set_timeout_millis(5000)
-
-                # Get the initial state of the power
-                if device._proxy_power_switch1.numOutlets != 0:
-                    device._pdu1_power_mode = device._proxy_power_switch1.GetOutletPowerMode(device.PDU1PowerOutlet)
-                else:
-                    device._pdu1_power_mode = PowerMode.UNKNOWN
-            else:
-                device._pdu1_power_mode = PowerMode.UNKNOWN
+                device._proxy_power_switch1.subscribe_event("simulationMode",
+                    tango.EventType.CHANGE_EVENT, device.check_power_mode, stateless=True)
 
             if device._proxy_power_switch2 is not None:
                 device._proxy_power_switch2.set_timeout_millis(5000)
+                device._proxy_power_switch2.subscribe_event("simulationMode",
+                    tango.EventType.CHANGE_EVENT, device.check_power_mode, stateless=True)
 
-                if device._proxy_power_switch2.numOutlets != 0:
-                    device._pdu2_power_mode = device._proxy_power_switch2.GetOutletPowerMode(device.PDU2PowerOutlet)
-                else:
-                    device._pdu2_power_mode = PowerMode.UNKNOWN
-            else:
-                device._pdu2_power_mode = PowerMode.UNKNOWN
-
-            # When starting up the MCS, expect that power is turned off
-            if (device._pdu1_power_mode == PowerMode.OFF and
-                device._pdu2_power_mode == PowerMode.OFF):
+            # Check the initial power mode of the PDUs
+            device.check_power_mode()
+            if device.get_state() == DevState.INIT:
                 return (ResultCode.OK, "TalonLRU initialization OK")
-
-            if device._pdu1_power_mode != PowerMode.OFF:
-                self.logger.error(
-                    f"Unexpected initial power state ({device._pdu1_power_mode}) for PDU outlet 1")
-
-            if device._pdu2_power_mode != PowerMode.OFF:
-                self.logger.error(
-                    f"Unexpected initial power state ({device._pdu2_power_mode}) for PDU outlet 2")
-
-            device.set_state(DevState.FAULT)
-            device.set_status("The device is in FAULT state - one or both PDU outlets have incorrect initial power state.")
-            return (ResultCode.FAILED, "One or both PDU outlets have incorrect initial power state")
+            else:
+                return (ResultCode.FAILED, "One or both PDU outlets have incorrect initial power state")
         
         def get_device_proxy(self: TalonLRU.InitCommand, fqdn: str) -> DeviceProxy | None:
             """
@@ -202,6 +181,55 @@ class TalonLRU(SKABaseDevice):
                 for item in df.args:
                     self.logger.error(f"Failed connection to {fqdn} device: {item.reason}")
                 return None
+
+    def check_power_mode(self: TalonLRU, event=None) -> None:
+        """
+        Get the power mode of both PDUs and check that it is consistent with the
+        current device state.
+        """
+        if self._proxy_power_switch1 is not None:
+            if self._proxy_power_switch1.numOutlets != 0:
+                self._pdu1_power_mode = self._proxy_power_switch1.GetOutletPowerMode(self.PDU1PowerOutlet)
+            else:
+                self._pdu1_power_mode = PowerMode.UNKNOWN
+        else:
+            self._pdu1_power_mode = PowerMode.UNKNOWN
+
+        if self._proxy_power_switch2 is not None:
+            if self._proxy_power_switch2.numOutlets != 0:
+                self._pdu2_power_mode = self._proxy_power_switch2.GetOutletPowerMode(self.PDU2PowerOutlet)
+            else:
+                self._pdu2_power_mode = PowerMode.UNKNOWN
+        else:
+            self._pdu2_power_mode = PowerMode.UNKNOWN
+
+        # Check the expected power mode
+        dev_state = self.get_state()
+        if dev_state == DevState.INIT or dev_state == DevState.OFF:
+            expected_power_mode = PowerMode.OFF
+        elif dev_state == DevState.ON:
+            expected_power_mode = PowerMode.ON
+        else:
+            # In other device states, we don't know what the expected power
+            # mode should be. Don't check it.
+            return
+            
+        if (self._pdu1_power_mode == expected_power_mode and
+            self._pdu2_power_mode == expected_power_mode):
+            return
+
+        if self._pdu1_power_mode != expected_power_mode:
+            self.logger.error(
+                f"PDU outlet 1 expected power mode: ({expected_power_mode})," \
+                f" actual power mode: ({self._pdu1_power_mode})")
+
+        if self._pdu2_power_mode != expected_power_mode:
+            self.logger.error(
+                f"PDU outlet 2 expected power mode: ({expected_power_mode})," \
+                f" actual power mode: ({self._pdu1_power_mode})")
+
+        self.set_state(DevState.FAULT)
+        self.set_status("The device is in FAULT state - one or both PDU outlets have incorrect power state.")
 
     class OnCommand(SKABaseDevice.OnCommand):
         """

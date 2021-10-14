@@ -1874,6 +1874,10 @@
                         "properties": {
                             "PowerSwitchIp": [
                                 "192.168.0.100"
+                            ],
+                            "polled_attr": [
+                                "simulationmode",
+                                "3000"
                             ]
                         }
                     }
@@ -1902,6 +1906,14 @@
                             ],
                             "PDU2PowerOutlet": [
                                 "1"
+                            ],
+                            "polled_attr": [
+                                "state",
+                                "1000",
+                                "healthstate",
+                                "1000",
+                                "adminmode",
+                                "1000"
                             ]
                         }
                     }

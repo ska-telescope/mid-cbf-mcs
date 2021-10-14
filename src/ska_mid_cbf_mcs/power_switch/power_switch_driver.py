@@ -54,6 +54,8 @@ class PowerSwitchDriver:
     # Coversion between PowerMode and outlet state response
     power_mode_conversion = [PowerMode.OFF, PowerMode.ON]
 
+    query_timeout_s = 4
+
     def __init__(
         self: PowerSwitchDriver,
         ip: str,
@@ -96,7 +98,8 @@ class PowerSwitchDriver:
         :return: whether the power switch is communicating
         """
         try:
-            response = requests.get(url=self.base_url, headers=self.header, auth=(user, password))
+            response = requests.get(url=self.base_url, headers=self.header,
+                auth=(user, password), timeout=self.query_timeout_s)
             if response.status_code == requests.codes.ok:
                 return True
             else:
@@ -145,7 +148,8 @@ class PowerSwitchDriver:
         data = "value=true"
 
         try:
-            response = requests.put(url=url, data=data, headers=self.header, auth=(user, password))
+            response = requests.put(url=url, data=data, headers=self.header,
+                auth=(user, password), timeout=self.query_timeout_s)
             if response.status_code in [requests.codes.ok, requests.codes.no_content]:
                 self.outlets[outlet].power_mode = PowerMode.ON
                 return ResultCode.OK, f"Outlet {outlet} power on"
@@ -177,7 +181,8 @@ class PowerSwitchDriver:
         data = "value=false"
 
         try:
-            response = requests.put(url=url, data=data, headers=self.header, auth=(user, password))
+            response = requests.put(url=url, data=data, headers=self.header,
+                auth=(user, password), timeout=self.query_timeout_s)
             if response.status_code in [requests.codes.ok, requests.codes.no_content]:
                 self.outlets[outlet].power_mode = PowerMode.OFF
                 return ResultCode.OK, f"Outlet {outlet} power off"
@@ -211,7 +216,8 @@ class PowerSwitchDriver:
 
         url = f"{self.base_url}/restapi/relay/outlets/"
         try:
-            response = requests.get(url=url, headers=self.header, auth=(user, password))
+            response = requests.get(url=url, headers=self.header, auth=(user, password),
+                timeout=self.query_timeout_s)
             if response.status_code == requests.codes.ok:
                 # Validate the response has the expected format
                 try:
