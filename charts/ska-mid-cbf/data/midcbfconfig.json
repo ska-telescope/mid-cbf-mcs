@@ -1886,10 +1886,10 @@
                     "mid_csp_cbf/talon_lru/001": {
                         "properties": {
                             "TalonDxBoard1Address": [
-                                "tbd"
+                                "arbitrary/fqdn/01"
                             ],
                             "TalonDxBoard2Address": [
-                                "tbd"
+                                "arbitrary/fqdn/02"
                             ],
                             "PDU1Address": [
                                 "mid_csp_cbf/power_switch/001"

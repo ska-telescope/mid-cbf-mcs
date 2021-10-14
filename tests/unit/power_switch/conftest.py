@@ -18,6 +18,7 @@ import requests
 from typing import List, Any
 
 # Local imports
+from ska_mid_cbf_mcs.power_switch.power_switch_device import PowerSwitch
 from ska_mid_cbf_mcs.power_switch.power_switch_component_manager import PowerSwitchComponentManager
 from ska_mid_cbf_mcs.testing.tango_harness import TangoHarness, DevicesToLoadType
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
@@ -146,8 +147,9 @@ def device_to_load() -> DevicesToLoadType:
     :return: specification of the device to be loaded
     """
     return {
-        "path": "charts/ska-mid-cbf/data/midcbfconfig.json",
+        "path": "devicetoload.json",
         "package": "ska_mid_cbf_mcs.power_switch.power_switch_device",
         "device": "powerswitch-001",
         "proxy": CbfDeviceProxy,
+        "patch": PowerSwitch
     }

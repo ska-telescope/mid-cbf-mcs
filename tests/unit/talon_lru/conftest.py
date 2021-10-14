@@ -8,7 +8,6 @@
 """This module contains pytest-specific test harness for TalonLRU unit tests."""
 
 from __future__ import annotations
-from _pytest.fixtures import pytest_fixture_setup
 
 # Standard imports
 import pytest
@@ -16,6 +15,7 @@ import unittest
 from typing import Dict
 
 # Local imports
+from ska_mid_cbf_mcs.talon_lru.talon_lru_device import TalonLRU
 from ska_mid_cbf_mcs.commons.global_enum import PowerMode
 from ska_mid_cbf_mcs.testing.tango_harness import TangoHarness, DevicesToLoadType
 from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder
@@ -45,6 +45,7 @@ def device_to_load() -> DevicesToLoadType:
         "package": "ska_mid_cbf_mcs.talon_lru.talon_lru_device",
         "device": "talonlru-001",
         "proxy": CbfDeviceProxy,
+        "patch": TalonLRU
     }
 
 @pytest.fixture(params=[

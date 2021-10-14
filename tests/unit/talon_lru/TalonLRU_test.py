@@ -19,9 +19,8 @@ from tango import DevState
 
 # Local imports
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import SimulationMode
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
-from ska_mid_cbf_mcs.testing.tango_harness import DeviceConfigType, TangoHarness
+from ska_mid_cbf_mcs.testing.tango_harness import TangoHarness
 
 def test_startup_state(
     tango_harness: TangoHarness,
