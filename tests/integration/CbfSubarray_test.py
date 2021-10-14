@@ -267,17 +267,26 @@ class TestCbfSubarray:
             raise e
 
     #TODO: fix; currently tests break if multiple scan configurations are tested
-    def test_ConfigureScan_basic(self, proxies):
+    @pytest.mark.parametrize(
+        "config_file_name", 
+        [
+            "/../data/ConfigureScan_basic.json", 
+            # "/../data/Configure_TM-CSP_v2.json" 
+            # TODO: uncomment second parameter and update test
+            # to work with multiple json files
+        ]
+    )
+    def test_ConfigureScan_basic(self, proxies, config_file_name):
         """
         Test a successful scan configuration
         """
-
-        proxies.subarray[1].loggingLevel = LoggingLevel.DEBUG
+        sub_id = 1
+        proxies.subarray[sub_id].loggingLevel = LoggingLevel.DEBUG
         try:
             # turn on Subarray
-            if proxies.subarray[1].State() != DevState.ON:
-                proxies.subarray[1].On()
-                proxies.wait_timeout_dev([proxies.subarray[1]], DevState.ON, 3, 1)
+            if proxies.subarray[sub_id].State() != DevState.ON:
+                proxies.subarray[sub_id].On()
+                proxies.wait_timeout_dev([proxies.subarray[sub_id]], DevState.ON, 3, 1)
                 for proxy in [proxies.vcc[i + 1] for i in range(4)]:
                     if proxy.State() == DevState.OFF:
                         proxy.On()
@@ -292,28 +301,30 @@ class TestCbfSubarray:
             
             logging.info("vcc_index  = {}".format( vcc_index ))
 
-            assert len(proxies.subarray[1].receptors) == 0
-            assert proxies.subarray[1].configID == ''
+            assert len(proxies.subarray[sub_id].receptors) == 0
+            assert proxies.subarray[sub_id].configID == ''
             # TODO in CbfSubarray, at end of scan, clear all private data
             #assert proxies.subarray[1].frequencyBand == 0
-            assert proxies.subarray[1].obsState == ObsState.EMPTY
+            assert proxies.subarray[sub_id].obsState == ObsState.EMPTY
 
             # add receptors
-            proxies.subarray[1].AddReceptors([1, 3, 4, 2])
-            proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.IDLE, 1, 1)
-            assert all([proxies.subarray[1].receptors[i] == j for i, j in zip(range(3), [1, 3, 4])])
+            proxies.subarray[sub_id].AddReceptors([1, 3, 4, 2])
+            proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.IDLE, 1, 1)
+            assert all([proxies.subarray[sub_id].receptors[i] == j for i, j in zip(range(3), [1, 3, 4])])
 
             # configure scan
-            config_file_name = "/../data/ConfigureScan_basic.json"
             f = open(file_path + config_file_name)
-            proxies.subarray[1].ConfigureScan(f.read().replace("\n", ""))
+            configuration = f.read().replace("\n", "")
             f.close()
-            proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.READY, 3, 1)
+            proxies.subarray[sub_id].ConfigureScan(configuration)
+            proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.READY, 3, 1)
+            configuration = json.loads(configuration)
 
             # check configured attributes of CBF subarray
-            assert proxies.subarray[1].configID == "band:5a, fsp1, 744 channels average factor 8"
-            assert proxies.subarray[1].frequencyBand == 4 # means 5a
-            assert proxies.subarray[1].obsState == ObsState.READY
+            assert proxies.subarray[sub_id].configID == configuration["common"]["config_id"]
+            band_index = freq_band_dict()[configuration["common"]["frequency_band"]]
+            assert proxies.subarray[sub_id].frequencyBand == band_index 
+            assert proxies.subarray[sub_id].obsState == ObsState.READY
 
             proxies.wait_timeout_obs([proxies.vcc[i + 1] for i in range(4)], ObsState.READY, 1, 1)
 
@@ -325,8 +336,8 @@ class TestCbfSubarray:
 
             vcc_band_proxies = proxies.vccBand[vcc_index - 1]
 
-            assert proxies.vcc[proxies.receptor_to_vcc[4]].frequencyBand == 4
-            assert proxies.vcc[proxies.receptor_to_vcc[1]].frequencyBand == 4
+            assert proxies.vcc[proxies.receptor_to_vcc[4]].frequencyBand == band_index
+            assert proxies.vcc[proxies.receptor_to_vcc[1]].frequencyBand == band_index
 
             for proxy in proxies.vccBand[proxies.receptor_to_vcc[4] - 1]:
                 logging.info("VCC proxy.State() = {}".format(proxy.State()))
@@ -338,16 +349,16 @@ class TestCbfSubarray:
 
             # check the rest of the configured attributes of VCCs
             # first for VCC belonging to receptor 10...
-            assert proxies.vcc[proxies.receptor_to_vcc[4]].subarrayMembership == 1
-            assert proxies.vcc[proxies.receptor_to_vcc[4]].band5Tuning[0] == 5.85
-            assert proxies.vcc[proxies.receptor_to_vcc[4]].band5Tuning[1] == 7.25
-            assert proxies.vcc[proxies.receptor_to_vcc[4]].frequencyBandOffsetStream1 == 0
-            assert proxies.vcc[proxies.receptor_to_vcc[4]].frequencyBandOffsetStream2 == 0
-            assert proxies.vcc[proxies.receptor_to_vcc[4]].rfiFlaggingMask == "{}"
+            assert proxies.vcc[proxies.receptor_to_vcc[4]].subarrayMembership == sub_id
+            for idx, band in enumerate(configuration["common"]["band_5_tuning"]):
+                assert proxies.vcc[proxies.receptor_to_vcc[4]].band5Tuning[idx] == band
+            assert proxies.vcc[proxies.receptor_to_vcc[4]].frequencyBandOffsetStream1 == configuration["cbf"]["frequency_band_offset_stream_1"]
+            assert proxies.vcc[proxies.receptor_to_vcc[4]].frequencyBandOffsetStream2 == configuration["cbf"]["frequency_band_offset_stream_2"]
+            assert proxies.vcc[proxies.receptor_to_vcc[4]].rfiFlaggingMask == str(configuration["cbf"]["rfi_flagging_mask"])
             # then for VCC belonging to receptor 1...
-            assert proxies.vcc[proxies.receptor_to_vcc[1]].subarrayMembership == 1
-            assert proxies.vcc[proxies.receptor_to_vcc[1]].band5Tuning[0] == 5.85
-            assert proxies.vcc[proxies.receptor_to_vcc[1]].band5Tuning[1] == 7.25
+            assert proxies.vcc[proxies.receptor_to_vcc[1]].subarrayMembership == sub_id
+            for idx, band in enumerate(configuration["common"]["band_5_tuning"]):
+                assert proxies.vcc[proxies.receptor_to_vcc[1]].band5Tuning[idx] == band
 
             # check configured attributes of search windows
             # first for search window 1...
@@ -380,11 +391,11 @@ class TestCbfSubarray:
             # check configured attributes of VCC search windows
             # first for search window 1 of VCC belonging to receptor 10...
             assert proxies.vccTdc[proxies.receptor_to_vcc[4] - 1][0].State() == DevState.ON
-            assert proxies.vccTdc[proxies.receptor_to_vcc[4] - 1][0].searchWindowTuning == 6000000000
-            assert proxies.vccTdc[proxies.receptor_to_vcc[4] - 1][0].tdcEnable == True
-            assert proxies.vccTdc[proxies.receptor_to_vcc[4] - 1][0].tdcNumBits == 8
-            assert proxies.vccTdc[proxies.receptor_to_vcc[4] - 1][0].tdcPeriodBeforeEpoch == 5
-            assert proxies.vccTdc[proxies.receptor_to_vcc[4] - 1][0].tdcPeriodAfterEpoch == 25
+            assert proxies.vccTdc[proxies.receptor_to_vcc[4] - 1][0].searchWindowTuning == configuration["cbf"]["search_window"][0]["search_window_tuning"]
+            assert proxies.vccTdc[proxies.receptor_to_vcc[4] - 1][0].tdcEnable == configuration["cbf"]["search_window"][0]["tdc_enable"]
+            assert proxies.vccTdc[proxies.receptor_to_vcc[4] - 1][0].tdcNumBits == configuration["cbf"]["search_window"][0]["tdc_num_bits"]
+            assert proxies.vccTdc[proxies.receptor_to_vcc[4] - 1][0].tdcPeriodBeforeEpoch == configuration["cbf"]["search_window"][0]["tdc_period_before_epoch"]
+            assert proxies.vccTdc[proxies.receptor_to_vcc[4] - 1][0].tdcPeriodAfterEpoch == configuration["cbf"]["search_window"][0]["tdc_period_after_epoch"]
 
             # TODO - re-enable and debug!
             # assert proxies.vccTdc[proxies.receptor_to_vcc[4] - 1][0].tdcDestinationAddress == (
@@ -392,11 +403,11 @@ class TestCbfSubarray:
             # )
             # then for search window 1 of VCC belonging to receptor 1...
             assert proxies.vccTdc[proxies.receptor_to_vcc[1] - 1][0].State() == DevState.ON
-            assert proxies.vccTdc[proxies.receptor_to_vcc[1] - 1][0].searchWindowTuning == 6000000000
-            assert proxies.vccTdc[proxies.receptor_to_vcc[1] - 1][0].tdcEnable == True
-            assert proxies.vccTdc[proxies.receptor_to_vcc[1] - 1][0].tdcNumBits == 8
-            assert proxies.vccTdc[proxies.receptor_to_vcc[1] - 1][0].tdcPeriodBeforeEpoch == 5
-            assert proxies.vccTdc[proxies.receptor_to_vcc[1] - 1][0].tdcPeriodAfterEpoch == 25
+            assert proxies.vccTdc[proxies.receptor_to_vcc[1] - 1][0].searchWindowTuning == configuration["cbf"]["search_window"][0]["search_window_tuning"]
+            assert proxies.vccTdc[proxies.receptor_to_vcc[1] - 1][0].tdcEnable == configuration["cbf"]["search_window"][0]["tdc_enable"]
+            assert proxies.vccTdc[proxies.receptor_to_vcc[1] - 1][0].tdcNumBits == configuration["cbf"]["search_window"][0]["tdc_num_bits"]
+            assert proxies.vccTdc[proxies.receptor_to_vcc[1] - 1][0].tdcPeriodBeforeEpoch == configuration["cbf"]["search_window"][0]["tdc_period_before_epoch"]
+            assert proxies.vccTdc[proxies.receptor_to_vcc[1] - 1][0].tdcPeriodAfterEpoch == configuration["cbf"]["search_window"][0]["tdc_period_after_epoch"]
 
             # TODO - re-enable and debug!
             # assert proxies.vccTdc[proxies.receptor_to_vcc[1] - 1][0].tdcDestinationAddress == (
@@ -405,12 +416,12 @@ class TestCbfSubarray:
 
             # then for search window 2 of VCC belonging to receptor 10...
             assert proxies.vccTdc[proxies.receptor_to_vcc[4] - 1][1].State() == DevState.DISABLE
-            assert proxies.vccTdc[proxies.receptor_to_vcc[4] - 1][1].searchWindowTuning == 7000000000
-            assert proxies.vccTdc[proxies.receptor_to_vcc[4] - 1][1].tdcEnable == False
+            assert proxies.vccTdc[proxies.receptor_to_vcc[4] - 1][1].searchWindowTuning == configuration["cbf"]["search_window"][1]["search_window_tuning"]
+            assert proxies.vccTdc[proxies.receptor_to_vcc[4] - 1][1].tdcEnable == configuration["cbf"]["search_window"][1]["tdc_enable"]
             # and lastly for search window 2 of VCC belonging to receptor 1...
             assert proxies.vccTdc[proxies.receptor_to_vcc[1] - 1][1].State() == DevState.DISABLE
-            assert proxies.vccTdc[proxies.receptor_to_vcc[1] - 1][1].searchWindowTuning == 7000000000
-            assert proxies.vccTdc[proxies.receptor_to_vcc[1] - 1][1].tdcEnable == False
+            assert proxies.vccTdc[proxies.receptor_to_vcc[1] - 1][1].searchWindowTuning == configuration["cbf"]["search_window"][1]["search_window_tuning"]
+            assert proxies.vccTdc[proxies.receptor_to_vcc[1] - 1][1].tdcEnable == configuration["cbf"]["search_window"][1]["tdc_enable"]
 
             # check configured attributes of FSPs, including states of function mode capabilities
             assert proxies.fsp[1].functionMode == 1
@@ -426,11 +437,10 @@ class TestCbfSubarray:
 
             # check configured attributes of FSP subarrays
             # first for FSP 3 ... (this is a PSS fsp device)
-            assert proxies.fspSubarray[3].receptors[0] == 3
-            assert proxies.fspSubarray[3].receptors[1] == 1
-            assert proxies.fspSubarray[3].searchWindowID == 2
-            assert proxies.fspSubarray[3].searchBeamID[0] == 300
-            assert proxies.fspSubarray[3].searchBeamID[1] == 400
+            assert proxies.fspSubarray[3].searchWindowID == configuration["cbf"]["fsp"][1]["search_window_id"]
+            for idx, searchBeam in enumerate(configuration["cbf"]["fsp"][1]["search_beam"]):
+                assert proxies.fspSubarray[3].receptors[idx] == searchBeam["receptor_ids"][0]
+                assert proxies.fspSubarray[3].searchBeamID[idx] == searchBeam["search_beam_id"]
 
             # TODO: currently searchBeams is stored by the device
             #       as a json string ( via attribute 'searchBeams');  
@@ -439,18 +449,18 @@ class TestCbfSubarray:
             searchBeam = proxies.fspSubarray[3].searchBeams
             searchBeam0 = json.loads(searchBeam[0])
             searchBeam1 = json.loads(searchBeam[1])
-            assert searchBeam0["search_beam_id"] == 300
-            assert searchBeam0["receptor_ids"][0] == 3
-            assert searchBeam0["enable_output"] == True
-            assert searchBeam0["averaging_interval"] == 4
+            assert searchBeam0["search_beam_id"] == configuration["cbf"]["fsp"][1]["search_beam"][0]["search_beam_id"]
+            assert searchBeam0["receptor_ids"][0] == configuration["cbf"]["fsp"][1]["search_beam"][0]["receptor_ids"][0]
+            assert searchBeam0["enable_output"] == configuration["cbf"]["fsp"][1]["search_beam"][0]["enable_output"]
+            assert searchBeam0["averaging_interval"] == configuration["cbf"]["fsp"][1]["search_beam"][0]["averaging_interval"]
 
             # TODO - this does not pass - to debug & fix
             #assert searchBeam0["searchBeamDestinationAddress"] == "10.05.1.1"
 
-            assert searchBeam1["search_beam_id"] == 400
-            assert searchBeam1["receptor_ids"][0] == 1
-            assert searchBeam1["enable_output"] == True
-            assert searchBeam1["averaging_interval"] == 2
+            assert searchBeam1["search_beam_id"] == configuration["cbf"]["fsp"][1]["search_beam"][1]["search_beam_id"]
+            assert searchBeam1["receptor_ids"][0] == configuration["cbf"]["fsp"][1]["search_beam"][1]["receptor_ids"][0]
+            assert searchBeam1["enable_output"] == configuration["cbf"]["fsp"][1]["search_beam"][1]["enable_output"]
+            assert searchBeam1["averaging_interval"] == configuration["cbf"]["fsp"][1]["search_beam"][1]["averaging_interval"]
 
             # TODO - this does not pass - to debug & fix
             #assert searchBeam1["searchBeamDestinationAddress"] == "10.05.2.1"
@@ -458,41 +468,40 @@ class TestCbfSubarray:
             # check configured attributes of FSP subarrays
             # first for FSP 1... (this is a CORR fsp device)
             assert proxies.fspSubarray[1].obsState == ObsState.READY
-            assert proxies.fspSubarray[1].receptors == 4
-            assert proxies.fspSubarray[1].frequencyBand == 4
-            assert proxies.fspSubarray[1].band5Tuning[0] == 5.85
-            assert proxies.fspSubarray[1].band5Tuning[1] == 7.25
-            assert proxies.fspSubarray[1].frequencyBandOffsetStream1 == 0
-            assert proxies.fspSubarray[1].frequencyBandOffsetStream2 == 0
-            assert proxies.fspSubarray[1].frequencySliceID == 1
+            assert proxies.fspSubarray[1].receptors == configuration["cbf"]["fsp"][0]["receptor_ids"][0]
+            assert proxies.fspSubarray[1].frequencyBand == band_index
+            for idx, band in enumerate(configuration["common"]["band_5_tuning"]):
+                assert proxies.fspSubarray[1].band5Tuning[idx] == band
+            assert proxies.fspSubarray[1].frequencyBandOffsetStream1 == configuration["cbf"]["frequency_band_offset_stream_1"]
+            assert proxies.fspSubarray[1].frequencyBandOffsetStream2 == configuration["cbf"]["frequency_band_offset_stream_2"]
+            assert proxies.fspSubarray[1].frequencySliceID == configuration["cbf"]["fsp"][0]["frequency_slice_id"]
             assert proxies.fspSubarray[1].corrBandwidth == 1
-            assert proxies.fspSubarray[1].zoomWindowTuning == 4700000
-            assert proxies.fspSubarray[1].integrationTime == 1
-            assert proxies.fspSubarray[1].fspChannelOffset == 14880
+            assert proxies.fspSubarray[1].zoomWindowTuning == configuration["cbf"]["fsp"][0]["zoom_window_tuning"]
+            assert proxies.fspSubarray[1].integrationTime == configuration["cbf"]["fsp"][0]["integration_factor"]
+            assert proxies.fspSubarray[1].fspChannelOffset == configuration["cbf"]["fsp"][0]["channel_offset"]
 
-            assert proxies.fspSubarray[1].channelAveragingMap[0][0] == 0
-            assert proxies.fspSubarray[1].channelAveragingMap[0][1] == 8
-            assert proxies.fspSubarray[1].channelAveragingMap[1][0] == 744
-            assert proxies.fspSubarray[1].channelAveragingMap[1][1] == 8
-            assert proxies.fspSubarray[1].channelAveragingMap[2][0] == 1488
-            assert proxies.fspSubarray[1].channelAveragingMap[2][1] == 8
-            assert proxies.fspSubarray[1].channelAveragingMap[3][0] == 2232
-            assert proxies.fspSubarray[1].channelAveragingMap[3][1] == 8
-            assert proxies.fspSubarray[1].channelAveragingMap[4][0] == 2976
+            for i in range(len(proxies.fspSubarray[1].channelAveragingMap)):
+                for j in range(len(proxies.fspSubarray[1].channelAveragingMap[i])):
+                    assert proxies.fspSubarray[1].channelAveragingMap[i][j] == configuration["cbf"]["fsp"][0]["channel_averaging_map"][i][j]
 
-            assert proxies.fspSubarray[1].outputLinkMap[0][0] == 0
-            assert proxies.fspSubarray[1].outputLinkMap[0][1] == 4
-            assert proxies.fspSubarray[1].outputLinkMap[1][0] == 744
-            assert proxies.fspSubarray[1].outputLinkMap[1][1] == 8      
-            assert proxies.fspSubarray[1].outputLinkMap[2][0] == 1488
-            assert proxies.fspSubarray[1].outputLinkMap[2][1] == 12
-            assert proxies.fspSubarray[1].outputLinkMap[3][0] == 2232
-            assert proxies.fspSubarray[1].outputLinkMap[3][1] == 16
+            for i in range(len(proxies.fspSubarray[1].outputLinkMap)):
+                    for j in range(len(proxies.fspSubarray[1].outputLinkMap[i])):
+                        assert proxies.fspSubarray[1].outputLinkMap[i][j] == configuration["cbf"]["fsp"][0]["output_link_map"][i][j]
 
             assert str(proxies.fspSubarray[1].visDestinationAddress).replace('"',"'") == \
-                str({"outputHost": [[0, "192.168.0.1"], [8184, "192.168.0.2"]], 
-                "outputMac": [[0, "06-00-00-00-00-01"]], 
-                "outputPort": [[0, 9000, 1], [8184, 9000, 1]]}).replace('"',"'")
+                str({
+                    "outputHost": [
+                        configuration["cbf"]["fsp"][0]["output_host"][0], 
+                        configuration["cbf"]["fsp"][0]["output_host"][1]
+                    ], 
+                    "outputMac": [
+                        configuration["cbf"]["fsp"][0]["output_mac"][0]
+                    ], 
+                    "outputPort": [
+                        configuration["cbf"]["fsp"][0]["output_port"][0], 
+                        configuration["cbf"]["fsp"][0]["output_port"][1]
+                    ]
+                    }).replace('"',"'")
 
             # Clean Up
             proxies.clean_proxies()
