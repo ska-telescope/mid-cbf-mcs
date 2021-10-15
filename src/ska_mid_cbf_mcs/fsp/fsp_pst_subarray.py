@@ -35,6 +35,7 @@ file_path = os.path.dirname(os.path.abspath(__file__))
 from ska_tango_base.control_model import HealthState, AdminMode, ObsState
 from ska_tango_base import SKASubarray, CspSubElementObsDevice, SKABaseDevice
 from ska_tango_base.commands import ResultCode
+from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 # PROTECTED REGION END #    //  FspPstSubarray.additionnal_import
 
 __all__ = ["FspPstSubarray", "main"]
@@ -171,19 +172,31 @@ class FspPstSubarray(CspSubElementObsDevice):
             device._receptors = []
             device._output_enable = 0
 
-            # device proxy for easy reference to CBF Controller
-            device._proxy_cbf_controller = tango.DeviceProxy(device.CbfControllerAddress)
-
+            # device proxy for connection to CbfController
+            device._proxy_cbf_controller = CbfDeviceProxy(
+                fqdn=device.CbfControllerAddress,
+                logger=device.logger
+            )
             device._controller_max_capabilities = dict(
-                pair.split(":") for pair in
+                pair.split(":") for pair in 
                 device._proxy_cbf_controller.get_property("MaxCapabilities")["MaxCapabilities"]
             )
+
+            # Connect to all VCC devices turned on by CbfController:
             device._count_vcc = int(device._controller_max_capabilities["VCC"])
             device._fqdn_vcc = list(device.VCC)[:device._count_vcc]
-            device._proxies_vcc = [*map(tango.DeviceProxy, device._fqdn_vcc)]
+            device._proxies_vcc = [
+                CbfDeviceProxy(
+                    logger=device.logger, 
+                    fqdn=address) for address in device._fqdn_vcc
+            ]
 
             # device proxy for easy reference to CBF Subarray
-            device._proxy_cbf_subarray = tango.DeviceProxy(device.CbfSubarrayAddress)
+            # TODO: Is device._proxy_cbf_subarray used anywhere?
+            device._proxy_cbf_subarray = CbfDeviceProxy(
+                fqdn=device.CbfSubarrayAddress,
+                logger=device.logger
+            )
 
             message = "FspPstSubarray Init command completed OK"
             self.logger.info(message)
@@ -450,7 +463,7 @@ class FspPstSubarray(CspSubElementObsDevice):
 
             (result_code,message)=super().do(argin)
 
-            return (result_code,message)
+            return (result_code, message)
 
     class GoToIdleCommand(CspSubElementObsDevice.GoToIdleCommand):
         """
