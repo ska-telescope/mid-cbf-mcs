@@ -147,7 +147,7 @@ def device_to_load() -> DevicesToLoadType:
     :return: specification of the device to be loaded
     """
     return {
-        "path": "devicetoload.json",
+        "path": "tests/unit/power_switch/devicetoload.json",
         "package": "ska_mid_cbf_mcs.power_switch.power_switch_device",
         "device": "powerswitch-001",
         "proxy": CbfDeviceProxy,
