@@ -85,6 +85,10 @@ class CbfController(SKAMaster):
         dtype=('str',)
     )
 
+    TalonLRU = device_property(
+        dtype=('str',)
+    )
+
     # ----------
     # Attributes
     # ----------
@@ -279,6 +283,9 @@ class CbfController(SKAMaster):
                         elif "fsp" in device_name:
                             device._report_fsp_health_state[device._fqdn_fsp.index(device_name)] = \
                                 event.attr_value.value
+                        elif "talon_lru" in device_name:
+                            device._report_talon_lru_health_state[device._fqdn_talon_lru.index(device_name)] = \
+                                event.attr_value.value
                         else:
                             # should NOT happen!
                             log_msg = "Received health state change for unknown device " + \
@@ -295,6 +302,9 @@ class CbfController(SKAMaster):
                         elif "fsp" in device_name:
                             device._report_fsp_state[device._fqdn_fsp.index(device_name)] = \
                                 event.attr_value.value
+                        elif "talon_lru" in device_name:
+                            device._report_talon_lru_state[device._fqdn_talon_lru.index(device_name)] = \
+                                event.attr_value.value
                         else:
                             # should NOT happen!
                             log_msg = "Received state change for unknown device " + \
@@ -310,6 +320,9 @@ class CbfController(SKAMaster):
                                 event.attr_value.value
                         elif "fsp" in device_name:
                             device._report_fsp_admin_mode[device._fqdn_fsp.index(device_name)] = \
+                                event.attr_value.value
+                        elif "talon_lru" in device_name:
+                            device._report_talon_lru_admin_mode[device._fqdn_talon_lru.index(device_name)] = \
                                 event.attr_value.value
                         else:
                             # should NOT happen!
@@ -431,6 +444,9 @@ class CbfController(SKAMaster):
             device._report_subarray_state = [tango.DevState.UNKNOWN] * device._count_subarray
             device._report_subarray_health_state = [HealthState.UNKNOWN.value] * device._count_subarray
             device._report_subarray_admin_mode = [AdminMode.ONLINE.value] * device._count_subarray
+            device._report_talon_lru_state = [tango.DevState.UNKNOWN] * len(device.TalonLRU)
+            device._report_talon_lru_health_state = [HealthState.UNKNOWN.value] * len(device.TalonLRU)
+            device._report_talon_lru_admin_mode = [AdminMode.ONLINE.value] * len(device.TalonLRU)
             device._frequency_offset_k = [0] * device._count_vcc
             device._frequency_offset_delta_f = [0] * device._count_vcc
             device._subarray_config_ID = [""] * device._count_subarray
@@ -439,6 +455,7 @@ class CbfController(SKAMaster):
             device._fqdn_vcc = list(device.VCC)[:device._count_vcc]
             device._fqdn_fsp = list(device.FSP)[:device._count_fsp]
             device._fqdn_subarray = list(device.CbfSubarray)[:device._count_subarray]
+            device._fqdn_talon_lru = list(device.TalonLRU)
 
             # initialize dicts with maps receptorID <=> vccID (randomly for now, for testing purposes)
             # maps receptor IDs to VCC IDs, in the form "receptorID:vccID"
@@ -474,7 +491,7 @@ class CbfController(SKAMaster):
                 device._group_subarray.add(fqdn)
 
             # Try connection with each subarray/capability
-            for fqdn in device._fqdn_vcc + device._fqdn_fsp + device._fqdn_subarray:
+            for fqdn in device._fqdn_vcc + device._fqdn_fsp + device._fqdn_subarray + device._fqdn_talon_lru:
                 try:
                     log_msg = "Trying connection to " + fqdn + " device"
                     device.logger.info(log_msg)
@@ -694,6 +711,9 @@ class CbfController(SKAMaster):
 
             device = self.target
 
+            for talon_lru_fqdn in device._fqdn_talon_lru:
+                device._proxies[talon_lru_fqdn].command_inout("On")
+
             device._group_subarray.command_inout("On")
             device._group_vcc.command_inout("On")
             device._group_fsp.command_inout("On")
@@ -719,6 +739,9 @@ class CbfController(SKAMaster):
             (result_code,message)=super().do()
 
             device = self.target
+
+            for talon_lru_fqdn in device._fqdn_talon_lru:
+                device._proxies[talon_lru_fqdn].command_inout("Off")
 
             for proxy in list(device._event_id.keys()):
                 for event_id in device._event_id[proxy]:
