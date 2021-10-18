@@ -287,6 +287,10 @@ class CbfController(SKAMaster):
                             device._report_fsp_health_state[
                                 device._fqdn_fsp.index(device_name)
                             ] = value
+                        elif "talon_lru" in device_name:
+                            device._report_talon_lru_health_state[
+                                device._fqdn_talon_lru.index(device_name)
+                                ] = value
                         else:
                             # should NOT happen!
                             log_msg = "Received health state change for unknown device " + \
@@ -306,6 +310,10 @@ class CbfController(SKAMaster):
                             device._report_fsp_state[
                                 device._fqdn_fsp.index(device_name)
                             ] = value
+                        elif "talon_lru" in device_name:
+                            device._report_talon_lru_state[
+                                device._fqdn_talon_lru.index(device_name)
+                            ] = value
                         else:
                             # should NOT happen!
                             log_msg = "Received state change for unknown device " + \
@@ -324,6 +332,10 @@ class CbfController(SKAMaster):
                         elif "fsp" in device_name:
                             device._report_fsp_admin_mode[
                                 device._fqdn_fsp.index(device_name)
+                            ] = value
+                        elif "talon_lru" in device_name:
+                            device._report_talon_lru_admin_mode[
+                                device._fqdn_talon_lru.index(device_name)
                             ] = value
                         else:
                             # should NOT happen!
@@ -453,6 +465,10 @@ class CbfController(SKAMaster):
             device._report_subarray_health_state = [HealthState.UNKNOWN.value] * device._count_subarray
             device._report_subarray_admin_mode = [AdminMode.ONLINE.value] * device._count_subarray
             device._subarray_config_ID = [""] * device._count_subarray
+
+            device._report_talon_lru_state = [tango.DevState.UNKNOWN] * len(device.TalonLRU)
+            device._report_talon_lru_health_state = [HealthState.UNKNOWN.value] * len(device.TalonLRU)
+            device._report_talon_lru_admin_mode = [AdminMode.ONLINE.value] * len(device.TalonLRU)
 
             # initialize lists with subarray/capability FQDNs
             device._fqdn_vcc = list(device.VCC)[:device._count_vcc]
