@@ -17,6 +17,9 @@
 
 # FspCorrSubarray TANGO device class for the FspCorrSubarray prototype
 # """
+from __future__ import annotations  # allow forward references in type hints
+
+from typing import List, Tuple
 
 # tango imports
 import tango
@@ -40,6 +43,7 @@ from ska_mid_cbf_mcs.commons.global_enum import const, freq_band_dict
 from ska_tango_base.control_model import HealthState, AdminMode, ObsState
 from ska_tango_base import CspSubElementObsDevice
 from ska_tango_base.commands import ResultCode
+from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 
 # PROTECTED REGION END #    //  FspCorrSubarray.additionnal_import
 
@@ -199,7 +203,7 @@ class FspCorrSubarray(CspSubElementObsDevice):
     # General methods
     # ---------------
 
-    def init_command_objects(self):
+    def init_command_objects(self: FspCorrSubarray) -> None:
         """
         Sets up the command objects
         """
@@ -215,10 +219,13 @@ class FspCorrSubarray(CspSubElementObsDevice):
 
     class InitCommand(CspSubElementObsDevice.InitCommand):
         """
-        A class for the Vcc's init_device() "command".
+        A class for the FspCorrSubarray's init_device() "command".
         """
 
-        def do(self):
+        def do(
+            self: FspCorrSubarray.InitCommand,
+        ) -> Tuple[ResultCode, str]:
+
             """
             Stateless hook for device initialisation.
 
@@ -266,17 +273,23 @@ class FspCorrSubarray(CspSubElementObsDevice):
             device._channel_info = []
 
             # device proxy for connection to CbfController
-            device._proxy_cbf_controller = tango.DeviceProxy(device.CbfControllerAddress)
-
+            device._proxy_cbf_controller = CbfDeviceProxy(
+                fqdn=device.CbfControllerAddress,
+                logger=device.logger
+            )
             device._controller_max_capabilities = dict(
-                pair.split(":") for pair in
+                pair.split(":") for pair in 
                 device._proxy_cbf_controller.get_property("MaxCapabilities")["MaxCapabilities"]
             )
 
             # Connect to all VCC devices turned on by CbfController:
             device._count_vcc = int(device._controller_max_capabilities["VCC"])
             device._fqdn_vcc = list(device.VCC)[:device._count_vcc]
-            device._proxies_vcc = [*map(tango.DeviceProxy, device._fqdn_vcc)]
+            device._proxies_vcc = [
+                CbfDeviceProxy(
+                    logger=device.logger, 
+                    fqdn=address) for address in device._fqdn_vcc
+            ]
 
             message = "FspCorrSubarry Init command completed OK"
             self.logger.info(message)
@@ -284,13 +297,13 @@ class FspCorrSubarray(CspSubElementObsDevice):
             
             # PROTECTED REGION END #    //  FspCorrSubarray.init_device
 
-    def always_executed_hook(self):
+    def always_executed_hook(self: FspCorrSubarray) -> None:
         # PROTECTED REGION ID(FspCorrSubarray.always_executed_hook) ENABLED START #
         """hook before any commands"""
         pass
         # PROTECTED REGION END #    //  FspCorrSubarray.always_executed_hook
 
-    def delete_device(self):
+    def delete_device(self: FspCorrSubarray) -> None:
         # PROTECTED REGION ID(FspCorrSubarray.delete_device) ENABLED START #
         pass
         # PROTECTED REGION END #    //  FspCorrSubarray.delete_device
@@ -299,61 +312,61 @@ class FspCorrSubarray(CspSubElementObsDevice):
     # Attributes methods
     # ------------------
 
-    def read_receptors(self):
+    def read_receptors(self: FspCorrSubarray) -> List[int]:
         # PROTECTED REGION ID(FspCorrSubarray.receptors_read) ENABLED START #
         """return receptros attribute.(array of int)"""
         return self._receptors
         # PROTECTED REGION END #    //  FspCorrSubarray.receptors_read
 
-    def read_frequencyBand(self):
+    def read_frequencyBand(self: FspCorrSubarray) -> tango.DevEnum:
         # PROTECTED REGION ID(FspCorrSubarray.frequencyBand_read) ENABLED START #
         """Return frequencyBand attribute(DevEnum)."""
         return self._frequency_band
         # PROTECTED REGION END #    //  FspCorrSubarray.frequencyBand_read
 
-    def read_band5Tuning(self):
+    def read_band5Tuning(self: FspCorrSubarray) -> List[float]:
         # PROTECTED REGION ID(FspCorrSubarray.band5Tuning_read) ENABLED START #
         """Return band5Tuning attribute(array of float, first element corresponds to the first stream, second to the second stream).""" 
         return self._stream_tuning
         # PROTECTED REGION END #    //  FspCorrSubarray.band5Tuning_read
 
-    def read_frequencyBandOffsetStream1(self):
+    def read_frequencyBandOffsetStream1(self: FspCorrSubarray) -> int:
         # PROTECTED REGION ID(FspCorrSubarray.frequencyBandOffsetStream1) ENABLED START #
         """Return frequencyBandOffsetStream1 attribute"""
         return self._frequency_band_offset_stream_1
         # PROTECTED REGION END #    //  FspCorrSubarray.frequencyBandOffsetStream1
 
-    def read_frequencyBandOffsetStream2(self):
+    def read_frequencyBandOffsetStream2(self: FspCorrSubarray) -> int:
         # PROTECTED REGION ID(FspCorrSubarray.frequencyBandOffsetStream2) ENABLED START #
         """Return frequencyBandOffsetStream2 attribute"""
         return self._frequency_band_offset_stream_2
         # PROTECTED REGION END #    //  FspCorrSubarray.frequencyBandOffsetStream2
 
-    def read_frequencySliceID(self):
+    def read_frequencySliceID(self: FspCorrSubarray) -> int:
         # PROTECTED REGION ID(FspCorrSubarray.frequencySliceID_read) ENABLED START #
         """Return frequencySliceID attribute"""
         return self._frequency_slice_ID
         # PROTECTED REGION END #    //  FspCorrSubarray.frequencySliceID_read
 
-    def read_corrBandwidth(self):
+    def read_corrBandwidth(self: FspCorrSubarray) -> int:
         # PROTECTED REGION ID(FspCorrSubarray.corrBandwidth_read) ENABLED START #
         """Return corrBandwidth attribute(Bandwidth to be correlated is <Full Bandwidth>/2^bandwidth)."""
         return self._bandwidth
         # PROTECTED REGION END #    //  FspCorrSubarray.corrBandwidth_read
 
-    def read_zoomWindowTuning(self):
+    def read_zoomWindowTuning(self: FspCorrSubarray) -> int:
         # PROTECTED REGION ID(FspCorrSubarray.zoomWindowTuning_read) ENABLED START #
         """Return zoomWindowTuning attribute."""
         return self._zoom_window_tuning
         # PROTECTED REGION END #    //  FspCorrSubarray.zoomWindowTuning_read
 
-    def read_integrationTime(self):
+    def read_integrationTime(self: FspCorrSubarray) -> int:
         # PROTECTED REGION ID(FspCorrSubarray.integrationTime_read) ENABLED START #
         """Return integrationTime attribute(millisecond)."""
         return self._integration_time
         # PROTECTED REGION END #    //  FspCorrSubarray.integrationTime_read
 
-    def read_channelAveragingMap(self):
+    def read_channelAveragingMap(self: FspCorrSubarray) -> List[List[int]]:
         # PROTECTED REGION ID(FspCorrSubarray.channelAveragingMap_read) ENABLED START #
         """Return channelAveragingMap. 
            Consists of 2*20 array of integers(20 tupples representing 20* 744 channels). 
@@ -361,67 +374,70 @@ class FspCorrSubarray(CspSubElementObsDevice):
         return self._channel_averaging_map
         # PROTECTED REGION END #    //  FspCorrSubarray.channelAveragingMap_read
 
-    def read_visDestinationAddress(self):
+    def read_visDestinationAddress(self: FspCorrSubarray) -> str:
         # PROTECTED REGION ID(FspCorrSubarray.visDestinationAddress_read) ENABLED START #
         """Return VisDestinationAddress attribute(JSON object containing info about current SDP destination addresses being used)."""
         return json.dumps(self._vis_destination_address)
         # PROTECTED REGION END #    //  FspCorrSubarray.visDestinationAddress_read
 
-    def write_visDestinationAddress(self, value):
+    def write_visDestinationAddress(self: FspCorrSubarray, value: str) -> None:
         # PROTECTED REGION ID(FspCorrSubarray.visDestinationAddress_write) ENABLED START #
         """Set VisDestinationAddress attribute(JSON object containing info about current SDP destination addresses being used)."""
         self._vis_destination_address = json.loads(value)
         # PROTECTED REGION END #    //  FspCorrSubarray.visDestinationAddress_write
 
-    def read_fspChannelOffset(self):
+    def read_fspChannelOffset(self: FspCorrSubarray) -> int:
         # PROTECTED REGION ID(Fsp.fspChannelOffset_read) ENABLED START #
         """Return the fspChannelOffset attribute."""
         return self._fsp_channel_offset
         # PROTECTED REGION END #    //  Fsp.fspChannelOffset_read
 
-    def write_fspChannelOffset(self, value):
+    def write_fspChannelOffset(self: FspCorrSubarray, value: int) -> None:
         # PROTECTED REGION ID(Fsp.fspChannelOffset_write) ENABLED START #
         """Set the fspChannelOffset attribute."""
         self._fsp_channel_offset=value
         # PROTECTED REGION END #    //  Fsp.fspChannelOffset_write
 
-    def read_outputLinkMap(self):
+    def read_outputLinkMap(self: FspCorrSubarray) -> List[List[int]]:
         # PROTECTED REGION ID(FspCorrSubarray.outputLinkMap_read) ENABLED START #
         """Return the outputLinkMap attribute."""
         return self._output_link_map
         # PROTECTED REGION END #    //  FspCorrSubarray.outputLinkMap_read
 
-    def write_outputLinkMap(self, value):
+    def write_outputLinkMap(self: FspCorrSubarray, value: List[List[int]]) -> None:
         # PROTECTED REGION ID(FspCorrSubarray.outputLinkMap_write) ENABLED START #
         """Set the outputLinkMap attribute."""
         self._output_link_map=value
         # PROTECTED REGION END #    //  FspCorrSubarray.outputLinkMap_write
 
-    def read_scanID(self):
+    def read_scanID(self: FspCorrSubarray) -> int:
         # PROTECTED REGION ID(FspCorrSubarray.scanID_read) ENABLED START #
         """Return the scanID attribute."""
         return self._scan_id
         # PROTECTED REGION END #    //  FspCorrSubarray.scanID_read
 
-    def write_scanID(self, value):
+    def write_scanID(self: FspCorrSubarray, value: int) -> None:
         # PROTECTED REGION ID(FspCorrSubarray.scanID_write) ENABLED START #
         """Set the scanID attribute."""
         self._scan_id=value
         # PROTECTED REGION END #    //  FspCorrSubarray.scanID_write
 
-    def read_configID(self):
+    def read_configID(self: FspCorrSubarray) -> str:
         # PROTECTED REGION ID(FspCorrSubarray.configID_read) ENABLED START #
         """Return the configID attribute."""
         return self._config_id
         # PROTECTED REGION END #    //  FspCorrSubarray.configID_read
 
-    def write_configID(self, value):
+    def write_configID(self: FspCorrSubarray, value: str) -> None:
         # PROTECTED REGION ID(FspCorrSubarray.configID_write) ENABLED START #
         """Set the configID attribute."""
         self._config_id=value
         # PROTECTED REGION END #    //  FspCorrSubarray.configID_write
 
-    def _add_receptors(self, argin):
+    def _add_receptors(
+        self: FspCorrSubarray, 
+        argin: List[int]
+        ) -> None:
         """add specified receptors to the FSP subarray. Input is array of int."""
         errs = []  # list of error messages
         receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
@@ -452,7 +468,10 @@ class FspCorrSubarray(CspSubElementObsDevice):
             tango.Except.throw_exception("Command failed", msg, "_add_receptors execution",
                                            tango.ErrSeverity.ERR)
 
-    def _remove_receptors(self, argin):
+    def _remove_receptors(
+        self: FspCorrSubarray, 
+        argin: List[int]
+        )-> None:
         """Remove Receptors. Input is array of int"""
         for receptorID in argin:
             if receptorID in self._receptors:
@@ -462,7 +481,7 @@ class FspCorrSubarray(CspSubElementObsDevice):
                     "Skipping.".format(str(receptorID))
                 self.logger.warn(log_msg)
 
-    def _remove_all_receptors(self):
+    def _remove_all_receptors(self: FspCorrSubarray) -> None:
         """Remove all Receptors of this subarray"""
         self._remove_receptors(self._receptors[:])
 
@@ -573,7 +592,10 @@ class FspCorrSubarray(CspSubElementObsDevice):
 
         """Input a serilized JSON object. """
 
-        def do(self, argin):
+        def do(
+            self: FspCorrSubarray.ConfigureScanCommand,
+            argin: str
+        ) -> Tuple[ResultCode, str]:
             """
             Stateless hook for ConfigureScan() command functionality.
 
@@ -757,7 +779,10 @@ class FspCorrSubarray(CspSubElementObsDevice):
 
             return(result_code, msg)
 
-        def validate_input(self, argin):
+        def validate_input(
+            self: FspCorrSubarray.ConfigureScanCommand, 
+            argin: str
+            ) -> None:
             """
             Validate the configuration parameters against allowed values, as needed.
 
@@ -780,7 +805,10 @@ class FspCorrSubarray(CspSubElementObsDevice):
     )
     
     @DebugIt()
-    def ConfigureScan(self, argin):
+    def ConfigureScan(
+        self: FspCorrSubarray, 
+        argin: str
+        ) -> None:
         # PROTECTED REGION ID(Vcc.ConfigureScan) ENABLED START #
         """
         Configure the observing device parameters for the current scan.
@@ -801,7 +829,9 @@ class FspCorrSubarray(CspSubElementObsDevice):
         A class for the FspCorrSubarray's GoToIdle command.
         """
 
-        def do(self):
+        def do(
+            self: FspCorrSubarray.GoToIdleCommand
+        ) -> Tuple[ResultCode, str]:
             """
             Stateless hook for GoToIdle() command functionality.
 
@@ -855,8 +885,9 @@ class FspCorrSubarray(CspSubElementObsDevice):
             return (ResultCode.OK, "GoToIdle command completed OK")
             
     # TODO - currently not used
-    def is_getLinkAndAddress_allowed(self):
-        """Allowed if destination addresses are received, meaning outputLinkMap also received (checked in subarray validate scan)."""
+    def is_getLinkAndAddress_allowed(self: FspCorrSubarray) -> bool:
+        """Allowed if destination addresses are received, 
+        meaning outputLinkMap also received (checked in subarray validate scan)."""
         if self._vis_destination_address["outputHost"]==[]:
             return False
         return True
@@ -866,7 +897,10 @@ class FspCorrSubarray(CspSubElementObsDevice):
         dtype_out='DevString',
         doc_out="output link and destination addresses in JSON",
     )
-    def getLinkAndAddress(self, argin):
+    def getLinkAndAddress(
+        self: FspCorrSubarray, 
+        argin: int
+        ) -> str:
         # PROTECTED REGION ID(FspCorrSubarray.getLinkAndAddress) ENABLED START #
         """
         get output link and destination addresses in JSON based on a channel ID

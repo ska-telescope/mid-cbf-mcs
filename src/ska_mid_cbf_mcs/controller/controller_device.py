@@ -84,6 +84,10 @@ class CbfController(SKAMaster):
         dtype=('str',)
     )
 
+    TalonLRU = device_property(
+        dtype=('str',)
+    )
+
     # ----------
     # Attributes
     # ----------
@@ -474,6 +478,7 @@ class CbfController(SKAMaster):
             device._fqdn_vcc = list(device.VCC)[:device._count_vcc]
             device._fqdn_fsp = list(device.FSP)[:device._count_fsp]
             device._fqdn_subarray = list(device.CbfSubarray)[:device._count_subarray]
+            device._fqdn_talon_lru = list(device.TalonLRU)
 
             # initialize dicts with maps receptorID <=> vccID (randomly for now, for testing purposes)
             # maps receptor IDs to VCC IDs, in the form "receptorID:vccID"
@@ -512,7 +517,7 @@ class CbfController(SKAMaster):
             device.logger.info(f"{device._group_subarray.__name__}/////////////////")
 
             # Try connection with each subarray/capability
-            for fqdn in device._fqdn_vcc + device._fqdn_fsp + device._fqdn_subarray:
+            for fqdn in device._fqdn_vcc + device._fqdn_fsp + device._fqdn_subarray + device._fqdn_talon_lru:
                 try:
                     log_msg = "Trying connection to " + fqdn + " device"
                     device.logger.info(log_msg)
@@ -667,7 +672,7 @@ class CbfController(SKAMaster):
         return self._frequency_offset_k
         # PROTECTED REGION END #    //  CbfController.frequencyOffsetK_read
 
-    def write_frequencyOffsetK(self: CbfController, value: frequencyOffsetK) -> None:
+    def write_frequencyOffsetK(self: CbfController, value: List[int]) -> None:
         # PROTECTED REGION ID(CbfController.frequencyOffsetK_write) ENABLED START #
         """Set frequencyOffsetK attribute"""
         if len(value) == self._count_vcc:
@@ -685,7 +690,7 @@ class CbfController(SKAMaster):
         return self._frequency_offset_delta_f
         # PROTECTED REGION END #    //  CbfController.frequencyOffsetDeltaF_read
 
-    def write_frequencyOffsetDeltaF(self: CbfController, value: frequencyOffsetDeltaF) -> None:
+    def write_frequencyOffsetDeltaF(self: CbfController, value: List[int]) -> None:
         # PROTECTED REGION ID(CbfController.frequencyOffsetDeltaF_write) ENABLED START #
         """Set the frequencyOffsetDeltaF attribute"""
         if len(value) == self._count_vcc:
@@ -738,6 +743,9 @@ class CbfController(SKAMaster):
 
             device = self.target
 
+            for talon_lru_fqdn in device._fqdn_talon_lru:
+                device._proxies[talon_lru_fqdn].command_inout("On")
+
             device._group_subarray.command_inout("On")
             device._group_vcc.command_inout("On")
             device._group_fsp.command_inout("On")
@@ -762,6 +770,9 @@ class CbfController(SKAMaster):
             (result_code,message)=super().do()
 
             device = self.target
+
+            for talon_lru_fqdn in device._fqdn_talon_lru:
+                device._proxies[talon_lru_fqdn].command_inout("Off")
 
             for proxy in list(device._event_id.keys()):
                 for event_id in device._event_id[proxy]:

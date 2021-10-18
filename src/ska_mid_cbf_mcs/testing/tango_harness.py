@@ -181,6 +181,7 @@ class CbfDeviceInfo:
                 # patched device class name and inputting the desired class type
                 # in the device_spec object, however this prevents the use of a 
                 # patched device wrapper
+                # Original code: class_name = next(iter(device_spec))
                 # TODO: add a new field specifying class_name to device_spec ?
                 class_name = patch.__name__
                 fqdn = next(iter(device_spec[class_name]))
@@ -196,8 +197,10 @@ class CbfDeviceInfo:
                 }
 
                 if patch is None:
-                    package = __import__(self._package, fromlist=[class_name])
-                    klass = getattr(package, class_name)
+                    raise ValueError(f"patch cannot be None.")
+                    # TODO: Fails is patch is None, need to implement working default
+                    # package = __import__(self._package, fromlist=[class_name])
+                    # klass = getattr(package, class_name)
                 else:
                     klass = patch
 

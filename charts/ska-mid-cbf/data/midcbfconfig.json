@@ -41,6 +41,9 @@
                                 "mid_csp_cbf/vcc/003",
                                 "mid_csp_cbf/vcc/004"
                             ],
+                            "TalonLRU": [
+                                "mid_csp_cbf/talon_lru/001"
+                            ],
                             "polled_attr": [
                                 "reportfspstate",
                                 "1000",
@@ -1861,6 +1864,59 @@
                 "VccSearchWindow": {
                     "mid_csp_cbf/vcc_sw1/004": {},
                     "mid_csp_cbf/vcc_sw2/004": {}
+                }
+            }
+        },
+        "PowerSwitch": {
+            "powerswitch-001": {
+                "PowerSwitch": {
+                    "mid_csp_cbf/power_switch/001": {
+                        "properties": {
+                            "PowerSwitchIp": [
+                                "192.168.0.100"
+                            ],
+                            "polled_attr": [
+                                "simulationmode",
+                                "3000"
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "TalonLRU": {
+            "talonlru-001": {
+                "TalonLRU": {
+                    "mid_csp_cbf/talon_lru/001": {
+                        "properties": {
+                            "TalonDxBoard1Address": [
+                                "arbitrary/fqdn/01"
+                            ],
+                            "TalonDxBoard2Address": [
+                                "arbitrary/fqdn/02"
+                            ],
+                            "PDU1Address": [
+                                "mid_csp_cbf/power_switch/001"
+                            ],
+                            "PDU1PowerOutlet": [
+                                "0"
+                            ],
+                            "PDU2Address": [
+                                "mid_csp_cbf/power_switch/001"
+                            ],
+                            "PDU2PowerOutlet": [
+                                "1"
+                            ],
+                            "polled_attr": [
+                                "state",
+                                "1000",
+                                "healthstate",
+                                "1000",
+                                "adminmode",
+                                "1000"
+                            ]
+                        }
+                    }
                 }
             }
         }
