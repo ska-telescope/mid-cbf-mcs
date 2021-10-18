@@ -33,7 +33,6 @@ from ska_mid_cbf_mcs.testing.tango_harness import DeviceToLoadType
 
 from ska_tango_base.control_model import HealthState, AdminMode, ObsState
 
-LOGGER = logging.getLogger(__name__)
 
 class TestCbfController:
     """
@@ -51,8 +50,6 @@ class TestCbfController:
             :py:class:`CbfDeviceProxy` to the device under test, in a
             :py:class:`tango.test_context.DeviceTestContext`.
         """
-        test = 1234567890
-        LOGGER.info(f"{tango.GroupCmdReplyList()} {test}")
         assert device_under_test.commandProgress == 0
         device_under_test.On()
         time.sleep(1)

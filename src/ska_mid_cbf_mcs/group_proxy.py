@@ -82,7 +82,7 @@ class CbfGroupProxy:
         self.__dict__["_name"] = name
         self.__dict__["_fqdns"] = []
         self.__dict__["_logger"] = logger
-        self.__dict__["group_connection_factory"] = (
+        self.__dict__["_group_connection_factory"] = (
             group_connection_factory or 
             CbfGroupProxy._default_connection_factory
         )
@@ -168,11 +168,11 @@ class CbfGroupProxy:
         if self._group == None:
             if max_time:
                 self._group = _backoff_connect(
-                    self.group_connection_factory, fqdns
+                    self._group_connection_factory, fqdns
                 )
             else:
                 self.__dict__["_group"] = _connect(
-                    self.group_connection_factory, fqdns
+                    self._group_connection_factory, fqdns
                 )
         else:
             self.__dict__["_group"].add(fqdns)
