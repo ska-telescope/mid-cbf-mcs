@@ -1021,10 +1021,6 @@ class MockingTangoHarness(WrapperTangoHarness):
             if set(fqdns).issubset(set(self.fqdns)):
                 return self._harness.group_connection_factory(name, fqdns)
             else:
-                # mock_list = []
-                # for i in range(len(fqdns)):
-                #     mock_list.append(self._mocks[fqdns[i]])
-                # return mock_list
                 group_str = ''.join(fqdns)
                 return self._mocks[group_str]
 

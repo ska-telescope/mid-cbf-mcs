@@ -70,8 +70,8 @@ def mock_vcc() -> unittest.mock.Mock:
 @pytest.fixture()
 def mock_vcc_group() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
-    builder.add_command("On", tango.GroupCmdReplyList())
-    builder.add_command("Off", tango.GroupCmdReplyList())
+    builder.add_group_command("On", ResultCode.OK)
+    builder.add_group_command("Off", ResultCode.OK)
     return builder()
 
 @pytest.fixture()
@@ -85,8 +85,8 @@ def mock_fsp() -> unittest.mock.Mock:
 @pytest.fixture()
 def mock_fsp_group() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
-    builder.add_command("On", tango.GroupCmdReplyList())
-    builder.add_command("Off", tango.GroupCmdReplyList())
+    builder.add_group_command("On", ResultCode.OK)
+    builder.add_group_command("Off", ResultCode.OK)
     return builder()
 
 @pytest.fixture()
@@ -100,8 +100,8 @@ def mock_subarray() -> unittest.mock.Mock:
 @pytest.fixture()
 def mock_subarray_group() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
-    builder.add_command("On", tango.GroupCmdReplyList())
-    builder.add_command("Off", tango.GroupCmdReplyList())
+    builder.add_group_command("On", ResultCode.OK)
+    builder.add_group_command("Off", ResultCode.OK)
     return builder()
 
 @pytest.fixture()

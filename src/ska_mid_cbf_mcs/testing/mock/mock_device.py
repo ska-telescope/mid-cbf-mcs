@@ -83,6 +83,27 @@ class MockDeviceBuilder:
             return
         """
         self.add_command(name, [[result_code], [status]])
+    
+    def add_group_command(
+        self: MockDeviceBuilder,
+        name: str,
+        result_code: ResultCode,
+        status: str = "Mock information-only message",
+    ) -> None:
+        """
+        Tell this builder to build mocks with a specified command that returns
+        (ResultCode, [message, message_uid]) or (ResultCode, message) tuples as
+        required.
+
+        :param name: the name of the command
+        :param result_code: the
+            :py:class:`ska_tango_base.commands.ResultCode` that the
+            command should return
+        :param status: an information-only message for the command to
+            return
+        """
+        group_reply = tango.GroupCmdReply()
+        self.add_command(name, group_reply)
 
     def set_state(self: MockDeviceBuilder, state: tango.DevState) -> None:
         """

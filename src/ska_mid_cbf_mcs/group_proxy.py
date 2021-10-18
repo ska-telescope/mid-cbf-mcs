@@ -161,15 +161,23 @@ class CbfGroupProxy:
 
             :return: a proxy for the device
             """
-            self.__dict__["_fqdns"].extend(fqdns)
-            return group_connection_factory(self._name, fqdns)
+            group = group_connection_factory(self._name)
+            group.add(fqdns)
+            return group
 
-        if max_time:
-            self._group = _backoff_connect(
-                self.group_connection_factory, fqdns
-            )
+        if self._group == None:
+            if max_time:
+                self._group = _backoff_connect(
+                    self.group_connection_factory, fqdns
+                )
+            else:
+                self.__dict__["_group"] = _connect(
+                    self.group_connection_factory, fqdns
+                )
         else:
-            self._group = _connect(self.group_connection_factory, fqdns)
+            self.__dict__["_group"].add(fqdns)
+        
+        self.__dict__["_fqdns"].extend(fqdns)
 
 
     def remove(self: CbfGroupProxy, fqdn: str) -> None:
@@ -179,6 +187,7 @@ class CbfGroupProxy:
         :param fqdn: FQDN of the device to be proxied.
         """
         self.__dict__["_fqdns"].remove(fqdn)
+        self.__dict__["_group"].remove(fqdn)
 
 
     def check_initialised(self: CbfGroupProxy, max_time: float = 120.0) -> bool:
@@ -265,124 +274,6 @@ class CbfGroupProxy:
             return _backoff_check_initialised(self._group)
         else:
             return _check_initialised(self._group)
-
-    def add_change_event_callback(
-        self: CbfGroupProxy,
-        attribute_name: str,
-        callback: Callable[[str, Any, AttrQuality], None],
-        stateless: bool = True,
-    ) -> None:
-        """
-        Register a callback for change events being pushed by the device.
-
-        :param attribute_name: the name of the attribute for which
-            change events are subscribed.
-        :param callback: the function to be called when a change event
-            arrives.
-        :param stateless: whether to use Tango's stateless subscription
-            feature
-        """
-        attribute_key = attribute_name.lower()
-        if attribute_key not in self._change_event_subscription_ids:
-            self._change_event_callbacks[attribute_key] = [callback]
-            self._change_event_subscription_ids[
-                attribute_key
-            ] = self._subscribe_change_event(attribute_name, stateless=stateless)
-        else:
-            self._change_event_callbacks[attribute_key].append(callback)
-            self._call_callback(callback, self._read(attribute_name))
-
-    @backoff.on_exception(backoff.expo, tango.DevFailed, factor=1, max_time=120)
-    def _subscribe_change_event(
-        self: CbfGroupProxy, attribute_name: str, stateless: bool = False
-    ) -> int:
-        """
-        Subscribe to a change event.
-
-        Even though we already have a DeviceProxy to the device that we
-        want to subscribe to, it is still possible that the device is
-        not ready, in which case subscription will fail and a
-        :py:class:`tango.DevFailed` exception will be raised. Here, we
-        attempt subscription in a backoff-retry, and only raise the
-        exception one our retries are exhausted. (The alternative option
-        of subscribing with "stateless=True" could not be made to work.)
-
-        :param attribute_name: the name of the attribute for which
-            change events are subscribed
-        :param stateless: whether to use Tango's stateless subscription
-            feature
-
-        :return: the subscription id
-        """
-        return self._group.subscribe_event(
-            attribute_name,
-            tango.EventType.CHANGE_EVENT,
-            self._change_event_received,
-            stateless=stateless,
-        )
-
-    def _change_event_received(self: CbfGroupProxy, event: tango.EventData) -> None:
-        """
-        Handle subscribe events from the Tango system with this callback.
-
-        It in turn invokes all its own callbacks.
-
-        :param event: an object encapsulating the event data.
-        """
-        # TODO: not sure if it is overkill to serialise change event
-        # handling, but it seems like the safer way to go
-        with self._change_event_lock:
-            attribute_data = self._process_event(event)
-            if attribute_data is not None:
-                for callback in self._change_event_callbacks[
-                    attribute_data.name.lower()
-                ]:
-                    self._call_callback(callback, attribute_data)
-
-    def _call_callback(
-        self: CbfGroupProxy,
-        callback: Callable[[str, Any, AttrQuality], None],
-        attribute_data: tango.DeviceAttribute,
-    ) -> None:
-        """
-        Call the callback with unpacked attribute data.
-
-        :param callback: function handle for the callback
-        :param attribute_data: the attribute data to be unpacked and
-            used to call the callback
-        """
-        callback(attribute_data.name, attribute_data.value, attribute_data.quality)
-
-    def _process_event(
-        self: CbfGroupProxy, event: tango.EventData
-    ) -> Optional[tango.DeviceAttribute]:
-        """
-        Process a received event.
-
-        Extract the attribute value from the event; or, if the event
-        failed to carry an attribute value, read the attribute value
-        directly.
-
-        :param event: the received event
-
-        :return: the attribute value data
-        """
-        if event.err:
-            self._logger.warn(
-                f"Received failed change event: error stack is {event.errors}."
-            )
-            return None
-        elif event.attr_value is None:
-            warning_message = (
-                "Received change event with empty value. Falling back to manual "
-                f"attribute read. Event.err is {event.err}. Event.errors is\n"
-                f"{event.errors}."
-            )
-            warnings.warn(UserWarning(warning_message))
-            self._logger.warn(warning_message)
-            return self._read(event.attr_name)
-        else:
-            return event.attr_value
 
     def _read(self: CbfGroupProxy, attribute_name: str) -> Any:
         """

@@ -183,7 +183,7 @@ class CbfController(SKAMaster):
         doc="Report the administration mode of the FSP capabilities as an array of unsigned short.\nfor ex:\n[0,0,2,..]",
     )
 
-    reportFSPCorrSubarrayMembership = attribute(
+    reportFSPSubarrayMembership = attribute(
         dtype=(('uint16',),),
         max_dim_x=16,
         max_dim_y=27,
@@ -263,7 +263,10 @@ class CbfController(SKAMaster):
 
         def __state_change_event_callback(
             self: CbfController.InitCommand, 
-            event
+            event,
+            name,
+            value,
+            quality
         ) -> None:
 
             device = self.target
@@ -271,69 +274,79 @@ class CbfController(SKAMaster):
             if not event.err:
                 try:
                     device_name = event.device.dev_name()
-                    if "healthstate" in event.attr_name:
+                    if "healthstate" in name:
                         if "subarray" in device_name:
                             device._report_subarray_health_state[
-                                device._fqdn_subarray.index(device_name)] = \
-                                event.attr_value.value
+                                device._fqdn_subarray.index(device_name)
+                            ] = value
                         elif "vcc" in device_name:
-                            device._report_vcc_health_state[device._fqdn_vcc.index(device_name)] = \
-                                event.attr_value.value
+                            device._report_vcc_health_state[
+                                device._fqdn_vcc.index(device_name)
+                            ] = value
                         elif "fsp" in device_name:
-                            device._report_fsp_health_state[device._fqdn_fsp.index(device_name)] = \
-                                event.attr_value.value
+                            device._report_fsp_health_state[
+                                device._fqdn_fsp.index(device_name)
+                            ] = value
                         else:
                             # should NOT happen!
                             log_msg = "Received health state change for unknown device " + \
-                                    str(event.attr_name)
+                                    str(name)
                             device.logger.warn(log_msg)
                             return
-                    elif "state" in event.attr_name:
+                    elif "state" in name:
                         if "subarray" in device_name:
-                            device._report_subarray_state[device._fqdn_subarray.index(device_name)] = \
-                                event.attr_value.value
+                            device._report_subarray_state[
+                                device._fqdn_subarray.index(device_name)
+                            ] = value
                         elif "vcc" in device_name:
-                            device._report_vcc_state[device._fqdn_vcc.index(device_name)] = \
-                                event.attr_value.value
+                            device._report_vcc_state[
+                                device._fqdn_vcc.index(device_name)
+                            ] = value
                         elif "fsp" in device_name:
-                            device._report_fsp_state[device._fqdn_fsp.index(device_name)] = \
-                                event.attr_value.value
+                            device._report_fsp_state[
+                                device._fqdn_fsp.index(device_name)
+                            ] = value
                         else:
                             # should NOT happen!
                             log_msg = "Received state change for unknown device " + \
-                                    str(event.attr_name)
+                                    str(name)
                             device.logger.warn(log_msg)
                             return
-                    elif "adminmode" in event.attr_name:
+                    elif "adminmode" in name:
                         if "subarray" in device_name:
-                            device._report_subarray_admin_mode[device._fqdn_subarray.index(device_name)] = \
-                                event.attr_value.value
+                            device._report_subarray_admin_mode[
+                                device._fqdn_subarray.index(device_name)
+                            ] = value
                         elif "vcc" in device_name:
-                            device._report_vcc_admin_mode[device._fqdn_vcc.index(device_name)] = \
-                                event.attr_value.value
+                            device._report_vcc_admin_mode[
+                                device._fqdn_vcc.index(device_name)
+                            ] = value
                         elif "fsp" in device_name:
-                            device._report_fsp_admin_mode[device._fqdn_fsp.index(device_name)] = \
-                                event.attr_value.value
+                            device._report_fsp_admin_mode[
+                                device._fqdn_fsp.index(device_name)
+                            ] = value
                         else:
                             # should NOT happen!
                             log_msg = "Received admin mode change for unknown device " + \
-                                    str(event.attr_name)
+                                    str(name)
                             self.logger.warn(log_msg)
                             return
 
-                    log_msg = "New value for " + str(event.attr_name) + " is " + \
-                            str(event.attr_value.value)
+                    log_msg = "New value for " + str(name) + " is " + str(value)
                     device.logger.debug(log_msg)
                 except Exception as except_occurred:
                     self.logger.error(str(except_occurred))
             else:
                 for item in event.errors:
-                    log_msg = item.reason + ": on attribute " + str(event.attr_name)
+                    log_msg = item.reason + ": on attribute " + str(name)
                     self.logger.error(log_msg)
 
         def __membership_event_callback(
             self: CbfController.InitCommand, 
-            event
+            event,
+            name,
+            value,
+            quality
         ) -> None:
 
             device = self.target
@@ -342,31 +355,31 @@ class CbfController(SKAMaster):
                 try:
                     device_name = event.device.dev_name()
                     if "vcc" in device_name:
-                        device._report_vcc_subarray_membership[device._fqdn_vcc.index(device_name)] = \
-                            event.attr_value.value
+                        device._report_vcc_subarray_membership[
+                            device._fqdn_vcc.index(device_name)
+                        ] = value
                     elif "fsp" in device_name:
-                        if event.attr_value.value not in device._report_fsp_corr_subarray_membership[
+                        if value not in device._report_fsp_subarray_membership[
                             device._fqdn_fsp.index(device_name)]:
-                            device.logger.warning("{}".format(event.attr_value.value))
-                            device._report_fsp_corr_subarray_membership[
+                            device.logger.warning("{}".format(value))
+                            device._report_fsp_subarray_membership[
                                 device._fqdn_fsp.index(device_name)
-                            ].append(event.attr_value.value)
+                            ].append(value)
                     else:
                         # should NOT happen!
-                        log_msg = "Received event for unknown device " + str(
-                            event.attr_name)
+                        log_msg = "Received event for unknown device " + str(name)
                         self.logger.warn(log_msg)
                         return
 
-                    log_msg = "New value for " + str(event.attr_name) + " of device " + \
-                            device_name + " is " + str(event.attr_value.value)
+                    log_msg = "New value for " + str(name) + " of device " + \
+                            device_name + " is " + str(value)
                     self.logger.debug(log_msg)
 
                 except Exception as except_occurred:
                     self.logger.error(str(except_occurred))
             else:
                 for item in event.errors:
-                    log_msg = item.reason + ": on attribute " + str(event.attr_name)
+                    log_msg = item.reason + ": on attribute " + str(name)
                     self.logger.error(log_msg)
 
         def __get_num_capabilities(
@@ -423,19 +436,22 @@ class CbfController(SKAMaster):
 
             # initialize attribute values
             device._command_progress = 0
+
             device._report_vcc_state = [tango.DevState.UNKNOWN] * device._count_vcc
             device._report_vcc_health_state = [HealthState.UNKNOWN.value] * device._count_vcc
             device._report_vcc_admin_mode = [AdminMode.ONLINE.value] * device._count_vcc
             device._report_vcc_subarray_membership = [0] * device._count_vcc
+            device._frequency_offset_k = [0] * device._count_vcc
+            device._frequency_offset_delta_f = [0] * device._count_vcc
+
             device._report_fsp_state = [tango.DevState.UNKNOWN] * device._count_fsp
             device._report_fsp_health_state = [HealthState.UNKNOWN.value] * device._count_fsp
             device._report_fsp_admin_mode = [AdminMode.ONLINE.value] * device._count_fsp
-            device._report_fsp_corr_subarray_membership = [[] for i in range(device._count_fsp)]
+            device._report_fsp_subarray_membership = [[] for i in range(device._count_fsp)]
+
             device._report_subarray_state = [tango.DevState.UNKNOWN] * device._count_subarray
             device._report_subarray_health_state = [HealthState.UNKNOWN.value] * device._count_subarray
             device._report_subarray_admin_mode = [AdminMode.ONLINE.value] * device._count_subarray
-            device._frequency_offset_k = [0] * device._count_vcc
-            device._frequency_offset_delta_f = [0] * device._count_vcc
             device._subarray_config_ID = [""] * device._count_subarray
 
             # initialize lists with subarray/capability FQDNs
@@ -471,10 +487,13 @@ class CbfController(SKAMaster):
             # initialize groups
             device._group_vcc = CbfGroupProxy("VCC", logger=device.logger)
             device._group_vcc.add(device._fqdn_vcc)
+            device.logger.info(f"{device._group_vcc.__name__}/////////////////")
             device._group_fsp = CbfGroupProxy("FSP", logger=device.logger)
             device._group_fsp.add(device._fqdn_fsp)
+            device.logger.info(f"{device._group_fsp.__name__}/////////////////")
             device._group_subarray = CbfGroupProxy("CBF Subarray", logger=device.logger)
             device._group_subarray.add(device._fqdn_subarray)
+            device.logger.info(f"{device._group_subarray.__name__}/////////////////")
 
             # Try connection with each subarray/capability
             for fqdn in device._fqdn_vcc + device._fqdn_fsp + device._fqdn_subarray:
@@ -493,21 +512,24 @@ class CbfController(SKAMaster):
                     # subscribe to change events on subarrays/capabilities
                     for attribute_val in ["adminMode", "healthState", "State"]:
                         events.append(
-                            device_proxy.subscribe_event(
-                                attribute_val, tango.EventType.CHANGE_EVENT,
-                                self.__state_change_event_callback, stateless=True
+                            device_proxy.add_change_event_callback(
+                                attribute_name=attribute_val,
+                                callback=self.__state_change_event_callback,
+                                stateless=True
                             )
                         )
 
                     # subscribe to VCC/FSP subarray membership change events
                     if "vcc" in fqdn or "fsp" in fqdn:
                         events.append(
-                            device_proxy.subscribe_event(
-                                "subarrayMembership", tango.EventType.CHANGE_EVENT,
-                                self.__membership_event_callback, stateless=True
+                            device_proxy.add_change_event_callback(
+                                attribute_name="subarrayMembership",
+                                callback=self.__membership_event_callback,
+                                stateless=True
                             )
                         )
 
+                    #TODO: re-enable and fix if this is needed?
                     # subscribe to subarray config ID change events
                     # if "subarray" in fqdn:
                     #     events.append(
@@ -616,12 +638,12 @@ class CbfController(SKAMaster):
         return self._report_fsp_admin_mode
         # PROTECTED REGION END #    //  CbfController.reportFSPAdminMode_read
 
-    def read_reportFSPCorrSubarrayMembership(self: CbfController) -> List[List[int]]:
-        # PROTECTED REGION ID(CbfController.reportFSPCorrSubarrayMembership_read) ENABLED START #
+    def read_reportFSPSubarrayMembership(self: CbfController) -> List[List[int]]:
+        # PROTECTED REGION ID(CbfController.reportFSPSubarrayMembership_read) ENABLED START #
         """Return reportVCCSubarrayMembership attribute: Report the subarray membership 
         of FSPs (each can only belong to at most 16 subarrays), 0 if not assigned."""
-        return self._report_fsp_corr_subarray_membership
-        # PROTECTED REGION END #    //  CbfController.reportFSPCorrSubarrayMembership_read
+        return self._report_fsp_subarray_membership
+        # PROTECTED REGION END #    //  CbfController.reportFSPSubarrayMembership_read
 
     def read_frequencyOffsetK(self: CbfController) -> List[int]:
         # PROTECTED REGION ID(CbfController.frequencyOffsetK_read) ENABLED START #

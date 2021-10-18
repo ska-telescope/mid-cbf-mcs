@@ -285,7 +285,11 @@ class CbfDeviceProxy:
             ] = self._subscribe_change_event(attribute_name, stateless=stateless)
         else:
             self._change_event_callbacks[attribute_key].append(callback)
-            self._call_callback(callback, self._read(attribute_name))
+            self._call_callback(
+                self._change_event_subscription_ids[attribute_key], 
+                callback, 
+                self._read(attribute_name)
+            )
 
     @backoff.on_exception(backoff.expo, tango.DevFailed, factor=1, max_time=120)
     def _subscribe_change_event(
@@ -332,10 +336,11 @@ class CbfDeviceProxy:
                 for callback in self._change_event_callbacks[
                     attribute_data.name.lower()
                 ]:
-                    self._call_callback(callback, attribute_data)
+                    self._call_callback(event, callback, attribute_data)
 
     def _call_callback(
         self: CbfDeviceProxy,
+        event: tango.EventData,
         callback: Callable[[str, Any, AttrQuality], None],
         attribute_data: tango.DeviceAttribute,
     ) -> None:
@@ -346,7 +351,8 @@ class CbfDeviceProxy:
         :param attribute_data: the attribute data to be unpacked and
             used to call the callback
         """
-        callback(attribute_data.name, attribute_data.value, attribute_data.quality)
+        callback(event, 
+            attribute_data.name, attribute_data.value, attribute_data.quality)
 
     def _process_event(
         self: CbfDeviceProxy, event: tango.EventData
