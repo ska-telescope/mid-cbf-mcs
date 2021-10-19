@@ -623,7 +623,7 @@ class CbfController(SKAMaster):
                             return
 
                     log_msg = "New value for " + str(name) + " of device " + \
-                        device_name + ": " + str(value)
+                        str(device_name) + ": " + str(value)
                     device.logger.info(log_msg)
                 except Exception as except_occurred:
                     self.logger.error(str(except_occurred))
@@ -665,7 +665,7 @@ class CbfController(SKAMaster):
                         return
 
                     log_msg = "New value for " + str(name) + " of device " + \
-                            device_name + ": " + str(value)
+                            str(device_name) + ": " + str(value)
                     self.logger.info(log_msg)
 
                 except Exception as except_occurred:
@@ -695,7 +695,7 @@ class CbfController(SKAMaster):
                         device._fqdn_subarray.index(device_name)
                     ] = value
                     log_msg = "New value for " + str(name) + " of device " + \
-                            device_name + ": " + str(value)
+                            str(device_name) + ": " + str(value)
                     self.logger.info(log_msg)
                 except Exception as except_occurred:
                     self.logger.error(str(except_occurred))

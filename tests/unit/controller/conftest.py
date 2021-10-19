@@ -64,6 +64,9 @@ def device_to_load() -> DeviceToLoadType:
 def mock_vcc() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.OFF)
+    builder.add_attribute("state", tango.DevState.OFF)
+    builder.add_attribute("adminMode", AdminMode.ONLINE)
+    builder.add_attribute("healthState", HealthState.OK)
     builder.add_result_command("On", ResultCode.OK)
     builder.add_result_command("Off", ResultCode.OK)
     return builder()
@@ -71,14 +74,17 @@ def mock_vcc() -> unittest.mock.Mock:
 @pytest.fixture()
 def mock_vcc_group() -> unittest.mock.Mock:
     builder = MockGroupBuilder()
-    builder.add_result_command("On", ResultCode.OK)
-    builder.add_result_command("Off", ResultCode.OK)
+    builder.add_command("On", None)
+    builder.add_command("Off", None)
     return builder()
 
 @pytest.fixture()
 def mock_fsp() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.OFF)
+    builder.add_attribute("state", tango.DevState.OFF)
+    builder.add_attribute("adminMode", AdminMode.ONLINE)
+    builder.add_attribute("healthState", HealthState.OK)
     builder.add_result_command("On", ResultCode.OK)
     builder.add_result_command("Off", ResultCode.OK)
     return builder()
@@ -86,14 +92,17 @@ def mock_fsp() -> unittest.mock.Mock:
 @pytest.fixture()
 def mock_fsp_group() -> unittest.mock.Mock:
     builder = MockGroupBuilder()
-    builder.add_result_command("On", ResultCode.OK)
-    builder.add_result_command("Off", ResultCode.OK)
+    builder.add_command("On", None)
+    builder.add_command("Off", None)
     return builder()
 
 @pytest.fixture()
 def mock_subarray() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.OFF)
+    builder.add_attribute("state", tango.DevState.OFF)
+    builder.add_attribute("adminMode", AdminMode.ONLINE)
+    builder.add_attribute("healthState", HealthState.OK)
     builder.add_result_command("On", ResultCode.OK)
     builder.add_result_command("Off", ResultCode.OK)
     return builder()
@@ -101,6 +110,17 @@ def mock_subarray() -> unittest.mock.Mock:
 @pytest.fixture()
 def mock_subarray_group() -> unittest.mock.Mock:
     builder = MockGroupBuilder()
+    builder.add_command("On", None)
+    builder.add_command("Off", None)
+    return builder()
+
+@pytest.fixture()
+def mock_talon_lru() -> unittest.mock.Mock:
+    builder = MockDeviceBuilder()
+    builder.set_state(tango.DevState.OFF)
+    builder.add_attribute("state", tango.DevState.OFF)
+    builder.add_attribute("adminMode", AdminMode.ONLINE)
+    builder.add_attribute("healthState", HealthState.OK)
     builder.add_result_command("On", ResultCode.OK)
     builder.add_result_command("Off", ResultCode.OK)
     return builder()
@@ -113,6 +133,7 @@ def initial_mocks(
     mock_fsp_group: unittest.mock.Mock,
     mock_subarray: unittest.mock.Mock,
     mock_subarray_group: unittest.mock.Mock,
+    mock_talon_lru: unittest.mock.Mock
 ) -> Dict[str, unittest.mock.Mock]:
     """
     Return a dictionary of device proxy mocks to pre-register.
@@ -135,6 +156,7 @@ def initial_mocks(
         "mid_csp_cbf/sub_elt/subarray_01": mock_subarray,
         "mid_csp_cbf/sub_elt/subarray_02": mock_subarray,
         "mid_csp_cbf/sub_elt/subarray_03": mock_subarray,
+        "mid_csp_cbf/talon_lru/001": mock_talon_lru,
         "VCC": mock_vcc_group,
         "FSP": mock_fsp_group,
         "CBF Subarray": mock_subarray_group,
