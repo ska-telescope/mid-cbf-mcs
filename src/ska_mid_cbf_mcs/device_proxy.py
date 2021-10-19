@@ -266,7 +266,7 @@ class CbfDeviceProxy:
         attribute_name: str,
         callback: Callable[[str, Any, AttrQuality], None],
         stateless: bool = True,
-    ) -> None:
+    ) -> int:
         """
         Register a callback for change events being pushed by the device.
 
@@ -276,6 +276,8 @@ class CbfDeviceProxy:
             arrives.
         :param stateless: whether to use Tango's stateless subscription
             feature
+
+        :return: change event ID
         """
         attribute_key = attribute_name.lower()
         if attribute_key not in self._change_event_subscription_ids:
@@ -290,6 +292,7 @@ class CbfDeviceProxy:
                 callback, 
                 self._read(attribute_name)
             )
+        return self._change_event_subscription_ids[attribute_key]
 
     @backoff.on_exception(backoff.expo, tango.DevFailed, factor=1, max_time=120)
     def _subscribe_change_event(

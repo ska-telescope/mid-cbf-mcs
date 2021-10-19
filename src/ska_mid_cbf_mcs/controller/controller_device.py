@@ -781,6 +781,10 @@ class CbfController(SKAMaster):
 
             for proxy in list(device._event_id.keys()):
                 for event_id in device._event_id[proxy]:
+                    device.logger.info(
+                        "Unsubscribing from event " + str(event_id) +
+                        ", device: " + proxy.get_fqdn
+                    )
                     proxy.unsubscribe_event(event_id)
             device._group_subarray.command_inout("Off")
             device._group_vcc.command_inout("Off")
