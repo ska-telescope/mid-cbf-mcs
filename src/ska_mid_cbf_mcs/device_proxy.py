@@ -372,13 +372,18 @@ class CbfDeviceProxy:
         :return: the attribute value data
         """
         if event.err:
-            self._logger.warn(f"Event error from device {event.device.dev_name()}")
+            self._logger.warn(
+                f"Event error; device: {event.device.dev_name()}, \
+                attribute: {event.attr_name}"
+            )
             self._logger.warn(
                 f"Received failed change event: error stack is {event.errors}."
             )
             return None
         elif event.attr_value is None:
-            self._logger.warn(f"Empty attribute value from device {event.device.dev_name()}")
+            self._logger.warn(
+                f"Empty attribute value from device {event.device.dev_name()}"
+            )
             warning_message = (
                 "Received change event with empty value. Falling back to manual "
                 f"attribute read. Event.err is {event.err}. Event.errors is\n"

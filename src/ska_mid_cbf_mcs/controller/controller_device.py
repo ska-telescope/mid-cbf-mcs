@@ -50,17 +50,6 @@ class CbfController(SKAMaster):
 
     # PROTECTED REGION ID(CbfController.class_variable) ENABLED START #
 
-    # def __config_ID_event_callback(self, event):
-    #     if not event.err:
-    #         try:
-    #             self._subarray_config_ID[self._fqdn_subarray.index(event.device.dev_name())] = \
-    #                 event.attr_value.value
-    #         except Exception as except_occurred:
-    #             self.logger.error(str(except_occurred))
-    #     else:
-    #         for item in event.errors:
-    #             log_msg = item.reason + ": on attribute " + str(event.attr_name)
-    #             self.logger.error(log_msg)
 
     # PROTECTED REGION END #    //  CbfController.class_variable
 
@@ -677,8 +666,37 @@ class CbfController(SKAMaster):
 
                     log_msg = "New value for " + str(name) + " of device " + \
                             device_name + ": " + str(value)
-                    self.logger.debug(log_msg)
+                    self.logger.info(log_msg)
 
+                except Exception as except_occurred:
+                    self.logger.error(str(except_occurred))
+            else:
+                self.logger.warn(
+                    "None value for attribute " + str(name) + 
+                    " of device " + device_name
+                )
+
+        
+        def __config_ID_event_callback(
+            self: CbfController.OnCommand, 
+            event,
+            name,
+            value,
+            quality
+        ) -> None:
+
+            device = self.target
+
+            device_name = event.device.dev_name()
+
+            if value is not None:
+                try:
+                    device._subarray_config_ID[
+                        device._fqdn_subarray.index(device_name)
+                    ] = value
+                    log_msg = "New value for " + str(name) + " of device " + \
+                            device_name + ": " + str(value)
+                    self.logger.info(log_msg)
                 except Exception as except_occurred:
                     self.logger.error(str(except_occurred))
             else:
@@ -738,13 +756,14 @@ class CbfController(SKAMaster):
 
                     #TODO: re-enable and fix if this is needed?
                     # subscribe to subarray config ID change events
-                    # if "subarray" in fqdn:
-                    #     events.append(
-                    #         device_proxy.subscribe_event(
-                    #             "configID", tango.EventType.CHANGE_EVENT,
-                    #             device.__config_ID_event_callback, stateless=True
-                    #         )
-                    #     )
+                    if "subarray" in fqdn:
+                        events.append(
+                            device_proxy.add_change_event_callback(
+                                attribute_name="configID",
+                                callback=self.__config_ID_event_callback,
+                                stateless=True
+                            )
+                        )
 
                     device._event_id[device_proxy] = events
                 except tango.DevFailed as df:
@@ -783,16 +802,17 @@ class CbfController(SKAMaster):
             for talon_lru_fqdn in device._fqdn_talon_lru:
                 device._proxies[talon_lru_fqdn].command_inout("Off")
 
+            device._group_subarray.command_inout("Off")
+            device._group_vcc.command_inout("Off")
+            device._group_fsp.command_inout("Off")
+
             for proxy in list(device._event_id.keys()):
                 for event_id in device._event_id[proxy]:
                     device.logger.info(
                         "Unsubscribing from event " + str(event_id) +
-                        ", device: " + proxy.get_fqdn()
+                        ", device: " + str(proxy._fqdn)
                     )
                     proxy.unsubscribe_event(event_id)
-            device._group_subarray.command_inout("Off")
-            device._group_vcc.command_inout("Off")
-            device._group_fsp.command_inout("Off")
 
             return (result_code,message)
 
