@@ -151,10 +151,10 @@ class MockGroupBuilder:
 
         Tango allows commands to be invoked via a high-level API
         (``device.Scan()``) or various low-level commands including the
-        synchronous :py:class:`tango.DeviceProxy.command_inout` and the
+        synchronous :py:class:`tango.Group.command_inout` and the
         asynchronous pair
-        :py:class:`tango.DeviceProxy.command_inout_asynch` and
-        :py:class:`tango.DeviceProxy.command_inout_reply`. This method
+        :py:class:`tango.Group.command_inout_asynch` and
+        :py:class:`tango.Group.command_inout_reply`. This method
         sets them up.
 
         :param mock_group: the mock being set up

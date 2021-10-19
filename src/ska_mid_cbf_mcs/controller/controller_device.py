@@ -275,9 +275,10 @@ class CbfController(SKAMaster):
 
             device = self.target
 
-            if not event.err:
+            device_name = event.device.dev_name()
+
+            if value is not None:
                 try:
-                    device_name = event.device.dev_name()
                     if "healthstate" in name:
                         if "subarray" in device_name:
                             device._report_subarray_health_state[
@@ -348,14 +349,16 @@ class CbfController(SKAMaster):
                             self.logger.warn(log_msg)
                             return
 
-                    log_msg = "New value for " + str(name) + " is " + str(value)
-                    device.logger.debug(log_msg)
+                    log_msg = "New value for " + str(name) + " of device " + \
+                        device_name + ": " + str(value)
+                    device.logger.info(log_msg)
                 except Exception as except_occurred:
                     self.logger.error(str(except_occurred))
             else:
-                for item in event.errors:
-                    log_msg = item.reason + ": on attribute " + str(name)
-                    self.logger.error(log_msg)
+                self.logger.warn(
+                    "None value for attribute " + str(name) + 
+                    " of device " + device_name
+                )
 
         def __membership_event_callback(
             self: CbfController.InitCommand, 
@@ -367,9 +370,10 @@ class CbfController(SKAMaster):
 
             device = self.target
 
-            if not event.err:
+            device_name = event.device.dev_name()
+
+            if value is not None:
                 try:
-                    device_name = event.device.dev_name()
                     if "vcc" in device_name:
                         device._report_vcc_subarray_membership[
                             device._fqdn_vcc.index(device_name)
@@ -388,15 +392,16 @@ class CbfController(SKAMaster):
                         return
 
                     log_msg = "New value for " + str(name) + " of device " + \
-                            device_name + " is " + str(value)
+                            device_name + ": " + str(value)
                     self.logger.debug(log_msg)
 
                 except Exception as except_occurred:
                     self.logger.error(str(except_occurred))
             else:
-                for item in event.errors:
-                    log_msg = item.reason + ": on attribute " + str(name)
-                    self.logger.error(log_msg)
+                self.logger.warn(
+                    "None value for attribute " + str(name) + 
+                    " of device " + device_name
+                )
 
         def __get_num_capabilities(
             self: CbfController.InitCommand, 

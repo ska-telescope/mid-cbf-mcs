@@ -577,20 +577,16 @@ class TestContextTangoHarness(BaseTangoHarness):
 
         :return: a Group for use in establishing connections.
         """
-
-        def connect(name: str, fqdns: list[str]) -> tango.Group:
+        
+        def connect(name: str) -> tango.Group:
             """
             Connect to the device.
 
-            :param fqdn: the FQDN of the device to connect to
+            :param name: the name of the group to connect to
 
             :return: a connection to the device
             """
-            group =  tango.Group(name)
-            for fqdn in fqdns:
-                group.add(f"tango://{self._host}:{self._port}/{fqdn}#dbase=no")
-            
-            return group
+            return tango.Group(name)
 
         return connect
 
@@ -875,16 +871,16 @@ class MockingTangoHarness(WrapperTangoHarness):
             but might actually provide mocks.
         """
 
-        def connect(name: str, fqdns: list[str]) -> tango.Group:
+        def connect(name: str) -> tango.Group:
             """
             Connect to the device.
 
-            :param fqdn: the FQDN of the device to connect to
+            :param name: the name of the group to connect to
 
             :return: a connection (possibly mocked) to the device
             """
-            if set(fqdns).issubset(set(self.fqdns)):
-                return self._harness.group_connection_factory(name, fqdns)
+            if name in self.fqdns:
+                return self._harness.group_connection_factory(name)
             else:
                 return self._mocks[name]
 

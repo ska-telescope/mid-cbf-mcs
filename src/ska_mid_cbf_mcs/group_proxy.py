@@ -132,7 +132,6 @@ class CbfGroupProxy:
         )
         def _backoff_connect(
             group_connection_factory: Callable[[str], tango.Group],
-            fqdns: list[str]
         ) -> tango.Group:
             """
             Attempt connection to a specified device.
@@ -146,11 +145,10 @@ class CbfGroupProxy:
 
             :return: a proxy for the device
             """
-            return _connect(group_connection_factory, fqdns)
+            return _connect(group_connection_factory)
 
         def _connect(
             group_connection_factory: Callable[[str], tango.Group],
-            fqdns: list[str]
         ) -> tango.Group:
             """
             Make a single attempt to connect to a device.
@@ -167,16 +165,12 @@ class CbfGroupProxy:
 
         if self._group == None:
             if max_time:
-                self._group = _backoff_connect(
-                    self._group_connection_factory, fqdns
-                )
+                self.__dict__["_group"] = _backoff_connect(self._group_connection_factory)
             else:
-                self.__dict__["_group"] = _connect(
-                    self._group_connection_factory, fqdns
-                )
+                self.__dict__["_group"] = _connect(self._group_connection_factory)
         else:
             self.__dict__["_group"].add(fqdns)
-        
+
         self.__dict__["_fqdns"].extend(fqdns)
 
 
