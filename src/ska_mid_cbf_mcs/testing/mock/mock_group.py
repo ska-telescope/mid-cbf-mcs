@@ -40,22 +40,6 @@ class MockGroupBuilder:
         self._return_values: dict[str, Any] = {}
         self._configuration: dict[str, Any] = {}
 
-    def add(self: MockGroupBuilder, fqdns: list[str]) -> None:
-        """
-        Tell this group builder to add the given device FQDNs.
-
-        :param fqdns: list of device FQDNs to add to group
-        """
-        pass
-    
-    def remove(self: MockGroupBuilder, fqdns: list[str]) -> None:
-        """
-        Tell this group builder to remove the given device FQDNs.
-
-        :param fqdns: list of device FQDNs to remove from the group
-        """
-        pass
-
     def add_attribute(self: MockGroupBuilder, name: str, value: Any) -> None:
         """
         Tell this builder to build mocks with a given attribute.
@@ -105,15 +89,24 @@ class MockGroupBuilder:
         """
         self.add_command("state", state)
 
+    def _setup_add_remove(self: MockGroupBuilder) -> None:
+        """
+        Set up add and remove group methods.
+
+        :param mock_group: the mock being set up
+        """
+        self.add_command("add", None)
+        self.add_command("remove", None)
+
     def _setup_read_attribute(
         self: MockGroupBuilder, mock_group: unittest.mock.Mock
     ) -> None:
         """
-        Set up attribute reads for a mock device.
+        Set up attribute reads for a mock group.
 
         Tango allows attributes to be read via a high-level API
-        (``device.voltage``) or a low-level API
-        (`device.read_attribute("voltage"`). This method sets that up.
+        (``group.voltage``) or a low-level API
+        (`group.read_attribute("voltage"`). This method sets that up.
 
         :param mock_group: the mock being set up
         """
@@ -219,6 +212,8 @@ class MockGroupBuilder:
 
         :return: a mock object
         """
+        self._setup_add_remove()
+
         mock_group = self._from_factory()
 
         for command in self._return_values:
