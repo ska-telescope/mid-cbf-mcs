@@ -23,7 +23,6 @@ from tango.server import command
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_mid_cbf_mcs.testing.mock.mock_callable import MockChangeEventCallback
 from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder
-from ska_mid_cbf_mcs.testing.mock.mock_group import MockGroupBuilder
 from ska_mid_cbf_mcs.testing.tango_harness import DeviceToLoadType, TangoHarness
 
 from ska_mid_cbf_mcs.controller.controller_device import CbfController
@@ -73,13 +72,6 @@ def mock_vcc() -> unittest.mock.Mock:
     return builder()
 
 @pytest.fixture()
-def mock_vcc_group() -> unittest.mock.Mock:
-    builder = MockGroupBuilder()
-    builder.add_command("On", None)
-    builder.add_command("Off", None)
-    return builder()
-
-@pytest.fixture()
 def mock_fsp() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.OFF)
@@ -92,13 +84,6 @@ def mock_fsp() -> unittest.mock.Mock:
     return builder()
 
 @pytest.fixture()
-def mock_fsp_group() -> unittest.mock.Mock:
-    builder = MockGroupBuilder()
-    builder.add_command("On", None)
-    builder.add_command("Off", None)
-    return builder()
-
-@pytest.fixture()
 def mock_subarray() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.OFF)
@@ -107,13 +92,6 @@ def mock_subarray() -> unittest.mock.Mock:
     builder.add_attribute("healthState", HealthState.OK)
     builder.add_result_command("On", ResultCode.OK)
     builder.add_result_command("Off", ResultCode.OK)
-    return builder()
-
-@pytest.fixture()
-def mock_subarray_group() -> unittest.mock.Mock:
-    builder = MockGroupBuilder()
-    builder.add_command("On", None)
-    builder.add_command("Off", None)
     return builder()
 
 @pytest.fixture()
@@ -130,11 +108,8 @@ def mock_talon_lru() -> unittest.mock.Mock:
 @pytest.fixture()
 def initial_mocks(
     mock_vcc: unittest.mock.Mock,
-    mock_vcc_group: unittest.mock.Mock,
     mock_fsp: unittest.mock.Mock,
-    mock_fsp_group: unittest.mock.Mock,
     mock_subarray: unittest.mock.Mock,
-    mock_subarray_group: unittest.mock.Mock,
     mock_talon_lru: unittest.mock.Mock
 ) -> Dict[str, unittest.mock.Mock]:
     """
@@ -159,7 +134,4 @@ def initial_mocks(
         "mid_csp_cbf/sub_elt/subarray_02": mock_subarray,
         "mid_csp_cbf/sub_elt/subarray_03": mock_subarray,
         "mid_csp_cbf/talon_lru/001": mock_talon_lru,
-        "VCC": mock_vcc_group,
-        "FSP": mock_fsp_group,
-        "CBF Subarray": mock_subarray_group,
     }
