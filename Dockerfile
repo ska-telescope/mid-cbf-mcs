@@ -1,6 +1,8 @@
 FROM artefact.skao.int/ska-tango-images-pytango-builder:9.3.10 as buildenv
 FROM artefact.skao.int/ska-tango-images-pytango-runtime:9.3.10
 
+RUN sudo apt-get update && sudo apt-get -y install openssh-server
+
 # create ipython profile to so that itango doesn't fail if ipython hasn't run yet
 RUN ipython profile create
 
@@ -16,5 +18,3 @@ ENV PATH=/home/tango/.local/bin:$PATH
 ################################################################################
 
 RUN python3 -m pip install -r requirements.txt .
-
-# CMD ["CbfController"]

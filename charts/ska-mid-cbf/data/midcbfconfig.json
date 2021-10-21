@@ -44,6 +44,9 @@
                             "TalonLRU": [
                                 "mid_csp_cbf/talon_lru/001"
                             ],
+                            "TalonDxConfigPath": [
+                                "mnt/talondx-config"
+                            ],
                             "polled_attr": [
                                 "reportfspstate",
                                 "3000",
