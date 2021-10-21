@@ -77,8 +77,13 @@ class TalonDxComponentManager:
         if self._start_hps_master() == ResultCode.FAILED:
             return ResultCode.FAILED
 
+        if self._create_hps_master_device_proxies() == ResultCode.FAILED:
+            return ResultCode.FAILED
+
         if self._configure_hps_master() == ResultCode.FAILED:
             return ResultCode.FAILED
+
+        return ResultCode.OK
 
     def _secure_copy(
         self: TalonDxComponentManager,
@@ -113,7 +118,7 @@ class TalonDxComponentManager:
                 target = f"root@{ip}"
                 
                 # Make the DS binaries directory
-                src_dir = f"{self.talondx_config_path}/artifacts"
+                src_dir = f"{self.talondx_config_path}"
                 dest_dir = talon_cfg["ds-path"]
                 subprocess.run(["ssh", target, f"mkdir -p {dest_dir}"], check=True, shell=True)
 
@@ -121,7 +126,7 @@ class TalonDxComponentManager:
                 self._secure_copy(
                     target=target,
                     src=f"{src_dir}/ds-hps-master/build-ci-cross/bin/dshpsmaster",
-                    dest=dest_dir)
+                    dest="/lib/firmware/hps_software")
 
                 # Copy the remaining DS binaries
                 for binary_name in talon_cfg["devices"]:
@@ -134,19 +139,19 @@ class TalonDxComponentManager:
                                 dest=dest_dir)
 
                 # Copy the FPGA bitstream
-                dest_dir = talon_cfg["fpga-dest-path"]
+                dest_dir = talon_cfg["fpga-path"]
                 subprocess.run(["ssh", target, f"mkdir -p {dest_dir}"], check=True, shell=True)
 
                 fpga_dtb_name = talon_cfg['fpga-dtb-name']
                 self._secure_copy(
                     target=target, 
-                    src=f"{src_dir}/{fpga_dtb_name}",
+                    src=f"{src_dir}/fpga-{target}/bin/{fpga_dtb_name}",
                     dest=dest_dir)
 
                 fpga_rbf_name = talon_cfg['fpga-rbf-name']
                 self._secure_copy(
                     target=target, 
-                    src=f"{src_dir}/{fpga_rbf_name}",
+                    src=f"{src_dir}/fpga-{target}/bin/{fpga_rbf_name}",
                     dest=dest_dir)
             except subprocess.CalledProcessError as err:
                 self.logger.error(f"Command '{err.cmd}' to target {target} failed with " \
@@ -157,8 +162,7 @@ class TalonDxComponentManager:
 
     def _start_hps_master(self: TalonDxComponentManager) -> ResultCode:
         """
-        Start the DsHpsMaster on each Talon board and attempt to
-        connect to each device proxy.
+        Start the DsHpsMaster on each Talon board.
 
         :return: ResultCode.OK if all HPS masters were started successfully,
                  otherwise ResultCode.FAILED
@@ -168,18 +172,26 @@ class TalonDxComponentManager:
             ip = talon_cfg["target"]
             target = f"root@{ip}"
             inst = talon_cfg["server-instance"]
-            path = talon_cfg["ds-path"]
 
             try:
                 subprocess.run(["ssh", target, 
-                    f"source /lib/firmware/hps_software/run_hps_master.sh {path} {inst}"],
+                    f"source /lib/firmware/hps_software/run_hps_master.sh {inst}"],
                     check=True, shell=True)
             except subprocess.CalledProcessError as err:
                 self.logger.error(f"Command '{err.cmd}' to target {target} failed with " \
                     f"error code {err.returncode}")
-                ret = ResultCode.FAILED   
+                ret = ResultCode.FAILED  
+        return ret 
 
+    def _create_hps_master_device_proxies(self: TalonDxComponentManager) -> ResultCode:
+        """
+        Attempt to create a device proxy to each DsHpsMaster device.
+
+        :return: ResultCode.OK if all proxies were created successfully,
+                 otherwise ResultCode.FAILED
+        """
         # Create device proxies for the HPS master devices
+        ret = ResultCode.OK
         self.proxies = {}
         for talon_cfg in self.talondx_config["config-commands"]:
             fqdn = talon_cfg["ds-hps-master"]
@@ -207,7 +219,7 @@ class TalonDxComponentManager:
 
             self.logger.info(f"Sending configure command to {hps_master_fqdn}")
             try:
-                cmd_ret = hps_master.command_inout("configure", json.dumps(talon_cfg))
+                cmd_ret = hps_master.configure(json.dumps(talon_cfg))
                 if cmd_ret != 0:
                     self.logger.error(f"Configure command for {hps_master_fqdn}" \
                         f" device failed with error code {cmd_ret}")
