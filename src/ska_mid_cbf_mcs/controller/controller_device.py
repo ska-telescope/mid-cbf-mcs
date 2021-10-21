@@ -540,7 +540,7 @@ class CbfController(SKAMaster):
 
         def __state_change_event_callback(
             self: CbfController.OnCommand, 
-            event,
+            fqdn,
             name,
             value,
             quality
@@ -548,26 +548,24 @@ class CbfController(SKAMaster):
 
             device = self.target
 
-            device_name = event.device.dev_name()
-
             if value is not None:
                 try:
                     if "healthstate" in name:
-                        if "subarray" in device_name:
+                        if "subarray" in fqdn:
                             device._report_subarray_health_state[
-                                device._fqdn_subarray.index(device_name)
+                                device._fqdn_subarray.index(fqdn)
                             ] = value
-                        elif "vcc" in device_name:
+                        elif "vcc" in fqdn:
                             device._report_vcc_health_state[
-                                device._fqdn_vcc.index(device_name)
+                                device._fqdn_vcc.index(fqdn)
                             ] = value
-                        elif "fsp" in device_name:
+                        elif "fsp" in fqdn:
                             device._report_fsp_health_state[
-                                device._fqdn_fsp.index(device_name)
+                                device._fqdn_fsp.index(fqdn)
                             ] = value
-                        elif "talon_lru" in device_name:
+                        elif "talon_lru" in fqdn:
                             device._report_talon_lru_health_state[
-                                device._fqdn_talon_lru.index(device_name)
+                                device._fqdn_talon_lru.index(fqdn)
                                 ] = value
                         else:
                             # should NOT happen!
@@ -576,21 +574,21 @@ class CbfController(SKAMaster):
                             device.logger.warn(log_msg)
                             return
                     elif "state" in name:
-                        if "subarray" in device_name:
+                        if "subarray" in fqdn:
                             device._report_subarray_state[
-                                device._fqdn_subarray.index(device_name)
+                                device._fqdn_subarray.index(fqdn)
                             ] = value
-                        elif "vcc" in device_name:
+                        elif "vcc" in fqdn:
                             device._report_vcc_state[
-                                device._fqdn_vcc.index(device_name)
+                                device._fqdn_vcc.index(fqdn)
                             ] = value
-                        elif "fsp" in device_name:
+                        elif "fsp" in fqdn:
                             device._report_fsp_state[
-                                device._fqdn_fsp.index(device_name)
+                                device._fqdn_fsp.index(fqdn)
                             ] = value
-                        elif "talon_lru" in device_name:
+                        elif "talon_lru" in fqdn:
                             device._report_talon_lru_state[
-                                device._fqdn_talon_lru.index(device_name)
+                                device._fqdn_talon_lru.index(fqdn)
                             ] = value
                         else:
                             # should NOT happen!
@@ -599,21 +597,21 @@ class CbfController(SKAMaster):
                             device.logger.warn(log_msg)
                             return
                     elif "adminmode" in name:
-                        if "subarray" in device_name:
+                        if "subarray" in fqdn:
                             device._report_subarray_admin_mode[
-                                device._fqdn_subarray.index(device_name)
+                                device._fqdn_subarray.index(fqdn)
                             ] = value
-                        elif "vcc" in device_name:
+                        elif "vcc" in fqdn:
                             device._report_vcc_admin_mode[
-                                device._fqdn_vcc.index(device_name)
+                                device._fqdn_vcc.index(fqdn)
                             ] = value
-                        elif "fsp" in device_name:
+                        elif "fsp" in fqdn:
                             device._report_fsp_admin_mode[
-                                device._fqdn_fsp.index(device_name)
+                                device._fqdn_fsp.index(fqdn)
                             ] = value
-                        elif "talon_lru" in device_name:
+                        elif "talon_lru" in fqdn:
                             device._report_talon_lru_admin_mode[
-                                device._fqdn_talon_lru.index(device_name)
+                                device._fqdn_talon_lru.index(fqdn)
                             ] = value
                         else:
                             # should NOT happen!
@@ -623,19 +621,19 @@ class CbfController(SKAMaster):
                             return
 
                     log_msg = "New value for " + str(name) + " of device " + \
-                        str(device_name) + ": " + str(value)
+                        fqdn + ": " + str(value)
                     device.logger.info(log_msg)
                 except Exception as except_occurred:
                     self.logger.error(str(except_occurred))
             else:
                 self.logger.warn(
                     "None value for attribute " + str(name) + 
-                    " of device " + device_name
+                    " of device " + fqdn
                 )
 
         def __membership_event_callback(
             self: CbfController.OnCommand, 
-            event,
+            fqdn,
             name,
             value,
             quality
@@ -643,20 +641,18 @@ class CbfController(SKAMaster):
 
             device = self.target
 
-            device_name = event.device.dev_name()
-
             if value is not None:
                 try:
-                    if "vcc" in device_name:
+                    if "vcc" in fqdn:
                         device._report_vcc_subarray_membership[
-                            device._fqdn_vcc.index(device_name)
+                            device._fqdn_vcc.index(fqdn)
                         ] = value
-                    elif "fsp" in device_name:
+                    elif "fsp" in fqdn:
                         if value not in device._report_fsp_subarray_membership[
-                            device._fqdn_fsp.index(device_name)]:
+                            device._fqdn_fsp.index(fqdn)]:
                             device.logger.warning("{}".format(value))
                             device._report_fsp_subarray_membership[
-                                device._fqdn_fsp.index(device_name)
+                                device._fqdn_fsp.index(fqdn)
                             ].append(value)
                     else:
                         # should NOT happen!
@@ -665,7 +661,7 @@ class CbfController(SKAMaster):
                         return
 
                     log_msg = "New value for " + str(name) + " of device " + \
-                            str(device_name) + ": " + str(value)
+                            fqdn + ": " + str(value)
                     self.logger.info(log_msg)
 
                 except Exception as except_occurred:
@@ -673,13 +669,13 @@ class CbfController(SKAMaster):
             else:
                 self.logger.warn(
                     "None value for attribute " + str(name) + 
-                    " of device " + device_name
+                    " of device " + fqdn
                 )
 
         
         def __config_ID_event_callback(
             self: CbfController.OnCommand, 
-            event,
+            fqdn,
             name,
             value,
             quality
@@ -687,22 +683,20 @@ class CbfController(SKAMaster):
 
             device = self.target
 
-            device_name = event.device.dev_name()
-
             if value is not None:
                 try:
                     device._subarray_config_ID[
-                        device._fqdn_subarray.index(device_name)
+                        device._fqdn_subarray.index(fqdn)
                     ] = value
                     log_msg = "New value for " + str(name) + " of device " + \
-                            str(device_name) + ": " + str(value)
+                            fqdn + ": " + str(value)
                     self.logger.info(log_msg)
                 except Exception as except_occurred:
                     self.logger.error(str(except_occurred))
             else:
                 self.logger.warn(
                     "None value for attribute " + str(name) + 
-                    " of device " + device_name
+                    " of device " + fqdn
                 )
 
         def do(            
@@ -772,7 +766,7 @@ class CbfController(SKAMaster):
                         device.logger.error(log_msg)
 
             for talon_lru_fqdn in device._fqdn_talon_lru:
-                device._proxies[talon_lru_fqdn].command_inout("On")
+                device._proxies[talon_lru_fqdn].On()
 
             device._group_subarray.command_inout("On")
             device._group_vcc.command_inout("On")
@@ -800,7 +794,7 @@ class CbfController(SKAMaster):
             device = self.target
 
             for talon_lru_fqdn in device._fqdn_talon_lru:
-                device._proxies[talon_lru_fqdn].command_inout("Off")
+                device._proxies[talon_lru_fqdn].Off()
 
             device._group_subarray.command_inout("Off")
             device._group_vcc.command_inout("Off")

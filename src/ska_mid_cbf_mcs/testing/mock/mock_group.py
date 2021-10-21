@@ -212,9 +212,10 @@ class MockGroupBuilder:
 
         :return: a mock object
         """
-        self._setup_add_remove()
 
         mock_group = self._from_factory()
+
+        self._setup_add_remove()
 
         for command in self._return_values:
             self._configuration[command] = MockCallable(

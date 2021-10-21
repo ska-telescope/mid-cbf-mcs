@@ -64,9 +64,10 @@ def device_to_load() -> DeviceToLoadType:
 def mock_vcc() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.OFF)
-    builder.add_attribute("state", tango.DevState.OFF)
+    builder.add_attribute("State", tango.DevState.OFF)
     builder.add_attribute("adminMode", AdminMode.ONLINE)
     builder.add_attribute("healthState", HealthState.OK)
+    builder.add_attribute("subarrayMembership", 0)
     builder.add_result_command("On", ResultCode.OK)
     builder.add_result_command("Off", ResultCode.OK)
     return builder()
@@ -82,9 +83,10 @@ def mock_vcc_group() -> unittest.mock.Mock:
 def mock_fsp() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.OFF)
-    builder.add_attribute("state", tango.DevState.OFF)
+    builder.add_attribute("State", tango.DevState.OFF)
     builder.add_attribute("adminMode", AdminMode.ONLINE)
     builder.add_attribute("healthState", HealthState.OK)
+    builder.add_attribute("subarrayMembership", 0)
     builder.add_result_command("On", ResultCode.OK)
     builder.add_result_command("Off", ResultCode.OK)
     return builder()
@@ -100,7 +102,7 @@ def mock_fsp_group() -> unittest.mock.Mock:
 def mock_subarray() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.OFF)
-    builder.add_attribute("state", tango.DevState.OFF)
+    builder.add_attribute("State", tango.DevState.OFF)
     builder.add_attribute("adminMode", AdminMode.ONLINE)
     builder.add_attribute("healthState", HealthState.OK)
     builder.add_result_command("On", ResultCode.OK)
@@ -118,7 +120,7 @@ def mock_subarray_group() -> unittest.mock.Mock:
 def mock_talon_lru() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.OFF)
-    builder.add_attribute("state", tango.DevState.OFF)
+    builder.add_attribute("State", tango.DevState.OFF)
     builder.add_attribute("adminMode", AdminMode.ONLINE)
     builder.add_attribute("healthState", HealthState.OK)
     builder.add_result_command("On", ResultCode.OK)
