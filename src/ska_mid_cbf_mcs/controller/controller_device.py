@@ -368,7 +368,7 @@ class CbfController(SKAMaster):
         # PROTECTED REGION ID(CbfController.always_executed_hook) ENABLED START #
         """hook to be executed before any command"""
          # Try connection with each subarray/capability
-        for fqdn in self._fqdn_vcc + self._fqdn_fsp + self._fqdn_subarray + self._fqdn_talon_lru:
+        for fqdn in self._fqdn_vcc + self._fqdn_fsp + self._fqdn_talon_lru + self._fqdn_subarray :
             if fqdn not in self._proxies:
                 try:
                     log_msg = "Trying connection to " + fqdn + " device"
