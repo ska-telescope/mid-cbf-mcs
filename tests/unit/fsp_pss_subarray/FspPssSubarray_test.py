@@ -53,11 +53,9 @@ class TestFspPssSubarray:
         """
         
         device_under_test.On()
-        time.sleep(3)
         assert device_under_test.State() == DevState.ON
 
         device_under_test.Off()
-        time.sleep(3)
         assert device_under_test.State() == DevState.OFF
 
     def test_Scan_EndScan_GoToIdle(
@@ -74,13 +72,11 @@ class TestFspPssSubarray:
 
         # turn on device and configure scan
         device_under_test.On()
-        time.sleep(1)
         config_file_name = "/../../data/FspPssSubarray_ConfigureScan_basic.json"
         f = open(file_path + config_file_name)
         json_str = f.read().replace("\n", "")
         f.close()
         device_under_test.ConfigureScan(json_str)
-        time.sleep(1)
 
         scan_id = '1'
         scan_id_device_data = tango.DeviceData()
@@ -127,7 +123,6 @@ class TestFspPssSubarray:
         assert device_under_test.outputEnable == 0
         
         device_under_test.On()
-        time.sleep(3)
         assert device_under_test.State() == DevState.ON
 
         # configure search window

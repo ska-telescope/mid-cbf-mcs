@@ -166,7 +166,7 @@ class MockGroupBuilder:
 
             :return: the specified return value for the command
             """
-            return getattr(mock_group, name).return_value
+            return getattr(mock_group, name)()
 
         mock_group.command_inout.side_effect = _mock_command_inout
 
@@ -205,7 +205,7 @@ class MockGroupBuilder:
             :return: the specified return value for the command
             """
             command_name = asynch_id
-            return getattr(mock_group, command_name).return_value
+            return getattr(mock_group, command_name)()
 
         mock_group.command_inout_reply.side_effect = _mock_command_inout_reply
 
@@ -221,8 +221,8 @@ class MockGroupBuilder:
         self._setup_add_remove()
 
         for command in self._return_values:
-            self.logger.warn(f"Command: {command}\n" + 
-            f"Return Value: {self._return_values[command]}")
+            # self.logger.warn(f"Command: {command}\n" + 
+            # f"Return Value: {self._return_values[command]}")
             self._configuration[command] = MockCallable(
                 return_value=self._return_values[command]
             )

@@ -63,10 +63,6 @@ class TestCbfController:
         assert proxies.controller.State() == DevState.OFF
         assert proxies.subarray[1].State() == DevState.OFF
 
-        # TODO - to remove
-        # for i in range(2):
-        #     assert proxies.sw[i + 1].State() == DevState.OFF
-
         for i in range(4):
             assert proxies.vcc[i + 1].State() == DevState.OFF
         for i in range(2):
@@ -84,11 +80,6 @@ class TestCbfController:
         proxies.wait_timeout_dev([proxies.subarray[1]], DevState.ON, 3, 0.1)
         assert proxies.subarray[1].State() == DevState.ON
 
-        # TODO - to remove
-        # proxies.wait_timeout_dev([proxies.sw[i + 1] for i in range(2)], DevState.DISABLE, 1, 0.1)
-        # for i in range(2):
-        #     assert proxies.sw[i + 1].State() == DevState.DISABLE
-
         proxies.wait_timeout_dev([proxies.vcc[i + 1] for i in range(4)], DevState.ON, 1, 0.1)
         for i in range(4):
             assert proxies.vcc[i + 1].State() == DevState.ON
@@ -101,42 +92,6 @@ class TestCbfController:
         for i in range(2):
             assert proxies.fspSubarray[i + 1].State() == DevState.ON
         
-
-    #TODO: test Standby command in a valid use case
-    @pytest.mark.skip(reason="base classes v0.10.1 Standby not allowed when ON")
-    def test_Standby_valid(self, proxies):
-        """
-        Test a valid use of the "Standby" command
-        """
-        # send the Standby command
-        proxies.controller.Standby()
-
-        # check states
-        proxies.wait_timeout_dev([proxies.controller], DevState.STANDBY, 3, 0.1)
-        assert proxies.controller.State() == DevState.STANDBY
-
-        proxies.wait_timeout_dev([proxies.subarray[1]], DevState.OFF, 3, 0.1)
-        assert proxies.subarray[1].State() == DevState.OFF
-
-        # The SearchWindow (SW) servers are currently not running
-        # as their functionality is covered by the  VCCSearchWindow server
-        # TODO: to remove from devices.json.
-
-        # proxies.wait_timeout_dev([proxies.sw[i + 1] for i in range(2)], DevState.OFF, 1, 0.1)
-        # for i in range(2):
-        #     assert proxies.sw[i + 1].State() == DevState.OFF
-
-        proxies.wait_timeout_dev([proxies.vcc[i + 1] for i in range(4)], DevState.OFF, 1, 0.1)
-        for i in range(4):
-            assert proxies.vcc[i + 1].State() == DevState.OFF
-
-        proxies.wait_timeout_dev([proxies.fsp[i + 1] for i in range(2)], DevState.OFF, 1, 0.1)
-        for i in range(2):
-            assert proxies.fsp[i + 1].State() == DevState.OFF
-
-        proxies.wait_timeout_dev([proxies.fspSubarray[i + 1] for i in range(2)], DevState.OFF, 1, 0.1)
-        for i in range(2):
-            assert proxies.fspSubarray[i + 1].State() == DevState.OFF
 
     def test_Off_valid(self, proxies):
         """
@@ -153,10 +108,31 @@ class TestCbfController:
         proxies.wait_timeout_dev([proxies.subarray[1]], DevState.OFF, 3, 0.1)
         assert proxies.subarray[1].State() == DevState.OFF
 
-        # TODO - to remove
-        # proxies.wait_timeout_dev([proxies.sw[i + 1] for i in range(2)], DevState.OFF, 1, 0.1)
-        # for i in range(2):
-        #     assert proxies.sw[i + 1].State() == DevState.OFF
+        proxies.wait_timeout_dev([proxies.vcc[i + 1] for i in range(4)], DevState.OFF, 1, 0.1)
+        for i in range(4):
+            assert proxies.vcc[i + 1].State() == DevState.OFF
+
+        proxies.wait_timeout_dev([proxies.fsp[i + 1] for i in range(2)], DevState.OFF, 1, 0.1)
+        for i in range(2):
+            assert proxies.fsp[i + 1].State() == DevState.OFF
+
+        proxies.wait_timeout_dev([proxies.fspSubarray[i + 1] for i in range(2)], DevState.OFF, 1, 0.1)
+        for i in range(2):
+            assert proxies.fspSubarray[i + 1].State() == DevState.OFF
+    
+    def test_Standby_valid(self, proxies):
+        """
+        Test a valid use of the "Standby" command
+        """
+        # send the Standby command
+        proxies.controller.Standby()
+
+        # check states
+        proxies.wait_timeout_dev([proxies.controller], DevState.STANDBY, 3, 0.1)
+        assert proxies.controller.State() == DevState.STANDBY
+
+        proxies.wait_timeout_dev([proxies.subarray[1]], DevState.OFF, 3, 0.1)
+        assert proxies.subarray[1].State() == DevState.OFF
 
         proxies.wait_timeout_dev([proxies.vcc[i + 1] for i in range(4)], DevState.OFF, 1, 0.1)
         for i in range(4):

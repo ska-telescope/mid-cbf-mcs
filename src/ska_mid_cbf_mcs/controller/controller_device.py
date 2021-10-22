@@ -822,9 +822,7 @@ class CbfController(SKAMaster):
 
             return (result_code,message)
 
-    # TODO: If the Standby command is needed: 
-    # Convert it to the new base class StandbyCommand
-    # Test it (can use integration test_standby_valid)
+
     class StandbyCommand(SKABaseDevice.StandbyCommand):
         """
         A class for the CbfController's Standby() command.

@@ -28,6 +28,7 @@ from tango import DevState
 from tango.server import command
 
 #SKA imports
+from ska_tango_base.commands import ResultCode
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_mid_cbf_mcs.testing.tango_harness import DeviceToLoadType
 
@@ -36,26 +37,49 @@ from ska_tango_base.control_model import HealthState, AdminMode, ObsState
 
 class TestCbfController:
     """
-    Test class for Vcc tests.
+    Test class for CbfController tests.
     """
 
-    def test_On_Off(
+    def test_State(
         self: TestCbfController,
-        device_under_test: CbfDeviceProxy
+        device_under_test: CbfDeviceProxy,
     ) -> None:
         """
-        Test On and Off commands.
+        Test State
 
         :param device_under_test: fixture that provides a
             :py:class:`CbfDeviceProxy` to the device under test, in a
             :py:class:`tango.test_context.DeviceTestContext`.
         """
-        assert device_under_test.commandProgress == 0
-        device_under_test.On()
-        time.sleep(1)
+        assert device_under_test.State() == DevState.OFF
+
+    def test_On(
+        self: TestCbfController,
+        device_under_test: CbfDeviceProxy
+    ) -> None:
+        """
+        Test On command.
+
+        :param device_under_test: fixture that provides a
+            :py:class:`CbfDeviceProxy` to the device under test, in a
+            :py:class:`tango.test_context.DeviceTestContext`.
+        """
+        result = device_under_test.On()
+        assert result[0][0] == ResultCode.OK
         assert device_under_test.State() == DevState.ON
 
-        device_under_test.Off()
-        time.sleep(1)
+    def test_Off(
+        self: TestCbfController,
+        device_under_test: CbfDeviceProxy
+    ) -> None:
+        """
+        Test Off command.
+
+        :param device_under_test: fixture that provides a
+            :py:class:`CbfDeviceProxy` to the device under test, in a
+            :py:class:`tango.test_context.DeviceTestContext`.
+        """
+        result = device_under_test.Off()
+        assert result[0][0] == ResultCode.OK
         assert device_under_test.State() == DevState.OFF
 
