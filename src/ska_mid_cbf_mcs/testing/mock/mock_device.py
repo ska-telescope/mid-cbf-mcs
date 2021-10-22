@@ -20,6 +20,7 @@ from ska_tango_base.commands import ResultCode
 
 from ska_mid_cbf_mcs.testing.mock.mock_callable import MockCallable
 
+import logging
 
 __all__ = ["MockDeviceBuilder"]
 
@@ -37,6 +38,7 @@ class MockDeviceBuilder:
         :param from_factory: an optional factory from which to draw the
             original mock
         """
+        self.logger = logging.getLogger(__name__)
         self._from_factory = from_factory
 
         self._return_values: dict[str, Any] = {}
@@ -298,6 +300,8 @@ class MockDeviceBuilder:
         mock_device = self._from_factory()
 
         for command in self._return_values:
+            self.logger.warn(f"Command: {command}\n" + 
+            f"Return Value: {self._return_values[command]}")
             self._configuration[command] = MockCallable(
                 return_value=self._return_values[command]
             )

@@ -382,6 +382,23 @@ class CbfController(SKAMaster):
         if self._group_subarray is None:
             self._group_subarray = CbfGroupProxy("CBF Subarray", logger=self.logger)
             self._group_subarray.add(self._fqdn_subarray)
+        
+        for fqdn in self._fqdn_vcc + self._fqdn_fsp + self._fqdn_talon_lru + self._fqdn_subarray :
+            if fqdn not in self._proxies:
+                try:
+                    log_msg = "Trying connection to " + fqdn + " device"
+                    self.logger.info(log_msg)
+                    device_proxy = CbfDeviceProxy(
+                        fqdn=fqdn, 
+                        logger=self.logger
+                    )
+                    device_proxy.ping()
+
+                    self._proxies[fqdn] = device_proxy
+                except tango.DevFailed as df:
+                    for item in df.args:
+                        log_msg = "Failure in connection to " + fqdn + " device: " + str(item.reason)
+                        self.logger.error(log_msg)
         # PROTECTED REGION END #    //  CbfController.always_executed_hook
 
     def delete_device(self: CbfController) -> None:
@@ -715,23 +732,18 @@ class CbfController(SKAMaster):
             device = self.target
 
             # Try connection with each subarray/capability
-            for fqdn in device._fqdn_vcc + device._fqdn_fsp + device._fqdn_subarray + device._fqdn_talon_lru:
+            for fqdn, proxy in device._proxies.items():
+                attribute_test = AdminMode(proxy.read_attribute("adminMode").value).name
+                device.logger.warn(f"{attribute_test}")
+                attribute_test = AdminMode(proxy.adminMode).name
+                device.logger.warn(f"{attribute_test}")
                 try:
-                    log_msg = "Trying connection to " + fqdn + " device"
-                    device.logger.info(log_msg)
-                    device_proxy = CbfDeviceProxy(
-                        fqdn=fqdn, 
-                        logger=device.logger
-                    )
-                    device_proxy.ping()
-
-                    device._proxies[fqdn] = device_proxy
                     events = []
 
                     # subscribe to change events on subarrays/capabilities
                     for attribute_val in ["adminMode", "healthState", "State"]:
                         events.append(
-                            device_proxy.add_change_event_callback(
+                            proxy.add_change_event_callback(
                                 attribute_name=attribute_val,
                                 callback=self.__state_change_event_callback,
                                 stateless=True
@@ -741,7 +753,7 @@ class CbfController(SKAMaster):
                     # subscribe to VCC/FSP subarray membership change events
                     if "vcc" in fqdn or "fsp" in fqdn:
                         events.append(
-                            device_proxy.add_change_event_callback(
+                            proxy.add_change_event_callback(
                                 attribute_name="subarrayMembership",
                                 callback=self.__membership_event_callback,
                                 stateless=True
@@ -752,21 +764,21 @@ class CbfController(SKAMaster):
                     # subscribe to subarray config ID change events
                     if "subarray" in fqdn:
                         events.append(
-                            device_proxy.add_change_event_callback(
+                            proxy.add_change_event_callback(
                                 attribute_name="configID",
                                 callback=self.__config_ID_event_callback,
                                 stateless=True
                             )
                         )
 
-                    device._event_id[device_proxy] = events
+                    device._event_id[proxy] = events
                 except tango.DevFailed as df:
                     for item in df.args:
                         log_msg = "Failure in connection to " + fqdn + " device: " + str(item.reason)
                         device.logger.error(log_msg)
 
             for talon_lru_fqdn in device._fqdn_talon_lru:
-                device._proxies[talon_lru_fqdn].On()
+                device._proxies[talon_lru_fqdn].command_inout("On")
 
             device._group_subarray.command_inout("On")
             device._group_vcc.command_inout("On")
@@ -813,22 +825,6 @@ class CbfController(SKAMaster):
     # TODO: If the Standby command is needed: 
     # Convert it to the new base class StandbyCommand
     # Test it (can use integration test_standby_valid)
-    # def is_Standby_allowed(self: CbfController) -> bool:
-    #     """allowed if state is ON"""
-    #     if self.dev_state() == tango.DevState.ON:
-    #         return True
-    #     return False
-
-    # @command()
-    # def Standby(self: CbfController) -> None:
-    #     # PROTECTED REGION ID(CbfController.Standby) ENABLED START #
-    #     """turn off subarray, vcc, fsp, turn CbfController to standby"""
-    #     self._group_subarray.command_inout("Off")
-    #     self._group_vcc.command_inout("Off")
-    #     self._group_fsp.command_inout("Off")
-    #     self.set_state(tango.DevState.STANDBY)
-    #     # PROTECTED REGION END #    //  CbfController.Standby
-    
     class StandbyCommand(SKABaseDevice.StandbyCommand):
         """
         A class for the CbfController's Standby() command.
@@ -838,6 +834,7 @@ class CbfController(SKAMaster):
         ) -> Tuple[ResultCode, str]:
             """
             Stateless hook for Standby() command functionality.
+            Turn off subarray, vcc, fsp, turn CbfController to standby
 
             :return: A tuple containing a return code and a string
                 message indicating status. The message is for

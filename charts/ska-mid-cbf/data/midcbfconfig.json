@@ -169,7 +169,7 @@
                             ],
                             "polled_attr": [
                                 "state",
-                                "1000",
+                                "3000",
                                 "healthstate",
                                 "3000",
                                 "adminmode",
@@ -282,7 +282,7 @@
                                 "healthstate",
                                 "3000",
                                 "state",
-                                "1000",
+                                "3000",
                                 "obsstate",
                                 "50",
                                 "vcchealthstate",
@@ -387,7 +387,7 @@
                             ],
                             "polled_attr": [
                                 "state",
-                                "1000",
+                                "3000",
                                 "healthstate",
                                 "3000",
                                 "adminmode",
