@@ -1334,14 +1334,36 @@ class TestCbfSubarray:
             proxies.clean_proxies()
             raise e
 
-    def test_Abort_Reset(self, proxies):
+    @pytest.mark.parametrize(
+        "config_file_name, scan_file_name, receptor_ids", 
+        [
+            (
+                "/../data/ConfigureScan_basic.json",
+                "/../data/Scan1_basic.json",
+                [1, 3, 4, 2],
+            ),
+            (
+                "/../data/Configure_TM-CSP_v2.json",
+                "/../data/Scan2_basic.json",
+                [4, 1, 2],
+            )
+
+        ]
+    )
+    def test_Abort_Reset(self, proxies, config_file_name, scan_file_name, receptor_ids):
         """
         Test abort reset
         """
         try:
+            f = open(file_path + config_file_name)
+            json_string = f.read().replace("\n", "")
+            f.close()
+            configuration = json.loads(json_string)
+
+            sub_id = int(configuration["common"]["subarray_id"])
             # turn on Subarray
-            if proxies.subarray[1].State() != DevState.ON:
-                proxies.subarray[1].On()
+            if proxies.subarray[sub_id].State() != DevState.ON:
+                proxies.subarray[sub_id].On()
                 proxies.wait_timeout_dev([proxies.subarray[1]], DevState.ON, 3, 1)
                 for proxy in [proxies.vcc[i + 1] for i in range(4)]:
                     if proxy.State() == DevState.OFF:
@@ -1351,77 +1373,149 @@ class TestCbfSubarray:
                     if proxy.State() == DevState.OFF:
                         proxy.On()
                         proxies.wait_timeout_dev([proxy], DevState.ON, 1, 1)
-            assert proxies.subarray[1].obsState == ObsState.EMPTY
+            assert proxies.subarray[sub_id].obsState == ObsState.EMPTY
             
             ############################# abort from READY ###########################
             # add receptors
-            proxies.subarray[1].AddReceptors([1, 3, 4, 2])
+            proxies.subarray[sub_id].AddReceptors(receptor_ids)
             proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.IDLE, 1, 1)
+            assert all([proxies.subarray[sub_id].receptors[i] == j 
+                for i, j in zip(range(len(receptor_ids)), receptor_ids)])
             # configure scan
-            f = open(file_path + "/../data/ConfigureScan_basic.json")
-            proxies.subarray[1].ConfigureScan(f.read().replace("\n", ""))
-            f.close()
+            proxies.subarray[sub_id].ConfigureScan(json_string)
             proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.READY, 3, 1)
-            assert proxies.subarray[1].obsState == ObsState.READY
-            assert proxies.fspSubarray[1].obsState == ObsState.READY
-            assert proxies.fspSubarray[3].obsState == ObsState.READY
-            assert proxies.fspSubarray[6].obsState == ObsState.READY
+            assert proxies.subarray[sub_id].obsState == ObsState.READY
+            for fsp in configuration["cbf"]["fsp"]:
+                fsp_id = int(fsp["fsp_id"])
+                if fsp["function_mode"] == "CORR":  
+                    # fsp_corr_id 0 = mid_csp_cbf/fspCorrSubarray/_01_01
+                    # fsp_corr_id 1 = mid_csp_cbf/fspCorrSubarray/_02_01
+                    fsp_corr_id = fsp_id -1 
+                    assert proxies.fspCorrSubarray[fsp_corr_id ].obsState == ObsState.READY
+                elif fsp["function_mode"] == "PSS-BF":
+                    # fsp_pss_id 0 = mid_csp_cbf/mid_csp_cbf/fspPssSubarray/_03_01
+                    # fsp_pss_id 1 = mid_csp_cbf/mid_csp_cbf/fspPssSubarray/_04_01
+                    fsp_pss_id = fsp_id - 3
+                    assert proxies.fspPssSubarray[fsp_pss_id].obsState == ObsState.READY
+                elif fsp["function_mode"] == "PST-BF":
+                    # fsp_pst_id 0 = mid_csp_cbf/mid_csp_cbf/fspPssSubarray/_01_01
+                    # fsp_pst_id 1 = mid_csp_cbf/mid_csp_cbf/fspPssSubarray/_02_01
+                    fsp_pst_id = fsp_id -1
+                    assert proxies.fspPstSubarray[fsp_pst_id].obsState == ObsState.READY
             assert proxies.vcc[proxies.receptor_to_vcc[1]].obsState == ObsState.READY
             assert proxies.vcc[proxies.receptor_to_vcc[4]].obsState == ObsState.READY
             # abort
-            proxies.subarray[1].Abort()
-            proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.ABORTED, 1, 1)
-            assert proxies.subarray[1].obsState == ObsState.ABORTED
+            proxies.subarray[sub_id].Abort()
+            proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.ABORTED, 1, 1)
+            assert proxies.subarray[sub_id].obsState == ObsState.ABORTED
             # ObsReset
-            proxies.subarray[1].ObsReset()
-            proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.IDLE, 1, 1)
-            assert proxies.subarray[1].obsState == ObsState.IDLE
-            assert all([proxies.subarray[1].receptors[i] == j for i, j in zip(range(3), [1, 3, 4])])
-            assert proxies.fspSubarray[1].obsState == ObsState.IDLE
-            assert proxies.fspSubarray[3].obsState == ObsState.IDLE
-            assert proxies.fspSubarray[6].obsState == ObsState.IDLE
+            proxies.subarray[sub_id].ObsReset()
+            proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.IDLE, 1, 1)
+            assert proxies.subarray[sub_id].obsState == ObsState.IDLE
+            assert all([proxies.subarray[sub_id].receptors[i] == j for i, j in zip(range(3), receptor_ids)])
+            for fsp in configuration["cbf"]["fsp"]:
+                fsp_id = int(fsp["fsp_id"])
+                if fsp["function_mode"] == "CORR":  
+                    # fsp_corr_id 0 = mid_csp_cbf/fspCorrSubarray/_01_01
+                    # fsp_corr_id 1 = mid_csp_cbf/fspCorrSubarray/_02_01
+                    fsp_corr_id = fsp_id -1 
+                    assert proxies.fspCorrSubarray[fsp_corr_id ].obsState == ObsState.IDLE
+                elif fsp["function_mode"] == "PSS-BF":
+                    # fsp_pss_id 0 = mid_csp_cbf/mid_csp_cbf/fspPssSubarray/_03_01
+                    # fsp_pss_id 1 = mid_csp_cbf/mid_csp_cbf/fspPssSubarray/_04_01
+                    fsp_pss_id = fsp_id - 3
+                    assert proxies.fspPssSubarray[fsp_pss_id].obsState == ObsState.IDLE
+                elif fsp["function_mode"] == "PST-BF":
+                    # fsp_pst_id 0 = mid_csp_cbf/mid_csp_cbf/fspPssSubarray/_01_01
+                    # fsp_pst_id 1 = mid_csp_cbf/mid_csp_cbf/fspPssSubarray/_02_01
+                    fsp_pst_id = fsp_id -1
+                    assert proxies.fspPstSubarray[fsp_pst_id].obsState == ObsState.IDLE
             assert proxies.vcc[proxies.receptor_to_vcc[1]].obsState == ObsState.IDLE
             assert proxies.vcc[proxies.receptor_to_vcc[4]].obsState == ObsState.IDLE
 
 
             ############################# abort from SCANNING ###########################
             # add receptors
-            proxies.subarray[1].AddReceptors([1, 3, 4, 2])
-            proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.IDLE, 1, 1)
+            proxies.subarray[sub_id].AddReceptors(receptor_ids)
+            proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.IDLE, 1, 1)
+            assert all([proxies.subarray[sub_id].receptors[i] == j 
+                for i, j in zip(range(len(receptor_ids)), receptor_ids)])
             # configure scan
-            f = open(file_path + "/../data/ConfigureScan_basic.json")
-            proxies.subarray[1].ConfigureScan(f.read().replace("\n", ""))
-            f.close()
-            proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.READY, 3, 1)
+            proxies.subarray[sub_id].ConfigureScan(json_string)
+            proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.READY, 3, 1)
             # scan
-            f2 = open(file_path + "/../data/Scan2_basic.json")
-            proxies.subarray[1].Scan(f2.read().replace("\n", ""))
-            f2.close()
-            proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.SCANNING, 1, 1)
-            assert proxies.subarray[1].obsState == ObsState.SCANNING
-            assert proxies.subarray[1].scanID == 2
-            assert proxies.fspSubarray[1].obsState == ObsState.SCANNING
-            assert proxies.fspSubarray[3].obsState == ObsState.SCANNING
-            assert proxies.fspSubarray[6].obsState == ObsState.SCANNING
+            f = open(file_path + scan_file_name)
+            json_string_scan = f.read().replace("\n", "")
+            proxies.subarray[sub_id].Scan(json_string_scan)
+            f.close()
+            scan_configuration = json.loads(json_string_scan)
+            proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.SCANNING, 1, 1)
+            assert proxies.subarray[sub_id].obsState == ObsState.SCANNING
+            assert proxies.subarray[sub_id].scanID == scan_configuration["scan_id"]
+            for fsp in configuration["cbf"]["fsp"]:
+                fsp_id = int(fsp["fsp_id"])
+                if fsp["function_mode"] == "CORR":  
+                    # fsp_corr_id 0 = mid_csp_cbf/fspCorrSubarray/_01_01
+                    # fsp_corr_id 1 = mid_csp_cbf/fspCorrSubarray/_02_01
+                    fsp_corr_id = fsp_id -1 
+                    assert proxies.fspCorrSubarray[fsp_corr_id ].obsState == ObsState.SCANNING
+                elif fsp["function_mode"] == "PSS-BF":
+                    # fsp_pss_id 0 = mid_csp_cbf/mid_csp_cbf/fspPssSubarray/_03_01
+                    # fsp_pss_id 1 = mid_csp_cbf/mid_csp_cbf/fspPssSubarray/_04_01
+                    fsp_pss_id = fsp_id - 3
+                    assert proxies.fspPssSubarray[fsp_pss_id].obsState == ObsState.SCANNING
+                elif fsp["function_mode"] == "PST-BF":
+                    # fsp_pst_id 0 = mid_csp_cbf/mid_csp_cbf/fspPssSubarray/_01_01
+                    # fsp_pst_id 1 = mid_csp_cbf/mid_csp_cbf/fspPssSubarray/_02_01
+                    fsp_pst_id = fsp_id -1
+                    assert proxies.fspPstSubarray[fsp_pst_id].obsState == ObsState.SCANNING
             assert proxies.vcc[proxies.receptor_to_vcc[1]].obsState == ObsState.SCANNING
             assert proxies.vcc[proxies.receptor_to_vcc[4]].obsState == ObsState.SCANNING
             # abort
-            proxies.subarray[1].Abort()
-            proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.ABORTED, 1, 1)
-            assert proxies.subarray[1].obsState == ObsState.ABORTED
-            assert proxies.fspSubarray[1].obsState == ObsState.READY
-            assert proxies.fspSubarray[3].obsState == ObsState.READY
-            assert proxies.fspSubarray[6].obsState == ObsState.READY
+            proxies.subarray[sub_id].Abort()
+            proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.ABORTED, 1, 1)
+            assert proxies.subarray[sub_id].obsState == ObsState.ABORTED
+            for fsp in configuration["cbf"]["fsp"]:
+                fsp_id = int(fsp["fsp_id"])
+                if fsp["function_mode"] == "CORR":  
+                    # fsp_corr_id 0 = mid_csp_cbf/fspCorrSubarray/_01_01
+                    # fsp_corr_id 1 = mid_csp_cbf/fspCorrSubarray/_02_01
+                    fsp_corr_id = fsp_id -1 
+                    assert proxies.fspCorrSubarray[fsp_corr_id ].obsState == ObsState.READY
+                elif fsp["function_mode"] == "PSS-BF":
+                    # fsp_pss_id 0 = mid_csp_cbf/mid_csp_cbf/fspPssSubarray/_03_01
+                    # fsp_pss_id 1 = mid_csp_cbf/mid_csp_cbf/fspPssSubarray/_04_01
+                    fsp_pss_id = fsp_id - 3
+                    assert proxies.fspPssSubarray[fsp_pss_id].obsState == ObsState.READY
+                elif fsp["function_mode"] == "PST-BF":
+                    # fsp_pst_id 0 = mid_csp_cbf/mid_csp_cbf/fspPssSubarray/_01_01
+                    # fsp_pst_id 1 = mid_csp_cbf/mid_csp_cbf/fspPssSubarray/_02_01
+                    fsp_pst_id = fsp_id -1
+                    assert proxies.fspPstSubarray[fsp_pst_id].obsState == ObsState.READY
             assert proxies.vcc[proxies.receptor_to_vcc[1]].obsState == ObsState.READY
             assert proxies.vcc[proxies.receptor_to_vcc[4]].obsState == ObsState.READY
             # ObsReset
-            proxies.subarray[1].ObsReset()
-            proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.IDLE, 1, 1)
-            assert proxies.subarray[1].obsState == ObsState.IDLE
-            assert proxies.subarray[1].scanID == 0
-            assert proxies.fspSubarray[1].obsState == ObsState.IDLE
-            assert proxies.fspSubarray[3].obsState == ObsState.IDLE
-            assert proxies.fspSubarray[6].obsState == ObsState.IDLE
+            proxies.subarray[sub_id].ObsReset()
+            proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.IDLE, 1, 1)
+            assert proxies.subarray[sub_id].obsState == ObsState.IDLE
+            assert proxies.subarray[sub_id].scanID == 0
+            for fsp in configuration["cbf"]["fsp"]:
+                fsp_id = int(fsp["fsp_id"])
+                if fsp["function_mode"] == "CORR":  
+                    # fsp_corr_id 0 = mid_csp_cbf/fspCorrSubarray/_01_01
+                    # fsp_corr_id 1 = mid_csp_cbf/fspCorrSubarray/_02_01
+                    fsp_corr_id = fsp_id -1 
+                    assert proxies.fspCorrSubarray[fsp_corr_id ].obsState == ObsState.IDLE
+                elif fsp["function_mode"] == "PSS-BF":
+                    # fsp_pss_id 0 = mid_csp_cbf/mid_csp_cbf/fspPssSubarray/_03_01
+                    # fsp_pss_id 1 = mid_csp_cbf/mid_csp_cbf/fspPssSubarray/_04_01
+                    fsp_pss_id = fsp_id - 3
+                    assert proxies.fspPssSubarray[fsp_pss_id].obsState == ObsState.IDLE
+                elif fsp["function_mode"] == "PST-BF":
+                    # fsp_pst_id 0 = mid_csp_cbf/mid_csp_cbf/fspPssSubarray/_01_01
+                    # fsp_pst_id 1 = mid_csp_cbf/mid_csp_cbf/fspPssSubarray/_02_01
+                    fsp_pst_id = fsp_id -1
+                    assert proxies.fspPstSubarray[fsp_pst_id].obsState == ObsState.IDLE
             assert proxies.vcc[proxies.receptor_to_vcc[1]].obsState == ObsState.IDLE
             assert proxies.vcc[proxies.receptor_to_vcc[4]].obsState == ObsState.IDLE
 
@@ -1435,14 +1529,36 @@ class TestCbfSubarray:
             proxies.clean_proxies()
             raise e
 
-    def test_Abort_Restart(self, proxies):
+    @pytest.mark.parametrize(
+        "config_file_name, scan_file_name, receptor_ids", 
+        [
+            (
+                "/../data/ConfigureScan_basic.json",
+                "/../data/Scan1_basic.json",
+                [1, 3, 4, 2],
+            ),
+            (
+                "/../data/Configure_TM-CSP_v2.json",
+                "/../data/Scan2_basic.json",
+                [4, 1, 2],
+            )
+
+        ]
+    )
+    def test_Abort_Restart(self, proxies, config_file_name, scan_file_name, receptor_ids):
         """
         Test abort restart
         """
         try:
+            f = open(file_path + config_file_name)
+            json_string = f.read().replace("\n", "")
+            f.close()
+            configuration = json.loads(json_string)
+
+            sub_id = int(configuration["common"]["subarray_id"])
             # turn on Subarray
-            if proxies.subarray[1].State() != DevState.ON:
-                proxies.subarray[1].On()
+            if proxies.subarray[sub_id].State() != DevState.ON:
+                proxies.subarray[sub_id].On()
                 proxies.wait_timeout_dev([proxies.subarray[1]], DevState.ON, 3, 1)
                 for proxy in [proxies.vcc[i + 1] for i in range(4)]:
                     if proxy.State() == DevState.OFF:
@@ -1452,25 +1568,39 @@ class TestCbfSubarray:
                     if proxy.State() == DevState.OFF:
                         proxy.On()
                         proxies.wait_timeout_dev([proxy], DevState.ON, 1, 1)
-            assert proxies.subarray[1].obsState == ObsState.EMPTY
+            assert proxies.subarray[sub_id].obsState == ObsState.EMPTY
             
             ############################# abort from IDLE ###########################
             # add receptors
-            proxies.subarray[1].AddReceptors([1, 3, 4, 2])
-            proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.IDLE, 1, 1)
-            assert proxies.subarray[1].obsState == ObsState.IDLE
+            proxies.subarray[sub_id].AddReceptors(receptor_ids)
+            proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.IDLE, 1, 1)
+            assert proxies.subarray[sub_id].obsState == ObsState.IDLE
             # abort
-            proxies.subarray[1].Abort()
-            proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.ABORTED, 1, 1)
-            assert proxies.subarray[1].obsState == ObsState.ABORTED
+            proxies.subarray[sub_id].Abort()
+            proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.ABORTED, 1, 1)
+            assert proxies.subarray[sub_id].obsState == ObsState.ABORTED
             # Restart: receptors should be empty
-            proxies.subarray[1].Restart()
-            proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.EMPTY, 1, 1)
-            assert proxies.subarray[1].obsState == ObsState.EMPTY
-            assert len(proxies.subarray[1].receptors) == 0
-            assert proxies.fspSubarray[1].obsState == ObsState.IDLE
-            assert proxies.fspSubarray[3].obsState == ObsState.IDLE
-            assert proxies.fspSubarray[6].obsState == ObsState.IDLE
+            proxies.subarray[sub_id].Restart()
+            proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.EMPTY, 1, 1)
+            assert proxies.subarray[sub_id].obsState == ObsState.EMPTY
+            assert len(proxies.subarray[sub_id].receptors) == 0
+            for fsp in configuration["cbf"]["fsp"]:
+                fsp_id = int(fsp["fsp_id"])
+                if fsp["function_mode"] == "CORR":  
+                    # fsp_corr_id 0 = mid_csp_cbf/fspCorrSubarray/_01_01
+                    # fsp_corr_id 1 = mid_csp_cbf/fspCorrSubarray/_02_01
+                    fsp_corr_id = fsp_id -1 
+                    assert proxies.fspCorrSubarray[fsp_corr_id ].obsState == ObsState.IDLE
+                elif fsp["function_mode"] == "PSS-BF":
+                    # fsp_pss_id 0 = mid_csp_cbf/mid_csp_cbf/fspPssSubarray/_03_01
+                    # fsp_pss_id 1 = mid_csp_cbf/mid_csp_cbf/fspPssSubarray/_04_01
+                    fsp_pss_id = fsp_id - 3
+                    assert proxies.fspPssSubarray[fsp_pss_id].obsState == ObsState.IDLE
+                elif fsp["function_mode"] == "PST-BF":
+                    # fsp_pst_id 0 = mid_csp_cbf/mid_csp_cbf/fspPssSubarray/_01_01
+                    # fsp_pst_id 1 = mid_csp_cbf/mid_csp_cbf/fspPssSubarray/_02_01
+                    fsp_pst_id = fsp_id -1
+                    assert proxies.fspPstSubarray[fsp_pst_id].obsState == ObsState.IDLE
             assert proxies.vcc[proxies.receptor_to_vcc[1]].obsState == ObsState.IDLE
             assert proxies.vcc[proxies.receptor_to_vcc[4]].obsState == ObsState.IDLE
 
@@ -1479,72 +1609,140 @@ class TestCbfSubarray:
 
             ############################# abort from READY ###########################
             # add receptors
-            proxies.subarray[1].AddReceptors([1, 3, 4, 2])
-            proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.IDLE, 1, 1)
+            proxies.subarray[sub_id].AddReceptors(receptor_ids)
+            proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.IDLE, 1, 1)
             # configure scan
-            f = open(file_path + "/../data/ConfigureScan_basic.json")
-            proxies.subarray[1].ConfigureScan(f.read().replace("\n", ""))
-            f.close()
+            proxies.subarray[sub_id].ConfigureScan(json_string)
             proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.READY, 3, 1)
-            assert proxies.subarray[1].obsState == ObsState.READY
-            assert proxies.fspSubarray[1].obsState == ObsState.READY
-            assert proxies.fspSubarray[3].obsState == ObsState.READY
-            assert proxies.fspSubarray[6].obsState == ObsState.READY
+            assert proxies.subarray[sub_id].obsState == ObsState.READY
+            for fsp in configuration["cbf"]["fsp"]:
+                fsp_id = int(fsp["fsp_id"])
+                if fsp["function_mode"] == "CORR":  
+                    # fsp_corr_id 0 = mid_csp_cbf/fspCorrSubarray/_01_01
+                    # fsp_corr_id 1 = mid_csp_cbf/fspCorrSubarray/_02_01
+                    fsp_corr_id = fsp_id -1 
+                    assert proxies.fspCorrSubarray[fsp_corr_id ].obsState == ObsState.READY
+                elif fsp["function_mode"] == "PSS-BF":
+                    # fsp_pss_id 0 = mid_csp_cbf/mid_csp_cbf/fspPssSubarray/_03_01
+                    # fsp_pss_id 1 = mid_csp_cbf/mid_csp_cbf/fspPssSubarray/_04_01
+                    fsp_pss_id = fsp_id - 3
+                    assert proxies.fspPssSubarray[fsp_pss_id].obsState == ObsState.READY
+                elif fsp["function_mode"] == "PST-BF":
+                    # fsp_pst_id 0 = mid_csp_cbf/mid_csp_cbf/fspPssSubarray/_01_01
+                    # fsp_pst_id 1 = mid_csp_cbf/mid_csp_cbf/fspPssSubarray/_02_01
+                    fsp_pst_id = fsp_id -1
+                    assert proxies.fspPstSubarray[fsp_pst_id].obsState == ObsState.READY
             assert proxies.vcc[proxies.receptor_to_vcc[1]].obsState == ObsState.READY
             assert proxies.vcc[proxies.receptor_to_vcc[4]].obsState == ObsState.READY
             # abort
-            proxies.subarray[1].Abort()
-            proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.ABORTED, 1, 1)
-            assert proxies.subarray[1].obsState == ObsState.ABORTED
+            proxies.subarray[sub_id].Abort()
+            proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.ABORTED, 1, 1)
+            assert proxies.subarray[sub_id].obsState == ObsState.ABORTED
             # ObsReset
-            proxies.subarray[1].Restart()
-            proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.EMPTY, 1, 1)
-            assert proxies.subarray[1].obsState == ObsState.EMPTY
-            assert len(proxies.subarray[1].receptors) == 0
-            assert proxies.fspSubarray[1].obsState == ObsState.IDLE
-            assert proxies.fspSubarray[3].obsState == ObsState.IDLE
-            assert proxies.fspSubarray[6].obsState == ObsState.IDLE
+            proxies.subarray[sub_id].Restart()
+            proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.EMPTY, 1, 1)
+            assert proxies.subarray[sub_id].obsState == ObsState.EMPTY
+            assert len(proxies.subarray[sub_id].receptors) == 0
+            for fsp in configuration["cbf"]["fsp"]:
+                fsp_id = int(fsp["fsp_id"])
+                if fsp["function_mode"] == "CORR":  
+                    # fsp_corr_id 0 = mid_csp_cbf/fspCorrSubarray/_01_01
+                    # fsp_corr_id 1 = mid_csp_cbf/fspCorrSubarray/_02_01
+                    fsp_corr_id = fsp_id -1 
+                    assert proxies.fspCorrSubarray[fsp_corr_id ].obsState == ObsState.IDLE
+                elif fsp["function_mode"] == "PSS-BF":
+                    # fsp_pss_id 0 = mid_csp_cbf/mid_csp_cbf/fspPssSubarray/_03_01
+                    # fsp_pss_id 1 = mid_csp_cbf/mid_csp_cbf/fspPssSubarray/_04_01
+                    fsp_pss_id = fsp_id - 3
+                    assert proxies.fspPssSubarray[fsp_pss_id].obsState == ObsState.IDLE
+                elif fsp["function_mode"] == "PST-BF":
+                    # fsp_pst_id 0 = mid_csp_cbf/mid_csp_cbf/fspPssSubarray/_01_01
+                    # fsp_pst_id 1 = mid_csp_cbf/mid_csp_cbf/fspPssSubarray/_02_01
+                    fsp_pst_id = fsp_id -1
+                    assert proxies.fspPstSubarray[fsp_pst_id].obsState == ObsState.IDLE
             assert proxies.vcc[proxies.receptor_to_vcc[1]].obsState == ObsState.IDLE
             assert proxies.vcc[proxies.receptor_to_vcc[4]].obsState == ObsState.IDLE
 
 
             ############################# abort from SCANNING ###########################
             # add receptors
-            proxies.subarray[1].AddReceptors([1, 3, 4, 2])
-            proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.IDLE, 1, 1)
+            proxies.subarray[sub_id].AddReceptors(receptor_ids)
+            proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.IDLE, 1, 1)
             # configure scan
-            f = open(file_path + "/../data/ConfigureScan_basic.json")
-            proxies.subarray[1].ConfigureScan(f.read().replace("\n", ""))
-            f.close()
-            proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.READY, 3, 1)
+            proxies.subarray[sub_id].ConfigureScan(json_string)
+            proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.READY, 3, 1)
             # scan
-            f2 = open(file_path + "/../data/Scan2_basic.json")
-            proxies.subarray[1].Scan(f2.read().replace("\n", ""))
-            f2.close()
-            proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.SCANNING, 1, 1)
-            assert proxies.subarray[1].obsState == ObsState.SCANNING
-            assert proxies.subarray[1].scanID == 2
-            assert proxies.fspSubarray[1].obsState == ObsState.SCANNING
-            assert proxies.fspSubarray[3].obsState == ObsState.SCANNING
-            assert proxies.fspSubarray[6].obsState == ObsState.SCANNING
+            f = open(file_path + scan_file_name)
+            json_string_scan = f.read().replace("\n", "")
+            proxies.subarray[sub_id].Scan(json_string_scan)
+            f.close()
+            scan_configuration = json.loads(json_string_scan)
+            proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.SCANNING, 1, 1)
+            assert proxies.subarray[sub_id].obsState == ObsState.SCANNING
+            assert proxies.subarray[sub_id].scanID == scan_configuration["scan_id"]
+            for fsp in configuration["cbf"]["fsp"]:
+                fsp_id = int(fsp["fsp_id"])
+                if fsp["function_mode"] == "CORR":  
+                    # fsp_corr_id 0 = mid_csp_cbf/fspCorrSubarray/_01_01
+                    # fsp_corr_id 1 = mid_csp_cbf/fspCorrSubarray/_02_01
+                    fsp_corr_id = fsp_id -1 
+                    assert proxies.fspCorrSubarray[fsp_corr_id ].obsState == ObsState.SCANNING
+                elif fsp["function_mode"] == "PSS-BF":
+                    # fsp_pss_id 0 = mid_csp_cbf/mid_csp_cbf/fspPssSubarray/_03_01
+                    # fsp_pss_id 1 = mid_csp_cbf/mid_csp_cbf/fspPssSubarray/_04_01
+                    fsp_pss_id = fsp_id - 3
+                    assert proxies.fspPssSubarray[fsp_pss_id].obsState == ObsState.SCANNING
+                elif fsp["function_mode"] == "PST-BF":
+                    # fsp_pst_id 0 = mid_csp_cbf/mid_csp_cbf/fspPssSubarray/_01_01
+                    # fsp_pst_id 1 = mid_csp_cbf/mid_csp_cbf/fspPssSubarray/_02_01
+                    fsp_pst_id = fsp_id -1
+                    assert proxies.fspPstSubarray[fsp_pst_id].obsState == ObsState.SCANNING
             assert proxies.vcc[proxies.receptor_to_vcc[1]].obsState == ObsState.SCANNING
             assert proxies.vcc[proxies.receptor_to_vcc[4]].obsState == ObsState.SCANNING
             # abort
-            proxies.subarray[1].Abort()
-            proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.ABORTED, 1, 1)
-            assert proxies.subarray[1].obsState == ObsState.ABORTED
-            assert proxies.fspSubarray[1].obsState == ObsState.READY
-            assert proxies.fspSubarray[3].obsState == ObsState.READY
-            assert proxies.fspSubarray[6].obsState == ObsState.READY
+            proxies.subarray[sub_id].Abort()
+            proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.ABORTED, 1, 1)
+            assert proxies.subarray[sub_id].obsState == ObsState.ABORTED
+            for fsp in configuration["cbf"]["fsp"]:
+                fsp_id = int(fsp["fsp_id"])
+                if fsp["function_mode"] == "CORR":  
+                    # fsp_corr_id 0 = mid_csp_cbf/fspCorrSubarray/_01_01
+                    # fsp_corr_id 1 = mid_csp_cbf/fspCorrSubarray/_02_01
+                    fsp_corr_id = fsp_id -1 
+                    assert proxies.fspCorrSubarray[fsp_corr_id ].obsState == ObsState.READY
+                elif fsp["function_mode"] == "PSS-BF":
+                    # fsp_pss_id 0 = mid_csp_cbf/mid_csp_cbf/fspPssSubarray/_03_01
+                    # fsp_pss_id 1 = mid_csp_cbf/mid_csp_cbf/fspPssSubarray/_04_01
+                    fsp_pss_id = fsp_id - 3
+                    assert proxies.fspPssSubarray[fsp_pss_id].obsState == ObsState.READY
+                elif fsp["function_mode"] == "PST-BF":
+                    # fsp_pst_id 0 = mid_csp_cbf/mid_csp_cbf/fspPssSubarray/_01_01
+                    # fsp_pst_id 1 = mid_csp_cbf/mid_csp_cbf/fspPssSubarray/_02_01
+                    fsp_pst_id = fsp_id -1
+                    assert proxies.fspPstSubarray[fsp_pst_id].obsState == ObsState.READY
             assert proxies.vcc[proxies.receptor_to_vcc[1]].obsState == ObsState.READY
             assert proxies.vcc[proxies.receptor_to_vcc[4]].obsState == ObsState.READY
             # ObsReset
-            proxies.subarray[1].Restart()
-            proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.IDLE, 1, 1)
-            assert len(proxies.subarray[1].receptors) == 0
-            assert proxies.fspSubarray[1].obsState == ObsState.IDLE
-            assert proxies.fspSubarray[3].obsState == ObsState.IDLE
-            assert proxies.fspSubarray[6].obsState == ObsState.IDLE
+            proxies.subarray[sub_id].Restart()
+            proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.IDLE, 1, 1)
+            assert len(proxies.subarray[sub_id].receptors) == 0
+            for fsp in configuration["cbf"]["fsp"]:
+                fsp_id = int(fsp["fsp_id"])
+                if fsp["function_mode"] == "CORR":  
+                    # fsp_corr_id 0 = mid_csp_cbf/fspCorrSubarray/_01_01
+                    # fsp_corr_id 1 = mid_csp_cbf/fspCorrSubarray/_02_01
+                    fsp_corr_id = fsp_id -1 
+                    assert proxies.fspCorrSubarray[fsp_corr_id ].obsState == ObsState.IDLE
+                elif fsp["function_mode"] == "PSS-BF":
+                    # fsp_pss_id 0 = mid_csp_cbf/mid_csp_cbf/fspPssSubarray/_03_01
+                    # fsp_pss_id 1 = mid_csp_cbf/mid_csp_cbf/fspPssSubarray/_04_01
+                    fsp_pss_id = fsp_id - 3
+                    assert proxies.fspPssSubarray[fsp_pss_id].obsState == ObsState.IDLE
+                elif fsp["function_mode"] == "PST-BF":
+                    # fsp_pst_id 0 = mid_csp_cbf/mid_csp_cbf/fspPssSubarray/_01_01
+                    # fsp_pst_id 1 = mid_csp_cbf/mid_csp_cbf/fspPssSubarray/_02_01
+                    fsp_pst_id = fsp_id -1
+                    assert proxies.fspPstSubarray[fsp_pst_id].obsState == ObsState.IDLE
             assert proxies.vcc[proxies.receptor_to_vcc[1]].obsState == ObsState.IDLE
             assert proxies.vcc[proxies.receptor_to_vcc[4]].obsState == ObsState.IDLE
 
