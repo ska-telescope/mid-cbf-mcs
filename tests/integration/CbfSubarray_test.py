@@ -123,7 +123,22 @@ class TestCbfSubarray:
             proxies.clean_proxies()
             raise e
 
-    def test_AddRemoveReceptors_invalid_single(self, proxies):
+    @pytest.mark.parametrize(
+        "receptor_ids, invalid_receptors_to_remove, sub_id", 
+        [
+            (
+                [1, 3],
+                [2],
+                1
+            ),
+            (
+                [4, 2],
+                [1, 3],
+                1
+            )
+        ]
+    )
+    def test_AddRemoveReceptors_invalid_single(self, proxies, receptor_ids, invalid_receptors_to_remove, sub_id):
         """
         Test invalid AddReceptors commands involving a single subarray:
             - when a receptor ID is invalid (e.g. out of range)
@@ -131,9 +146,9 @@ class TestCbfSubarray:
         """
         try:
             # turn on Subarray
-            if proxies.subarray[1].State() != DevState.ON:
-                proxies.subarray[1].On()
-                proxies.wait_timeout_dev([proxies.subarray[1]], DevState.ON, 3, 1)
+            if proxies.subarray[sub_id].State() != DevState.ON:
+                proxies.subarray[sub_id].On()
+                proxies.wait_timeout_dev([proxies.subarray[sub_id]], DevState.ON, 3, 1)
                 for proxy in [proxies.vcc[i + 1] for i in range(4)]:
                     if proxy.State() == DevState.OFF:
                         proxy.On()
@@ -142,20 +157,19 @@ class TestCbfSubarray:
                     if proxy.State() == DevState.OFF:
                         proxy.On()
                         proxies.wait_timeout_dev([proxy], DevState.ON, 1, 1)
-            assert proxies.subarray[1].State() == DevState.ON
-            assert proxies.subarray[1].obsState == ObsState.EMPTY
+            assert proxies.subarray[sub_id].State() == DevState.ON
+            assert proxies.subarray[sub_id].obsState == ObsState.EMPTY
 
             # receptor list should be empty right after initialization
-            assert len(proxies.subarray[1].receptors) == 0
+            assert len(proxies.subarray[sub_id].receptors) == 0
             assert all([proxies.vcc[i + 1].subarrayMembership == 0 for i in range(4)])
 
-            # add some receptors to subarray 1
-            proxies.subarray[1].AddReceptors([1, 3])
-            proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.IDLE, 1, 1)
-            assert proxies.subarray[1].receptors[0] == 1
-            assert proxies.subarray[1].receptors[1] == 3
-            assert all([proxies.vcc[proxies.receptor_to_vcc[i]].subarrayMembership == 1 for i in [1, 3]])
-            assert proxies.subarray[1].obsState == ObsState.IDLE
+            # add some receptors 
+            proxies.subarray[sub_id].AddReceptors(receptor_ids)
+            proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.IDLE, 1, 1)
+            assert [proxies.subarray[sub_id].receptors[i] for i in range(len(receptor_ids))] == receptor_ids
+            assert all([proxies.vcc[proxies.receptor_to_vcc[i]].subarrayMembership == 1 for i in receptor_ids])
+            assert proxies.subarray[sub_id].obsState == ObsState.IDLE
 
             # TODO: fix this
             # try adding an invalid receptor ID
@@ -166,13 +180,12 @@ class TestCbfSubarray:
 
             # try removing a receptor not assigned to subarray 1
             # doing this doesn't actually throw an error
-            proxies.subarray[1].RemoveReceptors([2])
-            assert proxies.subarray[1].receptors[0] == 1
-            assert proxies.subarray[1].receptors[1] == 3
-            proxies.subarray[1].RemoveAllReceptors()
-            proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.EMPTY, 1, 1)
-            proxies.subarray[1].Off()
-            proxies.wait_timeout_dev([proxies.subarray[1]], DevState.OFF, 3, 1)
+            proxies.subarray[sub_id].RemoveReceptors(invalid_receptors_to_remove)
+            assert [proxies.subarray[sub_id].receptors[i] for i in range(len(receptor_ids))] == receptor_ids
+            proxies.subarray[sub_id].RemoveAllReceptors()
+            proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.EMPTY, 1, 1)
+            proxies.subarray[sub_id].Off()
+            proxies.wait_timeout_dev([proxies.subarray[sub_id]], DevState.OFF, 3, 1)
 
         except AssertionError as ae:
             proxies.clean_proxies()
