@@ -61,21 +61,24 @@ def talon_dx_component_manager(
             self.args = cmd
 
             # Check that the arguments to the command are correct
-            if cmd[0] == "scp":
+            cmd_split = cmd.split(" ")
+            if cmd_split[0] == "scp":
                 src_ds = re.compile(r"tests\/unit\/talondx_component_manager\/.+\/build-ci-cross\/bin\/.*")
                 src_fpga = re.compile(r"tests\/unit\/talondx_component_manager\/fpga-.*\/bin\/vcc3_2ch4.*")
-                assert (src_ds.fullmatch(cmd[1]) or src_fpga.fullmatch(cmd[1]))
+                assert (src_ds.fullmatch(cmd_split[3]) or src_fpga.fullmatch(cmd_split[3]))
 
-                target_dest_ds = re.compile(r"root@talon1:\/lib\/firmware\/hps_software(\/vcc_test)?")
-                target_dest_fpga = re.compile(r"root@talon1:\/lib\/firmware\/bitstream")
-                assert (target_dest_ds.fullmatch(cmd[2]) or target_dest_fpga.fullmatch(cmd[2]))
+                target_dest_ds = re.compile(r"root@169.254.100.1:\/lib\/firmware\/hps_software(\/vcc_test)?")
+                target_dest_fpga = re.compile(r"root@169.254.100.1:\/lib\/firmware\/bitstream")
+                assert (target_dest_ds.fullmatch(cmd_split[4]) or target_dest_fpga.fullmatch(cmd_split[4]))
             else:
-                assert cmd[0] == "ssh"
-                assert cmd[1] == "root@talon1"
+                assert cmd_split[0] == "ssh"
+                assert cmd_split[3] == "root@169.254.100.1"
+
+                cmd_to_run = ' '.join(cmd_split[4:])
                 assert (
-                    (cmd[2] == "mkdir -p /lib/firmware/hps_software/vcc_test") or
-                    (cmd[2] == "mkdir -p /lib/firmware/bitstream") or
-                    (cmd[2] == "source /lib/firmware/hps_software/run_hps_master.sh talon1_test")
+                    (cmd_to_run == "mkdir -p /lib/firmware/hps_software/vcc_test") or
+                    (cmd_to_run == "mkdir -p /lib/firmware/bitstream") or
+                    (cmd_to_run == "/lib/firmware/hps_software/hps_master_mcs.sh talon1_test")
                 )
 
             if simulate_response_error:

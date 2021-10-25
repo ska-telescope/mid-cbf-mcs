@@ -48,6 +48,7 @@ class TalonDxComponentManager:
         self.talondx_config_path = talondx_config_path
         self.simulation_mode = simulation_mode
         self.logger = logger
+        self.ssh_options = "-o StrictHostKeyChecking=no"
 
     def configure_talons(self: TalonDxComponentManager) -> ResultCode:
         """
@@ -101,7 +102,7 @@ class TalonDxComponentManager:
         :raise subprocess.CalledProcessError: if the file copy fails
         """
         target_dest = f"{target}:{dest}"
-        subprocess.run(["scp", src, target_dest], check=True, shell=True)
+        subprocess.run(f"scp {self.ssh_options} {src} {target_dest}", check=True, shell=True)
 
     def _copy_binaries_and_bitstream(self: TalonDxComponentManager) -> ResultCode:
         """
@@ -114,13 +115,13 @@ class TalonDxComponentManager:
         ret = ResultCode.OK
         for talon_cfg in self.talondx_config["config-commands"]:
             try:
-                ip = talon_cfg["target"]
+                ip = talon_cfg["ip-address"]
                 target = f"root@{ip}"
                 
                 # Make the DS binaries directory
                 src_dir = f"{self.talondx_config_path}"
                 dest_dir = talon_cfg["ds-path"]
-                subprocess.run(["ssh", target, f"mkdir -p {dest_dir}"], check=True, shell=True)
+                subprocess.run(f"ssh {self.ssh_options} {target} mkdir -p {dest_dir}", check=True, shell=True)
 
                 # Copy the HPS master binary
                 self._secure_copy(
@@ -140,21 +141,22 @@ class TalonDxComponentManager:
 
                 # Copy the FPGA bitstream
                 dest_dir = talon_cfg["fpga-path"]
-                subprocess.run(["ssh", target, f"mkdir -p {dest_dir}"], check=True, shell=True)
+                subprocess.run(f"ssh {self.ssh_options} {target} mkdir -p {dest_dir}", check=True, shell=True)
 
+                target_alias = talon_cfg["target"]
                 fpga_dtb_name = talon_cfg['fpga-dtb-name']
                 self._secure_copy(
                     target=target, 
-                    src=f"{src_dir}/fpga-{target}/bin/{fpga_dtb_name}",
+                    src=f"{src_dir}/fpga-{target_alias}/bin/{fpga_dtb_name}",
                     dest=dest_dir)
 
                 fpga_rbf_name = talon_cfg['fpga-rbf-name']
                 self._secure_copy(
                     target=target, 
-                    src=f"{src_dir}/fpga-{target}/bin/{fpga_rbf_name}",
+                    src=f"{src_dir}/fpga-{target_alias}/bin/{fpga_rbf_name}",
                     dest=dest_dir)
             except subprocess.CalledProcessError as err:
-                self.logger.error(f"Command '{err.cmd}' to target {target} failed with " \
+                self.logger.error(f"Command '{err.cmd}' failed with " \
                     f"error code {err.returncode}")
                 ret = ResultCode.FAILED
             
@@ -169,16 +171,16 @@ class TalonDxComponentManager:
         """
         ret = ResultCode.OK
         for talon_cfg in self.talondx_config["config-commands"]:
-            ip = talon_cfg["target"]
+            ip = talon_cfg["ip-address"]
             target = f"root@{ip}"
             inst = talon_cfg["server-instance"]
 
             try:
-                subprocess.run(["ssh", target, 
-                    f"source /lib/firmware/hps_software/run_hps_master.sh {inst}"],
+                subprocess.run(f"ssh {self.ssh_options} {target}" \
+                    f" /lib/firmware/hps_software/hps_master_mcs.sh {inst}",
                     check=True, shell=True)
             except subprocess.CalledProcessError as err:
-                self.logger.error(f"Command '{err.cmd}' to target {target} failed with " \
+                self.logger.error(f"Command '{err.cmd}' failed with " \
                     f"error code {err.returncode}")
                 ret = ResultCode.FAILED  
         return ret 
