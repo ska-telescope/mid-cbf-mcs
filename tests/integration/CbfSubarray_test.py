@@ -555,88 +555,24 @@ class TestCbfSubarray:
                 elif fsp["function_mode"] == "PST-BF": 
                     function_mode = FspModes.PST_BF.value
                     assert proxies.fsp[fsp_id].functionMode == function_mode
+
+                    assert proxies.fsp[fsp_id].State() == DevState.ON
+                    assert sub_id in proxies.fsp[fsp_id].subarrayMembership
+                    assert [proxy.State() for proxy in proxies.fsp2FunctionMode] == [
+                        DevState.DISABLE, DevState.DISABLE, DevState.ON, DevState.DISABLE
+                    ]
+                    # fsp_pst_id 5 = pst _01_01
+                    # fsp_pst_id 6 = pst _02_01
+                    fsp_pst_id = fsp_id + 4
+                    assert proxies.fspSubarray[fsp_pst_id].obsState == ObsState.READY
+                    for beam in fsp["timing_beam"]:
+                        assert all([proxies.fspSubarray[fsp_pst_id].receptors[i] == j for i, j in zip(range(1), beam["receptor_ids"])])
+                        assert all([proxies.fspSubarray[fsp_pst_id].timingBeamID[i] == j for i, j in zip(range(1), [beam["timing_beam_id"]])])
+
                 elif fsp["function_mode"] == "VLBI": 
                     function_mode = FspModes.VLBI.value
                     assert proxies.fsp[fsp_id].functionMode == function_mode
                     #TODO: This mode is not tested
-
-            # Clean Up
-            proxies.clean_proxies()
-        
-        except AssertionError as ae:
-            proxies.clean_proxies()
-            raise ae
-        except Exception as e:
-            proxies.clean_proxies()
-            raise e
-
-    def test_ConfigureScan_onlyPst_basic(self, proxies):
-        """
-        Test a successful PST-BF scan configuration
-        """
-        try:
-            # turn on Subarray
-            if proxies.subarray[1].State() != DevState.ON:
-                proxies.subarray[1].On()
-                proxies.wait_timeout_dev([proxies.subarray[1]], DevState.ON, 3, 1)
-            for proxy in [proxies.vcc[i + 1] for i in range(4)]:
-                if proxy.State() == DevState.OFF:
-                    proxy.On()
-                    proxies.wait_timeout_dev([proxy], DevState.ON, 1, 1)
-            for proxy in [proxies.fsp[i + 1] for i in range(4)]:
-                proxy.loggingLevel = "DEBUG"
-                if proxy.State() == DevState.OFF:
-                    proxy.On()
-                    proxies.wait_timeout_dev([proxy], DevState.ON, 1, 1)
-            # check initial value of attributes of CBF subarray
-            assert len(proxies.subarray[1].receptors) == 0
-            assert proxies.subarray[1].configID == ''
-            assert proxies.subarray[1].frequencyBand == 0
-            assert proxies.subarray[1].obsState == ObsState.EMPTY
-
-            # add receptors
-            proxies.subarray[1].AddReceptors([4, 1, 3, 2])
-            proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.IDLE, 1, 1)
-            assert all([proxies.subarray[1].receptors[i] == j for i, j in zip(range(4), [4, 1, 3, 2])])
-
-            # configure scan
-            f = open(file_path + "/../data/ConfigureScan_basic.json")
-            proxies.subarray[1].ConfigureScan(f.read().replace("\n", ""))
-            f.close()
-            proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.READY, 3, 1)
-
-            # check configured attributes of CBF subarray
-            assert proxies.subarray[1].configID == "band:5a, fsp1, 744 channels average factor 8"
-            assert proxies.subarray[1].frequencyBand == 4
-            assert proxies.subarray[1].obsState == ObsState.READY
-
-            proxies.wait_timeout_obs([proxies.vcc[i + 1] for i in range(4)], ObsState.READY, 1, 1)
-
-            # check frequency band of VCCs, including states of frequency band capabilities
-            assert proxies.vcc[proxies.receptor_to_vcc[2]].frequencyBand == 4
-            assert [proxy.State() for proxy in proxies.vccBand[proxies.receptor_to_vcc[2] - 1]] == [
-                DevState.DISABLE, DevState.DISABLE, DevState.DISABLE, DevState.ON]
-
-            # check the rest of the configured attributes of VCCs
-            # first for VCC belonging to receptor 2...
-            assert proxies.vcc[proxies.receptor_to_vcc[2]].subarrayMembership == 1
-            assert proxies.vcc[proxies.receptor_to_vcc[2]].frequencyBandOffsetStream1 == 0
-            assert proxies.vcc[proxies.receptor_to_vcc[2]].frequencyBandOffsetStream2 == 0
-            assert proxies.vcc[proxies.receptor_to_vcc[2]].rfiFlaggingMask == "{}"
-
-            # check configured attributes of FSPs, including states of function mode capabilities
-            assert proxies.fsp[2].State() == DevState.ON
-            assert proxies.fsp[2].functionMode == 3
-            assert 1 in proxies.fsp[2].subarrayMembership
-            assert [proxy.State() for proxy in proxies.fsp2FunctionMode] == [
-                DevState.DISABLE, DevState.DISABLE, DevState.ON, DevState.DISABLE
-            ]
-
-            # check configured attributes of FSP subarrays
-            # FSP 2
-            assert proxies.fspSubarray[6].obsState == ObsState.READY
-            assert all([proxies.fspSubarray[6].receptors[i] == j for i, j in zip(range(1), [2])])
-            assert all([proxies.fspSubarray[6].timingBeamID[i] == j for i, j in zip(range(1), [10])])
 
             # Clean Up
             proxies.clean_proxies()
