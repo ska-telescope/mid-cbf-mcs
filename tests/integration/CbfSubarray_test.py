@@ -8,6 +8,9 @@
 # Distributed under the terms of the BSD-3-Clause license.
 # See LICENSE.txt for more info.
 """Contain the tests for the CbfSubarray."""
+from __future__ import annotations  # allow forward references in type hints
+
+from typing import List
 
 # Standard imports
 import sys
@@ -48,7 +51,13 @@ class TestCbfSubarray:
             )
         ]
     )
-    def test_AddRemoveReceptors_valid(self, proxies, receptor_ids, receptors_to_remove, sub_id):
+    def test_AddRemoveReceptors_valid(
+        self: TestCbfSubarray, 
+        proxies, 
+        receptor_ids: List[int], 
+        receptors_to_remove: List[int], 
+        sub_id: int
+    ) -> None:
         """
         Test valid AddReceptors and RemoveReceptors commands
         """
@@ -138,7 +147,13 @@ class TestCbfSubarray:
             )
         ]
     )
-    def test_AddRemoveReceptors_invalid_single(self, proxies, receptor_ids, invalid_receptors_to_remove, sub_id):
+    def test_AddRemoveReceptors_invalid_single(
+        self: TestCbfSubarray, 
+        proxies, 
+        receptor_ids: List[int], 
+        invalid_receptors_to_remove: List[int], 
+        sub_id: int
+    ) -> None:
         """
         Test invalid AddReceptors commands involving a single subarray:
             - when a receptor ID is invalid (e.g. out of range)
@@ -255,7 +270,12 @@ class TestCbfSubarray:
             )
         ]
     )
-    def test_RemoveAllReceptors(self, proxies, receptor_ids, sub_id):
+    def test_RemoveAllReceptors(
+        self: TestCbfSubarray, 
+        proxies, 
+        receptor_ids: List[int], 
+        sub_id: int
+    ) -> None:
         """
         Test RemoveAllReceptors command
         """
@@ -315,7 +335,12 @@ class TestCbfSubarray:
             )
         ]
     )
-    def test_ConfigureScan_basic(self, proxies, config_file_name, receptor_ids):
+    def test_ConfigureScan_basic(
+        self: TestCbfSubarray, 
+        proxies, 
+        config_file_name: str,
+        receptor_ids: List[int], 
+    ) -> None:
         """
         Test a successful scan configuration
         """
@@ -596,7 +621,15 @@ class TestCbfSubarray:
             )
         ]
     )
-    def test_ConfigureScan_onlyPst_basic_FSP_scan_parameters(self, proxies, config_file_name, jones_matrix_file_name, delay_model_file_name, timing_beam_weights_file_name, receptor_ids):
+    def test_ConfigureScan_onlyPst_basic_FSP_scan_parameters(
+        self: TestCbfSubarray, 
+        proxies, 
+        config_file_name: str,
+        jones_matrix_file_name: str,
+        delay_model_file_name: str,
+        timing_beam_weights_file_name: str,
+        receptor_ids: List[int]
+    ) -> None:
         """
         Test a successful transmission of PST-BF parameters to FSP
         """
@@ -739,12 +772,12 @@ class TestCbfSubarray:
         ]
     )
     def test_EndScan(
-        self, 
+        self: TestCbfSubarray, 
         proxies, 
-        config_file_name, 
-        scan_file_name, 
-        receptor_ids,
-    ):
+        config_file_name: str,
+        scan_file_name: str,
+        receptor_ids: List[int]
+    ) -> None:
         """
         Test the EndScan command
         """
@@ -1081,7 +1114,14 @@ class TestCbfSubarray:
             ),
         ]
     )
-    def test_ConfigureScan_jonesMatrix(self, proxies, config_file_name, scan_file_name, jones_matrix_file_name, receptor_ids):
+    def test_ConfigureScan_jonesMatrix(
+        self: TestCbfSubarray, 
+        proxies, 
+        config_file_name: str,
+        scan_file_name: str,
+        jones_matrix_file_name: str,
+        receptor_ids: List[int]
+    ) -> None:
         """
         Test the reception of Jones matrices
         """
@@ -1215,7 +1255,13 @@ class TestCbfSubarray:
 
         ]
     )
-    def test_Scan(self, proxies, config_file_name, scan_file_name, receptor_ids):
+    def test_Scan(
+        self: TestCbfSubarray, 
+        proxies, 
+        config_file_name: str,
+        scan_file_name: str,
+        receptor_ids: List[int]
+    ) -> None:
         """
         Test the Scan command
         """
@@ -1335,7 +1381,13 @@ class TestCbfSubarray:
 
         ]
     )
-    def test_Abort_Reset(self, proxies, config_file_name, scan_file_name, receptor_ids):
+    def test_Abort_Reset(
+        self: TestCbfSubarray, 
+        proxies, 
+        config_file_name: str,
+        scan_file_name: str,
+        receptor_ids: List[int]
+    ) -> None:
         """
         Test abort reset
         """
@@ -1530,7 +1582,13 @@ class TestCbfSubarray:
 
         ]
     )
-    def test_Abort_Restart(self, proxies, config_file_name, scan_file_name, receptor_ids):
+    def test_Abort_Restart(
+        self: TestCbfSubarray, 
+        proxies, 
+        config_file_name: str,
+        scan_file_name: str,
+        receptor_ids: List[int]
+    ) -> None:
         """
         Test abort restart
         """
