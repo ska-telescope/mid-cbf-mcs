@@ -584,15 +584,32 @@ class TestCbfSubarray:
             proxies.clean_proxies()
             raise e
 
-    def test_ConfigureScan_onlyPst_basic_FSP_scan_parameters(self, proxies):
+    @pytest.mark.parametrize(
+        "config_file_name, jones_matrix_file_name, delay_model_file_name, timing_beam_weights_file_name, receptor_ids", 
+        [
+            (
+                "/../data/ConfigureScan_basic.json",
+                "/../data/jonesmatrix_fsp.json",
+                "/../data/delaymodel_fsp.json",
+                "/../data/timingbeamweights.json",
+                [4, 1, 3, 2]
+            )
+        ]
+    )
+    def test_ConfigureScan_onlyPst_basic_FSP_scan_parameters(self, proxies, config_file_name, jones_matrix_file_name, delay_model_file_name, timing_beam_weights_file_name, receptor_ids):
         """
         Test a successful transmission of PST-BF parameters to FSP
         """
         try:
+            f = open(file_path + config_file_name)
+            json_string = f.read().replace("\n", "")
+            f.close()
+            configuration = json.loads(json_string)
+            sub_id = int(configuration["common"]["subarray_id"])
             # turn on Subarray
-            if proxies.subarray[1].State() != DevState.ON:
-                proxies.subarray[1].On()
-                proxies.wait_timeout_dev([proxies.subarray[1]], DevState.ON, 3, 1)
+            if proxies.subarray[sub_id].State() != DevState.ON:
+                proxies.subarray[sub_id].On()
+                proxies.wait_timeout_dev([proxies.subarray[sub_id]], DevState.ON, 3, 1)
                 for proxy in [proxies.vcc[i + 1] for i in range(4)]:
                     if proxy.State() == DevState.OFF:
                         proxy.On()
@@ -602,24 +619,22 @@ class TestCbfSubarray:
                         proxy.On()
                         proxies.wait_timeout_dev([proxy], DevState.ON, 1, 1)
             # check initial value of attributes of CBF subarray
-            assert len(proxies.subarray[1].receptors) == 0
-            assert proxies.subarray[1].configID == ''
-            assert proxies.subarray[1].frequencyBand == 0
-            assert proxies.subarray[1].obsState == ObsState.EMPTY
+            assert len(proxies.subarray[sub_id].receptors) == 0
+            assert proxies.subarray[sub_id].configID == ''
+            assert proxies.subarray[sub_id].frequencyBand == 0
+            assert proxies.subarray[sub_id].obsState == ObsState.EMPTY
 
             # add receptors
-            proxies.subarray[1].AddReceptors([4, 1, 3, 2])
-            proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.IDLE, 1, 1)
-            assert all([proxies.subarray[1].receptors[i] == j for i, j in zip(range(4), [4, 1, 3, 2])])
+            proxies.subarray[sub_id].AddReceptors(receptor_ids)
+            proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.IDLE, 1, 1)
+            assert all([proxies.subarray[sub_id].receptors[i] == j for i, j in zip(range(len(receptor_ids)), receptor_ids)])
 
             # configure scan
-            f = open(file_path + "/../data/ConfigureScan_basic.json")
-            proxies.subarray[1].ConfigureScan(f.read().replace("\n", ""))
-            f.close()
-            proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.READY, 3, 1)
+            proxies.subarray[sub_id].ConfigureScan(json_string)
+            proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.READY, 3, 1)
             
             # update jones matrices from tm emulator
-            f = open(file_path + "/../data/jonesmatrix_fsp.json")
+            f = open(file_path + jones_matrix_file_name)
             jones_matrix = json.loads(f.read().replace("\n", ""))
             epoch = str(int(time.time()))
             for matrix in jones_matrix["jonesMatrix"]:
@@ -647,7 +662,7 @@ class TestCbfSubarray:
             
 
             # update delay models from tm emulator
-            f = open(file_path + "/../data/delaymodel_fsp.json")
+            f = open(file_path + delay_model_file_name)
             delay_model = json.loads(f.read().replace("\n", ""))
             epoch = str(int(time.time()))
             for model in delay_model["delayModel"]:
@@ -674,7 +689,7 @@ class TestCbfSubarray:
                     time.sleep(10)
 
             # update timing beam weights from tm emulator
-            f = open(file_path + "/../data/timingbeamweights.json")
+            f = open(file_path + timing_beam_weights_file_name)
             timing_beam_weights = json.loads(f.read().replace("\n", ""))
             epoch = str(int(time.time()))
             for weights in timing_beam_weights["beamWeights"]:
