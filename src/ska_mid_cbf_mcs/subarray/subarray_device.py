@@ -1,12 +1,9 @@
 # -*- coding: utf-8 -*-
 #
-
 # This file is part of the SKA Mid.CBF MCS project
 #
-#
-#
 # Distributed under the terms of the GPL license.
-# See LICENSE.txt for more info.
+# See LICENSE for more info.
 
 """
 CbfSubarray
@@ -14,8 +11,15 @@ Sub-element subarray device for Mid.CBF
 """
 from __future__ import annotations  # allow forward references in type hints
 from typing import List, Tuple
+import sys
+import json
+from random import randint
+from threading import Thread, Lock
+import time
+import copy
+from itertools import repeat
 
-# tango imports
+# Tango imports
 import tango
 from tango import DebugIt
 from tango.server import run
@@ -25,13 +29,10 @@ from tango import DevState
 from tango import AttrWriteType
 # Additional import
 # PROTECTED REGION ID(CbfSubarray.additionnal_import) ENABLED START #
-import sys
-import json
-from random import randint
-from threading import Thread, Lock
-import time
-import copy
 
+# SKA imports
+from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
+from ska_mid_cbf_mcs.group_proxy import CbfGroupProxy
 from ska_mid_cbf_mcs.commons.global_enum import const, freq_band_dict
 from ska_tango_base.control_model import ObsState, AdminMode
 from ska_tango_base import SKASubarray, SKABaseDevice
@@ -1088,9 +1089,6 @@ class CbfSubarray(SKASubarray):
         return len(self._receptors)
 
 
-
-
-
     # -----------------
     # Device Properties
     # -----------------
@@ -1260,7 +1258,7 @@ class CbfSubarray(SKASubarray):
             else:
                 device._subarray_id = int(device.get_name()[-2:])  # last two chars of FQDN
 
-        # initialize attribute values
+            # initialize attribute values
             device._receptors = []
             device._frequency_band = 0
             device._config_ID = ""
@@ -1296,7 +1294,10 @@ class CbfSubarray(SKASubarray):
             device._stream_tuning = [0, 0]
 
             # device proxy for easy reference to CBF controller
-            device._proxy_cbf_controller = tango.DeviceProxy(device.CbfControllerAddress)
+            device._proxy_cbf_controller = CbfDeviceProxy(
+                fqdn=device.CbfControllerAddress,
+                logger=device.logger
+            )
 
             device.MIN_INT_TIME = const.MIN_INT_TIME
             device.NUM_CHANNEL_GROUPS = const.NUM_CHANNEL_GROUPS
@@ -1315,11 +1316,21 @@ class CbfSubarray(SKASubarray):
             device._fqdn_fsp_pss_subarray = list(device.FspPssSubarray)
             device._fqdn_fsp_pst_subarray = list(device.FspPstSubarray)
 
-            device._proxies_vcc = [*map(tango.DeviceProxy, device._fqdn_vcc)]
-            device._proxies_fsp = [*map(tango.DeviceProxy, device._fqdn_fsp)]
-            device._proxies_fsp_corr_subarray = [*map(tango.DeviceProxy, device._fqdn_fsp_corr_subarray)]
-            device._proxies_fsp_pss_subarray = [*map(tango.DeviceProxy, device._fqdn_fsp_pss_subarray)]
-            device._proxies_fsp_pst_subarray = [*map(tango.DeviceProxy, device._fqdn_fsp_pst_subarray)]
+            device._proxies_vcc = [*map(
+                CbfDeviceProxy, device._fqdn_vcc, repeat(device.logger)
+            )]
+            device._proxies_fsp = [*map(
+                CbfDeviceProxy, device._fqdn_fsp, repeat(device.logger)
+            )]
+            device._proxies_fsp_corr_subarray = [*map(
+                CbfDeviceProxy, device._fqdn_fsp_corr_subarray, repeat(device.logger)
+            )]
+            device._proxies_fsp_pss_subarray = [*map(
+                CbfDeviceProxy, device._fqdn_fsp_pss_subarray, repeat(device.logger)
+            )]
+            device._proxies_fsp_pst_subarray = [*map(
+                CbfDeviceProxy, device._fqdn_fsp_pst_subarray, repeat(device.logger)
+            )]
 
             # Note vcc connected both individual and in group
             device._proxies_assigned_vcc = [] 
@@ -1335,11 +1346,11 @@ class CbfSubarray(SKASubarray):
             device._events_state_change_fsp = {}
 
             # initialize groups
-            device._group_vcc = tango.Group("VCC")
-            device._group_fsp = tango.Group("FSP")
-            device._group_fsp_corr_subarray = tango.Group("FSP Subarray Corr")
-            device._group_fsp_pss_subarray = tango.Group("FSP Subarray Pss")
-            device._group_fsp_pst_subarray = tango.Group("FSP Subarray Pst")
+            device._group_vcc = CbfGroupProxy("VCC")
+            device._group_fsp = CbfGroupProxy("FSP")
+            device._group_fsp_corr_subarray = CbfGroupProxy("FSP Subarray Corr")
+            device._group_fsp_pss_subarray = CbfGroupProxy("FSP Subarray Pss")
+            device._group_fsp_pst_subarray = CbfGroupProxy("FSP Subarray Pst")
 
             return (ResultCode.OK, "successfull")
 
