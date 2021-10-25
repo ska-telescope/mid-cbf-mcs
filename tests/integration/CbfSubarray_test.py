@@ -345,9 +345,8 @@ class TestCbfSubarray:
                 for i, j in zip(range(len(receptor_ids)), receptor_ids)])
 
             # configure scan
-            proxies.subarray[sub_id].ConfigureScan(configuration)
+            proxies.subarray[sub_id].ConfigureScan(json_string)
             proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.READY, 3, 1)
-            configuration = json.loads(json_string)
 
             # check configured attributes of CBF subarray
             assert sub_id == int(configuration["common"]["subarray_id"])
@@ -872,7 +871,6 @@ class TestCbfSubarray:
             # Send the Scan command
             f2 = open(file_path + scan_file_name)
             json_string = f2.read().replace("\n", "")
-            input_scan_dict = json.loads(json_string)
             proxies.subarray[sub_id].Scan(json_string)
             f2.close()
             proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.SCANNING, 1, 1)
