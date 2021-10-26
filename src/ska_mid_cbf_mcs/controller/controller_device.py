@@ -372,7 +372,18 @@ class CbfController(SKAMaster):
 
     def always_executed_hook(self: CbfController) -> None:
         # PROTECTED REGION ID(CbfController.always_executed_hook) ENABLED START #
-        """hook to be executed before any command"""
+        """
+        Hook to be executed before any command.
+
+        Here all of the proxy connections are established, due to the fact that 
+        some devices may not yet be ready for connection while the controller is 
+        initializing; any time a command is invoked that might require a proxy, 
+        it is ensured that the connection is established succesfully first here.
+        
+        TODO: when upgrading to ska-tango-base v0.11 these connections will be
+        established by the controller component manager; move to 
+        controller_component_manager.CbfControllerComponentManager.start_communicating()
+        """
         if self._group_vcc is None:
             self._group_vcc = CbfGroupProxy("VCC", logger=self.logger)
             self._group_vcc.add(self._fqdn_vcc)
@@ -392,8 +403,6 @@ class CbfController(SKAMaster):
                         fqdn=fqdn, 
                         logger=self.logger
                     )
-                    device_proxy.ping()
-
                     self._proxies[fqdn] = device_proxy
                 except tango.DevFailed as df:
                     for item in df.args:
