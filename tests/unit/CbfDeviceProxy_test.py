@@ -117,7 +117,7 @@ class TestCbfDeviceProxy:
             for j in range(event_count):
                 if i == j:
                     mock_callbacks[j].assert_called_once_with(
-                        event_name, event_value, event_quality
+                        fqdn, event_name, event_value, event_quality
                     )
                     mock_callbacks[j].reset_mock()
                 else:
