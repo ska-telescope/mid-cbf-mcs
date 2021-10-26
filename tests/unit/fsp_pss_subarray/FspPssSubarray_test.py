@@ -7,7 +7,7 @@
 #
 # Distributed under the terms of the BSD-3-Clause license.
 # See LICENSE.txt for more info.
-"""Contain the tests for the FspCorrSubarray."""
+"""Contain the tests for the FspPssSubarray."""
 
 from __future__ import annotations
 
@@ -18,6 +18,8 @@ import json
 import logging
 import pytest
 from typing import Callable, Type, Dict
+
+from tango import server
 
 # Path
 file_path = os.path.dirname(os.path.abspath(__file__))
@@ -33,17 +35,17 @@ from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_tango_base.control_model import HealthState, AdminMode, ObsState
 from ska_mid_cbf_mcs.commons.global_enum import const, freq_band_dict
 
-class TestFspCorrSubarray:
+class TestFspPssSubarray:
     """
-    Test class for FspCorrSubarray tests.
+    Test class for FspPssSubarray tests.
     """
 
     def test_On_Off(
-        self: TestFspCorrSubarray,
+        self: TestFspPssSubarray,
         device_under_test: CbfDeviceProxy
     ) -> None:
         """
-        Test for FspCorrSubarray device.
+        Test for FspPssSubarray device.
 
         :param device_under_test: fixture that provides a
             :py:class:`tango.DeviceProxy` to the device under test, in a
@@ -55,9 +57,9 @@ class TestFspCorrSubarray:
 
         device_under_test.Off()
         assert device_under_test.State() == DevState.OFF
-    
+
     def test_Scan_EndScan_GoToIdle(
-        self: TestFspCorrSubarray,
+        self: TestFspPssSubarray,
         device_under_test: CbfDeviceProxy
     ) -> None:
         """
@@ -70,7 +72,7 @@ class TestFspCorrSubarray:
 
         # turn on device and configure scan
         device_under_test.On()
-        config_file_name = "/../../data/FspCorrSubarray_ConfigureScan_basic.json"
+        config_file_name = "/../../data/FspPssSubarray_ConfigureScan_basic.json"
         f = open(file_path + config_file_name)
         json_str = f.read().replace("\n", "")
         f.close()
@@ -95,7 +97,7 @@ class TestFspCorrSubarray:
         assert device_under_test.obsState == ObsState.IDLE
 
     def test_ConfigureScan_basic(
-        self: TestFspCorrSubarray,
+        self: TestFspPssSubarray,
         device_under_test: CbfDeviceProxy
     ) -> None:
         """
@@ -107,37 +109,24 @@ class TestFspCorrSubarray:
         """
 
         assert device_under_test.State() == tango.DevState.OFF
-        # Check initial values of attributes
-        # TODO: device_under_test.receptors should be [] after Init not None
+        # check initial values of attributes
+        # TODO: device_under_test.receptors,
+        #       device_under_test.searchBeams 
+        #       and device_under_test.searchBeamID 
+        #       should be [] after Init not None
         # This is a bug in the tango library: 
         # https://gitlab.com/tango-controls/pytango/-/issues/230
         assert device_under_test.receptors == None
-        assert device_under_test.frequencyBand == 0
-        assert [device_under_test.band5Tuning[0],
-                device_under_test.band5Tuning[1]] == [0, 0]
-        assert device_under_test.frequencyBandOffsetStream1 == 0
-        assert device_under_test.frequencyBandOffsetStream2 == 0
-        assert device_under_test.frequencySliceID == 0
-        assert device_under_test.corrBandwidth == 0
-        assert device_under_test.zoomWindowTuning == 0
-        assert device_under_test.integrationTime == 0
-        assert device_under_test.scanID == 0
-        assert device_under_test.configID == ""
-        for i in range(const.NUM_CHANNEL_GROUPS):
-            assert device_under_test.channelAveragingMap[i][0] == int(i*const.NUM_FINE_CHANNELS/const.NUM_CHANNEL_GROUPS) + 1
-            assert device_under_test.channelAveragingMap[i][1] == 0
-        assert device_under_test.visDestinationAddress == json.dumps({"outputHost":[], "outputMac": [], "outputPort":[]})
-        assert device_under_test.fspChannelOffset == 0
-        for i in range(40):
-            for j in range(2):
-                assert device_under_test.outputLinkMap[i][j] == 0 
-
-        # turn device ON
+        assert device_under_test.searchBeams == None
+        assert device_under_test.searchWindowID == 0
+        assert device_under_test.searchBeamID == None
+        assert device_under_test.outputEnable == 0
+        
         device_under_test.On()
         assert device_under_test.State() == DevState.ON
 
-        # run ConfigureScan
-        config_file_name = "/../../data/FspCorrSubarray_ConfigureScan_basic.json"
+        # configure search window
+        config_file_name = "/../../data/FspPssSubarray_ConfigureScan_basic.json"
         f = open(file_path + config_file_name)
         json_str = f.read().replace("\n", "")
         f.close()
@@ -145,23 +134,7 @@ class TestFspCorrSubarray:
         device_under_test.ConfigureScan(json_str)
         f.close()
 
-        # verify correct attribute values are receieved 
-        for idx, receptorID in enumerate(device_under_test.receptors):
-            assert receptorID == configuration["receptor_ids"][idx]
-        assert device_under_test.frequencyBand == freq_band_dict()[configuration["frequency_band"]]
-        assert device_under_test.frequencySliceID == configuration["frequency_slice_id"]
-        if "band_5_tuning" in configuration:
-            if device_under_test.frequencyBand in [4, 5]:
-                band5Tuning_config = configuration["band_5_tuning"]
-                for i in range(0, len(band5Tuning_config)):
-                    assert device_under_test.band5Tuning[i] == band5Tuning_config[i]
-        else:
-            logging.info("Attribute band5Tuning not in configuration")
-        
-        assert device_under_test.zoomWindowTuning == configuration["zoom_window_tuning"]
-        assert device_under_test.integrationTime == configuration["integration_factor"]
-        channelAveragingMap_config = configuration["channel_averaging_map"]
-        logging.info(channelAveragingMap_config)
-        for i, chan in enumerate(channelAveragingMap_config):
-            for j in range(0,len(chan)):
-                assert device_under_test.channelAveragingMap[i][j] == channelAveragingMap_config[i][j]
+        assert device_under_test.searchWindowID == int(configuration["search_window_id"])
+        for i, searchBeam in enumerate(configuration["search_beam"]):
+            assert device_under_test.searchBeams[i] == json.dumps(searchBeam)
+            assert device_under_test.searchBeamID[i] == int(searchBeam["search_beam_id"])

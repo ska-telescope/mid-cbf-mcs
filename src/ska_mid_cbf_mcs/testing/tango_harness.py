@@ -35,6 +35,7 @@ from ska_tango_base import SKABaseDevice
 from ska_tango_base.control_model import TestMode
 
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
+from ska_mid_cbf_mcs.group_proxy import CbfGroupProxy
 
 
 __all__ = [
@@ -287,11 +288,21 @@ class TangoHarness:
         :param kwargs: additional keyword arguments
         """
         CbfDeviceProxy.set_default_connection_factory(self.connection_factory)
+        CbfGroupProxy.set_default_connection_factory(self.group_connection_factory)
 
     @property
     def connection_factory(self: TangoHarness) -> Callable[[str], tango.DeviceProxy]:
         """
         The connection factory to use when establishing connections to devices.
+
+        :raises NotImplementedError: because this method is abstract
+        """
+        raise NotImplementedError("TangoHarness is abstract.")
+    
+    @property
+    def group_connection_factory(self: TangoHarness) -> Callable[[str], tango.Group]:
+        """
+        The connection factory to use when establishing group connections to devices.
 
         :raises NotImplementedError: because this method is abstract
         """
@@ -387,6 +398,20 @@ class BaseTangoHarness(TangoHarness):
         :return: a DeviceProxy for use in establishing connections.
         """
         return tango.DeviceProxy
+    
+    @property
+    def group_connection_factory(
+        self: BaseTangoHarness,
+    ) -> Callable[[str], tango.Group]:
+        """
+        The connection factory to use when establishing group connections to devices.
+
+        This class uses :py:class:`tango.Group` as its connection
+        factory.
+
+        :return: a Group for use in establishing connections.
+        """
+        return tango.Group
 
     @property
     def fqdns(self: BaseTangoHarness) -> list[str]:
@@ -538,6 +563,32 @@ class TestContextTangoHarness(BaseTangoHarness):
             )
 
         return connect
+    
+    @property
+    def group_connection_factory(
+        self: TestContextTangoHarness,
+    ) -> Callable[[str], tango.Group]:
+        """
+        The connection factory to use when establishing connections to devices.
+
+        This class uses :py:class:`tango.Group` but patches it to
+        use the long-form FQDN, as a workaround to an issue with
+        :py:class:`tango.test_context.MultiDeviceTestContext`.
+
+        :return: a Group for use in establishing connections.
+        """
+        
+        def connect(name: str) -> tango.Group:
+            """
+            Connect to the device.
+
+            :param name: the name of the group to connect to
+
+            :return: a connection to the device
+            """
+            return tango.Group(name)
+
+        return connect
 
     def __enter__(self: TestContextTangoHarness) -> TestContextTangoHarness:
         """
@@ -635,6 +686,19 @@ class WrapperTangoHarness(TangoHarness):
         :return: a DeviceProxy for use in establishing connections.
         """
         return self._harness.connection_factory
+    
+    @property
+    def group_connection_factory(
+        self: WrapperTangoHarness,
+    ) -> Callable[[str], tango.Group]:
+        """
+        The connection factory to use when establishing connections to devices.
+
+        This just uses the connection factory of the wrapped harness.
+
+        :return: a DeviceProxy for use in establishing connections.
+        """
+        return self._harness.group_connection_factory
 
     @property
     def fqdns(self: WrapperTangoHarness) -> list[str]:
@@ -788,5 +852,36 @@ class MockingTangoHarness(WrapperTangoHarness):
                 return self._harness.connection_factory(fqdn)
             else:
                 return self._mocks[fqdn]
+
+        return connect
+
+    @property
+    def group_connection_factory(
+        self: MockingTangoHarness,
+    ) -> Callable[[str], tango.Group]:
+        """
+        The connection factory to use when establishing connections to devices.
+
+        This is where we check whether the requested device is on our
+        list. Devices on the list are passed to the connection factory
+        of the wrapped harness. Devices not on the list are intercepted
+        and given a mock factory instead.
+
+        :return: a factory that putatively provides device connections,
+            but might actually provide mocks.
+        """
+
+        def connect(name: str) -> tango.Group:
+            """
+            Connect to the device.
+
+            :param name: the name of the group to connect to
+
+            :return: a connection (possibly mocked) to the device
+            """
+            if name in self.fqdns:
+                return self._harness.group_connection_factory(name)
+            else:
+                return self._mocks[name]
 
         return connect

@@ -54,7 +54,6 @@ class TestVcc:
         # to get the mock devices, use tango_harness.get_device("fqdn")
 
         device_under_test.On()
-        time.sleep(1)
         assert device_under_test.State() == DevState.ON
         
 
@@ -67,9 +66,9 @@ class TestVcc:
         frequency_band = configuration["frequency_band"]
         frequency_bands = ["1", "2", "3", "4", "5a", "5b"]
         freq_band_name =  frequency_bands[frequency_band]
+        device_under_test.TurnOnBandDevice(freq_band_name)
 
         device_under_test.ConfigureScan(json_str)
-        time.sleep(1)
 
         assert device_under_test.obsState == ObsState.READY
         assert device_under_test.configID == configuration["config_id"]
@@ -91,6 +90,8 @@ class TestVcc:
         assert device_under_test.scfoBand5a == configuration["scfo_band_5a"]
         assert device_under_test.scfoBand5b == configuration["scfo_band_5b"]
 
+        device_under_test.TurnOffBandDevice(freq_band_name)
+
     
 
     def test_On_Off(
@@ -106,11 +107,9 @@ class TestVcc:
         """
         
         device_under_test.On()
-        time.sleep(1)
         assert device_under_test.State() == DevState.ON
 
         device_under_test.Off()
-        time.sleep(1)
         assert device_under_test.State() == DevState.OFF
     
 
@@ -128,14 +127,12 @@ class TestVcc:
 
         # turn on device and configure scan
         device_under_test.On()
-        time.sleep(1)
         config_file_name = "/../../data/Vcc_ConfigureScan_basic.json"
         f = open(file_path + config_file_name)
         json_str = f.read().replace("\n", "")
         configuration = json.loads(json_str)
         f.close()
         device_under_test.ConfigureScan(json_str)
-        time.sleep(1)
 
         scan_id = '1'
         scan_id_device_data = tango.DeviceData()
@@ -171,7 +168,6 @@ class TestVcc:
             vcc_proxy = dev_factory.get_device("mid_csp_cbf/vcc/001")
             sw_1_proxy = dev_factory.get_device("mid_csp_cbf/vcc_sw1/001")
             sw_1_proxy.Init()
-            time.sleep(3)
 
             # check initial values of attributes
             assert sw_1_proxy.searchWindowTuning == 0
@@ -192,7 +188,6 @@ class TestVcc:
             f = open(file_path + "/../data/test_ConfigureSearchWindow_basic.json")
             vcc_proxy.ConfigureSearchWindow(f.read().replace("\n", ""))
             f.close()
-            time.sleep(1)
 
             # check configured values
             assert sw_1_proxy.searchWindowTuning == 1000000000
