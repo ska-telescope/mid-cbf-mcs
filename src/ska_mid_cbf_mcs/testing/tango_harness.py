@@ -34,6 +34,7 @@ from tango.test_context import MultiDeviceTestContext, get_host_ip
 from ska_tango_base import SKABaseDevice
 from ska_tango_base.control_model import TestMode
 
+from ska_mid_cbf_mcs.attribute_proxy import CbfAttributeProxy
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 
 
@@ -286,7 +287,17 @@ class TangoHarness:
         :param args: additional positional arguments
         :param kwargs: additional keyword arguments
         """
+        CbfAttributeProxy.set_default_connection_factory(self.attribute_connection_factory)
         CbfDeviceProxy.set_default_connection_factory(self.connection_factory)
+
+    @property
+    def attribute_connection_factory(self: TangoHarness) -> Callable[[str], tango.AttributeProxy]:
+        """
+        The connection factory to use when establishing connections to device attributes.
+
+        :raises NotImplementedError: because this method is abstract
+        """
+        raise NotImplementedError("TangoHarness is abstract.")
 
     @property
     def connection_factory(self: TangoHarness) -> Callable[[str], tango.DeviceProxy]:
@@ -373,6 +384,21 @@ class BaseTangoHarness(TangoHarness):
         self._fqdns = [] if device_info is None else list(device_info.fqdns)
         self.logger = logger
         super().__init__(*args, **kwargs)
+    
+    @property
+    def attribute_connection_factory(
+        self: BaseTangoHarness,
+    ) -> Callable[[str], tango.AttributeProxy]:
+        """
+        The connection factory to use when establishing connections to device 
+        attributes.
+
+        This class uses :py:class:`tango.AttributeProxy` as its connection
+        factory.
+
+        :return: a AttributeProxy for use in establishing connections.
+        """
+        return tango.AttributeProxy
 
     @property
     def connection_factory(
@@ -512,6 +538,34 @@ class TestContextTangoHarness(BaseTangoHarness):
         super().__init__(device_info, logger, *args, **kwargs)
 
     @property
+    def attribute_connection_factory(
+        self: TestContextTangoHarness,
+    ) -> Callable[[str], tango.AttributeProxy]:
+        """
+        The connection factory to use when establishing connections to devices.
+
+        This class uses :py:class:`tango.AttributeProxy` but patches it to
+        use the long-form FQDN, as a workaround to an issue with
+        :py:class:`tango.test_context.MultiDeviceTestContext`.
+
+        :return: a AttributeProxy for use in establishing connections.
+        """
+
+        def connect(fqdn: str) -> tango.AttributeProxy:
+            """
+            Connect to the device.
+
+            :param fqdn: the FQDN of the device attribute to connect to
+
+            :return: a connection to the device attribute
+            """
+            return tango.AttributeProxy(
+                f"tango://{self._host}:{self._port}/{fqdn}#dbase=no"
+            )
+
+        return connect
+
+    @property
     def connection_factory(
         self: TestContextTangoHarness,
     ) -> Callable[[str], tango.DeviceProxy]:
@@ -622,6 +676,20 @@ class WrapperTangoHarness(TangoHarness):
             by this method and should be swallowed i.e. not re-raised
         """
         return self._harness.__exit__(exc_type, exception, trace)
+
+    @property
+    def attribute_connection_factory(
+        self: WrapperTangoHarness,
+    ) -> Callable[[str], tango.AttributeProxy]:
+        """
+        The connection factory to use when establishing connections to device
+        attributes.
+
+        This just uses the connection factory of the wrapped harness.
+
+        :return: a AttributeProxy for use in establishing connections.
+        """
+        return self._harness.attribute_connection_factory
 
     @property
     def connection_factory(
@@ -759,6 +827,37 @@ class MockingTangoHarness(WrapperTangoHarness):
         """
         self._mocks = defaultdict(mock_factory, initial_mocks)
         super().__init__(harness, *args, **kwargs)
+
+    @property
+    def attribute_connection_factory(
+        self: MockingTangoHarness,
+    ) -> Callable[[str], tango.AttributeProxy]:
+        """
+        The connection factory to use when establishing connections to devices.
+
+        This is where we check whether the requested device is on our
+        list. Devices on the list are passed to the connection factory
+        of the wrapped harness. Devices not on the list are intercepted
+        and given a mock factory instead.
+
+        :return: a factory that putatively provides device connections,
+            but might actually provide mocks.
+        """
+
+        def connect(fqdn: str) -> tango.AttributeProxy:
+            """
+            Connect to the device.
+
+            :param fqdn: the FQDN of the device to connect to
+
+            :return: a connection (possibly mocked) to the device
+            """
+            if fqdn in self.fqdns:
+                return self._harness.connection_factory(fqdn)
+            else:
+                return self._mocks[fqdn]
+
+        return connect
 
     @property
     def connection_factory(
