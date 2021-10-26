@@ -36,8 +36,11 @@ from ska_tango_base.control_model import AdminMode, ObsState
 from ska_tango_base.base_device import _DEBUGGER_PORT
 
 class TestCbfSubarray:
+
     @pytest.mark.parametrize(
-        "receptor_ids, receptors_to_remove, sub_id", 
+        "receptor_ids, \
+        receptors_to_remove, \
+        sub_id", 
         [
             (
                 [1, 3, 4, 2],
@@ -53,7 +56,7 @@ class TestCbfSubarray:
     )
     def test_AddRemoveReceptors_valid(
         self: TestCbfSubarray, 
-        proxies, 
+        proxies: pytest.fixture, 
         receptor_ids: List[int], 
         receptors_to_remove: List[int], 
         sub_id: int
@@ -91,29 +94,34 @@ class TestCbfSubarray:
 
             # receptor list should be empty right after initialization
             assert len(proxies.subarray[sub_id].receptors) == 0
-            assert all([proxies.vcc[i + 1].subarrayMembership == 0 for i in range(4)])
+            assert all([proxies.vcc[i + 1].subarrayMembership == 0 
+                for i in range(4)])
 
             # add all except last receptor
             proxies.subarray[sub_id].AddReceptors(receptor_ids[:-1])
             proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.IDLE, 1, 1)
-            assert [proxies.subarray[sub_id].receptors[i] for i in range(len(receptor_ids[:-1]))] == receptor_ids[:-1]
-            assert all([proxies.vcc[proxies.receptor_to_vcc[i]].subarrayMembership == 1 for i in receptor_ids[:-1]])
+            assert [proxies.subarray[sub_id].receptors[i] 
+                for i in range(len(receptor_ids[:-1]))] == receptor_ids[:-1]
+            assert all([proxies.vcc[proxies.receptor_to_vcc[i]].subarrayMembership == sub_id 
+                for i in receptor_ids[:-1]])
             assert proxies.subarray[sub_id].obsState == ObsState.IDLE
 
             # add the last receptor
             proxies.subarray[sub_id].AddReceptors([receptor_ids[-1]])
             time.sleep(1)
-            assert [proxies.subarray[sub_id].receptors[i] for i in range(len(receptor_ids))] == receptor_ids
+            assert [proxies.subarray[sub_id].receptors[i] 
+                for i in range(len(receptor_ids))] == receptor_ids
             assert proxies.vcc[proxies.receptor_to_vcc[receptor_ids[-1]]].subarrayMembership == sub_id
 
             # remove all except last receptor
             proxies.subarray[sub_id].RemoveReceptors(receptors_to_remove)
             time.sleep(1)
-            receptor_ids_after_remove = [receptor for receptor in receptor_ids if receptor not in receptors_to_remove]
+            receptor_ids_after_remove = [r for r in receptor_ids if r not in receptors_to_remove]
             for idx, receptor in enumerate(receptor_ids_after_remove):
                 assert proxies.subarray[sub_id].receptors[idx] == receptor
                 assert proxies.vcc[proxies.receptor_to_vcc[receptor]].subarrayMembership == sub_id
-            assert all([proxies.vcc[proxies.receptor_to_vcc[i]].subarrayMembership == 0 for i in receptors_to_remove])
+            assert all([proxies.vcc[proxies.receptor_to_vcc[i]].subarrayMembership == 0 
+                for i in receptors_to_remove])
 
             # remove remaining receptor
             proxies.subarray[sub_id].RemoveReceptors(receptor_ids_after_remove)
@@ -133,7 +141,9 @@ class TestCbfSubarray:
             raise e
 
     @pytest.mark.parametrize(
-        "receptor_ids, invalid_receptors_to_remove, sub_id", 
+        "receptor_ids, \
+        invalid_receptors_to_remove, \
+        sub_id", 
         [
             (
                 [1, 3],
@@ -149,7 +159,7 @@ class TestCbfSubarray:
     )
     def test_AddRemoveReceptors_invalid_single(
         self: TestCbfSubarray, 
-        proxies, 
+        proxies: pytest.fixture, 
         receptor_ids: List[int], 
         invalid_receptors_to_remove: List[int], 
         sub_id: int
@@ -258,7 +268,8 @@ class TestCbfSubarray:
         # assert subarray_2_proxy.State() == DevState.ON
     
     @pytest.mark.parametrize(
-        "receptor_ids, sub_id", 
+        "receptor_ids, \
+        sub_id", 
         [
             (
                 [1, 3, 4],
@@ -272,7 +283,7 @@ class TestCbfSubarray:
     )
     def test_RemoveAllReceptors(
         self: TestCbfSubarray, 
-        proxies, 
+        proxies: pytest.fixture, 
         receptor_ids: List[int], 
         sub_id: int
     ) -> None:
@@ -323,7 +334,8 @@ class TestCbfSubarray:
             raise e
 
     @pytest.mark.parametrize(
-        "config_file_name, receptor_ids", 
+        "config_file_name, \
+        receptor_ids", 
         [
             (
                 "/../data/ConfigureScan_basic.json",
@@ -337,7 +349,7 @@ class TestCbfSubarray:
     )
     def test_ConfigureScan_basic(
         self: TestCbfSubarray, 
-        proxies, 
+        proxies: pytest.fixture, 
         config_file_name: str,
         receptor_ids: List[int], 
     ) -> None:
@@ -610,7 +622,11 @@ class TestCbfSubarray:
             raise e
 
     @pytest.mark.parametrize(
-        "config_file_name, jones_matrix_file_name, delay_model_file_name, timing_beam_weights_file_name, receptor_ids", 
+        "config_file_name, \
+        jones_matrix_file_name, \
+        delay_model_file_name, \
+        timing_beam_weights_file_name, \
+        receptor_ids", 
         [
             (
                 "/../data/ConfigureScan_basic.json",
@@ -623,7 +639,7 @@ class TestCbfSubarray:
     )
     def test_ConfigureScan_onlyPst_basic_FSP_scan_parameters(
         self: TestCbfSubarray, 
-        proxies, 
+        proxies: pytest.fixture, 
         config_file_name: str,
         jones_matrix_file_name: str,
         delay_model_file_name: str,
@@ -757,7 +773,9 @@ class TestCbfSubarray:
             raise e
 
     @pytest.mark.parametrize(
-        "config_file_name, scan_file_name, receptor_ids", 
+        "config_file_name, \
+        scan_file_name, \
+        receptor_ids", 
         [
             (
                 "/../data/ConfigureScan_basic.json",
@@ -773,7 +791,7 @@ class TestCbfSubarray:
     )
     def test_EndScan(
         self: TestCbfSubarray, 
-        proxies, 
+        proxies: pytest.fixture, 
         config_file_name: str,
         scan_file_name: str,
         receptor_ids: List[int]
@@ -812,13 +830,15 @@ class TestCbfSubarray:
 
             proxies.subarray[sub_id].AddReceptors(receptor_ids)
             proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.IDLE, 1, 1)
-            assert all([proxies.subarray[sub_id].receptors[i] == j for i, j in zip(range(num_receptors), receptor_ids)])
+            assert all([proxies.subarray[sub_id].receptors[i] == j 
+                for i, j in zip(range(num_receptors), receptor_ids)])
             assert proxies.subarray[sub_id].obsState == ObsState.IDLE
 
             # Check fsp obsState BEFORE scan configuration:
             for fsp in configuration["cbf"]["fsp"]:
                 fsp_id = int(fsp["fsp_id"])
                 if fsp["function_mode"] == "CORR":  
+                    # TODO: improve indexing by changing the 1D array to a 2D array
                     # fsp_corr_id 0 = mid_csp_cbf/fspCorrSubarray/_01_01
                     # fsp_corr_id 1 = mid_csp_cbf/fspCorrSubarray/_02_01
                     fsp_corr_id = fsp_id -1 
@@ -849,7 +869,8 @@ class TestCbfSubarray:
             # Check fsp obsState AFTER scan configuration:
             for fsp in configuration["cbf"]["fsp"]:
                 fsp_id = int(fsp["fsp_id"])
-                if fsp["function_mode"] == "CORR":  
+                if fsp["function_mode"] == "CORR":
+                    # TODO: improve indexing by changing the 1D array to a 2D array  
                     # fsp_corr_id 0 = mid_csp_cbf/fspCorrSubarray/_01_01
                     # fsp_corr_id 1 = mid_csp_cbf/fspCorrSubarray/_02_01
                     fsp_corr_id = fsp_id -1 
@@ -880,6 +901,7 @@ class TestCbfSubarray:
             for fsp in configuration["cbf"]["fsp"]:
                 fsp_id = int(fsp["fsp_id"])
                 if fsp["function_mode"] == "CORR":
+                    # TODO: improve indexing by changing the 1D array to a 2D array
                     # fsp_corr_id 0 = mid_csp_cbf/fspCorrSubarray/_01_01
                     # fsp_corr_id 1 = mid_csp_cbf/fspCorrSubarray/_02_01
                     fsp_corr_id = fsp_id -1 
@@ -909,6 +931,7 @@ class TestCbfSubarray:
             for fsp in configuration["cbf"]["fsp"]:
                 fsp_id = int(fsp["fsp_id"])
                 if fsp["function_mode"] == "CORR":
+                    # TODO: improve indexing by changing the 1D array to a 2D array
                     # fsp_corr_id 0 = mid_csp_cbf/fspCorrSubarray/_01_01
                     # fsp_corr_id 1 = mid_csp_cbf/fspCorrSubarray/_02_01
                     fsp_corr_id = fsp_id -1 
@@ -1104,7 +1127,10 @@ class TestCbfSubarray:
             raise e
 
     @pytest.mark.parametrize(
-        "config_file_name, scan_file_name, jones_matrix_file_name, receptor_ids", 
+        "config_file_name, \
+        scan_file_name, \
+        jones_matrix_file_name, \
+        receptor_ids", 
         [
             (
                 "/../data/ConfigureScan_basic.json",
@@ -1116,7 +1142,7 @@ class TestCbfSubarray:
     )
     def test_ConfigureScan_jonesMatrix(
         self: TestCbfSubarray, 
-        proxies, 
+        proxies: pytest.fixture, 
         config_file_name: str,
         scan_file_name: str,
         jones_matrix_file_name: str,
@@ -1181,17 +1207,24 @@ class TestCbfSubarray:
                         try:
                             assert proxies.vcc[vcc_id].jonesMatrix[fs_id-1][index] == value
                         except AssertionError as ae:
-                            logging.error("AssertionError; incorrect Jones matrix entry: epoch {}, VCC {}, i = {}, jonesMatrix[{}] = {}".format(
-                                jones_matrix["jonesMatrix"][1]["epoch"], vcc_id, index, fs_id-1, proxies.vcc[vcc_id].jonesMatrix[fs_id-1])
+                            logging.error(
+                                "AssertionError; incorrect Jones matrix entry: \
+                                epoch {}, VCC {}, i = {}, jonesMatrix[{}] = {}".format
+                                    (
+                                        jones_matrix["jonesMatrix"][1]["epoch"], 
+                                        vcc_id, index, 
+                                        fs_id-1, 
+                                        proxies.vcc[vcc_id].jonesMatrix[fs_id-1]
+                                    )
                             )
                             raise ae
                         except Exception as e:
                             raise e
 
             # transition to obsState == SCANNING
-            f2 = open(file_path + scan_file_name)
-            proxies.subarray[sub_id].Scan(f2.read().replace("\n", ""))
-            f2.close()
+            f = open(file_path + scan_file_name)
+            proxies.subarray[sub_id].Scan(f.read().replace("\n", ""))
+            f.close()
             proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.SCANNING, 1, 1)
             assert proxies.subarray[sub_id].obsState == ObsState.SCANNING
             
@@ -1204,8 +1237,16 @@ class TestCbfSubarray:
                         try:
                             assert proxies.vcc[vcc_id].jonesMatrix[fs_id-1][index] == value
                         except AssertionError as ae:
-                            logging.error("AssertionError; incorrect Jones matrix entry: epoch {}, VCC {}, i = {}, jonesMatrix[{}] = {}".format(
-                                jones_matrix["jonesMatrix"][1]["epoch"], vcc_id, index, fs_id-1, proxies.vcc[vcc_id].jonesMatrix[fs_id-1])
+                            logging.error(
+                                "AssertionError; incorrect Jones matrix entry: \
+                                epoch {}, VCC {}, i = {}, jonesMatrix[{}] = {}".format
+                                (
+                                    jones_matrix["jonesMatrix"][1]["epoch"], 
+                                    vcc_id, 
+                                    index, 
+                                    fs_id-1, 
+                                    proxies.vcc[vcc_id].jonesMatrix[fs_id-1]
+                                )
                             )
                             raise ae
                         except Exception as e:
@@ -1220,8 +1261,16 @@ class TestCbfSubarray:
                         try:
                             assert proxies.vcc[vcc_id].jonesMatrix[fs_id-1][index] == value
                         except AssertionError as ae:
-                            logging.error("AssertionError; incorrect Jones matrix entry: epoch {}, VCC {}, i = {}, jonesMatrix[{}] = {}".format(
-                                jones_matrix["jonesMatrix"][1]["epoch"], vcc_id, index, fs_id-1, proxies.vcc[vcc_id].jonesMatrix[fs_id-1])
+                            logging.error(
+                                "AssertionError; incorrect Jones matrix entry: \
+                                epoch {}, VCC {}, i = {}, jonesMatrix[{}] = {}".format
+                                (
+                                    jones_matrix["jonesMatrix"][1]["epoch"], 
+                                    vcc_id, 
+                                    index, 
+                                    fs_id-1, 
+                                    proxies.vcc[vcc_id].jonesMatrix[fs_id-1]
+                                )
                             )
                             raise ae
                         except Exception as e:
@@ -1240,7 +1289,9 @@ class TestCbfSubarray:
             raise e
 
     @pytest.mark.parametrize(
-        "config_file_name, scan_file_name, receptor_ids", 
+        "config_file_name, \
+        scan_file_name, \
+        receptor_ids", 
         [
             (
                 "/../data/ConfigureScan_basic.json",
@@ -1257,7 +1308,7 @@ class TestCbfSubarray:
     )
     def test_Scan(
         self: TestCbfSubarray, 
-        proxies, 
+        proxies: pytest.fixture, 
         config_file_name: str,
         scan_file_name: str,
         receptor_ids: List[int]
@@ -1303,7 +1354,8 @@ class TestCbfSubarray:
             assert proxies.vcc[proxies.receptor_to_vcc[4]].obsState == ObsState.READY
             for fsp in configuration["cbf"]["fsp"]:
                 fsp_id = int(fsp["fsp_id"])
-                if fsp["function_mode"] == "CORR":  
+                if fsp["function_mode"] == "CORR": 
+                    # TODO: improve indexing by changing the 1D array to a 2D array 
                     # fsp_corr_id 0 = mid_csp_cbf/fspCorrSubarray/_01_01
                     # fsp_corr_id 1 = mid_csp_cbf/fspCorrSubarray/_02_01
                     fsp_corr_id = fsp_id -1 
@@ -1335,7 +1387,8 @@ class TestCbfSubarray:
             assert proxies.vcc[proxies.receptor_to_vcc[4]].obsState == ObsState.SCANNING
             for fsp in configuration["cbf"]["fsp"]:
                 fsp_id = int(fsp["fsp_id"])
-                if fsp["function_mode"] == "CORR":  
+                if fsp["function_mode"] == "CORR": 
+                    # TODO: improve indexing by changing the 1D array to a 2D array 
                     # fsp_corr_id 0 = mid_csp_cbf/fspCorrSubarray/_01_01
                     # fsp_corr_id 1 = mid_csp_cbf/fspCorrSubarray/_02_01
                     fsp_corr_id = fsp_id -1 
@@ -1366,7 +1419,9 @@ class TestCbfSubarray:
             raise e
 
     @pytest.mark.parametrize(
-        "config_file_name, scan_file_name, receptor_ids", 
+        "config_file_name, \
+        scan_file_name, \
+        receptor_ids", 
         [
             (
                 "/../data/ConfigureScan_basic.json",
@@ -1383,7 +1438,7 @@ class TestCbfSubarray:
     )
     def test_Abort_Reset(
         self: TestCbfSubarray, 
-        proxies, 
+        proxies: pytest.fixture, 
         config_file_name: str,
         scan_file_name: str,
         receptor_ids: List[int]
@@ -1424,7 +1479,8 @@ class TestCbfSubarray:
             assert proxies.subarray[sub_id].obsState == ObsState.READY
             for fsp in configuration["cbf"]["fsp"]:
                 fsp_id = int(fsp["fsp_id"])
-                if fsp["function_mode"] == "CORR":  
+                if fsp["function_mode"] == "CORR":
+                    # TODO: improve indexing by changing the 1D array to a 2D array  
                     # fsp_corr_id 0 = mid_csp_cbf/fspCorrSubarray/_01_01
                     # fsp_corr_id 1 = mid_csp_cbf/fspCorrSubarray/_02_01
                     fsp_corr_id = fsp_id -1 
@@ -1453,6 +1509,7 @@ class TestCbfSubarray:
             for fsp in configuration["cbf"]["fsp"]:
                 fsp_id = int(fsp["fsp_id"])
                 if fsp["function_mode"] == "CORR":  
+                    # TODO: improve indexing by changing the 1D array to a 2D array
                     # fsp_corr_id 0 = mid_csp_cbf/fspCorrSubarray/_01_01
                     # fsp_corr_id 1 = mid_csp_cbf/fspCorrSubarray/_02_01
                     fsp_corr_id = fsp_id -1 
@@ -1491,7 +1548,8 @@ class TestCbfSubarray:
             assert proxies.subarray[sub_id].scanID == scan_configuration["scan_id"]
             for fsp in configuration["cbf"]["fsp"]:
                 fsp_id = int(fsp["fsp_id"])
-                if fsp["function_mode"] == "CORR":  
+                if fsp["function_mode"] == "CORR": 
+                    # TODO: improve indexing by changing the 1D array to a 2D array 
                     # fsp_corr_id 0 = mid_csp_cbf/fspCorrSubarray/_01_01
                     # fsp_corr_id 1 = mid_csp_cbf/fspCorrSubarray/_02_01
                     fsp_corr_id = fsp_id -1 
@@ -1515,6 +1573,7 @@ class TestCbfSubarray:
             for fsp in configuration["cbf"]["fsp"]:
                 fsp_id = int(fsp["fsp_id"])
                 if fsp["function_mode"] == "CORR":  
+                    # TODO: improve indexing by changing the 1D array to a 2D array
                     # fsp_corr_id 0 = mid_csp_cbf/fspCorrSubarray/_01_01
                     # fsp_corr_id 1 = mid_csp_cbf/fspCorrSubarray/_02_01
                     fsp_corr_id = fsp_id -1 
@@ -1538,7 +1597,8 @@ class TestCbfSubarray:
             assert proxies.subarray[sub_id].scanID == 0
             for fsp in configuration["cbf"]["fsp"]:
                 fsp_id = int(fsp["fsp_id"])
-                if fsp["function_mode"] == "CORR":  
+                if fsp["function_mode"] == "CORR": 
+                    # TODO: improve indexing by changing the 1D array to a 2D array 
                     # fsp_corr_id 0 = mid_csp_cbf/fspCorrSubarray/_01_01
                     # fsp_corr_id 1 = mid_csp_cbf/fspCorrSubarray/_02_01
                     fsp_corr_id = fsp_id -1 
@@ -1567,7 +1627,9 @@ class TestCbfSubarray:
             raise e
 
     @pytest.mark.parametrize(
-        "config_file_name, scan_file_name, receptor_ids", 
+        "config_file_name, \
+        scan_file_name, \
+        receptor_ids", 
         [
             (
                 "/../data/ConfigureScan_basic.json",
@@ -1584,7 +1646,7 @@ class TestCbfSubarray:
     )
     def test_Abort_Restart(
         self: TestCbfSubarray, 
-        proxies, 
+        proxies: pytest.fixture, 
         config_file_name: str,
         scan_file_name: str,
         receptor_ids: List[int]
@@ -1629,7 +1691,8 @@ class TestCbfSubarray:
             assert len(proxies.subarray[sub_id].receptors) == 0
             for fsp in configuration["cbf"]["fsp"]:
                 fsp_id = int(fsp["fsp_id"])
-                if fsp["function_mode"] == "CORR":  
+                if fsp["function_mode"] == "CORR": 
+                    # TODO: improve indexing by changing the 1D array to a 2D array 
                     # fsp_corr_id 0 = mid_csp_cbf/fspCorrSubarray/_01_01
                     # fsp_corr_id 1 = mid_csp_cbf/fspCorrSubarray/_02_01
                     fsp_corr_id = fsp_id -1 
@@ -1661,6 +1724,7 @@ class TestCbfSubarray:
             for fsp in configuration["cbf"]["fsp"]:
                 fsp_id = int(fsp["fsp_id"])
                 if fsp["function_mode"] == "CORR":  
+                    # TODO: improve indexing by changing the 1D array to a 2D array
                     # fsp_corr_id 0 = mid_csp_cbf/fspCorrSubarray/_01_01
                     # fsp_corr_id 1 = mid_csp_cbf/fspCorrSubarray/_02_01
                     fsp_corr_id = fsp_id -1 
@@ -1689,6 +1753,7 @@ class TestCbfSubarray:
             for fsp in configuration["cbf"]["fsp"]:
                 fsp_id = int(fsp["fsp_id"])
                 if fsp["function_mode"] == "CORR":  
+                    # TODO: improve indexing by changing the 1D array to a 2D array
                     # fsp_corr_id 0 = mid_csp_cbf/fspCorrSubarray/_01_01
                     # fsp_corr_id 1 = mid_csp_cbf/fspCorrSubarray/_02_01
                     fsp_corr_id = fsp_id -1 
@@ -1726,6 +1791,7 @@ class TestCbfSubarray:
             for fsp in configuration["cbf"]["fsp"]:
                 fsp_id = int(fsp["fsp_id"])
                 if fsp["function_mode"] == "CORR":  
+                    # TODO: improve indexing by changing the 1D array to a 2D array
                     # fsp_corr_id 0 = mid_csp_cbf/fspCorrSubarray/_01_01
                     # fsp_corr_id 1 = mid_csp_cbf/fspCorrSubarray/_02_01
                     fsp_corr_id = fsp_id -1 
@@ -1748,7 +1814,8 @@ class TestCbfSubarray:
             assert proxies.subarray[sub_id].obsState == ObsState.ABORTED
             for fsp in configuration["cbf"]["fsp"]:
                 fsp_id = int(fsp["fsp_id"])
-                if fsp["function_mode"] == "CORR":  
+                if fsp["function_mode"] == "CORR": 
+                    # TODO: improve indexing by changing the 1D array to a 2D array 
                     # fsp_corr_id 0 = mid_csp_cbf/fspCorrSubarray/_01_01
                     # fsp_corr_id 1 = mid_csp_cbf/fspCorrSubarray/_02_01
                     fsp_corr_id = fsp_id -1 
@@ -1772,6 +1839,7 @@ class TestCbfSubarray:
             for fsp in configuration["cbf"]["fsp"]:
                 fsp_id = int(fsp["fsp_id"])
                 if fsp["function_mode"] == "CORR":  
+                    # TODO: improve indexing by changing the 1D array to a 2D array
                     # fsp_corr_id 0 = mid_csp_cbf/fspCorrSubarray/_01_01
                     # fsp_corr_id 1 = mid_csp_cbf/fspCorrSubarray/_02_01
                     fsp_corr_id = fsp_id -1 
