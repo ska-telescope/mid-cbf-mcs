@@ -10,11 +10,13 @@
 # Copyright (c) 2019 National Research Council of Canada
 
 from __future__ import annotations
-
 import tango
 import json
 import logging
-import subprocess
+from socket import gaierror
+from paramiko import SSHClient, AutoAddPolicy
+from paramiko.ssh_exception import SSHException
+from scp import SCPClient, SCPException
 
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_tango_base.commands import ResultCode
@@ -48,7 +50,6 @@ class TalonDxComponentManager:
         self.talondx_config_path = talondx_config_path
         self.simulation_mode = simulation_mode
         self.logger = logger
-        self.ssh_options = "-o StrictHostKeyChecking=no"
 
     def configure_talons(self: TalonDxComponentManager) -> ResultCode:
         """
@@ -88,21 +89,21 @@ class TalonDxComponentManager:
 
     def _secure_copy(
         self: TalonDxComponentManager,
-        target: str,
+        ssh_client: paramiko.SSHClient,
         src: str,
         dest: str
     ) -> None:
         """
         Execute a secure file copy to the specified target address.
 
-        :param target: target address to copy to
+        :param ssh_client: SSH client for the Talon board we are trying to SCP to
         :param src: Source file path
         :param dest: Destination file path
 
-        :raise subprocess.CalledProcessError: if the file copy fails
+        :raise SCPException if the file copy fails
         """
-        target_dest = f"{target}:{dest}"
-        subprocess.run(f"scp {self.ssh_options} {src} {target_dest}", check=True, shell=True)
+        with SCPClient(ssh_client.get_transport()) as scp_client:
+            scp_client.put(src, remote_path=dest)
 
     def _copy_binaries_and_bitstream(self: TalonDxComponentManager) -> ResultCode:
         """
@@ -116,48 +117,56 @@ class TalonDxComponentManager:
         for talon_cfg in self.talondx_config["config-commands"]:
             try:
                 ip = talon_cfg["ip-address"]
-                target = f"root@{ip}"
+
+                with SSHClient() as ssh_client:
+                    ssh_client.set_missing_host_key_policy(AutoAddPolicy())
+                    ssh_client.connect(ip, username='root', password='')
                 
-                # Make the DS binaries directory
-                src_dir = f"{self.talondx_config_path}"
-                dest_dir = talon_cfg["ds-path"]
-                subprocess.run(f"ssh {self.ssh_options} {target} mkdir -p {dest_dir}", check=True, shell=True)
+                    # Make the DS binaries directory
+                    src_dir = f"{self.talondx_config_path}"
+                    dest_dir = talon_cfg["ds-path"]
+                    ssh_client.exec_command(f"mkdir -p {dest_dir}")
 
-                # Copy the HPS master binary
-                self._secure_copy(
-                    target=target,
-                    src=f"{src_dir}/ds-hps-master/build-ci-cross/bin/dshpsmaster",
-                    dest="/lib/firmware/hps_software")
+                    # Copy the HPS master binary
+                    self._secure_copy(
+                        ssh_client=ssh_client,
+                        src=f"{src_dir}/ds-hps-master/build-ci-cross/bin/dshpsmaster",
+                        dest="/lib/firmware/hps_software")
 
-                # Copy the remaining DS binaries
-                for binary_name in talon_cfg["devices"]:
-                    for ds_binary in self.talondx_config["ds-binaries"]:
-                        name = ds_binary["name"]
-                        if binary_name == name.replace('-', ''):
-                            self._secure_copy(
-                                target=target,
-                                src=f"{src_dir}/{name}/build-ci-cross/bin/{binary_name}",
-                                dest=dest_dir)
+                    # Copy the remaining DS binaries
+                    for binary_name in talon_cfg["devices"]:
+                        for ds_binary in self.talondx_config["ds-binaries"]:
+                            name = ds_binary["name"]
+                            if binary_name == name.replace('-', ''):
+                                self._secure_copy(
+                                    ssh_client=ssh_client,
+                                    src=f"{src_dir}/{name}/build-ci-cross/bin/{binary_name}",
+                                    dest=dest_dir)
 
-                # Copy the FPGA bitstream
-                dest_dir = talon_cfg["fpga-path"]
-                subprocess.run(f"ssh {self.ssh_options} {target} mkdir -p {dest_dir}", check=True, shell=True)
+                    # Copy the FPGA bitstream
+                    dest_dir = talon_cfg["fpga-path"]
+                    ssh_client.exec_command(f"mkdir -p {dest_dir}")
 
-                target_alias = talon_cfg["target"]
-                fpga_dtb_name = talon_cfg['fpga-dtb-name']
-                self._secure_copy(
-                    target=target, 
-                    src=f"{src_dir}/fpga-{target_alias}/bin/{fpga_dtb_name}",
-                    dest=dest_dir)
+                    target_alias = talon_cfg["target"]
+                    fpga_dtb_name = talon_cfg['fpga-dtb-name']
+                    self._secure_copy(
+                        ssh_client=ssh_client, 
+                        src=f"{src_dir}/fpga-{target_alias}/bin/{fpga_dtb_name}",
+                        dest=dest_dir)
 
-                fpga_rbf_name = talon_cfg['fpga-rbf-name']
-                self._secure_copy(
-                    target=target, 
-                    src=f"{src_dir}/fpga-{target_alias}/bin/{fpga_rbf_name}",
-                    dest=dest_dir)
-            except subprocess.CalledProcessError as err:
-                self.logger.error(f"Command '{err.cmd}' failed with " \
-                    f"error code {err.returncode}")
+                    fpga_rbf_name = talon_cfg['fpga-rbf-name']
+                    self._secure_copy(
+                        ssh_client=ssh_client, 
+                        src=f"{src_dir}/fpga-{target_alias}/bin/{fpga_rbf_name}",
+                        dest=dest_dir)
+            except gaierror as gai_err:
+                self.logger.error(f"Error connecting to {target}: {gai_err}")
+                ret = ResultCode.FAILED
+            except SSHException as ssh_err:
+                self.logger.error(f"SSH exception while talking to {target}: {ssh_err}")
+                ret = ResultCode.FAILED
+            except SCPException as scp_err:
+                self.logger.error(f"Failed to copy file to {target}: {scp_err}")
                 ret = ResultCode.FAILED
             
         return ret
@@ -176,13 +185,18 @@ class TalonDxComponentManager:
             inst = talon_cfg["server-instance"]
 
             try:
-                subprocess.run(f"ssh {self.ssh_options} {target}" \
-                    f" /lib/firmware/hps_software/hps_master_mcs.sh {inst}",
-                    check=True, shell=True)
-            except subprocess.CalledProcessError as err:
-                self.logger.error(f"Command '{err.cmd}' failed with " \
-                    f"error code {err.returncode}")
-                ret = ResultCode.FAILED  
+                with SSHClient() as ssh_client:
+                    ssh_client.set_missing_host_key_policy(AutoAddPolicy())
+                    ssh_client.connect(ip, username='root', password='')
+
+                    ssh_client.exec_command(f"/lib/firmware/hps_software/hps_master_mcs.sh {inst}")
+            except gaierror as gai_err:
+                self.logger.error(f"Error connecting to {target}: {gai_err}")
+                ret = ResultCode.FAILED
+            except SSHException as ssh_err:
+                self.logger.error(f"SSH exception while talking to {target}: {ssh_err}")
+                ret = ResultCode.FAILED
+            
         return ret 
 
     def _create_hps_master_device_proxies(self: TalonDxComponentManager) -> ResultCode:
@@ -196,8 +210,9 @@ class TalonDxComponentManager:
         ret = ResultCode.OK
         self.proxies = {}
         for talon_cfg in self.talondx_config["config-commands"]:
-            fqdn = talon_cfg["ds-hps-master"]
+            fqdn = talon_cfg["ds-hps-master-fqdn"]
 
+            self.logger.info(f"Trying connection to {fqdn} device")
             try:
                 self.proxies[fqdn] = CbfDeviceProxy(fqdn=fqdn, logger=self.logger)
             except tango.DevFailed as df:
@@ -216,7 +231,7 @@ class TalonDxComponentManager:
         """    
         ret = ResultCode.OK
         for talon_cfg in self.talondx_config['config-commands']:
-            hps_master_fqdn = talon_cfg["ds-hps-master"]
+            hps_master_fqdn = talon_cfg["ds-hps-master-fqdn"]
             hps_master = self.proxies[hps_master_fqdn]
 
             self.logger.info(f"Sending configure command to {hps_master_fqdn}")
