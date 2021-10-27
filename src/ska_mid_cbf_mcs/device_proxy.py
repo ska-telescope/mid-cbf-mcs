@@ -151,7 +151,7 @@ class CbfDeviceProxy:
 
             :param connection_factory: the factory to use to establish
                 the connection
-            :param fqdn: the fully qualified device name of the device
+            :param fqdn: the fully qualified domain name of the device
 
             :return: a proxy for the device
             """
@@ -165,7 +165,7 @@ class CbfDeviceProxy:
 
             :param connection_factory: the factory to use to establish
                 the connection
-            :param fqdn: the fully qualified device name of the device
+            :param fqdn: the fully qualified domain name of the device
 
             :return: a proxy for the device
             """
