@@ -1818,7 +1818,7 @@ class CbfSubarray(SKASubarray):
                     logger=device.logger
                 )
                 attribute_proxy.ping()
-                event_id = attribute_proxy.add_change_event_callback(,
+                event_id = attribute_proxy.add_change_event_callback(
                     device._beam_weights_event_callback
                 )
                 device._events_telstate[event_id] = attribute_proxy
