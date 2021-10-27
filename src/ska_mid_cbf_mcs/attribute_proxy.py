@@ -273,7 +273,7 @@ class CbfAttributeProxy:
             )
             warnings.warn(UserWarning(warning_message))
             self._logger.warn(warning_message)
-            return self._read(event.attr_name)
+            return self._read()
         else:
             return event.attr_value
 
