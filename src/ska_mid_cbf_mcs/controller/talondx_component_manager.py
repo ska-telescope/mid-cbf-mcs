@@ -13,9 +13,8 @@ from __future__ import annotations
 import tango
 import json
 import logging
-from socket import gaierror
 from paramiko import SSHClient, AutoAddPolicy
-from paramiko.ssh_exception import SSHException
+from paramiko.ssh_exception import SSHException, NoValidConnectionsError
 from scp import SCPClient, SCPException
 
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
@@ -121,15 +120,23 @@ class TalonDxComponentManager:
         for talon_cfg in self.talondx_config["config-commands"]:
             try:
                 ip = talon_cfg["ip-address"]
+                target = talon_cfg["target"]
+                self.logger.info(f"Copying FPGA bitstream and HPS binaries to {target}")
 
                 with SSHClient() as ssh_client:
                     ssh_client.set_missing_host_key_policy(AutoAddPolicy())
                     ssh_client.connect(ip, username='root', password='', timeout=TALON_FIRST_CONNECT_TIMEOUT)
+                    ssh_chan = ssh_client.get_transport().open_session()
                 
                     # Make the DS binaries directory
                     src_dir = f"{self.talondx_config_path}"
                     dest_dir = talon_cfg["ds-path"]
-                    ssh_client.exec_command(f"mkdir -p {dest_dir}")
+                    ssh_chan.exec_command(f"mkdir -p {dest_dir}")
+                    exit_status = ssh_chan.recv_exit_status()
+                    if exit_status != 0:
+                        self.logger.error(f"Error creating directory {dest_dir} on {target}: {exit_status}")
+                        ret = ResultCode.FAILED
+                        continue
 
                     # Copy the HPS master binary
                     self._secure_copy(
@@ -149,28 +156,34 @@ class TalonDxComponentManager:
 
                     # Copy the FPGA bitstream
                     dest_dir = talon_cfg["fpga-path"]
-                    ssh_client.exec_command(f"mkdir -p {dest_dir}")
+                    ssh_chan = ssh_client.get_transport().open_session()
+                    ssh_chan.exec_command(f"mkdir -p {dest_dir}")
+                    exit_status = ssh_chan.recv_exit_status()
+                    if exit_status != 0:
+                        self.logger.error(f"Error creating directory {dest_dir} on {target}: {exit_status}")
+                        ret = ResultCode.FAILED
+                        continue
 
-                    target_alias = talon_cfg["target"]
                     fpga_dtb_name = talon_cfg['fpga-dtb-name']
                     self._secure_copy(
                         ssh_client=ssh_client, 
-                        src=f"{src_dir}/fpga-{target_alias}/bin/{fpga_dtb_name}",
+                        src=f"{src_dir}/fpga-{target}/bin/{fpga_dtb_name}",
                         dest=dest_dir)
 
                     fpga_rbf_name = talon_cfg['fpga-rbf-name']
                     self._secure_copy(
                         ssh_client=ssh_client, 
-                        src=f"{src_dir}/fpga-{target_alias}/bin/{fpga_rbf_name}",
+                        src=f"{src_dir}/fpga-{target}/bin/{fpga_rbf_name}",
                         dest=dest_dir)
-            except gaierror as gai_err:
-                self.logger.error(f"Error connecting to {ip}: {gai_err}")
+
+            except NoValidConnectionsError:
+                self.logger.error(f"NoValidConnectionsError while connecting to {target}")
                 ret = ResultCode.FAILED
-            except SSHException as ssh_err:
-                self.logger.error(f"SSH exception while talking to {ip}: {ssh_err}")
+            except SSHException:
+                self.logger.error(f"SSHException while talking to {target}")
                 ret = ResultCode.FAILED
-            except SCPException as scp_err:
-                self.logger.error(f"Failed to copy file to {ip}: {scp_err}")
+            except SCPException:
+                self.logger.error(f"Failed to copy file to {target}")
                 ret = ResultCode.FAILED
             
         return ret
@@ -192,13 +205,19 @@ class TalonDxComponentManager:
                 with SSHClient() as ssh_client:
                     ssh_client.set_missing_host_key_policy(AutoAddPolicy())
                     ssh_client.connect(ip, username='root', password='')
+                    ssh_chan = ssh_client.get_transport().open_session()
 
-                    ssh_client.exec_command(f"/lib/firmware/hps_software/hps_master_mcs.sh {inst}")
-            except gaierror as gai_err:
-                self.logger.error(f"Error connecting to {target}: {gai_err}")
+                    ssh_chan.exec_command(f"/lib/firmware/hps_software/hps_master_mcs.sh {inst}")
+                    exit_status = ssh_chan.recv_exit_status()
+                    if exit_status != 0:
+                        self.logger.error(f"Error starting HPS master on {target}: {exit_status}")
+                        ret = ResultCode.FAILED
+
+            except NoValidConnectionsError:
+                self.logger.error(f"NoValidConnectionsError while connecting to {target}")
                 ret = ResultCode.FAILED
-            except SSHException as ssh_err:
-                self.logger.error(f"SSH exception while talking to {target}: {ssh_err}")
+            except SSHException:
+                self.logger.error(f"SSHException while talking to {target}")
                 ret = ResultCode.FAILED
             
         return ret 

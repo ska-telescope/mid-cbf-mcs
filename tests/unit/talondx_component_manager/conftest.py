@@ -16,7 +16,6 @@ import pytest
 import unittest
 import scp
 import paramiko
-import socket
 from typing import Any, Dict
 
 # Local imports
@@ -37,7 +36,9 @@ def talon_dx_component_manager(
     :param request: the pytest request fixture, must be indirectly parametrized 
                     by each test with a dict of the form:
                         { 
-                            "sim_error": boolean
+                            "sim_connect_error": boolean,
+                            "sim_cmd_error": boolean,
+                            "sim_scp_error": boolean
                         }
     :param monkeypatch: the pytest monkey-patching fixture
 
@@ -59,8 +60,8 @@ def talon_dx_component_manager(
         assert kwargs["username"] == "root"
         assert kwargs["password"] == ""
 
-        if request.param["sim_error"]:
-            raise socket.gaierror(255, "Failed connection")
+        if request.param["sim_connect_error"]:
+            raise paramiko.ssh_exception.NoValidConnectionsError({('169.254.100.1', 22): "Exception"})
 
     def mock_exec_command(
         *args: Any, **kwargs: Any
@@ -79,21 +80,37 @@ def talon_dx_component_manager(
             (args[1] == "/lib/firmware/hps_software/hps_master_mcs.sh talon1_test")
         )
 
-        if request.param["sim_error"]:
+        if request.param["sim_connect_error"]:
             raise paramiko.ssh_exception.SSHException()
+
+    def mock_recv_exit_status(
+        *args: Any, **kwargs: Any
+    ) -> None:
+        """
+        Replace paramiko.Channel.recv_exit_status() method with a mock method.
+
+        :param args: arguments to the mocked function
+        :param kwargs: keyword arguments to the mocked function
+
+        :returns: Mocked exit status
+        """
+        if request.param["sim_cmd_error"]:
+            return 255
+        else:
+            return 0
 
     class MockTransport:
         """
         Class to mock the paramiko.Transport object. Does not do anything useful.
         """
-        def __init__(self):
+        def __init__(self: MockTransport) -> None:
             pass
 
-        def getpeername(self):
+        def getpeername(self: MockTransport) -> str:
             return "fake_name"
 
-        def open_session(self):
-            pass
+        def open_session(self: MockTransport) -> paramiko.Channel:
+            return paramiko.Channel(0)
 
     def mock_get_transport(
         *args: Any, **kwargs: Any
@@ -127,11 +144,12 @@ def talon_dx_component_manager(
         target_dest_fpga = re.compile(r"\/lib\/firmware")
         assert (target_dest_ds.fullmatch(kwargs["remote_path"]) or target_dest_fpga.fullmatch(kwargs["remote_path"]))
 
-        if request.param["sim_error"]:
+        if request.param["sim_scp_error"]:
             raise scp.SCPException()
    
     monkeypatch.setattr(paramiko.SSHClient, "connect", mock_connect)
-    monkeypatch.setattr(paramiko.SSHClient, "exec_command", mock_exec_command)
+    monkeypatch.setattr(paramiko.Channel, "exec_command", mock_exec_command)
+    monkeypatch.setattr(paramiko.Channel, "recv_exit_status", mock_recv_exit_status)
     monkeypatch.setattr(paramiko.SSHClient, "get_transport", mock_get_transport)
     monkeypatch.setattr(scp.SCPClient, "put", mock_scp_put)
 

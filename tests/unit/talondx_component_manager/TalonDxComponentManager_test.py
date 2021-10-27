@@ -17,7 +17,7 @@ from ska_tango_base.commands import ResultCode
 
 @pytest.mark.parametrize(
     "talon_dx_component_manager",
-    [{"sim_error": False}],
+    [{"sim_connect_error": False, "sim_cmd_error": False, "sim_scp_error": False}],
     indirect=True)
 def test_configure_talons_ssh_success(
     talon_dx_component_manager: TalonDxComponentManager,
@@ -25,7 +25,7 @@ def test_configure_talons_ssh_success(
 ) -> None:
     """
     Tests the outcome of the configure_talons operation when the mocked
-    SSH responses are successful.
+    SSH operations are successful.
     """
     result = talon_dx_component_manager.configure_talons()
 
@@ -37,14 +37,41 @@ def test_configure_talons_ssh_success(
 
 @pytest.mark.parametrize(
     "talon_dx_component_manager",
-    [{"sim_error": True}],
+    [{"sim_connect_error": True, "sim_cmd_error": False, "sim_scp_error": False}],
     indirect=True)
 def test_configure_talons_ssh_fail(
     talon_dx_component_manager: TalonDxComponentManager
 ) -> None:
     """
     Tests the outcome of the configure_talons operation when the mocked
-    SSH responses are not successful.
+    SSH connection is not successful.
+    """
+    result = talon_dx_component_manager.configure_talons()
+    assert result == ResultCode.FAILED
+
+@pytest.mark.parametrize(
+    "talon_dx_component_manager",
+    [{"sim_connect_error": False, "sim_cmd_error": True, "sim_scp_error": False}],
+    indirect=True)
+def test_configure_talons_ssh_cmd_fail(
+    talon_dx_component_manager: TalonDxComponentManager
+) -> None:
+    """
+    Tests the outcome of the configure_talons operation when the mocked
+    remote command fails.
+    """
+    result = talon_dx_component_manager.configure_talons()
+    assert result == ResultCode.FAILED
+
+@pytest.mark.parametrize(
+    "talon_dx_component_manager",
+    [{"sim_connect_error": False, "sim_cmd_error": False, "sim_scp_error": True}],
+    indirect=True)
+def test_configure_talons_sco_fail(
+    talon_dx_component_manager: TalonDxComponentManager
+) -> None:
+    """
+    Tests the outcome of the configure_talons operation when the SCP fails.
     """
     result = talon_dx_component_manager.configure_talons()
     assert result == ResultCode.FAILED
