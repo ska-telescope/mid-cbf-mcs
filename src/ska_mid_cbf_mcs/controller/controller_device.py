@@ -17,6 +17,7 @@ Sub-element controller device for Mid.CBf
 from __future__ import annotations  # allow forward references in type hints
 
 from typing import List, Tuple
+from random import randint
 
 # tango imports
 import tango
@@ -27,15 +28,13 @@ from tango import AttrWriteType
 # Additional import
 # PROTECTED REGION ID(CbfController.additionnal_import) ENABLED START #
 # add the path to import global_enum package.
-import os
-import sys
-from random import randint
 
-file_path = os.path.dirname(os.path.abspath(__file__))
-
+# SKA imports
 from ska_tango_base import SKAMaster, SKABaseDevice
 from ska_tango_base.control_model import HealthState, AdminMode
 from ska_tango_base.commands import ResultCode
+from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
+from ska_mid_cbf_mcs.group_proxy import CbfGroupProxy
 
 # PROTECTED REGION END #    //  CbfController.additionnal_import
 
@@ -51,17 +50,6 @@ class CbfController(SKAMaster):
 
     # PROTECTED REGION ID(CbfController.class_variable) ENABLED START #
 
-    # def __config_ID_event_callback(self, event):
-    #     if not event.err:
-    #         try:
-    #             self._subarray_config_ID[self._fqdn_subarray.index(event.device.dev_name())] = \
-    #                 event.attr_value.value
-    #         except Exception as except_occurred:
-    #             self.logger.error(str(except_occurred))
-    #     else:
-    #         for item in event.errors:
-    #             log_msg = item.reason + ": on attribute " + str(event.attr_name)
-    #             self.logger.error(log_msg)
 
     # PROTECTED REGION END #    //  CbfController.class_variable
 
@@ -188,7 +176,7 @@ class CbfController(SKAMaster):
         doc="Report the administration mode of the FSP capabilities as an array of unsigned short.\nfor ex:\n[0,0,2,..]",
     )
 
-    reportFSPCorrSubarrayMembership = attribute(
+    reportFSPSubarrayMembership = attribute(
         dtype=(('uint16',),),
         max_dim_x=16,
         max_dim_y=27,
@@ -260,124 +248,11 @@ class CbfController(SKAMaster):
             "Off", self.OffCommand(*device_args)
         )
 
+        self.register_command_object(
+            "Standby", self.StandbyCommand(*device_args)
+        )
+
     class InitCommand(SKAMaster.InitCommand):
-
-        def __state_change_event_callback(
-            self: CbfController.InitCommand, 
-            event
-        ) -> None:
-
-            device = self.target
-
-            if not event.err:
-                try:
-                    device_name = event.device.dev_name()
-                    if "healthstate" in event.attr_name:
-                        if "subarray" in device_name:
-                            device._report_subarray_health_state[
-                                device._fqdn_subarray.index(device_name)] = \
-                                event.attr_value.value
-                        elif "vcc" in device_name:
-                            device._report_vcc_health_state[device._fqdn_vcc.index(device_name)] = \
-                                event.attr_value.value
-                        elif "fsp" in device_name:
-                            device._report_fsp_health_state[device._fqdn_fsp.index(device_name)] = \
-                                event.attr_value.value
-                        elif "talon_lru" in device_name:
-                            device._report_talon_lru_health_state[device._fqdn_talon_lru.index(device_name)] = \
-                                event.attr_value.value
-                        else:
-                            # should NOT happen!
-                            log_msg = "Received health state change for unknown device " + \
-                                    str(event.attr_name)
-                            device.logger.warn(log_msg)
-                            return
-                    elif "state" in event.attr_name:
-                        if "subarray" in device_name:
-                            device._report_subarray_state[device._fqdn_subarray.index(device_name)] = \
-                                event.attr_value.value
-                        elif "vcc" in device_name:
-                            device._report_vcc_state[device._fqdn_vcc.index(device_name)] = \
-                                event.attr_value.value
-                        elif "fsp" in device_name:
-                            device._report_fsp_state[device._fqdn_fsp.index(device_name)] = \
-                                event.attr_value.value
-                        elif "talon_lru" in device_name:
-                            device._report_talon_lru_state[device._fqdn_talon_lru.index(device_name)] = \
-                                event.attr_value.value
-                        else:
-                            # should NOT happen!
-                            log_msg = "Received state change for unknown device " + \
-                                    str(event.attr_name)
-                            device.logger.warn(log_msg)
-                            return
-                    elif "adminmode" in event.attr_name:
-                        if "subarray" in device_name:
-                            device._report_subarray_admin_mode[device._fqdn_subarray.index(device_name)] = \
-                                event.attr_value.value
-                        elif "vcc" in device_name:
-                            device._report_vcc_admin_mode[device._fqdn_vcc.index(device_name)] = \
-                                event.attr_value.value
-                        elif "fsp" in device_name:
-                            device._report_fsp_admin_mode[device._fqdn_fsp.index(device_name)] = \
-                                event.attr_value.value
-                        elif "talon_lru" in device_name:
-                            device._report_talon_lru_admin_mode[device._fqdn_talon_lru.index(device_name)] = \
-                                event.attr_value.value
-                        else:
-                            # should NOT happen!
-                            log_msg = "Received admin mode change for unknown device " + \
-                                    str(event.attr_name)
-                            self.logger.warn(log_msg)
-                            return
-
-                    log_msg = "New value for " + str(event.attr_name) + " is " + \
-                            str(event.attr_value.value)
-                    device.logger.debug(log_msg)
-                except Exception as except_occurred:
-                    self.logger.error(str(except_occurred))
-            else:
-                for item in event.errors:
-                    log_msg = item.reason + ": on attribute " + str(event.attr_name)
-                    self.logger.error(log_msg)
-
-        def __membership_event_callback(
-            self: CbfController.InitCommand, 
-            event
-        ) -> None:
-
-            device = self.target
-
-            if not event.err:
-                try:
-                    device_name = event.device.dev_name()
-                    if "vcc" in device_name:
-                        device._report_vcc_subarray_membership[device._fqdn_vcc.index(device_name)] = \
-                            event.attr_value.value
-                    elif "fsp" in device_name:
-                        if event.attr_value.value not in device._report_fsp_corr_subarray_membership[
-                            device._fqdn_fsp.index(device_name)]:
-                            device.logger.warning("{}".format(event.attr_value.value))
-                            device._report_fsp_corr_subarray_membership[
-                                device._fqdn_fsp.index(device_name)
-                            ].append(event.attr_value.value)
-                    else:
-                        # should NOT happen!
-                        log_msg = "Received event for unknown device " + str(
-                            event.attr_name)
-                        self.logger.warn(log_msg)
-                        return
-
-                    log_msg = "New value for " + str(event.attr_name) + " of device " + \
-                            device_name + " is " + str(event.attr_value.value)
-                    self.logger.debug(log_msg)
-
-                except Exception as except_occurred:
-                    self.logger.error(str(except_occurred))
-            else:
-                for item in event.errors:
-                    log_msg = item.reason + ": on attribute " + str(event.attr_name)
-                    self.logger.error(log_msg)
 
         def __get_num_capabilities(
             self: CbfController.InitCommand, 
@@ -433,23 +308,27 @@ class CbfController(SKAMaster):
 
             # initialize attribute values
             device._command_progress = 0
+
             device._report_vcc_state = [tango.DevState.UNKNOWN] * device._count_vcc
             device._report_vcc_health_state = [HealthState.UNKNOWN.value] * device._count_vcc
             device._report_vcc_admin_mode = [AdminMode.ONLINE.value] * device._count_vcc
             device._report_vcc_subarray_membership = [0] * device._count_vcc
+            device._frequency_offset_k = [0] * device._count_vcc
+            device._frequency_offset_delta_f = [0] * device._count_vcc
+
             device._report_fsp_state = [tango.DevState.UNKNOWN] * device._count_fsp
             device._report_fsp_health_state = [HealthState.UNKNOWN.value] * device._count_fsp
             device._report_fsp_admin_mode = [AdminMode.ONLINE.value] * device._count_fsp
-            device._report_fsp_corr_subarray_membership = [[] for i in range(device._count_fsp)]
+            device._report_fsp_subarray_membership = [[] for i in range(device._count_fsp)]
+
             device._report_subarray_state = [tango.DevState.UNKNOWN] * device._count_subarray
             device._report_subarray_health_state = [HealthState.UNKNOWN.value] * device._count_subarray
             device._report_subarray_admin_mode = [AdminMode.ONLINE.value] * device._count_subarray
+            device._subarray_config_ID = [""] * device._count_subarray
+
             device._report_talon_lru_state = [tango.DevState.UNKNOWN] * len(device.TalonLRU)
             device._report_talon_lru_health_state = [HealthState.UNKNOWN.value] * len(device.TalonLRU)
             device._report_talon_lru_admin_mode = [AdminMode.ONLINE.value] * len(device.TalonLRU)
-            device._frequency_offset_k = [0] * device._count_vcc
-            device._frequency_offset_delta_f = [0] * device._count_vcc
-            device._subarray_config_ID = [""] * device._count_subarray
 
             # initialize lists with subarray/capability FQDNs
             device._fqdn_vcc = list(device.VCC)[:device._count_vcc]
@@ -469,7 +348,10 @@ class CbfController(SKAMaster):
                 receptorID = remaining[receptorIDIndex]
                 device._receptor_to_vcc.append("{}:{}".format(receptorID, i))
                 device._vcc_to_receptor.append("{}:{}".format(i, receptorID))
-                vcc_proxy = tango.DeviceProxy(device._fqdn_vcc[i - 1])
+                vcc_proxy = CbfDeviceProxy(
+                    fqdn=device._fqdn_vcc[i - 1], 
+                    logger=device.logger
+                )
                 vcc_proxy.receptorID = receptorID
                 del remaining[receptorIDIndex]
 
@@ -480,59 +362,9 @@ class CbfController(SKAMaster):
             device._event_id = {}  # proxy:[eventID]
 
             # initialize groups
-            device._group_vcc = tango.Group("VCC")
-            for fqdn in device._fqdn_vcc:
-                device._group_vcc.add(fqdn)
-            device._group_fsp = tango.Group("FSP")
-            for fqdn in device._fqdn_fsp:
-                device._group_fsp.add(fqdn)
-            device._group_subarray = tango.Group("CBF Subarray")
-            for fqdn in device._fqdn_subarray:
-                device._group_subarray.add(fqdn)
-
-            # Try connection with each subarray/capability
-            for fqdn in device._fqdn_vcc + device._fqdn_fsp + device._fqdn_subarray + device._fqdn_talon_lru:
-                try:
-                    log_msg = "Trying connection to " + fqdn + " device"
-                    device.logger.info(log_msg)
-                    device_proxy = tango.DeviceProxy(fqdn)
-                    device_proxy.ping()
-
-                    device._proxies[fqdn] = device_proxy
-                    events = []
-
-                    # subscribe to change events on subarrays/capabilities
-                    for attribute_val in ["adminMode", "healthState", "State"]:
-                        events.append(
-                            device_proxy.subscribe_event(
-                                attribute_val, tango.EventType.CHANGE_EVENT,
-                                self.__state_change_event_callback, stateless=True
-                            )
-                        )
-
-                    # subscribe to VCC/FSP subarray membership change events
-                    if "vcc" in fqdn or "fsp" in fqdn:
-                        events.append(
-                            device_proxy.subscribe_event(
-                                "subarrayMembership", tango.EventType.CHANGE_EVENT,
-                                self.__membership_event_callback, stateless=True
-                            )
-                        )
-
-                    # subscribe to subarray config ID change events
-                    # if "subarray" in fqdn:
-                    #     events.append(
-                    #         device_proxy.subscribe_event(
-                    #             "configID", tango.EventType.CHANGE_EVENT,
-                    #             device.__config_ID_event_callback, stateless=True
-                    #         )
-                    #     )
-
-                    device._event_id[device_proxy] = events
-                except tango.DevFailed as df:
-                    for item in df.args:
-                        log_msg = "Failure in connection to " + fqdn + " device: " + str(item.reason)
-                        device.logger.error(log_msg)
+            device._group_vcc = None
+            device._group_fsp = None
+            device._group_subarray = None
 
             message = "CbfController Init command completed OK"
             self.logger.info(message)
@@ -540,8 +372,42 @@ class CbfController(SKAMaster):
 
     def always_executed_hook(self: CbfController) -> None:
         # PROTECTED REGION ID(CbfController.always_executed_hook) ENABLED START #
-        """hook to be executed before any command"""
-        pass
+        """
+        Hook to be executed before any command.
+
+        Here all of the proxy connections are established, due to the fact that 
+        some devices may not yet be ready for connection while the controller is 
+        initializing; any time a command is invoked that might require a proxy, 
+        it is ensured that the connection is established succesfully first here.
+        
+        TODO: when upgrading to ska-tango-base v0.11 these connections will be
+        established by the controller component manager; move to 
+        controller_component_manager.CbfControllerComponentManager.start_communicating()
+        """
+        if self._group_vcc is None:
+            self._group_vcc = CbfGroupProxy("VCC", logger=self.logger)
+            self._group_vcc.add(self._fqdn_vcc)
+        if self._group_fsp is None:
+            self._group_fsp = CbfGroupProxy("FSP", logger=self.logger)
+            self._group_fsp.add(self._fqdn_fsp)
+        if self._group_subarray is None:
+            self._group_subarray = CbfGroupProxy("CBF Subarray", logger=self.logger)
+            self._group_subarray.add(self._fqdn_subarray)
+        
+        for fqdn in self._fqdn_vcc + self._fqdn_fsp + self._fqdn_talon_lru + self._fqdn_subarray :
+            if fqdn not in self._proxies:
+                try:
+                    log_msg = "Trying connection to " + fqdn + " device"
+                    self.logger.info(log_msg)
+                    device_proxy = CbfDeviceProxy(
+                        fqdn=fqdn, 
+                        logger=self.logger
+                    )
+                    self._proxies[fqdn] = device_proxy
+                except tango.DevFailed as df:
+                    for item in df.args:
+                        log_msg = "Failure in connection to " + fqdn + " device: " + str(item.reason)
+                        self.logger.error(log_msg)
         # PROTECTED REGION END #    //  CbfController.always_executed_hook
 
     def delete_device(self: CbfController) -> None:
@@ -627,12 +493,12 @@ class CbfController(SKAMaster):
         return self._report_fsp_admin_mode
         # PROTECTED REGION END #    //  CbfController.reportFSPAdminMode_read
 
-    def read_reportFSPCorrSubarrayMembership(self: CbfController) -> List[List[int]]:
-        # PROTECTED REGION ID(CbfController.reportFSPCorrSubarrayMembership_read) ENABLED START #
+    def read_reportFSPSubarrayMembership(self: CbfController) -> List[List[int]]:
+        # PROTECTED REGION ID(CbfController.reportFSPSubarrayMembership_read) ENABLED START #
         """Return reportVCCSubarrayMembership attribute: Report the subarray membership 
         of FSPs (each can only belong to at most 16 subarrays), 0 if not assigned."""
-        return self._report_fsp_corr_subarray_membership
-        # PROTECTED REGION END #    //  CbfController.reportFSPCorrSubarrayMembership_read
+        return self._report_fsp_subarray_membership
+        # PROTECTED REGION END #    //  CbfController.reportFSPSubarrayMembership_read
 
     def read_frequencyOffsetK(self: CbfController) -> List[int]:
         # PROTECTED REGION ID(CbfController.frequencyOffsetK_read) ENABLED START #
@@ -696,6 +562,169 @@ class CbfController(SKAMaster):
         """
         A class for the CbfController's On() command.
         """
+    
+
+        def __state_change_event_callback(
+            self: CbfController.OnCommand, 
+            fqdn,
+            name,
+            value,
+            quality
+        ) -> None:
+
+            device = self.target
+
+            if value is not None:
+                try:
+                    if "healthstate" in name:
+                        if "subarray" in fqdn:
+                            device._report_subarray_health_state[
+                                device._fqdn_subarray.index(fqdn)
+                            ] = value
+                        elif "vcc" in fqdn:
+                            device._report_vcc_health_state[
+                                device._fqdn_vcc.index(fqdn)
+                            ] = value
+                        elif "fsp" in fqdn:
+                            device._report_fsp_health_state[
+                                device._fqdn_fsp.index(fqdn)
+                            ] = value
+                        elif "talon_lru" in fqdn:
+                            device._report_talon_lru_health_state[
+                                device._fqdn_talon_lru.index(fqdn)
+                                ] = value
+                        else:
+                            # should NOT happen!
+                            log_msg = "Received health state change for unknown device " + \
+                                    str(name)
+                            device.logger.warn(log_msg)
+                            return
+                    elif "state" in name:
+                        if "subarray" in fqdn:
+                            device._report_subarray_state[
+                                device._fqdn_subarray.index(fqdn)
+                            ] = value
+                        elif "vcc" in fqdn:
+                            device._report_vcc_state[
+                                device._fqdn_vcc.index(fqdn)
+                            ] = value
+                        elif "fsp" in fqdn:
+                            device._report_fsp_state[
+                                device._fqdn_fsp.index(fqdn)
+                            ] = value
+                        elif "talon_lru" in fqdn:
+                            device._report_talon_lru_state[
+                                device._fqdn_talon_lru.index(fqdn)
+                            ] = value
+                        else:
+                            # should NOT happen!
+                            log_msg = "Received state change for unknown device " + \
+                                    str(name)
+                            device.logger.warn(log_msg)
+                            return
+                    elif "adminmode" in name:
+                        if "subarray" in fqdn:
+                            device._report_subarray_admin_mode[
+                                device._fqdn_subarray.index(fqdn)
+                            ] = value
+                        elif "vcc" in fqdn:
+                            device._report_vcc_admin_mode[
+                                device._fqdn_vcc.index(fqdn)
+                            ] = value
+                        elif "fsp" in fqdn:
+                            device._report_fsp_admin_mode[
+                                device._fqdn_fsp.index(fqdn)
+                            ] = value
+                        elif "talon_lru" in fqdn:
+                            device._report_talon_lru_admin_mode[
+                                device._fqdn_talon_lru.index(fqdn)
+                            ] = value
+                        else:
+                            # should NOT happen!
+                            log_msg = "Received admin mode change for unknown device " + \
+                                    str(name)
+                            self.logger.warn(log_msg)
+                            return
+
+                    log_msg = "New value for " + str(name) + " of device " + \
+                        fqdn + ": " + str(value)
+                    device.logger.info(log_msg)
+                except Exception as except_occurred:
+                    self.logger.error(str(except_occurred))
+            else:
+                self.logger.warn(
+                    "None value for attribute " + str(name) + 
+                    " of device " + fqdn
+                )
+
+        def __membership_event_callback(
+            self: CbfController.OnCommand, 
+            fqdn,
+            name,
+            value,
+            quality
+        ) -> None:
+
+            device = self.target
+
+            if value is not None:
+                try:
+                    if "vcc" in fqdn:
+                        device._report_vcc_subarray_membership[
+                            device._fqdn_vcc.index(fqdn)
+                        ] = value
+                    elif "fsp" in fqdn:
+                        if value not in device._report_fsp_subarray_membership[
+                            device._fqdn_fsp.index(fqdn)]:
+                            device.logger.warning("{}".format(value))
+                            device._report_fsp_subarray_membership[
+                                device._fqdn_fsp.index(fqdn)
+                            ].append(value)
+                    else:
+                        # should NOT happen!
+                        log_msg = "Received event for unknown device " + str(name)
+                        self.logger.warn(log_msg)
+                        return
+
+                    log_msg = "New value for " + str(name) + " of device " + \
+                            fqdn + ": " + str(value)
+                    self.logger.info(log_msg)
+
+                except Exception as except_occurred:
+                    self.logger.error(str(except_occurred))
+            else:
+                self.logger.warn(
+                    "None value for attribute " + str(name) + 
+                    " of device " + fqdn
+                )
+
+        
+        def __config_ID_event_callback(
+            self: CbfController.OnCommand, 
+            fqdn,
+            name,
+            value,
+            quality
+        ) -> None:
+
+            device = self.target
+
+            if value is not None:
+                try:
+                    device._subarray_config_ID[
+                        device._fqdn_subarray.index(fqdn)
+                    ] = value
+                    log_msg = "New value for " + str(name) + " of device " + \
+                            fqdn + ": " + str(value)
+                    self.logger.info(log_msg)
+                except Exception as except_occurred:
+                    self.logger.error(str(except_occurred))
+            else:
+                self.logger.warn(
+                    "None value for attribute " + str(name) + 
+                    " of device " + fqdn
+                )
+
         def do(            
             self: CbfController.OnCommand,
         ) -> Tuple[ResultCode, str]:
@@ -711,13 +740,58 @@ class CbfController(SKAMaster):
 
             device = self.target
 
+            # Try connection with each subarray/capability
+            for fqdn, proxy in device._proxies.items():
+                attribute_test = AdminMode(proxy.read_attribute("adminMode").value).name
+                device.logger.warn(f"{attribute_test}")
+                attribute_test = AdminMode(proxy.adminMode).name
+                device.logger.warn(f"{attribute_test}")
+                try:
+                    events = []
+
+                    # subscribe to change events on subarrays/capabilities
+                    for attribute_val in ["adminMode", "healthState", "State"]:
+                        events.append(
+                            proxy.add_change_event_callback(
+                                attribute_name=attribute_val,
+                                callback=self.__state_change_event_callback,
+                                stateless=True
+                            )
+                        )
+
+                    # subscribe to VCC/FSP subarray membership change events
+                    if "vcc" in fqdn or "fsp" in fqdn:
+                        events.append(
+                            proxy.add_change_event_callback(
+                                attribute_name="subarrayMembership",
+                                callback=self.__membership_event_callback,
+                                stateless=True
+                            )
+                        )
+
+                    #TODO: re-enable and fix if this is needed?
+                    # subscribe to subarray config ID change events
+                    if "subarray" in fqdn:
+                        events.append(
+                            proxy.add_change_event_callback(
+                                attribute_name="configID",
+                                callback=self.__config_ID_event_callback,
+                                stateless=True
+                            )
+                        )
+
+                    device._event_id[proxy] = events
+                except tango.DevFailed as df:
+                    for item in df.args:
+                        log_msg = "Failure in connection to " + fqdn + " device: " + str(item.reason)
+                        device.logger.error(log_msg)
+
             for talon_lru_fqdn in device._fqdn_talon_lru:
                 device._proxies[talon_lru_fqdn].command_inout("On")
 
             device._group_subarray.command_inout("On")
             device._group_vcc.command_inout("On")
             device._group_fsp.command_inout("On")
-            device.set_state(tango.DevState.ON)
 
             return (result_code,message)
 
@@ -725,7 +799,7 @@ class CbfController(SKAMaster):
         """
         A class for the CbfController's Off() command.
         """
-        def do(            
+        def do(
             self: CbfController.OffCommand,
         ) -> Tuple[ResultCode, str]:
             """
@@ -741,36 +815,48 @@ class CbfController(SKAMaster):
             device = self.target
 
             for talon_lru_fqdn in device._fqdn_talon_lru:
-                device._proxies[talon_lru_fqdn].command_inout("Off")
+                device._proxies[talon_lru_fqdn].Off()
 
-            for proxy in list(device._event_id.keys()):
-                for event_id in device._event_id[proxy]:
-                    proxy.unsubscribe_event(event_id)
             device._group_subarray.command_inout("Off")
             device._group_vcc.command_inout("Off")
             device._group_fsp.command_inout("Off")
-            device.set_state(tango.DevState.OFF)
+
+            for proxy in list(device._event_id.keys()):
+                for event_id in device._event_id[proxy]:
+                    device.logger.info(
+                        "Unsubscribing from event " + str(event_id) +
+                        ", device: " + str(proxy._fqdn)
+                    )
+                    proxy.unsubscribe_event(event_id)
 
             return (result_code,message)
 
-    # TODO: If the Standby command is needed: 
-    # Convert it to the new base class StandbyCommand
-    # Test it (can use integration test_standby_valid)
-    def is_Standby_allowed(self: CbfController) -> bool:
-        """allowed if state is ON"""
-        if self.dev_state() == tango.DevState.ON:
-            return True
-        return False
 
-    @command()
-    def Standby(self: CbfController) -> None:
-        # PROTECTED REGION ID(CbfController.Standby) ENABLED START #
-        """turn off subarray, vcc, fsp, turn CbfController to standby"""
-        self._group_subarray.command_inout("Off")
-        self._group_vcc.command_inout("Off")
-        self._group_fsp.command_inout("Off")
-        self.set_state(tango.DevState.STANDBY)
-        # PROTECTED REGION END #    //  CbfController.Standby
+    class StandbyCommand(SKABaseDevice.StandbyCommand):
+        """
+        A class for the CbfController's Standby() command.
+        """
+        def do(            
+            self: CbfController.StandbyCommand,
+        ) -> Tuple[ResultCode, str]:
+            """
+            Stateless hook for Standby() command functionality.
+            Turn off subarray, vcc, fsp, turn CbfController to standby
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
+            (result_code,message)=super().do()
+
+            device = self.target
+
+            device._group_subarray.command_inout("Off")
+            device._group_vcc.command_inout("Off")
+            device._group_fsp.command_inout("Off")
+
+            return (result_code,message)
 
 
 # ----------

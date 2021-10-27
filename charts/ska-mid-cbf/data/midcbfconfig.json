@@ -46,33 +46,33 @@
                             ],
                             "polled_attr": [
                                 "reportfspstate",
-                                "1000",
+                                "3000",
                                 "reportvccadminmode",
-                                "1000",
+                                "3000",
                                 "reportvcchealthstate",
-                                "1000",
+                                "3000",
                                 "receptortovcc",
-                                "1000",
-                                "reportfspCorrSubarraymembership",
-                                "1000",
+                                "3000",
+                                "reportfspsubarraymembership",
+                                "3000",
                                 "reportfsphealthstate",
-                                "1000",
+                                "3000",
                                 "healthstate",
-                                "1000",
+                                "3000",
                                 "adminmode",
-                                "1000",
+                                "3000",
                                 "subarrayconfigid",
-                                "1000",
+                                "3000",
                                 "reportfspadminmode",
-                                "1000",
+                                "3000",
                                 "commandprogress",
-                                "2000",
+                                "3000",
                                 "reportsubarrayhealthstate",
-                                "1000",
+                                "3000",
                                 "reportvccstate",
-                                "1000",
+                                "3000",
                                 "reportsubarrayadminmode",
-                                "1000",
+                                "3000",
                                 "vcctoreceptor",
                                 "3000",
                                 "reportsubarraystate",
@@ -169,27 +169,27 @@
                             ],
                             "polled_attr": [
                                 "state",
-                                "1000",
+                                "3000",
                                 "healthstate",
-                                "1000",
+                                "3000",
                                 "adminmode",
-                                "1000",
+                                "3000",
                                 "fsphealthstate",
-                                "1000",
+                                "3000",
                                 "fspstate",
-                                "1000",
+                                "3000",
                                 "vccstate",
-                                "1000",
+                                "3000",
                                 "vcchealthstate",
-                                "1000",
+                                "3000",
                                 "obsstate",
                                 "50",
                                 "configid",
-                                "1000",
+                                "3000",
                                 "fspList",
-                                "1000",
+                                "3000",
                                 "outputLinksDistribution",
-                                "1000"
+                                "3000"
                             ]
                         }
                     }
@@ -278,27 +278,27 @@
                             ],
                             "polled_attr": [
                                 "configid",
-                                "1000",
+                                "3000",
                                 "healthstate",
-                                "1000",
+                                "3000",
                                 "state",
-                                "1000",
+                                "3000",
                                 "obsstate",
                                 "50",
                                 "vcchealthstate",
-                                "1000",
+                                "3000",
                                 "adminmode",
-                                "1000",
+                                "3000",
                                 "fspstate",
-                                "1000",
+                                "3000",
                                 "fspList",
-                                "1000",
+                                "3000",
                                 "fsphealthstate",
-                                "1000",
+                                "3000",
                                 "vccstate",
-                                "1000",
+                                "3000",
                                 "outputLinksDistribution",
-                                "1000"
+                                "3000"
                             ]
                         }
                     }
@@ -387,27 +387,27 @@
                             ],
                             "polled_attr": [
                                 "state",
-                                "1000",
+                                "3000",
                                 "healthstate",
-                                "1000",
+                                "3000",
                                 "adminmode",
-                                "1000",
+                                "3000",
                                 "fsphealthstate",
-                                "1000",
+                                "3000",
                                 "fspstate",
-                                "1000",
+                                "3000",
                                 "vccstate",
-                                "1000",
+                                "3000",
                                 "vcchealthstate",
-                                "1000",
+                                "3000",
                                 "obsstate",
                                 "50",
                                 "configid",
-                                "1000",
+                                "3000",
                                 "fspList",
-                                "1000",
+                                "3000",
                                 "outputLinksDistribution",
-                                "1000"
+                                "3000"
                             ]
                         }
                     }
@@ -478,13 +478,13 @@
                             ],
                             "polled_attr": [
                                 "adminmode",
-                                "1000",
+                                "3000",
                                 "healthstate",
-                                "1000",
+                                "3000",
                                 "state",
                                 "1000",
                                 "subarraymembership",
-                                "1000"
+                                "3000"
                             ]
                         }
                     }
@@ -762,13 +762,13 @@
                             ],
                             "polled_attr": [
                                 "adminmode",
-                                "1000",
+                                "3000",
                                 "healthstate",
-                                "1000",
+                                "3000",
                                 "state",
                                 "1000",
                                 "subarraymembership",
-                                "1000"
+                                "3000"
                             ]
                         }
                     }
@@ -1046,13 +1046,13 @@
                             ],
                             "polled_attr": [
                                 "adminmode",
-                                "1000",
+                                "3000",
                                 "healthstate",
-                                "1000",
+                                "3000",
                                 "state",
                                 "1000",
                                 "subarraymembership",
-                                "1000"
+                                "3000"
                             ]
                         }
                     }
@@ -1330,13 +1330,13 @@
                             ],
                             "polled_attr": [
                                 "adminmode",
-                                "1000",
+                                "3000",
                                 "healthstate",
-                                "1000",
+                                "3000",
                                 "state",
                                 "1000",
                                 "subarraymembership",
-                                "1000"
+                                "3000"
                             ]
                         }
                     }
@@ -1623,9 +1623,9 @@
                                 "state",
                                 "1000",
                                 "healthstate",
-                                "1000",
+                                "3000",
                                 "adminmode",
-                                "1000"
+                                "3000"
                             ]
                         }
                     }
@@ -1696,9 +1696,9 @@
                                 "state",
                                 "1000",
                                 "healthstate",
-                                "1000",
+                                "3000",
                                 "adminmode",
-                                "1000"
+                                "3000"
                             ]
                         }
                     }
@@ -1769,9 +1769,9 @@
                                 "state",
                                 "1000",
                                 "healthstate",
-                                "1000",
+                                "3000",
                                 "adminmode",
-                                "1000"
+                                "3000"
                             ]
                         }
                     }
@@ -1842,9 +1842,9 @@
                                 "state",
                                 "1000",
                                 "healthstate",
-                                "1000",
+                                "3000",
                                 "adminmode",
-                                "1000"
+                                "3000"
                             ]
                         }
                     }
@@ -1911,9 +1911,9 @@
                                 "state",
                                 "1000",
                                 "healthstate",
-                                "1000",
+                                "3000",
                                 "adminmode",
-                                "1000"
+                                "3000"
                             ]
                         }
                     }

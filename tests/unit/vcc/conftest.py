@@ -29,7 +29,37 @@ from ska_mid_cbf_mcs.vcc.vcc_device import Vcc
 from ska_tango_base.control_model import HealthState, AdminMode, ObsState
 from ska_tango_base.commands import ResultCode
 
-import logging
+@pytest.fixture()
+def patched_vcc_device_class() -> Type[Vcc]:
+    """
+    Return a Vcc device class, patched with extra methods for testing.
+
+    :return: a patched Vcc device class, patched with extra methods
+        for testing
+    """
+
+    class PatchedVccDevice(Vcc):
+        """
+        Vcc patched with extra commands for testing purposes.
+
+        The extra commands allow us to mock the receipt of obs state
+        change events from subservient devices.
+        """
+
+        @command(dtype_in=int)
+        def FakeSubservientDevicesObsState(
+            self,
+            obs_state: ObsState
+        ) -> None:
+            obs_state = ObsState(obs_state)
+
+            # for fqdn in self.component_manager._device_obs_states:
+            #     self.component_manager._device_obs_state_changed(fqdn, obs_state)
+
+    # using patch for now to determine class to select from device server;
+    # see TODO in src/ska_mid_cbf_mcs/testing/tango_harness.py
+    return Vcc
+
 
 @pytest.fixture()
 def device_under_test(tango_harness: TangoHarness) -> CbfDeviceProxy:
