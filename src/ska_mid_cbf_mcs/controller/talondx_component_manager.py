@@ -26,6 +26,10 @@ __all__ = [
     "TalonDxComponentManager"
 ]
 
+# Timeout for the first attempt at SSH connection with the Talon boards
+# after boot-up.
+TALON_FIRST_CONNECT_TIMEOUT = 30
+
 class TalonDxComponentManager:
     """A component manager for the Talon-DX boards. Used to configure and start
     the Tango applications on the HPS of each board."""
@@ -120,7 +124,7 @@ class TalonDxComponentManager:
 
                 with SSHClient() as ssh_client:
                     ssh_client.set_missing_host_key_policy(AutoAddPolicy())
-                    ssh_client.connect(ip, username='root', password='')
+                    ssh_client.connect(ip, username='root', password='', timeout=TALON_FIRST_CONNECT_TIMEOUT)
                 
                     # Make the DS binaries directory
                     src_dir = f"{self.talondx_config_path}"
@@ -160,13 +164,13 @@ class TalonDxComponentManager:
                         src=f"{src_dir}/fpga-{target_alias}/bin/{fpga_rbf_name}",
                         dest=dest_dir)
             except gaierror as gai_err:
-                self.logger.error(f"Error connecting to {target}: {gai_err}")
+                self.logger.error(f"Error connecting to {ip}: {gai_err}")
                 ret = ResultCode.FAILED
             except SSHException as ssh_err:
-                self.logger.error(f"SSH exception while talking to {target}: {ssh_err}")
+                self.logger.error(f"SSH exception while talking to {ip}: {ssh_err}")
                 ret = ResultCode.FAILED
             except SCPException as scp_err:
-                self.logger.error(f"Failed to copy file to {target}: {scp_err}")
+                self.logger.error(f"Failed to copy file to {ip}: {scp_err}")
                 ret = ResultCode.FAILED
             
         return ret

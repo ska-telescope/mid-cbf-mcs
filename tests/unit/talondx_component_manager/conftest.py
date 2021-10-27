@@ -14,8 +14,10 @@ import re
 import logging
 import pytest
 import unittest
-import subprocess
-from typing import Any, Dict, List
+import scp
+import paramiko
+import socket
+from typing import Any, Dict
 
 # Local imports
 from ska_mid_cbf_mcs.controller.talondx_component_manager import TalonDxComponentManager
@@ -42,66 +44,96 @@ def talon_dx_component_manager(
     :return: a Talon-DX component manager.
     """
 
-    class MockCompletedProcess:
-        """A mock class to replace subprocess.CompletedProcess."""
-
-        def __init__(
-            self: MockCompletedProcess,
-            cmd: List(str),
-            simulate_response_error: bool
-        ) -> None:
-            """
-            Initialise a new instance.
-
-            :param cmd: Command that was sent
-            :param simulate_response_error: set to True to simulate error response
-
-            :raise: subprocess.CalledProcessError if simulate_response_error is True
-            """
-            self.args = cmd
-
-            # Check that the arguments to the command are correct
-            cmd_split = cmd.split(" ")
-            if cmd_split[0] == "scp":
-                src_ds = re.compile(r"tests\/unit\/talondx_component_manager\/.+\/build-ci-cross\/bin\/.*")
-                src_fpga = re.compile(r"tests\/unit\/talondx_component_manager\/fpga-.*\/bin\/vcc3_2ch4.*")
-                assert (src_ds.fullmatch(cmd_split[3]) or src_fpga.fullmatch(cmd_split[3]))
-
-                target_dest_ds = re.compile(r"root@169.254.100.1:\/lib\/firmware\/hps_software(\/vcc_test)?")
-                target_dest_fpga = re.compile(r"root@169.254.100.1:\/lib\/firmware\/bitstream")
-                assert (target_dest_ds.fullmatch(cmd_split[4]) or target_dest_fpga.fullmatch(cmd_split[4]))
-            else:
-                assert cmd_split[0] == "ssh"
-                assert cmd_split[3] == "root@169.254.100.1"
-
-                cmd_to_run = ' '.join(cmd_split[4:])
-                assert (
-                    (cmd_to_run == "mkdir -p /lib/firmware/hps_software/vcc_test") or
-                    (cmd_to_run == "mkdir -p /lib/firmware/bitstream") or
-                    (cmd_to_run == "/lib/firmware/hps_software/hps_master_mcs.sh talon1_test")
-                )
-
-            if simulate_response_error:
-                self.returncode = 255
-                raise subprocess.CalledProcessError(cmd=cmd, returncode=255)
-            else:
-                self.returncode = 0
-
-    def mock_subprocess_run(
-        cmd: List(str), **kwargs: Any
-    ) -> MockCompletedProcess:
+    def mock_connect(
+        *args: Any, **kwargs: Any
+    ) -> None:
         """
-        Replace subprocess.run method with a mock method.
+        Replace paramiko.SSHClient.connect method with a mock method.
 
-        :param cmd: the command that was sent
-        :param kwargs: other keyword args
+        :param args: arguments to the mocked function
+        :param kwargs: keyword arguments to the mocked function
 
-        :return: a mocked CompletedResponse
-        :raise: subprocess.CalledProcessError if sim_error is True
+        :raise: socket.gaierror if sim_error is True
         """
-        return MockCompletedProcess(cmd, request.param["sim_error"])
+        assert args[1] == "169.254.100.1"
+        assert kwargs["username"] == "root"
+        assert kwargs["password"] == ""
 
-    monkeypatch.setattr(subprocess, "run", mock_subprocess_run)
+        if request.param["sim_error"]:
+            raise socket.gaierror(255, "Failed connection")
+
+    def mock_exec_command(
+        *args: Any, **kwargs: Any
+    ) -> None:
+        """
+        Replace paramiko.SSHClient.exec_command method with a mock method.
+
+        :param args: arguments to the mocked function
+        :param kwargs: keyword arguments to the mocked function
+
+        :raise: paramiko.SSHException if sim_error is True
+        """
+        assert (
+            (args[1] == "mkdir -p /lib/firmware/hps_software/vcc_test") or
+            (args[1] == "mkdir -p /lib/firmware") or
+            (args[1] == "/lib/firmware/hps_software/hps_master_mcs.sh talon1_test")
+        )
+
+        if request.param["sim_error"]:
+            raise paramiko.ssh_exception.SSHException()
+
+    class MockTransport:
+        """
+        Class to mock the paramiko.Transport object. Does not do anything useful.
+        """
+        def __init__(self):
+            pass
+
+        def getpeername(self):
+            return "fake_name"
+
+        def open_session(self):
+            pass
+
+    def mock_get_transport(
+        *args: Any, **kwargs: Any
+    ) -> MockTransport:
+        """
+        Replace paramiko.SSHClient.get_transport() method with a mock method.
+
+        :param args: arguments to the mocked function
+        :param kwargs: keyword arguments to the mocked function
+
+        :return: mocked Transport object
+        """
+        return MockTransport()
+
+    def mock_scp_put(
+        *args: Any, **kwargs: Any
+    ) -> None:
+        """
+        Replace scp.SCPClient.put method with a mock method.
+
+        :param args: arguments to the mocked function
+        :param kwargs: keyword arguments to the mocked function
+
+        :raise: scp.SCPException if sim_error is True
+        """
+        src_ds = re.compile(r"tests\/unit\/talondx_component_manager\/.+\/build-ci-cross\/bin\/.*")
+        src_fpga = re.compile(r"tests\/unit\/talondx_component_manager\/fpga-.*\/bin\/vcc3_2ch4.*")
+        assert (src_ds.fullmatch(args[1]) or src_fpga.fullmatch(args[1]))
+
+        target_dest_ds = re.compile(r"\/lib\/firmware\/hps_software(\/vcc_test)?")
+        target_dest_fpga = re.compile(r"\/lib\/firmware")
+        assert (target_dest_ds.fullmatch(kwargs["remote_path"]) or target_dest_fpga.fullmatch(kwargs["remote_path"]))
+
+        if request.param["sim_error"]:
+            raise scp.SCPException()
+   
+    monkeypatch.setattr(paramiko.SSHClient, "connect", mock_connect)
+    monkeypatch.setattr(paramiko.SSHClient, "exec_command", mock_exec_command)
+    monkeypatch.setattr(paramiko.SSHClient, "get_transport", mock_get_transport)
+    monkeypatch.setattr(scp.SCPClient, "put", mock_scp_put)
 
     return TalonDxComponentManager(
         "tests/unit/talondx_component_manager",
