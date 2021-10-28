@@ -218,9 +218,32 @@ class TestCbfSubarray:
         except Exception as e:
             proxies.clean_proxies()
             raise e
-        
+
+    @pytest.mark.parametrize(
+        "receptor_ids, \
+        invalid_receptors_to_remove, \
+        sub_id", 
+        [
+            (
+                [1, 3],
+                [2],
+                1
+            ),
+            (
+                [4, 2],
+                [1, 3],
+                1
+            )
+        ]
+    )    
     @pytest.mark.skip(reason="Since there's only a single subarray, this test is currently broken.")
-    def test_AddRemoveReceptors_invalid_multiple(self, proxies):
+    def test_AddRemoveReceptors_invalid_multiple(
+        self: TestCbfSubarray, 
+        proxies: pytest.fixture, 
+        receptor_ids: List[int], 
+        invalid_receptors_to_remove: List[int], 
+        sub_id: int
+    ) -> None:
         """
 
         Test invalid AddReceptors commands involving multiple subarrays:
@@ -936,16 +959,45 @@ class TestCbfSubarray:
             proxies.clean_proxies()
             raise e
     
-    #TODO refactor to verify delay model values against input json
-    @pytest.mark.skip(reason="test needs to be refactored")
-    def test_ConfigureScan_delayModel(self, proxies):
+    #TODO: Delay model values do not match json file
+    @pytest.mark.skip(
+        reason="Delay model values do not match json file"
+    )
+    @pytest.mark.parametrize(
+        "config_file_name, \
+        delay_model_file_name, \
+        scan_file_name, \
+        receptor_ids, \
+        vcc_receptors",
+        [
+            (
+                "/../data/ConfigureScan_basic.json",
+                "/../data/delaymodel.json",
+                "/../data/Scan1_basic.json",
+                [1, 3, 4, 2],
+                [4, 1]
+            )
+        ]
+    )
+    def test_ConfigureScan_delayModel(
+        self: TestCbfSubarray, 
+        proxies: pytest.fixture, 
+        config_file_name: str,
+        delay_model_file_name: str,
+        scan_file_name: str,
+        receptor_ids: List[int],
+        vcc_receptors: List[int]
+    ) -> None:
+
         """
         Test the reception of delay models
         """
         
         # Read delay model data from file
-        f = open(file_path + "/../data/delaymodel.json")
-        delay_model = json.loads(f.read().replace("\n", ""))
+        f = open(file_path + delay_model_file_name)
+        json_string_delay_mod = f.read().replace("\n", "")
+        delay_model = json.loads(json_string_delay_mod)
+        configuration_delay_mod = json.loads(json_string_delay_mod)
         f.close()
 
         aa = delay_model["delayModel"][0]["delayDetails"][0]["receptorDelayDetails"]
@@ -954,10 +1006,16 @@ class TestCbfSubarray:
             logging.info( "delayCoeff = {}".format( aa[jj]["delayCoeff"]) )
 
         try:
+            f = open(file_path + config_file_name)
+            json_string = f.read().replace("\n", "")
+            f.close()
+            configuration = json.loads(json_string)
+            sub_id = int(configuration["common"]["subarray_id"])
+
             # turn on Subarray
-            if proxies.subarray[1].State() != DevState.ON:
-                proxies.subarray[1].On()
-                proxies.wait_timeout_dev([proxies.subarray[1]], DevState.ON, 3, 1)
+            if proxies.subarray[sub_id].State() != DevState.ON:
+                proxies.subarray[sub_id].On()
+                proxies.wait_timeout_dev([proxies.subarray[sub_id]], DevState.ON, 3, 1)
                 for proxy in [proxies.vcc[i + 1] for i in range(len(proxies.vcc))]:
                     if proxy.State() == DevState.OFF:
                         proxy.On()
@@ -966,20 +1024,18 @@ class TestCbfSubarray:
                     if proxy.State() == DevState.OFF:
                         proxy.On()
                         proxies.wait_timeout_dev([proxy], DevState.ON, 1, 1)
-            assert proxies.subarray[1].obsState == ObsState.EMPTY
+            assert proxies.subarray[sub_id].obsState == ObsState.EMPTY
 
             # add receptors
-            proxies.subarray[1].AddReceptors([1, 3, 4, 2])
-            proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.IDLE, 1, 1)
-            assert all([proxies.subarray[1].receptors[i] == j for i, j in zip(range(3), [1, 3, 4])])
+            proxies.subarray[sub_id].AddReceptors(receptor_ids)
+            proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.IDLE, 1, 1)
+            assert all([proxies.subarray[sub_id].receptors[i] == j for i, j in zip(range(len(receptor_ids)), receptor_ids)])
 
             # configure scan
-            f = open(file_path + "/../data/ConfigureScan_basic.json")
-            proxies.subarray[1].ConfigureScan(f.read().replace("\n", ""))
-            f.close()
-            proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.READY, 3, 1)
+            proxies.subarray[sub_id].ConfigureScan(json_string)
+            proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.READY, 3, 1)
 
-            assert proxies.subarray[1].obsState == ObsState.READY
+            assert proxies.subarray[sub_id].obsState == ObsState.READY
 
             # create a delay model
             
@@ -992,7 +1048,7 @@ class TestCbfSubarray:
             proxies.tm.delayModel = json.dumps(delay_model)
             time.sleep(1)
 
-            for jj in range(4):
+            for jj in range(len(receptor_ids)):
                 logging.info((" proxies.vcc[{}].receptorID = {}".
                 format(jj+1, proxies.vcc[jj+1].receptorID)))
 
@@ -1000,102 +1056,66 @@ class TestCbfSubarray:
             format(proxies.vcc[proxies.receptor_to_vcc[1]].ObsState)) )
 
             #proxies.vcc[0].receptorID
-
-            assert proxies.vcc[proxies.receptor_to_vcc[1]].delayModel[0][0] == 1.1
-            assert proxies.vcc[proxies.receptor_to_vcc[1]].delayModel[0][1] == 1.2
-            assert proxies.vcc[proxies.receptor_to_vcc[1]].delayModel[0][2] == 1.3
-            assert proxies.vcc[proxies.receptor_to_vcc[1]].delayModel[0][3] == 1.4
-            assert proxies.vcc[proxies.receptor_to_vcc[1]].delayModel[0][4] == 1.5
-            assert proxies.vcc[proxies.receptor_to_vcc[1]].delayModel[0][5] == 1.6
-
-            assert proxies.vcc[proxies.receptor_to_vcc[1]].delayModel[1][0] == 1.7
-            assert proxies.vcc[proxies.receptor_to_vcc[1]].delayModel[1][1] == 1.8
-            assert proxies.vcc[proxies.receptor_to_vcc[1]].delayModel[1][2] == 1.9
-            assert proxies.vcc[proxies.receptor_to_vcc[1]].delayModel[1][3] == 2.0
-            assert proxies.vcc[proxies.receptor_to_vcc[1]].delayModel[1][4] == 2.1
-            assert proxies.vcc[proxies.receptor_to_vcc[1]].delayModel[1][5] == 2.2
-
-            assert proxies.vcc[proxies.receptor_to_vcc[4]].delayModel[0][0] == 2.3
-            assert proxies.vcc[proxies.receptor_to_vcc[4]].delayModel[0][1] == 2.4
-            assert proxies.vcc[proxies.receptor_to_vcc[4]].delayModel[0][2] == 2.5
-            assert proxies.vcc[proxies.receptor_to_vcc[4]].delayModel[0][3] == 2.6
-            assert proxies.vcc[proxies.receptor_to_vcc[4]].delayModel[0][4] == 2.7
-            assert proxies.vcc[proxies.receptor_to_vcc[4]].delayModel[0][5] == 2.8
-
-            assert proxies.vcc[proxies.receptor_to_vcc[4]].delayModel[1][0] == 2.9
-            assert proxies.vcc[proxies.receptor_to_vcc[4]].delayModel[1][1] == 3.0
-            assert proxies.vcc[proxies.receptor_to_vcc[4]].delayModel[1][2] == 3.1
-            assert proxies.vcc[proxies.receptor_to_vcc[4]].delayModel[1][3] == 3.2
-            assert proxies.vcc[proxies.receptor_to_vcc[4]].delayModel[1][4] == 3.3
-            assert proxies.vcc[proxies.receptor_to_vcc[4]].delayModel[1][5] == 3.4
+            delayModNum = 1
+            for r in vcc_receptors:
+                vcc = proxies.vcc[proxies.receptor_to_vcc[r]]
+                delayMod = vcc.delayModel
+                delayModConf = []
+                delayDetails = configuration_delay_mod["delayModel"][delayModNum]["delayDetails"]
+                for delayDetail in delayDetails:
+                    if delayDetail["receptor"] == r:
+                        for receptorDelayDetail in delayDetail["receptorDelayDetails"]:
+                            delayModConf += receptorDelayDetail["delayCoeff"]
+                confIdx = 0
+                for i in range(len(delayMod)):
+                    for j in range(len(delayMod[i])):
+                        assert delayMod[i][j] == delayModConf[confIdx]
+                        confIdx += 1
 
             # transition to obsState=SCANNING
-            f2 = open(file_path + "/../data/Scan1_basic.json")
-            proxies.subarray[1].Scan(f2.read().replace("\n", ""))
+            f2 = open(file_path + scan_file_name)
+            proxies.subarray[sub_id].Scan(f2.read().replace("\n", ""))
             f2.close()
-            proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.SCANNING, 1, 1)
-            assert proxies.subarray[1].obsState == ObsState.SCANNING
+            proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.SCANNING, 1, 1)
+            assert proxies.subarray[sub_id].obsState == ObsState.SCANNING
 
             time.sleep(10)
-            assert proxies.vcc[proxies.receptor_to_vcc[1]].delayModel[0][0] == 2.1
-            assert proxies.vcc[proxies.receptor_to_vcc[1]].delayModel[0][1] == 2.2
-            assert proxies.vcc[proxies.receptor_to_vcc[1]].delayModel[0][2] == 2.3
-            assert proxies.vcc[proxies.receptor_to_vcc[1]].delayModel[0][3] == 2.4
-            assert proxies.vcc[proxies.receptor_to_vcc[1]].delayModel[0][4] == 2.5
-            assert proxies.vcc[proxies.receptor_to_vcc[1]].delayModel[0][5] == 2.6
 
-            assert proxies.vcc[proxies.receptor_to_vcc[1]].delayModel[1][0] == 2.7
-            assert proxies.vcc[proxies.receptor_to_vcc[1]].delayModel[1][1] == 2.8
-            assert proxies.vcc[proxies.receptor_to_vcc[1]].delayModel[1][2] == 2.9
-            assert proxies.vcc[proxies.receptor_to_vcc[1]].delayModel[1][3] == 3.0
-            assert proxies.vcc[proxies.receptor_to_vcc[1]].delayModel[1][4] == 3.1
-            assert proxies.vcc[proxies.receptor_to_vcc[1]].delayModel[1][5] == 3.2
-
-            assert proxies.vcc[proxies.receptor_to_vcc[4]].delayModel[0][0] == 3.3
-            assert proxies.vcc[proxies.receptor_to_vcc[4]].delayModel[0][1] == 3.4
-            assert proxies.vcc[proxies.receptor_to_vcc[4]].delayModel[0][2] == 3.5
-            assert proxies.vcc[proxies.receptor_to_vcc[4]].delayModel[0][3] == 3.6
-            assert proxies.vcc[proxies.receptor_to_vcc[4]].delayModel[0][4] == 3.7
-            assert proxies.vcc[proxies.receptor_to_vcc[4]].delayModel[0][5] == 3.8
-
-            assert proxies.vcc[proxies.receptor_to_vcc[4]].delayModel[1][0] == 3.9
-            assert proxies.vcc[proxies.receptor_to_vcc[4]].delayModel[1][1] == 4.0
-            assert proxies.vcc[proxies.receptor_to_vcc[4]].delayModel[1][2] == 4.1
-            assert proxies.vcc[proxies.receptor_to_vcc[4]].delayModel[1][3] == 4.2
-            assert proxies.vcc[proxies.receptor_to_vcc[4]].delayModel[1][4] == 4.3
-            assert proxies.vcc[proxies.receptor_to_vcc[4]].delayModel[1][5] == 4.4
+            delayModNum = 2
+            for r in vcc_receptors:
+                vcc = proxies.vcc[proxies.receptor_to_vcc[r]]
+                delayMod = vcc.delayModel
+                delayModConf = []
+                delayDetails = configuration_delay_mod["delayModel"][delayModNum]["delayDetails"]
+                for delayDetail in delayDetails:
+                    if delayDetail["receptor"] == r:
+                        for receptorDelayDetail in delayDetail["receptorDelayDetails"]:
+                            delayModConf += receptorDelayDetail["delayCoeff"]
+                confIdx = 0
+                for i in range(len(delayMod)):
+                    for j in range(len(delayMod[i])):
+                        assert delayMod[i][j] == delayModConf[confIdx]
+                        confIdx += 1
 
             time.sleep(10)
-            assert proxies.vcc[proxies.receptor_to_vcc[1]].delayModel[0][0] == 0.1
-            assert proxies.vcc[proxies.receptor_to_vcc[1]].delayModel[0][1] == 0.2
-            assert proxies.vcc[proxies.receptor_to_vcc[1]].delayModel[0][2] == 0.3
-            assert proxies.vcc[proxies.receptor_to_vcc[1]].delayModel[0][3] == 0.4
-            assert proxies.vcc[proxies.receptor_to_vcc[1]].delayModel[0][4] == 0.5
-            assert proxies.vcc[proxies.receptor_to_vcc[1]].delayModel[0][5] == 0.6
+            delayModNum = 0
+            for r in vcc_receptors:
+                vcc = proxies.vcc[proxies.receptor_to_vcc[r]]
+                delayMod = vcc.delayModel
+                delayModConf = []
+                delayDetails = configuration_delay_mod["delayModel"][delayModNum]["delayDetails"]
+                for delayDetail in delayDetails:
+                    if delayDetail["receptor"] == r:
+                        for receptorDelayDetail in delayDetail["receptorDelayDetails"]:
+                            delayModConf += receptorDelayDetail["delayCoeff"]
+                confIdx = 0
+                for i in range(len(delayMod)):
+                    for j in range(len(delayMod[i])):
+                        assert delayMod[i][j] == delayModConf[confIdx]
+                        confIdx += 1
 
-            assert proxies.vcc[proxies.receptor_to_vcc[1]].delayModel[1][0] == 0.7
-            assert proxies.vcc[proxies.receptor_to_vcc[1]].delayModel[1][1] == 0.8
-            assert proxies.vcc[proxies.receptor_to_vcc[1]].delayModel[1][2] == 0.9
-            assert proxies.vcc[proxies.receptor_to_vcc[1]].delayModel[1][3] == 1.0
-            assert proxies.vcc[proxies.receptor_to_vcc[1]].delayModel[1][4] == 1.1
-            assert proxies.vcc[proxies.receptor_to_vcc[1]].delayModel[1][5] == 1.2
-
-            assert proxies.vcc[proxies.receptor_to_vcc[4]].delayModel[0][0] == 1.3
-            assert proxies.vcc[proxies.receptor_to_vcc[4]].delayModel[0][1] == 1.4
-            assert proxies.vcc[proxies.receptor_to_vcc[4]].delayModel[0][2] == 1.5
-            assert proxies.vcc[proxies.receptor_to_vcc[4]].delayModel[0][3] == 1.6
-            assert proxies.vcc[proxies.receptor_to_vcc[4]].delayModel[0][4] == 1.7
-            assert proxies.vcc[proxies.receptor_to_vcc[4]].delayModel[0][5] == 1.8
-
-            assert proxies.vcc[proxies.receptor_to_vcc[4]].delayModel[1][0] == 1.9
-            assert proxies.vcc[proxies.receptor_to_vcc[4]].delayModel[1][1] == 2.0
-            assert proxies.vcc[proxies.receptor_to_vcc[4]].delayModel[1][2] == 2.1
-            assert proxies.vcc[proxies.receptor_to_vcc[4]].delayModel[1][3] == 2.2
-            assert proxies.vcc[proxies.receptor_to_vcc[4]].delayModel[1][4] == 2.3
-            assert proxies.vcc[proxies.receptor_to_vcc[4]].delayModel[1][5] == 2.4
-
-            proxies.subarray[1].EndScan()
-            proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.READY, 1, 1)
+            proxies.subarray[sub_id].EndScan()
+            proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.READY, 1, 1)
 
             proxies.clean_proxies()
 
