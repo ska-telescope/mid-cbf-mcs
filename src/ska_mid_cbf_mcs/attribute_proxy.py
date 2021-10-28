@@ -95,7 +95,7 @@ class CbfAttributeProxy:
         self.__dict__["_attribute"] = None
 
         self.__dict__["_change_event_lock"] = threading.Lock()
-        self.__dict__["_change_event_subscription_ids"] = {}
+        self.__dict__["_change_event_subscription_id"] = None
         self.__dict__["_change_event_callback"] = []
 
         if connect:
@@ -181,7 +181,7 @@ class CbfAttributeProxy:
         :param stateless: whether to use Tango's stateless subscription
             feature
         """
-        if callback not in self._change_event_subscription_id:
+        if self._change_event_subscription_id is None:
             self._change_event_callback = callback
             self._change_event_subscription_id = self._subscribe_change_event(stateless=stateless)
         else:
@@ -209,7 +209,7 @@ class CbfAttributeProxy:
 
         :return: the subscription id
         """
-        return self._device.subscribe_event(
+        return self._attribute.subscribe_event(
             tango.EventType.CHANGE_EVENT,
             self._change_event_received,
             stateless=stateless,
