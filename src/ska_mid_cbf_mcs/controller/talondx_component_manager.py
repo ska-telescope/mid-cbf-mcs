@@ -141,18 +141,15 @@ class TalonDxComponentManager:
                     # Copy the HPS master binary
                     self._secure_copy(
                         ssh_client=ssh_client,
-                        src=f"{src_dir}/ds-hps-master/build-ci-cross/bin/dshpsmaster",
+                        src=f"{src_dir}/dshpsmaster/bin/dshpsmaster",
                         dest="/lib/firmware/hps_software")
 
                     # Copy the remaining DS binaries
                     for binary_name in talon_cfg["devices"]:
-                        for ds_binary in self.talondx_config["ds-binaries"]:
-                            name = ds_binary["name"]
-                            if binary_name == name.replace('-', ''):
-                                self._secure_copy(
-                                    ssh_client=ssh_client,
-                                    src=f"{src_dir}/{name}/build-ci-cross/bin/{binary_name}",
-                                    dest=dest_dir)
+                        self._secure_copy(
+                            ssh_client=ssh_client,
+                            src=f"{src_dir}/{binary_name}/bin/{binary_name}",
+                            dest=dest_dir)
 
                     # Copy the FPGA bitstream
                     dest_dir = talon_cfg["fpga-path"]
