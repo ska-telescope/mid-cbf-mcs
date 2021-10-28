@@ -64,7 +64,7 @@ class TestCbfSubarray:
         """
         Test valid AddReceptors and RemoveReceptors commands
         """
-        #TODO: port is not used - remove?
+
         if proxies.debug_device_is_on:
             port = proxies.subarray[sub_id].DebugDevice()
 
@@ -365,11 +365,6 @@ class TestCbfSubarray:
                 "/../data/ConfigureScan_basic.json",
                 [1, 3, 4, 2],
                 [4, 1]
-            ), 
-            (
-                "/../data/Configure_TM-CSP_v2.json",
-                [4, 1],
-                [4, 1]
             )
         ]
     )
@@ -555,19 +550,19 @@ class TestCbfSubarray:
                         for j in range(len(fsp["output_link_map"][i])):
                             assert proxies.fspSubarray[fsp_id].outputLinkMap[i][j] == fsp["output_link_map"][i][j]
                     
-                    if "outputHost" and "outputMac" and "outputPort" in fsp:
+                    if "output_host" and "output_mac" and "output_port" in fsp:
                         assert str(proxies.fspSubarray[sub_id].visDestinationAddress).replace('"',"'") == \
                             str({
                                 "outputHost": [
-                                    configuration["cbf"]["fsp"][0]["output_host"][0], 
-                                    configuration["cbf"]["fsp"][0]["output_host"][1]
+                                    fsp["output_host"][0], 
+                                    fsp["output_host"][1]
                                 ], 
                                 "outputMac": [
-                                    configuration["cbf"]["fsp"][0]["output_mac"][0]
+                                    fsp["output_mac"][0]
                                 ], 
                                 "outputPort": [
-                                    configuration["cbf"]["fsp"][0]["output_port"][0], 
-                                    configuration["cbf"]["fsp"][0]["output_port"][1]
+                                    fsp["output_port"][0], 
+                                    fsp["output_port"][1]
                                 ]
                                 }).replace('"',"'")
 
