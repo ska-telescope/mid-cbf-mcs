@@ -15,6 +15,9 @@
 
 # Fsp Tango device prototype
 # Fsp TANGO device class for the prototype
+from __future__ import annotations  # allow forward references in type hints
+
+from typing import Tuple
 
 # tango imports
 import tango
@@ -30,7 +33,8 @@ import json
 
 file_path = os.path.dirname(os.path.abspath(__file__))
 
-from ska_tango_base import SKACapability
+from ska_tango_base import SKACapability, SKABaseDevice
+from ska_tango_base.commands import ResultCode
 # PROTECTED REGION END #    //  Fsp.additionnal_import
 
 __all__ = ["Fsp", "main"]
@@ -42,31 +46,6 @@ class Fsp(SKACapability):
     """
     # PROTECTED REGION ID(Fsp.class_variable) ENABLED START #
 
-    def __get_capability_proxies(self):
-        # for now, assume that given addresses are valid
-        if self.CorrelationAddress:
-            self._proxy_correlation = tango.DeviceProxy(self.CorrelationAddress)
-        if self.PSSAddress:
-            self._proxy_pss = tango.DeviceProxy(self.PSSAddress)
-        if self.PSTAddress:
-            self._proxy_pst = tango.DeviceProxy(self.PSTAddress)
-        if self.VLBIAddress:
-            self._proxy_vlbi = tango.DeviceProxy(self.VLBIAddress)
-        if self.FspCorrSubarray:
-            self._proxy_fsp_corr_subarray = [*map(
-                tango.DeviceProxy,
-                list(self.FspCorrSubarray)
-            )]
-        if self.FspPssSubarray:
-            self._proxy_fsp_pss_subarray = [*map(
-                tango.DeviceProxy,
-                list(self.FspPssSubarray)
-            )]
-        if self.FspPstSubarray:
-            self._proxy_fsp_pst_subarray = [*map(
-                tango.DeviceProxy,
-                list(self.FspPstSubarray)
-            )]
 
     # PROTECTED REGION END #    //  Fsp.class_variable
 
@@ -170,42 +149,21 @@ class Fsp(SKACapability):
     # General methods
     # ---------------
 
-    def init_device(self):
-        SKACapability.init_device(self)
-        # PROTECTED REGION ID(Fsp.init_device) ENABLED START #
-        """Inherit from SKA Capability; Initialize attributes. Set state to OFF."""
-        self.set_state(tango.DevState.INIT)
+    def init_command_objects(self: Fsp) -> None:
+        """
+        Sets up the command objects
+        """
+        super().init_command_objects()
 
-        # defines self._proxy_correlation, self._proxy_pss, self._proxy_pst, self._proxy_vlbi,
-        # and self._proxy_fsp_corr_subarray
-        self.__get_capability_proxies()
+        device_args = (self, self.state_model, self.logger)
 
-        self._fsp_id = self.FspID
+        self.register_command_object(
+            "On", self.OnCommand(*device_args)
+        )
 
-        # initialize attribute values
-        self._function_mode = 0  # IDLE
-        self._subarray_membership = []
-        self._scan_id = 0
-        self._config_id = ""
-        self._jones_matrix = [[0.0] * 4 for _ in range(4)]
-        self._delay_model = [[0.0] * 6 for _ in range(4)]
-        self._timing_beam_weights = [[0.0] * 6 for _ in range(4)]
-
-        # initialize FSP subarray group
-        self._group_fsp_corr_subarray = tango.Group("FSP Subarray Corr")
-        for fqdn in list(self.FspCorrSubarray):
-            self._group_fsp_corr_subarray.add(fqdn)
-
-        self._group_fsp_pss_subarray = tango.Group("FSP Subarray Pss")
-        for fqdn in list(self.FspPssSubarray):
-            self._group_fsp_pss_subarray.add(fqdn)
-
-        self._group_fsp_pst_subarray = tango.Group("FSP Subarray Pst")
-        for fqdn in list(self.FspPstSubarray):
-            self._group_fsp_pst_subarray.add(fqdn)
-
-        self.set_state(tango.DevState.OFF)
-        # PROTECTED REGION END #    //  Fsp.init_device
+        self.register_command_object(
+            "Off", self.OffCommand(*device_args)
+        )
 
     def always_executed_hook(self):
         # PROTECTED REGION ID(Fsp.always_executed_hook) ENABLED START #
@@ -215,20 +173,8 @@ class Fsp(SKACapability):
 
     def delete_device(self):
         # PROTECTED REGION ID(Fsp.delete_device) ENABLED START #
-        """Hook to delete device. Turn corr, pss, pst, vlbi, corr and pss subarray OFF. Remove membership; """
-        self._proxy_correlation.SetState(tango.DevState.OFF)
-        self._proxy_pss.SetState(tango.DevState.OFF)
-        self._proxy_pst.SetState(tango.DevState.OFF)
-        self._proxy_vlbi.SetState(tango.DevState.OFF)
-        self._group_fsp_corr_subarray.command_inout("Off")
-        self._group_fsp_pss_subarray.command_inout("Off")
-        self._group_fsp_pst_subarray.command_inout("Off")
-
-        # remove all subarray membership
-        for subarray_ID in self._subarray_membership[:]:
-            self.RemoveSubarrayMembership(subarray_ID)
-        
-        self.set_state(tango.DevState.OFF)
+        """Hook to delete device."""
+        pass
         # PROTECTED REGION END #    //  Fsp.delete_device
 
     # ------------------
@@ -287,51 +233,149 @@ class Fsp(SKACapability):
     # Commands
     # --------
 
-    def is_On_allowed(self):
-        """allowed if FSP state is OFF"""
-        if self.dev_state() == tango.DevState.OFF:
-            return True
-        return False
+    class InitCommand(SKACapability.InitCommand):
+        """
+        A class for the Fsp's init_device() "command".
+        """
 
-    @command()
-    def On(self):
-        # PROTECTED REGION ID(Fsp.On) ENABLED START #
-        """Set corr, pss, pst, vlbi to 'DISABLE'. Set corr and pss subarray to 'On'. Set FSP device to 'On'."""
-        self._proxy_correlation.SetState(tango.DevState.DISABLE)
-        self._proxy_pss.SetState(tango.DevState.DISABLE)
-        self._proxy_pst.SetState(tango.DevState.DISABLE)
-        self._proxy_vlbi.SetState(tango.DevState.DISABLE)
-        self._group_fsp_corr_subarray.command_inout("On")
-        self._group_fsp_pss_subarray.command_inout("On")
-        self._group_fsp_pst_subarray.command_inout("On")
+        def __get_capability_proxies(
+            self: Fsp.InitCommand, 
+        ) -> None:
 
-        self.set_state(tango.DevState.ON)
-        # PROTECTED REGION END #    //  Fsp.On
+            # for now, assume that given addresses are valid
+            device = self.target
 
-    def is_Off_allowed(self):
-        """allowed if FSP state is ON"""
-        if self.dev_state() == tango.DevState.ON:
-            return True
-        return False
+            if device.CorrelationAddress:
+                device._proxy_correlation = tango.DeviceProxy(device.CorrelationAddress)
+            if device.PSSAddress:
+                device._proxy_pss = tango.DeviceProxy(device.PSSAddress)
+            if device.PSTAddress:
+                device._proxy_pst = tango.DeviceProxy(device.PSTAddress)
+            if device.VLBIAddress:
+                device._proxy_vlbi = tango.DeviceProxy(device.VLBIAddress)
+            if device.FspCorrSubarray:
+                device._proxy_fsp_corr_subarray = [*map(
+                    tango.DeviceProxy,
+                    list(device.FspCorrSubarray)
+                )]
+            if device.FspPssSubarray:
+                device._proxy_fsp_pss_subarray = [*map(
+                    tango.DeviceProxy,
+                    list(device.FspPssSubarray)
+                )]
+            if device.FspPstSubarray:
+                device._proxy_fsp_pst_subarray = [*map(
+                    tango.DeviceProxy,
+                    list(device.FspPstSubarray)
+                )]
 
-    @command()
-    def Off(self):
-        # PROTECTED REGION ID(Fsp.Off) ENABLED START #
-        """Send OFF signal to all the subordinates in the FSP'. Turn Off FSP device. Remove all Subarray membership. """
-        self._proxy_correlation.SetState(tango.DevState.OFF)
-        self._proxy_pss.SetState(tango.DevState.OFF)
-        self._proxy_pst.SetState(tango.DevState.OFF)
-        self._proxy_vlbi.SetState(tango.DevState.OFF)
-        self._group_fsp_corr_subarray.command_inout("Off")
-        self._group_fsp_pss_subarray.command_inout("Off")
-        self._group_fsp_pst_subarray.command_inout("Off")
+        def do(
+            self: Fsp.InitCommand,
+        ) -> Tuple[ResultCode, str]:
+            """
+            Stateless hook for device initialisation.
 
-        # remove all subarray membership
-        for subarray_ID in self._subarray_membership[:]:
-            self.RemoveSubarrayMembership(subarray_ID)
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
 
-        self.set_state(tango.DevState.OFF)
-        # PROTECTED REGION END #    //  Fsp.Off
+            (result_code,message)=super().do()
+
+            device = self.target
+
+            # defines self._proxy_correlation, self._proxy_pss, self._proxy_pst, self._proxy_vlbi,
+            # and self._proxy_fsp_corr_subarray
+            self.__get_capability_proxies()
+
+            device._fsp_id = device.FspID
+
+            # initialize attribute values
+            device._function_mode = 0  # IDLE
+            device._subarray_membership = []
+            device._scan_id = 0
+            device._config_id = ""
+            device._jones_matrix = [[0.0] * 4 for _ in range(4)]
+            device._delay_model = [[0.0] * 6 for _ in range(4)]
+            device._timing_beam_weights = [[0.0] * 6 for _ in range(4)]
+
+            # initialize FSP subarray group
+            device._group_fsp_corr_subarray = tango.Group("FSP Subarray Corr")
+            for fqdn in list(device.FspCorrSubarray):
+                device._group_fsp_corr_subarray.add(fqdn)
+
+            device._group_fsp_pss_subarray = tango.Group("FSP Subarray Pss")
+            for fqdn in list(device.FspPssSubarray):
+                device._group_fsp_pss_subarray.add(fqdn)
+
+            device._group_fsp_pst_subarray = tango.Group("FSP Subarray Pst")
+            for fqdn in list(device.FspPstSubarray):
+                device._group_fsp_pst_subarray.add(fqdn)
+
+            return (result_code,message)
+
+    class OnCommand(SKABaseDevice.OnCommand):
+        """
+        A class for the Fsp's On() command.
+        """
+        def do(
+            self: Fsp.OnCommand,
+        ) -> Tuple[ResultCode, str]:
+            """
+            Stateless hook for On() command functionality.
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
+            (result_code,message)=super().do()
+
+            device = self.target
+
+            device._proxy_correlation.SetState(tango.DevState.DISABLE)
+            device._proxy_pss.SetState(tango.DevState.DISABLE)
+            device._proxy_pst.SetState(tango.DevState.DISABLE)
+            device._proxy_vlbi.SetState(tango.DevState.DISABLE)
+            device._group_fsp_corr_subarray.command_inout("On")
+            device._group_fsp_pss_subarray.command_inout("On")
+            device._group_fsp_pst_subarray.command_inout("On")
+
+            return (result_code,message)
+    
+    class OffCommand(SKABaseDevice.OffCommand):
+        """
+        A class for the Fsp's Off() command.
+        """
+        def do(
+            self: Fsp.OffCommand,
+        ) -> Tuple[ResultCode, str]:
+            """
+            Stateless hook for Off() command functionality.
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
+            (result_code,message)=super().do()
+
+            device = self.target
+
+            device._proxy_correlation.SetState(tango.DevState.OFF)
+            device._proxy_pss.SetState(tango.DevState.OFF)
+            device._proxy_pst.SetState(tango.DevState.OFF)
+            device._proxy_vlbi.SetState(tango.DevState.OFF)
+            device._group_fsp_corr_subarray.command_inout("Off")
+            device._group_fsp_pss_subarray.command_inout("Off")
+            device._group_fsp_pst_subarray.command_inout("Off")
+
+            # remove all subarray membership
+            for subarray_ID in device._subarray_membership[:]:
+                device.RemoveSubarrayMembership(subarray_ID)
+
+            return (result_code,message)
 
     def is_SetFunctionMode_allowed(self):
         """allowed if FSP state is ON"""
