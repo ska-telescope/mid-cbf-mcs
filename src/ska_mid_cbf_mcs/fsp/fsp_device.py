@@ -35,6 +35,8 @@ file_path = os.path.dirname(os.path.abspath(__file__))
 
 from ska_tango_base import SKACapability, SKABaseDevice
 from ska_tango_base.commands import ResultCode
+from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
+from ska_mid_cbf_mcs.group_proxy import CbfGroupProxy
 # PROTECTED REGION END #    //  Fsp.additionnal_import
 
 __all__ = ["Fsp", "main"]
@@ -168,7 +170,20 @@ class Fsp(SKACapability):
     def always_executed_hook(self):
         # PROTECTED REGION ID(Fsp.always_executed_hook) ENABLED START #
         """Hook to be executed before any commands."""
-        pass
+
+        if self._group_fsp_corr_subarray is None:
+            self._group_fsp_corr_subarray = CbfGroupProxy("FSP Subarray Corr", logger=self.logger)
+            for fqdn in list(self.FspCorrSubarray):
+                self._group_fsp_corr_subarray.add(fqdn)
+        if self._group_fsp_pss_subarray is None:
+            self._group_fsp_pss_subarray = CbfGroupProxy("FSP Subarray Pss", logger=self.logger)
+            for fqdn in list(self.FspPssSubarray):
+                self._group_fsp_pss_subarray.add(fqdn)
+        if self._group_fsp_pst_subarray is None:
+            self._group_fsp_pst_subarray = CbfGroupProxy("FSP Subarray Pst", logger=self.logger)
+            for fqdn in list(self.FspPstSubarray):
+                self._group_fsp_pst_subarray.add(fqdn)
+
         # PROTECTED REGION END #    //  Fsp.always_executed_hook
 
     def delete_device(self):
@@ -246,27 +261,43 @@ class Fsp(SKACapability):
             device = self.target
 
             if device.CorrelationAddress:
-                device._proxy_correlation = tango.DeviceProxy(device.CorrelationAddress)
+                device._proxy_correlation = CbfDeviceProxy(
+                fqdn=device.CorrelationAddress,
+                logger=device.logger
+            )
             if device.PSSAddress:
-                device._proxy_pss = tango.DeviceProxy(device.PSSAddress)
+                device._proxy_pss = CbfDeviceProxy(
+                fqdn=device.PSSAddress,
+                logger=device.logger
+            )
             if device.PSTAddress:
-                device._proxy_pst = tango.DeviceProxy(device.PSTAddress)
+                device._proxy_pst = CbfDeviceProxy(
+                fqdn=device.PSTAddress,
+                logger=device.logger
+            )
             if device.VLBIAddress:
-                device._proxy_vlbi = tango.DeviceProxy(device.VLBIAddress)
+                device._proxy_vlbi = CbfDeviceProxy(
+                fqdn=device.VLBIAddress,
+                logger=device.logger
+            )
+
             if device.FspCorrSubarray:
                 device._proxy_fsp_corr_subarray = [*map(
-                    tango.DeviceProxy,
-                    list(device.FspCorrSubarray)
+                    CbfDeviceProxy,
+                    list(device.FspCorrSubarray),
+                    [device.logger] * len(list(device.FspCorrSubarray)),
                 )]
             if device.FspPssSubarray:
                 device._proxy_fsp_pss_subarray = [*map(
-                    tango.DeviceProxy,
-                    list(device.FspPssSubarray)
+                    CbfDeviceProxy,
+                    list(device.FspPssSubarray),
+                    [device.logger] * len(list(device.FspPssSubarray)),
                 )]
             if device.FspPstSubarray:
                 device._proxy_fsp_pst_subarray = [*map(
-                    tango.DeviceProxy,
-                    list(device.FspPstSubarray)
+                    CbfDeviceProxy,
+                    list(device.FspPstSubarray),
+                    [device.logger] * len(list(device.FspPstSubarray)),
                 )]
 
         def do(
@@ -301,17 +332,9 @@ class Fsp(SKACapability):
             device._timing_beam_weights = [[0.0] * 6 for _ in range(4)]
 
             # initialize FSP subarray group
-            device._group_fsp_corr_subarray = tango.Group("FSP Subarray Corr")
-            for fqdn in list(device.FspCorrSubarray):
-                device._group_fsp_corr_subarray.add(fqdn)
-
-            device._group_fsp_pss_subarray = tango.Group("FSP Subarray Pss")
-            for fqdn in list(device.FspPssSubarray):
-                device._group_fsp_pss_subarray.add(fqdn)
-
-            device._group_fsp_pst_subarray = tango.Group("FSP Subarray Pst")
-            for fqdn in list(device.FspPstSubarray):
-                device._group_fsp_pst_subarray.add(fqdn)
+            device._group_fsp_corr_subarray = None
+            device._group_fsp_pss_subarray = None
+            device._group_fsp_pst_subarray = None
 
             return (result_code,message)
 
