@@ -10,6 +10,7 @@
 """Contain the tests for the Vcc."""
 
 from __future__ import annotations
+from typing import List
 
 # Standard imports
 import os
@@ -60,9 +61,21 @@ class TestFsp:
         device_under_test.Off()
         assert device_under_test.State() == DevState.OFF
     
+    @pytest.mark.parametrize(
+        "sub_ids", 
+        [
+            (
+                [3, 4, 15]
+            ),
+            (
+                [5, 1, 2]
+            )
+        ]
+    )
     def test_AddRemoveSubarrayMembership(
         self: TestFsp,
-        device_under_test: CbfDeviceProxy
+        device_under_test: CbfDeviceProxy,
+        sub_ids: List[int]
     ) -> None:
 
         device_under_test.On()
@@ -71,33 +84,30 @@ class TestFsp:
         # subarray membership should be empty
         assert device_under_test.subarrayMembership == None
 
-        # add FSP to some subarrays
-        test_sub_ids = [3,4]
-        for sub_id in test_sub_ids:
+        # add fsp to all but last test subarray
+        for sub_id in sub_ids[:-1]:
             device_under_test.AddSubarrayMembership(sub_id)
         time.sleep(5)
-        for idx, sub_id in enumerate(test_sub_ids):
+        for idx, sub_id in enumerate(sub_ids[:-1]):
             assert device_under_test.read_attribute("subarrayMembership", \
-                extract_as=tango.ExtractAs.List).value[idx] == test_sub_ids[idx]
+                extract_as=tango.ExtractAs.List).value[idx] == sub_ids[:-1][idx]
 
-        # remove from a subarray
-        device_under_test.RemoveSubarrayMembership(3)
-        test_sub_ids.remove(3)
+        # remove fsp from first test subarray
+        device_under_test.RemoveSubarrayMembership(sub_ids[0])
         time.sleep(5)
-        for idx, sub_id in enumerate(test_sub_ids):
+        for idx, sub_id in enumerate(sub_ids[1:-1]):
             assert device_under_test.read_attribute("subarrayMembership", \
-                extract_as=tango.ExtractAs.List).value[idx] == test_sub_ids[idx]
+                extract_as=tango.ExtractAs.List).value[idx] == sub_ids[1:-1][idx]
         
-        # add again...
-        device_under_test.AddSubarrayMembership(15)
-        test_sub_ids.append(15)
+        # add fsp to last test subarray
+        device_under_test.AddSubarrayMembership(sub_ids[-1])
         time.sleep(5)
-        for idx, sub_id in enumerate(test_sub_ids):
+        for idx, sub_id in enumerate(sub_ids[1:]):
             assert device_under_test.read_attribute("subarrayMembership", \
-                extract_as=tango.ExtractAs.List).value[idx] == test_sub_ids[idx]
+                extract_as=tango.ExtractAs.List).value[idx] == sub_ids[1:][idx]
        
-        # remove from all subarrays
-        for sub_id in test_sub_ids:
+        # remove fsp from all subarrays
+        for sub_id in sub_ids:
             device_under_test.RemoveSubarrayMembership(sub_id)
         time.sleep(5)
         assert device_under_test.subarrayMembership == None
