@@ -136,7 +136,7 @@ def talon_dx_component_manager(
 
         :raise: scp.SCPException if sim_error is True
         """
-        src_ds = re.compile(r"tests\/unit\/talondx_component_manager\/.+\/build-ci-cross\/bin\/.*")
+        src_ds = re.compile(r"tests\/unit\/talondx_component_manager\/.+\/bin\/.*")
         src_fpga = re.compile(r"tests\/unit\/talondx_component_manager\/fpga-.*\/bin\/vcc3_2ch4.*")
         assert (src_ds.fullmatch(args[1]) or src_fpga.fullmatch(args[1]))
 

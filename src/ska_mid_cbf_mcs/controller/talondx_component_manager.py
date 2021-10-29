@@ -117,9 +117,9 @@ class TalonDxComponentManager:
                  otherwise ResultCode.FAILED
         """
         ret = ResultCode.OK
-        for talon_cfg in self.talondx_config["config-commands"]:
+        for talon_cfg in self.talondx_config["config_commands"]:
             try:
-                ip = talon_cfg["ip-address"]
+                ip = talon_cfg["ip_address"]
                 target = talon_cfg["target"]
                 self.logger.info(f"Copying FPGA bitstream and HPS binaries to {target}")
 
@@ -130,7 +130,7 @@ class TalonDxComponentManager:
                 
                     # Make the DS binaries directory
                     src_dir = f"{self.talondx_config_path}"
-                    dest_dir = talon_cfg["ds-path"]
+                    dest_dir = talon_cfg["ds_path"]
                     ssh_chan.exec_command(f"mkdir -p {dest_dir}")
                     exit_status = ssh_chan.recv_exit_status()
                     if exit_status != 0:
@@ -152,7 +152,7 @@ class TalonDxComponentManager:
                             dest=dest_dir)
 
                     # Copy the FPGA bitstream
-                    dest_dir = talon_cfg["fpga-path"]
+                    dest_dir = talon_cfg["fpga_path"]
                     ssh_chan = ssh_client.get_transport().open_session()
                     ssh_chan.exec_command(f"mkdir -p {dest_dir}")
                     exit_status = ssh_chan.recv_exit_status()
@@ -161,13 +161,13 @@ class TalonDxComponentManager:
                         ret = ResultCode.FAILED
                         continue
 
-                    fpga_dtb_name = talon_cfg['fpga-dtb-name']
+                    fpga_dtb_name = talon_cfg['fpga_dtb_name']
                     self._secure_copy(
                         ssh_client=ssh_client, 
                         src=f"{src_dir}/fpga-{target}/bin/{fpga_dtb_name}",
                         dest=dest_dir)
 
-                    fpga_rbf_name = talon_cfg['fpga-rbf-name']
+                    fpga_rbf_name = talon_cfg['fpga_rbf_name']
                     self._secure_copy(
                         ssh_client=ssh_client, 
                         src=f"{src_dir}/fpga-{target}/bin/{fpga_rbf_name}",
@@ -193,10 +193,10 @@ class TalonDxComponentManager:
                  otherwise ResultCode.FAILED
         """
         ret = ResultCode.OK
-        for talon_cfg in self.talondx_config["config-commands"]:
-            ip = talon_cfg["ip-address"]
+        for talon_cfg in self.talondx_config["config_commands"]:
+            ip = talon_cfg["ip_address"]
             target = f"root@{ip}"
-            inst = talon_cfg["server-instance"]
+            inst = talon_cfg["server_instance"]
 
             try:
                 with SSHClient() as ssh_client:
@@ -229,8 +229,8 @@ class TalonDxComponentManager:
         # Create device proxies for the HPS master devices
         ret = ResultCode.OK
         self.proxies = {}
-        for talon_cfg in self.talondx_config["config-commands"]:
-            fqdn = talon_cfg["ds-hps-master-fqdn"]
+        for talon_cfg in self.talondx_config["config_commands"]:
+            fqdn = talon_cfg["ds_hps_master_fqdn"]
 
             self.logger.info(f"Trying connection to {fqdn} device")
             try:
@@ -250,8 +250,8 @@ class TalonDxComponentManager:
                  otherwise ResultCode.FAILED
         """    
         ret = ResultCode.OK
-        for talon_cfg in self.talondx_config['config-commands']:
-            hps_master_fqdn = talon_cfg["ds-hps-master-fqdn"]
+        for talon_cfg in self.talondx_config['config_commands']:
+            hps_master_fqdn = talon_cfg["ds_hps_master_fqdn"]
             hps_master = self.proxies[hps_master_fqdn]
 
             self.logger.info(f"Sending configure command to {hps_master_fqdn}")

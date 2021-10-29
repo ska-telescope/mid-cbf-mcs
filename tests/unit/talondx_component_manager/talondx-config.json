@@ -1,102 +1,16 @@
 {
-  "ds-binaries": [
-    {
-      "name": "ds-hps-master",
-      "git_project_id": 688,
-      "git_branch": "main",
-      "git_pipeline_job": "export"
-    },
-    {
-      "name": "ds-dish-packets-gen",
-      "git_project_id": 674,
-      "git_branch": "develop",
-      "git_pipeline_job": "export"
-    },
-    {
-      "name": "ds-gaussian-noise-gen",
-      "git_project_id": 657,
-      "git_branch": "develop",
-      "git_pipeline_job": "export"
-    },
-    {
-      "name": "ds-lstv-bandpass-filter",
-      "git_project_id": 668,
-      "git_branch": "develop",
-      "git_pipeline_job": "export"
-    },
-    {
-      "name": "ds-lstv-gen",
-      "git_project_id": 669,
-      "git_branch": "develop",
-      "git_pipeline_job": "export"
-    },
-    {
-      "name": "ds-lstv-playback",
-      "git_project_id": 663,
-      "git_branch": "develop",
-      "git_pipeline_job": "export"
-    },
-    {
-      "name": "ds-lstv-tone-generator",
-      "git_project_id": 667,
-      "git_branch": "develop",
-      "git_pipeline_job": "export"
-    },
-    {
-      "name": "ds-polarization-coupler",
-      "git_project_id": 664,
-      "git_branch": "develop",
-      "git_pipeline_job": "export"
-    },
-    {
-      "name": "ds-circuit-switch",
-      "git_project_id": 653,
-      "git_branch": "develop",
-      "git_pipeline_job": "export"
-    },
-    {
-      "name": "ds-vcc",
-      "git_project_id": 652,
-      "git_branch": "develop",
-      "git_pipeline_job": "export"
-    },
-    {
-      "name": "ds-fine-channelizer",
-      "git_project_id": 675,
-      "git_branch": "develop",
-      "git_pipeline_job": "export"
-    },
-    {
-      "name": "ds-dct",
-      "git_project_id": 671,
-      "git_branch": "develop",
-      "git_pipeline_job": "export"
-    },
-    {
-      "name": "ds-talondx-rdma",
-      "git_project_id": 672,
-      "git_branch": "develop",
-      "git_pipeline_job": "export"
-    },
-    {
-      "name": "ds-gaussian-noise-gen",
-      "git_project_id": 657,
-      "git_branch": "develop",
-      "git_pipeline_job": "export"
-    }
-  ],
-  "config-commands": [
+  "config_commands": [
     {
       "description": "Configures Talon DX to run VCC firmware and devices.",
       "target": "talon1",
-      "ip-address": "169.254.100.1",
-      "ds-hps-master-fqdn": "talondx-001/hpsmaster/hps-1",
-      "fpga-path": "/lib/firmware",
-      "fpga-dtb-name": "vcc3_2ch4.dtb",
-      "fpga-rbf-name": "vcc3_2ch4.core.rbf",
-      "fpga-label": "base",
-      "ds-path": "/lib/firmware/hps_software/vcc_test",
-      "server-instance": "talon1_test",
+      "ip_address": "169.254.100.1",
+      "ds_hps_master_fqdn": "talondx-001/hpsmaster/hps-1",
+      "fpga_path": "/lib/firmware",
+      "fpga_dtb_name": "vcc3_2ch4.dtb",
+      "fpga_rbf_name": "vcc3_2ch4.core.rbf",
+      "fpga_label": "base",
+      "ds_path": "/lib/firmware/hps_software/vcc_test",
+      "server_instance": "talon1_test",
       "devices": [
         "dscircuitswitch",
         "dsdct",
