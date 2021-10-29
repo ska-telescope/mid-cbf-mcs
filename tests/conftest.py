@@ -421,19 +421,6 @@ def init_proxies_fixture():
     
     return Proxies()
 
-@pytest.fixture(name="input_test_data", scope="class", \
-    params = [
-       ([1, 3, 4, 2], "/../data/ConfigureScan_basic.json") ] )
-    #params = [
-    #    ([4, 1, 2],    "/test_json/Configure_TM-CSP_v2.json") ] )
-    # params = [
-    #     ([1, 3, 4, 2], "/test_json/ConfigureScan_basic.json"),
-    #     ([4, 1, 2],    "/test_json/Configure_TM-CSP_v2.json") ] )
-
-def input_test_data(request):
-    file_name = request.param
-    yield  file_name
-
 @pytest.fixture(scope="class")
 def debug_device_is_on():
     # NOTE: set debug_device_is_on to True in order
