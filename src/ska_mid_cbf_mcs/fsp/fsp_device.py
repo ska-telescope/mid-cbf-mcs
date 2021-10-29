@@ -17,7 +17,7 @@
 # Fsp TANGO device class for the prototype
 from __future__ import annotations  # allow forward references in type hints
 
-from typing import Tuple
+from typing import List, Tuple
 
 # tango imports
 import tango
@@ -167,7 +167,7 @@ class Fsp(SKACapability):
             "Off", self.OffCommand(*device_args)
         )
 
-    def always_executed_hook(self):
+    def always_executed_hook(self: Fsp) -> None:
         # PROTECTED REGION ID(Fsp.always_executed_hook) ENABLED START #
         """Hook to be executed before any commands."""
 
@@ -186,7 +186,7 @@ class Fsp(SKACapability):
 
         # PROTECTED REGION END #    //  Fsp.always_executed_hook
 
-    def delete_device(self):
+    def delete_device(self: Fsp) -> None:
         # PROTECTED REGION ID(Fsp.delete_device) ENABLED START #
         """Hook to delete device."""
         pass
@@ -196,49 +196,49 @@ class Fsp(SKACapability):
     # Attributes methods
     # ------------------
 
-    def read_functionMode(self):
+    def read_functionMode(self: Fsp) -> tango.DevEnum:
         # PROTECTED REGION ID(Fsp.functionMode_read) ENABLED START #
         """Return functionMode attribute (DevEnum representing mode)."""
         return self._function_mode
         # PROTECTED REGION END #    //  Fsp.functionMode_read
 
-    def read_subarrayMembership(self):
+    def read_subarrayMembership(self: Fsp) -> List[int]:
         # PROTECTED REGION ID(Fsp.subarrayMembership_read) ENABLED START #
         """Return subarrayMembership attribute (an array of affiliations of the FSP)."""
         return self._subarray_membership
         # PROTECTED REGION END #    //  Fsp.subarrayMembership_read
 
-    def read_scanID(self):
+    def read_scanID(self: Fsp) -> int:
         # PROTECTED REGION ID(FspCorrSubarray.scanID_read) ENABLED START #
         """Return the scanID attribute."""
         return self._scan_id
         # PROTECTED REGION END #    //  FspCorrSubarray.scanID_read
 
-    def read_configID(self):
+    def read_configID(self: Fsp) -> str:
         # PROTECTED REGION ID(Fsp.configID_read) ENABLED START #
         """Return the configID attribute."""
         return self._config_id
         # PROTECTED REGION END #    //  Fsp.configID_read
 
-    def write_configID(self, value):
+    def write_configID(self: Fsp, value: str) -> None:
         # PROTECTED REGION ID(Fsp.configID_write) ENABLED START #
         """Set the configID attribute."""
         self._config_id=value
         # PROTECTED REGION END #    //  Fsp.configID_write
 
-    def read_jonesMatrix(self):
+    def read_jonesMatrix(self: Fsp) -> List[List[float]]:
         # PROTECTED REGION ID(Fsp.jonesMatrix_read) ENABLED START #
         """Return the jonesMatrix attribute."""
         return self._jones_matrix
         # PROTECTED REGION END #    //  Fsp.jonesMatrix_read
 
-    def read_delayModel(self):
+    def read_delayModel(self: Fsp) -> List[List[float]]:
         # PROTECTED REGION ID(Fsp.delayModel_read) ENABLED START #
         """Return the delayModel attribute."""
         return self._delay_model
         # PROTECTED REGION END #    //  Fsp.delayModel_read
     
-    def read_timingBeamWeights(self):
+    def read_timingBeamWeights(self: Fsp) -> List[List[float]]:
         # PROTECTED REGION ID(Fsp.timingBeamWeights_read) ENABLED START #
         """Return the timingBeamWeights attribute."""
         return self._timing_beam_weights
@@ -400,7 +400,9 @@ class Fsp(SKACapability):
 
             return (result_code,message)
 
-    def is_SetFunctionMode_allowed(self):
+    def is_SetFunctionMode_allowed(
+        self: Fsp
+        ) -> bool:
         """allowed if FSP state is ON"""
         if self.dev_state() == tango.DevState.ON:
             return True
@@ -410,7 +412,10 @@ class Fsp(SKACapability):
         dtype_in='str',
         doc_in='Function mode'
     )
-    def SetFunctionMode(self, argin):
+    def SetFunctionMode(
+        self: Fsp,
+        argin: str,
+        ) -> None:
         # PROTECTED REGION ID(Fsp.SetFunctionMode) ENABLED START #
         """argin should be one of ('IDLE','CORR','PSS-BF','PST-BF','VLBI'). 
         If IDLE set the pss, pst, corr, Vlbi to 'DISABLE'.
@@ -451,7 +456,7 @@ class Fsp(SKACapability):
             self.logger.warn("functionMode not valid. Ignoring.")
         # PROTECTED REGION END #    //  Fsp.SetFunctionMode
 
-    def is_AddSubarrayMembership_allowed(self):
+    def is_AddSubarrayMembership_allowed(self: Fsp) -> bool:
         """allowed if the FSP state is ON"""
         if self.dev_state() == tango.DevState.ON:
             return True
@@ -461,7 +466,10 @@ class Fsp(SKACapability):
         dtype_in='uint16',
         doc_in='Subarray ID'
     )
-    def AddSubarrayMembership(self, argin):
+    def AddSubarrayMembership(
+        self: Fsp,
+        argin: int,
+        ) -> None:
         # PROTECTED REGION ID(Fsp.AddSubarrayMembership) ENABLED START #
         """Input should be an integer representing the subarray affiliation. Add a subarray to the subarrayMembership list"""
         if argin not in self._subarray_membership:
@@ -471,7 +479,7 @@ class Fsp(SKACapability):
             self.logger.warn(log_msg)
         # PROTECTED REGION END #    //  Fsp.AddSubarrayMembership
 
-    def is_RemoveSubarrayMembership_allowed(self):
+    def is_RemoveSubarrayMembership_allowed(self: Fsp) -> bool:
         """allowed if FSP state is ON"""
         if self.dev_state() == tango.DevState.ON:
             return True
@@ -481,7 +489,10 @@ class Fsp(SKACapability):
         dtype_in='uint16',
         doc_in='Subarray ID'
     )
-    def RemoveSubarrayMembership(self, argin):
+    def RemoveSubarrayMembership(
+        self: Fsp,
+        argin: int,
+        ) -> None:
         # PROTECTED REGION ID(Fsp.RemoveSubarrayMembership) ENABLED START #
         """Input should be an integer representing the subarray number. 
         If subarrayMembership is empty after removing (no subarray is using this FSP), set function mode to empty"""
@@ -499,7 +510,7 @@ class Fsp(SKACapability):
         dtype_out='DevString',
         doc_out="returns configID for all the fspCorrSubarray",
     )
-    def getConfigID(self):
+    def getConfigID(self: Fsp) -> str:
         # PROTECTED REGION ID(Fsp.getConfigID) ENABLED START #
         """
         returns configID for all the fspCorrSubarray
@@ -510,7 +521,7 @@ class Fsp(SKACapability):
         return str(result)
         # PROTECTED REGION END #    //  Fsp.getConfigID
 
-    def is_UpdateJonesMatrix_allowed(self):
+    def is_UpdateJonesMatrix_allowed(self: Fsp) -> bool:
         """allowed when Devstate is ON and ObsState is READY OR SCANNINNG"""
         #TODO implement obsstate in FSP
         if self.dev_state() == tango.DevState.ON:
@@ -521,7 +532,10 @@ class Fsp(SKACapability):
         dtype_in='str',
         doc_in="Jones Matrix, given per frequency slice"
     )
-    def UpdateJonesMatrix(self, argin):
+    def UpdateJonesMatrix(
+        self: Fsp, 
+        argin: str,
+        ) -> None:
         # PROTECTED REGION ID(Fsp.UpdateJonesMatrix) ENABLED START #
         self.logger.debug("Fsp.UpdateJonesMatrix")
         """update FSP's Jones matrix (serialized JSON object)"""
@@ -556,7 +570,7 @@ class Fsp(SKACapability):
             self.logger.error(log_msg)
         # PROTECTED REGION END #    // Fsp.UpdateJonesMatrix
 
-    def is_UpdateDelayModel_allowed(self):
+    def is_UpdateDelayModel_allowed(self: Fsp) -> bool:
         """allowed when Devstate is ON and ObsState is READY OR SCANNINNG"""
         #TODO implement obsstate in FSP
         if self.dev_state() == tango.DevState.ON:
@@ -567,7 +581,10 @@ class Fsp(SKACapability):
         dtype_in='str',
         doc_in="Delay Model, per receptor per polarization per timing beam"
     )
-    def UpdateDelayModel(self, argin):
+    def UpdateDelayModel(
+        self: Fsp, 
+        argin: str,
+        ) -> None:
         # PROTECTED REGION ID(Fsp.UpdateDelayModel) ENABLED START #
         self.logger.debug("Fsp.UpdateDelayModel")
         """update FSP's delay model (serialized JSON object)"""
@@ -603,7 +620,7 @@ class Fsp(SKACapability):
             self.logger.error(log_msg)
         # PROTECTED REGION END #    // Fsp.UpdateDelayModel
 
-    def is_UpdateTimingBeamWeights_allowed(self):
+    def is_UpdateTimingBeamWeights_allowed(self: Fsp) -> bool:
         """allowed when Devstate is ON and ObsState is READY OR SCANNINNG"""
         #TODO implement obsstate in FSP
         if self.dev_state() == tango.DevState.ON:
@@ -614,7 +631,10 @@ class Fsp(SKACapability):
         dtype_in='str',
         doc_in="Timing Beam Weights, per beam per receptor per group of 8 channels"
     )
-    def UpdateBeamWeights(self, argin):
+    def UpdateBeamWeights(
+        self: Fsp, 
+        argin: str,
+        ) -> None:
         # PROTECTED REGION ID(Fsp.UpdateTimingBeamWeights) ENABLED START #
         self.logger.debug("Fsp.UpdateBeamWeights")
         """update FSP's timing beam weights (serialized JSON object)"""
