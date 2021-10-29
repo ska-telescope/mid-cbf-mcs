@@ -59,3 +59,45 @@ class TestFsp:
 
         device_under_test.Off()
         assert device_under_test.State() == DevState.OFF
+    
+    def test_AddRemoveSubarrayMembership(
+        self: TestFsp,
+        device_under_test: CbfDeviceProxy
+    ) -> None:
+
+        device_under_test.On()
+        assert device_under_test.State() == DevState.ON
+
+        # subarray membership should be empty
+        assert device_under_test.subarrayMembership == None
+
+        # add FSP to some subarrays
+        test_sub_ids = [3,4]
+        for sub_id in test_sub_ids:
+            device_under_test.AddSubarrayMembership(sub_id)
+        time.sleep(5)
+        for idx, sub_id in enumerate(test_sub_ids):
+            assert device_under_test.read_attribute("subarrayMembership", \
+                extract_as=tango.ExtractAs.List).value[idx] == test_sub_ids[idx]
+
+        # remove from a subarray
+        device_under_test.RemoveSubarrayMembership(3)
+        test_sub_ids.remove(3)
+        time.sleep(5)
+        for idx, sub_id in enumerate(test_sub_ids):
+            assert device_under_test.read_attribute("subarrayMembership", \
+                extract_as=tango.ExtractAs.List).value[idx] == test_sub_ids[idx]
+        
+        # add again...
+        device_under_test.AddSubarrayMembership(15)
+        test_sub_ids.append(15)
+        time.sleep(5)
+        for idx, sub_id in enumerate(test_sub_ids):
+            assert device_under_test.read_attribute("subarrayMembership", \
+                extract_as=tango.ExtractAs.List).value[idx] == test_sub_ids[idx]
+       
+        # remove from all subarrays
+        for sub_id in test_sub_ids:
+            device_under_test.RemoveSubarrayMembership(sub_id)
+        time.sleep(5)
+        assert device_under_test.subarrayMembership == None
