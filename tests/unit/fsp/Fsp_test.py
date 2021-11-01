@@ -35,7 +35,6 @@ from ska_mid_cbf_mcs.testing.tango_harness import DeviceToLoadType
 
 from ska_tango_base.control_model import HealthState, AdminMode, ObsState
 
-
 class TestFsp:
     """
     Test class for CbfController tests.
@@ -111,3 +110,54 @@ class TestFsp:
             device_under_test.RemoveSubarrayMembership(sub_id)
         time.sleep(5)
         assert device_under_test.subarrayMembership == None
+    
+    @pytest.mark.parametrize(
+        "timing_beam_weights_file_name, \
+         sub_id",
+        [
+            (
+                "/../../data/timingbeamweights_fsp.json",
+                1
+            )
+        ]
+    )
+    def test_UpdateBeamWeights(
+        self: TestFsp,
+        device_under_test: CbfDeviceProxy,
+        timing_beam_weights_file_name: str,
+        sub_id: int
+    ) -> None:
+
+        device_under_test.On()
+        device_under_test.AddSubarrayMembership(sub_id)
+
+        # timing beam weights should be set to 0.0 after init
+        num_weights = 6
+        num_receptors = 4
+        assert device_under_test.read_attribute("timingBeamWeights", \
+             extract_as=tango.ExtractAs.List).value == [[0.0] * num_weights for _ in range(num_receptors)]
+
+        # update only valid for function mode PST-BF
+        device_under_test.SetFunctionMode("PST-BF")
+
+        # read the json file
+        f = open(file_path + timing_beam_weights_file_name)
+        json_str = f.read().replace("\n", "")
+        f.close()
+        timing_beam_weights = json.loads(json_str)
+        
+        # update the weights 
+        for weights in timing_beam_weights["beamWeights"]:
+            beam_weights_details = weights["beamWeightsDetails"]
+
+            device_under_test.UpdateBeamWeights(json.dumps(beam_weights_details))
+
+        # verify the weights were updated successfully 
+        for weights in timing_beam_weights["beamWeights"]:
+            beam_weights_details = weights["beamWeightsDetails"]
+            for receptor in beam_weights_details:
+                recptor_id = receptor["receptor"]
+                for frequency_slice in receptor["receptorWeightsDetails"]:
+                    weights = frequency_slice["weights"]
+                    assert device_under_test.read_attribute("timingBeamWeights", \
+                        extract_as=tango.ExtractAs.List).value[recptor_id -1] == weights
