@@ -16,5 +16,3 @@ ENV PATH=/home/tango/.local/bin:$PATH
 ################################################################################
 
 RUN python3 -m pip install -r requirements.txt .
-
-# CMD ["CbfController"]

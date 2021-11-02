@@ -30,8 +30,9 @@ from tango import AttrWriteType
 # add the path to import global_enum package.
 
 # SKA imports
+from ska_mid_cbf_mcs.controller.talondx_component_manager import TalonDxComponentManager
 from ska_tango_base import SKAMaster, SKABaseDevice
-from ska_tango_base.control_model import HealthState, AdminMode
+from ska_tango_base.control_model import HealthState, AdminMode, SimulationMode
 from ska_tango_base.commands import ResultCode
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_mid_cbf_mcs.group_proxy import CbfGroupProxy
@@ -75,6 +76,10 @@ class CbfController(SKAMaster):
 
     TalonLRU = device_property(
         dtype=('str',)
+    )
+
+    TalonDxConfigPath = device_property(
+        dtype=('str')
     )
 
     # ----------
@@ -228,6 +233,15 @@ class CbfController(SKAMaster):
         doc="Report the administration mode of the Subarray as an array of unsigned short.\nfor ex:\n[0,0,2,..]",
     )
 
+    simulationMode = attribute(
+        dtype=SimulationMode,
+        access=AttrWriteType.READ_WRITE,
+        memorized=True,
+        doc="Reports the simulation mode of the device. \nSome devices may implement "
+            "both modes, while others will have simulators that set simulationMode "
+            "to True while the real devices always set simulationMode to False.",
+    )
+
     # ---------------
     # General methods
     # ---------------
@@ -365,6 +379,12 @@ class CbfController(SKAMaster):
             device._group_vcc = None
             device._group_fsp = None
             device._group_subarray = None
+
+            # Create the Talon-DX component manager and initialize simulation
+            # mode to on
+            device._simulation_mode = SimulationMode.TRUE
+            device._talondx_component_manager = TalonDxComponentManager(
+                device.TalonDxConfigPath, device._simulation_mode, self.logger)
 
             message = "CbfController Init command completed OK"
             self.logger.info(message)
@@ -553,6 +573,15 @@ class CbfController(SKAMaster):
         of the Subarray as an array of unsigned short.\nfor ex:\n[0,0,2,..]"""
         return self._report_subarray_admin_mode
         # PROTECTED REGION END #    //  CbfController.reportSubarrayAdminMode_read
+
+    def write_simulationMode(self: CbfController, value: SimulationMode) -> None:
+        """
+        Set the Simulation Mode of the device.
+
+        :param value: SimulationMode
+        """
+        super().write_simulationMode(value)
+        self._talondx_component_manager.simulation_mode = value
 
     # --------
     # Commands
@@ -786,9 +815,14 @@ class CbfController(SKAMaster):
                         log_msg = "Failure in connection to " + fqdn + " device: " + str(item.reason)
                         device.logger.error(log_msg)
 
+            # Power on all the Talon boards
             for talon_lru_fqdn in device._fqdn_talon_lru:
                 device._proxies[talon_lru_fqdn].command_inout("On")
 
+            # Configure all the Talon boards
+            if device._talondx_component_manager.configure_talons() == ResultCode.FAILED:
+                return (ResultCode.FAILED, "Failed to configure Talon boards")
+            
             device._group_subarray.command_inout("On")
             device._group_vcc.command_inout("On")
             device._group_fsp.command_inout("On")

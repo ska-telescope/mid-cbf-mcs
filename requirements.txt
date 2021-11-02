@@ -16,3 +16,5 @@ pytest-xdist
 pytest-repeat
 pytest-pylint
 pyyaml
+scp
+paramiko
