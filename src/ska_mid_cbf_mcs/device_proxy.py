@@ -404,6 +404,39 @@ class CbfDeviceProxy:
         :return: the attribute value
         """
         return self._device.read_attribute(attribute_name)
+    
+    def remove_event(
+        self: CbfDeviceProxy, 
+        attribute_name: str,
+        subscription_id: int
+    ) -> None:
+        """
+        Register a callback for change events being pushed by the device.
+
+        :param attribute_name: the name of the attribute for which
+            change events are subscribed.
+        :param subscription_id: ID of event to unsubscribe from.
+        """
+        attribute_key = attribute_name.lower()
+        if attribute_key in self._change_event_subscription_ids:
+            del self._change_event_callbacks[attribute_key]
+            del self._change_event_subscription_ids[attribute_key]
+            self._unsubscribe_event(subscription_id)
+            self._logger.info(f"Unsubscribed from subscription {subscription_id}")
+        else:
+            self._logger.warn(
+                f"Unsubscribe error; proxy does not own subscription {subscription_id}"
+            )
+
+    @backoff.on_exception(backoff.expo, tango.DevFailed, factor=1, max_time=120)
+    def _unsubscribe_event(
+        self: CbfDeviceProxy, subscription_id: int) -> None:
+        """
+        Unsubscribe from an event.
+
+        :param subscription_id: ID of event to unsubscribe from.
+        """
+        return self._device.unsubscribe_event(subscription_id)
 
     # TODO: This method is commented out because it is implicated in our segfault
     # issues:

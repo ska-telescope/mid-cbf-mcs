@@ -968,14 +968,20 @@ class CbfSubarray(SKASubarray):
 
         # unsubscribe from TMC events
         for event_id in list(self._events_telstate.keys()):
-            self._events_telstate[event_id].unsubscribe_event(event_id)
-        self._events_telstate = {}
+            self._events_telstate[event_id].remove_event(event_id)
+            del self._events_telstate[event_id]
 
         # unsubscribe from FSP state change events
         for fspID in list(self._events_state_change_fsp.keys()):
             proxy_fsp = self._proxies_fsp[fspID - 1]
-            proxy_fsp.unsubscribe_event(self._events_state_change_fsp[fspID][0])  # state
-            proxy_fsp.unsubscribe_event(self._events_state_change_fsp[fspID][1])  # healthState
+            proxy_fsp.remove_event(
+                "State",
+                self._events_state_change_fsp[fspID][0]
+            )
+            proxy_fsp.remove_event(
+                "healthState",
+                self._events_state_change_fsp[fspID][1]
+            )
             del self._events_state_change_fsp[fspID]
             del self._fsp_state[self._fqdn_fsp[fspID - 1]]
             del self._fsp_health_state[self._fqdn_fsp[fspID - 1]]
@@ -1043,10 +1049,14 @@ class CbfSubarray(SKASubarray):
                 vccProxy = self._proxies_vcc[vccID - 1]
 
                 # unsubscribe from events
-                vccProxy.unsubscribe_event(self._events_state_change_vcc[vccID][0])  # state
-                vccProxy.unsubscribe_event(self._events_state_change_vcc[vccID][1])  # healthState
-                self.logger.warn(f"VCC {vccID} failed to unsubscribe from event " + \
-                    f"{self._events_state_change_vcc[vccID]}")
+                vccProxy.remove_event(
+                    "State",
+                    self._events_state_change_vcc[vccID][0]
+                )
+                vccProxy.remove_event(
+                    "healthState",
+                    self._events_state_change_vcc[vccID][1]
+                )
                 
                 del self._events_state_change_vcc[vccID]
                 del self._vcc_state[vccFQDN]
@@ -1054,7 +1064,9 @@ class CbfSubarray(SKASubarray):
 
 
                 # reset receptorID and subarrayMembership Vcc attribute:
-                vccProxy.receptorID = 0
+                # TODO: should VCC receptorID be altered here?
+                # currently the mapping is set in the controller
+                # vccProxy.receptorID = 0
                 vccProxy.subarrayMembership = 0
 
                 self._receptors.remove(receptorID)
@@ -1602,18 +1614,25 @@ class CbfSubarray(SKASubarray):
             :rtype: (ResultCode, str)
             """
             device = self.target
-            # Code here
+
             errs = []  # list of error messages
+
             receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
                                 device._proxy_cbf_controller.receptorToVcc)
+
             for receptorID in argin:
                 try:
                     vccID = receptor_to_vcc[receptorID]
                     vccProxy = device._proxies_vcc[vccID - 1]
 
                     self.logger.debug(
-                        (f"receptorID = {receptorID}, vccProxy.receptorID = {vccProxy.receptorID}")
+                        f"receptorID = {receptorID}, vccProxy.receptorID = {vccProxy.receptorID}"
                     )
+
+                    # vccProxy.receptorID = receptorID  # TODO - may not be needed?
+                    # self.logger.debug(
+                    #     f"receptorID = {receptorID}, vccProxy.receptorID = {vccProxy.receptorID}")
+                    # )
 
                     subarrayID = vccProxy.subarrayMembership
 

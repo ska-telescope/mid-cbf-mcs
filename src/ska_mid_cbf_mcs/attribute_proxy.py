@@ -96,7 +96,7 @@ class CbfAttributeProxy:
 
         self.__dict__["_change_event_lock"] = threading.Lock()
         self.__dict__["_change_event_subscription_id"] = None
-        self.__dict__["_change_event_callback"] = []
+        self.__dict__["_change_event_callback"] = None
 
         if connect:
             self.connect()
@@ -181,7 +181,6 @@ class CbfAttributeProxy:
         :param stateless: whether to use Tango's stateless subscription
             feature
         """
-        #attribute_key = self._attribute.name().lower()
         if self._change_event_subscription_id is None:
             self._change_event_callback = callback
             self._change_event_subscription_id = self._subscribe_change_event(stateless=stateless)
@@ -288,6 +287,32 @@ class CbfAttributeProxy:
         :return: the attribute value
         """
         return self._attribute.read()
+
+    def remove_event(
+        self: CbfAttributeProxy, subscription_id: int) -> None:
+        """
+        Register a callback for change events being pushed by the device.
+
+        :param subscription_id: ID of event to unsubscribe from.
+        """
+        if self._change_event_subscription_id == subscription_id:
+            self._change_event_callback = None
+            self._change_event_subscription_id = None
+            self._unsubscribe_event(subscription_id)
+            self._logger.info(f"Unsubscribed from subscription {subscription_id}")
+        else:
+            self._logger.warn(
+                f"Unsubscribe error; proxy does not own subscription {subscription_id}"
+            )
+
+    @backoff.on_exception(backoff.expo, tango.DevFailed, factor=1, max_time=120)
+    def _unsubscribe_event(self: CbfAttributeProxy, subscription_id: int) -> None:
+        """
+        Unsubscribe from an event.
+
+        :param subscription_id: ID of event to unsubscribe from.
+        """
+        self._attribute.unsubscribe_event(subscription_id)
 
     # TODO: This method is commented out because it is implicated in our segfault
     # issues:
