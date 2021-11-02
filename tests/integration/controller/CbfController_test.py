@@ -14,9 +14,6 @@ import sys
 import os
 import time
 
-# Path
-file_path = os.path.dirname(os.path.abspath(__file__))
-
 # Tango imports
 import tango
 from tango import DevState

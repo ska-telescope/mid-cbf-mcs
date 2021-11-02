@@ -288,6 +288,9 @@ class CbfDeviceProxy:
         else:
             self._change_event_callbacks[attribute_key].append(callback)
             self._call_callback(callback, self._read(attribute_name))
+        self._logger.info( "New event ID: " + \
+            f"{self._change_event_subscription_ids[attribute_key]}"
+        )
         return self._change_event_subscription_ids[attribute_key]
 
     @backoff.on_exception(backoff.expo, tango.DevFailed, factor=1, max_time=120)

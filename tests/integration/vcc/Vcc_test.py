@@ -89,7 +89,7 @@ class TestVcc:
         assert create_vcc_proxy.State() == DevState.ON
         
 
-        config_file_name = "/../data/Vcc_ConfigureScan_basic.json"
+        config_file_name = "/../../data/Vcc_ConfigureScan_basic.json"
         f = open(file_path + config_file_name)
         json_str = f.read().replace("\n", "")
         configuration = copy.deepcopy(json.loads(json_str))

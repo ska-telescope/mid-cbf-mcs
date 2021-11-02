@@ -181,6 +181,7 @@ class CbfAttributeProxy:
         :param stateless: whether to use Tango's stateless subscription
             feature
         """
+        #attribute_key = self._attribute.name().lower()
         if self._change_event_subscription_id is None:
             self._change_event_callback = callback
             self._change_event_subscription_id = self._subscribe_change_event(stateless=stateless)
@@ -283,8 +284,6 @@ class CbfAttributeProxy:
         Read an attribute manually.
 
         Used when we receive an event with empty attribute data.
-
-        :param attribute_name: the name of the attribute to be read
 
         :return: the attribute value
         """

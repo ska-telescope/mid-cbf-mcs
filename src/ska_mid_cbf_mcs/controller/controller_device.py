@@ -336,24 +336,25 @@ class CbfController(SKAMaster):
             device._fqdn_subarray = list(device.CbfSubarray)[:device._count_subarray]
             device._fqdn_talon_lru = list(device.TalonLRU)
 
-            # initialize dicts with maps receptorID <=> vccID (randomly for now, for testing purposes)
             # maps receptor IDs to VCC IDs, in the form "receptorID:vccID"
             device._receptor_to_vcc = []
             # maps VCC IDs to receptor IDs, in the form "vccID:receptorID"
             device._vcc_to_receptor = []
-
-            remaining = list(range(1, device._count_vcc + 1))
-            for i in range(1, device._count_vcc + 1):
-                receptorIDIndex = randint(0, len(remaining) - 1)
-                receptorID = remaining[receptorIDIndex]
-                device._receptor_to_vcc.append("{}:{}".format(receptorID, i))
-                device._vcc_to_receptor.append("{}:{}".format(i, receptorID))
+            
+            # initialize dicts with maps receptorID <=> vccID 
+            # TODO: vccID == receptorID for now, for testing purposes
+            for vccID in range(1, device._count_vcc + 1):
+                receptorID = vccID
+                device._receptor_to_vcc.append(f"{receptorID}:{vccID}")
+                device._vcc_to_receptor.append(f"{vccID}:{receptorID}")
                 vcc_proxy = CbfDeviceProxy(
-                    fqdn=device._fqdn_vcc[i - 1], 
+                    fqdn=device._fqdn_vcc[vccID - 1], 
                     logger=device.logger
                 )
                 vcc_proxy.receptorID = receptorID
-                del remaining[receptorIDIndex]
+                self.logger.debug(
+                    (f"receptorID = {receptorID}, vccProxy.receptorID = {vcc_proxy.receptorID}")
+                )
 
             # initialize the dict with subarray/capability proxies
             device._proxies = {}  # device_name:proxy
@@ -562,8 +563,7 @@ class CbfController(SKAMaster):
         """
         A class for the CbfController's On() command.
         """
-    
-
+        
         def __state_change_event_callback(
             self: CbfController.OnCommand, 
             fqdn,
@@ -676,10 +676,10 @@ class CbfController(SKAMaster):
                     elif "fsp" in fqdn:
                         if value not in device._report_fsp_subarray_membership[
                             device._fqdn_fsp.index(fqdn)]:
-                            device.logger.warning("{}".format(value))
-                            device._report_fsp_subarray_membership[
-                                device._fqdn_fsp.index(fqdn)
-                            ].append(value)
+                                device.logger.info(f"{value}")
+                                device._report_fsp_subarray_membership[
+                                    device._fqdn_fsp.index(fqdn)
+                                ].append(value)
                     else:
                         # should NOT happen!
                         log_msg = "Received event for unknown device " + str(name)
@@ -698,7 +698,6 @@ class CbfController(SKAMaster):
                     " of device " + fqdn
                 )
 
-        
         def __config_ID_event_callback(
             self: CbfController.OnCommand, 
             fqdn,

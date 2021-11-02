@@ -36,11 +36,6 @@
                         "tdc_destination_address": ["fizz", "buzz", "80"]
                     }
                 ]
-            },
-            {
-                "search_window_id": 2,
-                "search_window_tuning": 7000000000,
-                "tdc_enable": false
             }
         ],
         "fsp": [

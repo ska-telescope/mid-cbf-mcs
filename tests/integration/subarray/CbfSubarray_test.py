@@ -3,8 +3,6 @@
 #
 # This file is part of the csp-lmc-prototype project
 #
-#
-#
 # Distributed under the terms of the BSD-3-Clause license.
 # See LICENSE.txt for more info.
 """Contain the tests for the CbfSubarray."""
@@ -304,7 +302,7 @@ class TestCbfSubarray:
             assert all([proxies.subarray[1].receptors[i] == j for i, j in zip(range(3), [1, 3, 4])])
 
             # configure scan
-            config_file_name = "/../data/ConfigureScan_basic.json"
+            config_file_name = "/../../data/ConfigureScan_basic.json"
             f = open(file_path + config_file_name)
             proxies.subarray[1].ConfigureScan(f.read().replace("\n", ""))
             f.close()
@@ -534,7 +532,7 @@ class TestCbfSubarray:
             assert all([proxies.subarray[1].receptors[i] == j for i, j in zip(range(4), [4, 1, 3, 2])])
 
             # configure scan
-            f = open(file_path + "/../data/ConfigureScan_basic.json")
+            f = open(file_path + "/../../data/ConfigureScan_basic.json")
             proxies.subarray[1].ConfigureScan(f.read().replace("\n", ""))
             f.close()
             proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.READY, 3, 1)
@@ -611,13 +609,13 @@ class TestCbfSubarray:
             assert all([proxies.subarray[1].receptors[i] == j for i, j in zip(range(4), [4, 1, 3, 2])])
 
             # configure scan
-            f = open(file_path + "/../data/ConfigureScan_basic.json")
+            f = open(file_path + "/../../data/ConfigureScan_basic.json")
             proxies.subarray[1].ConfigureScan(f.read().replace("\n", ""))
             f.close()
             proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.READY, 3, 1)
             
             # update jones matrices from tm emulator
-            f = open(file_path + "/../data/jonesmatrix_fsp.json")
+            f = open(file_path + "/../../data/jonesmatrix_fsp.json")
             jones_matrix = json.loads(f.read().replace("\n", ""))
             epoch = str(int(time.time()))
             for matrix in jones_matrix["jonesMatrix"]:
@@ -645,7 +643,7 @@ class TestCbfSubarray:
             
 
             # update delay models from tm emulator
-            f = open(file_path + "/../data/delaymodel_fsp.json")
+            f = open(file_path + "/../../data/delaymodel_fsp.json")
             delay_model = json.loads(f.read().replace("\n", ""))
             epoch = str(int(time.time()))
             for model in delay_model["delayModel"]:
@@ -672,7 +670,7 @@ class TestCbfSubarray:
                     time.sleep(10)
 
             # update timing beam weights from tm emulator
-            f = open(file_path + "/../data/timingbeamweights.json")
+            f = open(file_path + "/../../data/timingbeamweights.json")
             timing_beam_weights = json.loads(f.read().replace("\n", ""))
             epoch = str(int(time.time()))
             for weights in timing_beam_weights["beamWeights"]:
@@ -781,7 +779,7 @@ class TestCbfSubarray:
             assert proxies.fspPstSubarray[fsp_pst_index-1].obsState == ObsState.READY
 
             # Send the Scan command
-            f2 = open(file_path + "/../data/Scan1_basic.json")
+            f2 = open(file_path + "/../../data/Scan1_basic.json")
             json_string = f2.read().replace("\n", "")
             input_scan_dict = json.loads(json_string)
             proxies.subarray[subarr_index].Scan(json_string)
@@ -849,7 +847,7 @@ class TestCbfSubarray:
         """
         
         # Read delay model data from file
-        f = open(file_path + "/../data/delaymodel.json")
+        f = open(file_path + "/../../data/delaymodel.json")
         delay_model = json.loads(f.read().replace("\n", ""))
         f.close()
 
@@ -879,7 +877,7 @@ class TestCbfSubarray:
             assert all([proxies.subarray[1].receptors[i] == j for i, j in zip(range(3), [1, 3, 4])])
 
             # configure scan
-            f = open(file_path + "/../data/ConfigureScan_basic.json")
+            f = open(file_path + "/../../data/ConfigureScan_basic.json")
             proxies.subarray[1].ConfigureScan(f.read().replace("\n", ""))
             f.close()
             proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.READY, 3, 1)
@@ -935,7 +933,7 @@ class TestCbfSubarray:
             assert proxies.vcc[proxies.receptor_to_vcc[4]].delayModel[1][5] == 3.4
 
             # transition to obsState=SCANNING
-            f2 = open(file_path + "/../data/Scan1_basic.json")
+            f2 = open(file_path + "/../../data/Scan1_basic.json")
             proxies.subarray[1].Scan(f2.read().replace("\n", ""))
             f2.close()
             proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.SCANNING, 1, 1)
@@ -1036,7 +1034,7 @@ class TestCbfSubarray:
             assert all([proxies.subarray[1].receptors[i] == j for i, j in zip(range(3), [1, 3, 4])])
 
             # configure scan
-            f = open(file_path + "/../data/ConfigureScan_basic.json")
+            f = open(file_path + "/../../data/ConfigureScan_basic.json")
             proxies.subarray[1].ConfigureScan(f.read().replace("\n", ""))
             f.close()
             proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.READY, 3, 1)
@@ -1044,7 +1042,7 @@ class TestCbfSubarray:
             assert proxies.subarray[1].obsState == ObsState.READY
 
             #create a Jones matrix
-            f = open(file_path + "/../data/jonesmatrix.json")
+            f = open(file_path + "/../../data/jonesmatrix.json")
             jones_matrix = json.loads(f.read().replace("\n", ""))
             f.close()
 
@@ -1072,7 +1070,7 @@ class TestCbfSubarray:
                             raise e
 
             # transition to obsState == SCANNING
-            f2 = open(file_path + "/../data/Scan1_basic.json")
+            f2 = open(file_path + "/../../data/Scan1_basic.json")
             proxies.subarray[1].Scan(f2.read().replace("\n", ""))
             f2.close()
             proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.SCANNING, 1, 1)
@@ -1147,7 +1145,7 @@ class TestCbfSubarray:
             assert all([proxies.subarray[1].receptors[i] == j for i, j in zip(range(3), [1, 3, 4])])
 
             # configure scan
-            f1 = open(file_path + "/../data/ConfigureScan_basic.json")
+            f1 = open(file_path + "/../../data/ConfigureScan_basic.json")
             proxies.subarray[1].ConfigureScan(f1.read().replace("\n", ""))
             f1.close()
             proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.READY, 3, 1)
@@ -1161,7 +1159,7 @@ class TestCbfSubarray:
             assert proxies.fspSubarray[6].obsState == ObsState.READY
 
             # send the Scan command
-            f2 = open(file_path + "/../data/Scan1_basic.json")
+            f2 = open(file_path + "/../../data/Scan1_basic.json")
             proxies.subarray[1].Scan(f2.read().replace("\n", ""))
             f2.close()
             proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.SCANNING, 1, 1)
@@ -1215,7 +1213,7 @@ class TestCbfSubarray:
             proxies.subarray[1].AddReceptors([1, 3, 4, 2])
             proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.IDLE, 1, 1)
             # configure scan
-            f = open(file_path + "/../data/ConfigureScan_basic.json")
+            f = open(file_path + "/../../data/ConfigureScan_basic.json")
             proxies.subarray[1].ConfigureScan(f.read().replace("\n", ""))
             f.close()
             proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.READY, 3, 1)
@@ -1246,12 +1244,12 @@ class TestCbfSubarray:
             proxies.subarray[1].AddReceptors([1, 3, 4, 2])
             proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.IDLE, 1, 1)
             # configure scan
-            f = open(file_path + "/../data/ConfigureScan_basic.json")
+            f = open(file_path + "/../../data/ConfigureScan_basic.json")
             proxies.subarray[1].ConfigureScan(f.read().replace("\n", ""))
             f.close()
             proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.READY, 3, 1)
             # scan
-            f2 = open(file_path + "/../data/Scan2_basic.json")
+            f2 = open(file_path + "/../../data/Scan2_basic.json")
             proxies.subarray[1].Scan(f2.read().replace("\n", ""))
             f2.close()
             proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.SCANNING, 1, 1)
@@ -1339,7 +1337,7 @@ class TestCbfSubarray:
             proxies.subarray[1].AddReceptors([1, 3, 4, 2])
             proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.IDLE, 1, 1)
             # configure scan
-            f = open(file_path + "/../data/ConfigureScan_basic.json")
+            f = open(file_path + "/../../data/ConfigureScan_basic.json")
             proxies.subarray[1].ConfigureScan(f.read().replace("\n", ""))
             f.close()
             proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.READY, 3, 1)
@@ -1370,12 +1368,12 @@ class TestCbfSubarray:
             proxies.subarray[1].AddReceptors([1, 3, 4, 2])
             proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.IDLE, 1, 1)
             # configure scan
-            f = open(file_path + "/../data/ConfigureScan_basic.json")
+            f = open(file_path + "/../../data/ConfigureScan_basic.json")
             proxies.subarray[1].ConfigureScan(f.read().replace("\n", ""))
             f.close()
             proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.READY, 3, 1)
             # scan
-            f2 = open(file_path + "/../data/Scan2_basic.json")
+            f2 = open(file_path + "/../../data/Scan2_basic.json")
             proxies.subarray[1].Scan(f2.read().replace("\n", ""))
             f2.close()
             proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.SCANNING, 1, 1)
@@ -1451,7 +1449,7 @@ class TestCbfSubarray:
                        for i, j in zip(range(len(test_receptor_ids)), test_receptor_ids)])
 
             # configure scan 
-            f = open(file_path + "/../data/Configure_TM-CSP_v2.json")
+            f = open(file_path + "/../../data/Configure_TM-CSP_v2.json")
             configuration = f.read().replace("\n", "")
             f.close()
             proxies.subarray[sub_id].ConfigureScan(configuration)
@@ -1571,7 +1569,7 @@ class TestCbfSubarray:
             proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.IDLE, 1, 1)
 
             # end configuration with off command
-            f = open(file_path + "/../data/Configure_TM-CSP_v2.json")
+            f = open(file_path + "/../../data/Configure_TM-CSP_v2.json")
             configuration = f.read().replace("\n", "")
             f.close()
             proxies.subarray[1].ConfigureScan(configuration)
@@ -1588,7 +1586,7 @@ class TestCbfSubarray:
             proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.IDLE, 1, 1)
 
             # end scan with off command
-            f2 = open(file_path + "/../data/Scan2_basic.json")
+            f2 = open(file_path + "/../../data/Scan2_basic.json")
             scan = f2.read().replace("\n", "")
             f2.close()
             proxies.subarray[1].ConfigureScan(configuration)

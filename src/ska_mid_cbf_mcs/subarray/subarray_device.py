@@ -143,8 +143,7 @@ class CbfSubarray(SKASubarray):
                 self.logger.warn(log_msg)
                 return
             try:
-                log_msg = "Received delay model update."
-                self.logger.info(log_msg)
+                self.logger.info("Received delay model update.")
 
                 if value == self._last_received_delay_model:
                     log_msg = "Ignoring delay model (identical to previous)."
@@ -174,13 +173,13 @@ class CbfSubarray(SKASubarray):
     def _update_delay_model(self, destination_type, epoch, model):
         # This method is always called on a separate thread
         log_msg = "Delay model active at {} (currently {})...".format(epoch, int(time.time()))
-        self.logger.warn(log_msg)
+        self.logger.info(log_msg)
 
         if epoch > time.time():
             time.sleep(epoch - time.time())
 
         log_msg = "Updating delay model at specified epoch {}...".format(epoch)
-        self.logger.warn(log_msg)
+        self.logger.info(log_msg)
 
         data = tango.DeviceData()
         data.insert(tango.DevString, model)
@@ -204,8 +203,7 @@ class CbfSubarray(SKASubarray):
                 self.logger.warn(log_msg)
                 return
             try:
-                log_msg = "Received Jones Matrix update."
-                self.logger.warn(log_msg)
+                self.logger.info("Received Jones Matrix update.")
 
                 if value == self._last_received_jones_matrix:
                     log_msg = "Ignoring Jones matrix (identical to previous)."
@@ -236,13 +234,13 @@ class CbfSubarray(SKASubarray):
         #This method is always called on a separate thread
         self.logger.debug("CbfSubarray._update_jones_matrix")
         log_msg = "Jones matrix active at {} (currently {})...".format(epoch, int(time.time()))
-        self.logger.warn(log_msg)
+        self.logger.info(log_msg)
 
         if epoch > time.time():
             time.sleep(epoch - time.time())
 
         log_msg = "Updating Jones Matrix at specified epoch {}, destination ".format(epoch) + destination_type
-        self.logger.warn(log_msg)
+        self.logger.info(log_msg)
 
         data = tango.DeviceData()
         data.insert(tango.DevString, matrix_details)
@@ -266,8 +264,7 @@ class CbfSubarray(SKASubarray):
                 self.logger.warn(log_msg)
                 return
             try:
-                log_msg = "Received beam weights update."
-                self.logger.warn(log_msg)
+                self.logger.info("Received beam weights update.")
 
                 if value == self._last_received_beam_weights:
                     log_msg = "Ignoring beam weights (identical to previous)."
@@ -297,13 +294,13 @@ class CbfSubarray(SKASubarray):
         #This method is always called on a separate thread
         self.logger.debug("CbfSubarray._update_beam_weights")
         log_msg = "Beam weights active at {} (currently {})...".format(epoch, int(time.time()))
-        self.logger.warn(log_msg)
+        self.logger.info(log_msg)
 
         if epoch > time.time():
             time.sleep(epoch - time.time())
 
         log_msg = "Updating beam weights at specified epoch {}".format(epoch)
-        self.logger.warn(log_msg)
+        self.logger.info(log_msg)
 
         data = tango.DeviceData()
         data.insert(tango.DevString, weights_details)
@@ -318,7 +315,7 @@ class CbfSubarray(SKASubarray):
     ) -> None:
         if value is not None:
             try:
-                if "healthstate" in name:
+                if "healthState" in name:
                     if "vcc" in fqdn:
                         self._vcc_health_state[fqdn] = value
                     elif "fsp" in fqdn:
@@ -329,7 +326,7 @@ class CbfSubarray(SKASubarray):
                         str(name)
                         self.logger.warn(log_msg)
                         return
-                elif "state" in name:
+                elif "State" in name:
                     if "vcc" in fqdn:
                         self._vcc_state[fqdn] = value
                     elif "fsp" in fqdn:
@@ -343,7 +340,7 @@ class CbfSubarray(SKASubarray):
 
                 log_msg = "New value for " + str(name) + \
                     " of device " + fqdn + " is " + str(value)
-                self.logger.warn(log_msg)
+                self.logger.info(log_msg)
 
             except Exception as except_occurred:
                 self.logger.error(str(except_occurred))
@@ -1042,14 +1039,19 @@ class CbfSubarray(SKASubarray):
         for receptorID in argin:
             if receptorID in self._receptors:
                 vccID = receptor_to_vcc[receptorID]
+                vccFQDN = self._fqdn_vcc[vccID - 1]
                 vccProxy = self._proxies_vcc[vccID - 1]
 
                 # unsubscribe from events
                 vccProxy.unsubscribe_event(self._events_state_change_vcc[vccID][0])  # state
                 vccProxy.unsubscribe_event(self._events_state_change_vcc[vccID][1])  # healthState
+                self.logger.warn(f"VCC {vccID} failed to unsubscribe from event " + \
+                    f"{self._events_state_change_vcc[vccID]}")
+                
                 del self._events_state_change_vcc[vccID]
-                del self._vcc_state[self._fqdn_vcc[vccID - 1]]
-                del self._vcc_health_state[self._fqdn_vcc[vccID - 1]]
+                del self._vcc_state[vccFQDN]
+                del self._vcc_health_state[vccFQDN]
+
 
                 # reset receptorID and subarrayMembership Vcc attribute:
                 vccProxy.receptorID = 0
@@ -1057,7 +1059,7 @@ class CbfSubarray(SKASubarray):
 
                 self._receptors.remove(receptorID)
                 self._proxies_assigned_vcc.remove(vccProxy)
-                self._group_vcc.remove(self._fqdn_vcc[vccID - 1])
+                self._group_vcc.remove(vccFQDN)
             else:
                 log_msg = "Receptor {} not assigned to subarray. Skipping.".format(str(receptorID))
                 self.logger.warn(log_msg)
@@ -1309,21 +1311,26 @@ class CbfSubarray(SKASubarray):
             device._fqdn_fsp_pss_subarray = list(device.FspPssSubarray)
             device._fqdn_fsp_pst_subarray = list(device.FspPstSubarray)
 
-            device._proxies_vcc = [*map(
-                CbfDeviceProxy, device._fqdn_vcc, repeat(device.logger)
-            )]
-            device._proxies_fsp = [*map(
-                CbfDeviceProxy, device._fqdn_fsp, repeat(device.logger)
-            )]
-            device._proxies_fsp_corr_subarray = [*map(
-                CbfDeviceProxy, device._fqdn_fsp_corr_subarray, repeat(device.logger)
-            )]
-            device._proxies_fsp_pss_subarray = [*map(
-                CbfDeviceProxy, device._fqdn_fsp_pss_subarray, repeat(device.logger)
-            )]
-            device._proxies_fsp_pst_subarray = [*map(
-                CbfDeviceProxy, device._fqdn_fsp_pst_subarray, repeat(device.logger)
-            )]
+            device._proxies_vcc = [
+                CbfDeviceProxy(fqdn=fqdn, logger=device.logger) 
+                for fqdn in device._fqdn_vcc
+            ]
+            device._proxies_fsp = [
+                CbfDeviceProxy(fqdn=fqdn, logger=device.logger)
+                for fqdn in device._fqdn_fsp
+            ]
+            device._proxies_fsp_corr_subarray = [
+                CbfDeviceProxy(fqdn=fqdn, logger=device.logger)
+                for fqdn in device._fqdn_fsp_corr_subarray
+            ]
+            device._proxies_fsp_pss_subarray = [
+                CbfDeviceProxy(fqdn=fqdn, logger=device.logger)
+                for fqdn in device._fqdn_fsp_pss_subarray
+            ]
+            device._proxies_fsp_pst_subarray = [
+                CbfDeviceProxy(fqdn=fqdn, logger=device.logger)
+                for fqdn in device._fqdn_fsp_pst_subarray
+            ]
 
             # Note vcc connected both individual and in group
             device._proxies_assigned_vcc = [] 
@@ -1604,15 +1611,9 @@ class CbfSubarray(SKASubarray):
                     vccID = receptor_to_vcc[receptorID]
                     vccProxy = device._proxies_vcc[vccID - 1]
 
-                    # Update the VCC receptorID attribute:
-
-                    self.logger.debug( ("receptorID = {}, vccProxy.receptorID = {}"
-                    .format(receptorID, vccProxy.receptorID)))
-
-                    vccProxy.receptorID = receptorID  # TODO - may not be needed?
-
-                    self.logger.debug( ("receptorID = {}, vccProxy.receptorID = {}"
-                    .format(receptorID, vccProxy.receptorID)))
+                    self.logger.debug(
+                        (f"receptorID = {receptorID}, vccProxy.receptorID = {vccProxy.receptorID}")
+                    )
 
                     subarrayID = vccProxy.subarrayMembership
 
@@ -1641,11 +1642,13 @@ class CbfSubarray(SKASubarray):
                                 "State",
                                 device._state_change_event_callback
                             )
+                            self.logger.debug(f"State event ID: {event_id_state}")
 
                             event_id_health_state = vccProxy.add_change_event_callback(
                                 "healthState",
                                 device._state_change_event_callback
                             )
+                            self.logger.debug(f"Health state event ID: {event_id_health_state}")
 
                             device._events_state_change_vcc[vccID] = [event_id_state,
                                                                     event_id_health_state]
@@ -1656,7 +1659,6 @@ class CbfSubarray(SKASubarray):
 
                 except KeyError:  # invalid receptor ID
                     errs.append("Invalid receptor ID: {}".format(receptorID))
-
 
             if errs:
                 msg = "\n".join(errs)
@@ -1669,6 +1671,7 @@ class CbfSubarray(SKASubarray):
             message = "CBFSubarray AddReceptors command completed OK"
             self.logger.info(message)
             return (ResultCode.OK, message)
+
 
     ############  Configure Related Commands   ##############
 
