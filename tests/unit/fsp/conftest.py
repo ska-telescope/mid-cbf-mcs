@@ -77,6 +77,9 @@ def mock_fsp_corr_subarray_group() -> unittest.mock.Mock:
 def mock_fsp_pss_subarray() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.OFF)
+    # add receptors to the mock pss subarray 
+    # (this is required for test_UpdateJonesMatrix)
+    builder.add_attribute("receptors", [1, 2, 3, 4])
     return builder()
 
 @pytest.fixture()

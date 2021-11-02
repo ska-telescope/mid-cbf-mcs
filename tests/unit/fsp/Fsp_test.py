@@ -116,7 +116,7 @@ class TestFsp:
          sub_id",
         [
             (
-                "/../../data/timingbeamweights_fsp.json",
+                "/../../data/timingbeamweights_fsp_unit_test.json",
                 1
             )
         ]
@@ -132,10 +132,10 @@ class TestFsp:
         device_under_test.AddSubarrayMembership(sub_id)
 
         # timing beam weights should be set to 0.0 after init
-        num_weights = 6
-        num_receptors = 4
+        num_cols = 6
+        num_rows = 4
         assert device_under_test.read_attribute("timingBeamWeights", \
-             extract_as=tango.ExtractAs.List).value == [[0.0] * num_weights for _ in range(num_receptors)]
+             extract_as=tango.ExtractAs.List).value == [[0.0] * num_cols for _ in range(num_rows)]
 
         # update only valid for function mode PST-BF
         device_under_test.SetFunctionMode("PST-BF")
@@ -161,3 +161,53 @@ class TestFsp:
                     weights = frequency_slice["weights"]
                     assert device_under_test.read_attribute("timingBeamWeights", \
                         extract_as=tango.ExtractAs.List).value[recptor_id -1] == weights
+    
+    @pytest.mark.parametrize(
+        "jones_matrix_file_name, \
+         sub_id",
+        [
+            (
+                "/../../data/jonesmatrix_fsp_unit_test.json",
+                1
+            )
+        ]
+    )
+    def test_UpdateJonesMatrix(
+        self: TestFsp,
+        device_under_test: CbfDeviceProxy,
+        jones_matrix_file_name: str,
+        sub_id: int
+    ) -> None:
+
+        device_under_test.On()
+        device_under_test.AddSubarrayMembership(sub_id)
+
+        # jones matrix values should be set to 0.0 after init
+        num_cols = 4
+        num_rows = 4
+        assert device_under_test.read_attribute("jonesMatrix", \
+             extract_as=tango.ExtractAs.List).value == [[0.0] * num_cols for _ in range(num_rows)]
+
+        # update only valid for function mode PSS-BF
+        device_under_test.SetFunctionMode("PSS-BF")
+
+         # read the json file
+        f = open(file_path + jones_matrix_file_name)
+        json_str = f.read().replace("\n", "")
+        f.close()
+        jones_matrix = json.loads(json_str)
+
+        # update the jones matrix
+        for m in jones_matrix["jonesMatrix"]:
+            if m["destinationType"] == "fsp":
+                device_under_test.UpdateJonesMatrix(json.dumps(m["matrixDetails"]))
+        
+        # verify the jones matrix was updated successfully 
+        for m in jones_matrix["jonesMatrix"]:
+            if m["destinationType"] == "fsp":
+                for matrixDetail in m["matrixDetails"]:
+                    receptor_id = matrixDetail["receptor"]
+                    for receptorMatrix in matrixDetail["receptorMatrix"]:
+                        matrix = receptorMatrix["matrix"]
+                        assert device_under_test.read_attribute("jonesMatrix", \
+                            extract_as=tango.ExtractAs.List).value[receptor_id -1] == matrix
