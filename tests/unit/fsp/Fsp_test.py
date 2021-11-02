@@ -191,7 +191,7 @@ class TestFsp:
         # update only valid for function mode PSS-BF
         device_under_test.SetFunctionMode("PSS-BF")
 
-         # read the json file
+        # read the json file
         f = open(file_path + jones_matrix_file_name)
         json_str = f.read().replace("\n", "")
         f.close()
@@ -211,3 +211,55 @@ class TestFsp:
                         matrix = receptorMatrix["matrix"]
                         assert device_under_test.read_attribute("jonesMatrix", \
                             extract_as=tango.ExtractAs.List).value[receptor_id -1] == matrix
+    
+    @pytest.mark.parametrize(
+        "delay_model_file_name, \
+         sub_id",
+        [
+            (
+                "/../../data/delaymodel_fsp_unit_test.json",
+                1
+            )
+        ]
+    )
+    def test_UpdateDelayModel(
+        self: TestFsp,
+        device_under_test: CbfDeviceProxy,
+        delay_model_file_name: str,
+        sub_id: int
+    ) -> None:
+
+        device_under_test.On()
+        device_under_test.AddSubarrayMembership(sub_id)
+
+        # delay model values should be set to 0.0 after init
+        num_cols = 6
+        num_rows = 4
+        assert device_under_test.read_attribute("delayModel", \
+             extract_as=tango.ExtractAs.List).value == [[0.0] * num_cols for _ in range(num_rows)]
+        
+        # read the json file
+        f = open(file_path + delay_model_file_name)
+        json_str = f.read().replace("\n", "")
+        f.close()
+        delay_model = json.loads(json_str)
+
+        valid_function_modes = ["PSS-BF", "PST-BF"]
+        for mode in valid_function_modes:
+            device_under_test.SetFunctionMode(mode)
+
+            # update the delay model
+            for m in delay_model["delayModel"]:
+                if m["destinationType"] == "fsp":
+                    device_under_test.UpdateDelayModel(json.dumps(m["delayDetails"]))
+
+            # verify the delay model was updated successfully 
+            for m in delay_model["delayModel"]:
+                if m["destinationType"] == "fsp":
+                    for delayDetail in m["delayDetails"]:
+                        receptor_id = delayDetail["receptor"]
+                        for receptorDelayDetail in delayDetail["receptorDelayDetails"]:
+                            delayCoeffs = receptorDelayDetail["delayCoeff"]
+                            assert device_under_test.read_attribute("delayModel", \
+                                extract_as=tango.ExtractAs.List).value[receptor_id -1] == delayCoeffs 
+
