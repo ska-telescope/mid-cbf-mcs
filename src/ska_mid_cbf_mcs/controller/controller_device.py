@@ -423,6 +423,10 @@ class CbfController(SKAMaster):
                         fqdn=fqdn, 
                         logger=self.logger
                     )
+
+                    if fqdn in self._fqdn_talon_lru:
+                        device_proxy.set_timeout_millis(10000)
+
                     self._proxies[fqdn] = device_proxy
                 except tango.DevFailed as df:
                     for item in df.args:

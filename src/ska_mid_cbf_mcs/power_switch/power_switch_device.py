@@ -134,7 +134,6 @@ class PowerSwitch(SKABaseDevice):
         """
         super().write_simulationMode(value)
         self.component_manager.simulation_mode = value
-        self.push_change_event("simulationMode", value)
 
     def read_numOutlets(self: PowerSwitch) -> int:
         """
