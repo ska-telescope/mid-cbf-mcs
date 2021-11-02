@@ -12,6 +12,7 @@ TANGO device class for controlling and monitoring a Talon LRU.
 """
 
 from __future__ import annotations
+import threading
 
 # tango imports
 import tango
@@ -140,6 +141,8 @@ class TalonLRU(SKABaseDevice):
 
             device = self.target
 
+            device._power_switch_lock = threading.Lock()
+
             # Get the device proxies of all the devices we care about
             device._proxy_talondx_board1 = self.get_device_proxy(device.TalonDxBoard1Address)
             device._proxy_talondx_board2 = self.get_device_proxy(device.TalonDxBoard2Address)
@@ -190,21 +193,22 @@ class TalonLRU(SKABaseDevice):
         Get the power mode of both PDUs and check that it is consistent with the
         current device state.
         """
-        if self._proxy_power_switch1 is not None:
-            if self._proxy_power_switch1.numOutlets != 0:
-                self._pdu1_power_mode = self._proxy_power_switch1.GetOutletPowerMode(self.PDU1PowerOutlet)
+        with self._power_switch_lock:
+            if self._proxy_power_switch1 is not None:
+                if self._proxy_power_switch1.numOutlets != 0:
+                    self._pdu1_power_mode = self._proxy_power_switch1.GetOutletPowerMode(self.PDU1PowerOutlet)
+                else:
+                    self._pdu1_power_mode = PowerMode.UNKNOWN
             else:
                 self._pdu1_power_mode = PowerMode.UNKNOWN
-        else:
-            self._pdu1_power_mode = PowerMode.UNKNOWN
 
-        if self._proxy_power_switch2 is not None:
-            if self._proxy_power_switch2.numOutlets != 0:
-                self._pdu2_power_mode = self._proxy_power_switch2.GetOutletPowerMode(self.PDU2PowerOutlet)
+            if self._proxy_power_switch2 is not None:
+                if self._proxy_power_switch2.numOutlets != 0:
+                    self._pdu2_power_mode = self._proxy_power_switch2.GetOutletPowerMode(self.PDU2PowerOutlet)
+                else:
+                    self._pdu2_power_mode = PowerMode.UNKNOWN
             else:
                 self._pdu2_power_mode = PowerMode.UNKNOWN
-        else:
-            self._pdu2_power_mode = PowerMode.UNKNOWN
 
         # Check the expected power mode
         dev_state = self.get_state()
@@ -252,30 +256,31 @@ class TalonLRU(SKABaseDevice):
             """
             device = self.target
 
-            # Power on both outlets
-            result1 = ResultCode.FAILED
-            if device._proxy_power_switch1 is not None:
-                result1 = device._proxy_power_switch1.TurnOnOutlet(device.PDU1PowerOutlet)[0][0]
-                if result1 == ResultCode.OK:
-                    device._pdu1_power_mode = PowerMode.ON
-                    self.logger.info("PDU 1 successfully turned on.")
+            with device._power_switch_lock:
+                # Power on both outlets
+                result1 = ResultCode.FAILED
+                if device._proxy_power_switch1 is not None:
+                    result1 = device._proxy_power_switch1.TurnOnOutlet(device.PDU1PowerOutlet)[0][0]
+                    if result1 == ResultCode.OK:
+                        device._pdu1_power_mode = PowerMode.ON
+                        self.logger.info("PDU 1 successfully turned on.")
 
-            result2 = ResultCode.FAILED
-            if device._proxy_power_switch2 is not None:
-                result2 = device._proxy_power_switch2.TurnOnOutlet(device.PDU2PowerOutlet)[0][0]
-                if result2 == ResultCode.OK:
-                    device._pdu2_power_mode = PowerMode.ON
-                    self.logger.info("PDU 2 successfully turned on.")
+                result2 = ResultCode.FAILED
+                if device._proxy_power_switch2 is not None:
+                    result2 = device._proxy_power_switch2.TurnOnOutlet(device.PDU2PowerOutlet)[0][0]
+                    if result2 == ResultCode.OK:
+                        device._pdu2_power_mode = PowerMode.ON
+                        self.logger.info("PDU 2 successfully turned on.")
 
-            # Determine what result code to return
-            if result1 == ResultCode.FAILED and result2 == ResultCode.FAILED:
-                return ResultCode.FAILED, "Failed to turn on both outlets"
-            elif result1 == ResultCode.FAILED or result2 == ResultCode.FAILED:
-                device.set_state(DevState.ON)
-                return ResultCode.OK, "Only one outlet successfully turned on"
-            else:
-                device.set_state(DevState.ON)
-                return ResultCode.OK, "Both outlets successfully turned on"
+                # Determine what result code to return
+                if result1 == ResultCode.FAILED and result2 == ResultCode.FAILED:
+                    return ResultCode.FAILED, "Failed to turn on both outlets"
+                elif result1 == ResultCode.FAILED or result2 == ResultCode.FAILED:
+                    device.set_state(DevState.ON)
+                    return ResultCode.OK, "Only one outlet successfully turned on"
+                else:
+                    device.set_state(DevState.ON)
+                    return ResultCode.OK, "Both outlets successfully turned on"
 
     class OffCommand(SKABaseDevice.OffCommand):
         """
@@ -295,29 +300,30 @@ class TalonLRU(SKABaseDevice):
             """
             device = self.target
 
-            # Power off both outlets
-            result1 = ResultCode.FAILED
-            if device._proxy_power_switch1 is not None:
-                result1 = device._proxy_power_switch1.TurnOffOutlet(device.PDU1PowerOutlet)[0][0]
-                if result1 == ResultCode.OK:
-                    device._pdu1_power_mode = PowerMode.OFF
-                    self.logger.info("PSU 1 successfully turned off.")
+            with device._power_switch_lock:
+                # Power off both outlets
+                result1 = ResultCode.FAILED
+                if device._proxy_power_switch1 is not None:
+                    result1 = device._proxy_power_switch1.TurnOffOutlet(device.PDU1PowerOutlet)[0][0]
+                    if result1 == ResultCode.OK:
+                        device._pdu1_power_mode = PowerMode.OFF
+                        self.logger.info("PSU 1 successfully turned off.")
 
-            result2 = ResultCode.FAILED
-            if device._proxy_power_switch2 is not None:
-                result2 = device._proxy_power_switch2.TurnOffOutlet(device.PDU2PowerOutlet)[0][0]
-                if result2 == ResultCode.OK:
-                    device._pdu2_power_mode = PowerMode.OFF
-                    self.logger.info("PSU 2 successfully turned off.")
+                result2 = ResultCode.FAILED
+                if device._proxy_power_switch2 is not None:
+                    result2 = device._proxy_power_switch2.TurnOffOutlet(device.PDU2PowerOutlet)[0][0]
+                    if result2 == ResultCode.OK:
+                        device._pdu2_power_mode = PowerMode.OFF
+                        self.logger.info("PSU 2 successfully turned off.")
 
-            # Determine what result code to return
-            if result1 == ResultCode.FAILED and result2 == ResultCode.FAILED:
-                return ResultCode.FAILED, "Failed to turn off both outlets"
-            elif result1 == ResultCode.FAILED or result2 == ResultCode.FAILED:
-                return ResultCode.FAILED, "Only one outlet successfully turned off"
-            else:
-                device.set_state(DevState.OFF)
-                return ResultCode.OK, "Both outlets successfully turned off"
+                # Determine what result code to return
+                if result1 == ResultCode.FAILED and result2 == ResultCode.FAILED:
+                    return ResultCode.FAILED, "Failed to turn off both outlets"
+                elif result1 == ResultCode.FAILED or result2 == ResultCode.FAILED:
+                    return ResultCode.FAILED, "Only one outlet successfully turned off"
+                else:
+                    device.set_state(DevState.OFF)
+                    return ResultCode.OK, "Both outlets successfully turned off"
 
 # ----------
 # Run server
