@@ -144,7 +144,10 @@ class TalonLRU(SKABaseDevice):
             device._proxy_talondx_board1 = self.get_device_proxy(device.TalonDxBoard1Address)
             device._proxy_talondx_board2 = self.get_device_proxy(device.TalonDxBoard2Address)
             device._proxy_power_switch1 = self.get_device_proxy(device.PDU1Address)
-            device._proxy_power_switch2 = self.get_device_proxy(device.PDU2Address)
+            if device.PDU2Address == device.PDU1Address:
+                device._proxy_power_switch2 = device._proxy_power_switch1
+            else:
+                device._proxy_power_switch2 = self.get_device_proxy(device.PDU2Address)
 
             # Increase the access timeout of the power switch proxies, since the
             # numOutlets attribute can take some time to read

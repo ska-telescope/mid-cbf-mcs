@@ -42,10 +42,26 @@ class PowerSwitchComponentManager:
         :param ip: IP address of the power switch
         :param logger: a logger for this object to use
         """
-        self.simulation_mode = simulation_mode
+        self._simulation_mode = simulation_mode
+        self._num_outlets = 0
 
         self.power_switch_driver = PowerSwitchDriver(ip, logger)
         self.power_switch_simulator = PowerSwitchSimulator(logger)
+
+    @property
+    def simulation_mode(self: PowerSwitchComponentManager) -> SimulationMode:
+        """
+        Get the simulation mode of the component manager.
+        """
+        return self._simulation_mode
+
+    @simulation_mode.setter
+    def simulation_mode(self: PowerSwitchComponentManager, value: SimulationMode) -> None:
+        """
+        Set the simulation mode of the component manager.
+        """
+        self._simulation_mode = value
+        self._num_outlets = 0
 
     @property
     def num_outlets(self: PowerSwitchComponentManager) -> int:
@@ -54,10 +70,12 @@ class PowerSwitchComponentManager:
 
         :return: number of outlets
         """
-        if self.simulation_mode:
-            return self.power_switch_simulator.num_outlets
-        else:
-            return self.power_switch_driver.num_outlets
+        if self._num_outlets == 0:
+            if self.simulation_mode:
+                self._num_outlets = self.power_switch_simulator.num_outlets
+            else:
+                self._num_outlets = self.power_switch_driver.num_outlets
+        return self._num_outlets
 
     @property
     def is_communicating(self: PowerSwitchComponentManager) -> bool:

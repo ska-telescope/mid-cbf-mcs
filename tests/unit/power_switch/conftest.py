@@ -84,6 +84,8 @@ def power_switch_component_manager(
                         self._json.append(outlet_cfg)
 
                     self.text = json.dumps(self._json)
+                elif outlet_state_url.fullmatch(url):
+                    self.text = "true"
 
         def json(self: MockResponse) -> dict[str, str]:
             """
