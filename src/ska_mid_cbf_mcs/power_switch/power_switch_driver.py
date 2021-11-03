@@ -80,6 +80,13 @@ class PowerSwitchDriver:
 
         self.outlets: List(Outlet) = []
 
+    def initialize(self: PowerSwitchDriver) -> None:
+        """
+        Initializes any variables needed for further communication with the
+        power switch. Should be called once before any of the other methods.
+        """
+        self.outlets = self.get_outlet_list()
+
     @property
     def num_outlets(self: PowerSwitchDriver) -> int:
         """
@@ -87,7 +94,6 @@ class PowerSwitchDriver:
 
         :return: number of outlets
         """
-        self.outlets = self.get_outlet_list()
         return len(self.outlets)
 
     @property
@@ -120,12 +126,32 @@ class PowerSwitchDriver:
         :return: power mode of the outlet
 
         :raise AssertionError: if outlet ID is out of bounds
+        :raise AssertionError: if outlet power mode is different than expected
         """
         assert (
             outlet < len(self.outlets) and outlet >= 0
         ), f"Outlet ID must be >= 0 and < {len(self.outlets)} (number of outlets in this power switch)" 
 
-        return self.outlets[outlet].power_mode
+        url = f"{self.base_url}/restapi/relay/outlets/{outlet}/state/"
+        try:
+            response = requests.get(url=url, headers=self.header,
+                auth=(user, password), timeout=self.query_timeout_s)
+            if response.status_code in [requests.codes.ok, requests.codes.no_content]:
+                try:
+                    power_mode = self.power_mode_conversion[response.text == "true"]
+                except IndexError:
+                    power_mode = PowerMode.UNKNOWN
+
+                if power_mode != self.outlets[outlet].power_mode:
+                    raise AssertionError(f"Power mode of outlet {outlet} ({power_mode})" \
+                        f" is different than the expected mode {self.outlets[outlet].power_mode}")
+                return power_mode
+            else:
+                self.logger.error(f"HTTP response error: {response.status_code}")
+                return PowerMode.UNKNOWN
+        except (requests.exceptions.ConnectTimeout, requests.exceptions.ConnectionError):
+            self.logger.error("Failed to connect to power switch")
+            return PowerMode.UNKNOWN
 
     def turn_on_outlet(
         self: PowerSwitchDriver,
