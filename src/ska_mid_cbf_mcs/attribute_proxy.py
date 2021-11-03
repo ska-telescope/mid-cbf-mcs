@@ -44,7 +44,7 @@ class CbfAttributeProxy:
 
     @classmethod
     def set_default_connection_factory(
-        cls: Type[CbfAttributeProxy], connection_factory: ConnectionFactory
+        cls: Type[CbfAttributeProxy], attribute_connection_factory: ConnectionFactory
     ) -> None:
         """
         Set the default connection factory for this class.
@@ -53,17 +53,17 @@ class CbfAttributeProxy:
         :py:class:`tango.AttributeProxy` altogether, by simply setting this
         class's default connection factory to a mock factory.
 
-        :param connection_factory: default factory to use to establish
-            a connection to the device
+        :param attribute_connection_factory: default factory to use to establish
+            a connection to the device attribute
         """
-        cls._default_connection_factory = connection_factory
+        cls._default_connection_factory = attribute_connection_factory
 
     def __init__(
         self: CbfAttributeProxy,
         fqdn: str,
         logger: logging.Logger,
         connect: bool = True,
-        connection_factory: Optional[ConnectionFactory] = None,
+        attribute_connection_factory: Optional[ConnectionFactory] = None,
         pass_through: bool = True,
     ) -> None:
         """
@@ -71,7 +71,7 @@ class CbfAttributeProxy:
 
         :param fqdn: fqdn of the device attribute to be proxied
         :param logger: a logger for this proxy to use
-        :param connection_factory: how we obtain a connection to the
+        :param attribute_connection_factory: how we obtain a connection to the
             device attribute we are proxying. By default this is
             :py:class:`tango.AttributeProxy`, but occasionally this needs
             to be changed. For example, when testing against a
@@ -88,8 +88,9 @@ class CbfAttributeProxy:
         # setattr and don't want to infinitely recurse.
         self.__dict__["_fqdn"] = fqdn
         self.__dict__["_logger"] = logger
-        self.__dict__["_connection_factory"] = (
-            connection_factory or CbfAttributeProxy._default_connection_factory
+        self.__dict__["_attribute_connection_factory"] = (
+            attribute_connection_factory or 
+            CbfAttributeProxy._default_connection_factory
         )
         self.__dict__["_pass_through"] = pass_through
         self.__dict__["_attribute"] = None
@@ -133,7 +134,8 @@ class CbfAttributeProxy:
             max_time=max_time,
         )
         def _backoff_connect(
-            connection_factory: Callable[[str], tango.AttributeProxy], fqdn: str
+            attribute_connection_factory: Callable[[str], tango.AttributeProxy], 
+            fqdn: str
         ) -> tango.AttributeProxy:
             """
             Attempt connection to a specified device attribute.
@@ -141,32 +143,39 @@ class CbfAttributeProxy:
             Connection attribute use an exponential backoff-retry
             scheme in case of failure.
 
-            :param connection_factory: the factory to use to establish
+            :param attribute_connection_factory: the factory to use to establish
                 the connection
             :param fqdn: the fully qualified domain name of the device attribute
 
             :return: a proxy for the device attribute
             """
-            return _connect(connection_factory, fqdn)
+            return _connect(attribute_connection_factory, fqdn)
 
         def _connect(
-            connection_factory: Callable[[str], tango.AttributeProxy], fqdn: str
+            attribute_connection_factory: Callable[[str], tango.AttributeProxy], 
+            fqdn: str
         ) -> tango.AttributeProxy:
             """
             Make a single attempt to connect to a device.
 
-            :param connection_factory: the factory to use to establish
+            :param attribute_connection_factory: the factory to use to establish
                 the connection
             :param fqdn: the fully qualified domain name of the device attribute
 
             :return: a proxy for the device attribute
             """
-            return connection_factory(fqdn)
+            return attribute_connection_factory(fqdn)
 
         if max_time:
-            self._attribute = _backoff_connect(self._connection_factory, self._fqdn)
+            self._attribute = _backoff_connect(
+                self._attribute_connection_factory, 
+                self._fqdn
+            )
         else:
-            self._attribute = _connect(self._connection_factory, self._fqdn)
+            self._attribute = _connect(
+                self._attribute_connection_factory, 
+                self._fqdn
+            )
 
     def add_change_event_callback(
         self: CbfAttributeProxy,
@@ -228,8 +237,7 @@ class CbfAttributeProxy:
         with self._change_event_lock:
             attribute_data = self._process_event(event)
             if attribute_data is not None:
-                for callback in self._change_event_callbacks:
-                    self._call_callback(callback, attribute_data)
+                self._call_callback(self._change_event_callback, attribute_data)
 
     def _call_callback(
         self: CbfAttributeProxy,

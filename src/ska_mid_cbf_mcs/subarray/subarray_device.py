@@ -1266,7 +1266,7 @@ class CbfSubarray(SKASubarray):
             else:
                 device._subarray_id = int(device.get_name()[-2:])  # last two chars of FQDN
 
-        # initialize attribute values
+            # initialize attribute values
             device._receptors = []
             device._frequency_band = 0
             device._config_ID = ""
@@ -1301,51 +1301,31 @@ class CbfSubarray(SKASubarray):
             device._frequency_band_offset_stream_2 = 0
             device._stream_tuning = [0, 0]
 
-            # device proxy for easy reference to CBF controller
-            device._proxy_cbf_controller = CbfDeviceProxy(
-                fqdn=device.CbfControllerAddress, logger=device.logger
-            )
-
             device.MIN_INT_TIME = const.MIN_INT_TIME
             device.NUM_CHANNEL_GROUPS = const.NUM_CHANNEL_GROUPS
             device.NUM_FINE_CHANNELS = const.NUM_FINE_CHANNELS
 
-            device._controller_max_capabilities = dict(
-                pair.split(":") for pair in
-                device._proxy_cbf_controller.get_property("MaxCapabilities")["MaxCapabilities"]
-            )
+            # device proxy for easy reference to CBF controller
+            device._proxy_cbf_controller = None
 
-            device._count_vcc = int(device._controller_max_capabilities["VCC"])
-            device._count_fsp = int(device._controller_max_capabilities["FSP"])
+            device._controller_max_capabilities = {}
+            device._count_vcc = 0
+            device._count_fsp = 0
+
             device._fqdn_vcc = list(device.VCC)[:device._count_vcc]
             device._fqdn_fsp = list(device.FSP)[:device._count_fsp]
             device._fqdn_fsp_corr_subarray = list(device.FspCorrSubarray)
             device._fqdn_fsp_pss_subarray = list(device.FspPssSubarray)
             device._fqdn_fsp_pst_subarray = list(device.FspPstSubarray)
 
-            device._proxies_vcc = [
-                CbfDeviceProxy(fqdn=fqdn, logger=device.logger) 
-                for fqdn in device._fqdn_vcc
-            ]
-            device._proxies_fsp = [
-                CbfDeviceProxy(fqdn=fqdn, logger=device.logger)
-                for fqdn in device._fqdn_fsp
-            ]
-            device._proxies_fsp_corr_subarray = [
-                CbfDeviceProxy(fqdn=fqdn, logger=device.logger)
-                for fqdn in device._fqdn_fsp_corr_subarray
-            ]
-            device._proxies_fsp_pss_subarray = [
-                CbfDeviceProxy(fqdn=fqdn, logger=device.logger)
-                for fqdn in device._fqdn_fsp_pss_subarray
-            ]
-            device._proxies_fsp_pst_subarray = [
-                CbfDeviceProxy(fqdn=fqdn, logger=device.logger)
-                for fqdn in device._fqdn_fsp_pst_subarray
-            ]
+            device._proxies_vcc = []
+            device._proxies_fsp = []
+            device._proxies_fsp_corr_subarray = []
+            device._proxies_fsp_pss_subarray = []
+            device._proxies_fsp_pst_subarray = []
 
             # Note vcc connected both individual and in group
-            device._proxies_assigned_vcc = [] 
+            device._proxies_assigned_vcc = []
             device._proxies_assigned_fsp = []
 
             # store the subscribed telstate events as event_ID:attribute_proxy key:value pairs
@@ -1366,10 +1346,49 @@ class CbfSubarray(SKASubarray):
 
             return (ResultCode.OK, "successfull")
 
-    def always_executed_hook(self):
+    def always_executed_hook(self: CbfSubarray) -> None:
         # PROTECTED REGION ID(CbfSubarray.always_executed_hook) ENABLED START #
         """methods always executed before any TANGO command is executed"""
-        pass
+        if self._proxy_cbf_controller is None:
+            self._proxy_cbf_controller = CbfDeviceProxy(
+                fqdn=self.CbfControllerAddress, logger=self.logger
+            )
+            self._controller_max_capabilities = dict(
+                pair.split(":") for pair in
+                self._proxy_cbf_controller.get_property("MaxCapabilities")["MaxCapabilities"]
+            )
+            self._count_vcc = int(self._controller_max_capabilities["VCC"])
+            self._count_fsp = int(self._controller_max_capabilities["FSP"])
+            self._fqdn_vcc = list(self.VCC)[:self._count_vcc]
+            self._fqdn_fsp = list(self.FSP)[:self._count_fsp]
+            self._fqdn_fsp_corr_subarray = list(self.FspCorrSubarray)
+            self._fqdn_fsp_pss_subarray = list(self.FspPssSubarray)
+            self._fqdn_fsp_pst_subarray = list(self.FspPstSubarray)
+        if len(self._proxies_vcc) == 0:
+            self._proxies_vcc = [
+                CbfDeviceProxy(fqdn=fqdn, logger=self.logger) 
+                for fqdn in self._fqdn_vcc
+            ]
+        if len(self._proxies_fsp) == 0:
+            self._proxies_fsp = [
+                CbfDeviceProxy(fqdn=fqdn, logger=self.logger)
+                for fqdn in self._fqdn_fsp
+            ]
+        if len(self._proxies_fsp_corr_subarray) == 0:
+            self._proxies_fsp_corr_subarray = [
+                CbfDeviceProxy(fqdn=fqdn, logger=self.logger)
+                for fqdn in self._fqdn_fsp_corr_subarray
+            ]
+        if len(self._proxies_fsp_pss_subarray) == 0:
+            self._proxies_fsp_pss_subarray = [
+                CbfDeviceProxy(fqdn=fqdn, logger=self.logger)
+                for fqdn in self._fqdn_fsp_pss_subarray
+            ]
+        if len(self._proxies_fsp_pst_subarray) == 0:
+            self._proxies_fsp_pst_subarray = [
+                CbfDeviceProxy(fqdn=fqdn, logger=self.logger)
+                for fqdn in self._fqdn_fsp_pst_subarray
+            ]
         # PROTECTED REGION END #    //  CbfSubarray.always_executed_hook
 
     def delete_device(self):
