@@ -1299,15 +1299,6 @@ class CbfSubarray(SKASubarray):
             device._frequency_band_offset_stream_2 = 0
             device._stream_tuning = [0, 0]
 
-<<<<<<< HEAD
-=======
-            # device proxy for easy reference to CBF controller
-            device._proxy_cbf_controller = CbfDeviceProxy(
-                fqdn=device.CbfControllerAddress,
-                logger=device.logger
-            )
-
->>>>>>> AT5-812 changed tango proxies to Cbf wrappers in subarray
             device.MIN_INT_TIME = const.MIN_INT_TIME
             device.NUM_CHANNEL_GROUPS = const.NUM_CHANNEL_GROUPS
             device.NUM_FINE_CHANNELS = const.NUM_FINE_CHANNELS
