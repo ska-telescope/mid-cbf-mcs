@@ -83,3 +83,13 @@ class TestCbfController:
         assert result[0][0] == ResultCode.OK
         assert device_under_test.State() == DevState.OFF
 
+    def test_Standby(
+        self: TestCbfController,
+        device_under_test: CbfDeviceProxy
+    ) -> None:
+
+        result = device_under_test.Standby()
+        assert result[0][0] == ResultCode.OK
+        assert device_under_test.State() == DevState.STANDBY
+    
+
