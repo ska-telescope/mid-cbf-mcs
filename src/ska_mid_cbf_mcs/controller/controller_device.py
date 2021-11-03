@@ -31,6 +31,7 @@ from tango import AttrWriteType
 
 # SKA imports
 from ska_mid_cbf_mcs.controller.talondx_component_manager import TalonDxComponentManager
+from ska_mid_cbf_mcs.controller.controller_component_manager import ControllerComponentManager
 from ska_tango_base import SKAMaster, SKABaseDevice
 from ska_tango_base.control_model import HealthState, AdminMode, SimulationMode
 from ska_tango_base.commands import ResultCode
@@ -313,6 +314,9 @@ class CbfController(SKAMaster):
 
             device = self.target
 
+            # TODO: remove once updating to new base class version
+            device.component_manager = device.create_component_manager()
+
             # defines self._count_vcc, self._count_fsp, and self._count_subarray
             self.__get_num_capabilities()
 
@@ -429,6 +433,16 @@ class CbfController(SKAMaster):
                         log_msg = "Failure in connection to " + fqdn + " device: " + str(item.reason)
                         self.logger.error(log_msg)
         # PROTECTED REGION END #    //  CbfController.always_executed_hook
+    
+    def create_component_manager(self: CbfController) -> ControllerComponentManager:
+        """
+        Create and return a component manager for this device.
+
+        :return: a component manager for this device.
+        """
+        return ControllerComponentManager(   
+            self.logger,
+        )
 
     def delete_device(self: CbfController) -> None:
         """Unsubscribe to events, turn all the subarrays, VCCs and FSPs off""" 
