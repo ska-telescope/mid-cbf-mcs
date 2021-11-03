@@ -118,6 +118,7 @@ class CbfSubarray(SKASubarray):
     def _doppler_phase_correction_event_callback(
         self: CbfSubarray, fqdn, name, value, quality
     ) -> None:
+    # TODO: investigate error in this callback (subarray logs)
         if value is not None:
             try:
                 self._group_vcc.write_attribute("dopplerPhaseCorrection", value)
