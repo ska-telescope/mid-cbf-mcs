@@ -12,6 +12,7 @@
 from __future__ import annotations
 
 import logging
+import threading
 from ska_mid_cbf_mcs.power_switch.power_switch_driver import PowerSwitchDriver
 from ska_mid_cbf_mcs.power_switch.power_switch_simulator import PowerSwitchSimulator
 from ska_mid_cbf_mcs.commons.global_enum import PowerMode
@@ -43,10 +44,19 @@ class PowerSwitchComponentManager:
         :param logger: a logger for this object to use
         """
         self._simulation_mode = simulation_mode
-        self._num_outlets = 0
+        self._power_switch_lock = threading.Lock()
 
         self.power_switch_driver = PowerSwitchDriver(ip, logger)
         self.power_switch_simulator = PowerSwitchSimulator(logger)
+        self.start_communicating()
+
+    def start_communicating(self: PowerSwitchComponentManager) -> None:
+        """
+        Establish connection with the component, then start monitoring.
+        """
+        with self._power_switch_lock:
+            if not self._simulation_mode:
+                self.power_switch_driver.initialize()
 
     @property
     def simulation_mode(self: PowerSwitchComponentManager) -> SimulationMode:
@@ -61,8 +71,9 @@ class PowerSwitchComponentManager:
         Set the simulation mode of the component manager.
         """
         self._simulation_mode = value
-        self._num_outlets = 0
 
+        threading.Thread(target=self.start_communicating).start()
+        
     @property
     def num_outlets(self: PowerSwitchComponentManager) -> int:
         """
@@ -70,12 +81,11 @@ class PowerSwitchComponentManager:
 
         :return: number of outlets
         """
-        if self._num_outlets == 0:
+        with self._power_switch_lock:
             if self.simulation_mode:
-                self._num_outlets = self.power_switch_simulator.num_outlets
+                return self.power_switch_simulator.num_outlets
             else:
-                self._num_outlets = self.power_switch_driver.num_outlets
-        return self._num_outlets
+                return self.power_switch_driver.num_outlets
 
     @property
     def is_communicating(self: PowerSwitchComponentManager) -> bool:
@@ -84,10 +94,11 @@ class PowerSwitchComponentManager:
 
         :return: whether the power switch is communicating
         """
-        if self.simulation_mode:
-            return self.power_switch_simulator.is_communicating
-        else:
-            return self.power_switch_driver.is_communicating
+        with self._power_switch_lock:
+            if self.simulation_mode:
+                return self.power_switch_simulator.is_communicating
+            else:
+                return self.power_switch_driver.is_communicating
 
     def get_outlet_power_mode(
         self: PowerSwitchComponentManager,
@@ -101,10 +112,11 @@ class PowerSwitchComponentManager:
 
         :raise AssertionError: if outlet ID is out of bounds
         """
-        if self.simulation_mode:
-            return self.power_switch_simulator.get_outlet_power_mode(outlet)
-        else:
-            return self.power_switch_driver.get_outlet_power_mode(outlet)
+        with self._power_switch_lock:
+            if self.simulation_mode:
+                return self.power_switch_simulator.get_outlet_power_mode(outlet)
+            else:
+                return self.power_switch_driver.get_outlet_power_mode(outlet)
 
     def turn_on_outlet(
         self: PowerSwitchComponentManager,
@@ -119,10 +131,11 @@ class PowerSwitchComponentManager:
 
         :raise AssertionError: if outlet ID is out of bounds
         """
-        if self.simulation_mode:
-            return self.power_switch_simulator.turn_on_outlet(outlet)
-        else:
-            return self.power_switch_driver.turn_on_outlet(outlet)
+        with self._power_switch_lock:
+            if self.simulation_mode:
+                return self.power_switch_simulator.turn_on_outlet(outlet)
+            else:
+                return self.power_switch_driver.turn_on_outlet(outlet)
         
     def turn_off_outlet(
         self: PowerSwitchComponentManager,
@@ -137,7 +150,8 @@ class PowerSwitchComponentManager:
 
         :raise AssertionError: if outlet ID is out of bounds
         """
-        if self.simulation_mode:
-            return self.power_switch_simulator.turn_off_outlet(outlet)
-        else:
-            return self.power_switch_driver.turn_off_outlet(outlet)
+        with self._power_switch_lock:
+            if self.simulation_mode:
+                return self.power_switch_simulator.turn_off_outlet(outlet)
+            else:
+                return self.power_switch_driver.turn_off_outlet(outlet)

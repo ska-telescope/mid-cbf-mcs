@@ -80,6 +80,13 @@ class PowerSwitchDriver:
 
         self.outlets: List(Outlet) = []
 
+    def initialize(self: PowerSwitchDriver) -> None:
+        """
+        Initializes the outlet list. Should be called once before calling
+        any of the other methods.
+        """
+        self.outlets = self.get_outlet_list()
+
     @property
     def num_outlets(self: PowerSwitchDriver) -> int:
         """
@@ -87,7 +94,6 @@ class PowerSwitchDriver:
 
         :return: number of outlets
         """
-        self.outlets = self.get_outlet_list()
         return len(self.outlets)
 
     @property
