@@ -137,7 +137,7 @@ class TalonDxComponentManager:
                                 attempts += 1
                                 continue
                             else:
-                                raise NoValidConnectionsError(e)
+                                raise NoValidConnectionsError(e.errors)
                         break
 
                     ssh_chan = ssh_client.get_transport().open_session()

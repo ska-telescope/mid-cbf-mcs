@@ -143,28 +143,28 @@ class TalonLRU(SKABaseDevice):
 
             device._power_switch_lock = threading.Lock()
 
+            # Get the device proxies of all the devices we care about
             device._proxy_talondx_board1 = self.get_device_proxy(device.TalonDxBoard1Address)
             device._proxy_talondx_board2 = self.get_device_proxy(device.TalonDxBoard2Address)
-
-            # Increase the access timeout of the power switch proxies, since the
-            # numOutlets attribute can take some time to read
-            device._proxy_power_switch1 = self.get_device_proxy(device.PDU1Address)
-            if device._proxy_power_switch1 is not None:
-                device._proxy_power_switch1.set_timeout_millis(5000)
-                device._proxy_power_switch1.add_change_event_callback("simulationMode",
-                    device.check_power_mode, stateless=True)
-             
+            device._proxy_power_switch1 = self.get_device_proxy(device.PDU1Address)  
             if device.PDU2Address == device.PDU1Address:
                 device._proxy_power_switch2 = device._proxy_power_switch1
             else:
                 device._proxy_power_switch2 = self.get_device_proxy(device.PDU2Address)
-                if device._proxy_power_switch2 is not None:
-                    device._proxy_power_switch2.set_timeout_millis(5000)
-                    device._proxy_power_switch2.add_change_event_callback("simulationMode",
-                        device.check_power_mode, stateless=True)
 
-            # Check the initial power mode of the PDUs
-            device.check_power_mode()
+            # Increase the access timeout of the power switch proxies, since the
+            # numOutlets attribute can take some time to read. And subscribe to
+            # simulationMode change event.
+            if device._proxy_power_switch1 is not None:
+                device._proxy_power_switch1.set_timeout_millis(5000)
+                device._proxy_power_switch1.add_change_event_callback("simulationMode",
+                    device.check_power_mode, stateless=True)
+            
+            if device.PDU2Address != device.PDU1Address and device._proxy_power_switch2 is not None:
+                device._proxy_power_switch2.set_timeout_millis(5000)
+                device._proxy_power_switch2.add_change_event_callback("simulationMode",
+                    device.check_power_mode, stateless=True)
+
             if device.get_state() == DevState.INIT:
                 return (ResultCode.OK, "TalonLRU initialization OK")
             else:
@@ -187,7 +187,13 @@ class TalonLRU(SKABaseDevice):
                     self.logger.error(f"Failed connection to {fqdn} device: {item.reason}")
                 return None
 
-    def check_power_mode(self: TalonLRU, event=None) -> None:
+    def check_power_mode(
+        self: TalonLRU, 
+        fqdn=None,
+        name=None,
+        value=None,
+        quality=None
+    ) -> None:
         """
         Get the power mode of both PDUs and check that it is consistent with the
         current device state.
