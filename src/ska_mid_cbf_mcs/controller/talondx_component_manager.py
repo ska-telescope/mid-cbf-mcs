@@ -10,8 +10,9 @@
 # Copyright (c) 2019 National Research Council of Canada
 
 from __future__ import annotations
-import tango
+import time
 import json
+import tango
 import logging
 from paramiko import SSHClient, AutoAddPolicy
 from paramiko.ssh_exception import SSHException, NoValidConnectionsError
@@ -125,7 +126,21 @@ class TalonDxComponentManager:
 
                 with SSHClient() as ssh_client:
                     ssh_client.set_missing_host_key_policy(AutoAddPolicy())
-                    ssh_client.connect(ip, username='root', password='', timeout=TALON_FIRST_CONNECT_TIMEOUT)
+                    
+                    # Attempt to make first connection with the Talon board
+                    attempts = 0
+                    while True:
+                        try:
+                            ssh_client.connect(ip, username='root', password='')
+                        except NoValidConnectionsError as e:
+                            if attempts < TALON_FIRST_CONNECT_TIMEOUT:
+                                time.sleep(1)
+                                attempts += 1
+                                continue
+                            else:
+                                raise NoValidConnectionsError(e.errors)
+                        break
+
                     ssh_chan = ssh_client.get_transport().open_session()
                 
                     # Make the DS binaries directory
