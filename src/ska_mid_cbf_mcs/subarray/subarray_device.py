@@ -1,12 +1,9 @@
 # -*- coding: utf-8 -*-
 #
-
 # This file is part of the SKA Mid.CBF MCS project
 #
-#
-#
 # Distributed under the terms of the GPL license.
-# See LICENSE.txt for more info.
+# See LICENSE for more info.
 
 """
 CbfSubarray
@@ -15,9 +12,15 @@ Sub-element subarray device for Mid.CBF
 from __future__ import annotations
 from logging import log  # allow forward references in type hints
 from typing import List, Tuple
+import sys
+import json
+from random import randint
+from threading import Thread, Lock
+import time
+import copy
 from itertools import repeat
 
-# tango imports
+# Tango imports
 import tango
 from tango import DebugIt
 from tango.server import run
@@ -27,13 +30,10 @@ from tango import DevState
 from tango import AttrWriteType
 # Additional import
 # PROTECTED REGION ID(CbfSubarray.additionnal_import) ENABLED START #
-import sys
-import json
-from random import randint
-from threading import Thread, Lock
-import time
-import copy
 
+# SKA imports
+from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
+from ska_mid_cbf_mcs.group_proxy import CbfGroupProxy
 from ska_mid_cbf_mcs.commons.global_enum import const, freq_band_dict
 from ska_mid_cbf_mcs.attribute_proxy import CbfAttributeProxy
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
@@ -1095,9 +1095,6 @@ class CbfSubarray(SKASubarray):
         return len(self._receptors)
 
 
-
-
-
     # -----------------
     # Device Properties
     # -----------------
@@ -1302,6 +1299,15 @@ class CbfSubarray(SKASubarray):
             device._frequency_band_offset_stream_2 = 0
             device._stream_tuning = [0, 0]
 
+<<<<<<< HEAD
+=======
+            # device proxy for easy reference to CBF controller
+            device._proxy_cbf_controller = CbfDeviceProxy(
+                fqdn=device.CbfControllerAddress,
+                logger=device.logger
+            )
+
+>>>>>>> AT5-812 changed tango proxies to Cbf wrappers in subarray
             device.MIN_INT_TIME = const.MIN_INT_TIME
             device.NUM_CHANNEL_GROUPS = const.NUM_CHANNEL_GROUPS
             device.NUM_FINE_CHANNELS = const.NUM_FINE_CHANNELS
@@ -1339,11 +1345,11 @@ class CbfSubarray(SKASubarray):
             device._events_state_change_fsp = {}
 
             # initialize groups
-            device._group_vcc = tango.Group("VCC")
-            device._group_fsp = tango.Group("FSP")
-            device._group_fsp_corr_subarray = tango.Group("FSP Subarray Corr")
-            device._group_fsp_pss_subarray = tango.Group("FSP Subarray Pss")
-            device._group_fsp_pst_subarray = tango.Group("FSP Subarray Pst")
+            device._group_vcc = CbfGroupProxy("VCC")
+            device._group_fsp = CbfGroupProxy("FSP")
+            device._group_fsp_corr_subarray = CbfGroupProxy("FSP Subarray Corr")
+            device._group_fsp_pss_subarray = CbfGroupProxy("FSP Subarray Pss")
+            device._group_fsp_pst_subarray = CbfGroupProxy("FSP Subarray Pst")
 
             return (ResultCode.OK, "successfull")
 
