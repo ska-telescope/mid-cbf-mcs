@@ -47,7 +47,23 @@ class Fsp(SKACapability):
     Fsp TANGO device class for the prototype
     """
     # PROTECTED REGION ID(Fsp.class_variable) ENABLED START #
+    
+    def __get_group_proxies(
+        self: Fsp, 
+        ) -> None:
 
+        if self._group_fsp_corr_subarray is None:
+            self._group_fsp_corr_subarray = CbfGroupProxy("FSP Subarray Corr", logger=self.logger)
+            for fqdn in list(self.FspCorrSubarray):
+                self._group_fsp_corr_subarray.add(fqdn)
+        if self._group_fsp_pss_subarray is None:
+            self._group_fsp_pss_subarray = CbfGroupProxy("FSP Subarray Pss", logger=self.logger)
+            for fqdn in list(self.FspPssSubarray):
+                self._group_fsp_pss_subarray.add(fqdn)
+        if self._group_fsp_pst_subarray is None:
+            self._group_fsp_pst_subarray = CbfGroupProxy("FSP Subarray Pst", logger=self.logger)
+            for fqdn in list(self.FspPstSubarray):
+                self._group_fsp_pst_subarray.add(fqdn)
 
     # PROTECTED REGION END #    //  Fsp.class_variable
 
@@ -171,18 +187,7 @@ class Fsp(SKACapability):
         # PROTECTED REGION ID(Fsp.always_executed_hook) ENABLED START #
         """Hook to be executed before any commands."""
 
-        if self._group_fsp_corr_subarray is None:
-            self._group_fsp_corr_subarray = CbfGroupProxy("FSP Subarray Corr", logger=self.logger)
-            for fqdn in list(self.FspCorrSubarray):
-                self._group_fsp_corr_subarray.add(fqdn)
-        if self._group_fsp_pss_subarray is None:
-            self._group_fsp_pss_subarray = CbfGroupProxy("FSP Subarray Pss", logger=self.logger)
-            for fqdn in list(self.FspPssSubarray):
-                self._group_fsp_pss_subarray.add(fqdn)
-        if self._group_fsp_pst_subarray is None:
-            self._group_fsp_pst_subarray = CbfGroupProxy("FSP Subarray Pst", logger=self.logger)
-            for fqdn in list(self.FspPstSubarray):
-                self._group_fsp_pst_subarray.add(fqdn)
+        self.__get_group_proxies()
 
         # PROTECTED REGION END #    //  Fsp.always_executed_hook
 
@@ -260,46 +265,51 @@ class Fsp(SKACapability):
             # for now, assume that given addresses are valid
             device = self.target
 
-            if device.CorrelationAddress:
-                device._proxy_correlation = CbfDeviceProxy(
-                fqdn=device.CorrelationAddress,
-                logger=device.logger
-            )
-            if device.PSSAddress:
-                device._proxy_pss = CbfDeviceProxy(
-                fqdn=device.PSSAddress,
-                logger=device.logger
-            )
-            if device.PSTAddress:
-                device._proxy_pst = CbfDeviceProxy(
-                fqdn=device.PSTAddress,
-                logger=device.logger
-            )
-            if device.VLBIAddress:
-                device._proxy_vlbi = CbfDeviceProxy(
-                fqdn=device.VLBIAddress,
-                logger=device.logger
-            )
+            if device._proxy_correlation is None:
+                if device.CorrelationAddress:
+                    device._proxy_correlation = CbfDeviceProxy(
+                        fqdn=device.CorrelationAddress,
+                        logger=device.logger
+                    )
+            
+            if device._proxy_pss is None:
+                if device.PSSAddress:
+                    device._proxy_pss = CbfDeviceProxy(
+                        fqdn=device.PSSAddress,
+                        logger=device.logger
+                    )
+            
+            if device._proxy_pst is None:
+                if device.PSTAddress:
+                    device._proxy_pst = CbfDeviceProxy(
+                        fqdn=device.PSTAddress,
+                        logger=device.logger
+                    )
+            
+            if device._proxy_vlbi is None:
+                if device.VLBIAddress:
+                    device._proxy_vlbi = CbfDeviceProxy(
+                        fqdn=device.VLBIAddress,
+                        logger=device.logger
+                    )
 
-            if device.FspCorrSubarray:
-                device._proxy_fsp_corr_subarray = [*map(
-                    CbfDeviceProxy,
-                    list(device.FspCorrSubarray),
-                    [device.logger] * len(list(device.FspCorrSubarray)),
-                )]
-            if device.FspPssSubarray:
-                device._proxy_fsp_pss_subarray = [*map(
-                    CbfDeviceProxy,
-                    list(device.FspPssSubarray),
-                    [device.logger] * len(list(device.FspPssSubarray)),
-                )]
-            if device.FspPstSubarray:
-                device._proxy_fsp_pst_subarray = [*map(
-                    CbfDeviceProxy,
-                    list(device.FspPstSubarray),
-                    [device.logger] * len(list(device.FspPstSubarray)),
-                )]
+            if device._proxy_fsp_corr_subarray is None:
+                if device.FspCorrSubarray:
+                    device._proxy_fsp_corr_subarray = \
+                        [CbfDeviceProxy(fqdn=fqdn, logger=device.logger) \
+                        for fqdn in device.FspCorrSubarray]
 
+            if device._proxy_fsp_pss_subarray is None:
+                if device.FspPssSubarray:
+                    device._proxy_fsp_pss_subarray = \
+                        [CbfDeviceProxy(fqdn=fqdn, logger=device.logger) \
+                        for fqdn in device.FspPssSubarray]
+
+            if device._proxy_fsp_pst_subarray is None:
+                if device.FspPstSubarray:
+                    device._proxy_fsp_pst_subarray = \
+                        [CbfDeviceProxy(fqdn=fqdn, logger=device.logger) \
+                        for fqdn in device.FspPstSubarray]
         def do(
             self: Fsp.InitCommand,
         ) -> Tuple[ResultCode, str]:
@@ -316,8 +326,18 @@ class Fsp(SKACapability):
 
             device = self.target
 
-            # defines self._proxy_correlation, self._proxy_pss, self._proxy_pst, self._proxy_vlbi,
-            # and self._proxy_fsp_corr_subarray
+            # initialize FSP proxies
+            device._group_fsp_corr_subarray = None
+            device._group_fsp_pss_subarray = None
+            device._group_fsp_pst_subarray = None
+            device._proxy_correlation = None
+            device._proxy_pss = None
+            device._proxy_pst = None
+            device._proxy_vlbi = None
+            device._proxy_fsp_corr_subarray = None
+            device._proxy_fsp_pss_subarray = None
+            device._proxy_fsp_pst_subarray = None
+
             self.__get_capability_proxies()
 
             device._fsp_id = device.FspID
@@ -330,11 +350,6 @@ class Fsp(SKACapability):
             device._jones_matrix = [[0.0] * 4 for _ in range(4)]
             device._delay_model = [[0.0] * 6 for _ in range(4)]
             device._timing_beam_weights = [[0.0] * 6 for _ in range(4)]
-
-            # initialize FSP subarray group
-            device._group_fsp_corr_subarray = None
-            device._group_fsp_pss_subarray = None
-            device._group_fsp_pst_subarray = None
 
             return (result_code,message)
 

@@ -19,6 +19,7 @@ import json
 import logging
 import pytest
 from typing import Callable, Type, Dict
+from enum import Enum
 
 # Path
 file_path = os.path.dirname(os.path.abspath(__file__))
@@ -130,6 +131,9 @@ class TestFsp:
 
         device_under_test.On()
         device_under_test.AddSubarrayMembership(sub_id)
+        time.sleep(5)
+        assert device_under_test.read_attribute("subarrayMembership", \
+            extract_as=tango.ExtractAs.List).value == [sub_id]
 
         # timing beam weights should be set to 0.0 after init
         num_cols = 6
@@ -139,6 +143,8 @@ class TestFsp:
 
         # update only valid for function mode PST-BF
         device_under_test.SetFunctionMode("PST-BF")
+        FspModes = Enum('FspModes', 'CORR PSS_BF PST_BF VLBI')
+        assert device_under_test.functionMode == FspModes.PST_BF.value
 
         # read the json file
         f = open(file_path + timing_beam_weights_file_name)
@@ -181,6 +187,9 @@ class TestFsp:
 
         device_under_test.On()
         device_under_test.AddSubarrayMembership(sub_id)
+        time.sleep(5)
+        assert device_under_test.read_attribute("subarrayMembership", \
+            extract_as=tango.ExtractAs.List).value == [sub_id]
 
         # jones matrix values should be set to 0.0 after init
         num_cols = 4
@@ -190,6 +199,8 @@ class TestFsp:
 
         # update only valid for function mode PSS-BF
         device_under_test.SetFunctionMode("PSS-BF")
+        FspModes = Enum('FspModes', 'CORR PSS_BF PST_BF VLBI')
+        assert device_under_test.functionMode == FspModes.PSS_BF.value
 
         # read the json file
         f = open(file_path + jones_matrix_file_name)
@@ -231,6 +242,9 @@ class TestFsp:
 
         device_under_test.On()
         device_under_test.AddSubarrayMembership(sub_id)
+        time.sleep(5)
+        assert device_under_test.read_attribute("subarrayMembership", \
+            extract_as=tango.ExtractAs.List).value == [sub_id]
 
         # delay model values should be set to 0.0 after init
         num_cols = 6
@@ -247,6 +261,11 @@ class TestFsp:
         valid_function_modes = ["PSS-BF", "PST-BF"]
         for mode in valid_function_modes:
             device_under_test.SetFunctionMode(mode)
+            FspModes = Enum('FspModes', 'CORR PSS_BF PST_BF VLBI')
+            if mode == "PSS-BF":
+                assert device_under_test.functionMode == FspModes.PSS_BF.value
+            elif mode == "PST-BF":
+                assert device_under_test.functionMode == FspModes.PST_BF.value
 
             # update the delay model
             for m in delay_model["delayModel"]:

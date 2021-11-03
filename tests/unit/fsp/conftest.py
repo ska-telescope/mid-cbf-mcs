@@ -47,9 +47,6 @@ def device_to_load() -> DeviceToLoadType:
     """
     Fixture that specifies the device to be loaded for testing.
 
-    :param patched_fsp_device_class: a class for a patched Fsp
-        device with extra methods for testing purposes.
-
     :return: specification of the device to be loaded
     """
     return {
@@ -117,8 +114,12 @@ def initial_mocks(
     """
     Return a dictionary of device proxy mocks to pre-register.
 
-    :param mock_vcc: a mock Vcc that is powered off.
-    :param mock_subarray: a mock VccBand4 that is powered off.
+    :param mock_fsp_corr_subarray: a mock FspCorrSubarray.
+    :param mock_fsp_corr_subarray_group: a mock FspCorrSubarray group.
+    :param mock_fsp_pss_subarray: a mock FspPssSubarray.
+    :param mock_fsp_pss_subarray_group: a mock FspPssSubarray group.
+    :param mock_fsp_pst_subarray: a mock FspPstSubarray.
+    :param mock_fsp_pst_subarray_group: a mock FspPstSubarray group.
 
     :return: a dictionary of device proxy mocks to pre-register.
     """
