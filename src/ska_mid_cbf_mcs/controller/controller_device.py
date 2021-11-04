@@ -35,8 +35,6 @@ from ska_mid_cbf_mcs.controller.controller_component_manager import ControllerCo
 from ska_tango_base import SKAMaster, SKABaseDevice
 from ska_tango_base.control_model import HealthState, AdminMode, SimulationMode
 from ska_tango_base.commands import ResultCode
-from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
-from ska_mid_cbf_mcs.group_proxy import CbfGroupProxy
 
 # PROTECTED REGION END #    //  CbfController.additionnal_import
 
@@ -351,38 +349,7 @@ class CbfController(SKAMaster):
             device._fqdn_subarray = list(device.CbfSubarray)[:device._count_subarray]
             device._fqdn_talon_lru = list(device.TalonLRU)
 
-            # initialize dicts with maps receptorID <=> vccID (randomly for now, for testing purposes)
-            # maps receptor IDs to VCC IDs, in the form "receptorID:vccID"
-            device._receptor_to_vcc = []
-            # maps VCC IDs to receptor IDs, in the form "vccID:receptorID"
-            device._vcc_to_receptor = []
-
-            remaining = list(range(1, device._count_vcc + 1))
-            for i in range(1, device._count_vcc + 1):
-                receptorIDIndex = randint(0, len(remaining) - 1)
-                receptorID = remaining[receptorIDIndex]
-                device._receptor_to_vcc.append("{}:{}".format(receptorID, i))
-                device._vcc_to_receptor.append("{}:{}".format(i, receptorID))
-                vcc_proxy = CbfDeviceProxy(
-                    fqdn=device._fqdn_vcc[i - 1], 
-                    logger=device.logger
-                )
-                vcc_proxy.receptorID = receptorID
-                del remaining[receptorIDIndex]
-
-            # initialize the dict with subarray/capability proxies
-            device._proxies = {}  # device_name:proxy
-
-            # initialize the dict with the subscribed event IDs
-            device._event_id = {}  # proxy:[eventID]
-
-            # initialize groups
-            device._group_vcc = None
-            device._group_fsp = None
-            device._group_subarray = None
-
             # Create the Talon-DX component manager and initialize simulation
-            # mode to on
             device._simulation_mode = SimulationMode.TRUE
             device._talondx_component_manager = TalonDxComponentManager(
                 device.TalonDxConfigPath, device._simulation_mode, self.logger)
@@ -408,6 +375,7 @@ class CbfController(SKAMaster):
         :return: a component manager for this device.
         """
         return ControllerComponentManager( 
+            self._count_vcc,
             self._fqdn_vcc,
             self._fqdn_fsp,
             self._fqdn_subarray,
@@ -437,13 +405,13 @@ class CbfController(SKAMaster):
     def read_receptorToVcc(self: CbfController) -> List[str]:
         # PROTECTED REGION ID(CbfController.receptorToVcc_read) ENABLED START #
         """Return 'receptorID:vccID'"""
-        return self._receptor_to_vcc
+        return self.component_manager.receptor_to_vcc
         # PROTECTED REGION END #    //  CbfController.receptorToVcc_read
 
     def read_vccToReceptor(self: CbfController) -> List[str]:
         # PROTECTED REGION ID(CbfController.vccToReceptor_read) ENABLED START #
         """Return receptorToVcc attribute: 'vccID:receptorID'"""
-        return self._vcc_to_receptor
+        return self.component_manager.vcc_to_receptor
         # PROTECTED REGION END #    //  CbfController.vccToReceptor_read
 
     def read_subarrayconfigID(self: CbfController) -> List[str]:
@@ -589,10 +557,11 @@ class CbfController(SKAMaster):
                 information purpose only.
             :rtype: (ResultCode, str)
             """
-            (result_code,message)=super().do()
+
+            super().do()
 
             component_manager = self.target
-            component_manager.on()
+            (result_code,message) = component_manager.on()
 
             return (result_code,message)
 
@@ -611,10 +580,11 @@ class CbfController(SKAMaster):
                 information purpose only.
             :rtype: (ResultCode, str)
             """
-            (result_code,message)=super().do()
+
+            super().do()
 
             component_manager = self.target
-            component_manager.off()
+            (result_code,message) = component_manager.off()
 
             return (result_code,message)
 
@@ -635,10 +605,11 @@ class CbfController(SKAMaster):
                 information purpose only.
             :rtype: (ResultCode, str)
             """
-            (result_code,message)=super().do()
+
+            super().do()
 
             component_manager = self.target
-            component_manager.standby()
+            (result_code,message) = component_manager.standby()
 
             return (result_code,message)
 

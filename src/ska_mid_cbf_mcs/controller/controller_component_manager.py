@@ -11,6 +11,10 @@
 
 from __future__ import annotations
 
+from typing import List, Tuple
+
+from random import randint
+
 # tango imports
 import tango
 import logging
@@ -25,6 +29,7 @@ class ControllerComponentManager:
 
     def __init__(
         self: ControllerComponentManager,
+        count_vcc: int,
         fqdn_vcc: str,
         fqdn_fsp: str,
         fqdn_subarray: str,
@@ -42,6 +47,8 @@ class ControllerComponentManager:
 
         self._connected = False
 
+        self._count_vcc = count_vcc
+
         self._fqdn_vcc = fqdn_vcc
         self._fqdn_fsp = fqdn_fsp
         self._fqdn_subarray = fqdn_subarray
@@ -53,7 +60,28 @@ class ControllerComponentManager:
 
         self._event_id = {} 
 
+        self._receptor_to_vcc = []
+        self._vcc_to_receptor = []
+
         self.start_communicating()
+
+    @property
+    def receptor_to_vcc(self: ControllerComponentManager) -> List[str]:
+        """
+        Get receptor to vcc assignment
+
+        :return: list of 'receptorID:vccID'
+        """
+        return self._receptor_to_vcc 
+    
+    @property
+    def vcc_to_receptor(self: ControllerComponentManager) -> List[str]:
+        """
+        Get vcc to receptor assignment
+
+        :return: list of 'vccID:receptorID'
+        """
+        return self._vcc_to_receptor
 
     
     def start_communicating(
@@ -91,8 +119,6 @@ class ControllerComponentManager:
             self._logger.error(log_msg)
             return
 
-        self._fqdn_talon_lru = self._fqdn_talon_lru
-
         for fqdn in self._fqdn_vcc + self._fqdn_fsp + self._fqdn_talon_lru + self._fqdn_subarray :
             if fqdn not in self._proxies:
                 try:
@@ -109,6 +135,24 @@ class ControllerComponentManager:
                         log_msg = "Failure in connection to " + fqdn + " device: " + str(item.reason)
                         self._logger.error(log_msg)
                     return
+        
+            try: 
+                remaining = list(range(1, self._count_vcc + 1))
+                for i in range(1, self._count_vcc + 1):
+                    receptorIDIndex = randint(0, len(remaining) - 1)
+                    receptorID = remaining[receptorIDIndex]
+                    self._receptor_to_vcc.append("{}:{}".format(receptorID, i))
+                    self._vcc_to_receptor.append("{}:{}".format(i, receptorID))
+                    vcc_proxy = CbfDeviceProxy(
+                        fqdn=self._fqdn_vcc[i - 1], 
+                        logger=self._logger
+                    )
+                    vcc_proxy.receptorID = receptorID
+                    del remaining[receptorIDIndex]
+            except tango.DevFailed:
+                log_msg = "Failure connecting to vcc proxies"
+                self._logger.error(log_msg)
+
         
         self._connected = True
 
@@ -271,7 +315,7 @@ class ControllerComponentManager:
     
     def on(      
         self: ControllerComponentManager,
-    ) -> None:
+    ) -> Tuple[ResultCode, str]:
 
         if self._connected:
 
@@ -316,55 +360,103 @@ class ControllerComponentManager:
                         for item in df.args:
                             log_msg = "Failure in connection to " + fqdn + " device: " + str(item.reason)
                             self._logger.error(log_msg)
+                            return (ResultCode.FAILED, log_msg)
 
             # Power on all the Talon boards
-            for talon_lru_fqdn in self._fqdn_talon_lru:
-                self._proxies[talon_lru_fqdn].On()
+            try: 
+                for talon_lru_fqdn in self._fqdn_talon_lru:
+                    self._proxies[talon_lru_fqdn].On()
+            except tango.DevFailed:
+                log_msg = "Failed to power on Talon boards"
+                self._logger.error(log_msg)
+                return (ResultCode.FAILED, log_msg)
 
             # Configure all the Talon boards
             if self._talondx_component_manager.configure_talons() == ResultCode.FAILED:
-                self._logger.error("Failed to configure Talon boards")
-                
-            self._group_subarray.command_inout("On")
-            self._group_vcc.command_inout("On")
-            self._group_fsp.command_inout("On")
+                log_msg = "Failed to configure Talon boards"
+                self._logger.error(log_msg)
+                return (ResultCode.FAILED, log_msg)
+    
+            try:
+                self._group_subarray.command_inout("On")
+                self._group_vcc.command_inout("On")
+                self._group_fsp.command_inout("On")
+            except tango.DevFailed:
+                log_msg = "Failed to turn on group proxies"
+                self._logger.error(log_msg)
+                return (ResultCode.FAILED, log_msg)
+
+            message = "CbfController On command completed OK"
+            return (ResultCode.OK, message)
 
         else:
-            self._logger.error("Proxies not connected")
+            log_msg = "Proxies not connected"
+            self._logger.error(log_msg)
+            return (ResultCode.FAILED, log_msg)
 
     def off(      
         self: ControllerComponentManager,
-    ) -> None:
+    ) -> Tuple[ResultCode, str]:
 
         if self._connected:
 
-            for talon_lru_fqdn in self._fqdn_talon_lru:
-                    self._proxies[talon_lru_fqdn].Off()
+            try:
+                for talon_lru_fqdn in self._fqdn_talon_lru:
+                        self._proxies[talon_lru_fqdn].Off()
+            except tango.DevFailed:
+                log_msg = "Failed to power off Talon boards"
+                self._logger.error(log_msg)
+                return (ResultCode.FAILED, log_msg)
 
-            self._group_subarray.command_inout("Off")
-            self._group_vcc.command_inout("Off")
-            self._group_fsp.command_inout("Off")
+            try:
+                self._group_subarray.command_inout("Off")
+                self._group_vcc.command_inout("Off")
+                self._group_fsp.command_inout("Off")
+            except tango.DevFailed:
+                log_msg = "Failed to turn off group proxies"
+                self._logger.error(log_msg)
+                return (ResultCode.FAILED, log_msg)
 
-            for proxy in list(self._event_id.keys()):
-                for event_id in self._event_id[proxy]:
-                    self._logger.info(
-                        "Unsubscribing from event " + str(event_id) +
-                        ", device: " + str(proxy._fqdn)
-                    )
-                    proxy.unsubscribe_event(event_id)
+            try:
+                for proxy in list(self._event_id.keys()):
+                    for event_id in self._event_id[proxy]:
+                        self._logger.info(
+                            "Unsubscribing from event " + str(event_id) +
+                            ", device: " + str(proxy._fqdn)
+                        )
+                        proxy.unsubscribe_event(event_id)
+            except tango.DevFailed:
+                log_msg = "Failed to unsubscribe to events"
+                self._logger.error(log_msg)
+                return (ResultCode.FAILED, log_msg)
+            
+            message = "CbfController Off command completed OK"
+            return (ResultCode.OK, message)
 
         else:
-            self._logger.error("Proxies not connected")
+            log_msg = "Proxies not connected"
+            self._logger.error(log_msg)
+            return (ResultCode.FAILED, log_msg)
 
     def standby(      
         self: ControllerComponentManager,
-    ) -> None:
+    ) -> Tuple[ResultCode, str]:
 
         if self._connected:
 
-            self._group_subarray.command_inout("Off")
-            self._group_vcc.command_inout("Off")
-            self._group_fsp.command_inout("Off")
+            try: 
+                self._group_subarray.command_inout("Off")
+                self._group_vcc.command_inout("Off")
+                self._group_fsp.command_inout("Off")
+            except tango.DevFailed:
+                log_msg = "Failed to turn off group proxies"
+                self._logger.error(log_msg)
+                return (ResultCode.FAILED, log_msg)
+
+            message = "CbfController Standby command completed OK"
+            return (ResultCode.OK, message)
         
         else:
-            self._logger.error("Proxies not connected")
+            log_msg = "Proxies not connected"
+            self._logger.error(log_msg)
+            return (ResultCode.FAILED, log_msg)
