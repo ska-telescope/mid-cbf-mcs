@@ -183,6 +183,12 @@ class CbfGroupProxy:
         self.__dict__["_fqdns"].remove(fqdn)
         self.__dict__["_group"].remove(fqdn)
 
+    def remove_all(self: CbfGroupProxy) -> None:
+        """
+        Remove all devices from the group.
+        """
+        self.remove(self._fqdns)
+
 
     def check_initialised(self: CbfGroupProxy, max_time: float = 120.0) -> bool:
         """

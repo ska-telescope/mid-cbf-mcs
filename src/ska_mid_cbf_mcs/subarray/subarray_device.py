@@ -10,7 +10,8 @@ CbfSubarray
 Sub-element subarray device for Mid.CBF
 """
 from __future__ import annotations
-from logging import log  # allow forward references in type hints
+from logging import log
+from os import name  # allow forward references in type hints
 from typing import List, Tuple
 import sys
 import json
@@ -1336,11 +1337,14 @@ class CbfSubarray(SKASubarray):
             device._events_state_change_fsp = {}
 
             # initialize groups
-            device._group_vcc = CbfGroupProxy("VCC")
-            device._group_fsp = CbfGroupProxy("FSP")
-            device._group_fsp_corr_subarray = CbfGroupProxy("FSP Subarray Corr")
-            device._group_fsp_pss_subarray = CbfGroupProxy("FSP Subarray Pss")
-            device._group_fsp_pst_subarray = CbfGroupProxy("FSP Subarray Pst")
+            device._group_vcc = CbfGroupProxy(name="VCC", logger=device.logger)
+            device._group_fsp = CbfGroupProxy(name="FSP",logger=device.logger)
+            device._group_fsp_corr_subarray = CbfGroupProxy(
+                name="FSP Subarray Corr", logger=device.logger)
+            device._group_fsp_pss_subarray = CbfGroupProxy(
+                name="FSP Subarray Pss", logger=device.logger)
+            device._group_fsp_pst_subarray = CbfGroupProxy(
+                name="FSP Subarray Pst", logger=device.logger)
 
             return (ResultCode.OK, "successfull")
 
