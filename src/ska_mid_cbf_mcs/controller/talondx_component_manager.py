@@ -197,6 +197,9 @@ class TalonDxComponentManager:
             except SCPException:
                 self.logger.error(f"Failed to copy file to {target}")
                 ret = ResultCode.FAILED
+            except FileNotFoundError as e:
+                self.logger.error(f"Failed to copy file {e.filename}, file does not exist")
+                ret = ResultCode.FAILED
             
         return ret
 
