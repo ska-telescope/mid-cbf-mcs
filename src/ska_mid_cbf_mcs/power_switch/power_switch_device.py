@@ -201,11 +201,12 @@ class PowerSwitch(SKABaseDevice):
                 information purpose only.
             """
             component_manager = self.target
-            result, msg = component_manager.turn_on_outlet(argin)
-            if result != ResultCode.OK:
-                return (result, msg)
 
             try:
+                result, msg = component_manager.turn_on_outlet(argin)
+                if result != ResultCode.OK:
+                    return (result, msg)
+
                 power_mode = component_manager.get_outlet_power_mode(argin)
                 if power_mode != PowerMode.ON:
                     return (ResultCode.FAILED, f"Power on failed, outlet is in power mode {power_mode}")
@@ -252,11 +253,12 @@ class PowerSwitch(SKABaseDevice):
                 information purpose only.
             """
             component_manager = self.target
-            result, msg = component_manager.turn_off_outlet(argin)
-            if result != ResultCode.OK:
-                return (result, msg)
 
             try:
+                result, msg = component_manager.turn_off_outlet(argin)
+                if result != ResultCode.OK:
+                    return (result, msg)
+
                 power_mode = component_manager.get_outlet_power_mode(argin)
                 if power_mode != PowerMode.OFF:
                     return (ResultCode.FAILED, f"Power off failed, outlet is in power mode {power_mode}")
