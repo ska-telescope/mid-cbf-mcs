@@ -551,10 +551,11 @@ class CbfController(SKAMaster):
                 information purpose only.
             :rtype: (ResultCode, str)
             """
-            (result_code,message)=super().do()
+            
+            super().do()
 
             component_manager = self.target
-            component_manager.on()
+            (result_code,message) = component_manager.on()
 
             return (result_code,message)
 
@@ -573,13 +574,13 @@ class CbfController(SKAMaster):
                 information purpose only.
             :rtype: (ResultCode, str)
             """
-            (result_code,message)=super().do()
+
+            super().do()
 
             component_manager = self.target
-            component_manager.off()
+            (result_code,message) = component_manager.off()
 
             return (result_code,message)
-
 
     class StandbyCommand(SKABaseDevice.StandbyCommand):
         """
@@ -597,10 +598,10 @@ class CbfController(SKAMaster):
                 information purpose only.
             :rtype: (ResultCode, str)
             """
-            (result_code,message)=super().do()
+            super().do()
 
             component_manager = self.target
-            component_manager.standby()
+            (result_code,message) = component_manager.standby()
 
             return (result_code,message)
 

@@ -453,7 +453,7 @@ class ControllerComponentManager:
     
     def on(      
         self: ControllerComponentManager,
-    ) -> None:
+    ) -> Tuple[ResultCode, str]:
 
         if self._connected:
 
@@ -498,55 +498,103 @@ class ControllerComponentManager:
                         for item in df.args:
                             log_msg = "Failure in connection to " + fqdn + " device: " + str(item.reason)
                             self._logger.error(log_msg)
+                            return (ResultCode.FAILED, log_msg)
 
             # Power on all the Talon boards
-            for talon_lru_fqdn in self._fqdn_talon_lru:
-                self._proxies[talon_lru_fqdn].On()
+            try: 
+                for talon_lru_fqdn in self._fqdn_talon_lru:
+                    self._proxies[talon_lru_fqdn].On()
+            except tango.DevFailed:
+                log_msg = "Failed to power on Talon boards"
+                self._logger.error(log_msg)
+                return (ResultCode.FAILED, log_msg)
 
             # Configure all the Talon boards
             if self._talondx_component_manager.configure_talons() == ResultCode.FAILED:
-                self._logger.error("Failed to configure Talon boards")
-                
-            self._group_subarray.command_inout("On")
-            self._group_vcc.command_inout("On")
-            self._group_fsp.command_inout("On")
+                log_msg = "Failed to configure Talon boards"
+                self._logger.error(log_msg)
+                return (ResultCode.FAILED, log_msg)
+    
+            try:
+                self._group_subarray.command_inout("On")
+                self._group_vcc.command_inout("On")
+                self._group_fsp.command_inout("On")
+            except tango.DevFailed:
+                log_msg = "Failed to turn on group proxies"
+                self._logger.error(log_msg)
+                return (ResultCode.FAILED, log_msg)
+
+            message = "CbfController On command completed OK"
+            return (ResultCode.OK, message)
 
         else:
-            self._logger.error("Proxies not connected")
+            log_msg = "Proxies not connected"
+            self._logger.error(log_msg)
+            return (ResultCode.FAILED, log_msg)
 
     def off(      
         self: ControllerComponentManager,
-    ) -> None:
+    ) -> Tuple[ResultCode, str]:
 
         if self._connected:
 
-            for talon_lru_fqdn in self._fqdn_talon_lru:
-                    self._proxies[talon_lru_fqdn].Off()
+            try:
+                for talon_lru_fqdn in self._fqdn_talon_lru:
+                        self._proxies[talon_lru_fqdn].Off()
+            except tango.DevFailed:
+                log_msg = "Failed to power off Talon boards"
+                self._logger.error(log_msg)
+                return (ResultCode.FAILED, log_msg)
 
-            self._group_subarray.command_inout("Off")
-            self._group_vcc.command_inout("Off")
-            self._group_fsp.command_inout("Off")
+            try:
+                self._group_subarray.command_inout("Off")
+                self._group_vcc.command_inout("Off")
+                self._group_fsp.command_inout("Off")
+            except tango.DevFailed:
+                log_msg = "Failed to turn off group proxies"
+                self._logger.error(log_msg)
+                return (ResultCode.FAILED, log_msg)
 
-            for proxy in list(self._event_id.keys()):
-                for event_id in self._event_id[proxy]:
-                    self._logger.info(
-                        "Unsubscribing from event " + str(event_id) +
-                        ", device: " + str(proxy._fqdn)
-                    )
-                    proxy.unsubscribe_event(event_id)
+            try:
+                for proxy in list(self._event_id.keys()):
+                    for event_id in self._event_id[proxy]:
+                        self._logger.info(
+                            "Unsubscribing from event " + str(event_id) +
+                            ", device: " + str(proxy._fqdn)
+                        )
+                        proxy.unsubscribe_event(event_id)
+            except tango.DevFailed:
+                log_msg = "Failed to unsubscribe to events"
+                self._logger.error(log_msg)
+                return (ResultCode.FAILED, log_msg)
+            
+            message = "CbfController Off command completed OK"
+            return (ResultCode.OK, message)
 
         else:
-            self._logger.error("Proxies not connected")
+            log_msg = "Proxies not connected"
+            self._logger.error(log_msg)
+            return (ResultCode.FAILED, log_msg)
 
     def standby(      
         self: ControllerComponentManager,
-    ) -> None:
+    ) -> Tuple[ResultCode, str]:
 
         if self._connected:
 
-            self._group_subarray.command_inout("Off")
-            self._group_vcc.command_inout("Off")
-            self._group_fsp.command_inout("Off")
+            try: 
+                self._group_subarray.command_inout("Off")
+                self._group_vcc.command_inout("Off")
+                self._group_fsp.command_inout("Off")
+            except tango.DevFailed:
+                log_msg = "Failed to turn off group proxies"
+                self._logger.error(log_msg)
+                return (ResultCode.FAILED, log_msg)
+
+            message = "CbfController Standby command completed OK"
+            return (ResultCode.OK, message)
         
         else:
-            self._logger.error("Proxies not connected")
+            log_msg = "Proxies not connected"
+            self._logger.error(log_msg)
+            return (ResultCode.FAILED, log_msg)
