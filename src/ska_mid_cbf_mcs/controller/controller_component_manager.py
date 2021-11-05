@@ -12,6 +12,8 @@
 from __future__ import annotations
 from typing import List, Tuple
 
+from random import randint
+
 # tango imports
 import tango
 import logging
@@ -71,7 +73,30 @@ class ControllerComponentManager:
         self._proxies = {}
         self._event_id = {} 
 
+        self._receptor_to_vcc = []
+        self._vcc_to_receptor = []
+
         self.start_communicating()
+
+    @property
+    def receptor_to_vcc(self: ControllerComponentManager) -> List[str]:
+        """
+        Get Receptor to Vcc
+
+        :return: receptorID:vccID
+        """
+
+        return self._receptor_to_vcc
+    
+    @property
+    def vcc_to_receptor(self: ControllerComponentManager) -> List[str]:
+        """
+        Get Vcc to Receptor
+
+        :return: vccID:receptorID
+        """
+
+        return self._vcc_to_receptor
     
     @property
     def report_vcc_state(self: ControllerComponentManager) -> List[tango.DevState]:
@@ -207,6 +232,19 @@ class ControllerComponentManager:
 
         if self._connected:
             return
+
+        remaining = list(range(1, self._count_vcc + 1))
+        for i in range(1, self._count_vcc + 1):
+            receptorIDIndex = randint(0, len(remaining) - 1)
+            receptorID = remaining[receptorIDIndex]
+            self._receptor_to_vcc.append("{}:{}".format(receptorID, i))
+            self._vcc_to_receptor.append("{}:{}".format(i, receptorID))
+            vcc_proxy = CbfDeviceProxy(
+                fqdn=self._fqdn_vcc[i - 1], 
+                logger=self._logger
+            )
+            vcc_proxy.receptorID = receptorID
+            del remaining[receptorIDIndex]
 
         try:
             self._group_vcc = CbfGroupProxy("VCC", logger=self._logger)

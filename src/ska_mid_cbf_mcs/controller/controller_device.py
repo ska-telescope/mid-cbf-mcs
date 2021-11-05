@@ -317,6 +317,8 @@ class CbfController(SKAMaster):
             # defines self._count_vcc, self._count_fsp, and self._count_subarray
             self.__get_num_capabilities()
 
+            device._count_talon_lru = len(device.TalonLRU)
+
             device._storage_logging_level = tango.LogLevel.LOG_DEBUG
             device._element_logging_level = tango.LogLevel.LOG_DEBUG
             device._central_logging_level = tango.LogLevel.LOG_DEBUG
@@ -332,25 +334,6 @@ class CbfController(SKAMaster):
             device._fqdn_fsp = list(device.FSP)[:device._count_fsp]
             device._fqdn_subarray = list(device.CbfSubarray)[:device._count_subarray]
             device._fqdn_talon_lru = list(device.TalonLRU)
-
-            # initialize dicts with maps receptorID <=> vccID (randomly for now, for testing purposes)
-            # maps receptor IDs to VCC IDs, in the form "receptorID:vccID"
-            device._receptor_to_vcc = []
-            # maps VCC IDs to receptor IDs, in the form "vccID:receptorID"
-            device._vcc_to_receptor = []
-
-            remaining = list(range(1, device._count_vcc + 1))
-            for i in range(1, device._count_vcc + 1):
-                receptorIDIndex = randint(0, len(remaining) - 1)
-                receptorID = remaining[receptorIDIndex]
-                device._receptor_to_vcc.append("{}:{}".format(receptorID, i))
-                device._vcc_to_receptor.append("{}:{}".format(i, receptorID))
-                vcc_proxy = CbfDeviceProxy(
-                    fqdn=device._fqdn_vcc[i - 1], 
-                    logger=device.logger
-                )
-                vcc_proxy.receptorID = receptorID
-                del remaining[receptorIDIndex]
 
             # Create the Talon-DX component manager and initialize simulation
             # mode to on
@@ -389,7 +372,7 @@ class CbfController(SKAMaster):
                 self._count_vcc, 
                 self._count_fsp,
                 self._count_subarray, 
-                len(self.TalonLRU),
+                self._count_talon_lru,
             ],
             self._talondx_component_manager,
             self.logger,
@@ -416,13 +399,13 @@ class CbfController(SKAMaster):
     def read_receptorToVcc(self: CbfController) -> List[str]:
         # PROTECTED REGION ID(CbfController.receptorToVcc_read) ENABLED START #
         """Return 'receptorID:vccID'"""
-        return self._receptor_to_vcc
+        return self.component_manager.receptor_to_vcc
         # PROTECTED REGION END #    //  CbfController.receptorToVcc_read
 
     def read_vccToReceptor(self: CbfController) -> List[str]:
         # PROTECTED REGION ID(CbfController.vccToReceptor_read) ENABLED START #
         """Return receptorToVcc attribute: 'vccID:receptorID'"""
-        return self._vcc_to_receptor
+        return self.component_manager.vcc_to_receptor
         # PROTECTED REGION END #    //  CbfController.vccToReceptor_read
 
     def read_subarrayconfigID(self: CbfController) -> List[str]:
