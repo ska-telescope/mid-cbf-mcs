@@ -411,7 +411,7 @@ class CbfDeviceProxy:
         subscription_id: int
     ) -> None:
         """
-        Register a callback for change events being pushed by the device.
+        Remove a callback for change events being pushed by the device.
 
         :param attribute_name: the name of the attribute for which
             change events are subscribed.
@@ -419,9 +419,9 @@ class CbfDeviceProxy:
         """
         attribute_key = attribute_name.lower()
         if attribute_key in self._change_event_subscription_ids:
+            self._unsubscribe_event(subscription_id)
             del self._change_event_callbacks[attribute_key]
             del self._change_event_subscription_ids[attribute_key]
-            self._unsubscribe_event(subscription_id)
             self._logger.info(f"Unsubscribed from subscription {subscription_id}")
         else:
             self._logger.warn(

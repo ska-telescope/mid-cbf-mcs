@@ -299,14 +299,14 @@ class CbfAttributeProxy:
     def remove_event(
         self: CbfAttributeProxy, subscription_id: int) -> None:
         """
-        Register a callback for change events being pushed by the device.
+        Remove a callback for change events being pushed by the device.
 
         :param subscription_id: ID of event to unsubscribe from.
         """
         if self._change_event_subscription_id == subscription_id:
+            self._unsubscribe_event(subscription_id)
             self._change_event_callback = None
             self._change_event_subscription_id = None
-            self._unsubscribe_event(subscription_id)
             self._logger.info(f"Unsubscribed from subscription {subscription_id}")
         else:
             self._logger.warn(

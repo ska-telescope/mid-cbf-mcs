@@ -361,14 +361,6 @@ class CbfController(SKAMaster):
                 receptorID = vccID
                 device._receptor_to_vcc.append(f"{receptorID}:{vccID}")
                 device._vcc_to_receptor.append(f"{vccID}:{receptorID}")
-                vcc_proxy = CbfDeviceProxy(
-                    fqdn=device._fqdn_vcc[vccID - 1], 
-                    logger=device.logger
-                )
-                vcc_proxy.receptorID = receptorID
-                self.logger.debug(
-                    (f"receptorID = {receptorID}, vccProxy.receptorID = {vcc_proxy.receptorID}")
-                )
 
             # initialize the dict with subarray/capability proxies
             device._proxies = {}  # device_name:proxy
@@ -425,6 +417,13 @@ class CbfController(SKAMaster):
                         logger=self.logger
                     )
                     self._proxies[fqdn] = device_proxy
+                    if fqdn in self._fqdn_vcc:
+                        # TODO: vccID == receptorID for now, for testing purposes
+                        device_proxy.receptorID = device_proxy.VccID
+                        self.logger.debug(
+                            f"receptorID = {device_proxy.receptorID}, " +
+                            f"vccProxy.receptorID = {device_proxy.receptorID}"
+                        )
                 except tango.DevFailed as df:
                     for item in df.args:
                         log_msg = "Failure in connection to " + fqdn + " device: " + str(item.reason)
