@@ -35,6 +35,8 @@ from ska_mid_cbf_mcs.controller.controller_component_manager import ControllerCo
 from ska_tango_base import SKAMaster, SKABaseDevice
 from ska_tango_base.control_model import HealthState, AdminMode, SimulationMode
 from ska_tango_base.commands import ResultCode
+from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
+from ska_mid_cbf_mcs.group_proxy import CbfGroupProxy
 
 # PROTECTED REGION END #    //  CbfController.additionnal_import
 
@@ -322,26 +324,8 @@ class CbfController(SKAMaster):
             # initialize attribute values
             device._command_progress = 0
 
-            device._report_vcc_state = [tango.DevState.UNKNOWN] * device._count_vcc
-            device._report_vcc_health_state = [HealthState.UNKNOWN.value] * device._count_vcc
-            device._report_vcc_admin_mode = [AdminMode.ONLINE.value] * device._count_vcc
-            device._report_vcc_subarray_membership = [0] * device._count_vcc
             device._frequency_offset_k = [0] * device._count_vcc
             device._frequency_offset_delta_f = [0] * device._count_vcc
-
-            device._report_fsp_state = [tango.DevState.UNKNOWN] * device._count_fsp
-            device._report_fsp_health_state = [HealthState.UNKNOWN.value] * device._count_fsp
-            device._report_fsp_admin_mode = [AdminMode.ONLINE.value] * device._count_fsp
-            device._report_fsp_subarray_membership = [[] for i in range(device._count_fsp)]
-
-            device._report_subarray_state = [tango.DevState.UNKNOWN] * device._count_subarray
-            device._report_subarray_health_state = [HealthState.UNKNOWN.value] * device._count_subarray
-            device._report_subarray_admin_mode = [AdminMode.ONLINE.value] * device._count_subarray
-            device._subarray_config_ID = [""] * device._count_subarray
-
-            device._report_talon_lru_state = [tango.DevState.UNKNOWN] * len(device.TalonLRU)
-            device._report_talon_lru_health_state = [HealthState.UNKNOWN.value] * len(device.TalonLRU)
-            device._report_talon_lru_admin_mode = [AdminMode.ONLINE.value] * len(device.TalonLRU)
 
             # initialize lists with subarray/capability FQDNs
             device._fqdn_vcc = list(device.VCC)[:device._count_vcc]
@@ -349,7 +333,27 @@ class CbfController(SKAMaster):
             device._fqdn_subarray = list(device.CbfSubarray)[:device._count_subarray]
             device._fqdn_talon_lru = list(device.TalonLRU)
 
+            # initialize dicts with maps receptorID <=> vccID (randomly for now, for testing purposes)
+            # maps receptor IDs to VCC IDs, in the form "receptorID:vccID"
+            device._receptor_to_vcc = []
+            # maps VCC IDs to receptor IDs, in the form "vccID:receptorID"
+            device._vcc_to_receptor = []
+
+            remaining = list(range(1, device._count_vcc + 1))
+            for i in range(1, device._count_vcc + 1):
+                receptorIDIndex = randint(0, len(remaining) - 1)
+                receptorID = remaining[receptorIDIndex]
+                device._receptor_to_vcc.append("{}:{}".format(receptorID, i))
+                device._vcc_to_receptor.append("{}:{}".format(i, receptorID))
+                vcc_proxy = CbfDeviceProxy(
+                    fqdn=device._fqdn_vcc[i - 1], 
+                    logger=device.logger
+                )
+                vcc_proxy.receptorID = receptorID
+                del remaining[receptorIDIndex]
+
             # Create the Talon-DX component manager and initialize simulation
+            # mode to on
             device._simulation_mode = SimulationMode.TRUE
             device._talondx_component_manager = TalonDxComponentManager(
                 device.TalonDxConfigPath, device._simulation_mode, self.logger)
@@ -375,11 +379,18 @@ class CbfController(SKAMaster):
         :return: a component manager for this device.
         """
         return ControllerComponentManager( 
-            self._count_vcc,
-            self._fqdn_vcc,
-            self._fqdn_fsp,
-            self._fqdn_subarray,
-            self._fqdn_talon_lru,
+            [
+                self._fqdn_vcc,
+                self._fqdn_fsp,
+                self._fqdn_subarray,
+                self._fqdn_talon_lru
+            ],
+            [
+                self._count_vcc, 
+                self._count_fsp,
+                self._count_subarray, 
+                len(self.TalonLRU),
+            ],
             self._talondx_component_manager,
             self.logger,
         )
@@ -405,73 +416,73 @@ class CbfController(SKAMaster):
     def read_receptorToVcc(self: CbfController) -> List[str]:
         # PROTECTED REGION ID(CbfController.receptorToVcc_read) ENABLED START #
         """Return 'receptorID:vccID'"""
-        return self.component_manager.receptor_to_vcc
+        return self._receptor_to_vcc
         # PROTECTED REGION END #    //  CbfController.receptorToVcc_read
 
     def read_vccToReceptor(self: CbfController) -> List[str]:
         # PROTECTED REGION ID(CbfController.vccToReceptor_read) ENABLED START #
         """Return receptorToVcc attribute: 'vccID:receptorID'"""
-        return self.component_manager.vcc_to_receptor
+        return self._vcc_to_receptor
         # PROTECTED REGION END #    //  CbfController.vccToReceptor_read
 
     def read_subarrayconfigID(self: CbfController) -> List[str]:
         # PROTECTED REGION ID(CbfController.subarrayconfigID_read) ENABLED START #
         """Return subarrayconfigID atrribute: ID of subarray config. 
         Used for debug purposes. empty string if subarray is not configured for a scan"""
-        return self._subarray_config_ID
+        return self.component_manager.subarray_config_ID
         # PROTECTED REGION END #    //  CbfController.subarrayconfigID_read
 
     def read_reportVCCState(self: CbfController) -> List[tango.DevState]:
         # PROTECTED REGION ID(CbfController.reportVCCState_read) ENABLED START #
         """Return reportVCCState attribute: the state of the VCC capabilities as an array of DevState"""
-        return self._report_vcc_state
+        return self.component_manager.report_vcc_state
         # PROTECTED REGION END #    //  CbfController.reportVCCState_read
 
     def read_reportVCCHealthState(self: CbfController) -> List[int]:
         # PROTECTED REGION ID(CbfController.reportVCCHealthState_read) ENABLED START #
         """Return reportVCCHealthState attribute: health status of VCC capabilities 
         as an array of unsigned short.\nEx:\n[0,0,0,2,0...3]"""
-        return self._report_vcc_health_state
+        return self.component_manager.report_vcc_health_state
         # PROTECTED REGION END #    //  CbfController.reportVCCHealthState_read
 
     def read_reportVCCAdminMode(self: CbfController) -> List[int]:
         # PROTECTED REGION ID(CbfController.reportVCCAdminMode_read) ENABLED START #
         """Return reportVCCAdminMode attribute: report the administration mode 
         of the VCC capabilities as an array of unsigned short.\nFor ex.:\n[0,0,0,...1,2]"""
-        return self._report_vcc_admin_mode
+        return self.component_manager.report_vcc_admin_mode
         # PROTECTED REGION END #    //  CbfController.reportVCCAdminMode_read
 
     def read_reportVCCSubarrayMembership(self: CbfController) -> List[int]:
         """Return reportVCCSubarrayMembership attribute: report the subarray membership of VCCs 
         (each can only belong to a single subarray), 0 if not assigned."""
         # PROTECTED REGION ID(CbfController.reportVCCSubarrayMembership_read) ENABLED START #
-        return self._report_vcc_subarray_membership
+        return self.component_manager.report_vcc_subarray_membership
         # PROTECTED REGION END #    //  CbfController.reportVCCSubarrayMembership_read
 
     def read_reportFSPState(self: CbfController) -> List[tango.DevState]:
         # PROTECTED REGION ID(CbfController.reportFSPState_read) ENABLED START #
         """Return reportFSPState attribute: state of all the FSP capabilities in the form of array"""
-        return self._report_fsp_state
+        return self.component_manager.report_fsp_state
         # PROTECTED REGION END #    //  CbfController.reportFSPState_read
 
     def read_reportFSPHealthState(self: CbfController) -> List[int]:
         # PROTECTED REGION ID(CbfController.reportFSPHealthState_read) ENABLED START #
         """Return reportFspHealthState attribute: Report the health status of the FSP capabilities"""
-        return self._report_fsp_health_state
+        return self.component_manager.report_fsp_health_state
         # PROTECTED REGION END #    //  CbfController.reportFSPHealthState_read
 
     def read_reportFSPAdminMode(self: CbfController) -> List[int]:
         # PROTECTED REGION ID(CbfController.reportFSPAdminMode_read) ENABLED START #
         """Return reportFSPAdminMode attribute: Report the administration mode 
         of the FSP capabilities as an array of unsigned short.\nfor ex:\n[0,0,2,..]"""
-        return self._report_fsp_admin_mode
+        return self.component_manager.report_fsp_admin_mode
         # PROTECTED REGION END #    //  CbfController.reportFSPAdminMode_read
 
     def read_reportFSPSubarrayMembership(self: CbfController) -> List[List[int]]:
         # PROTECTED REGION ID(CbfController.reportFSPSubarrayMembership_read) ENABLED START #
         """Return reportVCCSubarrayMembership attribute: Report the subarray membership 
         of FSPs (each can only belong to at most 16 subarrays), 0 if not assigned."""
-        return self._report_fsp_subarray_membership
+        return self.component_manager.report_fsp_subarray_membership
         # PROTECTED REGION END #    //  CbfController.reportFSPSubarrayMembership_read
 
     def read_frequencyOffsetK(self: CbfController) -> List[int]:
@@ -512,20 +523,20 @@ class CbfController(SKAMaster):
     def read_reportSubarrayState(self: CbfController) -> List[tango.DevState]:
         # PROTECTED REGION ID(CbfController.reportSubarrayState_read) ENABLED START #
         """Return reportSubarrayState attribute: report the state of the Subarray with an array of DevState"""
-        return self._report_subarray_state
+        return self.component_manager.report_subarray_state
         # PROTECTED REGION END #    //  CbfController.reportSubarrayState_read
 
     def read_reportSubarrayHealthState(self: CbfController) -> List[int]:
         # PROTECTED REGION ID(CbfController.reportSubarrayHealthState_read) ENABLED START #
         """Return reportSubarrayHealthState attribute: subarray healthstate in an array of unsigned short"""
-        return self._report_subarray_health_state
+        return self.component_manager.report_subarray_health_state
         # PROTECTED REGION END #    //  CbfController.reportSubarrayHealthState_read
 
     def read_reportSubarrayAdminMode(self: CbfController) -> List[int]:
         # PROTECTED REGION ID(CbfController.reportSubarrayAdminMode_read) ENABLED START #
         """Return reportSubarrayAdminMode attribute: Report the administration mode 
         of the Subarray as an array of unsigned short.\nfor ex:\n[0,0,2,..]"""
-        return self._report_subarray_admin_mode
+        return self.component_manager.report_subarray_admin_mode
         # PROTECTED REGION END #    //  CbfController.reportSubarrayAdminMode_read
 
     def write_simulationMode(self: CbfController, value: SimulationMode) -> None:
@@ -557,11 +568,10 @@ class CbfController(SKAMaster):
                 information purpose only.
             :rtype: (ResultCode, str)
             """
-
-            super().do()
+            (result_code,message)=super().do()
 
             component_manager = self.target
-            (result_code,message) = component_manager.on()
+            component_manager.on()
 
             return (result_code,message)
 
@@ -580,11 +590,10 @@ class CbfController(SKAMaster):
                 information purpose only.
             :rtype: (ResultCode, str)
             """
-
-            super().do()
+            (result_code,message)=super().do()
 
             component_manager = self.target
-            (result_code,message) = component_manager.off()
+            component_manager.off()
 
             return (result_code,message)
 
@@ -605,11 +614,10 @@ class CbfController(SKAMaster):
                 information purpose only.
             :rtype: (ResultCode, str)
             """
-
-            super().do()
+            (result_code,message)=super().do()
 
             component_manager = self.target
-            (result_code,message) = component_manager.standby()
+            component_manager.standby()
 
             return (result_code,message)
 

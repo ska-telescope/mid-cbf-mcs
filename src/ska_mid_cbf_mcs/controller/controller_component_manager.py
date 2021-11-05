@@ -10,10 +10,7 @@
 # Copyright (c) 2019 National Research Council of Canada
 
 from __future__ import annotations
-
 from typing import List, Tuple
-
-from random import randint
 
 # tango imports
 import tango
@@ -29,11 +26,8 @@ class ControllerComponentManager:
 
     def __init__(
         self: ControllerComponentManager,
-        count_vcc: int,
-        fqdn_vcc: str,
-        fqdn_fsp: str,
-        fqdn_subarray: str,
-        fqdn_talon_lru: str,
+        fqdns: List[str],
+        dev_counts: List[int],
         talondx_component_manager,
         logger: logging.Logger
     ) -> None:
@@ -47,41 +41,163 @@ class ControllerComponentManager:
 
         self._connected = False
 
-        self._count_vcc = count_vcc
+        self._fqdn_vcc, self._fqdn_fsp, self._fqdn_subarray, self._fqdn_talon_lru, = \
+            [fqdns[i] for i in range(len(fqdns))]
 
-        self._fqdn_vcc = fqdn_vcc
-        self._fqdn_fsp = fqdn_fsp
-        self._fqdn_subarray = fqdn_subarray
-        self._fqdn_talon_lru = fqdn_talon_lru
+        self._count_vcc, self._count_fsp, self._count_subarray, self._count_talon_lru, = \
+            [dev_counts[i] for i in range(len(dev_counts))]
 
         self._talondx_component_manager =  talondx_component_manager
 
-        self._proxies = {} 
+        self._report_vcc_state = [tango.DevState.UNKNOWN] * self._count_vcc
+        self._report_vcc_health_state = [HealthState.UNKNOWN.value] * self._count_vcc
+        self._report_vcc_admin_mode = [AdminMode.ONLINE.value] * self._count_vcc
+        self._report_vcc_subarray_membership = [0] * self._count_vcc
 
+        self._report_fsp_state = [tango.DevState.UNKNOWN] * self._count_fsp
+        self._report_fsp_health_state = [HealthState.UNKNOWN.value] * self._count_fsp
+        self._report_fsp_admin_mode = [AdminMode.ONLINE.value] * self._count_fsp
+        self._report_fsp_subarray_membership = [[] for i in range(self._count_fsp)]
+
+        self._report_subarray_state = [tango.DevState.UNKNOWN] * self._count_subarray
+        self._report_subarray_health_state = [HealthState.UNKNOWN.value] * self._count_subarray
+        self._report_subarray_admin_mode = [AdminMode.ONLINE.value] * self._count_subarray
+        self._subarray_config_ID = [""] * self._count_subarray
+
+        self._report_talon_lru_state = [tango.DevState.UNKNOWN] * self._count_talon_lru
+        self._report_talon_lru_health_state = [HealthState.UNKNOWN.value] * self._count_talon_lru
+        self._report_talon_lru_admin_mode = [AdminMode.ONLINE.value] * self._count_talon_lru
+
+        self._proxies = {}
         self._event_id = {} 
 
-        self._receptor_to_vcc = []
-        self._vcc_to_receptor = []
-
         self.start_communicating()
-
-    @property
-    def receptor_to_vcc(self: ControllerComponentManager) -> List[str]:
-        """
-        Get receptor to vcc assignment
-
-        :return: list of 'receptorID:vccID'
-        """
-        return self._receptor_to_vcc 
     
     @property
-    def vcc_to_receptor(self: ControllerComponentManager) -> List[str]:
+    def report_vcc_state(self: ControllerComponentManager) -> List[tango.DevState]:
         """
-        Get vcc to receptor assignment
+        Get Vcc States
 
-        :return: list of 'vccID:receptorID'
+        :return: the state of the VCC capabilities as an array of DevState
         """
-        return self._vcc_to_receptor
+
+        return self._report_vcc_state
+    
+    @property
+    def report_vcc_health_state(self: ControllerComponentManager) -> List[int]:
+        """
+        Get Vcc Health States
+
+        :return: health status of VCC capabilities as an array of unsigned short
+        """
+
+        return self._report_vcc_health_state
+    
+    @property
+    def report_vcc_admin_mode(self: ControllerComponentManager) -> List[int]:
+        """
+        Get Vcc Admin Modes
+
+        :return: report the administration mode of the 
+                 VCC capabilities as an array of unsigned short
+        """
+
+        return self._report_vcc_admin_mode
+    
+    @property
+    def report_vcc_subarray_membership(self: ControllerComponentManager) -> List[int]:
+        """
+        Get Vcc Subarray Memberships
+
+        :return: report the subarray membership of VCCs (each can only belong to 
+                 a single subarray), 0 if not assigned
+        """
+
+        return self._report_vcc_subarray_membership
+    
+    @property
+    def report_fsp_state(self: ControllerComponentManager) -> List[tango.DevState]:
+        """
+        Get Subarray States
+
+        :return: report the state of the Subarray with an array of DevState
+        """
+
+        return self._report_subarray_state
+    
+    @property
+    def report_fsp_health_state(self: ControllerComponentManager) -> List[int]:
+        """
+        Get Fsp Health States
+
+        :return: Report the health status of the FSP capabilities
+        """
+
+        return self._report_fsp_health_state
+    
+    @property
+    def report_fsp_admin_mode(self: ControllerComponentManager) -> List[int]:
+        """
+        Get Fsp Admin Modes
+
+        :return: Report the administration mode of the FSP capabilities 
+                 as an array of unsigned short
+        """
+
+        return self._report_fsp_admin_mode
+    
+    @property
+    def report_fsp_subarray_membership(self: ControllerComponentManager) -> List[int]:
+        """
+        Get Fsp Subarray Memberships
+
+        :return: Report the subarray membership of FSPs (each can only belong to 
+                 at most 16 subarrays), 0 if not assigned.
+        """
+
+        return self._report_fsp_subarray_membership
+    
+    @property
+    def report_subarray_state(self: ControllerComponentManager) -> List[tango.DevState]:
+        """
+        Get Fsp States
+
+        :return: state of all the FSP capabilities in the form of array
+        """
+
+        return self._report_fsp_state
+    
+    @property
+    def report_subarray_health_state(self: ControllerComponentManager) -> List[int]:
+        """
+        Get Subarray Health States
+
+        :return: subarray healthstate in an array of unsigned short
+        """
+
+        return self._report_subarray_health_state
+
+    @property
+    def report_subarray_admin_mode(self: ControllerComponentManager) -> List[int]:
+        """
+        Get Subarray Admin Modes
+
+        :return: Report the administration mode of the Subarray 
+                 as an array of unsigned short
+        """
+
+        return self._report_subarray_admin_mode
+    
+    @property
+    def report_subarray_config_id(self: ControllerComponentManager) -> List[str]:
+        """
+        Get Subarray Config Id
+
+        :return: ID of subarray config. Used for debug purposes. 
+                 Empty string if subarray is not configured for a scan.
+        """
+
+        return self._report_subarray_config_id
 
     
     def start_communicating(
@@ -119,6 +235,8 @@ class ControllerComponentManager:
             self._logger.error(log_msg)
             return
 
+        self._fqdn_talon_lru = self._fqdn_talon_lru
+
         for fqdn in self._fqdn_vcc + self._fqdn_fsp + self._fqdn_talon_lru + self._fqdn_subarray :
             if fqdn not in self._proxies:
                 try:
@@ -135,24 +253,6 @@ class ControllerComponentManager:
                         log_msg = "Failure in connection to " + fqdn + " device: " + str(item.reason)
                         self._logger.error(log_msg)
                     return
-        
-            try: 
-                remaining = list(range(1, self._count_vcc + 1))
-                for i in range(1, self._count_vcc + 1):
-                    receptorIDIndex = randint(0, len(remaining) - 1)
-                    receptorID = remaining[receptorIDIndex]
-                    self._receptor_to_vcc.append("{}:{}".format(receptorID, i))
-                    self._vcc_to_receptor.append("{}:{}".format(i, receptorID))
-                    vcc_proxy = CbfDeviceProxy(
-                        fqdn=self._fqdn_vcc[i - 1], 
-                        logger=self._logger
-                    )
-                    vcc_proxy.receptorID = receptorID
-                    del remaining[receptorIDIndex]
-            except tango.DevFailed:
-                log_msg = "Failure connecting to vcc proxies"
-                self._logger.error(log_msg)
-
         
         self._connected = True
 
@@ -315,7 +415,7 @@ class ControllerComponentManager:
     
     def on(      
         self: ControllerComponentManager,
-    ) -> Tuple[ResultCode, str]:
+    ) -> None:
 
         if self._connected:
 
@@ -360,103 +460,55 @@ class ControllerComponentManager:
                         for item in df.args:
                             log_msg = "Failure in connection to " + fqdn + " device: " + str(item.reason)
                             self._logger.error(log_msg)
-                            return (ResultCode.FAILED, log_msg)
 
             # Power on all the Talon boards
-            try: 
-                for talon_lru_fqdn in self._fqdn_talon_lru:
-                    self._proxies[talon_lru_fqdn].On()
-            except tango.DevFailed:
-                log_msg = "Failed to power on Talon boards"
-                self._logger.error(log_msg)
-                return (ResultCode.FAILED, log_msg)
+            for talon_lru_fqdn in self._fqdn_talon_lru:
+                self._proxies[talon_lru_fqdn].On()
 
             # Configure all the Talon boards
             if self._talondx_component_manager.configure_talons() == ResultCode.FAILED:
-                log_msg = "Failed to configure Talon boards"
-                self._logger.error(log_msg)
-                return (ResultCode.FAILED, log_msg)
-    
-            try:
-                self._group_subarray.command_inout("On")
-                self._group_vcc.command_inout("On")
-                self._group_fsp.command_inout("On")
-            except tango.DevFailed:
-                log_msg = "Failed to turn on group proxies"
-                self._logger.error(log_msg)
-                return (ResultCode.FAILED, log_msg)
-
-            message = "CbfController On command completed OK"
-            return (ResultCode.OK, message)
+                self._logger.error("Failed to configure Talon boards")
+                
+            self._group_subarray.command_inout("On")
+            self._group_vcc.command_inout("On")
+            self._group_fsp.command_inout("On")
 
         else:
-            log_msg = "Proxies not connected"
-            self._logger.error(log_msg)
-            return (ResultCode.FAILED, log_msg)
+            self._logger.error("Proxies not connected")
 
     def off(      
         self: ControllerComponentManager,
-    ) -> Tuple[ResultCode, str]:
+    ) -> None:
 
         if self._connected:
 
-            try:
-                for talon_lru_fqdn in self._fqdn_talon_lru:
-                        self._proxies[talon_lru_fqdn].Off()
-            except tango.DevFailed:
-                log_msg = "Failed to power off Talon boards"
-                self._logger.error(log_msg)
-                return (ResultCode.FAILED, log_msg)
+            for talon_lru_fqdn in self._fqdn_talon_lru:
+                    self._proxies[talon_lru_fqdn].Off()
 
-            try:
-                self._group_subarray.command_inout("Off")
-                self._group_vcc.command_inout("Off")
-                self._group_fsp.command_inout("Off")
-            except tango.DevFailed:
-                log_msg = "Failed to turn off group proxies"
-                self._logger.error(log_msg)
-                return (ResultCode.FAILED, log_msg)
+            self._group_subarray.command_inout("Off")
+            self._group_vcc.command_inout("Off")
+            self._group_fsp.command_inout("Off")
 
-            try:
-                for proxy in list(self._event_id.keys()):
-                    for event_id in self._event_id[proxy]:
-                        self._logger.info(
-                            "Unsubscribing from event " + str(event_id) +
-                            ", device: " + str(proxy._fqdn)
-                        )
-                        proxy.unsubscribe_event(event_id)
-            except tango.DevFailed:
-                log_msg = "Failed to unsubscribe to events"
-                self._logger.error(log_msg)
-                return (ResultCode.FAILED, log_msg)
-            
-            message = "CbfController Off command completed OK"
-            return (ResultCode.OK, message)
+            for proxy in list(self._event_id.keys()):
+                for event_id in self._event_id[proxy]:
+                    self._logger.info(
+                        "Unsubscribing from event " + str(event_id) +
+                        ", device: " + str(proxy._fqdn)
+                    )
+                    proxy.unsubscribe_event(event_id)
 
         else:
-            log_msg = "Proxies not connected"
-            self._logger.error(log_msg)
-            return (ResultCode.FAILED, log_msg)
+            self._logger.error("Proxies not connected")
 
     def standby(      
         self: ControllerComponentManager,
-    ) -> Tuple[ResultCode, str]:
+    ) -> None:
 
         if self._connected:
 
-            try: 
-                self._group_subarray.command_inout("Off")
-                self._group_vcc.command_inout("Off")
-                self._group_fsp.command_inout("Off")
-            except tango.DevFailed:
-                log_msg = "Failed to turn off group proxies"
-                self._logger.error(log_msg)
-                return (ResultCode.FAILED, log_msg)
-
-            message = "CbfController Standby command completed OK"
-            return (ResultCode.OK, message)
+            self._group_subarray.command_inout("Off")
+            self._group_vcc.command_inout("Off")
+            self._group_fsp.command_inout("Off")
         
         else:
-            log_msg = "Proxies not connected"
-            self._logger.error(log_msg)
-            return (ResultCode.FAILED, log_msg)
+            self._logger.error("Proxies not connected")
