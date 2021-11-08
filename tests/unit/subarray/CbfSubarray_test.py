@@ -18,9 +18,6 @@ import logging
 import pytest
 from typing import Callable, Type, Dict
 
-# Path
-file_path = os.path.dirname(os.path.abspath(__file__))
-
 # Tango imports
 import tango
 from tango import DevState
@@ -36,7 +33,7 @@ from ska_tango_base.control_model import HealthState, AdminMode, ObsState
 
 class TestCbfSubarray:
     """
-    Test class for CbfController tests.
+    Test class for TestCbfSubarray tests.
     """
 
     def test_State(

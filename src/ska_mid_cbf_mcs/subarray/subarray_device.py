@@ -9,9 +9,8 @@
 CbfSubarray
 Sub-element subarray device for Mid.CBF
 """
-from __future__ import annotations
+from __future__ import annotations  # allow forward references in type hints
 from logging import log
-from os import name  # allow forward references in type hints
 from typing import List, Tuple
 import sys
 import json

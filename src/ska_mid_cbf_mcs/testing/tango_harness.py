@@ -897,24 +897,25 @@ class MockingTangoHarness(WrapperTangoHarness):
         self: MockingTangoHarness,
     ) -> Callable[[str], tango.AttributeProxy]:
         """
-        The connection factory to use when establishing connections to devices.
+        The connection factory to use when establishing connections to device
+        attributes.
 
-        This is where we check whether the requested device is on our
-        list. Devices on the list are passed to the connection factory
-        of the wrapped harness. Devices not on the list are intercepted
+        This is where we check whether the requested device attribute is on our
+        list. Device attributes on the list are passed to the connection factory
+        of the wrapped harness. Device attributes not on the list are intercepted
         and given a mock factory instead.
 
-        :return: a factory that putatively provides device connections,
+        :return: a factory that putatively provides device attribute connections,
             but might actually provide mocks.
         """
 
         def connect(fqdn: str) -> tango.AttributeProxy:
             """
-            Connect to the device.
+            Connect to the device attribute.
 
-            :param fqdn: the FQDN of the device to connect to
+            :param fqdn: the FQDN of the device attribute to connect to
 
-            :return: a connection (possibly mocked) to the device
+            :return: a connection (possibly mocked) to the device attribute
             """
             if fqdn in self.fqdns:
                 return self._harness.connection_factory(fqdn)
