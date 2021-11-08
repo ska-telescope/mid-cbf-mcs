@@ -1073,7 +1073,7 @@ class CbfSubarray(SKASubarray):
 
                 self._receptors.remove(receptorID)
                 self._proxies_assigned_vcc.remove(vccProxy)
-                self._group_vcc.remove(vccFQDN)
+                self._group_vcc.remove([vccFQDN])
             else:
                 log_msg = "Receptor {} not assigned to subarray. Skipping.".format(str(receptorID))
                 self.logger.warn(log_msg)

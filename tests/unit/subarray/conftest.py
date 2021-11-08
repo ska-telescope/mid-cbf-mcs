@@ -62,8 +62,33 @@ def device_to_load() -> DeviceToLoadType:
     }
 
 @pytest.fixture()
+def mock_doppler() -> unittest.mock.Mock:
+    builder = MockAttributeBuilder()
+    builder.add_property("dopplerPhaseCorrection", [0.0, 0.0, 0.0, 0.0])
+    return builder()
+
+@pytest.fixture()
+def mock_delay() -> unittest.mock.Mock:
+    builder = MockAttributeBuilder()
+    builder.add_property("delayModel", "")
+    return builder()
+
+@pytest.fixture()
+def mock_jones() -> unittest.mock.Mock:
+    builder = MockAttributeBuilder()
+    builder.add_property("jonesMatrix", "")
+    return builder()
+
+@pytest.fixture()
+def mock_beam() -> unittest.mock.Mock:
+    builder = MockAttributeBuilder()
+    builder.add_property("beamWeights", "")
+    return builder()
+
+@pytest.fixture()
 def mock_controller() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
+    builder.set_state(tango.DevState.ON)
     builder.add_attribute("receptorToVcc", ["1:1", "2:2", "3:3, 4:4"])
     builder.add_property("MaxCapabilities", {'MaxCapabilities': ['VCC:4', 'FSP:4', 'Subarray:1']})
     return builder()
@@ -118,6 +143,10 @@ def mock_fsp_subarray() -> unittest.mock.Mock:
 
 @pytest.fixture()
 def initial_mocks(
+    mock_doppler: unittest.mock.Mock,
+    mock_delay: unittest.mock.Mock,
+    mock_jones: unittest.mock.Mock,
+    mock_beam: unittest.mock.Mock,
     mock_controller: unittest.mock.Mock,
     mock_vcc: unittest.mock.Mock,
     mock_vcc_group: unittest.mock.Mock,
@@ -126,15 +155,26 @@ def initial_mocks(
     mock_fsp_subarray: unittest.mock.Mock,
 ) -> Dict[str, unittest.mock.Mock]:
     """
-    Return a dictionary of device proxy mocks to pre-register.
+    Return a dictionary of proxy mocks to pre-register.
 
-    :param mock_vcc: a mock Vcc that is powered off.
-    :param mock_fsp: a mock VccBand3 that is powered off.
-    :param mock_subarray: a mock VccBand4 that is powered off.
+    :param mock_doppler: a mock dopplerPhaseCorrection attribute
+    :param mock_delay: a mock delayModel attribute
+    :param mock_jones: a mock jonesMatrix attribute
+    :param mock_beam: a mock beamWeights attribute
+    :param mock_controller: a mock CbfController that is powered on.
+    :param mock_vcc: a mock Vcc that is powered on.
+    :param mock_vcc_group: a mock Vcc tango.Group.
+    :param mock_fsp: a mock Fsp that is powered off.
+    :param mock_fsp_group: a mock Fsp tango.Group.
+    :param mock_fsp_subarray: a mock Fsp function mode subarray that is powered on.
 
-    :return: a dictionary of device proxy mocks to pre-register.
+    :return: a dictionary of proxy mocks to pre-register.
     """
     return {
+        "ska_mid/tm_leaf_node/csp_subarray_01/dopplerPhaseCorrection": mock_doppler,
+        "ska_mid/tm_leaf_node/csp_subarray_01/delayModel": mock_delay,
+        "ska_mid/tm_leaf_node/csp_subarray_01/jonesMatrix": mock_jones,
+        "ska_mid/tm_leaf_node/csp_subarray_01/beamWeights": mock_beam,
         "mid_csp_cbf/sub_elt/controller": mock_controller,
         "mid_csp_cbf/vcc/001": mock_vcc,
         "mid_csp_cbf/vcc/002": mock_vcc,

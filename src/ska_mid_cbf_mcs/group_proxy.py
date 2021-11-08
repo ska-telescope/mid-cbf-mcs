@@ -174,14 +174,15 @@ class CbfGroupProxy:
         self.__dict__["_fqdns"].extend(fqdns)
 
 
-    def remove(self: CbfGroupProxy, fqdn: str) -> None:
+    def remove(self: CbfGroupProxy, fqdns: list[str]) -> None:
         """
         Remove a device from the group.
 
         :param fqdn: FQDN of the device to be proxied.
         """
-        self.__dict__["_fqdns"].remove(fqdn)
-        self.__dict__["_group"].remove(fqdn)
+        for fqdn in fqdns:
+            self.__dict__["_fqdns"].remove(fqdn)
+            self.__dict__["_group"].remove(fqdn)
 
     def remove_all(self: CbfGroupProxy) -> None:
         """
