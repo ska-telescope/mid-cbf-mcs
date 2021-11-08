@@ -14,18 +14,32 @@ from tango import DevState
 import time
 import pytest
 from ska_mid_cbf_mcs.controller.controller_component_manager import ControllerComponentManager
+from ska_tango_base.commands import ResultCode
 
 def test_On(
     controller_component_manager: ControllerComponentManager,
 ) -> None:
     """
-    Test On command.
-
-    :param device_under_test: fixture that provides a
-        :py:class:`CbfDeviceProxy` to the device under test, in a
-        :py:class:`tango.test_context.DeviceTestContext`.
+    Test on().
     """
-    time.sleep(1)
 
+    (result_code, _) = controller_component_manager.on()
+    assert result_code == ResultCode.OK
 
+def test_Off(
+    controller_component_manager: ControllerComponentManager,
+) -> None:
+    """
+    Test off().
+    """
+    (result_code, _) = controller_component_manager.off()
+    assert result_code == ResultCode.OK
 
+def test_Standby(
+    controller_component_manager: ControllerComponentManager,
+) -> None:
+    """
+    Test standby().
+    """
+    (result_code, _) = controller_component_manager.standby()
+    assert result_code == ResultCode.OK

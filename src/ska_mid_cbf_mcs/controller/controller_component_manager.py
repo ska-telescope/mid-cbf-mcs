@@ -482,7 +482,6 @@ class ControllerComponentManager:
                                 )
                             )
 
-                        #TODO: re-enable and fix if this is needed?
                         # subscribe to subarray config ID change events
                         if "subarray" in fqdn:
                             events.append(
