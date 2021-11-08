@@ -29,10 +29,12 @@ from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import HealthState, AdminMode, ObsState
 from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder
 from ska_mid_cbf_mcs.testing.mock.mock_group import MockGroupBuilder
+from ska_mid_cbf_mcs.testing.tango_harness import TangoHarness
 
 @pytest.fixture(scope="function")
 def controller_component_manager(
     logger: logging.Logger,
+    tango_harness: TangoHarness # sets the connection_factory
 ) -> ControllerComponentManager:
     """
     Return a Controller component manager.
@@ -105,7 +107,7 @@ def mock_vcc_group() -> unittest.mock.Mock:
     return builder()
 
 @pytest.fixture()
-def mock_fsp(request: pytest.FixtureRequest) -> unittest.mock.Mock:
+def mock_fsp() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.OFF)
     builder.add_attribute("adminMode", AdminMode.ONLINE)
