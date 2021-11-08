@@ -97,7 +97,7 @@ class CbfAttributeProxy:
 
         self.__dict__["_change_event_lock"] = threading.Lock()
         self.__dict__["_change_event_subscription_id"] = None
-        self.__dict__["_change_event_callback"] = None
+        self.__dict__["_change_event_callbacks"] = []
 
         if connect:
             self.connect()
@@ -191,11 +191,10 @@ class CbfAttributeProxy:
             feature
         """
         if self._change_event_subscription_id is None:
-            self._change_event_callback = callback
+            self._change_event_callbacks = [callback]
             self._change_event_subscription_id = self._subscribe_change_event(stateless=stateless)
         else:
-            self._change_event_callback.append(callback)
-            self._call_callback(callback, self._read())
+            self._change_event_callbacks.append(callback)
         return self._change_event_subscription_id
 
     @backoff.on_exception(backoff.expo, tango.DevFailed, factor=1, max_time=120)
@@ -237,7 +236,8 @@ class CbfAttributeProxy:
         with self._change_event_lock:
             attribute_data = self._process_event(event)
             if attribute_data is not None:
-                self._call_callback(self._change_event_callback, attribute_data)
+                for callback in self._change_event_callbacks:
+                    self._call_callback(callback, attribute_data)
 
     def _call_callback(
         self: CbfAttributeProxy,
@@ -305,7 +305,7 @@ class CbfAttributeProxy:
         """
         if self._change_event_subscription_id == subscription_id:
             self._unsubscribe_event(subscription_id)
-            self._change_event_callback = None
+            self._change_event_callbacks = []
             self._change_event_subscription_id = None
             self._logger.info(f"Unsubscribed from subscription {subscription_id}")
         else:

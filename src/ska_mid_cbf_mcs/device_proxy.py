@@ -287,7 +287,6 @@ class CbfDeviceProxy:
             ] = self._subscribe_change_event(attribute_name, stateless=stateless)
         else:
             self._change_event_callbacks[attribute_key].append(callback)
-            self._call_callback(callback, self._read(attribute_name))
         self._logger.info( "New event ID: " + \
             f"{self._change_event_subscription_ids[attribute_key]}"
         )

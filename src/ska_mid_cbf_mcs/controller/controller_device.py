@@ -366,7 +366,7 @@ class CbfController(SKAMaster):
             device._proxies = {}  # device_name:proxy
 
             # initialize the dict with the subscribed event IDs
-            device._event_id = {}  # proxy:[eventID]
+            device._events = {}  # proxy:[eventID]
 
             # initialize groups
             device._group_vcc = None
@@ -406,27 +406,40 @@ class CbfController(SKAMaster):
         if self._group_subarray is None:
             self._group_subarray = CbfGroupProxy("CBF Subarray", logger=self.logger)
             self._group_subarray.add(self._fqdn_subarray)
-        
-        for fqdn in self._fqdn_vcc + self._fqdn_fsp + self._fqdn_talon_lru + self._fqdn_subarray :
+
+        for idx, fqdn in enumerate(self._fqdn_vcc):
             if fqdn not in self._proxies:
                 try:
                     log_msg = "Trying connection to " + fqdn + " device"
                     self.logger.info(log_msg)
-                    device_proxy = CbfDeviceProxy(
+                    proxy = CbfDeviceProxy(
                         fqdn=fqdn, 
                         logger=self.logger
                     )
-                    self._proxies[fqdn] = device_proxy
-                    if fqdn in self._fqdn_vcc:
-                        # TODO: vccID == receptorID for now, for testing purposes
-                        device_proxy.receptorID = device_proxy.VccID
-                        self.logger.debug(
-                            f"receptorID = {device_proxy.receptorID}, " +
-                            f"vccProxy.receptorID = {device_proxy.receptorID}"
-                        )
+                    self._proxies[fqdn] = proxy
+                    # TODO: for testing purposes;
+                    # receptorID assigned to VCCs in order they are processed
+                    proxy.receptorID = idx + 1
                 except tango.DevFailed as df:
                     for item in df.args:
-                        log_msg = "Failure in connection to " + fqdn + " device: " + str(item.reason)
+                        log_msg = "Failure in connection to " + fqdn + \
+                            " device: " + str(item.reason)
+                        self.logger.error(log_msg)
+        
+        for fqdn in self._fqdn_fsp + self._fqdn_talon_lru + self._fqdn_subarray:
+            if fqdn not in self._proxies:
+                try:
+                    log_msg = "Trying connection to " + fqdn + " device"
+                    self.logger.info(log_msg)
+                    proxy = CbfDeviceProxy(
+                        fqdn=fqdn, 
+                        logger=self.logger
+                    )
+                    self._proxies[fqdn] = proxy
+                except tango.DevFailed as df:
+                    for item in df.args:
+                        log_msg = "Failure in connection to " + fqdn + \
+                            " device: " + str(item.reason)
                         self.logger.error(log_msg)
         # PROTECTED REGION END #    //  CbfController.always_executed_hook
 
@@ -774,40 +787,34 @@ class CbfController(SKAMaster):
                 attribute_test = AdminMode(proxy.adminMode).name
                 device.logger.warn(f"{attribute_test}")
                 try:
-                    events = []
+                    events = {}
 
                     # subscribe to change events on subarrays/capabilities
                     for attribute_val in ["adminMode", "healthState", "State"]:
-                        events.append(
-                            proxy.add_change_event_callback(
-                                attribute_name=attribute_val,
-                                callback=self.__state_change_event_callback,
-                                stateless=True
-                            )
+                        events[attribute_val] = proxy.add_change_event_callback(
+                            attribute_name=attribute_val,
+                            callback=self.__state_change_event_callback,
+                            stateless=True
                         )
 
                     # subscribe to VCC/FSP subarray membership change events
                     if "vcc" in fqdn or "fsp" in fqdn:
-                        events.append(
-                            proxy.add_change_event_callback(
-                                attribute_name="subarrayMembership",
-                                callback=self.__membership_event_callback,
-                                stateless=True
-                            )
+                        events["subarrayMembership"] = proxy.add_change_event_callback(
+                            attribute_name="subarrayMembership",
+                            callback=self.__membership_event_callback,
+                            stateless=True
                         )
 
                     #TODO: re-enable and fix if this is needed?
                     # subscribe to subarray config ID change events
                     if "subarray" in fqdn:
-                        events.append(
-                            proxy.add_change_event_callback(
-                                attribute_name="configID",
-                                callback=self.__config_ID_event_callback,
-                                stateless=True
-                            )
+                        events["configID"] = proxy.add_change_event_callback(
+                            attribute_name="configID",
+                            callback=self.__config_ID_event_callback,
+                            stateless=True
                         )
 
-                    device._event_id[proxy] = events
+                    device._events[proxy] = events
                 except tango.DevFailed as df:
                     for item in df.args:
                         log_msg = "Failure in connection to " + fqdn + " device: " + str(item.reason)
@@ -853,13 +860,12 @@ class CbfController(SKAMaster):
             device._group_vcc.command_inout("Off")
             device._group_fsp.command_inout("Off")
 
-            for proxy in list(device._event_id.keys()):
-                for event_id in device._event_id[proxy]:
+            for proxy, events in device._events.items():
+                for name, id in events.items():
                     device.logger.info(
-                        "Unsubscribing from event " + str(event_id) +
-                        ", device: " + str(proxy._fqdn)
+                        f"Unsubscribing from event {id}, device: {proxy._fqdn}"
                     )
-                    proxy.unsubscribe_event(event_id)
+                    proxy.remove_event(name, id)
 
             return (result_code,message)
 
