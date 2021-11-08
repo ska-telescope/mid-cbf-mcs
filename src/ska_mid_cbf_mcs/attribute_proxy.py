@@ -195,6 +195,7 @@ class CbfAttributeProxy:
             self._change_event_subscription_id = self._subscribe_change_event(stateless=stateless)
         else:
             self._change_event_callbacks.append(callback)
+            self._call_callback(callback, self._read())
         return self._change_event_subscription_id
 
     @backoff.on_exception(backoff.expo, tango.DevFailed, factor=1, max_time=120)
@@ -359,6 +360,9 @@ class CbfAttributeProxy:
             if self._attribute is None:
                 raise ConnectionError("CbfAttributeProxy has not connected yet.")
             setattr(self._attribute, name, value)
+        else:
+            raise AttributeError(f"No such attribute: {name} (pass-through disabled)")
+        
 
     def __getattr__(self: CbfAttributeProxy, name: str, default_value: Any = None) -> Any:
         """

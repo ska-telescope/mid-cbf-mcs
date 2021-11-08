@@ -287,6 +287,7 @@ class CbfDeviceProxy:
             ] = self._subscribe_change_event(attribute_name, stateless=stateless)
         else:
             self._change_event_callbacks[attribute_key].append(callback)
+            self._call_callback(callback, self._read(attribute_name))
         self._logger.info( "New event ID: " + \
             f"{self._change_event_subscription_ids[attribute_key]}"
         )
@@ -474,6 +475,8 @@ class CbfDeviceProxy:
             if self._device is None:
                 raise ConnectionError("CbfDeviceProxy has not connected yet.")
             setattr(self._device, name, value)
+        else:
+            raise AttributeError(f"No such attribute: {name} (pass-through disabled)")
 
     def __getattr__(self: CbfDeviceProxy, name: str, default_value: Any = None) -> Any:
         """
