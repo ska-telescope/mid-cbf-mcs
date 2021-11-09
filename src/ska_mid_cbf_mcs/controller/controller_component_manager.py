@@ -49,6 +49,7 @@ class ControllerComponentManager:
         self._count_vcc, self._count_fsp, self._count_subarray, self._count_talon_lru, = \
             [dev_counts[i] for i in range(len(dev_counts))]
 
+        # TODO: component manager should not be passed into component manager
         self._talondx_component_manager =  talondx_component_manager
 
         self._report_vcc_state = [tango.DevState.UNKNOWN] * self._count_vcc
@@ -500,9 +501,11 @@ class ControllerComponentManager:
                             return (ResultCode.FAILED, log_msg)
 
             # Power on all the Talon boards
+            # TODO: There are two VCCs per LRU. Need to check the number of 
+            #       VCCs turned on against the number of LRUs powered on 
             try: 
-                for talon_lru_fqdn in self._fqdn_talon_lru:
-                    self._proxies[talon_lru_fqdn].On()
+                for fqdn in self._fqdn_talon_lru:
+                    self._proxies[fqdn].On()
             except tango.DevFailed:
                 log_msg = "Failed to power on Talon boards"
                 self._logger.error(log_msg)
