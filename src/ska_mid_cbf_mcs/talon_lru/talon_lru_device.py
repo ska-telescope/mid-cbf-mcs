@@ -13,6 +13,7 @@ TANGO device class for controlling and monitoring a Talon LRU.
 
 from __future__ import annotations
 import threading
+from typing import Any
 
 # tango imports
 import tango
@@ -156,13 +157,13 @@ class TalonLRU(SKABaseDevice):
             # timeout must be >3s.
             if device._proxy_power_switch1 is not None:
                 device._proxy_power_switch1.set_timeout_millis(5000)
-                device._proxy_power_switch1.subscribe_event("simulationMode",
-                    tango.EventType.CHANGE_EVENT, device._check_power_mode_callback, stateless=True)
+                device._proxy_power_switch1.add_change_event_callback("simulationMode",
+                    device._check_power_mode_callback, stateless=True)
 
             if device.PDU2Address != device.PDU1Address and device._proxy_power_switch2 is not None:
                 device._proxy_power_switch2.set_timeout_millis(5000)
-                device._proxy_power_switch2.subscribe_event("simulationMode",
-                    tango.EventType.CHANGE_EVENT, device._check_power_mode_callback, stateless=True)
+                device._proxy_power_switch2.add_change_event_callback("simulationMode",
+                    device._check_power_mode_callback, stateless=True)
 
             if device.get_state() == DevState.INIT:
                 return (ResultCode.OK, "TalonLRU initialization OK")
@@ -186,7 +187,13 @@ class TalonLRU(SKABaseDevice):
                     self.logger.error(f"Failed connection to {fqdn} device: {item.reason}")
                 return None
 
-    def _check_power_mode_callback(self: TalonLRU, event=None) -> None:
+    def _check_power_mode_callback(
+        self: TalonLRU,
+        fqdn: str = '',
+        name: str = '',
+        value: Any = None,
+        quality: tango.AttrQuality = None
+    ) -> None:
         """
         Get the power mode of both PDUs and check that it is consistent with the
         current device state.

@@ -10,9 +10,9 @@
 # Copyright (c) 2019 National Research Council of Canada
 
 from __future__ import annotations
-import time
 import json
 import tango
+import backoff
 import logging
 from paramiko import SSHClient, AutoAddPolicy
 from paramiko.ssh_exception import SSHException, NoValidConnectionsError
@@ -124,23 +124,20 @@ class TalonDxComponentManager:
                 target = talon_cfg["target"]
                 self.logger.info(f"Copying FPGA bitstream and HPS binaries to {target}")
 
-                with SSHClient() as ssh_client:
-                    ssh_client.set_missing_host_key_policy(AutoAddPolicy())
-                    
-                    # Attempt to make first connection with the Talon board
-                    attempts = 0
-                    while True:
-                        try:
-                            ssh_client.connect(ip, username='root', password='')
-                        except NoValidConnectionsError as e:
-                            if attempts < TALON_FIRST_CONNECT_TIMEOUT:
-                                time.sleep(1)
-                                attempts += 1
-                                continue
-                            else:
-                                raise NoValidConnectionsError(e.errors)
-                        break
+                with SSHClient() as ssh_client:                    
+                    @backoff.on_exception(backoff.expo, NoValidConnectionsError, max_time=TALON_FIRST_CONNECT_TIMEOUT)
+                    def make_first_connect(ip: str, ssh_client: SSHClient) -> None:
+                        """
+                        Attempts to connect to the Talon board for the first time 
+                        after power-on.
 
+                        :param ip: IP address of the board
+                        :param ssh_client: SSH client to use for connection
+                        """
+                        ssh_client.connect(ip, username='root', password='')
+
+                    ssh_client.set_missing_host_key_policy(AutoAddPolicy())
+                    make_first_connect(ip, ssh_client)
                     ssh_chan = ssh_client.get_transport().open_session()
                 
                     # Make the DS binaries directory
