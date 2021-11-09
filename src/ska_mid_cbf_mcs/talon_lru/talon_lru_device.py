@@ -144,6 +144,8 @@ class TalonLRU(SKABaseDevice):
             device._power_switch_lock = threading.Lock()
 
             # Get the device proxies of all the devices we care about
+            # TODO: the talondx_board proxies are not currently used for anything
+            # as the mirroring device on the HPS has not yet been created
             device._proxy_talondx_board1 = self.get_device_proxy(device.TalonDxBoard1Address)
             device._proxy_talondx_board2 = self.get_device_proxy(device.TalonDxBoard2Address)
             device._proxy_power_switch1 = self.get_device_proxy(device.PDU1Address)
