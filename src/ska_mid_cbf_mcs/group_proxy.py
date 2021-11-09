@@ -95,7 +95,7 @@ class CbfGroupProxy:
 
 
     def add(self: CbfGroupProxy,
-        fqdns: list[str],
+        fqdns: List[str],
         max_time: float = 120.0
     ) -> None:
         """
@@ -174,7 +174,7 @@ class CbfGroupProxy:
         self.__dict__["_fqdns"].extend(fqdns)
 
 
-    def remove(self: CbfGroupProxy, fqdns: list[str]) -> None:
+    def remove(self: CbfGroupProxy, fqdns: List[str]) -> None:
         """
         Remove a device from the group.
 

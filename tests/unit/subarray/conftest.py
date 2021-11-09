@@ -64,25 +64,25 @@ def device_to_load() -> DeviceToLoadType:
 @pytest.fixture()
 def mock_doppler() -> unittest.mock.Mock:
     builder = MockAttributeBuilder()
-    builder.add_property("dopplerPhaseCorrection", [0.0, 0.0, 0.0, 0.0])
+    builder.add_value([0.0, 0.0, 0.0, 0.0])
     return builder()
 
 @pytest.fixture()
 def mock_delay() -> unittest.mock.Mock:
     builder = MockAttributeBuilder()
-    builder.add_property("delayModel", "")
+    builder.add_value("")
     return builder()
 
 @pytest.fixture()
 def mock_jones() -> unittest.mock.Mock:
     builder = MockAttributeBuilder()
-    builder.add_property("jonesMatrix", "")
+    builder.add_value("")
     return builder()
 
 @pytest.fixture()
 def mock_beam() -> unittest.mock.Mock:
     builder = MockAttributeBuilder()
-    builder.add_property("beamWeights", "")
+    builder.add_value("")
     return builder()
 
 @pytest.fixture()
@@ -151,6 +151,8 @@ def mock_fsp_subarray() -> unittest.mock.Mock:
     builder.add_attribute("adminMode", AdminMode.ONLINE)
     builder.add_attribute("healthState", HealthState.OK)
     builder.add_attribute("subarrayMembership", 0)
+    builder.add_attribute("searchBeamID", None)
+    builder.add_attribute("timingBeamID", None)
     builder.add_attribute("obsState", ObsState.IDLE)
     builder.add_command("GoToIdle", None)
     builder.add_command("Scan", None)

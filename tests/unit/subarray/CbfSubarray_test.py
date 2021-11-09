@@ -66,11 +66,11 @@ class TestCbfSubarray:
             :py:class:`tango.test_context.DeviceTestContext`.
         """
         result = device_under_test.On()
-        time.sleep(0.1)
+        time.sleep(1)
         assert result[0][0] == ResultCode.OK
         assert device_under_test.State() == DevState.ON
         result = device_under_test.Off()
-        time.sleep(0.1)
+        time.sleep(1)
         assert result[0][0] == ResultCode.OK
         assert device_under_test.State() == DevState.OFF
 
@@ -224,9 +224,9 @@ class TestCbfSubarray:
         Test a successful scan configuration
         """
         f = open(data_file_path + config_file_name)
-        json_string = f.read().replace("\n", "")
+        config_string = f.read().replace("\n", "")
         f.close()
-        configuration = json.loads(json_string)
+        config_json = json.loads(config_string)
 
         device_under_test.On()
         time.sleep(0.1)
@@ -234,10 +234,262 @@ class TestCbfSubarray:
         time.sleep(0.1)
         
         # configure scan
-        device_under_test.ConfigureScan(json_string)
-        time.sleep(0.1)
-        assert device_under_test.configID == configuration["common"]["config_id"]
-        band_index = freq_band_dict()[configuration["common"]["frequency_band"]]
+        device_under_test.ConfigureScan(config_string)
+        time.sleep(3) # ConfigureScan takes a while
+        assert device_under_test.configID == config_json["common"]["config_id"]
+        band_index = freq_band_dict()[config_json["common"]["frequency_band"]]
         assert device_under_test.frequencyBand == band_index 
         assert device_under_test.obsState == ObsState.READY
 
+    @pytest.mark.parametrize(
+        "config_file_name, \
+        scan_file_name, \
+        receptor_ids",
+        [
+            (
+                "ConfigureScan_basic.json",
+                "Scan1_basic.json",
+                [1, 3, 4, 2]
+            ),
+            (
+                "Configure_TM-CSP_v2.json",
+                "Scan1_basic.json",
+                [4, 1, 2]
+            )
+
+        ]
+    )
+    def test_Scan(
+        self: TestCbfSubarray,
+        device_under_test: CbfDeviceProxy,
+        config_file_name: str,
+        scan_file_name: str,
+        receptor_ids: List[int]
+    ) -> None:
+        """
+        Test the Scan command
+        """
+        f1 = open(data_file_path + config_file_name)
+        config_string = f1.read().replace("\n", "")
+        f1.close()
+        device_under_test.On()
+        time.sleep(0.1)
+        device_under_test.AddReceptors(receptor_ids)
+        time.sleep(0.1)
+        device_under_test.ConfigureScan(config_string)
+        time.sleep(3)
+
+        # send the Scan command
+        f2 = open(data_file_path + scan_file_name)
+        json_string_scan = f2.read().replace("\n", "")
+        device_under_test.Scan(json_string_scan)
+        f2.close()
+        scan_id = json.loads(json_string_scan)["scan_id"]
+        time.sleep(0.1)
+
+        assert device_under_test.obsState == ObsState.SCANNING
+        assert device_under_test.scanID == scan_id
+
+    @pytest.mark.parametrize(
+        "config_file_name, \
+        scan_file_name, \
+        receptor_ids", 
+        [
+            (
+                "ConfigureScan_basic.json",
+                "Scan1_basic.json",
+                [1, 3, 4, 2],
+            ),
+            (
+                "Configure_TM-CSP_v2.json",
+                "Scan1_basic.json",
+                [4, 1, 2],
+            )
+        ]
+    )
+    def test_EndScan(
+        self: TestCbfSubarray,
+        device_under_test: CbfDeviceProxy,
+        config_file_name: str,
+        scan_file_name: str,
+        receptor_ids: List[int]
+    ) -> None:
+        """
+        Test the EndScan command
+        """
+        f1 = open(data_file_path + config_file_name)
+        config_string = f1.read().replace("\n", "")
+        f1.close()
+        device_under_test.On()
+        time.sleep(0.1)
+        device_under_test.AddReceptors(receptor_ids)
+        time.sleep(0.1)
+        device_under_test.ConfigureScan(config_string)
+        time.sleep(3)
+        f2 = open(data_file_path + scan_file_name)
+        json_string_scan = f2.read().replace("\n", "")
+        device_under_test.Scan(json_string_scan)
+        f2.close()
+        time.sleep(0.1)
+
+        # send the EndScan command
+        device_under_test.EndScan()
+        time.sleep(0.1)
+
+        assert device_under_test.obsState == ObsState.READY
+        assert device_under_test.scanID == 0
+
+    @pytest.mark.parametrize(
+        "config_file_name, \
+        scan_file_name, \
+        receptor_ids", 
+        [
+            (
+                "ConfigureScan_basic.json",
+                "Scan1_basic.json",
+                [1, 3, 4, 2],
+            ),
+            (
+                "Configure_TM-CSP_v2.json",
+                "Scan1_basic.json",
+                [4, 1, 2],
+            )
+        ]
+    )
+    def test_Abort(
+        self: TestCbfSubarray,
+        device_under_test: CbfDeviceProxy,
+        config_file_name: str,
+        scan_file_name: str,
+        receptor_ids: List[int]
+    ) -> None:
+        """
+        Test the Abort command
+        """
+        f1 = open(data_file_path + config_file_name)
+        config_string = f1.read().replace("\n", "")
+        f1.close()
+        device_under_test.On()
+        time.sleep(0.1)
+        device_under_test.AddReceptors(receptor_ids)
+        time.sleep(0.1)
+        device_under_test.ConfigureScan(config_string)
+        time.sleep(3)
+        f2 = open(data_file_path + scan_file_name)
+        json_string_scan = f2.read().replace("\n", "")
+        device_under_test.Scan(json_string_scan)
+        f2.close()
+        time.sleep(0.1)
+
+        # send the Abort command
+        device_under_test.Abort()
+        time.sleep(0.1)
+
+        assert device_under_test.obsState == ObsState.ABORTED
+
+    @pytest.mark.parametrize(
+        "config_file_name, \
+        scan_file_name, \
+        receptor_ids", 
+        [
+            (
+                "ConfigureScan_basic.json",
+                "Scan1_basic.json",
+                [1, 3, 4, 2],
+            ),
+            (
+                "Configure_TM-CSP_v2.json",
+                "Scan1_basic.json",
+                [4, 1, 2],
+            )
+        ]
+    )
+    def test_Reset(
+        self: TestCbfSubarray,
+        device_under_test: CbfDeviceProxy,
+        config_file_name: str,
+        scan_file_name: str,
+        receptor_ids: List[int]
+    ) -> None:
+        """
+        Test the ObsReset command
+        """
+        f1 = open(data_file_path + config_file_name)
+        config_string = f1.read().replace("\n", "")
+        f1.close()
+        device_under_test.On()
+        time.sleep(0.1)
+        device_under_test.AddReceptors(receptor_ids)
+        time.sleep(0.1)
+        device_under_test.ConfigureScan(config_string)
+        time.sleep(3)
+        f2 = open(data_file_path + scan_file_name)
+        json_string_scan = f2.read().replace("\n", "")
+        device_under_test.Scan(json_string_scan)
+        f2.close()
+        time.sleep(0.1)
+        device_under_test.Abort()
+        time.sleep(0.1)
+
+        # send the Reset command
+        device_under_test.ObsReset()
+        time.sleep(3)
+
+        assert device_under_test.obsState == ObsState.IDLE
+        assert device_under_test.configID == ""
+        assert device_under_test.scanID == 0
+        assert device_under_test.frequencyBand == 0
+
+    @pytest.mark.parametrize(
+        "config_file_name, \
+        scan_file_name, \
+        receptor_ids", 
+        [
+            (
+                "ConfigureScan_basic.json",
+                "Scan1_basic.json",
+                [1, 3, 4, 2],
+            ),
+            (
+                "Configure_TM-CSP_v2.json",
+                "Scan1_basic.json",
+                [4, 1, 2],
+            )
+        ]
+    )
+    def test_Restart(
+        self: TestCbfSubarray,
+        device_under_test: CbfDeviceProxy,
+        config_file_name: str,
+        scan_file_name: str,
+        receptor_ids: List[int]
+    ) -> None:
+        """
+        Test the Restart command
+        """
+        f1 = open(data_file_path + config_file_name)
+        config_string = f1.read().replace("\n", "")
+        f1.close()
+        device_under_test.On()
+        time.sleep(0.1)
+        device_under_test.AddReceptors(receptor_ids)
+        time.sleep(0.1)
+        device_under_test.ConfigureScan(config_string)
+        time.sleep(3)
+        f2 = open(data_file_path + scan_file_name)
+        json_string_scan = f2.read().replace("\n", "")
+        device_under_test.Scan(json_string_scan)
+        f2.close()
+        time.sleep(0.1)
+        device_under_test.Abort()
+        time.sleep(0.1)
+
+        # send the Reset command
+        device_under_test.Restart()
+        time.sleep(3)
+
+        assert device_under_test.obsState == ObsState.EMPTY
+        assert device_under_test.configID == ""
+        assert device_under_test.scanID == 0
+        assert device_under_test.frequencyBand == 0
+        assert len(device_under_test.receptors) == 0

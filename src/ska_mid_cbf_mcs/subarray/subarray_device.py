@@ -82,10 +82,10 @@ class CbfSubarray(SKASubarray):
             "Off",
             self.OffCommand(*device_args)
         )
-        self.register_command_object(
-            "Configure",
-            self.ConfigureCommand(*device_args)
-        )       
+        # self.register_command_object(
+        #     "Configure",
+        #     self.ConfigureCommand(*device_args)
+        # )
         self.register_command_object(
             "AddReceptors",
             self.AddReceptorsCommand(*device_args)
@@ -122,15 +122,12 @@ class CbfSubarray(SKASubarray):
         if value is not None:
             try:
                 self._group_vcc.write_attribute("dopplerPhaseCorrection", value)
-                log_msg = "Value of " + str(name) + " is " + str(value)
+                log_msg = f"Value of {name} is {value}"
                 self.logger.debug(log_msg)
             except Exception as e:
                 self.logger.error(str(e))
         else:
-            self.logger.warn(
-                "None value for attribute " + str(name) + 
-                " of device " + fqdn
-            )
+            self.logger.warn(f"None value for {fqdn}")
 
     def _delay_model_event_callback(
         self: CbfSubarray, fqdn, name, value, quality
@@ -166,10 +163,7 @@ class CbfSubarray(SKASubarray):
             except Exception as e:
                 self.logger.error(str(e))
         else:
-            self.logger.warn(
-                "None value for attribute " + str(name) + 
-                " of device " + fqdn
-            )
+            self.logger.warn(f"None value for {fqdn}")
 
     def _update_delay_model(self, destination_type, epoch, model):
         # This method is always called on a separate thread
@@ -226,10 +220,7 @@ class CbfSubarray(SKASubarray):
             except Exception as e:
                 self.logger.error(str(e))
         else:
-            self.logger.warn(
-                "None value for attribute " + str(name) + 
-                " of device " + fqdn
-            )
+            self.logger.warn(f"None value for {fqdn}")
 
     def _update_jones_matrix(self, destination_type, epoch, matrix_details):
         #This method is always called on a separate thread
@@ -286,10 +277,7 @@ class CbfSubarray(SKASubarray):
             except Exception as e:
                 self.logger.error(str(e))
         else:
-            self.logger.warn(
-                "None value for attribute " + str(name) + 
-                " of device " + fqdn
-            )
+            self.logger.warn(f"None value for {fqdn}")
 
     def _update_beam_weights(self, epoch, weights_details):
         #This method is always called on a separate thread
@@ -323,8 +311,7 @@ class CbfSubarray(SKASubarray):
                         self._fsp_health_state[fqdn] = value
                     else:
                         # should NOT happen!
-                        log_msg = "Received health state change for unknown device " + \
-                        str(name)
+                        log_msg = f"Received healthState change for unknown device {name}"
                         self.logger.warn(log_msg)
                         return
                 elif "State" in name:
@@ -334,22 +321,17 @@ class CbfSubarray(SKASubarray):
                         self._fsp_state[fqdn] = value
                     else:
                         # should NOT happen!
-                        log_msg = "Received state change for unknown device " + \
-                            str(name)
+                        log_msg = f"Received state change for unknown device {name}"
                         self.logger.warn(log_msg)
                         return
 
-                log_msg = "New value for " + str(name) + \
-                    " of device " + fqdn + " is " + str(value)
+                log_msg = f"New value for {fqdn} {name} is {value}"
                 self.logger.info(log_msg)
 
             except Exception as except_occurred:
                 self.logger.error(str(except_occurred))
         else:
-            self.logger.warn(
-                "None value for attribute " + str(name) + 
-                " of device " + fqdn
-            )
+            self.logger.warn(f"None value for {fqdn}")
 
     def _validate_scan_configuration(self, argin):
         # try to deserialize input string to a JSON object
@@ -1018,10 +1000,6 @@ class CbfSubarray(SKASubarray):
         data.insert(tango.DevString, freq_band_name)
         self._group_vcc.command_inout("TurnOffBandDevice", data)
 
-        # reset scanID, frequencyBand in case they're not reset
-        self._scan_ID = 0
-        self._frequency_band = 0
-
         # change FSP subarray membership
         data = tango.DeviceData()
         data.insert(tango.DevUShort, self._subarray_id)
@@ -1029,16 +1007,16 @@ class CbfSubarray(SKASubarray):
         self._group_fsp.command_inout("RemoveSubarrayMembership", data)
         self._group_fsp.remove_all()
 
-
         # remove channel info from FSP subarrays
         # already done in GoToIdle
         self._group_fsp_corr_subarray.remove_all()
         self._group_fsp_pss_subarray.remove_all()
         self._group_fsp_pst_subarray.remove_all()
 
-        # reset all private dat to their initialization values:
+        # reset all private data to their initialization values:
         self._scan_ID = 0       
         self._config_ID = ""
+        self._frequency_band = 0
         self._last_received_delay_model  = "{}"
         self._last_received_jones_matrix = "{}"
         self._last_received_beam_weights = "{}"
@@ -1792,7 +1770,7 @@ class CbfSubarray(SKASubarray):
             # Call this just to release all FSPs and unsubscribe to events. 
             # Can't call GoToIdle, otherwise there will be state transition problem. 
             # TODO - to clarify why can't call GoToIdle
-            device._deconfigure()
+            #device._deconfigure()
 
             full_configuration = json.loads(argin)
             common_configuration = copy.deepcopy(full_configuration["common"])
@@ -2111,7 +2089,6 @@ class CbfSubarray(SKASubarray):
             device._group_fsp_pst_subarray.command_inout("EndScan")
 
             device._scan_ID = 0
-            device._frequency_band = 0
 
             message = "EndScan command OK"
             self.logger.info(message)

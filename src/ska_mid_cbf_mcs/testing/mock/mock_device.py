@@ -101,6 +101,7 @@ class MockDeviceBuilder:
         :param state: the state of the mock
         """
         self.add_command("state", state)
+        self.add_command("State", state)
 
     def _setup_read_attribute(
         self: MockDeviceBuilder, mock_device: unittest.mock.Mock

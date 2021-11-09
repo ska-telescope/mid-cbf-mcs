@@ -21,7 +21,7 @@ __all__ = ["MockAttributeBuilder"]
 
 
 class MockAttributeBuilder:
-    """This module implements a mock builder for tango devices."""
+    """This module implements a mock builder for tango device attributes."""
 
     def __init__(
         self: MockAttributeBuilder,
@@ -37,6 +37,15 @@ class MockAttributeBuilder:
 
         self._return_values: dict[str, Any] = {}
         self._configuration: dict[str, Any] = {}
+        self._value = None
+
+    def add_value(self: MockAttributeBuilder, value: Any) -> None:
+        """
+        Tell this builder to build mocks with a given value.
+
+        :param value: the value of the attribute property
+        """
+        self._value = value
 
     def add_property(self: MockAttributeBuilder, name: str, value: Any) -> None:
         """
@@ -93,7 +102,6 @@ class MockAttributeBuilder:
         """
 
         def _mock_subscribe_event(
-            attribute_name: str,
             event_type: tango.EventType,
             callback: Callable[[tango.EventData], None],
             stateless: bool,
@@ -105,26 +113,16 @@ class MockAttributeBuilder:
             with the current value of the attribute if it exists. It
             doesn't actually support publishing change events.
 
-            :param attribute_name: name of the attribute for which
-                events are subscribed
             :param event_type: type of the event being subscribed to
             :param callback: a callback to call
             :param stateless: whether this is a stateless subscription
             """
-            attribute_value = (
-                mock_attribute.state()
-                if attribute_name == "state"
-                else getattr(mock_attribute, attribute_name)
-            )
-            if attribute_value is not None:
-                mock_event_data = unittest.mock.Mock()
-                mock_event_data.err = False
-                mock_event_data.attr_value.name = attribute_name
-                mock_event_data.attr_value.value = attribute_value
-                mock_event_data.attr_value.quality = tango.AttrQuality.ATTR_VALID
-                callback(mock_event_data)
-            # TODO: if attribute_value is None, it might be better to call the callback
-            # with a mock rather than not calling it at all.
+            mock_event_data = unittest.mock.Mock()
+            mock_event_data.err = False
+            mock_event_data.attr_value.name = "mockAttribute"
+            mock_event_data.attr_value.value = type(self._value)()
+            mock_event_data.attr_value.quality = tango.AttrQuality.ATTR_VALID
+            callback(mock_event_data)
 
         mock_attribute.subscribe_event.side_effect = _mock_subscribe_event
 

@@ -921,7 +921,7 @@ class TestCbfSubarray:
 
             # Check obsStates AFTER the EndScan() command
             assert proxies.subarray[sub_id].obsState  == ObsState.READY
-            assert proxies.vcc[vcc_ids[0]].obsState         == ObsState.READY
+            assert proxies.vcc[vcc_ids[0]].obsState  == ObsState.READY
             assert proxies.vcc[vcc_ids[num_receptors -1]].obsState == ObsState.READY
             # assert proxies.fspCorrSubarray[fsp_corr_id-1].obsState == ObsState.READY
             # assert proxies.fspPssSubarray[fsp_pss_id-1].obsState == ObsState.READY
