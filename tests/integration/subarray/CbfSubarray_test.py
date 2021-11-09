@@ -28,6 +28,7 @@ import pytest
 from enum import Enum
 
 # SKA specific imports
+from ska_tango_base.commands import ResultCode
 from ska_mid_cbf_mcs.commons.global_enum import freq_band_dict
 from ska_tango_base.control_model import LoggingLevel, HealthState
 from ska_tango_base.control_model import AdminMode, ObsState
@@ -140,16 +141,19 @@ class TestCbfSubarray:
 
     @pytest.mark.parametrize(
         "receptor_ids, \
+        invalid_receptor_id, \
         invalid_receptors_to_remove, \
         sub_id", 
         [
             (
                 [1, 3],
+                [200],
                 [2],
                 1
             ),
             (
                 [4, 2],
+                [0],
                 [1, 3],
                 1
             )
@@ -159,6 +163,7 @@ class TestCbfSubarray:
         self: TestCbfSubarray, 
         proxies: pytest.fixture, 
         receptor_ids: List[int], 
+        invalid_receptor_id: List[int],
         invalid_receptors_to_remove: List[int], 
         sub_id: int
     ) -> None:
@@ -194,12 +199,10 @@ class TestCbfSubarray:
             assert all([proxies.vcc[proxies.receptor_to_vcc[i]].subarrayMembership == 1 for i in receptor_ids])
             assert proxies.subarray[sub_id].obsState == ObsState.IDLE
 
-            # TODO: fix this
             # try adding an invalid receptor ID
-            # with pytest.raises(tango.DevFailed) as df:
-            #     proxies.subarray[sub_id].AddReceptors([5])
-            # time.sleep(1)
-            # assert "Invalid receptor ID" in str(df.value.args[0].desc)
+            result = proxies.subarray[sub_id].AddReceptors(invalid_receptor_id)
+            proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.IDLE, 1, 1)
+            assert result[0][0] == ResultCode.FAILED
 
             # try removing a receptor not assigned to subarray 1
             # doing this doesn't actually throw an error

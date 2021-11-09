@@ -89,8 +89,10 @@ def mock_beam() -> unittest.mock.Mock:
 def mock_controller() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.ON)
-    builder.add_attribute("receptorToVcc", ["1:1", "2:2", "3:3, 4:4"])
-    builder.add_property("MaxCapabilities", {'MaxCapabilities': ['VCC:4', 'FSP:4', 'Subarray:1']})
+    builder.add_attribute("receptorToVcc", ["1:1", "2:2", "3:3", "4:4"])
+    builder.add_property(
+        "MaxCapabilities", {'MaxCapabilities': ['VCC:4', 'FSP:4', 'Subarray:1']}
+    )
     return builder()
 
 @pytest.fixture()
@@ -109,6 +111,15 @@ def mock_vcc_group() -> unittest.mock.Mock:
     builder = MockGroupBuilder()
     builder.add_command("On", None)
     builder.add_command("Off", None)
+    builder.add_command("ConfigureScan", None)
+    builder.add_command("ConfigureSearchWindow", None)
+    builder.add_command("GoToIdle", None)
+    builder.add_command("Scan", None)
+    builder.add_command("EndScan", None)
+    builder.add_command("TurnOnBandDevice", None)
+    builder.add_command("TurnOffBandDevice", None)
+    builder.add_command("UpdateDelayModel", None)
+    builder.add_command("UpdateJonesMatrix", None)
     return builder()
 
 @pytest.fixture()
@@ -127,6 +138,10 @@ def mock_fsp_group() -> unittest.mock.Mock:
     builder = MockGroupBuilder()
     builder.add_command("On", None)
     builder.add_command("Off", None)
+    builder.add_command("RemoveSubarrayMembership", None)
+    builder.add_command("UpdateDelayModel", None)
+    builder.add_command("UpdateJonesMatrix", None)
+    builder.add_command("UpdateBeamWeights", None)
     return builder()
 
 @pytest.fixture()
@@ -137,8 +152,19 @@ def mock_fsp_subarray() -> unittest.mock.Mock:
     builder.add_attribute("healthState", HealthState.OK)
     builder.add_attribute("subarrayMembership", 0)
     builder.add_attribute("obsState", ObsState.IDLE)
+    builder.add_command("GoToIdle", None)
+    builder.add_command("Scan", None)
+    builder.add_command("EndScan", None)
     builder.add_result_command("On", ResultCode.OK)
     builder.add_result_command("Off", ResultCode.OK)
+    return builder()
+
+@pytest.fixture()
+def mock_fsp_subarray_group() -> unittest.mock.Mock:
+    builder = MockGroupBuilder()
+    builder.add_command("On", None)
+    builder.add_command("Off", None)
+    builder.add_command("GoToIdle", None)
     return builder()
 
 @pytest.fixture()
@@ -153,6 +179,7 @@ def initial_mocks(
     mock_fsp: unittest.mock.Mock,
     mock_fsp_group: unittest.mock.Mock,
     mock_fsp_subarray: unittest.mock.Mock,
+    mock_fsp_subarray_group: unittest.mock.Mock
 ) -> Dict[str, unittest.mock.Mock]:
     """
     Return a dictionary of proxy mocks to pre-register.
@@ -167,6 +194,7 @@ def initial_mocks(
     :param mock_fsp: a mock Fsp that is powered off.
     :param mock_fsp_group: a mock Fsp tango.Group.
     :param mock_fsp_subarray: a mock Fsp function mode subarray that is powered on.
+    :param mock_fsp_subarray_group: a mock Fsp function mode subarray tango.Group.
 
     :return: a dictionary of proxy mocks to pre-register.
     """
@@ -198,4 +226,7 @@ def initial_mocks(
         "mid_csp_cbf/fspPstSubarray/04_01": mock_fsp_subarray,
         "VCC": mock_vcc_group,
         "FSP": mock_fsp_group,
+        "FSP Subarray Corr": mock_fsp_subarray_group,
+        "FSP Subarray Pss": mock_fsp_subarray_group,
+        "FSP Subarray Pst": mock_fsp_subarray_group,
     }
