@@ -7,33 +7,23 @@
 #
 # Distributed under the terms of the BSD-3-Clause license.
 # See LICENSE.txt for more info.
-"""Contain the tests for the Vcc."""
+"""Contain the tests for the CbfController."""
 
 from __future__ import annotations
 
 # Standard imports
 import os
-import time
-import json
-import logging
-import pytest
-from typing import Callable, Type, Dict
 
 # Path
 file_path = os.path.dirname(os.path.abspath(__file__))
 
 # Tango imports
-import tango
 from tango import DevState
 from tango.server import command
 
 #SKA imports
 from ska_tango_base.commands import ResultCode
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
-from ska_mid_cbf_mcs.testing.tango_harness import DeviceToLoadType
-
-from ska_tango_base.control_model import HealthState, AdminMode, ObsState
-
 
 class TestCbfController:
     """
@@ -82,4 +72,14 @@ class TestCbfController:
         result = device_under_test.Off()
         assert result[0][0] == ResultCode.OK
         assert device_under_test.State() == DevState.OFF
+
+    def test_Standby(
+        self: TestCbfController,
+        device_under_test: CbfDeviceProxy
+    ) -> None:
+
+        result = device_under_test.Standby()
+        assert result[0][0] == ResultCode.OK
+        assert device_under_test.State() == DevState.STANDBY
+    
 
