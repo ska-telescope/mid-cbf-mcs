@@ -47,9 +47,6 @@ def device_to_load() -> DeviceToLoadType:
     """
     Fixture that specifies the device to be loaded for testing.
 
-    :param patched_vcc_device_class: a class for a patched Vcc
-        device with extra methods for testing purposes.
-
     :return: specification of the device to be loaded
     """
     return {
@@ -137,8 +134,12 @@ def initial_mocks(
     Return a dictionary of device proxy mocks to pre-register.
 
     :param mock_vcc: a mock Vcc that is powered off.
-    :param mock_fsp: a mock VccBand3 that is powered off.
-    :param mock_subarray: a mock VccBand4 that is powered off.
+    :param mock_vcc_group: a mock group.
+    :param mock_fsp: a mock Fsp that is powered off.
+    :param mock_fsp_group: a mock Fsp group.
+    :param mock_subarray: a mock Subarray that is powered off.
+    :param mock_subarray_group: a mock Subarray group.
+    :param mock_talon_lru: a mock Talon LRU.
 
     :return: a dictionary of device proxy mocks to pre-register.
     """

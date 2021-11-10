@@ -299,12 +299,13 @@ class FspCorrSubarray(CspSubElementObsDevice):
 
     def always_executed_hook(self: FspCorrSubarray) -> None:
         # PROTECTED REGION ID(FspCorrSubarray.always_executed_hook) ENABLED START #
-        """hook before any commands"""
+        """Hook to be executed before any commands."""
         pass
         # PROTECTED REGION END #    //  FspCorrSubarray.always_executed_hook
 
     def delete_device(self: FspCorrSubarray) -> None:
         # PROTECTED REGION ID(FspCorrSubarray.delete_device) ENABLED START #
+        """Hook to delete device."""
         pass
         # PROTECTED REGION END #    //  FspCorrSubarray.delete_device
 
@@ -314,123 +315,224 @@ class FspCorrSubarray(CspSubElementObsDevice):
 
     def read_receptors(self: FspCorrSubarray) -> List[int]:
         # PROTECTED REGION ID(FspCorrSubarray.receptors_read) ENABLED START #
-        """return receptros attribute.(array of int)"""
+        """
+            Read the receptors attribute.
+
+            :return: the list of receptors 
+            :rtype: List[int]
+        """
         return self._receptors
         # PROTECTED REGION END #    //  FspCorrSubarray.receptors_read
 
     def read_frequencyBand(self: FspCorrSubarray) -> tango.DevEnum:
         # PROTECTED REGION ID(FspCorrSubarray.frequencyBand_read) ENABLED START #
-        """Return frequencyBand attribute(DevEnum)."""
+        """
+            Read the frequencyBand attribute.
+
+            :return: the frequency band 
+            :rtype: tango.DevEnum
+        """
         return self._frequency_band
         # PROTECTED REGION END #    //  FspCorrSubarray.frequencyBand_read
 
     def read_band5Tuning(self: FspCorrSubarray) -> List[float]:
         # PROTECTED REGION ID(FspCorrSubarray.band5Tuning_read) ENABLED START #
-        """Return band5Tuning attribute(array of float, first element corresponds to the first stream, second to the second stream).""" 
+        """
+            Read the band5Tuning attribute.
+
+            :return: the band5Tuning attribute (array of float, 
+                first element corresponds to the first stream, 
+                second to the second stream).
+            :rtype: List[float]
+        """
         return self._stream_tuning
         # PROTECTED REGION END #    //  FspCorrSubarray.band5Tuning_read
 
     def read_frequencyBandOffsetStream1(self: FspCorrSubarray) -> int:
         # PROTECTED REGION ID(FspCorrSubarray.frequencyBandOffsetStream1) ENABLED START #
-        """Return frequencyBandOffsetStream1 attribute"""
+        """
+            Read the frequencyBandOffsetStream1 attribute.
+
+            :return: the frequencyBandOffsetStream1 attribute
+            :rtype: int
+        """
         return self._frequency_band_offset_stream_1
         # PROTECTED REGION END #    //  FspCorrSubarray.frequencyBandOffsetStream1
 
     def read_frequencyBandOffsetStream2(self: FspCorrSubarray) -> int:
         # PROTECTED REGION ID(FspCorrSubarray.frequencyBandOffsetStream2) ENABLED START #
-        """Return frequencyBandOffsetStream2 attribute"""
+        """
+            Read the frequencyBandOffsetStream2 attribute.
+
+            :return: the frequencyBandOffsetStream2 attribute.
+            :rtype: int
+        """
         return self._frequency_band_offset_stream_2
         # PROTECTED REGION END #    //  FspCorrSubarray.frequencyBandOffsetStream2
 
     def read_frequencySliceID(self: FspCorrSubarray) -> int:
         # PROTECTED REGION ID(FspCorrSubarray.frequencySliceID_read) ENABLED START #
-        """Return frequencySliceID attribute"""
+        """
+            Read the frequencySliceID attribute.
+
+            :return: the frequencySliceID attribute.
+            :rtype: int
+        """
         return self._frequency_slice_ID
         # PROTECTED REGION END #    //  FspCorrSubarray.frequencySliceID_read
 
     def read_corrBandwidth(self: FspCorrSubarray) -> int:
         # PROTECTED REGION ID(FspCorrSubarray.corrBandwidth_read) ENABLED START #
-        """Return corrBandwidth attribute(Bandwidth to be correlated is <Full Bandwidth>/2^bandwidth)."""
+        """
+            Read the corrBandwidth attribute.
+
+            :return: the corrBandwidth attribute 
+                (bandwidth to be correlated is <Full Bandwidth>/2^bandwidth).
+            :rtype: int
+        """
         return self._bandwidth
         # PROTECTED REGION END #    //  FspCorrSubarray.corrBandwidth_read
 
     def read_zoomWindowTuning(self: FspCorrSubarray) -> int:
         # PROTECTED REGION ID(FspCorrSubarray.zoomWindowTuning_read) ENABLED START #
-        """Return zoomWindowTuning attribute."""
+        """
+            Read the zoomWindowTuning attribute.
+
+            :return: the zoomWindowTuning attribute 
+            :rtype: int
+        """
         return self._zoom_window_tuning
         # PROTECTED REGION END #    //  FspCorrSubarray.zoomWindowTuning_read
 
     def read_integrationTime(self: FspCorrSubarray) -> int:
         # PROTECTED REGION ID(FspCorrSubarray.integrationTime_read) ENABLED START #
-        """Return integrationTime attribute(millisecond)."""
+        """
+            Read the integrationTime attribute.
+
+            :return: the integrationTime attribute (millisecond). 
+            :rtype: int
+        """
         return self._integration_time
         # PROTECTED REGION END #    //  FspCorrSubarray.integrationTime_read
 
     def read_channelAveragingMap(self: FspCorrSubarray) -> List[List[int]]:
         # PROTECTED REGION ID(FspCorrSubarray.channelAveragingMap_read) ENABLED START #
-        """Return channelAveragingMap. 
-           Consists of 2*20 array of integers(20 tupples representing 20* 744 channels). 
-           The first element is the ID of the first channel in a channel group. The second element is the averaging factor"""
+        """
+            Read the channelAveragingMap attribute.
+
+            :return: the channelAveragingMap attribute. 
+                Consists of 2*20 array of integers(20 tupples representing 20* 744 channels). 
+                The first element is the ID of the first channel in a channel group. 
+                The second element is the averaging factor
+            :rtype: List[List[int]]
+        """
         return self._channel_averaging_map
         # PROTECTED REGION END #    //  FspCorrSubarray.channelAveragingMap_read
 
     def read_visDestinationAddress(self: FspCorrSubarray) -> str:
         # PROTECTED REGION ID(FspCorrSubarray.visDestinationAddress_read) ENABLED START #
-        """Return VisDestinationAddress attribute(JSON object containing info about current SDP destination addresses being used)."""
+        """
+            Read the visDestinationAddress attribute.
+
+            :return: the visDestinationAddress attribute. 
+                (JSON object containing info about current SDP destination addresses being used).
+            :rtype: str
+        """
         return json.dumps(self._vis_destination_address)
         # PROTECTED REGION END #    //  FspCorrSubarray.visDestinationAddress_read
 
     def write_visDestinationAddress(self: FspCorrSubarray, value: str) -> None:
         # PROTECTED REGION ID(FspCorrSubarray.visDestinationAddress_write) ENABLED START #
-        """Set VisDestinationAddress attribute(JSON object containing info about current SDP destination addresses being used)."""
+        """
+            Write the visDestinationAddress attribute.
+
+            :param value: the visDestinationAddress attribute value. 
+                (JSON object containing info about current SDP destination addresses being used).
+        """
         self._vis_destination_address = json.loads(value)
         # PROTECTED REGION END #    //  FspCorrSubarray.visDestinationAddress_write
 
     def read_fspChannelOffset(self: FspCorrSubarray) -> int:
         # PROTECTED REGION ID(Fsp.fspChannelOffset_read) ENABLED START #
-        """Return the fspChannelOffset attribute."""
+        """
+            Read the fspChannelOffset attribute.
+
+            :return: the fspChannelOffset attribute. 
+            :rtype: int
+        """
         return self._fsp_channel_offset
         # PROTECTED REGION END #    //  Fsp.fspChannelOffset_read
 
     def write_fspChannelOffset(self: FspCorrSubarray, value: int) -> None:
         # PROTECTED REGION ID(Fsp.fspChannelOffset_write) ENABLED START #
-        """Set the fspChannelOffset attribute."""
+        """
+            Write the fspChannelOffset attribute.
+
+            :param value: the fspChannelOffset attribute value. 
+        """
         self._fsp_channel_offset=value
         # PROTECTED REGION END #    //  Fsp.fspChannelOffset_write
 
     def read_outputLinkMap(self: FspCorrSubarray) -> List[List[int]]:
         # PROTECTED REGION ID(FspCorrSubarray.outputLinkMap_read) ENABLED START #
-        """Return the outputLinkMap attribute."""
+        """
+            Read the outputLinkMap attribute.
+
+            :return: the outputLinkMap attribute. 
+            :rtype: List[List[int]]
+        """
         return self._output_link_map
         # PROTECTED REGION END #    //  FspCorrSubarray.outputLinkMap_read
 
     def write_outputLinkMap(self: FspCorrSubarray, value: List[List[int]]) -> None:
         # PROTECTED REGION ID(FspCorrSubarray.outputLinkMap_write) ENABLED START #
-        """Set the outputLinkMap attribute."""
+        """
+            Write the outputLinkMap attribute.
+
+            :param value: the outputLinkMap attribute value. 
+        """
         self._output_link_map=value
         # PROTECTED REGION END #    //  FspCorrSubarray.outputLinkMap_write
 
     def read_scanID(self: FspCorrSubarray) -> int:
         # PROTECTED REGION ID(FspCorrSubarray.scanID_read) ENABLED START #
-        """Return the scanID attribute."""
+        """
+            Read the scanID attribute.
+
+            :return: the scanID attribute. 
+            :rtype: int
+        """
         return self._scan_id
         # PROTECTED REGION END #    //  FspCorrSubarray.scanID_read
 
     def write_scanID(self: FspCorrSubarray, value: int) -> None:
         # PROTECTED REGION ID(FspCorrSubarray.scanID_write) ENABLED START #
-        """Set the scanID attribute."""
+        """
+            Write the scanID attribute.
+
+            :param value: the scanID attribute value. 
+        """
         self._scan_id=value
         # PROTECTED REGION END #    //  FspCorrSubarray.scanID_write
 
     def read_configID(self: FspCorrSubarray) -> str:
         # PROTECTED REGION ID(FspCorrSubarray.configID_read) ENABLED START #
-        """Return the configID attribute."""
+        """
+            Read the configID attribute.
+
+            :return: the configID attribute. 
+            :rtype: str
+        """
         return self._config_id
         # PROTECTED REGION END #    //  FspCorrSubarray.configID_read
 
     def write_configID(self: FspCorrSubarray, value: str) -> None:
         # PROTECTED REGION ID(FspCorrSubarray.configID_write) ENABLED START #
-        """Set the configID attribute."""
+        """
+            Write the configID attribute.
+
+            :param value: the configID attribute value. 
+        """
         self._config_id=value
         # PROTECTED REGION END #    //  FspCorrSubarray.configID_write
 
@@ -438,7 +540,11 @@ class FspCorrSubarray(CspSubElementObsDevice):
         self: FspCorrSubarray, 
         argin: List[int]
         ) -> None:
-        """add specified receptors to the FSP subarray. Input is array of int."""
+        """
+            Add specified receptors to the subarray.
+
+            :param argin: ids of receptors to add. 
+        """
         errs = []  # list of error messages
         receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
                                self._proxy_cbf_controller.receptorToVcc)
@@ -472,7 +578,11 @@ class FspCorrSubarray(CspSubElementObsDevice):
         self: FspCorrSubarray, 
         argin: List[int]
         )-> None:
-        """Remove Receptors. Input is array of int"""
+        """
+            Remove specified receptors from the subarray.
+
+            :param argin: ids of receptors to remove. 
+        """
         for receptorID in argin:
             if receptorID in self._receptors:
                 self._receptors.remove(receptorID)
@@ -784,12 +894,11 @@ class FspCorrSubarray(CspSubElementObsDevice):
             argin: str
             ) -> None:
             """
-            Validate the configuration parameters against allowed values, as needed.
+                Validate the configuration parameters against allowed values, as needed.
 
-            :param argin: The JSON formatted string with configuration for the device.
-            :type argin: 'DevString'
-            :return: A tuple containing a return code and a string message.
-            :rtype: (ResultCode, str)
+                :param argin: The JSON formatted string with configuration for the device.
+                :return: A tuple containing a return code and a string message.
+                :rtype: (ResultCode, str)
             """
             device = self.target
 
@@ -886,8 +995,14 @@ class FspCorrSubarray(CspSubElementObsDevice):
             
     # TODO - currently not used
     def is_getLinkAndAddress_allowed(self: FspCorrSubarray) -> bool:
-        """Allowed if destination addresses are received, 
-        meaning outputLinkMap also received (checked in subarray validate scan)."""
+        """
+            Determine if getLinkAndAddress is allowed 
+            (allowed if destination addresses are received, 
+            meaning outputLinkMap also received (checked in subarray validate scan)).
+
+            :return: if getLinkAndAddress is allowed
+            :rtype: bool
+        """
         if self._vis_destination_address["outputHost"]==[]:
             return False
         return True
@@ -903,13 +1018,12 @@ class FspCorrSubarray(CspSubElementObsDevice):
         ) -> str:
         # PROTECTED REGION ID(FspCorrSubarray.getLinkAndAddress) ENABLED START #
         """
-        get output link and destination addresses in JSON based on a channel ID
+            Get output link and destination addresses in JSON based on a channel ID.
 
-        :param argin: 'DevULong'
-        channel ID
+            :param argin: the channel id.
 
-        :return:'DevString'
-        output link and destination addresses in JSON
+            :return: the output link and destination addresses in JSON.
+            :rtype: str
         """
         if argin<0 or argin >14479:
             msg="channelID should be between 0 to 14479"

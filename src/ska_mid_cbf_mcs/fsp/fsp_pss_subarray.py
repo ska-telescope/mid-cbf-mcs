@@ -11,12 +11,14 @@
 Author: Ryam Voigt Ryan.Voigt@nrc-cnrc.gc.ca,
 Herzberg Astronomy and Astrophysics, National Research Council of Canada
 Copyright (c) 2019 National Research Council of Canada
-"""
 
-""" FspPssSubarray Tango device prototype
+FspPssSubarray Tango device prototype
 
 FspPssSubarray TANGO device class for the FspPssSubarray prototype
 """
+from __future__ import annotations  # allow forward references in type hints
+
+from typing import List, Tuple
 
 # tango imports
 import tango
@@ -123,7 +125,7 @@ class FspPssSubarray(CspSubElementObsDevice):
     # General methods
     # ---------------
 
-    def init_command_objects(self):
+    def init_command_objects(self: FspPssSubarray) -> None:
         """
         Sets up the command objects
         """
@@ -142,7 +144,9 @@ class FspPssSubarray(CspSubElementObsDevice):
         A class for the Vcc's init_device() "command".
         """
 
-        def do(self):
+        def do(
+            self: FspPssSubarray.InitCommand,
+        ) -> Tuple[ResultCode, str]:
             """
             Stateless hook for device initialisation.
 
@@ -194,15 +198,15 @@ class FspPssSubarray(CspSubElementObsDevice):
 
         # PROTECTED REGION END #    //  FspPssSubarray.init_device
 
-    def always_executed_hook(self):
+    def always_executed_hook(self: FspPssSubarray) -> None:
         # PROTECTED REGION ID(FspPssSubarray.always_executed_hook) ENABLED START #
-        """hook before any commands"""
+        """Hook to be executed before any commands."""
         pass
         # PROTECTED REGION END #    //  FspPssSubarray.always_executed_hook
 
-    def delete_device(self):
+    def delete_device(self: FspPssSubarray) -> None:
         # PROTECTED REGION ID(FspPssSubarray.delete_device) ENABLED START #
-        """Set Idle, remove all receptors, turn device OFF"""
+        """Hook to delete device."""
         pass
         # PROTECTED REGION END #    //  FspPssSubarray.delete_device
 
@@ -210,33 +214,59 @@ class FspPssSubarray(CspSubElementObsDevice):
     # Attributes methods
     # ------------------
 
-    def read_receptors(self):
+    def read_receptors(self: FspPssSubarray) -> List[int]:
         # PROTECTED REGION ID(FspPssSubarray.receptors_read) ENABLED START #
-        """return receptros attribute.(array of int)"""
+        """
+            Read the receptors attribute.
+
+            :return: the receptors attribute.
+            :rtype: List[int]
+        """
         return self._receptors
         # PROTECTED REGION END #    //  FspPssSubarray.receptors_read
 
-    def read_searchBeams(self):
+    def read_searchBeams(self: FspPssSubarray) -> List[str]:
         # PROTECTED REGION ID(FspPssSubarray.searchBeams_read) ENABLED START #
-        """Return searchBeams attribute (JSON)"""
+        """
+            Read the searchBeams attribute. 
+
+            :return: the searchBeams attribute.
+            :rtype: List[str]
+        """
         return self._search_beams
         # PROTECTED REGION END #    //  FspPssSubarray.searchBeams_read
 
-    def read_searchBeamID(self):
+    def read_searchBeamID(self: FspPssSubarray) -> List[int]:
         # PROTECTED REGION ID(FspPssSubarray.read_searchBeamID ENABLED START #
-        """REturn list of SearchBeam IDs(array of int). (From searchBeams JSON)"""
+        """
+            Read the searchBeamID attribute. 
+
+            :return: the searchBeamID attribute.
+            :rtype: List[int]
+        """
         return self._search_beam_id
         # PROTECTED REGION END #    //  FspPssSubarray.read_searchBeamID
 
-    def read_searchWindowID(self):
+    def read_searchWindowID(self: FspPssSubarray) -> List[int]:
         # PROTECTED REGION ID(CbfSubarrayPssConfig.read_searchWindowID) ENABLED START #
-        """Return searchWindowID attribtue(array of int)"""
+        """
+            Read the searchWindowID attribute. 
+
+            :return: the searchWindowID attribute.
+            :rtype: List[int]
+        """
         return self._search_window_id
         # PROTECTED REGION END #    //  CbfSubarrayPssConfig.read_searchWindowID
 
-    def read_outputEnable(self):
+    def read_outputEnable(self: FspPssSubarray) -> bool:
         # PROTECTED REGION ID(CbfSubarrayPssConfig.read_outputEnable) ENABLED START #
-        """Enable/Disable transmission of the output products"""
+        """
+            Read the outputEnable attribute. Used to enable/disable 
+            transmission of the output products.
+
+            :return: the outputEnable attribute.
+            :rtype: bool
+        """
         return self._output_enable
         # PROTECTED REGION END #    //  CbfSubarrayPssConfig.read_outputEnable
 
@@ -244,13 +274,20 @@ class FspPssSubarray(CspSubElementObsDevice):
     # Commands
     # --------
 
-    def _add_receptors(self, receptorIDs):
-        """add specified receptors to the FSP subarray. Input is array of int."""
+    def _add_receptors(
+        self: FspPssSubarray, 
+        argin: List[int]
+        ) -> None:
+        """
+            Add specified receptors to the subarray.
+
+            :param argin: ids of receptors to add. 
+        """
         self.logger.debug("_AddReceptors")
         errs = []  # list of error messages
         receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
                                self._proxy_cbf_controller.receptorToVcc)
-        for receptorID in receptorIDs:
+        for receptorID in argin:
             try:
                 vccID = receptor_to_vcc[receptorID]
                 subarrayID = self._proxies_vcc[vccID - 1].subarrayMembership
@@ -279,8 +316,15 @@ class FspPssSubarray(CspSubElementObsDevice):
                                            tango.ErrSeverity.ERR)
         # PROTECTED REGION END #    //  FspPssSubarray.AddReceptors
 
-    def _remove_receptors(self, argin):
-        """Remove Receptors. Input is array of int"""
+    def _remove_receptors(
+        self: FspPssSubarray, 
+        argin: List[int]
+        )-> None:
+        """
+            Remove specified receptors from the subarray.
+
+            :param argin: ids of receptors to remove. 
+        """
         self.logger.debug("_remove_receptors")
         for receptorID in argin:
             if receptorID in self._receptors:
@@ -290,7 +334,8 @@ class FspPssSubarray(CspSubElementObsDevice):
                     "Skipping.".format(str(receptorID))
                 self.logger.warn(log_msg)
 
-    def _remove_all_receptors(self):
+    def _remove_all_receptors(self: FspPssSubarray) -> None:
+        """ Remove all receptors from the subarray."""
         self._remove_receptors(self._receptors[:])
 
     # --------
@@ -304,11 +349,14 @@ class FspPssSubarray(CspSubElementObsDevice):
 
         """Input a serilized JSON object. """
 
-        def do(self, argin):
+        def do(
+            self: FspPssSubarray.ConfigureScanCommand,
+            argin: str,
+        ) -> Tuple[ResultCode, str]:
             """
             Stateless hook for ConfigureScan() command functionality.
 
-            :param argin: The configuration as JSON formatted string
+            :param argin: The configuration as JSON formatted string.
             :type argin: str
 
             :return: A tuple containing a return code and a string
@@ -386,7 +434,10 @@ class FspPssSubarray(CspSubElementObsDevice):
     )
 
     @DebugIt()
-    def ConfigureScan(self, argin):
+    def ConfigureScan(
+            self: FspPssSubarray, 
+            argin: str
+        ) -> Tuple[ResultCode, str]:
         # PROTECTED REGION ID(Vcc.ConfigureScan) ENABLED START #
         """
         Configure the observing device parameters for the current scan.
@@ -407,7 +458,9 @@ class FspPssSubarray(CspSubElementObsDevice):
         A class for the FspPssSubarray's GoToIdle command.
         """
 
-        def do(self):
+        def do(
+            self: FspPssSubarray.GoToIdleCommand,
+        ) -> Tuple[ResultCode, str]:
             """
             Stateless hook for GoToIdle() command functionality.
 
