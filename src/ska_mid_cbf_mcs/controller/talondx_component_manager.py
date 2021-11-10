@@ -10,8 +10,9 @@
 # Copyright (c) 2019 National Research Council of Canada
 
 from __future__ import annotations
-import tango
 import json
+import tango
+import backoff
 import logging
 from paramiko import SSHClient, AutoAddPolicy
 from paramiko.ssh_exception import SSHException, NoValidConnectionsError
@@ -123,9 +124,20 @@ class TalonDxComponentManager:
                 target = talon_cfg["target"]
                 self.logger.info(f"Copying FPGA bitstream and HPS binaries to {target}")
 
-                with SSHClient() as ssh_client:
+                with SSHClient() as ssh_client:                    
+                    @backoff.on_exception(backoff.expo, NoValidConnectionsError, max_time=TALON_FIRST_CONNECT_TIMEOUT)
+                    def make_first_connect(ip: str, ssh_client: SSHClient) -> None:
+                        """
+                        Attempts to connect to the Talon board for the first time 
+                        after power-on.
+
+                        :param ip: IP address of the board
+                        :param ssh_client: SSH client to use for connection
+                        """
+                        ssh_client.connect(ip, username='root', password='')
+
                     ssh_client.set_missing_host_key_policy(AutoAddPolicy())
-                    ssh_client.connect(ip, username='root', password='', timeout=TALON_FIRST_CONNECT_TIMEOUT)
+                    make_first_connect(ip, ssh_client)
                     ssh_chan = ssh_client.get_transport().open_session()
                 
                     # Make the DS binaries directory
@@ -181,6 +193,9 @@ class TalonDxComponentManager:
                 ret = ResultCode.FAILED
             except SCPException:
                 self.logger.error(f"Failed to copy file to {target}")
+                ret = ResultCode.FAILED
+            except FileNotFoundError as e:
+                self.logger.error(f"Failed to copy file {e.filename}, file does not exist")
                 ret = ResultCode.FAILED
             
         return ret
