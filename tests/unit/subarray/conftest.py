@@ -120,7 +120,6 @@ def mock_vcc_group() -> unittest.mock.Mock:
     builder.add_command("TurnOffBandDevice", None)
     builder.add_command("UpdateDelayModel", None)
     builder.add_command("UpdateJonesMatrix", None)
-    builder.set_size(4)
     return builder()
 
 @pytest.fixture()
@@ -143,7 +142,6 @@ def mock_fsp_group() -> unittest.mock.Mock:
     builder.add_command("UpdateDelayModel", None)
     builder.add_command("UpdateJonesMatrix", None)
     builder.add_command("UpdateBeamWeights", None)
-    builder.set_size(4)
     return builder()
 
 @pytest.fixture()
@@ -169,7 +167,6 @@ def mock_fsp_subarray_group() -> unittest.mock.Mock:
     builder.add_command("On", None)
     builder.add_command("Off", None)
     builder.add_command("GoToIdle", None)
-    builder.set_size(4)
     return builder()
 
 @pytest.fixture()

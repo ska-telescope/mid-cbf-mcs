@@ -68,13 +68,11 @@ class TestCbfSubarray:
             port = proxies.subarray[sub_id].DebugDevice()
 
         try:
-            proxies.clean_proxies()
             if proxies.controller.State() == DevState.OFF:
                 proxies.controller.Init()
                 proxies.wait_timeout_dev([proxies.controller], DevState.STANDBY, 3, 1)
                 proxies.controller.On()
                 proxies.wait_timeout_dev([proxies.controller], DevState.ON, 3, 1)
-            proxies.clean_proxies()
 
             # turn on Subarray
             if proxies.subarray[sub_id].State() != DevState.ON:
