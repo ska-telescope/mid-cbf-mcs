@@ -18,7 +18,7 @@ import copy
 import logging
 
 # Path
-file_path = os.path.dirname(os.path.abspath(__file__))
+data_file_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
 
 # Tango imports
 import tango
@@ -89,8 +89,8 @@ class TestVcc:
         assert create_vcc_proxy.State() == DevState.ON
         
 
-        config_file_name = "/../data/Vcc_ConfigureScan_basic.json"
-        f = open(file_path + config_file_name)
+        config_file_name = "Vcc_ConfigureScan_basic.json"
+        f = open(data_file_path + config_file_name)
         json_str = f.read().replace("\n", "")
         configuration = copy.deepcopy(json.loads(json_str))
         f.close()

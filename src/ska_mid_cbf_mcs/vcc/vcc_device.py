@@ -1125,9 +1125,9 @@ class Vcc(CspSubElementObsDevice):
                 for receptor in argin["tdc_destination_address"]:
                     if int(receptor["receptor_id"]) == self._receptor_ID:
                     # TODO: validate input
-                        break
+                        pass
                     else:  # receptorID not found
-                        raise KeyError  # just handle all the errors in one place
+                        pass
             except KeyError:
                 # tdcDestinationAddress not given or receptorID not in tdcDestinationAddress
                 msg = "Search window specified with TDC enabled, but 'tdcDestinationAddress' " \
