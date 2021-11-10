@@ -665,7 +665,7 @@ class Fsp(SKACapability):
                                 )
                                 self.logger.error(log_msg)
         else:
-            log_msg = "matrix not usable in function mode {}".format(self._function_mode)
+            log_msg = "matrix not used in function mode {}".format(self._function_mode)
             self.logger.error(log_msg)
         # PROTECTED REGION END #    // Fsp.UpdateJonesMatrix
 
@@ -726,7 +726,7 @@ class Fsp(SKACapability):
                                 )
                                 self.logger.error(log_msg)
         else:
-            log_msg = "model not usable in function mode {}".format(self._function_mode)
+            log_msg = "model not used in function mode {}".format(self._function_mode)
             self.logger.error(log_msg)
         # PROTECTED REGION END #    // Fsp.UpdateDelayModel
 
