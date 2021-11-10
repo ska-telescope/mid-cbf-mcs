@@ -219,3 +219,76 @@ class TestVcc:
 
             # check state
             assert sw_1_proxy.State() == DevState.ON
+    
+    @pytest.mark.parametrize(
+        "config_file_name, \
+        delay_model_file_name", 
+        [
+            (
+                "/../../data/Vcc_ConfigureScan_basic.json",
+                "/../../data/delaymodel_vcc_unit_test.json"
+            )
+        ]
+    )
+    def test_UpdateDelayModel(
+        self: TestVcc,
+        device_under_test: CbfDeviceProxy,
+        config_file_name: str,
+        delay_model_file_name: str
+    ) -> None:
+
+        assert device_under_test.State() == DevState.OFF
+        device_under_test.On()
+        time.sleep(5)
+        assert device_under_test.State() == DevState.ON
+
+        # delay model values should be set to 0.0 after init
+        num_cols = 6
+        num_rows = 26
+        assert device_under_test.read_attribute("delayModel", \
+             extract_as=tango.ExtractAs.List).value == [[0] * num_cols for i in range(num_rows)]
+        
+        f = open(file_path + config_file_name)
+        json_str = f.read().replace("\n", "")
+        configuration = json.loads(json_str)
+        f.close()
+
+        frequency_band = configuration["frequency_band"]
+        frequency_bands = ["1", "2", "3", "4", "5a", "5b"]
+        freq_band_name =  frequency_bands[frequency_band]
+        device_under_test.TurnOnBandDevice(freq_band_name)
+
+        device_under_test.ConfigureScan(json_str)
+
+        assert device_under_test.obsState == ObsState.READY
+        
+        # read the json file
+        f = open(file_path + delay_model_file_name)
+        json_str_model = f.read().replace("\n", "")
+        f.close()
+        delay_model = json.loads(json_str_model)
+
+        # update the delay model
+        for m in delay_model["delayModel"]:
+            if m["destinationType"] == "vcc":
+                device_under_test.write_attribute("receptorID", m["delayDetails"][0]["receptor"])
+                assert device_under_test.receptorID == m["delayDetails"][0]["receptor"]
+                device_under_test.UpdateDelayModel(json.dumps(m["delayDetails"]))
+        
+        for m in delay_model["delayModel"]:
+            for delayDetails in m["delayDetails"]:
+                for frequency_slice in delayDetails["receptorDelayDetails"]:
+                    if 1 <= frequency_slice["fsid"] <= num_rows:
+                        if len(frequency_slice["delayCoeff"]) == num_cols:
+                            assert device_under_test.read_attribute("delayModel", \
+                            extract_as=tango.ExtractAs.List).value[frequency_slice["fsid"] -1] \
+                                 == frequency_slice["delayCoeff"] 
+                        else:
+                            log_msg = "'delayCoeff' not valid for frequency slice {} of " \
+                                        "receptor {}".format(frequency_slice["fsid"], self._receptor_ID)
+                            logging.error(log_msg)
+                    else:
+                        log_msg = "'fsid' {} not valid for receptor {}".format(
+                            frequency_slice["fsid"], self._receptor_ID
+                        )
+                        logging.error(log_msg)
