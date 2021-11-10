@@ -239,6 +239,8 @@ class Fsp(SKACapability):
     def always_executed_hook(self: Fsp) -> None:
         # PROTECTED REGION ID(Fsp.always_executed_hook) ENABLED START #
         """Hook to be executed before any commands."""
+        # TODO: Proxy connections should not be in always_executed_hook, 
+        #       needs to be refactored
         self.__get_capability_proxies()
         self.__get_group_proxies()
 
@@ -637,6 +639,7 @@ class Fsp(SKACapability):
         """
         self.logger.debug("Fsp.UpdateJonesMatrix")
         fs_length = 4
+        #TODO: this enum should be defined once and referred to throughout the project
         FspModes = Enum('FspModes', 'CORR PSS_BF PST_BF VLBI')
         if self._function_mode in [FspModes.PSS_BF.value, FspModes.PST_BF.value]:
             argin = json.loads(argin)

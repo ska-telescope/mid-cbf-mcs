@@ -147,6 +147,7 @@ class TestFsp:
 
         # update only valid for function mode PST-BF
         device_under_test.SetFunctionMode("PST-BF")
+        #TODO: this enum should be defined once and referred to throughout the project
         FspModes = Enum('FspModes', 'CORR PSS_BF PST_BF VLBI')
         assert device_under_test.functionMode == FspModes.PST_BF.value
 
