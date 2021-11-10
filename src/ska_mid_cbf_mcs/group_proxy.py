@@ -161,6 +161,7 @@ class CbfGroupProxy:
             """
             group = group_connection_factory(self._name)
             group.add(fqdns)
+            self.__dict__["_fqdns"].extend(fqdns)
             return group
 
         if self._group == None:
@@ -170,17 +171,16 @@ class CbfGroupProxy:
                 self.__dict__["_group"] = _connect(self._group_connection_factory)
         else:
             self.__dict__["_group"].add(fqdns)
+            self.__dict__["_fqdns"].extend(fqdns)
 
-        self.__dict__["_fqdns"].extend(fqdns)
 
-
-    def remove(self: CbfGroupProxy, fqdns: List[str]) -> None:
+    def remove(self: CbfGroupProxy, fqdn: List[str]) -> None:
         """
         Remove a device from the group.
 
         :param fqdn: FQDN of the device to be proxied.
         """
-        for fqdn in fqdns:
+        if fqdn in self._fqdns:
             self.__dict__["_fqdns"].remove(fqdn)
             self.__dict__["_group"].remove(fqdn)
 
@@ -188,7 +188,11 @@ class CbfGroupProxy:
         """
         Remove all devices from the group.
         """
-        self.remove(self._fqdns)
+        if len(self._fqdns) > 0:
+            for fqdn in self._fqdns:
+                self.remove(fqdn)
+        else:
+            self._logger.warning("Group is empty.")
 
 
     def check_initialised(self: CbfGroupProxy, max_time: float = 120.0) -> bool:
@@ -287,6 +291,14 @@ class CbfGroupProxy:
         :return: the attribute value
         """
         return self._group.read_attribute(attribute_name)
+    
+    def get_size(self: CbfGroupProxy) -> int:
+        """
+        Get the size of the device group.
+
+        :return: the number of devices in the hierarchy
+        """
+        return len(self._fqdns)
 
     # TODO: This method is commented out because it is implicated in our segfault
     # issues:
@@ -325,6 +337,8 @@ class CbfGroupProxy:
             if self._group is None:
                 raise ConnectionError("CbfGroupProxy has not connected yet.")
             setattr(self._group, name, value)
+        else:
+            raise AttributeError(f"No such attribute: {name} (pass-through disabled)")
 
     def __getattr__(self: CbfGroupProxy, name: str, default_value: Any = None) -> Any:
         """

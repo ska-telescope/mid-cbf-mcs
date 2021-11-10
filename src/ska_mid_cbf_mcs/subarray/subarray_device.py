@@ -82,6 +82,7 @@ class CbfSubarray(SKASubarray):
             "Off",
             self.OffCommand(*device_args)
         )
+        #TODO: is this command needed (vs ConfigureScan)
         # self.register_command_object(
         #     "Configure",
         #     self.ConfigureCommand(*device_args)
@@ -103,7 +104,7 @@ class CbfSubarray(SKASubarray):
             self.ConfigureScanCommand(*device_args)
         )
         self.register_command_object(
-            "StartScan",
+            "Scan",
             self.ScanCommand(*device_args)
         )
         self.register_command_object(
@@ -989,29 +990,32 @@ class CbfSubarray(SKASubarray):
             del self._fsp_state[self._fqdn_fsp[fspID - 1]]
             del self._fsp_health_state[self._fqdn_fsp[fspID - 1]]
 
-        self._group_vcc.command_inout("GoToIdle")
-        self._group_fsp_corr_subarray.command_inout("GoToIdle")
-        self._group_fsp_pss_subarray.command_inout("GoToIdle")
-        self._group_fsp_pst_subarray.command_inout("GoToIdle")
+        for group in [
+            self._group_fsp_corr_subarray, 
+            self._group_fsp_pss_subarray,
+            self._group_fsp_pst_subarray
+            ]:
+            if group.get_size() > 0:
+                group.command_inout("GoToIdle")
+                # remove channel info from FSP subarrays
+                # already done in GoToIdle
+                group.remove_all()
 
-        frequency_bands = ["1", "2", "3", "4", "5a", "5b"]
-        freq_band_name =  frequency_bands[self._frequency_band]
-        data = tango.DeviceData()
-        data.insert(tango.DevString, freq_band_name)
-        self._group_vcc.command_inout("TurnOffBandDevice", data)
+        if self._group_vcc.get_size() > 0:
+            self._group_vcc.command_inout("GoToIdle")
+            frequency_bands = ["1", "2", "3", "4", "5a", "5b"]
+            freq_band_name =  frequency_bands[self._frequency_band]
+            data = tango.DeviceData()
+            data.insert(tango.DevString, freq_band_name)
+            self._group_vcc.command_inout("TurnOffBandDevice", data)
 
-        # change FSP subarray membership
-        data = tango.DeviceData()
-        data.insert(tango.DevUShort, self._subarray_id)
-        # self.logger.info(data)
-        self._group_fsp.command_inout("RemoveSubarrayMembership", data)
-        self._group_fsp.remove_all()
-
-        # remove channel info from FSP subarrays
-        # already done in GoToIdle
-        self._group_fsp_corr_subarray.remove_all()
-        self._group_fsp_pss_subarray.remove_all()
-        self._group_fsp_pst_subarray.remove_all()
+        if self._group_fsp.get_size() > 0:
+            # change FSP subarray membership
+            data = tango.DeviceData()
+            data.insert(tango.DevUShort, self._subarray_id)
+            # self.logger.info(data)
+            self._group_fsp.command_inout("RemoveSubarrayMembership", data)
+            self._group_fsp.remove_all()
 
         # reset all private data to their initialization values:
         self._scan_ID = 0       
@@ -1021,10 +1025,10 @@ class CbfSubarray(SKASubarray):
         self._last_received_jones_matrix = "{}"
         self._last_received_beam_weights = "{}"
 
-        # TODO: need to add 'GoToIdle' for VLBI and PST once implemented:
         # TODO: what happens if 
-        # #     sp_corr_subarray_proxy.State() == tango.DevState.OFF ??
+        #       fsp_corr_subarray_proxy.State() == tango.DevState.OFF ??
         #       that should not happen
+        # TODO: why is this done after the group command_inout?
         for fsp_corr_subarray_proxy in self._proxies_fsp_corr_subarray:
             if fsp_corr_subarray_proxy.State() == tango.DevState.ON:
                 fsp_corr_subarray_proxy.GoToIdle()
@@ -1034,6 +1038,7 @@ class CbfSubarray(SKASubarray):
         for fsp_pst_subarray_proxy in self._proxies_fsp_pst_subarray:
             if fsp_pst_subarray_proxy.State() == tango.DevState.ON:
                 fsp_pst_subarray_proxy.GoToIdle()
+        # TODO: add 'GoToIdle' for VLBI once implemented
 
     def _remove_receptors_helper(self, argin):
         """Helper function to remove receptors for removeAllReceptors. 
@@ -1254,7 +1259,6 @@ class CbfSubarray(SKASubarray):
             (result_code, message) = super().do()
 
             device=self.target
-
             
             device._storage_logging_level = tango.LogLevel.LOG_DEBUG
             device._element_logging_level = tango.LogLevel.LOG_DEBUG
@@ -1658,6 +1662,7 @@ class CbfSubarray(SKASubarray):
             for receptorID in argin:
                 try:
                     # check for invalid receptorID
+                    #TODO replace hardcoded values?
                     if not 0 < receptorID < 198:
                         errs.append(f"Invalid receptor ID {receptorID}.")
                         raise KeyError
@@ -1666,19 +1671,22 @@ class CbfSubarray(SKASubarray):
                     vccProxy = device._proxies_vcc[vccID - 1]
 
                     self.logger.debug(
-                        f"receptorID = {receptorID}, vccProxy.receptorID = {vccProxy.receptorID}"
+                        "receptorID = {receptorID}, vccProxy.receptorID = "
+                        f"{vccProxy.receptorID}"
                     )
 
-                    # vccProxy.receptorID = receptorID  # TODO - may not be needed?
-                    # self.logger.debug(
-                    #     f"receptorID = {receptorID}, vccProxy.receptorID = {vccProxy.receptorID}")
-                    # )
+                    # TODO - may not be needed?
+                    # vccProxy.receptorID = receptorID
 
                     subarrayID = vccProxy.subarrayMembership
 
-                    # only add receptor if it does not already belong to a different subarray
+                    # only add receptor if it does not already belong to a 
+                    # different subarray
                     if subarrayID not in [0, device._subarray_id]:
-                        errs.append(f"Receptor {receptorID} already in use by subarray {subarrayID}.")
+                        errs.append(
+                            f"Receptor {receptorID} already in use by "
+                            f"subarray {subarrayID}."
+                        )
                     else:
                         if receptorID not in device._receptors:
                             # change subarray membership of vcc
@@ -1688,8 +1696,8 @@ class CbfSubarray(SKASubarray):
                             # Note:json does not recognize NumPy data types. 
                             # Convert the number to a Python int 
                             # before serializing the object.
-                            # The list of receptors is serialized when the FSPs are 
-                            # configured for a scan.
+                            # The list of receptors is serialized when the FSPs  
+                            # are configured for a scan.
 
                             device._receptors.append(int(receptorID))
                             device._proxies_assigned_vcc.append(vccProxy)
@@ -1706,12 +1714,19 @@ class CbfSubarray(SKASubarray):
                                 "healthState",
                                 device._state_change_event_callback
                             )
-                            self.logger.debug(f"Health state event ID: {event_id_health_state}")
+                            self.logger.debug(
+                                f"Health state event ID: {event_id_health_state}"
+                            )
 
-                            device._events_state_change_vcc[vccID] = [event_id_state,
-                                                                    event_id_health_state]
+                            device._events_state_change_vcc[vccID] = [
+                                event_id_state,
+                                event_id_health_state
+                            ]
                         else:
-                            log_msg = f"Receptor {receptorID} already assigned to current subarray."
+                            log_msg = (
+                                f"Receptor {receptorID} already assigned to "
+                                "current subarray."
+                            )
                             self.logger.warn(log_msg)
 
                 except KeyError:  # invalid receptor ID
@@ -1720,8 +1735,6 @@ class CbfSubarray(SKASubarray):
             if errs:
                 msg = "\n".join(errs)
                 self.logger.error(msg)
-                # tango.Except.throw_exception("Command failed", msg, "AddReceptors execution",
-                #                             tango.ErrSeverity.ERR)
                 
                 return (ResultCode.FAILED, msg)
 
@@ -1767,10 +1780,10 @@ class CbfSubarray(SKASubarray):
                 self.logger.warn("validate scan configuration error")
                 # device._raise_configure_scan_fatal_error(msg)
 
-            # Call this just to release all FSPs and unsubscribe to events. 
-            # Can't call GoToIdle, otherwise there will be state transition problem. 
+            # Call this just to release all FSPs and unsubscribe to events.
+            # Can't call GoToIdle, otherwise there will be state transition problem.
             # TODO - to clarify why can't call GoToIdle
-            #device._deconfigure()
+            device._deconfigure()
 
             full_configuration = json.loads(argin)
             common_configuration = copy.deepcopy(full_configuration["common"])

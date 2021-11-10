@@ -159,7 +159,7 @@ class TestCbfSubarray:
             )
         ]
     )
-    def test_AddRemoveReceptors_invalid_single(
+    def test_AddReceptors_invalid_single(
         self: TestCbfSubarray, 
         proxies: pytest.fixture, 
         receptor_ids: List[int], 
@@ -201,8 +201,75 @@ class TestCbfSubarray:
 
             # try adding an invalid receptor ID
             result = proxies.subarray[sub_id].AddReceptors(invalid_receptor_id)
-            proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.IDLE, 1, 1)
+            proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.FAULT, 1, 1)
             assert result[0][0] == ResultCode.FAILED
+            assert [proxies.subarray[sub_id].receptors[i] for i in range(len(receptor_ids))] == receptor_ids
+            assert all([proxies.vcc[proxies.receptor_to_vcc[i]].subarrayMembership == 1 for i in receptor_ids])
+
+            proxies.clean_proxies()
+
+        except AssertionError as ae:
+            proxies.clean_proxies()
+            raise ae
+        except Exception as e:
+            proxies.clean_proxies()
+            raise e
+    
+    @pytest.mark.parametrize(
+        "receptor_ids, \
+        invalid_receptors_to_remove, \
+        sub_id", 
+        [
+            (
+                [1, 3],
+                [2],
+                1
+            ),
+            (
+                [4, 2],
+                [1, 3],
+                1
+            )
+        ]
+    )
+    def test_RemoveReceptors_invalid_single(
+        self: TestCbfSubarray, 
+        proxies: pytest.fixture, 
+        receptor_ids: List[int],
+        invalid_receptors_to_remove: List[int], 
+        sub_id: int
+    ) -> None:
+        """
+        Test invalid AddReceptors commands involving a single subarray:
+            - when a receptor ID is invalid (e.g. out of range)
+            - when a receptor to be removed is not assigned to the subarray
+        """
+        try:
+            # turn on Subarray
+            if proxies.subarray[sub_id].State() != DevState.ON:
+                proxies.subarray[sub_id].On()
+                proxies.wait_timeout_dev([proxies.subarray[sub_id]], DevState.ON, 3, 1)
+                for proxy in [proxies.vcc[i + 1] for i in range(len(proxies.vcc))]:
+                    if proxy.State() == DevState.OFF:
+                        proxy.On()
+                        proxies.wait_timeout_dev([proxy], DevState.ON, 1, 1)
+                for proxy in [proxies.fsp[i + 1] for i in range(len(proxies.fsp))]:
+                    if proxy.State() == DevState.OFF:
+                        proxy.On()
+                        proxies.wait_timeout_dev([proxy], DevState.ON, 1, 1)
+            assert proxies.subarray[sub_id].State() == DevState.ON
+            assert proxies.subarray[sub_id].obsState == ObsState.EMPTY
+
+            # receptor list should be empty right after initialization
+            assert len(proxies.subarray[sub_id].receptors) == 0
+            assert all([proxies.vcc[i + 1].subarrayMembership == 0 for i in range(len(proxies.vcc))])
+
+            # add some receptors 
+            proxies.subarray[sub_id].AddReceptors(receptor_ids)
+            proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.IDLE, 1, 1)
+            assert [proxies.subarray[sub_id].receptors[i] for i in range(len(receptor_ids))] == receptor_ids
+            assert all([proxies.vcc[proxies.receptor_to_vcc[i]].subarrayMembership == 1 for i in receptor_ids])
+            assert proxies.subarray[sub_id].obsState == ObsState.IDLE
 
             # try removing a receptor not assigned to subarray 1
             # doing this doesn't actually throw an error
