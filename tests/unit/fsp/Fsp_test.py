@@ -68,7 +68,7 @@ class TestFsp:
                 [3, 4, 15]
             ),
             (
-                [5, 1, 2]
+                [1]
             )
         ]
     )
@@ -77,6 +77,8 @@ class TestFsp:
         device_under_test: CbfDeviceProxy,
         sub_ids: List[int]
     ) -> None:
+
+        assert device_under_test.State() == DevState.OFF
 
         device_under_test.On()
         assert device_under_test.State() == DevState.ON
@@ -128,6 +130,8 @@ class TestFsp:
         timing_beam_weights_file_name: str,
         sub_id: int
     ) -> None:
+
+        assert device_under_test.State() == DevState.OFF
 
         device_under_test.On()
         device_under_test.AddSubarrayMembership(sub_id)
@@ -185,6 +189,8 @@ class TestFsp:
         sub_id: int
     ) -> None:
 
+        assert device_under_test.State() == DevState.OFF
+
         device_under_test.On()
         device_under_test.AddSubarrayMembership(sub_id)
         time.sleep(5)
@@ -239,6 +245,8 @@ class TestFsp:
         delay_model_file_name: str,
         sub_id: int
     ) -> None:
+
+        assert device_under_test.State() == DevState.OFF
 
         device_under_test.On()
         device_under_test.AddSubarrayMembership(sub_id)

@@ -30,6 +30,7 @@ from tango import AttrWriteType
 import os
 import sys
 import json
+from enum import Enum
 
 file_path = os.path.dirname(os.path.abspath(__file__))
 
@@ -635,11 +636,13 @@ class Fsp(SKACapability):
             :param argin: the jones matrix data
         """
         self.logger.debug("Fsp.UpdateJonesMatrix")
-        if self._function_mode in [2, 3]:
+        fs_length = 4
+        FspModes = Enum('FspModes', 'CORR PSS_BF PST_BF VLBI')
+        if self._function_mode in [FspModes.PSS_BF.value, FspModes.PST_BF.value]:
             argin = json.loads(argin)
 
             for i in self._subarray_membership:
-                if self._function_mode == 2:
+                if self._function_mode == FspModes.PSS_BF.value:
                     proxy = self._proxy_fsp_pss_subarray[i - 1]
                 else:
                     proxy = self._proxy_fsp_pst_subarray[i - 1]
@@ -650,7 +653,7 @@ class Fsp(SKACapability):
                             fs_id = frequency_slice["fsid"]
                             matrix = frequency_slice["matrix"]
                             if fs_id == self._fsp_id:
-                                if len(matrix) == 4:
+                                if len(matrix) == fs_length:
                                     self._jones_matrix[rec_id - 1] = matrix.copy()
                                 else:
                                     log_msg = "'matrix' not valid length for frequency slice {} of " \
@@ -781,7 +784,7 @@ class Fsp(SKACapability):
                                 )
                                 self.logger.error(log_msg)
         else:
-            log_msg = "weights not usable in function mode {}".format(self._function_mode)
+            log_msg = "weights not used in function mode {}".format(self._function_mode)
             self.logger.error(log_msg)
         # PROTECTED REGION END #    // Fsp.UpdateTimingBeamWeights
 
