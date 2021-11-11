@@ -35,7 +35,7 @@ class PowerSwitchSimulator:
         :param logger: a logger for this object to use
         """
         self.logger = logger
-        self.outlets: List(Outlet) = []
+        self.outlets = self.get_outlet_list()
 
     @property
     def num_outlets(self: PowerSwitchSimulator) -> int:
@@ -44,7 +44,6 @@ class PowerSwitchSimulator:
 
         :return: number of outlets
         """
-        self.outlets = self.get_outlet_list()
         return len(self.outlets)
 
     @property

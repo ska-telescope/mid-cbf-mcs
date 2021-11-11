@@ -134,7 +134,6 @@ class PowerSwitch(SKABaseDevice):
         """
         super().write_simulationMode(value)
         self.component_manager.simulation_mode = value
-        self.push_change_event("simulationMode", value)
 
     def read_numOutlets(self: PowerSwitch) -> int:
         """
@@ -202,7 +201,20 @@ class PowerSwitch(SKABaseDevice):
                 information purpose only.
             """
             component_manager = self.target
-            return component_manager.turn_on_outlet(argin)
+
+            try:
+                result, msg = component_manager.turn_on_outlet(argin)
+                if result != ResultCode.OK:
+                    return (result, msg)
+
+                power_mode = component_manager.get_outlet_power_mode(argin)
+                if power_mode != PowerMode.ON:
+                    return (ResultCode.FAILED, f"Power on failed, outlet is in power mode {power_mode}")
+            except AssertionError as e:
+                self.logger.error(e)
+                return (ResultCode.FAILED, "Unable to read outlet state after power on")
+
+            return (result, msg)
 
     @command(
     dtype_in='DevULong', 
@@ -241,7 +253,20 @@ class PowerSwitch(SKABaseDevice):
                 information purpose only.
             """
             component_manager = self.target
-            return component_manager.turn_off_outlet(argin)
+
+            try:
+                result, msg = component_manager.turn_off_outlet(argin)
+                if result != ResultCode.OK:
+                    return (result, msg)
+
+                power_mode = component_manager.get_outlet_power_mode(argin)
+                if power_mode != PowerMode.OFF:
+                    return (ResultCode.FAILED, f"Power off failed, outlet is in power mode {power_mode}")
+            except AssertionError as e:
+                self.logger.error(e)
+                return (ResultCode.FAILED, "Unable to read outlet state after power off")
+            
+            return (result, msg)
 
     @command(
     dtype_in='DevULong', 
@@ -278,7 +303,11 @@ class PowerSwitch(SKABaseDevice):
             :return: power mode of the outlet
             """
             component_manager = self.target
-            return component_manager.get_outlet_power_mode(argin)
+            try:
+                return component_manager.get_outlet_power_mode(argin)
+            except AssertionError as e:
+                self.logger.error(e)
+                return PowerMode.UNKNOWN
 
     @command(
     dtype_in='DevULong', 

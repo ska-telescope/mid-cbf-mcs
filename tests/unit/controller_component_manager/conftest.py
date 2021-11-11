@@ -5,57 +5,88 @@
 # Distributed under the terms of the GPL license.
 # See LICENSE.txt for more info.
 
-"""This module contains pytest-specific test harness for MCS unit tests."""
+"""This module contains pytest-specific test harness for ControllerComponentManager unit tests."""
 
 from __future__ import annotations
 
 # Standard imports
-from typing import Callable, Type, Dict
+import logging
 import pytest
 import unittest
+from typing import Any, Dict
 
-# Tango imports
 import tango
-from tango import DevState
-from tango.server import command
 
-#Local imports
-from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
-from ska_mid_cbf_mcs.testing.mock.mock_callable import MockChangeEventCallback
+import os
+file_path = os.path.dirname(os.path.abspath(__file__))
+import json
+
+# Local imports
+from ska_mid_cbf_mcs.controller.controller_component_manager import ControllerComponentManager
+from ska_tango_base.control_model import SimulationMode
+from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder
+from ska_tango_base.commands import ResultCode
+from ska_tango_base.control_model import HealthState, AdminMode, ObsState
 from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder
 from ska_mid_cbf_mcs.testing.mock.mock_group import MockGroupBuilder
-from ska_mid_cbf_mcs.testing.tango_harness import DeviceToLoadType, TangoHarness
+from ska_mid_cbf_mcs.testing.tango_harness import TangoHarness
 
-from ska_mid_cbf_mcs.controller.controller_device import CbfController
-from ska_tango_base.control_model import HealthState, AdminMode, ObsState
-from ska_tango_base.commands import ResultCode
-
-
-@pytest.fixture()
-def device_under_test(tango_harness: TangoHarness) -> CbfDeviceProxy:
+@pytest.fixture(scope="function")
+def controller_component_manager(
+    logger: logging.Logger,
+    tango_harness: TangoHarness # sets the connection_factory
+) -> ControllerComponentManager:
     """
-    Fixture that returns the device under test.
+    Return a Controller component manager.
 
-    :param tango_harness: a test harness for Tango devices
+    :param logger: the logger fixture
 
-    :return: the device under test
+    :return: a Controller component manager.
     """
-    return tango_harness.get_device("mid_csp_cbf/sub_elt/controller")
 
-@pytest.fixture()
-def device_to_load() -> DeviceToLoadType:
-    """
-    Fixture that specifies the device to be loaded for testing.
+    class MockTalonDxComponentManager:
+        """
+        Class to mock the TalonDxComponentManager.
+        """
+        def __init__(self: MockTalonDxComponentManager) -> None:
+            pass
 
-    :return: specification of the device to be loaded
-    """
-    return {
-        "path": "charts/ska-mid-cbf/data/midcbfconfig.json",
-        "package": "ska_mid_cbf_mcs",
-        "device": "controller",
-        "proxy": CbfDeviceProxy,
-        "patch": CbfController,
-    }
+        def configure_talons(self: MockTalonDxComponentManager) -> ResultCode:
+            return ResultCode.OK
+    
+    f = open(file_path + "/../../data/controller_component_manager.json")
+    json_string = f.read().replace("\n", "")
+    f.close()
+    configuration = json.loads(json_string)
+
+    fqdn_vcc = configuration["fqdn_vcc"]
+    fqdn_fsp = configuration["fqdn_fsp"]
+    fqdn_subarray = configuration["fqdn_subarray"]
+    fqdn_talon_lru = configuration["fqdn_talon_lru"]
+
+    count_vcc = configuration["count_vcc"]
+    count_fsp = configuration["count_fsp"]
+    count_subarray = configuration["count_subarray"]
+    count_talon_lru = configuration["count_talon_lru"]
+
+    talondx_component_manager = MockTalonDxComponentManager()
+
+    return ControllerComponentManager( 
+            [
+                fqdn_vcc,
+                fqdn_fsp,
+                fqdn_subarray,
+                fqdn_talon_lru
+            ],
+            [
+                count_vcc, 
+                count_fsp,
+                count_subarray, 
+                count_talon_lru,
+            ],
+            talondx_component_manager,
+            logger,
+        )
 
 @pytest.fixture()
 def mock_vcc() -> unittest.mock.Mock:
@@ -131,17 +162,13 @@ def initial_mocks(
     mock_talon_lru: unittest.mock.Mock
 ) -> Dict[str, unittest.mock.Mock]:
     """
-    Return a dictionary of proxy mocks to pre-register.
+    Return a dictionary of device proxy mocks to pre-register.
 
     :param mock_vcc: a mock Vcc that is powered off.
-    :param mock_vcc_group: a mock Vcc tango.Group.
-    :param mock_fsp: a mock Fsp that is powered off.
-    :param mock_fsp_group: a mock Fsp tango.Group.
+    :param mock_fsp: a mock VccBand3 that is powered off.
     :param mock_subarray: a mock VccBand4 that is powered off.
-    :param mock_subarray_group: a mock subarray tango.Group.
-    :param mock_talon_lru: a mock TalonLRU that is powered off.
 
-    :return: a dictionary of proxy mocks to pre-register.
+    :return: a dictionary of device proxy mocks to pre-register.
     """
     return {
         "mid_csp_cbf/vcc/001": mock_vcc,

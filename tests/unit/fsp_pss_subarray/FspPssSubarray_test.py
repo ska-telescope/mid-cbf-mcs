@@ -58,9 +58,25 @@ class TestFspPssSubarray:
         device_under_test.Off()
         assert device_under_test.State() == DevState.OFF
 
+    @pytest.mark.parametrize(
+        "config_file_name, \
+        scan_id", 
+        [
+            (
+                "/../../data/FspPssSubarray_ConfigureScan_basic.json",
+                1,
+            ),
+                        (
+                "/../../data/FspPssSubarray_ConfigureScan_basic.json",
+                2,
+            )
+        ]
+    )
     def test_Scan_EndScan_GoToIdle(
         self: TestFspPssSubarray,
-        device_under_test: CbfDeviceProxy
+        device_under_test: CbfDeviceProxy,
+        config_file_name: str,
+        scan_id: int
     ) -> None:
         """
         Test Scan command state changes.
@@ -72,21 +88,20 @@ class TestFspPssSubarray:
 
         # turn on device and configure scan
         device_under_test.On()
-        config_file_name = "/../../data/FspPssSubarray_ConfigureScan_basic.json"
         f = open(file_path + config_file_name)
-        json_str = f.read().replace("\n", "")
+        json_string = f.read().replace("\n", "")
         f.close()
-        device_under_test.ConfigureScan(json_str)
+        device_under_test.ConfigureScan(json_string)
 
-        scan_id = '1'
         scan_id_device_data = tango.DeviceData()
-        scan_id_device_data.insert(tango.DevString, scan_id)
+        scan_id_device_data.insert(tango.DevString, str(scan_id))
 
         # Use callable 'Scan'  API
         device_under_test.Scan(scan_id_device_data)
         time.sleep(0.1)
-        assert device_under_test.scanID == int(scan_id)
+        assert device_under_test.scanID == scan_id
         assert device_under_test.obsState == ObsState.SCANNING
+
 
         device_under_test.EndScan()
         time.sleep(0.1)
@@ -96,9 +111,18 @@ class TestFspPssSubarray:
         time.sleep(0.1)
         assert device_under_test.obsState == ObsState.IDLE
 
+    @pytest.mark.parametrize(
+        "config_file_name",
+        [
+            (
+                "/../../data/FspPssSubarray_ConfigureScan_basic.json"
+            )
+        ]
+    )
     def test_ConfigureScan_basic(
         self: TestFspPssSubarray,
-        device_under_test: CbfDeviceProxy
+        device_under_test: CbfDeviceProxy,
+        config_file_name: str
     ) -> None:
         """
         Test a minimal successful scan configuration.
@@ -126,7 +150,6 @@ class TestFspPssSubarray:
         assert device_under_test.State() == DevState.ON
 
         # configure search window
-        config_file_name = "/../../data/FspPssSubarray_ConfigureScan_basic.json"
         f = open(file_path + config_file_name)
         json_str = f.read().replace("\n", "")
         f.close()
