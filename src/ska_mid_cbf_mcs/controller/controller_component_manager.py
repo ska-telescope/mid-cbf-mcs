@@ -274,10 +274,10 @@ class ControllerComponentManager:
             if fqdn not in self._proxies:
                 try:
                     log_msg = "Trying connection to " + fqdn + " device"
-                    self.logger.info(log_msg)
+                    self._logger.info(log_msg)
                     proxy = CbfDeviceProxy(
                         fqdn=fqdn, 
-                        logger=self.logger
+                        logger=self._logger
                     )
                     self._proxies[fqdn] = proxy
                     # TODO: for testing purposes;
@@ -287,7 +287,7 @@ class ControllerComponentManager:
                     for item in df.args:
                         log_msg = "Failure in connection to " + fqdn + \
                             " device: " + str(item.reason)
-                        self.logger.error(log_msg)
+                        self._logger.error(log_msg)
 
         for fqdn in self._fqdn_fsp + self._fqdn_talon_lru + self._fqdn_subarray:
             if fqdn not in self._proxies:
@@ -572,7 +572,7 @@ class ControllerComponentManager:
 
             try:
                 for proxy, events in self._events.items():
-                    for name, id in events.items:
+                    for name, id in events.items():
                         self._logger.info(
                             f"Unsubscribing from event {id}, device: {proxy._fqdn}"
                         )

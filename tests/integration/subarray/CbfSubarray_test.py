@@ -68,6 +68,7 @@ class TestCbfSubarray:
             port = proxies.subarray[sub_id].DebugDevice()
 
         try:
+            proxies.clean_proxies()
             if proxies.controller.State() == DevState.OFF:
                 proxies.controller.Init()
                 proxies.wait_timeout_dev([proxies.controller], DevState.STANDBY, 3, 1)
@@ -127,8 +128,6 @@ class TestCbfSubarray:
             for receptor in receptor_ids_after_remove:
                 assert proxies.vcc[proxies.receptor_to_vcc[receptor]].subarrayMembership == 0
             assert proxies.subarray[sub_id].obsState == ObsState.EMPTY
-            proxies.subarray[sub_id].Off()
-            proxies.wait_timeout_dev([proxies.subarray[sub_id]], DevState.OFF, 3, 1)
 
         except AssertionError as ae: 
             proxies.clean_proxies()
@@ -275,8 +274,6 @@ class TestCbfSubarray:
             assert [proxies.subarray[sub_id].receptors[i] for i in range(len(receptor_ids))] == receptor_ids
             proxies.subarray[sub_id].RemoveAllReceptors()
             proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.EMPTY, 1, 1)
-            proxies.subarray[sub_id].Off()
-            proxies.wait_timeout_dev([proxies.subarray[sub_id]], DevState.OFF, 3, 1)
 
         except AssertionError as ae:
             proxies.clean_proxies()
@@ -412,8 +409,6 @@ class TestCbfSubarray:
             assert len(proxies.subarray[sub_id].receptors) == 0
             assert all([proxies.vcc[proxies.receptor_to_vcc[i]].subarrayMembership == 0 for i in receptor_ids])
             assert proxies.subarray[sub_id].obsState == ObsState.EMPTY
-            proxies.subarray[sub_id].Off()
-            proxies.wait_timeout_dev([proxies.subarray[sub_id]], DevState.OFF, 3, 1)
         
         except AssertionError as ae:
             proxies.clean_proxies()
