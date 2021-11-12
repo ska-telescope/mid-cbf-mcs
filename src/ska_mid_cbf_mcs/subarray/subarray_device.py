@@ -13,7 +13,9 @@ CbfSubarray
 Sub-element subarray device for Mid.CBF
 """
 from __future__ import annotations  # allow forward references in type hints
+from logging import log
 from typing import List, Tuple
+from itertools import repeat
 
 # tango imports
 import tango
@@ -33,6 +35,8 @@ import time
 import copy
 
 from ska_mid_cbf_mcs.commons.global_enum import const, freq_band_dict
+from ska_mid_cbf_mcs.attribute_proxy import CbfAttributeProxy
+from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_tango_base.control_model import ObsState, AdminMode
 from ska_tango_base import SKASubarray, SKABaseDevice
 from ska_tango_base.commands import ResultCode, BaseCommand, ResponseCommand, ActionCommand
@@ -111,42 +115,37 @@ class CbfSubarray(SKASubarray):
     # Helper functions
     # ----------
 
-    def _void_callback(self, event):
-        # This callback is only meant to be used to test if a subscription is valid
-        if not event.err:
-            pass
-        else:
-            for item in event.errors:
-                log_msg = item.reason + ": on attribute " + str(event.attr_name)
-                self.logger.error(log_msg)
-
-    def _doppler_phase_correction_event_callback(self, event):
-        if not event.err:
+    def _doppler_phase_correction_event_callback(
+        self: CbfSubarray, fqdn, name, value, quality
+    ) -> None:
+    # TODO: investigate error in this callback (subarray logs)
+        if value is not None:
             try:
-                self._group_vcc.write_attribute("dopplerPhaseCorrection", event.attr_value.value)
-                log_msg = "Value of " + str(event.attr_name) + " is " + str(event.attr_value.value)
+                self._group_vcc.write_attribute("dopplerPhaseCorrection", value)
+                log_msg = "Value of " + str(name) + " is " + str(value)
                 self.logger.debug(log_msg)
             except Exception as e:
                 self.logger.error(str(e))
         else:
-            for item in event.errors:
-                log_msg = item.desc + item.reason + ": on attribute " + str(event.attr_name)
-                self.logger.error(log_msg)
+            self.logger.warn(
+                "None value for attribute " + str(name) + 
+                " of device " + fqdn
+            )
 
-    def _delay_model_event_callback(self, event):
+    def _delay_model_event_callback(
+        self: CbfSubarray, fqdn, name, value, quality
+    ) -> None:
 
         self.logger.debug("Entering _delay_model_event_callback()")
 
-        if not event.err:
+        if value is not None:
             if self._obs_state not in [ObsState.READY, ObsState.SCANNING]:
                 log_msg = "Ignoring delay model (obsState not correct)."
                 self.logger.warn(log_msg)
                 return
             try:
-                log_msg = "Received delay model update."
-                self.logger.warn(log_msg)
+                self.logger.info("Received delay model update.")
 
-                value = str(event.attr_value.value)
                 if value == self._last_received_delay_model:
                     log_msg = "Ignoring delay model (identical to previous)."
                     self.logger.warn(log_msg)
@@ -167,20 +166,21 @@ class CbfSubarray(SKASubarray):
             except Exception as e:
                 self.logger.error(str(e))
         else:
-            for item in event.errors:
-                log_msg = item.reason + ": on attribute " + str(event.attr_name)
-                self.logger.error(log_msg)
+            self.logger.warn(
+                "None value for attribute " + str(name) + 
+                " of device " + fqdn
+            )
 
     def _update_delay_model(self, destination_type, epoch, model):
         # This method is always called on a separate thread
         log_msg = "Delay model active at {} (currently {})...".format(epoch, int(time.time()))
-        self.logger.warn(log_msg)
+        self.logger.info(log_msg)
 
         if epoch > time.time():
             time.sleep(epoch - time.time())
 
         log_msg = "Updating delay model at specified epoch {}...".format(epoch)
-        self.logger.warn(log_msg)
+        self.logger.info(log_msg)
 
         data = tango.DeviceData()
         data.insert(tango.DevString, model)
@@ -193,18 +193,19 @@ class CbfSubarray(SKASubarray):
             self._group_fsp.command_inout("UpdateDelayModel", data)
         self._mutex_delay_model_config.release()
 
-    def _jones_matrix_event_callback(self, event):
+    def _jones_matrix_event_callback(
+        self: CbfSubarray, fqdn, name, value, quality
+    ) -> None:
         self.logger.debug("CbfSubarray._jones_matrix_event_callback")
-        if not event.err:
+
+        if value is not None:
             if self._obs_state not in [ObsState.READY, ObsState.SCANNING]:
                 log_msg = "Ignoring Jones matrix (obsState not correct)."
                 self.logger.warn(log_msg)
                 return
             try:
-                log_msg = "Received Jones Matrix update."
-                self.logger.warn(log_msg)
+                self.logger.info("Received Jones Matrix update.")
 
-                value = str(event.attr_value.value)
                 if value == self._last_received_jones_matrix:
                     log_msg = "Ignoring Jones matrix (identical to previous)."
                     self.logger.warn(log_msg)
@@ -225,21 +226,22 @@ class CbfSubarray(SKASubarray):
             except Exception as e:
                 self.logger.error(str(e))
         else:
-            for item in event.errors:
-                log_msg = item.reason + ": on attribute " + str(event.attr_name)
-                self.logger.error(log_msg)
+            self.logger.warn(
+                "None value for attribute " + str(name) + 
+                " of device " + fqdn
+            )
 
     def _update_jones_matrix(self, destination_type, epoch, matrix_details):
         #This method is always called on a separate thread
         self.logger.debug("CbfSubarray._update_jones_matrix")
         log_msg = "Jones matrix active at {} (currently {})...".format(epoch, int(time.time()))
-        self.logger.warn(log_msg)
+        self.logger.info(log_msg)
 
         if epoch > time.time():
             time.sleep(epoch - time.time())
 
         log_msg = "Updating Jones Matrix at specified epoch {}, destination ".format(epoch) + destination_type
-        self.logger.warn(log_msg)
+        self.logger.info(log_msg)
 
         data = tango.DeviceData()
         data.insert(tango.DevString, matrix_details)
@@ -252,18 +254,19 @@ class CbfSubarray(SKASubarray):
             self._group_fsp.command_inout("UpdateJonesMatrix", data)
         self._mutex_jones_matrix_config.release()
 
-    def _beam_weights_event_callback(self, event):
+    def _beam_weights_event_callback(
+        self: CbfSubarray, fqdn, name, value, quality
+    ) -> None:
         self.logger.debug("CbfSubarray._beam_weights_event_callback")
-        if not event.err:
+
+        if value is not None:
             if self._obs_state not in [ObsState.READY, ObsState.SCANNING]:
                 log_msg = "Ignoring beam weights (obsState not correct)."
                 self.logger.warn(log_msg)
                 return
             try:
-                log_msg = "Received beam weights update."
-                self.logger.warn(log_msg)
+                self.logger.info("Received beam weights update.")
 
-                value = str(event.attr_value.value)
                 if value == self._last_received_beam_weights:
                     log_msg = "Ignoring beam weights (identical to previous)."
                     self.logger.warn(log_msg)
@@ -283,21 +286,22 @@ class CbfSubarray(SKASubarray):
             except Exception as e:
                 self.logger.error(str(e))
         else:
-            for item in event.errors:
-                log_msg = item.reason + ": on attribute " + str(event.attr_name)
-                self.logger.error(log_msg)
+            self.logger.warn(
+                "None value for attribute " + str(name) + 
+                " of device " + fqdn
+            )
 
     def _update_beam_weights(self, epoch, weights_details):
         #This method is always called on a separate thread
         self.logger.debug("CbfSubarray._update_beam_weights")
         log_msg = "Beam weights active at {} (currently {})...".format(epoch, int(time.time()))
-        self.logger.warn(log_msg)
+        self.logger.info(log_msg)
 
         if epoch > time.time():
             time.sleep(epoch - time.time())
 
         log_msg = "Updating beam weights at specified epoch {}".format(epoch)
-        self.logger.warn(log_msg)
+        self.logger.info(log_msg)
 
         data = tango.DeviceData()
         data.insert(tango.DevString, weights_details)
@@ -307,43 +311,45 @@ class CbfSubarray(SKASubarray):
         self._group_fsp.command_inout("UpdateBeamWeights", data)
         self._mutex_beam_weights_config.release()
 
-    def _state_change_event_callback(self, event):
-        if not event.err:
+    def _state_change_event_callback(
+        self: CbfSubarray, fqdn, name, value, quality
+    ) -> None:
+        if value is not None:
             try:
-                device_name = event.device.dev_name()
-                if "healthstate" in event.attr_name:
-                    if "vcc" in device_name:
-                        self._vcc_health_state[device_name] = event.attr_value.value
-                    elif "fsp" in device_name:
-                        self._fsp_health_state[device_name] = event.attr_value.value
+                if "healthState" in name:
+                    if "vcc" in fqdn:
+                        self._vcc_health_state[fqdn] = value
+                    elif "fsp" in fqdn:
+                        self._fsp_health_state[fqdn] = value
                     else:
                         # should NOT happen!
-                        log_msg = "Received health state change for unknown device " + str(
-                            event.attr_name)
+                        log_msg = "Received health state change for unknown device " + \
+                        str(name)
                         self.logger.warn(log_msg)
                         return
-                elif "state" in event.attr_name:
-                    if "vcc" in device_name:
-                        self._vcc_state[device_name] = event.attr_value.value
-                    elif "fsp" in device_name:
-                        self._fsp_state[device_name] = event.attr_value.value
+                elif "State" in name:
+                    if "vcc" in fqdn:
+                        self._vcc_state[fqdn] = value
+                    elif "fsp" in fqdn:
+                        self._fsp_state[fqdn] = value
                     else:
                         # should NOT happen!
-                        log_msg = "Received state change for unknown device " + str(event.attr_name)
+                        log_msg = "Received state change for unknown device " + \
+                            str(name)
                         self.logger.warn(log_msg)
                         return
 
-                log_msg = "New value for " + str(event.attr_name) + " of device " + device_name + \
-                          " is " + str(event.attr_value.value)
-                self.logger.warn(log_msg)
+                log_msg = "New value for " + str(name) + \
+                    " of device " + fqdn + " is " + str(value)
+                self.logger.info(log_msg)
 
             except Exception as except_occurred:
                 self.logger.error(str(except_occurred))
         else:
-            for item in event.errors:
-                log_msg = item.reason + ": on attribute " + str(event.attr_name)
-                self.logger.error(log_msg)
-
+            self.logger.warn(
+                "None value for attribute " + str(name) + 
+                " of device " + fqdn
+            )
 
     def _validate_scan_configuration(self, argin):
         # try to deserialize input string to a JSON object
@@ -435,15 +441,11 @@ class CbfSubarray(SKASubarray):
         # Validate dopplerPhaseCorrSubscriptionPoint.
         if "doppler_phase_corr_subscription_point" in configuration:
             try:
-                attribute_proxy = tango.AttributeProxy(configuration["doppler_phase_corr_subscription_point"])
+                attribute_proxy = CbfAttributeProxy(
+                    fqdn=configuration["doppler_phase_corr_subscription_point"],
+                    logger=self.logger
+                )
                 attribute_proxy.ping()
-                # TODO is this unsubscribe needed for validation?
-                # attribute_proxy.unsubscribe_event(
-                #     attribute_proxy.subscribe_event(
-                #         tango.EventType.CHANGE_EVENT,
-                #         self._void_callback
-                #     )
-                # )
             except tango.DevFailed:  # attribute doesn't exist or is not set up correctly
                 msg = "Attribute {} not found or not set up correctly for " \
                         "'dopplerPhaseCorrSubscriptionPoint'. Aborting configuration.".format(
@@ -454,15 +456,11 @@ class CbfSubarray(SKASubarray):
         # Validate delayModelSubscriptionPoint.
         if "delay_model_subscription_point" in configuration:
             try:
-                attribute_proxy = tango.AttributeProxy(configuration["delay_model_subscription_point"])
+                attribute_proxy = CbfAttributeProxy(
+                    fqdn=configuration["delay_model_subscription_point"],
+                    logger=self.logger
+                )
                 attribute_proxy.ping()
-                # TODO is this unsubscribe needed for validation?
-                # attribute_proxy.unsubscribe_event(
-                #     attribute_proxy.subscribe_event(
-                #         tango.EventType.CHANGE_EVENT,
-                #         self._void_callback
-                #     )
-                # )
             except tango.DevFailed:  # attribute doesn't exist or is not set up correctly
                 msg = "Attribute {} not found or not set up correctly for " \
                         "'delayModelSubscriptionPoint'. Aborting configuration.".format(
@@ -473,15 +471,11 @@ class CbfSubarray(SKASubarray):
         # Validate jonesMatrixSubscriptionPoint.
         if "jones_matrix_subscription_point" in configuration:
             try:
-                attribute_proxy = tango.AttributeProxy(configuration["jones_matrix_subscription_point"])
+                attribute_proxy = CbfAttributeProxy(
+                    fqdn=configuration["jones_matrix_subscription_point"],
+                    logger=self.logger
+                )
                 attribute_proxy.ping()
-                # TODO is this unsubscribe needed for validation?
-                # attribute_proxy.unsubscribe_event(
-                #     attribute_proxy.subscribe_event(
-                #         tango.EventType.CHANGE_EVENT,
-                #         self._void_callback
-                #     )
-                # )
             except tango.DevFailed:  # attribute doesn't exist or is not set up correctly
                 msg = "Attribute {} not found or not set up correctly for " \
                         "'jonesMatrixSubscriptionPoint'. Aborting configuration.".format(
@@ -492,15 +486,11 @@ class CbfSubarray(SKASubarray):
         # Validate beamWeightsSubscriptionPoint.
         if "timing_beam_weights_subscription_point" in configuration:
             try:
-                attribute_proxy = tango.AttributeProxy(configuration["timing_beam_weights_subscription_point"])
+                attribute_proxy = CbfAttributeProxy(
+                    fqdn=configuration["timing_beam_weights_subscription_point"],
+                    logger=self.logger
+                )
                 attribute_proxy.ping()
-                # TODO is this unsubscribe needed for validation?
-                # attribute_proxy.unsubscribe_event(
-                #     attribute_proxy.subscribe_event(
-                #         tango.EventType.CHANGE_EVENT,
-                #         self._void_callback
-                #     )
-                # )
             except tango.DevFailed:  # attribute doesn't exist or is not set up correctly
                 msg = "Attribute {} not found or not set up correctly for " \
                         "'beamWeightsSubscriptionPoint'. Aborting configuration.".format(
@@ -979,14 +969,20 @@ class CbfSubarray(SKASubarray):
 
         # unsubscribe from TMC events
         for event_id in list(self._events_telstate.keys()):
-            self._events_telstate[event_id].unsubscribe_event(event_id)
-        self._events_telstate = {}
+            self._events_telstate[event_id].remove_event(event_id)
+            del self._events_telstate[event_id]
 
         # unsubscribe from FSP state change events
         for fspID in list(self._events_state_change_fsp.keys()):
             proxy_fsp = self._proxies_fsp[fspID - 1]
-            proxy_fsp.unsubscribe_event(self._events_state_change_fsp[fspID][0])  # state
-            proxy_fsp.unsubscribe_event(self._events_state_change_fsp[fspID][1])  # healthState
+            proxy_fsp.remove_event(
+                "State",
+                self._events_state_change_fsp[fspID][0]
+            )
+            proxy_fsp.remove_event(
+                "healthState",
+                self._events_state_change_fsp[fspID][1]
+            )
             del self._events_state_change_fsp[fspID]
             del self._fsp_state[self._fqdn_fsp[fspID - 1]]
             del self._fsp_health_state[self._fqdn_fsp[fspID - 1]]
@@ -1050,22 +1046,33 @@ class CbfSubarray(SKASubarray):
         for receptorID in argin:
             if receptorID in self._receptors:
                 vccID = receptor_to_vcc[receptorID]
+                vccFQDN = self._fqdn_vcc[vccID - 1]
                 vccProxy = self._proxies_vcc[vccID - 1]
 
                 # unsubscribe from events
-                vccProxy.unsubscribe_event(self._events_state_change_vcc[vccID][0])  # state
-                vccProxy.unsubscribe_event(self._events_state_change_vcc[vccID][1])  # healthState
+                vccProxy.remove_event(
+                    "State",
+                    self._events_state_change_vcc[vccID][0]
+                )
+                vccProxy.remove_event(
+                    "healthState",
+                    self._events_state_change_vcc[vccID][1]
+                )
+                
                 del self._events_state_change_vcc[vccID]
-                del self._vcc_state[self._fqdn_vcc[vccID - 1]]
-                del self._vcc_health_state[self._fqdn_vcc[vccID - 1]]
+                del self._vcc_state[vccFQDN]
+                del self._vcc_health_state[vccFQDN]
+
 
                 # reset receptorID and subarrayMembership Vcc attribute:
-                vccProxy.receptorID = 0
+                # TODO: should VCC receptorID be altered here?
+                # currently the mapping is set in the controller
+                # vccProxy.receptorID = 0
                 vccProxy.subarrayMembership = 0
 
                 self._receptors.remove(receptorID)
                 self._proxies_assigned_vcc.remove(vccProxy)
-                self._group_vcc.remove(self._fqdn_vcc[vccID - 1])
+                self._group_vcc.remove(vccFQDN)
             else:
                 log_msg = "Receptor {} not assigned to subarray. Skipping.".format(str(receptorID))
                 self.logger.warn(log_msg)
@@ -1260,7 +1267,7 @@ class CbfSubarray(SKASubarray):
             else:
                 device._subarray_id = int(device.get_name()[-2:])  # last two chars of FQDN
 
-        # initialize attribute values
+            # initialize attribute values
             device._receptors = []
             device._frequency_band = 0
             device._config_ID = ""
@@ -1295,34 +1302,31 @@ class CbfSubarray(SKASubarray):
             device._frequency_band_offset_stream_2 = 0
             device._stream_tuning = [0, 0]
 
-            # device proxy for easy reference to CBF controller
-            device._proxy_cbf_controller = tango.DeviceProxy(device.CbfControllerAddress)
-
             device.MIN_INT_TIME = const.MIN_INT_TIME
             device.NUM_CHANNEL_GROUPS = const.NUM_CHANNEL_GROUPS
             device.NUM_FINE_CHANNELS = const.NUM_FINE_CHANNELS
 
-            device._controller_max_capabilities = dict(
-                pair.split(":") for pair in
-                device._proxy_cbf_controller.get_property("MaxCapabilities")["MaxCapabilities"]
-            )
+            # device proxy for easy reference to CBF controller
+            device._proxy_cbf_controller = None
 
-            device._count_vcc = int(device._controller_max_capabilities["VCC"])
-            device._count_fsp = int(device._controller_max_capabilities["FSP"])
+            device._controller_max_capabilities = {}
+            device._count_vcc = 0
+            device._count_fsp = 0
+
             device._fqdn_vcc = list(device.VCC)[:device._count_vcc]
             device._fqdn_fsp = list(device.FSP)[:device._count_fsp]
             device._fqdn_fsp_corr_subarray = list(device.FspCorrSubarray)
             device._fqdn_fsp_pss_subarray = list(device.FspPssSubarray)
             device._fqdn_fsp_pst_subarray = list(device.FspPstSubarray)
 
-            device._proxies_vcc = [*map(tango.DeviceProxy, device._fqdn_vcc)]
-            device._proxies_fsp = [*map(tango.DeviceProxy, device._fqdn_fsp)]
-            device._proxies_fsp_corr_subarray = [*map(tango.DeviceProxy, device._fqdn_fsp_corr_subarray)]
-            device._proxies_fsp_pss_subarray = [*map(tango.DeviceProxy, device._fqdn_fsp_pss_subarray)]
-            device._proxies_fsp_pst_subarray = [*map(tango.DeviceProxy, device._fqdn_fsp_pst_subarray)]
+            device._proxies_vcc = []
+            device._proxies_fsp = []
+            device._proxies_fsp_corr_subarray = []
+            device._proxies_fsp_pss_subarray = []
+            device._proxies_fsp_pst_subarray = []
 
             # Note vcc connected both individual and in group
-            device._proxies_assigned_vcc = [] 
+            device._proxies_assigned_vcc = []
             device._proxies_assigned_fsp = []
 
             # store the subscribed telstate events as event_ID:attribute_proxy key:value pairs
@@ -1343,10 +1347,49 @@ class CbfSubarray(SKASubarray):
 
             return (ResultCode.OK, "successfull")
 
-    def always_executed_hook(self):
+    def always_executed_hook(self: CbfSubarray) -> None:
         # PROTECTED REGION ID(CbfSubarray.always_executed_hook) ENABLED START #
         """methods always executed before any TANGO command is executed"""
-        pass
+        if self._proxy_cbf_controller is None:
+            self._proxy_cbf_controller = CbfDeviceProxy(
+                fqdn=self.CbfControllerAddress, logger=self.logger
+            )
+            self._controller_max_capabilities = dict(
+                pair.split(":") for pair in
+                self._proxy_cbf_controller.get_property("MaxCapabilities")["MaxCapabilities"]
+            )
+            self._count_vcc = int(self._controller_max_capabilities["VCC"])
+            self._count_fsp = int(self._controller_max_capabilities["FSP"])
+            self._fqdn_vcc = list(self.VCC)[:self._count_vcc]
+            self._fqdn_fsp = list(self.FSP)[:self._count_fsp]
+            self._fqdn_fsp_corr_subarray = list(self.FspCorrSubarray)
+            self._fqdn_fsp_pss_subarray = list(self.FspPssSubarray)
+            self._fqdn_fsp_pst_subarray = list(self.FspPstSubarray)
+        if len(self._proxies_vcc) == 0:
+            self._proxies_vcc = [
+                CbfDeviceProxy(fqdn=fqdn, logger=self.logger) 
+                for fqdn in self._fqdn_vcc
+            ]
+        if len(self._proxies_fsp) == 0:
+            self._proxies_fsp = [
+                CbfDeviceProxy(fqdn=fqdn, logger=self.logger)
+                for fqdn in self._fqdn_fsp
+            ]
+        if len(self._proxies_fsp_corr_subarray) == 0:
+            self._proxies_fsp_corr_subarray = [
+                CbfDeviceProxy(fqdn=fqdn, logger=self.logger)
+                for fqdn in self._fqdn_fsp_corr_subarray
+            ]
+        if len(self._proxies_fsp_pss_subarray) == 0:
+            self._proxies_fsp_pss_subarray = [
+                CbfDeviceProxy(fqdn=fqdn, logger=self.logger)
+                for fqdn in self._fqdn_fsp_pss_subarray
+            ]
+        if len(self._proxies_fsp_pst_subarray) == 0:
+            self._proxies_fsp_pst_subarray = [
+                CbfDeviceProxy(fqdn=fqdn, logger=self.logger)
+                for fqdn in self._fqdn_fsp_pst_subarray
+            ]
         # PROTECTED REGION END #    //  CbfSubarray.always_executed_hook
 
     def delete_device(self):
@@ -1591,24 +1634,25 @@ class CbfSubarray(SKASubarray):
             :rtype: (ResultCode, str)
             """
             device = self.target
-            # Code here
+
             errs = []  # list of error messages
+
             receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
                                 device._proxy_cbf_controller.receptorToVcc)
+
             for receptorID in argin:
                 try:
                     vccID = receptor_to_vcc[receptorID]
                     vccProxy = device._proxies_vcc[vccID - 1]
 
-                    # Update the VCC receptorID attribute:
+                    self.logger.debug(
+                        f"receptorID = {receptorID}, vccProxy.receptorID = {vccProxy.receptorID}"
+                    )
 
-                    self.logger.debug( ("receptorID = {}, vccProxy.receptorID = {}"
-                    .format(receptorID, vccProxy.receptorID)))
-
-                    vccProxy.receptorID = receptorID  # TODO - may not be needed?
-
-                    self.logger.debug( ("receptorID = {}, vccProxy.receptorID = {}"
-                    .format(receptorID, vccProxy.receptorID)))
+                    # vccProxy.receptorID = receptorID  # TODO - may not be needed?
+                    # self.logger.debug(
+                    #     f"receptorID = {receptorID}, vccProxy.receptorID = {vccProxy.receptorID}")
+                    # )
 
                     subarrayID = vccProxy.subarrayMembership
 
@@ -1633,17 +1677,17 @@ class CbfSubarray(SKASubarray):
                             device._group_vcc.add(device._fqdn_vcc[vccID - 1])
 
                             # subscribe to VCC state and healthState changes
-                            event_id_state = vccProxy.subscribe_event(
+                            event_id_state = vccProxy.add_change_event_callback(
                                 "State",
-                                tango.EventType.CHANGE_EVENT,
                                 device._state_change_event_callback
                             )
+                            self.logger.debug(f"State event ID: {event_id_state}")
 
-                            event_id_health_state = vccProxy.subscribe_event(
+                            event_id_health_state = vccProxy.add_change_event_callback(
                                 "healthState",
-                                tango.EventType.CHANGE_EVENT,
                                 device._state_change_event_callback
                             )
+                            self.logger.debug(f"Health state event ID: {event_id_health_state}")
 
                             device._events_state_change_vcc[vccID] = [event_id_state,
                                                                     event_id_health_state]
@@ -1654,7 +1698,6 @@ class CbfSubarray(SKASubarray):
 
                 except KeyError:  # invalid receptor ID
                     errs.append("Invalid receptor ID: {}".format(receptorID))
-
 
             if errs:
                 msg = "\n".join(errs)
@@ -1667,6 +1710,7 @@ class CbfSubarray(SKASubarray):
             message = "CBFSubarray AddReceptors command completed OK"
             self.logger.info(message)
             return (ResultCode.OK, message)
+
 
     ############  Configure Related Commands   ##############
 
@@ -1772,10 +1816,12 @@ class CbfSubarray(SKASubarray):
 
             # Configure dopplerPhaseCorrSubscriptionPoint.
             if "doppler_phase_corr_subscription_point" in configuration:
-                attribute_proxy = tango.AttributeProxy(configuration["doppler_phase_corr_subscription_point"])
+                attribute_proxy = CbfAttributeProxy(
+                    fqdn=configuration["doppler_phase_corr_subscription_point"],
+                    logger=device.logger
+                )
                 attribute_proxy.ping()
-                event_id = attribute_proxy.subscribe_event(
-                    tango.EventType.CHANGE_EVENT,
+                event_id = attribute_proxy.add_change_event_callback(
                     device._doppler_phase_correction_event_callback
                 )
                 device._events_telstate[event_id] = attribute_proxy
@@ -1783,10 +1829,12 @@ class CbfSubarray(SKASubarray):
             # Configure delayModelSubscriptionPoint.
             if "delay_model_subscription_point" in configuration:
                 device._last_received_delay_model = "{}"
-                attribute_proxy = tango.AttributeProxy(configuration["delay_model_subscription_point"])
+                attribute_proxy = CbfAttributeProxy(
+                    fqdn=configuration["delay_model_subscription_point"],
+                    logger=device.logger
+                )
                 attribute_proxy.ping() #To be sure the connection is good(don't know if the device is running)
-                event_id = attribute_proxy.subscribe_event(
-                    tango.EventType.CHANGE_EVENT,
+                event_id = attribute_proxy.add_change_event_callback(
                     device._delay_model_event_callback
                 )
                 device._events_telstate[event_id] = attribute_proxy
@@ -1794,10 +1842,12 @@ class CbfSubarray(SKASubarray):
             # Configure jonesMatrixSubscriptionPoint
             if "jones_matrix_subscription_point" in configuration:
                 device._last_received_jones_matrix = "{}"
-                attribute_proxy = tango.AttributeProxy(configuration["jones_matrix_subscription_point"])
+                attribute_proxy = CbfAttributeProxy(
+                    fqdn=configuration["jones_matrix_subscription_point"],
+                    logger=device.logger
+                )
                 attribute_proxy.ping()
-                event_id = attribute_proxy.subscribe_event(
-                    tango.EventType.CHANGE_EVENT,
+                event_id = attribute_proxy.add_change_event_callback(
                     device._jones_matrix_event_callback
                 )
                 device._events_telstate[event_id] = attribute_proxy
@@ -1805,10 +1855,12 @@ class CbfSubarray(SKASubarray):
             # Configure beamWeightsSubscriptionPoint
             if "timing_beam_weights_subscription_point" in configuration:
                 device._last_received_beam_weights= "{}"
-                attribute_proxy = tango.AttributeProxy(configuration["timing_beam_weights_subscription_point"])
+                attribute_proxy = CbfAttributeProxy(
+                    fqdn=configuration["timing_beam_weights_subscription_point"],
+                    logger=device.logger
+                )
                 attribute_proxy.ping()
-                event_id = attribute_proxy.subscribe_event(
-                    tango.EventType.CHANGE_EVENT,
+                event_id = attribute_proxy.add_change_event_callback(
                     device._beam_weights_event_callback
                 )
                 device._events_telstate[event_id] = attribute_proxy
@@ -1855,13 +1907,11 @@ class CbfSubarray(SKASubarray):
                 proxy_fsp.SetFunctionMode(fsp["function_mode"])
 
                 # subscribe to FSP state and healthState changes
-                event_id_state, event_id_health_state = proxy_fsp.subscribe_event(
+                event_id_state, event_id_health_state = proxy_fsp.add_change_event_callback(
                     "State",
-                    tango.EventType.CHANGE_EVENT,
                     device._state_change_event_callback
-                ), proxy_fsp.subscribe_event(
+                ), proxy_fsp.add_change_event_callback(
                     "healthState",
-                    tango.EventType.CHANGE_EVENT,
                     device._state_change_event_callback
                 )
                 device._events_state_change_fsp[int(fsp["fsp_id"])] = [event_id_state,
