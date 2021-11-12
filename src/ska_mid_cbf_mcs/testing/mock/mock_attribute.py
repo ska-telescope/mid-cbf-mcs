@@ -120,7 +120,7 @@ class MockAttributeBuilder:
             mock_event_data = unittest.mock.Mock()
             mock_event_data.err = False
             mock_event_data.attr_value.name = "mockAttribute"
-            mock_event_data.attr_value.value = type(self._value)()
+            mock_event_data.attr_value.value = self._value
             mock_event_data.attr_value.quality = tango.AttrQuality.ATTR_VALID
             callback(mock_event_data)
 

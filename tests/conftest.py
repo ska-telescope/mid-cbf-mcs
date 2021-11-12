@@ -389,9 +389,8 @@ def init_proxies_fixture():
                     proxy.GoToIdle()
                     self.wait_timeout_obs([proxy], ObsState.IDLE, 3, 0.05)
                 if proxy.obsState == ObsState.IDLE:
-                    if len(proxy.receptors) > 0:
-                        proxy.RemoveAllReceptors()
-                        self.wait_timeout_obs([proxy], ObsState.EMPTY, 3, 0.05)
+                    proxy.RemoveAllReceptors()
+                    self.wait_timeout_obs([proxy], ObsState.EMPTY, 3, 0.05)
                 if proxy.obsState == ObsState.EMPTY:
                     proxy.Off()
                     self.wait_timeout_dev([proxy], DevState.OFF, 3, 0.05)

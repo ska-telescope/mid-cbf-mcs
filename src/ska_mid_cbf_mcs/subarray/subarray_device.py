@@ -108,6 +108,10 @@ class CbfSubarray(SKASubarray):
             self.ScanCommand(*device_args)
         )
         self.register_command_object(
+            "EndScan",
+            self.EndScanCommand(*device_args)
+        )
+        self.register_command_object(
             "GoToIdle",
             self.GoToIdleCommand(*device_args)
         )
