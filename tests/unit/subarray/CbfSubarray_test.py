@@ -41,18 +41,34 @@ class TestCbfSubarray:
     Test class for TestCbfSubarray tests.
     """
 
-    def test_State(
+    def test_Init(
         self: TestCbfSubarray,
         device_under_test: CbfDeviceProxy,
     ) -> None:
         """
-        Test State
+        Test initialization
 
         :param device_under_test: fixture that provides a
             :py:class:`CbfDeviceProxy` to the device under test, in a
             :py:class:`tango.test_context.DeviceTestContext`.
         """
+        time.sleep(0.1)
+        # check attributes after initialization
         assert device_under_test.State() == DevState.OFF
+        # TODO: these asserts don't work
+        # assert device_under_test.receptors == []
+        # assert device_under_test.fspList == [[], [], [], []]
+        # assert device_under_test.fspState == {}
+        # assert device_under_test.fspHealthState == {}
+        # assert device_under_test.vccState == {}
+        # assert device_under_test.vccHealthState == {}
+        # This is a bug in the tango library: 
+        # https://gitlab.com/tango-controls/pytango/-/issues/230
+        assert device_under_test.frequencyBand == 0
+        assert device_under_test.configID == ""
+        assert device_under_test.scanID == 0
+        assert device_under_test.latestScanConfig == ""
+
 
     def test_On_Off(
         self: TestCbfSubarray,
@@ -74,7 +90,6 @@ class TestCbfSubarray:
         assert result[0][0] == ResultCode.OK
         assert device_under_test.State() == DevState.OFF
 
-
     @pytest.mark.parametrize(
         "receptor_ids, \
         receptors_to_remove",
@@ -89,7 +104,7 @@ class TestCbfSubarray:
             )
         ]
     )
-    def test_Add_Remove_Receptors(
+    def test_Add_Remove_Receptors_valid(
         self: TestCbfSubarray,
         device_under_test: CbfDeviceProxy,
         receptor_ids: List[int], 
@@ -126,6 +141,39 @@ class TestCbfSubarray:
 
         # remove remaining receptor
         device_under_test.RemoveReceptors(receptor_ids_after_remove)
+        time.sleep(0.1)
+        assert len(device_under_test.receptors) == 0
+        assert device_under_test.obsState == ObsState.EMPTY
+
+    @pytest.mark.parametrize(
+        "receptor_ids",
+        [
+            (
+                [1, 3, 4, 2]
+            ),
+            (
+                [4, 1, 2]
+            )
+        ]
+    )
+    def test_RemoveAllReceptors_valid(
+        self: TestCbfSubarray,
+        device_under_test: CbfDeviceProxy,
+        receptor_ids: List[int]
+    ) -> None:
+        """
+        Test valid use of RemoveAllReceptors command.
+
+        :param device_under_test: fixture that provides a
+            :py:class:`CbfDeviceProxy` to the device under test, in a
+            :py:class:`tango.test_context.DeviceTestContext`.
+        """
+        device_under_test.On()
+        device_under_test.AddReceptors(receptor_ids)
+        time.sleep(0.1)
+
+        # remove all receptors
+        device_under_test.RemoveAllReceptors()
         time.sleep(0.1)
         assert len(device_under_test.receptors) == 0
         assert device_under_test.obsState == ObsState.EMPTY
@@ -200,16 +248,44 @@ class TestCbfSubarray:
         # try removing a receptor not assigned to subarray 1
         # doing this doesn't actually throw an error
         device_under_test.RemoveReceptors(invalid_receptors_to_remove)
+    
+    @pytest.mark.parametrize(
+        "receptor_ids", 
+        [
+            (
+                [1, 3]
+            ),
+            (
+                [4, 2]
+            )
+        ]
+    )
+    def test_RemoveAllReceptors_invalid(
+            self: TestCbfSubarray,
+            device_under_test: CbfDeviceProxy,
+            receptor_ids: List[int] 
+        ) -> None:
+        """
+        Test invalid use of RemoveReceptors commands:
+            - when a receptor to be removed is not assigned to the subarray
+        """
+        device_under_test.On()
+        time.sleep(0.1)
+        # add some receptors 
+        device_under_test.AddReceptors(receptor_ids)
+        time.sleep(0.1)
+
+        # try removing all receptors
+        # doing this doesn't actually throw an error
+        device_under_test.RemoveAllReceptors()
 
     @pytest.mark.parametrize(
         "config_file_name, \
-        receptor_ids, \
-        vcc_receptors", 
+        receptor_ids", 
         [
             (
                 "ConfigureScan_basic.json",
-                [1, 3, 4, 2],
-                [4, 1]
+                [1, 3, 4, 2]
             )
         ]
     )
@@ -217,8 +293,7 @@ class TestCbfSubarray:
         self: TestCbfSubarray, 
         device_under_test: CbfDeviceProxy, 
         config_file_name: str,
-        receptor_ids: List[int], 
-        vcc_receptors: List[int]
+        receptor_ids: List[int]
     ) -> None:
         """
         Test a successful scan configuration
@@ -253,7 +328,7 @@ class TestCbfSubarray:
             ),
             (
                 "Configure_TM-CSP_v2.json",
-                "Scan1_basic.json",
+                "Scan2_basic.json",
                 [4, 1, 2]
             )
 
@@ -302,7 +377,7 @@ class TestCbfSubarray:
             ),
             (
                 "Configure_TM-CSP_v2.json",
-                "Scan1_basic.json",
+                "Scan2_basic.json",
                 [4, 1, 2],
             )
         ]
@@ -351,7 +426,7 @@ class TestCbfSubarray:
             ),
             (
                 "Configure_TM-CSP_v2.json",
-                "Scan1_basic.json",
+                "Scan2_basic.json",
                 [4, 1, 2],
             )
         ]
@@ -399,7 +474,7 @@ class TestCbfSubarray:
             ),
             (
                 "Configure_TM-CSP_v2.json",
-                "Scan1_basic.json",
+                "Scan2_basic.json",
                 [4, 1, 2],
             )
         ]
@@ -452,7 +527,7 @@ class TestCbfSubarray:
             ),
             (
                 "Configure_TM-CSP_v2.json",
-                "Scan1_basic.json",
+                "Scan2_basic.json",
                 [4, 1, 2],
             )
         ]
@@ -493,3 +568,40 @@ class TestCbfSubarray:
         assert device_under_test.scanID == 0
         assert device_under_test.frequencyBand == 0
         assert len(device_under_test.receptors) == 0
+
+    @pytest.mark.parametrize(
+        "config_file_name, \
+        receptor_ids", 
+        [
+            (
+                "ConfigureScan_basic.json",
+                [1, 3, 4, 2],
+            ),
+            (
+                "Configure_TM-CSP_v2.json",
+                [4, 1, 2],
+            )
+        ]
+    )
+    def test_GoToIdle(
+        self: TestCbfSubarray,
+        device_under_test: CbfDeviceProxy,
+        config_file_name: str,
+        receptor_ids: List[int]
+    ) -> None:
+        f1 = open(data_file_path + config_file_name)
+        config_string = f1.read().replace("\n", "")
+        f1.close()
+        device_under_test.On()
+        time.sleep(0.1)
+        device_under_test.AddReceptors(receptor_ids)
+        time.sleep(0.1)
+        device_under_test.ConfigureScan(config_string)
+        time.sleep(3)
+
+        device_under_test.GoToIdle()
+        time.sleep(3)
+        assert device_under_test.obsState == ObsState.IDLE
+        assert device_under_test.frequencyBand == 0
+        assert device_under_test.configID == ""
+        assert device_under_test.scanID == 0

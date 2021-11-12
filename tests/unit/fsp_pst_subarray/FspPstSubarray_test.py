@@ -140,7 +140,7 @@ class TestFspPstSubarray:
         # assert device_under_test.receptors == []
         # assert device_under_test.timingBeams == []
         # assert device_under_test.timingBeamID == [] 
-                # This is a bug in the tango library: 
+        # This is a bug in the tango library: 
         # https://gitlab.com/tango-controls/pytango/-/issues/230
         assert device_under_test.outputEnable == 0
         

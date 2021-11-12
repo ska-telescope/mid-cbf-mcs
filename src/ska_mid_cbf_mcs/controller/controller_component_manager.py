@@ -10,12 +10,14 @@
 # Copyright (c) 2019 National Research Council of Canada
 
 from __future__ import annotations
-from typing import List, Tuple
+from typing import Any, List, Tuple
 
 from random import randint
 
 # tango imports
 import tango
+from tango import AttrQuality
+
 import logging
 
 from ska_mid_cbf_mcs.group_proxy import CbfGroupProxy
@@ -314,109 +316,123 @@ class ControllerComponentManager:
 
 
     def __state_change_event_callback(
-            self: ControllerComponentManager, 
-            fqdn,
-            name,
-            value,
-            quality
-        ) -> None:
+        self: ControllerComponentManager,
+        fqdn: str,
+        name: str,
+        value: Any,
+        quality: AttrQuality
+    ) -> None:
+        """
+        Callback for state/healthState change event subscription.
 
-            if value is not None:
-                try:
-                    if "healthstate" in name:
-                        if "subarray" in fqdn:
-                            self._report_subarray_health_state[
-                                self._fqdn_subarray.index(fqdn)
+        :param fqdn: attribute FQDN
+        :param name: attribute name
+        :param value: attribute value
+        :param quality: attribute quality
+        """
+        if value is not None:
+            try:
+                if "healthstate" in name:
+                    if "subarray" in fqdn:
+                        self._report_subarray_health_state[
+                            self._fqdn_subarray.index(fqdn)
+                        ] = value
+                    elif "vcc" in fqdn:
+                        self._report_vcc_health_state[
+                            self._fqdn_vcc.index(fqdn)
+                        ] = value
+                    elif "fsp" in fqdn:
+                        self._report_fsp_health_state[
+                            self._fqdn_fsp.index(fqdn)
+                        ] = value
+                    elif "talon_lru" in fqdn:
+                        self._report_talon_lru_health_state[
+                            self._fqdn_talon_lru.index(fqdn)
                             ] = value
-                        elif "vcc" in fqdn:
-                            self._report_vcc_health_state[
-                                self._fqdn_vcc.index(fqdn)
-                            ] = value
-                        elif "fsp" in fqdn:
-                            self._report_fsp_health_state[
-                                self._fqdn_fsp.index(fqdn)
-                            ] = value
-                        elif "talon_lru" in fqdn:
-                            self._report_talon_lru_health_state[
-                                self._fqdn_talon_lru.index(fqdn)
-                                ] = value
-                        else:
-                            # should NOT happen!
-                            log_msg = (
-                                "Received health state change for "
-                                f"unknown device {name}"
-                            )
-                            self._logger.warn(log_msg)
-                            return
-                    elif "state" in name:
-                        if "subarray" in fqdn:
-                            self._report_subarray_state[
-                                self._fqdn_subarray.index(fqdn)
-                            ] = value
-                        elif "vcc" in fqdn:
-                            self._report_vcc_state[
-                                self._fqdn_vcc.index(fqdn)
-                            ] = value
-                        elif "fsp" in fqdn:
-                            self._report_fsp_state[
-                                self._fqdn_fsp.index(fqdn)
-                            ] = value
-                        elif "talon_lru" in fqdn:
-                            self._report_talon_lru_state[
-                                self._fqdn_talon_lru.index(fqdn)
-                            ] = value
-                        else:
-                            # should NOT happen!
-                            log_msg = (
-                                "Received state change for unknown device "
-                                f"{name}"
-                            )
-                            self._logger.warn(log_msg)
-                            return
-                    elif "adminmode" in name:
-                        if "subarray" in fqdn:
-                            self._report_subarray_admin_mode[
-                                self._fqdn_subarray.index(fqdn)
-                            ] = value
-                        elif "vcc" in fqdn:
-                            self._report_vcc_admin_mode[
-                                self._fqdn_vcc.index(fqdn)
-                            ] = value
-                        elif "fsp" in fqdn:
-                            self._report_fsp_admin_mode[
-                                self._fqdn_fsp.index(fqdn)
-                            ] = value
-                        elif "talon_lru" in fqdn:
-                            self._report_talon_lru_admin_mode[
-                                self._fqdn_talon_lru.index(fqdn)
-                            ] = value
-                        else:
-                            # should NOT happen!
-                            log_msg = (
-                                "Received admin mode change for "
-                                f"unknown device {name}"
-                            )
-                            self._logger.warn(log_msg)
-                            return
+                    else:
+                        # should NOT happen!
+                        log_msg = (
+                            "Received health state change for "
+                            f"unknown device {name}"
+                        )
+                        self._logger.warn(log_msg)
+                        return
+                elif "state" in name:
+                    if "subarray" in fqdn:
+                        self._report_subarray_state[
+                            self._fqdn_subarray.index(fqdn)
+                        ] = value
+                    elif "vcc" in fqdn:
+                        self._report_vcc_state[
+                            self._fqdn_vcc.index(fqdn)
+                        ] = value
+                    elif "fsp" in fqdn:
+                        self._report_fsp_state[
+                            self._fqdn_fsp.index(fqdn)
+                        ] = value
+                    elif "talon_lru" in fqdn:
+                        self._report_talon_lru_state[
+                            self._fqdn_talon_lru.index(fqdn)
+                        ] = value
+                    else:
+                        # should NOT happen!
+                        log_msg = (
+                            "Received state change for unknown device "
+                            f"{name}"
+                        )
+                        self._logger.warn(log_msg)
+                        return
+                elif "adminmode" in name:
+                    if "subarray" in fqdn:
+                        self._report_subarray_admin_mode[
+                            self._fqdn_subarray.index(fqdn)
+                        ] = value
+                    elif "vcc" in fqdn:
+                        self._report_vcc_admin_mode[
+                            self._fqdn_vcc.index(fqdn)
+                        ] = value
+                    elif "fsp" in fqdn:
+                        self._report_fsp_admin_mode[
+                            self._fqdn_fsp.index(fqdn)
+                        ] = value
+                    elif "talon_lru" in fqdn:
+                        self._report_talon_lru_admin_mode[
+                            self._fqdn_talon_lru.index(fqdn)
+                        ] = value
+                    else:
+                        # should NOT happen!
+                        log_msg = (
+                            "Received admin mode change for "
+                            f"unknown device {name}"
+                        )
+                        self._logger.warn(log_msg)
+                        return
 
-                    log_msg = f"New value for {name} of device {fqdn}: {value}"
-                    self._logger.info(log_msg)
-                except Exception as except_occurred:
-                    self._logger.error(str(except_occurred))
-            else:
-                self._logger.warn(
-                    f"None value for attribute {name} of device {fqdn}"
-                )
+                log_msg = f"New value for {name} of device {fqdn}: {value}"
+                self._logger.info(log_msg)
+            except Exception as except_occurred:
+                self._logger.error(str(except_occurred))
+        else:
+            self._logger.warn(
+                f"None value for attribute {name} of device {fqdn}"
+            )
 
 
     def __membership_event_callback(
-        self: ControllerComponentManager, 
-        fqdn,
-        name,
-        value,
-        quality
+        self: ControllerComponentManager,
+        fqdn: str,
+        name: str,
+        value: Any,
+        quality: AttrQuality
     ) -> None:
+        """
+        Callback for subarrayMembership change event subscription.
 
+        :param fqdn: attribute FQDN
+        :param name: attribute name
+        :param value: attribute value
+        :param quality: attribute quality
+        """
         if value is not None:
             try:
                 if "vcc" in fqdn:
@@ -449,12 +465,20 @@ class ControllerComponentManager:
 
         
     def __config_ID_event_callback(
-            self: ControllerComponentManager, 
-            fqdn,
-            name,
-            value,
-            quality
+        self: ControllerComponentManager,
+        fqdn: str,
+        name: str,
+        value: Any,
+        quality: AttrQuality
     ) -> None:
+        """
+        Callback for configID change event subscription.
+
+        :param fqdn: attribute FQDN
+        :param name: attribute name
+        :param value: attribute value
+        :param quality: attribute quality
+        """
 
         if value is not None:
             try:

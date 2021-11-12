@@ -11,7 +11,7 @@ Sub-element subarray device for Mid.CBF
 """
 from __future__ import annotations  # allow forward references in type hints
 from logging import log
-from typing import List, Tuple
+from typing import Any, Dict, List, Tuple
 import sys
 import json
 from random import randint
@@ -26,8 +26,7 @@ from tango import DebugIt
 from tango.server import run
 from tango.server import attribute, command
 from tango.server import device_property
-from tango import DevState
-from tango import AttrWriteType
+from tango import DevState, AttrWriteType, AttrQuality
 # Additional import
 # PROTECTED REGION ID(CbfSubarray.additionnal_import) ENABLED START #
 
@@ -37,7 +36,7 @@ from ska_mid_cbf_mcs.group_proxy import CbfGroupProxy
 from ska_mid_cbf_mcs.commons.global_enum import const, freq_band_dict
 from ska_mid_cbf_mcs.attribute_proxy import CbfAttributeProxy
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
-from ska_tango_base.control_model import ObsState, AdminMode
+from ska_tango_base.control_model import ObsState, AdminMode, HealthState
 from ska_tango_base import SKASubarray, SKABaseDevice
 from ska_tango_base.commands import ResultCode, BaseCommand, ResponseCommand, ActionCommand
 
@@ -46,7 +45,15 @@ from ska_tango_base.commands import ResultCode, BaseCommand, ResponseCommand, Ac
 __all__ = ["CbfSubarray", "main"]
 
 
-def validate_ip(ip):
+def validate_ip(ip: str) -> bool:
+    """
+    Validate IP address format.
+
+    :param ip: IP address to be evaluated
+
+    :return: whether or not the IP address format is valid
+    :rtype: bool
+    """
     splitip = ip.split('.')
     if len(splitip) != 4:
         return False
@@ -65,7 +72,7 @@ class CbfSubarray(SKASubarray):
     """
 
     # PROTECTED REGION ID(CbfSubarray.class_variable) ENABLED START #
-    def init_command_objects(self):
+    def init_command_objects(self: CbfSubarray) -> None:
         """
         Sets up the command objects. Register the new Commands here.
         """
@@ -121,9 +128,21 @@ class CbfSubarray(SKASubarray):
     # ----------
 
     def _doppler_phase_correction_event_callback(
-        self: CbfSubarray, fqdn, name, value, quality
+        self: CbfSubarray,
+        fqdn: str,
+        name: str,
+        value: Any,
+        quality: AttrQuality
     ) -> None:
-    # TODO: investigate error in this callback (subarray logs)
+        """
+        Callback for dopplerPhaseCorrection change event subscription.
+
+        :param fqdn: attribute FQDN
+        :param name: attribute name
+        :param value: attribute value
+        :param quality: attribute quality
+        """
+        # TODO: investigate error in this callback (subarray logs)
         if value is not None:
             try:
                 self._group_vcc.write_attribute("dopplerPhaseCorrection", value)
@@ -135,9 +154,20 @@ class CbfSubarray(SKASubarray):
             self.logger.warn(f"None value for {fqdn}")
 
     def _delay_model_event_callback(
-        self: CbfSubarray, fqdn, name, value, quality
+        self: CbfSubarray,
+        fqdn: str,
+        name: str,
+        value: Any,
+        quality: AttrQuality
     ) -> None:
+        """"
+        Callback for delayModel change event subscription.
 
+        :param fqdn: attribute FQDN
+        :param name: attribute name
+        :param value: attribute value
+        :param quality: attribute quality
+        """
         self.logger.debug("Entering _delay_model_event_callback()")
 
         if value is not None:
@@ -170,7 +200,19 @@ class CbfSubarray(SKASubarray):
         else:
             self.logger.warn(f"None value for {fqdn}")
 
-    def _update_delay_model(self, destination_type, epoch, model):
+    def _update_delay_model(
+        self: CbfSubarray,
+        destination_type: str,
+        epoch: int,
+        model: str
+    ) -> None:
+        """
+        Update FSP and VCC delay models.
+
+        :param destination_type: type of device to send the delay model to
+        :param epoch: system time of delay model reception
+        :param model: delay model
+        """
         # This method is always called on a separate thread
         log_msg = f"Delay model active at {epoch} (currently {time.time()})..."
         self.logger.info(log_msg)
@@ -193,8 +235,20 @@ class CbfSubarray(SKASubarray):
         self._mutex_delay_model_config.release()
 
     def _jones_matrix_event_callback(
-        self: CbfSubarray, fqdn, name, value, quality
+        self: CbfSubarray,
+        fqdn: str,
+        name: str,
+        value: Any,
+        quality: AttrQuality
     ) -> None:
+        """"
+        Callback for jonesMatrix change event subscription.
+
+        :param fqdn: attribute FQDN
+        :param name: attribute name
+        :param value: attribute value
+        :param quality: attribute quality
+        """
         self.logger.debug("CbfSubarray._jones_matrix_event_callback")
 
         if value is not None:
@@ -227,7 +281,19 @@ class CbfSubarray(SKASubarray):
         else:
             self.logger.warn(f"None value for {fqdn}")
 
-    def _update_jones_matrix(self, destination_type, epoch, matrix_details):
+    def _update_jones_matrix(
+        self: CbfSubarray,
+        destination_type: str,
+        epoch: int,
+        matrix_details: str
+    ) -> None:
+        """
+        Update FSP and VCC Jones matrices.
+
+        :param destination_type: type of device to send the delay model to
+        :param epoch: system time of delay model reception
+        :param matrix_details: Jones matrix value
+        """
         #This method is always called on a separate thread
         self.logger.debug("CbfSubarray._update_jones_matrix")
         log_msg = f"Jones matrix active at {epoch} (currently {time.time()})..."
@@ -251,8 +317,20 @@ class CbfSubarray(SKASubarray):
         self._mutex_jones_matrix_config.release()
 
     def _beam_weights_event_callback(
-        self: CbfSubarray, fqdn, name, value, quality
+        self: CbfSubarray,
+        fqdn: str,
+        name: str,
+        value: Any,
+        quality: AttrQuality
     ) -> None:
+        """"
+        Callback for beamWeights change event subscription.
+
+        :param fqdn: attribute FQDN
+        :param name: attribute name
+        :param value: attribute value
+        :param quality: attribute quality
+        """
         self.logger.debug("CbfSubarray._beam_weights_event_callback")
 
         if value is not None:
@@ -284,7 +362,18 @@ class CbfSubarray(SKASubarray):
         else:
             self.logger.warn(f"None value for {fqdn}")
 
-    def _update_beam_weights(self, epoch, weights_details):
+    def _update_beam_weights(
+        self: CbfSubarray,
+        epoch: int,
+        weights_details: str
+    ) -> None:
+        """
+        Update FSP beam weights.
+
+        :param destination_type: type of device to send the delay model to
+        :param epoch: system time of delay model reception
+        :param weights_details: beam weights value
+        """
         #This method is always called on a separate thread
         self.logger.debug("CbfSubarray._update_beam_weights")
         log_msg = f"Beam weights active at {epoch} (currently {time.time()})..."
@@ -305,8 +394,20 @@ class CbfSubarray(SKASubarray):
         self._mutex_beam_weights_config.release()
 
     def _state_change_event_callback(
-        self: CbfSubarray, fqdn, name, value, quality
+        self: CbfSubarray,
+        fqdn: str,
+        name: str,
+        value: Any,
+        quality: AttrQuality
     ) -> None:
+        """"
+        Callback for state and healthState change event subscription.
+
+        :param fqdn: attribute FQDN
+        :param name: attribute name
+        :param value: attribute value
+        :param quality: attribute quality
+        """
         if value is not None:
             try:
                 if "healthState" in name:
@@ -338,7 +439,17 @@ class CbfSubarray(SKASubarray):
         else:
             self.logger.warn(f"None value for {fqdn}")
 
-    def _validate_scan_configuration(self, argin):
+    def _validate_scan_configuration(
+        self: CbfSubarray,
+        argin: str
+    ) -> None:
+        """
+        Validate scan configuration.
+
+        :param argin: The configuration as JSON formatted string.
+
+        :raises: ``tango.DevFailed`` if the configuration data validation fails.
+        """
         # try to deserialize input string to a JSON object
         try:
             full_configuration = json.loads(argin)
@@ -958,16 +1069,22 @@ class CbfSubarray(SKASubarray):
 
         # At this point, everything has been validated.
 
-    def _raise_configure_scan_fatal_error(self, msg):
+    def _raise_configure_scan_fatal_error(self: CbfSubarray, msg: str) -> None:
+        """
+        Raise fatal error in ConfigureScan execution
+
+        :param msg: error message
+        """
         self.logger.error(msg)
-        tango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
-                                     tango.ErrSeverity.ERR)
+        tango.Except.throw_exception(
+            "Command failed", msg, "ConfigureScan execution", tango.ErrSeverity.ERR
+        )
 
     # PROTECTED REGION END #    //  CbfSubarray.class_variable
 
 
 
-    def _deconfigure(self):
+    def _deconfigure(self:CbfSubarray) -> None:
         """Completely deconfigure the subarray; all initialization performed 
         by by the ConfigureScan command must be 'undone' here."""
         
@@ -1044,9 +1161,11 @@ class CbfSubarray(SKASubarray):
                 fsp_pst_subarray_proxy.GoToIdle()
         # TODO: add 'GoToIdle' for VLBI once implemented
 
-    def _remove_receptors_helper(self, argin):
+    def _remove_receptors_helper(self: CbfSubarray, argin: List[int]) -> None:
         """Helper function to remove receptors for removeAllReceptors. 
         Takes in a list of integers.
+
+        :param argin: list of receptors to remove
         """
         receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
                                self._proxy_cbf_controller.receptorToVcc)
@@ -1093,7 +1212,7 @@ class CbfSubarray(SKASubarray):
     # base class (for example AddReceptors command). 
     # The base class define len as len(resource_manager), 
     # so we need to change that here. TODO - to clarify.
-    def __len__(self):
+    def __len__(self: CbfSubarray) -> int:
         """
         Returns the number of resources currently assigned. Note that
         this also functions as a boolean method for whether there are
@@ -1247,9 +1366,10 @@ class CbfSubarray(SKASubarray):
         """
         A class for the CbfSubarray's init_device() "command".
         """
-        def do(self):
+        def do(self: CbfSubarray.InitCommand) -> Tuple[ResultCode, str]:
             """
-            Stateless hook for device initialisation. Initialize the attributes and the properties of the CbfSubarray.
+            Stateless hook for device initialisation. 
+            Initialize the attributes and the properties of the CbfSubarray.
 
             :return: A tuple containing a return code and a string
                 message indicating status. The message is for
@@ -1414,7 +1534,7 @@ class CbfSubarray(SKASubarray):
                 name="FSP Subarray Pst", logger=self.logger)
         # PROTECTED REGION END #    //  CbfSubarray.always_executed_hook
 
-    def delete_device(self):
+    def delete_device(self: CbfSubarray) -> None:
         # PROTECTED REGION ID(CbfSubarray.delete_device) ENABLED START #
         """hook to delete device. Set State to DISABLE, romove all receptors, go to OBsState IDLE"""
 
@@ -1425,71 +1545,128 @@ class CbfSubarray(SKASubarray):
     # Attributes methods
     # ------------------
 
-    def read_frequencyBand(self):
+    def read_frequencyBand(self: CbfSubarray) -> int:
         # PROTECTED REGION ID(CbfSubarray.frequencyBand_read) ENABLED START #
-        """Return frequency band assigned to this subarray. one of ["1", "2", "3", "4", "5a", "5b", ]"""
+        """
+        Return frequency band assigned to this subarray. 
+        One of ["1", "2", "3", "4", "5a", "5b", ]
+
+        :return: the frequency band
+        :rtype: int
+        """
         return self._frequency_band
         # PROTECTED REGION END #    //  CbfSubarray.frequencyBand_read
 
-    def read_configID(self):
+    def read_configID(self: CbfSubarray) -> str:
         # PROTECTED REGION ID(CbfSubarray.configID_read) ENABLED START #
-        """Return attribute configID"""
+        """
+        Return attribute configID
+        
+        :return: the configuration ID
+        :rtype: str
+        """
         return self._config_ID
         # PROTECTED REGION END #    //  CbfSubarray.configID_read
 
-    def read_scanID(self):
+    def read_scanID(self: CbfSubarray) -> int:
         # PROTECTED REGION ID(CbfSubarray.configID_read) ENABLED START #
-        """Return attribute scanID"""
+        """
+        Return attribute scanID
+        
+        :return: the scan ID
+        :rtype: int
+        """
         return self._scan_ID
         # PROTECTED REGION END #    //  CbfSubarray.configID_read
 
-    def read_receptors(self):
+    def read_receptors(self: CbfSubarray) -> List[int]:
         # PROTECTED REGION ID(CbfSubarray.receptors_read) ENABLED START #
-        """Return list of receptors assgined to subarray"""
+        """
+        Return list of receptors assgined to subarray
+        
+        :return: the list of receptors
+        :rtype: List[int]
+        """
         return self._receptors
         # PROTECTED REGION END #    //  CbfSubarray.receptors_read
 
-    def write_receptors(self, value):
+    def write_receptors(self: CbfSubarray, value: List[int]) -> None:
         # PROTECTED REGION ID(CbfSubarray.receptors_write) ENABLED START #
-        """Set receptors of this array to the input value. Input should be an array of int"""
+        """
+        Set receptors of this array to the input value. 
+        Input should be an array of int
+        
+        :param value: the list of receptors
+        """
         self.RemoveAllReceptors()
         self.AddReceptors(value)
         # PROTECTED REGION END #    //  CbfSubarray.receptors_write
 
 
-    def read_vccState(self):
+    def read_vccState(self: CbfSubarray) -> Dict[str, DevState]:
         # PROTECTED REGION ID(CbfSubarray.vccState_read) ENABLED START #
-        """Return the attribute vccState": array of DevState"""
+        """
+        Return the attribute vccState: array of DevState
+        
+        :return: the list of VCC states
+        :rtype: Dict[str, DevState]
+        """
         return list(self._vcc_state.values())
         # PROTECTED REGION END #    //  CbfSubarray.vccState_read
 
-    def read_vccHealthState(self):
+    def read_vccHealthState(self: CbfSubarray) -> Dict[str, HealthState]:
         # PROTECTED REGION ID(CbfSubarray.vccHealthState_read) ENABLED START #
-        """returns vccHealthState attribute: an array of unsigned short"""
+        """
+        returns vccHealthState attribute: an array of unsigned short
+        
+        :return: the list of VCC health states
+        :rtype: Dict[str, HealthState]
+        """
         return list(self._vcc_health_state.values())
         # PROTECTED REGION END #    //  CbfSubarray.vccHealthState_read
 
-    def read_fspState(self):
+    def read_fspState(self: CbfSubarray) -> Dict[str, DevState]:
         # PROTECTED REGION ID(CbfSubarray.fspState_read) ENABLED START #
-        """Return the attribute fspState": array of DevState"""
+        """
+        Return the attribute fspState: array of DevState
+        
+        :return: the list of FSP states
+        :rtype: Dict[str, DevState]
+        """
         return list(self._fsp_state.values())
         # PROTECTED REGION END #    //  CbfSubarray.fspState_read
 
-    def read_fspHealthState(self):
+    def read_fspHealthState(self: CbfSubarray) -> Dict[str, HealthState]:
         # PROTECTED REGION ID(CbfSubarray.fspHealthState_read) ENABLED START #
-        """returns fspHealthState attribute: an array of unsigned short"""
+        """
+        returns fspHealthState attribute: an array of unsigned short
+        
+        :return: the list of FSP health states
+        :rtype: Dict[str, HealthState]
+        """
         return list(self._fsp_health_state.values())
         # PROTECTED REGION END #    //  CbfSubarray.fspHealthState_read
 
-    def read_fspList(self):
+    def read_fspList(self: CbfSubarray) -> List[List[int]]:
         # PROTECTED REGION ID(CbfSubarray.fspList_read) ENABLED START #
-        """return fspList attribute: 2 dimentioanl array the fsp used by all the subarrays"""
+        """
+        return fspList attribute 
+        2 dimentional array the fsp used by all the subarrays
+        
+        :return: the array of FSP IDs
+        :rtype: List[List[int]]
+        """
         return self._fsp_list
         # PROTECTED REGION END #    //  CbfSubarray.fspList_read
 
-    def read_latestScanConfig(self):
+    def read_latestScanConfig(self: CbfSubarray) -> str:
         # PROTECTED REGION ID(CbfSubarray.latestScanConfig_read) ENABLED START #
-        """Return the latestScanConfig attribute."""
+        """
+        Return the latestScanConfig attribute.
+        
+        :return: the latest scan configuration string
+        :rtype: str
+        """
         return self._latest_scan_config
         # PROTECTED REGION END #    //  CbfSubarray.latestScanConfig_read
 
@@ -1540,10 +1717,19 @@ class CbfSubarray(SKASubarray):
         dtype_out='DevVarLongStringArray',
         doc_out="(ReturnType, 'informational message')"
     )
-    def RemoveReceptors(self, argin):
+    def RemoveReceptors(
+        self: CbfSubarray,
+        argin: List[int]
+    ) -> Tuple[ResultCode, str]:
         """
         Remove from list of receptors. Turn Subarray to ObsState = EMPTY if no receptors assigned.
         Uses RemoveReceptorsCommand class.
+
+        :param argin: list of receptor IDs to remove
+        :return: A tuple containing a return code and a string
+            message indicating status. The message is for
+            information purpose only.
+        :rtype: (ResultCode, str)
         """
         command = self.get_command_object("RemoveReceptors")
         (return_code, message) = command(argin)
@@ -1582,9 +1768,16 @@ class CbfSubarray(SKASubarray):
     )
 
     @DebugIt()
-    def RemoveAllReceptors(self):
+    def RemoveAllReceptors(self: CbfSubarray) -> Tuple[ResultCode, str]:
         # PROTECTED REGION ID(CbfSubarray.RemoveAllReceptors) ENABLED START #
-        """Remove all receptors. Turn Subarray OFF if no receptors assigned"""
+        """
+        Remove all receptors. Turn Subarray OFF if no receptors assigned
+
+        :return: A tuple containing a return code and a string
+            message indicating status. The message is for
+            information purpose only.
+        :rtype: (ResultCode, str)
+        """
 
         command = self.get_command_object("RemoveAllReceptors")
         (return_code, message) = command()
@@ -1627,10 +1820,19 @@ class CbfSubarray(SKASubarray):
     )
 
     @DebugIt()
-    def AddReceptors(self, argin):
+    def AddReceptors(
+        self: CbfSubarray,
+        argin: List[int]
+    ) -> Tuple[ResultCode, str]:
         """
         Assign Receptors to this subarray. 
         Turn subarray to ObsState = IDLE if previously no receptor is assigned.
+
+        :param argin: list of receptors to add
+        :return: A tuple containing a return code and a string
+            message indicating status. The message is for
+            information purpose only.
+        :rtype: (ResultCode, str)
         """
         command = self.get_command_object("AddReceptors")
         (return_code, message) = command(argin)
@@ -1753,12 +1955,14 @@ class CbfSubarray(SKASubarray):
         """
         A class for CbfSubarray's ConfigureScan() command.
         """
-        def do(self, argin):
+        def do(
+            self: CbfSubarray.ConfigureScanCommand,
+            argin: str
+        ) -> Tuple[ResultCode, str]:
             """
             Stateless hook for ConfigureScan() command functionality.
 
-            :param argin: The configuration as JSON
-            :type argin: str
+            :param argin: The configuration as JSON formatted string.
             :return: A tuple containing a return code and a string
                 message indicating status. The message is for
                 information purpose only.
@@ -2042,12 +2246,18 @@ class CbfSubarray(SKASubarray):
     )
 
     @DebugIt()
-    def ConfigureScan(self, argin):
+    def ConfigureScan(self: CbfSubarray, argin: str) -> Tuple[ResultCode, str]:
         # PROTECTED REGION ID(CbfSubarray.ConfigureScan) ENABLED START #
         # """
         """Change state to CONFIGURING.
         Configure attributes from input JSON. Subscribe events. Configure VCC, VCC subarray, FSP, FSP Subarray. 
         publish output links.
+
+        :param argin: The configuration as JSON formatted string.
+        :return: A tuple containing a return code and a string
+            message indicating status. The message is for
+            information purpose only.
+        :rtype: (ResultCode, str)
         """
 
         command = self.get_command_object("ConfigureScan")
@@ -2058,12 +2268,15 @@ class CbfSubarray(SKASubarray):
         """
         A class for CbfSubarray's Scan() command.
         """
-        def do(self, argin):
+        def do(
+            self: CbfSubarray.ScanCommand,
+            argin: str
+        ) -> Tuple[ResultCode, str]:
             """
             Stateless hook for Scan() command functionality.
 
-            :param argin: ScanID
-            :type argin: int
+            :param argin: The scan ID as JSON formatted string.
+            :type argin: str
             :return: A tuple containing a return code and a string
                 message indicating status. The message is for
                 information purpose only.
@@ -2095,7 +2308,15 @@ class CbfSubarray(SKASubarray):
         """
         A class for CbfSubarray's EndScan() command.
         """
-        def do(self):
+        def do(self: CbfSubarray.EndScanCommand) -> Tuple[ResultCode, str]:
+            """
+            Stateless hook for EndScan() command functionality.
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
             (result_code,message)=super().do()
             device=self.target
 
@@ -2116,9 +2337,15 @@ class CbfSubarray(SKASubarray):
         dtype_out='DevVarLongStringArray',
         doc_out="(ReturnType, 'informational message')",
     )
-    def GoToIdle(self):
-        
-        """deconfigure a scan, set ObsState to IDLE"""
+    def GoToIdle(self: CbfSubarray) -> Tuple[ResultCode, str]:
+        """
+        deconfigure a scan, set ObsState to IDLE
+
+        :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+        :rtype: (ResultCode, str)
+        """
         
         command = self.get_command_object("GoToIdle")
         (return_code, message) = command()
@@ -2128,7 +2355,7 @@ class CbfSubarray(SKASubarray):
         """
         A class for SKASubarray's GoToIdle() command.
         """
-        def do(self):
+        def do(self: CbfSubarray.GoToIdleCommand) -> Tuple[ResultCode, str]:
             """
             Stateless hook for GoToIdle() command functionality.
             
@@ -2211,7 +2438,7 @@ class CbfSubarray(SKASubarray):
         """
         A class for CbfSubarray's ObsReset() command.
         """
-        def do(self):
+        def do(self: CbfSubarray.ObsResetCommand) -> Tuple[ResultCode, str]:
             """
             Stateless hook for ObsReset() command functionality.
 
