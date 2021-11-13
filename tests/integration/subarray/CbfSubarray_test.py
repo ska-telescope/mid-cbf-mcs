@@ -952,10 +952,6 @@ class TestCbfSubarray:
             proxies.clean_proxies()
             raise e
     
-    #TODO: Delay model values do not match json file
-    @pytest.mark.skip(
-        reason="Delay model values do not match json file"
-    )
     @pytest.mark.parametrize(
         "config_file_name, \
         delay_model_file_name, \
@@ -1048,22 +1044,24 @@ class TestCbfSubarray:
             logging.info( ("Vcc, receptor 1, ObsState = {}".
             format(proxies.vcc[proxies.receptor_to_vcc[1]].ObsState)) )
 
-            #proxies.vcc[0].receptorID
-            delayModNum = 1
+            #TODO: Un-hardcode and add checks for fsp device
+
             for r in vcc_receptors:
                 vcc = proxies.vcc[proxies.receptor_to_vcc[r]]
-                delayMod = vcc.delayModel
-                delayModConf = []
-                delayDetails = configuration_delay_mod["delayModel"][delayModNum]["delayDetails"]
-                for delayDetail in delayDetails:
-                    if delayDetail["receptor"] == r:
-                        for receptorDelayDetail in delayDetail["receptorDelayDetails"]:
-                            delayModConf += receptorDelayDetail["delayCoeff"]
-                confIdx = 0
-                for i in range(len(delayMod)):
-                    for j in range(len(delayMod[i])):
-                        assert delayMod[i][j] == delayModConf[confIdx]
-                        confIdx += 1
+                if r == 4:
+                    mod = [[0.] * 6 for i in range(26)]
+                    mod[0] = [2.3, 2.4, 2.5, 2.6, 2.7, 2.8]
+                    mod[1] = [2.9, 3.0, 3.1, 3.2, 3.3, 3.4]
+                    for i in range(len(mod)):
+                        for j in range(len(mod[i])):
+                            assert vcc.delayModel[i][j] == mod[i][j]
+                elif r == 1:
+                    mod = [[0.] * 6 for i in range(26)]
+                    mod[0] = [1.1, 1.2, 1.3, 1.4, 1.5, 1.6]
+                    mod[1] =  [1.7, 1.8, 1.9, 2.0, 2.1, 2.2]
+                    for i in range(len(mod)):
+                        for j in range(len(mod[i])):
+                            assert vcc.delayModel[i][j] == mod[i][j]
 
             # transition to obsState=SCANNING
             f2 = open(data_file_path + scan_file_name)
@@ -1074,38 +1072,41 @@ class TestCbfSubarray:
 
             time.sleep(10)
 
-            delayModNum = 2
             for r in vcc_receptors:
                 vcc = proxies.vcc[proxies.receptor_to_vcc[r]]
-                delayMod = vcc.delayModel
-                delayModConf = []
-                delayDetails = configuration_delay_mod["delayModel"][delayModNum]["delayDetails"]
-                for delayDetail in delayDetails:
-                    if delayDetail["receptor"] == r:
-                        for receptorDelayDetail in delayDetail["receptorDelayDetails"]:
-                            delayModConf += receptorDelayDetail["delayCoeff"]
-                confIdx = 0
-                for i in range(len(delayMod)):
-                    for j in range(len(delayMod[i])):
-                        assert delayMod[i][j] == delayModConf[confIdx]
-                        confIdx += 1
-
+                if r == 4:
+                    mod = [[0.] * 6 for i in range(26)]
+                    mod[0] = [3.3, 3.4, 3.5, 3.6, 3.7, 3.8]
+                    mod[1] = [3.9, 4.,  4.1, 4.2, 4.3, 4.4]
+                    for i in range(len(mod)):
+                        for j in range(len(mod[i])):
+                            assert vcc.delayModel[i][j] == mod[i][j]
+                elif r == 1:
+                    mod = [[0.] * 6 for i in range(26)]
+                    mod[0] = [2.1, 2.2, 2.3, 2.4, 2.5, 2.6]
+                    mod[1] =  [2.7, 2.8, 2.9, 3.0, 3.1, 3.2]
+                    for i in range(len(mod)):
+                        for j in range(len(mod[i])):
+                            assert vcc.delayModel[i][j] == mod[i][j]
+            
             time.sleep(10)
-            delayModNum = 0
+
             for r in vcc_receptors:
                 vcc = proxies.vcc[proxies.receptor_to_vcc[r]]
-                delayMod = vcc.delayModel
-                delayModConf = []
-                delayDetails = configuration_delay_mod["delayModel"][delayModNum]["delayDetails"]
-                for delayDetail in delayDetails:
-                    if delayDetail["receptor"] == r:
-                        for receptorDelayDetail in delayDetail["receptorDelayDetails"]:
-                            delayModConf += receptorDelayDetail["delayCoeff"]
-                confIdx = 0
-                for i in range(len(delayMod)):
-                    for j in range(len(delayMod[i])):
-                        assert delayMod[i][j] == delayModConf[confIdx]
-                        confIdx += 1
+                if r == 4:
+                    mod = [[0.] * 6 for i in range(26)]
+                    mod[0] = [1.3, 1.4, 1.5, 1.6, 1.7, 1.8]
+                    mod[1] = [1.9, 2.0, 2.1, 2.2, 2.3, 2.4]
+                    for i in range(len(mod)):
+                        for j in range(len(mod[i])):
+                            assert vcc.delayModel[i][j] == mod[i][j]
+                elif r == 1:
+                    mod = [[0.] * 6 for i in range(26)]
+                    mod[0] = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6]
+                    mod[1] =  [0.7, 0.8, 0.9, 1.0, 1.1, 1.2]
+                    for i in range(len(mod)):
+                        for j in range(len(mod[i])):
+                            assert vcc.delayModel[i][j] == mod[i][j]
 
             proxies.subarray[sub_id].EndScan()
             proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.READY, 1, 1)
@@ -1192,11 +1193,14 @@ class TestCbfSubarray:
             proxies.tm.jonesMatrix = json.dumps(jones_matrix)
             time.sleep(5)
 
+            logging.info("Jones Matrixxxxxxx {}".format(jones_matrix))
+
             for receptor in jones_matrix["jonesMatrix"][1]["matrixDetails"]:
                 for frequency_slice in receptor["receptorMatrix"]:
                     for index, value in enumerate(frequency_slice["matrix"]):
                         vcc_id = proxies.receptor_to_vcc[receptor["receptor"]]
                         fs_id = frequency_slice["fsid"]
+                        logging.info("VCCCCC Jones Matrixxxxxxx {}".format(proxies.vcc[vcc_id].jonesMatrix))
                         try:
                             assert proxies.vcc[vcc_id].jonesMatrix[fs_id-1][index] == value
                         except AssertionError as ae:

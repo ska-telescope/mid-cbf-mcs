@@ -157,8 +157,7 @@ class CbfSubarray(SKASubarray):
                 for delay_model in delay_model_all["delayModel"]:
                     t = Thread(
                         target=self._update_delay_model,
-                        args=(delay_model["destinationType"], 
-                              int(delay_model["epoch"]), 
+                        args=(int(delay_model["epoch"]), 
                               json.dumps(delay_model["delayDetails"])
                         )
                     )
@@ -171,7 +170,7 @@ class CbfSubarray(SKASubarray):
                 " of device " + fqdn
             )
 
-    def _update_delay_model(self, destination_type, epoch, model):
+    def _update_delay_model(self, epoch, model):
         # This method is always called on a separate thread
         log_msg = "Delay model active at {} (currently {})...".format(epoch, int(time.time()))
         self.logger.info(log_msg)
@@ -187,10 +186,8 @@ class CbfSubarray(SKASubarray):
 
         # we lock the mutex, forward the configuration, then immediately unlock it
         self._mutex_delay_model_config.acquire()
-        if destination_type == "vcc":
-            self._group_vcc.command_inout("UpdateDelayModel", data)
-        elif destination_type == "fsp":
-            self._group_fsp.command_inout("UpdateDelayModel", data)
+        self._group_vcc.command_inout("UpdateDelayModel", data)
+        self._group_fsp.command_inout("UpdateDelayModel", data)
         self._mutex_delay_model_config.release()
 
     def _jones_matrix_event_callback(
