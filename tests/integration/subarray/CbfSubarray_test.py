@@ -1193,14 +1193,11 @@ class TestCbfSubarray:
             proxies.tm.jonesMatrix = json.dumps(jones_matrix)
             time.sleep(5)
 
-            logging.info("Jones Matrixxxxxxx {}".format(jones_matrix))
-
             for receptor in jones_matrix["jonesMatrix"][1]["matrixDetails"]:
                 for frequency_slice in receptor["receptorMatrix"]:
                     for index, value in enumerate(frequency_slice["matrix"]):
                         vcc_id = proxies.receptor_to_vcc[receptor["receptor"]]
                         fs_id = frequency_slice["fsid"]
-                        logging.info("VCCCCC Jones Matrixxxxxxx {}".format(proxies.vcc[vcc_id].jonesMatrix))
                         try:
                             assert proxies.vcc[vcc_id].jonesMatrix[fs_id-1][index] == value
                         except AssertionError as ae:
