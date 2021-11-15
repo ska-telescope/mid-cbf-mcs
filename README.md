@@ -297,7 +297,7 @@ To re-generate the documentation locally prior to checking in updates to Git:
 ```bash
 make documentation
 ```
-To see the generated documentation, open `/ska-mid-cbf-engineering-console/docs/build/html/index.html` in a browser -- e.g.,
+To see the generated documentation, open `/ska-mid-cbf-mcs/docs/build/html/index.html` in a browser -- e.g.,
 ```
 firefox docs/build/html/index.html &
 ```
