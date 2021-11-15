@@ -1076,6 +1076,9 @@ class TestCbfSubarray:
                     if proxy.State() == DevState.OFF:
                         proxy.On()
                         proxies.wait_timeout_dev([proxy], DevState.ON, 1, 1)
+                    proxy.SetFunctionMode("PST-BF")
+                    time.sleep(2)
+                    assert proxy.functionMode == 3
             assert proxies.subarray[sub_id].obsState == ObsState.EMPTY
 
             # add receptors
@@ -1107,7 +1110,8 @@ class TestCbfSubarray:
             logging.info( ("Vcc, receptor 1, ObsState = {}".
             format(proxies.vcc[proxies.receptor_to_vcc[1]].ObsState)) )
 
-            #TODO: Un-hardcode and add checks for fsp device
+            #TODO: Un-hardcode 
+            FspModes = Enum('FspModes', 'CORR PSS_BF PST_BF VLBI')
 
             for r in vcc_receptors:
                 vcc = proxies.vcc[proxies.receptor_to_vcc[r]]
@@ -1115,6 +1119,7 @@ class TestCbfSubarray:
                     mod = [[0.] * 6 for i in range(26)]
                     mod[0] = [2.3, 2.4, 2.5, 2.6, 2.7, 2.8]
                     mod[1] = [2.9, 3.0, 3.1, 3.2, 3.3, 3.4]
+                    mod[2] = [7.7, 7.8, 7.9, 7.0, 7.1, 7.2]
                     for i in range(len(mod)):
                         for j in range(len(mod[i])):
                             assert vcc.delayModel[i][j] == mod[i][j]
@@ -1122,9 +1127,18 @@ class TestCbfSubarray:
                     mod = [[0.] * 6 for i in range(26)]
                     mod[0] = [1.1, 1.2, 1.3, 1.4, 1.5, 1.6]
                     mod[1] =  [1.7, 1.8, 1.9, 2.0, 2.1, 2.2]
+                    mod[2] = [6.7, 6.8, 6.9, 6.0, 6.1, 6.2]
                     for i in range(len(mod)):
                         for j in range(len(mod[i])):
                             assert vcc.delayModel[i][j] == mod[i][j]
+            
+            for fsp in [proxies.fsp[i + 1] for i in range(len(proxies.fsp))]:
+                if fsp.get_property("FspID") == 3:
+                    mod_fsp = [[0.0] * 6 for _ in range(4)]
+                    mod_fsp[0] = [6.7, 6.8, 6.9, 6.0, 6.1, 6.2]
+                    for i in range(len(mod_fsp)):
+                        for j in range(len(mod_fsp[i])):
+                            assert fsp.delayModel[i][j] == mod_fsp[i][j]
 
             # transition to obsState=SCANNING
             f2 = open(data_file_path + scan_file_name)
@@ -1141,6 +1155,7 @@ class TestCbfSubarray:
                     mod = [[0.] * 6 for i in range(26)]
                     mod[0] = [3.3, 3.4, 3.5, 3.6, 3.7, 3.8]
                     mod[1] = [3.9, 4.,  4.1, 4.2, 4.3, 4.4]
+                    mod[2] = [9.7, 9.8, 9.9, 9.0, 9.1, 9.2]
                     for i in range(len(mod)):
                         for j in range(len(mod[i])):
                             assert vcc.delayModel[i][j] == mod[i][j]
@@ -1148,9 +1163,18 @@ class TestCbfSubarray:
                     mod = [[0.] * 6 for i in range(26)]
                     mod[0] = [2.1, 2.2, 2.3, 2.4, 2.5, 2.6]
                     mod[1] =  [2.7, 2.8, 2.9, 3.0, 3.1, 3.2]
+                    mod[2] =  [8.7, 8.8, 8.9, 8.0, 8.1, 8.2]
                     for i in range(len(mod)):
                         for j in range(len(mod[i])):
                             assert vcc.delayModel[i][j] == mod[i][j]
+            
+            for fsp in [proxies.fsp[i + 1] for i in range(len(proxies.fsp))]:
+                if fsp.get_property("FspID") == 3:
+                    mod_fsp = [[0.0] * 6 for _ in range(4)]
+                    mod_fsp[0] = [8.7, 8.8, 8.9, 8.0, 8.1, 8.2]
+                    for i in range(len(mod_fsp)):
+                        for j in range(len(mod_fsp[i])):
+                            assert fsp.delayModel[i][j] == mod_fsp[i][j]
             
             time.sleep(10)
 
@@ -1160,6 +1184,7 @@ class TestCbfSubarray:
                     mod = [[0.] * 6 for i in range(26)]
                     mod[0] = [1.3, 1.4, 1.5, 1.6, 1.7, 1.8]
                     mod[1] = [1.9, 2.0, 2.1, 2.2, 2.3, 2.4]
+                    mod[2] = [5.7, 5.8, 5.9, 5.0, 5.1, 5.2]
                     for i in range(len(mod)):
                         for j in range(len(mod[i])):
                             assert vcc.delayModel[i][j] == mod[i][j]
@@ -1167,9 +1192,18 @@ class TestCbfSubarray:
                     mod = [[0.] * 6 for i in range(26)]
                     mod[0] = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6]
                     mod[1] =  [0.7, 0.8, 0.9, 1.0, 1.1, 1.2]
+                    mod[2] = [4.7, 4.8, 4.9, 4.0, 4.1, 4.2]
                     for i in range(len(mod)):
                         for j in range(len(mod[i])):
                             assert vcc.delayModel[i][j] == mod[i][j]
+            
+            for fsp in [proxies.fsp[i + 1] for i in range(len(proxies.fsp))]:
+                if fsp.get_property("FspID") == 3:
+                    mod_fsp = [[0.0] * 6 for _ in range(4)]
+                    mod_fsp[0] = [4.7, 4.8, 4.9, 4.0, 4.1, 4.2]
+                    for i in range(len(mod_fsp)):
+                        for j in range(len(mod_fsp[i])):
+                            assert fsp.delayModel[i][j] == mod_fsp[i][j]
 
             proxies.subarray[sub_id].EndScan()
             proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.READY, 1, 1)
