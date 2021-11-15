@@ -291,6 +291,16 @@ The device tree can be viewed and explored. In addition, device attributes can
 be seen and modified, and device commands can be sent, by creating and saving a 
 new dashboard.
 
+# Documentation
+To re-generate the documentation locally prior to checking in updates to Git:
+```bash
+make documentation
+```
+To see the generated documentation, open `/ska-mid-cbf-engineering-console/docs/build/html/index.html` in a browser -- e.g.,
+```
+firefox docs/build/html/index.html &
+```
+
 # Releasing
 
 For a new release (i.e. prior to merging a branch into main) update the 
