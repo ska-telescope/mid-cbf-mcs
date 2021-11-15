@@ -10,12 +10,14 @@
 # Copyright (c) 2019 National Research Council of Canada
 
 from __future__ import annotations
-from typing import List, Tuple
+from typing import Any, List, Tuple
 
 from random import randint
 
 # tango imports
 import tango
+from tango import AttrQuality
+
 import logging
 
 from ska_mid_cbf_mcs.group_proxy import CbfGroupProxy
@@ -72,7 +74,7 @@ class ControllerComponentManager:
         self._report_talon_lru_admin_mode = [AdminMode.ONLINE.value] * self._count_talon_lru
 
         self._proxies = {}
-        self._event_id = {} 
+        self._events = {} 
 
         self._receptor_to_vcc = []
         self._vcc_to_receptor = []
@@ -234,25 +236,19 @@ class ControllerComponentManager:
         if self._connected:
             return
 
-        remaining = list(range(1, self._count_vcc + 1))
-        for i in range(1, self._count_vcc + 1):
-            receptorIDIndex = randint(0, len(remaining) - 1)
-            receptorID = remaining[receptorIDIndex]
-            self._receptor_to_vcc.append("{}:{}".format(receptorID, i))
-            self._vcc_to_receptor.append("{}:{}".format(i, receptorID))
-            vcc_proxy = CbfDeviceProxy(
-                fqdn=self._fqdn_vcc[i - 1], 
-                logger=self._logger
-            )
-            vcc_proxy.receptorID = receptorID
-            del remaining[receptorIDIndex]
+        # initialize dicts with maps receptorID <=> vccID
+        # TODO: vccID == receptorID for now, for testing purposes
+        for vccID in range(1, self._count_vcc + 1):
+            receptorID = vccID
+            self._receptor_to_vcc.append(f"{receptorID}:{vccID}")
+            self._vcc_to_receptor.append(f"{vccID}:{receptorID}")
 
         try:
             self._group_vcc = CbfGroupProxy("VCC", logger=self._logger)
             self._group_vcc.add(self._fqdn_vcc)
         except tango.DevFailed:
             self._connected = False
-            log_msg = "Failure in connection to " + self._fqdn_vcc + " device"
+            log_msg = f"Failure in connection to {self._fqdn_vcc}"
             self._logger.error(log_msg)
             return
         
@@ -261,7 +257,7 @@ class ControllerComponentManager:
             self._group_fsp.add(self._fqdn_fsp)
         except tango.DevFailed:
             self._connected = False
-            log_msg = "Failure in connection to " + self._fqdn_fsp + " device"
+            log_msg = f"Failure in connection to {self._fqdn_fsp}"
             self._logger.error(log_msg)
             return
 
@@ -270,30 +266,49 @@ class ControllerComponentManager:
             self._group_subarray.add(self._fqdn_subarray)
         except tango.DevFailed:
             self._connected = False
-            log_msg = "Failure in connection to " + self._fqdn_subarray + " device"
+            log_msg = f"Failure in connection to {self._fqdn_subarray}"
             self._logger.error(log_msg)
             return
 
         self._fqdn_talon_lru = self._fqdn_talon_lru
 
-        for fqdn in self._fqdn_vcc + self._fqdn_fsp + self._fqdn_talon_lru + self._fqdn_subarray :
+        for idx, fqdn in enumerate(self._fqdn_vcc):
             if fqdn not in self._proxies:
                 try:
                     log_msg = "Trying connection to " + fqdn + " device"
                     self._logger.info(log_msg)
-                    device_proxy = CbfDeviceProxy(
+                    proxy = CbfDeviceProxy(
+                        fqdn=fqdn, 
+                        logger=self._logger
+                    )
+                    self._proxies[fqdn] = proxy
+                    # TODO: for testing purposes;
+                    # receptorID assigned to VCCs in order they are processed
+                    proxy.receptorID = idx + 1
+                except tango.DevFailed as df:
+                    for item in df.args:
+                        log_msg = "Failure in connection to " + fqdn + \
+                            " device: " + str(item.reason)
+                        self._logger.error(log_msg)
+
+        for fqdn in self._fqdn_fsp + self._fqdn_talon_lru + self._fqdn_subarray:
+            if fqdn not in self._proxies:
+                try:
+                    log_msg = f"Trying connection to {fqdn}"
+                    self._logger.info(log_msg)
+                    proxy = CbfDeviceProxy(
                         fqdn=fqdn, 
                         logger=self._logger
                     )
 
                     if fqdn in self._fqdn_talon_lru:
-                        device_proxy.set_timeout_millis(10000)
+                        proxy.set_timeout_millis(10000)
                         
-                    self._proxies[fqdn] = device_proxy
+                    self._proxies[fqdn] = proxy
                 except tango.DevFailed as df:
                     self._connected = False
                     for item in df.args:
-                        log_msg = "Failure in connection to " + fqdn + " device: " + str(item.reason)
+                        log_msg = f"Failure in connection to {fqdn}; {item.reason}"
                         self._logger.error(log_msg)
                     return
         
@@ -301,104 +316,123 @@ class ControllerComponentManager:
 
 
     def __state_change_event_callback(
-            self: ControllerComponentManager, 
-            fqdn,
-            name,
-            value,
-            quality
-        ) -> None:
+        self: ControllerComponentManager,
+        fqdn: str,
+        name: str,
+        value: Any,
+        quality: AttrQuality
+    ) -> None:
+        """
+        Callback for state/healthState change event subscription.
 
-            if value is not None:
-                try:
-                    if "healthstate" in name:
-                        if "subarray" in fqdn:
-                            self._report_subarray_health_state[
-                                self._fqdn_subarray.index(fqdn)
+        :param fqdn: attribute FQDN
+        :param name: attribute name
+        :param value: attribute value
+        :param quality: attribute quality
+        """
+        if value is not None:
+            try:
+                if "healthstate" in name:
+                    if "subarray" in fqdn:
+                        self._report_subarray_health_state[
+                            self._fqdn_subarray.index(fqdn)
+                        ] = value
+                    elif "vcc" in fqdn:
+                        self._report_vcc_health_state[
+                            self._fqdn_vcc.index(fqdn)
+                        ] = value
+                    elif "fsp" in fqdn:
+                        self._report_fsp_health_state[
+                            self._fqdn_fsp.index(fqdn)
+                        ] = value
+                    elif "talon_lru" in fqdn:
+                        self._report_talon_lru_health_state[
+                            self._fqdn_talon_lru.index(fqdn)
                             ] = value
-                        elif "vcc" in fqdn:
-                            self._report_vcc_health_state[
-                                self._fqdn_vcc.index(fqdn)
-                            ] = value
-                        elif "fsp" in fqdn:
-                            self._report_fsp_health_state[
-                                self._fqdn_fsp.index(fqdn)
-                            ] = value
-                        elif "talon_lru" in fqdn:
-                            self._report_talon_lru_health_state[
-                                self._fqdn_talon_lru.index(fqdn)
-                                ] = value
-                        else:
-                            # should NOT happen!
-                            log_msg = "Received health state change for unknown device " + \
-                                    str(name)
-                            self._logger.warn(log_msg)
-                            return
-                    elif "state" in name:
-                        if "subarray" in fqdn:
-                            self._report_subarray_state[
-                                self._fqdn_subarray.index(fqdn)
-                            ] = value
-                        elif "vcc" in fqdn:
-                            self._report_vcc_state[
-                                self._fqdn_vcc.index(fqdn)
-                            ] = value
-                        elif "fsp" in fqdn:
-                            self._report_fsp_state[
-                                self._fqdn_fsp.index(fqdn)
-                            ] = value
-                        elif "talon_lru" in fqdn:
-                            self._report_talon_lru_state[
-                                self._fqdn_talon_lru.index(fqdn)
-                            ] = value
-                        else:
-                            # should NOT happen!
-                            log_msg = "Received state change for unknown device " + \
-                                    str(name)
-                            self._logger.warn(log_msg)
-                            return
-                    elif "adminmode" in name:
-                        if "subarray" in fqdn:
-                            self._report_subarray_admin_mode[
-                                self._fqdn_subarray.index(fqdn)
-                            ] = value
-                        elif "vcc" in fqdn:
-                            self._report_vcc_admin_mode[
-                                self._fqdn_vcc.index(fqdn)
-                            ] = value
-                        elif "fsp" in fqdn:
-                            self._report_fsp_admin_mode[
-                                self._fqdn_fsp.index(fqdn)
-                            ] = value
-                        elif "talon_lru" in fqdn:
-                            self._report_talon_lru_admin_mode[
-                                self._fqdn_talon_lru.index(fqdn)
-                            ] = value
-                        else:
-                            # should NOT happen!
-                            log_msg = "Received admin mode change for unknown device " + \
-                                    str(name)
-                            self._logger.warn(log_msg)
-                            return
+                    else:
+                        # should NOT happen!
+                        log_msg = (
+                            "Received health state change for "
+                            f"unknown device {name}"
+                        )
+                        self._logger.warn(log_msg)
+                        return
+                elif "state" in name:
+                    if "subarray" in fqdn:
+                        self._report_subarray_state[
+                            self._fqdn_subarray.index(fqdn)
+                        ] = value
+                    elif "vcc" in fqdn:
+                        self._report_vcc_state[
+                            self._fqdn_vcc.index(fqdn)
+                        ] = value
+                    elif "fsp" in fqdn:
+                        self._report_fsp_state[
+                            self._fqdn_fsp.index(fqdn)
+                        ] = value
+                    elif "talon_lru" in fqdn:
+                        self._report_talon_lru_state[
+                            self._fqdn_talon_lru.index(fqdn)
+                        ] = value
+                    else:
+                        # should NOT happen!
+                        log_msg = (
+                            "Received state change for unknown device "
+                            f"{name}"
+                        )
+                        self._logger.warn(log_msg)
+                        return
+                elif "adminmode" in name:
+                    if "subarray" in fqdn:
+                        self._report_subarray_admin_mode[
+                            self._fqdn_subarray.index(fqdn)
+                        ] = value
+                    elif "vcc" in fqdn:
+                        self._report_vcc_admin_mode[
+                            self._fqdn_vcc.index(fqdn)
+                        ] = value
+                    elif "fsp" in fqdn:
+                        self._report_fsp_admin_mode[
+                            self._fqdn_fsp.index(fqdn)
+                        ] = value
+                    elif "talon_lru" in fqdn:
+                        self._report_talon_lru_admin_mode[
+                            self._fqdn_talon_lru.index(fqdn)
+                        ] = value
+                    else:
+                        # should NOT happen!
+                        log_msg = (
+                            "Received admin mode change for "
+                            f"unknown device {name}"
+                        )
+                        self._logger.warn(log_msg)
+                        return
 
-                    log_msg = "New value for " + str(name) + " of device " + \
-                        fqdn + ": " + str(value)
-                    self._logger.info(log_msg)
-                except Exception as except_occurred:
-                    self._logger.error(str(except_occurred))
-            else:
-                self._logger.warn(
-                    "None value for attribute " + str(name) + 
-                    " of device " + fqdn
-                )
+                log_msg = f"New value for {name} of device {fqdn}: {value}"
+                self._logger.info(log_msg)
+            except Exception as except_occurred:
+                self._logger.error(str(except_occurred))
+        else:
+            self._logger.warn(
+                f"None value for attribute {name} of device {fqdn}"
+            )
+
 
     def __membership_event_callback(
-        self: ControllerComponentManager, 
-        fqdn,
-        name,
-        value,
-        quality
+        self: ControllerComponentManager,
+        fqdn: str,
+        name: str,
+        value: Any,
+        quality: AttrQuality
     ) -> None:
+        """
+        Callback for subarrayMembership change event subscription.
 
+        :param fqdn: attribute FQDN
+        :param name: attribute name
+        :param value: attribute value
+        :param quality: attribute quality
+        """
         if value is not None:
             try:
                 if "vcc" in fqdn:
@@ -407,52 +441,57 @@ class ControllerComponentManager:
                     ] = value
                 elif "fsp" in fqdn:
                     if value not in self._report_fsp_subarray_membership[
-                        self._fqdn_fsp.index(fqdn)]:
-                        self._logger.warning("{}".format(value))
+                        self._fqdn_fsp.index(fqdn)
+                    ]:
+                        self._logger.info(f"{value}")
                         self._report_fsp_subarray_membership[
                             self._fqdn_fsp.index(fqdn)
                         ].append(value)
                 else:
                     # should NOT happen!
-                    log_msg = "Received event for unknown device " + str(name)
+                    log_msg = f"Received event for unknown device {name}"
                     self._logger.warn(log_msg)
                     return
 
-                log_msg = "New value for " + str(name) + " of device " + \
-                        fqdn + ": " + str(value)
+                log_msg = f"New value for {name} of device {fqdn}: {value}"
                 self._logger.info(log_msg)
 
             except Exception as except_occurred:
                 self._logger.error(str(except_occurred))
         else:
             self._logger.warn(
-                "None value for attribute " + str(name) + 
-                " of device " + fqdn
+                f"None value for attribute {name} of device {fqdn}"
             )
 
         
     def __config_ID_event_callback(
-            self: ControllerComponentManager, 
-            fqdn,
-            name,
-            value,
-            quality
+        self: ControllerComponentManager,
+        fqdn: str,
+        name: str,
+        value: Any,
+        quality: AttrQuality
     ) -> None:
+        """
+        Callback for configID change event subscription.
+
+        :param fqdn: attribute FQDN
+        :param name: attribute name
+        :param value: attribute value
+        :param quality: attribute quality
+        """
 
         if value is not None:
             try:
                 self._subarray_config_ID[
                     self._fqdn_subarray.index(fqdn)
                 ] = value
-                log_msg = "New value for " + str(name) + " of device " + \
-                        fqdn + ": " + str(value)
+                log_msg = f"New value for {name} of device {fqdn}: {value}"
                 self._logger.info(log_msg)
             except Exception as except_occurred:
                 self._logger.error(str(except_occurred))
         else:
             self._logger.warn(
-                "None value for attribute " + str(name) + 
-                " of device " + fqdn
+                f"None value for attribute {name} of device {fqdn}"
             )
 
     
@@ -465,42 +504,36 @@ class ControllerComponentManager:
             # Try connection with each subarray/capability
             for fqdn, proxy in self._proxies.items():
                     try:
-                        events = []
+                        events = {}
 
                         # subscribe to change events on subarrays/capabilities
                         for attribute_val in ["adminMode", "healthState", "State"]:
-                            events.append(
-                                proxy.add_change_event_callback(
+                            events[attribute_val] = proxy.add_change_event_callback(
                                     attribute_name=attribute_val,
                                     callback=self.__state_change_event_callback,
                                     stateless=True
-                                )
                             )
 
                         # subscribe to VCC/FSP subarray membership change events
                         if "vcc" in fqdn or "fsp" in fqdn:
-                            events.append(
-                                proxy.add_change_event_callback(
+                            events["subarrayMembership"] = proxy.add_change_event_callback(
                                     attribute_name="subarrayMembership",
                                     callback=self.__membership_event_callback,
                                     stateless=True
-                                )
                             )
 
                         # subscribe to subarray config ID change events
                         if "subarray" in fqdn:
-                            events.append(
-                                proxy.add_change_event_callback(
+                            events["configID"] = proxy.add_change_event_callback(
                                     attribute_name="configID",
                                     callback=self.__config_ID_event_callback,
                                     stateless=True
                                 )
-                            )
 
-                        self._event_id[proxy] = events
+                        self._events[proxy] = events
                     except tango.DevFailed as df:
                         for item in df.args:
-                            log_msg = "Failure in connection to " + fqdn + " device: " + str(item.reason)
+                            log_msg = f"Failure in connection to {fqdn}; {item.reason}"
                             self._logger.error(log_msg)
                             return (ResultCode.FAILED, log_msg)
 
@@ -562,13 +595,12 @@ class ControllerComponentManager:
                 return (ResultCode.FAILED, log_msg)
 
             try:
-                for proxy in list(self._event_id.keys()):
-                    for event_id in self._event_id[proxy]:
+                for proxy, events in self._events.items():
+                    for name, id in events.items():
                         self._logger.info(
-                            "Unsubscribing from event " + str(event_id) +
-                            ", device: " + str(proxy._fqdn)
+                            f"Unsubscribing from event {id}, device: {proxy._fqdn}"
                         )
-                        proxy.unsubscribe_event(event_id)
+                        proxy.remove_event(name, id)
             except tango.DevFailed:
                 log_msg = "Failed to unsubscribe to events"
                 self._logger.error(log_msg)

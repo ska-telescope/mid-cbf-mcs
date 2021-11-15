@@ -100,6 +100,7 @@ class MockGroupBuilder:
         """
         self.add_command("add", None)
         self.add_command("remove", None)
+        self.add_command("remove_all", None)
 
     def _setup_read_attribute(
         self: MockGroupBuilder, mock_group: unittest.mock.Mock
