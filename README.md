@@ -14,6 +14,7 @@ Documentation on the Developer's portal:
   * [Set up Kubernetes](#set-up-kubernetes)
 * [Running the Mid CBF MCS](#running-the-mid-cbf-mcs)
 * [Jive and Taranta](#jive-and-taranta)
+* [Documentation](#documentation)
 * [Releasing](#releasing)
 * [Development resources](#development-resources)
   * [Other resources](#other-resources)

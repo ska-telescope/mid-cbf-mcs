@@ -21,7 +21,7 @@
 # import skabase
 autodoc_mock_imports = ['PyTango', 'tango', 'tango.server','run', 'DeviceMeta', 'command',
                  'future', 'future.utils', 'logging', 'logging.handlers', 'ska',
-                 'skabase', 'SKASubarray','numpy', 'backoff', 'paramiko', 'scp', 'ska_tango_base'
+                 'skabase', 'numpy', 'backoff', 'paramiko', 'scp', 'ska_tango_base'
                  ]
 autodoc_member_order = 'bysource'
 
