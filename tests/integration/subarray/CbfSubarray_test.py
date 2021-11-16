@@ -1076,9 +1076,6 @@ class TestCbfSubarray:
                     if proxy.State() == DevState.OFF:
                         proxy.On()
                         proxies.wait_timeout_dev([proxy], DevState.ON, 1, 1)
-                    proxy.SetFunctionMode("PST-BF")
-                    time.sleep(2)
-                    assert proxy.functionMode == 3
             assert proxies.subarray[sub_id].obsState == ObsState.EMPTY
 
             # add receptors
