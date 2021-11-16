@@ -61,6 +61,7 @@ class TestCbfSubarray:
             :py:class:`tango.test_context.DeviceTestContext`.
         """
         result = device_under_test.On()
+        time.sleep(1)
         assert result[0][0] == ResultCode.OK
         assert device_under_test.State() == DevState.ON
 
@@ -76,6 +77,7 @@ class TestCbfSubarray:
             :py:class:`tango.test_context.DeviceTestContext`.
         """
         result = device_under_test.Off()
+        time.sleep(1)
         assert result[0][0] == ResultCode.OK
         assert device_under_test.State() == DevState.OFF
 
