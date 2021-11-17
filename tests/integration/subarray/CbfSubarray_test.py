@@ -435,7 +435,7 @@ class TestCbfSubarray:
         proxies: pytest.fixture, 
         config_file_name: str,
         receptor_ids: List[int], 
-        vcc_receptors: List[int]
+        vcc_receptors: List[int],
     ) -> None:
         """
         Test a successful scan configuration
@@ -1039,7 +1039,7 @@ class TestCbfSubarray:
         delay_model_file_name: str,
         scan_file_name: str,
         receptor_ids: List[int],
-        vcc_receptors: List[int]
+        vcc_receptors: List[int],
     ) -> None:
 
         """
@@ -1072,22 +1072,6 @@ class TestCbfSubarray:
                         proxy.On()
                         proxies.wait_timeout_dev([proxy], DevState.ON, 1, 1)
             assert proxies.subarray[sub_id].obsState == ObsState.EMPTY
-
-            # check initial delay models
-            num_cols = 6
-            num_rows_vcc = 26
-            num_rows_fsp = 4
-            vcc_mod_init = [[0.0] * num_cols for i in range(num_rows_vcc)] 
-            fsp_mod_init = [[0.0] * num_cols for _ in range(num_rows_fsp)]
-            for r in vcc_receptors:
-                vcc = proxies.vcc[proxies.receptor_to_vcc[r]] 
-                for i in range(len(vcc_mod_init)):
-                    for j in range(len(vcc_mod_init[i])):
-                        assert vcc.delayModel[i][j] == vcc_mod_init[i][j]
-            for fsp in [proxies.fsp[i + 1] for i in range(len(proxies.fsp))]:
-                for i in range(len(fsp_mod_init)):
-                    for j in range(len(fsp_mod_init[i])):
-                        assert fsp.delayModel[i][j] == fsp_mod_init[i][j]
             
             # add receptors
             proxies.subarray[sub_id].AddReceptors(receptor_ids)
@@ -1114,10 +1098,12 @@ class TestCbfSubarray:
 
             # update delay model
             proxies.tm.delayModel = json.dumps(delay_model)
-            time.sleep(1)
+            time.sleep(5)
 
             FspModes = Enum('FspModes', 'CORR PSS_BF PST_BF VLBI')
             epoch_to_scan = 1
+            num_cols = 6
+            num_rows_vcc = 26
 
             for epoch in range( len(delay_model_index_per_epoch) ):
 
@@ -1137,18 +1123,18 @@ class TestCbfSubarray:
                     for fsp in [proxies.fsp[i + 1] for i in range(len(proxies.fsp))]:
                         if fsp.functionMode in [FspModes.PSS_BF.value, FspModes.PST_BF.value]:
                             for receptorDelayDetail in delayDetail["receptorDelayDetails"]:
-                                recep_id = delayDetail["receptor"]
-                                if proxy.functionMode == FspModes.PSS_BF.value:
+                                rec_id = delayDetail["receptor"]
+                                if fsp.functionMode == FspModes.PSS_BF.value:
                                     proxy_subarray = proxies.fspPssSubarray[sub_id -1]
                                 else:
                                     proxy_subarray = proxies.fspPstSubarray[sub_id -1]
-                                if recep_id in proxy_subarray.receptors:
-                                    delayCoeff = receptorDelayDetail["delayCoeff"]
-                                    mod_fsp = [[0.0] * num_cols for _ in range(num_rows_fsp)]
-                                    mod_fsp[recep_id -1] = delayCoeff
-                                    for i in range(len(mod_fsp)):
-                                        for j in range(len(mod_fsp[i])):
-                                            assert fsp.delayModel[i][j] == mod_fsp[i][j]
+                                if rec_id in proxy_subarray.receptors:
+                                    fs_id = receptorDelayDetail["fsid"]
+                                    if fs_id == int(fsp.get_property("FspID")['FspID'][0]):
+                                        delayCoeff = receptorDelayDetail["delayCoeff"]
+                                        for idx, coeff in enumerate(delayCoeff):
+                                            assert coeff == fsp.delayModel[rec_id -1][idx]                                           
+                              
                 if epoch == epoch_to_scan:
                     # transition to obsState=SCANNING
                     f2 = open(data_file_path + scan_file_name)
