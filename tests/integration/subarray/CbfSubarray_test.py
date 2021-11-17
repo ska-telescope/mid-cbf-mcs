@@ -17,6 +17,7 @@ import time
 from datetime import datetime
 import json
 import logging
+import random
 
 # Data file path
 data_file_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
@@ -1051,11 +1052,6 @@ class TestCbfSubarray:
         delay_model = json.loads(json_string_delay_mod)
         f.close()
 
-        aa = delay_model["delayModel"][0]["delayDetails"][0]["receptorDelayDetails"]
-        num_fsp_IDs = len(aa)
-        for jj in range(num_fsp_IDs):      
-            logging.info( "delayCoeff = {}".format( aa[jj]["delayCoeff"]) )
-
         try:
             f = open(data_file_path + config_file_name)
             json_string = f.read().replace("\n", "")
@@ -1077,6 +1073,22 @@ class TestCbfSubarray:
                         proxies.wait_timeout_dev([proxy], DevState.ON, 1, 1)
             assert proxies.subarray[sub_id].obsState == ObsState.EMPTY
 
+            # check initial delay models
+            num_cols = 6
+            num_rows_vcc = 26
+            num_rows_fsp = 4
+            vcc_mod_init = [[0.0] * num_cols for i in range(num_rows_vcc)] 
+            fsp_mod_init = [[0.0] * num_cols for _ in range(num_rows_fsp)]
+            for r in vcc_receptors:
+                vcc = proxies.vcc[proxies.receptor_to_vcc[r]] 
+                for i in range(len(vcc_mod_init)):
+                    for j in range(len(vcc_mod_init[i])):
+                        assert vcc.delayModel[i][j] == vcc_mod_init[i][j]
+            for fsp in [proxies.fsp[i + 1] for i in range(len(proxies.fsp))]:
+                for i in range(len(fsp_mod_init)):
+                    for j in range(len(fsp_mod_init[i])):
+                        assert fsp.delayModel[i][j] == fsp_mod_init[i][j]
+            
             # add receptors
             proxies.subarray[sub_id].AddReceptors(receptor_ids)
             proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.IDLE, 1, 1)
@@ -1087,136 +1099,65 @@ class TestCbfSubarray:
             proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.READY, 3, 1)
 
             assert proxies.subarray[sub_id].obsState == ObsState.READY
-
-            # create a delay model
             
             # Insert the epoch
-
-            delay_model_index_per_epoch = [1,2,0]
+            delay_model_index_per_epoch = list(range(len(delay_model["delayModel"])))
+            random.shuffle(delay_model_index_per_epoch)
             epoch_increment = 10
             for i, delay_model_index in enumerate(delay_model_index_per_epoch):
                 if i == 0:
-                    epoch = 0
-                    delay_model["delayModel"][delay_model_index]["epoch"] = str(epoch)
+                    epoch_time = 0
+                    delay_model["delayModel"][delay_model_index]["epoch"] = str(epoch_time)
                 else:
-                    epoch += epoch_increment
-                    delay_model["delayModel"][delay_model_index]["epoch"] = str(int(time.time()) + epoch)
+                    epoch_time += epoch_increment
+                    delay_model["delayModel"][delay_model_index]["epoch"] = str(int(time.time()) + epoch_time)
 
             # update delay model
             proxies.tm.delayModel = json.dumps(delay_model)
             time.sleep(1)
 
-            for jj in range(len(receptor_ids)):
-                logging.info((" proxies.vcc[{}].receptorID = {}".
-                format(jj+1, proxies.vcc[jj+1].receptorID)))
-
-            logging.info( ("Vcc, receptor 1, ObsState = {}".
-            format(proxies.vcc[proxies.receptor_to_vcc[1]].ObsState)) )
-
             FspModes = Enum('FspModes', 'CORR PSS_BF PST_BF VLBI')
+            epoch_to_scan = 1
 
-            epoch = 0
-            model = delay_model["delayModel"][delay_model_index_per_epoch[epoch]]            
-            for delayDetail in model["delayDetails"]:
-                for r in vcc_receptors:
-                    vcc = proxies.vcc[proxies.receptor_to_vcc[r]]  
-                    if delayDetail["receptor"] == r:
-                        mod = [[0.] * 6 for i in range(26)]
-                        for receptorDelayDetail in delayDetail["receptorDelayDetails"]:
-                            fs_id = receptorDelayDetail["fsid"]
-                            delayCoeff = receptorDelayDetail["delayCoeff"]
-                            mod[fs_id -1] = delayCoeff
-                        for i in range(len(mod)):
-                            for j in range(len(mod[i])):
-                                assert vcc.delayModel[i][j] == mod[i][j]
-                for fsp in [proxies.fsp[i + 1] for i in range(len(proxies.fsp))]:
-                    if fsp.functionMode in [FspModes.PSS_BF.value, FspModes.PST_BF.value]:
-                        for receptorDelayDetail in delayDetail["receptorDelayDetails"]:
-                            recep_id = delayDetail["receptor"]
-                            if proxy.functionMode == FspModes.PSS_BF.value:
-                                proxy_subarray = proxies.fspPssSubarray[sub_id -1]
-                            else:
-                                proxy_subarray = proxies.fspPstSubarray[sub_id -1]
-                            if recep_id in proxy_subarray.receptors:
+            for epoch in range( len(delay_model_index_per_epoch) ):
+
+                model = delay_model["delayModel"][delay_model_index_per_epoch[epoch]]            
+                for delayDetail in model["delayDetails"]:
+                    for r in vcc_receptors:
+                        vcc = proxies.vcc[proxies.receptor_to_vcc[r]]  
+                        if delayDetail["receptor"] == r:
+                            mod_vcc = [[0.0] * num_cols for i in range(num_rows_vcc)]
+                            for receptorDelayDetail in delayDetail["receptorDelayDetails"]:
+                                fs_id = receptorDelayDetail["fsid"]
                                 delayCoeff = receptorDelayDetail["delayCoeff"]
-                                mod_fsp = [[0.0] * 6 for _ in range(4)]
-                                mod_fsp[recep_id -1] = delayCoeff
-                                for i in range(len(mod_fsp)):
-                                    for j in range(len(mod_fsp[i])):
-                                        assert fsp.delayModel[i][j] == mod_fsp[i][j]
+                                mod_vcc[fs_id -1] = delayCoeff
+                            for i in range(len(mod_vcc)):
+                                for j in range(len(mod_vcc[i])):
+                                    assert vcc.delayModel[i][j] == mod_vcc[i][j]
+                    for fsp in [proxies.fsp[i + 1] for i in range(len(proxies.fsp))]:
+                        if fsp.functionMode in [FspModes.PSS_BF.value, FspModes.PST_BF.value]:
+                            for receptorDelayDetail in delayDetail["receptorDelayDetails"]:
+                                recep_id = delayDetail["receptor"]
+                                if proxy.functionMode == FspModes.PSS_BF.value:
+                                    proxy_subarray = proxies.fspPssSubarray[sub_id -1]
+                                else:
+                                    proxy_subarray = proxies.fspPstSubarray[sub_id -1]
+                                if recep_id in proxy_subarray.receptors:
+                                    delayCoeff = receptorDelayDetail["delayCoeff"]
+                                    mod_fsp = [[0.0] * num_cols for _ in range(num_rows_fsp)]
+                                    mod_fsp[recep_id -1] = delayCoeff
+                                    for i in range(len(mod_fsp)):
+                                        for j in range(len(mod_fsp[i])):
+                                            assert fsp.delayModel[i][j] == mod_fsp[i][j]
+                if epoch == epoch_to_scan:
+                    # transition to obsState=SCANNING
+                    f2 = open(data_file_path + scan_file_name)
+                    proxies.subarray[sub_id].Scan(f2.read().replace("\n", ""))
+                    f2.close()
+                    proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.SCANNING, 1, 1)
+                    assert proxies.subarray[sub_id].obsState == ObsState.SCANNING
 
-            # transition to obsState=SCANNING
-            f2 = open(data_file_path + scan_file_name)
-            proxies.subarray[sub_id].Scan(f2.read().replace("\n", ""))
-            f2.close()
-            proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.SCANNING, 1, 1)
-            assert proxies.subarray[sub_id].obsState == ObsState.SCANNING
-
-            time.sleep(10)
-
-            epoch = 1
-            model = delay_model["delayModel"][delay_model_index_per_epoch[epoch]]            
-            for delayDetail in model["delayDetails"]:
-                for r in vcc_receptors:
-                    vcc = proxies.vcc[proxies.receptor_to_vcc[r]]  
-                    if delayDetail["receptor"] == r:
-                        mod = [[0.] * 6 for i in range(26)]
-                        for receptorDelayDetail in delayDetail["receptorDelayDetails"]:
-                            fs_id = receptorDelayDetail["fsid"]
-                            delayCoeff = receptorDelayDetail["delayCoeff"]
-                            mod[fs_id -1] = delayCoeff
-                        for i in range(len(mod)):
-                            for j in range(len(mod[i])):
-                                assert vcc.delayModel[i][j] == mod[i][j]
-            
-                for fsp in [proxies.fsp[i + 1] for i in range(len(proxies.fsp))]:
-                    if fsp.functionMode in [FspModes.PSS_BF.value, FspModes.PST_BF.value]:
-                        for receptorDelayDetail in delayDetail["receptorDelayDetails"]:
-                            recep_id = delayDetail["receptor"]
-                            if proxy.functionMode == FspModes.PSS_BF.value:
-                                proxy_subarray = proxies.fspPssSubarray[sub_id -1]
-                            else:
-                                proxy_subarray = proxies.fspPstSubarray[sub_id -1]
-                            if recep_id in proxy_subarray.receptors:
-                                delayCoeff = receptorDelayDetail["delayCoeff"]
-                                mod_fsp = [[0.0] * 6 for _ in range(4)]
-                                mod_fsp[recep_id -1] = delayCoeff
-                                for i in range(len(mod_fsp)):
-                                    for j in range(len(mod_fsp[i])):
-                                        assert fsp.delayModel[i][j] == mod_fsp[i][j]
-            
-            time.sleep(10)
-
-            epoch = 2
-            model = delay_model["delayModel"][delay_model_index_per_epoch[epoch]]            
-            for delayDetail in model["delayDetails"]:
-                for r in vcc_receptors:
-                    vcc = proxies.vcc[proxies.receptor_to_vcc[r]]  
-                    if delayDetail["receptor"] == r:
-                        mod = [[0.] * 6 for i in range(26)]
-                        for receptorDelayDetail in delayDetail["receptorDelayDetails"]:
-                            fs_id = receptorDelayDetail["fsid"]
-                            delayCoeff = receptorDelayDetail["delayCoeff"]
-                            mod[fs_id -1] = delayCoeff
-                        for i in range(len(mod)):
-                            for j in range(len(mod[i])):
-                                assert vcc.delayModel[i][j] == mod[i][j]
-            
-            for fsp in [proxies.fsp[i + 1] for i in range(len(proxies.fsp))]:
-                    if fsp.functionMode in [FspModes.PSS_BF.value, FspModes.PST_BF.value]:
-                        for receptorDelayDetail in delayDetail["receptorDelayDetails"]:
-                            recep_id = delayDetail["receptor"]
-                            if proxy.functionMode == FspModes.PSS_BF.value:
-                                proxy_subarray = proxies.fspPssSubarray[sub_id -1]
-                            else:
-                                proxy_subarray = proxies.fspPstSubarray[sub_id -1]
-                            if recep_id in proxy_subarray.receptors:
-                                delayCoeff = receptorDelayDetail["delayCoeff"]
-                                mod_fsp = [[0.0] * 6 for _ in range(4)]
-                                mod_fsp[recep_id -1] = delayCoeff
-                                for i in range(len(mod_fsp)):
-                                    for j in range(len(mod_fsp[i])):
-                                        assert fsp.delayModel[i][j] == mod_fsp[i][j]
+                time.sleep(10)
 
             proxies.subarray[sub_id].EndScan()
             proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.READY, 1, 1)
