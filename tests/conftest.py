@@ -407,6 +407,27 @@ def init_proxies_fixture():
                 for proxy in proxygroup:
                     if proxy.obsState == state: break
                 time.sleep(sleep_time_s)
+
+        # Controller device to turn on subarrays, FSPs, VCCs
+        def on(self: Proxies) -> None:
+            if self.controller.State() == DevState.ON:
+                pass
+            elif self.controller.State() == DevState.OFF:
+                self.controller.On()
+                self.wait_timeout_dev([self.controller], DevState.ON, 3, 1)
+            else:
+                self.controller.Off()
+                self.wait_timeout_dev([self.controller], DevState.OFF, 3, 1)
+                self.controller.On()
+                self.wait_timeout_dev([self.controller], DevState.ON, 3, 1)
+
+        # Controller device to turn off subarrays, FSPs, VCCs
+        def off(self: Proxies) -> None:
+            if self.controller.State() == DevState.OFF:
+                pass
+            else:
+                self.controller.Off()
+                self.wait_timeout_dev([self.controller], DevState.OFF, 3, 1)
     
     return Proxies()
 

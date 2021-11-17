@@ -118,6 +118,7 @@ class TestCbfSubarray:
             :py:class:`tango.test_context.DeviceTestContext`.
         """
         device_under_test.On()
+        time.sleep(1)
 
          # add all except last receptor
         device_under_test.AddReceptors(receptor_ids[:-1])
@@ -169,6 +170,7 @@ class TestCbfSubarray:
             :py:class:`tango.test_context.DeviceTestContext`.
         """
         device_under_test.On()
+        time.sleep(1)
         device_under_test.AddReceptors(receptor_ids)
         time.sleep(0.1)
 
@@ -203,6 +205,7 @@ class TestCbfSubarray:
             - when a receptor ID is invalid (e.g. out of range)
         """
         device_under_test.On()
+        time.sleep(1)
 
         # add some receptors 
         device_under_test.AddReceptors(receptor_ids)

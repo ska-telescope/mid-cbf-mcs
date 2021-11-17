@@ -142,9 +142,6 @@ class TestCbfController:
         proxies.wait_timeout_dev([proxies.fspSubarray[i + 1] for i in range(2)], DevState.OFF, 1, 0.1)
         for i in range(2):
             assert proxies.fspSubarray[i + 1].State() == DevState.OFF
-        
-        proxies.controller.Off()
-        proxies.wait_timeout_dev([proxies.controller], DevState.OFF, 3, 0.1)
 
     # Don't really wanna bother fixing these three tests right now.
     """
