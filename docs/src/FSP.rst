@@ -6,7 +6,7 @@ Mid-Cbf-FSP Device Server (FSPmulti)
 Fsp Class
 ---------------------------
 
-.. automodule:: tangods.Fsp.Fsp.Fsp
+.. autoclass:: ska_mid_cbf_mcs.fsp.fsp_device.Fsp
    :members:
    :undoc-members:
    :show-inheritance:
@@ -17,7 +17,7 @@ Fsp Class
 FspCorr Class
 ---------------------------
 
-.. automodule:: tangods.Fsp.FspCorr.FspCorr
+.. autoclass:: ska_mid_cbf_mcs.fsp.fsp_corr.FspCorr
    :members:
    :undoc-members:
    :show-inheritance:
@@ -26,7 +26,7 @@ FspCorr Class
 FspCorrSubarray Class
 ---------------------------
 
-.. automodule:: tangods.Fsp.FspCorrSubarray.FspCorrSubarray
+.. autoclass:: ska_mid_cbf_mcs.fsp.fsp_corr_subarray.FspCorrSubarray
    :members:
    :undoc-members:
    :show-inheritance:
@@ -35,7 +35,7 @@ FspCorrSubarray Class
 FspPss Class
 ---------------------------
 
-.. automodule:: tangods.Fsp.FspPss.FspPss
+.. autoclass:: ska_mid_cbf_mcs.fsp.fsp_pss.FspPss
    :members:
    :undoc-members:
    :show-inheritance:
@@ -44,7 +44,7 @@ FspPss Class
 FspPssSubarray Class
 ---------------------------
 
-.. automodule:: tangods.Fsp.FspPssSubarray.FspPssSubarray
+.. autoclass:: ska_mid_cbf_mcs.fsp.fsp_pss_subarray.FspPssSubarray
    :members:
    :undoc-members:
    :show-inheritance:
@@ -54,7 +54,7 @@ FspPssSubarray Class
 FspPst Class
 ---------------------------
 
-.. automodule:: tangods.Fsp.FspPst.FspPst
+.. autoclass:: ska_mid_cbf_mcs.fsp.fsp_pst.FspPst
    :members:
    :undoc-members:
    :show-inheritance:
@@ -63,7 +63,7 @@ FspPst Class
 FspVlbi Class
 ---------------------------
 
-.. automodule:: tangods.Fsp.FspVlbi.FspVlbi
+.. autoclass:: ska_mid_cbf_mcs.fsp.fsp_vlbi.FspVlbi
    :members:
    :undoc-members:
    :show-inheritance:

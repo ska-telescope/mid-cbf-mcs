@@ -6,7 +6,7 @@ Mid-Cbf-VCC Device Server (VCCmulti)
 VCC Class
 ---------------------------
 
-.. automodule:: tangods.Vcc.Vcc.Vcc
+.. autoclass:: ska_mid_cbf_mcs.vcc.vcc_device.Vcc
    :members:
    :undoc-members:
    :show-inheritance:
@@ -16,7 +16,7 @@ VCC Class
 VccBand1And2 Class
 ---------------------------
 
-.. automodule:: tangods.Vcc.VccBand1And2.VccBand1And2
+.. autoclass:: ska_mid_cbf_mcs.vcc.vcc_band_1_and_2.VccBand1And2
    :members:
    :undoc-members:
    :show-inheritance:
@@ -25,7 +25,7 @@ VccBand1And2 Class
 VccBand3 Class
 ---------------------------
 
-.. automodule:: tangods.Vcc.VccBand3.VccBand3
+.. autoclass:: ska_mid_cbf_mcs.vcc.vcc_band_3.VccBand3
    :members:
    :undoc-members:
    :show-inheritance:
@@ -34,7 +34,7 @@ VccBand3 Class
 VccBand4 Class
 ---------------------------
 
-.. automodule:: tangods.Vcc.VccBand4.VccBand4
+.. autoclass:: ska_mid_cbf_mcs.vcc.vcc_band_4.VccBand4
    :members:
    :undoc-members:
    :show-inheritance:
@@ -43,7 +43,7 @@ VccBand4 Class
 VccBand5 Class
 ---------------------------
 
-.. automodule:: tangods.Vcc.VccBand5.VccBand5
+.. autoclass:: ska_mid_cbf_mcs.vcc.vcc_band_5.VccBand5
    :members:
    :undoc-members:
    :show-inheritance:
@@ -52,7 +52,7 @@ VccBand5 Class
 VccSearchWindow Class
 ---------------------------
 
-.. automodule:: tangods.Vcc.VccSearchWindow.VccSearchWindow
+.. autoclass:: ska_mid_cbf_mcs.vcc.vcc_search_window.VccSearchWindow
    :members:
    :undoc-members:
    :show-inheritance:

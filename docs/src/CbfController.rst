@@ -3,7 +3,7 @@
 CbfController Class
 ================================
 
-.. automodule:: tangods.CbfController.CbfController.CbfController
+.. autoclass:: ska_mid_cbf_mcs.controller.controller_device.CbfController
    :members:
    :undoc-members:
    :show-inheritance:

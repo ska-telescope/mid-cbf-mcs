@@ -1,12 +1,12 @@
 .. Documentation
 
-Mid-Cbf-Subarray Device Server (Subarraymulti)
+Talon LRU
 ======================================================
 
-CbfSubarray Class
+TalonLRU Class
 -----------------
 
-.. autoclass:: ska_mid_cbf_mcs.subarray.subarray_device.CbfSubarray
+.. autoclass:: ska_mid_cbf_mcs.talon_lru.talon_lru_device.TalonLRU
    :members:
    :undoc-members:
    :show-inheritance:
