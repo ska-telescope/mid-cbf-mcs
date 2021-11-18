@@ -1393,10 +1393,10 @@ class CbfSubarray(SKASubarray):
             device._scan_ID = 0
             device._fsp_list = [[], [], [], []]
             # device._output_links_distribution = {"configID": ""}# ???
-            device._vcc_state = {}  # device_name:state
-            device._vcc_health_state = {}  # device_name:healthState
-            device._fsp_state = {}  # device_name:state
-            device._fsp_health_state = {}  # device_name:healthState
+            device._vcc_state = {}
+            device._vcc_health_state = {}
+            device._fsp_state = {}
+            device._fsp_health_state = {}
             # store list of fsp configs being used for each function mode
             device._corr_config = []
             device._pss_config = []

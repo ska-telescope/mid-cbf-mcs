@@ -109,6 +109,7 @@ unit:
     - k8srunner
   script:
     - make requirements
+    - pip install -e .
     - make unit-test
   environment:
       name: test

@@ -391,17 +391,6 @@ def init_proxies_fixture():
                 if proxy.obsState == ObsState.IDLE:
                     proxy.RemoveAllReceptors()
                     self.wait_timeout_obs([proxy], ObsState.EMPTY, 3, 0.05)
-                if proxy.obsState == ObsState.EMPTY:
-                    proxy.Off()
-                    self.wait_timeout_dev([proxy], DevState.OFF, 3, 0.05)
-                    for vcc_proxy in [self.vcc[i + 1] for i in range(4)]:
-                        if vcc_proxy.State() == DevState.ON:
-                            vcc_proxy.Off()
-                            self.wait_timeout_dev([vcc_proxy], DevState.OFF, 1, 0.05)
-                    for fsp_proxy in [self.fsp[i + 1] for i in range(4)]:
-                        if fsp_proxy.State() == DevState.ON:
-                            fsp_proxy.Off()
-                            self.wait_timeout_dev([fsp_proxy], DevState.OFF, 1, 0.05)
         
         def wait_timeout_dev(self, proxygroup, state, time_s, sleep_time_s):
             #time.sleep(time_s)
@@ -418,6 +407,27 @@ def init_proxies_fixture():
                 for proxy in proxygroup:
                     if proxy.obsState == state: break
                 time.sleep(sleep_time_s)
+
+        # Controller device to turn on subarrays, FSPs, VCCs
+        def on(self: Proxies) -> None:
+            if self.controller.State() == DevState.ON:
+                pass
+            elif self.controller.State() == DevState.OFF:
+                self.controller.On()
+                self.wait_timeout_dev([self.controller], DevState.ON, 3, 1)
+            else:
+                self.controller.Off()
+                self.wait_timeout_dev([self.controller], DevState.OFF, 3, 1)
+                self.controller.On()
+                self.wait_timeout_dev([self.controller], DevState.ON, 3, 1)
+
+        # Controller device to turn off subarrays, FSPs, VCCs
+        def off(self: Proxies) -> None:
+            if self.controller.State() == DevState.OFF:
+                pass
+            else:
+                self.controller.Off()
+                self.wait_timeout_dev([self.controller], DevState.OFF, 3, 1)
     
     return Proxies()
 

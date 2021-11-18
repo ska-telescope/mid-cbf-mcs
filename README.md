@@ -14,6 +14,7 @@ Documentation on the Developer's portal:
   * [Set up Kubernetes](#set-up-kubernetes)
 * [Running the Mid CBF MCS](#running-the-mid-cbf-mcs)
 * [Jive and Taranta](#jive-and-taranta)
+* [Documentation](#documentation)
 * [Releasing](#releasing)
 * [Development resources](#development-resources)
   * [Other resources](#other-resources)
@@ -290,6 +291,16 @@ The following credentials can be used to operate the system:
 The device tree can be viewed and explored. In addition, device attributes can 
 be seen and modified, and device commands can be sent, by creating and saving a 
 new dashboard.
+
+# Documentation
+To re-generate the documentation locally prior to checking in updates to Git:
+```bash
+make documentation
+```
+To see the generated documentation, open `/ska-mid-cbf-mcs/docs/build/html/index.html` in a browser -- e.g.,
+```
+firefox docs/build/html/index.html &
+```
 
 # Releasing
 

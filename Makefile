@@ -87,7 +87,7 @@ requirements: ## Install Dependencies
 
 unit-test: ## Run simulation mode unit tests
 	@mkdir -p build; \
-	PYTHONPATH=src:tests pytest -c setup-unit-test.cfg ./tests/unit $(FILE)
+	pytest -c setup-unit-test.cfg
 
 jive: ## configure TANGO_HOST to enable Jive
 	@echo
@@ -98,6 +98,9 @@ jive: ## configure TANGO_HOST to enable Jive
 update-db-port:  ## update Tango DB port so that the DB is accessible from the Talon boards on the Dell server
 	kubectl -n ska-mid-cbf patch service/tango-host-databaseds-from-makefile-test --type='json' -p '[{"op":"replace","path":"/spec/ports/0/nodePort","value": 30176}]'
 
+documentation:   ## ## Re-generate documentation
+	cd docs && make clean && make html
+	
 # pull and interactive preserved from docker.mk
 ###############################################
 # pull:  ## download the application image

@@ -21,15 +21,14 @@
 # import skabase
 autodoc_mock_imports = ['PyTango', 'tango', 'tango.server','run', 'DeviceMeta', 'command',
                  'future', 'future.utils', 'logging', 'logging.handlers', 'ska',
-                 'skabase', 'SKAMaster', 'SKASubarray','numpy'
+                 'skabase', 'numpy', 'backoff', 'paramiko', 'scp', 'ska_tango_base'
                  ]
 autodoc_member_order = 'bysource'
 
 import os
 import sys
+sys.path.insert(0, os.path.abspath('../../src/'))
 import sphinx_rtd_theme
-sys.path.append(os.path.abspath('../../'))
-
 
 
 def setup(app):
@@ -56,16 +55,18 @@ def setup(app):
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    'sphinx_rtd_theme',
     'sphinx.ext.autodoc',
+    'sphinx.ext.napoleon',
     'sphinx.ext.doctest',
     'sphinx.ext.intersphinx',
     'sphinx.ext.todo',
     'sphinx.ext.coverage',
-    'sphinx.ext.githubpages',
-    'sphinx.ext.napoleon',
-    'sphinx.ext.viewcode',
+    'sphinx.ext.mathjax',
     'sphinx.ext.ifconfig',
-    'sphinx.ext.mathjax'
+    'sphinx.ext.viewcode',
+    'sphinx.ext.githubpages',
+    'recommonmark'
 ]
 
 # Add any paths that contain templates here, relative to this directory.

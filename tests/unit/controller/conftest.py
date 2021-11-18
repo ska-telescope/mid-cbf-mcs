@@ -137,8 +137,8 @@ def initial_mocks(
     :param mock_vcc_group: a mock Vcc tango.Group.
     :param mock_fsp: a mock Fsp that is powered off.
     :param mock_fsp_group: a mock Fsp tango.Group.
-    :param mock_subarray: a mock VccBand4 that is powered off.
-    :param mock_subarray_group: a mock subarray tango.Group.
+    :param mock_subarray: a mock CbfSubarray that is powered off.
+    :param mock_subarray_group: a mock CbfSubarray tango.Group.
     :param mock_talon_lru: a mock TalonLRU that is powered off.
 
     :return: a dictionary of proxy mocks to pre-register.

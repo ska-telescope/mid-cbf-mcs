@@ -69,25 +69,10 @@ class TestCbfSubarray:
             port = proxies.subarray[sub_id].DebugDevice()
 
         try:
-            proxies.clean_proxies()
-            if proxies.controller.State() == DevState.OFF:
-                proxies.controller.Init()
-                proxies.wait_timeout_dev([proxies.controller], DevState.STANDBY, 3, 1)
-                proxies.controller.On()
-                proxies.wait_timeout_dev([proxies.controller], DevState.ON, 3, 1)
+            # controller will turn On/Off all of its subordinate devices,
+            # including the subarrays, FSPs and VCCs
+            proxies.on()
 
-            # turn on Subarray
-            if proxies.subarray[sub_id].State() != DevState.ON:
-                proxies.subarray[sub_id].On()
-                proxies.wait_timeout_dev([proxies.subarray[sub_id]], DevState.ON, 3, 1)
-                for proxy in [proxies.vcc[i + 1] for i in range(len(proxies.vcc))]:
-                    if proxy.State() == DevState.OFF:
-                        proxy.On()
-                        proxies.wait_timeout_dev([proxy], DevState.ON, 1, 1)
-                for proxy in [proxies.fsp[i + 1] for i in range(len(proxies.fsp))]:
-                    if proxy.State() == DevState.OFF:
-                        proxy.On()
-                        proxies.wait_timeout_dev([proxy], DevState.ON, 1, 1)
             assert proxies.subarray[sub_id].State() == DevState.ON
             assert proxies.subarray[sub_id].obsState == ObsState.EMPTY
 
@@ -130,11 +115,17 @@ class TestCbfSubarray:
                 assert proxies.vcc[proxies.receptor_to_vcc[receptor]].subarrayMembership == 0
             assert proxies.subarray[sub_id].obsState == ObsState.EMPTY
 
-        except AssertionError as ae: 
+            proxies.off()
+
+        except AssertionError as ae:
+            time.sleep(2)
             proxies.clean_proxies()
+            time.sleep(2)
             raise ae
         except Exception as e:
+            time.sleep(2)
             proxies.clean_proxies()
+            time.sleep(2)
             raise e
 
     @pytest.mark.parametrize(
@@ -168,25 +159,12 @@ class TestCbfSubarray:
         """
         Test invalid AddReceptors commands involving a single subarray:
             - when a receptor ID is invalid (e.g. out of range)
-            - when a receptor to be removed is not assigned to the subarray
         """
         try:
-            # turn on Subarray
-            if proxies.subarray[sub_id].State() != DevState.ON:
-                proxies.subarray[sub_id].On()
-                proxies.wait_timeout_dev([proxies.subarray[sub_id]], DevState.ON, 3, 1)
-                for proxy in [proxies.vcc[i + 1] for i in range(len(proxies.vcc))]:
-                    if proxy.State() == DevState.OFF:
-                        proxy.On()
-                        proxies.wait_timeout_dev([proxy], DevState.ON, 1, 1)
-                for proxy in [proxies.fsp[i + 1] for i in range(len(proxies.fsp))]:
-                    if proxy.State() == DevState.OFF:
-                        proxy.On()
-                        proxies.wait_timeout_dev([proxy], DevState.ON, 1, 1)
+            proxies.on()
+            
             assert proxies.subarray[sub_id].State() == DevState.ON
             assert proxies.subarray[sub_id].obsState == ObsState.EMPTY
-
-            # receptor list should be empty right after initialization
             assert len(proxies.subarray[sub_id].receptors) == 0
             assert all([proxies.vcc[i + 1].subarrayMembership == 0 for i in range(len(proxies.vcc))])
 
@@ -204,10 +182,15 @@ class TestCbfSubarray:
             assert [proxies.subarray[sub_id].receptors[i] for i in range(len(receptor_ids))] == receptor_ids
             assert all([proxies.vcc[proxies.receptor_to_vcc[i]].subarrayMembership == 1 for i in receptor_ids])
 
-            proxies.clean_proxies()
+            proxies.subarray[sub_id].Restart()
+            proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.EMPTY, 1, 1)
+
+            proxies.off()
 
         except AssertionError as ae:
+            time.sleep(2)
             proxies.clean_proxies()
+            time.sleep(2)
             raise ae
         except Exception as e:
             proxies.clean_proxies()
@@ -243,18 +226,8 @@ class TestCbfSubarray:
             - when a receptor to be removed is not assigned to the subarray
         """
         try:
-            # turn on Subarray
-            if proxies.subarray[sub_id].State() != DevState.ON:
-                proxies.subarray[sub_id].On()
-                proxies.wait_timeout_dev([proxies.subarray[sub_id]], DevState.ON, 3, 1)
-                for proxy in [proxies.vcc[i + 1] for i in range(len(proxies.vcc))]:
-                    if proxy.State() == DevState.OFF:
-                        proxy.On()
-                        proxies.wait_timeout_dev([proxy], DevState.ON, 1, 1)
-                for proxy in [proxies.fsp[i + 1] for i in range(len(proxies.fsp))]:
-                    if proxy.State() == DevState.OFF:
-                        proxy.On()
-                        proxies.wait_timeout_dev([proxy], DevState.ON, 1, 1)
+            proxies.on()
+            
             assert proxies.subarray[sub_id].State() == DevState.ON
             assert proxies.subarray[sub_id].obsState == ObsState.EMPTY
 
@@ -276,83 +249,27 @@ class TestCbfSubarray:
             proxies.subarray[sub_id].RemoveAllReceptors()
             proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.EMPTY, 1, 1)
 
+            proxies.off()
+
         except AssertionError as ae:
+            time.sleep(2)
             proxies.clean_proxies()
+            time.sleep(2)
             raise ae
         except Exception as e:
+            time.sleep(2)
             proxies.clean_proxies()
+            time.sleep(2)
             raise e
 
-    @pytest.mark.parametrize(
-        "receptor_ids, \
-        invalid_receptors_to_remove, \
-        sub_id", 
-        [
-            (
-                [1, 3],
-                [2],
-                1
-            ),
-            (
-                [4, 2],
-                [1, 3],
-                1
-            )
-        ]
-    )    
-    @pytest.mark.skip(reason="Since there's only a single subarray, this test is currently broken.")
-    def test_AddRemoveReceptors_invalid_multiple(
-        self: TestCbfSubarray, 
-        proxies: pytest.fixture, 
-        receptor_ids: List[int], 
-        invalid_receptors_to_remove: List[int], 
-        sub_id: int
-    ) -> None:
+    @pytest.mark.parametrize("", [])    
+    @pytest.mark.skip(
+        reason="Since there's only one subarray, this test is not required (and  currently the SW does not support it)."
+    )
+    def test_AddRemoveReceptors_invalid_multiple(self: TestCbfSubarray) -> None:
         """
-
-        Test invalid AddReceptors commands involving multiple subarrays:
-            - when a receptor to be added is already in use by a different subarray
         """
-        # for proxy in vcc_proxies:
-        #     proxy.Init()
-        # proxies.subarray[1].set_timeout_millis(60000)
-        # subarray_2_proxy.set_timeout_millis(60000)
-        # proxies.subarray[1].Init()
-        # subarray_2_proxy.Init()
-        # time.sleep(3)
-        # cbf_controller_proxy.set_timeout_millis(60000)
-        # cbf_controller_proxy.Init()
-        # time.sleep(60)  # takes pretty long for CBF controller to initialize
-
-        # receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
-        #                        cbf_controller_proxy.receptorToVcc)
-
-        # cbf_controller_proxy.On()
-        # time.sleep(3)
-
-        # # receptor list should be empty right after initialization
-        # assert proxies.subarray[1].receptors == ()
-        # assert subarray_2_proxy.receptors == ()
-        # assert all([proxy.subarrayMembership == 0 for proxy in vcc_proxies])
-        # assert proxies.subarray[1].State() == DevState.OFF
-        # assert subarray_2_proxy.State() == DevState.OFF
-
-        # # add some receptors to subarray 1
-        # proxies.subarray[1].AddReceptors([1, 3])
-        # time.sleep(1)
-        # assert proxies.subarray[1].receptors == (1, 3)
-        # assert all([vcc_proxies[receptor_to_vcc[i] - 1].subarrayMembership == 1 for i in [1, 3]])
-        # assert proxies.subarray[1].State() == DevState.ON
-
-        # # try adding some receptors (including an invalid one) to subarray 2
-        # with pytest.raises(tango.DevFailed) as df:
-        #     subarray_2_proxy.AddReceptors([1, 2, 4])
-        # time.sleep(1)
-        # assert "already in use" in str(df.value.args[0].desc)
-        # assert subarray_2_proxy.receptors == (2, 4)
-        # assert all([vcc_proxies[receptor_to_vcc[i] - 1].subarrayMembership == 1 for i in [1, 3]])
-        # assert all([vcc_proxies[receptor_to_vcc[i] - 1].subarrayMembership == 2 for i in [2, 4]])
-        # assert subarray_2_proxy.State() == DevState.ON
+        pass
     
     @pytest.mark.parametrize(
         "receptor_ids, \
@@ -378,18 +295,8 @@ class TestCbfSubarray:
         Test RemoveAllReceptors command
         """
         try:
-            # turn on Subarray
-            if proxies.subarray[sub_id].State() != DevState.ON:
-                proxies.subarray[sub_id].On()
-                proxies.wait_timeout_dev([proxies.subarray[sub_id]], DevState.ON, 3, 1)
-                for proxy in [proxies.vcc[i + 1] for i in range(len(proxies.vcc))]:
-                    if proxy.State() == DevState.OFF:
-                        proxy.On()
-                        proxies.wait_timeout_dev([proxy], DevState.ON, 1, 1)
-                for proxy in [proxies.fsp[i + 1] for i in range(len(proxies.fsp))]:
-                    if proxy.State() == DevState.OFF:
-                        proxy.On()
-                        proxies.wait_timeout_dev([proxy], DevState.ON, 1, 1)
+            proxies.on()
+            
             assert proxies.subarray[sub_id].State() == DevState.ON
             assert proxies.subarray[sub_id].obsState == ObsState.EMPTY
 
@@ -410,12 +317,18 @@ class TestCbfSubarray:
             assert len(proxies.subarray[sub_id].receptors) == 0
             assert all([proxies.vcc[proxies.receptor_to_vcc[i]].subarrayMembership == 0 for i in receptor_ids])
             assert proxies.subarray[sub_id].obsState == ObsState.EMPTY
+
+            proxies.off()
         
         except AssertionError as ae:
+            time.sleep(2)
             proxies.clean_proxies()
+            time.sleep(2)
             raise ae
         except Exception as e:
+            time.sleep(2)
             proxies.clean_proxies()
+            time.sleep(2)
             raise e
 
     @pytest.mark.parametrize(
@@ -441,24 +354,14 @@ class TestCbfSubarray:
         Test a successful scan configuration
         """
         try:
+            proxies.on()
+            
             f = open(data_file_path + config_file_name)
             json_string = f.read().replace("\n", "")
             f.close()
             configuration = json.loads(json_string)
             sub_id = int(configuration["common"]["subarray_id"])
             proxies.subarray[sub_id].loggingLevel = LoggingLevel.DEBUG
-            # turn on Subarray
-            if proxies.subarray[sub_id].State() != DevState.ON:
-                proxies.subarray[sub_id].On()
-                proxies.wait_timeout_dev([proxies.subarray[sub_id]], DevState.ON, 3, 1)
-                for proxy in [proxies.vcc[i + 1] for i in range(len(proxies.vcc))]:
-                    if proxy.State() == DevState.OFF:
-                        proxy.On()
-                        proxies.wait_timeout_dev([proxy], DevState.ON, 1, 1)
-                for proxy in [proxies.fsp[i + 1] for i in range(len(proxies.fsp))]:
-                    if proxy.State() == DevState.OFF:
-                        proxy.On()
-                        proxies.wait_timeout_dev([proxy], DevState.ON, 1, 1)
 
             # check initial value of attributes of CBF subarray
             vcc_index = proxies.receptor_to_vcc[4]
@@ -480,7 +383,7 @@ class TestCbfSubarray:
 
             # configure scan
             proxies.subarray[sub_id].ConfigureScan(json_string)
-            proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.READY, 3, 1)
+            proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.READY, 5, 1)
 
             # check configured attributes of CBF subarray
             assert sub_id == int(configuration["common"]["subarray_id"])
@@ -672,13 +575,22 @@ class TestCbfSubarray:
                     #TODO: This mode is not tested
 
             # Clean Up
-            proxies.clean_proxies()
+            proxies.subarray[sub_id].GoToIdle()
+            proxies.wait_timeout_obs([proxies.vcc[i + 1] for i in range(len(proxies.vcc))], ObsState.IDLE, 3, 1)
+            proxies.subarray[sub_id].RemoveAllReceptors()
+            proxies.wait_timeout_obs([proxies.vcc[i + 1] for i in range(len(proxies.vcc))], ObsState.EMPTY, 3, 1)
+
+            proxies.off()
         
         except AssertionError as ae:
+            time.sleep(2)
             proxies.clean_proxies()
+            time.sleep(2)
             raise ae
         except Exception as e:
+            time.sleep(2)
             proxies.clean_proxies()
+            time.sleep(2)
             raise e
 
     @pytest.mark.parametrize(
@@ -710,23 +622,14 @@ class TestCbfSubarray:
         Test a successful transmission of PST-BF parameters to FSP
         """
         try:
+            proxies.on()
+            
             f = open(data_file_path + config_file_name)
             json_string = f.read().replace("\n", "")
             f.close()
             configuration = json.loads(json_string)
             sub_id = int(configuration["common"]["subarray_id"])
-            # turn on Subarray
-            if proxies.subarray[sub_id].State() != DevState.ON:
-                proxies.subarray[sub_id].On()
-                proxies.wait_timeout_dev([proxies.subarray[sub_id]], DevState.ON, 3, 1)
-                for proxy in [proxies.vcc[i + 1] for i in range(len(proxies.vcc))]:
-                    if proxy.State() == DevState.OFF:
-                        proxy.On()
-                        proxies.wait_timeout_dev([proxy], DevState.ON, 1, 1)
-                for proxy in [proxies.fsp[i + 1] for i in range(len(proxies.fsp))]:
-                    if proxy.State() == DevState.OFF:
-                        proxy.On()
-                        proxies.wait_timeout_dev([proxy], DevState.ON, 1, 1)
+
             # check initial value of attributes of CBF subarray
             assert len(proxies.subarray[sub_id].receptors) == 0
             assert proxies.subarray[sub_id].configID == ''
@@ -740,7 +643,7 @@ class TestCbfSubarray:
 
             # configure scan
             proxies.subarray[sub_id].ConfigureScan(json_string)
-            proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.READY, 3, 1)
+            proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.READY, 5, 1)
             
             # update jones matrices from tm emulator
             f = open(data_file_path + jones_matrix_file_name)
@@ -823,13 +726,22 @@ class TestCbfSubarray:
                 time.sleep(10)
 
             # Clean Up
-            proxies.clean_proxies()
+            proxies.subarray[sub_id].GoToIdle()
+            proxies.wait_timeout_obs([proxies.vcc[i + 1] for i in range(len(proxies.vcc))], ObsState.IDLE, 3, 1)
+            proxies.subarray[sub_id].RemoveAllReceptors()
+            proxies.wait_timeout_obs([proxies.vcc[i + 1] for i in range(len(proxies.vcc))], ObsState.EMPTY, 3, 1)
+
+            proxies.off()
         
         except AssertionError as ae:
+            time.sleep(2)
             proxies.clean_proxies()
+            time.sleep(2)
             raise ae
         except Exception as e:
+            time.sleep(2)
             proxies.clean_proxies()
+            time.sleep(2)
             raise e
 
     @pytest.mark.parametrize(
@@ -841,11 +753,6 @@ class TestCbfSubarray:
                 "ConfigureScan_basic.json",
                 "Scan1_basic.json",
                 [1, 3, 4, 2],
-            ),
-            (
-                "Configure_TM-CSP_v2.json",
-                "Scan1_basic.json",
-                [4, 1, 2],
             )
         ]
     )
@@ -861,26 +768,14 @@ class TestCbfSubarray:
         """
 
         try:
+            proxies.on()
+            
             f = open(data_file_path + config_file_name)
             json_string = f.read().replace("\n", "")
             f.close()
             configuration = json.loads(json_string)
 
             sub_id = int(configuration["common"]["subarray_id"])
-
-            # turn on Subarray
-            if proxies.subarray[sub_id].State() != DevState.ON:
-                proxies.subarray[sub_id].On()
-                proxies.wait_timeout_dev([proxies.subarray[sub_id]], DevState.ON, 3, 1)
-                for proxy in [proxies.vcc[i + 1] for i in range(len(proxies.vcc))]:
-                    if proxy.State() == DevState.OFF:
-                        proxy.On()
-                        proxies.wait_timeout_dev([proxy], DevState.ON, 1, 1)
-                for proxy in [proxies.fsp[i + 1] for i in range(len(proxies.fsp))]:
-                    if proxy.State() == DevState.OFF:
-                        proxy.On()
-                        proxies.wait_timeout_dev([proxy], DevState.ON, 1, 1)
-            assert proxies.subarray[sub_id].obsState == ObsState.EMPTY
 
             num_receptors = len(receptor_ids)
 
@@ -915,8 +810,7 @@ class TestCbfSubarray:
                     assert proxies.fspPstSubarray[fsp_pst_id].obsState == ObsState.IDLE
 
             proxies.subarray[sub_id].ConfigureScan(json_string)
-
-            proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.READY, 3, 1)
+            proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.READY, 5, 1)
 
             # check some configured attributes of CBF subarray           
             frequency_band   = configuration["common"]["frequency_band"]
@@ -1007,13 +901,23 @@ class TestCbfSubarray:
                     fsp_pst_id = fsp_id -1
                     assert proxies.fspPstSubarray[fsp_pst_id].obsState == ObsState.READY
 
-            proxies.clean_proxies()
+            # Clean up
+            proxies.subarray[sub_id].GoToIdle()
+            proxies.wait_timeout_obs([proxies.vcc[i + 1] for i in range(len(proxies.vcc))], ObsState.IDLE, 3, 1)
+            proxies.subarray[sub_id].RemoveAllReceptors()
+            proxies.wait_timeout_obs([proxies.vcc[i + 1] for i in range(len(proxies.vcc))], ObsState.EMPTY, 3, 1)
+
+            proxies.on()
 
         except AssertionError as ae:
+            time.sleep(2)
             proxies.clean_proxies()
+            time.sleep(2)
             raise ae
         except Exception as e:
+            time.sleep(2)
             proxies.clean_proxies()
+            time.sleep(2)
             raise e
     
     @pytest.mark.parametrize(
@@ -1053,24 +957,14 @@ class TestCbfSubarray:
         f.close()
 
         try:
+            proxies.on()
+            
             f = open(data_file_path + config_file_name)
             json_string = f.read().replace("\n", "")
             f.close()
             configuration = json.loads(json_string)
             sub_id = int(configuration["common"]["subarray_id"])
 
-            # turn on Subarray
-            if proxies.subarray[sub_id].State() != DevState.ON:
-                proxies.subarray[sub_id].On()
-                proxies.wait_timeout_dev([proxies.subarray[sub_id]], DevState.ON, 3, 1)
-                for proxy in [proxies.vcc[i + 1] for i in range(len(proxies.vcc))]:
-                    if proxy.State() == DevState.OFF:
-                        proxy.On()
-                        proxies.wait_timeout_dev([proxy], DevState.ON, 1, 1)
-                for proxy in [proxies.fsp[i + 1] for i in range(len(proxies.fsp))]:
-                    if proxy.State() == DevState.OFF:
-                        proxy.On()
-                        proxies.wait_timeout_dev([proxy], DevState.ON, 1, 1)
             assert proxies.subarray[sub_id].obsState == ObsState.EMPTY
             
             # add receptors
@@ -1080,7 +974,7 @@ class TestCbfSubarray:
 
             # configure scan
             proxies.subarray[sub_id].ConfigureScan(json_string)
-            proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.READY, 3, 1)
+            proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.READY, 5, 1)
 
             assert proxies.subarray[sub_id].obsState == ObsState.READY
             
@@ -1145,16 +1039,25 @@ class TestCbfSubarray:
 
                 time.sleep(10)
 
+            # Clean up
             proxies.subarray[sub_id].EndScan()
             proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.READY, 1, 1)
+            proxies.subarray[sub_id].GoToIdle()
+            proxies.wait_timeout_obs([proxies.vcc[i + 1] for i in range(len(proxies.vcc))], ObsState.IDLE, 3, 1)
+            proxies.subarray[sub_id].RemoveAllReceptors()
+            proxies.wait_timeout_obs([proxies.vcc[i + 1] for i in range(len(proxies.vcc))], ObsState.EMPTY, 3, 1)
 
-            proxies.clean_proxies()
+            proxies.off()
 
         except AssertionError as ae:
+            time.sleep(2)
             proxies.clean_proxies()
+            time.sleep(2)
             raise ae
         except Exception as e:
+            time.sleep(2)
             proxies.clean_proxies()
+            time.sleep(2)
             raise e
 
     @pytest.mark.parametrize(
@@ -1183,6 +1086,8 @@ class TestCbfSubarray:
         Test the reception of Jones matrices
         """
         try:
+            proxies.on()
+            
             f = open(data_file_path + config_file_name)
             json_string = f.read().replace("\n", "")
             f.close()
@@ -1190,18 +1095,6 @@ class TestCbfSubarray:
 
             sub_id = int(configuration["common"]["subarray_id"])
 
-            # turn on Subarray
-            if proxies.subarray[sub_id].State() != DevState.ON:
-                proxies.subarray[sub_id].On()
-                proxies.wait_timeout_dev([proxies.subarray[sub_id]], DevState.ON, 3, 1)
-                for proxy in [proxies.vcc[i + 1] for i in range(len(proxies.vcc))]:
-                    if proxy.State() == DevState.OFF:
-                        proxy.On()
-                        proxies.wait_timeout_dev([proxy], DevState.ON, 1, 1)
-                for proxy in [proxies.fsp[i + 1] for i in range(len(proxies.fsp))]:
-                    if proxy.State() == DevState.OFF:
-                        proxy.On()
-                        proxies.wait_timeout_dev([proxy], DevState.ON, 1, 1)
             assert proxies.subarray[sub_id].obsState == ObsState.EMPTY
 
             # add receptors
@@ -1213,7 +1106,7 @@ class TestCbfSubarray:
             # configure scan
             proxies.subarray[sub_id].ConfigureScan(json_string)
 
-            proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.READY, 3, 1)
+            proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.READY, 5, 1)
 
             assert proxies.subarray[sub_id].obsState == ObsState.READY
 
@@ -1296,16 +1189,25 @@ class TestCbfSubarray:
 
                 time.sleep(10)
 
+            # Clean up
             proxies.subarray[sub_id].EndScan()
             proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.READY, 1, 1)
+            proxies.subarray[sub_id].GoToIdle()
+            proxies.wait_timeout_obs([proxies.vcc[i + 1] for i in range(len(proxies.vcc))], ObsState.IDLE, 3, 1)
+            proxies.subarray[sub_id].RemoveAllReceptors()
+            proxies.wait_timeout_obs([proxies.vcc[i + 1] for i in range(len(proxies.vcc))], ObsState.EMPTY, 3, 1)
 
-            proxies.clean_proxies()
+            proxies.off()
 
         except AssertionError as ae:
+            time.sleep(2)
             proxies.clean_proxies()
+            time.sleep(2)
             raise ae
         except Exception as e:
+            time.sleep(2)
             proxies.clean_proxies()
+            time.sleep(2)
             raise e
 
     @pytest.mark.parametrize(
@@ -1319,14 +1221,7 @@ class TestCbfSubarray:
                 "Scan1_basic.json",
                 [1, 3, 4, 2],
                 [4, 1]
-            ),
-            (
-                "Configure_TM-CSP_v2.json",
-                "Scan1_basic.json",
-                [4, 1, 2],
-                [4, 1]
             )
-
         ]
     )
     def test_Scan(
@@ -1341,6 +1236,8 @@ class TestCbfSubarray:
         Test the Scan command
         """
         try:
+            proxies.on()
+            
             f = open(data_file_path + config_file_name)
             json_string = f.read().replace("\n", "")
             f.close()
@@ -1348,18 +1245,6 @@ class TestCbfSubarray:
 
             sub_id = int(configuration["common"]["subarray_id"])
 
-            # turn on Subarray
-            if proxies.subarray[sub_id].State() != DevState.ON:
-                proxies.subarray[sub_id].On()
-                proxies.wait_timeout_dev([proxies.subarray[sub_id]], DevState.ON, 3, 1)
-                for proxy in [proxies.vcc[i + 1] for i in range(len(proxies.vcc))]:
-                    if proxy.State() == DevState.OFF:
-                        proxy.On()
-                        proxies.wait_timeout_dev([proxy], DevState.ON, 1, 1)
-                for proxy in [proxies.fsp[i + 1] for i in range(len(proxies.fsp))]:
-                    if proxy.State() == DevState.OFF:
-                        proxy.On()
-                        proxies.wait_timeout_dev([proxy], DevState.ON, 1, 1)
             assert proxies.subarray[sub_id].obsState == ObsState.EMPTY
 
             # add receptors
@@ -1370,7 +1255,7 @@ class TestCbfSubarray:
 
             # configure scan
             proxies.subarray[sub_id].ConfigureScan(json_string)
-            proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.READY, 3, 1)
+            proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.READY, 5, 1)
 
             # check initial states
             assert proxies.subarray[sub_id].obsState == ObsState.READY
@@ -1433,18 +1318,25 @@ class TestCbfSubarray:
                     fsp_pst_id = fsp_id -1
                     assert proxies.fspPstSubarray[fsp_pst_id].obsState == ObsState.SCANNING
 
+            # Clean up
             proxies.subarray[sub_id].EndScan()
             proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.READY, 1, 1)
-            assert proxies.subarray[sub_id].obsState == ObsState.READY
+            proxies.subarray[sub_id].GoToIdle()
+            proxies.wait_timeout_obs([proxies.vcc[i + 1] for i in range(len(proxies.vcc))], ObsState.IDLE, 3, 1)
+            proxies.subarray[sub_id].RemoveAllReceptors()
+            proxies.wait_timeout_obs([proxies.vcc[i + 1] for i in range(len(proxies.vcc))], ObsState.EMPTY, 3, 1)
 
-            # Clean Up
-            proxies.clean_proxies()
+            proxies.on()
 
         except AssertionError as ae:
+            time.sleep(2)
             proxies.clean_proxies()
+            time.sleep(2)
             raise ae
         except Exception as e:
+            time.sleep(2)
             proxies.clean_proxies()
+            time.sleep(2)
             raise e
 
     @pytest.mark.parametrize(
@@ -1480,24 +1372,15 @@ class TestCbfSubarray:
         Test abort reset
         """
         try:
+            proxies.on()
+            
             f = open(data_file_path + config_file_name)
             json_string = f.read().replace("\n", "")
             f.close()
             configuration = json.loads(json_string)
 
             sub_id = int(configuration["common"]["subarray_id"])
-            # turn on Subarray
-            if proxies.subarray[sub_id].State() != DevState.ON:
-                proxies.subarray[sub_id].On()
-                proxies.wait_timeout_dev([proxies.subarray[sub_id]], DevState.ON, 3, 1)
-                for proxy in [proxies.vcc[i + 1] for i in range(len(proxies.vcc))]:
-                    if proxy.State() == DevState.OFF:
-                        proxy.On()
-                        proxies.wait_timeout_dev([proxy], DevState.ON, 1, 1)
-                for proxy in [proxies.fsp[i + 1] for i in range(len(proxies.fsp))]:
-                    if proxy.State() == DevState.OFF:
-                        proxy.On()
-                        proxies.wait_timeout_dev([proxy], DevState.ON, 1, 1)
+
             assert proxies.subarray[sub_id].obsState == ObsState.EMPTY
             
             ############################# abort from READY ###########################
@@ -1508,7 +1391,7 @@ class TestCbfSubarray:
                 for i, j in zip(range(len(receptor_ids)), receptor_ids)])
             # configure scan
             proxies.subarray[sub_id].ConfigureScan(json_string)
-            proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.READY, 3, 1)
+            proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.READY, 5, 1)
             assert proxies.subarray[sub_id].obsState == ObsState.READY
             for fsp in configuration["cbf"]["fsp"]:
                 fsp_id = int(fsp["fsp_id"])
@@ -1568,7 +1451,7 @@ class TestCbfSubarray:
                 for i, j in zip(range(len(receptor_ids)), receptor_ids)])
             # configure scan
             proxies.subarray[sub_id].ConfigureScan(json_string)
-            proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.READY, 3, 1)
+            proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.READY, 5, 1)
             # scan
             f = open(data_file_path + scan_file_name)
             json_string_scan = f.read().replace("\n", "")
@@ -1650,14 +1533,21 @@ class TestCbfSubarray:
             for r in vcc_receptors:
                 assert proxies.vcc[proxies.receptor_to_vcc[r]].obsState == ObsState.IDLE
 
-            # Clean Up
-            proxies.clean_proxies()
+            # Clean up
+            proxies.subarray[sub_id].RemoveAllReceptors()
+            proxies.wait_timeout_obs([proxies.vcc[i + 1] for i in range(len(proxies.vcc))], ObsState.EMPTY, 3, 1)
+
+            proxies.off()
         
         except AssertionError as ae:
+            time.sleep(2)
             proxies.clean_proxies()
+            time.sleep(2)
             raise ae
         except Exception as e:
+            time.sleep(2)
             proxies.clean_proxies()
+            time.sleep(2)
             raise e
 
     @pytest.mark.parametrize(
@@ -1693,24 +1583,15 @@ class TestCbfSubarray:
         Test abort restart
         """
         try:
+            proxies.on()
+            
             f = open(data_file_path + config_file_name)
             json_string = f.read().replace("\n", "")
             f.close()
             configuration = json.loads(json_string)
 
             sub_id = int(configuration["common"]["subarray_id"])
-            # turn on Subarray
-            if proxies.subarray[sub_id].State() != DevState.ON:
-                proxies.subarray[sub_id].On()
-                proxies.wait_timeout_dev([proxies.subarray[sub_id]], DevState.ON, 3, 1)
-                for proxy in [proxies.vcc[i + 1] for i in range(len(proxies.vcc))]:
-                    if proxy.State() == DevState.OFF:
-                        proxy.On()
-                        proxies.wait_timeout_dev([proxy], DevState.ON, 1, 1)
-                for proxy in [proxies.fsp[i + 1] for i in range(len(proxies.fsp))]:
-                    if proxy.State() == DevState.OFF:
-                        proxy.On()
-                        proxies.wait_timeout_dev([proxy], DevState.ON, 1, 1)
+
             assert proxies.subarray[sub_id].obsState == ObsState.EMPTY
             
             ############################# abort from IDLE ###########################
@@ -1755,7 +1636,7 @@ class TestCbfSubarray:
             proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.IDLE, 1, 1)
             # configure scan
             proxies.subarray[sub_id].ConfigureScan(json_string)
-            proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.READY, 3, 1)
+            proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.READY, 5, 1)
             assert proxies.subarray[sub_id].obsState == ObsState.READY
             for fsp in configuration["cbf"]["fsp"]:
                 fsp_id = int(fsp["fsp_id"])
@@ -1815,7 +1696,7 @@ class TestCbfSubarray:
             proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.IDLE, 1, 1)
             # configure scan
             proxies.subarray[sub_id].ConfigureScan(json_string)
-            proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.READY, 3, 1)
+            proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.READY, 5, 1)
             # scan
             f = open(data_file_path + scan_file_name)
             json_string_scan = f.read().replace("\n", "")
@@ -1873,8 +1754,9 @@ class TestCbfSubarray:
 
             # ObsReset
             proxies.subarray[sub_id].Restart()
-            proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.IDLE, 1, 1)
+            proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.EMPTY, 3, 1)
             assert len(proxies.subarray[sub_id].receptors) == 0
+            assert proxies.subarray[sub_id].obsState == ObsState.EMPTY
             for fsp in configuration["cbf"]["fsp"]:
                 fsp_id = int(fsp["fsp_id"])
                 if fsp["function_mode"] == "CORR":  
@@ -1896,13 +1778,17 @@ class TestCbfSubarray:
             for r in vcc_receptors  :
                 assert proxies.vcc[proxies.receptor_to_vcc[r]].obsState == ObsState.IDLE
 
-            proxies.clean_proxies()
+            proxies.off()
         
         except AssertionError as ae:
+            time.sleep(2)
             proxies.clean_proxies()
+            time.sleep(2)
             raise ae
         except Exception as e:
+            time.sleep(2)
             proxies.clean_proxies()
+            time.sleep(2)
             raise e
     
     #TODO: remove entirely?
@@ -1912,18 +1798,8 @@ class TestCbfSubarray:
     )
     def test_Abort_from_Resourcing(self, proxies):
         try:
-            # turn on Subarray
-            if proxies.subarray[1].State() != DevState.ON:
-                proxies.subarray[1].On()
-                proxies.wait_timeout_dev([proxies.subarray[1]], DevState.ON, 3, 1)
-                for proxy in [proxies.vcc[i + 1] for i in range(len(proxies.vcc))]:
-                    if proxy.State() == DevState.OFF:
-                        proxy.On()
-                        proxies.wait_timeout_dev([proxy], DevState.ON, 1, 1)
-                for proxy in [proxies.fsp[i + 1] for i in range(len(proxies.fsp))]:
-                    if proxy.State() == DevState.OFF:
-                        proxy.On()
-                        proxies.wait_timeout_dev([proxy], DevState.ON, 1, 1)
+            proxies.on()
+                
             assert proxies.subarray[1].State() == DevState.ON
             assert proxies.subarray[1].obsState == ObsState.EMPTY
 
@@ -1965,7 +1841,7 @@ class TestCbfSubarray:
             scan = f2.read().replace("\n", "")
             f2.close()
             proxies.subarray[1].ConfigureScan(configuration)
-            proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.READY, 3, 1)
+            proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.READY, 5, 1)
             configuration = json.loads(configuration)
             # scan
             proxies.subarray[1].Scan(scan)
@@ -1994,11 +1870,17 @@ class TestCbfSubarray:
                 # check configured attributes of FSP subarray
                 #TODO align IDs of fspSubarrays to fsp_id in conftest; currently works for fsps 1 and 2
                 assert proxies.fspSubarray[fsp_id].obsState == ObsState.IDLE
+
+            proxies.off()
             
             
         except AssertionError as ae:
+            time.sleep(2)
             proxies.clean_proxies()
+            time.sleep(2)
             raise ae
         except Exception as e:
+            time.sleep(2)
             proxies.clean_proxies()
+            time.sleep(2)
             raise e

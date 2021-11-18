@@ -63,6 +63,7 @@ class TestVcc:
         # to get the mock devices, use tango_harness.get_device("fqdn")
 
         device_under_test.On()
+        time.sleep(1)
         assert device_under_test.State() == DevState.ON
         
         f = open(file_path + config_file_name)
@@ -76,6 +77,7 @@ class TestVcc:
         device_under_test.TurnOnBandDevice(freq_band_name)
 
         device_under_test.ConfigureScan(json_str)
+        time.sleep(3)
 
         assert device_under_test.obsState == ObsState.READY
         assert device_under_test.configID == configuration["config_id"]
@@ -114,9 +116,11 @@ class TestVcc:
         """
         
         device_under_test.On()
+        time.sleep(1)
         assert device_under_test.State() == DevState.ON
 
         device_under_test.Off()
+        time.sleep(1)
         assert device_under_test.State() == DevState.OFF
     
     @pytest.mark.parametrize(
@@ -153,6 +157,7 @@ class TestVcc:
         json_string = f.read().replace("\n", "")
         f.close()
         device_under_test.ConfigureScan(json_string)
+        time.sleep(3)
 
         scan_id_device_data = tango.DeviceData()
         scan_id_device_data.insert(tango.DevString, str(scan_id))
