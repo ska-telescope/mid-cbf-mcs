@@ -266,8 +266,7 @@ class CbfSubarray(SKASubarray):
                 for jones_matrix in jones_matrix_all["jonesMatrix"]:
                     t = Thread(
                         target=self._update_jones_matrix,
-                        args=(jones_matrix["destinationType"], 
-                              int(jones_matrix["epoch"]), 
+                        args=(int(jones_matrix["epoch"]), 
                               json.dumps(jones_matrix["matrixDetails"])
                         )
                     )
@@ -279,7 +278,6 @@ class CbfSubarray(SKASubarray):
 
     def _update_jones_matrix(
         self: CbfSubarray,
-        destination_type: str,
         epoch: int,
         matrix_details: str
     ) -> None:
@@ -306,10 +304,8 @@ class CbfSubarray(SKASubarray):
 
         # we lock the mutex, forward the configuration, then immediately unlock it
         self._mutex_jones_matrix_config.acquire()
-        if destination_type == "vcc":
-            self._group_vcc.command_inout("UpdateJonesMatrix", data)
-        elif destination_type == "fsp":
-            self._group_fsp.command_inout("UpdateJonesMatrix", data)
+        self._group_vcc.command_inout("UpdateJonesMatrix", data)
+        self._group_fsp.command_inout("UpdateJonesMatrix", data)
         self._mutex_jones_matrix_config.release()
 
     def _beam_weights_event_callback(

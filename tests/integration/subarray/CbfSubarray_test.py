@@ -1222,90 +1222,57 @@ class TestCbfSubarray:
             jones_matrix = json.loads(f.read().replace("\n", ""))
             f.close()
 
-            jones_matrix["jonesMatrix"][0]["epoch"] = str(int(time.time()) + 20)
-            jones_matrix["jonesMatrix"][1]["epoch"] = "0"
-            jones_matrix["jonesMatrix"][2]["epoch"] = str(int(time.time()) + 10)
+            # Insert the epoch
+            jones_matrix_index_per_epoch = list(range(len(jones_matrix["jonesMatrix"])))
+            random.shuffle(jones_matrix_index_per_epoch)
+            epoch_increment = 10
+            for i, jones_matrix_index in enumerate(jones_matrix_index_per_epoch):
+                if i == 0:
+                    epoch_time = 0
+                    jones_matrix["jonesMatrix"][jones_matrix_index]["epoch"] = str(epoch_time)
+                else:
+                    epoch_time += epoch_increment
+                    jones_matrix["jonesMatrix"][jones_matrix_index]["epoch"] = str(int(time.time()) + epoch_time)
 
             # update Jones Matrix
             proxies.tm.jonesMatrix = json.dumps(jones_matrix)
             time.sleep(5)
 
-            for receptor in jones_matrix["jonesMatrix"][1]["matrixDetails"]:
-                for frequency_slice in receptor["receptorMatrix"]:
-                    for index, value in enumerate(frequency_slice["matrix"]):
-                        vcc_id = proxies.receptor_to_vcc[receptor["receptor"]]
-                        fs_id = frequency_slice["fsid"]
-                        try:
-                            assert proxies.vcc[vcc_id].jonesMatrix[fs_id-1][index] == value
-                        except AssertionError as ae:
-                            logging.error(
-                                "AssertionError; incorrect Jones matrix entry: \
-                                epoch {}, VCC {}, i = {}, jonesMatrix[{}] = {}".format
-                                    (
-                                        jones_matrix["jonesMatrix"][1]["epoch"], 
-                                        vcc_id, index, 
-                                        fs_id-1, 
-                                        proxies.vcc[vcc_id].jonesMatrix[fs_id-1]
-                                    )
-                            )
-                            raise ae
-                        except Exception as e:
-                            raise e
+            epoch_to_scan = 1
 
-            # transition to obsState == SCANNING
-            f = open(data_file_path + scan_file_name)
-            proxies.subarray[sub_id].Scan(f.read().replace("\n", ""))
-            f.close()
-            proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.SCANNING, 1, 1)
-            assert proxies.subarray[sub_id].obsState == ObsState.SCANNING
-            
-            time.sleep(10)
-            for receptor in jones_matrix["jonesMatrix"][2]["matrixDetails"]:
-                for frequency_slice in receptor["receptorMatrix"]:
-                    for index, value in enumerate(frequency_slice["matrix"]):
-                        vcc_id = proxies.receptor_to_vcc[receptor["receptor"]]
-                        fs_id = frequency_slice["fsid"]
-                        try:
-                            assert proxies.vcc[vcc_id].jonesMatrix[fs_id-1][index] == value
-                        except AssertionError as ae:
-                            logging.error(
-                                "AssertionError; incorrect Jones matrix entry: \
-                                epoch {}, VCC {}, i = {}, jonesMatrix[{}] = {}".format
-                                (
-                                    jones_matrix["jonesMatrix"][1]["epoch"], 
-                                    vcc_id, 
-                                    index, 
-                                    fs_id-1, 
-                                    proxies.vcc[vcc_id].jonesMatrix[fs_id-1]
+            for epoch in range( len(jones_matrix_index_per_epoch) ):
+
+                for receptor in jones_matrix["jonesMatrix"][jones_matrix_index_per_epoch[epoch]]["matrixDetails"]:
+                    for frequency_slice in receptor["receptorMatrix"]:
+                        for index, value in enumerate(frequency_slice["matrix"]):
+                            vcc_id = proxies.receptor_to_vcc[receptor["receptor"]]
+                            fs_id = frequency_slice["fsid"]
+                            try:
+                                assert proxies.vcc[vcc_id].jonesMatrix[fs_id-1][index] == value
+                            except AssertionError as ae:
+                                logging.error(
+                                    "AssertionError; incorrect Jones matrix entry: \
+                                    epoch {}, VCC {}, i = {}, jonesMatrix[{}] = {}".format
+                                        (
+                                            jones_matrix["jonesMatrix"][1]["epoch"], 
+                                            vcc_id, index, 
+                                            fs_id-1, 
+                                            proxies.vcc[vcc_id].jonesMatrix[fs_id-1]
+                                        )
                                 )
-                            )
-                            raise ae
-                        except Exception as e:
-                            raise e
-            
-            time.sleep(10)
-            for receptor in jones_matrix["jonesMatrix"][0]["matrixDetails"]:
-                for frequency_slice in receptor["receptorMatrix"]:
-                    for index, value in enumerate(frequency_slice["matrix"]):
-                        vcc_id = proxies.receptor_to_vcc[receptor["receptor"]]
-                        fs_id = frequency_slice["fsid"]
-                        try:
-                            assert proxies.vcc[vcc_id].jonesMatrix[fs_id-1][index] == value
-                        except AssertionError as ae:
-                            logging.error(
-                                "AssertionError; incorrect Jones matrix entry: \
-                                epoch {}, VCC {}, i = {}, jonesMatrix[{}] = {}".format
-                                (
-                                    jones_matrix["jonesMatrix"][1]["epoch"], 
-                                    vcc_id, 
-                                    index, 
-                                    fs_id-1, 
-                                    proxies.vcc[vcc_id].jonesMatrix[fs_id-1]
-                                )
-                            )
-                            raise ae
-                        except Exception as e:
-                            raise e
+                                raise ae
+                            except Exception as e:
+                                raise e                                                  
+                              
+                if epoch == epoch_to_scan:
+                    # transition to obsState=SCANNING
+                    f2 = open(data_file_path + scan_file_name)
+                    proxies.subarray[sub_id].Scan(f2.read().replace("\n", ""))
+                    f2.close()
+                    proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.SCANNING, 1, 1)
+                    assert proxies.subarray[sub_id].obsState == ObsState.SCANNING
+
+                time.sleep(10)
 
             proxies.subarray[sub_id].EndScan()
             proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.READY, 1, 1)
