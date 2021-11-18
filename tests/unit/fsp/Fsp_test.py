@@ -7,7 +7,7 @@
 #
 # Distributed under the terms of the BSD-3-Clause license.
 # See LICENSE.txt for more info.
-"""Contain the tests for the Vcc."""
+"""Contain the tests for the Fsp."""
 
 from __future__ import annotations
 from typing import List
@@ -56,9 +56,11 @@ class TestFsp:
         assert device_under_test.State() == DevState.OFF
 
         device_under_test.On()
+        time.sleep(3)
         assert device_under_test.State() == DevState.ON
 
         device_under_test.Off()
+        time.sleep(3)
         assert device_under_test.State() == DevState.OFF
     
     @pytest.mark.parametrize(
@@ -81,6 +83,7 @@ class TestFsp:
         assert device_under_test.State() == DevState.OFF
 
         device_under_test.On()
+        time.sleep(3)
         assert device_under_test.State() == DevState.ON
 
         # subarray membership should be empty
@@ -89,21 +92,21 @@ class TestFsp:
         # add fsp to all but last test subarray
         for sub_id in sub_ids[:-1]:
             device_under_test.AddSubarrayMembership(sub_id)
-        time.sleep(5)
+            time.sleep(3)
         for idx, sub_id in enumerate(sub_ids[:-1]):
             assert device_under_test.read_attribute("subarrayMembership", \
                 extract_as=tango.ExtractAs.List).value[idx] == sub_ids[:-1][idx]
 
         # remove fsp from first test subarray
         device_under_test.RemoveSubarrayMembership(sub_ids[0])
-        time.sleep(5)
+        time.sleep(3)
         for idx, sub_id in enumerate(sub_ids[1:-1]):
             assert device_under_test.read_attribute("subarrayMembership", \
                 extract_as=tango.ExtractAs.List).value[idx] == sub_ids[1:-1][idx]
         
         # add fsp to last test subarray
         device_under_test.AddSubarrayMembership(sub_ids[-1])
-        time.sleep(5)
+        time.sleep(3)
         for idx, sub_id in enumerate(sub_ids[1:]):
             assert device_under_test.read_attribute("subarrayMembership", \
                 extract_as=tango.ExtractAs.List).value[idx] == sub_ids[1:][idx]
@@ -111,7 +114,7 @@ class TestFsp:
         # remove fsp from all subarrays
         for sub_id in sub_ids:
             device_under_test.RemoveSubarrayMembership(sub_id)
-        time.sleep(5)
+            time.sleep(3)
         assert device_under_test.subarrayMembership == None
     
     @pytest.mark.parametrize(
@@ -132,10 +135,11 @@ class TestFsp:
     ) -> None:
 
         assert device_under_test.State() == DevState.OFF
-
         device_under_test.On()
+        time.sleep(3)
+        assert device_under_test.State() == DevState.ON
         device_under_test.AddSubarrayMembership(sub_id)
-        time.sleep(5)
+        time.sleep(3)
         assert device_under_test.read_attribute("subarrayMembership", \
             extract_as=tango.ExtractAs.List).value == [sub_id]
 
@@ -147,6 +151,7 @@ class TestFsp:
 
         # update only valid for function mode PST-BF
         device_under_test.SetFunctionMode("PST-BF")
+        time.sleep(0.1)
         #TODO: this enum should be defined once and referred to throughout the project
         FspModes = Enum('FspModes', 'CORR PSS_BF PST_BF VLBI')
         assert device_under_test.functionMode == FspModes.PST_BF.value
@@ -163,6 +168,7 @@ class TestFsp:
 
             device_under_test.UpdateBeamWeights(json.dumps(beam_weights_details))
 
+        time.sleep(3)
         # verify the weights were updated successfully 
         for weights in timing_beam_weights["beamWeights"]:
             beam_weights_details = weights["beamWeightsDetails"]
@@ -191,10 +197,11 @@ class TestFsp:
     ) -> None:
 
         assert device_under_test.State() == DevState.OFF
-
         device_under_test.On()
+        time.sleep(3)
+        assert device_under_test.State() == DevState.ON
         device_under_test.AddSubarrayMembership(sub_id)
-        time.sleep(5)
+        time.sleep(3)
         assert device_under_test.read_attribute("subarrayMembership", \
             extract_as=tango.ExtractAs.List).value == [sub_id]
 
@@ -206,6 +213,7 @@ class TestFsp:
 
         # update only valid for function mode PSS-BF
         device_under_test.SetFunctionMode("PSS-BF")
+        time.sleep(0.1)
         FspModes = Enum('FspModes', 'CORR PSS_BF PST_BF VLBI')
         assert device_under_test.functionMode == FspModes.PSS_BF.value
 
@@ -220,6 +228,7 @@ class TestFsp:
             if m["destinationType"] == "fsp":
                 device_under_test.UpdateJonesMatrix(json.dumps(m["matrixDetails"]))
         
+        time.sleep(3)
         # verify the jones matrix was updated successfully 
         for m in jones_matrix["jonesMatrix"]:
             if m["destinationType"] == "fsp":
@@ -248,10 +257,11 @@ class TestFsp:
     ) -> None:
 
         assert device_under_test.State() == DevState.OFF
-
         device_under_test.On()
+        time.sleep(3)
+        assert device_under_test.State() == DevState.ON
         device_under_test.AddSubarrayMembership(sub_id)
-        time.sleep(5)
+        time.sleep(3)
         assert device_under_test.read_attribute("subarrayMembership", \
             extract_as=tango.ExtractAs.List).value == [sub_id]
 
@@ -270,6 +280,7 @@ class TestFsp:
         valid_function_modes = ["PSS-BF", "PST-BF"]
         for mode in valid_function_modes:
             device_under_test.SetFunctionMode(mode)
+            time.sleep(0.1)
             FspModes = Enum('FspModes', 'CORR PSS_BF PST_BF VLBI')
             if mode == "PSS-BF":
                 assert device_under_test.functionMode == FspModes.PSS_BF.value
@@ -281,6 +292,7 @@ class TestFsp:
                 if m["destinationType"] == "fsp":
                     device_under_test.UpdateDelayModel(json.dumps(m["delayDetails"]))
 
+            time.sleep(3)
             # verify the delay model was updated successfully 
             for m in delay_model["delayModel"]:
                 if m["destinationType"] == "fsp":

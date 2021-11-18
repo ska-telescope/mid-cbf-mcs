@@ -28,6 +28,7 @@ import pytest
 
 from ska_tango_base.control_model import HealthState, AdminMode, ObsState
 
+#TODO refactor these test modules to use common proxies fixture, state wait timeouts
 @pytest.fixture(scope="class")
 def device_under_test() -> DeviceProxy:
     """
@@ -87,10 +88,13 @@ class TestFspPstSubarray:
         # TODO implement proper reset of proxies for this test class
         if subarray.State() == DevState.OFF:
             subarray.On()
+            time.sleep(1)
         if subarray.ObsState == ObsState.FAULT:
             subarray.Restart()
+            time.sleep(1)
         elif len(subarray.receptors) != 0:
             subarray.RemoveAllReceptors()
+            time.sleep(1)
         if len(device_under_test.receptors) != 0:
             device_under_test.RemoveAllReceptors()
 
@@ -121,6 +125,7 @@ class TestFspPstSubarray:
 
         # remove remaining receptors
         subarray.RemoveAllReceptors()
+        time.sleep(1)
         device_under_test.RemoveReceptors(receptors_to_test)
         assert [device_under_test.receptors[i] \
             for i in range(len(device_under_test.receptors))] == []
@@ -181,6 +186,7 @@ class TestFspPstSubarray:
 
         # remove all receptors
         subarray.RemoveAllReceptors()
+        time.sleep(1)
         device_under_test.RemoveReceptors(receptors_to_test)
         assert [device_under_test.receptors[i] \
             for i in range(len(device_under_test.receptors))] == []
@@ -217,6 +223,7 @@ class TestFspPstSubarray:
 
         # remove all receptors
         subarray.RemoveAllReceptors()
+        time.sleep(1)
         device_under_test.RemoveAllReceptors()
         assert [device_under_test.receptors[i] \
             for i in range(len(device_under_test.receptors))] == []

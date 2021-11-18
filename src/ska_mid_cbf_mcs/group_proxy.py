@@ -95,7 +95,7 @@ class CbfGroupProxy:
 
 
     def add(self: CbfGroupProxy,
-        fqdns: list[str],
+        fqdns: List[str],
         max_time: float = 120.0
     ) -> None:
         """
@@ -161,6 +161,7 @@ class CbfGroupProxy:
             """
             group = group_connection_factory(self._name)
             group.add(fqdns)
+            self.__dict__["_fqdns"].extend(fqdns)
             return group
 
         if self._group == None:
@@ -170,104 +171,28 @@ class CbfGroupProxy:
                 self.__dict__["_group"] = _connect(self._group_connection_factory)
         else:
             self.__dict__["_group"].add(fqdns)
+            self.__dict__["_fqdns"].extend(fqdns)
 
-        self.__dict__["_fqdns"].extend(fqdns)
 
-
-    def remove(self: CbfGroupProxy, fqdn: str) -> None:
+    def remove(self: CbfGroupProxy, fqdn: List[str]) -> None:
         """
         Remove a device from the group.
 
         :param fqdn: FQDN of the device to be proxied.
         """
-        self.__dict__["_fqdns"].remove(fqdn)
-        self.__dict__["_group"].remove(fqdn)
+        if fqdn in self._fqdns:
+            self.__dict__["_fqdns"].remove(fqdn)
+            self.__dict__["_group"].remove(fqdn)
 
-
-    def check_initialised(self: CbfGroupProxy, max_time: float = 120.0) -> bool:
+    def remove_all(self: CbfGroupProxy) -> None:
         """
-        Check that the device has completed initialisation.
-
-        That is, check that the device is no longer in state INIT.
-
-        :param max_time: the (optional) maximum time, in seconds, to
-            wait for the device to complete initialisation. The default
-            is 120.0 i.e. two minutes. If set to 0 or None, the device
-            is checked once and the call returns immediately.
-
-        :return: whether the device is initialised yet
+        Remove all devices from the group.
         """
-
-        def _on_giveup_check_initialised(details: BackoffDetailsType) -> None:
-            """
-            Give up waiting for the device to complete initialisation.
-
-            :param details: a dictionary providing call context, such as
-                the call args and the elapsed time
-            """
-            elapsed = details["elapsed"]
-            self._logger.warning(
-                f"Gave up waiting for the device ({self._fqdn}) to complete "
-                f"initialisation after {elapsed} seconds."
-            )
-
-        @backoff.on_predicate(
-            backoff.expo,
-            on_giveup=_on_giveup_check_initialised,
-            factor=1,
-            max_time=max_time,
-        )
-        def _backoff_check_initialised(device: tango.DeviceProxy) -> bool:
-            """
-            Check that the device has completed initialisation.
-
-            That is, check that the device is no longer in
-            :py:const:`tango.DevState.INIT`. This check is performed
-            in an exponential backoff-retry loop.
-
-            :param device: the device to be checked
-
-            :return: whether the device has completed initialisation
-            """
-            return _check_initialised(device)
-
-        def _check_initialised(device: tango.DeviceProxy) -> bool:
-            """
-            Check that the device has completed initialisation.
-
-            That is, check that the device is no longer in
-            :py:const:`tango.DevState.INIT`.
-
-            Checking that a device has initialised means calling its
-            `state()` method, and even after the device returns a
-            response from a ping, it might still raise an exception in
-            response to reading device state
-            (``"BAD_INV_ORDER_ORBHasShutdown``). So here we catch that
-            exception.
-
-            This method only performs a single check, and returns
-            immediately. To check for initialisation in an exponential
-            backoff-retry loop, use
-            :py:meth:`._backoff_check_initialised`.
-
-            :param device: the device to be checked
-
-            :return: whether the device has completed initialisation
-            """
-            try:
-                return device.state() != DevState.INIT
-            except DevFailed:
-                self._logger.debug(
-                    "Caught a DevFailed exception while checking that the device has "
-                    "initialised. This is most likely a 'BAD_INV_ORDER_ORBHasShutdown "
-                    "exception triggered by the call to state()."
-                )
-                return False
-
-        if max_time:
-            return _backoff_check_initialised(self._group)
+        if len(self._fqdns) > 0:
+            for fqdn in self._fqdns:
+                self.remove(fqdn)
         else:
-            return _check_initialised(self._group)
+            self._logger.warning("Group is empty.")
 
     def _read(self: CbfGroupProxy, attribute_name: str) -> Any:
         """
@@ -280,6 +205,14 @@ class CbfGroupProxy:
         :return: the attribute value
         """
         return self._group.read_attribute(attribute_name)
+    
+    def get_size(self: CbfGroupProxy) -> int:
+        """
+        Get the size of the device group.
+
+        :return: the number of devices in the hierarchy
+        """
+        return len(self._fqdns)
 
     # TODO: This method is commented out because it is implicated in our segfault
     # issues:
@@ -318,6 +251,8 @@ class CbfGroupProxy:
             if self._group is None:
                 raise ConnectionError("CbfGroupProxy has not connected yet.")
             setattr(self._group, name, value)
+        else:
+            raise AttributeError(f"No such attribute: {name} (pass-through disabled)")
 
     def __getattr__(self: CbfGroupProxy, name: str, default_value: Any = None) -> Any:
         """

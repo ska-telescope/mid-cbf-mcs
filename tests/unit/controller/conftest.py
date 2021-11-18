@@ -131,17 +131,17 @@ def initial_mocks(
     mock_talon_lru: unittest.mock.Mock
 ) -> Dict[str, unittest.mock.Mock]:
     """
-    Return a dictionary of device proxy mocks to pre-register.
+    Return a dictionary of proxy mocks to pre-register.
 
     :param mock_vcc: a mock Vcc that is powered off.
-    :param mock_vcc_group: a mock group.
+    :param mock_vcc_group: a mock Vcc tango.Group.
     :param mock_fsp: a mock Fsp that is powered off.
-    :param mock_fsp_group: a mock Fsp group.
-    :param mock_subarray: a mock Subarray that is powered off.
-    :param mock_subarray_group: a mock Subarray group.
-    :param mock_talon_lru: a mock Talon LRU.
+    :param mock_fsp_group: a mock Fsp tango.Group.
+    :param mock_subarray: a mock CbfSubarray that is powered off.
+    :param mock_subarray_group: a mock CbfSubarray tango.Group.
+    :param mock_talon_lru: a mock TalonLRU that is powered off.
 
-    :return: a dictionary of device proxy mocks to pre-register.
+    :return: a dictionary of proxy mocks to pre-register.
     """
     return {
         "mid_csp_cbf/vcc/001": mock_vcc,
