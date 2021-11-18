@@ -1239,6 +1239,7 @@ class TestCbfSubarray:
             time.sleep(5)
 
             epoch_to_scan = 1
+            FspModes = Enum('FspModes', 'CORR PSS_BF PST_BF VLBI')
 
             for epoch in range( len(jones_matrix_index_per_epoch) ):
 
@@ -1262,7 +1263,28 @@ class TestCbfSubarray:
                                 )
                                 raise ae
                             except Exception as e:
-                                raise e                                                  
+                                raise e  
+                    rec_id = receptor["receptor"]
+                    for fsp in [proxies.fsp[i + 1] for i in range(len(proxies.fsp))]:
+                        if fsp.functionMode in [FspModes.PSS_BF.value, FspModes.PST_BF.value, FspModes.VLBI.value]:
+                            for frequency_slice in receptor["receptorMatrix"]:
+                                if fsp.functionMode == FspModes.PSS_BF.value:
+                                    proxy_subarray = proxies.fspPssSubarray[sub_id -1]
+                                    fs_length = 16
+                                elif fsp.functionMode == FspModes.PST_BF.value:
+                                    proxy_subarray = proxies.fspPstSubarray[sub_id -1]
+                                    fs_length = 4
+                                else:
+                                    fs_length = 4
+                                    log_msg = "function mode {} currently not supported".format(fsp.functionMode)
+                                    logging.error(log_msg)
+                                if rec_id in proxy_subarray.receptors:
+                                    fs_id = frequency_slice["fsid"]
+                                    if fs_id == int(fsp.get_property("FspID")['FspID'][0]):
+                                        matrix = frequency_slice["matrix"]
+                                        if len(matrix) == fs_length:
+                                            for idx, matrix_val in enumerate(matrix):
+                                                assert matrix_val == fsp.jonesMatrix[rec_id -1][idx]                                                   
                               
                 if epoch == epoch_to_scan:
                     # transition to obsState=SCANNING

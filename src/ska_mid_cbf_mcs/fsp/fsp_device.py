@@ -191,8 +191,8 @@ class Fsp(SKACapability):
 
     jonesMatrix = attribute(
         dtype=(('double',),),
-        max_dim_x=4,
-        max_dim_y=16,
+        max_dim_x=16,
+        max_dim_y=26,
         access=AttrWriteType.READ,
         label='Jones Matrix',
         doc='Jones Matrix, given per frequency slice'
@@ -387,7 +387,7 @@ class Fsp(SKACapability):
             device._subarray_membership = []
             device._scan_id = 0
             device._config_id = ""
-            device._jones_matrix = [[0.0] * 4 for _ in range(4)]
+            device._jones_matrix = [[0.0] * 16 for _ in range(26)]
             device._delay_model = [[0.0] * 6 for _ in range(4)]
             device._timing_beam_weights = [[0.0] * 6 for _ in range(4)]
 
@@ -638,17 +638,24 @@ class Fsp(SKACapability):
             :param argin: the jones matrix data
         """
         self.logger.debug("Fsp.UpdateJonesMatrix")
-        fs_length = 4
+
         #TODO: this enum should be defined once and referred to throughout the project
         FspModes = Enum('FspModes', 'CORR PSS_BF PST_BF VLBI')
-        if self._function_mode in [FspModes.PSS_BF.value, FspModes.PST_BF.value]:
+        if self._function_mode in [FspModes.PSS_BF.value, FspModes.PST_BF.value, FspModes.VLBI.value]:
             argin = json.loads(argin)
 
             for i in self._subarray_membership:
                 if self._function_mode == FspModes.PSS_BF.value:
                     proxy = self._proxy_fsp_pss_subarray[i - 1]
-                else:
+                    fs_length = 16
+                elif self._function_mode == FspModes.PST_BF.value:
                     proxy = self._proxy_fsp_pst_subarray[i - 1]
+                    fs_length = 4
+                else:
+                    fs_length = 4
+                    # TODO: support for function mode VLBI
+                    log_msg = "function mode {} currently not supported".format(self._function_mode)
+                    self.logger.error(log_msg)
                 for receptor in argin:
                     rec_id = int(receptor["receptor"])
                     if rec_id in proxy.receptors:
