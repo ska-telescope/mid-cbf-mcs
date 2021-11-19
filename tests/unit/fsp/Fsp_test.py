@@ -38,7 +38,7 @@ from ska_tango_base.control_model import HealthState, AdminMode, ObsState
 
 class TestFsp:
     """
-    Test class for CbfController tests.
+    Test class for Fsp tests.
     """
 
     def test_On_Off(
@@ -46,11 +46,11 @@ class TestFsp:
         device_under_test: CbfDeviceProxy
     ) -> None:
         """
-        Test for Fsp device.
+            Test Fsp's On and Off commands
 
-        :param device_under_test: fixture that provides a
-            :py:class:`tango.DeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
+            :param device_under_test: fixture that provides a
+                :py:class:`tango.DeviceProxy` to the device under test, in a
+                :py:class:`tango.test_context.DeviceTestContext`.
         """
     
         assert device_under_test.State() == DevState.OFF
@@ -79,6 +79,15 @@ class TestFsp:
         device_under_test: CbfDeviceProxy,
         sub_ids: List[int]
     ) -> None:
+        """
+            Test Fsp's AddSubarrayMembership and 
+            RemoveSubarrayMembership commands
+
+            :param device_under_test: fixture that provides a
+                :py:class:`tango.DeviceProxy` to the device under test, in a
+                :py:class:`tango.test_context.DeviceTestContext`.
+            :param sub_ids: list of subarray ids
+        """
 
         assert device_under_test.State() == DevState.OFF
 
@@ -133,6 +142,15 @@ class TestFsp:
         timing_beam_weights_file_name: str,
         sub_id: int
     ) -> None:
+        """
+            Test Fsp's UpdateBeamWeights command
+
+            :param device_under_test: fixture that provides a
+                :py:class:`tango.DeviceProxy` to the device under test, in a
+                :py:class:`tango.test_context.DeviceTestContext`.
+            :param timing_beam_weights_file_name: JSON file for the timing beam weights 
+            :param sub_id: the subarray id
+        """
 
         assert device_under_test.State() == DevState.OFF
         device_under_test.On()
@@ -195,6 +213,15 @@ class TestFsp:
         jones_matrix_file_name: str,
         sub_id: int
     ) -> None:
+        """
+            Test Fsp's UpdateJonesMatrix command
+
+            :param device_under_test: fixture that provides a
+                :py:class:`tango.DeviceProxy` to the device under test, in a
+                :py:class:`tango.test_context.DeviceTestContext`.
+            :param jones_matrix_file_name: JSON file for the jones matrix
+            :param sub_id: the subarray id
+        """
 
         assert device_under_test.State() == DevState.OFF
         device_under_test.On()
@@ -260,6 +287,15 @@ class TestFsp:
         delay_model_file_name: str,
         sub_id: int
     ) -> None:
+        """
+            Test Fsp's UpdateDelayModel command
+
+            :param device_under_test: fixture that provides a
+                :py:class:`tango.DeviceProxy` to the device under test, in a
+                :py:class:`tango.test_context.DeviceTestContext`.
+            :param delay_model_file_name: JSON file for the delay model
+            :param sub_id: the subarray id
+        """
 
         assert device_under_test.State() == DevState.OFF
         device_under_test.On()

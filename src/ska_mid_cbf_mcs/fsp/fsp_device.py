@@ -283,7 +283,7 @@ class Fsp(SKACapability):
         """
             Read the scanID attribute.
 
-            :return: the scanID.
+            :return: the scanID attribute.
             :rtype: int
         """
         return self._scan_id
@@ -294,7 +294,7 @@ class Fsp(SKACapability):
         """
             Read the configID attribute.
 
-            :return: the configID.
+            :return: the configID attribute.
             :rtype: str
         """
         return self._config_id
@@ -315,8 +315,8 @@ class Fsp(SKACapability):
         """
             Read the jonesMatrix attribute.
 
-            :return: the jonesMatrix.
-            :rtype: List[List[float]]
+            :return: the jonesMatrix attribute.
+            :rtype: list of list of float
         """
         return self._jones_matrix
         # PROTECTED REGION END #    //  Fsp.jonesMatrix_read
@@ -326,8 +326,8 @@ class Fsp(SKACapability):
         """
             Read the delayModel attribute.
 
-            :return: the delayModel.
-            :rtype: List[List[float]]
+            :return: the delayModel attribute.
+            :rtype: list of list of float
         """
         return self._delay_model
         # PROTECTED REGION END #    //  Fsp.delayModel_read
@@ -337,8 +337,8 @@ class Fsp(SKACapability):
         """
             Read the timingBeamWeights attribute.
 
-            :return: the timingBeamWeights.
-            :rtype: List[List[float]]
+            :return: the timingBeamWeights attribute.
+            :rtype: list of list of float
         """
         return self._timing_beam_weights
         # PROTECTED REGION END #    //  Fsp.timingBeamWeights_read

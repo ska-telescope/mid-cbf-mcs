@@ -62,7 +62,12 @@ class TestCbfSubarray:
         sub_id: int
     ) -> None:
         """
-        Test valid AddReceptors and RemoveReceptors commands
+            Test CbfSubarrays's AddReceptors and RemoveReceptors commands
+
+            :param proxies: proxies pytest fixture
+            :param receptor_ids: list of receptor ids
+            :param receptors_to_remove: list of ids of receptors to remove
+            :param sub_id: the subarray id
         """
 
         if proxies.debug_device_is_on:
@@ -131,19 +136,16 @@ class TestCbfSubarray:
     @pytest.mark.parametrize(
         "receptor_ids, \
         invalid_receptor_id, \
-        invalid_receptors_to_remove, \
         sub_id", 
         [
             (
                 [1, 3],
                 [200],
-                [2],
                 1
             ),
             (
                 [4, 2],
                 [0],
-                [1, 3],
                 1
             )
         ]
@@ -153,12 +155,16 @@ class TestCbfSubarray:
         proxies: pytest.fixture, 
         receptor_ids: List[int], 
         invalid_receptor_id: List[int],
-        invalid_receptors_to_remove: List[int], 
         sub_id: int
     ) -> None:
         """
-        Test invalid AddReceptors commands involving a single subarray:
-            - when a receptor ID is invalid (e.g. out of range)
+            Test CbfSubarrays's AddReceptors command for a single subarray 
+                when the receptor id is invalid
+
+            :param proxies: proxies pytest fixture
+            :param receptor_ids: list of receptor ids
+            :param invalid_receptor_id: invalid receptor id 
+            :param sub_id: the subarray id
         """
         try:
             proxies.on()
@@ -221,9 +227,14 @@ class TestCbfSubarray:
         sub_id: int
     ) -> None:
         """
-        Test invalid AddReceptors commands involving a single subarray:
-            - when a receptor ID is invalid (e.g. out of range)
-            - when a receptor to be removed is not assigned to the subarray
+            Test CbfSubarrays's RemoveReceptors command for a single subarray:  
+                - when a receptor id is invalid (e.g. out of range)
+                - when a receptor to be removed is not assigned to the subarray
+
+            :param proxies: proxies pytest fixture
+            :param receptor_ids: list of receptor ids
+            :param invalid_receptors_to_remove: invalid receptor ids 
+            :param sub_id: the subarray id
         """
         try:
             proxies.on()
@@ -268,6 +279,8 @@ class TestCbfSubarray:
     )
     def test_AddRemoveReceptors_invalid_multiple(self: TestCbfSubarray) -> None:
         """
+            Test CbfSubarrays's AddReceptors command for multiple subarrays 
+                when the receptor id is invalid
         """
         pass
     
@@ -292,7 +305,11 @@ class TestCbfSubarray:
         sub_id: int
     ) -> None:
         """
-        Test RemoveAllReceptors command
+            Test CbfSubarrays's RemoveAllReceptors command
+
+            :param proxies: proxies pytest fixture
+            :param receptor_ids: list of receptor ids
+            :param sub_id: the subarray id
         """
         try:
             proxies.on()
@@ -351,7 +368,12 @@ class TestCbfSubarray:
         vcc_receptors: List[int],
     ) -> None:
         """
-        Test a successful scan configuration
+            Test CbfSubarrays's ConfigureScan command
+
+            :param proxies: proxies pytest fixture
+            :param config_file_name: JSON file for the configuration
+            :param receptor_ids: list of receptor ids
+            :param vcc_receptors: list of vcc receptor ids
         """
         try:
             proxies.on()
@@ -621,7 +643,14 @@ class TestCbfSubarray:
         receptor_ids: List[int]
     ) -> None:
         """
-        Test a successful transmission of PST-BF parameters to FSP
+            Test CbfSubarrays's ConfigureScan command for Fsp PST
+
+            :param proxies: proxies pytest fixture
+            :param config_file_name: JSON file for the configuration
+            :param jones_matrix_file_name: JSON file for the jones matrix
+            :param delay_model_file_name: JSON file for the delay model
+            :param timing_beam_weights_file_name: JSON file for the timing beam weights
+            :param receptor_ids: list of receptor ids
         """
         try:
             proxies.on()
@@ -803,9 +832,13 @@ class TestCbfSubarray:
         receptor_ids: List[int]
     ) -> None:
         """
-        Test the EndScan command
-        """
+            Test CbfSubarrays's EndScan command 
 
+            :param proxies: proxies pytest fixture
+            :param config_file_name: JSON file for the configuration
+            :param scan_file_name: JSON file for the scan configuration
+            :param receptor_ids: list of receptor ids
+        """
         try:
             proxies.on()
             
@@ -984,9 +1017,16 @@ class TestCbfSubarray:
         receptor_ids: List[int],
         vcc_receptors: List[int],
     ) -> None:
-
         """
-        Test the reception of delay models
+            Test CbfSubarrays's delay model update via the 
+                ConfigureScan command 
+
+            :param proxies: proxies pytest fixture
+            :param config_file_name: JSON file for the configuration
+            :param delay_model_file_name: JSON file for the delay model
+            :param scan_file_name: JSON file for the scan configuration
+            :param receptor_ids: list of receptor ids
+            :param vcc_receptors: list of vcc receptor ids
         """
         
         # Read delay model data from file
@@ -1122,7 +1162,14 @@ class TestCbfSubarray:
         receptor_ids: List[int]
     ) -> None:
         """
-        Test the reception of Jones matrices
+            Test CbfSubarrays's jones matrix update via the 
+                ConfigureScan command 
+
+            :param proxies: proxies pytest fixture
+            :param config_file_name: JSON file for the configuration
+            :param scan_file_name: JSON file for the scan configuration
+            :param jones_matrix_file_name: JSON file for the jones matrix
+            :param receptor_ids: list of receptor ids
         """
         try:
             proxies.on()
@@ -1271,7 +1318,13 @@ class TestCbfSubarray:
         vcc_receptors: List[int]
     ) -> None:
         """
-        Test the Scan command
+            Test CbfSubarrays's Scan command 
+
+            :param proxies: proxies pytest fixture
+            :param config_file_name: JSON file for the configuration
+            :param scan_file_name: JSON file for the scan configuration
+            :param receptor_ids: list of receptor ids
+            :param vcc_receptors: list of vcc receptor ids
         """
         try:
             proxies.on()
@@ -1407,7 +1460,13 @@ class TestCbfSubarray:
         vcc_receptors: List[int]
     ) -> None:
         """
-        Test abort reset
+            Test CbfSubarrays's Abort and ObsReset commands 
+
+            :param proxies: proxies pytest fixture
+            :param config_file_name: JSON file for the configuration
+            :param scan_file_name: JSON file for the scan configuration
+            :param receptor_ids: list of receptor ids
+            :param vcc_receptors: list of vcc receptor ids
         """
         try:
             proxies.on()
@@ -1618,7 +1677,13 @@ class TestCbfSubarray:
         vcc_receptors: List[int]
     ) -> None:
         """
-        Test abort restart
+            Test CbfSubarrays's Abort and Restart commands 
+
+            :param proxies: proxies pytest fixture
+            :param config_file_name: JSON file for the configuration
+            :param scan_file_name: JSON file for the scan configuration
+            :param receptor_ids: list of receptor ids
+            :param vcc_receptors: list of vcc receptor ids
         """
         try:
             proxies.on()
@@ -1835,6 +1900,11 @@ class TestCbfSubarray:
         rather a series of commands will be issued (Abort -> Restart/Reset)"
     )
     def test_Abort_from_Resourcing(self, proxies):
+        """
+            Test CbfSubarrays's Abort command
+
+            :param proxies: proxies pytest fixture
+        """
         try:
             proxies.on()
                 

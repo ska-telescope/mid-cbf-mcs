@@ -53,11 +53,12 @@ class TestVcc:
         config_file_name: str
     ) -> None:
         """
-        Test a minimal successful scan configuration.
+            Test a minimal successful scan configuration.
 
-        :param device_under_test: fixture that provides a
-            :py:class:`tango.DeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
+            :param device_under_test: fixture that provides a
+                :py:class:`tango.DeviceProxy` to the device under test, in a
+                :py:class:`tango.test_context.DeviceTestContext`.
+            :param config_file_name: JSON file for the configuration 
         """
 
         # to get the mock devices, use tango_harness.get_device("fqdn")
@@ -108,11 +109,11 @@ class TestVcc:
         device_under_test: CbfDeviceProxy
     ) -> None:
         """
-        Test for Vcc device.
+            Test for Vcc's On and Off commands
 
-        :param device_under_test: fixture that provides a
-            :py:class:`tango.DeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
+            :param device_under_test: fixture that provides a
+                :py:class:`tango.DeviceProxy` to the device under test, in a
+                :py:class:`tango.test_context.DeviceTestContext`.
         """
         
         device_under_test.On()
@@ -144,11 +145,13 @@ class TestVcc:
         scan_id: int
     ) -> None:
         """
-        Test Scan command state changes.
+            Test Vcc's Scan command state changes.
 
-        :param device_under_test: fixture that provides a
-            :py:class:`tango.DeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
+            :param device_under_test: fixture that provides a
+                :py:class:`tango.DeviceProxy` to the device under test, in a
+                :py:class:`tango.test_context.DeviceTestContext`.
+            :param config_file_name: JSON file for the configuration
+            :param scan_id: the scan id
         """
 
         # turn on device and configure scan
@@ -185,7 +188,7 @@ class TestVcc:
         tango_context
     ):
         """
-        Test a minimal successful search window configuration.
+            Test a minimal successful search window configuration.
         """
         if tango_context is None:
             dev_factory = DevFactory()
@@ -241,6 +244,15 @@ class TestVcc:
         config_file_name: str,
         delay_model_file_name: str
     ) -> None:
+        """
+            Test Vcc's UpdateDelayModel Command.
+
+            :param device_under_test: fixture that provides a
+                :py:class:`tango.DeviceProxy` to the device under test, in a
+                :py:class:`tango.test_context.DeviceTestContext`.
+            :param config_file_name: JSON file for the configuration
+            :param delay_model_file_name: JSON file for the delay model
+        """
 
         assert device_under_test.State() == DevState.OFF
         device_under_test.On()
