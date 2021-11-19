@@ -275,10 +275,9 @@ class TestVcc:
 
         # update the delay model
         for m in delay_model["delayModel"]:
-            if m["destinationType"] == "vcc":
-                device_under_test.write_attribute("receptorID", m["delayDetails"][0]["receptor"])
-                assert device_under_test.receptorID == m["delayDetails"][0]["receptor"]
-                device_under_test.UpdateDelayModel(json.dumps(m["delayDetails"]))
+            device_under_test.write_attribute("receptorID", m["delayDetails"][0]["receptor"])
+            assert device_under_test.receptorID == m["delayDetails"][0]["receptor"]
+            device_under_test.UpdateDelayModel(json.dumps(m["delayDetails"]))
         
         for m in delay_model["delayModel"]:
             for delayDetails in m["delayDetails"]:

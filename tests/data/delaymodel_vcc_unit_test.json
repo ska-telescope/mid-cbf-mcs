@@ -1,7 +1,6 @@
 {
     "delayModel": [
       {
-        "destinationType": "vcc",
         "delayDetails": [
           {
             "receptor": 2,
@@ -15,7 +14,6 @@
         ]
       },
       {
-        "destinationType": "vcc",
         "delayDetails": [
           {
             "receptor": 2,
@@ -29,7 +27,6 @@
         ]
       },
       {
-        "destinationType": "vcc",
         "delayDetails": [
           {
             "receptor": 2,
@@ -43,7 +40,6 @@
         ]
       },
       {
-        "destinationType": "vcc",
         "delayDetails": [
           {
             "receptor": 2,

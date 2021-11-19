@@ -593,6 +593,11 @@ class TestCbfSubarray:
             time.sleep(2)
             raise e
 
+    #TODO: Remove?
+    @pytest.mark.skip(
+        reason="Already tested in test_ConfigureScan_basic, \
+            test_ConfigureScan_delayModel, test_ConfigureScan_jonesMatrix"
+    )
     @pytest.mark.parametrize(
         "config_file_name, \
         jones_matrix_file_name, \
