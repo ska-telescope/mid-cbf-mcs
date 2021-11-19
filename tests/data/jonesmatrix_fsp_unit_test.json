@@ -1,7 +1,6 @@
 {
     "jonesMatrix": [
         {
-            "destinationType": "fsp",
             "matrixDetails": [
                 {
                     "receptor": 1,
@@ -32,7 +31,6 @@
             ]
         },
         {
-            "destinationType": "fsp",
             "matrixDetails": [
                 {
                     "receptor": 2,
@@ -56,6 +54,24 @@
                                 3.3,
                                 3.4,
                                 3.5
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "matrixDetails": [
+                {
+                    "receptor": 1,
+                    "receptorMatrix": [
+                        {
+                            "fsid": 1,
+                            "matrix": [
+                                2.0,
+                                2.1,
+                                2.2,
+                                2.3
                             ]
                         }
                     ]

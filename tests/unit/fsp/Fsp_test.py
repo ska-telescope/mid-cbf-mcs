@@ -211,31 +211,38 @@ class TestFsp:
         assert device_under_test.read_attribute("jonesMatrix", \
              extract_as=tango.ExtractAs.List).value == [[0.0] * num_cols for _ in range(num_rows)]
 
-        # update only valid for function mode PSS-BF
-        device_under_test.SetFunctionMode("PSS-BF")
-        time.sleep(0.1)
-        FspModes = Enum('FspModes', 'CORR PSS_BF PST_BF VLBI')
-        assert device_under_test.functionMode == FspModes.PSS_BF.value
-
         # read the json file
         f = open(file_path + jones_matrix_file_name)
         json_str = f.read().replace("\n", "")
         f.close()
         jones_matrix = json.loads(json_str)
 
-        # update the jones matrix
-        for m in jones_matrix["jonesMatrix"]:
-            device_under_test.UpdateJonesMatrix(json.dumps(m["matrixDetails"]))
-        
-        time.sleep(3)
-        # verify the jones matrix was updated successfully 
-        for m in jones_matrix["jonesMatrix"]:
-            for matrixDetail in m["matrixDetails"]:
-                receptor_id = matrixDetail["receptor"]
-                for receptorMatrix in matrixDetail["receptorMatrix"]:
-                    matrix = receptorMatrix["matrix"]
-                    assert device_under_test.read_attribute("jonesMatrix", \
-                        extract_as=tango.ExtractAs.List).value[receptor_id -1] == matrix
+        valid_function_modes = ["PSS-BF", "PST-BF"]
+        for mode in valid_function_modes:
+            device_under_test.SetFunctionMode(mode)
+            time.sleep(0.1)
+            FspModes = Enum('FspModes', 'CORR PSS_BF PST_BF VLBI')
+            if mode == "PSS-BF":
+                assert device_under_test.functionMode == FspModes.PSS_BF.value
+                fs_length = 16
+            elif mode == "PST-BF":
+                assert device_under_test.functionMode == FspModes.PST_BF.value
+                fs_length = 4
+
+            # update the jones matrix
+            for m in jones_matrix["jonesMatrix"]:
+                device_under_test.UpdateJonesMatrix(json.dumps(m["matrixDetails"]))
+            
+            time.sleep(3)
+            # verify the jones matrix was updated successfully 
+            for m in jones_matrix["jonesMatrix"]:
+                for matrixDetail in m["matrixDetails"]:
+                    receptor_id = matrixDetail["receptor"]
+                    for receptorMatrix in matrixDetail["receptorMatrix"]:
+                        matrix = receptorMatrix["matrix"]
+                        if len(matrix) == fs_length:
+                            assert device_under_test.read_attribute("jonesMatrix", \
+                                extract_as=tango.ExtractAs.List).value[receptor_id -1] == matrix
     
     @pytest.mark.parametrize(
         "delay_model_file_name, \
@@ -298,4 +305,3 @@ class TestFsp:
                         delayCoeffs = receptorDelayDetail["delayCoeff"]
                         assert device_under_test.read_attribute("delayModel", \
                             extract_as=tango.ExtractAs.List).value[receptor_id -1] == delayCoeffs 
-
