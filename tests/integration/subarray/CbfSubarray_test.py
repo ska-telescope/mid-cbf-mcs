@@ -593,11 +593,8 @@ class TestCbfSubarray:
             time.sleep(2)
             raise e
 
-    #TODO: Remove?
-    @pytest.mark.skip(
-        reason="Already tested in test_ConfigureScan_basic, \
-            test_ConfigureScan_delayModel, test_ConfigureScan_jonesMatrix"
-    )
+    #TODO: The delay model and jones matrix are already tested. 
+    # Should this test just be for the beam weights?
     @pytest.mark.parametrize(
         "config_file_name, \
         jones_matrix_file_name, \
@@ -607,8 +604,8 @@ class TestCbfSubarray:
         [
             (
                 "ConfigureScan_basic.json",
-                "jonesmatrix_fsp.json",
-                "delaymodel_fsp.json",
+                "jonesmatrix.json",
+                "delaymodel.json",
                 "timingbeamweights.json",
                 [4, 1, 3, 2]
             )
@@ -650,60 +647,97 @@ class TestCbfSubarray:
             proxies.subarray[sub_id].ConfigureScan(json_string)
             proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.READY, 5, 1)
             
-            # update jones matrices from tm emulator
             f = open(data_file_path + jones_matrix_file_name)
             jones_matrix = json.loads(f.read().replace("\n", ""))
-            epoch = str(int(time.time()))
-            for matrix in jones_matrix["jonesMatrix"]:
-                matrix["epoch"] = epoch
-                if matrix["destinationType"] == "fsp":
-                    epoch = str(int(epoch) + 10)
+            f.close()
+
+            # Insert the epoch
+            jones_matrix_index_per_epoch = list(range(len(jones_matrix["jonesMatrix"])))
+            random.shuffle(jones_matrix_index_per_epoch)
+            epoch_increment = 10
+            for i, jones_matrix_index in enumerate(jones_matrix_index_per_epoch):
+                if i == 0:
+                    epoch_time = 0
+                    jones_matrix["jonesMatrix"][jones_matrix_index]["epoch"] = str(epoch_time)
+                else:
+                    epoch_time += epoch_increment
+                    jones_matrix["jonesMatrix"][jones_matrix_index]["epoch"] = str(int(time.time()) + epoch_time)
 
             # update Jones Matrix
             proxies.tm.jonesMatrix = json.dumps(jones_matrix)
-            time.sleep(1)
+            time.sleep(5)
 
-            for matrix in jones_matrix["jonesMatrix"]:
-                if matrix["destinationType"] == "fsp":
-                    for receptor in matrix["matrixDetails"]:
-                        rec_id = int(receptor["receptor"])
-                        fs_id = receptor["receptorMatrix"][0]["fsid"]
-                        for index, value in enumerate(receptor["receptorMatrix"][0]["matrix"]):
-                            try:
-                                assert proxies.fsp[fs_id].jonesMatrix[rec_id - 1][index] == value
-                            except AssertionError as ae:
-                                raise ae
-                            except Exception as e:
-                                raise e
-                    time.sleep(10)
-            
+            FspModes = Enum('FspModes', 'CORR PSS_BF PST_BF VLBI')
+
+            for epoch in range( len(jones_matrix_index_per_epoch) ):
+
+                for receptor in jones_matrix["jonesMatrix"][jones_matrix_index_per_epoch[epoch]]["matrixDetails"]:
+                    rec_id = receptor["receptor"]
+                    for fsp in [proxies.fsp[i + 1] for i in range(len(proxies.fsp))]:
+                        if fsp.functionMode in [FspModes.PSS_BF.value, FspModes.PST_BF.value, FspModes.VLBI.value]:
+                            for frequency_slice in receptor["receptorMatrix"]:
+                                if fsp.functionMode == FspModes.PSS_BF.value:
+                                    proxy_subarray = proxies.fspPssSubarray[sub_id -1]
+                                    fs_length = 16
+                                elif fsp.functionMode == FspModes.PST_BF.value:
+                                    proxy_subarray = proxies.fspPstSubarray[sub_id -1]
+                                    fs_length = 4
+                                else:
+                                    fs_length = 4
+                                    log_msg = "function mode {} currently not supported".format(fsp.functionMode)
+                                    logging.error(log_msg)
+                                if rec_id in proxy_subarray.receptors:
+                                    fs_id = frequency_slice["fsid"]
+                                    if fs_id == int(fsp.get_property("FspID")['FspID'][0]):
+                                        matrix = frequency_slice["matrix"]
+                                        if len(matrix) == fs_length:
+                                            for idx, matrix_val in enumerate(matrix):
+                                                assert matrix_val == fsp.jonesMatrix[rec_id -1][idx]                                                                               
+
+                time.sleep(10)
 
             # update delay models from tm emulator
             f = open(data_file_path + delay_model_file_name)
             delay_model = json.loads(f.read().replace("\n", ""))
-            epoch = str(int(time.time()))
-            for model in delay_model["delayModel"]:
-                model["epoch"] = epoch
-                if model["destinationType"] == "fsp":
-                    epoch = str(int(epoch) + 10)
-            
+           
+           # Insert the epoch
+            delay_model_index_per_epoch = list(range(len(delay_model["delayModel"])))
+            random.shuffle(delay_model_index_per_epoch)
+            epoch_increment = 10
+            for i, delay_model_index in enumerate(delay_model_index_per_epoch):
+                if i == 0:
+                    epoch_time = 0
+                    delay_model["delayModel"][delay_model_index]["epoch"] = str(epoch_time)
+                else:
+                    epoch_time += epoch_increment
+                    delay_model["delayModel"][delay_model_index]["epoch"] = str(int(time.time()) + epoch_time)
+
             # update delay model
             proxies.tm.delayModel = json.dumps(delay_model)
-            time.sleep(1)
+            time.sleep(5)
 
-            for model in delay_model["delayModel"]:
-                if model["destinationType"] == "fsp":
-                    for receptor in model["delayDetails"]:
-                        rec_id = int(receptor["receptor"])
-                        fs_id = receptor["receptorDelayDetails"][0]["fsid"]
-                        for index, value in enumerate(receptor["receptorDelayDetails"][0]["delayCoeff"]):
-                            try:
-                                assert proxies.fsp[fs_id].delayModel[rec_id - 1][index] == value
-                            except AssertionError as ae:
-                                raise ae
-                            except Exception as e:
-                                raise e
-                    time.sleep(10)
+            FspModes = Enum('FspModes', 'CORR PSS_BF PST_BF VLBI')
+
+            for epoch in range( len(delay_model_index_per_epoch) ):
+
+                model = delay_model["delayModel"][delay_model_index_per_epoch[epoch]]            
+                for delayDetail in model["delayDetails"]:
+                    for fsp in [proxies.fsp[i + 1] for i in range(len(proxies.fsp))]:
+                        if fsp.functionMode in [FspModes.PSS_BF.value, FspModes.PST_BF.value]:
+                            for receptorDelayDetail in delayDetail["receptorDelayDetails"]:
+                                rec_id = delayDetail["receptor"]
+                                if fsp.functionMode == FspModes.PSS_BF.value:
+                                    proxy_subarray = proxies.fspPssSubarray[sub_id -1]
+                                else:
+                                    proxy_subarray = proxies.fspPstSubarray[sub_id -1]
+                                if rec_id in proxy_subarray.receptors:
+                                    fs_id = receptorDelayDetail["fsid"]
+                                    if fs_id == int(fsp.get_property("FspID")['FspID'][0]):
+                                        delayCoeff = receptorDelayDetail["delayCoeff"]
+                                        for idx, coeff in enumerate(delayCoeff):
+                                            assert coeff == fsp.delayModel[rec_id -1][idx]                                           
+
+                time.sleep(10)
 
             # update timing beam weights from tm emulator
             f = open(data_file_path + timing_beam_weights_file_name)
@@ -1115,7 +1149,6 @@ class TestCbfSubarray:
 
             assert proxies.subarray[sub_id].obsState == ObsState.READY
 
-            #create a Jones matrix
             f = open(data_file_path + jones_matrix_file_name)
             jones_matrix = json.loads(f.read().replace("\n", ""))
             f.close()
