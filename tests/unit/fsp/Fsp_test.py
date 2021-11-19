@@ -202,7 +202,7 @@ class TestFsp:
          sub_id",
         [
             (
-                "/../../data/jonesmatrix_fsp_unit_test.json",
+                "/../../data/jonesmatrix_unit_test.json",
                 1
             )
         ]

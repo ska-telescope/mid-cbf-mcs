@@ -10,6 +10,7 @@
 """Contain the tests for the Vcc."""
 
 from __future__ import annotations
+from typing import List
 
 # Standard imports
 import os
@@ -227,6 +228,82 @@ class TestVcc:
 
             # check state
             assert sw_1_proxy.State() == DevState.ON
+    
+    @pytest.mark.parametrize(
+        "config_file_name, \
+        jones_matrix_file_name", 
+        [
+            (
+                "/../../data/Vcc_ConfigureScan_basic.json",
+                "/../../data/jonesmatrix_unit_test.json"
+            )
+        ]
+    )
+    def test_UpdateJonesMatrix(
+        self: TestVcc,
+        device_under_test: CbfDeviceProxy,
+        config_file_name: str,
+        jones_matrix_file_name: str,
+    ) -> None:
+        """
+            Test Vcc's UpdateJonesMatrix command
+
+            :param device_under_test: fixture that provides a
+                :py:class:`tango.DeviceProxy` to the device under test, in a
+                :py:class:`tango.test_context.DeviceTestContext`.
+            :param config_file_name: JSON file for the configuration
+            :param jones_matrix_file_name: JSON file for the jones matrix
+            :param sub_id: the subarray id
+        """
+
+        assert device_under_test.State() == DevState.OFF
+        device_under_test.On()
+        time.sleep(3)
+        assert device_under_test.State() == DevState.ON
+
+        # jones matrix values should be set to 0.0 after init
+        num_cols = 16
+        num_rows = 26
+        assert device_under_test.read_attribute("jonesMatrix", \
+             extract_as=tango.ExtractAs.List).value == [[0.0] * num_cols for _ in range(num_rows)]
+        
+        f = open(file_path + config_file_name)
+        json_str = f.read().replace("\n", "")
+        configuration = json.loads(json_str)
+        f.close()
+
+        frequency_band = configuration["frequency_band"]
+        frequency_bands = ["1", "2", "3", "4", "5a", "5b"]
+        freq_band_name =  frequency_bands[frequency_band]
+        device_under_test.TurnOnBandDevice(freq_band_name)
+
+        device_under_test.ConfigureScan(json_str)
+
+        assert device_under_test.obsState == ObsState.READY
+
+        # read the json file
+        f = open(file_path + jones_matrix_file_name)
+        json_str = f.read().replace("\n", "")
+        f.close()
+        jones_matrix = json.loads(json_str)
+
+        # update the jones matrix
+        for m in jones_matrix["jonesMatrix"]:
+            device_under_test.UpdateJonesMatrix(json.dumps(m["matrixDetails"]))
+        
+        min_fs_id = 1
+        max_fs_id = 26
+        matrix_len = 16 
+        for m in jones_matrix["jonesMatrix"]:
+            for receptor in m["matrixDetails"]:
+                rec_id = receptor["receptor"]
+                if rec_id == device_under_test.receptorID:
+                    for frequency_slice in receptor["receptorMatrix"]:
+                        fs_id = frequency_slice["fsid"]
+                        matrix = frequency_slice["matrix"]
+                        if min_fs_id <= fs_id <= max_fs_id:
+                            if len(matrix) == matrix_len:
+                                assert list(device_under_test.jonesMatrix[fs_id-1]) == list(matrix)
     
     @pytest.mark.parametrize(
         "config_file_name, \
