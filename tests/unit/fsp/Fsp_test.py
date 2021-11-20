@@ -199,10 +199,14 @@ class TestFsp:
     
     @pytest.mark.parametrize(
         "jones_matrix_file_name, \
-         sub_id",
+        sub_id, \
+        valid_receptor_ids, \
+        fsp_id",
         [
             (
                 "/../../data/jonesmatrix_unit_test.json",
+                1,
+                [1, 2, 3, 4],
                 1
             )
         ]
@@ -211,7 +215,9 @@ class TestFsp:
         self: TestFsp,
         device_under_test: CbfDeviceProxy,
         jones_matrix_file_name: str,
-        sub_id: int
+        sub_id: int,
+        valid_receptor_ids: List[int],
+        fsp_id: int
     ) -> None:
         """
             Test Fsp's UpdateJonesMatrix command
@@ -221,6 +227,9 @@ class TestFsp:
                 :py:class:`tango.test_context.DeviceTestContext`.
             :param jones_matrix_file_name: JSON file for the jones matrix
             :param sub_id: the subarray id
+            :param valid_receptor_ids: the valid receptor ids for the pss/pst subarray
+                (mocked in conftest.py)
+            :param fsp_id: the fsp id (defined in conftest.py)
         """
 
         assert device_under_test.State() == DevState.OFF
@@ -264,19 +273,26 @@ class TestFsp:
             # verify the jones matrix was updated successfully 
             for m in jones_matrix["jonesMatrix"]:
                 for matrixDetail in m["matrixDetails"]:
-                    receptor_id = matrixDetail["receptor"]
-                    for receptorMatrix in matrixDetail["receptorMatrix"]:
-                        matrix = receptorMatrix["matrix"]
-                        if len(matrix) == fs_length:
-                            assert device_under_test.read_attribute("jonesMatrix", \
-                                extract_as=tango.ExtractAs.List).value[receptor_id -1] == matrix
+                    rec_id = matrixDetail["receptor"]
+                    if rec_id in valid_receptor_ids:
+                        for frequency_slice in matrixDetail["receptorMatrix"]:
+                            fs_id = frequency_slice["fsid"]
+                            matrix = frequency_slice["matrix"]
+                            if fs_id == fsp_id:
+                                if len(matrix) == fs_length:
+                                    assert device_under_test.read_attribute("jonesMatrix", \
+                                        extract_as=tango.ExtractAs.List).value[rec_id -1] == matrix
     
     @pytest.mark.parametrize(
         "delay_model_file_name, \
-         sub_id",
+        sub_id, \
+        valid_receptor_ids, \
+        fsp_id",
         [
             (
                 "/../../data/delaymodel_fsp_unit_test.json",
+                1,
+                [1, 2, 3, 4],
                 1
             )
         ]
@@ -285,7 +301,9 @@ class TestFsp:
         self: TestFsp,
         device_under_test: CbfDeviceProxy,
         delay_model_file_name: str,
-        sub_id: int
+        sub_id: int,
+        valid_receptor_ids: List[int],
+        fsp_id: int
     ) -> None:
         """
             Test Fsp's UpdateDelayModel command
@@ -295,6 +313,9 @@ class TestFsp:
                 :py:class:`tango.test_context.DeviceTestContext`.
             :param delay_model_file_name: JSON file for the delay model
             :param sub_id: the subarray id
+            :param valid_receptor_ids: the valid receptor ids for the pss/pst subarray
+                (mocked in conftest.py)
+            :param fsp_id: the fsp id (defined in conftest.py)
         """
 
         assert device_under_test.State() == DevState.OFF
@@ -333,11 +354,17 @@ class TestFsp:
                 device_under_test.UpdateDelayModel(json.dumps(m["delayDetails"]))
 
             time.sleep(3)
+
+            model_len = 6
             # verify the delay model was updated successfully 
             for m in delay_model["delayModel"]:
                 for delayDetail in m["delayDetails"]:
-                    receptor_id = delayDetail["receptor"]
-                    for receptorDelayDetail in delayDetail["receptorDelayDetails"]:
-                        delayCoeffs = receptorDelayDetail["delayCoeff"]
-                        assert device_under_test.read_attribute("delayModel", \
-                            extract_as=tango.ExtractAs.List).value[receptor_id -1] == delayCoeffs 
+                    rec_id = delayDetail["receptor"]
+                    if rec_id in valid_receptor_ids:
+                            for frequency_slice in delayDetail["receptorDelayDetails"]:
+                                fs_id = frequency_slice["fsid"]
+                                if fs_id == fsp_id:
+                                    delayCoeffs = frequency_slice["delayCoeff"]
+                                    if len(delayCoeffs) == model_len:
+                                        assert device_under_test.read_attribute("delayModel", \
+                                            extract_as=tango.ExtractAs.List).value[rec_id -1] == delayCoeffs 
