@@ -311,7 +311,7 @@ class TestVcc:
         [
             (
                 "/../../data/Vcc_ConfigureScan_basic.json",
-                "/../../data/delaymodel_vcc_unit_test.json"
+                "/../../data/delaymodel_unit_test.json"
             )
         ]
     )
@@ -368,20 +368,14 @@ class TestVcc:
             assert device_under_test.receptorID == m["delayDetails"][0]["receptor"]
             device_under_test.UpdateDelayModel(json.dumps(m["delayDetails"]))
         
+        min_fs_id = 1
+        max_fs_id = 26
+        model_len = 6
         for m in delay_model["delayModel"]:
             for delayDetails in m["delayDetails"]:
                 for frequency_slice in delayDetails["receptorDelayDetails"]:
-                    if 1 <= frequency_slice["fsid"] <= num_rows:
-                        if len(frequency_slice["delayCoeff"]) == num_cols:
+                    if min_fs_id <= frequency_slice["fsid"] <= max_fs_id:
+                        if len(frequency_slice["delayCoeff"]) == model_len:
                             assert device_under_test.read_attribute("delayModel", \
                             extract_as=tango.ExtractAs.List).value[frequency_slice["fsid"] -1] \
                                  == frequency_slice["delayCoeff"] 
-                        else:
-                            log_msg = "'delayCoeff' not valid for frequency slice {} of " \
-                                        "receptor {}".format(frequency_slice["fsid"], self._receptor_ID)
-                            logging.error(log_msg)
-                    else:
-                        log_msg = "'fsid' {} not valid for receptor {}".format(
-                            frequency_slice["fsid"], self._receptor_ID
-                        )
-                        logging.error(log_msg)

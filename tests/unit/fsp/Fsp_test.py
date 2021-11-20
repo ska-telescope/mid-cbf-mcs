@@ -290,7 +290,7 @@ class TestFsp:
         fsp_id",
         [
             (
-                "/../../data/delaymodel_fsp_unit_test.json",
+                "/../../data/delaymodel_unit_test.json",
                 1,
                 [1, 2, 3, 4],
                 1
