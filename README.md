@@ -1,7 +1,9 @@
 # Mid.CBF MCS
 
 Documentation on the Developer's portal:
-[![ReadTheDoc](https://developer.skao.int/projects/ska-mid-cbf-mcs/en/latest/?badge=latest)](https://developer.skao.int/projects/ska-mid-cbf-mcs/en/latest/?badge=latest)
+[![ReadTheDocs](https://developer.skao.int/projects/ska-mid-cbf-mcs/en/latest/?badge=latest)](https://developer.skao.int/projects/ska-mid-cbf-mcs/en/latest/?badge=latest)
+
+Code repository: [ska-mid-cbf-mcs](https://gitlab.com/ska-telescope/ska-mid-cbf-mcs)
 
 # Table Of Contents
 * [Introduction](#introduction)

@@ -28,7 +28,6 @@ autodoc_member_order = 'bysource'
 import os
 import sys
 sys.path.insert(0, os.path.abspath('../../src/'))
-import sphinx_rtd_theme
 
 
 def setup(app):
@@ -41,9 +40,6 @@ project = 'ska-mid-cbf-mcs Software'
 copyright = '2020, NRC - SKA Organization'
 author = 'Taylor Huang'
 
-def setup(app):
-    app.add_css_file('css/custom.css')
-    app.add_javascript('js/github.js')
 
 # -- General configuration ------------------------------------------------
 # 
