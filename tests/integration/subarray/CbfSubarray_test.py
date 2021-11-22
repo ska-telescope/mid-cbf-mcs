@@ -61,7 +61,7 @@ class TestCbfSubarray:
         sub_id: int
     ) -> None:
         """
-        Test valid AddReceptors and RemoveReceptors commands
+        Test valid AddReceivers and RemoveReceivers commands
         """
 
         if proxies.debug_device_is_on:
@@ -81,7 +81,7 @@ class TestCbfSubarray:
                 for i in range(len(proxies.vcc))])
 
             # add all except last receptor
-            proxies.subarray[sub_id].AddReceptors(receptor_ids[:-1])
+            proxies.subarray[sub_id].AddReceivers(receptor_ids[:-1])
             proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.IDLE, 1, 1)
             assert [proxies.subarray[sub_id].receptors[i] 
                 for i in range(len(receptor_ids[:-1]))] == receptor_ids[:-1]
@@ -90,14 +90,14 @@ class TestCbfSubarray:
             assert proxies.subarray[sub_id].obsState == ObsState.IDLE
 
             # add the last receptor
-            proxies.subarray[sub_id].AddReceptors([receptor_ids[-1]])
+            proxies.subarray[sub_id].AddReceivers([receptor_ids[-1]])
             time.sleep(1)
             assert [proxies.subarray[sub_id].receptors[i] 
                 for i in range(len(receptor_ids))] == receptor_ids
             assert proxies.vcc[proxies.receptor_to_vcc[receptor_ids[-1]]].subarrayMembership == sub_id
 
             # remove all except last receptor
-            proxies.subarray[sub_id].RemoveReceptors(receptors_to_remove)
+            proxies.subarray[sub_id].RemoveReceivers(receptors_to_remove)
             time.sleep(1)
             receptor_ids_after_remove = [r for r in receptor_ids if r not in receptors_to_remove]
             for idx, receptor in enumerate(receptor_ids_after_remove):
@@ -107,7 +107,7 @@ class TestCbfSubarray:
                 for i in receptors_to_remove])
 
             # remove remaining receptor
-            proxies.subarray[sub_id].RemoveReceptors(receptor_ids_after_remove)
+            proxies.subarray[sub_id].RemoveReceivers(receptor_ids_after_remove)
             proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.EMPTY, 1, 1)
             assert len(proxies.subarray[sub_id].receptors) == 0
             for receptor in receptor_ids_after_remove:
@@ -156,7 +156,7 @@ class TestCbfSubarray:
         sub_id: int
     ) -> None:
         """
-        Test invalid AddReceptors commands involving a single subarray:
+        Test invalid AddReceivers commands involving a single subarray:
             - when a receptor ID is invalid (e.g. out of range)
         """
         try:
@@ -168,14 +168,14 @@ class TestCbfSubarray:
             assert all([proxies.vcc[i + 1].subarrayMembership == 0 for i in range(len(proxies.vcc))])
 
             # add some receptors 
-            proxies.subarray[sub_id].AddReceptors(receptor_ids)
+            proxies.subarray[sub_id].AddReceivers(receptor_ids)
             proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.IDLE, 1, 1)
             assert [proxies.subarray[sub_id].receptors[i] for i in range(len(receptor_ids))] == receptor_ids
             assert all([proxies.vcc[proxies.receptor_to_vcc[i]].subarrayMembership == 1 for i in receptor_ids])
             assert proxies.subarray[sub_id].obsState == ObsState.IDLE
 
             # try adding an invalid receptor ID
-            result = proxies.subarray[sub_id].AddReceptors(invalid_receptor_id)
+            result = proxies.subarray[sub_id].AddReceivers(invalid_receptor_id)
             proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.FAULT, 1, 1)
             assert result[0][0] == ResultCode.FAILED
             assert [proxies.subarray[sub_id].receptors[i] for i in range(len(receptor_ids))] == receptor_ids
@@ -220,7 +220,7 @@ class TestCbfSubarray:
         sub_id: int
     ) -> None:
         """
-        Test invalid AddReceptors commands involving a single subarray:
+        Test invalid AddReceivers commands involving a single subarray:
             - when a receptor ID is invalid (e.g. out of range)
             - when a receptor to be removed is not assigned to the subarray
         """
@@ -235,7 +235,7 @@ class TestCbfSubarray:
             assert all([proxies.vcc[i + 1].subarrayMembership == 0 for i in range(len(proxies.vcc))])
 
             # add some receptors 
-            proxies.subarray[sub_id].AddReceptors(receptor_ids)
+            proxies.subarray[sub_id].AddReceivers(receptor_ids)
             proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.IDLE, 1, 1)
             assert [proxies.subarray[sub_id].receptors[i] for i in range(len(receptor_ids))] == receptor_ids
             assert all([proxies.vcc[proxies.receptor_to_vcc[i]].subarrayMembership == 1 for i in receptor_ids])
@@ -243,9 +243,9 @@ class TestCbfSubarray:
 
             # try removing a receptor not assigned to subarray 1
             # doing this doesn't actually throw an error
-            proxies.subarray[sub_id].RemoveReceptors(invalid_receptors_to_remove)
+            proxies.subarray[sub_id].RemoveReceivers(invalid_receptors_to_remove)
             assert [proxies.subarray[sub_id].receptors[i] for i in range(len(receptor_ids))] == receptor_ids
-            proxies.subarray[sub_id].RemoveAllReceptors()
+            proxies.subarray[sub_id].RemoveAllReceivers()
             proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.EMPTY, 1, 1)
 
             proxies.off()
@@ -291,7 +291,7 @@ class TestCbfSubarray:
         sub_id: int
     ) -> None:
         """
-        Test RemoveAllReceptors command
+        Test RemoveAllReceivers command
         """
         try:
             proxies.on()
@@ -304,14 +304,14 @@ class TestCbfSubarray:
             assert all([proxies.vcc[i + 1].subarrayMembership == 0 for i in range(len(proxies.vcc))])
 
             # add some receptors
-            proxies.subarray[sub_id].AddReceptors(receptor_ids)
+            proxies.subarray[sub_id].AddReceivers(receptor_ids)
             proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.IDLE, 1, 1)
             assert all([proxies.subarray[sub_id].receptors[i] == j for i, j in zip(range(len(receptor_ids)), receptor_ids)])
             assert all([proxies.vcc[proxies.receptor_to_vcc[i]].subarrayMembership == sub_id for i in receptor_ids])
             assert proxies.subarray[sub_id].obsState == ObsState.IDLE
 
             # remove all receptors
-            proxies.subarray[sub_id].RemoveAllReceptors()
+            proxies.subarray[sub_id].RemoveAllReceivers()
             proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.EMPTY, 1, 1)
             assert len(proxies.subarray[sub_id].receptors) == 0
             assert all([proxies.vcc[proxies.receptor_to_vcc[i]].subarrayMembership == 0 for i in receptor_ids])
@@ -375,7 +375,7 @@ class TestCbfSubarray:
 
             # add receptors
             #TODO currently only support for 1 receptor per fsp
-            proxies.subarray[sub_id].AddReceptors(receptor_ids)
+            proxies.subarray[sub_id].AddReceivers(receptor_ids)
             proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.IDLE, 1, 1)
             assert all([proxies.subarray[sub_id].receptors[i] == j 
                 for i, j in zip(range(len(receptor_ids)), receptor_ids)])
@@ -576,7 +576,7 @@ class TestCbfSubarray:
             # Clean Up
             proxies.subarray[sub_id].GoToIdle()
             proxies.wait_timeout_obs([proxies.vcc[i + 1] for i in range(len(proxies.vcc))], ObsState.IDLE, 3, 1)
-            proxies.subarray[sub_id].RemoveAllReceptors()
+            proxies.subarray[sub_id].RemoveAllReceivers()
             proxies.wait_timeout_obs([proxies.vcc[i + 1] for i in range(len(proxies.vcc))], ObsState.EMPTY, 3, 1)
 
             proxies.off()
@@ -636,7 +636,7 @@ class TestCbfSubarray:
             assert proxies.subarray[sub_id].obsState == ObsState.EMPTY
 
             # add receptors
-            proxies.subarray[sub_id].AddReceptors(receptor_ids)
+            proxies.subarray[sub_id].AddReceivers(receptor_ids)
             proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.IDLE, 1, 1)
             assert all([proxies.subarray[sub_id].receptors[i] == j for i, j in zip(range(len(receptor_ids)), receptor_ids)])
 
@@ -727,7 +727,7 @@ class TestCbfSubarray:
             # Clean Up
             proxies.subarray[sub_id].GoToIdle()
             proxies.wait_timeout_obs([proxies.vcc[i + 1] for i in range(len(proxies.vcc))], ObsState.IDLE, 3, 1)
-            proxies.subarray[sub_id].RemoveAllReceptors()
+            proxies.subarray[sub_id].RemoveAllReceivers()
             proxies.wait_timeout_obs([proxies.vcc[i + 1] for i in range(len(proxies.vcc))], ObsState.EMPTY, 3, 1)
 
             proxies.off()
@@ -782,7 +782,7 @@ class TestCbfSubarray:
             for receptor_id, ii in zip(receptor_ids, range(num_receptors)):
                 vcc_ids[ii] = proxies.receptor_to_vcc[receptor_id]
 
-            proxies.subarray[sub_id].AddReceptors(receptor_ids)
+            proxies.subarray[sub_id].AddReceivers(receptor_ids)
             proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.IDLE, 1, 1)
             assert all([proxies.subarray[sub_id].receptors[i] == j 
                 for i, j in zip(range(num_receptors), receptor_ids)])
@@ -903,7 +903,7 @@ class TestCbfSubarray:
             # Clean up
             proxies.subarray[sub_id].GoToIdle()
             proxies.wait_timeout_obs([proxies.vcc[i + 1] for i in range(len(proxies.vcc))], ObsState.IDLE, 3, 1)
-            proxies.subarray[sub_id].RemoveAllReceptors()
+            proxies.subarray[sub_id].RemoveAllReceivers()
             proxies.wait_timeout_obs([proxies.vcc[i + 1] for i in range(len(proxies.vcc))], ObsState.EMPTY, 3, 1)
 
             proxies.on()
@@ -977,7 +977,7 @@ class TestCbfSubarray:
             assert proxies.subarray[sub_id].obsState == ObsState.EMPTY
 
             # add receptors
-            proxies.subarray[sub_id].AddReceptors(receptor_ids)
+            proxies.subarray[sub_id].AddReceivers(receptor_ids)
             proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.IDLE, 1, 1)
             assert all([proxies.subarray[sub_id].receptors[i] == j for i, j in zip(range(len(receptor_ids)), receptor_ids)])
 
@@ -1069,7 +1069,7 @@ class TestCbfSubarray:
             proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.READY, 1, 1)
             proxies.subarray[sub_id].GoToIdle()
             proxies.wait_timeout_obs([proxies.vcc[i + 1] for i in range(len(proxies.vcc))], ObsState.IDLE, 3, 1)
-            proxies.subarray[sub_id].RemoveAllReceptors()
+            proxies.subarray[sub_id].RemoveAllReceivers()
             proxies.wait_timeout_obs([proxies.vcc[i + 1] for i in range(len(proxies.vcc))], ObsState.EMPTY, 3, 1)
 
             proxies.off()
@@ -1123,7 +1123,7 @@ class TestCbfSubarray:
             assert proxies.subarray[sub_id].obsState == ObsState.EMPTY
 
             # add receptors
-            proxies.subarray[sub_id].AddReceptors(receptor_ids)
+            proxies.subarray[sub_id].AddReceivers(receptor_ids)
             proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.IDLE, 1, 1)
             assert all([proxies.subarray[sub_id].receptors[i] == j 
                        for i, j in zip(range(len(receptor_ids)), receptor_ids)])
@@ -1230,7 +1230,7 @@ class TestCbfSubarray:
             proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.READY, 1, 1)
             proxies.subarray[sub_id].GoToIdle()
             proxies.wait_timeout_obs([proxies.vcc[i + 1] for i in range(len(proxies.vcc))], ObsState.IDLE, 3, 1)
-            proxies.subarray[sub_id].RemoveAllReceptors()
+            proxies.subarray[sub_id].RemoveAllReceivers()
             proxies.wait_timeout_obs([proxies.vcc[i + 1] for i in range(len(proxies.vcc))], ObsState.EMPTY, 3, 1)
 
             proxies.off()
@@ -1284,7 +1284,7 @@ class TestCbfSubarray:
             assert proxies.subarray[sub_id].obsState == ObsState.EMPTY
 
             # add receptors
-            proxies.subarray[sub_id].AddReceptors(receptor_ids)
+            proxies.subarray[sub_id].AddReceivers(receptor_ids)
             proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.IDLE, 1, 1)
             assert all([proxies.subarray[sub_id].receptors[i] == j 
                 for i, j in zip(range(len(receptor_ids)), receptor_ids)])
@@ -1359,7 +1359,7 @@ class TestCbfSubarray:
             proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.READY, 1, 1)
             proxies.subarray[sub_id].GoToIdle()
             proxies.wait_timeout_obs([proxies.vcc[i + 1] for i in range(len(proxies.vcc))], ObsState.IDLE, 3, 1)
-            proxies.subarray[sub_id].RemoveAllReceptors()
+            proxies.subarray[sub_id].RemoveAllReceivers()
             proxies.wait_timeout_obs([proxies.vcc[i + 1] for i in range(len(proxies.vcc))], ObsState.EMPTY, 3, 1)
 
             proxies.on()
@@ -1421,7 +1421,7 @@ class TestCbfSubarray:
             
             ############################# abort from READY ###########################
             # add receptors
-            proxies.subarray[sub_id].AddReceptors(receptor_ids)
+            proxies.subarray[sub_id].AddReceivers(receptor_ids)
             proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.IDLE, 1, 1)
             assert all([proxies.subarray[sub_id].receptors[i] == j 
                 for i, j in zip(range(len(receptor_ids)), receptor_ids)])
@@ -1481,7 +1481,7 @@ class TestCbfSubarray:
 
             ############################# abort from SCANNING ###########################
             # add receptors
-            proxies.subarray[sub_id].AddReceptors(receptor_ids)
+            proxies.subarray[sub_id].AddReceivers(receptor_ids)
             proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.IDLE, 1, 1)
             assert all([proxies.subarray[sub_id].receptors[i] == j 
                 for i, j in zip(range(len(receptor_ids)), receptor_ids)])
@@ -1570,7 +1570,7 @@ class TestCbfSubarray:
                 assert proxies.vcc[proxies.receptor_to_vcc[r]].obsState == ObsState.IDLE
 
             # Clean up
-            proxies.subarray[sub_id].RemoveAllReceptors()
+            proxies.subarray[sub_id].RemoveAllReceivers()
             proxies.wait_timeout_obs([proxies.vcc[i + 1] for i in range(len(proxies.vcc))], ObsState.EMPTY, 3, 1)
 
             proxies.off()
@@ -1632,7 +1632,7 @@ class TestCbfSubarray:
             
             ############################# abort from IDLE ###########################
             # add receptors
-            proxies.subarray[sub_id].AddReceptors(receptor_ids)
+            proxies.subarray[sub_id].AddReceivers(receptor_ids)
             proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.IDLE, 1, 1)
             assert proxies.subarray[sub_id].obsState == ObsState.IDLE
             # abort
@@ -1668,7 +1668,7 @@ class TestCbfSubarray:
 
             ############################# abort from READY ###########################
             # add receptors
-            proxies.subarray[sub_id].AddReceptors(receptor_ids)
+            proxies.subarray[sub_id].AddReceivers(receptor_ids)
             proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.IDLE, 1, 1)
             # configure scan
             proxies.subarray[sub_id].ConfigureScan(json_string)
@@ -1728,7 +1728,7 @@ class TestCbfSubarray:
 
             ############################# abort from SCANNING ###########################
             # add receptors
-            proxies.subarray[sub_id].AddReceptors(receptor_ids)
+            proxies.subarray[sub_id].AddReceivers(receptor_ids)
             proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.IDLE, 1, 1)
             # configure scan
             proxies.subarray[sub_id].ConfigureScan(json_string)
@@ -1842,7 +1842,7 @@ class TestCbfSubarray:
             input_receptors = [1, 4]
 
             # add some receptors and turn subarray off 
-            proxies.subarray[1].AddReceptors(input_receptors)
+            proxies.subarray[1].AddReceivers(input_receptors)
             proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.RESOURCING, 1, 1)
             proxies.subarray[1].Off()
             proxies.wait_timeout_dev([proxies.subarray[1]], DevState.OFF, 3, 1)
@@ -1852,7 +1852,7 @@ class TestCbfSubarray:
 
             proxies.subarray[1].On()
             proxies.wait_timeout_dev([proxies.subarray[1]], DevState.ON, 3, 1)
-            proxies.subarray[1].AddReceptors(input_receptors)
+            proxies.subarray[1].AddReceivers(input_receptors)
             proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.IDLE, 1, 1)
 
             # end configuration with off command
@@ -1869,7 +1869,7 @@ class TestCbfSubarray:
 
             proxies.subarray[1].On()
             proxies.wait_timeout_dev([proxies.subarray[1]], DevState.ON, 3, 1)
-            proxies.subarray[1].AddReceptors(input_receptors)
+            proxies.subarray[1].AddReceivers(input_receptors)
             proxies.wait_timeout_obs([proxies.subarray[1]], ObsState.IDLE, 1, 1)
 
             # end scan with off command

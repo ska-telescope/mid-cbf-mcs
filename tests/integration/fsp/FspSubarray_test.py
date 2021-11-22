@@ -93,7 +93,7 @@ class TestFspPstSubarray:
             subarray.Restart()
             time.sleep(1)
         elif len(subarray.receptors) != 0:
-            subarray.RemoveAllReceptors()
+            subarray.RemoveAllReceivers()
             time.sleep(1)
         if len(device_under_test.receptors) != 0:
             device_under_test.RemoveAllReceptors()
@@ -104,7 +104,7 @@ class TestFspPstSubarray:
         device_under_test.On()
 
         # add some receptors
-        subarray.AddReceptors(receptors_to_test)
+        subarray.AddReceivers(receptors_to_test)
         time.sleep(1)
         assert [subarray.receptors[i] for i in range(len(subarray.receptors))] \
             == receptors_to_test
@@ -124,7 +124,7 @@ class TestFspPstSubarray:
             for i in range(len(device_under_test.receptors))] == receptors_to_test
 
         # remove remaining receptors
-        subarray.RemoveAllReceptors()
+        subarray.RemoveAllReceivers()
         time.sleep(1)
         device_under_test.RemoveReceptors(receptors_to_test)
         assert [device_under_test.receptors[i] \
@@ -155,7 +155,7 @@ class TestFspPstSubarray:
             for i in range(len(device_under_test.receptors))] == []
 
         # add some receptors
-        subarray.AddReceptors(receptors_to_test)
+        subarray.AddReceivers(receptors_to_test)
         time.sleep(1)
         assert [subarray.receptors[i] for i in range(len(subarray.receptors))] \
             == receptors_to_test
@@ -185,7 +185,7 @@ class TestFspPstSubarray:
             for i in range(len(device_under_test.receptors))] == receptors_to_test
 
         # remove all receptors
-        subarray.RemoveAllReceptors()
+        subarray.RemoveAllReceivers()
         time.sleep(1)
         device_under_test.RemoveReceptors(receptors_to_test)
         assert [device_under_test.receptors[i] \
@@ -213,7 +213,7 @@ class TestFspPstSubarray:
             for i in range(len(device_under_test.receptors))] == []
 
         # add some receptors
-        subarray.AddReceptors(receptors_to_test)
+        subarray.AddReceivers(receptors_to_test)
         time.sleep(1)
         assert [subarray.receptors[i] for i in range(len(subarray.receptors))] \
             == receptors_to_test
@@ -222,7 +222,7 @@ class TestFspPstSubarray:
             for i in range(len(device_under_test.receptors))] == receptors_to_test
 
         # remove all receptors
-        subarray.RemoveAllReceptors()
+        subarray.RemoveAllReceivers()
         time.sleep(1)
         device_under_test.RemoveAllReceptors()
         assert [device_under_test.receptors[i] \

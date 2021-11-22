@@ -111,7 +111,7 @@ class TestCbfSubarray:
         receptors_to_remove: List[int], 
     ) -> None:
         """
-        Test valid use of Add/RemoveReceptors command.
+        Test valid use of Add/RemoveReceivers command.
 
         :param device_under_test: fixture that provides a
             :py:class:`CbfDeviceProxy` to the device under test, in a
@@ -124,21 +124,21 @@ class TestCbfSubarray:
 
          # add all except last receptor
         assert device_under_test.obsState == ObsState.EMPTY
-        device_under_test.AddReceptors(receptor_ids[:-1])
+        device_under_test.AddReceivers(receptor_ids[:-1])
         time.sleep(0.1)
         assert [device_under_test.receptors[i] 
             for i in range(len(receptor_ids[:-1]))] == receptor_ids[:-1]
         assert device_under_test.obsState == ObsState.IDLE
 
         # add the last receptor
-        device_under_test.AddReceptors([receptor_ids[-1]])
+        device_under_test.AddReceivers([receptor_ids[-1]])
         time.sleep(0.1)
         assert [device_under_test.receptors[i] 
             for i in range(len(receptor_ids))] == receptor_ids
         assert device_under_test.obsState == ObsState.IDLE
 
         # remove all except last receptor
-        device_under_test.RemoveReceptors(receptors_to_remove)
+        device_under_test.RemoveReceivers(receptors_to_remove)
         time.sleep(0.1)
         receptor_ids_after_remove = [r for r in receptor_ids if r not in receptors_to_remove]
         for idx, receptor in enumerate(receptor_ids_after_remove):
@@ -146,7 +146,7 @@ class TestCbfSubarray:
         assert device_under_test.obsState == ObsState.IDLE
 
         # remove remaining receptor
-        device_under_test.RemoveReceptors(receptor_ids_after_remove)
+        device_under_test.RemoveReceivers(receptor_ids_after_remove)
         time.sleep(0.1)
         assert len(device_under_test.receptors) == 0
         assert device_under_test.obsState == ObsState.EMPTY
@@ -168,7 +168,7 @@ class TestCbfSubarray:
         receptor_ids: List[int]
     ) -> None:
         """
-        Test valid use of RemoveAllReceptors command.
+        Test valid use of RemoveAllReceivers command.
 
         :param device_under_test: fixture that provides a
             :py:class:`CbfDeviceProxy` to the device under test, in a
@@ -179,12 +179,12 @@ class TestCbfSubarray:
         time.sleep(3)
         assert device_under_test.State() == DevState.ON
         assert device_under_test.obsState == ObsState.EMPTY
-        device_under_test.AddReceptors(receptor_ids)
+        device_under_test.AddReceivers(receptor_ids)
         time.sleep(0.1)
         assert device_under_test.obsState == ObsState.IDLE
 
         # remove all receptors
-        device_under_test.RemoveAllReceptors()
+        device_under_test.RemoveAllReceivers()
         time.sleep(0.1)
         assert len(device_under_test.receptors) == 0
         assert device_under_test.obsState == ObsState.EMPTY
@@ -210,7 +210,7 @@ class TestCbfSubarray:
         invalid_receptor_id: List[int],
     ) -> None:
         """
-        Test invalid use of AddReceptors commands:
+        Test invalid use of AddReceivers commands:
             - when a receptor ID is invalid (e.g. out of range)
         """
         assert device_under_test.State() == DevState.OFF
@@ -220,13 +220,13 @@ class TestCbfSubarray:
 
         # add some receptors
         assert device_under_test.obsState == ObsState.EMPTY
-        device_under_test.AddReceptors(receptor_ids)
+        device_under_test.AddReceivers(receptor_ids)
         time.sleep(0.1)
         assert [device_under_test.receptors[i] for i in range(len(receptor_ids))] == receptor_ids
         assert device_under_test.obsState == ObsState.IDLE
 
         # try adding an invalid receptor ID
-        result = device_under_test.AddReceptors(invalid_receptor_id)
+        result = device_under_test.AddReceivers(invalid_receptor_id)
         time.sleep(0.1)
         assert result[0][0] == ResultCode.FAILED
         assert device_under_test.obsState == ObsState.FAULT
@@ -252,7 +252,7 @@ class TestCbfSubarray:
             invalid_receptors_to_remove: List[int], 
         ) -> None:
         """
-        Test invalid use of RemoveReceptors commands:
+        Test invalid use of RemoveReceivers commands:
             - when a receptor to be removed is not assigned to the subarray
         """
         assert device_under_test.State() == DevState.OFF
@@ -261,13 +261,13 @@ class TestCbfSubarray:
         assert device_under_test.State() == DevState.ON
         # add some receptors
         assert device_under_test.obsState == ObsState.EMPTY
-        device_under_test.AddReceptors(receptor_ids)
+        device_under_test.AddReceivers(receptor_ids)
         time.sleep(0.1)
         assert device_under_test.obsState == ObsState.IDLE
 
         # try removing a receptor not assigned to subarray 1
         # doing this doesn't actually throw an error
-        device_under_test.RemoveReceptors(invalid_receptors_to_remove)
+        device_under_test.RemoveReceivers(invalid_receptors_to_remove)
     
     @pytest.mark.parametrize(
         "receptor_ids", 
@@ -286,7 +286,7 @@ class TestCbfSubarray:
             receptor_ids: List[int] 
         ) -> None:
         """
-        Test invalid use of RemoveReceptors commands:
+        Test invalid use of RemoveReceivers commands:
             - when a receptor to be removed is not assigned to the subarray
         """
         assert device_under_test.State() == DevState.OFF
@@ -295,13 +295,13 @@ class TestCbfSubarray:
         assert device_under_test.State() == DevState.ON
         # add some receptors
         assert device_under_test.obsState == ObsState.EMPTY
-        device_under_test.AddReceptors(receptor_ids)
+        device_under_test.AddReceivers(receptor_ids)
         time.sleep(0.1)
         assert device_under_test.obsState == ObsState.IDLE
 
         # try removing all receptors
         # doing this doesn't actually throw an error
-        device_under_test.RemoveAllReceptors()
+        device_under_test.RemoveAllReceivers()
 
     @pytest.mark.parametrize(
         "config_file_name, \
@@ -332,7 +332,7 @@ class TestCbfSubarray:
         time.sleep(3)
         assert device_under_test.State() == DevState.ON
         assert device_under_test.obsState == ObsState.EMPTY
-        device_under_test.AddReceptors(receptor_ids)
+        device_under_test.AddReceivers(receptor_ids)
         time.sleep(0.1)
         assert device_under_test.obsState == ObsState.IDLE
         
@@ -380,7 +380,7 @@ class TestCbfSubarray:
         time.sleep(3)
         assert device_under_test.State() == DevState.ON
         assert device_under_test.obsState == ObsState.EMPTY
-        device_under_test.AddReceptors(receptor_ids)
+        device_under_test.AddReceivers(receptor_ids)
         time.sleep(0.1)
         assert device_under_test.obsState == ObsState.IDLE
         device_under_test.ConfigureScan(config_string)
@@ -433,7 +433,7 @@ class TestCbfSubarray:
         time.sleep(3)
         assert device_under_test.State() == DevState.ON
         assert device_under_test.obsState == ObsState.EMPTY
-        device_under_test.AddReceptors(receptor_ids)
+        device_under_test.AddReceivers(receptor_ids)
         time.sleep(0.1)
         assert device_under_test.obsState == ObsState.IDLE
         device_under_test.ConfigureScan(config_string)
@@ -488,7 +488,7 @@ class TestCbfSubarray:
         time.sleep(3)
         assert device_under_test.State() == DevState.ON
         assert device_under_test.obsState == ObsState.EMPTY
-        device_under_test.AddReceptors(receptor_ids)
+        device_under_test.AddReceivers(receptor_ids)
         time.sleep(0.1)
         assert device_under_test.obsState == ObsState.IDLE
         device_under_test.ConfigureScan(config_string)
@@ -542,7 +542,7 @@ class TestCbfSubarray:
         time.sleep(3)
         assert device_under_test.State() == DevState.ON
         assert device_under_test.obsState == ObsState.EMPTY
-        device_under_test.AddReceptors(receptor_ids)
+        device_under_test.AddReceivers(receptor_ids)
         time.sleep(0.1)
         assert device_under_test.obsState == ObsState.IDLE
         device_under_test.ConfigureScan(config_string)
@@ -602,7 +602,7 @@ class TestCbfSubarray:
         time.sleep(3)
         assert device_under_test.State() == DevState.ON
         assert device_under_test.obsState == ObsState.EMPTY
-        device_under_test.AddReceptors(receptor_ids)
+        device_under_test.AddReceivers(receptor_ids)
         time.sleep(0.1)
         assert device_under_test.obsState == ObsState.IDLE
         device_under_test.ConfigureScan(config_string)
@@ -656,7 +656,7 @@ class TestCbfSubarray:
         time.sleep(3)
         assert device_under_test.State() == DevState.ON
         assert device_under_test.obsState == ObsState.EMPTY
-        device_under_test.AddReceptors(receptor_ids)
+        device_under_test.AddReceivers(receptor_ids)
         time.sleep(0.1)
         assert device_under_test.obsState == ObsState.IDLE
         device_under_test.ConfigureScan(config_string)

@@ -95,16 +95,16 @@ class CbfSubarray(SKASubarray):
         #     self.ConfigureCommand(*device_args)
         # )
         self.register_command_object(
-            "AddReceptors",
-            self.AddReceptorsCommand(*device_args)
+            "AddReceivers",
+            self.AddReceiversCommand(*device_args)
         )
         self.register_command_object(
-            "RemoveReceptors",
-            self.RemoveReceptorsCommand(*device_args)
+            "RemoveReceivers",
+            self.RemoveReceiversCommand(*device_args)
         )
         self.register_command_object(
-            "RemoveAllReceptors",
-            self.RemoveAllReceptorsCommand(*device_args)
+            "RemoveAllReceivers",
+            self.RemoveAllReceiversCommand(*device_args)
         )
         self.register_command_object(
             "ConfigureScan",
@@ -1209,7 +1209,7 @@ class CbfSubarray(SKASubarray):
 
 
     # Used by commands that needs resource manager in SKASubarray 
-    # base class (for example AddReceptors command). 
+    # base class (for example AddReceivers command). 
     # The base class define len as len(resource_manager), 
     # so we need to change that here. TODO - to clarify.
     def __len__(self: CbfSubarray) -> int:
@@ -1598,8 +1598,8 @@ class CbfSubarray(SKASubarray):
         
         :param value: the list of receptors
         """
-        self.RemoveAllReceptors()
-        self.AddReceptors(value)
+        self.RemoveAllReceivers()
+        self.AddReceivers(value)
         # PROTECTED REGION END #    //  CbfSubarray.receptors_write
 
 
@@ -1717,13 +1717,13 @@ class CbfSubarray(SKASubarray):
         dtype_out='DevVarLongStringArray',
         doc_out="(ReturnType, 'informational message')"
     )
-    def RemoveReceptors(
+    def RemoveReceivers(
         self: CbfSubarray,
         argin: List[int]
     ) -> Tuple[ResultCode, str]:
         """
         Remove from list of receptors. Turn Subarray to ObsState = EMPTY if no receptors assigned.
-        Uses RemoveReceptorsCommand class.
+        Uses RemoveReceiversCommand class.
 
         :param argin: list of receptor IDs to remove
         :return: A tuple containing a return code and a string
@@ -1731,21 +1731,21 @@ class CbfSubarray(SKASubarray):
             information purpose only.
         :rtype: (ResultCode, str)
         """
-        command = self.get_command_object("RemoveReceptors")
+        command = self.get_command_object("RemoveReceivers")
         (return_code, message) = command(argin)
         return [[return_code], [message]]
 
-    class RemoveReceptorsCommand(SKASubarray.ReleaseResourcesCommand):
+    class RemoveReceiversCommand(SKASubarray.ReleaseResourcesCommand):
         """
-        A class for CbfSubarray's RemoveReceptors() command.
+        A class for CbfSubarray's RemoveReceivers() command.
         Equivalent to the ReleaseResourcesCommand in ADR-8.
         """
         def do(
-            self: CbfSubarray.RemoveReceptorsCommand,
+            self: CbfSubarray.RemoveReceiversCommand,
             argin: List[int]
         ) -> Tuple[ResultCode, str]:
             """
-            Stateless hook for RemoveReceptors() command functionality.
+            Stateless hook for RemoveReceivers() command functionality.
 
             :param argin: The receptors to be released
             :return: A tuple containing a return code and a string
@@ -1757,7 +1757,7 @@ class CbfSubarray(SKASubarray):
             device = self.target
 
             device._remove_receptors_helper(argin)
-            message = "CBFSubarray RemoveReceptors command completed OK"
+            message = "CBFSubarray RemoveReceivers command completed OK"
             self.logger.info(message)
             return (ResultCode.OK, message)
 
@@ -1768,8 +1768,8 @@ class CbfSubarray(SKASubarray):
     )
 
     @DebugIt()
-    def RemoveAllReceptors(self: CbfSubarray) -> Tuple[ResultCode, str]:
-        # PROTECTED REGION ID(CbfSubarray.RemoveAllReceptors) ENABLED START #
+    def RemoveAllReceivers(self: CbfSubarray) -> Tuple[ResultCode, str]:
+        # PROTECTED REGION ID(CbfSubarray.RemoveAllReceivers) ENABLED START #
         """
         Remove all receptors. Turn Subarray OFF if no receptors assigned
 
@@ -1779,20 +1779,20 @@ class CbfSubarray(SKASubarray):
         :rtype: (ResultCode, str)
         """
 
-        command = self.get_command_object("RemoveAllReceptors")
+        command = self.get_command_object("RemoveAllReceivers")
         (return_code, message) = command()
         return [[return_code], [message]]  
-        # PROTECTED REGION END #    //  CbfSubarray.RemoveAllReceptors
+        # PROTECTED REGION END #    //  CbfSubarray.RemoveAllReceivers
 
-    class RemoveAllReceptorsCommand(SKASubarray.ReleaseAllResourcesCommand):
+    class RemoveAllReceiversCommand(SKASubarray.ReleaseAllResourcesCommand):
         """
-        A class for CbfSubarray's RemoveAllReceptors() command.
+        A class for CbfSubarray's RemoveAllReceivers() command.
         """
         def do(
-            self: CbfSubarray.RemoveAllReceptorsCommand
+            self: CbfSubarray.RemoveAllReceiversCommand
         ) -> Tuple[ResultCode, str]:
             """
-            Stateless hook for RemoveAllReceptors() command functionality.
+            Stateless hook for RemoveAllReceivers() command functionality.
 
             :return: A tuple containing a return code and a string
                 message indicating status. The message is for
@@ -1800,7 +1800,7 @@ class CbfSubarray(SKASubarray):
             :rtype: (ResultCode, str)
             """
             # (result_code,message) = super().do()
-            self.logger.debug("Entering RemoveAllReceptors()")
+            self.logger.debug("Entering RemoveAllReceivers()")
 
             device = self.target
 
@@ -1808,7 +1808,7 @@ class CbfSubarray(SKASubarray):
             # For LMC0.6.0: use a helper instead of a command so that it doesn't care about the obsState
             device._remove_receptors_helper(device._receptors[:])
 
-            message = "CBFSubarray RemoveAllReceptors command completed OK"
+            message = "CBFSubarray RemoveAllReceivers command completed OK"
             self.logger.info(message)
             return (ResultCode.OK, message)
 
@@ -1820,7 +1820,7 @@ class CbfSubarray(SKASubarray):
     )
 
     @DebugIt()
-    def AddReceptors(
+    def AddReceivers(
         self: CbfSubarray,
         argin: List[int]
     ) -> Tuple[ResultCode, str]:
@@ -1834,23 +1834,23 @@ class CbfSubarray(SKASubarray):
             information purpose only.
         :rtype: (ResultCode, str)
         """
-        command = self.get_command_object("AddReceptors")
+        command = self.get_command_object("AddReceivers")
         (return_code, message) = command(argin)
         return [[return_code], [message]]  
 
     
-    class AddReceptorsCommand(SKASubarray.AssignResourcesCommand):
+    class AddReceiversCommand(SKASubarray.AssignResourcesCommand):
         # NOTE: doesn't inherit SKASubarray._ResourcingCommand 
         # because will give error on len(self.target); TODO: to resolve
         """
-        A class for CbfSubarray's AddReceptors() command.
+        A class for CbfSubarray's AddReceivers() command.
         """
         def do(
-            self: CbfSubarray.AddReceptorsCommand,
+            self: CbfSubarray.AddReceiversCommand,
             argin: List[int]
         ) -> Tuple[ResultCode, str]:
             """
-            Stateless hook for AddReceptors() command functionality.
+            Stateless hook for AddReceivers() command functionality.
 
             :param argin: The receptors to be assigned
             :return: A tuple containing a return code and a string
@@ -1944,7 +1944,7 @@ class CbfSubarray(SKASubarray):
                 
                 return (ResultCode.FAILED, msg)
 
-            message = "CBFSubarray AddReceptors command completed OK"
+            message = "CBFSubarray AddReceivers command completed OK"
             self.logger.info(message)
             return (ResultCode.OK, message)
 
