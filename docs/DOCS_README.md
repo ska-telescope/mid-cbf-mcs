@@ -1,4 +1,4 @@
-# Auto-Generated Documentation 
+# Notes on Auto-Generated Documentation 
 
 Document directory structure:
 ```
@@ -18,7 +18,6 @@ ska-mid-cbf-mcs/
   Makefile
 ```
 
-## Notes
 1. Run `make html` to generate the documentation.
 1. `README.md` is copied to `docs/src/` during `make html` so that it is
 available for autodoc to include it correctly &ndash; 
