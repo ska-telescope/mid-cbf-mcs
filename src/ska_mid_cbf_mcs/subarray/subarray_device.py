@@ -1161,7 +1161,7 @@ class CbfSubarray(SKASubarray):
                 fsp_pst_subarray_proxy.GoToIdle()
         # TODO: add 'GoToIdle' for VLBI once implemented
 
-    def _remove_receptors_helper(self: CbfSubarray, argin: List[int]) -> None:
+    def _remove_receivers_helper(self: CbfSubarray, argin: List[int]) -> None:
         """Helper function to remove receptors for removeAllReceptors. 
         Takes in a list of integers.
 
@@ -1169,13 +1169,13 @@ class CbfSubarray(SKASubarray):
         """
         receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
                                self._proxy_cbf_controller.receptorToVcc)
-        for receptorID in argin:
-            # check for invalid receptorID
-            if not 0 < receptorID < 198:
-                log_msg = f"Invalid receptor ID {receptorID}. Skipping."
+        for receiverID in argin:
+            # check for invalid receiverID
+            if not 0 < receiverID < 198:
+                log_msg = f"Invalid receptor ID {receiverID}. Skipping."
                 self.logger.warn(log_msg)
-            elif receptorID in self._receptors:
-                vccID = receptor_to_vcc[receptorID]
+            elif receiverID in self._receptors:
+                vccID = receptor_to_vcc[receiverID]
                 vccFQDN = self._fqdn_vcc[vccID - 1]
                 vccProxy = self._proxies_vcc[vccID - 1]
 
@@ -1194,17 +1194,17 @@ class CbfSubarray(SKASubarray):
                 del self._vcc_health_state[vccFQDN]
 
 
-                # reset receptorID and subarrayMembership Vcc attribute:
-                # TODO: should VCC receptorID be altered here?
+                # reset receiverID and subarrayMembership Vcc attribute:
+                # TODO: should VCC receiverID be altered here?
                 # currently the mapping is set in the controller
                 # vccProxy.receptorID = 0
                 vccProxy.subarrayMembership = 0
 
-                self._receptors.remove(receptorID)
+                self._receptors.remove(receiverID)
                 self._proxies_assigned_vcc.remove(vccProxy)
                 self._group_vcc.remove(vccFQDN)
             else:
-                log_msg = f"Receptor {receptorID} not assigned to subarray. Skipping."
+                log_msg = f"Receptor {receiverID} not assigned to subarray. Skipping."
                 self.logger.warn(log_msg)
 
 
@@ -1756,7 +1756,7 @@ class CbfSubarray(SKASubarray):
             #(result_code,message) = super().do(argin)
             device = self.target
 
-            device._remove_receptors_helper(argin)
+            device._remove_receivers_helper(argin)
             message = "CBFSubarray RemoveReceivers command completed OK"
             self.logger.info(message)
             return (ResultCode.OK, message)
@@ -1806,7 +1806,7 @@ class CbfSubarray(SKASubarray):
 
             # TODO
             # For LMC0.6.0: use a helper instead of a command so that it doesn't care about the obsState
-            device._remove_receptors_helper(device._receptors[:])
+            device._remove_receivers_helper(device._receptors[:])
 
             message = "CBFSubarray RemoveAllReceivers command completed OK"
             self.logger.info(message)
@@ -1865,15 +1865,15 @@ class CbfSubarray(SKASubarray):
             receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
                                 device._proxy_cbf_controller.receptorToVcc)
 
-            for receptorID in argin:
+            for receiverID in argin:
                 try:
-                    # check for invalid receptorID
+                    # check for invalid receiverID
                     #TODO replace hardcoded values?
-                    if not 0 < receptorID < 198:
-                        errs.append(f"Invalid receptor ID {receptorID}.")
+                    if not 0 < receiverID < 198:
+                        errs.append(f"Invalid receptor ID {receiverID}.")
                         raise KeyError
 
-                    vccID = receptor_to_vcc[receptorID]
+                    vccID = receptor_to_vcc[receiverID]
                     vccProxy = device._proxies_vcc[vccID - 1]
 
                     self.logger.debug(
@@ -1890,11 +1890,11 @@ class CbfSubarray(SKASubarray):
                     # different subarray
                     if subarrayID not in [0, device._subarray_id]:
                         errs.append(
-                            f"Receptor {receptorID} already in use by "
+                            f"Receptor {receiverID} already in use by "
                             f"subarray {subarrayID}."
                         )
                     else:
-                        if receptorID not in device._receptors:
+                        if receiverID not in device._receptors:
                             # change subarray membership of vcc
                             vccProxy.subarrayMembership = device._subarray_id
 
@@ -1905,7 +1905,7 @@ class CbfSubarray(SKASubarray):
                             # The list of receptors is serialized when the FSPs  
                             # are configured for a scan.
 
-                            device._receptors.append(int(receptorID))
+                            device._receptors.append(int(receiverID))
                             device._proxies_assigned_vcc.append(vccProxy)
                             device._group_vcc.add(device._fqdn_vcc[vccID - 1])
 
@@ -1930,13 +1930,13 @@ class CbfSubarray(SKASubarray):
                             ]
                         else:
                             log_msg = (
-                                f"Receptor {receptorID} already assigned to "
+                                f"Receiver{receiverID} already assigned to "
                                 "current subarray."
                             )
                             self.logger.warn(log_msg)
 
-                except KeyError:  # invalid receptor ID
-                    errs.append(f"Invalid receptor ID: {receptorID}")
+                except KeyError:  # invalid receiver ID
+                    errs.append(f"Invalid receiverID: {receiverID}")
 
             if errs:
                 msg = "\n".join(errs)
@@ -2427,7 +2427,7 @@ class CbfSubarray(SKASubarray):
             device._deconfigure()
 
             # and release all receptors
-            device._remove_receptors_helper(device._receptors[:])
+            device._remove_receivers_helper(device._receptors[:])
 
             message = "Restart command completed OK"
             self.logger.info(message)
