@@ -21,7 +21,8 @@
 # import skabase
 autodoc_mock_imports = ['PyTango', 'tango', 'tango.server','run', 'DeviceMeta', 'command',
                  'future', 'future.utils', 'logging', 'logging.handlers', 'ska',
-                 'skabase', 'numpy', 'backoff', 'paramiko', 'scp', 'ska_tango_base'
+                 'skabase', 'numpy', 'backoff', 'paramiko', 'scp', 'ska_tango_base',
+                 'typing_extensions', 'jsonschema'
                  ]
 autodoc_member_order = 'bysource'
 
@@ -32,7 +33,7 @@ sys.path.insert(0, os.path.abspath('../../src/'))
 
 def setup(app):
     app.add_css_file('css/custom.css')
-    app.add_javascript('js/github.js')
+    app.add_js_file('js/github.js')
 
 # -- Project information -----------------------------------------------------
 

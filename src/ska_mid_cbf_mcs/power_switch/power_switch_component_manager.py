@@ -24,9 +24,16 @@ __all__ = [
 ]
 
 class PowerSwitchComponentManager:
-    """A component manager for the DLI web power switch. Calls either the power
-       switch driver or the power switch simulator based on the simulation
-       mode."""
+    """
+    A component manager for the DLI web power switch. Calls either the power
+    switch driver or the power switch simulator based on the value of simulation
+    mode.
+    
+    :param simulation_mode: simulation mode identifies if the real power switch
+                          driver or the simulator should be used
+    :param ip: IP address of the power switch
+    :param logger: a logger for this object to use
+    """
 
     def __init__(
         self: PowerSwitchComponentManager,
@@ -36,11 +43,6 @@ class PowerSwitchComponentManager:
     ) -> None:
         """
         Initialise a new instance.
-
-        :simulation_mode: simulation mode identifies if the real power switch
-                          driver or the simulator should be used
-        :param ip: IP address of the power switch
-        :param logger: a logger for this object to use
         """
         self._simulation_mode = simulation_mode
 
@@ -76,6 +78,8 @@ class PowerSwitchComponentManager:
     def simulation_mode(self: PowerSwitchComponentManager) -> SimulationMode:
         """
         Get the simulation mode of the component manager.
+
+        :return: simulation mode of the component manager
         """
         return self._simulation_mode
 
@@ -83,6 +87,8 @@ class PowerSwitchComponentManager:
     def simulation_mode(self: PowerSwitchComponentManager, value: SimulationMode) -> None:
         """
         Set the simulation mode of the component manager.
+
+        :param value: value to set simulation mode to
         """
         self._simulation_mode = value
         self.start_communicating()
