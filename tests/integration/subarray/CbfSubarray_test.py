@@ -17,6 +17,7 @@ import time
 from datetime import datetime
 import json
 import logging
+import random
 
 # Data file path
 data_file_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
@@ -61,7 +62,12 @@ class TestCbfSubarray:
         sub_id: int
     ) -> None:
         """
-        Test valid AddReceptors and RemoveReceptors commands
+            Test CbfSubarrays's AddReceptors and RemoveReceptors commands
+
+            :param proxies: proxies pytest fixture
+            :param receptor_ids: list of receptor ids
+            :param receptors_to_remove: list of ids of receptors to remove
+            :param sub_id: the subarray id
         """
 
         if proxies.debug_device_is_on:
@@ -130,19 +136,16 @@ class TestCbfSubarray:
     @pytest.mark.parametrize(
         "receptor_ids, \
         invalid_receptor_id, \
-        invalid_receptors_to_remove, \
         sub_id", 
         [
             (
                 [1, 3],
                 [200],
-                [2],
                 1
             ),
             (
                 [4, 2],
                 [0],
-                [1, 3],
                 1
             )
         ]
@@ -152,12 +155,16 @@ class TestCbfSubarray:
         proxies: pytest.fixture, 
         receptor_ids: List[int], 
         invalid_receptor_id: List[int],
-        invalid_receptors_to_remove: List[int], 
         sub_id: int
     ) -> None:
         """
-        Test invalid AddReceptors commands involving a single subarray:
-            - when a receptor ID is invalid (e.g. out of range)
+            Test CbfSubarrays's AddReceptors command for a single subarray 
+                when the receptor id is invalid
+
+            :param proxies: proxies pytest fixture
+            :param receptor_ids: list of receptor ids
+            :param invalid_receptor_id: invalid receptor id 
+            :param sub_id: the subarray id
         """
         try:
             proxies.on()
@@ -220,9 +227,14 @@ class TestCbfSubarray:
         sub_id: int
     ) -> None:
         """
-        Test invalid AddReceptors commands involving a single subarray:
-            - when a receptor ID is invalid (e.g. out of range)
-            - when a receptor to be removed is not assigned to the subarray
+            Test CbfSubarrays's RemoveReceptors command for a single subarray:  
+                - when a receptor id is invalid (e.g. out of range)
+                - when a receptor to be removed is not assigned to the subarray
+
+            :param proxies: proxies pytest fixture
+            :param receptor_ids: list of receptor ids
+            :param invalid_receptors_to_remove: invalid receptor ids 
+            :param sub_id: the subarray id
         """
         try:
             proxies.on()
@@ -267,6 +279,8 @@ class TestCbfSubarray:
     )
     def test_AddRemoveReceptors_invalid_multiple(self: TestCbfSubarray) -> None:
         """
+            Test CbfSubarrays's AddReceptors command for multiple subarrays 
+                when the receptor id is invalid
         """
         pass
     
@@ -291,7 +305,11 @@ class TestCbfSubarray:
         sub_id: int
     ) -> None:
         """
-        Test RemoveAllReceptors command
+            Test CbfSubarrays's RemoveAllReceptors command
+
+            :param proxies: proxies pytest fixture
+            :param receptor_ids: list of receptor ids
+            :param sub_id: the subarray id
         """
         try:
             proxies.on()
@@ -347,10 +365,15 @@ class TestCbfSubarray:
         proxies: pytest.fixture, 
         config_file_name: str,
         receptor_ids: List[int], 
-        vcc_receptors: List[int]
+        vcc_receptors: List[int],
     ) -> None:
         """
-        Test a successful scan configuration
+            Test CbfSubarrays's ConfigureScan command
+
+            :param proxies: proxies pytest fixture
+            :param config_file_name: JSON file for the configuration
+            :param receptor_ids: list of receptor ids
+            :param vcc_receptors: list of vcc receptor ids
         """
         try:
             proxies.on()
@@ -592,6 +615,8 @@ class TestCbfSubarray:
             time.sleep(2)
             raise e
 
+    #TODO: The delay model and jones matrix are already tested. 
+    # Should this test just be for the beam weights?
     @pytest.mark.parametrize(
         "config_file_name, \
         jones_matrix_file_name, \
@@ -601,8 +626,8 @@ class TestCbfSubarray:
         [
             (
                 "ConfigureScan_basic.json",
-                "jonesmatrix_fsp.json",
-                "delaymodel_fsp.json",
+                "jonesmatrix.json",
+                "delaymodel.json",
                 "timingbeamweights.json",
                 [4, 1, 3, 2]
             )
@@ -618,7 +643,14 @@ class TestCbfSubarray:
         receptor_ids: List[int]
     ) -> None:
         """
-        Test a successful transmission of PST-BF parameters to FSP
+            Test CbfSubarrays's ConfigureScan command for Fsp PST
+
+            :param proxies: proxies pytest fixture
+            :param config_file_name: JSON file for the configuration
+            :param jones_matrix_file_name: JSON file for the jones matrix
+            :param delay_model_file_name: JSON file for the delay model
+            :param timing_beam_weights_file_name: JSON file for the timing beam weights
+            :param receptor_ids: list of receptor ids
         """
         try:
             proxies.on()
@@ -644,60 +676,99 @@ class TestCbfSubarray:
             proxies.subarray[sub_id].ConfigureScan(json_string)
             proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.READY, 5, 1)
             
-            # update jones matrices from tm emulator
             f = open(data_file_path + jones_matrix_file_name)
             jones_matrix = json.loads(f.read().replace("\n", ""))
-            epoch = str(int(time.time()))
-            for matrix in jones_matrix["jonesMatrix"]:
-                matrix["epoch"] = epoch
-                if matrix["destinationType"] == "fsp":
-                    epoch = str(int(epoch) + 10)
+            f.close()
+
+            # Insert the epoch
+            jones_matrix_index_per_epoch = list(range(len(jones_matrix["jonesMatrix"])))
+            random.shuffle(jones_matrix_index_per_epoch)
+            epoch_increment = 10
+            for i, jones_matrix_index in enumerate(jones_matrix_index_per_epoch):
+                if i == 0:
+                    epoch_time = 0
+                    jones_matrix["jonesMatrix"][jones_matrix_index]["epoch"] = str(epoch_time)
+                else:
+                    epoch_time += epoch_increment
+                    jones_matrix["jonesMatrix"][jones_matrix_index]["epoch"] = str(int(time.time()) + epoch_time)
 
             # update Jones Matrix
             proxies.tm.jonesMatrix = json.dumps(jones_matrix)
-            time.sleep(1)
+            time.sleep(5)
 
-            for matrix in jones_matrix["jonesMatrix"]:
-                if matrix["destinationType"] == "fsp":
-                    for receptor in matrix["matrixDetails"]:
-                        rec_id = int(receptor["receptor"])
-                        fs_id = receptor["receptorMatrix"][0]["fsid"]
-                        for index, value in enumerate(receptor["receptorMatrix"][0]["matrix"]):
-                            try:
-                                assert proxies.fsp[fs_id].jonesMatrix[rec_id - 1][index] == value
-                            except AssertionError as ae:
-                                raise ae
-                            except Exception as e:
-                                raise e
-                    time.sleep(10)
-            
+            FspModes = Enum('FspModes', 'CORR PSS_BF PST_BF VLBI')
+
+            for epoch in range( len(jones_matrix_index_per_epoch) ):
+
+                for receptor in jones_matrix["jonesMatrix"][jones_matrix_index_per_epoch[epoch]]["matrixDetails"]:
+                    rec_id = receptor["receptor"]
+                    for fsp in [proxies.fsp[i + 1] for i in range(len(proxies.fsp))]:
+                        if fsp.functionMode in [FspModes.PSS_BF.value, FspModes.PST_BF.value, FspModes.VLBI.value]:
+                            for frequency_slice in receptor["receptorMatrix"]:
+                                if fsp.functionMode == FspModes.PSS_BF.value:
+                                    proxy_subarray = proxies.fspPssSubarray[sub_id -1]
+                                    fs_length = 16
+                                elif fsp.functionMode == FspModes.PST_BF.value:
+                                    proxy_subarray = proxies.fspPstSubarray[sub_id -1]
+                                    fs_length = 4
+                                else:
+                                    fs_length = 4
+                                    log_msg = "function mode {} currently not supported".format(fsp.functionMode)
+                                    logging.error(log_msg)
+                                    return
+
+                                if rec_id in proxy_subarray.receptors:
+                                    fs_id = frequency_slice["fsid"]
+                                    if fs_id == int(fsp.get_property("FspID")['FspID'][0]):
+                                        matrix = frequency_slice["matrix"]
+                                        if len(matrix) == fs_length:
+                                            for idx, matrix_val in enumerate(matrix):
+                                                assert matrix_val == fsp.jonesMatrix[rec_id -1][idx]                                                                               
+
+                time.sleep(10)
 
             # update delay models from tm emulator
             f = open(data_file_path + delay_model_file_name)
             delay_model = json.loads(f.read().replace("\n", ""))
-            epoch = str(int(time.time()))
-            for model in delay_model["delayModel"]:
-                model["epoch"] = epoch
-                if model["destinationType"] == "fsp":
-                    epoch = str(int(epoch) + 10)
-            
+           
+           # Insert the epoch
+            delay_model_index_per_epoch = list(range(len(delay_model["delayModel"])))
+            random.shuffle(delay_model_index_per_epoch)
+            epoch_increment = 10
+            for i, delay_model_index in enumerate(delay_model_index_per_epoch):
+                if i == 0:
+                    epoch_time = 0
+                    delay_model["delayModel"][delay_model_index]["epoch"] = str(epoch_time)
+                else:
+                    epoch_time += epoch_increment
+                    delay_model["delayModel"][delay_model_index]["epoch"] = str(int(time.time()) + epoch_time)
+
             # update delay model
             proxies.tm.delayModel = json.dumps(delay_model)
-            time.sleep(1)
+            time.sleep(5)
 
-            for model in delay_model["delayModel"]:
-                if model["destinationType"] == "fsp":
-                    for receptor in model["delayDetails"]:
-                        rec_id = int(receptor["receptor"])
-                        fs_id = receptor["receptorDelayDetails"][0]["fsid"]
-                        for index, value in enumerate(receptor["receptorDelayDetails"][0]["delayCoeff"]):
-                            try:
-                                assert proxies.fsp[fs_id].delayModel[rec_id - 1][index] == value
-                            except AssertionError as ae:
-                                raise ae
-                            except Exception as e:
-                                raise e
-                    time.sleep(10)
+            FspModes = Enum('FspModes', 'CORR PSS_BF PST_BF VLBI')
+
+            for epoch in range( len(delay_model_index_per_epoch) ):
+
+                model = delay_model["delayModel"][delay_model_index_per_epoch[epoch]]            
+                for delayDetail in model["delayDetails"]:
+                    for fsp in [proxies.fsp[i + 1] for i in range(len(proxies.fsp))]:
+                        if fsp.functionMode in [FspModes.PSS_BF.value, FspModes.PST_BF.value]:
+                            for receptorDelayDetail in delayDetail["receptorDelayDetails"]:
+                                rec_id = delayDetail["receptor"]
+                                if fsp.functionMode == FspModes.PSS_BF.value:
+                                    proxy_subarray = proxies.fspPssSubarray[sub_id -1]
+                                else:
+                                    proxy_subarray = proxies.fspPstSubarray[sub_id -1]
+                                if rec_id in proxy_subarray.receptors:
+                                    fs_id = receptorDelayDetail["fsid"]
+                                    if fs_id == int(fsp.get_property("FspID")['FspID'][0]):
+                                        delayCoeff = receptorDelayDetail["delayCoeff"]
+                                        for idx, coeff in enumerate(delayCoeff):
+                                            assert coeff == fsp.delayModel[rec_id -1][idx]                                           
+
+                time.sleep(10)
 
             # update timing beam weights from tm emulator
             f = open(data_file_path + timing_beam_weights_file_name)
@@ -763,9 +834,13 @@ class TestCbfSubarray:
         receptor_ids: List[int]
     ) -> None:
         """
-        Test the EndScan command
-        """
+            Test CbfSubarrays's EndScan command 
 
+            :param proxies: proxies pytest fixture
+            :param config_file_name: JSON file for the configuration
+            :param scan_file_name: JSON file for the scan configuration
+            :param receptor_ids: list of receptor ids
+        """
         try:
             proxies.on()
             
@@ -919,10 +994,6 @@ class TestCbfSubarray:
             time.sleep(2)
             raise e
     
-    #TODO: Delay model values do not match json file
-    @pytest.mark.skip(
-        reason="Delay model values do not match json file"
-    )
     @pytest.mark.parametrize(
         "config_file_name, \
         delay_model_file_name, \
@@ -946,24 +1017,25 @@ class TestCbfSubarray:
         delay_model_file_name: str,
         scan_file_name: str,
         receptor_ids: List[int],
-        vcc_receptors: List[int]
+        vcc_receptors: List[int],
     ) -> None:
-
         """
-        Test the reception of delay models
+            Test CbfSubarrays's delay model update via the 
+                ConfigureScan command 
+
+            :param proxies: proxies pytest fixture
+            :param config_file_name: JSON file for the configuration
+            :param delay_model_file_name: JSON file for the delay model
+            :param scan_file_name: JSON file for the scan configuration
+            :param receptor_ids: list of receptor ids
+            :param vcc_receptors: list of vcc receptor ids
         """
         
         # Read delay model data from file
         f = open(data_file_path + delay_model_file_name)
         json_string_delay_mod = f.read().replace("\n", "")
         delay_model = json.loads(json_string_delay_mod)
-        configuration_delay_mod = json.loads(json_string_delay_mod)
         f.close()
-
-        aa = delay_model["delayModel"][0]["delayDetails"][0]["receptorDelayDetails"]
-        num_fsp_IDs = len(aa)
-        for jj in range(num_fsp_IDs):      
-            logging.info( "delayCoeff = {}".format( aa[jj]["delayCoeff"]) )
 
         try:
             proxies.on()
@@ -975,7 +1047,7 @@ class TestCbfSubarray:
             sub_id = int(configuration["common"]["subarray_id"])
 
             assert proxies.subarray[sub_id].obsState == ObsState.EMPTY
-
+            
             # add receptors
             proxies.subarray[sub_id].AddReceptors(receptor_ids)
             proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.IDLE, 1, 1)
@@ -986,83 +1058,67 @@ class TestCbfSubarray:
             proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.READY, 5, 1)
 
             assert proxies.subarray[sub_id].obsState == ObsState.READY
-
-            # create a delay model
             
             # Insert the epoch
-            delay_model["delayModel"][0]["epoch"] = str(int(time.time()) + 20)
-            delay_model["delayModel"][1]["epoch"] = "0"
-            delay_model["delayModel"][2]["epoch"] = str(int(time.time()) + 10)
+            delay_model_index_per_epoch = list(range(len(delay_model["delayModel"])))
+            random.shuffle(delay_model_index_per_epoch)
+            epoch_increment = 10
+            for i, delay_model_index in enumerate(delay_model_index_per_epoch):
+                if i == 0:
+                    epoch_time = 0
+                    delay_model["delayModel"][delay_model_index]["epoch"] = str(epoch_time)
+                else:
+                    epoch_time += epoch_increment
+                    delay_model["delayModel"][delay_model_index]["epoch"] = str(int(time.time()) + epoch_time)
 
             # update delay model
             proxies.tm.delayModel = json.dumps(delay_model)
-            time.sleep(1)
+            time.sleep(5)
 
-            for jj in range(len(receptor_ids)):
-                logging.info((" proxies.vcc[{}].receptorID = {}".
-                format(jj+1, proxies.vcc[jj+1].receptorID)))
+            FspModes = Enum('FspModes', 'CORR PSS_BF PST_BF VLBI')
+            epoch_to_scan = 1
+            num_cols = 6
+            num_rows_vcc = 26
 
-            logging.info( ("Vcc, receptor 1, ObsState = {}".
-            format(proxies.vcc[proxies.receptor_to_vcc[1]].ObsState)) )
+            for epoch in range( len(delay_model_index_per_epoch) ):
 
-            #proxies.vcc[0].receptorID
-            delayModNum = 1
-            for r in vcc_receptors:
-                vcc = proxies.vcc[proxies.receptor_to_vcc[r]]
-                delayMod = vcc.delayModel
-                delayModConf = []
-                delayDetails = configuration_delay_mod["delayModel"][delayModNum]["delayDetails"]
-                for delayDetail in delayDetails:
-                    if delayDetail["receptor"] == r:
-                        for receptorDelayDetail in delayDetail["receptorDelayDetails"]:
-                            delayModConf += receptorDelayDetail["delayCoeff"]
-                confIdx = 0
-                for i in range(len(delayMod)):
-                    for j in range(len(delayMod[i])):
-                        assert delayMod[i][j] == delayModConf[confIdx]
-                        confIdx += 1
+                model = delay_model["delayModel"][delay_model_index_per_epoch[epoch]]            
+                for delayDetail in model["delayDetails"]:
+                    for r in vcc_receptors:
+                        vcc = proxies.vcc[proxies.receptor_to_vcc[r]]  
+                        if delayDetail["receptor"] == r:
+                            mod_vcc = [[0.0] * num_cols for i in range(num_rows_vcc)]
+                            for receptorDelayDetail in delayDetail["receptorDelayDetails"]:
+                                fs_id = receptorDelayDetail["fsid"]
+                                delayCoeff = receptorDelayDetail["delayCoeff"]
+                                mod_vcc[fs_id -1] = delayCoeff
+                            for i in range(len(mod_vcc)):
+                                for j in range(len(mod_vcc[i])):
+                                    assert vcc.delayModel[i][j] == mod_vcc[i][j]
+                    for fsp in [proxies.fsp[i + 1] for i in range(len(proxies.fsp))]:
+                        if fsp.functionMode in [FspModes.PSS_BF.value, FspModes.PST_BF.value]:
+                            for receptorDelayDetail in delayDetail["receptorDelayDetails"]:
+                                rec_id = delayDetail["receptor"]
+                                if fsp.functionMode == FspModes.PSS_BF.value:
+                                    proxy_subarray = proxies.fspPssSubarray[sub_id -1]
+                                else:
+                                    proxy_subarray = proxies.fspPstSubarray[sub_id -1]
+                                if rec_id in proxy_subarray.receptors:
+                                    fs_id = receptorDelayDetail["fsid"]
+                                    if fs_id == int(fsp.get_property("FspID")['FspID'][0]):
+                                        delayCoeff = receptorDelayDetail["delayCoeff"]
+                                        for idx, coeff in enumerate(delayCoeff):
+                                            assert coeff == fsp.delayModel[rec_id -1][idx]                                           
+                              
+                if epoch == epoch_to_scan:
+                    # transition to obsState=SCANNING
+                    f2 = open(data_file_path + scan_file_name)
+                    proxies.subarray[sub_id].Scan(f2.read().replace("\n", ""))
+                    f2.close()
+                    proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.SCANNING, 1, 1)
+                    assert proxies.subarray[sub_id].obsState == ObsState.SCANNING
 
-            # transition to obsState=SCANNING
-            f2 = open(data_file_path + scan_file_name)
-            proxies.subarray[sub_id].Scan(f2.read().replace("\n", ""))
-            f2.close()
-            proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.SCANNING, 1, 1)
-            assert proxies.subarray[sub_id].obsState == ObsState.SCANNING
-
-            time.sleep(10)
-
-            delayModNum = 2
-            for r in vcc_receptors:
-                vcc = proxies.vcc[proxies.receptor_to_vcc[r]]
-                delayMod = vcc.delayModel
-                delayModConf = []
-                delayDetails = configuration_delay_mod["delayModel"][delayModNum]["delayDetails"]
-                for delayDetail in delayDetails:
-                    if delayDetail["receptor"] == r:
-                        for receptorDelayDetail in delayDetail["receptorDelayDetails"]:
-                            delayModConf += receptorDelayDetail["delayCoeff"]
-                confIdx = 0
-                for i in range(len(delayMod)):
-                    for j in range(len(delayMod[i])):
-                        assert delayMod[i][j] == delayModConf[confIdx]
-                        confIdx += 1
-
-            time.sleep(10)
-            delayModNum = 0
-            for r in vcc_receptors:
-                vcc = proxies.vcc[proxies.receptor_to_vcc[r]]
-                delayMod = vcc.delayModel
-                delayModConf = []
-                delayDetails = configuration_delay_mod["delayModel"][delayModNum]["delayDetails"]
-                for delayDetail in delayDetails:
-                    if delayDetail["receptor"] == r:
-                        for receptorDelayDetail in delayDetail["receptorDelayDetails"]:
-                            delayModConf += receptorDelayDetail["delayCoeff"]
-                confIdx = 0
-                for i in range(len(delayMod)):
-                    for j in range(len(delayMod[i])):
-                        assert delayMod[i][j] == delayModConf[confIdx]
-                        confIdx += 1
+                time.sleep(10)
 
             # Clean up
             proxies.subarray[sub_id].EndScan()
@@ -1108,7 +1164,14 @@ class TestCbfSubarray:
         receptor_ids: List[int]
     ) -> None:
         """
-        Test the reception of Jones matrices
+            Test CbfSubarrays's jones matrix update via the 
+                ConfigureScan command 
+
+            :param proxies: proxies pytest fixture
+            :param config_file_name: JSON file for the configuration
+            :param scan_file_name: JSON file for the scan configuration
+            :param jones_matrix_file_name: JSON file for the jones matrix
+            :param receptor_ids: list of receptor ids
         """
         try:
             proxies.on()
@@ -1135,95 +1198,85 @@ class TestCbfSubarray:
 
             assert proxies.subarray[sub_id].obsState == ObsState.READY
 
-            #create a Jones matrix
             f = open(data_file_path + jones_matrix_file_name)
             jones_matrix = json.loads(f.read().replace("\n", ""))
             f.close()
 
-            jones_matrix["jonesMatrix"][0]["epoch"] = str(int(time.time()) + 20)
-            jones_matrix["jonesMatrix"][1]["epoch"] = "0"
-            jones_matrix["jonesMatrix"][2]["epoch"] = str(int(time.time()) + 10)
+            # Insert the epoch
+            jones_matrix_index_per_epoch = list(range(len(jones_matrix["jonesMatrix"])))
+            random.shuffle(jones_matrix_index_per_epoch)
+            epoch_increment = 10
+            for i, jones_matrix_index in enumerate(jones_matrix_index_per_epoch):
+                if i == 0:
+                    epoch_time = 0
+                    jones_matrix["jonesMatrix"][jones_matrix_index]["epoch"] = str(epoch_time)
+                else:
+                    epoch_time += epoch_increment
+                    jones_matrix["jonesMatrix"][jones_matrix_index]["epoch"] = str(int(time.time()) + epoch_time)
 
             # update Jones Matrix
             proxies.tm.jonesMatrix = json.dumps(jones_matrix)
-            time.sleep(5)
+            time.sleep(1)
 
-            for receptor in jones_matrix["jonesMatrix"][1]["matrixDetails"]:
-                for frequency_slice in receptor["receptorMatrix"]:
-                    for index, value in enumerate(frequency_slice["matrix"]):
-                        vcc_id = proxies.receptor_to_vcc[receptor["receptor"]]
-                        fs_id = frequency_slice["fsid"]
-                        try:
-                            assert proxies.vcc[vcc_id].jonesMatrix[fs_id-1][index] == value
-                        except AssertionError as ae:
-                            logging.error(
-                                "AssertionError; incorrect Jones matrix entry: \
-                                epoch {}, VCC {}, i = {}, jonesMatrix[{}] = {}".format
-                                    (
-                                        jones_matrix["jonesMatrix"][1]["epoch"], 
-                                        vcc_id, index, 
-                                        fs_id-1, 
-                                        proxies.vcc[vcc_id].jonesMatrix[fs_id-1]
-                                    )
-                            )
-                            raise ae
-                        except Exception as e:
-                            raise e
+            epoch_to_scan = 1
+            FspModes = Enum('FspModes', 'CORR PSS_BF PST_BF VLBI')
 
-            # transition to obsState == SCANNING
-            f = open(data_file_path + scan_file_name)
-            proxies.subarray[sub_id].Scan(f.read().replace("\n", ""))
-            f.close()
-            proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.SCANNING, 1, 1)
-            assert proxies.subarray[sub_id].obsState == ObsState.SCANNING
-            
-            time.sleep(10)
-            for receptor in jones_matrix["jonesMatrix"][2]["matrixDetails"]:
-                for frequency_slice in receptor["receptorMatrix"]:
-                    for index, value in enumerate(frequency_slice["matrix"]):
-                        vcc_id = proxies.receptor_to_vcc[receptor["receptor"]]
-                        fs_id = frequency_slice["fsid"]
-                        try:
-                            assert proxies.vcc[vcc_id].jonesMatrix[fs_id-1][index] == value
-                        except AssertionError as ae:
-                            logging.error(
-                                "AssertionError; incorrect Jones matrix entry: \
-                                epoch {}, VCC {}, i = {}, jonesMatrix[{}] = {}".format
-                                (
-                                    jones_matrix["jonesMatrix"][1]["epoch"], 
-                                    vcc_id, 
-                                    index, 
-                                    fs_id-1, 
-                                    proxies.vcc[vcc_id].jonesMatrix[fs_id-1]
+            for epoch in range( len(jones_matrix_index_per_epoch) ):
+
+                for receptor in jones_matrix["jonesMatrix"][jones_matrix_index_per_epoch[epoch]]["matrixDetails"]:
+                    for frequency_slice in receptor["receptorMatrix"]:
+                        for index, value in enumerate(frequency_slice["matrix"]):
+                            vcc_id = proxies.receptor_to_vcc[receptor["receptor"]]
+                            fs_id = frequency_slice["fsid"]
+                            try:
+                                assert proxies.vcc[vcc_id].jonesMatrix[fs_id-1][index] == value
+                            except AssertionError as ae:
+                                logging.error(
+                                    "AssertionError; incorrect Jones matrix entry: \
+                                    epoch {}, VCC {}, i = {}, jonesMatrix[{}] = {}".format
+                                        (
+                                            jones_matrix["jonesMatrix"][1]["epoch"], 
+                                            vcc_id, index, 
+                                            fs_id-1, 
+                                            proxies.vcc[vcc_id].jonesMatrix[fs_id-1]
+                                        )
                                 )
-                            )
-                            raise ae
-                        except Exception as e:
-                            raise e
-            
-            time.sleep(10)
-            for receptor in jones_matrix["jonesMatrix"][0]["matrixDetails"]:
-                for frequency_slice in receptor["receptorMatrix"]:
-                    for index, value in enumerate(frequency_slice["matrix"]):
-                        vcc_id = proxies.receptor_to_vcc[receptor["receptor"]]
-                        fs_id = frequency_slice["fsid"]
-                        try:
-                            assert proxies.vcc[vcc_id].jonesMatrix[fs_id-1][index] == value
-                        except AssertionError as ae:
-                            logging.error(
-                                "AssertionError; incorrect Jones matrix entry: \
-                                epoch {}, VCC {}, i = {}, jonesMatrix[{}] = {}".format
-                                (
-                                    jones_matrix["jonesMatrix"][1]["epoch"], 
-                                    vcc_id, 
-                                    index, 
-                                    fs_id-1, 
-                                    proxies.vcc[vcc_id].jonesMatrix[fs_id-1]
-                                )
-                            )
-                            raise ae
-                        except Exception as e:
-                            raise e
+                                raise ae
+                            except Exception as e:
+                                raise e  
+                    rec_id = receptor["receptor"]
+                    for fsp in [proxies.fsp[i + 1] for i in range(len(proxies.fsp))]:
+                        if fsp.functionMode in [FspModes.PSS_BF.value, FspModes.PST_BF.value, FspModes.VLBI.value]:
+                            for frequency_slice in receptor["receptorMatrix"]:
+                                if fsp.functionMode == FspModes.PSS_BF.value:
+                                    proxy_subarray = proxies.fspPssSubarray[sub_id -1]
+                                    fs_length = 16
+                                elif fsp.functionMode == FspModes.PST_BF.value:
+                                    proxy_subarray = proxies.fspPstSubarray[sub_id -1]
+                                    fs_length = 4
+                                else:
+                                    fs_length = 4
+                                    log_msg = "function mode {} currently not supported".format(fsp.functionMode)
+                                    logging.error(log_msg)
+                                    return 
+                                    
+                                if rec_id in proxy_subarray.receptors:
+                                    fs_id = frequency_slice["fsid"]
+                                    if fs_id == int(fsp.get_property("FspID")['FspID'][0]):
+                                        matrix = frequency_slice["matrix"]
+                                        if len(matrix) == fs_length:
+                                            for idx, matrix_val in enumerate(matrix):
+                                                assert matrix_val == fsp.jonesMatrix[rec_id -1][idx]                                                   
+                              
+                if epoch == epoch_to_scan:
+                    # transition to obsState=SCANNING
+                    f2 = open(data_file_path + scan_file_name)
+                    proxies.subarray[sub_id].Scan(f2.read().replace("\n", ""))
+                    f2.close()
+                    proxies.wait_timeout_obs([proxies.subarray[sub_id]], ObsState.SCANNING, 1, 1)
+                    assert proxies.subarray[sub_id].obsState == ObsState.SCANNING
+
+                time.sleep(10)
 
             # Clean up
             proxies.subarray[sub_id].EndScan()
@@ -1269,7 +1322,13 @@ class TestCbfSubarray:
         vcc_receptors: List[int]
     ) -> None:
         """
-        Test the Scan command
+            Test CbfSubarrays's Scan command 
+
+            :param proxies: proxies pytest fixture
+            :param config_file_name: JSON file for the configuration
+            :param scan_file_name: JSON file for the scan configuration
+            :param receptor_ids: list of receptor ids
+            :param vcc_receptors: list of vcc receptor ids
         """
         try:
             proxies.on()
@@ -1405,7 +1464,13 @@ class TestCbfSubarray:
         vcc_receptors: List[int]
     ) -> None:
         """
-        Test abort reset
+            Test CbfSubarrays's Abort and ObsReset commands 
+
+            :param proxies: proxies pytest fixture
+            :param config_file_name: JSON file for the configuration
+            :param scan_file_name: JSON file for the scan configuration
+            :param receptor_ids: list of receptor ids
+            :param vcc_receptors: list of vcc receptor ids
         """
         try:
             proxies.on()
@@ -1616,7 +1681,13 @@ class TestCbfSubarray:
         vcc_receptors: List[int]
     ) -> None:
         """
-        Test abort restart
+            Test CbfSubarrays's Abort and Restart commands 
+
+            :param proxies: proxies pytest fixture
+            :param config_file_name: JSON file for the configuration
+            :param scan_file_name: JSON file for the scan configuration
+            :param receptor_ids: list of receptor ids
+            :param vcc_receptors: list of vcc receptor ids
         """
         try:
             proxies.on()
@@ -1833,6 +1904,11 @@ class TestCbfSubarray:
         rather a series of commands will be issued (Abort -> Restart/Reset)"
     )
     def test_Abort_from_Resourcing(self, proxies):
+        """
+            Test CbfSubarrays's Abort command
+
+            :param proxies: proxies pytest fixture
+        """
         try:
             proxies.on()
                 

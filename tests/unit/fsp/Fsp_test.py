@@ -38,7 +38,7 @@ from ska_tango_base.control_model import HealthState, AdminMode, ObsState
 
 class TestFsp:
     """
-    Test class for CbfController tests.
+    Test class for Fsp tests.
     """
 
     def test_On_Off(
@@ -46,11 +46,11 @@ class TestFsp:
         device_under_test: CbfDeviceProxy
     ) -> None:
         """
-        Test for Fsp device.
+            Test Fsp's On and Off commands
 
-        :param device_under_test: fixture that provides a
-            :py:class:`tango.DeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
+            :param device_under_test: fixture that provides a
+                :py:class:`tango.DeviceProxy` to the device under test, in a
+                :py:class:`tango.test_context.DeviceTestContext`.
         """
     
         assert device_under_test.State() == DevState.OFF
@@ -79,6 +79,15 @@ class TestFsp:
         device_under_test: CbfDeviceProxy,
         sub_ids: List[int]
     ) -> None:
+        """
+            Test Fsp's AddSubarrayMembership and 
+            RemoveSubarrayMembership commands
+
+            :param device_under_test: fixture that provides a
+                :py:class:`tango.DeviceProxy` to the device under test, in a
+                :py:class:`tango.test_context.DeviceTestContext`.
+            :param sub_ids: list of subarray ids
+        """
 
         assert device_under_test.State() == DevState.OFF
 
@@ -133,6 +142,15 @@ class TestFsp:
         timing_beam_weights_file_name: str,
         sub_id: int
     ) -> None:
+        """
+            Test Fsp's UpdateBeamWeights command
+
+            :param device_under_test: fixture that provides a
+                :py:class:`tango.DeviceProxy` to the device under test, in a
+                :py:class:`tango.test_context.DeviceTestContext`.
+            :param timing_beam_weights_file_name: JSON file for the timing beam weights 
+            :param sub_id: the subarray id
+        """
 
         assert device_under_test.State() == DevState.OFF
         device_under_test.On()
@@ -181,10 +199,14 @@ class TestFsp:
     
     @pytest.mark.parametrize(
         "jones_matrix_file_name, \
-         sub_id",
+        sub_id, \
+        valid_receptor_ids, \
+        fsp_id",
         [
             (
-                "/../../data/jonesmatrix_fsp_unit_test.json",
+                "/../../data/jonesmatrix_unit_test.json",
+                1,
+                [1, 2, 3, 4],
                 1
             )
         ]
@@ -193,8 +215,22 @@ class TestFsp:
         self: TestFsp,
         device_under_test: CbfDeviceProxy,
         jones_matrix_file_name: str,
-        sub_id: int
+        sub_id: int,
+        valid_receptor_ids: List[int],
+        fsp_id: int
     ) -> None:
+        """
+            Test Fsp's UpdateJonesMatrix command
+
+            :param device_under_test: fixture that provides a
+                :py:class:`tango.DeviceProxy` to the device under test, in a
+                :py:class:`tango.test_context.DeviceTestContext`.
+            :param jones_matrix_file_name: JSON file for the jones matrix
+            :param sub_id: the subarray id
+            :param valid_receptor_ids: the valid receptor ids for the pss/pst subarray
+                (mocked in conftest.py)
+            :param fsp_id: the fsp id (defined in conftest.py)
+        """
 
         assert device_under_test.State() == DevState.OFF
         device_under_test.On()
@@ -206,16 +242,10 @@ class TestFsp:
             extract_as=tango.ExtractAs.List).value == [sub_id]
 
         # jones matrix values should be set to 0.0 after init
-        num_cols = 4
+        num_cols = 16
         num_rows = 4
         assert device_under_test.read_attribute("jonesMatrix", \
              extract_as=tango.ExtractAs.List).value == [[0.0] * num_cols for _ in range(num_rows)]
-
-        # update only valid for function mode PSS-BF
-        device_under_test.SetFunctionMode("PSS-BF")
-        time.sleep(0.1)
-        FspModes = Enum('FspModes', 'CORR PSS_BF PST_BF VLBI')
-        assert device_under_test.functionMode == FspModes.PSS_BF.value
 
         # read the json file
         f = open(file_path + jones_matrix_file_name)
@@ -223,28 +253,46 @@ class TestFsp:
         f.close()
         jones_matrix = json.loads(json_str)
 
-        # update the jones matrix
-        for m in jones_matrix["jonesMatrix"]:
-            if m["destinationType"] == "fsp":
+        valid_function_modes = ["PSS-BF", "PST-BF"]
+        for mode in valid_function_modes:
+            device_under_test.SetFunctionMode(mode)
+            time.sleep(0.1)
+            FspModes = Enum('FspModes', 'CORR PSS_BF PST_BF VLBI')
+            if mode == "PSS-BF":
+                assert device_under_test.functionMode == FspModes.PSS_BF.value
+                fs_length = 16
+            elif mode == "PST-BF":
+                assert device_under_test.functionMode == FspModes.PST_BF.value
+                fs_length = 4
+
+            # update the jones matrix
+            for m in jones_matrix["jonesMatrix"]:
                 device_under_test.UpdateJonesMatrix(json.dumps(m["matrixDetails"]))
-        
-        time.sleep(3)
-        # verify the jones matrix was updated successfully 
-        for m in jones_matrix["jonesMatrix"]:
-            if m["destinationType"] == "fsp":
+            
+            time.sleep(3)
+            # verify the jones matrix was updated successfully 
+            for m in jones_matrix["jonesMatrix"]:
                 for matrixDetail in m["matrixDetails"]:
-                    receptor_id = matrixDetail["receptor"]
-                    for receptorMatrix in matrixDetail["receptorMatrix"]:
-                        matrix = receptorMatrix["matrix"]
-                        assert device_under_test.read_attribute("jonesMatrix", \
-                            extract_as=tango.ExtractAs.List).value[receptor_id -1] == matrix
+                    rec_id = matrixDetail["receptor"]
+                    if rec_id in valid_receptor_ids:
+                        for frequency_slice in matrixDetail["receptorMatrix"]:
+                            fs_id = frequency_slice["fsid"]
+                            matrix = frequency_slice["matrix"]
+                            if fs_id == fsp_id:
+                                if len(matrix) == fs_length:
+                                    assert device_under_test.read_attribute("jonesMatrix", \
+                                        extract_as=tango.ExtractAs.List).value[rec_id -1] == matrix
     
     @pytest.mark.parametrize(
         "delay_model_file_name, \
-         sub_id",
+        sub_id, \
+        valid_receptor_ids, \
+        fsp_id",
         [
             (
-                "/../../data/delaymodel_fsp_unit_test.json",
+                "/../../data/delaymodel_unit_test.json",
+                1,
+                [1, 2, 3, 4],
                 1
             )
         ]
@@ -253,8 +301,22 @@ class TestFsp:
         self: TestFsp,
         device_under_test: CbfDeviceProxy,
         delay_model_file_name: str,
-        sub_id: int
+        sub_id: int,
+        valid_receptor_ids: List[int],
+        fsp_id: int
     ) -> None:
+        """
+            Test Fsp's UpdateDelayModel command
+
+            :param device_under_test: fixture that provides a
+                :py:class:`tango.DeviceProxy` to the device under test, in a
+                :py:class:`tango.test_context.DeviceTestContext`.
+            :param delay_model_file_name: JSON file for the delay model
+            :param sub_id: the subarray id
+            :param valid_receptor_ids: the valid receptor ids for the pss/pst subarray
+                (mocked in conftest.py)
+            :param fsp_id: the fsp id (defined in conftest.py)
+        """
 
         assert device_under_test.State() == DevState.OFF
         device_under_test.On()
@@ -289,17 +351,20 @@ class TestFsp:
 
             # update the delay model
             for m in delay_model["delayModel"]:
-                if m["destinationType"] == "fsp":
-                    device_under_test.UpdateDelayModel(json.dumps(m["delayDetails"]))
+                device_under_test.UpdateDelayModel(json.dumps(m["delayDetails"]))
 
             time.sleep(3)
+
+            model_len = 6
             # verify the delay model was updated successfully 
             for m in delay_model["delayModel"]:
-                if m["destinationType"] == "fsp":
-                    for delayDetail in m["delayDetails"]:
-                        receptor_id = delayDetail["receptor"]
-                        for receptorDelayDetail in delayDetail["receptorDelayDetails"]:
-                            delayCoeffs = receptorDelayDetail["delayCoeff"]
-                            assert device_under_test.read_attribute("delayModel", \
-                                extract_as=tango.ExtractAs.List).value[receptor_id -1] == delayCoeffs 
-
+                for delayDetail in m["delayDetails"]:
+                    rec_id = delayDetail["receptor"]
+                    if rec_id in valid_receptor_ids:
+                            for frequency_slice in delayDetail["receptorDelayDetails"]:
+                                fs_id = frequency_slice["fsid"]
+                                if fs_id == fsp_id:
+                                    delayCoeffs = frequency_slice["delayCoeff"]
+                                    if len(delayCoeffs) == model_len:
+                                        assert device_under_test.read_attribute("delayModel", \
+                                            extract_as=tango.ExtractAs.List).value[rec_id -1] == delayCoeffs 
