@@ -243,7 +243,7 @@ class TestFsp:
 
         # jones matrix values should be set to 0.0 after init
         num_cols = 16
-        num_rows = 26
+        num_rows = 4
         assert device_under_test.read_attribute("jonesMatrix", \
              extract_as=tango.ExtractAs.List).value == [[0.0] * num_cols for _ in range(num_rows)]
 

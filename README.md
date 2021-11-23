@@ -245,7 +245,7 @@ source venv/bin/activate  # activate venv
 make requirements
 ```
 
-#### 6.  Install the project in your environment
+#### 6.  Install the MCS package in editable mode.
 ```
 pip install -e .
 ```

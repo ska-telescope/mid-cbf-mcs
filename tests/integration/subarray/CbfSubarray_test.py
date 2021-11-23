@@ -715,6 +715,8 @@ class TestCbfSubarray:
                                     fs_length = 4
                                     log_msg = "function mode {} currently not supported".format(fsp.functionMode)
                                     logging.error(log_msg)
+                                    return
+
                                 if rec_id in proxy_subarray.receptors:
                                     fs_id = frequency_slice["fsid"]
                                     if fs_id == int(fsp.get_property("FspID")['FspID'][0]):
@@ -1214,7 +1216,7 @@ class TestCbfSubarray:
 
             # update Jones Matrix
             proxies.tm.jonesMatrix = json.dumps(jones_matrix)
-            time.sleep(5)
+            time.sleep(1)
 
             epoch_to_scan = 1
             FspModes = Enum('FspModes', 'CORR PSS_BF PST_BF VLBI')
@@ -1256,6 +1258,8 @@ class TestCbfSubarray:
                                     fs_length = 4
                                     log_msg = "function mode {} currently not supported".format(fsp.functionMode)
                                     logging.error(log_msg)
+                                    return 
+                                    
                                 if rec_id in proxy_subarray.receptors:
                                     fs_id = frequency_slice["fsid"]
                                     if fs_id == int(fsp.get_property("FspID")['FspID'][0]):

@@ -387,7 +387,7 @@ class Fsp(SKACapability):
             device._subarray_membership = []
             device._scan_id = 0
             device._config_id = ""
-            device._jones_matrix = [[0.0] * 16 for _ in range(26)]
+            device._jones_matrix = [[0.0] * 16 for _ in range(4)]
             device._delay_model = [[0.0] * 6 for _ in range(4)]
             device._timing_beam_weights = [[0.0] * 6 for _ in range(4)]
 
@@ -656,6 +656,8 @@ class Fsp(SKACapability):
                     # TODO: support for function mode VLBI
                     log_msg = "function mode {} currently not supported".format(self._function_mode)
                     self.logger.error(log_msg)
+                    return
+
                 for receptor in argin:
                     rec_id = int(receptor["receptor"])
                     if rec_id in proxy.receptors:

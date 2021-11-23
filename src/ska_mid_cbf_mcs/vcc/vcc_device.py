@@ -450,7 +450,7 @@ class Vcc(CspSubElementObsDevice):
         """
             Write the dopplerPhaseCorrection attribute.
 
-            :param value: the cdopplerPhaseCorrection attribute value.
+            :param value: the dopplerPhaseCorrection attribute value.
         """
         self._doppler_phase_correction = value
         # PROTECTED REGION END #    //  Vcc.dopplerPhaseCorrection_write
@@ -472,7 +472,7 @@ class Vcc(CspSubElementObsDevice):
             Read the scfoBand1 attribute.
 
             :return: the scfoBand1 attribute (sample clock frequency 
-                offset for band 1.
+                offset for band 1).
             :rtype: int
         """
         return self._scfo_band_1
@@ -484,7 +484,7 @@ class Vcc(CspSubElementObsDevice):
             Read the scfoBand2 attribute.
 
             :return: the scfoBand2 attribute (sample clock frequency 
-                offset for band 2.
+                offset for band 2).
             :rtype: int
         """
         return self._scfo_band_2
@@ -496,7 +496,7 @@ class Vcc(CspSubElementObsDevice):
             Read the scfoBand3 attribute.
 
             :return: the scfoBand3 attribute (sample clock frequency 
-                offset for band 3.
+                offset for band 3).
             :rtype: int
         """      
         return self._scfo_band_3
@@ -508,7 +508,7 @@ class Vcc(CspSubElementObsDevice):
             Read the scfoBand4 attribute.
 
             :return: the scfoBand4 attribute (sample clock frequency 
-                offset for band 4.
+                offset for band 4).
             :rtype: int
         """      
         return self._scfo_band_4
@@ -520,7 +520,7 @@ class Vcc(CspSubElementObsDevice):
             Read the scfoBand5a attribute.
 
             :return: the scfoBand5a attribute (sample clock frequency 
-                offset for band 5a.
+                offset for band 5a).
             :rtype: int
         """     
         return self._scfo_band_5a
