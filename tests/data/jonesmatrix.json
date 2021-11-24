@@ -1,13 +1,12 @@
 {
     "jonesMatrix": [
         {
-            "destinationType": "vcc",
             "matrixDetails": [
                 {
                     "receptor": 1,
                     "receptorMatrix": [
                         {
-                            "fsid": 19,
+                            "fsid": 3,
                             "matrix": [
                                 0.0,
                                 1.0,
@@ -100,13 +99,12 @@
             ]
         },
         {
-            "destinationType": "vcc",
             "matrixDetails": [
                 {
                     "receptor": 1,
                     "receptorMatrix": [
                         {
-                            "fsid": 17,
+                            "fsid": 3,
                             "matrix": [
                                 0.0,
                                 2.0,
@@ -127,7 +125,7 @@
                             ]
                         },
                         {
-                            "fsid": 11,
+                            "fsid": 3,
                             "matrix": [
                                 0.0,
                                 2.0,
@@ -153,7 +151,7 @@
                     "receptor": 4,
                     "receptorMatrix": [
                         {
-                            "fsid": 4,
+                            "fsid": 5,
                             "matrix": [
                                 0.0,
                                 2.0,
@@ -199,7 +197,6 @@
             ]
         },
         {
-            "destinationType": "vcc",
             "matrixDetails": [
                 {
                     "receptor": 1,
@@ -226,7 +223,7 @@
                             ]
                         },
                         {
-                            "fsid": 2,
+                            "fsid": 3,
                             "matrix": [
                                 0.0,
                                 3.0,

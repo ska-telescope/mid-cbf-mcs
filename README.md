@@ -245,7 +245,12 @@ source venv/bin/activate  # activate venv
 make requirements
 ```
 
-#### 6.  Run a test.
+#### 6.  Install the MCS package in editable mode.
+```
+pip install -e .
+```
+
+#### 7.  Run a test.
 ```
 make test       # functional tests, creates a running deployment
 make test-only  # functional tests with an already running deployment
@@ -254,7 +259,7 @@ make unit_test  # unit tests, deployment does not need to be running
 *Note*: add `-k` pytest flags in `setup.cfg` in the project root to limit which 
 tests are run
 
-#### 6.  Tear down the deployment.
+#### 8.  Tear down the deployment.
 ```
 make uninstall-chart                  # uninstall deployment from Helm charts
 deactivate                            # if in active virtualenv
