@@ -17,7 +17,7 @@ When integration testing with the hardware is desired, the ``simulationMode`` at
 be set to 0. This initializes communication with the real power switch via the ``PowerSwitchDriver``,
 and queries the list of outlets in the power switch. 
 
-.. figure:: diagrams/powerswitch-device.png
+.. figure:: diagrams/power-switch-device.png
    :align: center
    
    MCS PowerSwitch Device

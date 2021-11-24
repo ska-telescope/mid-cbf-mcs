@@ -52,6 +52,8 @@ class TalonDxComponentManager:
     ) -> None:
         """
         Initialise a new instance.
+
+        :param logger: a logger for this object to use
         """
         self.talondx_config_path = talondx_config_path
         self.simulation_mode = simulation_mode
