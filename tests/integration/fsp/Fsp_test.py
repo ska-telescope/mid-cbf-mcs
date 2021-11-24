@@ -15,9 +15,6 @@ import os
 import time
 import json
 
-# Path
-file_path = os.path.dirname(os.path.abspath(__file__))
-
 # Tango imports
 import tango
 from tango import DevState
@@ -26,114 +23,127 @@ import pytest
 #Local imports
 from ska_tango_base.control_model import HealthState, AdminMode, ObsState
 
-# @pytest.mark.usefixtures(
-#     "create_fsp_proxy",
-#     "create_corr_proxy",
-#     "create_pss_proxy",
-#     "create_pst_proxy",
-#     "create_vlbi_proxy"
-# )
 
 @pytest.mark.skip(reason="this class is currently untested")
 class TestFsp:
     """
-    @classmethod
-    def mocking(cls):
-    """#Mock external libraries.
-    """
-        # Example : Mock numpy
-        # cls.numpy = CspController.numpy = MagicMock()
+    Test class for Fsp device class integration testing.
     """
 
+    @pytest.mark.parametrize(
+        "fsp_id", 
+        [1]
+    )
     def test_SetFunctionMode(
-            self,
-            create_fsp_proxy,
-            create_corr_proxy,
-            create_pss_proxy,
-            create_pst_proxy,
-            create_vlbi_proxy
-    ):
+        self,
+        test_proxies: pytest.fixture,
+        fsp_id: int
+    ) -> None:
         """
         Test SetFunctionMode command state changes.
         """
-        create_corr_proxy.Init()
-        create_pss_proxy.Init()
-        create_pst_proxy.Init()
-        create_vlbi_proxy.Init()
-        create_fsp_proxy.Init()
-        time.sleep(3)
 
         # all function modes should be disabled after initialization
-        assert create_corr_proxy.State() == DevState.DISABLE
-        assert create_pss_proxy.State() == DevState.DISABLE
-        assert create_pst_proxy.State() == DevState.DISABLE
-        assert create_vlbi_proxy.State() == DevState.DISABLE
+        assert test_proxies.fspFunctionMode[
+            fsp_id]["corr"].State() == DevState.DISABLE
+        assert test_proxies.fspFunctionMode[
+            fsp_id]["pss"].State() == DevState.DISABLE
+        assert test_proxies.fspFunctionMode[
+            fsp_id]["pst"].State() == DevState.DISABLE
+        assert test_proxies.fspFunctionMode[
+            fsp_id]["vlbi"].State() == DevState.DISABLE
 
         # set function mode to CORR
-        create_fsp_proxy.SetFunctionMode("CORR")
+        test_proxies.fsp[fsp_id].SetFunctionMode("CORR")
         time.sleep(1)
-        assert create_corr_proxy.State() == DevState.ON
-        assert create_pss_proxy.State() == DevState.DISABLE
-        assert create_pst_proxy.State() == DevState.DISABLE
-        assert create_vlbi_proxy.State() == DevState.DISABLE
+        assert test_proxies.fspFunctionMode[
+            fsp_id]["corr"].State() == DevState.ON
+        assert test_proxies.fspFunctionMode[
+            fsp_id]["pss"].State() == DevState.DISABLE
+        assert test_proxies.fspFunctionMode[
+            fsp_id]["pst"].State() == DevState.DISABLE
+        assert test_proxies.fspFunctionMode[
+            fsp_id]["vlbi"].State() == DevState.DISABLE
 
         # set function mode to PSS
-        create_fsp_proxy.SetFunctionMode("PSS-BF")
+        test_proxies.fsp[fsp_id].SetFunctionMode("PSS-BF")
         time.sleep(1)
-        assert create_corr_proxy.State() == DevState.DISABLE
-        assert create_pss_proxy.State() == DevState.ON
-        assert create_pst_proxy.State() == DevState.DISABLE
-        assert create_vlbi_proxy.State() == DevState.DISABLE
+        assert test_proxies.fspFunctionMode[
+            fsp_id]["corr"].State() == DevState.DISABLE
+        assert test_proxies.fspFunctionMode[
+            fsp_id]["pss"].State() == DevState.ON
+        assert test_proxies.fspFunctionMode[
+            fsp_id]["pst"].State() == DevState.DISABLE
+        assert test_proxies.fspFunctionMode[
+            fsp_id]["vlbi"].State() == DevState.DISABLE
 
         # set function mode to PST
-        create_fsp_proxy.SetFunctionMode("PST-BF")
+        test_proxies.fsp[fsp_id].SetFunctionMode("PST-BF")
         time.sleep(1)
-        assert create_corr_proxy.State() == DevState.DISABLE
-        assert create_pss_proxy.State() == DevState.DISABLE
-        assert create_pst_proxy.State() == DevState.ON
-        assert create_vlbi_proxy.State() == DevState.DISABLE
+        assert test_proxies.fspFunctionMode[
+            fsp_id]["corr"].State() == DevState.DISABLE
+        assert test_proxies.fspFunctionMode[
+            fsp_id]["pss"].State() == DevState.DISABLE
+        assert test_proxies.fspFunctionMode[
+            fsp_id]["pst"].State() == DevState.ON
+        assert test_proxies.fspFunctionMode[
+            fsp_id]["vlbi"].State() == DevState.DISABLE
 
         # set function mode to VLBI
-        create_fsp_proxy.SetFunctionMode("VLBI")
+        test_proxies.fsp[fsp_id].SetFunctionMode("VLBI")
         time.sleep(1)
-        assert create_corr_proxy.State() == DevState.DISABLE
-        assert create_pss_proxy.State() == DevState.DISABLE
-        assert create_pst_proxy.State() == DevState.DISABLE
-        assert create_vlbi_proxy.State() == DevState.ON
+        assert test_proxies.fspFunctionMode[
+            fsp_id]["corr"].State() == DevState.DISABLE
+        assert test_proxies.fspFunctionMode[
+            fsp_id]["pss"].State() == DevState.DISABLE
+        assert test_proxies.fspFunctionMode[
+            fsp_id]["pst"].State() == DevState.DISABLE
+        assert test_proxies.fspFunctionMode[
+            fsp_id]["vlbi"].State() == DevState.ON
 
         # set function mode to IDLE
-        create_fsp_proxy.SetFunctionMode("IDLE")
+        test_proxies.fsp[fsp_id].SetFunctionMode("IDLE")
         time.sleep(1)
-        assert create_corr_proxy.State() == DevState.DISABLE
-        assert create_pss_proxy.State() == DevState.DISABLE
-        assert create_pst_proxy.State() == DevState.DISABLE
-        assert create_vlbi_proxy.State() == DevState.DISABLE
+        assert test_proxies.fspFunctionMode[
+            fsp_id]["corr"].State() == DevState.DISABLE
+        assert test_proxies.fspFunctionMode[
+            fsp_id]["pss"].State() == DevState.DISABLE
+        assert test_proxies.fspFunctionMode[
+            fsp_id]["pst"].State() == DevState.DISABLE
+        assert test_proxies.fspFunctionMode[
+            fsp_id]["vlbi"].State() == DevState.DISABLE
 
-    def test_AddRemoveSubarrayMembership(self, create_fsp_proxy):
-        create_fsp_proxy.Init()
-        time.sleep(3)
+    @pytest.mark.parametrize(
+        "fsp_id", 
+        [1]
+    )
+    def test_AddRemoveSubarrayMembership(
+        self,
+        test_proxies: pytest.fixture,
+        fsp_id: int
+    ) -> None:
 
         # subarray membership should be empty
-        assert create_fsp_proxy.subarrayMembership == None
+        assert test_proxies.fsp[fsp_id].subarrayMembership == None
 
         # add FSP to some subarrays
-        create_fsp_proxy.AddSubarrayMembership(3)
-        create_fsp_proxy.AddSubarrayMembership(4)
+        test_proxies.fsp[fsp_id].AddSubarrayMembership(3)
+        test_proxies.fsp[fsp_id].AddSubarrayMembership(4)
         time.sleep(1)
-        assert create_fsp_proxy.subarrayMembership == (3, 4)
+        assert test_proxies.fsp[fsp_id].subarrayMembership == (3, 4)
 
         # remove from a subarray
-        create_fsp_proxy.RemoveSubarrayMembership(3)
+        test_proxies.fsp[fsp_id].RemoveSubarrayMembership(3)
         time.sleep(1)
-        assert create_fsp_proxy.subarrayMembership == (4,)
+        assert test_proxies.fsp[fsp_id].subarrayMembership == (4,)
 
         # add again...
-        create_fsp_proxy.AddSubarrayMembership(15)
+        test_proxies.fsp[fsp_id].AddSubarrayMembership(15)
         time.sleep(1)
-        assert create_fsp_proxy.subarrayMembership == (4, 15)
+        assert test_proxies.fsp[fsp_id].subarrayMembership == (4, 15)
 
         # remove from all subarrays
-        create_fsp_proxy.RemoveSubarrayMembership(4)
-        create_fsp_proxy.RemoveSubarrayMembership(15)
+        test_proxies.fsp[fsp_id].RemoveSubarrayMembership(4)
+        test_proxies.fsp[fsp_id].RemoveSubarrayMembership(15)
         time.sleep(1)
-        assert create_fsp_proxy.subarrayMembership == None
+        assert test_proxies.fsp[fsp_id].subarrayMembership == None

@@ -33,7 +33,7 @@
                             "MaxCapabilities": [
                                 "VCC:4",
                                 "FSP:4",
-                                "Subarray:2"
+                                "Subarray:1"
                             ],
                             "VCC": [
                                 "mid_csp_cbf/vcc/001",

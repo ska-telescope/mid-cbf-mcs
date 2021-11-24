@@ -20,15 +20,6 @@ import random
 from tango import DevState, DeviceProxy
 import pytest
 
-@pytest.fixture(scope="class")
-def subarray() -> DeviceProxy:
-    """
-    Proxy to CbfSubarray
-    
-    :return: a proxy to mid_csp_cbf/sub_elt/subarray_01
-    """
-    return DeviceProxy("mid_csp_cbf/sub_elt/subarray_01")
-
 @pytest.fixture(scope="function")
 def receptors_to_test() -> List[int]:
     # reserve receptor ID 4 to test unassigned/invalid receptor
