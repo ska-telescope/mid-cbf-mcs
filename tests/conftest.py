@@ -547,53 +547,6 @@ def debug_device_is_on():
         timeout_millis = 500000
     return debug_device_is_on
 
-@pytest.fixture(scope="class")
-def create_vcc_proxy():
-    dp = DeviceProxy("mid_csp_cbf/vcc/001")
-    dp.loggingLevel = LoggingLevel.DEBUG
-    return dp
-
-@pytest.fixture(scope="class")
-def create_band_12_proxy():
-    #return DeviceTestContext(VccBand1And2)
-    return DeviceProxy("mid_csp_cbf/vcc_band12/001")
-
-@pytest.fixture(scope="class")
-def create_band_3_proxy():
-    #return DeviceTestContext(VccBand3)
-    return DeviceProxy("mid_csp_cbf/vcc_band3/001")
-
-@pytest.fixture(scope="class")
-def create_band_4_proxy():
-    #return DeviceTestContext(VccBand4)
-    return DeviceProxy("mid_csp_cbf/vcc_band4/001")
-
-@pytest.fixture(scope="class")
-def create_band_5_proxy():
-    #return DeviceTestContext(VccBand5)
-    return DeviceProxy("mid_csp_cbf/vcc_band5/001")
-
-@pytest.fixture(scope="class")
-def create_sw_1_proxy():
-    #return DeviceTestContext(VccSearchWindow)
-    return DeviceProxy("mid_csp_cbf/vcc_sw1/001")
-
-@pytest.fixture(scope="class")
-def create_fsp_corr_subarray_1_1_proxy():
-    return DeviceProxy("mid_csp_cbf/fspCorrSubarray/01_01")
-
-@pytest.fixture(scope="class")
-def create_fsp_pss_subarray_2_1_proxy():
-    return DeviceProxy("mid_csp_cbf/fspPssSubarray/02_01")
-
-@pytest.fixture(scope="class")
-def create_corr_proxy():
-    return DeviceProxy("mid_csp_cbf/fsp_corr/01")
-
-@pytest.fixture(scope="class")
-def create_pss_proxy():
-    return DeviceProxy("mid_csp_cbf/fsp_pss/01")
-
 def load_data(name):
     """
     Loads a dataset by name. This implementation uses the name to find a
