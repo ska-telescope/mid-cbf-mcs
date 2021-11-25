@@ -23,7 +23,11 @@ __all__ = [
 ]
 
 class PowerSwitchSimulator:
-    """A simulator of the power switch."""
+    """
+    A simulator for the power switch.
+    
+    :param logger: a logger for this object to use
+    """
 
     def __init__(
         self: PowerSwitchSimulator,
@@ -31,8 +35,6 @@ class PowerSwitchSimulator:
     ) -> None:
         """
         Initialise a new instance.
-
-        :param logger: a logger for this object to use
         """
         self.logger = logger
         self.outlets = self.get_outlet_list()
@@ -51,7 +53,7 @@ class PowerSwitchSimulator:
         """
         Returns whether or not the power switch can be communicated with.
 
-        :return: whether the power switch is communicating
+        :return: simulator always returns True
         """
         return True
 
@@ -78,7 +80,7 @@ class PowerSwitchSimulator:
         outlet: int
     ) -> tuple[ResultCode, str]:
         """
-        Tell the DLI power switch to turn on a specific outlet.
+        Turn on a specific outlet.
 
         :param outlet: outlet ID to turn on
         :return: a tuple containing a return code and a string
@@ -98,7 +100,7 @@ class PowerSwitchSimulator:
         outlet: int
     ) -> tuple[ResultCode, str]:
         """
-        Tell the DLI power switch to turn off a specific outlet.
+        Turn off a specific outlet.
 
         :param outlet: outlet ID to turn off
         :return: a tuple containing a return code and a string
@@ -117,8 +119,8 @@ class PowerSwitchSimulator:
         self: PowerSwitchSimulator
     ) -> List(Outlet):
         """
-        Query the power switch for a list of outlets and get their name
-        and current state.
+        Returns a list of 8 outlets, containing their name and current state.
+        The current state is always set to OFF.
 
         :return: list of all the outlets available in this power switch
         """

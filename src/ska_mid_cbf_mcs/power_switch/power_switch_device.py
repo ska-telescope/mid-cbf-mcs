@@ -84,11 +84,17 @@ class PowerSwitch(SKABaseDevice):
     # ---------------
 
     def always_executed_hook(self: PowerSwitch) -> None:
+        """
+        Hook to be executed before any attribute access or command.
+        """
         # PROTECTED REGION ID(PowerSwitch.always_executed_hook) ENABLED START #
         pass
         # PROTECTED REGION END #    //  PowerSwitch.always_executed_hook
 
     def delete_device(self: PowerSwitch) -> None:
+        """
+        Uninitialize the device.
+        """
         # PROTECTED REGION ID(PowerSwitch.delete_device) ENABLED START #
         pass
         # PROTECTED REGION END #    //  PowerSwitch.delete_device
@@ -128,7 +134,9 @@ class PowerSwitch(SKABaseDevice):
 
     def write_simulationMode(self: PowerSwitch, value: SimulationMode) -> None:
         """
-        Set the Simulation Mode of the device.
+        Set the simulation mode of the device. When simulation mode is set to
+        True, the power switch software simulator is used in place of the hardware.
+        When simulation mode is set to False, the real power switch driver is used.
 
         :param value: SimulationMode
         """

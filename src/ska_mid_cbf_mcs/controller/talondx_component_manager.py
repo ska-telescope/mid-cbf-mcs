@@ -31,8 +31,18 @@ __all__ = [
 TALON_FIRST_CONNECT_TIMEOUT = 30
 
 class TalonDxComponentManager:
-    """A component manager for the Talon-DX boards. Used to configure and start
-    the Tango applications on the HPS of each board."""
+    """
+    A component manager for the Talon-DX boards. Used to configure and start
+    the Tango applications on the HPS of each board.
+
+    :param talondx_config_path: path to the directory containing configuration
+                                    files and artifacts for the Talon boards
+    :param simulation_mode: simulation mode identifies if the real Talon boards or
+                            a simulator should be used; note that currently there
+                            is no simulator for the Talon boards, so the component
+                            manager does nothing when in simulation mode
+    :param logger: a logger for this object to use
+    """
 
     def __init__(
         self: TalonDxComponentManager,
@@ -43,12 +53,6 @@ class TalonDxComponentManager:
         """
         Initialise a new instance.
 
-        :param talondx_config_path: path to the directory containing configuration
-                                    files and artifacts for the Talon boards
-        :param simulation_mode: simulation mode identifies if the real Talon boards or
-                                a simulator should be used; note that currently there
-                                is no simulator for the Talon boards, so the component
-                                manager does nothing when in simulation mode
         :param logger: a logger for this object to use
         """
         self.talondx_config_path = talondx_config_path
@@ -104,7 +108,7 @@ class TalonDxComponentManager:
         :param src: Source file path
         :param dest: Destination file path
 
-        :raise SCPException if the file copy fails
+        :raise SCPException: if the file copy fails
         """
         with SCPClient(ssh_client.get_transport()) as scp_client:
             scp_client.put(src, remote_path=dest)

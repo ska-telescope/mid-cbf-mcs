@@ -49,12 +49,18 @@ class Outlet:
         self.power_mode = power_mode
 
 class PowerSwitchDriver:
-    """A driver for the DLI web power switch."""
+    """
+    A driver for the DLI web power switch.
+    
+    :param ip: IP address of the power switch
+    :param logger: a logger for this object to use
+    """
 
-    # Coversion between PowerMode and outlet state response
     power_mode_conversion = [PowerMode.OFF, PowerMode.ON]
+    """Coversion between PowerMode and outlet state response"""
 
     query_timeout_s = 4
+    """Timeout in seconds used when waiting for a reply from the power switch"""
 
     def __init__(
         self: PowerSwitchDriver,
@@ -63,9 +69,6 @@ class PowerSwitchDriver:
     ) -> None:
         """
         Initialise a new instance.
-
-        :param ip: IP address of the power switch
-        :param logger: a logger for this object to use
         """
         self.logger = logger
 

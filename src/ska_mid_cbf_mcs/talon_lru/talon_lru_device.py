@@ -37,7 +37,7 @@ __all__ = ["TalonLRU", "main"]
 
 class TalonLRU(SKABaseDevice):
     """
-    TANGO device class for controlling and monitoring a Talon LRU
+    TANGO device class for controlling and monitoring a Talon LRU.
     """
     # PROTECTED REGION ID(TalonLRU.class_variable) ENABLED START #
     # PROTECTED REGION END #    //  TalonLRU.class_variable
@@ -89,11 +89,17 @@ class TalonLRU(SKABaseDevice):
     # ---------------
 
     def always_executed_hook(self: TalonLRU) -> None:
+        """
+        Hook to be executed before any attribute access or command.
+        """
         # PROTECTED REGION ID(TalonLRU.always_executed_hook) ENABLED START #
         pass
         # PROTECTED REGION END #    //  TalonLRU.always_executed_hook
 
     def delete_device(self: TalonLRU) -> None:
+        """
+        Uninitialize the device.
+        """
         # PROTECTED REGION ID(TalonLRU.delete_device) ENABLED START #
         pass
         # PROTECTED REGION END #    //  TalonLRU.delete_device
@@ -117,9 +123,19 @@ class TalonLRU(SKABaseDevice):
     # ------------------
 
     def read_PDU1PowerMode(self: TalonLRU) -> PowerMode:
+        """
+        Read the power mode of the outlet specified by PDU 1.
+
+        :return: Power mode of PDU 1
+        """
         return self._pdu1_power_mode
 
     def read_PDU2PowerMode(self: TalonLRU) -> PowerMode:
+        """
+        Read the power mode of the outlet specified by PDU 2.
+
+        :return: Power mode of PDU 2
+        """
         return self._pdu2_power_mode
 
     # --------
@@ -132,7 +148,8 @@ class TalonLRU(SKABaseDevice):
         """
         def do(self: TalonLRU.InitCommand) -> tuple[ResultCode, str]:
             """
-            Stateless hook for device initialisation.
+            Stateless hook for device initialisation. Creates the device proxies
+            to the power switch devices.
 
             :return: A tuple containing a return code and a string
                 message indicating status. The message is for
@@ -198,7 +215,8 @@ class TalonLRU(SKABaseDevice):
     ) -> None:
         """
         Get the power mode of both PDUs and check that it is consistent with the
-        current device state.
+        current device state. This is a callback that gets called whenever simulationMode
+        changes in the power switch devices.
         """
         with self._power_switch_lock:
             if self._proxy_power_switch1 is not None:

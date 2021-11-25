@@ -21,19 +21,19 @@
 # import skabase
 autodoc_mock_imports = ['PyTango', 'tango', 'tango.server','run', 'DeviceMeta', 'command',
                  'future', 'future.utils', 'logging', 'logging.handlers', 'ska',
-                 'skabase', 'numpy', 'backoff', 'paramiko', 'scp', 'ska_tango_base'
+                 'skabase', 'numpy', 'backoff', 'paramiko', 'scp', 'ska_tango_base',
+                 'typing_extensions', 'jsonschema'
                  ]
 autodoc_member_order = 'bysource'
 
 import os
 import sys
 sys.path.insert(0, os.path.abspath('../../src/'))
-import sphinx_rtd_theme
 
 
 def setup(app):
     app.add_css_file('css/custom.css')
-    app.add_javascript('js/github.js')
+    app.add_js_file('js/github.js')
 
 # -- Project information -----------------------------------------------------
 
@@ -41,9 +41,6 @@ project = 'ska-mid-cbf-mcs Software'
 copyright = '2020, NRC - SKA Organization'
 author = 'Taylor Huang'
 
-def setup(app):
-    app.add_css_file('css/custom.css')
-    app.add_javascript('js/github.js')
 
 # -- General configuration ------------------------------------------------
 # 
@@ -66,7 +63,8 @@ extensions = [
     'sphinx.ext.ifconfig',
     'sphinx.ext.viewcode',
     'sphinx.ext.githubpages',
-    'recommonmark'
+    'recommonmark',
+    'sphinx.ext.autosectionlabel'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
