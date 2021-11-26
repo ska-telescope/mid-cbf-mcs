@@ -712,37 +712,38 @@ class TestCbfSubarray:
 
             # update Jones Matrix
             test_proxies.tm.jonesMatrix = json.dumps(jones_matrix)
-            time.sleep(5)
+            time.sleep(1)
 
             FspModes = Enum('FspModes', 'CORR PSS_BF PST_BF VLBI')
 
-            for epoch in range( len(jones_matrix_index_per_epoch) ):
+            for epoch in range(len(jones_matrix_index_per_epoch)):
+                logging.info(f"epoch: {epoch}")
 
                 for receptor in jones_matrix["jonesMatrix"][jones_matrix_index_per_epoch[epoch]]["matrixDetails"]:
                     rec_id = receptor["receptor"]
+                    logging.info(f"configuration receptor: {rec_id}")
                     for fsp in [test_proxies.fsp[i] for i in range(1, test_proxies.num_fsp + 1)]:
-                        if fsp.functionMode in [FspModes.PSS_BF.value, FspModes.PST_BF.value, FspModes.VLBI.value]:
+                        if fsp.functionMode in [FspModes.PSS_BF.value, FspModes.PST_BF.value]:
                             for frequency_slice in receptor["receptorMatrix"]:
-                                fsp_id = frequency_slice["fsid"]
-                                if fsp.functionMode == FspModes.PSS_BF.value:
-                                    proxy_subarray = test_proxies.fspSubarray["PSS-BF"][sub_id][fsp_id]
-                                    fs_length = 16
-                                elif fsp.functionMode == FspModes.PST_BF.value:
-                                    proxy_subarray = test_proxies.fspSubarray["PST-BF"][sub_id][fsp_id]
-                                    fs_length = 4
-                                else:
-                                    fs_length = 4
-                                    log_msg = "function mode {} currently not supported".format(fsp.functionMode)
-                                    logging.error(log_msg)
+                                fs_id = frequency_slice["fsid"]
+                                matrix = frequency_slice["matrix"]
+                                logging.info(f"configuration fs: {fs_id}")
+                                if fs_id == int(fsp.get_property("FspID")['FspID'][0]):
+                                    if fsp.functionMode == FspModes.PSS_BF.value:
+                                        fs_length = 16
+                                        proxy_subarray = test_proxies.fspSubarray["PSS-BF"][sub_id][fs_id]
+                                    else:
+                                        fs_length = 4
+                                        proxy_subarray = test_proxies.fspSubarray["PST-BF"][sub_id][fs_id]
+                                    if rec_id in proxy_subarray.receptors and len(matrix) == fs_length:
+                                        for idx, matrix_val in enumerate(matrix):
+                                            logging.info("test")
+                                            assert matrix_val == fsp.jonesMatrix[rec_id -1][idx]
+                        else:
+                            log_msg = "function mode {} currently not supported".format(fsp.functionMode)
+                            logging.error(log_msg)
 
-                                if rec_id in proxy_subarray.receptors:
-                                    if fsp_id == int(fsp.get_property("FspID")['FspID'][0]):
-                                        matrix = frequency_slice["matrix"]
-                                        if len(matrix) == fs_length:
-                                            for idx, matrix_val in enumerate(matrix):
-                                                assert matrix_val == fsp.jonesMatrix[rec_id -1][idx]                                                                               
-
-                time.sleep(10)
+                time.sleep(epoch_increment)
 
             # update delay models from tm emulator
             f = open(data_file_path + delay_model_file_name)
@@ -762,30 +763,36 @@ class TestCbfSubarray:
 
             # update delay model
             test_proxies.tm.delayModel = json.dumps(delay_model)
-            time.sleep(5)
+            time.sleep(1)
 
             FspModes = Enum('FspModes', 'CORR PSS_BF PST_BF VLBI')
 
-            for epoch in range( len(delay_model_index_per_epoch) ):
+            for epoch in range(len(delay_model_index_per_epoch)):
+                logging.info(f"epoch: {epoch}")
 
                 model = delay_model["delayModel"][delay_model_index_per_epoch[epoch]]            
                 for delayDetail in model["delayDetails"]:
+                    rec_id = delayDetail["receptor"]
+                    logging.info(f"configuration receptor: {rec_id}")
                     for fsp in [test_proxies.fsp[i] for i in range(1, test_proxies.num_fsp + 1)]:
                         if fsp.functionMode in [FspModes.PSS_BF.value, FspModes.PST_BF.value]:
                             for receptorDelayDetail in delayDetail["receptorDelayDetails"]:
                                 fsp_id = receptorDelayDetail["fsid"]
-                                rec_id = delayDetail["receptor"]
-                                if fsp.functionMode == FspModes.PSS_BF.value:
-                                    proxy_subarray = test_proxies.fspSubarray["PSS-BF"][sub_id][fsp_id]
-                                else:
-                                    proxy_subarray = test_proxies.fspSubarray["PST-BF"][sub_id][fsp_id]
-                                if rec_id in proxy_subarray.receptors:
-                                    if fsp_id == int(fsp.get_property("FspID")['FspID'][0]):
-                                        delayCoeff = receptorDelayDetail["delayCoeff"]
+                                logging.info(f"configuration fsp: {fsp_id}")
+                                delayCoeff = receptorDelayDetail["delayCoeff"]
+                                if fsp_id == int(fsp.get_property("FspID")['FspID'][0]):
+                                    if fsp.functionMode == FspModes.PSS_BF.value:
+                                        proxy_subarray = test_proxies.fspSubarray["PSS-BF"][sub_id][fsp_id]
+                                    else:
+                                        proxy_subarray = test_proxies.fspSubarray["PST-BF"][sub_id][fsp_id]
+                                    if rec_id in proxy_subarray.receptors:
                                         for idx, coeff in enumerate(delayCoeff):
-                                            assert coeff == fsp.delayModel[rec_id -1][idx]                                           
+                                            assert coeff == fsp.delayModel[rec_id -1][idx]
+                        else:
+                            log_msg = "function mode {} currently not supported".format(fsp.functionMode)
+                            logging.error(log_msg)
 
-                time.sleep(10)
+                time.sleep(epoch_increment)
 
             # update timing beam weights from tm emulator
             f = open(data_file_path + timing_beam_weights_file_name)
@@ -810,7 +817,7 @@ class TestCbfSubarray:
                             raise ae
                         except Exception as e:
                             raise e
-                time.sleep(10)
+                time.sleep(epoch_increment)
 
             # Clean Up
             test_proxies.subarray[sub_id].GoToIdle()
@@ -1054,23 +1061,26 @@ class TestCbfSubarray:
 
             # update delay model
             test_proxies.tm.delayModel = json.dumps(delay_model)
-            time.sleep(5)
+            time.sleep(1)
 
             FspModes = Enum('FspModes', 'CORR PSS_BF PST_BF VLBI')
             epoch_to_scan = 1
             num_cols = 6
             num_rows_vcc = 26
 
-            for epoch in range( len(delay_model_index_per_epoch) ):
+            for epoch in range(len(delay_model_index_per_epoch)):
 
                 model = delay_model["delayModel"][delay_model_index_per_epoch[epoch]]            
                 for delayDetail in model["delayDetails"]:
+                    rec_id = delayDetail["receptor"]
+                    logging.info(f"configuration fsp: {rec_id}")
                     for r in vcc_receptors:
                         vcc = test_proxies.vcc[test_proxies.receptor_to_vcc[r]]  
                         if delayDetail["receptor"] == r:
                             mod_vcc = [[0.0] * num_cols for i in range(num_rows_vcc)]
                             for receptorDelayDetail in delayDetail["receptorDelayDetails"]:
                                 fs_id = receptorDelayDetail["fsid"]
+                                logging.info(f"configuration fsp: {fs_id}")
                                 delayCoeff = receptorDelayDetail["delayCoeff"]
                                 mod_vcc[fs_id -1] = delayCoeff
                             for i in range(len(mod_vcc)):
@@ -1080,16 +1090,19 @@ class TestCbfSubarray:
                         if fsp.functionMode in [FspModes.PSS_BF.value, FspModes.PST_BF.value]:
                             for receptorDelayDetail in delayDetail["receptorDelayDetails"]:
                                 fsp_id = receptorDelayDetail["fsid"]
-                                rec_id = delayDetail["receptor"]
-                                if fsp.functionMode == FspModes.PSS_BF.value:
-                                    proxy_subarray = test_proxies.fspSubarray["PSS-BF"][sub_id][fsp_id]
-                                else:
-                                    proxy_subarray = test_proxies.fspSubarray["PST-BF"][sub_id][fsp_id]
-                                if rec_id in proxy_subarray.receptors:
-                                    if fsp_id == int(fsp.get_property("FspID")['FspID'][0]):
-                                        delayCoeff = receptorDelayDetail["delayCoeff"]
+                                logging.info(f"configuration fsp: {fsp_id}")
+                                delayCoeff = receptorDelayDetail["delayCoeff"]
+                                if fsp_id == int(fsp.get_property("FspID")['FspID'][0]):
+                                    if fsp.functionMode == FspModes.PSS_BF.value:
+                                        proxy_subarray = test_proxies.fspSubarray["PSS-BF"][sub_id][fsp_id]
+                                    else:
+                                        proxy_subarray = test_proxies.fspSubarray["PST-BF"][sub_id][fsp_id]
+                                    if rec_id in proxy_subarray.receptors:
                                         for idx, coeff in enumerate(delayCoeff):
-                                            assert coeff == fsp.delayModel[rec_id -1][idx]                                           
+                                            assert coeff == fsp.delayModel[rec_id -1][idx]
+                        else:
+                            log_msg = "function mode {} currently not supported".format(fsp.functionMode)
+                            logging.error(log_msg)
                               
                 if epoch == epoch_to_scan:
                     # transition to obsState=SCANNING
@@ -1099,7 +1112,7 @@ class TestCbfSubarray:
                     test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.SCANNING, 1, 1)
                     assert test_proxies.subarray[sub_id].obsState == ObsState.SCANNING
 
-                time.sleep(10)
+                time.sleep(epoch_increment)
 
             # Clean up
             test_proxies.subarray[sub_id].EndScan()
@@ -1204,13 +1217,16 @@ class TestCbfSubarray:
             epoch_to_scan = 1
             FspModes = Enum('FspModes', 'CORR PSS_BF PST_BF VLBI')
 
-            for epoch in range( len(jones_matrix_index_per_epoch) ):
+            for epoch in range(len(jones_matrix_index_per_epoch)):
 
                 for receptor in jones_matrix["jonesMatrix"][jones_matrix_index_per_epoch[epoch]]["matrixDetails"]:
+                    rec_id = receptor["receptor"]
+                    logging.info(f"configuration receptor: {rec_id}")
                     for frequency_slice in receptor["receptorMatrix"]:
                         for index, value in enumerate(frequency_slice["matrix"]):
-                            vcc_id = test_proxies.receptor_to_vcc[receptor["receptor"]]
+                            vcc_id = test_proxies.receptor_to_vcc[rec_id]
                             fs_id = frequency_slice["fsid"]
+                            logging.info(f"configuration fs: {fs_id}")
                             try:
                                 assert test_proxies.vcc[vcc_id].jonesMatrix[fs_id-1][index] == value
                             except AssertionError as ae:
@@ -1226,31 +1242,27 @@ class TestCbfSubarray:
                                 )
                                 raise ae
                             except Exception as e:
-                                raise e  
-                    rec_id = receptor["receptor"]
+                                raise e
                     for fsp in [test_proxies.fsp[i] for i in range(1, test_proxies.num_fsp + 1)]:
-                        if fsp.functionMode in [FspModes.PSS_BF.value, FspModes.PST_BF.value, FspModes.VLBI.value]:
+                        if fsp.functionMode in [FspModes.PSS_BF.value, FspModes.PST_BF.value]:
                             for frequency_slice in receptor["receptorMatrix"]:
-                                fsp_id = frequency_slice["fsid"]
-                                if fsp.functionMode == FspModes.PSS_BF.value:
-                                    proxy_subarray = test_proxies.fspSubarray["PSS-BF"][sub_id][fsp_id]
-                                    fs_length = 16
-                                elif fsp.functionMode == FspModes.PST_BF.value:
-                                    proxy_subarray = test_proxies.fspSubarray["PST-BF"][sub_id][fsp_id]
-                                    fs_length = 4
-                                else:
-                                    fs_length = 4
-                                    log_msg = "function mode {} currently not supported".format(fsp.functionMode)
-                                    logging.error(log_msg)
-                                    return 
-                                    
-                                if rec_id in proxy_subarray.receptors:
-                                    if fsp_id == int(fsp.get_property("FspID")['FspID'][0]):
-                                        matrix = frequency_slice["matrix"]
-                                        if len(matrix) == fs_length:
+                                fs_id = frequency_slice["fsid"]
+                                logging.info(f"configuration fsp: {fs_id}")
+                                matrix = frequency_slice["matrix"]
+                                if fs_id == int(fsp.get_property("FspID")['FspID'][0]):
+                                    if fsp.functionMode == FspModes.PSS_BF.value:
+                                        proxy_subarray = test_proxies.fspSubarray["PSS-BF"][sub_id][fs_id]
+                                        fs_length = 16
+                                    elif fsp.functionMode == FspModes.PST_BF.value:
+                                        proxy_subarray = test_proxies.fspSubarray["PST-BF"][sub_id][fs_id]
+                                        fs_length = 4
+                                    if rec_id in proxy_subarray.receptors and len(matrix) == fs_length:
                                             for idx, matrix_val in enumerate(matrix):
-                                                assert matrix_val == fsp.jonesMatrix[rec_id -1][idx]                                                   
-                              
+                                                assert matrix_val == fsp.jonesMatrix[rec_id -1][idx]
+                        else:
+                            log_msg = "function mode {} currently not supported".format(fsp.functionMode)
+                            logging.error(log_msg)
+
                 if epoch == epoch_to_scan:
                     # transition to obsState=SCANNING
                     f2 = open(data_file_path + scan_file_name)
@@ -1259,7 +1271,7 @@ class TestCbfSubarray:
                     test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.SCANNING, 1, 1)
                     assert test_proxies.subarray[sub_id].obsState == ObsState.SCANNING
 
-                time.sleep(10)
+                time.sleep(epoch_increment)
 
             # Clean up
             test_proxies.subarray[sub_id].EndScan()

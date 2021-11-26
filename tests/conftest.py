@@ -430,7 +430,7 @@ def init_proxies_fixture():
                 for j in ["12", "3", "4", "5"]:
                     bands[j] = CbfDeviceProxy(
                         fqdn=f"mid_csp_cbf/vcc_band{j}/{i:03}",
-                        logger=None
+                        logger=logging.getLogger()
                     )
                 self.vccBand.append(bands)
 
@@ -441,7 +441,7 @@ def init_proxies_fixture():
                 for j in range(1, 3): # 2 search windows
                     sw.append(CbfDeviceProxy(
                         fqdn=f"mid_csp_cbf/vcc_sw{j}/{i:03}",
-                        logger=None
+                        logger=logging.getLogger()
                     ))
                 self.vccTdc.append(sw)
 
