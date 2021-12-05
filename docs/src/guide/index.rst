@@ -4,9 +4,9 @@ Developer Guide
 
 .. toctree::
 
-  Getting started<README>
+  Getting started<getting_started/index>
   System<system>
-  CCbfController<controller>
+  CbfController<controller>
   CbfSubarray<subarray>
   Fsp<fsp>
   Vcc<vcc>
