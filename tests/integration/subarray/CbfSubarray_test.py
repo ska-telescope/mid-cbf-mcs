@@ -717,17 +717,14 @@ class TestCbfSubarray:
             FspModes = Enum('FspModes', 'CORR PSS_BF PST_BF VLBI')
 
             for epoch in range(len(jones_matrix_index_per_epoch)):
-                logging.info(f"epoch: {epoch}")
 
                 for receptor in jones_matrix["jonesMatrix"][jones_matrix_index_per_epoch[epoch]]["matrixDetails"]:
                     rec_id = receptor["receptor"]
-                    logging.info(f"configuration receptor: {rec_id}")
                     for fsp in [test_proxies.fsp[i] for i in range(1, test_proxies.num_fsp + 1)]:
                         if fsp.functionMode in [FspModes.PSS_BF.value, FspModes.PST_BF.value]:
                             for frequency_slice in receptor["receptorMatrix"]:
                                 fs_id = frequency_slice["fsid"]
                                 matrix = frequency_slice["matrix"]
-                                logging.info(f"configuration fs: {fs_id}")
                                 if fs_id == int(fsp.get_property("FspID")['FspID'][0]):
                                     if fsp.functionMode == FspModes.PSS_BF.value:
                                         fs_length = 16
@@ -737,7 +734,6 @@ class TestCbfSubarray:
                                         proxy_subarray = test_proxies.fspSubarray["PST-BF"][sub_id][fs_id]
                                     if rec_id in proxy_subarray.receptors and len(matrix) == fs_length:
                                         for idx, matrix_val in enumerate(matrix):
-                                            logging.info("test")
                                             assert matrix_val == fsp.jonesMatrix[rec_id -1][idx]
                         else:
                             log_msg = "function mode {} currently not supported".format(fsp.functionMode)
@@ -768,17 +764,14 @@ class TestCbfSubarray:
             FspModes = Enum('FspModes', 'CORR PSS_BF PST_BF VLBI')
 
             for epoch in range(len(delay_model_index_per_epoch)):
-                logging.info(f"epoch: {epoch}")
 
                 model = delay_model["delayModel"][delay_model_index_per_epoch[epoch]]            
                 for delayDetail in model["delayDetails"]:
                     rec_id = delayDetail["receptor"]
-                    logging.info(f"configuration receptor: {rec_id}")
                     for fsp in [test_proxies.fsp[i] for i in range(1, test_proxies.num_fsp + 1)]:
                         if fsp.functionMode in [FspModes.PSS_BF.value, FspModes.PST_BF.value]:
                             for receptorDelayDetail in delayDetail["receptorDelayDetails"]:
                                 fsp_id = receptorDelayDetail["fsid"]
-                                logging.info(f"configuration fsp: {fsp_id}")
                                 delayCoeff = receptorDelayDetail["delayCoeff"]
                                 if fsp_id == int(fsp.get_property("FspID")['FspID'][0]):
                                     if fsp.functionMode == FspModes.PSS_BF.value:
@@ -1073,14 +1066,12 @@ class TestCbfSubarray:
                 model = delay_model["delayModel"][delay_model_index_per_epoch[epoch]]            
                 for delayDetail in model["delayDetails"]:
                     rec_id = delayDetail["receptor"]
-                    logging.info(f"configuration fsp: {rec_id}")
                     for r in vcc_receptors:
                         vcc = test_proxies.vcc[test_proxies.receptor_to_vcc[r]]  
                         if delayDetail["receptor"] == r:
                             mod_vcc = [[0.0] * num_cols for i in range(num_rows_vcc)]
                             for receptorDelayDetail in delayDetail["receptorDelayDetails"]:
                                 fs_id = receptorDelayDetail["fsid"]
-                                logging.info(f"configuration fsp: {fs_id}")
                                 delayCoeff = receptorDelayDetail["delayCoeff"]
                                 mod_vcc[fs_id -1] = delayCoeff
                             for i in range(len(mod_vcc)):
@@ -1090,7 +1081,6 @@ class TestCbfSubarray:
                         if fsp.functionMode in [FspModes.PSS_BF.value, FspModes.PST_BF.value]:
                             for receptorDelayDetail in delayDetail["receptorDelayDetails"]:
                                 fsp_id = receptorDelayDetail["fsid"]
-                                logging.info(f"configuration fsp: {fsp_id}")
                                 delayCoeff = receptorDelayDetail["delayCoeff"]
                                 if fsp_id == int(fsp.get_property("FspID")['FspID'][0]):
                                     if fsp.functionMode == FspModes.PSS_BF.value:
@@ -1221,12 +1211,10 @@ class TestCbfSubarray:
 
                 for receptor in jones_matrix["jonesMatrix"][jones_matrix_index_per_epoch[epoch]]["matrixDetails"]:
                     rec_id = receptor["receptor"]
-                    logging.info(f"configuration receptor: {rec_id}")
                     for frequency_slice in receptor["receptorMatrix"]:
                         for index, value in enumerate(frequency_slice["matrix"]):
                             vcc_id = test_proxies.receptor_to_vcc[rec_id]
                             fs_id = frequency_slice["fsid"]
-                            logging.info(f"configuration fs: {fs_id}")
                             try:
                                 assert test_proxies.vcc[vcc_id].jonesMatrix[fs_id-1][index] == value
                             except AssertionError as ae:
@@ -1247,7 +1235,6 @@ class TestCbfSubarray:
                         if fsp.functionMode in [FspModes.PSS_BF.value, FspModes.PST_BF.value]:
                             for frequency_slice in receptor["receptorMatrix"]:
                                 fs_id = frequency_slice["fsid"]
-                                logging.info(f"configuration fsp: {fs_id}")
                                 matrix = frequency_slice["matrix"]
                                 if fs_id == int(fsp.get_property("FspID")['FspID'][0]):
                                     if fsp.functionMode == FspModes.PSS_BF.value:
