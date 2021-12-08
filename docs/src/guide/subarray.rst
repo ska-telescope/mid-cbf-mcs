@@ -22,4 +22,9 @@ Scan configuration
 Subarrays receive a scan configuration via an ASCII encoded JSON string. The scan 
 configuration is validated for completeness and its parameters implemented as Tango 
 device attributes; the subarray device will then also configure subordinate devices 
-with the relevant parameters, including VCC and FSP-subarray devices.
+with the relevant parameters, including VCC, FSP and FSP-subarray devices.
+
+.. figure:: ../diagrams/cbf-subarray-device.png
+   :align: center
+   
+   MCS CbfSubarray Device Scan configuration
