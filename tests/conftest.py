@@ -314,6 +314,13 @@ def mock_change_event_callback_factory() -> Callable[[str], MockChangeEventCallb
 
 @pytest.fixture(name="test_proxies", scope="session")
 def init_proxies_fixture():
+    """
+    Return a proxy connection to all devices under test.
+
+    :return: a TestProxies object containing device proxies to all devices covered
+        under integration testing scope, with methods for resetting subarray ObsState
+        and waits with timeout for device DevState and ObsState.
+    """
 
     class TestProxies:
         def __init__(self: TestProxies) -> None:
@@ -446,34 +453,6 @@ def init_proxies_fixture():
                 self.vccTdc.append(sw)
 
 
-        def clean_test_proxies(self: TestProxies) -> None:
-            """
-            Reset subarray to DevState.ON, ObsState.EMPTY
-            """
-            for proxy in [self.subarray[i] for i in range(1, self.num_sub + 1)]:
-                if proxy.State() != DevState.ON:
-                    if proxy.State() != DevState.OFF:
-                        proxy.Off()
-                        self.wait_timeout_dev([proxy], DevState.OFF, 3, 1)
-                    proxy.On()
-                    self.wait_timeout_dev([proxy], DevState.ON, 3, 1)
-
-                if proxy.obsState == ObsState.FAULT:
-                    proxy.Restart()
-                    self.wait_timeout_obs([proxy], ObsState.READY, 3, 0.05)
-
-                if proxy.obsState == ObsState.SCANNING:
-                    proxy.EndScan()
-                    self.wait_timeout_obs([proxy], ObsState.READY, 3, 0.05)
-
-                if proxy.obsState == ObsState.READY:
-                    proxy.GoToIdle()
-                    self.wait_timeout_obs([proxy], ObsState.IDLE, 3, 0.05)
-                    
-                if proxy.obsState == ObsState.IDLE:
-                    proxy.RemoveAllReceptors()
-                    self.wait_timeout_obs([proxy], ObsState.EMPTY, 3, 0.05)
-        
         def wait_timeout_dev(
             self: TestProxies,
             proxy_list: List[CbfDeviceProxy],
@@ -484,6 +463,11 @@ def init_proxies_fixture():
             """
             Periodically check proxy DevState until it is either the specified 
             value or the time limit has elapsed.
+
+            :param proxy_list: list of proxies to wait on
+            :param state: proxy DevState to wait for
+            :param time_s: time to timeout in seconds
+            :param sleep_time_s: sleep time cycle in seconds
             """
             timeout = time.time_ns() + (time_s * 1_000_000_000)
             while time.time_ns() < timeout:
@@ -501,6 +485,11 @@ def init_proxies_fixture():
             """
             Periodically check proxy ObsState until it is either the specified 
             value or the time limit has elapsed.
+
+            :param proxy_list: list of proxies to wait on
+            :param state: proxy ObsState to wait for
+            :param time_s: time to timeout in seconds
+            :param sleep_time_s: sleep time cycle in seconds
             """
             timeout = time.time_ns() + (time_s * 1_000_000_000)
             while time.time_ns() < timeout:
@@ -509,36 +498,85 @@ def init_proxies_fixture():
                 time.sleep(sleep_time_s)
 
 
+        def clean_test_proxies(self: TestProxies) -> None:
+            """
+            Reset subarray to DevState.ON, ObsState.EMPTY
+            """
+            wait_time_s = 3
+            sleep_time_s_long = 1
+            sleep_time_s_short = 0.05
+
+            for proxy in [self.subarray[i] for i in range(1, self.num_sub + 1)]:
+                if proxy.State() != DevState.ON:
+                    if proxy.State() != DevState.OFF:
+                        proxy.Off()
+                        self.wait_timeout_dev(
+                            [proxy], DevState.OFF, wait_time_s, sleep_time_s_long)
+                    proxy.On()
+                    self.wait_timeout_dev(
+                        [proxy], DevState.ON, wait_time_s, sleep_time_s_long)
+
+                if proxy.obsState == ObsState.FAULT:
+                    proxy.Restart()
+                    self.wait_timeout_obs(
+                        [proxy], ObsState.READY, wait_time_s, sleep_time_s_short)
+
+                if proxy.obsState == ObsState.SCANNING:
+                    proxy.EndScan()
+                    self.wait_timeout_obs(
+                        [proxy], ObsState.READY, wait_time_s, sleep_time_s_short)
+
+                if proxy.obsState == ObsState.READY:
+                    proxy.GoToIdle()
+                    self.wait_timeout_obs(
+                        [proxy], ObsState.IDLE, wait_time_s, sleep_time_s_short)
+                    
+                if proxy.obsState == ObsState.IDLE:
+                    proxy.RemoveAllReceptors()
+                    self.wait_timeout_obs(
+                        [proxy], ObsState.EMPTY, wait_time_s, sleep_time_s_short)
+
+
         def on(self: TestProxies) -> None:
             """
             Controller device command sequence to turn on subarrays, FSPs, VCCs
             """
+            wait_time_s = 3
+            sleep_time_s = 1
+
             if self.controller.State() == DevState.ON:
                 pass
             elif self.controller.State() == DevState.OFF:
                 self.controller.On()
-                self.wait_timeout_dev([self.controller], DevState.ON, 3, 1)
+                self.wait_timeout_dev(
+                    [self.controller], DevState.ON, wait_time_s, sleep_time_s)
             else:
                 self.controller.Off()
-                self.wait_timeout_dev([self.controller], DevState.OFF, 3, 1)
+                self.wait_timeout_dev(
+                    [self.controller], DevState.OFF, wait_time_s, sleep_time_s)
                 self.controller.On()
-                self.wait_timeout_dev([self.controller], DevState.ON, 3, 1)
+                self.wait_timeout_dev(
+                    [self.controller], DevState.ON, wait_time_s, sleep_time_s)
 
 
         def off(self: TestProxies) -> None:
             """
             Controller device command sequence to turn off subarrays, FSPs, VCCs
             """
+            wait_time_s = 3
+            sleep_time_s = 1
+
             if self.controller.State() == DevState.OFF:
                 pass
             else:
                 self.controller.Off()
-                self.wait_timeout_dev([self.controller], DevState.OFF, 3, 1)
+                self.wait_timeout_dev(
+                    [self.controller], DevState.OFF, wait_time_s, sleep_time_s)
     
     return TestProxies()
 
 @pytest.fixture(scope="class")
-def debug_device_is_on():
+def debug_device_is_on() -> bool:
     # NOTE: set debug_device_is_on to True in order
     #       to allow device debugging under VScode
     debug_device_is_on = False
@@ -547,7 +585,7 @@ def debug_device_is_on():
         timeout_millis = 500000
     return debug_device_is_on
 
-def load_data(name):
+def load_data(name: str) -> dict[Any, Any]:
     """
     Loads a dataset by name. This implementation uses the name to find a
     JSON file containing the data to be loaded.

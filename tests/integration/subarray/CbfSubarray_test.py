@@ -74,6 +74,9 @@ class TestCbfSubarray:
             port = test_proxies.subarray[sub_id].DebugDevice()
 
         try:
+            wait_time_s = 1
+            sleep_time_s = 1
+
             # controller will turn On/Off all of its subordinate devices,
             # including the subarrays, FSPs and VCCs
             test_proxies.on()
@@ -88,7 +91,7 @@ class TestCbfSubarray:
 
             # add all except last receptor
             test_proxies.subarray[sub_id].AddReceptors(receptor_ids[:-1])
-            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.IDLE, 1, 1)
+            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.IDLE, wait_time_s, sleep_time_s)
             assert [test_proxies.subarray[sub_id].receptors[i] 
                 for i in range(len(receptor_ids[:-1]))] == receptor_ids[:-1]
             assert all([test_proxies.vcc[test_proxies.receptor_to_vcc[i]].subarrayMembership == sub_id 
@@ -114,7 +117,7 @@ class TestCbfSubarray:
 
             # remove remaining receptor
             test_proxies.subarray[sub_id].RemoveReceptors(receptor_ids_after_remove)
-            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.EMPTY, 1, 1)
+            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.EMPTY, wait_time_s, sleep_time_s)
             assert len(test_proxies.subarray[sub_id].receptors) == 0
             for receptor in receptor_ids_after_remove:
                 assert test_proxies.vcc[test_proxies.receptor_to_vcc[receptor]].subarrayMembership == 0
@@ -167,6 +170,9 @@ class TestCbfSubarray:
             :param sub_id: the subarray id
         """
         try:
+            wait_time_s = 1
+            sleep_time_s = 1
+
             test_proxies.on()
             
             assert test_proxies.subarray[sub_id].State() == DevState.ON
@@ -177,20 +183,20 @@ class TestCbfSubarray:
 
             # add some receptors 
             test_proxies.subarray[sub_id].AddReceptors(receptor_ids)
-            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.IDLE, 1, 1)
+            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.IDLE, wait_time_s, sleep_time_s)
             assert [test_proxies.subarray[sub_id].receptors[i] for i in range(len(receptor_ids))] == receptor_ids
             assert all([test_proxies.vcc[test_proxies.receptor_to_vcc[i]].subarrayMembership == 1 for i in receptor_ids])
             assert test_proxies.subarray[sub_id].obsState == ObsState.IDLE
 
             # try adding an invalid receptor ID
             result = test_proxies.subarray[sub_id].AddReceptors(invalid_receptor_id)
-            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.FAULT, 1, 1)
+            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.FAULT, wait_time_s, sleep_time_s)
             assert result[0][0] == ResultCode.FAILED
             assert [test_proxies.subarray[sub_id].receptors[i] for i in range(len(receptor_ids))] == receptor_ids
             assert all([test_proxies.vcc[test_proxies.receptor_to_vcc[i]].subarrayMembership == 1 for i in receptor_ids])
 
             test_proxies.subarray[sub_id].Restart()
-            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.EMPTY, 1, 1)
+            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.EMPTY, wait_time_s, sleep_time_s)
 
             test_proxies.off()
 
@@ -238,6 +244,9 @@ class TestCbfSubarray:
             :param sub_id: the subarray id
         """
         try:
+            wait_time_s = 1
+            sleep_time_s = 1
+
             test_proxies.on()
             
             assert test_proxies.subarray[sub_id].State() == DevState.ON
@@ -250,7 +259,7 @@ class TestCbfSubarray:
 
             # add some receptors 
             test_proxies.subarray[sub_id].AddReceptors(receptor_ids)
-            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.IDLE, 1, 1)
+            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.IDLE, wait_time_s, sleep_time_s)
             assert [test_proxies.subarray[sub_id].receptors[i] for i in range(len(receptor_ids))] == receptor_ids
             assert all([test_proxies.vcc[test_proxies.receptor_to_vcc[i]].subarrayMembership == 1 for i in receptor_ids])
             assert test_proxies.subarray[sub_id].obsState == ObsState.IDLE
@@ -260,7 +269,7 @@ class TestCbfSubarray:
             test_proxies.subarray[sub_id].RemoveReceptors(invalid_receptors_to_remove)
             assert [test_proxies.subarray[sub_id].receptors[i] for i in range(len(receptor_ids))] == receptor_ids
             test_proxies.subarray[sub_id].RemoveAllReceptors()
-            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.EMPTY, 1, 1)
+            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.EMPTY, wait_time_s, sleep_time_s)
 
             test_proxies.off()
 
@@ -314,6 +323,9 @@ class TestCbfSubarray:
             :param sub_id: the subarray id
         """
         try:
+            wait_time_s = 1
+            sleep_time_s = 1
+
             test_proxies.on()
             
             assert test_proxies.subarray[sub_id].State() == DevState.ON
@@ -326,14 +338,14 @@ class TestCbfSubarray:
 
             # add some receptors
             test_proxies.subarray[sub_id].AddReceptors(receptor_ids)
-            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.IDLE, 1, 1)
+            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.IDLE, wait_time_s, sleep_time_s)
             assert all([test_proxies.subarray[sub_id].receptors[i] == j for i, j in zip(range(len(receptor_ids)), receptor_ids)])
             assert all([test_proxies.vcc[test_proxies.receptor_to_vcc[i]].subarrayMembership == sub_id for i in receptor_ids])
             assert test_proxies.subarray[sub_id].obsState == ObsState.IDLE
 
             # remove all receptors
             test_proxies.subarray[sub_id].RemoveAllReceptors()
-            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.EMPTY, 1, 1)
+            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.EMPTY, wait_time_s, sleep_time_s)
             assert len(test_proxies.subarray[sub_id].receptors) == 0
             assert all([test_proxies.vcc[test_proxies.receptor_to_vcc[i]].subarrayMembership == 0 for i in receptor_ids])
             assert test_proxies.subarray[sub_id].obsState == ObsState.EMPTY
@@ -379,6 +391,9 @@ class TestCbfSubarray:
             :param vcc_receptors: list of vcc receptor ids
         """
         try:
+            wait_time_s = 1
+            sleep_time_s = 1
+
             test_proxies.on()
             
             f = open(data_file_path + config_file_name)
@@ -401,13 +416,14 @@ class TestCbfSubarray:
             # add receptors
             #TODO currently only support for 1 receptor per fsp
             test_proxies.subarray[sub_id].AddReceptors(receptor_ids)
-            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.IDLE, 1, 1)
+            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.IDLE, wait_time_s, sleep_time_s)
             assert all([test_proxies.subarray[sub_id].receptors[i] == j 
                 for i, j in zip(range(len(receptor_ids)), receptor_ids)])
 
             # configure scan
+            wait_time_configure = 5
             test_proxies.subarray[sub_id].ConfigureScan(json_string)
-            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.READY, 5, 1)
+            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.READY, wait_time_configure, sleep_time_s)
 
             # check configured attributes of CBF subarray
             assert sub_id == int(configuration["common"]["subarray_id"])
@@ -417,7 +433,7 @@ class TestCbfSubarray:
             assert test_proxies.subarray[sub_id].obsState == ObsState.READY
 
             test_proxies.wait_timeout_obs([test_proxies.vcc[i] 
-                for i in range(1, test_proxies.num_vcc + 1)], ObsState.READY, 1, 1)
+                for i in range(1, test_proxies.num_vcc + 1)], ObsState.READY, wait_time_s, sleep_time_s)
 
             # check the rest of the configured attributes of VCCs
 
@@ -613,12 +629,13 @@ class TestCbfSubarray:
                     #TODO: This mode is not tested
 
             # Clean Up
+            wait_time_s = 3
             test_proxies.subarray[sub_id].GoToIdle()
             test_proxies.wait_timeout_obs([test_proxies.vcc[i] 
-                for i in range(1, test_proxies.num_vcc + 1)], ObsState.IDLE, 3, 1)
+                for i in range(1, test_proxies.num_vcc + 1)], ObsState.IDLE, wait_time_s, sleep_time_s)
             test_proxies.subarray[sub_id].RemoveAllReceptors()
             test_proxies.wait_timeout_obs([test_proxies.vcc[i] 
-                for i in range(1, test_proxies.num_vcc + 1)], ObsState.EMPTY, 3, 1)
+                for i in range(1, test_proxies.num_vcc + 1)], ObsState.EMPTY, wait_time_s, sleep_time_s)
 
             test_proxies.off()
         
@@ -671,6 +688,9 @@ class TestCbfSubarray:
             :param receptor_ids: list of receptor ids
         """
         try:
+            wait_time_s = 1
+            sleep_time_s = 1
+
             test_proxies.on()
             
             f = open(data_file_path + config_file_name)
@@ -687,12 +707,13 @@ class TestCbfSubarray:
 
             # add receptors
             test_proxies.subarray[sub_id].AddReceptors(receptor_ids)
-            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.IDLE, 1, 1)
+            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.IDLE, wait_time_s, sleep_time_s)
             assert all([test_proxies.subarray[sub_id].receptors[i] == j for i, j in zip(range(len(receptor_ids)), receptor_ids)])
 
             # configure scan
+            wait_time_configure = 5
             test_proxies.subarray[sub_id].ConfigureScan(json_string)
-            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.READY, 5, 1)
+            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.READY, wait_time_configure, sleep_time_s)
             
             f = open(data_file_path + jones_matrix_file_name)
             jones_matrix = json.loads(f.read().replace("\n", ""))
@@ -813,12 +834,13 @@ class TestCbfSubarray:
                 time.sleep(epoch_increment)
 
             # Clean Up
+            wait_time_s = 3
             test_proxies.subarray[sub_id].GoToIdle()
             test_proxies.wait_timeout_obs([test_proxies.vcc[i] 
-                for i in range(1, test_proxies.num_vcc + 1)], ObsState.IDLE, 3, 1)
+                for i in range(1, test_proxies.num_vcc + 1)], ObsState.IDLE, wait_time_s, sleep_time_s)
             test_proxies.subarray[sub_id].RemoveAllReceptors()
             test_proxies.wait_timeout_obs([test_proxies.vcc[i] 
-                for i in range(1, test_proxies.num_vcc + 1)], ObsState.EMPTY, 3, 1)
+                for i in range(1, test_proxies.num_vcc + 1)], ObsState.EMPTY, wait_time_s, sleep_time_s)
 
             test_proxies.off()
         
@@ -861,6 +883,9 @@ class TestCbfSubarray:
             :param receptor_ids: list of receptor ids
         """
         try:
+            wait_time_s = 1
+            sleep_time_s = 1
+
             test_proxies.on()
             
             f = open(data_file_path + config_file_name)
@@ -877,7 +902,7 @@ class TestCbfSubarray:
                 vcc_ids[ii] = test_proxies.receptor_to_vcc[receptor_id]
 
             test_proxies.subarray[sub_id].AddReceptors(receptor_ids)
-            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.IDLE, 1, 1)
+            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.IDLE, wait_time_s, sleep_time_s)
             assert all([test_proxies.subarray[sub_id].receptors[i] == j 
                 for i, j in zip(range(num_receptors), receptor_ids)])
             assert test_proxies.subarray[sub_id].obsState == ObsState.IDLE
@@ -892,8 +917,9 @@ class TestCbfSubarray:
                 elif fsp["function_mode"] == "PST-BF":
                     assert test_proxies.fspSubarray["PST-BF"][sub_id][fsp_id].obsState == ObsState.IDLE
 
+            wait_time_configure = 5
             test_proxies.subarray[sub_id].ConfigureScan(json_string)
-            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.READY, 5, 1)
+            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.READY, wait_time_configure, sleep_time_s)
 
             # check some configured attributes of CBF subarray           
             frequency_band   = configuration["common"]["frequency_band"]
@@ -918,7 +944,7 @@ class TestCbfSubarray:
             json_string = f2.read().replace("\n", "")
             test_proxies.subarray[sub_id].Scan(json_string)
             f2.close()
-            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.SCANNING, 1, 1)
+            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.SCANNING, wait_time_s, sleep_time_s)
 
             # Check obsStates BEFORE the EndScan() command
             assert test_proxies.subarray[sub_id].obsState == ObsState.SCANNING
@@ -935,7 +961,7 @@ class TestCbfSubarray:
                     assert test_proxies.fspSubarray["PST-BF"][sub_id][fsp_id].obsState == ObsState.SCANNING
 
             test_proxies.subarray[sub_id].EndScan()
-            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.READY, 1, 1)
+            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.READY, wait_time_s, sleep_time_s)
 
             # Check obsStates AFTER the EndScan() command
             assert test_proxies.subarray[sub_id].obsState  == ObsState.READY
@@ -955,12 +981,13 @@ class TestCbfSubarray:
                     assert test_proxies.fspSubarray["PST-BF"][sub_id][fsp_id].obsState == ObsState.READY
 
             # Clean up
+            wait_time_s = 3
             test_proxies.subarray[sub_id].GoToIdle()
             test_proxies.wait_timeout_obs([test_proxies.vcc[i] 
-                for i in range(1, test_proxies.num_vcc + 1)], ObsState.IDLE, 3, 1)
+                for i in range(1, test_proxies.num_vcc + 1)], ObsState.IDLE, wait_time_s, sleep_time_s)
             test_proxies.subarray[sub_id].RemoveAllReceptors()
             test_proxies.wait_timeout_obs([test_proxies.vcc[i] 
-                for i in range(1, test_proxies.num_vcc + 1)], ObsState.EMPTY, 3, 1)
+                for i in range(1, test_proxies.num_vcc + 1)], ObsState.EMPTY, wait_time_s, sleep_time_s)
 
             test_proxies.on()
 
@@ -1019,6 +1046,9 @@ class TestCbfSubarray:
         f.close()
 
         try:
+            wait_time_s = 1
+            sleep_time_s = 1
+
             test_proxies.on()
             
             f = open(data_file_path + config_file_name)
@@ -1031,12 +1061,13 @@ class TestCbfSubarray:
             
             # add receptors
             test_proxies.subarray[sub_id].AddReceptors(receptor_ids)
-            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.IDLE, 1, 1)
+            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.IDLE, wait_time_s, sleep_time_s)
             assert all([test_proxies.subarray[sub_id].receptors[i] == j for i, j in zip(range(len(receptor_ids)), receptor_ids)])
 
             # configure scan
+            wait_time_configure = 5
             test_proxies.subarray[sub_id].ConfigureScan(json_string)
-            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.READY, 5, 1)
+            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.READY, wait_time_configure, sleep_time_s)
 
             assert test_proxies.subarray[sub_id].obsState == ObsState.READY
             
@@ -1099,20 +1130,21 @@ class TestCbfSubarray:
                     f2 = open(data_file_path + scan_file_name)
                     test_proxies.subarray[sub_id].Scan(f2.read().replace("\n", ""))
                     f2.close()
-                    test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.SCANNING, 1, 1)
+                    test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.SCANNING, wait_time_s, sleep_time_s)
                     assert test_proxies.subarray[sub_id].obsState == ObsState.SCANNING
 
                 time.sleep(epoch_increment)
 
             # Clean up
+            wait_time_s = 3
             test_proxies.subarray[sub_id].EndScan()
-            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.READY, 1, 1)
+            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.READY, wait_time_s, sleep_time_s)
             test_proxies.subarray[sub_id].GoToIdle()
             test_proxies.wait_timeout_obs([test_proxies.vcc[i] 
-                for i in range(1, test_proxies.num_vcc + 1)], ObsState.IDLE, 3, 1)
+                for i in range(1, test_proxies.num_vcc + 1)], ObsState.IDLE, wait_time_s, sleep_time_s)
             test_proxies.subarray[sub_id].RemoveAllReceptors()
             test_proxies.wait_timeout_obs([test_proxies.vcc[i] 
-                for i in range(1, test_proxies.num_vcc + 1)], ObsState.EMPTY, 3, 1)
+                for i in range(1, test_proxies.num_vcc + 1)], ObsState.EMPTY, wait_time_s, sleep_time_s)
 
             test_proxies.off()
 
@@ -1160,6 +1192,9 @@ class TestCbfSubarray:
             :param receptor_ids: list of receptor ids
         """
         try:
+            wait_time_s = 1
+            sleep_time_s = 1
+
             test_proxies.on()
             
             f = open(data_file_path + config_file_name)
@@ -1173,14 +1208,14 @@ class TestCbfSubarray:
 
             # add receptors
             test_proxies.subarray[sub_id].AddReceptors(receptor_ids)
-            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.IDLE, 1, 1)
+            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.IDLE, wait_time_s, sleep_time_s)
             assert all([test_proxies.subarray[sub_id].receptors[i] == j 
                        for i, j in zip(range(len(receptor_ids)), receptor_ids)])
 
             # configure scan
+            wait_time_configure = 5
             test_proxies.subarray[sub_id].ConfigureScan(json_string)
-
-            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.READY, 5, 1)
+            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.READY, wait_time_configure, sleep_time_s)
 
             assert test_proxies.subarray[sub_id].obsState == ObsState.READY
 
@@ -1222,7 +1257,7 @@ class TestCbfSubarray:
                                     "AssertionError; incorrect Jones matrix entry: \
                                     epoch {}, VCC {}, i = {}, jonesMatrix[{}] = {}".format
                                         (
-                                            jones_matrix["jonesMatrix"][1]["epoch"], 
+                                            jones_matrix["jonesMatrix"][jones_matrix_index_per_epoch[epoch]]["epoch"], 
                                             vcc_id, index, 
                                             fs_id-1, 
                                             test_proxies.vcc[vcc_id].jonesMatrix[fs_id-1]
@@ -1255,20 +1290,21 @@ class TestCbfSubarray:
                     f2 = open(data_file_path + scan_file_name)
                     test_proxies.subarray[sub_id].Scan(f2.read().replace("\n", ""))
                     f2.close()
-                    test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.SCANNING, 1, 1)
+                    test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.SCANNING, wait_time_s, sleep_time_s)
                     assert test_proxies.subarray[sub_id].obsState == ObsState.SCANNING
 
                 time.sleep(epoch_increment)
 
             # Clean up
+            wait_time_s = 3
             test_proxies.subarray[sub_id].EndScan()
-            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.READY, 1, 1)
+            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.READY, wait_time_s, sleep_time_s)
             test_proxies.subarray[sub_id].GoToIdle()
             test_proxies.wait_timeout_obs([test_proxies.vcc[i] 
-                for i in range(1, test_proxies.num_vcc + 1)], ObsState.IDLE, 3, 1)
+                for i in range(1, test_proxies.num_vcc + 1)], ObsState.IDLE, wait_time_s, sleep_time_s)
             test_proxies.subarray[sub_id].RemoveAllReceptors()
             test_proxies.wait_timeout_obs([test_proxies.vcc[i] 
-                for i in range(1, test_proxies.num_vcc + 1)], ObsState.EMPTY, 3, 1)
+                for i in range(1, test_proxies.num_vcc + 1)], ObsState.EMPTY, wait_time_s, sleep_time_s)
 
             test_proxies.off()
 
@@ -1315,6 +1351,9 @@ class TestCbfSubarray:
             :param vcc_receptors: list of vcc receptor ids
         """
         try:
+            wait_time_s = 1
+            sleep_time_s = 1
+
             test_proxies.on()
             
             f = open(data_file_path + config_file_name)
@@ -1328,13 +1367,14 @@ class TestCbfSubarray:
 
             # add receptors
             test_proxies.subarray[sub_id].AddReceptors(receptor_ids)
-            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.IDLE, 1, 1)
+            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.IDLE, wait_time_s, sleep_time_s)
             assert all([test_proxies.subarray[sub_id].receptors[i] == j 
                 for i, j in zip(range(len(receptor_ids)), receptor_ids)])
 
             # configure scan
+            wait_time_configure = 5
             test_proxies.subarray[sub_id].ConfigureScan(json_string)
-            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.READY, 5, 1)
+            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.READY, wait_time_configure, sleep_time_s)
 
             # check initial states
             assert test_proxies.subarray[sub_id].obsState == ObsState.READY
@@ -1355,7 +1395,7 @@ class TestCbfSubarray:
             test_proxies.subarray[sub_id].Scan(json_string_scan)
             f2.close()
             scan_configuration = json.loads(json_string_scan)
-            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.SCANNING, 1, 1)
+            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.SCANNING, wait_time_s, sleep_time_s)
             
             scan_id = scan_configuration["scan_id"]
 
@@ -1385,14 +1425,15 @@ class TestCbfSubarray:
                     assert test_proxies.fspSubarray["PST-BF"][sub_id][fsp_id].obsState == ObsState.SCANNING
 
             # Clean up
+            wait_time_s = 3
             test_proxies.subarray[sub_id].EndScan()
-            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.READY, 1, 1)
+            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.READY, wait_time_s, sleep_time_s)
             test_proxies.subarray[sub_id].GoToIdle()
             test_proxies.wait_timeout_obs([test_proxies.vcc[i] 
-                for i in range(1, test_proxies.num_vcc + 1)], ObsState.IDLE, 3, 1)
+                for i in range(1, test_proxies.num_vcc + 1)], ObsState.IDLE, wait_time_s, sleep_time_s)
             test_proxies.subarray[sub_id].RemoveAllReceptors()
             test_proxies.wait_timeout_obs([test_proxies.vcc[i] 
-                for i in range(1, test_proxies.num_vcc + 1)], ObsState.EMPTY, 3, 1)
+                for i in range(1, test_proxies.num_vcc + 1)], ObsState.EMPTY, wait_time_s, sleep_time_s)
 
             test_proxies.on()
 
@@ -1446,6 +1487,9 @@ class TestCbfSubarray:
             :param vcc_receptors: list of vcc receptor ids
         """
         try:
+            wait_time_s = 1
+            sleep_time_s = 1
+
             test_proxies.on()
             
             f = open(data_file_path + config_file_name)
@@ -1460,12 +1504,13 @@ class TestCbfSubarray:
             ############################# abort from READY ###########################
             # add receptors
             test_proxies.subarray[sub_id].AddReceptors(receptor_ids)
-            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.IDLE, 1, 1)
+            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.IDLE, wait_time_s, sleep_time_s)
             assert all([test_proxies.subarray[sub_id].receptors[i] == j 
                 for i, j in zip(range(len(receptor_ids)), receptor_ids)])
             # configure scan
+            wait_time_configure = 5
             test_proxies.subarray[sub_id].ConfigureScan(json_string)
-            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.READY, 5, 1)
+            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.READY, wait_time_configure, sleep_time_s)
             assert test_proxies.subarray[sub_id].obsState == ObsState.READY
             for fsp in configuration["cbf"]["fsp"]:
                 fsp_id = int(fsp["fsp_id"])
@@ -1479,11 +1524,11 @@ class TestCbfSubarray:
                 assert test_proxies.vcc[test_proxies.receptor_to_vcc[r]].obsState == ObsState.READY
             # abort
             test_proxies.subarray[sub_id].Abort()
-            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.ABORTED, 1, 1)
+            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.ABORTED, wait_time_s, sleep_time_s)
             assert test_proxies.subarray[sub_id].obsState == ObsState.ABORTED
             # ObsReset
             test_proxies.subarray[sub_id].ObsReset()
-            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.IDLE, 1, 1)
+            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.IDLE, wait_time_s, sleep_time_s)
             assert test_proxies.subarray[sub_id].obsState == ObsState.IDLE
             assert all([test_proxies.subarray[sub_id].receptors[i] == j for i, j in zip(range(3), receptor_ids)])
             for fsp in configuration["cbf"]["fsp"]:
@@ -1500,19 +1545,19 @@ class TestCbfSubarray:
             ############################# abort from SCANNING ###########################
             # add receptors
             test_proxies.subarray[sub_id].AddReceptors(receptor_ids)
-            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.IDLE, 1, 1)
+            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.IDLE, wait_time_s, sleep_time_s)
             assert all([test_proxies.subarray[sub_id].receptors[i] == j 
                 for i, j in zip(range(len(receptor_ids)), receptor_ids)])
             # configure scan
             test_proxies.subarray[sub_id].ConfigureScan(json_string)
-            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.READY, 5, 1)
+            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.READY, wait_time_configure, sleep_time_s)
             # scan
             f = open(data_file_path + scan_file_name)
             json_string_scan = f.read().replace("\n", "")
             test_proxies.subarray[sub_id].Scan(json_string_scan)
             f.close()
             scan_configuration = json.loads(json_string_scan)
-            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.SCANNING, 1, 1)
+            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.SCANNING, wait_time_s, sleep_time_s)
             assert test_proxies.subarray[sub_id].obsState == ObsState.SCANNING
             assert test_proxies.subarray[sub_id].scanID == scan_configuration["scan_id"]
             for fsp in configuration["cbf"]["fsp"]:
@@ -1528,7 +1573,7 @@ class TestCbfSubarray:
 
             # abort
             test_proxies.subarray[sub_id].Abort()
-            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.ABORTED, 1, 1)
+            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.ABORTED, wait_time_s, sleep_time_s)
             assert test_proxies.subarray[sub_id].obsState == ObsState.ABORTED
             for fsp in configuration["cbf"]["fsp"]:
                 fsp_id = int(fsp["fsp_id"])
@@ -1543,7 +1588,7 @@ class TestCbfSubarray:
 
             # ObsReset
             test_proxies.subarray[sub_id].ObsReset()
-            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.IDLE, 1, 1)
+            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.IDLE, wait_time_s, sleep_time_s)
             assert test_proxies.subarray[sub_id].obsState == ObsState.IDLE
             assert test_proxies.subarray[sub_id].scanID == 0
             for fsp in configuration["cbf"]["fsp"]:
@@ -1558,9 +1603,10 @@ class TestCbfSubarray:
                 assert test_proxies.vcc[test_proxies.receptor_to_vcc[r]].obsState == ObsState.IDLE
 
             # Clean up
+            wait_time_s = 3
             test_proxies.subarray[sub_id].RemoveAllReceptors()
             test_proxies.wait_timeout_obs([test_proxies.vcc[i] 
-                for i in range(1, test_proxies.num_vcc + 1)], ObsState.EMPTY, 3, 1)
+                for i in range(1, test_proxies.num_vcc + 1)], ObsState.EMPTY, wait_time_s, sleep_time_s)
 
             test_proxies.off()
         
@@ -1614,6 +1660,9 @@ class TestCbfSubarray:
             :param vcc_receptors: list of vcc receptor ids
         """
         try:
+            wait_time_s = 1
+            sleep_time_s = 1
+
             test_proxies.on()
             
             f = open(data_file_path + config_file_name)
@@ -1628,15 +1677,15 @@ class TestCbfSubarray:
             ############################# abort from IDLE ###########################
             # add receptors
             test_proxies.subarray[sub_id].AddReceptors(receptor_ids)
-            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.IDLE, 1, 1)
+            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.IDLE, wait_time_s, sleep_time_s)
             assert test_proxies.subarray[sub_id].obsState == ObsState.IDLE
             # abort
             test_proxies.subarray[sub_id].Abort()
-            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.ABORTED, 1, 1)
+            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.ABORTED, wait_time_s, sleep_time_s)
             assert test_proxies.subarray[sub_id].obsState == ObsState.ABORTED
             # Restart: receptors should be empty
             test_proxies.subarray[sub_id].Restart()
-            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.EMPTY, 1, 1)
+            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.EMPTY, wait_time_s, sleep_time_s)
             assert test_proxies.subarray[sub_id].obsState == ObsState.EMPTY
             assert len(test_proxies.subarray[sub_id].receptors) == 0
             for fsp in configuration["cbf"]["fsp"]:
@@ -1654,10 +1703,10 @@ class TestCbfSubarray:
             ############################# abort from READY ###########################
             # add receptors
             test_proxies.subarray[sub_id].AddReceptors(receptor_ids)
-            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.IDLE, 1, 1)
+            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.IDLE, wait_time_s, sleep_time_s)
             # configure scan
             test_proxies.subarray[sub_id].ConfigureScan(json_string)
-            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.READY, 5, 1)
+            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.READY, wait_time_configure, sleep_time_s)
             assert test_proxies.subarray[sub_id].obsState == ObsState.READY
             for fsp in configuration["cbf"]["fsp"]:
                 fsp_id = int(fsp["fsp_id"])
@@ -1672,11 +1721,11 @@ class TestCbfSubarray:
 
             # abort
             test_proxies.subarray[sub_id].Abort()
-            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.ABORTED, 1, 1)
+            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.ABORTED, wait_time_s, sleep_time_s)
             assert test_proxies.subarray[sub_id].obsState == ObsState.ABORTED
             # ObsReset
             test_proxies.subarray[sub_id].Restart()
-            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.EMPTY, 1, 1)
+            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.EMPTY, wait_time_s, sleep_time_s)
             assert test_proxies.subarray[sub_id].obsState == ObsState.EMPTY
             assert len(test_proxies.subarray[sub_id].receptors) == 0
             for fsp in configuration["cbf"]["fsp"]:
@@ -1694,17 +1743,18 @@ class TestCbfSubarray:
             ############################# abort from SCANNING ###########################
             # add receptors
             test_proxies.subarray[sub_id].AddReceptors(receptor_ids)
-            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.IDLE, 1, 1)
+            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.IDLE, wait_time_s, sleep_time_s)
             # configure scan
+            wait_time_configure = 5
             test_proxies.subarray[sub_id].ConfigureScan(json_string)
-            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.READY, 5, 1)
+            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.READY, wait_time_configure, sleep_time_s)
             # scan
             f = open(data_file_path + scan_file_name)
             json_string_scan = f.read().replace("\n", "")
             test_proxies.subarray[sub_id].Scan(json_string_scan)
             f.close()
             scan_configuration = json.loads(json_string_scan)
-            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.SCANNING, 1, 1)
+            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.SCANNING, wait_time_s, sleep_time_s)
             assert test_proxies.subarray[sub_id].obsState == ObsState.SCANNING
             assert test_proxies.subarray[sub_id].scanID == scan_configuration["scan_id"]
             for fsp in configuration["cbf"]["fsp"]:
@@ -1720,7 +1770,7 @@ class TestCbfSubarray:
 
             # abort
             test_proxies.subarray[sub_id].Abort()
-            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.ABORTED, 1, 1)
+            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.ABORTED, wait_time_s, sleep_time_s)
             assert test_proxies.subarray[sub_id].obsState == ObsState.ABORTED
             for fsp in configuration["cbf"]["fsp"]:
                 fsp_id = int(fsp["fsp_id"])
@@ -1734,8 +1784,9 @@ class TestCbfSubarray:
                 assert test_proxies.vcc[test_proxies.receptor_to_vcc[r]].obsState == ObsState.READY
 
             # ObsReset
+            wait_time_s = 3
             test_proxies.subarray[sub_id].Restart()
-            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.EMPTY, 3, 1)
+            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.EMPTY, wait_time_s, sleep_time_s)
             assert len(test_proxies.subarray[sub_id].receptors) == 0
             assert test_proxies.subarray[sub_id].obsState == ObsState.EMPTY
             for fsp in configuration["cbf"]["fsp"]:
@@ -1769,87 +1820,13 @@ class TestCbfSubarray:
     )
     def test_Abort_from_Resourcing(self, test_proxies):
         """
-            Test CbfSubarrays's Abort command
+            Test CbfSubarrays's Abort command from ObsState.RESOURCING.
 
-            :param proxies: proxies pytest fixture
+            :param test_proxies: proxies pytest fixture
         """
         try:
-            test_proxies.on()
-                
-            assert test_proxies.subarray[1].State() == DevState.ON
-            assert test_proxies.subarray[1].obsState == ObsState.EMPTY
-
-            input_receptors = [1, 4]
-
-            # add some receptors and turn subarray off 
-            test_proxies.subarray[1].AddReceptors(input_receptors)
-            test_proxies.wait_timeout_obs([test_proxies.subarray[1]], ObsState.RESOURCING, 1, 1)
-            test_proxies.subarray[1].Off()
-            test_proxies.wait_timeout_dev([test_proxies.subarray[1]], DevState.OFF, 3, 1)
-            assert test_proxies.subarray[1].State() == DevState.OFF
-            assert len(test_proxies.subarray[1].receptors) == 0
-            assert all([test_proxies.vcc[i + 1].subarrayMembership == 0 for i in range(test_proxies.num_vcc)])
-
-            test_proxies.subarray[1].On()
-            test_proxies.wait_timeout_dev([test_proxies.subarray[1]], DevState.ON, 3, 1)
-            test_proxies.subarray[1].AddReceptors(input_receptors)
-            test_proxies.wait_timeout_obs([test_proxies.subarray[1]], ObsState.IDLE, 1, 1)
-
-            # end configuration with off command
-            f = open(data_file_path + "Configure_TM-CSP_v2.json")
-            configuration = f.read().replace("\n", "")
-            f.close()
-            test_proxies.subarray[1].ConfigureScan(configuration)
-            test_proxies.wait_timeout_obs([test_proxies.subarray[1]], ObsState.CONFIGURING, 1, 1)
-            test_proxies.subarray[1].Off()
-            test_proxies.wait_timeout_dev([test_proxies.subarray[1]], DevState.OFF, 3, 1)
-            assert test_proxies.subarray[1].State() == DevState.OFF
-            assert len(test_proxies.subarray[1].receptors) == 0
-            assert all([test_proxies.vcc[i + 1].subarrayMembership == 0 for i in range(test_proxies.num_vcc)])
-
-            test_proxies.subarray[1].On()
-            test_proxies.wait_timeout_dev([test_proxies.subarray[1]], DevState.ON, 3, 1)
-            test_proxies.subarray[1].AddReceptors(input_receptors)
-            test_proxies.wait_timeout_obs([test_proxies.subarray[1]], ObsState.IDLE, 1, 1)
-
-            # end scan with off command
-            f2 = open(data_file_path + "Scan2_basic.json")
-            scan = f2.read().replace("\n", "")
-            f2.close()
-            test_proxies.subarray[1].ConfigureScan(configuration)
-            test_proxies.wait_timeout_obs([test_proxies.subarray[1]], ObsState.READY, 5, 1)
-            configuration = json.loads(configuration)
-            # scan
-            test_proxies.subarray[1].Scan(scan)
-            test_proxies.wait_timeout_obs([test_proxies.subarray[1]], ObsState.SCANNING, 1, 1)
-            assert test_proxies.subarray[1].obsState == ObsState.SCANNING
-            assert test_proxies.subarray[1].scanID == 2
-            assert test_proxies.vcc[test_proxies.receptor_to_vcc[1]].obsState == ObsState.SCANNING
-            assert test_proxies.vcc[test_proxies.receptor_to_vcc[4]].obsState == ObsState.SCANNING
-            for fsp in configuration["cbf"]["fsp"]:
-                fsp_id = fsp["fsp_id"]
-                logging.info("{}".format(fsp_id))
-                # check configured attributes of FSP subarray
-                #TODO align IDs of fspSubarrays to fsp_id in conftest; currently works for fsps 1 and 2
-                assert test_proxies.fspSubarray[fsp_id].obsState == ObsState.SCANNING
-            test_proxies.subarray[1].Off()
-            test_proxies.wait_timeout_dev([test_proxies.subarray[1]], DevState.OFF, 3, 1)
-            assert test_proxies.subarray[1].scanID == 0
-            assert test_proxies.subarray[1].State() == DevState.OFF
-            assert len(test_proxies.subarray[1].receptors) == 0
-            assert test_proxies.vcc[test_proxies.receptor_to_vcc[1]].obsState == ObsState.IDLE
-            assert test_proxies.vcc[test_proxies.receptor_to_vcc[4]].obsState == ObsState.IDLE
-            assert all([test_proxies.vcc[i + 1].subarrayMembership == 0 for i in range(test_proxies.num_vcc)])
-            for fsp in configuration["cbf"]["fsp"]:
-                fsp_id = fsp["fsp_id"]
-                logging.info("{}".format(fsp_id))
-                # check configured attributes of FSP subarray
-                #TODO align IDs of fspSubarrays to fsp_id in conftest; currently works for fsps 1 and 2
-                assert test_proxies.fspSubarray[fsp_id].obsState == ObsState.IDLE
-
-            test_proxies.off()
-            
-            
+            pass
+        
         except AssertionError as ae:
             time.sleep(2)
             test_proxies.clean_test_proxies()
