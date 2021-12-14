@@ -1705,6 +1705,7 @@ class TestCbfSubarray:
             test_proxies.subarray[sub_id].AddReceptors(receptor_ids)
             test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.IDLE, wait_time_s, sleep_time_s)
             # configure scan
+            wait_time_configure = 5
             test_proxies.subarray[sub_id].ConfigureScan(json_string)
             test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.READY, wait_time_configure, sleep_time_s)
             assert test_proxies.subarray[sub_id].obsState == ObsState.READY
