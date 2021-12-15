@@ -40,201 +40,135 @@ import socket
 from tango.test_context import DeviceTestContext
 
 
-@pytest.mark.usefixtures("proxies")
+@pytest.mark.usefixtures("test_proxies")
 
 class TestCbfController:
 
     @pytest.mark.skip(reason="enable to test DebugDevice")
-    def test_DebugDevice(self, proxies):
-        port = proxies.controller.DebugDevice()
+    def test_DebugDevice(self, test_proxies):
+        port = test_proxies.controller.DebugDevice()
         assert port == _DEBUGGER_PORT
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.connect(("localhost", _DEBUGGER_PORT))
-        proxies.controller.On()
+        test_proxies.controller.On()
 
-    def test_On_valid(self, proxies):
+    def test_On_valid(self, test_proxies):
         """
         Test a valid use of the "On" command
         """
         # check initial states
-        assert proxies.controller.State() == DevState.OFF
-        assert proxies.subarray[1].State() == DevState.OFF
-
-        for i in range(4):
-            assert proxies.vcc[i + 1].State() == DevState.OFF
-        for i in range(2):
-            assert proxies.fsp[i + 1].State() == DevState.OFF
-        for i in range(2):
-            assert proxies.fspSubarray[i + 1].State() == DevState.OFF
+        assert test_proxies.controller.State() == DevState.OFF
+        for i in range(1, test_proxies.num_sub + 1):
+            assert test_proxies.subarray[i].State() == DevState.OFF
+        for i in range(1, test_proxies.num_vcc + 1):
+            assert test_proxies.vcc[i].State() == DevState.OFF
+        for i in range(1, test_proxies.num_fsp + 1):
+            assert test_proxies.fsp[i].State() == DevState.OFF
+        for i in ["CORR", "PSS-BF", "PST-BF"]:
+            for j in range(1, test_proxies.num_sub + 1):
+                for k in range(1, test_proxies.num_fsp + 1):
+                    assert test_proxies.fspSubarray[i][j][k].State() == DevState.OFF
 
         # send the On command
-        proxies.controller.On()
+        test_proxies.controller.On()
 
         #check states
-        proxies.wait_timeout_dev([proxies.controller], DevState.ON, 3, 0.1)
-        assert proxies.controller.State() == DevState.ON
+        test_proxies.wait_timeout_dev([test_proxies.controller], DevState.ON, 3, 0.1)
+        assert test_proxies.controller.State() == DevState.ON
 
-        proxies.wait_timeout_dev([proxies.subarray[1]], DevState.ON, 3, 0.1)
-        assert proxies.subarray[1].State() == DevState.ON
+        for i in range(1, test_proxies.num_sub + 1):
+            test_proxies.wait_timeout_dev([test_proxies.subarray[i]], DevState.ON, 3, 0.1)
+            assert test_proxies.subarray[i].State() == DevState.ON
 
-        proxies.wait_timeout_dev([proxies.vcc[i + 1] for i in range(4)], DevState.ON, 1, 0.1)
-        for i in range(4):
-            assert proxies.vcc[i + 1].State() == DevState.ON
+        for i in range(1, test_proxies.num_vcc + 1):
+            assert test_proxies.vcc[i].State() == DevState.ON
 
-        proxies.wait_timeout_dev([proxies.fsp[i + 1] for i in range(2)], DevState.ON, 1, 0.1)
-        for i in range(2):
-            assert proxies.fsp[i + 1].State() == DevState.ON
-
-        proxies.wait_timeout_dev([proxies.fspSubarray[i + 1] for i in range(2)], DevState.ON, 1, 0.1)
-        for i in range(2):
-            assert proxies.fspSubarray[i + 1].State() == DevState.ON
+        for i in range(1, test_proxies.num_fsp + 1):
+            assert test_proxies.fsp[i].State() == DevState.ON
+        for i in ["CORR", "PSS-BF", "PST-BF"]:
+            for j in range(1, test_proxies.num_sub + 1):
+                for k in range(1, test_proxies.num_fsp + 1):
+                    assert test_proxies.fspSubarray[i][j][k].State() == DevState.ON
         
 
-    def test_Off_valid(self, proxies):
+    def test_Off_valid(self, test_proxies):
         """
         Test a valid use of the "Off" command
         """
 
         # send the Off command
-        proxies.controller.Off()
+        test_proxies.controller.Off()
 
         # check states
-        proxies.wait_timeout_dev([proxies.controller], DevState.OFF, 3, 0.1)
-        assert proxies.controller.State() == DevState.OFF
+        test_proxies.wait_timeout_dev([test_proxies.controller], DevState.OFF, 3, 0.1)
+        assert test_proxies.controller.State() == DevState.OFF
 
-        proxies.wait_timeout_dev([proxies.subarray[1]], DevState.OFF, 3, 0.1)
-        assert proxies.subarray[1].State() == DevState.OFF
+        for i in range(1, test_proxies.num_sub + 1):
+            test_proxies.wait_timeout_dev([test_proxies.subarray[i]], DevState.OFF, 3, 0.1)
+            assert test_proxies.subarray[i].State() == DevState.OFF
 
-        proxies.wait_timeout_dev([proxies.vcc[i + 1] for i in range(4)], DevState.OFF, 1, 0.1)
-        for i in range(4):
-            assert proxies.vcc[i + 1].State() == DevState.OFF
+        for i in range(1, test_proxies.num_vcc + 1):
+            assert test_proxies.vcc[i].State() == DevState.OFF
 
-        proxies.wait_timeout_dev([proxies.fsp[i + 1] for i in range(2)], DevState.OFF, 1, 0.1)
-        for i in range(2):
-            assert proxies.fsp[i + 1].State() == DevState.OFF
-
-        proxies.wait_timeout_dev([proxies.fspSubarray[i + 1] for i in range(2)], DevState.OFF, 1, 0.1)
-        for i in range(2):
-            assert proxies.fspSubarray[i + 1].State() == DevState.OFF
+        for i in range(1, test_proxies.num_fsp + 1):
+            assert test_proxies.fsp[i].State() == DevState.OFF
+        for i in ["CORR", "PSS-BF", "PST-BF"]:
+            for j in range(1, test_proxies.num_sub + 1):
+                for k in range(1, test_proxies.num_fsp + 1):
+                    assert test_proxies.fspSubarray[i][j][k].State() == DevState.OFF
     
-    def test_Standby_valid(self, proxies):
+    def test_Standby_valid(self, test_proxies):
         """
         Test a valid use of the "Standby" command
         """
         # send the Standby command
-        proxies.controller.Standby()
+        test_proxies.controller.Standby()
 
         # check states
-        proxies.wait_timeout_dev([proxies.controller], DevState.STANDBY, 3, 0.1)
-        assert proxies.controller.State() == DevState.STANDBY
+        test_proxies.wait_timeout_dev([test_proxies.controller], DevState.STANDBY, 3, 0.1)
+        assert test_proxies.controller.State() == DevState.STANDBY
 
-        proxies.wait_timeout_dev([proxies.subarray[1]], DevState.OFF, 3, 0.1)
-        assert proxies.subarray[1].State() == DevState.OFF
+        for i in range(1, test_proxies.num_sub + 1):
+            test_proxies.wait_timeout_dev([test_proxies.subarray[i]], DevState.OFF, 3, 0.1)
+            assert test_proxies.subarray[i].State() == DevState.OFF
 
-        proxies.wait_timeout_dev([proxies.vcc[i + 1] for i in range(4)], DevState.OFF, 1, 0.1)
-        for i in range(4):
-            assert proxies.vcc[i + 1].State() == DevState.OFF
+        for i in range(1, test_proxies.num_vcc + 1):
+            assert test_proxies.vcc[i].State() == DevState.OFF
 
-        proxies.wait_timeout_dev([proxies.fsp[i + 1] for i in range(2)], DevState.OFF, 1, 0.1)
-        for i in range(2):
-            assert proxies.fsp[i + 1].State() == DevState.OFF
+        for i in range(1, test_proxies.num_fsp + 1):
+            assert test_proxies.fsp[i].State() == DevState.OFF
+        for i in ["CORR", "PSS-BF", "PST-BF"]:
+            for j in range(1, test_proxies.num_sub + 1):
+                for k in range(1, test_proxies.num_fsp + 1):
+                    assert test_proxies.fspSubarray[i][j][k].State() == DevState.OFF
 
-        proxies.wait_timeout_dev([proxies.fspSubarray[i + 1] for i in range(2)], DevState.OFF, 1, 0.1)
-        for i in range(2):
-            assert proxies.fspSubarray[i + 1].State() == DevState.OFF
 
-    # Don't really wanna bother fixing these three tests right now.
-    """
-    def test_reportVCCSubarrayMembership(
-            self,
-            cbf_master_proxy,
-            subarray_1_proxy,
-            subarray_2_proxy,
-            vcc_proxies
-    ):
-    """
-    """
-        Test the VCC subarray membership subscriptions
-    """
-    """
-        receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
-                               cbf_master_proxy.receptorToVcc)
-        subarray_1_proxy.Init()
-        subarray_2_proxy.Init()
-        for proxy in vcc_proxies:
-            proxy.Init()
+    #TODO implement these tests properly?
+    # def test_reportVCCSubarrayMembership(
+    #         self,
+    #         cbf_master_proxy,
+    #         subarray_1_proxy,
+    #         subarray_2_proxy,
+    #         vcc_test_proxies
+    # ):
+    # """
+    #     Test the VCC subarray membership subscriptions
+    # """
 
-        time.sleep(3)
-
-        # all memberships should be 0 initially
-        assert cbf_master_proxy.reportVCCSubarrayMembership == (0,)*197
-
-        # add receptors to each of two subarrays
-        subarray_1_proxy.AddReceptors([197, 1])
-        subarray_2_proxy.AddReceptors([10, 17])
-        time.sleep(4)
-        assert cbf_master_proxy.reportVCCSubarrayMembership[receptor_to_vcc[197] - 1] == 1
-        assert cbf_master_proxy.reportVCCSubarrayMembership[receptor_to_vcc[1] - 1] == 1
-        assert cbf_master_proxy.reportVCCSubarrayMembership[receptor_to_vcc[10] - 1] == 2
-        assert cbf_master_proxy.reportVCCSubarrayMembership[receptor_to_vcc[17] - 1] == 2
-
-        # remove all receptors
-        subarray_1_proxy.RemoveAllReceptors()
-        subarray_2_proxy.RemoveAllReceptors()
-        time.sleep(4)
-        assert cbf_master_proxy.reportVCCSubarrayMembership == (0,)*197
-
-    def test_reportVCCState(
-            self,
-            cbf_master_proxy,
-            vcc_proxies
-    ):
-    """
-    """
-        Test the VCC state subscriptions
-    """
-    """
-        for proxy in vcc_proxies:
-            proxy.Init()
-
-        time.sleep(3)
-
-        # all states should be OFF initially
-        assert cbf_master_proxy.reportVCCState == (DevState.OFF,)*197
-
-        # change some states
-        vcc_proxies[10].On()
-        vcc_proxies[17].Disable()
-        vcc_proxies[196].Standby()
-        time.sleep(3)
-        assert cbf_master_proxy.reportVCCState[10] == DevState.ON
-        assert cbf_master_proxy.reportVCCState[17] == DevState.DISABLE
-        assert cbf_master_proxy.reportVCCState[196] == DevState.STANDBY
-
-    def test_reportVCCHealthState(
-            self,
-            cbf_master_proxy,
-            vcc_proxies
-    ):
-    """
-    """
-        Test the VCC state subscriptions
-    """
-    """
-        for proxy in vcc_proxies:
-            proxy.Init()
-
-        time.sleep(3)
-
-        # all health states should be 3 (UNKNOWN) initially
-        assert cbf_master_proxy.reportVCCHealthState == (3,)*197
-
-        # change some health states
-        vcc_proxies[10].SetHealthState(1)
-        vcc_proxies[17].SetHealthState(0)
-        vcc_proxies[196].SetHealthState(2)
-        time.sleep(3)
-        assert cbf_master_proxy.reportVCCHealthState[10] == 1
-        assert cbf_master_proxy.reportVCCHealthState[17] == 0
-        assert cbf_master_proxy.reportVCCHealthState[196] == 2
-    """
+    # def test_reportVCCState(
+    #         self,
+    #         cbf_master_proxy,
+    #         vcc_test_proxies
+    # ):
+    # """
+    #     Test the VCC state subscriptions
+    # """
+       
+    # def test_reportVCCHealthState(
+    #         self,
+    #         cbf_master_proxy,
+    #         vcc_test_proxies
+    # ):
+    # """
+    #     Test the VCC state subscriptions
+    # """
