@@ -124,3 +124,6 @@ mnt/*
 
 mnt/talondx-config/*
 !mnt/talondx-config/README.md
+
+# docs folder (copied content during document generation)
+docs/src/README.md

@@ -28,24 +28,22 @@ import pytest
 
 from ska_tango_base.control_model import HealthState, AdminMode, ObsState
 
-#TODO refactor these test modules to use common proxies fixture, state wait timeouts
-@pytest.fixture(scope="class")
-def device_under_test() -> DeviceProxy:
-    """
-    Proxy to FspPstSubarray
-    
-    :return: a proxy to mid_csp_cbf/fspPstSubarray/01_01
-    """
-    return DeviceProxy("mid_csp_cbf/fspPstSubarray/01_01")
 
 class TestFspPstSubarray:
     """
     Test class for FspPstSubarray device class integration testing.
     """
 
+    @pytest.mark.parametrize(
+        "fsp_id, \
+        sub_id", 
+        [(1, 1)]
+    )
     def test_On(
         self: TestFspPstSubarray,
-        device_under_test: DeviceProxy
+        test_proxies: pytest.fixture,
+        fsp_id: int,
+        sub_id: int
     ) -> None:
         """
         Test for FspPstSubarray device On command.
@@ -53,12 +51,21 @@ class TestFspPstSubarray:
         :param device_under_test: fixture that provides a
             :py:class:`tango.DeviceProxy` to the FspPstSubarray under test.
         """
+        device_under_test = test_proxies.fspSubarray["PST-BF"][sub_id][fsp_id]
         device_under_test.On()
+        test_proxies.wait_timeout_dev([device_under_test], DevState.ON, 3, 1)
         assert device_under_test.State() == DevState.ON
 
+    @pytest.mark.parametrize(
+        "fsp_id, \
+        sub_id", 
+        [(1, 1)]
+    )
     def test_Off(
         self: TestFspPstSubarray,
-        device_under_test: DeviceProxy
+        test_proxies: pytest.fixture,
+        fsp_id: int,
+        sub_id: int
     ) -> None:
         """
         Test for FspPstSubarray device Off command.
@@ -66,14 +73,22 @@ class TestFspPstSubarray:
         :param device_under_test: fixture that provides a
             :py:class:`tango.DeviceProxy` to the FspPstSubarray under test.
         """
+        device_under_test = test_proxies.fspSubarray["PST-BF"][sub_id][fsp_id]
         device_under_test.Off()
+        test_proxies.wait_timeout_dev([device_under_test], DevState.OFF, 3, 1)
         assert device_under_test.State() == DevState.OFF
 
+    @pytest.mark.parametrize(
+        "fsp_id, \
+        sub_id", 
+        [(1, 1)]
+    )
     def test_AddRemoveReceptors_valid(
-            self: TestFspPstSubarray,
-            subarray: DeviceProxy,
-            device_under_test: DeviceProxy,
-            receptors_to_test: List[int]
+        self: TestFspPstSubarray,
+        test_proxies: pytest.fixture,
+        receptors_to_test: List[int],
+        fsp_id: int,
+        sub_id: int
     ) -> None:
         """
         Test valid AddReceptors and RemoveReceptors commands
@@ -85,18 +100,22 @@ class TestFspPstSubarray:
         :param receptors_to_test: fixture that provides a random list of 
             receptor IDs
         """
+        device_under_test = test_proxies.fspSubarray["PST-BF"][sub_id][fsp_id]
+        subarray = test_proxies.subarray[sub_id]
+
         # TODO implement proper reset of proxies for this test class
         if subarray.State() == DevState.OFF:
             subarray.On()
-            time.sleep(1)
+            test_proxies.wait_timeout_dev([device_under_test], DevState.ON, 3, 1)
         if subarray.ObsState == ObsState.FAULT:
             subarray.Restart()
-            time.sleep(1)
+            test_proxies.wait_timeout_dev([device_under_test], ObsState.EMPTY, 3, 1)
         elif len(subarray.receptors) != 0:
             subarray.RemoveAllReceivers()
             time.sleep(1)
         if len(device_under_test.receptors) != 0:
             device_under_test.RemoveAllReceptors()
+            time.sleep(1)
 
         # receptor list should be empty right after initialization
         assert [device_under_test.receptors[i] \
@@ -130,11 +149,17 @@ class TestFspPstSubarray:
         assert [device_under_test.receptors[i] \
             for i in range(len(device_under_test.receptors))] == []
 
+    @pytest.mark.parametrize(
+        "fsp_id, \
+        sub_id", 
+        [(1, 1)]
+    )
     def test_AddRemoveReceptors_invalid(
-            self: TestFspPstSubarray,
-            subarray: DeviceProxy,
-            device_under_test: DeviceProxy,
-            receptors_to_test: List[int]
+        self: TestFspPstSubarray,
+        test_proxies: pytest.fixture,
+        receptors_to_test: List[int],
+        fsp_id: int,
+        sub_id: int
     ) -> None:
         """
         Test invalid AddReceptors and RemoveReceptors commands:
@@ -149,6 +174,8 @@ class TestFspPstSubarray:
         :param receptors_to_test: fixture that provides a random list of 
             receptor IDs
         """
+        device_under_test = test_proxies.fspSubarray["PST-BF"][sub_id][fsp_id]
+        subarray = test_proxies.subarray[sub_id]
 
         # receptor list should be empty right after initialization
         assert [device_under_test.receptors[i] \
@@ -191,11 +218,17 @@ class TestFspPstSubarray:
         assert [device_under_test.receptors[i] \
             for i in range(len(device_under_test.receptors))] == []
 
+    @pytest.mark.parametrize(
+        "fsp_id, \
+        sub_id", 
+        [(1, 1)]
+    )
     def test_RemoveAllReceptors(
-            self: TestFspPstSubarray,
-            subarray: DeviceProxy,
-            device_under_test: DeviceProxy,
-            receptors_to_test: List[int]
+        self: TestFspPstSubarray,
+        test_proxies: pytest.fixture,
+        receptors_to_test: List[int],
+        fsp_id: int,
+        sub_id: int
     ) -> None:
         """
         Test RemoveAllReceptors command
@@ -207,6 +240,8 @@ class TestFspPstSubarray:
         :param receptors_to_test: fixture that provides a random list of 
             receptor IDs
         """
+        device_under_test = test_proxies.fspSubarray["PST-BF"][sub_id][fsp_id]
+        subarray = test_proxies.subarray[sub_id]
 
         # receptor list should be empty right after initialization
         assert [device_under_test.receptors[i] \

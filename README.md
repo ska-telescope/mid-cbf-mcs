@@ -1,7 +1,9 @@
 # Mid.CBF MCS
 
 Documentation on the Developer's portal:
-[![ReadTheDoc](https://developer.skao.int/projects/ska-mid-cbf-mcs/en/latest/?badge=latest)](https://developer.skao.int/projects/ska-mid-cbf-mcs/en/latest/?badge=latest)
+[![ReadTheDocs](https://developer.skao.int/projects/ska-mid-cbf-mcs/en/latest/?badge=latest)](https://developer.skao.int/projects/ska-mid-cbf-mcs/en/latest/?badge=latest)
+
+Code repository: [ska-mid-cbf-mcs](https://gitlab.com/ska-telescope/ska-mid-cbf-mcs)
 
 # Table Of Contents
 * [Introduction](#introduction)
@@ -245,7 +247,12 @@ source venv/bin/activate  # activate venv
 make requirements
 ```
 
-#### 6.  Run a test.
+#### 6.  Install the MCS package in editable mode.
+```
+pip install -e .
+```
+
+#### 7.  Run a test.
 ```
 make test       # functional tests, creates a running deployment
 make test-only  # functional tests with an already running deployment
@@ -254,7 +261,7 @@ make unit_test  # unit tests, deployment does not need to be running
 *Note*: add `-k` pytest flags in `setup.cfg` in the project root to limit which 
 tests are run
 
-#### 6.  Tear down the deployment.
+#### 8.  Tear down the deployment.
 ```
 make uninstall-chart                  # uninstall deployment from Helm charts
 deactivate                            # if in active virtualenv

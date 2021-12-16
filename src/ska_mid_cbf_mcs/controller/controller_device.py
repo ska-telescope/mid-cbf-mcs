@@ -303,9 +303,9 @@ class CbfController(SKAMaster):
             """
             Stateless hook for device initialisation.
             :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-            :rtype: (ResultCode, str)
+            message indicating status. The message is for
+            information purpose only.
+            :return: (ResultCode, str)
             """
 
             self.logger.debug("Entering InitCommand()")
@@ -423,15 +423,18 @@ class CbfController(SKAMaster):
 
     def read_reportVCCHealthState(self: CbfController) -> List[int]:
         # PROTECTED REGION ID(CbfController.reportVCCHealthState_read) ENABLED START #
-        """Return reportVCCHealthState attribute: health status of VCC capabilities 
-        as an array of unsigned short.\nEx:\n[0,0,0,2,0...3]"""
+        """
+        Return reportVCCHealthState attribute: health status of VCC capabilities 
+        as an array of unsigned short. Ex: [0,0,0,2,0...3]
+        """
         return self.component_manager.report_vcc_health_state
         # PROTECTED REGION END #    //  CbfController.reportVCCHealthState_read
 
     def read_reportVCCAdminMode(self: CbfController) -> List[int]:
         # PROTECTED REGION ID(CbfController.reportVCCAdminMode_read) ENABLED START #
-        """Return reportVCCAdminMode attribute: report the administration mode 
-        of the VCC capabilities as an array of unsigned short.\nFor ex.:\n[0,0,0,...1,2]"""
+        """
+        Return reportVCCAdminMode attribute: report the administration mode 
+        of the VCC capabilities as an array of unsigned short. For ex.: [0,0,0,...1,2]"""
         return self.component_manager.report_vcc_admin_mode
         # PROTECTED REGION END #    //  CbfController.reportVCCAdminMode_read
 
@@ -456,8 +459,10 @@ class CbfController(SKAMaster):
 
     def read_reportFSPAdminMode(self: CbfController) -> List[int]:
         # PROTECTED REGION ID(CbfController.reportFSPAdminMode_read) ENABLED START #
-        """Return reportFSPAdminMode attribute: Report the administration mode 
-        of the FSP capabilities as an array of unsigned short.\nfor ex:\n[0,0,2,..]"""
+        """
+        Return reportFSPAdminMode attribute: Report the administration mode 
+        of the FSP capabilities as an array of unsigned short. for ex: [0,0,2,..]
+        """
         return self.component_manager.report_fsp_admin_mode
         # PROTECTED REGION END #    //  CbfController.reportFSPAdminMode_read
 
@@ -517,8 +522,10 @@ class CbfController(SKAMaster):
 
     def read_reportSubarrayAdminMode(self: CbfController) -> List[int]:
         # PROTECTED REGION ID(CbfController.reportSubarrayAdminMode_read) ENABLED START #
-        """Return reportSubarrayAdminMode attribute: Report the administration mode 
-        of the Subarray as an array of unsigned short.\nfor ex:\n[0,0,2,..]"""
+        """
+        Return reportSubarrayAdminMode attribute: Report the administration mode 
+        of the Subarray as an array of unsigned short. for ex: [0,0,2,..]
+        """
         return self.component_manager.report_subarray_admin_mode
         # PROTECTED REGION END #    //  CbfController.reportSubarrayAdminMode_read
 
