@@ -1,7 +1,9 @@
 # Mid.CBF MCS
 
 Documentation on the Developer's portal:
-[![ReadTheDoc](https://developer.skao.int/projects/ska-mid-cbf-mcs/en/latest/?badge=latest)](https://developer.skao.int/projects/ska-mid-cbf-mcs/en/latest/?badge=latest)
+[![ReadTheDocs](https://developer.skao.int/projects/ska-mid-cbf-mcs/en/latest/?badge=latest)](https://developer.skao.int/projects/ska-mid-cbf-mcs/en/latest/?badge=latest)
+
+Code repository: [ska-mid-cbf-mcs](https://gitlab.com/ska-telescope/ska-mid-cbf-mcs)
 
 # Table Of Contents
 * [Introduction](#introduction)
@@ -14,6 +16,7 @@ Documentation on the Developer's portal:
   * [Set up Kubernetes](#set-up-kubernetes)
 * [Running the Mid CBF MCS](#running-the-mid-cbf-mcs)
 * [Jive and Taranta](#jive-and-taranta)
+* [Documentation](#documentation)
 * [Releasing](#releasing)
 * [Development resources](#development-resources)
   * [Other resources](#other-resources)
@@ -244,7 +247,12 @@ source venv/bin/activate  # activate venv
 make requirements
 ```
 
-#### 6.  Run a test.
+#### 6.  Install the MCS package in editable mode.
+```
+pip install -e .
+```
+
+#### 7.  Run a test.
 ```
 make test       # functional tests, creates a running deployment
 make test-only  # functional tests with an already running deployment
@@ -253,7 +261,7 @@ make unit-test  # unit tests, deployment does not need to be running
 *Note*: add `-k` pytest flags in `setup.cfg` in the project root to limit which 
 tests are run
 
-#### 6.  Tear down the deployment.
+#### 8.  Tear down the deployment.
 ```
 make uninstall-chart                  # uninstall deployment from Helm charts
 deactivate                            # if in active virtualenv
@@ -291,9 +299,19 @@ The device tree can be viewed and explored. In addition, device attributes can
 be seen and modified, and device commands can be sent, by creating and saving a 
 new dashboard.
 
+# Documentation
+To re-generate the documentation locally prior to checking in updates to Git:
+```bash
+make documentation
+```
+To see the generated documentation, open `/ska-mid-cbf-mcs/docs/build/html/index.html` in a browser -- e.g.,
+```
+firefox docs/build/html/index.html &
+```
+
 # Releasing
 
-For a new release (i.e. prior to merging a branch into master) update the 
+For a new release (i.e. prior to merging a branch into main) update the 
 following files by incrementing version/release/tag number fields to conform to 
 the semantic versioning convention:
 * `.release`: `release=` and `tag=`
@@ -309,7 +327,7 @@ the semantic versioning convention:
 *Note*: `appVersion` represents the version of the application running, so it 
 corresponds to the ska-mid-cbf-mcs docker image version.
 
-Once a new release has been merged into master, create a new tag on GitLab and 
+Once a new release has been merged into main, create a new tag on GitLab and 
 run the manual "publish-chart" stage of the tag pipeline to publish the 
 Helm charts.
 

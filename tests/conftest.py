@@ -1,107 +1,338 @@
+# -*- coding: utf-8 -*-
+#
+# This file is part of the SKA Mid.CBF MCS project
+#
+# Partially ported from the SKA Low MCCS project:
+# https://gitlab.com/ska-telescope/ska-low-mccs/-/blob/main/testing/src/tests/conftest.py
+#
+# Distributed under the terms of the GPL license.
+# See LICENSE for more info.
+
 """
-A module defining a list of fixture functions that are shared across all the skabase
-tests.
+A module defining a list of fixture functions that are shared across all the 
+ska-mid-cbf-mcs tests.
 """
 
 from __future__ import absolute_import
-# from unittest import mock
-import pytest
+from __future__ import annotations
+
 import logging
-import importlib
-import os
-import sys
+from typing import Any, Callable, Generator, Set, cast, List
+import pytest
+import unittest
+import yaml
 import time
 import json
 
+# Tango imports
 import tango
 from tango import DevState
 from tango import DeviceProxy
-from tango.test_context import MultiDeviceTestContext, get_host_ip
-import socket
 
+# SKA imports
 from ska_tango_base.control_model import LoggingLevel, ObsState, AdminMode
 
-#TODO clean up file path navigation with proper packaging
+from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
+from ska_mid_cbf_mcs.testing.mock.mock_callable import MockChangeEventCallback
+from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder
+from ska_mid_cbf_mcs.testing.tango_harness import (
+    ClientProxyTangoHarness,
+    DevicesToLoadType,
+    CbfDeviceInfo,
+    MockingTangoHarness,
+    StartingStateTangoHarness,
+    TangoHarness,
+    TestContextTangoHarness,
+)
 
-from ska_mid_cbf_mcs.dev_factory import DevFactory
-from ska_mid_cbf_mcs.vcc.vcc_device import Vcc
-
-def pytest_addoption(parser):
+def pytest_sessionstart(session: pytest.Session) -> None:
     """
-    Pytest hook; implemented to add the `--test-context` option, used to
-    indicate that a test Tango subsystem is available; otherwise there is no
-    need for a :py:class:`tango.test_context.MultiDeviceTestContext`.
+    Pytest hook; prints info about tango version.
+
+    :param session: a pytest Session object
+    """
+    print(tango.utils.info())
+
+
+with open("tests/testbeds.yaml", "r") as stream:
+    _testbeds: dict[str, set[str]] = yaml.safe_load(stream)
+
+
+def pytest_configure(config: pytest.config.Config) -> None:
+    """
+    Register custom markers to avoid pytest warnings.
+
+    :param config: the pytest config object
+    """
+    all_tags: Set[str] = cast(Set[str], set()).union(*_testbeds.values())
+    for tag in all_tags:
+        config.addinivalue_line("markers", f"needs_{tag}")
+
+
+def pytest_addoption(parser: pytest.config.ArgumentParser) -> None:
+    """
+    Pytest hook; implemented to add the `--testbed` option, used to specify the context
+    in which the test is running. This could be used, for example, to skip tests that
+    have requirements not met by the context.
 
     :param parser: the command line options parser
-    :type parser: :py:class:`argparse.ArgumentParser`
     """
     parser.addoption(
-        "--test-context",
-        action="store_true",
-        default=False,
-        help=(
-            "Tell pytest that you have a true Tango context and don't "
-            "need to spin up a Tango test context"
-        ),
+        "--testbed",
+        choices=_testbeds.keys(),
+        default="test",
+        help="Specify the testbed on which the tests are running.",
     )
 
-@pytest.fixture
-def tango_context(devices_to_load, request):
-    test_context = request.config.getoption("--test-context")
-    logging.info("test context: %s", test_context)
-    if test_context:
-        with MultiDeviceTestContext(devices_to_load, process=False) as context:
-            DevFactory._test_context = context
-            Vcc.TEST_CONTEXT = True
-            yield context
-    else:
-        Vcc.TEST_CONTEXT = False
-        yield None
 
-#TODO: mocker patch may allow for DeviceProxy workaround in test context usage
-# @pytest.fixture(scope="module")
-# def devices_to_test(request):
-#     yield getattr(request.module, "devices_to_test")
+def pytest_collection_modifyitems(
+    config: pytest.config.Config, items: list[pytest.Item]
+) -> None:
+    """
+    Modify the list of tests to be run, after pytest has collected them.
 
-# @pytest.fixture(scope="function")
-# def multi_device_tango_context(
-#     devices_to_test  # pylint: disable=redefined-outer-name
-# ):
-#     """
-#     Creates and returns a TANGO MultiDeviceTestContext object, with
-#     tango.DeviceProxy patched to work around a name-resolving issue.
-#     """
+    This hook implementation skips tests that are marked as needing some
+    tag that is not provided by the current test context, as specified
+    by the "--testbed" option.
 
-#     def _get_open_port():
-#         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-#         s.bind(("", 0))
-#         s.listen(1)
-#         port = s.getsockname()[1]
-#         s.close()
-#         return port
+    For example, if we have a hardware test that requires the presence
+    of a real TPM, we can tag it with "@needs_tpm". When we run in a
+    "test" context (that is, with "--testbed test" option), the test
+    will be skipped because the "test" context does not provide a TPM.
+    But when we run in "pss" context, the test will be run because the
+    "pss" context provides a TPM.
 
-#     HOST = get_host_ip()
-#     PORT = _get_open_port()
-#     _DeviceProxy = tango.DeviceProxy
-#     mock.patch(
-#         'tango.DeviceProxy',
-#         wraps=lambda fqdn, *args, **kwargs: _DeviceProxy(
-#             "tango://{0}:{1}/{2}#dbase=no".format(HOST, PORT, fqdn),
-#             *args,
-#             **kwargs
-#         ),
-#     )
-#     with MultiDeviceTestContext(
-#         devices_to_test, host=HOST, port=PORT, process=True
-#     ) as context:
-#         yield context
+    :param config: the pytest config object
+    :param items: list of tests collected by pytest
+    """
+    testbed = config.getoption("--testbed")
+    available_tags = _testbeds.get(testbed, set())
+
+    prefix = "needs_"
+    for item in items:
+        needs_tags = set(
+            tag[len(prefix) :] for tag in item.keywords if tag.startswith(prefix)
+        )
+        unmet_tags = list(needs_tags - available_tags)
+        if unmet_tags:
+            item.add_marker(
+                pytest.mark.skip(
+                    reason=(
+                        f"Testbed '{testbed}' does not meet test needs: "
+                        f"{unmet_tags}."
+                    )
+                )
+            )
 
 
-@pytest.fixture(name="proxies", scope="session")
+
+@pytest.fixture()
+def initial_mocks() -> dict[str, unittest.mock.Mock]:
+    """
+    Fixture that registers device proxy mocks prior to patching.
+
+    By default no initial mocks are registered, but this fixture can be
+    overridden by test modules/classes that need to register initial
+    mocks.
+
+    :return: an empty dictionary
+    """
+    return {}
+
+
+@pytest.fixture()
+def mock_factory() -> Callable[[], unittest.mock.Mock]:
+    """
+    Fixture that provides a mock factory for device proxy mocks. This default factory
+    provides vanilla mocks, but this fixture can be overridden by test modules/classes
+    to provide mocks with specified behaviours.
+
+    :return: a factory for device proxy mocks
+    """
+    return MockDeviceBuilder()
+
+
+@pytest.fixture()
+def tango_harness_factory(
+    request: pytest.FixtureRequest, logger: logging.Logger
+) -> Callable[
+    [
+        dict[str, Any],
+        DevicesToLoadType,
+        Callable[[], unittest.mock.Mock],
+        dict[str, unittest.mock.Mock],
+    ],
+    TangoHarness,
+]:
+    """
+    Returns a factory for creating a test harness for testing Tango devices. The Tango
+    context used depends upon the context in which the tests are being run, as specified
+    by the `--testbed` option.
+
+    If the context is "test", then this harness deploys the specified
+    devices into a
+    :py:class:`tango.test_context.MultiDeviceTestContext`.
+
+    Otherwise, this harness assumes that devices are already running;
+    that is, we are testing a deployed system.
+
+    This fixture is implemented as a factory so that the actual
+    `tango_harness` fixture can vary in scope: unit tests require test
+    isolation, so will want to build a new harness every time. But
+    functional tests assume a single harness that maintains state
+    across multiple tests, so they will want to instantiate the harness
+    once and then use it for multiple tests.
+
+    :param request: A pytest object giving access to the requesting test
+        context.
+    :param logger: the logger to be used by this object.
+
+    :return: a tango harness factory
+    """
+
+    class _CPTCTangoHarness(ClientProxyTangoHarness, TestContextTangoHarness):
+        """
+        A Tango test harness with the client proxy functionality of
+        :py:class:`~ska_mid_cbf_mcs.testing.tango_harness.ClientProxyTangoHarness`
+        within the lightweight test context provided by
+        :py:class:`~ska_mid_cbf_mcs.testing.tango_harness.TestContextTangoHarness`.
+        """
+
+        pass
+
+    testbed = request.config.getoption("--testbed")
+
+    def build_harness(
+        tango_config: dict[str, Any],
+        devices_to_load: DevicesToLoadType,
+        mock_factory: Callable[[], unittest.mock.Mock],
+        initial_mocks: dict[str, unittest.mock.Mock],
+    ) -> TangoHarness:
+        """
+        Builds the Tango test harness.
+
+        :param tango_config: basic configuration information for a tango
+            test harness
+        :param devices_to_load: fixture that provides a specification of the
+            devices that are to be included in the devices_info dictionary
+        :param mock_factory: the factory to be used to build mocks
+        :param initial_mocks: a pre-build dictionary of mocks to be used
+            for particular
+
+        :return: a tango test harness
+        """
+        if devices_to_load is None:
+            device_info = None
+        else:
+            device_info = CbfDeviceInfo(**devices_to_load)
+
+        tango_harness: TangoHarness  # type hint only
+        if testbed == "test":
+            tango_harness = _CPTCTangoHarness(device_info, logger, **tango_config)
+        else:
+            tango_harness = ClientProxyTangoHarness(device_info, logger)
+
+        starting_state_harness = StartingStateTangoHarness(tango_harness)
+
+        mocking_harness = MockingTangoHarness(
+            starting_state_harness, mock_factory, initial_mocks
+        )
+
+        return mocking_harness
+
+    return build_harness
+
+
+@pytest.fixture()
+def tango_config() -> dict[str, Any]:
+    """
+    Fixture that returns basic configuration information for a Tango test harness, such
+    as whether or not to run in a separate process.
+
+    :return: a dictionary of configuration key-value pairs
+    """
+    return {"process": False}
+
+
+@pytest.fixture()
+def tango_harness(
+    tango_harness_factory: Callable[
+        [
+            dict[str, Any],
+            DevicesToLoadType,
+            Callable[[], unittest.mock.Mock],
+            dict[str, unittest.mock.Mock],
+        ],
+        TangoHarness,
+    ],
+    tango_config: dict[str, str],
+    devices_to_load: DevicesToLoadType,
+    mock_factory: Callable[[], unittest.mock.Mock],
+    initial_mocks: dict[str, unittest.mock.Mock],
+) -> Generator[TangoHarness, None, None]:
+    """
+    Creates a test harness for testing Tango devices.
+
+    :param tango_harness_factory: a factory that provides a test harness
+        for testing tango devices
+    :param tango_config: basic configuration information for a tango
+        test harness
+    :param devices_to_load: fixture that provides a specification of the
+        devices that are to be included in the devices_info dictionary
+    :param mock_factory: the factory to be used to build mocks
+    :param initial_mocks: a pre-build dictionary of mocks to be used
+        for particular
+
+    :yields: a tango test harness
+    """
+    with tango_harness_factory(
+        tango_config, devices_to_load, mock_factory, initial_mocks
+    ) as harness:
+        yield harness
+
+
+@pytest.fixture(scope="session")
+def logger() -> logging.Logger:
+    """
+    Fixture that returns a default logger.
+
+    :return: a logger
+    """
+    return logging.getLogger()
+
+
+@pytest.fixture()
+def mock_change_event_callback_factory() -> Callable[[str], MockChangeEventCallback]:
+    """
+    Return a factory that returns a new mock change event callback each call.
+
+    :return: a factory that returns a new mock change event callback
+        each time it is called with the name of a device attribute.
+    """
+    return MockChangeEventCallback
+
+
+@pytest.fixture(name="test_proxies", scope="session")
 def init_proxies_fixture():
+    """
+    Return a proxy connection to all devices under test.
 
-    class Proxies:
-        def __init__(self):
+    :return: a TestProxies object containing device proxies to all devices covered
+        under integration testing scope, with methods for resetting subarray ObsState
+        and waits with timeout for device DevState and ObsState.
+    """
+
+    class TestProxies:
+        def __init__(self: TestProxies) -> None:
+            """
+            Initialize all device proxies needed for integration testing.
+
+            Currently supported capabilities:
+            - 1 CbfController
+            - 1 CbfSubarray
+            - 4 Fsp
+            - 4 Vcc
+            """
             # NOTE: set debug_device_is_on to True in order
             #       to allow device debugging under VScode
             self.debug_device_is_on = False
@@ -110,124 +341,242 @@ def init_proxies_fixture():
                 timeout_millis = 500000
             else:
                 timeout_millis = 60000
-
-            self.vcc = {}
-            for i, proxy in enumerate([DeviceProxy("mid_csp_cbf/vcc/" + str(j + 1).zfill(3)) for j in range(4)]):
-                proxy.loggingLevel = LoggingLevel.DEBUG
-                self.vcc[i + 1] = proxy
-
-            band_tags = ["12", "3", "4", "5"]
-            self.vccBand = [[DeviceProxy("mid_csp_cbf/vcc_band{0}/{1:03d}".format(j, k + 1)) for j in band_tags] for k in range(4)]
-            self.vccTdc = [[DeviceProxy("mid_csp_cbf/vcc_sw{0}/{1:03d}".format(j, i + 1)) for j in ["1", "2"]] for i in range(4)] 
             
-            self.fspSubarray = {} # index 1, 2 = corr (01_01, 02_01); index 3, 4 = pss (03_01, 04_01); index 5, 6 = pst (01_01, 02_01)
-            self.fspCorrSubarray = {}
-            for i, proxy in enumerate([DeviceProxy("mid_csp_cbf/fspCorrSubarray/" + str(j + 1).zfill(2) + "_01") for j in range(2)]):
-                proxy.loggingLevel = LoggingLevel.DEBUG
-                self.fspSubarray[i + 1] = proxy
-                self.fspCorrSubarray[i] = proxy
+            # TmCspSubarrayLeafNodeTest
+            self.tm = CbfDeviceProxy(
+                fqdn="ska_mid/tm_leaf_node/csp_subarray_01",
+                logger=logging.getLogger()
+            )
 
-            self.fspPssSubarray = {}    
-            for i ,proxy in enumerate([DeviceProxy("mid_csp_cbf/fspPssSubarray/" + str(j + 3).zfill(2) + "_01") for j in range(2)]):
-                proxy.loggingLevel = LoggingLevel.DEBUG
-                self.fspSubarray[i + 3] = proxy
-                self.fspPssSubarray[i] = proxy
-
-            self.fspPstSubarray = {}      
-            for i ,proxy in enumerate([DeviceProxy("mid_csp_cbf/fspPstSubarray/" + str(j + 1).zfill(2) + "_01") for j in range(2)]):
-                proxy.Init()
-                self.fspSubarray[i + 5] = proxy
-                self.fspPstSubarray[i] = proxy
-
-            self.fsp1FunctionMode = [*map(DeviceProxy, ["mid_csp_cbf/fsp_{}/01".format(i) for i in ["corr", "pss", "pst", "vlbi"]])]
-            self.fsp2FunctionMode = [*map(DeviceProxy, ["mid_csp_cbf/fsp_{}/02".format(i) for i in ["corr", "pss", "pst", "vlbi"]])]
-            self.fsp3FunctionMode = [*map(DeviceProxy, ["mid_csp_cbf/fsp_{}/03".format(i) for i in ["corr", "pss", "pst", "vlbi"]])]
-            self.fsp4FunctionMode = [*map(DeviceProxy, ["mid_csp_cbf/fsp_{}/04".format(i) for i in ["corr", "pss", "pst", "vlbi"]])]
-
-            self.fsp = {}
-            for i, proxy in enumerate([DeviceProxy("mid_csp_cbf/fsp/" + str(j + 1).zfill(2)) for j in range(4)]):
-                proxy.loggingLevel = LoggingLevel.DEBUG
-                proxy.Init()
-                self.fsp[i + 1] = proxy
-
-            # self.sw = {}
-            # for i, proxy in enumerate([DeviceProxy("mid_csp_cbf/sw" + str(j + 1) + "/01") for j in range(2)]):
-            #     proxy.Init()
-            #     self.sw[i + 1] = proxy
-            
-            self.controller = DeviceProxy("mid_csp_cbf/sub_elt/controller")
-            self.controller.loggingLevel = LoggingLevel.DEBUG
+            # CbfController
+            self.controller = CbfDeviceProxy(
+                fqdn="mid_csp_cbf/sub_elt/controller",
+                logger=logging.getLogger()
+            )
             self.controller.set_timeout_millis(timeout_millis)
-            self.wait_timeout_dev([self.controller], DevState.STANDBY, 3, 0.05)
+            self.wait_timeout_dev([self.controller], DevState.OFF, 3, 1)
             
-            self.receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in self.controller.receptorToVcc)
+            self.receptor_to_vcc = dict([
+                *map(int, pair.split(":"))
+            ] for pair in self.controller.receptorToVcc)
+
+            self.max_capabilities = dict(
+                pair.split(":") for pair in
+                self.controller.get_property("MaxCapabilities")["MaxCapabilities"]
+            )
+            self.num_sub = int(self.max_capabilities["Subarray"])
+            self.num_fsp = int(self.max_capabilities["FSP"])
+            self.num_vcc = int(self.max_capabilities["VCC"])
             
-            self.subarray = {}
-            for i, proxy in enumerate([DeviceProxy("mid_csp_cbf/sub_elt/subarray_" + str(i + 1).zfill(2)) for i in range(3)]):
-                proxy.loggingLevel = LoggingLevel.DEBUG
-                self.subarray[i + 1] = proxy
-                self.subarray[i + 1].set_timeout_millis(timeout_millis)
+            # CbfSubarray
+            self.subarray = [None]
+            for proxy in [CbfDeviceProxy(
+                fqdn=f"mid_csp_cbf/sub_elt/subarray_{i:02}",
+                logger=logging.getLogger()
+            ) for i in range(1, self.num_sub + 1)]:
+                proxy.set_timeout_millis(timeout_millis)
+                self.subarray.append(proxy)
 
-            self.tm = DeviceProxy("ska_mid/tm_leaf_node/csp_subarray_01")
-            self.tm.Init()
+            # Fsp
+            # index == fspID
+            self.fsp = [None]
+            for proxy in [CbfDeviceProxy(
+                fqdn=f"mid_csp_cbf/fsp/{j:02}",
+                logger=logging.getLogger()
+            ) for j in range(1, self.num_fsp + 1)]:
+                self.fsp.append(proxy)
+            
+            # currently support for just one subarray, CORR/PSS-BF/PST-BF only
+            # fspSubarray[function mode (str)][subarray id (int)][fsp id (int)]
+            self.fspSubarray = {
+                "CORR": {1: [None]}, "PSS-BF": {1: [None]}, "PST-BF": {1: [None]}
+            }
 
-        def clean_proxies(self):
-            self.receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in self.controller.receptorToVcc)
-            for proxy in [self.subarray[i + 1] for i in range(1)]:
-                if proxy.obsState == ObsState.SCANNING:
-                    proxy.EndScan()
-                    self.wait_timeout_obs([proxy], ObsState.READY, 3, 0.05)
-                if proxy.obsState == ObsState.READY:
-                    proxy.GoToIdle()
-                    self.wait_timeout_obs([proxy], ObsState.IDLE, 3, 0.05)
-                if proxy.obsState == ObsState.IDLE:
-                    proxy.RemoveAllReceptors()
-                    self.wait_timeout_obs([proxy], ObsState.EMPTY, 3, 0.05)
-                if proxy.obsState == ObsState.EMPTY:
-                    proxy.Off()
-                    self.wait_timeout_dev([proxy], DevState.OFF, 3, 0.05)
-                    for vcc_proxy in [self.vcc[i + 1] for i in range(4)]:
-                        if vcc_proxy.State() == DevState.ON:
-                            vcc_proxy.Off()
-                            self.wait_timeout_dev([vcc_proxy], DevState.OFF, 1, 0.05)
-                    for fsp_proxy in [self.fsp[i + 1] for i in range(4)]:
-                        if fsp_proxy.State() == DevState.ON:
-                            fsp_proxy.Off()
-                            self.wait_timeout_dev([fsp_proxy], DevState.OFF, 1, 0.05)
-        
-        def wait_timeout_dev(self, proxygroup, state, time_s, sleep_time_s):
-            #time.sleep(time_s)
+            for proxy in [CbfDeviceProxy(
+                fqdn=f"mid_csp_cbf/fspCorrSubarray/{j:02}_01",
+                logger=logging.getLogger()
+            ) for j in range(1, self.num_fsp + 1)]:
+                self.fspSubarray["CORR"][1].append(proxy)
+  
+            for proxy in [CbfDeviceProxy(
+                fqdn=f"mid_csp_cbf/fspPssSubarray/{j:02}_01",
+                logger=logging.getLogger()
+            ) for j in range(1, self.num_fsp + 1)]:
+                self.fspSubarray["PSS-BF"][1].append(proxy)
+     
+            for proxy in [CbfDeviceProxy(
+                fqdn=f"mid_csp_cbf/fspPstSubarray/{j:02}_01",
+                logger=logging.getLogger()
+            ) for j in range(1, self.num_fsp + 1)]:
+                self.fspSubarray["PST-BF"][1].append(proxy)
+
+            # fspFunctionMode[fsp id (int)][function mode (str)]
+            self.fspFunctionMode = [None]
+            for i in range(1, self.num_fsp + 1):
+                func_modes = {}
+                for j in ["corr", "pss", "pst", "vlbi"]:
+                    func_modes[j] = CbfDeviceProxy(
+                        fqdn=f"mid_csp_cbf/fsp_{j}/{i:02}",
+                        logger=logging.getLogger()
+                    )
+                self.fspFunctionMode.append(func_modes)
+            
+            # Vcc
+            # index == vccID
+            self.vcc = [None]
+            for proxy in [CbfDeviceProxy(
+                fqdn=f"mid_csp_cbf/vcc/{i:03}",
+                logger=logging.getLogger()
+            ) for i in range(1, self.num_vcc + 1)]:
+                self.vcc.append(proxy)
+
+            # vccBand[vcc id (int)][band (str)]
+            self.vccBand = [None]
+            for i in range(1, self.num_vcc + 1):
+                bands = {}
+                for j in ["12", "3", "4", "5"]:
+                    bands[j] = CbfDeviceProxy(
+                        fqdn=f"mid_csp_cbf/vcc_band{j}/{i:03}",
+                        logger=logging.getLogger()
+                    )
+                self.vccBand.append(bands)
+
+            # TODO: why is search window named vccTdc?
+            self.vccTdc = [None]
+            for i in range(1, self.num_vcc + 1):
+                sw = [None]
+                for j in range(1, 3): # 2 search windows
+                    sw.append(CbfDeviceProxy(
+                        fqdn=f"mid_csp_cbf/vcc_sw{j}/{i:03}",
+                        logger=logging.getLogger()
+                    ))
+                self.vccTdc.append(sw)
+
+
+        def wait_timeout_dev(
+            self: TestProxies,
+            proxy_list: List[CbfDeviceProxy],
+            state: DevState,
+            time_s: float,
+            sleep_time_s: float
+        ) -> None:
+            """
+            Periodically check proxy DevState until it is either the specified 
+            value or the time limit has elapsed.
+
+            :param proxy_list: list of proxies to wait on
+            :param state: proxy DevState to wait for
+            :param time_s: time to timeout in seconds
+            :param sleep_time_s: sleep time cycle in seconds
+            """
             timeout = time.time_ns() + (time_s * 1_000_000_000)
             while time.time_ns() < timeout:
-                for proxy in proxygroup:
+                for proxy in proxy_list:
                     if proxy.State() == state: break
                 time.sleep(sleep_time_s)
 
-        def wait_timeout_obs(self, proxygroup, state, time_s, sleep_time_s):
-            #time.sleep(time_s)
+        def wait_timeout_obs(
+            self: TestProxies,
+            proxy_list: List[CbfDeviceProxy],
+            state: ObsState,
+            time_s: float,
+            sleep_time_s: float
+        ) -> None:
+            """
+            Periodically check proxy ObsState until it is either the specified 
+            value or the time limit has elapsed.
+
+            :param proxy_list: list of proxies to wait on
+            :param state: proxy ObsState to wait for
+            :param time_s: time to timeout in seconds
+            :param sleep_time_s: sleep time cycle in seconds
+            """
             timeout = time.time_ns() + (time_s * 1_000_000_000)
             while time.time_ns() < timeout:
-                for proxy in proxygroup:
+                for proxy in proxy_list:
                     if proxy.obsState == state: break
                 time.sleep(sleep_time_s)
+
+
+        def clean_test_proxies(self: TestProxies) -> None:
+            """
+            Reset subarray to DevState.ON, ObsState.EMPTY
+            """
+            wait_time_s = 3
+            sleep_time_s_long = 1
+            sleep_time_s_short = 0.05
+
+            for proxy in [self.subarray[i] for i in range(1, self.num_sub + 1)]:
+                if proxy.State() != DevState.ON:
+                    if proxy.State() != DevState.OFF:
+                        proxy.Off()
+                        self.wait_timeout_dev(
+                            [proxy], DevState.OFF, wait_time_s, sleep_time_s_long)
+                    proxy.On()
+                    self.wait_timeout_dev(
+                        [proxy], DevState.ON, wait_time_s, sleep_time_s_long)
+
+                if proxy.obsState == ObsState.FAULT:
+                    proxy.Restart()
+                    self.wait_timeout_obs(
+                        [proxy], ObsState.READY, wait_time_s, sleep_time_s_short)
+
+                if proxy.obsState == ObsState.SCANNING:
+                    proxy.EndScan()
+                    self.wait_timeout_obs(
+                        [proxy], ObsState.READY, wait_time_s, sleep_time_s_short)
+
+                if proxy.obsState == ObsState.READY:
+                    proxy.GoToIdle()
+                    self.wait_timeout_obs(
+                        [proxy], ObsState.IDLE, wait_time_s, sleep_time_s_short)
+                    
+                if proxy.obsState == ObsState.IDLE:
+                    proxy.RemoveAllReceptors()
+                    self.wait_timeout_obs(
+                        [proxy], ObsState.EMPTY, wait_time_s, sleep_time_s_short)
+
+
+        def on(self: TestProxies) -> None:
+            """
+            Controller device command sequence to turn on subarrays, FSPs, VCCs
+            """
+            wait_time_s = 3
+            sleep_time_s = 1
+
+            if self.controller.State() == DevState.ON:
+                pass
+            elif self.controller.State() == DevState.OFF:
+                self.controller.On()
+                self.wait_timeout_dev(
+                    [self.controller], DevState.ON, wait_time_s, sleep_time_s)
+            else:
+                self.controller.Off()
+                self.wait_timeout_dev(
+                    [self.controller], DevState.OFF, wait_time_s, sleep_time_s)
+                self.controller.On()
+                self.wait_timeout_dev(
+                    [self.controller], DevState.ON, wait_time_s, sleep_time_s)
+
+
+        def off(self: TestProxies) -> None:
+            """
+            Controller device command sequence to turn off subarrays, FSPs, VCCs
+            """
+            wait_time_s = 3
+            sleep_time_s = 1
+
+            if self.controller.State() == DevState.OFF:
+                pass
+            else:
+                self.controller.Off()
+                self.wait_timeout_dev(
+                    [self.controller], DevState.OFF, wait_time_s, sleep_time_s)
     
-    return Proxies()
-
-@pytest.fixture(name="input_test_data", scope="class", \
-    params = [
-       ([1, 3, 4, 2], "/../data/ConfigureScan_basic.json") ] )
-    #params = [
-    #    ([4, 1, 2],    "/test_json/Configure_TM-CSP_v2.json") ] )
-    # params = [
-    #     ([1, 3, 4, 2], "/test_json/ConfigureScan_basic.json"),
-    #     ([4, 1, 2],    "/test_json/Configure_TM-CSP_v2.json") ] )
-
-def input_test_data(request):
-    file_name = request.param
-    yield  file_name
+    return TestProxies()
 
 @pytest.fixture(scope="class")
-def debug_device_is_on():
+def debug_device_is_on() -> bool:
     # NOTE: set debug_device_is_on to True in order
     #       to allow device debugging under VScode
     debug_device_is_on = False
@@ -236,54 +585,7 @@ def debug_device_is_on():
         timeout_millis = 500000
     return debug_device_is_on
 
-@pytest.fixture(scope="class")
-def create_vcc_proxy():
-    dp = DeviceProxy("mid_csp_cbf/vcc/001")
-    dp.loggingLevel = LoggingLevel.DEBUG
-    return dp
-
-@pytest.fixture(scope="class")
-def create_band_12_proxy():
-    #return DeviceTestContext(VccBand1And2)
-    return DeviceProxy("mid_csp_cbf/vcc_band12/001")
-
-@pytest.fixture(scope="class")
-def create_band_3_proxy():
-    #return DeviceTestContext(VccBand3)
-    return DeviceProxy("mid_csp_cbf/vcc_band3/001")
-
-@pytest.fixture(scope="class")
-def create_band_4_proxy():
-    #return DeviceTestContext(VccBand4)
-    return DeviceProxy("mid_csp_cbf/vcc_band4/001")
-
-@pytest.fixture(scope="class")
-def create_band_5_proxy():
-    #return DeviceTestContext(VccBand5)
-    return DeviceProxy("mid_csp_cbf/vcc_band5/001")
-
-@pytest.fixture(scope="class")
-def create_sw_1_proxy():
-    #return DeviceTestContext(VccSearchWindow)
-    return DeviceProxy("mid_csp_cbf/vcc_sw1/001")
-
-@pytest.fixture(scope="class")
-def create_fsp_corr_subarray_1_1_proxy():
-    return DeviceProxy("mid_csp_cbf/fspCorrSubarray/01_01")
-
-@pytest.fixture(scope="class")
-def create_fsp_pss_subarray_2_1_proxy():
-    return DeviceProxy("mid_csp_cbf/fspPssSubarray/02_01")
-
-@pytest.fixture(scope="class")
-def create_corr_proxy():
-    return DeviceProxy("mid_csp_cbf/fsp_corr/01")
-
-@pytest.fixture(scope="class")
-def create_pss_proxy():
-    return DeviceProxy("mid_csp_cbf/fsp_pss/01")
-
-def load_data(name):
+def load_data(name: str) -> dict[Any, Any]:
     """
     Loads a dataset by name. This implementation uses the name to find a
     JSON file containing the data to be loaded.

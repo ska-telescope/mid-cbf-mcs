@@ -1,3 +1,4 @@
+SHELL := /bin/bash
 # Minimal makefile for Sphinx documentation
 #
 
@@ -13,6 +14,16 @@ help:
 	@$(SPHINXBUILD) -M help "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
 .PHONY: help Makefile
+
+# Copy README from project directory so that autodoc can see and parse it correctly.
+html:
+	cp ../README.md src/
+	@$(SPHINXBUILD) -M html "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
+
+# Remove copy of README from the doc source directory.
+clean:
+	rm -f src/README.md
+	@$(SPHINXBUILD) -M clean "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
 # Catch-all target: route all unknown targets to Sphinx using the new
 # "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).

@@ -1,24 +1,40 @@
-ska-mid-cbf-mcs Prototype's documentation
-=============================================
+ska-mid-cbf-mcs 
+================
+.. HOME SECTION ==================================================
+
+.. Hidden toctree to manage the sidebar navigation.
+
+.. toctree::
+  :maxdepth: 2
+  :caption: Home
+  :hidden:
+
+.. SYSTEM =============================================================
+.. toctree::
+   :maxdepth: 2
+   :caption: System:
+
+   system
+
+.. README =============================================================
+.. toctree::
+   :maxdepth: 2
+   :caption: Readme
+
+   README
 
 .. toctree::
    :maxdepth: 2
-   :caption: Introduction:
+   :caption: CbfController:
 
-   README<README>
-
-.. toctree::
-   :maxdepth: 2
-   :caption: CbfMaster:
-
-   CbfMaster<CbfMaster>
+   CbfController
 
 
 .. toctree::
    :maxdepth: 2
    :caption: CbfSubarray:
    
-   CbfSubarray<CbfSubarray>
+   CbfSubarray
 
 
 
@@ -33,6 +49,18 @@ ska-mid-cbf-mcs Prototype's documentation
    :caption: FSP:
 
    FSP
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Talon LRU:
+
+   TalonLRU
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Power Switch:
+
+   PowerSwitch
 
 
 Indices and tables

@@ -5,8 +5,7 @@
 
 #
 # DOCKER_REGISTRY_HOST, DOCKER_REGISTRY_USER and PROJECT are combined to define
-# the Docker tag for this project. The definition below inherits the standard
-# value for DOCKER_REGISTRY_HOST (=rnexus.engageska-portugal.pt) and overwrites
+# the Docker tag for this project. The definition below overwrites
 # DOCKER_REGISTRY_USER and PROJECT
 #
 #DOCKER_REGISTRY_USER:=ska-docker
@@ -86,9 +85,9 @@ include .make/k8s.mk
 requirements: ## Install Dependencies
 	python3 -m pip install -r requirements.txt
 
-unit_test: ## Run simulation mode unit tests; currently only Vcc tests are supported, with TEST_CONTEXT flag set True in Vcc.py
+unit-test: ## Run simulation mode unit tests
 	@mkdir -p build; \
-	PYTHONPATH=src:tests pytest -v ./tests/unit/Vcc_test.py $(FILE) --test-context --cov=src/ska_mid_cbf_mcs/Vcc
+	pytest -c setup-unit-test.cfg
 
 jive: ## configure TANGO_HOST to enable Jive
 	@echo
@@ -96,6 +95,12 @@ jive: ## configure TANGO_HOST to enable Jive
 	@echo
 	export TANGO_HOST=$$(minikube ip):$$(kubectl describe service -n $(KUBE_NAMESPACE) $(TANGO_DATABASE) | grep -i 'NodePort:' | awk '{print $$3}' | sed 's;/TCP;;')
 
+update-db-port:  ## update Tango DB port so that the DB is accessible from the Talon boards on the Dell server
+	kubectl -n ska-mid-cbf patch service/tango-host-databaseds-from-makefile-test --type='json' -p '[{"op":"replace","path":"/spec/ports/0/nodePort","value": 30176}]'
+
+documentation:   ## ## Re-generate documentation
+	cd docs && make clean && make html
+	
 # pull and interactive preserved from docker.mk
 ###############################################
 # pull:  ## download the application image
@@ -110,4 +115,4 @@ jive: ## configure TANGO_HOST to enable Jive
 
 #pytest $(if $(findstring all,$(MARK)),, -m '$(MARK)')
 
-.PHONY: all jive unit_test requirements test up down help k8s show lint logs describe mkcerts localip namespace delete_namespace ingress_check kubeconfig kubectl_dependencies helm_dependencies rk8s_test k8s_test rlint
+.PHONY: all jive unit-test requirements test up down help k8s show lint logs describe mkcerts localip namespace delete_namespace ingress_check kubeconfig kubectl_dependencies helm_dependencies rk8s_test k8s_test rlint

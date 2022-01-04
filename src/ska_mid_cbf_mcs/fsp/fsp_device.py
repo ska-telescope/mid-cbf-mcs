@@ -15,6 +15,9 @@
 
 # Fsp Tango device prototype
 # Fsp TANGO device class for the prototype
+from __future__ import annotations  # allow forward references in type hints
+
+from typing import List, Tuple
 
 # tango imports
 import tango
@@ -27,10 +30,14 @@ from tango import AttrWriteType
 import os
 import sys
 import json
+from enum import Enum
 
 file_path = os.path.dirname(os.path.abspath(__file__))
 
-from ska_tango_base import SKACapability
+from ska_tango_base import SKACapability, SKABaseDevice
+from ska_tango_base.commands import ResultCode
+from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
+from ska_mid_cbf_mcs.group_proxy import CbfGroupProxy
 # PROTECTED REGION END #    //  Fsp.additionnal_import
 
 __all__ = ["Fsp", "main"]
@@ -42,31 +49,74 @@ class Fsp(SKACapability):
     """
     # PROTECTED REGION ID(Fsp.class_variable) ENABLED START #
 
-    def __get_capability_proxies(self):
+    def __get_capability_proxies(
+            self: Fsp, 
+    ) -> None:
+        """Establish connections with the capability proxies"""
         # for now, assume that given addresses are valid
-        if self.CorrelationAddress:
-            self._proxy_correlation = tango.DeviceProxy(self.CorrelationAddress)
-        if self.PSSAddress:
-            self._proxy_pss = tango.DeviceProxy(self.PSSAddress)
-        if self.PSTAddress:
-            self._proxy_pst = tango.DeviceProxy(self.PSTAddress)
-        if self.VLBIAddress:
-            self._proxy_vlbi = tango.DeviceProxy(self.VLBIAddress)
-        if self.FspCorrSubarray:
-            self._proxy_fsp_corr_subarray = [*map(
-                tango.DeviceProxy,
-                list(self.FspCorrSubarray)
-            )]
-        if self.FspPssSubarray:
-            self._proxy_fsp_pss_subarray = [*map(
-                tango.DeviceProxy,
-                list(self.FspPssSubarray)
-            )]
-        if self.FspPstSubarray:
-            self._proxy_fsp_pst_subarray = [*map(
-                tango.DeviceProxy,
-                list(self.FspPstSubarray)
-            )]
+
+        if self._proxy_correlation is None:
+            if self.CorrelationAddress:
+                self._proxy_correlation = CbfDeviceProxy(
+                    fqdn=self.CorrelationAddress,
+                    logger=self.logger
+                )
+            
+        if self._proxy_pss is None:
+            if self.PSSAddress:
+                self._proxy_pss = CbfDeviceProxy(
+                    fqdn=self.PSSAddress,
+                    logger=self.logger
+                )
+            
+        if self._proxy_pst is None:
+            if self.PSTAddress:
+                self._proxy_pst = CbfDeviceProxy(
+                    fqdn=self.PSTAddress,
+                    logger=self.logger
+                )
+            
+        if self._proxy_vlbi is None:
+            if self.VLBIAddress:
+                self._proxy_vlbi = CbfDeviceProxy(
+                    fqdn=self.VLBIAddress,
+                    logger=self.logger
+                )
+
+        if self._proxy_fsp_corr_subarray is None:
+            if self.FspCorrSubarray:
+                self._proxy_fsp_corr_subarray = \
+                    [CbfDeviceProxy(fqdn=fqdn, logger=self.logger) \
+                    for fqdn in self.FspCorrSubarray]
+
+        if self._proxy_fsp_pss_subarray is None:
+            if self.FspPssSubarray:
+                self._proxy_fsp_pss_subarray = \
+                    [CbfDeviceProxy(fqdn=fqdn, logger=self.logger) \
+                    for fqdn in self.FspPssSubarray]
+
+        if self._proxy_fsp_pst_subarray is None:
+            if self.FspPstSubarray:
+                self._proxy_fsp_pst_subarray = \
+                    [CbfDeviceProxy(fqdn=fqdn, logger=self.logger) \
+                    for fqdn in self.FspPstSubarray]
+    
+    def __get_group_proxies(
+        self: Fsp, 
+    ) -> None:
+        """Establish connections with the group proxies"""
+        if self._group_fsp_corr_subarray is None:
+            self._group_fsp_corr_subarray = CbfGroupProxy("FSP Subarray Corr", logger=self.logger)
+            for fqdn in list(self.FspCorrSubarray):
+                self._group_fsp_corr_subarray.add(fqdn)
+        if self._group_fsp_pss_subarray is None:
+            self._group_fsp_pss_subarray = CbfGroupProxy("FSP Subarray Pss", logger=self.logger)
+            for fqdn in list(self.FspPssSubarray):
+                self._group_fsp_pss_subarray.add(fqdn)
+        if self._group_fsp_pst_subarray is None:
+            self._group_fsp_pst_subarray = CbfGroupProxy("FSP Subarray Pst", logger=self.logger)
+            for fqdn in list(self.FspPstSubarray):
+                self._group_fsp_pst_subarray.add(fqdn)
 
     # PROTECTED REGION END #    //  Fsp.class_variable
 
@@ -141,8 +191,8 @@ class Fsp(SKACapability):
 
     jonesMatrix = attribute(
         dtype=(('double',),),
-        max_dim_x=4,
-        max_dim_y=16,
+        max_dim_x=16,
+        max_dim_y=26,
         access=AttrWriteType.READ,
         label='Jones Matrix',
         doc='Jones Matrix, given per frequency slice'
@@ -170,116 +220,126 @@ class Fsp(SKACapability):
     # General methods
     # ---------------
 
-    def init_device(self):
-        SKACapability.init_device(self)
-        # PROTECTED REGION ID(Fsp.init_device) ENABLED START #
-        """Inherit from SKA Capability; Initialize attributes. Set state to OFF."""
-        self.set_state(tango.DevState.INIT)
+    def init_command_objects(self: Fsp) -> None:
+        """
+        Sets up the command objects
+        """
+        super().init_command_objects()
 
-        # defines self._proxy_correlation, self._proxy_pss, self._proxy_pst, self._proxy_vlbi,
-        # and self._proxy_fsp_corr_subarray
-        self.__get_capability_proxies()
+        device_args = (self, self.state_model, self.logger)
 
-        self._fsp_id = self.FspID
+        self.register_command_object(
+            "On", self.OnCommand(*device_args)
+        )
 
-        # initialize attribute values
-        self._function_mode = 0  # IDLE
-        self._subarray_membership = []
-        self._scan_id = 0
-        self._config_id = ""
-        self._jones_matrix = [[0.0] * 4 for _ in range(4)]
-        self._delay_model = [[0.0] * 6 for _ in range(4)]
-        self._timing_beam_weights = [[0.0] * 6 for _ in range(4)]
+        self.register_command_object(
+            "Off", self.OffCommand(*device_args)
+        )
 
-        # initialize FSP subarray group
-        self._group_fsp_corr_subarray = tango.Group("FSP Subarray Corr")
-        for fqdn in list(self.FspCorrSubarray):
-            self._group_fsp_corr_subarray.add(fqdn)
-
-        self._group_fsp_pss_subarray = tango.Group("FSP Subarray Pss")
-        for fqdn in list(self.FspPssSubarray):
-            self._group_fsp_pss_subarray.add(fqdn)
-
-        self._group_fsp_pst_subarray = tango.Group("FSP Subarray Pst")
-        for fqdn in list(self.FspPstSubarray):
-            self._group_fsp_pst_subarray.add(fqdn)
-
-        self.set_state(tango.DevState.OFF)
-        # PROTECTED REGION END #    //  Fsp.init_device
-
-    def always_executed_hook(self):
+    def always_executed_hook(self: Fsp) -> None:
         # PROTECTED REGION ID(Fsp.always_executed_hook) ENABLED START #
         """Hook to be executed before any commands."""
-        pass
+        # TODO: Proxy connections should not be in always_executed_hook, 
+        #       needs to be refactored
+        self.__get_capability_proxies()
+        self.__get_group_proxies()
+
         # PROTECTED REGION END #    //  Fsp.always_executed_hook
 
-    def delete_device(self):
+    def delete_device(self: Fsp) -> None:
         # PROTECTED REGION ID(Fsp.delete_device) ENABLED START #
-        """Hook to delete device. Turn corr, pss, pst, vlbi, corr and pss subarray OFF. Remove membership; """
-        self._proxy_correlation.SetState(tango.DevState.OFF)
-        self._proxy_pss.SetState(tango.DevState.OFF)
-        self._proxy_pst.SetState(tango.DevState.OFF)
-        self._proxy_vlbi.SetState(tango.DevState.OFF)
-        self._group_fsp_corr_subarray.command_inout("Off")
-        self._group_fsp_pss_subarray.command_inout("Off")
-        self._group_fsp_pst_subarray.command_inout("Off")
-
-        # remove all subarray membership
-        for subarray_ID in self._subarray_membership[:]:
-            self.RemoveSubarrayMembership(subarray_ID)
-        
-        self.set_state(tango.DevState.OFF)
+        """Hook to delete device."""
+        pass
         # PROTECTED REGION END #    //  Fsp.delete_device
 
     # ------------------
     # Attributes methods
     # ------------------
 
-    def read_functionMode(self):
+    def read_functionMode(self: Fsp) -> tango.DevEnum:
         # PROTECTED REGION ID(Fsp.functionMode_read) ENABLED START #
-        """Return functionMode attribute (DevEnum representing mode)."""
+        """
+            Read the functionMode attribute.
+
+            :return: a DevEnum representing the mode.
+            :rtype: tango.DevEnum
+        """
         return self._function_mode
         # PROTECTED REGION END #    //  Fsp.functionMode_read
 
-    def read_subarrayMembership(self):
+    def read_subarrayMembership(self: Fsp) -> List[int]:
         # PROTECTED REGION ID(Fsp.subarrayMembership_read) ENABLED START #
-        """Return subarrayMembership attribute (an array of affiliations of the FSP)."""
+        """
+            Read the subarrayMembership attribute.
+
+            :return: an array of affiliations of the FSP.
+            :rtype: List[int]
+        """
         return self._subarray_membership
         # PROTECTED REGION END #    //  Fsp.subarrayMembership_read
 
-    def read_scanID(self):
+    def read_scanID(self: Fsp) -> int:
         # PROTECTED REGION ID(FspCorrSubarray.scanID_read) ENABLED START #
-        """Return the scanID attribute."""
+        """
+            Read the scanID attribute.
+
+            :return: the scanID attribute.
+            :rtype: int
+        """
         return self._scan_id
         # PROTECTED REGION END #    //  FspCorrSubarray.scanID_read
 
-    def read_configID(self):
+    def read_configID(self: Fsp) -> str:
         # PROTECTED REGION ID(Fsp.configID_read) ENABLED START #
-        """Return the configID attribute."""
+        """
+            Read the configID attribute.
+
+            :return: the configID attribute.
+            :rtype: str
+        """
         return self._config_id
         # PROTECTED REGION END #    //  Fsp.configID_read
 
-    def write_configID(self, value):
+    def write_configID(self: Fsp, value: str) -> None:
         # PROTECTED REGION ID(Fsp.configID_write) ENABLED START #
-        """Set the configID attribute."""
+        """
+            Write the configID attribute.
+
+            :param value: the configID value.
+        """
         self._config_id=value
         # PROTECTED REGION END #    //  Fsp.configID_write
 
-    def read_jonesMatrix(self):
+    def read_jonesMatrix(self: Fsp) -> List[List[float]]:
         # PROTECTED REGION ID(Fsp.jonesMatrix_read) ENABLED START #
-        """Return the jonesMatrix attribute."""
+        """
+            Read the jonesMatrix attribute.
+
+            :return: the jonesMatrix attribute.
+            :rtype: list of list of float
+        """
         return self._jones_matrix
         # PROTECTED REGION END #    //  Fsp.jonesMatrix_read
 
-    def read_delayModel(self):
+    def read_delayModel(self: Fsp) -> List[List[float]]:
         # PROTECTED REGION ID(Fsp.delayModel_read) ENABLED START #
-        """Return the delayModel attribute."""
+        """
+            Read the delayModel attribute.
+
+            :return: the delayModel attribute.
+            :rtype: list of list of float
+        """
         return self._delay_model
         # PROTECTED REGION END #    //  Fsp.delayModel_read
     
-    def read_timingBeamWeights(self):
+    def read_timingBeamWeights(self: Fsp) -> List[List[float]]:
         # PROTECTED REGION ID(Fsp.timingBeamWeights_read) ENABLED START #
-        """Return the timingBeamWeights attribute."""
+        """
+            Read the timingBeamWeights attribute.
+
+            :return: the timingBeamWeights attribute.
+            :rtype: list of list of float
+        """
         return self._timing_beam_weights
         # PROTECTED REGION END #    //  Fsp.timingBeamWeights_read
 
@@ -287,54 +347,124 @@ class Fsp(SKACapability):
     # Commands
     # --------
 
-    def is_On_allowed(self):
-        """allowed if FSP state is OFF"""
-        if self.dev_state() == tango.DevState.OFF:
-            return True
-        return False
+    class InitCommand(SKACapability.InitCommand):
+        """
+        A class for the Fsp's init_device() "command".
+        """
 
-    @command()
-    def On(self):
-        # PROTECTED REGION ID(Fsp.On) ENABLED START #
-        """Set corr, pss, pst, vlbi to 'DISABLE'. Set corr and pss subarray to 'On'. Set FSP device to 'On'."""
-        self._proxy_correlation.SetState(tango.DevState.DISABLE)
-        self._proxy_pss.SetState(tango.DevState.DISABLE)
-        self._proxy_pst.SetState(tango.DevState.DISABLE)
-        self._proxy_vlbi.SetState(tango.DevState.DISABLE)
-        self._group_fsp_corr_subarray.command_inout("On")
-        self._group_fsp_pss_subarray.command_inout("On")
-        self._group_fsp_pst_subarray.command_inout("On")
+        def do(
+            self: Fsp.InitCommand,
+        ) -> Tuple[ResultCode, str]:
+            """
+            Stateless hook for device initialisation.
 
-        self.set_state(tango.DevState.ON)
-        # PROTECTED REGION END #    //  Fsp.On
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
 
-    def is_Off_allowed(self):
-        """allowed if FSP state is ON"""
-        if self.dev_state() == tango.DevState.ON:
-            return True
-        return False
+            (result_code,message)=super().do()
 
-    @command()
-    def Off(self):
-        # PROTECTED REGION ID(Fsp.Off) ENABLED START #
-        """Send OFF signal to all the subordinates in the FSP'. Turn Off FSP device. Remove all Subarray membership. """
-        self._proxy_correlation.SetState(tango.DevState.OFF)
-        self._proxy_pss.SetState(tango.DevState.OFF)
-        self._proxy_pst.SetState(tango.DevState.OFF)
-        self._proxy_vlbi.SetState(tango.DevState.OFF)
-        self._group_fsp_corr_subarray.command_inout("Off")
-        self._group_fsp_pss_subarray.command_inout("Off")
-        self._group_fsp_pst_subarray.command_inout("Off")
+            device = self.target
 
-        # remove all subarray membership
-        for subarray_ID in self._subarray_membership[:]:
-            self.RemoveSubarrayMembership(subarray_ID)
+            # initialize FSP proxies
+            device._group_fsp_corr_subarray = None
+            device._group_fsp_pss_subarray = None
+            device._group_fsp_pst_subarray = None
+            device._proxy_correlation = None
+            device._proxy_pss = None
+            device._proxy_pst = None
+            device._proxy_vlbi = None
+            device._proxy_fsp_corr_subarray = None
+            device._proxy_fsp_pss_subarray = None
+            device._proxy_fsp_pst_subarray = None
 
-        self.set_state(tango.DevState.OFF)
-        # PROTECTED REGION END #    //  Fsp.Off
+            device._fsp_id = device.FspID
 
-    def is_SetFunctionMode_allowed(self):
-        """allowed if FSP state is ON"""
+            # initialize attribute values
+            device._function_mode = 0  # IDLE
+            device._subarray_membership = []
+            device._scan_id = 0
+            device._config_id = ""
+            device._jones_matrix = [[0.0] * 16 for _ in range(4)]
+            device._delay_model = [[0.0] * 6 for _ in range(4)]
+            device._timing_beam_weights = [[0.0] * 6 for _ in range(4)]
+
+            return (result_code,message)
+
+    class OnCommand(SKABaseDevice.OnCommand):
+        """
+        A class for the Fsp's On() command.
+        """
+        def do(
+            self: Fsp.OnCommand,
+        ) -> Tuple[ResultCode, str]:
+            """
+            Stateless hook for On() command functionality.
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
+            (result_code,message)=super().do()
+
+            device = self.target
+
+            device._proxy_correlation.SetState(tango.DevState.DISABLE)
+            device._proxy_pss.SetState(tango.DevState.DISABLE)
+            device._proxy_pst.SetState(tango.DevState.DISABLE)
+            device._proxy_vlbi.SetState(tango.DevState.DISABLE)
+            device._group_fsp_corr_subarray.command_inout("On")
+            device._group_fsp_pss_subarray.command_inout("On")
+            device._group_fsp_pst_subarray.command_inout("On")
+
+            return (result_code,message)
+    
+    class OffCommand(SKABaseDevice.OffCommand):
+        """
+        A class for the Fsp's Off() command.
+        """
+        def do(
+            self: Fsp.OffCommand,
+        ) -> Tuple[ResultCode, str]:
+            """
+            Stateless hook for Off() command functionality.
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
+            (result_code,message)=super().do()
+
+            device = self.target
+
+            device._proxy_correlation.SetState(tango.DevState.OFF)
+            device._proxy_pss.SetState(tango.DevState.OFF)
+            device._proxy_pst.SetState(tango.DevState.OFF)
+            device._proxy_vlbi.SetState(tango.DevState.OFF)
+            device._group_fsp_corr_subarray.command_inout("Off")
+            device._group_fsp_pss_subarray.command_inout("Off")
+            device._group_fsp_pst_subarray.command_inout("Off")
+
+            # remove all subarray membership
+            for subarray_ID in device._subarray_membership[:]:
+                device.RemoveSubarrayMembership(subarray_ID)
+
+            return (result_code,message)
+
+    def is_SetFunctionMode_allowed(
+        self: Fsp
+        ) -> bool:
+        """
+            Determine if SetFunctionMode is allowed 
+            (allowed if FSP state is ON).
+
+            :return: if SetFunctionMode is allowed
+            :rtype: bool
+        """
         if self.dev_state() == tango.DevState.ON:
             return True
         return False
@@ -343,11 +473,17 @@ class Fsp(SKACapability):
         dtype_in='str',
         doc_in='Function mode'
     )
-    def SetFunctionMode(self, argin):
+    def SetFunctionMode(
+        self: Fsp,
+        argin: str,
+        ) -> None:
         # PROTECTED REGION ID(Fsp.SetFunctionMode) ENABLED START #
-        """argin should be one of ('IDLE','CORR','PSS-BF','PST-BF','VLBI'). 
-        If IDLE set the pss, pst, corr, Vlbi to 'DISABLE'.
-        OTherwise, turn one of them ON according to argin, and all others DISABLE.
+        """
+            Set the Fsp Function Mode, either IDLE, CORR, PSS-BF, PST-BF, or VLBI
+            If IDLE set the pss, pst, corr and vlbi devicess to DISABLE. OTherwise, 
+            turn one of them ON according to argin, and all others DISABLE.
+
+            :param argin: one of 'IDLE','CORR','PSS-BF','PST-BF', or 'VLBI'
         """
         if argin == "IDLE":
             self._function_mode = 0
@@ -384,8 +520,14 @@ class Fsp(SKACapability):
             self.logger.warn("functionMode not valid. Ignoring.")
         # PROTECTED REGION END #    //  Fsp.SetFunctionMode
 
-    def is_AddSubarrayMembership_allowed(self):
-        """allowed if the FSP state is ON"""
+    def is_AddSubarrayMembership_allowed(self: Fsp) -> bool:
+        """
+            Determine if AddSubarrayMembership is allowed
+            (allowed if FSP state is ON).
+
+            :return: if AddSubarrayMembership is allowed
+            :rtype: bool
+        """
         if self.dev_state() == tango.DevState.ON:
             return True
         return False
@@ -394,9 +536,16 @@ class Fsp(SKACapability):
         dtype_in='uint16',
         doc_in='Subarray ID'
     )
-    def AddSubarrayMembership(self, argin):
+    def AddSubarrayMembership(
+        self: Fsp,
+        argin: int,
+        ) -> None:
         # PROTECTED REGION ID(Fsp.AddSubarrayMembership) ENABLED START #
-        """Input should be an integer representing the subarray affiliation. Add a subarray to the subarrayMembership list"""
+        """
+            Add a subarray to the subarrayMembership list.
+
+            :param argin: an integer representing the subarray affiliation
+        """
         if argin not in self._subarray_membership:
             self._subarray_membership.append(argin)
         else:
@@ -404,8 +553,14 @@ class Fsp(SKACapability):
             self.logger.warn(log_msg)
         # PROTECTED REGION END #    //  Fsp.AddSubarrayMembership
 
-    def is_RemoveSubarrayMembership_allowed(self):
-        """allowed if FSP state is ON"""
+    def is_RemoveSubarrayMembership_allowed(self: Fsp) -> bool:
+        """
+            Determine if RemoveSubarrayMembership is allowed 
+            (allowed if FSP state is ON).
+
+            :return: if RemoveSubarrayMembership is allowed
+            :rtype: bool
+        """
         if self.dev_state() == tango.DevState.ON:
             return True
         return False
@@ -414,10 +569,18 @@ class Fsp(SKACapability):
         dtype_in='uint16',
         doc_in='Subarray ID'
     )
-    def RemoveSubarrayMembership(self, argin):
+    def RemoveSubarrayMembership(
+        self: Fsp,
+        argin: int,
+        ) -> None:
         # PROTECTED REGION ID(Fsp.RemoveSubarrayMembership) ENABLED START #
-        """Input should be an integer representing the subarray number. 
-        If subarrayMembership is empty after removing (no subarray is using this FSP), set function mode to empty"""
+        """
+            Remove subarray from the subarrayMembership list.
+            If subarrayMembership is empty after removing 
+            (no subarray is using this FSP), set function mode to empty.
+
+            :param argin: an integer representing the subarray affiliation
+        """
         if argin in self._subarray_membership:
             self._subarray_membership.remove(argin)
             # change function mode to IDLE if no subarrays are using it.
@@ -432,10 +595,13 @@ class Fsp(SKACapability):
         dtype_out='DevString',
         doc_out="returns configID for all the fspCorrSubarray",
     )
-    def getConfigID(self):
+    def getConfigID(self: Fsp) -> str:
         # PROTECTED REGION ID(Fsp.getConfigID) ENABLED START #
         """
-        returns configID for all the fspCorrSubarray
+            Get the configID for all the fspCorrSubarray
+
+            :return: the configID
+            :rtype: str
         """
         result ={}
         for proxy in self._proxy_fsp_corr_subarray:
@@ -443,8 +609,15 @@ class Fsp(SKACapability):
         return str(result)
         # PROTECTED REGION END #    //  Fsp.getConfigID
 
-    def is_UpdateJonesMatrix_allowed(self):
-        """allowed when Devstate is ON and ObsState is READY OR SCANNINNG"""
+    def is_UpdateJonesMatrix_allowed(self: Fsp) -> bool:
+        """
+            Determine if UpdateJonesMatrix is allowed 
+            (allowed if FSP state is ON and ObsState is 
+            READY OR SCANNINNG).
+
+            :return: if UpdateJonesMatrix is allowed
+            :rtype: bool
+        """
         #TODO implement obsstate in FSP
         if self.dev_state() == tango.DevState.ON:
             return True
@@ -454,18 +627,37 @@ class Fsp(SKACapability):
         dtype_in='str',
         doc_in="Jones Matrix, given per frequency slice"
     )
-    def UpdateJonesMatrix(self, argin):
+    def UpdateJonesMatrix(
+        self: Fsp, 
+        argin: str,
+        ) -> None:
         # PROTECTED REGION ID(Fsp.UpdateJonesMatrix) ENABLED START #
+        """
+            Update the FSP's jones matrix (serialized JSON object)
+
+            :param argin: the jones matrix data
+        """
         self.logger.debug("Fsp.UpdateJonesMatrix")
-        """update FSP's Jones matrix (serialized JSON object)"""
-        if self._function_mode in [2, 3]:
+
+        #TODO: this enum should be defined once and referred to throughout the project
+        FspModes = Enum('FspModes', 'CORR PSS_BF PST_BF VLBI')
+        if self._function_mode in [FspModes.PSS_BF.value, FspModes.PST_BF.value, FspModes.VLBI.value]:
             argin = json.loads(argin)
 
             for i in self._subarray_membership:
-                if self._function_mode == 2:
+                if self._function_mode == FspModes.PSS_BF.value:
                     proxy = self._proxy_fsp_pss_subarray[i - 1]
-                else:
+                    fs_length = 16
+                elif self._function_mode == FspModes.PST_BF.value:
                     proxy = self._proxy_fsp_pst_subarray[i - 1]
+                    fs_length = 4
+                else:
+                    fs_length = 4
+                    # TODO: support for function mode VLBI
+                    log_msg = "function mode {} currently not supported".format(self._function_mode)
+                    self.logger.error(log_msg)
+                    return
+
                 for receptor in argin:
                     rec_id = int(receptor["receptor"])
                     if rec_id in proxy.receptors:
@@ -473,7 +665,7 @@ class Fsp(SKACapability):
                             fs_id = frequency_slice["fsid"]
                             matrix = frequency_slice["matrix"]
                             if fs_id == self._fsp_id:
-                                if len(matrix) == 4:
+                                if len(matrix) == fs_length:
                                     self._jones_matrix[rec_id - 1] = matrix.copy()
                                 else:
                                     log_msg = "'matrix' not valid length for frequency slice {} of " \
@@ -485,12 +677,19 @@ class Fsp(SKACapability):
                                 )
                                 self.logger.error(log_msg)
         else:
-            log_msg = "matrix not usable in function mode {}".format(self._function_mode)
+            log_msg = "matrix not used in function mode {}".format(self._function_mode)
             self.logger.error(log_msg)
         # PROTECTED REGION END #    // Fsp.UpdateJonesMatrix
 
-    def is_UpdateDelayModel_allowed(self):
-        """allowed when Devstate is ON and ObsState is READY OR SCANNINNG"""
+    def is_UpdateDelayModel_allowed(self: Fsp) -> bool:
+        """
+            Determine if UpdateDelayModelis allowed 
+            (allowed if FSP state is ON and ObsState is 
+            READY OR SCANNINNG).
+
+            :return: if UpdateDelayModel is allowed
+            :rtype: bool
+        """
         #TODO implement obsstate in FSP
         if self.dev_state() == tango.DevState.ON:
             return True
@@ -500,10 +699,17 @@ class Fsp(SKACapability):
         dtype_in='str',
         doc_in="Delay Model, per receptor per polarization per timing beam"
     )
-    def UpdateDelayModel(self, argin):
+    def UpdateDelayModel(
+        self: Fsp, 
+        argin: str,
+        ) -> None:
         # PROTECTED REGION ID(Fsp.UpdateDelayModel) ENABLED START #
+        """
+            Update the FSP's delay model (serialized JSON object)
+
+            :param argin: the delay model data
+        """
         self.logger.debug("Fsp.UpdateDelayModel")
-        """update FSP's delay model (serialized JSON object)"""
 
         # update if current function mode is either PSS-BF or PST-BF
         if self._function_mode in [2, 3]:
@@ -532,12 +738,19 @@ class Fsp(SKACapability):
                                 )
                                 self.logger.error(log_msg)
         else:
-            log_msg = "model not usable in function mode {}".format(self._function_mode)
+            log_msg = "model not used in function mode {}".format(self._function_mode)
             self.logger.error(log_msg)
         # PROTECTED REGION END #    // Fsp.UpdateDelayModel
 
-    def is_UpdateTimingBeamWeights_allowed(self):
-        """allowed when Devstate is ON and ObsState is READY OR SCANNINNG"""
+    def is_UpdateTimingBeamWeights_allowed(self: Fsp) -> bool:
+        """
+            Determine if UpdateTimingBeamWeights is allowed 
+            (allowed if FSP state is ON and ObsState is 
+            READY OR SCANNINNG).
+
+            :return: if UpdateTimingBeamWeights is allowed
+            :rtype: bool
+        """
         #TODO implement obsstate in FSP
         if self.dev_state() == tango.DevState.ON:
             return True
@@ -547,10 +760,17 @@ class Fsp(SKACapability):
         dtype_in='str',
         doc_in="Timing Beam Weights, per beam per receptor per group of 8 channels"
     )
-    def UpdateBeamWeights(self, argin):
+    def UpdateBeamWeights(
+        self: Fsp, 
+        argin: str,
+        ) -> None:
         # PROTECTED REGION ID(Fsp.UpdateTimingBeamWeights) ENABLED START #
+        """
+            Update the FSP's timing beam weights (serialized JSON object)
+
+            :param argin: the timing beam weight data
+        """
         self.logger.debug("Fsp.UpdateBeamWeights")
-        """update FSP's timing beam weights (serialized JSON object)"""
 
         # update if current function mode is PST-BF
         if self._function_mode == 3:
@@ -576,7 +796,7 @@ class Fsp(SKACapability):
                                 )
                                 self.logger.error(log_msg)
         else:
-            log_msg = "weights not usable in function mode {}".format(self._function_mode)
+            log_msg = "weights not used in function mode {}".format(self._function_mode)
             self.logger.error(log_msg)
         # PROTECTED REGION END #    // Fsp.UpdateTimingBeamWeights
 

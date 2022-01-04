@@ -1,11 +1,20 @@
 --extra-index-url https://artefact.skao.int/repository/pypi-internal/simple
+backoff
 numpy == 1.17.2
-pytango >= 9.3.3
 jsonschema >= 3.2.0
 ska-tango-base == 0.10.1
 ska-ser-logging
 ska-ser-log-transactions
-pytest
+pytango >= 9.3.3
+pytest >= 6.2.5
+pytest-bdd
 pytest-cov
+pytest-forked
 pytest-json-report
+pytest-mock
+pytest-xdist
+pytest-repeat
 pytest-pylint
+pyyaml
+scp
+paramiko
