@@ -65,12 +65,21 @@ deviceServers:
       - device: mid_csp_cbf/fsp/02 
       - device: mid_csp_cbf/fsp/03 
       - device: mid_csp_cbf/fsp/04
-      - device: mid_csp_cbf/talon_lru/001 
+      - device: mid_csp_cbf/talon_lru/001
+    server:
+      name: "CbfController"
+      instances:
+      - name: "controller"
+        classes:
+        - name: "CbfController"
+          devices:
+          - name: "mid_csp_cbf/sub_elt/controller"
     image:
       registry: "{{.Values.midcbf.image.registry}}"
       image: "{{.Values.midcbf.image.image}}"
       tag: "{{.Values.midcbf.image.tag}}"
       pullPolicy: "{{.Values.midcbf.image.pullPolicy}}"
+    expose: true
   - name: cbfsubarray01
     function: cbf-subarray-observation
     domain: subarray
