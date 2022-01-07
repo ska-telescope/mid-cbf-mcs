@@ -22,7 +22,9 @@ file_path = os.path.dirname(os.path.abspath(__file__))
 import json
 
 # Local imports
-from ska_mid_cbf_mcs.controller.controller_component_manager import ControllerComponentManager
+
+# uncomment the following after update to version 0.11.3 of base classes
+# from ska_mid_cbf_mcs.controller.controller_component_manager import ControllerComponentManager 
 from ska_tango_base.control_model import SimulationMode
 from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder
 from ska_tango_base.commands import ResultCode
@@ -31,62 +33,63 @@ from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder
 from ska_mid_cbf_mcs.testing.mock.mock_group import MockGroupBuilder
 from ska_mid_cbf_mcs.testing.tango_harness import TangoHarness
 
-@pytest.fixture(scope="function")
-def controller_component_manager(
-    logger: logging.Logger,
-    tango_harness: TangoHarness # sets the connection_factory
-) -> ControllerComponentManager:
-    """
-    Return a Controller component manager.
+# uncomment the following after update to version 0.11.3 of base classes
+# @pytest.fixture(scope="function")
+# def controller_component_manager(
+#     logger: logging.Logger,
+#     tango_harness: TangoHarness # sets the connection_factory
+# ) -> ControllerComponentManager:
+#     """
+#     Return a Controller component manager.
 
-    :param logger: the logger fixture
+#     :param logger: the logger fixture
 
-    :return: a Controller component manager.
-    """
+#     :return: a Controller component manager.
+#     """
 
-    class MockTalonDxComponentManager:
-        """
-        Class to mock the TalonDxComponentManager.
-        """
-        def __init__(self: MockTalonDxComponentManager) -> None:
-            pass
+#     class MockTalonDxComponentManager:
+#         """
+#         Class to mock the TalonDxComponentManager.
+#         """
+#         def __init__(self: MockTalonDxComponentManager) -> None:
+#             pass
 
-        def configure_talons(self: MockTalonDxComponentManager) -> ResultCode:
-            return ResultCode.OK
+#         def configure_talons(self: MockTalonDxComponentManager) -> ResultCode:
+#             return ResultCode.OK
     
-    f = open(file_path + "/../../data/controller_component_manager.json")
-    json_string = f.read().replace("\n", "")
-    f.close()
-    configuration = json.loads(json_string)
+#     f = open(file_path + "/../../data/controller_component_manager.json")
+#     json_string = f.read().replace("\n", "")
+#     f.close()
+#     configuration = json.loads(json_string)
 
-    fqdn_vcc = configuration["fqdn_vcc"]
-    fqdn_fsp = configuration["fqdn_fsp"]
-    fqdn_subarray = configuration["fqdn_subarray"]
-    fqdn_talon_lru = configuration["fqdn_talon_lru"]
+#     fqdn_vcc = configuration["fqdn_vcc"]
+#     fqdn_fsp = configuration["fqdn_fsp"]
+#     fqdn_subarray = configuration["fqdn_subarray"]
+#     fqdn_talon_lru = configuration["fqdn_talon_lru"]
 
-    count_vcc = configuration["count_vcc"]
-    count_fsp = configuration["count_fsp"]
-    count_subarray = configuration["count_subarray"]
-    count_talon_lru = configuration["count_talon_lru"]
+#     count_vcc = configuration["count_vcc"]
+#     count_fsp = configuration["count_fsp"]
+#     count_subarray = configuration["count_subarray"]
+#     count_talon_lru = configuration["count_talon_lru"]
 
-    talondx_component_manager = MockTalonDxComponentManager()
+#     talondx_component_manager = MockTalonDxComponentManager()
 
-    return ControllerComponentManager( 
-            [
-                fqdn_vcc,
-                fqdn_fsp,
-                fqdn_subarray,
-                fqdn_talon_lru
-            ],
-            [
-                count_vcc, 
-                count_fsp,
-                count_subarray, 
-                count_talon_lru,
-            ],
-            talondx_component_manager,
-            logger,
-        )
+#     return ControllerComponentManager( 
+#             [
+#                 fqdn_vcc,
+#                 fqdn_fsp,
+#                 fqdn_subarray,
+#                 fqdn_talon_lru
+#             ],
+#             [
+#                 count_vcc, 
+#                 count_fsp,
+#                 count_subarray, 
+#                 count_talon_lru,
+#             ],
+#             talondx_component_manager,
+#             logger,
+#         )
 
 @pytest.fixture()
 def mock_vcc() -> unittest.mock.Mock:

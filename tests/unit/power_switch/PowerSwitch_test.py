@@ -20,6 +20,9 @@ from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import SimulationMode
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 
+@pytest.mark.skip(
+        reason="Not updated to version 0.11.3 of the base classes."
+)
 def test_TurnOnOutlet_TurnOffOutlet(
     device_under_test: CbfDeviceProxy
 ) -> None:
@@ -55,6 +58,9 @@ def test_TurnOnOutlet_TurnOffOutlet(
         for j in range(0, num_outlets):
             assert device_under_test.GetOutletPowerMode(j) == outlets[j]
 
+@pytest.mark.skip(
+        reason="Not updated to version 0.11.3 of the base classes."
+)
 def test_connection_failure(
     device_under_test: CbfDeviceProxy
 ) -> None:

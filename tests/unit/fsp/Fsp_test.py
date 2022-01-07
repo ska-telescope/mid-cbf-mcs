@@ -41,6 +41,9 @@ class TestFsp:
     Test class for Fsp tests.
     """
 
+    @pytest.mark.skip(
+        reason="Not updated to version 0.11.3 of the base classes."
+    )
     def test_On_Off(
         self: TestFsp,
         device_under_test: CbfDeviceProxy
@@ -73,6 +76,9 @@ class TestFsp:
                 [1]
             )
         ]
+    )
+    @pytest.mark.skip(
+        reason="Not updated to version 0.11.3 of the base classes."
     )
     def test_AddRemoveSubarrayMembership(
         self: TestFsp,
@@ -135,6 +141,9 @@ class TestFsp:
                 1
             )
         ]
+    )
+    @pytest.mark.skip(
+        reason="Not updated to version 0.11.3 of the base classes."
     )
     def test_UpdateBeamWeights(
         self: TestFsp,
@@ -210,6 +219,9 @@ class TestFsp:
                 1
             )
         ]
+    )
+    @pytest.mark.skip(
+        reason="Not updated to version 0.11.3 of the base classes."
     )
     def test_UpdateJonesMatrix(
         self: TestFsp,
@@ -296,6 +308,9 @@ class TestFsp:
                 1
             )
         ]
+    )
+    @pytest.mark.skip(
+        reason="Not updated to version 0.11.3 of the base classes."
     )
     def test_UpdateDelayModel(
         self: TestFsp,
