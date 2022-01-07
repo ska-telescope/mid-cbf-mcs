@@ -40,6 +40,9 @@ class TestVcc:
         "vcc_id", 
         [1]
     )
+    @pytest.mark.skip(
+        reason="Not updated to version 0.11.3 of the base classes."
+    )
     def test_Vcc_ConfigureScan_basic(
         self,
         test_proxies: pytest.fixture,
