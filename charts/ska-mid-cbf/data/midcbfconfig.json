@@ -79,9 +79,7 @@
                                 "vcctoreceptor",
                                 "3000",
                                 "reportsubarraystate",
-                                "3000",
-                                "state",
-                                "1000"
+                                "3000"
                             ]
                         }
                     }

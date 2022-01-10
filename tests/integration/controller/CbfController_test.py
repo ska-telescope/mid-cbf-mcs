@@ -70,10 +70,10 @@ class TestCbfController:
                     assert test_proxies.fspSubarray[i][j][k].State() == DevState.OFF
 
         # send the On command
-        test_proxies.controller.On()
+        (result_code, message) = test_proxies.controller.On()
 
         #check states
-        test_proxies.wait_timeout_dev([test_proxies.controller], DevState.ON, 3, 0.1)
+        assert result_code == ResultCode.OK
         assert test_proxies.controller.State() == DevState.ON
 
         for i in range(1, test_proxies.num_sub + 1):
@@ -97,10 +97,10 @@ class TestCbfController:
         """
 
         # send the Off command
-        test_proxies.controller.Off()
+        (result_code, message) = test_proxies.controller.Off()
 
         # check states
-        test_proxies.wait_timeout_dev([test_proxies.controller], DevState.OFF, 3, 0.1)
+        assert result_code == ResultCode.OK
         assert test_proxies.controller.State() == DevState.OFF
 
         for i in range(1, test_proxies.num_sub + 1):
@@ -122,10 +122,10 @@ class TestCbfController:
         Test a valid use of the "Standby" command
         """
         # send the Standby command
-        test_proxies.controller.Standby()
+        (result_code, message) = test_proxies.controller.Standby()
 
         # check states
-        test_proxies.wait_timeout_dev([test_proxies.controller], DevState.STANDBY, 3, 0.1)
+        assert result_code == ResultCode.OK
         assert test_proxies.controller.State() == DevState.STANDBY
 
         for i in range(1, test_proxies.num_sub + 1):
