@@ -10,30 +10,37 @@
 # Copyright (c) 2019 National Research Council of Canada
 
 from __future__ import annotations
-from typing import Any, List, Tuple
+from typing import Any, List, Tuple, Callable, Optional
 
-from random import randint
-
-# tango imports
 import tango
-from tango import AttrQuality
 
 import logging
 
 from ska_mid_cbf_mcs.group_proxy import CbfGroupProxy
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
-from ska_tango_base.control_model import HealthState, AdminMode, SimulationMode
+from ska_tango_base.control_model import HealthState, AdminMode, PowerMode
 from ska_tango_base.commands import ResultCode
 
-class ControllerComponentManager:
+from ska_mid_cbf_mcs.component.component_manager import (
+    CommunicationStatus,
+    CbfComponentManager,
+)
+
+class ControllerComponentManager(CbfComponentManager):
     """A component manager for the CbfController device."""
 
     def __init__(
         self: ControllerComponentManager,
-        fqdns: List[str],
-        dev_counts: List[int],
+        get_num_capabilities,
+        vcc,
+        fsp,
+        subarray,
+        talon_lru,
         talondx_component_manager,
-        logger: logging.Logger
+        logger: logging.Logger,
+        push_change_event: Optional[Callable],
+        communication_status_changed_callback: Callable[[CommunicationStatus], None],
+        component_power_mode_changed_callback: Callable[[PowerMode], None],
     ) -> None:
         """
         Initialise a new instance.
@@ -45,33 +52,21 @@ class ControllerComponentManager:
 
         self._connected = False
 
-        self._fqdn_vcc, self._fqdn_fsp, self._fqdn_subarray, self._fqdn_talon_lru, = \
-            [fqdns[i] for i in range(len(fqdns))]
+        self._fqdn_vcc = []
+        self._fqdn_fsp = []
+        self._fqdn_subarray = []
+        self._fqdn_talon_lru = []
 
-        self._count_vcc, self._count_fsp, self._count_subarray, self._count_talon_lru, = \
-            [dev_counts[i] for i in range(len(dev_counts))]
+        self._vcc = vcc
+        self._fsp = fsp
+        self._subarray = subarray
+        self._talon_lru = talon_lru
+        self._get_max_capabilities = get_num_capabilities
 
         # TODO: component manager should not be passed into component manager
         self._talondx_component_manager =  talondx_component_manager
 
-        self._report_vcc_state = [tango.DevState.UNKNOWN] * self._count_vcc
-        self._report_vcc_health_state = [HealthState.UNKNOWN.value] * self._count_vcc
-        self._report_vcc_admin_mode = [AdminMode.ONLINE.value] * self._count_vcc
-        self._report_vcc_subarray_membership = [0] * self._count_vcc
-
-        self._report_fsp_state = [tango.DevState.UNKNOWN] * self._count_fsp
-        self._report_fsp_health_state = [HealthState.UNKNOWN.value] * self._count_fsp
-        self._report_fsp_admin_mode = [AdminMode.ONLINE.value] * self._count_fsp
-        self._report_fsp_subarray_membership = [[] for i in range(self._count_fsp)]
-
-        self._report_subarray_state = [tango.DevState.UNKNOWN] * self._count_subarray
-        self._report_subarray_health_state = [HealthState.UNKNOWN.value] * self._count_subarray
-        self._report_subarray_admin_mode = [AdminMode.ONLINE.value] * self._count_subarray
-        self._subarray_config_ID = [""] * self._count_subarray
-
-        self._report_talon_lru_state = [tango.DevState.UNKNOWN] * self._count_talon_lru
-        self._report_talon_lru_health_state = [HealthState.UNKNOWN.value] * self._count_talon_lru
-        self._report_talon_lru_admin_mode = [AdminMode.ONLINE.value] * self._count_talon_lru
+        self._max_capabilities = ""
 
         self._proxies = {}
         self._events = {} 
@@ -79,7 +74,13 @@ class ControllerComponentManager:
         self._receptor_to_vcc = []
         self._vcc_to_receptor = []
 
-        self.start_communicating()
+        super().__init__(
+            logger,
+            push_change_event,
+            communication_status_changed_callback,
+            component_power_mode_changed_callback,
+            None,
+        )
 
     @property
     def receptor_to_vcc(self: ControllerComponentManager) -> List[str]:
@@ -236,6 +237,52 @@ class ControllerComponentManager:
         if self._connected:
             return
 
+        super().start_communicating()
+
+        self._max_capabilities = self._get_max_capabilities()
+        if self._max_capabilities:
+                try:
+                    self._count_vcc = self._max_capabilities["VCC"]
+                except KeyError:  # not found in DB
+                    self._count_vcc = 197
+
+                try:
+                    self._count_fsp = self._max_capabilities["FSP"]
+                except KeyError:  # not found in DB
+                    self._count_fsp = 27
+
+                try:
+                    self._count_subarray = self._max_capabilities["Subarray"]
+                except KeyError:  # not found in DB
+                    self._count_subarray = 16
+        else:
+            self._logger.warn("MaxCapabilities device property not defined")
+        
+        self._fqdn_vcc = list(self._vcc)[:self._count_vcc]
+        self._fqdn_fsp = list(self._fsp)[:self._count_fsp]
+        self._fqdn_subarray = list(self._fsp)[:self._count_subarray]
+        self._fqdn_talon_lru = list(self._talon_lru)
+        
+        self._report_vcc_state = [tango.DevState.UNKNOWN] * self._count_vcc
+        self._report_vcc_health_state = [HealthState.UNKNOWN.value] * self._count_vcc
+        self._report_vcc_admin_mode = [AdminMode.ONLINE.value] * self._count_vcc
+        self._report_vcc_subarray_membership = [0] * self._count_vcc
+
+        self._report_fsp_state = [tango.DevState.UNKNOWN] * self._count_fsp
+        self._report_fsp_health_state = [HealthState.UNKNOWN.value] * self._count_fsp
+        self._report_fsp_admin_mode = [AdminMode.ONLINE.value] * self._count_fsp
+        self._report_fsp_subarray_membership = [[] for i in range(self._count_fsp)]
+
+        self._report_subarray_state = [tango.DevState.UNKNOWN] * self._count_subarray
+        self._report_subarray_health_state = [HealthState.UNKNOWN.value] * self._count_subarray
+        self._report_subarray_admin_mode = [AdminMode.ONLINE.value] * self._count_subarray
+        self._subarray_config_ID = [""] * self._count_subarray
+
+        self._count_talon_lru = len(self._talon_lru)
+        self._report_talon_lru_state = [tango.DevState.UNKNOWN] * self._count_talon_lru
+        self._report_talon_lru_health_state = [HealthState.UNKNOWN.value] * self._count_talon_lru
+        self._report_talon_lru_admin_mode = [AdminMode.ONLINE.value] * self._count_talon_lru
+
         # initialize dicts with maps receptorID <=> vccID
         # TODO: vccID == receptorID for now, for testing purposes
         for vccID in range(1, self._count_vcc + 1):
@@ -313,14 +360,22 @@ class ControllerComponentManager:
                     return
         
         self._connected = True
+        self.update_communication_status(CommunicationStatus.ESTABLISHED)
+        self.update_component_fault(False)
+        self.update_component_power_mode(PowerMode.OFF)
 
+    def stop_communicating(self: CbfComponentManager) -> None:
+        """Stop communication with the component"""
+        super().stop_communicating()
+        
+        self._connected = False
+        self.update_communication_status(CommunicationStatus.DISABLED)
 
     def __state_change_event_callback(
         self: ControllerComponentManager,
         fqdn: str,
         name: str,
         value: Any,
-        quality: AttrQuality
     ) -> None:
         """
         Callback for state/healthState change event subscription.
@@ -328,7 +383,6 @@ class ControllerComponentManager:
         :param fqdn: attribute FQDN
         :param name: attribute name
         :param value: attribute value
-        :param quality: attribute quality
         """
         if value is not None:
             try:
@@ -423,7 +477,6 @@ class ControllerComponentManager:
         fqdn: str,
         name: str,
         value: Any,
-        quality: AttrQuality
     ) -> None:
         """
         Callback for subarrayMembership change event subscription.
@@ -431,7 +484,6 @@ class ControllerComponentManager:
         :param fqdn: attribute FQDN
         :param name: attribute name
         :param value: attribute value
-        :param quality: attribute quality
         """
         if value is not None:
             try:
@@ -469,7 +521,6 @@ class ControllerComponentManager:
         fqdn: str,
         name: str,
         value: Any,
-        quality: AttrQuality
     ) -> None:
         """
         Callback for configID change event subscription.
@@ -477,7 +528,6 @@ class ControllerComponentManager:
         :param fqdn: attribute FQDN
         :param name: attribute name
         :param value: attribute value
-        :param quality: attribute quality
         """
 
         if value is not None:
@@ -494,7 +544,6 @@ class ControllerComponentManager:
                 f"None value for attribute {name} of device {fqdn}"
             )
 
-    
     def on(      
         self: ControllerComponentManager,
     ) -> Tuple[ResultCode, str]:
@@ -536,13 +585,18 @@ class ControllerComponentManager:
                             log_msg = f"Failure in connection to {fqdn}; {item.reason}"
                             self._logger.error(log_msg)
                             return (ResultCode.FAILED, log_msg)
+            
+            # Power On subordinate devices will not work until they are updated to v0.11.3
+            # TODO: remove the following lines when update to v0.11.3 complete
+            message = "CbfController On command completed OK"
+            return (ResultCode.OK, message)
 
             # Power on all the Talon boards
             # TODO: There are two VCCs per LRU. Need to check the number of 
             #       VCCs turned on against the number of LRUs powered on 
             try: 
                 for fqdn in self._fqdn_talon_lru:
-                    self._proxies[fqdn].On()
+                    self._proxies[fqdn].On() 
             except tango.DevFailed:
                 log_msg = "Failed to power on Talon boards"
                 self._logger.error(log_msg)
@@ -577,6 +631,11 @@ class ControllerComponentManager:
 
         if self._connected:
 
+            # Power Off subordinate devices will not work until they are updated to v0.11.3
+            # TODO: remove the following lines when update to v0.11.3 complete
+            message = "CbfController On command completed OK"
+            return (ResultCode.OK, message)
+            
             try:
                 for talon_lru_fqdn in self._fqdn_talon_lru:
                         self._proxies[talon_lru_fqdn].Off()

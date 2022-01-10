@@ -12,10 +12,5 @@
 
 from ska_mid_cbf_mcs.component.component_manager import CbfComponentManager
 
-def test_On(
-    cbf_component_manager: CbfComponentManager,
-) -> None:
-    """
-    Test 
-    """
+
     

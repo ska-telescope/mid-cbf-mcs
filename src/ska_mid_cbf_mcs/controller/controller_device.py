@@ -16,34 +16,25 @@ Sub-element controller device for Mid.CBf
 
 from __future__ import annotations  # allow forward references in type hints
 
-from typing import List, Tuple
-from random import randint
+from typing import List, Tuple, Optional
 
-# tango imports
 import tango
 from tango.server import run
 from tango.server import attribute, command
 from tango.server import device_property
 from tango import AttrWriteType
-# Additional import
-# PROTECTED REGION ID(CbfController.additionnal_import) ENABLED START #
-# add the path to import global_enum package.
 
-# SKA imports
 from ska_mid_cbf_mcs.controller.talondx_component_manager import TalonDxComponentManager
-from ska_mid_cbf_mcs.controller.controller_component_manager import ControllerComponentManager
-from ska_tango_base import SKAMaster, SKABaseDevice
-from ska_tango_base.control_model import HealthState, AdminMode, SimulationMode
+from ska_tango_base import SKAController, SKABaseDevice
+from ska_tango_base.control_model import SimulationMode, PowerMode
 from ska_tango_base.commands import ResultCode
-from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
-from ska_mid_cbf_mcs.group_proxy import CbfGroupProxy
-
-# PROTECTED REGION END #    //  CbfController.additionnal_import
+from ska_mid_cbf_mcs.controller.controller_component_manager import ControllerComponentManager
+from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
 
 __all__ = ["CbfController", "main"]
 
 
-class CbfController(SKAMaster):
+class CbfController(SKAController):
 
     """
     CbfController TANGO device class.
@@ -253,7 +244,7 @@ class CbfController(SKAMaster):
         """
         super().init_command_objects()
 
-        device_args = (self.component_manager, self.state_model, self.logger)
+        device_args = (self, self.op_state_model, self.logger)
 
         self.register_command_object(
             "On", self.OnCommand(*device_args)
@@ -266,13 +257,26 @@ class CbfController(SKAMaster):
         self.register_command_object(
             "Standby", self.StandbyCommand(*device_args)
         )
+    
+    def get_num_capabilities(
+            self: CbfController, 
+        ) -> None:
+            # self._max_capabilities inherited from SKAController
+            # check first if property exists in DB
+            """Get number of capabilities for _init_Device. 
+            If property not found in db, then assign a default amount(197,27,16)"""
 
-    class InitCommand(SKAMaster.InitCommand):
+            if self._max_capabilities:
+                return self._max_capabilities
+            else:
+                self.logger.warn("MaxCapabilities device property not defined")
+
+    class InitCommand(SKAController.InitCommand):
 
         def __get_num_capabilities(
             self: CbfController.InitCommand, 
         ) -> None:
-            # self._max_capabilities inherited from SKAMaster
+            # self._max_capabilities inherited from SKAController
             # check first if property exists in DB
             """Get number of capabilities for _init_Device. 
             If property not found in db, then assign a default amount(197,27,16)"""
@@ -309,40 +313,24 @@ class CbfController(SKAMaster):
             """
 
             self.logger.debug("Entering InitCommand()")
+            message = "Entering InitCommand()"
+            self.logger.info(message)
 
             super().do()
 
             device = self.target
 
+            # initialize attribute values
+            device._command_progress = 0
+
             # defines self._count_vcc, self._count_fsp, and self._count_subarray
             self.__get_num_capabilities()
 
-            device._count_talon_lru = len(device.TalonLRU)
-
-            device._storage_logging_level = tango.LogLevel.LOG_DEBUG
-            device._element_logging_level = tango.LogLevel.LOG_DEBUG
-            device._central_logging_level = tango.LogLevel.LOG_DEBUG
-
-            # initialize attribute values
+            # # initialize attribute values
             device._command_progress = 0
 
             device._frequency_offset_k = [0] * device._count_vcc
             device._frequency_offset_delta_f = [0] * device._count_vcc
-
-            # initialize lists with subarray/capability FQDNs
-            device._fqdn_vcc = list(device.VCC)[:device._count_vcc]
-            device._fqdn_fsp = list(device.FSP)[:device._count_fsp]
-            device._fqdn_subarray = list(device.CbfSubarray)[:device._count_subarray]
-            device._fqdn_talon_lru = list(device.TalonLRU)
-
-            # Create the Talon-DX component manager and initialize simulation
-            # mode to on
-            device._simulation_mode = SimulationMode.TRUE
-            device._talondx_component_manager = TalonDxComponentManager(
-                device.TalonDxConfigPath, device._simulation_mode, self.logger)
-            
-            # TODO: remove once updating to new base class version
-            device.component_manager = device.create_component_manager()
 
             message = "CbfController Init command completed OK"
             self.logger.info(message)
@@ -361,21 +349,29 @@ class CbfController(SKAMaster):
 
         :return: a component manager for this device.
         """
+
+        self.logger.debug("Entering create_component_manager()")
+
+        self._communication_status: Optional[CommunicationStatus] = None
+        self._component_power_mode: Optional[PowerMode] = None
+
+        # Create the Talon-DX component manager and initialize simulation
+        # mode to on
+        self._simulation_mode = SimulationMode.TRUE
+        self._talondx_component_manager = TalonDxComponentManager(
+            self.TalonDxConfigPath, self._simulation_mode, self.logger)
+
         return ControllerComponentManager( 
-            [
-                self._fqdn_vcc,
-                self._fqdn_fsp,
-                self._fqdn_subarray,
-                self._fqdn_talon_lru
-            ],
-            [
-                self._count_vcc, 
-                self._count_fsp,
-                self._count_subarray, 
-                self._count_talon_lru,
-            ],
+            self.get_num_capabilities,
+            self.VCC,
+            self.FSP,
+            self.CbfSubarray,
+            self.TalonLRU,
             self._talondx_component_manager,
             self.logger,
+            self.push_change_event,
+            self._communication_status_changed,
+            self._component_power_mode_changed,
         )
 
     def delete_device(self: CbfController) -> None:
@@ -558,13 +554,14 @@ class CbfController(SKAMaster):
                 information purpose only.
             :rtype: (ResultCode, str)
             """
-            
-            super().do()
 
-            component_manager = self.target
-            (result_code,message) = component_manager.on()
+            (result_code,message) = self.target.component_manager.on()
 
-            return (result_code,message)
+            if result_code == ResultCode.OK:
+                self.target._component_power_mode_changed(PowerMode.ON)
+
+            self.logger.info(message)
+            return (result_code, message)
 
     class OffCommand(SKABaseDevice.OffCommand):
         """
@@ -582,12 +579,13 @@ class CbfController(SKAMaster):
             :rtype: (ResultCode, str)
             """
 
-            super().do()
+            (result_code,message) = self.target.component_manager.off()
 
-            component_manager = self.target
-            (result_code,message) = component_manager.off()
+            if result_code == ResultCode.OK:
+                self.target._component_power_mode_changed(PowerMode.OFF)
 
-            return (result_code,message)
+            self.logger.info(message)
+            return (result_code, message)
 
     class StandbyCommand(SKABaseDevice.StandbyCommand):
         """
@@ -605,13 +603,83 @@ class CbfController(SKAMaster):
                 information purpose only.
             :rtype: (ResultCode, str)
             """
-            super().do()
+            
+            (result_code,message) = self.target.component_manager.standby()
 
-            component_manager = self.target
-            (result_code,message) = component_manager.standby()
+            if result_code == ResultCode.OK:
+                self.target._component_power_mode_changed(PowerMode.STANDBY)
 
-            return (result_code,message)
+            self.logger.info(message)
+            return (result_code, message)
+    
+    # ----------
+    # Callbacks
+    # ----------
+    def _communication_status_changed(
+        self: CbfController,
+        communication_status: CommunicationStatus,
+    ) -> None:
+        """
+        Handle change in communications status between component manager and component.
 
+        This is a callback hook, called by the component manager when
+        the communications status changes. It is implemented here to
+        drive the op_state.
+
+        :param communication_status: the status of communications
+            between the component manager and its component.
+        """
+
+        self._communication_status = communication_status
+
+        message = "Entering CbfController._communication_status_changed with status {}".format(communication_status)
+        self.logger.info(message)
+
+        message = "Entering CbfController._communication_status_changed with power mode {}".format(self._component_power_mode)
+        self.logger.info(message)
+
+        if communication_status == CommunicationStatus.DISABLED:
+            self.op_state_model.perform_action("component_disconnected")
+        elif communication_status == CommunicationStatus.NOT_ESTABLISHED:
+            self.op_state_model.perform_action("component_unknown")
+        elif self._component_power_mode == PowerMode.OFF:
+            self.op_state_model.perform_action("component_off")
+        elif self._component_power_mode == PowerMode.STANDBY:
+            self.op_state_model.perform_action("component_standby")
+        elif self._component_power_mode == PowerMode.ON:
+            self.op_state_model.perform_action("component_on")
+        elif self._component_power_mode == PowerMode.UNKNOWN:
+            self.op_state_model.perform_action("component_unknown")
+        else:  # self._component_power_mode is None
+            pass  # wait for a power mode update
+    
+    def _component_power_mode_changed(
+        self: CbfController,
+        power_mode: PowerMode,
+    ) -> None:
+        """
+        Handle change in the power mode of the component.
+
+        This is a callback hook, called by the component manager when
+        the power mode of the component changes. It is implemented here
+        to drive the op_state.
+
+        :param power_mode: the power mode of the component.
+        """
+        self._component_power_mode = power_mode
+
+        message = "Entering CbfController._component_power_mode_changed with mode {}".format(power_mode)
+        self.logger.info(message)
+
+        if self._communication_status == CommunicationStatus.ESTABLISHED:
+            action_map = {
+                PowerMode.OFF: "component_off",
+                PowerMode.STANDBY: "component_standby",
+                PowerMode.ON: "component_on",
+                PowerMode.UNKNOWN: "component_unknown",
+            }
+
+            self.op_state_model.perform_action(action_map[power_mode])
 
 # ----------
 # Run server

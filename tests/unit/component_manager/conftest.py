@@ -27,8 +27,8 @@ from ska_mid_cbf_mcs.testing.tango_harness import TangoHarness
 
 @pytest.fixture(scope="function")
 def cbf_component_manager(
+    tango_harness: TangoHarness, # sets the connection_factory
     logger: logging.Logger,
-    tango_harness: TangoHarness # sets the connection_factory
 ) -> CbfComponentManager:
     """
     Return a Cbf component manager.
@@ -38,6 +38,4 @@ def cbf_component_manager(
     :return: a Controller component manager.
     """
 
-    return CbfComponentManager( 
-            logger,
-        )
+    pass
