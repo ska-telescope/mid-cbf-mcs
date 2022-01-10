@@ -169,8 +169,6 @@
                                 "mid_csp_cbf/vcc/004"
                             ],
                             "polled_attr": [
-                                "state",
-                                "3000",
                                 "healthstate",
                                 "3000",
                                 "adminmode",
@@ -282,8 +280,6 @@
                                 "3000",
                                 "healthstate",
                                 "3000",
-                                "state",
-                                "3000",
                                 "obsstate",
                                 "50",
                                 "vcchealthstate",
@@ -387,8 +383,6 @@
                                 "mid_csp_cbf/vcc/004"
                             ],
                             "polled_attr": [
-                                "state",
-                                "3000",
                                 "healthstate",
                                 "3000",
                                 "adminmode",
@@ -482,8 +476,6 @@
                                 "3000",
                                 "healthstate",
                                 "3000",
-                                "state",
-                                "1000",
                                 "subarraymembership",
                                 "3000"
                             ]
@@ -766,8 +758,6 @@
                                 "3000",
                                 "healthstate",
                                 "3000",
-                                "state",
-                                "1000",
                                 "subarraymembership",
                                 "3000"
                             ]
@@ -1050,8 +1040,6 @@
                                 "3000",
                                 "healthstate",
                                 "3000",
-                                "state",
-                                "1000",
                                 "subarraymembership",
                                 "3000"
                             ]
@@ -1334,8 +1322,6 @@
                                 "3000",
                                 "healthstate",
                                 "3000",
-                                "state",
-                                "1000",
                                 "subarraymembership",
                                 "3000"
                             ]
@@ -1621,8 +1607,6 @@
                                 "1"
                             ],
                             "polled_attr": [
-                                "state",
-                                "1000",
                                 "healthstate",
                                 "3000",
                                 "adminmode",
@@ -1694,8 +1678,6 @@
                                 "2"
                             ],
                             "polled_attr": [
-                                "state",
-                                "1000",
                                 "healthstate",
                                 "3000",
                                 "adminmode",
@@ -1767,8 +1749,6 @@
                                 "3"
                             ],
                             "polled_attr": [
-                                "state",
-                                "1000",
                                 "healthstate",
                                 "3000",
                                 "adminmode",
@@ -1840,8 +1820,6 @@
                                 "4"
                             ],
                             "polled_attr": [
-                                "state",
-                                "1000",
                                 "healthstate",
                                 "3000",
                                 "adminmode",
@@ -1909,8 +1887,6 @@
                                 "1"
                             ],
                             "polled_attr": [
-                                "state",
-                                "1000",
                                 "healthstate",
                                 "3000",
                                 "adminmode",

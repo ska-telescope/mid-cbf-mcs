@@ -77,7 +77,6 @@ class TestCbfController:
         assert test_proxies.controller.State() == DevState.ON
 
         for i in range(1, test_proxies.num_sub + 1):
-            test_proxies.wait_timeout_dev([test_proxies.subarray[i]], DevState.ON, 3, 0.1)
             assert test_proxies.subarray[i].State() == DevState.ON
 
         for i in range(1, test_proxies.num_vcc + 1):
@@ -104,7 +103,6 @@ class TestCbfController:
         assert test_proxies.controller.State() == DevState.OFF
 
         for i in range(1, test_proxies.num_sub + 1):
-            test_proxies.wait_timeout_dev([test_proxies.subarray[i]], DevState.OFF, 3, 0.1)
             assert test_proxies.subarray[i].State() == DevState.OFF
 
         for i in range(1, test_proxies.num_vcc + 1):
@@ -129,7 +127,6 @@ class TestCbfController:
         assert test_proxies.controller.State() == DevState.STANDBY
 
         for i in range(1, test_proxies.num_sub + 1):
-            test_proxies.wait_timeout_dev([test_proxies.subarray[i]], DevState.OFF, 3, 0.1)
             assert test_proxies.subarray[i].State() == DevState.OFF
 
         for i in range(1, test_proxies.num_vcc + 1):
