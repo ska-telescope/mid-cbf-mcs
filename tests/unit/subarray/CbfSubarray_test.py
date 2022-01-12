@@ -52,7 +52,6 @@ class TestCbfSubarray:
             :py:class:`CbfDeviceProxy` to the device under test, in a
             :py:class:`tango.test_context.DeviceTestContext`.
         """
-        time.sleep(0.1)
         # check attributes after initialization
         assert device_under_test.State() == DevState.OFF
         # TODO: these asserts don't work
@@ -82,11 +81,9 @@ class TestCbfSubarray:
         """
         assert device_under_test.State() == DevState.OFF
         result = device_under_test.On()
-        time.sleep(3)
         assert result[0][0] == ResultCode.OK
         assert device_under_test.State() == DevState.ON
         result = device_under_test.Off()
-        time.sleep(3)
         assert result[0][0] == ResultCode.OK
         assert device_under_test.State() == DevState.OFF
 
@@ -118,36 +115,36 @@ class TestCbfSubarray:
             :py:class:`tango.test_context.DeviceTestContext`.
         """
         assert device_under_test.State() == DevState.OFF
-        device_under_test.On()
-        time.sleep(3)
+        result = device_under_test.On()
+        assert result[0][0] == ResultCode.OK
         assert device_under_test.State() == DevState.ON
 
          # add all except last receptor
         assert device_under_test.obsState == ObsState.EMPTY
-        device_under_test.AddReceptors(receptor_ids[:-1])
-        time.sleep(0.1)
+        result = device_under_test.AddReceptors(receptor_ids[:-1])
+        assert result[0][0] == ResultCode.OK
         assert [device_under_test.receptors[i] 
             for i in range(len(receptor_ids[:-1]))] == receptor_ids[:-1]
         assert device_under_test.obsState == ObsState.IDLE
 
         # add the last receptor
-        device_under_test.AddReceptors([receptor_ids[-1]])
-        time.sleep(0.1)
+        result = device_under_test.AddReceptors([receptor_ids[-1]])
+        assert result[0][0] == ResultCode.OK
         assert [device_under_test.receptors[i] 
             for i in range(len(receptor_ids))] == receptor_ids
         assert device_under_test.obsState == ObsState.IDLE
 
         # remove all except last receptor
-        device_under_test.RemoveReceptors(receptors_to_remove)
-        time.sleep(0.1)
+        result = device_under_test.RemoveReceptors(receptors_to_remove)
+        assert result[0][0] == ResultCode.OK
         receptor_ids_after_remove = [r for r in receptor_ids if r not in receptors_to_remove]
         for idx, receptor in enumerate(receptor_ids_after_remove):
             assert device_under_test.receptors[idx] == receptor
         assert device_under_test.obsState == ObsState.IDLE
 
         # remove remaining receptor
-        device_under_test.RemoveReceptors(receptor_ids_after_remove)
-        time.sleep(0.1)
+        result = device_under_test.RemoveReceptors(receptor_ids_after_remove)
+        assert result[0][0] == ResultCode.OK
         assert len(device_under_test.receptors) == 0
         assert device_under_test.obsState == ObsState.EMPTY
 
@@ -175,17 +172,17 @@ class TestCbfSubarray:
             :py:class:`tango.test_context.DeviceTestContext`.
         """
         assert device_under_test.State() == DevState.OFF
-        device_under_test.On()
-        time.sleep(3)
+        result = device_under_test.On()
+        assert result[0][0] == ResultCode.OK
         assert device_under_test.State() == DevState.ON
         assert device_under_test.obsState == ObsState.EMPTY
-        device_under_test.AddReceptors(receptor_ids)
-        time.sleep(0.1)
+        result = device_under_test.AddReceptors(receptor_ids)
+        assert result[0][0] == ResultCode.OK
         assert device_under_test.obsState == ObsState.IDLE
 
         # remove all receptors
-        device_under_test.RemoveAllReceptors()
-        time.sleep(0.1)
+        result = device_under_test.RemoveAllReceptors()
+        assert result[0][0] == ResultCode.OK
         assert len(device_under_test.receptors) == 0
         assert device_under_test.obsState == ObsState.EMPTY
 
@@ -214,20 +211,19 @@ class TestCbfSubarray:
             - when a receptor ID is invalid (e.g. out of range)
         """
         assert device_under_test.State() == DevState.OFF
-        device_under_test.On()
-        time.sleep(3)
+        result = device_under_test.On()
+        assert result[0][0] == ResultCode.OK
         assert device_under_test.State() == DevState.ON
 
         # add some receptors
         assert device_under_test.obsState == ObsState.EMPTY
-        device_under_test.AddReceptors(receptor_ids)
-        time.sleep(0.1)
+        result = device_under_test.AddReceptors(receptor_ids)
+        assert result[0][0] == ResultCode.OK
         assert [device_under_test.receptors[i] for i in range(len(receptor_ids))] == receptor_ids
         assert device_under_test.obsState == ObsState.IDLE
 
         # try adding an invalid receptor ID
         result = device_under_test.AddReceptors(invalid_receptor_id)
-        time.sleep(0.1)
         assert result[0][0] == ResultCode.FAILED
         assert device_under_test.obsState == ObsState.FAULT
 
@@ -256,13 +252,13 @@ class TestCbfSubarray:
             - when a receptor to be removed is not assigned to the subarray
         """
         assert device_under_test.State() == DevState.OFF
-        device_under_test.On()
-        time.sleep(3)
+        result = device_under_test.On()
+        assert result[0][0] == ResultCode.OK
         assert device_under_test.State() == DevState.ON
         # add some receptors
         assert device_under_test.obsState == ObsState.EMPTY
-        device_under_test.AddReceptors(receptor_ids)
-        time.sleep(0.1)
+        result = device_under_test.AddReceptors(receptor_ids)
+        assert result[0][0] == ResultCode.OK
         assert device_under_test.obsState == ObsState.IDLE
 
         # try removing a receptor not assigned to subarray 1
@@ -290,13 +286,13 @@ class TestCbfSubarray:
             - when a receptor to be removed is not assigned to the subarray
         """
         assert device_under_test.State() == DevState.OFF
-        device_under_test.On()
-        time.sleep(3)
+        result = device_under_test.On()
+        assert result[0][0] == ResultCode.OK
         assert device_under_test.State() == DevState.ON
         # add some receptors
         assert device_under_test.obsState == ObsState.EMPTY
-        device_under_test.AddReceptors(receptor_ids)
-        time.sleep(0.1)
+        result = device_under_test.AddReceptors(receptor_ids)
+        assert result[0][0] == ResultCode.OK
         assert device_under_test.obsState == ObsState.IDLE
 
         # try removing all receptors
@@ -328,17 +324,18 @@ class TestCbfSubarray:
         config_json = json.loads(config_string)
 
         assert device_under_test.State() == DevState.OFF
-        device_under_test.On()
-        time.sleep(3)
+        result = device_under_test.On()
+        assert result[0][0] == ResultCode.OK
         assert device_under_test.State() == DevState.ON
         assert device_under_test.obsState == ObsState.EMPTY
-        device_under_test.AddReceptors(receptor_ids)
-        time.sleep(0.1)
+        result = device_under_test.AddReceptors(receptor_ids)
+        assert result[0][0] == ResultCode.OK
         assert device_under_test.obsState == ObsState.IDLE
         
         # configure scan
-        device_under_test.ConfigureScan(config_string)
+        result = device_under_test.ConfigureScan(config_string)
         time.sleep(3) # ConfigureScan takes a while
+        assert result[0][0] == ResultCode.OK
         assert device_under_test.configID == config_json["common"]["config_id"]
         band_index = freq_band_dict()[config_json["common"]["frequency_band"]]
         assert device_under_test.frequencyBand == band_index 
@@ -376,25 +373,26 @@ class TestCbfSubarray:
         config_string = f1.read().replace("\n", "")
         f1.close()
         assert device_under_test.State() == DevState.OFF
-        device_under_test.On()
-        time.sleep(3)
+        result = device_under_test.On()
+        assert result[0][0] == ResultCode.OK
         assert device_under_test.State() == DevState.ON
         assert device_under_test.obsState == ObsState.EMPTY
-        device_under_test.AddReceptors(receptor_ids)
-        time.sleep(0.1)
+        result = device_under_test.AddReceptors(receptor_ids)
+        assert result[0][0] == ResultCode.OK
         assert device_under_test.obsState == ObsState.IDLE
-        device_under_test.ConfigureScan(config_string)
+        result = device_under_test.ConfigureScan(config_string)
         time.sleep(3)
+        assert result[0][0] == ResultCode.OK
         assert device_under_test.obsState == ObsState.READY
 
         # send the Scan command
         f2 = open(data_file_path + scan_file_name)
         json_string_scan = f2.read().replace("\n", "")
-        device_under_test.Scan(json_string_scan)
+        result = device_under_test.Scan(json_string_scan)
         f2.close()
         scan_id = json.loads(json_string_scan)["scan_id"]
-        time.sleep(0.1)
 
+        assert result[0][0] == ResultCode.STARTED
         assert device_under_test.obsState == ObsState.SCANNING
         assert device_under_test.scanID == scan_id
 
@@ -429,26 +427,27 @@ class TestCbfSubarray:
         config_string = f1.read().replace("\n", "")
         f1.close()
         assert device_under_test.State() == DevState.OFF
-        device_under_test.On()
-        time.sleep(3)
+        result = device_under_test.On()
+        assert result[0][0] == ResultCode.OK
         assert device_under_test.State() == DevState.ON
         assert device_under_test.obsState == ObsState.EMPTY
-        device_under_test.AddReceptors(receptor_ids)
-        time.sleep(0.1)
+        result = device_under_test.AddReceptors(receptor_ids)
+        assert result[0][0] == ResultCode.OK
         assert device_under_test.obsState == ObsState.IDLE
-        device_under_test.ConfigureScan(config_string)
+        result = device_under_test.ConfigureScan(config_string)
         time.sleep(3)
+        assert result[0][0] == ResultCode.OK
         assert device_under_test.obsState == ObsState.READY
         f2 = open(data_file_path + scan_file_name)
         json_string_scan = f2.read().replace("\n", "")
-        device_under_test.Scan(json_string_scan)
+        result = device_under_test.Scan(json_string_scan)
         f2.close()
-        time.sleep(0.1)
+        assert result[0][0] == ResultCode.STARTED
         assert device_under_test.obsState == ObsState.SCANNING
 
         # send the EndScan command
-        device_under_test.EndScan()
-        time.sleep(0.1)
+        result = device_under_test.EndScan()
+        assert result[0][0] == ResultCode.OK
 
         assert device_under_test.obsState == ObsState.READY
         assert device_under_test.scanID == 0
@@ -484,26 +483,27 @@ class TestCbfSubarray:
         config_string = f1.read().replace("\n", "")
         f1.close()
         assert device_under_test.State() == DevState.OFF
-        device_under_test.On()
-        time.sleep(3)
+        result = device_under_test.On()
+        assert result[0][0] == ResultCode.OK
         assert device_under_test.State() == DevState.ON
         assert device_under_test.obsState == ObsState.EMPTY
-        device_under_test.AddReceptors(receptor_ids)
-        time.sleep(0.1)
+        result = device_under_test.AddReceptors(receptor_ids)
+        assert result[0][0] == ResultCode.OK
         assert device_under_test.obsState == ObsState.IDLE
-        device_under_test.ConfigureScan(config_string)
+        result = device_under_test.ConfigureScan(config_string)
         time.sleep(3)
+        assert result[0][0] == ResultCode.OK
         assert device_under_test.obsState == ObsState.READY
         f2 = open(data_file_path + scan_file_name)
         json_string_scan = f2.read().replace("\n", "")
-        device_under_test.Scan(json_string_scan)
+        result = device_under_test.Scan(json_string_scan)
         f2.close()
-        time.sleep(0.1)
+        assert result[0][0] == ResultCode.STARTED
         assert device_under_test.obsState == ObsState.SCANNING
 
         # send the Abort command
-        device_under_test.Abort()
-        time.sleep(0.1)
+        result = device_under_test.Abort()
+        assert result[0][0] == ResultCode.OK
 
         assert device_under_test.obsState == ObsState.ABORTED
 
@@ -538,29 +538,31 @@ class TestCbfSubarray:
         config_string = f1.read().replace("\n", "")
         f1.close()
         assert device_under_test.State() == DevState.OFF
-        device_under_test.On()
-        time.sleep(3)
+        result = device_under_test.On()
+        assert result[0][0] == ResultCode.OK
         assert device_under_test.State() == DevState.ON
         assert device_under_test.obsState == ObsState.EMPTY
-        device_under_test.AddReceptors(receptor_ids)
-        time.sleep(0.1)
+        result = device_under_test.AddReceptors(receptor_ids)
+        assert result[0][0] == ResultCode.OK
         assert device_under_test.obsState == ObsState.IDLE
-        device_under_test.ConfigureScan(config_string)
+        result = device_under_test.ConfigureScan(config_string)
         time.sleep(3)
+        assert result[0][0] == ResultCode.OK
         assert device_under_test.obsState == ObsState.READY
         f2 = open(data_file_path + scan_file_name)
         json_string_scan = f2.read().replace("\n", "")
-        device_under_test.Scan(json_string_scan)
+        result = device_under_test.Scan(json_string_scan)
         f2.close()
-        time.sleep(0.1)
+        assert result[0][0] == ResultCode.STARTED
         assert device_under_test.obsState == ObsState.SCANNING
-        device_under_test.Abort()
-        time.sleep(0.1)
+        result = device_under_test.Abort()
+        assert result[0][0] == ResultCode.OK
         assert device_under_test.obsState == ObsState.ABORTED
 
         # send the Reset command
-        device_under_test.ObsReset()
+        result = device_under_test.ObsReset()
         time.sleep(3)
+        assert result[0][0] == ResultCode.OK
 
         assert device_under_test.obsState == ObsState.IDLE
         assert device_under_test.configID == ""
@@ -598,29 +600,31 @@ class TestCbfSubarray:
         config_string = f1.read().replace("\n", "")
         f1.close()
         assert device_under_test.State() == DevState.OFF
-        device_under_test.On()
-        time.sleep(3)
+        result = device_under_test.On()
+        assert result[0][0] == ResultCode.OK
         assert device_under_test.State() == DevState.ON
         assert device_under_test.obsState == ObsState.EMPTY
-        device_under_test.AddReceptors(receptor_ids)
-        time.sleep(0.1)
+        result = device_under_test.AddReceptors(receptor_ids)
+        assert result[0][0] == ResultCode.OK
         assert device_under_test.obsState == ObsState.IDLE
-        device_under_test.ConfigureScan(config_string)
+        result = device_under_test.ConfigureScan(config_string)
         time.sleep(3)
+        assert result[0][0] == ResultCode.OK
         assert device_under_test.obsState == ObsState.READY
         f2 = open(data_file_path + scan_file_name)
         json_string_scan = f2.read().replace("\n", "")
-        device_under_test.Scan(json_string_scan)
+        result = device_under_test.Scan(json_string_scan)
         f2.close()
-        time.sleep(0.1)
+        assert result[0][0] == ResultCode.STARTED
         assert device_under_test.obsState == ObsState.SCANNING
-        device_under_test.Abort()
-        time.sleep(0.1)
+        result = device_under_test.Abort()
+        assert result[0][0] == ResultCode.OK
         assert device_under_test.obsState == ObsState.ABORTED
 
         # send the Reset command
-        device_under_test.Restart()
+        result = device_under_test.Restart()
         time.sleep(3)
+        assert result[0][0] == ResultCode.OK
 
         assert device_under_test.obsState == ObsState.EMPTY
         assert device_under_test.configID == ""
@@ -652,19 +656,21 @@ class TestCbfSubarray:
         config_string = f1.read().replace("\n", "")
         f1.close()
         assert device_under_test.State() == DevState.OFF
-        device_under_test.On()
-        time.sleep(3)
+        result = device_under_test.On()
+        assert result[0][0] == ResultCode.OK
         assert device_under_test.State() == DevState.ON
         assert device_under_test.obsState == ObsState.EMPTY
-        device_under_test.AddReceptors(receptor_ids)
-        time.sleep(0.1)
+        result = device_under_test.AddReceptors(receptor_ids)
+        assert result[0][0] == ResultCode.OK
         assert device_under_test.obsState == ObsState.IDLE
-        device_under_test.ConfigureScan(config_string)
+        result = device_under_test.ConfigureScan(config_string)
         time.sleep(3)
+        assert result[0][0] == ResultCode.OK
         assert device_under_test.obsState == ObsState.READY
 
-        device_under_test.GoToIdle()
+        result = device_under_test.GoToIdle()
         time.sleep(3)
+        assert result[0][0] == ResultCode.OK
         assert device_under_test.obsState == ObsState.IDLE
         assert device_under_test.frequencyBand == 0
         assert device_under_test.configID == ""

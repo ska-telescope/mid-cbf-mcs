@@ -103,8 +103,8 @@ class TestVcc:
             # so this shouldn't happen
             logging.error("Incorrect frequency band: " + freq_band_name)
 
-        test_proxies.vcc[vcc_id].ConfigureScan(json_str)
-        test_proxies.wait_timeout_obs([test_proxies.vcc[vcc_id]], ObsState.READY, 3, 1)
+        (result_code, message) = test_proxies.vcc[vcc_id].ConfigureScan(json_str)
+        assert result_code == ResultCode.OK
 
         assert test_proxies.vcc[vcc_id].configID == configuration["config_id"]
         assert test_proxies.vcc[vcc_id].frequencyBand == configuration["frequency_band"]

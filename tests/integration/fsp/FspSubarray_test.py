@@ -109,8 +109,8 @@ class TestFspPstSubarray:
             (result_code, message) = subarray.On()
             assert result_code == ResultCode.OK
         if subarray.ObsState == ObsState.FAULT:
-            subarray.Restart()
-            test_proxies.wait_timeout_obs([device_under_test], ObsState.EMPTY, 3, 1)
+            (result_code, message) = subarray.Restart()
+            assert result_code == ResultCode.OK
         elif len(subarray.receptors) != 0:
             subarray.RemoveAllReceptors()
             time.sleep(1)
