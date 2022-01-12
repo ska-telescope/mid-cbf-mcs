@@ -31,6 +31,7 @@ from tango.server import command
 from ska_mid_cbf_mcs.testing.tango_harness import DeviceToLoadType
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_tango_base.control_model import HealthState, AdminMode, ObsState
+from ska_tango_base.commands import ResultCode
 from ska_mid_cbf_mcs.commons.global_enum import const, freq_band_dict
 
 class TestFspCorrSubarray:
@@ -96,17 +97,14 @@ class TestFspCorrSubarray:
 
         # Use callable 'Scan'  API
         device_under_test.Scan(scan_id_device_data)
-        time.sleep(0.1)
         assert device_under_test.scanID == scan_id
         assert device_under_test.obsState == ObsState.SCANNING
 
 
         device_under_test.EndScan()
-        time.sleep(0.1)
         assert device_under_test.obsState == ObsState.READY
 
         device_under_test.GoToIdle()
-        time.sleep(0.1)
         assert device_under_test.obsState == ObsState.IDLE
 
     @pytest.mark.parametrize(

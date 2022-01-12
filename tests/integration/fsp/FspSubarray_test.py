@@ -27,6 +27,7 @@ import pytest
 # SKA imports
 
 from ska_tango_base.control_model import HealthState, AdminMode, ObsState
+from ska_tango_base.commands import ResultCode
 
 
 class TestFspPstSubarray:
@@ -52,8 +53,8 @@ class TestFspPstSubarray:
             :py:class:`tango.DeviceProxy` to the FspPstSubarray under test.
         """
         device_under_test = test_proxies.fspSubarray["PST-BF"][sub_id][fsp_id]
-        device_under_test.On()
-        test_proxies.wait_timeout_dev([device_under_test], DevState.ON, 3, 1)
+        (result_code, message) = device_under_test.On()
+        assert result_code == ResultCode.OK
         assert device_under_test.State() == DevState.ON
 
     @pytest.mark.parametrize(
@@ -74,8 +75,8 @@ class TestFspPstSubarray:
             :py:class:`tango.DeviceProxy` to the FspPstSubarray under test.
         """
         device_under_test = test_proxies.fspSubarray["PST-BF"][sub_id][fsp_id]
-        device_under_test.Off()
-        test_proxies.wait_timeout_dev([device_under_test], DevState.OFF, 3, 1)
+        (result_code, message) = device_under_test.Off()
+        assert result_code == ResultCode.OK
         assert device_under_test.State() == DevState.OFF
 
     @pytest.mark.parametrize(
@@ -105,11 +106,11 @@ class TestFspPstSubarray:
 
         # TODO implement proper reset of proxies for this test class
         if subarray.State() == DevState.OFF:
-            subarray.On()
-            test_proxies.wait_timeout_dev([device_under_test], DevState.ON, 3, 1)
+            (result_code, message) = subarray.On()
+            assert result_code == ResultCode.OK
         if subarray.ObsState == ObsState.FAULT:
-            subarray.Restart()
-            test_proxies.wait_timeout_dev([device_under_test], ObsState.EMPTY, 3, 1)
+            (result_code, message) = subarray.Restart()
+            assert result_code == ResultCode.OK
         elif len(subarray.receptors) != 0:
             subarray.RemoveAllReceptors()
             time.sleep(1)

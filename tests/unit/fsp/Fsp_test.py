@@ -55,12 +55,12 @@ class TestFsp:
     
         assert device_under_test.State() == DevState.OFF
 
-        device_under_test.On()
-        time.sleep(3)
+        (result_code, message) = device_under_test.On()
+        assert result_code == ResultCode.OK
         assert device_under_test.State() == DevState.ON
 
-        device_under_test.Off()
-        time.sleep(3)
+        (result_code, message) = device_under_test.Off()
+        assert result_code == ResultCode.OK
         assert device_under_test.State() == DevState.OFF
     
     @pytest.mark.parametrize(
@@ -91,8 +91,8 @@ class TestFsp:
 
         assert device_under_test.State() == DevState.OFF
 
-        device_under_test.On()
-        time.sleep(3)
+        (result_code, message) = device_under_test.On()
+        assert result_code == ResultCode.OK
         assert device_under_test.State() == DevState.ON
 
         # subarray membership should be empty
@@ -153,8 +153,8 @@ class TestFsp:
         """
 
         assert device_under_test.State() == DevState.OFF
-        device_under_test.On()
-        time.sleep(3)
+        (result_code, message) = device_under_test.On()
+        assert result_code == ResultCode.OK
         assert device_under_test.State() == DevState.ON
         device_under_test.AddSubarrayMembership(sub_id)
         time.sleep(3)
@@ -233,8 +233,8 @@ class TestFsp:
         """
 
         assert device_under_test.State() == DevState.OFF
-        device_under_test.On()
-        time.sleep(3)
+        (result_code, message) = device_under_test.On()
+        assert result_code == ResultCode.OK
         assert device_under_test.State() == DevState.ON
         device_under_test.AddSubarrayMembership(sub_id)
         time.sleep(3)
@@ -319,8 +319,8 @@ class TestFsp:
         """
 
         assert device_under_test.State() == DevState.OFF
-        device_under_test.On()
-        time.sleep(3)
+        (result_code, message) = device_under_test.On()
+        assert result_code == ResultCode.OK
         assert device_under_test.State() == DevState.ON
         device_under_test.AddSubarrayMembership(sub_id)
         time.sleep(3)

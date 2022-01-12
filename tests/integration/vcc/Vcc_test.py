@@ -27,8 +27,8 @@ import pytest
 
 # SKA specific imports
 from ska_mid_cbf_mcs.commons.global_enum import freq_band_dict
-from ska_tango_base.control_model import LoggingLevel, HealthState
-from ska_tango_base.control_model import AdminMode, ObsState
+from ska_tango_base.control_model import LoggingLevel, HealthState, AdminMode, ObsState
+from ska_tango_base.commands import ResultCode
 
 
 class TestVcc:
@@ -53,19 +53,17 @@ class TestVcc:
         # after being initialised, should not have to manually
         # turn off
 
-        test_proxies.vcc[vcc_id].Off()
-        test_proxies.wait_timeout_dev([test_proxies.vcc[vcc_id]], DevState.OFF, 3, 1)
+        (result_code, message) = test_proxies.vcc[vcc_id].Off()
+        assert result_code == ResultCode.OK
         assert test_proxies.vcc[vcc_id].State() == DevState.OFF
 
         for band in ["12", "3", "4", "5"]:
-            test_proxies.vccBand[vcc_id][band].Off()
-            test_proxies.wait_timeout_dev(
-                [test_proxies.vccBand[vcc_id][band]], DevState.OFF, 3, 1
-            )
+            (result_code, message) = test_proxies.vccBand[vcc_id][band].Off()
+            assert result_code == ResultCode.OK
             assert test_proxies.vccBand[vcc_id][band].State() == DevState.OFF
 
-        test_proxies.vcc[vcc_id].On()
-        test_proxies.wait_timeout_dev([test_proxies.vcc[vcc_id]], DevState.ON, 3, 1)
+        (result_code, message) = test_proxies.vcc[vcc_id].On()
+        assert result_code == ResultCode.OK
         assert test_proxies.vcc[vcc_id].State() == DevState.ON
         
         config_file_name = "Vcc_ConfigureScan_basic.json"
@@ -105,8 +103,8 @@ class TestVcc:
             # so this shouldn't happen
             logging.error("Incorrect frequency band: " + freq_band_name)
 
-        test_proxies.vcc[vcc_id].ConfigureScan(json_str)
-        test_proxies.wait_timeout_obs([test_proxies.vcc[vcc_id]], ObsState.READY, 3, 1)
+        (result_code, message) = test_proxies.vcc[vcc_id].ConfigureScan(json_str)
+        assert result_code == ResultCode.OK
 
         assert test_proxies.vcc[vcc_id].configID == configuration["config_id"]
         assert test_proxies.vcc[vcc_id].frequencyBand == configuration["frequency_band"]
@@ -143,6 +141,6 @@ class TestVcc:
             # so this shouldn't happen
             logging.error("Incorrect frequency band: " + freq_band_name)
 
-        test_proxies.vcc[vcc_id].Off()
-        test_proxies.wait_timeout_dev([test_proxies.vcc[vcc_id]], DevState.OFF, 3, 1)
+        (result_code, message) = test_proxies.vcc[vcc_id].Off()
+        assert result_code == ResultCode.OK
         assert test_proxies.vcc[vcc_id].State() == DevState.OFF
