@@ -127,3 +127,6 @@ mnt/talondx-config/*
 
 # docs folder (copied content during document generation)
 docs/src/README.md
+
+# OS things
+.DS_Store

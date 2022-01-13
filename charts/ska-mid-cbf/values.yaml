@@ -11,11 +11,12 @@ system: csp
 subsystem: cbfmcs-mid
 telescope: SKA-mid
 
+labels:
+  app: ska-mid-cbf
+
 global:
   minikube: true
   tango_host: databaseds-tango-base-test:10000
-  labels:
-    app: ska-mid-cbf-mcs
 annotations:
     app.gitlab.com/app: CI_PROJECT_PATH_SLUG
     app.gitlab.com/env: CI_ENVIRONMENT_SLUG  
