@@ -14,6 +14,8 @@ from __future__ import annotations
 # Standard imports
 import os
 import pytest
+import unittest
+import time
 
 # Path
 file_path = os.path.dirname(os.path.abspath(__file__))
@@ -25,15 +27,15 @@ from tango.server import command
 #SKA imports
 from ska_tango_base.commands import ResultCode
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
+from ska_tango_base.control_model import AdminMode
+
+CONST_WAIT_TIME = 5
 
 class TestCbfController:
     """
     Test class for CbfController tests.
     """
     
-    @pytest.mark.skip(
-        reason="Not updated to version 0.11.3 of the base classes."
-    )
     def test_State(
         self: TestCbfController,
         device_under_test: CbfDeviceProxy,
@@ -45,14 +47,34 @@ class TestCbfController:
             :py:class:`CbfDeviceProxy` to the device under test, in a
             :py:class:`tango.test_context.DeviceTestContext`.
         """
-        assert device_under_test.State() == DevState.OFF
-
-    @pytest.mark.skip(
-        reason="Not updated to version 0.11.3 of the base classes."
-    )
-    def test_On(
+        assert device_under_test.State() == DevState.DISABLE
+    
+    def test_Status(
         self: TestCbfController,
-        device_under_test: CbfDeviceProxy
+        device_under_test: CbfDeviceProxy,
+    ) -> None:
+
+        assert device_under_test.Status() == "The device is in DISABLE state."
+
+    def test_adminMode(
+        self: TestCbfController,
+        device_under_test: CbfDeviceProxy,
+    ) -> None:
+
+        assert device_under_test.adminMode == AdminMode.OFFLINE
+
+    @pytest.mark.parametrize(
+        "command",
+        [
+            "On",
+            "Off",
+            "Standby"
+        ]
+    )
+    def test_Commands(
+        self: TestCbfController,
+        device_under_test: CbfDeviceProxy,
+        command: str
     ) -> None:
         """
         Test On command.
@@ -61,38 +83,23 @@ class TestCbfController:
             :py:class:`CbfDeviceProxy` to the device under test, in a
             :py:class:`tango.test_context.DeviceTestContext`.
         """
-        result = device_under_test.On()
-        assert result[0][0] == ResultCode.OK
-        assert device_under_test.State() == DevState.ON
 
-    @pytest.mark.skip(
-        reason="Not updated to version 0.11.3 of the base classes."
-    )
-    def test_Off(
-        self: TestCbfController,
-        device_under_test: CbfDeviceProxy
-    ) -> None:
-        """
-        Test Off command.
+        device_under_test.write_attribute("adminMode", AdminMode.ONLINE)
+        time.sleep(CONST_WAIT_TIME)
+        assert device_under_test.adminMode == AdminMode.ONLINE
 
-        :param device_under_test: fixture that provides a
-            :py:class:`CbfDeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
-        """
-        result = device_under_test.Off()
-        assert result[0][0] == ResultCode.OK
         assert device_under_test.State() == DevState.OFF
 
-    @pytest.mark.skip(
-        reason="Not updated to version 0.11.3 of the base classes."
-    )
-    def test_Standby(
-        self: TestCbfController,
-        device_under_test: CbfDeviceProxy
-    ) -> None:
+        if command == "On":
+            state = DevState.ON
+            result = device_under_test.On()
+        elif command == "Off":
+            state = DevState.OFF
+            result = device_under_test.Off()
+        elif command == "Standby":
+            state = DevState.STANDBY
+            result = device_under_test.Standby()
 
-        result = device_under_test.Standby()
+        time.sleep(CONST_WAIT_TIME)
         assert result[0][0] == ResultCode.OK
-        assert device_under_test.State() == DevState.STANDBY
-    
-
+        assert device_under_test.State() == state
