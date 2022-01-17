@@ -14,12 +14,9 @@ from typing import Any, Callable, Optional
 
 import logging
 import enum
-import threading
 
 from ska_tango_base.base import BaseComponentManager
 from ska_tango_base.control_model import PowerMode
-
-from ska_mid_cbf_mcs.utils import ThreadsafeCheckingMeta, threadsafe
 
 __all__ = [
     "CommunicationStatus",
@@ -64,7 +61,7 @@ class CommunicationStatus(enum.Enum):
       the component manager has connected to its component.
     """
 
-class CbfComponentManager(BaseComponentManager, metaclass=ThreadsafeCheckingMeta):
+class CbfComponentManager(BaseComponentManager):
 
     def __init__(
         self: CbfComponentManager,
@@ -89,13 +86,11 @@ class CbfComponentManager(BaseComponentManager, metaclass=ThreadsafeCheckingMeta
         assert push_change_event
         self._push_change_event = push_change_event
 
-        self.__communication_lock = threading.Lock()
         self._communication_status = CommunicationStatus.DISABLED
         self._communication_status_changed_callback = (
             communication_status_changed_callback
         )
 
-        self._power_mode_lock = threading.RLock()
         self._power_mode: Optional[PowerMode] = None
         self._component_power_mode_changed_callback = (
             component_power_mode_changed_callback
@@ -120,11 +115,9 @@ class CbfComponentManager(BaseComponentManager, metaclass=ThreadsafeCheckingMeta
             return
 
         self.update_communication_status(CommunicationStatus.DISABLED)
-        with self._power_mode_lock:
-            self.update_component_power_mode(None)
+        self.update_component_power_mode(None)
         self.update_component_fault(None)
 
-    @threadsafe
     def update_communication_status(
         self: CbfComponentManager,
         communication_status: CommunicationStatus,
@@ -138,10 +131,9 @@ class CbfComponentManager(BaseComponentManager, metaclass=ThreadsafeCheckingMeta
             component manager.
         """
         if self._communication_status != communication_status:
-            with self.__communication_lock:
-                self._communication_status = communication_status
-                if self._communication_status_changed_callback is not None:
-                    self._communication_status_changed_callback(communication_status)
+            self._communication_status = communication_status
+            if self._communication_status_changed_callback is not None:
+                self._communication_status_changed_callback(communication_status)
 
     @property
     def is_communicating(self: CbfComponentManager) -> bool:
@@ -168,7 +160,6 @@ class CbfComponentManager(BaseComponentManager, metaclass=ThreadsafeCheckingMeta
         """
         return self._communication_status
 
-    @threadsafe
     def update_component_power_mode(
         self: CbfComponentManager, power_mode: Optional[PowerMode]
     ) -> None:
@@ -200,8 +191,7 @@ class CbfComponentManager(BaseComponentManager, metaclass=ThreadsafeCheckingMeta
 
         :param power_mode: the new power mode of the component
         """
-        with self._power_mode_lock:
-            self.update_component_power_mode(power_mode)
+        self.update_component_power_mode(power_mode)
 
     @property
     def power_mode(self: CbfComponentManager) -> Optional[PowerMode]:
