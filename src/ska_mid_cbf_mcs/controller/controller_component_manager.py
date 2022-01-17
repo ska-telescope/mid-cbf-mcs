@@ -13,6 +13,7 @@ from __future__ import annotations
 from typing import Any, List, Tuple, Callable, Optional
 
 import tango
+from tango import AttrQuality
 
 import logging
 
@@ -25,6 +26,11 @@ from ska_mid_cbf_mcs.component.component_manager import (
     CommunicationStatus,
     CbfComponentManager,
 )
+
+CONST_NUM_DEV = 4
+CONST_DEFAULT_COUNT_VCC = 197
+CONST_DEFAULT_COUNT_FSP = 27
+CONST_DEFAULT_COUNT_SUBARRAY = 16
 
 class ControllerComponentManager(CbfComponentManager):
     """A component manager for the CbfController device."""
@@ -52,10 +58,8 @@ class ControllerComponentManager(CbfComponentManager):
 
         self._connected = False
 
-        self._fqdn_vcc = []
-        self._fqdn_fsp = []
-        self._fqdn_subarray = []
-        self._fqdn_talon_lru = []
+        self._fqdn_vcc, self._fqdn_fsp, self._fqdn_subarray, self._fqdn_talon_lru  \
+            = ([] for i in range(CONST_NUM_DEV))
 
         self._vcc = vcc
         self._fsp = fsp
@@ -244,17 +248,17 @@ class ControllerComponentManager(CbfComponentManager):
                 try:
                     self._count_vcc = self._max_capabilities["VCC"]
                 except KeyError:  # not found in DB
-                    self._count_vcc = 197
+                    self._count_vcc = CONST_DEFAULT_COUNT_VCC
 
                 try:
                     self._count_fsp = self._max_capabilities["FSP"]
                 except KeyError:  # not found in DB
-                    self._count_fsp = 27
+                    self._count_fsp = CONST_DEFAULT_COUNT_FSP
 
                 try:
                     self._count_subarray = self._max_capabilities["Subarray"]
                 except KeyError:  # not found in DB
-                    self._count_subarray = 16
+                    self._count_subarray = CONST_DEFAULT_COUNT_SUBARRAY
         else:
             self._logger.warn("MaxCapabilities device property not defined")
         
@@ -376,6 +380,7 @@ class ControllerComponentManager(CbfComponentManager):
         fqdn: str,
         name: str,
         value: Any,
+        quality: AttrQuality
     ) -> None:
         """
         Callback for state/healthState change event subscription.
@@ -383,6 +388,7 @@ class ControllerComponentManager(CbfComponentManager):
         :param fqdn: attribute FQDN
         :param name: attribute name
         :param value: attribute value
+        :param quality: attribute quality
         """
         if value is not None:
             try:
@@ -477,6 +483,7 @@ class ControllerComponentManager(CbfComponentManager):
         fqdn: str,
         name: str,
         value: Any,
+        quality: AttrQuality
     ) -> None:
         """
         Callback for subarrayMembership change event subscription.
@@ -484,6 +491,7 @@ class ControllerComponentManager(CbfComponentManager):
         :param fqdn: attribute FQDN
         :param name: attribute name
         :param value: attribute value
+        :param quality: attribute quality
         """
         if value is not None:
             try:
@@ -521,6 +529,7 @@ class ControllerComponentManager(CbfComponentManager):
         fqdn: str,
         name: str,
         value: Any,
+        quality: AttrQuality
     ) -> None:
         """
         Callback for configID change event subscription.
@@ -528,6 +537,7 @@ class ControllerComponentManager(CbfComponentManager):
         :param fqdn: attribute FQDN
         :param name: attribute name
         :param value: attribute value
+        :param quality: attribute quality
         """
 
         if value is not None:

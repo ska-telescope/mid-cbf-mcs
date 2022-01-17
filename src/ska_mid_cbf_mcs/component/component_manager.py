@@ -19,6 +19,8 @@ import threading
 from ska_tango_base.base import BaseComponentManager
 from ska_tango_base.control_model import PowerMode
 
+from ska_mid_cbf_mcs.utils import ThreadsafeCheckingMeta, threadsafe
+
 __all__ = [
     "CommunicationStatus",
     "CbfComponentManager",
@@ -62,7 +64,7 @@ class CommunicationStatus(enum.Enum):
       the component manager has connected to its component.
     """
 
-class CbfComponentManager(BaseComponentManager):
+class CbfComponentManager(BaseComponentManager, metaclass=ThreadsafeCheckingMeta):
 
     def __init__(
         self: CbfComponentManager,
@@ -122,6 +124,7 @@ class CbfComponentManager(BaseComponentManager):
             self.update_component_power_mode(None)
         self.update_component_fault(None)
 
+    @threadsafe
     def update_communication_status(
         self: CbfComponentManager,
         communication_status: CommunicationStatus,
@@ -165,6 +168,7 @@ class CbfComponentManager(BaseComponentManager):
         """
         return self._communication_status
 
+    @threadsafe
     def update_component_power_mode(
         self: CbfComponentManager, power_mode: Optional[PowerMode]
     ) -> None:
@@ -246,6 +250,3 @@ class CbfComponentManager(BaseComponentManager):
             experiencing a fault.
         """
         return self._faulty
-
-
-    
