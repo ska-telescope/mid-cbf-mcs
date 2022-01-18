@@ -21,7 +21,7 @@ import pytest
 
 #Local imports
 
-from ska_tango_base import SKABaseDevice
+from ska_tango_base.base import SKABaseDevice
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import (
     AdminMode, ControlMode, HealthState, LoggingLevel, SimulationMode, TestMode
