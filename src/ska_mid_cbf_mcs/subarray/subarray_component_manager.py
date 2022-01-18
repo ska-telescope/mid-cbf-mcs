@@ -253,7 +253,7 @@ class SubarrayComponentManager:
 
         self._connected = True
 
-    def start_communicating(self: SubarrayComponentManager) -> None:
+    def stop_communicating(self: SubarrayComponentManager) -> None:
         """Stop communication with the component."""
         self._connected = False
 
