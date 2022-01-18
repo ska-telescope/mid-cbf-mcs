@@ -28,6 +28,7 @@ from ska_mid_cbf_mcs.testing.mock.mock_group import MockGroupBuilder
 from ska_mid_cbf_mcs.testing.tango_harness import DeviceToLoadType, TangoHarness
 
 from ska_mid_cbf_mcs.subarray.subarray_device import CbfSubarray
+from ska_mid_cbf_mcs.subarray.subarray_component_manager import SubarrayComponentManager
 from ska_tango_base.control_model import HealthState, AdminMode, ObsState
 from ska_tango_base.commands import ResultCode
 
@@ -232,3 +233,42 @@ def initial_mocks(
         "FSP Subarray Pss": mock_fsp_subarray_group,
         "FSP Subarray Pst": mock_fsp_subarray_group,
     }
+
+@pytest.fixture()
+def subarray_component_manager() -> SubarrayComponentManager:
+    """Return a subarray component manager."""
+    return SubarrayComponentManager(
+        controller="mid_csp_cbf/sub_elt/controller",
+        subarray="mid_csp_cbf/sub_elt/subarray_01",
+        vcc=[
+            "mid_csp_cbf/vcc/001",
+            "mid_csp_cbf/vcc/002",
+            "mid_csp_cbf/vcc/003",
+            "mid_csp_cbf/vcc/004"
+        ],
+        fsp=[
+            "mid_csp_cbf/fsp/01",
+            "mid_csp_cbf/fsp/02",
+            "mid_csp_cbf/fsp/03",
+            "mid_csp_cbf/fsp/04"
+        ],
+        fsp_corr_sub=[
+            "mid_csp_cbf/fspCorrSubarray/01_01",
+            "mid_csp_cbf/fspCorrSubarray/02_01",
+            "mid_csp_cbf/fspCorrSubarray/03_01",
+            "mid_csp_cbf/fspCorrSubarray/04_01"
+        ],
+        fsp_pss_sub=[
+            "mid_csp_cbf/fspPssSubarray/01_01",
+            "mid_csp_cbf/fspPssSubarray/02_01",
+            "mid_csp_cbf/fspPssSubarray/03_01",
+            "mid_csp_cbf/fspPssSubarray/04_01"
+        ],
+        fsp_pst_sub=[
+            "mid_csp_cbf/fspPstSubarray/01_01",
+            "mid_csp_cbf/fspPstSubarray/02_01",
+            "mid_csp_cbf/fspPstSubarray/03_01",
+            "mid_csp_cbf/fspPstSubarray/04_01"
+        ],
+        logger=None
+    )

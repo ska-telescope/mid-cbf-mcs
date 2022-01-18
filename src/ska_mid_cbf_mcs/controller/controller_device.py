@@ -283,16 +283,22 @@ class CbfController(SKAMaster):
                 try:
                     device._count_vcc = device._max_capabilities["VCC"]
                 except KeyError:  # not found in DB
+                    self.logger.warn(
+                        "VCC capabilities not defined; defaulting to 197.")
                     device._count_vcc = 197
 
                 try:
                     device._count_fsp = device._max_capabilities["FSP"]
                 except KeyError:  # not found in DB
+                    self.logger.warn(
+                        "FSP capabilities not defined; defaulting to 27.")
                     device._count_fsp = 27
 
                 try:
                     device._count_subarray = device._max_capabilities["Subarray"]
                 except KeyError:  # not found in DB
+                    self.logger.warn(
+                        "Subarray capabilities not defined; defaulting to 16.")
                     device._count_subarray = 16
             else:
                 self.logger.warn("MaxCapabilities device property not defined")
