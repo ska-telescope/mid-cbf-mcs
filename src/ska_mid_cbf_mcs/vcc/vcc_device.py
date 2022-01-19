@@ -21,10 +21,7 @@ from __future__ import annotations  # allow forward references in type hints
 
 from typing import List, Tuple
 
-import os
-import sys
 import json
-import copy
 
 # tango imports
 import tango
