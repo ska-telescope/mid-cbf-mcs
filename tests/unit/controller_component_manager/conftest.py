@@ -34,12 +34,19 @@ from ska_tango_base.control_model import HealthState, AdminMode, ObsState
 from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder
 from ska_mid_cbf_mcs.testing.mock.mock_group import MockGroupBuilder
 from ska_mid_cbf_mcs.testing.tango_harness import TangoHarness
-from ska_mid_cbf_mcs.testing.mock.mock_callable import MockChangeEventCallback
+from ska_mid_cbf_mcs.testing.mock.mock_callable import MockChangeEventCallback, MockCallable
 
-@pytest.fixture(scope="function")
+CONST_TEST_NUM_VCC = 4
+CONST_TEST_NUM_FSP = 4
+CONST_TEST_NUM_SUBARRAY = 1
+
+@pytest.fixture()
 def controller_component_manager(
     logger: logging.Logger,
-    tango_harness: TangoHarness # sets the connection_factory
+    tango_harness: TangoHarness, # sets the connection_factory
+    push_change_event_callback: MockChangeEventCallback,
+    communication_status_changed_callback: MockCallable,
+    component_power_mode_changed_callback: MockCallable,
 ) -> ControllerComponentManager:
     """
     Return a Controller component manager.
@@ -70,18 +77,12 @@ def controller_component_manager(
     talon_lru = configuration["fqdn_talon_lru"]
 
     def mock_get_num_capabilities():
-        num_capbilities = {
-                            "VCC": 4,
-                            "FSP": 4,
-                            "Subarray": 1 
-                        }
-        return num_capbilities
-    
-    def mock_communication_status_changed_callback(communication_status: CommunicationStatus):
-        pass
-
-    def mock_component_power_mode_changed_callback(power_mode: PowerMode):
-        pass
+        num_capabilities = {
+            "VCC": CONST_TEST_NUM_VCC,
+            "FSP": CONST_TEST_NUM_FSP,
+            "Subarray": CONST_TEST_NUM_SUBARRAY
+        }
+        return num_capabilities
 
     talondx_component_manager = MockTalonDxComponentManager()
 
@@ -93,32 +94,77 @@ def controller_component_manager(
             talon_lru,
             talondx_component_manager,
             logger,
-            mock_change_event_callback_factory,
-            mock_communication_status_changed_callback,
-            mock_component_power_mode_changed_callback,
+            push_change_event_callback,
+            communication_status_changed_callback,
+            component_power_mode_changed_callback,
         )
 
 @pytest.fixture()
-def mock_change_event_callback_factory(
-    mock_callback_called_timeout: float,
-    mock_callback_not_called_timeout: float,
-) -> Callable[[str], MockChangeEventCallback]:
+def communication_status_changed_callback(
+    mock_callback_factory: Callable[[], unittest.mock.Mock],
+) -> unittest.mock.Mock:
     """
-    Return a factory that returns a new mock change event callback each call.
+    Return a mock callback for component manager communication status.
 
-    :param mock_callback_called_timeout: the time to wait for a mock
-        callback to be called when a call is expected
-    :param mock_callback_not_called_timeout: the time to wait for a mock
-        callback to be called when a call is unexpected
+    :param mock_callback_factory: fixture that provides a mock callback
+        factory (i.e. an object that returns mock callbacks when
+        called).
 
-    :return: a factory that returns a new mock change event callback
-        each time it is called with the name of a device attribute.
+    :return: a mock callback to be called when the communication status
+        of a component manager changed.
     """
-    return functools.partial(
-        MockChangeEventCallback,
-        called_timeout=mock_callback_called_timeout,
-        not_called_timeout=mock_callback_not_called_timeout,
-    )
+    return mock_callback_factory()
+
+
+@pytest.fixture()
+def component_power_mode_changed_callback(
+    mock_callback_factory: Callable[[], unittest.mock.Mock],
+) -> unittest.mock.Mock:
+    """
+    Return a mock callback for component power mode change.
+
+    :param mock_callback_factory: fixture that provides a mock callback
+        factory (i.e. an object that returns mock callbacks when
+        called).
+
+    :return: a mock callback to be called when the component manager
+        detects that the power mode of its component has changed.
+    """
+    return mock_callback_factory()
+
+@pytest.fixture()
+def push_change_event_callback_factory(
+    mock_change_event_callback_factory: Callable[[str], MockChangeEventCallback],
+) -> Callable[[], MockChangeEventCallback]:
+    """
+    Return a mock change event callback factory 
+
+    :param mock_change_event_callback_factory: fixture that provides a
+        mock change event callback factory (i.e. an object that returns
+        mock callbacks when called).
+
+    :return: a mock change event callback factory 
+    """
+
+    def _factory() -> MockChangeEventCallback:
+        return mock_change_event_callback_factory("adminMode")
+
+    return _factory
+
+
+@pytest.fixture()
+def push_change_event_callback(
+    push_change_event_callback_factory: Callable[[], MockChangeEventCallback],
+) -> MockChangeEventCallback:
+    """
+    Return a mock change event callback 
+
+    :param push_change_event_callback_factory: fixture that provides a mock
+        change event callback factory 
+
+    :return: a mock change event callback 
+    """
+    return push_change_event_callback_factory()
 
 @pytest.fixture()
 def mock_vcc() -> unittest.mock.Mock:

@@ -24,6 +24,7 @@ class TestControllerComponentManager:
     def test_communication(
             self: TestControllerComponentManager,
             controller_component_manager: ControllerComponentManager,
+            communication_status_changed_callback: MockCallable,
         ) -> None:
             """
             Test the controller component manager's management of communication.
@@ -35,25 +36,30 @@ class TestControllerComponentManager:
                 the component manager and its component changes
             """
             assert (
-                controller_component_manager.communication_status
-                == CommunicationStatus.DISABLED
+            controller_component_manager.communication_status
+            == CommunicationStatus.DISABLED
             )
 
             controller_component_manager.start_communicating()
-           
+            communication_status_changed_callback.assert_next_call(
+                CommunicationStatus.NOT_ESTABLISHED
+            )
+            communication_status_changed_callback.assert_next_call(
+                CommunicationStatus.ESTABLISHED
+            )
             assert (
                 controller_component_manager.communication_status
                 == CommunicationStatus.ESTABLISHED
             )
-            assert controller_component_manager._connected == True
 
             controller_component_manager.stop_communicating()
-            
+            communication_status_changed_callback.assert_next_call(
+                CommunicationStatus.DISABLED
+            )
             assert (
                 controller_component_manager.communication_status
                 == CommunicationStatus.DISABLED
             )
-            assert controller_component_manager._connected == False
 
     def test_On(
         self: TestControllerComponentManager,
