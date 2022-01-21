@@ -43,6 +43,9 @@ from tango.test_context import DeviceTestContext
 @pytest.mark.usefixtures("test_proxies")
 
 class TestCbfController:
+    """
+    Test class for CbfController device class integration testing.
+    """
 
     @pytest.mark.skip(reason="enable to test DebugDevice")
     def test_DebugDevice(self, test_proxies):
@@ -53,6 +56,10 @@ class TestCbfController:
         test_proxies.controller.On()
     
     def test_Connect(self, test_proxies):
+        """
+        Test the initial states and verify the component manager 
+        can start communicating
+        """
         
         # after init devices should be in DISABLE state
         assert test_proxies.controller.State() == DevState.DISABLE
@@ -152,6 +159,9 @@ class TestCbfController:
         #             assert test_proxies.fspSubarray[i][j][k].State() == DevState.OFF
 
     def test_Disconnect(self, test_proxies):
+        """
+        Verify the component manager can stop communicating
+        """
 
         # trigger stop_communicating by setting the AdminMode to OFFLINE
         test_proxies.controller.adminMode = AdminMode.OFFLINE

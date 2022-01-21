@@ -62,6 +62,23 @@ class CommunicationStatus(enum.Enum):
     """
 
 class CbfComponentManager(BaseComponentManager):
+    """
+    A base component manager for SKA Mid.CBF MCS
+
+    This class exists to modify the interface of the
+    :py:class:`ska_tango_base.base.component_manager.BaseComponentManager`.
+    The ``BaseComponentManager`` accepts an ``op_state_model` argument,
+    and is expected to interact directly with it. This is not a very
+    good design decision. It is better to leave the ``op_state_model``
+    behind in the device, and drive it indirectly through callbacks.
+
+    Therefore this class accepts three callback arguments: one for when
+    communication with the component changes, one for when the power
+    mode of the component changes, and one for when the component fault
+    status changes. In the last two cases, callback hooks are provided
+    so that the component can indicate the change to this component
+    manager.
+    """
 
     def __init__(
         self: CbfComponentManager,
@@ -140,7 +157,7 @@ class CbfComponentManager(BaseComponentManager):
         """
         Return communication with the component is established.
 
-        MCCS uses the more expressive :py:attr:`communication_status`
+        SKA Mid.CBF MCS uses the more expressive :py:attr:`communication_status`
         for this, but this is still needed as a base classes hook.
 
         :return: whether communication with the component is

@@ -10,7 +10,7 @@
 # Copyright (c) 2019 National Research Council of Canada
 
 from __future__ import annotations
-from typing import Any, List, Tuple, Callable, Optional
+from typing import Any, List, Tuple, Callable, Optional, Dict
 
 import tango
 from tango import AttrQuality
@@ -21,6 +21,7 @@ from ska_mid_cbf_mcs.group_proxy import CbfGroupProxy
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_tango_base.control_model import HealthState, AdminMode, PowerMode
 from ska_tango_base.commands import ResultCode
+from ska_mid_cbf_mcs.controller.talondx_component_manager import TalonDxComponentManager
 
 from ska_mid_cbf_mcs.component.component_manager import (
     CommunicationStatus,
@@ -37,12 +38,12 @@ class ControllerComponentManager(CbfComponentManager):
 
     def __init__(
         self: ControllerComponentManager,
-        get_num_capabilities,
-        vcc,
-        fsp,
-        subarray,
-        talon_lru,
-        talondx_component_manager,
+        get_num_capabilities : Callable[[None], Dict[str, int]],
+        vcc: List[str],
+        fsp: List[str],
+        subarray: List[str],
+        talon_lru: List[str],
+        talondx_component_manager: TalonDxComponentManager,
         logger: logging.Logger,
         push_change_event: Optional[Callable],
         communication_status_changed_callback: Callable[[CommunicationStatus], None],
@@ -51,7 +52,21 @@ class ControllerComponentManager(CbfComponentManager):
         """
         Initialise a new instance.
 
+        :param get_num_capabilities: method that returns the controller device's 
+                maxCapabilities attribute (a dictionary specifying the number of each capability)    
+        :param vcc: FQDNS of all the Vcc devices
+        :param fsp: FQDNS of all the Fsp devices
+        :param subarray: FQDNS of all the Subarray devices
+        :param talon_lru: FQDNS of all the Talon LRU devices
+        :talondx_component_manager: component manager for the Talon LRU 
         :param logger: a logger for this object to use
+        :param push_change_event: method to call when the base classes
+            want to send an event
+        :param communication_status_changed_callback: callback to be
+            called when the status of the communications channel between
+            the component manager and its component changes
+        :param component_power_mode_changed_callback: callback to be
+            called when the component power mode changes
         """
 
         self._logger = logger
@@ -557,6 +572,14 @@ class ControllerComponentManager(CbfComponentManager):
     def on(      
         self: ControllerComponentManager,
     ) -> Tuple[ResultCode, str]:
+        """
+        Turn on the controller and its subordinate devices 
+
+        :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+        :rtype: (ResultCode, str)
+        """
 
         if self._connected:
 
@@ -638,6 +661,14 @@ class ControllerComponentManager(CbfComponentManager):
     def off(      
         self: ControllerComponentManager,
     ) -> Tuple[ResultCode, str]:
+        """
+        Turn off the controller and its subordinate devices 
+
+        :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+        :rtype: (ResultCode, str)
+        """
 
         if self._connected:
 
@@ -686,6 +717,14 @@ class ControllerComponentManager(CbfComponentManager):
     def standby(      
         self: ControllerComponentManager,
     ) -> Tuple[ResultCode, str]:
+        """
+        Turn the controller into low power standby mode
+
+        :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+        :rtype: (ResultCode, str)
+        """
 
         if self._connected:
 
