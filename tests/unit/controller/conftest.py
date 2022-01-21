@@ -10,7 +10,7 @@
 from __future__ import annotations
 
 # Standard imports
-from typing import Callable, Type, Dict, Tuple
+from typing import Callable, Type, Dict, Tuple, Optional
 import pytest
 import pytest_mock
 import unittest
@@ -45,7 +45,9 @@ def device_under_test(tango_harness: TangoHarness) -> CbfDeviceProxy:
     return tango_harness.get_device("mid_csp_cbf/sub_elt/controller")
 
 @pytest.fixture() 
-def device_to_load() -> DeviceToLoadType:
+def device_to_load(
+    patched_controller_device_class: Type[CbfController]
+) -> DeviceToLoadType:
     """
     Fixture that specifies the device to be loaded for testing.
 
@@ -56,10 +58,83 @@ def device_to_load() -> DeviceToLoadType:
         "package": "ska_mid_cbf_mcs",
         "device": "controller",
         "proxy": CbfDeviceProxy,
-        "patch": PatchedCbfController,
+        "patch": patched_controller_device_class,
     }
 
-class PatchedCbfController(CbfController):
+@pytest.fixture
+def unique_id() -> str:
+    """
+    Return a unique ID used to test Tango layer infrastructure.
+
+    :return: a unique ID
+    """
+    return "a unique id"
+
+
+@pytest.fixture()
+def mock_component_manager(
+    mocker: pytest_mock.mocker,
+    unique_id: str,
+) -> unittest.mock.Mock:
+    """
+    Return a mock component manager.
+
+    The mock component manager is a simple mock except for one bit of
+    extra functionality: when we call start_communicating() on it, it
+    makes calls to callbacks signaling that communication is established
+    and the component is off.
+
+    :param mocker: pytest wrapper for unittest.mock
+    :param unique_id: a unique id used to check Tango layer functionality
+
+    :return: a mock component manager
+    """
+    mock = mocker.Mock()
+    mock.is_communicating = False
+
+    def _start_communicating(mock: unittest.mock.Mock) -> None:
+        mock.is_communicating = True
+        mock._communication_status_changed_callback(CommunicationStatus.NOT_ESTABLISHED)
+        mock._communication_status_changed_callback(CommunicationStatus.ESTABLISHED)
+        mock._component_power_mode_changed_callback(PowerMode.OFF)
+    
+    def _on(mock: unittest.mock.Mock) -> None:
+        mock.message = "CbfController On command completed OK"
+        return (ResultCode.OK, mock.message)
+    
+    def _off(mock: unittest.mock.Mock) -> None:
+        mock.message = "CbfController Off command completed OK"
+        return (ResultCode.OK, mock.message)
+    
+    def _standby(mock: unittest.mock.Mock) -> None:
+        mock.message = "CbfController On command completed OK"
+        return (ResultCode.OK, mock.message)
+
+    mock.on.side_effect = lambda: _on(mock)
+    mock.off.side_effect = lambda: _off(mock)
+    mock.standby.side_effect = lambda: _standby(mock)
+    mock.start_communicating.side_effect = lambda: _start_communicating(mock)
+
+    mock.enqueue.return_value = unique_id, ResultCode.QUEUED
+
+    return mock
+
+
+@pytest.fixture()
+def patched_controller_device_class(
+    mock_component_manager: unittest.mock.Mock,
+) -> Type[CbfController]:
+    """
+    Return a controller device that is patched with a mock component manager.
+
+    :param mock_component_manager: the mock component manager with
+        which to patch the device
+
+    :return: a controller device that is patched with a mock component
+        manager.
+    """
+
+    class PatchedCbfController(CbfController):
         """A controller device patched with a mock component manager."""
 
         def create_component_manager(
@@ -70,9 +145,8 @@ class PatchedCbfController(CbfController):
 
             :return: a mock component manager
             """
-
-            self._communication_status = None
-            self._component_power_mode = None
+            self._communication_status: Optional[CommunicationStatus] = None
+            self._component_power_mode: Optional[PowerMode] = None
 
             mock_component_manager._communication_status_changed_callback = (
                 self._communication_status_changed
@@ -80,30 +154,10 @@ class PatchedCbfController(CbfController):
             mock_component_manager._component_power_mode_changed_callback = (
                 self._component_power_mode_changed
             )
-            
-            return mock_component_manager()
 
-class mock_component_manager:
+            return mock_component_manager
 
-    is_communicating = False
-
-    def start_communicating(self: mock_component_manager) -> None:
-        self.is_communicating = True
-        self._communication_status_changed_callback(CommunicationStatus.NOT_ESTABLISHED)
-        self._communication_status_changed_callback(CommunicationStatus.ESTABLISHED)
-        self._component_power_mode_changed_callback(PowerMode.OFF)
-        
-    def on(self: mock_component_manager) -> Tuple[ResultCode, str]:
-        message = "CbfController On command completed OK"
-        return (ResultCode.OK, message)
-    
-    def off(self: mock_component_manager) -> Tuple[ResultCode, str]:
-        message = "CbfController On command completed OK"
-        return (ResultCode.OK, message)
-    
-    def standby(self: mock_component_manager) -> Tuple[ResultCode, str]:
-        message = "CbfController Standby command completed OK"
-        return (ResultCode.OK, message)
+    return PatchedCbfController
 
 @pytest.fixture()
 def mock_vcc() -> unittest.mock.Mock:
