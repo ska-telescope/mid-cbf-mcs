@@ -19,7 +19,7 @@
 # """
 from __future__ import annotations  # allow forward references in type hints
 
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 
 # tango imports
 import tango
@@ -40,10 +40,12 @@ from random import randint
 file_path = os.path.dirname(os.path.abspath(__file__))
 
 from ska_mid_cbf_mcs.commons.global_enum import const, freq_band_dict
-from ska_tango_base.control_model import HealthState, AdminMode, ObsState
+from ska_tango_base.control_model import HealthState, AdminMode, ObsState, PowerMode
 from ska_tango_base import CspSubElementObsDevice
 from ska_tango_base.commands import ResultCode
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
+from ska_mid_cbf_mcs.fsp.fsp_corr_subarray_component_manager import FspCorrSubarrayComponentManager
+from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
 
 # PROTECTED REGION END #    //  FspCorrSubarray.additionnal_import
 
@@ -302,11 +304,29 @@ class FspCorrSubarray(CspSubElementObsDevice):
         """Hook to be executed before any commands."""
         pass
         # PROTECTED REGION END #    //  FspCorrSubarray.always_executed_hook
+    
+    def create_component_manager(self: FspCorrSubarray) -> FspCorrSubarrayComponentManager:
+        """
+        Create and return a component manager for this device.
+
+        :return: a component manager for this device.
+        """
+
+        self._communication_status: Optional[CommunicationStatus] = None
+        self._component_power_mode: Optional[PowerMode] = None
+
+        return FspCorrSubarrayComponentManager( 
+            self.logger,
+            self.push_change_event,
+            self._communication_status_changed,
+            self._component_power_mode_changed,
+        )
 
     def delete_device(self: FspCorrSubarray) -> None:
         # PROTECTED REGION ID(FspCorrSubarray.delete_device) ENABLED START #
         """Hook to delete device."""
         pass
+    
         # PROTECTED REGION END #    //  FspCorrSubarray.delete_device
 
     # ------------------
