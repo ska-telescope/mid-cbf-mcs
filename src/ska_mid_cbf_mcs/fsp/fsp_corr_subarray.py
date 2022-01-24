@@ -274,7 +274,7 @@ class FspCorrSubarray(CspSubElementObsDevice):
             # [chanID, bw, cf, cbfOutLink, sdpIp, sdpPort] # TODO
             device._channel_info = []
 
-            # device proxy for connection to CbfController
+            # device proxy for connection to FspCorrSubarray
             device._proxy_cbf_controller = CbfDeviceProxy(
                 fqdn=device.CbfControllerAddress,
                 logger=device.logger
@@ -284,7 +284,7 @@ class FspCorrSubarray(CspSubElementObsDevice):
                 device._proxy_cbf_controller.get_property("MaxCapabilities")["MaxCapabilities"]
             )
 
-            # Connect to all VCC devices turned on by CbfController:
+            # Connect to all VCC devices turned on by FspCorrSubarray:
             device._count_vcc = int(device._controller_max_capabilities["VCC"])
             device._fqdn_vcc = list(device.VCC)[:device._count_vcc]
             device._proxies_vcc = [
@@ -1090,6 +1090,75 @@ class FspCorrSubarray(CspSubElementObsDevice):
         result["outputPort"]= triple[1] + (argin - triple[0])* triple[2]
 
         return str(result)
+
+    # ----------
+    # Callbacks
+    # ----------
+    def _communication_status_changed(
+        self: FspCorrSubarray,
+        communication_status: CommunicationStatus,
+    ) -> None:
+        """
+        Handle change in communications status between component manager and component.
+
+        This is a callback hook, called by the component manager when
+        the communications status changes. It is implemented here to
+        drive the op_state.
+
+        :param communication_status: the status of communications
+            between the component manager and its component.
+        """
+
+        self._communication_status = communication_status
+
+        message = "Entering FspCorrSubarray._communication_status_changed with status {}".format(communication_status)
+        self.logger.info(message)
+
+        message = "Entering FspCorrSubarray._communication_status_changed with power mode {}".format(self._component_power_mode)
+        self.logger.info(message)
+
+        if communication_status == CommunicationStatus.DISABLED:
+            self.op_state_model.perform_action("component_disconnected")
+        elif communication_status == CommunicationStatus.NOT_ESTABLISHED:
+            self.op_state_model.perform_action("component_unknown")
+        elif self._component_power_mode == PowerMode.OFF:
+            self.op_state_model.perform_action("component_off")
+        elif self._component_power_mode == PowerMode.STANDBY:
+            self.op_state_model.perform_action("component_standby")
+        elif self._component_power_mode == PowerMode.ON:
+            self.op_state_model.perform_action("component_on")
+        elif self._component_power_mode == PowerMode.UNKNOWN:
+            self.op_state_model.perform_action("component_unknown")
+        else:  # self._component_power_mode is None
+            pass  # wait for a power mode update
+    
+    def _component_power_mode_changed(
+        self: FspCorrSubarray,
+        power_mode: PowerMode,
+    ) -> None:
+        """
+        Handle change in the power mode of the component.
+
+        This is a callback hook, called by the component manager when
+        the power mode of the component changes. It is implemented here
+        to drive the op_state.
+
+        :param power_mode: the power mode of the component.
+        """
+        self._component_power_mode = power_mode
+
+        message = "Entering FspCorrSubarray._component_power_mode_changed with mode {}".format(power_mode)
+        self.logger.info(message)
+
+        if self._communication_status == CommunicationStatus.ESTABLISHED:
+            action_map = {
+                PowerMode.OFF: "component_off",
+                PowerMode.STANDBY: "component_standby",
+                PowerMode.ON: "component_on",
+                PowerMode.UNKNOWN: "component_unknown",
+            }
+
+            self.op_state_model.perform_action(action_map[power_mode])
         # PROTECTED REGION END #    //  FspCorrSubarray.getLinkAndAddress
 # ----------
 # Run server

@@ -41,6 +41,9 @@ class FspCorrSubarrayComponentManager(CbfComponentManager):
         :param component_power_mode_changed_callback: callback to be
             called when the component power mode changes
         """
+        self._logger = logger
+        
+        self._connected = False
 
         super().__init__(
             logger,
