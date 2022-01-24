@@ -401,7 +401,6 @@ class TestCbfSubarray:
             f.close()
             configuration = json.loads(json_string)
             sub_id = int(configuration["common"]["subarray_id"])
-            test_proxies.subarray[sub_id].loggingLevel = LoggingLevel.DEBUG
 
             # check initial value of attributes of CBF subarray
             vcc_index = test_proxies.receptor_to_vcc[4]

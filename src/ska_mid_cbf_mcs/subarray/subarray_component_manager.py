@@ -18,7 +18,6 @@ import logging
 from typing import Any, Dict, List, Tuple
 import sys
 import json
-from random import randint
 from threading import Thread, Lock
 import time
 import copy
@@ -42,33 +41,12 @@ from ska_tango_base.control_model import ObsState, AdminMode, HealthState
 from ska_tango_base.commands import ResultCode
 
 
-def validate_ip(ip: str) -> bool:
-    """
-    Validate IP address format.
-
-    :param ip: IP address to be evaluated
-
-    :return: whether or not the IP address format is valid
-    :rtype: bool
-    """
-    splitip = ip.split('.')
-    if len(splitip) != 4:
-        return False
-    for ipparts in splitip:
-        if not ipparts.isdigit():
-            return False
-        ipval = int(ipparts)
-        if ipval < 0 or ipval > 255:
-            return False
-    return True
-
-
 class SubarrayComponentManager:
     """A component manager for the CbfSubarray class."""
 
     def __init__(
         self: SubarrayComponentManager,
-        subarray: str,
+        subarray_id: int,
         controller: str,
         vcc: List[str],
         fsp: List[str],
@@ -87,8 +65,7 @@ class SubarrayComponentManager:
         :param connect: whether to connect automatically upon initialization
         """
 
-        self._subarray_id = int(subarray[-2:]) # last two chars of FQDN
-        self._fqdn_subarray = subarray
+        self._subarray_id = subarray_id
         self._fqdn_controller = controller
         self._fqdn_vcc = vcc
         self._fqdn_fsp = fsp
@@ -96,15 +73,17 @@ class SubarrayComponentManager:
         self._fqdn_fsp_pss_subarray = fsp_pss_sub
         self._fqdn_fsp_pst_subarray = fsp_pst_sub
 
+        # set to determine if ready to receive subscribed parameters
+        self._ready = False
+
         self._logger = logger
 
-        self._connected = False
+        self.connected = False
 
         # initialize attribute values
         self._receptors = []
         self._frequency_band = 0
         self._config_ID = ""
-        self._scan_ID = 0
         self._fsp_list = [[], [], [], []]
         # self._output_links_distribution = {"configID": ""}# ???
         self._vcc_state = {}
@@ -148,9 +127,6 @@ class SubarrayComponentManager:
         self.NUM_CHANNEL_GROUPS = const.NUM_CHANNEL_GROUPS
         self.NUM_FINE_CHANNELS = const.NUM_FINE_CHANNELS
 
-        #device proxy for easy reference to subarray
-        self._proxy_subarray = None
-
         # device proxy for easy reference to CBF controller
         self._proxy_cbf_controller = None
         self._controller_max_capabilities = {}
@@ -183,14 +159,9 @@ class SubarrayComponentManager:
     def start_communicating(self: SubarrayComponentManager) -> None:
         """Establish communication with the component, then start monitoring."""
 
-        if self._connected:
+        if self.connected:
             self._logger.info("Already connected.")
             return
-
-        if self._proxy_subarray is None:
-            self._proxy_subarray = CbfDeviceProxy(
-                fqdn=self._fqdn_subarray, logger=self._logger
-            )
         
         if self._proxy_cbf_controller is None:
             self._proxy_cbf_controller = CbfDeviceProxy(
@@ -251,11 +222,11 @@ class SubarrayComponentManager:
             self._group_fsp_pst_subarray = CbfGroupProxy(
                 name="FSP Subarray Pst", logger=self._logger) 
 
-        self._connected = True
+        self.connected = True
 
     def stop_communicating(self: SubarrayComponentManager) -> None:
         """Stop communication with the component."""
-        self._connected = False
+        self.connected = False
 
 
     def _doppler_phase_correction_event_callback(
@@ -303,7 +274,7 @@ class SubarrayComponentManager:
         self._logger.debug("Entering _delay_model_event_callback()")
 
         if value is not None:
-            if self._proxy_subarray.obsState not in [ObsState.READY, ObsState.SCANNING]:
+            if not self._ready:
                 log_msg = "Ignoring delay model (obsState not correct)."
                 self._logger.warn(log_msg)
                 return
@@ -382,7 +353,7 @@ class SubarrayComponentManager:
         self._logger.debug("CbfSubarray._jones_matrix_event_callback")
 
         if value is not None:
-            if self._proxy_subarray.obsState not in [ObsState.READY, ObsState.SCANNING]:
+            if not self._ready:
                 log_msg = "Ignoring Jones matrix (obsState not correct)."
                 self._logger.warn(log_msg)
                 return
@@ -462,7 +433,7 @@ class SubarrayComponentManager:
         self._logger.debug("CbfSubarray._beam_weights_event_callback")
 
         if value is not None:
-            if self._proxy_subarray.obsState not in [ObsState.READY, ObsState.SCANNING]:
+            if not self._ready:
                 log_msg = "Ignoring beam weights (obsState not correct)."
                 self._logger.warn(log_msg)
                 return
@@ -570,7 +541,28 @@ class SubarrayComponentManager:
             self._logger.warn(f"None value for {fqdn}")
 
 
-    def _raise_configure_scan_fatal_error(
+    def validate_ip(self: SubarrayComponentManager, ip: str) -> bool:
+        """
+        Validate IP address format.
+
+        :param ip: IP address to be evaluated
+
+        :return: whether or not the IP address format is valid
+        :rtype: bool
+        """
+        splitip = ip.split('.')
+        if len(splitip) != 4:
+            return False
+        for ipparts in splitip:
+            if not ipparts.isdigit():
+                return False
+            ipval = int(ipparts)
+            if ipval < 0 or ipval > 255:
+                return False
+        return True
+
+
+    def raise_configure_scan_fatal_error(
         self: SubarrayComponentManager,
         msg: str
     ) -> Tuple[ResultCode, str]:
@@ -587,88 +579,98 @@ class SubarrayComponentManager:
         tango.Except.throw_exception(
             "Command failed", msg, "ConfigureScan execution", tango.ErrSeverity.ERR
         )
-        return (ResultCode.FAILED, msg)
 
 
-    def _deconfigure(self:SubarrayComponentManager) -> None:
+    def deconfigure(self:SubarrayComponentManager) -> Tuple[ResultCode, str]:
         """Completely deconfigure the subarray; all initialization performed 
         by by the ConfigureScan command must be 'undone' here."""
         
-        # TODO: the deconfiguration should happen in reverse order of the
-        #       initialization:
+        try:
+            # unsubscribe from TMC events
+            for event_id in list(self._events_telstate.keys()):
+                self._events_telstate[event_id].remove_event(event_id)
+                del self._events_telstate[event_id]
 
-        # unsubscribe from TMC events
-        for event_id in list(self._events_telstate.keys()):
-            self._events_telstate[event_id].remove_event(event_id)
-            del self._events_telstate[event_id]
+            # unsubscribe from FSP state change events
+            for fspID in list(self._events_state_change_fsp.keys()):
+                proxy_fsp = self._proxies_fsp[fspID - 1]
+                proxy_fsp.remove_event(
+                    "State",
+                    self._events_state_change_fsp[fspID][0]
+                )
+                proxy_fsp.remove_event(
+                    "healthState",
+                    self._events_state_change_fsp[fspID][1]
+                )
+                del self._events_state_change_fsp[fspID]
+                del self._fsp_state[self._fqdn_fsp[fspID - 1]]
+                del self._fsp_health_state[self._fqdn_fsp[fspID - 1]]
 
-        # unsubscribe from FSP state change events
-        for fspID in list(self._events_state_change_fsp.keys()):
-            proxy_fsp = self._proxies_fsp[fspID - 1]
-            proxy_fsp.remove_event(
-                "State",
-                self._events_state_change_fsp[fspID][0]
-            )
-            proxy_fsp.remove_event(
-                "healthState",
-                self._events_state_change_fsp[fspID][1]
-            )
-            del self._events_state_change_fsp[fspID]
-            del self._fsp_state[self._fqdn_fsp[fspID - 1]]
-            del self._fsp_health_state[self._fqdn_fsp[fspID - 1]]
+            # TODO: add 'GoToIdle' for VLBI once implemented
+            for group in [
+                self._group_fsp_corr_subarray, 
+                self._group_fsp_pss_subarray,
+                self._group_fsp_pst_subarray
+                ]:
+                if group.get_size() > 0:
+                    group.command_inout("GoToIdle")
+                    # remove channel info from FSP subarrays
+                    # already done in GoToIdle
+                    group.remove_all()
 
-        for group in [
-            self._group_fsp_corr_subarray, 
-            self._group_fsp_pss_subarray,
-            self._group_fsp_pst_subarray
-            ]:
-            if group.get_size() > 0:
-                group.command_inout("GoToIdle")
-                # remove channel info from FSP subarrays
-                # already done in GoToIdle
-                group.remove_all()
+            # TODO: handle proxy.State() == tango.DevState.OFF
+            # TODO: consolidate with above group command_inout
+            for fsp_corr_subarray_proxy in self._proxies_fsp_corr_subarray:
+                if fsp_corr_subarray_proxy.State() == tango.DevState.ON:
+                    fsp_corr_subarray_proxy.GoToIdle()
+            for fsp_pss_subarray_proxy in self._proxies_fsp_pss_subarray:
+                if fsp_pss_subarray_proxy.State() == tango.DevState.ON:
+                    fsp_pss_subarray_proxy.GoToIdle()
+            for fsp_pst_subarray_proxy in self._proxies_fsp_pst_subarray:
+                if fsp_pst_subarray_proxy.State() == tango.DevState.ON:
+                    fsp_pst_subarray_proxy.GoToIdle()
 
-        if self._group_vcc.get_size() > 0:
-            self._group_vcc.command_inout("GoToIdle")
-            frequency_bands = ["1", "2", "3", "4", "5a", "5b"]
-            freq_band_name =  frequency_bands[self._frequency_band]
-            data = tango.DeviceData()
-            data.insert(tango.DevString, freq_band_name)
-            self._group_vcc.command_inout("TurnOffBandDevice", data)
+            if self._group_vcc.get_size() > 0:
+                self._group_vcc.command_inout("GoToIdle")
+                frequency_bands = ["1", "2", "3", "4", "5a", "5b"]
+                freq_band_name =  frequency_bands[self._frequency_band]
+                data = tango.DeviceData()
+                data.insert(tango.DevString, freq_band_name)
+                self._group_vcc.command_inout("TurnOffBandDevice", data)
 
-        if self._group_fsp.get_size() > 0:
-            # change FSP subarray membership
-            data = tango.DeviceData()
-            data.insert(tango.DevUShort, self._subarray_id)
-            # self._logger.info(data)
-            self._group_fsp.command_inout("RemoveSubarrayMembership", data)
-            self._group_fsp.remove_all()
+            if self._group_fsp.get_size() > 0:
+                # change FSP subarray membership
+                data = tango.DeviceData()
+                data.insert(tango.DevUShort, self._subarray_id)
+                # self._logger.info(data)
+                self._group_fsp.command_inout("RemoveSubarrayMembership", data)
+                self._group_fsp.remove_all()
+
+        except tango.DevFailed as df:
+            msg = str(df.args[0].desc)
+            return (ResultCode.FAILED, msg)
 
         # reset all private data to their initialization values:
-        self._scan_ID = 0       
+        self._fsp_list = [[], [], [], []]
+        self._pst_fsp_list = []
+        self._pss_fsp_list = []
+        self._corr_fsp_list = []
+        self._pst_config = []
+        self._pss_config = []
+        self._corr_config = []
+
         self._config_ID = ""
         self._frequency_band = 0
         self._last_received_delay_model  = "{}"
         self._last_received_jones_matrix = "{}"
         self._last_received_beam_weights = "{}"
 
-        # TODO: what happens if 
-        #       fsp_corr_subarray_proxy.State() == tango.DevState.OFF ??
-        #       that should not happen
-        # TODO: why is this done after the group command_inout?
-        for fsp_corr_subarray_proxy in self._proxies_fsp_corr_subarray:
-            if fsp_corr_subarray_proxy.State() == tango.DevState.ON:
-                fsp_corr_subarray_proxy.GoToIdle()
-        for fsp_pss_subarray_proxy in self._proxies_fsp_pss_subarray:
-            if fsp_pss_subarray_proxy.State() == tango.DevState.ON:
-                fsp_pss_subarray_proxy.GoToIdle()
-        for fsp_pst_subarray_proxy in self._proxies_fsp_pst_subarray:
-            if fsp_pst_subarray_proxy.State() == tango.DevState.ON:
-                fsp_pst_subarray_proxy.GoToIdle()
-        # TODO: add 'GoToIdle' for VLBI once implemented
+        self._ready = False
+
+        return (ResultCode.OK, "Deconfiguration completed OK")
 
 
-    def _validate_scan_configuration(
+    def validate_scan_configuration(
         self: SubarrayComponentManager,
         argin: str
     ) -> Tuple[bool, str]:
@@ -690,81 +692,6 @@ class SubarrayComponentManager:
         except json.JSONDecodeError:  # argument not a valid JSON object
             msg = "Scan configuration object is not a valid JSON object. Aborting configuration."
             return (False, msg)
-
-        for proxy in self._proxies_assigned_vcc:
-            if proxy.State() != tango.DevState.ON:
-                msg = f"VCC {self._proxies_vcc.index(proxy) + 1} is not ON. Aborting configuration."
-                return (False, msg)
-        
-        # Validate frequencyBandOffsetStream1.
-        if "frequency_band_offset_stream_1" not in configuration:
-            configuration["frequency_band_offset_stream_1"] = 0
-        if abs(int(configuration["frequency_band_offset_stream_1"])) <= const.FREQUENCY_SLICE_BW * 10 ** 6 / 2:
-            pass
-        else:
-            msg = "Absolute value of 'frequencyBandOffsetStream1' must be at most half " \
-                    "of the frequency slice bandwidth. Aborting configuration."
-            return (False, msg)
-
-        # Validate frequencyBandOffsetStream2.
-        if "frequency_band_offset_stream_2" not in configuration:
-            configuration["frequency_band_offset_stream_2"] = 0
-        if abs(int(configuration["frequency_band_offset_stream_2"])) <= const.FREQUENCY_SLICE_BW * 10 ** 6 / 2:
-            pass
-        else:
-            msg = "Absolute value of 'frequencyBandOffsetStream2' must be at most " \
-                    "half of the frequency slice bandwidth. Aborting configuration."
-            return (False, msg)
-
-        # Validate band5Tuning, frequencyBandOffsetStream2 if frequencyBand is 5a or 5b.
-        if common_configuration["frequency_band"] in ["5a", "5b"]:
-            # band5Tuning is optional
-            if "band_5_tuning" in common_configuration:
-                pass
-                # check if streamTuning is an array of length 2
-                try:
-                    assert len(common_configuration["band_5_tuning"]) == 2
-                except (TypeError, AssertionError):
-                    msg = "'band5Tuning' must be an array of length 2. Aborting configuration."
-                    return (False, msg)
-
-                stream_tuning = [*map(float, common_configuration["band_5_tuning"])]
-                if common_configuration["frequency_band"] == "5a":
-                    if all(
-                            [const.FREQUENCY_BAND_5a_TUNING_BOUNDS[0] <= stream_tuning[i]
-                             <= const.FREQUENCY_BAND_5a_TUNING_BOUNDS[1] for i in [0, 1]]
-                    ):
-                        pass
-                    else:
-                        msg = (
-                            "Elements in 'band5Tuning must be floats between"
-                            f"{const.FREQUENCY_BAND_5a_TUNING_BOUNDS[0]} and "
-                            f"{const.FREQUENCY_BAND_5a_TUNING_BOUNDS[1]} "
-                            f"(received {stream_tuning[0]} and {stream_tuning[1]})"
-                            " for a 'frequencyBand' of 5a. "
-                            "Aborting configuration."
-                        )
-                        return (False, msg)
-                else:  # configuration["frequency_band"] == "5b"
-                    if all(
-                            [const.FREQUENCY_BAND_5b_TUNING_BOUNDS[0] <= stream_tuning[i]
-                             <= const.FREQUENCY_BAND_5b_TUNING_BOUNDS[1] for i in [0, 1]]
-                    ):
-                        pass
-                    else:
-                        msg = (
-                            "Elements in 'band5Tuning must be floats between"
-                            f"{const.FREQUENCY_BAND_5b_TUNING_BOUNDS[0]} and "
-                            f"{const.FREQUENCY_BAND_5b_TUNING_BOUNDS[1]} "
-                            f"(received {stream_tuning[0]} and {stream_tuning[1]})"
-                            " for a 'frequencyBand' of 5b. "
-                            "Aborting configuration."
-                        )
-                        return (False, msg)
-            else:
-                # set band5Tuning to zero for the rest of the test. This won't 
-                # change the argin in function "configureScan(argin)"
-                common_configuration["band_5_tuning"] = [0, 0]
 
         # Validate dopplerPhaseCorrSubscriptionPoint.
         if "doppler_phase_corr_subscription_point" in configuration:
@@ -813,7 +740,7 @@ class SubarrayComponentManager:
                     "'jonesMatrixSubscriptionPoint'. Aborting configuration."
                 )
                 return (False, msg)
-        
+
         # Validate beamWeightsSubscriptionPoint.
         if "timing_beam_weights_subscription_point" in configuration:
             try:
@@ -830,6 +757,10 @@ class SubarrayComponentManager:
                 )
                 return (False, msg)
 
+        for proxy in self._proxies_assigned_vcc:
+            if proxy.State() != tango.DevState.ON:
+                msg = f"VCC {self._proxies_vcc.index(proxy) + 1} is not ON. Aborting configuration."
+                return (False, msg)
 
         # Validate searchWindow.
         if "search_window" in configuration:
@@ -1218,7 +1149,7 @@ class SubarrayComponentManager:
                                 msg = "'averagingInterval' is not a valid integer"
                                 return (False, msg)
 
-                            if validate_ip(searchBeam["search_beam_destination_address"]):
+                            if self.validate_ip(searchBeam["search_beam_destination_address"]):
                                 pass
                             else:
                                 msg = "'searchBeamDestinationAddress' is not a valid IP address"
@@ -1280,7 +1211,7 @@ class SubarrayComponentManager:
                                 msg = "'outputEnabled' is not a valid boolean"
                                 return (False, msg)
 
-                            if validate_ip(timingBeam["timing_beam_destination_address"]):
+                            if self.validate_ip(timingBeam["timing_beam_destination_address"]):
                                 pass
                             else:
                                 msg = "'timingBeamDestinationAddress' is not a valid IP address"
@@ -1313,32 +1244,9 @@ class SubarrayComponentManager:
             information purpose only.
         :rtype: (ResultCode, str)
         """
-        (valid, msg) = self._validate_scan_configuration(argin)
-        if not valid:
-            return self._raise_configure_scan_fatal_error(msg)
-
-        self._deconfigure()
-
-        self._corr_config = []
-        self._pss_config = []
-        self._pst_config = []
-        self._corr_fsp_list = []
-        self._pss_fsp_list = []
-        self._pst_fsp_list = []
-        self._fsp_list = [[], [], [], []]
-
         full_configuration = json.loads(argin)
         common_configuration = copy.deepcopy(full_configuration["common"])
         configuration = copy.deepcopy(full_configuration["cbf"])
-        # set band5Tuning to [0,0] if not specified
-        if "band_5_tuning" not in common_configuration: 
-            common_configuration["band_5_tuning"] = [0,0]
-        if "frequency_band_offset_stream_1" not in common_configuration: 
-            configuration["frequency_band_offset_stream_1"] = 0
-        if "frequency_band_offset_stream_2" not in common_configuration: 
-            configuration["frequency_band_offset_stream_2"] = 0
-        if "rfi_flagging_mask" not in configuration: 
-            configuration["rfi_flagging_mask"] = {}
 
         # Configure configID.
         self._config_ID = str(common_configuration["config_id"])
@@ -1524,7 +1432,7 @@ class SubarrayComponentManager:
 
         # NOTE:_corr_config is a list of fsp config JSON objects, each 
         #      augmented by a number of vcc-fsp common parameters 
-        #      created by the function _validate_scan_configuration()
+        #      created by the function validate_scan_configuration()
         if len(self._corr_config) != 0: 
             #self._proxy_corr_config.ConfigureFSP(json.dumps(self._corr_config))
             # Michelle - WIP - TODO - this is to replace the call to 
@@ -1536,7 +1444,7 @@ class SubarrayComponentManager:
                 except tango.DevFailed:
                     msg = "An exception occurred while configuring " \
                     "FspCorrSubarray; Aborting configuration"
-                    return self._raise_configure_scan_fatal_error(msg)
+                    self.raise_configure_scan_fatal_error(msg)
 
         # NOTE: _pss_config is costructed similarly to _corr_config
         if len(self._pss_config) != 0:
@@ -1547,7 +1455,7 @@ class SubarrayComponentManager:
                 except tango.DevFailed:
                     msg = "An exception occurred while configuring  " \
                     "FspPssSubarray; Aborting configuration"
-                    return self._raise_configure_scan_fatal_error(msg)
+                    self.raise_configure_scan_fatal_error(msg)
 
         # NOTE: _pst_config is costructed similarly to _corr_config
         if len(self._pst_config) != 0:
@@ -1558,7 +1466,7 @@ class SubarrayComponentManager:
                 except tango.DevFailed:
                     msg = "An exception occurred while configuring  " \
                     "FspPstSubarray; Aborting configuration"
-                    return self._raise_configure_scan_fatal_error(msg)
+                    self.raise_configure_scan_fatal_error(msg)
 
         # TODO add VLBI to this once they are implemented
         # potentially remove
@@ -1569,32 +1477,30 @@ class SubarrayComponentManager:
         #save configuration into latestScanConfig
         self._latest_scan_config = str(configuration)
 
+        self._ready = True
+
         return (ResultCode.OK, "Configure command completed OK")
 
 
-    def remove_receptors(
+    def remove_receptor(
         self: SubarrayComponentManager,
-        argin: List[int]
+        receptor_id: int
     ) -> Tuple[ResultCode, str]:
         """
-        Remove receptors from subarray.
+        Remove receptor from subarray.
 
-        :param argin: The receptors to be released
+        :param receptor_id: The receptor to be released
         :return: A tuple containing a return code and a string
             message indicating status. The message is for
             information purpose only.
         :rtype: (ResultCode, str)
         """
-        for receptorID in argin:
-            # check for invalid receptorID
-            if not 0 < receptorID < 198:
-                log_msg = f"Invalid receptor ID {receptorID}. Skipping."
-                self._logger.warn(log_msg)
-            elif receptorID in self._receptors:
-                vccID = self._receptor_to_vcc[receptorID]
-                vccFQDN = self._fqdn_vcc[vccID - 1]
-                vccProxy = self._proxies_vcc[vccID - 1]
-
+        if receptor_id in self._receptors:
+            vccID = self._receptor_to_vcc[receptor_id]
+            vccFQDN = self._fqdn_vcc[vccID - 1]
+            vccProxy = self._proxies_vcc[vccID - 1]
+            
+            try:
                 # unsubscribe from events
                 vccProxy.remove_event(
                     "State",
@@ -1609,117 +1515,92 @@ class SubarrayComponentManager:
                 del self._vcc_state[vccFQDN]
                 del self._vcc_health_state[vccFQDN]
 
-                # reset receptorID and subarrayMembership Vcc attribute:
-                # TODO: should VCC receptorID be altered here?
-                # currently the mapping is set in the controller
-                # vccProxy.receptorID = 0
+                # reset subarrayMembership Vcc attribute:
                 vccProxy.subarrayMembership = 0
-
-                self._receptors.remove(receptorID)
-                self._proxies_assigned_vcc.remove(vccProxy)
-                self._group_vcc.remove(vccFQDN)
-            else:
-                log_msg = f"Receptor {receptorID} not assigned to subarray. Skipping."
-                self._logger.warn(log_msg)
-
-        return (ResultCode.OK, "RemoveReceptors command completed OK")
+            except tango.DevFailed as df:
+                msg = str(df.args[0].desc)
+                return (ResultCode.FAILED, msg)
 
 
-    def add_receptors(
+            self._receptors.remove(receptor_id)
+            self._proxies_assigned_vcc.remove(vccProxy)
+            self._group_vcc.remove(vccFQDN)
+        
+        else:
+            msg = f"Error in SubarrayComponentManager; receptor {receptor_id} not found."
+            return (ResultCode.FAILED, msg)
+
+        return (ResultCode.OK, "remove_receptor command completed OK")
+
+
+    def add_receptor(
         self: SubarrayComponentManager,
-        argin: List[int]
+        receptor_id: int
     ) -> Tuple[ResultCode, str]:
         """
         Add receptors to subarray.
 
-        :param argin: The receptors to be assigned
+        :param receptor_id: The receptor to be assigned
         :return: A tuple containing a return code and a string
             message indicating status. The message is for
             information purpose only.
         :rtype: (ResultCode, str)
         """
-        errs = []  # list of error messages
+        vccID = self._receptor_to_vcc[receptor_id]
+        vccProxy = self._proxies_vcc[vccID - 1]
 
-        for receptorID in argin:
-            try:
-                # check for invalid receptorID
-                #TODO replace hardcoded values
-                if not 0 < receptorID < 198:
-                    errs.append(f"Invalid receptor ID {receptorID}.")
-                    raise KeyError
+        self._logger.debug(
+            "receptor_id = {receptor_id}, vccProxy.receptor_id = "
+            f"{vccProxy.receptor_id}"
+        )
 
-                vccID = self._receptor_to_vcc[receptorID]
-                vccProxy = self._proxies_vcc[vccID - 1]
+        subarrayID = vccProxy.subarrayMembership
 
+        # only add receptor if it does not already belong to a 
+        # different subarray
+        if subarrayID not in [0, self._subarray_id]:
+            msg = f"Receptor {receptor_id} already in use by subarray {subarrayID}."
+            return (ResultCode.FAILED, msg)
+        else:
+            if receptor_id not in self._receptors:
+                # change subarray membership of vcc
+                vccProxy.subarrayMembership = self._subarray_id
+
+                # TODO: is this note still relevant? 
+                # Note:json does not recognize NumPy data types. 
+                # Convert the number to a Python int 
+                # before serializing the object.
+                # The list of receptors is serialized when the FSPs  
+                # are configured for a scan.
+
+                self._receptors.append(int(receptor_id))
+                self._proxies_assigned_vcc.append(vccProxy)
+                self._group_vcc.add(self._fqdn_vcc[vccID - 1])
+
+                # subscribe to VCC state and healthState changes
+                event_id_state = vccProxy.add_change_event_callback(
+                    "State",
+                    self._state_change_event_callback
+                )
+                self._logger.debug(f"State event ID: {event_id_state}")
+
+                event_id_health_state = vccProxy.add_change_event_callback(
+                    "healthState",
+                    self._state_change_event_callback
+                )
                 self._logger.debug(
-                    "receptorID = {receptorID}, vccProxy.receptorID = "
-                    f"{vccProxy.receptorID}"
+                    f"Health state event ID: {event_id_health_state}"
                 )
 
-                # TODO - may not be needed
-                # vccProxy.receptorID = receptorID
+                self._events_state_change_vcc[vccID] = [
+                    event_id_state,
+                    event_id_health_state
+                ]
+            else:
+                msg = f"Receptor {receptor_id} already assigned to subarray component manager."
+                return (ResultCode.FAILED, msg)
 
-                subarrayID = vccProxy.subarrayMembership
-
-                # only add receptor if it does not already belong to a 
-                # different subarray
-                if subarrayID not in [0, self._subarray_id]:
-                    errs.append(
-                        f"Receptor {receptorID} already in use by "
-                        f"subarray {subarrayID}."
-                    )
-                else:
-                    if receptorID not in self._receptors:
-                        # change subarray membership of vcc
-                        vccProxy.subarrayMembership = self._subarray_id
-
-                        # TODO: is this note still relevant? 
-                        # Note:json does not recognize NumPy data types. 
-                        # Convert the number to a Python int 
-                        # before serializing the object.
-                        # The list of receptors is serialized when the FSPs  
-                        # are configured for a scan.
-
-                        self._receptors.append(int(receptorID))
-                        self._proxies_assigned_vcc.append(vccProxy)
-                        self._group_vcc.add(self._fqdn_vcc[vccID - 1])
-
-                        # subscribe to VCC state and healthState changes
-                        event_id_state = vccProxy.add_change_event_callback(
-                            "State",
-                            self._state_change_event_callback
-                        )
-                        self._logger.debug(f"State event ID: {event_id_state}")
-
-                        event_id_health_state = vccProxy.add_change_event_callback(
-                            "healthState",
-                            self._state_change_event_callback
-                        )
-                        self._logger.debug(
-                            f"Health state event ID: {event_id_health_state}"
-                        )
-
-                        self._events_state_change_vcc[vccID] = [
-                            event_id_state,
-                            event_id_health_state
-                        ]
-                    else:
-                        log_msg = (
-                            f"Receptor {receptorID} already assigned to "
-                            "current subarray."
-                        )
-                        self._logger.warn(log_msg)
-
-            except KeyError:  # invalid receptor ID
-                errs.append(f"Invalid receptor ID: {receptorID}")
-
-        if errs:
-            msg = "\n".join(errs)
-            self._logger.error(msg)
-            
-            return (ResultCode.FAILED, msg)
-
-        return (ResultCode.OK, "AddReceptors command completed OK")
+        return (ResultCode.OK, "add_receptor command completed OK")
 
 
     def scan(
@@ -1736,19 +1617,10 @@ class SubarrayComponentManager:
             information purpose only.
         :rtype: (ResultCode, str)
         """
-        # overwrites the do hook
-
-        scan = json.loads(argin)
-
-        self._scan_ID = int(scan["scan_id"])
-
-        data = tango.DeviceData()
-        data.insert(tango.DevString, str(self._scan_ID))
-        
-        self._group_vcc.command_inout("Scan", data)
-        self._group_fsp_corr_subarray.command_inout("Scan", data)
-        self._group_fsp_pss_subarray.command_inout("Scan", data)
-        self._group_fsp_pst_subarray.command_inout("Scan", data)
+        self._group_vcc.command_inout("Scan", argin)
+        self._group_fsp_corr_subarray.command_inout("Scan", argin)
+        self._group_fsp_pss_subarray.command_inout("Scan", argin)
+        self._group_fsp_pst_subarray.command_inout("Scan", argin)
 
         return (ResultCode.STARTED, "Scan command successful")
 
@@ -1769,80 +1641,4 @@ class SubarrayComponentManager:
         self._group_fsp_pss_subarray.command_inout("EndScan")
         self._group_fsp_pst_subarray.command_inout("EndScan")
 
-        self._scan_ID = 0
-
         return (ResultCode.OK, "EndScan command completed OK")
-
-
-    def go_to_idle(self:SubarrayComponentManager) -> Tuple[ResultCode, str]:
-        """
-        Go to idle observing state.
-        
-        :return: A tuple containing a return code and a string
-            message indicating status. The message is for
-            information purpose only.
-        :rtype: (ResultCode, str)
-        """
-        self._deconfigure()
-
-        return (ResultCode.OK, "GoToIdle command completed OK")
-
-
-    def abort(self:SubarrayComponentManager) -> Tuple[ResultCode, str]:
-        """
-        Abort current operation.
-
-        :return: A tuple containing a return code and a string
-            message indicating status. The message is for
-            information purpose only.
-        :rtype: (ResultCode, str)
-        """
-
-        # if aborted from SCANNING, end VCC and FSP Subarray scans
-        if self._scan_ID != 0:
-            self._logger.info("Aborting from SCANNING")
-            self._group_vcc.command_inout("EndScan")
-            self._group_fsp_corr_subarray.command_inout("EndScan")
-            self._group_fsp_pss_subarray.command_inout("EndScan")
-            self._group_fsp_pst_subarray.command_inout("EndScan")
-
-        return (ResultCode.OK, "Abort command completed OK")
-
-
-    def restart(self:SubarrayComponentManager) -> Tuple[ResultCode, str]:
-        """
-        Restart from aborted or failed state.
-
-        :return: A tuple containing a return code and a string
-            message indicating status. The message is for
-            information purpose only.
-        :rtype: (ResultCode, str)
-        """
-        # We might have interrupted a long-running command such as a Configure
-        # or a Scan, so we need to clean up from that.
-
-        # Now totally deconfigure
-        self._deconfigure()
-
-        # and release all receptors
-        self.remove_receptors(self._receptors[:])
-
-        return (ResultCode.OK, "Restart command completed OK")
-   
-
-    def obs_reset(self:SubarrayComponentManager) -> Tuple[ResultCode, str]:
-        """
-        Reset observing state.
-
-        :return: A tuple containing a return code and a string
-            message indicating status. The message is for
-            information purpose only.
-        :rtype: (ResultCode, str)
-        """
-        # We might have interrupted a long-running command such as a Configure
-        # or a Scan, so we need to clean up from that.
-
-        # totally deconfigure
-        self._deconfigure()
-
-        return (ResultCode.OK, "ObsReset command completed OK")
