@@ -33,11 +33,12 @@ from tango import DevFailed, DebugIt, DevState, AttrWriteType
 # SKA Specific imports
 
 from ska_mid_cbf_mcs.commons.global_enum import const, freq_band_dict
-from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 
-from ska_tango_base.control_model import ObsState
+from ska_tango_base.control_model import ObsState, SimulationMode
 from ska_tango_base import SKAObsDevice, CspSubElementObsDevice
 from ska_tango_base.commands import ResultCode
+
+from ska_mid_cbf_mcs.vcc.vcc_component_manager import VccComponentManager
 
 # PROTECTED REGION END #    //  Vcc.additionnal_import
 
@@ -289,35 +290,18 @@ class Vcc(CspSubElementObsDevice):
 
             device.set_change_event("subarrayMembership", True, True)
 
-            try:
-                device._proxy_band_12 = CbfDeviceProxy(
-                    fqdn=device.Band1And2Address,
-                    logger=device.logger
-                )
-                device._proxy_band_3  = CbfDeviceProxy(
-                    fqdn=device.Band3Address,
-                    logger=device.logger
-                )
-                device._proxy_band_4  = CbfDeviceProxy(
-                    fqdn=device.Band4Address,
-                    logger=device.logger
-                )
-                device._proxy_band_5  = CbfDeviceProxy(
-                    fqdn=device.Band5Address,
-                    logger=device.logger
-                )
-                device._proxy_sw_1    = CbfDeviceProxy(
-                    fqdn=device.SW1Address,
-                    logger=device.logger
-                )
-                device._proxy_sw_2    = CbfDeviceProxy(
-                    fqdn=device.SW2Address,
-                    logger=device.logger
-                )
-            except tango.DevFailed as dev_failed:
-                raise ConnectionError(
-                    f"Error in proxy connection."
-                ) from dev_failed
+            device.component_manager = VccComponentManager(
+                simulation_mode=SimulationMode.TRUE,
+                vcc_id=device.VccID,
+                vcc_band=[device.Band1And2Address,
+                    device.Band3Address,
+                    device.Band4Address,
+                    device.Band5Address
+                ],
+                search_window=[device.SW1Address, device.SW2Address],
+                logger=device.logger,
+                connect=True
+            )
 
             message = "Vcc Init command completed OK"
             device.logger.info(message)
@@ -326,6 +310,8 @@ class Vcc(CspSubElementObsDevice):
     def always_executed_hook(self: Vcc) -> None:
         # PROTECTED REGION ID(Vcc.always_executed_hook) ENABLED START #
         """Hook to be executed before any commands."""
+        if not self.component_manager.connected:
+            self.component_manager.start_communicating()
         # PROTECTED REGION END #    //  Vcc.always_executed_hook
 
     def delete_device(self: Vcc) -> None:
@@ -341,7 +327,7 @@ class Vcc(CspSubElementObsDevice):
     def read_receptorID(self: Vcc) -> int:
         # PROTECTED REGION ID(Vcc.receptorID_read) ENABLED START #
         """
-            Read the recptorID attribute.
+            Read the receptorID attribute.
 
             :return: the Vcc's receptor id.
             :rtype: int
@@ -605,32 +591,7 @@ class Vcc(CspSubElementObsDevice):
 
             :param freq_band_name: the frequency band name
         """
-
-        # TODO: can be done in a more Pythonian way; broken?
-        if freq_band_name in ["1", "2"]:
-            self._proxy_band_12.On()
-            self._proxy_band_3.Disable()
-            self._proxy_band_4.Disable()
-            self._proxy_band_5.Disable()
-        elif freq_band_name == "3":
-            self._proxy_band_12.Disable()
-            self._proxy_band_3.On()
-            self._proxy_band_4.Disable()
-            self._proxy_band_5.Disable()
-        elif freq_band_name == "4":
-            self._proxy_band_12.Disable()
-            self._proxy_band_3.Disable()
-            self._proxy_band_4.On()
-            self._proxy_band_5.Disable()
-        elif freq_band_name in ["5a", "5b"]:
-            self._proxy_band_12.Disable()
-            self._proxy_band_3.Disable()
-            self._proxy_band_4.Disable()
-            self._proxy_band_5.On()
-        else:
-            # The frequency band name has been validated at this point
-            # so this shouldn't happen
-            pass
+        self.component_manager.turn_on_band_device(freq_band_name)
     
     @command(
         dtype_in='str',
@@ -642,19 +603,7 @@ class Vcc(CspSubElementObsDevice):
 
             :param freq_band_name: the frequency band name
         """
-        # TODO: can be done in a more Pythonian way; broken?
-        if freq_band_name in ["1", "2"]:
-            self._proxy_band_12.Off()
-        elif freq_band_name == "3":
-            self._proxy_band_3.Off()
-        elif freq_band_name == "4":
-            self._proxy_band_4.Off()
-        elif freq_band_name in ["5a", "5b"]:
-            self._proxy_band_5.Off()
-        else:
-            # The frequency band name has been validated at this point
-            # so this shouldn't happen
-            pass
+        self.component_manager.turn_off_band_device(freq_band_name)
 
     class ConfigureScanCommand(CspSubElementObsDevice.ConfigureScanCommand):
         """
@@ -1301,122 +1250,22 @@ class Vcc(CspSubElementObsDevice):
     def ConfigureSearchWindow(
         self: Vcc, 
         argin: str
-        ) -> None:
+        ) -> Tuple[ResultCode, str]:
         # PROTECTED REGION ID(Vcc.ConfigureSearchWindow) ENABLED START #
         """
-            Configure a search window by sending parameters from the input(JSON) to SearchWindow device. 
-                This function is called by the subarray after the configuration has already been validated, 
-                so the checks here have been removed to reduce overhead.
+        Configure a search window by sending parameters from the input(JSON) to SearchWindow device. 
+            This function is called by the subarray after the configuration has already been validated, 
+            so the checks here have been removed to reduce overhead.
 
-            :param argin: JSON object with the search window parameters
+        :param argin: JSON object with the search window parameters
+
+        :return: A tuple containing a return code and a string
+            message indicating status. The message is for
+            information purpose only.
+        :rtype: (ResultCode, str)
         """
-        self.logger.debug("Entering ConfigureSearchWindow()") 
-        argin = json.loads(argin)
-
-        # variable to use as SW proxy
-        proxy_sw = None
-
-        # Configure searchWindowID.
-        if int(argin["search_window_id"]) == 1:
-            proxy_sw = self._proxy_sw_1
-        elif int(argin["search_window_id"]) == 2:
-            proxy_sw = self._proxy_sw_2
-
-        # Configure searchWindowTuning.
-        if self._frequency_band in list(range(4)):  # frequency band is not band 5
-            proxy_sw.searchWindowTuning = argin["search_window_tuning"]
-
-            start_freq_Hz, stop_freq_Hz = [
-                const.FREQUENCY_BAND_1_RANGE_HZ,
-                const.FREQUENCY_BAND_2_RANGE_HZ,
-                const.FREQUENCY_BAND_3_RANGE_HZ,
-                const.FREQUENCY_BAND_4_RANGE_HZ
-            ][self._frequency_band]
-
-            if start_freq_Hz + self._frequency_band_offset_stream_1 + \
-                    const.SEARCH_WINDOW_BW_HZ / 2 <= \
-                    int(argin["search_window_tuning"]) <= \
-                    stop_freq_Hz + self._frequency_band_offset_stream_1 - \
-                    const.SEARCH_WINDOW_BW_HZ / 2:
-                # this is the acceptable range
-                pass
-            else:
-                # log a warning message
-                log_msg = "'searchWindowTuning' partially out of observed band. " \
-                        "Proceeding."
-                self.logger.warn(log_msg)
-        else:  # frequency band 5a or 5b (two streams with bandwidth 2.5 GHz)
-            proxy_sw.searchWindowTuning = argin["search_window_tuning"]
-
-            frequency_band_range_1 = (
-                self._stream_tuning[0] * 10 ** 9 + self._frequency_band_offset_stream_1 - \
-                const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2,
-                self._stream_tuning[0] * 10 ** 9 + self._frequency_band_offset_stream_1 + \
-                const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2
-            )
-
-            frequency_band_range_2 = (
-                self._stream_tuning[1] * 10 ** 9 + self._frequency_band_offset_stream_2 - \
-                const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2,
-                self._stream_tuning[1] * 10 ** 9 + self._frequency_band_offset_stream_2 + \
-                const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2
-            )
-
-            if (frequency_band_range_1[0] + \
-                const.SEARCH_WINDOW_BW * 10 ** 6 / 2 <= \
-                int(argin["search_window_tuning"]) <= \
-                frequency_band_range_1[1] - \
-                const.SEARCH_WINDOW_BW * 10 ** 6 / 2) or \
-                    (frequency_band_range_2[0] + \
-                    const.SEARCH_WINDOW_BW * 10 ** 6 / 2 <= \
-                    int(argin["search_window_tuning"]) <= \
-                    frequency_band_range_2[1] - \
-                    const.SEARCH_WINDOW_BW * 10 ** 6 / 2):
-                # this is the acceptable range
-                pass
-            else:
-                # log a warning message
-                log_msg = "'searchWindowTuning' partially out of observed band. " \
-                        "Proceeding."
-                self.logger.warn(log_msg)
-
-            # Configure tdcEnable.
-            proxy_sw.tdcEnable = argin["tdc_enable"]
-            if argin["tdc_enable"]:
-                proxy_sw.On()
-            else:
-                proxy_sw.Disable()
-
-            # Configure tdcNumBits.
-            if argin["tdc_enable"]:
-                proxy_sw.tdcNumBits = int(argin["tdc_num_bits"])
-
-            # Configure tdcPeriodBeforeEpoch.
-            if "tdc_period_before_epoch" in argin:
-                proxy_sw.tdcPeriodBeforeEpoch = int(argin["tdc_period_before_epoch"])
-            else:
-                proxy_sw.tdcPeriodBeforeEpoch = 2
-                log_msg = "Search window specified, but 'tdcPeriodBeforeEpoch' not given. " \
-                        "Defaulting to 2."
-                self.logger.warn(log_msg)
-
-            # Configure tdcPeriodAfterEpoch.
-            if "tdc_period_after_epoch" in argin:
-                proxy_sw.tdcPeriodAfterEpoch = int(argin["tdc_period_after_epoch"])
-            else:
-                proxy_sw.tdcPeriodAfterEpoch = 22
-                log_msg = "Search window specified, but 'tdcPeriodAfterEpoch' not given. " \
-                        "Defaulting to 22."
-                self.logger.warn(log_msg)
-
-            # Configure tdcDestinationAddress.
-            if argin["tdc_enable"]:
-                for receptor in argin["tdc_destination_address"]:
-                    if int(receptor["receptor_id"]) == self._receptor_ID:
-                        # TODO: validate input
-                        proxy_sw.tdcDestinationAddress = \
-                            receptor["tdc_destination_address"]
-                        break
+        self.logger.debug("Entering ConfigureSearchWindow()")
+        return self.component_manager.configure_search_window(argin)
 
 # ----------
 # Run server
