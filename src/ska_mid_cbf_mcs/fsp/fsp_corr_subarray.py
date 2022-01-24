@@ -20,6 +20,7 @@
 from __future__ import annotations  # allow forward references in type hints
 
 from typing import List, Tuple, Optional
+from ska_tango_base.csp.obs import obs_state_model
 
 # tango imports
 import tango
@@ -30,6 +31,7 @@ from tango.server import attribute, command
 from tango.server import device_property
 from tango import AttrQuality, DispLevel, DevState
 from tango import AttrWriteType, PipeWriteType
+from ska_tango_base import SKABaseDevice
 # Additional import
 # PROTECTED REGION ID(FspCorrSubarray.additionnal_import) ENABLED START #
 import os
@@ -211,12 +213,19 @@ class FspCorrSubarray(CspSubElementObsDevice):
         """
         super().init_command_objects()
 
-        device_args = (self, self.obs_state_model, self.logger)
+        device_args = (self, self.op_state_model, self.obs_state_model, self.logger)
         self.register_command_object(
             "ConfigureScan", self.ConfigureScanCommand(*device_args)
         )
         self.register_command_object(
             "GoToIdle", self.GoToIdleCommand(*device_args)
+        )
+        device_args = (self, self.op_state_model, self.logger)
+        self.register_command_object(
+            "On", self.OnCommand(*device_args)
+        )
+        self.register_command_object(
+            "Off", self.OffCommand(*device_args)
         )
 
     class InitCommand(CspSubElementObsDevice.InitCommand):
@@ -714,6 +723,53 @@ class FspCorrSubarray(CspSubElementObsDevice):
     # --------
     # Commands
     # --------
+
+    class OnCommand(SKABaseDevice.OnCommand):
+        """
+        A class for the FspCorrSubarray's On() command.
+        """
+
+        def do(            
+            self: FspCorrSubarray.OnCommand,
+        ) -> Tuple[ResultCode, str]:
+            """
+            Stateless hook for On() command functionality.
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
+
+            (result_code,message) = (ResultCode.OK, "FspCorrSubarray On command completed OK")
+
+            self.target._component_power_mode_changed(PowerMode.ON)
+
+            self.logger.info(message)
+            return (result_code, message)
+
+    class OffCommand(SKABaseDevice.OffCommand):
+        """
+        A class for the FspCorrSubarray's Off() command.
+        """
+        def do(
+            self: FspCorrSubarray.OffCommand,
+        ) -> Tuple[ResultCode, str]:
+            """
+            Stateless hook for Off() command functionality.
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
+
+            (result_code,message) = (ResultCode.OK, "FspCorrSubarray Off command completed OK")
+
+            self.target._component_power_mode_changed(PowerMode.OFF)
+
+            self.logger.info(message)
+            return (result_code, message)
 
     class ConfigureScanCommand(CspSubElementObsDevice.ConfigureScanCommand):
         """

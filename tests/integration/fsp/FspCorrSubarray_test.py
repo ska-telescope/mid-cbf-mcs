@@ -54,6 +54,50 @@ class TestFspCorrSubarray:
         sub_id", 
         [(1, 1)]
     )
+    def test_On_valid(
+        self: TestFspCorrSubarray, 
+        test_proxies,         
+        fsp_id: int,
+        sub_id: int
+    ) -> None:
+        """
+        Test a valid use of the "On" command
+        """
+        
+        device_under_test = test_proxies.fspSubarray["CORR"][sub_id][fsp_id]
+
+        device_under_test.On()
+
+        time.sleep(1)
+        assert device_under_test.State() == DevState.ON
+    
+    @pytest.mark.parametrize(
+        "fsp_id, \
+        sub_id", 
+        [(1, 1)]
+    )
+    def test_Off_valid(
+        self: TestFspCorrSubarray, 
+        test_proxies,         
+        fsp_id: int,
+        sub_id: int
+    ) -> None:
+        """
+        Test a valid use of the "Off" command
+        """
+        
+        device_under_test = test_proxies.fspSubarray["CORR"][sub_id][fsp_id]
+
+        device_under_test.Off()
+
+        time.sleep(1)
+        assert device_under_test.State() == DevState.OFF
+    
+    @pytest.mark.parametrize(
+        "fsp_id, \
+        sub_id", 
+        [(1, 1)]
+    )
     def test_Disconnect(
         self: TestFspCorrSubarray, 
         test_proxies,         
