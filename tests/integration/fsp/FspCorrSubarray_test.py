@@ -32,7 +32,8 @@ class TestFspCorrSubarray:
         self: TestFspCorrSubarray, 
         test_proxies,         
         fsp_id: int,
-        sub_id: int):
+        sub_id: int
+    ) -> None:
         """
         Test the initial states and verify the component manager 
         can start communicating
@@ -47,3 +48,27 @@ class TestFspCorrSubarray:
         # controller device should be in OFF state after start_communicating 
         time.sleep(1)
         assert device_under_test.State() == DevState.OFF
+    
+    @pytest.mark.parametrize(
+        "fsp_id, \
+        sub_id", 
+        [(1, 1)]
+    )
+    def test_Disconnect(
+        self: TestFspCorrSubarray, 
+        test_proxies,         
+        fsp_id: int,
+        sub_id: int
+    ) -> None:
+        """
+        Verify the component manager can stop communicating
+        """
+
+        device_under_test = test_proxies.fspSubarray["CORR"][sub_id][fsp_id]
+
+        # trigger stop_communicating by setting the AdminMode to OFFLINE
+        device_under_test.adminMode = AdminMode.OFFLINE
+
+        # controller device should be in DISABLE state after stop_communicating  
+        time.sleep(1)
+        assert device_under_test.State() == DevState.DISABLE
