@@ -81,9 +81,11 @@ class TestCbfController:
         test_proxies.wait_timeout_dev([test_proxies.controller], DevState.OFF, 3, 0.1)
         assert test_proxies.controller.State() == DevState.OFF
 
-    def test_On_valid(self, test_proxies):
+    @pytest.mark.skip(reason="controller subordinate devices need to be \
+        updated to v0.11.3")
+    def test_On(self, test_proxies):
         """
-        Test a valid use of the "On" command
+        Test the "On" command
         """
         
         # send the On command
@@ -92,24 +94,25 @@ class TestCbfController:
         test_proxies.wait_timeout_dev([test_proxies.controller], DevState.ON, 3, 0.1)
         assert test_proxies.controller.State() == DevState.ON
 
-        #TODO: uncomment when update to v.0.11.3 complete
-        # for i in range(1, test_proxies.num_sub + 1):
-        #     test_proxies.wait_timeout_dev([test_proxies.subarray[i]], DevState.ON, 3, 0.1)
-        #     assert test_proxies.subarray[i].State() == DevState.ON
+        for i in range(1, test_proxies.num_sub + 1):
+            test_proxies.wait_timeout_dev([test_proxies.subarray[i]], DevState.ON, 3, 0.1)
+            assert test_proxies.subarray[i].State() == DevState.ON
 
-        # for i in range(1, test_proxies.num_vcc + 1):
-        #     assert test_proxies.vcc[i].State() == DevState.ON
+        for i in range(1, test_proxies.num_vcc + 1):
+            assert test_proxies.vcc[i].State() == DevState.ON
 
-        # for i in range(1, test_proxies.num_fsp + 1):
-        #     assert test_proxies.fsp[i].State() == DevState.ON
-        # for i in ["CORR", "PSS-BF", "PST-BF"]:
-        #     for j in range(1, test_proxies.num_sub + 1):
-        #         for k in range(1, test_proxies.num_fsp + 1):
-        #             assert test_proxies.fspSubarray[i][j][k].State() == DevState.ON
-        
-    def test_Off_valid(self, test_proxies):
+        for i in range(1, test_proxies.num_fsp + 1):
+            assert test_proxies.fsp[i].State() == DevState.ON
+        for i in ["CORR", "PSS-BF", "PST-BF"]:
+            for j in range(1, test_proxies.num_sub + 1):
+                for k in range(1, test_proxies.num_fsp + 1):
+                    assert test_proxies.fspSubarray[i][j][k].State() == DevState.ON
+    
+    @pytest.mark.skip(reason="controller subordinate devices need to be \
+        updated to v0.11.3")    
+    def test_Off(self, test_proxies):
         """
-        Test a valid use of the "Off" command
+        Test the "Off" command
         """
 
         # send the Off command
@@ -118,24 +121,25 @@ class TestCbfController:
         test_proxies.wait_timeout_dev([test_proxies.controller], DevState.OFF, 3, 0.1)
         assert test_proxies.controller.State() == DevState.OFF
 
-        #TODO: uncomment when update to v.0.11.3 complete 
-        # for i in range(1, test_proxies.num_sub + 1):
-        #     test_proxies.wait_timeout_dev([test_proxies.subarray[i]], DevState.OFF, 3, 0.1)
-        #     assert test_proxies.subarray[i].State() == DevState.OFF
+        for i in range(1, test_proxies.num_sub + 1):
+            test_proxies.wait_timeout_dev([test_proxies.subarray[i]], DevState.OFF, 3, 0.1)
+            assert test_proxies.subarray[i].State() == DevState.OFF
 
-        # for i in range(1, test_proxies.num_vcc + 1):
-        #     assert test_proxies.vcc[i].State() == DevState.OFF
+        for i in range(1, test_proxies.num_vcc + 1):
+            assert test_proxies.vcc[i].State() == DevState.OFF
 
-        # for i in range(1, test_proxies.num_fsp + 1):
-        #     assert test_proxies.fsp[i].State() == DevState.OFF
-        # for i in ["CORR", "PSS-BF", "PST-BF"]:
-        #     for j in range(1, test_proxies.num_sub + 1):
-        #         for k in range(1, test_proxies.num_fsp + 1):
-        #             assert test_proxies.fspSubarray[i][j][k].State() == DevState.OFF
+        for i in range(1, test_proxies.num_fsp + 1):
+            assert test_proxies.fsp[i].State() == DevState.OFF
+        for i in ["CORR", "PSS-BF", "PST-BF"]:
+            for j in range(1, test_proxies.num_sub + 1):
+                for k in range(1, test_proxies.num_fsp + 1):
+                    assert test_proxies.fspSubarray[i][j][k].State() == DevState.OFF
     
-    def test_Standby_valid(self, test_proxies):
+    @pytest.mark.skip(reason="controller subordinate devices need to be \
+        updated to v0.11.3")  
+    def test_Standby(self, test_proxies):
         """
-        Test a valid use of the "Standby" command
+        Test the "Standby" command
         """
         # send the Standby command
         test_proxies.controller.Standby()
@@ -143,20 +147,19 @@ class TestCbfController:
         test_proxies.wait_timeout_dev([test_proxies.controller], DevState.STANDBY, 3, 0.1)
         assert test_proxies.controller.State() == DevState.STANDBY
 
-        #TODO: uncomment when update to v.0.11.3 complete 
-        # for i in range(1, test_proxies.num_sub + 1):
-        #     test_proxies.wait_timeout_dev([test_proxies.subarray[i]], DevState.OFF, 3, 0.1)
-        #     assert test_proxies.subarray[i].State() == DevState.OFF
+        for i in range(1, test_proxies.num_sub + 1):
+            test_proxies.wait_timeout_dev([test_proxies.subarray[i]], DevState.OFF, 3, 0.1)
+            assert test_proxies.subarray[i].State() == DevState.OFF
 
-        # for i in range(1, test_proxies.num_vcc + 1):
-        #     assert test_proxies.vcc[i].State() == DevState.OFF
+        for i in range(1, test_proxies.num_vcc + 1):
+            assert test_proxies.vcc[i].State() == DevState.OFF
 
-        # for i in range(1, test_proxies.num_fsp + 1):
-        #     assert test_proxies.fsp[i].State() == DevState.OFF
-        # for i in ["CORR", "PSS-BF", "PST-BF"]:
-        #     for j in range(1, test_proxies.num_sub + 1):
-        #         for k in range(1, test_proxies.num_fsp + 1):
-        #             assert test_proxies.fspSubarray[i][j][k].State() == DevState.OFF
+        for i in range(1, test_proxies.num_fsp + 1):
+            assert test_proxies.fsp[i].State() == DevState.OFF
+        for i in ["CORR", "PSS-BF", "PST-BF"]:
+            for j in range(1, test_proxies.num_sub + 1):
+                for k in range(1, test_proxies.num_fsp + 1):
+                    assert test_proxies.fspSubarray[i][j][k].State() == DevState.OFF
 
     def test_Disconnect(self, test_proxies):
         """
