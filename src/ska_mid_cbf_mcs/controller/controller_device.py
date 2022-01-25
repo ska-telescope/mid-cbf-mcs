@@ -299,7 +299,8 @@ class CbfController(SKAController):
                 except KeyError:  # not found in DB
                     device._count_subarray = 16
             else:
-                self.logger.warn("MaxCapabilities device property not defined")
+                self._logger.warn("MaxCapabilities device property not defined - \
+                    using default value")
 
         def do(
             self: CbfController.InitCommand,
@@ -322,6 +323,10 @@ class CbfController(SKAController):
 
             # initialize attribute values
             device._command_progress = 0
+
+            device._storage_logging_level = tango.LogLevel.LOG_DEBUG
+            device._element_logging_level = tango.LogLevel.LOG_DEBUG
+            device._central_logging_level = tango.LogLevel.LOG_DEBUG
 
             # defines self._count_vcc, self._count_fsp, and self._count_subarray
             self.__get_num_capabilities()

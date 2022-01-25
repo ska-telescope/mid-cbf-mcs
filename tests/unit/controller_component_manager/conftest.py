@@ -79,7 +79,6 @@ def controller_component_manager(
         num_capabilities = {
             "VCC": CONST_TEST_NUM_VCC,
             "FSP": CONST_TEST_NUM_FSP,
-            "Subarray": CONST_TEST_NUM_SUBARRAY
         }
         return num_capabilities
 

@@ -271,7 +271,8 @@ class ControllerComponentManager(CbfComponentManager):
                 except KeyError:  # not found in DB
                     self._count_subarray = CONST_DEFAULT_COUNT_SUBARRAY
         else:
-            self._logger.warn("MaxCapabilities device property not defined")
+            self._logger.warn("MaxCapabilities device property not defined - \
+                using default value")
         
         self._fqdn_vcc = list(self._vcc_fqdns_all)[:self._count_vcc]
         self._fqdn_fsp = list(self._fsp_fqdns_all)[:self._count_fsp]
@@ -379,7 +380,7 @@ class ControllerComponentManager(CbfComponentManager):
         self.update_component_fault(False)
         self.update_component_power_mode(PowerMode.OFF)
 
-    def stop_communicating(self: CbfComponentManager) -> None:
+    def stop_communicating(self: ControllerComponentManager) -> None:
         """Stop communication with the component"""
         super().stop_communicating()
         

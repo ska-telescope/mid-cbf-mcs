@@ -83,7 +83,7 @@ class CbfComponentManager(BaseComponentManager):
     def __init__(
         self: CbfComponentManager,
         logger: logging.Logger,
-        push_change_event: Optional[Callable],
+        push_change_event_callback: Optional[Callable],
         communication_status_changed_callback: Optional[
             Callable[[CommunicationStatus], None]
         ],
@@ -96,12 +96,23 @@ class CbfComponentManager(BaseComponentManager):
         Initialise a new instance.
 
         :param logger: a logger for this instance to use
+        :param push_change_event_callback: mechanism to inform the base classes
+            what method to call; typically device.push_change_event.
+        :param communication_status_changed_callback: callback to be
+            called when the status of communications between the
+            component manager and its component changes.
+        :param component_power_mode_changed_callback: callback to be
+            called when the power mode of the component changes.
+        :param component_fault_callback: callback to be called when the
+            fault status of the component changes.
+        :param args: other positional args
+        :param kwargs: other keyword args
         """
 
         self._logger = logger
 
-        assert push_change_event
-        self._push_change_event = push_change_event
+        assert push_change_event_callback
+        self._push_change_event = push_change_event_callback
 
         self._communication_status = CommunicationStatus.DISABLED
         self._communication_status_changed_callback = (
