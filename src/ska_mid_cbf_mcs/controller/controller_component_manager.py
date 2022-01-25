@@ -28,7 +28,6 @@ from ska_mid_cbf_mcs.component.component_manager import (
     CbfComponentManager,
 )
 
-CONST_NUM_DEV = 4
 CONST_DEFAULT_COUNT_VCC = 197
 CONST_DEFAULT_COUNT_FSP = 27
 CONST_DEFAULT_COUNT_SUBARRAY = 16
@@ -39,10 +38,9 @@ class ControllerComponentManager(CbfComponentManager):
     def __init__(
         self: ControllerComponentManager,
         get_num_capabilities : Callable[[None], Dict[str, int]],
-        vcc: List[str],
-        fsp: List[str],
-        subarray: List[str],
-        talon_lru: List[str],
+        vcc_fqdns_all: List[str],
+        fsp_fqdns_all: List[str],
+        talon_lru_fqdns_all: List[str],
         talondx_component_manager: TalonDxComponentManager,
         logger: logging.Logger,
         push_change_event: Optional[Callable],
@@ -54,10 +52,9 @@ class ControllerComponentManager(CbfComponentManager):
 
         :param get_num_capabilities: method that returns the controller device's 
                 maxCapabilities attribute (a dictionary specifying the number of each capability)    
-        :param vcc: FQDNS of all the Vcc devices
-        :param fsp: FQDNS of all the Fsp devices
-        :param subarray: FQDNS of all the Subarray devices
-        :param talon_lru: FQDNS of all the Talon LRU devices
+        :param vcc_fqdns_all: FQDNS of all the Vcc devices
+        :param fsp_fqdns_all: FQDNS of all the Fsp devices
+        :param talon_lru_fqdns_all: FQDNS of all the Talon LRU devices
         :talondx_component_manager: component manager for the Talon LRU 
         :param logger: a logger for this object to use
         :param push_change_event: method to call when the base classes
@@ -74,12 +71,11 @@ class ControllerComponentManager(CbfComponentManager):
         self._connected = False
 
         self._fqdn_vcc, self._fqdn_fsp, self._fqdn_subarray, self._fqdn_talon_lru  \
-            = ([] for i in range(CONST_NUM_DEV))
+            = ([] for i in range(4))
 
-        self._vcc = vcc
-        self._fsp = fsp
-        self._subarray = subarray
-        self._talon_lru = talon_lru
+        self._vcc_fqdns_all = vcc_fqdns_all
+        self._fsp_fqdns_all = fsp_fqdns_all
+        self._talon_lru_fqdns_all = talon_lru_fqdns_all
         self._get_max_capabilities = get_num_capabilities
 
         # TODO: component manager should not be passed into component manager
@@ -277,10 +273,10 @@ class ControllerComponentManager(CbfComponentManager):
         else:
             self._logger.warn("MaxCapabilities device property not defined")
         
-        self._fqdn_vcc = list(self._vcc)[:self._count_vcc]
-        self._fqdn_fsp = list(self._fsp)[:self._count_fsp]
-        self._fqdn_subarray = list(self._fsp)[:self._count_subarray]
-        self._fqdn_talon_lru = list(self._talon_lru)
+        self._fqdn_vcc = list(self._vcc_fqdns_all)[:self._count_vcc]
+        self._fqdn_fsp = list(self._fsp_fqdns_all)[:self._count_fsp]
+        self._fqdn_subarray = list(self._fsp_fqdns_all)[:self._count_subarray]
+        self._fqdn_talon_lru = list(self._talon_lru_fqdns_all)
         
         self._report_vcc_state = [tango.DevState.UNKNOWN] * self._count_vcc
         self._report_vcc_health_state = [HealthState.UNKNOWN.value] * self._count_vcc
@@ -297,7 +293,7 @@ class ControllerComponentManager(CbfComponentManager):
         self._report_subarray_admin_mode = [AdminMode.ONLINE.value] * self._count_subarray
         self._subarray_config_ID = [""] * self._count_subarray
 
-        self._count_talon_lru = len(self._talon_lru)
+        self._count_talon_lru = len(self._talon_lru_fqdns_all)
         self._report_talon_lru_state = [tango.DevState.UNKNOWN] * self._count_talon_lru
         self._report_talon_lru_health_state = [HealthState.UNKNOWN.value] * self._count_talon_lru
         self._report_talon_lru_admin_mode = [AdminMode.ONLINE.value] * self._count_talon_lru

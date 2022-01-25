@@ -365,7 +365,6 @@ class CbfController(SKAController):
             self.get_num_capabilities,
             self.VCC,
             self.FSP,
-            self.CbfSubarray,
             self.TalonLRU,
             self._talondx_component_manager,
             self.logger,
