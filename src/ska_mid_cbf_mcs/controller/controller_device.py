@@ -299,7 +299,8 @@ class CbfController(SKAController):
                 except KeyError:  # not found in DB
                     device._count_subarray = 16
             else:
-                self.logger.warn("MaxCapabilities device property not defined")
+                self._logger.warn("MaxCapabilities device property not defined - \
+                    using default value")
 
         def do(
             self: CbfController.InitCommand,
@@ -323,8 +324,21 @@ class CbfController(SKAController):
             # initialize attribute values
             device._command_progress = 0
 
+            device._storage_logging_level = tango.LogLevel.LOG_DEBUG
+            device._element_logging_level = tango.LogLevel.LOG_DEBUG
+            device._central_logging_level = tango.LogLevel.LOG_DEBUG
+
             # defines self._count_vcc, self._count_fsp, and self._count_subarray
             self.__get_num_capabilities()
+
+            # initialize dicts with maps receptorID <=> vccID
+            # TODO: vccID == receptorID for now, for testing purposes
+            device._receptor_to_vcc = []
+            device._vcc_to_receptor = []
+            for vccID in range(1, device._count_vcc + 1):
+                receptorID = vccID
+                device._receptor_to_vcc.append(f"{receptorID}:{vccID}")
+                device._vcc_to_receptor.append(f"{vccID}:{receptorID}")
 
             # # initialize attribute values
             device._command_progress = 0
@@ -365,7 +379,6 @@ class CbfController(SKAController):
             self.get_num_capabilities,
             self.VCC,
             self.FSP,
-            self.CbfSubarray,
             self.TalonLRU,
             self._talondx_component_manager,
             self.logger,
@@ -395,13 +408,13 @@ class CbfController(SKAController):
     def read_receptorToVcc(self: CbfController) -> List[str]:
         # PROTECTED REGION ID(CbfController.receptorToVcc_read) ENABLED START #
         """Return 'receptorID:vccID'"""
-        return self.component_manager.receptor_to_vcc
+        return self._receptor_to_vcc
         # PROTECTED REGION END #    //  CbfController.receptorToVcc_read
 
     def read_vccToReceptor(self: CbfController) -> List[str]:
         # PROTECTED REGION ID(CbfController.vccToReceptor_read) ENABLED START #
         """Return receptorToVcc attribute: 'vccID:receptorID'"""
-        return self.component_manager.vcc_to_receptor
+        return self._vcc_to_receptor
         # PROTECTED REGION END #    //  CbfController.vccToReceptor_read
 
     def read_subarrayconfigID(self: CbfController) -> List[str]:
@@ -632,24 +645,13 @@ class CbfController(SKAController):
 
         self._communication_status = communication_status
 
-        message = "Entering CbfController._communication_status_changed with status {}".format(communication_status)
-        self.logger.info(message)
-
-        message = "Entering CbfController._communication_status_changed with power mode {}".format(self._component_power_mode)
-        self.logger.info(message)
-
         if communication_status == CommunicationStatus.DISABLED:
             self.op_state_model.perform_action("component_disconnected")
         elif communication_status == CommunicationStatus.NOT_ESTABLISHED:
             self.op_state_model.perform_action("component_unknown")
-        elif self._component_power_mode == PowerMode.OFF:
-            self.op_state_model.perform_action("component_off")
-        elif self._component_power_mode == PowerMode.STANDBY:
-            self.op_state_model.perform_action("component_standby")
-        elif self._component_power_mode == PowerMode.ON:
-            self.op_state_model.perform_action("component_on")
-        elif self._component_power_mode == PowerMode.UNKNOWN:
-            self.op_state_model.perform_action("component_unknown")
+        elif communication_status == CommunicationStatus.ESTABLISHED \
+            and self._component_power_mode is not None:
+            self._component_power_mode_changed(self._component_power_mode)
         else:  # self._component_power_mode is None
             pass  # wait for a power mode update
     
@@ -667,9 +669,6 @@ class CbfController(SKAController):
         :param power_mode: the power mode of the component.
         """
         self._component_power_mode = power_mode
-
-        message = "Entering CbfController._component_power_mode_changed with mode {}".format(power_mode)
-        self.logger.info(message)
 
         if self._communication_status == CommunicationStatus.ESTABLISHED:
             action_map = {
