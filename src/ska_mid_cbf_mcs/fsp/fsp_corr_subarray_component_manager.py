@@ -9,7 +9,7 @@
 
 # Copyright (c) 2019 National Research Council of Canada
 from __future__ import annotations
-from typing import Callable, Optional
+from typing import Callable, Optional, Tuple
 
 import logging
 
@@ -18,16 +18,19 @@ from ska_mid_cbf_mcs.component.component_manager import (
     CbfComponentManager,
 )
 from ska_tango_base.control_model import PowerMode
+from ska_tango_base.commands import ResultCode
+from ska_tango_base.csp.obs.component_manager import CspObsComponentManager
 
-class FspCorrSubarrayComponentManager(CbfComponentManager):
+class FspCorrSubarrayComponentManager(CbfComponentManager, CspObsComponentManager):
     """A component manager for the FspCorrSubarray device."""
 
     def __init__(
         self: FspCorrSubarrayComponentManager,
         logger: logging.Logger,
-        push_change_event: Optional[Callable],
+        push_change_event_callback: Optional[Callable],
         communication_status_changed_callback: Callable[[CommunicationStatus], None],
         component_power_mode_changed_callback: Callable[[PowerMode], None],
+        obs_state_model
     ) -> None:
         """
         Initialise a new instance.
@@ -46,11 +49,12 @@ class FspCorrSubarrayComponentManager(CbfComponentManager):
         self._connected = False
 
         super().__init__(
-            logger,
-            push_change_event,
-            communication_status_changed_callback,
-            component_power_mode_changed_callback,
-            None,
+            logger=logger,
+            push_change_event_callback=push_change_event_callback,
+            communication_status_changed_callback=communication_status_changed_callback,
+            component_power_mode_changed_callback=component_power_mode_changed_callback,
+            component_fault_callback=None,
+            obs_state_model=obs_state_model
         )
     
     def start_communicating(
@@ -68,10 +72,17 @@ class FspCorrSubarrayComponentManager(CbfComponentManager):
         self.update_component_fault(False)
         self.update_component_power_mode(PowerMode.OFF)
     
-    def stop_communicating(self: CbfComponentManager) -> None:
+    def stop_communicating(self: FspCorrSubarrayComponentManager) -> None:
         """Stop communication with the component"""
         
         super().stop_communicating()
         
         self._connected = False
-        self.update_communication_status(CommunicationStatus.DISABLED)
+    
+    def configure_scan(
+        self: FspCorrSubarrayComponentManager,
+        argin: str
+    ) -> Tuple[ResultCode, str]:
+        
+        message = "FspCorrSubarray ConfigureScan command completed OK"
+        return (ResultCode.OK, message)

@@ -325,10 +325,11 @@ class FspCorrSubarray(CspSubElementObsDevice):
         self._component_power_mode: Optional[PowerMode] = None
 
         return FspCorrSubarrayComponentManager( 
-            self.logger,
-            self.push_change_event,
-            self._communication_status_changed,
-            self._component_power_mode_changed,
+            logger=self.logger,
+            push_change_event_callback=self.push_change_event,
+            communication_status_changed_callback=self._communication_status_changed,
+            component_power_mode_changed_callback=self._component_power_mode_changed,
+            obs_state_model=self.obs_state_model
         )
 
     def delete_device(self: FspCorrSubarray) -> None:
@@ -958,12 +959,13 @@ class FspCorrSubarray(CspSubElementObsDevice):
             result_code = ResultCode.OK # TODO  - temp - remove
             msg = "Configure command completed OK" # TODO temp, remove
 
+            (result_code,message) = self.target.component_manager.configure_scan(argin)
+
             if result_code == ResultCode.OK:
                 # store the configuration on command success
                 device._last_scan_configuration = argin
-                msg = "Configure command completed OK"
 
-            return(result_code, msg)
+            return(result_code, message)
 
         def validate_input(
             self: FspCorrSubarray.ConfigureScanCommand, 
@@ -1167,24 +1169,13 @@ class FspCorrSubarray(CspSubElementObsDevice):
 
         self._communication_status = communication_status
 
-        message = "Entering FspCorrSubarray._communication_status_changed with status {}".format(communication_status)
-        self.logger.info(message)
-
-        message = "Entering FspCorrSubarray._communication_status_changed with power mode {}".format(self._component_power_mode)
-        self.logger.info(message)
-
         if communication_status == CommunicationStatus.DISABLED:
             self.op_state_model.perform_action("component_disconnected")
         elif communication_status == CommunicationStatus.NOT_ESTABLISHED:
             self.op_state_model.perform_action("component_unknown")
-        elif self._component_power_mode == PowerMode.OFF:
-            self.op_state_model.perform_action("component_off")
-        elif self._component_power_mode == PowerMode.STANDBY:
-            self.op_state_model.perform_action("component_standby")
-        elif self._component_power_mode == PowerMode.ON:
-            self.op_state_model.perform_action("component_on")
-        elif self._component_power_mode == PowerMode.UNKNOWN:
-            self.op_state_model.perform_action("component_unknown")
+        elif communication_status == CommunicationStatus.ESTABLISHED \
+            and self._component_power_mode is not None:
+            self._component_power_mode_changed(self._component_power_mode)
         else:  # self._component_power_mode is None
             pass  # wait for a power mode update
     
@@ -1202,9 +1193,6 @@ class FspCorrSubarray(CspSubElementObsDevice):
         :param power_mode: the power mode of the component.
         """
         self._component_power_mode = power_mode
-
-        message = "Entering FspCorrSubarray._component_power_mode_changed with mode {}".format(power_mode)
-        self.logger.info(message)
 
         if self._communication_status == CommunicationStatus.ESTABLISHED:
             action_map = {

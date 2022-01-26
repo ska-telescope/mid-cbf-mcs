@@ -12,6 +12,11 @@ from __future__ import annotations
 
 import pytest
 import time
+import os
+import copy
+import json
+
+data_file_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
 
 import tango
 from tango import DevState
@@ -54,7 +59,7 @@ class TestFspCorrSubarray:
         sub_id", 
         [(1, 1)]
     )
-    def test_On_valid(
+    def test_On(
         self: TestFspCorrSubarray, 
         test_proxies,         
         fsp_id: int,
@@ -76,7 +81,7 @@ class TestFspCorrSubarray:
         sub_id", 
         [(1, 1)]
     )
-    def test_Off_valid(
+    def test_Off(
         self: TestFspCorrSubarray, 
         test_proxies,         
         fsp_id: int,
@@ -92,6 +97,27 @@ class TestFspCorrSubarray:
 
         time.sleep(1)
         assert device_under_test.State() == DevState.OFF
+    
+    @pytest.mark.parametrize(
+        "fsp_id, \
+        sub_id", 
+        [(1, 1)]
+    )
+    def test_ConfigureScan(
+        self: TestFspCorrSubarray, 
+        test_proxies,         
+        fsp_id: int,
+        sub_id: int
+    ) -> None:
+
+        device_under_test = test_proxies.fspSubarray["CORR"][sub_id][fsp_id]
+
+        config_file_name = "Vcc_ConfigureScan_basic.json"
+        f = open(data_file_path + config_file_name)
+        json_str = f.read().replace("\n", "")
+        configuration = copy.deepcopy(json.loads(json_str))
+        f.close()
+        pass
     
     @pytest.mark.parametrize(
         "fsp_id, \
