@@ -331,6 +331,15 @@ class CbfController(SKAController):
             # defines self._count_vcc, self._count_fsp, and self._count_subarray
             self.__get_num_capabilities()
 
+            # initialize dicts with maps receptorID <=> vccID
+            # TODO: vccID == receptorID for now, for testing purposes
+            device._receptor_to_vcc = []
+            device._vcc_to_receptor = []
+            for vccID in range(1, device._count_vcc + 1):
+                receptorID = vccID
+                device._receptor_to_vcc.append(f"{receptorID}:{vccID}")
+                device._vcc_to_receptor.append(f"{vccID}:{receptorID}")
+
             # # initialize attribute values
             device._command_progress = 0
 
@@ -399,13 +408,13 @@ class CbfController(SKAController):
     def read_receptorToVcc(self: CbfController) -> List[str]:
         # PROTECTED REGION ID(CbfController.receptorToVcc_read) ENABLED START #
         """Return 'receptorID:vccID'"""
-        return self.component_manager.receptor_to_vcc
+        return self._receptor_to_vcc
         # PROTECTED REGION END #    //  CbfController.receptorToVcc_read
 
     def read_vccToReceptor(self: CbfController) -> List[str]:
         # PROTECTED REGION ID(CbfController.vccToReceptor_read) ENABLED START #
         """Return receptorToVcc attribute: 'vccID:receptorID'"""
-        return self.component_manager.vcc_to_receptor
+        return self._vcc_to_receptor
         # PROTECTED REGION END #    //  CbfController.vccToReceptor_read
 
     def read_subarrayconfigID(self: CbfController) -> List[str]:

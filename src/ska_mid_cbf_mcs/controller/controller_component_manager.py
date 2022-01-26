@@ -86,9 +86,6 @@ class ControllerComponentManager(CbfComponentManager):
         self._proxies = {}
         self._events = {} 
 
-        self._receptor_to_vcc = []
-        self._vcc_to_receptor = []
-
         super().__init__(
             logger,
             push_change_event,
@@ -96,26 +93,6 @@ class ControllerComponentManager(CbfComponentManager):
             component_power_mode_changed_callback,
             None,
         )
-
-    @property
-    def receptor_to_vcc(self: ControllerComponentManager) -> List[str]:
-        """
-        Get Receptor to Vcc
-
-        :return: receptorID:vccID
-        """
-
-        return self._receptor_to_vcc
-    
-    @property
-    def vcc_to_receptor(self: ControllerComponentManager) -> List[str]:
-        """
-        Get Vcc to Receptor
-
-        :return: vccID:receptorID
-        """
-
-        return self._vcc_to_receptor
     
     @property
     def report_vcc_state(self: ControllerComponentManager) -> List[tango.DevState]:
@@ -298,13 +275,6 @@ class ControllerComponentManager(CbfComponentManager):
         self._report_talon_lru_state = [tango.DevState.UNKNOWN] * self._count_talon_lru
         self._report_talon_lru_health_state = [HealthState.UNKNOWN.value] * self._count_talon_lru
         self._report_talon_lru_admin_mode = [AdminMode.ONLINE.value] * self._count_talon_lru
-
-        # initialize dicts with maps receptorID <=> vccID
-        # TODO: vccID == receptorID for now, for testing purposes
-        for vccID in range(1, self._count_vcc + 1):
-            receptorID = vccID
-            self._receptor_to_vcc.append(f"{receptorID}:{vccID}")
-            self._vcc_to_receptor.append(f"{vccID}:{receptorID}")
 
         try:
             self._group_vcc = CbfGroupProxy("VCC", logger=self._logger)

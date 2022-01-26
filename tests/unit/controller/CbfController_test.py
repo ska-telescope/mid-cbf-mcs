@@ -91,15 +91,15 @@ class TestCbfController:
         assert device_under_test.State() == DevState.OFF
 
         if command == "On":
-            state = DevState.ON
+            expected_state = DevState.ON
             result = device_under_test.On()
         elif command == "Off":
-            state = DevState.OFF
+            expected_state = DevState.OFF
             result = device_under_test.Off()
         elif command == "Standby":
-            state = DevState.STANDBY
+            expected_state = DevState.STANDBY
             result = device_under_test.Standby()
 
         time.sleep(CONST_WAIT_TIME)
         assert result[0][0] == ResultCode.OK
-        assert device_under_test.State() == state
+        assert device_under_test.State() == expected_state
