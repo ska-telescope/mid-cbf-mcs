@@ -645,24 +645,13 @@ class CbfController(SKAController):
 
         self._communication_status = communication_status
 
-        message = "Entering CbfController._communication_status_changed with status {}".format(communication_status)
-        self.logger.info(message)
-
-        message = "Entering CbfController._communication_status_changed with power mode {}".format(self._component_power_mode)
-        self.logger.info(message)
-
         if communication_status == CommunicationStatus.DISABLED:
             self.op_state_model.perform_action("component_disconnected")
         elif communication_status == CommunicationStatus.NOT_ESTABLISHED:
             self.op_state_model.perform_action("component_unknown")
-        elif self._component_power_mode == PowerMode.OFF:
-            self.op_state_model.perform_action("component_off")
-        elif self._component_power_mode == PowerMode.STANDBY:
-            self.op_state_model.perform_action("component_standby")
-        elif self._component_power_mode == PowerMode.ON:
-            self.op_state_model.perform_action("component_on")
-        elif self._component_power_mode == PowerMode.UNKNOWN:
-            self.op_state_model.perform_action("component_unknown")
+        elif communication_status == CommunicationStatus.ESTABLISHED \
+            and self._component_power_mode is not None:
+            self._component_power_mode_changed(self._component_power_mode)
         else:  # self._component_power_mode is None
             pass  # wait for a power mode update
     
@@ -680,9 +669,6 @@ class CbfController(SKAController):
         :param power_mode: the power mode of the component.
         """
         self._component_power_mode = power_mode
-
-        message = "Entering CbfController._component_power_mode_changed with mode {}".format(power_mode)
-        self.logger.info(message)
 
         if self._communication_status == CommunicationStatus.ESTABLISHED:
             action_map = {

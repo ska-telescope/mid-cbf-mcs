@@ -131,7 +131,6 @@ class CbfComponentManager(BaseComponentManager):
     
     def start_communicating(self: CbfComponentManager) -> None:
         """Start communicating with the component."""
-        self._logger.info("Entering CbfComponentManager.start_communicating with status {}".format(self.communication_status))
         if self.communication_status == CommunicationStatus.ESTABLISHED:
             return
         if self.communication_status == CommunicationStatus.DISABLED:

@@ -352,10 +352,10 @@ class ControllerComponentManager(CbfComponentManager):
 
     def stop_communicating(self: ControllerComponentManager) -> None:
         """Stop communication with the component"""
+        
         super().stop_communicating()
         
         self._connected = False
-        self.update_communication_status(CommunicationStatus.DISABLED)
 
     def __state_change_event_callback(
         self: ControllerComponentManager,
