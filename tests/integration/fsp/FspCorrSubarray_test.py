@@ -112,20 +112,22 @@ class TestFspCorrSubarray:
     ) -> None:
 
         device_under_test = test_proxies.fspSubarray["CORR"][sub_id][fsp_id]
+        wait_time_s = 1
+        sleep_time_s = 1
 
         assert device_under_test.adminMode == AdminMode.ONLINE
 
         device_under_test.On()
 
-        test_proxies.wait_timeout_dev([device_under_test], DevState.ON, 3, 0.1)
+        test_proxies.wait_timeout_dev([device_under_test], DevState.ON, wait_time_s, sleep_time_s)
         assert device_under_test.State() == DevState.ON
 
         for i in range(1, test_proxies.num_vcc + 1):
             assert test_proxies.vcc[i].subarrayMembership == 0
         for i in range(1, test_proxies.num_vcc + 1):
-            test_proxies.vcc[i].subarrayMembership = 1
+            test_proxies.vcc[i].subarrayMembership = sub_id
         for i in range(1, test_proxies.num_vcc + 1):
-            assert test_proxies.vcc[i].subarrayMembership == 1
+            assert test_proxies.vcc[i].subarrayMembership == sub_id
 
         config_file_name = "FspCorrSubarray_ConfigureScan_basic.json"
         f = open(data_file_path + config_file_name)
@@ -170,10 +172,12 @@ class TestFspCorrSubarray:
     ) -> None:
 
         device_under_test = test_proxies.fspSubarray["CORR"][sub_id][fsp_id]
+        wait_time_s = 1
+        sleep_time_s = 1
 
         assert device_under_test.adminMode == AdminMode.ONLINE
 
-        test_proxies.wait_timeout_dev([device_under_test], DevState.ON, 3, 0.1)
+        test_proxies.wait_timeout_dev([device_under_test], DevState.ON, wait_time_s, sleep_time_s)
         assert device_under_test.State() == DevState.ON
 
         scan_id = 1
@@ -181,10 +185,12 @@ class TestFspCorrSubarray:
         scan_id_device_data.insert(tango.DevString, str(scan_id))
 
         device_under_test.Scan(scan_id_device_data)
-        time.sleep(0.1)
+
+        test_proxies.wait_timeout_obs([device_under_test], ObsState.SCANNING, wait_time_s, sleep_time_s)
+        assert device_under_test.obsState == ObsState.SCANNING
+
         assert device_under_test.scanID == scan_id
 
-    @pytest.mark.skip(reason="need to implement obs state callback")
     @pytest.mark.parametrize(
         "fsp_id, \
         sub_id", 
@@ -198,10 +204,12 @@ class TestFspCorrSubarray:
     ) -> None:
 
         device_under_test = test_proxies.fspSubarray["CORR"][sub_id][fsp_id]
+        wait_time_s = 1
+        sleep_time_s = 1
 
         assert device_under_test.adminMode == AdminMode.ONLINE
 
-        test_proxies.wait_timeout_dev([device_under_test], DevState.ON, 3, 0.1)
+        test_proxies.wait_timeout_dev([device_under_test], DevState.ON, wait_time_s, sleep_time_s)
         assert device_under_test.State() == DevState.ON
 
         device_under_test.EndScan()
@@ -219,13 +227,18 @@ class TestFspCorrSubarray:
     ) -> None:
 
         device_under_test = test_proxies.fspSubarray["CORR"][sub_id][fsp_id]
+        wait_time_s = 1
+        sleep_time_s = 1
 
         assert device_under_test.adminMode == AdminMode.ONLINE
 
-        test_proxies.wait_timeout_dev([device_under_test], DevState.ON, 3, 0.1)
+        test_proxies.wait_timeout_dev([device_under_test], DevState.ON, wait_time_s, sleep_time_s)
         assert device_under_test.State() == DevState.ON
 
         device_under_test.GoToIdle()
+
+        test_proxies.wait_timeout_obs([device_under_test], ObsState.IDLE, wait_time_s, sleep_time_s)
+        assert device_under_test.obsState == ObsState.IDLE
 
         
     @pytest.mark.parametrize(

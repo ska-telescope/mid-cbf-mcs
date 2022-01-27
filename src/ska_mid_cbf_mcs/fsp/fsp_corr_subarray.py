@@ -696,7 +696,6 @@ class FspCorrSubarray(CspSubElementObsDevice):
             if result_code == ResultCode.OK:
                 # store the configuration on command success
                 device._last_scan_configuration = argin
-                device.obs_state_model.perform_action("component_configured")
             
             return(result_code, message)
 
@@ -849,6 +848,7 @@ class FspCorrSubarray(CspSubElementObsDevice):
     # ----------
     # Callbacks
     # ----------
+
     def _communication_status_changed(
         self: FspCorrSubarray,
         communication_status: CommunicationStatus,

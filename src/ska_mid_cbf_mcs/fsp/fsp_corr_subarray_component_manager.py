@@ -473,6 +473,8 @@ class FspCorrSubarrayComponentManager(CbfComponentManager, CspObsComponentManage
 
         self._config_id = configuration["config_id"]
 
+        self.component_configured(True)
+
         return (ResultCode.OK, "FspCorrSubarray ConfigureScan command completed OK")
     
     def scan(
@@ -481,11 +483,16 @@ class FspCorrSubarrayComponentManager(CbfComponentManager, CspObsComponentManage
     ) -> Tuple[ResultCode, str]:
 
         self._scan_id = scan_id
+
+        self.component_scanning(True)
+
         return (ResultCode.OK, "FspCorrSubarray Scan command completed OK")
     
     def end_scan(
         self: FspCorrSubarrayComponentManager,
     ) -> Tuple[ResultCode, str]:
+
+        self.component_scanning(False)
 
         return (ResultCode.OK, "FspCorrSubarray EndScan command completed OK")
     
@@ -518,5 +525,7 @@ class FspCorrSubarrayComponentManager(CbfComponentManager, CspObsComponentManage
         #self._channel_info.clear() #TODO:  not yet populated
 
         self._remove_all_receptors()
+
+        self.component_configured(False)
         
         return (ResultCode.OK, "FspCorrSubarray GoToIdle command completed OK")
