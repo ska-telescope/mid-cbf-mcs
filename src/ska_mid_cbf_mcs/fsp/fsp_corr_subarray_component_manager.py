@@ -173,7 +173,7 @@ class FspCorrSubarrayComponentManager(CbfComponentManager, CspObsComponentManage
         :return: the FSP channel offset
         :rtype: int
         """
-        return self._integration_time
+        return self._fsp_channel_offset
     
     @property
     def vis_destination_address(self: FspCorrSubarrayComponentManager) -> str:

@@ -21,8 +21,8 @@ data_file_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
 import tango
 from tango import DevState
 
-from ska_tango_base.control_model import AdminMode
-from ska_mid_cbf_mcs.commons.global_enum import const, freq_band_dict
+from ska_tango_base.control_model import AdminMode, ObsState
+from ska_mid_cbf_mcs.commons.global_enum import freq_band_dict
 
 class TestFspCorrSubarray:
     """
@@ -52,7 +52,7 @@ class TestFspCorrSubarray:
         device_under_test.adminMode = AdminMode.ONLINE
 
         # controller device should be in OFF state after start_communicating 
-        time.sleep(1)
+        test_proxies.wait_timeout_dev([device_under_test], DevState.OFF, 3, 0.1)
         assert device_under_test.State() == DevState.OFF
     
     @pytest.mark.parametrize(
@@ -74,7 +74,7 @@ class TestFspCorrSubarray:
 
         device_under_test.On()
 
-        time.sleep(1)
+        test_proxies.wait_timeout_dev([device_under_test], DevState.ON, 3, 0.1)
         assert device_under_test.State() == DevState.ON
     
     @pytest.mark.parametrize(
@@ -96,7 +96,7 @@ class TestFspCorrSubarray:
 
         device_under_test.Off()
 
-        time.sleep(1)
+        test_proxies.wait_timeout_dev([device_under_test], DevState.OFF, 3, 0.1)
         assert device_under_test.State() == DevState.OFF
     
     @pytest.mark.parametrize(
@@ -116,7 +116,8 @@ class TestFspCorrSubarray:
         assert device_under_test.adminMode == AdminMode.ONLINE
 
         device_under_test.On()
-        time.sleep(1)
+
+        test_proxies.wait_timeout_dev([device_under_test], DevState.ON, 3, 0.1)
         assert device_under_test.State() == DevState.ON
 
         for i in range(1, test_proxies.num_vcc + 1):
@@ -133,16 +134,25 @@ class TestFspCorrSubarray:
         f.close()
         
         device_under_test.ConfigureScan(json_str)
-        time.sleep(1)
 
         freq_band_name = configuration["frequency_band"]
         assert device_under_test.frequencyBand == freq_band_dict()[freq_band_name]
-        for idx, stream in enumerate(device_under_test.band5Tuning):
-            assert stream == configuration["band_5_tuning"][idx]
+        assert list(device_under_test.band5Tuning) == list(configuration["band_5_tuning"])
         assert device_under_test.frequencyBandOffsetStream1 == \
             int(configuration["frequency_band_offset_stream_1"])
         assert device_under_test.frequencyBandOffsetStream2 == \
             int(configuration["frequency_band_offset_stream_2"])
+        assert device_under_test.frequencySliceID == configuration["frequency_slice_id"]
+        assert device_under_test.corrBandwidth == int(configuration["zoom_factor"])
+        assert device_under_test.zoomWindowTuning == int(configuration["zoom_window_tuning"])
+        assert device_under_test.integrationTime == int(configuration["integration_factor"])
+        assert device_under_test.fspChannelOffset == int(configuration["channel_offset"])
+        vis_destination_addr = json.loads(device_under_test.visDestinationAddress)
+        assert list(vis_destination_addr["outputHost"]) == configuration["output_host"]
+        assert list(vis_destination_addr["outputMac"]) == configuration["output_mac"]
+        assert list(vis_destination_addr["outputPort"]) == configuration["output_port"]
+        assert device_under_test.configID == configuration["config_id"]
+
         
     @pytest.mark.parametrize(
         "fsp_id, \
@@ -165,5 +175,5 @@ class TestFspCorrSubarray:
         device_under_test.adminMode = AdminMode.OFFLINE
 
         # controller device should be in DISABLE state after stop_communicating  
-        time.sleep(1)
+        test_proxies.wait_timeout_dev([device_under_test], DevState.DISABLE, 3, 0.1)
         assert device_under_test.State() == DevState.DISABLE
