@@ -247,61 +247,7 @@ class FspCorrSubarray(CspSubElementObsDevice):
             """
 
             self.logger.debug("Entering InitCommand()")
-
-            device = self.target
-
-            # Make a private copy of the device properties:
-            device._subarray_id = device.SubID
-            device._fsp_id = device.FspID
-
-            # initialize attribute values
-            device._receptors = []
-            device._freq_band_name = ""
-            device._frequency_band = 0
-            device._stream_tuning = (0, 0)
-            device._frequency_band_offset_stream_1 = 0
-            device._frequency_band_offset_stream_2 = 0
-            device._frequency_slice_ID = 0
-            device._bandwidth = 0
-            device._bandwidth_actual = const.FREQUENCY_SLICE_BW
-            device._zoom_window_tuning = 0
-            device._integration_time = 0
-            device._scan_id = 0
-            device._config_id = ""
-            device._channel_averaging_map = [
-                [int(i*const.NUM_FINE_CHANNELS/const.NUM_CHANNEL_GROUPS) + 1, 0]
-                for i in range(const.NUM_CHANNEL_GROUPS)
-            ]
-            # destination addresses includes the following three
-            device._vis_destination_address = {"outputHost": [], "outputMac": [], "outputPort": []}
-            device._fsp_channel_offset = 0
-            # outputLinkMap is a 2*40 array. Pogo generates tuple;
-            # Changed into list to facilitate writing
-            device._output_link_map = [[0,0] for i in range(40)]
-
-            # For each channel sent to SDP: 
-            # [chanID, bw, cf, cbfOutLink, sdpIp, sdpPort] # TODO
-            device._channel_info = []
-
-            # device proxy for connection to FspCorrSubarray
-            device._proxy_cbf_controller = CbfDeviceProxy(
-                fqdn=device.CbfControllerAddress,
-                logger=device.logger
-            )
-            device._controller_max_capabilities = dict(
-                pair.split(":") for pair in 
-                device._proxy_cbf_controller.get_property("MaxCapabilities")["MaxCapabilities"]
-            )
-
-            # Connect to all VCC devices turned on by FspCorrSubarray:
-            device._count_vcc = int(device._controller_max_capabilities["VCC"])
-            device._fqdn_vcc = list(device.VCC)[:device._count_vcc]
-            device._proxies_vcc = [
-                CbfDeviceProxy(
-                    logger=device.logger, 
-                    fqdn=address) for address in device._fqdn_vcc
-            ]
-
+           
             message = "FspCorrSubarry Init command completed OK"
             self.logger.info(message)
             return (ResultCode.OK, message)
@@ -482,7 +428,7 @@ class FspCorrSubarray(CspSubElementObsDevice):
             :param value: the visDestinationAddress attribute value. 
                 (JSON object containing info about current SDP destination addresses being used).
         """
-        self._vis_destination_address = json.loads(value)
+        self.component_manager.vis_destination_address = json.loads(value)
         # PROTECTED REGION END #    //  FspCorrSubarray.visDestinationAddress_write
 
     def read_fspChannelOffset(self: FspCorrSubarray) -> int:
@@ -503,7 +449,7 @@ class FspCorrSubarray(CspSubElementObsDevice):
 
             :param value: the fspChannelOffset attribute value. 
         """
-        self._fsp_channel_offset=value
+        self.component_manager.fsp_channel_offset=value
         # PROTECTED REGION END #    //  Fsp.fspChannelOffset_write
 
     def read_outputLinkMap(self: FspCorrSubarray) -> List[List[int]]:
@@ -524,7 +470,7 @@ class FspCorrSubarray(CspSubElementObsDevice):
 
             :param value: the outputLinkMap attribute value. 
         """
-        self._output_link_map=value
+        self.component_manager.output_link_map=value
         # PROTECTED REGION END #    //  FspCorrSubarray.outputLinkMap_write
 
     def read_scanID(self: FspCorrSubarray) -> int:
@@ -535,7 +481,7 @@ class FspCorrSubarray(CspSubElementObsDevice):
             :return: the scanID attribute. 
             :rtype: int
         """
-        return self._scan_id
+        return self.component_manager.scan_id
         # PROTECTED REGION END #    //  FspCorrSubarray.scanID_read
 
     def write_scanID(self: FspCorrSubarray, value: int) -> None:
@@ -545,7 +491,7 @@ class FspCorrSubarray(CspSubElementObsDevice):
 
             :param value: the scanID attribute value. 
         """
-        self._scan_id=value
+        self.component_manager.scan_id=value
         # PROTECTED REGION END #    //  FspCorrSubarray.scanID_write
 
     def read_configID(self: FspCorrSubarray) -> str:
@@ -566,67 +512,8 @@ class FspCorrSubarray(CspSubElementObsDevice):
 
             :param value: the configID attribute value. 
         """
-        self._config_id=value
+        self.component_manager.config_id=value
         # PROTECTED REGION END #    //  FspCorrSubarray.configID_write
-
-    # def _add_receptors(
-    #     self: FspCorrSubarray, 
-    #     argin: List[int]
-    #     ) -> None:
-    #     """
-    #         Add specified receptors to the subarray.
-
-    #         :param argin: ids of receptors to add. 
-    #     """
-    #     errs = []  # list of error messages
-    #     receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
-    #                            self._proxy_cbf_controller.receptorToVcc)
-    #     for receptorID in argin:
-    #         try:
-    #             vccID = receptor_to_vcc[receptorID]
-    #             subarrayID = self._proxies_vcc[vccID - 1].subarrayMembership
-
-    #             # only add receptor if it belongs to the CBF subarray
-    #             if subarrayID != self._subarray_id:
-    #                 errs.append("Receptor {} does not belong to subarray {}.".format(
-    #                     str(receptorID), str(self._subarray_id)))
-    #             else:
-    #                 if receptorID not in self._receptors:
-    #                     self._receptors.append(receptorID)
-    #                 else:
-    #                     log_msg = "Receptor {} already assigned to current FSP subarray.".format(
-    #                         str(receptorID))
-    #                     self.logger.warn(log_msg)
-
-    #         except KeyError:  # invalid receptor ID
-    #             errs.append("Invalid receptor ID: {}".format(receptorID))
-
-    #     if errs:
-    #         msg = "\n".join(errs)
-    #         self.logger.error(msg)
-    #         tango.Except.throw_exception("Command failed", msg, "_add_receptors execution",
-    #                                        tango.ErrSeverity.ERR)
-
-    # def _remove_receptors(
-    #     self: FspCorrSubarray, 
-    #     argin: List[int]
-    #     )-> None:
-    #     """
-    #         Remove specified receptors from the subarray.
-
-    #         :param argin: ids of receptors to remove. 
-    #     """
-    #     for receptorID in argin:
-    #         if receptorID in self._receptors:
-    #             self._receptors.remove(receptorID)
-    #         else:
-    #             log_msg = "Receptor {} not assigned to FSP subarray. "\
-    #                 "Skipping.".format(str(receptorID))
-    #             self.logger.warn(log_msg)
-
-    # def _remove_all_receptors(self: FspCorrSubarray) -> None:
-    #     """Remove all Receptors of this subarray"""
-    #     self._remove_receptors(self._receptors[:])
 
     # TODO: Reinstate AddChannels?
     # def is_AddChannels_allowed(self): # ???
@@ -803,12 +690,14 @@ class FspCorrSubarray(CspSubElementObsDevice):
 
             device = self.target
 
+
             (result_code,message) = self.target.component_manager.configure_scan(argin)
 
             if result_code == ResultCode.OK:
                 # store the configuration on command success
                 device._last_scan_configuration = argin
-
+                device.obs_state_model.perform_action("component_configured")
+            
             return(result_code, message)
 
         def validate_input(
@@ -874,46 +763,10 @@ class FspCorrSubarray(CspSubElementObsDevice):
 
             self.logger.debug("Entering GoToIdleCommand()")
 
-            device = self.target
+            (result_code,message) = self.target.component_manager.go_to_idle()
 
-            # Reset all private data defined in InitCommand.do()
-            # and which are then set via ConfigureScan()
+            return (result_code, message)
 
-            device._freq_band_name = ""
-            device._frequency_band = 0
-            device._stream_tuning = (0, 0)
-            device._frequency_band_offset_stream_1 = 0
-            device._frequency_band_offset_stream_2 = 0
-            device._frequency_slice_ID = 0
-            device._bandwidth = 0
-            device._bandwidth_actual = const.FREQUENCY_SLICE_BW
-            device._zoom_window_tuning = 0
-            device._integration_time = 0
-            device._scan_id = 0
-            device._config_id = ""
-
-            device._channel_averaging_map = [
-                [int(i*const.NUM_FINE_CHANNELS/const.NUM_CHANNEL_GROUPS) + 1, 0]
-                for i in range(const.NUM_CHANNEL_GROUPS)
-            ]
-            # destination addresses includes the following three
-            device._vis_destination_address = {"outputHost":[], "outputMac": [], "outputPort":[]}
-            device._fsp_channel_offset = 0
-            # outputLinkMap is a 2*40 array. Pogo generates tuple;
-            # Changed into list to facilitate writing
-            device._output_link_map = [[0,0] for i in range(40)]
-
-            device._channel_info = []
-            #device._channel_info.clear() #TODO:  not yet populated
-
-            # Reset self._receptors
-            device._remove_all_receptors()
-
-            if device.state_model.obs_state == ObsState.IDLE:
-                return (ResultCode.OK, 
-                "GoToIdle command completed OK. Device already IDLE")
-
-            return (ResultCode.OK, "GoToIdle command completed OK")
             
     # TODO - currently not used
     def is_getLinkAndAddress_allowed(self: FspCorrSubarray) -> bool:

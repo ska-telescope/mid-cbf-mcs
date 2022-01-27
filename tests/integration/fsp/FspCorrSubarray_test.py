@@ -132,6 +132,8 @@ class TestFspCorrSubarray:
         json_str = f.read().replace("\n", "")
         configuration = copy.deepcopy(json.loads(json_str))
         f.close()
+
+        assert device_under_test.obsState == ObsState.IDLE
         
         device_under_test.ConfigureScan(json_str)
 
@@ -152,6 +154,78 @@ class TestFspCorrSubarray:
         assert list(vis_destination_addr["outputMac"]) == configuration["output_mac"]
         assert list(vis_destination_addr["outputPort"]) == configuration["output_port"]
         assert device_under_test.configID == configuration["config_id"]
+
+        assert device_under_test.obsState == ObsState.READY
+    
+    @pytest.mark.parametrize(
+        "fsp_id, \
+        sub_id", 
+        [(1, 1)]
+    )
+    def test_Scan(
+        self: TestFspCorrSubarray, 
+        test_proxies,         
+        fsp_id: int,
+        sub_id: int
+    ) -> None:
+
+        device_under_test = test_proxies.fspSubarray["CORR"][sub_id][fsp_id]
+
+        assert device_under_test.adminMode == AdminMode.ONLINE
+
+        test_proxies.wait_timeout_dev([device_under_test], DevState.ON, 3, 0.1)
+        assert device_under_test.State() == DevState.ON
+
+        scan_id = 1
+        scan_id_device_data = tango.DeviceData()
+        scan_id_device_data.insert(tango.DevString, str(scan_id))
+
+        device_under_test.Scan(scan_id_device_data)
+        time.sleep(0.1)
+        assert device_under_test.scanID == scan_id
+
+    @pytest.mark.skip(reason="need to implement obs state callback")
+    @pytest.mark.parametrize(
+        "fsp_id, \
+        sub_id", 
+        [(1, 1)]
+    )
+    def test_EndScan(
+        self: TestFspCorrSubarray, 
+        test_proxies,         
+        fsp_id: int,
+        sub_id: int
+    ) -> None:
+
+        device_under_test = test_proxies.fspSubarray["CORR"][sub_id][fsp_id]
+
+        assert device_under_test.adminMode == AdminMode.ONLINE
+
+        test_proxies.wait_timeout_dev([device_under_test], DevState.ON, 3, 0.1)
+        assert device_under_test.State() == DevState.ON
+
+        device_under_test.EndScan()
+    
+    @pytest.mark.parametrize(
+        "fsp_id, \
+        sub_id", 
+        [(1, 1)]
+    )
+    def test_GoToIdle(
+        self: TestFspCorrSubarray, 
+        test_proxies,         
+        fsp_id: int,
+        sub_id: int
+    ) -> None:
+
+        device_under_test = test_proxies.fspSubarray["CORR"][sub_id][fsp_id]
+
+        assert device_under_test.adminMode == AdminMode.ONLINE
+
+        test_proxies.wait_timeout_dev([device_under_test], DevState.ON, 3, 0.1)
+        assert device_under_test.State() == DevState.ON
+
+        device_under_test.GoToIdle()
 
         
     @pytest.mark.parametrize(

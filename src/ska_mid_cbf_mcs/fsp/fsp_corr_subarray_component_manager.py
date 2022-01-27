@@ -229,6 +229,16 @@ class FspCorrSubarrayComponentManager(CbfComponentManager, CspObsComponentManage
         return self._config_id
     
     @property
+    def scan_id(self: FspCorrSubarrayComponentManager) -> int:
+        """
+        Scan ID
+
+        :return: the scan id
+        :rtype: int
+        """
+        return self._scan_id
+    
+    @property
     def receptors(self: FspCorrSubarrayComponentManager) -> List[int]:
         """
         Receptors
@@ -464,3 +474,49 @@ class FspCorrSubarrayComponentManager(CbfComponentManager, CspObsComponentManage
         self._config_id = configuration["config_id"]
 
         return (ResultCode.OK, "FspCorrSubarray ConfigureScan command completed OK")
+    
+    def scan(
+        self: FspCorrSubarrayComponentManager,
+        scan_id: int,
+    ) -> Tuple[ResultCode, str]:
+
+        self._scan_id = scan_id
+        return (ResultCode.OK, "FspCorrSubarray Scan command completed OK")
+    
+    def end_scan(
+        self: FspCorrSubarrayComponentManager,
+    ) -> Tuple[ResultCode, str]:
+
+        return (ResultCode.OK, "FspCorrSubarray EndScan command completed OK")
+    
+    def go_to_idle(
+        self: FspCorrSubarrayComponentManager,
+    ) -> Tuple[ResultCode, str]:
+
+        self._freq_band_name = ""
+        self._frequency_band = 0
+        self._stream_tuning = (0, 0)
+        self._frequency_band_offset_stream_1 = 0
+        self._frequency_band_offset_stream_2 = 0
+        self._frequency_slice_ID = 0
+        self._bandwidth = 0
+        self._bandwidth_actual = const.FREQUENCY_SLICE_BW
+        self._zoom_window_tuning = 0
+        self._integration_time = 0
+        self._scan_id = 0
+        self._config_id = ""
+
+        self._channel_averaging_map = [
+            [int(i*const.NUM_FINE_CHANNELS/const.NUM_CHANNEL_GROUPS) + 1, 0]
+            for i in range(const.NUM_CHANNEL_GROUPS)
+        ]
+        self._vis_destination_address = {"outputHost":[], "outputMac": [], "outputPort":[]}
+        self._fsp_channel_offset = 0
+        self._output_link_map = [[0,0] for i in range(40)]
+
+        self._channel_info = []
+        #self._channel_info.clear() #TODO:  not yet populated
+
+        self._remove_all_receptors()
+        
+        return (ResultCode.OK, "FspCorrSubarray GoToIdle command completed OK")
