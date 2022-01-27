@@ -2034,7 +2034,7 @@ class CbfSubarray(SKASubarray):
 
             config_dict = {
                 "config_id": device._config_ID,
-                "frequency_band": device._frequency_band,
+                "frequency_band": common_configuration["frequency_band"],
                 "band_5_tuning": device._stream_tuning,
                 "frequency_band_offset_stream_1": device._frequency_band_offset_stream_1,
                 "frequency_band_offset_stream_2": device._frequency_band_offset_stream_2,

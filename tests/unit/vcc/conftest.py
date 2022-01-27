@@ -10,8 +10,9 @@
 from __future__ import annotations
 
 # Standard imports
-from typing import Callable, Type, Dict
+from typing import Callable, Type, Dict, Tuple, Optional
 import pytest
+import pytest_mock
 import unittest
 
 # Tango imports
@@ -29,8 +30,61 @@ from ska_mid_cbf_mcs.vcc.vcc_device import Vcc
 from ska_tango_base.control_model import HealthState, AdminMode, ObsState
 from ska_tango_base.commands import ResultCode
 
+
+# TODO implement commented items in base class v0.11
 @pytest.fixture()
-def patched_vcc_device_class() -> Type[Vcc]:
+def mock_component_manager(
+    mocker: pytest_mock.mocker,
+    # unique_id: str,
+) -> unittest.mock.Mock:
+    """
+    Return a mock component manager.
+
+    The mock component manager is a simple mock except for one bit of
+    extra functionality: when we call start_communicating() on it, it
+    makes calls to callbacks signaling that communication is established
+    and the component is off.
+
+    :param mocker: pytest wrapper for unittest.mock
+    :param unique_id: a unique id used to check Tango layer functionality
+
+    :return: a mock component manager
+    """
+    mock = mocker.Mock()
+    # mock.is_communicating = False
+    mock.connected = False
+
+    def _start_communicating(mock: unittest.mock.Mock) -> None:
+        # mock.is_communicating = True
+        mock.connected = True
+        # mock._communication_status_changed_callback(CommunicationStatus.NOT_ESTABLISHED)
+        # mock._communication_status_changed_callback(CommunicationStatus.ESTABLISHED)
+        # mock._component_power_mode_changed_callback(PowerMode.OFF)
+    
+    def _turn_on_band_device(mock: unittest.mock.Mock) -> Tuple[ResultCode, str]:
+        return (ResultCode.OK, "Vcc On command completed OK")
+    
+    def _turn_off_band_device(mock: unittest.mock.Mock) -> Tuple[ResultCode, str]:
+        return (ResultCode.OK, "Vcc Off command completed OK")
+    
+    def _deconfigure(mock: unittest.mock.Mock) -> None: return None
+
+    def _configure_search_window(mock: unittest.mock.Mock) -> Tuple[ResultCode, str]:
+        return (ResultCode.OK, "Vcc ConfigureSearchWindow command completed OK")
+
+
+    mock.start_communicating.side_effect = lambda: _start_communicating(mock)
+    mock.turn_on_band_device.side_effect = lambda: _turn_on_band_device(mock)
+    mock.turn_off_band_device.side_effect = lambda: _turn_off_band_device(mock)
+    mock.deconfigure.side_effect = lambda: _deconfigure(mock)
+    mock.configure_search_window.side_effect = lambda: _configure_search_window(mock)
+
+    return mock
+
+@pytest.fixture()
+def patched_vcc_device_class(
+    mock_component_manager: unittest.mock.Mock
+) -> Type[Vcc]:
     """
     Return a Vcc device class, patched with extra methods for testing.
 
@@ -38,13 +92,34 @@ def patched_vcc_device_class() -> Type[Vcc]:
         for testing
     """
 
-    class PatchedVccDevice(Vcc):
+    class PatchedVcc(Vcc):
         """
         Vcc patched with extra commands for testing purposes.
 
         The extra commands allow us to mock the receipt of obs state
         change events from subservient devices.
         """
+
+        def create_component_manager(
+            self: PatchedVcc,
+        ) -> unittest.mock.Mock:
+            """
+            Return a mock component manager instead of the usual one.
+
+            :return: a mock component manager
+            """
+            #TODO implement in base class v0.11
+            #self._communication_status: Optional[CommunicationStatus] = None
+            #self._component_power_mode: Optional[PowerMode] = None
+
+            mock_component_manager._communication_status_changed_callback = (
+                self._communication_status_changed
+            )
+            mock_component_manager._component_power_mode_changed_callback = (
+                self._component_power_mode_changed
+            )
+
+            return mock_component_manager
 
         @command(dtype_in=int)
         def FakeSubservientDevicesObsState(
@@ -56,9 +131,7 @@ def patched_vcc_device_class() -> Type[Vcc]:
             # for fqdn in self.component_manager._device_obs_states:
             #     self.component_manager._device_obs_state_changed(fqdn, obs_state)
 
-    # using patch for now to determine class to select from device server;
-    # see TODO in src/ska_mid_cbf_mcs/testing/tango_harness.py
-    return Vcc
+    return PatchedVcc
 
 
 @pytest.fixture()
@@ -72,9 +145,11 @@ def device_under_test(tango_harness: TangoHarness) -> CbfDeviceProxy:
     """
     return tango_harness.get_device("mid_csp_cbf/vcc/001")
 
-# TODO: see TODO in src/ska_mid_cbf_mcs/testing/tango_harness.py
+
 @pytest.fixture()
-def device_to_load() -> DeviceToLoadType:
+def device_to_load(
+    patched_vcc_device_class: Type[Vcc]
+) -> DeviceToLoadType:
     """
     Fixture that specifies the device to be loaded for testing.
 
@@ -84,8 +159,9 @@ def device_to_load() -> DeviceToLoadType:
         "path": "charts/ska-mid-cbf/data/midcbfconfig.json",
         "package": "ska_mid_cbf_mcs",
         "device": "vcc-001",
+        "device_class": "Vcc",
         "proxy": CbfDeviceProxy,
-        "patch": Vcc
+        "patch": patched_vcc_device_class
     }
 
 @pytest.fixture()
