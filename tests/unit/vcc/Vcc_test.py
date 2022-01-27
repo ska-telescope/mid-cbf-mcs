@@ -21,7 +21,7 @@ import pytest
 from typing import Callable, Type, Dict
 
 # Path
-file_path = os.path.dirname(os.path.abspath(__file__))
+file_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
 
 # Tango imports
 import tango
@@ -30,9 +30,8 @@ from tango.server import command
 
 #SKA imports
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
-from ska_mid_cbf_mcs.testing.tango_harness import DeviceToLoadType
 
-from ska_tango_base.control_model import HealthState, AdminMode, ObsState
+from ska_tango_base.control_model import HealthState, AdminMode, ObsState, LoggingLevel
 
 
 class TestVcc:
@@ -44,7 +43,7 @@ class TestVcc:
         "config_file_name",
         [
             (
-                "/../../data/Vcc_ConfigureScan_basic.json"
+                "Vcc_ConfigureScan_basic.json"
             )
         ]
     )    
@@ -73,17 +72,15 @@ class TestVcc:
         configuration = json.loads(json_str)
         f.close()
 
-        frequency_band = configuration["frequency_band"]
         frequency_bands = ["1", "2", "3", "4", "5a", "5b"]
-        freq_band_name =  frequency_bands[frequency_band]
-        device_under_test.TurnOnBandDevice(freq_band_name)
+        device_under_test.TurnOnBandDevice(configuration["frequency_band"])
 
         device_under_test.ConfigureScan(json_str)
         time.sleep(3)
 
         assert device_under_test.obsState == ObsState.READY
         assert device_under_test.configID == configuration["config_id"]
-        assert device_under_test.frequencyBand == configuration["frequency_band"]
+        assert device_under_test.frequencyBand == frequency_bands.index(configuration["frequency_band"])
         assert device_under_test.rfiFlaggingMask == str(configuration["rfi_flagging_mask"])
         if "band_5_tuning" in configuration:
                 if device_under_test.frequencyBand in [4, 5]:
@@ -101,9 +98,8 @@ class TestVcc:
         assert device_under_test.scfoBand5a == configuration["scfo_band_5a"]
         assert device_under_test.scfoBand5b == configuration["scfo_band_5b"]
 
-        device_under_test.TurnOffBandDevice(freq_band_name)
+        device_under_test.TurnOffBandDevice(configuration["frequency_band"])
 
-    
 
     def test_On_Off(
         self: TestVcc,
@@ -124,17 +120,18 @@ class TestVcc:
         device_under_test.Off()
         time.sleep(1)
         assert device_under_test.State() == DevState.OFF
-    
+
+
     @pytest.mark.parametrize(
         "config_file_name, \
         scan_id", 
         [
             (
-                "/../../data/Vcc_ConfigureScan_basic.json",
+                "Vcc_ConfigureScan_basic.json",
                 1,
             ),
                         (
-                "/../../data/Vcc_ConfigureScan_basic.json",
+                "Vcc_ConfigureScan_basic.json",
                 2,
             )
         ]
@@ -182,60 +179,48 @@ class TestVcc:
         assert device_under_test.obsState == ObsState.IDLE
 
 
-    #TODO refactor and enable this test, move to search window test module
-    @pytest.mark.skip
+    @pytest.mark.parametrize(
+        "sw_config_file_name, \
+        config_file_name",
+        [
+            (
+                "Vcc_ConfigureSearchWindow_basic.json",
+                "Vcc_ConfigureScan_basic.json"
+            )
+        ]
+    )
     def test_ConfigureSearchWindow_basic(
-        self,
-        tango_context
+        self: TestVcc,
+        device_under_test: CbfDeviceProxy,
+        sw_config_file_name: str,
+        config_file_name: str
     ):
         """
-            Test a minimal successful search window configuration.
+        Test a minimal successful search window configuration.
         """
-        if tango_context is None:
-            dev_factory = DevFactory()
-            logging.info("%s", dev_factory._test_context)
-            vcc_proxy = dev_factory.get_device("mid_csp_cbf/vcc/001")
-            sw_1_proxy = dev_factory.get_device("mid_csp_cbf/vcc_sw1/001")
-            sw_1_proxy.Init()
+        device_under_test.On()
+        device_under_test.loggingLevel = LoggingLevel.DEBUG
+        # set receptorID to 1 to correctly test tdcDestinationAddress
+        device_under_test.receptorID = 1
+        f = open(file_path + config_file_name)
+        json_string = f.read().replace("\n", "")
+        f.close()
+        device_under_test.ConfigureScan(json_string)
+        time.sleep(3)
 
-            # check initial values of attributes
-            assert sw_1_proxy.searchWindowTuning == 0
-            assert sw_1_proxy.tdcEnable == False
-            assert sw_1_proxy.tdcNumBits == 0
-            assert sw_1_proxy.tdcPeriodBeforeEpoch == 0
-            assert sw_1_proxy.tdcPeriodAfterEpoch == 0
-            assert sw_1_proxy.tdcDestinationAddress == ("", "", "")
+        # configure search window
+        f = open(file_path + sw_config_file_name)
+        device_under_test.ConfigureSearchWindow(f.read().replace("\n", ""))
+        f.close()
 
-            # check initial state
-            assert sw_1_proxy.State() == DevState.DISABLE
 
-            # set receptorID to 1 to correctly test tdcDestinationAddress
-            vcc_proxy.receptorID = 1
-
-        
-            # configure search window
-            f = open(file_path + "/../data/test_ConfigureSearchWindow_basic.json")
-            vcc_proxy.ConfigureSearchWindow(f.read().replace("\n", ""))
-            f.close()
-
-            # check configured values
-            assert sw_1_proxy.searchWindowTuning == 1000000000
-            assert sw_1_proxy.tdcEnable == True
-            assert sw_1_proxy.tdcNumBits == 8
-            assert sw_1_proxy.tdcPeriodBeforeEpoch == 5
-            assert sw_1_proxy.tdcPeriodAfterEpoch == 25
-            assert sw_1_proxy.tdcDestinationAddress == ("", "", "")
-
-            # check state
-            assert sw_1_proxy.State() == DevState.ON
-    
     @pytest.mark.parametrize(
         "config_file_name, \
         jones_matrix_file_name", 
         [
             (
-                "/../../data/Vcc_ConfigureScan_basic.json",
-                "/../../data/jonesmatrix_unit_test.json"
+                "Vcc_ConfigureScan_basic.json",
+                "jonesmatrix_unit_test.json"
             )
         ]
     )
@@ -272,10 +257,7 @@ class TestVcc:
         configuration = json.loads(json_str)
         f.close()
 
-        frequency_band = configuration["frequency_band"]
-        frequency_bands = ["1", "2", "3", "4", "5a", "5b"]
-        freq_band_name =  frequency_bands[frequency_band]
-        device_under_test.TurnOnBandDevice(freq_band_name)
+        device_under_test.TurnOnBandDevice(configuration["frequency_band"])
 
         device_under_test.ConfigureScan(json_str)
 
@@ -304,14 +286,15 @@ class TestVcc:
                         if min_fs_id <= fs_id <= max_fs_id:
                             if len(matrix) == matrix_len:
                                 assert list(device_under_test.jonesMatrix[fs_id-1]) == list(matrix)
-    
+
+
     @pytest.mark.parametrize(
         "config_file_name, \
         delay_model_file_name", 
         [
             (
-                "/../../data/Vcc_ConfigureScan_basic.json",
-                "/../../data/delaymodel_unit_test.json"
+                "Vcc_ConfigureScan_basic.json",
+                "delaymodel_unit_test.json"
             )
         ]
     )
@@ -347,10 +330,7 @@ class TestVcc:
         configuration = json.loads(json_str)
         f.close()
 
-        frequency_band = configuration["frequency_band"]
-        frequency_bands = ["1", "2", "3", "4", "5a", "5b"]
-        freq_band_name =  frequency_bands[frequency_band]
-        device_under_test.TurnOnBandDevice(freq_band_name)
+        device_under_test.TurnOnBandDevice(configuration["frequency_band"])
 
         device_under_test.ConfigureScan(json_str)
 

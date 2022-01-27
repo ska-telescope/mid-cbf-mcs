@@ -42,7 +42,6 @@ class VccComponentManager:
     def __init__(
         self: VccComponentManager,
         simulation_mode: SimulationMode,
-        vcc_id: int,
         vcc_band: List[str],
         search_window: List[str],
         logger: logging.Logger,
@@ -53,7 +52,6 @@ class VccComponentManager:
 
         :param simulation_mode: simulation mode identifies if the real VCC HPS
                           applications or the simulator should be connected
-        :param vcc_id: ID of VCC
         :param vcc_band: FQDNs of VCC band devices
         :param search_window: FQDNs of VCC search windows
         :param logger: a logger for this object to use
@@ -61,7 +59,6 @@ class VccComponentManager:
         """
         self._simulation_mode = simulation_mode
 
-        self._vcc_id = vcc_id
         self._vcc_band_fqdn = vcc_band
         self._search_window_fqdn = search_window
 
@@ -71,26 +68,11 @@ class VccComponentManager:
 
         # initialize attribute values
         self._receptor_ID = 0
-        self._freq_band_name = ""
+
         self._frequency_band = 0
-        self._subarray_membership = 0
         self._stream_tuning = (0, 0)
         self._frequency_band_offset_stream_1 = 0
         self._frequency_band_offset_stream_2 = 0
-        self._doppler_phase_correction = (0, 
-        0, 0, 0)
-        self._rfi_flagging_mask = ""
-        self._scfo_band_1 = 0
-        self._scfo_band_2 = 0
-        self._scfo_band_3 = 0
-        self._scfo_band_4 = 0
-        self._scfo_band_5a = 0
-        self._scfo_band_5b = 0
-        self._delay_model = [[0] * 6 for i in range(26)]
-        self._jones_matrix = [[0] * 16 for i in range(26)]
-
-        self._scan_id = ""
-        self._config_id = ""
 
         # initialize list of band proxies and band -> index translation;
         # entry for each of: band 1 & 2, band 3, band 4, band 5
@@ -146,31 +128,70 @@ class VccComponentManager:
     def turn_on_band_device(
         self: VccComponentManager,
         freq_band_name: str
-    ) -> None:
+    ) -> Tuple[ResultCode, str]:
         """
         Turn on the corresponding band device and disable all the others.
 
         :param freq_band_name: the frequency band name
+
+        :return: A tuple containing a return code and a string
+            message indicating status. The message is for
+            information purpose only.
+        :rtype: (ResultCode, str)
         """
-        for idx, band in enumerate(self._band_proxies):
-            if idx == self._freq_band_index[freq_band_name]:
-                band.On()
-            else:
-                band.Disable()
+        self._logger.debug(
+            "VccComponentManager.turn_on_band_device(" + freq_band_name + ")"
+        )
+        (result_code, msg) = (ResultCode.OK, "TurnOnBandDevice completed OK.")
+        try:
+            for idx, band in enumerate(self._band_proxies):
+                if idx == self._freq_band_index[freq_band_name]:
+                    self._logger.debug(f"Turning on band device index {idx}")
+                    band.On()
+                else:
+                    self._logger.debug(f"Disabling band device index {idx}")
+                    band.Disable()
+        except tango.DevFailed as df:
+            self._logger.error(str(df.args[0].desc))
+            (result_code, msg) = (ResultCode.FAILED, "TurnOnBandDevice failed.")
+        return (result_code, msg)
 
 
     def turn_off_band_device(
         self:VccComponentManager,
         freq_band_name: str
-    ) -> None:
+    ) -> Tuple[ResultCode, str]:
         """
         Send OFF signal to the corresponding band
 
         :param freq_band_name: the frequency band name
+
+        :return: A tuple containing a return code and a string
+            message indicating status. The message is for
+            information purpose only.
+        :rtype: (ResultCode, str)
         """
-        for idx, band in enumerate(self._band_proxies):
-            if idx == self._freq_band_index[freq_band_name]:
-                band.Off()
+        self._logger.debug(
+            "VccComponentManager.turn_off_band_device(" + freq_band_name + ")"
+        )
+        (result_code, msg) = (ResultCode.OK, "TurnOffBandDevice completed OK.")
+        try:
+            for idx, band in enumerate(self._band_proxies):
+                if idx == self._freq_band_index[freq_band_name]:
+                    self._logger.debug(f"Turning off band device index {idx}")
+                    band.Off()
+        except tango.DevFailed as df:
+            self._logger.error(str(df.args[0].desc))
+            (result_code, msg) = (ResultCode.FAILED, "TurnOffBandDevice failed.")
+        return (result_code, msg)
+
+
+    def deconfigure(self: VccComponentManager) -> None:
+        """Deconfigure scan configuration parameters."""
+        self._frequency_band_offset_stream_2 = 0
+        self._frequency_band_offset_stream_1 = 0
+        self._stream_tuning = (0, 0)
+        self._frequency_band = 0
 
 
     def configure_search_window(
@@ -184,6 +205,11 @@ class VccComponentManager:
         removed to reduce overhead.
 
         :param argin: JSON string with the search window parameters
+
+        :return: A tuple containing a return code and a string
+            message indicating status. The message is for
+            information purpose only.
+        :rtype: (ResultCode, str)
         """
         result_code = ResultCode.OK
         msg = "ConfigureSearchWindwo completed OK"
@@ -289,13 +315,14 @@ class VccComponentManager:
                 # Configure tdcDestinationAddress.
                 if argin["tdc_enable"]:
                     for receptor in argin["tdc_destination_address"]:
-                        if int(receptor["receptor_id"]) == self._receptor_ID:
+                        if receptor["receptor_id"] == self._receptor_ID:
                             # TODO: validate input
                             proxy_sw.tdcDestinationAddress = \
                                 receptor["tdc_destination_address"]
                             break
+
         except tango.DevFailed as df:
             self._logger.error(str(df.args[0].desc))
             (result_code, msg) = (ResultCode.FAILED, "Error configuring search window.")
-        
+
         return (result_code, msg)
