@@ -14,10 +14,7 @@ from __future__ import annotations
 # Standard imports
 import os
 import time
-import json
-import logging
 import pytest
-from typing import Callable, Type, Dict
 
 # Path
 file_path = os.path.dirname(os.path.abspath(__file__))
@@ -25,13 +22,10 @@ file_path = os.path.dirname(os.path.abspath(__file__))
 # Tango imports
 import tango
 from tango import DevState
-from tango.server import command
 
 #SKA imports
-from ska_mid_cbf_mcs.testing.tango_harness import DeviceToLoadType
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
-from ska_tango_base.control_model import HealthState, AdminMode, ObsState
-from ska_mid_cbf_mcs.commons.global_enum import const, freq_band_dict
+from ska_tango_base.control_model import AdminMode, ObsState
 from ska_tango_base.commands import ResultCode
 
 CONST_WAIT_TIME = 4
@@ -58,14 +52,26 @@ class TestFspCorrSubarray:
         self: TestFspCorrSubarray,
         device_under_test: CbfDeviceProxy,
     ) -> None:
+        """
+        Test Status
 
+        :param device_under_test: fixture that provides a
+            :py:class:`CbfDeviceProxy` to the device under test, in a
+            :py:class:`tango.test_context.DeviceTestContext`.
+        """
         assert device_under_test.Status() == "The device is in DISABLE state."
 
     def test_adminMode(
         self: TestFspCorrSubarray,
         device_under_test: CbfDeviceProxy,
     ) -> None:
+        """
+        Test Admin Mode
 
+        :param device_under_test: fixture that provides a
+            :py:class:`CbfDeviceProxy` to the device under test, in a
+            :py:class:`tango.test_context.DeviceTestContext`.
+        """
         assert device_under_test.adminMode == AdminMode.OFFLINE
     
     @pytest.mark.parametrize(
@@ -86,6 +92,7 @@ class TestFspCorrSubarray:
         :param device_under_test: fixture that provides a
             :py:class:`CbfDeviceProxy` to the device under test, in a
             :py:class:`tango.test_context.DeviceTestContext`.
+        :param command: the name of the Power command to be tested
         """
 
         device_under_test.write_attribute("adminMode", AdminMode.ONLINE)
@@ -119,18 +126,22 @@ class TestFspCorrSubarray:
             )
         ]
     )
-    def test_Scan_EndScan_GoToIdle(
+    def test_ObsState_Commands(
         self: TestFspCorrSubarray,
         device_under_test: CbfDeviceProxy,
         config_file_name: str,
         scan_id: int
     ) -> None:
         """
-        Test Scan command state changes.
+        Test the ConfigureScan(), Scan(), EndScan() amd GoToIdle() commands
+            and the triggered ObState transitions
 
         :param device_under_test: fixture that provides a
             :py:class:`tango.DeviceProxy` to the device under test, in a
             :py:class:`tango.test_context.DeviceTestContext`.
+        :param config_file_name: name of the JSON file that contains the
+            configuration
+        :param scan_id: the scan id
         """
 
         device_under_test.write_attribute("adminMode", AdminMode.ONLINE)

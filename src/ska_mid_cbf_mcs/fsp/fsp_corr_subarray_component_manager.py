@@ -43,6 +43,10 @@ class FspCorrSubarrayComponentManager(CbfComponentManager, CspObsComponentManage
         Initialise a new instance.
 
         :param logger: a logger for this object to use
+        :param cbf_controller_address: address of the cbf controller device
+        :param vcc_fqdns_all: list of all vcc fqdns
+        :param subarray_id: the id indicating the subarray memmbership 
+            of the fsp corr subarray device
         :param push_change_event: method to call when the base classes
             want to send an event
         :param communication_status_changed_callback: callback to be
@@ -294,9 +298,9 @@ class FspCorrSubarrayComponentManager(CbfComponentManager, CspObsComponentManage
         argin: List[int]
     ) -> None:
         """
-            Add specified receptors to the subarray.
+        Add specified receptors to the subarray.
 
-            :param argin: ids of receptors to add. 
+        :param argin: ids of receptors to add. 
         """
         errs = []  # list of error messages
         receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
@@ -332,9 +336,9 @@ class FspCorrSubarrayComponentManager(CbfComponentManager, CspObsComponentManage
         argin: List[int]
     ) -> None:
         """
-            Remove specified receptors from the subarray.
+        Remove specified receptors from the subarray.
 
-            :param argin: ids of receptors to remove. 
+        :param argin: ids of receptors to remove. 
         """
         for receptorID in argin:
             if receptorID in self._receptors:
@@ -352,6 +356,15 @@ class FspCorrSubarrayComponentManager(CbfComponentManager, CspObsComponentManage
         self: FspCorrSubarrayComponentManager,
         configuration: str
     ) -> Tuple[ResultCode, str]:
+        """
+        Performs the ConfigureScan() command functionality
+
+        :param configuration: The configuration as JSON formatted string 
+        :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+        :rtype: (ResultCode, str)
+        """
         
         configuration = json.loads(configuration)
 
@@ -480,6 +493,15 @@ class FspCorrSubarrayComponentManager(CbfComponentManager, CspObsComponentManage
         self: FspCorrSubarrayComponentManager,
         scan_id: int,
     ) -> Tuple[ResultCode, str]:
+        """
+        Performs the Scan() command functionality
+
+        :param scan_id: The scan id
+        :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+        :rtype: (ResultCode, str)
+        """
 
         self._scan_id = scan_id
 
@@ -488,12 +510,28 @@ class FspCorrSubarrayComponentManager(CbfComponentManager, CspObsComponentManage
     def end_scan(
         self: FspCorrSubarrayComponentManager,
     ) -> Tuple[ResultCode, str]:
+        """
+        Performs the EndScan() command functionality
+
+        :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+        :rtype: (ResultCode, str)
+        """
 
         return (ResultCode.OK, "FspCorrSubarray EndScan command completed OK")
     
     def go_to_idle(
         self: FspCorrSubarrayComponentManager,
     ) -> Tuple[ResultCode, str]:
+        """
+        Performs the GoToIdle() command functionality
+
+        :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+        :rtype: (ResultCode, str)
+        """
 
         self._freq_band_name = ""
         self._frequency_band = 0

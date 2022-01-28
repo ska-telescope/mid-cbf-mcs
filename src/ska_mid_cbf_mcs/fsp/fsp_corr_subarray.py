@@ -21,7 +21,6 @@ from __future__ import annotations
 from curses.ascii import FS  # allow forward references in type hints
 
 from typing import List, Tuple, Optional
-from ska_tango_base.csp.obs import obs_state_model
 
 # tango imports
 import tango
@@ -302,10 +301,10 @@ class FspCorrSubarray(CspSubElementObsDevice):
     def read_receptors(self: FspCorrSubarray) -> List[int]:
         # PROTECTED REGION ID(FspCorrSubarray.receptors_read) ENABLED START #
         """
-            Read the receptors attribute.
+        Read the receptors attribute.
 
-            :return: the list of receptors 
-            :rtype: List[int]
+        :return: the list of receptors 
+        :rtype: List[int]
         """
         return self.component_manager.receptors
         # PROTECTED REGION END #    //  FspCorrSubarray.receptors_read
@@ -313,10 +312,10 @@ class FspCorrSubarray(CspSubElementObsDevice):
     def read_frequencyBand(self: FspCorrSubarray) -> tango.DevEnum:
         # PROTECTED REGION ID(FspCorrSubarray.frequencyBand_read) ENABLED START #
         """
-            Read the frequencyBand attribute.
+        Read the frequencyBand attribute.
 
-            :return: the frequency band 
-            :rtype: tango.DevEnum
+        :return: the frequency band 
+        :rtype: tango.DevEnum
         """
         return self.component_manager.frequency_band
         # PROTECTED REGION END #    //  FspCorrSubarray.frequencyBand_read
@@ -324,12 +323,12 @@ class FspCorrSubarray(CspSubElementObsDevice):
     def read_band5Tuning(self: FspCorrSubarray) -> List[float]:
         # PROTECTED REGION ID(FspCorrSubarray.band5Tuning_read) ENABLED START #
         """
-            Read the band5Tuning attribute.
+        Read the band5Tuning attribute.
 
-            :return: the band5Tuning attribute (array of float, 
-                first element corresponds to the first stream, 
-                second to the second stream).
-            :rtype: List[float]
+        :return: the band5Tuning attribute (array of float, 
+            first element corresponds to the first stream, 
+            second to the second stream).
+        :rtype: List[float]
         """
         return self.component_manager.stream_tuning
         # PROTECTED REGION END #    //  FspCorrSubarray.band5Tuning_read
@@ -337,10 +336,10 @@ class FspCorrSubarray(CspSubElementObsDevice):
     def read_frequencyBandOffsetStream1(self: FspCorrSubarray) -> int:
         # PROTECTED REGION ID(FspCorrSubarray.frequencyBandOffsetStream1) ENABLED START #
         """
-            Read the frequencyBandOffsetStream1 attribute.
+        Read the frequencyBandOffsetStream1 attribute.
 
-            :return: the frequencyBandOffsetStream1 attribute
-            :rtype: int
+        :return: the frequencyBandOffsetStream1 attribute
+        :rtype: int
         """
         return self.component_manager.frequency_band_offset_stream_1
         # PROTECTED REGION END #    //  FspCorrSubarray.frequencyBandOffsetStream1
@@ -348,10 +347,10 @@ class FspCorrSubarray(CspSubElementObsDevice):
     def read_frequencyBandOffsetStream2(self: FspCorrSubarray) -> int:
         # PROTECTED REGION ID(FspCorrSubarray.frequencyBandOffsetStream2) ENABLED START #
         """
-            Read the frequencyBandOffsetStream2 attribute.
+        Read the frequencyBandOffsetStream2 attribute.
 
-            :return: the frequencyBandOffsetStream2 attribute.
-            :rtype: int
+        :return: the frequencyBandOffsetStream2 attribute.
+        :rtype: int
         """
         return self.component_manager.frequency_band_offset_stream_2
         # PROTECTED REGION END #    //  FspCorrSubarray.frequencyBandOffsetStream2
@@ -359,10 +358,10 @@ class FspCorrSubarray(CspSubElementObsDevice):
     def read_frequencySliceID(self: FspCorrSubarray) -> int:
         # PROTECTED REGION ID(FspCorrSubarray.frequencySliceID_read) ENABLED START #
         """
-            Read the frequencySliceID attribute.
+        Read the frequencySliceID attribute.
 
-            :return: the frequencySliceID attribute.
-            :rtype: int
+        :return: the frequencySliceID attribute.
+        :rtype: int
         """
         return self.component_manager.frequency_slice_ID
         # PROTECTED REGION END #    //  FspCorrSubarray.frequencySliceID_read
@@ -370,11 +369,11 @@ class FspCorrSubarray(CspSubElementObsDevice):
     def read_corrBandwidth(self: FspCorrSubarray) -> int:
         # PROTECTED REGION ID(FspCorrSubarray.corrBandwidth_read) ENABLED START #
         """
-            Read the corrBandwidth attribute.
+        Read the corrBandwidth attribute.
 
-            :return: the corrBandwidth attribute 
-                (bandwidth to be correlated is <Full Bandwidth>/2^bandwidth).
-            :rtype: int
+        :return: the corrBandwidth attribute 
+            (bandwidth to be correlated is <Full Bandwidth>/2^bandwidth).
+        :rtype: int
         """
         return self.component_manager.bandwidth
         # PROTECTED REGION END #    //  FspCorrSubarray.corrBandwidth_read
@@ -382,10 +381,10 @@ class FspCorrSubarray(CspSubElementObsDevice):
     def read_zoomWindowTuning(self: FspCorrSubarray) -> int:
         # PROTECTED REGION ID(FspCorrSubarray.zoomWindowTuning_read) ENABLED START #
         """
-            Read the zoomWindowTuning attribute.
+        Read the zoomWindowTuning attribute.
 
-            :return: the zoomWindowTuning attribute 
-            :rtype: int
+        :return: the zoomWindowTuning attribute 
+        :rtype: int
         """
         return self.component_manager.zoom_window_tuning
         # PROTECTED REGION END #    //  FspCorrSubarray.zoomWindowTuning_read
@@ -393,10 +392,10 @@ class FspCorrSubarray(CspSubElementObsDevice):
     def read_integrationTime(self: FspCorrSubarray) -> int:
         # PROTECTED REGION ID(FspCorrSubarray.integrationTime_read) ENABLED START #
         """
-            Read the integrationTime attribute.
+        Read the integrationTime attribute.
 
-            :return: the integrationTime attribute (millisecond). 
-            :rtype: int
+        :return: the integrationTime attribute (millisecond). 
+        :rtype: int
         """
         return self.component_manager.integration_time
         # PROTECTED REGION END #    //  FspCorrSubarray.integrationTime_read
@@ -404,13 +403,13 @@ class FspCorrSubarray(CspSubElementObsDevice):
     def read_channelAveragingMap(self: FspCorrSubarray) -> List[List[int]]:
         # PROTECTED REGION ID(FspCorrSubarray.channelAveragingMap_read) ENABLED START #
         """
-            Read the channelAveragingMap attribute.
+        Read the channelAveragingMap attribute.
 
-            :return: the channelAveragingMap attribute. 
-                Consists of 2*20 array of integers(20 tupples representing 20* 744 channels). 
-                The first element is the ID of the first channel in a channel group. 
-                The second element is the averaging factor
-            :rtype: List[List[int]]
+        :return: the channelAveragingMap attribute. 
+            Consists of 2*20 array of integers(20 tupples representing 20* 744 channels). 
+            The first element is the ID of the first channel in a channel group. 
+            The second element is the averaging factor
+        :rtype: List[List[int]]
         """
         return self.component_manager.channel_averaging_map
         # PROTECTED REGION END #    //  FspCorrSubarray.channelAveragingMap_read
@@ -418,11 +417,11 @@ class FspCorrSubarray(CspSubElementObsDevice):
     def read_visDestinationAddress(self: FspCorrSubarray) -> str:
         # PROTECTED REGION ID(FspCorrSubarray.visDestinationAddress_read) ENABLED START #
         """
-            Read the visDestinationAddress attribute.
+        Read the visDestinationAddress attribute.
 
-            :return: the visDestinationAddress attribute. 
-                (JSON object containing info about current SDP destination addresses being used).
-            :rtype: str
+        :return: the visDestinationAddress attribute. 
+            (JSON object containing info about current SDP destination addresses being used).
+        :rtype: str
         """
         return json.dumps(self.component_manager.vis_destination_address)
         # PROTECTED REGION END #    //  FspCorrSubarray.visDestinationAddress_read
@@ -430,10 +429,10 @@ class FspCorrSubarray(CspSubElementObsDevice):
     def write_visDestinationAddress(self: FspCorrSubarray, value: str) -> None:
         # PROTECTED REGION ID(FspCorrSubarray.visDestinationAddress_write) ENABLED START #
         """
-            Write the visDestinationAddress attribute.
+        Write the visDestinationAddress attribute.
 
-            :param value: the visDestinationAddress attribute value. 
-                (JSON object containing info about current SDP destination addresses being used).
+        :param value: the visDestinationAddress attribute value. 
+            (JSON object containing info about current SDP destination addresses being used).
         """
         self.component_manager.vis_destination_address = json.loads(value)
         # PROTECTED REGION END #    //  FspCorrSubarray.visDestinationAddress_write
@@ -441,10 +440,10 @@ class FspCorrSubarray(CspSubElementObsDevice):
     def read_fspChannelOffset(self: FspCorrSubarray) -> int:
         # PROTECTED REGION ID(Fsp.fspChannelOffset_read) ENABLED START #
         """
-            Read the fspChannelOffset attribute.
+        Read the fspChannelOffset attribute.
 
-            :return: the fspChannelOffset attribute. 
-            :rtype: int
+        :return: the fspChannelOffset attribute. 
+        :rtype: int
         """
         return self.component_manager.fsp_channel_offset
         # PROTECTED REGION END #    //  Fsp.fspChannelOffset_read
@@ -452,9 +451,9 @@ class FspCorrSubarray(CspSubElementObsDevice):
     def write_fspChannelOffset(self: FspCorrSubarray, value: int) -> None:
         # PROTECTED REGION ID(Fsp.fspChannelOffset_write) ENABLED START #
         """
-            Write the fspChannelOffset attribute.
+        Write the fspChannelOffset attribute.
 
-            :param value: the fspChannelOffset attribute value. 
+        :param value: the fspChannelOffset attribute value. 
         """
         self.component_manager.fsp_channel_offset=value
         # PROTECTED REGION END #    //  Fsp.fspChannelOffset_write
@@ -462,10 +461,10 @@ class FspCorrSubarray(CspSubElementObsDevice):
     def read_outputLinkMap(self: FspCorrSubarray) -> List[List[int]]:
         # PROTECTED REGION ID(FspCorrSubarray.outputLinkMap_read) ENABLED START #
         """
-            Read the outputLinkMap attribute.
+        Read the outputLinkMap attribute.
 
-            :return: the outputLinkMap attribute. 
-            :rtype: List[List[int]]
+        :return: the outputLinkMap attribute. 
+        :rtype: List[List[int]]
         """
         return self.component_manager.output_link_map
         # PROTECTED REGION END #    //  FspCorrSubarray.outputLinkMap_read
@@ -473,9 +472,9 @@ class FspCorrSubarray(CspSubElementObsDevice):
     def write_outputLinkMap(self: FspCorrSubarray, value: List[List[int]]) -> None:
         # PROTECTED REGION ID(FspCorrSubarray.outputLinkMap_write) ENABLED START #
         """
-            Write the outputLinkMap attribute.
+        Write the outputLinkMap attribute.
 
-            :param value: the outputLinkMap attribute value. 
+        :param value: the outputLinkMap attribute value. 
         """
         self.component_manager.output_link_map=value
         # PROTECTED REGION END #    //  FspCorrSubarray.outputLinkMap_write
@@ -483,10 +482,10 @@ class FspCorrSubarray(CspSubElementObsDevice):
     def read_scanID(self: FspCorrSubarray) -> int:
         # PROTECTED REGION ID(FspCorrSubarray.scanID_read) ENABLED START #
         """
-            Read the scanID attribute.
+        Read the scanID attribute.
 
-            :return: the scanID attribute. 
-            :rtype: int
+        :return: the scanID attribute. 
+        :rtype: int
         """
         return self.component_manager.scan_id
         # PROTECTED REGION END #    //  FspCorrSubarray.scanID_read
@@ -494,9 +493,9 @@ class FspCorrSubarray(CspSubElementObsDevice):
     def write_scanID(self: FspCorrSubarray, value: int) -> None:
         # PROTECTED REGION ID(FspCorrSubarray.scanID_write) ENABLED START #
         """
-            Write the scanID attribute.
+        Write the scanID attribute.
 
-            :param value: the scanID attribute value. 
+        :param value: the scanID attribute value. 
         """
         self.component_manager.scan_id=value
         # PROTECTED REGION END #    //  FspCorrSubarray.scanID_write
@@ -504,10 +503,10 @@ class FspCorrSubarray(CspSubElementObsDevice):
     def read_configID(self: FspCorrSubarray) -> str:
         # PROTECTED REGION ID(FspCorrSubarray.configID_read) ENABLED START #
         """
-            Read the configID attribute.
+        Read the configID attribute.
 
-            :return: the configID attribute. 
-            :rtype: str
+        :return: the configID attribute. 
+        :rtype: str
         """
         return self.component_manager.config_id
         # PROTECTED REGION END #    //  FspCorrSubarray.configID_read
@@ -515,9 +514,9 @@ class FspCorrSubarray(CspSubElementObsDevice):
     def write_configID(self: FspCorrSubarray, value: str) -> None:
         # PROTECTED REGION ID(FspCorrSubarray.configID_write) ENABLED START #
         """
-            Write the configID attribute.
+        Write the configID attribute.
 
-            :param value: the configID attribute value. 
+        :param value: the configID attribute value. 
         """
         self.component_manager.config_id=value
         # PROTECTED REGION END #    //  FspCorrSubarray.configID_write
@@ -673,9 +672,7 @@ class FspCorrSubarray(CspSubElementObsDevice):
         """
         A class for the FspCorrSubarray's ConfigureScan() command.
         """
-
-        """Input a serilized JSON object. """
-
+        
         def do(
             self: FspCorrSubarray.ConfigureScanCommand,
             argin: str
