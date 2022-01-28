@@ -38,6 +38,19 @@ class TestFspCorrSubarray:
     Test class for FspCorrSubarray tests.
     """
 
+    def test_State(
+        self: TestFspCorrSubarray,
+        device_under_test: CbfDeviceProxy,
+    ) -> None:
+        """
+        Test State
+
+        :param device_under_test: fixture that provides a
+            :py:class:`CbfDeviceProxy` to the device under test, in a
+            :py:class:`tango.test_context.DeviceTestContext`.
+        """
+        assert device_under_test.State() == DevState.DISABLE
+
     @pytest.mark.skip(
         reason="Not updated to version 0.11.3 of the base classes."
     )

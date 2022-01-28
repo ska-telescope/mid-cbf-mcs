@@ -58,6 +58,7 @@ def device_to_load(
         "package": "ska_mid_cbf_mcs",
         "device": "controller",
         "proxy": CbfDeviceProxy,
+        "device_class": "CbfController",
         "patch": patched_controller_device_class,
     }
 

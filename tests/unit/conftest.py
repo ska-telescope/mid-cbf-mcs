@@ -13,7 +13,6 @@
 from typing import Callable, Optional
 
 import pytest
-import logging
 
 # SKA imports
 from ska_mid_cbf_mcs.testing.tango_harness import DeviceToLoadType, DevicesToLoadType
@@ -61,6 +60,7 @@ def devices_to_load(
         "devices": [
             {
                 "name": device_to_load["device"],
+                "device_class": device_to_load["device_class"],
                 "proxy": device_to_load["proxy"],
             }
         ],
@@ -196,4 +196,3 @@ def device_to_load() -> Optional[DeviceToLoadType]:
     :return: specification of the device to be loaded
     """
     return None
-
