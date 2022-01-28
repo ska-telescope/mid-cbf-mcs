@@ -51,10 +51,11 @@ def device_to_load() -> DeviceToLoadType:
     """
     return {
         "path": "charts/ska-mid-cbf/data/midcbfconfig.json",
-        "package": "ska_mid_cbf_mcs",
+        "package": "ska_mid_cbf_mcs.fsp.fsp_device",
         "device": "fsp-01",
+        "device_class": "Fsp",
         "proxy": CbfDeviceProxy,
-        "patch": Fsp,
+        "patch": None,
     }
 
 @pytest.fixture()

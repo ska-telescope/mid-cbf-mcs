@@ -157,7 +157,7 @@ def device_to_load(
     """
     return {
         "path": "charts/ska-mid-cbf/data/midcbfconfig.json",
-        "package": "ska_mid_cbf_mcs",
+        "package": "ska_mid_cbf_mcs.vcc.vcc_device",
         "device": "vcc-001",
         "device_class": "Vcc",
         "proxy": CbfDeviceProxy,

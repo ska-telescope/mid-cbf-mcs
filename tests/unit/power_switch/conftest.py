@@ -152,6 +152,7 @@ def device_to_load() -> DevicesToLoadType:
         "path": "tests/unit/power_switch/devicetoload.json",
         "package": "ska_mid_cbf_mcs.power_switch.power_switch_device",
         "device": "powerswitch-001",
+        "device_class": "PowerSwitch",
         "proxy": CbfDeviceProxy,
         "patch": PowerSwitch
     }
