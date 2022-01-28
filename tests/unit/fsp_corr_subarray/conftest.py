@@ -94,9 +94,6 @@ def mock_component_manager(
     mock = mocker.Mock()
     mock.is_communicating = False
 
-    mock_config = ""
-    mock_scan_id = 0
-
     def _start_communicating(mock: unittest.mock.Mock) -> None:
         mock.is_communicating = True
         mock._communication_status_changed_callback(CommunicationStatus.NOT_ESTABLISHED)
@@ -129,8 +126,8 @@ def mock_component_manager(
 
     mock.on.side_effect = lambda: _on(mock)
     mock.off.side_effect = lambda: _off(mock)
-    mock.configure_scan.side_effect = lambda: _configure_scan(mock, mock_config)
-    mock.scan.side_effect = lambda: _scan(mock, mock_scan_id)
+    mock.configure_scan.side_effect = lambda mock_config: _configure_scan(mock, mock_config)
+    mock.scan.side_effect = lambda mock_scan_id: _scan(mock, mock_scan_id)
     mock.end_scan.side_effect = lambda: _end_scan(mock)
     mock.go_to_idle.side_effect = lambda: _go_to_idle(mock)
     mock.start_communicating.side_effect = lambda: _start_communicating(mock)
