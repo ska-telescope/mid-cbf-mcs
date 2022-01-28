@@ -156,12 +156,9 @@ def mock_cbf_controller() -> unittest.mock.Mock:
 @pytest.fixture()
 def mock_vcc() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
-    builder.set_state(tango.DevState.OFF)
-    builder.add_attribute("adminMode", AdminMode.ONLINE)
-    builder.add_attribute("healthState", HealthState.OK)
-    builder.add_attribute("subarrayMembership", 0)
-    builder.add_result_command("On", ResultCode.OK)
-    builder.add_result_command("Off", ResultCode.OK)
+    # Mock the Vcc subarrayMembership attribute
+    # The subarray ID for this unit test is hardcoded to 1
+    builder.add_attribute("subarrayMembership", 1)
     return builder()
 
 @pytest.fixture()

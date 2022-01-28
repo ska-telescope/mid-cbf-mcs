@@ -11,12 +11,18 @@
 """Contain the tests for the CbfController component manager."""
 from __future__ import annotations
 
+import json
+import os
+import pytest
+import logging
+
+file_path = os.path.dirname(os.path.abspath(__file__))
+
 from ska_mid_cbf_mcs.fsp.fsp_corr_subarray_component_manager import FspCorrSubarrayComponentManager 
 from ska_tango_base.commands import ResultCode
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
 from ska_mid_cbf_mcs.testing.mock.mock_callable import MockCallable
-
-import pytest
+from ska_mid_cbf_mcs.commons.global_enum import const, freq_band_dict
 
 class TestFspCorrSubarrayComponentManager:
     """Tests of the fsp corr subarray component manager."""
@@ -60,5 +66,114 @@ class TestFspCorrSubarrayComponentManager:
                 fsp_corr_subarray_component_manager.communication_status
                 == CommunicationStatus.DISABLED
             )
+    
+    @pytest.mark.parametrize(
+        "config_file_name",
+        [
+            (
+                "/../../data/FspCorrSubarray_ConfigureScan_basic.json"
+            )
+        ]
+    )
+    def test_configure_scan(
+            self: TestFspCorrSubarrayComponentManager,
+            fsp_corr_subarray_component_manager: FspCorrSubarrayComponentManager,
+            config_file_name: str,
+        ) -> None:
+            """
+            Test the fsp corr subarray component manager's configure_scan command.
+
+            :param fsp_corr_subarray_component_manager: the fsp corr subarray component
+                manager under test.
+            :param config_file_name: the name of the configuration file
+            """
+            assert (
+            fsp_corr_subarray_component_manager.communication_status
+            == CommunicationStatus.DISABLED
+            )
+
+            fsp_corr_subarray_component_manager.start_communicating()
+
+            assert fsp_corr_subarray_component_manager.receptors == []
+            assert fsp_corr_subarray_component_manager.frequency_band == 0
+            assert [fsp_corr_subarray_component_manager.stream_tuning[0],
+                    fsp_corr_subarray_component_manager.stream_tuning[1]] == [0, 0]
+            assert fsp_corr_subarray_component_manager.frequency_band_offset_stream_1 == 0
+            assert fsp_corr_subarray_component_manager.frequency_band_offset_stream_2 == 0
+            assert fsp_corr_subarray_component_manager.frequency_slice_ID == 0
+            assert fsp_corr_subarray_component_manager.bandwidth == 0
+            assert fsp_corr_subarray_component_manager.zoom_window_tuning == 0
+            assert fsp_corr_subarray_component_manager.integration_time == 0
+            assert fsp_corr_subarray_component_manager.scan_id == 0
+            assert fsp_corr_subarray_component_manager.config_id == ""
+            for i in range(const.NUM_CHANNEL_GROUPS):
+                assert fsp_corr_subarray_component_manager.channel_averaging_map[i][0] == int(i*const.NUM_FINE_CHANNELS/const.NUM_CHANNEL_GROUPS) + 1
+                assert fsp_corr_subarray_component_manager.channel_averaging_map[i][1] == 0
+            assert fsp_corr_subarray_component_manager.vis_destination_address == {"outputHost":[], "outputMac": [], "outputPort":[]}
+            assert fsp_corr_subarray_component_manager.fsp_channel_offset == 0
+            for i in range(40):
+                for j in range(2):
+                    assert fsp_corr_subarray_component_manager.output_link_map[i][j] == 0 
+            
+            # run ConfigureScan
+            f = open(file_path + config_file_name)
+            json_str = f.read().replace("\n", "")
+            f.close()
+            configuration = json.loads(json_str)
+            fsp_corr_subarray_component_manager.configure_scan(json_str)
+            f.close()
+
+            # verify correct attribute values are receieved 
+            for idx, receptorID in enumerate(fsp_corr_subarray_component_manager.receptors):
+                assert receptorID == configuration["receptor_ids"][idx]
+            assert fsp_corr_subarray_component_manager.frequency_band == freq_band_dict()[configuration["frequency_band"]]
+            assert fsp_corr_subarray_component_manager.frequency_slice_ID == configuration["frequency_slice_id"]
+            if "band_5_tuning" in configuration:
+                if fsp_corr_subarray_component_manager.frequency_band in [4, 5]:
+                    band5Tuning_config = configuration["band_5_tuning"]
+                    for i in range(0, len(band5Tuning_config)):
+                        assert fsp_corr_subarray_component_manager.stream_tuning[i] == band5Tuning_config[i]
+            else:
+                logging.info("Attribute band5Tuning not in configuration")
+            
+            assert fsp_corr_subarray_component_manager.zoom_window_tuning == configuration["zoom_window_tuning"]
+            assert fsp_corr_subarray_component_manager.integration_time == configuration["integration_factor"]
+            channelAveragingMap_config = configuration["channel_averaging_map"]
+            logging.info(channelAveragingMap_config)
+            for i, chan in enumerate(channelAveragingMap_config):
+                for j in range(0,len(chan)):
+                    assert fsp_corr_subarray_component_manager.channel_averaging_map[i][j] == channelAveragingMap_config[i][j]
+
+    @pytest.mark.parametrize(
+        "scan_id", 
+        [ 1, 2]
+    )
+    def test_scan(
+            self: TestFspCorrSubarrayComponentManager,
+            fsp_corr_subarray_component_manager: FspCorrSubarrayComponentManager,
+            scan_id: int
+        ) -> None:
+            """
+            Test the fsp corr subarray component manager's scan command.
+
+            :param fsp_corr_subarray_component_manager: the fsp corr subarray component
+                manager under test.
+            :param scan_id: the scan id
+            """
+
+            assert (
+            fsp_corr_subarray_component_manager.communication_status
+            == CommunicationStatus.DISABLED
+            )
+
+            fsp_corr_subarray_component_manager.start_communicating()
+
+            fsp_corr_subarray_component_manager.scan(scan_id)
+            assert fsp_corr_subarray_component_manager.scan_id == scan_id
+
+
+
+           
+
 
    

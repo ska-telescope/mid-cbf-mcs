@@ -82,6 +82,8 @@ class FspCorrSubarrayComponentManager(CbfComponentManager, CspObsComponentManage
         self._proxy_cbf_controller = None
         self._proxies_vcc = None
 
+        self._output_link_map = [[0,0] for i in range(40)]
+
         super().__init__(
             logger=logger,
             push_change_event_callback=push_change_event_callback,
