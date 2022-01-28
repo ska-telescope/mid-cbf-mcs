@@ -38,7 +38,6 @@ class FspCorrSubarrayComponentManager(CbfComponentManager, CspObsComponentManage
         push_change_event_callback: Optional[Callable],
         communication_status_changed_callback: Callable[[CommunicationStatus], None],
         component_power_mode_changed_callback: Callable[[PowerMode], None],
-        obs_state_model
     ) -> None:
         """
         Initialise a new instance.
@@ -89,7 +88,7 @@ class FspCorrSubarrayComponentManager(CbfComponentManager, CspObsComponentManage
             communication_status_changed_callback=communication_status_changed_callback,
             component_power_mode_changed_callback=component_power_mode_changed_callback,
             component_fault_callback=None,
-            obs_state_model=obs_state_model
+            obs_state_model=None
         )
     
     @property
@@ -473,8 +472,6 @@ class FspCorrSubarrayComponentManager(CbfComponentManager, CspObsComponentManage
 
         self._config_id = configuration["config_id"]
 
-        self.component_configured(True)
-
         return (ResultCode.OK, "FspCorrSubarray ConfigureScan command completed OK")
     
     def scan(
@@ -484,15 +481,11 @@ class FspCorrSubarrayComponentManager(CbfComponentManager, CspObsComponentManage
 
         self._scan_id = scan_id
 
-        self.component_scanning(True)
-
         return (ResultCode.OK, "FspCorrSubarray Scan command completed OK")
     
     def end_scan(
         self: FspCorrSubarrayComponentManager,
     ) -> Tuple[ResultCode, str]:
-
-        self.component_scanning(False)
 
         return (ResultCode.OK, "FspCorrSubarray EndScan command completed OK")
     
@@ -525,7 +518,5 @@ class FspCorrSubarrayComponentManager(CbfComponentManager, CspObsComponentManage
         #self._channel_info.clear() #TODO:  not yet populated
 
         self._remove_all_receptors()
-
-        self.component_configured(False)
         
         return (ResultCode.OK, "FspCorrSubarray GoToIdle command completed OK")

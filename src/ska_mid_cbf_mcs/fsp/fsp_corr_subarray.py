@@ -17,7 +17,8 @@
 
 # FspCorrSubarray TANGO device class for the FspCorrSubarray prototype
 # """
-from __future__ import annotations  # allow forward references in type hints
+from __future__ import annotations
+from curses.ascii import FS  # allow forward references in type hints
 
 from typing import List, Tuple, Optional
 from ska_tango_base.csp.obs import obs_state_model
@@ -218,8 +219,15 @@ class FspCorrSubarray(CspSubElementObsDevice):
             "ConfigureScan", self.ConfigureScanCommand(*device_args)
         )
         self.register_command_object(
+            "Scan", self.ScanCommand(*device_args)
+        )
+        self.register_command_object(
+            "EndScan", self.EndScanCommand(*device_args)
+        )
+        self.register_command_object(
             "GoToIdle", self.GoToIdleCommand(*device_args)
         )
+
         device_args = (self, self.op_state_model, self.logger)
         self.register_command_object(
             "On", self.OnCommand(*device_args)
@@ -278,7 +286,6 @@ class FspCorrSubarray(CspSubElementObsDevice):
             self.push_change_event,
             self._communication_status_changed,
             self._component_power_mode_changed,
-            self.obs_state_model
         )
 
     def delete_device(self: FspCorrSubarray) -> None:
@@ -690,12 +697,11 @@ class FspCorrSubarray(CspSubElementObsDevice):
 
             device = self.target
 
-
-            (result_code,message) = self.target.component_manager.configure_scan(argin)
+            (result_code,message) = device.component_manager.configure_scan(argin)
 
             if result_code == ResultCode.OK:
-                # store the configuration on command success
                 device._last_scan_configuration = argin
+                device._component_configured(True)
             
             return(result_code, message)
 
@@ -741,6 +747,68 @@ class FspCorrSubarray(CspSubElementObsDevice):
         command = self.get_command_object("ConfigureScan")
         (return_code, message) = command(argin)
         return [[return_code], [message]]
+    
+    class ScanCommand(CspSubElementObsDevice.ScanCommand):
+        """
+        A class for the FspCorrSubarray's Scan() command.
+        """
+
+        def do(
+            self: FspCorrSubarray.ScanCommand,
+            argin: str
+        ) -> Tuple[ResultCode, str]:
+            """
+            Stateless hook for Scan() command functionality.
+
+            :param argin: The scan ID 
+            :type argin: str
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            :raises: ``CommandError`` if the configuration data validation fails.
+            """
+
+            self.logger.debug("Entering ScanCommand()")
+
+            device = self.target
+
+            (result_code,message) = device.component_manager.scan(int(argin))
+
+            if result_code == ResultCode.OK:
+                device._component_scanning(True)
+            
+            return(result_code, message)
+    
+    class EndScanCommand(CspSubElementObsDevice.EndScanCommand):
+        """
+        A class for the FspCorrSubarray's Scan() command.
+        """
+
+        def do(
+            self: FspCorrSubarray.EndScanCommand,
+        ) -> Tuple[ResultCode, str]:
+            """
+            Stateless hook for Scan() command functionality.
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            :raises: ``CommandError`` if the configuration data validation fails.
+            """
+
+            self.logger.debug("Entering EndScanCommand()")
+
+            device = self.target
+
+            (result_code,message) = device.component_manager.end_scan()
+
+            if result_code == ResultCode.OK:
+                device._component_scanning(False)
+            
+            return(result_code, message)
 
 
     class GoToIdleCommand(CspSubElementObsDevice.GoToIdleCommand):
@@ -762,7 +830,12 @@ class FspCorrSubarray(CspSubElementObsDevice):
 
             self.logger.debug("Entering GoToIdleCommand()")
 
-            (result_code,message) = self.target.component_manager.go_to_idle()
+            device = self.target
+
+            (result_code,message) = device.component_manager.go_to_idle()
+
+            if result_code == ResultCode.OK:
+                device._component_configured(False)
 
             return (result_code, message)
 
@@ -848,6 +921,49 @@ class FspCorrSubarray(CspSubElementObsDevice):
     # ----------
     # Callbacks
     # ----------
+
+    def _component_configured(
+        self: FspCorrSubarray,
+        configured: bool
+    ) -> None:
+        """
+        Handle notification that the component has started or stopped configuring.
+
+        This is callback hook.
+
+        :param configured: whether this component is configured
+        :type configured: bool
+        """
+        if configured:
+            self.obs_state_model.perform_action("component_configured")
+        else:
+            self.obs_state_model.perform_action("component_unconfigured")
+    
+    def _component_scanning(
+        self: FspCorrSubarray, 
+        scanning: bool
+    ) -> None:
+        """
+        Handle notification that the component has started or stopped scanning.
+
+        This is a callback hook.
+
+        :param scanning: whether this component is scanning
+        :type scanning: bool
+        """
+        if scanning:
+            self.obs_state_model.perform_action("component_scanning")
+        else:
+            self.obs_state_model.perform_action("component_not_scanning")
+    
+    def _component_obsfault(self: FspCorrSubarray) -> None:
+        """
+        Handle notification that the component has obsfaulted.
+
+        This is a callback hook.
+        """
+        self.obs_state_model.perform_action("component_obsfault")
+
 
     def _communication_status_changed(
         self: FspCorrSubarray,
