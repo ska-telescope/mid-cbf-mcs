@@ -78,7 +78,8 @@ class TestFspCorrSubarray:
         "command",
         [
             "On",
-            "Off"
+            "Off",
+            "Standby"
         ]
     )
     def test_Power_Commands(
@@ -107,6 +108,9 @@ class TestFspCorrSubarray:
         elif command == "Off":
             expected_state = DevState.OFF
             result = device_under_test.Off()
+        elif command == "Standby":
+            expected_state = DevState.STANDBY
+            result = device_under_test.Standby()
 
         time.sleep(CONST_WAIT_TIME)
         assert result[0][0] == ResultCode.OK

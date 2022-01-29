@@ -104,6 +104,28 @@ class TestFspCorrSubarray:
         sub_id", 
         [(1, 1)]
     )
+    def test_Standby(
+        self: TestFspCorrSubarray, 
+        test_proxies,         
+        fsp_id: int,
+        sub_id: int
+    ) -> None:
+        """
+        Test a valid use of the "Standby" command
+        """
+        
+        device_under_test = test_proxies.fspSubarray["CORR"][sub_id][fsp_id]
+
+        device_under_test.Standby()
+
+        test_proxies.wait_timeout_dev([device_under_test], DevState.STANDBY, 3, 0.1)
+        assert device_under_test.State() == DevState.STANDBY
+    
+    @pytest.mark.parametrize(
+        "fsp_id, \
+        sub_id", 
+        [(1, 1)]
+    )
     def test_ConfigureScan(
         self: TestFspCorrSubarray, 
         test_proxies,         

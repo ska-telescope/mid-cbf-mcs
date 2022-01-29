@@ -234,6 +234,9 @@ class FspCorrSubarray(CspSubElementObsDevice):
         self.register_command_object(
             "Off", self.OffCommand(*device_args)
         )
+        self.register_command_object(
+            "Standby", self.StandbyCommand(*device_args)
+        )
 
     class InitCommand(CspSubElementObsDevice.InitCommand):
         """
@@ -664,6 +667,29 @@ class FspCorrSubarray(CspSubElementObsDevice):
             (result_code,message) = (ResultCode.OK, "FspCorrSubarray Off command completed OK")
 
             self.target._component_power_mode_changed(PowerMode.OFF)
+
+            self.logger.info(message)
+            return (result_code, message)
+    
+    class StandbyCommand(SKABaseDevice.StandbyCommand):
+        """
+        A class for the FspCorrSubarray's Standby() command.
+        """
+        def do(
+            self: FspCorrSubarray.StandbyCommand,
+        ) -> Tuple[ResultCode, str]:
+            """
+            Stateless hook for Standby() command functionality.
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
+
+            (result_code,message) = (ResultCode.OK, "FspCorrSubarray Standby command completed OK")
+
+            self.target._component_power_mode_changed(PowerMode.STANDBY)
 
             self.logger.info(message)
             return (result_code, message)
