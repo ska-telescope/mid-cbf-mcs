@@ -52,6 +52,8 @@ class FspPssSubarrayComponentManager(CbfComponentManager, CspObsComponentManager
         
         self._connected = False
 
+        self._scan_id = 0
+
         super().__init__(
             logger=logger,
             push_change_event_callback=push_change_event_callback,
@@ -60,6 +62,16 @@ class FspPssSubarrayComponentManager(CbfComponentManager, CspObsComponentManager
             component_fault_callback=None,
             obs_state_model=None
         )
+    
+    @property
+    def scan_id(self: FspPssSubarrayComponentManager) -> int:
+        """
+        Scan ID
+
+        :return: the scan id
+        :rtype: int
+        """
+        return self._scan_id
     
     def start_communicating(
         self: FspPssSubarrayComponentManager,
@@ -82,3 +94,35 @@ class FspPssSubarrayComponentManager(CbfComponentManager, CspObsComponentManager
         super().stop_communicating()
         
         self._connected = False
+    
+    def scan(
+        self: FspPssSubarrayComponentManager,
+        scan_id: int,
+    ) -> Tuple[ResultCode, str]:
+        """
+        Performs the Scan() command functionality
+
+        :param scan_id: The scan id
+        :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+        :rtype: (ResultCode, str)
+        """
+
+        self._scan_id = scan_id
+
+        return (ResultCode.OK, "FspPssSubarray Scan command completed OK")
+    
+    def end_scan(
+        self: FspPssSubarrayComponentManager,
+    ) -> Tuple[ResultCode, str]:
+        """
+        Performs the EndScan() command functionality
+
+        :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+        :rtype: (ResultCode, str)
+        """
+
+        return (ResultCode.OK, "FspPssSubarray EndScan command completed OK")

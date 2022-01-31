@@ -305,8 +305,27 @@ class FspPssSubarray(CspSubElementObsDevice):
             :rtype: bool
         """
         return self._output_enable
-        # PROTECTED REGION END #    //  CbfSubarrayPssConfig.read_outputEnable
+    
+    def read_scanID(self: FspPssSubarray) -> int:
+        # PROTECTED REGION ID(FspPssSubarray.scanID_read) ENABLED START #
+        """
+        Read the scanID attribute.
 
+        :return: the scanID attribute. 
+        :rtype: int
+        """
+        return self.component_manager.scan_id
+        # PROTECTED REGION END #    //  FspPssSubarray.scanID_read
+
+    def write_scanID(self: FspPssSubarray, value: int) -> None:
+        # PROTECTED REGION ID(FspPssSubarray.scanID_write) ENABLED START #
+        """
+        Write the scanID attribute.
+
+        :param value: the scanID attribute value. 
+        """
+        self.component_manager.scan_id=value
+        # PROTECTED REGION END #    //  FspPssSubarray.scanID_write
     # --------
     # Commands
     # --------
@@ -517,6 +536,7 @@ class FspPssSubarray(CspSubElementObsDevice):
                 # store the configuration on command success
                 device._last_scan_configuration = argin
                 msg = "Configure command completed OK"
+                device._component_configured(True)
 
             return(result_code, msg)
 
@@ -559,6 +579,68 @@ class FspPssSubarray(CspSubElementObsDevice):
         command = self.get_command_object("ConfigureScan")
         (return_code, message) = command(argin)
         return [[return_code], [message]]
+    
+    class ScanCommand(CspSubElementObsDevice.ScanCommand):
+        """
+        A class for the FspPssSubarray's Scan() command.
+        """
+
+        def do(
+            self: FspPssSubarray.ScanCommand,
+            argin: str
+        ) -> Tuple[ResultCode, str]:
+            """
+            Stateless hook for Scan() command functionality.
+
+            :param argin: The scan ID 
+            :type argin: str
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            :raises: ``CommandError`` if the configuration data validation fails.
+            """
+
+            self.logger.debug("Entering ScanCommand()")
+
+            device = self.target
+
+            (result_code,message) = device.component_manager.scan(int(argin))
+
+            if result_code == ResultCode.OK:
+                device._component_scanning(True)
+            
+            return(result_code, message)
+    
+    class EndScanCommand(CspSubElementObsDevice.EndScanCommand):
+        """
+        A class for the FspPssSubarray's Scan() command.
+        """
+
+        def do(
+            self: FspPssSubarray.EndScanCommand,
+        ) -> Tuple[ResultCode, str]:
+            """
+            Stateless hook for Scan() command functionality.
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            :raises: ``CommandError`` if the configuration data validation fails.
+            """
+
+            self.logger.debug("Entering EndScanCommand()")
+
+            device = self.target
+
+            (result_code,message) = device.component_manager.end_scan()
+
+            if result_code == ResultCode.OK:
+                device._component_scanning(False)
+            
+            return(result_code, message)
 
     class GoToIdleCommand(CspSubElementObsDevice.GoToIdleCommand):
         """
@@ -594,6 +676,8 @@ class FspPssSubarray(CspSubElementObsDevice):
             if device.state_model.obs_state == ObsState.IDLE:
                 return (ResultCode.OK, 
                 "GoToIdle command completed OK. Device already IDLE")
+            
+            device._component_configured(False)
 
             return (ResultCode.OK, "GoToIdle command completed OK")
     
