@@ -236,6 +236,10 @@ class FspPssSubarray(CspSubElementObsDevice):
 
         return FspPssSubarrayComponentManager( 
             self.logger,
+            self.CbfControllerAddress,
+            self.VCC,
+            self.SubID,
+            self.FspID,
             self.push_change_event,
             self._communication_status_changed,
             self._component_power_mode_changed,
@@ -270,7 +274,7 @@ class FspPssSubarray(CspSubElementObsDevice):
             :return: the searchBeams attribute.
             :rtype: List[str]
         """
-        return self._search_beams
+        return self.component_manager.search_beams
         # PROTECTED REGION END #    //  FspPssSubarray.searchBeams_read
 
     def read_searchBeamID(self: FspPssSubarray) -> List[int]:
@@ -281,7 +285,7 @@ class FspPssSubarray(CspSubElementObsDevice):
             :return: the searchBeamID attribute.
             :rtype: List[int]
         """
-        return self._search_beam_id
+        return self.component_manager.search_beam_id
         # PROTECTED REGION END #    //  FspPssSubarray.read_searchBeamID
 
     def read_searchWindowID(self: FspPssSubarray) -> List[int]:
@@ -292,7 +296,7 @@ class FspPssSubarray(CspSubElementObsDevice):
             :return: the searchWindowID attribute.
             :rtype: List[int]
         """
-        return self._search_window_id
+        return self.component_manager.search_window_id
         # PROTECTED REGION END #    //  CbfSubarrayPssConfig.read_searchWindowID
 
     def read_outputEnable(self: FspPssSubarray) -> bool:
@@ -325,7 +329,8 @@ class FspPssSubarray(CspSubElementObsDevice):
         :param value: the scanID attribute value. 
         """
         self.component_manager.scan_id=value
-        # PROTECTED REGION END #    //  FspPssSubarray.scanID_write
+        # PROTECTED REGION END #    //  FspPssSubarray.scanID_writes
+    
     # --------
     # Commands
     # --------
@@ -494,51 +499,13 @@ class FspPssSubarray(CspSubElementObsDevice):
 
             device = self.target
 
-            argin = json.loads(argin)
-
-            # Configure receptors.
-            self.logger.debug("_receptors = {}".format(device._receptors))
-            # TODO: Why are we overwriting the device property fsp ID
-            #       with the argument in the ConfigureScan json file
-            if device._fsp_id != argin["fsp_id"]:
-                device.logger.warning(
-                    "The Fsp ID from ConfigureScan {} does not equal the Fsp ID from the device properties {}"
-                    .format(device._fsp_id, argin["fsp_id"]))
-            device._fsp_id = argin["fsp_id"]
-            device._search_window_id = int(argin["search_window_id"])
-
-            self.logger.debug("_search_window_id = {}".format(device._search_window_id))
-
-            for searchBeam in argin["search_beam"]:
-
-                if len(searchBeam["receptor_ids"]) != 1:
-                    # TODO - to add support for multiple receptors
-                    msg = "Currently only 1 receptor per searchBeam is supported"
-                    self.logger.error(msg) 
-                    return (ResultCode.FAILED, msg)
-
-                device._add_receptors(map(int, searchBeam["receptor_ids"]))
-                self.logger.debug("device._receptors = {}".format(device._receptors))
-                device._search_beams.append(json.dumps(searchBeam))
-
-                device._search_beam_id.append(int(searchBeam["search_beam_id"]))
-            
-            # TODO: _output_enable is not currently set
-
-            # TODO - possibly move validation of params to  
-            #        validate_input()
-            # (result_code, msg) = self.validate_input(argin) # TODO
-
-            result_code = ResultCode.OK # TODO  - temp - remove
-            msg = "Configure command completed OK" # TODO temp, remove
+            (result_code,message) = device.component_manager.configure_scan(argin)
 
             if result_code == ResultCode.OK:
-                # store the configuration on command success
                 device._last_scan_configuration = argin
-                msg = "Configure command completed OK"
                 device._component_configured(True)
-
-            return(result_code, msg)
+            
+            return(result_code, message)
 
         def validate_input(self, argin):
             """
