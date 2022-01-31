@@ -18,7 +18,7 @@ FspPssSubarray TANGO device class for the FspPssSubarray prototype
 """
 from __future__ import annotations  # allow forward references in type hints
 
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 
 # tango imports
 import tango
@@ -36,10 +36,12 @@ import sys
 import json
 from random import randint
 
-from ska_tango_base.control_model import HealthState, AdminMode, ObsState
+from ska_tango_base.control_model import HealthState, AdminMode, ObsState, PowerMode
 from ska_tango_base import CspSubElementObsDevice
 from ska_tango_base.commands import ResultCode
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
+from ska_mid_cbf_mcs.fsp.fsp_pss_subarray_component_manager import FspPssSubarrayComponentManager
+from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
 
 # PROTECTED REGION END #    //  FspPssSubarray.additionnal_import
 
@@ -203,6 +205,23 @@ class FspPssSubarray(CspSubElementObsDevice):
         """Hook to be executed before any commands."""
         pass
         # PROTECTED REGION END #    //  FspPssSubarray.always_executed_hook
+    
+    def create_component_manager(self: FspPssSubarray) -> FspPssSubarrayComponentManager:
+        """
+        Create and return a component manager for this device.
+
+        :return: a component manager for this device.
+        """
+
+        self._communication_status: Optional[CommunicationStatus] = None
+        self._component_power_mode: Optional[PowerMode] = None
+
+        return FspPssSubarrayComponentManager( 
+            self.logger,
+            self.push_change_event,
+            self._communication_status_changed,
+            self._component_power_mode_changed,
+        )
 
     def delete_device(self: FspPssSubarray) -> None:
         # PROTECTED REGION ID(FspPssSubarray.delete_device) ENABLED START #
@@ -489,6 +508,105 @@ class FspPssSubarray(CspSubElementObsDevice):
                 "GoToIdle command completed OK. Device already IDLE")
 
             return (ResultCode.OK, "GoToIdle command completed OK")
+    
+    # ----------
+    # Callbacks
+    # ----------
+
+    def _component_configured(
+        self: FspPssSubarray,
+        configured: bool
+    ) -> None:
+        """
+        Handle notification that the component has started or stopped configuring.
+
+        This is callback hook.
+
+        :param configured: whether this component is configured
+        :type configured: bool
+        """
+        if configured:
+            self.obs_state_model.perform_action("component_configured")
+        else:
+            self.obs_state_model.perform_action("component_unconfigured")
+    
+    def _component_scanning(
+        self: FspPssSubarray, 
+        scanning: bool
+    ) -> None:
+        """
+        Handle notification that the component has started or stopped scanning.
+
+        This is a callback hook.
+
+        :param scanning: whether this component is scanning
+        :type scanning: bool
+        """
+        if scanning:
+            self.obs_state_model.perform_action("component_scanning")
+        else:
+            self.obs_state_model.perform_action("component_not_scanning")
+    
+    def _component_obsfault(self: FspPssSubarray) -> None:
+        """
+        Handle notification that the component has obsfaulted.
+
+        This is a callback hook.
+        """
+        self.obs_state_model.perform_action("component_obsfault")
+
+
+    def _communication_status_changed(
+        self: FspPssSubarray,
+        communication_status: CommunicationStatus,
+    ) -> None:
+        """
+        Handle change in communications status between component manager and component.
+
+        This is a callback hook, called by the component manager when
+        the communications status changes. It is implemented here to
+        drive the op_state.
+
+        :param communication_status: the status of communications
+            between the component manager and its component.
+        """
+
+        self._communication_status = communication_status
+
+        if communication_status == CommunicationStatus.DISABLED:
+            self.op_state_model.perform_action("component_disconnected")
+        elif communication_status == CommunicationStatus.NOT_ESTABLISHED:
+            self.op_state_model.perform_action("component_unknown")
+        elif communication_status == CommunicationStatus.ESTABLISHED \
+            and self._component_power_mode is not None:
+            self._component_power_mode_changed(self._component_power_mode)
+        else:  # self._component_power_mode is None
+            pass  # wait for a power mode update
+    
+    def _component_power_mode_changed(
+        self: FspPssSubarray,
+        power_mode: PowerMode,
+    ) -> None:
+        """
+        Handle change in the power mode of the component.
+
+        This is a callback hook, called by the component manager when
+        the power mode of the component changes. It is implemented here
+        to drive the op_state.
+
+        :param power_mode: the power mode of the component.
+        """
+        self._component_power_mode = power_mode
+
+        if self._communication_status == CommunicationStatus.ESTABLISHED:
+            action_map = {
+                PowerMode.OFF: "component_off",
+                PowerMode.STANDBY: "component_standby",
+                PowerMode.ON: "component_on",
+                PowerMode.UNKNOWN: "component_unknown",
+            }
+
+            self.op_state_model.perform_action(action_map[power_mode])
 
 # ----------
 # Run server
