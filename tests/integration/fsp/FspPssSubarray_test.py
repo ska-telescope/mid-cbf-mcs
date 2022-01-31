@@ -145,8 +145,6 @@ class TestFspPssSubarray:
         assert device_under_test.State() == DevState.ON
 
         for i in range(1, test_proxies.num_vcc + 1):
-            assert test_proxies.vcc[i].subarrayMembership == 0
-        for i in range(1, test_proxies.num_vcc + 1):
             test_proxies.vcc[i].subarrayMembership = sub_id
         for i in range(1, test_proxies.num_vcc + 1):
             assert test_proxies.vcc[i].subarrayMembership == sub_id
