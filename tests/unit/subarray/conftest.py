@@ -27,12 +27,16 @@ from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder
 from ska_mid_cbf_mcs.testing.mock.mock_group import MockGroupBuilder
 from ska_mid_cbf_mcs.testing.tango_harness import DeviceToLoadType, TangoHarness
 
-from ska_mid_cbf_mcs.subarray.subarray_device import CbfSubarray
+# uncomment the following after update to version 0.11.3 of base classes
+# from ska_mid_cbf_mcs.subarray.subarray_device import CbfSubarray
 from ska_tango_base.control_model import HealthState, AdminMode, ObsState
 from ska_tango_base.commands import ResultCode
 
 
 @pytest.fixture()
+@pytest.mark.skip(
+        reason="Not updated to version 0.11.3 of the base classes."
+) 
 def device_under_test(tango_harness: TangoHarness) -> CbfDeviceProxy:
     """
     Fixture that returns the device under test.
@@ -43,23 +47,24 @@ def device_under_test(tango_harness: TangoHarness) -> CbfDeviceProxy:
     """
     return tango_harness.get_device("mid_csp_cbf/sub_elt/subarray_01")
 
-@pytest.fixture()
-def device_to_load() -> DeviceToLoadType:
-    """
-    Fixture that specifies the device to be loaded for testing.
+# uncomment the following after update to version 0.11.3 of base classes
+# @pytest.fixture()
+# def device_to_load() -> DeviceToLoadType:
+#     """
+#     Fixture that specifies the device to be loaded for testing.
 
-    :param patched_vcc_device_class: a class for a patched Vcc
-        device with extra methods for testing purposes.
+#     :param patched_vcc_device_class: a class for a patched Vcc
+#         device with extra methods for testing purposes.
 
-    :return: specification of the device to be loaded
-    """
-    return {
-        "path": "charts/ska-mid-cbf/data/midcbfconfig.json",
-        "package": "ska_mid_cbf_mcs",
-        "device": "cbfsubarray-01",
-        "proxy": CbfDeviceProxy,
-        "patch": CbfSubarray,
-    }
+#     :return: specification of the device to be loaded
+#     """
+#     return {
+#         "path": "charts/ska-mid-cbf/data/midcbfconfig.json",
+#         "package": "ska_mid_cbf_mcs",
+#         "device": "cbfsubarray-01",
+#         "proxy": CbfDeviceProxy,
+#         "patch": CbfSubarray,
+#     }
 
 @pytest.fixture()
 def mock_doppler() -> unittest.mock.Mock:

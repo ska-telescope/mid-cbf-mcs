@@ -13,6 +13,7 @@
 from typing import Callable, Optional
 
 import pytest
+import logging
 
 # SKA imports
 from ska_mid_cbf_mcs.testing.tango_harness import DeviceToLoadType, DevicesToLoadType

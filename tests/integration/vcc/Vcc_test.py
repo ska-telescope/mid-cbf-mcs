@@ -30,7 +30,9 @@ from ska_mid_cbf_mcs.commons.global_enum import freq_band_dict
 from ska_tango_base.control_model import LoggingLevel, HealthState
 from ska_tango_base.control_model import AdminMode, ObsState
 
-
+@pytest.mark.skip(
+    reason="Not updated to version 0.11.3 of the base classes."
+)
 class TestVcc:
     """
     Test class for Vcc device class integration testing.

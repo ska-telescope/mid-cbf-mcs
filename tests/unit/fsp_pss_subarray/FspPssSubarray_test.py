@@ -40,6 +40,9 @@ class TestFspPssSubarray:
     Test class for FspPssSubarray tests.
     """
 
+    @pytest.mark.skip(
+        reason="Not updated to version 0.11.3 of the base classes."
+    )
     def test_On_Off(
         self: TestFspPssSubarray,
         device_under_test: CbfDeviceProxy
@@ -71,6 +74,9 @@ class TestFspPssSubarray:
                 2,
             )
         ]
+    )
+    @pytest.mark.skip(
+        reason="Not updated to version 0.11.3 of the base classes."
     )
     def test_Scan_EndScan_GoToIdle(
         self: TestFspPssSubarray,
@@ -118,6 +124,9 @@ class TestFspPssSubarray:
                 "/../../data/FspPssSubarray_ConfigureScan_basic.json"
             )
         ]
+    )
+    @pytest.mark.skip(
+        reason="Not updated to version 0.11.3 of the base classes."
     )
     def test_ConfigureScan_basic(
         self: TestFspPssSubarray,
