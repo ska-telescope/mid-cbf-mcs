@@ -42,6 +42,7 @@ from ska_tango_base.commands import ResultCode
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_mid_cbf_mcs.fsp.fsp_pss_subarray_component_manager import FspPssSubarrayComponentManager
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
+from ska_tango_base import SKABaseDevice
 
 # PROTECTED REGION END #    //  FspPssSubarray.additionnal_import
 
@@ -133,12 +134,29 @@ class FspPssSubarray(CspSubElementObsDevice):
         """
         super().init_command_objects()
 
-        device_args = (self, self.obs_state_model, self.logger)
+        device_args = (self, self.op_state_model, self.obs_state_model, self.logger)
         self.register_command_object(
             "ConfigureScan", self.ConfigureScanCommand(*device_args)
         )
         self.register_command_object(
+            "Scan", self.ScanCommand(*device_args)
+        )
+        self.register_command_object(
+            "EndScan", self.EndScanCommand(*device_args)
+        )
+        self.register_command_object(
             "GoToIdle", self.GoToIdleCommand(*device_args)
+        )
+
+        device_args = (self, self.op_state_model, self.logger)
+        self.register_command_object(
+            "On", self.OnCommand(*device_args)
+        )
+        self.register_command_object(
+            "Off", self.OffCommand(*device_args)
+        )
+        self.register_command_object(
+            "Standby", self.StandbyCommand(*device_args)
         )
 
     class InitCommand(CspSubElementObsDevice.InitCommand):
@@ -360,6 +378,76 @@ class FspPssSubarray(CspSubElementObsDevice):
     # --------
     # Commands
     # --------
+
+    class OnCommand(SKABaseDevice.OnCommand):
+        """
+        A class for the FspPssSubarray's On() command.
+        """
+
+        def do(            
+            self: FspPssSubarray.OnCommand,
+        ) -> Tuple[ResultCode, str]:
+            """
+            Stateless hook for On() command functionality.
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
+
+            (result_code,message) = (ResultCode.OK, "FspPssSubarray On command completed OK")
+
+            self.target._component_power_mode_changed(PowerMode.ON)
+
+            self.logger.info(message)
+            return (result_code, message)
+
+    class OffCommand(SKABaseDevice.OffCommand):
+        """
+        A class for the FspPssSubarray's Off() command.
+        """
+        def do(
+            self: FspPssSubarray.OffCommand,
+        ) -> Tuple[ResultCode, str]:
+            """
+            Stateless hook for Off() command functionality.
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
+
+            (result_code,message) = (ResultCode.OK, "FspPssSubarray Off command completed OK")
+
+            self.target._component_power_mode_changed(PowerMode.OFF)
+
+            self.logger.info(message)
+            return (result_code, message)
+    
+    class StandbyCommand(SKABaseDevice.StandbyCommand):
+        """
+        A class for the FspPssSubarray's Standby() command.
+        """
+        def do(
+            self: FspPssSubarray.StandbyCommand,
+        ) -> Tuple[ResultCode, str]:
+            """
+            Stateless hook for Standby() command functionality.
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
+
+            (result_code,message) = (ResultCode.OK, "FspPssSubarray Standby command completed OK")
+
+            self.target._component_power_mode_changed(PowerMode.STANDBY)
+
+            self.logger.info(message)
+            return (result_code, message)
 
     class ConfigureScanCommand(CspSubElementObsDevice.ConfigureScanCommand):
         """
