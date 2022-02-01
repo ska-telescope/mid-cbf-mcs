@@ -46,6 +46,9 @@ class TestVcc:
                 "Vcc_ConfigureScan_basic.json"
             )
         ]
+    )
+    @pytest.mark.skip(
+        reason="Not updated to version 0.11.3 of the base classes."
     )    
     def test_Vcc_ConfigureScan_basic(
         self,
@@ -100,7 +103,10 @@ class TestVcc:
 
         device_under_test.TurnOffBandDevice(configuration["frequency_band"])
 
-
+    
+    @pytest.mark.skip(
+        reason="Not updated to version 0.11.3 of the base classes."
+    ) 
     def test_On_Off(
         self: TestVcc,
         device_under_test: CbfDeviceProxy
@@ -136,6 +142,9 @@ class TestVcc:
             )
         ]
     )
+    @pytest.mark.skip(
+        reason="Not updated to version 0.11.3 of the base classes."
+    ) 
     def test_Scan_EndScan_GoToIdle(
         self: TestVcc,
         device_under_test: CbfDeviceProxy,
@@ -224,6 +233,9 @@ class TestVcc:
             )
         ]
     )
+    @pytest.mark.skip(
+        reason="Not updated to version 0.11.3 of the base classes."
+    ) 
     def test_UpdateJonesMatrix(
         self: TestVcc,
         device_under_test: CbfDeviceProxy,
@@ -298,6 +310,9 @@ class TestVcc:
             )
         ]
     )
+    @pytest.mark.skip(
+        reason="Not updated to version 0.11.3 of the base classes."
+    ) 
     def test_UpdateDelayModel(
         self: TestVcc,
         device_under_test: CbfDeviceProxy,

@@ -27,7 +27,7 @@ Code repository: [ska-mid-cbf-mcs](https://gitlab.com/ska-telescope/ska-mid-cbf-
 
 The Mid CBF MCS prototype implements at the moment these TANGO device classes:
 
-* `CbfController`: Based on the `SKAMaster` class. It represents a primary point 
+* `CbfController`: Based on the `SKAController` class. It represents a primary point 
 of contact for CBF Monitor and Control. It implements CBF state and mode 
 indicators 
 and a set of housekeeping commands.

@@ -58,7 +58,7 @@ setuptools.setup(
     test_suite='tests',
     install_requires=[
         'pytango >= 9.3.2',
-        'ska-tango-base >= 0.10.0'
+        'ska-tango-base >= 0.11.3'
     ],
     setup_requires=[
         # dependency for `python setup.py test`

@@ -32,7 +32,7 @@ import unittest.mock
 import tango
 from tango.test_context import MultiDeviceTestContext, get_host_ip
 
-from ska_tango_base import SKABaseDevice
+from ska_tango_base.base import SKABaseDevice
 from ska_tango_base.control_model import TestMode
 
 from ska_mid_cbf_mcs.attribute_proxy import CbfAttributeProxy

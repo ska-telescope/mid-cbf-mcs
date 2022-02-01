@@ -40,6 +40,9 @@ class TestCbfSubarray:
     Test class for TestCbfSubarray tests.
     """
 
+    @pytest.mark.skip(
+        reason="Not updated to version 0.11.3 of the base classes."
+    )
     def test_Init(
         self: TestCbfSubarray,
         device_under_test: CbfDeviceProxy,
@@ -68,6 +71,9 @@ class TestCbfSubarray:
         assert device_under_test.scanID == 0
         assert device_under_test.latestScanConfig == ""
 
+    @pytest.mark.skip(
+        reason="Not updated to version 0.11.3 of the base classes."
+    )
     def test_On_Off(
         self: TestCbfSubarray,
         device_under_test: CbfDeviceProxy
@@ -102,6 +108,9 @@ class TestCbfSubarray:
                 [2, 1]
             )
         ]
+    )
+    @pytest.mark.skip(
+        reason="Not updated to version 0.11.3 of the base classes."
     )
     def test_Add_Remove_Receptors_valid(
         self: TestCbfSubarray,
@@ -161,6 +170,9 @@ class TestCbfSubarray:
             )
         ]
     )
+    @pytest.mark.skip(
+        reason="Not updated to version 0.11.3 of the base classes."
+    )
     def test_RemoveAllReceptors_valid(
         self: TestCbfSubarray,
         device_under_test: CbfDeviceProxy,
@@ -201,6 +213,9 @@ class TestCbfSubarray:
                 [0]
             )
         ]
+    )
+    @pytest.mark.skip(
+        reason="Not updated to version 0.11.3 of the base classes."
     )
     def test_AddReceptors_invalid(
         self: TestCbfSubarray,
@@ -244,6 +259,9 @@ class TestCbfSubarray:
             )
         ]
     )
+    @pytest.mark.skip(
+        reason="Not updated to version 0.11.3 of the base classes."
+    )
     def test_RemoveReceptors_invalid(
             self: TestCbfSubarray,
             device_under_test: CbfDeviceProxy,
@@ -279,6 +297,9 @@ class TestCbfSubarray:
             )
         ]
     )
+    @pytest.mark.skip(
+        reason="Not updated to version 0.11.3 of the base classes."
+    )
     def test_RemoveAllReceptors_invalid(
             self: TestCbfSubarray,
             device_under_test: CbfDeviceProxy,
@@ -311,6 +332,9 @@ class TestCbfSubarray:
                 [1, 3, 4, 2]
             )
         ]
+    )
+    @pytest.mark.skip(
+        reason="Not updated to version 0.11.3 of the base classes."
     )
     def test_ConfigureScan_basic(
         self: TestCbfSubarray, 
@@ -360,6 +384,9 @@ class TestCbfSubarray:
             )
 
         ]
+    )
+    @pytest.mark.skip(
+        reason="Not updated to version 0.11.3 of the base classes."
     )
     def test_Scan(
         self: TestCbfSubarray,
@@ -413,6 +440,9 @@ class TestCbfSubarray:
                 [4, 1, 2],
             )
         ]
+    )
+    @pytest.mark.skip(
+        reason="Not updated to version 0.11.3 of the base classes."
     )
     def test_EndScan(
         self: TestCbfSubarray,
@@ -469,6 +499,9 @@ class TestCbfSubarray:
             )
         ]
     )
+    @pytest.mark.skip(
+        reason="Not updated to version 0.11.3 of the base classes."
+    )
     def test_Abort(
         self: TestCbfSubarray,
         device_under_test: CbfDeviceProxy,
@@ -522,6 +555,9 @@ class TestCbfSubarray:
                 [4, 1, 2],
             )
         ]
+    )
+    @pytest.mark.skip(
+        reason="Not updated to version 0.11.3 of the base classes."
     )
     def test_Reset(
         self: TestCbfSubarray,
@@ -583,6 +619,9 @@ class TestCbfSubarray:
             )
         ]
     )
+    @pytest.mark.skip(
+        reason="Not updated to version 0.11.3 of the base classes."
+    )
     def test_Restart(
         self: TestCbfSubarray,
         device_under_test: CbfDeviceProxy,
@@ -640,6 +679,9 @@ class TestCbfSubarray:
                 [4, 1, 2],
             )
         ]
+    )
+    @pytest.mark.skip(
+        reason="Not updated to version 0.11.3 of the base classes."
     )
     def test_GoToIdle(
         self: TestCbfSubarray,

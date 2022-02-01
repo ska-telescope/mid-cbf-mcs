@@ -27,12 +27,16 @@ from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder
 from ska_mid_cbf_mcs.testing.mock.mock_group import MockGroupBuilder
 from ska_mid_cbf_mcs.testing.tango_harness import DeviceToLoadType, TangoHarness
 
-from ska_mid_cbf_mcs.subarray.subarray_device import CbfSubarray
+# uncomment the following after update to version 0.11.3 of base classes
+# from ska_mid_cbf_mcs.subarray.subarray_device import CbfSubarray
 from ska_tango_base.control_model import HealthState, AdminMode, ObsState
 from ska_tango_base.commands import ResultCode
 
 
 @pytest.fixture()
+@pytest.mark.skip(
+        reason="Not updated to version 0.11.3 of the base classes."
+) 
 def device_under_test(tango_harness: TangoHarness) -> CbfDeviceProxy:
     """
     Fixture that returns the device under test.
