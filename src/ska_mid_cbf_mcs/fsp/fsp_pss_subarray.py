@@ -161,7 +161,7 @@ class FspPssSubarray(CspSubElementObsDevice):
 
     class InitCommand(CspSubElementObsDevice.InitCommand):
         """
-        A class for the Vcc's init_device() "command".
+        A class for the FspPssSubarray's init_device() "command".
         """
 
         def do(
@@ -177,40 +177,6 @@ class FspPssSubarray(CspSubElementObsDevice):
             """
 
             self.logger.debug("Entering InitCommand()")
-
-            device = self.target
-
-            # Make a private copy of the device properties:
-            device._subarray_id = device.SubID
-            device._fsp_id = device.FspID
-
-            # initialize attribute values
-            device._receptors = []
-            device._search_beams = []
-            device._search_window_id = 0
-            device._search_beam_id = []
-            device._output_enable = 0
-            device._scan_id = 0
-            device._config_id = ""
-
-            # device proxy for connection to CbfController
-            device._proxy_cbf_controller = CbfDeviceProxy(
-                fqdn=device.CbfControllerAddress,
-                logger=device.logger
-            )
-            device._controller_max_capabilities = dict(
-                pair.split(":") for pair in 
-                device._proxy_cbf_controller.get_property("MaxCapabilities")["MaxCapabilities"]
-            )
-
-            # Connect to all VCC devices turned on by CbfController:
-            device._count_vcc = int(device._controller_max_capabilities["VCC"])
-            device._fqdn_vcc = list(device.VCC)[:device._count_vcc]
-            device._proxies_vcc = [
-                CbfDeviceProxy(
-                    logger=device.logger, 
-                    fqdn=address) for address in device._fqdn_vcc
-            ]
 
             message = "FspPssSubarry Init command completed OK"
             self.logger.info(message)
@@ -351,74 +317,6 @@ class FspPssSubarray(CspSubElementObsDevice):
         """
         self.component_manager.config_id=value
         # PROTECTED REGION END #    //  FspPssSubarray.scanID_writes
-    
-    # --------
-    # Commands
-    # --------
-
-    def _add_receptors(
-        self: FspPssSubarray, 
-        argin: List[int]
-        ) -> None:
-        """
-            Add specified receptors to the subarray.
-
-            :param argin: ids of receptors to add. 
-        """
-        self.logger.debug("_AddReceptors")
-        errs = []  # list of error messages
-        receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
-                               self._proxy_cbf_controller.receptorToVcc)
-        for receptorID in argin:
-            try:
-                vccID = receptor_to_vcc[receptorID]
-                subarrayID = self._proxies_vcc[vccID - 1].subarrayMembership
-
-                # only add receptor if it belongs to the CBF subarray
-                if subarrayID != self._subarray_id:
-                    errs.append("Receptor {} does not belong to subarray {}.".format(
-                        str(receptorID), str(self._subarray_id)))
-                else:
-                    if receptorID not in self._receptors:
-                        self._receptors.append(receptorID)
-                    else:
-                        # TODO: this is not true if more receptors can be 
-                        #       specified for the same search beam
-                        log_msg = "Receptor {} already assigned to current FSP subarray.".format(
-                            str(receptorID))
-                        self.logger.warn(log_msg)
-
-            except KeyError:  # invalid receptor ID
-                errs.append("Invalid receptor ID: {}".format(receptorID))
-
-        if errs:
-            msg = "\n".join(errs)
-            self.logger.error(msg)
-            tango.Except.throw_exception("Command failed", msg, "AddReceptors execution",
-                                           tango.ErrSeverity.ERR)
-        # PROTECTED REGION END #    //  FspPssSubarray.AddReceptors
-
-    def _remove_receptors(
-        self: FspPssSubarray, 
-        argin: List[int]
-        )-> None:
-        """
-            Remove specified receptors from the subarray.
-
-            :param argin: ids of receptors to remove. 
-        """
-        self.logger.debug("_remove_receptors")
-        for receptorID in argin:
-            if receptorID in self._receptors:
-                self._receptors.remove(receptorID)
-            else:
-                log_msg = "Receptor {} not assigned to FSP subarray. "\
-                    "Skipping.".format(str(receptorID))
-                self.logger.warn(log_msg)
-
-    def _remove_all_receptors(self: FspPssSubarray) -> None:
-        """ Remove all receptors from the subarray."""
-        self._remove_receptors(self._receptors[:])
 
     # --------
     # Commands
@@ -440,6 +338,8 @@ class FspPssSubarray(CspSubElementObsDevice):
                 information purpose only.
             :rtype: (ResultCode, str)
             """
+
+            self.logger.debug("Entering OnCommand()")
 
             (result_code,message) = (ResultCode.OK, "FspPssSubarray On command completed OK")
 
@@ -464,6 +364,8 @@ class FspPssSubarray(CspSubElementObsDevice):
             :rtype: (ResultCode, str)
             """
 
+            self.logger.debug("Entering OffCommand()")
+
             (result_code,message) = (ResultCode.OK, "FspPssSubarray Off command completed OK")
 
             self.target._component_power_mode_changed(PowerMode.OFF)
@@ -486,6 +388,8 @@ class FspPssSubarray(CspSubElementObsDevice):
                 information purpose only.
             :rtype: (ResultCode, str)
             """
+
+            self.logger.debug("Entering StandbyCommand()")
 
             (result_code,message) = (ResultCode.OK, "FspPssSubarray Standby command completed OK")
 
@@ -529,18 +433,6 @@ class FspPssSubarray(CspSubElementObsDevice):
                 device._component_configured(True)
             
             return(result_code, message)
-
-        def validate_input(self, argin):
-            """
-            Validate the configuration parameters against allowed values, as needed.
-
-            :param argin: The JSON formatted string with configuration for the device.
-            :type argin: 'DevString'
-            :return: A tuple containing a return code and a string message.
-            :rtype: (ResultCode, str)
-            """
-            device = self.target
-            return (ResultCode.OK, "ConfigureScan arguments validation successfull") 
 
     @command(
     dtype_in='DevString',

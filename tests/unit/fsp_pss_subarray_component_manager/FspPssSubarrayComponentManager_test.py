@@ -8,7 +8,7 @@
 # Distributed under the terms of the BSD-3-Clause license.
 # See LICENSE.txt for more info.
 
-"""Contain the tests for the CbfController component manager."""
+"""Contain the tests for the FspPssSubarray component manager."""
 from __future__ import annotations
 
 import json
@@ -116,7 +116,7 @@ class TestFspPssSubarrayComponentManager:
 
     @pytest.mark.parametrize(
         "scan_id", 
-        [ 1, 2]
+        [1, 2]
     )
     def test_scan(
             self: TestFspPssSubarrayComponentManager,

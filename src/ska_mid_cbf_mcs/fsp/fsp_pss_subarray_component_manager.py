@@ -44,6 +44,11 @@ class FspPssSubarrayComponentManager(CbfComponentManager, CspObsComponentManager
         Initialise a new instance.
 
         :param logger: a logger for this object to use
+        :param cbf_controller_address: address of the cbf controller device
+        :param vcc_fqdns_all: list of all vcc fqdns
+        :param subarray_id: the id indicating the subarray membership 
+            of the fsp pss subarray device
+        :param fsp_id: the id of the corresponding fsp device
         :param push_change_event: method to call when the base classes
             want to send an event
         :param communication_status_changed_callback: callback to be
@@ -110,12 +115,12 @@ class FspPssSubarrayComponentManager(CbfComponentManager, CspObsComponentManager
         return self._fsp_id
     
     @property
-    def search_window_id(self: FspPssSubarrayComponentManager) -> List[int]:
+    def search_window_id(self: FspPssSubarrayComponentManager) -> int:
         """
         Search Window ID
 
         :return: the search window id
-        :rtype: List[int]
+        :rtype: int
         """
         return self._search_window_id
     
@@ -203,9 +208,9 @@ class FspPssSubarrayComponentManager(CbfComponentManager, CspObsComponentManager
         argin: List[int]
         ) -> None:
         """
-            Add specified receptors to the subarray.
+        Add specified receptors to the subarray.
 
-            :param argin: ids of receptors to add. 
+        :param argin: ids of receptors to add. 
         """
         errs = []  # list of error messages
         receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
@@ -241,9 +246,9 @@ class FspPssSubarrayComponentManager(CbfComponentManager, CspObsComponentManager
         argin: List[int]
         )-> None:
         """
-            Remove specified receptors from the subarray.
+        Remove specified receptors from the subarray.
 
-            :param argin: ids of receptors to remove. 
+        :param argin: ids of receptors to remove. 
         """
 
         for receptorID in argin:
@@ -257,6 +262,21 @@ class FspPssSubarrayComponentManager(CbfComponentManager, CspObsComponentManager
     def _remove_all_receptors(self: FspPssSubarrayComponentManager) -> None:
         """ Remove all receptors from the subarray."""
         self._remove_receptors(self._receptors[:])
+    
+    def validate_input(
+        self: FspPssSubarrayComponentManager, 
+        configuration: str
+    ) -> Tuple[ResultCode, str]:
+            """
+            Validate the configuration parameters against allowed values, as needed.
+
+            :param configuration: The JSON formatted string with configuration for the device.
+            :type configuration: 'DevString'
+            :return: A tuple containing a return code and a string message.
+            :rtype: (ResultCode, str)
+            """
+            device = self.target
+            return (ResultCode.OK, "ConfigureScan arguments validation successfull") 
     
     def configure_scan(
         self: FspPssSubarrayComponentManager,
@@ -274,6 +294,7 @@ class FspPssSubarrayComponentManager(CbfComponentManager, CspObsComponentManager
         
         configuration = json.loads(configuration)
 
+        #TODO: call validate input with self.validate_input 
 
         # TODO: Why are we overwriting the device property fsp ID
         #       with the argument in the ConfigureScan json file

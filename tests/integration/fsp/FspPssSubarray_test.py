@@ -36,13 +36,17 @@ class TestFspPssSubarray:
     )
     def test_Connect(
         self: TestFspPssSubarray, 
-        test_proxies,         
+        test_proxies: pytest.fixture,         
         fsp_id: int,
         sub_id: int
     ) -> None:
         """
         Test the initial states and verify the component manager 
         can start communicating
+
+        :param test_proxies: the proxies test fixture
+        :param fsp_id: the fsp id
+        :param sub_id: the subarray id
         """
         device_under_test = test_proxies.fspSubarray["PSS-BF"][sub_id][fsp_id]
 
@@ -62,12 +66,16 @@ class TestFspPssSubarray:
     )
     def test_On(
         self: TestFspPssSubarray, 
-        test_proxies,         
+        test_proxies: pytest.fixture,         
         fsp_id: int,
         sub_id: int
     ) -> None:
         """
-        Test a valid use of the "On" command
+        Test the "On" command
+
+        :param test_proxies: the proxies test fixture
+        :param fsp_id: the fsp id
+        :param sub_id: the subarray id
         """
         
         device_under_test = test_proxies.fspSubarray["PSS-BF"][sub_id][fsp_id]
@@ -84,12 +92,16 @@ class TestFspPssSubarray:
     )
     def test_Off(
         self: TestFspPssSubarray, 
-        test_proxies,         
+        test_proxies: pytest.fixture,         
         fsp_id: int,
         sub_id: int
     ) -> None:
         """
-        Test a valid use of the "Off" command
+        Test the "Off" command
+
+        :param test_proxies: the proxies test fixture
+        :param fsp_id: the fsp id
+        :param sub_id: the subarray id
         """
         
         device_under_test = test_proxies.fspSubarray["PSS-BF"][sub_id][fsp_id]
@@ -106,12 +118,16 @@ class TestFspPssSubarray:
     )
     def test_Standby(
         self: TestFspPssSubarray, 
-        test_proxies,         
+        test_proxies: pytest.fixture,         
         fsp_id: int,
         sub_id: int
     ) -> None:
         """
-        Test a valid use of the "Standby" command
+        Test the "Standby" command
+
+        :param test_proxies: the proxies test fixture
+        :param fsp_id: the fsp id
+        :param sub_id: the subarray id
         """
         
         device_under_test = test_proxies.fspSubarray["PSS-BF"][sub_id][fsp_id]
@@ -122,16 +138,33 @@ class TestFspPssSubarray:
         assert device_under_test.State() == DevState.STANDBY
     
     @pytest.mark.parametrize(
-        "fsp_id, \
+        "config_file_name, \
+        fsp_id, \
         sub_id", 
-        [(1, 1)]
+        [
+            (
+                "FspPssSubarray_ConfigureScan_basic.json",
+                1,
+                1,
+            )
+        ]
     )
     def test_ConfigureScan(
         self: TestFspPssSubarray, 
-        test_proxies,         
+        test_proxies: pytest.fixture, 
+        config_file_name: str,        
         fsp_id: int,
         sub_id: int
     ) -> None:
+        """
+        Test the "ConfigureScan" command
+
+        :param test_proxies: the proxies test fixture
+        :param config_file_name: the name of the JSON file
+            containing the configuration
+        :param fsp_id: the fsp id
+        :param sub_id: the subarray id
+        """
 
         device_under_test = test_proxies.fspSubarray["PSS-BF"][sub_id][fsp_id]
         wait_time_s = 1
@@ -149,7 +182,6 @@ class TestFspPssSubarray:
         for i in range(1, test_proxies.num_vcc + 1):
             assert test_proxies.vcc[i].subarrayMembership == sub_id
 
-        config_file_name = "FspPssSubarray_ConfigureScan_basic.json"
         f = open(data_file_path + config_file_name)
         json_str = f.read().replace("\n", "")
         configuration = copy.deepcopy(json.loads(json_str))
@@ -159,7 +191,11 @@ class TestFspPssSubarray:
         
         device_under_test.ConfigureScan(json_str)
 
-        time.sleep(10)
+        assert device_under_test.searchWindowID == int(configuration["search_window_id"])
+        for i, searchBeam in enumerate(configuration["search_beam"]):
+            assert device_under_test.searchBeams[i] == json.dumps(searchBeam)
+            assert device_under_test.searchBeamID[i] == int(searchBeam["search_beam_id"])
+
         assert device_under_test.obsState == ObsState.READY
     
     @pytest.mark.parametrize(
@@ -169,10 +205,17 @@ class TestFspPssSubarray:
     )
     def test_Scan(
         self: TestFspPssSubarray, 
-        test_proxies,         
+        test_proxies: pytest.fixture,         
         fsp_id: int,
         sub_id: int
     ) -> None:
+        """
+        Test the "Scan" command
+
+        :param test_proxies: the proxies test fixture
+        :param fsp_id: the fsp id
+        :param sub_id: the subarray id
+        """
 
         device_under_test = test_proxies.fspSubarray["PSS-BF"][sub_id][fsp_id]
         wait_time_s = 1
@@ -201,10 +244,17 @@ class TestFspPssSubarray:
     )
     def test_EndScan(
         self: TestFspPssSubarray, 
-        test_proxies,         
+        test_proxies: pytest.fixture,         
         fsp_id: int,
         sub_id: int
     ) -> None:
+        """
+        Test the "EndScan" command
+
+        :param test_proxies: the proxies test fixture
+        :param fsp_id: the fsp id
+        :param sub_id: the subarray id
+        """
 
         device_under_test = test_proxies.fspSubarray["PSS-BF"][sub_id][fsp_id]
         wait_time_s = 1
@@ -224,10 +274,17 @@ class TestFspPssSubarray:
     )
     def test_GoToIdle(
         self: TestFspPssSubarray, 
-        test_proxies,         
+        test_proxies: pytest.fixture,         
         fsp_id: int,
         sub_id: int
     ) -> None:
+        """
+        Test the "GoToIdle" command
+
+        :param test_proxies: the proxies test fixture
+        :param fsp_id: the fsp id
+        :param sub_id: the subarray id
+        """
 
         device_under_test = test_proxies.fspSubarray["PSS-BF"][sub_id][fsp_id]
         wait_time_s = 1
@@ -251,12 +308,16 @@ class TestFspPssSubarray:
     )
     def test_Disconnect(
         self: TestFspPssSubarray, 
-        test_proxies,         
+        test_proxies: pytest.fixture,         
         fsp_id: int,
         sub_id: int
     ) -> None:
         """
         Verify the component manager can stop communicating
+
+        :param test_proxies: the proxies test fixture
+        :param fsp_id: the fsp id
+        :param sub_id: the subarray id
         """
 
         device_under_test = test_proxies.fspSubarray["PSS-BF"][sub_id][fsp_id]
