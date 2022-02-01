@@ -57,10 +57,11 @@ class FspPssSubarrayComponentManager(CbfComponentManager, CspObsComponentManager
         self._connected = False
 
         self._scan_id = 0
-        self._output_enable = 0
+        self._search_window_id = 0
         self._config_id = ""
         self._fsp_id = fsp_id
         self._subarray_id = subarray_id
+        self._output_enable = 0
         self._search_beams = []
         self._receptors = []
         self._search_beam_id = []
@@ -147,6 +148,16 @@ class FspPssSubarrayComponentManager(CbfComponentManager, CspObsComponentManager
         :rtype: bool
         """
         return self._output_enable
+    
+    @property
+    def receptors(self: FspPssSubarrayComponentManager) -> List[int]:
+        """
+        Receptors
+
+        :return: list of receptor ids
+        :rtype: List[int]
+        """
+        return self._receptors
     
     def start_communicating(
         self: FspPssSubarrayComponentManager,

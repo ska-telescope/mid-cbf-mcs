@@ -263,7 +263,7 @@ class FspPssSubarray(CspSubElementObsDevice):
             :return: the receptors attribute.
             :rtype: List[int]
         """
-        return self._receptors
+        return self.component_manager.receptors
         # PROTECTED REGION END #    //  FspPssSubarray.receptors_read
 
     def read_searchBeams(self: FspPssSubarray) -> List[str]:
