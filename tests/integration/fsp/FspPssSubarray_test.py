@@ -222,6 +222,33 @@ class TestFspPssSubarray:
         sub_id", 
         [(1, 1)]
     )
+    def test_GoToIdle(
+        self: TestFspPssSubarray, 
+        test_proxies,         
+        fsp_id: int,
+        sub_id: int
+    ) -> None:
+
+        device_under_test = test_proxies.fspSubarray["PSS-BF"][sub_id][fsp_id]
+        wait_time_s = 1
+        sleep_time_s = 1
+
+        assert device_under_test.adminMode == AdminMode.ONLINE
+
+        test_proxies.wait_timeout_dev([device_under_test], DevState.ON, wait_time_s, sleep_time_s)
+        assert device_under_test.State() == DevState.ON
+
+        device_under_test.GoToIdle()
+
+        test_proxies.wait_timeout_obs([device_under_test], ObsState.IDLE, wait_time_s, sleep_time_s)
+        assert device_under_test.obsState == ObsState.IDLE
+
+    
+    @pytest.mark.parametrize(
+        "fsp_id, \
+        sub_id", 
+        [(1, 1)]
+    )
     def test_Disconnect(
         self: TestFspPssSubarray, 
         test_proxies,         

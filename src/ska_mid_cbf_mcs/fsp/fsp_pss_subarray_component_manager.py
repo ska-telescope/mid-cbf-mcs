@@ -57,6 +57,8 @@ class FspPssSubarrayComponentManager(CbfComponentManager, CspObsComponentManager
         self._connected = False
 
         self._scan_id = 0
+        self._output_enable = 0
+        self._config_id = ""
         self._fsp_id = fsp_id
         self._subarray_id = subarray_id
         self._search_beams = []
@@ -85,6 +87,16 @@ class FspPssSubarrayComponentManager(CbfComponentManager, CspObsComponentManager
         :rtype: int
         """
         return self._scan_id
+    
+    @property
+    def config_id(self: FspPssSubarrayComponentManager) -> str:
+        """
+        Config ID
+
+        :return: the config id
+        :rtype: str
+        """
+        return self._config_id
     
     @property
     def fsp_id(self: FspPssSubarrayComponentManager) -> int:
@@ -125,6 +137,16 @@ class FspPssSubarrayComponentManager(CbfComponentManager, CspObsComponentManager
         :rtype: List[int]
         """
         return self._search_beam_id
+    
+    @property
+    def output_enable(self: FspPssSubarrayComponentManager) -> bool:
+        """
+        Output Enable
+
+        :return: output enable
+        :rtype: bool
+        """
+        return self._output_enable
     
     def start_communicating(
         self: FspPssSubarrayComponentManager,
@@ -203,6 +225,28 @@ class FspPssSubarrayComponentManager(CbfComponentManager, CspObsComponentManager
             msg = "\n".join(errs)
             self._logger.error(msg)
     
+    def _remove_receptors(
+        self: FspPssSubarrayComponentManager, 
+        argin: List[int]
+        )-> None:
+        """
+            Remove specified receptors from the subarray.
+
+            :param argin: ids of receptors to remove. 
+        """
+
+        for receptorID in argin:
+            if receptorID in self._receptors:
+                self._receptors.remove(receptorID)
+            else:
+                log_msg = "Receptor {} not assigned to FSP subarray. "\
+                    "Skipping.".format(str(receptorID))
+                self._logger.warn(log_msg)
+    
+    def _remove_all_receptors(self: FspPssSubarrayComponentManager) -> None:
+        """ Remove all receptors from the subarray."""
+        self._remove_receptors(self._receptors[:])
+    
     def configure_scan(
         self: FspPssSubarrayComponentManager,
         configuration: str
@@ -274,3 +318,26 @@ class FspPssSubarrayComponentManager(CbfComponentManager, CspObsComponentManager
         """
 
         return (ResultCode.OK, "FspPssSubarray EndScan command completed OK")
+    
+    def go_to_idle(
+        self: FspPssSubarrayComponentManager,
+    ) -> Tuple[ResultCode, str]:
+        """
+        Performs the GoToIdle() command functionality
+
+        :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+        :rtype: (ResultCode, str)
+        """
+
+        self._search_beams = []
+        self._search_window_id = 0
+        self._search_beam_id = []
+        self._output_enable = 0
+        self._scan_id = 0
+        self._config_id = ""
+
+        self._remove_all_receptors()
+        
+        return (ResultCode.OK, "FspPssSubarray GoToIdle command completed OK")

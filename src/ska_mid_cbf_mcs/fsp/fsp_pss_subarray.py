@@ -308,7 +308,7 @@ class FspPssSubarray(CspSubElementObsDevice):
             :return: the outputEnable attribute.
             :rtype: bool
         """
-        return self._output_enable
+        return self.component_manager.output_enable
     
     def read_scanID(self: FspPssSubarray) -> int:
         # PROTECTED REGION ID(FspPssSubarray.scanID_read) ENABLED START #
@@ -329,6 +329,27 @@ class FspPssSubarray(CspSubElementObsDevice):
         :param value: the scanID attribute value. 
         """
         self.component_manager.scan_id=value
+        # PROTECTED REGION END #    //  FspPssSubarray.scanID_writes
+    
+    def read_configID(self: FspPssSubarray) -> str:
+        # PROTECTED REGION ID(FspPssSubarray.scanID_read) ENABLED START #
+        """
+        Read the configID attribute.
+
+        :return: the configID attribute. 
+        :rtype: str
+        """
+        return self.component_manager.config_id
+        # PROTECTED REGION END #    //  FspPssSubarray.scanID_read
+
+    def write_configID(self: FspPssSubarray, value: str) -> None:
+        # PROTECTED REGION ID(FspPssSubarray.scanID_write) ENABLED START #
+        """
+        Write the configID attribute.
+
+        :param value: the configID attribute value. 
+        """
+        self.component_manager.config_id=value
         # PROTECTED REGION END #    //  FspPssSubarray.scanID_writes
     
     # --------
@@ -497,6 +518,8 @@ class FspPssSubarray(CspSubElementObsDevice):
             :raises: ``CommandError`` if the configuration data validation fails.
             """
 
+            self.logger.debug("Entering ConfigureScanCommand()")
+
             device = self.target
 
             (result_code,message) = device.component_manager.configure_scan(argin)
@@ -630,23 +653,12 @@ class FspPssSubarray(CspSubElementObsDevice):
 
             device = self.target
 
-            # initialize attribute values
-            device._search_beams = []
-            device._search_window_id = 0
-            device._search_beam_id = []
-            device._output_enable = 0
-            device._scan_id = 0
-            device._config_id = ""
+            (result_code,message) = device.component_manager.go_to_idle()
 
-            device._remove_all_receptors()
+            if result_code == ResultCode.OK:
+                device._component_configured(False)
 
-            if device.state_model.obs_state == ObsState.IDLE:
-                return (ResultCode.OK, 
-                "GoToIdle command completed OK. Device already IDLE")
-            
-            device._component_configured(False)
-
-            return (ResultCode.OK, "GoToIdle command completed OK")
+            return (result_code, message)
     
     # ----------
     # Callbacks
