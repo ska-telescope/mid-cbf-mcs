@@ -728,22 +728,6 @@ class FspCorrSubarray(CspSubElementObsDevice):
             
             return(result_code, message)
 
-        def validate_input(
-            self: FspCorrSubarray.ConfigureScanCommand, 
-            argin: str
-            ) -> None:
-            """
-                Validate the configuration parameters against allowed values, as needed.
-
-                :param argin: The JSON formatted string with configuration for the device.
-                :return: A tuple containing a return code and a string message.
-                :rtype: (ResultCode, str)
-            """
-            device = self.target
-
-            # TODO -add the actual validation
-            return (ResultCode.OK, "ConfigureScan arguments validation successfull")
-
     @command(
         dtype_in='DevString',
         doc_in="JSON formatted string with the scan configuration.",

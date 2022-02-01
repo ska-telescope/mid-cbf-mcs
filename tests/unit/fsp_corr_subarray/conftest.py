@@ -142,17 +142,17 @@ def patched_fsp_corr_subarray_device_class(
     mock_component_manager: unittest.mock.Mock,
 ) -> Type[FspCorrSubarray]:
     """
-    Return a controller device that is patched with a mock component manager.
+    Return a device that is patched with a mock component manager.
 
     :param mock_component_manager: the mock component manager with
         which to patch the device
 
-    :return: a controller device that is patched with a mock component
+    :return: a device that is patched with a mock component
         manager.
     """
 
     class PatchedFspCorrSubarray(FspCorrSubarray):
-        """A controller device patched with a mock component manager."""
+        """A device patched with a mock component manager."""
 
         def create_component_manager(
             self: PatchedFspCorrSubarray,

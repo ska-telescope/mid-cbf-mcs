@@ -50,11 +50,11 @@ def fsp_corr_subarray_component_manager(
     component_power_mode_changed_callback: MockCallable,
 ) -> FspCorrSubarrayComponentManager:
     """
-    Return a Controller component manager.
+    Return a FspCorrSubarray component manager.
 
     :param logger: the logger fixture
 
-    :return: a Controller component manager.
+    :return: a FspCorrSubarray component manager.
     """
     
     f = open(file_path + "/../../data/controller_component_manager.json")
