@@ -62,6 +62,7 @@ DeviceSpecType = TypedDict(
     "DeviceSpecType",
     {
         "name": str,
+        "device_class": str,
         "proxy": Type[CbfDeviceProxy],
         "patch": Type[SKABaseDevice],
     },
@@ -115,8 +116,9 @@ DeviceToLoadType = TypedDict(
         "path": str,
         "package": str,
         "device": str,
+        "device_class": str,
         "proxy": Type[CbfDeviceProxy],
-        "patch": Type[SKABaseDevice],
+        "patch": Type[SKABaseDevice]
     },
     total=False,
 )
@@ -133,7 +135,7 @@ class CbfDeviceInfo:
         self: CbfDeviceInfo,
         path: str,
         package: str,
-        devices: Optional[list[DeviceSpecType]] = None,
+        devices: Optional[List[DeviceSpecType]] = None,
     ) -> None:
         """
         Create a new instance.
@@ -148,8 +150,8 @@ class CbfDeviceInfo:
         with open(path, "r") as json_file:
             self._source_data = json.load(json_file)
         self._package = package
-        self._devices: dict[str, DeviceConfigType] = {}
-        self._proxies: dict[str, type[CbfDeviceProxy]] = {}
+        self._devices: Dict[str, DeviceConfigType] = {}
+        self._proxies: Dict[str, Type[CbfDeviceProxy]] = {}
 
         if devices is not None:
             for device_spec in devices:
@@ -158,8 +160,9 @@ class CbfDeviceInfo:
     def include_device(
         self: CbfDeviceInfo,
         name: str,
-        proxy: type[CbfDeviceProxy],
-        patch: Optional[type[SKABaseDevice]] = None,
+        device_class: str,
+        proxy: Type[CbfDeviceProxy],
+        patch: Optional[Type[SKABaseDevice]] = None,
     ) -> None:
         """
         Include a device in this specification.
@@ -170,6 +173,7 @@ class CbfDeviceInfo:
         :param proxy: the proxy class to use to access the device.
         :param patch: an optional device class with which to patch the
             named device
+        :param device_class: the named device's class.
 
         :raises ValueError: if the named device does not exist in the
             source configuration data
@@ -177,17 +181,9 @@ class CbfDeviceInfo:
         for server in self._source_data["servers"]:
             if name in self._source_data["servers"][server]:
                 device_spec = self._source_data["servers"][server][name]
-                # current workaround for loading a device that isn't listed
-                # first in the device server config json is to load via the
-                # patched device class name and inputting the desired class type
-                # in the device_spec object, however this prevents the use of a 
-                # patched device wrapper
-                # Original code: class_name = next(iter(device_spec))
-                # TODO: add a new field specifying class_name to device_spec ?
-                class_name = patch.__name__
+                class_name = device_class
                 fqdn = next(iter(device_spec[class_name]))
                 properties = device_spec[class_name][fqdn]["properties"]
-
                 attribute_properties = device_spec[class_name][fqdn].get(
                     "attribute_properties", {}
                 )
@@ -198,10 +194,8 @@ class CbfDeviceInfo:
                 }
 
                 if patch is None:
-                    raise ValueError(f"patch cannot be None.")
-                    # TODO: Fails is patch is None, need to implement working default
-                    # package = __import__(self._package, fromlist=[class_name])
-                    # klass = getattr(package, class_name)
+                    package = __import__(self._package, fromlist=[class_name])
+                    klass = getattr(package, class_name)
                 else:
                     klass = patch
 
@@ -227,7 +221,7 @@ class CbfDeviceInfo:
         return self.fqdn_map.values()
 
     @property
-    def fqdn_map(self: CbfDeviceInfo) -> dict[str, str]:
+    def fqdn_map(self: CbfDeviceInfo) -> Dict[str, str]:
         """
         A dictionary that maps device names onto FQDNs.
 
@@ -236,7 +230,7 @@ class CbfDeviceInfo:
         return {name: self._devices[name]["fqdn"] for name in self._devices}
 
     @property
-    def proxy_map(self: CbfDeviceInfo) -> dict[str, type[CbfDeviceProxy]]:
+    def proxy_map(self: CbfDeviceInfo) -> Dict[str, Type[CbfDeviceProxy]]:
         """
         Return a map from FQDN to proxy type.
 
@@ -244,7 +238,7 @@ class CbfDeviceInfo:
         """
         return dict(self._proxies)
 
-    def as_mdtc_device_info(self: CbfDeviceInfo) -> list[MdtcInfoType]:
+    def as_mdtc_device_info(self: CbfDeviceInfo) -> List[MdtcInfoType]:
         """
         Return this device info in a format required by
         :py:class:`tango.test_context.MultiDeviceTestContext`.
@@ -252,8 +246,8 @@ class CbfDeviceInfo:
         :return: device info in a format required by
             :py:class:`tango.test_context.MultiDeviceTestContext`.
         """
-        devices_by_class: dict[
-            type[SKABaseDevice], list[MdtcDeviceInfoType]
+        devices_by_class: Dict[
+            Type[SKABaseDevice], List[MdtcDeviceInfoType]
         ] = defaultdict(list)
         for device in self._devices.values():
             devices_by_class[device["class"]].append(
@@ -263,7 +257,7 @@ class CbfDeviceInfo:
                     "memorized": device["memorized"],
                 }
             )
-        mdtc_device_info: list[MdtcInfoType] = [
+        mdtc_device_info: List[MdtcInfoType] = [
             {"class": klass, "devices": devices}
             for klass, devices in devices_by_class.items()
         ]
@@ -320,7 +314,7 @@ class TangoHarness:
         raise NotImplementedError("TangoHarness is abstract.")
 
     @property
-    def fqdns(self: TangoHarness) -> list[str]:
+    def fqdns(self: TangoHarness) -> List[str]:
         """
         The FQDNs of devices in this harness.
 
@@ -440,7 +434,7 @@ class BaseTangoHarness(TangoHarness):
         return tango.Group
 
     @property
-    def fqdns(self: BaseTangoHarness) -> list[str]:
+    def fqdns(self: BaseTangoHarness) -> List[str]:
         """
         The FQDNs of devices in this harness.
 
@@ -769,7 +763,7 @@ class WrapperTangoHarness(TangoHarness):
         return self._harness.group_connection_factory
 
     @property
-    def fqdns(self: WrapperTangoHarness) -> list[str]:
+    def fqdns(self: WrapperTangoHarness) -> List[str]:
         """
         Return the FQDNs of devices in this harness.
 
@@ -875,7 +869,7 @@ class MockingTangoHarness(WrapperTangoHarness):
         self: MockingTangoHarness,
         harness: TangoHarness,
         mock_factory: Callable[[], unittest.mock.Mock],
-        initial_mocks: dict[str, unittest.mock.Mock],
+        initial_mocks: Dict[str, unittest.mock.Mock],
         *args: Any,
         **kwargs: Any,
     ) -> None:

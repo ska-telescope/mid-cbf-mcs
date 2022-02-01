@@ -36,6 +36,7 @@ from ska_tango_base.control_model import HealthState, AdminMode, ObsState
 # Data file path
 data_file_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
 
+@pytest.mark.skip
 class TestCbfSubarray:
     """
     Test class for TestCbfSubarray tests.

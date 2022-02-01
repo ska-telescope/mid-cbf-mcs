@@ -707,8 +707,10 @@ class Vcc(CspSubElementObsDevice):
             # (see Mid.CBF Scan Configuration in ICD). Therefore, the previous frequency 
             # band value needs to be stored, and if the frequency band is not
             # set in the config it should be replaced with the previous value.
-            device._frequency_band = int(configuration["frequency_band"])
             frequency_bands = ["1", "2", "3", "4", "5a", "5b"]
+            #TODO change frequency_band assignment to str when merging vcc 
+            # component manager changes
+            device._frequency_band = frequency_bands.index(configuration["frequency_band"])
             device._freq_band_name =  frequency_bands[device._frequency_band]
             if device._frequency_band in [4, 5]:
                     device._stream_tuning = configuration["band_5_tuning"]

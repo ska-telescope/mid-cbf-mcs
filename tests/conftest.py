@@ -17,7 +17,7 @@ from __future__ import absolute_import
 from __future__ import annotations
 
 import logging
-from typing import Any, Callable, Generator, Set, cast, List
+from typing import Any, Callable, Generator, Set, cast, List, Dict
 import pytest
 import unittest
 import yaml
@@ -55,7 +55,7 @@ def pytest_sessionstart(session: pytest.Session) -> None:
 
 
 with open("tests/testbeds.yaml", "r") as stream:
-    _testbeds: dict[str, set[str]] = yaml.safe_load(stream)
+    _testbeds: Dict[str, Set[str]] = yaml.safe_load(stream)
 
 
 def pytest_configure(config: pytest.config.Config) -> None:
@@ -86,7 +86,7 @@ def pytest_addoption(parser: pytest.config.ArgumentParser) -> None:
 
 
 def pytest_collection_modifyitems(
-    config: pytest.config.Config, items: list[pytest.Item]
+    config: pytest.config.Config, items: List[pytest.Item]
 ) -> None:
     """
     Modify the list of tests to be run, after pytest has collected them.
@@ -127,7 +127,7 @@ def pytest_collection_modifyitems(
 
 
 @pytest.fixture()
-def initial_mocks() -> dict[str, unittest.mock.Mock]:
+def initial_mocks() -> Dict[str, unittest.mock.Mock]:
     """
     Fixture that registers device proxy mocks prior to patching.
 
@@ -157,10 +157,10 @@ def tango_harness_factory(
     request: pytest.FixtureRequest, logger: logging.Logger
 ) -> Callable[
     [
-        dict[str, Any],
+        Dict[str, Any],
         DevicesToLoadType,
         Callable[[], unittest.mock.Mock],
-        dict[str, unittest.mock.Mock],
+        Dict[str, unittest.mock.Mock],
     ],
     TangoHarness,
 ]:
@@ -203,10 +203,10 @@ def tango_harness_factory(
     testbed = request.config.getoption("--testbed")
 
     def build_harness(
-        tango_config: dict[str, Any],
+        tango_config: Dict[str, Any],
         devices_to_load: DevicesToLoadType,
         mock_factory: Callable[[], unittest.mock.Mock],
-        initial_mocks: dict[str, unittest.mock.Mock],
+        initial_mocks: Dict[str, unittest.mock.Mock],
     ) -> TangoHarness:
         """
         Builds the Tango test harness.
@@ -244,7 +244,7 @@ def tango_harness_factory(
 
 
 @pytest.fixture()
-def tango_config() -> dict[str, Any]:
+def tango_config() -> Dict[str, Any]:
     """
     Fixture that returns basic configuration information for a Tango test harness, such
     as whether or not to run in a separate process.
@@ -258,17 +258,17 @@ def tango_config() -> dict[str, Any]:
 def tango_harness(
     tango_harness_factory: Callable[
         [
-            dict[str, Any],
+            Dict[str, Any],
             DevicesToLoadType,
             Callable[[], unittest.mock.Mock],
-            dict[str, unittest.mock.Mock],
+            Dict[str, unittest.mock.Mock],
         ],
         TangoHarness,
     ],
-    tango_config: dict[str, str],
+    tango_config: Dict[str, str],
     devices_to_load: DevicesToLoadType,
     mock_factory: Callable[[], unittest.mock.Mock],
-    initial_mocks: dict[str, unittest.mock.Mock],
+    initial_mocks: Dict[str, unittest.mock.Mock],
 ) -> Generator[TangoHarness, None, None]:
     """
     Creates a test harness for testing Tango devices.
@@ -585,7 +585,7 @@ def debug_device_is_on() -> bool:
         timeout_millis = 500000
     return debug_device_is_on
 
-def load_data(name: str) -> dict[Any, Any]:
+def load_data(name: str) -> Dict[Any, Any]:
     """
     Loads a dataset by name. This implementation uses the name to find a
     JSON file containing the data to be loaded.

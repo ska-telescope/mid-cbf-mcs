@@ -40,27 +40,6 @@ from ska_tango_base.commands import ResultCode
 __all__ = ["CbfSubarray", "main"]
 
 
-def validate_ip(ip: str) -> bool:
-    """
-    Validate IP address format.
-
-    :param ip: IP address to be evaluated
-
-    :return: whether or not the IP address format is valid
-    :rtype: bool
-    """
-    splitip = ip.split('.')
-    if len(splitip) != 4:
-        return False
-    for ipparts in splitip:
-        if not ipparts.isdigit():
-            return False
-        ipval = int(ipparts)
-        if ipval < 0 or ipval > 255:
-            return False
-    return True
-
-
 class CbfSubarray(SKASubarray):
     """
     CBFSubarray TANGO device class for the CBFSubarray prototype
@@ -76,10 +55,10 @@ class CbfSubarray(SKASubarray):
         # resource_args = (self.resource_manager, self.state_model, self.logger) 
         # only use resource_args if we want to have separate resource_manager object
 
-        # self.register_command_object(
-        #     "On",
-        #     self.OnCommand(*device_args)
-        # )
+        self.register_command_object(
+            "On",
+            self.OnCommand(*device_args)
+        )
         self.register_command_object(
             "Off",
             self.OffCommand(*device_args)
@@ -491,20 +470,25 @@ class CbfSubarray(SKASubarray):
     # Commands
     # --------
 
-    # class OnCommand(SKASubarray.OnCommand):
-    #     """
-    #     A class for the SKASubarray's On() command.
-    #     """
-    #     def do(self):
-    #         """
-    #         Stateless hook for On() command functionality.
+    class OnCommand(SKASubarray.OnCommand):
+        """
+        A class for the SKASubarray's On() command.
+        """
+        def do(self):
+            """
+            Stateless hook for On() command functionality.
 
-    #         :return: A tuple containing a return code and a string
-    #             message indicating status. The message is for
-    #             information purpose only.
-    #         :rtype: (ResultCode, str)
-    #         """
-    #         return super().do()
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
+            (result_code,message) = super().do()
+            device = self.target
+            device.logger.info(f"Subarray ObsState is {device._obs_state}")
+
+            return (result_code, message)
+
 
     class OffCommand(SKABaseDevice.OffCommand):
         """
@@ -546,19 +530,19 @@ class CbfSubarray(SKASubarray):
             # check for invalid receptorID
             if not 0 < receptorID < 198:
                 log_msg = f"Invalid receptor ID {receptorID}. Skipping."
-                self.logger.warn(log_msg)
+                self.logger.warning(log_msg)
 
             elif receptorID in self._receptors:
                 (result_code, msg) = self.component_manager.remove_receptor(receptorID)
                 if result_code == ResultCode.FAILED:
                     return_code = ResultCode.FAILED
-                    self.logger.warn(msg)
+                    self.logger.warning(msg)
                 else:
                     self._receptors.remove(receptorID)
 
             else:
                 log_msg = f"Receptor {receptorID} not assigned to subarray. Skipping."
-                self.logger.warn(log_msg)
+                self.logger.warning(log_msg)
         
         return return_code
 
@@ -729,11 +713,11 @@ class CbfSubarray(SKASubarray):
                         (result_code, msg) = device.component_manager.add_receptor(receptorID)
                         if result_code == ResultCode.FAILED:
                             return_code = ResultCode.FAILED
-                            device.logger.warn(msg)
+                            device.logger.warning(msg)
                         else:
                             device._receptors.append(receptorID)
                     else:
-                        device.logger.warn(
+                        device.logger.warning(
                             f"Receptor {receptorID} already assigned to "
                             "current subarray."
                         )
@@ -878,6 +862,7 @@ class CbfSubarray(SKASubarray):
             (valid, msg) = device._validate_scan_configuration(argin)
             if not valid:
                 device.component_manager.raise_configure_scan_fatal_error(msg)
+            device.logger.info(msg)
 
             # Call this just to release all FSPs and unsubscribe to events.
             device._deconfigure()
@@ -913,7 +898,7 @@ class CbfSubarray(SKASubarray):
             else:
                 device._frequency_band_offset_stream_1 = 0
                 log_msg = "'frequencyBandOffsetStream1' not specified. Defaulting to 0."
-                self.logger.warn(log_msg)
+                device.logger.warning(log_msg)
 
             # Validate frequencyBandOffsetStream2.
             # If not given, use a default value.
@@ -923,7 +908,7 @@ class CbfSubarray(SKASubarray):
             else:
                 device._frequency_band_offset_stream_2 = 0
                 log_msg = "'frequencyBandOffsetStream2' not specified. Defaulting to 0."
-                self.logger.warn(log_msg)
+                device.logger.warning(log_msg)
 
             # Configure components
             full_configuration["common"] = copy.deepcopy(common_configuration)
@@ -987,8 +972,7 @@ class CbfSubarray(SKASubarray):
             data = tango.DeviceData()
             data.insert(tango.DevString, str(device._scan_ID))
 
-            (result_code, msg) = device.component_manager.scan(data)
-            return (result_code, msg)
+            return device.component_manager.scan(data)
 
 
 

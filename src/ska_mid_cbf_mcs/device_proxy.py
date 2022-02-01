@@ -387,8 +387,8 @@ class CbfDeviceProxy:
                 f"attribute read. Event.err is {event.err}. Event.errors is\n"
                 f"{event.errors}."
             )
-            warnings.warn(UserWarning(warning_message))
-            self._logger.warn(warning_message)
+            warnings.warning(UserWarning(warning_message))
+            self._logger.warning(warning_message)
             return self._read(event.attr_name)
         else:
             return event.attr_value
@@ -424,7 +424,7 @@ class CbfDeviceProxy:
             del self._change_event_subscription_ids[attribute_key]
             self._logger.info(f"Unsubscribed from subscription {subscription_id}")
         else:
-            self._logger.warn(
+            self._logger.warning(
                 f"Unsubscribe error; proxy does not own subscription {subscription_id}"
             )
 

@@ -253,7 +253,7 @@ class SubarrayComponentManager:
             except Exception as e:
                 self._logger.error(str(e))
         else:
-            self._logger.warn(f"None value for {fqdn}")
+            self._logger.warning(f"None value for {fqdn}")
 
 
     def _delay_model_event_callback(
@@ -276,14 +276,14 @@ class SubarrayComponentManager:
         if value is not None:
             if not self._ready:
                 log_msg = "Ignoring delay model (obsState not correct)."
-                self._logger.warn(log_msg)
+                self._logger.warning(log_msg)
                 return
             try:
                 self._logger.info("Received delay model update.")
 
                 if value == self._last_received_delay_model:
                     log_msg = "Ignoring delay model (identical to previous)."
-                    self._logger.warn(log_msg)
+                    self._logger.warning(log_msg)
                     return
 
                 self._last_received_delay_model = value
@@ -300,7 +300,7 @@ class SubarrayComponentManager:
             except Exception as e:
                 self._logger.error(str(e))
         else:
-            self._logger.warn(f"None value for {fqdn}")
+            self._logger.warning(f"None value for {fqdn}")
 
 
     def _update_delay_model(
@@ -355,14 +355,14 @@ class SubarrayComponentManager:
         if value is not None:
             if not self._ready:
                 log_msg = "Ignoring Jones matrix (obsState not correct)."
-                self._logger.warn(log_msg)
+                self._logger.warning(log_msg)
                 return
             try:
                 self._logger.info("Received Jones Matrix update.")
 
                 if value == self._last_received_jones_matrix:
                     log_msg = "Ignoring Jones matrix (identical to previous)."
-                    self._logger.warn(log_msg)
+                    self._logger.warning(log_msg)
                     return
 
                 self._last_received_jones_matrix = value
@@ -379,7 +379,7 @@ class SubarrayComponentManager:
             except Exception as e:
                 self._logger.error(str(e))
         else:
-            self._logger.warn(f"None value for {fqdn}")
+            self._logger.warning(f"None value for {fqdn}")
 
 
     def _update_jones_matrix(
@@ -435,14 +435,14 @@ class SubarrayComponentManager:
         if value is not None:
             if not self._ready:
                 log_msg = "Ignoring beam weights (obsState not correct)."
-                self._logger.warn(log_msg)
+                self._logger.warning(log_msg)
                 return
             try:
                 self._logger.info("Received beam weights update.")
 
                 if value == self._last_received_beam_weights:
                     log_msg = "Ignoring beam weights (identical to previous)."
-                    self._logger.warn(log_msg)
+                    self._logger.warning(log_msg)
                     return
 
                 self._last_received_beam_weights = value
@@ -459,7 +459,7 @@ class SubarrayComponentManager:
             except Exception as e:
                 self._logger.error(str(e))
         else:
-            self._logger.warn(f"None value for {fqdn}")
+            self._logger.warning(f"None value for {fqdn}")
 
 
     def _update_beam_weights(
@@ -519,7 +519,7 @@ class SubarrayComponentManager:
                     else:
                         # should NOT happen!
                         log_msg = f"Received healthState change for unknown device {name}"
-                        self._logger.warn(log_msg)
+                        self._logger.warning(log_msg)
                         return
                 elif "State" in name:
                     if "vcc" in fqdn:
@@ -529,7 +529,7 @@ class SubarrayComponentManager:
                     else:
                         # should NOT happen!
                         log_msg = f"Received state change for unknown device {name}"
-                        self._logger.warn(log_msg)
+                        self._logger.warning(log_msg)
                         return
 
                 log_msg = f"New value for {fqdn} {name} is {value}"
@@ -538,7 +538,7 @@ class SubarrayComponentManager:
             except Exception as except_occurred:
                 self._logger.error(str(except_occurred))
         else:
-            self._logger.warn(f"None value for {fqdn}")
+            self._logger.warning(f"None value for {fqdn}")
 
 
     def validate_ip(self: SubarrayComponentManager, ip: str) -> bool:
@@ -880,8 +880,8 @@ class SubarrayComponentManager:
                         for this_rec in fsp["receptor_ids"]:
                             if this_rec not in self._receptors:
                                 msg = (
-                                    f"Receptor {self._receptors[this_rec]} "
-                                    f"does not belong to subarray {self._subarray_id}."
+                                    f"Receptor {this_rec} does not belong to "
+                                    f"subarray {self._subarray_id}."
                                 )
                                 self._logger.error(msg)
                                 return (False, msg)
@@ -907,8 +907,7 @@ class SubarrayComponentManager:
                             f"for a 'frequencyBand' of {fsp['frequency_band']}."
                         )
                         self._logger.error(msg)
-                        tango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
-                                                        tango.ErrSeverity.ERR)
+                        return (False, msg)
 
                     # Validate zoom_factor.
                     if int(fsp["zoom_factor"]) in list(range(0, 7)):
@@ -917,8 +916,7 @@ class SubarrayComponentManager:
                         msg = "'zoom_factor' must be an integer in the range [0, 6]."
                         # this is a fatal error
                         self._logger.error(msg)
-                        tango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
-                                                        tango.ErrSeverity.ERR)
+                        return (False, msg)
 
                     # Validate zoomWindowTuning.
                     if int(fsp["zoom_factor"]) > 0:  # zoomWindowTuning is required
@@ -947,9 +945,7 @@ class SubarrayComponentManager:
                                 else:
                                     msg = "'zoomWindowTuning' must be within observed frequency slice."
                                     self._logger.error(msg)
-                                    tango.Except.throw_exception("Command failed", msg,
-                                                                    "ConfigureScan execution",
-                                                                    tango.ErrSeverity.ERR)
+                                    return (False, msg)
                             else:  # frequency band 5a or 5b (two streams with bandwidth 2.5 GHz)
                                 if common_configuration["band_5_tuning"] == [0,0]: # band5Tuning not specified
                                     pass
@@ -986,15 +982,11 @@ class SubarrayComponentManager:
                                     else:
                                         msg = "'zoomWindowTuning' must be within observed frequency slice."
                                         self._logger.error(msg)
-                                        tango.Except.throw_exception("Command failed", msg,
-                                                                    "ConfigureScan execution",
-                                                                    tango.ErrSeverity.ERR)
+                                        return (False, msg)
                         else:
                             msg = "FSP specified, but 'zoomWindowTuning' not given."
                             self._logger.error(msg)
-                            tango.Except.throw_exception("Command failed", msg,
-                                                            "ConfigureScan execution",
-                                                            tango.ErrSeverity.ERR)
+                            return (False, msg)
 
                     # Validate integrationTime.
                     if int(fsp["integration_factor"]) in list(
@@ -1007,8 +999,7 @@ class SubarrayComponentManager:
                             f" [1, 10] multiplied by {self.MIN_INT_TIME}."
                         )
                         self._logger.error(msg)
-                        tango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
-                                                        tango.ErrSeverity.ERR)
+                        return (False, msg)
 
                     # Validate fspChannelOffset
                     try: 
@@ -1018,13 +1009,11 @@ class SubarrayComponentManager:
                         else:
                             msg="fspChannelOffset must be greater than or equal to zero"
                             self._logger.error(msg)
-                            tango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
-                                                        tango.ErrSeverity.ERR)
+                            return (False, msg)
                     except:
                         msg="fspChannelOffset must be an integer"
                         self._logger.error(msg)
-                        tango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
-                                                        tango.ErrSeverity.ERR)
+                        return (False, msg)
 
                     # validate outputlink
                     # check the format
@@ -1034,8 +1023,7 @@ class SubarrayComponentManager:
                     except:
                         msg = "'outputLinkMap' format not correct."
                         self._logger.error(msg)
-                        tango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
-                                                    tango.ErrSeverity.ERR)
+                        return (False, msg)
 
                     # Validate channelAveragingMap.
                     if "channel_averaging_map" in fsp:
@@ -1056,9 +1044,7 @@ class SubarrayComponentManager:
                                         f"first channel in a group (received {fsp['channel_averaging_map'][i][0]})."
                                     )
                                     self._logger.error(msg)
-                                    tango.Except.throw_exception("Command failed", msg,
-                                                                 "ConfigureScan execution",
-                                                                 tango.ErrSeverity.ERR)
+                                    return (False, msg)
 
                                 # validate averaging factor
                                 if int(fsp["channel_averaging_map"][i][1]) in [0, 1, 2, 3, 4, 6, 8]:
@@ -1069,14 +1055,11 @@ class SubarrayComponentManager:
                                         f"[0, 1, 2, 3, 4, 6, 8] (received {fsp['channel_averaging_map'][i][1]})."
                                     )
                                     self._logger.error(msg)
-                                    tango.Except.throw_exception("Command failed", msg,
-                                                                    "ConfigureScan execution",
-                                                                    tango.ErrSeverity.ERR)
+                                    return (False, msg)
                         except (TypeError, AssertionError):  # dimensions not correct
                             msg = "channel Averaging Map dimensions not correct"
                             self._logger.error(msg)
-                            tango.Except.throw_exception("Command failed", msg, "ConfigureScan execution",
-                                                            tango.ErrSeverity.ERR)
+                            return (False, msg)
 
                     # TODO: validate destination addresses: outputHost, outputMac, outputPort?
 
@@ -1130,12 +1113,11 @@ class SubarrayComponentManager:
                             for this_rec in searchBeam["receptor_ids"]:
                                 if this_rec not in self._receptors:
                                     msg = (
-                                        f"Receptor {self._receptors[this_rec]} "
-                                        f"does not belong to subarray {self._subarray_id}."
+                                        f"Receptor {this_rec} does not belong to "
+                                        f"subarray {self._subarray_id}."
                                     )
                                     self._logger.error(msg)
-                                    tango.Except.throw_exception("Command failed", msg, 
-                                    "ConfigureScan execution", tango.ErrSeverity.ERR)
+                                    return (False, msg)
 
                             if searchBeam["enable_output"] is False or searchBeam["enable_output"] is True:
                                 pass
@@ -1197,8 +1179,8 @@ class SubarrayComponentManager:
                                 for this_rec in timingBeam["receptor_ids"]:
                                     if this_rec not in self._receptors:
                                         msg = (
-                                            f"Receptor {self._receptors[this_rec]} "
-                                            f"does not belong to subarray {self._subarray_id}."
+                                            f"Receptor {this_rec} does not belong to "
+                                            f"subarray {self._subarray_id}."
                                         )
                                         self._logger.error(msg)
                                         return (False, msg)
@@ -1270,7 +1252,7 @@ class SubarrayComponentManager:
         else:
             self._frequency_band_offset_stream_1 = 0
             log_msg = "'frequencyBandOffsetStream1' not specified. Defaulting to 0."
-            self._logger.warn(log_msg)
+            self._logger.warning(log_msg)
 
         # Validate frequencyBandOffsetStream2.
         # If not given, use a default value.
@@ -1280,11 +1262,11 @@ class SubarrayComponentManager:
         else:
             self._frequency_band_offset_stream_2 = 0
             log_msg = "'frequencyBandOffsetStream2' not specified. Defaulting to 0."
-            self._logger.warn(log_msg)
+            self._logger.warning(log_msg)
 
         config_dict = {
             "config_id": self._config_ID,
-            "frequency_band": self._frequency_band,
+            "frequency_band": common_configuration["frequency_band"],
             "band_5_tuning": self._stream_tuning,
             "frequency_band_offset_stream_1": self._frequency_band_offset_stream_1,
             "frequency_band_offset_stream_2": self._frequency_band_offset_stream_2,
@@ -1362,7 +1344,7 @@ class SubarrayComponentManager:
                 self._group_vcc.command_inout("ConfigureSearchWindow", data)
         else:
             log_msg = "'searchWindow' not given."
-            self._logger.warn(log_msg)
+            self._logger.warning(log_msg)
 
         # TODO: the entire vcc configuration should move to Vcc
         # for now, run ConfigScan only wih the following data, so that
@@ -1479,7 +1461,7 @@ class SubarrayComponentManager:
 
         self._ready = True
 
-        return (ResultCode.OK, "Configure command completed OK")
+        return (ResultCode.OK, "ConfigureScan command completed OK")
 
 
     def remove_receptor(
@@ -1527,10 +1509,10 @@ class SubarrayComponentManager:
             self._group_vcc.remove(vccFQDN)
         
         else:
-            msg = f"Error in SubarrayComponentManager; receptor {receptor_id} not found."
+            msg = f"Error in remove_receptor; receptor {receptor_id} not found."
             return (ResultCode.FAILED, msg)
 
-        return (ResultCode.OK, "remove_receptor command completed OK")
+        return (ResultCode.OK, "remove_receptor completed OK")
 
 
     def add_receptor(
@@ -1554,24 +1536,17 @@ class SubarrayComponentManager:
             f"{vccProxy.receptor_id}"
         )
 
-        subarrayID = vccProxy.subarrayMembership
+        vccSubarrayID = vccProxy.subarrayMembership
 
         # only add receptor if it does not already belong to a 
         # different subarray
-        if subarrayID not in [0, self._subarray_id]:
-            msg = f"Receptor {receptor_id} already in use by subarray {subarrayID}."
+        if vccSubarrayID not in [0, self._subarray_id]:
+            msg = f"Receptor {receptor_id} already in use by subarray {vccSubarrayID}."
             return (ResultCode.FAILED, msg)
         else:
             if receptor_id not in self._receptors:
                 # change subarray membership of vcc
                 vccProxy.subarrayMembership = self._subarray_id
-
-                # TODO: is this note still relevant? 
-                # Note:json does not recognize NumPy data types. 
-                # Convert the number to a Python int 
-                # before serializing the object.
-                # The list of receptors is serialized when the FSPs  
-                # are configured for a scan.
 
                 self._receptors.append(int(receptor_id))
                 self._proxies_assigned_vcc.append(vccProxy)
@@ -1597,10 +1572,10 @@ class SubarrayComponentManager:
                     event_id_health_state
                 ]
             else:
-                msg = f"Receptor {receptor_id} already assigned to subarray component manager."
+                msg = f"Receptor {receptor_id} already assigned to component manager."
                 return (ResultCode.FAILED, msg)
 
-        return (ResultCode.OK, "add_receptor command completed OK")
+        return (ResultCode.OK, "add_receptor completed OK")
 
 
     def scan(

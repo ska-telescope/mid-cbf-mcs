@@ -283,25 +283,25 @@ class CbfController(SKAMaster):
                 try:
                     device._count_vcc = device._max_capabilities["VCC"]
                 except KeyError:  # not found in DB
-                    self.logger.warn(
+                    self.logger.warning(
                         "VCC capabilities not defined; defaulting to 197.")
                     device._count_vcc = 197
 
                 try:
                     device._count_fsp = device._max_capabilities["FSP"]
                 except KeyError:  # not found in DB
-                    self.logger.warn(
+                    self.logger.warning(
                         "FSP capabilities not defined; defaulting to 27.")
                     device._count_fsp = 27
 
                 try:
                     device._count_subarray = device._max_capabilities["Subarray"]
                 except KeyError:  # not found in DB
-                    self.logger.warn(
+                    self.logger.warning(
                         "Subarray capabilities not defined; defaulting to 16.")
                     device._count_subarray = 16
             else:
-                self.logger.warn("MaxCapabilities device property not defined")
+                self.logger.warning("MaxCapabilities device property not defined")
 
         def do(
             self: CbfController.InitCommand,
@@ -493,7 +493,7 @@ class CbfController(SKAMaster):
         else:
             log_msg = "Skipped writing to frequencyOffsetK attribute (expected {} arguments, " \
                       "but received {}.".format(self._count_vcc, len(value))
-            self.logger.warn(log_msg)
+            self.logger.warning(log_msg)
         # PROTECTED REGION END #    //  CbfController.frequencyOffsetK_write
 
     def read_frequencyOffsetDeltaF(self: CbfController) -> List[int]:
@@ -511,7 +511,7 @@ class CbfController(SKAMaster):
         else:
             log_msg = "Skipped writing to frequencyOffsetDeltaF attribute (expected {} arguments, " \
                       "but received {}.".format(self._count_vcc, len(value))
-            self.logger.warn(log_msg)
+            self.logger.warning(log_msg)
         # PROTECTED REGION END #    //  CbfController.frequencyOffsetDeltaF_write
 
     def read_reportSubarrayState(self: CbfController) -> List[tango.DevState]:

@@ -355,7 +355,7 @@ class ControllerComponentManager:
                             "Received health state change for "
                             f"unknown device {name}"
                         )
-                        self._logger.warn(log_msg)
+                        self._logger.warning(log_msg)
                         return
                 elif "state" in name:
                     if "subarray" in fqdn:
@@ -380,7 +380,7 @@ class ControllerComponentManager:
                             "Received state change for unknown device "
                             f"{name}"
                         )
-                        self._logger.warn(log_msg)
+                        self._logger.warning(log_msg)
                         return
                 elif "adminmode" in name:
                     if "subarray" in fqdn:
@@ -405,7 +405,7 @@ class ControllerComponentManager:
                             "Received admin mode change for "
                             f"unknown device {name}"
                         )
-                        self._logger.warn(log_msg)
+                        self._logger.warning(log_msg)
                         return
 
                 log_msg = f"New value for {name} of device {fqdn}: {value}"
@@ -413,7 +413,7 @@ class ControllerComponentManager:
             except Exception as except_occurred:
                 self._logger.error(str(except_occurred))
         else:
-            self._logger.warn(
+            self._logger.warning(
                 f"None value for attribute {name} of device {fqdn}"
             )
 
@@ -450,7 +450,7 @@ class ControllerComponentManager:
                 else:
                     # should NOT happen!
                     log_msg = f"Received event for unknown device {name}"
-                    self._logger.warn(log_msg)
+                    self._logger.warning(log_msg)
                     return
 
                 log_msg = f"New value for {name} of device {fqdn}: {value}"
@@ -459,7 +459,7 @@ class ControllerComponentManager:
             except Exception as except_occurred:
                 self._logger.error(str(except_occurred))
         else:
-            self._logger.warn(
+            self._logger.warning(
                 f"None value for attribute {name} of device {fqdn}"
             )
 
@@ -490,7 +490,7 @@ class ControllerComponentManager:
             except Exception as except_occurred:
                 self._logger.error(str(except_occurred))
         else:
-            self._logger.warn(
+            self._logger.warning(
                 f"None value for attribute {name} of device {fqdn}"
             )
 
