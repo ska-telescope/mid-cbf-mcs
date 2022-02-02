@@ -12,7 +12,7 @@
 """
 from __future__ import annotations  # allow forward references in type hints
 
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 
 # PyTango imports
 import tango
@@ -32,10 +32,12 @@ from random import randint
 
 file_path = os.path.dirname(os.path.abspath(__file__))
 
-from ska_tango_base.control_model import HealthState, AdminMode, ObsState
+from ska_tango_base.control_model import HealthState, AdminMode, ObsState, PowerMode
 from ska_tango_base import SKASubarray, CspSubElementObsDevice, SKABaseDevice
 from ska_tango_base.commands import ResultCode
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
+from ska_mid_cbf_mcs.fsp.fsp_pst_subarray_component_manager import FspPstSubarrayComponentManager
+from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
 # PROTECTED REGION END #    //  FspPstSubarray.additionnal_import
 
 __all__ = ["FspPstSubarray", "main"]
@@ -207,6 +209,23 @@ class FspPstSubarray(CspSubElementObsDevice):
         """Hook to be executed before any commands."""
         pass
         # PROTECTED REGION END #    //  FspPstSubarray.always_executed_hook
+    
+    def create_component_manager(self: FspPstSubarray) -> FspPstSubarrayComponentManager:
+        """
+        Create and return a component manager for this device.
+
+        :return: a component manager for this device.
+        """
+
+        self._communication_status: Optional[CommunicationStatus] = None
+        self._component_power_mode: Optional[PowerMode] = None
+
+        return FspPstSubarrayComponentManager( 
+            self.logger,
+            self.push_change_event,
+            self._communication_status_changed,
+            self._component_power_mode_changed,
+        )
 
     def delete_device(self: FspPstSubarray) -> None:
         # PROTECTED REGION ID(FspPstSubarray.delete_device) ENABLED START #
@@ -283,6 +302,7 @@ class FspPstSubarray(CspSubElementObsDevice):
         """
         A class for the FspPstSubarray's On() command.
         """
+
         def do(            
             self: FspPstSubarray.OnCommand,
         ) -> Tuple[ResultCode, str]:
@@ -294,15 +314,21 @@ class FspPstSubarray(CspSubElementObsDevice):
                 information purpose only.
             :rtype: (ResultCode, str)
             """
-            (result_code,message)=super().do()
 
-            return (result_code,message)
+            self.logger.debug("Entering OnCommand()")
+
+            (result_code,message) = (ResultCode.OK, "FspPstSubarray On command completed OK")
+
+            self.target._component_power_mode_changed(PowerMode.ON)
+
+            self.logger.info(message)
+            return (result_code, message)
 
     class OffCommand(SKABaseDevice.OffCommand):
         """
         A class for the FspPstSubarray's Off() command.
         """
-        def do(            
+        def do(
             self: FspPstSubarray.OffCommand,
         ) -> Tuple[ResultCode, str]:
             """
@@ -313,13 +339,40 @@ class FspPstSubarray(CspSubElementObsDevice):
                 information purpose only.
             :rtype: (ResultCode, str)
             """
-            (result_code,message)=super().do()
 
-            device = self.target
+            self.logger.debug("Entering OffCommand()")
 
-            device.RemoveAllReceptors()
+            (result_code,message) = (ResultCode.OK, "FspPstSubarray Off command completed OK")
 
-            return (result_code,message)
+            self.target._component_power_mode_changed(PowerMode.OFF)
+
+            self.logger.info(message)
+            return (result_code, message)
+    
+    class StandbyCommand(SKABaseDevice.StandbyCommand):
+        """
+        A class for the FspPstSubarray's Standby() command.
+        """
+        def do(
+            self: FspPstSubarray.StandbyCommand,
+        ) -> Tuple[ResultCode, str]:
+            """
+            Stateless hook for Standby() command functionality.
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
+
+            self.logger.debug("Entering StandbyCommand()")
+
+            (result_code,message) = (ResultCode.OK, "FspPstSubarray Standby command completed OK")
+
+            self.target._component_power_mode_changed(PowerMode.STANDBY)
+
+            self.logger.info(message)
+            return (result_code, message)
 
     @command(
         dtype_in=('uint16',),
@@ -530,6 +583,105 @@ class FspPstSubarray(CspSubElementObsDevice):
             device.RemoveAllReceptors()
 
             return (result_code,message)
+    
+    # ----------
+    # Callbacks
+    # ----------
+
+    def _component_configured(
+        self: FspPstSubarray,
+        configured: bool
+    ) -> None:
+        """
+        Handle notification that the component has started or stopped configuring.
+
+        This is callback hook.
+
+        :param configured: whether this component is configured
+        :type configured: bool
+        """
+        if configured:
+            self.obs_state_model.perform_action("component_configured")
+        else:
+            self.obs_state_model.perform_action("component_unconfigured")
+    
+    def _component_scanning(
+        self: FspPstSubarray, 
+        scanning: bool
+    ) -> None:
+        """
+        Handle notification that the component has started or stopped scanning.
+
+        This is a callback hook.
+
+        :param scanning: whether this component is scanning
+        :type scanning: bool
+        """
+        if scanning:
+            self.obs_state_model.perform_action("component_scanning")
+        else:
+            self.obs_state_model.perform_action("component_not_scanning")
+    
+    def _component_obsfault(self: FspPstSubarray) -> None:
+        """
+        Handle notification that the component has obsfaulted.
+
+        This is a callback hook.
+        """
+        self.obs_state_model.perform_action("component_obsfault")
+
+
+    def _communication_status_changed(
+        self: FspPstSubarray,
+        communication_status: CommunicationStatus,
+    ) -> None:
+        """
+        Handle change in communications status between component manager and component.
+
+        This is a callback hook, called by the component manager when
+        the communications status changes. It is implemented here to
+        drive the op_state.
+
+        :param communication_status: the status of communications
+            between the component manager and its component.
+        """
+
+        self._communication_status = communication_status
+
+        if communication_status == CommunicationStatus.DISABLED:
+            self.op_state_model.perform_action("component_disconnected")
+        elif communication_status == CommunicationStatus.NOT_ESTABLISHED:
+            self.op_state_model.perform_action("component_unknown")
+        elif communication_status == CommunicationStatus.ESTABLISHED \
+            and self._component_power_mode is not None:
+            self._component_power_mode_changed(self._component_power_mode)
+        else:  # self._component_power_mode is None
+            pass  # wait for a power mode update
+    
+    def _component_power_mode_changed(
+        self: FspPstSubarray,
+        power_mode: PowerMode,
+    ) -> None:
+        """
+        Handle change in the power mode of the component.
+
+        This is a callback hook, called by the component manager when
+        the power mode of the component changes. It is implemented here
+        to drive the op_state.
+
+        :param power_mode: the power mode of the component.
+        """
+        self._component_power_mode = power_mode
+
+        if self._communication_status == CommunicationStatus.ESTABLISHED:
+            action_map = {
+                PowerMode.OFF: "component_off",
+                PowerMode.STANDBY: "component_standby",
+                PowerMode.ON: "component_on",
+                PowerMode.UNKNOWN: "component_unknown",
+            }
+
+            self.op_state_model.perform_action(action_map[power_mode])
 
 # ----------
 # Run server
