@@ -42,7 +42,6 @@ def device_under_test(tango_harness: TangoHarness) -> CbfDeviceProxy:
     """
     return tango_harness.get_device("mid_csp_cbf/fspPssSubarray/01_01")
 
-# TODO: see TODO in src/ska_mid_cbf_mcs/testing/tango_harness.py
 @pytest.fixture()
 def device_to_load(
     patched_fsp_pss_subarray_device_class: Type[FspPssSubarray]
