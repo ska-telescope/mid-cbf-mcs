@@ -129,11 +129,11 @@ class TestFspPssSubarray:
         scan_id", 
         [
             (
-                "/../../data/FspCorrSubarray_ConfigureScan_basic.json",
+                "/../../data/FspPssSubarray_ConfigureScan_basic.json",
                 1,
             ),
                         (
-                "/../../data/FspCorrSubarray_ConfigureScan_basic.json",
+                "/../../data/FspPssSubarray_ConfigureScan_basic.json",
                 2,
             )
         ]
