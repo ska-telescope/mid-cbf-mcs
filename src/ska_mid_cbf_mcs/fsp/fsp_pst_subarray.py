@@ -164,33 +164,33 @@ class FspPstSubarray(CspSubElementObsDevice):
             device = self.target
 
             #get relevant IDs
-            device._subarray_id = device.SubID
-            device._fsp_id = device.FspID
+            # device._subarray_id = device.SubID
+            # device._fsp_id = device.FspID
 
-            # initialize attribute values
-            device._timing_beams = []
-            device._timing_beam_id = []
-            device._receptors = []
+            # # initialize attribute values
+            # device._timing_beams = []
+            # device._timing_beam_id = []
+            # device._receptors = []
             device._output_enable = 0
 
-            # device proxy for connection to CbfController
-            device._proxy_cbf_controller = CbfDeviceProxy(
-                fqdn=device.CbfControllerAddress,
-                logger=device.logger
-            )
-            device._controller_max_capabilities = dict(
-                pair.split(":") for pair in 
-                device._proxy_cbf_controller.get_property("MaxCapabilities")["MaxCapabilities"]
-            )
+            # # device proxy for connection to CbfController
+            # device._proxy_cbf_controller = CbfDeviceProxy(
+            #     fqdn=device.CbfControllerAddress,
+            #     logger=device.logger
+            # )
+            # device._controller_max_capabilities = dict(
+            #     pair.split(":") for pair in 
+            #     device._proxy_cbf_controller.get_property("MaxCapabilities")["MaxCapabilities"]
+            # )
 
-            # Connect to all VCC devices turned on by CbfController:
-            device._count_vcc = int(device._controller_max_capabilities["VCC"])
-            device._fqdn_vcc = list(device.VCC)[:device._count_vcc]
-            device._proxies_vcc = [
-                CbfDeviceProxy(
-                    logger=device.logger, 
-                    fqdn=address) for address in device._fqdn_vcc
-            ]
+            # # Connect to all VCC devices turned on by CbfController:
+            # device._count_vcc = int(device._controller_max_capabilities["VCC"])
+            # device._fqdn_vcc = list(device.VCC)[:device._count_vcc]
+            # device._proxies_vcc = [
+            #     CbfDeviceProxy(
+            #         logger=device.logger, 
+            #         fqdn=address) for address in device._fqdn_vcc
+            # ]
 
             # device proxy for easy reference to CBF Subarray
             # TODO: Is device._proxy_cbf_subarray used anywhere?
@@ -221,6 +221,10 @@ class FspPstSubarray(CspSubElementObsDevice):
 
         return FspPstSubarrayComponentManager( 
             self.logger,
+            self.CbfControllerAddress,
+            self.VCC,
+            self.SubID,
+            self.FspID,
             self.push_change_event,
             self._communication_status_changed,
             self._component_power_mode_changed,
@@ -245,7 +249,7 @@ class FspPstSubarray(CspSubElementObsDevice):
             :return: the outputEnable attribute.
             :rtype: bool
         """
-        return self._output_enable
+        return self.component_manager.output_enable
         # PROTECTED REGION END #    //  FspPstSubarray.outputEnable_read
 
     def read_receptors(self: FspPstSubarray) -> List[int]:
@@ -256,19 +260,20 @@ class FspPstSubarray(CspSubElementObsDevice):
             :return: the list of receptors.
             :rtype: List[int]
         """
-        return self._receptors
+        return self.component_manager.receptors
         # PROTECTED REGION END #    //  FspPstSubarray.receptors_read
 
-    def write_receptors(self: FspPstSubarray, value: receptors) -> None:
+    # TODO: do we need write_receptors? All receptor adding is handled by component 
+    # manager. Other Fsp subarray devices do not have this
+    def write_receptors(self: FspPstSubarray, value: List[int]) -> None:
         # PROTECTED REGION ID(FspPstSubarray.receptors_write) ENABLED START #
         """
             Write the receptors attribute.
 
             :param value: the receptors attribute value. 
         """
-        self.RemoveAllReceptors()
-        self.AddReceptors(value)
-        # PROTECTED REGION END #    //  FspPstSubarray.receptors_write
+        self.component_manager.receptors = value
+    #     # PROTECTED REGION END #    //  FspPstSubarray.receptors_write
 
     def read_timingBeams(self: FspPstSubarray) -> List[str]:
         # PROTECTED REGION ID(FspPstSubarray.timingBeams_read) ENABLED START #
@@ -278,7 +283,7 @@ class FspPstSubarray(CspSubElementObsDevice):
             :return: the timingBeams attribute.
             :rtype: List[int] 
         """
-        return self._timing_beams
+        return self.component_manager.timing_beams
         # PROTECTED REGION END #    //  FspPstSubarray.timingBeams_read
 
     def read_timingBeamID(self: FspPstSubarray) -> List[int]:
@@ -291,6 +296,27 @@ class FspPstSubarray(CspSubElementObsDevice):
         """
         return self._timing_beam_id
         # PROTECTED REGION END #    //  FspPstSubarray.timingBeamID_read
+    
+    def read_scanID(self: FspPstSubarray) -> int:
+        # PROTECTED REGION ID(FspPstSubarray.scanID_read) ENABLED START #
+        """
+        Read the scanID attribute.
+
+        :return: the scanID attribute. 
+        :rtype: int
+        """
+        return self.component_manager.scan_id
+        # PROTECTED REGION END #    //  FspPstSubarray.scanID_read
+
+    def write_scanID(self: FspPstSubarray, value: int) -> None:
+        # PROTECTED REGION ID(FspPstSubarray.scanID_write) ENABLED START #
+        """
+        Write the scanID attribute.
+
+        :param value: the scanID attribute value. 
+        """
+        self.component_manager.scan_id=value
+        # PROTECTED REGION END #    //  FspPstSubarray.scanID_writes
 
 
     # --------
@@ -475,83 +501,103 @@ class FspPstSubarray(CspSubElementObsDevice):
 
             device = self.target
 
-            # validate the input args
-
-            # NOTE: This function is called after the
-            # configuration has already  been validated, 
-            # so the checks here have been removed to
-            #  reduce overhead TODO:  to change where the
-            # validation is done
-
-            argin = json.loads(argin)
-
-            # Configure receptors.
-            # TODO: Why are we overwriting the device property fsp ID
-            #       with the argument in the ConfigureScan json file
-            if device._fsp_id != argin["fsp_id"]:
-                device.logger.warning(
-                    "The Fsp ID from ConfigureScan {} does not equal the Fsp ID from the device properties {}"
-                    .format(device._fsp_id, argin["fsp_id"]))
-
-            device._fsp_id = argin["fsp_id"]
-            device._timing_beams = []
-            device._timing_beam_id = []
-            device._receptors = []
-
-            for timingBeam in argin["timing_beam"]:
-                device.AddReceptors(map(int, timingBeam["receptor_ids"]))
-                device._timing_beams.append(json.dumps(timingBeam))
-                device._timing_beam_id.append(int(timingBeam["timing_beam_id"]))  
-
-            result_code = ResultCode.OK # TODO  - temp - remove
-            msg = "Configure command completed OK" # TODO temp, remove
+            (result_code,message) = device.component_manager.configure_scan(argin)
 
             if result_code == ResultCode.OK:
-                msg = "Configure command completed OK"
+                device._last_scan_configuration = argin
+                device._component_configured(True)
+            
+            return(result_code, message)
+    
+    @command(
+    dtype_in='DevString',
+    doc_in="JSON formatted string with the scan configuration.",
+    dtype_out='DevVarLongStringArray',
+    doc_out="A tuple containing a return code and a string message indicating status. "
+            "The message is for information purpose only.",
+    )
 
-            return(result_code, msg)
-
-    class EndScanCommand(CspSubElementObsDevice.EndScanCommand):
-        """
-        A class for the FspPstSubarray's EndScan() command.
-        """
-        def do(            
-            self: FspPstSubarray.EndScanCommand,
+    @DebugIt()
+    def ConfigureScan(
+            self: FspPstSubarray, 
+            argin: str
         ) -> Tuple[ResultCode, str]:
-            """
-            Stateless hook for EndScan() command functionality.
+        # PROTECTED REGION ID(Vcc.ConfigureScan) ENABLED START #
+        """
+        Configure the observing device parameters for the current scan.
 
-            :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-            :rtype: (ResultCode, str)
-            """
-            (result_code,message)=super().do()
+        :param argin: JSON formatted string with the scan configuration.
+        :type argin: 'DevString'
 
-            return (result_code,message)
+        :return: A tuple containing a return code and a string message indicating status.
+            The message is for information purpose only.
+        :rtype: (ResultCode, str)
+        """
+        command = self.get_command_object("ConfigureScan")
+        (return_code, message) = command(argin)
+        return [[return_code], [message]]
 
     class ScanCommand(CspSubElementObsDevice.ScanCommand):
         """
         A class for the FspPstSubarray's Scan() command.
         """
-        def do(            
+
+        def do(
             self: FspPstSubarray.ScanCommand,
-            argin: int
+            argin: str
         ) -> Tuple[ResultCode, str]:
             """
             Stateless hook for Scan() command functionality.
 
-            :param argin: ScanID
-            :type argin: int
+            :param argin: The scan ID 
+            :type argin: str
+
             :return: A tuple containing a return code and a string
                 message indicating status. The message is for
                 information purpose only.
             :rtype: (ResultCode, str)
+            :raises: ``CommandError`` if the configuration data validation fails.
             """
 
-            (result_code,message)=super().do(argin)
+            self.logger.debug("Entering ScanCommand()")
 
-            return (result_code, message)
+            device = self.target
+
+            (result_code,message) = device.component_manager.scan(int(argin))
+
+            if result_code == ResultCode.OK:
+                device._component_scanning(True)
+            
+            return(result_code, message)
+    
+    class EndScanCommand(CspSubElementObsDevice.EndScanCommand):
+        """
+        A class for the FspPstSubarray's EndScan() command.
+        """
+
+        def do(
+            self: FspPstSubarray.EndScanCommand,
+        ) -> Tuple[ResultCode, str]:
+            """
+            Stateless hook for Scan() command functionality.
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            :raises: ``CommandError`` if the configuration data validation fails.
+            """
+
+            self.logger.debug("Entering EndScanCommand()")
+
+            device = self.target
+
+            (result_code,message) = device.component_manager.end_scan()
+
+            if result_code == ResultCode.OK:
+                device._component_scanning(False)
+            
+            return(result_code, message)
 
     class GoToIdleCommand(CspSubElementObsDevice.GoToIdleCommand):
         """
@@ -559,7 +605,7 @@ class FspPstSubarray(CspSubElementObsDevice):
         """
 
         def do(
-            self: FspPstSubarray.InitCommand,
+            self: FspPstSubarray.GoToIdleCommand,
         ) -> Tuple[ResultCode, str]:
             """
             Stateless hook for GoToIdle() command functionality.
@@ -572,16 +618,14 @@ class FspPstSubarray(CspSubElementObsDevice):
 
             self.logger.debug("Entering GoToIdleCommand()")
 
-            (result_code,message)=super().do()
-
             device = self.target
 
-            device._timing_beams = []
-            device._timing_beam_id = []
-            device._output_enable = 0
-            device.RemoveAllReceptors()
+            (result_code,message) = device.component_manager.go_to_idle()
 
-            return (result_code,message)
+            if result_code == ResultCode.OK:
+                device._component_configured(False)
+
+            return (result_code, message)
     
     # ----------
     # Callbacks
