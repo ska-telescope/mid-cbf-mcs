@@ -216,11 +216,11 @@ class FspPstSubarray(CspSubElementObsDevice):
     def read_outputEnable(self: FspPstSubarray) -> bool:
         # PROTECTED REGION ID(FspPstSubarray.outputEnable_read) ENABLED START #
         """
-            Read the outputEnable attribute. Used to enable/disable 
-            transmission of the output products.
+        Read the outputEnable attribute. Used to enable/disable 
+        transmission of the output products.
 
-            :return: the outputEnable attribute.
-            :rtype: bool
+        :return: the outputEnable attribute.
+        :rtype: bool
         """
         return self.component_manager.output_enable
         # PROTECTED REGION END #    //  FspPstSubarray.outputEnable_read
@@ -228,10 +228,10 @@ class FspPstSubarray(CspSubElementObsDevice):
     def read_receptors(self: FspPstSubarray) -> List[int]:
         # PROTECTED REGION ID(FspPstSubarray.receptors_read) ENABLED START #
         """
-            Read the receptors attribute.
+        Read the receptors attribute.
 
-            :return: the list of receptors.
-            :rtype: List[int]
+        :return: the list of receptors.
+        :rtype: List[int]
         """
         return self.component_manager.receptors
         # PROTECTED REGION END #    //  FspPstSubarray.receptors_read
@@ -241,9 +241,9 @@ class FspPstSubarray(CspSubElementObsDevice):
     def write_receptors(self: FspPstSubarray, value: List[int]) -> None:
         # PROTECTED REGION ID(FspPstSubarray.receptors_write) ENABLED START #
         """
-            Write the receptors attribute.
+        Write the receptors attribute.
 
-            :param value: the receptors attribute value. 
+        :param value: the receptors attribute value. 
         """
         self.component_manager.receptors = value
     #     # PROTECTED REGION END #    //  FspPstSubarray.receptors_write
@@ -251,10 +251,10 @@ class FspPstSubarray(CspSubElementObsDevice):
     def read_timingBeams(self: FspPstSubarray) -> List[str]:
         # PROTECTED REGION ID(FspPstSubarray.timingBeams_read) ENABLED START #
         """
-            Read the timingBeams attribute.
+        Read the timingBeams attribute.
 
-            :return: the timingBeams attribute.
-            :rtype: List[int] 
+        :return: the timingBeams attribute.
+        :rtype: List[int] 
         """
         return self.component_manager.timing_beams
         # PROTECTED REGION END #    //  FspPstSubarray.timingBeams_read
@@ -262,10 +262,10 @@ class FspPstSubarray(CspSubElementObsDevice):
     def read_timingBeamID(self: FspPstSubarray) -> List[int]:
         # PROTECTED REGION ID(FspPstSubarray.timingBeamID_read) ENABLED START #
         """
-            Read the list of Timing Beam IDs.
+        Read the list of Timing Beam IDs.
 
-            :return: the timingBeamID attribute.
-            :rtype: List[int] 
+        :return: the timingBeamID attribute.
+        :rtype: List[int] 
         """
         return self.component_manager.timing_beam_id
         # PROTECTED REGION END #    //  FspPstSubarray.timingBeamID_read
@@ -371,80 +371,6 @@ class FspPstSubarray(CspSubElementObsDevice):
 
             self.logger.info(message)
             return (result_code, message)
-
-    @command(
-        dtype_in=('uint16',),
-        doc_in="List of receptor IDs",
-    )
-    def AddReceptors(
-        self: FspPstSubarray, 
-        argin: List[int]
-        ) -> None:
-        # PROTECTED REGION ID(FspPstSubarray.AddReceptors) ENABLED START #
-        """
-            Add specified receptors to the subarray.
-
-            :param argin: ids of receptors to add. 
-        """
-        errs = []  # list of error messages
-        receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
-                               self._proxy_cbf_controller.receptorToVcc)
-        for receptorID in argin:
-            try:
-                vccID = receptor_to_vcc[receptorID]
-                subarrayID = self._proxies_vcc[vccID - 1].subarrayMembership
-
-                # only add receptor if it belongs to the CBF subarray
-                if subarrayID != self._subarray_id:
-                    errs.append("Receptor {} does not belong to subarray {}.".format(
-                        str(receptorID), str(self._subarray_id)))
-                else:
-                    if receptorID not in self._receptors:
-                        self._receptors.append(receptorID)
-                    else:
-                        log_msg = "Receptor {} already assigned to current FSP subarray.".format(
-                            str(receptorID))
-                        self.logger.warn(log_msg)
-
-            except KeyError:  # invalid receptor ID
-                errs.append("Invalid receptor ID: {}".format(receptorID))
-
-        if errs:
-            msg = "\n".join(errs)
-            self.logger.error(msg)
-            tango.Except.throw_exception("Command failed", msg, "AddReceptors execution",
-                                           tango.ErrSeverity.ERR)
-        # PROTECTED REGION END #    //  FspPstSubarray.AddReceptors
-
-    @command(
-        dtype_in=('uint16',),
-        doc_in="List of receptor IDs",
-    )
-    def RemoveReceptors(
-        self: FspPstSubarray, 
-        argin: List[int]
-        ) -> None:
-        # PROTECTED REGION ID(FspPstSubarray.RemoveReceptors) ENABLED START #
-        """
-            Remove specified receptors from the subarray.
-
-            :param argin: ids of receptors to remove. 
-        """
-        for receptorID in argin:
-            if receptorID in self._receptors:
-                self._receptors.remove(receptorID)
-            else:
-                log_msg = "Receptor {} not assigned to FSP subarray. "\
-                    "Skipping.".format(str(receptorID))
-                self.logger.warn(log_msg)
-        # PROTECTED REGION END #    //  FspPstSubarray.RemoveReceptors
-    
-    @command()
-    def RemoveAllReceptors(self: FspPstSubarray) -> None:
-        # PROTECTED REGION ID(FspPstSubarray.RemoveAllReceptors) ENABLED START #
-        """Remove all Receptors of this subarray."""
-        self.RemoveReceptors(self._receptors[:])
-        # PROTECTED REGION END #    //  FspPstSubarray.RemoveAllReceptors
 
     class ConfigureScanCommand(CspSubElementObsDevice.ConfigureScanCommand):
         """

@@ -150,11 +150,11 @@ def patched_fsp_pst_subarray_device_class(
         manager.
     """
 
-    class PatchedFspCorrSubarray(FspPstSubarray):
+    class PatchedFspPstSubarray(FspPstSubarray):
         """A device patched with a mock component manager."""
 
         def create_component_manager(
-            self: PatchedFspCorrSubarray,
+            self: PatchedFspPstSubarray,
         ) -> unittest.mock.Mock:
             """
             Return a mock component manager instead of the usual one.
@@ -173,7 +173,7 @@ def patched_fsp_pst_subarray_device_class(
 
             return mock_component_manager
 
-    return PatchedFspCorrSubarray
+    return PatchedFspPstSubarray
 
 @pytest.fixture()
 def mock_cbf_controller() -> unittest.mock.Mock:
@@ -202,11 +202,14 @@ def initial_mocks(
     Return a dictionary of device proxy mocks to pre-register.
 
     :param mock_cbf_controller: a mock CbfController.
-    :param mock_vcc: a mock Vcc.
+    :param mock_vcc: a mock Vcc that is powered off.
 
     :return: a dictionary of device proxy mocks to pre-register.
     """
     return {
         "mid_csp_cbf/sub_elt/controller": mock_cbf_controller,
-        "mid_csp_cbf/vcc/001": mock_vcc
+        "mid_csp_cbf/vcc/001": mock_vcc,
+        "mid_csp_cbf/vcc/002": mock_vcc,
+        "mid_csp_cbf/vcc/003": mock_vcc,
+        "mid_csp_cbf/vcc/004": mock_vcc,
     }
