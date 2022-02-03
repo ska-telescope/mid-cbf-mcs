@@ -17,7 +17,7 @@
 # Fsp TANGO device class for the prototype
 from __future__ import annotations  # allow forward references in type hints
 
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 
 # tango imports
 import tango
@@ -36,8 +36,11 @@ file_path = os.path.dirname(os.path.abspath(__file__))
 
 from ska_tango_base import SKACapability, SKABaseDevice
 from ska_tango_base.commands import ResultCode
+from ska_tango_base.control_model import PowerMode
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_mid_cbf_mcs.group_proxy import CbfGroupProxy
+from ska_mid_cbf_mcs.fsp.fsp_component_manager import FspComponentManager
+from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
 # PROTECTED REGION END #    //  Fsp.additionnal_import
 
 __all__ = ["Fsp", "main"]
@@ -48,75 +51,6 @@ class Fsp(SKACapability):
     Fsp TANGO device class for the prototype
     """
     # PROTECTED REGION ID(Fsp.class_variable) ENABLED START #
-
-    def __get_capability_proxies(
-            self: Fsp, 
-    ) -> None:
-        """Establish connections with the capability proxies"""
-        # for now, assume that given addresses are valid
-
-        if self._proxy_correlation is None:
-            if self.CorrelationAddress:
-                self._proxy_correlation = CbfDeviceProxy(
-                    fqdn=self.CorrelationAddress,
-                    logger=self.logger
-                )
-            
-        if self._proxy_pss is None:
-            if self.PSSAddress:
-                self._proxy_pss = CbfDeviceProxy(
-                    fqdn=self.PSSAddress,
-                    logger=self.logger
-                )
-            
-        if self._proxy_pst is None:
-            if self.PSTAddress:
-                self._proxy_pst = CbfDeviceProxy(
-                    fqdn=self.PSTAddress,
-                    logger=self.logger
-                )
-            
-        if self._proxy_vlbi is None:
-            if self.VLBIAddress:
-                self._proxy_vlbi = CbfDeviceProxy(
-                    fqdn=self.VLBIAddress,
-                    logger=self.logger
-                )
-
-        if self._proxy_fsp_corr_subarray is None:
-            if self.FspCorrSubarray:
-                self._proxy_fsp_corr_subarray = \
-                    [CbfDeviceProxy(fqdn=fqdn, logger=self.logger) \
-                    for fqdn in self.FspCorrSubarray]
-
-        if self._proxy_fsp_pss_subarray is None:
-            if self.FspPssSubarray:
-                self._proxy_fsp_pss_subarray = \
-                    [CbfDeviceProxy(fqdn=fqdn, logger=self.logger) \
-                    for fqdn in self.FspPssSubarray]
-
-        if self._proxy_fsp_pst_subarray is None:
-            if self.FspPstSubarray:
-                self._proxy_fsp_pst_subarray = \
-                    [CbfDeviceProxy(fqdn=fqdn, logger=self.logger) \
-                    for fqdn in self.FspPstSubarray]
-    
-    def __get_group_proxies(
-        self: Fsp, 
-    ) -> None:
-        """Establish connections with the group proxies"""
-        if self._group_fsp_corr_subarray is None:
-            self._group_fsp_corr_subarray = CbfGroupProxy("FSP Subarray Corr", logger=self.logger)
-            for fqdn in list(self.FspCorrSubarray):
-                self._group_fsp_corr_subarray.add(fqdn)
-        if self._group_fsp_pss_subarray is None:
-            self._group_fsp_pss_subarray = CbfGroupProxy("FSP Subarray Pss", logger=self.logger)
-            for fqdn in list(self.FspPssSubarray):
-                self._group_fsp_pss_subarray.add(fqdn)
-        if self._group_fsp_pst_subarray is None:
-            self._group_fsp_pst_subarray = CbfGroupProxy("FSP Subarray Pst", logger=self.logger)
-            for fqdn in list(self.FspPstSubarray):
-                self._group_fsp_pst_subarray.add(fqdn)
 
     # PROTECTED REGION END #    //  Fsp.class_variable
 
@@ -239,12 +173,34 @@ class Fsp(SKACapability):
     def always_executed_hook(self: Fsp) -> None:
         # PROTECTED REGION ID(Fsp.always_executed_hook) ENABLED START #
         """Hook to be executed before any commands."""
-        # TODO: Proxy connections should not be in always_executed_hook, 
-        #       needs to be refactored
-        self.__get_capability_proxies()
-        self.__get_group_proxies()
 
         # PROTECTED REGION END #    //  Fsp.always_executed_hook
+    
+    def create_component_manager(self: Fsp) -> FspComponentManager:
+        """
+        Create and return a component manager for this device.
+
+        :return: a component manager for this device.
+        """
+
+        self.logger.debug("Entering create_component_manager()")
+
+        self._communication_status: Optional[CommunicationStatus] = None
+        self._component_power_mode: Optional[PowerMode] = None
+
+        return FspComponentManager( 
+            self.logger,
+            self.FspCorrSubarray,
+            self.FspPssSubarray,
+            self.FspPstSubarray,
+            self.CorrelationAddress,
+            self.PSSAddress,
+            self.PSTAddress,
+            self.VLBIAddress,
+            self.push_change_event,
+            self._communication_status_changed,
+            self._component_power_mode_changed,
+        )
 
     def delete_device(self: Fsp) -> None:
         # PROTECTED REGION ID(Fsp.delete_device) ENABLED START #
@@ -799,6 +755,61 @@ class Fsp(SKACapability):
             log_msg = "weights not used in function mode {}".format(self._function_mode)
             self.logger.error(log_msg)
         # PROTECTED REGION END #    // Fsp.UpdateTimingBeamWeights
+    
+    # ----------
+    # Callbacks
+    # ----------
+    def _communication_status_changed(
+        self: Fsp,
+        communication_status: CommunicationStatus,
+    ) -> None:
+        """
+        Handle change in communications status between component manager and component.
+
+        This is a callback hook, called by the component manager when
+        the communications status changes. It is implemented here to
+        drive the op_state.
+
+        :param communication_status: the status of communications
+            between the component manager and its component.
+        """
+
+        self._communication_status = communication_status
+
+        if communication_status == CommunicationStatus.DISABLED:
+            self.op_state_model.perform_action("component_disconnected")
+        elif communication_status == CommunicationStatus.NOT_ESTABLISHED:
+            self.op_state_model.perform_action("component_unknown")
+        elif communication_status == CommunicationStatus.ESTABLISHED \
+            and self._component_power_mode is not None:
+            self._component_power_mode_changed(self._component_power_mode)
+        else:  # self._component_power_mode is None
+            pass  # wait for a power mode update
+    
+    def _component_power_mode_changed(
+        self: Fsp,
+        power_mode: PowerMode,
+    ) -> None:
+        """
+        Handle change in the power mode of the component.
+
+        This is a callback hook, called by the component manager when
+        the power mode of the component changes. It is implemented here
+        to drive the op_state.
+
+        :param power_mode: the power mode of the component.
+        """
+        self._component_power_mode = power_mode
+
+        if self._communication_status == CommunicationStatus.ESTABLISHED:
+            action_map = {
+                PowerMode.OFF: "component_off",
+                PowerMode.STANDBY: "component_standby",
+                PowerMode.ON: "component_on",
+                PowerMode.UNKNOWN: "component_unknown",
+            }
+
+            self.op_state_model.perform_action(action_map[power_mode])
 
 # ----------
 # Run server
