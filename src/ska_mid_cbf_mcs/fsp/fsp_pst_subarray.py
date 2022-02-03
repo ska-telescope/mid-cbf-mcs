@@ -163,37 +163,10 @@ class FspPstSubarray(CspSubElementObsDevice):
 
             device = self.target
 
-            #get relevant IDs
-            # device._subarray_id = device.SubID
-            # device._fsp_id = device.FspID
-
-            # # initialize attribute values
-            # device._timing_beams = []
-            # device._timing_beam_id = []
-            # device._receptors = []
-            device._output_enable = 0
-
-            # # device proxy for connection to CbfController
-            # device._proxy_cbf_controller = CbfDeviceProxy(
-            #     fqdn=device.CbfControllerAddress,
-            #     logger=device.logger
-            # )
-            # device._controller_max_capabilities = dict(
-            #     pair.split(":") for pair in 
-            #     device._proxy_cbf_controller.get_property("MaxCapabilities")["MaxCapabilities"]
-            # )
-
-            # # Connect to all VCC devices turned on by CbfController:
-            # device._count_vcc = int(device._controller_max_capabilities["VCC"])
-            # device._fqdn_vcc = list(device.VCC)[:device._count_vcc]
-            # device._proxies_vcc = [
-            #     CbfDeviceProxy(
-            #         logger=device.logger, 
-            #         fqdn=address) for address in device._fqdn_vcc
-            # ]
-
             # device proxy for easy reference to CBF Subarray
             # TODO: Is device._proxy_cbf_subarray used anywhere?
+            # if it is used this should be created in the 
+            # component manager
             device._proxy_cbf_subarray = CbfDeviceProxy(
                 fqdn=device.CbfSubarrayAddress,
                 logger=device.logger
@@ -294,7 +267,7 @@ class FspPstSubarray(CspSubElementObsDevice):
             :return: the timingBeamID attribute.
             :rtype: List[int] 
         """
-        return self._timing_beam_id
+        return self.component_manager.timing_beam_id
         # PROTECTED REGION END #    //  FspPstSubarray.timingBeamID_read
     
     def read_scanID(self: FspPstSubarray) -> int:

@@ -108,6 +108,7 @@ class TestFspPstSubarrayComponentManager:
 
             assert fsp_pst_subarray_component_manager.fsp_id == configuration["fsp_id"]
             for i, timingBeam in enumerate(configuration["timing_beam"]):
+                assert list(fsp_pst_subarray_component_manager.receptors) == list(timingBeam["receptor_ids"])
                 assert fsp_pst_subarray_component_manager.timing_beams[i] == json.dumps(timingBeam)
                 assert fsp_pst_subarray_component_manager.timing_beam_id[i] == int(timingBeam["timing_beam_id"])
 

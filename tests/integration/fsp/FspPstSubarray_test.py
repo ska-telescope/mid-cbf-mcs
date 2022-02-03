@@ -191,8 +191,10 @@ class TestFspPstSubarray:
         
         device_under_test.ConfigureScan(json_str)
 
-        #TODO: check param
-        time.sleep(4)
+        for i, timingBeam in enumerate(configuration["timing_beam"]):
+            assert list(device_under_test.receptors) == list(timingBeam["receptor_ids"])
+            assert device_under_test.timingBeams[i] == json.dumps(timingBeam)
+            assert device_under_test.timingBeamID[i] == int(timingBeam["timing_beam_id"])
 
         assert device_under_test.obsState == ObsState.READY
 
