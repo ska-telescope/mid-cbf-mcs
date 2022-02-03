@@ -12,6 +12,7 @@ from __future__ import annotations
 from typing import Callable, Optional, Tuple, List
 
 import logging
+import tango
 
 from ska_mid_cbf_mcs.component.component_manager import (
     CommunicationStatus,
@@ -75,6 +76,8 @@ class FspComponentManager(CbfComponentManager):
         self._proxy_fsp_pss_subarray = None
         self._proxy_fsp_pst_subarray = None
 
+        self._subarray_membership = []
+
         super().__init__(
             logger,
             push_change_event_callback,
@@ -82,6 +85,16 @@ class FspComponentManager(CbfComponentManager):
             component_power_mode_changed_callback,
             None,
         )
+    
+    @property
+    def subarray_membership(self: FspComponentManager) -> List[int]:
+        """
+        Subarray Membership
+
+        :return: an array of affiliations of the FSP.
+        :rtype: List[int]
+        """
+        return self._subarray_membership
     
     def start_communicating(
         self: FspComponentManager,
@@ -176,4 +189,103 @@ class FspComponentManager(CbfComponentManager):
             self._group_fsp_pst_subarray = CbfGroupProxy("FSP Subarray Pst", logger=self._logger)
             for fqdn in list(self._fsp_pst_subarray_fqdns_all):
                 self._group_fsp_pst_subarray.add(fqdn)
+    
+    def _remove_subarray_membership(
+        self: FspComponentManager,
+        argin: int,
+        ) -> None:
+        """
+        Remove subarray from the subarrayMembership list.
+        If subarrayMembership is empty after removing 
+        (no subarray is using this FSP), set function mode to empty.
+
+        :param argin: an integer representing the subarray affiliation
+        """
+        if argin in self._subarray_membership:
+            self._subarray_membership.remove(argin)
+            # change function mode to IDLE if no subarrays are using it.
+            if not self._subarray_membership:
+                self._function_mode = 0
+        else:
+            log_msg = "FSP does not belong to subarray {}.".format(argin)
+            self._logger.warn(log_msg)
+    
+    def on(      
+        self: FspComponentManager,
+    ) -> Tuple[ResultCode, str]:
+        """
+        Turn on the controller and its subordinate devices 
+
+        :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+        :rtype: (ResultCode, str)
+        """
+
+        if self._connected:
+
+            self._proxy_correlation.SetState(tango.DevState.DISABLE)
+            self._proxy_pss.SetState(tango.DevState.DISABLE)
+            self._proxy_pst.SetState(tango.DevState.DISABLE)
+            self._proxy_vlbi.SetState(tango.DevState.DISABLE)
+            self._group_fsp_corr_subarray.command_inout("On")
+            self._group_fsp_pss_subarray.command_inout("On")
+            self._group_fsp_pst_subarray.command_inout("On")
+            
+            message = "CbfController On command completed OK"
+            return (ResultCode.OK, message)
+
+        else:
+            log_msg = "Proxies not connected"
+            self._logger.error(log_msg)
+            return (ResultCode.FAILED, log_msg)
+    
+    def off(      
+        self: FspComponentManager,
+    ) -> Tuple[ResultCode, str]:
+        """
+        Turn off the fsp and its subordinate devices 
+
+        :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+        :rtype: (ResultCode, str)
+        """
+
+        if self._connected:
+
+            self._proxy_correlation.SetState(tango.DevState.OFF)
+            self._proxy_pss.SetState(tango.DevState.OFF)
+            self._proxy_pst.SetState(tango.DevState.OFF)
+            self._proxy_vlbi.SetState(tango.DevState.OFF)
+            self._group_fsp_corr_subarray.command_inout("Off")
+            self._group_fsp_pss_subarray.command_inout("Off")
+            self._group_fsp_pst_subarray.command_inout("Off")
+
+            for subarray_ID in self._subarray_membership[:]:
+                self.RemoveSubarrayMembership(subarray_ID)
+
+            
+            message = "Fsp Off command completed OK"
+            return (ResultCode.OK, message)
+
+        else:
+            log_msg = "Proxies not connected"
+            self._logger.error(log_msg)
+            return (ResultCode.FAILED, log_msg)
+        
+    def standby(      
+        self: FspComponentManager,
+    ) -> Tuple[ResultCode, str]:
+        """
+        Put the fsp into low power standby mode
+
+        :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+        :rtype: (ResultCode, str)
+        """
+
+        message = "Fsp Standby command completed OK"
+        return (ResultCode.OK, message)
     

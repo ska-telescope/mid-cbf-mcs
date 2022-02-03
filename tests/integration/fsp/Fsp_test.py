@@ -8,6 +8,7 @@
 # Distributed under the terms of the BSD-3-Clause license.
 # See LICENSE.txt for more info.
 """Contain the tests for the Fsp."""
+from __future__ import annotations
 
 # Standard imports
 import sys
@@ -33,7 +34,7 @@ class TestFsp:
         [1]
     )
     def test_Connect(
-        self,
+        self: TestFsp,
         test_proxies: pytest.fixture,
         fsp_id: int
     ) -> None:
@@ -51,6 +52,63 @@ class TestFsp:
         # fsp device should be in OFF state after start_communicating 
         test_proxies.wait_timeout_dev([test_proxies.fsp[fsp_id]], DevState.OFF, 3, 0.1)
         assert test_proxies.fsp[fsp_id].State() == DevState.OFF
+
+    @pytest.mark.parametrize(
+        "fsp_id", 
+        [1]
+    )
+    def test_On(
+        self: TestFsp,
+        test_proxies: pytest.fixture,
+        fsp_id: int
+    ) -> None:
+        """
+        Test the "On" command
+        """
+
+        # send the On command
+        test_proxies.fsp[fsp_id].On()
+
+        test_proxies.wait_timeout_dev([test_proxies.fsp[fsp_id]], DevState.ON, 3, 0.1)
+        assert test_proxies.fsp[fsp_id].State() == DevState.ON
+
+    
+    @pytest.mark.parametrize(
+        "fsp_id", 
+        [1]
+    )
+    def test_Off(
+        self: TestFsp,
+        test_proxies: pytest.fixture,
+        fsp_id: int
+    ) -> None:
+        """
+        Test the "Off" command
+        """
+
+        # send the Off command
+        test_proxies.fsp[fsp_id].Off()
+
+        test_proxies.wait_timeout_dev([test_proxies.fsp[fsp_id]], DevState.OFF, 3, 0.1)
+        assert test_proxies.fsp[fsp_id].State() == DevState.OFF
+    
+    @pytest.mark.parametrize(
+        "fsp_id", 
+        [1]
+    )
+    def test_Standby(
+        self: TestFsp,
+        test_proxies: pytest.fixture,
+        fsp_id: int
+    ) -> None:
+        """
+        Test the "Standby" command
+        """
+        # send the Standby command
+        test_proxies.fsp[fsp_id].Standby()
+
+        test_proxies.wait_timeout_dev([test_proxies.fsp[fsp_id]], DevState.STANDBY, 3, 0.1)
+        assert test_proxies.fsp[fsp_id].State() == DevState.STANDBY
     
     @pytest.mark.parametrize(
         "fsp_id", 

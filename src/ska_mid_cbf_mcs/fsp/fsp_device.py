@@ -170,6 +170,10 @@ class Fsp(SKACapability):
             "Off", self.OffCommand(*device_args)
         )
 
+        self.register_command_object(
+            "Standby", self.StandbyCommand(*device_args)
+        )
+
     def always_executed_hook(self: Fsp) -> None:
         # PROTECTED REGION ID(Fsp.always_executed_hook) ENABLED START #
         """Hook to be executed before any commands."""
@@ -231,7 +235,7 @@ class Fsp(SKACapability):
             :return: an array of affiliations of the FSP.
             :rtype: List[int]
         """
-        return self._subarray_membership
+        return self.component_manager.subarray_membership
         # PROTECTED REGION END #    //  Fsp.subarrayMembership_read
 
     def read_scanID(self: Fsp) -> int:
@@ -348,12 +352,13 @@ class Fsp(SKACapability):
             device._timing_beam_weights = [[0.0] * 6 for _ in range(4)]
 
             return (result_code,message)
-
+    
     class OnCommand(SKABaseDevice.OnCommand):
         """
         A class for the Fsp's On() command.
         """
-        def do(
+
+        def do(            
             self: Fsp.OnCommand,
         ) -> Tuple[ResultCode, str]:
             """
@@ -364,20 +369,15 @@ class Fsp(SKACapability):
                 information purpose only.
             :rtype: (ResultCode, str)
             """
-            (result_code,message)=super().do()
 
-            device = self.target
+            (result_code,message) = self.target.component_manager.on()
 
-            device._proxy_correlation.SetState(tango.DevState.DISABLE)
-            device._proxy_pss.SetState(tango.DevState.DISABLE)
-            device._proxy_pst.SetState(tango.DevState.DISABLE)
-            device._proxy_vlbi.SetState(tango.DevState.DISABLE)
-            device._group_fsp_corr_subarray.command_inout("On")
-            device._group_fsp_pss_subarray.command_inout("On")
-            device._group_fsp_pst_subarray.command_inout("On")
+            if result_code == ResultCode.OK:
+                self.target._component_power_mode_changed(PowerMode.ON)
 
-            return (result_code,message)
-    
+            self.logger.info(message)
+            return (result_code, message)
+
     class OffCommand(SKABaseDevice.OffCommand):
         """
         A class for the Fsp's Off() command.
@@ -393,23 +393,39 @@ class Fsp(SKACapability):
                 information purpose only.
             :rtype: (ResultCode, str)
             """
-            (result_code,message)=super().do()
 
-            device = self.target
+            (result_code,message) = self.target.component_manager.off()
 
-            device._proxy_correlation.SetState(tango.DevState.OFF)
-            device._proxy_pss.SetState(tango.DevState.OFF)
-            device._proxy_pst.SetState(tango.DevState.OFF)
-            device._proxy_vlbi.SetState(tango.DevState.OFF)
-            device._group_fsp_corr_subarray.command_inout("Off")
-            device._group_fsp_pss_subarray.command_inout("Off")
-            device._group_fsp_pst_subarray.command_inout("Off")
+            if result_code == ResultCode.OK:
+                self.target._component_power_mode_changed(PowerMode.OFF)
 
-            # remove all subarray membership
-            for subarray_ID in device._subarray_membership[:]:
-                device.RemoveSubarrayMembership(subarray_ID)
+            self.logger.info(message)
+            return (result_code, message)
 
-            return (result_code,message)
+    
+    class StandbyCommand(SKABaseDevice.StandbyCommand):
+        """
+        A class for the Fsp's Standby() command.
+        """
+        def do(            
+            self: Fsp.StandbyCommand,
+        ) -> Tuple[ResultCode, str]:
+            """
+            Stateless hook for Standby() command functionality.
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
+            
+            (result_code,message) = self.target.component_manager.standby()
+
+            if result_code == ResultCode.OK:
+                self.target._component_power_mode_changed(PowerMode.STANDBY)
+
+            self.logger.info(message)
+            return (result_code, message)
 
     def is_SetFunctionMode_allowed(
         self: Fsp
