@@ -236,7 +236,8 @@ class FspComponentManager(CbfComponentManager):
             return (ResultCode.OK, message)
 
         else:
-            log_msg = "Proxies not connected"
+            log_msg = "Fsp On command failed: \
+                    proxies not connected"
             self._logger.error(log_msg)
             return (ResultCode.FAILED, log_msg)
     
@@ -270,7 +271,8 @@ class FspComponentManager(CbfComponentManager):
             return (ResultCode.OK, message)
 
         else:
-            log_msg = "Proxies not connected"
+            log_msg = "Fsp Off command failed: \
+                    proxies not connected"
             self._logger.error(log_msg)
             return (ResultCode.FAILED, log_msg)
         
@@ -288,4 +290,66 @@ class FspComponentManager(CbfComponentManager):
 
         message = "Fsp Standby command completed OK"
         return (ResultCode.OK, message)
+    
+    def set_function_mode(      
+        self: FspComponentManager,
+        argin: str,
+    ) -> Tuple[ResultCode, str]:
+        """
+        Put the fsp into low power standby mode
+
+        :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+        :rtype: (ResultCode, str)
+        """
+
+        if self._connected:
+
+            if argin == "IDLE":
+                self._function_mode = 0
+                self._proxy_correlation.SetState(tango.DevState.DISABLE)
+                self._proxy_pss.SetState(tango.DevState.DISABLE)
+                self._proxy_pst.SetState(tango.DevState.DISABLE)
+                self._proxy_vlbi.SetState(tango.DevState.DISABLE)
+            elif argin == "CORR":
+                self._function_mode = 1
+                self._proxy_correlation.SetState(tango.DevState.ON)
+                self._proxy_pss.SetState(tango.DevState.DISABLE)
+                self._proxy_pst.SetState(tango.DevState.DISABLE)
+                self._proxy_vlbi.SetState(tango.DevState.DISABLE)
+            elif argin == "PSS-BF":
+                self._function_mode = 2
+                self._proxy_correlation.SetState(tango.DevState.DISABLE)
+                self._proxy_pss.SetState(tango.DevState.ON)
+                self._proxy_pst.SetState(tango.DevState.DISABLE)
+                self._proxy_vlbi.SetState(tango.DevState.DISABLE)
+            elif argin == "PST-BF":
+                self._function_mode = 3
+                self._proxy_correlation.SetState(tango.DevState.DISABLE)
+                self._proxy_pss.SetState(tango.DevState.DISABLE)
+                self._proxy_pst.SetState(tango.DevState.ON)
+                self._proxy_vlbi.SetState(tango.DevState.DISABLE)
+            elif argin == "VLBI":
+                self._function_mode = 4
+                self._proxy_correlation.SetState(tango.DevState.DISABLE)
+                self._proxy_pss.SetState(tango.DevState.DISABLE)
+                self._proxy_pst.SetState(tango.DevState.DISABLE)
+                self._proxy_vlbi.SetState(tango.DevState.ON)
+            else:
+                # shouldn't happen
+                self._logger.warn("functionMode not valid. Ignoring.")
+                message = "Fsp SetFunctionMode command failed: \
+                    functionMode not valid"
+                return (ResultCode.FAILED, message)
+
+            message = "Fsp SetFunctionMode command completed OK"
+            return (ResultCode.OK, message)
+        
+        else:
+            log_msg = "Fsp SetFunctionMode command failed: \
+                    proxies not connected"
+            self._logger.error(log_msg)
+            return (ResultCode.FAILED, log_msg)
+
     

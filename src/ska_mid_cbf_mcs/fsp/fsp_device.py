@@ -35,7 +35,7 @@ from enum import Enum
 file_path = os.path.dirname(os.path.abspath(__file__))
 
 from ska_tango_base import SKACapability, SKABaseDevice
-from ska_tango_base.commands import ResultCode
+from ska_tango_base.commands import ResultCode, BaseCommand
 from ska_tango_base.control_model import PowerMode
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_mid_cbf_mcs.group_proxy import CbfGroupProxy
@@ -172,6 +172,10 @@ class Fsp(SKACapability):
 
         self.register_command_object(
             "Standby", self.StandbyCommand(*device_args)
+        )
+
+        self.register_command_object(
+            "SetFunctionMode", self.SetFunctionModeCommand(*device_args)
         )
 
     def always_executed_hook(self: Fsp) -> None:
@@ -375,7 +379,6 @@ class Fsp(SKACapability):
             if result_code == ResultCode.OK:
                 self.target._component_power_mode_changed(PowerMode.ON)
 
-            self.logger.info(message)
             return (result_code, message)
 
     class OffCommand(SKABaseDevice.OffCommand):
@@ -399,7 +402,6 @@ class Fsp(SKACapability):
             if result_code == ResultCode.OK:
                 self.target._component_power_mode_changed(PowerMode.OFF)
 
-            self.logger.info(message)
             return (result_code, message)
 
     
@@ -424,73 +426,53 @@ class Fsp(SKACapability):
             if result_code == ResultCode.OK:
                 self.target._component_power_mode_changed(PowerMode.STANDBY)
 
-            self.logger.info(message)
             return (result_code, message)
+    
+    class SetFunctionModeCommand(BaseCommand):
+        """The command class for the SetFunctionModeCommand command."""
 
-    def is_SetFunctionMode_allowed(
-        self: Fsp
-        ) -> bool:
-        """
-            Determine if SetFunctionMode is allowed 
-            (allowed if FSP state is ON).
+        def do(
+            self: Fsp.SetFunctionMode, 
+            argin: str
+        ) -> None:  
+            """
+            Implement Fsp.SetFunctionModeCommand command functionality.
 
-            :return: if SetFunctionMode is allowed
-            :rtype: bool
-        """
-        if self.dev_state() == tango.DevState.ON:
-            return True
-        return False
+            :param argin: one of 'IDLE','CORR','PSS-BF','PST-BF', or 'VLBI'
+
+            """
+
+            (result_code,message) = self.target.component_manager.set_function_mode(argin)
+            return (result_code, message)
 
     @command(
         dtype_in='str',
         doc_in='Function mode'
     )
-    def SetFunctionMode(
-        self: Fsp,
-        argin: str,
-        ) -> None:
-        # PROTECTED REGION ID(Fsp.SetFunctionMode) ENABLED START #
+    def SetFunctionMode(self: Fsp, argin: str) -> None:  
         """
-            Set the Fsp Function Mode, either IDLE, CORR, PSS-BF, PST-BF, or VLBI
-            If IDLE set the pss, pst, corr and vlbi devicess to DISABLE. OTherwise, 
-            turn one of them ON according to argin, and all others DISABLE.
+        Set the Fsp Function Mode, either IDLE, CORR, PSS-BF, PST-BF, or VLBI
+        If IDLE set the pss, pst, corr and vlbi devicess to DISABLE. OTherwise, 
+        turn one of them ON according to argin, and all others DISABLE.
 
-            :param argin: one of 'IDLE','CORR','PSS-BF','PST-BF', or 'VLBI'
+        :param argin: one of 'IDLE','CORR','PSS-BF','PST-BF', or 'VLBI'
         """
-        if argin == "IDLE":
-            self._function_mode = 0
-            self._proxy_correlation.SetState(tango.DevState.DISABLE)
-            self._proxy_pss.SetState(tango.DevState.DISABLE)
-            self._proxy_pst.SetState(tango.DevState.DISABLE)
-            self._proxy_vlbi.SetState(tango.DevState.DISABLE)
-        elif argin == "CORR":
-            self._function_mode = 1
-            self._proxy_correlation.SetState(tango.DevState.ON)
-            self._proxy_pss.SetState(tango.DevState.DISABLE)
-            self._proxy_pst.SetState(tango.DevState.DISABLE)
-            self._proxy_vlbi.SetState(tango.DevState.DISABLE)
-        elif argin == "PSS-BF":
-            self._function_mode = 2
-            self._proxy_correlation.SetState(tango.DevState.DISABLE)
-            self._proxy_pss.SetState(tango.DevState.ON)
-            self._proxy_pst.SetState(tango.DevState.DISABLE)
-            self._proxy_vlbi.SetState(tango.DevState.DISABLE)
-        elif argin == "PST-BF":
-            self._function_mode = 3
-            self._proxy_correlation.SetState(tango.DevState.DISABLE)
-            self._proxy_pss.SetState(tango.DevState.DISABLE)
-            self._proxy_pst.SetState(tango.DevState.ON)
-            self._proxy_vlbi.SetState(tango.DevState.DISABLE)
-        elif argin == "VLBI":
-            self._function_mode = 4
-            self._proxy_correlation.SetState(tango.DevState.DISABLE)
-            self._proxy_pss.SetState(tango.DevState.DISABLE)
-            self._proxy_pst.SetState(tango.DevState.DISABLE)
-            self._proxy_vlbi.SetState(tango.DevState.ON)
-        else:
-            # shouldn't happen
-            self.logger.warn("functionMode not valid. Ignoring.")
-        # PROTECTED REGION END #    //  Fsp.SetFunctionMode
+        handler = self.get_command_object("SetFunctionMode")
+        return handler(argin)
+    
+    def is_SetFunctionMode_allowed(
+        self: Fsp
+        ) -> bool:
+        """
+        Determine if SetFunctionMode is allowed 
+        (allowed if FSP state is ON).
+
+        :return: if SetFunctionMode is allowed
+        :rtype: bool
+        """
+        if self.dev_state() == tango.DevState.ON:
+            return True
+        return False
 
     def is_AddSubarrayMembership_allowed(self: Fsp) -> bool:
         """
@@ -525,6 +507,8 @@ class Fsp(SKACapability):
             self.logger.warn(log_msg)
         # PROTECTED REGION END #    //  Fsp.AddSubarrayMembership
 
+    #TODO: does this need to be a command? Or just a function 
+    # private to the component manager?
     def is_RemoveSubarrayMembership_allowed(self: Fsp) -> bool:
         """
             Determine if RemoveSubarrayMembership is allowed 

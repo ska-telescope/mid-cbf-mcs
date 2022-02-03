@@ -114,28 +114,6 @@ class TestFsp:
         "fsp_id", 
         [1]
     )
-    def test_Disconnect(
-         self,
-        test_proxies: pytest.fixture,
-        fsp_id: int
-    ) -> None:
-        """
-        Verify the component manager can stop communicating
-        """
-
-        # trigger stop_communicating by setting the AdminMode to OFFLINE
-        test_proxies.fsp[fsp_id].adminMode = AdminMode.OFFLINE
-
-        # fsp device should be in DISABLE state after stop_communicating  
-        test_proxies.wait_timeout_dev([test_proxies.fsp[fsp_id]], DevState.DISABLE, 3, 0.1)
-        assert test_proxies.fsp[fsp_id].State() == DevState.DISABLE
-
-    @pytest.mark.skip(reason="this class is currently untested, and not \
-    updated to version 0.11.3 of the base classes.")
-    @pytest.mark.parametrize(
-        "fsp_id", 
-        [1]
-    )
     def test_SetFunctionMode(
         self,
         test_proxies: pytest.fixture,
@@ -144,6 +122,11 @@ class TestFsp:
         """
         Test SetFunctionMode command state changes.
         """
+
+        test_proxies.fsp[fsp_id].On()
+
+        test_proxies.wait_timeout_dev([test_proxies.fsp[fsp_id]], DevState.ON, 3, 0.1)
+        assert test_proxies.fsp[fsp_id].State() == DevState.ON
 
         # all function modes should be disabled after initialization
         assert test_proxies.fspFunctionMode[
@@ -182,7 +165,7 @@ class TestFsp:
         # set function mode to PST
         test_proxies.fsp[fsp_id].SetFunctionMode("PST-BF")
         time.sleep(1)
-        assert test_proxies.fspFunctionMode[
+        assert test_proxies.fspFunctionMode[ 
             fsp_id]["corr"].State() == DevState.DISABLE
         assert test_proxies.fspFunctionMode[
             fsp_id]["pss"].State() == DevState.DISABLE
@@ -214,6 +197,26 @@ class TestFsp:
             fsp_id]["pst"].State() == DevState.DISABLE
         assert test_proxies.fspFunctionMode[
             fsp_id]["vlbi"].State() == DevState.DISABLE
+    
+    @pytest.mark.parametrize(
+        "fsp_id", 
+        [1]
+    )
+    def test_Disconnect(
+         self,
+        test_proxies: pytest.fixture,
+        fsp_id: int
+    ) -> None:
+        """
+        Verify the component manager can stop communicating
+        """
+
+        # trigger stop_communicating by setting the AdminMode to OFFLINE
+        test_proxies.fsp[fsp_id].adminMode = AdminMode.OFFLINE
+
+        # fsp device should be in DISABLE state after stop_communicating  
+        test_proxies.wait_timeout_dev([test_proxies.fsp[fsp_id]], DevState.DISABLE, 3, 0.1)
+        assert test_proxies.fsp[fsp_id].State() == DevState.DISABLE
 
     @pytest.mark.skip(reason="this class is currently untested, and not \
     updated to version 0.11.3 of the base classes.")
