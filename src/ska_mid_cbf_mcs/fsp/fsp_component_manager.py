@@ -13,6 +13,8 @@ from typing import Callable, Optional, Tuple, List
 
 import logging
 import tango
+from enum import Enum
+import json
 
 from ska_mid_cbf_mcs.component.component_manager import (
     CommunicationStatus,
@@ -30,6 +32,7 @@ class FspComponentManager(CbfComponentManager):
     def __init__(
         self: FspComponentManager,
         logger: logging.Logger,
+        fsp_id: int,
         fsp_corr_subarray_fqdns_all: List[str],
         fsp_pss_subarray_fqdns_all: List[str],
         fsp_pst_subarray_fqdns_all: List[str],
@@ -57,6 +60,8 @@ class FspComponentManager(CbfComponentManager):
         
         self._connected = False
 
+        self._fsp_id = fsp_id
+
         self._fsp_corr_subarray_fqdns_all = fsp_corr_subarray_fqdns_all
         self._fsp_pss_subarray_fqdns_all = fsp_pss_subarray_fqdns_all
         self._fsp_pst_subarray_fqdns_all = fsp_pst_subarray_fqdns_all
@@ -78,6 +83,7 @@ class FspComponentManager(CbfComponentManager):
 
         self._subarray_membership = []
         self._function_mode = 0  # IDLE
+        self._jones_matrix = [[0.0] * 16 for _ in range(4)]
 
         super().__init__(
             logger,
@@ -105,7 +111,17 @@ class FspComponentManager(CbfComponentManager):
         :return: the Fsp function mode
         :rtype: tango.DevEnum
         """
-        return self._subarray_membership
+        return self._function_mode
+    
+    @property
+    def jones_matrix(self: FspComponentManager) -> List[List[float]]:
+        """
+        Jones Matrix
+
+        :return: the jones matrix
+        :rtype: List[List[float]]
+        """
+        return self._jones_matrix
     
     def start_communicating(
         self: FspComponentManager,
@@ -339,6 +355,7 @@ class FspComponentManager(CbfComponentManager):
         """
         Put the fsp into low power standby mode
 
+        :param argin: one of 'IDLE','CORR','PSS-BF','PST-BF', or 'VLBI'
         :return: A tuple containing a return code and a string
                 message indicating status. The message is for
                 information purpose only.
@@ -393,4 +410,80 @@ class FspComponentManager(CbfComponentManager):
             self._logger.error(log_msg)
             return (ResultCode.FAILED, log_msg)
 
+    def update_jones_matrix(      
+        self: FspComponentManager,
+        argin: str,
+    ) -> Tuple[ResultCode, str]:
+        """
+        Update the FSP's jones matrix (serialized JSON object)
+
+        :param argin: the jones matrix data
+        :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+        :rtype: (ResultCode, str)
+        """
+
+        if self._connected:
+         
+            #TODO: this enum should be defined once and referred to throughout the project
+            FspModes = Enum('FspModes', 'CORR PSS_BF PST_BF VLBI')
+            if self._function_mode in [FspModes.PSS_BF.value, FspModes.PST_BF.value, FspModes.VLBI.value]:
+                argin = json.loads(argin)
+
+                for i in self._subarray_membership:
+                    if self._function_mode == FspModes.PSS_BF.value:
+                        print("FQDNNNN {}".format(self._fsp_pss_subarray_fqdns_all[i-1]))
+                        proxy = self._proxy_fsp_pss_subarray[i - 1]
+                        fs_length = 16
+                    elif self._function_mode == FspModes.PST_BF.value:
+                        proxy = self._proxy_fsp_pst_subarray[i - 1]
+                        fs_length = 4
+                    else:
+                        fs_length = 4
+                        # TODO: support for function mode VLBI
+                        log_msg = "Fsp UpdateJonesMatrix command failed: \
+                                function mode {} currently not supported".format(self._function_mode)
+                        self._logger.error(log_msg)
+                        return (ResultCode.FAILED, log_msg)
+
+                    for receptor in argin:
+                        rec_id = int(receptor["receptor"])
+                        print("REC IDDDD {}".format(rec_id))
+                        print("PROXYYY {}".format(proxy))
+                        print("PROXYYY RECEPPPPPPPPPP {}".format(proxy.receptors))
+                        if rec_id in proxy.receptors:
+                            for frequency_slice in receptor["receptorMatrix"]:
+                                fs_id = frequency_slice["fsid"]
+                                matrix = frequency_slice["matrix"]
+                                if fs_id == self._fsp_id:
+                                    if len(matrix) == fs_length:
+                                        print("COPYINGGGGGGGGGGG")
+                                        self._jones_matrix[rec_id - 1] = matrix.copy()
+                                        print(self._jones_matrix[rec_id - 1])
+                                    else:
+                                        log_msg = "Fsp UpdateJonesMatrix command error: \
+                                        'matrix' not valid length for frequency slice {} of " \
+                                                "receptor {}".format(fs_id, rec_id)
+                                        self._logger.error(log_msg)
+                                else:
+                                    log_msg = "Fsp UpdateJonesMatrix command error: \
+                                        'fsid' {} not valid for receptor {}".format(
+                                        fs_id, rec_id
+                                    )
+                                    self._logger.error(log_msg)
+            else:
+                log_msg = "Fsp UpdateJonesMatrix command failed: \
+                    matrix not used in function mode {}".format(self._function_mode)
+                self._logger.error(log_msg)
+                return (ResultCode.FAILED, log_msg)
+
+            message = "Fsp UpdateJonesMatrix command completed OK"
+            return (ResultCode.OK, message)
+        
+        else:
+            log_msg = "Fsp UpdateJonesMatrix command failed: \
+                    proxies not connected"
+            self._logger.error(log_msg)
+            return (ResultCode.FAILED, log_msg)
     

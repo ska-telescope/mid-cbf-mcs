@@ -186,6 +186,10 @@ class Fsp(SKACapability):
             "RemoveSubarrayMembership", self.RemoveSubarrayMembershipCommand(*device_args)
         )
 
+        self.register_command_object(
+            "UpdateJonesMatrix", self.UpdateJonesMatrixCommand(*device_args)
+        )
+
     def always_executed_hook(self: Fsp) -> None:
         # PROTECTED REGION ID(Fsp.always_executed_hook) ENABLED START #
         """Hook to be executed before any commands."""
@@ -206,6 +210,7 @@ class Fsp(SKACapability):
 
         return FspComponentManager( 
             self.logger,
+            self.FspID,
             self.FspCorrSubarray,
             self.FspPssSubarray,
             self.FspPstSubarray,
@@ -290,7 +295,7 @@ class Fsp(SKACapability):
             :return: the jonesMatrix attribute.
             :rtype: list of list of float
         """
-        return self._jones_matrix
+        return self.component_manager.jones_matrix
         # PROTECTED REGION END #    //  Fsp.jonesMatrix_read
 
     def read_delayModel(self: Fsp) -> List[List[float]]:
@@ -600,78 +605,113 @@ class Fsp(SKACapability):
             result[str(proxy)]=proxy.configID
         return str(result)
         # PROTECTED REGION END #    //  Fsp.getConfigID
+    
+    class UpdateJonesMatrixCommand(BaseCommand):
+        """
+        A class for the Fsp's UpdateJonesMatrix() command.
+        """
+
+        def do(
+            self: Fsp.UpdateJonesMatrixCommand, 
+            argin: str
+        ) -> Tuple[ResultCode, str]:  
+            """
+            Stateless hook for UpdateJonesMatrix() command functionality.
+
+            :param argin: the jones matrix data
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
+
+            (result_code,message) = self.target.component_manager.update_jones_matrix(argin)
+            return (result_code, message)
+    
+    @command(
+        dtype_in='str',
+        doc_in="Jones Matrix, given per frequency slice"
+    )
+    def UpdateJonesMatrix(self: Fsp, argin: str) -> None:  
+        """
+        Update the FSP's jones matrix (serialized JSON object)
+
+        :param argin: the jones matrix data
+        """
+        handler = self.get_command_object("UpdateJonesMatrix")
+        return handler(argin)
 
     def is_UpdateJonesMatrix_allowed(self: Fsp) -> bool:
         """
-            Determine if UpdateJonesMatrix is allowed 
-            (allowed if FSP state is ON and ObsState is 
-            READY OR SCANNINNG).
+        Determine if UpdateJonesMatrix is allowed 
+        (allowed if FSP state is ON and ObsState is 
+        READY OR SCANNINNG).
 
-            :return: if UpdateJonesMatrix is allowed
-            :rtype: bool
+        :return: if UpdateJonesMatrix is allowed
+        :rtype: bool
         """
         #TODO implement obsstate in FSP
         if self.dev_state() == tango.DevState.ON:
             return True
         return False
 
-    @command(
-        dtype_in='str',
-        doc_in="Jones Matrix, given per frequency slice"
-    )
-    def UpdateJonesMatrix(
-        self: Fsp, 
-        argin: str,
-        ) -> None:
-        # PROTECTED REGION ID(Fsp.UpdateJonesMatrix) ENABLED START #
-        """
-            Update the FSP's jones matrix (serialized JSON object)
+    # @command(
+    #     dtype_in='str',
+    #     doc_in="Jones Matrix, given per frequency slice"
+    # )
+    # def UpdateJonesMatrix(
+    #     self: Fsp, 
+    #     argin: str,
+    #     ) -> None:
+    #     # PROTECTED REGION ID(Fsp.UpdateJonesMatrix) ENABLED START #
+    #     """
+    #         Update the FSP's jones matrix (serialized JSON object)
 
-            :param argin: the jones matrix data
-        """
-        self.logger.debug("Fsp.UpdateJonesMatrix")
+    #         :param argin: the jones matrix data
+    #     """
+    #     self.logger.debug("Fsp.UpdateJonesMatrix")
 
-        #TODO: this enum should be defined once and referred to throughout the project
-        FspModes = Enum('FspModes', 'CORR PSS_BF PST_BF VLBI')
-        if self._function_mode in [FspModes.PSS_BF.value, FspModes.PST_BF.value, FspModes.VLBI.value]:
-            argin = json.loads(argin)
+    #     #TODO: this enum should be defined once and referred to throughout the project
+    #     FspModes = Enum('FspModes', 'CORR PSS_BF PST_BF VLBI')
+    #     if self._function_mode in [FspModes.PSS_BF.value, FspModes.PST_BF.value, FspModes.VLBI.value]:
+    #         argin = json.loads(argin)
 
-            for i in self._subarray_membership:
-                if self._function_mode == FspModes.PSS_BF.value:
-                    proxy = self._proxy_fsp_pss_subarray[i - 1]
-                    fs_length = 16
-                elif self._function_mode == FspModes.PST_BF.value:
-                    proxy = self._proxy_fsp_pst_subarray[i - 1]
-                    fs_length = 4
-                else:
-                    fs_length = 4
-                    # TODO: support for function mode VLBI
-                    log_msg = "function mode {} currently not supported".format(self._function_mode)
-                    self.logger.error(log_msg)
-                    return
+    #         for i in self._subarray_membership:
+    #             if self._function_mode == FspModes.PSS_BF.value:
+    #                 proxy = self._proxy_fsp_pss_subarray[i - 1]
+    #                 fs_length = 16
+    #             elif self._function_mode == FspModes.PST_BF.value:
+    #                 proxy = self._proxy_fsp_pst_subarray[i - 1]
+    #                 fs_length = 4
+    #             else:
+    #                 fs_length = 4
+    #                 # TODO: support for function mode VLBI
+    #                 log_msg = "function mode {} currently not supported".format(self._function_mode)
+    #                 self.logger.error(log_msg)
+    #                 return
 
-                for receptor in argin:
-                    rec_id = int(receptor["receptor"])
-                    if rec_id in proxy.receptors:
-                        for frequency_slice in receptor["receptorMatrix"]:
-                            fs_id = frequency_slice["fsid"]
-                            matrix = frequency_slice["matrix"]
-                            if fs_id == self._fsp_id:
-                                if len(matrix) == fs_length:
-                                    self._jones_matrix[rec_id - 1] = matrix.copy()
-                                else:
-                                    log_msg = "'matrix' not valid length for frequency slice {} of " \
-                                            "receptor {}".format(fs_id, rec_id)
-                                    self.logger.error(log_msg)
-                            else:
-                                log_msg = "'fsid' {} not valid for receptor {}".format(
-                                    fs_id, rec_id
-                                )
-                                self.logger.error(log_msg)
-        else:
-            log_msg = "matrix not used in function mode {}".format(self._function_mode)
-            self.logger.error(log_msg)
-        # PROTECTED REGION END #    // Fsp.UpdateJonesMatrix
+    #             for receptor in argin:
+    #                 rec_id = int(receptor["receptor"])
+    #                 if rec_id in proxy.receptors:
+    #                     for frequency_slice in receptor["receptorMatrix"]:
+    #                         fs_id = frequency_slice["fsid"]
+    #                         matrix = frequency_slice["matrix"]
+    #                         if fs_id == self._fsp_id:
+    #                             if len(matrix) == fs_length:
+    #                                 self._jones_matrix[rec_id - 1] = matrix.copy()
+    #                             else:
+    #                                 log_msg = "'matrix' not valid length for frequency slice {} of " \
+    #                                         "receptor {}".format(fs_id, rec_id)
+    #                                 self.logger.error(log_msg)
+    #                         else:
+    #                             log_msg = "'fsid' {} not valid for receptor {}".format(
+    #                                 fs_id, rec_id
+    #                             )
+    #                             self.logger.error(log_msg)
+    #     else:
+    #         log_msg = "matrix not used in function mode {}".format(self._function_mode)
+    #         self.logger.error(log_msg)
+    #     # PROTECTED REGION END #    // Fsp.UpdateJonesMatrix
 
     def is_UpdateDelayModel_allowed(self: Fsp) -> bool:
         """
