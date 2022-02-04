@@ -15,10 +15,11 @@ Sub-element VCC component manager for Mid.CBF
 """
 from __future__ import annotations  # allow forward references in type hints
 
-from typing import List, Tuple
+from typing import List, Tuple, Callable, Optional
 
 import logging
 import json
+from ska_tango_base import obs
 
 # tango imports
 import tango
@@ -31,12 +32,18 @@ from tango import DevFailed, DebugIt, DevState, AttrWriteType
 
 from ska_mid_cbf_mcs.commons.global_enum import const, freq_band_dict
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
+from ska_mid_cbf_mcs.component.component_manager import (
+    CbfComponentManager, CommunicationStatus
+)
 
-from ska_tango_base.control_model import ObsState, SimulationMode
-from ska_tango_base import SKAObsDevice, CspSubElementObsDevice
+from ska_tango_base.control_model import ObsState, SimulationMode, PowerMode
+from ska_tango_base.csp.obs import CspObsComponentManager
 from ska_tango_base.commands import ResultCode
 
-class VccComponentManager:
+__all__ = ["VccComponentManager"]
+
+
+class VccComponentManager(CbfComponentManager, CspObsComponentManager):
     """Component manager for Vcc class."""
 
     def __init__(
@@ -45,6 +52,9 @@ class VccComponentManager:
         vcc_band: List[str],
         search_window: List[str],
         logger: logging.Logger,
+        push_change_event_callback: Optional[Callable],
+        communication_status_changed_callback: Callable[[CommunicationStatus], None],
+        component_power_mode_changed_callback: Callable[[PowerMode], None],
         connect: bool = True
     ) -> None:
         """
@@ -56,6 +66,13 @@ class VccComponentManager:
         :param search_window: FQDNs of VCC search windows
         :param logger: a logger for this object to use
         :param connect: whether to connect automatically upon initialization
+        :param push_change_event_callback: method to call when the base classes
+            want to send an event
+        :param communication_status_changed_callback: callback to be
+            called when the status of the communications channel between
+            the component manager and its component changes
+        :param component_power_mode_changed_callback: callback to be
+            called when the component power mode changes
         """
         self._simulation_mode = simulation_mode
 
@@ -67,12 +84,19 @@ class VccComponentManager:
         self.connected = False
 
         # initialize attribute values
-        self._receptor_ID = 0
+        self.receptor_id = 0
 
-        self._frequency_band = 0
-        self._stream_tuning = (0, 0)
-        self._frequency_band_offset_stream_1 = 0
-        self._frequency_band_offset_stream_2 = 0
+        self.frequency_band = 0
+        self.stream_tuning = (0, 0)
+        self.frequency_band_offset_stream_1 = 0
+        self.frequency_band_offset_stream_2 = 0
+        self.rfi_flagging_mask = ""
+        self.scfo_band_1 = 0
+        self.scfo_band_2 = 0
+        self.scfo_band_3 = 0
+        self.scfo_band_4 = 0
+        self.scfo_band_5a = 0
+        self.scfo_band_5b = 0
 
         # initialize list of band proxies and band -> index translation;
         # entry for each of: band 1 & 2, band 3, band 4, band 5
@@ -87,14 +111,24 @@ class VccComponentManager:
         if connect:
             self.start_communicating()
 
+        super().__init__(
+            logger=logger,
+            push_change_event_callback=push_change_event_callback,
+            communication_status_changed_callback=communication_status_changed_callback,
+            component_power_mode_changed_callback=component_power_mode_changed_callback,
+            component_fault_callback=None,
+            obs_state_model=None
+        )
+
 
     def start_communicating(self: VccComponentManager) -> None:
         """Establish communication with the component, then start monitoring."""
-
         if self.connected:
             self._logger.info("Already connected.")
             return
-        
+
+        super().start_communicating()
+
         if not self._simulation_mode:
             try:
                 self._band_proxies = [CbfDeviceProxy(fqdn=fqdn, logger=self._logger
@@ -106,12 +140,17 @@ class VccComponentManager:
                 raise ConnectionError(
                     f"Error in proxy connection."
                 ) from dev_failed
-        
+
         self.connected = True
+        self.update_communication_status(CommunicationStatus.ESTABLISHED)
+        self.update_component_fault(False)
+        self.update_component_power_mode(PowerMode.OFF)
 
 
     def stop_communicating(self: VccComponentManager) -> None:
         """Stop communication with the component."""
+        super().stop_communicating()
+
         self.connected = False
 
 
@@ -188,10 +227,122 @@ class VccComponentManager:
 
     def deconfigure(self: VccComponentManager) -> None:
         """Deconfigure scan configuration parameters."""
-        self._frequency_band_offset_stream_2 = 0
-        self._frequency_band_offset_stream_1 = 0
-        self._stream_tuning = (0, 0)
-        self._frequency_band = 0
+        self.frequency_band_offset_stream_2 = 0
+        self.frequency_band_offset_stream_1 = 0
+        self.stream_tuning = (0, 0)
+        self.frequency_band = 0
+        self.config_id = ""
+        self.scan_id = 0
+        self.scfo_band_5b = 0
+        self.scfo_band_5a = 0
+        self.scfo_band_4 = 0
+        self.scfo_band_3 = 0
+        self.scfo_band_2 = 0
+        self.scfo_band_1 = 0
+        self.rfi_flagging_mask = ""
+
+    def configure_scan(self: VccComponentManager, argin: str) -> Tuple[ResultCode, str]:
+
+        """
+        Begin scan operation.
+
+        :param argin: JSON string with the search window parameters
+
+        :return: A tuple containing a return code and a string
+            message indicating status. The message is for
+            information purpose only.
+        :rtype: (ResultCode, str)
+        """
+        configuration = json.loads(argin)
+        self.config_id = configuration["config_id"]
+
+        # TODO: The frequency band attribute is optional but 
+        # if not specified the previous frequency band set should be used 
+        # (see Mid.CBF Scan Configuration in ICD). Therefore, the previous frequency 
+        # band value needs to be stored, and if the frequency band is not
+        # set in the config it should be replaced with the previous value.
+        self.frequency_band = freq_band_dict()[configuration["frequency_band"]]
+        self.frequency_band = freq_band_dict()[configuration["frequency_band"]]
+        self._freq_band_name = configuration["frequency_band"]
+        if self.frequency_band in [4, 5]:
+                self.stream_tuning = \
+                    configuration["band_5_tuning"]
+
+        self.frequency_band_offset_stream_1 = \
+            int(configuration["frequency_band_offset_stream_1"])
+        self.frequency_band_offset_stream_2 = \
+            int(configuration["frequency_band_offset_stream_2"])
+        
+        if "rfi_flagging_mask" in configuration:
+            self.rfi_flagging_mask = str(configuration["rfi_flagging_mask"])
+        else:
+            self._logger.warn("'rfiFlaggingMask' not given. Proceeding.")
+
+        if "scfo_band_1" in configuration:
+            self.scfo_band_1 = int(configuration["scfo_band_1"])
+        else:
+            self.scfo_band_1 = 0
+            self._logger.warn("'scfoBand1' not specified. Defaulting to 0.")
+
+        if "scfo_band_2" in configuration:
+            self.scfo_band_2 = int(configuration["scfo_band_2"])
+        else:
+            self.scfo_band_2 = 0
+            self._logger.warn("'scfoBand2' not specified. Defaulting to 0.")
+
+        if "scfo_band_3" in configuration:
+            self.scfo_band_3 = int(configuration["scfo_band_3"])
+        else:
+            self.scfo_band_3 = 0
+            self._logger.warn("'scfoBand3' not specified. Defaulting to 0.")
+
+        if "scfo_band_4" in configuration:
+            self.scfo_band_4 = configuration["scfo_band_4"]
+        else:
+            self.scfo_band_4 = 0
+            self._logger.warn("'scfoBand4' not specified. Defaulting to 0.")
+
+        if "scfo_band_5a" in configuration:
+            self.scfo_band_5a = int(configuration["scfo_band_5a"])
+        else:
+            self.scfo_band_5a = 0
+            self._logger.warn("'scfoBand5a' not specified. Defaulting to 0.")
+
+        if "scfo_band_5b" in configuration:
+            self.scfo_band_5b = int(configuration["scfo_band_5b"])
+        else:
+            self.scfo_band_5b = 0
+            self._logger.warn("'scfoBand5b' not specified. Defaulting to 0.")
+
+        return (ResultCode.OK, "Vcc ScanCommand completed OK")
+
+    def scan(self: VccComponentManager, scan_id: int) -> Tuple[ResultCode, str]:
+
+        """
+        Begin scan operation.
+
+        :param argin: scan ID integer
+
+        :return: A tuple containing a return code and a string
+            message indicating status. The message is for
+            information purpose only.
+        :rtype: (ResultCode, str)
+        """
+
+        self.scan_id = scan_id
+        return (ResultCode.STARTED, "Vcc ScanCommand completed OK")
+
+    def end_scan(self: VccComponentManager) -> Tuple[ResultCode, str]:
+
+        """
+        End scan operation.
+
+        :return: A tuple containing a return code and a string
+            message indicating status. The message is for
+            information purpose only.
+        :rtype: (ResultCode, str)
+        """
+        return (ResultCode.OK, "Vcc EndScanCommand completed OK")
 
 
     def configure_search_window(
@@ -200,7 +351,7 @@ class VccComponentManager:
     ) -> Tuple[ResultCode, str]:
         """
         Configure a search window by sending parameters from the input(JSON) to 
-        SearchWindow device. This function is called by the subarray after the 
+        SearchWindow self. This function is called by the subarray after the 
         configuration has already been validated, so the checks here have been 
         removed to reduce overhead.
 
@@ -226,7 +377,7 @@ class VccComponentManager:
 
         try:
             # Configure searchWindowTuning.
-            if self._frequency_band in list(range(4)):  # frequency band is not band 5
+            if self.frequency_band in list(range(4)):  # frequency band is not band 5
                 proxy_sw.searchWindowTuning = argin["search_window_tuning"]
 
                 start_freq_Hz, stop_freq_Hz = [
@@ -234,12 +385,12 @@ class VccComponentManager:
                     const.FREQUENCY_BAND_2_RANGE_HZ,
                     const.FREQUENCY_BAND_3_RANGE_HZ,
                     const.FREQUENCY_BAND_4_RANGE_HZ
-                ][self._frequency_band]
+                ][self.frequency_band]
 
-                if start_freq_Hz + self._frequency_band_offset_stream_1 + \
+                if start_freq_Hz + self.frequency_band_offset_stream_1 + \
                         const.SEARCH_WINDOW_BW_HZ / 2 <= \
                         int(argin["search_window_tuning"]) <= \
-                        stop_freq_Hz + self._frequency_band_offset_stream_1 - \
+                        stop_freq_Hz + self.frequency_band_offset_stream_1 - \
                         const.SEARCH_WINDOW_BW_HZ / 2:
                     # this is the acceptable range
                     pass
@@ -252,16 +403,16 @@ class VccComponentManager:
                 proxy_sw.searchWindowTuning = argin["search_window_tuning"]
 
                 frequency_band_range_1 = (
-                    self._stream_tuning[0] * 10 ** 9 + self._frequency_band_offset_stream_1 - \
+                    self.stream_tuning[0] * 10 ** 9 + self.frequency_band_offset_stream_1 - \
                     const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2,
-                    self._stream_tuning[0] * 10 ** 9 + self._frequency_band_offset_stream_1 + \
+                    self.stream_tuning[0] * 10 ** 9 + self.frequency_band_offset_stream_1 + \
                     const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2
                 )
 
                 frequency_band_range_2 = (
-                    self._stream_tuning[1] * 10 ** 9 + self._frequency_band_offset_stream_2 - \
+                    self.stream_tuning[1] * 10 ** 9 + self.frequency_band_offset_stream_2 - \
                     const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2,
-                    self._stream_tuning[1] * 10 ** 9 + self._frequency_band_offset_stream_2 + \
+                    self.stream_tuning[1] * 10 ** 9 + self.frequency_band_offset_stream_2 + \
                     const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2
                 )
 
@@ -315,7 +466,7 @@ class VccComponentManager:
                 # Configure tdcDestinationAddress.
                 if argin["tdc_enable"]:
                     for receptor in argin["tdc_destination_address"]:
-                        if receptor["receptor_id"] == self._receptor_ID:
+                        if receptor["receptor_id"] == self.receptor_id:
                             # TODO: validate input
                             proxy_sw.tdcDestinationAddress = \
                                 receptor["tdc_destination_address"]

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# This file is part of the Vcc project
+# This file is part of the Mid.CBF MCS project
 #
 #
 #
@@ -13,34 +13,30 @@
 # Copyright (c) 2019 National Research Council of Canada
 # """
 
-# Vcc Tango device prototype
-# Vcc TANGO device class for the prototype
+# Vcc TANGO device class
 
-# PROTECTED REGION ID(Vcc.additionnal_import) ENABLED START #
+# PROTECTED REGION ID(Vcc.additional_import) ENABLED START #
 from __future__ import annotations  # allow forward references in type hints
-
-from typing import List, Tuple
-
+from typing import List, Tuple, Optional
 import json
 
-# tango imports
+# Tango imports
 import tango
-from tango.server import BaseDevice, Device, run
-from tango.server import attribute, command
-from tango.server import device_property
-from tango import DevFailed, DebugIt, DevState, AttrWriteType
+from tango.server import run, attribute, command, device_property
+from tango import AttrWriteType
 
-# SKA Specific imports
-
+# SKA imports
 from ska_mid_cbf_mcs.commons.global_enum import const, freq_band_dict
-
-from ska_tango_base.control_model import ObsState, SimulationMode
-from ska_tango_base import SKAObsDevice, CspSubElementObsDevice
-from ska_tango_base.commands import ResultCode
-
 from ska_mid_cbf_mcs.vcc.vcc_component_manager import VccComponentManager
 
-# PROTECTED REGION END #    //  Vcc.additionnal_import
+from ska_tango_base.base.base_device import SKABaseDevice
+from ska_tango_base.control_model import ObsState, SimulationMode, PowerMode
+from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
+from ska_tango_base.csp.obs.obs_state_model import CspSubElementObsStateModel
+from ska_tango_base.csp.obs.obs_device import CspSubElementObsDevice
+from ska_tango_base.commands import ResultCode
+
+# PROTECTED REGION END #    //  Vcc.additional_import
 
 __all__ = ["Vcc", "main"]
 
@@ -231,15 +227,107 @@ class Vcc(CspSubElementObsDevice):
         """
         super().init_command_objects()
 
-        device_args = (self, self.obs_state_model, self.logger)
+        device_args = (
+            self,
+            self.op_state_model,
+            self.logger
+        )
+
+        self.register_command_object(
+            "On", self.OnCommand(*device_args)
+        )
+
+        self.register_command_object(
+            "Off", self.OffCommand(*device_args)
+        )
+
+        self.register_command_object(
+            "Standby", self.StandbyCommand(*device_args)
+        )
+
+        device_args = (
+            self,
+            self.op_state_model,
+            self.obs_state_model,
+            self.logger
+        )
+
         self.register_command_object(
             "ConfigureScan", self.ConfigureScanCommand(*device_args)
         )
+
+        self.register_command_object(
+            "Scan", self.ScanCommand(*device_args)
+        )
+
+        self.register_command_object(
+            "EndScan", self.EndScanCommand(*device_args)
+        )
+
         self.register_command_object(
             "GoToIdle", self.GoToIdleCommand(*device_args)
         )
 
     # PROTECTED REGION END #    //  Vcc.class_variable
+
+    class OnCommand(SKABaseDevice.OnCommand):
+        """
+        A class for the Vcc's On() command.
+        """
+
+        def do(            
+            self: Vcc.OnCommand,
+        ) -> Tuple[ResultCode, str]:
+            """
+            Stateless hook for On() command functionality.
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
+
+            self.target._component_power_mode_changed(PowerMode.ON)
+
+            return (ResultCode.OK, "OnCommand completed OK")
+
+    class OffCommand(SKABaseDevice.OffCommand):
+        """
+        A class for the Vcc's Off() command.
+        """
+        def do(
+            self: Vcc.OffCommand,
+        ) -> Tuple[ResultCode, str]:
+            """
+            Stateless hook for Off() command functionality.
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
+            self.target._component_power_mode_changed(PowerMode.OFF)
+
+            return (ResultCode.OK, "OffCommand completed OK")
+
+    class StandbyCommand(SKABaseDevice.StandbyCommand):
+        """
+        A class for the Vcc's Standby() command.
+        """
+        def do(            
+            self: Vcc.StandbyCommand,
+        ) -> Tuple[ResultCode, str]:
+            """
+            Stateless hook for Standby() command functionality.
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
+            self.target._component_power_mode_changed(PowerMode.STANDBY)
+
+            return (ResultCode.OK, "StandbyCommand completed OK")
 
     class InitCommand(CspSubElementObsDevice.InitCommand):
         """
@@ -266,43 +354,90 @@ class Vcc(CspSubElementObsDevice):
             self._vcc_id = device.VccID
 
             # initialize attribute values
-            device._receptor_ID = 0
             device._subarray_membership = 0
-
-            device._freq_band_name = ""
-            device._frequency_band = 0
-
             device._doppler_phase_correction = (0, 0, 0, 0)
-            device._rfi_flagging_mask = ""
-            device._scfo_band_1 = 0
-            device._scfo_band_2 = 0
-            device._scfo_band_3 = 0
-            device._scfo_band_4 = 0
-            device._scfo_band_5a = 0
-            device._scfo_band_5b = 0
             device._delay_model = [[0] * 6 for i in range(26)]
             device._jones_matrix = [[0] * 16 for i in range(26)]
-
-            device._scan_id = ""
-            device._config_id = ""
+            device._last_scan_configuration = ""
 
             device.set_change_event("subarrayMembership", True, True)
 
-            device.component_manager = VccComponentManager(
-                simulation_mode=SimulationMode.FALSE,
-                vcc_band=[device.Band1And2Address,
-                    device.Band3Address,
-                    device.Band4Address,
-                    device.Band5Address
-                ],
-                search_window=[device.SW1Address, device.SW2Address],
-                logger=device.logger,
-                connect=True
-            )
+            return (ResultCode.OK, "Vcc Init command completed OK")
 
-            message = "Vcc Init command completed OK"
-            device.logger.info(message)
-            return (ResultCode.OK, message)
+
+    def create_component_manager(self: Vcc):
+        self._communication_status: Optional[CommunicationStatus] = None
+        self._component_power_mode: Optional[PowerMode] = None
+
+        self._simulation_mode = SimulationMode.FALSE
+
+        self.component_manager = VccComponentManager(
+            simulation_mode=self._simulation_mode,
+            vcc_band=[
+                self.Band1And2Address,
+                self.Band3Address,
+                self.Band4Address,
+                self.Band5Address
+            ],
+            search_window=[self.SW1Address, self.SW2Address],
+            logger=self.logger,
+            push_change_event_callback=self.push_change_event,
+            communication_status_changed_callback=self._communication_status_changed,
+            component_power_mode_changed_callback=self._component_power_mode_changed,
+            connect=True
+        )
+
+    def _communication_status_changed(
+        self: Vcc,
+        communication_status: CommunicationStatus,
+    ) -> None:
+        """
+        Handle change in communications status between component manager and component.
+
+        This is a callback hook, called by the component manager when
+        the communications status changes. It is implemented here to
+        drive the op_state.
+
+        :param communication_status: the status of communications
+            between the component manager and its component.
+        """
+
+        self._communication_status = communication_status
+
+        if communication_status == CommunicationStatus.DISABLED:
+            self.op_state_model.perform_action("component_disconnected")
+        elif communication_status == CommunicationStatus.NOT_ESTABLISHED:
+            self.op_state_model.perform_action("component_unknown")
+        elif communication_status == CommunicationStatus.ESTABLISHED \
+            and self._component_power_mode is not None:
+            self._component_power_mode_changed(self._component_power_mode)
+        else:  # self._component_power_mode is None
+            pass  # wait for a power mode update
+    
+    def _component_power_mode_changed(
+        self: Vcc,
+        power_mode: PowerMode,
+    ) -> None:
+        """
+        Handle change in the power mode of the component.
+
+        This is a callback hook, called by the component manager when
+        the power mode of the component changes. It is implemented here
+        to drive the op_state.
+
+        :param power_mode: the power mode of the component.
+        """
+        self._component_power_mode = power_mode
+
+        if self._communication_status == CommunicationStatus.ESTABLISHED:
+            action_map = {
+                PowerMode.OFF: "component_off",
+                PowerMode.STANDBY: "component_standby",
+                PowerMode.ON: "component_on",
+                PowerMode.UNKNOWN: "component_unknown",
+            }
+
+            self.op_state_model.perform_action(action_map[power_mode])
 
     def always_executed_hook(self: Vcc) -> None:
         # PROTECTED REGION ID(Vcc.always_executed_hook) ENABLED START #
@@ -329,7 +464,7 @@ class Vcc(CspSubElementObsDevice):
             :return: the Vcc's receptor id.
             :rtype: int
         """
-        return self._receptor_ID
+        return self.component_manager.receptor_id
         # PROTECTED REGION END #    //  Vcc.receptorID_read
 
     def write_receptorID(self: Vcc, value: int) -> None:
@@ -339,8 +474,7 @@ class Vcc(CspSubElementObsDevice):
 
             :param value: the receptorID value.
         """
-        self._receptor_ID = value
-        self.component_manager._receptor_ID = value
+        self.component_manager.receptor_id = value
         # PROTECTED REGION END #    //  Vcc.receptorID_write
 
     def read_subarrayMembership(self: Vcc) -> int:
@@ -351,8 +485,6 @@ class Vcc(CspSubElementObsDevice):
             :return: the subarray membership (0 = no affiliation).
             :rtype: int
         """
-        self.logger.debug("Entering read_subarrayMembership()," + \
-            f" _subarray_membership = {self._subarray_membership}")
         return self._subarray_membership
         # PROTECTED REGION END #    //  Vcc.subarrayMembership_read
 
@@ -384,7 +516,7 @@ class Vcc(CspSubElementObsDevice):
             ["1", "2", "3", "4", "5a", "5b"]).
         :rtype: tango.DevEnum
         """
-        return self._frequency_band
+        return self.component_manager.frequency_band
         # PROTECTED REGION END #    //  Vcc.frequencyBand_read
 
     def read_band5Tuning(self: Vcc) -> List[float]:
@@ -395,7 +527,7 @@ class Vcc(CspSubElementObsDevice):
         :return: the band5Tuning attribute (stream tuning (GHz)).
         :rtype: list of float
         """
-        return self.component_manager._stream_tuning
+        return self.component_manager.stream_tuning
         # PROTECTED REGION END #    //  Vcc.band5Tuning_read
 
     def read_frequencyBandOffsetStream1(self: Vcc) -> int:
@@ -406,7 +538,7 @@ class Vcc(CspSubElementObsDevice):
         :return: the frequencyBandOffsetStream1 attribute.
         :rtype: int
         """
-        return self.component_manager._frequency_band_offset_stream_1
+        return self.component_manager.frequency_band_offset_stream_1
         # PROTECTED REGION END #    //  Vcc.frequencyBandOffsetStream1_read
 
     def read_frequencyBandOffsetStream2(self: Vcc) -> int:
@@ -417,7 +549,7 @@ class Vcc(CspSubElementObsDevice):
         :return: the frequencyBandOffsetStream2 attribute.
         :rtype: int
         """
-        return self.component_manager._frequency_band_offset_stream_2
+        return self.component_manager.frequency_band_offset_stream_2
         # PROTECTED REGION END #    //  Vcc.frequencyBandOffsetStream2_read
 
     def read_dopplerPhaseCorrection(self: Vcc) -> List[float]:
@@ -449,7 +581,7 @@ class Vcc(CspSubElementObsDevice):
         :return: the rfiFlaggingMask attribute.
         :rtype: str/JSON
         """
-        return self._rfi_flagging_mask
+        return self.component_manager.rfi_flagging_mask
         # PROTECTED REGION END #    //  Vcc.rfiFlaggingMask_read
 
     def read_scfoBand1(self: Vcc) -> int:
@@ -463,7 +595,7 @@ class Vcc(CspSubElementObsDevice):
             offset for band 1).
         :rtype: int
         """
-        return self._scfo_band_1
+        return self.component_manager.scfo_band_1
         # PROTECTED REGION END #    //  Vcc.scfoBand1_read
 
     def read_scfoBand2(self: Vcc) -> int:
@@ -477,7 +609,7 @@ class Vcc(CspSubElementObsDevice):
             offset for band 2).
         :rtype: int
         """
-        return self._scfo_band_2
+        return self.component_manager.scfo_band_2
         # PROTECTED REGION END #    //  Vcc.scfoBand2_read
 
     def read_scfoBand3(self: Vcc) -> int:
@@ -491,7 +623,7 @@ class Vcc(CspSubElementObsDevice):
             offset for band 3).
         :rtype: int
         """      
-        return self._scfo_band_3
+        return self.component_manager.scfo_band_3
         # PROTECTED REGION END #    //  Vcc.scfoBand3_read
 
     def read_scfoBand4(self: Vcc) -> int:
@@ -505,7 +637,7 @@ class Vcc(CspSubElementObsDevice):
             offset for band 4).
         :rtype: int
         """      
-        return self._scfo_band_4
+        return self.component_manager.scfo_band_4
         # PROTECTED REGION END #    //  Vcc.scfoBand4_read
 
     def read_scfoBand5a(self: Vcc) -> int:
@@ -519,7 +651,7 @@ class Vcc(CspSubElementObsDevice):
             offset for band 5a).
         :rtype: int
         """     
-        return self._scfo_band_5a
+        return self.component_manager.scfo_band_5a
         # PROTECTED REGION END #    //  Vcc.scfoBand5a_read
 
     def read_scfoBand5b(self: Vcc) -> int:
@@ -533,7 +665,7 @@ class Vcc(CspSubElementObsDevice):
             offset for band 5b.
         :rtype: int
         """      
-        return self._scfo_band_5b
+        return self.component_manager.scfo_band_5b
         # PROTECTED REGION END #    //  Vcc.scfoBand5b_read
 
     def read_delayModel(self: Vcc) -> List[List[float]]:
@@ -572,7 +704,7 @@ class Vcc(CspSubElementObsDevice):
         :return: the scanID attribute.
         :rtype: int
         """
-        return self._scan_id
+        return self.component_manager.scan_id
         # PROTECTED REGION END #    //  Vcc.scanID_read
 
     def write_scanID(self: Vcc, value: int) -> None:
@@ -582,7 +714,7 @@ class Vcc(CspSubElementObsDevice):
 
         :param value: the scanID value.
         """
-        self._scan_id=value
+        self.component_manager.scan_id = value
         # PROTECTED REGION END #    //  Vcc.scanID_write
 
     def read_configID(self: Vcc) -> str:
@@ -593,7 +725,7 @@ class Vcc(CspSubElementObsDevice):
         :return: the configID attribute.
         :rtype: str
         """
-        return self._config_id
+        return self.component_manager.config_id
         # PROTECTED REGION END #    //  Vcc.configID_read
 
     # --------
@@ -643,22 +775,9 @@ class Vcc(CspSubElementObsDevice):
 
         self.component_manager.deconfigure()
 
-        self._config_id = ""
-        self._scan_id = 0
-
         self._jones_matrix = [[0] * 16 for i in range(26)]
         self._delay_model = [[0] * 6 for i in range(26)]
-        self._scfo_band_5b = 0
-        self._scfo_band_5a = 0
-        self._scfo_band_4 = 0
-        self._scfo_band_3 = 0
-        self._scfo_band_2 = 0
-        self._scfo_band_1 = 0
-        self._rfi_flagging_mask = ""
         self._doppler_phase_correction = (0, 0, 0, 0)
-
-        self._frequency_band = 0
-        self._freq_band_name = ""
 
 
     def _raise_configuration_fatal_error(
@@ -698,15 +817,12 @@ class Vcc(CspSubElementObsDevice):
             :rtype: (ResultCode, str)
             :raises: ``CommandError`` if the configuration data validation fails.
             """
-
             device = self.target
-            result_code = ResultCode.OK
-
             # By this time, the receptor_ID should be set:
-            self.logger.debug(("device._receptor_ID = {}".
-            format(device._receptor_ID)))
+            self.logger.debug(("receptorID = {}".
+            format(device.component_manager.receptor_id)))
 
-            # This validation is already performed in the CbfSubbarray ConfigureScan.
+            # This validation is already performed in the CbfSubarray ConfigureScan.
             # TODO: Improve validation (validation should only be done once,
             # most of the validation can be done through a schema instead of manually
             # through functions).
@@ -716,72 +832,15 @@ class Vcc(CspSubElementObsDevice):
                 device._raise_configuration_fatal_error(msg, "ConfigureScan")
 
             device._deconfigure()
-            configuration = json.loads(argin)
 
-            device._config_id = configuration["config_id"]
-
-            # TODO: The frequency band attribute is optional but 
-            # if not specified the previous frequency band set should be used 
-            # (see Mid.CBF Scan Configuration in ICD). Therefore, the previous frequency 
-            # band value needs to be stored, and if the frequency band is not
-            # set in the config it should be replaced with the previous value.
-            device._frequency_band = freq_band_dict()[configuration["frequency_band"]]
-            device.component_manager._frequency_band = freq_band_dict()[configuration["frequency_band"]]
-            device._freq_band_name = configuration["frequency_band"]
-            if device._frequency_band in [4, 5]:
-                    device.component_manager._stream_tuning = \
-                        configuration["band_5_tuning"]
-
-            device.component_manager._frequency_band_offset_stream_1 = \
-                int(configuration["frequency_band_offset_stream_1"])
-            device.component_manager._frequency_band_offset_stream_2 = \
-                int(configuration["frequency_band_offset_stream_2"])
-            
-            if "rfi_flagging_mask" in configuration:
-                device._rfi_flagging_mask = str(configuration["rfi_flagging_mask"])
-            else:
-                self.logger.warn("'rfiFlaggingMask' not given. Proceeding.")
-
-            if "scfo_band_1" in configuration:
-                device._scfo_band_1 = int(configuration["scfo_band_1"])
-            else:
-                device._scfo_band_1 = 0
-                self.logger.warn("'scfoBand1' not specified. Defaulting to 0.")
-
-            if "scfo_band_2" in configuration:
-                device._scfo_band_2 = int(configuration["scfo_band_2"])
-            else:
-                device._scfo_band_2 = 0
-                self.logger.warn("'scfoBand2' not specified. Defaulting to 0.")
-
-            if "scfo_band_3" in configuration:
-                device._scfo_band_3 = int(configuration["scfo_band_3"])
-            else:
-                device._scfo_band_3 = 0
-                self.logger.warn("'scfoBand3' not specified. Defaulting to 0.")
-
-            if "scfo_band_4" in configuration:
-                device._scfo_band_4 = configuration["scfo_band_4"]
-            else:
-                device._scfo_band_4 = 0
-                self.logger.warn("'scfoBand4' not specified. Defaulting to 0.")
-
-            if "scfo_band_5a" in configuration:
-                device._scfo_band_5a = int(configuration["scfo_band_5a"])
-            else:
-                device._scfo_band_5a = 0
-                self.logger.warn("'scfoBand5a' not specified. Defaulting to 0.")
-
-            if "scfo_band_5b" in configuration:
-                device._scfo_band_5b = int(configuration["scfo_band_5b"])
-            else:
-                device._scfo_band_5b = 0
-                self.logger.warn("'scfoBand5b' not specified. Defaulting to 0.")
+            (result_code, msg) = device.component_manager.configure_scan(argin)
 
             if result_code == ResultCode.OK:
                 # store the configuration on command success
                 device._last_scan_configuration = argin
                 msg = "Configure command completed OK"
+
+            device.obs_state_model.perform_action("component_configured")
 
             return(result_code, msg)
 
@@ -893,7 +952,6 @@ class Vcc(CspSubElementObsDevice):
         doc_out="A tuple containing a return code and a string message indicating status. "
                 "The message is for information purpose only.",
     )
-    @DebugIt()
     def ConfigureScan(
         self: Vcc, 
         argin: str
@@ -913,6 +971,56 @@ class Vcc(CspSubElementObsDevice):
         (return_code, message) = command(argin)
         return [[return_code], [message]]
         # PROTECTED REGION END #    //  Vcc.ConfigureScan
+
+
+    class ScanCommand(CspSubElementObsDevice.ScanCommand):
+        """
+        A class for the Vcc's Scan() command.
+        """
+
+        def do(
+            self: Vcc.ScanCommand,
+            argin: str
+        ) -> Tuple[ResultCode, str]:
+            """
+            Stateless hook for Scan() command functionality.
+
+            :param argin: The scan ID as JSON formatted string
+            :type argin: str
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
+
+            device = self.target
+            (result_code, msg) = device.component_manager.scan(int(argin))
+
+            device.obs_state_model.perform_action("component_scanning")
+
+            return(result_code, msg)
+
+
+    class EndScanCommand(CspSubElementObsDevice.EndScanCommand):
+        """
+        A class for the Vcc's EndScan() command.
+        """
+        def do(self: Vcc.EndScanCommand) -> Tuple[ResultCode, str]:
+            """
+            Stateless hook for EndScan() command functionality.
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
+            device = self.target
+            (result_code, msg) = device.component_manager.end_scan()
+
+            device.obs_state_model.perform_action("component_not_scanning")
+
+            return(result_code, msg)
 
 
     class GoToIdleCommand(CspSubElementObsDevice.GoToIdleCommand):
@@ -939,9 +1047,11 @@ class Vcc(CspSubElementObsDevice):
             # Reset all values intialized in InitCommand.do():
             device._deconfigure()
 
-            if device.state_model.obs_state == ObsState.IDLE:
+            if device._obs_state == ObsState.IDLE:
                 return (ResultCode.OK, 
                 "GoToIdle command completed OK. Device already IDLE")
+
+            device.obs_state_model.perform_action("component_unconfigured")
 
             return (ResultCode.OK, "GoToIdle command completed OK")
 
@@ -956,7 +1066,7 @@ class Vcc(CspSubElementObsDevice):
         """
         self.logger.debug("Entering is_UpdateDelayModel_allowed()")
         self.logger.debug(f"self.dev_state(): {self.dev_state()}")
-        if self.dev_state() == tango.DevState.ON and \
+        if self.get_state() == tango.DevState.ON and \
                 self._obs_state in [ObsState.READY, ObsState.SCANNING]:
             return True
         return False
@@ -979,14 +1089,14 @@ class Vcc(CspSubElementObsDevice):
         self.logger.debug("Entering UpdateDelayModel()")
         argin = json.loads(argin)
 
-        self.logger.debug(("self._receptor_ID = {}".
-            format(self._receptor_ID)))
+        self.logger.debug(("receptor_ID = {}".
+            format(self.component_manager.receptor_id)))
 
         for delayDetails in argin:
             self.logger.debug(("delayDetails[receptor] = {}".
             format(delayDetails["receptor"])))
 
-            if delayDetails["receptor"] != self._receptor_ID:
+            if delayDetails["receptor"] != self.component_manager.receptor_id:
                 continue
             for frequency_slice in delayDetails["receptorDelayDetails"]:
                 fsid = frequency_slice["fsid"]
@@ -996,10 +1106,10 @@ class Vcc(CspSubElementObsDevice):
                             frequency_slice["delayCoeff"]
                     else:
                         log_msg = "'delayCoeff' not valid for frequency slice " + \
-                            f"{fsid} of receptor {self._receptor_ID}"
+                            f"{fsid} of receptor {self.component_manager.receptor_id}"
                         self.logger.error(log_msg)
                 else:
-                    log_msg = f"'fsid' {fsid} not valid for receptor {self._receptor_ID}"
+                    log_msg = f"'fsid' {fsid} not valid for receptor {self.component_manager.receptor_id}"
                     self.logger.error(log_msg)
         # PROTECTED REGION END #    // Vcc.UpdateDelayModel
 
@@ -1012,7 +1122,7 @@ class Vcc(CspSubElementObsDevice):
             :return: if UpdateJonesMatrix is allowed
             :rtype: bool
         """
-        if self.dev_state() == tango.DevState.ON and \
+        if self.get_state() == tango.DevState.ON and \
                 self._obs_state in [ObsState.READY, ObsState.SCANNING]:
             return True
         return False
@@ -1036,7 +1146,7 @@ class Vcc(CspSubElementObsDevice):
         argin = json.loads(argin)
 
         for receptor in argin:
-            if receptor["receptor"] == self._receptor_ID:
+            if receptor["receptor"] == self.component_manager.receptor_id:
                 for frequency_slice in receptor["receptorMatrix"]:
                     fs_id = frequency_slice["fsid"]
                     matrix = frequency_slice["matrix"]
@@ -1045,10 +1155,10 @@ class Vcc(CspSubElementObsDevice):
                             self._jones_matrix[fs_id-1] = matrix.copy()
                         else:
                             log_msg = f"'matrix' not valid for frequency slice {fs_id} " + \
-                                      f" of receptor {self._receptor_ID}"
+                                      f" of receptor {self.component_manager.receptor_id}"
                             self.logger.error(log_msg)
                     else:
-                        log_msg = f"'fsid' {fs_id} not valid for receptor {self._receptor_ID}"
+                        log_msg = f"'fsid' {fs_id} not valid for receptor {self.component_manager.receptor_id}"
                         self.logger.error(log_msg)
         # PROTECTED REGION END #    // Vcc.UpdateJonesMatrix
 
@@ -1211,7 +1321,7 @@ class Vcc(CspSubElementObsDevice):
         if argin["tdc_enable"]:
             try:
                 for receptor in argin["tdc_destination_address"]:
-                    if int(receptor["receptor_id"]) == self._receptor_ID:
+                    if int(receptor["receptor_id"]) == self.component_manager.receptor_id:
                     # TODO: validate input
                         pass
                     else:  # receptorID not found
@@ -1231,7 +1341,7 @@ class Vcc(CspSubElementObsDevice):
         :return: if ConfigureSearchWindow is allowed
         :rtype: bool
         """
-        if self.dev_state() == tango.DevState.ON and \
+        if self.get_state() == tango.DevState.ON and \
             (self._obs_state == ObsState.CONFIGURING or \
             self._obs_state == ObsState.READY):
             return True
