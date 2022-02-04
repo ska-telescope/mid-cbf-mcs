@@ -202,6 +202,41 @@ class TestFsp:
         "fsp_id", 
         [1]
     )
+    def test_AddRemoveSubarrayMembership(
+        self,
+        test_proxies: pytest.fixture,
+        fsp_id: int
+    ) -> None:
+
+        # subarray membership should be empty
+        assert test_proxies.fsp[fsp_id].subarrayMembership == None
+
+        # add FSP to some subarrays
+        test_proxies.fsp[fsp_id].AddSubarrayMembership(3)
+        test_proxies.fsp[fsp_id].AddSubarrayMembership(4)
+        time.sleep(4)
+        assert list(test_proxies.fsp[fsp_id].subarrayMembership) == [3, 4]
+
+        # remove from a subarray
+        test_proxies.fsp[fsp_id].RemoveSubarrayMembership(3)
+        time.sleep(4)
+        assert list(test_proxies.fsp[fsp_id].subarrayMembership) == [4]
+
+        # add again...
+        test_proxies.fsp[fsp_id].AddSubarrayMembership(15)
+        time.sleep(4)
+        assert list(test_proxies.fsp[fsp_id].subarrayMembership) == [4, 15]
+
+        # remove from all subarrays
+        test_proxies.fsp[fsp_id].RemoveSubarrayMembership(4)
+        test_proxies.fsp[fsp_id].RemoveSubarrayMembership(15)
+        time.sleep(4)
+        assert test_proxies.fsp[fsp_id].subarrayMembership == None
+    
+    @pytest.mark.parametrize(
+        "fsp_id", 
+        [1]
+    )
     def test_Disconnect(
          self,
         test_proxies: pytest.fixture,
@@ -218,39 +253,4 @@ class TestFsp:
         test_proxies.wait_timeout_dev([test_proxies.fsp[fsp_id]], DevState.DISABLE, 3, 0.1)
         assert test_proxies.fsp[fsp_id].State() == DevState.DISABLE
 
-    @pytest.mark.skip(reason="this class is currently untested, and not \
-    updated to version 0.11.3 of the base classes.")
-    @pytest.mark.parametrize(
-        "fsp_id", 
-        [1]
-    )
-    def test_AddRemoveSubarrayMembership(
-        self,
-        test_proxies: pytest.fixture,
-        fsp_id: int
-    ) -> None:
-
-        # subarray membership should be empty
-        assert test_proxies.fsp[fsp_id].subarrayMembership == None
-
-        # add FSP to some subarrays
-        test_proxies.fsp[fsp_id].AddSubarrayMembership(3)
-        test_proxies.fsp[fsp_id].AddSubarrayMembership(4)
-        time.sleep(1)
-        assert test_proxies.fsp[fsp_id].subarrayMembership == (3, 4)
-
-        # remove from a subarray
-        test_proxies.fsp[fsp_id].RemoveSubarrayMembership(3)
-        time.sleep(1)
-        assert test_proxies.fsp[fsp_id].subarrayMembership == (4,)
-
-        # add again...
-        test_proxies.fsp[fsp_id].AddSubarrayMembership(15)
-        time.sleep(1)
-        assert test_proxies.fsp[fsp_id].subarrayMembership == (4, 15)
-
-        # remove from all subarrays
-        test_proxies.fsp[fsp_id].RemoveSubarrayMembership(4)
-        test_proxies.fsp[fsp_id].RemoveSubarrayMembership(15)
-        time.sleep(1)
-        assert test_proxies.fsp[fsp_id].subarrayMembership == None
+    

@@ -178,6 +178,14 @@ class Fsp(SKACapability):
             "SetFunctionMode", self.SetFunctionModeCommand(*device_args)
         )
 
+        self.register_command_object(
+            "AddSubarrayMembership", self.AddSubarrayMembershipCommand(*device_args)
+        )
+
+        self.register_command_object(
+            "RemoveSubarrayMembership", self.RemoveSubarrayMembershipCommand(*device_args)
+        )
+
     def always_executed_hook(self: Fsp) -> None:
         # PROTECTED REGION ID(Fsp.always_executed_hook) ENABLED START #
         """Hook to be executed before any commands."""
@@ -228,7 +236,7 @@ class Fsp(SKACapability):
             :return: a DevEnum representing the mode.
             :rtype: tango.DevEnum
         """
-        return self._function_mode
+        return self.component_manager.function_mode
         # PROTECTED REGION END #    //  Fsp.functionMode_read
 
     def read_subarrayMembership(self: Fsp) -> List[int]:
@@ -429,17 +437,22 @@ class Fsp(SKACapability):
             return (result_code, message)
     
     class SetFunctionModeCommand(BaseCommand):
-        """The command class for the SetFunctionModeCommand command."""
+        """
+        A class for the Fsp's SetFunctionMode() command.
+        """
 
         def do(
-            self: Fsp.SetFunctionMode, 
+            self: Fsp.SetFunctionModeCommand, 
             argin: str
-        ) -> None:  
+        ) -> Tuple[ResultCode, str]:  
             """
-            Implement Fsp.SetFunctionModeCommand command functionality.
+            Stateless hook for SetFunctionMode() command functionality.
 
             :param argin: one of 'IDLE','CORR','PSS-BF','PST-BF', or 'VLBI'
-
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
             """
 
             (result_code,message) = self.target.component_manager.set_function_mode(argin)
@@ -473,6 +486,41 @@ class Fsp(SKACapability):
         if self.dev_state() == tango.DevState.ON:
             return True
         return False
+    
+    class AddSubarrayMembershipCommand(BaseCommand):
+        """
+        A class for the Fsp's AddSubarrayMembership() command.
+        """
+
+        def do(
+            self: Fsp.AddSubarrayMembershipCommand, 
+            argin: int
+        ) -> Tuple[ResultCode, str]:  
+            """
+            Stateless hook for AddSubarrayMembership() command functionality.
+
+            :param argin: an integer representing the subarray affiliation
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
+
+            (result_code,message) = self.target.component_manager.add_subarray_membership(argin)
+            return (result_code, message)
+    
+    @command(
+        dtype_in='uint16',
+        doc_in='Subarray ID'
+    )
+    def AddSubarrayMembership(self: Fsp, argin: str) -> None:  
+        """
+        Add a subarray to the subarrayMembership list.
+
+        :param argin: an integer representing the subarray affiliation
+        """
+        handler = self.get_command_object("AddSubarrayMembership")
+        return handler(argin)
 
     def is_AddSubarrayMembership_allowed(self: Fsp) -> bool:
         """
@@ -485,67 +533,55 @@ class Fsp(SKACapability):
         if self.dev_state() == tango.DevState.ON:
             return True
         return False
+    
+    class RemoveSubarrayMembershipCommand(BaseCommand):
+        """
+        A class for the Fsp's RemoveSubarrayMembership() command.
+        """
+
+        def do(
+            self: Fsp.RemoveSubarrayMembershipCommand, 
+            argin: int
+        ) -> Tuple[ResultCode, str]:  
+            """
+            Stateless hook for RemoveSubarrayMembership() command functionality.
+
+            :param argin: an integer representing the subarray affiliation
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
+
+            (result_code,message) = self.target.component_manager.remove_subarray_membership(argin)
+            return (result_code, message)
 
     @command(
         dtype_in='uint16',
         doc_in='Subarray ID'
     )
-    def AddSubarrayMembership(
-        self: Fsp,
-        argin: int,
-        ) -> None:
-        # PROTECTED REGION ID(Fsp.AddSubarrayMembership) ENABLED START #
+    def RemoveSubarrayMembership(self: Fsp, argin: str) -> None:  
         """
-            Add a subarray to the subarrayMembership list.
+        Remove subarray from the subarrayMembership list.
+        If subarrayMembership is empty after removing 
+        (no subarray is using this FSP), set function mode to empty.
 
-            :param argin: an integer representing the subarray affiliation
+        :param argin: an integer representing the subarray affiliation
         """
-        if argin not in self._subarray_membership:
-            self._subarray_membership.append(argin)
-        else:
-            log_msg = "FSP already belongs to subarray {}.".format(argin)
-            self.logger.warn(log_msg)
-        # PROTECTED REGION END #    //  Fsp.AddSubarrayMembership
+        handler = self.get_command_object("RemoveSubarrayMembership")
+        return handler(argin)
 
-    #TODO: does this need to be a command? Or just a function 
-    # private to the component manager?
     def is_RemoveSubarrayMembership_allowed(self: Fsp) -> bool:
         """
-            Determine if RemoveSubarrayMembership is allowed 
-            (allowed if FSP state is ON).
+        Determine if RemoveSubarrayMembership is allowed 
+        (allowed if FSP state is ON).
 
-            :return: if RemoveSubarrayMembership is allowed
-            :rtype: bool
+        :return: if RemoveSubarrayMembership is allowed
+        :rtype: bool
         """
         if self.dev_state() == tango.DevState.ON:
             return True
         return False
-
-    @command(
-        dtype_in='uint16',
-        doc_in='Subarray ID'
-    )
-    def RemoveSubarrayMembership(
-        self: Fsp,
-        argin: int,
-        ) -> None:
-        # PROTECTED REGION ID(Fsp.RemoveSubarrayMembership) ENABLED START #
-        """
-            Remove subarray from the subarrayMembership list.
-            If subarrayMembership is empty after removing 
-            (no subarray is using this FSP), set function mode to empty.
-
-            :param argin: an integer representing the subarray affiliation
-        """
-        if argin in self._subarray_membership:
-            self._subarray_membership.remove(argin)
-            # change function mode to IDLE if no subarrays are using it.
-            if not self._subarray_membership:
-                self._function_mode = 0
-        else:
-            log_msg = "FSP does not belong to subarray {}.".format(argin)
-            self.logger.warn(log_msg)
-        # PROTECTED REGION END #    //  Fsp.RemoveSubarrayMembership
 
     @command(
         dtype_out='DevString',

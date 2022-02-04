@@ -77,6 +77,7 @@ class FspComponentManager(CbfComponentManager):
         self._proxy_fsp_pst_subarray = None
 
         self._subarray_membership = []
+        self._function_mode = 0  # IDLE
 
         super().__init__(
             logger,
@@ -93,6 +94,16 @@ class FspComponentManager(CbfComponentManager):
 
         :return: an array of affiliations of the FSP.
         :rtype: List[int]
+        """
+        return self._subarray_membership
+    
+    @property
+    def function_mode(self: FspComponentManager) -> tango.DevEnum:
+        """
+        Function Mode
+
+        :return: the Fsp function mode
+        :rtype: tango.DevEnum
         """
         return self._subarray_membership
     
@@ -190,16 +201,20 @@ class FspComponentManager(CbfComponentManager):
             for fqdn in list(self._fsp_pst_subarray_fqdns_all):
                 self._group_fsp_pst_subarray.add(fqdn)
     
-    def _remove_subarray_membership(
+    def remove_subarray_membership(
         self: FspComponentManager,
         argin: int,
-        ) -> None:
+        ) -> Tuple[ResultCode, str]:
         """
         Remove subarray from the subarrayMembership list.
         If subarrayMembership is empty after removing 
         (no subarray is using this FSP), set function mode to empty.
 
         :param argin: an integer representing the subarray affiliation
+        :return: A tuple containing a return code and a string
+            message indicating status. The message is for
+            information purpose only.
+        :rtype: (ResultCode, str)
         """
         if argin in self._subarray_membership:
             self._subarray_membership.remove(argin)
@@ -209,6 +224,32 @@ class FspComponentManager(CbfComponentManager):
         else:
             log_msg = "FSP does not belong to subarray {}.".format(argin)
             self._logger.warn(log_msg)
+        
+        message = "Fsp RemoveSubarrayMembership command completed OK"
+        return (ResultCode.OK, message)
+    
+    def add_subarray_membership(
+        self: FspComponentManager,
+        argin: int,
+        ) -> Tuple[ResultCode, str]:
+        """
+        Add a subarray to the subarrayMembership list.
+
+        :param argin: an integer representing the subarray affiliation
+        :return: A tuple containing a return code and a string
+            message indicating status. The message is for
+            information purpose only.
+        :rtype: (ResultCode, str)
+        """
+
+        if argin not in self._subarray_membership:
+            self._subarray_membership.append(argin)
+        else:
+            log_msg = "FSP already belongs to subarray {}.".format(argin)
+            self._logger.warn(log_msg)
+        
+        message = "Fsp AddSubarrayMembership command completed OK"
+        return (ResultCode.OK, message)
     
     def on(      
         self: FspComponentManager,
@@ -264,7 +305,7 @@ class FspComponentManager(CbfComponentManager):
             self._group_fsp_pst_subarray.command_inout("Off")
 
             for subarray_ID in self._subarray_membership[:]:
-                self.RemoveSubarrayMembership(subarray_ID)
+                self.remove_subarray_membership(subarray_ID)
 
             
             message = "Fsp Off command completed OK"
