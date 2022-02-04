@@ -247,7 +247,8 @@ class CbfDeviceProxy:
             :return: whether the device has completed initialisation
             """
             try:
-                return device.state() != DevState.INIT
+                #TODO:  base class update v0.11.3 why this doesn't work with device.state()
+                return device.State() != DevState.INIT
             except DevFailed:
                 self._logger.debug(
                     "Caught a DevFailed exception while checking that the device has "

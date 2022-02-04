@@ -20,6 +20,8 @@ import logging
 import pytest
 from typing import Callable, Type, Dict
 
+from ska_mid_cbf_mcs.testing.tango_harness import TangoHarness
+
 # Path
 file_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
 
@@ -32,12 +34,41 @@ from tango.server import command
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 
 from ska_tango_base.control_model import HealthState, AdminMode, ObsState, LoggingLevel
+from ska_tango_base.commands import ResultCode
 
+CONST_WAIT_TIME = 4
 
 class TestVcc:
     """
     Test class for Vcc tests.
     """
+
+    def test_State(
+        self: TestVcc,
+        device_under_test: CbfDeviceProxy,
+    ) -> None:
+        """
+        Test State
+
+        :param device_under_test: fixture that provides a
+            :py:class:`CbfDeviceProxy` to the device under test, in a
+            :py:class:`tango.test_context.DeviceTestContext`.
+        """
+        assert device_under_test.State() == DevState.OFF
+    
+    def test_Status(
+        self: TestVcc,
+        device_under_test: CbfDeviceProxy,
+    ) -> None:
+
+        assert device_under_test.Status() == "The device is in OFF state."
+
+    def test_adminMode(
+        self: TestVcc,
+        device_under_test: CbfDeviceProxy,
+    ) -> None:
+
+        assert device_under_test.adminMode == AdminMode.OFFLINE
 
     @pytest.mark.parametrize(
         "config_file_name",
@@ -47,9 +78,6 @@ class TestVcc:
             )
         ]
     )
-    @pytest.mark.skip(
-        reason="Not updated to version 0.11.3 of the base classes."
-    )    
     def test_Vcc_ConfigureScan_basic(
         self,
         device_under_test: CbfDeviceProxy,
@@ -64,10 +92,9 @@ class TestVcc:
             :param config_file_name: JSON file for the configuration 
         """
 
-        # to get the mock devices, use tango_harness.get_device("fqdn")
-
-        device_under_test.On()
-        time.sleep(1)
+        (result_code, msg) = device_under_test.On()
+        time.sleep(CONST_WAIT_TIME)
+        assert result_code == ResultCode.OK
         assert device_under_test.State() == DevState.ON
         
         f = open(file_path + config_file_name)
@@ -75,38 +102,15 @@ class TestVcc:
         configuration = json.loads(json_str)
         f.close()
 
-        frequency_bands = ["1", "2", "3", "4", "5a", "5b"]
         device_under_test.TurnOnBandDevice(configuration["frequency_band"])
 
         device_under_test.ConfigureScan(json_str)
         time.sleep(3)
-
         assert device_under_test.obsState == ObsState.READY
-        assert device_under_test.configID == configuration["config_id"]
-        assert device_under_test.frequencyBand == frequency_bands.index(configuration["frequency_band"])
-        assert device_under_test.rfiFlaggingMask == str(configuration["rfi_flagging_mask"])
-        if "band_5_tuning" in configuration:
-                if device_under_test.frequencyBand in [4, 5]:
-                    band5Tuning_config = configuration["band_5_tuning"]
-                    for i in range(0, len(band5Tuning_config)):
-                        assert device_under_test.band5Tuning[i] == band5Tuning_config[i]
-        if "frequency_band_offset_stream_1" in configuration:
-            assert  device_under_test.frequencyBandOffsetStream1 == configuration["frequency_band_offset_stream_1"]
-        if "frequency_band_offset_stream_2" in configuration:
-            assert  device_under_test.frequencyBandOffsetStream2 == configuration["frequency_band_offset_stream_2"] 
-        assert device_under_test.scfoBand1 == configuration["scfo_band_1"]
-        assert device_under_test.scfoBand2 == configuration["scfo_band_2"]
-        assert device_under_test.scfoBand3 == configuration["scfo_band_3"]
-        assert device_under_test.scfoBand4 == configuration["scfo_band_4"]
-        assert device_under_test.scfoBand5a == configuration["scfo_band_5a"]
-        assert device_under_test.scfoBand5b == configuration["scfo_band_5b"]
 
         device_under_test.TurnOffBandDevice(configuration["frequency_band"])
 
-    
-    @pytest.mark.skip(
-        reason="Not updated to version 0.11.3 of the base classes."
-    ) 
+
     def test_On_Off(
         self: TestVcc,
         device_under_test: CbfDeviceProxy
@@ -142,9 +146,6 @@ class TestVcc:
             )
         ]
     )
-    @pytest.mark.skip(
-        reason="Not updated to version 0.11.3 of the base classes."
-    ) 
     def test_Scan_EndScan_GoToIdle(
         self: TestVcc,
         device_under_test: CbfDeviceProxy,
@@ -175,7 +176,6 @@ class TestVcc:
         # Use callable 'Scan'  API
         device_under_test.Scan(scan_id_device_data)
         time.sleep(0.1)
-        assert device_under_test.scanID == scan_id
         assert device_under_test.obsState == ObsState.SCANNING
 
 
@@ -233,9 +233,6 @@ class TestVcc:
             )
         ]
     )
-    @pytest.mark.skip(
-        reason="Not updated to version 0.11.3 of the base classes."
-    ) 
     def test_UpdateJonesMatrix(
         self: TestVcc,
         device_under_test: CbfDeviceProxy,
@@ -310,9 +307,6 @@ class TestVcc:
             )
         ]
     )
-    @pytest.mark.skip(
-        reason="Not updated to version 0.11.3 of the base classes."
-    ) 
     def test_UpdateDelayModel(
         self: TestVcc,
         device_under_test: CbfDeviceProxy,
