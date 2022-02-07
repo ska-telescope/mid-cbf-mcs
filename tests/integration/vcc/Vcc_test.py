@@ -90,12 +90,6 @@ class TestVcc:
             assert  test_proxies.vcc[vcc_id].frequencyBandOffsetStream1 == configuration["frequency_band_offset_stream_1"]
         if "frequency_band_offset_stream_2" in configuration:
             assert  test_proxies.vcc[vcc_id].frequencyBandOffsetStream2 == configuration["frequency_band_offset_stream_2"] 
-        assert test_proxies.vcc[vcc_id].scfoBand1 == configuration["scfo_band_1"]
-        assert test_proxies.vcc[vcc_id].scfoBand2 == configuration["scfo_band_2"]
-        assert test_proxies.vcc[vcc_id].scfoBand3 == configuration["scfo_band_3"]
-        assert test_proxies.vcc[vcc_id].scfoBand4 == configuration["scfo_band_4"]
-        assert test_proxies.vcc[vcc_id].scfoBand5a == configuration["scfo_band_5a"]
-        assert test_proxies.vcc[vcc_id].scfoBand5b == configuration["scfo_band_5b"]
 
         test_proxies.vcc[vcc_id].Scan("1")
         test_proxies.wait_timeout_obs([test_proxies.vcc[vcc_id]], ObsState.SCANNING, 3, 1)

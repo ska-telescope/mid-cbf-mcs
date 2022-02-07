@@ -142,48 +142,6 @@ class Vcc(CspSubElementObsDevice):
         doc="RFI Flagging Mask"
     )
 
-    scfoBand1 = attribute(
-        dtype='int',
-        access=AttrWriteType.READ,
-        label="SCFO (band 1)",
-        doc="Sample clock frequency offset for band 1",
-    )
-
-    scfoBand2 = attribute(
-        dtype='int',
-        access=AttrWriteType.READ,
-        label="SCFO (band 2)",
-        doc="Sample clock frequency offset for band 2",
-    )
-
-    scfoBand3 = attribute(
-        dtype='int',
-        access=AttrWriteType.READ,
-        label="SCFO (band 3)",
-        doc="Sample clock frequency offset for band 3",
-    )
-
-    scfoBand4 = attribute(
-        dtype='int',
-        access=AttrWriteType.READ,
-        label="SCFO (band 4)",
-        doc="Sample clock frequency offset for band 4",
-    )
-
-    scfoBand5a = attribute(
-        dtype='int',
-        access=AttrWriteType.READ,
-        label="SCFO (band 5a)",
-        doc="Sample clock frequency offset for band 5a",
-    )
-
-    scfoBand5b = attribute(
-        dtype='int',
-        access=AttrWriteType.READ,
-        label="SCFO (band 5b)",
-        doc="Sample clock frequency offset for band 5b",
-    )
-
     delayModel = attribute(
         dtype=(('double',),),
         max_dim_x=6,
@@ -532,90 +490,6 @@ class Vcc(CspSubElementObsDevice):
         """
         return self.component_manager.rfi_flagging_mask
         # PROTECTED REGION END #    //  Vcc.rfiFlaggingMask_read
-
-    def read_scfoBand1(self: Vcc) -> int:
-        # PROTECTED REGION ID(Vcc.scfoBand1_read) ENABLED START #
-        """
-        Read the scfoBand1 attribute.
-
-        :return: the scfoBand1 attribute (sample clock frequency 
-            :return: the scfoBand1 attribute (sample clock frequency 
-        :return: the scfoBand1 attribute (sample clock frequency 
-            offset for band 1).
-        :rtype: int
-        """
-        return self.component_manager.scfo_band_1
-        # PROTECTED REGION END #    //  Vcc.scfoBand1_read
-
-    def read_scfoBand2(self: Vcc) -> int:
-        # PROTECTED REGION ID(Vcc.scfoBand2_read) ENABLED START #
-        """
-        Read the scfoBand2 attribute.
-
-        :return: the scfoBand2 attribute (sample clock frequency 
-            :return: the scfoBand2 attribute (sample clock frequency 
-        :return: the scfoBand2 attribute (sample clock frequency 
-            offset for band 2).
-        :rtype: int
-        """
-        return self.component_manager.scfo_band_2
-        # PROTECTED REGION END #    //  Vcc.scfoBand2_read
-
-    def read_scfoBand3(self: Vcc) -> int:
-        # PROTECTED REGION ID(Vcc.scfoBand3_read) ENABLED START #
-        """
-        Read the scfoBand3 attribute.
-
-        :return: the scfoBand3 attribute (sample clock frequency 
-            :return: the scfoBand3 attribute (sample clock frequency 
-        :return: the scfoBand3 attribute (sample clock frequency 
-            offset for band 3).
-        :rtype: int
-        """      
-        return self.component_manager.scfo_band_3
-        # PROTECTED REGION END #    //  Vcc.scfoBand3_read
-
-    def read_scfoBand4(self: Vcc) -> int:
-        # PROTECTED REGION ID(Vcc.scfoBand4_read) ENABLED START #
-        """
-        Read the scfoBand4 attribute.
-
-        :return: the scfoBand4 attribute (sample clock frequency 
-            :return: the scfoBand4 attribute (sample clock frequency 
-        :return: the scfoBand4 attribute (sample clock frequency 
-            offset for band 4).
-        :rtype: int
-        """      
-        return self.component_manager.scfo_band_4
-        # PROTECTED REGION END #    //  Vcc.scfoBand4_read
-
-    def read_scfoBand5a(self: Vcc) -> int:
-        # PROTECTED REGION ID(Vcc.scfoBand5a_read) ENABLED START #
-        """
-        Read the scfoBand5a attribute.
-
-        :return: the scfoBand5a attribute (sample clock frequency 
-            :return: the scfoBand5a attribute (sample clock frequency 
-        :return: the scfoBand5a attribute (sample clock frequency 
-            offset for band 5a).
-        :rtype: int
-        """     
-        return self.component_manager.scfo_band_5a
-        # PROTECTED REGION END #    //  Vcc.scfoBand5a_read
-
-    def read_scfoBand5b(self: Vcc) -> int:
-        # PROTECTED REGION ID(Vcc.scfoBand5b_read) ENABLED START #
-        """
-        Read the scfoBand5b attribute.
-
-        :return: the scfoBand5b attribute (sample clock frequency 
-            :return: the scfoBand5b attribute (sample clock frequency 
-        :return: the scfoBand5b attribute (sample clock frequency 
-            offset for band 5b.
-        :rtype: int
-        """      
-        return self.component_manager.scfo_band_5b
-        # PROTECTED REGION END #    //  Vcc.scfoBand5b_read
 
     def read_delayModel(self: Vcc) -> List[List[float]]:
         # PROTECTED REGION ID(Vcc.delayModel_read) ENABLED START #

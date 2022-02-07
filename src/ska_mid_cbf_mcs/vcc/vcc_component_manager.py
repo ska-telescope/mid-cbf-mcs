@@ -93,30 +93,6 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         return self._rfi_flagging_mask
 
     @property
-    def scfo_band_1(self: VccComponentManager) -> int:
-        return self._scfo_band_1
-
-    @property
-    def scfo_band_2(self: VccComponentManager) -> int:
-        return self._scfo_band_2
-
-    @property
-    def scfo_band_3(self: VccComponentManager) -> int:
-        return self._scfo_band_3
-
-    @property
-    def scfo_band_4(self: VccComponentManager) -> int:
-        return self._scfo_band_4
-
-    @property
-    def scfo_band_5a(self: VccComponentManager) -> int:
-        return self._scfo_band_5a
-
-    @property
-    def scfo_band_5b(self: VccComponentManager) -> int:
-        return self._scfo_band_5b
-
-    @property
     def jones_matrix(self: VccComponentManager) -> List[List[float]]:
         return self._jones_matrix
 
@@ -178,12 +154,6 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         self._frequency_band_offset_stream_1 = 0
         self._frequency_band_offset_stream_2 = 0
         self._rfi_flagging_mask = ""
-        self._scfo_band_1 = 0
-        self._scfo_band_2 = 0
-        self._scfo_band_3 = 0
-        self._scfo_band_4 = 0
-        self._scfo_band_5a = 0
-        self._scfo_band_5b = 0
 
         self._jones_matrix = [[0] * 16 for _ in range(26)]
         self._delay_model = [[0] * 6 for _ in range(26)]
@@ -363,12 +333,6 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         self._jones_matrix = [[0] * 16 for _ in range(26)]
         self._delay_model = [[0] * 6 for _ in range(26)]
         self._rfi_flagging_mask = ""
-        self._scfo_band_5b = 0
-        self._scfo_band_5a = 0
-        self._scfo_band_4 = 0
-        self._scfo_band_3 = 0
-        self._scfo_band_2 = 0
-        self._scfo_band_1 = 0
         self._frequency_band_offset_stream_2 = 0
         self._frequency_band_offset_stream_1 = 0
         self._stream_tuning = (0, 0)
@@ -417,43 +381,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         else:
             self._logger.warning("'rfiFlaggingMask' not given. Proceeding.")
 
-        if "scfo_band_1" in configuration:
-            self._scfo_band_1 = int(configuration["scfo_band_1"])
-        else:
-            self._scfo_band_1 = 0
-            self._logger.warning("'scfoBand1' not specified. Defaulting to 0.")
-
-        if "scfo_band_2" in configuration:
-            self._scfo_band_2 = int(configuration["scfo_band_2"])
-        else:
-            self._scfo_band_2 = 0
-            self._logger.warning("'scfoBand2' not specified. Defaulting to 0.")
-
-        if "scfo_band_3" in configuration:
-            self._scfo_band_3 = int(configuration["scfo_band_3"])
-        else:
-            self._scfo_band_3 = 0
-            self._logger.warning("'scfoBand3' not specified. Defaulting to 0.")
-
-        if "scfo_band_4" in configuration:
-            self._scfo_band_4 = configuration["scfo_band_4"]
-        else:
-            self._scfo_band_4 = 0
-            self._logger.warning("'scfoBand4' not specified. Defaulting to 0.")
-
-        if "scfo_band_5a" in configuration:
-            self._scfo_band_5a = int(configuration["scfo_band_5a"])
-        else:
-            self._scfo_band_5a = 0
-            self._logger.warning("'scfoBand5a' not specified. Defaulting to 0.")
-
-        if "scfo_band_5b" in configuration:
-            self._scfo_band_5b = int(configuration["scfo_band_5b"])
-        else:
-            self._scfo_band_5b = 0
-            self._logger.warning("'scfoBand5b' not specified. Defaulting to 0.")
-
-        return (ResultCode.OK, "Vcc ConfigureScan command completed OK")
+        return (ResultCode.OK, "Vcc ScanCommand completed OK")
 
     def scan(self: VccComponentManager, scan_id: int) -> Tuple[ResultCode, str]:
 
