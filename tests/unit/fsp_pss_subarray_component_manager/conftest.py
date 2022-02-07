@@ -57,7 +57,7 @@ def fsp_pss_subarray_component_manager(
     :return: a FspPssSubarray component manager.
     """
     
-    f = open(file_path + "/../../data/controller_component_manager.json")
+    f = open(file_path + "/../../data/test_fqdns.json")
     json_string = f.read().replace("\n", "")
     f.close()
     configuration = json.loads(json_string)

@@ -433,7 +433,6 @@ class FspComponentManager(CbfComponentManager):
 
                 for i in self._subarray_membership:
                     if self._function_mode == FspModes.PSS_BF.value:
-                        print("FQDNNNN {}".format(self._fsp_pss_subarray_fqdns_all[i-1]))
                         proxy = self._proxy_fsp_pss_subarray[i - 1]
                         fs_length = 16
                     elif self._function_mode == FspModes.PST_BF.value:
@@ -449,18 +448,13 @@ class FspComponentManager(CbfComponentManager):
 
                     for receptor in argin:
                         rec_id = int(receptor["receptor"])
-                        print("REC IDDDD {}".format(rec_id))
-                        print("PROXYYY {}".format(proxy))
-                        print("PROXYYY RECEPPPPPPPPPP {}".format(proxy.receptors))
                         if rec_id in proxy.receptors:
                             for frequency_slice in receptor["receptorMatrix"]:
                                 fs_id = frequency_slice["fsid"]
                                 matrix = frequency_slice["matrix"]
                                 if fs_id == self._fsp_id:
                                     if len(matrix) == fs_length:
-                                        print("COPYINGGGGGGGGGGG")
                                         self._jones_matrix[rec_id - 1] = matrix.copy()
-                                        print(self._jones_matrix[rec_id - 1])
                                     else:
                                         log_msg = "Fsp UpdateJonesMatrix command error: \
                                         'matrix' not valid length for frequency slice {} of " \
