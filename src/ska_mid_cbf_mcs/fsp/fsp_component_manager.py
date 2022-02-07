@@ -289,7 +289,7 @@ class FspComponentManager(CbfComponentManager):
             self._group_fsp_pss_subarray.command_inout("On")
             self._group_fsp_pst_subarray.command_inout("On")
             
-            message = "CbfController On command completed OK"
+            message = "Fsp On command completed OK"
             return (ResultCode.OK, message)
 
         else:

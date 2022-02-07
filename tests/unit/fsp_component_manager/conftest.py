@@ -41,7 +41,7 @@ CONST_TEST_NUM_FSP = 4
 CONST_TEST_NUM_SUBARRAY = 1
 
 @pytest.fixture()
-def controller_component_manager(
+def fsp_component_manager(
     logger: logging.Logger,
     tango_harness: TangoHarness, # sets the connection_factory
     push_change_event_callback: MockChangeEventCallback,
