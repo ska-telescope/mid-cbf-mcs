@@ -236,12 +236,6 @@ class TestVccComponentManager:
         assert vcc_component_manager.frequency_band_offset_stream_1 == configuration["frequency_band_offset_stream_1"]
         assert vcc_component_manager.frequency_band_offset_stream_2 == configuration["frequency_band_offset_stream_2"]
         assert vcc_component_manager.rfi_flagging_mask == str(configuration["rfi_flagging_mask"])
-        assert vcc_component_manager.scfo_band_1 == configuration["scfo_band_1"]
-        assert vcc_component_manager.scfo_band_2 == configuration["scfo_band_2"]
-        assert vcc_component_manager.scfo_band_3 == configuration["scfo_band_3"]
-        assert vcc_component_manager.scfo_band_4 == configuration["scfo_band_4"]
-        assert vcc_component_manager.scfo_band_5a == configuration["scfo_band_5a"]
-        assert vcc_component_manager.scfo_band_5b == configuration["scfo_band_5b"]
 
 
 
