@@ -1094,11 +1094,6 @@ class CbfSubarray(SKASubarray):
 
         if self._group_vcc.get_size() > 0:
             self._group_vcc.command_inout("GoToIdle")
-            frequency_bands = ["1", "2", "3", "4", "5a", "5b"]
-            freq_band_name =  frequency_bands[self._frequency_band]
-            data = tango.DeviceData()
-            data.insert(tango.DevString, freq_band_name)
-            self._group_vcc.command_inout("TurnOffBandDevice", data)
 
         if self._group_fsp.get_size() > 0:
             # change FSP subarray membership
@@ -1985,7 +1980,7 @@ class CbfSubarray(SKASubarray):
 
             data = tango.DeviceData()
             data.insert(tango.DevString, common_configuration["frequency_band"])
-            device._group_vcc.command_inout("TurnOnBandDevice", data)
+            device._group_vcc.command_inout("ConfigureBand", data)
 
             # Configure band5Tuning, if frequencyBand is 5a or 5b.
             if device._frequency_band in [4, 5]:

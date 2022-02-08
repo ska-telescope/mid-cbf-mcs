@@ -66,15 +66,17 @@ class TestVcc:
         frequency_bands = ["1", "2", "3", "4", "5a", "5b"]
         frequency_band = configuration["frequency_band"]
         freq_band_index = dict(zip(freq_band_dict().keys(), ['12', '12', '3', '4', '5', '5']))
-        test_proxies.vcc[vcc_id].TurnOnBandDevice(frequency_band)
+        test_proxies.vcc[vcc_id].ConfigureBand(frequency_band)
         time.sleep(2)
         assert test_proxies.vcc[vcc_id].frequencyBand == freq_band_dict()[frequency_band]
 
+        """
         for band, proxy in test_proxies.vccBand[vcc_id].items():
             if band == freq_band_index[frequency_band]:
                 assert proxy.state() == DevState.ON
             else:
                 assert proxy.state() == DevState.OFF
+        """
 
         test_proxies.vcc[vcc_id].ConfigureScan(json_str)
         test_proxies.wait_timeout_obs([test_proxies.vcc[vcc_id]], ObsState.READY, 3, 1)
@@ -108,11 +110,13 @@ class TestVcc:
         test_proxies.wait_timeout_obs([test_proxies.vcc[vcc_id]], ObsState.READY, 3, 1)
         assert test_proxies.vcc[vcc_id].obsState == ObsState.READY
 
-        test_proxies.vcc[vcc_id].TurnOffBandDevice(frequency_band)
+        test_proxies.vcc[vcc_id].GoToIdle()
         time.sleep(2)
 
+        """
         for _, proxy in test_proxies.vccBand[vcc_id].items():
             assert proxy.state() == DevState.OFF
+        """
 
         (result_code, msg) = test_proxies.vcc[vcc_id].Off()
         test_proxies.wait_timeout_dev([test_proxies.vcc[vcc_id]], DevState.OFF, 3, 1)

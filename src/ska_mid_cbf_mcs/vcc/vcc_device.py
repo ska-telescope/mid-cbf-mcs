@@ -55,6 +55,10 @@ class Vcc(CspSubElementObsDevice):
         dtype='DevUShort'
     )
 
+    VccControllerAddress = device_property(
+        dtype='str'
+    )
+
     Band1And2Address = device_property(
         dtype='str'
     )
@@ -205,11 +209,7 @@ class Vcc(CspSubElementObsDevice):
         )
 
         self.register_command_object(
-            "TurnOnBandDevice", self.TurnOnBandDeviceCommand(*device_args)
-        )
-
-        self.register_command_object(
-            "TurnOffBandDevice", self.TurnOffBandDeviceCommand(*device_args)
+            "ConfigureBand", self.ConfigureBandCommand(*device_args)
         )
 
         self.register_command_object(
@@ -263,6 +263,7 @@ class Vcc(CspSubElementObsDevice):
 
         return VccComponentManager(
             simulation_mode=self._simulation_mode,
+            vcc_controller=self.VccControllerAddress,
             vcc_band=[
                 self.Band1And2Address,
                 self.Band3Address,
@@ -637,16 +638,16 @@ class Vcc(CspSubElementObsDevice):
             return self.target.component_manager.standby()
 
 
-    class TurnOnBandDeviceCommand(ResponseCommand):
+    class ConfigureBandCommand(ResponseCommand):
         """
-        A class for the Vcc's TurnOnBandDevice() command.
+        A class for the Vcc's ConfigureBand() command.
 
         Turn on the corresponding band device and disable all the others.
         """
 
-        def do(self: Vcc.TurnOnBandDeviceCommand, argin: str) -> Tuple[ResultCode, str]:
+        def do(self: Vcc.ConfigureBandCommand, argin: str) -> Tuple[ResultCode, str]:
             """
-            Stateless hook for TurnOnBandDevice() command functionality.
+            Stateless hook for ConfigureBand() command functionality.
 
             :param freq_band_name: the frequency band name
 
@@ -655,15 +656,15 @@ class Vcc(CspSubElementObsDevice):
                 information purpose only.
             :rtype: (ResultCode, str)
             """
-            return self.target.component_manager.turn_on_band_device(argin)
+            return self.target.component_manager.configure_band(argin)
 
     @command(
         dtype_in="DevString",
         doc_in="Frequency band string.",
     )
     @DebugIt()
-    def TurnOnBandDevice(self, freq_band_name: str) -> Tuple[ResultCode, str]:
-        # PROTECTED REGION ID(CspSubElementObsDevice.TurnOnBandDevice) ENABLED START #
+    def ConfigureBand(self, freq_band_name: str) -> Tuple[ResultCode, str]:
+        # PROTECTED REGION ID(CspSubElementObsDevice.ConfigureBand) ENABLED START #
         """
         Turn on the corresponding band device and disable all the others.
 
@@ -674,54 +675,10 @@ class Vcc(CspSubElementObsDevice):
             information purpose only.
         :rtype: (ResultCode, str)
         """
-        command = self.get_command_object("TurnOnBandDevice")
+        command = self.get_command_object("ConfigureBand")
         (result_code, message) = command(freq_band_name)
         return [[result_code], [message]]
-        # PROTECTED REGION END #    //  CspSubElementObsDevice.TurnOnBandDevice
-
-
-    class TurnOffBandDeviceCommand(ResponseCommand):
-        """
-        A class for the Vcc's TurnOffBandDevice() command.
-
-        Turn off the corresponding band device.
-        """
-
-        def do(self: Vcc.TurnOffBandDeviceCommand, argin: str) -> Tuple[ResultCode, str]:
-            """
-            Stateless hook for TurnOffBandDevice() command functionality.
-
-            :param freq_band_name: the frequency band name
-
-            :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-            :rtype: (ResultCode, str)
-            """
-            return self.target.component_manager.turn_off_band_device(argin)
-
-
-    @command(
-        dtype_in="DevString",
-        doc_in="Frequency band string.",
-    )
-    @DebugIt()
-    def TurnOffBandDevice(self, freq_band_name: str) -> Tuple[ResultCode, str]:
-        # PROTECTED REGION ID(CspSubElementObsDevice.TurnOffBandDevice) ENABLED START #
-        """
-        Turn off the corresponding band device.
-
-        :param freq_band_name: the frequency band name
-
-        :return: A tuple containing a return code and a string
-            message indicating status. The message is for
-            information purpose only.
-        :rtype: (ResultCode, str)
-        """
-        command = self.get_command_object("TurnOffBandDevice")
-        (result_code, message) = command(freq_band_name)
-        return [[result_code], [message]]
-        # PROTECTED REGION END #    //  CspSubElementObsDevice.TurnOffBandDevice
+        # PROTECTED REGION END #    //  CspSubElementObsDevice.ConfigureBand
 
     def _raise_configuration_fatal_error(
         self: Vcc, 
