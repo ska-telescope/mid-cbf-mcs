@@ -84,6 +84,8 @@ class FspComponentManager(CbfComponentManager):
         self._subarray_membership = []
         self._function_mode = 0  # IDLE
         self._jones_matrix = [[0.0] * 16 for _ in range(4)]
+        self._delay_model = [[0.0] * 6 for _ in range(4)]
+        self._timing_beam_weights = [[0.0] * 6 for _ in range(4)]
 
         super().__init__(
             logger,
@@ -122,6 +124,26 @@ class FspComponentManager(CbfComponentManager):
         :rtype: List[List[float]]
         """
         return self._jones_matrix
+    
+    @property
+    def delay_model(self: FspComponentManager) -> List[List[float]]:
+        """
+        Delay Model
+
+        :return: the delay model
+        :rtype: List[List[float]]
+        """
+        return self._delay_model
+    
+    @property
+    def timing_beam_weights(self: FspComponentManager) -> List[List[float]]:
+        """
+        Timing Beam Weights
+
+        :return: the timing beam weights
+        :rtype: List[List[float]]
+        """
+        return self._timing_beam_weights
     
     def start_communicating(
         self: FspComponentManager,
@@ -477,6 +499,127 @@ class FspComponentManager(CbfComponentManager):
         
         else:
             log_msg = "Fsp UpdateJonesMatrix command failed: \
+                    proxies not connected"
+            self._logger.error(log_msg)
+            return (ResultCode.FAILED, log_msg)
+    
+    def update_delay_model(      
+        self: FspComponentManager,
+        argin: str,
+    ) -> Tuple[ResultCode, str]:
+        """
+        Update the FSP's delay model (serialized JSON object)
+
+        :param argin: the delay model data
+        :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+        :rtype: (ResultCode, str)
+        """
+
+        if self._connected:
+            # update if current function mode is either PSS-BF or PST-BF
+            if self._function_mode in [2, 3]:
+                argin = json.loads(argin)
+                for i in self._subarray_membership:
+                    if self._function_mode == 2:
+                        proxy = self._proxy_fsp_pss_subarray[i - 1]
+                    else:
+                        proxy = self._proxy_fsp_pst_subarray[i - 1]
+                    for receptor in argin:
+                        rec_id = int(receptor["receptor"])
+                        if rec_id in proxy.receptors:
+                            for frequency_slice in receptor["receptorDelayDetails"]:
+                                fs_id = frequency_slice["fsid"]
+                                model = frequency_slice["delayCoeff"]
+                                if fs_id == self._fsp_id:
+                                    if len(model) == 6:
+                                        self._delay_model[rec_id - 1] = model.copy()
+                                    else:
+                                        log_msg = "Fsp UpdateDelayModel command failed: \
+                                            'model' not valid length for frequency slice {} of " \
+                                                "receptor {}".format(fs_id, rec_id)
+                                        self._logger.error(log_msg)
+                                        return (ResultCode.FAILED, log_msg)
+                                else:
+                                    log_msg = "Fsp UpdateDelayModel command failed: \
+                                        'fsid' {} not valid for receptor {}".format(
+                                        fs_id, rec_id
+                                    )
+                                    self._logger.error(log_msg)
+                                    return (ResultCode.FAILED, log_msg)
+
+            else:
+                log_msg = "Fsp UpdateDelayModel command failed: \
+                    model not used in function mode {}".format(self._function_mode)
+                self._logger.error(log_msg)
+                return (ResultCode.FAILED, log_msg)
+            
+            message = "Fsp UpdateDelayModel command completed OK"
+            return (ResultCode.OK, message)
+        
+        else:
+            log_msg = "Fsp UpdateDelayModel command failed: \
+                    proxies not connected"
+            self._logger.error(log_msg)
+            return (ResultCode.FAILED, log_msg)
+    
+    def update_timing_beam_weights(      
+        self: FspComponentManager,
+        argin: str,
+    ) -> Tuple[ResultCode, str]:
+        """
+        Update the FSP's timing beam weights (serialized JSON object)
+
+        :param argin: the timing beam weight data:param argin: the timing beam weight data
+        :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+        :rtype: (ResultCode, str)
+        """
+
+        if self._connected:
+
+            # update if current function mode is PST-BF
+            if self._function_mode == 3:
+                argin = json.loads(argin)
+                for i in self._subarray_membership:
+                    proxy = self._proxy_fsp_pst_subarray[i - 1]
+                    for receptor in argin:
+                        rec_id = int(receptor["receptor"])
+                        if rec_id in proxy.receptors:
+                            for frequency_slice in receptor["receptorWeightsDetails"]:
+                                fs_id = frequency_slice["fsid"]
+                                weights = frequency_slice["weights"]
+                                if fs_id == self._fsp_id:
+                                    if len(weights) == 6:
+                                        self._timing_beam_weights[rec_id - 1] = weights.copy()
+                                    else:
+                                        log_msg = "Fsp UpdateDelayModel command failed: \
+                                                'weights' not valid length for frequency slice {} of \
+                                                receptor {}".format(fs_id, rec_id)
+                                        self._logger.error(log_msg)
+                                        return (ResultCode.FAILED, log_msg)
+                                    
+                                else:
+                                    log_msg = "Fsp UpdateDelayModel command failed: \
+                                            'fsid' {} not valid for receptor {}".format(
+                                                fs_id, rec_id
+                                            )
+                                    self._logger.error(log_msg)
+                                    return (ResultCode.FAILED, log_msg)
+                                    
+            else:
+                log_msg = "Fsp UpdateDelayModel command failed: \
+                    weights not used in function mode {}".format(self._function_mode)
+                self._logger.error(log_msg)
+                return (ResultCode.FAILED, log_msg)
+                
+            message = "Fsp UpdateDelayModel command completed OK"
+            return (ResultCode.OK, message)
+        
+        else:
+            log_msg = "Fsp UpdateDelayModel command failed: \
                     proxies not connected"
             self._logger.error(log_msg)
             return (ResultCode.FAILED, log_msg)

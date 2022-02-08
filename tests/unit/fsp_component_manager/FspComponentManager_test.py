@@ -249,7 +249,164 @@ class TestFspComponentManager:
                             if fs_id == fsp_id:
                                 if len(matrix) == fs_length:
                                     assert list(fsp_component_manager.jones_matrix[rec_id -1]) == matrix
+    
+    @pytest.mark.parametrize(
+        "delay_model_file_name, \
+        sub_id, \
+        valid_receptor_ids, \
+        fsp_id",
+        [
+            (
+                "/../../data/delaymodel_unit_test.json",
+                1,
+                [1, 2, 3, 4],
+                1
+            )
+        ]
+    )
+    def test_UpdateDelayModel(
+        self: TestFspComponentManager,
+        fsp_component_manager: FspComponentManager,
+        delay_model_file_name: str,
+        sub_id: int,
+        valid_receptor_ids: List[int],
+        fsp_id: int
+    ) -> None:
+        """
+            Test Fsp's UpdateDelayModel command
 
+            :param device_under_test: fixture that provides a
+                :py:class:`tango.DeviceProxy` to the device under test, in a
+                :py:class:`tango.test_context.DeviceTestContext`.
+            :param delay_model_file_name: JSON file for the delay model
+            :param sub_id: the subarray id
+            :param valid_receptor_ids: the valid receptor ids for the pss/pst subarray
+                (mocked in conftest.py)
+            :param fsp_id: the fsp id (defined in conftest.py)
+        """
+
+        fsp_component_manager.start_communicating()
+        assert (
+                fsp_component_manager.communication_status
+                == CommunicationStatus.ESTABLISHED
+            )
+        assert fsp_component_manager._connected == True
+
+        fsp_component_manager.add_subarray_membership(sub_id)
+        time.sleep(3)
+        assert list(fsp_component_manager.subarray_membership) == [sub_id]
+
+        # delay model values should be set to 0.0 after init
+        num_cols = 6
+        num_rows = 4
+        assert list(fsp_component_manager.delay_model) == [[0.0] * num_cols for _ in range(num_rows)]
+        
+        # read the json file
+        f = open(file_path + delay_model_file_name)
+        json_str = f.read().replace("\n", "")
+        f.close()
+        delay_model = json.loads(json_str)
+
+        valid_function_modes = ["PSS-BF", "PST-BF"]
+        for mode in valid_function_modes:
+            fsp_component_manager.set_function_mode(mode)
+            time.sleep(0.1)
+            FspModes = Enum('FspModes', 'CORR PSS_BF PST_BF VLBI')
+            if mode == "PSS-BF":
+                assert fsp_component_manager.function_mode == FspModes.PSS_BF.value
+            elif mode == "PST-BF":
+                assert fsp_component_manager.function_mode == FspModes.PST_BF.value
+
+            # update the delay model
+            for m in delay_model["delayModel"]:
+                fsp_component_manager.update_delay_model(json.dumps(m["delayDetails"]))
+
+            time.sleep(3)
+
+            model_len = 6
+            # verify the delay model was updated successfully 
+            for m in delay_model["delayModel"]:
+                for delayDetail in m["delayDetails"]:
+                    rec_id = delayDetail["receptor"]
+                    if rec_id in valid_receptor_ids:
+                            for frequency_slice in delayDetail["receptorDelayDetails"]:
+                                fs_id = frequency_slice["fsid"]
+                                if fs_id == fsp_id:
+                                    delayCoeffs = frequency_slice["delayCoeff"]
+                                    if len(delayCoeffs) == model_len:
+                                        assert fsp_component_manager.delay_model[rec_id -1] == delayCoeffs 
+
+
+    @pytest.mark.parametrize(
+        "timing_beam_weights_file_name, \
+         sub_id",
+        [
+            (
+                "/../../data/timingbeamweights_fsp_unit_test.json",
+                1
+            )
+        ]
+    )
+    def test_UpdateBeamWeights(
+        self: TestFspComponentManager,
+        fsp_component_manager: FspComponentManager,
+        timing_beam_weights_file_name: str,
+        sub_id: int
+    ) -> None:
+        """
+            Test Fsp's UpdateBeamWeights command
+
+            :param device_under_test: fixture that provides a
+                :py:class:`tango.DeviceProxy` to the device under test, in a
+                :py:class:`tango.test_context.DeviceTestContext`.
+            :param timing_beam_weights_file_name: JSON file for the timing beam weights 
+            :param sub_id: the subarray id
+        """
+
+        fsp_component_manager.start_communicating()
+        assert (
+                fsp_component_manager.communication_status
+                == CommunicationStatus.ESTABLISHED
+            )
+        assert fsp_component_manager._connected == True
+
+        fsp_component_manager.add_subarray_membership(sub_id)
+        time.sleep(3)
+        assert list(fsp_component_manager.subarray_membership) == [sub_id]
+
+        # timing beam weights should be set to 0.0 after init
+        num_cols = 6
+        num_rows = 4
+        assert fsp_component_manager.timing_beam_weights == [[0.0] * num_cols for _ in range(num_rows)]
+
+        # update only valid for function mode PST-BF
+        fsp_component_manager.set_function_mode("PST-BF")
+        time.sleep(0.1)
+        #TODO: this enum should be defined once and referred to throughout the project
+        FspModes = Enum('FspModes', 'CORR PSS_BF PST_BF VLBI')
+        assert fsp_component_manager.function_mode == FspModes.PST_BF.value
+
+        # read the json file
+        f = open(file_path + timing_beam_weights_file_name)
+        json_str = f.read().replace("\n", "")
+        f.close()
+        timing_beam_weights = json.loads(json_str)
+        
+        # update the weights 
+        for weights in timing_beam_weights["beamWeights"]:
+            beam_weights_details = weights["beamWeightsDetails"]
+
+            fsp_component_manager.update_timing_beam_weights(json.dumps(beam_weights_details))
+
+        time.sleep(3)
+        # verify the weights were updated successfully 
+        for weights in timing_beam_weights["beamWeights"]:
+            beam_weights_details = weights["beamWeightsDetails"]
+            for receptor in beam_weights_details:
+                recptor_id = receptor["receptor"]
+                for frequency_slice in receptor["receptorWeightsDetails"]:
+                    weights = frequency_slice["weights"]
+                    assert fsp_component_manager.timing_beam_weights[recptor_id -1] == weights
 
 
   

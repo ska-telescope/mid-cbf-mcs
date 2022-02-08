@@ -18,6 +18,7 @@
 from __future__ import annotations  # allow forward references in type hints
 
 from typing import List, Tuple, Optional
+from xxlimited import Str
 
 # tango imports
 import tango
@@ -190,6 +191,14 @@ class Fsp(SKACapability):
             "UpdateJonesMatrix", self.UpdateJonesMatrixCommand(*device_args)
         )
 
+        self.register_command_object(
+            "UpdateDelayModel", self.UpdateDelayModelCommand(*device_args)
+        )
+
+        self.register_command_object(
+            "UpdateTimingBeamWeights", self.UpdateTimingBeamWeightsCommand(*device_args)
+        )
+
     def always_executed_hook(self: Fsp) -> None:
         # PROTECTED REGION ID(Fsp.always_executed_hook) ENABLED START #
         """Hook to be executed before any commands."""
@@ -306,7 +315,7 @@ class Fsp(SKACapability):
             :return: the delayModel attribute.
             :rtype: list of list of float
         """
-        return self._delay_model
+        return self.component_manager.delay_model
         # PROTECTED REGION END #    //  Fsp.delayModel_read
     
     def read_timingBeamWeights(self: Fsp) -> List[List[float]]:
@@ -317,7 +326,7 @@ class Fsp(SKACapability):
             :return: the timingBeamWeights attribute.
             :rtype: list of list of float
         """
-        return self._timing_beam_weights
+        return self.component_manager.timing_beam_weights
         # PROTECTED REGION END #    //  Fsp.timingBeamWeights_read
 
     # --------
@@ -654,64 +663,41 @@ class Fsp(SKACapability):
         if self.dev_state() == tango.DevState.ON:
             return True
         return False
+    
+    class UpdateDelayModelCommand(BaseCommand):
+        """
+        A class for the Fsp's UpdateDelayModel() command.
+        """
 
-    # @command(
-    #     dtype_in='str',
-    #     doc_in="Jones Matrix, given per frequency slice"
-    # )
-    # def UpdateJonesMatrix(
-    #     self: Fsp, 
-    #     argin: str,
-    #     ) -> None:
-    #     # PROTECTED REGION ID(Fsp.UpdateJonesMatrix) ENABLED START #
-    #     """
-    #         Update the FSP's jones matrix (serialized JSON object)
+        def do(
+            self: Fsp.UpdateDelayModelCommand, 
+            argin: Str
+        ) -> Tuple[ResultCode, str]:  
+            """
+            Stateless hook for UpdateDelayModel() command functionality.
 
-    #         :param argin: the jones matrix data
-    #     """
-    #     self.logger.debug("Fsp.UpdateJonesMatrix")
+            :param argin: the delay model data
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
 
-    #     #TODO: this enum should be defined once and referred to throughout the project
-    #     FspModes = Enum('FspModes', 'CORR PSS_BF PST_BF VLBI')
-    #     if self._function_mode in [FspModes.PSS_BF.value, FspModes.PST_BF.value, FspModes.VLBI.value]:
-    #         argin = json.loads(argin)
+            (result_code,message) = self.target.component_manager.update_delay_model(argin)
+            return (result_code, message)
+    
+    @command(
+        dtype_in='str',
+        doc_in="Delay Model, per receptor per polarization per timing beam"
+    )
+    def UpdateDelayModel(self: Fsp, argin: str) -> None:  
+        """
+        Update the FSP's delay model (serialized JSON object)
 
-    #         for i in self._subarray_membership:
-    #             if self._function_mode == FspModes.PSS_BF.value:
-    #                 proxy = self._proxy_fsp_pss_subarray[i - 1]
-    #                 fs_length = 16
-    #             elif self._function_mode == FspModes.PST_BF.value:
-    #                 proxy = self._proxy_fsp_pst_subarray[i - 1]
-    #                 fs_length = 4
-    #             else:
-    #                 fs_length = 4
-    #                 # TODO: support for function mode VLBI
-    #                 log_msg = "function mode {} currently not supported".format(self._function_mode)
-    #                 self.logger.error(log_msg)
-    #                 return
-
-    #             for receptor in argin:
-    #                 rec_id = int(receptor["receptor"])
-    #                 if rec_id in proxy.receptors:
-    #                     for frequency_slice in receptor["receptorMatrix"]:
-    #                         fs_id = frequency_slice["fsid"]
-    #                         matrix = frequency_slice["matrix"]
-    #                         if fs_id == self._fsp_id:
-    #                             if len(matrix) == fs_length:
-    #                                 self._jones_matrix[rec_id - 1] = matrix.copy()
-    #                             else:
-    #                                 log_msg = "'matrix' not valid length for frequency slice {} of " \
-    #                                         "receptor {}".format(fs_id, rec_id)
-    #                                 self.logger.error(log_msg)
-    #                         else:
-    #                             log_msg = "'fsid' {} not valid for receptor {}".format(
-    #                                 fs_id, rec_id
-    #                             )
-    #                             self.logger.error(log_msg)
-    #     else:
-    #         log_msg = "matrix not used in function mode {}".format(self._function_mode)
-    #         self.logger.error(log_msg)
-    #     # PROTECTED REGION END #    // Fsp.UpdateJonesMatrix
+        :param argin: the delay model data
+        """
+        handler = self.get_command_object("UpdateDelayModel")
+        return handler(argin)
 
     def is_UpdateDelayModel_allowed(self: Fsp) -> bool:
         """
@@ -726,53 +712,41 @@ class Fsp(SKACapability):
         if self.dev_state() == tango.DevState.ON:
             return True
         return False
+    
+    class UpdateTimingBeamWeightsCommand(BaseCommand):
+        """
+        A class for the Fsp's UpdateTimingBeamWeights() command.
+        """
 
+        def do(
+            self: Fsp.UpdateTimingBeamWeightsCommand, 
+            argin: Str
+        ) -> Tuple[ResultCode, str]:  
+            """
+            Stateless hook for UpdateTimingBeamWeights() command functionality.
+
+            :param argin: the timing beam weight data
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
+
+            (result_code,message) = self.target.component_manager.update_timing_beam_weights(argin)
+            return (result_code, message)
+    
     @command(
         dtype_in='str',
-        doc_in="Delay Model, per receptor per polarization per timing beam"
+        doc_in="Timing Beam Weights, per beam per receptor per group of 8 channels"
     )
-    def UpdateDelayModel(
-        self: Fsp, 
-        argin: str,
-        ) -> None:
-        # PROTECTED REGION ID(Fsp.UpdateDelayModel) ENABLED START #
+    def UpdateBeamWeights(self: Fsp, argin: str) -> None:  
         """
-            Update the FSP's delay model (serialized JSON object)
+        Update the FSP's timing beam weights (serialized JSON object)
 
-            :param argin: the delay model data
+        :param argin: the timing beam weight data
         """
-        self.logger.debug("Fsp.UpdateDelayModel")
-
-        # update if current function mode is either PSS-BF or PST-BF
-        if self._function_mode in [2, 3]:
-            argin = json.loads(argin)
-            for i in self._subarray_membership:
-                if self._function_mode == 2:
-                    proxy = self._proxy_fsp_pss_subarray[i - 1]
-                else:
-                    proxy = self._proxy_fsp_pst_subarray[i - 1]
-                for receptor in argin:
-                    rec_id = int(receptor["receptor"])
-                    if rec_id in proxy.receptors:
-                        for frequency_slice in receptor["receptorDelayDetails"]:
-                            fs_id = frequency_slice["fsid"]
-                            model = frequency_slice["delayCoeff"]
-                            if fs_id == self._fsp_id:
-                                if len(model) == 6:
-                                    self._delay_model[rec_id - 1] = model.copy()
-                                else:
-                                    log_msg = "'model' not valid length for frequency slice {} of " \
-                                            "receptor {}".format(fs_id, rec_id)
-                                    self.logger.error(log_msg)
-                            else:
-                                log_msg = "'fsid' {} not valid for receptor {}".format(
-                                    fs_id, rec_id
-                                )
-                                self.logger.error(log_msg)
-        else:
-            log_msg = "model not used in function mode {}".format(self._function_mode)
-            self.logger.error(log_msg)
-        # PROTECTED REGION END #    // Fsp.UpdateDelayModel
+        handler = self.get_command_object("UpdateBeamWeights")
+        return handler(argin)
 
     def is_UpdateTimingBeamWeights_allowed(self: Fsp) -> bool:
         """
@@ -787,50 +761,6 @@ class Fsp(SKACapability):
         if self.dev_state() == tango.DevState.ON:
             return True
         return False
-
-    @command(
-        dtype_in='str',
-        doc_in="Timing Beam Weights, per beam per receptor per group of 8 channels"
-    )
-    def UpdateBeamWeights(
-        self: Fsp, 
-        argin: str,
-        ) -> None:
-        # PROTECTED REGION ID(Fsp.UpdateTimingBeamWeights) ENABLED START #
-        """
-            Update the FSP's timing beam weights (serialized JSON object)
-
-            :param argin: the timing beam weight data
-        """
-        self.logger.debug("Fsp.UpdateBeamWeights")
-
-        # update if current function mode is PST-BF
-        if self._function_mode == 3:
-            argin = json.loads(argin)
-            for i in self._subarray_membership:
-                proxy = self._proxy_fsp_pst_subarray[i - 1]
-                for receptor in argin:
-                    rec_id = int(receptor["receptor"])
-                    if rec_id in proxy.receptors:
-                        for frequency_slice in receptor["receptorWeightsDetails"]:
-                            fs_id = frequency_slice["fsid"]
-                            weights = frequency_slice["weights"]
-                            if fs_id == self._fsp_id:
-                                if len(weights) == 6:
-                                    self._timing_beam_weights[rec_id - 1] = weights.copy()
-                                else:
-                                    log_msg = "'weights' not valid length for frequency slice {} of " \
-                                            "receptor {}".format(fs_id, rec_id)
-                                    self.logger.error(log_msg)
-                            else:
-                                log_msg = "'fsid' {} not valid for receptor {}".format(
-                                    fs_id, rec_id
-                                )
-                                self.logger.error(log_msg)
-        else:
-            log_msg = "weights not used in function mode {}".format(self._function_mode)
-            self.logger.error(log_msg)
-        # PROTECTED REGION END #    // Fsp.UpdateTimingBeamWeights
     
     # ----------
     # Callbacks
