@@ -49,11 +49,11 @@ def fsp_component_manager(
     component_power_mode_changed_callback: MockCallable,
 ) -> FspComponentManager:
     """
-    Return a Controller component manager.
+    Return an Fsp component manager.
 
     :param logger: the logger fixture
 
-    :return: a Controller component manager.
+    :return: an Fsp component manager.
     """
 
     fsp_id = 1

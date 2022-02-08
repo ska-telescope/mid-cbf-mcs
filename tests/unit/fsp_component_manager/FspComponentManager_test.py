@@ -27,7 +27,7 @@ from enum import Enum
 file_path = os.path.dirname(os.path.abspath(__file__))
 
 class TestFspComponentManager:
-    """Tests of the fsp component manager."""
+    """Tests of the Fsp component manager."""
 
     def test_communication(
             self: TestFspComponentManager,
@@ -82,7 +82,13 @@ class TestFspComponentManager:
         fsp_component_manager: FspComponentManager,
         command: str
     ) -> None:
+        """
+        Test the On/Off/Standby Commands
 
+        :param fsp_component_manager: the fsp component
+            manager under test.
+        :param command: the command to test (one of On/Off/Standby)
+        """
         fsp_component_manager.start_communicating()
         assert (
                 fsp_component_manager.communication_status
@@ -117,13 +123,13 @@ class TestFspComponentManager:
         sub_ids: List[int]
     ) -> None:
         """
-            Test Fsp's AddSubarrayMembership and 
-            RemoveSubarrayMembership commands
+        Test Fsp's AddSubarrayMembership and 
+        RemoveSubarrayMembership commands
 
-            :param device_under_test: fixture that provides a
-                :py:class:`tango.DeviceProxy` to the device under test, in a
-                :py:class:`tango.test_context.DeviceTestContext`.
-            :param sub_ids: list of subarray ids
+        :param device_under_test: fixture that provides a
+            :py:class:`tango.DeviceProxy` to the device under test, in a
+            :py:class:`tango.test_context.DeviceTestContext`.
+        :param sub_ids: list of subarray ids
         """
 
         fsp_component_manager.start_communicating()
@@ -187,16 +193,16 @@ class TestFspComponentManager:
         fsp_id: int
     ) -> None:
         """
-            Test Fsp's UpdateJonesMatrix command
+        Test Fsp's UpdateJonesMatrix command
 
-            :param device_under_test: fixture that provides a
-                :py:class:`tango.DeviceProxy` to the device under test, in a
-                :py:class:`tango.test_context.DeviceTestContext`.
-            :param jones_matrix_file_name: JSON file for the jones matrix
-            :param sub_id: the subarray id
-            :param valid_receptor_ids: the valid receptor ids for the pss/pst subarray
-                (mocked in conftest.py)
-            :param fsp_id: the fsp id (defined in conftest.py)
+        :param device_under_test: fixture that provides a
+            :py:class:`tango.DeviceProxy` to the device under test, in a
+            :py:class:`tango.test_context.DeviceTestContext`.
+        :param jones_matrix_file_name: JSON file for the jones matrix
+        :param sub_id: the subarray id
+        :param valid_receptor_ids: the valid receptor ids for the pss/pst subarray
+            (mocked in conftest.py)
+        :param fsp_id: the fsp id (defined in conftest.py)
         """
 
         fsp_component_manager.start_communicating()
@@ -273,16 +279,16 @@ class TestFspComponentManager:
         fsp_id: int
     ) -> None:
         """
-            Test Fsp's UpdateDelayModel command
+        Test Fsp's UpdateDelayModel command
 
-            :param device_under_test: fixture that provides a
-                :py:class:`tango.DeviceProxy` to the device under test, in a
-                :py:class:`tango.test_context.DeviceTestContext`.
-            :param delay_model_file_name: JSON file for the delay model
-            :param sub_id: the subarray id
-            :param valid_receptor_ids: the valid receptor ids for the pss/pst subarray
-                (mocked in conftest.py)
-            :param fsp_id: the fsp id (defined in conftest.py)
+        :param device_under_test: fixture that provides a
+            :py:class:`tango.DeviceProxy` to the device under test, in a
+            :py:class:`tango.test_context.DeviceTestContext`.
+        :param delay_model_file_name: JSON file for the delay model
+        :param sub_id: the subarray id
+        :param valid_receptor_ids: the valid receptor ids for the pss/pst subarray
+            (mocked in conftest.py)
+        :param fsp_id: the fsp id (defined in conftest.py)
         """
 
         fsp_component_manager.start_communicating()
@@ -354,13 +360,13 @@ class TestFspComponentManager:
         sub_id: int
     ) -> None:
         """
-            Test Fsp's UpdateBeamWeights command
+        Test Fsp's UpdateBeamWeights command
 
-            :param device_under_test: fixture that provides a
-                :py:class:`tango.DeviceProxy` to the device under test, in a
-                :py:class:`tango.test_context.DeviceTestContext`.
-            :param timing_beam_weights_file_name: JSON file for the timing beam weights 
-            :param sub_id: the subarray id
+        :param device_under_test: fixture that provides a
+            :py:class:`tango.DeviceProxy` to the device under test, in a
+            :py:class:`tango.test_context.DeviceTestContext`.
+        :param timing_beam_weights_file_name: JSON file for the timing beam weights 
+        :param sub_id: the subarray id
         """
 
         fsp_component_manager.start_communicating()

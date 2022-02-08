@@ -96,11 +96,12 @@ class TestFsp:
         command: str
     ) -> None:
         """
-        Test On command.
+        Test the On/Off/Standby Commands
 
         :param device_under_test: fixture that provides a
             :py:class:`CbfDeviceProxy` to the device under test, in a
             :py:class:`tango.test_context.DeviceTestContext`.
+        :param command: the command to test (one of On/Off/Standby)
         """
 
         device_under_test.write_attribute("adminMode", AdminMode.ONLINE)

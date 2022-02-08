@@ -48,6 +48,17 @@ class FspComponentManager(CbfComponentManager):
         Initialise a new instance.
 
         :param logger: a logger for this object to use
+        :param fsp_id: the fsp id
+        :param fsp_corr_subarray_fqdns_all: list of all 
+            fsp corr subarray fqdns
+        :param fsp_pss_subarray_fqdns_all: list of all 
+            fsp pss subarray fqdns
+        :param fsp_pst_subarray_fqdns_all: list of all 
+            fsp pst subarray fqdns
+        :param fsp_corr_subarray_address: the address of the fsp corr subarray
+        :param fsp_pss_subarray_address: the address of the fsp pss subarray
+        :param fsp_pst_subarray_address: the address of the fsp pst subarray
+        :param vlbi_address: the address of the vlbi
         :param push_change_event: method to call when the base classes
             want to send an event
         :param communication_status_changed_callback: callback to be
@@ -293,7 +304,7 @@ class FspComponentManager(CbfComponentManager):
         self: FspComponentManager,
     ) -> Tuple[ResultCode, str]:
         """
-        Turn on the controller and its subordinate devices 
+        Turn on the fsp and its subordinate devices 
 
         :return: A tuple containing a return code and a string
                 message indicating status. The message is for
@@ -627,6 +638,12 @@ class FspComponentManager(CbfComponentManager):
     def get_fsp_corr_config_id(      
         self: FspComponentManager,
     ) -> str:
+        """
+        Get the configID for all the fspCorrSubarray
+
+        :return: the configID
+        :rtype: str
+        """
 
         if self._connected:
             result ={}

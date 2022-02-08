@@ -29,17 +29,12 @@ from tango import AttrWriteType
 # Additional import
 # PROTECTED REGION ID(Fsp.additionnal_import) ENABLED START #
 import os
-import sys
-import json
-from enum import Enum
 
 file_path = os.path.dirname(os.path.abspath(__file__))
 
 from ska_tango_base import SKACapability, SKABaseDevice
 from ska_tango_base.commands import ResultCode, BaseCommand
 from ska_tango_base.control_model import PowerMode
-from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
-from ska_mid_cbf_mcs.group_proxy import CbfGroupProxy
 from ska_mid_cbf_mcs.fsp.fsp_component_manager import FspComponentManager
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
 # PROTECTED REGION END #    //  Fsp.additionnal_import
@@ -245,10 +240,10 @@ class Fsp(SKACapability):
     def read_functionMode(self: Fsp) -> tango.DevEnum:
         # PROTECTED REGION ID(Fsp.functionMode_read) ENABLED START #
         """
-            Read the functionMode attribute.
+        Read the functionMode attribute.
 
-            :return: a DevEnum representing the mode.
-            :rtype: tango.DevEnum
+        :return: a DevEnum representing the mode.
+        :rtype: tango.DevEnum
         """
         return self.component_manager.function_mode
         # PROTECTED REGION END #    //  Fsp.functionMode_read
@@ -256,10 +251,10 @@ class Fsp(SKACapability):
     def read_subarrayMembership(self: Fsp) -> List[int]:
         # PROTECTED REGION ID(Fsp.subarrayMembership_read) ENABLED START #
         """
-            Read the subarrayMembership attribute.
+        Read the subarrayMembership attribute.
 
-            :return: an array of affiliations of the FSP.
-            :rtype: List[int]
+        :return: an array of affiliations of the FSP.
+        :rtype: List[int]
         """
         return self.component_manager.subarray_membership
         # PROTECTED REGION END #    //  Fsp.subarrayMembership_read
@@ -267,10 +262,10 @@ class Fsp(SKACapability):
     def read_scanID(self: Fsp) -> int:
         # PROTECTED REGION ID(FspCorrSubarray.scanID_read) ENABLED START #
         """
-            Read the scanID attribute.
+        Read the scanID attribute.
 
-            :return: the scanID attribute.
-            :rtype: int
+        :return: the scanID attribute.
+        :rtype: int
         """
         return self._scan_id
         # PROTECTED REGION END #    //  FspCorrSubarray.scanID_read
@@ -278,10 +273,10 @@ class Fsp(SKACapability):
     def read_configID(self: Fsp) -> str:
         # PROTECTED REGION ID(Fsp.configID_read) ENABLED START #
         """
-            Read the configID attribute.
+        Read the configID attribute.
 
-            :return: the configID attribute.
-            :rtype: str
+        :return: the configID attribute.
+        :rtype: str
         """
         return self._config_id
         # PROTECTED REGION END #    //  Fsp.configID_read
@@ -289,9 +284,9 @@ class Fsp(SKACapability):
     def write_configID(self: Fsp, value: str) -> None:
         # PROTECTED REGION ID(Fsp.configID_write) ENABLED START #
         """
-            Write the configID attribute.
+        Write the configID attribute.
 
-            :param value: the configID value.
+        :param value: the configID value.
         """
         self._config_id=value
         # PROTECTED REGION END #    //  Fsp.configID_write
@@ -299,10 +294,10 @@ class Fsp(SKACapability):
     def read_jonesMatrix(self: Fsp) -> List[List[float]]:
         # PROTECTED REGION ID(Fsp.jonesMatrix_read) ENABLED START #
         """
-            Read the jonesMatrix attribute.
+        Read the jonesMatrix attribute.
 
-            :return: the jonesMatrix attribute.
-            :rtype: list of list of float
+        :return: the jonesMatrix attribute.
+        :rtype: list of list of float
         """
         return self.component_manager.jones_matrix
         # PROTECTED REGION END #    //  Fsp.jonesMatrix_read
@@ -310,10 +305,10 @@ class Fsp(SKACapability):
     def read_delayModel(self: Fsp) -> List[List[float]]:
         # PROTECTED REGION ID(Fsp.delayModel_read) ENABLED START #
         """
-            Read the delayModel attribute.
+        Read the delayModel attribute.
 
-            :return: the delayModel attribute.
-            :rtype: list of list of float
+        :return: the delayModel attribute.
+        :rtype: list of list of float
         """
         return self.component_manager.delay_model
         # PROTECTED REGION END #    //  Fsp.delayModel_read
@@ -321,10 +316,10 @@ class Fsp(SKACapability):
     def read_timingBeamWeights(self: Fsp) -> List[List[float]]:
         # PROTECTED REGION ID(Fsp.timingBeamWeights_read) ENABLED START #
         """
-            Read the timingBeamWeights attribute.
+        Read the timingBeamWeights attribute.
 
-            :return: the timingBeamWeights attribute.
-            :rtype: list of list of float
+        :return: the timingBeamWeights attribute.
+        :rtype: list of list of float
         """
         return self.component_manager.timing_beam_weights
         # PROTECTED REGION END #    //  Fsp.timingBeamWeights_read
@@ -354,28 +349,9 @@ class Fsp(SKACapability):
 
             device = self.target
 
-            # initialize FSP proxies
-            device._group_fsp_corr_subarray = None
-            device._group_fsp_pss_subarray = None
-            device._group_fsp_pst_subarray = None
-            device._proxy_correlation = None
-            device._proxy_pss = None
-            device._proxy_pst = None
-            device._proxy_vlbi = None
-            device._proxy_fsp_corr_subarray = None
-            device._proxy_fsp_pss_subarray = None
-            device._proxy_fsp_pst_subarray = None
-
-            device._fsp_id = device.FspID
-
-            # initialize attribute values
-            device._function_mode = 0  # IDLE
-            device._subarray_membership = []
+            
             device._scan_id = 0
             device._config_id = ""
-            device._jones_matrix = [[0.0] * 16 for _ in range(4)]
-            device._delay_model = [[0.0] * 6 for _ in range(4)]
-            device._timing_beam_weights = [[0.0] * 6 for _ in range(4)]
 
             return (result_code,message)
     
@@ -538,11 +514,11 @@ class Fsp(SKACapability):
 
     def is_AddSubarrayMembership_allowed(self: Fsp) -> bool:
         """
-            Determine if AddSubarrayMembership is allowed
-            (allowed if FSP state is ON).
+        Determine if AddSubarrayMembership is allowed
+        (allowed if FSP state is ON).
 
-            :return: if AddSubarrayMembership is allowed
-            :rtype: bool
+        :return: if AddSubarrayMembership is allowed
+        :rtype: bool
         """
         if self.dev_state() == tango.DevState.ON:
             return True
@@ -604,10 +580,10 @@ class Fsp(SKACapability):
     def getConfigID(self: Fsp) -> str:
         # PROTECTED REGION ID(Fsp.getConfigID) ENABLED START #
         """
-            Get the configID for all the fspCorrSubarray
+        Get the configID for all the fspCorrSubarray
 
-            :return: the configID
-            :rtype: str
+        :return: the configID
+        :rtype: str
         """
         return self.component_manager.get_fsp_corr_config_id()
         # PROTECTED REGION END #    //  Fsp.getConfigID
@@ -698,12 +674,12 @@ class Fsp(SKACapability):
 
     def is_UpdateDelayModel_allowed(self: Fsp) -> bool:
         """
-            Determine if UpdateDelayModelis allowed 
-            (allowed if FSP state is ON and ObsState is 
-            READY OR SCANNINNG).
+        Determine if UpdateDelayModelis allowed 
+        (allowed if FSP state is ON and ObsState is 
+        READY OR SCANNINNG).
 
-            :return: if UpdateDelayModel is allowed
-            :rtype: bool
+        :return: if UpdateDelayModel is allowed
+        :rtype: bool
         """
         #TODO implement obsstate in FSP
         if self.dev_state() == tango.DevState.ON:
@@ -747,12 +723,12 @@ class Fsp(SKACapability):
 
     def is_UpdateTimingBeamWeights_allowed(self: Fsp) -> bool:
         """
-            Determine if UpdateTimingBeamWeights is allowed 
-            (allowed if FSP state is ON and ObsState is 
-            READY OR SCANNINNG).
+        Determine if UpdateTimingBeamWeights is allowed 
+        (allowed if FSP state is ON and ObsState is 
+        READY OR SCANNINNG).
 
-            :return: if UpdateTimingBeamWeights is allowed
-            :rtype: bool
+        :return: if UpdateTimingBeamWeights is allowed
+        :rtype: bool
         """
         #TODO implement obsstate in FSP
         if self.dev_state() == tango.DevState.ON:
