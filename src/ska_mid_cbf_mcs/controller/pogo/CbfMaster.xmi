@@ -4,7 +4,7 @@
     <description description="CBFMaster TANGO device class for the CBFMaster prototype" title="CbfMaster Tango device prototype" sourcePath="/home/jerry/Documents/ska/mid-cbf-mcs/tangods/CbfMaster/CbfMaster/pogo" language="PythonHL" filestogenerate="XMI   file,Code files,Protected Regions" license="GPL" copyright="" hasMandatoryProperty="false" hasConcreteProperty="false" hasAbstractCommand="false" hasAbstractAttribute="false">
       <inheritances classname="Device_Impl" sourcePath=""/>
       <inheritances classname="SKABaseDevice" sourcePath="../../../../../lmc-base-classes/pogo"/>
-      <inheritances classname="SKAMaster" sourcePath="/home/jerry/Documents/ska/lmc-base-classes/pogo"/>
+      <inheritances classname="SKAController" sourcePath="/home/jerry/Documents/ska/lmc-base-classes/pogo"/>
       <identification contact="at nrc.cnrc.gc.ca - james.jiang" author="james.jiang" emailDomain="nrc.cnrc.gc.ca" classFamily="SkaCsp" siteSpecific="" platform="Unix Like" bus="Not Applicable" manufacturer="none" reference=""/>
     </description>
     <deviceProperties name="SkaLevel" description="Indication of importance of the device in the SKA hierarchy &#xA;to support drill-down navigation: 1..6, with 1 highest.&#xA;Default is 4, making provision for &#xA;EltMaster, EltAlarms, EltTelState = 1&#xA;SubEltMaster = 2&#xA;Subarray, Capability = 2/3&#xA;Others = 4 (or 5 or 6)">

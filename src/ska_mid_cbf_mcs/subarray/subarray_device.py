@@ -33,7 +33,7 @@ from ska_mid_cbf_mcs.attribute_proxy import CbfAttributeProxy
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_tango_base.control_model import ObsState, AdminMode, HealthState
 from ska_tango_base import SKASubarray, SKABaseDevice
-from ska_tango_base.commands import ResultCode
+from ska_tango_base.commands import ResultCode, BaseCommand, ResponseCommand
 
 # PROTECTED REGION END #    //  CbfSubarray.additionnal_import
 
@@ -51,7 +51,7 @@ class CbfSubarray(SKASubarray):
         Sets up the command objects. Register the new Commands here.
         """
         super().init_command_objects()
-        device_args = (self, self.state_model, self.logger)
+        device_args = (self, self.obs_state_model, self.logger)
         # resource_args = (self.resource_manager, self.state_model, self.logger) 
         # only use resource_args if we want to have separate resource_manager object
 

@@ -28,7 +28,9 @@ import pytest
 
 from ska_tango_base.control_model import HealthState, AdminMode, ObsState
 
-
+@pytest.mark.skip(
+        reason="Not updated to version 0.11.3 of the base classes."
+)
 class TestFspPstSubarray:
     """
     Test class for FspPstSubarray device class integration testing.
@@ -274,7 +276,6 @@ class TestFspCorrSubarray:
         # Example : Mock numpy
         # cls.numpy = CspController.numpy = MagicMock()
     """
-
     def test_AddRemoveReceptors_valid(
             self,
             create_cbf_controller_proxy,

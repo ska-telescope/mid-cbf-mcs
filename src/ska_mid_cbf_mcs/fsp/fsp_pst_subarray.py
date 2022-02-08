@@ -115,7 +115,7 @@ class FspPstSubarray(CspSubElementObsDevice):
         """
         super().init_command_objects()
 
-        device_args = (self, self.state_model, self.logger)
+        device_args = (self, self.obs_state_model, self.logger)
 
         self.register_command_object(
             "On", self.OnCommand(*device_args)
