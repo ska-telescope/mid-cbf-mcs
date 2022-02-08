@@ -624,3 +624,18 @@ class FspComponentManager(CbfComponentManager):
             self._logger.error(log_msg)
             return (ResultCode.FAILED, log_msg)
     
+    def get_fsp_corr_config_id(      
+        self: FspComponentManager,
+    ) -> str:
+
+        if self._connected:
+            result ={}
+            for proxy in self._proxy_fsp_corr_subarray:
+                result[str(proxy)]=proxy.configID
+            return str(result)
+        
+        else:
+            log_msg = "Fsp getConfigID command failed: \
+                    proxies not connected"
+            self._logger.error(log_msg)
+            return ""

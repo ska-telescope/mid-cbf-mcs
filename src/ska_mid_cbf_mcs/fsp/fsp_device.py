@@ -609,10 +609,7 @@ class Fsp(SKACapability):
             :return: the configID
             :rtype: str
         """
-        result ={}
-        for proxy in self._proxy_fsp_corr_subarray:
-            result[str(proxy)]=proxy.configID
-        return str(result)
+        return self.component_manager.get_fsp_corr_config_id()
         # PROTECTED REGION END #    //  Fsp.getConfigID
     
     class UpdateJonesMatrixCommand(BaseCommand):
