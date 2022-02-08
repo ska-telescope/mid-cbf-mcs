@@ -55,8 +55,9 @@ def device_to_load(
     """
     return {
         "path": "charts/ska-mid-cbf/data/midcbfconfig.json",
-        "package": "ska_mid_cbf_mcs",
+        "package": "ska_mid_cbf_mcs.controller.controller_device",
         "device": "controller",
+        "device_class": "CbfController",
         "proxy": CbfDeviceProxy,
         "patch": patched_controller_device_class,
     }

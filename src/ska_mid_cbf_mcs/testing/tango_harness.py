@@ -63,7 +63,7 @@ DeviceSpecType = TypedDict(
     "DeviceSpecType",
     {
         "name": str,
-        "device_class": Type[SKABaseDevice],
+        "device_class": str,
         "proxy": Type[CbfDeviceProxy],
         "patch": Type[SKABaseDevice],
     },
@@ -117,7 +117,7 @@ DeviceToLoadType = TypedDict(
         "path": str,
         "package": str,
         "device": str,
-        "device_class": Type[SKABaseDevice],
+        "device_class": str,
         "proxy": Type[CbfDeviceProxy],
         "patch": Type[SKABaseDevice]
     },
