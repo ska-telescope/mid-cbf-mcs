@@ -51,31 +51,27 @@ class TestVccComponentManager:
         assert vcc_component_manager.connected
 
         vcc_component_manager.stop_communicating()
-
         assert not vcc_component_manager.connected
 
     @pytest.mark.parametrize(
         "frequency_band", 
         ["5a"]
     )
-    def test_turn_on_off_band_device(
+    def test_configure_band(
         self: TestVccComponentManager,
         vcc_component_manager: VccComponentManager,
         tango_harness: TangoHarness,
         frequency_band: str
     ) -> None:
         """
-        Test turning on band device.
+        Test band configuration.
 
         :param vcc_component_manager: vcc component manager under test.
         :param frequency_band: frequency band ID
         """
         vcc_component_manager.start_communicating()
-        (result_code, msg) = vcc_component_manager.turn_on_band_device(frequency_band)
+        (result_code, msg) = vcc_component_manager.configure_band(frequency_band)
         assert result_code == ResultCode.OK
-        (result_code, msg) = vcc_component_manager.turn_off_band_device(frequency_band)
-        assert result_code == ResultCode.OK
-
 
     @pytest.mark.parametrize(
         "config_file_name, \
@@ -112,7 +108,7 @@ class TestVccComponentManager:
         configuration = json.loads(json_str)
         f.close()
 
-        vcc_component_manager.turn_on_band_device(configuration["frequency_band"])
+        vcc_component_manager.configure_band(configuration["frequency_band"])
 
         vcc_component_manager.configure_scan(json_str)
 
@@ -163,6 +159,7 @@ class TestVccComponentManager:
         :param config_file_name: JSON file for the configuration
         :param delay_model_file_name: JSON file for the delay model
         """
+        vcc_component_manager.start_communicating()
 
         # delay model values should be set to 0.0 after init
         num_cols = 6
@@ -174,7 +171,7 @@ class TestVccComponentManager:
         configuration = json.loads(json_str)
         f.close()
 
-        vcc_component_manager.turn_on_band_device(configuration["frequency_band"])
+        vcc_component_manager.configure_band(configuration["frequency_band"])
 
         vcc_component_manager.configure_scan(json_str)
         
@@ -226,7 +223,7 @@ class TestVccComponentManager:
         configuration = json.loads(json_str)
         f.close()
 
-        vcc_component_manager.turn_on_band_device(configuration["frequency_band"])
+        vcc_component_manager.configure_band(configuration["frequency_band"])
         assert vcc_component_manager.frequency_band == freq_band_dict()[configuration["frequency_band"]]
 
         (result_code, msg) = vcc_component_manager.configure_scan(json_str)
@@ -236,6 +233,8 @@ class TestVccComponentManager:
         assert vcc_component_manager.frequency_band_offset_stream_1 == configuration["frequency_band_offset_stream_1"]
         assert vcc_component_manager.frequency_band_offset_stream_2 == configuration["frequency_band_offset_stream_2"]
         assert vcc_component_manager.rfi_flagging_mask == str(configuration["rfi_flagging_mask"])
+
+        vcc_component_manager.deconfigure()
 
 
 

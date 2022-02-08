@@ -146,12 +146,12 @@ class TestVcc:
         configuration = json.loads(json_str)
         f.close()
 
-        device_under_test.TurnOnBandDevice(configuration["frequency_band"])
+        device_under_test.ConfigureBand(configuration["frequency_band"])
 
         device_under_test.ConfigureScan(json_str)
         assert device_under_test.obsState == ObsState.READY
 
-        device_under_test.TurnOffBandDevice(configuration["frequency_band"])
+        device_under_test.GoToIdle()
 
 
     @pytest.mark.parametrize(

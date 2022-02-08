@@ -1594,6 +1594,9 @@
                             }
                         },
                         "properties": {
+                            "VccControllerAddress": [
+                                "talondx-001/vcc-app/vcc-controller"
+                            ],
                             "Band1And2Address": [
                                 "mid_csp_cbf/vcc_band12/001"
                             ],
@@ -1673,6 +1676,9 @@
                             }
                         },
                         "properties": {
+                            "VccControllerAddress": [
+                                "talondx-002/vcc-app/vcc-controller"
+                            ],
                             "Band1And2Address": [
                                 "mid_csp_cbf/vcc_band12/002"
                             ],
@@ -1752,6 +1758,9 @@
                             }
                         },
                         "properties": {
+                            "VccControllerAddress": [
+                                "talondx-003/vcc-app/vcc-controller"
+                            ],
                             "Band1And2Address": [
                                 "mid_csp_cbf/vcc_band12/003"
                             ],
@@ -1831,6 +1840,9 @@
                             }
                         },
                         "properties": {
+                            "VccControllerAddress": [
+                                "talondx-004/vcc-app/vcc-controller"
+                            ],
                             "Band1And2Address": [
                                 "mid_csp_cbf/vcc_band12/004"
                             ],

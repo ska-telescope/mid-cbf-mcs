@@ -65,6 +65,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
     def __init__(
         self: VccComponentManager,
         simulation_mode: SimulationMode,
+        vcc_controller: str,
         vcc_band: List[str],
         search_window: List[str],
         logger: logging.Logger,
@@ -78,7 +79,8 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
 
         :param simulation_mode: simulation mode identifies if the real VCC HPS
                           applications or the simulator should be connected
-        :param vcc_band: FQDNs of VCC band devices
+        :param vcc_controller: FQDN of the HPS VCC controller device
+        :param vcc_band: FQDNs of HPS VCC band devices
         :param search_window: FQDNs of VCC search windows
         :param logger: a logger for this object to use
         :param push_change_event_callback: method to call when the base classes
@@ -95,6 +97,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
 
         self._simulation_mode = simulation_mode
 
+        self._vcc_controller_fqdn = vcc_controller
         self._vcc_band_fqdn = vcc_band
         self._search_window_fqdn = search_window
 
@@ -119,6 +122,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         # initialize list of band proxies and band -> index translation;
         # entry for each of: band 1 & 2, band 3, band 4, band 5
         self._band_proxies = []
+        self._vcc_controller_proxy = None
         self._freq_band_index = dict(zip(
             freq_band_dict().keys(), 
             [0, 0, 1, 2, 3, 3]
@@ -146,6 +150,8 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
 
         if not self._simulation_mode:
             try:
+                self._vcc_controller_proxy = CbfDeviceProxy(
+                    fqdn=self._vcc_controller_fqdn, logger=self._logger)
                 self._band_proxies = [CbfDeviceProxy(fqdn=fqdn, logger=self._logger
                     ) for fqdn in self._vcc_band_fqdn]
                 self._sw_proxies = [CbfDeviceProxy(fqdn=fqdn, logger=self._logger
@@ -220,12 +226,14 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         return (ResultCode.OK, "Standby command completed OK")
 
 
-    def turn_on_band_device(
+    def configure_band(
         self: VccComponentManager,
         freq_band_name: str
     ) -> Tuple[ResultCode, str]:
         """
-        Turn on the corresponding band device and turn off all the others.
+        Configure the corresponding band. At the HPS level, this reconfigures the
+        FPGA to the correct bitstream and enables the respective band device. All
+        other band devices are disabled.
 
         :param freq_band_name: the frequency band name
 
@@ -237,52 +245,18 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         self._logger.debug(
             "VccComponentManager.turn_on_band_device(" + freq_band_name + ")"
         )
-        self.frequency_band = freq_band_dict()[freq_band_name]
-        self._logger.info("VCC assigned frequency band: " + freq_band_name)
-        try:
-            for idx, band in enumerate(self._band_proxies):
-                self._logger.debug(self._vcc_band_fqdn[idx] + f" state: {band.state()}")
-                if idx == self._freq_band_index[freq_band_name] and (
-                    band.state() == DevState.DISABLE or band.state() == DevState.OFF):
-                    band.On()
-                elif band.state() == DevState.DISABLE or band.state() == DevState.ON:
-                    band.Off()
-        except tango.DevFailed as df:
-            self._logger.error(str(df.args[0].desc))
-            return (ResultCode.FAILED, "TurnOnBandDevice failed.")
-        return (ResultCode.OK, "TurnOnBandDevice completed OK.")
 
+        (result_code, msg) = (ResultCode.OK, "ConfigureBand completed OK.")
 
-    def turn_off_band_device(
-        self:VccComponentManager,
-        freq_band_name: str
-    ) -> Tuple[ResultCode, str]:
-        """
-        Send OFF signal to the corresponding band
+        if not self._simulation_mode:
+            try:
+                self._vcc_controller_proxy.ConfigureBand(freq_band_name)
+                self.frequency_band = freq_band_dict()[freq_band_name]
+            except tango.DevFailed as df:
+                self._logger.error(str(df.args[0].desc))
+                (result_code, msg) = (ResultCode.FAILED, "ConfigureBand failed.")
 
-        :param freq_band_name: the frequency band name
-
-        :return: A tuple containing a return code and a string
-            message indicating status. The message is for
-            information purpose only.
-        :rtype: (ResultCode, str)
-        """
-        self._logger.debug(
-            "VccComponentManager.turn_off_band_device(" + freq_band_name + ")"
-        )
-        self.frequency_band = None
-        self._logger.info("VCC frequency band unassigned")
-        try:
-            for idx, band in enumerate(self._band_proxies):
-                self._logger.debug(self._vcc_band_fqdn[idx] + f" state: {band.state()}")
-                if idx == self._freq_band_index[freq_band_name] and (
-                    band.state() == DevState.ON or band.state() == DevState.DISABLE):
-                    band.Off()
-        except tango.DevFailed as df:
-            self._logger.error(str(df.args[0].desc))
-            return (ResultCode.FAILED, "TurnOffBandDevice failed.")
-        return (ResultCode.OK, "TurnOffBandDevice completed OK.")
-
+        return (result_code, msg)
 
     def deconfigure(self: VccComponentManager) -> None:
         """Deconfigure scan configuration parameters."""
@@ -295,6 +269,12 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         self.stream_tuning = (0, 0)
         self.config_id = ""
         self.scan_id = 0
+
+        if not self._simulation_mode:
+            try:
+                self._vcc_controller_proxy.Deconfigure()
+            except tango.DevFailed as df:
+                self._logger.error(str(df.args[0].desc))
 
     def configure_scan(self: VccComponentManager, argin: str) -> Tuple[ResultCode, str]:
 

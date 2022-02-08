@@ -97,11 +97,8 @@ def mock_component_manager(
     def _end_scan() -> Tuple[ResultCode, str]:
         return (ResultCode.OK, "EndScan command completed OK")
 
-    def _turn_on_band_device() -> Tuple[ResultCode, str]:
-        return (ResultCode.OK, "TurnOnBandDevice command completed OK")
-    
-    def _turn_off_band_device() -> Tuple[ResultCode, str]:
-        return (ResultCode.OK, "TurnOffBandDevice command completed OK")
+    def _configure_band(mock: unittest.mock.Mock) -> Tuple[ResultCode, str]:
+        return (ResultCode.OK, "ConfigureBand command completed OK")
     
     def _deconfigure() -> None: pass
 
@@ -115,8 +112,7 @@ def mock_component_manager(
     mock.configure_scan.side_effect = lambda argin: _configure_scan()
     mock.scan.side_effect = lambda argin: _scan()
     mock.end_scan.side_effect = lambda : _end_scan()
-    mock.turn_on_band_device.side_effect = lambda argin: _turn_on_band_device()
-    mock.turn_off_band_device.side_effect = lambda argin: _turn_off_band_device()
+    mock.configure_band.side_effect = lambda argin: _configure_band(mock)
     mock.deconfigure.side_effect = lambda: _deconfigure()
     mock.configure_search_window.side_effect = lambda argin: _configure_search_window()
 
@@ -198,6 +194,14 @@ def device_to_load(
     }
 
 @pytest.fixture()
+def mock_vcc_controller() -> unittest.mock.Mock:
+    builder = MockDeviceBuilder()
+    builder.set_state(tango.DevState.OFF)
+    builder.add_result_command("ConfigureBand", ResultCode.OK)
+    builder.add_result_command("Deconfigure", ResultCode.OK)
+    return builder()
+
+@pytest.fixture()
 def mock_vcc_band() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.OFF)
@@ -221,6 +225,7 @@ def mock_sw() -> unittest.mock.Mock:
 
 @pytest.fixture()
 def initial_mocks(
+    mock_vcc_controller: unittest.mock.Mock,
     mock_vcc_band: unittest.mock.Mock,
     mock_sw: unittest.mock.Mock
 ) -> Dict[str, unittest.mock.Mock]:
@@ -233,6 +238,7 @@ def initial_mocks(
     :return: a dictionary of device proxy mocks to pre-register.
     """
     return {
+        "talondx-001/vcc-app/vcc-controller": mock_vcc_controller,
         "mid_csp_cbf/vcc_band12/001": mock_vcc_band,
         "mid_csp_cbf/vcc_band3/001": mock_vcc_band,
         "mid_csp_cbf/vcc_band4/001": mock_vcc_band,
@@ -253,6 +259,7 @@ def vcc_component_manager(
     """Return a VCC component manager."""
     return VccComponentManager(
         SimulationMode.FALSE,
+        vcc_controller="talondx-001/vcc-app/vcc-controller",
         vcc_band=[
             "mid_csp_cbf/vcc_band12/001",
             "mid_csp_cbf/vcc_band3/001",
