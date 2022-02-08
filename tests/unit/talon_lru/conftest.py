@@ -44,6 +44,7 @@ def device_to_load() -> DevicesToLoadType:
         "path": "tests/unit/talon_lru/devicetoload.json",
         "package": "ska_mid_cbf_mcs.talon_lru.talon_lru_device",
         "device": "talonlru-001",
+        "device_class": "TalonLRU",
         "proxy": CbfDeviceProxy,
         "patch": TalonLRU
     }

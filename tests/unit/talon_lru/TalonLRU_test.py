@@ -22,9 +22,7 @@ from ska_tango_base.commands import ResultCode
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_mid_cbf_mcs.testing.tango_harness import TangoHarness
 
-@pytest.mark.skip(
-        reason="Not updated to version 0.11.3 of the base classes."
-)
+
 def test_startup_state(
     tango_harness: TangoHarness,
     device_under_test: CbfDeviceProxy
@@ -46,7 +44,7 @@ def test_startup_state(
     else:
         assert device_under_test.PDU1PowerMode == PowerMode.OFF
         power_switch1_valid = True
-    
+
     # Check the device state and PDU2PowerMode based on mock_power_switch2 behaviour
     power_switch2_valid = False
     if mock_power_switch2.stimulusMode == "conn_fail":
@@ -63,9 +61,8 @@ def test_startup_state(
     if power_switch1_valid and power_switch2_valid:
         assert device_under_test.State() == DevState.OFF
 
-@pytest.mark.skip(
-        reason="Not updated to version 0.11.3 of the base classes."
-)
+
+
 def test_On(
     tango_harness: TangoHarness,
     device_under_test: CbfDeviceProxy
@@ -107,9 +104,7 @@ def test_On(
         else:
             assert device_under_test.PDU2PowerMode == PowerMode.ON
 
-@pytest.mark.skip(
-        reason="Not updated to version 0.11.3 of the base classes."
-)
+
 def test_Off(
     tango_harness: TangoHarness,
     device_under_test: CbfDeviceProxy
@@ -154,9 +149,7 @@ def test_Off(
         assert result[0][0] == ResultCode.OK
         assert device_under_test.State() == DevState.OFF
 
-@pytest.mark.skip(
-        reason="Not updated to version 0.11.3 of the base classes."
-)
+
 def test_OnOff(
     tango_harness: TangoHarness,
     device_under_test: CbfDeviceProxy

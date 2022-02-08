@@ -22,6 +22,7 @@ from __future__ import annotations
 from collections import defaultdict
 import json
 import logging
+from re import S
 import socket
 from types import TracebackType
 from typing import Any, Callable, Dict, Iterable, List, Optional, Type, cast
@@ -62,6 +63,7 @@ DeviceSpecType = TypedDict(
     "DeviceSpecType",
     {
         "name": str,
+        "device_class": Type[SKABaseDevice],
         "proxy": Type[CbfDeviceProxy],
         "patch": Type[SKABaseDevice],
     },
@@ -115,8 +117,9 @@ DeviceToLoadType = TypedDict(
         "path": str,
         "package": str,
         "device": str,
+        "device_class": Type[SKABaseDevice],
         "proxy": Type[CbfDeviceProxy],
-        "patch": Type[SKABaseDevice],
+        "patch": Type[SKABaseDevice]
     },
     total=False,
 )
@@ -158,6 +161,7 @@ class CbfDeviceInfo:
     def include_device(
         self: CbfDeviceInfo,
         name: str,
+        device_class: str,
         proxy: type[CbfDeviceProxy],
         patch: Optional[type[SKABaseDevice]] = None,
     ) -> None:
@@ -170,6 +174,7 @@ class CbfDeviceInfo:
         :param proxy: the proxy class to use to access the device.
         :param patch: an optional device class with which to patch the
             named device
+        :param device_class: the named device's class.
 
         :raises ValueError: if the named device does not exist in the
             source configuration data
@@ -177,17 +182,7 @@ class CbfDeviceInfo:
         for server in self._source_data["servers"]:
             if name in self._source_data["servers"][server]:
                 device_spec = self._source_data["servers"][server][name]
-
-                # TODO: The following is a workaround for loading a device that isn't listed
-                # first in the device server config json is to load via the
-                # patched device class name and inputting the desired class type
-                # in the device_spec object. When refactoring for the v0.11.3 
-                # base class upgrade can add back in this workaround or ideally 
-                # come up with a better fix
-                # 
-                # class_name = patch.__name__
-
-                class_name = next(iter(device_spec))
+                class_name = device_class
                 fqdn = next(iter(device_spec[class_name]))
                 properties = device_spec[class_name][fqdn]["properties"]
                 attribute_properties = device_spec[class_name][fqdn].get(
@@ -200,8 +195,6 @@ class CbfDeviceInfo:
                 }
 
                 if patch is None:
-                    raise ValueError(f"patch cannot be None.")
-                    # TODO: Fails is patch is None, need to implement working default
                     package = __import__(self._package, fromlist=[class_name])
                     klass = getattr(package, class_name)
                 else:

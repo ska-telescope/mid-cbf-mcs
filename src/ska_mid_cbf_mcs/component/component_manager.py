@@ -243,8 +243,8 @@ class CbfComponentManager(BaseComponentManager):
         """
         if self._faulty != faulty:
             self._faulty = faulty
-            if self._component_fault_callback is not None and faulty is not None:
-                self._component_fault_callback(faulty)
+        if self._component_fault_callback is not None and faulty is not None:
+            self._component_fault_callback(faulty)
 
     def component_fault_changed(self: CbfComponentManager, faulty: bool) -> None:
         """

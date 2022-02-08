@@ -61,6 +61,7 @@ def devices_to_load(
         "devices": [
             {
                 "name": device_to_load["device"],
+                "device_class": device_to_load["device_class"],
                 "proxy": device_to_load["proxy"],
             }
         ],
