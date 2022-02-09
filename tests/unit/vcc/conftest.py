@@ -207,6 +207,9 @@ def mock_vcc_band() -> unittest.mock.Mock:
     builder.set_state(tango.DevState.OFF)
     builder.add_result_command("On", ResultCode.OK)
     builder.add_result_command("Off", ResultCode.OK)
+    builder.add_command("ConfigureScan", None)
+    builder.add_command("Scan", None)
+    builder.add_command("EndScan", None)
     return builder()
 
 @pytest.fixture()

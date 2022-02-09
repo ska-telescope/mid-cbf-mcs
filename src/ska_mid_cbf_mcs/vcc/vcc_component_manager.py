@@ -153,6 +153,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         self._config_id = ""
 
         self._frequency_band = None
+        self._freq_band_name = ""
         self._stream_tuning = (0, 0)
         self._frequency_band_offset_stream_1 = 0
         self._frequency_band_offset_stream_2 = 0
@@ -310,6 +311,8 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         self._frequency_band_offset_stream_2 = 0
         self._frequency_band_offset_stream_1 = 0
         self._stream_tuning = (0, 0)
+        self._frequency_band = None
+        self._freq_band_name = ""
         self._config_id = ""
         self._scan_id = 0
 
@@ -348,8 +351,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
             )
         self._freq_band_name = configuration["frequency_band"]
         if self._frequency_band in [4, 5]:
-                self._stream_tuning = \
-                    configuration["band_5_tuning"]
+            self._stream_tuning = configuration["band_5_tuning"]
 
         self._frequency_band_offset_stream_1 = \
             int(configuration["frequency_band_offset_stream_1"])
@@ -361,7 +363,14 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         else:
             self._logger.warning("'rfiFlaggingMask' not given. Proceeding.")
 
-        return (ResultCode.OK, "Vcc ScanCommand completed OK")
+        # Send the ConfigureScan command to the HPS
+        if not self._simulation_mode:
+            try:
+                self._band_proxies[self._freq_band_index[self._freq_band_name]].ConfigureScan(argin)
+            except tango.DevFailed as df:
+                self._logger.error(str(df.args[0].desc))
+
+        return (ResultCode.OK, "Vcc ConfigureScanCommand completed OK")
 
     def scan(self: VccComponentManager, scan_id: int) -> Tuple[ResultCode, str]:
 
@@ -377,7 +386,13 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         """
 
         self._scan_id = scan_id
-        return (ResultCode.STARTED, "Vcc Scan command completed OK")
+        # Send the Scan command to the HPS
+        if not self._simulation_mode:
+            try:
+                self._band_proxies[self._freq_band_index[self._freq_band_name]].Scan(scan_id)
+            except tango.DevFailed as df:
+                self._logger.error(str(df.args[0].desc))
+        return (ResultCode.STARTED, "Vcc ScanCommand completed OK")
 
     def end_scan(self: VccComponentManager) -> Tuple[ResultCode, str]:
 
@@ -389,8 +404,13 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
             information purpose only.
         :rtype: (ResultCode, str)
         """
-        return (ResultCode.OK, "Vcc EndScan command completed OK")
-
+        # Send the EndScan command to the HPS
+        if not self._simulation_mode:
+            try:
+                self._band_proxies[self._freq_band_index[self._freq_band_name]].EndScan()
+            except tango.DevFailed as df:
+                self._logger.error(str(df.args[0].desc))
+        return (ResultCode.OK, "Vcc EndScanCommand completed OK")
 
     def configure_search_window(
         self:VccComponentManager,
