@@ -2011,8 +2011,20 @@ class CbfSubarray(SKASubarray):
                 "band_5_tuning": device._stream_tuning,
                 "frequency_band_offset_stream_1": device._frequency_band_offset_stream_1,
                 "frequency_band_offset_stream_2": device._frequency_band_offset_stream_2,
-                "rfi_flagging_mask": configuration["rfi_flagging_mask"],
+                "rfi_flagging_mask": configuration["rfi_flagging_mask"]
             }
+            
+            # Add subset of FSP configuration to the VCC configure scan argument
+            reduced_fsp = []
+            for fsp in configuration["fsp"]:
+                fsp_cfg = {
+                    "fsp_id": fsp["fsp_id"],
+                    "function_mode": fsp["function_mode"],
+                    "frequency_slice_id": fsp["frequency_slide_id"]
+                }
+                reduced_fsp.append(fsp_cfg)
+            config_dict["fsp"] = reduced_fsp
+
             json_str = json.dumps(config_dict)
             data = tango.DeviceData()
             data.insert(tango.DevString, json_str)

@@ -269,6 +269,8 @@ class TestVccComponentManager:
         f = open(file_path + config_file_name)
         json_string = f.read().replace("\n", "")
         f.close()
+        configuration = json.loads(json_string)
+        vcc_component_manager.configure_band(configuration["frequency_band"])
         vcc_component_manager.configure_scan(json_string)
 
         # Use callable 'Scan'  API
