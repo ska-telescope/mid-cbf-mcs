@@ -54,14 +54,14 @@ class TestVcc:
             :py:class:`CbfDeviceProxy` to the device under test, in a
             :py:class:`tango.test_context.DeviceTestContext`.
         """
-        assert device_under_test.State() == DevState.OFF
+        assert device_under_test.state() == DevState.DISABLE
     
     def test_Status(
         self: TestVcc,
         device_under_test: CbfDeviceProxy,
     ) -> None:
 
-        assert device_under_test.Status() == "The device is in OFF state."
+        assert device_under_test.Status() == "The device is in DISABLE state."
 
     def test_adminMode(
         self: TestVcc,
@@ -91,12 +91,12 @@ class TestVcc:
                 :py:class:`tango.test_context.DeviceTestContext`.
             :param config_file_name: JSON file for the configuration 
         """
+        device_under_test.adminMode = AdminMode.ONLINE
+        assert device_under_test.adminMode == AdminMode.ONLINE
+        assert device_under_test.state() == DevState.OFF
 
-        (result_code, msg) = device_under_test.On()
-        time.sleep(CONST_WAIT_TIME)
-        assert result_code == ResultCode.OK
-        assert device_under_test.State() == DevState.ON
-        
+        device_under_test.On()
+
         f = open(file_path + config_file_name)
         json_str = f.read().replace("\n", "")
         configuration = json.loads(json_str)
@@ -105,31 +105,9 @@ class TestVcc:
         device_under_test.TurnOnBandDevice(configuration["frequency_band"])
 
         device_under_test.ConfigureScan(json_str)
-        time.sleep(3)
         assert device_under_test.obsState == ObsState.READY
 
         device_under_test.TurnOffBandDevice(configuration["frequency_band"])
-
-
-    def test_On_Off(
-        self: TestVcc,
-        device_under_test: CbfDeviceProxy
-    ) -> None:
-        """
-            Test for Vcc's On and Off commands
-
-            :param device_under_test: fixture that provides a
-                :py:class:`tango.DeviceProxy` to the device under test, in a
-                :py:class:`tango.test_context.DeviceTestContext`.
-        """
-        
-        device_under_test.On()
-        time.sleep(1)
-        assert device_under_test.State() == DevState.ON
-
-        device_under_test.Off()
-        time.sleep(1)
-        assert device_under_test.State() == DevState.OFF
 
 
     @pytest.mark.parametrize(
@@ -153,14 +131,15 @@ class TestVcc:
         scan_id: int
     ) -> None:
         """
-            Test Vcc's Scan command state changes.
+        Test Vcc's Scan command state changes.
 
-            :param device_under_test: fixture that provides a
-                :py:class:`tango.DeviceProxy` to the device under test, in a
-                :py:class:`tango.test_context.DeviceTestContext`.
-            :param config_file_name: JSON file for the configuration
-            :param scan_id: the scan id
+        :param device_under_test: fixture that provides a
+            :py:class:`tango.DeviceProxy` to the device under test, in a
+            :py:class:`tango.test_context.DeviceTestContext`.
+        :param config_file_name: JSON file for the configuration
+        :param scan_id: the scan id
         """
+        device_under_test.adminMode = AdminMode.ONLINE
 
         # turn on device and configure scan
         device_under_test.On()
@@ -207,6 +186,8 @@ class TestVcc:
         """
         Test a minimal successful search window configuration.
         """
+        device_under_test.adminMode = AdminMode.ONLINE
+        device_under_test.loggingLevel = LoggingLevel.DEBUG
         device_under_test.On()
         device_under_test.loggingLevel = LoggingLevel.DEBUG
         # set receptorID to 1 to correctly test tdcDestinationAddress
@@ -222,149 +203,3 @@ class TestVcc:
         device_under_test.ConfigureSearchWindow(f.read().replace("\n", ""))
         f.close()
 
-
-    @pytest.mark.parametrize(
-        "config_file_name, \
-        jones_matrix_file_name", 
-        [
-            (
-                "Vcc_ConfigureScan_basic.json",
-                "jonesmatrix_unit_test.json"
-            )
-        ]
-    )
-    def test_UpdateJonesMatrix(
-        self: TestVcc,
-        device_under_test: CbfDeviceProxy,
-        config_file_name: str,
-        jones_matrix_file_name: str,
-    ) -> None:
-        """
-            Test Vcc's UpdateJonesMatrix command
-
-            :param device_under_test: fixture that provides a
-                :py:class:`tango.DeviceProxy` to the device under test, in a
-                :py:class:`tango.test_context.DeviceTestContext`.
-            :param config_file_name: JSON file for the configuration
-            :param jones_matrix_file_name: JSON file for the jones matrix
-            :param sub_id: the subarray id
-        """
-
-        assert device_under_test.State() == DevState.OFF
-        device_under_test.On()
-        time.sleep(3)
-        assert device_under_test.State() == DevState.ON
-
-        # jones matrix values should be set to 0.0 after init
-        num_cols = 16
-        num_rows = 26
-        assert device_under_test.read_attribute("jonesMatrix", \
-             extract_as=tango.ExtractAs.List).value == [[0.0] * num_cols for _ in range(num_rows)]
-        
-        f = open(file_path + config_file_name)
-        json_str = f.read().replace("\n", "")
-        configuration = json.loads(json_str)
-        f.close()
-
-        device_under_test.TurnOnBandDevice(configuration["frequency_band"])
-
-        device_under_test.ConfigureScan(json_str)
-
-        assert device_under_test.obsState == ObsState.READY
-
-        # read the json file
-        f = open(file_path + jones_matrix_file_name)
-        json_str = f.read().replace("\n", "")
-        f.close()
-        jones_matrix = json.loads(json_str)
-
-        # update the jones matrix
-        for m in jones_matrix["jonesMatrix"]:
-            device_under_test.UpdateJonesMatrix(json.dumps(m["matrixDetails"]))
-        
-        min_fs_id = 1
-        max_fs_id = 26
-        matrix_len = 16 
-        for m in jones_matrix["jonesMatrix"]:
-            for receptor in m["matrixDetails"]:
-                rec_id = receptor["receptor"]
-                if rec_id == device_under_test.receptorID:
-                    for frequency_slice in receptor["receptorMatrix"]:
-                        fs_id = frequency_slice["fsid"]
-                        matrix = frequency_slice["matrix"]
-                        if min_fs_id <= fs_id <= max_fs_id:
-                            if len(matrix) == matrix_len:
-                                assert list(device_under_test.jonesMatrix[fs_id-1]) == list(matrix)
-
-
-    @pytest.mark.parametrize(
-        "config_file_name, \
-        delay_model_file_name", 
-        [
-            (
-                "Vcc_ConfigureScan_basic.json",
-                "delaymodel_unit_test.json"
-            )
-        ]
-    )
-    def test_UpdateDelayModel(
-        self: TestVcc,
-        device_under_test: CbfDeviceProxy,
-        config_file_name: str,
-        delay_model_file_name: str
-    ) -> None:
-        """
-            Test Vcc's UpdateDelayModel Command.
-
-            :param device_under_test: fixture that provides a
-                :py:class:`tango.DeviceProxy` to the device under test, in a
-                :py:class:`tango.test_context.DeviceTestContext`.
-            :param config_file_name: JSON file for the configuration
-            :param delay_model_file_name: JSON file for the delay model
-        """
-
-        assert device_under_test.State() == DevState.OFF
-        device_under_test.On()
-        time.sleep(5)
-        assert device_under_test.State() == DevState.ON
-
-        # delay model values should be set to 0.0 after init
-        num_cols = 6
-        num_rows = 26
-        assert device_under_test.read_attribute("delayModel", \
-             extract_as=tango.ExtractAs.List).value == [[0] * num_cols for i in range(num_rows)]
-        
-        f = open(file_path + config_file_name)
-        json_str = f.read().replace("\n", "")
-        configuration = json.loads(json_str)
-        f.close()
-
-        device_under_test.TurnOnBandDevice(configuration["frequency_band"])
-
-        device_under_test.ConfigureScan(json_str)
-
-        assert device_under_test.obsState == ObsState.READY
-        
-        # read the json file
-        f = open(file_path + delay_model_file_name)
-        json_str_model = f.read().replace("\n", "")
-        f.close()
-        delay_model = json.loads(json_str_model)
-
-        # update the delay model
-        for m in delay_model["delayModel"]:
-            device_under_test.write_attribute("receptorID", m["delayDetails"][0]["receptor"])
-            assert device_under_test.receptorID == m["delayDetails"][0]["receptor"]
-            device_under_test.UpdateDelayModel(json.dumps(m["delayDetails"]))
-        
-        min_fs_id = 1
-        max_fs_id = 26
-        model_len = 6
-        for m in delay_model["delayModel"]:
-            for delayDetails in m["delayDetails"]:
-                for frequency_slice in delayDetails["receptorDelayDetails"]:
-                    if min_fs_id <= frequency_slice["fsid"] <= max_fs_id:
-                        if len(frequency_slice["delayCoeff"]) == model_len:
-                            assert device_under_test.read_attribute("delayModel", \
-                            extract_as=tango.ExtractAs.List).value[frequency_slice["fsid"] -1] \
-                                 == frequency_slice["delayCoeff"] 

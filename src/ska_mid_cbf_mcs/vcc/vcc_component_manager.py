@@ -19,14 +19,9 @@ from typing import List, Tuple, Callable, Optional
 
 import logging
 import json
-from ska_tango_base import obs
 
 # tango imports
 import tango
-from tango.server import BaseDevice, Device, run
-from tango.server import attribute, command
-from tango.server import device_property
-from tango import DevFailed, DebugIt, DevState, AttrWriteType
 
 # SKA Specific imports
 
@@ -36,7 +31,7 @@ from ska_mid_cbf_mcs.component.component_manager import (
     CbfComponentManager, CommunicationStatus
 )
 
-from ska_tango_base.control_model import ObsState, SimulationMode, PowerMode
+from ska_tango_base.control_model import SimulationMode, PowerMode
 from ska_tango_base.csp.obs import CspObsComponentManager
 from ska_tango_base.commands import ResultCode
 
@@ -45,6 +40,26 @@ __all__ = ["VccComponentManager"]
 
 class VccComponentManager(CbfComponentManager, CspObsComponentManager):
     """Component manager for Vcc class."""
+
+    @property
+    def config_id(self):
+        """Return the configuration id."""
+        return self._config_id
+
+    @property
+    def scan_id(self):
+        """Return the scan id."""
+        return self._scan_id
+
+    @config_id.setter
+    def config_id(self, config_id):
+        """Set the configuration id."""
+        self._config_id = config_id
+
+    @scan_id.setter
+    def scan_id(self, scan_id):
+        """Set the configuration id."""
+        self._scan_id = scan_id
 
     def __init__(
         self: VccComponentManager,
@@ -55,7 +70,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         push_change_event_callback: Optional[Callable],
         communication_status_changed_callback: Callable[[CommunicationStatus], None],
         component_power_mode_changed_callback: Callable[[PowerMode], None],
-        connect: bool = True
+        component_fault_callback: Callable
     ) -> None:
         """
         Initialize a new instance.
@@ -65,14 +80,15 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         :param vcc_band: FQDNs of VCC band devices
         :param search_window: FQDNs of VCC search windows
         :param logger: a logger for this object to use
-        :param connect: whether to connect automatically upon initialization
         :param push_change_event_callback: method to call when the base classes
             want to send an event
         :param communication_status_changed_callback: callback to be
-            called when the status of the communications channel between
-            the component manager and its component changes
-        :param component_power_mode_changed_callback: callback to be
-            called when the component power mode changes
+            called when the status of the communications channel between the 
+            component manager and its component changes
+        :param component_power_mode_changed_callback: callback to be called when 
+            the component power mode changes
+        :param component_fault_callback: callback to be called in event of 
+            component fault
         """
         self._simulation_mode = simulation_mode
 
@@ -86,6 +102,9 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         # initialize attribute values
         self.receptor_id = 0
 
+        self.scan_id = 0
+        self.config_id = ""
+
         self.frequency_band = 0
         self.stream_tuning = (0, 0)
         self.frequency_band_offset_stream_1 = 0
@@ -98,6 +117,10 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         self.scfo_band_5a = 0
         self.scfo_band_5b = 0
 
+        self.jones_matrix = [[0] * 16 for _ in range(26)]
+        self.delay_model = [[0] * 6 for _ in range(26)]
+        self.doppler_phase_correction = [0 for _ in range(4)]
+
         # initialize list of band proxies and band -> index translation;
         # entry for each of: band 1 & 2, band 3, band 4, band 5
         self._band_proxies = []
@@ -108,15 +131,12 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
 
         self._sw_proxies = []
 
-        if connect:
-            self.start_communicating()
-
         super().__init__(
             logger=logger,
             push_change_event_callback=push_change_event_callback,
             communication_status_changed_callback=communication_status_changed_callback,
             component_power_mode_changed_callback=component_power_mode_changed_callback,
-            component_fault_callback=None,
+            component_fault_callback=component_fault_callback,
             obs_state_model=None
         )
 
@@ -137,20 +157,22 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                 ) for fqdn in self._search_window_fqdn]
 
             except tango.DevFailed as dev_failed:
+                self.update_component_power_mode(PowerMode.UNKNOWN)
+                self.update_communication_status(CommunicationStatus.NOT_ESTABLISHED)
+                self.update_component_fault(True)
                 raise ConnectionError(
                     f"Error in proxy connection."
                 ) from dev_failed
 
         self.connected = True
+        self.update_component_power_mode(PowerMode.ON)
         self.update_communication_status(CommunicationStatus.ESTABLISHED)
-        self.update_component_fault(False)
-        self.update_component_power_mode(PowerMode.OFF)
 
 
     def stop_communicating(self: VccComponentManager) -> None:
         """Stop communication with the component."""
         super().stop_communicating()
-
+        self.update_component_power_mode(PowerMode.UNKNOWN)
         self.connected = False
 
 
@@ -162,6 +184,45 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         :return: simulation mode of the component manager
         """
         return self._simulation_mode
+
+
+    def on(self: VccComponentManager) -> Tuple[ResultCode, str]:
+        """
+        Turn on VCC component; currently unimplemented.
+
+        :return: A tuple containing a return code and a string
+            message indicating status. The message is for
+            information purpose only.
+        :rtype: (ResultCode, str)
+        """
+        self.update_component_power_mode(PowerMode.ON)
+        return (ResultCode.OK, "On command completed OK")
+
+
+    def off(self: VccComponentManager) -> Tuple[ResultCode, str]:
+        """
+        Turn off VCC component; currently unimplemented.
+
+        :return: A tuple containing a return code and a string
+            message indicating status. The message is for
+            information purpose only.
+        :rtype: (ResultCode, str)
+        """
+        self.update_component_power_mode(PowerMode.OFF)
+        return (ResultCode.OK, "Off command completed OK")
+
+
+    def standby(self: VccComponentManager) -> Tuple[ResultCode, str]:
+        """
+        Turn VCC component to standby; currently unimplemented.
+
+        :return: A tuple containing a return code and a string
+            message indicating status. The message is for
+            information purpose only.
+        :rtype: (ResultCode, str)
+        """
+        self.update_component_power_mode(PowerMode.STANDBY)
+        return (ResultCode.OK, "Standby command completed OK")
 
 
     def turn_on_band_device(
@@ -187,6 +248,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                 if idx == self._freq_band_index[freq_band_name]:
                     self._logger.debug(f"Turning on band device index {idx}")
                     band.On()
+                    self.frequency_band = freq_band_dict()[freq_band_name]
                 else:
                     self._logger.debug(f"Disabling band device index {idx}")
                     band.Disable()
@@ -219,6 +281,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                 if idx == self._freq_band_index[freq_band_name]:
                     self._logger.debug(f"Turning off band device index {idx}")
                     band.Off()
+                    self.frequency_band = 0
         except tango.DevFailed as df:
             self._logger.error(str(df.args[0].desc))
             (result_code, msg) = (ResultCode.FAILED, "TurnOffBandDevice failed.")
@@ -227,19 +290,22 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
 
     def deconfigure(self: VccComponentManager) -> None:
         """Deconfigure scan configuration parameters."""
-        self.frequency_band_offset_stream_2 = 0
-        self.frequency_band_offset_stream_1 = 0
-        self.stream_tuning = (0, 0)
-        self.frequency_band = 0
-        self.config_id = ""
-        self.scan_id = 0
+        self.doppler_phase_correction = [0 for _ in range(4)]
+        self.jones_matrix = [[0] * 16 for _ in range(26)]
+        self.delay_model = [[0] * 6 for _ in range(26)]
+        self.rfi_flagging_mask = ""
         self.scfo_band_5b = 0
         self.scfo_band_5a = 0
         self.scfo_band_4 = 0
         self.scfo_band_3 = 0
         self.scfo_band_2 = 0
         self.scfo_band_1 = 0
-        self.rfi_flagging_mask = ""
+        self.frequency_band_offset_stream_2 = 0
+        self.frequency_band_offset_stream_1 = 0
+        self.stream_tuning = (0, 0)
+        self.frequency_band = 0
+        self.config_id = ""
+        self.scan_id = 0
 
     def configure_scan(self: VccComponentManager, argin: str) -> Tuple[ResultCode, str]:
 
@@ -261,8 +327,13 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         # (see Mid.CBF Scan Configuration in ICD). Therefore, the previous frequency 
         # band value needs to be stored, and if the frequency band is not
         # set in the config it should be replaced with the previous value.
-        self.frequency_band = freq_band_dict()[configuration["frequency_band"]]
-        self.frequency_band = freq_band_dict()[configuration["frequency_band"]]
+        freq_band = freq_band_dict()[configuration["frequency_band"]]
+        if self.frequency_band != freq_band:
+            return (
+                ResultCode.FAILED,
+                f"Error in Vcc.ConfigureScan; scan configuration frequency band {freq_band} " + \
+                f"not the same as enabled band device {self.frequency_band}"
+            )
         self._freq_band_name = configuration["frequency_band"]
         if self.frequency_band in [4, 5]:
                 self.stream_tuning = \
@@ -276,45 +347,45 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         if "rfi_flagging_mask" in configuration:
             self.rfi_flagging_mask = str(configuration["rfi_flagging_mask"])
         else:
-            self._logger.warn("'rfiFlaggingMask' not given. Proceeding.")
+            self._logger.warning("'rfiFlaggingMask' not given. Proceeding.")
 
         if "scfo_band_1" in configuration:
             self.scfo_band_1 = int(configuration["scfo_band_1"])
         else:
             self.scfo_band_1 = 0
-            self._logger.warn("'scfoBand1' not specified. Defaulting to 0.")
+            self._logger.warning("'scfoBand1' not specified. Defaulting to 0.")
 
         if "scfo_band_2" in configuration:
             self.scfo_band_2 = int(configuration["scfo_band_2"])
         else:
             self.scfo_band_2 = 0
-            self._logger.warn("'scfoBand2' not specified. Defaulting to 0.")
+            self._logger.warning("'scfoBand2' not specified. Defaulting to 0.")
 
         if "scfo_band_3" in configuration:
             self.scfo_band_3 = int(configuration["scfo_band_3"])
         else:
             self.scfo_band_3 = 0
-            self._logger.warn("'scfoBand3' not specified. Defaulting to 0.")
+            self._logger.warning("'scfoBand3' not specified. Defaulting to 0.")
 
         if "scfo_band_4" in configuration:
             self.scfo_band_4 = configuration["scfo_band_4"]
         else:
             self.scfo_band_4 = 0
-            self._logger.warn("'scfoBand4' not specified. Defaulting to 0.")
+            self._logger.warning("'scfoBand4' not specified. Defaulting to 0.")
 
         if "scfo_band_5a" in configuration:
             self.scfo_band_5a = int(configuration["scfo_band_5a"])
         else:
             self.scfo_band_5a = 0
-            self._logger.warn("'scfoBand5a' not specified. Defaulting to 0.")
+            self._logger.warning("'scfoBand5a' not specified. Defaulting to 0.")
 
         if "scfo_band_5b" in configuration:
             self.scfo_band_5b = int(configuration["scfo_band_5b"])
         else:
             self.scfo_band_5b = 0
-            self._logger.warn("'scfoBand5b' not specified. Defaulting to 0.")
+            self._logger.warning("'scfoBand5b' not specified. Defaulting to 0.")
 
-        return (ResultCode.OK, "Vcc ScanCommand completed OK")
+        return (ResultCode.OK, "Vcc ConfigureScan command completed OK")
 
     def scan(self: VccComponentManager, scan_id: int) -> Tuple[ResultCode, str]:
 
@@ -330,7 +401,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         """
 
         self.scan_id = scan_id
-        return (ResultCode.STARTED, "Vcc ScanCommand completed OK")
+        return (ResultCode.STARTED, "Vcc Scan command completed OK")
 
     def end_scan(self: VccComponentManager) -> Tuple[ResultCode, str]:
 
@@ -342,7 +413,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
             information purpose only.
         :rtype: (ResultCode, str)
         """
-        return (ResultCode.OK, "Vcc EndScanCommand completed OK")
+        return (ResultCode.OK, "Vcc EndScan command completed OK")
 
 
     def configure_search_window(
@@ -398,7 +469,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                     # log a warning message
                     log_msg = "'searchWindowTuning' partially out of observed band. " \
                             "Proceeding."
-                    self._logger.warn(log_msg)
+                    self._logger.warning(log_msg)
             else:  # frequency band 5a or 5b (two streams with bandwidth 2.5 GHz)
                 proxy_sw.searchWindowTuning = argin["search_window_tuning"]
 
@@ -432,7 +503,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                     # log a warning message
                     log_msg = "'searchWindowTuning' partially out of observed band. " \
                             "Proceeding."
-                    self._logger.warn(log_msg)
+                    self._logger.warning(log_msg)
 
                 # Configure tdcEnable.
                 proxy_sw.tdcEnable = argin["tdc_enable"]
@@ -452,7 +523,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                     proxy_sw.tdcPeriodBeforeEpoch = 2
                     log_msg = "Search window specified, but 'tdcPeriodBeforeEpoch' not given. " \
                             "Defaulting to 2."
-                    self._logger.warn(log_msg)
+                    self._logger.warning(log_msg)
 
                 # Configure tdcPeriodAfterEpoch.
                 if "tdc_period_after_epoch" in argin:
@@ -461,7 +532,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                     proxy_sw.tdcPeriodAfterEpoch = 22
                     log_msg = "Search window specified, but 'tdcPeriodAfterEpoch' not given. " \
                             "Defaulting to 22."
-                    self._logger.warn(log_msg)
+                    self._logger.warning(log_msg)
 
                 # Configure tdcDestinationAddress.
                 if argin["tdc_enable"]:
@@ -477,3 +548,71 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
             (result_code, msg) = (ResultCode.FAILED, "Error configuring search window.")
 
         return (result_code, msg)
+
+
+    def update_doppler_phase_correction(self: VccComponentManager, argin: str) -> None:
+        """
+        Update Vcc's doppler phase correction
+
+        :param argin: the doppler phase correction JSON string
+        """
+        argin = json.loads(argin)
+
+        for dopplerDetails in argin:
+            if dopplerDetails["receptor"] == self.receptor_id:
+                coeff = dopplerDetails["dopplerCoeff"]
+                if len(coeff) == 4:
+                    self.doppler_phase_correction = coeff.copy()
+                else:
+                    log_msg = "Invalid length for 'dopplerCoeff' "
+                    self._logger.error(log_msg)
+
+
+    def update_delay_model(self: VccComponentManager, argin: str) -> None:
+        """
+        Update Vcc's delay model
+
+        :param argin: the delay model JSON string
+        """
+        argin = json.loads(argin)
+
+        for delayDetails in argin:
+            if delayDetails["receptor"] == self.receptor_id:
+                for frequency_slice in delayDetails["receptorDelayDetails"]:
+                    fsid = frequency_slice["fsid"]
+                    coeff = frequency_slice["delayCoeff"]
+                    if 1 <= fsid <= 26:
+                        if len(coeff) == 6:
+                            self.delay_model[fsid - 1] = coeff.copy()
+                        else:
+                            log_msg = "'delayCoeff' not valid for frequency slice " + \
+                                f"{fsid} of receptor {self.receptor_id}"
+                            self._logger.error(log_msg)
+                    else:
+                        log_msg = f"'fsid' {fsid} not valid for receptor {self.receptor_id}"
+                        self._logger.error(log_msg)
+
+
+    def update_jones_matrix(self: VccComponentManager, argin: str) -> None:
+        """
+        Update Vcc's jones matrix
+
+        :param argin: the jones matrix JSON string
+        """
+        argin = json.loads(argin)
+
+        for receptor in argin:
+            if receptor["receptor"] == self.receptor_id:
+                for frequency_slice in receptor["receptorMatrix"]:
+                    fs_id = frequency_slice["fsid"]
+                    matrix = frequency_slice["matrix"]
+                    if 1 <= fs_id <= 26:
+                        if len(matrix) == 16:
+                            self.jones_matrix[fs_id-1] = matrix.copy()
+                        else:
+                            log_msg = f"'matrix' not valid for frequency slice {fs_id} " + \
+                                        f" of receptor {self.receptor_id}"
+                            self._logger.error(log_msg)
+                    else:
+                        log_msg = f"'fsid' {fs_id} not valid for receptor {self.receptor_id}"
+                        self._logger.error(log_msg)

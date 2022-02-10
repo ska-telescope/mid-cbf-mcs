@@ -598,28 +598,6 @@ class CbfSubarray(SKASubarray):
                 msg = "'searchWindow' must be an array of maximum length 2. " \
                         "Aborting configuration."
                 self._raise_configure_scan_fatal_error(msg)
-            #TODO consider moving the search_window object validation to Vcc
-            for search_window in configuration["search_window"]:
-                for vcc in self._proxies_assigned_vcc:
-                    try:
-                        search_window["frequency_band"] = common_configuration["frequency_band"]
-                        search_window["frequency_band_offset_stream_1"] = \
-                            configuration["frequency_band_offset_stream_1"]
-                        search_window["frequency_band_offset_stream_2"] = \
-                            configuration["frequency_band_offset_stream_2"]
-                        if search_window["frequency_band"] in ["5a", "5b"]:
-                            search_window["band_5_tuning"] = common_configuration["band_5_tuning"]
-
-                        # pass on configuration to VCC
-                        vcc.ValidateSearchWindow(json.dumps(search_window))
-
-                    except tango.DevFailed:  # exception in Vcc.ValidateSearchWindow
-                        msg = (
-                            "An exception occurred while configuring VCC search "
-                            f"windows:\n{sys.exc_info()[1].args[0].de}\n. "
-                            "Aborting configuration."
-                        )
-                        self._raise_configure_scan_fatal_error(msg)
         else:
             pass
 
