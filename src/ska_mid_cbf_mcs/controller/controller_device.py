@@ -343,9 +343,6 @@ class CbfController(SKAController):
             # # initialize attribute values
             device._command_progress = 0
 
-            device._frequency_offset_k = [0] * device._count_vcc
-            device._frequency_offset_delta_f = [0] * device._count_vcc
-
             message = "CbfController Init command completed OK"
             self.logger.info(message)
             return (ResultCode.OK, message)
@@ -485,14 +482,14 @@ class CbfController(SKAController):
     def read_frequencyOffsetK(self: CbfController) -> List[int]:
         # PROTECTED REGION ID(CbfController.frequencyOffsetK_read) ENABLED START #
         """Return frequencyOffsetK attribute: array of integers reporting receptors in subarray"""
-        return self._frequency_offset_k
+        return self.component_manager.frequency_offset_k
         # PROTECTED REGION END #    //  CbfController.frequencyOffsetK_read
 
     def write_frequencyOffsetK(self: CbfController, value: List[int]) -> None:
         # PROTECTED REGION ID(CbfController.frequencyOffsetK_write) ENABLED START #
         """Set frequencyOffsetK attribute"""
         if len(value) == self._count_vcc:
-            self._frequency_offset_k = value
+            self.component_manager.frequency_offset_k = value
         else:
             log_msg = "Skipped writing to frequencyOffsetK attribute (expected {} arguments, " \
                       "but received {}.".format(self._count_vcc, len(value))
@@ -503,14 +500,14 @@ class CbfController(SKAController):
         # PROTECTED REGION ID(CbfController.frequencyOffsetDeltaF_read) ENABLED START #
         """Return frequencyOffsetDeltaF attribute: Frequency offset (delta f) 
         of all 197 receptors as an array of ints."""
-        return self._frequency_offset_delta_f
+        return self.component_manager.frequency_offset_delta_f
         # PROTECTED REGION END #    //  CbfController.frequencyOffsetDeltaF_read
 
     def write_frequencyOffsetDeltaF(self: CbfController, value: List[int]) -> None:
         # PROTECTED REGION ID(CbfController.frequencyOffsetDeltaF_write) ENABLED START #
         """Set the frequencyOffsetDeltaF attribute"""
         if len(value) == self._count_vcc:
-            self._frequency_offset_delta_f = value
+            self.component_manager.frequency_offset_delta_f = value
         else:
             log_msg = "Skipped writing to frequencyOffsetDeltaF attribute (expected {} arguments, " \
                       "but received {}.".format(self._count_vcc, len(value))
