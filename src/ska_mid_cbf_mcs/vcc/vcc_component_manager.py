@@ -39,6 +39,7 @@ from ska_tango_base.commands import ResultCode
 
 __all__ = ["VccComponentManager"]
 
+VCC_PARAM_PATH = "mnt/vcc_param/"
 
 class VccComponentManager(CbfComponentManager, CspObsComponentManager):
     """Component manager for Vcc class."""
@@ -340,6 +341,14 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
             try:
                 self._vcc_controller_proxy.ConfigureBand(freq_band_name)
                 self._frequency_band = freq_band_dict()[freq_band_name]
+                self._freq_band_name = freq_band_name
+
+                # Set internal params for the configured band
+                f = open(VCC_PARAM_PATH + "internal_params_receptor" + str(self._receptor_id) +
+                    "_band" + freq_band_name + ".json")
+                json_string = f.read()
+                f.close()
+                self._band_proxies[self._freq_band_index[self._freq_band_name]].SetInternalParameters(json_string)
             except tango.DevFailed as df:
                 self._logger.error(str(df.args[0].desc))
                 (result_code, msg) = (ResultCode.FAILED, "ConfigureBand failed.")
