@@ -30,9 +30,7 @@ from ska_mid_cbf_mcs.commons.global_enum import freq_band_dict
 from ska_tango_base.control_model import LoggingLevel, HealthState
 from ska_tango_base.control_model import AdminMode, ObsState
 
-@pytest.mark.skip(
-    reason="Not updated to version 0.11.3 of the base classes."
-)
+
 class TestVcc:
     """
     Test class for Vcc device class integration testing.
@@ -56,8 +54,8 @@ class TestVcc:
         # turn off
 
         test_proxies.vcc[vcc_id].loggingLevel = LoggingLevel.DEBUG
+        test_proxies.vcc[vcc_id].adminMode = AdminMode.ONLINE
 
-        test_proxies.vcc[vcc_id].Off()
         test_proxies.wait_timeout_dev([test_proxies.vcc[vcc_id]], DevState.OFF, 3, 1)
         assert test_proxies.vcc[vcc_id].State() == DevState.OFF
 

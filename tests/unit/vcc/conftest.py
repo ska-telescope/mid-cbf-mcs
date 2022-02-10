@@ -15,6 +15,7 @@ import pytest
 import pytest_mock
 import unittest
 import logging
+import json
 
 # Tango imports
 import tango
@@ -75,35 +76,46 @@ def mock_component_manager(
         mock._communication_status_changed_callback(CommunicationStatus.ESTABLISHED)
         mock._component_power_mode_changed_callback(PowerMode.OFF)
 
-    def _configure_scan(mock: unittest.mock.Mock) -> Tuple[ResultCode, str]:
+    def _on()  -> Tuple[ResultCode, str]:
+        return (ResultCode.OK, "On command completed OK")
+
+    def _off()  -> Tuple[ResultCode, str]:
+        return (ResultCode.OK, "Off command completed OK")
+
+    def _standby()  -> Tuple[ResultCode, str]:
+        return (ResultCode.OK, "Standby command completed OK")
+
+    def _configure_scan() -> Tuple[ResultCode, str]:
         return (ResultCode.OK, "ConfigureScan command completed OK")
 
-    def _scan(mock: unittest.mock.Mock) -> Tuple[ResultCode, str]:
+    def _scan() -> Tuple[ResultCode, str]:
         return (ResultCode.STARTED, "Scan command started")
 
-    def _end_scan(mock: unittest.mock.Mock) -> Tuple[ResultCode, str]:
+    def _end_scan() -> Tuple[ResultCode, str]:
         return (ResultCode.OK, "EndScan command completed OK")
 
-    def _turn_on_band_device(mock: unittest.mock.Mock) -> Tuple[ResultCode, str]:
+    def _turn_on_band_device() -> Tuple[ResultCode, str]:
         return (ResultCode.OK, "TurnOnBandDevice command completed OK")
     
-    def _turn_off_band_device(mock: unittest.mock.Mock) -> Tuple[ResultCode, str]:
+    def _turn_off_band_device() -> Tuple[ResultCode, str]:
         return (ResultCode.OK, "TurnOffBandDevice command completed OK")
     
-    def _deconfigure(mock: unittest.mock.Mock) -> None: return None
+    def _deconfigure() -> None: pass
 
-    def _configure_search_window(mock: unittest.mock.Mock) -> Tuple[ResultCode, str]:
+    def _configure_search_window() -> Tuple[ResultCode, str]:
         return (ResultCode.OK, "Vcc ConfigureSearchWindow command completed OK")
 
-
     mock.start_communicating.side_effect = lambda: _start_communicating(mock)
-    mock.configure_scan.side_effect = lambda argin: _configure_scan(mock)
-    mock.scan.side_effect = lambda argin: _scan(mock)
-    mock.end_scan.side_effect = lambda : _end_scan(mock)
-    mock.turn_on_band_device.side_effect = lambda argin: _turn_on_band_device(mock)
-    mock.turn_off_band_device.side_effect = lambda argin: _turn_off_band_device(mock)
-    mock.deconfigure.side_effect = lambda: _deconfigure(mock)
-    mock.configure_search_window.side_effect = lambda argin: _configure_search_window(mock)
+    mock.on.side_effect = lambda: _on()
+    mock.off.side_effect = lambda: _off()
+    mock.standby.side_effect = lambda: _standby()
+    mock.configure_scan.side_effect = lambda argin: _configure_scan()
+    mock.scan.side_effect = lambda argin: _scan()
+    mock.end_scan.side_effect = lambda : _end_scan()
+    mock.turn_on_band_device.side_effect = lambda argin: _turn_on_band_device()
+    mock.turn_off_band_device.side_effect = lambda argin: _turn_off_band_device()
+    mock.deconfigure.side_effect = lambda: _deconfigure()
+    mock.configure_search_window.side_effect = lambda argin: _configure_search_window()
 
     mock.enqueue.return_value = unique_id, ResultCode.QUEUED
 
@@ -233,6 +245,7 @@ def vcc_component_manager(
     push_change_event_callback: MockChangeEventCallback,
     communication_status_changed_callback: MockCallable,
     component_power_mode_changed_callback: MockCallable,
+    component_fault_callback: MockCallable
 ) -> VccComponentManager:
     """Return a VCC component manager."""
     return VccComponentManager(
@@ -251,7 +264,7 @@ def vcc_component_manager(
         push_change_event_callback=push_change_event_callback,
         communication_status_changed_callback=communication_status_changed_callback,
         component_power_mode_changed_callback=component_power_mode_changed_callback,
-        connect=False
+        component_fault_callback=component_fault_callback
     )
 
 @pytest.fixture()
@@ -277,6 +290,22 @@ def component_power_mode_changed_callback(
 ) -> unittest.mock.Mock:
     """
     Return a mock callback for component power mode change.
+
+    :param mock_callback_factory: fixture that provides a mock callback
+        factory (i.e. an object that returns mock callbacks when
+        called).
+
+    :return: a mock callback to be called when the component manager
+        detects that the power mode of its component has changed.
+    """
+    return mock_callback_factory()
+
+@pytest.fixture()
+def component_fault_callback(
+    mock_callback_factory: Callable[[], unittest.mock.Mock],
+) -> unittest.mock.Mock:
+    """
+    Return a mock callback for component fault.
 
     :param mock_callback_factory: fixture that provides a mock callback
         factory (i.e. an object that returns mock callbacks when

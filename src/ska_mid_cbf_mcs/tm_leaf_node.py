@@ -55,14 +55,14 @@ class TmCspSubarrayLeafNodeTest(SKABaseDevice):
         if not event.err:
             try:
                 log_msg = "Received output links."
-                self.logger.warn(log_msg)
+                self.logger.warning(log_msg)
 
                 output_links = json.loads(str(event.attr_value.value))
                 config_ID = output_links["configID"]
 
                 if not config_ID or self._received_output_links:
                     log_msg = "Skipped assigning destination addresses."
-                    self.logger.warn(log_msg)
+                    self.logger.warning(log_msg)
                     return
 
                 self._config_ID = config_ID
@@ -107,7 +107,7 @@ class TmCspSubarrayLeafNodeTest(SKABaseDevice):
             destination_addresses["receiveAddresses"].append(fsp)
 
         log_msg = "Done assigning destination addresses."
-        self.logger.warn(log_msg)
+        self.logger.warning(log_msg)
         # publish the destination addresses
         self._vis_destination_address = destination_addresses
         self.push_change_event("visDestinationAddress", json.dumps(self._vis_destination_address))
