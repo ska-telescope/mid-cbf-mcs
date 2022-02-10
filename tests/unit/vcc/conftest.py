@@ -197,8 +197,9 @@ def device_to_load(
 def mock_vcc_controller() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.OFF)
-    builder.add_result_command("ConfigureBand", ResultCode.OK)
-    builder.add_result_command("Deconfigure", ResultCode.OK)
+    builder.add_command("InitCommonParameters", None)
+    builder.add_command("ConfigureBand", None)
+    builder.add_command("Deconfigure", None)
     return builder()
 
 @pytest.fixture()

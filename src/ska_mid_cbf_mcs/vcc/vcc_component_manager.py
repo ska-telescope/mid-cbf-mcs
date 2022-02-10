@@ -105,6 +105,8 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
 
         # initialize attribute values
         self.receptor_id = 0
+        self.frequency_offset_k = 0
+        self.frequency_offset_delta_f = 0
 
         self.scan_id = 0
         self.config_id = ""
@@ -141,6 +143,16 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         )
 
 
+    @property
+    def simulation_mode(self: VccComponentManager) -> SimulationMode:
+        """
+        Get the simulation mode of the component manager.
+
+        :return: simulation mode of the component manager
+        """
+        return self._simulation_mode
+
+
     def start_communicating(self: VccComponentManager) -> None:
         """Establish communication with the component, then start monitoring."""
         if self.connected:
@@ -158,6 +170,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                 self._sw_proxies = [CbfDeviceProxy(fqdn=fqdn, logger=self._logger
                 ) for fqdn in self._search_window_fqdn]
 
+                self.init_vcc_controller_parameters()
             except tango.DevFailed as dev_failed:
                 self.update_component_power_mode(PowerMode.UNKNOWN)
                 self.update_communication_status(CommunicationStatus.NOT_ESTABLISHED)
@@ -178,15 +191,30 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         self.connected = False
 
 
-    @property
-    def simulation_mode(self: VccComponentManager) -> SimulationMode:
+    def init_vcc_controller_parameters(
+        self: VccComponentManager
+    ) -> None:
         """
-        Get the simulation mode of the component manager.
-
-        :return: simulation mode of the component manager
+        Initialize the set of parameters in the VCC Controller device that
+        are common to all bands and will not change during scan configurations.
         """
-        return self._simulation_mode
+        if not self._simulation_mode:
+            try:
+                # Skip this if the device has already been initialized
+                if self._vcc_controller_proxy.State() != tango.DevState.INIT:
+                    self._logger.info("VCC Controller parameters already initialized")
+                    return
 
+                param_init = {
+                    "frequency_offset_k": self.frequency_offset_k,
+                    "frequency_offset_delta_f": self.frequency_offset_delta_f
+                }
+
+                self._vcc_controller_proxy.InitCommonParameters(json.dumps(param_init))
+            except tango.DevFailed as dev_failed:
+                raise ConnectionError(
+                    "Error connecting to VCC Controller device."
+                ) from dev_failed
 
     def on(self: VccComponentManager) -> Tuple[ResultCode, str]:
         """
