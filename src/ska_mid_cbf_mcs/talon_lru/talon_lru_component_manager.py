@@ -8,7 +8,6 @@
 # Copyright (c) 2019 National Research Council of Canada
 
 from __future__ import annotations
-from ast import Pow
 from typing import List, Tuple, Callable, Optional
 
 import logging
@@ -26,7 +25,7 @@ from ska_mid_cbf_mcs.component.component_manager import (
 )
 
 class TalonLRUComponentManager(CbfComponentManager):
-    """A component manager for the CbfController device."""
+    """A component manager for the TalonLRU device."""
 
     def __init__(
         self: TalonLRUComponentManager,
@@ -43,7 +42,6 @@ class TalonLRUComponentManager(CbfComponentManager):
         """
         Initialise a new instance.
 
-        :param get_num_capabilities: method that returns the controller device's
         :param talon_fqdns: FQDNs of the Talon DX board
         :param pdu_fqdns: FQDNs of the power switch devices
         :param pdu_outlets: IDs of the PDU outlets
@@ -57,6 +55,8 @@ class TalonLRUComponentManager(CbfComponentManager):
             called when the component power mode changes
         :param component_fault_callback: callback to be called in event of 
             component fault
+        :param check_power_mode_callback: callback to be called in event of 
+            power switch simulationMode change
         """
         self.connected = False
 
@@ -67,13 +67,15 @@ class TalonLRUComponentManager(CbfComponentManager):
         self._pdu_fqdns = pdu_fqdns
         self._pdu_outlets = pdu_outlets
 
-        self.pdu1_power_mode = PowerMode.OFF
-        self.pdu2_power_mode = PowerMode.OFF
+        self.pdu1_power_mode = PowerMode.UNKNOWN
+        self.pdu2_power_mode = PowerMode.UNKNOWN
 
         self._proxy_talondx_board1 = None
         self._proxy_talondx_board2 = None
         self._proxy_power_switch1 = None
         self._proxy_power_switch2 = None
+
+        self._simulation_mode_events = [None, None]
 
         self._check_power_mode_callback = check_power_mode_callback
 
@@ -108,23 +110,39 @@ class TalonLRUComponentManager(CbfComponentManager):
         # timeout must be >3s.
         if self._proxy_power_switch1 is not None:
             self._proxy_power_switch1.set_timeout_millis(5000)
-            self._proxy_power_switch1.add_change_event_callback("simulationMode",
-                self._check_power_mode_callback, stateless=True)
+            self._simulation_mode_events[0] = self._proxy_power_switch1.add_change_event_callback(
+                "simulationMode", self._check_power_mode_callback, stateless=True
+            )
 
-        if self._pdu_fqdns[1] != self._pdu_fqdns[0] and self._proxy_power_switch2 is not None:
-            self._proxy_power_switch2.set_timeout_millis(5000)
-            self._proxy_power_switch2.add_change_event_callback("simulationMode",
-                self._check_power_mode_callback, stateless=True)
+            if self._pdu_fqdns[1] != self._pdu_fqdns[0]:
+                if self._proxy_power_switch2 is not None:
+                    self._proxy_power_switch2.set_timeout_millis(5000)
+                    self._simulation_mode_events[1] = self._proxy_power_switch2.add_change_event_callback(
+                        "simulationMode", self._check_power_mode_callback, stateless=True
+                    )
 
-        self.connected = True
+            self.connected = True
+            self.pdu1_power_mode = PowerMode.OFF
+            self.pdu2_power_mode = PowerMode.OFF
 
-        self.update_communication_status(CommunicationStatus.ESTABLISHED)
-        self.update_component_fault(False)
-        self.update_component_power_mode(PowerMode.OFF)
+            self.update_communication_status(CommunicationStatus.ESTABLISHED)
+            self.update_component_power_mode(PowerMode.OFF)
+
+        else:
+            self.update_communication_status(CommunicationStatus.NOT_ESTABLISHED)
+            self.update_component_fault(True)
 
     def stop_communicating(self: TalonLRUComponentManager) -> None:
         """Stop communication with the component."""
         super().stop_communicating()
+        if self._simulation_mode_events[0]:
+            self._proxy_power_switch1.remove_event(
+                "simulationMode", self._simulation_mode_events[0])
+            self._simulation_mode_events[0] = None
+        if self._simulation_mode_events[1]:
+            self._proxy_power_switch1.remove_event(
+                "simulationMode", self._simulation_mode_events[1])
+            self._simulation_mode_events[1] = None
         self.connected = False
 
     def get_device_proxy(
@@ -145,6 +163,7 @@ class TalonLRUComponentManager(CbfComponentManager):
         except tango.DevFailed as df:
             for item in df.args:
                 self._logger.error(f"Failed connection to {fqdn} device: {item.reason}")
+            self.update_component_fault(True)
             return None
 
     def check_power_mode(
@@ -154,6 +173,8 @@ class TalonLRUComponentManager(CbfComponentManager):
         """
         Get the power mode of both PDUs and check that it is consistent with the
         current device state.
+
+        :param state: device operational state
         """
         if self._proxy_power_switch1 is not None:
             if self._proxy_power_switch1.numOutlets != 0:
@@ -201,7 +222,7 @@ class TalonLRUComponentManager(CbfComponentManager):
         self: TalonLRUComponentManager,
     ) -> Tuple[ResultCode, str]:
         """
-        Turn on the controller and its subordinate devices 
+        Turn on the TalonLRU and its subordinate devices 
 
         :return: A tuple containing a return code and a string
                 message indicating status. The message is for
@@ -245,7 +266,7 @@ class TalonLRUComponentManager(CbfComponentManager):
         self: TalonLRUComponentManager,
     ) -> Tuple[ResultCode, str]:
         """
-        Turn off the controller and its subordinate devices 
+        Turn off the TalonLRU and its subordinate devices 
 
         :return: A tuple containing a return code and a string
                 message indicating status. The message is for
@@ -291,29 +312,11 @@ class TalonLRUComponentManager(CbfComponentManager):
         self: TalonLRUComponentManager,
     ) -> Tuple[ResultCode, str]:
         """
-        Turn the controller into low power standby mode
+        Turn the TalonLRU into low power standby mode
 
         :return: A tuple containing a return code and a string
                 message indicating status. The message is for
                 information purpose only.
         :rtype: (ResultCode, str)
         """
-
-        if self.connected:
-
-            try: 
-                self._group_subarray.command_inout("Off")
-                self._group_vcc.command_inout("Off")
-                self._group_fsp.command_inout("Off")
-            except tango.DevFailed:
-                log_msg = "Failed to turn off group proxies"
-                self._logger.error(log_msg)
-                return (ResultCode.FAILED, log_msg)
-
-            message = "CbfController Standby command completed OK"
-            return (ResultCode.OK, message)
-        
-        else:
-            log_msg = "Proxies not connected"
-            self._logger.error(log_msg)
-            return (ResultCode.FAILED, log_msg)
+        return (ResultCode.OK, "TalonLRU Standby command completed OK")

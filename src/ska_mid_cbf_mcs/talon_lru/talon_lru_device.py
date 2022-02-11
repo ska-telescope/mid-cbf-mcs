@@ -269,9 +269,6 @@ class TalonLRU(SKABaseDevice):
                     "One or both PDU outlets have incorrect initial power state."
                 )
 
-            # establish component communication
-            device.component_manager.start_communicating()
-            
             #check power mode in case of fault during communication establishment
             device.component_manager.check_power_mode(device.get_state())
 

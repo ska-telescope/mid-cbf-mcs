@@ -11,16 +11,79 @@ from __future__ import annotations
 
 # Standard imports
 import pytest
+import pytest_mock
 import unittest
-from typing import Dict
+from typing import Tuple, Dict, Callable
+import logging
 
 # Local imports
 from ska_mid_cbf_mcs.talon_lru.talon_lru_device import TalonLRU
-from ska_mid_cbf_mcs.commons.global_enum import PowerMode
+from ska_mid_cbf_mcs.talon_lru.talon_lru_component_manager import TalonLRUComponentManager
+from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
 from ska_mid_cbf_mcs.testing.tango_harness import TangoHarness, DevicesToLoadType
 from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder
+from ska_mid_cbf_mcs.testing.mock.mock_callable import MockChangeEventCallback, MockCallable
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_tango_base.commands import ResultCode
+from ska_tango_base.control_model import PowerMode
+
+@pytest.fixture
+def unique_id() -> str:
+    """
+    Return a unique ID used to test Tango layer infrastructure.
+
+    :return: a unique ID
+    """
+    return "a unique id"
+
+
+@pytest.fixture()
+def mock_component_manager(
+    mocker: pytest_mock.mocker,
+    unique_id: str,
+) -> unittest.mock.Mock:
+    """
+    Return a mock component manager.
+
+    The mock component manager is a simple mock except for one bit of
+    extra functionality: when we call start_communicating() on it, it
+    makes calls to callbacks signaling that communication is established
+    and the component is off.
+
+    :param mocker: pytest wrapper for unittest.mock
+    :param unique_id: a unique id used to check Tango layer functionality
+
+    :return: a mock component manager
+    """
+    mock = mocker.Mock()
+    mock.is_communicating = False
+    mock.connected = False
+
+    def _start_communicating(mock: unittest.mock.Mock) -> None:
+        mock.is_communicating = True
+        mock.connected = True
+        mock._communication_status_changed_callback(CommunicationStatus.NOT_ESTABLISHED)
+        mock._communication_status_changed_callback(CommunicationStatus.ESTABLISHED)
+        mock._component_power_mode_changed_callback(PowerMode.OFF)
+
+    def _on(mock: unittest.mock.Mock) -> Tuple[ResultCode, str]:
+        return (ResultCode.OK, "On command completed OK")
+
+    def _off(mock: unittest.mock.Mock) -> Tuple[ResultCode, str]:
+        return (ResultCode.OK, "Off command started")
+
+    def _check_power_mode(mock: unittest.mock.Mock) -> None: pass
+
+
+    mock.start_communicating.side_effect = lambda: _start_communicating(mock)
+    mock.on.side_effect = lambda: _on()
+    mock.off.side_effect = lambda: _off()
+    mock.check_power_mode.side_effect = lambda : _check_power_mode()
+
+    mock.enqueue.return_value = unique_id, ResultCode.QUEUED
+
+    return mock
+
 
 @pytest.fixture()
 def device_under_test(tango_harness: TangoHarness) -> CbfDeviceProxy:
@@ -139,3 +202,126 @@ def initial_mocks(
         "mid_csp_cbf/power_switch/001": mock_power_switch1,
         "mid_csp_cbf/power_switch/002": mock_power_switch2,
     }
+
+
+@pytest.fixture()
+def talon_lru_component_manager(
+    logger: logging.Logger,
+    tango_harness: TangoHarness, # sets the connection_factory
+    push_change_event_callback: MockChangeEventCallback,
+    communication_status_changed_callback: MockCallable,
+    component_power_mode_changed_callback: MockCallable,
+    component_fault_callback: MockCallable,
+    check_power_mode_callback: MockCallable,
+) -> TalonLRUComponentManager:
+    return TalonLRUComponentManager(
+        talon_fqdns=["arbitrary/fqdn/01", "arbitrary/fqdn/02"],
+        pdu_fqdns=["mid_csp_cbf/power_switch/001", "mid_csp_cbf/power_switch/002"],
+        pdu_outlets=[0, 0],
+        logger=logging.getLogger(),
+        push_change_event_callback=push_change_event_callback,
+        communication_status_changed_callback=communication_status_changed_callback,
+        component_power_mode_changed_callback=component_power_mode_changed_callback,
+        component_fault_callback=component_fault_callback,
+        check_power_mode_callback=check_power_mode_callback
+    )
+
+@pytest.fixture()
+def communication_status_changed_callback(
+    mock_callback_factory: Callable[[], unittest.mock.Mock],
+) -> unittest.mock.Mock:
+    """
+    Return a mock callback for component manager communication status.
+
+    :param mock_callback_factory: fixture that provides a mock callback
+        factory (i.e. an object that returns mock callbacks when
+        called).
+
+    :return: a mock callback to be called when the communication status
+        of a component manager changed.
+    """
+    return mock_callback_factory()
+
+
+@pytest.fixture()
+def component_power_mode_changed_callback(
+    mock_callback_factory: Callable[[], unittest.mock.Mock],
+) -> unittest.mock.Mock:
+    """
+    Return a mock callback for component power mode change.
+
+    :param mock_callback_factory: fixture that provides a mock callback
+        factory (i.e. an object that returns mock callbacks when
+        called).
+
+    :return: a mock callback to be called when the component manager
+        detects that the power mode of its component has changed.
+    """
+    return mock_callback_factory()
+
+@pytest.fixture()
+def component_fault_callback(
+    mock_callback_factory: Callable[[], unittest.mock.Mock],
+) -> unittest.mock.Mock:
+    """
+    Return a mock callback for component manager fault.
+
+    :param mock_callback_factory: fixture that provides a mock callback
+        factory (i.e. an object that returns mock callbacks when
+        called).
+
+    :return: a mock callback to be called when the communication status
+        of a component manager changed.
+    """
+    return mock_callback_factory()
+
+@pytest.fixture()
+def check_power_mode_callback(
+    mock_callback_factory: Callable[[], unittest.mock.Mock],
+) -> unittest.mock.Mock:
+    """
+    Return a mock callback for component manager fault.
+
+    :param mock_callback_factory: fixture that provides a mock callback
+        factory (i.e. an object that returns mock callbacks when
+        called).
+
+    :return: a mock callback to be called when the communication status
+        of a component manager changed.
+    """
+    return mock_callback_factory()
+
+@pytest.fixture()
+def push_change_event_callback_factory(
+    mock_change_event_callback_factory: Callable[[str], MockChangeEventCallback],
+) -> Callable[[], MockChangeEventCallback]:
+    """
+    Return a mock change event callback factory 
+
+    :param mock_change_event_callback_factory: fixture that provides a
+        mock change event callback factory (i.e. an object that returns
+        mock callbacks when called).
+
+    :return: a mock change event callback factory 
+    """
+
+    def _factory() -> MockChangeEventCallback:
+        return mock_change_event_callback_factory("adminMode")
+
+    return _factory
+
+
+@pytest.fixture()
+def push_change_event_callback(
+    push_change_event_callback_factory: Callable[[], MockChangeEventCallback],
+) -> MockChangeEventCallback:
+    """
+    Return a mock change event callback 
+
+    :param push_change_event_callback_factory: fixture that provides a mock
+        change event callback factory 
+
+    :return: a mock change event callback 
+    """
+    return push_change_event_callback_factory()
+

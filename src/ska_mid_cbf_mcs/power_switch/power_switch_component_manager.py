@@ -10,20 +10,22 @@
 # Copyright (c) 2019 National Research Council of Canada
 
 from __future__ import annotations
+from typing import Tuple, Optional, Callable
 
 import logging
 from ska_mid_cbf_mcs.power_switch.power_switch_driver import PowerSwitchDriver
 from ska_mid_cbf_mcs.power_switch.power_switch_simulator import PowerSwitchSimulator
-from ska_mid_cbf_mcs.commons.global_enum import PowerMode
+from ska_mid_cbf_mcs.component.component_manager import CbfComponentManager, CommunicationStatus
 
+from ska_tango_base.base.component_manager import BaseComponentManager
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import SimulationMode
+from ska_tango_base.control_model import SimulationMode, PowerMode
 
 __all__ = [
     "PowerSwitchComponentManager"
 ]
 
-class PowerSwitchComponentManager:
+class PowerSwitchComponentManager(CbfComponentManager):
     """
     A component manager for the DLI web power switch. Calls either the power
     switch driver or the power switch simulator based on the value of simulation
@@ -37,18 +39,31 @@ class PowerSwitchComponentManager:
 
     def __init__(
         self: PowerSwitchComponentManager,
-        simulation_mode: SimulationMode,
         ip: str,
-        logger: logging.Logger
+        logger: logging.Logger,
+        push_change_event_callback: Optional[Callable],
+        communication_status_changed_callback: Callable[[CommunicationStatus], None],
+        component_power_mode_changed_callback: Callable[[PowerMode], None],
+        component_fault_callback: Callable[[bool], None],
+        simulation_mode: SimulationMode=SimulationMode.TRUE
     ) -> None:
         """
-        Initialise a new instance.
+        Initialize a new instance.
         """
+        self.connected = False
+
         self._simulation_mode = simulation_mode
 
         self.power_switch_driver = PowerSwitchDriver(ip, logger)
         self.power_switch_simulator = PowerSwitchSimulator(logger)
-        self.start_communicating()
+
+        super().__init__(
+            logger=logger,
+            push_change_event_callback=push_change_event_callback,
+            communication_status_changed_callback=communication_status_changed_callback,
+            component_power_mode_changed_callback=component_power_mode_changed_callback,
+            component_fault_callback=component_fault_callback
+        )
 
     @property
     def num_outlets(self: PowerSwitchComponentManager) -> int:
@@ -91,14 +106,28 @@ class PowerSwitchComponentManager:
         :param value: value to set simulation mode to
         """
         self._simulation_mode = value
-        self.start_communicating()
 
     def start_communicating(self: PowerSwitchComponentManager) -> None:
         """
         Perform any setup needed for communicating with the power switch.
         """
+        if self.connected:
+            self._logger.info("Already communicating.")
+            return
+
+        super().start_communicating()
+
         if not self._simulation_mode:
             self.power_switch_driver.initialize()
+
+        self.update_communication_status(CommunicationStatus.ESTABLISHED)
+        self.update_component_power_mode(PowerMode.UNKNOWN)
+        self.connected = True
+
+    def stop_communicating(self: PowerSwitchComponentManager) -> None:
+        """Stop communication with the component."""
+        super().stop_communicating()
+        self.connected = False
 
     def get_outlet_power_mode(
         self: PowerSwitchComponentManager,
@@ -120,7 +149,7 @@ class PowerSwitchComponentManager:
     def turn_on_outlet(
         self: PowerSwitchComponentManager,
         outlet: int
-    ) -> tuple[ResultCode, str]:
+    ) -> Tuple[ResultCode, str]:
         """
         Tell the DLI power switch to turn on a specific outlet.
 
@@ -130,6 +159,8 @@ class PowerSwitchComponentManager:
 
         :raise AssertionError: if outlet ID is out of bounds
         """
+        self.update_component_power_mode(PowerMode.ON)
+
         if self.simulation_mode:
             return self.power_switch_simulator.turn_on_outlet(outlet)
         else:
@@ -138,7 +169,7 @@ class PowerSwitchComponentManager:
     def turn_off_outlet(
         self: PowerSwitchComponentManager,
         outlet: int
-    ) -> tuple[ResultCode, str]:
+    ) -> Tuple[ResultCode, str]:
         """
         Tell the DLI power switch to turn off a specific outlet.
 
@@ -148,6 +179,8 @@ class PowerSwitchComponentManager:
 
         :raise AssertionError: if outlet ID is out of bounds
         """
+        self.update_component_power_mode(PowerMode.OFF)
+
         if self.simulation_mode:
             return self.power_switch_simulator.turn_off_outlet(outlet)
         else:

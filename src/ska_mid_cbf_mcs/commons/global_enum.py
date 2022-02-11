@@ -5,19 +5,6 @@ __all__ = [
     "freq_band_dict"
 ]
 
-# TODO - Temporary class. This enum should come from the SKA base classes but
-#        only exists starting in v11.
-class PowerMode(IntEnum):
-    """
-    Enumerated type for power mode.
-
-    Used by components that rely upon a power supply, such as hardware.
-    """
-    UNKNOWN = 0
-    OFF = 1
-    STANDBY = 2
-    ON = 3
-
 # TODO - Temporary class. These values should be retrieved 
 #        from their respective devices (?)
 class Const:
