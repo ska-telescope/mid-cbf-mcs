@@ -199,7 +199,7 @@ def mock_vcc_controller() -> unittest.mock.Mock:
     builder.set_state(tango.DevState.OFF)
     builder.add_command("InitCommonParameters", None)
     builder.add_command("ConfigureBand", None)
-    builder.add_command("Deconfigure", None)
+    builder.add_command("Unconfigure", None)
     return builder()
 
 @pytest.fixture()
@@ -243,7 +243,7 @@ def initial_mocks(
     """
     return {
         "talondx-001/vcc-app/vcc-controller": mock_vcc_controller,
-        "mid_csp_cbf/vcc_band12/001": mock_vcc_band,
+        "talondx-001/vcc-app/vcc-band-1-and-2": mock_vcc_band,
         "mid_csp_cbf/vcc_band3/001": mock_vcc_band,
         "mid_csp_cbf/vcc_band4/001": mock_vcc_band,
         "mid_csp_cbf/vcc_band5/001": mock_vcc_band,
@@ -265,7 +265,7 @@ def vcc_component_manager(
         SimulationMode.FALSE,
         vcc_controller="talondx-001/vcc-app/vcc-controller",
         vcc_band=[
-            "mid_csp_cbf/vcc_band12/001",
+            "talondx-001/vcc-app/vcc-band-1-and-2",
             "mid_csp_cbf/vcc_band3/001",
             "mid_csp_cbf/vcc_band4/001",
             "mid_csp_cbf/vcc_band5/001"
