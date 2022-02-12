@@ -1598,7 +1598,7 @@
                                 "talondx-001/vcc-app/vcc-controller"
                             ],
                             "Band1And2Address": [
-                                "mid_csp_cbf/vcc_band12/001"
+                                "talondx-001/vcc-app/vcc-band-1-and-2"
                             ],
                             "Band3Address": [
                                 "mid_csp_cbf/vcc_band3/001"

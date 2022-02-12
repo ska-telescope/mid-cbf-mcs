@@ -332,17 +332,17 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         :rtype: (ResultCode, str)
         """
         self._logger.debug(
-            "VccComponentManager.turn_on_band_device(" + freq_band_name + ")"
+            "VccComponentManager.configure_band(" + freq_band_name + ")"
         )
 
         (result_code, msg) = (ResultCode.OK, "ConfigureBand completed OK.")
 
         if not self._simulation_mode:
             try:
-                self._vcc_controller_proxy.ConfigureBand(freq_band_name)
                 self._frequency_band = freq_band_dict()[freq_band_name]
                 self._freq_band_name = freq_band_name
-
+                self._vcc_controller_proxy.ConfigureBand(self.frequency_band)
+                
                 # Set internal params for the configured band
                 f = open(VCC_PARAM_PATH + "internal_params_receptor" + str(self._receptor_id) +
                     "_band" + freq_band_name + ".json")
@@ -371,10 +371,10 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
 
         if not self._simulation_mode:
             try:
-                self._vcc_controller_proxy.Deconfigure()
+                self._vcc_controller_proxy.Unconfigure()
             except tango.DevFailed as df:
                 self._logger.error(str(df.args[0].desc))
-
+        
     def configure_scan(self: VccComponentManager, argin: str) -> Tuple[ResultCode, str]:
 
         """
@@ -402,9 +402,15 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                 f"Error in Vcc.ConfigureScan; scan configuration frequency band {freq_band} " + \
                 f"not the same as enabled band device {self._frequency_band}"
             )
+<<<<<<< HEAD
         self._freq_band_name = configuration["frequency_band"]
         if self._frequency_band in [4, 5]:
             self._stream_tuning = configuration["band_5_tuning"]
+=======
+
+        if self.frequency_band in [4, 5]:
+            self.stream_tuning = configuration["band_5_tuning"]
+>>>>>>> AT5-887 Some minor fixes from testing with HPS devices, add Abort and ObsReset connection down to the band devices
 
         self._frequency_band_offset_stream_1 = \
             int(configuration["frequency_band_offset_stream_1"])
@@ -422,6 +428,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                 self._band_proxies[self._freq_band_index[self._freq_band_name]].ConfigureScan(argin)
             except tango.DevFailed as df:
                 self._logger.error(str(df.args[0].desc))
+                return (ResultCode.FAILED, "Failed to connect to VCC band device")
 
         return (ResultCode.OK, "Vcc ConfigureScanCommand completed OK")
 
@@ -445,6 +452,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                 self._band_proxies[self._freq_band_index[self._freq_band_name]].Scan(scan_id)
             except tango.DevFailed as df:
                 self._logger.error(str(df.args[0].desc))
+                return (ResultCode.FAILED, "Failed to connect to VCC band device")
         return (ResultCode.STARTED, "Vcc ScanCommand completed OK")
 
     def end_scan(self: VccComponentManager) -> Tuple[ResultCode, str]:
@@ -463,7 +471,28 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                 self._band_proxies[self._freq_band_index[self._freq_band_name]].EndScan()
             except tango.DevFailed as df:
                 self._logger.error(str(df.args[0].desc))
+                return (ResultCode.FAILED, "Failed to connect to VCC band device")
         return (ResultCode.OK, "Vcc EndScanCommand completed OK")
+    
+    def abort(self):
+        """Tell the current VCC band device to abort whatever it was doing."""
+        if not self._simulation_mode:
+            try:
+                self._band_proxies[self._freq_band_index[self._freq_band_name]].Abort()
+            except tango.DevFailed as df:
+                self._logger.error(str(df.args[0].desc))
+                return (ResultCode.FAILED, "Failed to connect to VCC band device")
+        return (ResultCode.OK, "Vcc Abort command completed OK")
+
+    def obsreset(self):
+        """Reset the configuration."""
+        if not self._simulation_mode:
+            try:
+                self._band_proxies[self._freq_band_index[self._freq_band_name]].ObsReset()
+            except tango.DevFailed as df:
+                self._logger.error(str(df.args[0].desc))
+                return (ResultCode.FAILED, "Failed to connect to VCC band device")
+        return (ResultCode.OK, "Vcc ObsReset command completed OK")
 
     def configure_search_window(
         self:VccComponentManager,

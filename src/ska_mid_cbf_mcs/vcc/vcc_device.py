@@ -263,6 +263,14 @@ class Vcc(CspSubElementObsDevice):
         )
 
         self.register_command_object(
+            "Abort", self.AbortCommand(*device_args)
+        )
+
+        self.register_command_object(
+            "ObsReset", self.ObsResetCommand(*device_args)
+        )
+
+        self.register_command_object(
             "GoToIdle", self.GoToIdleCommand(*device_args)
         )
 
@@ -759,7 +767,6 @@ class Vcc(CspSubElementObsDevice):
             # By this time, the receptor_ID should be set:
             device.logger.debug(f"receptorID: {device.component_manager.receptor_id}")
 
-            device.component_manager.deconfigure()
             (result_code, msg) = device.component_manager.configure_scan(argin)
 
             if result_code == ResultCode.OK:
@@ -964,6 +971,38 @@ class Vcc(CspSubElementObsDevice):
                 device.obs_state_model.perform_action("component_not_scanning")
 
             return(result_code, msg)
+
+
+    class ObsResetCommand(CspSubElementObsDevice.ObsResetCommand):
+        """A class for the VCC's ObsReset command."""
+
+        def do(self):
+            """
+            Stateless hook for ObsReset() command functionality.
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
+            device = self.target
+            return device.component_manager.obsreset()
+
+
+    class AbortCommand(CspSubElementObsDevice.AbortCommand):
+        """A class for the VCC's Abort command."""
+
+        def do(self):
+            """
+            Stateless hook for Abort() command functionality.
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
+            device = self.target
+            return device.component_manager.abort()
 
 
     class GoToIdleCommand(CspSubElementObsDevice.GoToIdleCommand):
