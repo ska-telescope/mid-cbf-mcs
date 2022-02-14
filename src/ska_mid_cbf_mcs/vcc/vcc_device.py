@@ -235,6 +235,18 @@ class Vcc(CspSubElementObsDevice):
         )
 
         self.register_command_object(
+            "On", self.OnCommand(*device_args)
+        )
+
+        self.register_command_object(
+            "Off", self.OffCommand(*device_args)
+        )
+
+        self.register_command_object(
+            "Standby", self.StandbyCommand(*device_args)
+        )
+
+        self.register_command_object(
             "TurnOnBandDevice", self.TurnOnBandDeviceCommand(*device_args)
         )
 
@@ -690,9 +702,66 @@ class Vcc(CspSubElementObsDevice):
             device._subarray_membership = 0
             device._last_scan_configuration = ""
 
+            device._configuring_from_idle = False
+
             device.set_change_event("subarrayMembership", True, True)
 
             return (result_code, msg)
+
+
+    class OnCommand(CspSubElementObsDevice.OnCommand):
+        """
+        A class for the Vcc's on command.
+        """
+
+        def do(
+            self: Vcc.OnCommand,
+        ) -> Tuple[ResultCode, str]:
+            """
+            Stateless hook for device initialisation.
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
+            return self.target.component_manager.on()
+
+    class OffCommand(CspSubElementObsDevice.OffCommand):
+        """
+        A class for the Vcc's off command.
+        """
+
+        def do(
+            self: Vcc.OffCommand,
+        ) -> Tuple[ResultCode, str]:
+            """
+            Stateless hook for device initialisation.
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
+            return self.target.component_manager.off()
+
+    class StandbyCommand(CspSubElementObsDevice.StandbyCommand):
+        """
+        A class for the Vcc's standby command.
+        """
+
+        def do(
+            self: Vcc.StandbyCommand,
+        ) -> Tuple[ResultCode, str]:
+            """
+            Stateless hook for device initialisation.
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
+            return self.target.component_manager.standby()
 
 
     class TurnOnBandDeviceCommand(ResponseCommand):
@@ -702,7 +771,7 @@ class Vcc(CspSubElementObsDevice):
         Turn on the corresponding band device and disable all the others.
         """
 
-        def do(self: Vcc.TurnOnBandDeviceCommand, argin: str) -> None:
+        def do(self: Vcc.TurnOnBandDeviceCommand, argin: str) -> Tuple[ResultCode, str]:
             """
             Stateless hook for TurnOnBandDevice() command functionality.
 
@@ -720,12 +789,21 @@ class Vcc(CspSubElementObsDevice):
         doc_in="Frequency band string.",
     )
     @DebugIt()
-    def TurnOnBandDevice(self, freq_band_name: str):
+    def TurnOnBandDevice(self, freq_band_name: str) -> Tuple[ResultCode, str]:
         # PROTECTED REGION ID(CspSubElementObsDevice.TurnOnBandDevice) ENABLED START #
         """
         Turn on the corresponding band device and disable all the others.
+
+        :param freq_band_name: the frequency band name
+
+        :return: A tuple containing a return code and a string
+            message indicating status. The message is for
+            information purpose only.
+        :rtype: (ResultCode, str)
         """
-        self.get_command_object("TurnOnBandDevice")(freq_band_name)
+        command = self.get_command_object("TurnOnBandDevice")
+        (result_code, message) = command(freq_band_name)
+        return [[result_code], [message]]
         # PROTECTED REGION END #    //  CspSubElementObsDevice.TurnOnBandDevice
 
 
@@ -736,7 +814,7 @@ class Vcc(CspSubElementObsDevice):
         Turn off the corresponding band device.
         """
 
-        def do(self: Vcc.TurnOffBandDeviceCommand, argin: str) -> None:
+        def do(self: Vcc.TurnOffBandDeviceCommand, argin: str) -> Tuple[ResultCode, str]:
             """
             Stateless hook for TurnOffBandDevice() command functionality.
 
@@ -755,12 +833,21 @@ class Vcc(CspSubElementObsDevice):
         doc_in="Frequency band string.",
     )
     @DebugIt()
-    def TurnOffBandDevice(self, freq_band_name: str):
+    def TurnOffBandDevice(self, freq_band_name: str) -> Tuple[ResultCode, str]:
         # PROTECTED REGION ID(CspSubElementObsDevice.TurnOffBandDevice) ENABLED START #
         """
         Turn off the corresponding band device.
+
+        :param freq_band_name: the frequency band name
+
+        :return: A tuple containing a return code and a string
+            message indicating status. The message is for
+            information purpose only.
+        :rtype: (ResultCode, str)
         """
-        self.get_command_object("TurnOffBandDevice")(freq_band_name)
+        command = self.get_command_object("TurnOffBandDevice")
+        (result_code, message) = command(freq_band_name)
+        return [[result_code], [message]]
         # PROTECTED REGION END #    //  CspSubElementObsDevice.TurnOffBandDevice
 
     def _raise_configuration_fatal_error(
@@ -810,7 +897,8 @@ class Vcc(CspSubElementObsDevice):
             if result_code == ResultCode.OK:
                 # store the configuration on command success
                 device._last_scan_configuration = argin
-                device.obs_state_model.perform_action("component_configured")
+                if device._configuring_from_idle:
+                    device.obs_state_model.perform_action("component_configured")
 
             return(result_code, msg)
 
@@ -946,9 +1034,13 @@ class Vcc(CspSubElementObsDevice):
         if not valid:
             self._raise_configuration_fatal_error(message, "ConfigureScan")
         else:
+            if self._obs_state == ObsState.IDLE:
+                self._configuring_from_idle = True
+            else: 
+                self._configuring_from_idle = False
+            (result_code, message) = command(argin)
             # store the configuration on command success
             self._last_scan_configuration = argin
-            (result_code, message) = command(argin)
 
         return [[result_code], [message]]
         # PROTECTED REGION END #    //  CspSubElementObsDevice.ConfigureScan
