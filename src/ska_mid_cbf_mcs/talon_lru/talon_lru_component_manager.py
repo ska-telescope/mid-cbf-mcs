@@ -105,6 +105,11 @@ class TalonLRUComponentManager(CbfComponentManager):
         else:
             self._proxy_power_switch2 = self.get_device_proxy(self._pdu_fqdns[1])
 
+        if (self._proxy_power_switch1 is None) and (self._proxy_power_switch2 is None):
+            self.update_communication_status(CommunicationStatus.NOT_ESTABLISHED)
+            self.update_component_fault(True)
+            self._logger.error("Both power switches failed to connect.")
+            return
         # Subscribe to simulationMode change event and increase the access
         # timeout of the power switch proxies, since the HTTP connection
         # timeout must be >3s.
@@ -131,10 +136,6 @@ class TalonLRUComponentManager(CbfComponentManager):
 
             self.update_communication_status(CommunicationStatus.ESTABLISHED)
             self.update_component_power_mode(PowerMode.OFF)
-
-        else:
-            self.update_communication_status(CommunicationStatus.NOT_ESTABLISHED)
-            self.update_component_fault(True)
 
     def stop_communicating(self: TalonLRUComponentManager) -> None:
         """Stop communication with the component."""
