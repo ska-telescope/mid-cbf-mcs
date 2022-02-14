@@ -1594,6 +1594,9 @@
                             }
                         },
                         "properties": {
+                            "TalonLRUAddress": [
+                                "mid_csp_cbf/talon_lru/001"
+                            ],
                             "VccControllerAddress": [
                                 "talondx-001/vcc-app/vcc-controller"
                             ],

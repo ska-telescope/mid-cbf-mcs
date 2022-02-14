@@ -55,6 +55,10 @@ class Vcc(CspSubElementObsDevice):
         dtype='DevUShort'
     )
 
+    TalonLRUAddress = device_property(
+        dtype='str'
+    )
+
     VccControllerAddress = device_property(
         dtype='str'
     )
@@ -284,7 +288,7 @@ class Vcc(CspSubElementObsDevice):
         self._simulation_mode = SimulationMode.FALSE
 
         return VccComponentManager(
-            simulation_mode=self._simulation_mode,
+            talon_lru=self.TalonLRUAddress,
             vcc_controller=self.VccControllerAddress,
             vcc_band=[
                 self.Band1And2Address,
