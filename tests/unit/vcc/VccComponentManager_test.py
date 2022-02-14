@@ -12,21 +12,14 @@
 
 from __future__ import annotations
 
-from typing import List
-
 # Standard imports
 import os
-import time
 import json
 import pytest
 
-import tango
-
-from ska_tango_base.commands import ResultCode
-from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
-from ska_mid_cbf_mcs.vcc.vcc_component_manager import VccComponentManager
 from ska_mid_cbf_mcs.commons.global_enum import freq_band_dict
-from ska_mid_cbf_mcs.testing.tango_harness import TangoHarness
+from ska_tango_base.commands import ResultCode
+from ska_mid_cbf_mcs.vcc.vcc_component_manager import VccComponentManager
 
 # Data file path
 file_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
@@ -39,11 +32,9 @@ class TestVccComponentManager:
     def test_init_start_stop_communicating(
         self: TestVccComponentManager,
         vcc_component_manager: VccComponentManager,
-        tango_harness: TangoHarness
     ) -> None:
         """
-        Test component manager initialization and communication establishment 
-        with subordinate devices.
+        Test component manager initialization and communication establishment.
 
         :param vcc_component_manager: vcc component manager under test.
         """
@@ -54,13 +45,11 @@ class TestVccComponentManager:
         assert not vcc_component_manager.connected
 
     @pytest.mark.parametrize(
-        "frequency_band", 
-        ["5a"]
+        "frequency_band", ["1", "2", "3", "4", "5a", "5b"]
     )
     def test_configure_band(
         self: TestVccComponentManager,
         vcc_component_manager: VccComponentManager,
-        tango_harness: TangoHarness,
         frequency_band: str
     ) -> None:
         """
@@ -70,7 +59,8 @@ class TestVccComponentManager:
         :param frequency_band: frequency band ID
         """
         vcc_component_manager.start_communicating()
-        (result_code, msg) = vcc_component_manager.configure_band(frequency_band)
+        vcc_component_manager.on()
+        (result_code, _) = vcc_component_manager.configure_band(frequency_band)
         assert result_code == ResultCode.OK
 
     @pytest.mark.parametrize(
@@ -97,6 +87,7 @@ class TestVccComponentManager:
         :param jones_matrix_file_name: JSON file for the jones matrix
         """
         vcc_component_manager.start_communicating()
+        vcc_component_manager.on()
 
         # jones matrix values should be set to 0.0 after init
         num_cols = 16
@@ -160,6 +151,7 @@ class TestVccComponentManager:
         :param delay_model_file_name: JSON file for the delay model
         """
         vcc_component_manager.start_communicating()
+        vcc_component_manager.on()
 
         # delay model values should be set to 0.0 after init
         num_cols = 6
@@ -201,9 +193,7 @@ class TestVccComponentManager:
     @pytest.mark.parametrize(
         "config_file_name",
         [
-            (
-                "Vcc_ConfigureScan_basic.json"
-            )
+            "Vcc_ConfigureScan_basic.json"   
         ]
     )
     def test_configure_scan(
@@ -218,6 +208,8 @@ class TestVccComponentManager:
         :param config_file_name: JSON file for the configuration 
         """
         vcc_component_manager.start_communicating()
+        vcc_component_manager.on()
+
         f = open(file_path + config_file_name)
         json_str = f.read().replace("\n", "")
         configuration = json.loads(json_str)
@@ -235,7 +227,12 @@ class TestVccComponentManager:
         assert vcc_component_manager.rfi_flagging_mask == str(configuration["rfi_flagging_mask"])
 
         vcc_component_manager.deconfigure()
-
+        assert vcc_component_manager.frequency_band == None
+        assert vcc_component_manager.config_id == ""
+        assert vcc_component_manager.stream_tuning == (0, 0)
+        assert vcc_component_manager.frequency_band_offset_stream_1 == 0
+        assert vcc_component_manager.frequency_band_offset_stream_2 == 0
+        assert vcc_component_manager.rfi_flagging_mask == ""
 
 
     @pytest.mark.parametrize(
@@ -246,7 +243,7 @@ class TestVccComponentManager:
                 "Vcc_ConfigureScan_basic.json",
                 1,
             ),
-                        (
+            (
                 "Vcc_ConfigureScan_basic.json",
                 2,
             )
@@ -266,6 +263,8 @@ class TestVccComponentManager:
         :param scan_id: the scan id
         """
         vcc_component_manager.start_communicating()
+        vcc_component_manager.on()
+
         f = open(file_path + config_file_name)
         json_string = f.read().replace("\n", "")
         f.close()
@@ -306,6 +305,8 @@ class TestVccComponentManager:
         :param config_file_name: JSON file for the scan configuration
         """
         vcc_component_manager.start_communicating()
+        vcc_component_manager.on()
+
         # set receptorID to 1 to correctly test tdcDestinationAddress
         vcc_component_manager.receptor_id = 1
         f = open(file_path + config_file_name)
