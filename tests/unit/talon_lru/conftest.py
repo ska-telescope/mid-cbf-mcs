@@ -97,6 +97,11 @@ def mock_component_manager(
             mock.connected = True
             mock._communication_status_changed_callback(CommunicationStatus.ESTABLISHED)
             mock._component_power_mode_changed_callback(PowerMode.OFF)
+        elif mock_power_switch1.stimulusMode == "command_fail" or mock_power_switch2.stimulusMode == "command_fail":
+            mock.is_communicating = True
+            mock.connected = True
+            mock._communication_status_changed_callback(CommunicationStatus.ESTABLISHED)
+            mock._component_power_mode_changed_callback(PowerMode.OFF)
         else:
             mock.is_communicating = False
             mock.connected = False
@@ -104,10 +109,22 @@ def mock_component_manager(
             mock._component_fault_callback(True)
 
     def _on(mock: unittest.mock.Mock) -> Tuple[ResultCode, str]:
-        return (ResultCode.OK, "On command completed OK")
+        if (mock_power_switch1.stimulusMode == "command_fail" and 
+            mock_power_switch2.stimulusMode == "command_fail"):
+            mock._component_fault_callback(True)
+            return (ResultCode.FAILED, "On command failed")
+        else:
+            mock._component_power_mode_changed_callback(PowerMode.ON)
+            return (ResultCode.OK, "On command completed OK")
 
     def _off(mock: unittest.mock.Mock) -> Tuple[ResultCode, str]:
-        return (ResultCode.OK, "Off command started")
+        if (mock_power_switch1.stimulusMode == "command_fail" and 
+            mock_power_switch2.stimulusMode == "command_fail"):
+            mock._component_fault_callback(True)
+            return (ResultCode.FAILED, "Off command failed")
+        else:
+            mock._component_power_mode_changed_callback(PowerMode.OFF)
+            return (ResultCode.OK, "Off command completed OK")
 
     def _check_power_mode(mock: unittest.mock.Mock, state: tango.DevState) -> None: pass
 
