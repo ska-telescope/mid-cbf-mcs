@@ -73,16 +73,19 @@ def mock_component_manager(
         mock.is_communicating = True
         mock.connected = True
         mock._communication_status_changed_callback(CommunicationStatus.NOT_ESTABLISHED)
+        mock._component_power_mode_changed_callback(PowerMode.ON)
         mock._communication_status_changed_callback(CommunicationStatus.ESTABLISHED)
-        mock._component_power_mode_changed_callback(PowerMode.OFF)
 
-    def _on()  -> Tuple[ResultCode, str]:
+    def _on(mock: unittest.mock.Mock)  -> Tuple[ResultCode, str]:
+        mock._component_power_mode_changed_callback(PowerMode.ON)
         return (ResultCode.OK, "On command completed OK")
 
-    def _off()  -> Tuple[ResultCode, str]:
+    def _off(mock: unittest.mock.Mock)  -> Tuple[ResultCode, str]:
+        mock._component_power_mode_changed_callback(PowerMode.OFF)
         return (ResultCode.OK, "Off command completed OK")
 
-    def _standby()  -> Tuple[ResultCode, str]:
+    def _standby(mock: unittest.mock.Mock)  -> Tuple[ResultCode, str]:
+        mock._component_power_mode_changed_callback(PowerMode.STANDBY)
         return (ResultCode.OK, "Standby command completed OK")
 
     def _configure_scan() -> Tuple[ResultCode, str]:
@@ -106,9 +109,9 @@ def mock_component_manager(
         return (ResultCode.OK, "Vcc ConfigureSearchWindow command completed OK")
 
     mock.start_communicating.side_effect = lambda: _start_communicating(mock)
-    mock.on.side_effect = lambda: _on()
-    mock.off.side_effect = lambda: _off()
-    mock.standby.side_effect = lambda: _standby()
+    mock.on.side_effect = lambda: _on(mock)
+    mock.off.side_effect = lambda: _off(mock)
+    mock.standby.side_effect = lambda: _standby(mock)
     mock.configure_scan.side_effect = lambda argin: _configure_scan()
     mock.scan.side_effect = lambda argin: _scan()
     mock.end_scan.side_effect = lambda : _end_scan()
@@ -199,7 +202,7 @@ def mock_vcc_band() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.OFF)
     builder.add_result_command("On", ResultCode.OK)
-    builder.add_result_command("Disable", ResultCode.OK)
+    builder.add_result_command("Off", ResultCode.OK)
     return builder()
 
 @pytest.fixture()
@@ -213,7 +216,7 @@ def mock_sw() -> unittest.mock.Mock:
     builder.add_attribute("tdcPeriodAfterEpoch", 0)
     builder.add_attribute("tdcDestinationAddress", ["", "", ""])
     builder.add_result_command("On", ResultCode.OK)
-    builder.add_result_command("Disable", ResultCode.OK)
+    builder.add_result_command("Off", ResultCode.OK)
     return builder()
 
 @pytest.fixture()

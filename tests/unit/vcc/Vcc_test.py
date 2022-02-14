@@ -36,7 +36,7 @@ from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_tango_base.control_model import HealthState, AdminMode, ObsState, LoggingLevel
 from ska_tango_base.commands import ResultCode
 
-CONST_WAIT_TIME = 4
+CONST_WAIT_TIME = 2
 
 class TestVcc:
     """
@@ -70,6 +70,50 @@ class TestVcc:
 
         assert device_under_test.adminMode == AdminMode.OFFLINE
 
+
+    @pytest.mark.parametrize(
+        "command",
+        [
+            "On",
+            "Off",
+            "Standby"
+        ]
+    )
+    def test_Power_Commands(
+        self: TestVcc,
+        device_under_test: CbfDeviceProxy,
+        command: str
+    ) -> None:
+        """
+        Test the On/Off/Standby Commands
+
+        :param device_under_test: fixture that provides a
+            :py:class:`CbfDeviceProxy` to the device under test, in a
+            :py:class:`tango.test_context.DeviceTestContext`.
+        :param command: the command to test (one of On/Off/Standby)
+        """
+
+        device_under_test.adminMode = AdminMode.ONLINE
+        time.sleep(CONST_WAIT_TIME)
+        assert device_under_test.adminMode == AdminMode.ONLINE
+
+        assert device_under_test.State() == DevState.ON
+
+        if command == "On":
+            expected_state = DevState.ON
+            result = device_under_test.On()
+        elif command == "Off":
+            expected_state = DevState.OFF
+            result = device_under_test.Off()
+        elif command == "Standby":
+            expected_state = DevState.STANDBY
+            result = device_under_test.Standby()
+
+        time.sleep(CONST_WAIT_TIME)
+        assert result[0][0] == ResultCode.OK
+        assert device_under_test.State() == expected_state
+
+
     @pytest.mark.parametrize(
         "config_file_name",
         [
@@ -93,7 +137,7 @@ class TestVcc:
         """
         device_under_test.adminMode = AdminMode.ONLINE
         assert device_under_test.adminMode == AdminMode.ONLINE
-        assert device_under_test.state() == DevState.OFF
+        assert device_under_test.state() == DevState.ON
 
         device_under_test.On()
 
@@ -146,25 +190,36 @@ class TestVcc:
         f = open(file_path + config_file_name)
         json_string = f.read().replace("\n", "")
         f.close()
-        device_under_test.ConfigureScan(json_string)
-        time.sleep(3)
+        (result_code, _) = device_under_test.ConfigureScan(json_string)
+        time.sleep(CONST_WAIT_TIME)
+        assert result_code == ResultCode.OK
 
         scan_id_device_data = tango.DeviceData()
         scan_id_device_data.insert(tango.DevString, str(scan_id))
 
         # Use callable 'Scan'  API
-        device_under_test.Scan(scan_id_device_data)
-        time.sleep(0.1)
+        (result_code, _) = device_under_test.Scan(scan_id_device_data)
+        assert result_code == ResultCode.STARTED
         assert device_under_test.obsState == ObsState.SCANNING
 
-
-        device_under_test.EndScan()
-        time.sleep(0.1)
+        (result_code, _) = device_under_test.EndScan()
         assert device_under_test.obsState == ObsState.READY
 
-        device_under_test.GoToIdle()
-        time.sleep(0.1)
+        # try reconfiguring and scanning again
+        (result_code, _) = device_under_test.ConfigureScan(json_string)
+        time.sleep(CONST_WAIT_TIME)
+        assert result_code == ResultCode.OK
+
+        (result_code, _) = device_under_test.Scan(scan_id_device_data)
+        assert result_code == ResultCode.STARTED
+        assert device_under_test.obsState == ObsState.SCANNING
+        (result_code, _) = device_under_test.EndScan()
+        assert result_code == ResultCode.OK
+        assert device_under_test.obsState == ObsState.READY
+
+        (result_code, _) = device_under_test.GoToIdle()
         assert device_under_test.obsState == ObsState.IDLE
+        assert result_code == ResultCode.OK
 
 
     @pytest.mark.parametrize(

@@ -227,10 +227,21 @@ class TestVccComponentManager:
         f.close()
 
         vcc_component_manager.turn_on_band_device(configuration["frequency_band"])
+        assert vcc_component_manager.frequency_band == freq_band_dict()[configuration["frequency_band"]]
 
-        vcc_component_manager.configure_scan(json_str)
-
-        vcc_component_manager.turn_off_band_device(configuration["frequency_band"])
+        (result_code, msg) = vcc_component_manager.configure_scan(json_str)
+        assert result_code == ResultCode.OK
+        assert vcc_component_manager.config_id == configuration["config_id"]
+        assert vcc_component_manager.stream_tuning == configuration["band_5_tuning"]
+        assert vcc_component_manager.frequency_band_offset_stream_1 == configuration["frequency_band_offset_stream_1"]
+        assert vcc_component_manager.frequency_band_offset_stream_2 == configuration["frequency_band_offset_stream_2"]
+        assert vcc_component_manager.rfi_flagging_mask == str(configuration["rfi_flagging_mask"])
+        assert vcc_component_manager.scfo_band_1 == configuration["scfo_band_1"]
+        assert vcc_component_manager.scfo_band_2 == configuration["scfo_band_2"]
+        assert vcc_component_manager.scfo_band_3 == configuration["scfo_band_3"]
+        assert vcc_component_manager.scfo_band_4 == configuration["scfo_band_4"]
+        assert vcc_component_manager.scfo_band_5a == configuration["scfo_band_5a"]
+        assert vcc_component_manager.scfo_band_5b == configuration["scfo_band_5b"]
 
 
 
@@ -268,10 +279,12 @@ class TestVccComponentManager:
         vcc_component_manager.configure_scan(json_string)
 
         # Use callable 'Scan'  API
-        vcc_component_manager.scan(scan_id)
+        (result_code, msg) = vcc_component_manager.scan(scan_id)
+        assert result_code == ResultCode.STARTED
         assert vcc_component_manager.scan_id == scan_id
 
-        vcc_component_manager.end_scan()
+        (result_code, msg) = vcc_component_manager.end_scan()
+        assert result_code == ResultCode.OK
 
 
     @pytest.mark.parametrize(
@@ -303,10 +316,10 @@ class TestVccComponentManager:
         f = open(file_path + config_file_name)
         json_string = f.read().replace("\n", "")
         f.close()
-
         vcc_component_manager.configure_scan(json_string)
 
         # configure search window
         f = open(file_path + sw_config_file_name)
-        vcc_component_manager.configure_search_window(f.read().replace("\n", ""))
+        (result_code, msg) = vcc_component_manager.configure_search_window(f.read().replace("\n", ""))
         f.close()
+        assert result_code == ResultCode.OK

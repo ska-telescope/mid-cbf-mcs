@@ -22,6 +22,7 @@ import json
 
 # tango imports
 import tango
+from tango import DevState
 
 # SKA Specific imports
 
@@ -90,12 +91,12 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         :param component_fault_callback: callback to be called in event of 
             component fault
         """
+        self._logger = logger
+
         self._simulation_mode = simulation_mode
 
         self._vcc_band_fqdn = vcc_band
         self._search_window_fqdn = search_window
-
-        self._logger = logger
 
         self.connected = False
 
@@ -105,7 +106,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         self.scan_id = 0
         self.config_id = ""
 
-        self.frequency_band = 0
+        self.frequency_band = None
         self.stream_tuning = (0, 0)
         self.frequency_band_offset_stream_1 = 0
         self.frequency_band_offset_stream_2 = 0
@@ -230,7 +231,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         freq_band_name: str
     ) -> Tuple[ResultCode, str]:
         """
-        Turn on the corresponding band device and disable all the others.
+        Turn on the corresponding band device and turn off all the others.
 
         :param freq_band_name: the frequency band name
 
@@ -242,20 +243,20 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         self._logger.debug(
             "VccComponentManager.turn_on_band_device(" + freq_band_name + ")"
         )
-        (result_code, msg) = (ResultCode.OK, "TurnOnBandDevice completed OK.")
+        self.frequency_band = freq_band_dict()[freq_band_name]
+        self._logger.info("VCC assigned frequency band: " + freq_band_name)
         try:
             for idx, band in enumerate(self._band_proxies):
-                if idx == self._freq_band_index[freq_band_name]:
-                    self._logger.debug(f"Turning on band device index {idx}")
+                self._logger.debug(self._vcc_band_fqdn[idx] + f" state: {band.state()}")
+                if idx == self._freq_band_index[freq_band_name] and (
+                    band.state() == DevState.DISABLE or band.state() == DevState.OFF):
                     band.On()
-                    self.frequency_band = freq_band_dict()[freq_band_name]
-                else:
-                    self._logger.debug(f"Disabling band device index {idx}")
-                    band.Disable()
+                elif band.state() == DevState.DISABLE or band.state() == DevState.ON:
+                    band.Off()
         except tango.DevFailed as df:
             self._logger.error(str(df.args[0].desc))
-            (result_code, msg) = (ResultCode.FAILED, "TurnOnBandDevice failed.")
-        return (result_code, msg)
+            return (ResultCode.FAILED, "TurnOnBandDevice failed.")
+        return (ResultCode.OK, "TurnOnBandDevice completed OK.")
 
 
     def turn_off_band_device(
@@ -275,17 +276,18 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         self._logger.debug(
             "VccComponentManager.turn_off_band_device(" + freq_band_name + ")"
         )
-        (result_code, msg) = (ResultCode.OK, "TurnOffBandDevice completed OK.")
+        self.frequency_band = None
+        self._logger.info("VCC frequency band unassigned")
         try:
             for idx, band in enumerate(self._band_proxies):
-                if idx == self._freq_band_index[freq_band_name]:
-                    self._logger.debug(f"Turning off band device index {idx}")
+                self._logger.debug(self._vcc_band_fqdn[idx] + f" state: {band.state()}")
+                if idx == self._freq_band_index[freq_band_name] and (
+                    band.state() == DevState.ON or band.state() == DevState.DISABLE):
                     band.Off()
-                    self.frequency_band = 0
         except tango.DevFailed as df:
             self._logger.error(str(df.args[0].desc))
-            (result_code, msg) = (ResultCode.FAILED, "TurnOffBandDevice failed.")
-        return (result_code, msg)
+            return (ResultCode.FAILED, "TurnOffBandDevice failed.")
+        return (ResultCode.OK, "TurnOffBandDevice completed OK.")
 
 
     def deconfigure(self: VccComponentManager) -> None:
@@ -303,7 +305,6 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         self.frequency_band_offset_stream_2 = 0
         self.frequency_band_offset_stream_1 = 0
         self.stream_tuning = (0, 0)
-        self.frequency_band = 0
         self.config_id = ""
         self.scan_id = 0
 
@@ -510,7 +511,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                 if argin["tdc_enable"]:
                     proxy_sw.On()
                 else:
-                    proxy_sw.Disable()
+                    proxy_sw.Off()
 
                 # Configure tdcNumBits.
                 if argin["tdc_enable"]:
