@@ -153,4 +153,24 @@ class TestTalonLRU:
         else:
             assert result[0][0] == ResultCode.OK
             assert device_under_test.State() == DevState.OFF
+    
+    def test_OnOff(
+        self,
+        tango_harness: TangoHarness,
+        device_under_test: CbfDeviceProxy
+    ) -> None:
+        """
+        Tests that the On command followed by the Off command works appropriately.
+        """
+        mock_power_switch1 = tango_harness.get_device("mid_csp_cbf/power_switch/001")
+        mock_power_switch2 = tango_harness.get_device("mid_csp_cbf/power_switch/002")
+
+        # Skip this test for certain configurations
+        if (mock_power_switch1.stimulusMode == "command_fail" and
+            mock_power_switch2.stimulusMode == "command_fail"):
+            pytest.skip("Test sequence is not valid for this configuration of stimulus")
+
+        self.test_On(tango_harness, device_under_test)
+        self.test_Off(tango_harness, device_under_test)
+
         
