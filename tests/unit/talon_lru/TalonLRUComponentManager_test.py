@@ -74,16 +74,16 @@ class TestTalonLRUComponentManager:
 
         talon_lru_component_manager.start_communicating()
         # Send the On command
-        result = talon_lru_component_manager.on()
+        (result_code, _) = talon_lru_component_manager.on()
 
         # Check the command result, device state and PDU power modes
         if (mock_power_switch1.stimulusMode == "command_fail" and 
             mock_power_switch2.stimulusMode == "command_fail"):
-            assert result[0][0] == ResultCode.FAILED
+            assert result_code == ResultCode.FAILED
             assert talon_lru_component_manager.pdu1_power_mode == PowerMode.OFF
             assert talon_lru_component_manager.pdu2_power_mode == PowerMode.OFF
         else:
-            assert result[0][0] == ResultCode.OK
+            assert result_code == ResultCode.OK
 
             if mock_power_switch1.stimulusMode == "command_fail":
                 assert talon_lru_component_manager.pdu1_power_mode == PowerMode.OFF
@@ -120,24 +120,24 @@ class TestTalonLRUComponentManager:
         initial_pdu2_power_mode = talon_lru_component_manager.pdu2_power_mode
 
         # Send the Off command
-        result = talon_lru_component_manager.off()
+        (result_code, _) = talon_lru_component_manager.off()
 
         # Check the command result, device state and PDU power modes
         if mock_power_switch1.stimulusMode == "command_fail":
-            assert result[0][0] == ResultCode.FAILED
+            assert result_code == ResultCode.FAILED
             assert talon_lru_component_manager.pdu1_power_mode == initial_pdu1_power_mode
         else:
             assert talon_lru_component_manager.pdu1_power_mode == PowerMode.OFF
 
         if mock_power_switch2.stimulusMode == "command_fail":
-            assert result[0][0] == ResultCode.FAILED
+            assert result_code == ResultCode.FAILED
             assert talon_lru_component_manager.pdu2_power_mode == initial_pdu2_power_mode
         else:
             assert talon_lru_component_manager.pdu2_power_mode == PowerMode.OFF
 
         if (mock_power_switch1.stimulusMode != "command_fail" and
             mock_power_switch2.stimulusMode != "command_fail"):
-            assert result[0][0] == ResultCode.OK
+            assert result_code == ResultCode.OK
 
 
     def test_OnOff(

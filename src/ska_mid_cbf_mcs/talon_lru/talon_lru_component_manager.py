@@ -113,6 +113,9 @@ class TalonLRUComponentManager(CbfComponentManager):
             self._simulation_mode_events[0] = self._proxy_power_switch1.add_change_event_callback(
                 "simulationMode", self._check_power_mode_callback, stateless=True
             )
+            self.pdu1_power_mode = self._proxy_power_switch1.GetOutletPowerMode()
+            if self._proxy_power_switch1.numOutlets == 0:
+                self.pdu1_power_mode = PowerMode.UNKNOWN
 
             if self._pdu_fqdns[1] != self._pdu_fqdns[0]:
                 if self._proxy_power_switch2 is not None:
@@ -120,10 +123,11 @@ class TalonLRUComponentManager(CbfComponentManager):
                     self._simulation_mode_events[1] = self._proxy_power_switch2.add_change_event_callback(
                         "simulationMode", self._check_power_mode_callback, stateless=True
                     )
+                    self.pdu2_power_mode = self._proxy_power_switch2.GetOutletPowerMode()
+                    if self._proxy_power_switch2.numOutlets == 0:
+                        self.pdu2_power_mode = PowerMode.UNKNOWN
 
             self.connected = True
-            self.pdu1_power_mode = PowerMode.OFF
-            self.pdu2_power_mode = PowerMode.OFF
 
             self.update_communication_status(CommunicationStatus.ESTABLISHED)
             self.update_component_power_mode(PowerMode.OFF)
@@ -249,13 +253,13 @@ class TalonLRUComponentManager(CbfComponentManager):
             # Determine what result code to return
             if result1 == ResultCode.FAILED and result2 == ResultCode.FAILED:
                 self.update_component_fault(True)
-                return ResultCode.FAILED, "Failed to turn on both outlets"
+                return (ResultCode.FAILED, "Failed to turn on both outlets")
             elif result1 == ResultCode.FAILED or result2 == ResultCode.FAILED:
                 self.update_component_power_mode(PowerMode.ON)
-                return ResultCode.OK, "Only one outlet successfully turned on"
+                return (ResultCode.OK, "Only one outlet successfully turned on")
             else:
                 self.update_component_power_mode(PowerMode.ON)
-                return ResultCode.OK, "Both outlets successfully turned on"
+                return (ResultCode.OK, "Both outlets successfully turned on")
         else:
             log_msg = "Proxies not connected"
             self._logger.error(log_msg)
@@ -295,13 +299,13 @@ class TalonLRUComponentManager(CbfComponentManager):
             # Determine what result code to return
             if result1 == ResultCode.FAILED and result2 == ResultCode.FAILED:
                 self.update_component_fault(True)
-                return ResultCode.FAILED, "Failed to turn off both outlets"
+                return (ResultCode.FAILED, "Failed to turn off both outlets")
             elif result1 == ResultCode.FAILED or result2 == ResultCode.FAILED:
                 self.update_component_fault(True)
-                return ResultCode.FAILED, "Only one outlet successfully turned off"
+                return (ResultCode.FAILED, "Only one outlet successfully turned off")
             else:
                 self.update_component_power_mode(PowerMode.OFF)
-                return ResultCode.OK, "Both outlets successfully turned off"
+                return (ResultCode.OK, "Both outlets successfully turned off")
         else:
             log_msg = "Proxies not connected"
             self._logger.error(log_msg)

@@ -76,9 +76,9 @@ def mock_component_manager(
 
 
     mock.start_communicating.side_effect = lambda: _start_communicating(mock)
-    mock.on.side_effect = lambda: _on()
-    mock.off.side_effect = lambda: _off()
-    mock.check_power_mode.side_effect = lambda : _check_power_mode()
+    mock.on.side_effect = lambda: _on(mock)
+    mock.off.side_effect = lambda: _off(mock)
+    mock.check_power_mode.side_effect = lambda : _check_power_mode(mock)
 
     mock.enqueue.return_value = unique_id, ResultCode.QUEUED
 
