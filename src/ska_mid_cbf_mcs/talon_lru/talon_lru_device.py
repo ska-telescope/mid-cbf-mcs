@@ -264,11 +264,6 @@ class TalonLRU(SKABaseDevice):
             device = self.target
             device._power_switch_lock = Lock()
 
-            if result_code == ResultCode.FAILED:
-                device.logger.warn(
-                    "One or both PDU outlets have incorrect initial power state."
-                )
-
             #check power mode in case of fault during communication establishment
             device.component_manager.check_power_mode(device.get_state())
 
