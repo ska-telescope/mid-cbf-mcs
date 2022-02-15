@@ -18,6 +18,7 @@ from __future__ import annotations # allow forward references in type hints
 import json
 import logging
 from typing import List, Tuple, Callable, Optional
+from ska_mid_cbf_mcs.vcc.vcc_band_simulator import VccBandSimulator
 
 # tango imports
 import tango
@@ -164,7 +165,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
 
         self.connected = False
 
-        # initialize attribute values
+        # Initialize attribute values
         self._receptor_id = 0
         self._frequency_offset_k = 0
         self._frequency_offset_delta_f = 0
@@ -183,7 +184,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         self._delay_model = [[0] * 6 for _ in range(26)]
         self._doppler_phase_correction = [0 for _ in range(4)]
 
-        # initialize list of band proxies and band -> index translation;
+        # Initialize list of band proxies and band -> index translation;
         # entry for each of: band 1 & 2, band 3, band 4, band 5
         self._band_proxies = []
         self._freq_band_index = dict(zip(
@@ -194,6 +195,14 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         self._sw_proxies = []
         self._talon_lru_proxy = None
         self._vcc_controller_proxy = None
+
+        # Create simulators
+        self._band_simulators = [
+            VccBandSimulator(vcc_band[0]),
+            VccBandSimulator(vcc_band[1]),
+            VccBandSimulator(vcc_band[2]),
+            VccBandSimulator(vcc_band[3])
+        ] 
 
         super().__init__(
             logger=logger,
@@ -359,33 +368,39 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         """
         (result_code, msg) = (ResultCode.OK, "ConfigureBand completed OK.")
 
-        if not self._simulation_mode:
-            try:
-                # Configure the band via the VCC Controller device
-                self._logger.info(f"Configuring VCC band {freq_band_name}")
-                self._frequency_band = freq_band_dict()[freq_band_name]
-                self._freq_band_name = freq_band_name
-                self._vcc_controller_proxy.ConfigureBand(self.frequency_band)
+        try:
+            # Configure the band via the VCC Controller device
+            self._logger.info(f"Configuring VCC band {freq_band_name}")
+            self._frequency_band = freq_band_dict()[freq_band_name]
+            self._freq_band_name = freq_band_name
+            if self._simulation_mode:
+                pass
+            else:
+                self._vcc_controller_proxy.ConfigureBand(self._frequency_band)
                 
-                # Set internal params for the configured band
-                self._logger.info(f"Configuring internal parameters for VCC band {freq_band_name}")
-                
-                internal_params_file_name = VCC_PARAM_PATH + "internal_params_receptor" + \
-                    str(self._receptor_id) + "_band" + freq_band_name + ".json"
-                self._logger.debug(f"Using parameters stored in {internal_params_file_name}")
+            # Set internal params for the configured band
+            self._logger.info(f"Configuring internal parameters for VCC band {freq_band_name}")
+            
+            internal_params_file_name = VCC_PARAM_PATH + "internal_params_receptor" + \
+                str(self._receptor_id) + "_band" + freq_band_name + ".json"
+            self._logger.debug(f"Using parameters stored in {internal_params_file_name}")
 
-                with open(internal_params_file_name, 'r') as f:
-                    json_string = f.read()
-                    self._band_proxies[self._freq_band_index[self._freq_band_name]].SetInternalParameters(json_string)
-            except tango.DevFailed as df:
-                self._logger.error(str(df.args[0].desc))
-                (result_code, msg) = (ResultCode.FAILED,
-                    "Failed to connect to HPS VCC devices")
-            except FileNotFoundError:
-                self._logger.error(f"Could not find internal parameters file for \
-                    receptor {self._receptor_id}, band {freq_band_name}")
-                (result_code, msg) = (ResultCode.FAILED,
-                    "Invalid internal parameters file name")
+            with open(internal_params_file_name, 'r') as f:
+                json_string = f.read()
+                idx = self._freq_band_index[self._freq_band_name]
+                if self._simulation_mode:
+                    self._band_simulators[idx].SetInternalParameters(json_string)
+                else:
+                    self._band_proxies[idx].SetInternalParameters(json_string)
+        except tango.DevFailed as df:
+            self._logger.error(str(df.args[0].desc))
+            (result_code, msg) = (ResultCode.FAILED,
+                "Failed to connect to HPS VCC devices")
+        except FileNotFoundError:
+            self._logger.error(f"Could not find internal parameters file for \
+                receptor {self._receptor_id}, band {freq_band_name}")
+            (result_code, msg) = (ResultCode.FAILED,
+                "Invalid internal parameters file name")
 
         return (result_code, msg)
 
@@ -404,7 +419,9 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         self._config_id = ""
         self._scan_id = 0
 
-        if not self._simulation_mode:
+        if self._simulation_mode:
+            pass
+        else:
             try:
                 self._vcc_controller_proxy.Unconfigure()
             except tango.DevFailed as df:
@@ -452,9 +469,12 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
             self._logger.warning("'rfiFlaggingMask' not given. Proceeding.")
 
         # Send the ConfigureScan command to the HPS
-        if not self._simulation_mode:
+        idx = self._freq_band_index[self._freq_band_name]
+        if self._simulation_mode:
+            self._band_simulators[idx].ConfigureScan(argin)
+        else:
             try:
-                self._band_proxies[self._freq_band_index[self._freq_band_name]].ConfigureScan(argin)
+                self._band_proxies[idx].ConfigureScan(argin)
             except tango.DevFailed as df:
                 self._logger.error(str(df.args[0].desc))
                 return (ResultCode.FAILED, "Failed to connect to VCC band device")
@@ -477,12 +497,16 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         self._scan_id = scan_id
 
         # Send the Scan command to the HPS
-        if not self._simulation_mode:
+        idx = self._freq_band_index[self._freq_band_name]
+        if self._simulation_mode:
+            self._band_simulators[idx].Scan(scan_id)
+        else:
             try:
-                self._band_proxies[self._freq_band_index[self._freq_band_name]].Scan(scan_id)
+                self._band_proxies[idx].Scan(scan_id)
             except tango.DevFailed as df:
                 self._logger.error(str(df.args[0].desc))
                 return (ResultCode.FAILED, "Failed to connect to VCC band device")
+
         return (ResultCode.STARTED, "Vcc ScanCommand completed OK")
 
 
@@ -498,34 +522,46 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         self._logger.info("Edning scan")
 
         # Send the EndScan command to the HPS
-        if not self._simulation_mode:
+        idx = self._freq_band_index[self._freq_band_name]
+        if self._simulation_mode:
+            self._band_simulators[idx].EndScan()
+        else:
             try:
-                self._band_proxies[self._freq_band_index[self._freq_band_name]].EndScan()
+                self._band_proxies[idx].EndScan()
             except tango.DevFailed as df:
                 self._logger.error(str(df.args[0].desc))
                 return (ResultCode.FAILED, "Failed to connect to VCC band device")
+
         return (ResultCode.OK, "Vcc EndScanCommand completed OK")
     
 
     def abort(self):
         """Tell the current VCC band device to abort whatever it was doing."""
-        if not self._simulation_mode:
+        idx = self._freq_band_index[self._freq_band_name]
+        if self._simulation_mode:
+            self._band_simulators[idx].Abort()
+        else:
             try:
-                self._band_proxies[self._freq_band_index[self._freq_band_name]].Abort()
+                self._band_proxies[idx].Abort()
             except tango.DevFailed as df:
                 self._logger.error(str(df.args[0].desc))
                 return (ResultCode.FAILED, "Failed to connect to VCC band device")
+
         return (ResultCode.OK, "Vcc Abort command completed OK")
 
 
     def obsreset(self):
         """Reset the configuration."""
-        if not self._simulation_mode:
+        idx = self._freq_band_index[self._freq_band_name]
+        if self._simulation_mode:
+            self._band_simulators[idx].ObsReset()
+        else:
             try:
-                self._band_proxies[self._freq_band_index[self._freq_band_name]].ObsReset()
+                self._band_proxies[idx].ObsReset()
             except tango.DevFailed as df:
                 self._logger.error(str(df.args[0].desc))
                 return (ResultCode.FAILED, "Failed to connect to VCC band device")
+                
         return (ResultCode.OK, "Vcc ObsReset command completed OK")
 
 

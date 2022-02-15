@@ -9,14 +9,13 @@ import os
 import sys
 
 from ska_mid_cbf_mcs.vcc.vcc_device import Vcc
-from ska_mid_cbf_mcs.vcc.vcc_band import VccBand
 from ska_mid_cbf_mcs.vcc.vcc_search_window import VccSearchWindow
 
 __all__ = ["main"]
 
 def main(args=None, **kwargs):
     return run(
-        classes=(VccBand, VccSearchWindow, Vcc), 
+        classes=(VccSearchWindow, Vcc), 
         args=args, 
         **kwargs
     )
