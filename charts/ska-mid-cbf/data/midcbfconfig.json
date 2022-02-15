@@ -1604,13 +1604,13 @@
                                 "talondx-001/vcc-app/vcc-band-1-and-2"
                             ],
                             "Band3Address": [
-                                "mid_csp_cbf/vcc_band3/001"
+                                "talondx-001/vcc-app/vcc-band-3"
                             ],
                             "Band4Address": [
-                                "mid_csp_cbf/vcc_band4/001"
+                                "talondx-001/vcc-app/vcc-band-4"
                             ],
                             "Band5Address": [
-                                "mid_csp_cbf/vcc_band5/001"
+                                "talondx-001/vcc-app/vcc-band-5"
                             ],
                             "SW1Address": [
                                 "mid_csp_cbf/vcc_sw1/001"
@@ -1630,24 +1630,6 @@
                                 "3000"
                             ]
                         }
-                    }
-                },
-                "VccBand": {
-                    "mid_csp_cbf/vcc_band12/001": {
-                        "properties": {},
-                        "attribute_properties": {}
-                    },
-                    "mid_csp_cbf/vcc_band3/001": {
-                        "properties": {},
-                        "attribute_properties": {}
-                    },
-                    "mid_csp_cbf/vcc_band4/001": {
-                        "properties": {},
-                        "attribute_properties": {}
-                    },
-                    "mid_csp_cbf/vcc_band5/001": {
-                        "properties": {},
-                        "attribute_properties": {}
                     }
                 },
                 "VccSearchWindow": {
@@ -1683,16 +1665,16 @@
                                 "talondx-002/vcc-app/vcc-controller"
                             ],
                             "Band1And2Address": [
-                                "mid_csp_cbf/vcc_band12/002"
+                                "talondx-002/vcc-app/vcc-band-1-and-2"
                             ],
                             "Band3Address": [
-                                "mid_csp_cbf/vcc_band3/002"
+                                "talondx-002/vcc-app/vcc-band-3"
                             ],
                             "Band4Address": [
-                                "mid_csp_cbf/vcc_band4/002"
+                                "talondx-002/vcc-app/vcc-band-4"
                             ],
                             "Band5Address": [
-                                "mid_csp_cbf/vcc_band5/002"
+                                "talondx-002/vcc-app/vcc-band-5"
                             ],
                             "SW1Address": [
                                 "mid_csp_cbf/vcc_sw1/002"
@@ -1712,24 +1694,6 @@
                                 "3000"
                             ]
                         }
-                    }
-                },
-                "VccBand": {
-                    "mid_csp_cbf/vcc_band12/002": {
-                        "properties": {},
-                        "attribute_properties": {}
-                    },
-                    "mid_csp_cbf/vcc_band3/002": {
-                        "properties": {},
-                        "attribute_properties": {}
-                    },
-                    "mid_csp_cbf/vcc_band4/002": {
-                        "properties": {},
-                        "attribute_properties": {}
-                    },
-                    "mid_csp_cbf/vcc_band5/002": {
-                        "properties": {},
-                        "attribute_properties": {}
                     }
                 },
                 "VccSearchWindow": {
@@ -1765,16 +1729,16 @@
                                 "talondx-003/vcc-app/vcc-controller"
                             ],
                             "Band1And2Address": [
-                                "mid_csp_cbf/vcc_band12/003"
+                                "talondx-003/vcc-app/vcc-band-1-and-2"
                             ],
                             "Band3Address": [
-                                "mid_csp_cbf/vcc_band3/003"
+                                "talondx-003/vcc-app/vcc-band-3"
                             ],
                             "Band4Address": [
-                                "mid_csp_cbf/vcc_band4/003"
+                                "talondx-003/vcc-app/vcc-band-4"
                             ],
                             "Band5Address": [
-                                "mid_csp_cbf/vcc_band5/003"
+                                "talondx-003/vcc-app/vcc-band-5"
                             ],
                             "SW1Address": [
                                 "mid_csp_cbf/vcc_sw1/003"
@@ -1794,24 +1758,6 @@
                                 "3000"
                             ]
                         }
-                    }
-                },
-                "VccBand": {
-                    "mid_csp_cbf/vcc_band12/003": {
-                        "properties": {},
-                        "attribute_properties": {}
-                    },
-                    "mid_csp_cbf/vcc_band3/003": {
-                        "properties": {},
-                        "attribute_properties": {}
-                    },
-                    "mid_csp_cbf/vcc_band4/003": {
-                        "properties": {},
-                        "attribute_properties": {}
-                    },
-                    "mid_csp_cbf/vcc_band5/003": {
-                        "properties": {},
-                        "attribute_properties": {}
                     }
                 },
                 "VccSearchWindow": {
@@ -1847,16 +1793,16 @@
                                 "talondx-004/vcc-app/vcc-controller"
                             ],
                             "Band1And2Address": [
-                                "mid_csp_cbf/vcc_band12/004"
+                                "talondx-004/vcc-app/vcc-band-1-and-2"
                             ],
                             "Band3Address": [
-                                "mid_csp_cbf/vcc_band3/004"
+                                "talondx-004/vcc-app/vcc-band-3"
                             ],
                             "Band4Address": [
-                                "mid_csp_cbf/vcc_band4/004"
+                                "talondx-004/vcc-app/vcc-band-4"
                             ],
                             "Band5Address": [
-                                "mid_csp_cbf/vcc_band5/004"
+                                "talondx-004/vcc-app/vcc-band-5"
                             ],
                             "SW1Address": [
                                 "mid_csp_cbf/vcc_sw1/004"
@@ -1876,24 +1822,6 @@
                                 "3000"
                             ]
                         }
-                    }
-                },
-                "VccBand": {
-                    "mid_csp_cbf/vcc_band12/004": {
-                        "properties": {},
-                        "attribute_properties": {}
-                    },
-                    "mid_csp_cbf/vcc_band3/004": {
-                        "properties": {},
-                        "attribute_properties": {}
-                    },
-                    "mid_csp_cbf/vcc_band4/004": {
-                        "properties": {},
-                        "attribute_properties": {}
-                    },
-                    "mid_csp_cbf/vcc_band5/004": {
-                        "properties": {},
-                        "attribute_properties": {}
                     }
                 },
                 "VccSearchWindow": {
