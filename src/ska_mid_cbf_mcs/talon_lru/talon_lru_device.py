@@ -162,11 +162,6 @@ class TalonLRU(SKABaseDevice):
             self.op_state_model.perform_action("component_disconnected")
         elif communication_status == CommunicationStatus.NOT_ESTABLISHED:
             self.op_state_model.perform_action("component_unknown")
-        elif communication_status == CommunicationStatus.ESTABLISHED \
-            and self._component_power_mode is not None:
-            self._component_power_mode_changed(self._component_power_mode)
-        else:  # self._component_power_mode is None
-            pass  # wait for a power mode update
     
     def _component_power_mode_changed(
         self: TalonLRU,
@@ -265,7 +260,7 @@ class TalonLRU(SKABaseDevice):
             device._power_switch_lock = Lock()
 
             #check power mode in case of fault during communication establishment
-            device.component_manager.check_power_mode(device.get_state())
+            # device.component_manager.check_power_mode(device.get_state())
 
             return (result_code, msg)
 
