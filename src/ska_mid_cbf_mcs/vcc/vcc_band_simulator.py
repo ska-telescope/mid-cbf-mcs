@@ -180,9 +180,12 @@ class VccBandSimulator:
         self._obs_state = ObsState.ABORTED
 
     def ObsReset(self: VccBandSimulator) -> None:
-        """Reset the configuration."""
+        """Reset the observing state."""
         self._obs_state = ObsState.RESETTING
+        self.Unconfigure()
 
+    def Unconfigure(self: VccBandSimulator) -> None:
+        """Reset the configuration."""
         self._config_id = ""
         self._frequency_band = 0
         self._stream_tuning = (0, 0)

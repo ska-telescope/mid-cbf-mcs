@@ -19,6 +19,7 @@ import json
 import logging
 from typing import List, Tuple, Callable, Optional
 from ska_mid_cbf_mcs.vcc.vcc_band_simulator import VccBandSimulator
+from ska_mid_cbf_mcs.vcc.vcc_controller_simulator import VccControllerSimulator
 
 # tango imports
 import tango
@@ -202,7 +203,14 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
             VccBandSimulator(vcc_band[1]),
             VccBandSimulator(vcc_band[2]),
             VccBandSimulator(vcc_band[3])
-        ] 
+        ]
+        self._vcc_controller_simulator = VccControllerSimulator(
+            vcc_controller,
+            self._band_simulators[0],
+            self._band_simulators[1],
+            self._band_simulators[2],
+            self._band_simulators[3]
+        )
 
         super().__init__(
             logger=logger,
@@ -283,9 +291,9 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
 
         :raise ConnectionError: if unable to connect to HPS VCC devices
         """
-        # Try to connect to HPS devices, they should be running at this point
-        if not self._simulation_mode:
-            try:
+        try:
+            # Try to connect to HPS devices, they should be running at this point
+            if not self._simulation_mode:
                 self._logger.info("Connecting to HPS VCC controller and band devices")
 
                 self._vcc_controller_proxy = CbfDeviceProxy(
@@ -294,10 +302,10 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                 self._band_proxies = [CbfDeviceProxy(fqdn=fqdn, logger=self._logger
                     ) for fqdn in self._vcc_band_fqdn]
 
-                self._init_vcc_controller_parameters()
-            except tango.DevFailed as dev_failed:
-                self.update_component_fault(True)
-                raise ConnectionError(f"Error in proxy connection.") from dev_failed
+            self._init_vcc_controller_parameters()
+        except tango.DevFailed as dev_failed:
+            self.update_component_fault(True)
+            raise ConnectionError(f"Error in proxy connection.") from dev_failed
 
         self.update_component_power_mode(PowerMode.ON)
         return (ResultCode.OK, "On command completed OK")
@@ -310,17 +318,21 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         Initialize the set of parameters in the VCC Controller device that
         are common to all bands and will not change during scan configuration.
         """
-        if not self._simulation_mode:
+        param_init = {
+            "frequency_offset_k": self._frequency_offset_k,
+            "frequency_offset_delta_f": self._frequency_offset_delta_f
+        }
+
+        if self._simulation_mode:
+            self._logger.info("Initializing VCC Controller constant parameters")
+            self._vcc_controller_simulator.InitCommonParameters(json.dumps(param_init))
+        else:
             # Skip this if the device has already been initialized
             if self._vcc_controller_proxy.State() != tango.DevState.INIT:
                 self._logger.info("VCC Controller parameters already initialized")
                 return
 
             self._logger.info("Initializing VCC Controller constant parameters")
-            param_init = {
-                "frequency_offset_k": self.frequency_offset_k,
-                "frequency_offset_delta_f": self.frequency_offset_delta_f
-            }
             self._vcc_controller_proxy.InitCommonParameters(json.dumps(param_init))
 
 
@@ -374,7 +386,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
             self._frequency_band = freq_band_dict()[freq_band_name]
             self._freq_band_name = freq_band_name
             if self._simulation_mode:
-                pass
+                self._vcc_controller_simulator.ConfigureBand(self._frequency_band)
             else:
                 self._vcc_controller_proxy.ConfigureBand(self._frequency_band)
                 
@@ -420,7 +432,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         self._scan_id = 0
 
         if self._simulation_mode:
-            pass
+            self._vcc_controller_simulator.Unconfigure()
         else:
             try:
                 self._vcc_controller_proxy.Unconfigure()
@@ -561,7 +573,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
             except tango.DevFailed as df:
                 self._logger.error(str(df.args[0].desc))
                 return (ResultCode.FAILED, "Failed to connect to VCC band device")
-                
+
         return (ResultCode.OK, "Vcc ObsReset command completed OK")
 
 
