@@ -136,12 +136,13 @@ class PowerSwitchComponentManager(CbfComponentManager):
             self.power_switch_driver.initialize()
 
         self.update_communication_status(CommunicationStatus.ESTABLISHED)
-        self.update_component_power_mode(PowerMode.UNKNOWN)
+        self.update_component_power_mode(PowerMode.ON)
         self.connected = True
 
     def stop_communicating(self: PowerSwitchComponentManager) -> None:
         """Stop communication with the component."""
         super().stop_communicating()
+        self.update_component_power_mode(PowerMode.UNKNOWN)
         self.connected = False
 
     def get_outlet_power_mode(
@@ -174,8 +175,6 @@ class PowerSwitchComponentManager(CbfComponentManager):
 
         :raise AssertionError: if outlet ID is out of bounds
         """
-        self.update_component_power_mode(PowerMode.ON)
-
         if self.simulation_mode:
             return self.power_switch_simulator.turn_on_outlet(outlet)
         else:
@@ -194,8 +193,6 @@ class PowerSwitchComponentManager(CbfComponentManager):
 
         :raise AssertionError: if outlet ID is out of bounds
         """
-        self.update_component_power_mode(PowerMode.OFF)
-
         if self.simulation_mode:
             return self.power_switch_simulator.turn_off_outlet(outlet)
         else:
