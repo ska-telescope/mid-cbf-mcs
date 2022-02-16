@@ -32,6 +32,7 @@ from tango.server import device_property
 from tango import AttrQuality, DispLevel, DevState
 from tango import AttrWriteType, PipeWriteType
 from ska_tango_base import SKABaseDevice
+import logging
 # Additional import
 # PROTECTED REGION ID(FspCorrSubarray.additionnal_import) ENABLED START #
 import os
@@ -256,6 +257,9 @@ class FspCorrSubarray(CspSubElementObsDevice):
             """
 
             super().do()
+
+            device = self.target
+            device._configuring_from_idle = False
 
             self.logger.debug("Entering InitCommand()")
            
@@ -779,6 +783,11 @@ class FspCorrSubarray(CspSubElementObsDevice):
             self.logger.error(message)
             tango.Except.throw_exception("Command failed", message, "ConfigureScan" + " execution",
                                     tango.ErrSeverity.ERR)
+        else:
+            if self._obs_state == ObsState.IDLE:
+                self._configuring_from_idle = True
+            else: 
+                self._configuring_from_idle = False
 
         (return_code, message) = command(argin)
         return [[return_code], [message]]
@@ -970,7 +979,11 @@ class FspCorrSubarray(CspSubElementObsDevice):
         :type configured: bool
         """
         if configured:
-            self.obs_state_model.perform_action("component_configured")
+            if self._configuring_from_idle:
+                self.obs_state_model.perform_action("component_configured")
+            else:
+                self.logger.error("Action 'component_configured' only allowed from \
+                    'CONFIGURING_IDLE' state")
         else:
             self.obs_state_model.perform_action("component_unconfigured")
     
