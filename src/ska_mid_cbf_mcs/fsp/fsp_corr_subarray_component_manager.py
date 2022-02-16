@@ -73,7 +73,7 @@ class FspCorrSubarrayComponentManager(CbfComponentManager, CspObsComponentManage
         self._stream_tuning = (0, 0)
         self._frequency_band_offset_stream_1 = 0
         self._frequency_band_offset_stream_2 = 0
-        self._frequency_slice_ID = 0
+        self._frequency_slice_id = 0
         self._bandwidth = 0
         self._bandwidth_actual = const.FREQUENCY_SLICE_BW
         self._zoom_window_tuning = 0
@@ -150,7 +150,7 @@ class FspCorrSubarrayComponentManager(CbfComponentManager, CspObsComponentManage
         :return: the frequency slice id
         :rtype: int
         """
-        return self._frequency_slice_ID
+        return self._frequency_slice_id
     
     @property
     def bandwidth(self: FspCorrSubarrayComponentManager) -> int:
@@ -404,6 +404,9 @@ class FspCorrSubarrayComponentManager(CbfComponentManager, CspObsComponentManage
                 information purpose only.
         :rtype: (ResultCode, str)
         """
+
+        self._deconfigure()
+        
         #TODO: call validate input with self.validate_input
         
         configuration = json.loads(configuration)
@@ -419,7 +422,7 @@ class FspCorrSubarrayComponentManager(CbfComponentManager, CspObsComponentManage
         self._remove_all_receptors()
         self._add_receptors(map(int, configuration["receptor_ids"]))
 
-        self._frequency_slice_ID = int(configuration["frequency_slice_id"])
+        self._frequency_slice_id = int(configuration["frequency_slice_id"])
 
         self._bandwidth = int(configuration["zoom_factor"])
         self._bandwidth_actual = int(const.FREQUENCY_SLICE_BW/2**int(configuration["zoom_factor"]))
@@ -436,9 +439,9 @@ class FspCorrSubarrayComponentManager(CbfComponentManager, CspObsComponentManage
                 ])][self._frequency_band] + self._frequency_band_offset_stream_1
                 frequency_slice_range = (
                     frequency_band_start + \
-                        (self._frequency_slice_ID - 1)*const.FREQUENCY_SLICE_BW*10**6,
+                        (self._frequency_slice_id - 1)*const.FREQUENCY_SLICE_BW*10**6,
                     frequency_band_start +
-                            self._frequency_slice_ID*const.FREQUENCY_SLICE_BW*10**6
+                            self._frequency_slice_id*const.FREQUENCY_SLICE_BW*10**6
                 )
 
                 if frequency_slice_range[0] + \
@@ -459,19 +462,19 @@ class FspCorrSubarrayComponentManager(CbfComponentManager, CspObsComponentManage
                 frequency_slice_range_1 = (
                     self._stream_tuning[0]*10**9 + self._frequency_band_offset_stream_1 - \
                         const.BAND_5_STREAM_BANDWIDTH*10**9/2 + \
-                        (self._frequency_slice_ID - 1)*const.FREQUENCY_SLICE_BW*10**6,
+                        (self._frequency_slice_id - 1)*const.FREQUENCY_SLICE_BW*10**6,
                     self._stream_tuning[0]*10**9 + self._frequency_band_offset_stream_1 - \
                         const.BAND_5_STREAM_BANDWIDTH*10**9/2 + \
-                        self._frequency_slice_ID*const.FREQUENCY_SLICE_BW*10**6
+                        self._frequency_slice_id*const.FREQUENCY_SLICE_BW*10**6
                 )
 
                 frequency_slice_range_2 = (
                     self._stream_tuning[1]*10**9 + self._frequency_band_offset_stream_2 - \
                         const.BAND_5_STREAM_BANDWIDTH*10**9/2 + \
-                        (self._frequency_slice_ID - 1)*const.FREQUENCY_SLICE_BW*10**6,
+                        (self._frequency_slice_id - 1)*const.FREQUENCY_SLICE_BW*10**6,
                     self._stream_tuning[1]*10**9 + self._frequency_band_offset_stream_2 - \
                         const.BAND_5_STREAM_BANDWIDTH*10**9/2 + \
-                        self._frequency_slice_ID*const.FREQUENCY_SLICE_BW*10**6
+                        self._frequency_slice_id*const.FREQUENCY_SLICE_BW*10**6
                 )
 
                 if (frequency_slice_range_1[0] + \
@@ -561,24 +564,16 @@ class FspCorrSubarrayComponentManager(CbfComponentManager, CspObsComponentManage
 
         return (ResultCode.OK, "FspCorrSubarray EndScan command completed OK")
     
-    def go_to_idle(
+    def _deconfigure( 
         self: FspCorrSubarrayComponentManager,
-    ) -> Tuple[ResultCode, str]:
-        """
-        Performs the GoToIdle() command functionality
-
-        :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-        :rtype: (ResultCode, str)
-        """
+    ) -> None:
 
         self._freq_band_name = ""
         self._frequency_band = 0
         self._stream_tuning = (0, 0)
         self._frequency_band_offset_stream_1 = 0
         self._frequency_band_offset_stream_2 = 0
-        self._frequency_slice_ID = 0
+        self._frequency_slice_id = 0
         self._bandwidth = 0
         self._bandwidth_actual = const.FREQUENCY_SLICE_BW
         self._zoom_window_tuning = 0
@@ -596,6 +591,20 @@ class FspCorrSubarrayComponentManager(CbfComponentManager, CspObsComponentManage
 
         self._channel_info = []
         #self._channel_info.clear() #TODO:  not yet populated
+    
+    def go_to_idle(
+        self: FspCorrSubarrayComponentManager,
+    ) -> Tuple[ResultCode, str]:
+        """
+        Performs the GoToIdle() command functionality
+
+        :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+        :rtype: (ResultCode, str)
+        """
+
+        self._deconfigure()
 
         self._remove_all_receptors()
         

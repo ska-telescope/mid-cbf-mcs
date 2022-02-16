@@ -369,7 +369,7 @@ class FspCorrSubarray(CspSubElementObsDevice):
         :return: the frequencySliceID attribute.
         :rtype: int
         """
-        return self.component_manager.frequency_slice_ID
+        return self.component_manager.frequency_slice_id
         # PROTECTED REGION END #    //  FspCorrSubarray.frequencySliceID_read
 
     def read_corrBandwidth(self: FspCorrSubarray) -> int:
