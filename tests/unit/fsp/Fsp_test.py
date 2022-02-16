@@ -19,7 +19,6 @@ import json
 import logging
 import pytest
 from typing import Callable, Type, Dict
-from enum import Enum
 
 # Path
 file_path = os.path.dirname(os.path.abspath(__file__))
@@ -35,6 +34,7 @@ from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_mid_cbf_mcs.testing.tango_harness import DeviceToLoadType
 
 from ska_tango_base.control_model import HealthState, AdminMode, ObsState
+from ska_mid_cbf_mcs.commons.global_enum import FspModes
 
 class TestFsp:
     """
@@ -179,8 +179,6 @@ class TestFsp:
         # update only valid for function mode PST-BF
         device_under_test.SetFunctionMode("PST-BF")
         time.sleep(0.1)
-        #TODO: this enum should be defined once and referred to throughout the project
-        FspModes = Enum('FspModes', 'CORR PSS_BF PST_BF VLBI')
         assert device_under_test.functionMode == FspModes.PST_BF.value
 
         # read the json file
@@ -269,7 +267,6 @@ class TestFsp:
         for mode in valid_function_modes:
             device_under_test.SetFunctionMode(mode)
             time.sleep(0.1)
-            FspModes = Enum('FspModes', 'CORR PSS_BF PST_BF VLBI')
             if mode == "PSS-BF":
                 assert device_under_test.functionMode == FspModes.PSS_BF.value
                 fs_length = 16
@@ -358,7 +355,6 @@ class TestFsp:
         for mode in valid_function_modes:
             device_under_test.SetFunctionMode(mode)
             time.sleep(0.1)
-            FspModes = Enum('FspModes', 'CORR PSS_BF PST_BF VLBI')
             if mode == "PSS-BF":
                 assert device_under_test.functionMode == FspModes.PSS_BF.value
             elif mode == "PST-BF":

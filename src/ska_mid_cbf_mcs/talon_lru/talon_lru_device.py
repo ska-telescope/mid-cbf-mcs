@@ -29,7 +29,7 @@ from ska_tango_base import SKABaseDevice
 # Additional import
 # PROTECTED REGION ID(TalonLRU.additionnal_import) ENABLED START #
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
-from ska_mid_cbf_mcs.commons.global_enum import PowerMode
+from ska_tango_base.control_model import PowerMode
 from ska_tango_base.commands import ResultCode
 # PROTECTED REGION END #    //  TalonLRU.additionnal_import
 

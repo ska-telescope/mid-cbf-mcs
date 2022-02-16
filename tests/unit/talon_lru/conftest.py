@@ -16,7 +16,7 @@ from typing import Dict
 
 # Local imports
 from ska_mid_cbf_mcs.talon_lru.talon_lru_device import TalonLRU
-from ska_mid_cbf_mcs.commons.global_enum import PowerMode
+from ska_tango_base.control_model import PowerMode
 from ska_mid_cbf_mcs.testing.tango_harness import TangoHarness, DevicesToLoadType
 from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy

@@ -12,7 +12,7 @@
 
 # Standard imports
 import pytest
-from ska_mid_cbf_mcs.commons.global_enum import PowerMode
+from ska_tango_base.control_model import PowerMode
 from ska_mid_cbf_mcs.power_switch.power_switch_component_manager import PowerSwitchComponentManager
 
 # Local imports

@@ -13,7 +13,7 @@
 # Standard imports
 import pytest
 from typing import List
-from ska_mid_cbf_mcs.commons.global_enum import PowerMode
+from ska_tango_base.control_model import PowerMode
 
 # Local imports
 from ska_tango_base.commands import ResultCode

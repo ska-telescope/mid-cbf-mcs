@@ -12,7 +12,7 @@
 
 # Standard imports
 import pytest
-from ska_mid_cbf_mcs.commons.global_enum import PowerMode
+from ska_tango_base.control_model import PowerMode
 
 # Tango imports
 from tango import DevState

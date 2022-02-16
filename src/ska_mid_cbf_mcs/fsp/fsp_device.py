@@ -30,7 +30,6 @@ from tango import AttrWriteType
 import os
 import sys
 import json
-from enum import Enum
 
 file_path = os.path.dirname(os.path.abspath(__file__))
 
@@ -38,6 +37,7 @@ from ska_tango_base import SKACapability, SKABaseDevice
 from ska_tango_base.commands import ResultCode
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_mid_cbf_mcs.group_proxy import CbfGroupProxy
+from ska_mid_cbf_mcs.commons.global_enum import FspModes
 # PROTECTED REGION END #    //  Fsp.additionnal_import
 
 __all__ = ["Fsp", "main"]
@@ -638,9 +638,7 @@ class Fsp(SKACapability):
             :param argin: the jones matrix data
         """
         self.logger.debug("Fsp.UpdateJonesMatrix")
-
-        #TODO: this enum should be defined once and referred to throughout the project
-        FspModes = Enum('FspModes', 'CORR PSS_BF PST_BF VLBI')
+        
         if self._function_mode in [FspModes.PSS_BF.value, FspModes.PST_BF.value, FspModes.VLBI.value]:
             argin = json.loads(argin)
 

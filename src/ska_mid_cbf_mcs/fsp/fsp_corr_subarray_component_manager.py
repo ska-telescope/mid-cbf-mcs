@@ -25,6 +25,7 @@ from ska_tango_base.commands import ResultCode
 from ska_tango_base.csp.obs.component_manager import CspObsComponentManager
 from ska_mid_cbf_mcs.commons.global_enum import const, freq_band_dict
 
+
 class FspCorrSubarrayComponentManager(CbfComponentManager, CspObsComponentManager):
     """A component manager for the FspCorrSubarray device."""
 
@@ -423,17 +424,17 @@ class FspCorrSubarrayComponentManager(CbfComponentManager, CspObsComponentManage
         if "output_host" in configuration:
             self._vis_destination_address["outputHost"] = configuration["output_host"]
         elif self._vis_destination_address["outputHost"] == []:
-                self._vis_destination_address["outputHost"] = [[0, "192.168.0.1"]]
+                self._vis_destination_address["outputHost"] = const.DEFAULT_OUTPUT_HOST
         
         if "output_mac" in configuration:
             self._vis_destination_address["outputMac"] = configuration["output_mac"]
         elif self._vis_destination_address["outputMac"] == []:
-            self._vis_destination_address["outputMac"] = [[0, "06-00-00-00-00-01"]]
+            self._vis_destination_address["outputMac"] = const.DEFAULT_OUTPUT_MAC
         
         if "output_port" in configuration:
             self._vis_destination_address["outputPort"] = configuration["output_port"]
         elif self._vis_destination_address["outputPort"] == []:
-            self._vis_destination_address["outputPort"] = [[0, 9000, 1]]
+            self._vis_destination_address["outputPort"] = const.DEFAULT_OUTPUT_PORT
 
         self._output_link_map = configuration["output_link_map"]
 

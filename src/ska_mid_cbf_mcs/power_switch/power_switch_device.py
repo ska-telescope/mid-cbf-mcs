@@ -30,7 +30,7 @@ from ska_tango_base import SKABaseDevice
 # PROTECTED REGION ID(PowerSwitch.additionnal_import) ENABLED START #
 from ska_tango_base.control_model import SimulationMode
 from ska_tango_base.commands import ResultCode, BaseCommand, ResponseCommand
-from ska_mid_cbf_mcs.commons.global_enum import PowerMode
+from ska_tango_base.control_model import PowerMode
 from ska_mid_cbf_mcs.power_switch.power_switch_component_manager import PowerSwitchComponentManager
 # PROTECTED REGION END #    //  PowerSwitch.additionnal_import
 
