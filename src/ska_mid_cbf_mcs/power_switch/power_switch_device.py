@@ -14,24 +14,23 @@ TANGO device class for controlling and monitoring the web power switch that dist
 """
 
 from __future__ import annotations
+from typing import Tuple, Optional
 
 # tango imports
 import tango
 from tango import DebugIt
 from tango.server import run
-from tango.server import Device, DeviceMeta
 from tango.server import attribute, command
 from tango.server import device_property
-from tango import AttrQuality, DispLevel, DevState
-from tango import AttrWriteType, PipeWriteType
+from tango import AttrWriteType
 from ska_tango_base import SKABaseDevice
 
 # Additional import
 # PROTECTED REGION ID(PowerSwitch.additionnal_import) ENABLED START #
-from ska_tango_base.control_model import SimulationMode
+from ska_tango_base.control_model import SimulationMode, PowerMode
 from ska_tango_base.commands import ResultCode, BaseCommand, ResponseCommand
-from ska_mid_cbf_mcs.commons.global_enum import PowerMode
 from ska_mid_cbf_mcs.power_switch.power_switch_component_manager import PowerSwitchComponentManager
+from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
 # PROTECTED REGION END #    //  PowerSwitch.additionnal_import
 
 __all__ = ["PowerSwitch", "main"]
@@ -105,10 +104,16 @@ class PowerSwitch(SKABaseDevice):
 
         :return: a component manager for this device
         """
+        self._communication_status: Optional[CommunicationStatus] = None
+        self._component_power_mode: Optional[PowerMode] = None
+        # Simulation mode default true (using the simulator)
         return PowerSwitchComponentManager(
-            self._simulation_mode,
             self.PowerSwitchIp,
-            self.logger
+            self.logger,
+            push_change_event_callback=self.push_change_event,
+            communication_status_changed_callback=self._communication_status_changed,
+            component_power_mode_changed_callback=self._component_power_mode_changed,
+            component_fault_callback=self._component_fault
         )
 
     def init_command_objects(self: PowerSwitch) -> None:
@@ -127,6 +132,70 @@ class PowerSwitch(SKABaseDevice):
         self.register_command_object(
             "GetOutletPowerMode", self.GetOutletPowerModeCommand(*device_args)
         )
+
+    # ---------
+    # Callbacks
+    # ---------
+
+    def _communication_status_changed(
+        self: PowerSwitch,
+        communication_status: CommunicationStatus,
+    ) -> None:
+        """
+        Handle change in communications status between component manager and component.
+
+        This is a callback hook, called by the component manager when
+        the communications status changes. It is implemented here to
+        drive the op_state.
+
+        :param communication_status: the status of communications
+            between the component manager and its component.
+        """
+
+        self._communication_status = communication_status
+
+        if communication_status == CommunicationStatus.DISABLED:
+            self.op_state_model.perform_action("component_disconnected")
+        elif communication_status == CommunicationStatus.NOT_ESTABLISHED:
+            self.op_state_model.perform_action("component_unknown")
+        elif communication_status == CommunicationStatus.ESTABLISHED \
+            and self._component_power_mode is not None:
+            self._component_power_mode_changed(self._component_power_mode)
+        else:  # self._component_power_mode is None
+            pass  # wait for a power mode update
+    
+    def _component_power_mode_changed(
+        self: PowerSwitch,
+        power_mode: PowerMode,
+    ) -> None:
+        """
+        Handle change in the power mode of the component.
+
+        This is a callback hook, called by the component manager when
+        the power mode of the component changes. It is implemented here
+        to drive the op_state.
+
+        :param power_mode: the power mode of the component.
+        """
+        self._component_power_mode = power_mode
+
+        if self._communication_status == CommunicationStatus.ESTABLISHED:
+            action_map = {
+                PowerMode.OFF: "component_off",
+                PowerMode.STANDBY: "component_standby",
+                PowerMode.ON: "component_on",
+                PowerMode.UNKNOWN: "component_unknown",
+            }
+
+            self.op_state_model.perform_action(action_map[power_mode])
+    
+    def _component_fault(self: PowerSwitch, faulty: bool) -> None:
+        """
+        Handle component fault
+        """
+        if faulty:
+            self.op_state_model.perform_action("component_fault")
+            self.set_status("The device is in FAULT state.")
 
     # ------------------
     # Attributes methods
@@ -167,7 +236,7 @@ class PowerSwitch(SKABaseDevice):
         """
         A class for the PowerSwitch's init_device() "command".
         """
-        def do(self: PowerSwitch.InitCommand) -> tuple[ResultCode, str]:
+        def do(self: PowerSwitch.InitCommand) -> Tuple[ResultCode, str]:
             """
             Stateless hook for device initialisation.
 
@@ -175,17 +244,7 @@ class PowerSwitch(SKABaseDevice):
                 message indicating status. The message is for
                 information purpose only.
             """
-            super().do()
-
-            device = self.target
-
-            # Set simulation mode to be default true (using the simulator)
-            device._simulation_mode = SimulationMode.TRUE
-
-            # TODO: remove once updating to new base class version
-            device.component_manager = device.create_component_manager()
-
-            return (ResultCode.OK, "PowerSwitch initialization OK")
+            return super().do()
 
     class TurnOnOutletCommand(ResponseCommand):
         """
@@ -198,7 +257,7 @@ class PowerSwitch(SKABaseDevice):
         def do(
             self: PowerSwitch.TurnOnOutletCommand,
             argin: int
-        ) -> tuple[ResultCode, str]:
+        ) -> Tuple[ResultCode, str]:
             """
             Implement TurnOnOutlet command functionality.
 
@@ -250,7 +309,7 @@ class PowerSwitch(SKABaseDevice):
         def do(
             self: PowerSwitch.TurnOffOutletCommand,
             argin: int
-        ) -> tuple[ResultCode, str]:
+        ) -> Tuple[ResultCode, str]:
             """
             Implement TurnOffOutlet command functionality.
 
