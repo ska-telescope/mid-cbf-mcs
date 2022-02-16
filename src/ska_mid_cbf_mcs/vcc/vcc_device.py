@@ -466,12 +466,7 @@ class Vcc(CspSubElementObsDevice):
         """
         Read the frequencyBand attribute.
 
-        :return: the frequency band (being 
-            :return: the frequency band (being 
-        :return: the frequency band (being 
-            observed by the current scan, one of 
-                observed by the current scan, one of 
-            observed by the current scan, one of 
+        :return: the frequency band (being observed by the current scan, one of 
             ["1", "2", "3", "4", "5a", "5b"]).
         :rtype: tango.DevEnum
         """
