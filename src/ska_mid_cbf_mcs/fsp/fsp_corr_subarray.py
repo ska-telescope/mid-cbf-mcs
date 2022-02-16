@@ -981,9 +981,6 @@ class FspCorrSubarray(CspSubElementObsDevice):
         if configured:
             if self._configuring_from_idle:
                 self.obs_state_model.perform_action("component_configured")
-            else:
-                self.logger.error("Action 'component_configured' only allowed from \
-                    'CONFIGURING_IDLE' state")
         else:
             self.obs_state_model.perform_action("component_unconfigured")
     
