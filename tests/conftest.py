@@ -440,6 +440,17 @@ def init_proxies_fixture():
                     ))
                 self.vccSw.append(sw)
 
+            # Talon LRU
+            self.talon_lru = CbfDeviceProxy(
+                fqdn="mid_csp_cbf/talon_lru/001",
+                logger=logging.getLogger()
+            )
+
+            # Power switch
+            self.power_switch = CbfDeviceProxy(
+                fqdn="mid_csp_cbf/power_switch/001",
+                logger=logging.getLogger()
+            )
 
         def wait_timeout_dev(
             self: TestProxies,

@@ -1661,6 +1661,9 @@
                             }
                         },
                         "properties": {
+                            "TalonLRUAddress": [
+                                "mid_csp_cbf/talon_lru/001"
+                            ],
                             "VccControllerAddress": [
                                 "talondx-002/vcc-app/vcc-controller"
                             ],
@@ -1725,6 +1728,9 @@
                             }
                         },
                         "properties": {
+                            "TalonLRUAddress": [
+                                "mid_csp_cbf/talon_lru/001"
+                            ],
                             "VccControllerAddress": [
                                 "talondx-003/vcc-app/vcc-controller"
                             ],
@@ -1789,6 +1795,9 @@
                             }
                         },
                         "properties": {
+                            "TalonLRUAddress": [
+                                "mid_csp_cbf/talon_lru/001"
+                            ],
                             "VccControllerAddress": [
                                 "talondx-004/vcc-app/vcc-controller"
                             ],
