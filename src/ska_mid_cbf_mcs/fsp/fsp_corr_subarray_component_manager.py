@@ -143,7 +143,7 @@ class FspCorrSubarrayComponentManager(CbfComponentManager, CspObsComponentManage
         return self._frequency_band_offset_stream_2
     
     @property
-    def frequency_slice_ID(self: FspCorrSubarrayComponentManager) -> int:
+    def frequency_slice_id(self: FspCorrSubarrayComponentManager) -> int:
         """
         Frequency Slice ID
 
@@ -375,22 +375,6 @@ class FspCorrSubarrayComponentManager(CbfComponentManager, CspObsComponentManage
         """Remove all Receptors of this subarray"""
         self._remove_receptors(self._receptors[:])
     
-    def validate_input(
-            self: FspCorrSubarrayComponentManager.ConfigureScanCommand, 
-            configuration: str
-            ) -> None:
-            """
-                Validate the configuration parameters against allowed values, as needed.
-
-                :param configuration: The JSON formatted string with configuration for the device.
-                :return: A tuple containing a return code and a string message.
-                :rtype: (ResultCode, str)
-            """
-            device = self.target
-
-            # TODO -add the actual validation
-            return (ResultCode.OK, "ConfigureScan arguments validation successfull")
-    
     def configure_scan(
         self: FspCorrSubarrayComponentManager,
         configuration: str
@@ -406,8 +390,6 @@ class FspCorrSubarrayComponentManager(CbfComponentManager, CspObsComponentManage
         """
 
         self._deconfigure()
-        
-        #TODO: call validate input with self.validate_input
         
         configuration = json.loads(configuration)
 

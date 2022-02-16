@@ -730,6 +730,29 @@ class FspCorrSubarray(CspSubElementObsDevice):
                 device._component_configured(True)
             
             return(result_code, message)
+        
+        def validate_input(
+            self: FspCorrSubarray.ConfigureScanCommand, 
+            argin: str
+            ) -> Tuple[bool, str]:
+            """
+                Validate the configuration parameters against allowed values, as needed.
+
+                :param argin: The JSON formatted string with configuration for the device.
+                    :type argin: 'DevString'
+                :return: A tuple containing a boolean and a string message.
+                :rtype: (bool, str)
+            """
+            try:
+                configuration = json.loads(argin)
+            except json.JSONDecodeError:
+                msg = "Scan configuration object is not a valid JSON object." \
+                " Aborting configuration."
+                return (False, msg)
+            
+            # TODO validate the fields
+
+            return (True, "Configuration validated OK")
 
     @command(
         dtype_in='DevString',
@@ -755,6 +778,12 @@ class FspCorrSubarray(CspSubElementObsDevice):
         :rtype: (ResultCode, str)
         """
         command = self.get_command_object("ConfigureScan")
+        (valid, message) = command.validate_input(argin)
+        if not valid:
+            self.logger.error(message)
+            tango.Except.throw_exception("Command failed", message, "ConfigureScan" + " execution",
+                                    tango.ErrSeverity.ERR)
+
         (return_code, message) = command(argin)
         return [[return_code], [message]]
     
