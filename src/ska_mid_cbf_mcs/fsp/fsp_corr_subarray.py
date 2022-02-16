@@ -290,6 +290,7 @@ class FspCorrSubarray(CspSubElementObsDevice):
             self.push_change_event,
             self._communication_status_changed,
             self._component_power_mode_changed,
+            self._component_fault,
         )
 
     def delete_device(self: FspCorrSubarray) -> None:
@@ -964,6 +965,15 @@ class FspCorrSubarray(CspSubElementObsDevice):
             self.obs_state_model.perform_action("component_scanning")
         else:
             self.obs_state_model.perform_action("component_not_scanning")
+    
+    def _component_fault(self: FspCorrSubarray, faulty: bool) -> None:
+        """
+        Handle component fault
+        """
+        if faulty:
+            self.op_state_model.perform_action("component_fault")
+            self.set_status("The device is in FAULT state - one or both PDU outlets have incorrect power state.")
+
     
     def _component_obsfault(self: FspCorrSubarray) -> None:
         """

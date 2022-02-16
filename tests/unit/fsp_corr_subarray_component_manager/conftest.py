@@ -48,6 +48,7 @@ def fsp_corr_subarray_component_manager(
     push_change_event_callback: MockChangeEventCallback,
     communication_status_changed_callback: MockCallable,
     component_power_mode_changed_callback: MockCallable,
+    component_fault_callback: MockCallable,
 ) -> FspCorrSubarrayComponentManager:
     """
     Return a FspCorrSubarray component manager.
@@ -74,6 +75,7 @@ def fsp_corr_subarray_component_manager(
             push_change_event_callback,
             communication_status_changed_callback,
             component_power_mode_changed_callback,
+            component_fault_callback=component_fault_callback,
         )
 
 @pytest.fixture()
@@ -106,6 +108,22 @@ def component_power_mode_changed_callback(
 
     :return: a mock callback to be called when the component manager
         detects that the power mode of its component has changed.
+    """
+    return mock_callback_factory()
+
+@pytest.fixture()
+def component_fault_callback(
+    mock_callback_factory: Callable[[], unittest.mock.Mock],
+) -> unittest.mock.Mock:
+    """
+    Return a mock callback for component manager fault.
+
+    :param mock_callback_factory: fixture that provides a mock callback
+        factory (i.e. an object that returns mock callbacks when
+        called).
+
+    :return: a mock callback to be called when the communication status
+        of a component manager changed.
     """
     return mock_callback_factory()
 

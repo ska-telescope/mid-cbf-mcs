@@ -38,6 +38,7 @@ class FspCorrSubarrayComponentManager(CbfComponentManager, CspObsComponentManage
         push_change_event_callback: Optional[Callable],
         communication_status_changed_callback: Callable[[CommunicationStatus], None],
         component_power_mode_changed_callback: Callable[[PowerMode], None],
+        component_fault_callback: Callable[[bool], None],
     ) -> None:
         """
         Initialise a new instance.
@@ -54,6 +55,8 @@ class FspCorrSubarrayComponentManager(CbfComponentManager, CspObsComponentManage
             the component manager and its component changes
         :param component_power_mode_changed_callback: callback to be
             called when the component power mode changes
+        :param component_fault_callback: callback to be called in event of 
+            component fault
         """
         self._logger = logger
         
@@ -93,7 +96,7 @@ class FspCorrSubarrayComponentManager(CbfComponentManager, CspObsComponentManage
             push_change_event_callback=push_change_event_callback,
             communication_status_changed_callback=communication_status_changed_callback,
             component_power_mode_changed_callback=component_power_mode_changed_callback,
-            component_fault_callback=None,
+            component_fault_callback=component_fault_callback,
             obs_state_model=None
         )
     
@@ -263,10 +266,8 @@ class FspCorrSubarrayComponentManager(CbfComponentManager, CspObsComponentManage
 
         super().start_communicating()
 
-        self._proxy_cbf_controller = CbfDeviceProxy(
-            fqdn=self._cbf_controller_address,
-            logger=self._logger
-        )
+        self._proxy_cbf_controller = self.get_device_proxy(self._cbf_controller_address)
+        
         self._controller_max_capabilities = dict(
             pair.split(":") for pair in 
             self._proxy_cbf_controller.get_property("MaxCapabilities")["MaxCapabilities"]
@@ -275,10 +276,10 @@ class FspCorrSubarrayComponentManager(CbfComponentManager, CspObsComponentManage
         # Connect to all VCC devices turned on by FspCorrSubarray:
         self._count_vcc = int(self._controller_max_capabilities["VCC"])
         self._fqdn_vcc = list(self._vcc_fqdns_all)[:self._count_vcc]
+
         self._proxies_vcc = [
-            CbfDeviceProxy(
-                logger=self._logger, 
-                fqdn=address) for address in self._fqdn_vcc
+            self.get_device_proxy(fqdn=address) \
+                for address in self._fqdn_vcc
         ]
 
         self._connected = True
@@ -292,6 +293,28 @@ class FspCorrSubarrayComponentManager(CbfComponentManager, CspObsComponentManage
         super().stop_communicating()
         
         self._connected = False
+    
+    def get_device_proxy(
+        self: FspCorrSubarrayComponentManager,
+        fqdn: str
+    ) -> CbfDeviceProxy | None:
+        """
+        Attempt to get a device proxy of the specified device.
+
+        :param fqdn: FQDN of the device to connect to
+        :return: CbfDeviceProxy to the device or None if no connection was made
+        """
+        try:
+            self._logger.info(f"Attempting connection to {fqdn} device")
+            device_proxy = CbfDeviceProxy(fqdn=fqdn, logger=self._logger, connect=False)
+            device_proxy.connect(max_time=0) # Make one attempt at connecting
+            return device_proxy
+        except tango.DevFailed as df:
+            for item in df.args:
+                self._logger.error(f"Failed connection to {fqdn} device: {item.reason}")
+            self.update_component_fault(True)
+            return None
+
     
     def _add_receptors(
         self: FspCorrSubarrayComponentManager,
