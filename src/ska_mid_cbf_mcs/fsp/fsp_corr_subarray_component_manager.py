@@ -24,7 +24,6 @@ from ska_tango_base.control_model import PowerMode
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.csp.obs.component_manager import CspObsComponentManager
 from ska_mid_cbf_mcs.commons.global_enum import const, freq_band_dict
-from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 
 class FspCorrSubarrayComponentManager(CbfComponentManager, CspObsComponentManager):
     """A component manager for the FspCorrSubarray device."""
@@ -32,9 +31,6 @@ class FspCorrSubarrayComponentManager(CbfComponentManager, CspObsComponentManage
     def __init__(
         self: FspCorrSubarrayComponentManager,
         logger: logging.Logger,
-        cbf_controller_address: str,
-        vcc_fqdns_all: List[str],
-        subarray_id: int,
         push_change_event_callback: Optional[Callable],
         communication_status_changed_callback: Callable[[CommunicationStatus], None],
         component_power_mode_changed_callback: Callable[[PowerMode], None],
@@ -44,10 +40,6 @@ class FspCorrSubarrayComponentManager(CbfComponentManager, CspObsComponentManage
         Initialise a new instance.
 
         :param logger: a logger for this object to use
-        :param cbf_controller_address: address of the cbf controller device
-        :param vcc_fqdns_all: list of all vcc fqdns
-        :param subarray_id: the id indicating the subarray memmbership 
-            of the fsp corr subarray device
         :param push_change_event: method to call when the base classes
             want to send an event
         :param communication_status_changed_callback: callback to be
@@ -61,11 +53,6 @@ class FspCorrSubarrayComponentManager(CbfComponentManager, CspObsComponentManage
         self._logger = logger
         
         self._connected = False
-
-        self._subarray_id = subarray_id
-
-        self._cbf_controller_address = cbf_controller_address
-        self._vcc_fqdns_all = vcc_fqdns_all
 
         self._receptors = []
         self._freq_band_name = ""
@@ -86,8 +73,6 @@ class FspCorrSubarrayComponentManager(CbfComponentManager, CspObsComponentManage
         ]
         self._vis_destination_address = {"outputHost": [], "outputMac": [], "outputPort": []}
         self._fsp_channel_offset = 0
-        self._proxy_cbf_controller = None
-        self._proxies_vcc = None
 
         self._output_link_map = [[0,0] for i in range(40)]
 
@@ -266,22 +251,6 @@ class FspCorrSubarrayComponentManager(CbfComponentManager, CspObsComponentManage
 
         super().start_communicating()
 
-        self._proxy_cbf_controller = self.get_device_proxy(self._cbf_controller_address)
-        
-        self._controller_max_capabilities = dict(
-            pair.split(":") for pair in 
-            self._proxy_cbf_controller.get_property("MaxCapabilities")["MaxCapabilities"]
-        )
-
-        # Connect to all VCC devices turned on by FspCorrSubarray:
-        self._count_vcc = int(self._controller_max_capabilities["VCC"])
-        self._fqdn_vcc = list(self._vcc_fqdns_all)[:self._count_vcc]
-
-        self._proxies_vcc = [
-            self.get_device_proxy(fqdn=address) \
-                for address in self._fqdn_vcc
-        ]
-
         self._connected = True
         self.update_communication_status(CommunicationStatus.ESTABLISHED)
         self.update_component_fault(False)
@@ -293,29 +262,7 @@ class FspCorrSubarrayComponentManager(CbfComponentManager, CspObsComponentManage
         super().stop_communicating()
         
         self._connected = False
-    
-    def get_device_proxy(
-        self: FspCorrSubarrayComponentManager,
-        fqdn: str
-    ) -> CbfDeviceProxy | None:
-        """
-        Attempt to get a device proxy of the specified device.
 
-        :param fqdn: FQDN of the device to connect to
-        :return: CbfDeviceProxy to the device or None if no connection was made
-        """
-        try:
-            self._logger.info(f"Attempting connection to {fqdn} device")
-            device_proxy = CbfDeviceProxy(fqdn=fqdn, logger=self._logger, connect=False)
-            device_proxy.connect(max_time=0) # Make one attempt at connecting
-            return device_proxy
-        except tango.DevFailed as df:
-            for item in df.args:
-                self._logger.error(f"Failed connection to {fqdn} device: {item.reason}")
-            self.update_component_fault(True)
-            return None
-
-    
     def _add_receptors(
         self: FspCorrSubarrayComponentManager,
         argin: List[int]
@@ -326,24 +273,15 @@ class FspCorrSubarrayComponentManager(CbfComponentManager, CspObsComponentManage
         :param argin: ids of receptors to add. 
         """
         errs = []  # list of error messages
-        receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
-                               self._proxy_cbf_controller.receptorToVcc)
+
         for receptorID in argin:
             try:
-                vccID = receptor_to_vcc[receptorID]
-                subarrayID = self._proxies_vcc[vccID - 1].subarrayMembership
-
-                # only add receptor if it belongs to the CBF subarray
-                if subarrayID != self._subarray_id:
-                    errs.append("Receptor {} does not belong to subarray {} subarrayID={}.".format(
-                        str(receptorID), str(self._subarray_id), str(subarrayID)))
+                if receptorID not in self._receptors:
+                    self._receptors.append(receptorID)
                 else:
-                    if receptorID not in self._receptors:
-                        self._receptors.append(receptorID)
-                    else:
-                        log_msg = "Receptor {} already assigned to current FSP subarray.".format(
-                            str(receptorID))
-                        self._logger.warn(log_msg)
+                    log_msg = "Receptor {} already assigned to current FSP subarray.".format(
+                        str(receptorID))
+                    self._logger.warn(log_msg)
 
             except KeyError:  # invalid receptor ID
                 errs.append("Invalid receptor ID: {}".format(receptorID))

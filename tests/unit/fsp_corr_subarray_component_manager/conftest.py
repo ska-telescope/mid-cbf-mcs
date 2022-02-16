@@ -58,20 +58,8 @@ def fsp_corr_subarray_component_manager(
     :return: a FspCorrSubarray component manager.
     """
     
-    f = open(file_path + "/../../data/controller_component_manager.json")
-    json_string = f.read().replace("\n", "")
-    f.close()
-    configuration = json.loads(json_string)
-
-    vcc_fqdns_all = configuration["fqdn_vcc"]
-    cbf_controller_address = "mid_csp_cbf/sub_elt/controller"
-    subarray_id = 1
-
     return FspCorrSubarrayComponentManager( 
             logger,
-            cbf_controller_address,
-            vcc_fqdns_all,
-            subarray_id,
             push_change_event_callback,
             communication_status_changed_callback,
             component_power_mode_changed_callback,

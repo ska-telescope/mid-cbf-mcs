@@ -100,7 +100,7 @@ class TestFspCorrSubarrayComponentManager:
                     fsp_corr_subarray_component_manager.stream_tuning[1]] == [0, 0]
             assert fsp_corr_subarray_component_manager.frequency_band_offset_stream_1 == 0
             assert fsp_corr_subarray_component_manager.frequency_band_offset_stream_2 == 0
-            assert fsp_corr_subarray_component_manager.frequency_slice_ID == 0
+            assert fsp_corr_subarray_component_manager.frequency_slice_id == 0
             assert fsp_corr_subarray_component_manager.bandwidth == 0
             assert fsp_corr_subarray_component_manager.zoom_window_tuning == 0
             assert fsp_corr_subarray_component_manager.integration_time == 0
@@ -127,7 +127,7 @@ class TestFspCorrSubarrayComponentManager:
             for idx, receptorID in enumerate(fsp_corr_subarray_component_manager.receptors):
                 assert receptorID == configuration["receptor_ids"][idx]
             assert fsp_corr_subarray_component_manager.frequency_band == freq_band_dict()[configuration["frequency_band"]]
-            assert fsp_corr_subarray_component_manager.frequency_slice_ID == configuration["frequency_slice_id"]
+            assert fsp_corr_subarray_component_manager.frequency_slice_id == configuration["frequency_slice_id"]
             if "band_5_tuning" in configuration:
                 if fsp_corr_subarray_component_manager.frequency_band in [4, 5]:
                     band5Tuning_config = configuration["band_5_tuning"]

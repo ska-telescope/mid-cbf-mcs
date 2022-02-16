@@ -45,7 +45,6 @@ from ska_mid_cbf_mcs.commons.global_enum import const, freq_band_dict
 from ska_tango_base.control_model import HealthState, AdminMode, ObsState, PowerMode
 from ska_tango_base import CspSubElementObsDevice
 from ska_tango_base.commands import ResultCode
-from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_mid_cbf_mcs.fsp.fsp_corr_subarray_component_manager import FspCorrSubarrayComponentManager
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
 
@@ -284,9 +283,6 @@ class FspCorrSubarray(CspSubElementObsDevice):
 
         return FspCorrSubarrayComponentManager( 
             self.logger,
-            self.CbfControllerAddress,
-            self.VCC,
-            self.SubID,
             self.push_change_event,
             self._communication_status_changed,
             self._component_power_mode_changed,
