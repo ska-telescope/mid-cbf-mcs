@@ -181,7 +181,6 @@ class CbfDeviceInfo:
         for server in self._source_data["servers"]:
             if name in self._source_data["servers"][server]:
                 device_spec = self._source_data["servers"][server][name]
-
                 class_name = device_class
                 fqdn = next(iter(device_spec[class_name]))
                 properties = device_spec[class_name][fqdn]["properties"]
@@ -195,8 +194,6 @@ class CbfDeviceInfo:
                 }
 
                 if patch is None:
-                    raise ValueError(f"patch cannot be None.")
-                    # TODO: Fails is patch is None, need to implement working default
                     package = __import__(self._package, fromlist=[class_name])
                     klass = getattr(package, class_name)
                 else:
