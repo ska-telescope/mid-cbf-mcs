@@ -24,7 +24,6 @@ from ska_tango_base.control_model import PowerMode
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.csp.obs.component_manager import CspObsComponentManager
 from ska_mid_cbf_mcs.commons.global_enum import const, freq_band_dict
-from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 
 class FspPssSubarrayComponentManager(CbfComponentManager, CspObsComponentManager):
     """A component manager for the FspPssSubarray device."""
@@ -32,13 +31,11 @@ class FspPssSubarrayComponentManager(CbfComponentManager, CspObsComponentManager
     def __init__(
         self: FspPssSubarrayComponentManager,
         logger: logging.Logger,
-        cbf_controller_address: str,
-        vcc_fqdns_all: List[str],
-        subarray_id: int,
         fsp_id: int,
         push_change_event_callback: Optional[Callable],
         communication_status_changed_callback: Callable[[CommunicationStatus], None],
         component_power_mode_changed_callback: Callable[[PowerMode], None],
+        component_fault_callback: Callable[[bool], None],
     ) -> None:
         """
         Initialise a new instance.
@@ -56,6 +53,8 @@ class FspPssSubarrayComponentManager(CbfComponentManager, CspObsComponentManager
             the component manager and its component changes
         :param component_power_mode_changed_callback: callback to be
             called when the component power mode changes
+        :param component_fault_callback: callback to be called in event of 
+            component fault
         """
         self._logger = logger
         
@@ -65,22 +64,17 @@ class FspPssSubarrayComponentManager(CbfComponentManager, CspObsComponentManager
         self._search_window_id = 0
         self._config_id = ""
         self._fsp_id = fsp_id
-        self._subarray_id = subarray_id
         self._output_enable = 0
         self._search_beams = []
         self._receptors = []
         self._search_beam_id = []
-        self._cbf_controller_address = cbf_controller_address
-        self._vcc_fqdns_all = vcc_fqdns_all
-        self._proxy_cbf_controller = None
-        self._proxies_vcc = None
 
         super().__init__(
             logger=logger,
             push_change_event_callback=push_change_event_callback,
             communication_status_changed_callback=communication_status_changed_callback,
             component_power_mode_changed_callback=component_power_mode_changed_callback,
-            component_fault_callback=None,
+            component_fault_callback=component_fault_callback,
             obs_state_model=None
         )
     
@@ -174,23 +168,6 @@ class FspPssSubarrayComponentManager(CbfComponentManager, CspObsComponentManager
 
         super().start_communicating()
 
-        self._proxy_cbf_controller = CbfDeviceProxy(
-            fqdn=self._cbf_controller_address,
-            logger=self._logger
-        )
-        self._controller_max_capabilities = dict(
-            pair.split(":") for pair in 
-            self._proxy_cbf_controller.get_property("MaxCapabilities")["MaxCapabilities"]
-        )
-
-        self._count_vcc = int(self._controller_max_capabilities["VCC"])
-        self._fqdn_vcc = list(self._vcc_fqdns_all)[:self._count_vcc]
-        self._proxies_vcc = [
-            CbfDeviceProxy(
-                logger=self._logger, 
-                fqdn=address) for address in self._fqdn_vcc
-        ]
-
         self._connected = True
         self.update_communication_status(CommunicationStatus.ESTABLISHED)
         self.update_component_fault(False)
@@ -213,26 +190,17 @@ class FspPssSubarrayComponentManager(CbfComponentManager, CspObsComponentManager
         :param argin: ids of receptors to add. 
         """
         errs = []  # list of error messages
-        receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
-                               self._proxy_cbf_controller.receptorToVcc)
+
         for receptorID in argin:
             try:
-                vccID = receptor_to_vcc[receptorID]
-                subarrayID = self._proxies_vcc[vccID - 1].subarrayMembership
-
-                # only add receptor if it belongs to the CBF subarray
-                if subarrayID != self._subarray_id:
-                    errs.append("Receptor {} does not belong to subarray {}.".format(
-                        str(receptorID), str(self._subarray_id)))
+                if receptorID not in self._receptors:
+                    self._receptors.append(receptorID)
                 else:
-                    if receptorID not in self._receptors:
-                        self._receptors.append(receptorID)
-                    else:
-                        # TODO: this is not true if more receptors can be 
-                        #       specified for the same search beam
-                        log_msg = "Receptor {} already assigned to current FSP subarray.".format(
-                            str(receptorID))
-                        self._logger.warn(log_msg)
+                    # TODO: this is not true if more receptors can be 
+                    #       specified for the same search beam
+                    log_msg = "Receptor {} already assigned to current FSP subarray.".format(
+                        str(receptorID))
+                    self._logger.warn(log_msg)
 
             except KeyError:  # invalid receptor ID
                 errs.append("Invalid receptor ID: {}".format(receptorID))

@@ -178,6 +178,8 @@ class FspPssSubarray(CspSubElementObsDevice):
 
             self.logger.debug("Entering InitCommand()")
 
+            super().do()
+
             message = "FspPssSubarry Init command completed OK"
             self.logger.info(message)
             return (ResultCode.OK, message)
@@ -202,13 +204,11 @@ class FspPssSubarray(CspSubElementObsDevice):
 
         return FspPssSubarrayComponentManager( 
             self.logger,
-            self.CbfControllerAddress,
-            self.VCC,
-            self.SubID,
             self.FspID,
             self.push_change_event,
             self._communication_status_changed,
             self._component_power_mode_changed,
+            self._component_fault,
         )
 
     def delete_device(self: FspPssSubarray) -> None:
@@ -589,6 +589,14 @@ class FspPssSubarray(CspSubElementObsDevice):
             self.obs_state_model.perform_action("component_scanning")
         else:
             self.obs_state_model.perform_action("component_not_scanning")
+    
+    def _component_fault(self: FspPssSubarray, faulty: bool) -> None:
+        """
+        Handle component fault
+        """
+        if faulty:
+            self.op_state_model.perform_action("component_fault")
+            self.set_status("The device is in FAULT state")
     
     def _component_obsfault(self: FspPssSubarray) -> None:
         """
