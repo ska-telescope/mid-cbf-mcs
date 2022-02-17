@@ -13,22 +13,21 @@
 # Standard imports
 import pytest
 from typing import List
-from ska_tango_base.control_model import PowerMode
 
 # Local imports
+from ska_tango_base.control_model import PowerMode
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import SimulationMode
+from ska_tango_base.control_model import SimulationMode, AdminMode
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 
-@pytest.mark.skip(
-        reason="Not updated to version 0.11.3 of the base classes."
-)
+
 def test_TurnOnOutlet_TurnOffOutlet(
     device_under_test: CbfDeviceProxy
 ) -> None:
     """
     Tests that the outlets can be turned on and off individually.
     """
+    device_under_test.adminMode = AdminMode.ONLINE
     # Put the device in simulation mode
     device_under_test.simulationMode = SimulationMode.TRUE
 
@@ -58,9 +57,7 @@ def test_TurnOnOutlet_TurnOffOutlet(
         for j in range(0, num_outlets):
             assert device_under_test.GetOutletPowerMode(j) == outlets[j]
 
-@pytest.mark.skip(
-        reason="Not updated to version 0.11.3 of the base classes."
-)
+
 def test_connection_failure(
     device_under_test: CbfDeviceProxy
 ) -> None:
@@ -68,6 +65,7 @@ def test_connection_failure(
     Tests that the device can respond to requests even when the power
     switch is not communicating.
     """
+    device_under_test.adminMode = AdminMode.ONLINE
     # Take device out of simulation mode
     device_under_test.simulationMode = SimulationMode.FALSE
 
