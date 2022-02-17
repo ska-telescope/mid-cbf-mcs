@@ -43,6 +43,7 @@ class FspComponentManager(CbfComponentManager):
         push_change_event_callback: Optional[Callable],
         communication_status_changed_callback: Callable[[CommunicationStatus], None],
         component_power_mode_changed_callback: Callable[[PowerMode], None],
+        component_fault_callback: Callable[[bool], None],
     ) -> None:
         """
         Initialise a new instance.
@@ -66,6 +67,8 @@ class FspComponentManager(CbfComponentManager):
             the component manager and its component changes
         :param component_power_mode_changed_callback: callback to be
             called when the component power mode changes
+        :param component_fault_callback: callback to be called in event of 
+            component fault
         """
         self._logger = logger
         
@@ -99,11 +102,11 @@ class FspComponentManager(CbfComponentManager):
         self._timing_beam_weights = [[0.0] * 6 for _ in range(4)]
 
         super().__init__(
-            logger,
-            push_change_event_callback,
-            communication_status_changed_callback,
-            component_power_mode_changed_callback,
-            None,
+            logger=logger,
+            push_change_event_callback=push_change_event_callback,
+            communication_status_changed_callback=communication_status_changed_callback,
+            component_power_mode_changed_callback=component_power_mode_changed_callback,
+            component_fault_callback=component_fault_callback,
         )
     
     @property
@@ -166,8 +169,8 @@ class FspComponentManager(CbfComponentManager):
 
         super().start_communicating()
 
-        self.__get_capability_proxies()
-        self.__get_group_proxies()
+        self._get_capability_proxies()
+        self._get_group_proxies()
 
         self._connected = True
         self.update_communication_status(CommunicationStatus.ESTABLISHED)
@@ -181,72 +184,106 @@ class FspComponentManager(CbfComponentManager):
         
         self._connected = False
     
-    def __get_capability_proxies(
+    def _get_device_proxy(
+        self: FspComponentManager,
+        fqdn_or_name: str,
+        is_group: bool
+    ) -> CbfDeviceProxy | CbfGroupProxy | None:
+        """
+        Attempt to get a device proxy of the specified device.
+
+        :param fqdn_or_name: FQDN of the device to connect to 
+            or the name of the group proxy to connect to
+        :param is_group: True if the proxy to connect to is a group proxy
+        :return: CbfDeviceProxy or CbfGroupProxy or None if no connection was made
+        """
+        try:
+            self._logger.info(f"Attempting connection to {fqdn_or_name} ")
+            if is_group:
+                device_proxy = CbfGroupProxy(name=fqdn_or_name, logger=self._logger)
+            else:
+                device_proxy = CbfDeviceProxy(fqdn=fqdn_or_name, logger=self._logger, connect=False)
+                device_proxy.connect(max_time=0) # Make one attempt at connecting
+            return device_proxy
+        except tango.DevFailed as df:
+            for item in df.args:
+                self._logger.error(f"Failed connection to {fqdn_or_name} : {item.reason}")
+            self.update_component_fault(True)
+            return None
+    
+    
+    
+    def _get_capability_proxies(
             self: FspComponentManager, 
     ) -> None:
         """Establish connections with the capability proxies"""
         # for now, assume that given addresses are valid
 
+   
         if self._proxy_correlation is None:
             if self._fsp_corr_subarray_address:
-                self._proxy_correlation = CbfDeviceProxy(
-                    fqdn=self._fsp_corr_subarray_address,
-                    logger=self._logger
-                )
-            
-        if self._proxy_pss is None:
-            if self._fsp_pss_subarray_address:
-                self._proxy_pss = CbfDeviceProxy(
-                    fqdn=self._fsp_pss_subarray_address,
-                    logger=self._logger
-                )
-            
-        if self._proxy_pst is None:
-            if self._fsp_pst_subarray_address:
-                self._proxy_pst = CbfDeviceProxy(
-                    fqdn=self._fsp_pst_subarray_address,
-                    logger=self._logger
-                )
-            
-        if self._proxy_vlbi is None:
-            if self._vlbi_address:
-                self._proxy_vlbi = CbfDeviceProxy(
-                    fqdn=self._vlbi_address,
-                    logger=self._logger
-                )
+                self._proxy_correlation = \
+                    self._get_device_proxy(
+                        self._fsp_corr_subarray_address, 
+                        is_group=False)
+                
+            if self._proxy_pss is None:
+                if self._fsp_pss_subarray_address:
+                    self._proxy_pss = \
+                        self._get_device_proxy(
+                            self._fsp_pss_subarray_address, 
+                            is_group=False)
+                
+            if self._proxy_pst is None:
+                if self._fsp_pst_subarray_address:
+                    self._proxy_pst = \
+                        self._get_device_proxy(
+                            self._fsp_pst_subarray_address, 
+                            is_group=False)
+                
+            if self._proxy_vlbi is None:
+                if self._vlbi_address:
+                    self._proxy_vlbi = \
+                        self._get_device_proxy(
+                            self._vlbi_address, 
+                            is_group=False)
 
-        if self._proxy_fsp_corr_subarray is None:
-            if self._fsp_corr_subarray_fqdns_all:
-                self._proxy_fsp_corr_subarray = \
-                    [CbfDeviceProxy(fqdn=fqdn, logger=self._logger) \
-                    for fqdn in self._fsp_corr_subarray_fqdns_all]
+            if self._proxy_fsp_corr_subarray is None:
+                if self._fsp_corr_subarray_fqdns_all:
+                    self._proxy_fsp_corr_subarray = \
+                        [self._get_device_proxy(fqdn, is_group=False) \
+                        for fqdn in self._fsp_corr_subarray_fqdns_all]
 
-        if self._proxy_fsp_pss_subarray is None:
-            if self._fsp_pss_subarray_fqdns_all:
-                self._proxy_fsp_pss_subarray = \
-                    [CbfDeviceProxy(fqdn=fqdn, logger=self._logger) \
-                    for fqdn in self._fsp_pss_subarray_fqdns_all]
+            if self._proxy_fsp_pss_subarray is None:
+                if self._fsp_pss_subarray_fqdns_all:
+                    self._proxy_fsp_pss_subarray = \
+                        [self._get_device_proxy(fqdn, is_group=False) \
+                        for fqdn in self._fsp_pss_subarray_fqdns_all]
 
-        if self._proxy_fsp_pst_subarray is None:
-            if self._fsp_pst_subarray_fqdns_all:
-                self._proxy_fsp_pst_subarray = \
-                    [CbfDeviceProxy(fqdn=fqdn, logger=self._logger) \
-                    for fqdn in self._fsp_pst_subarray_fqdns_all]
-    
-    def __get_group_proxies(
+            if self._proxy_fsp_pst_subarray is None:
+                if self._fsp_pst_subarray_fqdns_all:
+                    self._proxy_fsp_pst_subarray = \
+                        [self._get_device_proxy(fqdn, is_group=False) \
+                        for fqdn in self._fsp_pst_subarray_fqdns_all]
+        
+       
+    def _get_group_proxies(
         self: FspComponentManager, 
     ) -> None:
         """Establish connections with the group proxies"""
         if self._group_fsp_corr_subarray is None:
-            self._group_fsp_corr_subarray = CbfGroupProxy("FSP Subarray Corr", logger=self._logger)
+            self._group_fsp_corr_subarray = \
+                self._get_device_proxy("FSP Subarray Corr", is_group=True)
             for fqdn in list(self._fsp_corr_subarray_fqdns_all):
                 self._group_fsp_corr_subarray.add(fqdn)
         if self._group_fsp_pss_subarray is None:
-            self._group_fsp_pss_subarray = CbfGroupProxy("FSP Subarray Pss", logger=self._logger)
+            self._group_fsp_pss_subarray = \
+                self._get_device_proxy("FSP Subarray Pss", is_group=True)
             for fqdn in list(self._fsp_pss_subarray_fqdns_all):
                 self._group_fsp_pss_subarray.add(fqdn)
         if self._group_fsp_pst_subarray is None:
-            self._group_fsp_pst_subarray = CbfGroupProxy("FSP Subarray Pst", logger=self._logger)
+            self._group_fsp_pst_subarray = \
+                self._get_device_proxy("FSP Subarray Pst", is_group=True)
             for fqdn in list(self._fsp_pst_subarray_fqdns_all):
                 self._group_fsp_pst_subarray.add(fqdn)
     

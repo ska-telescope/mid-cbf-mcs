@@ -224,6 +224,7 @@ class Fsp(SKACapability):
             self.push_change_event,
             self._communication_status_changed,
             self._component_power_mode_changed,
+            self._component_fault,
         )
 
     def delete_device(self: Fsp) -> None:
@@ -785,6 +786,15 @@ class Fsp(SKACapability):
             }
 
             self.op_state_model.perform_action(action_map[power_mode])
+    
+    def _component_fault(self: Fsp, faulty: bool) -> None:
+        """
+        Handle component fault
+        """
+        if faulty:
+            self.op_state_model.perform_action("component_fault")
+            self.set_status("The device is in FAULT state")
+
 
 # ----------
 # Run server
