@@ -49,9 +49,10 @@ class TestVcc:
         """
         Test a minimal successful scan configuration.
         """
-        # Start monitoring the TalonLRU and power switch
+        # Start monitoring the TalonLRUs and power switch devices
         test_proxies.power_switch.adminMode = AdminMode.ONLINE
-        test_proxies.talon_lru.adminMode = AdminMode.ONLINE
+        for proxy in test_proxies.talon_lru:
+            proxy.adminMode = AdminMode.ONLINE
 
         # The VCC and bands should be in the OFF state after being initialised
         test_proxies.vcc[vcc_id].loggingLevel = LoggingLevel.DEBUG
@@ -60,10 +61,9 @@ class TestVcc:
         test_proxies.wait_timeout_dev([test_proxies.vcc[vcc_id]], DevState.OFF, 3, 1)
         assert test_proxies.vcc[vcc_id].State() == DevState.OFF
         
-        # Turn on the LRU and then the VCC devices
-        # TODO: eventually we need to turn on multiple LRU devices, however there
-        # is currently only one instance of it to match the hardware configuration
-        test_proxies.talon_lru.On()
+        # Turn on the LRUs and then the VCC devices
+        for proxy in test_proxies.talon_lru:
+            proxy.On()
         test_proxies.vcc[vcc_id].On()
         test_proxies.wait_timeout_dev([test_proxies.vcc[vcc_id]], DevState.ON, 3, 1)
         assert test_proxies.vcc[vcc_id].State() == DevState.ON
@@ -114,7 +114,8 @@ class TestVcc:
         test_proxies.vcc[vcc_id].GoToIdle()
         time.sleep(2)
 
-        test_proxies.talon_lru.Off()
+        for proxy in test_proxies.talon_lru:
+            proxy.Off()
         (result_code, msg) = test_proxies.vcc[vcc_id].Off()
         test_proxies.wait_timeout_dev([test_proxies.vcc[vcc_id]], DevState.OFF, 3, 1)
         assert test_proxies.vcc[vcc_id].State() == DevState.OFF
