@@ -1007,7 +1007,7 @@ class FspCorrSubarray(CspSubElementObsDevice):
         """
         if faulty:
             self.op_state_model.perform_action("component_fault")
-            self.set_status("The device is in FAULT state - one or both PDU outlets have incorrect power state.")
+            self.set_status("The device is in FAULT state")
 
     
     def _component_obsfault(self: FspCorrSubarray) -> None:
