@@ -32,7 +32,7 @@ import os
 file_path = os.path.dirname(os.path.abspath(__file__))
 
 from ska_tango_base import SKACapability, SKABaseDevice
-from ska_tango_base.commands import ResultCode, BaseCommand
+from ska_tango_base.commands import ResultCode, ResponseCommand
 from ska_tango_base.control_model import PowerMode
 from ska_mid_cbf_mcs.fsp.fsp_component_manager import FspComponentManager
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
@@ -425,7 +425,7 @@ class Fsp(SKACapability):
 
             return (result_code, message)
     
-    class SetFunctionModeCommand(BaseCommand):
+    class SetFunctionModeCommand(ResponseCommand):
         """
         A class for the Fsp's SetFunctionMode() command.
         """
@@ -476,7 +476,7 @@ class Fsp(SKACapability):
             return True
         return False
     
-    class AddSubarrayMembershipCommand(BaseCommand):
+    class AddSubarrayMembershipCommand(ResponseCommand):
         """
         A class for the Fsp's AddSubarrayMembership() command.
         """
@@ -523,7 +523,7 @@ class Fsp(SKACapability):
             return True
         return False
     
-    class RemoveSubarrayMembershipCommand(BaseCommand):
+    class RemoveSubarrayMembershipCommand(ResponseCommand):
         """
         A class for the Fsp's RemoveSubarrayMembership() command.
         """
@@ -587,7 +587,7 @@ class Fsp(SKACapability):
         return self.component_manager.get_fsp_corr_config_id()
         # PROTECTED REGION END #    //  Fsp.getConfigID
     
-    class UpdateJonesMatrixCommand(BaseCommand):
+    class UpdateJonesMatrixCommand(ResponseCommand):
         """
         A class for the Fsp's UpdateJonesMatrix() command.
         """
@@ -636,7 +636,7 @@ class Fsp(SKACapability):
             return True
         return False
     
-    class UpdateDelayModelCommand(BaseCommand):
+    class UpdateDelayModelCommand(ResponseCommand):
         """
         A class for the Fsp's UpdateDelayModel() command.
         """
@@ -685,7 +685,7 @@ class Fsp(SKACapability):
             return True
         return False
     
-    class UpdateTimingBeamWeightsCommand(BaseCommand):
+    class UpdateTimingBeamWeightsCommand(ResponseCommand):
         """
         A class for the Fsp's UpdateTimingBeamWeights() command.
         """
