@@ -441,8 +441,7 @@ def init_proxies_fixture():
                     )
                 self.vccBand.append(bands)
 
-            # TODO: why is search window named vccTdc?
-            self.vccTdc = [None]
+            self.vccSw = [None]
             for i in range(1, self.num_vcc + 1):
                 sw = [None]
                 for j in range(1, 3): # 2 search windows
@@ -450,7 +449,7 @@ def init_proxies_fixture():
                         fqdn=f"mid_csp_cbf/vcc_sw{j}/{i:03}",
                         logger=logging.getLogger()
                     ))
-                self.vccTdc.append(sw)
+                self.vccSw.append(sw)
 
 
         def wait_timeout_dev(

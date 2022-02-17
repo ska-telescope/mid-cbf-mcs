@@ -18,7 +18,7 @@ from typing import List
 from jsonschema import validate
 from jsonschema.exceptions import ValidationError
 
-from ska_mid_cbf_mcs.commons.global_enum import PowerMode
+from ska_tango_base.control_model import PowerMode
 from ska_tango_base.commands import ResultCode
 
 __all__ = [
