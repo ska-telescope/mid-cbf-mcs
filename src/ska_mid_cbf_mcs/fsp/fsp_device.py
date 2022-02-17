@@ -572,6 +572,8 @@ class Fsp(SKACapability):
             return True
         return False
 
+    # TODO: is this command needed? 
+    # If not also remove the get_fsp_corr_config_id method
     @command(
         dtype_out='DevString',
         doc_out="returns configID for all the fspCorrSubarray",
@@ -758,11 +760,6 @@ class Fsp(SKACapability):
             self.op_state_model.perform_action("component_disconnected")
         elif communication_status == CommunicationStatus.NOT_ESTABLISHED:
             self.op_state_model.perform_action("component_unknown")
-        elif communication_status == CommunicationStatus.ESTABLISHED \
-            and self._component_power_mode is not None:
-            self._component_power_mode_changed(self._component_power_mode)
-        else:  # self._component_power_mode is None
-            pass  # wait for a power mode update
     
     def _component_power_mode_changed(
         self: Fsp,

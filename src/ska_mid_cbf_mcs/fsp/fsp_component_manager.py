@@ -313,7 +313,7 @@ class FspComponentManager(CbfComponentManager):
         """
 
         if self._connected:
-
+            #TODO: VLBI device needs a component manager and power commands
             self._proxy_correlation.SetState(tango.DevState.DISABLE)
             self._proxy_pss.SetState(tango.DevState.DISABLE)
             self._proxy_pst.SetState(tango.DevState.DISABLE)
