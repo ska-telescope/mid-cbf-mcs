@@ -26,6 +26,8 @@ from ska_tango_base.csp.obs.component_manager import CspObsComponentManager
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_mid_cbf_mcs.group_proxy import CbfGroupProxy
 
+MAX_SUBARRAY_MEMBERSHIPS = 16
+
 class FspComponentManager(CbfComponentManager):
     """A component manager for the Fsp device."""
 
@@ -328,10 +330,17 @@ class FspComponentManager(CbfComponentManager):
         :rtype: (ResultCode, str)
         """
 
+        if len(self._subarray_membership) == MAX_SUBARRAY_MEMBERSHIPS:
+            log_msg = "Fsp already assigned to the \
+                maximum number subarrays ({})".format(MAX_SUBARRAY_MEMBERSHIPS)
+            self._logger.warn(log_msg)
+            message = "Fsp AddSubarrayMembership command completed OK"
+            return (ResultCode.OK, message)
+
         if argin not in self._subarray_membership:
             self._subarray_membership.append(argin)
         else:
-            log_msg = "FSP already belongs to subarray {}.".format(argin)
+            log_msg = "Fsp already belongs to subarray {}.".format(argin)
             self._logger.warn(log_msg)
         
         message = "Fsp AddSubarrayMembership command completed OK"
