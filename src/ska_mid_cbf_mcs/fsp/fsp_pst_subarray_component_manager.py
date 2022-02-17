@@ -207,21 +207,6 @@ class FspPstSubarrayComponentManager(CbfComponentManager, CspObsComponentManager
         """ Remove all receptors from the subarray."""
         self._remove_receptors(self._receptors[:])
     
-    def validate_input(
-        self: FspPstSubarrayComponentManager, 
-        configuration: str
-    ) -> Tuple[ResultCode, str]:
-            """
-            Validate the configuration parameters against allowed values, as needed.
-
-            :param configuration: The JSON formatted string with configuration for the device.
-            :type configuration: 'DevString'
-            :return: A tuple containing a return code and a string message.
-            :rtype: (ResultCode, str)
-            """
-            device = self.target
-            return (ResultCode.OK, "ConfigureScan arguments validation successfull") 
-    
     def configure_scan(
         self: FspPstSubarrayComponentManager,
         configuration: str
@@ -237,8 +222,6 @@ class FspPstSubarrayComponentManager(CbfComponentManager, CspObsComponentManager
         """
         
         configuration = json.loads(configuration)
-
-        #TODO: call validate input with self.validate_input 
 
         if self._fsp_id != configuration["fsp_id"]:
             self._logger.warning(

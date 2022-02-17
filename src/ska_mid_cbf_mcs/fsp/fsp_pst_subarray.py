@@ -163,6 +163,9 @@ class FspPstSubarray(CspSubElementObsDevice):
 
             super().do()
 
+            device = self.target
+            device._configuring_from_idle = False
+
             message = "FspPstSubarray Init command completed OK"
             self.logger.info(message)
             return (ResultCode.OK, message)
@@ -396,6 +399,30 @@ class FspPstSubarray(CspSubElementObsDevice):
                 device._component_configured(True)
             
             return(result_code, message)
+        
+        def validate_input(
+            self: FspPstSubarray.ConfigureScanCommand, 
+            argin: str
+            ) -> Tuple[bool, str]:
+            """
+                Validate the configuration parameters against allowed values, as needed.
+
+                :param argin: The JSON formatted string with configuration for the device.
+                    :type argin: 'DevString'
+                :return: A tuple containing a boolean and a string message.
+                :rtype: (bool, str)
+            """
+            try:
+                configuration = json.loads(argin)
+            except json.JSONDecodeError:
+                msg = "Scan configuration object is not a valid JSON object." \
+                " Aborting configuration."
+                return (False, msg)
+            
+            # TODO validate the fields
+
+            return (True, "Configuration validated OK")
+
     
     @command(
     dtype_in='DevString',
@@ -422,6 +449,17 @@ class FspPstSubarray(CspSubElementObsDevice):
         :rtype: (ResultCode, str)
         """
         command = self.get_command_object("ConfigureScan")
+        (valid, message) = command.validate_input(argin)
+        if not valid:
+            self.logger.error(message)
+            tango.Except.throw_exception("Command failed", message, "ConfigureScan" + " execution",
+                                    tango.ErrSeverity.ERR)
+        else:
+            if self._obs_state == ObsState.IDLE:
+                self._configuring_from_idle = True
+            else: 
+                self._configuring_from_idle = False
+
         (return_code, message) = command(argin)
         return [[return_code], [message]]
 
@@ -532,7 +570,8 @@ class FspPstSubarray(CspSubElementObsDevice):
         :type configured: bool
         """
         if configured:
-            self.obs_state_model.perform_action("component_configured")
+            if self._configuring_from_idle:
+                self.obs_state_model.perform_action("component_configured")
         else:
             self.obs_state_model.perform_action("component_unconfigured")
     
