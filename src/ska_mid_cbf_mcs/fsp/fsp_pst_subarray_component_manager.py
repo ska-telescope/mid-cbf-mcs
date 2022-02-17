@@ -272,6 +272,14 @@ class FspPstSubarrayComponentManager(CbfComponentManager, CspObsComponentManager
 
         return (ResultCode.OK, "FspPstSubarray EndScan command completed OK")
     
+    def _deconfigure( 
+        self: FspPstSubarrayComponentManager,
+    ) -> None:
+        self._timing_beams = []
+        self._timing_beam_id = []
+        self._output_enable = 0
+        self._remove_all_receptors()
+    
     def go_to_idle(
         self: FspPstSubarrayComponentManager,
     ) -> Tuple[ResultCode, str]:
@@ -284,10 +292,7 @@ class FspPstSubarrayComponentManager(CbfComponentManager, CspObsComponentManager
         :rtype: (ResultCode, str)
         """
 
-        self._timing_beams = []
-        self._timing_beam_id = []
-        self._output_enable = 0
-        self._remove_all_receptors()
+        self._deconfigure()
         
         return (ResultCode.OK, "FspPstSubarray GoToIdle command completed OK")
     
