@@ -231,21 +231,6 @@ class FspPssSubarrayComponentManager(CbfComponentManager, CspObsComponentManager
         """ Remove all receptors from the subarray."""
         self._remove_receptors(self._receptors[:])
     
-    def validate_input(
-        self: FspPssSubarrayComponentManager, 
-        configuration: str
-    ) -> Tuple[ResultCode, str]:
-            """
-            Validate the configuration parameters against allowed values, as needed.
-
-            :param configuration: The JSON formatted string with configuration for the device.
-            :type configuration: 'DevString'
-            :return: A tuple containing a return code and a string message.
-            :rtype: (ResultCode, str)
-            """
-            device = self.target
-            return (ResultCode.OK, "ConfigureScan arguments validation successfull") 
-    
     def configure_scan(
         self: FspPssSubarrayComponentManager,
         configuration: str
@@ -261,8 +246,6 @@ class FspPssSubarrayComponentManager(CbfComponentManager, CspObsComponentManager
         """
         
         configuration = json.loads(configuration)
-
-        #TODO: call validate input with self.validate_input 
 
         # TODO: Why are we overwriting the device property fsp ID
         #       with the argument in the ConfigureScan json file
@@ -319,6 +302,20 @@ class FspPssSubarrayComponentManager(CbfComponentManager, CspObsComponentManager
 
         return (ResultCode.OK, "FspPssSubarray EndScan command completed OK")
     
+    def _deconfigure( 
+        self: FspPssSubarrayComponentManager,
+    ) -> None:
+
+        self._search_beams = []
+        self._search_window_id = 0
+        self._search_beam_id = []
+        self._output_enable = 0
+        self._scan_id = 0
+        self._config_id = ""
+
+        self._remove_all_receptors()
+
+    
     def go_to_idle(
         self: FspPssSubarrayComponentManager,
     ) -> Tuple[ResultCode, str]:
@@ -331,13 +328,6 @@ class FspPssSubarrayComponentManager(CbfComponentManager, CspObsComponentManager
         :rtype: (ResultCode, str)
         """
 
-        self._search_beams = []
-        self._search_window_id = 0
-        self._search_beam_id = []
-        self._output_enable = 0
-        self._scan_id = 0
-        self._config_id = ""
-
-        self._remove_all_receptors()
+        self._deconfigure()
         
         return (ResultCode.OK, "FspPssSubarray GoToIdle command completed OK")
