@@ -18,7 +18,6 @@
 from __future__ import annotations  # allow forward references in type hints
 
 from typing import List, Tuple, Optional
-from xxlimited import Str
 
 # tango imports
 import tango
@@ -644,7 +643,7 @@ class Fsp(SKACapability):
 
         def do(
             self: Fsp.UpdateDelayModelCommand, 
-            argin: Str
+            argin: str
         ) -> Tuple[ResultCode, str]:  
             """
             Stateless hook for UpdateDelayModel() command functionality.
@@ -693,7 +692,7 @@ class Fsp(SKACapability):
 
         def do(
             self: Fsp.UpdateTimingBeamWeightsCommand, 
-            argin: Str
+            argin: str
         ) -> Tuple[ResultCode, str]:  
             """
             Stateless hook for UpdateTimingBeamWeights() command functionality.

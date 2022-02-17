@@ -22,7 +22,6 @@ from __future__ import annotations
 from collections import defaultdict
 import json
 import logging
-from re import S
 import socket
 from types import TracebackType
 from typing import Any, Callable, Dict, Iterable, List, Optional, Type, cast
