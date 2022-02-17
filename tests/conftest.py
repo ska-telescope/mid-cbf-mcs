@@ -441,10 +441,12 @@ def init_proxies_fixture():
                 self.vccSw.append(sw)
 
             # Talon LRU
-            self.talon_lru = CbfDeviceProxy(
-                fqdn="mid_csp_cbf/talon_lru/001",
-                logger=logging.getLogger()
-            )
+            self.talon_lru = []
+            for i in range(1, 3): # 2 Talon LRUs for now
+                self.talon_lru.append(CbfDeviceProxy(
+                    fqdn=f"mid_csp_cbf/talon_lru/{i:03}",
+                    logger=logging.getLogger()
+                ))
 
             # Power switch
             self.power_switch = CbfDeviceProxy(
