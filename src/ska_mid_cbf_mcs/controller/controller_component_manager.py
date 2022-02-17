@@ -585,11 +585,6 @@ class ControllerComponentManager(CbfComponentManager):
                             log_msg = f"Failure in connection to {fqdn}; {item.reason}"
                             self._logger.error(log_msg)
                             return (ResultCode.FAILED, log_msg)
-            
-            # Power On subordinate devices will not work until they are updated to v0.11.3
-            # TODO: remove the following lines when update to v0.11.3 complete
-            message = "CbfController On command completed OK"
-            return (ResultCode.OK, message)
 
             # Power on all the Talon boards
             # TODO: There are two VCCs per LRU. Need to check the number of 
@@ -601,12 +596,17 @@ class ControllerComponentManager(CbfComponentManager):
                 log_msg = "Failed to power on Talon boards"
                 self._logger.error(log_msg)
                 return (ResultCode.FAILED, log_msg)
-
+        
             # Configure all the Talon boards
             if self._talondx_component_manager.configure_talons() == ResultCode.FAILED:
                 log_msg = "Failed to configure Talon boards"
                 self._logger.error(log_msg)
                 return (ResultCode.FAILED, log_msg)
+            
+            # Power On subordinate devices will not work until they are updated to v0.11.3
+            # TODO: remove the following lines when update to v0.11.3 complete
+            message = "CbfController On command completed OK"
+            return (ResultCode.OK, message)
     
             try:
                 self._group_subarray.command_inout("On")
