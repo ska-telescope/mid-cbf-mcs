@@ -232,6 +232,16 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         return self._simulation_mode
 
 
+    @simulation_mode.setter
+    def simulation_mode(self: VccComponentManager, value: SimulationMode) -> None:
+        """
+        Set the simulation mode of the component manager.
+
+        :param value: value to set simulation mode to
+        """
+        self._simulation_mode = value
+
+
     def start_communicating(self: VccComponentManager) -> None:
         """Establish communication with the component, then start monitoring."""
         if self.connected:

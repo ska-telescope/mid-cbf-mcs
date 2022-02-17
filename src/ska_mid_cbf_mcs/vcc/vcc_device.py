@@ -196,6 +196,15 @@ class Vcc(CspSubElementObsDevice):
         doc="config ID",
     )
 
+    simulationMode = attribute(
+        dtype=SimulationMode,
+        access=AttrWriteType.READ_WRITE,
+        memorized=True,
+        doc="Reports the simulation mode of the device. \nSome devices may implement "
+            "both modes, while others will have simulators that set simulationMode "
+            "to True while the real devices always set simulationMode to False.",
+    )
+
     # ---------------
     # General methods
     # ---------------
@@ -285,7 +294,7 @@ class Vcc(CspSubElementObsDevice):
         self._communication_status: Optional[CommunicationStatus] = None
         self._component_power_mode: Optional[PowerMode] = None
 
-        self._simulation_mode = SimulationMode.FALSE
+        self._simulation_mode = SimulationMode.TRUE
 
         return VccComponentManager(
             talon_lru=self.TalonLRUAddress,
@@ -389,6 +398,15 @@ class Vcc(CspSubElementObsDevice):
     # ------------------
     # Attributes methods
     # ------------------
+
+    def write_simulationMode(self: Vcc, value: SimulationMode) -> None:
+        """
+        Set the simulation mode of the device.
+
+        :param value: SimulationMode
+        """
+        super().write_simulationMode(value)
+        self.component_manager.simulation_mode = value
 
     def read_receptorID(self: Vcc) -> int:
         # PROTECTED REGION ID(Vcc.receptorID_read) ENABLED START #
