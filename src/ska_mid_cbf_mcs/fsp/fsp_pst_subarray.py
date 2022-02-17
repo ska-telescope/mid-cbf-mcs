@@ -161,16 +161,7 @@ class FspPstSubarray(CspSubElementObsDevice):
 
             self.logger.debug("Entering InitCommand()")
 
-            device = self.target
-
-            # device proxy for easy reference to CBF Subarray
-            # TODO: Is device._proxy_cbf_subarray used anywhere?
-            # if it is used this should be created in the 
-            # component manager
-            device._proxy_cbf_subarray = CbfDeviceProxy(
-                fqdn=device.CbfSubarrayAddress,
-                logger=device.logger
-            )
+            super().do()
 
             message = "FspPstSubarray Init command completed OK"
             self.logger.info(message)
@@ -594,11 +585,6 @@ class FspPstSubarray(CspSubElementObsDevice):
             self.op_state_model.perform_action("component_disconnected")
         elif communication_status == CommunicationStatus.NOT_ESTABLISHED:
             self.op_state_model.perform_action("component_unknown")
-        elif communication_status == CommunicationStatus.ESTABLISHED \
-            and self._component_power_mode is not None:
-            self._component_power_mode_changed(self._component_power_mode)
-        else:  # self._component_power_mode is None
-            pass  # wait for a power mode update
     
     def _component_power_mode_changed(
         self: FspPstSubarray,
