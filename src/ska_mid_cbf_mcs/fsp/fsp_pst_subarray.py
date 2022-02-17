@@ -185,9 +185,6 @@ class FspPstSubarray(CspSubElementObsDevice):
 
         return FspPstSubarrayComponentManager( 
             self.logger,
-            self.CbfControllerAddress,
-            self.VCC,
-            self.SubID,
             self.FspID,
             self.push_change_event,
             self._communication_status_changed,
