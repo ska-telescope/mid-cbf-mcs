@@ -813,10 +813,100 @@ class CbfSubarray(CspSubElementSubarray):
                 return (False, msg)
 
             # Validate frequencyBandOffsetStream2.
+<<<<<<< HEAD
             if "frequency_band_offset_stream_2" not in configuration:
                 configuration["frequency_band_offset_stream_2"] = 0
             if abs(int(configuration["frequency_band_offset_stream_2"])) <= const.FREQUENCY_SLICE_BW * 10 ** 6 / 2:
                 pass
+=======
+            # If not given, use a default value.
+            # If malformed, use a default value, but append an error.
+            if "frequency_band_offset_stream_2" in configuration:
+                device._frequency_band_offset_stream_2 = int(configuration["frequency_band_offset_stream_2"])
+            else:
+                device._frequency_band_offset_stream_2 = 0
+                log_msg = "'frequencyBandOffsetStream2' not specified. Defaulting to 0."
+                self.logger.warn(log_msg)
+
+            config_dict = {
+                "config_id": device._config_ID,
+                "frequency_band": common_configuration["frequency_band"],
+                "band_5_tuning": device._stream_tuning,
+                "frequency_band_offset_stream_1": device._frequency_band_offset_stream_1,
+                "frequency_band_offset_stream_2": device._frequency_band_offset_stream_2,
+                "rfi_flagging_mask": configuration["rfi_flagging_mask"],
+            }
+            json_str = json.dumps(config_dict)
+            data = tango.DeviceData()
+            data.insert(tango.DevString, json_str)
+            device._group_vcc.command_inout("ConfigureScan", data)
+
+            # Configure dopplerPhaseCorrSubscriptionPoint.
+            if "doppler_phase_corr_subscription_point" in configuration:
+                attribute_proxy = CbfAttributeProxy(
+                    fqdn=configuration["doppler_phase_corr_subscription_point"],
+                    logger=device.logger
+                )
+                attribute_proxy.ping()
+                event_id = attribute_proxy.add_change_event_callback(
+                    device._doppler_phase_correction_event_callback
+                )
+                device._events_telstate[event_id] = attribute_proxy
+
+            # Configure delayModelSubscriptionPoint.
+            if "delay_model_subscription_point" in configuration:
+                device._last_received_delay_model = "{}"
+                attribute_proxy = CbfAttributeProxy(
+                    fqdn=configuration["delay_model_subscription_point"],
+                    logger=device.logger
+                )
+                attribute_proxy.ping() #To be sure the connection is good(don't know if the device is running)
+                event_id = attribute_proxy.add_change_event_callback(
+                    device._delay_model_event_callback
+                )
+                device._events_telstate[event_id] = attribute_proxy
+
+            # Configure jonesMatrixSubscriptionPoint
+            if "jones_matrix_subscription_point" in configuration:
+                device._last_received_jones_matrix = "{}"
+                attribute_proxy = CbfAttributeProxy(
+                    fqdn=configuration["jones_matrix_subscription_point"],
+                    logger=device.logger
+                )
+                attribute_proxy.ping()
+                event_id = attribute_proxy.add_change_event_callback(
+                    device._jones_matrix_event_callback
+                )
+                device._events_telstate[event_id] = attribute_proxy
+
+            # Configure beamWeightsSubscriptionPoint
+            if "timing_beam_weights_subscription_point" in configuration:
+                device._last_received_beam_weights= "{}"
+                attribute_proxy = CbfAttributeProxy(
+                    fqdn=configuration["timing_beam_weights_subscription_point"],
+                    logger=device.logger
+                )
+                attribute_proxy.ping()
+                event_id = attribute_proxy.add_change_event_callback(
+                    device._beam_weights_event_callback
+                )
+                device._events_telstate[event_id] = attribute_proxy
+
+            # Configure searchWindow.
+            if "search_window" in configuration:
+                for search_window in configuration["search_window"]:
+                    search_window["frequency_band"] = common_configuration["frequency_band"]
+                    search_window["frequency_band_offset_stream_1"] = \
+                        device._frequency_band_offset_stream_1
+                    search_window["frequency_band_offset_stream_2"] = \
+                        device._frequency_band_offset_stream_2
+                    if search_window["frequency_band"] in ["5a", "5b"]:
+                        search_window["band_5_tuning"] = common_configuration["band_5_tuning"]
+                    # pass on configuration to VCC
+                    data = tango.DeviceData()
+                    data.insert(tango.DevString, json.dumps(search_window))
+                    device._group_vcc.command_inout("ConfigureSearchWindow", data)
+>>>>>>> at5-782-vcc-component-manager
             else:
                 msg = "Absolute value of 'frequencyBandOffsetStream2' must be at most " \
                         "half of the frequency slice bandwidth. Aborting configuration."

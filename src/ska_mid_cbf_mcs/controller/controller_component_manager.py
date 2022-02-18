@@ -248,7 +248,7 @@ class ControllerComponentManager(CbfComponentManager):
                 except KeyError:  # not found in DB
                     self._count_subarray = CONST_DEFAULT_COUNT_SUBARRAY
         else:
-            self._logger.warn("MaxCapabilities device property not defined - \
+            self._logger.warning("MaxCapabilities device property not defined - \
                 using default value")
         
         self._fqdn_vcc = list(self._vcc_fqdns_all)[:self._count_vcc]

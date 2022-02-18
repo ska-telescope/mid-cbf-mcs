@@ -280,7 +280,7 @@ class CbfAttributeProxy:
                 f"attribute read. Event.err is {event.err}. Event.errors is\n"
                 f"{event.errors}."
             )
-            warnings.warning(UserWarning(warning_message))
+            warnings.warn(UserWarning(warning_message))
             self._logger.warning(warning_message)
             return self._read()
         else:
