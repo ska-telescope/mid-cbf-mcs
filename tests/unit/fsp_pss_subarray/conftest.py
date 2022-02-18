@@ -148,11 +148,11 @@ def patched_fsp_pss_subarray_device_class(
         manager.
     """
 
-    class PatchedFspCorrSubarray(FspPssSubarray):
+    class PatchedFspPssSubarray(FspPssSubarray):
         """A device patched with a mock component manager."""
 
         def create_component_manager(
-            self: PatchedFspCorrSubarray,
+            self: PatchedFspPssSubarray,
         ) -> unittest.mock.Mock:
             """
             Return a mock component manager instead of the usual one.
@@ -171,7 +171,7 @@ def patched_fsp_pss_subarray_device_class(
 
             return mock_component_manager
 
-    return PatchedFspCorrSubarray
+    return PatchedFspPssSubarray
 
 @pytest.fixture()
 def mock_cbf_controller() -> unittest.mock.Mock:
