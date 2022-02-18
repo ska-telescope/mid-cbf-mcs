@@ -161,16 +161,10 @@ class FspPstSubarray(CspSubElementObsDevice):
 
             self.logger.debug("Entering InitCommand()")
 
-            device = self.target
+            super().do()
 
-            # device proxy for easy reference to CBF Subarray
-            # TODO: Is device._proxy_cbf_subarray used anywhere?
-            # if it is used this should be created in the 
-            # component manager
-            device._proxy_cbf_subarray = CbfDeviceProxy(
-                fqdn=device.CbfSubarrayAddress,
-                logger=device.logger
-            )
+            device = self.target
+            device._configuring_from_idle = False
 
             message = "FspPstSubarray Init command completed OK"
             self.logger.info(message)
@@ -194,13 +188,11 @@ class FspPstSubarray(CspSubElementObsDevice):
 
         return FspPstSubarrayComponentManager( 
             self.logger,
-            self.CbfControllerAddress,
-            self.VCC,
-            self.SubID,
             self.FspID,
             self.push_change_event,
             self._communication_status_changed,
             self._component_power_mode_changed,
+            self._component_fault,
         )
 
     def delete_device(self: FspPstSubarray) -> None:
@@ -407,6 +399,30 @@ class FspPstSubarray(CspSubElementObsDevice):
                 device._component_configured(True)
             
             return(result_code, message)
+        
+        def validate_input(
+            self: FspPstSubarray.ConfigureScanCommand, 
+            argin: str
+            ) -> Tuple[bool, str]:
+            """
+                Validate the configuration parameters against allowed values, as needed.
+
+                :param argin: The JSON formatted string with configuration for the device.
+                    :type argin: 'DevString'
+                :return: A tuple containing a boolean and a string message.
+                :rtype: (bool, str)
+            """
+            try:
+                configuration = json.loads(argin)
+            except json.JSONDecodeError:
+                msg = "Scan configuration object is not a valid JSON object." \
+                " Aborting configuration."
+                return (False, msg)
+            
+            # TODO validate the fields
+
+            return (True, "Configuration validated OK")
+
     
     @command(
     dtype_in='DevString',
@@ -433,6 +449,17 @@ class FspPstSubarray(CspSubElementObsDevice):
         :rtype: (ResultCode, str)
         """
         command = self.get_command_object("ConfigureScan")
+        (valid, message) = command.validate_input(argin)
+        if not valid:
+            self.logger.error(message)
+            tango.Except.throw_exception("Command failed", message, "ConfigureScan" + " execution",
+                                    tango.ErrSeverity.ERR)
+        else:
+            if self._obs_state == ObsState.IDLE:
+                self._configuring_from_idle = True
+            else: 
+                self._configuring_from_idle = False
+
         (return_code, message) = command(argin)
         return [[return_code], [message]]
 
@@ -543,7 +570,8 @@ class FspPstSubarray(CspSubElementObsDevice):
         :type configured: bool
         """
         if configured:
-            self.obs_state_model.perform_action("component_configured")
+            if self._configuring_from_idle:
+                self.obs_state_model.perform_action("component_configured")
         else:
             self.obs_state_model.perform_action("component_unconfigured")
     
@@ -563,6 +591,14 @@ class FspPstSubarray(CspSubElementObsDevice):
             self.obs_state_model.perform_action("component_scanning")
         else:
             self.obs_state_model.perform_action("component_not_scanning")
+    
+    def _component_fault(self: FspPstSubarray, faulty: bool) -> None:
+        """
+        Handle component fault
+        """
+        if faulty:
+            self.op_state_model.perform_action("component_fault")
+            self.set_status("The device is in FAULT state")
     
     def _component_obsfault(self: FspPstSubarray) -> None:
         """
@@ -594,11 +630,6 @@ class FspPstSubarray(CspSubElementObsDevice):
             self.op_state_model.perform_action("component_disconnected")
         elif communication_status == CommunicationStatus.NOT_ESTABLISHED:
             self.op_state_model.perform_action("component_unknown")
-        elif communication_status == CommunicationStatus.ESTABLISHED \
-            and self._component_power_mode is not None:
-            self._component_power_mode_changed(self._component_power_mode)
-        else:  # self._component_power_mode is None
-            pass  # wait for a power mode update
     
     def _component_power_mode_changed(
         self: FspPstSubarray,

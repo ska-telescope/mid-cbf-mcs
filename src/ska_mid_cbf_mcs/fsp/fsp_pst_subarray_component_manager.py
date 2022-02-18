@@ -24,7 +24,6 @@ from ska_tango_base.control_model import PowerMode
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.csp.obs.component_manager import CspObsComponentManager
 from ska_mid_cbf_mcs.commons.global_enum import const, freq_band_dict
-from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 
 class FspPstSubarrayComponentManager(CbfComponentManager, CspObsComponentManager):
     """A component manager for the FspPstSubarray device."""
@@ -32,13 +31,11 @@ class FspPstSubarrayComponentManager(CbfComponentManager, CspObsComponentManager
     def __init__(
         self: FspPstSubarrayComponentManager,
         logger: logging.Logger,
-        cbf_controller_address: str,
-        vcc_fqdns_all: List[str],
-        subarray_id: int,
         fsp_id: int,
         push_change_event_callback: Optional[Callable],
         communication_status_changed_callback: Callable[[CommunicationStatus], None],
         component_power_mode_changed_callback: Callable[[PowerMode], None],
+        component_fault_callback: Callable[[bool], None],
     ) -> None:
         """
         Initialise a new instance.
@@ -56,22 +53,19 @@ class FspPstSubarrayComponentManager(CbfComponentManager, CspObsComponentManager
             the component manager and its component changes
         :param component_power_mode_changed_callback: callback to be
             called when the component power mode changes
+        :param component_fault_callback: callback to be called in event of 
+            component fault
         """
         self._logger = logger
         
         self._connected = False
 
         self._fsp_id = fsp_id
-        self._subarray_id = subarray_id
         self._receptors = []
-        self._cbf_controller_address = cbf_controller_address
-        self._vcc_fqdns_all = vcc_fqdns_all
         self._timing_beams = []
         self._timing_beam_id = []
         self._scan_id = 0
         self._output_enable = 0
-        self._proxy_cbf_controller = None
-        self._proxies_vcc = None
 
 
         super().__init__(
@@ -79,7 +73,7 @@ class FspPstSubarrayComponentManager(CbfComponentManager, CspObsComponentManager
             push_change_event_callback=push_change_event_callback,
             communication_status_changed_callback=communication_status_changed_callback,
             component_power_mode_changed_callback=component_power_mode_changed_callback,
-            component_fault_callback=None,
+            component_fault_callback=component_fault_callback,
             obs_state_model=None
         )
     
@@ -153,23 +147,6 @@ class FspPstSubarrayComponentManager(CbfComponentManager, CspObsComponentManager
 
         super().start_communicating()
 
-        self._proxy_cbf_controller = CbfDeviceProxy(
-            fqdn=self._cbf_controller_address,
-            logger=self._logger
-        )
-        self._controller_max_capabilities = dict(
-            pair.split(":") for pair in 
-            self._proxy_cbf_controller.get_property("MaxCapabilities")["MaxCapabilities"]
-        )
-
-        self._count_vcc = int(self._controller_max_capabilities["VCC"])
-        self._fqdn_vcc = list(self._vcc_fqdns_all)[:self._count_vcc]
-        self._proxies_vcc = [
-            CbfDeviceProxy(
-                logger=self._logger, 
-                fqdn=address) for address in self._fqdn_vcc
-        ]
-
         self._connected = True
         self.update_communication_status(CommunicationStatus.ESTABLISHED)
         self.update_component_fault(False)
@@ -192,24 +169,14 @@ class FspPstSubarrayComponentManager(CbfComponentManager, CspObsComponentManager
         :param argin: ids of receptors to add. 
         """
         errs = []  # list of error messages
-        receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
-                               self._proxy_cbf_controller.receptorToVcc)
         for receptorID in argin:
             try:
-                vccID = receptor_to_vcc[receptorID]
-                subarrayID = self._proxies_vcc[vccID - 1].subarrayMembership
-
-                # only add receptor if it belongs to the CBF subarray
-                if subarrayID != self._subarray_id:
-                    errs.append("Receptor {} does not belong to subarray {}.".format(
-                        str(receptorID), str(self._subarray_id)))
+                if receptorID not in self._receptors:
+                    self._receptors.append(receptorID)
                 else:
-                    if receptorID not in self._receptors:
-                        self._receptors.append(receptorID)
-                    else:
-                        log_msg = "Receptor {} already assigned to current FSP subarray.".format(
-                            str(receptorID))
-                        self._logger.warn(log_msg)
+                    log_msg = "Receptor {} already assigned to current FSP subarray.".format(
+                        str(receptorID))
+                    self._logger.warn(log_msg)
 
             except KeyError:  # invalid receptor ID
                 errs.append("Invalid receptor ID: {}".format(receptorID))
@@ -240,21 +207,6 @@ class FspPstSubarrayComponentManager(CbfComponentManager, CspObsComponentManager
         """ Remove all receptors from the subarray."""
         self._remove_receptors(self._receptors[:])
     
-    def validate_input(
-        self: FspPstSubarrayComponentManager, 
-        configuration: str
-    ) -> Tuple[ResultCode, str]:
-            """
-            Validate the configuration parameters against allowed values, as needed.
-
-            :param configuration: The JSON formatted string with configuration for the device.
-            :type configuration: 'DevString'
-            :return: A tuple containing a return code and a string message.
-            :rtype: (ResultCode, str)
-            """
-            device = self.target
-            return (ResultCode.OK, "ConfigureScan arguments validation successfull") 
-    
     def configure_scan(
         self: FspPstSubarrayComponentManager,
         configuration: str
@@ -270,8 +222,6 @@ class FspPstSubarrayComponentManager(CbfComponentManager, CspObsComponentManager
         """
         
         configuration = json.loads(configuration)
-
-        #TODO: call validate input with self.validate_input 
 
         if self._fsp_id != configuration["fsp_id"]:
             self._logger.warning(
@@ -322,6 +272,14 @@ class FspPstSubarrayComponentManager(CbfComponentManager, CspObsComponentManager
 
         return (ResultCode.OK, "FspPstSubarray EndScan command completed OK")
     
+    def _deconfigure( 
+        self: FspPstSubarrayComponentManager,
+    ) -> None:
+        self._timing_beams = []
+        self._timing_beam_id = []
+        self._output_enable = 0
+        self._remove_all_receptors()
+    
     def go_to_idle(
         self: FspPstSubarrayComponentManager,
     ) -> Tuple[ResultCode, str]:
@@ -334,10 +292,7 @@ class FspPstSubarrayComponentManager(CbfComponentManager, CspObsComponentManager
         :rtype: (ResultCode, str)
         """
 
-        self._timing_beams = []
-        self._timing_beam_id = []
-        self._output_enable = 0
-        self._remove_all_receptors()
+        self._deconfigure()
         
         return (ResultCode.OK, "FspPstSubarray GoToIdle command completed OK")
     
