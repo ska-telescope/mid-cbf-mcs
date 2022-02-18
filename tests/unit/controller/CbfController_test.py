@@ -29,7 +29,7 @@ from ska_tango_base.commands import ResultCode
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_tango_base.control_model import AdminMode
 
-CONST_WAIT_TIME = 5
+CONST_WAIT_TIME = 4
 
 class TestCbfController:
     """

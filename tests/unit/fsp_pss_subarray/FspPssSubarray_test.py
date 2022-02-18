@@ -33,32 +33,95 @@ from tango.server import command
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_tango_base.control_model import HealthState, AdminMode, ObsState
 from ska_mid_cbf_mcs.commons.global_enum import const, freq_band_dict
+from ska_tango_base.commands import ResultCode
+
+CONST_WAIT_TIME = 4
 
 class TestFspPssSubarray:
     """
     Test class for FspPssSubarray tests.
     """
 
-    @pytest.mark.skip(
-        reason="Not updated to version 0.11.3 of the base classes."
-    )
-    def test_On_Off(
+    def test_State(
         self: TestFspPssSubarray,
-        device_under_test: CbfDeviceProxy
+        device_under_test: CbfDeviceProxy,
     ) -> None:
         """
-        Test for FspPssSubarray device.
+        Test State
 
         :param device_under_test: fixture that provides a
-            :py:class:`tango.DeviceProxy` to the device under test, in a
+            :py:class:`CbfDeviceProxy` to the device under test, in a
             :py:class:`tango.test_context.DeviceTestContext`.
         """
-        
-        device_under_test.On()
-        assert device_under_test.State() == DevState.ON
+        assert device_under_test.State() == DevState.DISABLE
+    
+    def test_Status(
+        self: TestFspPssSubarray,
+        device_under_test: CbfDeviceProxy,
+    ) -> None:
+        """
+        Test Status
 
-        device_under_test.Off()
+        :param device_under_test: fixture that provides a
+            :py:class:`CbfDeviceProxy` to the device under test, in a
+            :py:class:`tango.test_context.DeviceTestContext`.
+        """
+        assert device_under_test.Status() == "The device is in DISABLE state."
+
+    def test_adminMode(
+        self: TestFspPssSubarray,
+        device_under_test: CbfDeviceProxy,
+    ) -> None:
+        """
+        Test Admin Mode
+
+        :param device_under_test: fixture that provides a
+            :py:class:`CbfDeviceProxy` to the device under test, in a
+            :py:class:`tango.test_context.DeviceTestContext`.
+        """
+        assert device_under_test.adminMode == AdminMode.OFFLINE
+    
+    @pytest.mark.parametrize(
+        "command",
+        [
+            "On",
+            "Off",
+            "Standby"
+        ]
+    )
+    def test_Power_Commands(
+        self: TestFspPssSubarray,
+        device_under_test: CbfDeviceProxy,
+        command: str
+    ) -> None:
+        """
+        Test Power commands.
+
+        :param device_under_test: fixture that provides a
+            :py:class:`CbfDeviceProxy` to the device under test, in a
+            :py:class:`tango.test_context.DeviceTestContext`.
+        :param command: the name of the Power command to be tested
+        """
+
+        device_under_test.write_attribute("adminMode", AdminMode.ONLINE)
+        time.sleep(CONST_WAIT_TIME)
+        assert device_under_test.adminMode == AdminMode.ONLINE
+
         assert device_under_test.State() == DevState.OFF
+
+        if command == "On":
+            expected_state = DevState.ON
+            result = device_under_test.On()
+        elif command == "Off":
+            expected_state = DevState.OFF
+            result = device_under_test.Off()
+        elif command == "Standby":
+            expected_state = DevState.STANDBY
+            result = device_under_test.Standby()
+
+        time.sleep(CONST_WAIT_TIME)
+        assert result[0][0] == ResultCode.OK
+        assert device_under_test.State() == expected_state
 
     @pytest.mark.parametrize(
         "config_file_name, \
@@ -74,39 +137,46 @@ class TestFspPssSubarray:
             )
         ]
     )
-    @pytest.mark.skip(
-        reason="Not updated to version 0.11.3 of the base classes."
-    )
-    def test_Scan_EndScan_GoToIdle(
+    def test_ObsState_Commands(
         self: TestFspPssSubarray,
         device_under_test: CbfDeviceProxy,
         config_file_name: str,
         scan_id: int
     ) -> None:
         """
-        Test Scan command state changes.
+        Test the ConfigureScan(), Scan(), EndScan() amd GoToIdle() commands
+            and the triggered ObState transitions
 
         :param device_under_test: fixture that provides a
             :py:class:`tango.DeviceProxy` to the device under test, in a
             :py:class:`tango.test_context.DeviceTestContext`.
+        :param config_file_name: name of the JSON file that contains the
+            configuration
+        :param scan_id: the scan id
         """
 
-        # turn on device and configure scan
+        device_under_test.write_attribute("adminMode", AdminMode.ONLINE)
+        time.sleep(CONST_WAIT_TIME)
+        assert device_under_test.adminMode == AdminMode.ONLINE
+
+        assert device_under_test.State() == DevState.OFF
+
         device_under_test.On()
+        time.sleep(CONST_WAIT_TIME)
+        assert device_under_test.State() == DevState.ON
+
         f = open(file_path + config_file_name)
         json_string = f.read().replace("\n", "")
         f.close()
         device_under_test.ConfigureScan(json_string)
+        time.sleep(0.1)
 
         scan_id_device_data = tango.DeviceData()
         scan_id_device_data.insert(tango.DevString, str(scan_id))
 
-        # Use callable 'Scan'  API
         device_under_test.Scan(scan_id_device_data)
         time.sleep(0.1)
-        assert device_under_test.scanID == scan_id
         assert device_under_test.obsState == ObsState.SCANNING
-
 
         device_under_test.EndScan()
         time.sleep(0.1)
@@ -115,57 +185,3 @@ class TestFspPssSubarray:
         device_under_test.GoToIdle()
         time.sleep(0.1)
         assert device_under_test.obsState == ObsState.IDLE
-
-    @pytest.mark.parametrize(
-        "config_file_name",
-        [
-            (
-                "/../../data/FspPssSubarray_ConfigureScan_basic.json"
-            )
-        ]
-    )
-    @pytest.mark.skip(
-        reason="Not updated to version 0.11.3 of the base classes."
-    )
-    def test_ConfigureScan_basic(
-        self: TestFspPssSubarray,
-        device_under_test: CbfDeviceProxy,
-        config_file_name: str
-    ) -> None:
-        """
-        Test a minimal successful scan configuration.
-
-        :param device_under_test: fixture that provides a
-            :py:class:`tango.DeviceProxy` to the device under test, in a
-            :py:class:`tango.test_context.DeviceTestContext`.
-        """
-
-        assert device_under_test.State() == tango.DevState.OFF
-        # check initial values of attributes
-        # TODO: device_under_test.receptors,
-        #       device_under_test.searchBeams 
-        #       and device_under_test.searchBeamID 
-        #       should be [] after Init not None
-        # This is a bug in the tango library: 
-        # https://gitlab.com/tango-controls/pytango/-/issues/230
-        assert device_under_test.receptors == None
-        assert device_under_test.searchBeams == None
-        assert device_under_test.searchWindowID == 0
-        assert device_under_test.searchBeamID == None
-        assert device_under_test.outputEnable == 0
-        
-        device_under_test.On()
-        assert device_under_test.State() == DevState.ON
-
-        # configure search window
-        f = open(file_path + config_file_name)
-        json_str = f.read().replace("\n", "")
-        f.close()
-        configuration = json.loads(json_str)
-        device_under_test.ConfigureScan(json_str)
-        f.close()
-
-        assert device_under_test.searchWindowID == int(configuration["search_window_id"])
-        for i, searchBeam in enumerate(configuration["search_beam"]):
-            assert device_under_test.searchBeams[i] == json.dumps(searchBeam)
-            assert device_under_test.searchBeamID[i] == int(searchBeam["search_beam_id"])
