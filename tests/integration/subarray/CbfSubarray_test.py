@@ -35,9 +35,7 @@ from ska_tango_base.control_model import LoggingLevel, HealthState
 from ska_tango_base.control_model import AdminMode, ObsState
 from ska_tango_base.base.base_device import _DEBUGGER_PORT
 
-@pytest.mark.skip(
-    reason="Not updated to version 0.11.3 of the base classes."
-)
+
 class TestCbfSubarray:
 
     @pytest.mark.parametrize(

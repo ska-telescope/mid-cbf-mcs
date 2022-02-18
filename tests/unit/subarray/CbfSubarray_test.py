@@ -29,73 +29,100 @@ from tango.server import command
 from ska_tango_base.commands import ResultCode
 from ska_mid_cbf_mcs.commons.global_enum import freq_band_dict
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
-from ska_mid_cbf_mcs.testing.tango_harness import DeviceToLoadType
 
 from ska_tango_base.control_model import HealthState, AdminMode, ObsState
 
 # Data file path
 data_file_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
 
-@pytest.mark.skip
+CONST_WAIT_TIME = 4
+
 class TestCbfSubarray:
     """
     Test class for TestCbfSubarray tests.
     """
 
-    @pytest.mark.skip(
-        reason="Not updated to version 0.11.3 of the base classes."
-    )
-    def test_Init(
+    def test_State(
         self: TestCbfSubarray,
         device_under_test: CbfDeviceProxy,
     ) -> None:
         """
-        Test initialization
+        Test State
 
         :param device_under_test: fixture that provides a
             :py:class:`CbfDeviceProxy` to the device under test, in a
             :py:class:`tango.test_context.DeviceTestContext`.
         """
-        time.sleep(0.1)
-        # check attributes after initialization
-        assert device_under_test.State() == DevState.OFF
-        # TODO: these asserts don't work
-        # assert device_under_test.receptors == []
-        # assert device_under_test.fspList == [[], [], [], []]
-        # assert device_under_test.fspState == {}
-        # assert device_under_test.fspHealthState == {}
-        # assert device_under_test.vccState == {}
-        # assert device_under_test.vccHealthState == {}
-        # This is a bug in the tango library: 
-        # https://gitlab.com/tango-controls/pytango/-/issues/230
-        assert device_under_test.frequencyBand == 0
-        assert device_under_test.configID == ""
-        assert device_under_test.scanID == 0
-        assert device_under_test.latestScanConfig == ""
-
-    @pytest.mark.skip(
-        reason="Not updated to version 0.11.3 of the base classes."
-    )
-    def test_On_Off(
+        assert device_under_test.State() == DevState.DISABLE
+    
+    def test_Status(
         self: TestCbfSubarray,
-        device_under_test: CbfDeviceProxy
+        device_under_test: CbfDeviceProxy,
     ) -> None:
         """
-        Test On/Off commands.
+        Test Status
 
         :param device_under_test: fixture that provides a
             :py:class:`CbfDeviceProxy` to the device under test, in a
             :py:class:`tango.test_context.DeviceTestContext`.
         """
-        assert device_under_test.State() == DevState.OFF
-        result = device_under_test.On()
-        time.sleep(3)
-        assert result[0][0] == ResultCode.OK
+        assert device_under_test.Status() == "The device is in DISABLE state."
+
+    def test_adminMode(
+        self: TestCbfSubarray,
+        device_under_test: CbfDeviceProxy,
+    ) -> None:
+        """
+        Test Admin Mode
+
+        :param device_under_test: fixture that provides a
+            :py:class:`CbfDeviceProxy` to the device under test, in a
+            :py:class:`tango.test_context.DeviceTestContext`.
+        """
+        assert device_under_test.adminMode == AdminMode.OFFLINE
+    
+    @pytest.mark.parametrize(
+        "command",
+        [
+            "On",
+            "Off",
+            "Standby"
+        ]
+    )
+    def test_Power_Commands(
+        self: TestCbfSubarray,
+        device_under_test: CbfDeviceProxy,
+        command: str
+    ) -> None:
+        """
+        Test the On/Off/Standby Commands
+
+        :param device_under_test: fixture that provides a
+            :py:class:`CbfDeviceProxy` to the device under test, in a
+            :py:class:`tango.test_context.DeviceTestContext`.
+        :param command: the command to test (one of On/Off/Standby)
+        """
+
+        device_under_test.adminMode = AdminMode.ONLINE
+        time.sleep(CONST_WAIT_TIME)
+        assert device_under_test.adminMode == AdminMode.ONLINE
+
         assert device_under_test.State() == DevState.ON
-        result = device_under_test.Off()
-        time.sleep(3)
+
+        if command == "On":
+            expected_state = DevState.ON
+            result = device_under_test.On()
+        elif command == "Off":
+            expected_state = DevState.OFF
+            result = device_under_test.Off()
+        elif command == "Standby":
+            expected_state = DevState.STANDBY
+            result = device_under_test.Standby()
+
+        time.sleep(CONST_WAIT_TIME)
         assert result[0][0] == ResultCode.OK
-        assert device_under_test.State() == DevState.OFF
+        assert device_under_test.State() == expected_state
+
 
     @pytest.mark.parametrize(
         "receptor_ids, \
@@ -111,9 +138,6 @@ class TestCbfSubarray:
             )
         ]
     )
-    @pytest.mark.skip(
-        reason="Not updated to version 0.11.3 of the base classes."
-    )
     def test_Add_Remove_Receptors_valid(
         self: TestCbfSubarray,
         device_under_test: CbfDeviceProxy,
@@ -127,9 +151,9 @@ class TestCbfSubarray:
             :py:class:`CbfDeviceProxy` to the device under test, in a
             :py:class:`tango.test_context.DeviceTestContext`.
         """
-        assert device_under_test.State() == DevState.OFF
-        device_under_test.On()
-        time.sleep(3)
+        assert device_under_test.State() == DevState.DISABLE
+        device_under_test.adminMode = AdminMode.ONLINE
+        time.sleep(CONST_WAIT_TIME)
         assert device_under_test.State() == DevState.ON
 
          # add all except last receptor
@@ -172,9 +196,6 @@ class TestCbfSubarray:
             )
         ]
     )
-    @pytest.mark.skip(
-        reason="Not updated to version 0.11.3 of the base classes."
-    )
     def test_RemoveAllReceptors_valid(
         self: TestCbfSubarray,
         device_under_test: CbfDeviceProxy,
@@ -187,9 +208,9 @@ class TestCbfSubarray:
             :py:class:`CbfDeviceProxy` to the device under test, in a
             :py:class:`tango.test_context.DeviceTestContext`.
         """
-        assert device_under_test.State() == DevState.OFF
-        device_under_test.On()
-        time.sleep(3)
+        assert device_under_test.State() == DevState.DISABLE
+        device_under_test.adminMode = AdminMode.ONLINE
+        time.sleep(CONST_WAIT_TIME)
         assert device_under_test.State() == DevState.ON
         assert device_under_test.obsState == ObsState.EMPTY
         device_under_test.AddReceptors(receptor_ids)
@@ -216,9 +237,6 @@ class TestCbfSubarray:
             )
         ]
     )
-    @pytest.mark.skip(
-        reason="Not updated to version 0.11.3 of the base classes."
-    )
     def test_AddReceptors_invalid(
         self: TestCbfSubarray,
         device_under_test: CbfDeviceProxy,
@@ -229,9 +247,9 @@ class TestCbfSubarray:
         Test invalid use of AddReceptors commands:
             - when a receptor ID is invalid (e.g. out of range)
         """
-        assert device_under_test.State() == DevState.OFF
-        device_under_test.On()
-        time.sleep(3)
+        assert device_under_test.State() == DevState.DISABLE
+        device_under_test.adminMode = AdminMode.ONLINE
+        time.sleep(CONST_WAIT_TIME)
         assert device_under_test.State() == DevState.ON
 
         # add some receptors
@@ -261,9 +279,6 @@ class TestCbfSubarray:
             )
         ]
     )
-    @pytest.mark.skip(
-        reason="Not updated to version 0.11.3 of the base classes."
-    )
     def test_RemoveReceptors_invalid(
             self: TestCbfSubarray,
             device_under_test: CbfDeviceProxy,
@@ -274,9 +289,9 @@ class TestCbfSubarray:
         Test invalid use of RemoveReceptors commands:
             - when a receptor to be removed is not assigned to the subarray
         """
-        assert device_under_test.State() == DevState.OFF
-        device_under_test.On()
-        time.sleep(3)
+        assert device_under_test.State() == DevState.DISABLE
+        device_under_test.adminMode = AdminMode.ONLINE
+        time.sleep(CONST_WAIT_TIME)
         assert device_under_test.State() == DevState.ON
         # add some receptors
         assert device_under_test.obsState == ObsState.EMPTY
@@ -299,9 +314,6 @@ class TestCbfSubarray:
             )
         ]
     )
-    @pytest.mark.skip(
-        reason="Not updated to version 0.11.3 of the base classes."
-    )
     def test_RemoveAllReceptors_invalid(
             self: TestCbfSubarray,
             device_under_test: CbfDeviceProxy,
@@ -311,9 +323,9 @@ class TestCbfSubarray:
         Test invalid use of RemoveReceptors commands:
             - when a receptor to be removed is not assigned to the subarray
         """
-        assert device_under_test.State() == DevState.OFF
-        device_under_test.On()
-        time.sleep(3)
+        assert device_under_test.State() == DevState.DISABLE
+        device_under_test.adminMode = AdminMode.ONLINE
+        time.sleep(CONST_WAIT_TIME)
         assert device_under_test.State() == DevState.ON
         # add some receptors
         assert device_under_test.obsState == ObsState.EMPTY
@@ -335,9 +347,6 @@ class TestCbfSubarray:
             )
         ]
     )
-    @pytest.mark.skip(
-        reason="Not updated to version 0.11.3 of the base classes."
-    )
     def test_ConfigureScan_basic(
         self: TestCbfSubarray, 
         device_under_test: CbfDeviceProxy, 
@@ -352,9 +361,9 @@ class TestCbfSubarray:
         f.close()
         config_json = json.loads(config_string)
 
-        assert device_under_test.State() == DevState.OFF
-        device_under_test.On()
-        time.sleep(3)
+        assert device_under_test.State() == DevState.DISABLE
+        device_under_test.adminMode = AdminMode.ONLINE
+        time.sleep(CONST_WAIT_TIME)
         assert device_under_test.State() == DevState.ON
         assert device_under_test.obsState == ObsState.EMPTY
         device_under_test.AddReceptors(receptor_ids)
@@ -387,9 +396,6 @@ class TestCbfSubarray:
 
         ]
     )
-    @pytest.mark.skip(
-        reason="Not updated to version 0.11.3 of the base classes."
-    )
     def test_Scan(
         self: TestCbfSubarray,
         device_under_test: CbfDeviceProxy,
@@ -403,9 +409,9 @@ class TestCbfSubarray:
         f1 = open(data_file_path + config_file_name)
         config_string = f1.read().replace("\n", "")
         f1.close()
-        assert device_under_test.State() == DevState.OFF
-        device_under_test.On()
-        time.sleep(3)
+        assert device_under_test.State() == DevState.DISABLE
+        device_under_test.adminMode = AdminMode.ONLINE
+        time.sleep(CONST_WAIT_TIME)
         assert device_under_test.State() == DevState.ON
         assert device_under_test.obsState == ObsState.EMPTY
         device_under_test.AddReceptors(receptor_ids)
@@ -443,9 +449,6 @@ class TestCbfSubarray:
             )
         ]
     )
-    @pytest.mark.skip(
-        reason="Not updated to version 0.11.3 of the base classes."
-    )
     def test_EndScan(
         self: TestCbfSubarray,
         device_under_test: CbfDeviceProxy,
@@ -459,9 +462,9 @@ class TestCbfSubarray:
         f1 = open(data_file_path + config_file_name)
         config_string = f1.read().replace("\n", "")
         f1.close()
-        assert device_under_test.State() == DevState.OFF
-        device_under_test.On()
-        time.sleep(3)
+        assert device_under_test.State() == DevState.DISABLE
+        device_under_test.adminMode = AdminMode.ONLINE
+        time.sleep(CONST_WAIT_TIME)
         assert device_under_test.State() == DevState.ON
         assert device_under_test.obsState == ObsState.EMPTY
         device_under_test.AddReceptors(receptor_ids)
@@ -501,9 +504,6 @@ class TestCbfSubarray:
             )
         ]
     )
-    @pytest.mark.skip(
-        reason="Not updated to version 0.11.3 of the base classes."
-    )
     def test_Abort(
         self: TestCbfSubarray,
         device_under_test: CbfDeviceProxy,
@@ -517,9 +517,9 @@ class TestCbfSubarray:
         f1 = open(data_file_path + config_file_name)
         config_string = f1.read().replace("\n", "")
         f1.close()
-        assert device_under_test.State() == DevState.OFF
-        device_under_test.On()
-        time.sleep(3)
+        assert device_under_test.State() == DevState.DISABLE
+        device_under_test.adminMode = AdminMode.ONLINE
+        time.sleep(CONST_WAIT_TIME)
         assert device_under_test.State() == DevState.ON
         assert device_under_test.obsState == ObsState.EMPTY
         device_under_test.AddReceptors(receptor_ids)
@@ -558,9 +558,6 @@ class TestCbfSubarray:
             )
         ]
     )
-    @pytest.mark.skip(
-        reason="Not updated to version 0.11.3 of the base classes."
-    )
     def test_Reset(
         self: TestCbfSubarray,
         device_under_test: CbfDeviceProxy,
@@ -574,9 +571,9 @@ class TestCbfSubarray:
         f1 = open(data_file_path + config_file_name)
         config_string = f1.read().replace("\n", "")
         f1.close()
-        assert device_under_test.State() == DevState.OFF
-        device_under_test.On()
-        time.sleep(3)
+        assert device_under_test.State() == DevState.DISABLE
+        device_under_test.adminMode = AdminMode.ONLINE
+        time.sleep(CONST_WAIT_TIME)
         assert device_under_test.State() == DevState.ON
         assert device_under_test.obsState == ObsState.EMPTY
         device_under_test.AddReceptors(receptor_ids)
@@ -621,9 +618,6 @@ class TestCbfSubarray:
             )
         ]
     )
-    @pytest.mark.skip(
-        reason="Not updated to version 0.11.3 of the base classes."
-    )
     def test_Restart(
         self: TestCbfSubarray,
         device_under_test: CbfDeviceProxy,
@@ -637,9 +631,9 @@ class TestCbfSubarray:
         f1 = open(data_file_path + config_file_name)
         config_string = f1.read().replace("\n", "")
         f1.close()
-        assert device_under_test.State() == DevState.OFF
-        device_under_test.On()
-        time.sleep(3)
+        assert device_under_test.State() == DevState.DISABLE
+        device_under_test.adminMode = AdminMode.ONLINE
+        time.sleep(CONST_WAIT_TIME)
         assert device_under_test.State() == DevState.ON
         assert device_under_test.obsState == ObsState.EMPTY
         device_under_test.AddReceptors(receptor_ids)
@@ -682,9 +676,6 @@ class TestCbfSubarray:
             )
         ]
     )
-    @pytest.mark.skip(
-        reason="Not updated to version 0.11.3 of the base classes."
-    )
     def test_GoToIdle(
         self: TestCbfSubarray,
         device_under_test: CbfDeviceProxy,
@@ -694,9 +685,9 @@ class TestCbfSubarray:
         f1 = open(data_file_path + config_file_name)
         config_string = f1.read().replace("\n", "")
         f1.close()
-        assert device_under_test.State() == DevState.OFF
-        device_under_test.On()
-        time.sleep(3)
+        assert device_under_test.State() == DevState.DISABLE
+        device_under_test.adminMode = AdminMode.ONLINE
+        time.sleep(CONST_WAIT_TIME)
         assert device_under_test.State() == DevState.ON
         assert device_under_test.obsState == ObsState.EMPTY
         device_under_test.AddReceptors(receptor_ids)

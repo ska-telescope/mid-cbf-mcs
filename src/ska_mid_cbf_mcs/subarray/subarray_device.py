@@ -12,7 +12,7 @@ Sub-element subarray device for Mid.CBF
 from __future__ import annotations
 from importlib.abc import ResourceLoader  # allow forward references in type hints
 from logging import log
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Tuple, Optional
 import json
 import copy
 
@@ -27,12 +27,13 @@ from tango import DevState, AttrWriteType, AttrQuality
 # PROTECTED REGION ID(CbfSubarray.additionnal_import) ENABLED START #
 
 # SKA imports
-from ska_mid_cbf_mcs.subarray.subarray_component_manager import SubarrayComponentManager
+from ska_mid_cbf_mcs.subarray.subarray_component_manager import CbfSubarrayComponentManager
+from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
 from ska_mid_cbf_mcs.commons.global_enum import const, freq_band_dict
 from ska_mid_cbf_mcs.attribute_proxy import CbfAttributeProxy
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
-from ska_tango_base.control_model import ObsState, AdminMode, HealthState
-from ska_tango_base import SKASubarray, SKABaseDevice
+from ska_tango_base.control_model import ObsState, AdminMode, HealthState, PowerMode
+from ska_tango_base.csp.subarray.subarray_device import CspSubElementSubarray
 from ska_tango_base.commands import ResultCode, BaseCommand, ResponseCommand
 
 # PROTECTED REGION END #    //  CbfSubarray.additionnal_import
@@ -40,7 +41,7 @@ from ska_tango_base.commands import ResultCode, BaseCommand, ResponseCommand
 __all__ = ["CbfSubarray", "main"]
 
 
-class CbfSubarray(SKASubarray):
+class CbfSubarray(CspSubElementSubarray):
     """
     CBFSubarray TANGO device class for the CBFSubarray prototype
     """
@@ -51,23 +52,9 @@ class CbfSubarray(SKASubarray):
         Sets up the command objects. Register the new Commands here.
         """
         super().init_command_objects()
-        device_args = (self, self.obs_state_model, self.logger)
-        # resource_args = (self.resource_manager, self.state_model, self.logger) 
-        # only use resource_args if we want to have separate resource_manager object
 
-        self.register_command_object(
-            "On",
-            self.OnCommand(*device_args)
-        )
-        self.register_command_object(
-            "Off",
-            self.OffCommand(*device_args)
-        )
-        #TODO: is this command needed (vs ConfigureScan)
-        # self.register_command_object(
-        #     "Configure",
-        #     self.ConfigureCommand(*device_args)
-        # )
+        device_args = (self, self.op_state_model, self.obs_state_model, self.logger)
+
         self.register_command_object(
             "AddReceptors",
             self.AddReceptorsCommand(*device_args)
@@ -96,16 +83,14 @@ class CbfSubarray(SKASubarray):
             "GoToIdle",
             self.GoToIdleCommand(*device_args)
         )
-        
+    # PROTECTED REGION END #    //  CbfSubarray.class_variable
+
+
     # ----------
     # Helper functions
     # ----------
 
-
-    # PROTECTED REGION END #    //  CbfSubarray.class_variable
-
-
-    # Used by commands that needs resource manager in SKASubarray 
+    # Used by commands that needs resource manager in CspSubElementSubarray 
     # base class (for example AddReceptors command). 
     # The base class define len as len(resource_manager), 
     # so we need to change that here. TODO - to clarify.
@@ -118,8 +103,7 @@ class CbfSubarray(SKASubarray):
         :return: number of resources assigned
         :rtype: int
         """
-
-        return len(self._receptors)
+        return len(self.component_manager.receptors)
 
 
     # -----------------
@@ -184,20 +168,6 @@ class CbfSubarray(SKASubarray):
         enum_labels=["1", "2", "3", "4", "5a", "5b", ],
     )
 
-    configID = attribute(
-        dtype='str',
-        access=AttrWriteType.READ,
-        label="Config ID",
-        doc="config ID",
-    )
-
-    scanID = attribute(
-        dtype='uint',
-        access=AttrWriteType.READ,
-        label="Scan ID",
-        doc="Scan ID",
-    )
-
     receptors = attribute(
         dtype=('uint16',),
         access=AttrWriteType.READ_WRITE,
@@ -249,17 +219,12 @@ class CbfSubarray(SKASubarray):
         doc="fsp[1][x] = CORR [2][x] = PSS [1][x] = PST [1][x] = VLBI",
     )
 
-    latestScanConfig = attribute(
-        dtype='DevString',
-        label="lastest Scan Configuration",
-        doc="for storing lastest scan configuration",
-    )
-
 
     # ---------------
     # General methods
     # ---------------
-    class InitCommand(SKASubarray.InitCommand):
+
+    class InitCommand(CspSubElementSubarray.InitCommand):
         """
         A class for the CbfSubarray's init_device() "command".
         """
@@ -278,37 +243,28 @@ class CbfSubarray(SKASubarray):
             (result_code, message) = super().do()
 
             device = self.target
-            
+
             device._storage_logging_level = tango.LogLevel.LOG_DEBUG
             device._element_logging_level = tango.LogLevel.LOG_DEBUG
             device._central_logging_level = tango.LogLevel.LOG_DEBUG
 
             # initialize attribute values
             device._receptors = []
-            device._frequency_band = 0
-            device._config_ID = ""
-            device._scan_ID = 0
-            device._latest_scan_config = ""
-
-            # for easy device-reference
-            device._frequency_band_offset_stream_1 = 0
-            device._frequency_band_offset_stream_2 = 0
-            device._stream_tuning = [0, 0]
-
-            device.component_manager = device.create_component_manager()
 
             return (result_code, message)
 
 
-    def create_component_manager(self: CbfSubarray) -> SubarrayComponentManager:
+    def create_component_manager(self: CbfSubarray) -> CbfSubarrayComponentManager:
         """
         Create and return a subarray component manager.
         
         :return: a subarray component manager
         """
         self.logger.debug("Entering create_component_manager()")
+        self._communication_status: Optional[CommunicationStatus] = None
+        self._component_power_mode: Optional[PowerMode] = None
 
-        return SubarrayComponentManager(
+        return CbfSubarrayComponentManager(
             subarray_id=int(self.get_name()[-2:]),
             controller=self.CbfControllerAddress,
             vcc=self.VCC,
@@ -317,25 +273,147 @@ class CbfSubarray(SKASubarray):
             fsp_pss_sub=self.FspPssSubarray,
             fsp_pst_sub=self.FspPstSubarray,
             logger=self.logger,
-            connect=False
+            push_change_event_callback=self.push_change_event,
+            component_configured_callback=self._component_configured,
+            component_resourced_callback=self._component_resourced,
+            communication_status_changed_callback=self._communication_status_changed,
+            component_power_mode_changed_callback=self._component_power_mode_changed,
+            component_fault_callback=self._component_fault
         )
 
 
     def always_executed_hook(self: CbfSubarray) -> None:
         # PROTECTED REGION ID(CbfSubarray.always_executed_hook) ENABLED START #
         """methods always executed before any TANGO command is executed"""
-        if not self.component_manager.connected:
-            self.component_manager.start_communicating()
+        pass
         # PROTECTED REGION END #    //  CbfSubarray.always_executed_hook
 
     def delete_device(self: CbfSubarray) -> None:
         # PROTECTED REGION ID(CbfSubarray.delete_device) ENABLED START #
-        """
-        Hook to delete device. 
-        TODO: Set State to DISABLE, remove all receptors, go to ObsState IDLE
-        """
+        """Hook to delete device."""
         pass
         # PROTECTED REGION END #    //  CbfSubarray.delete_device
+
+
+    # ---------
+    # Callbacks
+    # ---------
+
+    def _component_resourced(
+        self: CbfSubarray,
+        resourced: bool
+    ) -> None:
+        """
+        Handle notification that the component has started or stopped resourcing.
+
+        This is callback hook.
+
+        :param configured: whether this component is configured
+        :type configured: bool
+        """
+        if resourced:
+            self.obs_state_model.perform_action("component_resourced")
+        else:
+            self.obs_state_model.perform_action("component_unresourced")
+
+    def _component_configured(
+        self: CbfSubarray,
+        configured: bool
+    ) -> None:
+        """
+        Handle notification that the component has started or stopped configuring.
+
+        This is callback hook.
+
+        :param configured: whether this component is configured
+        :type configured: bool
+        """
+        if configured:
+            self.obs_state_model.perform_action("component_configured")
+        else:
+            self.obs_state_model.perform_action("component_unconfigured")
+
+
+    def _component_scanning(
+        self: CbfSubarray, 
+        scanning: bool
+    ) -> None:
+        """
+        Handle notification that the component has started or stopped scanning.
+
+        This is a callback hook.
+
+        :param scanning: whether this component is scanning
+        :type scanning: bool
+        """
+        if scanning:
+            self.obs_state_model.perform_action("component_scanning")
+        else:
+            self.obs_state_model.perform_action("component_not_scanning")
+
+
+    def _communication_status_changed(
+        self: CbfSubarray,
+        communication_status: CommunicationStatus,
+    ) -> None:
+        """
+        Handle change in communications status between component manager and component.
+
+        This is a callback hook, called by the component manager when
+        the communications status changes. It is implemented here to
+        drive the op_state.
+
+        :param communication_status: the status of communications
+            between the component manager and its component.
+        """
+        self._communication_status = communication_status
+
+        if communication_status == CommunicationStatus.DISABLED:
+            self.op_state_model.perform_action("component_disconnected")
+        elif communication_status == CommunicationStatus.NOT_ESTABLISHED:
+            self.op_state_model.perform_action("component_unknown")
+        elif communication_status == CommunicationStatus.ESTABLISHED \
+            and self._component_power_mode is not None:
+            self._component_power_mode_changed(self._component_power_mode)
+        else:  # self._component_power_mode is None
+            pass  # wait for a power mode update
+
+
+    def _component_power_mode_changed(
+        self: CbfSubarray,
+        power_mode: PowerMode,
+    ) -> None:
+        """
+        Handle change in the power mode of the component.
+
+        This is a callback hook, called by the component manager when
+        the power mode of the component changes. It is implemented here
+        to drive the op_state.
+
+        :param power_mode: the power mode of the component.
+        """
+        self._component_power_mode = power_mode
+
+        if self._communication_status == CommunicationStatus.ESTABLISHED:
+            action_map = {
+                PowerMode.OFF: "component_off",
+                PowerMode.STANDBY: "component_standby",
+                PowerMode.ON: "component_on",
+                PowerMode.UNKNOWN: "component_unknown",
+            }
+            self.op_state_model.perform_action(action_map[power_mode])
+
+
+    def _component_fault(self: CbfSubarray, faulty: bool) -> None:
+        """
+        Handle component fault
+        """
+        if faulty:
+            self.op_state_model.perform_action("component_fault")
+            self.set_status("The device is in FAULT state.")
+        else:
+            self.set_status("The device has recovered from FAULT state.")
+
 
     # ------------------
     # Attributes methods
@@ -350,30 +428,8 @@ class CbfSubarray(SKASubarray):
         :return: the frequency band
         :rtype: int
         """
-        return self._frequency_band
+        return self.component_manager.frequency_band
         # PROTECTED REGION END #    //  CbfSubarray.frequencyBand_read
-
-    def read_configID(self: CbfSubarray) -> str:
-        # PROTECTED REGION ID(CbfSubarray.configID_read) ENABLED START #
-        """
-        Return attribute configID
-        
-        :return: the configuration ID
-        :rtype: str
-        """
-        return self._config_ID
-        # PROTECTED REGION END #    //  CbfSubarray.configID_read
-
-    def read_scanID(self: CbfSubarray) -> int:
-        # PROTECTED REGION ID(CbfSubarray.configID_read) ENABLED START #
-        """
-        Return attribute scanID
-        
-        :return: the scan ID
-        :rtype: int
-        """
-        return self._scan_ID
-        # PROTECTED REGION END #    //  CbfSubarray.configID_read
 
     def read_receptors(self: CbfSubarray) -> List[int]:
         # PROTECTED REGION ID(CbfSubarray.receptors_read) ENABLED START #
@@ -383,7 +439,7 @@ class CbfSubarray(SKASubarray):
         :return: the list of receptors
         :rtype: List[int]
         """
-        return self._receptors
+        return self.component_manager.receptors
         # PROTECTED REGION END #    //  CbfSubarray.receptors_read
 
     def write_receptors(self: CbfSubarray, value: List[int]) -> None:
@@ -398,7 +454,6 @@ class CbfSubarray(SKASubarray):
         self.AddReceptors(value)
         # PROTECTED REGION END #    //  CbfSubarray.receptors_write
 
-
     def read_vccState(self: CbfSubarray) -> Dict[str, DevState]:
         # PROTECTED REGION ID(CbfSubarray.vccState_read) ENABLED START #
         """
@@ -407,7 +462,7 @@ class CbfSubarray(SKASubarray):
         :return: the list of VCC states
         :rtype: Dict[str, DevState]
         """
-        return list(self.component_manager._vcc_state.values())
+        return self.component_manager.vcc_state.values()
         # PROTECTED REGION END #    //  CbfSubarray.vccState_read
 
     def read_vccHealthState(self: CbfSubarray) -> Dict[str, HealthState]:
@@ -418,7 +473,7 @@ class CbfSubarray(SKASubarray):
         :return: the list of VCC health states
         :rtype: Dict[str, HealthState]
         """
-        return list(self.component_manager._vcc_health_state.values())
+        return self.component_manager.vcc_health_state.values()
         # PROTECTED REGION END #    //  CbfSubarray.vccHealthState_read
 
     def read_fspState(self: CbfSubarray) -> Dict[str, DevState]:
@@ -429,7 +484,7 @@ class CbfSubarray(SKASubarray):
         :return: the list of FSP states
         :rtype: Dict[str, DevState]
         """
-        return list(self.component_manager._fsp_state.values())
+        return self.component_manager.fsp_state.values()
         # PROTECTED REGION END #    //  CbfSubarray.fspState_read
 
     def read_fspHealthState(self: CbfSubarray) -> Dict[str, HealthState]:
@@ -440,7 +495,7 @@ class CbfSubarray(SKASubarray):
         :return: the list of FSP health states
         :rtype: Dict[str, HealthState]
         """
-        return list(self.component_manager._fsp_health_state.values())
+        return self.component_manager.fsp_health_state.values()
         # PROTECTED REGION END #    //  CbfSubarray.fspHealthState_read
 
     def read_fspList(self: CbfSubarray) -> List[List[int]]:
@@ -452,63 +507,13 @@ class CbfSubarray(SKASubarray):
         :return: the array of FSP IDs
         :rtype: List[List[int]]
         """
-        return self.component_manager._fsp_list
+        return self.component_manager.fsp_list
         # PROTECTED REGION END #    //  CbfSubarray.fspList_read
 
-    def read_latestScanConfig(self: CbfSubarray) -> str:
-        # PROTECTED REGION ID(CbfSubarray.latestScanConfig_read) ENABLED START #
-        """
-        Return the latestScanConfig attribute.
-        
-        :return: the latest scan configuration string
-        :rtype: str
-        """
-        return self._latest_scan_config
-        # PROTECTED REGION END #    //  CbfSubarray.latestScanConfig_read
 
     # --------
     # Commands
     # --------
-
-    class OnCommand(SKASubarray.OnCommand):
-        """
-        A class for the SKASubarray's On() command.
-        """
-        def do(self):
-            """
-            Stateless hook for On() command functionality.
-
-            :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-            :rtype: (ResultCode, str)
-            """
-            (result_code,message) = super().do()
-            device = self.target
-            device.logger.info(f"Subarray ObsState is {device._obs_state}")
-
-            return (result_code, message)
-
-
-    class OffCommand(SKABaseDevice.OffCommand):
-        """
-        A class for the SKASubarray's Off() command.
-        """
-        def do(self: CbfSubarray.OffCommand) -> Tuple[ResultCode, str]:
-            """
-            Stateless hook for Off() command functionality.
-
-            :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-            :rtype: (ResultCode, str)
-            """
-            (result_code,message) = super().do()
-            device = self.target
-            device.logger.info(f"Subarray ObsState is {device._obs_state}")
-
-            return (result_code, message)
-
 
     ##################  Receptors Related Commands  ###################
 
@@ -543,36 +548,11 @@ class CbfSubarray(SKASubarray):
             else:
                 log_msg = f"Receptor {receptorID} not assigned to subarray. Skipping."
                 self.logger.warning(log_msg)
-        
+
         return return_code
 
 
-
-    @command(
-        dtype_in=('uint16',),
-        doc_in="List of receptor IDs",
-        dtype_out='DevVarLongStringArray',
-        doc_out="(ReturnType, 'informational message')"
-    )
-    def RemoveReceptors(
-        self: CbfSubarray,
-        argin: List[int]
-    ) -> Tuple[ResultCode, str]:
-        """
-        Remove from list of receptors. Turn Subarray to ObsState = EMPTY if no receptors assigned.
-        Uses RemoveReceptorsCommand class.
-
-        :param argin: list of receptor IDs to remove
-        :return: A tuple containing a return code and a string
-            message indicating status. The message is for
-            information purpose only.
-        :rtype: (ResultCode, str)
-        """
-        command = self.get_command_object("RemoveReceptors")
-        (return_code, message) = command(argin)
-        return [[return_code], [message]]
-
-    class RemoveReceptorsCommand(SKASubarray.ReleaseResourcesCommand):
+    class RemoveReceptorsCommand(CspSubElementSubarray.ReleaseResourcesCommand):
         """
         A class for CbfSubarray's RemoveReceptors() command.
         Equivalent to the ReleaseResourcesCommand in ADR-8.
@@ -601,30 +581,31 @@ class CbfSubarray(SKASubarray):
             device.logger.info(message)
             return (result_code, message)
 
-
     @command(
+        dtype_in=('uint16',),
+        doc_in="List of receptor IDs",
         dtype_out='DevVarLongStringArray',
         doc_out="(ReturnType, 'informational message')"
     )
-
-    @DebugIt()
-    def RemoveAllReceptors(self: CbfSubarray) -> Tuple[ResultCode, str]:
-        # PROTECTED REGION ID(CbfSubarray.RemoveAllReceptors) ENABLED START #
+    def RemoveReceptors(
+        self: CbfSubarray,
+        argin: List[int]
+    ) -> Tuple[ResultCode, str]:
         """
-        Remove all receptors. Turn Subarray OFF if no receptors assigned
+        Remove from list of receptors. Turn Subarray to ObsState = EMPTY if no receptors assigned.
+        Uses RemoveReceptorsCommand class.
 
+        :param argin: list of receptor IDs to remove
         :return: A tuple containing a return code and a string
             message indicating status. The message is for
             information purpose only.
         :rtype: (ResultCode, str)
         """
-
-        command = self.get_command_object("RemoveAllReceptors")
-        (return_code, message) = command()
+        command = self.get_command_object("RemoveReceptors")
+        (return_code, message) = command(argin)
         return [[return_code], [message]]
-        # PROTECTED REGION END #    //  CbfSubarray.RemoveAllReceptors
 
-    class RemoveAllReceptorsCommand(SKASubarray.ReleaseAllResourcesCommand):
+    class RemoveAllReceptorsCommand(CspSubElementSubarray.ReleaseAllResourcesCommand):
         """
         A class for CbfSubarray's RemoveAllReceptors() command.
         """
@@ -653,34 +634,30 @@ class CbfSubarray(SKASubarray):
             return (result_code, message)
 
     @command(
-        dtype_in=('uint16',),
-        doc_in="List of receptor IDs",
         dtype_out='DevVarLongStringArray',
         doc_out="(ReturnType, 'informational message')"
     )
 
     @DebugIt()
-    def AddReceptors(
-        self: CbfSubarray,
-        argin: List[int]
-    ) -> Tuple[ResultCode, str]:
+    def RemoveAllReceptors(self: CbfSubarray) -> Tuple[ResultCode, str]:
+        # PROTECTED REGION ID(CbfSubarray.RemoveAllReceptors) ENABLED START #
         """
-        Assign Receptors to this subarray. 
-        Turn subarray to ObsState = IDLE if previously no receptor is assigned.
+        Remove all receptors. Turn Subarray OFF if no receptors assigned
 
-        :param argin: list of receptors to add
         :return: A tuple containing a return code and a string
             message indicating status. The message is for
             information purpose only.
         :rtype: (ResultCode, str)
         """
-        command = self.get_command_object("AddReceptors")
-        (return_code, message) = command(argin)
-        return [[return_code], [message]]  
 
-    
-    class AddReceptorsCommand(SKASubarray.AssignResourcesCommand):
-        # NOTE: doesn't inherit SKASubarray._ResourcingCommand 
+        command = self.get_command_object("RemoveAllReceptors")
+        (return_code, message) = command()
+        return [[return_code], [message]]
+        # PROTECTED REGION END #    //  CbfSubarray.RemoveAllReceptors
+
+
+    class AddReceptorsCommand(CspSubElementSubarray.AssignResourcesCommand):
+        # NOTE: doesn't inherit CspSubElementSubarray._ResourcingCommand 
         # because will give error on len(self.target); TODO: to resolve
         """
         A class for CbfSubarray's AddReceptors() command.
@@ -725,122 +702,35 @@ class CbfSubarray(SKASubarray):
             device.logger.info(msg)
             return (return_code, msg)
 
+    @command(
+        dtype_in=('uint16',),
+        doc_in="List of receptor IDs",
+        dtype_out='DevVarLongStringArray',
+        doc_out="(ReturnType, 'informational message')"
+    )
+
+    @DebugIt()
+    def AddReceptors(
+        self: CbfSubarray,
+        argin: List[int]
+    ) -> Tuple[ResultCode, str]:
+        """
+        Assign Receptors to this subarray. 
+        Turn subarray to ObsState = IDLE if previously no receptor is assigned.
+
+        :param argin: list of receptors to add
+        :return: A tuple containing a return code and a string
+            message indicating status. The message is for
+            information purpose only.
+        :rtype: (ResultCode, str)
+        """
+        command = self.get_command_object("AddReceptors")
+        (return_code, message) = command(argin)
+        return [[return_code], [message]]  
 
     ############  Configure Related Commands   ##############
 
-
-    def _deconfigure(self:CbfSubarray) -> Tuple[ResultCode, str]:
-        """Completely deconfigure the subarray; all initialization performed 
-        by by the ConfigureScan command must be 'undone' here."""
-
-        # reset all private data to their initialization values:
-        self._scan_ID = 0       
-        self._config_ID = ""
-        self._frequency_band = 0
-
-        return self.component_manager.deconfigure()
-
-
-    def _validate_scan_configuration(
-        self: CbfSubarray,
-        argin: str
-    ) -> Tuple[bool, str]:
-        """
-        Validate scan configuration.
-
-        :param argin: The configuration as JSON formatted string.
-
-        :return: A tuple containing a boolean indicating if the configuration
-            is valid and a string message. The message is for information 
-            purpose only.
-        :rtype: (bool, str)
-        """
-        # try to deserialize input string to a JSON object
-        try:
-            full_configuration = json.loads(argin)
-            common_configuration = copy.deepcopy(full_configuration["common"])
-            configuration = copy.deepcopy(full_configuration["cbf"])
-        except json.JSONDecodeError:  # argument not a valid JSON object
-            msg = "Scan configuration object is not a valid JSON object. Aborting configuration."
-            return (False, msg)
-
-        # Validate frequencyBandOffsetStream1.
-        if "frequency_band_offset_stream_1" not in configuration:
-            configuration["frequency_band_offset_stream_1"] = 0
-        if abs(int(configuration["frequency_band_offset_stream_1"])) <= const.FREQUENCY_SLICE_BW * 10 ** 6 / 2:
-            pass
-        else:
-            msg = "Absolute value of 'frequencyBandOffsetStream1' must be at most half " \
-                    "of the frequency slice bandwidth. Aborting configuration."
-            return (False, msg)
-
-        # Validate frequencyBandOffsetStream2.
-        if "frequency_band_offset_stream_2" not in configuration:
-            configuration["frequency_band_offset_stream_2"] = 0
-        if abs(int(configuration["frequency_band_offset_stream_2"])) <= const.FREQUENCY_SLICE_BW * 10 ** 6 / 2:
-            pass
-        else:
-            msg = "Absolute value of 'frequencyBandOffsetStream2' must be at most " \
-                    "half of the frequency slice bandwidth. Aborting configuration."
-            return (False, msg)
-
-        # Validate band5Tuning, frequencyBandOffsetStream2 if frequencyBand is 5a or 5b.
-        if common_configuration["frequency_band"] in ["5a", "5b"]:
-            # band5Tuning is optional
-            if "band_5_tuning" in common_configuration:
-                pass
-                # check if streamTuning is an array of length 2
-                try:
-                    assert len(common_configuration["band_5_tuning"]) == 2
-                except (TypeError, AssertionError):
-                    msg = "'band5Tuning' must be an array of length 2. Aborting configuration."
-                    return (False, msg)
-
-                stream_tuning = [*map(float, common_configuration["band_5_tuning"])]
-                if common_configuration["frequency_band"] == "5a":
-                    if all(
-                            [const.FREQUENCY_BAND_5a_TUNING_BOUNDS[0] <= stream_tuning[i]
-                             <= const.FREQUENCY_BAND_5a_TUNING_BOUNDS[1] for i in [0, 1]]
-                    ):
-                        pass
-                    else:
-                        msg = (
-                            "Elements in 'band5Tuning must be floats between"
-                            f"{const.FREQUENCY_BAND_5a_TUNING_BOUNDS[0]} and "
-                            f"{const.FREQUENCY_BAND_5a_TUNING_BOUNDS[1]} "
-                            f"(received {stream_tuning[0]} and {stream_tuning[1]})"
-                            " for a 'frequencyBand' of 5a. "
-                            "Aborting configuration."
-                        )
-                        return (False, msg)
-                else:  # configuration["frequency_band"] == "5b"
-                    if all(
-                            [const.FREQUENCY_BAND_5b_TUNING_BOUNDS[0] <= stream_tuning[i]
-                             <= const.FREQUENCY_BAND_5b_TUNING_BOUNDS[1] for i in [0, 1]]
-                    ):
-                        pass
-                    else:
-                        msg = (
-                            "Elements in 'band5Tuning must be floats between"
-                            f"{const.FREQUENCY_BAND_5b_TUNING_BOUNDS[0]} and "
-                            f"{const.FREQUENCY_BAND_5b_TUNING_BOUNDS[1]} "
-                            f"(received {stream_tuning[0]} and {stream_tuning[1]})"
-                            " for a 'frequencyBand' of 5b. "
-                            "Aborting configuration."
-                        )
-                        return (False, msg)
-            else:
-                # set band5Tuning to zero for the rest of the test. This won't 
-                # change the argin in function "configureScan(argin)"
-                common_configuration["band_5_tuning"] = [0, 0]
-
-        # At this point, validate FSP, VCC, subscription parameters
-        full_configuration["common"] = copy.deepcopy(common_configuration)
-        full_configuration["cbf"] = copy.deepcopy(configuration)
-        return self.component_manager.validate_scan_configuration(json.dumps(full_configuration))
-
-
-    class ConfigureScanCommand(SKASubarray.ConfigureCommand):
+    class ConfigureScanCommand(CspSubElementSubarray.ConfigureCommand):
         """
         A class for CbfSubarray's ConfigureScan() command.
         """
@@ -859,13 +749,10 @@ class CbfSubarray(SKASubarray):
             """
             device = self.target
 
-            (valid, msg) = device._validate_scan_configuration(argin)
-            if not valid:
-                device.component_manager.raise_configure_scan_fatal_error(msg)
-            device.logger.info(msg)
-
             # Call this just to release all FSPs and unsubscribe to events.
-            device._deconfigure()
+            (result_code, msg) = device.component_manager.deconfigure()
+            if result_code == ResultCode.FAILED:
+                return (result_code, msg)
 
             full_configuration = json.loads(argin)
             common_configuration = copy.deepcopy(full_configuration["common"])
@@ -880,44 +767,116 @@ class CbfSubarray(SKASubarray):
             if "rfi_flagging_mask" not in configuration: 
                 configuration["rfi_flagging_mask"] = {}
 
-            # Configure configID.
-            device._config_ID = str(common_configuration["config_id"])
-
-            # Configure frequencyBand.
-            frequency_bands = ["1", "2", "3", "4", "5a", "5b"]
-            device._frequency_band = frequency_bands.index(common_configuration["frequency_band"])
-
-            # Configure band5Tuning, if frequencyBand is 5a or 5b.
-            if device._frequency_band in [4, 5]:
-                stream_tuning = [*map(float, common_configuration["band_5_tuning"])]
-                device._stream_tuning = stream_tuning
-
-            # Configure frequencyBandOffsetStream1.
-            if "frequency_band_offset_stream_1" in configuration:
-                device._frequency_band_offset_stream_1 = int(configuration["frequency_band_offset_stream_1"])
-            else:
-                device._frequency_band_offset_stream_1 = 0
-                log_msg = "'frequencyBandOffsetStream1' not specified. Defaulting to 0."
-                device.logger.warning(log_msg)
-
-            # Validate frequencyBandOffsetStream2.
-            # If not given, use a default value.
-            # If malformed, use a default value, but append an error.
-            if "frequency_band_offset_stream_2" in configuration:
-                device._frequency_band_offset_stream_2 = int(configuration["frequency_band_offset_stream_2"])
-            else:
-                device._frequency_band_offset_stream_2 = 0
-                log_msg = "'frequencyBandOffsetStream2' not specified. Defaulting to 0."
-                device.logger.warning(log_msg)
-
             # Configure components
             full_configuration["common"] = copy.deepcopy(common_configuration)
             full_configuration["cbf"] = copy.deepcopy(configuration)
             (result_code, message) = device.component_manager.configure_scan(json.dumps(full_configuration))
 
-            #save configuration into latestScanConfig
-            device._latest_scan_config = str(configuration)
+            if result_code == ResultCode.OK:
+                # store the configuration on command success
+                device._last_scan_configuration = argin
+
             return (result_code, message)
+
+
+        def validate_input(
+            self: CbfSubarray.ConfigureScanCommand,
+            argin: str
+        ) -> Tuple[bool, str]:
+            """
+            Validate scan configuration.
+
+            :param argin: The configuration as JSON formatted string.
+
+            :return: A tuple containing a boolean indicating if the configuration
+                is valid and a string message. The message is for information 
+                purpose only.
+            :rtype: (bool, str)
+            """
+            # try to deserialize input string to a JSON object
+            try:
+                full_configuration = json.loads(argin)
+                common_configuration = copy.deepcopy(full_configuration["common"])
+                configuration = copy.deepcopy(full_configuration["cbf"])
+            except json.JSONDecodeError:  # argument not a valid JSON object
+                msg = "Scan configuration object is not a valid JSON object. Aborting configuration."
+                return (False, msg)
+
+            # Validate frequencyBandOffsetStream1.
+            if "frequency_band_offset_stream_1" not in configuration:
+                configuration["frequency_band_offset_stream_1"] = 0
+            if abs(int(configuration["frequency_band_offset_stream_1"])) <= const.FREQUENCY_SLICE_BW * 10 ** 6 / 2:
+                pass
+            else:
+                msg = "Absolute value of 'frequencyBandOffsetStream1' must be at most half " \
+                        "of the frequency slice bandwidth. Aborting configuration."
+                return (False, msg)
+
+            # Validate frequencyBandOffsetStream2.
+            if "frequency_band_offset_stream_2" not in configuration:
+                configuration["frequency_band_offset_stream_2"] = 0
+            if abs(int(configuration["frequency_band_offset_stream_2"])) <= const.FREQUENCY_SLICE_BW * 10 ** 6 / 2:
+                pass
+            else:
+                msg = "Absolute value of 'frequencyBandOffsetStream2' must be at most " \
+                        "half of the frequency slice bandwidth. Aborting configuration."
+                return (False, msg)
+
+            # Validate band5Tuning, frequencyBandOffsetStream2 if frequencyBand is 5a or 5b.
+            if common_configuration["frequency_band"] in ["5a", "5b"]:
+                # band5Tuning is optional
+                if "band_5_tuning" in common_configuration:
+                    pass
+                    # check if streamTuning is an array of length 2
+                    try:
+                        assert len(common_configuration["band_5_tuning"]) == 2
+                    except (TypeError, AssertionError):
+                        msg = "'band5Tuning' must be an array of length 2. Aborting configuration."
+                        return (False, msg)
+
+                    stream_tuning = [*map(float, common_configuration["band_5_tuning"])]
+                    if common_configuration["frequency_band"] == "5a":
+                        if all(
+                                [const.FREQUENCY_BAND_5a_TUNING_BOUNDS[0] <= stream_tuning[i]
+                                <= const.FREQUENCY_BAND_5a_TUNING_BOUNDS[1] for i in [0, 1]]
+                        ):
+                            pass
+                        else:
+                            msg = (
+                                "Elements in 'band5Tuning must be floats between"
+                                f"{const.FREQUENCY_BAND_5a_TUNING_BOUNDS[0]} and "
+                                f"{const.FREQUENCY_BAND_5a_TUNING_BOUNDS[1]} "
+                                f"(received {stream_tuning[0]} and {stream_tuning[1]})"
+                                " for a 'frequencyBand' of 5a. "
+                                "Aborting configuration."
+                            )
+                            return (False, msg)
+                    else:  # configuration["frequency_band"] == "5b"
+                        if all(
+                                [const.FREQUENCY_BAND_5b_TUNING_BOUNDS[0] <= stream_tuning[i]
+                                <= const.FREQUENCY_BAND_5b_TUNING_BOUNDS[1] for i in [0, 1]]
+                        ):
+                            pass
+                        else:
+                            msg = (
+                                "Elements in 'band5Tuning must be floats between"
+                                f"{const.FREQUENCY_BAND_5b_TUNING_BOUNDS[0]} and "
+                                f"{const.FREQUENCY_BAND_5b_TUNING_BOUNDS[1]} "
+                                f"(received {stream_tuning[0]} and {stream_tuning[1]})"
+                                " for a 'frequencyBand' of 5b. "
+                                "Aborting configuration."
+                            )
+                            return (False, msg)
+                else:
+                    # set band5Tuning to zero for the rest of the test. This won't 
+                    # change the argin in function "configureScan(argin)"
+                    common_configuration["band_5_tuning"] = [0, 0]
+
+            # At this point, validate FSP, VCC, subscription parameters
+            full_configuration["common"] = copy.deepcopy(common_configuration)
+            full_configuration["cbf"] = copy.deepcopy(configuration)
+            return self.component_manager.validate_input(json.dumps(full_configuration))
+
 
     @command(
         dtype_in='str',
@@ -925,7 +884,6 @@ class CbfSubarray(SKASubarray):
         dtype_out='DevVarLongStringArray',
         doc_out="(ReturnType, 'informational message')",
     )
-
     @DebugIt()
     def ConfigureScan(self: CbfSubarray, argin: str) -> Tuple[ResultCode, str]:
         # PROTECTED REGION ID(CbfSubarray.ConfigureScan) ENABLED START #
@@ -942,10 +900,17 @@ class CbfSubarray(SKASubarray):
         """
 
         command = self.get_command_object("ConfigureScan")
-        (return_code, message) = command(argin)
-        return [[return_code], [message]]    
 
-    class ScanCommand(SKASubarray.ScanCommand):
+        (valid, msg) = command.validate_input(argin)
+        if not valid:
+            self.component_manager.raise_configure_scan_fatal_error(msg)
+        self.logger.info(msg)
+
+        (return_code, message) = command(argin)
+        return [[return_code], [message]]
+
+
+    class ScanCommand(CspSubElementSubarray.ScanCommand):
         """
         A class for CbfSubarray's Scan() command.
         """
@@ -964,19 +929,16 @@ class CbfSubarray(SKASubarray):
             :rtype: (ResultCode, str)
             """
             device = self.target
-
             scan = json.loads(argin)
-
-            device._scan_ID = int(scan["scan_id"])
-
-            data = tango.DeviceData()
-            data.insert(tango.DevString, str(device._scan_ID))
-
-            return device.component_manager.scan(data)
-
+            (result_code, msg) =  device.component_manager.scan(scan["scan_id"])
+            
+            if result_code == ResultCode.STARTED:
+                device._component_scanning(True)
+            
+            return (result_code, msg)
 
 
-    class EndScanCommand(SKASubarray.EndScanCommand):
+    class EndScanCommand(CspSubElementSubarray.EndScanCommand):
         """
         A class for CbfSubarray's EndScan() command.
         """
@@ -989,17 +951,35 @@ class CbfSubarray(SKASubarray):
                 information purpose only.
             :rtype: (ResultCode, str)
             """
-            (result_code, msg) = super().do()
-
             device = self.target
-            device.logger.info(msg)
 
+            (result_code, msg) =  device.component_manager.end_scan()
+            
             if result_code == ResultCode.OK:
-                (result_code, msg) = device.component_manager.end_scan()
-                device._scan_ID = 0
+                device._component_scanning(False)
 
             return (result_code, msg)
 
+
+    class GoToIdleCommand(CspSubElementSubarray.EndCommand):
+        """
+        A class for CspSubElementSubarray's GoToIdle() command.
+        """
+        def do(self: CbfSubarray.GoToIdleCommand) -> Tuple[ResultCode, str]:
+            """
+            Stateless hook for GoToIdle() command functionality.
+            
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
+            
+            device = self.target
+            device.logger.debug("Entering GoToIdleCommand()")
+
+            (result_code, message) = device.component_manager.deconfigure()
+            return (result_code, message)
 
     @command(
         dtype_out='DevVarLongStringArray',
@@ -1019,31 +999,12 @@ class CbfSubarray(SKASubarray):
         (return_code, message) = command()
         return [[return_code], [message]]
 
-    class GoToIdleCommand(SKASubarray.EndCommand):
-        """
-        A class for SKASubarray's GoToIdle() command.
-        """
-        def do(self: CbfSubarray.GoToIdleCommand) -> Tuple[ResultCode, str]:
-            """
-            Stateless hook for GoToIdle() command functionality.
-            
-            :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-            :rtype: (ResultCode, str)
-            """
-            
-            device = self.target
-            device.logger.debug("Entering GoToIdleCommand()")
-
-            (result_code, message) = device._deconfigure()
-            return (result_code, message)
 
     ############### abort, restart and reset #####################
 
-    class AbortCommand(SKASubarray.AbortCommand):
+    class AbortCommand(CspSubElementSubarray.AbortCommand):
         """
-        A class for SKASubarray's Abort() command.
+        A class for CspSubElementSubarray's Abort() command.
         """
         def do(self: CbfSubarray.AbortCommand) -> Tuple[ResultCode, str]:
             """
@@ -1064,9 +1025,8 @@ class CbfSubarray(SKASubarray):
 
             return (result_code, message)
 
-    
-    # RestartCommand already registered in SKASubarray, so no "def restart" needed
-    class RestartCommand(SKASubarray.RestartCommand):
+
+    class RestartCommand(CspSubElementSubarray.RestartCommand):
         """
         A class for CbfSubarray's Restart() command.
         """
@@ -1085,7 +1045,7 @@ class CbfSubarray(SKASubarray):
             # or a Scan, so we need to clean up from that.
 
             # Now totally deconfigure
-            (result_code, msg) = device._deconfigure()
+            (result_code, msg) = device.component_manager.deconfigure()
             if result_code == ResultCode.FAILED:
                 return (result_code, msg)
 
@@ -1099,7 +1059,7 @@ class CbfSubarray(SKASubarray):
             return (result_code, message)
 
 
-    class ObsResetCommand(SKASubarray.ObsResetCommand):
+    class ObsResetCommand(CspSubElementSubarray.ObsResetCommand):
         """
         A class for CbfSubarray's ObsReset() command.
         """
@@ -1115,12 +1075,11 @@ class CbfSubarray(SKASubarray):
             device = self.target
             # We might have interrupted a long-running command such as a Configure
             # or a Scan, so we need to clean up from that.
-            (result_code, msg) = device._deconfigure()
+            (result_code, msg) = device.component_manager.deconfigure()
             if result_code == ResultCode.FAILED:
                 return (result_code, msg)
 
             return (ResultCode.OK, "ObsReset command completed OK")
-
 
 
 # ----------

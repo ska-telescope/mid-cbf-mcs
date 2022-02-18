@@ -22,21 +22,21 @@ import pytest
 
 from ska_tango_base.commands import ResultCode
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
-from ska_mid_cbf_mcs.subarray.subarray_component_manager import SubarrayComponentManager
+from ska_mid_cbf_mcs.subarray.subarray_component_manager import CbfSubarrayComponentManager
 from ska_mid_cbf_mcs.commons.global_enum import freq_band_dict
 from ska_mid_cbf_mcs.testing.tango_harness import TangoHarness
 
 # Data file path
 data_file_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
 
-class TestSubarrayComponentManager:
+class TestCbfSubarrayComponentManager:
     """
-    Test class for SubarrayComponentManager tests.
+    Test class for CbfSubarrayComponentManager tests.
     """
 
     def test_init_start_communicating(
-        self: TestSubarrayComponentManager,
-        subarray_component_manager: SubarrayComponentManager,
+        self: TestCbfSubarrayComponentManager,
+        subarray_component_manager: CbfSubarrayComponentManager,
         tango_harness: TangoHarness
     ) -> None:
         """
@@ -60,8 +60,8 @@ class TestSubarrayComponentManager:
         ]
     )
     def test_add_remove_receptor_valid(
-        self: TestSubarrayComponentManager,
-        subarray_component_manager: SubarrayComponentManager,
+        self: TestCbfSubarrayComponentManager,
+        subarray_component_manager: CbfSubarrayComponentManager,
         tango_harness: TangoHarness,
         receptor_ids: List[int]
     ) -> None:
@@ -96,8 +96,8 @@ class TestSubarrayComponentManager:
         ]
     )
     def test_add_receptor_invalid(
-        self: TestSubarrayComponentManager,
-        subarray_component_manager: SubarrayComponentManager,
+        self: TestCbfSubarrayComponentManager,
+        subarray_component_manager: CbfSubarrayComponentManager,
         tango_harness: TangoHarness,
         receptor_ids: List[int]
     ) -> None:
@@ -113,11 +113,11 @@ class TestSubarrayComponentManager:
         for receptor in receptor_ids[:-1]:
             vcc_id = subarray_component_manager._receptor_to_vcc[receptor]
             vcc_proxy = subarray_component_manager._proxies_vcc[vcc_id - 1]
-            vcc_proxy.subarrayMembership = subarray_component_manager._subarray_id + 1
+            vcc_proxy.subarrayMembership = subarray_component_manager.subarray_id + 1
 
             subarray_component_manager.add_receptor(receptor)
         
-        assert subarray_component_manager._receptors == []
+        assert subarray_component_manager.receptors == []
 
         # try adding same receptor twice
         subarray_component_manager.add_receptor(receptor_ids[-1])
@@ -136,8 +136,8 @@ class TestSubarrayComponentManager:
         ]
     )
     def test_remove_receptor_invalid(
-        self: TestSubarrayComponentManager,
-        subarray_component_manager: SubarrayComponentManager,
+        self: TestCbfSubarrayComponentManager,
+        subarray_component_manager: CbfSubarrayComponentManager,
         tango_harness: TangoHarness,
         receptor_ids: List[int]
     ) -> None:
@@ -173,8 +173,8 @@ class TestSubarrayComponentManager:
         ]
     )
     def test_validate_and_configure_scan(
-        self: TestSubarrayComponentManager,
-        subarray_component_manager: SubarrayComponentManager,
+        self: TestCbfSubarrayComponentManager,
+        subarray_component_manager: CbfSubarrayComponentManager,
         tango_harness: TangoHarness,
         config_file_name: str,
         receptor_ids: List[int]
@@ -196,13 +196,13 @@ class TestSubarrayComponentManager:
         for receptor in receptor_ids:
             subarray_component_manager.add_receptor(receptor)
 
-        result = subarray_component_manager.validate_scan_configuration(config_string)
+        result = subarray_component_manager.validate_input(config_string)
         assert result[0]
 
         # configure scan
         subarray_component_manager.configure_scan(config_string)
-        assert subarray_component_manager._config_ID == config_json["common"]["config_id"]
+        assert subarray_component_manager.config_id == config_json["common"]["config_id"]
         band_index = freq_band_dict()[config_json["common"]["frequency_band"]]
-        assert subarray_component_manager._frequency_band == band_index
+        assert subarray_component_manager.frequency_band == band_index
 
         assert subarray_component_manager._ready

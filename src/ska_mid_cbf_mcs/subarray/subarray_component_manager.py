@@ -15,7 +15,7 @@ Sub-element subarray device for Mid.CBF
 """
 from __future__ import annotations  # allow forward references in type hints
 import logging
-from typing import Any, Dict, List, Tuple
+from typing import Any, List, Tuple, Dict, Optional, Callable
 import sys
 import json
 from threading import Thread, Lock
@@ -24,11 +24,7 @@ import copy
 
 # Tango imports
 import tango
-from tango import DebugIt
-from tango.server import run
-from tango.server import attribute, command
-from tango.server import device_property
-from tango import DevState, AttrWriteType, AttrQuality
+from tango import AttrQuality, DevState
 
 # SKA imports
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
@@ -36,16 +32,68 @@ from ska_mid_cbf_mcs.group_proxy import CbfGroupProxy
 from ska_mid_cbf_mcs.commons.global_enum import const, freq_band_dict
 from ska_mid_cbf_mcs.attribute_proxy import CbfAttributeProxy
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
+from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus, CbfComponentManager
 
-from ska_tango_base.control_model import ObsState, AdminMode, HealthState
+from ska_tango_base.control_model import ObsState, HealthState, PowerMode
 from ska_tango_base.commands import ResultCode
+from ska_tango_base.csp.subarray.component_manager import CspSubarrayComponentManager
 
 
-class SubarrayComponentManager:
+class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManager):
     """A component manager for the CbfSubarray class."""
 
+    @property
+    def config_id(self) -> str:
+        """Return the configuration ID."""
+        return self._config_id
+
+    @property
+    def scan_id(self) -> int:
+        """Return the scan ID."""
+        return self._scan_id
+
+    @property
+    def subarray_id(self) -> int:
+        """Return the subarray ID."""
+        return self._subarray_id
+
+    @property
+    def frequency_band(self) -> int:
+        """Return the frequency band."""
+        return self._frequency_band
+
+    @property
+    def receptors(self) -> List[int]:
+        """Return the receptor list."""
+        return self._receptors
+
+    @property
+    def vcc_state(self) -> Dict[str, DevState]:
+        """Return the VCC operational states."""
+        return self._vcc_state
+
+    @property
+    def vcc_health_state(self) -> Dict[str, HealthState]:
+        """Return the VCC health states."""
+        return self._vcc_health_state
+
+    @property
+    def fsp_state(self) -> Dict[str, DevState]:
+        """Return the FSP operational states."""
+        return self._fsp_state
+
+    @property
+    def fsp_health_state(self) -> Dict[str, HealthState]:
+        """Return the FSP health states."""
+        return self._fsp_health_state
+
+    @property
+    def fsp_list(self) -> List[List[int]]:
+        """Return the FSP function mode device IDs."""
+        return self._fsp_list
+
     def __init__(
-        self: SubarrayComponentManager,
+        self: CbfSubarrayComponentManager,
         subarray_id: int,
         controller: str,
         vcc: List[str],
@@ -54,15 +102,36 @@ class SubarrayComponentManager:
         fsp_pss_sub: List[str],
         fsp_pst_sub: List[str],
         logger: logging.Logger,
-        connect: bool = True
+        push_change_event_callback: Optional[Callable],
+        component_resourced_callback: Callable[[bool], None],
+        component_configured_callback: Callable[[bool], None],
+        communication_status_changed_callback: Callable[[CommunicationStatus], None],
+        component_power_mode_changed_callback: Callable[[PowerMode], None],
+        component_fault_callback: Callable
     ) -> None:
         """
         Initialise a new instance.
 
-        :param fqdns: FQDNs of subordinate devices
-        :param dev_counts: subordinate device count
+        :param subarray_id: ID of subarray
+        :param vcc: FQDNs of subordinate VCC devices
+        :param fsp: FQDNs of subordinate FSP devices
+        :param fsp_corr_sub: FQDNs of subordinate FSP CORR subarray devices
+        :param fsp_pss_sub: FQDNs of subordinate FSP PSS-BF subarray devices
+        :param fsp_pst_sub: FQDNs of subordinate FSP PST-BF devices
         :param logger: a logger for this object to use
-        :param connect: whether to connect automatically upon initialization
+        :param push_change_event_callback: method to call when the base classes
+            want to send an event
+        :param component_resourced_callback: callback to be called when 
+            the component resource status changes
+        :param component_configured_callback: callback to be called when 
+            the component configuration status changes
+        :param communication_status_changed_callback: callback to be
+            called when the status of the communications channel between the 
+            component manager and its component changes
+        :param component_power_mode_changed_callback: callback to be called when 
+            the component power mode changes
+        :param component_fault_callback: callback to be called in event of 
+            component fault
         """
 
         self._subarray_id = subarray_id
@@ -83,14 +152,11 @@ class SubarrayComponentManager:
         # initialize attribute values
         self._receptors = []
         self._frequency_band = 0
-        self._config_ID = ""
+        self._config_id = ""
+        self._scan_id = 0
         self._fsp_list = [[], [], [], []]
-        # self._output_links_distribution = {"configID": ""}# ???
-        self._vcc_state = {}
-        self._vcc_health_state = {}
-        self._fsp_state = {}
-        self._fsp_health_state = {}
-        # store list of fsp configs being used for each function mode
+
+        # store list of fsp configurations being used for each function mode
         self._corr_config = []
         self._pss_config = []
         self._pst_config = []
@@ -99,8 +165,12 @@ class SubarrayComponentManager:
         self._pss_fsp_list = []
         self._pst_fsp_list = []
         self._latest_scan_config=""
-        # self._published_output_links = False# ???
-        # self._last_received_vis_destination_address = "{}"#???
+
+        # TODO
+        # self._output_links_distribution = {"configID": ""} 
+        # self._published_output_links = False
+        # self._last_received_vis_destination_address = "{}"
+
         self._last_received_delay_model = "{}"
         self._last_received_jones_matrix = "{}"
         self._last_received_beam_weights = "{}"
@@ -118,14 +188,15 @@ class SubarrayComponentManager:
         # store the subscribed state change events as fsp_ID:[event_ID, event_ID] key:value pairs
         self._events_state_change_fsp = {}
 
+        self._vcc_state = {}
+        self._vcc_health_state = {}
+        self._fsp_state = {}
+        self._fsp_health_state = {}
+
         # for easy device-reference
         self._frequency_band_offset_stream_1 = 0
         self._frequency_band_offset_stream_2 = 0
         self._stream_tuning = [0, 0]
-
-        self.MIN_INT_TIME = const.MIN_INT_TIME
-        self.NUM_CHANNEL_GROUPS = const.NUM_CHANNEL_GROUPS
-        self.NUM_FINE_CHANNELS = const.NUM_FINE_CHANNELS
 
         # device proxy for easy reference to CBF controller
         self._proxy_cbf_controller = None
@@ -134,103 +205,135 @@ class SubarrayComponentManager:
         self._count_fsp = 0
         self._receptor_to_vcc = None
 
-        #proxies to subordinate devices
+        # proxies to subordinate devices
         self._proxies_vcc = []
+        self._proxies_assigned_vcc = []
         self._proxies_fsp = []
         self._proxies_fsp_corr_subarray = []
         self._proxies_fsp_pss_subarray = []
         self._proxies_fsp_pst_subarray = []
-
-        # Note vcc connected both individual and in group
-        self._proxies_assigned_vcc = []
-        self._proxies_assigned_fsp = []
-
-        # initialize groups
+        # group proxies to subordinate devices
+        # Note: VCC connected both individual and in group
         self._group_vcc = None
         self._group_fsp = None
         self._group_fsp_corr_subarray = None
         self._group_fsp_pss_subarray = None
         self._group_fsp_pst_subarray = None
 
-        if connect:
-            self.start_communicating()
+        self._component_resourced_callback = component_resourced_callback
+        self._component_configured_callback = component_configured_callback
+
+        super().__init__(
+            logger=logger,
+            push_change_event_callback=push_change_event_callback,
+            communication_status_changed_callback=communication_status_changed_callback,
+            component_power_mode_changed_callback=component_power_mode_changed_callback,
+            component_fault_callback=component_fault_callback,
+            obs_state_model=None
+        )
 
 
-    def start_communicating(self: SubarrayComponentManager) -> None:
+    def start_communicating(self: CbfSubarrayComponentManager) -> None:
         """Establish communication with the component, then start monitoring."""
-
         if self.connected:
             self._logger.info("Already connected.")
             return
-        
-        if self._proxy_cbf_controller is None:
-            self._proxy_cbf_controller = CbfDeviceProxy(
-                fqdn=self._fqdn_controller, logger=self._logger
-            )
-            self._controller_max_capabilities = dict(
-                pair.split(":") for pair in
-                self._proxy_cbf_controller.get_property("MaxCapabilities")["MaxCapabilities"]
-            )
-            self._count_vcc = int(self._controller_max_capabilities["VCC"])
-            self._count_fsp = int(self._controller_max_capabilities["FSP"])
-            self._receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
-                               self._proxy_cbf_controller.receptorToVcc)
 
-            self._fqdn_vcc = self._fqdn_vcc[:self._count_vcc]
-            self._fqdn_fsp = self._fqdn_fsp[:self._count_fsp]
-            self._fqdn_fsp_corr_subarray = self._fqdn_fsp_corr_subarray[:self._count_fsp]
-            self._fqdn_fsp_pss_subarray = self._fqdn_fsp_pss_subarray[:self._count_fsp]
-            self._fqdn_fsp_pst_subarray = self._fqdn_fsp_pst_subarray[:self._count_fsp]
+        super().start_communicating()
 
-        if len(self._proxies_vcc) == 0:
-            self._proxies_vcc = [
-                CbfDeviceProxy(fqdn=fqdn, logger=self._logger) 
-                for fqdn in self._fqdn_vcc
-            ]
-        if len(self._proxies_fsp) == 0:
-            self._proxies_fsp = [
-                CbfDeviceProxy(fqdn=fqdn, logger=self._logger)
-                for fqdn in self._fqdn_fsp
-            ]
-        if len(self._proxies_fsp_corr_subarray) == 0:
-            self._proxies_fsp_corr_subarray = [
-                CbfDeviceProxy(fqdn=fqdn, logger=self._logger)
-                for fqdn in self._fqdn_fsp_corr_subarray
-            ]
-        if len(self._proxies_fsp_pss_subarray) == 0:
-            self._proxies_fsp_pss_subarray = [
-                CbfDeviceProxy(fqdn=fqdn, logger=self._logger)
-                for fqdn in self._fqdn_fsp_pss_subarray
-            ]
-        if len(self._proxies_fsp_pst_subarray) == 0:
-            self._proxies_fsp_pst_subarray = [
-                CbfDeviceProxy(fqdn=fqdn, logger=self._logger)
-                for fqdn in self._fqdn_fsp_pst_subarray
-            ]
-        
-        if self._group_vcc is None:
-            self._group_vcc = CbfGroupProxy(name="VCC", logger=self._logger)
-        if self._group_fsp is None:
-            self._group_fsp = CbfGroupProxy(name="FSP",logger=self._logger)
-        if self._group_fsp_corr_subarray is None:
-            self._group_fsp_corr_subarray = CbfGroupProxy(
-                name="FSP Subarray Corr", logger=self._logger)
-        if self._group_fsp_pss_subarray is None:
-            self._group_fsp_pss_subarray = CbfGroupProxy(
-                name="FSP Subarray Pss", logger=self._logger)
-        if self._group_fsp_pst_subarray is None:
-            self._group_fsp_pst_subarray = CbfGroupProxy(
-                name="FSP Subarray Pst", logger=self._logger) 
+        try:
+            if self._proxy_cbf_controller is None:
+                self._proxy_cbf_controller = CbfDeviceProxy(
+                    fqdn=self._fqdn_controller, logger=self._logger
+                )
+                self._controller_max_capabilities = dict(
+                    pair.split(":") for pair in
+                    self._proxy_cbf_controller.get_property("MaxCapabilities")["MaxCapabilities"]
+                )
+                self._count_vcc = int(self._controller_max_capabilities["VCC"])
+                self._count_fsp = int(self._controller_max_capabilities["FSP"])
+                self._receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
+                                self._proxy_cbf_controller.receptorToVcc)
+
+                self._fqdn_vcc = self._fqdn_vcc[:self._count_vcc]
+                self._fqdn_fsp = self._fqdn_fsp[:self._count_fsp]
+                self._fqdn_fsp_corr_subarray = self._fqdn_fsp_corr_subarray[:self._count_fsp]
+                self._fqdn_fsp_pss_subarray = self._fqdn_fsp_pss_subarray[:self._count_fsp]
+                self._fqdn_fsp_pst_subarray = self._fqdn_fsp_pst_subarray[:self._count_fsp]
+
+            if len(self._proxies_vcc) == 0:
+                self._proxies_vcc = [
+                    CbfDeviceProxy(fqdn=fqdn, logger=self._logger) 
+                    for fqdn in self._fqdn_vcc
+                ]
+            if len(self._proxies_fsp) == 0:
+                self._proxies_fsp = [
+                    CbfDeviceProxy(fqdn=fqdn, logger=self._logger)
+                    for fqdn in self._fqdn_fsp
+                ]
+            if len(self._proxies_fsp_corr_subarray) == 0:
+                self._proxies_fsp_corr_subarray = [
+                    CbfDeviceProxy(fqdn=fqdn, logger=self._logger)
+                    for fqdn in self._fqdn_fsp_corr_subarray
+                ]
+            if len(self._proxies_fsp_pss_subarray) == 0:
+                self._proxies_fsp_pss_subarray = [
+                    CbfDeviceProxy(fqdn=fqdn, logger=self._logger)
+                    for fqdn in self._fqdn_fsp_pss_subarray
+                ]
+            if len(self._proxies_fsp_pst_subarray) == 0:
+                self._proxies_fsp_pst_subarray = [
+                    CbfDeviceProxy(fqdn=fqdn, logger=self._logger)
+                    for fqdn in self._fqdn_fsp_pst_subarray
+                ]
+
+            if self._group_vcc is None:
+                self._group_vcc = CbfGroupProxy(name="VCC", logger=self._logger)
+            if self._group_fsp is None:
+                self._group_fsp = CbfGroupProxy(name="FSP",logger=self._logger)
+            if self._group_fsp_corr_subarray is None:
+                self._group_fsp_corr_subarray = CbfGroupProxy(
+                    name="FSP Subarray Corr", logger=self._logger)
+            if self._group_fsp_pss_subarray is None:
+                self._group_fsp_pss_subarray = CbfGroupProxy(
+                    name="FSP Subarray Pss", logger=self._logger)
+            if self._group_fsp_pst_subarray is None:
+                self._group_fsp_pst_subarray = CbfGroupProxy(
+                    name="FSP Subarray Pst", logger=self._logger)
+
+        except tango.DevFailed as dev_failed:
+            self.update_component_power_mode(PowerMode.UNKNOWN)
+            self.update_communication_status(CommunicationStatus.NOT_ESTABLISHED)
+            self.update_component_fault(True)
+            raise ConnectionError(
+                f"Error in proxy connection."
+            ) from dev_failed
 
         self.connected = True
+        self.update_component_power_mode(PowerMode.ON)
+        self.update_communication_status(CommunicationStatus.ESTABLISHED)
 
-    def stop_communicating(self: SubarrayComponentManager) -> None:
+
+    def stop_communicating(self: CbfSubarrayComponentManager) -> None:
         """Stop communication with the component."""
+        super().stop_communicating()
         self.connected = False
+        self.update_component_power_mode(PowerMode.UNKNOWN)
+
+
+    def on(self: CbfSubarrayComponentManager) -> None:
+        self.update_component_power_mode(PowerMode.ON)
+
+
+    def off(self: CbfSubarrayComponentManager) -> None:
+        self.update_component_power_mode(PowerMode.OFF)
+
+    def standby(self: CbfSubarrayComponentManager) -> None:
+        self.update_component_power_mode(PowerMode.STANDBY)
 
 
     def _doppler_phase_correction_event_callback(
-        self: SubarrayComponentManager,
+        self: CbfSubarrayComponentManager,
         fqdn: str,
         name: str,
         value: Any,
@@ -257,7 +360,7 @@ class SubarrayComponentManager:
 
 
     def _delay_model_event_callback(
-        self: SubarrayComponentManager,
+        self: CbfSubarrayComponentManager,
         fqdn: str,
         name: str,
         value: Any,
@@ -304,7 +407,7 @@ class SubarrayComponentManager:
 
 
     def _update_delay_model(
-        self: SubarrayComponentManager,
+        self: CbfSubarrayComponentManager,
         epoch: int,
         model: str
     ) -> None:
@@ -336,7 +439,7 @@ class SubarrayComponentManager:
 
 
     def _jones_matrix_event_callback(
-        self: SubarrayComponentManager,
+        self: CbfSubarrayComponentManager,
         fqdn: str,
         name: str,
         value: Any,
@@ -383,7 +486,7 @@ class SubarrayComponentManager:
 
 
     def _update_jones_matrix(
-        self: SubarrayComponentManager,
+        self: CbfSubarrayComponentManager,
         epoch: int,
         matrix_details: str
     ) -> None:
@@ -416,7 +519,7 @@ class SubarrayComponentManager:
 
 
     def _beam_weights_event_callback(
-        self: SubarrayComponentManager,
+        self: CbfSubarrayComponentManager,
         fqdn: str,
         name: str,
         value: Any,
@@ -463,7 +566,7 @@ class SubarrayComponentManager:
 
 
     def _update_beam_weights(
-        self: SubarrayComponentManager,
+        self: CbfSubarrayComponentManager,
         epoch: int,
         weights_details: str
     ) -> None:
@@ -495,7 +598,7 @@ class SubarrayComponentManager:
 
 
     def _state_change_event_callback(
-        self: SubarrayComponentManager,
+        self: CbfSubarrayComponentManager,
         fqdn: str,
         name: str,
         value: Any,
@@ -541,7 +644,7 @@ class SubarrayComponentManager:
             self._logger.warning(f"None value for {fqdn}")
 
 
-    def validate_ip(self: SubarrayComponentManager, ip: str) -> bool:
+    def validate_ip(self: CbfSubarrayComponentManager, ip: str) -> bool:
         """
         Validate IP address format.
 
@@ -563,7 +666,7 @@ class SubarrayComponentManager:
 
 
     def raise_configure_scan_fatal_error(
-        self: SubarrayComponentManager,
+        self: CbfSubarrayComponentManager,
         msg: str
     ) -> Tuple[ResultCode, str]:
         """
@@ -581,7 +684,7 @@ class SubarrayComponentManager:
         )
 
 
-    def deconfigure(self:SubarrayComponentManager) -> Tuple[ResultCode, str]:
+    def deconfigure(self: CbfSubarrayComponentManager) -> Tuple[ResultCode, str]:
         """Completely deconfigure the subarray; all initialization performed 
         by by the ConfigureScan command must be 'undone' here."""
         
@@ -659,19 +762,22 @@ class SubarrayComponentManager:
         self._pss_config = []
         self._corr_config = []
 
-        self._config_ID = ""
-        self._frequency_band = 0
+        self._scan_id = 0
+        self._config_id = ""
+        self._frequency_band= 0
         self._last_received_delay_model  = "{}"
         self._last_received_jones_matrix = "{}"
         self._last_received_beam_weights = "{}"
+
+        self.update_component_configuration(False)
 
         self._ready = False
 
         return (ResultCode.OK, "Deconfiguration completed OK")
 
 
-    def validate_scan_configuration(
-        self: SubarrayComponentManager,
+    def validate_input(
+        self: CbfSubarrayComponentManager,
         argin: str
     ) -> Tuple[bool, str]:
         """
@@ -870,8 +976,6 @@ class SubarrayComponentManager:
                 if fsp["frequency_band"] in ["5a", "5b"]:
                     fsp["band_5_tuning"] = common_configuration["band_5_tuning"]
 
-                # --------------------------------------------------------
-
                 ########## CORR ##########
 
                 if fsp["function_mode"] == "CORR":
@@ -990,13 +1094,13 @@ class SubarrayComponentManager:
 
                     # Validate integrationTime.
                     if int(fsp["integration_factor"]) in list(
-                            range (self.MIN_INT_TIME, 10 * self.MIN_INT_TIME + 1, self.MIN_INT_TIME)
+                            range (const.MIN_INT_TIME, 10 * const.MIN_INT_TIME + 1, const.MIN_INT_TIME)
                     ):
                         pass
                     else:
                         msg = (
                             "'integrationTime' must be an integer in the range"
-                            f" [1, 10] multiplied by {self.MIN_INT_TIME}."
+                            f" [1, 10] multiplied by {const.MIN_INT_TIME}."
                         )
                         self._logger.error(msg)
                         return (False, msg)
@@ -1036,7 +1140,7 @@ class SubarrayComponentManager:
                             for i in range(0,len(fsp["channel_averaging_map"])):
                                 # validate channel ID of first channel in group
                                 if int(fsp["channel_averaging_map"][i][0]) == \
-                                        i * self.NUM_FINE_CHANNELS / self.NUM_CHANNEL_GROUPS:
+                                        i * const.NUM_FINE_CHANNELS / const.NUM_CHANNEL_GROUPS:
                                     pass  # the default value is already correct
                                 else:
                                     msg = (
@@ -1061,11 +1165,10 @@ class SubarrayComponentManager:
                             self._logger.error(msg)
                             return (False, msg)
 
-                    # TODO: validate destination addresses: outputHost, outputMac, outputPort?
-
-                # --------------------------------------------------------
+                    # TODO: validate destination addresses: outputHost, outputMac, outputPort
 
                 ########## PSS-BF ##########
+
                 # TODO currently only CORR function mode is supported outside of Mid.CBF MCS
                 if fsp["function_mode"] == "PSS-BF":
                     if int(fsp["search_window_id"]) in [1, 2]:
@@ -1140,10 +1243,9 @@ class SubarrayComponentManager:
                     else:
                         msg = "More than 192 SearchBeams defined in PSS-BF config"
                         return (False, msg)
-                
-                # --------------------------------------------------------
 
                 ########## PST-BF ##########
+
                 # TODO currently only CORR function mode is supported outside of Mid.CBF MCS
                 if fsp["function_mode"] == "PST-BF":
                     if len(fsp["timing_beam"]) <= 16:
@@ -1212,12 +1314,11 @@ class SubarrayComponentManager:
                 return (False, msg)
 
         # At this point, everything has been validated.
-
         return (True, "Scan configuration is valid.")
 
 
     def configure_scan(
-        self: SubarrayComponentManager,
+        self: CbfSubarrayComponentManager,
         argin: str
     ) -> Tuple[ResultCode, str]:
         """
@@ -1231,11 +1332,11 @@ class SubarrayComponentManager:
         configuration = copy.deepcopy(full_configuration["cbf"])
 
         # Configure configID.
-        self._config_ID = str(common_configuration["config_id"])
+        self._config_id = str(common_configuration["config_id"])
 
         # Configure frequencyBand.
         frequency_bands = ["1", "2", "3", "4", "5a", "5b"]
-        self._frequency_band = frequency_bands.index(common_configuration["frequency_band"])
+        self._frequency_band= frequency_bands.index(common_configuration["frequency_band"])
 
         data = tango.DeviceData()
         data.insert(tango.DevString, common_configuration["frequency_band"])
@@ -1265,7 +1366,7 @@ class SubarrayComponentManager:
             self._logger.warning(log_msg)
 
         config_dict = {
-            "config_id": self._config_ID,
+            "config_id": self._config_id,
             "frequency_band": common_configuration["frequency_band"],
             "band_5_tuning": self._stream_tuning,
             "frequency_band_offset_stream_1": self._frequency_band_offset_stream_1,
@@ -1414,7 +1515,7 @@ class SubarrayComponentManager:
 
         # NOTE:_corr_config is a list of fsp config JSON objects, each 
         #      augmented by a number of vcc-fsp common parameters 
-        #      created by the function validate_scan_configuration()
+        #      created by the function validate_input()
         if len(self._corr_config) != 0: 
             #self._proxy_corr_config.ConfigureFSP(json.dumps(self._corr_config))
             # Michelle - WIP - TODO - this is to replace the call to 
@@ -1459,13 +1560,15 @@ class SubarrayComponentManager:
         #save configuration into latestScanConfig
         self._latest_scan_config = str(configuration)
 
+        self.update_component_configuration(True)
+
         self._ready = True
 
         return (ResultCode.OK, "ConfigureScan command completed OK")
 
 
     def remove_receptor(
-        self: SubarrayComponentManager,
+        self: CbfSubarrayComponentManager,
         receptor_id: int
     ) -> Tuple[ResultCode, str]:
         """
@@ -1481,7 +1584,7 @@ class SubarrayComponentManager:
             vccID = self._receptor_to_vcc[receptor_id]
             vccFQDN = self._fqdn_vcc[vccID - 1]
             vccProxy = self._proxies_vcc[vccID - 1]
-            
+
             try:
                 # unsubscribe from events
                 vccProxy.remove_event(
@@ -1492,7 +1595,7 @@ class SubarrayComponentManager:
                     "healthState",
                     self._events_state_change_vcc[vccID][1]
                 )
-                
+
                 del self._events_state_change_vcc[vccID]
                 del self._vcc_state[vccFQDN]
                 del self._vcc_health_state[vccFQDN]
@@ -1503,20 +1606,22 @@ class SubarrayComponentManager:
                 msg = str(df.args[0].desc)
                 return (ResultCode.FAILED, msg)
 
-
             self._receptors.remove(receptor_id)
             self._proxies_assigned_vcc.remove(vccProxy)
             self._group_vcc.remove(vccFQDN)
-        
+
         else:
             msg = f"Error in remove_receptor; receptor {receptor_id} not found."
             return (ResultCode.FAILED, msg)
+
+        if len(self._receptors) == 0:
+            self._component_resourced_callback(False)
 
         return (ResultCode.OK, "remove_receptor completed OK")
 
 
     def add_receptor(
-        self: SubarrayComponentManager,
+        self: CbfSubarrayComponentManager,
         receptor_id: int
     ) -> Tuple[ResultCode, str]:
         """
@@ -1547,6 +1652,9 @@ class SubarrayComponentManager:
             if receptor_id not in self._receptors:
                 # change subarray membership of vcc
                 vccProxy.subarrayMembership = self._subarray_id
+
+                if len(self._receptors) == 0:
+                    self._component_resourced_callback(True)
 
                 self._receptors.append(int(receptor_id))
                 self._proxies_assigned_vcc.append(vccProxy)
@@ -1579,7 +1687,7 @@ class SubarrayComponentManager:
 
 
     def scan(
-        self: SubarrayComponentManager,
+        self: CbfSubarrayComponentManager,
         argin: str
     ) -> Tuple[ResultCode, str]:
         """
@@ -1592,6 +1700,7 @@ class SubarrayComponentManager:
             information purpose only.
         :rtype: (ResultCode, str)
         """
+        self._scan_id = int(argin)
         self._group_vcc.command_inout("Scan", argin)
         self._group_fsp_corr_subarray.command_inout("Scan", argin)
         self._group_fsp_pss_subarray.command_inout("Scan", argin)
@@ -1600,7 +1709,7 @@ class SubarrayComponentManager:
         return (ResultCode.STARTED, "Scan command successful")
 
 
-    def end_scan(self: SubarrayComponentManager) -> Tuple[ResultCode, str]:
+    def end_scan(self: CbfSubarrayComponentManager) -> Tuple[ResultCode, str]:
         """
         End subarray Scan operation.
 
@@ -1609,7 +1718,7 @@ class SubarrayComponentManager:
             information purpose only.
         :rtype: (ResultCode, str)
         """
-
+        self._scan_id = 0
         # EndScan for all subordinate devices:
         self._group_vcc.command_inout("EndScan")
         self._group_fsp_corr_subarray.command_inout("EndScan")
@@ -1617,3 +1726,19 @@ class SubarrayComponentManager:
         self._group_fsp_pst_subarray.command_inout("EndScan")
 
         return (ResultCode.OK, "EndScan command completed OK")
+
+
+    def update_component_configuration(
+        self: CbfSubarrayComponentManager, configured: bool
+    ) -> None:
+        """
+        Update the component configuration status, calling callbacks as required.
+
+        :param configured: whether the component is configured.
+        """
+        if configured:
+            # call component configured if not previously configured
+            if not self._ready:
+                self._component_configured_callback(True)
+        else:
+            self._component_configured_callback(False)

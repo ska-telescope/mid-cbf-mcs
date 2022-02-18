@@ -26,16 +26,13 @@ from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_mid_cbf_mcs.testing.mock.mock_attribute import MockAttributeBuilder
 from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder
 from ska_mid_cbf_mcs.testing.mock.mock_group import MockGroupBuilder
+from ska_mid_cbf_mcs.testing.mock.mock_callable import MockChangeEventCallback, MockCallable
 from ska_mid_cbf_mcs.testing.tango_harness import DeviceToLoadType, TangoHarness
 
-<<<<<<< tests/unit/subarray/conftest.py
 from ska_mid_cbf_mcs.subarray.subarray_device import CbfSubarray
-from ska_mid_cbf_mcs.subarray.subarray_component_manager import SubarrayComponentManager
-=======
-# uncomment the following after update to version 0.11.3 of base classes
-# from ska_mid_cbf_mcs.subarray.subarray_device import CbfSubarray
->>>>>>> tests/unit/subarray/conftest.py
-from ska_tango_base.control_model import HealthState, AdminMode, ObsState
+from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
+from ska_mid_cbf_mcs.subarray.subarray_component_manager import CbfSubarrayComponentManager
+from ska_tango_base.control_model import HealthState, AdminMode, ObsState, PowerMode
 from ska_tango_base.commands import ResultCode
 
 
@@ -59,29 +56,31 @@ def mock_component_manager(
     :return: a mock component manager
     """
     mock = mocker.Mock()
-    # mock.is_communicating = False
+    mock.is_communicating = False
     mock.connected = False
     mock._receptors = []
 
     def _start_communicating(mock: unittest.mock.Mock) -> None:
-        # mock.is_communicating = True
+        mock.is_communicating = True
         mock.connected = True
-        # mock._communication_status_changed_callback(CommunicationStatus.NOT_ESTABLISHED)
-        # mock._communication_status_changed_callback(CommunicationStatus.ESTABLISHED)
-        # mock._component_power_mode_changed_callback(PowerMode.OFF)
+        mock._communication_status_changed_callback(CommunicationStatus.NOT_ESTABLISHED)
+        mock._component_power_mode_changed_callback(PowerMode.ON)
+        mock._communication_status_changed_callback(CommunicationStatus.ESTABLISHED)
 
     def _raise_configure_scan_fatal_error() -> None:
         tango.Except.throw_exception(
             "Command failed ConfigureScan execution", tango.ErrSeverity.ERR
         )
 
-    def _deconfigure() -> Tuple[ResultCode, str]:
+    def _deconfigure(mock) -> Tuple[ResultCode, str]:
+        mock._component_configured_callback(True)
         return (ResultCode.OK, "Deconfiguration completed OK")
 
-    def _validate_scan_configuration(argin: str) -> Tuple[bool, str]:
+    def _validate_input() -> Tuple[bool, str]:
         return (True, "Scan configuration is valid.")
 
-    def _configure_scan(argin: str) -> Tuple[ResultCode, str]:
+    def _configure_scan(mock) -> Tuple[ResultCode, str]:
+        mock._component_configured_callback(True)
         return (ResultCode.OK, "ConfigureScan command completed OK")
 
     def _remove_receptor(
@@ -90,36 +89,43 @@ def mock_component_manager(
     ) -> Tuple[ResultCode, str]:
         if receptor_id in mock._receptors:
             mock._receptors.remove(receptor_id)
-            return (ResultCode.OK, "remove_receptor completed OK")
+            if len(mock._receptors) == 0:
+                mock._component_resourced_callback(False)
+            return (ResultCode.OK, "RemoveReceptors completed OK")
         else:
             return (ResultCode.FAILED, 
-            f"Error in SubarrayComponentManager; receptor {receptor_id} not found.")
+            f"Error in CbfSubarrayComponentManager; receptor {receptor_id} not found.")
 
     def _add_receptor(
         mock: unittest.mock.Mock,
         receptor_id: int
     ) -> Tuple[ResultCode, str]:
         if receptor_id not in mock._receptors:
+            if len(mock._receptors) == 0:
+                mock._component_resourced_callback(True)
             mock._receptors.append(receptor_id)
-            return (ResultCode.OK, "add_receptor completed OK")
+            return (ResultCode.OK, "AddReceptors completed OK")
         else:
             return (ResultCode.FAILED, 
             f"Receptor {receptor_id} already assigned to subarray component manager.")
 
-    def _scan(argin: str) -> Tuple[ResultCode, str]:
+    def _scan() -> Tuple[ResultCode, str]:
         return (ResultCode.STARTED, "Scan command successful")
 
     def _end_scan() -> Tuple[ResultCode, str]:
         return (ResultCode.OK, "EndScan command completed OK")
 
     mock.start_communicating.side_effect = lambda: _start_communicating(mock)
+    mock.on.side_effect = lambda: mock._component_power_mode_changed_callback(PowerMode.ON)
+    mock.off.side_effect = lambda: mock._component_power_mode_changed_callback(PowerMode.OFF)
+    mock.standby.side_effect = lambda: mock._component_power_mode_changed_callback(PowerMode.STANDBY)
     mock.raise_configure_scan_fatal_error.side_effect = lambda: _raise_configure_scan_fatal_error()
-    mock.deconfigure.side_effect = lambda: _deconfigure()
-    mock.validate_scan_configuration.side_effect = lambda argin: _validate_scan_configuration(argin)
-    mock.configure_scan.side_effect = lambda argin: _configure_scan(argin)
+    mock.deconfigure.side_effect = lambda: _deconfigure(mock)
+    mock.validate_scan_configuration.side_effect = lambda argin: _validate_input()
+    mock.configure_scan.side_effect = lambda argin: _configure_scan(mock)
     mock.remove_receptor.side_effect = lambda receptor_id: _remove_receptor(mock, receptor_id)
     mock.add_receptor.side_effect = lambda receptor_id: _add_receptor(mock, receptor_id)
-    mock.scan.side_effect = lambda argin: _scan(argin)
+    mock.scan.side_effect = lambda argin: _scan()
     mock.end_scan.side_effect = lambda: _end_scan()
 
     return mock
@@ -151,16 +157,24 @@ def patched_subarray_device_class(
 
             :return: a mock component manager
             """
-            #TODO implement in base class v0.11
-            #self._communication_status: Optional[CommunicationStatus] = None
-            #self._component_power_mode: Optional[PowerMode] = None
+            self._communication_status: Optional[CommunicationStatus] = None
+            self._component_power_mode: Optional[PowerMode] = None
 
-            # mock_component_manager._communication_status_changed_callback = (
-            #     self._communication_status_changed
-            # )
-            # mock_component_manager._component_power_mode_changed_callback = (
-            #     self._component_power_mode_changed
-            # )
+            mock_component_manager._component_resourced_callback = (
+                self._component_resourced
+            )
+            mock_component_manager._component_configured_callback = (
+                self._component_configured
+            )
+            mock_component_manager._communication_status_changed_callback = (
+                self._communication_status_changed
+            )
+            mock_component_manager._component_power_mode_changed_callback = (
+                self._component_power_mode_changed
+            )
+            mock_component_manager._component_fault_callback = (
+                self._component_fault
+            )
 
             return mock_component_manager
 
@@ -387,9 +401,14 @@ def initial_mocks(
     }
 
 @pytest.fixture()
-def subarray_component_manager() -> SubarrayComponentManager:
+def subarray_component_manager(
+    logger: logging.Logger,
+    tango_harness: TangoHarness, # sets the connection_factory
+    push_change_event_callback: MockChangeEventCallback,
+    component_callback: MockCallable
+) -> CbfSubarrayComponentManager:
     """Return a subarray component manager."""
-    return SubarrayComponentManager(
+    return CbfSubarrayComponentManager(
         subarray_id=1,
         controller="mid_csp_cbf/sub_elt/controller",
         vcc=[
@@ -422,6 +441,60 @@ def subarray_component_manager() -> SubarrayComponentManager:
             "mid_csp_cbf/fspPstSubarray/03_01",
             "mid_csp_cbf/fspPstSubarray/04_01"
         ],
-        logger=logging.getLogger(),
-        connect=False
+        logger=logger,
+        push_change_event_callback=push_change_event_callback,
+        component_configured_callback=component_callback,
+        component_resourced_callback=component_callback,
+        communication_status_changed_callback=component_callback,
+        component_power_mode_changed_callback=component_callback,
+        component_fault_callback=component_callback
     )
+
+@pytest.fixture()
+def component_callback(
+    mock_callback_factory: Callable[[], unittest.mock.Mock],
+) -> unittest.mock.Mock:
+    """
+    Return a mock callback for component manager use.
+
+    :param mock_callback_factory: fixture that provides a mock callback
+        factory (i.e. an object that returns mock callbacks when
+        called).
+
+    :return: a mock callback to be called.
+    """
+    return mock_callback_factory()
+
+@pytest.fixture()
+def push_change_event_callback_factory(
+    mock_change_event_callback_factory: Callable[[str], MockChangeEventCallback],
+) -> Callable[[], MockChangeEventCallback]:
+    """
+    Return a mock change event callback factory 
+
+    :param mock_change_event_callback_factory: fixture that provides a
+        mock change event callback factory (i.e. an object that returns
+        mock callbacks when called).
+
+    :return: a mock change event callback factory 
+    """
+
+    def _factory() -> MockChangeEventCallback:
+        return mock_change_event_callback_factory("adminMode")
+
+    return _factory
+
+
+@pytest.fixture()
+def push_change_event_callback(
+    push_change_event_callback_factory: Callable[[], MockChangeEventCallback],
+) -> MockChangeEventCallback:
+    """
+    Return a mock change event callback 
+
+    :param push_change_event_callback_factory: fixture that provides a mock
+        change event callback factory 
+
+    :return: a mock change event callback 
+    """
+    return push_change_event_callback_factory()
