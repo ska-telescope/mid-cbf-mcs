@@ -5,7 +5,7 @@
 # Distributed under the terms of the GPL license.
 # See LICENSE.txt for more info.
 
-"""This module contains pytest-specific test harness for ControllerComponentManager unit tests."""
+"""This module contains pytest-specific test harness for FspPssSubarrayComponentManager unit tests."""
 
 from __future__ import annotations
 
@@ -14,6 +14,7 @@ import logging
 import pytest
 import unittest
 from typing import Dict, Callable
+from ska_tango_base import subarray
 
 import tango
 
@@ -26,7 +27,7 @@ import functools
 
 # Local imports
 
-from ska_mid_cbf_mcs.controller.controller_component_manager import ControllerComponentManager 
+from ska_mid_cbf_mcs.fsp.fsp_pss_subarray_component_manager import FspPssSubarrayComponentManager 
 from ska_tango_base.control_model import PowerMode, SimulationMode
 from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder
 from ska_tango_base.commands import ResultCode
@@ -41,56 +42,37 @@ CONST_TEST_NUM_FSP = 4
 CONST_TEST_NUM_SUBARRAY = 1
 
 @pytest.fixture()
-def controller_component_manager(
+def fsp_pss_subarray_component_manager(
     logger: logging.Logger,
     tango_harness: TangoHarness, # sets the connection_factory
     push_change_event_callback: MockChangeEventCallback,
     communication_status_changed_callback: MockCallable,
     component_power_mode_changed_callback: MockCallable,
-) -> ControllerComponentManager:
+) -> FspPssSubarrayComponentManager:
     """
-    Return a Controller component manager.
+    Return a FspPssSubarray component manager.
 
     :param logger: the logger fixture
 
-    :return: a Controller component manager.
+    :return: a FspPssSubarray component manager.
     """
-
-    class MockTalonDxComponentManager:
-        """
-        Class to mock the TalonDxComponentManager.
-        """
-        def __init__(self: MockTalonDxComponentManager) -> None:
-            pass
-
-        def configure_talons(self: MockTalonDxComponentManager) -> ResultCode:
-            return ResultCode.OK
     
     f = open(file_path + "/../../data/test_fqdns.json")
     json_string = f.read().replace("\n", "")
     f.close()
     configuration = json.loads(json_string)
 
-    vcc = configuration["fqdn_vcc"]
-    fsp = configuration["fqdn_fsp"]
-    talon_lru = configuration["fqdn_talon_lru"]
+    vcc_fqdns_all = configuration["fqdn_vcc"]
+    cbf_controller_address = "mid_csp_cbf/sub_elt/controller"
+    subarray_id = 1
+    fsp_id = 1
 
-    def mock_get_num_capabilities():
-        num_capabilities = {
-            "VCC": CONST_TEST_NUM_VCC,
-            "FSP": CONST_TEST_NUM_FSP,
-        }
-        return num_capabilities
-
-    talondx_component_manager = MockTalonDxComponentManager()
-
-    return ControllerComponentManager( 
-            mock_get_num_capabilities,
-            vcc,
-            fsp,
-            talon_lru,
-            talondx_component_manager,
+    return FspPssSubarrayComponentManager( 
             logger,
+            cbf_controller_address,
+            vcc_fqdns_all,
+            subarray_id,
+            fsp_id,
             push_change_event_callback,
             communication_status_changed_callback,
             component_power_mode_changed_callback,
@@ -164,101 +146,40 @@ def push_change_event_callback(
     return push_change_event_callback_factory()
 
 @pytest.fixture()
+def mock_cbf_controller() -> unittest.mock.Mock:
+    builder = MockDeviceBuilder()
+    # Mock the MaxCapabilities Cbf Controller property
+    builder.add_property("MaxCapabilities", {'MaxCapabilities': ['VCC:4', 'FSP:4', 'Subarray:2']})
+    # Mock the receptortoVcc Cbf Controller attribute
+    # Note: Each receptor can only have one Vcc 
+    builder.add_attribute("receptorToVcc", ["1:1", "2:2", "3:3"])
+    return builder()
+
+@pytest.fixture()
 def mock_vcc() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
-    builder.set_state(tango.DevState.OFF)
-    builder.add_attribute("adminMode", AdminMode.ONLINE)
-    builder.add_attribute("healthState", HealthState.OK)
-    builder.add_attribute("subarrayMembership", 0)
-    builder.add_result_command("On", ResultCode.OK)
-    builder.add_result_command("Off", ResultCode.OK)
-    return builder()
-
-@pytest.fixture()
-def mock_vcc_group() -> unittest.mock.Mock:
-    builder = MockGroupBuilder()
-    builder.add_command("On", None)
-    builder.add_command("Off", None)
-    return builder()
-
-@pytest.fixture()
-def mock_fsp() -> unittest.mock.Mock:
-    builder = MockDeviceBuilder()
-    builder.set_state(tango.DevState.OFF)
-    builder.add_attribute("adminMode", AdminMode.ONLINE)
-    builder.add_attribute("healthState", HealthState.OK)
-    builder.add_attribute("subarrayMembership", 0)
-    builder.add_result_command("On", ResultCode.OK)
-    builder.add_result_command("Off", ResultCode.OK)
-    return builder()
-
-@pytest.fixture()
-def mock_fsp_group() -> unittest.mock.Mock:
-    builder = MockGroupBuilder()
-    builder.add_command("On", None)
-    builder.add_command("Off", None)
-    return builder()
-
-@pytest.fixture()
-def mock_subarray() -> unittest.mock.Mock:
-    builder = MockDeviceBuilder()
-    builder.set_state(tango.DevState.OFF)
-    builder.add_attribute("adminMode", AdminMode.ONLINE)
-    builder.add_attribute("healthState", HealthState.OK)
-    builder.add_result_command("On", ResultCode.OK)
-    builder.add_result_command("Off", ResultCode.OK)
-    return builder()
-
-@pytest.fixture()
-def mock_subarray_group() -> unittest.mock.Mock:
-    builder = MockGroupBuilder()
-    builder.add_command("On", None)
-    builder.add_command("Off", None)
-    return builder()
-
-@pytest.fixture()
-def mock_talon_lru() -> unittest.mock.Mock:
-    builder = MockDeviceBuilder()
-    builder.set_state(tango.DevState.OFF)
-    builder.add_attribute("adminMode", AdminMode.ONLINE)
-    builder.add_attribute("healthState", HealthState.OK)
-    builder.add_result_command("On", ResultCode.OK)
-    builder.add_result_command("Off", ResultCode.OK)
+    # Mock the Vcc subarrayMembership attribute
+    # The subarray ID for this unit test is hardcoded to 1
+    builder.add_attribute("subarrayMembership", 1)
     return builder()
 
 @pytest.fixture()
 def initial_mocks(
+    mock_cbf_controller: unittest.mock.Mock,
     mock_vcc: unittest.mock.Mock,
-    mock_vcc_group: unittest.mock.Mock,
-    mock_fsp: unittest.mock.Mock,
-    mock_fsp_group: unittest.mock.Mock,
-    mock_subarray: unittest.mock.Mock,
-    mock_subarray_group: unittest.mock.Mock,
-    mock_talon_lru: unittest.mock.Mock
 ) -> Dict[str, unittest.mock.Mock]:
     """
     Return a dictionary of device proxy mocks to pre-register.
 
+    :param mock_cbf_controller: a mock CbfController.
     :param mock_vcc: a mock Vcc that is powered off.
-    :param mock_fsp: a mock VccBand3 that is powered off.
-    :param mock_subarray: a mock VccBand4 that is powered off.
 
     :return: a dictionary of device proxy mocks to pre-register.
     """
     return {
+        "mid_csp_cbf/sub_elt/controller": mock_cbf_controller,
         "mid_csp_cbf/vcc/001": mock_vcc,
         "mid_csp_cbf/vcc/002": mock_vcc,
         "mid_csp_cbf/vcc/003": mock_vcc,
         "mid_csp_cbf/vcc/004": mock_vcc,
-        "mid_csp_cbf/fsp/01": mock_fsp,
-        "mid_csp_cbf/fsp/02": mock_fsp,
-        "mid_csp_cbf/fsp/03": mock_fsp,
-        "mid_csp_cbf/fsp/04": mock_fsp,
-        "mid_csp_cbf/sub_elt/subarray_01": mock_subarray,
-        "mid_csp_cbf/sub_elt/subarray_02": mock_subarray,
-        "mid_csp_cbf/sub_elt/subarray_03": mock_subarray,
-        "mid_csp_cbf/talon_lru/001": mock_talon_lru,
-        "VCC": mock_vcc_group,
-        "FSP": mock_fsp_group,
-        "CBF Subarray": mock_subarray_group,
     }
