@@ -59,6 +59,7 @@ def device_to_load(
         "device": "controller",
         "device_class": "CbfController",
         "proxy": CbfDeviceProxy,
+        "device_class": "CbfController",
         "patch": patched_controller_device_class,
     }
 

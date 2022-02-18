@@ -26,11 +26,10 @@ data_file_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
 import tango
 from tango import DevState
 import pytest
-from enum import Enum
 
 # SKA specific imports
 from ska_tango_base.commands import ResultCode
-from ska_mid_cbf_mcs.commons.global_enum import freq_band_dict
+from ska_mid_cbf_mcs.commons.global_enum import freq_band_dict, FspModes
 from ska_tango_base.control_model import LoggingLevel, HealthState
 from ska_tango_base.control_model import AdminMode, ObsState
 from ska_tango_base.base.base_device import _DEBUGGER_PORT
@@ -532,7 +531,6 @@ class TestCbfSubarray:
                             ].tdcDestinationAddress)] == tdcDestAddr
  
            # check configured attributes of FSPs, including states of function mode capabilities
-            FspModes = Enum('FspModes', 'CORR PSS_BF PST_BF VLBI')
             for fsp in configuration["cbf"]["fsp"]:
                 fsp_id = fsp["fsp_id"]
                 logging.info("Check for fsp id = {}".format(fsp_id))
@@ -736,8 +734,6 @@ class TestCbfSubarray:
             test_proxies.tm.jonesMatrix = json.dumps(jones_matrix)
             time.sleep(1)
 
-            FspModes = Enum('FspModes', 'CORR PSS_BF PST_BF VLBI')
-
             for epoch in range(len(jones_matrix_index_per_epoch)):
 
                 for receptor in jones_matrix["jonesMatrix"][jones_matrix_index_per_epoch[epoch]]["matrixDetails"]:
@@ -782,8 +778,6 @@ class TestCbfSubarray:
             # update delay model
             test_proxies.tm.delayModel = json.dumps(delay_model)
             time.sleep(1)
-
-            FspModes = Enum('FspModes', 'CORR PSS_BF PST_BF VLBI')
 
             for epoch in range(len(delay_model_index_per_epoch)):
 
@@ -1088,7 +1082,6 @@ class TestCbfSubarray:
             test_proxies.tm.delayModel = json.dumps(delay_model)
             time.sleep(1)
 
-            FspModes = Enum('FspModes', 'CORR PSS_BF PST_BF VLBI')
             epoch_to_scan = 1
             num_cols = 6
             num_rows_vcc = 26
@@ -1241,7 +1234,6 @@ class TestCbfSubarray:
             time.sleep(1)
 
             epoch_to_scan = 1
-            FspModes = Enum('FspModes', 'CORR PSS_BF PST_BF VLBI')
 
             for epoch in range(len(jones_matrix_index_per_epoch)):
 
