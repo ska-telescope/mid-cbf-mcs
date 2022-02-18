@@ -19,6 +19,7 @@ import tango
 
 # Local imports
 from ska_mid_cbf_mcs.talon_lru.talon_lru_device import TalonLRU
+from ska_tango_base.control_model import PowerMode
 from ska_mid_cbf_mcs.talon_lru.talon_lru_component_manager import TalonLRUComponentManager
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
 from ska_mid_cbf_mcs.testing.tango_harness import TangoHarness, DevicesToLoadType

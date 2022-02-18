@@ -1,4 +1,4 @@
-from enum import IntEnum, unique
+from enum import IntEnum, unique, Enum
 
 __all__ = [
     "const",
@@ -32,9 +32,18 @@ class Const:
         self.FREQUENCY_BAND_3_RANGE_HZ = (1.65* 10**9, 3.05 * 10**9)
         self.FREQUENCY_BAND_4_RANGE_Hz = (2.80* 10**9, 5.18 * 10**9)
 
+        self.DEFAULT_OUTPUT_HOST = [[0, "192.168.0.1"]]
+        self.DEFAULT_OUTPUT_MAC = [[0, "06-00-00-00-00-01"]]
+        self.DEFAULT_OUTPUT_PORT = [[0, 9000, 1]]
+
 const = Const()
 
 def freq_band_dict():
     freq_band_labels = ["1", "2", "3", "4", "5a", "5b"]
     freq_bands = dict(zip(freq_band_labels, range(len(freq_band_labels))))
     return freq_bands
+
+FspModes = Enum('FspModes', 'CORR PSS_BF PST_BF VLBI')
+
+
+
