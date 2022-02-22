@@ -80,10 +80,6 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         return self._stream_tuning
 
     @property
-    def stream_tuning(self):
-        return self._stream_tuning
-
-    @property
     def frequency_band_offset_stream_1(self):
         return self._frequency_band_offset_stream_1
 
