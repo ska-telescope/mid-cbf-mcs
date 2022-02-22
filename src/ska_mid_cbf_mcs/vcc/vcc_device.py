@@ -359,6 +359,11 @@ class Vcc(CspSubElementObsDevice):
             self.op_state_model.perform_action("component_disconnected")
         elif communication_status == CommunicationStatus.NOT_ESTABLISHED:
             self.op_state_model.perform_action("component_unknown")
+        elif communication_status == CommunicationStatus.ESTABLISHED \
+            and self._component_power_mode is not None:
+            self._component_power_mode_changed(self._component_power_mode)
+        else:  # self._component_power_mode is None
+            pass  # wait for a power mode update
 
     def _component_power_mode_changed(
         self: Vcc,

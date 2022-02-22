@@ -19,6 +19,7 @@ from typing import List, Tuple, Callable, Optional
 
 import logging
 import json
+from pyrsistent import v
 
 # tango imports
 import tango
@@ -43,27 +44,27 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
     """Component manager for Vcc class."""
 
     @property
-    def config_id(self):
+    def config_id(self: VccComponentManager) -> str:
         """Return the configuration id."""
         return self._config_id
 
     @config_id.setter
-    def config_id(self, config_id):
+    def config_id(self: VccComponentManager, config_id: str):
         """Set the configuration ID."""
         self._config_id = config_id
 
     @property
-    def scan_id(self):
+    def scan_id(self: VccComponentManager) -> int:
         """Return the scan id."""
         return self._scan_id
 
     @scan_id.setter
-    def scan_id(self, scan_id):
+    def scan_id(self: VccComponentManager, scan_id: int) -> None:
         """Set the scan ID."""
         self._scan_id = scan_id
 
     @property
-    def receptor_id(self):
+    def receptor_id(self: VccComponentManager) -> int:
         return self._receptor_id
 
     @receptor_id.setter
@@ -72,59 +73,59 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         self._receptor_id = receptor_id
 
     @property
-    def frequency_band(self):
+    def frequency_band(self: VccComponentManager) -> None:
         return self._frequency_band
 
     @property
-    def stream_tuning(self):
+    def stream_tuning(self: VccComponentManager) -> List[float]:
         return self._stream_tuning
 
     @property
-    def frequency_band_offset_stream_1(self):
+    def frequency_band_offset_stream_1(self: VccComponentManager):
         return self._frequency_band_offset_stream_1
 
     @property
-    def frequency_band_offset_stream_2(self):
+    def frequency_band_offset_stream_2(self: VccComponentManager):
         return self._frequency_band_offset_stream_2
 
     @property
-    def rfi_flagging_mask(self):
+    def rfi_flagging_mask(self: VccComponentManager) -> str:
         return self._rfi_flagging_mask
 
     @property
-    def scfo_band_1(self):
+    def scfo_band_1(self: VccComponentManager) -> int:
         return self._scfo_band_1
 
     @property
-    def scfo_band_2(self):
+    def scfo_band_2(self: VccComponentManager) -> int:
         return self._scfo_band_2
 
     @property
-    def scfo_band_3(self):
+    def scfo_band_3(self: VccComponentManager) -> int:
         return self._scfo_band_3
 
     @property
-    def scfo_band_4(self):
+    def scfo_band_4(self: VccComponentManager) -> int:
         return self._scfo_band_4
 
     @property
-    def scfo_band_5a(self):
+    def scfo_band_5a(self: VccComponentManager) -> int:
         return self._scfo_band_5a
 
     @property
-    def scfo_band_5b(self):
+    def scfo_band_5b(self: VccComponentManager) -> int:
         return self._scfo_band_5b
 
     @property
-    def jones_matrix(self):
+    def jones_matrix(self: VccComponentManager) -> List[List[float]]:
         return self._jones_matrix
 
     @property
-    def delay_model(self):
+    def delay_model(self: VccComponentManager) -> List[List[float]]:
         return self._delay_model
 
     @property
-    def doppler_phase_correction(self):
+    def doppler_phase_correction(self: VccComponentManager) -> List[float]:
         return self._doppler_phase_correction
 
 
