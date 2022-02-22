@@ -47,20 +47,90 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         """Return the configuration id."""
         return self._config_id
 
+    @config_id.setter
+    def config_id(self, config_id):
+        """Set the configuration ID."""
+        self._config_id = config_id
+
     @property
     def scan_id(self):
         """Return the scan id."""
         return self._scan_id
 
-    @config_id.setter
-    def config_id(self, config_id):
-        """Set the configuration id."""
-        self._config_id = config_id
-
     @scan_id.setter
     def scan_id(self, scan_id):
-        """Set the configuration id."""
+        """Set the scan ID."""
         self._scan_id = scan_id
+
+    @property
+    def receptor_id(self):
+        return self._receptor_id
+
+    @receptor_id.setter
+    def receptor_id(self, receptor_id):
+        """Set the receptor ID."""
+        self._receptor_id = receptor_id
+
+    @property
+    def frequency_band(self):
+        return self._frequency_band
+
+    @property
+    def stream_tuning(self):
+        return self._stream_tuning
+
+    @property
+    def stream_tuning(self):
+        return self._stream_tuning
+
+    @property
+    def frequency_band_offset_stream_1(self):
+        return self._frequency_band_offset_stream_1
+
+    @property
+    def frequency_band_offset_stream_2(self):
+        return self._frequency_band_offset_stream_2
+
+    @property
+    def rfi_flagging_mask(self):
+        return self._rfi_flagging_mask
+
+    @property
+    def scfo_band_1(self):
+        return self._scfo_band_1
+
+    @property
+    def scfo_band_2(self):
+        return self._scfo_band_2
+
+    @property
+    def scfo_band_3(self):
+        return self._scfo_band_3
+
+    @property
+    def scfo_band_4(self):
+        return self._scfo_band_4
+
+    @property
+    def scfo_band_5a(self):
+        return self._scfo_band_5a
+
+    @property
+    def scfo_band_5b(self):
+        return self._scfo_band_5b
+
+    @property
+    def jones_matrix(self):
+        return self._jones_matrix
+
+    @property
+    def delay_model(self):
+        return self._delay_model
+
+    @property
+    def doppler_phase_correction(self):
+        return self._doppler_phase_correction
+
 
     def __init__(
         self: VccComponentManager,
@@ -101,26 +171,26 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         self.connected = False
 
         # initialize attribute values
-        self.receptor_id = 0
+        self._receptor_id = 0
 
-        self.scan_id = 0
-        self.config_id = ""
+        self._scan_id = 0
+        self._config_id = ""
 
-        self.frequency_band = None
-        self.stream_tuning = (0, 0)
-        self.frequency_band_offset_stream_1 = 0
-        self.frequency_band_offset_stream_2 = 0
-        self.rfi_flagging_mask = ""
-        self.scfo_band_1 = 0
-        self.scfo_band_2 = 0
-        self.scfo_band_3 = 0
-        self.scfo_band_4 = 0
-        self.scfo_band_5a = 0
-        self.scfo_band_5b = 0
+        self._frequency_band = None
+        self._stream_tuning = (0, 0)
+        self._frequency_band_offset_stream_1 = 0
+        self._frequency_band_offset_stream_2 = 0
+        self._rfi_flagging_mask = ""
+        self._scfo_band_1 = 0
+        self._scfo_band_2 = 0
+        self._scfo_band_3 = 0
+        self._scfo_band_4 = 0
+        self._scfo_band_5a = 0
+        self._scfo_band_5b = 0
 
-        self.jones_matrix = [[0] * 16 for _ in range(26)]
-        self.delay_model = [[0] * 6 for _ in range(26)]
-        self.doppler_phase_correction = [0 for _ in range(4)]
+        self._jones_matrix = [[0] * 16 for _ in range(26)]
+        self._delay_model = [[0] * 6 for _ in range(26)]
+        self._doppler_phase_correction = [0 for _ in range(4)]
 
         # initialize list of band proxies and band -> index translation;
         # entry for each of: band 1 & 2, band 3, band 4, band 5
@@ -243,7 +313,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         self._logger.debug(
             "VccComponentManager.turn_on_band_device(" + freq_band_name + ")"
         )
-        self.frequency_band = freq_band_dict()[freq_band_name]
+        self._frequency_band = freq_band_dict()[freq_band_name]
         self._logger.info("VCC assigned frequency band: " + freq_band_name)
         try:
             for idx, band in enumerate(self._band_proxies):
@@ -276,7 +346,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         self._logger.debug(
             "VccComponentManager.turn_off_band_device(" + freq_band_name + ")"
         )
-        self.frequency_band = None
+        self._frequency_band = None
         self._logger.info("VCC frequency band unassigned")
         try:
             for idx, band in enumerate(self._band_proxies):
@@ -292,21 +362,21 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
 
     def deconfigure(self: VccComponentManager) -> None:
         """Deconfigure scan configuration parameters."""
-        self.doppler_phase_correction = [0 for _ in range(4)]
-        self.jones_matrix = [[0] * 16 for _ in range(26)]
-        self.delay_model = [[0] * 6 for _ in range(26)]
-        self.rfi_flagging_mask = ""
-        self.scfo_band_5b = 0
-        self.scfo_band_5a = 0
-        self.scfo_band_4 = 0
-        self.scfo_band_3 = 0
-        self.scfo_band_2 = 0
-        self.scfo_band_1 = 0
-        self.frequency_band_offset_stream_2 = 0
-        self.frequency_band_offset_stream_1 = 0
-        self.stream_tuning = (0, 0)
-        self.config_id = ""
-        self.scan_id = 0
+        self._doppler_phase_correction = [0 for _ in range(4)]
+        self._jones_matrix = [[0] * 16 for _ in range(26)]
+        self._delay_model = [[0] * 6 for _ in range(26)]
+        self._rfi_flagging_mask = ""
+        self._scfo_band_5b = 0
+        self._scfo_band_5a = 0
+        self._scfo_band_4 = 0
+        self._scfo_band_3 = 0
+        self._scfo_band_2 = 0
+        self._scfo_band_1 = 0
+        self._frequency_band_offset_stream_2 = 0
+        self._frequency_band_offset_stream_1 = 0
+        self._stream_tuning = (0, 0)
+        self._config_id = ""
+        self._scan_id = 0
 
     def configure_scan(self: VccComponentManager, argin: str) -> Tuple[ResultCode, str]:
 
@@ -321,7 +391,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         :rtype: (ResultCode, str)
         """
         configuration = json.loads(argin)
-        self.config_id = configuration["config_id"]
+        self._config_id = configuration["config_id"]
 
         # TODO: The frequency band attribute is optional but 
         # if not specified the previous frequency band set should be used 
@@ -329,61 +399,61 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         # band value needs to be stored, and if the frequency band is not
         # set in the config it should be replaced with the previous value.
         freq_band = freq_band_dict()[configuration["frequency_band"]]
-        if self.frequency_band != freq_band:
+        if self._frequency_band != freq_band:
             return (
                 ResultCode.FAILED,
                 f"Error in Vcc.ConfigureScan; scan configuration frequency band {freq_band} " + \
-                f"not the same as enabled band device {self.frequency_band}"
+                f"not the same as enabled band device {self._frequency_band}"
             )
         self._freq_band_name = configuration["frequency_band"]
-        if self.frequency_band in [4, 5]:
-                self.stream_tuning = \
+        if self._frequency_band in [4, 5]:
+                self._stream_tuning = \
                     configuration["band_5_tuning"]
 
-        self.frequency_band_offset_stream_1 = \
+        self._frequency_band_offset_stream_1 = \
             int(configuration["frequency_band_offset_stream_1"])
-        self.frequency_band_offset_stream_2 = \
+        self._frequency_band_offset_stream_2 = \
             int(configuration["frequency_band_offset_stream_2"])
         
         if "rfi_flagging_mask" in configuration:
-            self.rfi_flagging_mask = str(configuration["rfi_flagging_mask"])
+            self._rfi_flagging_mask = str(configuration["rfi_flagging_mask"])
         else:
             self._logger.warning("'rfiFlaggingMask' not given. Proceeding.")
 
         if "scfo_band_1" in configuration:
-            self.scfo_band_1 = int(configuration["scfo_band_1"])
+            self._scfo_band_1 = int(configuration["scfo_band_1"])
         else:
-            self.scfo_band_1 = 0
+            self._scfo_band_1 = 0
             self._logger.warning("'scfoBand1' not specified. Defaulting to 0.")
 
         if "scfo_band_2" in configuration:
-            self.scfo_band_2 = int(configuration["scfo_band_2"])
+            self._scfo_band_2 = int(configuration["scfo_band_2"])
         else:
-            self.scfo_band_2 = 0
+            self._scfo_band_2 = 0
             self._logger.warning("'scfoBand2' not specified. Defaulting to 0.")
 
         if "scfo_band_3" in configuration:
-            self.scfo_band_3 = int(configuration["scfo_band_3"])
+            self._scfo_band_3 = int(configuration["scfo_band_3"])
         else:
-            self.scfo_band_3 = 0
+            self._scfo_band_3 = 0
             self._logger.warning("'scfoBand3' not specified. Defaulting to 0.")
 
         if "scfo_band_4" in configuration:
-            self.scfo_band_4 = configuration["scfo_band_4"]
+            self._scfo_band_4 = configuration["scfo_band_4"]
         else:
-            self.scfo_band_4 = 0
+            self._scfo_band_4 = 0
             self._logger.warning("'scfoBand4' not specified. Defaulting to 0.")
 
         if "scfo_band_5a" in configuration:
-            self.scfo_band_5a = int(configuration["scfo_band_5a"])
+            self._scfo_band_5a = int(configuration["scfo_band_5a"])
         else:
-            self.scfo_band_5a = 0
+            self._scfo_band_5a = 0
             self._logger.warning("'scfoBand5a' not specified. Defaulting to 0.")
 
         if "scfo_band_5b" in configuration:
-            self.scfo_band_5b = int(configuration["scfo_band_5b"])
+            self._scfo_band_5b = int(configuration["scfo_band_5b"])
         else:
-            self.scfo_band_5b = 0
+            self._scfo_band_5b = 0
             self._logger.warning("'scfoBand5b' not specified. Defaulting to 0.")
 
         return (ResultCode.OK, "Vcc ConfigureScan command completed OK")
@@ -401,7 +471,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         :rtype: (ResultCode, str)
         """
 
-        self.scan_id = scan_id
+        self._scan_id = scan_id
         return (ResultCode.STARTED, "Vcc Scan command completed OK")
 
     def end_scan(self: VccComponentManager) -> Tuple[ResultCode, str]:
@@ -449,7 +519,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
 
         try:
             # Configure searchWindowTuning.
-            if self.frequency_band in list(range(4)):  # frequency band is not band 5
+            if self._frequency_band in list(range(4)):  # frequency band is not band 5
                 proxy_sw.searchWindowTuning = argin["search_window_tuning"]
 
                 start_freq_Hz, stop_freq_Hz = [
@@ -457,12 +527,12 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                     const.FREQUENCY_BAND_2_RANGE_HZ,
                     const.FREQUENCY_BAND_3_RANGE_HZ,
                     const.FREQUENCY_BAND_4_RANGE_HZ
-                ][self.frequency_band]
+                ][self._frequency_band]
 
-                if start_freq_Hz + self.frequency_band_offset_stream_1 + \
+                if start_freq_Hz + self._frequency_band_offset_stream_1 + \
                         const.SEARCH_WINDOW_BW_HZ / 2 <= \
                         int(argin["search_window_tuning"]) <= \
-                        stop_freq_Hz + self.frequency_band_offset_stream_1 - \
+                        stop_freq_Hz + self._frequency_band_offset_stream_1 - \
                         const.SEARCH_WINDOW_BW_HZ / 2:
                     # this is the acceptable range
                     pass
@@ -475,16 +545,16 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                 proxy_sw.searchWindowTuning = argin["search_window_tuning"]
 
                 frequency_band_range_1 = (
-                    self.stream_tuning[0] * 10 ** 9 + self.frequency_band_offset_stream_1 - \
+                    self._stream_tuning[0] * 10 ** 9 + self._frequency_band_offset_stream_1 - \
                     const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2,
-                    self.stream_tuning[0] * 10 ** 9 + self.frequency_band_offset_stream_1 + \
+                    self._stream_tuning[0] * 10 ** 9 + self._frequency_band_offset_stream_1 + \
                     const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2
                 )
 
                 frequency_band_range_2 = (
-                    self.stream_tuning[1] * 10 ** 9 + self.frequency_band_offset_stream_2 - \
+                    self._stream_tuning[1] * 10 ** 9 + self._frequency_band_offset_stream_2 - \
                     const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2,
-                    self.stream_tuning[1] * 10 ** 9 + self.frequency_band_offset_stream_2 + \
+                    self._stream_tuning[1] * 10 ** 9 + self._frequency_band_offset_stream_2 + \
                     const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2
                 )
 
@@ -538,7 +608,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                 # Configure tdcDestinationAddress.
                 if argin["tdc_enable"]:
                     for receptor in argin["tdc_destination_address"]:
-                        if receptor["receptor_id"] == self.receptor_id:
+                        if receptor["receptor_id"] == self._receptor_id:
                             # TODO: validate input
                             proxy_sw.tdcDestinationAddress = \
                                 receptor["tdc_destination_address"]
@@ -560,10 +630,10 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         argin = json.loads(argin)
 
         for dopplerDetails in argin:
-            if dopplerDetails["receptor"] == self.receptor_id:
+            if dopplerDetails["receptor"] == self._receptor_id:
                 coeff = dopplerDetails["dopplerCoeff"]
                 if len(coeff) == 4:
-                    self.doppler_phase_correction = coeff.copy()
+                    self._doppler_phase_correction = coeff.copy()
                 else:
                     log_msg = "Invalid length for 'dopplerCoeff' "
                     self._logger.error(log_msg)
@@ -578,19 +648,19 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         argin = json.loads(argin)
 
         for delayDetails in argin:
-            if delayDetails["receptor"] == self.receptor_id:
+            if delayDetails["receptor"] == self._receptor_id:
                 for frequency_slice in delayDetails["receptorDelayDetails"]:
                     fsid = frequency_slice["fsid"]
                     coeff = frequency_slice["delayCoeff"]
                     if 1 <= fsid <= 26:
                         if len(coeff) == 6:
-                            self.delay_model[fsid - 1] = coeff.copy()
+                            self._delay_model[fsid - 1] = coeff.copy()
                         else:
                             log_msg = "'delayCoeff' not valid for frequency slice " + \
-                                f"{fsid} of receptor {self.receptor_id}"
+                                f"{fsid} of receptor {self._receptor_id}"
                             self._logger.error(log_msg)
                     else:
-                        log_msg = f"'fsid' {fsid} not valid for receptor {self.receptor_id}"
+                        log_msg = f"'fsid' {fsid} not valid for receptor {self._receptor_id}"
                         self._logger.error(log_msg)
 
 
@@ -603,17 +673,17 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         argin = json.loads(argin)
 
         for receptor in argin:
-            if receptor["receptor"] == self.receptor_id:
+            if receptor["receptor"] == self._receptor_id:
                 for frequency_slice in receptor["receptorMatrix"]:
                     fs_id = frequency_slice["fsid"]
                     matrix = frequency_slice["matrix"]
                     if 1 <= fs_id <= 26:
                         if len(matrix) == 16:
-                            self.jones_matrix[fs_id-1] = matrix.copy()
+                            self._jones_matrix[fs_id-1] = matrix.copy()
                         else:
                             log_msg = f"'matrix' not valid for frequency slice {fs_id} " + \
-                                        f" of receptor {self.receptor_id}"
+                                        f" of receptor {self._receptor_id}"
                             self._logger.error(log_msg)
                     else:
-                        log_msg = f"'fsid' {fs_id} not valid for receptor {self.receptor_id}"
+                        log_msg = f"'fsid' {fs_id} not valid for receptor {self._receptor_id}"
                         self._logger.error(log_msg)
