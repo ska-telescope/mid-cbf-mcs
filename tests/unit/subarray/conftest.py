@@ -47,24 +47,24 @@ def device_under_test(tango_harness: TangoHarness) -> CbfDeviceProxy:
     """
     return tango_harness.get_device("mid_csp_cbf/sub_elt/subarray_01")
 
-# uncomment the following after update to version 0.11.3 of base classes
-# @pytest.fixture()
-# def device_to_load() -> DeviceToLoadType:
-#     """
-#     Fixture that specifies the device to be loaded for testing.
+@pytest.fixture()
+def device_to_load() -> DeviceToLoadType:
+    """
+    Fixture that specifies the device to be loaded for testing.
 
-#     :param patched_vcc_device_class: a class for a patched Vcc
-#         device with extra methods for testing purposes.
+    :param patched_vcc_device_class: a class for a patched Vcc
+        device with extra methods for testing purposes.
 
-#     :return: specification of the device to be loaded
-#     """
-#     return {
-#         "path": "charts/ska-mid-cbf/data/midcbfconfig.json",
-#         "package": "ska_mid_cbf_mcs",
-#         "device": "cbfsubarray-01",
-#         "proxy": CbfDeviceProxy,
-#         "patch": CbfSubarray,
-#     }
+    :return: specification of the device to be loaded
+    """
+    return {
+        "path": "charts/ska-mid-cbf/data/midcbfconfig.json",
+        "package": "ska_mid_cbf_mcs.subarray.subarray_device",
+        "device": "cbfsubarray-01",
+        "device_class": "CbfSubarray",
+        "proxy": CbfDeviceProxy,
+        "patch": CbfSubarray,
+    }
 
 @pytest.fixture()
 def mock_doppler() -> unittest.mock.Mock:

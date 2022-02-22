@@ -270,7 +270,7 @@ class CbfAttributeProxy:
         :return: the attribute value data
         """
         if event.err:
-            self._logger.warn(
+            self._logger.warning(
                 f"Received failed change event: error stack is {event.errors}."
             )
             return None
@@ -281,7 +281,7 @@ class CbfAttributeProxy:
                 f"{event.errors}."
             )
             warnings.warn(UserWarning(warning_message))
-            self._logger.warn(warning_message)
+            self._logger.warning(warning_message)
             return self._read()
         else:
             return event.attr_value
@@ -310,7 +310,7 @@ class CbfAttributeProxy:
             self._change_event_subscription_id = None
             self._logger.info(f"Unsubscribed from subscription {subscription_id}")
         else:
-            self._logger.warn(
+            self._logger.warning(
                 f"Unsubscribe error; proxy does not own subscription {subscription_id}"
             )
 

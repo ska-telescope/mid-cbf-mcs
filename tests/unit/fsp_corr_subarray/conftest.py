@@ -44,7 +44,6 @@ def device_under_test(tango_harness: TangoHarness) -> CbfDeviceProxy:
     """
     return tango_harness.get_device("mid_csp_cbf/fspCorrSubarray/01_01")
 
-# TODO: see TODO in src/ska_mid_cbf_mcs/testing/tango_harness.py
 @pytest.fixture()
 def device_to_load(
     patched_fsp_corr_subarray_device_class: Type[FspCorrSubarray]
@@ -56,7 +55,7 @@ def device_to_load(
     """
     return {
         "path": "charts/ska-mid-cbf/data/midcbfconfig.json",
-        "package": "ska_mid_cbf_mcs",
+        "package": "ska_mid_cbf_mcs.fsp.fsp_corr_subarray",
         "device": "fsp-01",
         "device_class": "FspCorrSubarray",
         "proxy": CbfDeviceProxy,

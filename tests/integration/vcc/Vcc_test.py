@@ -29,10 +29,9 @@ import pytest
 from ska_mid_cbf_mcs.commons.global_enum import freq_band_dict
 from ska_tango_base.control_model import LoggingLevel, HealthState
 from ska_tango_base.control_model import AdminMode, ObsState
+from ska_tango_base.commands import ResultCode
 
-@pytest.mark.skip(
-    reason="Not updated to version 0.11.3 of the base classes."
-)
+
 class TestVcc:
     """
     Test class for Vcc device class integration testing.
@@ -40,9 +39,9 @@ class TestVcc:
 
     @pytest.mark.parametrize(
         "vcc_id", 
-        [1]
+        [4]
     )
-    def test_Vcc_ConfigureScan_basic(
+    def test_Vcc_ConfigureScan_Scan_EndScan(
         self,
         test_proxies: pytest.fixture,
         vcc_id: int
@@ -50,23 +49,11 @@ class TestVcc:
         """
         Test a minimal successful scan configuration.
         """
+        # The VCC and bands should be in the ON state after being initialised
 
-        #TODO: The VCC and bands should be in the OFF state 
-        # after being initialised, should not have to manually
-        # turn off
+        test_proxies.vcc[vcc_id].loggingLevel = LoggingLevel.DEBUG
+        test_proxies.vcc[vcc_id].adminMode = AdminMode.ONLINE
 
-        test_proxies.vcc[vcc_id].Off()
-        test_proxies.wait_timeout_dev([test_proxies.vcc[vcc_id]], DevState.OFF, 3, 1)
-        assert test_proxies.vcc[vcc_id].State() == DevState.OFF
-
-        for band in ["12", "3", "4", "5"]:
-            test_proxies.vccBand[vcc_id][band].Off()
-            test_proxies.wait_timeout_dev(
-                [test_proxies.vccBand[vcc_id][band]], DevState.OFF, 3, 1
-            )
-            assert test_proxies.vccBand[vcc_id][band].State() == DevState.OFF
-
-        test_proxies.vcc[vcc_id].On()
         test_proxies.wait_timeout_dev([test_proxies.vcc[vcc_id]], DevState.ON, 3, 1)
         assert test_proxies.vcc[vcc_id].State() == DevState.ON
         
@@ -76,42 +63,23 @@ class TestVcc:
         configuration = copy.deepcopy(json.loads(json_str))
         f.close()
 
-        frequency_band = configuration["frequency_band"]
         frequency_bands = ["1", "2", "3", "4", "5a", "5b"]
-        freq_band_name =  frequency_bands[frequency_band]
-        test_proxies.vcc[vcc_id].TurnOnBandDevice(freq_band_name)
+        frequency_band = configuration["frequency_band"]
+        freq_band_index = dict(zip(freq_band_dict().keys(), ['12', '12', '3', '4', '5', '5']))
+        test_proxies.vcc[vcc_id].TurnOnBandDevice(frequency_band)
         time.sleep(2)
+        assert test_proxies.vcc[vcc_id].frequencyBand == freq_band_dict()[frequency_band]
 
-        if freq_band_name in ["1", "2"]:
-            assert test_proxies.vccBand[vcc_id]["12"].State() == DevState.ON
-            assert test_proxies.vccBand[vcc_id]["3"].State() == DevState.DISABLE
-            assert test_proxies.vccBand[vcc_id]["4"].State() == DevState.DISABLE
-            assert test_proxies.vccBand[vcc_id]["5"].State() == DevState.DISABLE
-        elif freq_band_name == "3":
-            assert test_proxies.vccBand[vcc_id]["12"].State() == DevState.DISABLE
-            assert test_proxies.vccBand[vcc_id]["3"].State() == DevState.ON
-            assert test_proxies.vccBand[vcc_id]["4"].State() == DevState.DISABLE
-            assert test_proxies.vccBand[vcc_id]["5"].State() == DevState.DISABLE
-        elif freq_band_name == "4":
-            assert test_proxies.vccBand[vcc_id]["12"].State() == DevState.DISABLE
-            assert test_proxies.vccBand[vcc_id]["3"].State() == DevState.DISABLE
-            assert test_proxies.vccBand[vcc_id]["4"].State() == DevState.ON
-            assert test_proxies.vccBand[vcc_id]["5"].State() == DevState.DISABLE
-        elif freq_band_name in ["5a", "5b"]:
-            assert test_proxies.vccBand[vcc_id]["12"].State() == DevState.DISABLE
-            assert test_proxies.vccBand[vcc_id]["3"].State() == DevState.DISABLE
-            assert test_proxies.vccBand[vcc_id]["4"].State() == DevState.DISABLE
-            assert test_proxies.vccBand[vcc_id]["5"].State() == DevState.ON
-        else:
-            # The frequency band name has been validated at this point
-            # so this shouldn't happen
-            logging.error("Incorrect frequency band: " + freq_band_name)
+        for band, proxy in test_proxies.vccBand[vcc_id].items():
+            if band == freq_band_index[frequency_band]:
+                assert proxy.state() == DevState.ON
+            else:
+                assert proxy.state() == DevState.OFF
 
         test_proxies.vcc[vcc_id].ConfigureScan(json_str)
         test_proxies.wait_timeout_obs([test_proxies.vcc[vcc_id]], ObsState.READY, 3, 1)
 
         assert test_proxies.vcc[vcc_id].configID == configuration["config_id"]
-        assert test_proxies.vcc[vcc_id].frequencyBand == configuration["frequency_band"]
         assert test_proxies.vcc[vcc_id].rfiFlaggingMask == str(configuration["rfi_flagging_mask"])
         if "band_5_tuning" in configuration:
                 if test_proxies.vcc[vcc_id].frequencyBand in [4, 5]:
@@ -129,22 +97,30 @@ class TestVcc:
         assert test_proxies.vcc[vcc_id].scfoBand5a == configuration["scfo_band_5a"]
         assert test_proxies.vcc[vcc_id].scfoBand5b == configuration["scfo_band_5b"]
 
-        test_proxies.vcc[vcc_id].TurnOffBandDevice(freq_band_name)
+        test_proxies.vcc[vcc_id].Scan("1")
+        test_proxies.wait_timeout_obs([test_proxies.vcc[vcc_id]], ObsState.SCANNING, 3, 1)
+        assert test_proxies.vcc[vcc_id].obsState == ObsState.SCANNING
+        test_proxies.vcc[vcc_id].EndScan()
+        test_proxies.wait_timeout_obs([test_proxies.vcc[vcc_id]], ObsState.READY, 3, 1)
+        assert test_proxies.vcc[vcc_id].obsState == ObsState.READY
+        
+        test_proxies.vcc[vcc_id].ConfigureScan(json_str)
+        test_proxies.wait_timeout_obs([test_proxies.vcc[vcc_id]], ObsState.READY, 3, 1)
+
+        test_proxies.vcc[vcc_id].Scan("1")
+        test_proxies.wait_timeout_obs([test_proxies.vcc[vcc_id]], ObsState.SCANNING, 3, 1)
+        assert test_proxies.vcc[vcc_id].obsState == ObsState.SCANNING
+        test_proxies.vcc[vcc_id].EndScan()
+        test_proxies.wait_timeout_obs([test_proxies.vcc[vcc_id]], ObsState.READY, 3, 1)
+        assert test_proxies.vcc[vcc_id].obsState == ObsState.READY
+
+        test_proxies.vcc[vcc_id].TurnOffBandDevice(frequency_band)
         time.sleep(2)
 
-        if freq_band_name in ["1", "2"]:
-            assert test_proxies.vccBand[vcc_id]["12"].State() == DevState.OFF
-        elif freq_band_name == "3":
-            assert test_proxies.vccBand[vcc_id]["3"].State() == DevState.OFF
-        elif freq_band_name == "4":
-            assert test_proxies.vccBand[vcc_id]["4"].State() == DevState.OFF
-        elif freq_band_name in ["5a", "5b"]:
-            assert test_proxies.vccBand[vcc_id]["5"].State() == DevState.OFF
-        else:
-            # The frequency band name has been validated at this point
-            # so this shouldn't happen
-            logging.error("Incorrect frequency band: " + freq_band_name)
+        for _, proxy in test_proxies.vccBand[vcc_id].items():
+            assert proxy.state() == DevState.OFF
 
-        test_proxies.vcc[vcc_id].Off()
+        (result_code, msg) = test_proxies.vcc[vcc_id].Off()
         test_proxies.wait_timeout_dev([test_proxies.vcc[vcc_id]], DevState.OFF, 3, 1)
         assert test_proxies.vcc[vcc_id].State() == DevState.OFF
+        assert result_code[0] == ResultCode.OK

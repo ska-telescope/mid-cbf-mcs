@@ -247,7 +247,8 @@ class CbfDeviceProxy:
             :return: whether the device has completed initialisation
             """
             try:
-                return device.state() != DevState.INIT
+                #TODO:  base class update v0.11.3 why this doesn't work with device.state()
+                return device.State() != DevState.INIT
             except DevFailed:
                 self._logger.debug(
                     "Caught a DevFailed exception while checking that the device has "
@@ -388,7 +389,7 @@ class CbfDeviceProxy:
                 f"{event.errors}."
             )
             warnings.warn(UserWarning(warning_message))
-            self._logger.warn(warning_message)
+            self._logger.warning(warning_message)
             return self._read(event.attr_name)
         else:
             return event.attr_value
@@ -424,7 +425,7 @@ class CbfDeviceProxy:
             del self._change_event_subscription_ids[attribute_key]
             self._logger.info(f"Unsubscribed from subscription {subscription_id}")
         else:
-            self._logger.warn(
+            self._logger.warning(
                 f"Unsubscribe error; proxy does not own subscription {subscription_id}"
             )
 
