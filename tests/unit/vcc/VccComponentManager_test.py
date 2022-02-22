@@ -15,14 +15,17 @@ from __future__ import annotations
 # Standard imports
 import os
 import json
+import tango
+import unittest
 import pytest
 
 from ska_mid_cbf_mcs.commons.global_enum import freq_band_dict
 from ska_tango_base.commands import ResultCode
 from ska_mid_cbf_mcs.vcc.vcc_component_manager import VccComponentManager
 
-# Data file path
+# Data file paths
 file_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
+vcc_param_path = os.path.dirname(os.path.abspath(__file__)) + "/../../../mnt/vcc_param/"
 
 class TestVccComponentManager:
     """
@@ -44,24 +47,46 @@ class TestVccComponentManager:
         vcc_component_manager.stop_communicating()
         assert not vcc_component_manager.connected
 
+
     @pytest.mark.parametrize(
         "frequency_band", ["1", "2", "3", "4", "5a", "5b"]
     )
     def test_configure_band(
         self: TestVccComponentManager,
         vcc_component_manager: VccComponentManager,
+        mock_vcc_controller: unittest.mock.Mock,
+        mock_vcc_band: unittest.mock.Mock,
         frequency_band: str
     ) -> None:
         """
         Test band configuration.
 
         :param vcc_component_manager: vcc component manager under test.
+        :param mock_vcc_controller: VCC controller mock fixture
+        :param mock_vcc_band: VCC band mock fixture
         :param frequency_band: frequency band ID
         """
         vcc_component_manager.start_communicating()
         vcc_component_manager.on()
+        mock_vcc_controller.InitCommonParameters.assert_next_call(
+            '{"frequency_offset_k": 0, "frequency_offset_delta_f": 0}'
+        )
+        
         (result_code, _) = vcc_component_manager.configure_band(frequency_band)
         assert result_code == ResultCode.OK
+
+        # Check for band configuration
+        mock_vcc_controller.ConfigureBand.assert_next_call(
+            freq_band_dict()[frequency_band]
+        )
+
+        # Check for internal parameter configuration
+        internal_params_file_name = vcc_param_path + "internal_params_receptor" + \
+            str(vcc_component_manager.receptor_id) + "_band" + frequency_band + ".json"
+        with open(internal_params_file_name, 'r') as f:
+            json_string = f.read()
+        mock_vcc_band.SetInternalParameters.assert_next_call(json_string)
+        
 
     @pytest.mark.parametrize(
         "config_file_name, \
@@ -190,6 +215,7 @@ class TestVccComponentManager:
                     if min_fs_id <= fs_id <= max_fs_id and len(coeff) == model_len:
                         assert vcc_component_manager.delay_model[fs_id - 1] == frequency_slice["delayCoeff"] 
 
+
     @pytest.mark.parametrize(
         "config_file_name",
         [
@@ -199,12 +225,16 @@ class TestVccComponentManager:
     def test_configure_scan(
         self: TestVccComponentManager,
         vcc_component_manager: VccComponentManager,
+        mock_vcc_controller: unittest.mock.Mock,
+        mock_vcc_band: unittest.mock.Mock,
         config_file_name: str
     ) -> None:
         """
         Test a minimal successful scan configuration.
 
         :param vcc_component_manager: vcc component manager under test.
+        :param mock_vcc_controller: VCC controller mock fixture
+        :param mock_vcc_band: VCC band mock fixture
         :param config_file_name: JSON file for the configuration 
         """
         vcc_component_manager.start_communicating()
@@ -218,13 +248,14 @@ class TestVccComponentManager:
         vcc_component_manager.configure_band(configuration["frequency_band"])
         assert vcc_component_manager.frequency_band == freq_band_dict()[configuration["frequency_band"]]
 
-        (result_code, msg) = vcc_component_manager.configure_scan(json_str)
+        (result_code, _) = vcc_component_manager.configure_scan(json_str)
         assert result_code == ResultCode.OK
         assert vcc_component_manager.config_id == configuration["config_id"]
         assert vcc_component_manager.stream_tuning == configuration["band_5_tuning"]
         assert vcc_component_manager.frequency_band_offset_stream_1 == configuration["frequency_band_offset_stream_1"]
         assert vcc_component_manager.frequency_band_offset_stream_2 == configuration["frequency_band_offset_stream_2"]
         assert vcc_component_manager.rfi_flagging_mask == str(configuration["rfi_flagging_mask"])
+        mock_vcc_band.ConfigureScan.assert_next_call(json_str)
 
         vcc_component_manager.deconfigure()
         assert vcc_component_manager.frequency_band == None
@@ -233,6 +264,58 @@ class TestVccComponentManager:
         assert vcc_component_manager.frequency_band_offset_stream_1 == 0
         assert vcc_component_manager.frequency_band_offset_stream_2 == 0
         assert vcc_component_manager.rfi_flagging_mask == ""
+        mock_vcc_controller.Unconfigure.assert_next_call()
+
+
+    @pytest.mark.parametrize(
+        "config_file_name",
+        [
+            "Vcc_ConfigureScan_basic.json"   
+        ]
+    )
+    def test_configure_scan_invalid_frequency_band(
+        self: TestVccComponentManager,
+        vcc_component_manager: VccComponentManager,
+        mock_vcc_band: unittest.mock.Mock,
+        config_file_name: str
+    ) -> None:
+        """
+        Test a scan configuration when the frequency band in the argument
+        does not match the last configured frequency band.
+
+        :param vcc_component_manager: vcc component manager under test.
+        :param mock_vcc_band: VCC band mock fixture
+        :param config_file_name: JSON file for the configuration 
+        """
+        vcc_component_manager.start_communicating()
+        vcc_component_manager.on()
+
+        f = open(file_path + config_file_name)
+        json_str = f.read().replace("\n", "")
+        f.close()
+
+        configuration = json.loads(json_str)
+        freq_band = freq_band_dict()[configuration["frequency_band"]]
+
+        # Try without configuring the band first
+        (result_code, msg) = vcc_component_manager.configure_scan(json_str)
+        assert result_code == ResultCode.FAILED
+        assert msg == f"Error in Vcc.ConfigureScan; scan configuration " \
+            f"frequency band {freq_band} not the same as enabled band device None"
+        mock_vcc_band.ConfigureScan.assert_not_called()
+
+        # Configure the band to something different
+        other_freq_bands = list(set(["1", "2", "3", "4", "5a", "5b"]) - 
+            set(configuration["frequency_band"]))
+        vcc_component_manager.configure_band(other_freq_bands[0])
+        assert vcc_component_manager.frequency_band == freq_band_dict()[other_freq_bands[0]]
+
+        (result_code, msg) = vcc_component_manager.configure_scan(json_str)
+        assert result_code == ResultCode.FAILED
+        assert msg == f"Error in Vcc.ConfigureScan; scan configuration " \
+            f"frequency band {freq_band} not the same as enabled band device " \
+            f"{vcc_component_manager.frequency_band}"
+        mock_vcc_band.ConfigureScan.assert_not_called()
 
 
     @pytest.mark.parametrize(
@@ -252,6 +335,7 @@ class TestVccComponentManager:
     def test_scan_end_scan_go_to_idle(
         self: TestVccComponentManager,
         vcc_component_manager: VccComponentManager,
+        mock_vcc_band: unittest.mock.Mock,
         config_file_name: str,
         scan_id: int
     ) -> None:
@@ -259,6 +343,7 @@ class TestVccComponentManager:
         Test Vcc's Scan command state changes.
 
         :param vcc_component_manager: vcc component manager under test.
+        :param mock_vcc_band: VCC band mock fixture
         :param config_file_name: JSON file for the configuration
         :param scan_id: the scan id
         """
@@ -273,12 +358,14 @@ class TestVccComponentManager:
         vcc_component_manager.configure_scan(json_string)
 
         # Use callable 'Scan'  API
-        (result_code, msg) = vcc_component_manager.scan(scan_id)
+        (result_code, _) = vcc_component_manager.scan(scan_id)
         assert result_code == ResultCode.STARTED
         assert vcc_component_manager.scan_id == scan_id
+        mock_vcc_band.Scan.assert_next_call(scan_id)
 
-        (result_code, msg) = vcc_component_manager.end_scan()
+        (result_code, _) = vcc_component_manager.end_scan()
         assert result_code == ResultCode.OK
+        mock_vcc_band.EndScan.assert_next_call()
 
 
     @pytest.mark.parametrize(
@@ -316,6 +403,39 @@ class TestVccComponentManager:
 
         # configure search window
         f = open(file_path + sw_config_file_name)
-        (result_code, msg) = vcc_component_manager.configure_search_window(f.read().replace("\n", ""))
+        (result_code, _) = vcc_component_manager.configure_search_window(f.read().replace("\n", ""))
         f.close()
         assert result_code == ResultCode.OK
+
+    @pytest.mark.parametrize(
+        "frequency_band", ["1", "2", "3", "4", "5a", "5b"]
+    )
+    def test_abort_obs_reset(
+        self: TestVccComponentManager,
+        vcc_component_manager: VccComponentManager,
+        mock_vcc_controller: unittest.mock.Mock,
+        mock_vcc_band: unittest.mock.Mock,
+        frequency_band: str
+    ) -> None:
+        """
+        Test Vcc's Abort and ObsReset commands.
+
+        :param vcc_component_manager: vcc component manager under test.
+        :param mock_vcc_controller: VCC controller mock fixture
+        :param mock_vcc_band: VCC band mock fixture
+        :param frequency_band: frequency band ID
+        """
+        self.test_configure_band(
+            vcc_component_manager,
+            mock_vcc_controller,
+            mock_vcc_band,
+            frequency_band
+        )
+
+        (result_code, _) = vcc_component_manager.abort()
+        mock_vcc_band.Abort.assert_next_call()
+        assert result_code == ResultCode.OK
+
+        (result_code, _) = vcc_component_manager.obsreset()
+        assert result_code == ResultCode.OK
+        mock_vcc_band.ObsReset.assert_next_call()

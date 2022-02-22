@@ -203,7 +203,7 @@ def mock_talon_lru() -> unittest.mock.Mock:
 @pytest.fixture()
 def mock_vcc_controller() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
-    builder.set_state(tango.DevState.ON)
+    builder.set_state(tango.DevState.INIT)
     builder.add_command("InitCommonParameters", None)
     builder.add_command("ConfigureBand", None)
     builder.add_command("Unconfigure", None)
@@ -212,7 +212,8 @@ def mock_vcc_controller() -> unittest.mock.Mock:
 @pytest.fixture()
 def mock_vcc_band() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
-    builder.set_state(tango.DevState.ON)
+    builder.set_state(tango.DevState.INIT)
+    builder.add_command("SetInternalParameters", None)
     builder.add_command("ConfigureScan", None)
     builder.add_command("Scan", None)
     builder.add_command("EndScan", None)
