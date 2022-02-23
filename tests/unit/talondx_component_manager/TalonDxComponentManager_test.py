@@ -19,9 +19,6 @@ from ska_tango_base.commands import ResultCode
     "talon_dx_component_manager",
     [{"sim_connect_error": False, "sim_cmd_error": False, "sim_scp_error": False}],
     indirect=True)
-@pytest.mark.skip(
-        reason="Not updated to version 0.11.3 of the base classes."
-)
 def test_configure_talons_ssh_success(
     talon_dx_component_manager: TalonDxComponentManager,
     tango_harness: TangoHarness
@@ -42,9 +39,6 @@ def test_configure_talons_ssh_success(
     "talon_dx_component_manager",
     [{"sim_connect_error": True, "sim_cmd_error": False, "sim_scp_error": False}],
     indirect=True)
-@pytest.mark.skip(
-        reason="Not updated to version 0.11.3 of the base classes."
-)
 def test_configure_talons_ssh_fail(
     talon_dx_component_manager: TalonDxComponentManager
 ) -> None:
@@ -59,9 +53,6 @@ def test_configure_talons_ssh_fail(
     "talon_dx_component_manager",
     [{"sim_connect_error": False, "sim_cmd_error": True, "sim_scp_error": False}],
     indirect=True)
-@pytest.mark.skip(
-        reason="Not updated to version 0.11.3 of the base classes."
-)
 def test_configure_talons_ssh_cmd_fail(
     talon_dx_component_manager: TalonDxComponentManager
 ) -> None:
@@ -76,9 +67,6 @@ def test_configure_talons_ssh_cmd_fail(
     "talon_dx_component_manager",
     [{"sim_connect_error": False, "sim_cmd_error": False, "sim_scp_error": True}],
     indirect=True)
-@pytest.mark.skip(
-        reason="Not updated to version 0.11.3 of the base classes."
-)
 def test_configure_talons_sco_fail(
     talon_dx_component_manager: TalonDxComponentManager
 ) -> None:

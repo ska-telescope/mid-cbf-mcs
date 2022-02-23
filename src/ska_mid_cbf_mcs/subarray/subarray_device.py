@@ -53,7 +53,12 @@ class CbfSubarray(CspSubElementSubarray):
         """
         super().init_command_objects()
 
-        device_args = (self, self.op_state_model, self.obs_state_model, self.logger)
+        device_args = (
+            self.component_manager,
+            self.op_state_model,
+            self.obs_state_model,
+            self.logger
+        )
 
         self.register_command_object(
             "AddReceptors",
@@ -266,8 +271,9 @@ class CbfSubarray(CspSubElementSubarray):
             fsp_pst_sub=self.FspPstSubarray,
             logger=self.logger,
             push_change_event_callback=self.push_change_event,
-            component_configured_callback=self._component_configured,
             component_resourced_callback=self._component_resourced,
+            component_configured_callback=self._component_configured,
+            component_scanning_callback=self._component_scanning,
             communication_status_changed_callback=self._communication_status_changed,
             component_power_mode_changed_callback=self._component_power_mode_changed,
             component_fault_callback=self._component_fault
@@ -397,13 +403,18 @@ class CbfSubarray(CspSubElementSubarray):
             self.op_state_model.perform_action(action_map[power_mode])
 
 
-    def _component_fault(self: CbfSubarray, faulty: bool) -> None:
+    def _component_fault(self: CbfSubarray, faulty: bool, type: str) -> None:
         """
         Handle component fault
+
+        :param faulty: whether the component has faulted.
+        :param type: type of component fault, "op" or "obs".
         """
         if faulty:
-            self.op_state_model.perform_action("component_fault")
-            self.obs_state_model.perform_action("component_obsfault")
+            if type == "op":
+                self.op_state_model.perform_action("component_fault")
+            elif type == "obs":
+                self.obs_state_model.perform_action("component_obsfault")
             self.set_status("The device is in FAULT state.")
         else:
             self.set_status("The device has recovered from FAULT state.")
@@ -516,6 +527,7 @@ class CbfSubarray(CspSubElementSubarray):
         A class for CbfSubarray's RemoveReceptors() command.
         Equivalent to the ReleaseResourcesCommand in ADR-8.
         """
+
         def do(
             self: CbfSubarray.RemoveReceptorsCommand,
             argin: List[int]
@@ -529,23 +541,8 @@ class CbfSubarray(CspSubElementSubarray):
                 information purpose only.
             :rtype: (ResultCode, str)
             """
-            device = self.target
-            return_code = ResultCode.OK
-            msg = "RemoveReceptors command completed OK"
-
-            for receptorID in argin:
-                # check for invalid receptorID
-                if not 0 < receptorID <= const.MAX_VCC:
-                    msg = f"Invalid receptor ID {receptorID}. Skipping."
-                    self.logger.warning(msg)
-                else:
-                    (result_code, msg) = device.component_manager.remove_receptor(receptorID)
-                    if result_code == ResultCode.FAILED:
-                        return_code = ResultCode.FAILED
-                        device.logger.warning(msg)
-
-            device.logger.info(msg)
-            return (return_code, msg)
+            component_manager = self.target
+            return component_manager.remove_receptors(argin)
 
     @command(
         dtype_in=('uint16',),
@@ -576,6 +573,7 @@ class CbfSubarray(CspSubElementSubarray):
         """
         A class for CbfSubarray's RemoveAllReceptors() command.
         """
+
         def do(
             self: CbfSubarray.RemoveAllReceptorsCommand
         ) -> Tuple[ResultCode, str]:
@@ -587,8 +585,8 @@ class CbfSubarray(CspSubElementSubarray):
                 information purpose only.
             :rtype: (ResultCode, str)
             """
-            device = self.target
-            return device.component_manager.remove_all_receptors()
+            component_manager = self.target
+            return component_manager.remove_all_receptors()
 
     @command(
         dtype_out='DevVarLongStringArray',
@@ -613,11 +611,10 @@ class CbfSubarray(CspSubElementSubarray):
 
 
     class AddReceptorsCommand(CspSubElementSubarray.AssignResourcesCommand):
-        # NOTE: doesn't inherit CspSubElementSubarray._ResourcingCommand 
-        # because will give error on len(self.target); TODO: to resolve
         """
         A class for CbfSubarray's AddReceptors() command.
         """
+
         def do(
             self: CbfSubarray.AddReceptorsCommand,
             argin: List[int]
@@ -631,24 +628,8 @@ class CbfSubarray(CspSubElementSubarray):
                 information purpose only.
             :rtype: (ResultCode, str)
             """
-            device = self.target
-
-            return_code = ResultCode.OK
-            msg = "AddReceptorsCommand completed OK"
-
-            for receptorID in argin:
-                # check for invalid receptorID
-                if not 0 < receptorID <= const.MAX_VCC:
-                    msg = f"Invalid receptor ID {receptorID}. Skipping."
-                    self.logger.warning(msg)
-                else:
-                    (result_code, msg) = device.component_manager.add_receptor(receptorID)
-                    if result_code == ResultCode.FAILED:
-                        return_code = ResultCode.FAILED
-                        device.logger.warning(msg)
-
-            device.logger.info(msg)
-            return (return_code, msg)
+            component_manager = self.target
+            return component_manager.add_receptors(argin)
 
     @command(
         dtype_in=('uint16',),
@@ -695,10 +676,10 @@ class CbfSubarray(CspSubElementSubarray):
                 information purpose only.
             :rtype: (ResultCode, str)
             """
-            device = self.target
+            component_manager = self.target
 
             # Call this just to release all FSPs and unsubscribe to events.
-            (result_code, msg) = device.component_manager.deconfigure()
+            (result_code, msg) = component_manager.deconfigure()
             if result_code == ResultCode.FAILED:
                 return (result_code, msg)
 
@@ -718,11 +699,7 @@ class CbfSubarray(CspSubElementSubarray):
             # Configure components
             full_configuration["common"] = copy.deepcopy(common_configuration)
             full_configuration["cbf"] = copy.deepcopy(configuration)
-            (result_code, message) = device.component_manager.configure_scan(json.dumps(full_configuration))
-
-            if result_code == ResultCode.OK:
-                # store the configuration on command success
-                device._last_scan_configuration = argin
+            (result_code, message) = component_manager.configure_scan(json.dumps(full_configuration))
 
             return (result_code, message)
 
@@ -823,7 +800,8 @@ class CbfSubarray(CspSubElementSubarray):
             # At this point, validate FSP, VCC, subscription parameters
             full_configuration["common"] = copy.deepcopy(common_configuration)
             full_configuration["cbf"] = copy.deepcopy(configuration)
-            return self.target.component_manager.validate_input(json.dumps(full_configuration))
+            component_manager = self.target
+            return component_manager.validate_input(json.dumps(full_configuration))
 
 
     @command(
@@ -854,8 +832,11 @@ class CbfSubarray(CspSubElementSubarray):
             self.component_manager.raise_configure_scan_fatal_error(msg)
         self.logger.info(msg)
 
-        (return_code, message) = command(argin)
-        return [[return_code], [message]]
+        (result_code, message) = command(argin)
+        if result_code == ResultCode.OK:
+            # store the configuration on command success
+            self._last_scan_configuration = argin
+        return [[result_code], [message]]
 
 
     class ScanCommand(CspSubElementSubarray.ScanCommand):
@@ -876,13 +857,9 @@ class CbfSubarray(CspSubElementSubarray):
                 information purpose only.
             :rtype: (ResultCode, str)
             """
-            device = self.target
+            component_manager = self.target
             scan = json.loads(argin)
-            (result_code, msg) =  device.component_manager.scan(scan["scan_id"])
-            
-            if result_code == ResultCode.STARTED:
-                device._component_scanning(True)
-            
+            (result_code, msg) =  component_manager.scan(scan["scan_id"])
             return (result_code, msg)
 
 
@@ -899,48 +876,9 @@ class CbfSubarray(CspSubElementSubarray):
                 information purpose only.
             :rtype: (ResultCode, str)
             """
-            device = self.target
-
-            (result_code, msg) =  device.component_manager.end_scan()
-            
-            if result_code == ResultCode.OK:
-                device._component_scanning(False)
-
+            component_manager = self.target
+            (result_code, msg) =  component_manager.end_scan()
             return (result_code, msg)
-
-
-    # # TODO: Remove GoToIdleCommand in favour of Base
-    # class GoToIdleCommand(CspSubElementSubarray.EndCommand):
-    #     """
-    #     A class for CspSubElementSubarray's GoToIdle() command.
-    #     """
-    #     def do(self: CbfSubarray.GoToIdleCommand) -> Tuple[ResultCode, str]:
-    #         """
-    #         Stateless hook for GoToIdle() command functionality.
-            
-    #         :return: A tuple containing a return code and a string
-    #             message indicating status. The message is for
-    #             information purpose only.
-    #         :rtype: (ResultCode, str)
-    #         """
-    #         return super().do()
-
-    # @command(
-    #     dtype_out='DevVarLongStringArray',
-    #     doc_out="(ReturnType, 'informational message')",
-    # )
-    # def GoToIdle(self: CbfSubarray) -> Tuple[ResultCode, str]:
-    #     """
-    #     deconfigure a scan, set ObsState to IDLE
-
-    #     :return: A tuple containing a return code and a string
-    #             message indicating status. The message is for
-    #             information purpose only.
-    #     :rtype: (ResultCode, str)
-    #     """
-    #     command = self.get_command_object("GoToIdle")
-    #     (return_code, message) = command()
-    #     return [[return_code], [message]]
 
 
 # ----------

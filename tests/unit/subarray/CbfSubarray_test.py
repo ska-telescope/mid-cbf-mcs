@@ -299,9 +299,9 @@ class TestCbfSubarray:
         assert device_under_test.obsState == ObsState.IDLE
 
         # try removing a receptor not assigned to subarray 1
-        result = device_under_test.RemoveReceptors(invalid_receptors_to_remove)
+        device_under_test.RemoveReceptors(invalid_receptors_to_remove)
         time.sleep(0.1)
-        assert result[0][0] == ResultCode.FAILED
+        assert device_under_test.obsState == ObsState.IDLE
     
     @pytest.mark.parametrize(
         "receptor_ids", 

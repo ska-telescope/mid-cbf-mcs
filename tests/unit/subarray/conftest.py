@@ -244,7 +244,7 @@ def device_to_load(
         "device": "cbfsubarray-01",
         "device_class": "CbfSubarray",
         "proxy": CbfDeviceProxy,
-        "patch": patched_subarray_device_class,
+        "patch": None,
     }
 
 
@@ -463,8 +463,9 @@ def subarray_component_manager(
         ],
         logger=logger,
         push_change_event_callback=push_change_event_callback,
-        component_configured_callback=component_callback,
         component_resourced_callback=component_callback,
+        component_configured_callback=component_callback,
+        component_scanning_callback=component_callback,
         communication_status_changed_callback=component_callback,
         component_power_mode_changed_callback=component_callback,
         component_fault_callback=component_callback

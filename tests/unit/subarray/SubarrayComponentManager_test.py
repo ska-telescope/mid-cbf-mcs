@@ -59,7 +59,7 @@ class TestCbfSubarrayComponentManager:
             )
         ]
     )
-    def test_add_remove_receptor_valid(
+    def test_add_remove_receptors_valid(
         self: TestCbfSubarrayComponentManager,
         subarray_component_manager: CbfSubarrayComponentManager,
         tango_harness: TangoHarness,
@@ -73,16 +73,14 @@ class TestCbfSubarrayComponentManager:
         """
         subarray_component_manager.start_communicating()
 
-        for receptor in receptor_ids:
-            subarray_component_manager.add_receptor(receptor)
+        subarray_component_manager.add_receptors(receptor_ids)
 
-        assert [subarray_component_manager._receptors[i]
+        assert [subarray_component_manager.receptors[i]
             for i in range(len(receptor_ids))] == receptor_ids
 
-        for receptor in receptor_ids:
-            subarray_component_manager.remove_receptor(receptor)
+        subarray_component_manager.remove_receptors(receptor_ids)
 
-        assert subarray_component_manager._receptors == []
+        assert subarray_component_manager.receptors == []
 
     @pytest.mark.parametrize(
         "receptor_ids", 
@@ -115,14 +113,14 @@ class TestCbfSubarrayComponentManager:
             vcc_proxy = subarray_component_manager._proxies_vcc[vcc_id - 1]
             vcc_proxy.subarrayMembership = subarray_component_manager.subarray_id + 1
 
-            subarray_component_manager.add_receptor(receptor)
+        subarray_component_manager.add_receptors(receptor_ids[:-1])
 
         assert subarray_component_manager.receptors == []
 
         # try adding same receptor twice
-        subarray_component_manager.add_receptor(receptor_ids[-1])
-        result = subarray_component_manager.add_receptor(receptor_ids[-1])
-        assert result[0] == ResultCode.FAILED
+        subarray_component_manager.add_receptors([receptor_ids[-1]])
+        subarray_component_manager.add_receptors([receptor_ids[-1]])
+        assert subarray_component_manager.receptors == receptor_ids
 
     @pytest.mark.parametrize(
         "receptor_ids", 
@@ -150,15 +148,14 @@ class TestCbfSubarrayComponentManager:
         subarray_component_manager.start_communicating()
 
         # try removing receptors before assignment
-        for receptor in receptor_ids:
-            result = subarray_component_manager.remove_receptor(receptor)
-            assert result[0] == ResultCode.FAILED
+        assert subarray_component_manager.receptors == []
+        subarray_component_manager.remove_receptors(receptor_ids)
+        assert subarray_component_manager.receptors == []
 
         # try removing unassigned receptor
-        for receptor in receptor_ids[:-1]:
-            subarray_component_manager.add_receptor(receptor)
-        result = subarray_component_manager.remove_receptor(receptor_ids[-1])
-        assert result[0] == ResultCode.FAILED
+        subarray_component_manager.add_receptors(receptor_ids[:-1])
+        subarray_component_manager.remove_receptors([receptor_ids[-1]])
+        assert subarray_component_manager.receptors == receptor_ids[:-1]
 
 
     @pytest.mark.parametrize(
@@ -192,8 +189,7 @@ class TestCbfSubarrayComponentManager:
         assert result[0] == ResultCode.FAILED
 
         # remove all receptors
-        for receptor in receptor_ids:
-            subarray_component_manager.add_receptor(receptor)
+        subarray_component_manager.add_receptors(receptor_ids)
         result = subarray_component_manager.remove_all_receptors()
         assert result[0] == ResultCode.OK
         assert subarray_component_manager.receptors == []
@@ -230,8 +226,7 @@ class TestCbfSubarrayComponentManager:
         f.close()
         config_json = json.loads(config_string)
 
-        for receptor in receptor_ids:
-            subarray_component_manager.add_receptor(receptor)
+        subarray_component_manager.add_receptors(receptor_ids)
 
         result = subarray_component_manager.validate_input(config_string)
         assert result[0]

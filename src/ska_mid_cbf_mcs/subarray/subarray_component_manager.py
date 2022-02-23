@@ -105,6 +105,7 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
         push_change_event_callback: Optional[Callable],
         component_resourced_callback: Callable[[bool], None],
         component_configured_callback: Callable[[bool], None],
+        component_scanning_callback: Callable[[bool], None],
         communication_status_changed_callback: Callable[[CommunicationStatus], None],
         component_power_mode_changed_callback: Callable[[PowerMode], None],
         component_fault_callback: Callable
@@ -125,6 +126,8 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
             the component resource status changes
         :param component_configured_callback: callback to be called when 
             the component configuration status changes
+        :param component_scanning_callback: callback to be called when 
+            the component scanning status changes
         :param communication_status_changed_callback: callback to be
             called when the status of the communications channel between the 
             component manager and its component changes
@@ -142,6 +145,8 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
         self._fqdn_fsp_pss_subarray = fsp_pss_sub
         self._fqdn_fsp_pst_subarray = fsp_pst_sub
 
+        # set to determine if resources are assigned
+        self._resourced = False
         # set to determine if ready to receive subscribed parameters;
         # also indicates whether component is currently configured
         self._ready = False
@@ -223,6 +228,7 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
 
         self._component_resourced_callback = component_resourced_callback
         self._component_configured_callback = component_configured_callback
+        self._component_scanning_callback = component_scanning_callback
 
         super().__init__(
             logger=logger,
@@ -305,7 +311,7 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
         except tango.DevFailed as dev_failed:
             self.update_component_power_mode(PowerMode.UNKNOWN)
             self.update_communication_status(CommunicationStatus.NOT_ESTABLISHED)
-            self.update_component_fault(True)
+            self.update_component_fault(True, "op")
             raise ConnectionError(
                 f"Error in proxy connection."
             ) from dev_failed
@@ -679,7 +685,7 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
             information purpose only.
         :rtype: (ResultCode, str)
         """
-        self.update_component_fault(True)
+        self.update_component_fault(True, "obs")
         self._logger.error(msg)
         tango.Except.throw_exception(
             "Command failed", msg, "ConfigureScan execution", tango.ErrSeverity.ERR
@@ -752,7 +758,7 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
                 self._group_fsp.remove_all()
 
         except tango.DevFailed as df:
-            self.update_component_fault(True)
+            self.update_component_fault(True, "op")
             msg = str(df.args[0].desc)
             return (ResultCode.FAILED, msg)
 
@@ -774,7 +780,6 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
 
         if self._ready:
             self.update_component_configuration(False)
-        self._ready = False
 
         return (ResultCode.OK, "Deconfiguration completed OK")
 
@@ -1314,10 +1319,12 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
 
         # Configure configID.
         self._config_id = str(common_configuration["config_id"])
+        self._logger.debug(f"config_id: {self._config_id}")
 
         # Configure frequencyBand.
         frequency_bands = ["1", "2", "3", "4", "5a", "5b"]
         self._frequency_band= frequency_bands.index(common_configuration["frequency_band"])
+        self._logger.debug(f"frequency_band: {self._frequency_band}")
 
         data = tango.DeviceData()
         data.insert(tango.DevString, common_configuration["frequency_band"])
@@ -1543,61 +1550,69 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
 
         self.update_component_configuration(True)
 
-        self._ready = True
-
         return (ResultCode.OK, "ConfigureScan command completed OK")
 
 
-    def remove_receptor(
+    def remove_receptors(
         self: CbfSubarrayComponentManager,
-        receptor_id: int
+        argin: List[int]
     ) -> Tuple[ResultCode, str]:
         """
         Remove receptor from subarray.
 
-        :param receptor_id: The receptor to be released
+        :param argin: The receptors to be released
         :return: A tuple containing a return code and a string
             message indicating status. The message is for
             information purpose only.
         :rtype: (ResultCode, str)
         """
-        if receptor_id in self._receptors:
-            vccID = self._receptor_to_vcc[receptor_id]
-            vccFQDN = self._fqdn_vcc[vccID - 1]
-            vccProxy = self._proxies_vcc[vccID - 1]
+        self._logger.debug(f"current receptors: {*self._receptors,}")
+        for receptor_id in argin:
+            self._logger.debug(f"Attempting to remove receptor {receptor_id}")
+            # check for invalid receptorID
+            if not 0 < receptor_id <= const.MAX_VCC:
+                msg = f"Invalid receptor ID {receptor_id}. Skipping."
+                self._logger.warning(msg)
+            else:
+                if receptor_id in self._receptors:
+                    vccID = self._receptor_to_vcc[receptor_id]
+                    vccFQDN = self._fqdn_vcc[vccID - 1]
+                    vccProxy = self._proxies_vcc[vccID - 1]
 
-            try:
-                # unsubscribe from events
-                vccProxy.remove_event(
-                    "State",
-                    self._events_state_change_vcc[vccID][0]
-                )
-                vccProxy.remove_event(
-                    "healthState",
-                    self._events_state_change_vcc[vccID][1]
-                )
+                    try:
+                        # unsubscribe from events
+                        vccProxy.remove_event(
+                            "State",
+                            self._events_state_change_vcc[vccID][0]
+                        )
+                        vccProxy.remove_event(
+                            "healthState",
+                            self._events_state_change_vcc[vccID][1]
+                        )
 
-                del self._events_state_change_vcc[vccID]
-                del self._vcc_state[vccFQDN]
-                del self._vcc_health_state[vccFQDN]
+                        del self._events_state_change_vcc[vccID]
+                        del self._vcc_state[vccFQDN]
+                        del self._vcc_health_state[vccFQDN]
 
-                # reset subarrayMembership Vcc attribute:
-                vccProxy.subarrayMembership = 0
-            except tango.DevFailed as df:
-                msg = str(df.args[0].desc)
-                self._component_fault_callback(True)
-                return (ResultCode.FAILED, msg)
+                        # reset subarrayMembership Vcc attribute:
+                        vccProxy.subarrayMembership = 0
+                    except tango.DevFailed as df:
+                        msg = str(df.args[0].desc)
+                        self.update_component_fault(True, "obs")
+                        return (ResultCode.FAILED, msg)
 
-            self._receptors.remove(receptor_id)
-            self._proxies_assigned_vcc.remove(vccProxy)
-            self._group_vcc.remove(vccFQDN)
+                    self._proxies_assigned_vcc.remove(vccProxy)
+                    self._group_vcc.remove(vccFQDN)
+                    self._receptors.remove(receptor_id)
 
-        else:
-            msg = f"Error in remove_receptor; receptor {receptor_id} not found."
-            return (ResultCode.FAILED, msg)
+                else:
+                    msg = f"Receptor {receptor_id} not found. Skipping."
+                    self._logger.warning(msg)
 
         if len(self._receptors) == 0:
-            self._component_resourced_callback(False)
+            self.update_component_resourced(False)
+
+        self._logger.debug(f"receptors remaining: {*self._receptors,}")
 
         return (ResultCode.OK, "RemoveReceptors completed OK")
 
@@ -1614,8 +1629,10 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
             information purpose only.
         :rtype: (ResultCode, str)
         """
+        self._logger.debug(f"current receptors: {*self._receptors,}")
         if len(self._receptors) > 0:
             for receptor_id in self._receptors:
+                self._logger.debug(f"Attempting to remove receptor {receptor_id}")
                 vccID = self._receptor_to_vcc[receptor_id]
                 vccFQDN = self._fqdn_vcc[vccID - 1]
                 vccProxy = self._proxies_vcc[vccID - 1]
@@ -1639,15 +1656,19 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
                     vccProxy.subarrayMembership = 0
                 except tango.DevFailed as df:
                     msg = str(df.args[0].desc)
-                    self._component_fault_callback(True)
+                    self.update_component_fault(True, "obs")
                     return (ResultCode.FAILED, msg)
 
                 self._proxies_assigned_vcc.remove(vccProxy)
                 self._group_vcc.remove(vccFQDN)
+                self._receptors.remove(receptor_id)
 
+            self._logger.debug(f"receptors remaining: {*self._receptors,}")
             self._receptors = []
-            self._component_resourced_callback(False)
-        
+            self.update_component_resourced(False)
+
+            return (ResultCode.OK, "RemoveAllReceptors completed OK")
+
         else:
             return (
                 ResultCode.FAILED, 
@@ -1655,71 +1676,87 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
             )
 
 
-        return (ResultCode.OK, "RemoveAllReceptors completed OK")
-
-
-    def add_receptor(
+    def add_receptors(
         self: CbfSubarrayComponentManager,
-        receptor_id: int
+        argin: List[int]
     ) -> Tuple[ResultCode, str]:
         """
         Add receptors to subarray.
 
-        :param receptor_id: The receptor to be assigned
+        :param argin: The receptors to be assigned
         :return: A tuple containing a return code and a string
             message indicating status. The message is for
             information purpose only.
         :rtype: (ResultCode, str)
         """
-        vccID = self._receptor_to_vcc[receptor_id]
-        vccProxy = self._proxies_vcc[vccID - 1]
-
-        self._logger.debug(
-            "receptor_id = {receptor_id}, vccProxy.receptor_id = "
-            f"{vccProxy.receptor_id}"
-        )
-
-        vccSubarrayID = vccProxy.subarrayMembership
-
-        # only add receptor if it does not already belong to a 
-        # different subarray
-        if vccSubarrayID not in [0, self._subarray_id]:
-            msg = f"Receptor {receptor_id} already in use by subarray {vccSubarrayID}."
-            return (ResultCode.FAILED, msg)
-        else:
-            if receptor_id not in self._receptors:
-                # change subarray membership of vcc
-                vccProxy.subarrayMembership = self._subarray_id
-
-                if len(self._receptors) == 0:
-                    self._component_resourced_callback(True)
-
-                self._receptors.append(int(receptor_id))
-                self._proxies_assigned_vcc.append(vccProxy)
-                self._group_vcc.add(self._fqdn_vcc[vccID - 1])
-
-                # subscribe to VCC state and healthState changes
-                event_id_state = vccProxy.add_change_event_callback(
-                    "State",
-                    self._state_change_event_callback
-                )
-                self._logger.debug(f"State event ID: {event_id_state}")
-
-                event_id_health_state = vccProxy.add_change_event_callback(
-                    "healthState",
-                    self._state_change_event_callback
-                )
-                self._logger.debug(
-                    f"Health state event ID: {event_id_health_state}"
-                )
-
-                self._events_state_change_vcc[vccID] = [
-                    event_id_state,
-                    event_id_health_state
-                ]
+        self._logger.debug(f"current receptors: {*self._receptors,}")
+        for receptor_id in argin:
+            self._logger.debug(f"Attempting to add receptor {receptor_id}")
+            # check for invalid receptorID
+            if not 0 < receptor_id <= const.MAX_VCC:
+                msg = f"Invalid receptor ID {receptor_id}. Skipping."
+                self._logger.warning(msg)
             else:
-                msg = f"Receptor {receptor_id} already assigned to component manager."
-                return (ResultCode.FAILED, msg)
+                vccID = self._receptor_to_vcc[receptor_id]
+                vccProxy = self._proxies_vcc[vccID - 1]
+
+                self._logger.debug(
+                    "receptor_id = {receptor_id}, vccProxy.receptor_id = "
+                    f"{vccProxy.receptor_id}"
+                )
+
+                vccSubarrayID = vccProxy.subarrayMembership
+
+                # only add receptor if it does not already belong to a 
+                # different subarray
+                if vccSubarrayID not in [0, self._subarray_id]:
+                    msg = f"Receptor {receptor_id} already in use by " + \
+                        f"subarray {vccSubarrayID}. Skipping."
+                    self._logger.warning(msg)
+                else:
+                    if receptor_id not in self._receptors:
+                        try:
+                            # change subarray membership of vcc
+                            vccProxy.subarrayMembership = self._subarray_id
+                            self._proxies_assigned_vcc.append(vccProxy)
+                            self._group_vcc.add(self._fqdn_vcc[vccID - 1])
+
+                            # subscribe to VCC state and healthState changes
+                            event_id_state = vccProxy.add_change_event_callback(
+                                "State",
+                                self._state_change_event_callback
+                            )
+                            self._logger.debug(f"State event ID: {event_id_state}")
+
+                            event_id_health_state = vccProxy.add_change_event_callback(
+                                "healthState",
+                                self._state_change_event_callback
+                            )
+                            self._logger.debug(
+                                f"Health state event ID: {event_id_health_state}"
+                            )
+
+                            self._events_state_change_vcc[vccID] = [
+                                event_id_state,
+                                event_id_health_state
+                            ]
+                        except tango.DevFailed as df:
+                            msg = str(df.args[0].desc)
+                            self.update_component_fault(True, "obs")
+                            return (ResultCode.FAILED, msg)
+
+                        # update resourced state once first receptor is added
+                        if len(self._receptors) == 0:
+                            self.update_component_resourced(True)
+
+                        self._receptors.append(int(receptor_id))
+
+                    else:
+                        msg = f"Receptor {receptor_id} already assigned to " + \
+                        "subarray. Skipping."
+                        self._logger.warning(msg)
+
+        self._logger.debug(f"receptors after adding: {*self._receptors,}")
 
         return (ResultCode.OK, "AddReceptors completed OK")
 
@@ -1745,10 +1782,11 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
             self._group_fsp_pst_subarray.command_inout("Scan", argin)
         except tango.DevFailed as df:
             msg = str(df.args[0].desc)
-            self._component_fault_callback(True)
+            self.update_component_fault(True, "obs")
             return (ResultCode.FAILED, msg)
 
         self._scan_id = int(argin)
+        self._component_scanning_callback(True)
         return (ResultCode.STARTED, "Scan command successful")
 
 
@@ -1769,10 +1807,11 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
             self._group_fsp_pst_subarray.command_inout("EndScan")
         except tango.DevFailed as df:
             msg = str(df.args[0].desc)
-            self._component_fault_callback(True)
+            self.update_component_fault(True, "obs")
             return (ResultCode.FAILED, msg)
 
         self._scan_id = 0
+        self._component_scanning_callback(False)
         return (ResultCode.OK, "EndScan command completed OK")
 
 
@@ -1803,6 +1842,41 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
         # or a Scan, so we need to clean up from that.
         self.deconfigure()
 
+    
+    def update_component_fault(
+        self: CbfComponentManager,
+        faulty: Optional[bool],
+        type: str
+    ) -> None:
+        """
+        Update the component fault status, calling callbacks as required.
+
+        :param faulty: whether the component has faulted.
+        :param type: type of component fault, "op" or "obs".
+        """
+        if self._faulty != faulty:
+            self._faulty = faulty
+        if self._component_fault_callback is not None and faulty is not None:
+            self._component_fault_callback(faulty, type)
+
+
+    def update_component_resourced(
+        self: CbfSubarrayComponentManager, resourced: bool
+    ) -> None:
+        """
+        Update the component resource status, calling callbacks as required.
+
+        :param resourced: whether the component is resourced.
+        """
+        if resourced:
+            # perform "component_configured" if not previously configured
+            if not self._resourced:
+                self._component_resourced_callback(True)
+        elif self._resourced:
+            self._component_resourced_callback(False)
+
+        self._resourced = resourced
+
 
     def update_component_configuration(
         self: CbfSubarrayComponentManager, configured: bool
@@ -1816,5 +1890,7 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
             # perform "component_configured" if not previously configured
             if not self._ready:
                 self._component_configured_callback(True)
-        else:
+        elif self._ready:
             self._component_configured_callback(False)
+
+        self._ready = configured

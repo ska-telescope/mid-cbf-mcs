@@ -355,7 +355,7 @@ def init_proxies_fixture():
             )
             self.controller.set_timeout_millis(timeout_millis)
             self.wait_timeout_dev([self.controller], DevState.DISABLE, 3, 1)
-            
+
             self.receptor_to_vcc = dict([
                 *map(int, pair.split(":"))
             ] for pair in self.controller.receptorToVcc)
@@ -367,7 +367,7 @@ def init_proxies_fixture():
             self.num_sub = int(self.max_capabilities["Subarray"])
             self.num_fsp = int(self.max_capabilities["FSP"])
             self.num_vcc = int(self.max_capabilities["VCC"])
-            
+
             # CbfSubarray
             self.subarray = [None]
             for proxy in [CbfDeviceProxy(
@@ -376,6 +376,7 @@ def init_proxies_fixture():
             ) for i in range(1, self.num_sub + 1)]:
                 proxy.set_timeout_millis(timeout_millis)
                 self.subarray.append(proxy)
+                proxy.loggingLevel = LoggingLevel.DEBUG
 
             # Fsp
             # index == fspID
@@ -420,7 +421,7 @@ def init_proxies_fixture():
                         logger=logging.getLogger()
                     )
                 self.fspFunctionMode.append(func_modes)
-            
+
             # Vcc
             # index == vccID
             self.vcc = [None]
@@ -516,7 +517,7 @@ def init_proxies_fixture():
                         [proxy], DevState.ON, wait_time_s, sleep_time_s_long)
 
                 if proxy.obsState == ObsState.FAULT:
-                    proxy.Restart()
+                    proxy.ObsReset()
                     self.wait_timeout_obs(
                         [proxy], ObsState.READY, wait_time_s, sleep_time_s_short)
 
@@ -536,9 +537,12 @@ def init_proxies_fixture():
                         [proxy], ObsState.EMPTY, wait_time_s, sleep_time_s_short)
 
 
-        def on(self: TestProxies) -> None:
+        def on(self: TestProxies, sub_id: int) -> None:
             """
             Controller device command sequence to turn on subarrays, FSPs, VCCs
+            Used for resetting starting state duing subarray integration testing.
+
+            :param sub_id: ID subarray under test
             """
             wait_time_s = 3
             sleep_time_s = 1
@@ -546,36 +550,52 @@ def init_proxies_fixture():
             if self.controller.adminMode == AdminMode.OFFLINE:
                 self.controller.adminMode = AdminMode.ONLINE
 
-            if self.controller.State() == DevState.ON:
-                pass
-            elif self.controller.State() == DevState.OFF:
-                self.controller.On()
-                self.wait_timeout_dev(
-                    [self.controller], DevState.ON, wait_time_s, sleep_time_s)
-            else:
+            # ensure On command sent in OFF state
+            if self.controller.State() != DevState.OFF:
                 self.controller.Off()
                 self.wait_timeout_dev(
                     [self.controller], DevState.OFF, wait_time_s, sleep_time_s)
-                self.controller.On()
+
+            self.controller.On()
+            self.wait_timeout_dev(
+                [self.controller], DevState.ON, wait_time_s, sleep_time_s)
+
+            if self.subarray[sub_id].adminMode == AdminMode.OFFLINE:
+                self.subarray[sub_id].adminMode = AdminMode.ONLINE
                 self.wait_timeout_dev(
-                    [self.controller], DevState.ON, wait_time_s, sleep_time_s)
+                    [self.subarray[sub_id]], DevState.ON, wait_time_s, sleep_time_s)
 
 
-        def off(self: TestProxies) -> None:
+        def off(self: TestProxies, sub_id: int) -> None:
             """
             Controller device command sequence to turn off subarrays, FSPs, VCCs
+            Used for resetting starting state duing subarray integration testing.
+
+            :param sub_id: ID subarray under test
             """
             wait_time_s = 3
             sleep_time_s = 1
 
+            if self.controller.adminMode == AdminMode.OFFLINE:
+                self.controller.adminMode = AdminMode.ONLINE
+
+            # ensure Off command not sent in OFF state
             if self.controller.State() == DevState.OFF:
-                pass
-            else:
-                self.controller.Off()
+                self.controller.On()
                 self.wait_timeout_dev(
-                    [self.controller], DevState.OFF, wait_time_s, sleep_time_s)
+                    [self.controller], DevState.ON, wait_time_s, sleep_time_s)
+
+            self.controller.Off()
+            self.wait_timeout_dev(
+                [self.controller], DevState.OFF, wait_time_s, sleep_time_s)
+
+            if self.subarray[sub_id].adminMode == AdminMode.OFFLINE:
+                self.subarray[sub_id].adminMode = AdminMode.ONLINE
+                self.wait_timeout_dev(
+                    [self.subarray[sub_id]], DevState.ON, wait_time_s, sleep_time_s)
     
     return TestProxies()
+
 
 @pytest.fixture(scope="class")
 def debug_device_is_on() -> bool:
