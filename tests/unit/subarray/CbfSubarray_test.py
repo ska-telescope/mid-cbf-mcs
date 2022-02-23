@@ -260,10 +260,9 @@ class TestCbfSubarray:
         assert device_under_test.obsState == ObsState.IDLE
 
         # try adding an invalid receptor ID
-        result = device_under_test.AddReceptors(invalid_receptor_id)
+        device_under_test.AddReceptors(invalid_receptor_id)
         time.sleep(0.1)
-        assert result[0][0] == ResultCode.FAILED
-        assert device_under_test.obsState == ObsState.FAULT
+        assert [device_under_test.receptors[i] for i in range(len(receptor_ids))] == receptor_ids
 
     @pytest.mark.parametrize(
         "receptor_ids, \
@@ -300,8 +299,9 @@ class TestCbfSubarray:
         assert device_under_test.obsState == ObsState.IDLE
 
         # try removing a receptor not assigned to subarray 1
-        # doing this doesn't actually throw an error
-        device_under_test.RemoveReceptors(invalid_receptors_to_remove)
+        result = device_under_test.RemoveReceptors(invalid_receptors_to_remove)
+        time.sleep(0.1)
+        assert result[0][0] == ResultCode.FAILED
     
     @pytest.mark.parametrize(
         "receptor_ids", 
@@ -327,15 +327,13 @@ class TestCbfSubarray:
         device_under_test.adminMode = AdminMode.ONLINE
         time.sleep(CONST_WAIT_TIME)
         assert device_under_test.State() == DevState.ON
-        # add some receptors
         assert device_under_test.obsState == ObsState.EMPTY
-        device_under_test.AddReceptors(receptor_ids)
-        time.sleep(0.1)
-        assert device_under_test.obsState == ObsState.IDLE
+        # add some receptors
 
         # try removing all receptors
-        # doing this doesn't actually throw an error
-        device_under_test.RemoveAllReceptors()
+        result = device_under_test.RemoveAllReceptors()
+        time.sleep(0.1)
+        assert result[0][0] == ResultCode.FAILED
 
     @pytest.mark.parametrize(
         "config_file_name, \
@@ -372,10 +370,7 @@ class TestCbfSubarray:
         
         # configure scan
         device_under_test.ConfigureScan(config_string)
-        time.sleep(3) # ConfigureScan takes a while
-        assert device_under_test.configID == config_json["common"]["config_id"]
-        band_index = freq_band_dict()[config_json["common"]["frequency_band"]]
-        assert device_under_test.frequencyBand == band_index 
+        time.sleep(CONST_WAIT_TIME)
         assert device_under_test.obsState == ObsState.READY
 
     @pytest.mark.parametrize(
@@ -418,19 +413,17 @@ class TestCbfSubarray:
         time.sleep(0.1)
         assert device_under_test.obsState == ObsState.IDLE
         device_under_test.ConfigureScan(config_string)
-        time.sleep(3)
+        time.sleep(CONST_WAIT_TIME)
         assert device_under_test.obsState == ObsState.READY
 
         # send the Scan command
         f2 = open(data_file_path + scan_file_name)
         json_string_scan = f2.read().replace("\n", "")
-        device_under_test.Scan(json_string_scan)
+        device_under_test.Scan(json.dumps(json_string_scan))
         f2.close()
-        scan_id = json.loads(json_string_scan)["scan_id"]
         time.sleep(0.1)
 
         assert device_under_test.obsState == ObsState.SCANNING
-        assert device_under_test.scanID == scan_id
 
     @pytest.mark.parametrize(
         "config_file_name, \
@@ -471,11 +464,11 @@ class TestCbfSubarray:
         time.sleep(0.1)
         assert device_under_test.obsState == ObsState.IDLE
         device_under_test.ConfigureScan(config_string)
-        time.sleep(3)
+        time.sleep(CONST_WAIT_TIME)
         assert device_under_test.obsState == ObsState.READY
         f2 = open(data_file_path + scan_file_name)
         json_string_scan = f2.read().replace("\n", "")
-        device_under_test.Scan(json_string_scan)
+        device_under_test.Scan(json.dumps(json_string_scan))
         f2.close()
         time.sleep(0.1)
         assert device_under_test.obsState == ObsState.SCANNING
@@ -485,7 +478,6 @@ class TestCbfSubarray:
         time.sleep(0.1)
 
         assert device_under_test.obsState == ObsState.READY
-        assert device_under_test.scanID == 0
 
     @pytest.mark.parametrize(
         "config_file_name, \
@@ -526,11 +518,11 @@ class TestCbfSubarray:
         time.sleep(0.1)
         assert device_under_test.obsState == ObsState.IDLE
         device_under_test.ConfigureScan(config_string)
-        time.sleep(3)
+        time.sleep(CONST_WAIT_TIME)
         assert device_under_test.obsState == ObsState.READY
         f2 = open(data_file_path + scan_file_name)
         json_string_scan = f2.read().replace("\n", "")
-        device_under_test.Scan(json_string_scan)
+        device_under_test.Scan(json.dumps(json_string_scan))
         f2.close()
         time.sleep(0.1)
         assert device_under_test.obsState == ObsState.SCANNING
@@ -580,11 +572,11 @@ class TestCbfSubarray:
         time.sleep(0.1)
         assert device_under_test.obsState == ObsState.IDLE
         device_under_test.ConfigureScan(config_string)
-        time.sleep(3)
+        time.sleep(CONST_WAIT_TIME)
         assert device_under_test.obsState == ObsState.READY
         f2 = open(data_file_path + scan_file_name)
         json_string_scan = f2.read().replace("\n", "")
-        device_under_test.Scan(json_string_scan)
+        device_under_test.Scan(json.dumps(json_string_scan))
         f2.close()
         time.sleep(0.1)
         assert device_under_test.obsState == ObsState.SCANNING
@@ -594,12 +586,9 @@ class TestCbfSubarray:
 
         # send the Reset command
         device_under_test.ObsReset()
-        time.sleep(3)
+        time.sleep(CONST_WAIT_TIME)
 
         assert device_under_test.obsState == ObsState.IDLE
-        assert device_under_test.configID == ""
-        assert device_under_test.scanID == 0
-        assert device_under_test.frequencyBand == 0
 
     @pytest.mark.parametrize(
         "config_file_name, \
@@ -640,11 +629,11 @@ class TestCbfSubarray:
         time.sleep(0.1)
         assert device_under_test.obsState == ObsState.IDLE
         device_under_test.ConfigureScan(config_string)
-        time.sleep(3)
+        time.sleep(CONST_WAIT_TIME)
         assert device_under_test.obsState == ObsState.READY
         f2 = open(data_file_path + scan_file_name)
         json_string_scan = f2.read().replace("\n", "")
-        device_under_test.Scan(json_string_scan)
+        device_under_test.Scan(json.dumps(json_string_scan))
         f2.close()
         time.sleep(0.1)
         assert device_under_test.obsState == ObsState.SCANNING
@@ -654,13 +643,9 @@ class TestCbfSubarray:
 
         # send the Reset command
         device_under_test.Restart()
-        time.sleep(3)
+        time.sleep(CONST_WAIT_TIME)
 
         assert device_under_test.obsState == ObsState.EMPTY
-        assert device_under_test.configID == ""
-        assert device_under_test.scanID == 0
-        assert device_under_test.frequencyBand == 0
-        assert len(device_under_test.receptors) == 0
 
     @pytest.mark.parametrize(
         "config_file_name, \
@@ -676,7 +661,7 @@ class TestCbfSubarray:
             )
         ]
     )
-    def test_GoToIdle(
+    def test_End(
         self: TestCbfSubarray,
         device_under_test: CbfDeviceProxy,
         config_file_name: str,
@@ -694,12 +679,9 @@ class TestCbfSubarray:
         time.sleep(0.1)
         assert device_under_test.obsState == ObsState.IDLE
         device_under_test.ConfigureScan(config_string)
-        time.sleep(3)
+        time.sleep(CONST_WAIT_TIME)
         assert device_under_test.obsState == ObsState.READY
 
-        device_under_test.GoToIdle()
-        time.sleep(3)
+        device_under_test.End()
+        time.sleep(CONST_WAIT_TIME)
         assert device_under_test.obsState == ObsState.IDLE
-        assert device_under_test.frequencyBand == 0
-        assert device_under_test.configID == ""
-        assert device_under_test.scanID == 0

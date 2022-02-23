@@ -311,7 +311,7 @@ class FspComponentManager(CbfComponentManager):
                 self._function_mode = 0
         else:
             log_msg = "FSP does not belong to subarray {}.".format(argin)
-            self._logger.warn(log_msg)
+            self._logger.warning(log_msg)
         
         message = "Fsp RemoveSubarrayMembership command completed OK"
         return (ResultCode.OK, message)
@@ -333,7 +333,7 @@ class FspComponentManager(CbfComponentManager):
         if len(self._subarray_membership) == MAX_SUBARRAY_MEMBERSHIPS:
             log_msg = "Fsp already assigned to the \
                 maximum number subarrays ({})".format(MAX_SUBARRAY_MEMBERSHIPS)
-            self._logger.warn(log_msg)
+            self._logger.warning(log_msg)
             message = "Fsp AddSubarrayMembership command completed OK"
             return (ResultCode.OK, message)
 
@@ -341,7 +341,7 @@ class FspComponentManager(CbfComponentManager):
             self._subarray_membership.append(argin)
         else:
             log_msg = "Fsp already belongs to subarray {}.".format(argin)
-            self._logger.warn(log_msg)
+            self._logger.warning(log_msg)
         
         message = "Fsp AddSubarrayMembership command completed OK"
         return (ResultCode.OK, message)
@@ -475,7 +475,7 @@ class FspComponentManager(CbfComponentManager):
                 self._proxy_vlbi.SetState(tango.DevState.ON)
             else:
                 # shouldn't happen
-                self._logger.warn("functionMode not valid. Ignoring.")
+                self._logger.warning("functionMode not valid. Ignoring.")
                 message = "Fsp SetFunctionMode command failed: \
                     functionMode not valid"
                 return (ResultCode.FAILED, message)

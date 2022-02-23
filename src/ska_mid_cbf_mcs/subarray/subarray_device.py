@@ -79,10 +79,6 @@ class CbfSubarray(CspSubElementSubarray):
             "EndScan",
             self.EndScanCommand(*device_args)
         )
-        self.register_command_object(
-            "GoToIdle",
-            self.GoToIdleCommand(*device_args)
-        )
     # PROTECTED REGION END #    //  CbfSubarray.class_variable
 
 
@@ -242,14 +238,10 @@ class CbfSubarray(CspSubElementSubarray):
             # PROTECTED REGION ID(CbfSubarray.init_device) ENABLED START #
             (result_code, message) = super().do()
 
-            device = self.target
-
-            device._storage_logging_level = tango.LogLevel.LOG_DEBUG
-            device._element_logging_level = tango.LogLevel.LOG_DEBUG
-            device._central_logging_level = tango.LogLevel.LOG_DEBUG
-
-            # initialize attribute values
-            device._receptors = []
+            # TODO: remove
+            # device._storage_logging_level = tango.LogLevel.LOG_DEBUG
+            # device._element_logging_level = tango.LogLevel.LOG_DEBUG
+            # device._central_logging_level = tango.LogLevel.LOG_DEBUG
 
             return (result_code, message)
 
@@ -315,6 +307,7 @@ class CbfSubarray(CspSubElementSubarray):
             self.obs_state_model.perform_action("component_resourced")
         else:
             self.obs_state_model.perform_action("component_unresourced")
+
 
     def _component_configured(
         self: CbfSubarray,
@@ -410,6 +403,7 @@ class CbfSubarray(CspSubElementSubarray):
         """
         if faulty:
             self.op_state_model.perform_action("component_fault")
+            self.obs_state_model.perform_action("component_obsfault")
             self.set_status("The device is in FAULT state.")
         else:
             self.set_status("The device has recovered from FAULT state.")
@@ -517,41 +511,6 @@ class CbfSubarray(CspSubElementSubarray):
 
     ##################  Receptors Related Commands  ###################
 
-
-    def _remove_receptors_helper(
-        self: CbfSubarray,
-        argin: List[int]
-    ) -> ResultCode:
-        """
-        Helper function to remove receptors. 
-        Takes in a list of integers.
-
-        :param argin: list of receptors to remove
-        :return: A return code.
-        :rtype: ResultCode
-        """
-        return_code = ResultCode.OK
-        for receptorID in argin:
-            # check for invalid receptorID
-            if not 0 < receptorID < 198:
-                log_msg = f"Invalid receptor ID {receptorID}. Skipping."
-                self.logger.warning(log_msg)
-
-            elif receptorID in self._receptors:
-                (result_code, msg) = self.component_manager.remove_receptor(receptorID)
-                if result_code == ResultCode.FAILED:
-                    return_code = ResultCode.FAILED
-                    self.logger.warning(msg)
-                else:
-                    self._receptors.remove(receptorID)
-
-            else:
-                log_msg = f"Receptor {receptorID} not assigned to subarray. Skipping."
-                self.logger.warning(log_msg)
-
-        return return_code
-
-
     class RemoveReceptorsCommand(CspSubElementSubarray.ReleaseResourcesCommand):
         """
         A class for CbfSubarray's RemoveReceptors() command.
@@ -570,16 +529,23 @@ class CbfSubarray(CspSubElementSubarray):
                 information purpose only.
             :rtype: (ResultCode, str)
             """
-            #(result_code,message) = super().do(argin)
             device = self.target
+            return_code = ResultCode.OK
+            msg = "RemoveReceptors command completed OK"
 
-            result_code = device._remove_receptors_helper(argin)
-            if result_code == ResultCode.FAILED:
-                message = "CbfSubarray RemoveReceptors command failed"
-            else:
-                message = "CbfSubarray RemoveReceptors command completed OK"
-            device.logger.info(message)
-            return (result_code, message)
+            for receptorID in argin:
+                # check for invalid receptorID
+                if not 0 < receptorID <= const.MAX_VCC:
+                    msg = f"Invalid receptor ID {receptorID}. Skipping."
+                    self.logger.warning(msg)
+                else:
+                    (result_code, msg) = device.component_manager.remove_receptor(receptorID)
+                    if result_code == ResultCode.FAILED:
+                        return_code = ResultCode.FAILED
+                        device.logger.warning(msg)
+
+            device.logger.info(msg)
+            return (return_code, msg)
 
     @command(
         dtype_in=('uint16',),
@@ -605,6 +571,7 @@ class CbfSubarray(CspSubElementSubarray):
         (return_code, message) = command(argin)
         return [[return_code], [message]]
 
+
     class RemoveAllReceptorsCommand(CspSubElementSubarray.ReleaseAllResourcesCommand):
         """
         A class for CbfSubarray's RemoveAllReceptors() command.
@@ -620,24 +587,13 @@ class CbfSubarray(CspSubElementSubarray):
                 information purpose only.
             :rtype: (ResultCode, str)
             """
-            # (result_code,message) = super().do()
-
             device = self.target
-            device.logger.debug("Entering RemoveAllReceptors()")
-
-            result_code = device._remove_receptors_helper(device._receptors[:])
-            if result_code == ResultCode.FAILED:
-                message = "CbfSubarray RemoveAllReceptors command failed"
-            else:
-                message = "CbfSubarray RemoveAllReceptors command completed OK"
-            device.logger.info(message)
-            return (result_code, message)
+            return device.component_manager.remove_all_receptors()
 
     @command(
         dtype_out='DevVarLongStringArray',
         doc_out="(ReturnType, 'informational message')"
     )
-
     @DebugIt()
     def RemoveAllReceptors(self: CbfSubarray) -> Tuple[ResultCode, str]:
         # PROTECTED REGION ID(CbfSubarray.RemoveAllReceptors) ENABLED START #
@@ -679,25 +635,17 @@ class CbfSubarray(CspSubElementSubarray):
 
             return_code = ResultCode.OK
             msg = "AddReceptorsCommand completed OK"
+
             for receptorID in argin:
                 # check for invalid receptorID
-                #TODO replace hardcoded values
-                if not 0 < receptorID < 198:
-                    return (ResultCode.FAILED, "Invalid receptor ID.")
-
+                if not 0 < receptorID <= const.MAX_VCC:
+                    msg = f"Invalid receptor ID {receptorID}. Skipping."
+                    self.logger.warning(msg)
                 else:
-                    if receptorID not in device._receptors:
-                        (result_code, msg) = device.component_manager.add_receptor(receptorID)
-                        if result_code == ResultCode.FAILED:
-                            return_code = ResultCode.FAILED
-                            device.logger.warning(msg)
-                        else:
-                            device._receptors.append(receptorID)
-                    else:
-                        device.logger.warning(
-                            f"Receptor {receptorID} already assigned to "
-                            "current subarray."
-                        )
+                    (result_code, msg) = device.component_manager.add_receptor(receptorID)
+                    if result_code == ResultCode.FAILED:
+                        return_code = ResultCode.FAILED
+                        device.logger.warning(msg)
 
             device.logger.info(msg)
             return (return_code, msg)
@@ -813,100 +761,10 @@ class CbfSubarray(CspSubElementSubarray):
                 return (False, msg)
 
             # Validate frequencyBandOffsetStream2.
-<<<<<<< HEAD
             if "frequency_band_offset_stream_2" not in configuration:
                 configuration["frequency_band_offset_stream_2"] = 0
             if abs(int(configuration["frequency_band_offset_stream_2"])) <= const.FREQUENCY_SLICE_BW * 10 ** 6 / 2:
                 pass
-=======
-            # If not given, use a default value.
-            # If malformed, use a default value, but append an error.
-            if "frequency_band_offset_stream_2" in configuration:
-                device._frequency_band_offset_stream_2 = int(configuration["frequency_band_offset_stream_2"])
-            else:
-                device._frequency_band_offset_stream_2 = 0
-                log_msg = "'frequencyBandOffsetStream2' not specified. Defaulting to 0."
-                self.logger.warn(log_msg)
-
-            config_dict = {
-                "config_id": device._config_ID,
-                "frequency_band": common_configuration["frequency_band"],
-                "band_5_tuning": device._stream_tuning,
-                "frequency_band_offset_stream_1": device._frequency_band_offset_stream_1,
-                "frequency_band_offset_stream_2": device._frequency_band_offset_stream_2,
-                "rfi_flagging_mask": configuration["rfi_flagging_mask"],
-            }
-            json_str = json.dumps(config_dict)
-            data = tango.DeviceData()
-            data.insert(tango.DevString, json_str)
-            device._group_vcc.command_inout("ConfigureScan", data)
-
-            # Configure dopplerPhaseCorrSubscriptionPoint.
-            if "doppler_phase_corr_subscription_point" in configuration:
-                attribute_proxy = CbfAttributeProxy(
-                    fqdn=configuration["doppler_phase_corr_subscription_point"],
-                    logger=device.logger
-                )
-                attribute_proxy.ping()
-                event_id = attribute_proxy.add_change_event_callback(
-                    device._doppler_phase_correction_event_callback
-                )
-                device._events_telstate[event_id] = attribute_proxy
-
-            # Configure delayModelSubscriptionPoint.
-            if "delay_model_subscription_point" in configuration:
-                device._last_received_delay_model = "{}"
-                attribute_proxy = CbfAttributeProxy(
-                    fqdn=configuration["delay_model_subscription_point"],
-                    logger=device.logger
-                )
-                attribute_proxy.ping() #To be sure the connection is good(don't know if the device is running)
-                event_id = attribute_proxy.add_change_event_callback(
-                    device._delay_model_event_callback
-                )
-                device._events_telstate[event_id] = attribute_proxy
-
-            # Configure jonesMatrixSubscriptionPoint
-            if "jones_matrix_subscription_point" in configuration:
-                device._last_received_jones_matrix = "{}"
-                attribute_proxy = CbfAttributeProxy(
-                    fqdn=configuration["jones_matrix_subscription_point"],
-                    logger=device.logger
-                )
-                attribute_proxy.ping()
-                event_id = attribute_proxy.add_change_event_callback(
-                    device._jones_matrix_event_callback
-                )
-                device._events_telstate[event_id] = attribute_proxy
-
-            # Configure beamWeightsSubscriptionPoint
-            if "timing_beam_weights_subscription_point" in configuration:
-                device._last_received_beam_weights= "{}"
-                attribute_proxy = CbfAttributeProxy(
-                    fqdn=configuration["timing_beam_weights_subscription_point"],
-                    logger=device.logger
-                )
-                attribute_proxy.ping()
-                event_id = attribute_proxy.add_change_event_callback(
-                    device._beam_weights_event_callback
-                )
-                device._events_telstate[event_id] = attribute_proxy
-
-            # Configure searchWindow.
-            if "search_window" in configuration:
-                for search_window in configuration["search_window"]:
-                    search_window["frequency_band"] = common_configuration["frequency_band"]
-                    search_window["frequency_band_offset_stream_1"] = \
-                        device._frequency_band_offset_stream_1
-                    search_window["frequency_band_offset_stream_2"] = \
-                        device._frequency_band_offset_stream_2
-                    if search_window["frequency_band"] in ["5a", "5b"]:
-                        search_window["band_5_tuning"] = common_configuration["band_5_tuning"]
-                    # pass on configuration to VCC
-                    data = tango.DeviceData()
-                    data.insert(tango.DevString, json.dumps(search_window))
-                    device._group_vcc.command_inout("ConfigureSearchWindow", data)
->>>>>>> at5-782-vcc-component-manager
             else:
                 msg = "Absolute value of 'frequencyBandOffsetStream2' must be at most " \
                         "half of the frequency slice bandwidth. Aborting configuration."
@@ -965,7 +823,7 @@ class CbfSubarray(CspSubElementSubarray):
             # At this point, validate FSP, VCC, subscription parameters
             full_configuration["common"] = copy.deepcopy(common_configuration)
             full_configuration["cbf"] = copy.deepcopy(configuration)
-            return self.component_manager.validate_input(json.dumps(full_configuration))
+            return self.target.component_manager.validate_input(json.dumps(full_configuration))
 
 
     @command(
@@ -1051,125 +909,38 @@ class CbfSubarray(CspSubElementSubarray):
             return (result_code, msg)
 
 
-    class GoToIdleCommand(CspSubElementSubarray.EndCommand):
-        """
-        A class for CspSubElementSubarray's GoToIdle() command.
-        """
-        def do(self: CbfSubarray.GoToIdleCommand) -> Tuple[ResultCode, str]:
-            """
-            Stateless hook for GoToIdle() command functionality.
+    # # TODO: Remove GoToIdleCommand in favour of Base
+    # class GoToIdleCommand(CspSubElementSubarray.EndCommand):
+    #     """
+    #     A class for CspSubElementSubarray's GoToIdle() command.
+    #     """
+    #     def do(self: CbfSubarray.GoToIdleCommand) -> Tuple[ResultCode, str]:
+    #         """
+    #         Stateless hook for GoToIdle() command functionality.
             
-            :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-            :rtype: (ResultCode, str)
-            """
-            
-            device = self.target
-            device.logger.debug("Entering GoToIdleCommand()")
+    #         :return: A tuple containing a return code and a string
+    #             message indicating status. The message is for
+    #             information purpose only.
+    #         :rtype: (ResultCode, str)
+    #         """
+    #         return super().do()
 
-            (result_code, message) = device.component_manager.deconfigure()
-            return (result_code, message)
+    # @command(
+    #     dtype_out='DevVarLongStringArray',
+    #     doc_out="(ReturnType, 'informational message')",
+    # )
+    # def GoToIdle(self: CbfSubarray) -> Tuple[ResultCode, str]:
+    #     """
+    #     deconfigure a scan, set ObsState to IDLE
 
-    @command(
-        dtype_out='DevVarLongStringArray',
-        doc_out="(ReturnType, 'informational message')",
-    )
-    def GoToIdle(self: CbfSubarray) -> Tuple[ResultCode, str]:
-        """
-        deconfigure a scan, set ObsState to IDLE
-
-        :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-        :rtype: (ResultCode, str)
-        """
-        
-        command = self.get_command_object("GoToIdle")
-        (return_code, message) = command()
-        return [[return_code], [message]]
-
-
-    ############### abort, restart and reset #####################
-
-    class AbortCommand(CspSubElementSubarray.AbortCommand):
-        """
-        A class for CspSubElementSubarray's Abort() command.
-        """
-        def do(self: CbfSubarray.AbortCommand) -> Tuple[ResultCode, str]:
-            """
-            Stateless hook for Abort() command functionality.
-
-            :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-            :rtype: (ResultCode, str)
-            """
-            device = self.target
-
-            # if aborted from SCANNING, end VCC and FSP Subarray scans
-            if device._scan_ID != 0:
-                device.component_manager.end_scan()
-
-            (result_code, message) = super().do()
-
-            return (result_code, message)
-
-
-    class RestartCommand(CspSubElementSubarray.RestartCommand):
-        """
-        A class for CbfSubarray's Restart() command.
-        """
-        def do(self: CbfSubarray.RestartCommand) -> Tuple[ResultCode, str]:
-            """
-            Stateless hook for Restart() command functionality.
-
-            :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-            :rtype: (ResultCode, str)
-            """
-            device = self.target
-
-            # We might have interrupted a long-running command such as a Configure
-            # or a Scan, so we need to clean up from that.
-
-            # Now totally deconfigure
-            (result_code, msg) = device.component_manager.deconfigure()
-            if result_code == ResultCode.FAILED:
-                return (result_code, msg)
-
-            # and release all receptors
-            result_code = device._remove_receptors_helper(device._receptors[:])
-            if result_code == ResultCode.FAILED:
-                message = "CbfSubarray Restart command failed"
-            else:
-                message = "CbfSubarray Restart command completed OK"
-            device.logger.info(message)
-            return (result_code, message)
-
-
-    class ObsResetCommand(CspSubElementSubarray.ObsResetCommand):
-        """
-        A class for CbfSubarray's ObsReset() command.
-        """
-        def do(self: CbfSubarray.ObsResetCommand) -> Tuple[ResultCode, str]:
-            """
-            Stateless hook for ObsReset() command functionality.
-
-            :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-            :rtype: (ResultCode, str)
-            """
-            device = self.target
-            # We might have interrupted a long-running command such as a Configure
-            # or a Scan, so we need to clean up from that.
-            (result_code, msg) = device.component_manager.deconfigure()
-            if result_code == ResultCode.FAILED:
-                return (result_code, msg)
-
-            return (ResultCode.OK, "ObsReset command completed OK")
+    #     :return: A tuple containing a return code and a string
+    #             message indicating status. The message is for
+    #             information purpose only.
+    #     :rtype: (ResultCode, str)
+    #     """
+    #     command = self.get_command_object("GoToIdle")
+    #     (return_code, message) = command()
+    #     return [[return_code], [message]]
 
 
 # ----------

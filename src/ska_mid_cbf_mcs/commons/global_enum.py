@@ -2,7 +2,8 @@ from enum import IntEnum, unique, Enum
 
 __all__ = [
     "const",
-    "freq_band_dict"
+    "freq_band_dict",
+    "FspModes"
 ]
 
 # TODO - Temporary class. These values should be retrieved 
@@ -36,6 +37,8 @@ class Const:
         self.DEFAULT_OUTPUT_MAC = [[0, "06-00-00-00-00-01"]]
         self.DEFAULT_OUTPUT_PORT = [[0, 9000, 1]]
 
+        self.MAX_VCC = 197
+
 const = Const()
 
 def freq_band_dict():
@@ -44,6 +47,3 @@ def freq_band_dict():
     return freq_bands
 
 FspModes = Enum('FspModes', 'CORR PSS_BF PST_BF VLBI')
-
-
-

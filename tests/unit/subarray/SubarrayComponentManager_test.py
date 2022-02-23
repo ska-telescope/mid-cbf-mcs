@@ -116,7 +116,7 @@ class TestCbfSubarrayComponentManager:
             vcc_proxy.subarrayMembership = subarray_component_manager.subarray_id + 1
 
             subarray_component_manager.add_receptor(receptor)
-        
+
         assert subarray_component_manager.receptors == []
 
         # try adding same receptor twice
@@ -154,12 +154,49 @@ class TestCbfSubarrayComponentManager:
             result = subarray_component_manager.remove_receptor(receptor)
             assert result[0] == ResultCode.FAILED
 
-
         # try removing unassigned receptor
         for receptor in receptor_ids[:-1]:
             subarray_component_manager.add_receptor(receptor)
         result = subarray_component_manager.remove_receptor(receptor_ids[-1])
         assert result[0] == ResultCode.FAILED
+
+
+    @pytest.mark.parametrize(
+        "receptor_ids",
+        [
+            (
+                [1, 3, 4, 2]
+            ),
+            (
+                [4, 1, 2]
+            )
+        ]
+    )
+    def test_remove_all_receptors_invalid_valid(
+        self: TestCbfSubarrayComponentManager,
+        subarray_component_manager: CbfSubarrayComponentManager,
+        tango_harness: TangoHarness,
+        receptor_ids: List[int]
+    ) -> None:
+        """
+        Test valid use of remove_all_receptors command.
+
+        :param device_under_test: fixture that provides a
+            :py:class:`CbfDeviceProxy` to the device under test, in a
+            :py:class:`tango.test_context.DeviceTestContext`.
+        """
+        subarray_component_manager.start_communicating()
+
+        # try removing receptors before assignment
+        result = subarray_component_manager.remove_all_receptors()
+        assert result[0] == ResultCode.FAILED
+
+        # remove all receptors
+        for receptor in receptor_ids:
+            subarray_component_manager.add_receptor(receptor)
+        result = subarray_component_manager.remove_all_receptors()
+        assert result[0] == ResultCode.OK
+        assert subarray_component_manager.receptors == []
 
 
     @pytest.mark.parametrize(

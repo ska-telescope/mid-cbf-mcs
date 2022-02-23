@@ -35,12 +35,19 @@ from ska_mid_cbf_mcs.subarray.subarray_component_manager import CbfSubarrayCompo
 from ska_tango_base.control_model import HealthState, AdminMode, ObsState, PowerMode
 from ska_tango_base.commands import ResultCode
 
+@pytest.fixture
+def unique_id() -> str:
+    """
+    Return a unique ID used to test Tango layer infrastructure.
 
-# TODO implement commented items in base class v0.11
+    :return: a unique ID
+    """
+    return "a unique id"
+
 @pytest.fixture()
 def mock_component_manager(
     mocker: pytest_mock.mocker,
-    # unique_id: str,
+    unique_id: str,
 ) -> unittest.mock.Mock:
     """
     Return a mock component manager.
@@ -58,7 +65,8 @@ def mock_component_manager(
     mock = mocker.Mock()
     mock.is_communicating = False
     mock.connected = False
-    mock._receptors = []
+    mock.receptors = []
+    mock._ready = False
 
     def _start_communicating(mock: unittest.mock.Mock) -> None:
         mock.is_communicating = True
@@ -73,39 +81,51 @@ def mock_component_manager(
         )
 
     def _deconfigure(mock) -> Tuple[ResultCode, str]:
-        mock._component_configured_callback(True)
+        if mock._ready:
+            mock._component_configured_callback(False)
+        mock._ready = False
         return (ResultCode.OK, "Deconfiguration completed OK")
 
     def _validate_input() -> Tuple[bool, str]:
         return (True, "Scan configuration is valid.")
 
     def _configure_scan(mock) -> Tuple[ResultCode, str]:
-        mock._component_configured_callback(True)
+        if not mock._ready:
+            mock._component_configured_callback(True)
+        mock._ready = True
         return (ResultCode.OK, "ConfigureScan command completed OK")
 
     def _remove_receptor(
         mock: unittest.mock.Mock,
         receptor_id: int
     ) -> Tuple[ResultCode, str]:
-        if receptor_id in mock._receptors:
-            mock._receptors.remove(receptor_id)
-            if len(mock._receptors) == 0:
+        if receptor_id in mock.receptors:
+            mock.receptors.remove(receptor_id)
+            if len(mock.receptors) == 0:
                 mock._component_resourced_callback(False)
             return (ResultCode.OK, "RemoveReceptors completed OK")
         else:
             return (ResultCode.FAILED, 
             f"Error in CbfSubarrayComponentManager; receptor {receptor_id} not found.")
 
+    def _remove_all_receptors(mock: unittest.mock.Mock) -> Tuple[ResultCode, str]:
+        if mock.receptors == []:
+            return (ResultCode.FAILED, "RemoveAllReceptors failed")
+        mock.receptors = []
+        mock._component_resourced_callback(False)
+        return (ResultCode.OK, "RemoveAllReceptors completed OK")
+
     def _add_receptor(
         mock: unittest.mock.Mock,
         receptor_id: int
     ) -> Tuple[ResultCode, str]:
-        if receptor_id not in mock._receptors:
-            if len(mock._receptors) == 0:
+        if receptor_id not in mock.receptors:
+            if len(mock.receptors) == 0:
                 mock._component_resourced_callback(True)
-            mock._receptors.append(receptor_id)
+            mock.receptors.append(receptor_id)
             return (ResultCode.OK, "AddReceptors completed OK")
         else:
+            mock._component_fault_callback(True)
             return (ResultCode.FAILED, 
             f"Receptor {receptor_id} already assigned to subarray component manager.")
 
@@ -121,12 +141,15 @@ def mock_component_manager(
     mock.standby.side_effect = lambda: mock._component_power_mode_changed_callback(PowerMode.STANDBY)
     mock.raise_configure_scan_fatal_error.side_effect = lambda: _raise_configure_scan_fatal_error()
     mock.deconfigure.side_effect = lambda: _deconfigure(mock)
-    mock.validate_scan_configuration.side_effect = lambda argin: _validate_input()
+    mock.validate_input.side_effect = lambda argin: _validate_input()
     mock.configure_scan.side_effect = lambda argin: _configure_scan(mock)
     mock.remove_receptor.side_effect = lambda receptor_id: _remove_receptor(mock, receptor_id)
+    mock.remove_all_receptors.side_effect = lambda: _remove_all_receptors(mock)
     mock.add_receptor.side_effect = lambda receptor_id: _add_receptor(mock, receptor_id)
     mock.scan.side_effect = lambda argin: _scan()
     mock.end_scan.side_effect = lambda: _end_scan()
+
+    mock.enqueue.return_value = unique_id, ResultCode.QUEUED
 
     return mock
 
@@ -192,9 +215,6 @@ def patched_subarray_device_class(
 
 
 @pytest.fixture()
-@pytest.mark.skip(
-        reason="Not updated to version 0.11.3 of the base classes."
-) 
 def device_under_test(tango_harness: TangoHarness) -> CbfDeviceProxy:
     """
     Fixture that returns the device under test.

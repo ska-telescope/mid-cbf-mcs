@@ -409,7 +409,7 @@ class TestCbfSubarray:
             logging.info("vcc_index  = {}".format( vcc_index ))
 
             assert len(test_proxies.subarray[sub_id].receptors) == 0
-            assert test_proxies.subarray[sub_id].configID == ''
+            assert test_proxies.subarray[sub_id].configurationID == ''
             assert test_proxies.subarray[sub_id].frequencyBand == 0
             assert test_proxies.subarray[sub_id].obsState == ObsState.EMPTY
 
@@ -427,7 +427,7 @@ class TestCbfSubarray:
 
             # check configured attributes of CBF subarray
             assert sub_id == int(configuration["common"]["subarray_id"])
-            assert test_proxies.subarray[sub_id].configID == configuration["common"]["config_id"]
+            assert test_proxies.subarray[sub_id].configurationID == configuration["common"]["config_id"]
             band_index = freq_band_dict()[configuration["common"]["frequency_band"]]
             assert band_index == test_proxies.subarray[sub_id].frequencyBand 
             assert test_proxies.subarray[sub_id].obsState == ObsState.READY
@@ -629,7 +629,7 @@ class TestCbfSubarray:
 
             # Clean Up
             wait_time_s = 3
-            test_proxies.subarray[sub_id].GoToIdle()
+            test_proxies.subarray[sub_id].End()
             test_proxies.wait_timeout_obs([test_proxies.vcc[i] 
                 for i in range(1, test_proxies.num_vcc + 1)], ObsState.IDLE, wait_time_s, sleep_time_s)
             test_proxies.subarray[sub_id].RemoveAllReceptors()
@@ -700,7 +700,7 @@ class TestCbfSubarray:
 
             # check initial value of attributes of CBF subarray
             assert len(test_proxies.subarray[sub_id].receptors) == 0
-            assert test_proxies.subarray[sub_id].configID == ''
+            assert test_proxies.subarray[sub_id].configurationID == ''
             assert test_proxies.subarray[sub_id].frequencyBand == 0
             assert test_proxies.subarray[sub_id].obsState == ObsState.EMPTY
 
@@ -830,7 +830,7 @@ class TestCbfSubarray:
 
             # Clean Up
             wait_time_s = 3
-            test_proxies.subarray[sub_id].GoToIdle()
+            test_proxies.subarray[sub_id].End()
             test_proxies.wait_timeout_obs([test_proxies.vcc[i] 
                 for i in range(1, test_proxies.num_vcc + 1)], ObsState.IDLE, wait_time_s, sleep_time_s)
             test_proxies.subarray[sub_id].RemoveAllReceptors()
@@ -920,7 +920,7 @@ class TestCbfSubarray:
             frequency_band   = configuration["common"]["frequency_band"]
             input_band_index = freq_band_dict()[frequency_band]
 
-            assert test_proxies.subarray[sub_id].configID == configuration["common"]["config_id"]
+            assert test_proxies.subarray[sub_id].configurationID == configuration["common"]["config_id"]
             assert test_proxies.subarray[sub_id].frequencyBand == input_band_index
             assert test_proxies.subarray[sub_id].obsState == ObsState.READY
 
@@ -977,7 +977,7 @@ class TestCbfSubarray:
 
             # Clean up
             wait_time_s = 3
-            test_proxies.subarray[sub_id].GoToIdle()
+            test_proxies.subarray[sub_id].End()
             test_proxies.wait_timeout_obs([test_proxies.vcc[i] 
                 for i in range(1, test_proxies.num_vcc + 1)], ObsState.IDLE, wait_time_s, sleep_time_s)
             test_proxies.subarray[sub_id].RemoveAllReceptors()
@@ -1133,7 +1133,7 @@ class TestCbfSubarray:
             wait_time_s = 3
             test_proxies.subarray[sub_id].EndScan()
             test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.READY, wait_time_s, sleep_time_s)
-            test_proxies.subarray[sub_id].GoToIdle()
+            test_proxies.subarray[sub_id].End()
             test_proxies.wait_timeout_obs([test_proxies.vcc[i] 
                 for i in range(1, test_proxies.num_vcc + 1)], ObsState.IDLE, wait_time_s, sleep_time_s)
             test_proxies.subarray[sub_id].RemoveAllReceptors()
@@ -1292,7 +1292,7 @@ class TestCbfSubarray:
             wait_time_s = 3
             test_proxies.subarray[sub_id].EndScan()
             test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.READY, wait_time_s, sleep_time_s)
-            test_proxies.subarray[sub_id].GoToIdle()
+            test_proxies.subarray[sub_id].End()
             test_proxies.wait_timeout_obs([test_proxies.vcc[i] 
                 for i in range(1, test_proxies.num_vcc + 1)], ObsState.IDLE, wait_time_s, sleep_time_s)
             test_proxies.subarray[sub_id].RemoveAllReceptors()
@@ -1421,7 +1421,7 @@ class TestCbfSubarray:
             wait_time_s = 3
             test_proxies.subarray[sub_id].EndScan()
             test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.READY, wait_time_s, sleep_time_s)
-            test_proxies.subarray[sub_id].GoToIdle()
+            test_proxies.subarray[sub_id].End()
             test_proxies.wait_timeout_obs([test_proxies.vcc[i] 
                 for i in range(1, test_proxies.num_vcc + 1)], ObsState.IDLE, wait_time_s, sleep_time_s)
             test_proxies.subarray[sub_id].RemoveAllReceptors()

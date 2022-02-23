@@ -354,7 +354,7 @@ def init_proxies_fixture():
                 logger=logging.getLogger()
             )
             self.controller.set_timeout_millis(timeout_millis)
-            self.wait_timeout_dev([self.controller], DevState.OFF, 3, 1)
+            self.wait_timeout_dev([self.controller], DevState.DISABLE, 3, 1)
             
             self.receptor_to_vcc = dict([
                 *map(int, pair.split(":"))
@@ -526,7 +526,7 @@ def init_proxies_fixture():
                         [proxy], ObsState.READY, wait_time_s, sleep_time_s_short)
 
                 if proxy.obsState == ObsState.READY:
-                    proxy.GoToIdle()
+                    proxy.End()
                     self.wait_timeout_obs(
                         [proxy], ObsState.IDLE, wait_time_s, sleep_time_s_short)
                     
@@ -542,6 +542,9 @@ def init_proxies_fixture():
             """
             wait_time_s = 3
             sleep_time_s = 1
+
+            if self.controller.adminMode == AdminMode.OFFLINE:
+                self.controller.adminMode = AdminMode.ONLINE
 
             if self.controller.State() == DevState.ON:
                 pass

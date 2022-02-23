@@ -259,21 +259,21 @@ class CbfController(SKAController):
         )
     
     def get_num_capabilities(
-            self: CbfController, 
-        ) -> None:
-            # self._max_capabilities inherited from SKAController
-            # check first if property exists in DB
-            """Get number of capabilities for _init_Device. 
-            If property not found in db, then assign a default amount(197,27,16)"""
+        self: CbfController, 
+    ) -> None:
+        # self._max_capabilities inherited from SKAController
+        # check first if property exists in DB
+        """Get number of capabilities for _init_Device. 
+        If property not found in db, then assign a default amount(197,27,16)"""
 
-            if self._max_capabilities:
-                return self._max_capabilities
-            else:
-                self.logger.warn("MaxCapabilities device property not defined")
+        if self._max_capabilities:
+            return self._max_capabilities
+        else:
+            self.logger.warning("MaxCapabilities device property not defined")
 
     class InitCommand(SKAController.InitCommand):
 
-        def __get_num_capabilities(
+        def _get_num_capabilities(
             self: CbfController.InitCommand, 
         ) -> None:
             # self._max_capabilities inherited from SKAController
@@ -305,7 +305,7 @@ class CbfController(SKAController):
                         "Subarray capabilities not defined; defaulting to 16.")
                     device._count_subarray = 16
             else:
-                self._logger.warn("MaxCapabilities device property not defined - \
+                self.logger.warning("MaxCapabilities device property not defined - \
                     using default value")
 
         def do(
@@ -335,7 +335,7 @@ class CbfController(SKAController):
             device._central_logging_level = tango.LogLevel.LOG_DEBUG
 
             # defines self._count_vcc, self._count_fsp, and self._count_subarray
-            self.__get_num_capabilities()
+            self._get_num_capabilities()
 
             # initialize dicts with maps receptorID <=> vccID
             # TODO: vccID == receptorID for now, for testing purposes

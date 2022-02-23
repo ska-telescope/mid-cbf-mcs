@@ -142,7 +142,8 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
         self._fqdn_fsp_pss_subarray = fsp_pss_sub
         self._fqdn_fsp_pst_subarray = fsp_pst_sub
 
-        # set to determine if ready to receive subscribed parameters
+        # set to determine if ready to receive subscribed parameters;
+        # also indicates whether component is currently configured
         self._ready = False
 
         self._logger = logger
@@ -678,6 +679,7 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
             information purpose only.
         :rtype: (ResultCode, str)
         """
+        self.update_component_fault(True)
         self._logger.error(msg)
         tango.Except.throw_exception(
             "Command failed", msg, "ConfigureScan execution", tango.ErrSeverity.ERR
@@ -750,6 +752,7 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
                 self._group_fsp.remove_all()
 
         except tango.DevFailed as df:
+            self.update_component_fault(True)
             msg = str(df.args[0].desc)
             return (ResultCode.FAILED, msg)
 
@@ -769,8 +772,8 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
         self._last_received_jones_matrix = "{}"
         self._last_received_beam_weights = "{}"
 
-        self.update_component_configuration(False)
-
+        if self._ready:
+            self.update_component_configuration(False)
         self._ready = False
 
         return (ResultCode.OK, "Deconfiguration completed OK")
@@ -875,28 +878,6 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
                 msg = "'searchWindow' must be an array of maximum length 2. " \
                         "Aborting configuration."
                 return (False, msg)
-            #TODO consider moving the search_window object validation to Vcc
-            for search_window in configuration["search_window"]:
-                for vcc in self._proxies_assigned_vcc:
-                    try:
-                        search_window["frequency_band"] = common_configuration["frequency_band"]
-                        search_window["frequency_band_offset_stream_1"] = \
-                            configuration["frequency_band_offset_stream_1"]
-                        search_window["frequency_band_offset_stream_2"] = \
-                            configuration["frequency_band_offset_stream_2"]
-                        if search_window["frequency_band"] in ["5a", "5b"]:
-                            search_window["band_5_tuning"] = common_configuration["band_5_tuning"]
-
-                        # pass on configuration to VCC
-                        vcc.ValidateSearchWindow(json.dumps(search_window))
-
-                    except tango.DevFailed:  # exception in Vcc.ValidateSearchWindow
-                        msg = (
-                            "An exception occurred while configuring VCC search "
-                            f"windows:\n{sys.exc_info()[1].args[0].de}\n. "
-                            "Aborting configuration."
-                        )
-                        return (False, msg)
         else:
             pass
 
@@ -1604,6 +1585,7 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
                 vccProxy.subarrayMembership = 0
             except tango.DevFailed as df:
                 msg = str(df.args[0].desc)
+                self._component_fault_callback(True)
                 return (ResultCode.FAILED, msg)
 
             self._receptors.remove(receptor_id)
@@ -1617,7 +1599,63 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
         if len(self._receptors) == 0:
             self._component_resourced_callback(False)
 
-        return (ResultCode.OK, "remove_receptor completed OK")
+        return (ResultCode.OK, "RemoveReceptors completed OK")
+
+
+    def remove_all_receptors(
+        self: CbfSubarrayComponentManager
+    ) -> Tuple[ResultCode, str]:
+        """
+        Remove all receptors from subarray.
+
+        :param receptor_id: The receptor to be released
+        :return: A tuple containing a return code and a string
+            message indicating status. The message is for
+            information purpose only.
+        :rtype: (ResultCode, str)
+        """
+        if len(self._receptors) > 0:
+            for receptor_id in self._receptors:
+                vccID = self._receptor_to_vcc[receptor_id]
+                vccFQDN = self._fqdn_vcc[vccID - 1]
+                vccProxy = self._proxies_vcc[vccID - 1]
+
+                try:
+                    # unsubscribe from events
+                    vccProxy.remove_event(
+                        "State",
+                        self._events_state_change_vcc[vccID][0]
+                    )
+                    vccProxy.remove_event(
+                        "healthState",
+                        self._events_state_change_vcc[vccID][1]
+                    )
+
+                    del self._events_state_change_vcc[vccID]
+                    del self._vcc_state[vccFQDN]
+                    del self._vcc_health_state[vccFQDN]
+
+                    # reset subarrayMembership Vcc attribute:
+                    vccProxy.subarrayMembership = 0
+                except tango.DevFailed as df:
+                    msg = str(df.args[0].desc)
+                    self._component_fault_callback(True)
+                    return (ResultCode.FAILED, msg)
+
+                self._proxies_assigned_vcc.remove(vccProxy)
+                self._group_vcc.remove(vccFQDN)
+
+            self._receptors = []
+            self._component_resourced_callback(False)
+        
+        else:
+            return (
+                ResultCode.FAILED, 
+                "RemoveAllReceptors failed; no receptors currently assigned"
+            )
+
+
+        return (ResultCode.OK, "RemoveAllReceptors completed OK")
 
 
     def add_receptor(
@@ -1683,7 +1721,7 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
                 msg = f"Receptor {receptor_id} already assigned to component manager."
                 return (ResultCode.FAILED, msg)
 
-        return (ResultCode.OK, "add_receptor completed OK")
+        return (ResultCode.OK, "AddReceptors completed OK")
 
 
     def scan(
@@ -1700,12 +1738,17 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
             information purpose only.
         :rtype: (ResultCode, str)
         """
-        self._scan_id = int(argin)
-        self._group_vcc.command_inout("Scan", argin)
-        self._group_fsp_corr_subarray.command_inout("Scan", argin)
-        self._group_fsp_pss_subarray.command_inout("Scan", argin)
-        self._group_fsp_pst_subarray.command_inout("Scan", argin)
+        try:
+            self._group_vcc.command_inout("Scan", argin)
+            self._group_fsp_corr_subarray.command_inout("Scan", argin)
+            self._group_fsp_pss_subarray.command_inout("Scan", argin)
+            self._group_fsp_pst_subarray.command_inout("Scan", argin)
+        except tango.DevFailed as df:
+            msg = str(df.args[0].desc)
+            self._component_fault_callback(True)
+            return (ResultCode.FAILED, msg)
 
+        self._scan_id = int(argin)
         return (ResultCode.STARTED, "Scan command successful")
 
 
@@ -1718,14 +1761,47 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
             information purpose only.
         :rtype: (ResultCode, str)
         """
-        self._scan_id = 0
-        # EndScan for all subordinate devices:
-        self._group_vcc.command_inout("EndScan")
-        self._group_fsp_corr_subarray.command_inout("EndScan")
-        self._group_fsp_pss_subarray.command_inout("EndScan")
-        self._group_fsp_pst_subarray.command_inout("EndScan")
+        try:
+            # EndScan for all subordinate devices:
+            self._group_vcc.command_inout("EndScan")
+            self._group_fsp_corr_subarray.command_inout("EndScan")
+            self._group_fsp_pss_subarray.command_inout("EndScan")
+            self._group_fsp_pst_subarray.command_inout("EndScan")
+        except tango.DevFailed as df:
+            msg = str(df.args[0].desc)
+            self._component_fault_callback(True)
+            return (ResultCode.FAILED, msg)
 
+        self._scan_id = 0
         return (ResultCode.OK, "EndScan command completed OK")
+
+
+    def abort(self: CbfSubarrayComponentManager) -> None:
+        """
+        Abort subarray configuration or operation.
+        """
+        # if aborted from SCANNING, end VCC and FSP Subarray scans
+        if self.scan_id != 0:
+            self.end_scan()
+
+
+    def restart(self: CbfSubarrayComponentManager) -> None:
+        """
+        Restart from fault.
+        """
+        # We might have interrupted a long-running command such as a Configure
+        # or a Scan, so we need to clean up from that.
+        self.deconfigure()
+        self.remove_all_receptors()
+
+
+    def obsreset(self: CbfSubarrayComponentManager) -> None:
+        """
+        Reset subarray scan configuration or operation.
+        """
+        # We might have interrupted a long-running command such as a Configure
+        # or a Scan, so we need to clean up from that.
+        self.deconfigure()
 
 
     def update_component_configuration(
@@ -1737,7 +1813,7 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
         :param configured: whether the component is configured.
         """
         if configured:
-            # call component configured if not previously configured
+            # perform "component_configured" if not previously configured
             if not self._ready:
                 self._component_configured_callback(True)
         else:

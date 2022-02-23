@@ -43,88 +43,88 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
     """Component manager for Vcc class."""
 
     @property
-    def config_id(self):
+    def config_id(self) -> str:
         """Return the configuration id."""
         return self._config_id
 
     @config_id.setter
-    def config_id(self, config_id):
+    def config_id(self, config_id: str):
         """Set the configuration ID."""
         self._config_id = config_id
 
     @property
-    def scan_id(self):
+    def scan_id(self) -> int:
         """Return the scan id."""
         return self._scan_id
 
     @scan_id.setter
-    def scan_id(self, scan_id):
+    def scan_id(self, scan_id: int):
         """Set the scan ID."""
         self._scan_id = scan_id
 
     @property
-    def receptor_id(self):
+    def receptor_id(self) -> int:
         return self._receptor_id
 
     @receptor_id.setter
-    def receptor_id(self, receptor_id):
+    def receptor_id(self, receptor_id: int):
         """Set the receptor ID."""
         self._receptor_id = receptor_id
 
     @property
-    def frequency_band(self):
+    def frequency_band(self) -> Optional[int]:
         return self._frequency_band
 
     @property
-    def stream_tuning(self):
+    def stream_tuning(self) -> Tuple[int]:
         return self._stream_tuning
 
     @property
-    def frequency_band_offset_stream_1(self):
+    def frequency_band_offset_stream_1(self) -> int:
         return self._frequency_band_offset_stream_1
 
     @property
-    def frequency_band_offset_stream_2(self):
+    def frequency_band_offset_stream_2(self) -> int:
         return self._frequency_band_offset_stream_2
 
     @property
-    def rfi_flagging_mask(self):
+    def rfi_flagging_mask(self) -> str:
         return self._rfi_flagging_mask
 
     @property
-    def scfo_band_1(self):
+    def scfo_band_1(self) -> int:
         return self._scfo_band_1
 
     @property
-    def scfo_band_2(self):
+    def scfo_band_2(self) -> int:
         return self._scfo_band_2
 
     @property
-    def scfo_band_3(self):
+    def scfo_band_3(self) -> int:
         return self._scfo_band_3
 
     @property
-    def scfo_band_4(self):
+    def scfo_band_4(self) -> int:
         return self._scfo_band_4
 
     @property
-    def scfo_band_5a(self):
+    def scfo_band_5a(self) -> int:
         return self._scfo_band_5a
 
     @property
-    def scfo_band_5b(self):
+    def scfo_band_5b(self) -> int:
         return self._scfo_band_5b
 
     @property
-    def jones_matrix(self):
+    def jones_matrix(self) -> List[List[float]]:
         return self._jones_matrix
 
     @property
-    def delay_model(self):
+    def delay_model(self) -> List[List[float]]:
         return self._delay_model
 
     @property
-    def doppler_phase_correction(self):
+    def doppler_phase_correction(self) -> List[float]:
         return self._doppler_phase_correction
 
 

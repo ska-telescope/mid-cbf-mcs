@@ -176,7 +176,7 @@ class FspPstSubarrayComponentManager(CbfComponentManager, CspObsComponentManager
                 else:
                     log_msg = "Receptor {} already assigned to current FSP subarray.".format(
                         str(receptorID))
-                    self._logger.warn(log_msg)
+                    self._logger.warning(log_msg)
 
             except KeyError:  # invalid receptor ID
                 errs.append("Invalid receptor ID: {}".format(receptorID))
@@ -201,7 +201,7 @@ class FspPstSubarrayComponentManager(CbfComponentManager, CspObsComponentManager
             else:
                 log_msg = "Receptor {} not assigned to FSP subarray. "\
                     "Skipping.".format(str(receptorID))
-                self._logger.warn(log_msg)
+                self._logger.warning(log_msg)
     
     def _remove_all_receptors(self: FspPstSubarrayComponentManager) -> None:
         """ Remove all receptors from the subarray."""

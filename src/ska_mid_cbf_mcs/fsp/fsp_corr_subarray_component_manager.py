@@ -282,7 +282,7 @@ class FspCorrSubarrayComponentManager(CbfComponentManager, CspObsComponentManage
                 else:
                     log_msg = "Receptor {} already assigned to current FSP subarray.".format(
                         str(receptorID))
-                    self._logger.warn(log_msg)
+                    self._logger.warning(log_msg)
 
             except KeyError:  # invalid receptor ID
                 errs.append("Invalid receptor ID: {}".format(receptorID))
@@ -308,7 +308,7 @@ class FspCorrSubarrayComponentManager(CbfComponentManager, CspObsComponentManage
             else:
                 log_msg = "Receptor {} not assigned to FSP subarray. "\
                     "Skipping.".format(str(receptorID))
-                self._logger.warn(log_msg)
+                self._logger.warning(log_msg)
     
     def _remove_all_receptors(self: FspCorrSubarrayComponentManager) -> None:
         """Remove all Receptors of this subarray"""
@@ -376,7 +376,7 @@ class FspCorrSubarrayComponentManager(CbfComponentManager, CspObsComponentManage
                     # log a warning message
                     log_msg = "'zoomWindowTuning' partially out of observed frequency slice. "\
                         "Proceeding."
-                    self._logger.warn(log_msg)
+                    self._logger.warning(log_msg)
             else:  # frequency band 5a or 5b (two streams with bandwidth 2.5 GHz)
                 self._zoom_window_tuning = configuration["zoom_window_tuning"]
 
@@ -414,7 +414,7 @@ class FspCorrSubarrayComponentManager(CbfComponentManager, CspObsComponentManage
                     # log a warning message
                     log_msg = "'zoomWindowTuning' partially out of observed frequency slice. "\
                         "Proceeding."
-                    self._logger.warn(log_msg)
+                    self._logger.warning(log_msg)
 
 
         self._integration_time = int(configuration["integration_factor"])
@@ -447,7 +447,7 @@ class FspCorrSubarrayComponentManager(CbfComponentManager, CspObsComponentManage
             ]
             log_msg = "FSP specified, but 'channelAveragingMap not given. Default to averaging "\
                 "factor = 0 for all channel groups."
-            self._logger.warn(log_msg)
+            self._logger.warning(log_msg)
 
         self._config_id = configuration["config_id"]
 
