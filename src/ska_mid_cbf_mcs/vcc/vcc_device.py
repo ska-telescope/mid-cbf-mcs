@@ -365,7 +365,6 @@ class Vcc(CspSubElementObsDevice):
         else:  # self._component_power_mode is None
             pass  # wait for a power mode update
 
-
     def _component_power_mode_changed(
         self: Vcc,
         power_mode: PowerMode,
