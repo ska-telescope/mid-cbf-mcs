@@ -17,7 +17,7 @@ When integration testing with the hardware is desired, the ``simulationMode`` at
 be set to 0. This initializes communication with the real power switch via the ``PowerSwitchDriver``,
 and queries the list of outlets in the power switch. 
 
-.. figure:: diagrams/power-switch-device.png
+.. figure:: ../diagrams/power-switch-device.png
    :align: center
    
    MCS PowerSwitch Device
@@ -37,42 +37,3 @@ Important operational notes:
   sequential. Currently the ``PowerSwitchDriver`` does not ensure this. If the ``PowerSwitch``
   device is ever changed to handle requests asynchronously, the ``PowerSwitchDriver`` should
   also be updated to only process one request at a time. 
-
-PowerSwitch Class
------------------
-
-.. autoclass:: ska_mid_cbf_mcs.power_switch.power_switch_device.PowerSwitch
-   :members:
-   :undoc-members:
-   :show-inheritance:
-   :member-order:
-
-
-PowerSwitchComponentManager Class
----------------------------------
-
-.. autoclass:: ska_mid_cbf_mcs.power_switch.power_switch_component_manager.PowerSwitchComponentManager
-   :members:
-   :undoc-members:
-   :show-inheritance:
-   :member-order:
-
-PowerSwitchDriver
------------------
-
-.. automodule:: ska_mid_cbf_mcs.power_switch.power_switch_driver
-   :members:
-   :undoc-members:
-   :show-inheritance:
-   :member-order:
-
-PowerSwitchSimulator
---------------------
-
-.. automodule:: ska_mid_cbf_mcs.power_switch.power_switch_simulator
-   :members:
-   :undoc-members:
-   :show-inheritance:
-   :member-order:
-
-

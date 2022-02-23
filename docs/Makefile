@@ -17,7 +17,7 @@ help:
 
 # Copy README from project directory so that autodoc can see and parse it correctly.
 html:
-	cp ../README.md src/
+	cp ../README.md src/guide/getting_started
 	@$(SPHINXBUILD) -M html "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
 # Remove copy of README from the doc source directory.

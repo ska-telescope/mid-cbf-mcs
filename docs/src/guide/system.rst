@@ -9,7 +9,7 @@ System Context
 The following diagram shows the Mid.CBF MCS as it fits into the rest of the CSP Mid
 system.
 
-.. figure:: diagrams/mcs-context.png
+.. figure:: ../diagrams/mcs-context.png
     :align: center
 
     MCS System Context
@@ -82,7 +82,7 @@ From a MCS perspective, the On command sequence consists of the following steps:
 - Arrow 10: Start up the HPS Master on each board
 - Arrow 12: Send the ``configure`` to each HPS Master device server
 
-.. figure:: diagrams/on-command-sequence.png
+.. figure:: ../diagrams/on-command-sequence.png
     :align: center
     
     MCS On Command Sequence
