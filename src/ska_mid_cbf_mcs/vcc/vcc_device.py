@@ -30,10 +30,8 @@ from tango import AttrWriteType
 from ska_mid_cbf_mcs.commons.global_enum import const, freq_band_dict
 from ska_mid_cbf_mcs.vcc.vcc_component_manager import VccComponentManager
 
-from ska_tango_base.base.base_device import SKABaseDevice
 from ska_tango_base.control_model import ObsState, SimulationMode, PowerMode
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
-from ska_tango_base.csp.obs.obs_state_model import CspSubElementObsStateModel
 from ska_tango_base.csp.obs.obs_device import CspSubElementObsDevice
 from ska_tango_base.commands import ResultCode, BaseCommand, ResponseCommand
 
@@ -456,25 +454,43 @@ class Vcc(CspSubElementObsDevice):
 
     def read_frequencyOffsetK(self: Vcc) -> int:
         # PROTECTED REGION ID(Vcc.frequencyOffsetK_read) ENABLED START #
-        """Return frequencyOffsetK attribute for this receptor"""
+        """
+        Read the frequencyOffsetK attribute.
+
+        :return: the frequency offset k-value
+        :rtype: int
+        """
         return self.component_manager.frequency_offset_k
         # PROTECTED REGION END #    //  Vcc.frequencyOffsetK_read
 
     def write_frequencyOffsetK(self: Vcc, value: int) -> None:
         # PROTECTED REGION ID(Vcc.frequencyOffsetK_write) ENABLED START #
-        """Set frequencyOffsetK attribute"""
+        """
+        Write the frequencyOffsetK attribute.
+
+        :param value: the frequency offset k-value
+        """
         self.component_manager.frequency_offset_k = value
         # PROTECTED REGION END #    //  Vcc.frequencyOffsetK_write
 
     def read_frequencyOffsetDeltaF(self: Vcc) -> int:
         # PROTECTED REGION ID(Vcc.frequencyOffsetDeltaF_read) ENABLED START #
-        """Return frequencyOffsetDeltaF attribute for this receptor"""
+        """
+        Read the frequencyOffsetDeltaF attribute.
+
+        :return: the frequency offset delta-f value
+        :rtype: int
+        """
         return self.component_manager.frequency_offset_delta_f
         # PROTECTED REGION END #    //  Vcc.frequencyOffsetDeltaF_read
 
     def write_frequencyOffsetDeltaF(self: Vcc, value: int) -> None:
         # PROTECTED REGION ID(Vcc.frequencyOffsetDeltaF_write) ENABLED START #
-        """Set the frequencyOffsetDeltaF attribute"""
+        """
+        Write the frequencyOffsetDeltaF attribute.
+
+        :param value: the frequency offset delta-f value
+        """
         self.component_manager.frequency_offset_delta_f = value
         # PROTECTED REGION END #    //  Vcc.frequencyOffsetDeltaF_write
 

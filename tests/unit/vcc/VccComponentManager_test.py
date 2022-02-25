@@ -258,7 +258,7 @@ class TestVccComponentManager:
         mock_vcc_band.ConfigureScan.assert_next_call(json_str)
 
         vcc_component_manager.deconfigure()
-        assert vcc_component_manager.frequency_band == None
+        assert vcc_component_manager.frequency_band == 0
         assert vcc_component_manager.config_id == ""
         assert vcc_component_manager.stream_tuning == (0, 0)
         assert vcc_component_manager.frequency_band_offset_stream_1 == 0
@@ -301,7 +301,7 @@ class TestVccComponentManager:
         (result_code, msg) = vcc_component_manager.configure_scan(json_str)
         assert result_code == ResultCode.FAILED
         assert msg == f"Error in Vcc.ConfigureScan; scan configuration " \
-            f"frequency band {freq_band} not the same as enabled band device None"
+            f"frequency band {freq_band} not the same as enabled band device 0"
         mock_vcc_band.ConfigureScan.assert_not_called()
 
         # Configure the band to something different

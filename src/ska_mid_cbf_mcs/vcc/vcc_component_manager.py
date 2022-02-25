@@ -23,7 +23,6 @@ from ska_mid_cbf_mcs.vcc.vcc_controller_simulator import VccControllerSimulator
 
 # tango imports
 import tango
-from tango import DevState
 
 # SKA Specific imports
 
@@ -46,79 +45,166 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
 
     @property
     def config_id(self: VccComponentManager) -> str:
-        """Return the configuration id."""
+        """
+        Configuration ID
+
+        :return: the configuration ID
+        """
         return self._config_id
 
     @config_id.setter
-    def config_id(self: VccComponentManager, config_id: str):
-        """Set the configuration ID."""
+    def config_id(self: VccComponentManager, config_id: str) -> None:
+        """
+        Set the configuration ID.
+        
+        :param config_id: Configuration ID
+        """
         self._config_id = config_id
 
     @property
     def scan_id(self: VccComponentManager) -> int:
-        """Return the scan id."""
+        """
+        Scan ID
+
+        :return: the scan ID
+        """
         return self._scan_id
 
     @scan_id.setter
     def scan_id(self: VccComponentManager, scan_id: int) -> None:
-        """Set the scan ID."""
+        """
+        Set the scan ID.
+        
+        :param scan_id: Scan ID
+        """
         self._scan_id = scan_id
 
     @property
     def receptor_id(self: VccComponentManager) -> int:
+        """
+        Receptor ID
+
+        :return: the receptor ID
+        """
         return self._receptor_id
 
     @receptor_id.setter
-    def receptor_id(self, receptor_id):
-        """Set the receptor ID."""
+    def receptor_id(self: VccComponentManager, receptor_id: int) -> None:
+        """
+        Set the receptor ID.
+        
+        :param receptor_id: Receptor ID
+        """
         self._receptor_id = receptor_id
 
     @property
     def frequency_offset_k(self: VccComponentManager) -> int:
+        """
+        Frequency Offset K-value for this receptor
+
+        :return: the frequency offset k-value
+        """
         return self._frequency_offset_k
 
     @frequency_offset_k.setter
-    def frequency_offset_k(self, frequency_offset_k):
+    def frequency_offset_k(self: VccComponentManager, frequency_offset_k: int) -> None:
+        """
+        Set the frequency offset k-value.
+        
+        :param frequency_offset_k: Frequency offset k-value
+        """
         self._frequency_offset_k = frequency_offset_k
 
     @property
     def frequency_offset_delta_f(self: VccComponentManager) -> int:
+        """
+        Frequency Offset Delta-F Value for this receptor
+
+        :return: the frequency offset delta-f value
+        """
         return self._frequency_offset_delta_f
 
     @frequency_offset_delta_f.setter
-    def frequency_offset_delta_f(self, frequency_offset_delta_f):
+    def frequency_offset_delta_f(self: VccComponentManager, frequency_offset_delta_f: int) -> None:
+        """
+        Set the frequency offset delta-f value.
+        
+        :param frequency_offset_delta_f: Frequency offset delta-f value
+        """
         self._frequency_offset_delta_f = frequency_offset_delta_f
 
     @property
-    def frequency_band(self: VccComponentManager) -> None:
+    def frequency_band(self: VccComponentManager) -> int:
+        """
+        Frequency Band
+
+        :return: the frequency band as the integer index in an array
+                of frequency band labels: ["1", "2", "3", "4", "5a", "5b"]
+        """
         return self._frequency_band
 
     @property
     def stream_tuning(self: VccComponentManager) -> List[float]:
+        """
+        Band 5 Stream Tuning
+
+        :return: the band 5 stream tuning
+        """
         return self._stream_tuning
 
     @property
-    def frequency_band_offset_stream_1(self: VccComponentManager):
+    def frequency_band_offset_stream_1(self: VccComponentManager) -> int:
+        """
+        Frequency Band Offset Stream 1
+
+        :return: the frequency band offset for stream 1
+        """
         return self._frequency_band_offset_stream_1
 
     @property
-    def frequency_band_offset_stream_2(self: VccComponentManager):
+    def frequency_band_offset_stream_2(self: VccComponentManager) -> int:
+        """
+        Frequency Band Offset Stream 2
+
+        :return: the frequency band offset for stream 2, this
+                is only use when band 5 is active
+        """
         return self._frequency_band_offset_stream_2
 
     @property
     def rfi_flagging_mask(self: VccComponentManager) -> str:
+        """
+        RFI Flagging Mask 
+
+        :return: the RFI flagging mask
+        """
         return self._rfi_flagging_mask
 
     @property
     def jones_matrix(self: VccComponentManager) -> List[List[float]]:
+        """
+        Jones Matrix
+
+        :return: the last received Jones matrix
+        """
         return self._jones_matrix
 
     @property
     def delay_model(self: VccComponentManager) -> List[List[float]]:
+        """
+        Delay Model
+
+        :return: the last received delay model
+        """
         return self._delay_model
 
     @property
     def doppler_phase_correction(self: VccComponentManager) -> List[float]:
+        """
+        Doppler Phase Correction
+
+        :return: the last received Doppler phase correction array
+        """
         return self._doppler_phase_correction
 
 
@@ -174,7 +260,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         self._scan_id = 0
         self._config_id = ""
 
-        self._frequency_band = None
+        self._frequency_band = 0
         self._freq_band_name = ""
         self._stream_tuning = (0, 0)
         self._frequency_band_offset_stream_1 = 0
@@ -250,10 +336,15 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
 
         super().start_communicating()
 
-        self._talon_lru_proxy = CbfDeviceProxy(fqdn=self._talon_lru_fqdn, logger=self._logger)
+        try:
+            self._talon_lru_proxy = CbfDeviceProxy(fqdn=self._talon_lru_fqdn, logger=self._logger)
 
-        self._sw_proxies = [CbfDeviceProxy(fqdn=fqdn, logger=self._logger
-            ) for fqdn in self._search_window_fqdn]
+            self._sw_proxies = [CbfDeviceProxy(fqdn=fqdn, logger=self._logger
+                ) for fqdn in self._search_window_fqdn]
+        except tango.DevFailed:
+            self.update_component_fault(True)
+            self._logger.error("Error in proxy connection")
+            return
 
         self.connected = True
         self.update_component_power_mode(self._get_power_mode())
@@ -286,6 +377,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                 return PowerMode.UNKNOWN
         except tango.DevFailed:
             self._logger.error("Could not connect to Talon LRU device")
+            self.update_component_fault(True)
             return PowerMode.UNKNOWN
 
 
@@ -313,9 +405,10 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                     ) for fqdn in self._vcc_band_fqdn]
 
             self._init_vcc_controller_parameters()
-        except tango.DevFailed as dev_failed:
+        except tango.DevFailed as df:
+            self._logger.error(str(df.args[0].desc))
             self.update_component_fault(True)
-            raise ConnectionError(f"Error in proxy connection.") from dev_failed
+            return (ResultCode.FAILED, "Failed to connect to HPS VCC devices")
 
         self.update_component_power_mode(PowerMode.ON)
         return (ResultCode.OK, "On command completed OK")
@@ -416,6 +509,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                     self._band_proxies[idx].SetInternalParameters(json_string)
         except tango.DevFailed as df:
             self._logger.error(str(df.args[0].desc))
+            self.update_component_fault(True)
             (result_code, msg) = (ResultCode.FAILED,
                 "Failed to connect to HPS VCC devices")
         except FileNotFoundError:
@@ -436,7 +530,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         self._frequency_band_offset_stream_2 = 0
         self._frequency_band_offset_stream_1 = 0
         self._stream_tuning = (0, 0)
-        self._frequency_band = None
+        self._frequency_band = 0
         self._freq_band_name = ""
         self._config_id = ""
         self._scan_id = 0
@@ -448,6 +542,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                 self._vcc_controller_proxy.Unconfigure()
             except tango.DevFailed as df:
                 self._logger.error(str(df.args[0].desc))
+                self.update_component_fault(True)
         
 
     def configure_scan(self: VccComponentManager, argin: str) -> Tuple[ResultCode, str]:
@@ -499,6 +594,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                 self._band_proxies[idx].ConfigureScan(argin)
             except tango.DevFailed as df:
                 self._logger.error(str(df.args[0].desc))
+                self.update_component_fault(True)
                 return (ResultCode.FAILED, "Failed to connect to VCC band device")
 
         return (ResultCode.OK, "Vcc ConfigureScanCommand completed OK")
@@ -527,6 +623,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                 self._band_proxies[idx].Scan(scan_id)
             except tango.DevFailed as df:
                 self._logger.error(str(df.args[0].desc))
+                self.update_component_fault(True)
                 return (ResultCode.FAILED, "Failed to connect to VCC band device")
 
         return (ResultCode.STARTED, "Vcc ScanCommand completed OK")
@@ -552,6 +649,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                 self._band_proxies[idx].EndScan()
             except tango.DevFailed as df:
                 self._logger.error(str(df.args[0].desc))
+                self.update_component_fault(True)
                 return (ResultCode.FAILED, "Failed to connect to VCC band device")
 
         return (ResultCode.OK, "Vcc EndScanCommand completed OK")
@@ -567,6 +665,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                 self._band_proxies[idx].Abort()
             except tango.DevFailed as df:
                 self._logger.error(str(df.args[0].desc))
+                self.update_component_fault(True)
                 return (ResultCode.FAILED, "Failed to connect to VCC band device")
 
         return (ResultCode.OK, "Vcc Abort command completed OK")
@@ -582,6 +681,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                 self._band_proxies[idx].ObsReset()
             except tango.DevFailed as df:
                 self._logger.error(str(df.args[0].desc))
+                self.update_component_fault(True)
                 return (ResultCode.FAILED, "Failed to connect to VCC band device")
 
         return (ResultCode.OK, "Vcc ObsReset command completed OK")

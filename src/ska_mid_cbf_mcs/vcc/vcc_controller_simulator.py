@@ -21,9 +21,6 @@ from ska_mid_cbf_mcs.vcc.vcc_band_simulator import VccBandSimulator
 import tango
 from typing import List
 
-from ska_tango_base.control_model import ObsState
-from ska_mid_cbf_mcs.commons.global_enum import freq_band_dict
-
 __all__ = ["VccControllerSimulator"]
 
 class VccControllerSimulator:
