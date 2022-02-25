@@ -1383,8 +1383,9 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
             fsp_cfg = {
                 "fsp_id": fsp["fsp_id"],
                 "function_mode": fsp["function_mode"],
-                "frequency_slice_id": fsp["frequency_slide_id"]
             }
+            if fsp["function_mode"] == "CORR":
+                    fsp_cfg["frequency_slice_id"] = fsp["frequency_slice_id"]
             reduced_fsp.append(fsp_cfg)
         config_dict["fsp"] = reduced_fsp
 
