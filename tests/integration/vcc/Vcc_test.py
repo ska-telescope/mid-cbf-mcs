@@ -49,32 +49,35 @@ class TestVcc:
         """
         Test a minimal successful scan configuration.
         """
-        # The VCC and bands should be in the ON state after being initialised
+        # Start monitoring the TalonLRUs and power switch devices
+        test_proxies.power_switch.adminMode = AdminMode.ONLINE
+        for proxy in test_proxies.talon_lru:
+            proxy.adminMode = AdminMode.ONLINE
 
+        # The VCC and bands should be in the OFF state after being initialised
         test_proxies.vcc[vcc_id].loggingLevel = LoggingLevel.DEBUG
         test_proxies.vcc[vcc_id].adminMode = AdminMode.ONLINE
 
+        test_proxies.wait_timeout_dev([test_proxies.vcc[vcc_id]], DevState.OFF, 3, 1)
+        assert test_proxies.vcc[vcc_id].State() == DevState.OFF
+        
+        # Turn on the LRUs and then the VCC devices
+        for proxy in test_proxies.talon_lru:
+            proxy.On()
+        test_proxies.vcc[vcc_id].On()
         test_proxies.wait_timeout_dev([test_proxies.vcc[vcc_id]], DevState.ON, 3, 1)
         assert test_proxies.vcc[vcc_id].State() == DevState.ON
-        
+
         config_file_name = "Vcc_ConfigureScan_basic.json"
         f = open(data_file_path + config_file_name)
         json_str = f.read().replace("\n", "")
         configuration = copy.deepcopy(json.loads(json_str))
         f.close()
 
-        frequency_bands = ["1", "2", "3", "4", "5a", "5b"]
         frequency_band = configuration["frequency_band"]
-        freq_band_index = dict(zip(freq_band_dict().keys(), ['12', '12', '3', '4', '5', '5']))
-        test_proxies.vcc[vcc_id].TurnOnBandDevice(frequency_band)
+        test_proxies.vcc[vcc_id].ConfigureBand(frequency_band)
         time.sleep(2)
         assert test_proxies.vcc[vcc_id].frequencyBand == freq_band_dict()[frequency_band]
-
-        for band, proxy in test_proxies.vccBand[vcc_id].items():
-            if band == freq_band_index[frequency_band]:
-                assert proxy.state() == DevState.ON
-            else:
-                assert proxy.state() == DevState.OFF
 
         test_proxies.vcc[vcc_id].ConfigureScan(json_str)
         test_proxies.wait_timeout_obs([test_proxies.vcc[vcc_id]], ObsState.READY, 3, 1)
@@ -90,12 +93,6 @@ class TestVcc:
             assert  test_proxies.vcc[vcc_id].frequencyBandOffsetStream1 == configuration["frequency_band_offset_stream_1"]
         if "frequency_band_offset_stream_2" in configuration:
             assert  test_proxies.vcc[vcc_id].frequencyBandOffsetStream2 == configuration["frequency_band_offset_stream_2"] 
-        assert test_proxies.vcc[vcc_id].scfoBand1 == configuration["scfo_band_1"]
-        assert test_proxies.vcc[vcc_id].scfoBand2 == configuration["scfo_band_2"]
-        assert test_proxies.vcc[vcc_id].scfoBand3 == configuration["scfo_band_3"]
-        assert test_proxies.vcc[vcc_id].scfoBand4 == configuration["scfo_band_4"]
-        assert test_proxies.vcc[vcc_id].scfoBand5a == configuration["scfo_band_5a"]
-        assert test_proxies.vcc[vcc_id].scfoBand5b == configuration["scfo_band_5b"]
 
         test_proxies.vcc[vcc_id].Scan("1")
         test_proxies.wait_timeout_obs([test_proxies.vcc[vcc_id]], ObsState.SCANNING, 3, 1)
@@ -114,12 +111,11 @@ class TestVcc:
         test_proxies.wait_timeout_obs([test_proxies.vcc[vcc_id]], ObsState.READY, 3, 1)
         assert test_proxies.vcc[vcc_id].obsState == ObsState.READY
 
-        test_proxies.vcc[vcc_id].TurnOffBandDevice(frequency_band)
+        test_proxies.vcc[vcc_id].GoToIdle()
         time.sleep(2)
 
-        for _, proxy in test_proxies.vccBand[vcc_id].items():
-            assert proxy.state() == DevState.OFF
-
+        for proxy in test_proxies.talon_lru:
+            proxy.Off()
         (result_code, msg) = test_proxies.vcc[vcc_id].Off()
         test_proxies.wait_timeout_dev([test_proxies.vcc[vcc_id]], DevState.OFF, 3, 1)
         assert test_proxies.vcc[vcc_id].State() == DevState.OFF

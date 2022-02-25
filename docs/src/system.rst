@@ -76,7 +76,7 @@ components in the Mid.CBF system. The steps are outlined in detail in the
 
 From a MCS perspective, the On command sequence consists of the following steps:
 
-- Arrows 4-7: Power on the Talon-DX boards (see :ref:`TalonLRU Class` and :ref:`PowerSwitch Class`)
+- Arrows 4-7: Power on the Talon-DX boards (see :ref:`TalonLRU Device` and :ref:`PowerSwitch Device`)
 - Arrow 9: Attempt to connect to each board over SSH (see :ref:`TalonDxComponentManager Class`)
 - Arrows 8-9: Copy the relevant binaries and bitstreams to each board
 - Arrow 10: Start up the HPS Master on each board
