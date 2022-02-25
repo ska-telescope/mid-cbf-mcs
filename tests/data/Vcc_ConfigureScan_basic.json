@@ -4,11 +4,5 @@
     "band_5_tuning": [5.85, 7.25],
     "frequency_band_offset_stream_1": 0,
     "frequency_band_offset_stream_2": 0,
-    "rfi_flagging_mask": "",
-    "scfo_band_1": 0,
-    "scfo_band_2": 0,
-    "scfo_band_3": 0,
-    "scfo_band_4": 0,
-    "scfo_band_5a": 0,
-    "scfo_band_5b": 0
+    "rfi_flagging_mask": ""
 }

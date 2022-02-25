@@ -431,17 +431,6 @@ def init_proxies_fixture():
             ) for i in range(1, self.num_vcc + 1)]:
                 self.vcc.append(proxy)
 
-            # vccBand[vcc id (int)][band (str)]
-            self.vccBand = [None]
-            for i in range(1, self.num_vcc + 1):
-                bands = {}
-                for j in ["12", "3", "4", "5"]:
-                    bands[j] = CbfDeviceProxy(
-                        fqdn=f"mid_csp_cbf/vcc_band{j}/{i:03}",
-                        logger=logging.getLogger()
-                    )
-                self.vccBand.append(bands)
-
             self.vccSw = [None]
             for i in range(1, self.num_vcc + 1):
                 sw = [None]
@@ -452,6 +441,19 @@ def init_proxies_fixture():
                     ))
                 self.vccSw.append(sw)
 
+            # Talon LRU
+            self.talon_lru = []
+            for i in range(1, 3): # 2 Talon LRUs for now
+                self.talon_lru.append(CbfDeviceProxy(
+                    fqdn=f"mid_csp_cbf/talon_lru/{i:03}",
+                    logger=logging.getLogger()
+                ))
+
+            # Power switch
+            self.power_switch = CbfDeviceProxy(
+                fqdn="mid_csp_cbf/power_switch/001",
+                logger=logging.getLogger()
+            )
 
         def wait_timeout_dev(
             self: TestProxies,

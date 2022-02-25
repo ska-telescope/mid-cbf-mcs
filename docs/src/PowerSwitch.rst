@@ -38,8 +38,8 @@ Important operational notes:
   device is ever changed to handle requests asynchronously, the ``PowerSwitchDriver`` should
   also be updated to only process one request at a time. 
 
-PowerSwitch Class
------------------
+PowerSwitch Device
+------------------
 
 .. autoclass:: ska_mid_cbf_mcs.power_switch.power_switch_device.PowerSwitch
    :members:

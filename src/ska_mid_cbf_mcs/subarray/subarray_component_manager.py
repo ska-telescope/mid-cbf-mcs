@@ -757,11 +757,6 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
 
                 if self._group_vcc.get_size() > 0:
                     self._group_vcc.command_inout("GoToIdle")
-                    frequency_bands = ["1", "2", "3", "4", "5a", "5b"]
-                    freq_band_name =  frequency_bands[self._frequency_band]
-                    data = tango.DeviceData()
-                    data.insert(tango.DevString, freq_band_name)
-                    self._group_vcc.command_inout("TurnOffBandDevice", data)
 
                 if self._group_fsp.get_size() > 0:
                     # change FSP subarray membership
@@ -1349,7 +1344,7 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
 
         data = tango.DeviceData()
         data.insert(tango.DevString, common_configuration["frequency_band"])
-        self._group_vcc.command_inout("TurnOnBandDevice", data)
+        self._group_vcc.command_inout("ConfigureBand", data)
 
         # Configure band5Tuning, if frequencyBand is 5a or 5b.
         if self._frequency_band in [4, 5]:
@@ -1364,7 +1359,6 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
             log_msg = "'frequencyBandOffsetStream1' not specified. Defaulting to 0."
             self._logger.warning(log_msg)
 
-        # Validate frequencyBandOffsetStream2.
         # If not given, use a default value.
         # If malformed, use a default value, but append an error.
         if "frequency_band_offset_stream_2" in configuration:
@@ -1372,7 +1366,7 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
         else:
             self._frequency_band_offset_stream_2 = 0
             log_msg = "'frequencyBandOffsetStream2' not specified. Defaulting to 0."
-            self._logger.warning(log_msg)
+            self._logger.warn(log_msg)
 
         config_dict = {
             "config_id": self._config_id,
@@ -1380,8 +1374,20 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
             "band_5_tuning": self._stream_tuning,
             "frequency_band_offset_stream_1": self._frequency_band_offset_stream_1,
             "frequency_band_offset_stream_2": self._frequency_band_offset_stream_2,
-            "rfi_flagging_mask": configuration["rfi_flagging_mask"],
+            "rfi_flagging_mask": configuration["rfi_flagging_mask"]
         }
+        
+        # Add subset of FSP configuration to the VCC configure scan argument
+        reduced_fsp = []
+        for fsp in configuration["fsp"]:
+            fsp_cfg = {
+                "fsp_id": fsp["fsp_id"],
+                "function_mode": fsp["function_mode"],
+                "frequency_slice_id": fsp["frequency_slide_id"]
+            }
+            reduced_fsp.append(fsp_cfg)
+        config_dict["fsp"] = reduced_fsp
+
         json_str = json.dumps(config_dict)
         data = tango.DeviceData()
         data.insert(tango.DevString, json_str)

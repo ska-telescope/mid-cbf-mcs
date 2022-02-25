@@ -504,15 +504,6 @@ class TestCbfSubarray:
                 for i in range(1, test_proxies.num_vcc + 1)], ObsState.READY, wait_time_s, sleep_time_s)
 
             # check the rest of the configured attributes of VCCs
-
-            #TODO fix these tests; issue with VccBand devices either not reconfiguring in between
-            #     configurations or causing a fault within the Vcc device
-            # assert [proxy.State() for proxy in test_proxies.vccBand[test_proxies.receptor_to_vcc[4] - 1]] == [
-            #     DevState.DISABLE, DevState.DISABLE, DevState.DISABLE, DevState.ON]
-            # assert [proxy.State() for proxy in test_proxies.vccBand[test_proxies.receptor_to_vcc[1] - 1]] == [
-            #     DevState.DISABLE, DevState.DISABLE, DevState.DISABLE, DevState.ON]
-
-            # check the rest of the configured attributes of VCCs
             for r in vcc_receptors:
                 assert test_proxies.vcc[test_proxies.receptor_to_vcc[r]].frequencyBand == band_index
                 assert test_proxies.vcc[test_proxies.receptor_to_vcc[r]].subarrayMembership == sub_id

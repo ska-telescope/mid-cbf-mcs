@@ -30,10 +30,8 @@ from tango import AttrWriteType
 from ska_mid_cbf_mcs.commons.global_enum import const, freq_band_dict
 from ska_mid_cbf_mcs.vcc.vcc_component_manager import VccComponentManager
 
-from ska_tango_base.base.base_device import SKABaseDevice
 from ska_tango_base.control_model import ObsState, SimulationMode, PowerMode
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
-from ska_tango_base.csp.obs.obs_state_model import CspSubElementObsStateModel
 from ska_tango_base.csp.obs.obs_device import CspSubElementObsDevice
 from ska_tango_base.commands import ResultCode, BaseCommand, ResponseCommand
 
@@ -53,6 +51,14 @@ class Vcc(CspSubElementObsDevice):
 
     VccID = device_property(
         dtype='DevUShort'
+    )
+
+    TalonLRUAddress = device_property(
+        dtype='str'
+    )
+
+    VccControllerAddress = device_property(
+        dtype='str'
     )
 
     Band1And2Address = device_property(
@@ -95,6 +101,20 @@ class Vcc(CspSubElementObsDevice):
         access=AttrWriteType.READ_WRITE,
         label="subarrayMembership",
         doc="Subarray membership",
+    )
+
+    frequencyOffsetK = attribute(
+        dtype='int',
+        access=AttrWriteType.READ_WRITE,
+        label="Frequency offset (k)",
+        doc="Frequency offset (k) of this receptor",
+    )
+
+    frequencyOffsetDeltaF = attribute(
+        dtype='int',
+        access=AttrWriteType.READ_WRITE,
+        label="Frequency offset (delta f)",
+        doc="Frequency offset (delta f) of this receptor",
     )
 
     frequencyBand = attribute(
@@ -142,48 +162,6 @@ class Vcc(CspSubElementObsDevice):
         doc="RFI Flagging Mask"
     )
 
-    scfoBand1 = attribute(
-        dtype='int',
-        access=AttrWriteType.READ,
-        label="SCFO (band 1)",
-        doc="Sample clock frequency offset for band 1",
-    )
-
-    scfoBand2 = attribute(
-        dtype='int',
-        access=AttrWriteType.READ,
-        label="SCFO (band 2)",
-        doc="Sample clock frequency offset for band 2",
-    )
-
-    scfoBand3 = attribute(
-        dtype='int',
-        access=AttrWriteType.READ,
-        label="SCFO (band 3)",
-        doc="Sample clock frequency offset for band 3",
-    )
-
-    scfoBand4 = attribute(
-        dtype='int',
-        access=AttrWriteType.READ,
-        label="SCFO (band 4)",
-        doc="Sample clock frequency offset for band 4",
-    )
-
-    scfoBand5a = attribute(
-        dtype='int',
-        access=AttrWriteType.READ,
-        label="SCFO (band 5a)",
-        doc="Sample clock frequency offset for band 5a",
-    )
-
-    scfoBand5b = attribute(
-        dtype='int',
-        access=AttrWriteType.READ,
-        label="SCFO (band 5b)",
-        doc="Sample clock frequency offset for band 5b",
-    )
-
     delayModel = attribute(
         dtype=(('double',),),
         max_dim_x=6,
@@ -214,6 +192,15 @@ class Vcc(CspSubElementObsDevice):
         access=AttrWriteType.READ,
         label="config ID",
         doc="config ID",
+    )
+
+    simulationMode = attribute(
+        dtype=SimulationMode,
+        access=AttrWriteType.READ_WRITE,
+        memorized=True,
+        doc="Reports the simulation mode of the device. \nSome devices may implement "
+            "both modes, while others will have simulators that set simulationMode "
+            "to True while the real devices always set simulationMode to False.",
     )
 
     # ---------------
@@ -247,11 +234,7 @@ class Vcc(CspSubElementObsDevice):
         )
 
         self.register_command_object(
-            "TurnOnBandDevice", self.TurnOnBandDeviceCommand(*device_args)
-        )
-
-        self.register_command_object(
-            "TurnOffBandDevice", self.TurnOffBandDeviceCommand(*device_args)
+            "ConfigureBand", self.ConfigureBandCommand(*device_args)
         )
 
         self.register_command_object(
@@ -291,6 +274,14 @@ class Vcc(CspSubElementObsDevice):
         )
 
         self.register_command_object(
+            "Abort", self.AbortCommand(*device_args)
+        )
+
+        self.register_command_object(
+            "ObsReset", self.ObsResetCommand(*device_args)
+        )
+
+        self.register_command_object(
             "GoToIdle", self.GoToIdleCommand(*device_args)
         )
 
@@ -301,10 +292,11 @@ class Vcc(CspSubElementObsDevice):
         self._communication_status: Optional[CommunicationStatus] = None
         self._component_power_mode: Optional[PowerMode] = None
 
-        self._simulation_mode = SimulationMode.FALSE
+        self._simulation_mode = SimulationMode.TRUE
 
         return VccComponentManager(
-            simulation_mode=self._simulation_mode,
+            talon_lru=self.TalonLRUAddress,
+            vcc_controller=self.VccControllerAddress,
             vcc_band=[
                 self.Band1And2Address,
                 self.Band3Address,
@@ -405,6 +397,15 @@ class Vcc(CspSubElementObsDevice):
     # Attributes methods
     # ------------------
 
+    def write_simulationMode(self: Vcc, value: SimulationMode) -> None:
+        """
+        Set the simulation mode of the device.
+
+        :param value: SimulationMode
+        """
+        super().write_simulationMode(value)
+        self.component_manager.simulation_mode = value
+
     def read_receptorID(self: Vcc) -> int:
         # PROTECTED REGION ID(Vcc.receptorID_read) ENABLED START #
         """
@@ -450,17 +451,54 @@ class Vcc(CspSubElementObsDevice):
         self.component_manager.deconfigure()
         # PROTECTED REGION END #    //  Vcc.subarrayMembership_write
 
+    def read_frequencyOffsetK(self: Vcc) -> int:
+        # PROTECTED REGION ID(Vcc.frequencyOffsetK_read) ENABLED START #
+        """
+        Read the frequencyOffsetK attribute.
+
+        :return: the frequency offset k-value
+        :rtype: int
+        """
+        return self.component_manager.frequency_offset_k
+        # PROTECTED REGION END #    //  Vcc.frequencyOffsetK_read
+
+    def write_frequencyOffsetK(self: Vcc, value: int) -> None:
+        # PROTECTED REGION ID(Vcc.frequencyOffsetK_write) ENABLED START #
+        """
+        Write the frequencyOffsetK attribute.
+
+        :param value: the frequency offset k-value
+        """
+        self.component_manager.frequency_offset_k = value
+        # PROTECTED REGION END #    //  Vcc.frequencyOffsetK_write
+
+    def read_frequencyOffsetDeltaF(self: Vcc) -> int:
+        # PROTECTED REGION ID(Vcc.frequencyOffsetDeltaF_read) ENABLED START #
+        """
+        Read the frequencyOffsetDeltaF attribute.
+
+        :return: the frequency offset delta-f value
+        :rtype: int
+        """
+        return self.component_manager.frequency_offset_delta_f
+        # PROTECTED REGION END #    //  Vcc.frequencyOffsetDeltaF_read
+
+    def write_frequencyOffsetDeltaF(self: Vcc, value: int) -> None:
+        # PROTECTED REGION ID(Vcc.frequencyOffsetDeltaF_write) ENABLED START #
+        """
+        Write the frequencyOffsetDeltaF attribute.
+
+        :param value: the frequency offset delta-f value
+        """
+        self.component_manager.frequency_offset_delta_f = value
+        # PROTECTED REGION END #    //  Vcc.frequencyOffsetDeltaF_write
+
     def read_frequencyBand(self: Vcc) -> tango.DevEnum:
         # PROTECTED REGION ID(Vcc.frequencyBand_read) ENABLED START #
         """
         Read the frequencyBand attribute.
 
-        :return: the frequency band (being 
-            :return: the frequency band (being 
-        :return: the frequency band (being 
-            observed by the current scan, one of 
-                observed by the current scan, one of 
-            observed by the current scan, one of 
+        :return: the frequency band (being observed by the current scan, one of 
             ["1", "2", "3", "4", "5a", "5b"]).
         :rtype: tango.DevEnum
         """
@@ -531,90 +569,6 @@ class Vcc(CspSubElementObsDevice):
         """
         return self.component_manager.rfi_flagging_mask
         # PROTECTED REGION END #    //  Vcc.rfiFlaggingMask_read
-
-    def read_scfoBand1(self: Vcc) -> int:
-        # PROTECTED REGION ID(Vcc.scfoBand1_read) ENABLED START #
-        """
-        Read the scfoBand1 attribute.
-
-        :return: the scfoBand1 attribute (sample clock frequency 
-            :return: the scfoBand1 attribute (sample clock frequency 
-        :return: the scfoBand1 attribute (sample clock frequency 
-            offset for band 1).
-        :rtype: int
-        """
-        return self.component_manager.scfo_band_1
-        # PROTECTED REGION END #    //  Vcc.scfoBand1_read
-
-    def read_scfoBand2(self: Vcc) -> int:
-        # PROTECTED REGION ID(Vcc.scfoBand2_read) ENABLED START #
-        """
-        Read the scfoBand2 attribute.
-
-        :return: the scfoBand2 attribute (sample clock frequency 
-            :return: the scfoBand2 attribute (sample clock frequency 
-        :return: the scfoBand2 attribute (sample clock frequency 
-            offset for band 2).
-        :rtype: int
-        """
-        return self.component_manager.scfo_band_2
-        # PROTECTED REGION END #    //  Vcc.scfoBand2_read
-
-    def read_scfoBand3(self: Vcc) -> int:
-        # PROTECTED REGION ID(Vcc.scfoBand3_read) ENABLED START #
-        """
-        Read the scfoBand3 attribute.
-
-        :return: the scfoBand3 attribute (sample clock frequency 
-            :return: the scfoBand3 attribute (sample clock frequency 
-        :return: the scfoBand3 attribute (sample clock frequency 
-            offset for band 3).
-        :rtype: int
-        """      
-        return self.component_manager.scfo_band_3
-        # PROTECTED REGION END #    //  Vcc.scfoBand3_read
-
-    def read_scfoBand4(self: Vcc) -> int:
-        # PROTECTED REGION ID(Vcc.scfoBand4_read) ENABLED START #
-        """
-        Read the scfoBand4 attribute.
-
-        :return: the scfoBand4 attribute (sample clock frequency 
-            :return: the scfoBand4 attribute (sample clock frequency 
-        :return: the scfoBand4 attribute (sample clock frequency 
-            offset for band 4).
-        :rtype: int
-        """      
-        return self.component_manager.scfo_band_4
-        # PROTECTED REGION END #    //  Vcc.scfoBand4_read
-
-    def read_scfoBand5a(self: Vcc) -> int:
-        # PROTECTED REGION ID(Vcc.scfoBand5a_read) ENABLED START #
-        """
-        Read the scfoBand5a attribute.
-
-        :return: the scfoBand5a attribute (sample clock frequency 
-            :return: the scfoBand5a attribute (sample clock frequency 
-        :return: the scfoBand5a attribute (sample clock frequency 
-            offset for band 5a).
-        :rtype: int
-        """     
-        return self.component_manager.scfo_band_5a
-        # PROTECTED REGION END #    //  Vcc.scfoBand5a_read
-
-    def read_scfoBand5b(self: Vcc) -> int:
-        # PROTECTED REGION ID(Vcc.scfoBand5b_read) ENABLED START #
-        """
-        Read the scfoBand5b attribute.
-
-        :return: the scfoBand5b attribute (sample clock frequency 
-            :return: the scfoBand5b attribute (sample clock frequency 
-        :return: the scfoBand5b attribute (sample clock frequency 
-            offset for band 5b.
-        :rtype: int
-        """      
-        return self.component_manager.scfo_band_5b
-        # PROTECTED REGION END #    //  Vcc.scfoBand5b_read
 
     def read_delayModel(self: Vcc) -> List[List[float]]:
         # PROTECTED REGION ID(Vcc.delayModel_read) ENABLED START #
@@ -762,16 +716,16 @@ class Vcc(CspSubElementObsDevice):
             return self.target.component_manager.standby()
 
 
-    class TurnOnBandDeviceCommand(ResponseCommand):
+    class ConfigureBandCommand(ResponseCommand):
         """
-        A class for the Vcc's TurnOnBandDevice() command.
+        A class for the Vcc's ConfigureBand() command.
 
         Turn on the corresponding band device and disable all the others.
         """
 
-        def do(self: Vcc.TurnOnBandDeviceCommand, argin: str) -> Tuple[ResultCode, str]:
+        def do(self: Vcc.ConfigureBandCommand, argin: str) -> Tuple[ResultCode, str]:
             """
-            Stateless hook for TurnOnBandDevice() command functionality.
+            Stateless hook for ConfigureBand() command functionality.
 
             :param freq_band_name: the frequency band name
 
@@ -780,15 +734,15 @@ class Vcc(CspSubElementObsDevice):
                 information purpose only.
             :rtype: (ResultCode, str)
             """
-            return self.target.component_manager.turn_on_band_device(argin)
+            return self.target.component_manager.configure_band(argin)
 
     @command(
         dtype_in="DevString",
         doc_in="Frequency band string.",
     )
     @DebugIt()
-    def TurnOnBandDevice(self, freq_band_name: str) -> Tuple[ResultCode, str]:
-        # PROTECTED REGION ID(CspSubElementObsDevice.TurnOnBandDevice) ENABLED START #
+    def ConfigureBand(self, freq_band_name: str) -> Tuple[ResultCode, str]:
+        # PROTECTED REGION ID(CspSubElementObsDevice.ConfigureBand) ENABLED START #
         """
         Turn on the corresponding band device and disable all the others.
 
@@ -799,54 +753,10 @@ class Vcc(CspSubElementObsDevice):
             information purpose only.
         :rtype: (ResultCode, str)
         """
-        command = self.get_command_object("TurnOnBandDevice")
+        command = self.get_command_object("ConfigureBand")
         (result_code, message) = command(freq_band_name)
         return [[result_code], [message]]
-        # PROTECTED REGION END #    //  CspSubElementObsDevice.TurnOnBandDevice
-
-
-    class TurnOffBandDeviceCommand(ResponseCommand):
-        """
-        A class for the Vcc's TurnOffBandDevice() command.
-
-        Turn off the corresponding band device.
-        """
-
-        def do(self: Vcc.TurnOffBandDeviceCommand, argin: str) -> Tuple[ResultCode, str]:
-            """
-            Stateless hook for TurnOffBandDevice() command functionality.
-
-            :param freq_band_name: the frequency band name
-
-            :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-            :rtype: (ResultCode, str)
-            """
-            return self.target.component_manager.turn_off_band_device(argin)
-
-
-    @command(
-        dtype_in="DevString",
-        doc_in="Frequency band string.",
-    )
-    @DebugIt()
-    def TurnOffBandDevice(self, freq_band_name: str) -> Tuple[ResultCode, str]:
-        # PROTECTED REGION ID(CspSubElementObsDevice.TurnOffBandDevice) ENABLED START #
-        """
-        Turn off the corresponding band device.
-
-        :param freq_band_name: the frequency band name
-
-        :return: A tuple containing a return code and a string
-            message indicating status. The message is for
-            information purpose only.
-        :rtype: (ResultCode, str)
-        """
-        command = self.get_command_object("TurnOffBandDevice")
-        (result_code, message) = command(freq_band_name)
-        return [[result_code], [message]]
-        # PROTECTED REGION END #    //  CspSubElementObsDevice.TurnOffBandDevice
+        # PROTECTED REGION END #    //  CspSubElementObsDevice.ConfigureBand
 
     def _raise_configuration_fatal_error(
         self: Vcc, 
@@ -889,7 +799,6 @@ class Vcc(CspSubElementObsDevice):
             # By this time, the receptor_ID should be set:
             device.logger.debug(f"receptorID: {device.component_manager.receptor_id}")
 
-            device.component_manager.deconfigure()
             (result_code, msg) = device.component_manager.configure_scan(argin)
 
             if result_code == ResultCode.OK:
@@ -1094,6 +1003,38 @@ class Vcc(CspSubElementObsDevice):
                 device.obs_state_model.perform_action("component_not_scanning")
 
             return(result_code, msg)
+
+
+    class ObsResetCommand(CspSubElementObsDevice.ObsResetCommand):
+        """A class for the VCC's ObsReset command."""
+
+        def do(self):
+            """
+            Stateless hook for ObsReset() command functionality.
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
+            device = self.target
+            return device.component_manager.obsreset()
+
+
+    class AbortCommand(CspSubElementObsDevice.AbortCommand):
+        """A class for the VCC's Abort command."""
+
+        def do(self):
+            """
+            Stateless hook for Abort() command functionality.
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
+            device = self.target
+            return device.component_manager.abort()
 
 
     class GoToIdleCommand(CspSubElementObsDevice.GoToIdleCommand):

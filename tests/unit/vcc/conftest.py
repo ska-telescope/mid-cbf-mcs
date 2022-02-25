@@ -97,11 +97,8 @@ def mock_component_manager(
     def _end_scan() -> Tuple[ResultCode, str]:
         return (ResultCode.OK, "EndScan command completed OK")
 
-    def _turn_on_band_device() -> Tuple[ResultCode, str]:
-        return (ResultCode.OK, "TurnOnBandDevice command completed OK")
-    
-    def _turn_off_band_device() -> Tuple[ResultCode, str]:
-        return (ResultCode.OK, "TurnOffBandDevice command completed OK")
+    def _configure_band(mock: unittest.mock.Mock) -> Tuple[ResultCode, str]:
+        return (ResultCode.OK, "ConfigureBand command completed OK")
     
     def _deconfigure() -> None: pass
 
@@ -115,8 +112,7 @@ def mock_component_manager(
     mock.configure_scan.side_effect = lambda argin: _configure_scan()
     mock.scan.side_effect = lambda argin: _scan()
     mock.end_scan.side_effect = lambda : _end_scan()
-    mock.turn_on_band_device.side_effect = lambda argin: _turn_on_band_device()
-    mock.turn_off_band_device.side_effect = lambda argin: _turn_off_band_device()
+    mock.configure_band.side_effect = lambda argin: _configure_band(mock)
     mock.deconfigure.side_effect = lambda: _deconfigure()
     mock.configure_search_window.side_effect = lambda argin: _configure_search_window()
 
@@ -198,11 +194,31 @@ def device_to_load(
     }
 
 @pytest.fixture()
+def mock_talon_lru() -> unittest.mock.Mock:
+    builder = MockDeviceBuilder()
+    builder.add_attribute("PDU1PowerMode", PowerMode.OFF)
+    builder.add_attribute("PDU2PowerMode", PowerMode.OFF)
+    return builder()
+
+@pytest.fixture()
+def mock_vcc_controller() -> unittest.mock.Mock:
+    builder = MockDeviceBuilder()
+    builder.set_state(tango.DevState.INIT)
+    builder.add_command("InitCommonParameters", None)
+    builder.add_command("ConfigureBand", None)
+    builder.add_command("Unconfigure", None)
+    return builder()
+
+@pytest.fixture()
 def mock_vcc_band() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
-    builder.set_state(tango.DevState.OFF)
-    builder.add_result_command("On", ResultCode.OK)
-    builder.add_result_command("Off", ResultCode.OK)
+    builder.set_state(tango.DevState.INIT)
+    builder.add_command("SetInternalParameters", None)
+    builder.add_command("ConfigureScan", None)
+    builder.add_command("Scan", None)
+    builder.add_command("EndScan", None)
+    builder.add_command("Abort", None)
+    builder.add_command("ObsReset", None)
     return builder()
 
 @pytest.fixture()
@@ -221,6 +237,8 @@ def mock_sw() -> unittest.mock.Mock:
 
 @pytest.fixture()
 def initial_mocks(
+    mock_talon_lru: unittest.mock.Mock,
+    mock_vcc_controller: unittest.mock.Mock,
     mock_vcc_band: unittest.mock.Mock,
     mock_sw: unittest.mock.Mock
 ) -> Dict[str, unittest.mock.Mock]:
@@ -233,10 +251,12 @@ def initial_mocks(
     :return: a dictionary of device proxy mocks to pre-register.
     """
     return {
-        "mid_csp_cbf/vcc_band12/001": mock_vcc_band,
-        "mid_csp_cbf/vcc_band3/001": mock_vcc_band,
-        "mid_csp_cbf/vcc_band4/001": mock_vcc_band,
-        "mid_csp_cbf/vcc_band5/001": mock_vcc_band,
+        "mid_csp_cbf/talon_lru/001": mock_talon_lru,
+        "talondx-001/vcc-app/vcc-controller": mock_vcc_controller,
+        "talondx-001/vcc-app/vcc-band-1-and-2": mock_vcc_band,
+        "talondx-001/vcc-app/vcc-band-3": mock_vcc_band,
+        "talondx-001/vcc-app/vcc-band-4": mock_vcc_band,
+        "talondx-001/vcc-app/vcc-band-5": mock_vcc_band,
         "mid_csp_cbf/vcc_sw1/001": mock_sw,
         "mid_csp_cbf/vcc_sw2/001": mock_sw
     }
@@ -252,12 +272,13 @@ def vcc_component_manager(
 ) -> VccComponentManager:
     """Return a VCC component manager."""
     return VccComponentManager(
-        SimulationMode.FALSE,
+        talon_lru="mid_csp_cbf/talon_lru/001",
+        vcc_controller="talondx-001/vcc-app/vcc-controller",
         vcc_band=[
-            "mid_csp_cbf/vcc_band12/001",
-            "mid_csp_cbf/vcc_band3/001",
-            "mid_csp_cbf/vcc_band4/001",
-            "mid_csp_cbf/vcc_band5/001"
+            "talondx-001/vcc-app/vcc-band-1-and-2",
+            "talondx-001/vcc-app/vcc-band-3",
+            "talondx-001/vcc-app/vcc-band-4",
+            "talondx-001/vcc-app/vcc-band-5"
         ],
         search_window=[
             "mid_csp_cbf/vcc_sw1/001",
@@ -267,7 +288,8 @@ def vcc_component_manager(
         push_change_event_callback=push_change_event_callback,
         communication_status_changed_callback=communication_status_changed_callback,
         component_power_mode_changed_callback=component_power_mode_changed_callback,
-        component_fault_callback=component_fault_callback
+        component_fault_callback=component_fault_callback,
+        simulation_mode=SimulationMode.FALSE
     )
 
 @pytest.fixture()

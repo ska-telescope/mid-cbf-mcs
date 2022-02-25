@@ -76,6 +76,7 @@ class ControllerComponentManager(CbfComponentManager):
         self._vcc_fqdns_all = vcc_fqdns_all
         self._fsp_fqdns_all = fsp_fqdns_all
         self._talon_lru_fqdns_all = talon_lru_fqdns_all
+
         self._get_max_capabilities = get_num_capabilities
 
         # TODO: component manager should not be passed into component manager
@@ -85,6 +86,10 @@ class ControllerComponentManager(CbfComponentManager):
 
         self._proxies = {}
         self._events = {} 
+
+        # Initialize attribute values
+        self.frequency_offset_k = [0] * CONST_DEFAULT_COUNT_VCC
+        self.frequency_offset_delta_f = [0] * CONST_DEFAULT_COUNT_VCC
 
         super().__init__(
             logger,
@@ -318,6 +323,8 @@ class ControllerComponentManager(CbfComponentManager):
                     # TODO: for testing purposes;
                     # receptorID assigned to VCCs in order they are processed
                     proxy.receptorID = idx + 1
+                    proxy.frequencyOffsetK = self.frequency_offset_k[idx]
+                    proxy.frequencyOffsetDeltaF = self.frequency_offset_delta_f[idx]
                 except tango.DevFailed as df:
                     for item in df.args:
                         log_msg = "Failure in connection to " + fqdn + \
