@@ -1378,13 +1378,29 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
         }
         
         # Add subset of FSP configuration to the VCC configure scan argument
+        # TODO determine necessary parameters to send to VCC for each function mode
+        # TODO VLBI
         reduced_fsp = []
         for fsp in configuration["fsp"]:
-            fsp_cfg = {
-                "fsp_id": fsp["fsp_id"],
-                "function_mode": fsp["function_mode"],
-                "frequency_slice_id": fsp["frequency_slide_id"]
-            }
+            fsp_cfg = {}
+            function_mode = fsp["function_mode"]
+            if function_mode == "CORR":
+                fsp_cfg = {
+                    "fsp_id": fsp["fsp_id"],
+                    "function_mode": function_mode,
+                    "frequency_slice_id": fsp["frequency_slice_id"]
+                }
+            elif function_mode == "PSS-BF":
+                fsp_cfg = {
+                    "fsp_id": fsp["fsp_id"],
+                    "function_mode": function_mode,
+                    "search_window_id": fsp["search_window_id"]
+                }
+            elif function_mode == "PST-BF":
+                fsp_cfg = {
+                    "fsp_id": fsp["fsp_id"],
+                    "function_mode": function_mode
+                }
             reduced_fsp.append(fsp_cfg)
         config_dict["fsp"] = reduced_fsp
 
