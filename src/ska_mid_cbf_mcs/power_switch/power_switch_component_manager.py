@@ -99,6 +99,13 @@ class PowerSwitchComponentManager(CbfComponentManager):
 
         :return: whether the power switch is communicating
         """
+        # If we haven't started communicating yet, don't check power switch
+        # communication status
+        if self.connected == False:
+            return False
+
+        # If we have started communicating, check the actual communication
+        # status of the power switch
         if self.simulation_mode:
             return self.power_switch_simulator.is_communicating
         else:

@@ -2,16 +2,20 @@
 Fsp 
 ==================
 
-.. automodule:: ska_mid_cbf.Fsp
+.. automodule:: ska_mid_cbf_mcs.fsp
 
 
 .. toctree::
 
-  Fsp<fsp_device>
+  Fsp Device<fsp_device>
+  FspComponentManager<fsp_component_manager>
   FspCorr<fsp_corr>
-  FspCorrSubarray<fsp_corr_subarray>
+  FspCorrSubarray Device<fsp_corr_subarray_device>
+  FspCorrSubarrayComponentManager<fsp_corr_subarray_component_manager>
   FspPss<fsp_pss>
-  FspPssSubarray<fsp_pss_subarray>
+  FspPssSubarray Device<fsp_pss_subarray_device>
+  FspPssSubarrayComponentManager<fsp_pss_subarray_component_manager>
   FspPst<fsp_pst>
-  FspPstSubarray<fsp_pst_subarray>
+  FspPstSubarray Device<fsp_pst_subarray_device>
+  FspPstSubarrayComponentManager<fsp_pst_subarray_component_manager>
   FspVlbi<fsp_vlbi>

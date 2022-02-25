@@ -1,5 +1,5 @@
-PowerSwitch Class
------------------
+PowerSwitch Device
+------------------
 
 .. autoclass:: ska_mid_cbf_mcs.power_switch.power_switch_device.PowerSwitch
    :members:

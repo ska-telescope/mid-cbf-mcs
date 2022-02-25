@@ -118,10 +118,6 @@ charts/ska-mid-cbf/charts/
 certs/*.crt
 
 # Contents of mounted folder
-mnt/*
-!mnt/README.md
-!mnt/talondx-config
-
 mnt/talondx-config/*
 !mnt/talondx-config/README.md
 

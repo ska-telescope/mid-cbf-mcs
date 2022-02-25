@@ -1,10 +1,10 @@
 ==================
-CbfSubarray
+CbfSubarray Device
 ==================
 
-.. automodule:: ska_mid_cbf.subarray
+.. automodule:: ska_mid_cbf_mcs.subarray
 
 
 .. toctree::
 
-  CbfSubarray<subarray_device>
+  CbfSubarray Device<cbfsubarray_device>

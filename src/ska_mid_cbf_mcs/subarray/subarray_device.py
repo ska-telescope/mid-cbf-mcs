@@ -598,28 +598,6 @@ class CbfSubarray(SKASubarray):
                 msg = "'searchWindow' must be an array of maximum length 2. " \
                         "Aborting configuration."
                 self._raise_configure_scan_fatal_error(msg)
-            #TODO consider moving the search_window object validation to Vcc
-            for search_window in configuration["search_window"]:
-                for vcc in self._proxies_assigned_vcc:
-                    try:
-                        search_window["frequency_band"] = common_configuration["frequency_band"]
-                        search_window["frequency_band_offset_stream_1"] = \
-                            configuration["frequency_band_offset_stream_1"]
-                        search_window["frequency_band_offset_stream_2"] = \
-                            configuration["frequency_band_offset_stream_2"]
-                        if search_window["frequency_band"] in ["5a", "5b"]:
-                            search_window["band_5_tuning"] = common_configuration["band_5_tuning"]
-
-                        # pass on configuration to VCC
-                        vcc.ValidateSearchWindow(json.dumps(search_window))
-
-                    except tango.DevFailed:  # exception in Vcc.ValidateSearchWindow
-                        msg = (
-                            "An exception occurred while configuring VCC search "
-                            f"windows:\n{sys.exc_info()[1].args[0].de}\n. "
-                            "Aborting configuration."
-                        )
-                        self._raise_configure_scan_fatal_error(msg)
         else:
             pass
 
@@ -1116,11 +1094,6 @@ class CbfSubarray(SKASubarray):
 
         if self._group_vcc.get_size() > 0:
             self._group_vcc.command_inout("GoToIdle")
-            frequency_bands = ["1", "2", "3", "4", "5a", "5b"]
-            freq_band_name =  frequency_bands[self._frequency_band]
-            data = tango.DeviceData()
-            data.insert(tango.DevString, freq_band_name)
-            self._group_vcc.command_inout("TurnOffBandDevice", data)
 
         if self._group_fsp.get_size() > 0:
             # change FSP subarray membership
@@ -2007,7 +1980,7 @@ class CbfSubarray(SKASubarray):
 
             data = tango.DeviceData()
             data.insert(tango.DevString, common_configuration["frequency_band"])
-            device._group_vcc.command_inout("TurnOnBandDevice", data)
+            device._group_vcc.command_inout("ConfigureBand", data)
 
             # Configure band5Tuning, if frequencyBand is 5a or 5b.
             if device._frequency_band in [4, 5]:
@@ -2034,12 +2007,24 @@ class CbfSubarray(SKASubarray):
 
             config_dict = {
                 "config_id": device._config_ID,
-                "frequency_band": device._frequency_band,
+                "frequency_band": common_configuration["frequency_band"],
                 "band_5_tuning": device._stream_tuning,
                 "frequency_band_offset_stream_1": device._frequency_band_offset_stream_1,
                 "frequency_band_offset_stream_2": device._frequency_band_offset_stream_2,
-                "rfi_flagging_mask": configuration["rfi_flagging_mask"],
+                "rfi_flagging_mask": configuration["rfi_flagging_mask"]
             }
+            
+            # Add subset of FSP configuration to the VCC configure scan argument
+            reduced_fsp = []
+            for fsp in configuration["fsp"]:
+                fsp_cfg = {
+                    "fsp_id": fsp["fsp_id"],
+                    "function_mode": fsp["function_mode"],
+                    "frequency_slice_id": fsp["frequency_slide_id"]
+                }
+                reduced_fsp.append(fsp_cfg)
+            config_dict["fsp"] = reduced_fsp
+
             json_str = json.dumps(config_dict)
             data = tango.DeviceData()
             data.insert(tango.DevString, json_str)

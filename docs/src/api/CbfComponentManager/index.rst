@@ -1,8 +1,8 @@
-==================
+=====================
 CbfComponentManager
-==================
+=====================
 
-.. automodule:: ska_mid_cbf.component_manager
+.. automodule:: ska_mid_cbf_mcs.component.component_manager
 
 
 .. toctree::

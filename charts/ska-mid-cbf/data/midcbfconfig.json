@@ -42,7 +42,8 @@
                                 "mid_csp_cbf/vcc/004"
                             ],
                             "TalonLRU": [
-                                "mid_csp_cbf/talon_lru/001"
+                                "mid_csp_cbf/talon_lru/001",
+                                "mid_csp_cbf/talon_lru/002"
                             ],
                             "TalonDxConfigPath": [
                                 "mnt/talondx-config"
@@ -1569,13 +1570,6 @@
                 }
             }
         },
-        "TangoTest": {
-            "test": {
-                "TangoTest": {
-                    "sys/tg_test/1": {}
-                }
-            }
-        },
         "VccMulti": {
             "vcc-001": {
                 "Vcc": {
@@ -1601,17 +1595,23 @@
                             }
                         },
                         "properties": {
+                            "TalonLRUAddress": [
+                                "mid_csp_cbf/talon_lru/001"
+                            ],
+                            "VccControllerAddress": [
+                                "talondx-001/vcc-app/vcc-controller"
+                            ],
                             "Band1And2Address": [
-                                "mid_csp_cbf/vcc_band12/001"
+                                "talondx-001/vcc-app/vcc-band-1-and-2"
                             ],
                             "Band3Address": [
-                                "mid_csp_cbf/vcc_band3/001"
+                                "talondx-001/vcc-app/vcc-band-3"
                             ],
                             "Band4Address": [
-                                "mid_csp_cbf/vcc_band4/001"
+                                "talondx-001/vcc-app/vcc-band-4"
                             ],
                             "Band5Address": [
-                                "mid_csp_cbf/vcc_band5/001"
+                                "talondx-001/vcc-app/vcc-band-5"
                             ],
                             "SW1Address": [
                                 "mid_csp_cbf/vcc_sw1/001"
@@ -1632,18 +1632,6 @@
                             ]
                         }
                     }
-                },
-                "VccBand1And2": {
-                    "mid_csp_cbf/vcc_band12/001": {}
-                },
-                "VccBand3": {
-                    "mid_csp_cbf/vcc_band3/001": {}
-                },
-                "VccBand4": {
-                    "mid_csp_cbf/vcc_band4/001": {}
-                },
-                "VccBand5": {
-                    "mid_csp_cbf/vcc_band5/001": {}
                 },
                 "VccSearchWindow": {
                     "mid_csp_cbf/vcc_sw1/001": {},
@@ -1674,17 +1662,23 @@
                             }
                         },
                         "properties": {
+                            "TalonLRUAddress": [
+                                "mid_csp_cbf/talon_lru/001"
+                            ],
+                            "VccControllerAddress": [
+                                "talondx-002/vcc-app/vcc-controller"
+                            ],
                             "Band1And2Address": [
-                                "mid_csp_cbf/vcc_band12/002"
+                                "talondx-002/vcc-app/vcc-band-1-and-2"
                             ],
                             "Band3Address": [
-                                "mid_csp_cbf/vcc_band3/002"
+                                "talondx-002/vcc-app/vcc-band-3"
                             ],
                             "Band4Address": [
-                                "mid_csp_cbf/vcc_band4/002"
+                                "talondx-002/vcc-app/vcc-band-4"
                             ],
                             "Band5Address": [
-                                "mid_csp_cbf/vcc_band5/002"
+                                "talondx-002/vcc-app/vcc-band-5"
                             ],
                             "SW1Address": [
                                 "mid_csp_cbf/vcc_sw1/002"
@@ -1705,18 +1699,6 @@
                             ]
                         }
                     }
-                },
-                "VccBand1And2": {
-                    "mid_csp_cbf/vcc_band12/002": {}
-                },
-                "VccBand3": {
-                    "mid_csp_cbf/vcc_band3/002": {}
-                },
-                "VccBand4": {
-                    "mid_csp_cbf/vcc_band4/002": {}
-                },
-                "VccBand5": {
-                    "mid_csp_cbf/vcc_band5/002": {}
                 },
                 "VccSearchWindow": {
                     "mid_csp_cbf/vcc_sw1/002": {},
@@ -1747,17 +1729,23 @@
                             }
                         },
                         "properties": {
+                            "TalonLRUAddress": [
+                                "mid_csp_cbf/talon_lru/002"
+                            ],
+                            "VccControllerAddress": [
+                                "talondx-003/vcc-app/vcc-controller"
+                            ],
                             "Band1And2Address": [
-                                "mid_csp_cbf/vcc_band12/003"
+                                "talondx-003/vcc-app/vcc-band-1-and-2"
                             ],
                             "Band3Address": [
-                                "mid_csp_cbf/vcc_band3/003"
+                                "talondx-003/vcc-app/vcc-band-3"
                             ],
                             "Band4Address": [
-                                "mid_csp_cbf/vcc_band4/003"
+                                "talondx-003/vcc-app/vcc-band-4"
                             ],
                             "Band5Address": [
-                                "mid_csp_cbf/vcc_band5/003"
+                                "talondx-003/vcc-app/vcc-band-5"
                             ],
                             "SW1Address": [
                                 "mid_csp_cbf/vcc_sw1/003"
@@ -1778,18 +1766,6 @@
                             ]
                         }
                     }
-                },
-                "VccBand1And2": {
-                    "mid_csp_cbf/vcc_band12/003": {}
-                },
-                "VccBand3": {
-                    "mid_csp_cbf/vcc_band3/003": {}
-                },
-                "VccBand4": {
-                    "mid_csp_cbf/vcc_band4/003": {}
-                },
-                "VccBand5": {
-                    "mid_csp_cbf/vcc_band5/003": {}
                 },
                 "VccSearchWindow": {
                     "mid_csp_cbf/vcc_sw1/003": {},
@@ -1820,17 +1796,23 @@
                             }
                         },
                         "properties": {
+                            "TalonLRUAddress": [
+                                "mid_csp_cbf/talon_lru/002"
+                            ],
+                            "VccControllerAddress": [
+                                "talondx-004/vcc-app/vcc-controller"
+                            ],
                             "Band1And2Address": [
-                                "mid_csp_cbf/vcc_band12/004"
+                                "talondx-004/vcc-app/vcc-band-1-and-2"
                             ],
                             "Band3Address": [
-                                "mid_csp_cbf/vcc_band3/004"
+                                "talondx-004/vcc-app/vcc-band-3"
                             ],
                             "Band4Address": [
-                                "mid_csp_cbf/vcc_band4/004"
+                                "talondx-004/vcc-app/vcc-band-4"
                             ],
                             "Band5Address": [
-                                "mid_csp_cbf/vcc_band5/004"
+                                "talondx-004/vcc-app/vcc-band-5"
                             ],
                             "SW1Address": [
                                 "mid_csp_cbf/vcc_sw1/004"
@@ -1851,18 +1833,6 @@
                             ]
                         }
                     }
-                },
-                "VccBand1And2": {
-                    "mid_csp_cbf/vcc_band12/004": {}
-                },
-                "VccBand3": {
-                    "mid_csp_cbf/vcc_band3/004": {}
-                },
-                "VccBand4": {
-                    "mid_csp_cbf/vcc_band4/004": {}
-                },
-                "VccBand5": {
-                    "mid_csp_cbf/vcc_band5/004": {}
                 },
                 "VccSearchWindow": {
                     "mid_csp_cbf/vcc_sw1/004": {},
@@ -1909,6 +1879,40 @@
                             ],
                             "PDU2PowerOutlet": [
                                 "1"
+                            ],
+                            "polled_attr": [
+                                "state",
+                                "1000",
+                                "healthstate",
+                                "3000",
+                                "adminmode",
+                                "3000"
+                            ]
+                        }
+                    }
+                }
+            },
+            "talonlru-002": {
+                "TalonLRU": {
+                    "mid_csp_cbf/talon_lru/002": {
+                        "properties": {
+                            "TalonDxBoard1Address": [
+                                "arbitrary/fqdn/01"
+                            ],
+                            "TalonDxBoard2Address": [
+                                "arbitrary/fqdn/02"
+                            ],
+                            "PDU1Address": [
+                                "mid_csp_cbf/power_switch/001"
+                            ],
+                            "PDU1PowerOutlet": [
+                                "2"
+                            ],
+                            "PDU2Address": [
+                                "mid_csp_cbf/power_switch/001"
+                            ],
+                            "PDU2PowerOutlet": [
+                                "3"
                             ],
                             "polled_attr": [
                                 "state",

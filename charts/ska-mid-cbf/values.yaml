@@ -65,7 +65,8 @@ deviceServers:
       - device: mid_csp_cbf/fsp/02 
       - device: mid_csp_cbf/fsp/03 
       - device: mid_csp_cbf/fsp/04
-      - device: mid_csp_cbf/talon_lru/001 
+      - device: mid_csp_cbf/talon_lru/001
+      - device: mid_csp_cbf/talon_lru/002
     image:
       registry: "{{.Values.midcbf.image.registry}}"
       image: "{{.Values.midcbf.image.image}}"
@@ -230,6 +231,18 @@ deviceServers:
     domain: mid-csp-cbf
     command: "TalonLRU"
     instances: ["talonlru-001"]
+    depends_on:
+      - device: mid_csp_cbf/power_switch/001
+    image:
+      registry: "{{.Values.midcbf.image.registry}}"
+      image: "{{.Values.midcbf.image.image}}"
+      tag: "{{.Values.midcbf.image.tag}}"
+      pullPolicy: "{{.Values.midcbf.image.pullPolicy}}"
+  - name: talonlru002
+    function: talon-lru
+    domain: mid-csp-cbf
+    command: "TalonLRU"
+    instances: ["talonlru-002"]
     depends_on:
       - device: mid_csp_cbf/power_switch/001
     image:

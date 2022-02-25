@@ -2,13 +2,10 @@
 Vcc 
 ==================
 
-.. automodule:: ska_mid_cbf.Vcc
+.. automodule:: ska_mid_cbf_mcs.vcc
 
 
 .. toctree::
 
   Vcc<vcc_device>
-  VccBand1And2<vcc_band_1_and_2>
-  VccBand3<vcc_band_3>
-  VccBand4<vcc_band_4>
-  VccBand5<vcc_band_5>
+  VccComponentManager<vcc_component_manager>

@@ -22,7 +22,7 @@ html:
 
 # Remove copy of README from the doc source directory.
 clean:
-	rm -f src/README.md
+	rm -f src/guide/getting_started/README.md
 	@$(SPHINXBUILD) -M clean "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
 # Catch-all target: route all unknown targets to Sphinx using the new

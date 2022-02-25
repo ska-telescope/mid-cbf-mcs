@@ -439,15 +439,6 @@ class TestCbfSubarray:
                 for i in range(1, test_proxies.num_vcc + 1)], ObsState.READY, wait_time_s, sleep_time_s)
 
             # check the rest of the configured attributes of VCCs
-
-            #TODO fix these tests; issue with VccBand devices either not reconfiguring in between
-            #     configurations or causing a fault within the Vcc device
-            # assert [proxy.State() for proxy in test_proxies.vccBand[test_proxies.receptor_to_vcc[4] - 1]] == [
-            #     DevState.DISABLE, DevState.DISABLE, DevState.DISABLE, DevState.ON]
-            # assert [proxy.State() for proxy in test_proxies.vccBand[test_proxies.receptor_to_vcc[1] - 1]] == [
-            #     DevState.DISABLE, DevState.DISABLE, DevState.DISABLE, DevState.ON]
-
-            # check the rest of the configured attributes of VCCs
             for r in vcc_receptors:
                 assert test_proxies.vcc[test_proxies.receptor_to_vcc[r]].frequencyBand == band_index
                 assert test_proxies.vcc[test_proxies.receptor_to_vcc[r]].subarrayMembership == sub_id
@@ -497,30 +488,30 @@ class TestCbfSubarray:
             if "search_window" in configuration["cbf"]:
                 for idx, search_window in enumerate(configuration["cbf"]["search_window"]):
                     for r in vcc_receptors:
-                        assert test_proxies.vccTdc[
+                        assert test_proxies.vccSw[
                             test_proxies.receptor_to_vcc[r]][idx + 1
                         ].tdcEnable == search_window["tdc_enable"]
                         if search_window["tdc_enable"]:
-                            assert test_proxies.vccTdc[
+                            assert test_proxies.vccSw[
                                 test_proxies.receptor_to_vcc[r]][idx + 1
                             ].State() == DevState.ON
                         else:
-                            assert test_proxies.vccTdc[
+                            assert test_proxies.vccSw[
                                 test_proxies.receptor_to_vcc[r]][idx + 1
                             ].State() == DevState.DISABLE
-                        assert test_proxies.vccTdc[
+                        assert test_proxies.vccSw[
                             test_proxies.receptor_to_vcc[r]][idx + 1
                         ].searchWindowTuning == search_window["search_window_tuning"]
                         if "tdc_num_bits" in search_window:
-                            assert test_proxies.vccTdc[
+                            assert test_proxies.vccSw[
                                 test_proxies.receptor_to_vcc[r]][idx + 1
                             ].tdcNumBits == search_window["tdc_num_bits"]
                         if "tdc_period_before_epoch" in search_window:
-                            assert test_proxies.vccTdc[
+                            assert test_proxies.vccSw[
                                 test_proxies.receptor_to_vcc[r]][idx + 1
                             ].tdcPeriodBeforeEpoch == search_window["tdc_period_before_epoch"]
                         if "tdc_period_after_epoch" in search_window:
-                            assert test_proxies.vccTdc[
+                            assert test_proxies.vccSw[
                                 test_proxies.receptor_to_vcc[r]][idx + 1
                             ].tdcPeriodAfterEpoch == search_window["tdc_period_after_epoch"]
                         if "tdc_destination_address" in search_window:
@@ -529,7 +520,7 @@ class TestCbfSubarray:
                                 for t in search_window["tdc_destination_address"] 
                                 if t["receptor_id"] == r
                             ]
-                            assert [list(test_proxies.vccTdc[
+                            assert [list(test_proxies.vccSw[
                                 test_proxies.receptor_to_vcc[r]][idx + 1
                             ].tdcDestinationAddress)] == tdcDestAddr
  

@@ -76,6 +76,7 @@ class ControllerComponentManager(CbfComponentManager):
         self._vcc_fqdns_all = vcc_fqdns_all
         self._fsp_fqdns_all = fsp_fqdns_all
         self._talon_lru_fqdns_all = talon_lru_fqdns_all
+
         self._get_max_capabilities = get_num_capabilities
 
         # TODO: component manager should not be passed into component manager
@@ -85,6 +86,10 @@ class ControllerComponentManager(CbfComponentManager):
 
         self._proxies = {}
         self._events = {} 
+
+        # Initialize attribute values
+        self.frequency_offset_k = [0] * CONST_DEFAULT_COUNT_VCC
+        self.frequency_offset_delta_f = [0] * CONST_DEFAULT_COUNT_VCC
 
         super().__init__(
             logger,
@@ -248,7 +253,7 @@ class ControllerComponentManager(CbfComponentManager):
                 except KeyError:  # not found in DB
                     self._count_subarray = CONST_DEFAULT_COUNT_SUBARRAY
         else:
-            self._logger.warn("MaxCapabilities device property not defined - \
+            self._logger.warning("MaxCapabilities device property not defined - \
                 using default value")
         
         self._fqdn_vcc = list(self._vcc_fqdns_all)[:self._count_vcc]
@@ -318,6 +323,8 @@ class ControllerComponentManager(CbfComponentManager):
                     # TODO: for testing purposes;
                     # receptorID assigned to VCCs in order they are processed
                     proxy.receptorID = idx + 1
+                    proxy.frequencyOffsetK = self.frequency_offset_k[idx]
+                    proxy.frequencyOffsetDeltaF = self.frequency_offset_delta_f[idx]
                 except tango.DevFailed as df:
                     for item in df.args:
                         log_msg = "Failure in connection to " + fqdn + \
@@ -397,7 +404,7 @@ class ControllerComponentManager(CbfComponentManager):
                             "Received health state change for "
                             f"unknown device {name}"
                         )
-                        self._logger.warn(log_msg)
+                        self._logger.warning(log_msg)
                         return
                 elif "state" in name:
                     if "subarray" in fqdn:
@@ -422,7 +429,7 @@ class ControllerComponentManager(CbfComponentManager):
                             "Received state change for unknown device "
                             f"{name}"
                         )
-                        self._logger.warn(log_msg)
+                        self._logger.warning(log_msg)
                         return
                 elif "adminmode" in name:
                     if "subarray" in fqdn:
@@ -447,7 +454,7 @@ class ControllerComponentManager(CbfComponentManager):
                             "Received admin mode change for "
                             f"unknown device {name}"
                         )
-                        self._logger.warn(log_msg)
+                        self._logger.warning(log_msg)
                         return
 
                 log_msg = f"New value for {name} of device {fqdn}: {value}"
@@ -455,7 +462,7 @@ class ControllerComponentManager(CbfComponentManager):
             except Exception as except_occurred:
                 self._logger.error(str(except_occurred))
         else:
-            self._logger.warn(
+            self._logger.warning(
                 f"None value for attribute {name} of device {fqdn}"
             )
 
@@ -492,7 +499,7 @@ class ControllerComponentManager(CbfComponentManager):
                 else:
                     # should NOT happen!
                     log_msg = f"Received event for unknown device {name}"
-                    self._logger.warn(log_msg)
+                    self._logger.warning(log_msg)
                     return
 
                 log_msg = f"New value for {name} of device {fqdn}: {value}"
@@ -501,7 +508,7 @@ class ControllerComponentManager(CbfComponentManager):
             except Exception as except_occurred:
                 self._logger.error(str(except_occurred))
         else:
-            self._logger.warn(
+            self._logger.warning(
                 f"None value for attribute {name} of device {fqdn}"
             )
 
@@ -532,7 +539,7 @@ class ControllerComponentManager(CbfComponentManager):
             except Exception as except_occurred:
                 self._logger.error(str(except_occurred))
         else:
-            self._logger.warn(
+            self._logger.warning(
                 f"None value for attribute {name} of device {fqdn}"
             )
 
