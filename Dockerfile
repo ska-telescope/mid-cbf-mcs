@@ -1,5 +1,5 @@
-FROM artefact.skao.int/ska-tango-images-pytango-builder:9.3.10 as buildenv
-FROM artefact.skao.int/ska-tango-images-pytango-runtime:9.3.10
+FROM ska-tango-images-pytango-builder:latest as buildenv
+FROM ska-tango-images-pytango-runtime:latest
 
 # create ipython profile to so that itango doesn't fail if ipython hasn't run yet
 RUN ipython profile create
