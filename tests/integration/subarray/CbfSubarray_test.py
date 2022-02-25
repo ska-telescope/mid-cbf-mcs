@@ -975,7 +975,7 @@ class TestCbfSubarray:
                 elif fsp["function_mode"] == "PST-BF":
                     assert test_proxies.fspSubarray["PST-BF"][sub_id][fsp_id].obsState == ObsState.IDLE
 
-            wait_time_configure = 5
+            wait_time_configure = 4
             test_proxies.subarray[sub_id].ConfigureScan(json_string)
             test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.READY, wait_time_configure, sleep_time_s)
 
@@ -1002,7 +1002,7 @@ class TestCbfSubarray:
             json_string = f2.read().replace("\n", "")
             test_proxies.subarray[sub_id].Scan(json_string)
             f2.close()
-            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.SCANNING, wait_time_s, sleep_time_s)
+            time.sleep(wait_time_configure)
 
             # Check obsStates BEFORE the EndScan() command
             assert test_proxies.subarray[sub_id].obsState == ObsState.SCANNING
@@ -1456,7 +1456,7 @@ class TestCbfSubarray:
             scan_configuration = json.loads(json_string_scan)
             test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.SCANNING, wait_time_s, sleep_time_s)
             
-            scan_id = scan_configuration["scan_id"]
+            scan_id = int(scan_configuration["scan_id"])
 
             # check scanID on VCC and FSP
             for fsp in configuration["cbf"]["fsp"]:
@@ -1619,7 +1619,7 @@ class TestCbfSubarray:
             scan_configuration = json.loads(json_string_scan)
             test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.SCANNING, wait_time_s, sleep_time_s)
             assert test_proxies.subarray[sub_id].obsState == ObsState.SCANNING
-            assert test_proxies.subarray[sub_id].scanID == scan_configuration["scan_id"]
+            assert test_proxies.subarray[sub_id].scanID == int(scan_configuration["scan_id"])
             for fsp in configuration["cbf"]["fsp"]:
                 fsp_id = int(fsp["fsp_id"])
                 if fsp["function_mode"] == "CORR":
@@ -1818,7 +1818,7 @@ class TestCbfSubarray:
             scan_configuration = json.loads(json_string_scan)
             test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.SCANNING, wait_time_s, sleep_time_s)
             assert test_proxies.subarray[sub_id].obsState == ObsState.SCANNING
-            assert test_proxies.subarray[sub_id].scanID == scan_configuration["scan_id"]
+            assert test_proxies.subarray[sub_id].scanID == int(scan_configuration["scan_id"])
             for fsp in configuration["cbf"]["fsp"]:
                 fsp_id = int(fsp["fsp_id"])
                 if fsp["function_mode"] == "CORR":

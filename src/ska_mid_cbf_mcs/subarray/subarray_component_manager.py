@@ -1807,7 +1807,7 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
 
     def scan(
         self: CbfSubarrayComponentManager,
-        argin: str
+        argin: Dict[Any]
     ) -> Tuple[ResultCode, str]:
         """
         Start subarray Scan operation.
@@ -1819,17 +1819,20 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
             information purpose only.
         :rtype: (ResultCode, str)
         """
+        scan_id = argin["scan_id"]
         try:
-            self._group_vcc.command_inout("Scan", argin)
-            self._group_fsp_corr_subarray.command_inout("Scan", argin)
-            self._group_fsp_pss_subarray.command_inout("Scan", argin)
-            self._group_fsp_pst_subarray.command_inout("Scan", argin)
+            data = tango.DeviceData()
+            data.insert(tango.DevString, scan_id)
+            self._group_vcc.command_inout("Scan", data)
+            self._group_fsp_corr_subarray.command_inout("Scan", data)
+            self._group_fsp_pss_subarray.command_inout("Scan", data)
+            self._group_fsp_pst_subarray.command_inout("Scan", data)
         except tango.DevFailed as df:
             msg = str(df.args[0].desc)
             self.update_component_fault(True, "obs")
             return (ResultCode.FAILED, msg)
 
-        self._scan_id = int(argin)
+        self._scan_id = int(scan_id)
         self._component_scanning_callback(True)
         return (ResultCode.STARTED, "Scan command successful")
 

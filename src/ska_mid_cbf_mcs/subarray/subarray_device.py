@@ -850,8 +850,7 @@ class CbfSubarray(CspSubElementSubarray):
             :rtype: (ResultCode, str)
             """
             component_manager = self.target
-            scan = json.loads(argin)
-            (result_code, msg) =  component_manager.scan(scan["scan_id"])
+            (result_code, msg) =  component_manager.scan(argin)
             return (result_code, msg)
 
 
