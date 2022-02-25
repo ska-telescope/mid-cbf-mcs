@@ -575,10 +575,10 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
 
                 # Configure tdcEnable.
                 proxy_sw.tdcEnable = argin["tdc_enable"]
-                if argin["tdc_enable"]:
-                    proxy_sw.On()
-                else:
-                    proxy_sw.Off()
+                # if argin["tdc_enable"]:
+                #     proxy_sw.On()
+                # else:
+                #     proxy_sw.Off()
 
                 # Configure tdcNumBits.
                 if argin["tdc_enable"]:

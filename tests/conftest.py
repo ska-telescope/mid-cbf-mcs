@@ -517,7 +517,7 @@ def init_proxies_fixture():
                         [proxy], DevState.ON, wait_time_s, sleep_time_s_long)
 
                 if proxy.obsState == ObsState.FAULT:
-                    proxy.ObsReset()
+                    proxy.Restart()
                     self.wait_timeout_obs(
                         [proxy], ObsState.READY, wait_time_s, sleep_time_s_short)
 
@@ -560,11 +560,6 @@ def init_proxies_fixture():
             self.wait_timeout_dev(
                 [self.controller], DevState.ON, wait_time_s, sleep_time_s)
 
-            if self.subarray[sub_id].adminMode == AdminMode.OFFLINE:
-                self.subarray[sub_id].adminMode = AdminMode.ONLINE
-                self.wait_timeout_dev(
-                    [self.subarray[sub_id]], DevState.ON, wait_time_s, sleep_time_s)
-
 
         def off(self: TestProxies, sub_id: int) -> None:
             """
@@ -589,11 +584,6 @@ def init_proxies_fixture():
             self.wait_timeout_dev(
                 [self.controller], DevState.OFF, wait_time_s, sleep_time_s)
 
-            if self.subarray[sub_id].adminMode == AdminMode.OFFLINE:
-                self.subarray[sub_id].adminMode = AdminMode.ONLINE
-                self.wait_timeout_dev(
-                    [self.subarray[sub_id]], DevState.ON, wait_time_s, sleep_time_s)
-    
     return TestProxies()
 
 

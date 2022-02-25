@@ -447,8 +447,7 @@ class Vcc(CspSubElementObsDevice):
         self.logger.debug(f"Entering write_subarrayMembership(), value = {value}")
         self._subarray_membership = value
         self.push_change_event("subarrayMembership",value)
-        if not value:
-            self.obs_state_model.perform_action("component_unconfigured")
+        self.component_manager.deconfigure()
         # PROTECTED REGION END #    //  Vcc.subarrayMembership_write
 
     def read_frequencyBand(self: Vcc) -> tango.DevEnum:
@@ -1433,10 +1432,9 @@ class Vcc(CspSubElementObsDevice):
                         receptor_id = receptor["receptor_id"]
                         if receptor_id == device.component_manager.receptor_id:
                             # TODO: validate tdc_destination_address
-                            pass
+                            break
                         else:
-                            msg = f"Incorrect receptor ID: {receptor_id}"
-                            return (False, msg)
+                            pass
                 except KeyError:
                     # tdcDestinationAddress not given or receptorID not in tdcDestinationAddress
                     msg = "Search window specified with TDC enabled, but 'tdcDestinationAddress' " \

@@ -34,7 +34,7 @@ from ska_mid_cbf_mcs.attribute_proxy import CbfAttributeProxy
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus, CbfComponentManager
 
-from ska_tango_base.control_model import ObsState, HealthState, PowerMode
+from ska_tango_base.control_model import ObsState, HealthState, PowerMode, AdminMode
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.csp.subarray.component_manager import CspSubarrayComponentManager
 
@@ -213,7 +213,7 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
 
         # proxies to subordinate devices
         self._proxies_vcc = []
-        self._proxies_assigned_vcc = []
+        self._proxies_assigned_vcc = {}
         self._proxies_fsp = []
         self._proxies_fsp_corr_subarray = []
         self._proxies_fsp_pss_subarray = []
@@ -261,6 +261,7 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
                 self._count_fsp = int(self._controller_max_capabilities["FSP"])
                 self._receptor_to_vcc = dict([*map(int, pair.split(":"))] for pair in
                                 self._proxy_cbf_controller.receptorToVcc)
+                self._logger.debug(f"{self._receptor_to_vcc}")
 
                 self._fqdn_vcc = self._fqdn_vcc[:self._count_vcc]
                 self._fqdn_fsp = self._fqdn_fsp[:self._count_fsp]
@@ -273,26 +274,30 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
                     CbfDeviceProxy(fqdn=fqdn, logger=self._logger) 
                     for fqdn in self._fqdn_vcc
                 ]
+
             if len(self._proxies_fsp) == 0:
                 self._proxies_fsp = [
                     CbfDeviceProxy(fqdn=fqdn, logger=self._logger)
                     for fqdn in self._fqdn_fsp
                 ]
+
             if len(self._proxies_fsp_corr_subarray) == 0:
-                self._proxies_fsp_corr_subarray = [
-                    CbfDeviceProxy(fqdn=fqdn, logger=self._logger)
-                    for fqdn in self._fqdn_fsp_corr_subarray
-                ]
+                for fqdn in self._fqdn_fsp_corr_subarray:
+                    proxy = CbfDeviceProxy(fqdn=fqdn, logger=self._logger)
+                    proxy.adminMode = AdminMode.ONLINE
+                    self._proxies_fsp_corr_subarray.append(proxy)
+
             if len(self._proxies_fsp_pss_subarray) == 0:
-                self._proxies_fsp_pss_subarray = [
-                    CbfDeviceProxy(fqdn=fqdn, logger=self._logger)
-                    for fqdn in self._fqdn_fsp_pss_subarray
-                ]
+                for fqdn in self._fqdn_fsp_pss_subarray:
+                    proxy = CbfDeviceProxy(fqdn=fqdn, logger=self._logger)
+                    proxy.adminMode = AdminMode.ONLINE
+                    self._proxies_fsp_pss_subarray.append(proxy)
+
             if len(self._proxies_fsp_pst_subarray) == 0:
-                self._proxies_fsp_pst_subarray = [
-                    CbfDeviceProxy(fqdn=fqdn, logger=self._logger)
-                    for fqdn in self._fqdn_fsp_pst_subarray
-                ]
+                for fqdn in self._fqdn_fsp_pst_subarray:
+                    proxy = CbfDeviceProxy(fqdn=fqdn, logger=self._logger)
+                    proxy.adminMode = AdminMode.ONLINE
+                    self._proxies_fsp_pst_subarray.append(proxy)
 
             if self._group_vcc is None:
                 self._group_vcc = CbfGroupProxy(name="VCC", logger=self._logger)
@@ -329,13 +334,34 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
 
 
     def on(self: CbfSubarrayComponentManager) -> None:
+        for proxy in self._proxies_fsp_corr_subarray:
+            proxy.On()
+        for proxy in self._proxies_fsp_pss_subarray:
+            proxy.On()
+        for proxy in self._proxies_fsp_pst_subarray:
+            proxy.On()
+
         self.update_component_power_mode(PowerMode.ON)
 
 
     def off(self: CbfSubarrayComponentManager) -> None:
+        for proxy in self._proxies_fsp_corr_subarray:
+            proxy.Off()
+        for proxy in self._proxies_fsp_pss_subarray:
+            proxy.Off()
+        for proxy in self._proxies_fsp_pst_subarray:
+            proxy.Off()
+
         self.update_component_power_mode(PowerMode.OFF)
 
     def standby(self: CbfSubarrayComponentManager) -> None:
+        for proxy in self._proxies_fsp_corr_subarray:
+            proxy.Standby()
+        for proxy in self._proxies_fsp_pss_subarray:
+            proxy.Standby()
+        for proxy in self._proxies_fsp_pst_subarray:
+            proxy.Standby()
+
         self.update_component_power_mode(PowerMode.STANDBY)
 
 
@@ -695,7 +721,6 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
     def deconfigure(self: CbfSubarrayComponentManager) -> Tuple[ResultCode, str]:
         """Completely deconfigure the subarray; all initialization performed 
         by by the ConfigureScan command must be 'undone' here."""
-        
         try:
             # unsubscribe from TMC events
             for event_id in list(self._events_telstate.keys()):
@@ -717,45 +742,34 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
                 del self._fsp_state[self._fqdn_fsp[fspID - 1]]
                 del self._fsp_health_state[self._fqdn_fsp[fspID - 1]]
 
-            # TODO: add 'GoToIdle' for VLBI once implemented
-            for group in [
-                self._group_fsp_corr_subarray, 
-                self._group_fsp_pss_subarray,
-                self._group_fsp_pst_subarray
-                ]:
-                if group.get_size() > 0:
-                    group.command_inout("GoToIdle")
-                    # remove channel info from FSP subarrays
-                    # already done in GoToIdle
-                    group.remove_all()
+            if self._ready:
+                # TODO: add 'GoToIdle' for VLBI once implemented
+                for group in [
+                    self._group_fsp_corr_subarray, 
+                    self._group_fsp_pss_subarray,
+                    self._group_fsp_pst_subarray
+                    ]:
+                    if group.get_size() > 0:
+                        group.command_inout("GoToIdle")
+                        # remove channel info from FSP subarrays
+                        # already done in GoToIdle
+                        group.remove_all()
 
-            # TODO: handle proxy.State() == tango.DevState.OFF
-            # TODO: consolidate with above group command_inout
-            for fsp_corr_subarray_proxy in self._proxies_fsp_corr_subarray:
-                if fsp_corr_subarray_proxy.State() == tango.DevState.ON:
-                    fsp_corr_subarray_proxy.GoToIdle()
-            for fsp_pss_subarray_proxy in self._proxies_fsp_pss_subarray:
-                if fsp_pss_subarray_proxy.State() == tango.DevState.ON:
-                    fsp_pss_subarray_proxy.GoToIdle()
-            for fsp_pst_subarray_proxy in self._proxies_fsp_pst_subarray:
-                if fsp_pst_subarray_proxy.State() == tango.DevState.ON:
-                    fsp_pst_subarray_proxy.GoToIdle()
+                if self._group_vcc.get_size() > 0:
+                    self._group_vcc.command_inout("GoToIdle")
+                    frequency_bands = ["1", "2", "3", "4", "5a", "5b"]
+                    freq_band_name =  frequency_bands[self._frequency_band]
+                    data = tango.DeviceData()
+                    data.insert(tango.DevString, freq_band_name)
+                    self._group_vcc.command_inout("TurnOffBandDevice", data)
 
-            if self._group_vcc.get_size() > 0:
-                self._group_vcc.command_inout("GoToIdle")
-                frequency_bands = ["1", "2", "3", "4", "5a", "5b"]
-                freq_band_name =  frequency_bands[self._frequency_band]
-                data = tango.DeviceData()
-                data.insert(tango.DevString, freq_band_name)
-                self._group_vcc.command_inout("TurnOffBandDevice", data)
-
-            if self._group_fsp.get_size() > 0:
-                # change FSP subarray membership
-                data = tango.DeviceData()
-                data.insert(tango.DevUShort, self._subarray_id)
-                # self._logger.info(data)
-                self._group_fsp.command_inout("RemoveSubarrayMembership", data)
-                self._group_fsp.remove_all()
+                if self._group_fsp.get_size() > 0:
+                    # change FSP subarray membership
+                    data = tango.DeviceData()
+                    data.insert(tango.DevUShort, self._subarray_id)
+                    # self._logger.info(data)
+                    self._group_fsp.command_inout("RemoveSubarrayMembership", data)
+                    self._group_fsp.remove_all()
 
         except tango.DevFailed as df:
             self.update_component_fault(True, "op")
@@ -778,8 +792,7 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
         self._last_received_jones_matrix = "{}"
         self._last_received_beam_weights = "{}"
 
-        if self._ready:
-            self.update_component_configuration(False)
+        self.update_component_configuration(False)
 
         return (ResultCode.OK, "Deconfiguration completed OK")
 
@@ -871,7 +884,7 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
                 )
                 return (False, msg)
 
-        for proxy in self._proxies_assigned_vcc:
+        for receptor_id, proxy in self._proxies_assigned_vcc.items():
             if proxy.State() != tango.DevState.ON:
                 msg = f"VCC {self._proxies_vcc.index(proxy) + 1} is not ON. Aborting configuration."
                 return (False, msg)
@@ -883,6 +896,14 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
                 msg = "'searchWindow' must be an array of maximum length 2. " \
                         "Aborting configuration."
                 return (False, msg)
+            for sw in configuration["search_window"]:
+                if sw["tdc_enable"]:
+                    for receptor in sw["tdc_destination_address"]:
+                        receptor_id = receptor["receptor_id"]
+                        if receptor_id not in self._receptors:
+                            msg = f"'searchWindow' receptor ID {receptor_id} " + \
+                            "not assigned to subarray. Aborting configuration."
+                            return (False, msg)
         else:
             pass
 
@@ -1579,7 +1600,18 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
                     vccFQDN = self._fqdn_vcc[vccID - 1]
                     vccProxy = self._proxies_vcc[vccID - 1]
 
+                    self._receptors.remove(receptor_id)
+                    self._group_vcc.remove(vccFQDN)
+                    del self._proxies_assigned_vcc[receptor_id]
+
                     try:
+                        # reset subarrayMembership Vcc attribute:
+                        vccProxy.subarrayMembership = 0
+                        self._logger.debug(
+                            f"VCC {vccID} subarray_id: " + 
+                            f"{vccProxy.subarrayMembership}"
+                        )
+
                         # unsubscribe from events
                         vccProxy.remove_event(
                             "State",
@@ -1594,23 +1626,17 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
                         del self._vcc_state[vccFQDN]
                         del self._vcc_health_state[vccFQDN]
 
-                        # reset subarrayMembership Vcc attribute:
-                        vccProxy.subarrayMembership = 0
                     except tango.DevFailed as df:
                         msg = str(df.args[0].desc)
                         self.update_component_fault(True, "obs")
                         return (ResultCode.FAILED, msg)
-
-                    self._proxies_assigned_vcc.remove(vccProxy)
-                    self._group_vcc.remove(vccFQDN)
-                    self._receptors.remove(receptor_id)
 
                 else:
                     msg = f"Receptor {receptor_id} not found. Skipping."
                     self._logger.warning(msg)
 
         if len(self._receptors) == 0:
-            self.update_component_resourced(False)
+            self.update_component_resources(False)
 
         self._logger.debug(f"receptors remaining: {*self._receptors,}")
 
@@ -1631,13 +1657,24 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
         """
         self._logger.debug(f"current receptors: {*self._receptors,}")
         if len(self._receptors) > 0:
-            for receptor_id in self._receptors:
+            for receptor_id in self._receptors[:]:
                 self._logger.debug(f"Attempting to remove receptor {receptor_id}")
                 vccID = self._receptor_to_vcc[receptor_id]
                 vccFQDN = self._fqdn_vcc[vccID - 1]
                 vccProxy = self._proxies_vcc[vccID - 1]
 
+                self._receptors.remove(receptor_id)
+                self._group_vcc.remove(vccFQDN)
+                del self._proxies_assigned_vcc[receptor_id]
+
                 try:
+                    # reset subarrayMembership Vcc attribute:
+                    vccProxy.subarrayMembership = 0
+                    self._logger.debug(
+                        f"VCC {vccID} subarray_id: " + 
+                        f"{vccProxy.subarrayMembership}"
+                    )
+
                     # unsubscribe from events
                     vccProxy.remove_event(
                         "State",
@@ -1651,21 +1688,13 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
                     del self._events_state_change_vcc[vccID]
                     del self._vcc_state[vccFQDN]
                     del self._vcc_health_state[vccFQDN]
-
-                    # reset subarrayMembership Vcc attribute:
-                    vccProxy.subarrayMembership = 0
                 except tango.DevFailed as df:
                     msg = str(df.args[0].desc)
                     self.update_component_fault(True, "obs")
                     return (ResultCode.FAILED, msg)
 
-                self._proxies_assigned_vcc.remove(vccProxy)
-                self._group_vcc.remove(vccFQDN)
-                self._receptors.remove(receptor_id)
-
             self._logger.debug(f"receptors remaining: {*self._receptors,}")
-            self._receptors = []
-            self.update_component_resourced(False)
+            self.update_component_resources(False)
 
             return (ResultCode.OK, "RemoveAllReceptors completed OK")
 
@@ -1701,11 +1730,12 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
                 vccProxy = self._proxies_vcc[vccID - 1]
 
                 self._logger.debug(
-                    "receptor_id = {receptor_id}, vccProxy.receptor_id = "
-                    f"{vccProxy.receptor_id}"
+                    f"receptor_id = {receptor_id}, vccProxy.receptor_id = " +
+                    f"{vccProxy.receptorID}"
                 )
 
                 vccSubarrayID = vccProxy.subarrayMembership
+                self._logger.debug(f"VCC {vccID} subarray_id: {vccSubarrayID}")
 
                 # only add receptor if it does not already belong to a 
                 # different subarray
@@ -1715,11 +1745,21 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
                     self._logger.warning(msg)
                 else:
                     if receptor_id not in self._receptors:
+                        # update resourced state once first receptor is added
+                        if len(self._receptors) == 0:
+                            self.update_component_resources(True)
+
+                        self._receptors.append(int(receptor_id))
+                        self._group_vcc.add(self._fqdn_vcc[vccID - 1])
+                        self._proxies_assigned_vcc[receptor_id] = vccProxy
+
                         try:
                             # change subarray membership of vcc
                             vccProxy.subarrayMembership = self._subarray_id
-                            self._proxies_assigned_vcc.append(vccProxy)
-                            self._group_vcc.add(self._fqdn_vcc[vccID - 1])
+                            self._logger.debug(
+                                f"VCC {vccID} subarray_id: " + 
+                                f"{vccProxy.subarrayMembership}"
+                            )
 
                             # subscribe to VCC state and healthState changes
                             event_id_state = vccProxy.add_change_event_callback(
@@ -1740,16 +1780,11 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
                                 event_id_state,
                                 event_id_health_state
                             ]
+
                         except tango.DevFailed as df:
                             msg = str(df.args[0].desc)
                             self.update_component_fault(True, "obs")
                             return (ResultCode.FAILED, msg)
-
-                        # update resourced state once first receptor is added
-                        if len(self._receptors) == 0:
-                            self.update_component_resourced(True)
-
-                        self._receptors.append(int(receptor_id))
 
                     else:
                         msg = f"Receptor {receptor_id} already assigned to " + \
@@ -1830,8 +1865,9 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
         """
         # We might have interrupted a long-running command such as a Configure
         # or a Scan, so we need to clean up from that.
-        self.deconfigure()
-        self.remove_all_receptors()
+        (result_code, msg) = self.deconfigure()
+        if result_code == ResultCode.OK:
+            self.remove_all_receptors()
 
 
     def obsreset(self: CbfSubarrayComponentManager) -> None:
@@ -1840,9 +1876,9 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
         """
         # We might have interrupted a long-running command such as a Configure
         # or a Scan, so we need to clean up from that.
-        self.deconfigure()
+        (result_code, msg) = self.deconfigure()
 
-    
+
     def update_component_fault(
         self: CbfComponentManager,
         faulty: Optional[bool],
@@ -1860,7 +1896,7 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
             self._component_fault_callback(faulty, type)
 
 
-    def update_component_resourced(
+    def update_component_resources(
         self: CbfSubarrayComponentManager, resourced: bool
     ) -> None:
         """
@@ -1868,8 +1904,9 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
 
         :param resourced: whether the component is resourced.
         """
+        self._logger.debug(f"update_component_resources({resourced})")
         if resourced:
-            # perform "component_configured" if not previously configured
+            # perform "component_resourced" if not previously resourced
             if not self._resourced:
                 self._component_resourced_callback(True)
         elif self._resourced:
@@ -1886,6 +1923,7 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
 
         :param configured: whether the component is configured.
         """
+        self._logger.debug(f"update_component_configuration({configured})")
         if configured:
             # perform "component_configured" if not previously configured
             if not self._ready:

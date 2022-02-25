@@ -72,18 +72,6 @@ class CbfSubarray(CspSubElementSubarray):
             "RemoveAllReceptors",
             self.RemoveAllReceptorsCommand(*device_args)
         )
-        self.register_command_object(
-            "ConfigureScan",
-            self.ConfigureScanCommand(*device_args)
-        )
-        self.register_command_object(
-            "Scan",
-            self.ScanCommand(*device_args)
-        )
-        self.register_command_object(
-            "EndScan",
-            self.EndScanCommand(*device_args)
-        )
     # PROTECTED REGION END #    //  CbfSubarray.class_variable
 
 
@@ -345,6 +333,7 @@ class CbfSubarray(CspSubElementSubarray):
         :param scanning: whether this component is scanning
         :type scanning: bool
         """
+        self.logger.debug(f"_component_scanning({scanning})")
         if scanning:
             self.obs_state_model.perform_action("component_scanning")
         else:
@@ -659,7 +648,7 @@ class CbfSubarray(CspSubElementSubarray):
 
     ############  Configure Related Commands   ##############
 
-    class ConfigureScanCommand(CspSubElementSubarray.ConfigureCommand):
+    class ConfigureScanCommand(CspSubElementSubarray.ConfigureScanCommand):
         """
         A class for CbfSubarray's ConfigureScan() command.
         """
@@ -831,11 +820,14 @@ class CbfSubarray(CspSubElementSubarray):
         if not valid:
             self.component_manager.raise_configure_scan_fatal_error(msg)
         self.logger.info(msg)
+        # store the configuration on command success
+        self._last_scan_configuration = argin
+
+        self.logger.debug(f"obsState == {self.obsState}")
 
         (result_code, message) = command(argin)
-        if result_code == ResultCode.OK:
-            # store the configuration on command success
-            self._last_scan_configuration = argin
+
+        self.logger.debug(f"obsState == {self.obsState}")
         return [[result_code], [message]]
 
 

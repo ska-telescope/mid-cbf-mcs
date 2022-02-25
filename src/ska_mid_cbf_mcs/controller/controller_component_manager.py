@@ -553,6 +553,8 @@ class ControllerComponentManager(CbfComponentManager):
             # Try connection with each subarray/capability
             for fqdn, proxy in self._proxies.items():
                     try:
+                        proxy.adminMode = AdminMode.ONLINE
+
                         events = {}
 
                         # subscribe to change events on subarrays/capabilities
@@ -633,12 +635,6 @@ class ControllerComponentManager(CbfComponentManager):
         """
 
         if self._connected:
-
-            # Power Off subordinate devices will not work until they are updated to v0.11.3
-            # TODO: remove the following lines when update to v0.11.3 complete
-            message = "CbfController On command completed OK"
-            return (ResultCode.OK, message)
-            
             try:
                 for talon_lru_fqdn in self._fqdn_talon_lru:
                         self._proxies[talon_lru_fqdn].Off()
@@ -663,6 +659,7 @@ class ControllerComponentManager(CbfComponentManager):
                             f"Unsubscribing from event {id}, device: {proxy._fqdn}"
                         )
                         proxy.remove_event(name, id)
+                    proxy.adminMode = AdminMode.OFFLINE
             except tango.DevFailed:
                 log_msg = "Failed to unsubscribe to events"
                 self._logger.error(log_msg)

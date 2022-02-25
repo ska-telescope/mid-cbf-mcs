@@ -37,6 +37,7 @@ data_file_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
 
 CONST_WAIT_TIME = 4
 
+
 class TestCbfSubarray:
     """
     Test class for TestCbfSubarray tests.
@@ -55,6 +56,7 @@ class TestCbfSubarray:
         """
         assert device_under_test.State() == DevState.DISABLE
     
+
     def test_Status(
         self: TestCbfSubarray,
         device_under_test: CbfDeviceProxy,
@@ -68,6 +70,7 @@ class TestCbfSubarray:
         """
         assert device_under_test.Status() == "The device is in DISABLE state."
 
+
     def test_adminMode(
         self: TestCbfSubarray,
         device_under_test: CbfDeviceProxy,
@@ -80,7 +83,8 @@ class TestCbfSubarray:
             :py:class:`tango.test_context.DeviceTestContext`.
         """
         assert device_under_test.adminMode == AdminMode.OFFLINE
-    
+
+
     @pytest.mark.parametrize(
         "command",
         [
@@ -160,30 +164,28 @@ class TestCbfSubarray:
         assert device_under_test.obsState == ObsState.EMPTY
         device_under_test.AddReceptors(receptor_ids[:-1])
         time.sleep(0.1)
-        assert [device_under_test.receptors[i] 
-            for i in range(len(receptor_ids[:-1]))] == receptor_ids[:-1]
+        assert (device_under_test.receptors == receptor_ids[:-1]).all()
         assert device_under_test.obsState == ObsState.IDLE
 
         # add the last receptor
         device_under_test.AddReceptors([receptor_ids[-1]])
         time.sleep(0.1)
-        assert [device_under_test.receptors[i] 
-            for i in range(len(receptor_ids))] == receptor_ids
+        assert (device_under_test.receptors == receptor_ids).all()
         assert device_under_test.obsState == ObsState.IDLE
 
         # remove all except last receptor
         device_under_test.RemoveReceptors(receptors_to_remove)
         time.sleep(0.1)
         receptor_ids_after_remove = [r for r in receptor_ids if r not in receptors_to_remove]
-        for idx, receptor in enumerate(receptor_ids_after_remove):
-            assert device_under_test.receptors[idx] == receptor
+        assert (device_under_test.receptors == receptor_ids_after_remove).all()
         assert device_under_test.obsState == ObsState.IDLE
 
         # remove remaining receptor
         device_under_test.RemoveReceptors(receptor_ids_after_remove)
         time.sleep(0.1)
-        assert len(device_under_test.receptors) == 0
+        assert (device_under_test.receptors == []).all()
         assert device_under_test.obsState == ObsState.EMPTY
+
 
     @pytest.mark.parametrize(
         "receptor_ids",
@@ -220,8 +222,9 @@ class TestCbfSubarray:
         # remove all receptors
         device_under_test.RemoveAllReceptors()
         time.sleep(0.1)
-        assert len(device_under_test.receptors) == 0
+        assert (device_under_test.receptors == []).all()
         assert device_under_test.obsState == ObsState.EMPTY
+
 
     @pytest.mark.parametrize(
         "receptor_ids, \
@@ -256,13 +259,14 @@ class TestCbfSubarray:
         assert device_under_test.obsState == ObsState.EMPTY
         device_under_test.AddReceptors(receptor_ids)
         time.sleep(0.1)
-        assert [device_under_test.receptors[i] for i in range(len(receptor_ids))] == receptor_ids
+        assert (device_under_test.receptors == receptor_ids).all()
         assert device_under_test.obsState == ObsState.IDLE
 
         # try adding an invalid receptor ID
         device_under_test.AddReceptors(invalid_receptor_id)
         time.sleep(0.1)
-        assert [device_under_test.receptors[i] for i in range(len(receptor_ids))] == receptor_ids
+        assert (device_under_test.receptors == receptor_ids).all()
+
 
     @pytest.mark.parametrize(
         "receptor_ids, \
@@ -279,11 +283,11 @@ class TestCbfSubarray:
         ]
     )
     def test_RemoveReceptors_invalid(
-            self: TestCbfSubarray,
-            device_under_test: CbfDeviceProxy,
-            receptor_ids: List[int], 
-            invalid_receptors_to_remove: List[int], 
-        ) -> None:
+        self: TestCbfSubarray,
+        device_under_test: CbfDeviceProxy,
+        receptor_ids: List[int], 
+        invalid_receptors_to_remove: List[int], 
+    ) -> None:
         """
         Test invalid use of RemoveReceptors commands:
             - when a receptor to be removed is not assigned to the subarray
@@ -301,8 +305,10 @@ class TestCbfSubarray:
         # try removing a receptor not assigned to subarray 1
         device_under_test.RemoveReceptors(invalid_receptors_to_remove)
         time.sleep(0.1)
+        assert (device_under_test.receptors == receptor_ids).all()
         assert device_under_test.obsState == ObsState.IDLE
-    
+
+
     @pytest.mark.parametrize(
         "receptor_ids", 
         [
@@ -315,10 +321,10 @@ class TestCbfSubarray:
         ]
     )
     def test_RemoveAllReceptors_invalid(
-            self: TestCbfSubarray,
-            device_under_test: CbfDeviceProxy,
-            receptor_ids: List[int] 
-        ) -> None:
+        self: TestCbfSubarray,
+        device_under_test: CbfDeviceProxy,
+        receptor_ids: List[int] 
+    ) -> None:
         """
         Test invalid use of RemoveReceptors commands:
             - when a receptor to be removed is not assigned to the subarray
@@ -328,12 +334,12 @@ class TestCbfSubarray:
         time.sleep(CONST_WAIT_TIME)
         assert device_under_test.State() == DevState.ON
         assert device_under_test.obsState == ObsState.EMPTY
-        # add some receptors
 
         # try removing all receptors
         result = device_under_test.RemoveAllReceptors()
         time.sleep(0.1)
         assert result[0][0] == ResultCode.FAILED
+
 
     @pytest.mark.parametrize(
         "config_file_name, \
@@ -354,11 +360,6 @@ class TestCbfSubarray:
         """
         Test a successful scan configuration
         """
-        f = open(data_file_path + config_file_name)
-        config_string = f.read().replace("\n", "")
-        f.close()
-        config_json = json.loads(config_string)
-
         assert device_under_test.State() == DevState.DISABLE
         device_under_test.adminMode = AdminMode.ONLINE
         time.sleep(CONST_WAIT_TIME)
@@ -367,11 +368,14 @@ class TestCbfSubarray:
         device_under_test.AddReceptors(receptor_ids)
         time.sleep(0.1)
         assert device_under_test.obsState == ObsState.IDLE
-        
+
         # configure scan
-        device_under_test.ConfigureScan(config_string)
+        f = open(data_file_path + config_file_name)
+        device_under_test.ConfigureScan(f.read().replace("\n", ""))
+        f.close()
         time.sleep(CONST_WAIT_TIME)
         assert device_under_test.obsState == ObsState.READY
+
 
     @pytest.mark.parametrize(
         "config_file_name, \
@@ -401,29 +405,18 @@ class TestCbfSubarray:
         """
         Test the Scan command
         """
-        f1 = open(data_file_path + config_file_name)
-        config_string = f1.read().replace("\n", "")
-        f1.close()
-        assert device_under_test.State() == DevState.DISABLE
-        device_under_test.adminMode = AdminMode.ONLINE
-        time.sleep(CONST_WAIT_TIME)
-        assert device_under_test.State() == DevState.ON
-        assert device_under_test.obsState == ObsState.EMPTY
-        device_under_test.AddReceptors(receptor_ids)
-        time.sleep(0.1)
-        assert device_under_test.obsState == ObsState.IDLE
-        device_under_test.ConfigureScan(config_string)
-        time.sleep(CONST_WAIT_TIME)
-        assert device_under_test.obsState == ObsState.READY
+        self.test_ConfigureScan_basic(
+            device_under_test, config_file_name, receptor_ids
+        )
 
         # send the Scan command
-        f2 = open(data_file_path + scan_file_name)
-        json_string_scan = f2.read().replace("\n", "")
-        device_under_test.Scan(json.dumps(json_string_scan))
-        f2.close()
+        f = open(data_file_path + scan_file_name)
+        device_under_test.Scan(json.dumps(f.read().replace("\n", "")))
+        f.close()
         time.sleep(0.1)
 
         assert device_under_test.obsState == ObsState.SCANNING
+
 
     @pytest.mark.parametrize(
         "config_file_name, \
@@ -452,32 +445,16 @@ class TestCbfSubarray:
         """
         Test the EndScan command
         """
-        f1 = open(data_file_path + config_file_name)
-        config_string = f1.read().replace("\n", "")
-        f1.close()
-        assert device_under_test.State() == DevState.DISABLE
-        device_under_test.adminMode = AdminMode.ONLINE
-        time.sleep(CONST_WAIT_TIME)
-        assert device_under_test.State() == DevState.ON
-        assert device_under_test.obsState == ObsState.EMPTY
-        device_under_test.AddReceptors(receptor_ids)
-        time.sleep(0.1)
-        assert device_under_test.obsState == ObsState.IDLE
-        device_under_test.ConfigureScan(config_string)
-        time.sleep(CONST_WAIT_TIME)
-        assert device_under_test.obsState == ObsState.READY
-        f2 = open(data_file_path + scan_file_name)
-        json_string_scan = f2.read().replace("\n", "")
-        device_under_test.Scan(json.dumps(json_string_scan))
-        f2.close()
-        time.sleep(0.1)
-        assert device_under_test.obsState == ObsState.SCANNING
+        self.test_Scan(
+            device_under_test, config_file_name, scan_file_name, receptor_ids
+        )
 
         # send the EndScan command
         device_under_test.EndScan()
         time.sleep(0.1)
 
         assert device_under_test.obsState == ObsState.READY
+
 
     @pytest.mark.parametrize(
         "config_file_name, \
@@ -506,26 +483,9 @@ class TestCbfSubarray:
         """
         Test the Abort command
         """
-        f1 = open(data_file_path + config_file_name)
-        config_string = f1.read().replace("\n", "")
-        f1.close()
-        assert device_under_test.State() == DevState.DISABLE
-        device_under_test.adminMode = AdminMode.ONLINE
-        time.sleep(CONST_WAIT_TIME)
-        assert device_under_test.State() == DevState.ON
-        assert device_under_test.obsState == ObsState.EMPTY
-        device_under_test.AddReceptors(receptor_ids)
-        time.sleep(0.1)
-        assert device_under_test.obsState == ObsState.IDLE
-        device_under_test.ConfigureScan(config_string)
-        time.sleep(CONST_WAIT_TIME)
-        assert device_under_test.obsState == ObsState.READY
-        f2 = open(data_file_path + scan_file_name)
-        json_string_scan = f2.read().replace("\n", "")
-        device_under_test.Scan(json.dumps(json_string_scan))
-        f2.close()
-        time.sleep(0.1)
-        assert device_under_test.obsState == ObsState.SCANNING
+        self.test_Scan(
+            device_under_test, config_file_name, scan_file_name, receptor_ids
+        )
 
         # send the Abort command
         device_under_test.Abort()
@@ -560,29 +520,9 @@ class TestCbfSubarray:
         """
         Test the ObsReset command
         """
-        f1 = open(data_file_path + config_file_name)
-        config_string = f1.read().replace("\n", "")
-        f1.close()
-        assert device_under_test.State() == DevState.DISABLE
-        device_under_test.adminMode = AdminMode.ONLINE
-        time.sleep(CONST_WAIT_TIME)
-        assert device_under_test.State() == DevState.ON
-        assert device_under_test.obsState == ObsState.EMPTY
-        device_under_test.AddReceptors(receptor_ids)
-        time.sleep(0.1)
-        assert device_under_test.obsState == ObsState.IDLE
-        device_under_test.ConfigureScan(config_string)
-        time.sleep(CONST_WAIT_TIME)
-        assert device_under_test.obsState == ObsState.READY
-        f2 = open(data_file_path + scan_file_name)
-        json_string_scan = f2.read().replace("\n", "")
-        device_under_test.Scan(json.dumps(json_string_scan))
-        f2.close()
-        time.sleep(0.1)
-        assert device_under_test.obsState == ObsState.SCANNING
-        device_under_test.Abort()
-        time.sleep(0.1)
-        assert device_under_test.obsState == ObsState.ABORTED
+        self.test_Abort(
+            device_under_test, config_file_name, scan_file_name, receptor_ids
+        )
 
         # send the Reset command
         device_under_test.ObsReset()
@@ -617,29 +557,9 @@ class TestCbfSubarray:
         """
         Test the Restart command
         """
-        f1 = open(data_file_path + config_file_name)
-        config_string = f1.read().replace("\n", "")
-        f1.close()
-        assert device_under_test.State() == DevState.DISABLE
-        device_under_test.adminMode = AdminMode.ONLINE
-        time.sleep(CONST_WAIT_TIME)
-        assert device_under_test.State() == DevState.ON
-        assert device_under_test.obsState == ObsState.EMPTY
-        device_under_test.AddReceptors(receptor_ids)
-        time.sleep(0.1)
-        assert device_under_test.obsState == ObsState.IDLE
-        device_under_test.ConfigureScan(config_string)
-        time.sleep(CONST_WAIT_TIME)
-        assert device_under_test.obsState == ObsState.READY
-        f2 = open(data_file_path + scan_file_name)
-        json_string_scan = f2.read().replace("\n", "")
-        device_under_test.Scan(json.dumps(json_string_scan))
-        f2.close()
-        time.sleep(0.1)
-        assert device_under_test.obsState == ObsState.SCANNING
-        device_under_test.Abort()
-        time.sleep(0.1)
-        assert device_under_test.obsState == ObsState.ABORTED
+        self.test_Abort(
+            device_under_test, config_file_name, scan_file_name, receptor_ids
+        )
 
         # send the Reset command
         device_under_test.Restart()
@@ -667,20 +587,9 @@ class TestCbfSubarray:
         config_file_name: str,
         receptor_ids: List[int]
     ) -> None:
-        f1 = open(data_file_path + config_file_name)
-        config_string = f1.read().replace("\n", "")
-        f1.close()
-        assert device_under_test.State() == DevState.DISABLE
-        device_under_test.adminMode = AdminMode.ONLINE
-        time.sleep(CONST_WAIT_TIME)
-        assert device_under_test.State() == DevState.ON
-        assert device_under_test.obsState == ObsState.EMPTY
-        device_under_test.AddReceptors(receptor_ids)
-        time.sleep(0.1)
-        assert device_under_test.obsState == ObsState.IDLE
-        device_under_test.ConfigureScan(config_string)
-        time.sleep(CONST_WAIT_TIME)
-        assert device_under_test.obsState == ObsState.READY
+        self.test_ConfigureScan_basic(
+            device_under_test, config_file_name, receptor_ids
+        )
 
         device_under_test.End()
         time.sleep(CONST_WAIT_TIME)

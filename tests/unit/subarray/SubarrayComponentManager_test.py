@@ -48,6 +48,7 @@ class TestCbfSubarrayComponentManager:
         subarray_component_manager.start_communicating()
         assert subarray_component_manager.connected
 
+
     @pytest.mark.parametrize(
         "receptor_ids",
         [
@@ -81,6 +82,7 @@ class TestCbfSubarrayComponentManager:
         subarray_component_manager.remove_receptors(receptor_ids)
 
         assert subarray_component_manager.receptors == []
+
 
     @pytest.mark.parametrize(
         "receptor_ids", 
@@ -117,10 +119,15 @@ class TestCbfSubarrayComponentManager:
 
         assert subarray_component_manager.receptors == []
 
+        vcc_id = subarray_component_manager._receptor_to_vcc[receptor_ids[-1]]
+        vcc_proxy = subarray_component_manager._proxies_vcc[vcc_id - 1]
+        vcc_proxy.subarrayMembership = subarray_component_manager.subarray_id
+
         # try adding same receptor twice
         subarray_component_manager.add_receptors([receptor_ids[-1]])
         subarray_component_manager.add_receptors([receptor_ids[-1]])
-        assert subarray_component_manager.receptors == receptor_ids
+        assert subarray_component_manager.receptors == [receptor_ids[-1]]
+
 
     @pytest.mark.parametrize(
         "receptor_ids", 
@@ -238,3 +245,45 @@ class TestCbfSubarrayComponentManager:
         assert subarray_component_manager.frequency_band == band_index
 
         assert subarray_component_manager._ready
+
+
+    @pytest.mark.parametrize(
+        "config_file_name, \
+        scan_file_name, \
+        receptor_ids",
+        [
+            (
+                "ConfigureScan_basic.json",
+                "Scan1_basic.json",
+                [1, 3, 4, 2]
+            )
+        ]
+    )
+    def test_scan_end_scan(
+        self: TestCbfSubarrayComponentManager,
+        subarray_component_manager: CbfSubarrayComponentManager,
+        tango_harness: TangoHarness,
+        config_file_name: str,
+        scan_file_name: str,
+        receptor_ids: List[int]
+    ) -> None:
+        """
+        Test scan operation.
+
+        :param subarray_component_manager: subarray component manager under test.
+        :param config_file_name: scan configuration file name.
+        :param receptor_ids: receptor IDs to use in test.
+        """
+        self.test_validate_and_configure_scan(
+            subarray_component_manager, tango_harness, config_file_name, receptor_ids
+        )
+
+        # start scan
+        f = open(data_file_path + scan_file_name)
+        scan_json = json.loads(f.read().replace("\n", ""))
+        f.close()
+
+        (result_code, msg) = subarray_component_manager.scan(scan_json["scan_id"])
+
+        assert subarray_component_manager.scan_id == scan_json["scan_id"]
+        assert result_code == ResultCode.STARTED
