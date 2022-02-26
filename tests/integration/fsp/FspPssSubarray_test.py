@@ -321,6 +321,12 @@ class TestFspPssSubarray:
         :param sub_id: the subarray id
         """
 
+        # reset VCC subarray membership for other integration tests
+        for i in range(1, test_proxies.num_vcc + 1):
+            test_proxies.vcc[i].subarrayMembership = 0
+        for i in range(1, test_proxies.num_vcc + 1):
+            assert test_proxies.vcc[i].subarrayMembership == 0
+
         device_under_test = test_proxies.fspSubarray["PSS-BF"][sub_id][fsp_id]
 
         # trigger stop_communicating by setting the AdminMode to OFFLINE
