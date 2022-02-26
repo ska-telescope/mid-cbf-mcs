@@ -705,7 +705,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         :rtype: (ResultCode, str)
         """
         result_code = ResultCode.OK
-        msg = "ConfigureSearchWindwo completed OK"
+        msg = "ConfigureSearchWindow completed OK"
 
         argin = json.loads(argin)
 

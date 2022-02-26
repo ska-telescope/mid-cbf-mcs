@@ -25,6 +25,7 @@ from ska_tango_base.commands import ResultCode
 from ska_tango_base.csp.obs.component_manager import CspObsComponentManager
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_mid_cbf_mcs.group_proxy import CbfGroupProxy
+from ska_mid_cbf_mcs.commons.global_enum import FspModes
 
 MAX_SUBARRAY_MEMBERSHIPS = 16
 
@@ -502,11 +503,9 @@ class FspComponentManager(CbfComponentManager):
                 information purpose only.
         :rtype: (ResultCode, str)
         """
+        self._logger.debug("Entering update_jones_matrix")
 
         if self._connected:
-         
-            #TODO: this enum should be defined once and referred to throughout the project
-            FspModes = Enum('FspModes', 'CORR PSS_BF PST_BF VLBI')
             if self._function_mode in [FspModes.PSS_BF.value, FspModes.PST_BF.value, FspModes.VLBI.value]:
                 argin = json.loads(argin)
 
@@ -576,7 +575,7 @@ class FspComponentManager(CbfComponentManager):
 
         if self._connected:
             # update if current function mode is either PSS-BF or PST-BF
-            if self._function_mode in [2, 3]:
+            if self._function_mode in [FspModes.PSS_BF.value, FspModes.PST_BF.value]:
                 argin = json.loads(argin)
                 for i in self._subarray_membership:
                     if self._function_mode == 2:
@@ -638,7 +637,7 @@ class FspComponentManager(CbfComponentManager):
         if self._connected:
 
             # update if current function mode is PST-BF
-            if self._function_mode == 3:
+            if self._function_mode == [FspModes.PST_BF.value]:
                 argin = json.loads(argin)
                 for i in self._subarray_membership:
                     proxy = self._proxy_fsp_pst_subarray[i - 1]
