@@ -37,7 +37,7 @@ data_file_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
 
 CONST_WAIT_TIME = 4
 
-
+@pytest.mark.skip
 class TestCbfSubarray:
     """
     Test class for TestCbfSubarray tests.
@@ -411,7 +411,7 @@ class TestCbfSubarray:
 
         # send the Scan command
         f = open(data_file_path + scan_file_name)
-        device_under_test.Scan(json.dumps(f.read().replace("\n", "")))
+        device_under_test.Scan(f.read().replace("\n", ""))
         f.close()
         time.sleep(0.1)
 

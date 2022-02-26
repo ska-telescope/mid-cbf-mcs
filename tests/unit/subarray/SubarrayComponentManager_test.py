@@ -283,7 +283,7 @@ class TestCbfSubarrayComponentManager:
         scan_json = json.loads(f.read().replace("\n", ""))
         f.close()
 
-        (result_code, msg) = subarray_component_manager.scan(scan_json["scan_id"])
+        (result_code, msg) = subarray_component_manager.scan(scan_json)
 
-        assert subarray_component_manager.scan_id == scan_json["scan_id"]
+        assert subarray_component_manager.scan_id == int(scan_json["scan_id"])
         assert result_code == ResultCode.STARTED
