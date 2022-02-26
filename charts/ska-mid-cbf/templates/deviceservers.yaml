@@ -1,8 +1,10 @@
 {{ $localchart := . }}
 
-{{ range $deviceserver := .Values.deviceServers }}
+{{ range $key, $deviceserver := .Values.deviceServers }}
 
-{{ $context := dict "deviceserver" $deviceserver "image" $deviceserver.image "local" $localchart }}
+{{ $filedeviceserver := $.Files.Get $deviceserver.file | fromYaml }}
+
+{{ $context := dict "name" $key "deviceserver" $filedeviceserver "image" $deviceserver.image "local" $localchart }}
 
 {{ template "ska-tango-util.multidevice-config.tpl" $context }}
 

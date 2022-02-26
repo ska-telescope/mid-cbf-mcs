@@ -1,0 +1,274 @@
+name: vcc
+function: coarse-channelisation
+domain: sensing
+command: "VccMulti"
+instances: ["vcc-001", "vcc-002", "vcc-003", "vcc-004"]
+depends_on:
+  - device: sys/database/2
+server:
+  name: "VccMulti"
+  instances:
+  - name: "vcc-001"
+    classes:
+    - name: "Vcc"
+      devices:
+      - name: "mid_csp_cbf/vcc/001"
+        attribute_properties:
+        - attribute: "adminMode"
+          properties: 
+          - name: "abs_change"
+            values: 
+            - "-1"
+            - "1"
+        - attribute: "healthState"
+          properties:
+          - name: "abs_change"
+            values: 
+            - "-1"
+            - "1"
+        - attribute: "subarrayMembership"
+          properties:
+          - name: "abs_change"
+            values: 
+            - "-1"
+            - "1"
+        properties:
+          - name: "TalonLRUAddress"
+            values:
+            - "mid_csp_cbf/talon_lru/001"
+          - name: "VccControllerAddress"
+            values:
+            - "talondx-001/vcc-app/vcc-controller"
+          - name: "Band1And2Address"
+            values:
+            - "talondx-001/vcc-app/vcc-band-1-and-2"
+          - name: "Band3Address"
+            values:
+            - "talondx-001/vcc-app/vcc-band-3"
+          - name: "Band4Address"
+            values:
+            - "talondx-001/vcc-app/vcc-band-4"
+          - name: "Band5Address"
+            values:
+            - "talondx-001/vcc-app/vcc-band-5"
+          - name: "SW1Address"
+            values:
+            - "mid_csp_cbf/vcc_sw1/001"
+          - name: "SW2Address"
+            values:
+            - "mid_csp_cbf/vcc_sw2/001"
+          - name: "VccID"
+            values:
+            - "1"
+          - name: "polled_attr"
+            values:
+            - "state"
+            - "1000"
+            - "healthstate"
+            - "3000"
+            - "adminmode"
+            - "3000"
+    - name: "VccSearchWindow"
+      devices:
+      - name: "mid_csp_cbf/vcc_sw1/001"
+      - name: "mid_csp_cbf/vcc_sw2/001"
+
+  - name: "vcc-002"
+    classes:
+    - name: "Vcc"
+      devices:
+      - name: "mid_csp_cbf/vcc/002"
+        attribute_properties:
+        - attribute: "adminMode"
+          properties: 
+          - name: "abs_change"
+            values: 
+            - "-1"
+            - "1"
+        - attribute: "healthState"
+          properties:
+          - name: "abs_change"
+            values: 
+            - "-1"
+            - "1"
+        - attribute: "subarrayMembership"
+          properties:
+          - name: "abs_change"
+            values: 
+            - "-1"
+            - "1"
+        properties:
+          - name: "TalonLRUAddress"
+            values:
+            - "mid_csp_cbf/talon_lru/001"
+          - name: "VccControllerAddress"
+            values:
+            - "talondx-002/vcc-app/vcc-controller"
+          - name: "Band1And2Address"
+            values:
+            - "talondx-002/vcc-app/vcc-band-1-and-2"
+          - name: "Band3Address"
+            values:
+            - "talondx-002/vcc-app/vcc-band-3"
+          - name: "Band4Address"
+            values:
+            - "talondx-002/vcc-app/vcc-band-4"
+          - name: "Band5Address"
+            values:
+            - "talondx-002/vcc-app/vcc-band-5"
+          - name: "SW1Address"
+            values:
+            - "mid_csp_cbf/vcc_sw1/002"
+          - name: "SW2Address"
+            values:
+            - "mid_csp_cbf/vcc_sw2/002"
+          - name: "VccID"
+            values:
+            - "2"
+          - name: "polled_attr"
+            values:
+            - "state"
+            - "1000"
+            - "healthstate"
+            - "3000"
+            - "adminmode"
+            - "3000"
+    - name: "VccSearchWindow"
+      devices:
+      - name: "mid_csp_cbf/vcc_sw1/002"
+      - name: "mid_csp_cbf/vcc_sw2/002"
+
+  - name: "vcc-003"
+    classes:
+    - name: "Vcc"
+      devices:
+      - name: "mid_csp_cbf/vcc/003"
+        attribute_properties:
+        - attribute: "adminMode"
+          properties: 
+          - name: "abs_change"
+            values: 
+            - "-1"
+            - "1"
+        - attribute: "healthState"
+          properties:
+          - name: "abs_change"
+            values: 
+            - "-1"
+            - "1"
+        - attribute: "subarrayMembership"
+          properties:
+          - name: "abs_change"
+            values: 
+            - "-1"
+            - "1"
+        properties:
+          - name: "TalonLRUAddress"
+            values:
+            - "mid_csp_cbf/talon_lru/002"
+          - name: "VccControllerAddress"
+            values:
+            - "talondx-003/vcc-app/vcc-controller"
+          - name: "Band1And2Address"
+            values:
+            - "talondx-003/vcc-app/vcc-band-1-and-2"
+          - name: "Band3Address"
+            values:
+            - "talondx-003/vcc-app/vcc-band-3"
+          - name: "Band4Address"
+            values:
+            - "talondx-003/vcc-app/vcc-band-4"
+          - name: "Band5Address"
+            values:
+            - "talondx-003/vcc-app/vcc-band-5"
+          - name: "SW1Address"
+            values:
+            - "mid_csp_cbf/vcc_sw1/003"
+          - name: "SW2Address"
+            values:
+            - "mid_csp_cbf/vcc_sw2/003"
+          - name: "VccID"
+            values:
+            - "3"
+          - name: "polled_attr"
+            values:
+            - "state"
+            - "1000"
+            - "healthstate"
+            - "3000"
+            - "adminmode"
+            - "3000"
+    - name: "VccSearchWindow"
+      devices:
+      - name: "mid_csp_cbf/vcc_sw1/003"
+      - name: "mid_csp_cbf/vcc_sw2/003"
+
+  - name: "vcc-004"
+    classes:
+    - name: "Vcc"
+      devices:
+      - name: "mid_csp_cbf/vcc/004"
+        attribute_properties:
+        - attribute: "adminMode"
+          properties: 
+          - name: "abs_change"
+            values: 
+            - "-1"
+            - "1"
+        - attribute: "healthState"
+          properties:
+          - name: "abs_change"
+            values: 
+            - "-1"
+            - "1"
+        - attribute: "subarrayMembership"
+          properties:
+          - name: "abs_change"
+            values: 
+            - "-1"
+            - "1"
+        properties:
+          - name: "TalonLRUAddress"
+            values:
+            - "mid_csp_cbf/talon_lru/002"
+          - name: "VccControllerAddress"
+            values:
+            - "talondx-004/vcc-app/vcc-controller"
+          - name: "Band1And2Address"
+            values:
+            - "talondx-004/vcc-app/vcc-band-1-and-2"
+          - name: "Band3Address"
+            values:
+            - "talondx-004/vcc-app/vcc-band-3"
+          - name: "Band4Address"
+            values:
+            - "talondx-004/vcc-app/vcc-band-4"
+          - name: "Band5Address"
+            values:
+            - "talondx-004/vcc-app/vcc-band-5"
+          - name: "SW1Address"
+            values:
+            - "mid_csp_cbf/vcc_sw1/004"
+          - name: "SW2Address"
+            values:
+            - "mid_csp_cbf/vcc_sw2/004"
+          - name: "VccID"
+            values:
+            - "4"
+          - name: "polled_attr"
+            values:
+            - "state"
+            - "1000"
+            - "healthstate"
+            - "3000"
+            - "adminmode"
+            - "3000"
+    - name: "VccSearchWindow"
+      devices:
+      - name: "mid_csp_cbf/vcc_sw1/004"
+      - name: "mid_csp_cbf/vcc_sw2/004"
+image:
+  registry: "{{.Values.midcbf.image.registry}}"
+  image: "{{.Values.midcbf.image.image}}"
+  tag: "{{.Values.midcbf.image.tag}}"
+  pullPolicy: "{{.Values.midcbf.image.pullPolicy}}"
