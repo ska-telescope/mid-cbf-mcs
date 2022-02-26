@@ -46,4 +46,4 @@ def freq_band_dict():
     freq_bands = dict(zip(freq_band_labels, range(len(freq_band_labels))))
     return freq_bands
 
-FspModes = Enum('FspModes', 'CORR PSS_BF PST_BF VLBI')
+FspModes = Enum('FspModes', 'IDLE CORR PSS_BF PST_BF VLBI')

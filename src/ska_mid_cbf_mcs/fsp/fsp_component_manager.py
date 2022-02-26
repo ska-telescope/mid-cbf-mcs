@@ -99,7 +99,7 @@ class FspComponentManager(CbfComponentManager):
         self._proxy_fsp_pst_subarray = None
 
         self._subarray_membership = []
-        self._function_mode = 0  # IDLE
+        self._function_mode = FspModes.IDLE.value  # IDLE
         self._jones_matrix = [[0.0] * 16 for _ in range(4)]
         self._delay_model = [[0.0] * 6 for _ in range(4)]
         self._timing_beam_weights = [[0.0] * 6 for _ in range(4)]
@@ -309,7 +309,7 @@ class FspComponentManager(CbfComponentManager):
             self._subarray_membership.remove(argin)
             # change function mode to IDLE if no subarrays are using it.
             if not self._subarray_membership:
-                self._function_mode = 0
+                self._function_mode = FspModes.IDLE.value
         else:
             log_msg = "FSP does not belong to subarray {}.".format(argin)
             self._logger.warning(log_msg)
@@ -445,31 +445,31 @@ class FspComponentManager(CbfComponentManager):
         if self._connected:
 
             if argin == "IDLE":
-                self._function_mode = 0
+                self._function_mode = FspModes.IDLE.value
                 self._proxy_correlation.SetState(tango.DevState.DISABLE)
                 self._proxy_pss.SetState(tango.DevState.DISABLE)
                 self._proxy_pst.SetState(tango.DevState.DISABLE)
                 self._proxy_vlbi.SetState(tango.DevState.DISABLE)
             elif argin == "CORR":
-                self._function_mode = 1
+                self._function_mode = FspModes.CORR.value
                 self._proxy_correlation.SetState(tango.DevState.ON)
                 self._proxy_pss.SetState(tango.DevState.DISABLE)
                 self._proxy_pst.SetState(tango.DevState.DISABLE)
                 self._proxy_vlbi.SetState(tango.DevState.DISABLE)
             elif argin == "PSS-BF":
-                self._function_mode = 2
+                self._function_mode = FspModes.PSS_BF.value
                 self._proxy_correlation.SetState(tango.DevState.DISABLE)
                 self._proxy_pss.SetState(tango.DevState.ON)
                 self._proxy_pst.SetState(tango.DevState.DISABLE)
                 self._proxy_vlbi.SetState(tango.DevState.DISABLE)
             elif argin == "PST-BF":
-                self._function_mode = 3
+                self._function_mode = FspModes.PST_BF.value
                 self._proxy_correlation.SetState(tango.DevState.DISABLE)
                 self._proxy_pss.SetState(tango.DevState.DISABLE)
                 self._proxy_pst.SetState(tango.DevState.ON)
                 self._proxy_vlbi.SetState(tango.DevState.DISABLE)
             elif argin == "VLBI":
-                self._function_mode = 4
+                self._function_mode = FspModes.VLBI.value
                 self._proxy_correlation.SetState(tango.DevState.DISABLE)
                 self._proxy_pss.SetState(tango.DevState.DISABLE)
                 self._proxy_pst.SetState(tango.DevState.DISABLE)
@@ -506,7 +506,11 @@ class FspComponentManager(CbfComponentManager):
         self._logger.debug("Entering update_jones_matrix")
 
         if self._connected:
-            if self._function_mode in [FspModes.PSS_BF.value, FspModes.PST_BF.value, FspModes.VLBI.value]:
+            if self._function_mode in [
+                FspModes.PSS_BF.value,
+                FspModes.PST_BF.value,
+                FspModes.VLBI.value
+            ]:
                 argin = json.loads(argin)
 
                 for i in self._subarray_membership:
@@ -578,7 +582,7 @@ class FspComponentManager(CbfComponentManager):
             if self._function_mode in [FspModes.PSS_BF.value, FspModes.PST_BF.value]:
                 argin = json.loads(argin)
                 for i in self._subarray_membership:
-                    if self._function_mode == 2:
+                    if self._function_mode == FspModes.PSS_BF.value:
                         proxy = self._proxy_fsp_pss_subarray[i - 1]
                     else:
                         proxy = self._proxy_fsp_pst_subarray[i - 1]
@@ -637,7 +641,7 @@ class FspComponentManager(CbfComponentManager):
         if self._connected:
 
             # update if current function mode is PST-BF
-            if self._function_mode == [FspModes.PST_BF.value]:
+            if self._function_mode == FspModes.PST_BF.value:
                 argin = json.loads(argin)
                 for i in self._subarray_membership:
                     proxy = self._proxy_fsp_pst_subarray[i - 1]
