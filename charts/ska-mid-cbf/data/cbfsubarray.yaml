@@ -5,6 +5,18 @@ command: "CbfSubarray"
 instances: ["cbfsubarray-01", "cbfsubarray-02", "cbfsubarray-03"]
 depends_on:
   - device: mid_csp_cbf/sub_elt/controller
+readinessProbe:
+  initialDelaySeconds: 0
+  periodSeconds: 10
+  timeoutSeconds: 5
+  successThreshold: 1
+  failureThreshold: 3
+livenessProbe:
+  initialDelaySeconds: 0
+  periodSeconds: 10
+  timeoutSeconds: 5
+  successThreshold: 1
+  failureThreshold: 3
 server:
   name: "CbfSubarray"
   instances:
