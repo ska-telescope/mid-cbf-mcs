@@ -54,7 +54,7 @@ def device_to_load(
     :return: specification of the device to be loaded
     """
     return {
-        "path": "charts/ska-mid-cbf/data/midcbfconfig.json",
+        "path": "tests/unit/fsp/devicetoload.json",
         "package": "ska_mid_cbf_mcs.fsp.fsp_device",
         "device": "fsp-01",
         "device_class": "Fsp",
