@@ -16,6 +16,7 @@ PROJECT = ska-mid-cbf-mcs
 KUBE_NAMESPACE ?= ska-mid-cbf
 SDP_KUBE_NAMESPACE ?= sdp #namespace to be used
 DASHBOARD ?= webjive-dash.dump
+DOMAIN ?= cluster.local
 
 # HELM_RELEASE is the release that all Kubernetes resources will be labelled
 # with
@@ -94,6 +95,9 @@ jive: ## configure TANGO_HOST to enable Jive
 	@echo 'With the deployment active, copy and run the following command to configure TANGO_HOST for local jive:'
 	@echo
 	export TANGO_HOST=$$(kubectl describe service -n $(KUBE_NAMESPACE) $(TANGO_DATABASE)-external | grep -i 'LoadBalancer Ingress' | awk '{print $$3}'):10000
+
+config_tango_dns: ## Configure the hosts file to contain the Tango device server host names
+	./scripts/config-tango-dns.sh $(KUBE_NAMESPACE) $(DOMAIN)
 
 documentation:   ## ## Re-generate documentation
 	cd docs && make clean && make html

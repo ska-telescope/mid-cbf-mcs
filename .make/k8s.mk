@@ -93,6 +93,7 @@ install-chart: dep-up namespace ## install the helm chart with name HELM_RELEASE
 	sed -e 's/CI_ENVIRONMENT_SLUG/$(CI_ENVIRONMENT_SLUG)/' generated_values.yaml > values.yaml; \
 	helm dependency update $(UMBRELLA_CHART_PATH); \
 	helm install $(HELM_RELEASE) \
+	--set global.domain=$(DOMAIN) \
 	--set global.minikube=$(MINIKUBE) \
 	--set global.tango_host=$(TANGO_HOST) \
 	--values values.yaml $(SET_IMAGE_TAG) \
@@ -108,6 +109,7 @@ install-chart-only: ## install the helm chart with name HELM_RELEASE and path UM
 	sed -e 's/CI_ENVIRONMENT_SLUG/$(CI_ENVIRONMENT_SLUG)/' generated_values.yaml > values.yaml; \
 	helm dependency update $(UMBRELLA_CHART_PATH); \
 	helm install $(HELM_RELEASE) \
+	--set global.domain=$(DOMAIN) \
 	--set global.minikube=$(MINIKUBE) \
 	--set global.tango_host=$(TANGO_HOST) \
 	--values values.yaml $(SET_IMAGE_TAG) \
@@ -121,6 +123,7 @@ install-chart-with-taranta: dep-up namespace ## install the helm chart with name
 	sed -e 's/CI_ENVIRONMENT_SLUG/$(CI_ENVIRONMENT_SLUG)/' generated_values.yaml > values.yaml; \
 	helm dependency update $(UMBRELLA_CHART_PATH); \
 	helm install $(HELM_RELEASE) \
+	--set global.domain=$(DOMAIN) \
 	--set global.minikube=$(MINIKUBE) \
 	--set global.tango_host=$(TANGO_HOST) \
 	--values taranta-values.yaml $(SET_IMAGE_TAG) \
@@ -132,6 +135,7 @@ template-chart: clean dep-up## install the helm chart with name RELEASE_NAME and
 	@sed -e 's/CI_PROJECT_PATH_SLUG/$(CI_PROJECT_PATH_SLUG)/' $(UMBRELLA_CHART_PATH)values.yaml > generated_values.yaml; \
 	sed -e 's/CI_ENVIRONMENT_SLUG/$(CI_ENVIRONMENT_SLUG)/' generated_values.yaml > values.yaml; \
 	helm template $(RELEASE_NAME) \
+	--set global.domain=$(DOMAIN) \
 	--set global.minikube=$(MINIKUBE) \
 	--set global.tango_host=$(TANGO_HOST) \
 	--values values.yaml $(SET_IMAGE_TAG) \
@@ -142,7 +146,7 @@ template-chart: clean dep-up## install the helm chart with name RELEASE_NAME and
 
 # This job is used to delete a deployment of ska-mid-cbf-umbrella charts
 uninstall-chart: ## uninstall the ska-mid-cbf-umbrella helm chart on the namespace mid-cbf
-	helm template  $(HELM_RELEASE) $(UMBRELLA_CHART_PATH) --set global.minikube=$(MINIKUBE) --set global.tango_host=$(TANGO_HOST) --namespace $(KUBE_NAMESPACE)  | kubectl delete -f - ; \
+	helm template  $(HELM_RELEASE) $(UMBRELLA_CHART_PATH) --set global.domain=$(DOMAIN) --set global.minikube=$(MINIKUBE) --set global.tango_host=$(TANGO_HOST) --namespace $(KUBE_NAMESPACE)  | kubectl delete -f - ; \
 	helm uninstall  $(HELM_RELEASE) --namespace $(KUBE_NAMESPACE) 
 
 reinstall-chart: uninstall-chart install-chart ## reinstall ska-mid-cbf-umbrella helm chart
@@ -150,7 +154,7 @@ reinstall-chart: uninstall-chart install-chart ## reinstall ska-mid-cbf-umbrella
 reinstall-chart-only: uninstall-chart install-chart-only ## reinstall ska-mid-cbf-umbrella helm chart
 
 upgrade-chart: ## upgrade the ska-mid-cbf-umbrella helm chart on the namespace mid-cbf 
-	helm upgrade --set global.minikube=$(MINIKUBE) --set global.tango_host=$(TANGO_HOST) $(HELM_RELEASE) $(UMBRELLA_CHART_PATH) --namespace $(KUBE_NAMESPACE) 
+	helm upgrade --set global.domain=$(DOMAIN) --set global.minikube=$(MINIKUBE) --set global.tango_host=$(TANGO_HOST) $(HELM_RELEASE) $(UMBRELLA_CHART_PATH) --namespace $(KUBE_NAMESPACE) 
 
 wait: ## wait for pods to be ready
 	@echo "Waiting for pods to be ready"
