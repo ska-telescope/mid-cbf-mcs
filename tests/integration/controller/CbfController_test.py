@@ -81,8 +81,7 @@ class TestCbfController:
         test_proxies.wait_timeout_dev([test_proxies.controller], DevState.OFF, 3, 0.1)
         assert test_proxies.controller.State() == DevState.OFF
 
-    @pytest.mark.skip(reason="controller subordinate devices need to be \
-        updated to v0.11.3")
+
     def test_On(self, test_proxies):
         """
         Test the "On" command
@@ -107,9 +106,8 @@ class TestCbfController:
             for j in range(1, test_proxies.num_sub + 1):
                 for k in range(1, test_proxies.num_fsp + 1):
                     assert test_proxies.fspSubarray[i][j][k].State() == DevState.ON
-    
-    @pytest.mark.skip(reason="controller subordinate devices need to be \
-        updated to v0.11.3")    
+
+
     def test_Off(self, test_proxies):
         """
         Test the "Off" command
@@ -134,9 +132,8 @@ class TestCbfController:
             for j in range(1, test_proxies.num_sub + 1):
                 for k in range(1, test_proxies.num_fsp + 1):
                     assert test_proxies.fspSubarray[i][j][k].State() == DevState.OFF
-    
-    @pytest.mark.skip(reason="controller subordinate devices need to be \
-        updated to v0.11.3")  
+
+
     def test_Standby(self, test_proxies):
         """
         Test the "Standby" command

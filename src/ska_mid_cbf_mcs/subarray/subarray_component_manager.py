@@ -452,6 +452,7 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
         :param model: delay model
         """
         # This method is always called on a separate thread
+        self._logger.debug("CbfSubarray._update_delay_model")
         log_msg = f"Delay model active at {epoch} (currently {time.time()})..."
         self._logger.info(log_msg)
 

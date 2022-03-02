@@ -576,6 +576,7 @@ class FspComponentManager(CbfComponentManager):
                 information purpose only.
         :rtype: (ResultCode, str)
         """
+        self._logger.debug("entering update_delay_model")
 
         if self._connected:
             # update if current function mode is either PSS-BF or PST-BF

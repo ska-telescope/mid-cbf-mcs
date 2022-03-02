@@ -814,7 +814,7 @@ class TestCbfSubarray:
                                         proxy_subarray = test_proxies.fspSubarray["PST-BF"][sub_id][fs_id]
                                     if rec_id in proxy_subarray.receptors and len(matrix) == fs_length:
                                         for idx, matrix_val in enumerate(matrix):
-                                            assert matrix_val == fsp.jonesMatrix[rec_id -1][idx]
+                                            assert matrix_val == fsp.jonesMatrix[rec_id - 1][idx]
                         else:
                             log_msg = "function mode {} currently not supported".format(fsp.functionMode)
                             logging.error(log_msg)
@@ -843,7 +843,7 @@ class TestCbfSubarray:
 
             for epoch in range(len(delay_model_index_per_epoch)):
 
-                model = delay_model["delayModel"][delay_model_index_per_epoch[epoch]]            
+                model = delay_model["delayModel"][delay_model_index_per_epoch[epoch]]
                 for delayDetail in model["delayDetails"]:
                     rec_id = delayDetail["receptor"]
                     for fsp in [test_proxies.fsp[i] for i in range(1, test_proxies.num_fsp + 1)]:
@@ -858,7 +858,7 @@ class TestCbfSubarray:
                                         proxy_subarray = test_proxies.fspSubarray["PST-BF"][sub_id][fsp_id]
                                     if rec_id in proxy_subarray.receptors:
                                         for idx, coeff in enumerate(delayCoeff):
-                                            assert coeff == fsp.delayModel[rec_id -1][idx]
+                                            assert coeff == fsp.delayModel[rec_id - 1][idx]
                         else:
                             log_msg = "function mode {} currently not supported".format(fsp.functionMode)
                             logging.error(log_msg)
@@ -873,7 +873,7 @@ class TestCbfSubarray:
                 weights["epoch"] = epoch
                 epoch = str(int(epoch) + 10)
             
-            # update delay model
+            # update timing beam weights
             test_proxies.tm.beamWeights = json.dumps(timing_beam_weights)
             time.sleep(1)
 
@@ -1106,7 +1106,7 @@ class TestCbfSubarray:
         try:
             wait_time_s = 1
             sleep_time_s = 1
-            
+
             f = open(data_file_path + config_file_name)
             json_string = f.read().replace("\n", "")
             f.close()
@@ -1117,7 +1117,7 @@ class TestCbfSubarray:
             time.sleep(sleep_time_s)
 
             assert test_proxies.subarray[sub_id].obsState == ObsState.EMPTY
-            
+
             # add receptors
             test_proxies.subarray[sub_id].AddReceptors(receptor_ids)
             test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.IDLE, wait_time_s, sleep_time_s)
@@ -1129,7 +1129,7 @@ class TestCbfSubarray:
             test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.READY, wait_time_configure, sleep_time_s)
 
             assert test_proxies.subarray[sub_id].obsState == ObsState.READY
-            
+
             # Insert the epoch
             delay_model_index_per_epoch = list(range(len(delay_model["delayModel"])))
             random.shuffle(delay_model_index_per_epoch)
@@ -1182,7 +1182,7 @@ class TestCbfSubarray:
                         else:
                             log_msg = "function mode {} currently not supported".format(fsp.functionMode)
                             logging.error(log_msg)
-                              
+
                 if epoch == epoch_to_scan:
                     # transition to obsState=SCANNING
                     f2 = open(data_file_path + scan_file_name)
