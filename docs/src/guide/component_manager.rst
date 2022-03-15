@@ -3,7 +3,8 @@
 Component Managers
 ======================================================
 
-More details about the role of component managers can be found in the SKA Tango Base Documentation. In the Mid.CBF MCS 
+More details about the role of component managers can be found in the `SKA Tango Base Documentation 
+<https://developer.skao.int/projects/ska-tango-base/en/latest/guide/component_managers.html>`_. In the Mid.CBF MCS 
 each component has a Tango device class and a component manager class. The Tango device class updates its state model(s) 
 (the ``op_state_model`` and\or ``obs_state_model``). The Tango device class does not directly communicate with its component, 
 instead it tells its component manager class what to do by calling its methods. The component manager class directly interacts 
