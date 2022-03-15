@@ -123,3 +123,4 @@ mnt/talondx-config/*
 
 # docs folder (copied content during document generation)
 docs/src/README.md
+docs/src/diagrams/*.~vsdx

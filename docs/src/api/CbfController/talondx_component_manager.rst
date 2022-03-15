@@ -1,24 +1,3 @@
-.. Documentation
-
-CbfController
-================================
-
-CbfController Class
----------------------------------
-.. autoclass:: ska_mid_cbf_mcs.controller.controller_device.CbfController
-   :members:
-   :undoc-members:
-   :show-inheritance:
-   :member-order:
-
-ControllerComponentManager Class
----------------------------------
-.. autoclass:: ska_mid_cbf_mcs.controller.controller_component_manager.ControllerComponentManager
-   :members:
-   :undoc-members:
-   :show-inheritance:
-   :member-order:
-
 TalonDxComponentManager Class
 ---------------------------------
 The ``TalonDxComponentManager`` is used to configure and start up Tango device servers 

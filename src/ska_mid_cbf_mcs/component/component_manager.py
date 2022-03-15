@@ -67,7 +67,7 @@ class CbfComponentManager(BaseComponentManager):
 
     This class exists to modify the interface of the
     :py:class:`ska_tango_base.base.component_manager.BaseComponentManager`.
-    The ``BaseComponentManager`` accepts an ``op_state_model` argument,
+    The ``BaseComponentManager`` accepts an ``op_state_model`` argument,
     and is expected to interact directly with it. This is not a very
     good design decision. It is better to leave the ``op_state_model``
     behind in the device, and drive it indirectly through callbacks.
