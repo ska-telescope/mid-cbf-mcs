@@ -43,52 +43,52 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
     """A component manager for the CbfSubarray class."""
 
     @property
-    def config_id(self) -> str:
+    def config_id(self: CbfSubarrayComponentManager) -> str:
         """Return the configuration ID."""
         return self._config_id
 
     @property
-    def scan_id(self) -> int:
+    def scan_id(self: CbfSubarrayComponentManager) -> int:
         """Return the scan ID."""
         return self._scan_id
 
     @property
-    def subarray_id(self) -> int:
+    def subarray_id(self: CbfSubarrayComponentManager) -> int:
         """Return the subarray ID."""
         return self._subarray_id
 
     @property
-    def frequency_band(self) -> int:
+    def frequency_band(self: CbfSubarrayComponentManager) -> int:
         """Return the frequency band."""
         return self._frequency_band
 
     @property
-    def receptors(self) -> List[int]:
+    def receptors(self: CbfSubarrayComponentManager) -> List[int]:
         """Return the receptor list."""
         return self._receptors
 
     @property
-    def vcc_state(self) -> Dict[str, DevState]:
+    def vcc_state(self: CbfSubarrayComponentManager) -> Dict[str, DevState]:
         """Return the VCC operational states."""
         return self._vcc_state
 
     @property
-    def vcc_health_state(self) -> Dict[str, HealthState]:
+    def vcc_health_state(self: CbfSubarrayComponentManager) -> Dict[str, HealthState]:
         """Return the VCC health states."""
         return self._vcc_health_state
 
     @property
-    def fsp_state(self) -> Dict[str, DevState]:
+    def fsp_state(self: CbfSubarrayComponentManager) -> Dict[str, DevState]:
         """Return the FSP operational states."""
         return self._fsp_state
 
     @property
-    def fsp_health_state(self) -> Dict[str, HealthState]:
+    def fsp_health_state(self: CbfSubarrayComponentManager) -> Dict[str, HealthState]:
         """Return the FSP health states."""
         return self._fsp_health_state
 
     @property
-    def fsp_list(self) -> List[List[int]]:
+    def fsp_list(self: CbfSubarrayComponentManager) -> List[List[int]]:
         """Return the FSP function mode device IDs."""
         return self._fsp_list
 
@@ -114,6 +114,7 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
         Initialise a new instance.
 
         :param subarray_id: ID of subarray
+        :param controller: FQDN of controller device
         :param vcc: FQDNs of subordinate VCC devices
         :param fsp: FQDNs of subordinate FSP devices
         :param fsp_corr_sub: FQDNs of subordinate FSP CORR subarray devices

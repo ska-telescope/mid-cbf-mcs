@@ -379,15 +379,16 @@ class CbfController(SKAController):
             self.TalonDxConfigPath, self._simulation_mode, self.logger)
 
         return ControllerComponentManager( 
-            self.get_num_capabilities,
-            self.VCC,
-            self.FSP,
-            self.TalonLRU,
-            self._talondx_component_manager,
-            self.logger,
-            self.push_change_event,
-            self._communication_status_changed,
-            self._component_power_mode_changed,
+            get_num_capabilities=self.get_num_capabilities,
+            vcc_fqdns_all=self.VCC,
+            fsp_fqdns_all=self.FSP,
+            talon_lru_fqdns_all=self.TalonLRU,
+            talondx_component_manager=self._talondx_component_manager,
+            logger=self.logger,
+            push_change_event=self.push_change_event,
+            communication_status_changed_callback=self._communication_status_changed,
+            component_power_mode_changed_callback=self._component_power_mode_changed,
+            component_fault_callback=self._component_fault
         )
 
     def delete_device(self: CbfController) -> None:
@@ -677,6 +678,18 @@ class CbfController(SKAController):
             }
 
             self.op_state_model.perform_action(action_map[power_mode])
+
+    def _component_fault(self: CbfController, faulty: bool) -> None:
+        """
+        Handle component fault
+
+        :param faulty: whether the component has faulted.
+        """
+        if faulty:
+            self.op_state_model.perform_action("component_fault")
+            self.set_status("The device is in FAULT state.")
+        else:
+            self.set_status("The device has recovered from FAULT state.")
 
 # ----------
 # Run server

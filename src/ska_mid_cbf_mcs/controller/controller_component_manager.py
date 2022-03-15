@@ -46,6 +46,7 @@ class ControllerComponentManager(CbfComponentManager):
         push_change_event: Optional[Callable],
         communication_status_changed_callback: Callable[[CommunicationStatus], None],
         component_power_mode_changed_callback: Callable[[PowerMode], None],
+        component_fault_callback: Callable
     ) -> None:
         """
         Initialise a new instance.
@@ -64,6 +65,8 @@ class ControllerComponentManager(CbfComponentManager):
             the component manager and its component changes
         :param component_power_mode_changed_callback: callback to be
             called when the component power mode changes
+        :param component_fault_callback: callback to be called in event of 
+            component fault
         """
 
         self._logger = logger
@@ -92,11 +95,11 @@ class ControllerComponentManager(CbfComponentManager):
         self.frequency_offset_delta_f = [0] * CONST_DEFAULT_COUNT_VCC
 
         super().__init__(
-            logger,
-            push_change_event,
-            communication_status_changed_callback,
-            component_power_mode_changed_callback,
-            None,
+            logger=logger,
+            push_change_event_callback=push_change_event,
+            communication_status_changed_callback=communication_status_changed_callback,
+            component_power_mode_changed_callback=component_power_mode_changed_callback,
+            component_fault_callback=component_fault_callback
         )
     
     @property
