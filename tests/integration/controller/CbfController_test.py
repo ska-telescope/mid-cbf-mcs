@@ -94,18 +94,19 @@ class TestCbfController:
         assert test_proxies.controller.State() == DevState.ON
 
         for i in range(1, test_proxies.num_sub + 1):
-            test_proxies.wait_timeout_dev([test_proxies.subarray[i]], DevState.ON, 3, 0.1)
-            assert test_proxies.subarray[i].State() == DevState.ON
+            test_proxies.wait_timeout_dev([test_proxies.subarray[i]], DevState.DISABLE, 3, 0.1)
+            assert test_proxies.subarray[i].State() == DevState.DISABLE
 
         for i in range(1, test_proxies.num_vcc + 1):
-            assert test_proxies.vcc[i].State() == DevState.ON
+            assert test_proxies.vcc[i].State() == DevState.DISABLE
 
         for i in range(1, test_proxies.num_fsp + 1):
-            assert test_proxies.fsp[i].State() == DevState.ON
+            assert test_proxies.fsp[i].State() == DevState.DISABLE
+
         for i in ["CORR", "PSS-BF", "PST-BF"]:
             for j in range(1, test_proxies.num_sub + 1):
                 for k in range(1, test_proxies.num_fsp + 1):
-                    assert test_proxies.fspSubarray[i][j][k].State() == DevState.ON
+                    assert test_proxies.fspSubarray[i][j][k].State() == DevState.DISABLE
 
 
     def test_Off(self, test_proxies):
@@ -128,6 +129,7 @@ class TestCbfController:
 
         for i in range(1, test_proxies.num_fsp + 1):
             assert test_proxies.fsp[i].State() == DevState.OFF
+
         for i in ["CORR", "PSS-BF", "PST-BF"]:
             for j in range(1, test_proxies.num_sub + 1):
                 for k in range(1, test_proxies.num_fsp + 1):
@@ -153,6 +155,7 @@ class TestCbfController:
 
         for i in range(1, test_proxies.num_fsp + 1):
             assert test_proxies.fsp[i].State() == DevState.OFF
+
         for i in ["CORR", "PSS-BF", "PST-BF"]:
             for j in range(1, test_proxies.num_sub + 1):
                 for k in range(1, test_proxies.num_fsp + 1):
@@ -170,7 +173,9 @@ class TestCbfController:
         test_proxies.wait_timeout_dev([test_proxies.controller], DevState.DISABLE, 3, 0.1)
         assert test_proxies.controller.State() == DevState.DISABLE
 
-    #TODO implement these tests properly?
+
+    #TODO
+
     # def test_reportVCCSubarrayMembership(
     #         self,
     #         cbf_master_proxy,

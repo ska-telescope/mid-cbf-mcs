@@ -33,6 +33,7 @@ from ska_mid_cbf_mcs.commons.global_enum import const, freq_band_dict
 from ska_mid_cbf_mcs.attribute_proxy import CbfAttributeProxy
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus, CbfComponentManager
+from ska_mid_cbf_mcs.component.util import check_communicating, check_on
 
 from ska_tango_base.control_model import ObsState, HealthState, PowerMode, AdminMode
 from ska_tango_base.commands import ResultCode
@@ -171,7 +172,7 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
         self._corr_fsp_list = []
         self._pss_fsp_list = []
         self._pst_fsp_list = []
-        self._latest_scan_config=""
+        self._latest_scan_config = ""
 
         # TODO
         # self._output_links_distribution = {"configID": ""} 
@@ -334,6 +335,7 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
         self.update_component_power_mode(PowerMode.UNKNOWN)
 
 
+    @check_communicating
     def on(self: CbfSubarrayComponentManager) -> None:
         for proxy in self._proxies_fsp_corr_subarray:
             proxy.On()
@@ -345,6 +347,7 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
         self.update_component_power_mode(PowerMode.ON)
 
 
+    @check_communicating
     def off(self: CbfSubarrayComponentManager) -> None:
         for proxy in self._proxies_fsp_corr_subarray:
             proxy.Off()
@@ -355,6 +358,8 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
 
         self.update_component_power_mode(PowerMode.OFF)
 
+
+    @check_communicating
     def standby(self: CbfSubarrayComponentManager) -> None:
         for proxy in self._proxies_fsp_corr_subarray:
             proxy.Standby()
@@ -366,6 +371,7 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
         self.update_component_power_mode(PowerMode.STANDBY)
 
 
+    @check_communicating
     def _doppler_phase_correction_event_callback(
         self: CbfSubarrayComponentManager,
         fqdn: str,
@@ -393,6 +399,7 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
             self._logger.warning(f"None value for {fqdn}")
 
 
+    @check_communicating
     def _delay_model_event_callback(
         self: CbfSubarrayComponentManager,
         fqdn: str,
@@ -473,6 +480,7 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
         self._mutex_delay_model_config.release()
 
 
+    @check_communicating
     def _jones_matrix_event_callback(
         self: CbfSubarrayComponentManager,
         fqdn: str,
@@ -553,6 +561,7 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
         self._mutex_jones_matrix_config.release()
 
 
+    @check_communicating
     def _beam_weights_event_callback(
         self: CbfSubarrayComponentManager,
         fqdn: str,
@@ -720,6 +729,7 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
         )
 
 
+    @check_communicating
     def deconfigure(self: CbfSubarrayComponentManager) -> Tuple[ResultCode, str]:
         """Completely deconfigure the subarray; all initialization performed 
         by by the ConfigureScan command must be 'undone' here."""
@@ -794,6 +804,7 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
         return (ResultCode.OK, "Deconfiguration completed OK")
 
 
+    @check_communicating
     def validate_input(
         self: CbfSubarrayComponentManager,
         argin: str
@@ -1321,6 +1332,7 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
         return (True, "Scan configuration is valid.")
 
 
+    @check_communicating
     def configure_scan(
         self: CbfSubarrayComponentManager,
         argin: str
@@ -1585,6 +1597,7 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
         return (ResultCode.OK, "ConfigureScan command completed OK")
 
 
+    @check_communicating
     def remove_receptors(
         self: CbfSubarrayComponentManager,
         argin: List[int]
@@ -1654,6 +1667,7 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
         return (ResultCode.OK, "RemoveReceptors completed OK")
 
 
+    @check_communicating
     def remove_all_receptors(
         self: CbfSubarrayComponentManager
     ) -> Tuple[ResultCode, str]:
@@ -1716,6 +1730,7 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
             )
 
 
+    @check_communicating
     def add_receptors(
         self: CbfSubarrayComponentManager,
         argin: List[int]
@@ -1807,6 +1822,7 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
         return (ResultCode.OK, "AddReceptors completed OK")
 
 
+    @check_communicating
     def scan(
         self: CbfSubarrayComponentManager,
         argin: Dict[Any]
@@ -1839,6 +1855,7 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
         return (ResultCode.STARTED, "Scan command successful")
 
 
+    @check_communicating
     def end_scan(self: CbfSubarrayComponentManager) -> Tuple[ResultCode, str]:
         """
         End subarray Scan operation.
@@ -1864,6 +1881,7 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
         return (ResultCode.OK, "EndScan command completed OK")
 
 
+    @check_communicating
     def abort(self: CbfSubarrayComponentManager) -> None:
         """
         Abort subarray configuration or operation.
@@ -1873,6 +1891,7 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
             self.end_scan()
 
 
+    @check_communicating
     def restart(self: CbfSubarrayComponentManager) -> None:
         """
         Restart from fault.
@@ -1884,6 +1903,7 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
             self.remove_all_receptors()
 
 
+    @check_communicating
     def obsreset(self: CbfSubarrayComponentManager) -> None:
         """
         Reset subarray scan configuration or operation.

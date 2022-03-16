@@ -28,9 +28,8 @@ import pytest
 
 from ska_tango_base.control_model import HealthState, AdminMode, ObsState
 
-@pytest.mark.skip(
-        reason="Not updated to version 0.11.3 of the base classes."
-)
+# TODO: remove?
+@pytest.mark.skip(reason="this class is currently untested")
 class TestFspPstSubarray:
     """
     Test class for FspPstSubarray device class integration testing.
@@ -265,7 +264,7 @@ class TestFspPstSubarray:
         assert [device_under_test.receptors[i] \
             for i in range(len(device_under_test.receptors))] == []
 
-# TODO: fix and move to its own test file
+# TODO: remove?
 @pytest.mark.skip(reason="this class is currently untested")
 class TestFspCorrSubarray:
     """
