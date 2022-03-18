@@ -324,8 +324,9 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
             ) from dev_failed
 
         self.connected = True
-        self.update_component_power_mode(PowerMode.ON)
         self.update_communication_status(CommunicationStatus.ESTABLISHED)
+        self.update_component_power_mode(PowerMode.ON)
+        self.update_component_fault(False, "op")
 
 
     def stop_communicating(self: CbfSubarrayComponentManager) -> None:
