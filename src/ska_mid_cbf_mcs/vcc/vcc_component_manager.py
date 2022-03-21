@@ -347,8 +347,9 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
             return
 
         self.connected = True
-        self.update_component_power_mode(self._get_power_mode())
         self.update_communication_status(CommunicationStatus.ESTABLISHED)
+        self.update_component_power_mode(self._get_power_mode())
+        self.update_component_fault(False)
 
 
     def stop_communicating(self: VccComponentManager) -> None:
