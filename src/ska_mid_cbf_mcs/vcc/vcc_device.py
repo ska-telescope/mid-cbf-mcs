@@ -677,6 +677,7 @@ class Vcc(CspSubElementObsDevice):
                 information purpose only.
             :rtype: (ResultCode, str)
             """
+            self.logger.info("Entering Vcc.OnCommand")
             return self.target.component_manager.on()
 
     class OffCommand(CspSubElementObsDevice.OffCommand):

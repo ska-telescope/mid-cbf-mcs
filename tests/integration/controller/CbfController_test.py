@@ -93,12 +93,21 @@ class TestCbfController:
         test_proxies.wait_timeout_dev([test_proxies.controller], DevState.ON, 3, 0.1)
         assert test_proxies.controller.State() == DevState.ON
 
+        # after init devices should be in DISABLE state
+        for i in range(1, test_proxies.num_sub + 1):
+            assert test_proxies.subarray[i].adminMode == AdminMode.ONLINE
+        for i in range(1, test_proxies.num_vcc + 1):
+            assert test_proxies.vcc[i].adminMode == AdminMode.ONLINE
+        for i in range(1, test_proxies.num_fsp + 1):
+            assert test_proxies.fsp[i].adminMode == AdminMode.ONLINE
+        for i in ["CORR", "PSS-BF", "PST-BF"]:
+            for j in range(1, test_proxies.num_sub + 1):
+                for k in range(1, test_proxies.num_fsp + 1):
+                    assert test_proxies.fspSubarray[i][j][k].adminMode == AdminMode.ONLINE
+
         for i in range(1, test_proxies.num_sub + 1):
             test_proxies.wait_timeout_dev([test_proxies.subarray[i]], DevState.ON, 3, 0.1)
             assert test_proxies.subarray[i].State() == DevState.ON
-
-        for i in range(1, test_proxies.num_vcc + 1):
-            assert test_proxies.vcc[i].State() == DevState.ON
 
         for i in range(1, test_proxies.num_fsp + 1):
             assert test_proxies.fsp[i].State() == DevState.ON
@@ -107,6 +116,9 @@ class TestCbfController:
             for j in range(1, test_proxies.num_sub + 1):
                 for k in range(1, test_proxies.num_fsp + 1):
                     assert test_proxies.fspSubarray[i][j][k].State() == DevState.ON
+        
+        for i in range(1, test_proxies.num_vcc + 1):
+            assert test_proxies.vcc[i].State() == DevState.ON
 
 
     def test_Off(self, test_proxies):

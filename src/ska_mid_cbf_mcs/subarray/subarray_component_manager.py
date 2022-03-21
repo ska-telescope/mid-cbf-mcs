@@ -139,6 +139,10 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
             component fault
         """
 
+        self._logger = logger
+
+        self._logger.info("Entering CbfSubarrayComponentManager.__init__)")
+
         self._subarray_id = subarray_id
         self._fqdn_controller = controller
         self._fqdn_vcc = vcc
@@ -152,8 +156,6 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
         # set to determine if ready to receive subscribed parameters;
         # also indicates whether component is currently configured
         self._ready = False
-
-        self._logger = logger
 
         self.connected = False
 
@@ -244,6 +246,8 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
 
     def start_communicating(self: CbfSubarrayComponentManager) -> None:
         """Establish communication with the component, then start monitoring."""
+        self._logger.info("Entering CbfSubarrayComponentManager.start_communicating")
+
         if self.connected:
             self._logger.info("Already connected.")
             return

@@ -38,6 +38,7 @@ class ControllerComponentManager(CbfComponentManager):
     def __init__(
         self: ControllerComponentManager,
         get_num_capabilities : Callable[[None], Dict[str, int]],
+        subarray_fqdns_all: List[str],
         vcc_fqdns_all: List[str],
         fsp_fqdns_all: List[str],
         talon_lru_fqdns_all: List[str],
@@ -76,6 +77,7 @@ class ControllerComponentManager(CbfComponentManager):
         self._fqdn_vcc, self._fqdn_fsp, self._fqdn_subarray, self._fqdn_talon_lru  \
             = ([] for i in range(4))
 
+        self._subarray_fqdns_all = subarray_fqdns_all
         self._vcc_fqdns_all = vcc_fqdns_all
         self._fsp_fqdns_all = fsp_fqdns_all
         self._talon_lru_fqdns_all = talon_lru_fqdns_all
@@ -261,7 +263,7 @@ class ControllerComponentManager(CbfComponentManager):
         
         self._fqdn_vcc = list(self._vcc_fqdns_all)[:self._count_vcc]
         self._fqdn_fsp = list(self._fsp_fqdns_all)[:self._count_fsp]
-        self._fqdn_subarray = list(self._fsp_fqdns_all)[:self._count_subarray]
+        self._fqdn_subarray = list(self._subarray_fqdns_all)[:self._count_subarray]
         self._fqdn_talon_lru = list(self._talon_lru_fqdns_all)
         
         self._report_vcc_state = [tango.DevState.UNKNOWN] * self._count_vcc
@@ -613,8 +615,8 @@ class ControllerComponentManager(CbfComponentManager):
             if self._talondx_component_manager.configure_talons() == ResultCode.FAILED:
                 log_msg = "Failed to configure Talon boards"
                 self._logger.error(log_msg)
-                return (ResultCode.FAILED, log_msg)
-    
+                return (ResultCode.FAILED, log_msg)    
+            
             try:
                 self._group_subarray.command_inout("On")
                 self._group_vcc.command_inout("On")

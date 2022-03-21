@@ -35,6 +35,7 @@ from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_tango_base.control_model import ObsState, AdminMode, HealthState, PowerMode
 from ska_tango_base.csp.subarray.subarray_device import CspSubElementSubarray
 from ska_tango_base.commands import ResultCode, BaseCommand, ResponseCommand
+from ska_tango_base import SKACapability, SKABaseDevice
 
 # PROTECTED REGION END #    //  CbfSubarray.additionnal_import
 
@@ -52,6 +53,16 @@ class CbfSubarray(CspSubElementSubarray):
         Sets up the command objects. Register the new Commands here.
         """
         super().init_command_objects()
+
+        device_args = (self, self.op_state_model, self.logger)
+
+        self.register_command_object(
+            "On", self.OnCommand(*device_args)
+        )
+
+        self.register_command_object(
+            "Off", self.OffCommand(*device_args)
+        )
 
         device_args = (
             self.component_manager,
@@ -237,6 +248,47 @@ class CbfSubarray(CspSubElementSubarray):
             # device._central_logging_level = tango.LogLevel.LOG_DEBUG
 
             return (result_code, message)
+    
+    class OnCommand(SKABaseDevice.OnCommand):
+        """
+        A class for the CbfSubarray's On() command.
+        """
+
+        def do(            
+            self: CbfSubarray.OnCommand,
+        ) -> Tuple[ResultCode, str]:
+            """
+            Stateless hook for On() command functionality.
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
+
+            _ = self.target.component_manager.on()
+
+            return (ResultCode.OK, "message")
+
+    class OffCommand(SKABaseDevice.OffCommand):
+        """
+        A class for the CbfSubarray's Off() command.
+        """
+        def do(
+            self: CbfSubarray.OffCommand,
+        ) -> Tuple[ResultCode, str]:
+            """
+            Stateless hook for Off() command functionality.
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
+
+            (result_code,message) = self.target.component_manager.off()
+
+            return (result_code, message)
 
 
     def create_component_manager(self: CbfSubarray) -> CbfSubarrayComponentManager:
@@ -245,12 +297,12 @@ class CbfSubarray(CspSubElementSubarray):
         
         :return: a subarray component manager
         """
-        self.logger.debug("Entering create_component_manager()")
+        self.logger.info("Entering CbfSubarray.create_component_manager()")
         self._communication_status: Optional[CommunicationStatus] = None
         self._component_power_mode: Optional[PowerMode] = None
 
         return CbfSubarrayComponentManager(
-            subarray_id=int(self.get_name()[-2:]),
+            subarray_id=1,
             controller=self.CbfControllerAddress,
             vcc=self.VCC,
             fsp=self.FSP,
