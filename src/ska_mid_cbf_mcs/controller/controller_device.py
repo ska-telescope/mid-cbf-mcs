@@ -382,6 +382,7 @@ class CbfController(SKAController):
             get_num_capabilities=self.get_num_capabilities,
             vcc_fqdns_all=self.VCC,
             fsp_fqdns_all=self.FSP,
+            subarray_fqdns_all=self.CbfSubarray,
             talon_lru_fqdns_all=self.TalonLRU,
             talondx_component_manager=self._talondx_component_manager,
             logger=self.logger,

@@ -620,8 +620,8 @@ class ControllerComponentManager(CbfComponentManager):
             if self._talondx_component_manager.configure_talons() == ResultCode.FAILED:
                 log_msg = "Failed to configure Talon boards"
                 self._logger.error(log_msg)
-                return (ResultCode.FAILED, log_msg)
-    
+                return (ResultCode.FAILED, log_msg)    
+            
             try:
                 self._group_subarray.command_inout("On")
                 self._group_vcc.command_inout("On")
