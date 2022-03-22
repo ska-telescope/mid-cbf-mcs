@@ -373,6 +373,9 @@ class ControllerComponentManager(CbfComponentManager):
         """Stop communication with the component"""
         
         super().stop_communicating()
+
+        for proxy in self._proxies:
+            proxy.adminMode = AdminMode.OFFLINE
         
         self._connected = False
 
@@ -676,10 +679,10 @@ class ControllerComponentManager(CbfComponentManager):
                             f"Unsubscribing from event {id}, device: {proxy._fqdn}"
                         )
                         proxy.remove_event(name, id)
-                    proxy.adminMode = AdminMode.OFFLINE
-            except tango.DevFailed:
-                log_msg = "Failed to unsubscribe to events"
-                self._logger.error(log_msg)
+            except tango.DevFailed as df:
+                for item in df.args:
+                    log_msg = f"Failed to unsubscribe to events; {item.reason} ; {item.desc} ; {item.origin}"
+                    self._logger.error(log_msg)
                 return (ResultCode.FAILED, log_msg)
             
             message = "CbfController Off command completed OK"

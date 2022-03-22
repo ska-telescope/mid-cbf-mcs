@@ -109,7 +109,8 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
         component_scanning_callback: Callable[[bool], None],
         communication_status_changed_callback: Callable[[CommunicationStatus], None],
         component_power_mode_changed_callback: Callable[[PowerMode], None],
-        component_fault_callback: Callable
+        component_fault_callback: Callable,
+        component_obs_fault_callback: Callable
     ) -> None:
         """
         Initialise a new instance.
@@ -142,6 +143,9 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
         self._logger = logger
 
         self._logger.info("Entering CbfSubarrayComponentManager.__init__)")
+
+        self._component_fault_callback = component_fault_callback
+        self._component_obs_fault_callback = component_obs_fault_callback
 
         self._subarray_id = subarray_id
         self._fqdn_controller = controller
@@ -322,7 +326,7 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
         except tango.DevFailed as dev_failed:
             self.update_component_power_mode(PowerMode.UNKNOWN)
             self.update_communication_status(CommunicationStatus.NOT_ESTABLISHED)
-            self.update_component_fault(True, "op")
+            self._update_component_fault(True, "op")
             raise ConnectionError(
                 f"Error in proxy connection."
             ) from dev_failed
@@ -330,7 +334,7 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
         self.connected = True
         self.update_communication_status(CommunicationStatus.ESTABLISHED)
         self.update_component_power_mode(PowerMode.ON)
-        self.update_component_fault(False, "op")
+        self._update_component_fault(False, "op")
 
 
     def stop_communicating(self: CbfSubarrayComponentManager) -> None:
@@ -727,7 +731,7 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
             information purpose only.
         :rtype: (ResultCode, str)
         """
-        self.update_component_fault(True, "obs")
+        self._update_component_fault(True, "obs")
         self._logger.error(msg)
         tango.Except.throw_exception(
             "Command failed", msg, "ConfigureScan execution", tango.ErrSeverity.ERR
@@ -784,7 +788,7 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
                     self._group_fsp.remove_all()
 
         except tango.DevFailed as df:
-            self.update_component_fault(True, "op")
+            self._update_component_fault(True, "op")
             msg = str(df.args[0].desc)
             return (ResultCode.FAILED, msg)
 
@@ -1657,7 +1661,7 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
 
                     except tango.DevFailed as df:
                         msg = str(df.args[0].desc)
-                        self.update_component_fault(True, "obs")
+                        self._update_component_fault(True, "obs")
                         return (ResultCode.FAILED, msg)
 
                 else:
@@ -1720,7 +1724,7 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
                     del self._vcc_health_state[vccFQDN]
                 except tango.DevFailed as df:
                     msg = str(df.args[0].desc)
-                    self.update_component_fault(True, "obs")
+                    self._update_component_fault(True, "obs")
                     return (ResultCode.FAILED, msg)
 
             self._logger.debug(f"receptors remaining: {*self._receptors,}")
@@ -1814,7 +1818,7 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
 
                         except tango.DevFailed as df:
                             msg = str(df.args[0].desc)
-                            self.update_component_fault(True, "obs")
+                            self._update_component_fault(True, "obs")
                             return (ResultCode.FAILED, msg)
 
                     else:
@@ -1852,7 +1856,7 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
             self._group_fsp_pst_subarray.command_inout("Scan", data)
         except tango.DevFailed as df:
             msg = str(df.args[0].desc)
-            self.update_component_fault(True, "obs")
+            self._update_component_fault(True, "obs")
             return (ResultCode.FAILED, msg)
 
         self._scan_id = int(scan_id)
@@ -1878,7 +1882,7 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
             self._group_fsp_pst_subarray.command_inout("EndScan")
         except tango.DevFailed as df:
             msg = str(df.args[0].desc)
-            self.update_component_fault(True, "obs")
+            self._update_component_fault(True, "obs")
             return (ResultCode.FAILED, msg)
 
         self._scan_id = 0
@@ -1918,8 +1922,8 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
         (result_code, msg) = self.deconfigure()
 
 
-    def update_component_fault(
-        self: CbfComponentManager,
+    def _update_component_fault(
+        self: CbfSubarrayComponentManager,
         faulty: Optional[bool],
         type: str
     ) -> None:
@@ -1932,7 +1936,12 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
         if self._faulty != faulty:
             self._faulty = faulty
         if self._component_fault_callback is not None and faulty is not None:
-            self._component_fault_callback(faulty, type)
+            if type == "op":
+                self._component_fault_callback(faulty)
+            elif type == "obs":
+                self._component_obs_fault_callback(faulty)
+            else:
+                self._logger.warning("CbfSubarrayComponentManager._update_component_fault: invalid type, must be 'op' or 'obs'")
 
 
     def update_component_resources(

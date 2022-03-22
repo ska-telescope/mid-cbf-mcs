@@ -265,7 +265,8 @@ class CbfSubarray(CspSubElementSubarray):
             component_scanning_callback=self._component_scanning,
             communication_status_changed_callback=self._communication_status_changed,
             component_power_mode_changed_callback=self._component_power_mode_changed,
-            component_fault_callback=self._component_fault
+            component_fault_callback=self._component_fault,
+            component_obs_fault_callback=self._component_obsfault,
         )
 
 
@@ -393,21 +394,21 @@ class CbfSubarray(CspSubElementSubarray):
             self.op_state_model.perform_action(action_map[power_mode])
 
 
-    def _component_fault(self: CbfSubarray, faulty: bool, type: str) -> None:
+    def _component_fault(self: FspPstSubarray, faulty: bool) -> None:
         """
         Handle component fault
-
-        :param faulty: whether the component has faulted.
-        :param type: type of component fault, "op" or "obs".
         """
         if faulty:
-            if type == "op":
-                self.op_state_model.perform_action("component_fault")
-            elif type == "obs":
-                self.obs_state_model.perform_action("component_obsfault")
-            self.set_status("The device is in FAULT state.")
-        else:
-            self.set_status("The device has recovered from FAULT state.")
+            self.op_state_model.perform_action("component_fault")
+            self.set_status("The device is in FAULT state")
+    
+    def _component_obsfault(self: FspPstSubarray) -> None:
+        """
+        Handle notification that the component has obsfaulted.
+
+        This is a callback hook.
+        """
+        self.obs_state_model.perform_action("component_obsfault")
 
 
     # ------------------
