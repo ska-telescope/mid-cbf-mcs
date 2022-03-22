@@ -76,6 +76,7 @@ def controller_component_manager(
     vcc = configuration["fqdn_vcc"]
     fsp = configuration["fqdn_fsp"]
     talon_lru = configuration["fqdn_talon_lru"]
+    subarray = configuration["fqdn_subarray"]
 
     def mock_get_num_capabilities():
         num_capabilities = {
@@ -88,6 +89,7 @@ def controller_component_manager(
 
     return ControllerComponentManager( 
             mock_get_num_capabilities,
+            subarray_fqdns_all=subarray,
             vcc_fqdns_all=vcc,
             fsp_fqdns_all=fsp,
             talon_lru_fqdns_all=talon_lru,

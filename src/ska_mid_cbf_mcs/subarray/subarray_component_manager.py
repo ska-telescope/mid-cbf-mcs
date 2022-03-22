@@ -137,7 +137,9 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
         :param component_power_mode_changed_callback: callback to be called when 
             the component power mode changes
         :param component_fault_callback: callback to be called in event of 
-            component fault
+            component fault (for op state model)
+        :param component_obs_fault_callback: callback to be called in event of 
+            component fault (for obs state model)
         """
 
         self._logger = logger
