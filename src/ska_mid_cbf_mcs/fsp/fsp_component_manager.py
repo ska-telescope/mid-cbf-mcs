@@ -20,6 +20,7 @@ from ska_mid_cbf_mcs.component.component_manager import (
     CommunicationStatus,
     CbfComponentManager,
 )
+from ska_mid_cbf_mcs.component.util import check_on, check_communicating
 from ska_tango_base.control_model import PowerMode
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.csp.obs.component_manager import CspObsComponentManager
@@ -179,14 +180,16 @@ class FspComponentManager(CbfComponentManager):
         self.update_communication_status(CommunicationStatus.ESTABLISHED)
         self.update_component_fault(False)
         self.update_component_power_mode(PowerMode.OFF)
-    
+
+
     def stop_communicating(self: FspComponentManager) -> None:
         """Stop communication with the component"""
         
         super().stop_communicating()
-        
+
         self._connected = False
-    
+
+
     def _get_device_proxy(
         self: FspComponentManager,
         fqdn_or_name: str,
@@ -213,9 +216,8 @@ class FspComponentManager(CbfComponentManager):
                 self._logger.error(f"Failed connection to {fqdn_or_name} : {item.reason}")
             self.update_component_fault(True)
             return None
-    
-    
-    
+
+
     def _get_capability_proxies(
             self: FspComponentManager, 
     ) -> None:
@@ -268,8 +270,8 @@ class FspComponentManager(CbfComponentManager):
                     self._proxy_fsp_pst_subarray = \
                         [self._get_device_proxy(fqdn, is_group=False) \
                         for fqdn in self._fsp_pst_subarray_fqdns_all]
-        
-       
+
+
     def _get_group_proxies(
         self: FspComponentManager, 
     ) -> None:
@@ -289,7 +291,9 @@ class FspComponentManager(CbfComponentManager):
                 self._get_device_proxy("FSP Subarray Pst", is_group=True)
             for fqdn in list(self._fsp_pst_subarray_fqdns_all):
                 self._group_fsp_pst_subarray.add(fqdn)
-    
+
+
+    @check_communicating
     def remove_subarray_membership(
         self: FspComponentManager,
         argin: int,
@@ -316,7 +320,9 @@ class FspComponentManager(CbfComponentManager):
         
         message = "Fsp RemoveSubarrayMembership command completed OK"
         return (ResultCode.OK, message)
-    
+
+
+    @check_communicating
     def add_subarray_membership(
         self: FspComponentManager,
         argin: int,
@@ -346,8 +352,10 @@ class FspComponentManager(CbfComponentManager):
         
         message = "Fsp AddSubarrayMembership command completed OK"
         return (ResultCode.OK, message)
-    
-    def on(      
+
+
+    @check_communicating
+    def on(
         self: FspComponentManager,
     ) -> Tuple[ResultCode, str]:
         """
@@ -377,8 +385,10 @@ class FspComponentManager(CbfComponentManager):
                     proxies not connected"
             self._logger.error(log_msg)
             return (ResultCode.FAILED, log_msg)
-    
-    def off(      
+
+
+    @check_communicating
+    def off(
         self: FspComponentManager,
     ) -> Tuple[ResultCode, str]:
         """
@@ -412,8 +422,10 @@ class FspComponentManager(CbfComponentManager):
                     proxies not connected"
             self._logger.error(log_msg)
             return (ResultCode.FAILED, log_msg)
-        
-    def standby(      
+
+
+    @check_communicating
+    def standby(
         self: FspComponentManager,
     ) -> Tuple[ResultCode, str]:
         """
@@ -427,8 +439,10 @@ class FspComponentManager(CbfComponentManager):
 
         message = "Fsp Standby command completed OK"
         return (ResultCode.OK, message)
-    
-    def set_function_mode(      
+
+
+    @check_communicating
+    def set_function_mode(
         self: FspComponentManager,
         argin: str,
     ) -> Tuple[ResultCode, str]:
@@ -490,7 +504,9 @@ class FspComponentManager(CbfComponentManager):
             self._logger.error(log_msg)
             return (ResultCode.FAILED, log_msg)
 
-    def update_jones_matrix(      
+
+    @check_communicating
+    def update_jones_matrix(
         self: FspComponentManager,
         argin: str,
     ) -> Tuple[ResultCode, str]:
@@ -562,8 +578,10 @@ class FspComponentManager(CbfComponentManager):
                     proxies not connected"
             self._logger.error(log_msg)
             return (ResultCode.FAILED, log_msg)
-    
-    def update_delay_model(      
+
+
+    @check_communicating
+    def update_delay_model(
         self: FspComponentManager,
         argin: str,
     ) -> Tuple[ResultCode, str]:
@@ -624,8 +642,10 @@ class FspComponentManager(CbfComponentManager):
                     proxies not connected"
             self._logger.error(log_msg)
             return (ResultCode.FAILED, log_msg)
-    
-    def update_timing_beam_weights(      
+
+
+    @check_communicating
+    def update_timing_beam_weights(
         self: FspComponentManager,
         argin: str,
     ) -> Tuple[ResultCode, str]:
@@ -684,8 +704,10 @@ class FspComponentManager(CbfComponentManager):
                     proxies not connected"
             self._logger.error(log_msg)
             return (ResultCode.FAILED, log_msg)
-    
-    def get_fsp_corr_config_id(      
+
+
+    @check_communicating
+    def get_fsp_corr_config_id(
         self: FspComponentManager,
     ) -> str:
         """

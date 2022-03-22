@@ -316,30 +316,6 @@ class ControllerComponentManager(CbfComponentManager):
 
         self._fqdn_talon_lru = self._fqdn_talon_lru
 
-        for idx, fqdn in enumerate(self._fqdn_vcc):
-            if fqdn not in self._proxies:
-                try:
-                    log_msg = "Trying connection to " + fqdn + " device"
-                    self._logger.info(log_msg)
-                    proxy = CbfDeviceProxy(
-                        fqdn=fqdn, 
-                        logger=self._logger
-                    )
-                    self._proxies[fqdn] = proxy
-                    # TODO: for testing purposes;
-                    # receptorID assigned to VCCs in order they are processed
-                    proxy.receptorID = idx + 1
-                    proxy.frequencyOffsetK = self.frequency_offset_k[idx]
-                    proxy.frequencyOffsetDeltaF = self.frequency_offset_delta_f[idx]
-
-                    # establish proxy connection to component
-                    proxy.adminMode = AdminMode.ONLINE
-                except tango.DevFailed as df:
-                    for item in df.args:
-                        log_msg = "Failure in connection to " + fqdn + \
-                            " device: " + str(item.reason)
-                        self._logger.error(log_msg)
-
         for fqdn in self._fqdn_fsp + self._fqdn_talon_lru + self._fqdn_subarray:
             if fqdn not in self._proxies:
                 try:
@@ -363,6 +339,30 @@ class ControllerComponentManager(CbfComponentManager):
                         log_msg = f"Failure in connection to {fqdn}; {item.reason}"
                         self._logger.error(log_msg)
                     return
+
+        for idx, fqdn in enumerate(self._fqdn_vcc):
+            if fqdn not in self._proxies:
+                try:
+                    log_msg = "Trying connection to " + fqdn + " device"
+                    self._logger.info(log_msg)
+                    proxy = CbfDeviceProxy(
+                        fqdn=fqdn, 
+                        logger=self._logger
+                    )
+                    self._proxies[fqdn] = proxy
+                    # TODO: for testing purposes;
+                    # receptorID assigned to VCCs in order they are processed
+                    proxy.receptorID = idx + 1
+                    proxy.frequencyOffsetK = self.frequency_offset_k[idx]
+                    proxy.frequencyOffsetDeltaF = self.frequency_offset_delta_f[idx]
+
+                    # establish proxy connection to component
+                    proxy.adminMode = AdminMode.ONLINE
+                except tango.DevFailed as df:
+                    for item in df.args:
+                        log_msg = "Failure in connection to " + fqdn + \
+                            " device: " + str(item.reason)
+                        self._logger.error(log_msg)
         
         self._connected = True
         self.update_communication_status(CommunicationStatus.ESTABLISHED)
@@ -615,13 +615,13 @@ class ControllerComponentManager(CbfComponentManager):
                 log_msg = "Failed to power on Talon boards"
                 self._logger.error(log_msg)
                 return (ResultCode.FAILED, log_msg)
-        
+
             # Configure all the Talon boards
             if self._talondx_component_manager.configure_talons() == ResultCode.FAILED:
                 log_msg = "Failed to configure Talon boards"
                 self._logger.error(log_msg)
-                return (ResultCode.FAILED, log_msg)    
-            
+                return (ResultCode.FAILED, log_msg)
+
             try:
                 self._group_subarray.command_inout("On")
                 self._group_vcc.command_inout("On")
