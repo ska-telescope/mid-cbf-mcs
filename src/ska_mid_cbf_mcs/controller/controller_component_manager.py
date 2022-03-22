@@ -373,7 +373,7 @@ class ControllerComponentManager(CbfComponentManager):
         """Stop communication with the component"""
         
         super().stop_communicating()
-        for proxy in self._proxies:
+        for proxy in self._proxies.values():
             proxy.adminMode = AdminMode.OFFLINE
         self._connected = False
 
