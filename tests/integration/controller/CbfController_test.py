@@ -160,18 +160,18 @@ class TestCbfController:
 
         for i in range(1, test_proxies.num_sub + 1):
             test_proxies.wait_timeout_dev([test_proxies.subarray[i]], DevState.OFF, 3, 0.1)
-            assert test_proxies.subarray[i].State() == DevState.OFF
+            assert test_proxies.subarray[i].State() == DevState.STANDBY
 
         for i in range(1, test_proxies.num_vcc + 1):
-            assert test_proxies.vcc[i].State() == DevState.OFF
+            assert test_proxies.vcc[i].State() == DevState.STANDBY
 
         for i in range(1, test_proxies.num_fsp + 1):
-            assert test_proxies.fsp[i].State() == DevState.OFF
+            assert test_proxies.fsp[i].State() == DevState.STANDBY
 
         for i in ["CORR", "PSS-BF", "PST-BF"]:
             for j in range(1, test_proxies.num_sub + 1):
                 for k in range(1, test_proxies.num_fsp + 1):
-                    assert test_proxies.fspSubarray[i][j][k].State() == DevState.OFF
+                    assert test_proxies.fspSubarray[i][j][k].State() == DevState.STANDBY
 
     def test_Disconnect(self, test_proxies):
         """
