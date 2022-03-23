@@ -341,7 +341,14 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
 
     def stop_communicating(self: CbfSubarrayComponentManager) -> None:
         """Stop communication with the component."""
+        self._logger.info("Entering CbfSubarrayComponentManager.stop_communicating")
         super().stop_communicating()
+        for proxy in self._proxies_fsp_corr_subarray:
+            proxy.adminMode = AdminMode.OFFLINE
+        for proxy in self._proxies_fsp_pss_subarray:
+            proxy.adminMode = AdminMode.OFFLINE
+        for proxy in self._proxies_fsp_pst_subarray:
+            proxy.adminMode = AdminMode.OFFLINE
         self.connected = False
         self.update_component_power_mode(PowerMode.UNKNOWN)
 

@@ -154,7 +154,7 @@ class FspPstSubarrayComponentManager(CbfComponentManager, CspObsComponentManager
     
     def stop_communicating(self: FspPstSubarrayComponentManager) -> None:
         """Stop communication with the component"""
-        
+        self._logger.info("Entering FspPstSubarrayComponentManager.stop_communicating")
         super().stop_communicating()
         
         self._connected = False
@@ -174,11 +174,12 @@ class FspPstSubarrayComponentManager(CbfComponentManager, CspObsComponentManager
                 if receptorID not in self._receptors:
                     self._receptors.append(receptorID)
                 else:
-                    log_msg = f"Receptor {receptorID} already assigned to current FSP subarray."
+                    log_msg = "Receptor {} already assigned to current FSP subarray.".format(
+                        str(receptorID))
                     self._logger.warning(log_msg)
 
             except KeyError:  # invalid receptor ID
-                errs.append(f"Invalid receptor ID: {receptorID}")
+                errs.append("Invalid receptor ID: {}".format(receptorID))
 
         if errs:
             msg = "\n".join(errs)
@@ -198,7 +199,8 @@ class FspPstSubarrayComponentManager(CbfComponentManager, CspObsComponentManager
             if receptorID in self._receptors:
                 self._receptors.remove(receptorID)
             else:
-                log_msg = "Receptor {receptorID} not assigned to FSP subarray. Skipping."
+                log_msg = "Receptor {} not assigned to FSP subarray. "\
+                    "Skipping.".format(str(receptorID))
                 self._logger.warning(log_msg)
     
     def _remove_all_receptors(self: FspPstSubarrayComponentManager) -> None:
@@ -221,13 +223,12 @@ class FspPstSubarrayComponentManager(CbfComponentManager, CspObsComponentManager
         
         configuration = json.loads(configuration)
 
-        fsp_id = configuration["fsp_id"]
-        if self._fsp_id != fsp_id:
+        if self._fsp_id != configuration["fsp_id"]:
             self._logger.warning(
-                f"The Fsp ID from ConfigureScan {fsp_id} does not equal " + \
-                f"the Fsp ID from the self properties {self._fsp_id}"
+                "The Fsp ID from ConfigureScan {} does not equal the Fsp ID from the self properties {}"
+                .format(self._fsp_id, configuration["fsp_id"]))
 
-        self._fsp_id = fsp_id
+        self._fsp_id = configuration["fsp_id"]
         self._timing_beams = []
         self._timing_beam_id = []
         self._receptors = []
@@ -295,4 +296,3 @@ class FspPstSubarrayComponentManager(CbfComponentManager, CspObsComponentManager
         
         return (ResultCode.OK, "FspPstSubarray GoToIdle command completed OK")
     
-   

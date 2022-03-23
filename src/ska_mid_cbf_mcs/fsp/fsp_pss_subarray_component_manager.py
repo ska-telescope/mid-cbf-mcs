@@ -175,7 +175,7 @@ class FspPssSubarrayComponentManager(CbfComponentManager, CspObsComponentManager
     
     def stop_communicating(self: FspPssSubarrayComponentManager) -> None:
         """Stop communication with the component"""
-        
+        self._logger.info("Entering FspPssSubarrayComponentManager.stop_communicating")
         super().stop_communicating()
         
         self._connected = False

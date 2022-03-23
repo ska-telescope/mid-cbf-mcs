@@ -371,7 +371,7 @@ class ControllerComponentManager(CbfComponentManager):
 
     def stop_communicating(self: ControllerComponentManager) -> None:
         """Stop communication with the component"""
-        
+        self._logger.info("Entering ControllerComponentManager.stop_communicating")
         super().stop_communicating()
         for proxy in self._proxies.values():
             proxy.adminMode = AdminMode.OFFLINE
