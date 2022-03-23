@@ -40,10 +40,10 @@ class FspComponentManager(CbfComponentManager):
         fsp_corr_subarray_fqdns_all: List[str],
         fsp_pss_subarray_fqdns_all: List[str],
         fsp_pst_subarray_fqdns_all: List[str],
-        fsp_corr_subarray_address: str,
-        fsp_pss_subarray_address: str,
-        fsp_pst_subarray_address: str,
-        vlbi_address: str,
+        fsp_corr_address: str,
+        fsp_pss_address: str,
+        fsp_pst_address: str,
+        fsp_vlbi_address: str,
         push_change_event_callback: Optional[Callable],
         communication_status_changed_callback: Callable[[CommunicationStatus], None],
         component_power_mode_changed_callback: Callable[[PowerMode], None],
@@ -60,10 +60,10 @@ class FspComponentManager(CbfComponentManager):
             fsp pss subarray fqdns
         :param fsp_pst_subarray_fqdns_all: list of all 
             fsp pst subarray fqdns
-        :param fsp_corr_subarray_address: the address of the fsp corr subarray
-        :param fsp_pss_subarray_address: the address of the fsp pss subarray
-        :param fsp_pst_subarray_address: the address of the fsp pst subarray
-        :param vlbi_address: the address of the vlbi
+        :param fsp_corr_address: the address of the fsp corr subarray
+        :param fsp_pss_address: the address of the fsp pss subarray
+        :param fsp_pst_address: the address of the fsp pst subarray
+        :param fsp_vlbi_address: the address of the fsp vlbi subarray
         :param push_change_event: method to call when the base classes
             want to send an event
         :param communication_status_changed_callback: callback to be
@@ -74,8 +74,6 @@ class FspComponentManager(CbfComponentManager):
         :param component_fault_callback: callback to be called in event of 
             component fault
         """
-        self._logger = logger
-        
         self._connected = False
 
         self._fsp_id = fsp_id
@@ -83,10 +81,10 @@ class FspComponentManager(CbfComponentManager):
         self._fsp_corr_subarray_fqdns_all = fsp_corr_subarray_fqdns_all
         self._fsp_pss_subarray_fqdns_all = fsp_pss_subarray_fqdns_all
         self._fsp_pst_subarray_fqdns_all = fsp_pst_subarray_fqdns_all
-        self._fsp_corr_subarray_address = fsp_corr_subarray_address
-        self._fsp_pss_subarray_address = fsp_pss_subarray_address
-        self._fsp_pst_subarray_address = fsp_pst_subarray_address
-        self._vlbi_address = vlbi_address
+        self._fsp_corr_address = fsp_corr_address
+        self._fsp_pss_address = fsp_pss_address
+        self._fsp_pst_address = fsp_pst_address
+        self._fsp_vlbi_address = fsp_vlbi_address
 
         self._group_fsp_corr_subarray = None
         self._group_fsp_pss_subarray = None
@@ -226,31 +224,31 @@ class FspComponentManager(CbfComponentManager):
 
    
         if self._proxy_correlation is None:
-            if self._fsp_corr_subarray_address:
+            if self._fsp_corr_address:
                 self._proxy_correlation = \
                     self._get_device_proxy(
-                        self._fsp_corr_subarray_address, 
+                        self._fsp_corr_address, 
                         is_group=False)
                 
             if self._proxy_pss is None:
-                if self._fsp_pss_subarray_address:
+                if self._fsp_pss_address:
                     self._proxy_pss = \
                         self._get_device_proxy(
-                            self._fsp_pss_subarray_address, 
+                            self._fsp_pss_address, 
                             is_group=False)
                 
             if self._proxy_pst is None:
-                if self._fsp_pst_subarray_address:
+                if self._fsp_pst_address:
                     self._proxy_pst = \
                         self._get_device_proxy(
-                            self._fsp_pst_subarray_address, 
+                            self._fsp_pst_address, 
                             is_group=False)
                 
             if self._proxy_vlbi is None:
-                if self._vlbi_address:
+                if self._fsp_vlbi_address:
                     self._proxy_vlbi = \
                         self._get_device_proxy(
-                            self._vlbi_address, 
+                            self._fsp_vlbi_address, 
                             is_group=False)
 
             if self._proxy_fsp_corr_subarray is None:
@@ -338,7 +336,7 @@ class FspComponentManager(CbfComponentManager):
         """
 
         if len(self._subarray_membership) == MAX_SUBARRAY_MEMBERSHIPS:
-            log_msg = "Fsp already assigned to the maximum number subarrays " + \
+            log_msg = "Fsp already assigned to the maximum number subarrays " \
             f"({MAX_SUBARRAY_MEMBERSHIPS})"
             self._logger.warning(log_msg)
             message = "Fsp AddSubarrayMembership command completed OK"
@@ -541,7 +539,7 @@ class FspComponentManager(CbfComponentManager):
                     else:
                         fs_length = 4
                         # TODO: support for function mode VLBI
-                        log_msg = "Fsp UpdateJonesMatrix command failed: " + \
+                        log_msg = "Fsp UpdateJonesMatrix command failed: " \
                                 f"function mode {self._function_mode} currently not supported"
                         self._logger.warning(log_msg)
                         return (ResultCode.FAILED, log_msg)
@@ -556,16 +554,16 @@ class FspComponentManager(CbfComponentManager):
                                     if len(matrix) == fs_length:
                                         self._jones_matrix[rec_id - 1] = matrix.copy()
                                     else:
-                                        log_msg = "Fsp UpdateJonesMatrix command error: " + \
-                                            "'matrix' not valid length for frequency slice " + \
+                                        log_msg = "Fsp UpdateJonesMatrix command error: " \
+                                            "'matrix' not valid length for frequency slice " \
                                             f"{fs_id} of receptor {rec_id}"
                                         self._logger.error(log_msg)
                                 else:
-                                    log_msg = "Fsp UpdateJonesMatrix command error: " + \
+                                    log_msg = "Fsp UpdateJonesMatrix command error: " \
                                         f"'fsid' {fs_id} not valid for receptor {rec_id}"
                                     self._logger.error(log_msg)
             else:
-                log_msg = "Fsp UpdateJonesMatrix command failed: " + \
+                log_msg = "Fsp UpdateJonesMatrix command failed: " \
                     f"matrix not used in function mode {self._function_mode}"
                 self._logger.warning(log_msg)
                 return (ResultCode.FAILED, log_msg)
@@ -615,19 +613,18 @@ class FspComponentManager(CbfComponentManager):
                                     if len(model) == 6:
                                         self._delay_model[rec_id - 1] = model.copy()
                                     else:
-                                        log_msg = "Fsp UpdateDelayModel command error: " + \
-                                            "'model' not valid length for frequency slice " + \
+                                        log_msg = "Fsp UpdateDelayModel command error: " \
+                                            "'model' not valid length for frequency slice " \
                                             f"{fs_id} of receptor {rec_id}"
                                         self._logger.error(log_msg)
                                         return (ResultCode.FAILED, log_msg)
                                 else:
-                                    log_msg = "Fsp UpdateDelayModel command error: " + \
+                                    log_msg = "Fsp UpdateDelayModel command error: " \
                                         f"'fsid' {fs_id} not valid for receptor {rec_id}"
-                                    self._logger.error(log_msg)
-                                    return (ResultCode.FAILED, log_msg)
+                                    self._logger.warning(log_msg)
 
             else:
-                log_msg = "Fsp UpdateDelayModel command failed: " + \
+                log_msg = "Fsp UpdateDelayModel command failed: " \
                     f"model not used in function mode {self._function_mode}"
                 self._logger.warning(log_msg)
                 return (ResultCode.FAILED, log_msg)
@@ -656,6 +653,7 @@ class FspComponentManager(CbfComponentManager):
                 information purpose only.
         :rtype: (ResultCode, str)
         """
+        self._logger.debug("entering update_timing_beam_weights")
 
         if self._connected:
 
@@ -674,20 +672,19 @@ class FspComponentManager(CbfComponentManager):
                                     if len(weights) == 6:
                                         self._timing_beam_weights[rec_id - 1] = weights.copy()
                                     else:
-                                        log_msg = "Fsp UpdateTimingBeamWeights command error: " + \
-                                        "'weights' not valid length for frequency slice " + \
+                                        log_msg = "Fsp UpdateTimingBeamWeights command error: " \
+                                        "'weights' not valid length for frequency slice " \
                                         f"{fs_id} of receptor {rec_id}"
                                         self._logger.error(log_msg)
                                         return (ResultCode.FAILED, log_msg)
                                     
                                 else:
-                                    log_msg = "Fsp UpdateTimingBeamWeights command error: " + \
+                                    log_msg = "Fsp UpdateTimingBeamWeights command error: " \
                                         f"'fsid' {fs_id} not valid for receptor {rec_id}"
                                     self._logger.error(log_msg)
-                                    return (ResultCode.FAILED, log_msg)
                                     
             else:
-                log_msg = "Fsp UpdateTimingBeamWeights command failed: " + \
+                log_msg = "Fsp UpdateTimingBeamWeights command failed: " \
                     f"weights not used in function mode {self._function_mode}"
                 self._logger.warning(log_msg)
                 return (ResultCode.FAILED, log_msg)

@@ -189,7 +189,7 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
 
         self._last_received_delay_model = "{}"
         self._last_received_jones_matrix = "{}"
-        self._last_received_beam_weights = "{}"
+        self._last_received_timing_beam_weights = "{}"
 
         self._mutex_delay_model_config = Lock()
         self._mutex_jones_matrix_config = Lock()
@@ -580,7 +580,7 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
 
 
     @check_communicating
-    def _beam_weights_event_callback(
+    def _timing_beam_weights_event_callback(
         self: CbfSubarrayComponentManager,
         fqdn: str,
         name: str,
@@ -595,27 +595,27 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
         :param value: attribute value
         :param quality: attribute quality
         """
-        self._logger.debug("CbfSubarray._beam_weights_event_callback")
+        self._logger.debug("CbfSubarray._timing_beam_weights_event_callback")
 
         if value is not None:
             if not self._ready:
-                log_msg = "Ignoring beam weights (obsState not correct)."
+                log_msg = "Ignoring timing beam weights (obsState not correct)."
                 self._logger.warning(log_msg)
                 return
             try:
-                self._logger.info("Received beam weights update.")
+                self._logger.info("Received timing beam weights update.")
 
-                if value == self._last_received_beam_weights:
-                    log_msg = "Ignoring beam weights (identical to previous)."
+                if value == self._last_received_timing_beam_weights:
+                    log_msg = "Ignoring timing beam weights (identical to previous)."
                     self._logger.warning(log_msg)
                     return
 
-                self._last_received_beam_weights = value
-                beam_weights_all = json.loads(value)
+                self._last_received_timing_beam_weights = value
+                timing_beam_weights_all = json.loads(value)
 
-                for beam_weights in beam_weights_all["beamWeights"]:
+                for beam_weights in timing_beam_weights_all["beamWeights"]:
                     t = Thread(
-                        target=self._update_beam_weights,
+                        target=self._update_timing_beam_weights,
                         args=(int(beam_weights["epoch"]), 
                               json.dumps(beam_weights["beamWeightsDetails"])
                         )
@@ -627,7 +627,7 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
             self._logger.warning(f"None value for {fqdn}")
 
 
-    def _update_beam_weights(
+    def _update_timing_beam_weights(
         self: CbfSubarrayComponentManager,
         epoch: int,
         weights_details: str
@@ -640,14 +640,14 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
         :param weights_details: beam weights value
         """
         #This method is always called on a separate thread
-        self._logger.debug("CbfSubarray._update_beam_weights")
-        log_msg = f"Beam weights active at {epoch} (currently {time.time()})..."
+        self._logger.debug("CbfSubarray._update_timing_beam_weights")
+        log_msg = f"Timing beam weights active at {epoch} (currently {time.time()})..."
         self._logger.info(log_msg)
 
         if epoch > time.time():
             time.sleep(epoch - time.time())
 
-        log_msg = f"Updating beam weights at specified epoch {epoch}..."
+        log_msg = f"Updating timing beam weights at specified epoch {epoch}..."
         self._logger.info(log_msg)
 
         data = tango.DeviceData()
@@ -655,7 +655,7 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
 
         # we lock the mutex, forward the configuration, then immediately unlock it
         self._mutex_beam_weights_config.acquire()
-        self._group_fsp.command_inout("UpdateBeamWeights", data)
+        self._group_fsp.command_inout("UpdateTimingBeamWeights", data)
         self._mutex_beam_weights_config.release()
 
 
@@ -815,7 +815,7 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
         self._frequency_band= 0
         self._last_received_delay_model  = "{}"
         self._last_received_jones_matrix = "{}"
-        self._last_received_beam_weights = "{}"
+        self._last_received_timing_beam_weights = "{}"
 
         self.update_component_configuration(False)
 
@@ -1434,7 +1434,6 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
                 fqdn=configuration["doppler_phase_corr_subscription_point"],
                 logger=self._logger
             )
-            attribute_proxy.ping()
             event_id = attribute_proxy.add_change_event_callback(
                 self._doppler_phase_correction_event_callback
             )
@@ -1447,7 +1446,6 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
                 fqdn=configuration["delay_model_subscription_point"],
                 logger=self._logger
             )
-            attribute_proxy.ping() #To be sure the connection is good(don't know if the device is running)
             event_id = attribute_proxy.add_change_event_callback(
                 self._delay_model_event_callback
             )
@@ -1460,7 +1458,6 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
                 fqdn=configuration["jones_matrix_subscription_point"],
                 logger=self._logger
             )
-            attribute_proxy.ping()
             event_id = attribute_proxy.add_change_event_callback(
                 self._jones_matrix_event_callback
             )
@@ -1468,14 +1465,13 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
 
         # Configure beamWeightsSubscriptionPoint
         if "timing_beam_weights_subscription_point" in configuration:
-            self._last_received_beam_weights= "{}"
+            self._last_received_timing_beam_weights= "{}"
             attribute_proxy = CbfAttributeProxy(
                 fqdn=configuration["timing_beam_weights_subscription_point"],
                 logger=self._logger
             )
-            attribute_proxy.ping()
             event_id = attribute_proxy.add_change_event_callback(
-                self._beam_weights_event_callback
+                self._timing_beam_weights_event_callback
             )
             self._events_telstate[event_id] = attribute_proxy
 

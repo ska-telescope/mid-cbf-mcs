@@ -157,7 +157,8 @@ class FspPssSubarrayComponentManager(CbfComponentManager, CspObsComponentManager
         :rtype: List[int]
         """
         return self._receptors
-    
+
+
     def start_communicating(
         self: FspPssSubarrayComponentManager,
     ) -> None:
@@ -172,14 +173,16 @@ class FspPssSubarrayComponentManager(CbfComponentManager, CspObsComponentManager
         self.update_communication_status(CommunicationStatus.ESTABLISHED)
         self.update_component_fault(False)
         self.update_component_power_mode(PowerMode.OFF)
-    
+
+
     def stop_communicating(self: FspPssSubarrayComponentManager) -> None:
         """Stop communication with the component"""
         self._logger.info("Entering FspPssSubarrayComponentManager.stop_communicating")
         super().stop_communicating()
         
         self._connected = False
-    
+
+
     def _add_receptors(
         self: FspPssSubarrayComponentManager, 
         argin: List[int]
@@ -194,6 +197,7 @@ class FspPssSubarrayComponentManager(CbfComponentManager, CspObsComponentManager
         for receptorID in argin:
             try:
                 if receptorID not in self._receptors:
+                    self._logger.info(f"Receptor {receptorID} added.")
                     self._receptors.append(receptorID)
                 else:
                     # TODO: this is not true if more receptors can be 
@@ -207,7 +211,8 @@ class FspPssSubarrayComponentManager(CbfComponentManager, CspObsComponentManager
         if errs:
             msg = "\n".join(errs)
             self._logger.error(msg)
-    
+
+
     def _remove_receptors(
         self: FspPssSubarrayComponentManager, 
         argin: List[int]
@@ -220,15 +225,18 @@ class FspPssSubarrayComponentManager(CbfComponentManager, CspObsComponentManager
 
         for receptorID in argin:
             if receptorID in self._receptors:
+                self._logger.info(f"Receptor {receptorID} removed.")
                 self._receptors.remove(receptorID)
             else:
                 log_msg = f"Receptor {receptorID} not assigned to FSP subarray. Skipping."
                 self._logger.warning(log_msg)
-    
+
+
     def _remove_all_receptors(self: FspPssSubarrayComponentManager) -> None:
         """ Remove all receptors from the subarray."""
         self._remove_receptors(self._receptors[:])
-    
+
+
     def configure_scan(
         self: FspPssSubarrayComponentManager,
         configuration: str
@@ -269,7 +277,8 @@ class FspPssSubarrayComponentManager(CbfComponentManager, CspObsComponentManager
             self._search_beam_id.append(int(searchBeam["search_beam_id"]))
 
         return (ResultCode.OK, "FspPssSubarray ConfigureScan command completed OK")
-    
+
+
     def scan(
         self: FspPssSubarrayComponentManager,
         scan_id: int,
@@ -287,7 +296,8 @@ class FspPssSubarrayComponentManager(CbfComponentManager, CspObsComponentManager
         self._scan_id = scan_id
 
         return (ResultCode.OK, "FspPssSubarray Scan command completed OK")
-    
+
+
     def end_scan(
         self: FspPssSubarrayComponentManager,
     ) -> Tuple[ResultCode, str]:
@@ -301,7 +311,8 @@ class FspPssSubarrayComponentManager(CbfComponentManager, CspObsComponentManager
         """
 
         return (ResultCode.OK, "FspPssSubarray EndScan command completed OK")
-    
+
+
     def _deconfigure( 
         self: FspPssSubarrayComponentManager,
     ) -> None:
@@ -315,7 +326,7 @@ class FspPssSubarrayComponentManager(CbfComponentManager, CspObsComponentManager
 
         self._remove_all_receptors()
 
-    
+
     def go_to_idle(
         self: FspPssSubarrayComponentManager,
     ) -> Tuple[ResultCode, str]:
@@ -329,5 +340,7 @@ class FspPssSubarrayComponentManager(CbfComponentManager, CspObsComponentManager
         """
 
         self._deconfigure()
-        
+
+        self._remove_all_receptors()
+
         return (ResultCode.OK, "FspPssSubarray GoToIdle command completed OK")

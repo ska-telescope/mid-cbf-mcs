@@ -402,7 +402,7 @@ class CbfSubarray(CspSubElementSubarray):
             self.op_state_model.perform_action("component_fault")
             self.set_status("The device is in FAULT state")
     
-    def _component_obsfault(self: FspPstSubarray) -> None:
+    def _component_obsfault(self: CbfSubarray) -> None:
         """
         Handle notification that the component has obsfaulted.
 
