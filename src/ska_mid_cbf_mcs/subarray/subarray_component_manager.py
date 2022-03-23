@@ -296,19 +296,16 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
             if len(self._proxies_fsp_corr_subarray) == 0:
                 for fqdn in self._fqdn_fsp_corr_subarray:
                     proxy = CbfDeviceProxy(fqdn=fqdn, logger=self._logger)
-                    proxy.adminMode = AdminMode.ONLINE
                     self._proxies_fsp_corr_subarray.append(proxy)
 
             if len(self._proxies_fsp_pss_subarray) == 0:
                 for fqdn in self._fqdn_fsp_pss_subarray:
                     proxy = CbfDeviceProxy(fqdn=fqdn, logger=self._logger)
-                    proxy.adminMode = AdminMode.ONLINE
                     self._proxies_fsp_pss_subarray.append(proxy)
 
             if len(self._proxies_fsp_pst_subarray) == 0:
                 for fqdn in self._fqdn_fsp_pst_subarray:
                     proxy = CbfDeviceProxy(fqdn=fqdn, logger=self._logger)
-                    proxy.adminMode = AdminMode.ONLINE
                     self._proxies_fsp_pst_subarray.append(proxy)
 
             if self._group_vcc is None:
@@ -325,6 +322,13 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
                 self._group_fsp_pst_subarray = CbfGroupProxy(
                     name="FSP Subarray Pst", logger=self._logger)
 
+            for proxy in self._proxies_fsp_corr_subarray:
+                proxy.adminMode = AdminMode.ONLINE
+            for proxy in self._proxies_fsp_pss_subarray:
+                proxy.adminMode = AdminMode.ONLINE
+            for proxy in self._proxies_fsp_pst_subarray:
+                proxy.adminMode = AdminMode.ONLINE
+
         except tango.DevFailed as dev_failed:
             self.update_component_power_mode(PowerMode.UNKNOWN)
             self.update_communication_status(CommunicationStatus.NOT_ESTABLISHED)
@@ -335,7 +339,7 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
 
         self.connected = True
         self.update_communication_status(CommunicationStatus.ESTABLISHED)
-        self.update_component_power_mode(PowerMode.ON)
+        self.update_component_power_mode(PowerMode.OFF)
         self._update_component_fault(False, "op")
 
 

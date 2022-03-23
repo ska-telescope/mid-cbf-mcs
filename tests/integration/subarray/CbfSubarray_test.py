@@ -61,8 +61,8 @@ class TestCbfSubarray:
         device_under_test.adminMode = AdminMode.ONLINE
 
         # subarray device should be in ON state after start_communicating 
-        test_proxies.wait_timeout_dev([device_under_test], DevState.ON, 3, 0.1)
-        assert device_under_test.State() == DevState.ON
+        test_proxies.wait_timeout_dev([device_under_test], DevState.OFF, 3, 0.1)
+        assert device_under_test.State() == DevState.OFF
     
     @pytest.mark.parametrize(
         "sub_id", 
@@ -84,15 +84,15 @@ class TestCbfSubarray:
 
         device_under_test = test_proxies.subarray[sub_id]
 
-        device_under_test.Off()
-
-        test_proxies.wait_timeout_dev([device_under_test], DevState.OFF, wait_time_s, sleep_time_s)
-        assert device_under_test.State() == DevState.OFF
-
         device_under_test.On()
 
         test_proxies.wait_timeout_dev([device_under_test], DevState.ON, wait_time_s, sleep_time_s)
         assert device_under_test.State() == DevState.ON
+
+        device_under_test.Off()
+
+        test_proxies.wait_timeout_dev([device_under_test], DevState.OFF, wait_time_s, sleep_time_s)
+        assert device_under_test.State() == DevState.OFF
 
         device_under_test.Standby()
 

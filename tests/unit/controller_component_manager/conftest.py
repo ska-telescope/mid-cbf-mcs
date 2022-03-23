@@ -8,7 +8,6 @@
 """This module contains pytest-specific test harness for ControllerComponentManager unit tests."""
 
 from __future__ import annotations
-from ast import Call
 
 # Standard imports
 import logging
