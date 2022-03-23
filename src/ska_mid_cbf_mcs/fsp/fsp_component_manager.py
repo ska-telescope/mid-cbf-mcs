@@ -315,7 +315,7 @@ class FspComponentManager(CbfComponentManager):
             if not self._subarray_membership:
                 self._function_mode = FspModes.IDLE.value
         else:
-            log_msg = "FSP does not belong to subarray {}.".format(argin)
+            log_msg = f"FSP does not belong to subarray {argin}."
             self._logger.warning(log_msg)
         
         message = "Fsp RemoveSubarrayMembership command completed OK"
@@ -338,8 +338,8 @@ class FspComponentManager(CbfComponentManager):
         """
 
         if len(self._subarray_membership) == MAX_SUBARRAY_MEMBERSHIPS:
-            log_msg = "Fsp already assigned to the \
-                maximum number subarrays ({})".format(MAX_SUBARRAY_MEMBERSHIPS)
+            log_msg = "Fsp already assigned to the maximum number subarrays " + \
+            f"({MAX_SUBARRAY_MEMBERSHIPS})"
             self._logger.warning(log_msg)
             message = "Fsp AddSubarrayMembership command completed OK"
             return (ResultCode.OK, message)
@@ -347,7 +347,7 @@ class FspComponentManager(CbfComponentManager):
         if argin not in self._subarray_membership:
             self._subarray_membership.append(argin)
         else:
-            log_msg = "Fsp already belongs to subarray {}.".format(argin)
+            log_msg = f"Fsp already belongs to subarray {argin}."
             self._logger.warning(log_msg)
         
         message = "Fsp AddSubarrayMembership command completed OK"
@@ -495,6 +495,8 @@ class FspComponentManager(CbfComponentManager):
                     functionMode not valid"
                 return (ResultCode.FAILED, message)
 
+            self._logger.info("FSP set to function mode " + argin)
+
             message = "Fsp SetFunctionMode command completed OK"
             return (ResultCode.OK, message)
         
@@ -539,9 +541,9 @@ class FspComponentManager(CbfComponentManager):
                     else:
                         fs_length = 4
                         # TODO: support for function mode VLBI
-                        log_msg = "Fsp UpdateJonesMatrix command failed: \
-                                function mode {} currently not supported".format(self._function_mode)
-                        self._logger.error(log_msg)
+                        log_msg = "Fsp UpdateJonesMatrix command failed: " + \
+                                f"function mode {self._function_mode} currently not supported"
+                        self._logger.warning(log_msg)
                         return (ResultCode.FAILED, log_msg)
 
                     for receptor in argin:
@@ -554,20 +556,18 @@ class FspComponentManager(CbfComponentManager):
                                     if len(matrix) == fs_length:
                                         self._jones_matrix[rec_id - 1] = matrix.copy()
                                     else:
-                                        log_msg = "Fsp UpdateJonesMatrix command error: \
-                                        'matrix' not valid length for frequency slice {} of " \
-                                                "receptor {}".format(fs_id, rec_id)
+                                        log_msg = "Fsp UpdateJonesMatrix command error: " + \
+                                            "'matrix' not valid length for frequency slice " + \
+                                            f"{fs_id} of receptor {rec_id}"
                                         self._logger.error(log_msg)
                                 else:
-                                    log_msg = "Fsp UpdateJonesMatrix command error: \
-                                        'fsid' {} not valid for receptor {}".format(
-                                        fs_id, rec_id
-                                    )
+                                    log_msg = "Fsp UpdateJonesMatrix command error: " + \
+                                        f"'fsid' {fs_id} not valid for receptor {rec_id}"
                                     self._logger.error(log_msg)
             else:
-                log_msg = "Fsp UpdateJonesMatrix command failed: \
-                    matrix not used in function mode {}".format(self._function_mode)
-                self._logger.error(log_msg)
+                log_msg = "Fsp UpdateJonesMatrix command failed: " + \
+                    f"matrix not used in function mode {self._function_mode}"
+                self._logger.warning(log_msg)
                 return (ResultCode.FAILED, log_msg)
 
             message = "Fsp UpdateJonesMatrix command completed OK"
@@ -615,23 +615,21 @@ class FspComponentManager(CbfComponentManager):
                                     if len(model) == 6:
                                         self._delay_model[rec_id - 1] = model.copy()
                                     else:
-                                        log_msg = "Fsp UpdateDelayModel command failed: \
-                                            'model' not valid length for frequency slice {} of " \
-                                                "receptor {}".format(fs_id, rec_id)
+                                        log_msg = "Fsp UpdateDelayModel command error: " + \
+                                            "'model' not valid length for frequency slice " + \
+                                            f"{fs_id} of receptor {rec_id}"
                                         self._logger.error(log_msg)
                                         return (ResultCode.FAILED, log_msg)
                                 else:
-                                    log_msg = "Fsp UpdateDelayModel command failed: \
-                                        'fsid' {} not valid for receptor {}".format(
-                                        fs_id, rec_id
-                                    )
+                                    log_msg = "Fsp UpdateDelayModel command error: " + \
+                                        f"'fsid' {fs_id} not valid for receptor {rec_id}"
                                     self._logger.error(log_msg)
                                     return (ResultCode.FAILED, log_msg)
 
             else:
-                log_msg = "Fsp UpdateDelayModel command failed: \
-                    model not used in function mode {}".format(self._function_mode)
-                self._logger.error(log_msg)
+                log_msg = "Fsp UpdateDelayModel command failed: " + \
+                    f"model not used in function mode {self._function_mode}"
+                self._logger.warning(log_msg)
                 return (ResultCode.FAILED, log_msg)
             
             message = "Fsp UpdateDelayModel command completed OK"
@@ -676,24 +674,22 @@ class FspComponentManager(CbfComponentManager):
                                     if len(weights) == 6:
                                         self._timing_beam_weights[rec_id - 1] = weights.copy()
                                     else:
-                                        log_msg = "Fsp UpdateDelayModel command failed: \
-                                                'weights' not valid length for frequency slice {} of \
-                                                receptor {}".format(fs_id, rec_id)
+                                        log_msg = "Fsp UpdateTimingBeamWeights command error: " + \
+                                        "'weights' not valid length for frequency slice " + \
+                                        f"{fs_id} of receptor {rec_id}"
                                         self._logger.error(log_msg)
                                         return (ResultCode.FAILED, log_msg)
                                     
                                 else:
-                                    log_msg = "Fsp UpdateDelayModel command failed: \
-                                            'fsid' {} not valid for receptor {}".format(
-                                                fs_id, rec_id
-                                            )
+                                    log_msg = "Fsp UpdateTimingBeamWeights command error: " + \
+                                        f"'fsid' {fs_id} not valid for receptor {rec_id}"
                                     self._logger.error(log_msg)
                                     return (ResultCode.FAILED, log_msg)
                                     
             else:
-                log_msg = "Fsp UpdateDelayModel command failed: \
-                    weights not used in function mode {}".format(self._function_mode)
-                self._logger.error(log_msg)
+                log_msg = "Fsp UpdateTimingBeamWeights command failed: " + \
+                    f"weights not used in function mode {self._function_mode}"
+                self._logger.warning(log_msg)
                 return (ResultCode.FAILED, log_msg)
                 
             message = "Fsp UpdateDelayModel command completed OK"

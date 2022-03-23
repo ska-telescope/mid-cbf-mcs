@@ -499,8 +499,8 @@ class CbfController(SKAController):
         if len(value) == self._count_vcc:
             self.component_manager.frequency_offset_k = value
         else:
-            log_msg = "Skipped writing to frequencyOffsetK attribute (expected {} arguments, " \
-                      "but received {}.".format(self._count_vcc, len(value))
+            log_msg = "Skipped writing to frequencyOffsetK attribute " + \
+                f"(expected {self._count_vcc} arguments, but received {len(value)}."
             self.logger.warning(log_msg)
         # PROTECTED REGION END #    //  CbfController.frequencyOffsetK_write
 
@@ -517,8 +517,8 @@ class CbfController(SKAController):
         if len(value) == self._count_vcc:
             self.component_manager.frequency_offset_delta_f = value
         else:
-            log_msg = "Skipped writing to frequencyOffsetDeltaF attribute (expected {} arguments, " \
-                      "but received {}.".format(self._count_vcc, len(value))
+            log_msg = "Skipped writing to frequencyOffsetDeltaF attribute " + \
+                f"(expected {self._count_vcc} arguments, but received {len(value)}."
             self.logger.warning(log_msg)
         # PROTECTED REGION END #    //  CbfController.frequencyOffsetDeltaF_write
 

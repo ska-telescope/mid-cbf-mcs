@@ -198,12 +198,11 @@ class FspPssSubarrayComponentManager(CbfComponentManager, CspObsComponentManager
                 else:
                     # TODO: this is not true if more receptors can be 
                     #       specified for the same search beam
-                    log_msg = "Receptor {} already assigned to current FSP subarray.".format(
-                        str(receptorID))
+                    log_msg = f"Receptor {receptorID} already assigned to current FSP subarray."
                     self._logger.warning(log_msg)
 
             except KeyError:  # invalid receptor ID
-                errs.append("Invalid receptor ID: {}".format(receptorID))
+                errs.append(f"Invalid receptor ID: {receptorID}")
 
         if errs:
             msg = "\n".join(errs)
@@ -223,8 +222,7 @@ class FspPssSubarrayComponentManager(CbfComponentManager, CspObsComponentManager
             if receptorID in self._receptors:
                 self._receptors.remove(receptorID)
             else:
-                log_msg = "Receptor {} not assigned to FSP subarray. "\
-                    "Skipping.".format(str(receptorID))
+                log_msg = f"Receptor {receptorID} not assigned to FSP subarray. Skipping."
                 self._logger.warning(log_msg)
     
     def _remove_all_receptors(self: FspPssSubarrayComponentManager) -> None:
@@ -249,11 +247,13 @@ class FspPssSubarrayComponentManager(CbfComponentManager, CspObsComponentManager
 
         # TODO: Why are we overwriting the device property fsp ID
         #       with the argument in the ConfigureScan json file
-        if self._fsp_id != configuration["fsp_id"]:
+        fsp_id = configuration["fsp_id"]
+        if self._fsp_id != fsp_id:
             self._logger.warning(
-                "The Fsp ID from ConfigureScan {} does not equal the Fsp ID from the device properties {}"
-                .format(self._fsp_id, configuration["fsp_id"]))
-        self._fsp_id = configuration["fsp_id"]
+                f"The Fsp ID from ConfigureScan {fsp_id} does not equal " + \
+                f"the Fsp ID from the device properties {self._fsp_id}"
+            )
+        self._fsp_id = fsp_id
         self._search_window_id = int(configuration["search_window_id"])
 
         for searchBeam in configuration["search_beam"]:
