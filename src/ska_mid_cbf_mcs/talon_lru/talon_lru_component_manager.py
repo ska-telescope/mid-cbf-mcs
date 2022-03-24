@@ -97,8 +97,9 @@ class TalonLRUComponentManager(CbfComponentManager):
 
         super().start_communicating()
 
-        self._proxy_talondx_board1 = self.get_device_proxy(self._talon_fqdns[0])
-        self._proxy_talondx_board2 = self.get_device_proxy(self._talon_fqdns[1])
+        #TODO: implement
+        # self._proxy_talondx_board1 = self.get_device_proxy(self._talon_fqdns[0])
+        # self._proxy_talondx_board2 = self.get_device_proxy(self._talon_fqdns[1])
         self._proxy_power_switch1 = self.get_device_proxy(self._pdu_fqdns[0])
         if self._pdu_fqdns[1] == self._pdu_fqdns[0]:
             self._proxy_power_switch2 = self._proxy_power_switch1

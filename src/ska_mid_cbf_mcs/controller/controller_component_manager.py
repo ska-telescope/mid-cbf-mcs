@@ -265,7 +265,7 @@ class ControllerComponentManager(CbfComponentManager):
         self._fqdn_vcc = list(self._vcc_fqdns_all)[:self._count_vcc]
         self._fqdn_fsp = list(self._fsp_fqdns_all)[:self._count_fsp]
         self._fqdn_subarray = list(self._subarray_fqdns_all)[:self._count_subarray]
-        self._fqdn_talon_lru = list(self._talon_lru_fqdns_all)
+        self._fqdn_talon_lru = self._talon_lru_fqdns_all
         
         self._report_vcc_state = [tango.DevState.UNKNOWN] * self._count_vcc
         self._report_vcc_health_state = [HealthState.UNKNOWN.value] * self._count_vcc
@@ -313,8 +313,6 @@ class ControllerComponentManager(CbfComponentManager):
             log_msg = f"Failure in connection to {self._fqdn_subarray}"
             self._logger.error(log_msg)
             return
-
-        self._fqdn_talon_lru = self._fqdn_talon_lru
 
         for fqdn in self._fqdn_fsp + self._fqdn_talon_lru + self._fqdn_subarray:
             if fqdn not in self._proxies:
@@ -594,7 +592,7 @@ class ControllerComponentManager(CbfComponentManager):
                         # subscribe to subarray config ID change events
                         if "subarray" in fqdn:
                             events["configID"] = proxy.add_change_event_callback(
-                                    attribute_name="configID",
+                                    attribute_name="configurationID",
                                     callback=self._config_ID_event_callback,
                                     stateless=True
                                 )
