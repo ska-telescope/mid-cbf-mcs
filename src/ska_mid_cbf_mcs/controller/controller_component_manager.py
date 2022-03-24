@@ -328,15 +328,15 @@ class ControllerComponentManager(CbfComponentManager):
                         proxy.set_timeout_millis(10000)
                         
                     self._proxies[fqdn] = proxy
-
-                    # establish proxy connection to component
-                    proxy.adminMode = AdminMode.ONLINE
                 except tango.DevFailed as df:
                     self._connected = False
                     for item in df.args:
                         log_msg = f"Failure in connection to {fqdn}; {item.reason}"
                         self._logger.error(log_msg)
                     return
+
+            # establish proxy connection to component
+            self._proxies[fqdn].adminMode = AdminMode.ONLINE
 
         for idx, fqdn in enumerate(self._fqdn_vcc):
             if fqdn not in self._proxies:
@@ -348,19 +348,20 @@ class ControllerComponentManager(CbfComponentManager):
                         logger=self._logger
                     )
                     self._proxies[fqdn] = proxy
+                    
                     # TODO: for testing purposes;
                     # receptorID assigned to VCCs in order they are processed
                     proxy.receptorID = idx + 1
                     proxy.frequencyOffsetK = self.frequency_offset_k[idx]
                     proxy.frequencyOffsetDeltaF = self.frequency_offset_delta_f[idx]
-
-                    # establish proxy connection to component
-                    proxy.adminMode = AdminMode.ONLINE
                 except tango.DevFailed as df:
                     for item in df.args:
                         log_msg = "Failure in connection to " + fqdn + \
                             " device: " + str(item.reason)
                         self._logger.error(log_msg)
+
+            # establish proxy connection to component
+            self._proxies[fqdn].adminMode = AdminMode.ONLINE
         
         self._connected = True
         self.update_communication_status(CommunicationStatus.ESTABLISHED)

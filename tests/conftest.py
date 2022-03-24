@@ -539,12 +539,10 @@ def init_proxies_fixture():
                         [proxy], ObsState.EMPTY, wait_time_s, sleep_time_s_short)
 
 
-        def on(self: TestProxies, sub_id: int) -> None:
+        def on(self: TestProxies) -> None:
             """
             Controller device command sequence to turn on subarrays, FSPs, VCCs
             Used for resetting starting state duing subarray integration testing.
-
-            :param sub_id: ID subarray under test
             """
             wait_time_s = 3
             sleep_time_s = 1
@@ -563,12 +561,10 @@ def init_proxies_fixture():
                 [self.controller], DevState.ON, wait_time_s, sleep_time_s)
 
 
-        def off(self: TestProxies, sub_id: int) -> None:
+        def off(self: TestProxies) -> None:
             """
             Controller device command sequence to turn off subarrays, FSPs, VCCs
             Used for resetting starting state duing subarray integration testing.
-
-            :param sub_id: ID subarray under test
             """
             wait_time_s = 3
             sleep_time_s = 1

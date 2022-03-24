@@ -99,18 +99,6 @@ class TestCbfSubarray:
         test_proxies.wait_timeout_dev([device_under_test], DevState.STANDBY, wait_time_s, sleep_time_s)
         assert device_under_test.State() == DevState.STANDBY
 
-        device_under_test.On()
-        for i in range(1, test_proxies.num_vcc + 1):
-            test_proxies.vcc[i].adminMode = AdminMode.ONLINE
-            time.sleep(0.1)
-            test_proxies.vcc[i].On()
-            time.sleep(0.1)
-        for i in range(1, test_proxies.num_fsp + 1):
-            test_proxies.fsp[i].adminMode = AdminMode.ONLINE
-            time.sleep(0.1)
-            test_proxies.vcc[i].On()
-            time.sleep(0.1)
-
 
     @pytest.mark.parametrize(
         "receptor_ids, \
@@ -154,7 +142,7 @@ class TestCbfSubarray:
 
             # controller will turn On/Off all of its subordinate devices,
             # including the subarrays, FSPs and VCCs
-            test_proxies.on(sub_id)
+            test_proxies.on()
             time.sleep(sleep_time_s)
 
             assert test_proxies.subarray[sub_id].State() == DevState.ON
@@ -199,7 +187,7 @@ class TestCbfSubarray:
                 assert test_proxies.vcc[test_proxies.receptor_to_vcc[receptor]].subarrayMembership == 0
             assert test_proxies.subarray[sub_id].obsState == ObsState.EMPTY
 
-            test_proxies.off(sub_id)
+            test_proxies.off()
 
         except AssertionError as ae:
             time.sleep(2)
@@ -250,7 +238,7 @@ class TestCbfSubarray:
             wait_time_s = 1
             sleep_time_s = 1
 
-            test_proxies.on(sub_id)
+            test_proxies.on()
             time.sleep(sleep_time_s)
 
             assert test_proxies.subarray[sub_id].State() == DevState.ON
@@ -274,7 +262,7 @@ class TestCbfSubarray:
 
             test_proxies.subarray[sub_id].RemoveAllReceptors()
 
-            test_proxies.off(sub_id)
+            test_proxies.off()
 
         except AssertionError as ae:
             time.sleep(2)
@@ -323,7 +311,7 @@ class TestCbfSubarray:
             wait_time_s = 1
             sleep_time_s = 1
 
-            test_proxies.on(sub_id)
+            test_proxies.on()
             time.sleep(sleep_time_s)
             
             assert test_proxies.subarray[sub_id].State() == DevState.ON
@@ -348,7 +336,7 @@ class TestCbfSubarray:
             test_proxies.subarray[sub_id].RemoveAllReceptors()
             test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.EMPTY, wait_time_s, sleep_time_s)
 
-            test_proxies.off(sub_id)
+            test_proxies.off()
 
         except AssertionError as ae:
             time.sleep(2)
@@ -403,7 +391,7 @@ class TestCbfSubarray:
             wait_time_s = 1
             sleep_time_s = 1
 
-            test_proxies.on(sub_id)
+            test_proxies.on()
             time.sleep(sleep_time_s)
             
             assert test_proxies.subarray[sub_id].State() == DevState.ON
@@ -428,7 +416,7 @@ class TestCbfSubarray:
             assert all([test_proxies.vcc[test_proxies.receptor_to_vcc[i]].subarrayMembership == 0 for i in receptor_ids])
             assert test_proxies.subarray[sub_id].obsState == ObsState.EMPTY
 
-            test_proxies.off(sub_id)
+            test_proxies.off()
         
         except AssertionError as ae:
             time.sleep(2)
@@ -478,7 +466,7 @@ class TestCbfSubarray:
             configuration = json.loads(json_string)
             sub_id = int(configuration["common"]["subarray_id"])
 
-            test_proxies.on(sub_id)
+            test_proxies.on()
             time.sleep(sleep_time_s)
 
             # check initial value of attributes of CBF subarray
@@ -707,7 +695,7 @@ class TestCbfSubarray:
             test_proxies.wait_timeout_obs([test_proxies.vcc[i] 
                 for i in range(1, test_proxies.num_vcc + 1)], ObsState.EMPTY, wait_time_s, sleep_time_s)
 
-            test_proxies.off(sub_id)
+            test_proxies.off()
         
         except AssertionError as ae:
             time.sleep(2)
@@ -767,7 +755,7 @@ class TestCbfSubarray:
             configuration = json.loads(json_string)
             sub_id = int(configuration["common"]["subarray_id"])
 
-            test_proxies.on(sub_id)
+            test_proxies.on()
             time.sleep(sleep_time_s)
 
             # check initial value of attributes of CBF subarray
@@ -909,7 +897,7 @@ class TestCbfSubarray:
             test_proxies.wait_timeout_obs([test_proxies.vcc[i] 
                 for i in range(1, test_proxies.num_vcc + 1)], ObsState.EMPTY, wait_time_s, sleep_time_s)
 
-            test_proxies.off(sub_id)
+            test_proxies.off()
         
         except AssertionError as ae:
             time.sleep(2)
@@ -960,7 +948,7 @@ class TestCbfSubarray:
 
             sub_id = int(configuration["common"]["subarray_id"])
 
-            test_proxies.on(sub_id)
+            test_proxies.on()
             time.sleep(sleep_time_s)
 
             num_receptors = len(receptor_ids)
@@ -1057,7 +1045,7 @@ class TestCbfSubarray:
             test_proxies.wait_timeout_obs([test_proxies.vcc[i] 
                 for i in range(1, test_proxies.num_vcc + 1)], ObsState.EMPTY, wait_time_s, sleep_time_s)
 
-            test_proxies.off(sub_id)
+            test_proxies.off()
 
         except AssertionError as ae:
             time.sleep(2)
@@ -1123,7 +1111,7 @@ class TestCbfSubarray:
             configuration = json.loads(json_string)
             sub_id = int(configuration["common"]["subarray_id"])
 
-            test_proxies.on(sub_id)
+            test_proxies.on()
             time.sleep(sleep_time_s)
 
             assert test_proxies.subarray[sub_id].obsState == ObsState.EMPTY
@@ -1214,7 +1202,7 @@ class TestCbfSubarray:
             test_proxies.wait_timeout_obs([test_proxies.vcc[i] 
                 for i in range(1, test_proxies.num_vcc + 1)], ObsState.EMPTY, wait_time_s, sleep_time_s)
 
-            test_proxies.off(sub_id)
+            test_proxies.off()
 
         except AssertionError as ae:
             time.sleep(2)
@@ -1270,7 +1258,7 @@ class TestCbfSubarray:
 
             sub_id = int(configuration["common"]["subarray_id"])
 
-            test_proxies.on(sub_id)
+            test_proxies.on()
             time.sleep(sleep_time_s)
 
             assert test_proxies.subarray[sub_id].obsState == ObsState.EMPTY
@@ -1374,7 +1362,7 @@ class TestCbfSubarray:
             test_proxies.wait_timeout_obs([test_proxies.vcc[i] 
                 for i in range(1, test_proxies.num_vcc + 1)], ObsState.EMPTY, wait_time_s, sleep_time_s)
 
-            test_proxies.off(sub_id)
+            test_proxies.off()
 
         except AssertionError as ae:
             time.sleep(2)
@@ -1429,7 +1417,7 @@ class TestCbfSubarray:
 
             sub_id = int(configuration["common"]["subarray_id"])
 
-            test_proxies.on(sub_id)
+            test_proxies.on()
             time.sleep(sleep_time_s)
 
             assert test_proxies.subarray[sub_id].obsState == ObsState.EMPTY
@@ -1504,7 +1492,7 @@ class TestCbfSubarray:
             test_proxies.wait_timeout_obs([test_proxies.vcc[i] 
                 for i in range(1, test_proxies.num_vcc + 1)], ObsState.EMPTY, wait_time_s, sleep_time_s)
 
-            test_proxies.off(sub_id)
+            test_proxies.off()
 
         except AssertionError as ae:
             time.sleep(2)
@@ -1566,7 +1554,7 @@ class TestCbfSubarray:
 
             sub_id = int(configuration["common"]["subarray_id"])
 
-            test_proxies.on(sub_id)
+            test_proxies.on()
             time.sleep(sleep_time_s)
 
             assert test_proxies.subarray[sub_id].obsState == ObsState.EMPTY
@@ -1678,7 +1666,7 @@ class TestCbfSubarray:
             test_proxies.wait_timeout_obs([test_proxies.vcc[i] 
                 for i in range(1, test_proxies.num_vcc + 1)], ObsState.EMPTY, wait_time_s, sleep_time_s)
 
-            test_proxies.off(sub_id)
+            test_proxies.off()
         
         except AssertionError as ae:
             time.sleep(2)
@@ -1740,7 +1728,7 @@ class TestCbfSubarray:
 
             sub_id = int(configuration["common"]["subarray_id"])
 
-            test_proxies.on(sub_id)
+            test_proxies.on()
             time.sleep(sleep_time_s)
 
             assert test_proxies.subarray[sub_id].obsState == ObsState.EMPTY
@@ -1872,7 +1860,7 @@ class TestCbfSubarray:
             for r in vcc_receptors  :
                 assert test_proxies.vcc[test_proxies.receptor_to_vcc[r]].obsState == ObsState.IDLE
 
-            test_proxies.off(sub_id)
+            test_proxies.off()
         
         except AssertionError as ae:
             time.sleep(2)
