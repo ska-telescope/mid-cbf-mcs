@@ -332,8 +332,7 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
         except tango.DevFailed as dev_failed:
             self.update_component_power_mode(PowerMode.UNKNOWN)
             self.update_communication_status(CommunicationStatus.NOT_ESTABLISHED)
-            self._faulty = True
-            self._component_op_fault_callback(self._faulty)
+            self._component_op_fault_callback(True)
             raise ConnectionError(
                 f"Error in proxy connection."
             ) from dev_failed
@@ -341,8 +340,7 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
         self.connected = True
         self.update_communication_status(CommunicationStatus.ESTABLISHED)
         self.update_component_power_mode(PowerMode.OFF)
-        self._faulty = False
-        self._component_op_fault_callback(self._faulty)
+        self._component_op_fault_callback(False)
 
 
     def stop_communicating(self: CbfSubarrayComponentManager) -> None:
@@ -803,8 +801,7 @@ class CbfSubarrayComponentManager(CbfComponentManager, CspSubarrayComponentManag
                     self._group_fsp.remove_all()
 
         except tango.DevFailed as df:
-            self._faulty = True
-            self._component_op_fault_callback(self._faulty)
+            self._component_op_fault_callback(True)
             msg = str(df.args[0].desc)
             return (ResultCode.FAILED, msg)
 

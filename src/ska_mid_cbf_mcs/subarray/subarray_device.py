@@ -412,6 +412,7 @@ class CbfSubarray(CspSubElementSubarray):
         """
         if faulty:
             self.obs_state_model.perform_action("component_obsfault")
+            self.set_status("The device is in FAULT state")
 
 
     # ------------------
