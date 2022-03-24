@@ -402,13 +402,15 @@ class CbfSubarray(CspSubElementSubarray):
             self.op_state_model.perform_action("component_fault")
             self.set_status("The device is in FAULT state")
     
-    def _component_obsfault(self: CbfSubarray) -> None:
+    def _component_obsfault(self: CbfSubarray, faulty: bool) -> None:
         """
         Handle notification that the component has obsfaulted.
 
         This is a callback hook.
         """
-        self.obs_state_model.perform_action("component_obsfault")
+        if faulty:
+            self.obs_state_model.perform_action("component_obsfault")
+            self.set_status("The device is in FAULT state")
 
 
     # ------------------
