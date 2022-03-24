@@ -265,7 +265,7 @@ class ControllerComponentManager(CbfComponentManager):
         self._fqdn_vcc = list(self._vcc_fqdns_all)[:self._count_vcc]
         self._fqdn_fsp = list(self._fsp_fqdns_all)[:self._count_fsp]
         self._fqdn_subarray = list(self._subarray_fqdns_all)[:self._count_subarray]
-        self._fqdn_talon_lru = self._talon_lru_fqdns_all
+        self._fqdn_talon_lru = list(self._talon_lru_fqdns_all)
         
         self._report_vcc_state = [tango.DevState.UNKNOWN] * self._count_vcc
         self._report_vcc_health_state = [HealthState.UNKNOWN.value] * self._count_vcc

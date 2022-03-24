@@ -100,6 +100,16 @@ class TestCbfSubarray:
         assert device_under_test.State() == DevState.STANDBY
 
         device_under_test.On()
+        for i in range(1, test_proxies.num_vcc + 1):
+            test_proxies.vcc[i].adminMode = AdminMode.ONLINE
+            time.sleep(0.1)
+            test_proxies.vcc[i].On()
+            time.sleep(0.1)
+        for i in range(1, test_proxies.num_fsp + 1):
+            test_proxies.fsp[i].adminMode = AdminMode.ONLINE
+            time.sleep(0.1)
+            test_proxies.vcc[i].On()
+            time.sleep(0.1)
 
 
     @pytest.mark.parametrize(
