@@ -196,9 +196,9 @@ class Fsp(SKACapability):
     def always_executed_hook(self: Fsp) -> None:
         # PROTECTED REGION ID(Fsp.always_executed_hook) ENABLED START #
         """Hook to be executed before any commands."""
-
         # PROTECTED REGION END #    //  Fsp.always_executed_hook
-    
+
+
     def create_component_manager(self: Fsp) -> FspComponentManager:
         """
         Create and return a component manager for this device.
@@ -212,20 +212,21 @@ class Fsp(SKACapability):
         self._component_power_mode: Optional[PowerMode] = None
 
         return FspComponentManager( 
-            self.logger,
-            self.FspID,
-            self.FspCorrSubarray,
-            self.FspPssSubarray,
-            self.FspPstSubarray,
-            self.CorrelationAddress,
-            self.PSSAddress,
-            self.PSTAddress,
-            self.VLBIAddress,
-            self.push_change_event,
-            self._communication_status_changed,
-            self._component_power_mode_changed,
-            self._component_fault,
+            logger=self.logger,
+            fsp_id=self.FspID,
+            fsp_corr_subarray_fqdns_all=self.FspCorrSubarray,
+            fsp_pss_subarray_fqdns_all=self.FspPssSubarray,
+            fsp_pst_subarray_fqdns_all=self.FspPstSubarray,
+            fsp_corr_address= self.CorrelationAddress,
+            fsp_pss_address=self.PSSAddress,
+            fsp_pst_address=self.PSTAddress,
+            fsp_vlbi_address=self.VLBIAddress,
+            push_change_event_callback=self.push_change_event,
+            communication_status_changed_callback=self._communication_status_changed,
+            component_power_mode_changed_callback=self._component_power_mode_changed,
+            component_fault_callback=self._component_fault,
         )
+
 
     def delete_device(self: Fsp) -> None:
         # PROTECTED REGION ID(Fsp.delete_device) ENABLED START #
@@ -354,7 +355,8 @@ class Fsp(SKACapability):
             device._config_id = ""
 
             return (result_code,message)
-    
+
+
     class OnCommand(SKABaseDevice.OnCommand):
         """
         A class for the Fsp's On() command.
@@ -379,6 +381,7 @@ class Fsp(SKACapability):
 
             return (result_code, message)
 
+
     class OffCommand(SKABaseDevice.OffCommand):
         """
         A class for the Fsp's Off() command.
@@ -402,7 +405,7 @@ class Fsp(SKACapability):
 
             return (result_code, message)
 
-    
+
     class StandbyCommand(SKABaseDevice.StandbyCommand):
         """
         A class for the Fsp's Standby() command.
@@ -425,7 +428,8 @@ class Fsp(SKACapability):
                 self.target._component_power_mode_changed(PowerMode.STANDBY)
 
             return (result_code, message)
-    
+
+
     class SetFunctionModeCommand(ResponseCommand):
         """
         A class for the Fsp's SetFunctionMode() command.
@@ -714,13 +718,13 @@ class Fsp(SKACapability):
         dtype_in='str',
         doc_in="Timing Beam Weights, per beam per receptor per group of 8 channels"
     )
-    def UpdateBeamWeights(self: Fsp, argin: str) -> None:  
+    def UpdateTimingBeamWeights(self: Fsp, argin: str) -> None:  
         """
         Update the FSP's timing beam weights (serialized JSON object)
 
         :param argin: the timing beam weight data
         """
-        handler = self.get_command_object("UpdateBeamWeights")
+        handler = self.get_command_object("UpdateTimingBeamWeights")
         return handler(argin)
 
     def is_UpdateTimingBeamWeights_allowed(self: Fsp) -> bool:

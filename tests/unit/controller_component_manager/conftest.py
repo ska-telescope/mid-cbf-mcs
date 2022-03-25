@@ -47,6 +47,7 @@ def controller_component_manager(
     push_change_event_callback: MockChangeEventCallback,
     communication_status_changed_callback: MockCallable,
     component_power_mode_changed_callback: MockCallable,
+    component_fault_callback: MockCallable
 ) -> ControllerComponentManager:
     """
     Return a Controller component manager.
@@ -74,6 +75,7 @@ def controller_component_manager(
     vcc = configuration["fqdn_vcc"]
     fsp = configuration["fqdn_fsp"]
     talon_lru = configuration["fqdn_talon_lru"]
+    subarray = configuration["fqdn_subarray"]
 
     def mock_get_num_capabilities():
         num_capabilities = {
@@ -86,15 +88,33 @@ def controller_component_manager(
 
     return ControllerComponentManager( 
             mock_get_num_capabilities,
-            vcc,
-            fsp,
-            talon_lru,
-            talondx_component_manager,
-            logger,
-            push_change_event_callback,
-            communication_status_changed_callback,
-            component_power_mode_changed_callback,
+            subarray_fqdns_all=subarray,
+            vcc_fqdns_all=vcc,
+            fsp_fqdns_all=fsp,
+            talon_lru_fqdns_all=talon_lru,
+            talondx_component_manager=talondx_component_manager,
+            logger=logger,
+            push_change_event=push_change_event_callback,
+            communication_status_changed_callback=communication_status_changed_callback,
+            component_power_mode_changed_callback=component_power_mode_changed_callback,
+            component_fault_callback=component_fault_callback
         )
+
+@pytest.fixture()
+def component_fault_callback(
+    mock_callback_factory: Callable[[], unittest.mock.Mock]
+) -> unittest.mock.Mock:
+    """
+    Return a mock callback for component manager fault.
+
+    :param mock_callback_factory: fixture that provides a mock callback
+        factory (i.e. an object that returns mock callbacks when
+        called).
+
+    :return: a mock callback to be called when the communication status
+        of a component manager changed.
+    """
+    return mock_callback_factory()
 
 @pytest.fixture()
 def communication_status_changed_callback(

@@ -259,21 +259,21 @@ class CbfController(SKAController):
         )
     
     def get_num_capabilities(
-            self: CbfController, 
-        ) -> None:
-            # self._max_capabilities inherited from SKAController
-            # check first if property exists in DB
-            """Get number of capabilities for _init_Device. 
-            If property not found in db, then assign a default amount(197,27,16)"""
+        self: CbfController, 
+    ) -> None:
+        # self._max_capabilities inherited from SKAController
+        # check first if property exists in DB
+        """Get number of capabilities for _init_Device. 
+        If property not found in db, then assign a default amount(197,27,16)"""
 
-            if self._max_capabilities:
-                return self._max_capabilities
-            else:
-                self.logger.warn("MaxCapabilities device property not defined")
+        if self._max_capabilities:
+            return self._max_capabilities
+        else:
+            self.logger.warning("MaxCapabilities device property not defined")
 
     class InitCommand(SKAController.InitCommand):
 
-        def __get_num_capabilities(
+        def _get_num_capabilities(
             self: CbfController.InitCommand, 
         ) -> None:
             # self._max_capabilities inherited from SKAController
@@ -287,19 +287,25 @@ class CbfController(SKAController):
                 try:
                     device._count_vcc = device._max_capabilities["VCC"]
                 except KeyError:  # not found in DB
+                    self.logger.warning(
+                        "VCC capabilities not defined; defaulting to 197.")
                     device._count_vcc = 197
 
                 try:
                     device._count_fsp = device._max_capabilities["FSP"]
                 except KeyError:  # not found in DB
+                    self.logger.warning(
+                        "FSP capabilities not defined; defaulting to 27.")
                     device._count_fsp = 27
 
                 try:
                     device._count_subarray = device._max_capabilities["Subarray"]
                 except KeyError:  # not found in DB
+                    self.logger.warning(
+                        "Subarray capabilities not defined; defaulting to 16.")
                     device._count_subarray = 16
             else:
-                self._logger.warn("MaxCapabilities device property not defined - \
+                self.logger.warning("MaxCapabilities device property not defined - \
                     using default value")
 
         def do(
@@ -329,7 +335,7 @@ class CbfController(SKAController):
             device._central_logging_level = tango.LogLevel.LOG_DEBUG
 
             # defines self._count_vcc, self._count_fsp, and self._count_subarray
-            self.__get_num_capabilities()
+            self._get_num_capabilities()
 
             # initialize dicts with maps receptorID <=> vccID
             # TODO: vccID == receptorID for now, for testing purposes
@@ -373,15 +379,17 @@ class CbfController(SKAController):
             self.TalonDxConfigPath, self._simulation_mode, self.logger)
 
         return ControllerComponentManager( 
-            self.get_num_capabilities,
-            self.VCC,
-            self.FSP,
-            self.TalonLRU,
-            self._talondx_component_manager,
-            self.logger,
-            self.push_change_event,
-            self._communication_status_changed,
-            self._component_power_mode_changed,
+            get_num_capabilities=self.get_num_capabilities,
+            vcc_fqdns_all=self.VCC,
+            fsp_fqdns_all=self.FSP,
+            subarray_fqdns_all=self.CbfSubarray,
+            talon_lru_fqdns_all=self.TalonLRU,
+            talondx_component_manager=self._talondx_component_manager,
+            logger=self.logger,
+            push_change_event=self.push_change_event,
+            communication_status_changed_callback=self._communication_status_changed,
+            component_power_mode_changed_callback=self._component_power_mode_changed,
+            component_fault_callback=self._component_fault
         )
 
     def delete_device(self: CbfController) -> None:
@@ -491,9 +499,9 @@ class CbfController(SKAController):
         if len(value) == self._count_vcc:
             self.component_manager.frequency_offset_k = value
         else:
-            log_msg = "Skipped writing to frequencyOffsetK attribute (expected {} arguments, " \
-                      "but received {}.".format(self._count_vcc, len(value))
-            self.logger.warn(log_msg)
+            log_msg = "Skipped writing to frequencyOffsetK attribute " + \
+                f"(expected {self._count_vcc} arguments, but received {len(value)}."
+            self.logger.warning(log_msg)
         # PROTECTED REGION END #    //  CbfController.frequencyOffsetK_write
 
     def read_frequencyOffsetDeltaF(self: CbfController) -> List[int]:
@@ -509,9 +517,9 @@ class CbfController(SKAController):
         if len(value) == self._count_vcc:
             self.component_manager.frequency_offset_delta_f = value
         else:
-            log_msg = "Skipped writing to frequencyOffsetDeltaF attribute (expected {} arguments, " \
-                      "but received {}.".format(self._count_vcc, len(value))
-            self.logger.warn(log_msg)
+            log_msg = "Skipped writing to frequencyOffsetDeltaF attribute " + \
+                f"(expected {self._count_vcc} arguments, but received {len(value)}."
+            self.logger.warning(log_msg)
         # PROTECTED REGION END #    //  CbfController.frequencyOffsetDeltaF_write
 
     def read_reportSubarrayState(self: CbfController) -> List[tango.DevState]:
@@ -671,6 +679,18 @@ class CbfController(SKAController):
             }
 
             self.op_state_model.perform_action(action_map[power_mode])
+
+    def _component_fault(self: CbfController, faulty: bool) -> None:
+        """
+        Handle component fault
+
+        :param faulty: whether the component has faulted.
+        """
+        if faulty:
+            self.op_state_model.perform_action("component_fault")
+            self.set_status("The device is in FAULT state.")
+        else:
+            self.set_status("The device has recovered from FAULT state.")
 
 # ----------
 # Run server

@@ -17,6 +17,7 @@ from ska_mid_cbf_mcs.fsp.fsp_component_manager import FspComponentManager
 from ska_tango_base.commands import ResultCode
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
 from ska_mid_cbf_mcs.testing.mock.mock_callable import MockCallable
+from ska_mid_cbf_mcs.commons.global_enum import FspModes
 
 import pytest
 import time
@@ -231,7 +232,6 @@ class TestFspComponentManager:
         for mode in valid_function_modes:
             fsp_component_manager.set_function_mode(mode)
             time.sleep(0.1)
-            FspModes = Enum('FspModes', 'CORR PSS_BF PST_BF VLBI')
             if mode == "PSS-BF":
                 assert fsp_component_manager.function_mode == FspModes.PSS_BF.value
                 fs_length = 16
@@ -317,7 +317,6 @@ class TestFspComponentManager:
         for mode in valid_function_modes:
             fsp_component_manager.set_function_mode(mode)
             time.sleep(0.1)
-            FspModes = Enum('FspModes', 'CORR PSS_BF PST_BF VLBI')
             if mode == "PSS-BF":
                 assert fsp_component_manager.function_mode == FspModes.PSS_BF.value
             elif mode == "PST-BF":
@@ -388,8 +387,6 @@ class TestFspComponentManager:
         # update only valid for function mode PST-BF
         fsp_component_manager.set_function_mode("PST-BF")
         time.sleep(0.1)
-        #TODO: this enum should be defined once and referred to throughout the project
-        FspModes = Enum('FspModes', 'CORR PSS_BF PST_BF VLBI')
         assert fsp_component_manager.function_mode == FspModes.PST_BF.value
 
         # read the json file

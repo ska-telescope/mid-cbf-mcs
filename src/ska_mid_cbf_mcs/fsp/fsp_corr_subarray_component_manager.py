@@ -241,7 +241,8 @@ class FspCorrSubarrayComponentManager(CbfComponentManager, CspObsComponentManage
         :rtype: List[int]
         """
         return self._receptors
-    
+
+
     def start_communicating(
         self: FspCorrSubarrayComponentManager,
     ) -> None:
@@ -256,13 +257,15 @@ class FspCorrSubarrayComponentManager(CbfComponentManager, CspObsComponentManage
         self.update_communication_status(CommunicationStatus.ESTABLISHED)
         self.update_component_fault(False)
         self.update_component_power_mode(PowerMode.OFF)
-    
+
+
     def stop_communicating(self: FspCorrSubarrayComponentManager) -> None:
         """Stop communication with the component"""
-        
+        self._logger.info("Entering FspCorrSubarrayComponentManager.stop_communicating")
         super().stop_communicating()
         
         self._connected = False
+
 
     def _add_receptors(
         self: FspCorrSubarrayComponentManager,
@@ -278,20 +281,21 @@ class FspCorrSubarrayComponentManager(CbfComponentManager, CspObsComponentManage
         for receptorID in argin:
             try:
                 if receptorID not in self._receptors:
+                    self._logger.info(f"Receptor {receptorID} added.")
                     self._receptors.append(receptorID)
                 else:
-                    log_msg = "Receptor {} already assigned to current FSP subarray.".format(
-                        str(receptorID))
-                    self._logger.warn(log_msg)
+                    log_msg = f"Receptor {receptorID} already assigned to current FSP subarray."
+                    self._logger.warning(log_msg)
 
             except KeyError:  # invalid receptor ID
-                errs.append("Invalid receptor ID: {}".format(receptorID))
+                errs.append(f"Invalid receptor ID: {receptorID}")
 
         if errs:
             msg = "\n".join(errs)
             self._logger.error(msg)
             tango.Except.throw_exception("Command failed", msg, "_add_receptors execution",
                                            tango.ErrSeverity.ERR)
+
 
     def _remove_receptors(
         self: FspCorrSubarrayComponentManager,
@@ -304,16 +308,18 @@ class FspCorrSubarrayComponentManager(CbfComponentManager, CspObsComponentManage
         """
         for receptorID in argin:
             if receptorID in self._receptors:
+                self._logger.info(f"Receptor {receptorID} removed.")
                 self._receptors.remove(receptorID)
             else:
-                log_msg = "Receptor {} not assigned to FSP subarray. "\
-                    "Skipping.".format(str(receptorID))
-                self._logger.warn(log_msg)
-    
+                log_msg = "Receptor {receptorID} not assigned to FSP subarray. Skipping."
+                self._logger.warning(log_msg)
+
+
     def _remove_all_receptors(self: FspCorrSubarrayComponentManager) -> None:
         """Remove all Receptors of this subarray"""
         self._remove_receptors(self._receptors[:])
-    
+
+
     def configure_scan(
         self: FspCorrSubarrayComponentManager,
         configuration: str
@@ -376,7 +382,7 @@ class FspCorrSubarrayComponentManager(CbfComponentManager, CspObsComponentManage
                     # log a warning message
                     log_msg = "'zoomWindowTuning' partially out of observed frequency slice. "\
                         "Proceeding."
-                    self._logger.warn(log_msg)
+                    self._logger.warning(log_msg)
             else:  # frequency band 5a or 5b (two streams with bandwidth 2.5 GHz)
                 self._zoom_window_tuning = configuration["zoom_window_tuning"]
 
@@ -414,7 +420,7 @@ class FspCorrSubarrayComponentManager(CbfComponentManager, CspObsComponentManage
                     # log a warning message
                     log_msg = "'zoomWindowTuning' partially out of observed frequency slice. "\
                         "Proceeding."
-                    self._logger.warn(log_msg)
+                    self._logger.warning(log_msg)
 
 
         self._integration_time = int(configuration["integration_factor"])
@@ -447,12 +453,13 @@ class FspCorrSubarrayComponentManager(CbfComponentManager, CspObsComponentManage
             ]
             log_msg = "FSP specified, but 'channelAveragingMap not given. Default to averaging "\
                 "factor = 0 for all channel groups."
-            self._logger.warn(log_msg)
+            self._logger.warning(log_msg)
 
         self._config_id = configuration["config_id"]
 
         return (ResultCode.OK, "FspCorrSubarray ConfigureScan command completed OK")
-    
+
+
     def scan(
         self: FspCorrSubarrayComponentManager,
         scan_id: int,
@@ -470,7 +477,8 @@ class FspCorrSubarrayComponentManager(CbfComponentManager, CspObsComponentManage
         self._scan_id = scan_id
 
         return (ResultCode.OK, "FspCorrSubarray Scan command completed OK")
-    
+
+
     def end_scan(
         self: FspCorrSubarrayComponentManager,
     ) -> Tuple[ResultCode, str]:
@@ -484,7 +492,8 @@ class FspCorrSubarrayComponentManager(CbfComponentManager, CspObsComponentManage
         """
 
         return (ResultCode.OK, "FspCorrSubarray EndScan command completed OK")
-    
+
+
     def _deconfigure( 
         self: FspCorrSubarrayComponentManager,
     ) -> None:
@@ -512,7 +521,8 @@ class FspCorrSubarrayComponentManager(CbfComponentManager, CspObsComponentManage
 
         self._channel_info = []
         #self._channel_info.clear() #TODO:  not yet populated
-    
+
+
     def go_to_idle(
         self: FspCorrSubarrayComponentManager,
     ) -> Tuple[ResultCode, str]:
@@ -528,5 +538,5 @@ class FspCorrSubarrayComponentManager(CbfComponentManager, CspObsComponentManage
         self._deconfigure()
 
         self._remove_all_receptors()
-        
+
         return (ResultCode.OK, "FspCorrSubarray GoToIdle command completed OK")

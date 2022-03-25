@@ -81,8 +81,7 @@ class TestCbfController:
         test_proxies.wait_timeout_dev([test_proxies.controller], DevState.OFF, 3, 0.1)
         assert test_proxies.controller.State() == DevState.OFF
 
-    @pytest.mark.skip(reason="controller subordinate devices need to be \
-        updated to v0.11.3")
+
     def test_On(self, test_proxies):
         """
         Test the "On" command
@@ -94,22 +93,34 @@ class TestCbfController:
         test_proxies.wait_timeout_dev([test_proxies.controller], DevState.ON, 3, 0.1)
         assert test_proxies.controller.State() == DevState.ON
 
+        # after init devices should be in DISABLE state
+        for i in range(1, test_proxies.num_sub + 1):
+            assert test_proxies.subarray[i].adminMode == AdminMode.ONLINE
+        for i in range(1, test_proxies.num_vcc + 1):
+            assert test_proxies.vcc[i].adminMode == AdminMode.ONLINE
+        for i in range(1, test_proxies.num_fsp + 1):
+            assert test_proxies.fsp[i].adminMode == AdminMode.ONLINE
+        for i in ["CORR", "PSS-BF", "PST-BF"]:
+            for j in range(1, test_proxies.num_sub + 1):
+                for k in range(1, test_proxies.num_fsp + 1):
+                    assert test_proxies.fspSubarray[i][j][k].adminMode == AdminMode.ONLINE
+
         for i in range(1, test_proxies.num_sub + 1):
             test_proxies.wait_timeout_dev([test_proxies.subarray[i]], DevState.ON, 3, 0.1)
             assert test_proxies.subarray[i].State() == DevState.ON
 
-        for i in range(1, test_proxies.num_vcc + 1):
-            assert test_proxies.vcc[i].State() == DevState.ON
-
         for i in range(1, test_proxies.num_fsp + 1):
             assert test_proxies.fsp[i].State() == DevState.ON
+
         for i in ["CORR", "PSS-BF", "PST-BF"]:
             for j in range(1, test_proxies.num_sub + 1):
                 for k in range(1, test_proxies.num_fsp + 1):
                     assert test_proxies.fspSubarray[i][j][k].State() == DevState.ON
-    
-    @pytest.mark.skip(reason="controller subordinate devices need to be \
-        updated to v0.11.3")    
+        
+        for i in range(1, test_proxies.num_vcc + 1):
+            assert test_proxies.vcc[i].State() == DevState.ON
+
+
     def test_Off(self, test_proxies):
         """
         Test the "Off" command
@@ -130,13 +141,13 @@ class TestCbfController:
 
         for i in range(1, test_proxies.num_fsp + 1):
             assert test_proxies.fsp[i].State() == DevState.OFF
+
         for i in ["CORR", "PSS-BF", "PST-BF"]:
             for j in range(1, test_proxies.num_sub + 1):
                 for k in range(1, test_proxies.num_fsp + 1):
                     assert test_proxies.fspSubarray[i][j][k].State() == DevState.OFF
-    
-    @pytest.mark.skip(reason="controller subordinate devices need to be \
-        updated to v0.11.3")  
+
+
     def test_Standby(self, test_proxies):
         """
         Test the "Standby" command
@@ -149,17 +160,18 @@ class TestCbfController:
 
         for i in range(1, test_proxies.num_sub + 1):
             test_proxies.wait_timeout_dev([test_proxies.subarray[i]], DevState.OFF, 3, 0.1)
-            assert test_proxies.subarray[i].State() == DevState.OFF
+            assert test_proxies.subarray[i].State() == DevState.STANDBY
 
         for i in range(1, test_proxies.num_vcc + 1):
-            assert test_proxies.vcc[i].State() == DevState.OFF
+            assert test_proxies.vcc[i].State() == DevState.STANDBY
 
         for i in range(1, test_proxies.num_fsp + 1):
-            assert test_proxies.fsp[i].State() == DevState.OFF
+            assert test_proxies.fsp[i].State() == DevState.STANDBY
+
         for i in ["CORR", "PSS-BF", "PST-BF"]:
             for j in range(1, test_proxies.num_sub + 1):
                 for k in range(1, test_proxies.num_fsp + 1):
-                    assert test_proxies.fspSubarray[i][j][k].State() == DevState.OFF
+                    assert test_proxies.fspSubarray[i][j][k].State() == DevState.STANDBY
 
     def test_Disconnect(self, test_proxies):
         """
@@ -172,8 +184,20 @@ class TestCbfController:
         # controller device should be in DISABLE state after stop_communicating  
         test_proxies.wait_timeout_dev([test_proxies.controller], DevState.DISABLE, 3, 0.1)
         assert test_proxies.controller.State() == DevState.DISABLE
+        for i in range(1, test_proxies.num_sub + 1):
+            assert test_proxies.subarray[i].State() == DevState.DISABLE
+        for i in range(1, test_proxies.num_vcc + 1):
+            assert test_proxies.vcc[i].State() == DevState.DISABLE
+        for i in range(1, test_proxies.num_fsp + 1):
+            assert test_proxies.fsp[i].State() == DevState.DISABLE
+        for i in ["CORR", "PSS-BF", "PST-BF"]:
+            for j in range(1, test_proxies.num_sub + 1):
+                for k in range(1, test_proxies.num_fsp + 1):
+                    assert test_proxies.fspSubarray[i][j][k].State() == DevState.DISABLE
 
-    #TODO implement these tests properly?
+
+    #TODO
+
     # def test_reportVCCSubarrayMembership(
     #         self,
     #         cbf_master_proxy,

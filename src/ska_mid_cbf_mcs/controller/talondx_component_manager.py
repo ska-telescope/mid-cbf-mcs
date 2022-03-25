@@ -97,7 +97,7 @@ class TalonDxComponentManager:
 
     def _secure_copy(
         self: TalonDxComponentManager,
-        ssh_client: paramiko.SSHClient,
+        ssh_client: SSHClient,
         src: str,
         dest: str
     ) -> None:

@@ -136,7 +136,7 @@ class CbfDeviceInfo:
         self: CbfDeviceInfo,
         path: str,
         package: str,
-        devices: Optional[list[DeviceSpecType]] = None,
+        devices: Optional[List[DeviceSpecType]] = None,
     ) -> None:
         """
         Create a new instance.
@@ -151,8 +151,8 @@ class CbfDeviceInfo:
         with open(path, "r") as json_file:
             self._source_data = json.load(json_file)
         self._package = package
-        self._devices: dict[str, DeviceConfigType] = {}
-        self._proxies: dict[str, type[CbfDeviceProxy]] = {}
+        self._devices: Dict[str, DeviceConfigType] = {}
+        self._proxies: Dict[str, Type[CbfDeviceProxy]] = {}
 
         if devices is not None:
             for device_spec in devices:
@@ -162,8 +162,8 @@ class CbfDeviceInfo:
         self: CbfDeviceInfo,
         name: str,
         device_class: str,
-        proxy: type[CbfDeviceProxy],
-        patch: Optional[type[SKABaseDevice]] = None,
+        proxy: Type[CbfDeviceProxy],
+        patch: Optional[Type[SKABaseDevice]] = None,
     ) -> None:
         """
         Include a device in this specification.
@@ -222,7 +222,7 @@ class CbfDeviceInfo:
         return self.fqdn_map.values()
 
     @property
-    def fqdn_map(self: CbfDeviceInfo) -> dict[str, str]:
+    def fqdn_map(self: CbfDeviceInfo) -> Dict[str, str]:
         """
         A dictionary that maps device names onto FQDNs.
 
@@ -231,7 +231,7 @@ class CbfDeviceInfo:
         return {name: self._devices[name]["fqdn"] for name in self._devices}
 
     @property
-    def proxy_map(self: CbfDeviceInfo) -> dict[str, type[CbfDeviceProxy]]:
+    def proxy_map(self: CbfDeviceInfo) -> Dict[str, Type[CbfDeviceProxy]]:
         """
         Return a map from FQDN to proxy type.
 
@@ -239,7 +239,7 @@ class CbfDeviceInfo:
         """
         return dict(self._proxies)
 
-    def as_mdtc_device_info(self: CbfDeviceInfo) -> list[MdtcInfoType]:
+    def as_mdtc_device_info(self: CbfDeviceInfo) -> List[MdtcInfoType]:
         """
         Return this device info in a format required by
         :py:class:`tango.test_context.MultiDeviceTestContext`.
@@ -247,8 +247,8 @@ class CbfDeviceInfo:
         :return: device info in a format required by
             :py:class:`tango.test_context.MultiDeviceTestContext`.
         """
-        devices_by_class: dict[
-            type[SKABaseDevice], list[MdtcDeviceInfoType]
+        devices_by_class: Dict[
+            Type[SKABaseDevice], List[MdtcDeviceInfoType]
         ] = defaultdict(list)
         for device in self._devices.values():
             devices_by_class[device["class"]].append(
@@ -258,7 +258,7 @@ class CbfDeviceInfo:
                     "memorized": device["memorized"],
                 }
             )
-        mdtc_device_info: list[MdtcInfoType] = [
+        mdtc_device_info: List[MdtcInfoType] = [
             {"class": klass, "devices": devices}
             for klass, devices in devices_by_class.items()
         ]
@@ -315,7 +315,7 @@ class TangoHarness:
         raise NotImplementedError("TangoHarness is abstract.")
 
     @property
-    def fqdns(self: TangoHarness) -> list[str]:
+    def fqdns(self: TangoHarness) -> List[str]:
         """
         The FQDNs of devices in this harness.
 
@@ -435,7 +435,7 @@ class BaseTangoHarness(TangoHarness):
         return tango.Group
 
     @property
-    def fqdns(self: BaseTangoHarness) -> list[str]:
+    def fqdns(self: BaseTangoHarness) -> List[str]:
         """
         The FQDNs of devices in this harness.
 
@@ -764,7 +764,7 @@ class WrapperTangoHarness(TangoHarness):
         return self._harness.group_connection_factory
 
     @property
-    def fqdns(self: WrapperTangoHarness) -> list[str]:
+    def fqdns(self: WrapperTangoHarness) -> List[str]:
         """
         Return the FQDNs of devices in this harness.
 
@@ -870,7 +870,7 @@ class MockingTangoHarness(WrapperTangoHarness):
         self: MockingTangoHarness,
         harness: TangoHarness,
         mock_factory: Callable[[], unittest.mock.Mock],
-        initial_mocks: dict[str, unittest.mock.Mock],
+        initial_mocks: Dict[str, unittest.mock.Mock],
         *args: Any,
         **kwargs: Any,
     ) -> None:
