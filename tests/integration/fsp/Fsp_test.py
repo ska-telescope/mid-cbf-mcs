@@ -277,4 +277,3 @@ class TestFsp:
         test_proxies.wait_timeout_dev([test_proxies.fsp[fsp_id]], DevState.DISABLE, wait_time_s, sleep_time_s)
         assert test_proxies.fsp[fsp_id].State() == DevState.DISABLE
 
-    

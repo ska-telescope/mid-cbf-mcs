@@ -94,7 +94,7 @@ class TestCbfController:
         sleep_time_s = 0.1
         
         # send the On command
-        (result_code, message) = test_proxies.controller.On()
+        test_proxies.controller.On()
 
         test_proxies.wait_timeout_dev([test_proxies.controller], DevState.ON, wait_time_s, sleep_time_s)
         assert test_proxies.controller.State() == DevState.ON
@@ -139,7 +139,7 @@ class TestCbfController:
         sleep_time_s = 0.1
 
         # send the Off command
-        (result_code, message) = test_proxies.controller.Off()
+        test_proxies.controller.Off()
 
         test_proxies.wait_timeout_dev([test_proxies.controller], DevState.OFF, wait_time_s, sleep_time_s)
         assert test_proxies.controller.State() == DevState.OFF
@@ -171,7 +171,7 @@ class TestCbfController:
         sleep_time_s = 0.1
 
         # send the Standby command
-        (result_code, message) = test_proxies.controller.Standby()
+        test_proxies.controller.Standby()
 
         test_proxies.wait_timeout_dev([test_proxies.controller], DevState.STANDBY, wait_time_s, sleep_time_s)
         assert test_proxies.controller.State() == DevState.STANDBY
