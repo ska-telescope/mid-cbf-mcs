@@ -48,6 +48,9 @@ class TestFspCorrSubarray:
         :param fsp_id: the fsp id
         :param sub_id: the subarray id
         """
+        wait_time_s = 3
+        sleep_time_s = 0.1
+
         device_under_test = test_proxies.fspSubarray["CORR"][sub_id][fsp_id]
 
         assert device_under_test.State() == DevState.DISABLE 
@@ -56,7 +59,7 @@ class TestFspCorrSubarray:
         device_under_test.adminMode = AdminMode.ONLINE
 
         # controller device should be in OFF state after start_communicating 
-        test_proxies.wait_timeout_dev([device_under_test], DevState.OFF, 3, 0.1)
+        test_proxies.wait_timeout_dev([device_under_test], DevState.OFF, wait_time_s, sleep_time_s)
         assert device_under_test.State() == DevState.OFF
     
     @pytest.mark.parametrize(
@@ -77,13 +80,14 @@ class TestFspCorrSubarray:
         :param fsp_id: the fsp id
         :param sub_id: the subarray id
         """
-
+        wait_time_s = 3
+        sleep_time_s = 0.1
         
         device_under_test = test_proxies.fspSubarray["CORR"][sub_id][fsp_id]
 
         device_under_test.On()
 
-        test_proxies.wait_timeout_dev([device_under_test], DevState.ON, 3, 0.1)
+        test_proxies.wait_timeout_dev([device_under_test], DevState.ON, wait_time_s, sleep_time_s)
         assert device_under_test.State() == DevState.ON
     
     @pytest.mark.parametrize(
@@ -104,12 +108,15 @@ class TestFspCorrSubarray:
         :param fsp_id: the fsp id
         :param sub_id: the subarray id
         """
+
+        wait_time_s = 3
+        sleep_time_s = 0.1
         
         device_under_test = test_proxies.fspSubarray["CORR"][sub_id][fsp_id]
 
         device_under_test.Off()
 
-        test_proxies.wait_timeout_dev([device_under_test], DevState.OFF, 3, 0.1)
+        test_proxies.wait_timeout_dev([device_under_test], DevState.OFF, wait_time_s, sleep_time_s)
         assert device_under_test.State() == DevState.OFF
     
     @pytest.mark.parametrize(
@@ -131,11 +138,14 @@ class TestFspCorrSubarray:
         :param sub_id: the subarray id
         """
 
+        wait_time_s = 3
+        sleep_time_s = 0.1
+
         device_under_test = test_proxies.fspSubarray["CORR"][sub_id][fsp_id]
 
         device_under_test.Standby()
 
-        test_proxies.wait_timeout_dev([device_under_test], DevState.STANDBY, 3, 0.1)
+        test_proxies.wait_timeout_dev([device_under_test], DevState.STANDBY, wait_time_s, sleep_time_s)
         assert device_under_test.State() == DevState.STANDBY
     
     @pytest.mark.parametrize(
@@ -339,6 +349,9 @@ class TestFspCorrSubarray:
         :param sub_id: the subarray id
         """
 
+        wait_time_s = 3
+        sleep_time_s = 0.1
+
         # reset VCC subarray membership for other integration tests
         for i in range(1, test_proxies.num_vcc + 1):
             test_proxies.vcc[i].subarrayMembership = 0
@@ -351,5 +364,5 @@ class TestFspCorrSubarray:
         device_under_test.adminMode = AdminMode.OFFLINE
 
         # controller device should be in DISABLE state after stop_communicating  
-        test_proxies.wait_timeout_dev([device_under_test], DevState.DISABLE, 3, 0.1)
+        test_proxies.wait_timeout_dev([device_under_test], DevState.DISABLE, wait_time_s, sleep_time_s)
         assert device_under_test.State() == DevState.DISABLE
