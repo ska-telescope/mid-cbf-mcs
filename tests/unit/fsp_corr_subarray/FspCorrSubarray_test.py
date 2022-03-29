@@ -172,10 +172,8 @@ class TestFspCorrSubarray:
         assert device_under_test.obsState == ObsState.SCANNING
 
         device_under_test.EndScan()
-        time.sleep(0.1)
         assert device_under_test.obsState == ObsState.READY
 
         device_under_test.GoToIdle()
-        time.sleep(0.1)
         assert device_under_test.obsState == ObsState.IDLE
     

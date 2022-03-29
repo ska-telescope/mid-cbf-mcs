@@ -174,8 +174,8 @@ class TestCbfSubarray:
         assert device_under_test.obsState == ObsState.IDLE
 
         # remove all except last receptor
-        device_under_test.RemoveReceptors(receptors_to_remove)
-        time.sleep(0.1)
+        result = device_under_test.RemoveReceptors(receptors_to_remove)
+        assert result[0][0] == ResultCode.OK
         receptor_ids_after_remove = [r for r in receptor_ids if r not in receptors_to_remove]
         assert (device_under_test.receptors == receptor_ids_after_remove).all()
         assert device_under_test.obsState == ObsState.IDLE
@@ -215,8 +215,8 @@ class TestCbfSubarray:
         time.sleep(CONST_WAIT_TIME)
         assert device_under_test.State() == DevState.ON
         assert device_under_test.obsState == ObsState.EMPTY
-        device_under_test.AddReceptors(receptor_ids)
-        time.sleep(0.1)
+        result = device_under_test.AddReceptors(receptor_ids)
+        assert result[0][0] == ResultCode.OK
         assert device_under_test.obsState == ObsState.IDLE
 
         # remove all receptors
@@ -298,8 +298,8 @@ class TestCbfSubarray:
         assert device_under_test.State() == DevState.ON
         # add some receptors
         assert device_under_test.obsState == ObsState.EMPTY
-        device_under_test.AddReceptors(receptor_ids)
-        time.sleep(0.1)
+        result = device_under_test.AddReceptors(receptor_ids)
+        assert result[0][0] == ResultCode.OK
         assert device_under_test.obsState == ObsState.IDLE
 
         # try removing a receptor not assigned to subarray 1
@@ -365,8 +365,8 @@ class TestCbfSubarray:
         time.sleep(CONST_WAIT_TIME)
         assert device_under_test.State() == DevState.ON
         assert device_under_test.obsState == ObsState.EMPTY
-        device_under_test.AddReceptors(receptor_ids)
-        time.sleep(0.1)
+        result = device_under_test.AddReceptors(receptor_ids)
+        assert result[0][0] == ResultCode.OK
         assert device_under_test.obsState == ObsState.IDLE
 
         # configure scan
@@ -415,6 +415,7 @@ class TestCbfSubarray:
         f.close()
         time.sleep(0.1)
 
+        assert result[0][0] == ResultCode.STARTED
         assert device_under_test.obsState == ObsState.SCANNING
 
 
@@ -450,8 +451,8 @@ class TestCbfSubarray:
         )
 
         # send the EndScan command
-        device_under_test.EndScan()
-        time.sleep(0.1)
+        result = device_under_test.EndScan()
+        assert result[0][0] == ResultCode.OK
 
         assert device_under_test.obsState == ObsState.READY
 
@@ -488,8 +489,8 @@ class TestCbfSubarray:
         )
 
         # send the Abort command
-        device_under_test.Abort()
-        time.sleep(0.1)
+        result = device_under_test.Abort()
+        assert result[0][0] == ResultCode.OK
 
         assert device_under_test.obsState == ObsState.ABORTED
 

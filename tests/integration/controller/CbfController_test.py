@@ -94,7 +94,7 @@ class TestCbfController:
         sleep_time_s = 0.1
         
         # send the On command
-        test_proxies.controller.On()
+        (result_code, message) = test_proxies.controller.On()
 
         test_proxies.wait_timeout_dev([test_proxies.controller], DevState.ON, wait_time_s, sleep_time_s)
         assert test_proxies.controller.State() == DevState.ON
@@ -139,7 +139,7 @@ class TestCbfController:
         sleep_time_s = 0.1
 
         # send the Off command
-        test_proxies.controller.Off()
+        (result_code, message) = test_proxies.controller.Off()
 
         test_proxies.wait_timeout_dev([test_proxies.controller], DevState.OFF, wait_time_s, sleep_time_s)
         assert test_proxies.controller.State() == DevState.OFF
@@ -171,7 +171,7 @@ class TestCbfController:
         sleep_time_s = 0.1
 
         # send the Standby command
-        test_proxies.controller.Standby()
+        (result_code, message) = test_proxies.controller.Standby()
 
         test_proxies.wait_timeout_dev([test_proxies.controller], DevState.STANDBY, wait_time_s, sleep_time_s)
         assert test_proxies.controller.State() == DevState.STANDBY
@@ -222,35 +222,3 @@ class TestCbfController:
                 for k in range(1, test_proxies.num_fsp + 1):
                     test_proxies.wait_timeout_dev([test_proxies.fspSubarray[i][j][k]], DevState.DISABLE, wait_time_s, sleep_time_s)
                     assert test_proxies.fspSubarray[i][j][k].State() == DevState.DISABLE
-
-
-    #TODO
-
-    # def test_reportVCCSubarrayMembership(
-    #         self,
-    #         cbf_master_proxy,
-    #         subarray_1_proxy,
-    #         subarray_2_proxy,
-    #         vcc_test_proxies
-    # ):
-    # """
-    #     Test the VCC subarray membership subscriptions
-    # """
-
-    # def test_reportVCCState(
-    #         self,
-    #         cbf_master_proxy,
-    #         vcc_test_proxies
-    # ):
-    # """
-    #     Test the VCC state subscriptions
-    # """
-       
-    # def test_reportVCCHealthState(
-    #         self,
-    #         cbf_master_proxy,
-    #         vcc_test_proxies
-    # ):
-    # """
-    #     Test the VCC state subscriptions
-    # """

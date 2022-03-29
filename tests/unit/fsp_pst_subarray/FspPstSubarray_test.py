@@ -32,6 +32,7 @@ from tango.server import command
 #SKA imports
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_tango_base.control_model import HealthState, AdminMode, ObsState
+from ska_tango_base.commands import ResultCode
 from ska_mid_cbf_mcs.commons.global_enum import const, freq_band_dict
 from ska_tango_base.commands import ResultCode
 
@@ -179,7 +180,6 @@ class TestFspPstSubarray:
         assert device_under_test.obsState == ObsState.SCANNING
 
         device_under_test.EndScan()
-        time.sleep(0.1)
         assert device_under_test.obsState == ObsState.READY
 
         device_under_test.GoToIdle()
