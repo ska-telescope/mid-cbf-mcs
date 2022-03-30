@@ -14,8 +14,8 @@ from __future__ import annotations
 import logging
 from typing import List
 from ska_mid_cbf_mcs.power_switch.power_switch_driver import Outlet
-from ska_mid_cbf_mcs.commons.global_enum import PowerMode
 
+from ska_tango_base.control_model import PowerMode
 from ska_tango_base.commands import ResultCode
 
 __all__ = [

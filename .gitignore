@@ -118,15 +118,12 @@ charts/ska-mid-cbf/charts/
 certs/*.crt
 
 # Contents of mounted folder
-mnt/*
-!mnt/README.md
-!mnt/talondx-config
-
 mnt/talondx-config/*
 !mnt/talondx-config/README.md
 
 # docs folder (copied content during document generation)
 docs/src/README.md
+docs/src/diagrams/*.~vsdx
 
 # OS things
 .DS_Store

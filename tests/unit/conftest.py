@@ -60,6 +60,7 @@ def devices_to_load(
         "devices": [
             {
                 "name": device_to_load["device"],
+                "device_class": device_to_load["device_class"],
                 "proxy": device_to_load["proxy"],
             }
         ],
@@ -195,4 +196,3 @@ def device_to_load() -> Optional[DeviceToLoadType]:
     :return: specification of the device to be loaded
     """
     return None
-

@@ -17,7 +17,7 @@ from __future__ import absolute_import
 from __future__ import annotations
 
 import logging
-from typing import Any, Callable, Generator, Set, cast, List
+from typing import Any, Callable, Generator, Set, cast, List, Dict
 import pytest
 import unittest
 import yaml
@@ -55,7 +55,7 @@ def pytest_sessionstart(session: pytest.Session) -> None:
 
 
 with open("tests/testbeds.yaml", "r") as stream:
-    _testbeds: dict[str, set[str]] = yaml.safe_load(stream)
+    _testbeds: Dict[str, Set[str]] = yaml.safe_load(stream)
 
 
 def pytest_configure(config: pytest.config.Config) -> None:
@@ -86,7 +86,7 @@ def pytest_addoption(parser: pytest.config.ArgumentParser) -> None:
 
 
 def pytest_collection_modifyitems(
-    config: pytest.config.Config, items: list[pytest.Item]
+    config: pytest.config.Config, items: List[pytest.Item]
 ) -> None:
     """
     Modify the list of tests to be run, after pytest has collected them.
@@ -127,7 +127,7 @@ def pytest_collection_modifyitems(
 
 
 @pytest.fixture()
-def initial_mocks() -> dict[str, unittest.mock.Mock]:
+def initial_mocks() -> Dict[str, unittest.mock.Mock]:
     """
     Fixture that registers device proxy mocks prior to patching.
 
@@ -157,10 +157,10 @@ def tango_harness_factory(
     request: pytest.FixtureRequest, logger: logging.Logger
 ) -> Callable[
     [
-        dict[str, Any],
+        Dict[str, Any],
         DevicesToLoadType,
         Callable[[], unittest.mock.Mock],
-        dict[str, unittest.mock.Mock],
+        Dict[str, unittest.mock.Mock],
     ],
     TangoHarness,
 ]:
@@ -203,10 +203,10 @@ def tango_harness_factory(
     testbed = request.config.getoption("--testbed")
 
     def build_harness(
-        tango_config: dict[str, Any],
+        tango_config: Dict[str, Any],
         devices_to_load: DevicesToLoadType,
         mock_factory: Callable[[], unittest.mock.Mock],
-        initial_mocks: dict[str, unittest.mock.Mock],
+        initial_mocks: Dict[str, unittest.mock.Mock],
     ) -> TangoHarness:
         """
         Builds the Tango test harness.
@@ -244,7 +244,7 @@ def tango_harness_factory(
 
 
 @pytest.fixture()
-def tango_config() -> dict[str, Any]:
+def tango_config() -> Dict[str, Any]:
     """
     Fixture that returns basic configuration information for a Tango test harness, such
     as whether or not to run in a separate process.
@@ -258,17 +258,17 @@ def tango_config() -> dict[str, Any]:
 def tango_harness(
     tango_harness_factory: Callable[
         [
-            dict[str, Any],
+            Dict[str, Any],
             DevicesToLoadType,
             Callable[[], unittest.mock.Mock],
-            dict[str, unittest.mock.Mock],
+            Dict[str, unittest.mock.Mock],
         ],
         TangoHarness,
     ],
-    tango_config: dict[str, str],
+    tango_config: Dict[str, str],
     devices_to_load: DevicesToLoadType,
     mock_factory: Callable[[], unittest.mock.Mock],
-    initial_mocks: dict[str, unittest.mock.Mock],
+    initial_mocks: Dict[str, unittest.mock.Mock],
 ) -> Generator[TangoHarness, None, None]:
     """
     Creates a test harness for testing Tango devices.
@@ -354,8 +354,8 @@ def init_proxies_fixture():
                 logger=logging.getLogger()
             )
             self.controller.set_timeout_millis(timeout_millis)
-            self.wait_timeout_dev([self.controller], DevState.OFF, 3, 1)
-            
+            self.wait_timeout_dev([self.controller], DevState.DISABLE, 3, 1)
+
             self.receptor_to_vcc = dict([
                 *map(int, pair.split(":"))
             ] for pair in self.controller.receptorToVcc)
@@ -367,7 +367,7 @@ def init_proxies_fixture():
             self.num_sub = int(self.max_capabilities["Subarray"])
             self.num_fsp = int(self.max_capabilities["FSP"])
             self.num_vcc = int(self.max_capabilities["VCC"])
-            
+
             # CbfSubarray
             self.subarray = [None]
             for proxy in [CbfDeviceProxy(
@@ -376,6 +376,7 @@ def init_proxies_fixture():
             ) for i in range(1, self.num_sub + 1)]:
                 proxy.set_timeout_millis(timeout_millis)
                 self.subarray.append(proxy)
+                proxy.loggingLevel = LoggingLevel.DEBUG
 
             # Fsp
             # index == fspID
@@ -420,7 +421,7 @@ def init_proxies_fixture():
                         logger=logging.getLogger()
                     )
                 self.fspFunctionMode.append(func_modes)
-            
+
             # Vcc
             # index == vccID
             self.vcc = [None]
@@ -430,19 +431,7 @@ def init_proxies_fixture():
             ) for i in range(1, self.num_vcc + 1)]:
                 self.vcc.append(proxy)
 
-            # vccBand[vcc id (int)][band (str)]
-            self.vccBand = [None]
-            for i in range(1, self.num_vcc + 1):
-                bands = {}
-                for j in ["12", "3", "4", "5"]:
-                    bands[j] = CbfDeviceProxy(
-                        fqdn=f"mid_csp_cbf/vcc_band{j}/{i:03}",
-                        logger=logging.getLogger()
-                    )
-                self.vccBand.append(bands)
-
-            # TODO: why is search window named vccTdc?
-            self.vccTdc = [None]
+            self.vccSw = [None]
             for i in range(1, self.num_vcc + 1):
                 sw = [None]
                 for j in range(1, 3): # 2 search windows
@@ -450,8 +439,21 @@ def init_proxies_fixture():
                         fqdn=f"mid_csp_cbf/vcc_sw{j}/{i:03}",
                         logger=logging.getLogger()
                     ))
-                self.vccTdc.append(sw)
+                self.vccSw.append(sw)
 
+            # Talon LRU
+            self.talon_lru = []
+            for i in range(1, 3): # 2 Talon LRUs for now
+                self.talon_lru.append(CbfDeviceProxy(
+                    fqdn=f"mid_csp_cbf/talon_lru/{i:03}",
+                    logger=logging.getLogger()
+                ))
+
+            # Power switch
+            self.power_switch = CbfDeviceProxy(
+                fqdn="mid_csp_cbf/power_switch/001",
+                logger=logging.getLogger()
+            )
 
         def wait_timeout_dev(
             self: TestProxies,
@@ -527,7 +529,7 @@ def init_proxies_fixture():
                         [proxy], ObsState.READY, wait_time_s, sleep_time_s_short)
 
                 if proxy.obsState == ObsState.READY:
-                    proxy.GoToIdle()
+                    proxy.End()
                     self.wait_timeout_obs(
                         [proxy], ObsState.IDLE, wait_time_s, sleep_time_s_short)
                     
@@ -540,40 +542,48 @@ def init_proxies_fixture():
         def on(self: TestProxies) -> None:
             """
             Controller device command sequence to turn on subarrays, FSPs, VCCs
+            Used for resetting starting state duing subarray integration testing.
             """
             wait_time_s = 3
             sleep_time_s = 1
 
-            if self.controller.State() == DevState.ON:
-                pass
-            elif self.controller.State() == DevState.OFF:
-                self.controller.On()
-                self.wait_timeout_dev(
-                    [self.controller], DevState.ON, wait_time_s, sleep_time_s)
-            else:
+            if self.controller.adminMode == AdminMode.OFFLINE:
+                self.controller.adminMode = AdminMode.ONLINE
+
+            # ensure On command sent in OFF state
+            if self.controller.State() != DevState.OFF:
                 self.controller.Off()
                 self.wait_timeout_dev(
                     [self.controller], DevState.OFF, wait_time_s, sleep_time_s)
-                self.controller.On()
-                self.wait_timeout_dev(
-                    [self.controller], DevState.ON, wait_time_s, sleep_time_s)
+
+            self.controller.On()
+            self.wait_timeout_dev(
+                [self.controller], DevState.ON, wait_time_s, sleep_time_s)
 
 
         def off(self: TestProxies) -> None:
             """
             Controller device command sequence to turn off subarrays, FSPs, VCCs
+            Used for resetting starting state duing subarray integration testing.
             """
             wait_time_s = 3
             sleep_time_s = 1
 
+            if self.controller.adminMode == AdminMode.OFFLINE:
+                self.controller.adminMode = AdminMode.ONLINE
+
+            # ensure Off command not sent in OFF state
             if self.controller.State() == DevState.OFF:
-                pass
-            else:
-                self.controller.Off()
+                self.controller.On()
                 self.wait_timeout_dev(
-                    [self.controller], DevState.OFF, wait_time_s, sleep_time_s)
-    
+                    [self.controller], DevState.ON, wait_time_s, sleep_time_s)
+
+            self.controller.Off()
+            self.wait_timeout_dev(
+                [self.controller], DevState.OFF, wait_time_s, sleep_time_s)
+
     return TestProxies()
+
 
 @pytest.fixture(scope="class")
 def debug_device_is_on() -> bool:
@@ -585,7 +595,7 @@ def debug_device_is_on() -> bool:
         timeout_millis = 500000
     return debug_device_is_on
 
-def load_data(name: str) -> dict[Any, Any]:
+def load_data(name: str) -> Dict[Any, Any]:
     """
     Loads a dataset by name. This implementation uses the name to find a
     JSON file containing the data to be loaded.

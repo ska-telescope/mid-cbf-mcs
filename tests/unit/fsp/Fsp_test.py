@@ -19,7 +19,6 @@ import json
 import logging
 import pytest
 from typing import Callable, Type, Dict
-from enum import Enum
 
 # Path
 file_path = os.path.dirname(os.path.abspath(__file__))
@@ -35,336 +34,92 @@ from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_mid_cbf_mcs.testing.tango_harness import DeviceToLoadType
 
 from ska_tango_base.control_model import HealthState, AdminMode, ObsState
+from ska_mid_cbf_mcs.commons.global_enum import FspModes
+
+CONST_WAIT_TIME = 4
 
 class TestFsp:
     """
     Test class for Fsp tests.
     """
 
-    def test_On_Off(
-        self: TestFsp,
-        device_under_test: CbfDeviceProxy
-    ) -> None:
-        """
-            Test Fsp's On and Off commands
-
-            :param device_under_test: fixture that provides a
-                :py:class:`tango.DeviceProxy` to the device under test, in a
-                :py:class:`tango.test_context.DeviceTestContext`.
-        """
-    
-        assert device_under_test.State() == DevState.OFF
-
-        (result_code, message) = device_under_test.On()
-        assert result_code == ResultCode.OK
-        assert device_under_test.State() == DevState.ON
-
-        (result_code, message) = device_under_test.Off()
-        assert result_code == ResultCode.OK
-        assert device_under_test.State() == DevState.OFF
-    
-    @pytest.mark.parametrize(
-        "sub_ids", 
-        [
-            (
-                [3, 4, 15]
-            ),
-            (
-                [1]
-            )
-        ]
-    )
-    def test_AddRemoveSubarrayMembership(
+    def test_State(
         self: TestFsp,
         device_under_test: CbfDeviceProxy,
-        sub_ids: List[int]
     ) -> None:
         """
-            Test Fsp's AddSubarrayMembership and 
-            RemoveSubarrayMembership commands
+        Test State
 
-            :param device_under_test: fixture that provides a
-                :py:class:`tango.DeviceProxy` to the device under test, in a
-                :py:class:`tango.test_context.DeviceTestContext`.
-            :param sub_ids: list of subarray ids
+        :param device_under_test: fixture that provides a
+            :py:class:`CbfDeviceProxy` to the device under test, in a
+            :py:class:`tango.test_context.DeviceTestContext`.
         """
-
-        assert device_under_test.State() == DevState.OFF
-
-        (result_code, message) = device_under_test.On()
-        assert result_code == ResultCode.OK
-        assert device_under_test.State() == DevState.ON
-
-        # subarray membership should be empty
-        assert device_under_test.subarrayMembership == None
-
-        # add fsp to all but last test subarray
-        for sub_id in sub_ids[:-1]:
-            device_under_test.AddSubarrayMembership(sub_id)
-            time.sleep(3)
-        for idx, sub_id in enumerate(sub_ids[:-1]):
-            assert device_under_test.read_attribute("subarrayMembership", \
-                extract_as=tango.ExtractAs.List).value[idx] == sub_ids[:-1][idx]
-
-        # remove fsp from first test subarray
-        device_under_test.RemoveSubarrayMembership(sub_ids[0])
-        time.sleep(3)
-        for idx, sub_id in enumerate(sub_ids[1:-1]):
-            assert device_under_test.read_attribute("subarrayMembership", \
-                extract_as=tango.ExtractAs.List).value[idx] == sub_ids[1:-1][idx]
-        
-        # add fsp to last test subarray
-        device_under_test.AddSubarrayMembership(sub_ids[-1])
-        time.sleep(3)
-        for idx, sub_id in enumerate(sub_ids[1:]):
-            assert device_under_test.read_attribute("subarrayMembership", \
-                extract_as=tango.ExtractAs.List).value[idx] == sub_ids[1:][idx]
-       
-        # remove fsp from all subarrays
-        for sub_id in sub_ids:
-            device_under_test.RemoveSubarrayMembership(sub_id)
-            time.sleep(3)
-        assert device_under_test.subarrayMembership == None
+        assert device_under_test.State() == DevState.DISABLE
     
-    @pytest.mark.parametrize(
-        "timing_beam_weights_file_name, \
-         sub_id",
-        [
-            (
-                "/../../data/timingbeamweights_fsp_unit_test.json",
-                1
-            )
-        ]
-    )
-    def test_UpdateBeamWeights(
+    def test_Status(
         self: TestFsp,
         device_under_test: CbfDeviceProxy,
-        timing_beam_weights_file_name: str,
-        sub_id: int
     ) -> None:
         """
-            Test Fsp's UpdateBeamWeights command
+        Test Status
 
-            :param device_under_test: fixture that provides a
-                :py:class:`tango.DeviceProxy` to the device under test, in a
-                :py:class:`tango.test_context.DeviceTestContext`.
-            :param timing_beam_weights_file_name: JSON file for the timing beam weights 
-            :param sub_id: the subarray id
+        :param device_under_test: fixture that provides a
+            :py:class:`CbfDeviceProxy` to the device under test, in a
+            :py:class:`tango.test_context.DeviceTestContext`.
         """
+        assert device_under_test.Status() == "The device is in DISABLE state."
 
-        assert device_under_test.State() == DevState.OFF
-        (result_code, message) = device_under_test.On()
-        assert result_code == ResultCode.OK
-        assert device_under_test.State() == DevState.ON
-        device_under_test.AddSubarrayMembership(sub_id)
-        time.sleep(3)
-        assert device_under_test.read_attribute("subarrayMembership", \
-            extract_as=tango.ExtractAs.List).value == [sub_id]
-
-        # timing beam weights should be set to 0.0 after init
-        num_cols = 6
-        num_rows = 4
-        assert device_under_test.read_attribute("timingBeamWeights", \
-             extract_as=tango.ExtractAs.List).value == [[0.0] * num_cols for _ in range(num_rows)]
-
-        # update only valid for function mode PST-BF
-        device_under_test.SetFunctionMode("PST-BF")
-        time.sleep(0.1)
-        #TODO: this enum should be defined once and referred to throughout the project
-        FspModes = Enum('FspModes', 'CORR PSS_BF PST_BF VLBI')
-        assert device_under_test.functionMode == FspModes.PST_BF.value
-
-        # read the json file
-        f = open(file_path + timing_beam_weights_file_name)
-        json_str = f.read().replace("\n", "")
-        f.close()
-        timing_beam_weights = json.loads(json_str)
-        
-        # update the weights 
-        for weights in timing_beam_weights["beamWeights"]:
-            beam_weights_details = weights["beamWeightsDetails"]
-
-            device_under_test.UpdateBeamWeights(json.dumps(beam_weights_details))
-
-        time.sleep(3)
-        # verify the weights were updated successfully 
-        for weights in timing_beam_weights["beamWeights"]:
-            beam_weights_details = weights["beamWeightsDetails"]
-            for receptor in beam_weights_details:
-                recptor_id = receptor["receptor"]
-                for frequency_slice in receptor["receptorWeightsDetails"]:
-                    weights = frequency_slice["weights"]
-                    assert device_under_test.read_attribute("timingBeamWeights", \
-                        extract_as=tango.ExtractAs.List).value[recptor_id -1] == weights
-    
-    @pytest.mark.parametrize(
-        "jones_matrix_file_name, \
-        sub_id, \
-        valid_receptor_ids, \
-        fsp_id",
-        [
-            (
-                "/../../data/jonesmatrix_unit_test.json",
-                1,
-                [1, 2, 3, 4],
-                1
-            )
-        ]
-    )
-    def test_UpdateJonesMatrix(
+    def test_adminMode(
         self: TestFsp,
         device_under_test: CbfDeviceProxy,
-        jones_matrix_file_name: str,
-        sub_id: int,
-        valid_receptor_ids: List[int],
-        fsp_id: int
     ) -> None:
         """
-            Test Fsp's UpdateJonesMatrix command
+        Test Admin Mode
 
-            :param device_under_test: fixture that provides a
-                :py:class:`tango.DeviceProxy` to the device under test, in a
-                :py:class:`tango.test_context.DeviceTestContext`.
-            :param jones_matrix_file_name: JSON file for the jones matrix
-            :param sub_id: the subarray id
-            :param valid_receptor_ids: the valid receptor ids for the pss/pst subarray
-                (mocked in conftest.py)
-            :param fsp_id: the fsp id (defined in conftest.py)
+        :param device_under_test: fixture that provides a
+            :py:class:`CbfDeviceProxy` to the device under test, in a
+            :py:class:`tango.test_context.DeviceTestContext`.
         """
-
-        assert device_under_test.State() == DevState.OFF
-        (result_code, message) = device_under_test.On()
-        assert result_code == ResultCode.OK
-        assert device_under_test.State() == DevState.ON
-        device_under_test.AddSubarrayMembership(sub_id)
-        time.sleep(3)
-        assert device_under_test.read_attribute("subarrayMembership", \
-            extract_as=tango.ExtractAs.List).value == [sub_id]
-
-        # jones matrix values should be set to 0.0 after init
-        num_cols = 16
-        num_rows = 4
-        assert device_under_test.read_attribute("jonesMatrix", \
-             extract_as=tango.ExtractAs.List).value == [[0.0] * num_cols for _ in range(num_rows)]
-
-        # read the json file
-        f = open(file_path + jones_matrix_file_name)
-        json_str = f.read().replace("\n", "")
-        f.close()
-        jones_matrix = json.loads(json_str)
-
-        valid_function_modes = ["PSS-BF", "PST-BF"]
-        for mode in valid_function_modes:
-            device_under_test.SetFunctionMode(mode)
-            time.sleep(0.1)
-            FspModes = Enum('FspModes', 'CORR PSS_BF PST_BF VLBI')
-            if mode == "PSS-BF":
-                assert device_under_test.functionMode == FspModes.PSS_BF.value
-                fs_length = 16
-            elif mode == "PST-BF":
-                assert device_under_test.functionMode == FspModes.PST_BF.value
-                fs_length = 4
-
-            # update the jones matrix
-            for m in jones_matrix["jonesMatrix"]:
-                device_under_test.UpdateJonesMatrix(json.dumps(m["matrixDetails"]))
-            
-            time.sleep(3)
-            # verify the jones matrix was updated successfully 
-            for m in jones_matrix["jonesMatrix"]:
-                for matrixDetail in m["matrixDetails"]:
-                    rec_id = matrixDetail["receptor"]
-                    if rec_id in valid_receptor_ids:
-                        for frequency_slice in matrixDetail["receptorMatrix"]:
-                            fs_id = frequency_slice["fsid"]
-                            matrix = frequency_slice["matrix"]
-                            if fs_id == fsp_id:
-                                if len(matrix) == fs_length:
-                                    assert device_under_test.read_attribute("jonesMatrix", \
-                                        extract_as=tango.ExtractAs.List).value[rec_id -1] == matrix
+        assert device_under_test.adminMode == AdminMode.OFFLINE
     
     @pytest.mark.parametrize(
-        "delay_model_file_name, \
-        sub_id, \
-        valid_receptor_ids, \
-        fsp_id",
+        "command",
         [
-            (
-                "/../../data/delaymodel_unit_test.json",
-                1,
-                [1, 2, 3, 4],
-                1
-            )
+            "On",
+            "Off",
+            "Standby"
         ]
     )
-    def test_UpdateDelayModel(
+    def test_Power_Commands(
         self: TestFsp,
         device_under_test: CbfDeviceProxy,
-        delay_model_file_name: str,
-        sub_id: int,
-        valid_receptor_ids: List[int],
-        fsp_id: int
+        command: str
     ) -> None:
         """
-            Test Fsp's UpdateDelayModel command
+        Test the On/Off/Standby Commands
 
-            :param device_under_test: fixture that provides a
-                :py:class:`tango.DeviceProxy` to the device under test, in a
-                :py:class:`tango.test_context.DeviceTestContext`.
-            :param delay_model_file_name: JSON file for the delay model
-            :param sub_id: the subarray id
-            :param valid_receptor_ids: the valid receptor ids for the pss/pst subarray
-                (mocked in conftest.py)
-            :param fsp_id: the fsp id (defined in conftest.py)
+        :param device_under_test: fixture that provides a
+            :py:class:`CbfDeviceProxy` to the device under test, in a
+            :py:class:`tango.test_context.DeviceTestContext`.
+        :param command: the command to test (one of On/Off/Standby)
         """
 
+        device_under_test.write_attribute("adminMode", AdminMode.ONLINE)
+        time.sleep(CONST_WAIT_TIME)
+        assert device_under_test.adminMode == AdminMode.ONLINE
+
         assert device_under_test.State() == DevState.OFF
-        (result_code, message) = device_under_test.On()
-        assert result_code == ResultCode.OK
-        assert device_under_test.State() == DevState.ON
-        device_under_test.AddSubarrayMembership(sub_id)
-        time.sleep(3)
-        assert device_under_test.read_attribute("subarrayMembership", \
-            extract_as=tango.ExtractAs.List).value == [sub_id]
 
-        # delay model values should be set to 0.0 after init
-        num_cols = 6
-        num_rows = 4
-        assert device_under_test.read_attribute("delayModel", \
-             extract_as=tango.ExtractAs.List).value == [[0.0] * num_cols for _ in range(num_rows)]
-        
-        # read the json file
-        f = open(file_path + delay_model_file_name)
-        json_str = f.read().replace("\n", "")
-        f.close()
-        delay_model = json.loads(json_str)
+        if command == "On":
+            expected_state = DevState.ON
+            result = device_under_test.On()
+        elif command == "Off":
+            expected_state = DevState.OFF
+            result = device_under_test.Off()
+        elif command == "Standby":
+            expected_state = DevState.STANDBY
+            result = device_under_test.Standby()
 
-        valid_function_modes = ["PSS-BF", "PST-BF"]
-        for mode in valid_function_modes:
-            device_under_test.SetFunctionMode(mode)
-            time.sleep(0.1)
-            FspModes = Enum('FspModes', 'CORR PSS_BF PST_BF VLBI')
-            if mode == "PSS-BF":
-                assert device_under_test.functionMode == FspModes.PSS_BF.value
-            elif mode == "PST-BF":
-                assert device_under_test.functionMode == FspModes.PST_BF.value
-
-            # update the delay model
-            for m in delay_model["delayModel"]:
-                device_under_test.UpdateDelayModel(json.dumps(m["delayDetails"]))
-
-            time.sleep(3)
-
-            model_len = 6
-            # verify the delay model was updated successfully 
-            for m in delay_model["delayModel"]:
-                for delayDetail in m["delayDetails"]:
-                    rec_id = delayDetail["receptor"]
-                    if rec_id in valid_receptor_ids:
-                            for frequency_slice in delayDetail["receptorDelayDetails"]:
-                                fs_id = frequency_slice["fsid"]
-                                if fs_id == fsp_id:
-                                    delayCoeffs = frequency_slice["delayCoeff"]
-                                    if len(delayCoeffs) == model_len:
-                                        assert device_under_test.read_attribute("delayModel", \
-                                            extract_as=tango.ExtractAs.List).value[rec_id -1] == delayCoeffs 
+        time.sleep(CONST_WAIT_TIME)
+        assert result[0][0] == ResultCode.OK
+        assert device_under_test.State() == expected_state

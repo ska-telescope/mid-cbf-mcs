@@ -15,13 +15,16 @@ import json
 import logging
 import pytest
 import requests
-from typing import List, Any
+from typing import List, Any, Callable
+import unittest
 
 # Local imports
 from ska_mid_cbf_mcs.power_switch.power_switch_device import PowerSwitch
 from ska_mid_cbf_mcs.power_switch.power_switch_component_manager import PowerSwitchComponentManager
 from ska_mid_cbf_mcs.testing.tango_harness import TangoHarness, DevicesToLoadType
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
+from ska_mid_cbf_mcs.testing.mock.mock_callable import MockChangeEventCallback, MockCallable
+
 from ska_tango_base.control_model import SimulationMode
 
 @pytest.fixture(scope="function")
@@ -29,6 +32,10 @@ def power_switch_component_manager(
     logger: logging.Logger,
     request: pytest.FixtureRequest,
     monkeypatch: pytest.MonkeyPatch,
+    push_change_event_callback: MockChangeEventCallback,
+    communication_status_changed_callback: MockCallable,
+    component_power_mode_changed_callback: MockCallable,
+    component_fault_callback: MockCallable
 ) -> PowerSwitchComponentManager:
     """
     Return a power switch component manager (with HTTP connection monkey-patched).
@@ -125,10 +132,114 @@ def power_switch_component_manager(
     monkeypatch.setattr(requests, "get", mock_get)
 
     return PowerSwitchComponentManager(
-        SimulationMode.FALSE,
-        "0.0.0.0",
-        logger
+        simulation_mode=SimulationMode.FALSE,
+        ip="0.0.0.0",
+        logger=logger,
+        push_change_event_callback=push_change_event_callback,
+        communication_status_changed_callback=communication_status_changed_callback,
+        component_power_mode_changed_callback=component_power_mode_changed_callback,
+        component_fault_callback=component_fault_callback
     )
+
+
+@pytest.fixture()
+def communication_status_changed_callback(
+    mock_callback_factory: Callable[[], unittest.mock.Mock],
+) -> unittest.mock.Mock:
+    """
+    Return a mock callback for component manager communication status.
+
+    :param mock_callback_factory: fixture that provides a mock callback
+        factory (i.e. an object that returns mock callbacks when
+        called).
+
+    :return: a mock callback to be called when the communication status
+        of a component manager changed.
+    """
+    return mock_callback_factory()
+
+
+@pytest.fixture()
+def component_power_mode_changed_callback(
+    mock_callback_factory: Callable[[], unittest.mock.Mock],
+) -> unittest.mock.Mock:
+    """
+    Return a mock callback for component power mode change.
+
+    :param mock_callback_factory: fixture that provides a mock callback
+        factory (i.e. an object that returns mock callbacks when
+        called).
+
+    :return: a mock callback to be called when the component manager
+        detects that the power mode of its component has changed.
+    """
+    return mock_callback_factory()
+
+@pytest.fixture()
+def component_fault_callback(
+    mock_callback_factory: Callable[[], unittest.mock.Mock],
+) -> unittest.mock.Mock:
+    """
+    Return a mock callback for component manager fault.
+
+    :param mock_callback_factory: fixture that provides a mock callback
+        factory (i.e. an object that returns mock callbacks when
+        called).
+
+    :return: a mock callback to be called when the communication status
+        of a component manager changed.
+    """
+    return mock_callback_factory()
+
+@pytest.fixture()
+def ccheck_power_mode_callback(
+    mock_callback_factory: Callable[[], unittest.mock.Mock],
+) -> unittest.mock.Mock:
+    """
+    Return a mock callback for component manager fault.
+
+    :param mock_callback_factory: fixture that provides a mock callback
+        factory (i.e. an object that returns mock callbacks when
+        called).
+
+    :return: a mock callback to be called when the communication status
+        of a component manager changed.
+    """
+    return mock_callback_factory()
+
+@pytest.fixture()
+def push_change_event_callback_factory(
+    mock_change_event_callback_factory: Callable[[str], MockChangeEventCallback],
+) -> Callable[[], MockChangeEventCallback]:
+    """
+    Return a mock change event callback factory 
+
+    :param mock_change_event_callback_factory: fixture that provides a
+        mock change event callback factory (i.e. an object that returns
+        mock callbacks when called).
+
+    :return: a mock change event callback factory 
+    """
+
+    def _factory() -> MockChangeEventCallback:
+        return mock_change_event_callback_factory("adminMode")
+
+    return _factory
+
+
+@pytest.fixture()
+def push_change_event_callback(
+    push_change_event_callback_factory: Callable[[], MockChangeEventCallback],
+) -> MockChangeEventCallback:
+    """
+    Return a mock change event callback 
+
+    :param push_change_event_callback_factory: fixture that provides a mock
+        change event callback factory 
+
+    :return: a mock change event callback 
+    """
+    return push_change_event_callback_factory()
 
 @pytest.fixture()
 def device_under_test(tango_harness: TangoHarness) -> CbfDeviceProxy:
@@ -152,6 +263,7 @@ def device_to_load() -> DevicesToLoadType:
         "path": "tests/unit/power_switch/devicetoload.json",
         "package": "ska_mid_cbf_mcs.power_switch.power_switch_device",
         "device": "powerswitch-001",
+        "device_class": "PowerSwitch",
         "proxy": CbfDeviceProxy,
         "patch": PowerSwitch
     }

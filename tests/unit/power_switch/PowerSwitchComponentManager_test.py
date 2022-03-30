@@ -12,10 +12,9 @@
 
 # Standard imports
 import pytest
-from ska_mid_cbf_mcs.commons.global_enum import PowerMode
 from ska_mid_cbf_mcs.power_switch.power_switch_component_manager import PowerSwitchComponentManager
 
-# Local imports
+from ska_tango_base.control_model import PowerMode
 from ska_tango_base.commands import ResultCode
 
 @pytest.mark.parametrize(
@@ -31,6 +30,7 @@ def test_get_outlet_state(
     """
     Tests that we can get the state of every outlet.
     """
+    power_switch_component_manager.start_communicating()
     # Check that the number of outlets is 8, since that is what our mock response returns
     num_outlets = power_switch_component_manager.num_outlets
     assert num_outlets == 8
@@ -51,6 +51,7 @@ def test_turn_outlet_on_off(
     """
     Tests that the outlets can be turned on and off individually.
     """
+    power_switch_component_manager.start_communicating()
     # Check that the number of outlets is 8, since that is what our mock response returns
     num_outlets = power_switch_component_manager.num_outlets
     assert num_outlets == 8
@@ -101,6 +102,7 @@ def test_outlet_out_of_bounds(
     Tests that the power switch driver does not query the power switch with
     an outlet number that is invalid.
     """
+    power_switch_component_manager.start_communicating()
     # Check that the number of outlets is 8, since that is what our mock response returns
     num_outlets = power_switch_component_manager.num_outlets
     assert num_outlets == 8
@@ -128,6 +130,7 @@ def test_get_request_failure(
     """
     Tests that a GET request failure is appropriately handled.
     """
+    power_switch_component_manager.start_communicating()
     assert power_switch_component_manager.is_communicating == False
     assert power_switch_component_manager.num_outlets == 0
 
@@ -144,6 +147,7 @@ def test_put_request_failure(
     """
     Tests that a PUT request failure is appropriately handled.
     """
+    power_switch_component_manager.start_communicating()
     num_outlets = power_switch_component_manager.num_outlets
     assert num_outlets == 8
 

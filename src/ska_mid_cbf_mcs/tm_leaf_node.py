@@ -51,18 +51,18 @@ class TmCspSubarrayLeafNodeTest(SKABaseDevice):
     # PROTECTED REGION ID(TmCspSubarrayLeafNodeTest.class_variable) ENABLED START #
 
     def __output_links_event_callback(self, event):
-        self.logger.info("__output_links_event_callback: {}".format(self._received_output_links))
+        self.logger.info(f"__output_links_event_callback: {self._received_output_links}")
         if not event.err:
             try:
                 log_msg = "Received output links."
-                self.logger.warn(log_msg)
+                self.logger.warning(log_msg)
 
                 output_links = json.loads(str(event.attr_value.value))
                 config_ID = output_links["configID"]
 
                 if not config_ID or self._received_output_links:
                     log_msg = "Skipped assigning destination addresses."
-                    self.logger.warn(log_msg)
+                    self.logger.warning(log_msg)
                     return
 
                 self._config_ID = config_ID
@@ -107,7 +107,7 @@ class TmCspSubarrayLeafNodeTest(SKABaseDevice):
             destination_addresses["receiveAddresses"].append(fsp)
 
         log_msg = "Done assigning destination addresses."
-        self.logger.warn(log_msg)
+        self.logger.warning(log_msg)
         # publish the destination addresses
         self._vis_destination_address = destination_addresses
         self.push_change_event("visDestinationAddress", json.dumps(self._vis_destination_address))
@@ -244,13 +244,13 @@ class TmCspSubarrayLeafNodeTest(SKABaseDevice):
 
     def write_dopplerPhaseCorrection(self, value):
         # PROTECTED REGION ID(TmCspSubarrayLeafNodeTest.dopplerPhaseCorrection_write) ENABLED START #
-        self.logger.info("write_dopplerPhaseCorrection: type(value) {}".format(type(value)))
+        self.logger.info(f"write_dopplerPhaseCorrection: type(value) {type(value)}")
         try:
             if len(value) == 4:
                 self._doppler_phase_correction = value
             else:
-                log_msg = "Writing to dopplerPhaseCorrection attribute expected 4 elements, \
-                    but received {}. Ignoring.".format(len(value))
+                log_msg = "Writing to dopplerPhaseCorrection attribute expected 4 elements, " + \
+                    f"but received {len(value)}. Ignoring."
                 self.logger.error(log_msg)
         except TypeError:  # value is not an array
             log_msg = "dopplerPhaseCorrection attribute must be an array of length 4. Ignoring."

@@ -26,16 +26,83 @@ data_file_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
 import tango
 from tango import DevState
 import pytest
-from enum import Enum
 
 # SKA specific imports
 from ska_tango_base.commands import ResultCode
-from ska_mid_cbf_mcs.commons.global_enum import freq_band_dict
+from ska_mid_cbf_mcs.commons.global_enum import freq_band_dict, FspModes
 from ska_tango_base.control_model import LoggingLevel, HealthState
 from ska_tango_base.control_model import AdminMode, ObsState
-from ska_tango_base.base_device import _DEBUGGER_PORT
+from ska_tango_base.base.base_device import _DEBUGGER_PORT
+
 
 class TestCbfSubarray:
+
+    @pytest.mark.parametrize(
+        "sub_id", 
+        [1]
+    )
+    def test_Connect(
+        self: TestCbfSubarray, 
+        test_proxies: pytest.fixture,
+        sub_id: int
+    ) -> None:
+        """
+        Test the initial states and verify the component manager 
+        can start communicating
+
+        :param test_proxies: the proxies test fixture
+        :param sub_id: the subarray id
+        """
+
+        wait_time_s = 3
+        sleep_time_s = 0.1
+
+        device_under_test = test_proxies.subarray[sub_id]
+
+        assert device_under_test.State() == DevState.DISABLE 
+
+        # trigger start_communicating by setting the AdminMode to ONLINE
+        device_under_test.adminMode = AdminMode.ONLINE
+
+        # subarray device should be in ON state after start_communicating 
+        test_proxies.wait_timeout_dev([device_under_test], DevState.OFF, wait_time_s, sleep_time_s)
+        assert device_under_test.State() == DevState.OFF
+    
+    @pytest.mark.parametrize(
+        "sub_id", 
+        [1]
+    )
+    def test_Off_On_Standby(
+        self: TestCbfSubarray, 
+        test_proxies: pytest.fixture,
+        sub_id: int
+    ) -> None:
+        """
+        Test the "On" command
+
+        :param test_proxies: the proxies test fixture
+        :param sub_id: the subarray id
+        """
+        wait_time_s = 3
+        sleep_time_s = 1
+
+        device_under_test = test_proxies.subarray[sub_id]
+
+        device_under_test.On()
+
+        test_proxies.wait_timeout_dev([device_under_test], DevState.ON, wait_time_s, sleep_time_s)
+        assert device_under_test.State() == DevState.ON
+
+        device_under_test.Off()
+
+        test_proxies.wait_timeout_dev([device_under_test], DevState.OFF, wait_time_s, sleep_time_s)
+        assert device_under_test.State() == DevState.OFF
+
+        device_under_test.Standby()
+
+        test_proxies.wait_timeout_dev([device_under_test], DevState.STANDBY, wait_time_s, sleep_time_s)
+        assert device_under_test.State() == DevState.STANDBY
+
 
     @pytest.mark.parametrize(
         "receptor_ids, \
@@ -74,12 +141,13 @@ class TestCbfSubarray:
             port = test_proxies.subarray[sub_id].DebugDevice()
 
         try:
-            wait_time_s = 1
+            wait_time_s = 3
             sleep_time_s = 1
 
             # controller will turn On/Off all of its subordinate devices,
             # including the subarrays, FSPs and VCCs
             test_proxies.on()
+            time.sleep(sleep_time_s)
 
             assert test_proxies.subarray[sub_id].State() == DevState.ON
             assert test_proxies.subarray[sub_id].obsState == ObsState.EMPTY
@@ -153,6 +221,7 @@ class TestCbfSubarray:
             )
         ]
     )
+
     def test_AddReceptors_invalid_single(
         self: TestCbfSubarray, 
         test_proxies: pytest.fixture, 
@@ -174,7 +243,8 @@ class TestCbfSubarray:
             sleep_time_s = 1
 
             test_proxies.on()
-            
+            time.sleep(sleep_time_s)
+
             assert test_proxies.subarray[sub_id].State() == DevState.ON
             assert test_proxies.subarray[sub_id].obsState == ObsState.EMPTY
             assert len(test_proxies.subarray[sub_id].receptors) == 0
@@ -189,14 +259,12 @@ class TestCbfSubarray:
             assert test_proxies.subarray[sub_id].obsState == ObsState.IDLE
 
             # try adding an invalid receptor ID
-            result = test_proxies.subarray[sub_id].AddReceptors(invalid_receptor_id)
-            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.FAULT, wait_time_s, sleep_time_s)
-            assert result[0][0] == ResultCode.FAILED
+            test_proxies.subarray[sub_id].AddReceptors(invalid_receptor_id)
+            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.IDLE, wait_time_s, sleep_time_s)
             assert [test_proxies.subarray[sub_id].receptors[i] for i in range(len(receptor_ids))] == receptor_ids
             assert all([test_proxies.vcc[test_proxies.receptor_to_vcc[i]].subarrayMembership == 1 for i in receptor_ids])
 
-            test_proxies.subarray[sub_id].Restart()
-            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.EMPTY, wait_time_s, sleep_time_s)
+            test_proxies.subarray[sub_id].RemoveAllReceptors()
 
             test_proxies.off()
 
@@ -248,6 +316,7 @@ class TestCbfSubarray:
             sleep_time_s = 1
 
             test_proxies.on()
+            time.sleep(sleep_time_s)
             
             assert test_proxies.subarray[sub_id].State() == DevState.ON
             assert test_proxies.subarray[sub_id].obsState == ObsState.EMPTY
@@ -327,6 +396,7 @@ class TestCbfSubarray:
             sleep_time_s = 1
 
             test_proxies.on()
+            time.sleep(sleep_time_s)
             
             assert test_proxies.subarray[sub_id].State() == DevState.ON
             assert test_proxies.subarray[sub_id].obsState == ObsState.EMPTY
@@ -394,14 +464,14 @@ class TestCbfSubarray:
             wait_time_s = 1
             sleep_time_s = 1
 
-            test_proxies.on()
-            
             f = open(data_file_path + config_file_name)
             json_string = f.read().replace("\n", "")
             f.close()
             configuration = json.loads(json_string)
             sub_id = int(configuration["common"]["subarray_id"])
-            test_proxies.subarray[sub_id].loggingLevel = LoggingLevel.DEBUG
+
+            test_proxies.on()
+            time.sleep(sleep_time_s)
 
             # check initial value of attributes of CBF subarray
             vcc_index = test_proxies.receptor_to_vcc[4]
@@ -409,7 +479,7 @@ class TestCbfSubarray:
             logging.info("vcc_index  = {}".format( vcc_index ))
 
             assert len(test_proxies.subarray[sub_id].receptors) == 0
-            assert test_proxies.subarray[sub_id].configID == ''
+            assert test_proxies.subarray[sub_id].configurationID == ''
             assert test_proxies.subarray[sub_id].frequencyBand == 0
             assert test_proxies.subarray[sub_id].obsState == ObsState.EMPTY
 
@@ -427,22 +497,13 @@ class TestCbfSubarray:
 
             # check configured attributes of CBF subarray
             assert sub_id == int(configuration["common"]["subarray_id"])
-            assert test_proxies.subarray[sub_id].configID == configuration["common"]["config_id"]
+            assert test_proxies.subarray[sub_id].configurationID == configuration["common"]["config_id"]
             band_index = freq_band_dict()[configuration["common"]["frequency_band"]]
             assert band_index == test_proxies.subarray[sub_id].frequencyBand 
             assert test_proxies.subarray[sub_id].obsState == ObsState.READY
 
             test_proxies.wait_timeout_obs([test_proxies.vcc[i] 
                 for i in range(1, test_proxies.num_vcc + 1)], ObsState.READY, wait_time_s, sleep_time_s)
-
-            # check the rest of the configured attributes of VCCs
-
-            #TODO fix these tests; issue with VccBand devices either not reconfiguring in between
-            #     configurations or causing a fault within the Vcc device
-            # assert [proxy.State() for proxy in test_proxies.vccBand[test_proxies.receptor_to_vcc[4] - 1]] == [
-            #     DevState.DISABLE, DevState.DISABLE, DevState.DISABLE, DevState.ON]
-            # assert [proxy.State() for proxy in test_proxies.vccBand[test_proxies.receptor_to_vcc[1] - 1]] == [
-            #     DevState.DISABLE, DevState.DISABLE, DevState.DISABLE, DevState.ON]
 
             # check the rest of the configured attributes of VCCs
             for r in vcc_receptors:
@@ -494,30 +555,32 @@ class TestCbfSubarray:
             if "search_window" in configuration["cbf"]:
                 for idx, search_window in enumerate(configuration["cbf"]["search_window"]):
                     for r in vcc_receptors:
-                        assert test_proxies.vccTdc[
+                        assert test_proxies.vccSw[
                             test_proxies.receptor_to_vcc[r]][idx + 1
                         ].tdcEnable == search_window["tdc_enable"]
+                        # TODO implement VCC SW functionality and
+                        # correct power states
                         if search_window["tdc_enable"]:
-                            assert test_proxies.vccTdc[
-                                test_proxies.receptor_to_vcc[r]][idx + 1
-                            ].State() == DevState.ON
-                        else:
-                            assert test_proxies.vccTdc[
+                            assert test_proxies.vccSw[
                                 test_proxies.receptor_to_vcc[r]][idx + 1
                             ].State() == DevState.DISABLE
-                        assert test_proxies.vccTdc[
+                        else:
+                            assert test_proxies.vccSw[
+                                test_proxies.receptor_to_vcc[r]][idx + 1
+                            ].State() == DevState.DISABLE
+                        assert test_proxies.vccSw[
                             test_proxies.receptor_to_vcc[r]][idx + 1
                         ].searchWindowTuning == search_window["search_window_tuning"]
                         if "tdc_num_bits" in search_window:
-                            assert test_proxies.vccTdc[
+                            assert test_proxies.vccSw[
                                 test_proxies.receptor_to_vcc[r]][idx + 1
                             ].tdcNumBits == search_window["tdc_num_bits"]
                         if "tdc_period_before_epoch" in search_window:
-                            assert test_proxies.vccTdc[
+                            assert test_proxies.vccSw[
                                 test_proxies.receptor_to_vcc[r]][idx + 1
                             ].tdcPeriodBeforeEpoch == search_window["tdc_period_before_epoch"]
                         if "tdc_period_after_epoch" in search_window:
-                            assert test_proxies.vccTdc[
+                            assert test_proxies.vccSw[
                                 test_proxies.receptor_to_vcc[r]][idx + 1
                             ].tdcPeriodAfterEpoch == search_window["tdc_period_after_epoch"]
                         if "tdc_destination_address" in search_window:
@@ -526,12 +589,11 @@ class TestCbfSubarray:
                                 for t in search_window["tdc_destination_address"] 
                                 if t["receptor_id"] == r
                             ]
-                            assert [list(test_proxies.vccTdc[
+                            assert [list(test_proxies.vccSw[
                                 test_proxies.receptor_to_vcc[r]][idx + 1
                             ].tdcDestinationAddress)] == tdcDestAddr
  
            # check configured attributes of FSPs, including states of function mode capabilities
-            FspModes = Enum('FspModes', 'CORR PSS_BF PST_BF VLBI')
             for fsp in configuration["cbf"]["fsp"]:
                 fsp_id = fsp["fsp_id"]
                 logging.info("Check for fsp id = {}".format(fsp_id))
@@ -630,7 +692,7 @@ class TestCbfSubarray:
 
             # Clean Up
             wait_time_s = 3
-            test_proxies.subarray[sub_id].GoToIdle()
+            test_proxies.subarray[sub_id].End()
             test_proxies.wait_timeout_obs([test_proxies.vcc[i] 
                 for i in range(1, test_proxies.num_vcc + 1)], ObsState.IDLE, wait_time_s, sleep_time_s)
             test_proxies.subarray[sub_id].RemoveAllReceptors()
@@ -690,8 +752,6 @@ class TestCbfSubarray:
         try:
             wait_time_s = 1
             sleep_time_s = 1
-
-            test_proxies.on()
             
             f = open(data_file_path + config_file_name)
             json_string = f.read().replace("\n", "")
@@ -699,9 +759,12 @@ class TestCbfSubarray:
             configuration = json.loads(json_string)
             sub_id = int(configuration["common"]["subarray_id"])
 
+            test_proxies.on()
+            time.sleep(sleep_time_s)
+
             # check initial value of attributes of CBF subarray
             assert len(test_proxies.subarray[sub_id].receptors) == 0
-            assert test_proxies.subarray[sub_id].configID == ''
+            assert test_proxies.subarray[sub_id].configurationID == ''
             assert test_proxies.subarray[sub_id].frequencyBand == 0
             assert test_proxies.subarray[sub_id].obsState == ObsState.EMPTY
 
@@ -735,8 +798,6 @@ class TestCbfSubarray:
             test_proxies.tm.jonesMatrix = json.dumps(jones_matrix)
             time.sleep(1)
 
-            FspModes = Enum('FspModes', 'CORR PSS_BF PST_BF VLBI')
-
             for epoch in range(len(jones_matrix_index_per_epoch)):
 
                 for receptor in jones_matrix["jonesMatrix"][jones_matrix_index_per_epoch[epoch]]["matrixDetails"]:
@@ -755,7 +816,7 @@ class TestCbfSubarray:
                                         proxy_subarray = test_proxies.fspSubarray["PST-BF"][sub_id][fs_id]
                                     if rec_id in proxy_subarray.receptors and len(matrix) == fs_length:
                                         for idx, matrix_val in enumerate(matrix):
-                                            assert matrix_val == fsp.jonesMatrix[rec_id -1][idx]
+                                            assert matrix_val == fsp.jonesMatrix[rec_id - 1][idx]
                         else:
                             log_msg = "function mode {} currently not supported".format(fsp.functionMode)
                             logging.error(log_msg)
@@ -782,11 +843,9 @@ class TestCbfSubarray:
             test_proxies.tm.delayModel = json.dumps(delay_model)
             time.sleep(1)
 
-            FspModes = Enum('FspModes', 'CORR PSS_BF PST_BF VLBI')
-
             for epoch in range(len(delay_model_index_per_epoch)):
 
-                model = delay_model["delayModel"][delay_model_index_per_epoch[epoch]]            
+                model = delay_model["delayModel"][delay_model_index_per_epoch[epoch]]
                 for delayDetail in model["delayDetails"]:
                     rec_id = delayDetail["receptor"]
                     for fsp in [test_proxies.fsp[i] for i in range(1, test_proxies.num_fsp + 1)]:
@@ -801,7 +860,7 @@ class TestCbfSubarray:
                                         proxy_subarray = test_proxies.fspSubarray["PST-BF"][sub_id][fsp_id]
                                     if rec_id in proxy_subarray.receptors:
                                         for idx, coeff in enumerate(delayCoeff):
-                                            assert coeff == fsp.delayModel[rec_id -1][idx]
+                                            assert coeff == fsp.delayModel[rec_id - 1][idx]
                         else:
                             log_msg = "function mode {} currently not supported".format(fsp.functionMode)
                             logging.error(log_msg)
@@ -816,7 +875,7 @@ class TestCbfSubarray:
                 weights["epoch"] = epoch
                 epoch = str(int(epoch) + 10)
             
-            # update delay model
+            # update timing beam weights
             test_proxies.tm.beamWeights = json.dumps(timing_beam_weights)
             time.sleep(1)
 
@@ -835,7 +894,7 @@ class TestCbfSubarray:
 
             # Clean Up
             wait_time_s = 3
-            test_proxies.subarray[sub_id].GoToIdle()
+            test_proxies.subarray[sub_id].End()
             test_proxies.wait_timeout_obs([test_proxies.vcc[i] 
                 for i in range(1, test_proxies.num_vcc + 1)], ObsState.IDLE, wait_time_s, sleep_time_s)
             test_proxies.subarray[sub_id].RemoveAllReceptors()
@@ -885,8 +944,6 @@ class TestCbfSubarray:
         try:
             wait_time_s = 1
             sleep_time_s = 1
-
-            test_proxies.on()
             
             f = open(data_file_path + config_file_name)
             json_string = f.read().replace("\n", "")
@@ -894,6 +951,9 @@ class TestCbfSubarray:
             configuration = json.loads(json_string)
 
             sub_id = int(configuration["common"]["subarray_id"])
+
+            test_proxies.on()
+            time.sleep(sleep_time_s)
 
             num_receptors = len(receptor_ids)
 
@@ -917,7 +977,7 @@ class TestCbfSubarray:
                 elif fsp["function_mode"] == "PST-BF":
                     assert test_proxies.fspSubarray["PST-BF"][sub_id][fsp_id].obsState == ObsState.IDLE
 
-            wait_time_configure = 5
+            wait_time_configure = 4
             test_proxies.subarray[sub_id].ConfigureScan(json_string)
             test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.READY, wait_time_configure, sleep_time_s)
 
@@ -925,7 +985,7 @@ class TestCbfSubarray:
             frequency_band   = configuration["common"]["frequency_band"]
             input_band_index = freq_band_dict()[frequency_band]
 
-            assert test_proxies.subarray[sub_id].configID == configuration["common"]["config_id"]
+            assert test_proxies.subarray[sub_id].configurationID == configuration["common"]["config_id"]
             assert test_proxies.subarray[sub_id].frequencyBand == input_band_index
             assert test_proxies.subarray[sub_id].obsState == ObsState.READY
 
@@ -944,7 +1004,7 @@ class TestCbfSubarray:
             json_string = f2.read().replace("\n", "")
             test_proxies.subarray[sub_id].Scan(json_string)
             f2.close()
-            test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.SCANNING, wait_time_s, sleep_time_s)
+            time.sleep(wait_time_configure)
 
             # Check obsStates BEFORE the EndScan() command
             assert test_proxies.subarray[sub_id].obsState == ObsState.SCANNING
@@ -982,14 +1042,14 @@ class TestCbfSubarray:
 
             # Clean up
             wait_time_s = 3
-            test_proxies.subarray[sub_id].GoToIdle()
+            test_proxies.subarray[sub_id].End()
             test_proxies.wait_timeout_obs([test_proxies.vcc[i] 
                 for i in range(1, test_proxies.num_vcc + 1)], ObsState.IDLE, wait_time_s, sleep_time_s)
             test_proxies.subarray[sub_id].RemoveAllReceptors()
             test_proxies.wait_timeout_obs([test_proxies.vcc[i] 
                 for i in range(1, test_proxies.num_vcc + 1)], ObsState.EMPTY, wait_time_s, sleep_time_s)
 
-            test_proxies.on()
+            test_proxies.off()
 
         except AssertionError as ae:
             time.sleep(2)
@@ -1049,16 +1109,17 @@ class TestCbfSubarray:
             wait_time_s = 1
             sleep_time_s = 1
 
-            test_proxies.on()
-            
             f = open(data_file_path + config_file_name)
             json_string = f.read().replace("\n", "")
             f.close()
             configuration = json.loads(json_string)
             sub_id = int(configuration["common"]["subarray_id"])
 
+            test_proxies.on()
+            time.sleep(sleep_time_s)
+
             assert test_proxies.subarray[sub_id].obsState == ObsState.EMPTY
-            
+
             # add receptors
             test_proxies.subarray[sub_id].AddReceptors(receptor_ids)
             test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.IDLE, wait_time_s, sleep_time_s)
@@ -1070,7 +1131,7 @@ class TestCbfSubarray:
             test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.READY, wait_time_configure, sleep_time_s)
 
             assert test_proxies.subarray[sub_id].obsState == ObsState.READY
-            
+
             # Insert the epoch
             delay_model_index_per_epoch = list(range(len(delay_model["delayModel"])))
             random.shuffle(delay_model_index_per_epoch)
@@ -1087,7 +1148,6 @@ class TestCbfSubarray:
             test_proxies.tm.delayModel = json.dumps(delay_model)
             time.sleep(1)
 
-            FspModes = Enum('FspModes', 'CORR PSS_BF PST_BF VLBI')
             epoch_to_scan = 1
             num_cols = 6
             num_rows_vcc = 26
@@ -1124,7 +1184,7 @@ class TestCbfSubarray:
                         else:
                             log_msg = "function mode {} currently not supported".format(fsp.functionMode)
                             logging.error(log_msg)
-                              
+
                 if epoch == epoch_to_scan:
                     # transition to obsState=SCANNING
                     f2 = open(data_file_path + scan_file_name)
@@ -1139,7 +1199,7 @@ class TestCbfSubarray:
             wait_time_s = 3
             test_proxies.subarray[sub_id].EndScan()
             test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.READY, wait_time_s, sleep_time_s)
-            test_proxies.subarray[sub_id].GoToIdle()
+            test_proxies.subarray[sub_id].End()
             test_proxies.wait_timeout_obs([test_proxies.vcc[i] 
                 for i in range(1, test_proxies.num_vcc + 1)], ObsState.IDLE, wait_time_s, sleep_time_s)
             test_proxies.subarray[sub_id].RemoveAllReceptors()
@@ -1194,8 +1254,6 @@ class TestCbfSubarray:
         try:
             wait_time_s = 1
             sleep_time_s = 1
-
-            test_proxies.on()
             
             f = open(data_file_path + config_file_name)
             json_string = f.read().replace("\n", "")
@@ -1203,6 +1261,9 @@ class TestCbfSubarray:
             configuration = json.loads(json_string)
 
             sub_id = int(configuration["common"]["subarray_id"])
+
+            test_proxies.on()
+            time.sleep(sleep_time_s)
 
             assert test_proxies.subarray[sub_id].obsState == ObsState.EMPTY
 
@@ -1240,7 +1301,6 @@ class TestCbfSubarray:
             time.sleep(1)
 
             epoch_to_scan = 1
-            FspModes = Enum('FspModes', 'CORR PSS_BF PST_BF VLBI')
 
             for epoch in range(len(jones_matrix_index_per_epoch)):
 
@@ -1299,7 +1359,7 @@ class TestCbfSubarray:
             wait_time_s = 3
             test_proxies.subarray[sub_id].EndScan()
             test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.READY, wait_time_s, sleep_time_s)
-            test_proxies.subarray[sub_id].GoToIdle()
+            test_proxies.subarray[sub_id].End()
             test_proxies.wait_timeout_obs([test_proxies.vcc[i] 
                 for i in range(1, test_proxies.num_vcc + 1)], ObsState.IDLE, wait_time_s, sleep_time_s)
             test_proxies.subarray[sub_id].RemoveAllReceptors()
@@ -1353,8 +1413,6 @@ class TestCbfSubarray:
         try:
             wait_time_s = 1
             sleep_time_s = 1
-
-            test_proxies.on()
             
             f = open(data_file_path + config_file_name)
             json_string = f.read().replace("\n", "")
@@ -1362,6 +1420,9 @@ class TestCbfSubarray:
             configuration = json.loads(json_string)
 
             sub_id = int(configuration["common"]["subarray_id"])
+
+            test_proxies.on()
+            time.sleep(sleep_time_s)
 
             assert test_proxies.subarray[sub_id].obsState == ObsState.EMPTY
 
@@ -1397,7 +1458,7 @@ class TestCbfSubarray:
             scan_configuration = json.loads(json_string_scan)
             test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.SCANNING, wait_time_s, sleep_time_s)
             
-            scan_id = scan_configuration["scan_id"]
+            scan_id = int(scan_configuration["scan_id"])
 
             # check scanID on VCC and FSP
             for fsp in configuration["cbf"]["fsp"]:
@@ -1428,14 +1489,14 @@ class TestCbfSubarray:
             wait_time_s = 3
             test_proxies.subarray[sub_id].EndScan()
             test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.READY, wait_time_s, sleep_time_s)
-            test_proxies.subarray[sub_id].GoToIdle()
+            test_proxies.subarray[sub_id].End()
             test_proxies.wait_timeout_obs([test_proxies.vcc[i] 
                 for i in range(1, test_proxies.num_vcc + 1)], ObsState.IDLE, wait_time_s, sleep_time_s)
             test_proxies.subarray[sub_id].RemoveAllReceptors()
             test_proxies.wait_timeout_obs([test_proxies.vcc[i] 
                 for i in range(1, test_proxies.num_vcc + 1)], ObsState.EMPTY, wait_time_s, sleep_time_s)
 
-            test_proxies.on()
+            test_proxies.off()
 
         except AssertionError as ae:
             time.sleep(2)
@@ -1489,8 +1550,6 @@ class TestCbfSubarray:
         try:
             wait_time_s = 1
             sleep_time_s = 1
-
-            test_proxies.on()
             
             f = open(data_file_path + config_file_name)
             json_string = f.read().replace("\n", "")
@@ -1498,6 +1557,9 @@ class TestCbfSubarray:
             configuration = json.loads(json_string)
 
             sub_id = int(configuration["common"]["subarray_id"])
+
+            test_proxies.on()
+            time.sleep(sleep_time_s)
 
             assert test_proxies.subarray[sub_id].obsState == ObsState.EMPTY
             
@@ -1559,7 +1621,7 @@ class TestCbfSubarray:
             scan_configuration = json.loads(json_string_scan)
             test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.SCANNING, wait_time_s, sleep_time_s)
             assert test_proxies.subarray[sub_id].obsState == ObsState.SCANNING
-            assert test_proxies.subarray[sub_id].scanID == scan_configuration["scan_id"]
+            assert test_proxies.subarray[sub_id].scanID == int(scan_configuration["scan_id"])
             for fsp in configuration["cbf"]["fsp"]:
                 fsp_id = int(fsp["fsp_id"])
                 if fsp["function_mode"] == "CORR":
@@ -1662,8 +1724,6 @@ class TestCbfSubarray:
         try:
             wait_time_s = 1
             sleep_time_s = 1
-
-            test_proxies.on()
             
             f = open(data_file_path + config_file_name)
             json_string = f.read().replace("\n", "")
@@ -1671,6 +1731,9 @@ class TestCbfSubarray:
             configuration = json.loads(json_string)
 
             sub_id = int(configuration["common"]["subarray_id"])
+
+            test_proxies.on()
+            time.sleep(sleep_time_s)
 
             assert test_proxies.subarray[sub_id].obsState == ObsState.EMPTY
             
@@ -1757,7 +1820,7 @@ class TestCbfSubarray:
             scan_configuration = json.loads(json_string_scan)
             test_proxies.wait_timeout_obs([test_proxies.subarray[sub_id]], ObsState.SCANNING, wait_time_s, sleep_time_s)
             assert test_proxies.subarray[sub_id].obsState == ObsState.SCANNING
-            assert test_proxies.subarray[sub_id].scanID == scan_configuration["scan_id"]
+            assert test_proxies.subarray[sub_id].scanID == int(scan_configuration["scan_id"])
             for fsp in configuration["cbf"]["fsp"]:
                 fsp_id = int(fsp["fsp_id"])
                 if fsp["function_mode"] == "CORR":

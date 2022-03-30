@@ -1,22 +1,10 @@
-from enum import IntEnum, unique
+from enum import IntEnum, unique, Enum
 
 __all__ = [
     "const",
-    "freq_band_dict"
+    "freq_band_dict",
+    "FspModes"
 ]
-
-# TODO - Temporary class. This enum should come from the SKA base classes but
-#        only exists starting in v11.
-class PowerMode(IntEnum):
-    """
-    Enumerated type for power mode.
-
-    Used by components that rely upon a power supply, such as hardware.
-    """
-    UNKNOWN = 0
-    OFF = 1
-    STANDBY = 2
-    ON = 3
 
 # TODO - Temporary class. These values should be retrieved 
 #        from their respective devices (?)
@@ -43,7 +31,13 @@ class Const:
         self.FREQUENCY_BAND_1_RANGE_HZ = (0.35* 10**9, 1.05 * 10**9)
         self.FREQUENCY_BAND_2_RANGE_HZ = (0.95* 10**9, 1.76 * 10**9)
         self.FREQUENCY_BAND_3_RANGE_HZ = (1.65* 10**9, 3.05 * 10**9)
-        self.FREQUENCY_BAND_4_RANGE_Hz = (2.80* 10**9, 5.18 * 10**9)
+        self.FREQUENCY_BAND_4_RANGE_HZ = (2.80* 10**9, 5.18 * 10**9)
+
+        self.DEFAULT_OUTPUT_HOST = [[0, "192.168.0.1"]]
+        self.DEFAULT_OUTPUT_MAC = [[0, "06-00-00-00-00-01"]]
+        self.DEFAULT_OUTPUT_PORT = [[0, 9000, 1]]
+
+        self.MAX_VCC = 197
 
 const = Const()
 
@@ -51,3 +45,10 @@ def freq_band_dict():
     freq_band_labels = ["1", "2", "3", "4", "5a", "5b"]
     freq_bands = dict(zip(freq_band_labels, range(len(freq_band_labels))))
     return freq_bands
+
+class FspModes(Enum):
+    IDLE = 0
+    CORR = 1
+    PSS_BF = 2
+    PST_BF = 3
+    VLBI = 4
