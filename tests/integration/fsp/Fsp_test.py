@@ -47,6 +47,9 @@ class TestFsp:
         Test the initial states and verify the component manager 
         can start communicating
         """
+
+        wait_time_s = 3
+        sleep_time_s = 0.1
         
         # after init devices should be in DISABLE state
         assert test_proxies.fsp[fsp_id].State() == DevState.DISABLE
@@ -55,7 +58,7 @@ class TestFsp:
         test_proxies.fsp[fsp_id].adminMode = AdminMode.ONLINE
 
         # fsp device should be in OFF state after start_communicating 
-        test_proxies.wait_timeout_dev([test_proxies.fsp[fsp_id]], DevState.OFF, 3, 0.1)
+        test_proxies.wait_timeout_dev([test_proxies.fsp[fsp_id]], DevState.OFF, wait_time_s, sleep_time_s)
         assert test_proxies.fsp[fsp_id].State() == DevState.OFF
 
     @pytest.mark.parametrize(
@@ -71,10 +74,13 @@ class TestFsp:
         Test the "On" command
         """
 
+        wait_time_s = 3
+        sleep_time_s = 0.1
+
         # send the On command
         test_proxies.fsp[fsp_id].On()
 
-        test_proxies.wait_timeout_dev([test_proxies.fsp[fsp_id]], DevState.ON, 3, 0.1)
+        test_proxies.wait_timeout_dev([test_proxies.fsp[fsp_id]], DevState.ON, wait_time_s, sleep_time_s)
         assert test_proxies.fsp[fsp_id].State() == DevState.ON
 
     
@@ -91,10 +97,13 @@ class TestFsp:
         Test the "Off" command
         """
 
+        wait_time_s = 3
+        sleep_time_s = 0.1
+
         # send the Off command
         test_proxies.fsp[fsp_id].Off()
 
-        test_proxies.wait_timeout_dev([test_proxies.fsp[fsp_id]], DevState.OFF, 3, 0.1)
+        test_proxies.wait_timeout_dev([test_proxies.fsp[fsp_id]], DevState.OFF, wait_time_s, sleep_time_s)
         assert test_proxies.fsp[fsp_id].State() == DevState.OFF
     
     @pytest.mark.parametrize(
@@ -109,10 +118,14 @@ class TestFsp:
         """
         Test the "Standby" command
         """
+
+        wait_time_s = 3
+        sleep_time_s = 0.1
+
         # send the Standby command
         test_proxies.fsp[fsp_id].Standby()
 
-        test_proxies.wait_timeout_dev([test_proxies.fsp[fsp_id]], DevState.STANDBY, 3, 0.1)
+        test_proxies.wait_timeout_dev([test_proxies.fsp[fsp_id]], DevState.STANDBY, wait_time_s, sleep_time_s)
         assert test_proxies.fsp[fsp_id].State() == DevState.STANDBY
     
     @pytest.mark.parametrize(
@@ -128,9 +141,12 @@ class TestFsp:
         Test SetFunctionMode command state changes.
         """
 
+        wait_time_s = 3
+        sleep_time_s = 0.1
+
         test_proxies.fsp[fsp_id].On()
 
-        test_proxies.wait_timeout_dev([test_proxies.fsp[fsp_id]], DevState.ON, 3, 0.1)
+        test_proxies.wait_timeout_dev([test_proxies.fsp[fsp_id]], DevState.ON, wait_time_s, sleep_time_s)
         assert test_proxies.fsp[fsp_id].State() == DevState.ON
 
         # all function modes should be disabled after initialization
@@ -251,11 +267,13 @@ class TestFsp:
         Verify the component manager can stop communicating
         """
 
+        wait_time_s = 3
+        sleep_time_s = 0.1
+
         # trigger stop_communicating by setting the AdminMode to OFFLINE
         test_proxies.fsp[fsp_id].adminMode = AdminMode.OFFLINE
 
         # fsp device should be in DISABLE state after stop_communicating  
-        test_proxies.wait_timeout_dev([test_proxies.fsp[fsp_id]], DevState.DISABLE, 3, 0.1)
+        test_proxies.wait_timeout_dev([test_proxies.fsp[fsp_id]], DevState.DISABLE, wait_time_s, sleep_time_s)
         assert test_proxies.fsp[fsp_id].State() == DevState.DISABLE
 
-    

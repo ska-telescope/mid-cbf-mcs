@@ -10,6 +10,7 @@
 """Contain the tests for the Vcc."""
 
 # Standard imports
+from multiprocessing.connection import wait
 import sys
 import os
 import time
@@ -49,6 +50,9 @@ class TestVcc:
         """
         Test a minimal successful scan configuration.
         """
+        wait_time_s = 3
+        sleep_time_s = 1
+
         # Start monitoring the TalonLRUs and power switch devices
         test_proxies.power_switch.adminMode = AdminMode.ONLINE
         for proxy in test_proxies.talon_lru:
@@ -58,14 +62,14 @@ class TestVcc:
         test_proxies.vcc[vcc_id].loggingLevel = LoggingLevel.DEBUG
         test_proxies.vcc[vcc_id].adminMode = AdminMode.ONLINE
 
-        test_proxies.wait_timeout_dev([test_proxies.vcc[vcc_id]], DevState.OFF, 3, 1)
+        test_proxies.wait_timeout_dev([test_proxies.vcc[vcc_id]], DevState.OFF, wait_time_s, sleep_time_s)
         assert test_proxies.vcc[vcc_id].State() == DevState.OFF
         
         # Turn on the LRUs and then the VCC devices
         for proxy in test_proxies.talon_lru:
             proxy.On()
         test_proxies.vcc[vcc_id].On()
-        test_proxies.wait_timeout_dev([test_proxies.vcc[vcc_id]], DevState.ON, 3, 1)
+        test_proxies.wait_timeout_dev([test_proxies.vcc[vcc_id]], DevState.ON, wait_time_s, 1)
         assert test_proxies.vcc[vcc_id].State() == DevState.ON
 
         config_file_name = "Vcc_ConfigureScan_basic.json"
@@ -80,7 +84,7 @@ class TestVcc:
         assert test_proxies.vcc[vcc_id].frequencyBand == freq_band_dict()[frequency_band]
 
         test_proxies.vcc[vcc_id].ConfigureScan(json_str)
-        test_proxies.wait_timeout_obs([test_proxies.vcc[vcc_id]], ObsState.READY, 3, 1)
+        test_proxies.wait_timeout_obs([test_proxies.vcc[vcc_id]], ObsState.READY, wait_time_s, sleep_time_s)
 
         assert test_proxies.vcc[vcc_id].configID == configuration["config_id"]
         assert test_proxies.vcc[vcc_id].rfiFlaggingMask == str(configuration["rfi_flagging_mask"])
@@ -95,20 +99,20 @@ class TestVcc:
             assert  test_proxies.vcc[vcc_id].frequencyBandOffsetStream2 == configuration["frequency_band_offset_stream_2"] 
 
         test_proxies.vcc[vcc_id].Scan("1")
-        test_proxies.wait_timeout_obs([test_proxies.vcc[vcc_id]], ObsState.SCANNING, 3, 1)
+        test_proxies.wait_timeout_obs([test_proxies.vcc[vcc_id]], ObsState.SCANNING, wait_time_s, sleep_time_s)
         assert test_proxies.vcc[vcc_id].obsState == ObsState.SCANNING
         test_proxies.vcc[vcc_id].EndScan()
-        test_proxies.wait_timeout_obs([test_proxies.vcc[vcc_id]], ObsState.READY, 3, 1)
+        test_proxies.wait_timeout_obs([test_proxies.vcc[vcc_id]], ObsState.READY, wait_time_s, sleep_time_s)
         assert test_proxies.vcc[vcc_id].obsState == ObsState.READY
         
         test_proxies.vcc[vcc_id].ConfigureScan(json_str)
-        test_proxies.wait_timeout_obs([test_proxies.vcc[vcc_id]], ObsState.READY, 3, 1)
+        test_proxies.wait_timeout_obs([test_proxies.vcc[vcc_id]], ObsState.READY, wait_time_s, sleep_time_s)
 
         test_proxies.vcc[vcc_id].Scan("1")
-        test_proxies.wait_timeout_obs([test_proxies.vcc[vcc_id]], ObsState.SCANNING, 3, 1)
+        test_proxies.wait_timeout_obs([test_proxies.vcc[vcc_id]], ObsState.SCANNING, wait_time_s, sleep_time_s)
         assert test_proxies.vcc[vcc_id].obsState == ObsState.SCANNING
         test_proxies.vcc[vcc_id].EndScan()
-        test_proxies.wait_timeout_obs([test_proxies.vcc[vcc_id]], ObsState.READY, 3, 1)
+        test_proxies.wait_timeout_obs([test_proxies.vcc[vcc_id]], ObsState.READY, wait_time_s, sleep_time_s)
         assert test_proxies.vcc[vcc_id].obsState == ObsState.READY
 
         test_proxies.vcc[vcc_id].GoToIdle()
@@ -117,6 +121,6 @@ class TestVcc:
         for proxy in test_proxies.talon_lru:
             proxy.Off()
         (result_code, msg) = test_proxies.vcc[vcc_id].Off()
-        test_proxies.wait_timeout_dev([test_proxies.vcc[vcc_id]], DevState.OFF, 3, 1)
+        test_proxies.wait_timeout_dev([test_proxies.vcc[vcc_id]], DevState.OFF, wait_time_s, sleep_time_s)
         assert test_proxies.vcc[vcc_id].State() == DevState.OFF
         assert result_code[0] == ResultCode.OK

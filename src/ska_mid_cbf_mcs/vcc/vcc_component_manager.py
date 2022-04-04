@@ -347,8 +347,9 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
             return
 
         self.connected = True
-        self.update_component_power_mode(self._get_power_mode())
         self.update_communication_status(CommunicationStatus.ESTABLISHED)
+        self.update_component_power_mode(self._get_power_mode())
+        self.update_component_fault(False)
 
 
     def stop_communicating(self: VccComponentManager) -> None:
@@ -393,6 +394,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
 
         :raise ConnectionError: if unable to connect to HPS VCC devices
         """
+        self._logger.info("Entering VccComponentManager.on")
         try:
             # Try to connect to HPS devices, they should be running at this point
             if not self._simulation_mode:
@@ -410,6 +412,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
             self.update_component_fault(True)
             return (ResultCode.FAILED, "Failed to connect to HPS VCC devices")
 
+        self._logger.info("Completed VccComponentManager.on")
         self.update_component_power_mode(PowerMode.ON)
         return (ResultCode.OK, "On command completed OK")
 
@@ -705,7 +708,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         :rtype: (ResultCode, str)
         """
         result_code = ResultCode.OK
-        msg = "ConfigureSearchWindwo completed OK"
+        msg = "ConfigureSearchWindow completed OK"
 
         argin = json.loads(argin)
 
@@ -778,10 +781,10 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
 
                 # Configure tdcEnable.
                 proxy_sw.tdcEnable = argin["tdc_enable"]
-                if argin["tdc_enable"]:
-                    proxy_sw.On()
-                else:
-                    proxy_sw.Off()
+                # if argin["tdc_enable"]:
+                #     proxy_sw.On()
+                # else:
+                #     proxy_sw.Off()
 
                 # Configure tdcNumBits.
                 if argin["tdc_enable"]:
