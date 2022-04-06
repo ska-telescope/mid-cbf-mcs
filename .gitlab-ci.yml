@@ -5,6 +5,7 @@ image: $SKA_K8S_TOOLS_DOCKER_BUILDER_IMAGE
 
 variables:
   CHARTS_TO_PUBLISH: ska-mid-cbf ska-mid-cbf-tmleafnode
+  GIT_SUBMODULE_STRATEGY: recursive
 # Standardised included jobs
 include:
 # Helm Chart Publish
