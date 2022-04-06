@@ -10,20 +10,20 @@ include:
 # Helm Chart Publish
 # https://developer.skatelescope.org/en/latest/development/software_package_release_procedure.html#package-and-publish-helm-charts-to-the-ska-helm-chart-repository
 - project: 'ska-telescope/templates-repository'
-  file: 'gitlab-ci/includes/helm_publish.yml'
+  file: 'gitlab-ci/includes/oci-image.gitlab-ci.yml'
 
 # Create Gitlab CI badges from CI metrics
 # https://developer.skatelescope.org/en/latest/tools/continuousintegration.html#automated-collection-of-ci-health-metrics-as-part-of-the-ci-pipeline
-- project: 'ska-telescope/templates-repository'
-  file: 'gitlab-ci/includes/post_step.yml'
+#- project: 'ska-telescope/templates-repository'
+  #  file: 'gitlab-ci/includes/post_step.yml'
 
 # Application image publish
-- project: 'ska-telescope/templates-repository'
-  file: 'gitlab-ci/includes/build_push.yml'
+#- project: 'ska-telescope/templates-repository'
+#  file: 'gitlab-ci/includes/build_push.yml'
 
 # Application package publish
-- project: 'ska-telescope/templates-repository'
-  file: 'gitlab-ci/includes/build_wheel.yml'
+#- project: 'ska-telescope/templates-repository'
+  #  file: 'gitlab-ci/includes/build_wheel.yml'
 
 # cache is used to specify a list of files and directories which should be cached between jobs. You can only use paths that are within the project workspace.
 # If cache is defined outside the scope of jobs, it means it is set globally and all jobs will use that definition
@@ -37,12 +37,12 @@ cache:
 # It is also specified that only the main branch will be subject of this job.
 
 stages:
-  - linting
-  - build_for_test
-  - test
   - build
-  - publish
+  - lint
+  - test
+  - scan
   - pages
+  - publish
 
 .install_pip: &install_pip |-
   apt-get -y update && apt-get install -yq curl python3-distutils
@@ -57,26 +57,6 @@ clean shell runner:
     - pwd
     - ls -lR
     - rm -rf build/*
-
-# linting stage for branches
-linting:
-  stage: linting
-  image: artefact.skao.int/ska-tango-images-pytango-builder:9.3.10
-  tags:
-    - k8srunner
-  artifacts:
-    paths:
-      - ./build/
-  script:
-    - apt-get --allow-releaseinfo-change update
-    - apt-get -y update
-    - apt-get install -y python3-pip python3-setuptools python3-wheel --no-install-recommends
-    - python3 -m  pip install pylint2junit
-    - python3 -m pip install -r requirements.txt
-    - mkdir -p build/reports      
-    - pylint --output-format=parseable src | tee ./build/mid-cbf-code-analysis.stdout
-    - pylint --output-format=pylint2junit.JunitReporter src > ./build/reports/linting.xml
-    - ls -alR
 
 # build and push image on gitlab container registry
 # image is used to run integration tests in k8s environment
@@ -118,43 +98,3 @@ unit:
       - build/
 
 
-integration:
-  extends: .test
-  image: $SKA_K8S_TOOLS_DEPLOY_IMAGE
-  dependencies:
-    - build-for-test 
-  tags:
-    - k8srunner
-  script:
-    - export KUBE_NAMESPACE="ci-$CI_PROJECT_NAME-$CI_COMMIT_SHORT_SHA"
-    - make clean
-    - make k8s
-    - make test
-  environment:
-      name: test
-  after_script:
-    - export KUBE_NAMESPACE="ci-$CI_PROJECT_NAME-$CI_COMMIT_SHORT_SHA"
-    - make describe
-    - ls -lR
-    - pwd
-    - make uninstall-chart
-    - make delete_namespace      
-  artifacts:
-    paths:
-      - ./build/
-
-pages:
-  stage: pages
-  dependencies:
-    - integration 
-  tags:
-    - k8srunner
-  script:
-   - pwd
-   - ls -lR
-   - cp -R build/ public/
-   - ls -lR public
-  artifacts:
-    paths:
-      - public
-    expire_in: 30 days
