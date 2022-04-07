@@ -110,8 +110,8 @@ integration:
     - k8srunner
   script:
     - export KUBE_NAMESPACE="ci-$CI_PROJECT_NAME-$CI_COMMIT_SHORT_SHA"
-    - make clean
-    - make k8s
+    - make k8s-clean
+    - make k8s-vars
     - make test
   environment:
       name: test
@@ -120,7 +120,7 @@ integration:
     - make describe
     - ls -lR
     - pwd
-    - make uninstall-chart
+    - make k8s-uninstall-chart
     - make delete_namespace      
   artifacts:
     paths:
