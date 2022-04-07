@@ -113,6 +113,7 @@ integration:
     - k8srunner
   script:
     - export KUBE_NAMESPACE="ci-$CI_PROJECT_NAME-$CI_COMMIT_SHORT_SHA"
+    - cd ..
     - make k8s-install-chart
     - make k8s-vars
     - make k8s-test
