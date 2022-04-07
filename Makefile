@@ -77,6 +77,7 @@ include .make/release.mk
 include .make/k8s.mk
 include .make/make.mk
 include .make/oci.mk
+include .make/helm.mk
 #
 # Defines a default make target so that help is printed if make is called
 # without a target
