@@ -12,7 +12,7 @@ subsystem: cbfmcs-mid
 telescope: SKA-mid
 
 labels:
-  app: ska-mid-cbf
+  app: ska-mid-cbf-mcs
 
 global:
   minikube: true
