@@ -24,8 +24,19 @@ HELM_RELEASE ?= test
 # HELM_CHART the chart name
 HELM_CHART ?= ska-mid-cbf-umbrella
 
+TANGO_DATABASE = tango-host-databaseds-from-makefile-$(HELM_RELEASE)
+TANGO_HOST = $(TANGO_DATABASE):10000## TANGO_HOST is an input!
+
+
+PYTHON_VARS_BEFORE_PYTEST = TANGO_HOST=$(TANGO_HOST)
+
 # UMBRELLA_CHART_PATH Path of the umbrella chart to work with
 UMBRELLA_CHART_PATH ?= charts/ska-mid-cbf-umbrella/
+
+K8S_CHARTS ?= ska-mid-cbf-umbrella ska-mid-cbf-mcs ska-mid-cbf-tmleafnode ## list of charts
+K8S_UMBRELLA_CHART_PATH ?= ./charts/ska-mid-cbf-umbrella
+K8S_CHART_PARAMS = --set global.tango_host=$(TANGO_HOST)
+
 
 # Fixed variables
 # Timeout for gitlab-runner when run locally
@@ -78,6 +89,7 @@ include .make/k8s.mk
 include .make/make.mk
 include .make/oci.mk
 include .make/helm.mk
+
 #
 # Defines a default make target so that help is printed if make is called
 # without a target
