@@ -13,7 +13,7 @@ dependencies:
   repository: https://artefact.skao.int/repository/helm-internal
 - name: ska-mid-cbf-mcs
   version: 0.1.0
-  repository: "file://../ska-mid-cbf"
+  repository: "file://../ska-mid-cbf-mcs"
 - name: ska-mid-cbf-tmleafnode
   version: 0.3.0
   repository: "file://../ska-mid-cbf-tmleafnode"
