@@ -106,6 +106,9 @@ unit-test: ## Run simulation mode unit tests
 	@mkdir -p build; \
 	python3 -m pytest -c setup-unit-test.cfg
 
+python-do-lint:
+	@echo
+
 python-do-build:
 	python3 -m pip install -r requirements.txt
 	python3 -m pip install -e .
