@@ -28,7 +28,7 @@ TANGO_DATABASE = tango-host-databaseds-from-makefile-$(HELM_RELEASE)
 TANGO_HOST = $(TANGO_DATABASE):10000## TANGO_HOST is an input!
 
 
-PYTHON_VARS_BEFORE_PYTEST = TANGO_HOST=$(TANGO_HOST)
+#PYTHON_VARS_BEFORE_PYTEST = TANGO_HOST=$(TANGO_HOST)
 
 # UMBRELLA_CHART_PATH Path of the umbrella chart to work with
 UMBRELLA_CHART_PATH ?= charts/ska-mid-cbf-umbrella/
@@ -37,6 +37,8 @@ K8S_CHARTS ?= ska-mid-cbf-umbrella ska-mid-cbf-mcs ska-mid-cbf-tmleafnode ## lis
 K8S_UMBRELLA_CHART_PATH ?= ./charts/ska-mid-cbf-umbrella
 K8S_CHART_PARAMS = --set global.tango_host=$(TANGO_HOST)
 
+PYTHON_TEST_FILE = 
+PYTHON_VARS_AFTER_PYTEST = -c setup-unit-test.cfg
 
 # Fixed variables
 # Timeout for gitlab-runner when run locally
@@ -79,6 +81,7 @@ DISPLAY := $(THIS_HOST):0
 #		old name is 64 characters, too long for container name
 TEST_RUNNER = test-runner-$(CI_JOB_ID)-$(KUBE_NAMESPACE)-$(HELM_RELEASE)
 
+
 #
 # include makefile to pick up the standard Make targets, e.g., 'make build'
 # build, 'make push' docker push procedure, etc. The other Make targets
@@ -102,6 +105,10 @@ requirements: ## Install Dependencies
 unit-test: ## Run simulation mode unit tests
 	@mkdir -p build; \
 	python3 -m pytest -c setup-unit-test.cfg
+
+python-do-build:
+	python3 -m pip install -r requirements.txt
+	python3 -m pip install -e .
 
 jive: ## configure TANGO_HOST to enable Jive
 	@echo
