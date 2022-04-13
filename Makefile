@@ -111,7 +111,7 @@ python-do-lint:
 
 python-do-build:
 	apt -y update
-	apt install pkg-config
+	apt -y install pkg-config
 	python3 -m pip install -e .
 
 jive: ## configure TANGO_HOST to enable Jive
