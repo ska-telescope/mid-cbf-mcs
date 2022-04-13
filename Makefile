@@ -110,6 +110,7 @@ python-do-lint:
 	python3 -m pip install -r requirements.txt
 
 python-do-test:
+	@ls -lrt
 	@echo "$(PYTHON_VARS_BEFORE_PYTEST)" "$(PYTHON_RUNNER)" pytest "$(PYTHON_VARS_AFTER_PYTEST)" \
 		         --cov=src --cov-report=term-missing --cov-report html:build/reports/code-coverage --cov-report xml:build/reports/code-coverage.xml --junitxml=build/reports/unit-tests.xml $(PYTHON_TEST_FILE)
 	python3 -m pip install -e .
