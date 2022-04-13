@@ -27,8 +27,7 @@ HELM_CHART ?= ska-mid-cbf-umbrella
 TANGO_DATABASE = tango-host-databaseds-from-makefile-$(HELM_RELEASE)
 TANGO_HOST = $(TANGO_DATABASE):10000## TANGO_HOST is an input!
 
-
-#PYTHON_VARS_BEFORE_PYTEST = TANGO_HOST=$(TANGO_HOST)
+PYTHON_VARS_BEFORE_PYTEST = PYTHONPATH=./src:/app/src:/app/src/ska_mid_cbf_mcs KUBE_NAMESPACE=$(KUBE_NAMESPACE) HELM_RELEASE=$(RELEASE_NAME) TANGO_HOST=$(TANGO_HOST)
 
 # UMBRELLA_CHART_PATH Path of the umbrella chart to work with
 UMBRELLA_CHART_PATH ?= charts/ska-mid-cbf-umbrella/
