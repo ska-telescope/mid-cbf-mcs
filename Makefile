@@ -109,12 +109,6 @@ unit-test: ## Run simulation mode unit tests
 python-do-lint:
 	python3 -m pip install -r requirements.txt
 
-python-pre-test:
-	python3 -m pip install -r requirements.txt
-	python3 -m pip install -e .
-
-python-do-test:
-	python3 -m pytest --version
 
 jive: ## configure TANGO_HOST to enable Jive
 	@echo
