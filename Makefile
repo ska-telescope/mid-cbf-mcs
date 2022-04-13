@@ -109,8 +109,9 @@ unit-test: ## Run simulation mode unit tests
 python-do-lint:
 	python3 -m pip install -r requirements.txt
 
-#python-do-build:
-#	python3 -m pip install -e .
+python-do-test:
+	@echo "$(PYTHON_VARS_BEFORE_PYTEST)" "$(PYTHON_RUNNER)" pytest "$(PYTHON_VARS_AFTER_PYTEST)" \
+		         --cov=src --cov-report=term-missing --cov-report html:build/reports/code-coverage --cov-report xml:build/reports/code-coverage.xml --junitxml=build/reports/unit-tests.xml $(PYTHON_TEST_FILE)
 
 jive: ## configure TANGO_HOST to enable Jive
 	@echo
