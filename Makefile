@@ -112,8 +112,9 @@ python-do-lint:
 python-do-test:
 	@ls -lrt
 	python3 -m pip install -e .
+	python3 -m pytest --version
 	python3 -m pytest -c setup-unit-test.cfg
-		                         --cov=src --cov-report=term-missing --cov-report html:build/reports/code-coverage --cov-report xml:build/reports/code-coverage.xml --junitxml=build/reports/unit-tests.xml $(PYTHON_TEST_FILE)
+
 jive: ## configure TANGO_HOST to enable Jive
 	@echo
 	@echo 'With the deployment active, copy and run the following command to configure TANGO_HOST for local jive:'
