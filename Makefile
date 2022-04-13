@@ -111,6 +111,7 @@ python-do-lint:
 
 python-do-test:
 	@ls -lrt
+	python3 -m pip install -r requirements.txt
 	python3 -m pip install -e .
 	python3 -m pytest --version
 	python3 -m pytest -c setup-unit-test.cfg
