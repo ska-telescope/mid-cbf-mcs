@@ -37,7 +37,7 @@ K8S_CHARTS ?= ska-mid-cbf-umbrella ska-mid-cbf-mcs ska-mid-cbf-tmleafnode ## lis
 K8S_UMBRELLA_CHART_PATH ?= ./charts/ska-mid-cbf-umbrella
 K8S_CHART_PARAMS = --set global.tango_host=$(TANGO_HOST)
 
-PYTHON_TEST_FILE = 
+PYTHON_TEST_FILE = tests/unit 
 PYTHON_VARS_AFTER_PYTEST = -c setup-unit-test.cfg
 
 # Fixed variables
