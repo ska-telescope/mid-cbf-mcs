@@ -60,3 +60,6 @@ docs-build:
 docs-pages:
   image: readthedocs/build:latest
 
+python-build-for-development:
+  image: $SKA_PYTHON_PYTANGO_BUILDER_IMAGE
+
