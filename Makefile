@@ -111,10 +111,8 @@ python-do-lint:
 
 python-do-test:
 	@ls -lrt
-	@echo "$(PYTHON_VARS_BEFORE_PYTEST)" "$(PYTHON_RUNNER)" pytest "$(PYTHON_VARS_AFTER_PYTEST)" \
-		         --cov=src --cov-report=term-missing --cov-report html:build/reports/code-coverage --cov-report xml:build/reports/code-coverage.xml --junitxml=build/reports/unit-tests.xml $(PYTHON_TEST_FILE)
 	python3 -m pip install -e .
-	$(PYTHON_VARS_BEFORE_PYTEST) $(PYTHON_RUNNER) pytest $(PYTHON_VARS_AFTER_PYTEST) \
+	python3 -m pytest -c setup-unit-test.cfg
 		                         --cov=src --cov-report=term-missing --cov-report html:build/reports/code-coverage --cov-report xml:build/reports/code-coverage.xml --junitxml=build/reports/unit-tests.xml $(PYTHON_TEST_FILE)
 jive: ## configure TANGO_HOST to enable Jive
 	@echo
