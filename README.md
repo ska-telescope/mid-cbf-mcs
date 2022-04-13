@@ -211,6 +211,8 @@ sudo chown -R <user_name>:<user_name> ~/.kube/
 ```
 
 #### 1.  Make sure minikube is up and running
+The following commands use the default minikube profile. If you are running the MCS on the Dell server you will need to set up your own minikube profile. A new minikube profile is needed for a new cluster, so creating minikube profiles ensures two users on the Dell server do not work on the same cluster at the same time. To view the modifications needed to run the following commands on a new minikube profile see Minikube Profiles
+
 ```
 minikube start    # start minikube (local kubernetes node)
 minikube status   # check current status of minikube
@@ -268,6 +270,52 @@ deactivate                            # if in active virtualenv
 eval $(minikube docker-env --unset)   # if docker-env variables were set previously
 minikube stop                         # stop minikube
 ```
+
+# Minikube Profiles
+
+### Create a minikube profile
+```
+minikube start -p <profile_name>
+```
+
+### Check the status of the cluster created for your minikube profile
+```
+minikube status -p <profile_name>
+```
+
+### Switch to a pre-existing minikube profile
+```
+minikube profile <profile_name>
+```
+
+### Check which minikube profile you are on
+```
+minikube profile
+```
+
+### List all minikube profiles
+```
+minikube profile list
+```
+
+### Set and unset docker-env variables
+```
+eval $(minikube docker-env -p <profile_name>) 
+eval $(minikube docker-env --unset -p <profile_name>) 
+```
+
+### Verify the kubectl context matches the minikube profile name
+In order to use kubectl to get pod information via the command line, the kubectl 'conext' should match the minikube profile. To verify this the output of `minikube profile` should match the output of `kubectl config current-context`
+```
+kubectl config current-context
+```
+
+### Delete a minikube profile
+```
+minikube delete -p <profile_name>
+```
+
+
 
 # Jive and Taranta
 
