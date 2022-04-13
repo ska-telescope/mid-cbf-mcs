@@ -61,5 +61,5 @@ docs-pages:
   image: readthedocs/build:latest
 
 python-build-for-development:
-  image: $SKA_PYTHON_PYTANGO_BUILDER_IMAGE
+  image: artefact.skao.int/ska-tango-images-pytango-builder:9.3.10
 
