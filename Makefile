@@ -110,6 +110,7 @@ python-do-lint:
 	python3 -m pip install -r requirements.txt
 
 python-do-build:
+	apt -y update
 	apt install pkg-config
 	python3 -m pip install -e .
 
