@@ -38,8 +38,8 @@ include:
     file: 'gitlab-ci/includes/oci-image.gitlab-ci.yml'
 
   # Docs pages
-  - project: 'ska-telescope/templates-repository'
-    file: 'gitlab-ci/includes/docs.gitlab-ci.yml'
+  #  - project: 'ska-telescope/templates-repository'
+  #  file: 'gitlab-ci/includes/docs.gitlab-ci.yml'
 
   # Create Gitlab CI badges from CI metrics
   - project: 'ska-telescope/templates-repository'
@@ -54,11 +54,11 @@ include:
     file: 'gitlab-ci/includes/helm-chart.gitlab-ci.yml'
 
 
-docs-build:
-  image: readthedocs/build:latest
+    #docs-build:
+    #image: readthedocs/build:latest
 
-docs-pages:
-  image: readthedocs/build:latest
+    #docs-pages:
+    #image: readthedocs/build:latest
 
 python-build-for-development-legacy:
   image: artefact.skao.int/ska-tango-images-pytango-builder:9.3.10
