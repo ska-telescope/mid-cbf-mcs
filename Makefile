@@ -118,7 +118,7 @@ k8s-do-test:
 	tar -cz $(k8s_test_src_dir) $(k8s_test_folder) $(K8S_TEST_AUX_DIRS) | kubectl run $(k8s_test_kubectl_run_args) -iq -- $(k8s_test_command) 2>&1   | grep -vE "^(1\||-+ live log)" --line-buffered &
 	sleep 1
 	#kubectl run $(k8s_test_runner) -n $(KUBE_NAMESPACE) --restart=Never --pod-running-timeout=360s  --image-pull-policy=IfNotPresent --image=artefact.skao.int/ska-mid-cbf-mcs:0.6.0-dirty --env=INGRESS_HOST=
-	make k8s-watch
+	kubectl get pods -n $(KUBE_NAMESPACE)
 	echo "k8s-test: waiting for test runner to boot up: $(k8s_test_runner)"
 	( kubectl wait pod $(k8s_test_runner) --for=condition=ready --timeout=$(K8S_TIMEOUT); wait_status=$$?; \
         if ! [[ $$wait_status -eq 0 ]]; then echo "Wait for Pod $(k8s_test_runner) failed - aborting"; exit 1; fi; \
