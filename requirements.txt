@@ -7,7 +7,7 @@ ska-ser-logging
 ska-ser-log-transactions
 pytango == 9.3.3
 pytest-pydocstyle == 2.2.0
-pytest-pycodestyle = 2.2.0
+pytest-pycodestyle == 2.2.0
 pytest == 6.2.5
 pytest-bdd
 pytest-cov
