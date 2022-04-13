@@ -112,7 +112,7 @@ python-do-lint:
 python-do-build:
 	apt -y update
 	apt -y install pkg-config
-	apt -y install libboost-all
+	apt -y install libboost-all-dev
 	python3 -m pip install -e .
 
 jive: ## configure TANGO_HOST to enable Jive
