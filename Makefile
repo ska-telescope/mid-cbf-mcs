@@ -108,6 +108,27 @@ unit-test: ## Run simulation mode unit tests
 python-do-lint:
 	python3 -m pip install -r requirements.txt
 
+k8s-do-test:
+        @rm -fr build; mkdir build
+        @find ./$(k8s_test_folder) -name "*.pyc" -type f -delete
+        @echo "k8s-test: start test runner: $(k8s_test_runner)"
+        @echo "k8s-test: sending test folder: tar -cz $(k8s_test_src_dir) $(k8s_test_folder) $(K8S_TEST_AUX_DIRS)"
+        cd $(BASE)
+		tar -cz $(k8s_test_src_dir) $(k8s_test_folder) $(K8S_TEST_AUX_DIRS) | kubectl run $(k8s_test_kubectl_run_args) -iq -- $(k8s_test_command) 2>&1   | grep -vE "^(1\||-+ live log)" --line-buffered &)
+        sleep 1
+        echo "k8s-test: waiting for test runner to boot up: $(k8s_test_runner)"
+        ( kubectl wait pod $(k8s_test_runner) --for=condition=ready --timeout=$(K8S_TIMEOUT); wait_status=$$?; \
+        if ! [[ $$wait_status -eq 0 ]]; then echo "Wait for Pod $(k8s_test_runner) failed - aborting"; exit 1; fi; \
+         ) && \
+                echo "k8s-test: $(k8s_test_runner) is up, now waiting for tests to complete" && \
+                (kubectl exec $(k8s_test_runner) -- cat results-pipe | tar --directory=$(BASE) -xz)
+        cd $(BASE)/
+        kubectl get all,job,pv,pvc,ingress,cm -n $(KUBE_NAMESPACE) -o yaml > build/k8s_manifest.txt
+        echo "k8s-test: test run complete, processing files"; \
+        kubectl --namespace $(KUBE_NAMESPACE) delete --ignore-not-found pod $(K8S_TEST_RUNNER) --wait=false
+        @echo "k8s-test: the test run exit code is ($$(cat build/status))"
+        @exit `cat build/status
+
 
 jive: ## configure TANGO_HOST to enable Jive
 	@echo
