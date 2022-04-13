@@ -119,6 +119,9 @@ k8s-do-test:
 	sleep 1
 	#kubectl run $(k8s_test_runner) -n $(KUBE_NAMESPACE) --restart=Never --pod-running-timeout=360s  --image-pull-policy=IfNotPresent --image=artefact.skao.int/ska-mid-cbf-mcs:0.6.0-dirty --env=INGRESS_HOST=
 	kubectl get pods -n $(KUBE_NAMESPACE)
+	sleep 120
+	kubectl get pods -n $(KUBE_NAMESPACE)
+	kubectl logs $(k8s_test_runner) -n $(KUBE_NAMESPACE)
 	echo "k8s-test: waiting for test runner to boot up: $(k8s_test_runner)"
 	( kubectl wait pod $(k8s_test_runner) --for=condition=ready --timeout=$(K8S_TIMEOUT); wait_status=$$?; \
         if ! [[ $$wait_status -eq 0 ]]; then echo "Wait for Pod $(k8s_test_runner) failed - aborting"; exit 1; fi; \
