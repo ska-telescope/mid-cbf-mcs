@@ -80,6 +80,12 @@ DISPLAY := $(THIS_HOST):0
 #		old name is 64 characters, too long for container name
 TEST_RUNNER = test-runner-$(CI_JOB_ID)-$(KUBE_NAMESPACE)-$(HELM_RELEASE)
 
+ifneq ($(CI_REGISTRY),)
+K8S_TEST_IMAGE_TO_TEST=$(CI_REGISTRY)/ska-telescope/ska-mid-cbf-mcs/ska-mid-cbf-mcs:0.6.0-dev.c$(CI_COMMIT_SHORT_SHA)
+else
+K8S_TEST_IMAGE_TO_TEST = artefact.skao.int/ska-mid-cbf-mcs:0.6.0
+endif
+
 
 #
 # include makefile to pick up the standard Make targets, e.g., 'make build'
@@ -117,9 +123,6 @@ k8s-do-test:
 	cd $(BASE)
 	tar -cz $(k8s_test_src_dir) $(k8s_test_folder) $(K8S_TEST_AUX_DIRS) | kubectl run $(k8s_test_kubectl_run_args) -iq -- $(k8s_test_command) 2>&1   | grep -vE "^(1\||-+ live log)" --line-buffered &
 	sleep 1
-	#kubectl run $(k8s_test_runner) -n $(KUBE_NAMESPACE) --restart=Never --pod-running-timeout=360s  --image-pull-policy=IfNotPresent --image=artefact.skao.int/ska-mid-cbf-mcs:0.6.0-dirty --env=INGRESS_HOST=
-	kubectl get pods -n $(KUBE_NAMESPACE)
-	sleep 120
 	kubectl get pods -n $(KUBE_NAMESPACE)
 	kubectl logs $(k8s_test_runner) -n $(KUBE_NAMESPACE)
 	echo "k8s-test: waiting for test runner to boot up: $(k8s_test_runner)"
