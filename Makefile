@@ -36,7 +36,7 @@ K8S_CHARTS ?= ska-mid-cbf-umbrella ska-mid-cbf-mcs ska-mid-cbf-tmleafnode ## lis
 K8S_UMBRELLA_CHART_PATH ?= ./charts/ska-mid-cbf-umbrella
 K8S_CHART_PARAMS = --set global.tango_host=$(TANGO_HOST)
 
-PYTHON_TEST_FILE = tests/unit 
+PYTHON_TEST_FILE = 
 PYTHON_VARS_AFTER_PYTEST = -c setup-unit-test.cfg
 
 # Fixed variables
@@ -86,6 +86,10 @@ else
 K8S_TEST_IMAGE_TO_TEST = artefact.skao.int/ska-mid-cbf-mcs:0.6.0
 endif
 
+K8S_TEST_TEST_COMMAND ?= cd .. && $(PYTHON_VARS_BEFORE_PYTEST) $(PYTHON_RUNNER) \
+                        pytest \
+                        -c setup-integration-test.cfg \
+                        | tee pytest.stdout; ## k8s-test test command to run in container
 
 #
 # include makefile to pick up the standard Make targets, e.g., 'make build'
@@ -112,31 +116,7 @@ unit-test: ## Run simulation mode unit tests
 	python3 -m pytest -c setup-unit-test.cfg
 
 python-do-lint:
-	python3 -m pip install -r requirements.txt
-
-k8s-do-test:
-	@rm -fr build
-	mkdir build
-	@find ./$(k8s_test_folder) -name "*.pyc" -type f -delete
-	@echo "k8s-test: start test runner: $(k8s_test_runner)"
-	@echo "k8s-test: sending test folder: tar -cz $(k8s_test_src_dir) $(k8s_test_folder) $(K8S_TEST_AUX_DIRS)"
-	cd $(BASE)
-	tar -cz $(k8s_test_src_dir) $(k8s_test_folder) $(K8S_TEST_AUX_DIRS) | kubectl run $(k8s_test_kubectl_run_args) -iq -- $(k8s_test_command) 2>&1   | grep -vE "^(1\||-+ live log)" --line-buffered &
-	sleep 1
-	kubectl get pods -n $(KUBE_NAMESPACE)
-	kubectl logs $(k8s_test_runner) -n $(KUBE_NAMESPACE)
-	echo "k8s-test: waiting for test runner to boot up: $(k8s_test_runner)"
-	( kubectl wait pod $(k8s_test_runner) --for=condition=ready --timeout=$(K8S_TIMEOUT); wait_status=$$?; \
-        if ! [[ $$wait_status -eq 0 ]]; then echo "Wait for Pod $(k8s_test_runner) failed - aborting"; exit 1; fi; \
-         ) && \
-                echo "k8s-test: $(k8s_test_runner) is up, now waiting for tests to complete" && \
-                (kubectl exec $(k8s_test_runner) -- cat results-pipe | tar --directory=$(BASE) -xz)
-	cd $(BASE)/
-	kubectl get all,job,pv,pvc,ingress,cm -n $(KUBE_NAMESPACE) -o yaml > build/k8s_manifest.txt
-	echo "k8s-test: test run complete, processing files"; \
-	kubectl --namespace $(KUBE_NAMESPACE) delete --ignore-not-found pod $(K8S_TEST_RUNNER) --wait=false
-	@echo "k8s-test: the test run exit code is ($$(cat build/status))"
-	@exit `cat build/status`
+	@echo
 
 
 jive: ## configure TANGO_HOST to enable Jive
