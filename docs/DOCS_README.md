@@ -6,16 +6,16 @@ ska-mid-cbf-mcs/
    docs/
       build
       src/
-         index.rst
+         _static/
+         _templates/
+         api/
          diagrams/
-            MCS-diagrams.vsdx
-            mcs-on-command-sequence.png
-            ...
-         ...
+         guide/
          conf.py
-      ...
-  README.md
+         index.rst
+  DOCS_README.md
   Makefile
+  requirements.txt
 ```
 
 1. Run `make html` to generate the documentation.

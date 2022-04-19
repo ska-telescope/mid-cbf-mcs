@@ -88,7 +88,7 @@ requirements: ## Install Dependencies
 
 unit-test: ## Run simulation mode unit tests
 	@mkdir -p build; \
-	pytest -c setup-unit-test.cfg
+	python3 -m pytest -c setup-unit-test.cfg
 
 jive: ## configure TANGO_HOST to enable Jive
 	@echo

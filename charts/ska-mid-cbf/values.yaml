@@ -11,13 +11,14 @@ system: csp
 subsystem: cbfmcs-mid
 telescope: SKA-mid
 
+labels:
+  app: ska-mid-cbf
+
 global:
   minikube: true
   exposeDatabaseDS: true
   exposeAllDS: true
   tango_host: databaseds-tango-base-test:10000
-  labels:
-    app: ska-mid-cbf-mcs
 annotations:
     app.gitlab.com/app: CI_PROJECT_PATH_SLUG
     app.gitlab.com/env: CI_ENVIRONMENT_SLUG  
@@ -38,7 +39,7 @@ midcbf:
   image:
     registry: artefact.skao.int
     image: ska-mid-cbf-mcs
-    tag: 0.5.6
+    tag: 0.6.0
     pullPolicy: IfNotPresent
 
 resources:
