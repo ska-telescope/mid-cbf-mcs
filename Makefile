@@ -96,9 +96,6 @@ jive: ## configure TANGO_HOST to enable Jive
 	@echo
 	export TANGO_HOST=$$(kubectl describe service -n $(KUBE_NAMESPACE) $(TANGO_DATABASE)-external | grep -i 'LoadBalancer Ingress' | awk '{print $$3}'):10000
 
-config_tango_dns: ## Configure the hosts file to contain the Tango device server host names
-	./scripts/config-tango-dns.sh $(KUBE_NAMESPACE) $(DOMAIN)
-
 documentation:   ## ## Re-generate documentation
 	cd docs && make clean && make html
 	
