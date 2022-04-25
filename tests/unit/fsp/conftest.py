@@ -56,7 +56,7 @@ def device_to_load(
     return {
         "path": "tests/unit/fsp/devicetoload.json",
         "package": "ska_mid_cbf_mcs.fsp.fsp_device",
-        "device": "fsp-03",
+        "device": "fsp-01",
         "device_class": "Fsp",
         "proxy": CbfDeviceProxy,
         "patch": patched_fsp_device_class,
