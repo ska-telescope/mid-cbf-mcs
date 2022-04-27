@@ -42,7 +42,7 @@ def device_under_test(tango_harness: TangoHarness) -> CbfDeviceProxy:
 
     :return: the device under test
     """
-    return tango_harness.get_device("mid_csp_cbf/fsp/03")
+    return tango_harness.get_device("mid_csp_cbf/fsp/01")
 
 @pytest.fixture()
 def device_to_load(
