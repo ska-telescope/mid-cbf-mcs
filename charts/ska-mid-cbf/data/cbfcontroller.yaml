@@ -1,0 +1,120 @@
+name: cbfcontroller
+function: cbf-central-control
+domain: csp-monitoring
+command: "CbfController"
+instances: ["controller"]
+depends_on:
+  - device: mid_csp_cbf/vcc/001   
+  - device: mid_csp_cbf/vcc/002  
+  - device: mid_csp_cbf/vcc/003  
+  - device: mid_csp_cbf/vcc/004  
+  - device: mid_csp_cbf/fsp/01 
+  - device: mid_csp_cbf/fsp/02 
+  - device: mid_csp_cbf/fsp/03 
+  - device: mid_csp_cbf/fsp/04
+  - device: mid_csp_cbf/talon_lru/001
+  - device: mid_csp_cbf/talon_lru/002
+readinessProbe:
+  initialDelaySeconds: 0
+  periodSeconds: 10
+  timeoutSeconds: 5
+  successThreshold: 1
+  failureThreshold: 3
+livenessProbe:
+  initialDelaySeconds: 0
+  periodSeconds: 10
+  timeoutSeconds: 5
+  successThreshold: 1
+  failureThreshold: 3
+server:
+  name: "CbfController"
+  instances:
+  - name: "controller"
+    classes:
+    - name: "CbfController"
+      devices:
+      - name: "mid_csp_cbf/sub_elt/controller"
+        attribute_properties:
+        - attribute: "adminMode"
+          properties: 
+          - name: "abs_change"
+            values: 
+            - "-1"
+            - "1"
+        - attribute: "healthState"
+          properties:
+          - name: "abs_change"
+            values: 
+            - "-1"
+            - "1"
+        properties:
+          - name: "CbfSubarray"
+            values:
+            - "mid_csp_cbf/sub_elt/subarray_01"
+            - "mid_csp_cbf/sub_elt/subarray_02"
+            - "mid_csp_cbf/sub_elt/subarray_03"
+          - name: "FSP"
+            values:
+            - "mid_csp_cbf/fsp/01"
+            - "mid_csp_cbf/fsp/02"
+            - "mid_csp_cbf/fsp/03"
+            - "mid_csp_cbf/fsp/04"
+          - name: "MaxCapabilities"
+            values:
+            - "VCC:4"
+            - "FSP:4"
+            - "Subarray:1"
+          - name: "VCC"
+            values:
+            - "mid_csp_cbf/vcc/001"
+            - "mid_csp_cbf/vcc/002"
+            - "mid_csp_cbf/vcc/003"
+            - "mid_csp_cbf/vcc/004"
+          - name: "TalonLRU"
+            values:
+            - "mid_csp_cbf/talon_lru/001"
+            - "mid_csp_cbf/talon_lru/002"
+          - name: "TalonDxConfigPath"
+            values:
+            - "mnt/talondx-config"
+          - name: "polled_attr"
+            values:
+            - "reportfspstate"
+            - "3000"
+            - "reportvccadminmode"
+            - "3000"
+            - "reportvcchealthstate"
+            - "3000"
+            - "receptortovcc"
+            - "3000"
+            - "reportfspsubarraymembership"
+            - "3000"
+            - "reportfsphealthstate"
+            - "3000"
+            - "healthstate"
+            - "3000"
+            - "adminmode"
+            - "3000"
+            - "subarrayconfigid"
+            - "3000"
+            - "reportfspadminmode"
+            - "3000"
+            - "commandprogress"
+            - "3000"
+            - "reportsubarrayhealthstate"
+            - "3000"
+            - "reportvccstate"
+            - "3000"
+            - "reportsubarrayadminmode"
+            - "3000"
+            - "vcctoreceptor"
+            - "3000"
+            - "reportsubarraystate"
+            - "3000"
+            - "state"
+            - "1000"
+image:
+  registry: "{{.Values.midcbf.image.registry}}"
+  image: "{{.Values.midcbf.image.image}}"
+  tag: "{{.Values.midcbf.image.tag}}"
+  pullPolicy: "{{.Values.midcbf.image.pullPolicy}}"

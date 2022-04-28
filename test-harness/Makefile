@@ -31,7 +31,7 @@ test:
 	done
 
 	cd /app && pytest $(if $(findstring all,$(MARK)),, -m '$(MARK)') | tee setup_py_test.stdout
-	cd /app && ./code-analysis.sh | tee code_analysis.stdout
+	cd /app && ./scripts/code-analysis.sh | tee code_analysis.stdout
 	mkdir -p build/reports && \
 	if [ -d build ]; then \
 		mv /app/setup_py_test.stdout ./build/setup_test.stdout; \
