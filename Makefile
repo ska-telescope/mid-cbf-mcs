@@ -96,6 +96,9 @@ jive: ## configure TANGO_HOST to enable Jive
 	@echo
 	export TANGO_HOST=$$(kubectl describe service -n $(KUBE_NAMESPACE) $(TANGO_DATABASE)-external | grep -i 'LoadBalancer Ingress' | awk '{print $$3}'):10000
 
+update-db-port:  ## update Tango DB port so that the DB is accessible from the Talon boards on the Dell server
+	kubectl -n ska-mid-cbf patch service/tango-host-databaseds-from-makefile-test --type='json' -p '[{"op":"replace","path":"/spec/ports/0/nodePort","value": 30176}]'
+
 documentation:   ## ## Re-generate documentation
 	cd docs && make clean && make html
 	
