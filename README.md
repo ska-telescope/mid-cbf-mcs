@@ -218,6 +218,10 @@ minikube start    # start minikube (local kubernetes node)
 minikube status   # check current status of minikube
 ```
 
+If restarting a stopped minikube; from local `ska-cicd-deploy-minikube` repository 
+run `make minikube-metallb-config` to reapply metallb configMap to determine pod
+LoadBalancer service external IP addresses.
+
 #### 2.  From the root of the project, build the application image.
 ```
 cd ska-mid-cbf-mcs
