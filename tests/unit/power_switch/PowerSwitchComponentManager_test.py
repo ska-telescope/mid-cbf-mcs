@@ -12,20 +12,21 @@
 
 # Standard imports
 import pytest
-from ska_mid_cbf_mcs.power_switch.power_switch_component_manager import PowerSwitchComponentManager
-
-from ska_tango_base.control_model import PowerMode
 from ska_tango_base.commands import ResultCode
+from ska_tango_base.control_model import PowerMode
+
+from ska_mid_cbf_mcs.power_switch.power_switch_component_manager import (
+    PowerSwitchComponentManager,
+)
+
 
 @pytest.mark.parametrize(
     "power_switch_component_manager",
-    [{
-        "sim_put_error": False,
-        "sim_get_error": False
-    }],
-    indirect=True)
+    [{"sim_put_error": False, "sim_get_error": False}],
+    indirect=True,
+)
 def test_get_outlet_state(
-    power_switch_component_manager: PowerSwitchComponentManager
+    power_switch_component_manager: PowerSwitchComponentManager,
 ) -> None:
     """
     Tests that we can get the state of every outlet.
@@ -36,17 +37,19 @@ def test_get_outlet_state(
     assert num_outlets == 8
 
     for i in range(0, num_outlets):
-        assert power_switch_component_manager.get_outlet_power_mode(i) == PowerMode.ON
+        assert (
+            power_switch_component_manager.get_outlet_power_mode(i)
+            == PowerMode.ON
+        )
+
 
 @pytest.mark.parametrize(
     "power_switch_component_manager",
-    [{
-        "sim_put_error": False,
-        "sim_get_error": False
-    }],
-    indirect=True)
+    [{"sim_put_error": False, "sim_get_error": False}],
+    indirect=True,
+)
 def test_turn_outlet_on_off(
-    power_switch_component_manager: PowerSwitchComponentManager
+    power_switch_component_manager: PowerSwitchComponentManager,
 ) -> None:
     """
     Tests that the outlets can be turned on and off individually.
@@ -58,45 +61,59 @@ def test_turn_outlet_on_off(
 
     # Check initial state
     for i in range(0, num_outlets):
-        assert power_switch_component_manager.get_outlet_power_mode(i) == PowerMode.ON
+        assert (
+            power_switch_component_manager.get_outlet_power_mode(i)
+            == PowerMode.ON
+        )
 
     # Turn outlets off and check the state again
     for i in range(0, num_outlets):
         assert power_switch_component_manager.turn_off_outlet(i) == (
-            ResultCode.OK, f"Outlet {i} power off")
+            ResultCode.OK,
+            f"Outlet {i} power off",
+        )
 
         for j in range(0, num_outlets):
             if j <= i:
-                with pytest.raises(AssertionError, 
-                    match="Power mode of outlet \d \(3\) is different than the expected mode 1"
+                with pytest.raises(
+                    AssertionError,
+                    match="Power mode of outlet \d \(3\) is different than the expected mode 1",
                 ):
                     power_switch_component_manager.get_outlet_power_mode(j)
             else:
-                assert power_switch_component_manager.get_outlet_power_mode(j) == PowerMode.ON
+                assert (
+                    power_switch_component_manager.get_outlet_power_mode(j)
+                    == PowerMode.ON
+                )
 
     # Turn on outlets and check the state again
     for i in range(0, num_outlets):
         assert power_switch_component_manager.turn_on_outlet(i) == (
-            ResultCode.OK, f"Outlet {i} power on")
+            ResultCode.OK,
+            f"Outlet {i} power on",
+        )
 
         for j in range(0, num_outlets):
             if j <= i:
-                assert power_switch_component_manager.get_outlet_power_mode(j) == PowerMode.ON
+                assert (
+                    power_switch_component_manager.get_outlet_power_mode(j)
+                    == PowerMode.ON
+                )
             else:
-                with pytest.raises(AssertionError, 
-                    match="Power mode of outlet \d \(3\) is different than the expected mode 1"
+                with pytest.raises(
+                    AssertionError,
+                    match="Power mode of outlet \d \(3\) is different than the expected mode 1",
                 ):
                     power_switch_component_manager.get_outlet_power_mode(j)
 
+
 @pytest.mark.parametrize(
     "power_switch_component_manager",
-    [{
-        "sim_put_error": False,
-        "sim_get_error": False
-    }],
-    indirect=True)
+    [{"sim_put_error": False, "sim_get_error": False}],
+    indirect=True,
+)
 def test_outlet_out_of_bounds(
-    power_switch_component_manager: PowerSwitchComponentManager
+    power_switch_component_manager: PowerSwitchComponentManager,
 ) -> None:
     """
     Tests that the power switch driver does not query the power switch with
@@ -110,22 +127,21 @@ def test_outlet_out_of_bounds(
     # Check that an assertion is raised if we try to access an invalid outlet ID
     with pytest.raises(AssertionError):
         power_switch_component_manager.get_outlet_power_mode(num_outlets)
-    
+
     with pytest.raises(AssertionError):
         power_switch_component_manager.turn_on_outlet(num_outlets)
 
     with pytest.raises(AssertionError):
         power_switch_component_manager.turn_off_outlet(num_outlets)
 
+
 @pytest.mark.parametrize(
     "power_switch_component_manager",
-    [{
-        "sim_put_error": False,
-        "sim_get_error": True
-    }],
-    indirect=True)
+    [{"sim_put_error": False, "sim_get_error": True}],
+    indirect=True,
+)
 def test_get_request_failure(
-    power_switch_component_manager: PowerSwitchComponentManager
+    power_switch_component_manager: PowerSwitchComponentManager,
 ) -> None:
     """
     Tests that a GET request failure is appropriately handled.
@@ -134,15 +150,14 @@ def test_get_request_failure(
     assert power_switch_component_manager.is_communicating == False
     assert power_switch_component_manager.num_outlets == 0
 
+
 @pytest.mark.parametrize(
     "power_switch_component_manager",
-    [{
-        "sim_put_error": True,
-        "sim_get_error": False
-    }],
-    indirect=True)
+    [{"sim_put_error": True, "sim_get_error": False}],
+    indirect=True,
+)
 def test_put_request_failure(
-    power_switch_component_manager: PowerSwitchComponentManager
+    power_switch_component_manager: PowerSwitchComponentManager,
 ) -> None:
     """
     Tests that a PUT request failure is appropriately handled.
@@ -152,4 +167,6 @@ def test_put_request_failure(
     assert num_outlets == 8
 
     assert power_switch_component_manager.turn_off_outlet(0) == (
-        ResultCode.FAILED, "HTTP response error")
+        ResultCode.FAILED,
+        "HTTP response error",
+    )

@@ -10,32 +10,33 @@
 
 from __future__ import annotations
 
-from typing import List
+import json
+import logging
 
 # Standard imports
 import os
 import time
-import json
-import logging
+from typing import Callable, Dict, List, Type
+
 import pytest
-from typing import Callable, Type, Dict
 
 # Tango imports
 import tango
+
+# SKA imports
+from ska_tango_base.commands import ResultCode
+from ska_tango_base.control_model import AdminMode, HealthState, ObsState
 from tango import DevState
 from tango.server import command
 
-#SKA imports
-from ska_tango_base.commands import ResultCode
 from ska_mid_cbf_mcs.commons.global_enum import freq_band_dict
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
-
-from ska_tango_base.control_model import HealthState, AdminMode, ObsState
 
 # Data file path
 data_file_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
 
 CONST_WAIT_TIME = 4
+
 
 @pytest.mark.skip
 class TestCbfSubarray:
@@ -55,7 +56,6 @@ class TestCbfSubarray:
             :py:class:`tango.test_context.DeviceTestContext`.
         """
         assert device_under_test.State() == DevState.DISABLE
-    
 
     def test_Status(
         self: TestCbfSubarray,
@@ -70,7 +70,6 @@ class TestCbfSubarray:
         """
         assert device_under_test.Status() == "The device is in DISABLE state."
 
-
     def test_adminMode(
         self: TestCbfSubarray,
         device_under_test: CbfDeviceProxy,
@@ -84,19 +83,9 @@ class TestCbfSubarray:
         """
         assert device_under_test.adminMode == AdminMode.OFFLINE
 
-
-    @pytest.mark.parametrize(
-        "command",
-        [
-            "On",
-            "Off",
-            "Standby"
-        ]
-    )
+    @pytest.mark.parametrize("command", ["On", "Off", "Standby"])
     def test_Power_Commands(
-        self: TestCbfSubarray,
-        device_under_test: CbfDeviceProxy,
-        command: str
+        self: TestCbfSubarray, device_under_test: CbfDeviceProxy, command: str
     ) -> None:
         """
         Test the On/Off/Standby Commands
@@ -127,26 +116,16 @@ class TestCbfSubarray:
         assert result[0][0] == ResultCode.OK
         assert device_under_test.State() == expected_state
 
-
     @pytest.mark.parametrize(
         "receptor_ids, \
         receptors_to_remove",
-        [
-            (
-                [1, 3, 4, 2],
-                [2, 1, 4]
-            ),
-            (
-                [4, 1, 2],
-                [2, 1]
-            )
-        ]
+        [([1, 3, 4, 2], [2, 1, 4]), ([4, 1, 2], [2, 1])],
     )
     def test_Add_Remove_Receptors_valid(
         self: TestCbfSubarray,
         device_under_test: CbfDeviceProxy,
-        receptor_ids: List[int], 
-        receptors_to_remove: List[int], 
+        receptor_ids: List[int],
+        receptors_to_remove: List[int],
     ) -> None:
         """
         Test valid use of Add/RemoveReceptors command.
@@ -160,7 +139,7 @@ class TestCbfSubarray:
         time.sleep(CONST_WAIT_TIME)
         assert device_under_test.State() == DevState.ON
 
-         # add all except last receptor
+        # add all except last receptor
         assert device_under_test.obsState == ObsState.EMPTY
         device_under_test.AddReceptors(receptor_ids[:-1])
         time.sleep(0.1)
@@ -176,7 +155,9 @@ class TestCbfSubarray:
         # remove all except last receptor
         device_under_test.RemoveReceptors(receptors_to_remove)
         time.sleep(0.1)
-        receptor_ids_after_remove = [r for r in receptor_ids if r not in receptors_to_remove]
+        receptor_ids_after_remove = [
+            r for r in receptor_ids if r not in receptors_to_remove
+        ]
         assert (device_under_test.receptors == receptor_ids_after_remove).all()
         assert device_under_test.obsState == ObsState.IDLE
 
@@ -186,22 +167,11 @@ class TestCbfSubarray:
         assert (device_under_test.receptors == []).all()
         assert device_under_test.obsState == ObsState.EMPTY
 
-
-    @pytest.mark.parametrize(
-        "receptor_ids",
-        [
-            (
-                [1, 3, 4, 2]
-            ),
-            (
-                [4, 1, 2]
-            )
-        ]
-    )
+    @pytest.mark.parametrize("receptor_ids", [([1, 3, 4, 2]), ([4, 1, 2])])
     def test_RemoveAllReceptors_valid(
         self: TestCbfSubarray,
         device_under_test: CbfDeviceProxy,
-        receptor_ids: List[int]
+        receptor_ids: List[int],
     ) -> None:
         """
         Test valid use of RemoveAllReceptors command.
@@ -225,25 +195,15 @@ class TestCbfSubarray:
         assert (device_under_test.receptors == []).all()
         assert device_under_test.obsState == ObsState.EMPTY
 
-
     @pytest.mark.parametrize(
         "receptor_ids, \
-        invalid_receptor_id", 
-        [
-            (
-                [1, 3],
-                [200]
-            ),
-            (
-                [4, 2],
-                [0]
-            )
-        ]
+        invalid_receptor_id",
+        [([1, 3], [200]), ([4, 2], [0])],
     )
     def test_AddReceptors_invalid(
         self: TestCbfSubarray,
         device_under_test: CbfDeviceProxy,
-        receptor_ids: List[int], 
+        receptor_ids: List[int],
         invalid_receptor_id: List[int],
     ) -> None:
         """
@@ -267,26 +227,16 @@ class TestCbfSubarray:
         time.sleep(0.1)
         assert (device_under_test.receptors == receptor_ids).all()
 
-
     @pytest.mark.parametrize(
         "receptor_ids, \
-        invalid_receptors_to_remove", 
-        [
-            (
-                [1, 3],
-                [2]
-            ),
-            (
-                [4, 2],
-                [1, 3]
-            )
-        ]
+        invalid_receptors_to_remove",
+        [([1, 3], [2]), ([4, 2], [1, 3])],
     )
     def test_RemoveReceptors_invalid(
         self: TestCbfSubarray,
         device_under_test: CbfDeviceProxy,
-        receptor_ids: List[int], 
-        invalid_receptors_to_remove: List[int], 
+        receptor_ids: List[int],
+        invalid_receptors_to_remove: List[int],
     ) -> None:
         """
         Test invalid use of RemoveReceptors commands:
@@ -308,22 +258,11 @@ class TestCbfSubarray:
         assert (device_under_test.receptors == receptor_ids).all()
         assert device_under_test.obsState == ObsState.IDLE
 
-
-    @pytest.mark.parametrize(
-        "receptor_ids", 
-        [
-            (
-                [1, 3]
-            ),
-            (
-                [4, 2]
-            )
-        ]
-    )
+    @pytest.mark.parametrize("receptor_ids", [([1, 3]), ([4, 2])])
     def test_RemoveAllReceptors_invalid(
         self: TestCbfSubarray,
         device_under_test: CbfDeviceProxy,
-        receptor_ids: List[int] 
+        receptor_ids: List[int],
     ) -> None:
         """
         Test invalid use of RemoveReceptors commands:
@@ -340,22 +279,16 @@ class TestCbfSubarray:
         time.sleep(0.1)
         assert result[0][0] == ResultCode.FAILED
 
-
     @pytest.mark.parametrize(
         "config_file_name, \
-        receptor_ids", 
-        [
-            (
-                "ConfigureScan_basic.json",
-                [1, 3, 4, 2]
-            )
-        ]
+        receptor_ids",
+        [("ConfigureScan_basic.json", [1, 3, 4, 2])],
     )
     def test_ConfigureScan_basic(
-        self: TestCbfSubarray, 
-        device_under_test: CbfDeviceProxy, 
+        self: TestCbfSubarray,
+        device_under_test: CbfDeviceProxy,
         config_file_name: str,
-        receptor_ids: List[int]
+        receptor_ids: List[int],
     ) -> None:
         """
         Test a successful scan configuration
@@ -376,31 +309,21 @@ class TestCbfSubarray:
         time.sleep(CONST_WAIT_TIME)
         assert device_under_test.obsState == ObsState.READY
 
-
     @pytest.mark.parametrize(
         "config_file_name, \
         scan_file_name, \
         receptor_ids",
         [
-            (
-                "ConfigureScan_basic.json",
-                "Scan1_basic.json",
-                [1, 3, 4, 2]
-            ),
-            (
-                "Configure_TM-CSP_v2.json",
-                "Scan2_basic.json",
-                [4, 1, 2]
-            )
-
-        ]
+            ("ConfigureScan_basic.json", "Scan1_basic.json", [1, 3, 4, 2]),
+            ("Configure_TM-CSP_v2.json", "Scan2_basic.json", [4, 1, 2]),
+        ],
     )
     def test_Scan(
         self: TestCbfSubarray,
         device_under_test: CbfDeviceProxy,
         config_file_name: str,
         scan_file_name: str,
-        receptor_ids: List[int]
+        receptor_ids: List[int],
     ) -> None:
         """
         Test the Scan command
@@ -417,11 +340,10 @@ class TestCbfSubarray:
 
         assert device_under_test.obsState == ObsState.SCANNING
 
-
     @pytest.mark.parametrize(
         "config_file_name, \
         scan_file_name, \
-        receptor_ids", 
+        receptor_ids",
         [
             (
                 "ConfigureScan_basic.json",
@@ -432,15 +354,15 @@ class TestCbfSubarray:
                 "Configure_TM-CSP_v2.json",
                 "Scan2_basic.json",
                 [4, 1, 2],
-            )
-        ]
+            ),
+        ],
     )
     def test_EndScan(
         self: TestCbfSubarray,
         device_under_test: CbfDeviceProxy,
         config_file_name: str,
         scan_file_name: str,
-        receptor_ids: List[int]
+        receptor_ids: List[int],
     ) -> None:
         """
         Test the EndScan command
@@ -455,11 +377,10 @@ class TestCbfSubarray:
 
         assert device_under_test.obsState == ObsState.READY
 
-
     @pytest.mark.parametrize(
         "config_file_name, \
         scan_file_name, \
-        receptor_ids", 
+        receptor_ids",
         [
             (
                 "ConfigureScan_basic.json",
@@ -470,15 +391,15 @@ class TestCbfSubarray:
                 "Configure_TM-CSP_v2.json",
                 "Scan2_basic.json",
                 [4, 1, 2],
-            )
-        ]
+            ),
+        ],
     )
     def test_Abort(
         self: TestCbfSubarray,
         device_under_test: CbfDeviceProxy,
         config_file_name: str,
         scan_file_name: str,
-        receptor_ids: List[int]
+        receptor_ids: List[int],
     ) -> None:
         """
         Test the Abort command
@@ -496,7 +417,7 @@ class TestCbfSubarray:
     @pytest.mark.parametrize(
         "config_file_name, \
         scan_file_name, \
-        receptor_ids", 
+        receptor_ids",
         [
             (
                 "ConfigureScan_basic.json",
@@ -507,15 +428,15 @@ class TestCbfSubarray:
                 "Configure_TM-CSP_v2.json",
                 "Scan2_basic.json",
                 [4, 1, 2],
-            )
-        ]
+            ),
+        ],
     )
     def test_Reset(
         self: TestCbfSubarray,
         device_under_test: CbfDeviceProxy,
         config_file_name: str,
         scan_file_name: str,
-        receptor_ids: List[int]
+        receptor_ids: List[int],
     ) -> None:
         """
         Test the ObsReset command
@@ -533,7 +454,7 @@ class TestCbfSubarray:
     @pytest.mark.parametrize(
         "config_file_name, \
         scan_file_name, \
-        receptor_ids", 
+        receptor_ids",
         [
             (
                 "ConfigureScan_basic.json",
@@ -544,15 +465,15 @@ class TestCbfSubarray:
                 "Configure_TM-CSP_v2.json",
                 "Scan2_basic.json",
                 [4, 1, 2],
-            )
-        ]
+            ),
+        ],
     )
     def test_Restart(
         self: TestCbfSubarray,
         device_under_test: CbfDeviceProxy,
         config_file_name: str,
         scan_file_name: str,
-        receptor_ids: List[int]
+        receptor_ids: List[int],
     ) -> None:
         """
         Test the Restart command
@@ -569,7 +490,7 @@ class TestCbfSubarray:
 
     @pytest.mark.parametrize(
         "config_file_name, \
-        receptor_ids", 
+        receptor_ids",
         [
             (
                 "ConfigureScan_basic.json",
@@ -578,14 +499,14 @@ class TestCbfSubarray:
             (
                 "Configure_TM-CSP_v2.json",
                 [4, 1, 2],
-            )
-        ]
+            ),
+        ],
     )
     def test_End(
         self: TestCbfSubarray,
         device_under_test: CbfDeviceProxy,
         config_file_name: str,
-        receptor_ids: List[int]
+        receptor_ids: List[int],
     ) -> None:
         self.test_ConfigureScan_basic(
             device_under_test, config_file_name, receptor_ids

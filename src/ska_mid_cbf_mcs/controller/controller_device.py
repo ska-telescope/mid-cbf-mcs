@@ -16,20 +16,22 @@ Sub-element controller device for Mid.CBf
 
 from __future__ import annotations  # allow forward references in type hints
 
-from typing import List, Tuple, Optional
+from typing import List, Optional, Tuple
 
 import tango
-from tango.server import run
-from tango.server import attribute, command
-from tango.server import device_property
-from tango import AttrWriteType
-
-from ska_mid_cbf_mcs.controller.talondx_component_manager import TalonDxComponentManager
-from ska_tango_base import SKAController, SKABaseDevice
-from ska_tango_base.control_model import SimulationMode, PowerMode
+from ska_tango_base import SKABaseDevice, SKAController
 from ska_tango_base.commands import ResultCode
-from ska_mid_cbf_mcs.controller.controller_component_manager import ControllerComponentManager
+from ska_tango_base.control_model import PowerMode, SimulationMode
+from tango import AttrWriteType
+from tango.server import attribute, command, device_property, run
+
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
+from ska_mid_cbf_mcs.controller.controller_component_manager import (
+    ControllerComponentManager,
+)
+from ska_mid_cbf_mcs.controller.talondx_component_manager import (
+    TalonDxComponentManager,
+)
 
 __all__ = ["CbfController", "main"]
 
@@ -43,43 +45,28 @@ class CbfController(SKAController):
 
     # PROTECTED REGION ID(CbfController.class_variable) ENABLED START #
 
-
     # PROTECTED REGION END #    //  CbfController.class_variable
 
-    
     # -----------------
     # Device Properties
     # -----------------
 
-    CbfSubarray = device_property(
-       
-        dtype=('str',)
-    )
+    CbfSubarray = device_property(dtype=("str",))
 
-    VCC = device_property(
-        
-        dtype=('str',)
-    )
+    VCC = device_property(dtype=("str",))
 
-    FSP = device_property(
-        
-        dtype=('str',)
-    )
+    FSP = device_property(dtype=("str",))
 
-    TalonLRU = device_property(
-        dtype=('str',)
-    )
+    TalonLRU = device_property(dtype=("str",))
 
-    TalonDxConfigPath = device_property(
-        dtype=('str')
-    )
+    TalonDxConfigPath = device_property(dtype=("str"))
 
     # ----------
     # Attributes
     # ----------
 
     commandProgress = attribute(
-        dtype='uint16',
+        dtype="uint16",
         label="Command progress percentage",
         max_value=100,
         min_value=0,
@@ -90,31 +77,31 @@ class CbfController(SKAController):
     )
 
     receptorToVcc = attribute(
-        dtype=('str',),
+        dtype=("str",),
         max_dim_x=197,
         label="Receptor-VCC map",
         polling_period=3000,
-        doc="Maps receptors IDs to VCC IDs, in the form \"receptorID:vccID\"",
+        doc='Maps receptors IDs to VCC IDs, in the form "receptorID:vccID"',
     )
 
     vccToReceptor = attribute(
-        dtype=('str',),
+        dtype=("str",),
         max_dim_x=197,
         label="VCC-receptor map",
         polling_period=3000,
-        doc="Maps VCC IDs to receptor IDs, in the form \"vccID:receptorID\"",
+        doc='Maps VCC IDs to receptor IDs, in the form "vccID:receptorID"',
     )
 
     subarrayconfigID = attribute(
-        dtype=('str',),
+        dtype=("str",),
         max_dim_x=16,
         label="Subarray config IDs",
         polling_period=3000,
-        doc="ID of subarray configuration. empty string if subarray is not configured for a scan."
+        doc="ID of subarray configuration. empty string if subarray is not configured for a scan.",
     )
 
     reportVCCState = attribute(
-        dtype=('DevState',),
+        dtype=("DevState",),
         max_dim_x=197,
         label="VCC state",
         polling_period=3000,
@@ -122,7 +109,7 @@ class CbfController(SKAController):
     )
 
     reportVCCHealthState = attribute(
-        dtype=('uint16',),
+        dtype=("uint16",),
         max_dim_x=197,
         label="VCC health status",
         polling_period=3000,
@@ -131,7 +118,7 @@ class CbfController(SKAController):
     )
 
     reportVCCAdminMode = attribute(
-        dtype=('uint16',),
+        dtype=("uint16",),
         max_dim_x=197,
         label="VCC admin mode",
         polling_period=3000,
@@ -140,15 +127,15 @@ class CbfController(SKAController):
     )
 
     reportVCCSubarrayMembership = attribute(
-        dtype=('uint16',),
+        dtype=("uint16",),
         max_dim_x=197,
         label="VCC subarray membership",
         # no polling period so it reads the true value and not the one in cache
-        doc="Report the subarray membership of VCCs (each can only belong to a single subarray), 0 if not assigned."
+        doc="Report the subarray membership of VCCs (each can only belong to a single subarray), 0 if not assigned.",
     )
 
     reportFSPState = attribute(
-        dtype=('DevState',),
+        dtype=("DevState",),
         max_dim_x=27,
         label="FSP state",
         polling_period=3000,
@@ -156,7 +143,7 @@ class CbfController(SKAController):
     )
 
     reportFSPHealthState = attribute(
-        dtype=('uint16',),
+        dtype=("uint16",),
         max_dim_x=27,
         label="FSP health status",
         polling_period=3000,
@@ -165,7 +152,7 @@ class CbfController(SKAController):
     )
 
     reportFSPAdminMode = attribute(
-        dtype=('uint16',),
+        dtype=("uint16",),
         max_dim_x=27,
         label="FSP admin mode",
         polling_period=3000,
@@ -174,17 +161,17 @@ class CbfController(SKAController):
     )
 
     reportFSPSubarrayMembership = attribute(
-        dtype=(('uint16',),),
+        dtype=(("uint16",),),
         max_dim_x=16,
         max_dim_y=27,
         label="FSP subarray membership",
         polling_period=3000,
         abs_change=1,
-        doc="Report the subarray membership of FSPs (each can only belong to at most 16 subarrays), 0 if not assigned."
+        doc="Report the subarray membership of FSPs (each can only belong to at most 16 subarrays), 0 if not assigned.",
     )
 
     frequencyOffsetK = attribute(
-        dtype=('int',),
+        dtype=("int",),
         access=AttrWriteType.READ_WRITE,
         max_dim_x=197,
         label="Frequency offset (k)",
@@ -192,7 +179,7 @@ class CbfController(SKAController):
     )
 
     frequencyOffsetDeltaF = attribute(
-        dtype=('int',),
+        dtype=("int",),
         access=AttrWriteType.READ_WRITE,
         max_dim_x=197,
         label="Frequency offset (delta f)",
@@ -200,7 +187,7 @@ class CbfController(SKAController):
     )
 
     reportSubarrayState = attribute(
-        dtype=('DevState',),
+        dtype=("DevState",),
         max_dim_x=16,
         label="Subarray state",
         polling_period=3000,
@@ -208,7 +195,7 @@ class CbfController(SKAController):
     )
 
     reportSubarrayHealthState = attribute(
-        dtype=('uint16',),
+        dtype=("uint16",),
         max_dim_x=16,
         label="Subarray health status",
         polling_period=3000,
@@ -217,7 +204,7 @@ class CbfController(SKAController):
     )
 
     reportSubarrayAdminMode = attribute(
-        dtype=('uint16',),
+        dtype=("uint16",),
         max_dim_x=16,
         label="FSP admin mode",
         polling_period=3000,
@@ -230,8 +217,8 @@ class CbfController(SKAController):
         access=AttrWriteType.READ_WRITE,
         memorized=True,
         doc="Reports the simulation mode of the device. \nSome devices may implement "
-            "both modes, while others will have simulators that set simulationMode "
-            "to True while the real devices always set simulationMode to False.",
+        "both modes, while others will have simulators that set simulationMode "
+        "to True while the real devices always set simulationMode to False.",
     )
 
     # ---------------
@@ -246,24 +233,20 @@ class CbfController(SKAController):
 
         device_args = (self, self.op_state_model, self.logger)
 
-        self.register_command_object(
-            "On", self.OnCommand(*device_args)
-        )
+        self.register_command_object("On", self.OnCommand(*device_args))
 
-        self.register_command_object(
-            "Off", self.OffCommand(*device_args)
-        )
+        self.register_command_object("Off", self.OffCommand(*device_args))
 
         self.register_command_object(
             "Standby", self.StandbyCommand(*device_args)
         )
-    
+
     def get_num_capabilities(
-        self: CbfController, 
+        self: CbfController,
     ) -> None:
         # self._max_capabilities inherited from SKAController
         # check first if property exists in DB
-        """Get number of capabilities for _init_Device. 
+        """Get number of capabilities for _init_Device.
         If property not found in db, then assign a default amount(197,27,16)"""
 
         if self._max_capabilities:
@@ -272,41 +255,47 @@ class CbfController(SKAController):
             self.logger.warning("MaxCapabilities device property not defined")
 
     class InitCommand(SKAController.InitCommand):
-
         def _get_num_capabilities(
-            self: CbfController.InitCommand, 
+            self: CbfController.InitCommand,
         ) -> None:
             # self._max_capabilities inherited from SKAController
             # check first if property exists in DB
-            """Get number of capabilities for _init_Device. 
+            """Get number of capabilities for _init_Device.
             If property not found in db, then assign a default amount(197,27,16)"""
-            
+
             device = self.target
-            
+
             if device._max_capabilities:
                 try:
                     device._count_vcc = device._max_capabilities["VCC"]
                 except KeyError:  # not found in DB
                     self.logger.warning(
-                        "VCC capabilities not defined; defaulting to 197.")
+                        "VCC capabilities not defined; defaulting to 197."
+                    )
                     device._count_vcc = 197
 
                 try:
                     device._count_fsp = device._max_capabilities["FSP"]
                 except KeyError:  # not found in DB
                     self.logger.warning(
-                        "FSP capabilities not defined; defaulting to 27.")
+                        "FSP capabilities not defined; defaulting to 27."
+                    )
                     device._count_fsp = 27
 
                 try:
-                    device._count_subarray = device._max_capabilities["Subarray"]
+                    device._count_subarray = device._max_capabilities[
+                        "Subarray"
+                    ]
                 except KeyError:  # not found in DB
                     self.logger.warning(
-                        "Subarray capabilities not defined; defaulting to 16.")
+                        "Subarray capabilities not defined; defaulting to 16."
+                    )
                     device._count_subarray = 16
             else:
-                self.logger.warning("MaxCapabilities device property not defined - \
-                    using default value")
+                self.logger.warning(
+                    "MaxCapabilities device property not defined - \
+                    using default value"
+                )
 
         def do(
             self: CbfController.InitCommand,
@@ -359,8 +348,10 @@ class CbfController(SKAController):
         Hook to be executed before any command.
         """
         # PROTECTED REGION END #    //  CbfController.always_executed_hook
-    
-    def create_component_manager(self: CbfController) -> ControllerComponentManager:
+
+    def create_component_manager(
+        self: CbfController,
+    ) -> ControllerComponentManager:
         """
         Create and return a component manager for this device.
 
@@ -376,9 +367,10 @@ class CbfController(SKAController):
         # mode to on
         self._simulation_mode = SimulationMode.TRUE
         self._talondx_component_manager = TalonDxComponentManager(
-            self.TalonDxConfigPath, self._simulation_mode, self.logger)
+            self.TalonDxConfigPath, self._simulation_mode, self.logger
+        )
 
-        return ControllerComponentManager( 
+        return ControllerComponentManager(
             get_num_capabilities=self.get_num_capabilities,
             vcc_fqdns_all=self.VCC,
             fsp_fqdns_all=self.FSP,
@@ -389,11 +381,11 @@ class CbfController(SKAController):
             push_change_event=self.push_change_event,
             communication_status_changed_callback=self._communication_status_changed,
             component_power_mode_changed_callback=self._component_power_mode_changed,
-            component_fault_callback=self._component_fault
+            component_fault_callback=self._component_fault,
         )
 
     def delete_device(self: CbfController) -> None:
-        """Unsubscribe to events, turn all the subarrays, VCCs and FSPs off""" 
+        """Unsubscribe to events, turn all the subarrays, VCCs and FSPs off"""
         # PROTECTED REGION ID(CbfController.delete_device) ENABLED START #
         pass
         # PROTECTED REGION END #    //  CbfController.delete_device
@@ -404,8 +396,8 @@ class CbfController(SKAController):
 
     def read_commandProgress(self: CbfController) -> int:
         # PROTECTED REGION ID(CbfController.commandProgress_read) ENABLED START #
-        """Return commandProgress attribute: percentage progress implemented for 
-        commands that result in state/mode transitions for a large number of 
+        """Return commandProgress attribute: percentage progress implemented for
+        commands that result in state/mode transitions for a large number of
         components and/or are executed in stages (e.g power up, power down)"""
         return self._command_progress
         # PROTECTED REGION END #    //  CbfController.commandProgress_read
@@ -424,7 +416,7 @@ class CbfController(SKAController):
 
     def read_subarrayconfigID(self: CbfController) -> List[str]:
         # PROTECTED REGION ID(CbfController.subarrayconfigID_read) ENABLED START #
-        """Return subarrayconfigID atrribute: ID of subarray config. 
+        """Return subarrayconfigID atrribute: ID of subarray config.
         Used for debug purposes. empty string if subarray is not configured for a scan"""
         return self.component_manager.subarray_config_ID
         # PROTECTED REGION END #    //  CbfController.subarrayconfigID_read
@@ -438,7 +430,7 @@ class CbfController(SKAController):
     def read_reportVCCHealthState(self: CbfController) -> List[int]:
         # PROTECTED REGION ID(CbfController.reportVCCHealthState_read) ENABLED START #
         """
-        Return reportVCCHealthState attribute: health status of VCC capabilities 
+        Return reportVCCHealthState attribute: health status of VCC capabilities
         as an array of unsigned short. Ex: [0,0,0,2,0...3]
         """
         return self.component_manager.report_vcc_health_state
@@ -447,13 +439,13 @@ class CbfController(SKAController):
     def read_reportVCCAdminMode(self: CbfController) -> List[int]:
         # PROTECTED REGION ID(CbfController.reportVCCAdminMode_read) ENABLED START #
         """
-        Return reportVCCAdminMode attribute: report the administration mode 
+        Return reportVCCAdminMode attribute: report the administration mode
         of the VCC capabilities as an array of unsigned short. For ex.: [0,0,0,...1,2]"""
         return self.component_manager.report_vcc_admin_mode
         # PROTECTED REGION END #    //  CbfController.reportVCCAdminMode_read
 
     def read_reportVCCSubarrayMembership(self: CbfController) -> List[int]:
-        """Return reportVCCSubarrayMembership attribute: report the subarray membership of VCCs 
+        """Return reportVCCSubarrayMembership attribute: report the subarray membership of VCCs
         (each can only belong to a single subarray), 0 if not assigned."""
         # PROTECTED REGION ID(CbfController.reportVCCSubarrayMembership_read) ENABLED START #
         return self.component_manager.report_vcc_subarray_membership
@@ -474,15 +466,17 @@ class CbfController(SKAController):
     def read_reportFSPAdminMode(self: CbfController) -> List[int]:
         # PROTECTED REGION ID(CbfController.reportFSPAdminMode_read) ENABLED START #
         """
-        Return reportFSPAdminMode attribute: Report the administration mode 
+        Return reportFSPAdminMode attribute: Report the administration mode
         of the FSP capabilities as an array of unsigned short. for ex: [0,0,2,..]
         """
         return self.component_manager.report_fsp_admin_mode
         # PROTECTED REGION END #    //  CbfController.reportFSPAdminMode_read
 
-    def read_reportFSPSubarrayMembership(self: CbfController) -> List[List[int]]:
+    def read_reportFSPSubarrayMembership(
+        self: CbfController,
+    ) -> List[List[int]]:
         # PROTECTED REGION ID(CbfController.reportFSPSubarrayMembership_read) ENABLED START #
-        """Return reportVCCSubarrayMembership attribute: Report the subarray membership 
+        """Return reportVCCSubarrayMembership attribute: Report the subarray membership
         of FSPs (each can only belong to at most 16 subarrays), 0 if not assigned."""
         return self.component_manager.report_fsp_subarray_membership
         # PROTECTED REGION END #    //  CbfController.reportFSPSubarrayMembership_read
@@ -499,26 +493,32 @@ class CbfController(SKAController):
         if len(value) == self._count_vcc:
             self.component_manager.frequency_offset_k = value
         else:
-            log_msg = "Skipped writing to frequencyOffsetK attribute " + \
-                f"(expected {self._count_vcc} arguments, but received {len(value)}."
+            log_msg = (
+                "Skipped writing to frequencyOffsetK attribute "
+                + f"(expected {self._count_vcc} arguments, but received {len(value)}."
+            )
             self.logger.warning(log_msg)
         # PROTECTED REGION END #    //  CbfController.frequencyOffsetK_write
 
     def read_frequencyOffsetDeltaF(self: CbfController) -> List[int]:
         # PROTECTED REGION ID(CbfController.frequencyOffsetDeltaF_read) ENABLED START #
-        """Return frequencyOffsetDeltaF attribute: Frequency offset (delta f) 
+        """Return frequencyOffsetDeltaF attribute: Frequency offset (delta f)
         of all 197 receptors as an array of ints."""
         return self.component_manager.frequency_offset_delta_f
         # PROTECTED REGION END #    //  CbfController.frequencyOffsetDeltaF_read
 
-    def write_frequencyOffsetDeltaF(self: CbfController, value: List[int]) -> None:
+    def write_frequencyOffsetDeltaF(
+        self: CbfController, value: List[int]
+    ) -> None:
         # PROTECTED REGION ID(CbfController.frequencyOffsetDeltaF_write) ENABLED START #
         """Set the frequencyOffsetDeltaF attribute"""
         if len(value) == self._count_vcc:
             self.component_manager.frequency_offset_delta_f = value
         else:
-            log_msg = "Skipped writing to frequencyOffsetDeltaF attribute " + \
-                f"(expected {self._count_vcc} arguments, but received {len(value)}."
+            log_msg = (
+                "Skipped writing to frequencyOffsetDeltaF attribute "
+                + f"(expected {self._count_vcc} arguments, but received {len(value)}."
+            )
             self.logger.warning(log_msg)
         # PROTECTED REGION END #    //  CbfController.frequencyOffsetDeltaF_write
 
@@ -537,13 +537,15 @@ class CbfController(SKAController):
     def read_reportSubarrayAdminMode(self: CbfController) -> List[int]:
         # PROTECTED REGION ID(CbfController.reportSubarrayAdminMode_read) ENABLED START #
         """
-        Return reportSubarrayAdminMode attribute: Report the administration mode 
+        Return reportSubarrayAdminMode attribute: Report the administration mode
         of the Subarray as an array of unsigned short. for ex: [0,0,2,..]
         """
         return self.component_manager.report_subarray_admin_mode
         # PROTECTED REGION END #    //  CbfController.reportSubarrayAdminMode_read
 
-    def write_simulationMode(self: CbfController, value: SimulationMode) -> None:
+    def write_simulationMode(
+        self: CbfController, value: SimulationMode
+    ) -> None:
         """
         Set the Simulation Mode of the device.
 
@@ -561,7 +563,7 @@ class CbfController(SKAController):
         A class for the CbfController's On() command.
         """
 
-        def do(            
+        def do(
             self: CbfController.OnCommand,
         ) -> Tuple[ResultCode, str]:
             """
@@ -573,7 +575,7 @@ class CbfController(SKAController):
             :rtype: (ResultCode, str)
             """
 
-            (result_code,message) = self.target.component_manager.on()
+            (result_code, message) = self.target.component_manager.on()
 
             if result_code == ResultCode.OK:
                 self.target._component_power_mode_changed(PowerMode.ON)
@@ -585,6 +587,7 @@ class CbfController(SKAController):
         """
         A class for the CbfController's Off() command.
         """
+
         def do(
             self: CbfController.OffCommand,
         ) -> Tuple[ResultCode, str]:
@@ -597,7 +600,7 @@ class CbfController(SKAController):
             :rtype: (ResultCode, str)
             """
 
-            (result_code,message) = self.target.component_manager.off()
+            (result_code, message) = self.target.component_manager.off()
 
             if result_code == ResultCode.OK:
                 self.target._component_power_mode_changed(PowerMode.OFF)
@@ -609,7 +612,8 @@ class CbfController(SKAController):
         """
         A class for the CbfController's Standby() command.
         """
-        def do(            
+
+        def do(
             self: CbfController.StandbyCommand,
         ) -> Tuple[ResultCode, str]:
             """
@@ -621,15 +625,15 @@ class CbfController(SKAController):
                 information purpose only.
             :rtype: (ResultCode, str)
             """
-            
-            (result_code,message) = self.target.component_manager.standby()
+
+            (result_code, message) = self.target.component_manager.standby()
 
             if result_code == ResultCode.OK:
                 self.target._component_power_mode_changed(PowerMode.STANDBY)
 
             self.logger.info(message)
             return (result_code, message)
-    
+
     # ----------
     # Callbacks
     # ----------
@@ -654,7 +658,7 @@ class CbfController(SKAController):
             self.op_state_model.perform_action("component_disconnected")
         elif communication_status == CommunicationStatus.NOT_ESTABLISHED:
             self.op_state_model.perform_action("component_unknown")
-    
+
     def _component_power_mode_changed(
         self: CbfController,
         power_mode: PowerMode,
@@ -692,6 +696,7 @@ class CbfController(SKAController):
         else:
             self.set_status("The device has recovered from FAULT state.")
 
+
 # ----------
 # Run server
 # ----------
@@ -703,5 +708,5 @@ def main(args=None, **kwargs):
     # PROTECTED REGION END #    //  CbfController.main
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

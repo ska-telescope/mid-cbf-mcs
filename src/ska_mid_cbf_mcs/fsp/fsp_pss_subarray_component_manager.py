@@ -9,23 +9,26 @@
 
 # Copyright (c) 2019 National Research Council of Canada
 from __future__ import annotations
-from typing import Callable, Optional, Tuple, List
 
-import logging
 import json
+import logging
+from typing import Callable, List, Optional, Tuple
 
 import tango
-
-from ska_mid_cbf_mcs.component.component_manager import (
-    CommunicationStatus,
-    CbfComponentManager,
-)
-from ska_tango_base.control_model import PowerMode
 from ska_tango_base.commands import ResultCode
+from ska_tango_base.control_model import PowerMode
 from ska_tango_base.csp.obs.component_manager import CspObsComponentManager
-from ska_mid_cbf_mcs.commons.global_enum import const, freq_band_dict
 
-class FspPssSubarrayComponentManager(CbfComponentManager, CspObsComponentManager):
+from ska_mid_cbf_mcs.commons.global_enum import const, freq_band_dict
+from ska_mid_cbf_mcs.component.component_manager import (
+    CbfComponentManager,
+    CommunicationStatus,
+)
+
+
+class FspPssSubarrayComponentManager(
+    CbfComponentManager, CspObsComponentManager
+):
     """A component manager for the FspPssSubarray device."""
 
     def __init__(
@@ -33,7 +36,9 @@ class FspPssSubarrayComponentManager(CbfComponentManager, CspObsComponentManager
         logger: logging.Logger,
         fsp_id: int,
         push_change_event_callback: Optional[Callable],
-        communication_status_changed_callback: Callable[[CommunicationStatus], None],
+        communication_status_changed_callback: Callable[
+            [CommunicationStatus], None
+        ],
         component_power_mode_changed_callback: Callable[[PowerMode], None],
         component_fault_callback: Callable[[bool], None],
     ) -> None:
@@ -43,7 +48,7 @@ class FspPssSubarrayComponentManager(CbfComponentManager, CspObsComponentManager
         :param logger: a logger for this object to use
         :param cbf_controller_address: address of the cbf controller device
         :param vcc_fqdns_all: list of all vcc fqdns
-        :param subarray_id: the id indicating the subarray membership 
+        :param subarray_id: the id indicating the subarray membership
             of the fsp pss subarray device
         :param fsp_id: the id of the corresponding fsp device
         :param push_change_event: method to call when the base classes
@@ -53,11 +58,11 @@ class FspPssSubarrayComponentManager(CbfComponentManager, CspObsComponentManager
             the component manager and its component changes
         :param component_power_mode_changed_callback: callback to be
             called when the component power mode changes
-        :param component_fault_callback: callback to be called in event of 
+        :param component_fault_callback: callback to be called in event of
             component fault
         """
         self._logger = logger
-        
+
         self._connected = False
 
         self._scan_id = 0
@@ -75,9 +80,9 @@ class FspPssSubarrayComponentManager(CbfComponentManager, CspObsComponentManager
             communication_status_changed_callback=communication_status_changed_callback,
             component_power_mode_changed_callback=component_power_mode_changed_callback,
             component_fault_callback=component_fault_callback,
-            obs_state_model=None
+            obs_state_model=None,
         )
-    
+
     @property
     def scan_id(self: FspPssSubarrayComponentManager) -> int:
         """
@@ -87,7 +92,7 @@ class FspPssSubarrayComponentManager(CbfComponentManager, CspObsComponentManager
         :rtype: int
         """
         return self._scan_id
-    
+
     @property
     def config_id(self: FspPssSubarrayComponentManager) -> str:
         """
@@ -97,7 +102,7 @@ class FspPssSubarrayComponentManager(CbfComponentManager, CspObsComponentManager
         :rtype: str
         """
         return self._config_id
-    
+
     @property
     def fsp_id(self: FspPssSubarrayComponentManager) -> int:
         """
@@ -107,7 +112,7 @@ class FspPssSubarrayComponentManager(CbfComponentManager, CspObsComponentManager
         :rtype: int
         """
         return self._fsp_id
-    
+
     @property
     def search_window_id(self: FspPssSubarrayComponentManager) -> int:
         """
@@ -117,7 +122,7 @@ class FspPssSubarrayComponentManager(CbfComponentManager, CspObsComponentManager
         :rtype: int
         """
         return self._search_window_id
-    
+
     @property
     def search_beams(self: FspPssSubarrayComponentManager) -> List[str]:
         """
@@ -127,7 +132,7 @@ class FspPssSubarrayComponentManager(CbfComponentManager, CspObsComponentManager
         :rtype: List[str]
         """
         return self._search_beams
-    
+
     @property
     def search_beam_id(self: FspPssSubarrayComponentManager) -> List[int]:
         """
@@ -137,7 +142,7 @@ class FspPssSubarrayComponentManager(CbfComponentManager, CspObsComponentManager
         :rtype: List[int]
         """
         return self._search_beam_id
-    
+
     @property
     def output_enable(self: FspPssSubarrayComponentManager) -> bool:
         """
@@ -147,7 +152,7 @@ class FspPssSubarrayComponentManager(CbfComponentManager, CspObsComponentManager
         :rtype: bool
         """
         return self._output_enable
-    
+
     @property
     def receptors(self: FspPssSubarrayComponentManager) -> List[int]:
         """
@@ -157,7 +162,6 @@ class FspPssSubarrayComponentManager(CbfComponentManager, CspObsComponentManager
         :rtype: List[int]
         """
         return self._receptors
-
 
     def start_communicating(
         self: FspPssSubarrayComponentManager,
@@ -174,23 +178,22 @@ class FspPssSubarrayComponentManager(CbfComponentManager, CspObsComponentManager
         self.update_component_fault(False)
         self.update_component_power_mode(PowerMode.OFF)
 
-
     def stop_communicating(self: FspPssSubarrayComponentManager) -> None:
         """Stop communication with the component"""
-        self._logger.info("Entering FspPssSubarrayComponentManager.stop_communicating")
+        self._logger.info(
+            "Entering FspPssSubarrayComponentManager.stop_communicating"
+        )
         super().stop_communicating()
-        
+
         self._connected = False
 
-
     def _add_receptors(
-        self: FspPssSubarrayComponentManager, 
-        argin: List[int]
-        ) -> None:
+        self: FspPssSubarrayComponentManager, argin: List[int]
+    ) -> None:
         """
         Add specified receptors to the subarray.
 
-        :param argin: ids of receptors to add. 
+        :param argin: ids of receptors to add.
         """
         errs = []  # list of error messages
 
@@ -200,7 +203,7 @@ class FspPssSubarrayComponentManager(CbfComponentManager, CspObsComponentManager
                     self._logger.info(f"Receptor {receptorID} added.")
                     self._receptors.append(receptorID)
                 else:
-                    # TODO: this is not true if more receptors can be 
+                    # TODO: this is not true if more receptors can be
                     #       specified for the same search beam
                     log_msg = f"Receptor {receptorID} already assigned to current FSP subarray."
                     self._logger.warning(log_msg)
@@ -212,15 +215,13 @@ class FspPssSubarrayComponentManager(CbfComponentManager, CspObsComponentManager
             msg = "\n".join(errs)
             self._logger.error(msg)
 
-
     def _remove_receptors(
-        self: FspPssSubarrayComponentManager, 
-        argin: List[int]
-        )-> None:
+        self: FspPssSubarrayComponentManager, argin: List[int]
+    ) -> None:
         """
         Remove specified receptors from the subarray.
 
-        :param argin: ids of receptors to remove. 
+        :param argin: ids of receptors to remove.
         """
 
         for receptorID in argin:
@@ -231,26 +232,23 @@ class FspPssSubarrayComponentManager(CbfComponentManager, CspObsComponentManager
                 log_msg = f"Receptor {receptorID} not assigned to FSP subarray. Skipping."
                 self._logger.warning(log_msg)
 
-
     def _remove_all_receptors(self: FspPssSubarrayComponentManager) -> None:
-        """ Remove all receptors from the subarray."""
+        """Remove all receptors from the subarray."""
         self._remove_receptors(self._receptors[:])
 
-
     def configure_scan(
-        self: FspPssSubarrayComponentManager,
-        configuration: str
+        self: FspPssSubarrayComponentManager, configuration: str
     ) -> Tuple[ResultCode, str]:
         """
         Performs the ConfigureScan() command functionality
 
-        :param configuration: The configuration as JSON formatted string 
+        :param configuration: The configuration as JSON formatted string
         :return: A tuple containing a return code and a string
                 message indicating status. The message is for
                 information purpose only.
         :rtype: (ResultCode, str)
         """
-        
+
         configuration = json.loads(configuration)
 
         # TODO: Why are we overwriting the device property fsp ID
@@ -258,8 +256,8 @@ class FspPssSubarrayComponentManager(CbfComponentManager, CspObsComponentManager
         fsp_id = configuration["fsp_id"]
         if self._fsp_id != fsp_id:
             self._logger.warning(
-                f"The Fsp ID from ConfigureScan {fsp_id} does not equal " + \
-                f"the Fsp ID from the device properties {self._fsp_id}"
+                f"The Fsp ID from ConfigureScan {fsp_id} does not equal "
+                + f"the Fsp ID from the device properties {self._fsp_id}"
             )
         self._fsp_id = fsp_id
         self._search_window_id = int(configuration["search_window_id"])
@@ -269,15 +267,17 @@ class FspPssSubarrayComponentManager(CbfComponentManager, CspObsComponentManager
             if len(searchBeam["receptor_ids"]) != 1:
                 # TODO - to add support for multiple receptors
                 msg = "Currently only 1 receptor per searchBeam is supported"
-                self._logger.error(msg) 
+                self._logger.error(msg)
                 return (ResultCode.FAILED, msg)
 
             self._add_receptors(map(int, searchBeam["receptor_ids"]))
             self._search_beams.append(json.dumps(searchBeam))
             self._search_beam_id.append(int(searchBeam["search_beam_id"]))
 
-        return (ResultCode.OK, "FspPssSubarray ConfigureScan command completed OK")
-
+        return (
+            ResultCode.OK,
+            "FspPssSubarray ConfigureScan command completed OK",
+        )
 
     def scan(
         self: FspPssSubarrayComponentManager,
@@ -297,7 +297,6 @@ class FspPssSubarrayComponentManager(CbfComponentManager, CspObsComponentManager
 
         return (ResultCode.OK, "FspPssSubarray Scan command completed OK")
 
-
     def end_scan(
         self: FspPssSubarrayComponentManager,
     ) -> Tuple[ResultCode, str]:
@@ -312,8 +311,7 @@ class FspPssSubarrayComponentManager(CbfComponentManager, CspObsComponentManager
 
         return (ResultCode.OK, "FspPssSubarray EndScan command completed OK")
 
-
-    def _deconfigure( 
+    def _deconfigure(
         self: FspPssSubarrayComponentManager,
     ) -> None:
 
@@ -325,7 +323,6 @@ class FspPssSubarrayComponentManager(CbfComponentManager, CspObsComponentManager
         self._config_id = ""
 
         self._remove_all_receptors()
-
 
     def go_to_idle(
         self: FspPssSubarrayComponentManager,

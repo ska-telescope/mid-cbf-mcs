@@ -11,43 +11,55 @@ from __future__ import annotations
 
 # Standard imports
 import logging
-import pytest
+import os
 import unittest
-from typing import Dict, Callable
+from typing import Callable, Dict
 
+import pytest
 import tango
 
-import os
-
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
+
 file_path = os.path.dirname(os.path.abspath(__file__))
-import json
 import functools
+import json
 
-# Local imports
-
-from ska_mid_cbf_mcs.controller.controller_component_manager import ControllerComponentManager 
-from ska_tango_base.control_model import PowerMode, SimulationMode
-from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import HealthState, AdminMode, ObsState
+from ska_tango_base.control_model import (
+    AdminMode,
+    HealthState,
+    ObsState,
+    PowerMode,
+    SimulationMode,
+)
+
+from ska_mid_cbf_mcs.controller.controller_component_manager import (
+    ControllerComponentManager,
+)
+from ska_mid_cbf_mcs.testing.mock.mock_callable import (
+    MockCallable,
+    MockChangeEventCallback,
+)
 from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder
 from ska_mid_cbf_mcs.testing.mock.mock_group import MockGroupBuilder
 from ska_mid_cbf_mcs.testing.tango_harness import TangoHarness
-from ska_mid_cbf_mcs.testing.mock.mock_callable import MockChangeEventCallback, MockCallable
+
+# Local imports
+
 
 CONST_TEST_NUM_VCC = 4
 CONST_TEST_NUM_FSP = 4
 CONST_TEST_NUM_SUBARRAY = 1
 
+
 @pytest.fixture()
 def controller_component_manager(
     logger: logging.Logger,
-    tango_harness: TangoHarness, # sets the connection_factory
+    tango_harness: TangoHarness,  # sets the connection_factory
     push_change_event_callback: MockChangeEventCallback,
     communication_status_changed_callback: MockCallable,
     component_power_mode_changed_callback: MockCallable,
-    component_fault_callback: MockCallable
+    component_fault_callback: MockCallable,
 ) -> ControllerComponentManager:
     """
     Return a Controller component manager.
@@ -61,12 +73,13 @@ def controller_component_manager(
         """
         Class to mock the TalonDxComponentManager.
         """
+
         def __init__(self: MockTalonDxComponentManager) -> None:
             pass
 
         def configure_talons(self: MockTalonDxComponentManager) -> ResultCode:
             return ResultCode.OK
-    
+
     f = open(file_path + "/../../data/test_fqdns.json")
     json_string = f.read().replace("\n", "")
     f.close()
@@ -86,19 +99,20 @@ def controller_component_manager(
 
     talondx_component_manager = MockTalonDxComponentManager()
 
-    return ControllerComponentManager( 
-            mock_get_num_capabilities,
-            subarray_fqdns_all=subarray,
-            vcc_fqdns_all=vcc,
-            fsp_fqdns_all=fsp,
-            talon_lru_fqdns_all=talon_lru,
-            talondx_component_manager=talondx_component_manager,
-            logger=logger,
-            push_change_event=push_change_event_callback,
-            communication_status_changed_callback=communication_status_changed_callback,
-            component_power_mode_changed_callback=component_power_mode_changed_callback,
-            component_fault_callback=component_fault_callback
-        )
+    return ControllerComponentManager(
+        mock_get_num_capabilities,
+        subarray_fqdns_all=subarray,
+        vcc_fqdns_all=vcc,
+        fsp_fqdns_all=fsp,
+        talon_lru_fqdns_all=talon_lru,
+        talondx_component_manager=talondx_component_manager,
+        logger=logger,
+        push_change_event=push_change_event_callback,
+        communication_status_changed_callback=communication_status_changed_callback,
+        component_power_mode_changed_callback=component_power_mode_changed_callback,
+        component_fault_callback=component_fault_callback,
+    )
+
 
 @pytest.fixture()
 def component_fault_callback(
@@ -115,6 +129,7 @@ def component_fault_callback(
         of a component manager changed.
     """
     return mock_callback_factory()
+
 
 @pytest.fixture()
 def communication_status_changed_callback(
@@ -149,18 +164,21 @@ def component_power_mode_changed_callback(
     """
     return mock_callback_factory()
 
+
 @pytest.fixture()
 def push_change_event_callback_factory(
-    mock_change_event_callback_factory: Callable[[str], MockChangeEventCallback],
+    mock_change_event_callback_factory: Callable[
+        [str], MockChangeEventCallback
+    ],
 ) -> Callable[[], MockChangeEventCallback]:
     """
-    Return a mock change event callback factory 
+    Return a mock change event callback factory
 
     :param mock_change_event_callback_factory: fixture that provides a
         mock change event callback factory (i.e. an object that returns
         mock callbacks when called).
 
-    :return: a mock change event callback factory 
+    :return: a mock change event callback factory
     """
 
     def _factory() -> MockChangeEventCallback:
@@ -174,14 +192,15 @@ def push_change_event_callback(
     push_change_event_callback_factory: Callable[[], MockChangeEventCallback],
 ) -> MockChangeEventCallback:
     """
-    Return a mock change event callback 
+    Return a mock change event callback
 
     :param push_change_event_callback_factory: fixture that provides a mock
-        change event callback factory 
+        change event callback factory
 
-    :return: a mock change event callback 
+    :return: a mock change event callback
     """
     return push_change_event_callback_factory()
+
 
 @pytest.fixture()
 def mock_vcc() -> unittest.mock.Mock:
@@ -196,12 +215,14 @@ def mock_vcc() -> unittest.mock.Mock:
     builder.add_result_command("Off", ResultCode.OK)
     return builder()
 
+
 @pytest.fixture()
 def mock_vcc_group() -> unittest.mock.Mock:
     builder = MockGroupBuilder()
     builder.add_command("On", None)
     builder.add_command("Off", None)
     return builder()
+
 
 @pytest.fixture()
 def mock_fsp() -> unittest.mock.Mock:
@@ -214,12 +235,14 @@ def mock_fsp() -> unittest.mock.Mock:
     builder.add_result_command("Off", ResultCode.OK)
     return builder()
 
+
 @pytest.fixture()
 def mock_fsp_group() -> unittest.mock.Mock:
     builder = MockGroupBuilder()
     builder.add_command("On", None)
     builder.add_command("Off", None)
     return builder()
+
 
 @pytest.fixture()
 def mock_subarray() -> unittest.mock.Mock:
@@ -231,12 +254,14 @@ def mock_subarray() -> unittest.mock.Mock:
     builder.add_result_command("Off", ResultCode.OK)
     return builder()
 
+
 @pytest.fixture()
 def mock_subarray_group() -> unittest.mock.Mock:
     builder = MockGroupBuilder()
     builder.add_command("On", None)
     builder.add_command("Off", None)
     return builder()
+
 
 @pytest.fixture()
 def mock_talon_lru() -> unittest.mock.Mock:
@@ -248,6 +273,7 @@ def mock_talon_lru() -> unittest.mock.Mock:
     builder.add_result_command("Off", ResultCode.OK)
     return builder()
 
+
 @pytest.fixture()
 def initial_mocks(
     mock_vcc: unittest.mock.Mock,
@@ -256,7 +282,7 @@ def initial_mocks(
     mock_fsp_group: unittest.mock.Mock,
     mock_subarray: unittest.mock.Mock,
     mock_subarray_group: unittest.mock.Mock,
-    mock_talon_lru: unittest.mock.Mock
+    mock_talon_lru: unittest.mock.Mock,
 ) -> Dict[str, unittest.mock.Mock]:
     """
     Return a dictionary of device proxy mocks to pre-register.

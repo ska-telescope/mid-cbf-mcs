@@ -12,23 +12,25 @@
 #
 # This class is used to simulate the behaviour of the HPS VCC band
 # devices when the Talon-DX hardware is not connected.
-# 
+#
 # Currently this is just provided as a single class, but there may
 # be a need to add functionality for different bands at a later time.
 # In that case, this may be used as a base class with an additional class
 # created for each band that inherit from it.
 # """
 
-from __future__ import annotations # allow forward references in type hints
+from __future__ import annotations  # allow forward references in type hints
 
 import json
-import tango
 from typing import List
 
+import tango
 from ska_tango_base.control_model import ObsState
+
 from ska_mid_cbf_mcs.commons.global_enum import freq_band_dict
 
 __all__ = ["VccBandSimulator"]
+
 
 class VccBandSimulator:
     """
@@ -37,6 +39,7 @@ class VccBandSimulator:
 
     :param device_name: Identifier for the device instance
     """
+
     def __init__(self: VccBandSimulator, device_name: str) -> None:
         self.device_name = device_name
 
@@ -118,7 +121,7 @@ class VccBandSimulator:
         :param json_str: JSON-formatted string containing the parameters
         """
         params = json.loads(json_str)
-        self._frequency_offset_k  = params["frequency_offset_k"]
+        self._frequency_offset_k = params["frequency_offset_k"]
         self._frequency_offset_delta_f = params["frequency_offset_delta_f"]
         self._state = tango.DevState.DISABLE
 
@@ -131,7 +134,7 @@ class VccBandSimulator:
         :param json_str: JSON-formatted string containing the parameters
         """
         internal_params = json.loads(json_str)
-        self._vcc_gain  = internal_params["vcc_gain"]
+        self._vcc_gain = internal_params["vcc_gain"]
 
     def ConfigureScan(self: VccBandSimulator, json_str: str) -> None:
         """
@@ -146,7 +149,9 @@ class VccBandSimulator:
 
         self._config_id = configuration["config_id"]
 
-        self._frequency_band = freq_band_dict()[configuration["frequency_band"]]
+        self._frequency_band = freq_band_dict()[
+            configuration["frequency_band"]
+        ]
 
         # If band is 5a or 5b, store band 5 turning parameter
         if self._frequency_band in [4, 5]:
@@ -154,9 +159,9 @@ class VccBandSimulator:
 
         self._frequency_band_offset = [
             int(configuration["frequency_band_offset_stream_1"]),
-            int(configuration["frequency_band_offset_stream_2"])
+            int(configuration["frequency_band_offset_stream_2"]),
         ]
-        
+
         if "rfi_flagging_mask" in configuration:
             self._rfi_flagging_mask = str(configuration["rfi_flagging_mask"])
 

@@ -9,28 +9,38 @@
 
 from __future__ import annotations
 
-# Standard imports
-from typing import Callable, Type, Dict, Optional
-import pytest
 import unittest
+
+# Standard imports
+from typing import Callable, Dict, Optional, Type
+
+import pytest
 import pytest_mock
 
 # Tango imports
 import tango
+from ska_tango_base.commands import ResultCode
+from ska_tango_base.control_model import (
+    AdminMode,
+    HealthState,
+    ObsState,
+    PowerMode,
+)
 from tango import DevState
 from tango.server import command
 
-#Local imports
+from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
+
+# Local imports
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
+from ska_mid_cbf_mcs.fsp.fsp_device import Fsp
 from ska_mid_cbf_mcs.testing.mock.mock_callable import MockChangeEventCallback
 from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder
 from ska_mid_cbf_mcs.testing.mock.mock_group import MockGroupBuilder
-from ska_mid_cbf_mcs.testing.tango_harness import DeviceToLoadType, TangoHarness
-
-from ska_mid_cbf_mcs.fsp.fsp_device import Fsp
-from ska_tango_base.control_model import HealthState, AdminMode, ObsState, PowerMode
-from ska_tango_base.commands import ResultCode
-from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
+from ska_mid_cbf_mcs.testing.tango_harness import (
+    DeviceToLoadType,
+    TangoHarness,
+)
 
 
 @pytest.fixture()
@@ -44,10 +54,9 @@ def device_under_test(tango_harness: TangoHarness) -> CbfDeviceProxy:
     """
     return tango_harness.get_device("mid_csp_cbf/fsp/03")
 
+
 @pytest.fixture()
-def device_to_load(
-    patched_fsp_device_class: Type[Fsp]
-) -> DeviceToLoadType:
+def device_to_load(patched_fsp_device_class: Type[Fsp]) -> DeviceToLoadType:
     """
     Fixture that specifies the device to be loaded for testing.
 
@@ -61,6 +70,7 @@ def device_to_load(
         "proxy": CbfDeviceProxy,
         "patch": patched_fsp_device_class,
     }
+
 
 @pytest.fixture
 def unique_id() -> str:
@@ -95,22 +105,26 @@ def mock_component_manager(
 
     def _start_communicating(mock: unittest.mock.Mock) -> None:
         mock.is_communicating = True
-        mock._communication_status_changed_callback(CommunicationStatus.NOT_ESTABLISHED)
-        mock._communication_status_changed_callback(CommunicationStatus.ESTABLISHED)
+        mock._communication_status_changed_callback(
+            CommunicationStatus.NOT_ESTABLISHED
+        )
+        mock._communication_status_changed_callback(
+            CommunicationStatus.ESTABLISHED
+        )
         mock._component_power_mode_changed_callback(PowerMode.OFF)
-    
+
     def _on(mock: unittest.mock.Mock) -> None:
         mock.message = "Fsp On command completed OK"
         return (ResultCode.OK, mock.message)
-    
+
     def _off(mock: unittest.mock.Mock) -> None:
         mock.message = "Fsp Off command completed OK"
         return (ResultCode.OK, mock.message)
-    
+
     def _standby(mock: unittest.mock.Mock) -> None:
         mock.message = "Fsp Standby command completed OK"
         return (ResultCode.OK, mock.message)
-    
+
     mock.start_communicating.side_effect = lambda: _start_communicating(mock)
     mock.on.side_effect = lambda: _on(mock)
     mock.off.side_effect = lambda: _off(mock)
@@ -119,6 +133,7 @@ def mock_component_manager(
     mock.enqueue.return_value = unique_id, ResultCode.QUEUED
 
     return mock
+
 
 @pytest.fixture()
 def patched_fsp_device_class(
@@ -159,11 +174,13 @@ def patched_fsp_device_class(
 
     return PatchedFsp
 
+
 @pytest.fixture()
 def mock_fsp_corr_subarray() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.OFF)
     return builder()
+
 
 @pytest.fixture()
 def mock_fsp_corr_subarray_group() -> unittest.mock.Mock:
@@ -172,14 +189,16 @@ def mock_fsp_corr_subarray_group() -> unittest.mock.Mock:
     builder.add_command("Off", None)
     return builder()
 
+
 @pytest.fixture()
 def mock_fsp_pss_subarray() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.OFF)
-    # add receptors to the mock pss subarray 
+    # add receptors to the mock pss subarray
     # (this is required for test_UpdateJonesMatrix)
     builder.add_attribute("receptors", [1, 2, 3, 4])
     return builder()
+
 
 @pytest.fixture()
 def mock_fsp_pss_subarray_group() -> unittest.mock.Mock:
@@ -188,14 +207,16 @@ def mock_fsp_pss_subarray_group() -> unittest.mock.Mock:
     builder.add_command("Off", None)
     return builder()
 
+
 @pytest.fixture()
 def mock_fsp_pst_subarray() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.OFF)
-    # add receptors to the mock pst subarray 
+    # add receptors to the mock pst subarray
     # (this is required for test_UpdateBeamWeights)
     builder.add_attribute("receptors", [1, 2, 3, 4])
     return builder()
+
 
 @pytest.fixture()
 def mock_fsp_pst_subarray_group() -> unittest.mock.Mock:
@@ -203,6 +224,7 @@ def mock_fsp_pst_subarray_group() -> unittest.mock.Mock:
     builder.add_command("On", None)
     builder.add_command("Off", None)
     return builder()
+
 
 @pytest.fixture()
 def initial_mocks(

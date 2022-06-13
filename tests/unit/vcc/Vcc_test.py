@@ -10,15 +10,16 @@
 """Contain the tests for the Vcc."""
 
 from __future__ import annotations
-from typing import List
+
+import json
+import logging
 
 # Standard imports
 import os
 import time
-import json
-import logging
+from typing import Callable, Dict, List, Type
+
 import pytest
-from typing import Callable, Type, Dict
 
 from ska_mid_cbf_mcs.testing.tango_harness import TangoHarness
 
@@ -27,16 +28,21 @@ file_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
 
 # Tango imports
 import tango
+from ska_tango_base.commands import ResultCode
+from ska_tango_base.control_model import (
+    AdminMode,
+    HealthState,
+    LoggingLevel,
+    ObsState,
+)
 from tango import DevState
 from tango.server import command
 
-#SKA imports
+# SKA imports
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 
-from ska_tango_base.control_model import HealthState, AdminMode, ObsState, LoggingLevel
-from ska_tango_base.commands import ResultCode
-
 CONST_WAIT_TIME = 2
+
 
 class TestVcc:
     """
@@ -55,7 +61,7 @@ class TestVcc:
             :py:class:`tango.test_context.DeviceTestContext`.
         """
         assert device_under_test.state() == DevState.DISABLE
-    
+
     def test_Status(
         self: TestVcc,
         device_under_test: CbfDeviceProxy,
@@ -70,19 +76,9 @@ class TestVcc:
 
         assert device_under_test.adminMode == AdminMode.OFFLINE
 
-
-    @pytest.mark.parametrize(
-        "command",
-        [
-            "On",
-            "Off",
-            "Standby"
-        ]
-    )
+    @pytest.mark.parametrize("command", ["On", "Off", "Standby"])
     def test_Power_Commands(
-        self: TestVcc,
-        device_under_test: CbfDeviceProxy,
-        command: str
+        self: TestVcc, device_under_test: CbfDeviceProxy, command: str
     ) -> None:
         """
         Test the On/Off/Standby Commands
@@ -113,27 +109,19 @@ class TestVcc:
         assert result[0][0] == ResultCode.OK
         assert device_under_test.State() == expected_state
 
-
     @pytest.mark.parametrize(
-        "config_file_name",
-        [
-            (
-                "Vcc_ConfigureScan_basic.json"
-            )
-        ]
+        "config_file_name", [("Vcc_ConfigureScan_basic.json")]
     )
     def test_Vcc_ConfigureScan_basic(
-        self,
-        device_under_test: CbfDeviceProxy,
-        config_file_name: str
+        self, device_under_test: CbfDeviceProxy, config_file_name: str
     ) -> None:
         """
-            Test a minimal successful scan configuration.
+        Test a minimal successful scan configuration.
 
-            :param device_under_test: fixture that provides a
-                :py:class:`tango.DeviceProxy` to the device under test, in a
-                :py:class:`tango.test_context.DeviceTestContext`.
-            :param config_file_name: JSON file for the configuration 
+        :param device_under_test: fixture that provides a
+            :py:class:`tango.DeviceProxy` to the device under test, in a
+            :py:class:`tango.test_context.DeviceTestContext`.
+        :param config_file_name: JSON file for the configuration
         """
         device_under_test.adminMode = AdminMode.ONLINE
         assert device_under_test.adminMode == AdminMode.ONLINE
@@ -153,26 +141,25 @@ class TestVcc:
 
         device_under_test.GoToIdle()
 
-
     @pytest.mark.parametrize(
         "config_file_name, \
-        scan_id", 
+        scan_id",
         [
             (
                 "Vcc_ConfigureScan_basic.json",
                 1,
             ),
-                        (
+            (
                 "Vcc_ConfigureScan_basic.json",
                 2,
-            )
-        ]
+            ),
+        ],
     )
     def test_Scan_EndScan_GoToIdle(
         self: TestVcc,
         device_under_test: CbfDeviceProxy,
         config_file_name: str,
-        scan_id: int
+        scan_id: int,
     ) -> None:
         """
         Test Vcc's Scan command state changes.
@@ -221,22 +208,21 @@ class TestVcc:
         assert device_under_test.obsState == ObsState.IDLE
         assert result_code == ResultCode.OK
 
-
     @pytest.mark.parametrize(
         "sw_config_file_name, \
         config_file_name",
         [
             (
                 "Vcc_ConfigureSearchWindow_basic.json",
-                "Vcc_ConfigureScan_basic.json"
+                "Vcc_ConfigureScan_basic.json",
             )
-        ]
+        ],
     )
     def test_ConfigureSearchWindow_basic(
         self: TestVcc,
         device_under_test: CbfDeviceProxy,
         sw_config_file_name: str,
-        config_file_name: str
+        config_file_name: str,
     ):
         """
         Test a minimal successful search window configuration.
@@ -257,4 +243,3 @@ class TestVcc:
         f = open(file_path + sw_config_file_name)
         device_under_test.ConfigureSearchWindow(f.read().replace("\n", ""))
         f.close()
-

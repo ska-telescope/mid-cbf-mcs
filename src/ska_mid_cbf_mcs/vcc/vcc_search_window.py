@@ -18,23 +18,25 @@
 # VccSearchWindow TANGO device class for the prototype
 # """
 
-# tango imports
-import tango
-from tango import DebugIt
-from tango.server import run
-from tango.server import Device
-from tango.server import attribute, command
-from tango.server import device_property
-from tango import AttrQuality, DispLevel, DevState
-from tango import AttrWriteType, PipeWriteType
 # Additional import
 # PROTECTED REGION ID(VccSearchWindow.additionnal_import) ENABLED START #
 import os
 import sys
 
-from ska_tango_base.control_model import HealthState, AdminMode
+# tango imports
+import tango
 from ska_tango_base import SKACapability
 from ska_tango_base.commands import ResultCode
+from ska_tango_base.control_model import AdminMode, HealthState
+from tango import (
+    AttrQuality,
+    AttrWriteType,
+    DebugIt,
+    DevState,
+    DispLevel,
+    PipeWriteType,
+)
+from tango.server import Device, attribute, command, device_property, run
 
 # PROTECTED REGION END #    //  VccSearchWindow.additionnal_import
 
@@ -45,6 +47,7 @@ class VccSearchWindow(SKACapability):
     """
     VccSearchWindow TANGO device class for the prototype
     """
+
     # PROTECTED REGION ID(VccSearchWindow.class_variable) ENABLED START #
     # PROTECTED REGION END #    //  VccSearchWindow.class_variable
 
@@ -57,46 +60,46 @@ class VccSearchWindow(SKACapability):
     # ----------
 
     searchWindowTuning = attribute(
-        dtype='uint64',
+        dtype="uint64",
         access=AttrWriteType.READ_WRITE,
         label="Search window tuning",
-        doc="Search window tuning"
+        doc="Search window tuning",
     )
 
     tdcEnable = attribute(
-        dtype='bool',
+        dtype="bool",
         access=AttrWriteType.READ_WRITE,
         label="Enable transient data capture",
-        doc="Enable transient data capture"
+        doc="Enable transient data capture",
     )
 
     tdcNumBits = attribute(
-        dtype='uint16',
+        dtype="uint16",
         access=AttrWriteType.READ_WRITE,
         label="Number of bits",
-        doc="Number of bits"
+        doc="Number of bits",
     )
 
     tdcPeriodBeforeEpoch = attribute(
-        dtype='uint',
+        dtype="uint",
         access=AttrWriteType.READ_WRITE,
         label="Period before the epoch",
-        doc="Period before the epoch for which data is saved"
+        doc="Period before the epoch for which data is saved",
     )
 
     tdcPeriodAfterEpoch = attribute(
-        dtype='uint',
+        dtype="uint",
         access=AttrWriteType.READ_WRITE,
         label="Period after the epoch",
-        doc="Period after the epoch for which data is saved"
+        doc="Period after the epoch for which data is saved",
     )
 
     tdcDestinationAddress = attribute(
-        dtype=('str',),
+        dtype=("str",),
         max_dim_x=3,
         access=AttrWriteType.READ_WRITE,
         label="Destination addresses",
-        doc="Destination addresses (MAC address, IP address, port) for transient data"
+        doc="Destination addresses (MAC address, IP address, port) for transient data",
     )
 
     # ---------------
@@ -126,7 +129,7 @@ class VccSearchWindow(SKACapability):
             device._period_before_epoch = 0
             device._period_after_epoch = 0
             device._destination_address = ["", "", ""]
-            #self.logger.warn("State() = {}".format(device.get_state()))
+            # self.logger.warn("State() = {}".format(device.get_state()))
             message = "VccSearchWindow Init command completed OK"
             self.logger.info(message)
             return (ResultCode.OK, message)
@@ -225,6 +228,7 @@ class VccSearchWindow(SKACapability):
 
     # None
 
+
 # ----------
 # Run server
 # ----------
@@ -235,5 +239,6 @@ def main(args=None, **kwargs):
     return run((VccSearchWindow,), args=args, **kwargs)
     # PROTECTED REGION END #    //  VccSearchWindow.main
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

@@ -10,27 +10,32 @@
 # Copyright (c) 2019 National Research Council of Canada
 
 from __future__ import annotations
-from typing import Tuple, Optional, Callable
 
 import logging
-from ska_mid_cbf_mcs.power_switch.power_switch_driver import PowerSwitchDriver
-from ska_mid_cbf_mcs.power_switch.power_switch_simulator import PowerSwitchSimulator
-from ska_mid_cbf_mcs.component.component_manager import CbfComponentManager, CommunicationStatus
+from typing import Callable, Optional, Tuple
 
 from ska_tango_base.base.component_manager import BaseComponentManager
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import SimulationMode, PowerMode
+from ska_tango_base.control_model import PowerMode, SimulationMode
 
-__all__ = [
-    "PowerSwitchComponentManager"
-]
+from ska_mid_cbf_mcs.component.component_manager import (
+    CbfComponentManager,
+    CommunicationStatus,
+)
+from ska_mid_cbf_mcs.power_switch.power_switch_driver import PowerSwitchDriver
+from ska_mid_cbf_mcs.power_switch.power_switch_simulator import (
+    PowerSwitchSimulator,
+)
+
+__all__ = ["PowerSwitchComponentManager"]
+
 
 class PowerSwitchComponentManager(CbfComponentManager):
     """
     A component manager for the DLI web power switch. Calls either the power
     switch driver or the power switch simulator based on the value of simulation
     mode.
-    
+
     :param simulation_mode: simulation mode identifies if the real power switch
                           driver or the simulator should be used
     :param ip: IP address of the power switch
@@ -42,10 +47,12 @@ class PowerSwitchComponentManager(CbfComponentManager):
         ip: str,
         logger: logging.Logger,
         push_change_event_callback: Optional[Callable],
-        communication_status_changed_callback: Callable[[CommunicationStatus], None],
+        communication_status_changed_callback: Callable[
+            [CommunicationStatus], None
+        ],
         component_power_mode_changed_callback: Callable[[PowerMode], None],
         component_fault_callback: Callable[[bool], None],
-        simulation_mode: SimulationMode=SimulationMode.TRUE
+        simulation_mode: SimulationMode = SimulationMode.TRUE,
     ) -> None:
         """
         Initialize a new instance.
@@ -77,7 +84,7 @@ class PowerSwitchComponentManager(CbfComponentManager):
             push_change_event_callback=push_change_event_callback,
             communication_status_changed_callback=communication_status_changed_callback,
             component_power_mode_changed_callback=component_power_mode_changed_callback,
-            component_fault_callback=component_fault_callback
+            component_fault_callback=component_fault_callback,
         )
 
     @property
@@ -121,7 +128,9 @@ class PowerSwitchComponentManager(CbfComponentManager):
         return self._simulation_mode
 
     @simulation_mode.setter
-    def simulation_mode(self: PowerSwitchComponentManager, value: SimulationMode) -> None:
+    def simulation_mode(
+        self: PowerSwitchComponentManager, value: SimulationMode
+    ) -> None:
         """
         Set the simulation mode of the component manager.
 
@@ -153,8 +162,7 @@ class PowerSwitchComponentManager(CbfComponentManager):
         self.connected = False
 
     def get_outlet_power_mode(
-        self: PowerSwitchComponentManager,
-        outlet: int
+        self: PowerSwitchComponentManager, outlet: int
     ) -> PowerMode:
         """
         Get the power mode of a specific outlet.
@@ -170,8 +178,7 @@ class PowerSwitchComponentManager(CbfComponentManager):
             return self.power_switch_driver.get_outlet_power_mode(outlet)
 
     def turn_on_outlet(
-        self: PowerSwitchComponentManager,
-        outlet: int
+        self: PowerSwitchComponentManager, outlet: int
     ) -> Tuple[ResultCode, str]:
         """
         Tell the DLI power switch to turn on a specific outlet.
@@ -186,10 +193,9 @@ class PowerSwitchComponentManager(CbfComponentManager):
             return self.power_switch_simulator.turn_on_outlet(outlet)
         else:
             return self.power_switch_driver.turn_on_outlet(outlet)
-        
+
     def turn_off_outlet(
-        self: PowerSwitchComponentManager,
-        outlet: int
+        self: PowerSwitchComponentManager, outlet: int
     ) -> Tuple[ResultCode, str]:
         """
         Tell the DLI power switch to turn off a specific outlet.

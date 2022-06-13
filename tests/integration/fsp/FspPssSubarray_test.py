@@ -10,19 +10,21 @@
 """Contain the tests for the FspSubarray."""
 from __future__ import annotations
 
-import pytest
-import time
-import os
 import copy
 import json
+import os
+import time
+
+import pytest
 
 data_file_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
 
 import tango
+from ska_tango_base.control_model import AdminMode, ObsState
 from tango import DevState
 
-from ska_tango_base.control_model import AdminMode, ObsState
 from ska_mid_cbf_mcs.commons.global_enum import freq_band_dict
+
 
 class TestFspPssSubarray:
     """
@@ -31,17 +33,17 @@ class TestFspPssSubarray:
 
     @pytest.mark.parametrize(
         "fsp_id, \
-        sub_id", 
-        [(1, 1)]
+        sub_id",
+        [(1, 1)],
     )
     def test_Connect(
-        self: TestFspPssSubarray, 
-        test_proxies: pytest.fixture,         
+        self: TestFspPssSubarray,
+        test_proxies: pytest.fixture,
         fsp_id: int,
-        sub_id: int
+        sub_id: int,
     ) -> None:
         """
-        Test the initial states and verify the component manager 
+        Test the initial states and verify the component manager
         can start communicating
 
         :param test_proxies: the proxies test fixture
@@ -53,25 +55,27 @@ class TestFspPssSubarray:
 
         device_under_test = test_proxies.fspSubarray["PSS-BF"][sub_id][fsp_id]
 
-        assert device_under_test.State() == DevState.DISABLE 
+        assert device_under_test.State() == DevState.DISABLE
 
         # trigger start_communicating by setting the AdminMode to ONLINE
         device_under_test.adminMode = AdminMode.ONLINE
 
-        # device should be in OFF state after start_communicating 
-        test_proxies.wait_timeout_dev([device_under_test], DevState.OFF, wait_time_s, sleep_time_s)
+        # device should be in OFF state after start_communicating
+        test_proxies.wait_timeout_dev(
+            [device_under_test], DevState.OFF, wait_time_s, sleep_time_s
+        )
         assert device_under_test.State() == DevState.OFF
-    
+
     @pytest.mark.parametrize(
         "fsp_id, \
-        sub_id", 
-        [(1, 1)]
+        sub_id",
+        [(1, 1)],
     )
     def test_On(
-        self: TestFspPssSubarray, 
-        test_proxies: pytest.fixture,         
+        self: TestFspPssSubarray,
+        test_proxies: pytest.fixture,
         fsp_id: int,
-        sub_id: int
+        sub_id: int,
     ) -> None:
         """
         Test the "On" command
@@ -83,24 +87,26 @@ class TestFspPssSubarray:
 
         wait_time_s = 3
         sleep_time_s = 0.1
-        
+
         device_under_test = test_proxies.fspSubarray["PSS-BF"][sub_id][fsp_id]
 
         device_under_test.On()
 
-        test_proxies.wait_timeout_dev([device_under_test], DevState.ON, wait_time_s, sleep_time_s)
+        test_proxies.wait_timeout_dev(
+            [device_under_test], DevState.ON, wait_time_s, sleep_time_s
+        )
         assert device_under_test.State() == DevState.ON
-    
+
     @pytest.mark.parametrize(
         "fsp_id, \
-        sub_id", 
-        [(1, 1)]
+        sub_id",
+        [(1, 1)],
     )
     def test_Off(
-        self: TestFspPssSubarray, 
-        test_proxies: pytest.fixture,         
+        self: TestFspPssSubarray,
+        test_proxies: pytest.fixture,
         fsp_id: int,
-        sub_id: int
+        sub_id: int,
     ) -> None:
         """
         Test the "Off" command
@@ -112,24 +118,26 @@ class TestFspPssSubarray:
 
         wait_time_s = 3
         sleep_time_s = 0.1
-        
+
         device_under_test = test_proxies.fspSubarray["PSS-BF"][sub_id][fsp_id]
 
         device_under_test.Off()
 
-        test_proxies.wait_timeout_dev([device_under_test], DevState.OFF, wait_time_s, sleep_time_s)
+        test_proxies.wait_timeout_dev(
+            [device_under_test], DevState.OFF, wait_time_s, sleep_time_s
+        )
         assert device_under_test.State() == DevState.OFF
-    
+
     @pytest.mark.parametrize(
         "fsp_id, \
-        sub_id", 
-        [(1, 1)]
+        sub_id",
+        [(1, 1)],
     )
     def test_Standby(
-        self: TestFspPssSubarray, 
-        test_proxies: pytest.fixture,         
+        self: TestFspPssSubarray,
+        test_proxies: pytest.fixture,
         fsp_id: int,
-        sub_id: int
+        sub_id: int,
     ) -> None:
         """
         Test the "Standby" command
@@ -141,32 +149,34 @@ class TestFspPssSubarray:
 
         wait_time_s = 3
         sleep_time_s = 0.1
-        
+
         device_under_test = test_proxies.fspSubarray["PSS-BF"][sub_id][fsp_id]
 
         device_under_test.Standby()
 
-        test_proxies.wait_timeout_dev([device_under_test], DevState.STANDBY, wait_time_s, sleep_time_s)
+        test_proxies.wait_timeout_dev(
+            [device_under_test], DevState.STANDBY, wait_time_s, sleep_time_s
+        )
         assert device_under_test.State() == DevState.STANDBY
-    
+
     @pytest.mark.parametrize(
         "config_file_name, \
         fsp_id, \
-        sub_id", 
+        sub_id",
         [
             (
                 "FspPssSubarray_ConfigureScan_basic.json",
                 1,
                 1,
             )
-        ]
+        ],
     )
     def test_ConfigureScan(
-        self: TestFspPssSubarray, 
-        test_proxies: pytest.fixture, 
-        config_file_name: str,        
+        self: TestFspPssSubarray,
+        test_proxies: pytest.fixture,
+        config_file_name: str,
         fsp_id: int,
-        sub_id: int
+        sub_id: int,
     ) -> None:
         """
         Test the "ConfigureScan" command
@@ -186,7 +196,9 @@ class TestFspPssSubarray:
 
         device_under_test.On()
 
-        test_proxies.wait_timeout_dev([device_under_test], DevState.ON, wait_time_s, sleep_time_s)
+        test_proxies.wait_timeout_dev(
+            [device_under_test], DevState.ON, wait_time_s, sleep_time_s
+        )
         assert device_under_test.State() == DevState.ON
 
         for i in range(1, test_proxies.num_vcc + 1):
@@ -200,27 +212,33 @@ class TestFspPssSubarray:
         f.close()
 
         assert device_under_test.obsState == ObsState.IDLE
-        
+
         device_under_test.ConfigureScan(json_str)
 
-        assert device_under_test.searchWindowID == int(configuration["search_window_id"])
+        assert device_under_test.searchWindowID == int(
+            configuration["search_window_id"]
+        )
         for i, searchBeam in enumerate(configuration["search_beam"]):
-            assert list(device_under_test.receptors) == list(searchBeam["receptor_ids"])
+            assert list(device_under_test.receptors) == list(
+                searchBeam["receptor_ids"]
+            )
             assert device_under_test.searchBeams[i] == json.dumps(searchBeam)
-            assert device_under_test.searchBeamID[i] == int(searchBeam["search_beam_id"])
+            assert device_under_test.searchBeamID[i] == int(
+                searchBeam["search_beam_id"]
+            )
 
         assert device_under_test.obsState == ObsState.READY
-    
+
     @pytest.mark.parametrize(
         "fsp_id, \
-        sub_id", 
-        [(1, 1)]
+        sub_id",
+        [(1, 1)],
     )
     def test_Scan(
-        self: TestFspPssSubarray, 
-        test_proxies: pytest.fixture,         
+        self: TestFspPssSubarray,
+        test_proxies: pytest.fixture,
         fsp_id: int,
-        sub_id: int
+        sub_id: int,
     ) -> None:
         """
         Test the "Scan" command
@@ -236,7 +254,9 @@ class TestFspPssSubarray:
 
         assert device_under_test.adminMode == AdminMode.ONLINE
 
-        test_proxies.wait_timeout_dev([device_under_test], DevState.ON, wait_time_s, sleep_time_s)
+        test_proxies.wait_timeout_dev(
+            [device_under_test], DevState.ON, wait_time_s, sleep_time_s
+        )
         assert device_under_test.State() == DevState.ON
 
         scan_id = 1
@@ -245,21 +265,23 @@ class TestFspPssSubarray:
 
         device_under_test.Scan(scan_id_device_data)
 
-        test_proxies.wait_timeout_obs([device_under_test], ObsState.SCANNING, wait_time_s, sleep_time_s)
+        test_proxies.wait_timeout_obs(
+            [device_under_test], ObsState.SCANNING, wait_time_s, sleep_time_s
+        )
         assert device_under_test.obsState == ObsState.SCANNING
 
         assert device_under_test.scanID == scan_id
 
     @pytest.mark.parametrize(
         "fsp_id, \
-        sub_id", 
-        [(1, 1)]
+        sub_id",
+        [(1, 1)],
     )
     def test_EndScan(
-        self: TestFspPssSubarray, 
-        test_proxies: pytest.fixture,         
+        self: TestFspPssSubarray,
+        test_proxies: pytest.fixture,
         fsp_id: int,
-        sub_id: int
+        sub_id: int,
     ) -> None:
         """
         Test the "EndScan" command
@@ -275,21 +297,23 @@ class TestFspPssSubarray:
 
         assert device_under_test.adminMode == AdminMode.ONLINE
 
-        test_proxies.wait_timeout_dev([device_under_test], DevState.ON, wait_time_s, sleep_time_s)
+        test_proxies.wait_timeout_dev(
+            [device_under_test], DevState.ON, wait_time_s, sleep_time_s
+        )
         assert device_under_test.State() == DevState.ON
 
         device_under_test.EndScan()
-    
+
     @pytest.mark.parametrize(
         "fsp_id, \
-        sub_id", 
-        [(1, 1)]
+        sub_id",
+        [(1, 1)],
     )
     def test_GoToIdle(
-        self: TestFspPssSubarray, 
-        test_proxies: pytest.fixture,         
+        self: TestFspPssSubarray,
+        test_proxies: pytest.fixture,
         fsp_id: int,
-        sub_id: int
+        sub_id: int,
     ) -> None:
         """
         Test the "GoToIdle" command
@@ -305,25 +329,28 @@ class TestFspPssSubarray:
 
         assert device_under_test.adminMode == AdminMode.ONLINE
 
-        test_proxies.wait_timeout_dev([device_under_test], DevState.ON, wait_time_s, sleep_time_s)
+        test_proxies.wait_timeout_dev(
+            [device_under_test], DevState.ON, wait_time_s, sleep_time_s
+        )
         assert device_under_test.State() == DevState.ON
 
         device_under_test.GoToIdle()
 
-        test_proxies.wait_timeout_obs([device_under_test], ObsState.IDLE, wait_time_s, sleep_time_s)
+        test_proxies.wait_timeout_obs(
+            [device_under_test], ObsState.IDLE, wait_time_s, sleep_time_s
+        )
         assert device_under_test.obsState == ObsState.IDLE
 
-    
     @pytest.mark.parametrize(
         "fsp_id, \
-        sub_id", 
-        [(1, 1)]
+        sub_id",
+        [(1, 1)],
     )
     def test_Disconnect(
-        self: TestFspPssSubarray, 
-        test_proxies: pytest.fixture,         
+        self: TestFspPssSubarray,
+        test_proxies: pytest.fixture,
         fsp_id: int,
-        sub_id: int
+        sub_id: int,
     ) -> None:
         """
         Verify the component manager can stop communicating
@@ -347,6 +374,8 @@ class TestFspPssSubarray:
         # trigger stop_communicating by setting the AdminMode to OFFLINE
         device_under_test.adminMode = AdminMode.OFFLINE
 
-        # device should be in DISABLE state after stop_communicating  
-        test_proxies.wait_timeout_dev([device_under_test], DevState.DISABLE, wait_time_s, sleep_time_s)
+        # device should be in DISABLE state after stop_communicating
+        test_proxies.wait_timeout_dev(
+            [device_under_test], DevState.DISABLE, wait_time_s, sleep_time_s
+        )
         assert device_under_test.State() == DevState.DISABLE

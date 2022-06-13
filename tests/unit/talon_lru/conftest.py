@@ -9,25 +9,35 @@
 
 from __future__ import annotations
 
+import logging
+import unittest
+from typing import Callable, Dict, Optional, Tuple, Type
+
 # Standard imports
 import pytest
 import pytest_mock
-import unittest
-from typing import Tuple, Dict, Callable, Type, Optional
-import logging
 import tango
+from ska_tango_base.commands import ResultCode
+from ska_tango_base.control_model import PowerMode
+
+from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
+from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
+from ska_mid_cbf_mcs.talon_lru.talon_lru_component_manager import (
+    TalonLRUComponentManager,
+)
 
 # Local imports
 from ska_mid_cbf_mcs.talon_lru.talon_lru_device import TalonLRU
-from ska_tango_base.control_model import PowerMode
-from ska_mid_cbf_mcs.talon_lru.talon_lru_component_manager import TalonLRUComponentManager
-from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
-from ska_mid_cbf_mcs.testing.tango_harness import TangoHarness, DevicesToLoadType
+from ska_mid_cbf_mcs.testing.mock.mock_callable import (
+    MockCallable,
+    MockChangeEventCallback,
+)
 from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder
-from ska_mid_cbf_mcs.testing.mock.mock_callable import MockChangeEventCallback, MockCallable
-from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
-from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import PowerMode
+from ska_mid_cbf_mcs.testing.tango_harness import (
+    DevicesToLoadType,
+    TangoHarness,
+)
+
 
 @pytest.fixture()
 def device_under_test(tango_harness: TangoHarness) -> CbfDeviceProxy:
@@ -40,9 +50,10 @@ def device_under_test(tango_harness: TangoHarness) -> CbfDeviceProxy:
     """
     return tango_harness.get_device("mid_csp_cbf/talon_lru/001")
 
+
 @pytest.fixture()
 def device_to_load(
-    patched_talon_lru_device_class: Type[TalonLRU]
+    patched_talon_lru_device_class: Type[TalonLRU],
 ) -> DevicesToLoadType:
     """
     Fixture that specifies the device to be loaded for testing.
@@ -55,7 +66,7 @@ def device_to_load(
         "device": "talonlru-001",
         "device_class": "TalonLRU",
         "proxy": CbfDeviceProxy,
-        "patch": patched_talon_lru_device_class
+        "patch": patched_talon_lru_device_class,
     }
 
 
@@ -67,6 +78,7 @@ def unique_id() -> str:
     :return: a unique ID
     """
     return "a unique id"
+
 
 @pytest.fixture()
 def mock_component_manager(
@@ -93,25 +105,39 @@ def mock_component_manager(
     mock.connected = False
 
     def _start_communicating(mock: unittest.mock.Mock) -> None:
-        if mock_power_switch1.stimulusMode == "conn_success" or mock_power_switch2.stimulusMode == "conn_success":
+        if (
+            mock_power_switch1.stimulusMode == "conn_success"
+            or mock_power_switch2.stimulusMode == "conn_success"
+        ):
             mock.is_communicating = True
             mock.connected = True
-            mock._communication_status_changed_callback(CommunicationStatus.ESTABLISHED)
+            mock._communication_status_changed_callback(
+                CommunicationStatus.ESTABLISHED
+            )
             mock._component_power_mode_changed_callback(PowerMode.OFF)
-        elif mock_power_switch1.stimulusMode == "command_fail" or mock_power_switch2.stimulusMode == "command_fail":
+        elif (
+            mock_power_switch1.stimulusMode == "command_fail"
+            or mock_power_switch2.stimulusMode == "command_fail"
+        ):
             mock.is_communicating = True
             mock.connected = True
-            mock._communication_status_changed_callback(CommunicationStatus.ESTABLISHED)
+            mock._communication_status_changed_callback(
+                CommunicationStatus.ESTABLISHED
+            )
             mock._component_power_mode_changed_callback(PowerMode.OFF)
         else:
             mock.is_communicating = False
             mock.connected = False
-            mock._communication_status_changed_callback(CommunicationStatus.NOT_ESTABLISHED)
+            mock._communication_status_changed_callback(
+                CommunicationStatus.NOT_ESTABLISHED
+            )
             mock._component_fault_callback(True)
 
     def _on(mock: unittest.mock.Mock) -> Tuple[ResultCode, str]:
-        if (mock_power_switch1.stimulusMode == "command_fail" and 
-            mock_power_switch2.stimulusMode == "command_fail"):
+        if (
+            mock_power_switch1.stimulusMode == "command_fail"
+            and mock_power_switch2.stimulusMode == "command_fail"
+        ):
             mock._component_fault_callback(True)
             return (ResultCode.FAILED, "On command failed")
         else:
@@ -119,25 +145,32 @@ def mock_component_manager(
             return (ResultCode.OK, "On command completed OK")
 
     def _off(mock: unittest.mock.Mock) -> Tuple[ResultCode, str]:
-        if (mock_power_switch1.stimulusMode == "command_fail" and 
-            mock_power_switch2.stimulusMode == "command_fail"):
+        if (
+            mock_power_switch1.stimulusMode == "command_fail"
+            and mock_power_switch2.stimulusMode == "command_fail"
+        ):
             mock._component_fault_callback(True)
             return (ResultCode.FAILED, "Off command failed")
         else:
             mock._component_power_mode_changed_callback(PowerMode.OFF)
             return (ResultCode.OK, "Off command completed OK")
 
-    def _check_power_mode(mock: unittest.mock.Mock, state: tango.DevState) -> None: pass
-
+    def _check_power_mode(
+        mock: unittest.mock.Mock, state: tango.DevState
+    ) -> None:
+        pass
 
     mock.start_communicating.side_effect = lambda: _start_communicating(mock)
     mock.on.side_effect = lambda: _on(mock)
     mock.off.side_effect = lambda: _off(mock)
-    mock.check_power_mode.side_effect = lambda mock_state: _check_power_mode(mock, mock_state)
+    mock.check_power_mode.side_effect = lambda mock_state: _check_power_mode(
+        mock, mock_state
+    )
 
     mock.enqueue.return_value = unique_id, ResultCode.QUEUED
 
     return mock
+
 
 @pytest.fixture()
 def patched_talon_lru_device_class(
@@ -181,12 +214,10 @@ def patched_talon_lru_device_class(
 
     return PatchedTalonLRU
 
-@pytest.fixture(params=[
-    "conn_success",
-    "conn_fail",
-    "invalid_start_state",
-    "command_fail"
-])
+
+@pytest.fixture(
+    params=["conn_success", "conn_fail", "invalid_start_state", "command_fail"]
+)
 def mock_power_switch1(request: pytest.FixtureRequest) -> unittest.mock.Mock:
     """
     Get a mock power switch device. This fixture is parameterized to
@@ -198,12 +229,10 @@ def mock_power_switch1(request: pytest.FixtureRequest) -> unittest.mock.Mock:
     """
     return get_mock_power_switch(request.param)
 
-@pytest.fixture(params=[
-    "conn_success",
-    "conn_fail",
-    "invalid_start_state",
-    "command_fail"
-])
+
+@pytest.fixture(
+    params=["conn_success", "conn_fail", "invalid_start_state", "command_fail"]
+)
 def mock_power_switch2(request: pytest.FixtureRequest) -> unittest.mock.Mock:
     """
     Get a mock power switch device. This fixture is parameterized to
@@ -215,50 +244,70 @@ def mock_power_switch2(request: pytest.FixtureRequest) -> unittest.mock.Mock:
     """
     return get_mock_power_switch(request.param)
 
+
 def get_mock_power_switch(param: str) -> unittest.mock.Mock:
     """
-    Get a mock power switch device with the specified parameterization. 
+    Get a mock power switch device with the specified parameterization.
 
     :param param: parameterization string that impacts the mocked behaviour
     """
     builder = MockDeviceBuilder()
-    builder.add_attribute("stimulusMode", param) # Attribute only used by tests
+    builder.add_attribute(
+        "stimulusMode", param
+    )  # Attribute only used by tests
 
     if param == "conn_success":
         # Connection to power switch is working as expected
         builder.add_attribute("numOutlets", 8)
         builder.add_command("GetOutletPowerMode", PowerMode.OFF)
-        builder.add_result_command("TurnOnOutlet", ResultCode.OK, "Success msg")
-        builder.add_result_command("TurnOffOutlet", ResultCode.OK, "Success msg")
+        builder.add_result_command(
+            "TurnOnOutlet", ResultCode.OK, "Success msg"
+        )
+        builder.add_result_command(
+            "TurnOffOutlet", ResultCode.OK, "Success msg"
+        )
 
     elif param == "conn_fail":
         # Connection to power switch cannot be made
         builder.add_attribute("numOutlets", 0)
-        builder.add_result_command("TurnOnOutlet", ResultCode.FAILED, "Failed msg")
-        builder.add_result_command("TurnOffOutlet", ResultCode.FAILED, "Failed msg")
+        builder.add_result_command(
+            "TurnOnOutlet", ResultCode.FAILED, "Failed msg"
+        )
+        builder.add_result_command(
+            "TurnOffOutlet", ResultCode.FAILED, "Failed msg"
+        )
 
     elif param == "invalid_start_state":
         # Can communicate with the power switch, but one or both outlets are ON
         # when the TalonLRU device starts up
         builder.add_attribute("numOutlets", 8)
         builder.add_command("GetOutletPowerMode", PowerMode.ON)
-        builder.add_result_command("TurnOnOutlet", ResultCode.OK, "Success msg")
-        builder.add_result_command("TurnOffOutlet", ResultCode.OK, "Success msg")
+        builder.add_result_command(
+            "TurnOnOutlet", ResultCode.OK, "Success msg"
+        )
+        builder.add_result_command(
+            "TurnOffOutlet", ResultCode.OK, "Success msg"
+        )
 
     elif param == "command_fail":
         # Can communicate with the power switch, but the turn on/off outlet
         # commands fail
         builder.add_attribute("numOutlets", 8)
         builder.add_command("GetOutletPowerMode", PowerMode.OFF)
-        builder.add_result_command("TurnOnOutlet", ResultCode.FAILED, "Failed msg")
-        builder.add_result_command("TurnOffOutlet", ResultCode.FAILED, "Failed msg")
+        builder.add_result_command(
+            "TurnOnOutlet", ResultCode.FAILED, "Failed msg"
+        )
+        builder.add_result_command(
+            "TurnOffOutlet", ResultCode.FAILED, "Failed msg"
+        )
 
     return builder()
+
 
 @pytest.fixture()
 def initial_mocks(
     mock_power_switch1: unittest.mock.Mock,
-    mock_power_switch2: unittest.mock.Mock
+    mock_power_switch2: unittest.mock.Mock,
 ) -> Dict[str, unittest.mock.Mock]:
     """
     Return a dictionary of device proxy mocks to pre-register.
@@ -271,6 +320,7 @@ def initial_mocks(
         "mid_csp_cbf/power_switch/001": mock_power_switch1,
         "mid_csp_cbf/power_switch/002": mock_power_switch2,
     }
+
 
 @pytest.fixture()
 def communication_status_changed_callback(
@@ -305,6 +355,7 @@ def component_power_mode_changed_callback(
     """
     return mock_callback_factory()
 
+
 @pytest.fixture()
 def component_fault_callback(
     mock_callback_factory: Callable[[], unittest.mock.Mock],
@@ -320,6 +371,7 @@ def component_fault_callback(
         of a component manager changed.
     """
     return mock_callback_factory()
+
 
 @pytest.fixture()
 def check_power_mode_callback(
@@ -337,18 +389,21 @@ def check_power_mode_callback(
     """
     return mock_callback_factory()
 
+
 @pytest.fixture()
 def push_change_event_callback_factory(
-    mock_change_event_callback_factory: Callable[[str], MockChangeEventCallback],
+    mock_change_event_callback_factory: Callable[
+        [str], MockChangeEventCallback
+    ],
 ) -> Callable[[], MockChangeEventCallback]:
     """
-    Return a mock change event callback factory 
+    Return a mock change event callback factory
 
     :param mock_change_event_callback_factory: fixture that provides a
         mock change event callback factory (i.e. an object that returns
         mock callbacks when called).
 
-    :return: a mock change event callback factory 
+    :return: a mock change event callback factory
     """
 
     def _factory() -> MockChangeEventCallback:
@@ -362,11 +417,11 @@ def push_change_event_callback(
     push_change_event_callback_factory: Callable[[], MockChangeEventCallback],
 ) -> MockChangeEventCallback:
     """
-    Return a mock change event callback 
+    Return a mock change event callback
 
     :param push_change_event_callback_factory: fixture that provides a mock
-        change event callback factory 
+        change event callback factory
 
-    :return: a mock change event callback 
+    :return: a mock change event callback
     """
     return push_change_event_callback_factory()

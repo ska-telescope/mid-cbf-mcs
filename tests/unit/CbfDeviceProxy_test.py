@@ -17,8 +17,8 @@ import pytest
 import pytest_mock
 
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
-
 from ska_mid_cbf_mcs.testing.tango_harness import TangoHarness
+
 
 class TestCbfDeviceProxy:
     """This class contains unit tests for the CbfDeviceProxy class."""
@@ -50,7 +50,9 @@ class TestCbfDeviceProxy:
 
         for i in range(event_count):
             event_name = f"mock_event_{i}"
-            mccs_device_proxy.add_change_event_callback(event_name, callbacks[i])
+            mccs_device_proxy.add_change_event_callback(
+                event_name, callbacks[i]
+            )
 
             # check that initialisation resulted in the device at the fqdn
             # receiving a subscription to the event
@@ -88,7 +90,9 @@ class TestCbfDeviceProxy:
         mock_callbacks = [mocker.Mock() for i in range(event_count)]
         for i in range(event_count):
             event_name = f"mock_event_{i+1}"
-            device_proxy.add_change_event_callback(event_name, mock_callbacks[i])
+            device_proxy.add_change_event_callback(
+                event_name, mock_callbacks[i]
+            )
 
             for j in range(event_count):
                 if i == j:
@@ -122,5 +126,3 @@ class TestCbfDeviceProxy:
                     mock_callbacks[j].reset_mock()
                 else:
                     mock_callbacks[j].assert_not_called()
-
-

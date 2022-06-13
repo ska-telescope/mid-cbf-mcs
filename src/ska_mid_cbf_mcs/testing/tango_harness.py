@@ -2,7 +2,7 @@
 #
 # This file is part of the SKA Mid.CBF MCS project
 #
-# Ported from the SKA Low MCCS project: 
+# Ported from the SKA Low MCCS project:
 # https://gitlab.com/ska-telescope/ska-low-mccs/-/blob/main/src/ska_low_mccs/testing/tango_harness.py
 #
 # Distributed under the terms of the GPL license.
@@ -11,33 +11,31 @@
 """This module implements a test harness for Tango devices."""
 from __future__ import annotations
 
+import json
+import logging
+import socket
+import unittest.mock
+from collections import defaultdict
+from re import S
+from types import TracebackType
+from typing import Any, Callable, Dict, Iterable, List, Optional, Type, cast
+
+import tango
+from ska_tango_base import SKABaseDevice
+from ska_tango_base.control_model import TestMode
+from tango.test_context import MultiDeviceTestContext, get_host_ip
+from typing_extensions import TypedDict
+
+from ska_mid_cbf_mcs.attribute_proxy import CbfAttributeProxy
+from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
+from ska_mid_cbf_mcs.group_proxy import CbfGroupProxy
+
 # Even with 'from __future__ import annotations`, we still cannot use dict, list, type,
 # etc., in Python 3.7 code in certain circumstances, such as in type aliases and type
 # definitions. We have to use Dict, List, Type, etc. See
 # https://mypy.readthedocs.io/en/stable/runtime_troubles.html#future-annotations-import-pep-563
 # for details.
 # TODO: Update these when we move to a newer python version
-
-
-from collections import defaultdict
-import json
-import logging
-from re import S
-import socket
-from types import TracebackType
-from typing import Any, Callable, Dict, Iterable, List, Optional, Type, cast
-from typing_extensions import TypedDict
-import unittest.mock
-
-import tango
-from tango.test_context import MultiDeviceTestContext, get_host_ip
-
-from ska_tango_base import SKABaseDevice
-from ska_tango_base.control_model import TestMode
-
-from ska_mid_cbf_mcs.attribute_proxy import CbfAttributeProxy
-from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
-from ska_mid_cbf_mcs.group_proxy import CbfGroupProxy
 
 
 __all__ = [
@@ -119,7 +117,7 @@ DeviceToLoadType = TypedDict(
         "device": str,
         "device_class": str,
         "proxy": Type[CbfDeviceProxy],
-        "patch": Type[SKABaseDevice]
+        "patch": Type[SKABaseDevice],
     },
     total=False,
 )
@@ -283,12 +281,18 @@ class TangoHarness:
         :param args: additional positional arguments
         :param kwargs: additional keyword arguments
         """
-        CbfAttributeProxy.set_default_connection_factory(self.attribute_connection_factory)
+        CbfAttributeProxy.set_default_connection_factory(
+            self.attribute_connection_factory
+        )
         CbfDeviceProxy.set_default_connection_factory(self.connection_factory)
-        CbfGroupProxy.set_default_connection_factory(self.group_connection_factory)
+        CbfGroupProxy.set_default_connection_factory(
+            self.group_connection_factory
+        )
 
     @property
-    def attribute_connection_factory(self: TangoHarness) -> Callable[[str], tango.AttributeProxy]:
+    def attribute_connection_factory(
+        self: TangoHarness,
+    ) -> Callable[[str], tango.AttributeProxy]:
         """
         The connection factory to use when establishing connections to device attributes.
 
@@ -297,16 +301,20 @@ class TangoHarness:
         raise NotImplementedError("TangoHarness is abstract.")
 
     @property
-    def connection_factory(self: TangoHarness) -> Callable[[str], tango.DeviceProxy]:
+    def connection_factory(
+        self: TangoHarness,
+    ) -> Callable[[str], tango.DeviceProxy]:
         """
         The connection factory to use when establishing connections to devices.
 
         :raises NotImplementedError: because this method is abstract
         """
         raise NotImplementedError("TangoHarness is abstract.")
-    
+
     @property
-    def group_connection_factory(self: TangoHarness) -> Callable[[str], tango.Group]:
+    def group_connection_factory(
+        self: TangoHarness,
+    ) -> Callable[[str], tango.Group]:
         """
         The connection factory to use when establishing group connections to devices.
 
@@ -390,13 +398,13 @@ class BaseTangoHarness(TangoHarness):
         self._fqdns = [] if device_info is None else list(device_info.fqdns)
         self.logger = logger
         super().__init__(*args, **kwargs)
-    
+
     @property
     def attribute_connection_factory(
         self: BaseTangoHarness,
     ) -> Callable[[str], tango.AttributeProxy]:
         """
-        The connection factory to use when establishing connections to device 
+        The connection factory to use when establishing connections to device
         attributes.
 
         This class uses :py:class:`tango.AttributeProxy` as its connection
@@ -419,7 +427,7 @@ class BaseTangoHarness(TangoHarness):
         :return: a DeviceProxy for use in establishing connections.
         """
         return tango.DeviceProxy
-    
+
     @property
     def group_connection_factory(
         self: BaseTangoHarness,
@@ -612,7 +620,7 @@ class TestContextTangoHarness(BaseTangoHarness):
             )
 
         return connect
-    
+
     @property
     def group_connection_factory(
         self: TestContextTangoHarness,
@@ -626,7 +634,7 @@ class TestContextTangoHarness(BaseTangoHarness):
 
         :return: a Group for use in establishing connections.
         """
-        
+
         def connect(name: str) -> tango.Group:
             """
             Connect to the device.
@@ -749,7 +757,7 @@ class WrapperTangoHarness(TangoHarness):
         :return: a DeviceProxy for use in establishing connections.
         """
         return self._harness.connection_factory
-    
+
     @property
     def group_connection_factory(
         self: WrapperTangoHarness,
@@ -833,7 +841,9 @@ class StartingStateTangoHarness(WrapperTangoHarness):
 
         super().__init__(harness, *args, **kwargs)
 
-    def __enter__(self: StartingStateTangoHarness) -> StartingStateTangoHarness:
+    def __enter__(
+        self: StartingStateTangoHarness,
+    ) -> StartingStateTangoHarness:
         """
         Entry method for "with" context.
 

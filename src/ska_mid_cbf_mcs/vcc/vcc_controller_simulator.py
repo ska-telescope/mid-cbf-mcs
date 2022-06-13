@@ -14,14 +14,17 @@
 # device when the Talon-DX hardware is not connected.
 # """
 
-from __future__ import annotations # allow forward references in type hints
+from __future__ import annotations  # allow forward references in type hints
 
 import json
-from ska_mid_cbf_mcs.vcc.vcc_band_simulator import VccBandSimulator
-import tango
 from typing import List
 
+import tango
+
+from ska_mid_cbf_mcs.vcc.vcc_band_simulator import VccBandSimulator
+
 __all__ = ["VccControllerSimulator"]
+
 
 class VccControllerSimulator:
     """
@@ -34,13 +37,14 @@ class VccControllerSimulator:
     :param vcc_band_4: VCC band simulator instance for the band 4 device
     :param vcc_band_5: VCC band simulator instance for the band 5 device
     """
+
     def __init__(
         self: VccControllerSimulator,
         device_name: str,
         vcc_band_1_and_2: VccBandSimulator,
         vcc_band_3: VccBandSimulator,
         vcc_band_4: VccBandSimulator,
-        vcc_band_5: VccBandSimulator
+        vcc_band_5: VccBandSimulator,
     ) -> None:
         self.device_name = device_name
 
@@ -48,7 +52,7 @@ class VccControllerSimulator:
             vcc_band_1_and_2,
             vcc_band_3,
             vcc_band_4,
-            vcc_band_5
+            vcc_band_5,
         ]
 
         self._state = tango.DevState.INIT
@@ -78,7 +82,9 @@ class VccControllerSimulator:
         """Get the current state of the device"""
         return self._state
 
-    def InitCommonParameters(self: VccControllerSimulator, json_str: str) -> None:
+    def InitCommonParameters(
+        self: VccControllerSimulator, json_str: str
+    ) -> None:
         """
         Initialize the common/constant parameters of this VCC device. These
         parameters hold the same value across all bands for one receptor, and
@@ -87,7 +93,7 @@ class VccControllerSimulator:
         :param json_str: JSON-formatted string containing the parameters
         """
         params = json.loads(json_str)
-        self._frequency_offset_k  = params["frequency_offset_k"]
+        self._frequency_offset_k = params["frequency_offset_k"]
         self._frequency_offset_delta_f = params["frequency_offset_delta_f"]
 
         # Initialize the band devices
@@ -96,7 +102,9 @@ class VccControllerSimulator:
 
         self._state = tango.DevState.ON
 
-    def ConfigureBand(self: VccControllerSimulator, frequency_band: int) -> None:
+    def ConfigureBand(
+        self: VccControllerSimulator, frequency_band: int
+    ) -> None:
         """
         Configure the band of this VCC.
 
@@ -106,7 +114,7 @@ class VccControllerSimulator:
 
         freq_band_index_mapping = [0, 0, 1, 2, 3, 3]
         freq_band_index = freq_band_index_mapping[frequency_band]
-        
+
         # Enable / disable the band devices
         for idx, band_device in enumerate(self._band_devices):
             if idx == freq_band_index:

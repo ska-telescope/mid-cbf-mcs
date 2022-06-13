@@ -29,6 +29,10 @@ TANGO_HOST = $(TANGO_DATABASE):10000## TANGO_HOST is an input!
 
 PYTHON_VARS_BEFORE_PYTEST = PYTHONPATH=./src:/app/src:/app/src/ska_mid_cbf_mcs KUBE_NAMESPACE=$(KUBE_NAMESPACE) HELM_RELEASE=$(RELEASE_NAME) TANGO_HOST=$(TANGO_HOST)
 
+PYTHON_SWITCHES_FOR_FLAKE8 = --ignore=E266,E302,E402,E501,E711,E712,E722,F401,F407,F541,F821,F841,W291,W503,E203,F811,W605
+PYTHON_SWITCHES_FOR_PYLINT = --disable=all
+
+
 # UMBRELLA_CHART_PATH Path of the umbrella chart to work with
 UMBRELLA_CHART_PATH ?= charts/ska-mid-cbf-umbrella/
 
@@ -38,6 +42,7 @@ K8S_CHART_PARAMS = --set global.tango_host=$(TANGO_HOST)
 
 PYTHON_TEST_FILE = 
 PYTHON_VARS_AFTER_PYTEST = -c setup-unit-test.cfg
+PYTHON_RUNNER = python3 -m
 
 # Fixed variables
 # Timeout for gitlab-runner when run locally
@@ -115,8 +120,8 @@ unit-test: ## Run simulation mode unit tests
 	@mkdir -p build; \
 	python3 -m pytest -c setup-unit-test.cfg
 
-python-do-lint:
-	@echo
+#python-do-lint:
+#	@echo
 
 
 jive: ## configure TANGO_HOST to enable Jive

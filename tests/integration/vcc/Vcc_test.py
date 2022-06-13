@@ -9,28 +9,34 @@
 # See LICENSE.txt for more info.
 """Contain the tests for the Vcc."""
 
+import copy
+import json
+import logging
+import os
+import sys
+import time
+
 # Standard imports
 from multiprocessing.connection import wait
-import sys
-import os
-import time
-import json
-import copy
-import logging
 
 # Path
 data_file_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
 
+import pytest
+
 # Tango imports
 import tango
+from ska_tango_base.commands import ResultCode
+from ska_tango_base.control_model import (
+    AdminMode,
+    HealthState,
+    LoggingLevel,
+    ObsState,
+)
 from tango import DevState
-import pytest
 
 # SKA specific imports
 from ska_mid_cbf_mcs.commons.global_enum import freq_band_dict
-from ska_tango_base.control_model import LoggingLevel, HealthState
-from ska_tango_base.control_model import AdminMode, ObsState
-from ska_tango_base.commands import ResultCode
 
 
 class TestVcc:
@@ -38,14 +44,9 @@ class TestVcc:
     Test class for Vcc device class integration testing.
     """
 
-    @pytest.mark.parametrize(
-        "vcc_id", 
-        [4]
-    )
+    @pytest.mark.parametrize("vcc_id", [4])
     def test_Vcc_ConfigureScan_Scan_EndScan(
-        self,
-        test_proxies: pytest.fixture,
-        vcc_id: int
+        self, test_proxies: pytest.fixture, vcc_id: int
     ) -> None:
         """
         Test a minimal successful scan configuration.
@@ -62,14 +63,18 @@ class TestVcc:
         test_proxies.vcc[vcc_id].loggingLevel = LoggingLevel.DEBUG
         test_proxies.vcc[vcc_id].adminMode = AdminMode.ONLINE
 
-        test_proxies.wait_timeout_dev([test_proxies.vcc[vcc_id]], DevState.OFF, wait_time_s, sleep_time_s)
+        test_proxies.wait_timeout_dev(
+            [test_proxies.vcc[vcc_id]], DevState.OFF, wait_time_s, sleep_time_s
+        )
         assert test_proxies.vcc[vcc_id].State() == DevState.OFF
-        
+
         # Turn on the LRUs and then the VCC devices
         for proxy in test_proxies.talon_lru:
             proxy.On()
         test_proxies.vcc[vcc_id].On()
-        test_proxies.wait_timeout_dev([test_proxies.vcc[vcc_id]], DevState.ON, wait_time_s, 1)
+        test_proxies.wait_timeout_dev(
+            [test_proxies.vcc[vcc_id]], DevState.ON, wait_time_s, 1
+        )
         assert test_proxies.vcc[vcc_id].State() == DevState.ON
 
         config_file_name = "Vcc_ConfigureScan_basic.json"
@@ -81,38 +86,82 @@ class TestVcc:
         frequency_band = configuration["frequency_band"]
         test_proxies.vcc[vcc_id].ConfigureBand(frequency_band)
         time.sleep(2)
-        assert test_proxies.vcc[vcc_id].frequencyBand == freq_band_dict()[frequency_band]
+        assert (
+            test_proxies.vcc[vcc_id].frequencyBand
+            == freq_band_dict()[frequency_band]
+        )
 
         test_proxies.vcc[vcc_id].ConfigureScan(json_str)
-        test_proxies.wait_timeout_obs([test_proxies.vcc[vcc_id]], ObsState.READY, wait_time_s, sleep_time_s)
+        test_proxies.wait_timeout_obs(
+            [test_proxies.vcc[vcc_id]],
+            ObsState.READY,
+            wait_time_s,
+            sleep_time_s,
+        )
 
         assert test_proxies.vcc[vcc_id].configID == configuration["config_id"]
-        assert test_proxies.vcc[vcc_id].rfiFlaggingMask == str(configuration["rfi_flagging_mask"])
+        assert test_proxies.vcc[vcc_id].rfiFlaggingMask == str(
+            configuration["rfi_flagging_mask"]
+        )
         if "band_5_tuning" in configuration:
-                if test_proxies.vcc[vcc_id].frequencyBand in [4, 5]:
-                    band5Tuning_config = configuration["band_5_tuning"]
-                    for i in range(0, len(band5Tuning_config)):
-                        assert test_proxies.vcc[vcc_id].band5Tuning[i] == band5Tuning_config[i]
+            if test_proxies.vcc[vcc_id].frequencyBand in [4, 5]:
+                band5Tuning_config = configuration["band_5_tuning"]
+                for i in range(0, len(band5Tuning_config)):
+                    assert (
+                        test_proxies.vcc[vcc_id].band5Tuning[i]
+                        == band5Tuning_config[i]
+                    )
         if "frequency_band_offset_stream_1" in configuration:
-            assert  test_proxies.vcc[vcc_id].frequencyBandOffsetStream1 == configuration["frequency_band_offset_stream_1"]
+            assert (
+                test_proxies.vcc[vcc_id].frequencyBandOffsetStream1
+                == configuration["frequency_band_offset_stream_1"]
+            )
         if "frequency_band_offset_stream_2" in configuration:
-            assert  test_proxies.vcc[vcc_id].frequencyBandOffsetStream2 == configuration["frequency_band_offset_stream_2"] 
+            assert (
+                test_proxies.vcc[vcc_id].frequencyBandOffsetStream2
+                == configuration["frequency_band_offset_stream_2"]
+            )
 
         test_proxies.vcc[vcc_id].Scan("1")
-        test_proxies.wait_timeout_obs([test_proxies.vcc[vcc_id]], ObsState.SCANNING, wait_time_s, sleep_time_s)
+        test_proxies.wait_timeout_obs(
+            [test_proxies.vcc[vcc_id]],
+            ObsState.SCANNING,
+            wait_time_s,
+            sleep_time_s,
+        )
         assert test_proxies.vcc[vcc_id].obsState == ObsState.SCANNING
         test_proxies.vcc[vcc_id].EndScan()
-        test_proxies.wait_timeout_obs([test_proxies.vcc[vcc_id]], ObsState.READY, wait_time_s, sleep_time_s)
+        test_proxies.wait_timeout_obs(
+            [test_proxies.vcc[vcc_id]],
+            ObsState.READY,
+            wait_time_s,
+            sleep_time_s,
+        )
         assert test_proxies.vcc[vcc_id].obsState == ObsState.READY
-        
+
         test_proxies.vcc[vcc_id].ConfigureScan(json_str)
-        test_proxies.wait_timeout_obs([test_proxies.vcc[vcc_id]], ObsState.READY, wait_time_s, sleep_time_s)
+        test_proxies.wait_timeout_obs(
+            [test_proxies.vcc[vcc_id]],
+            ObsState.READY,
+            wait_time_s,
+            sleep_time_s,
+        )
 
         test_proxies.vcc[vcc_id].Scan("1")
-        test_proxies.wait_timeout_obs([test_proxies.vcc[vcc_id]], ObsState.SCANNING, wait_time_s, sleep_time_s)
+        test_proxies.wait_timeout_obs(
+            [test_proxies.vcc[vcc_id]],
+            ObsState.SCANNING,
+            wait_time_s,
+            sleep_time_s,
+        )
         assert test_proxies.vcc[vcc_id].obsState == ObsState.SCANNING
         test_proxies.vcc[vcc_id].EndScan()
-        test_proxies.wait_timeout_obs([test_proxies.vcc[vcc_id]], ObsState.READY, wait_time_s, sleep_time_s)
+        test_proxies.wait_timeout_obs(
+            [test_proxies.vcc[vcc_id]],
+            ObsState.READY,
+            wait_time_s,
+            sleep_time_s,
+        )
         assert test_proxies.vcc[vcc_id].obsState == ObsState.READY
 
         test_proxies.vcc[vcc_id].GoToIdle()
@@ -121,6 +170,8 @@ class TestVcc:
         for proxy in test_proxies.talon_lru:
             proxy.Off()
         (result_code, msg) = test_proxies.vcc[vcc_id].Off()
-        test_proxies.wait_timeout_dev([test_proxies.vcc[vcc_id]], DevState.OFF, wait_time_s, sleep_time_s)
+        test_proxies.wait_timeout_dev(
+            [test_proxies.vcc[vcc_id]], DevState.OFF, wait_time_s, sleep_time_s
+        )
         assert test_proxies.vcc[vcc_id].State() == DevState.OFF
         assert result_code[0] == ResultCode.OK

@@ -8,32 +8,48 @@
 """This module contains pytest-specific test harness for MCS unit tests."""
 
 from __future__ import annotations
+
 import logging
+import unittest
 
 # Standard imports
-from typing import Callable, Type, Dict, Tuple, Optional
+from typing import Callable, Dict, Optional, Tuple, Type
+
 import pytest
 import pytest_mock
-import unittest
 
 # Tango imports
 import tango
+from ska_tango_base.commands import ResultCode
+from ska_tango_base.control_model import (
+    AdminMode,
+    HealthState,
+    ObsState,
+    PowerMode,
+)
 from tango import DevState
 from tango.server import command
 
-#Local imports
+from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
+
+# Local imports
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
+from ska_mid_cbf_mcs.subarray.subarray_component_manager import (
+    CbfSubarrayComponentManager,
+)
+from ska_mid_cbf_mcs.subarray.subarray_device import CbfSubarray
 from ska_mid_cbf_mcs.testing.mock.mock_attribute import MockAttributeBuilder
+from ska_mid_cbf_mcs.testing.mock.mock_callable import (
+    MockCallable,
+    MockChangeEventCallback,
+)
 from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder
 from ska_mid_cbf_mcs.testing.mock.mock_group import MockGroupBuilder
-from ska_mid_cbf_mcs.testing.mock.mock_callable import MockChangeEventCallback, MockCallable
-from ska_mid_cbf_mcs.testing.tango_harness import DeviceToLoadType, TangoHarness
+from ska_mid_cbf_mcs.testing.tango_harness import (
+    DeviceToLoadType,
+    TangoHarness,
+)
 
-from ska_mid_cbf_mcs.subarray.subarray_device import CbfSubarray
-from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
-from ska_mid_cbf_mcs.subarray.subarray_component_manager import CbfSubarrayComponentManager
-from ska_tango_base.control_model import HealthState, AdminMode, ObsState, PowerMode
-from ska_tango_base.commands import ResultCode
 
 @pytest.fixture
 def unique_id() -> str:
@@ -43,6 +59,7 @@ def unique_id() -> str:
     :return: a unique ID
     """
     return "a unique id"
+
 
 @pytest.fixture()
 def mock_component_manager(
@@ -71,9 +88,13 @@ def mock_component_manager(
     def _start_communicating(mock: unittest.mock.Mock) -> None:
         mock.is_communicating = True
         mock.connected = True
-        mock._communication_status_changed_callback(CommunicationStatus.NOT_ESTABLISHED)
+        mock._communication_status_changed_callback(
+            CommunicationStatus.NOT_ESTABLISHED
+        )
         mock._component_power_mode_changed_callback(PowerMode.ON)
-        mock._communication_status_changed_callback(CommunicationStatus.ESTABLISHED)
+        mock._communication_status_changed_callback(
+            CommunicationStatus.ESTABLISHED
+        )
 
     def _raise_configure_scan_fatal_error() -> None:
         tango.Except.throw_exception(
@@ -96,8 +117,7 @@ def mock_component_manager(
         return (ResultCode.OK, "ConfigureScan command completed OK")
 
     def _remove_receptor(
-        mock: unittest.mock.Mock,
-        receptor_id: int
+        mock: unittest.mock.Mock, receptor_id: int
     ) -> Tuple[ResultCode, str]:
         if receptor_id in mock.receptors:
             mock.receptors.remove(receptor_id)
@@ -105,10 +125,14 @@ def mock_component_manager(
                 mock._component_resourced_callback(False)
             return (ResultCode.OK, "RemoveReceptors completed OK")
         else:
-            return (ResultCode.FAILED, 
-            f"Error in CbfSubarrayComponentManager; receptor {receptor_id} not found.")
+            return (
+                ResultCode.FAILED,
+                f"Error in CbfSubarrayComponentManager; receptor {receptor_id} not found.",
+            )
 
-    def _remove_all_receptors(mock: unittest.mock.Mock) -> Tuple[ResultCode, str]:
+    def _remove_all_receptors(
+        mock: unittest.mock.Mock,
+    ) -> Tuple[ResultCode, str]:
         if mock.receptors == []:
             return (ResultCode.FAILED, "RemoveAllReceptors failed")
         mock.receptors = []
@@ -116,8 +140,7 @@ def mock_component_manager(
         return (ResultCode.OK, "RemoveAllReceptors completed OK")
 
     def _add_receptor(
-        mock: unittest.mock.Mock,
-        receptor_id: int
+        mock: unittest.mock.Mock, receptor_id: int
     ) -> Tuple[ResultCode, str]:
         if receptor_id not in mock.receptors:
             if len(mock.receptors) == 0:
@@ -126,8 +149,10 @@ def mock_component_manager(
             return (ResultCode.OK, "AddReceptors completed OK")
         else:
             mock._component_fault_callback(True)
-            return (ResultCode.FAILED, 
-            f"Receptor {receptor_id} already assigned to subarray component manager.")
+            return (
+                ResultCode.FAILED,
+                f"Receptor {receptor_id} already assigned to subarray component manager.",
+            )
 
     def _scan() -> Tuple[ResultCode, str]:
         return (ResultCode.STARTED, "Scan command successful")
@@ -136,16 +161,28 @@ def mock_component_manager(
         return (ResultCode.OK, "EndScan command completed OK")
 
     mock.start_communicating.side_effect = lambda: _start_communicating(mock)
-    mock.on.side_effect = lambda: mock._component_power_mode_changed_callback(PowerMode.ON)
-    mock.off.side_effect = lambda: mock._component_power_mode_changed_callback(PowerMode.OFF)
-    mock.standby.side_effect = lambda: mock._component_power_mode_changed_callback(PowerMode.STANDBY)
-    mock.raise_configure_scan_fatal_error.side_effect = lambda: _raise_configure_scan_fatal_error()
+    mock.on.side_effect = lambda: mock._component_power_mode_changed_callback(
+        PowerMode.ON
+    )
+    mock.off.side_effect = lambda: mock._component_power_mode_changed_callback(
+        PowerMode.OFF
+    )
+    mock.standby.side_effect = (
+        lambda: mock._component_power_mode_changed_callback(PowerMode.STANDBY)
+    )
+    mock.raise_configure_scan_fatal_error.side_effect = (
+        lambda: _raise_configure_scan_fatal_error()
+    )
     mock.deconfigure.side_effect = lambda: _deconfigure(mock)
     mock.validate_input.side_effect = lambda argin: _validate_input()
     mock.configure_scan.side_effect = lambda argin: _configure_scan(mock)
-    mock.remove_receptor.side_effect = lambda receptor_id: _remove_receptor(mock, receptor_id)
+    mock.remove_receptor.side_effect = lambda receptor_id: _remove_receptor(
+        mock, receptor_id
+    )
     mock.remove_all_receptors.side_effect = lambda: _remove_all_receptors(mock)
-    mock.add_receptor.side_effect = lambda receptor_id: _add_receptor(mock, receptor_id)
+    mock.add_receptor.side_effect = lambda receptor_id: _add_receptor(
+        mock, receptor_id
+    )
     mock.scan.side_effect = lambda argin: _scan()
     mock.end_scan.side_effect = lambda: _end_scan()
 
@@ -153,9 +190,10 @@ def mock_component_manager(
 
     return mock
 
+
 @pytest.fixture()
 def patched_subarray_device_class(
-    mock_component_manager: unittest.mock.Mock
+    mock_component_manager: unittest.mock.Mock,
 ) -> Type[CbfSubarray]:
     """
     Return a CbfSubarray device class, patched with extra methods for testing.
@@ -203,8 +241,7 @@ def patched_subarray_device_class(
 
         @command(dtype_in=int)
         def FakeSubservientDevicesObsState(
-            self: PatchedCbfSubarray,
-            obs_state: ObsState
+            self: PatchedCbfSubarray, obs_state: ObsState
         ) -> None:
             obs_state = ObsState(obs_state)
 
@@ -228,7 +265,7 @@ def device_under_test(tango_harness: TangoHarness) -> CbfDeviceProxy:
 
 @pytest.fixture()
 def device_to_load(
-    patched_subarray_device_class: Type[CbfSubarray]
+    patched_subarray_device_class: Type[CbfSubarray],
 ) -> DeviceToLoadType:
     """
     Fixture that specifies the device to be loaded for testing.
@@ -254,11 +291,13 @@ def mock_doppler() -> unittest.mock.Mock:
     builder.add_value([0.0, 0.0, 0.0, 0.0])
     return builder()
 
+
 @pytest.fixture()
 def mock_delay() -> unittest.mock.Mock:
     builder = MockAttributeBuilder()
     builder.add_value("")
     return builder()
+
 
 @pytest.fixture()
 def mock_jones() -> unittest.mock.Mock:
@@ -266,11 +305,13 @@ def mock_jones() -> unittest.mock.Mock:
     builder.add_value("")
     return builder()
 
+
 @pytest.fixture()
 def mock_beam() -> unittest.mock.Mock:
     builder = MockAttributeBuilder()
     builder.add_value("")
     return builder()
+
 
 @pytest.fixture()
 def mock_controller() -> unittest.mock.Mock:
@@ -278,9 +319,11 @@ def mock_controller() -> unittest.mock.Mock:
     builder.set_state(tango.DevState.ON)
     builder.add_attribute("receptorToVcc", ["1:1", "2:2", "3:3", "4:4"])
     builder.add_property(
-        "MaxCapabilities", {'MaxCapabilities': ['VCC:4', 'FSP:4', 'Subarray:1']}
+        "MaxCapabilities",
+        {"MaxCapabilities": ["VCC:4", "FSP:4", "Subarray:1"]},
     )
     return builder()
+
 
 @pytest.fixture()
 def mock_vcc() -> unittest.mock.Mock:
@@ -292,6 +335,7 @@ def mock_vcc() -> unittest.mock.Mock:
     builder.add_result_command("On", ResultCode.OK)
     builder.add_result_command("Off", ResultCode.OK)
     return builder()
+
 
 @pytest.fixture()
 def mock_vcc_group() -> unittest.mock.Mock:
@@ -308,6 +352,7 @@ def mock_vcc_group() -> unittest.mock.Mock:
     builder.add_command("UpdateJonesMatrix", None)
     return builder()
 
+
 @pytest.fixture()
 def mock_fsp() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
@@ -319,6 +364,7 @@ def mock_fsp() -> unittest.mock.Mock:
     builder.add_result_command("Off", ResultCode.OK)
     return builder()
 
+
 @pytest.fixture()
 def mock_fsp_group() -> unittest.mock.Mock:
     builder = MockGroupBuilder()
@@ -329,6 +375,7 @@ def mock_fsp_group() -> unittest.mock.Mock:
     builder.add_command("UpdateJonesMatrix", None)
     builder.add_command("UpdateBeamWeights", None)
     return builder()
+
 
 @pytest.fixture()
 def mock_fsp_subarray() -> unittest.mock.Mock:
@@ -347,6 +394,7 @@ def mock_fsp_subarray() -> unittest.mock.Mock:
     builder.add_result_command("Off", ResultCode.OK)
     return builder()
 
+
 @pytest.fixture()
 def mock_fsp_subarray_group() -> unittest.mock.Mock:
     builder = MockGroupBuilder()
@@ -354,6 +402,7 @@ def mock_fsp_subarray_group() -> unittest.mock.Mock:
     builder.add_command("Off", None)
     builder.add_command("GoToIdle", None)
     return builder()
+
 
 @pytest.fixture()
 def initial_mocks(
@@ -367,7 +416,7 @@ def initial_mocks(
     mock_fsp: unittest.mock.Mock,
     mock_fsp_group: unittest.mock.Mock,
     mock_fsp_subarray: unittest.mock.Mock,
-    mock_fsp_subarray_group: unittest.mock.Mock
+    mock_fsp_subarray_group: unittest.mock.Mock,
 ) -> Dict[str, unittest.mock.Mock]:
     """
     Return a dictionary of proxy mocks to pre-register.
@@ -419,12 +468,13 @@ def initial_mocks(
         "FSP Subarray Pst": mock_fsp_subarray_group,
     }
 
+
 @pytest.fixture()
 def subarray_component_manager(
     logger: logging.Logger,
-    tango_harness: TangoHarness, # sets the connection_factory
+    tango_harness: TangoHarness,  # sets the connection_factory
     push_change_event_callback: MockChangeEventCallback,
-    component_callback: MockCallable
+    component_callback: MockCallable,
 ) -> CbfSubarrayComponentManager:
     """Return a subarray component manager."""
     return CbfSubarrayComponentManager(
@@ -434,31 +484,31 @@ def subarray_component_manager(
             "mid_csp_cbf/vcc/001",
             "mid_csp_cbf/vcc/002",
             "mid_csp_cbf/vcc/003",
-            "mid_csp_cbf/vcc/004"
+            "mid_csp_cbf/vcc/004",
         ],
         fsp=[
             "mid_csp_cbf/fsp/01",
             "mid_csp_cbf/fsp/02",
             "mid_csp_cbf/fsp/03",
-            "mid_csp_cbf/fsp/04"
+            "mid_csp_cbf/fsp/04",
         ],
         fsp_corr_sub=[
             "mid_csp_cbf/fspCorrSubarray/01_01",
             "mid_csp_cbf/fspCorrSubarray/02_01",
             "mid_csp_cbf/fspCorrSubarray/03_01",
-            "mid_csp_cbf/fspCorrSubarray/04_01"
+            "mid_csp_cbf/fspCorrSubarray/04_01",
         ],
         fsp_pss_sub=[
             "mid_csp_cbf/fspPssSubarray/01_01",
             "mid_csp_cbf/fspPssSubarray/02_01",
             "mid_csp_cbf/fspPssSubarray/03_01",
-            "mid_csp_cbf/fspPssSubarray/04_01"
+            "mid_csp_cbf/fspPssSubarray/04_01",
         ],
         fsp_pst_sub=[
             "mid_csp_cbf/fspPstSubarray/01_01",
             "mid_csp_cbf/fspPstSubarray/02_01",
             "mid_csp_cbf/fspPstSubarray/03_01",
-            "mid_csp_cbf/fspPstSubarray/04_01"
+            "mid_csp_cbf/fspPstSubarray/04_01",
         ],
         logger=logger,
         push_change_event_callback=push_change_event_callback,
@@ -468,8 +518,9 @@ def subarray_component_manager(
         communication_status_changed_callback=component_callback,
         component_power_mode_changed_callback=component_callback,
         component_fault_callback=component_callback,
-        component_obs_fault_callback=component_callback
+        component_obs_fault_callback=component_callback,
     )
+
 
 @pytest.fixture()
 def component_callback(
@@ -486,18 +537,21 @@ def component_callback(
     """
     return mock_callback_factory()
 
+
 @pytest.fixture()
 def push_change_event_callback_factory(
-    mock_change_event_callback_factory: Callable[[str], MockChangeEventCallback],
+    mock_change_event_callback_factory: Callable[
+        [str], MockChangeEventCallback
+    ],
 ) -> Callable[[], MockChangeEventCallback]:
     """
-    Return a mock change event callback factory 
+    Return a mock change event callback factory
 
     :param mock_change_event_callback_factory: fixture that provides a
         mock change event callback factory (i.e. an object that returns
         mock callbacks when called).
 
-    :return: a mock change event callback factory 
+    :return: a mock change event callback factory
     """
 
     def _factory() -> MockChangeEventCallback:
@@ -511,11 +565,11 @@ def push_change_event_callback(
     push_change_event_callback_factory: Callable[[], MockChangeEventCallback],
 ) -> MockChangeEventCallback:
     """
-    Return a mock change event callback 
+    Return a mock change event callback
 
     :param push_change_event_callback_factory: fixture that provides a mock
-        change event callback factory 
+        change event callback factory
 
-    :return: a mock change event callback 
+    :return: a mock change event callback
     """
     return push_change_event_callback_factory()

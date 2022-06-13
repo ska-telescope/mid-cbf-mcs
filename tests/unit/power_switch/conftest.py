@@ -9,23 +9,34 @@
 
 from __future__ import annotations
 
-# Standard imports
-import re
 import json
 import logging
+
+# Standard imports
+import re
+import unittest
+from typing import Any, Callable, List
+
 import pytest
 import requests
-from typing import List, Any, Callable
-import unittest
+from ska_tango_base.control_model import SimulationMode
+
+from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
+from ska_mid_cbf_mcs.power_switch.power_switch_component_manager import (
+    PowerSwitchComponentManager,
+)
 
 # Local imports
 from ska_mid_cbf_mcs.power_switch.power_switch_device import PowerSwitch
-from ska_mid_cbf_mcs.power_switch.power_switch_component_manager import PowerSwitchComponentManager
-from ska_mid_cbf_mcs.testing.tango_harness import TangoHarness, DevicesToLoadType
-from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
-from ska_mid_cbf_mcs.testing.mock.mock_callable import MockChangeEventCallback, MockCallable
+from ska_mid_cbf_mcs.testing.mock.mock_callable import (
+    MockCallable,
+    MockChangeEventCallback,
+)
+from ska_mid_cbf_mcs.testing.tango_harness import (
+    DevicesToLoadType,
+    TangoHarness,
+)
 
-from ska_tango_base.control_model import SimulationMode
 
 @pytest.fixture(scope="function")
 def power_switch_component_manager(
@@ -35,15 +46,15 @@ def power_switch_component_manager(
     push_change_event_callback: MockChangeEventCallback,
     communication_status_changed_callback: MockCallable,
     component_power_mode_changed_callback: MockCallable,
-    component_fault_callback: MockCallable
+    component_fault_callback: MockCallable,
 ) -> PowerSwitchComponentManager:
     """
     Return a power switch component manager (with HTTP connection monkey-patched).
 
     :param logger: the logger fixture
-    :param request: the pytest request fixture, must be indirectly parametrized 
+    :param request: the pytest request fixture, must be indirectly parametrized
                     by each test with a dict of the form:
-                        { 
+                        {
                             "sim_put_error": boolean,
                             "sim_get_error": boolean
                         }
@@ -56,9 +67,7 @@ def power_switch_component_manager(
         """A mock class to replace requests.Response."""
 
         def __init__(
-            self: MockResponse,
-            url: str,
-            simulate_response_error: bool
+            self: MockResponse, url: str, simulate_response_error: bool
         ) -> None:
             """
             Initialise a new instance.
@@ -66,8 +75,12 @@ def power_switch_component_manager(
             :param url: URL of the request
             :param simulate_response_error: set to True to simulate error response
             """
-            outlet_state_url = re.compile(r"http:\/\/[\d.]+\/restapi\/relay\/outlets\/\d+\/state\/")
-            outlet_list_url = re.compile(r"http:\/\/[\d.]+\/restapi\/relay\/outlets\/")
+            outlet_state_url = re.compile(
+                r"http:\/\/[\d.]+\/restapi\/relay\/outlets\/\d+\/state\/"
+            )
+            outlet_list_url = re.compile(
+                r"http:\/\/[\d.]+\/restapi\/relay\/outlets\/"
+            )
 
             if simulate_response_error:
                 self.status_code = 404
@@ -85,7 +98,7 @@ def power_switch_component_manager(
                             "cycle_delay": 0,
                             "state": True,
                             "physical_state": True,
-                            "transient_state": True
+                            "transient_state": True,
                         }
 
                         self._json.append(outlet_cfg)
@@ -138,7 +151,7 @@ def power_switch_component_manager(
         push_change_event_callback=push_change_event_callback,
         communication_status_changed_callback=communication_status_changed_callback,
         component_power_mode_changed_callback=component_power_mode_changed_callback,
-        component_fault_callback=component_fault_callback
+        component_fault_callback=component_fault_callback,
     )
 
 
@@ -175,6 +188,7 @@ def component_power_mode_changed_callback(
     """
     return mock_callback_factory()
 
+
 @pytest.fixture()
 def component_fault_callback(
     mock_callback_factory: Callable[[], unittest.mock.Mock],
@@ -190,6 +204,7 @@ def component_fault_callback(
         of a component manager changed.
     """
     return mock_callback_factory()
+
 
 @pytest.fixture()
 def ccheck_power_mode_callback(
@@ -207,18 +222,21 @@ def ccheck_power_mode_callback(
     """
     return mock_callback_factory()
 
+
 @pytest.fixture()
 def push_change_event_callback_factory(
-    mock_change_event_callback_factory: Callable[[str], MockChangeEventCallback],
+    mock_change_event_callback_factory: Callable[
+        [str], MockChangeEventCallback
+    ],
 ) -> Callable[[], MockChangeEventCallback]:
     """
-    Return a mock change event callback factory 
+    Return a mock change event callback factory
 
     :param mock_change_event_callback_factory: fixture that provides a
         mock change event callback factory (i.e. an object that returns
         mock callbacks when called).
 
-    :return: a mock change event callback factory 
+    :return: a mock change event callback factory
     """
 
     def _factory() -> MockChangeEventCallback:
@@ -232,14 +250,15 @@ def push_change_event_callback(
     push_change_event_callback_factory: Callable[[], MockChangeEventCallback],
 ) -> MockChangeEventCallback:
     """
-    Return a mock change event callback 
+    Return a mock change event callback
 
     :param push_change_event_callback_factory: fixture that provides a mock
-        change event callback factory 
+        change event callback factory
 
-    :return: a mock change event callback 
+    :return: a mock change event callback
     """
     return push_change_event_callback_factory()
+
 
 @pytest.fixture()
 def device_under_test(tango_harness: TangoHarness) -> CbfDeviceProxy:
@@ -251,6 +270,7 @@ def device_under_test(tango_harness: TangoHarness) -> CbfDeviceProxy:
     :return: the device under test
     """
     return tango_harness.get_device("mid_csp_cbf/power_switch/001")
+
 
 @pytest.fixture()
 def device_to_load() -> DevicesToLoadType:
@@ -265,5 +285,5 @@ def device_to_load() -> DevicesToLoadType:
         "device": "powerswitch-001",
         "device_class": "PowerSwitch",
         "proxy": CbfDeviceProxy,
-        "patch": PowerSwitch
+        "patch": PowerSwitch,
     }

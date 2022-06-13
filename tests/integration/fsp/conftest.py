@@ -11,14 +11,16 @@
 
 from __future__ import annotations
 
-# Standard imports
-from typing import List
 import random
 
+# Standard imports
+from typing import List
+
+import pytest
 
 # Tango imports
-from tango import DevState, DeviceProxy
-import pytest
+from tango import DeviceProxy, DevState
+
 
 @pytest.fixture(scope="function")
 def receptors_to_test() -> List[int]:

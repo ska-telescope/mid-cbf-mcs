@@ -16,9 +16,7 @@ author = "Team CIPA"
 author_email = "taylor.huang@mda.space"
 url = "https://gitlab.com/ska-telescope/ska-mid-cbf-mcs"
 license = "BSD-3-Clause"  # noqa: A001
-copyright = (  # noqa: A001
-    ""
-)
+copyright = ""  # noqa: A001
 
 
 def get_release_info(clsname: Optional[str] = None) -> str:

@@ -9,29 +9,39 @@
 
 from __future__ import annotations
 
-# Standard imports
-from typing import Callable, Type, Dict, Optional
-import pytest
+import logging
 import unittest
+
+# Standard imports
+from typing import Callable, Dict, Optional, Type
+
+import pytest
 import pytest_mock
 
 # Tango imports
 import tango
+from ska_tango_base.commands import ResultCode
+from ska_tango_base.control_model import (
+    AdminMode,
+    HealthState,
+    ObsState,
+    PowerMode,
+)
 from tango import DevState
 from tango.server import command
 
-#Local imports
-from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
-from ska_mid_cbf_mcs.testing.mock.mock_callable import MockChangeEventCallback
-from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder
-from ska_mid_cbf_mcs.testing.tango_harness import DeviceToLoadType, TangoHarness
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
 
+# Local imports
+from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_mid_cbf_mcs.fsp.fsp_corr_subarray import FspCorrSubarray
-from ska_tango_base.control_model import HealthState, AdminMode, ObsState, PowerMode
-from ska_tango_base.commands import ResultCode
+from ska_mid_cbf_mcs.testing.mock.mock_callable import MockChangeEventCallback
+from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder
+from ska_mid_cbf_mcs.testing.tango_harness import (
+    DeviceToLoadType,
+    TangoHarness,
+)
 
-import logging
 
 @pytest.fixture()
 def device_under_test(tango_harness: TangoHarness) -> CbfDeviceProxy:
@@ -44,9 +54,10 @@ def device_under_test(tango_harness: TangoHarness) -> CbfDeviceProxy:
     """
     return tango_harness.get_device("mid_csp_cbf/fspCorrSubarray/01_01")
 
+
 @pytest.fixture()
 def device_to_load(
-    patched_fsp_corr_subarray_device_class: Type[FspCorrSubarray]
+    patched_fsp_corr_subarray_device_class: Type[FspCorrSubarray],
 ) -> DeviceToLoadType:
     """
     Fixture that specifies the device to be loaded for testing.
@@ -59,8 +70,9 @@ def device_to_load(
         "device": "fsp-01",
         "device_class": "FspCorrSubarray",
         "proxy": CbfDeviceProxy,
-        "patch": patched_fsp_corr_subarray_device_class
+        "patch": patched_fsp_corr_subarray_device_class,
     }
+
 
 @pytest.fixture
 def unique_id() -> str:
@@ -95,37 +107,43 @@ def mock_component_manager(
 
     def _start_communicating(mock: unittest.mock.Mock) -> None:
         mock.is_communicating = True
-        mock._communication_status_changed_callback(CommunicationStatus.NOT_ESTABLISHED)
-        mock._communication_status_changed_callback(CommunicationStatus.ESTABLISHED)
+        mock._communication_status_changed_callback(
+            CommunicationStatus.NOT_ESTABLISHED
+        )
+        mock._communication_status_changed_callback(
+            CommunicationStatus.ESTABLISHED
+        )
         mock._component_power_mode_changed_callback(PowerMode.OFF)
-    
+
     def _on(mock: unittest.mock.Mock) -> None:
         mock.message = "FspCorrSubarray On command completed OK"
         return (ResultCode.OK, mock.message)
-    
+
     def _off(mock: unittest.mock.Mock) -> None:
         mock.message = "FspCorrSubarray Off command completed OK"
         return (ResultCode.OK, mock.message)
-    
+
     def _configure_scan(mock: unittest.mock.Mock, argin: str) -> None:
         mock.message = "FspCorrSubarray ConfigureScan command completed OK"
         return (ResultCode.OK, mock.message)
-    
+
     def _scan(mock: unittest.mock.Mock, argin: int) -> None:
         mock.message = "FspCorrSubarray Scan command completed OK"
         return (ResultCode.OK, mock.message)
-    
+
     def _end_scan(mock: unittest.mock.Mock) -> None:
         mock.message = "FspCorrSubarray EndScan command completed OK"
         return (ResultCode.OK, mock.message)
-    
+
     def _go_to_idle(mock: unittest.mock.Mock) -> None:
         mock.message = "FspCorrSubarray GoToIdle command completed OK"
         return (ResultCode.OK, mock.message)
 
     mock.on.side_effect = lambda: _on(mock)
     mock.off.side_effect = lambda: _off(mock)
-    mock.configure_scan.side_effect = lambda mock_config: _configure_scan(mock, mock_config)
+    mock.configure_scan.side_effect = lambda mock_config: _configure_scan(
+        mock, mock_config
+    )
     mock.scan.side_effect = lambda mock_scan_id: _scan(mock, mock_scan_id)
     mock.end_scan.side_effect = lambda: _end_scan(mock)
     mock.go_to_idle.side_effect = lambda: _go_to_idle(mock)
@@ -175,15 +193,20 @@ def patched_fsp_corr_subarray_device_class(
 
     return PatchedFspCorrSubarray
 
+
 @pytest.fixture()
 def mock_cbf_controller() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     # Mock the MaxCapabilities Cbf Controller property
-    builder.add_property("MaxCapabilities", {'MaxCapabilities': ['VCC:4', 'FSP:4', 'Subarray:2']})
+    builder.add_property(
+        "MaxCapabilities",
+        {"MaxCapabilities": ["VCC:4", "FSP:4", "Subarray:2"]},
+    )
     # Mock the receptortoVcc Cbf Controller attribute
-    # Note: Each receptor can only have one Vcc 
+    # Note: Each receptor can only have one Vcc
     builder.add_attribute("receptorToVcc", ["1:1", "2:2", "3:3"])
     return builder()
+
 
 @pytest.fixture()
 def mock_vcc() -> unittest.mock.Mock:
@@ -192,6 +215,7 @@ def mock_vcc() -> unittest.mock.Mock:
     # The subarray ID for this unit test is hardcoded to 1
     builder.add_attribute("subarrayMembership", 1)
     return builder()
+
 
 @pytest.fixture()
 def initial_mocks(
@@ -208,5 +232,5 @@ def initial_mocks(
     """
     return {
         "mid_csp_cbf/sub_elt/controller": mock_cbf_controller,
-        "mid_csp_cbf/vcc/001": mock_vcc
+        "mid_csp_cbf/vcc/001": mock_vcc,
     }
