@@ -42,7 +42,7 @@ K8S_CHART_PARAMS = --set global.tango_host=$(TANGO_HOST)
 
 PYTHON_TEST_FILE = 
 PYTHON_VARS_AFTER_PYTEST = -c setup-unit-test.cfg
-PYTHON_RUNNER = python -m
+#PYTHON_RUNNER = python3 -m
 
 # Fixed variables
 # Timeout for gitlab-runner when run locally
