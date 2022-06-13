@@ -91,7 +91,7 @@ else
 K8S_TEST_IMAGE_TO_TEST = artefact.skao.int/ska-mid-cbf-mcs:0.6.0
 endif
 
-K8S_TEST_TEST_COMMAND ?= cd .. && $(PYTHON_VARS_BEFORE_PYTEST) $(PYTHON_RUNNER) \
+K8S_TEST_TEST_COMMAND ?= ls -lrt &&  $(PYTHON_VARS_BEFORE_PYTEST) $(PYTHON_RUNNER) \
                         pytest \
                         -c setup-integration-test.cfg \
                         | tee pytest.stdout; ## k8s-test test command to run in container
