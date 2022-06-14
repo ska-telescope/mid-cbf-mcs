@@ -107,6 +107,7 @@ include .make/make.mk
 include .make/oci.mk
 include .make/helm.mk
 include .make/python.mk
+include .make/docs.mk
 #
 # Defines a default make target so that help is printed if make is called
 # without a target
