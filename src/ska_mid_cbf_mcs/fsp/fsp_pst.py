@@ -23,6 +23,7 @@ import sys
 
 # tango imports
 import tango
+
 # Additional import
 # PROTECTED REGION ID(FspPst.additionnal_import) ENABLED START #
 from ska_tango_base import SKACapability

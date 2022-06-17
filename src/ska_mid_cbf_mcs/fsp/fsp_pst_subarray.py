@@ -13,6 +13,7 @@
 from __future__ import annotations  # allow forward references in type hints
 
 import json
+
 # Additional import
 # PROTECTED REGION ID(FspPstSubarray.additionnal_import) ENABLED START #
 import os
@@ -27,8 +28,9 @@ from tango import AttrWriteType, DebugIt
 from tango.server import attribute, command, device_property, run
 
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
-from ska_mid_cbf_mcs.fsp.fsp_pst_subarray_component_manager import \
-    FspPstSubarrayComponentManager
+from ska_mid_cbf_mcs.fsp.fsp_pst_subarray_component_manager import (
+    FspPstSubarrayComponentManager,
+)
 
 file_path = os.path.dirname(os.path.abspath(__file__))
 

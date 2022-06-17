@@ -26,10 +26,12 @@ from tango import AttrWriteType
 from tango.server import attribute, device_property, run
 
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
-from ska_mid_cbf_mcs.controller.controller_component_manager import \
-    ControllerComponentManager
-from ska_mid_cbf_mcs.controller.talondx_component_manager import \
-    TalonDxComponentManager
+from ska_mid_cbf_mcs.controller.controller_component_manager import (
+    ControllerComponentManager,
+)
+from ska_mid_cbf_mcs.controller.talondx_component_manager import (
+    TalonDxComponentManager,
+)
 
 __all__ = ["CbfController", "main"]
 

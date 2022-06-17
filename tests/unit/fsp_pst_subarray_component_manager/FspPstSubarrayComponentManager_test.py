@@ -17,8 +17,9 @@ import os
 import pytest
 
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
-from ska_mid_cbf_mcs.fsp.fsp_pst_subarray_component_manager import \
-    FspPstSubarrayComponentManager
+from ska_mid_cbf_mcs.fsp.fsp_pst_subarray_component_manager import (
+    FspPstSubarrayComponentManager,
+)
 from ska_mid_cbf_mcs.testing.mock.mock_callable import MockCallable
 
 file_path = os.path.dirname(os.path.abspath(__file__))

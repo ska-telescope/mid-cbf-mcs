@@ -10,6 +10,7 @@
 from __future__ import annotations
 
 import json
+
 # Standard imports
 import logging
 import os
@@ -21,7 +22,9 @@ import tango
 
 from ska_mid_cbf_mcs.fsp.fsp_component_manager import FspComponentManager
 from ska_mid_cbf_mcs.testing.mock.mock_callable import (
-    MockCallable, MockChangeEventCallback)
+    MockCallable,
+    MockChangeEventCallback,
+)
 from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder
 from ska_mid_cbf_mcs.testing.mock.mock_group import MockGroupBuilder
 from ska_mid_cbf_mcs.testing.tango_harness import TangoHarness

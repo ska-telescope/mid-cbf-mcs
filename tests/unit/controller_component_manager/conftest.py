@@ -10,6 +10,7 @@
 from __future__ import annotations
 
 import json
+
 # Standard imports
 import logging
 import os
@@ -21,10 +22,13 @@ import tango
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import AdminMode, HealthState
 
-from ska_mid_cbf_mcs.controller.controller_component_manager import \
-    ControllerComponentManager
+from ska_mid_cbf_mcs.controller.controller_component_manager import (
+    ControllerComponentManager,
+)
 from ska_mid_cbf_mcs.testing.mock.mock_callable import (
-    MockCallable, MockChangeEventCallback)
+    MockCallable,
+    MockChangeEventCallback,
+)
 from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder
 from ska_mid_cbf_mcs.testing.mock.mock_group import MockGroupBuilder
 from ska_mid_cbf_mcs.testing.tango_harness import TangoHarness

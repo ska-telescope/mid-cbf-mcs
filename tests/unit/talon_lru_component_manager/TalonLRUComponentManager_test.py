@@ -12,13 +12,15 @@
 
 # Standard imports
 import pytest
+
 # Local imports
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import PowerMode
 
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
-from ska_mid_cbf_mcs.talon_lru.talon_lru_component_manager import \
-    TalonLRUComponentManager
+from ska_mid_cbf_mcs.talon_lru.talon_lru_component_manager import (
+    TalonLRUComponentManager,
+)
 from ska_mid_cbf_mcs.testing.tango_harness import TangoHarness
 
 # Tango imports

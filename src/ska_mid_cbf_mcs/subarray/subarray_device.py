@@ -24,9 +24,11 @@ from tango.server import attribute, command, device_property, run
 
 from ska_mid_cbf_mcs.commons.global_enum import const
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
+
 # SKA imports
-from ska_mid_cbf_mcs.subarray.subarray_component_manager import \
-    CbfSubarrayComponentManager
+from ska_mid_cbf_mcs.subarray.subarray_component_manager import (
+    CbfSubarrayComponentManager,
+)
 
 # Additional import
 # PROTECTED REGION ID(CbfSubarray.additionnal_import) ENABLED START #

@@ -21,6 +21,7 @@ from typing import Optional, Tuple
 import tango
 from ska_tango_base import SKABaseDevice
 from ska_tango_base.commands import BaseCommand, ResponseCommand, ResultCode
+
 # Additional import
 # PROTECTED REGION ID(PowerSwitch.additionnal_import) ENABLED START #
 from ska_tango_base.control_model import PowerMode, SimulationMode
@@ -28,8 +29,9 @@ from tango import AttrWriteType, DebugIt
 from tango.server import attribute, command, device_property, run
 
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
-from ska_mid_cbf_mcs.power_switch.power_switch_component_manager import \
-    PowerSwitchComponentManager
+from ska_mid_cbf_mcs.power_switch.power_switch_component_manager import (
+    PowerSwitchComponentManager,
+)
 
 # PROTECTED REGION END #    //  PowerSwitch.additionnal_import
 

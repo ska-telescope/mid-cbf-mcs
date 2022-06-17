@@ -19,10 +19,13 @@ from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import AdminMode, HealthState, PowerMode
 from tango import AttrQuality
 
-from ska_mid_cbf_mcs.component.component_manager import (CbfComponentManager,
-                                                         CommunicationStatus)
-from ska_mid_cbf_mcs.controller.talondx_component_manager import \
-    TalonDxComponentManager
+from ska_mid_cbf_mcs.component.component_manager import (
+    CbfComponentManager,
+    CommunicationStatus,
+)
+from ska_mid_cbf_mcs.controller.talondx_component_manager import (
+    TalonDxComponentManager,
+)
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_mid_cbf_mcs.group_proxy import CbfGroupProxy
 

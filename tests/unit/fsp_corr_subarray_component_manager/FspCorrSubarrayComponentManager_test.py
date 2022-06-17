@@ -19,8 +19,9 @@ import pytest
 
 from ska_mid_cbf_mcs.commons.global_enum import const, freq_band_dict
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
-from ska_mid_cbf_mcs.fsp.fsp_corr_subarray_component_manager import \
-    FspCorrSubarrayComponentManager
+from ska_mid_cbf_mcs.fsp.fsp_corr_subarray_component_manager import (
+    FspCorrSubarrayComponentManager,
+)
 from ska_mid_cbf_mcs.testing.mock.mock_callable import MockCallable
 
 file_path = os.path.dirname(os.path.abspath(__file__))

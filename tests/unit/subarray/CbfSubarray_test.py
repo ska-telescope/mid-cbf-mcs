@@ -16,6 +16,7 @@ import time
 from typing import List
 
 import pytest
+
 # SKA imports
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import AdminMode, ObsState

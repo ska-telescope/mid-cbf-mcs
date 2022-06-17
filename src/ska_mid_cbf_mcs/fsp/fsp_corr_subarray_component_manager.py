@@ -20,8 +20,10 @@ from ska_tango_base.control_model import PowerMode
 from ska_tango_base.csp.obs.component_manager import CspObsComponentManager
 
 from ska_mid_cbf_mcs.commons.global_enum import const, freq_band_dict
-from ska_mid_cbf_mcs.component.component_manager import (CbfComponentManager,
-                                                         CommunicationStatus)
+from ska_mid_cbf_mcs.component.component_manager import (
+    CbfComponentManager,
+    CommunicationStatus,
+)
 
 
 class FspCorrSubarrayComponentManager(

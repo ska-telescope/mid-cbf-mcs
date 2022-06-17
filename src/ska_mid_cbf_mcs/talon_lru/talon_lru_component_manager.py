@@ -17,8 +17,10 @@ from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import PowerMode
 from tango import DevState
 
-from ska_mid_cbf_mcs.component.component_manager import (CbfComponentManager,
-                                                         CommunicationStatus)
+from ska_mid_cbf_mcs.component.component_manager import (
+    CbfComponentManager,
+    CommunicationStatus,
+)
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 
 

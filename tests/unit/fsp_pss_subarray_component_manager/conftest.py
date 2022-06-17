@@ -17,10 +17,13 @@ from typing import Callable, Dict
 
 import pytest
 
-from ska_mid_cbf_mcs.fsp.fsp_pss_subarray_component_manager import \
-    FspPssSubarrayComponentManager
+from ska_mid_cbf_mcs.fsp.fsp_pss_subarray_component_manager import (
+    FspPssSubarrayComponentManager,
+)
 from ska_mid_cbf_mcs.testing.mock.mock_callable import (
-    MockCallable, MockChangeEventCallback)
+    MockCallable,
+    MockChangeEventCallback,
+)
 from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder
 from ska_mid_cbf_mcs.testing.tango_harness import TangoHarness
 
