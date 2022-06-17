@@ -9,14 +9,14 @@
 # See LICENSE.txt for more info.
 """Contain the tests for the Fsp."""
 from __future__ import annotations
-from tango import DevState
-from ska_tango_base.control_model import AdminMode
-import pytest
 
 import os
-
 # Standard imports
 import time
+
+import pytest
+from ska_tango_base.control_model import AdminMode
+from tango import DevState
 
 file_path = os.path.dirname(os.path.abspath(__file__))
 

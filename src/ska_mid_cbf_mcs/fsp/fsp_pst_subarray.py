@@ -11,19 +11,8 @@
 
 """
 from __future__ import annotations  # allow forward references in type hints
-from ska_mid_cbf_mcs.fsp.fsp_pst_subarray_component_manager import (
-    FspPstSubarrayComponentManager,
-)
-from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
-from ska_tango_base.control_model import (
-    ObsState,
-    PowerMode,
-)
-from ska_tango_base.commands import ResultCode
-from ska_tango_base import CspSubElementObsDevice, SKABaseDevice
 
 import json
-
 # Additional import
 # PROTECTED REGION ID(FspPstSubarray.additionnal_import) ENABLED START #
 import os
@@ -31,11 +20,15 @@ from typing import List, Optional, Tuple
 
 # PyTango imports
 import tango
-from tango import (
-    AttrWriteType,
-    DebugIt,
-)
+from ska_tango_base import CspSubElementObsDevice, SKABaseDevice
+from ska_tango_base.commands import ResultCode
+from ska_tango_base.control_model import ObsState, PowerMode
+from tango import AttrWriteType, DebugIt
 from tango.server import attribute, command, device_property, run
+
+from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
+from ska_mid_cbf_mcs.fsp.fsp_pst_subarray_component_manager import \
+    FspPstSubarrayComponentManager
 
 file_path = os.path.dirname(os.path.abspath(__file__))
 

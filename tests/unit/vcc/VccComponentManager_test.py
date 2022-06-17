@@ -13,7 +13,6 @@
 from __future__ import annotations
 
 import json
-
 # Standard imports
 import os
 import unittest

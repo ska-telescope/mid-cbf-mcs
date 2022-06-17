@@ -22,11 +22,9 @@ import unittest
 from typing import Any, Callable, Dict, Generator, List, Set, cast
 
 import pytest
-
 # Tango imports
 import tango
 import yaml
-
 # SKA imports
 from ska_tango_base.control_model import AdminMode, LoggingLevel, ObsState
 from tango import DevState
@@ -34,15 +32,13 @@ from tango import DevState
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_mid_cbf_mcs.testing.mock.mock_callable import MockChangeEventCallback
 from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder
-from ska_mid_cbf_mcs.testing.tango_harness import (
-    CbfDeviceInfo,
-    ClientProxyTangoHarness,
-    DevicesToLoadType,
-    MockingTangoHarness,
-    StartingStateTangoHarness,
-    TangoHarness,
-    TestContextTangoHarness,
-)
+from ska_mid_cbf_mcs.testing.tango_harness import (CbfDeviceInfo,
+                                                   ClientProxyTangoHarness,
+                                                   DevicesToLoadType,
+                                                   MockingTangoHarness,
+                                                   StartingStateTangoHarness,
+                                                   TangoHarness,
+                                                   TestContextTangoHarness)
 
 
 def pytest_sessionstart(session: pytest.Session) -> None:

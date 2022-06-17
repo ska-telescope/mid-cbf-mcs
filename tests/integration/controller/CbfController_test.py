@@ -11,18 +11,15 @@
 
 import socket
 
+import pytest
+# Tango imports
+from ska_tango_base.base.base_device import \
+    _DEBUGGER_PORT  # DeviceStateModel, removed in v0.11.3
+from ska_tango_base.control_model import AdminMode
+from tango import DevState
+
 # Standard imports
 
-import pytest
-
-# Tango imports
-from ska_tango_base.base.base_device import (  # DeviceStateModel, removed in v0.11.3
-    _DEBUGGER_PORT,
-)
-from ska_tango_base.control_model import (
-    AdminMode,
-)
-from tango import DevState
 
 # Local imports
 

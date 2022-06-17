@@ -10,22 +10,21 @@
 
 from __future__ import annotations
 
-
 # Standard imports
 import os
 import time
 from typing import List
 
 import pytest
-
-# Tango imports
-
 # SKA imports
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import AdminMode, ObsState
 from tango import DevState
 
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
+
+# Tango imports
+
 
 # Data file path
 data_file_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"

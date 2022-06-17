@@ -15,15 +15,10 @@ from typing import Callable, Optional
 import pytest
 
 from ska_mid_cbf_mcs.testing.mock.mock_callable import (
-    MockCallable,
-    MockChangeEventCallback,
-)
-
+    MockCallable, MockChangeEventCallback)
 # SKA imports
-from ska_mid_cbf_mcs.testing.tango_harness import (
-    DevicesToLoadType,
-    DeviceToLoadType,
-)
+from ska_mid_cbf_mcs.testing.tango_harness import (DevicesToLoadType,
+                                                   DeviceToLoadType)
 
 
 def pytest_itemcollected(item: pytest.Item) -> None:

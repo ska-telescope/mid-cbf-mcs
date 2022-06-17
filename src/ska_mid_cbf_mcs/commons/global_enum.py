@@ -1,6 +1,5 @@
 from enum import Enum
 
-
 __all__ = ["const", "freq_band_dict", "FspModes"]
 
 

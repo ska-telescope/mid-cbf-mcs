@@ -26,25 +26,17 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 # Tango imports
 import tango
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import (
-    AdminMode,
-    HealthState,
-    ObsState,
-    PowerMode,
-)
-from ska_tango_base.csp.subarray.component_manager import (
-    CspSubarrayComponentManager,
-)
+from ska_tango_base.control_model import (AdminMode, HealthState, ObsState,
+                                          PowerMode)
+from ska_tango_base.csp.subarray.component_manager import \
+    CspSubarrayComponentManager
 from tango import AttrQuality, DevState
 
 from ska_mid_cbf_mcs.attribute_proxy import CbfAttributeProxy
 from ska_mid_cbf_mcs.commons.global_enum import const, freq_band_dict
-from ska_mid_cbf_mcs.component.component_manager import (
-    CbfComponentManager,
-    CommunicationStatus,
-)
+from ska_mid_cbf_mcs.component.component_manager import (CbfComponentManager,
+                                                         CommunicationStatus)
 from ska_mid_cbf_mcs.component.util import check_communicating
-
 # SKA imports
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_mid_cbf_mcs.group_proxy import CbfGroupProxy

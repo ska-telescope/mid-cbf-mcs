@@ -13,7 +13,6 @@
 from __future__ import annotations
 
 import json
-
 # Standard imports
 import os
 from typing import List
@@ -22,9 +21,8 @@ import pytest
 from ska_tango_base.commands import ResultCode
 
 from ska_mid_cbf_mcs.commons.global_enum import freq_band_dict
-from ska_mid_cbf_mcs.subarray.subarray_component_manager import (
-    CbfSubarrayComponentManager,
-)
+from ska_mid_cbf_mcs.subarray.subarray_component_manager import \
+    CbfSubarrayComponentManager
 from ska_mid_cbf_mcs.testing.tango_harness import TangoHarness
 
 # Data file path

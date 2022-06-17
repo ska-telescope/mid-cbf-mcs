@@ -24,12 +24,10 @@ from ska_tango_base.control_model import PowerMode
 from tango.server import attribute, device_property, run
 
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
-
 # Additional import
 # PROTECTED REGION ID(TalonLRU.additionnal_import) ENABLED START #
-from ska_mid_cbf_mcs.talon_lru.talon_lru_component_manager import (
-    TalonLRUComponentManager,
-)
+from ska_mid_cbf_mcs.talon_lru.talon_lru_component_manager import \
+    TalonLRUComponentManager
 
 # PROTECTED REGION END #    //  TalonLRU.additionnal_import
 

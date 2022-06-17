@@ -12,7 +12,6 @@
 from __future__ import annotations
 
 import random
-
 # Standard imports
 from typing import List
 

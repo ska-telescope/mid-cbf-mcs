@@ -8,23 +8,8 @@
 """This module contains pytest-specific test harness for ControllerComponentManager unit tests."""
 
 from __future__ import annotations
-from ska_mid_cbf_mcs.testing.tango_harness import TangoHarness
-from ska_mid_cbf_mcs.testing.mock.mock_group import MockGroupBuilder
-from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder
-from ska_mid_cbf_mcs.testing.mock.mock_callable import (
-    MockCallable,
-    MockChangeEventCallback,
-)
-from ska_mid_cbf_mcs.controller.controller_component_manager import (
-    ControllerComponentManager,
-)
-from ska_tango_base.control_model import (
-    AdminMode,
-    HealthState,
-)
-from ska_tango_base.commands import ResultCode
-import json
 
+import json
 # Standard imports
 import logging
 import os
@@ -33,7 +18,16 @@ from typing import Callable, Dict
 
 import pytest
 import tango
+from ska_tango_base.commands import ResultCode
+from ska_tango_base.control_model import AdminMode, HealthState
 
+from ska_mid_cbf_mcs.controller.controller_component_manager import \
+    ControllerComponentManager
+from ska_mid_cbf_mcs.testing.mock.mock_callable import (
+    MockCallable, MockChangeEventCallback)
+from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder
+from ska_mid_cbf_mcs.testing.mock.mock_group import MockGroupBuilder
+from ska_mid_cbf_mcs.testing.tango_harness import TangoHarness
 
 file_path = os.path.dirname(os.path.abspath(__file__))
 

@@ -11,43 +11,31 @@ from __future__ import annotations
 
 import logging
 import unittest
-
 # Standard imports
 from typing import Callable, Dict, Optional, Tuple, Type
 
 import pytest
 import pytest_mock
-
 # Tango imports
 import tango
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import (
-    AdminMode,
-    HealthState,
-    ObsState,
-    PowerMode,
-)
+from ska_tango_base.control_model import (AdminMode, HealthState, ObsState,
+                                          PowerMode)
 from tango.server import command
 
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
-
 # Local imports
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
-from ska_mid_cbf_mcs.subarray.subarray_component_manager import (
-    CbfSubarrayComponentManager,
-)
+from ska_mid_cbf_mcs.subarray.subarray_component_manager import \
+    CbfSubarrayComponentManager
 from ska_mid_cbf_mcs.subarray.subarray_device import CbfSubarray
 from ska_mid_cbf_mcs.testing.mock.mock_attribute import MockAttributeBuilder
 from ska_mid_cbf_mcs.testing.mock.mock_callable import (
-    MockCallable,
-    MockChangeEventCallback,
-)
+    MockCallable, MockChangeEventCallback)
 from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder
 from ska_mid_cbf_mcs.testing.mock.mock_group import MockGroupBuilder
-from ska_mid_cbf_mcs.testing.tango_harness import (
-    DeviceToLoadType,
-    TangoHarness,
-)
+from ska_mid_cbf_mcs.testing.tango_harness import (DeviceToLoadType,
+                                                   TangoHarness)
 
 
 @pytest.fixture

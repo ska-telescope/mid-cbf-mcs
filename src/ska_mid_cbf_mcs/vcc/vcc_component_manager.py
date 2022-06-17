@@ -26,10 +26,8 @@ from ska_tango_base.control_model import PowerMode, SimulationMode
 from ska_tango_base.csp.obs import CspObsComponentManager
 
 from ska_mid_cbf_mcs.commons.global_enum import const, freq_band_dict
-from ska_mid_cbf_mcs.component.component_manager import (
-    CbfComponentManager,
-    CommunicationStatus,
-)
+from ska_mid_cbf_mcs.component.component_manager import (CbfComponentManager,
+                                                         CommunicationStatus)
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_mid_cbf_mcs.vcc.vcc_band_simulator import VccBandSimulator
 from ska_mid_cbf_mcs.vcc.vcc_controller_simulator import VccControllerSimulator

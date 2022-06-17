@@ -9,16 +9,17 @@
 # See LICENSE for more info.
 """Contain the tests for the FspSubarray."""
 from __future__ import annotations
-from ska_mid_cbf_mcs.commons.global_enum import freq_band_dict
-from tango import DevState
-from ska_tango_base.control_model import AdminMode, ObsState
-import tango
 
 import copy
 import json
 import os
 
 import pytest
+import tango
+from ska_tango_base.control_model import AdminMode, ObsState
+from tango import DevState
+
+from ska_mid_cbf_mcs.commons.global_enum import freq_band_dict
 
 data_file_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
 

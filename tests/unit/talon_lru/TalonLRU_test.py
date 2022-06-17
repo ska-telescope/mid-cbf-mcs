@@ -16,11 +16,9 @@ import time
 
 # Standard imports
 import pytest
-
 # Local imports
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import AdminMode
-
 # Tango imports
 from tango import DevState
 

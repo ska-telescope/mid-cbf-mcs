@@ -24,9 +24,7 @@
 # tango imports
 from ska_tango_base import SKACapability
 from ska_tango_base.commands import ResultCode
-from tango import (
-    AttrWriteType,
-)
+from tango import AttrWriteType
 from tango.server import attribute, run
 
 # PROTECTED REGION END #    //  VccSearchWindow.additionnal_import

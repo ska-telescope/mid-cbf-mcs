@@ -8,15 +8,6 @@
 """This module contains pytest-specific test harness for FspPstSubarrayComponentManager unit tests."""
 
 from __future__ import annotations
-from ska_mid_cbf_mcs.testing.tango_harness import TangoHarness
-from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder
-from ska_mid_cbf_mcs.testing.mock.mock_callable import (
-    MockCallable,
-    MockChangeEventCallback,
-)
-from ska_mid_cbf_mcs.fsp.fsp_pst_subarray_component_manager import (
-    FspPstSubarrayComponentManager,
-)
 
 # Standard imports
 import logging
@@ -26,6 +17,12 @@ from typing import Callable, Dict
 
 import pytest
 
+from ska_mid_cbf_mcs.fsp.fsp_pst_subarray_component_manager import \
+    FspPstSubarrayComponentManager
+from ska_mid_cbf_mcs.testing.mock.mock_callable import (
+    MockCallable, MockChangeEventCallback)
+from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder
+from ska_mid_cbf_mcs.testing.tango_harness import TangoHarness
 
 file_path = os.path.dirname(os.path.abspath(__file__))
 

@@ -19,6 +19,7 @@ FspCorr TANGO device class for the prototype
 """
 import os  # noqa: E402
 import sys  # noqa: E402
+
 import tango  # noqa: E402
 from ska_tango_base import SKACapability  # noqa: E402
 from tango.server import command, run  # noqa: E402

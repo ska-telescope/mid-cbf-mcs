@@ -19,7 +19,6 @@ FspPssSubarray TANGO device class for the FspPssSubarray prototype
 from __future__ import annotations  # allow forward references in type hints
 
 import json
-
 # Additional import
 # PROTECTED REGION ID(FspPssSubarray.additionnal_import) ENABLED START #
 from typing import List, Optional, Tuple
@@ -28,20 +27,13 @@ from typing import List, Optional, Tuple
 import tango
 from ska_tango_base import CspSubElementObsDevice, SKABaseDevice
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import (
-    ObsState,
-    PowerMode,
-)
-from tango import (
-    AttrWriteType,
-    DebugIt,
-)
+from ska_tango_base.control_model import ObsState, PowerMode
+from tango import AttrWriteType, DebugIt
 from tango.server import attribute, command, device_property, run
 
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
-from ska_mid_cbf_mcs.fsp.fsp_pss_subarray_component_manager import (
-    FspPssSubarrayComponentManager,
-)
+from ska_mid_cbf_mcs.fsp.fsp_pss_subarray_component_manager import \
+    FspPssSubarrayComponentManager
 
 # PROTECTED REGION END #    //  FspPssSubarray.additionnal_import
 

@@ -10,17 +10,17 @@
 """Contain the tests for the Fsp."""
 
 from __future__ import annotations
-from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
-from tango import DevState
-from ska_tango_base.control_model import AdminMode
-from ska_tango_base.commands import ResultCode
-
 
 # Standard imports
 import os
 import time
 
 import pytest
+from ska_tango_base.commands import ResultCode
+from ska_tango_base.control_model import AdminMode
+from tango import DevState
+
+from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 
 # Path
 file_path = os.path.dirname(os.path.abspath(__file__))

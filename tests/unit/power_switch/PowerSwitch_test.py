@@ -14,7 +14,6 @@ from typing import List
 
 # Standard imports
 from ska_tango_base.commands import ResultCode
-
 # Local imports
 from ska_tango_base.control_model import AdminMode, PowerMode, SimulationMode
 

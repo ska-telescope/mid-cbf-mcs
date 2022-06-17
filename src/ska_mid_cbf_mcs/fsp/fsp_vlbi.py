@@ -18,14 +18,14 @@
 # FspVlbi TANGO device class for the prototype
 # """
 
-# Additional import
-# PROTECTED REGION ID(FspVlbi.additionnal_import) ENABLED START #
-from ska_tango_base import SKACapability
 import os
 import sys
 
 # tango imports
 import tango
+# Additional import
+# PROTECTED REGION ID(FspVlbi.additionnal_import) ENABLED START #
+from ska_tango_base import SKACapability
 from tango.server import command, run
 
 file_path = os.path.dirname(os.path.abspath(__file__))

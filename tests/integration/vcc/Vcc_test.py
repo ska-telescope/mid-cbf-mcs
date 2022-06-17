@@ -9,19 +9,17 @@
 # See LICENSE.txt for more info.
 """Contain the tests for the Vcc."""
 
-from ska_mid_cbf_mcs.commons.global_enum import freq_band_dict
-from tango import DevState
-from ska_tango_base.control_model import (
-    AdminMode,
-    LoggingLevel,
-    ObsState,
-)
-from ska_tango_base.commands import ResultCode
-import pytest
 import copy
 import json
 import os
 import time
+
+import pytest
+from ska_tango_base.commands import ResultCode
+from ska_tango_base.control_model import AdminMode, LoggingLevel, ObsState
+from tango import DevState
+
+from ska_mid_cbf_mcs.commons.global_enum import freq_band_dict
 
 # Standard imports
 

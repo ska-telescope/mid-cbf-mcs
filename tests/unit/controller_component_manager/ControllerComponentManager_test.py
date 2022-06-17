@@ -14,9 +14,8 @@ from __future__ import annotations
 from ska_tango_base.commands import ResultCode
 
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
-from ska_mid_cbf_mcs.controller.controller_component_manager import (
-    ControllerComponentManager,
-)
+from ska_mid_cbf_mcs.controller.controller_component_manager import \
+    ControllerComponentManager
 from ska_mid_cbf_mcs.testing.mock.mock_callable import MockCallable
 
 

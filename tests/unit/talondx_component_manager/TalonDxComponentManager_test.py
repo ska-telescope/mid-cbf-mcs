@@ -13,9 +13,8 @@
 import pytest
 from ska_tango_base.commands import ResultCode
 
-from ska_mid_cbf_mcs.controller.talondx_component_manager import (
-    TalonDxComponentManager,
-)
+from ska_mid_cbf_mcs.controller.talondx_component_manager import \
+    TalonDxComponentManager
 from ska_mid_cbf_mcs.testing.tango_harness import TangoHarness
 
 

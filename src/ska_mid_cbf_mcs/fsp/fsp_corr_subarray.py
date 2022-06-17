@@ -18,19 +18,8 @@
 # FspCorrSubarray TANGO device class for the FspCorrSubarray prototype
 # """
 from __future__ import annotations
-from ska_mid_cbf_mcs.fsp.fsp_corr_subarray_component_manager import (
-    FspCorrSubarrayComponentManager,
-)
-from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
-from ska_tango_base.control_model import (
-    ObsState,
-    PowerMode,
-)
-from ska_tango_base.commands import ResultCode
-from ska_tango_base import CspSubElementObsDevice
 
 import json
-
 # Additional import
 # PROTECTED REGION ID(FspCorrSubarray.additionnal_import) ENABLED START #
 import os
@@ -38,12 +27,15 @@ from typing import List, Optional, Tuple
 
 # tango imports
 import tango
-from ska_tango_base import SKABaseDevice
-from tango import (
-    AttrWriteType,
-    DebugIt,
-)
+from ska_tango_base import CspSubElementObsDevice, SKABaseDevice
+from ska_tango_base.commands import ResultCode
+from ska_tango_base.control_model import ObsState, PowerMode
+from tango import AttrWriteType, DebugIt
 from tango.server import attribute, command, device_property, run
+
+from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
+from ska_mid_cbf_mcs.fsp.fsp_corr_subarray_component_manager import \
+    FspCorrSubarrayComponentManager
 
 file_path = os.path.dirname(os.path.abspath(__file__))
 

@@ -17,21 +17,16 @@ from typing import Dict, List, Optional, Tuple
 
 # Tango imports
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import (
-    HealthState,
-    PowerMode,
-)
+from ska_tango_base.control_model import HealthState, PowerMode
 from ska_tango_base.csp.subarray.subarray_device import CspSubElementSubarray
 from tango import AttrWriteType, DebugIt, DevState
 from tango.server import attribute, command, device_property, run
 
 from ska_mid_cbf_mcs.commons.global_enum import const
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
-
 # SKA imports
-from ska_mid_cbf_mcs.subarray.subarray_component_manager import (
-    CbfSubarrayComponentManager,
-)
+from ska_mid_cbf_mcs.subarray.subarray_component_manager import \
+    CbfSubarrayComponentManager
 
 # Additional import
 # PROTECTED REGION ID(CbfSubarray.additionnal_import) ENABLED START #

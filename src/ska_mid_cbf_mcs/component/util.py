@@ -13,10 +13,8 @@ from typing import Any, Callable, TypeVar, cast
 
 from ska_tango_base.control_model import PowerMode
 
-from ska_mid_cbf_mcs.component.component_manager import (
-    CbfComponentManager,
-    CommunicationStatus,
-)
+from ska_mid_cbf_mcs.component.component_manager import (CbfComponentManager,
+                                                         CommunicationStatus)
 
 __all__ = ["check_communicating", "check_on"]
 

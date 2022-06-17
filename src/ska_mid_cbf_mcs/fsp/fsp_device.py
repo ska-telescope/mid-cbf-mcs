@@ -16,11 +16,6 @@
 # Fsp Tango device prototype
 # Fsp TANGO device class for the prototype
 from __future__ import annotations  # allow forward references in type hints
-from ska_mid_cbf_mcs.fsp.fsp_component_manager import FspComponentManager
-from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
-from ska_tango_base.control_model import PowerMode
-from ska_tango_base.commands import ResponseCommand, ResultCode
-from ska_tango_base import SKABaseDevice, SKACapability
 
 # Additional import
 # PROTECTED REGION ID(Fsp.additionnal_import) ENABLED START #
@@ -29,8 +24,14 @@ from typing import List, Optional, Tuple
 
 # tango imports
 import tango
+from ska_tango_base import SKABaseDevice, SKACapability
+from ska_tango_base.commands import ResponseCommand, ResultCode
+from ska_tango_base.control_model import PowerMode
 from tango import AttrWriteType
 from tango.server import attribute, command, device_property, run
+
+from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
+from ska_mid_cbf_mcs.fsp.fsp_component_manager import FspComponentManager
 
 file_path = os.path.dirname(os.path.abspath(__file__))
 

@@ -11,13 +11,11 @@ from __future__ import annotations
 
 import logging
 import unittest
-
 # Standard imports
 from typing import Callable, Dict, Optional, Tuple, Type
 
 import pytest
 import pytest_mock
-
 # Tango imports
 import tango
 from ska_tango_base.commands import ResultCode
@@ -26,16 +24,11 @@ from ska_tango_base.control_model import PowerMode, SimulationMode
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_mid_cbf_mcs.testing.mock.mock_callable import (
-    MockCallable,
-    MockChangeEventCallback,
-)
+    MockCallable, MockChangeEventCallback)
 from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder
-from ska_mid_cbf_mcs.testing.tango_harness import (
-    DeviceToLoadType,
-    TangoHarness,
-)
+from ska_mid_cbf_mcs.testing.tango_harness import (DeviceToLoadType,
+                                                   TangoHarness)
 from ska_mid_cbf_mcs.vcc.vcc_component_manager import VccComponentManager
-
 # Local imports
 from ska_mid_cbf_mcs.vcc.vcc_device import Vcc
 

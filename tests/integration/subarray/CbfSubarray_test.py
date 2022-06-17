@@ -7,22 +7,20 @@
 # See LICENSE.txt for more info.
 """Contain the tests for the CbfSubarray."""
 from __future__ import annotations  # allow forward references in type hints
-from ska_mid_cbf_mcs.commons.global_enum import FspModes, freq_band_dict
-from tango import DevState
-from ska_tango_base.control_model import (
-    AdminMode,
-    ObsState,
-)
-import pytest
 
 import json
 import logging
 import os
 import random
-
 # Standard imports
 import time
 from typing import List
+
+import pytest
+from ska_tango_base.control_model import AdminMode, ObsState
+from tango import DevState
+
+from ska_mid_cbf_mcs.commons.global_enum import FspModes, freq_band_dict
 
 # Data file path
 data_file_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"

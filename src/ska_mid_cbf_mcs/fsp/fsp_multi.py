@@ -4,17 +4,18 @@ Herzberg Astronomy and Astrophysics, National Research Council of Canada
 Copyright (c) 2019 National Research Council of Canada
 """
 
-from ska_mid_cbf_mcs.fsp.fsp_vlbi import FspVlbi
-from ska_mid_cbf_mcs.fsp.fsp_pst_subarray import FspPstSubarray
-from ska_mid_cbf_mcs.fsp.fsp_pst import FspPst
-from ska_mid_cbf_mcs.fsp.fsp_pss_subarray import FspPssSubarray
-from ska_mid_cbf_mcs.fsp.fsp_pss import FspPss
-from ska_mid_cbf_mcs.fsp.fsp_device import Fsp
-from ska_mid_cbf_mcs.fsp.fsp_corr_subarray import FspCorrSubarray
-from ska_mid_cbf_mcs.fsp.fsp_corr import FspCorr
 import os
 
 from tango.server import run
+
+from ska_mid_cbf_mcs.fsp.fsp_corr import FspCorr
+from ska_mid_cbf_mcs.fsp.fsp_corr_subarray import FspCorrSubarray
+from ska_mid_cbf_mcs.fsp.fsp_device import Fsp
+from ska_mid_cbf_mcs.fsp.fsp_pss import FspPss
+from ska_mid_cbf_mcs.fsp.fsp_pss_subarray import FspPssSubarray
+from ska_mid_cbf_mcs.fsp.fsp_pst import FspPst
+from ska_mid_cbf_mcs.fsp.fsp_pst_subarray import FspPstSubarray
+from ska_mid_cbf_mcs.fsp.fsp_vlbi import FspVlbi
 
 file_path = os.path.dirname(os.path.abspath(__file__))
 

@@ -10,7 +10,6 @@
 from __future__ import annotations
 
 import logging
-
 # Standard imports
 import re
 import unittest
@@ -22,9 +21,8 @@ import scp
 from ska_tango_base.control_model import SimulationMode
 
 # Local imports
-from ska_mid_cbf_mcs.controller.talondx_component_manager import (
-    TalonDxComponentManager,
-)
+from ska_mid_cbf_mcs.controller.talondx_component_manager import \
+    TalonDxComponentManager
 from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder
 
 

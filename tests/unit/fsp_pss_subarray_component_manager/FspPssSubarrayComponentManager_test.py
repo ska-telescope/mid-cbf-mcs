@@ -10,16 +10,16 @@
 
 """Contain the tests for the FspPssSubarray component manager."""
 from __future__ import annotations
-from ska_mid_cbf_mcs.testing.mock.mock_callable import MockCallable
-from ska_mid_cbf_mcs.fsp.fsp_pss_subarray_component_manager import (
-    FspPssSubarrayComponentManager,
-)
-from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
 
 import json
 import os
 
 import pytest
+
+from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
+from ska_mid_cbf_mcs.fsp.fsp_pss_subarray_component_manager import \
+    FspPssSubarrayComponentManager
+from ska_mid_cbf_mcs.testing.mock.mock_callable import MockCallable
 
 file_path = os.path.dirname(os.path.abspath(__file__))
 

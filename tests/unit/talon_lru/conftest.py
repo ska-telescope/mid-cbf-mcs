@@ -21,17 +21,12 @@ from ska_tango_base.control_model import PowerMode
 
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
-
 # Local imports
 from ska_mid_cbf_mcs.talon_lru.talon_lru_device import TalonLRU
-from ska_mid_cbf_mcs.testing.mock.mock_callable import (
-    MockChangeEventCallback,
-)
+from ska_mid_cbf_mcs.testing.mock.mock_callable import MockChangeEventCallback
 from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder
-from ska_mid_cbf_mcs.testing.tango_harness import (
-    DevicesToLoadType,
-    TangoHarness,
-)
+from ska_mid_cbf_mcs.testing.tango_harness import (DevicesToLoadType,
+                                                   TangoHarness)
 
 
 @pytest.fixture()
