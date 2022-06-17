@@ -10,32 +10,26 @@
 """Contain the tests for the FspPssSubarray."""
 
 from __future__ import annotations
+from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
+from tango import DevState
+from ska_tango_base.control_model import AdminMode, ObsState
+from ska_tango_base.commands import ResultCode
+import tango
 
-import json
-import logging
 
 # Standard imports
 import os
 import time
-from typing import Callable, Dict, Type
 
 import pytest
-from tango import server
 
 # Path
 file_path = os.path.dirname(os.path.abspath(__file__))
 
 # Tango imports
-import tango
-from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import AdminMode, HealthState, ObsState
-from tango import DevState
-from tango.server import command
 
-from ska_mid_cbf_mcs.commons.global_enum import const, freq_band_dict
 
 # SKA imports
-from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 
 CONST_WAIT_TIME = 4
 

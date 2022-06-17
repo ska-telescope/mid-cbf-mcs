@@ -16,6 +16,11 @@
 # Fsp Tango device prototype
 # Fsp TANGO device class for the prototype
 from __future__ import annotations  # allow forward references in type hints
+from ska_mid_cbf_mcs.fsp.fsp_component_manager import FspComponentManager
+from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
+from ska_tango_base.control_model import PowerMode
+from ska_tango_base.commands import ResponseCommand, ResultCode
+from ska_tango_base import SKABaseDevice, SKACapability
 
 # Additional import
 # PROTECTED REGION ID(Fsp.additionnal_import) ENABLED START #
@@ -29,14 +34,8 @@ from tango.server import attribute, command, device_property, run
 
 file_path = os.path.dirname(os.path.abspath(__file__))
 
-from ska_tango_base import SKABaseDevice, SKACapability
-from ska_tango_base.commands import ResponseCommand, ResultCode
-from ska_tango_base.control_model import PowerMode
 
-from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
-from ska_mid_cbf_mcs.fsp.fsp_component_manager import FspComponentManager
-
-# PROTECTED REGION END #    //  Fsp.additionnal_import
+# PROTECTED REGION END # // Fsp.additionnal_import
 
 __all__ = ["Fsp", "main"]
 
@@ -48,7 +47,7 @@ class Fsp(SKACapability):
 
     # PROTECTED REGION ID(Fsp.class_variable) ENABLED START #
 
-    # PROTECTED REGION END #    //  Fsp.class_variable
+    # PROTECTED REGION END #  //  Fsp.class_variable
 
     # -----------------
     # Device Properties
@@ -219,7 +218,6 @@ class Fsp(SKACapability):
     def delete_device(self: Fsp) -> None:
         # PROTECTED REGION ID(Fsp.delete_device) ENABLED START #
         """Hook to delete device."""
-        pass
         # PROTECTED REGION END #    //  Fsp.delete_device
 
     # ------------------

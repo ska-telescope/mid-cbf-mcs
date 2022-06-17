@@ -1,6 +1,8 @@
-from enum import Enum, IntEnum, unique
+from enum import Enum
+
 
 __all__ = ["const", "freq_band_dict", "FspModes"]
+
 
 # TODO - Temporary class. These values should be retrieved
 #        from their respective devices (?)

@@ -14,7 +14,6 @@ from __future__ import annotations
 import logging
 from typing import Callable, Optional, Tuple
 
-from ska_tango_base.base.component_manager import BaseComponentManager
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import PowerMode, SimulationMode
 
@@ -108,7 +107,7 @@ class PowerSwitchComponentManager(CbfComponentManager):
         """
         # If we haven't started communicating yet, don't check power switch
         # communication status
-        if self.connected == False:
+        if self.connected is False:
             return False
 
         # If we have started communicating, check the actual communication

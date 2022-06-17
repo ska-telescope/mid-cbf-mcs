@@ -43,7 +43,7 @@ from ska_mid_cbf_mcs.component.component_manager import (
     CbfComponentManager,
     CommunicationStatus,
 )
-from ska_mid_cbf_mcs.component.util import check_communicating, check_on
+from ska_mid_cbf_mcs.component.util import check_communicating
 
 # SKA imports
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
@@ -372,7 +372,7 @@ class CbfSubarrayComponentManager(
             )
             self._component_op_fault_callback(True)
             raise ConnectionError(
-                f"Error in proxy connection."
+                "Error in proxy connection."
             ) from dev_failed
 
         self.connected = True
@@ -1084,7 +1084,7 @@ class CbfSubarrayComponentManager(
                         "band_5_tuning"
                     ]
 
-                ########## CORR ##########
+                # CORR #
 
                 if fsp["function_mode"] == "CORR":
 
@@ -1184,7 +1184,8 @@ class CbfSubarrayComponentManager(
                                     msg = "'zoomWindowTuning' must be within observed frequency slice."
                                     self._logger.error(msg)
                                     return (False, msg)
-                            else:  # frequency band 5a or 5b (two streams with bandwidth 2.5 GHz)
+                            # frequency band 5a or 5b (two streams with bandwidth 2.5 GHz)
+                            else:
                                 if common_configuration["band_5_tuning"] == [
                                     0,
                                     0,
@@ -1281,7 +1282,7 @@ class CbfSubarrayComponentManager(
                             msg = "fspChannelOffset must be greater than or equal to zero"
                             self._logger.error(msg)
                             return (False, msg)
-                    except:
+                    except (TypeError, ValueError):
                         msg = "fspChannelOffset must be an integer"
                         self._logger.error(msg)
                         return (False, msg)
@@ -1290,8 +1291,8 @@ class CbfSubarrayComponentManager(
                     # check the format
                     try:
                         for element in fsp["output_link_map"]:
-                            a, b = (int(element[0]), int(element[1]))
-                    except:
+                            (int(element[0]), int(element[1]))
+                    except (TypeError, ValueError, IndexError):
                         msg = "'outputLinkMap' format not correct."
                         self._logger.error(msg)
                         return (False, msg)
@@ -1357,7 +1358,7 @@ class CbfSubarrayComponentManager(
 
                     # TODO: validate destination addresses: outputHost, outputMac, outputPort
 
-                ########## PSS-BF ##########
+                # PSS-BF #
 
                 # TODO currently only CORR function mode is supported outside of Mid.CBF MCS
                 if fsp["function_mode"] == "PSS-BF":
@@ -1451,7 +1452,7 @@ class CbfSubarrayComponentManager(
                         msg = "More than 192 SearchBeams defined in PSS-BF config"
                         return (False, msg)
 
-                ########## PST-BF ##########
+                # PST-BF #
 
                 # TODO currently only CORR function mode is supported outside of Mid.CBF MCS
                 if fsp["function_mode"] == "PST-BF":
@@ -1705,7 +1706,7 @@ class CbfSubarrayComponentManager(
         # the obsState are properly (implicitly) updated by the command
         # (And not manually by SetObservingState as before)
 
-        ######## FSP #######
+        # FSP #
         # Configure FSP.
         for fsp in configuration["fsp"]:
             # Configure fspID.

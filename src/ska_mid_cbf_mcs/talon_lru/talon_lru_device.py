@@ -7,7 +7,7 @@
 # Distributed under the terms of the GPL license.
 # See LICENSE.txt for more info.
 
-""" 
+"""
 TANGO device class for controlling and monitoring a Talon LRU.
 """
 
@@ -20,12 +20,10 @@ from typing import Any, Optional, Tuple
 import tango
 from ska_tango_base import SKABaseDevice
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import PowerMode, SimulationMode
-from tango import DevState
+from ska_tango_base.control_model import PowerMode
 from tango.server import attribute, device_property, run
 
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
-from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 
 # Additional import
 # PROTECTED REGION ID(TalonLRU.additionnal_import) ENABLED START #
@@ -97,7 +95,6 @@ class TalonLRU(SKABaseDevice):
         Hook to be executed before any attribute access or command.
         """
         # PROTECTED REGION ID(TalonLRU.always_executed_hook) ENABLED START #
-        pass
         # PROTECTED REGION END #    //  TalonLRU.always_executed_hook
 
     def delete_device(self: TalonLRU) -> None:
@@ -105,7 +102,6 @@ class TalonLRU(SKABaseDevice):
         Uninitialize the device.
         """
         # PROTECTED REGION ID(TalonLRU.delete_device) ENABLED START #
-        pass
         # PROTECTED REGION END #    //  TalonLRU.delete_device
 
     def init_command_objects(self: TalonLRU) -> None:

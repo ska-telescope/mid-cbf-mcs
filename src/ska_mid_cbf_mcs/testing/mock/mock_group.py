@@ -11,7 +11,7 @@ from __future__ import annotations  # allow forward references in type hints
 
 import logging
 import unittest.mock
-from typing import Any, Callable
+from typing import Any
 
 import tango
 from ska_tango_base.commands import ResultCode

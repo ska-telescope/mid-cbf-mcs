@@ -10,26 +10,21 @@
 
 from __future__ import annotations
 
-import json
-import logging
 
 # Standard imports
 import os
 import time
-from typing import Callable, Dict, List, Type
+from typing import List
 
 import pytest
 
 # Tango imports
-import tango
 
 # SKA imports
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import AdminMode, HealthState, ObsState
+from ska_tango_base.control_model import AdminMode, ObsState
 from tango import DevState
-from tango.server import command
 
-from ska_mid_cbf_mcs.commons.global_enum import freq_band_dict
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 
 # Data file path

@@ -10,23 +10,18 @@
 
 """Contain the tests for the FspPstSubarray component manager."""
 from __future__ import annotations
+from ska_mid_cbf_mcs.testing.mock.mock_callable import MockCallable
+from ska_mid_cbf_mcs.fsp.fsp_pst_subarray_component_manager import (
+    FspPstSubarrayComponentManager,
+)
+from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
 
 import json
-import logging
 import os
 
 import pytest
 
 file_path = os.path.dirname(os.path.abspath(__file__))
-
-from ska_tango_base.commands import ResultCode
-
-from ska_mid_cbf_mcs.commons.global_enum import const, freq_band_dict
-from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
-from ska_mid_cbf_mcs.fsp.fsp_pst_subarray_component_manager import (
-    FspPstSubarrayComponentManager,
-)
-from ska_mid_cbf_mcs.testing.mock.mock_callable import MockCallable
 
 
 class TestFspPstSubarrayComponentManager:

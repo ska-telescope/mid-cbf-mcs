@@ -20,27 +20,18 @@
 
 # Additional import
 # PROTECTED REGION ID(FspPss.additionnal_import) ENABLED START #
+from ska_tango_base import SKACapability
 import os
 import sys
 
 # tango imports
 import tango
-from tango import (
-    AttrQuality,
-    AttrWriteType,
-    DebugIt,
-    DevState,
-    DispLevel,
-    PipeWriteType,
-)
-from tango.server import Device, attribute, command, device_property, run
+from tango.server import command, run
 
 file_path = os.path.dirname(os.path.abspath(__file__))
 commons_pkg_path = os.path.abspath(os.path.join(file_path, "../../commons"))
 sys.path.insert(0, commons_pkg_path)
 
-from ska_tango_base import SKACapability
-from ska_tango_base.control_model import AdminMode, HealthState
 
 # PROTECTED REGION END #    //  FspPss.additionnal_import
 
@@ -77,13 +68,11 @@ class FspPss(SKACapability):
     def always_executed_hook(self):
         # PROTECTED REGION ID(FspPss.always_executed_hook) ENABLED START #
         """hook before commands"""
-        pass
         # PROTECTED REGION END #    //  FspPss.always_executed_hook
 
     def delete_device(self):
         # PROTECTED REGION ID(FspPss.delete_device) ENABLED START #
         """hook to delelte device"""
-        pass
         # PROTECTED REGION END #    //  FspPss.delete_device
 
     # ------------------

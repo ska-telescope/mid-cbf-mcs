@@ -9,34 +9,29 @@
 # See LICENSE.txt for more info.
 """Contain the tests for the Vcc."""
 
+from ska_mid_cbf_mcs.commons.global_enum import freq_band_dict
+from tango import DevState
+from ska_tango_base.control_model import (
+    AdminMode,
+    LoggingLevel,
+    ObsState,
+)
+from ska_tango_base.commands import ResultCode
+import pytest
 import copy
 import json
-import logging
 import os
-import sys
 import time
 
 # Standard imports
-from multiprocessing.connection import wait
 
 # Path
 data_file_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
 
-import pytest
 
 # Tango imports
-import tango
-from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import (
-    AdminMode,
-    HealthState,
-    LoggingLevel,
-    ObsState,
-)
-from tango import DevState
 
 # SKA specific imports
-from ska_mid_cbf_mcs.commons.global_enum import freq_band_dict
 
 
 class TestVcc:

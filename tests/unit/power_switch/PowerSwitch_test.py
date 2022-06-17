@@ -13,7 +13,6 @@
 from typing import List
 
 # Standard imports
-import pytest
 from ska_tango_base.commands import ResultCode
 
 # Local imports
@@ -71,7 +70,7 @@ def test_connection_failure(device_under_test: CbfDeviceProxy) -> None:
     device_under_test.simulationMode = SimulationMode.FALSE
 
     # Check that the device is not communicating
-    assert device_under_test.isCommunicating == False
+    assert device_under_test.isCommunicating is False
 
     # Check that numOutlets is 0 since we cannot talk to the power switch
     assert device_under_test.numOutlets == 0

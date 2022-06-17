@@ -14,7 +14,6 @@ from __future__ import annotations
 import json
 import os
 import time
-from enum import Enum
 from typing import List
 
 import pytest
@@ -89,7 +88,7 @@ class TestFspComponentManager:
             fsp_component_manager.communication_status
             == CommunicationStatus.ESTABLISHED
         )
-        assert fsp_component_manager._connected == True
+        assert fsp_component_manager._connected is True
 
         if command == "On":
             (result_code, msg) = fsp_component_manager.on()
@@ -131,7 +130,7 @@ class TestFspComponentManager:
             fsp_component_manager.communication_status
             == CommunicationStatus.ESTABLISHED
         )
-        assert fsp_component_manager._connected == True
+        assert fsp_component_manager._connected is True
 
         # subarray membership should be empty
         assert fsp_component_manager.subarray_membership == []
@@ -203,7 +202,7 @@ class TestFspComponentManager:
             fsp_component_manager.communication_status
             == CommunicationStatus.ESTABLISHED
         )
-        assert fsp_component_manager._connected == True
+        assert fsp_component_manager._connected is True
 
         fsp_component_manager.add_subarray_membership(sub_id)
         time.sleep(3)
@@ -298,7 +297,7 @@ class TestFspComponentManager:
             fsp_component_manager.communication_status
             == CommunicationStatus.ESTABLISHED
         )
-        assert fsp_component_manager._connected == True
+        assert fsp_component_manager._connected is True
 
         fsp_component_manager.add_subarray_membership(sub_id)
         time.sleep(3)
@@ -386,7 +385,7 @@ class TestFspComponentManager:
             fsp_component_manager.communication_status
             == CommunicationStatus.ESTABLISHED
         )
-        assert fsp_component_manager._connected == True
+        assert fsp_component_manager._connected is True
 
         fsp_component_manager.add_subarray_membership(sub_id)
         time.sleep(3)

@@ -9,27 +9,21 @@
 # See LICENSE.txt for more info.
 """Contain the tests for the Fsp."""
 from __future__ import annotations
+from tango import DevState
+from ska_tango_base.control_model import AdminMode
+import pytest
 
-import json
-import logging
 import os
 
 # Standard imports
-import sys
 import time
-from enum import Enum
-from typing import List
 
 file_path = os.path.dirname(os.path.abspath(__file__))
 
-import pytest
 
 # Tango imports
-import tango
 
 # Local imports
-from ska_tango_base.control_model import AdminMode, HealthState, ObsState
-from tango import DevState
 
 
 class TestFsp:
@@ -259,7 +253,7 @@ class TestFsp:
     ) -> None:
 
         # subarray membership should be empty
-        assert test_proxies.fsp[fsp_id].subarrayMembership == None
+        assert test_proxies.fsp[fsp_id].subarrayMembership is None
 
         # add FSP to some subarrays
         test_proxies.fsp[fsp_id].AddSubarrayMembership(3)
@@ -281,7 +275,7 @@ class TestFsp:
         test_proxies.fsp[fsp_id].RemoveSubarrayMembership(4)
         test_proxies.fsp[fsp_id].RemoveSubarrayMembership(15)
         time.sleep(4)
-        assert test_proxies.fsp[fsp_id].subarrayMembership == None
+        assert test_proxies.fsp[fsp_id].subarrayMembership is None
 
     @pytest.mark.parametrize("fsp_id", [1])
     def test_Disconnect(

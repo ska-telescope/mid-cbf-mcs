@@ -10,11 +10,14 @@
 """Contain the tests for the CbfController."""
 
 from __future__ import annotations
+from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
+from tango import DevState
+from ska_tango_base.control_model import AdminMode
+from ska_tango_base.commands import ResultCode
 
 # Standard imports
 import os
 import time
-import unittest
 
 import pytest
 
@@ -22,14 +25,9 @@ import pytest
 file_path = os.path.dirname(os.path.abspath(__file__))
 
 # SKA imports
-from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import AdminMode
 
 # Tango imports
-from tango import DevState
-from tango.server import command
 
-from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 
 CONST_WAIT_TIME = 4
 

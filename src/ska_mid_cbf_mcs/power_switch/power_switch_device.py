@@ -9,7 +9,7 @@
 
 # Copyright (c) 2019 National Research Council of Canada
 
-""" 
+"""
 TANGO device class for controlling and monitoring the web power switch that distributes power to the Talon LRUs.
 """
 
@@ -91,7 +91,6 @@ class PowerSwitch(SKABaseDevice):
         Hook to be executed before any attribute access or command.
         """
         # PROTECTED REGION ID(PowerSwitch.always_executed_hook) ENABLED START #
-        pass
         # PROTECTED REGION END #    //  PowerSwitch.always_executed_hook
 
     def delete_device(self: PowerSwitch) -> None:
@@ -99,7 +98,6 @@ class PowerSwitch(SKABaseDevice):
         Uninitialize the device.
         """
         # PROTECTED REGION ID(PowerSwitch.delete_device) ENABLED START #
-        pass
         # PROTECTED REGION END #    //  PowerSwitch.delete_device
 
     def create_component_manager(

@@ -18,7 +18,7 @@ from typing import Any, Callable, Optional, Type
 
 import backoff
 import tango
-from tango import AttrQuality, DevFailed, DevState
+from tango import AttrQuality, DevFailed
 from typing_extensions import TypedDict
 
 # type for the "details" dictionary that backoff calls its callbacks with

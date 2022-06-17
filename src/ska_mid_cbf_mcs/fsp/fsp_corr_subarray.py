@@ -18,49 +18,37 @@
 # FspCorrSubarray TANGO device class for the FspCorrSubarray prototype
 # """
 from __future__ import annotations
+from ska_mid_cbf_mcs.fsp.fsp_corr_subarray_component_manager import (
+    FspCorrSubarrayComponentManager,
+)
+from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
+from ska_tango_base.control_model import (
+    ObsState,
+    PowerMode,
+)
+from ska_tango_base.commands import ResultCode
+from ska_tango_base import CspSubElementObsDevice
 
 import json
-import logging
 
 # Additional import
 # PROTECTED REGION ID(FspCorrSubarray.additionnal_import) ENABLED START #
 import os
-import sys
-from curses.ascii import FS  # allow forward references in type hints
-from random import randint
 from typing import List, Optional, Tuple
 
 # tango imports
 import tango
 from ska_tango_base import SKABaseDevice
 from tango import (
-    AttrQuality,
     AttrWriteType,
     DebugIt,
-    DevState,
-    DispLevel,
-    PipeWriteType,
 )
-from tango.server import Device, attribute, command, device_property, run
+from tango.server import attribute, command, device_property, run
 
 file_path = os.path.dirname(os.path.abspath(__file__))
 
-from ska_tango_base import CspSubElementObsDevice
-from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import (
-    AdminMode,
-    HealthState,
-    ObsState,
-    PowerMode,
-)
 
-from ska_mid_cbf_mcs.commons.global_enum import const, freq_band_dict
-from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
-from ska_mid_cbf_mcs.fsp.fsp_corr_subarray_component_manager import (
-    FspCorrSubarrayComponentManager,
-)
-
-# PROTECTED REGION END #    //  FspCorrSubarray.additionnal_import
+# PROTECTED REGION END #  //  FspCorrSubarray.additionnal_import
 
 __all__ = ["FspCorrSubarray", "main"]
 
@@ -257,7 +245,6 @@ class FspCorrSubarray(CspSubElementObsDevice):
         def do(
             self: FspCorrSubarray.InitCommand,
         ) -> Tuple[ResultCode, str]:
-
             """
             Stateless hook for device initialisation.
 
@@ -283,7 +270,6 @@ class FspCorrSubarray(CspSubElementObsDevice):
     def always_executed_hook(self: FspCorrSubarray) -> None:
         # PROTECTED REGION ID(FspCorrSubarray.always_executed_hook) ENABLED START #
         """Hook to be executed before any commands."""
-        pass
         # PROTECTED REGION END #    //  FspCorrSubarray.always_executed_hook
 
     def create_component_manager(
@@ -309,7 +295,6 @@ class FspCorrSubarray(CspSubElementObsDevice):
     def delete_device(self: FspCorrSubarray) -> None:
         # PROTECTED REGION ID(FspCorrSubarray.delete_device) ENABLED START #
         """Hook to delete device."""
-        pass
 
         # PROTECTED REGION END #    //  FspCorrSubarray.delete_device
 
@@ -770,7 +755,7 @@ class FspCorrSubarray(CspSubElementObsDevice):
             :rtype: (bool, str)
             """
             try:
-                configuration = json.loads(argin)
+                json.loads(argin)
             except json.JSONDecodeError:
                 msg = (
                     "Scan configuration object is not a valid JSON object."

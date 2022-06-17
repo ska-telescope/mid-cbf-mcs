@@ -16,7 +16,6 @@ import logging
 import socket
 import unittest.mock
 from collections import defaultdict
-from re import S
 from types import TracebackType
 from typing import Any, Callable, Dict, Iterable, List, Optional, Type, cast
 

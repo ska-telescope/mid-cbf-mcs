@@ -11,46 +11,36 @@
 
 """
 from __future__ import annotations  # allow forward references in type hints
+from ska_mid_cbf_mcs.fsp.fsp_pst_subarray_component_manager import (
+    FspPstSubarrayComponentManager,
+)
+from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
+from ska_tango_base.control_model import (
+    ObsState,
+    PowerMode,
+)
+from ska_tango_base.commands import ResultCode
+from ska_tango_base import CspSubElementObsDevice, SKABaseDevice
 
 import json
 
 # Additional import
 # PROTECTED REGION ID(FspPstSubarray.additionnal_import) ENABLED START #
 import os
-import sys
-from random import randint
 from typing import List, Optional, Tuple
 
 # PyTango imports
 import tango
 from tango import (
-    AttrQuality,
     AttrWriteType,
     DebugIt,
-    DevState,
-    DispLevel,
-    PipeWriteType,
 )
-from tango.server import Device, attribute, command, device_property, run
+from tango.server import attribute, command, device_property, run
 
 file_path = os.path.dirname(os.path.abspath(__file__))
 
-from ska_tango_base import CspSubElementObsDevice, SKABaseDevice, SKASubarray
-from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import (
-    AdminMode,
-    HealthState,
-    ObsState,
-    PowerMode,
-)
 
-from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
-from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
-from ska_mid_cbf_mcs.fsp.fsp_pst_subarray_component_manager import (
-    FspPstSubarrayComponentManager,
-)
-
-# PROTECTED REGION END #    //  FspPstSubarray.additionnal_import
+# PROTECTED REGION END #  //  FspPstSubarray.additionnal_import
 
 __all__ = ["FspPstSubarray", "main"]
 
@@ -176,7 +166,6 @@ class FspPstSubarray(CspSubElementObsDevice):
     def always_executed_hook(self: FspPstSubarray) -> None:
         # PROTECTED REGION ID(FspPstSubarray.always_executed_hook) ENABLED START #
         """Hook to be executed before any commands."""
-        pass
         # PROTECTED REGION END #    //  FspPstSubarray.always_executed_hook
 
     def create_component_manager(
@@ -203,7 +192,6 @@ class FspPstSubarray(CspSubElementObsDevice):
     def delete_device(self: FspPstSubarray) -> None:
         # PROTECTED REGION ID(FspPstSubarray.delete_device) ENABLED START #
         """Hook to delete device."""
-        pass
         # PROTECTED REGION END #    //  FspPstSubarray.delete_device
 
     # ------------------
@@ -427,7 +415,7 @@ class FspPstSubarray(CspSubElementObsDevice):
             :rtype: (bool, str)
             """
             try:
-                configuration = json.loads(argin)
+                json.loads(argin)
             except json.JSONDecodeError:
                 msg = (
                     "Scan configuration object is not a valid JSON object."

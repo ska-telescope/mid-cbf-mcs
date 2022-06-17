@@ -11,7 +11,6 @@
 """Contain the tests for the CbfController component manager."""
 from __future__ import annotations
 
-import pytest
 from ska_tango_base.commands import ResultCode
 
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
@@ -76,7 +75,7 @@ class TestControllerComponentManager:
             controller_component_manager.communication_status
             == CommunicationStatus.ESTABLISHED
         )
-        assert controller_component_manager._connected == True
+        assert controller_component_manager._connected is True
 
         (result_code, _) = controller_component_manager.on()
         assert result_code == ResultCode.OK
@@ -93,7 +92,7 @@ class TestControllerComponentManager:
             controller_component_manager.communication_status
             == CommunicationStatus.ESTABLISHED
         )
-        assert controller_component_manager._connected == True
+        assert controller_component_manager._connected is True
 
         (result_code, _) = controller_component_manager.off()
         assert result_code == ResultCode.OK
@@ -110,7 +109,7 @@ class TestControllerComponentManager:
             controller_component_manager.communication_status
             == CommunicationStatus.ESTABLISHED
         )
-        assert controller_component_manager._connected == True
+        assert controller_component_manager._connected is True
 
         (result_code, _) = controller_component_manager.standby()
         assert result_code == ResultCode.OK

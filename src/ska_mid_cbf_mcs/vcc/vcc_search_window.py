@@ -20,23 +20,14 @@
 
 # Additional import
 # PROTECTED REGION ID(VccSearchWindow.additionnal_import) ENABLED START #
-import os
-import sys
 
 # tango imports
-import tango
 from ska_tango_base import SKACapability
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import AdminMode, HealthState
 from tango import (
-    AttrQuality,
     AttrWriteType,
-    DebugIt,
-    DevState,
-    DispLevel,
-    PipeWriteType,
 )
-from tango.server import Device, attribute, command, device_property, run
+from tango.server import attribute, run
 
 # PROTECTED REGION END #    //  VccSearchWindow.additionnal_import
 
@@ -137,13 +128,11 @@ class VccSearchWindow(SKACapability):
     def always_executed_hook(self):
         # PROTECTED REGION ID(VccSearchWindow.always_executed_hook) ENABLED START #
         """hook to be executed before any TANGO command is executed"""
-        pass
         # PROTECTED REGION END #    //  VccSearchWindow.always_executed_hook
 
     def delete_device(self):
         # PROTECTED REGION ID(VccSearchWindow.delete_device) ENABLED START #
         """hook to delete resoures allocated in init_device"""
-        pass
         # PROTECTED REGION END #    //  VccSearchWindow.delete_device
 
     # ------------------

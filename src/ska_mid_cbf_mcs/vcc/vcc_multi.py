@@ -4,8 +4,6 @@ Herzberg Astronomy and Astrophysics, National Research Council of Canada
 Copyright (c) 2019 National Research Council of Canada
 """
 
-import os
-import sys
 
 from tango.server import run
 

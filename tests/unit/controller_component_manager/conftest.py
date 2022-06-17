@@ -8,6 +8,22 @@
 """This module contains pytest-specific test harness for ControllerComponentManager unit tests."""
 
 from __future__ import annotations
+from ska_mid_cbf_mcs.testing.tango_harness import TangoHarness
+from ska_mid_cbf_mcs.testing.mock.mock_group import MockGroupBuilder
+from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder
+from ska_mid_cbf_mcs.testing.mock.mock_callable import (
+    MockCallable,
+    MockChangeEventCallback,
+)
+from ska_mid_cbf_mcs.controller.controller_component_manager import (
+    ControllerComponentManager,
+)
+from ska_tango_base.control_model import (
+    AdminMode,
+    HealthState,
+)
+from ska_tango_base.commands import ResultCode
+import json
 
 # Standard imports
 import logging
@@ -18,31 +34,9 @@ from typing import Callable, Dict
 import pytest
 import tango
 
-from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
 
 file_path = os.path.dirname(os.path.abspath(__file__))
-import functools
-import json
 
-from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import (
-    AdminMode,
-    HealthState,
-    ObsState,
-    PowerMode,
-    SimulationMode,
-)
-
-from ska_mid_cbf_mcs.controller.controller_component_manager import (
-    ControllerComponentManager,
-)
-from ska_mid_cbf_mcs.testing.mock.mock_callable import (
-    MockCallable,
-    MockChangeEventCallback,
-)
-from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder
-from ska_mid_cbf_mcs.testing.mock.mock_group import MockGroupBuilder
-from ska_mid_cbf_mcs.testing.tango_harness import TangoHarness
 
 # Local imports
 

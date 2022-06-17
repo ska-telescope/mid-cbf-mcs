@@ -1,3 +1,4 @@
+
 # -*- coding: utf-8 -*-
 #
 # This file is part of the TmCspSubarrayLeafNodeTest project
@@ -17,31 +18,19 @@ Copyright (c) 2019 National Research Council of Canada
 
 TmCspSubarrayLeafNodeTest TANGO device class for the CBF prototype
 """
-
-import json
-
 # Additional import
 # PROTECTED REGION ID(TmCspSubarrayLeafNodeTest.additionnal_import) ENABLED START #
-import os
-import sys
-from random import randint
-
 # tango imports
-import tango
-from tango import (
-    AttrQuality,
-    AttrWriteType,
-    DebugIt,
-    DevState,
-    DispLevel,
-    PipeWriteType,
-)
-from tango.server import Device, attribute, command, device_property, run
+
+from tango.server import attribute, device_property, run  # noqa: E402
+import os  # noqa: E402
+import sys  # noqa: E402
+import json  # noqa: E402
+import tango  # noqa: E402
+from tango import AttrWriteType, DevState  # noqa: E402
+from ska_tango_base import SKABaseDevice  # noqa: E402
 
 file_path = os.path.dirname(os.path.abspath(__file__))
-
-from ska_tango_base import SKABaseDevice
-from ska_tango_base.control_model import AdminMode, HealthState
 
 # PROTECTED REGION END #    //  TmCspSubarrayLeafNodeTest.additionnal_import
 

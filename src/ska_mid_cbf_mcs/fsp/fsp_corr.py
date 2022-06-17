@@ -17,32 +17,22 @@ Copyright (c) 2019 National Research Council of Canada
 
 FspCorr TANGO device class for the prototype
 """
+import os  # noqa: E402
+import sys  # noqa: E402
+import tango  # noqa: E402
+from ska_tango_base import SKACapability  # noqa: E402
+from tango.server import command, run  # noqa: E402
 
 # Additional import
 # PROTECTED REGION ID(FspCorr.additionnal_import) ENABLED START #
-import os
-import sys
 
 # tango imports
-import tango
-from tango import (
-    AttrQuality,
-    AttrWriteType,
-    DebugIt,
-    DevState,
-    DispLevel,
-    PipeWriteType,
-)
-from tango.server import Device, attribute, command, device_property, run
+
+# PROTECTED REGION END #    //  FspCorr.additionnal_import
 
 file_path = os.path.dirname(os.path.abspath(__file__))
 commons_pkg_path = os.path.abspath(os.path.join(file_path, "../../commons"))
 sys.path.insert(0, commons_pkg_path)
-
-from ska_tango_base import SKACapability
-from ska_tango_base.control_model import AdminMode, HealthState
-
-# PROTECTED REGION END #    //  FspCorr.additionnal_import
 
 __all__ = ["FspCorr", "main"]
 
@@ -77,13 +67,11 @@ class FspCorr(SKACapability):
     def always_executed_hook(self):
         # PROTECTED REGION ID(FspCorr.always_executed_hook) ENABLED START #
         """Hook before any commands"""
-        pass
         # PROTECTED REGION END #    //  FspCorr.always_executed_hook
 
     def delete_device(self):
         # PROTECTED REGION ID(FspCorr.delete_device) ENABLED START #
         """hook before delete device"""
-        pass
         # PROTECTED REGION END #    //  FspCorr.delete_device
 
     # ------------------

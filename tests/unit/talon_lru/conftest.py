@@ -9,7 +9,6 @@
 
 from __future__ import annotations
 
-import logging
 import unittest
 from typing import Callable, Dict, Optional, Tuple, Type
 
@@ -22,14 +21,10 @@ from ska_tango_base.control_model import PowerMode
 
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
-from ska_mid_cbf_mcs.talon_lru.talon_lru_component_manager import (
-    TalonLRUComponentManager,
-)
 
 # Local imports
 from ska_mid_cbf_mcs.talon_lru.talon_lru_device import TalonLRU
 from ska_mid_cbf_mcs.testing.mock.mock_callable import (
-    MockCallable,
     MockChangeEventCallback,
 )
 from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder

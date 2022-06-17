@@ -10,6 +10,11 @@
 """Contain the tests for the FspCorrSubarray."""
 
 from __future__ import annotations
+from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
+from tango import DevState
+from ska_tango_base.control_model import AdminMode, ObsState
+from ska_tango_base.commands import ResultCode
+import tango
 
 # Standard imports
 import os
@@ -21,13 +26,8 @@ import pytest
 file_path = os.path.dirname(os.path.abspath(__file__))
 
 # Tango imports
-import tango
-from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import AdminMode, ObsState
-from tango import DevState
 
 # SKA imports
-from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 
 CONST_WAIT_TIME = 4
 

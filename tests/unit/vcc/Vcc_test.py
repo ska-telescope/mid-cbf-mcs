@@ -10,36 +10,31 @@
 """Contain the tests for the Vcc."""
 
 from __future__ import annotations
+from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
+from tango import DevState
+from ska_tango_base.control_model import (
+    AdminMode,
+    LoggingLevel,
+    ObsState,
+)
+from ska_tango_base.commands import ResultCode
+import tango
 
 import json
-import logging
 
 # Standard imports
 import os
 import time
-from typing import Callable, Dict, List, Type
 
 import pytest
 
-from ska_mid_cbf_mcs.testing.tango_harness import TangoHarness
 
 # Path
 file_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
 
 # Tango imports
-import tango
-from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import (
-    AdminMode,
-    HealthState,
-    LoggingLevel,
-    ObsState,
-)
-from tango import DevState
-from tango.server import command
 
 # SKA imports
-from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 
 CONST_WAIT_TIME = 2
 

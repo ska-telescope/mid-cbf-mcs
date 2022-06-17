@@ -13,7 +13,6 @@ from __future__ import annotations  # allow forward references in type hints
 
 import logging
 
-import pytest
 import pytest_mock
 
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy

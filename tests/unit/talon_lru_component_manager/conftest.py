@@ -11,15 +11,13 @@ from __future__ import annotations
 
 import logging
 import unittest
-from typing import Callable, Dict, Tuple
+from typing import Callable, Dict
 
 # Standard imports
 import pytest
-import pytest_mock
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import PowerMode
 
-from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_mid_cbf_mcs.talon_lru.talon_lru_component_manager import (
     TalonLRUComponentManager,

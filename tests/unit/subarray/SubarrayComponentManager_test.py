@@ -16,14 +16,12 @@ import json
 
 # Standard imports
 import os
-import time
 from typing import List
 
 import pytest
 from ska_tango_base.commands import ResultCode
 
 from ska_mid_cbf_mcs.commons.global_enum import freq_band_dict
-from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_mid_cbf_mcs.subarray.subarray_component_manager import (
     CbfSubarrayComponentManager,
 )

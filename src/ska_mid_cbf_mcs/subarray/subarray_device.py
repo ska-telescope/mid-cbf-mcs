@@ -13,30 +13,20 @@ from __future__ import annotations
 
 import copy
 import json
-from importlib.abc import (
-    ResourceLoader,  # allow forward references in type hints
-)
-from logging import log
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 # Tango imports
-import tango
-from ska_tango_base import SKABaseDevice, SKACapability
-from ska_tango_base.commands import BaseCommand, ResponseCommand, ResultCode
+from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import (
-    AdminMode,
     HealthState,
-    ObsState,
     PowerMode,
 )
 from ska_tango_base.csp.subarray.subarray_device import CspSubElementSubarray
-from tango import AttrQuality, AttrWriteType, DebugIt, DevState
+from tango import AttrWriteType, DebugIt, DevState
 from tango.server import attribute, command, device_property, run
 
-from ska_mid_cbf_mcs.attribute_proxy import CbfAttributeProxy
-from ska_mid_cbf_mcs.commons.global_enum import const, freq_band_dict
+from ska_mid_cbf_mcs.commons.global_enum import const
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
-from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 
 # SKA imports
 from ska_mid_cbf_mcs.subarray.subarray_component_manager import (
@@ -267,13 +257,11 @@ class CbfSubarray(CspSubElementSubarray):
     def always_executed_hook(self: CbfSubarray) -> None:
         # PROTECTED REGION ID(CbfSubarray.always_executed_hook) ENABLED START #
         """methods always executed before any TANGO command is executed"""
-        pass
         # PROTECTED REGION END #    //  CbfSubarray.always_executed_hook
 
     def delete_device(self: CbfSubarray) -> None:
         # PROTECTED REGION ID(CbfSubarray.delete_device) ENABLED START #
         """Hook to delete device."""
-        pass
         # PROTECTED REGION END #    //  CbfSubarray.delete_device
 
     # ---------
@@ -494,7 +482,7 @@ class CbfSubarray(CspSubElementSubarray):
     # Commands
     # --------
 
-    ##################  Receptors Related Commands  ###################
+    #  Receptors Related Commands  #
 
     class RemoveReceptorsCommand(
         CspSubElementSubarray.ReleaseResourcesCommand
@@ -628,7 +616,7 @@ class CbfSubarray(CspSubElementSubarray):
         (return_code, message) = command(argin)
         return [[return_code], [message]]
 
-    ############  Configure Related Commands   ##############
+    #  Configure Related Commands   #
 
     class ConfigureScanCommand(CspSubElementSubarray.ConfigureScanCommand):
         """

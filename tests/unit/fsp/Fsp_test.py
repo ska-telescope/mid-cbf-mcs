@@ -10,14 +10,15 @@
 """Contain the tests for the Fsp."""
 
 from __future__ import annotations
+from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
+from tango import DevState
+from ska_tango_base.control_model import AdminMode
+from ska_tango_base.commands import ResultCode
 
-import json
-import logging
 
 # Standard imports
 import os
 import time
-from typing import Callable, Dict, List, Type
 
 import pytest
 
@@ -25,17 +26,9 @@ import pytest
 file_path = os.path.dirname(os.path.abspath(__file__))
 
 # Tango imports
-import tango
 
 # SKA imports
-from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import AdminMode, HealthState, ObsState
-from tango import DevState
-from tango.server import command
 
-from ska_mid_cbf_mcs.commons.global_enum import FspModes
-from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
-from ska_mid_cbf_mcs.testing.tango_harness import DeviceToLoadType
 
 CONST_WAIT_TIME = 4
 

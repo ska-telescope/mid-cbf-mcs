@@ -12,20 +12,18 @@ from __future__ import annotations
 
 import json
 import logging
-from enum import Enum
 from typing import Callable, List, Optional, Tuple
 
 import tango
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import PowerMode
-from ska_tango_base.csp.obs.component_manager import CspObsComponentManager
 
 from ska_mid_cbf_mcs.commons.global_enum import FspModes
 from ska_mid_cbf_mcs.component.component_manager import (
     CbfComponentManager,
     CommunicationStatus,
 )
-from ska_mid_cbf_mcs.component.util import check_communicating, check_on
+from ska_mid_cbf_mcs.component.util import check_communicating
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_mid_cbf_mcs.group_proxy import CbfGroupProxy
 

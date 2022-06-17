@@ -19,7 +19,6 @@ import os
 import unittest
 
 import pytest
-import tango
 from ska_tango_base.commands import ResultCode
 
 from ska_mid_cbf_mcs.commons.global_enum import freq_band_dict

@@ -23,7 +23,7 @@ from ska_tango_base import SKABaseDevice, SKAController
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import PowerMode, SimulationMode
 from tango import AttrWriteType
-from tango.server import attribute, command, device_property, run
+from tango.server import attribute, device_property, run
 
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
 from ska_mid_cbf_mcs.controller.controller_component_manager import (
@@ -387,7 +387,6 @@ class CbfController(SKAController):
     def delete_device(self: CbfController) -> None:
         """Unsubscribe to events, turn all the subarrays, VCCs and FSPs off"""
         # PROTECTED REGION ID(CbfController.delete_device) ENABLED START #
-        pass
         # PROTECTED REGION END #    //  CbfController.delete_device
 
     # ------------------

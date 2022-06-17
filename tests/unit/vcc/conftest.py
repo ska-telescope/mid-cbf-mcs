@@ -9,7 +9,6 @@
 
 from __future__ import annotations
 
-import json
 import logging
 import unittest
 
@@ -22,9 +21,7 @@ import pytest_mock
 # Tango imports
 import tango
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import ObsState, PowerMode, SimulationMode
-from tango import DevState
-from tango.server import command
+from ska_tango_base.control_model import PowerMode, SimulationMode
 
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy

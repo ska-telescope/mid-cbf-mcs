@@ -30,7 +30,8 @@ def get_release_info(clsname: Optional[str] = None) -> str:
     """
     rmod = sys.modules[__name__]
     info = ", ".join(
-        (rmod.name, rmod.version, rmod.description)  # type: ignore[attr-defined]
+        # type: ignore[attr-defined]
+        (rmod.name, rmod.version, rmod.description)
     )
     if clsname is None:
         return info

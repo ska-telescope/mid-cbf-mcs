@@ -14,7 +14,7 @@ from typing import Callable, List, Optional, Tuple
 
 import tango
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import AdminMode, HealthState, PowerMode
+from ska_tango_base.control_model import PowerMode
 from tango import DevState
 
 from ska_mid_cbf_mcs.component.component_manager import (

@@ -13,12 +13,11 @@ __all__ = ["CbfGroupProxy"]
 
 import logging
 import threading
-import warnings
 from typing import Any, Callable, List, Optional, Type
 
 import backoff
 import tango
-from tango import AttrQuality, DevFailed, DevState
+from tango import DevFailed
 from typing_extensions import TypedDict
 
 # type for the "details" dictionary that backoff calls its callbacks with
@@ -162,7 +161,7 @@ class CbfGroupProxy:
             self.__dict__["_fqdns"].extend(fqdns)
             return group
 
-        if self._group == None:
+        if self._group is None:
             if max_time:
                 self.__dict__["_group"] = _backoff_connect(
                     self._group_connection_factory

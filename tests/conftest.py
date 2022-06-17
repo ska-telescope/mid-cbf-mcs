@@ -9,7 +9,7 @@
 # See LICENSE for more info.
 
 """
-A module defining a list of fixture functions that are shared across all the 
+A module defining a list of fixture functions that are shared across all the
 ska-mid-cbf-mcs tests.
 """
 
@@ -29,7 +29,7 @@ import yaml
 
 # SKA imports
 from ska_tango_base.control_model import AdminMode, LoggingLevel, ObsState
-from tango import DeviceProxy, DevState
+from tango import DevState
 
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_mid_cbf_mcs.testing.mock.mock_callable import MockChangeEventCallback
@@ -111,7 +111,7 @@ def pytest_collection_modifyitems(
     prefix = "needs_"
     for item in items:
         needs_tags = set(
-            tag[len(prefix) :]
+            tag[len(prefix):]
             for tag in item.keywords
             if tag.startswith(prefix)
         )
@@ -198,8 +198,6 @@ def tango_harness_factory(
         within the lightweight test context provided by
         :py:class:`~ska_mid_cbf_mcs.testing.tango_harness.TestContextTangoHarness`.
         """
-
-        pass
 
     testbed = request.config.getoption("--testbed")
 
@@ -644,7 +642,7 @@ def debug_device_is_on() -> bool:
     debug_device_is_on = False
     if debug_device_is_on:
         # Increase the timeout in order to allow  time for debugging
-        timeout_millis = 500000
+        timeout_millis = 500000  # noqa: F841
     return debug_device_is_on
 
 

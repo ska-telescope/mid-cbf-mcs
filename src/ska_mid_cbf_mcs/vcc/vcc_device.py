@@ -290,13 +290,11 @@ class Vcc(CspSubElementObsDevice):
     def always_executed_hook(self: Vcc) -> None:
         # PROTECTED REGION ID(Vcc.always_executed_hook) ENABLED START #
         """Hook to be executed before any commands."""
-        pass
         # PROTECTED REGION END #    //  Vcc.always_executed_hook
 
     def delete_device(self: Vcc) -> None:
         # PROTECTED REGION ID(Vcc.delete_device) ENABLED START #
         """Hook to delete device."""
-        pass
         # PROTECTED REGION END #    //  Vcc.delete_device
 
     # ---------
@@ -1292,7 +1290,8 @@ class Vcc(CspSubElementObsDevice):
                     else:
                         msg = "'search_window_tuning' must be within observed band."
                         return (False, msg)
-                else:  # frequency band 5a or 5b (two streams with bandwidth 2.5 GHz)
+                # frequency band 5a or 5b (two streams with bandwidth 2.5 GHz)
+                else:
                     if argin["band_5_tuning"] == [
                         0,
                         0,

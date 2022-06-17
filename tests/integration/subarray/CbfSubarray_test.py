@@ -7,6 +7,13 @@
 # See LICENSE.txt for more info.
 """Contain the tests for the CbfSubarray."""
 from __future__ import annotations  # allow forward references in type hints
+from ska_mid_cbf_mcs.commons.global_enum import FspModes, freq_band_dict
+from tango import DevState
+from ska_tango_base.control_model import (
+    AdminMode,
+    ObsState,
+)
+import pytest
 
 import json
 import logging
@@ -14,31 +21,16 @@ import os
 import random
 
 # Standard imports
-import sys
 import time
-from datetime import datetime
 from typing import List
 
 # Data file path
 data_file_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
 
-import pytest
 
 # Tango imports
-import tango
-from ska_tango_base.base.base_device import _DEBUGGER_PORT
 
 # SKA specific imports
-from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import (
-    AdminMode,
-    HealthState,
-    LoggingLevel,
-    ObsState,
-)
-from tango import DevState
-
-from ska_mid_cbf_mcs.commons.global_enum import FspModes, freq_band_dict
 
 
 class TestCbfSubarray:
@@ -129,7 +121,7 @@ class TestCbfSubarray:
         """
 
         if test_proxies.debug_device_is_on:
-            port = test_proxies.subarray[sub_id].DebugDevice()
+            test_proxies.subarray[sub_id].DebugDevice()
 
         try:
             wait_time_s = 3
@@ -449,7 +441,6 @@ class TestCbfSubarray:
         Test CbfSubarrays's AddReceptors command for multiple subarrays
             when the receptor id is invalid
         """
-        pass
 
     @pytest.mark.parametrize(
         "receptor_ids, \
@@ -2426,7 +2417,9 @@ class TestCbfSubarray:
 
             assert test_proxies.subarray[sub_id].obsState == ObsState.EMPTY
 
-            ############################# abort from READY ###########################
+            # -------------------- #
+            # abort from READY #
+            # -------------------- #
             # add receptors
             test_proxies.subarray[sub_id].AddReceptors(receptor_ids)
             test_proxies.wait_timeout_obs(
@@ -2531,8 +2524,9 @@ class TestCbfSubarray:
                     test_proxies.vcc[test_proxies.receptor_to_vcc[r]].obsState
                     == ObsState.IDLE
                 )
-
-            ############################# abort from SCANNING ###########################
+            # ------------------- #
+            # abort from SCANNING #
+            # ------------------- #
             # add receptors
             test_proxies.subarray[sub_id].AddReceptors(receptor_ids)
             test_proxies.wait_timeout_obs(
@@ -2756,7 +2750,9 @@ class TestCbfSubarray:
 
             assert test_proxies.subarray[sub_id].obsState == ObsState.EMPTY
 
-            ############################# abort from IDLE ###########################
+            # --------------- #
+            # abort from IDLE #
+            # --------------- #
             # add receptors
             test_proxies.subarray[sub_id].AddReceptors(receptor_ids)
             test_proxies.wait_timeout_obs(
@@ -2814,7 +2810,9 @@ class TestCbfSubarray:
                     == ObsState.IDLE
                 )
 
-            ############################# abort from READY ###########################
+            # ---------------- #
+            # abort from READY #
+            # ---------------- #
             # add receptors
             test_proxies.subarray[sub_id].AddReceptors(receptor_ids)
             test_proxies.wait_timeout_obs(
@@ -2910,7 +2908,9 @@ class TestCbfSubarray:
                     == ObsState.IDLE
                 )
 
-            ############################# abort from SCANNING ###########################
+            # ------------------- #
+            # abort from SCANNING #
+            # ------------------- #
             # add receptors
             test_proxies.subarray[sub_id].AddReceptors(receptor_ids)
             test_proxies.wait_timeout_obs(

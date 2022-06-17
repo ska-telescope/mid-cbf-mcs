@@ -22,9 +22,6 @@ import json
 
 # Additional import
 # PROTECTED REGION ID(FspPssSubarray.additionnal_import) ENABLED START #
-import os
-import sys
-from random import randint
 from typing import List, Optional, Tuple
 
 # tango imports
@@ -32,23 +29,16 @@ import tango
 from ska_tango_base import CspSubElementObsDevice, SKABaseDevice
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import (
-    AdminMode,
-    HealthState,
     ObsState,
     PowerMode,
 )
 from tango import (
-    AttrQuality,
     AttrWriteType,
     DebugIt,
-    DevState,
-    DispLevel,
-    PipeWriteType,
 )
-from tango.server import Device, attribute, command, device_property, run
+from tango.server import attribute, command, device_property, run
 
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
-from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_mid_cbf_mcs.fsp.fsp_pss_subarray_component_manager import (
     FspPssSubarrayComponentManager,
 )
@@ -195,7 +185,6 @@ class FspPssSubarray(CspSubElementObsDevice):
     def always_executed_hook(self: FspPssSubarray) -> None:
         # PROTECTED REGION ID(FspPssSubarray.always_executed_hook) ENABLED START #
         """Hook to be executed before any commands."""
-        pass
         # PROTECTED REGION END #    //  FspPssSubarray.always_executed_hook
 
     def create_component_manager(
@@ -222,7 +211,6 @@ class FspPssSubarray(CspSubElementObsDevice):
     def delete_device(self: FspPssSubarray) -> None:
         # PROTECTED REGION ID(FspPssSubarray.delete_device) ENABLED START #
         """Hook to delete device."""
-        pass
         # PROTECTED REGION END #    //  FspPssSubarray.delete_device
 
     # ------------------
@@ -467,7 +455,7 @@ class FspPssSubarray(CspSubElementObsDevice):
             :rtype: (bool, str)
             """
             try:
-                configuration = json.loads(argin)
+                json.loads(argin)
             except json.JSONDecodeError:
                 msg = (
                     "Scan configuration object is not a valid JSON object."

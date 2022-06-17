@@ -77,7 +77,7 @@ def test_turn_outlet_on_off(
             if j <= i:
                 with pytest.raises(
                     AssertionError,
-                    match="Power mode of outlet \d \(3\) is different than the expected mode 1",
+                    match=r"Power mode of outlet \d \(3\) is different than the expected mode 1",
                 ):
                     power_switch_component_manager.get_outlet_power_mode(j)
             else:
@@ -102,7 +102,7 @@ def test_turn_outlet_on_off(
             else:
                 with pytest.raises(
                     AssertionError,
-                    match="Power mode of outlet \d \(3\) is different than the expected mode 1",
+                    match=r"Power mode of outlet \d \(3\) is different than the expected mode 1",
                 ):
                     power_switch_component_manager.get_outlet_power_mode(j)
 
@@ -147,7 +147,7 @@ def test_get_request_failure(
     Tests that a GET request failure is appropriately handled.
     """
     power_switch_component_manager.start_communicating()
-    assert power_switch_component_manager.is_communicating == False
+    assert power_switch_component_manager.is_communicating is False
     assert power_switch_component_manager.num_outlets == 0
 
 

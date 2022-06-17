@@ -27,7 +27,6 @@ from ska_tango_base.control_model import (
     ObsState,
     PowerMode,
 )
-from tango import DevState
 from tango.server import command
 
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus

@@ -9,38 +9,20 @@
 # See LICENSE.txt for more info.
 """Contain the tests for the CbfController."""
 
-import os
 import socket
 
 # Standard imports
-import sys
-import time
 
 import pytest
 
 # Tango imports
-import tango
-from ska_tango_base.base import SKABaseDevice
 from ska_tango_base.base.base_device import (  # DeviceStateModel, removed in v0.11.3
     _DEBUGGER_PORT,
-    _PYTHON_TO_TANGO_LOGGING_LEVEL,
-    LoggingTargetError,
-    LoggingUtils,
-    TangoLoggingServiceHandler,
-    _Log4TangoLoggingLevel,
 )
-from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import (
     AdminMode,
-    ControlMode,
-    HealthState,
-    LoggingLevel,
-    SimulationMode,
-    TestMode,
 )
-from ska_tango_base.faults import CommandError
 from tango import DevState
-from tango.test_context import DeviceTestContext
 
 # Local imports
 

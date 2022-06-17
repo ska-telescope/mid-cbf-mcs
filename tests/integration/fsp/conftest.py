@@ -19,7 +19,6 @@ from typing import List
 import pytest
 
 # Tango imports
-from tango import DeviceProxy, DevState
 
 
 @pytest.fixture(scope="function")

@@ -5,7 +5,7 @@ import getopt
 import json
 import os
 import sys
-from random import choice, randint
+from random import choice
 
 
 def main(argv):
