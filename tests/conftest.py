@@ -111,7 +111,7 @@ def pytest_collection_modifyitems(
     prefix = "needs_"
     for item in items:
         needs_tags = set(
-            tag[len(prefix):]
+            tag[len(prefix) :]  # noqa: E203
             for tag in item.keywords
             if tag.startswith(prefix)
         )

@@ -371,9 +371,7 @@ class CbfSubarrayComponentManager(
                 CommunicationStatus.NOT_ESTABLISHED
             )
             self._component_op_fault_callback(True)
-            raise ConnectionError(
-                "Error in proxy connection."
-            ) from dev_failed
+            raise ConnectionError("Error in proxy connection.") from dev_failed
 
         self.connected = True
         self.update_communication_status(CommunicationStatus.ESTABLISHED)
