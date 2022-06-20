@@ -199,13 +199,15 @@ class TalonDxComponentManager:
                     self._secure_copy(
                         ssh_client=ssh_client, 
                         src=f"{src_dir}/fpga-talon/bin/{fpga_dtb_name}",
-                        dest=dest_dir)
+                        dest=dest_dir
+                    )
 
                     fpga_rbf_name = talon_cfg["fpga_rbf_name"]
                     self._secure_copy(
                         ssh_client=ssh_client, 
                         src=f"{src_dir}/fpga-talon/bin/{fpga_rbf_name}",
-                        dest=dest_dir)
+                        dest=dest_dir
+                    )
 
             except NoValidConnectionsError:
                 self.logger.error(

@@ -1,17 +1,15 @@
 {{ $localchart := . }}
 
-{{ range $key, $deviceserver := .Values.deviceServers }}
+{{ template "ska-tango-util.configuration.tpl" . }}
 
-{{ $filedeviceserver := $.Files.Get $deviceserver.file | fromYaml }}
+{{ range $deviceserver := .Values.deviceServers }}
 
-{{ $context := dict "name" $key "deviceserver" $filedeviceserver "image" $deviceserver.image "local" $localchart }}
+{{ range $instance := $deviceserver.instances }}
 
-{{ template "ska-tango-util.multidevice-config.tpl" $context }}
+{{ $context := dict "deviceserver" $deviceserver "image" $deviceserver.image "local" $localchart "instance" $instance  }}
 
-{{ template "ska-tango-util.multidevice-sacc-role.tpl" $context }}
+{{ template "ska-tango-util.deviceserver.tpl" $context }}
 
-{{ template "ska-tango-util.multidevice-job.tpl" $context }}
-
-{{ template "ska-tango-util.multidevice-svc.tpl" $context }}
+{{ end }} ## instances
 
 {{ end }} # deviceservers
