@@ -44,7 +44,7 @@ def device_under_test(tango_harness: TangoHarness) -> CbfDeviceProxy:
 
     :return: the device under test
     """
-    return tango_harness.get_device("mid_csp_cbf/fsp/03")
+    return tango_harness.get_device("mid_csp_cbf/fsp/01")
 
 
 @pytest.fixture()
@@ -55,9 +55,9 @@ def device_to_load(patched_fsp_device_class: Type[Fsp]) -> DeviceToLoadType:
     :return: specification of the device to be loaded
     """
     return {
-        "path": "charts/ska-mid-cbf-mcs/data/midcbfconfig.json",
+        "path": "tests/unit/fsp/devicetoload.json",
         "package": "ska_mid_cbf_mcs.fsp.fsp_device",
-        "device": "fsp-03",
+        "device": "fsp-01",
         "device_class": "Fsp",
         "proxy": CbfDeviceProxy,
         "patch": patched_fsp_device_class,

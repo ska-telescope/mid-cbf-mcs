@@ -1,0 +1,1137 @@
+name: fsp
+function: fsp-processing
+domain: signal-processing
+command: "FspMulti"
+instances: ["fsp-01", "fsp-02", "fsp-03", "fsp-04"]
+depends_on:
+  - device: mid_csp_cbf/vcc/001
+  - device: mid_csp_cbf/vcc/002
+  - device: mid_csp_cbf/vcc/003
+  - device: mid_csp_cbf/vcc/004
+readinessProbe:
+  initialDelaySeconds: 0
+  periodSeconds: 10
+  timeoutSeconds: 5
+  successThreshold: 1
+  failureThreshold: 3
+livenessProbe:
+  initialDelaySeconds: 0
+  periodSeconds: 10
+  timeoutSeconds: 5
+  successThreshold: 1
+  failureThreshold: 3
+server:
+  name: "FspMulti"
+  instances:
+  - name: "fsp-01"
+    classes:
+    - name: "Fsp"
+      devices:
+      - name: "mid_csp_cbf/fsp/01"
+        attribute_properties:
+        - attribute: "adminMode"
+          properties: 
+          - name: "abs_change"
+            values: 
+            - "-1"
+            - "1"
+        - attribute: "healthState"
+          properties:
+          - name: "abs_change"
+            values: 
+            - "-1"
+            - "1"
+        - attribute: "subarrayMembership"
+          properties:
+          - name: "abs_change"
+            values: 
+            - "-1"
+            - "1"
+        properties:
+          - name: "FspID"
+            values:
+            - "1"
+          - name: "CorrelationAddress"
+            values:
+            - "mid_csp_cbf/fsp_corr/01"
+          - name: "PSSAddress"
+            values:
+            - "mid_csp_cbf/fsp_pss/01"
+          - name: "PSTAddress"
+            values:
+            - "mid_csp_cbf/fsp_pst/01"
+          - name: "VLBIAddress"
+            values:
+            - "mid_csp_cbf/fsp_vlbi/01"
+          - name: "FspCorrSubarray"
+            values:
+            - "mid_csp_cbf/fspCorrSubarray/01_01"
+            - "mid_csp_cbf/fspCorrSubarray/01_02"
+            - "mid_csp_cbf/fspCorrSubarray/01_03"
+          - name: "FspPssSubarray"
+            values:
+            - "mid_csp_cbf/fspPssSubarray/01_01"
+            - "mid_csp_cbf/fspPssSubarray/01_02"
+            - "mid_csp_cbf/fspPssSubarray/01_03"
+          - name: "FspPstSubarray"
+            values:
+            - "mid_csp_cbf/fspPstSubarray/01_01"
+            - "mid_csp_cbf/fspPstSubarray/01_02"
+            - "mid_csp_cbf/fspPstSubarray/01_03"
+          - name: "polled_attr"
+            values:
+            - "state"
+            - "1000"
+            - "healthstate"
+            - "3000"
+            - "adminmode"
+            - "3000"
+            - "subarraymembership"
+            - "3000"
+
+    - name: "FspCorr"
+      devices:
+      - name: "mid_csp_cbf/fsp_corr/01"
+
+    - name: "FspPss"
+      devices:
+      - name: "mid_csp_cbf/fsp_pss/01"
+
+    - name: "FspPst"
+      devices:
+      - name: "mid_csp_cbf/fsp_pst/01"
+
+    - name: "FspVlbi"
+      devices:
+      - name: "mid_csp_cbf/fsp_vlbi/01"
+
+    - name: "FspCorrSubarray"
+      devices:
+      - name: "mid_csp_cbf/fspCorrSubarray/01_01"
+        properties:
+          - name: "CbfControllerAddress"
+            values:
+            - "mid_csp_cbf/sub_elt/controller"
+          - name: "CbfSubarrayAddress"
+            values:
+            - "mid_csp_cbf/sub_elt/subarray_01"
+          - name: "FspID"
+            values:
+            - "1"
+          - name: "SubID"
+            values:
+            - "1"
+          - name: "VCC"
+            values:
+            - "mid_csp_cbf/vcc/001"
+            - "mid_csp_cbf/vcc/002"
+            - "mid_csp_cbf/vcc/003"
+            - "mid_csp_cbf/vcc/004"
+
+      - name: "mid_csp_cbf/fspCorrSubarray/01_02"
+        properties:
+          - name: "CbfControllerAddress"
+            values:
+            - "mid_csp_cbf/sub_elt/controller"
+          - name: "CbfSubarrayAddress"
+            values:
+            - "mid_csp_cbf/sub_elt/subarray_02"
+          - name: "FspID"
+            values:
+            - "1"
+          - name: "SubID"
+            values:
+            - "2"
+          - name: "VCC"
+            values:
+            - "mid_csp_cbf/vcc/001"
+            - "mid_csp_cbf/vcc/002"
+            - "mid_csp_cbf/vcc/003"
+            - "mid_csp_cbf/vcc/004"
+
+      - name: "mid_csp_cbf/fspCorrSubarray/01_03"
+        properties:
+          - name: "CbfControllerAddress"
+            values:
+            - "mid_csp_cbf/sub_elt/controller"
+          - name: "CbfSubarrayAddress"
+            values:
+            - "mid_csp_cbf/sub_elt/subarray_03"
+          - name: "FspID"
+            values:
+            - "1"
+          - name: "SubID"
+            values:
+            - "3"
+          - name: "VCC"
+            values:
+            - "mid_csp_cbf/vcc/001"
+            - "mid_csp_cbf/vcc/002"
+            - "mid_csp_cbf/vcc/003"
+            - "mid_csp_cbf/vcc/004"
+
+    - name: "FspPssSubarray"
+      devices:
+      - name: "mid_csp_cbf/fspPssSubarray/01_01"
+        properties:
+          - name: "CbfControllerAddress"
+            values:
+            - "mid_csp_cbf/sub_elt/controller"
+          - name: "CbfSubarrayAddress"
+            values:
+            - "mid_csp_cbf/sub_elt/subarray_01"
+          - name: "FspID"
+            values:
+            - "1"
+          - name: "SubID"
+            values:
+            - "1"
+          - name: "VCC"
+            values:
+            - "mid_csp_cbf/vcc/001"
+            - "mid_csp_cbf/vcc/002"
+            - "mid_csp_cbf/vcc/003"
+            - "mid_csp_cbf/vcc/004"
+
+      - name: "mid_csp_cbf/fspPssSubarray/01_02"
+        properties:
+          - name: "CbfControllerAddress"
+            values:
+            - "mid_csp_cbf/sub_elt/controller"
+          - name: "CbfSubarrayAddress"
+            values:
+            - "mid_csp_cbf/sub_elt/subarray_02"
+          - name: "FspID"
+            values:
+            - "1"
+          - name: "SubID"
+            values:
+            - "2"
+          - name: "VCC"
+            values:
+            - "mid_csp_cbf/vcc/001"
+            - "mid_csp_cbf/vcc/002"
+            - "mid_csp_cbf/vcc/003"
+            - "mid_csp_cbf/vcc/004"
+
+      - name: "mid_csp_cbf/fspPssSubarray/01_03"
+        properties:
+          - name: "CbfControllerAddress"
+            values:
+            - "mid_csp_cbf/sub_elt/controller"
+          - name: "CbfSubarrayAddress"
+            values:
+            - "mid_csp_cbf/sub_elt/subarray_03"
+          - name: "FspID"
+            values:
+            - "1"
+          - name: "SubID"
+            values:
+            - "3"
+          - name: "VCC"
+            values:
+            - "mid_csp_cbf/vcc/001"
+            - "mid_csp_cbf/vcc/002"
+            - "mid_csp_cbf/vcc/003"
+            - "mid_csp_cbf/vcc/004"
+            
+    - name: "FspPstSubarray"
+      devices:
+      - name: "mid_csp_cbf/fspPstSubarray/01_01"
+        properties:
+          - name: "CbfControllerAddress"
+            values:
+            - "mid_csp_cbf/sub_elt/controller"
+          - name: "CbfSubarrayAddress"
+            values:
+            - "mid_csp_cbf/sub_elt/subarray_01"
+          - name: "FspID"
+            values:
+            - "1"
+          - name: "SubID"
+            values:
+            - "1"
+          - name: "VCC"
+            values:
+            - "mid_csp_cbf/vcc/001"
+            - "mid_csp_cbf/vcc/002"
+            - "mid_csp_cbf/vcc/003"
+            - "mid_csp_cbf/vcc/004"
+
+      - name: "mid_csp_cbf/fspPstSubarray/01_02"
+        properties:
+          - name: "CbfControllerAddress"
+            values:
+            - "mid_csp_cbf/sub_elt/controller"
+          - name: "CbfSubarrayAddress"
+            values:
+            - "mid_csp_cbf/sub_elt/subarray_02"
+          - name: "FspID"
+            values:
+            - "1"
+          - name: "SubID"
+            values:
+            - "2"
+          - name: "VCC"
+            values:
+            - "mid_csp_cbf/vcc/001"
+            - "mid_csp_cbf/vcc/002"
+            - "mid_csp_cbf/vcc/003"
+            - "mid_csp_cbf/vcc/004"
+
+      - name: "mid_csp_cbf/fspPstSubarray/01_03"
+        properties:
+          - name: "CbfControllerAddress"
+            values:
+            - "mid_csp_cbf/sub_elt/controller"
+          - name: "CbfSubarrayAddress"
+            values:
+            - "mid_csp_cbf/sub_elt/subarray_03"
+          - name: "FspID"
+            values:
+            - "1"
+          - name: "SubID"
+            values:
+            - "3"
+          - name: "VCC"
+            values:
+            - "mid_csp_cbf/vcc/001"
+            - "mid_csp_cbf/vcc/002"
+            - "mid_csp_cbf/vcc/003"
+            - "mid_csp_cbf/vcc/004"
+
+  - name: "fsp-02"
+    classes:
+    - name: "Fsp"
+      devices:
+      - name: "mid_csp_cbf/fsp/02"
+        attribute_properties:
+        - attribute: "adminMode"
+          properties: 
+          - name: "abs_change"
+            values: 
+            - "-1"
+            - "1"
+        - attribute: "healthState"
+          properties:
+          - name: "abs_change"
+            values: 
+            - "-1"
+            - "1"
+        - attribute: "subarrayMembership"
+          properties:
+          - name: "abs_change"
+            values: 
+            - "-1"
+            - "1"
+        properties:
+          - name: "FspID"
+            values:
+            - "2"
+          - name: "CorrelationAddress"
+            values:
+            - "mid_csp_cbf/fsp_corr/02"
+          - name: "PSSAddress"
+            values:
+            - "mid_csp_cbf/fsp_pss/02"
+          - name: "PSTAddress"
+            values:
+            - "mid_csp_cbf/fsp_pst/02"
+          - name: "VLBIAddress"
+            values:
+            - "mid_csp_cbf/fsp_vlbi/02"
+          - name: "FspCorrSubarray"
+            values:
+            - "mid_csp_cbf/fspCorrSubarray/02_01"
+            - "mid_csp_cbf/fspCorrSubarray/02_02"
+            - "mid_csp_cbf/fspCorrSubarray/02_03"
+          - name: "FspPssSubarray"
+            values:
+            - "mid_csp_cbf/fspPssSubarray/02_01"
+            - "mid_csp_cbf/fspPssSubarray/02_02"
+            - "mid_csp_cbf/fspPssSubarray/02_03"
+          - name: "FspPstSubarray"
+            values:
+            - "mid_csp_cbf/fspPstSubarray/02_01"
+            - "mid_csp_cbf/fspPstSubarray/02_02"
+            - "mid_csp_cbf/fspPstSubarray/02_03"
+          - name: "polled_attr"
+            values:
+            - "state"
+            - "1000"
+            - "healthstate"
+            - "3000"
+            - "adminmode"
+            - "3000"
+            - "subarraymembership"
+            - "3000"
+
+    - name: "FspCorr"
+      devices:
+      - name: "mid_csp_cbf/fsp_corr/02"
+
+    - name: "FspPss"
+      devices:
+      - name: "mid_csp_cbf/fsp_pss/02"
+
+    - name: "FspPst"
+      devices:
+      - name: "mid_csp_cbf/fsp_pst/02"
+
+    - name: "FspVlbi"
+      devices:
+      - name: "mid_csp_cbf/fsp_vlbi/02"
+
+    - name: "FspCorrSubarray"
+      devices:
+      - name: "mid_csp_cbf/fspCorrSubarray/02_01"
+        properties:
+          - name: "CbfControllerAddress"
+            values:
+            - "mid_csp_cbf/sub_elt/controller"
+          - name: "CbfSubarrayAddress"
+            values:
+            - "mid_csp_cbf/sub_elt/subarray_01"
+          - name: "FspID"
+            values:
+            - "2"
+          - name: "SubID"
+            values:
+            - "1"
+          - name: "VCC"
+            values:
+            - "mid_csp_cbf/vcc/001"
+            - "mid_csp_cbf/vcc/002"
+            - "mid_csp_cbf/vcc/003"
+            - "mid_csp_cbf/vcc/004"
+
+      - name: "mid_csp_cbf/fspCorrSubarray/02_02"
+        properties:
+          - name: "CbfControllerAddress"
+            values:
+            - "mid_csp_cbf/sub_elt/controller"
+          - name: "CbfSubarrayAddress"
+            values:
+            - "mid_csp_cbf/sub_elt/subarray_02"
+          - name: "FspID"
+            values:
+            - "2"
+          - name: "SubID"
+            values:
+            - "2"
+          - name: "VCC"
+            values:
+            - "mid_csp_cbf/vcc/001"
+            - "mid_csp_cbf/vcc/002"
+            - "mid_csp_cbf/vcc/003"
+            - "mid_csp_cbf/vcc/004"
+
+      - name: "mid_csp_cbf/fspCorrSubarray/02_03"
+        properties:
+          - name: "CbfControllerAddress"
+            values:
+            - "mid_csp_cbf/sub_elt/controller"
+          - name: "CbfSubarrayAddress"
+            values:
+            - "mid_csp_cbf/sub_elt/subarray_03"
+          - name: "FspID"
+            values:
+            - "2"
+          - name: "SubID"
+            values:
+            - "3"
+          - name: "VCC"
+            values:
+            - "mid_csp_cbf/vcc/001"
+            - "mid_csp_cbf/vcc/002"
+            - "mid_csp_cbf/vcc/003"
+            - "mid_csp_cbf/vcc/004"
+
+    - name: "FspPssSubarray"
+      devices:
+      - name: "mid_csp_cbf/fspPssSubarray/02_01"
+        properties:
+          - name: "CbfControllerAddress"
+            values:
+            - "mid_csp_cbf/sub_elt/controller"
+          - name: "CbfSubarrayAddress"
+            values:
+            - "mid_csp_cbf/sub_elt/subarray_01"
+          - name: "FspID"
+            values:
+            - "2"
+          - name: "SubID"
+            values:
+            - "1"
+          - name: "VCC"
+            values:
+            - "mid_csp_cbf/vcc/001"
+            - "mid_csp_cbf/vcc/002"
+            - "mid_csp_cbf/vcc/003"
+            - "mid_csp_cbf/vcc/004"
+
+      - name: "mid_csp_cbf/fspPssSubarray/02_02"
+        properties:
+          - name: "CbfControllerAddress"
+            values:
+            - "mid_csp_cbf/sub_elt/controller"
+          - name: "CbfSubarrayAddress"
+            values:
+            - "mid_csp_cbf/sub_elt/subarray_02"
+          - name: "FspID"
+            values:
+            - "2"
+          - name: "SubID"
+            values:
+            - "2"
+          - name: "VCC"
+            values:
+            - "mid_csp_cbf/vcc/001"
+            - "mid_csp_cbf/vcc/002"
+            - "mid_csp_cbf/vcc/003"
+            - "mid_csp_cbf/vcc/004"
+
+      - name: "mid_csp_cbf/fspPssSubarray/02_03"
+        properties:
+          - name: "CbfControllerAddress"
+            values:
+            - "mid_csp_cbf/sub_elt/controller"
+          - name: "CbfSubarrayAddress"
+            values:
+            - "mid_csp_cbf/sub_elt/subarray_03"
+          - name: "FspID"
+            values:
+            - "2"
+          - name: "SubID"
+            values:
+            - "3"
+          - name: "VCC"
+            values:
+            - "mid_csp_cbf/vcc/001"
+            - "mid_csp_cbf/vcc/002"
+            - "mid_csp_cbf/vcc/003"
+            - "mid_csp_cbf/vcc/004"
+
+    - name: "FspPstSubarray"
+      devices:
+      - name: "mid_csp_cbf/fspPstSubarray/02_01"
+        properties:
+          - name: "CbfControllerAddress"
+            values:
+            - "mid_csp_cbf/sub_elt/controller"
+          - name: "CbfSubarrayAddress"
+            values:
+            - "mid_csp_cbf/sub_elt/subarray_01"
+          - name: "FspID"
+            values:
+            - "2"
+          - name: "SubID"
+            values:
+            - "1"
+          - name: "VCC"
+            values:
+            - "mid_csp_cbf/vcc/001"
+            - "mid_csp_cbf/vcc/002"
+            - "mid_csp_cbf/vcc/003"
+            - "mid_csp_cbf/vcc/004"
+
+      - name: "mid_csp_cbf/fspPstSubarray/02_02"
+        properties:
+          - name: "CbfControllerAddress"
+            values:
+            - "mid_csp_cbf/sub_elt/controller"
+          - name: "CbfSubarrayAddress"
+            values:
+            - "mid_csp_cbf/sub_elt/subarray_02"
+          - name: "FspID"
+            values:
+            - "2"
+          - name: "SubID"
+            values:
+            - "2"
+          - name: "VCC"
+            values:
+            - "mid_csp_cbf/vcc/001"
+            - "mid_csp_cbf/vcc/002"
+            - "mid_csp_cbf/vcc/003"
+            - "mid_csp_cbf/vcc/004"
+
+      - name: "mid_csp_cbf/fspPstSubarray/02_03"
+        properties:
+          - name: "CbfControllerAddress"
+            values:
+            - "mid_csp_cbf/sub_elt/controller"
+          - name: "CbfSubarrayAddress"
+            values:
+            - "mid_csp_cbf/sub_elt/subarray_03"
+          - name: "FspID"
+            values:
+            - "2"
+          - name: "SubID"
+            values:
+            - "3"
+          - name: "VCC"
+            values:
+            - "mid_csp_cbf/vcc/001"
+            - "mid_csp_cbf/vcc/002"
+            - "mid_csp_cbf/vcc/003"
+            - "mid_csp_cbf/vcc/004"
+
+  - name: "fsp-03"
+    classes:
+    - name: "Fsp"
+      devices:
+      - name: "mid_csp_cbf/fsp/03"
+        attribute_properties:
+        - attribute: "adminMode"
+          properties: 
+          - name: "abs_change"
+            values: 
+            - "-1"
+            - "1"
+        - attribute: "healthState"
+          properties:
+          - name: "abs_change"
+            values: 
+            - "-1"
+            - "1"
+        - attribute: "subarrayMembership"
+          properties:
+          - name: "abs_change"
+            values: 
+            - "-1"
+            - "1"
+        properties:
+          - name: "FspID"
+            values:
+            - "3"
+          - name: "CorrelationAddress"
+            values:
+            - "mid_csp_cbf/fsp_corr/03"
+          - name: "PSSAddress"
+            values:
+            - "mid_csp_cbf/fsp_pss/03"
+          - name: "PSTAddress"
+            values:
+            - "mid_csp_cbf/fsp_pst/03"
+          - name: "VLBIAddress"
+            values:
+            - "mid_csp_cbf/fsp_vlbi/03"
+          - name: "FspCorrSubarray"
+            values:
+            - "mid_csp_cbf/fspCorrSubarray/03_01"
+            - "mid_csp_cbf/fspCorrSubarray/03_02"
+            - "mid_csp_cbf/fspCorrSubarray/03_03"
+          - name: "FspPssSubarray"
+            values:
+            - "mid_csp_cbf/fspPssSubarray/03_01"
+            - "mid_csp_cbf/fspPssSubarray/03_02"
+            - "mid_csp_cbf/fspPssSubarray/03_03"
+          - name: "FspPstSubarray"
+            values:
+            - "mid_csp_cbf/fspPstSubarray/03_01"
+            - "mid_csp_cbf/fspPstSubarray/03_02"
+            - "mid_csp_cbf/fspPstSubarray/03_03"
+          - name: "polled_attr"
+            values:
+            - "state"
+            - "1000"
+            - "healthstate"
+            - "3000"
+            - "adminmode"
+            - "3000"
+            - "subarraymembership"
+            - "3000"
+
+    - name: "FspCorr"
+      devices:
+      - name: "mid_csp_cbf/fsp_corr/03"
+
+    - name: "FspPss"
+      devices:
+      - name: "mid_csp_cbf/fsp_pss/03"
+
+    - name: "FspPst"
+      devices:
+      - name: "mid_csp_cbf/fsp_pst/03"
+
+    - name: "FspVlbi"
+      devices:
+      - name: "mid_csp_cbf/fsp_vlbi/03"
+
+    - name: "FspCorrSubarray"
+      devices:
+      - name: "mid_csp_cbf/fspCorrSubarray/03_01"
+        properties:
+          - name: "CbfControllerAddress"
+            values:
+            - "mid_csp_cbf/sub_elt/controller"
+          - name: "CbfSubarrayAddress"
+            values:
+            - "mid_csp_cbf/sub_elt/subarray_01"
+          - name: "FspID"
+            values:
+            - "3"
+          - name: "SubID"
+            values:
+            - "1"
+          - name: "VCC"
+            values:
+            - "mid_csp_cbf/vcc/001"
+            - "mid_csp_cbf/vcc/002"
+            - "mid_csp_cbf/vcc/003"
+            - "mid_csp_cbf/vcc/004"
+
+      - name: "mid_csp_cbf/fspCorrSubarray/03_02"
+        properties:
+          - name: "CbfControllerAddress"
+            values:
+            - "mid_csp_cbf/sub_elt/controller"
+          - name: "CbfSubarrayAddress"
+            values:
+            - "mid_csp_cbf/sub_elt/subarray_02"
+          - name: "FspID"
+            values:
+            - "3"
+          - name: "SubID"
+            values:
+            - "2"
+          - name: "VCC"
+            values:
+            - "mid_csp_cbf/vcc/001"
+            - "mid_csp_cbf/vcc/002"
+            - "mid_csp_cbf/vcc/003"
+            - "mid_csp_cbf/vcc/004"
+
+      - name: "mid_csp_cbf/fspCorrSubarray/03_03"
+        properties:
+          - name: "CbfControllerAddress"
+            values:
+            - "mid_csp_cbf/sub_elt/controller"
+          - name: "CbfSubarrayAddress"
+            values:
+            - "mid_csp_cbf/sub_elt/subarray_03"
+          - name: "FspID"
+            values:
+            - "3"
+          - name: "SubID"
+            values:
+            - "3"
+          - name: "VCC"
+            values:
+            - "mid_csp_cbf/vcc/001"
+            - "mid_csp_cbf/vcc/002"
+            - "mid_csp_cbf/vcc/003"
+            - "mid_csp_cbf/vcc/004"
+
+    - name: "FspPssSubarray"
+      devices:
+      - name: "mid_csp_cbf/fspPssSubarray/03_01"
+        properties:
+          - name: "CbfControllerAddress"
+            values:
+            - "mid_csp_cbf/sub_elt/controller"
+          - name: "CbfSubarrayAddress"
+            values:
+            - "mid_csp_cbf/sub_elt/subarray_01"
+          - name: "FspID"
+            values:
+            - "3"
+          - name: "SubID"
+            values:
+            - "1"
+          - name: "VCC"
+            values:
+            - "mid_csp_cbf/vcc/001"
+            - "mid_csp_cbf/vcc/002"
+            - "mid_csp_cbf/vcc/003"
+            - "mid_csp_cbf/vcc/004"
+
+      - name: "mid_csp_cbf/fspPssSubarray/03_02"
+        properties:
+          - name: "CbfControllerAddress"
+            values:
+            - "mid_csp_cbf/sub_elt/controller"
+          - name: "CbfSubarrayAddress"
+            values:
+            - "mid_csp_cbf/sub_elt/subarray_02"
+          - name: "FspID"
+            values:
+            - "3"
+          - name: "SubID"
+            values:
+            - "2"
+          - name: "VCC"
+            values:
+            - "mid_csp_cbf/vcc/001"
+            - "mid_csp_cbf/vcc/002"
+            - "mid_csp_cbf/vcc/003"
+            - "mid_csp_cbf/vcc/004"
+
+      - name: "mid_csp_cbf/fspPssSubarray/03_03"
+        properties:
+          - name: "CbfControllerAddress"
+            values:
+            - "mid_csp_cbf/sub_elt/controller"
+          - name: "CbfSubarrayAddress"
+            values:
+            - "mid_csp_cbf/sub_elt/subarray_03"
+          - name: "FspID"
+            values:
+            - "3"
+          - name: "SubID"
+            values:
+            - "3"
+          - name: "VCC"
+            values:
+            - "mid_csp_cbf/vcc/001"
+            - "mid_csp_cbf/vcc/002"
+            - "mid_csp_cbf/vcc/003"
+            - "mid_csp_cbf/vcc/004"
+
+    - name: "FspPstSubarray"
+      devices:
+      - name: "mid_csp_cbf/fspPstSubarray/03_01"
+        properties:
+          - name: "CbfControllerAddress"
+            values:
+            - "mid_csp_cbf/sub_elt/controller"
+          - name: "CbfSubarrayAddress"
+            values:
+            - "mid_csp_cbf/sub_elt/subarray_01"
+          - name: "FspID"
+            values:
+            - "3"
+          - name: "SubID"
+            values:
+            - "1"
+          - name: "VCC"
+            values:
+            - "mid_csp_cbf/vcc/001"
+            - "mid_csp_cbf/vcc/002"
+            - "mid_csp_cbf/vcc/003"
+            - "mid_csp_cbf/vcc/004"
+
+      - name: "mid_csp_cbf/fspPstSubarray/03_02"
+        properties:
+          - name: "CbfControllerAddress"
+            values:
+            - "mid_csp_cbf/sub_elt/controller"
+          - name: "CbfSubarrayAddress"
+            values:
+            - "mid_csp_cbf/sub_elt/subarray_02"
+          - name: "FspID"
+            values:
+            - "3"
+          - name: "SubID"
+            values:
+            - "2"
+          - name: "VCC"
+            values:
+            - "mid_csp_cbf/vcc/001"
+            - "mid_csp_cbf/vcc/002"
+            - "mid_csp_cbf/vcc/003"
+            - "mid_csp_cbf/vcc/004"
+
+      - name: "mid_csp_cbf/fspPstSubarray/03_03"
+        properties:
+          - name: "CbfControllerAddress"
+            values:
+            - "mid_csp_cbf/sub_elt/controller"
+          - name: "CbfSubarrayAddress"
+            values:
+            - "mid_csp_cbf/sub_elt/subarray_03"
+          - name: "FspID"
+            values:
+            - "3"
+          - name: "SubID"
+            values:
+            - "3"
+          - name: "VCC"
+            values:
+            - "mid_csp_cbf/vcc/001"
+            - "mid_csp_cbf/vcc/002"
+            - "mid_csp_cbf/vcc/003"
+            - "mid_csp_cbf/vcc/004"
+
+  - name: "fsp-04"
+    classes:
+    - name: "Fsp"
+      devices:
+      - name: "mid_csp_cbf/fsp/04"
+        attribute_properties:
+        - attribute: "adminMode"
+          properties: 
+          - name: "abs_change"
+            values: 
+            - "-1"
+            - "1"
+        - attribute: "healthState"
+          properties:
+          - name: "abs_change"
+            values: 
+            - "-1"
+            - "1"
+        - attribute: "subarrayMembership"
+          properties:
+          - name: "abs_change"
+            values: 
+            - "-1"
+            - "1"
+        properties:
+          - name: "FspID"
+            values:
+            - "4"
+          - name: "CorrelationAddress"
+            values:
+            - "mid_csp_cbf/fsp_corr/04"
+          - name: "PSSAddress"
+            values:
+            - "mid_csp_cbf/fsp_pss/04"
+          - name: "PSTAddress"
+            values:
+            - "mid_csp_cbf/fsp_pst/04"
+          - name: "VLBIAddress"
+            values:
+            - "mid_csp_cbf/fsp_vlbi/04"
+          - name: "FspCorrSubarray"
+            values:
+            - "mid_csp_cbf/fspCorrSubarray/04_01"
+            - "mid_csp_cbf/fspCorrSubarray/04_02"
+            - "mid_csp_cbf/fspCorrSubarray/04_03"
+          - name: "FspPssSubarray"
+            values:
+            - "mid_csp_cbf/fspPssSubarray/04_01"
+            - "mid_csp_cbf/fspPssSubarray/04_02"
+            - "mid_csp_cbf/fspPssSubarray/04_03"
+          - name: "FspPstSubarray"
+            values:
+            - "mid_csp_cbf/fspPstSubarray/04_01"
+            - "mid_csp_cbf/fspPstSubarray/04_02"
+            - "mid_csp_cbf/fspPstSubarray/04_03"
+          - name: "polled_attr"
+            values:
+            - "state"
+            - "1000"
+            - "healthstate"
+            - "3000"
+            - "adminmode"
+            - "3000"
+            - "subarraymembership"
+            - "3000"
+
+    - name: "FspCorr"
+      devices:
+      - name: "mid_csp_cbf/fsp_corr/04"
+
+    - name: "FspPss"
+      devices:
+      - name: "mid_csp_cbf/fsp_pss/04"
+
+    - name: "FspPst"
+      devices:
+      - name: "mid_csp_cbf/fsp_pst/04"
+
+    - name: "FspVlbi"
+      devices:
+      - name: "mid_csp_cbf/fsp_vlbi/04"
+
+    - name: "FspCorrSubarray"
+      devices:
+      - name: "mid_csp_cbf/fspCorrSubarray/04_01"
+        properties:
+          - name: "CbfControllerAddress"
+            values:
+            - "mid_csp_cbf/sub_elt/controller"
+          - name: "CbfSubarrayAddress"
+            values:
+            - "mid_csp_cbf/sub_elt/subarray_01"
+          - name: "FspID"
+            values:
+            - "4"
+          - name: "SubID"
+            values:
+            - "1"
+          - name: "VCC"
+            values:
+            - "mid_csp_cbf/vcc/001"
+            - "mid_csp_cbf/vcc/002"
+            - "mid_csp_cbf/vcc/003"
+            - "mid_csp_cbf/vcc/004"
+
+      - name: "mid_csp_cbf/fspCorrSubarray/04_02"
+        properties:
+          - name: "CbfControllerAddress"
+            values:
+            - "mid_csp_cbf/sub_elt/controller"
+          - name: "CbfSubarrayAddress"
+            values:
+            - "mid_csp_cbf/sub_elt/subarray_02"
+          - name: "FspID"
+            values:
+            - "4"
+          - name: "SubID"
+            values:
+            - "2"
+          - name: "VCC"
+            values:
+            - "mid_csp_cbf/vcc/001"
+            - "mid_csp_cbf/vcc/002"
+            - "mid_csp_cbf/vcc/003"
+            - "mid_csp_cbf/vcc/004"
+
+      - name: "mid_csp_cbf/fspCorrSubarray/04_03"
+        properties:
+          - name: "CbfControllerAddress"
+            values:
+            - "mid_csp_cbf/sub_elt/controller"
+          - name: "CbfSubarrayAddress"
+            values:
+            - "mid_csp_cbf/sub_elt/subarray_03"
+          - name: "FspID"
+            values:
+            - "4"
+          - name: "SubID"
+            values:
+            - "3"
+          - name: "VCC"
+            values:
+            - "mid_csp_cbf/vcc/001"
+            - "mid_csp_cbf/vcc/002"
+            - "mid_csp_cbf/vcc/003"
+            - "mid_csp_cbf/vcc/004"
+
+    - name: "FspPssSubarray"
+      devices:
+      - name: "mid_csp_cbf/fspPssSubarray/04_01"
+        properties:
+          - name: "CbfControllerAddress"
+            values:
+            - "mid_csp_cbf/sub_elt/controller"
+          - name: "CbfSubarrayAddress"
+            values:
+            - "mid_csp_cbf/sub_elt/subarray_01"
+          - name: "FspID"
+            values:
+            - "4"
+          - name: "SubID"
+            values:
+            - "1"
+          - name: "VCC"
+            values:
+            - "mid_csp_cbf/vcc/001"
+            - "mid_csp_cbf/vcc/002"
+            - "mid_csp_cbf/vcc/003"
+            - "mid_csp_cbf/vcc/004"
+
+      - name: "mid_csp_cbf/fspPssSubarray/04_02"
+        properties:
+          - name: "CbfControllerAddress"
+            values:
+            - "mid_csp_cbf/sub_elt/controller"
+          - name: "CbfSubarrayAddress"
+            values:
+            - "mid_csp_cbf/sub_elt/subarray_02"
+          - name: "FspID"
+            values:
+            - "4"
+          - name: "SubID"
+            values:
+            - "2"
+          - name: "VCC"
+            values:
+            - "mid_csp_cbf/vcc/001"
+            - "mid_csp_cbf/vcc/002"
+            - "mid_csp_cbf/vcc/003"
+            - "mid_csp_cbf/vcc/004"
+
+      - name: "mid_csp_cbf/fspPssSubarray/04_03"
+        properties:
+          - name: "CbfControllerAddress"
+            values:
+            - "mid_csp_cbf/sub_elt/controller"
+          - name: "CbfSubarrayAddress"
+            values:
+            - "mid_csp_cbf/sub_elt/subarray_03"
+          - name: "FspID"
+            values:
+            - "4"
+          - name: "SubID"
+            values:
+            - "3"
+          - name: "VCC"
+            values:
+            - "mid_csp_cbf/vcc/001"
+            - "mid_csp_cbf/vcc/002"
+            - "mid_csp_cbf/vcc/003"
+            - "mid_csp_cbf/vcc/004"
+
+    - name: "FspPstSubarray"
+      devices:
+      - name: "mid_csp_cbf/fspPstSubarray/04_01"
+        properties:
+          - name: "CbfControllerAddress"
+            values:
+            - "mid_csp_cbf/sub_elt/controller"
+          - name: "CbfSubarrayAddress"
+            values:
+            - "mid_csp_cbf/sub_elt/subarray_01"
+          - name: "FspID"
+            values:
+            - "4"
+          - name: "SubID"
+            values:
+            - "1"
+          - name: "VCC"
+            values:
+            - "mid_csp_cbf/vcc/001"
+            - "mid_csp_cbf/vcc/002"
+            - "mid_csp_cbf/vcc/003"
+            - "mid_csp_cbf/vcc/004"
+
+      - name: "mid_csp_cbf/fspPstSubarray/04_02"
+        properties:
+          - name: "CbfControllerAddress"
+            values:
+            - "mid_csp_cbf/sub_elt/controller"
+          - name: "CbfSubarrayAddress"
+            values:
+            - "mid_csp_cbf/sub_elt/subarray_02"
+          - name: "FspID"
+            values:
+            - "4"
+          - name: "SubID"
+            values:
+            - "2"
+          - name: "VCC"
+            values:
+            - "mid_csp_cbf/vcc/001"
+            - "mid_csp_cbf/vcc/002"
+            - "mid_csp_cbf/vcc/003"
+            - "mid_csp_cbf/vcc/004"
+
+      - name: "mid_csp_cbf/fspPstSubarray/04_03"
+        properties:
+          - name: "CbfControllerAddress"
+            values:
+            - "mid_csp_cbf/sub_elt/controller"
+          - name: "CbfSubarrayAddress"
+            values:
+            - "mid_csp_cbf/sub_elt/subarray_03"
+          - name: "FspID"
+            values:
+            - "4"
+          - name: "SubID"
+            values:
+            - "3"
+          - name: "VCC"
+            values:
+            - "mid_csp_cbf/vcc/001"
+            - "mid_csp_cbf/vcc/002"
+            - "mid_csp_cbf/vcc/003"
+            - "mid_csp_cbf/vcc/004"
+image:
+  registry: "{{.Values.midcbf.image.registry}}"
+  image: "{{.Values.midcbf.image.image}}"
+  tag: "{{.Values.midcbf.image.tag}}"
+  pullPolicy: "{{.Values.midcbf.image.pullPolicy}}"

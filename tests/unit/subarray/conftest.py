@@ -275,7 +275,7 @@ def device_to_load(
     :return: specification of the device to be loaded
     """
     return {
-        "path": "charts/ska-mid-cbf-mcs/data/midcbfconfig.json",
+        "path": "tests/unit/subarray/devicetoload.json",
         "package": "ska_mid_cbf_mcs.subarray.subarray_device",
         "device": "cbfsubarray-01",
         "device_class": "CbfSubarray",
