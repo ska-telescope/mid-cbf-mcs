@@ -27,8 +27,8 @@ HELM_CHART ?= ska-mid-cbf-umbrella
 TANGO_DATABASE = tango-host-databaseds-from-makefile-$(HELM_RELEASE)
 TANGO_HOST = $(TANGO_DATABASE):10000## TANGO_HOST is an input!
 
+# Python variables
 PYTHON_VARS_BEFORE_PYTEST = PYTHONPATH=./src:/app/src:/app/src/ska_mid_cbf_mcs KUBE_NAMESPACE=$(KUBE_NAMESPACE) HELM_RELEASE=$(RELEASE_NAME) TANGO_HOST=$(TANGO_HOST)
-
 PYTHON_SWITCHES_FOR_FLAKE8 = --ignore=E501,W503
 PYTHON_SWITCHES_FOR_PYLINT = 
 
