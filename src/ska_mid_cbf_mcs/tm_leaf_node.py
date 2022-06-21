@@ -69,9 +69,7 @@ class TmCspSubarrayLeafNodeTest(SKABaseDevice):
                 self.logger.error(str(e))
         else:
             for item in event.errors:
-                log_msg = (
-                        f"{item.reason}: on attribute {event.attr_name}"
-                )
+                log_msg = f"{item.reason}: on attribute {event.attr_name}"
                 self.logger.error(log_msg)
 
     def __generate_visibilities_destination_addresses(self, output_links):
