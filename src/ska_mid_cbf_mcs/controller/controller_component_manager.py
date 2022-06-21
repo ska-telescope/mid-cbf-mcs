@@ -393,7 +393,7 @@ class ControllerComponentManager(CbfComponentManager):
         for idx, fqdn in enumerate(self._fqdn_vcc):
             if fqdn not in self._proxies:
                 try:
-                    log_msg = "Trying connection to " + fqdn + " device"
+                    log_msg = f"Trying connection to {fqdn} device"
                     self._logger.info(log_msg)
                     proxy = CbfDeviceProxy(fqdn=fqdn, logger=self._logger)
                     self._proxies[fqdn] = proxy

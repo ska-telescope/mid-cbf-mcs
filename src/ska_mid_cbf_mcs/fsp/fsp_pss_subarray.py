@@ -490,7 +490,7 @@ class FspPssSubarray(CspSubElementObsDevice):
             tango.Except.throw_exception(
                 "Command failed",
                 message,
-                "ConfigureScan" + " execution",
+                "ConfigureScan execution",
                 tango.ErrSeverity.ERR,
             )
         else:

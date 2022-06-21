@@ -70,7 +70,7 @@ class TmCspSubarrayLeafNodeTest(SKABaseDevice):
         else:
             for item in event.errors:
                 log_msg = (
-                    item.reason + ": on attribute " + str(event.attr_name)
+                        f"{item.reason}: on attribute {event.attr_name}"
                 )
                 self.logger.error(log_msg)
 

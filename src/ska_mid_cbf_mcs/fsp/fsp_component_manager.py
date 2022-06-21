@@ -493,7 +493,7 @@ class FspComponentManager(CbfComponentManager):
                     functionMode not valid"
                 return (ResultCode.FAILED, message)
 
-            self._logger.info("FSP set to function mode " + argin)
+            self._logger.info(f"FSP set to function mode {argin}")
 
             message = "Fsp SetFunctionMode command completed OK"
             return (ResultCode.OK, message)
