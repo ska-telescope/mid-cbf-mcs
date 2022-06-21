@@ -23,6 +23,7 @@ annotations:
     app.gitlab.com/app: CI_PROJECT_PATH_SLUG
     app.gitlab.com/env: CI_ENVIRONMENT_SLUG  
 dsconfig:
+    configuration_file: data/midcbfconfig.json
     image:
       registry: artefact.skao.int
       image: ska-tango-images-tango-dsconfig
