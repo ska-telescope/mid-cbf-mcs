@@ -87,9 +87,9 @@ DISPLAY := $(THIS_HOST):0
 TEST_RUNNER = test-runner-$(CI_JOB_ID)-$(KUBE_NAMESPACE)-$(HELM_RELEASE)
 
 ifneq ($(CI_REGISTRY),)
-K8S_TEST_IMAGE_TO_TEST=$(CI_REGISTRY)/ska-telescope/ska-mid-cbf-mcs/ska-mid-cbf-mcs:0.6.0-dev.c$(CI_COMMIT_SHORT_SHA)
+K8S_TEST_IMAGE_TO_TEST=$(CI_REGISTRY)/ska-telescope/ska-mid-cbf-mcs/ska-mid-cbf-mcs:0.6.3-dev.c$(CI_COMMIT_SHORT_SHA)
 else
-K8S_TEST_IMAGE_TO_TEST = artefact.skao.int/ska-mid-cbf-mcs:0.6.0
+K8S_TEST_IMAGE_TO_TEST = artefact.skao.int/ska-mid-cbf-mcs:0.6.3
 endif
 
 K8S_TEST_TEST_COMMAND ?= ls -lrt &&  $(PYTHON_VARS_BEFORE_PYTEST) $(PYTHON_RUNNER) \
