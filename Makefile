@@ -30,8 +30,11 @@ TANGO_HOST = $(TANGO_DATABASE):10000## TANGO_HOST is an input!
 
 # Python variables
 PYTHON_VARS_BEFORE_PYTEST = PYTHONPATH=./src:/app/src:/app/src/ska_mid_cbf_mcs KUBE_NAMESPACE=$(KUBE_NAMESPACE) HELM_RELEASE=$(RELEASE_NAME) TANGO_HOST=$(TANGO_HOST)
+
+# Ignoring 501 which checks line length. There are over 500 failures for this in the code due to commenting. 
+# Also ignoring 503 because operators can either be before or after line break(504). 
+# We are choosing a standard to have it before the line break and therefore 503 will be ignored.
 PYTHON_SWITCHES_FOR_FLAKE8 = --ignore=E501,W503
-PYTHON_SWITCHES_FOR_PYLINT = 
 
 
 # UMBRELLA_CHART_PATH Path of the umbrella chart to work with
@@ -39,11 +42,9 @@ UMBRELLA_CHART_PATH ?= charts/ska-mid-cbf-umbrella/
 
 K8S_CHARTS ?= ska-mid-cbf-umbrella ska-mid-cbf-mcs ska-mid-cbf-tmleafnode ## list of charts
 K8S_UMBRELLA_CHART_PATH ?= ./charts/ska-mid-cbf-umbrella
-#K8S_CHART_PARAMS = --set global.tango_host=$(TANGO_HOST) --set midcbf.image.registry=registry.gitlab.com/ska-telescope/ska-mid-cbf-mcs
 
 PYTHON_TEST_FILE = 
 PYTHON_VARS_AFTER_PYTEST = -c setup-unit-test.cfg
-#PYTHON_RUNNER = python3 -m
 
 # Fixed variables
 # Timeout for gitlab-runner when run locally
@@ -124,14 +125,6 @@ unit-test: ## Run simulation mode unit tests
 	@mkdir -p build; \
 	python3 -m pytest -c setup-unit-test.cfg
 
-#python-do-lint:
-#	@echo
-
-k8s-post-install-chart:
-	@sleep 60
-	kubectl describe pod powerswitch-powerswitch-001-0 -n $(KUBE_NAMESPACE)
-	echo K8S_TEST_IMAGE_TO_TEST=$(K8S_TEST_IMAGE_TO_TEST)
-	echo K8S_CHART_PARAMS=$(K8S_CHART_PARAMS)
 
 jive: ## configure TANGO_HOST to enable Jive
 	@echo
