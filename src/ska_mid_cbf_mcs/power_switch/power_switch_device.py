@@ -9,38 +9,41 @@
 
 # Copyright (c) 2019 National Research Council of Canada
 
-""" 
+"""
 TANGO device class for controlling and monitoring the web power switch that distributes power to the Talon LRUs.
 """
 
 from __future__ import annotations
-from typing import Tuple, Optional
+
+from typing import Optional, Tuple
 
 # tango imports
 import tango
-from tango import DebugIt
-from tango.server import run
-from tango.server import attribute, command
-from tango.server import device_property
-from tango import AttrWriteType
 from ska_tango_base import SKABaseDevice
+from ska_tango_base.commands import BaseCommand, ResponseCommand, ResultCode
 
 # Additional import
 # PROTECTED REGION ID(PowerSwitch.additionnal_import) ENABLED START #
-from ska_tango_base.control_model import SimulationMode, PowerMode
-from ska_tango_base.commands import ResultCode, BaseCommand, ResponseCommand
-from ska_tango_base.control_model import PowerMode
-from ska_mid_cbf_mcs.power_switch.power_switch_component_manager import PowerSwitchComponentManager
+from ska_tango_base.control_model import PowerMode, SimulationMode
+from tango import AttrWriteType, DebugIt
+from tango.server import attribute, command, device_property, run
+
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
+from ska_mid_cbf_mcs.power_switch.power_switch_component_manager import (
+    PowerSwitchComponentManager,
+)
+
 # PROTECTED REGION END #    //  PowerSwitch.additionnal_import
 
 __all__ = ["PowerSwitch", "main"]
+
 
 class PowerSwitch(SKABaseDevice):
     """
     TANGO device class for controlling and monitoring the web power switch that
     distributes power to the Talon LRUs.
     """
+
     # PROTECTED REGION ID(PowerSwitch.class_variable) ENABLED START #
     # PROTECTED REGION END #    //  PowerSwitch.class_variable
 
@@ -49,7 +52,7 @@ class PowerSwitch(SKABaseDevice):
     # -----------------
 
     PowerSwitchIp = device_property(
-        dtype='str',
+        dtype="str",
     )
 
     # ----------
@@ -57,14 +60,14 @@ class PowerSwitch(SKABaseDevice):
     # ----------
 
     isCommunicating = attribute(
-        dtype='DevBoolean',
+        dtype="DevBoolean",
         access=AttrWriteType.READ,
         label="is communicating",
         doc="Whether or not the power switch can be communicated with",
     )
 
     numOutlets = attribute(
-        dtype='DevULong',
+        dtype="DevULong",
         access=AttrWriteType.READ,
         label="num outlets",
         doc="Number of outlets in this power switch",
@@ -75,8 +78,8 @@ class PowerSwitch(SKABaseDevice):
         access=AttrWriteType.READ_WRITE,
         memorized=True,
         doc="Reports the simulation mode of the device. \nSome devices may implement "
-            "both modes, while others will have simulators that set simulationMode "
-            "to True while the real devices always set simulationMode to False.",
+        "both modes, while others will have simulators that set simulationMode "
+        "to True while the real devices always set simulationMode to False.",
     )
 
     # ---------------
@@ -88,7 +91,6 @@ class PowerSwitch(SKABaseDevice):
         Hook to be executed before any attribute access or command.
         """
         # PROTECTED REGION ID(PowerSwitch.always_executed_hook) ENABLED START #
-        pass
         # PROTECTED REGION END #    //  PowerSwitch.always_executed_hook
 
     def delete_device(self: PowerSwitch) -> None:
@@ -96,10 +98,11 @@ class PowerSwitch(SKABaseDevice):
         Uninitialize the device.
         """
         # PROTECTED REGION ID(PowerSwitch.delete_device) ENABLED START #
-        pass
         # PROTECTED REGION END #    //  PowerSwitch.delete_device
 
-    def create_component_manager(self: PowerSwitch) -> PowerSwitchComponentManager:
+    def create_component_manager(
+        self: PowerSwitch,
+    ) -> PowerSwitchComponentManager:
         """
         Create and return a component manager for this device.
 
@@ -114,7 +117,7 @@ class PowerSwitch(SKABaseDevice):
             push_change_event_callback=self.push_change_event,
             communication_status_changed_callback=self._communication_status_changed,
             component_power_mode_changed_callback=self._component_power_mode_changed,
-            component_fault_callback=self._component_fault
+            component_fault_callback=self._component_fault,
         )
 
     def init_command_objects(self: PowerSwitch) -> None:
@@ -159,12 +162,14 @@ class PowerSwitch(SKABaseDevice):
             self.op_state_model.perform_action("component_disconnected")
         elif communication_status == CommunicationStatus.NOT_ESTABLISHED:
             self.op_state_model.perform_action("component_unknown")
-        elif communication_status == CommunicationStatus.ESTABLISHED \
-            and self._component_power_mode is not None:
+        elif (
+            communication_status == CommunicationStatus.ESTABLISHED
+            and self._component_power_mode is not None
+        ):
             self._component_power_mode_changed(self._component_power_mode)
         else:  # self._component_power_mode is None
             pass  # wait for a power mode update
-    
+
     def _component_power_mode_changed(
         self: PowerSwitch,
         power_mode: PowerMode,
@@ -189,7 +194,7 @@ class PowerSwitch(SKABaseDevice):
             }
 
             self.op_state_model.perform_action(action_map[power_mode])
-    
+
     def _component_fault(self: PowerSwitch, faulty: bool) -> None:
         """
         Handle component fault
@@ -237,6 +242,7 @@ class PowerSwitch(SKABaseDevice):
         """
         A class for the PowerSwitch's init_device() "command".
         """
+
         def do(self: PowerSwitch.InitCommand) -> Tuple[ResultCode, str]:
             """
             Stateless hook for device initialisation.
@@ -256,8 +262,7 @@ class PowerSwitch(SKABaseDevice):
         """
 
         def do(
-            self: PowerSwitch.TurnOnOutletCommand,
-            argin: int
+            self: PowerSwitch.TurnOnOutletCommand, argin: int
         ) -> Tuple[ResultCode, str]:
             """
             Implement TurnOnOutlet command functionality.
@@ -277,27 +282,34 @@ class PowerSwitch(SKABaseDevice):
 
                 power_mode = component_manager.get_outlet_power_mode(argin)
                 if power_mode != PowerMode.ON:
-                    return (ResultCode.FAILED, f"Power on failed, outlet is in power mode {power_mode}")
+                    return (
+                        ResultCode.FAILED,
+                        f"Power on failed, outlet is in power mode {power_mode}",
+                    )
             except AssertionError as e:
                 self.logger.error(e)
-                return (ResultCode.FAILED, "Unable to read outlet state after power on")
+                return (
+                    ResultCode.FAILED,
+                    "Unable to read outlet state after power on",
+                )
 
             return (result, msg)
 
     @command(
-    dtype_in='DevULong', 
-    doc_in="Outlet to turn on.", 
-    dtype_out='DevVarLongStringArray', 
-    doc_out="Tuple containing a return code and a string message indicating the status of the command.", 
+        dtype_in="DevULong",
+        doc_in="Outlet to turn on.",
+        dtype_out="DevVarLongStringArray",
+        doc_out="Tuple containing a return code and a string message indicating the status of the command.",
     )
     @DebugIt()
-    def TurnOnOutlet(self: PowerSwitch, argin: int) -> tango.DevVarLongStringArray:
+    def TurnOnOutlet(
+        self: PowerSwitch, argin: int
+    ) -> tango.DevVarLongStringArray:
         # PROTECTED REGION ID(PowerSwitch.TurnOnOutlet) ENABLED START #
         handler = self.get_command_object("TurnOnOutlet")
         return_code, message = handler(argin)
         return [[return_code], [message]]
         # PROTECTED REGION END #    //  PowerSwitch.TurnOnOutlet
-
 
     class TurnOffOutletCommand(ResponseCommand):
         """
@@ -308,8 +320,7 @@ class PowerSwitch(SKABaseDevice):
         """
 
         def do(
-            self: PowerSwitch.TurnOffOutletCommand,
-            argin: int
+            self: PowerSwitch.TurnOffOutletCommand, argin: int
         ) -> Tuple[ResultCode, str]:
             """
             Implement TurnOffOutlet command functionality.
@@ -329,39 +340,45 @@ class PowerSwitch(SKABaseDevice):
 
                 power_mode = component_manager.get_outlet_power_mode(argin)
                 if power_mode != PowerMode.OFF:
-                    return (ResultCode.FAILED, f"Power off failed, outlet is in power mode {power_mode}")
+                    return (
+                        ResultCode.FAILED,
+                        f"Power off failed, outlet is in power mode {power_mode}",
+                    )
             except AssertionError as e:
                 self.logger.error(e)
-                return (ResultCode.FAILED, "Unable to read outlet state after power off")
-            
+                return (
+                    ResultCode.FAILED,
+                    "Unable to read outlet state after power off",
+                )
+
             return (result, msg)
 
     @command(
-    dtype_in='DevULong', 
-    doc_in="Outlet to turn off.", 
-    dtype_out='DevVarLongStringArray', 
-    doc_out="Tuple containing a return code and a string message indicating the status of the command.", 
+        dtype_in="DevULong",
+        doc_in="Outlet to turn off.",
+        dtype_out="DevVarLongStringArray",
+        doc_out="Tuple containing a return code and a string message indicating the status of the command.",
     )
     @DebugIt()
-    def TurnOffOutlet(self: PowerSwitch, argin: int) -> tango.DevVarLongStringArray:
+    def TurnOffOutlet(
+        self: PowerSwitch, argin: int
+    ) -> tango.DevVarLongStringArray:
         # PROTECTED REGION ID(PowerSwitch.TurnOffOutlet) ENABLED START #
         handler = self.get_command_object("TurnOffOutlet")
         return_code, message = handler(argin)
         return [[return_code], [message]]
         # PROTECTED REGION END #    //  PowerSwitch.TurnOffOutlet
 
-
     class GetOutletPowerModeCommand(BaseCommand):
         """
         The command class for the GetOutletPowerMode command.
 
-        Get the power mode of an individual outlet, specified by the outlet ID 
+        Get the power mode of an individual outlet, specified by the outlet ID
         (range 0 to numOutlets - 1).
         """
 
         def do(
-            self: PowerSwitch.GetOutletPowerModeCommand,
-            argin: int
+            self: PowerSwitch.GetOutletPowerModeCommand, argin: int
         ) -> PowerMode:
             """
             Implement GetOutletPowerMode command functionality.
@@ -378,10 +395,10 @@ class PowerSwitch(SKABaseDevice):
                 return PowerMode.UNKNOWN
 
     @command(
-    dtype_in='DevULong', 
-    doc_in="Outlet to get the power mode of.", 
-    dtype_out='DevULong', 
-    doc_out="Power mode of the outlet.", 
+        dtype_in="DevULong",
+        doc_in="Outlet to get the power mode of.",
+        dtype_out="DevULong",
+        doc_out="Power mode of the outlet.",
     )
     @DebugIt()
     def GetOutletPowerMode(self: PowerSwitch, argin: int) -> int:
@@ -390,14 +407,17 @@ class PowerSwitch(SKABaseDevice):
         return int(handler(argin))
         # PROTECTED REGION END #    //  PowerSwitch.GetOutletPowerMode
 
+
 # ----------
 # Run server
 # ----------
+
 
 def main(args=None, **kwargs):
     # PROTECTED REGION ID(PowerSwitch.main) ENABLED START #
     return run((PowerSwitch,), args=args, **kwargs)
     # PROTECTED REGION END #    //  PowerSwitch.main
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

@@ -14,9 +14,16 @@ from typing import Callable, Optional
 
 import pytest
 
+from ska_mid_cbf_mcs.testing.mock.mock_callable import (
+    MockCallable,
+    MockChangeEventCallback,
+)
+
 # SKA imports
-from ska_mid_cbf_mcs.testing.tango_harness import DeviceToLoadType, DevicesToLoadType
-from ska_mid_cbf_mcs.testing.mock.mock_callable import MockCallable, MockChangeEventCallback
+from ska_mid_cbf_mcs.testing.tango_harness import (
+    DevicesToLoadType,
+    DeviceToLoadType,
+)
 
 
 def pytest_itemcollected(item: pytest.Item) -> None:
@@ -106,7 +113,8 @@ def mock_callback_not_called_timeout() -> float:
 
 @pytest.fixture()
 def mock_callback_factory(
-    mock_callback_called_timeout: float, mock_callback_not_called_timeout: float
+    mock_callback_called_timeout: float,
+    mock_callback_not_called_timeout: float,
 ) -> Callable[[], MockCallable]:
     """
     Return a factory that returns a new mock callback each time it is called.
@@ -131,7 +139,9 @@ def mock_callback_factory(
 
 @pytest.fixture()
 def device_state_changed_callback(
-    mock_change_event_callback_factory: Callable[[str], MockChangeEventCallback],
+    mock_change_event_callback_factory: Callable[
+        [str], MockChangeEventCallback
+    ],
 ) -> MockChangeEventCallback:
     """
     Return a mock change event callback for device state change.
@@ -149,7 +159,9 @@ def device_state_changed_callback(
 
 @pytest.fixture()
 def device_admin_mode_changed_callback(
-    mock_change_event_callback_factory: Callable[[str], MockChangeEventCallback],
+    mock_change_event_callback_factory: Callable[
+        [str], MockChangeEventCallback
+    ],
 ) -> MockChangeEventCallback:
     """
     Return a mock change event callback for device admin mode change.
@@ -167,7 +179,9 @@ def device_admin_mode_changed_callback(
 
 @pytest.fixture()
 def device_health_state_changed_callback(
-    mock_change_event_callback_factory: Callable[[str], MockChangeEventCallback],
+    mock_change_event_callback_factory: Callable[
+        [str], MockChangeEventCallback
+    ],
 ) -> MockChangeEventCallback:
     """
     Return a mock change event callback for device health state change.

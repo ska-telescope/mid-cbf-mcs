@@ -10,10 +10,10 @@
 # Copyright (c) 2019 National Research Council of Canada
 
 from __future__ import annotations  # allow forward references in type hints
-from typing import Any, Callable, Optional
 
-import logging
 import enum
+import logging
+from typing import Any, Callable, Optional
 
 from ska_tango_base.base import BaseComponentManager
 from ska_tango_base.control_model import PowerMode
@@ -22,6 +22,7 @@ __all__ = [
     "CommunicationStatus",
     "CbfComponentManager",
 ]
+
 
 class CommunicationStatus(enum.Enum):
     """The status of a component manager's communication with its component."""
@@ -61,6 +62,7 @@ class CommunicationStatus(enum.Enum):
       the component manager has connected to its component.
     """
 
+
 class CbfComponentManager(BaseComponentManager):
     """
     A base component manager for SKA Mid.CBF MCS
@@ -87,7 +89,9 @@ class CbfComponentManager(BaseComponentManager):
         communication_status_changed_callback: Optional[
             Callable[[CommunicationStatus], None]
         ],
-        component_power_mode_changed_callback: Optional[Callable[[PowerMode], None]],
+        component_power_mode_changed_callback: Optional[
+            Callable[[PowerMode], None]
+        ],
         component_fault_callback: Optional[Callable[[bool], None]],
         *args: Any,
         **kwargs: Any,
@@ -128,13 +132,15 @@ class CbfComponentManager(BaseComponentManager):
         self._component_fault_callback = component_fault_callback
 
         super().__init__(None, *args, **kwargs)
-    
+
     def start_communicating(self: CbfComponentManager) -> None:
         """Start communicating with the component."""
         if self.communication_status == CommunicationStatus.ESTABLISHED:
             return
         if self.communication_status == CommunicationStatus.DISABLED:
-            self.update_communication_status(CommunicationStatus.NOT_ESTABLISHED)
+            self.update_communication_status(
+                CommunicationStatus.NOT_ESTABLISHED
+            )
 
     def stop_communicating(self: CbfComponentManager) -> None:
         """Break off communicating with the component."""
@@ -160,7 +166,9 @@ class CbfComponentManager(BaseComponentManager):
         if self._communication_status != communication_status:
             self._communication_status = communication_status
             if self._communication_status_changed_callback is not None:
-                self._communication_status_changed_callback(communication_status)
+                self._communication_status_changed_callback(
+                    communication_status
+                )
 
     @property
     def is_communicating(self: CbfComponentManager) -> bool:
@@ -246,7 +254,9 @@ class CbfComponentManager(BaseComponentManager):
         if self._component_fault_callback is not None and faulty is not None:
             self._component_fault_callback(faulty)
 
-    def component_fault_changed(self: CbfComponentManager, faulty: bool) -> None:
+    def component_fault_changed(
+        self: CbfComponentManager, faulty: bool
+    ) -> None:
         """
         Handle notification that the component's fault status has changed.
 

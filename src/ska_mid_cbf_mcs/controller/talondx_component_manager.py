@@ -10,25 +10,26 @@
 # Copyright (c) 2019 National Research Council of Canada
 
 from __future__ import annotations
-import json
-import tango
-import backoff
-import logging
-from paramiko import SSHClient, AutoAddPolicy
-from paramiko.ssh_exception import SSHException, NoValidConnectionsError
-from scp import SCPClient, SCPException
 
-from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
+import json
+import logging
+
+import backoff
+import tango
+from paramiko import AutoAddPolicy, SSHClient
+from paramiko.ssh_exception import NoValidConnectionsError, SSHException
+from scp import SCPClient, SCPException
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import SimulationMode
 
-__all__ = [
-    "TalonDxComponentManager"
-]
+from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
+
+__all__ = ["TalonDxComponentManager"]
 
 # Timeout for the first attempt at SSH connection with the Talon boards
 # after boot-up.
 TALON_FIRST_CONNECT_TIMEOUT = 30
+
 
 class TalonDxComponentManager:
     """
@@ -48,7 +49,7 @@ class TalonDxComponentManager:
         self: TalonDxComponentManager,
         talondx_config_path: str,
         simulation_mode: SimulationMode,
-        logger: logging.Logger
+        logger: logging.Logger,
     ) -> None:
         """
         Initialise a new instance.
@@ -99,7 +100,7 @@ class TalonDxComponentManager:
         self: TalonDxComponentManager,
         ssh_client: SSHClient,
         src: str,
-        dest: str
+        dest: str,
     ) -> None:
         """
         Execute a secure file copy to the specified target address.
@@ -113,7 +114,9 @@ class TalonDxComponentManager:
         with SCPClient(ssh_client.get_transport()) as scp_client:
             scp_client.put(src, remote_path=dest)
 
-    def _copy_binaries_and_bitstream(self: TalonDxComponentManager) -> ResultCode:
+    def _copy_binaries_and_bitstream(
+        self: TalonDxComponentManager,
+    ) -> ResultCode:
         """
         Copy the relevant device server binaries and FPGA bitstream to each
         Talon board.
@@ -126,31 +129,42 @@ class TalonDxComponentManager:
             try:
                 ip = talon_cfg["ip_address"]
                 target = talon_cfg["target"]
-                self.logger.info(f"Copying FPGA bitstream and HPS binaries to {target}")
+                self.logger.info(
+                    f"Copying FPGA bitstream and HPS binaries to {target}"
+                )
 
-                with SSHClient() as ssh_client:                    
-                    @backoff.on_exception(backoff.expo, NoValidConnectionsError, max_time=TALON_FIRST_CONNECT_TIMEOUT)
-                    def make_first_connect(ip: str, ssh_client: SSHClient) -> None:
+                with SSHClient() as ssh_client:
+
+                    @backoff.on_exception(
+                        backoff.expo,
+                        NoValidConnectionsError,
+                        max_time=TALON_FIRST_CONNECT_TIMEOUT,
+                    )
+                    def make_first_connect(
+                        ip: str, ssh_client: SSHClient
+                    ) -> None:
                         """
-                        Attempts to connect to the Talon board for the first time 
+                        Attempts to connect to the Talon board for the first time
                         after power-on.
 
                         :param ip: IP address of the board
                         :param ssh_client: SSH client to use for connection
                         """
-                        ssh_client.connect(ip, username='root', password='')
+                        ssh_client.connect(ip, username="root", password="")
 
                     ssh_client.set_missing_host_key_policy(AutoAddPolicy())
                     make_first_connect(ip, ssh_client)
                     ssh_chan = ssh_client.get_transport().open_session()
-                
+
                     # Make the DS binaries directory
                     src_dir = f"{self.talondx_config_path}"
                     dest_dir = talon_cfg["ds_path"]
                     ssh_chan.exec_command(f"mkdir -p {dest_dir}")
                     exit_status = ssh_chan.recv_exit_status()
                     if exit_status != 0:
-                        self.logger.error(f"Error creating directory {dest_dir} on {target}: {exit_status}")
+                        self.logger.error(
+                            f"Error creating directory {dest_dir} on {target}: {exit_status}"
+                        )
                         ret = ResultCode.FAILED
                         continue
 
@@ -158,14 +172,16 @@ class TalonDxComponentManager:
                     self._secure_copy(
                         ssh_client=ssh_client,
                         src=f"{src_dir}/dshpsmaster/bin/dshpsmaster",
-                        dest="/lib/firmware/hps_software")
+                        dest="/lib/firmware/hps_software",
+                    )
 
                     # Copy the remaining DS binaries
                     for binary_name in talon_cfg["devices"]:
                         self._secure_copy(
                             ssh_client=ssh_client,
                             src=f"{src_dir}/{binary_name}/bin/{binary_name}",
-                            dest=dest_dir)
+                            dest=dest_dir,
+                        )
 
                     # Copy the FPGA bitstream
                     dest_dir = talon_cfg["fpga_path"]
@@ -173,24 +189,30 @@ class TalonDxComponentManager:
                     ssh_chan.exec_command(f"mkdir -p {dest_dir}")
                     exit_status = ssh_chan.recv_exit_status()
                     if exit_status != 0:
-                        self.logger.error(f"Error creating directory {dest_dir} on {target}: {exit_status}")
+                        self.logger.error(
+                            f"Error creating directory {dest_dir} on {target}: {exit_status}"
+                        )
                         ret = ResultCode.FAILED
                         continue
 
-                    fpga_dtb_name = talon_cfg['fpga_dtb_name']
+                    fpga_dtb_name = talon_cfg["fpga_dtb_name"]
                     self._secure_copy(
-                        ssh_client=ssh_client, 
+                        ssh_client=ssh_client,
                         src=f"{src_dir}/fpga-talon/bin/{fpga_dtb_name}",
-                        dest=dest_dir)
+                        dest=dest_dir,
+                    )
 
-                    fpga_rbf_name = talon_cfg['fpga_rbf_name']
+                    fpga_rbf_name = talon_cfg["fpga_rbf_name"]
                     self._secure_copy(
-                        ssh_client=ssh_client, 
+                        ssh_client=ssh_client,
                         src=f"{src_dir}/fpga-talon/bin/{fpga_rbf_name}",
-                        dest=dest_dir)
+                        dest=dest_dir,
+                    )
 
             except NoValidConnectionsError:
-                self.logger.error(f"NoValidConnectionsError while connecting to {target}")
+                self.logger.error(
+                    f"NoValidConnectionsError while connecting to {target}"
+                )
                 ret = ResultCode.FAILED
             except SSHException:
                 self.logger.error(f"SSHException while talking to {target}")
@@ -199,9 +221,11 @@ class TalonDxComponentManager:
                 self.logger.error(f"Failed to copy file to {target}")
                 ret = ResultCode.FAILED
             except FileNotFoundError as e:
-                self.logger.error(f"Failed to copy file {e.filename}, file does not exist")
+                self.logger.error(
+                    f"Failed to copy file {e.filename}, file does not exist"
+                )
                 ret = ResultCode.FAILED
-            
+
         return ret
 
     def _start_hps_master(self: TalonDxComponentManager) -> ResultCode:
@@ -220,25 +244,33 @@ class TalonDxComponentManager:
             try:
                 with SSHClient() as ssh_client:
                     ssh_client.set_missing_host_key_policy(AutoAddPolicy())
-                    ssh_client.connect(ip, username='root', password='')
+                    ssh_client.connect(ip, username="root", password="")
                     ssh_chan = ssh_client.get_transport().open_session()
 
-                    ssh_chan.exec_command(f"/lib/firmware/hps_software/hps_master_mcs.sh {inst}")
+                    ssh_chan.exec_command(
+                        f"/lib/firmware/hps_software/hps_master_mcs.sh {inst}"
+                    )
                     exit_status = ssh_chan.recv_exit_status()
                     if exit_status != 0:
-                        self.logger.error(f"Error starting HPS master on {target}: {exit_status}")
+                        self.logger.error(
+                            f"Error starting HPS master on {target}: {exit_status}"
+                        )
                         ret = ResultCode.FAILED
 
             except NoValidConnectionsError:
-                self.logger.error(f"NoValidConnectionsError while connecting to {target}")
+                self.logger.error(
+                    f"NoValidConnectionsError while connecting to {target}"
+                )
                 ret = ResultCode.FAILED
             except SSHException:
                 self.logger.error(f"SSHException while talking to {target}")
                 ret = ResultCode.FAILED
-            
-        return ret 
 
-    def _create_hps_master_device_proxies(self: TalonDxComponentManager) -> ResultCode:
+        return ret
+
+    def _create_hps_master_device_proxies(
+        self: TalonDxComponentManager,
+    ) -> ResultCode:
         """
         Attempt to create a device proxy to each DsHpsMaster device.
 
@@ -253,10 +285,14 @@ class TalonDxComponentManager:
 
             self.logger.info(f"Trying connection to {fqdn} device")
             try:
-                self.proxies[fqdn] = CbfDeviceProxy(fqdn=fqdn, logger=self.logger)
+                self.proxies[fqdn] = CbfDeviceProxy(
+                    fqdn=fqdn, logger=self.logger
+                )
             except tango.DevFailed as df:
                 for item in df.args:
-                    self.logger.error(f"Failed connection to {fqdn} device: {item.reason}")
+                    self.logger.error(
+                        f"Failed connection to {fqdn} device: {item.reason}"
+                    )
                 ret = ResultCode.FAILED
 
         return ret
@@ -267,9 +303,9 @@ class TalonDxComponentManager:
 
         :return: ResultCode.OK if all configure commands were sent successfully,
                  otherwise ResultCode.FAILED
-        """    
+        """
         ret = ResultCode.OK
-        for talon_cfg in self.talondx_config['config_commands']:
+        for talon_cfg in self.talondx_config["config_commands"]:
             hps_master_fqdn = talon_cfg["ds_hps_master_fqdn"]
             hps_master = self.proxies[hps_master_fqdn]
 
@@ -277,14 +313,18 @@ class TalonDxComponentManager:
             try:
                 cmd_ret = hps_master.configure(json.dumps(talon_cfg))
                 if cmd_ret != 0:
-                    self.logger.error(f"Configure command for {hps_master_fqdn}" \
-                        f" device failed with error code {cmd_ret}")
+                    self.logger.error(
+                        f"Configure command for {hps_master_fqdn}"
+                        f" device failed with error code {cmd_ret}"
+                    )
                     ret = ResultCode.FAILED
 
             except tango.DevFailed as df:
                 for item in df.args:
-                    self.logger.error(f"Exception while sending configure command" \
-                        f" to {hps_master_fqdn} device: {str(item.reason)}")
+                    self.logger.error(
+                        f"Exception while sending configure command"
+                        f" to {hps_master_fqdn} device: {str(item.reason)}"
+                    )
                 ret = ResultCode.FAILED
 
         return ret

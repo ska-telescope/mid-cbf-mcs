@@ -18,26 +18,22 @@
 # FspPst TANGO device class for the prototype
 # """
 
-# tango imports
-import tango
-from tango import DebugIt
-from tango.server import run
-from tango.server import Device
-from tango.server import attribute, command
-from tango.server import device_property
-from tango import AttrQuality, DispLevel, DevState
-from tango import AttrWriteType, PipeWriteType
-# Additional import
-# PROTECTED REGION ID(FspPst.additionnal_import) ENABLED START #
 import os
 import sys
+
+# tango imports
+import tango
+
+# Additional import
+# PROTECTED REGION ID(FspPst.additionnal_import) ENABLED START #
+from ska_tango_base import SKACapability
+from tango.server import command, run
 
 file_path = os.path.dirname(os.path.abspath(__file__))
 commons_pkg_path = os.path.abspath(os.path.join(file_path, "../../commons"))
 sys.path.insert(0, commons_pkg_path)
 
-from ska_tango_base.control_model import HealthState, AdminMode
-from ska_tango_base import SKACapability
+
 # PROTECTED REGION END #    //  FspPst.additionnal_import
 
 __all__ = ["FspPst", "main"]
@@ -47,6 +43,7 @@ class FspPst(SKACapability):
     """
     FspPst TANGO device class for the prototype
     """
+
     # PROTECTED REGION ID(FspPst.class_variable) ENABLED START #
     # PROTECTED REGION END #    //  FspPst.class_variable
 
@@ -72,13 +69,11 @@ class FspPst(SKACapability):
     def always_executed_hook(self):
         # PROTECTED REGION ID(FspPst.always_executed_hook) ENABLED START #
         """hook before commands"""
-        pass
         # PROTECTED REGION END #    //  FspPst.always_executed_hook
 
     def delete_device(self):
         # PROTECTED REGION ID(FspPst.delete_device) ENABLED START #
         """hook to delelte device"""
-        pass
         # PROTECTED REGION END #    //  FspPst.delete_device
 
     # ------------------
@@ -89,15 +84,13 @@ class FspPst(SKACapability):
     # Commands
     # --------
 
-    @command(
-        dtype_in='DevState',
-        doc_in='New state'
-    )
+    @command(dtype_in="DevState", doc_in="New state")
     def SetState(self, argin):
         # PROTECTED REGION ID(FspPst.SetState) ENABLED START #
         """Input is DevState."""
         self.set_state(argin)
         # PROTECTED REGION END #    //  FspPst.SetState
+
 
 # ----------
 # Run server
@@ -109,5 +102,6 @@ def main(args=None, **kwargs):
     return run((FspPst,), args=args, **kwargs)
     # PROTECTED REGION END #    //  FspPst.main
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

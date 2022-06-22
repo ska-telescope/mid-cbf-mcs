@@ -16,16 +16,18 @@ __all__ = ["CbfDeviceProxy"]
 
 import logging
 import threading
-from typing import Any, Callable, Optional, Type
-from typing_extensions import TypedDict
 import warnings
+from typing import Any, Callable, Optional, Type
 
 import backoff
 import tango
-from tango import DevFailed, DevState, AttrQuality
+from tango import AttrQuality, DevFailed, DevState
+from typing_extensions import TypedDict
 
 # type for the "details" dictionary that backoff calls its callbacks with
-BackoffDetailsType = TypedDict("BackoffDetailsType", {"args": list, "elapsed": float})
+BackoffDetailsType = TypedDict(
+    "BackoffDetailsType", {"args": list, "elapsed": float}
+)
 ConnectionFactory = Callable[[str], tango.DeviceProxy]
 
 
@@ -172,11 +174,15 @@ class CbfDeviceProxy:
             return connection_factory(fqdn)
 
         if max_time:
-            self._device = _backoff_connect(self._connection_factory, self._fqdn)
+            self._device = _backoff_connect(
+                self._connection_factory, self._fqdn
+            )
         else:
             self._device = _connect(self._connection_factory, self._fqdn)
 
-    def check_initialised(self: CbfDeviceProxy, max_time: float = 120.0) -> bool:
+    def check_initialised(
+        self: CbfDeviceProxy, max_time: float = 120.0
+    ) -> bool:
         """
         Check that the device has completed initialisation.
 
@@ -247,7 +253,7 @@ class CbfDeviceProxy:
             :return: whether the device has completed initialisation
             """
             try:
-                #TODO:  base class update v0.11.3 why this doesn't work with device.state()
+                # TODO:  base class update v0.11.3 why this doesn't work with device.state()
                 return device.State() != DevState.INIT
             except DevFailed:
                 self._logger.debug(
@@ -285,16 +291,21 @@ class CbfDeviceProxy:
             self._change_event_callbacks[attribute_key] = [callback]
             self._change_event_subscription_ids[
                 attribute_key
-            ] = self._subscribe_change_event(attribute_name, stateless=stateless)
+            ] = self._subscribe_change_event(
+                attribute_name, stateless=stateless
+            )
         else:
             self._change_event_callbacks[attribute_key].append(callback)
             self._call_callback(callback, self._read(attribute_name))
-        self._logger.info( "New event ID: " + \
-            f"{self._change_event_subscription_ids[attribute_key]}"
+        self._logger.info(
+            "New event ID: "
+            + f"{self._change_event_subscription_ids[attribute_key]}"
         )
         return self._change_event_subscription_ids[attribute_key]
 
-    @backoff.on_exception(backoff.expo, tango.DevFailed, factor=1, max_time=120)
+    @backoff.on_exception(
+        backoff.expo, tango.DevFailed, factor=1, max_time=120
+    )
     def _subscribe_change_event(
         self: CbfDeviceProxy, attribute_name: str, stateless: bool = False
     ) -> int:
@@ -323,7 +334,9 @@ class CbfDeviceProxy:
             stateless=stateless,
         )
 
-    def _change_event_received(self: CbfDeviceProxy, event: tango.EventData) -> None:
+    def _change_event_received(
+        self: CbfDeviceProxy, event: tango.EventData
+    ) -> None:
         """
         Handle subscribe events from the Tango system with this callback.
 
@@ -353,8 +366,12 @@ class CbfDeviceProxy:
         :param attribute_data: the attribute data to be unpacked and
             used to call the callback
         """
-        callback(self._fqdn, 
-            attribute_data.name, attribute_data.value, attribute_data.quality)
+        callback(
+            self._fqdn,
+            attribute_data.name,
+            attribute_data.value,
+            attribute_data.quality,
+        )
 
     def _process_event(
         self: CbfDeviceProxy, event: tango.EventData
@@ -405,11 +422,9 @@ class CbfDeviceProxy:
         :return: the attribute value
         """
         return self._device.read_attribute(attribute_name)
-    
+
     def remove_event(
-        self: CbfDeviceProxy, 
-        attribute_name: str,
-        subscription_id: int
+        self: CbfDeviceProxy, attribute_name: str, subscription_id: int
     ) -> None:
         """
         Remove a callback for change events being pushed by the device.
@@ -423,15 +438,18 @@ class CbfDeviceProxy:
             self._unsubscribe_event(subscription_id)
             del self._change_event_callbacks[attribute_key]
             del self._change_event_subscription_ids[attribute_key]
-            self._logger.info(f"Unsubscribed from subscription {subscription_id}")
+            self._logger.info(
+                f"Unsubscribed from subscription {subscription_id}"
+            )
         else:
             self._logger.warning(
                 f"Unsubscribe error; proxy does not own subscription {subscription_id}"
             )
 
-    @backoff.on_exception(backoff.expo, tango.DevFailed, factor=1, max_time=120)
-    def _unsubscribe_event(
-        self: CbfDeviceProxy, subscription_id: int) -> None:
+    @backoff.on_exception(
+        backoff.expo, tango.DevFailed, factor=1, max_time=120
+    )
+    def _unsubscribe_event(self: CbfDeviceProxy, subscription_id: int) -> None:
         """
         Unsubscribe from an event.
 
@@ -477,9 +495,13 @@ class CbfDeviceProxy:
                 raise ConnectionError("CbfDeviceProxy has not connected yet.")
             setattr(self._device, name, value)
         else:
-            raise AttributeError(f"No such attribute: {name} (pass-through disabled)")
+            raise AttributeError(
+                f"No such attribute: {name} (pass-through disabled)"
+            )
 
-    def __getattr__(self: CbfDeviceProxy, name: str, default_value: Any = None) -> Any:
+    def __getattr__(
+        self: CbfDeviceProxy, name: str, default_value: Any = None
+    ) -> Any:
         """
         Handle any requested attribute not found in the usual way.
 

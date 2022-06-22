@@ -9,17 +9,14 @@
 
 from __future__ import annotations  # allow forward references in type hints
 
-from typing import Any, Callable
+import logging
 import unittest.mock
+from typing import Any
 
 import tango
-
 from ska_tango_base.commands import ResultCode
 
 from ska_mid_cbf_mcs.testing.mock.mock_callable import MockCallable
-
-import logging
-
 
 __all__ = ["MockGroupBuilder"]
 
@@ -54,7 +51,9 @@ class MockGroupBuilder:
         """
         self._configuration[name] = value
 
-    def add_command(self: MockGroupBuilder, name: str, return_value: Any) -> None:
+    def add_command(
+        self: MockGroupBuilder, name: str, return_value: Any
+    ) -> None:
         """
         Tell this builder to build mocks with a specified command that returns the
         provided value.
@@ -133,7 +132,9 @@ class MockGroupBuilder:
             mock_attribute = unittest.mock.Mock()
             mock_attribute.name = name
             mock_attribute.value = (
-                mock_group.state() if name == "state" else getattr(mock_group, name)
+                mock_group.state()
+                if name == "state"
+                else getattr(mock_group, name)
             )
             mock_attribute.quality = tango.AttrQuality.ATTR_VALID
             return mock_attribute
@@ -171,7 +172,9 @@ class MockGroupBuilder:
 
         mock_group.command_inout.side_effect = _mock_command_inout
 
-        def _mock_command_inout_asynch(name: str, *args: str, **kwargs: str) -> str:
+        def _mock_command_inout_asynch(
+            name: str, *args: str, **kwargs: str
+        ) -> str:
             """
             Mock side-effect for command_inout_asynch method.
 
@@ -189,9 +192,13 @@ class MockGroupBuilder:
             asynch_id = name
             return asynch_id
 
-        mock_group.command_inout_asynch.side_effect = _mock_command_inout_asynch
+        mock_group.command_inout_asynch.side_effect = (
+            _mock_command_inout_asynch
+        )
 
-        def _mock_command_inout_reply(asynch_id: str, *args: str, **kwargs: str) -> Any:
+        def _mock_command_inout_reply(
+            asynch_id: str, *args: str, **kwargs: str
+        ) -> Any:
             """
             Mock side-effect for command_inout_reply method.
 
@@ -222,8 +229,10 @@ class MockGroupBuilder:
         self._setup_add_remove()
 
         for command in self._return_values:
-            self.logger.debug(f"Command: {command}\n" + 
-            f"Return Value: {self._return_values[command]}")
+            self.logger.debug(
+                f"Command: {command}\n"
+                + f"Return Value: {self._return_values[command]}"
+            )
             self._configuration[command] = MockCallable(
                 return_value=self._return_values[command]
             )

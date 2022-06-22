@@ -17,23 +17,22 @@
 
 # PROTECTED REGION ID(Vcc.additional_import) ENABLED START #
 from __future__ import annotations  # allow forward references in type hints
-from typing import List, Tuple, Optional
+
 import json
+from typing import List, Optional, Tuple
 
 # Tango imports
 import tango
-from tango import DebugIt
-from tango.server import run, attribute, command, device_property
-from tango import AttrWriteType
+from ska_tango_base.commands import BaseCommand, ResponseCommand, ResultCode
+from ska_tango_base.control_model import ObsState, PowerMode, SimulationMode
+from ska_tango_base.csp.obs.obs_device import CspSubElementObsDevice
+from tango import AttrWriteType, DebugIt
+from tango.server import attribute, command, device_property, run
 
 # SKA imports
 from ska_mid_cbf_mcs.commons.global_enum import const, freq_band_dict
-from ska_mid_cbf_mcs.vcc.vcc_component_manager import VccComponentManager
-
-from ska_tango_base.control_model import ObsState, SimulationMode, PowerMode
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
-from ska_tango_base.csp.obs.obs_device import CspSubElementObsDevice
-from ska_tango_base.commands import ResultCode, BaseCommand, ResponseCommand
+from ska_mid_cbf_mcs.vcc.vcc_component_manager import VccComponentManager
 
 # PROTECTED REGION END #    //  Vcc.additional_import
 
@@ -49,146 +48,135 @@ class Vcc(CspSubElementObsDevice):
     # Device Properties
     # -----------------
 
-    VccID = device_property(
-        dtype='DevUShort'
-    )
+    VccID = device_property(dtype="DevUShort")
 
-    TalonLRUAddress = device_property(
-        dtype='str'
-    )
+    TalonLRUAddress = device_property(dtype="str")
 
-    VccControllerAddress = device_property(
-        dtype='str'
-    )
+    VccControllerAddress = device_property(dtype="str")
 
-    Band1And2Address = device_property(
-        dtype='str'
-    )
+    Band1And2Address = device_property(dtype="str")
 
-    Band3Address = device_property(
-        dtype='str'
-    )
+    Band3Address = device_property(dtype="str")
 
-    Band4Address = device_property(
-        dtype='str'
-    )
+    Band4Address = device_property(dtype="str")
 
-    Band5Address = device_property(
-        dtype='str'
-    )
+    Band5Address = device_property(dtype="str")
 
-    SW1Address = device_property(
-        dtype='str'
-    )
+    SW1Address = device_property(dtype="str")
 
-    SW2Address = device_property(
-        dtype='str'
-    )
+    SW2Address = device_property(dtype="str")
 
     # ----------
     # Attributes
     # ----------
 
     receptorID = attribute(
-        dtype='uint16',
+        dtype="uint16",
         access=AttrWriteType.READ_WRITE,
         label="Receptor ID",
         doc="Receptor ID",
     )
 
     subarrayMembership = attribute(
-        dtype='uint16',
+        dtype="uint16",
         access=AttrWriteType.READ_WRITE,
         label="subarrayMembership",
         doc="Subarray membership",
     )
 
     frequencyOffsetK = attribute(
-        dtype='int',
+        dtype="int",
         access=AttrWriteType.READ_WRITE,
         label="Frequency offset (k)",
         doc="Frequency offset (k) of this receptor",
     )
 
     frequencyOffsetDeltaF = attribute(
-        dtype='int',
+        dtype="int",
         access=AttrWriteType.READ_WRITE,
         label="Frequency offset (delta f)",
         doc="Frequency offset (delta f) of this receptor",
     )
 
     frequencyBand = attribute(
-        dtype='DevEnum',
+        dtype="DevEnum",
         access=AttrWriteType.READ,
         label="Frequency band",
         doc="Frequency band; an int in the range [0, 5]",
-        enum_labels=["1", "2", "3", "4", "5a", "5b", ],
+        enum_labels=[
+            "1",
+            "2",
+            "3",
+            "4",
+            "5a",
+            "5b",
+        ],
     )
 
     band5Tuning = attribute(
-        dtype=('float',),
+        dtype=("float",),
         max_dim_x=2,
         access=AttrWriteType.READ,
         label="Stream tuning (GHz)",
-        doc="Stream tuning (GHz)"
+        doc="Stream tuning (GHz)",
     )
 
     frequencyBandOffsetStream1 = attribute(
-        dtype='int',
+        dtype="int",
         access=AttrWriteType.READ,
         label="Frequency band offset (stream 1) (Hz)",
-        doc="Frequency band offset (stream 1) (Hz)"
+        doc="Frequency band offset (stream 1) (Hz)",
     )
 
     frequencyBandOffsetStream2 = attribute(
-        dtype='int',
+        dtype="int",
         access=AttrWriteType.READ,
         label="Frequency band offset (stream 2) (Hz)",
-        doc="Frequency band offset (stream 2) (Hz)"
+        doc="Frequency band offset (stream 2) (Hz)",
     )
 
     dopplerPhaseCorrection = attribute(
-        dtype=('float',),
+        dtype=("float",),
         access=AttrWriteType.READ_WRITE,
         max_dim_x=4,
         label="Doppler phase correction coefficients",
-        doc="Doppler phase correction coefficients"
+        doc="Doppler phase correction coefficients",
     )
 
     rfiFlaggingMask = attribute(
-        dtype='str',
+        dtype="str",
         access=AttrWriteType.READ,
         label="RFI Flagging Mask",
-        doc="RFI Flagging Mask"
+        doc="RFI Flagging Mask",
     )
 
     delayModel = attribute(
-        dtype=(('double',),),
+        dtype=(("double",),),
         max_dim_x=6,
         max_dim_y=26,
         access=AttrWriteType.READ,
         label="Delay model coefficients",
-        doc="Delay model coefficients, given per frequency slice"
+        doc="Delay model coefficients, given per frequency slice",
     )
 
     jonesMatrix = attribute(
-        dtype=(('double',),),
+        dtype=(("double",),),
         max_dim_x=16,
         max_dim_y=26,
         access=AttrWriteType.READ,
-        label='Jones Matrix elements',
-        doc='Jones Matrix elements, given per frequency slice'
+        label="Jones Matrix elements",
+        doc="Jones Matrix elements, given per frequency slice",
     )
 
     scanID = attribute(
-        dtype='DevULong',
+        dtype="DevULong",
         access=AttrWriteType.READ,
         label="scanID",
         doc="scan ID",
     )
 
     configID = attribute(
-        dtype='DevString',
+        dtype="DevString",
         access=AttrWriteType.READ,
         label="config ID",
         doc="config ID",
@@ -199,8 +187,8 @@ class Vcc(CspSubElementObsDevice):
         access=AttrWriteType.READ_WRITE,
         memorized=True,
         doc="Reports the simulation mode of the device. \nSome devices may implement "
-            "both modes, while others will have simulators that set simulationMode "
-            "to True while the real devices always set simulationMode to False.",
+        "both modes, while others will have simulators that set simulationMode "
+        "to True while the real devices always set simulationMode to False.",
     )
 
     # ---------------
@@ -215,19 +203,11 @@ class Vcc(CspSubElementObsDevice):
         """
         super().init_command_objects()
 
-        device_args = (
-            self,
-            self.op_state_model,
-            self.logger
-        )
+        device_args = (self, self.op_state_model, self.logger)
 
-        self.register_command_object(
-            "On", self.OnCommand(*device_args)
-        )
+        self.register_command_object("On", self.OnCommand(*device_args))
 
-        self.register_command_object(
-            "Off", self.OffCommand(*device_args)
-        )
+        self.register_command_object("Off", self.OffCommand(*device_args))
 
         self.register_command_object(
             "Standby", self.StandbyCommand(*device_args)
@@ -239,7 +219,7 @@ class Vcc(CspSubElementObsDevice):
 
         self.register_command_object(
             "UpdateDopplerPhaseCorrection",
-            self.UpdateDopplerPhaseCorrectionCommand(*device_args)
+            self.UpdateDopplerPhaseCorrectionCommand(*device_args),
         )
 
         self.register_command_object(
@@ -251,31 +231,28 @@ class Vcc(CspSubElementObsDevice):
         )
 
         self.register_command_object(
-            "ConfigureSearchWindow", self.ConfigureSearchWindowCommand(*device_args)
+            "ConfigureSearchWindow",
+            self.ConfigureSearchWindowCommand(*device_args),
         )
 
         device_args = (
             self,
             self.op_state_model,
             self.obs_state_model,
-            self.logger
+            self.logger,
         )
 
         self.register_command_object(
             "ConfigureScan", self.ConfigureScanCommand(*device_args)
         )
 
-        self.register_command_object(
-            "Scan", self.ScanCommand(*device_args)
-        )
+        self.register_command_object("Scan", self.ScanCommand(*device_args))
 
         self.register_command_object(
             "EndScan", self.EndScanCommand(*device_args)
         )
 
-        self.register_command_object(
-            "Abort", self.AbortCommand(*device_args)
-        )
+        self.register_command_object("Abort", self.AbortCommand(*device_args))
 
         self.register_command_object(
             "ObsReset", self.ObsResetCommand(*device_args)
@@ -286,7 +263,6 @@ class Vcc(CspSubElementObsDevice):
         )
 
     # PROTECTED REGION END #    //  Vcc.class_variable
-
 
     def create_component_manager(self: Vcc) -> VccComponentManager:
         self._communication_status: Optional[CommunicationStatus] = None
@@ -301,34 +277,29 @@ class Vcc(CspSubElementObsDevice):
                 self.Band1And2Address,
                 self.Band3Address,
                 self.Band4Address,
-                self.Band5Address
+                self.Band5Address,
             ],
             search_window=[self.SW1Address, self.SW2Address],
             logger=self.logger,
             push_change_event_callback=self.push_change_event,
             communication_status_changed_callback=self._communication_status_changed,
             component_power_mode_changed_callback=self._component_power_mode_changed,
-            component_fault_callback=self._component_fault
+            component_fault_callback=self._component_fault,
         )
-
 
     def always_executed_hook(self: Vcc) -> None:
         # PROTECTED REGION ID(Vcc.always_executed_hook) ENABLED START #
         """Hook to be executed before any commands."""
-        pass
         # PROTECTED REGION END #    //  Vcc.always_executed_hook
 
     def delete_device(self: Vcc) -> None:
         # PROTECTED REGION ID(Vcc.delete_device) ENABLED START #
         """Hook to delete device."""
-        pass
         # PROTECTED REGION END #    //  Vcc.delete_device
-
 
     # ---------
     # Callbacks
     # ---------
-
 
     def _communication_status_changed(
         self: Vcc,
@@ -351,8 +322,10 @@ class Vcc(CspSubElementObsDevice):
             self.op_state_model.perform_action("component_disconnected")
         elif communication_status == CommunicationStatus.NOT_ESTABLISHED:
             self.op_state_model.perform_action("component_unknown")
-        elif communication_status == CommunicationStatus.ESTABLISHED \
-            and self._component_power_mode is not None:
+        elif (
+            communication_status == CommunicationStatus.ESTABLISHED
+            and self._component_power_mode is not None
+        ):
             self._component_power_mode_changed(self._component_power_mode)
         else:  # self._component_power_mode is None
             pass  # wait for a power mode update
@@ -381,7 +354,6 @@ class Vcc(CspSubElementObsDevice):
             }
             self.op_state_model.perform_action(action_map[power_mode])
 
-
     def _component_fault(self: Vcc, faulty: bool) -> None:
         """
         Handle component fault
@@ -391,7 +363,6 @@ class Vcc(CspSubElementObsDevice):
             self.set_status("The device is in FAULT state.")
         else:
             self.set_status("The device has recovered from FAULT state.")
-
 
     # ------------------
     # Attributes methods
@@ -445,9 +416,11 @@ class Vcc(CspSubElementObsDevice):
 
         :param value: the subarray membership value (0 = no affiliation).
         """
-        self.logger.debug(f"Entering write_subarrayMembership(), value = {value}")
+        self.logger.debug(
+            f"Entering write_subarrayMembership(), value = {value}"
+        )
         self._subarray_membership = value
-        self.push_change_event("subarrayMembership",value)
+        self.push_change_event("subarrayMembership", value)
         self.component_manager.deconfigure()
         # PROTECTED REGION END #    //  Vcc.subarrayMembership_write
 
@@ -498,7 +471,7 @@ class Vcc(CspSubElementObsDevice):
         """
         Read the frequencyBand attribute.
 
-        :return: the frequency band (being observed by the current scan, one of 
+        :return: the frequency band (being observed by the current scan, one of
             ["1", "2", "3", "4", "5a", "5b"]).
         :rtype: tango.DevEnum
         """
@@ -575,9 +548,9 @@ class Vcc(CspSubElementObsDevice):
         """
         Read the delayModel attribute.
 
-        :return: the delayModel attribute (delay model coefficients, 
-            :return: the delayModel attribute (delay model coefficients, 
-        :return: the delayModel attribute (delay model coefficients, 
+        :return: the delayModel attribute (delay model coefficients,
+            :return: the delayModel attribute (delay model coefficients,
+        :return: the delayModel attribute (delay model coefficients,
             given per frequency slice).
         :rtype: list of list of float
         """
@@ -589,9 +562,9 @@ class Vcc(CspSubElementObsDevice):
         """
         Read the jonesMatrix attribute.
 
-        :return: the jonesMatrix attribute (jones matrix values, 
-            :return: the jonesMatrix attribute (jones matrix values, 
-        :return: the jonesMatrix attribute (jones matrix values, 
+        :return: the jonesMatrix attribute (jones matrix values,
+            :return: the jonesMatrix attribute (jones matrix values,
+        :return: the jonesMatrix attribute (jones matrix values,
             given per frequency slice).
         :rtype: list of list of float
         """
@@ -620,11 +593,9 @@ class Vcc(CspSubElementObsDevice):
         return self.component_manager.config_id
         # PROTECTED REGION END #    //  Vcc.configID_read
 
-
     # --------
     # Commands
     # --------
-
 
     class InitCommand(CspSubElementObsDevice.InitCommand):
         """
@@ -659,7 +630,6 @@ class Vcc(CspSubElementObsDevice):
             device.set_change_event("subarrayMembership", True, True)
 
             return (result_code, msg)
-
 
     class OnCommand(CspSubElementObsDevice.OnCommand):
         """
@@ -716,7 +686,6 @@ class Vcc(CspSubElementObsDevice):
             """
             return self.target.component_manager.standby()
 
-
     class ConfigureBandCommand(ResponseCommand):
         """
         A class for the Vcc's ConfigureBand() command.
@@ -724,7 +693,9 @@ class Vcc(CspSubElementObsDevice):
         Turn on the corresponding band device and disable all the others.
         """
 
-        def do(self: Vcc.ConfigureBandCommand, argin: str) -> Tuple[ResultCode, str]:
+        def do(
+            self: Vcc.ConfigureBandCommand, argin: str
+        ) -> Tuple[ResultCode, str]:
             """
             Stateless hook for ConfigureBand() command functionality.
 
@@ -760,9 +731,7 @@ class Vcc(CspSubElementObsDevice):
         # PROTECTED REGION END #    //  CspSubElementObsDevice.ConfigureBand
 
     def _raise_configuration_fatal_error(
-        self: Vcc, 
-        msg: str,
-        cmd: str
+        self: Vcc, msg: str, cmd: str
     ) -> None:
         """
         Throw an error message if ConfigureScan/ConfigureSearchWindow fails
@@ -771,9 +740,9 @@ class Vcc(CspSubElementObsDevice):
         ::param cmd: the failed command
         """
         self.logger.error(msg)
-        tango.Except.throw_exception("Command failed", msg, cmd + " execution",
-                                    tango.ErrSeverity.ERR)
-
+        tango.Except.throw_exception(
+            "Command failed", msg, cmd + " execution", tango.ErrSeverity.ERR
+        )
 
     class ConfigureScanCommand(CspSubElementObsDevice.ConfigureScanCommand):
         """
@@ -781,8 +750,7 @@ class Vcc(CspSubElementObsDevice):
         """
 
         def do(
-            self: Vcc.ConfigureScanCommand,
-            argin: str
+            self: Vcc.ConfigureScanCommand, argin: str
         ) -> Tuple[ResultCode, str]:
             """
             Stateless hook for ConfigureScan() command functionality.
@@ -798,7 +766,9 @@ class Vcc(CspSubElementObsDevice):
             """
             device = self.target
             # By this time, the receptor_ID should be set:
-            device.logger.debug(f"receptorID: {device.component_manager.receptor_id}")
+            device.logger.debug(
+                f"receptorID: {device.component_manager.receptor_id}"
+            )
 
             (result_code, msg) = device.component_manager.configure_scan(argin)
 
@@ -806,66 +776,79 @@ class Vcc(CspSubElementObsDevice):
                 # store the configuration on command success
                 device._last_scan_configuration = argin
                 if device._configuring_from_idle:
-                    device.obs_state_model.perform_action("component_configured")
+                    device.obs_state_model.perform_action(
+                        "component_configured"
+                    )
 
-            return(result_code, msg)
+            return (result_code, msg)
 
         def validate_input(
-            self: Vcc.ConfigureScanCommand, 
-            argin: str
-            ) -> Tuple[bool, str]:
+            self: Vcc.ConfigureScanCommand, argin: str
+        ) -> Tuple[bool, str]:
             """
-                Validate the configuration parameters against allowed values, as needed.
+            Validate the configuration parameters against allowed values, as needed.
 
-                :param argin: The JSON formatted string with configuration for the device.
-                    :type argin: 'DevString'
-                :return: A tuple containing a boolean and a string message.
-                :rtype: (bool, str)
+            :param argin: The JSON formatted string with configuration for the device.
+                :type argin: 'DevString'
+            :return: A tuple containing a boolean and a string message.
+            :rtype: (bool, str)
             """
             try:
                 configuration = json.loads(argin)
             except json.JSONDecodeError:
-                msg = "Scan configuration object is not a valid JSON object." \
-                " Aborting configuration."
+                msg = (
+                    "Scan configuration object is not a valid JSON object."
+                    " Aborting configuration."
+                )
                 return (False, msg)
 
             # Validate config_id.
             if "config_id" not in configuration:
                 msg = "'configID' attribute is required."
                 return (False, msg)
-            
+
             # Validate frequency_band.
             if "frequency_band" not in configuration:
                 msg = "'frequencyBand' attribute is required."
                 return (False, msg)
-            
+
             # Validate frequency_band_offset_stream_1.
             if "frequency_band_offset_stream_1" not in configuration:
                 configuration["frequency_band_offset_stream_1"] = 0
-            if abs(int(configuration["frequency_band_offset_stream_1"])) <= \
-                const.FREQUENCY_SLICE_BW * 10 ** 6 / 2:
+            if (
+                abs(int(configuration["frequency_band_offset_stream_1"]))
+                <= const.FREQUENCY_SLICE_BW * 10**6 / 2
+            ):
                 pass
             else:
-                msg = "Absolute value of 'frequencyBandOffsetStream1' must be at " \
+                msg = (
+                    "Absolute value of 'frequencyBandOffsetStream1' must be at "
                     "most half of the frequency slice bandwidth. Aborting configuration."
+                )
                 return (False, msg)
 
             # Validate frequency_band_offset_stream_2.
             if "frequency_band_offset_stream_2" not in configuration:
                 configuration["frequency_band_offset_stream_2"] = 0
-            if abs(int(configuration["frequency_band_offset_stream_2"])) <= \
-                const.FREQUENCY_SLICE_BW * 10 ** 6 / 2:
+            if (
+                abs(int(configuration["frequency_band_offset_stream_2"]))
+                <= const.FREQUENCY_SLICE_BW * 10**6 / 2
+            ):
                 pass
             else:
-                msg = "Absolute value of 'frequencyBandOffsetStream2' must be at " \
+                msg = (
+                    "Absolute value of 'frequencyBandOffsetStream2' must be at "
                     "most half of the frequency slice bandwidth. Aborting configuration."
+                )
                 return (False, msg)
-            
+
             # Validate frequency_band.
             valid_freq_bands = ["1", "2", "3", "4", "5a", "5b"]
             if configuration["frequency_band"] not in valid_freq_bands:
-                msg = configuration["frequency_band"] + \
-                    " not a valid frequency band. Aborting configuration."
+                msg = (
+                    configuration["frequency_band"]
+                    + " not a valid frequency band. Aborting configuration."
+                )
                 return (False, msg)
 
             # Validate band_5_tuning, frequency_band_offset_stream_2
@@ -881,36 +864,49 @@ class Vcc(CspSubElementObsDevice):
                         msg = "'band_5_tuning' must be an array of length 2. Aborting configuration."
                         return (False, msg)
 
-                    stream_tuning = [*map(float, configuration["band_5_tuning"])]
+                    stream_tuning = [
+                        *map(float, configuration["band_5_tuning"])
+                    ]
                     if configuration["frequency_band"] == "5a":
                         if all(
-                                [const.FREQUENCY_BAND_5a_TUNING_BOUNDS[0] <= stream_tuning[i]
-                                <= const.FREQUENCY_BAND_5a_TUNING_BOUNDS[1] for i in [0, 1]]
+                            [
+                                const.FREQUENCY_BAND_5a_TUNING_BOUNDS[0]
+                                <= stream_tuning[i]
+                                <= const.FREQUENCY_BAND_5a_TUNING_BOUNDS[1]
+                                for i in [0, 1]
+                            ]
                         ):
                             pass
                         else:
-                            msg = "Elements in 'band_5_tuning must be floats between " + \
-                                f"{const.FREQUENCY_BAND_5a_TUNING_BOUNDS[0]} and " + \
-                                f"{const.FREQUENCY_BAND_5a_TUNING_BOUNDS[1]} " + \
-                                f"(received {stream_tuning[0]} and {stream_tuning[1]})" + \
-                                " for a 'frequencyBand' of 5a. Aborting configuration."
+                            msg = (
+                                "Elements in 'band_5_tuning must be floats between "
+                                + f"{const.FREQUENCY_BAND_5a_TUNING_BOUNDS[0]} and "
+                                + f"{const.FREQUENCY_BAND_5a_TUNING_BOUNDS[1]} "
+                                + f"(received {stream_tuning[0]} and {stream_tuning[1]})"
+                                + " for a 'frequencyBand' of 5a. Aborting configuration."
+                            )
                             return (False, msg)
                     else:  # configuration["frequency_band"] == "5b"
                         if all(
-                                [const.FREQUENCY_BAND_5b_TUNING_BOUNDS[0] <= stream_tuning[i]
-                                <= const.FREQUENCY_BAND_5b_TUNING_BOUNDS[1] for i in [0, 1]]
+                            [
+                                const.FREQUENCY_BAND_5b_TUNING_BOUNDS[0]
+                                <= stream_tuning[i]
+                                <= const.FREQUENCY_BAND_5b_TUNING_BOUNDS[1]
+                                for i in [0, 1]
+                            ]
                         ):
                             pass
                         else:
-                            msg = "Elements in 'band_5_tuning must be floats between " + \
-                                f"{const.FREQUENCY_BAND_5b_TUNING_BOUNDS[0]} and " + \
-                                f"{const.FREQUENCY_BAND_5b_TUNING_BOUNDS[1]} " + \
-                                f"(received {stream_tuning[0]} and {stream_tuning[1]})" + \
-                                " for a 'frequencyBand' of 5b. Aborting configuration."
+                            msg = (
+                                "Elements in 'band_5_tuning must be floats between "
+                                + f"{const.FREQUENCY_BAND_5b_TUNING_BOUNDS[0]} and "
+                                + f"{const.FREQUENCY_BAND_5b_TUNING_BOUNDS[1]} "
+                                + f"(received {stream_tuning[0]} and {stream_tuning[1]})"
+                                + " for a 'frequencyBand' of 5b. Aborting configuration."
+                            )
                             return (False, msg)
-            
-            return (True, "Configuration validated OK")
 
+            return (True, "Configuration validated OK")
 
     @command(
         dtype_in="DevString",
@@ -944,7 +940,7 @@ class Vcc(CspSubElementObsDevice):
         else:
             if self._obs_state == ObsState.IDLE:
                 self._configuring_from_idle = True
-            else: 
+            else:
                 self._configuring_from_idle = False
             (result_code, message) = command(argin)
             # store the configuration on command success
@@ -953,16 +949,12 @@ class Vcc(CspSubElementObsDevice):
         return [[result_code], [message]]
         # PROTECTED REGION END #    //  CspSubElementObsDevice.ConfigureScan
 
-
     class ScanCommand(CspSubElementObsDevice.ScanCommand):
         """
         A class for the Vcc's Scan() command.
         """
 
-        def do(
-            self: Vcc.ScanCommand,
-            argin: str
-        ) -> Tuple[ResultCode, str]:
+        def do(self: Vcc.ScanCommand, argin: str) -> Tuple[ResultCode, str]:
             """
             Stateless hook for Scan() command functionality.
 
@@ -981,13 +973,13 @@ class Vcc(CspSubElementObsDevice):
             if result_code == ResultCode.STARTED:
                 device.obs_state_model.perform_action("component_scanning")
 
-            return(result_code, msg)
-
+            return (result_code, msg)
 
     class EndScanCommand(CspSubElementObsDevice.EndScanCommand):
         """
         A class for the Vcc's EndScan() command.
         """
+
         def do(self: Vcc.EndScanCommand) -> Tuple[ResultCode, str]:
             """
             Stateless hook for EndScan() command functionality.
@@ -1003,8 +995,7 @@ class Vcc(CspSubElementObsDevice):
             if result_code == ResultCode.OK:
                 device.obs_state_model.perform_action("component_not_scanning")
 
-            return(result_code, msg)
-
+            return (result_code, msg)
 
     class ObsResetCommand(CspSubElementObsDevice.ObsResetCommand):
         """A class for the VCC's ObsReset command."""
@@ -1021,7 +1012,6 @@ class Vcc(CspSubElementObsDevice):
             device = self.target
             return device.component_manager.obsreset()
 
-
     class AbortCommand(CspSubElementObsDevice.AbortCommand):
         """A class for the VCC's Abort command."""
 
@@ -1036,7 +1026,6 @@ class Vcc(CspSubElementObsDevice):
             """
             device = self.target
             return device.component_manager.abort()
-
 
     class GoToIdleCommand(CspSubElementObsDevice.GoToIdleCommand):
         """
@@ -1063,13 +1052,14 @@ class Vcc(CspSubElementObsDevice):
             device.component_manager.deconfigure()
 
             if device._obs_state == ObsState.IDLE:
-                return (ResultCode.OK, 
-                "GoToIdle command completed OK. Device already IDLE")
+                return (
+                    ResultCode.OK,
+                    "GoToIdle command completed OK. Device already IDLE",
+                )
 
             device.obs_state_model.perform_action("component_unconfigured")
 
             return (ResultCode.OK, "GoToIdle command completed OK")
-
 
     class UpdateDopplerPhaseCorrectionCommand(BaseCommand):
         """
@@ -1086,20 +1076,26 @@ class Vcc(CspSubElementObsDevice):
             :return: if UpdateDopplerPhaseCorrection is allowed
             :rtype: bool
             """
-            if self.target.get_state() == tango.DevState.ON and \
-                self.target._obs_state in [ObsState.READY, ObsState.SCANNING]:
+            if (
+                self.target.get_state() == tango.DevState.ON
+                and self.target._obs_state
+                in [ObsState.READY, ObsState.SCANNING]
+            ):
                 return True
             return False
 
-        def do(self: Vcc.UpdateDopplerPhaseCorrectionCommand, argin: str) -> None:
+        def do(
+            self: Vcc.UpdateDopplerPhaseCorrectionCommand, argin: str
+        ) -> None:
             """
             Stateless hook for UpdateDopplerPhaseCorrection() command functionality.
 
             :param argin: the doppler phase correction JSON
             """
             if self.is_allowed():
-                self.target.component_manager.update_doppler_phase_correction(argin)
-
+                self.target.component_manager.update_doppler_phase_correction(
+                    argin
+                )
 
     @command(
         dtype_in="DevString",
@@ -1113,7 +1109,6 @@ class Vcc(CspSubElementObsDevice):
         """
         self.get_command_object("UpdateDopplerPhaseCorrection")(argin)
         # PROTECTED REGION END #    //  CspSubElementObsDevice.UpdateDopplerPhaseCorrection
-
 
     class UpdateDelayModelCommand(BaseCommand):
         """
@@ -1130,8 +1125,11 @@ class Vcc(CspSubElementObsDevice):
             :return: if UpdateDelayModel is allowed
             :rtype: bool
             """
-            if self.target.get_state() == tango.DevState.ON and \
-                self.target._obs_state in [ObsState.READY, ObsState.SCANNING]:
+            if (
+                self.target.get_state() == tango.DevState.ON
+                and self.target._obs_state
+                in [ObsState.READY, ObsState.SCANNING]
+            ):
                 return True
             return False
 
@@ -1143,7 +1141,6 @@ class Vcc(CspSubElementObsDevice):
             """
             if self.is_allowed():
                 self.target.component_manager.update_delay_model(argin)
-
 
     @command(
         dtype_in="DevString",
@@ -1157,8 +1154,6 @@ class Vcc(CspSubElementObsDevice):
         """
         self.get_command_object("UpdateDelayModel")(argin)
         # PROTECTED REGION END #    //  CspSubElementObsDevice.UpdateDelayModel
-
-
 
     class UpdateJonesMatrixCommand(BaseCommand):
         """
@@ -1175,8 +1170,11 @@ class Vcc(CspSubElementObsDevice):
             :return: if UpdateJonesMatrix is allowed
             :rtype: bool
             """
-            if self.target.get_state() == tango.DevState.ON and \
-                self.target._obs_state in [ObsState.READY, ObsState.SCANNING]:
+            if (
+                self.target.get_state() == tango.DevState.ON
+                and self.target._obs_state
+                in [ObsState.READY, ObsState.SCANNING]
+            ):
                 return True
             return False
 
@@ -1188,7 +1186,6 @@ class Vcc(CspSubElementObsDevice):
             """
             if self.is_allowed():
                 self.target.component_manager.update_jones_matrix(argin)
-
 
     @command(
         dtype_in="DevString",
@@ -1203,14 +1200,13 @@ class Vcc(CspSubElementObsDevice):
         self.get_command_object("UpdateJonesMatrix")(argin)
         # PROTECTED REGION END #    //  CspSubElementObsDevice.UpdateJonesMatrix
 
-
     class ConfigureSearchWindowCommand(ResponseCommand):
         """
         A class for the Vcc's ConfigureSearchWindow() command.
 
-        Configure a search window by sending parameters from the input(JSON) to 
-        SearchWindow device. 
-        This function is called by the subarray after the configuration has 
+        Configure a search window by sending parameters from the input(JSON) to
+        SearchWindow device.
+        This function is called by the subarray after the configuration has
         already been validated.
         """
 
@@ -1222,15 +1218,15 @@ class Vcc(CspSubElementObsDevice):
             :return: if ConfigureSearchWindow is allowed
             :rtype: bool
             """
-            if self.target.get_state() == tango.DevState.ON and \
-                (self.target._obs_state == ObsState.CONFIGURING or \
-                self.target._obs_state == ObsState.READY):
+            if self.target.get_state() == tango.DevState.ON and (
+                self.target._obs_state == ObsState.CONFIGURING
+                or self.target._obs_state == ObsState.READY
+            ):
                 return True
             return False
 
         def validate_input(
-            self: Vcc.ConfigureSearchWindowCommand, 
-            argin: str
+            self: Vcc.ConfigureSearchWindowCommand, argin: str
         ) -> Tuple[bool, str]:
             """
             Validate a search window configuration
@@ -1261,62 +1257,84 @@ class Vcc(CspSubElementObsDevice):
             # Validate searchWindowTuning.
             if "search_window_tuning" in argin:
                 freq_band_name = argin["frequency_band"]
-                if freq_band_name not in ["5a", "5b"]:  # frequency band is not band 5
-                    
+                if freq_band_name not in [
+                    "5a",
+                    "5b",
+                ]:  # frequency band is not band 5
+
                     frequencyBand_mi = freq_band_dict()[freq_band_name]
-                    
-                    frequencyBand = ["1", "2", "3", "4", "5a", "5b"].index(argin["frequency_band"])
+
+                    frequencyBand = ["1", "2", "3", "4", "5a", "5b"].index(
+                        argin["frequency_band"]
+                    )
 
                     assert frequencyBand_mi == frequencyBand
-                    
+
                     start_freq_Hz, stop_freq_Hz = [
                         const.FREQUENCY_BAND_1_RANGE_HZ,
                         const.FREQUENCY_BAND_2_RANGE_HZ,
                         const.FREQUENCY_BAND_3_RANGE_HZ,
-                        const.FREQUENCY_BAND_4_RANGE_HZ
+                        const.FREQUENCY_BAND_4_RANGE_HZ,
                     ][frequencyBand]
 
                     device.logger.debug(f"start_freq_Hz = {start_freq_Hz}")
                     device.logger.debug(f"stop_freq_Hz = {stop_freq_Hz}")
 
-                    if start_freq_Hz + argin["frequency_band_offset_stream_1"] <= \
-                            int(argin["search_window_tuning"]) <= \
-                            stop_freq_Hz + argin["frequency_band_offset_stream_1"]:
+                    if (
+                        start_freq_Hz + argin["frequency_band_offset_stream_1"]
+                        <= int(argin["search_window_tuning"])
+                        <= stop_freq_Hz
+                        + argin["frequency_band_offset_stream_1"]
+                    ):
                         pass
                     else:
                         msg = "'search_window_tuning' must be within observed band."
                         return (False, msg)
-                else:  # frequency band 5a or 5b (two streams with bandwidth 2.5 GHz)
-                    if argin["band_5_tuning"] == [0,0]: # band 5 tuning not specified in configuration
+                # frequency band 5a or 5b (two streams with bandwidth 2.5 GHz)
+                else:
+                    if argin["band_5_tuning"] == [
+                        0,
+                        0,
+                    ]:  # band 5 tuning not specified in configuration
                         pass
                     else:
                         frequency_band_range_1 = (
-                            argin["band_5_tuning"][0] * 10 ** 9 + argin["frequency_band_offset_stream_1"] - \
-                            const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2,
-                            argin["band_5_tuning"][0] * 10 ** 9 + argin["frequency_band_offset_stream_1"] + \
-                            const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2
+                            argin["band_5_tuning"][0] * 10**9
+                            + argin["frequency_band_offset_stream_1"]
+                            - const.BAND_5_STREAM_BANDWIDTH * 10**9 / 2,
+                            argin["band_5_tuning"][0] * 10**9
+                            + argin["frequency_band_offset_stream_1"]
+                            + const.BAND_5_STREAM_BANDWIDTH * 10**9 / 2,
                         )
 
                         frequency_band_range_2 = (
-                            argin["band_5_tuning"][1] * 10 ** 9 + argin["frequency_band_offset_stream_2"] - \
-                            const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2,
-                            argin["band_5_tuning"][1] * 10 ** 9 + argin["frequency_band_offset_stream_2"] + \
-                            const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2
+                            argin["band_5_tuning"][1] * 10**9
+                            + argin["frequency_band_offset_stream_2"]
+                            - const.BAND_5_STREAM_BANDWIDTH * 10**9 / 2,
+                            argin["band_5_tuning"][1] * 10**9
+                            + argin["frequency_band_offset_stream_2"]
+                            + const.BAND_5_STREAM_BANDWIDTH * 10**9 / 2,
                         )
 
-                        if (frequency_band_range_1[0] <= \
-                            int(argin["search_window_tuning"]) <= \
-                            frequency_band_range_1[1]) or \
-                                (frequency_band_range_2[0] <= \
-                                int(argin["search_window_tuning"]) <= \
-                                frequency_band_range_2[1]):
+                        if (
+                            frequency_band_range_1[0]
+                            <= int(argin["search_window_tuning"])
+                            <= frequency_band_range_1[1]
+                        ) or (
+                            frequency_band_range_2[0]
+                            <= int(argin["search_window_tuning"])
+                            <= frequency_band_range_2[1]
+                        ):
                             pass
                         else:
                             msg = "'searchWindowTuning' must be within observed band."
                             device.logger.error(msg)
-                            tango.Except.throw_exception("Command failed", msg,
-                                                        "ConfigureSearchWindow execution",
-                                                        tango.ErrSeverity.ERR)
+                            tango.Except.throw_exception(
+                                "Command failed",
+                                msg,
+                                "ConfigureSearchWindow execution",
+                                tango.ErrSeverity.ERR,
+                            )
             else:
                 msg = "Search window specified, but 'search_window_tuning' not given."
                 return (False, msg)
@@ -1326,7 +1344,9 @@ class Vcc(CspSubElementObsDevice):
                 if argin["tdc_enable"] in [True, False]:
                     pass
                 else:
-                    msg = "Search window specified, but 'tdc_enable' not given."
+                    msg = (
+                        "Search window specified, but 'tdc_enable' not given."
+                    )
                     return (False, msg)
             else:
                 msg = "Search window specified, but 'tdc_enable' not given."
@@ -1379,15 +1399,16 @@ class Vcc(CspSubElementObsDevice):
                             pass
                 except KeyError:
                     # tdcDestinationAddress not given or receptorID not in tdcDestinationAddress
-                    msg = "Search window specified with TDC enabled, but 'tdcDestinationAddress' " \
+                    msg = (
+                        "Search window specified with TDC enabled, but 'tdcDestinationAddress' "
                         "not given or missing receptors."
+                    )
                     return (False, msg)
-            
+
             return (True, "Search window validated.")
 
         def do(
-            self: Vcc.ConfigureSearchWindowCommand,
-            argin: str
+            self: Vcc.ConfigureSearchWindowCommand, argin: str
         ) -> Tuple[ResultCode, str]:
             """
             Stateless hook for ConfigureSearchWindow() command functionality.
@@ -1429,7 +1450,9 @@ class Vcc(CspSubElementObsDevice):
 
         (valid, message) = command.validate_input(argin)
         if not valid:
-            self._raise_configuration_fatal_error(message, "ConfigureSearchWindow")
+            self._raise_configuration_fatal_error(
+                message, "ConfigureSearchWindow"
+            )
 
         (result_code, message) = command(argin)
 
@@ -1441,10 +1464,12 @@ class Vcc(CspSubElementObsDevice):
 # Run server
 # ----------
 
+
 def main(args=None, **kwargs):
     # PROTECTED REGION ID(Vcc.main) ENABLED START #
     return run((Vcc,), args=args, **kwargs)
     # PROTECTED REGION END #    //  Vcc.main
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

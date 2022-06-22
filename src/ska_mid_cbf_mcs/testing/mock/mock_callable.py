@@ -2,7 +2,7 @@
 #
 # This file is part of the SKA Mid.CBF MCS project
 #
-# Ported from the SKA Low MCCS project: 
+# Ported from the SKA Low MCCS project:
 # https://gitlab.com/ska-telescope/ska-low-mccs/-/blob/main/src/ska_low_mccs/testing/mock/mock_callable.py
 #
 # Distributed under the terms of the GPL license.
@@ -12,8 +12,8 @@
 from __future__ import annotations  # allow forward references in type hints
 
 import queue
-from typing import Any, Optional, Sequence, Tuple
 import unittest.mock
+from typing import Any, Optional, Sequence, Tuple
 
 import tango
 
@@ -109,7 +109,9 @@ class MockCallable:
         self._queue.put(called_mock)
         return self._return_value
 
-    def assert_not_called(self: MockCallable, timeout: Optional[float] = None) -> None:
+    def assert_not_called(
+        self: MockCallable, timeout: Optional[float] = None
+    ) -> None:
         """
         Assert that the callback still has not been called after the timeout period.
 
@@ -129,7 +131,9 @@ class MockCallable:
             return
         called_mock.assert_not_called()  # we know this will fail and raise an exception
 
-    def assert_next_call(self: MockCallable, *args: Any, **kwargs: Any) -> None:
+    def assert_next_call(
+        self: MockCallable, *args: Any, **kwargs: Any
+    ) -> None:
         """
         Assert the arguments of the next call to this mock callback.
 
@@ -147,7 +151,9 @@ class MockCallable:
             raise AssertionError("Callback has not been called.")
         called_mock.assert_called_once_with(*args, **kwargs)
 
-    def get_next_call(self: MockCallable) -> Tuple[Sequence[Any], Sequence[Any]]:
+    def get_next_call(
+        self: MockCallable,
+    ) -> Tuple[Sequence[Any], Sequence[Any]]:
         """
         Return the arguments of the next call to this mock callback.
 
@@ -176,7 +182,9 @@ class MockCallable:
             raise AssertionError("Callback has not been called.")
         return called_mock.call_args
 
-    def assert_last_call(self: MockCallable, *args: Any, **kwargs: Any) -> None:
+    def assert_last_call(
+        self: MockCallable, *args: Any, **kwargs: Any
+    ) -> None:
         """
         Assert the arguments of the last call to this mock callback.
 
@@ -322,9 +330,7 @@ class MockChangeEventCallback(MockCallable):
                 continue
 
             if call_value != value:
-                failure_message = (
-                    f"Call value {call_value} does not match expected value {value}"
-                )
+                failure_message = f"Call value {call_value} does not match expected value {value}"
                 called_mock = None
                 continue
 

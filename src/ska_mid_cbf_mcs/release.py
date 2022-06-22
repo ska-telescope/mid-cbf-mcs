@@ -9,16 +9,14 @@ import sys
 from typing import Optional
 
 name = "ska_mid_cbf_mcs"
-version = "0.6.2"
+version = "0.6.3"
 version_info = version.split(".")
 description = "A set of Mid MCS tango devices for the SKA Telescope."
 author = "Team CIPA"
 author_email = "taylor.huang@mda.space"
 url = "https://gitlab.com/ska-telescope/ska-mid-cbf-mcs"
 license = "BSD-3-Clause"  # noqa: A001
-copyright = (  # noqa: A001
-    ""
-)
+copyright = ""  # noqa: A001
 
 
 def get_release_info(clsname: Optional[str] = None) -> str:
@@ -32,7 +30,8 @@ def get_release_info(clsname: Optional[str] = None) -> str:
     """
     rmod = sys.modules[__name__]
     info = ", ".join(
-        (rmod.name, rmod.version, rmod.description)  # type: ignore[attr-defined]
+        # type: ignore[attr-defined]
+        (rmod.name, rmod.version, rmod.description)
     )
     if clsname is None:
         return info

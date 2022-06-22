@@ -13,29 +13,31 @@ from __future__ import annotations
 
 # Standard imports
 import os
-import pytest
-import unittest
 import time
+
+import pytest
+from ska_tango_base.commands import ResultCode
+from ska_tango_base.control_model import AdminMode
+from tango import DevState
+
+from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 
 # Path
 file_path = os.path.dirname(os.path.abspath(__file__))
 
-# Tango imports
-from tango import DevState
-from tango.server import command
+# SKA imports
 
-#SKA imports
-from ska_tango_base.commands import ResultCode
-from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
-from ska_tango_base.control_model import AdminMode
+# Tango imports
+
 
 CONST_WAIT_TIME = 4
+
 
 class TestCbfController:
     """
     Test class for CbfController tests.
     """
-    
+
     def test_State(
         self: TestCbfController,
         device_under_test: CbfDeviceProxy,
@@ -48,7 +50,7 @@ class TestCbfController:
             :py:class:`tango.test_context.DeviceTestContext`.
         """
         assert device_under_test.State() == DevState.DISABLE
-    
+
     def test_Status(
         self: TestCbfController,
         device_under_test: CbfDeviceProxy,
@@ -63,18 +65,11 @@ class TestCbfController:
 
         assert device_under_test.adminMode == AdminMode.OFFLINE
 
-    @pytest.mark.parametrize(
-        "command",
-        [
-            "On",
-            "Off",
-            "Standby"
-        ]
-    )
+    @pytest.mark.parametrize("command", ["On", "Off", "Standby"])
     def test_Commands(
         self: TestCbfController,
         device_under_test: CbfDeviceProxy,
-        command: str
+        command: str,
     ) -> None:
         """
         Test On command.

@@ -12,30 +12,27 @@
 from __future__ import annotations
 
 import logging
-import requests
-from requests.structures import CaseInsensitiveDict
 from typing import List
+
+import requests
 from jsonschema import validate
 from jsonschema.exceptions import ValidationError
-
-from ska_tango_base.control_model import PowerMode
+from requests.structures import CaseInsensitiveDict
 from ska_tango_base.commands import ResultCode
+from ska_tango_base.control_model import PowerMode
 
-__all__ = [
-    "PowerSwitchDriver"
-]
+__all__ = ["PowerSwitchDriver"]
 
 # TODO: replace these with Kubernetes secrets
 user = "admin"
 password = "1234"
 
+
 class Outlet:
     """Represents a single outlet in the power switch."""
+
     def __init__(
-        self: Outlet,
-        outlet_ID: int,
-        outlet_name: str,
-        power_mode: PowerMode
+        self: Outlet, outlet_ID: int, outlet_name: str, power_mode: PowerMode
     ) -> None:
         """
         Initialize a new instance.
@@ -48,10 +45,11 @@ class Outlet:
         self.outlet_name = outlet_name
         self.power_mode = power_mode
 
+
 class PowerSwitchDriver:
     """
     A driver for the DLI web power switch.
-    
+
     :param ip: IP address of the power switch
     :param logger: a logger for this object to use
     """
@@ -63,9 +61,7 @@ class PowerSwitchDriver:
     """Timeout in seconds used when waiting for a reply from the power switch"""
 
     def __init__(
-        self: PowerSwitchDriver,
-        ip: str,
-        logger: logging.Logger
+        self: PowerSwitchDriver, ip: str, logger: logging.Logger
     ) -> None:
         """
         Initialise a new instance.
@@ -77,9 +73,9 @@ class PowerSwitchDriver:
 
         # Initialize the request header
         self.header = CaseInsensitiveDict()
-        self.header['Accept'] = 'application/json'
-        self.header['X-CSRF'] = 'x'
-        self.header['Content-Type'] = "application/x-www-form-urlencoded"
+        self.header["Accept"] = "application/json"
+        self.header["X-CSRF"] = "x"
+        self.header["Content-Type"] = "application/x-www-form-urlencoded"
 
         self.outlets: List(Outlet) = []
 
@@ -107,20 +103,28 @@ class PowerSwitchDriver:
         :return: whether the power switch is communicating
         """
         try:
-            response = requests.get(url=self.base_url, headers=self.header,
-                auth=(user, password), timeout=self.query_timeout_s)
+            response = requests.get(
+                url=self.base_url,
+                headers=self.header,
+                auth=(user, password),
+                timeout=self.query_timeout_s,
+            )
             if response.status_code == requests.codes.ok:
                 return True
             else:
-                self.logger.error(f"HTTP response error: {response.status_code}")
+                self.logger.error(
+                    f"HTTP response error: {response.status_code}"
+                )
                 return False
-        except (requests.exceptions.ConnectTimeout, requests.exceptions.ConnectionError):
+        except (
+            requests.exceptions.ConnectTimeout,
+            requests.exceptions.ConnectionError,
+        ):
             self.logger.error("Failed to connect to power switch")
             return False
 
     def get_outlet_power_mode(
-        self: PowerSwitchDriver,
-        outlet: int
+        self: PowerSwitchDriver, outlet: int
     ) -> PowerMode:
         """
         Get the power mode of a specific outlet.
@@ -133,32 +137,47 @@ class PowerSwitchDriver:
         """
         assert (
             outlet < len(self.outlets) and outlet >= 0
-        ), f"Outlet ID must be >= 0 and < {len(self.outlets)} (number of outlets in this power switch)" 
+        ), f"Outlet ID must be >= 0 and < {len(self.outlets)} (number of outlets in this power switch)"
 
         url = f"{self.base_url}/restapi/relay/outlets/{outlet}/state/"
         try:
-            response = requests.get(url=url, headers=self.header,
-                auth=(user, password), timeout=self.query_timeout_s)
-            if response.status_code in [requests.codes.ok, requests.codes.no_content]:
+            response = requests.get(
+                url=url,
+                headers=self.header,
+                auth=(user, password),
+                timeout=self.query_timeout_s,
+            )
+            if response.status_code in [
+                requests.codes.ok,
+                requests.codes.no_content,
+            ]:
                 try:
-                    power_mode = self.power_mode_conversion[response.text == "true"]
+                    power_mode = self.power_mode_conversion[
+                        response.text == "true"
+                    ]
                 except IndexError:
                     power_mode = PowerMode.UNKNOWN
 
                 if power_mode != self.outlets[outlet].power_mode:
-                    raise AssertionError(f"Power mode of outlet {outlet} ({power_mode})" \
-                        f" is different than the expected mode {self.outlets[outlet].power_mode}")
+                    raise AssertionError(
+                        f"Power mode of outlet {outlet} ({power_mode})"
+                        f" is different than the expected mode {self.outlets[outlet].power_mode}"
+                    )
                 return power_mode
             else:
-                self.logger.error(f"HTTP response error: {response.status_code}")
+                self.logger.error(
+                    f"HTTP response error: {response.status_code}"
+                )
                 return PowerMode.UNKNOWN
-        except (requests.exceptions.ConnectTimeout, requests.exceptions.ConnectionError):
+        except (
+            requests.exceptions.ConnectTimeout,
+            requests.exceptions.ConnectionError,
+        ):
             self.logger.error("Failed to connect to power switch")
             return PowerMode.UNKNOWN
 
     def turn_on_outlet(
-        self: PowerSwitchDriver,
-        outlet: int
+        self: PowerSwitchDriver, outlet: int
     ) -> tuple[ResultCode, str]:
         """
         Tell the DLI power switch to turn on a specific outlet.
@@ -177,21 +196,33 @@ class PowerSwitchDriver:
         data = "value=true"
 
         try:
-            response = requests.put(url=url, data=data, headers=self.header,
-                auth=(user, password), timeout=self.query_timeout_s)
-            if response.status_code in [requests.codes.ok, requests.codes.no_content]:
+            response = requests.put(
+                url=url,
+                data=data,
+                headers=self.header,
+                auth=(user, password),
+                timeout=self.query_timeout_s,
+            )
+            if response.status_code in [
+                requests.codes.ok,
+                requests.codes.no_content,
+            ]:
                 self.outlets[outlet].power_mode = PowerMode.ON
                 return ResultCode.OK, f"Outlet {outlet} power on"
             else:
-                self.logger.error(f"HTTP response error: {response.status_code}")
+                self.logger.error(
+                    f"HTTP response error: {response.status_code}"
+                )
                 return ResultCode.FAILED, "HTTP response error"
-        except (requests.exceptions.ConnectTimeout, requests.exceptions.ConnectionError):
+        except (
+            requests.exceptions.ConnectTimeout,
+            requests.exceptions.ConnectionError,
+        ):
             self.logger.error("Failed to connect to power switch")
             return ResultCode.FAILED, "Connection error"
-        
+
     def turn_off_outlet(
-        self: PowerSwitchDriver,
-        outlet: int
+        self: PowerSwitchDriver, outlet: int
     ) -> tuple[ResultCode, str]:
         """
         Tell the DLI power switch to turn off a specific outlet.
@@ -210,21 +241,32 @@ class PowerSwitchDriver:
         data = "value=false"
 
         try:
-            response = requests.put(url=url, data=data, headers=self.header,
-                auth=(user, password), timeout=self.query_timeout_s)
-            if response.status_code in [requests.codes.ok, requests.codes.no_content]:
+            response = requests.put(
+                url=url,
+                data=data,
+                headers=self.header,
+                auth=(user, password),
+                timeout=self.query_timeout_s,
+            )
+            if response.status_code in [
+                requests.codes.ok,
+                requests.codes.no_content,
+            ]:
                 self.outlets[outlet].power_mode = PowerMode.OFF
                 return ResultCode.OK, f"Outlet {outlet} power off"
             else:
-                self.logger.error(f"HTTP response error: {response.status_code}")
+                self.logger.error(
+                    f"HTTP response error: {response.status_code}"
+                )
                 return ResultCode.FAILED, "HTTP response error"
-        except (requests.exceptions.ConnectTimeout, requests.exceptions.ConnectionError):
+        except (
+            requests.exceptions.ConnectTimeout,
+            requests.exceptions.ConnectionError,
+        ):
             self.logger.error("Failed to connect to power switch")
             return ResultCode.FAILED, "Connection error"
 
-    def get_outlet_list(
-        self: PowerSwitchDriver
-    ) -> List(Outlet):
+    def get_outlet_list(self: PowerSwitchDriver) -> List(Outlet):
         """
         Query the power switch for a list of outlets and get their name
         and current state.
@@ -240,13 +282,17 @@ class PowerSwitchDriver:
             "cycle_delay": "integer",
             "state": "boolean",
             "physical_state": "boolean",
-            "transient_state": "boolean"
+            "transient_state": "boolean",
         }
 
         url = f"{self.base_url}/restapi/relay/outlets/"
         try:
-            response = requests.get(url=url, headers=self.header, auth=(user, password),
-                timeout=self.query_timeout_s)
+            response = requests.get(
+                url=url,
+                headers=self.header,
+                auth=(user, password),
+                timeout=self.query_timeout_s,
+            )
             if response.status_code == requests.codes.ok:
                 # Validate the response has the expected format
                 try:
@@ -260,21 +306,30 @@ class PowerSwitchDriver:
                 resp_list = response.json()
                 for idx, resp_dict in enumerate(resp_list):
                     try:
-                        power_mode = self.power_mode_conversion[resp_dict['state']]
+                        power_mode = self.power_mode_conversion[
+                            resp_dict["state"]
+                        ]
                     except IndexError:
                         power_mode = PowerMode.UNKNOWN
 
-                    outlets.append(Outlet(
-                        outlet_ID = idx,
-                        outlet_name = resp_dict['name'],
-                        power_mode = power_mode
-                    ))
+                    outlets.append(
+                        Outlet(
+                            outlet_ID=idx,
+                            outlet_name=resp_dict["name"],
+                            power_mode=power_mode,
+                        )
+                    )
                 return outlets
 
             else:
-                self.logger.error(f"HTTP response error: {response.status_code}")
+                self.logger.error(
+                    f"HTTP response error: {response.status_code}"
+                )
                 return []
 
-        except (requests.exceptions.ConnectTimeout, requests.exceptions.ConnectionError):
+        except (
+            requests.exceptions.ConnectTimeout,
+            requests.exceptions.ConnectionError,
+        ):
             self.logger.error("Failed to connect to power switch")
             return []

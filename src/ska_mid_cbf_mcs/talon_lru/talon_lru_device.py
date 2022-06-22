@@ -7,37 +7,40 @@
 # Distributed under the terms of the GPL license.
 # See LICENSE.txt for more info.
 
-""" 
+"""
 TANGO device class for controlling and monitoring a Talon LRU.
 """
 
 from __future__ import annotations
+
 from threading import Lock
-from typing import Any, Tuple, Optional
+from typing import Any, Optional, Tuple
 
 # tango imports
 import tango
-from tango.server import run
-from tango.server import attribute
-from tango.server import device_property
-from tango import DevState
 from ska_tango_base import SKABaseDevice
+from ska_tango_base.commands import ResultCode
+from ska_tango_base.control_model import PowerMode
+from tango.server import attribute, device_property, run
+
+from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
 
 # Additional import
 # PROTECTED REGION ID(TalonLRU.additionnal_import) ENABLED START #
-from ska_mid_cbf_mcs.talon_lru.talon_lru_component_manager import TalonLRUComponentManager
-from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
-from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
-from ska_tango_base.control_model import SimulationMode, PowerMode
-from ska_tango_base.commands import ResultCode
+from ska_mid_cbf_mcs.talon_lru.talon_lru_component_manager import (
+    TalonLRUComponentManager,
+)
+
 # PROTECTED REGION END #    //  TalonLRU.additionnal_import
 
 __all__ = ["TalonLRU", "main"]
+
 
 class TalonLRU(SKABaseDevice):
     """
     TANGO device class for controlling and monitoring a Talon LRU.
     """
+
     # PROTECTED REGION ID(TalonLRU.class_variable) ENABLED START #
     # PROTECTED REGION END #    //  TalonLRU.class_variable
 
@@ -46,27 +49,27 @@ class TalonLRU(SKABaseDevice):
     # -----------------
 
     TalonDxBoard1Address = device_property(
-        dtype='str',
+        dtype="str",
     )
 
     TalonDxBoard2Address = device_property(
-        dtype='str',
+        dtype="str",
     )
 
     PDU1Address = device_property(
-        dtype='str',
+        dtype="str",
     )
 
     PDU1PowerOutlet = device_property(
-        dtype='int',
+        dtype="int",
     )
 
     PDU2Address = device_property(
-        dtype='str',
+        dtype="str",
     )
 
     PDU2PowerOutlet = device_property(
-        dtype='int',
+        dtype="int",
     )
 
     # ----------
@@ -74,12 +77,12 @@ class TalonLRU(SKABaseDevice):
     # ----------
 
     PDU1PowerMode = attribute(
-        dtype='uint16',
+        dtype="uint16",
         doc="Power mode of the Talon LRU PSU 1",
     )
 
     PDU2PowerMode = attribute(
-        dtype='uint16',
+        dtype="uint16",
         doc="Power mode of the Talon LRU PSU 2",
     )
 
@@ -92,7 +95,6 @@ class TalonLRU(SKABaseDevice):
         Hook to be executed before any attribute access or command.
         """
         # PROTECTED REGION ID(TalonLRU.always_executed_hook) ENABLED START #
-        pass
         # PROTECTED REGION END #    //  TalonLRU.always_executed_hook
 
     def delete_device(self: TalonLRU) -> None:
@@ -100,7 +102,6 @@ class TalonLRU(SKABaseDevice):
         Uninitialize the device.
         """
         # PROTECTED REGION ID(TalonLRU.delete_device) ENABLED START #
-        pass
         # PROTECTED REGION END #    //  TalonLRU.delete_device
 
     def init_command_objects(self: TalonLRU) -> None:
@@ -110,12 +111,8 @@ class TalonLRU(SKABaseDevice):
         super().init_command_objects()
 
         device_args = (self, self.op_state_model, self.logger)
-        self.register_command_object(
-            "On", self.OnCommand(*device_args)
-        )
-        self.register_command_object(
-            "Off", self.OffCommand(*device_args)
-        )
+        self.register_command_object("On", self.OnCommand(*device_args))
+        self.register_command_object("Off", self.OffCommand(*device_args))
 
     # ------------------
     # Attributes methods
@@ -162,7 +159,7 @@ class TalonLRU(SKABaseDevice):
             self.op_state_model.perform_action("component_disconnected")
         elif communication_status == CommunicationStatus.NOT_ESTABLISHED:
             self.op_state_model.perform_action("component_unknown")
-    
+
     def _component_power_mode_changed(
         self: TalonLRU,
         power_mode: PowerMode,
@@ -187,21 +184,23 @@ class TalonLRU(SKABaseDevice):
             }
 
             self.op_state_model.perform_action(action_map[power_mode])
-    
+
     def _component_fault(self: TalonLRU, faulty: bool) -> None:
         """
         Handle component fault
         """
         if faulty:
             self.op_state_model.perform_action("component_fault")
-            self.set_status("The device is in FAULT state - one or both PDU outlets have incorrect power state.")
+            self.set_status(
+                "The device is in FAULT state - one or both PDU outlets have incorrect power state."
+            )
 
     def _check_power_mode(
         self: TalonLRUComponentManager,
-        fqdn: str = '',
-        name: str = '',
+        fqdn: str = "",
+        name: str = "",
         value: Any = None,
-        quality: tango.AttrQuality = None
+        quality: tango.AttrQuality = None,
     ) -> None:
         """
         Get the power mode of both PDUs and check that it is consistent with the
@@ -211,12 +210,11 @@ class TalonLRU(SKABaseDevice):
         with self._power_switch_lock:
             self.component_manager.check_power_mode(self.get_state())
 
-
     # --------
     # Commands
     # --------
 
-    def create_component_manager(self:TalonLRU) -> TalonLRUComponentManager:
+    def create_component_manager(self: TalonLRU) -> TalonLRUComponentManager:
         """
         Create and return a component manager for this device.
 
@@ -237,14 +235,14 @@ class TalonLRU(SKABaseDevice):
             communication_status_changed_callback=self._communication_status_changed,
             component_power_mode_changed_callback=self._component_power_mode_changed,
             component_fault_callback=self._component_fault,
-            check_power_mode_callback=self._check_power_mode
+            check_power_mode_callback=self._check_power_mode,
         )
-
 
     class InitCommand(SKABaseDevice.InitCommand):
         """
         A class for the TalonLRU's init_device() "command".
         """
+
         def do(self: TalonLRU.InitCommand) -> Tuple[ResultCode, str]:
             """
             Stateless hook for device initialisation. Creates the device proxies
@@ -259,11 +257,10 @@ class TalonLRU(SKABaseDevice):
             device = self.target
             device._power_switch_lock = Lock()
 
-            #check power mode in case of fault during communication establishment
+            # check power mode in case of fault during communication establishment
             # device.component_manager.check_power_mode(device.get_state())
 
             return (result_code, msg)
-
 
     class OnCommand(SKABaseDevice.OnCommand):
         """
@@ -313,14 +310,17 @@ class TalonLRU(SKABaseDevice):
                 self.is_allowed()
                 return device.component_manager.off()
 
+
 # ----------
 # Run server
 # ----------
+
 
 def main(args=None, **kwargs):
     # PROTECTED REGION ID(TalonLRU.main) ENABLED START #
     return run((TalonLRU,), args=args, **kwargs)
     # PROTECTED REGION END #    //  TalonLRU.main
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

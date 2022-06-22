@@ -9,41 +9,41 @@
 # See LICENSE for more info.
 
 """
-A module defining a list of fixture functions that are shared across all the 
+A module defining a list of fixture functions that are shared across all the
 ska-mid-cbf-mcs tests.
 """
 
-from __future__ import absolute_import
-from __future__ import annotations
+from __future__ import absolute_import, annotations
 
-import logging
-from typing import Any, Callable, Generator, Set, cast, List, Dict
-import pytest
-import unittest
-import yaml
-import time
 import json
+import logging
+import time
+import unittest
+from typing import Any, Callable, Dict, Generator, List, Set, cast
+
+import pytest
 
 # Tango imports
 import tango
-from tango import DevState
-from tango import DeviceProxy
+import yaml
 
 # SKA imports
-from ska_tango_base.control_model import LoggingLevel, ObsState, AdminMode
+from ska_tango_base.control_model import AdminMode, LoggingLevel, ObsState
+from tango import DevState
 
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_mid_cbf_mcs.testing.mock.mock_callable import MockChangeEventCallback
 from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder
 from ska_mid_cbf_mcs.testing.tango_harness import (
+    CbfDeviceInfo,
     ClientProxyTangoHarness,
     DevicesToLoadType,
-    CbfDeviceInfo,
     MockingTangoHarness,
     StartingStateTangoHarness,
     TangoHarness,
     TestContextTangoHarness,
 )
+
 
 def pytest_sessionstart(session: pytest.Session) -> None:
     """
@@ -111,7 +111,9 @@ def pytest_collection_modifyitems(
     prefix = "needs_"
     for item in items:
         needs_tags = set(
-            tag[len(prefix) :] for tag in item.keywords if tag.startswith(prefix)
+            tag[len(prefix) :]  # noqa: E203
+            for tag in item.keywords
+            if tag.startswith(prefix)
         )
         unmet_tags = list(needs_tags - available_tags)
         if unmet_tags:
@@ -123,7 +125,6 @@ def pytest_collection_modifyitems(
                     )
                 )
             )
-
 
 
 @pytest.fixture()
@@ -198,8 +199,6 @@ def tango_harness_factory(
         :py:class:`~ska_mid_cbf_mcs.testing.tango_harness.TestContextTangoHarness`.
         """
 
-        pass
-
     testbed = request.config.getoption("--testbed")
 
     def build_harness(
@@ -228,7 +227,9 @@ def tango_harness_factory(
 
         tango_harness: TangoHarness  # type hint only
         if testbed == "test":
-            tango_harness = _CPTCTangoHarness(device_info, logger, **tango_config)
+            tango_harness = _CPTCTangoHarness(
+                device_info, logger, **tango_config
+            )
         else:
             tango_harness = ClientProxyTangoHarness(device_info, logger)
 
@@ -302,7 +303,9 @@ def logger() -> logging.Logger:
 
 
 @pytest.fixture()
-def mock_change_event_callback_factory() -> Callable[[str], MockChangeEventCallback]:
+def mock_change_event_callback_factory() -> Callable[
+    [str], MockChangeEventCallback
+]:
     """
     Return a factory that returns a new mock change event callback each call.
 
@@ -341,28 +344,31 @@ def init_proxies_fixture():
                 timeout_millis = 500000
             else:
                 timeout_millis = 60000
-            
+
             # TmCspSubarrayLeafNodeTest
             self.tm = CbfDeviceProxy(
                 fqdn="ska_mid/tm_leaf_node/csp_subarray_01",
-                logger=logging.getLogger()
+                logger=logging.getLogger(),
             )
 
             # CbfController
             self.controller = CbfDeviceProxy(
                 fqdn="mid_csp_cbf/sub_elt/controller",
-                logger=logging.getLogger()
+                logger=logging.getLogger(),
             )
             self.controller.set_timeout_millis(timeout_millis)
             self.wait_timeout_dev([self.controller], DevState.DISABLE, 3, 1)
 
-            self.receptor_to_vcc = dict([
-                *map(int, pair.split(":"))
-            ] for pair in self.controller.receptorToVcc)
+            self.receptor_to_vcc = dict(
+                [*map(int, pair.split(":"))]
+                for pair in self.controller.receptorToVcc
+            )
 
             self.max_capabilities = dict(
-                pair.split(":") for pair in
-                self.controller.get_property("MaxCapabilities")["MaxCapabilities"]
+                pair.split(":")
+                for pair in self.controller.get_property("MaxCapabilities")[
+                    "MaxCapabilities"
+                ]
             )
             self.num_sub = int(self.max_capabilities["Subarray"])
             self.num_fsp = int(self.max_capabilities["FSP"])
@@ -370,10 +376,13 @@ def init_proxies_fixture():
 
             # CbfSubarray
             self.subarray = [None]
-            for proxy in [CbfDeviceProxy(
-                fqdn=f"mid_csp_cbf/sub_elt/subarray_{i:02}",
-                logger=logging.getLogger()
-            ) for i in range(1, self.num_sub + 1)]:
+            for proxy in [
+                CbfDeviceProxy(
+                    fqdn=f"mid_csp_cbf/sub_elt/subarray_{i:02}",
+                    logger=logging.getLogger(),
+                )
+                for i in range(1, self.num_sub + 1)
+            ]:
                 proxy.set_timeout_millis(timeout_millis)
                 self.subarray.append(proxy)
                 proxy.loggingLevel = LoggingLevel.DEBUG
@@ -381,34 +390,47 @@ def init_proxies_fixture():
             # Fsp
             # index == fspID
             self.fsp = [None]
-            for proxy in [CbfDeviceProxy(
-                fqdn=f"mid_csp_cbf/fsp/{j:02}",
-                logger=logging.getLogger()
-            ) for j in range(1, self.num_fsp + 1)]:
+            for proxy in [
+                CbfDeviceProxy(
+                    fqdn=f"mid_csp_cbf/fsp/{j:02}", logger=logging.getLogger()
+                )
+                for j in range(1, self.num_fsp + 1)
+            ]:
                 self.fsp.append(proxy)
-            
+
             # currently support for just one subarray, CORR/PSS-BF/PST-BF only
             # fspSubarray[function mode (str)][subarray id (int)][fsp id (int)]
             self.fspSubarray = {
-                "CORR": {1: [None]}, "PSS-BF": {1: [None]}, "PST-BF": {1: [None]}
+                "CORR": {1: [None]},
+                "PSS-BF": {1: [None]},
+                "PST-BF": {1: [None]},
             }
 
-            for proxy in [CbfDeviceProxy(
-                fqdn=f"mid_csp_cbf/fspCorrSubarray/{j:02}_01",
-                logger=logging.getLogger()
-            ) for j in range(1, self.num_fsp + 1)]:
+            for proxy in [
+                CbfDeviceProxy(
+                    fqdn=f"mid_csp_cbf/fspCorrSubarray/{j:02}_01",
+                    logger=logging.getLogger(),
+                )
+                for j in range(1, self.num_fsp + 1)
+            ]:
                 self.fspSubarray["CORR"][1].append(proxy)
-  
-            for proxy in [CbfDeviceProxy(
-                fqdn=f"mid_csp_cbf/fspPssSubarray/{j:02}_01",
-                logger=logging.getLogger()
-            ) for j in range(1, self.num_fsp + 1)]:
+
+            for proxy in [
+                CbfDeviceProxy(
+                    fqdn=f"mid_csp_cbf/fspPssSubarray/{j:02}_01",
+                    logger=logging.getLogger(),
+                )
+                for j in range(1, self.num_fsp + 1)
+            ]:
                 self.fspSubarray["PSS-BF"][1].append(proxy)
-     
-            for proxy in [CbfDeviceProxy(
-                fqdn=f"mid_csp_cbf/fspPstSubarray/{j:02}_01",
-                logger=logging.getLogger()
-            ) for j in range(1, self.num_fsp + 1)]:
+
+            for proxy in [
+                CbfDeviceProxy(
+                    fqdn=f"mid_csp_cbf/fspPstSubarray/{j:02}_01",
+                    logger=logging.getLogger(),
+                )
+                for j in range(1, self.num_fsp + 1)
+            ]:
                 self.fspSubarray["PST-BF"][1].append(proxy)
 
             # fspFunctionMode[fsp id (int)][function mode (str)]
@@ -418,41 +440,46 @@ def init_proxies_fixture():
                 for j in ["corr", "pss", "pst", "vlbi"]:
                     func_modes[j] = CbfDeviceProxy(
                         fqdn=f"mid_csp_cbf/fsp_{j}/{i:02}",
-                        logger=logging.getLogger()
+                        logger=logging.getLogger(),
                     )
                 self.fspFunctionMode.append(func_modes)
 
             # Vcc
             # index == vccID
             self.vcc = [None]
-            for proxy in [CbfDeviceProxy(
-                fqdn=f"mid_csp_cbf/vcc/{i:03}",
-                logger=logging.getLogger()
-            ) for i in range(1, self.num_vcc + 1)]:
+            for proxy in [
+                CbfDeviceProxy(
+                    fqdn=f"mid_csp_cbf/vcc/{i:03}", logger=logging.getLogger()
+                )
+                for i in range(1, self.num_vcc + 1)
+            ]:
                 self.vcc.append(proxy)
 
             self.vccSw = [None]
             for i in range(1, self.num_vcc + 1):
                 sw = [None]
-                for j in range(1, 3): # 2 search windows
-                    sw.append(CbfDeviceProxy(
-                        fqdn=f"mid_csp_cbf/vcc_sw{j}/{i:03}",
-                        logger=logging.getLogger()
-                    ))
+                for j in range(1, 3):  # 2 search windows
+                    sw.append(
+                        CbfDeviceProxy(
+                            fqdn=f"mid_csp_cbf/vcc_sw{j}/{i:03}",
+                            logger=logging.getLogger(),
+                        )
+                    )
                 self.vccSw.append(sw)
 
             # Talon LRU
             self.talon_lru = []
-            for i in range(1, 3): # 2 Talon LRUs for now
-                self.talon_lru.append(CbfDeviceProxy(
-                    fqdn=f"mid_csp_cbf/talon_lru/{i:03}",
-                    logger=logging.getLogger()
-                ))
+            for i in range(1, 3):  # 2 Talon LRUs for now
+                self.talon_lru.append(
+                    CbfDeviceProxy(
+                        fqdn=f"mid_csp_cbf/talon_lru/{i:03}",
+                        logger=logging.getLogger(),
+                    )
+                )
 
             # Power switch
             self.power_switch = CbfDeviceProxy(
-                fqdn="mid_csp_cbf/power_switch/001",
-                logger=logging.getLogger()
+                fqdn="mid_csp_cbf/power_switch/001", logger=logging.getLogger()
             )
 
         def wait_timeout_dev(
@@ -460,10 +487,10 @@ def init_proxies_fixture():
             proxy_list: List[CbfDeviceProxy],
             state: DevState,
             time_s: float,
-            sleep_time_s: float
+            sleep_time_s: float,
         ) -> None:
             """
-            Periodically check proxy DevState until it is either the specified 
+            Periodically check proxy DevState until it is either the specified
             value or the time limit has elapsed.
 
             :param proxy_list: list of proxies to wait on
@@ -474,7 +501,8 @@ def init_proxies_fixture():
             timeout = time.time_ns() + (time_s * 1_000_000_000)
             while time.time_ns() < timeout:
                 for proxy in proxy_list:
-                    if proxy.State() == state: break
+                    if proxy.State() == state:
+                        break
                 time.sleep(sleep_time_s)
 
         def wait_timeout_obs(
@@ -482,10 +510,10 @@ def init_proxies_fixture():
             proxy_list: List[CbfDeviceProxy],
             state: ObsState,
             time_s: float,
-            sleep_time_s: float
+            sleep_time_s: float,
         ) -> None:
             """
-            Periodically check proxy ObsState until it is either the specified 
+            Periodically check proxy ObsState until it is either the specified
             value or the time limit has elapsed.
 
             :param proxy_list: list of proxies to wait on
@@ -496,9 +524,9 @@ def init_proxies_fixture():
             timeout = time.time_ns() + (time_s * 1_000_000_000)
             while time.time_ns() < timeout:
                 for proxy in proxy_list:
-                    if proxy.obsState == state: break
+                    if proxy.obsState == state:
+                        break
                 time.sleep(sleep_time_s)
-
 
         def clean_test_proxies(self: TestProxies) -> None:
             """
@@ -508,36 +536,55 @@ def init_proxies_fixture():
             sleep_time_s_long = 1
             sleep_time_s_short = 0.05
 
-            for proxy in [self.subarray[i] for i in range(1, self.num_sub + 1)]:
+            for proxy in [
+                self.subarray[i] for i in range(1, self.num_sub + 1)
+            ]:
                 if proxy.State() != DevState.ON:
                     if proxy.State() != DevState.OFF:
                         proxy.Off()
                         self.wait_timeout_dev(
-                            [proxy], DevState.OFF, wait_time_s, sleep_time_s_long)
+                            [proxy],
+                            DevState.OFF,
+                            wait_time_s,
+                            sleep_time_s_long,
+                        )
                     proxy.On()
                     self.wait_timeout_dev(
-                        [proxy], DevState.ON, wait_time_s, sleep_time_s_long)
+                        [proxy], DevState.ON, wait_time_s, sleep_time_s_long
+                    )
 
                 if proxy.obsState == ObsState.FAULT:
                     proxy.Restart()
                     self.wait_timeout_obs(
-                        [proxy], ObsState.READY, wait_time_s, sleep_time_s_short)
+                        [proxy],
+                        ObsState.READY,
+                        wait_time_s,
+                        sleep_time_s_short,
+                    )
 
                 if proxy.obsState == ObsState.SCANNING:
                     proxy.EndScan()
                     self.wait_timeout_obs(
-                        [proxy], ObsState.READY, wait_time_s, sleep_time_s_short)
+                        [proxy],
+                        ObsState.READY,
+                        wait_time_s,
+                        sleep_time_s_short,
+                    )
 
                 if proxy.obsState == ObsState.READY:
                     proxy.End()
                     self.wait_timeout_obs(
-                        [proxy], ObsState.IDLE, wait_time_s, sleep_time_s_short)
-                    
+                        [proxy], ObsState.IDLE, wait_time_s, sleep_time_s_short
+                    )
+
                 if proxy.obsState == ObsState.IDLE:
                     proxy.RemoveAllReceptors()
                     self.wait_timeout_obs(
-                        [proxy], ObsState.EMPTY, wait_time_s, sleep_time_s_short)
-
+                        [proxy],
+                        ObsState.EMPTY,
+                        wait_time_s,
+                        sleep_time_s_short,
+                    )
 
         def on(self: TestProxies) -> None:
             """
@@ -554,12 +601,13 @@ def init_proxies_fixture():
             if self.controller.State() != DevState.OFF:
                 self.controller.Off()
                 self.wait_timeout_dev(
-                    [self.controller], DevState.OFF, wait_time_s, sleep_time_s)
+                    [self.controller], DevState.OFF, wait_time_s, sleep_time_s
+                )
 
             self.controller.On()
             self.wait_timeout_dev(
-                [self.controller], DevState.ON, wait_time_s, sleep_time_s)
-
+                [self.controller], DevState.ON, wait_time_s, sleep_time_s
+            )
 
         def off(self: TestProxies) -> None:
             """
@@ -576,11 +624,13 @@ def init_proxies_fixture():
             if self.controller.State() == DevState.OFF:
                 self.controller.On()
                 self.wait_timeout_dev(
-                    [self.controller], DevState.ON, wait_time_s, sleep_time_s)
+                    [self.controller], DevState.ON, wait_time_s, sleep_time_s
+                )
 
             self.controller.Off()
             self.wait_timeout_dev(
-                [self.controller], DevState.OFF, wait_time_s, sleep_time_s)
+                [self.controller], DevState.OFF, wait_time_s, sleep_time_s
+            )
 
     return TestProxies()
 
@@ -592,8 +642,9 @@ def debug_device_is_on() -> bool:
     debug_device_is_on = False
     if debug_device_is_on:
         # Increase the timeout in order to allow  time for debugging
-        timeout_millis = 500000
+        timeout_millis = 500000  # noqa: F841
     return debug_device_is_on
+
 
 def load_data(name: str) -> Dict[Any, Any]:
     """

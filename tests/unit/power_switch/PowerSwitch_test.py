@@ -10,20 +10,18 @@
 
 """Contain the tests for the power switch device."""
 
-# Standard imports
-import pytest
 from typing import List
 
-# Local imports
-from ska_tango_base.control_model import PowerMode
+# Standard imports
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import SimulationMode, AdminMode
+
+# Local imports
+from ska_tango_base.control_model import AdminMode, PowerMode, SimulationMode
+
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 
 
-def test_TurnOnOutlet_TurnOffOutlet(
-    device_under_test: CbfDeviceProxy
-) -> None:
+def test_TurnOnOutlet_TurnOffOutlet(device_under_test: CbfDeviceProxy) -> None:
     """
     Tests that the outlets can be turned on and off individually.
     """
@@ -42,7 +40,9 @@ def test_TurnOnOutlet_TurnOffOutlet(
     # Turn outlets off and check the state again
     for i in range(0, num_outlets):
         assert device_under_test.TurnOffOutlet(i) == [
-            [ResultCode.OK], [f"Outlet {i} power off"]]
+            [ResultCode.OK],
+            [f"Outlet {i} power off"],
+        ]
         outlets[i] = PowerMode.OFF
 
         for j in range(0, num_outlets):
@@ -51,16 +51,16 @@ def test_TurnOnOutlet_TurnOffOutlet(
     # Turn on outlets and check the state again
     for i in range(0, num_outlets):
         assert device_under_test.TurnOnOutlet(i) == [
-            [ResultCode.OK], [f"Outlet {i} power on"]]
+            [ResultCode.OK],
+            [f"Outlet {i} power on"],
+        ]
         outlets[i] = PowerMode.ON
 
         for j in range(0, num_outlets):
             assert device_under_test.GetOutletPowerMode(j) == outlets[j]
 
 
-def test_connection_failure(
-    device_under_test: CbfDeviceProxy
-) -> None:
+def test_connection_failure(device_under_test: CbfDeviceProxy) -> None:
     """
     Tests that the device can respond to requests even when the power
     switch is not communicating.
@@ -70,7 +70,7 @@ def test_connection_failure(
     device_under_test.simulationMode = SimulationMode.FALSE
 
     # Check that the device is not communicating
-    assert device_under_test.isCommunicating == False
+    assert device_under_test.isCommunicating is False
 
     # Check that numOutlets is 0 since we cannot talk to the power switch
     assert device_under_test.numOutlets == 0

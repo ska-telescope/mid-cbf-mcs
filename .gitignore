@@ -111,8 +111,8 @@ charts/ska-mid-cbf-tmleafnode/Chart.lock
 charts/ska-mid-cbf-tmleafnode/charts/
 charts/ska-mid-cbf-umbrella/Chart.lock
 charts/ska-mid-cbf-umbrella/charts/
-charts/ska-mid-cbf/Chart.lock
-charts/ska-mid-cbf/charts/
+charts/ska-mid-cbf-mcs/Chart.lock
+charts/ska-mid-cbf-mcs/charts/
 
 # ssl certs for MDA network workaround
 certs/*.crt

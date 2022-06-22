@@ -11,17 +11,28 @@
 """Contain the tests for the Talon-DX component manager."""
 
 import pytest
-from ska_mid_cbf_mcs.controller.talondx_component_manager import TalonDxComponentManager
-from ska_mid_cbf_mcs.testing.tango_harness import TangoHarness
 from ska_tango_base.commands import ResultCode
+
+from ska_mid_cbf_mcs.controller.talondx_component_manager import (
+    TalonDxComponentManager,
+)
+from ska_mid_cbf_mcs.testing.tango_harness import TangoHarness
+
 
 @pytest.mark.parametrize(
     "talon_dx_component_manager",
-    [{"sim_connect_error": False, "sim_cmd_error": False, "sim_scp_error": False}],
-    indirect=True)
+    [
+        {
+            "sim_connect_error": False,
+            "sim_cmd_error": False,
+            "sim_scp_error": False,
+        }
+    ],
+    indirect=True,
+)
 def test_configure_talons_ssh_success(
     talon_dx_component_manager: TalonDxComponentManager,
-    tango_harness: TangoHarness
+    tango_harness: TangoHarness,
 ) -> None:
     """
     Tests the outcome of the configure_talons operation when the mocked
@@ -29,18 +40,28 @@ def test_configure_talons_ssh_success(
     """
     result = talon_dx_component_manager.configure_talons()
 
-    mock_ds_hps_master = tango_harness.get_device("talondx-001/hpsmaster/hps-1")
+    mock_ds_hps_master = tango_harness.get_device(
+        "talondx-001/hpsmaster/hps-1"
+    )
     if mock_ds_hps_master.stimulusMode == "success":
         assert result == ResultCode.OK
     else:
         assert result == ResultCode.FAILED
 
+
 @pytest.mark.parametrize(
     "talon_dx_component_manager",
-    [{"sim_connect_error": True, "sim_cmd_error": False, "sim_scp_error": False}],
-    indirect=True)
+    [
+        {
+            "sim_connect_error": True,
+            "sim_cmd_error": False,
+            "sim_scp_error": False,
+        }
+    ],
+    indirect=True,
+)
 def test_configure_talons_ssh_fail(
-    talon_dx_component_manager: TalonDxComponentManager
+    talon_dx_component_manager: TalonDxComponentManager,
 ) -> None:
     """
     Tests the outcome of the configure_talons operation when the mocked
@@ -49,12 +70,20 @@ def test_configure_talons_ssh_fail(
     result = talon_dx_component_manager.configure_talons()
     assert result == ResultCode.FAILED
 
+
 @pytest.mark.parametrize(
     "talon_dx_component_manager",
-    [{"sim_connect_error": False, "sim_cmd_error": True, "sim_scp_error": False}],
-    indirect=True)
+    [
+        {
+            "sim_connect_error": False,
+            "sim_cmd_error": True,
+            "sim_scp_error": False,
+        }
+    ],
+    indirect=True,
+)
 def test_configure_talons_ssh_cmd_fail(
-    talon_dx_component_manager: TalonDxComponentManager
+    talon_dx_component_manager: TalonDxComponentManager,
 ) -> None:
     """
     Tests the outcome of the configure_talons operation when the mocked
@@ -63,12 +92,20 @@ def test_configure_talons_ssh_cmd_fail(
     result = talon_dx_component_manager.configure_talons()
     assert result == ResultCode.FAILED
 
+
 @pytest.mark.parametrize(
     "talon_dx_component_manager",
-    [{"sim_connect_error": False, "sim_cmd_error": False, "sim_scp_error": True}],
-    indirect=True)
+    [
+        {
+            "sim_connect_error": False,
+            "sim_cmd_error": False,
+            "sim_scp_error": True,
+        }
+    ],
+    indirect=True,
+)
 def test_configure_talons_sco_fail(
-    talon_dx_component_manager: TalonDxComponentManager
+    talon_dx_component_manager: TalonDxComponentManager,
 ) -> None:
     """
     Tests the outcome of the configure_talons operation when the SCP fails.

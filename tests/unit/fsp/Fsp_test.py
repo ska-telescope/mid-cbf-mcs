@@ -10,33 +10,28 @@
 """Contain the tests for the Fsp."""
 
 from __future__ import annotations
-from typing import List
 
 # Standard imports
 import os
 import time
-import json
-import logging
+
 import pytest
-from typing import Callable, Type, Dict
+from ska_tango_base.commands import ResultCode
+from ska_tango_base.control_model import AdminMode
+from tango import DevState
+
+from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 
 # Path
 file_path = os.path.dirname(os.path.abspath(__file__))
 
 # Tango imports
-import tango
-from tango import DevState
-from tango.server import command
 
-#SKA imports
-from ska_tango_base.commands import ResultCode
-from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
-from ska_mid_cbf_mcs.testing.tango_harness import DeviceToLoadType
+# SKA imports
 
-from ska_tango_base.control_model import HealthState, AdminMode, ObsState
-from ska_mid_cbf_mcs.commons.global_enum import FspModes
 
 CONST_WAIT_TIME = 4
+
 
 class TestFsp:
     """
@@ -55,7 +50,7 @@ class TestFsp:
             :py:class:`tango.test_context.DeviceTestContext`.
         """
         assert device_under_test.State() == DevState.DISABLE
-    
+
     def test_Status(
         self: TestFsp,
         device_under_test: CbfDeviceProxy,
@@ -81,19 +76,10 @@ class TestFsp:
             :py:class:`tango.test_context.DeviceTestContext`.
         """
         assert device_under_test.adminMode == AdminMode.OFFLINE
-    
-    @pytest.mark.parametrize(
-        "command",
-        [
-            "On",
-            "Off",
-            "Standby"
-        ]
-    )
+
+    @pytest.mark.parametrize("command", ["On", "Off", "Standby"])
     def test_Power_Commands(
-        self: TestFsp,
-        device_under_test: CbfDeviceProxy,
-        command: str
+        self: TestFsp, device_under_test: CbfDeviceProxy, command: str
     ) -> None:
         """
         Test the On/Off/Standby Commands

@@ -25,8 +25,26 @@ HELM_RELEASE ?= test
 # HELM_CHART the chart name
 HELM_CHART ?= ska-mid-cbf-umbrella
 
+TANGO_DATABASE = tango-host-databaseds-from-makefile-$(HELM_RELEASE)
+TANGO_HOST = $(TANGO_DATABASE):10000## TANGO_HOST is an input!
+
+# Python variables
+PYTHON_VARS_BEFORE_PYTEST = PYTHONPATH=./src:/app/src:/app/src/ska_mid_cbf_mcs KUBE_NAMESPACE=$(KUBE_NAMESPACE) HELM_RELEASE=$(RELEASE_NAME) TANGO_HOST=$(TANGO_HOST)
+
+# Ignoring 501 which checks line length. There are over 500 failures for this in the code due to commenting. 
+# Also ignoring 503 because operators can either be before or after line break(504). 
+# We are choosing a standard to have it before the line break and therefore 503 will be ignored.
+PYTHON_SWITCHES_FOR_FLAKE8 = --ignore=E501,W503
+
+
 # UMBRELLA_CHART_PATH Path of the umbrella chart to work with
 UMBRELLA_CHART_PATH ?= charts/ska-mid-cbf-umbrella/
+
+K8S_CHARTS ?= ska-mid-cbf-umbrella ska-mid-cbf-mcs ska-mid-cbf-tmleafnode ## list of charts
+K8S_UMBRELLA_CHART_PATH ?= ./charts/ska-mid-cbf-umbrella
+
+PYTHON_TEST_FILE = 
+PYTHON_VARS_AFTER_PYTEST = -c setup-unit-test.cfg
 
 # Fixed variables
 # Timeout for gitlab-runner when run locally
@@ -69,6 +87,19 @@ DISPLAY := $(THIS_HOST):0
 #		old name is 64 characters, too long for container name
 TEST_RUNNER = test-runner-$(CI_JOB_ID)-$(KUBE_NAMESPACE)-$(HELM_RELEASE)
 
+ifneq ($(strip $(CI_JOB_ID)),)
+K8S_TEST_IMAGE_TO_TEST = $(CI_REGISTRY)/ska-telescope/ska-mid-cbf-mcs/ska-mid-cbf-mcs:$(VERSION)-dev.c$(CI_COMMIT_SHORT_SHA)
+K8S_CHART_PARAMS = --set global.tango_host=$(TANGO_HOST) --set ska-mid-cbf-tmleafnode.midcbf.image.registry=$(CI_REGISTRY)/ska-telescope/ska-mid-cbf-mcs --set ska-mid-cbf-mcs.midcbf.image.registry=$(CI_REGISTRY)/ska-telescope/ska-mid-cbf-mcs
+else
+K8S_TEST_IMAGE_TO_TEST = artefact.skao.int/ska-mid-cbf-mcs:$(VERSION)
+K8S_CHART_PARAMS = --set global.tango_host=$(TANGO_HOST)
+endif
+
+K8S_TEST_TEST_COMMAND ?= ls -lrt &&  $(PYTHON_VARS_BEFORE_PYTEST) $(PYTHON_RUNNER) \
+                        pytest \
+                        -c setup-integration-test.cfg \
+                        | tee pytest.stdout; ## k8s-test test command to run in container
+
 #
 # include makefile to pick up the standard Make targets, e.g., 'make build'
 # build, 'make push' docker push procedure, etc. The other Make targets
@@ -76,7 +107,11 @@ TEST_RUNNER = test-runner-$(CI_JOB_ID)-$(KUBE_NAMESPACE)-$(HELM_RELEASE)
 #
 include .make/release.mk
 include .make/k8s.mk
-
+include .make/make.mk
+include .make/oci.mk
+include .make/helm.mk
+include .make/python.mk
+include .make/docs.mk
 #
 # Defines a default make target so that help is printed if make is called
 # without a target
@@ -89,6 +124,7 @@ requirements: ## Install Dependencies
 unit-test: ## Run simulation mode unit tests
 	@mkdir -p build; \
 	python3 -m pytest -c setup-unit-test.cfg
+
 
 jive: ## configure TANGO_HOST to enable Jive
 	@echo
@@ -115,5 +151,11 @@ documentation:   ## ## Re-generate documentation
 ###############################################
 
 #pytest $(if $(findstring all,$(MARK)),, -m '$(MARK)')
+
+help: ## show this help.
+	@echo "make targets:"
+	@echo "$(MAKEFILE_LIST)"
+	@grep -E '^[0-9a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ": .*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
+
 
 .PHONY: all jive unit-test requirements test up down help k8s show lint logs describe mkcerts localip namespace delete_namespace ingress_check kubeconfig kubectl_dependencies helm_dependencies rk8s_test k8s_test rlint

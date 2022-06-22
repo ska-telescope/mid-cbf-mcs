@@ -13,13 +13,12 @@ __all__ = ["CbfGroupProxy"]
 
 import logging
 import threading
-from typing import Any, Callable, Optional, Type, List
-from typing_extensions import TypedDict
-import warnings
-import backoff
+from typing import Any, Callable, List, Optional, Type
 
+import backoff
 import tango
-from tango import DevFailed, DevState, AttrQuality
+from tango import DevFailed
+from typing_extensions import TypedDict
 
 # type for the "details" dictionary that backoff calls its callbacks with
 BackoffDetailsType = TypedDict(
@@ -83,8 +82,8 @@ class CbfGroupProxy:
         self.__dict__["_fqdns"] = []
         self.__dict__["_logger"] = logger
         self.__dict__["_group_connection_factory"] = (
-            group_connection_factory or 
-            CbfGroupProxy._default_connection_factory
+            group_connection_factory
+            or CbfGroupProxy._default_connection_factory
         )
         self.__dict__["_pass_through"] = pass_through
         self.__dict__["_group"] = None
@@ -93,10 +92,8 @@ class CbfGroupProxy:
         self.__dict__["_change_event_subscription_ids"] = {}
         self.__dict__["_change_event_callbacks"] = {}
 
-
-    def add(self: CbfGroupProxy,
-        fqdns: List[str],
-        max_time: float = 120.0
+    def add(
+        self: CbfGroupProxy, fqdns: List[str], max_time: float = 120.0
     ) -> None:
         """
         Adds connections to the devices that we want to proxy to the group.
@@ -164,15 +161,18 @@ class CbfGroupProxy:
             self.__dict__["_fqdns"].extend(fqdns)
             return group
 
-        if self._group == None:
+        if self._group is None:
             if max_time:
-                self.__dict__["_group"] = _backoff_connect(self._group_connection_factory)
+                self.__dict__["_group"] = _backoff_connect(
+                    self._group_connection_factory
+                )
             else:
-                self.__dict__["_group"] = _connect(self._group_connection_factory)
+                self.__dict__["_group"] = _connect(
+                    self._group_connection_factory
+                )
         else:
             self.__dict__["_group"].add(fqdns)
             self.__dict__["_fqdns"].extend(fqdns)
-
 
     def remove(self: CbfGroupProxy, fqdn: List[str]) -> None:
         """
@@ -205,7 +205,7 @@ class CbfGroupProxy:
         :return: the attribute value
         """
         return self._group.read_attribute(attribute_name)
-    
+
     def get_size(self: CbfGroupProxy) -> int:
         """
         Get the size of the device group.
@@ -252,9 +252,13 @@ class CbfGroupProxy:
                 raise ConnectionError("CbfGroupProxy has not connected yet.")
             setattr(self._group, name, value)
         else:
-            raise AttributeError(f"No such attribute: {name} (pass-through disabled)")
+            raise AttributeError(
+                f"No such attribute: {name} (pass-through disabled)"
+            )
 
-    def __getattr__(self: CbfGroupProxy, name: str, default_value: Any = None) -> Any:
+    def __getattr__(
+        self: CbfGroupProxy, name: str, default_value: Any = None
+    ) -> Any:
         """
         Handle any requested attribute not found in the usual way.
 
@@ -276,4 +280,3 @@ class CbfGroupProxy:
             return default_value
         else:
             raise AttributeError(f"No such attribute: {name}")
-

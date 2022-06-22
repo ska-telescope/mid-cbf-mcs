@@ -2,7 +2,7 @@
 #
 # This file is part of the SKA Mid.CBF MCS project
 #
-# Ported from the SKA Low MCCS project: 
+# Ported from the SKA Low MCCS project:
 # https://gitlab.com/ska-telescope/ska-low-mccs/-/blob/main/src/ska_low_mccs/testing/mock/mock_device.py
 #
 # Distributed under the terms of the GPL license.
@@ -12,10 +12,10 @@
 
 from __future__ import annotations  # allow forward references in type hints
 
-from typing import Any, Callable
 import unittest.mock
-import tango
+from typing import Any, Callable
 
+import tango
 
 __all__ = ["MockAttributeBuilder"]
 
@@ -47,7 +47,9 @@ class MockAttributeBuilder:
         """
         self._value = value
 
-    def add_property(self: MockAttributeBuilder, name: str, value: Any) -> None:
+    def add_property(
+        self: MockAttributeBuilder, name: str, value: Any
+    ) -> None:
         """
         Tell this builder to build mocks with a given attribute property.
 

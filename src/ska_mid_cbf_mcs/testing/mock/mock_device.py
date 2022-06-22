@@ -2,7 +2,7 @@
 #
 # This file is part of the SKA Mid.CBF MCS project
 #
-# Ported from the SKA Low MCCS project: 
+# Ported from the SKA Low MCCS project:
 # https://gitlab.com/ska-telescope/ska-low-mccs/-/blob/main/src/ska_low_mccs/testing/mock/mock_device.py
 #
 # Distributed under the terms of the GPL license.
@@ -12,15 +12,14 @@
 
 from __future__ import annotations  # allow forward references in type hints
 
-from typing import Any, Callable
+import logging
 import unittest.mock
-import tango
+from typing import Any, Callable
 
+import tango
 from ska_tango_base.commands import ResultCode
 
 from ska_mid_cbf_mcs.testing.mock.mock_callable import MockCallable
-
-import logging
 
 __all__ = ["MockDeviceBuilder"]
 
@@ -64,7 +63,9 @@ class MockDeviceBuilder:
         """
         self._configuration[name] = value
 
-    def add_command(self: MockDeviceBuilder, name: str, return_value: Any) -> None:
+    def add_command(
+        self: MockDeviceBuilder, name: str, return_value: Any
+    ) -> None:
         """
         Tell this builder to build mocks with a specified command that returns the
         provided value.
@@ -134,7 +135,9 @@ class MockDeviceBuilder:
             mock_attribute = unittest.mock.Mock()
             mock_attribute.name = name
             mock_attribute.value = (
-                mock_device.state() if name == "state" else getattr(mock_device, name)
+                mock_device.state()
+                if name == "state"
+                else getattr(mock_device, name)
             )
             mock_attribute.quality = tango.AttrQuality.ATTR_VALID
             return mock_attribute
@@ -205,7 +208,9 @@ class MockDeviceBuilder:
 
         mock_device.command_inout.side_effect = _mock_command_inout
 
-        def _mock_command_inout_asynch(name: str, *args: str, **kwargs: str) -> str:
+        def _mock_command_inout_asynch(
+            name: str, *args: str, **kwargs: str
+        ) -> str:
             """
             Mock side-effect for command_inout_asynch method.
 
@@ -223,9 +228,13 @@ class MockDeviceBuilder:
             asynch_id = name
             return asynch_id
 
-        mock_device.command_inout_asynch.side_effect = _mock_command_inout_asynch
+        mock_device.command_inout_asynch.side_effect = (
+            _mock_command_inout_asynch
+        )
 
-        def _mock_command_inout_reply(asynch_id: str, *args: str, **kwargs: str) -> Any:
+        def _mock_command_inout_reply(
+            asynch_id: str, *args: str, **kwargs: str
+        ) -> Any:
             """
             Mock side-effect for command_inout_reply method.
 
@@ -285,7 +294,9 @@ class MockDeviceBuilder:
                 mock_event_data.err = False
                 mock_event_data.attr_value.name = attribute_name
                 mock_event_data.attr_value.value = attribute_value
-                mock_event_data.attr_value.quality = tango.AttrQuality.ATTR_VALID
+                mock_event_data.attr_value.quality = (
+                    tango.AttrQuality.ATTR_VALID
+                )
                 callback(mock_event_data)
             # TODO: if attribute_value is None, it might be better to call the callback
             # with a mock rather than not calling it at all.
@@ -301,8 +312,10 @@ class MockDeviceBuilder:
         mock_device = self._from_factory()
 
         for command in self._return_values:
-            self.logger.debug(f"Command: {command}\n" + 
-            f"Return Value: {self._return_values[command]}")
+            self.logger.debug(
+                f"Command: {command}\n"
+                + f"Return Value: {self._return_values[command]}"
+            )
             self._configuration[command] = MockCallable(
                 return_value=self._return_values[command]
             )

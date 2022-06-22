@@ -14,28 +14,25 @@ from __future__ import annotations
 # Standard imports
 import os
 import time
-import json
-import logging
-import pytest
-from typing import Callable, Type, Dict
 
-from tango import server
+import pytest
+import tango
+from ska_tango_base.commands import ResultCode
+from ska_tango_base.control_model import AdminMode, ObsState
+from tango import DevState
+
+from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 
 # Path
 file_path = os.path.dirname(os.path.abspath(__file__))
 
 # Tango imports
-import tango
-from tango import DevState
-from tango.server import command
 
-#SKA imports
-from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
-from ska_tango_base.control_model import HealthState, AdminMode, ObsState
-from ska_mid_cbf_mcs.commons.global_enum import const, freq_band_dict
-from ska_tango_base.commands import ResultCode
+
+# SKA imports
 
 CONST_WAIT_TIME = 4
+
 
 class TestFspPstSubarray:
     """
@@ -54,7 +51,7 @@ class TestFspPstSubarray:
             :py:class:`tango.test_context.DeviceTestContext`.
         """
         assert device_under_test.State() == DevState.DISABLE
-    
+
     def test_Status(
         self: TestFspPstSubarray,
         device_under_test: CbfDeviceProxy,
@@ -80,19 +77,12 @@ class TestFspPstSubarray:
             :py:class:`tango.test_context.DeviceTestContext`.
         """
         assert device_under_test.adminMode == AdminMode.OFFLINE
-    
-    @pytest.mark.parametrize(
-        "command",
-        [
-            "On",
-            "Off",
-            "Standby"
-        ]
-    )
+
+    @pytest.mark.parametrize("command", ["On", "Off", "Standby"])
     def test_Power_Commands(
         self: TestFspPstSubarray,
         device_under_test: CbfDeviceProxy,
-        command: str
+        command: str,
     ) -> None:
         """
         Test Power commands.
@@ -125,23 +115,23 @@ class TestFspPstSubarray:
 
     @pytest.mark.parametrize(
         "config_file_name, \
-        scan_id", 
+        scan_id",
         [
             (
                 "/../../data/FspPstSubarray_ConfigureScan_basic.json",
                 1,
             ),
-                        (
+            (
                 "/../../data/FspPstSubarray_ConfigureScan_basic.json",
                 2,
-            )
-        ]
+            ),
+        ],
     )
     def test_ObsState_Commands(
         self: TestFspPstSubarray,
         device_under_test: CbfDeviceProxy,
         config_file_name: str,
-        scan_id: int
+        scan_id: int,
     ) -> None:
         """
         Test the ConfigureScan(), Scan(), EndScan() amd GoToIdle() commands

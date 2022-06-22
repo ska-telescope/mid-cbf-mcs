@@ -9,28 +9,30 @@
 
 from __future__ import annotations
 
+import unittest
+
 # Standard imports
-from typing import Callable, Type, Dict, Tuple, Optional
+from typing import Dict, Optional, Type
+
 import pytest
 import pytest_mock
-import unittest
 
 # Tango imports
 import tango
-from tango import DevState
-from tango.server import command, DeviceMeta
+from ska_tango_base.commands import ResultCode
+from ska_tango_base.control_model import AdminMode, HealthState, PowerMode
 
-#Local imports
+from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
+from ska_mid_cbf_mcs.controller.controller_device import CbfController
+
+# Local imports
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
-from ska_mid_cbf_mcs.testing.mock.mock_callable import MockChangeEventCallback
 from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder
 from ska_mid_cbf_mcs.testing.mock.mock_group import MockGroupBuilder
-from ska_mid_cbf_mcs.testing.tango_harness import DeviceToLoadType, TangoHarness
-from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
-
-from ska_mid_cbf_mcs.controller.controller_device import CbfController
-from ska_tango_base.control_model import HealthState, AdminMode, ObsState, PowerMode
-from ska_tango_base.commands import ResultCode
+from ska_mid_cbf_mcs.testing.tango_harness import (
+    DeviceToLoadType,
+    TangoHarness,
+)
 
 
 @pytest.fixture()
@@ -44,9 +46,10 @@ def device_under_test(tango_harness: TangoHarness) -> CbfDeviceProxy:
     """
     return tango_harness.get_device("mid_csp_cbf/sub_elt/controller")
 
-@pytest.fixture() 
+
+@pytest.fixture()
 def device_to_load(
-    patched_controller_device_class: Type[CbfController]
+    patched_controller_device_class: Type[CbfController],
 ) -> DeviceToLoadType:
     """
     Fixture that specifies the device to be loaded for testing.
@@ -61,6 +64,7 @@ def device_to_load(
         "proxy": CbfDeviceProxy,
         "patch": patched_controller_device_class,
     }
+
 
 @pytest.fixture
 def unique_id() -> str:
@@ -95,18 +99,22 @@ def mock_component_manager(
 
     def _start_communicating(mock: unittest.mock.Mock) -> None:
         mock.is_communicating = True
-        mock._communication_status_changed_callback(CommunicationStatus.NOT_ESTABLISHED)
-        mock._communication_status_changed_callback(CommunicationStatus.ESTABLISHED)
+        mock._communication_status_changed_callback(
+            CommunicationStatus.NOT_ESTABLISHED
+        )
+        mock._communication_status_changed_callback(
+            CommunicationStatus.ESTABLISHED
+        )
         mock._component_power_mode_changed_callback(PowerMode.OFF)
-    
+
     def _on(mock: unittest.mock.Mock) -> None:
         mock.message = "CbfController On command completed OK"
         return (ResultCode.OK, mock.message)
-    
+
     def _off(mock: unittest.mock.Mock) -> None:
         mock.message = "CbfController Off command completed OK"
         return (ResultCode.OK, mock.message)
-    
+
     def _standby(mock: unittest.mock.Mock) -> None:
         mock.message = "CbfController On command completed OK"
         return (ResultCode.OK, mock.message)
@@ -160,6 +168,7 @@ def patched_controller_device_class(
 
     return PatchedCbfController
 
+
 @pytest.fixture()
 def mock_vcc() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
@@ -171,12 +180,14 @@ def mock_vcc() -> unittest.mock.Mock:
     builder.add_result_command("Off", ResultCode.OK)
     return builder()
 
+
 @pytest.fixture()
 def mock_vcc_group() -> unittest.mock.Mock:
     builder = MockGroupBuilder()
     builder.add_command("On", None)
     builder.add_command("Off", None)
     return builder()
+
 
 @pytest.fixture()
 def mock_fsp() -> unittest.mock.Mock:
@@ -189,12 +200,14 @@ def mock_fsp() -> unittest.mock.Mock:
     builder.add_result_command("Off", ResultCode.OK)
     return builder()
 
+
 @pytest.fixture()
 def mock_fsp_group() -> unittest.mock.Mock:
     builder = MockGroupBuilder()
     builder.add_command("On", None)
     builder.add_command("Off", None)
     return builder()
+
 
 @pytest.fixture()
 def mock_subarray() -> unittest.mock.Mock:
@@ -206,12 +219,14 @@ def mock_subarray() -> unittest.mock.Mock:
     builder.add_result_command("Off", ResultCode.OK)
     return builder()
 
+
 @pytest.fixture()
 def mock_subarray_group() -> unittest.mock.Mock:
     builder = MockGroupBuilder()
     builder.add_command("On", None)
     builder.add_command("Off", None)
     return builder()
+
 
 @pytest.fixture()
 def mock_talon_lru() -> unittest.mock.Mock:
@@ -223,6 +238,7 @@ def mock_talon_lru() -> unittest.mock.Mock:
     builder.add_result_command("Off", ResultCode.OK)
     return builder()
 
+
 @pytest.fixture()
 def initial_mocks(
     mock_vcc: unittest.mock.Mock,
@@ -231,7 +247,7 @@ def initial_mocks(
     mock_fsp_group: unittest.mock.Mock,
     mock_subarray: unittest.mock.Mock,
     mock_subarray_group: unittest.mock.Mock,
-    mock_talon_lru: unittest.mock.Mock
+    mock_talon_lru: unittest.mock.Mock,
 ) -> Dict[str, unittest.mock.Mock]:
     """
     Return a dictionary of proxy mocks to pre-register.

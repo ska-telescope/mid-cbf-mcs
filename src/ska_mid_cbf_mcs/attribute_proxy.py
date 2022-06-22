@@ -13,16 +13,18 @@ __all__ = ["CbfAttributeProxy"]
 
 import logging
 import threading
-from typing import Any, Callable, Optional, Type
-from typing_extensions import TypedDict
 import warnings
+from typing import Any, Callable, Optional, Type
 
 import backoff
 import tango
-from tango import DevFailed, DevState, AttrQuality
+from tango import AttrQuality, DevFailed
+from typing_extensions import TypedDict
 
 # type for the "details" dictionary that backoff calls its callbacks with
-BackoffDetailsType = TypedDict("BackoffDetailsType", {"args": list, "elapsed": float})
+BackoffDetailsType = TypedDict(
+    "BackoffDetailsType", {"args": list, "elapsed": float}
+)
 ConnectionFactory = Callable[[str], tango.AttributeProxy]
 
 
@@ -44,7 +46,8 @@ class CbfAttributeProxy:
 
     @classmethod
     def set_default_connection_factory(
-        cls: Type[CbfAttributeProxy], attribute_connection_factory: ConnectionFactory
+        cls: Type[CbfAttributeProxy],
+        attribute_connection_factory: ConnectionFactory,
     ) -> None:
         """
         Set the default connection factory for this class.
@@ -89,8 +92,8 @@ class CbfAttributeProxy:
         self.__dict__["_fqdn"] = fqdn
         self.__dict__["_logger"] = logger
         self.__dict__["_attribute_connection_factory"] = (
-            attribute_connection_factory or 
-            CbfAttributeProxy._default_connection_factory
+            attribute_connection_factory
+            or CbfAttributeProxy._default_connection_factory
         )
         self.__dict__["_pass_through"] = pass_through
         self.__dict__["_attribute"] = None
@@ -134,8 +137,10 @@ class CbfAttributeProxy:
             max_time=max_time,
         )
         def _backoff_connect(
-            attribute_connection_factory: Callable[[str], tango.AttributeProxy], 
-            fqdn: str
+            attribute_connection_factory: Callable[
+                [str], tango.AttributeProxy
+            ],
+            fqdn: str,
         ) -> tango.AttributeProxy:
             """
             Attempt connection to a specified device attribute.
@@ -152,8 +157,10 @@ class CbfAttributeProxy:
             return _connect(attribute_connection_factory, fqdn)
 
         def _connect(
-            attribute_connection_factory: Callable[[str], tango.AttributeProxy], 
-            fqdn: str
+            attribute_connection_factory: Callable[
+                [str], tango.AttributeProxy
+            ],
+            fqdn: str,
         ) -> tango.AttributeProxy:
             """
             Make a single attempt to connect to a device.
@@ -168,13 +175,11 @@ class CbfAttributeProxy:
 
         if max_time:
             self._attribute = _backoff_connect(
-                self._attribute_connection_factory, 
-                self._fqdn
+                self._attribute_connection_factory, self._fqdn
             )
         else:
             self._attribute = _connect(
-                self._attribute_connection_factory, 
-                self._fqdn
+                self._attribute_connection_factory, self._fqdn
             )
 
     def add_change_event_callback(
@@ -192,13 +197,17 @@ class CbfAttributeProxy:
         """
         if self._change_event_subscription_id is None:
             self._change_event_callbacks = [callback]
-            self._change_event_subscription_id = self._subscribe_change_event(stateless=stateless)
+            self._change_event_subscription_id = self._subscribe_change_event(
+                stateless=stateless
+            )
         else:
             self._change_event_callbacks.append(callback)
             self._call_callback(callback, self._read())
         return self._change_event_subscription_id
 
-    @backoff.on_exception(backoff.expo, tango.DevFailed, factor=1, max_time=120)
+    @backoff.on_exception(
+        backoff.expo, tango.DevFailed, factor=1, max_time=120
+    )
     def _subscribe_change_event(
         self: CbfAttributeProxy, stateless: bool = False
     ) -> int:
@@ -224,7 +233,9 @@ class CbfAttributeProxy:
             stateless=stateless,
         )
 
-    def _change_event_received(self: CbfAttributeProxy, event: tango.EventData) -> None:
+    def _change_event_received(
+        self: CbfAttributeProxy, event: tango.EventData
+    ) -> None:
         """
         Handle subscribe events from the Tango system with this callback.
 
@@ -252,8 +263,12 @@ class CbfAttributeProxy:
         :param attribute_data: the attribute data to be unpacked and
             used to call the callback
         """
-        callback(self._fqdn,
-            attribute_data.name, attribute_data.value, attribute_data.quality)
+        callback(
+            self._fqdn,
+            attribute_data.name,
+            attribute_data.value,
+            attribute_data.quality,
+        )
 
     def _process_event(
         self: CbfAttributeProxy, event: tango.EventData
@@ -286,7 +301,6 @@ class CbfAttributeProxy:
         else:
             return event.attr_value
 
-
     def _read(self: CbfAttributeProxy) -> Any:
         """
         Read an attribute manually.
@@ -297,8 +311,7 @@ class CbfAttributeProxy:
         """
         return self._attribute.read()
 
-    def remove_event(
-        self: CbfAttributeProxy, subscription_id: int) -> None:
+    def remove_event(self: CbfAttributeProxy, subscription_id: int) -> None:
         """
         Remove a callback for change events being pushed by the device.
 
@@ -308,14 +321,20 @@ class CbfAttributeProxy:
             self._unsubscribe_event(subscription_id)
             self._change_event_callbacks = []
             self._change_event_subscription_id = None
-            self._logger.info(f"Unsubscribed from subscription {subscription_id}")
+            self._logger.info(
+                f"Unsubscribed from subscription {subscription_id}"
+            )
         else:
             self._logger.warning(
                 f"Unsubscribe error; proxy does not own subscription {subscription_id}"
             )
 
-    @backoff.on_exception(backoff.expo, tango.DevFailed, factor=1, max_time=120)
-    def _unsubscribe_event(self: CbfAttributeProxy, subscription_id: int) -> None:
+    @backoff.on_exception(
+        backoff.expo, tango.DevFailed, factor=1, max_time=120
+    )
+    def _unsubscribe_event(
+        self: CbfAttributeProxy, subscription_id: int
+    ) -> None:
         """
         Unsubscribe from an event.
 
@@ -358,13 +377,18 @@ class CbfAttributeProxy:
             self.__dict__[name] = value
         elif self._pass_through:
             if self._attribute is None:
-                raise ConnectionError("CbfAttributeProxy has not connected yet.")
+                raise ConnectionError(
+                    "CbfAttributeProxy has not connected yet."
+                )
             setattr(self._attribute, name, value)
         else:
-            raise AttributeError(f"No such attribute: {name} (pass-through disabled)")
-        
+            raise AttributeError(
+                f"No such attribute: {name} (pass-through disabled)"
+            )
 
-    def __getattr__(self: CbfAttributeProxy, name: str, default_value: Any = None) -> Any:
+    def __getattr__(
+        self: CbfAttributeProxy, name: str, default_value: Any = None
+    ) -> Any:
         """
         Handle any requested attribute not found in the usual way.
 

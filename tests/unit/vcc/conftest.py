@@ -9,31 +9,35 @@
 
 from __future__ import annotations
 
+import logging
+import unittest
+
 # Standard imports
-from typing import Callable, Type, Dict, Tuple, Optional
+from typing import Callable, Dict, Optional, Tuple, Type
+
 import pytest
 import pytest_mock
-import unittest
-import logging
-import json
 
 # Tango imports
 import tango
-from tango import DevState
-from tango.server import command
-
-#Local imports
-from ska_mid_cbf_mcs.vcc.vcc_device import Vcc
-from ska_mid_cbf_mcs.vcc.vcc_component_manager import VccComponentManager
-from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
-from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
-from ska_mid_cbf_mcs.testing.tango_harness import TangoHarness
-from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder
-from ska_mid_cbf_mcs.testing.mock.mock_callable import MockChangeEventCallback, MockCallable
-from ska_mid_cbf_mcs.testing.tango_harness import DeviceToLoadType, TangoHarness
-
-from ska_tango_base.control_model import ObsState, PowerMode, SimulationMode
 from ska_tango_base.commands import ResultCode
+from ska_tango_base.control_model import PowerMode, SimulationMode
+
+from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
+from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
+from ska_mid_cbf_mcs.testing.mock.mock_callable import (
+    MockCallable,
+    MockChangeEventCallback,
+)
+from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder
+from ska_mid_cbf_mcs.testing.tango_harness import (
+    DeviceToLoadType,
+    TangoHarness,
+)
+from ska_mid_cbf_mcs.vcc.vcc_component_manager import VccComponentManager
+
+# Local imports
+from ska_mid_cbf_mcs.vcc.vcc_device import Vcc
 
 
 @pytest.fixture
@@ -72,19 +76,23 @@ def mock_component_manager(
     def _start_communicating(mock: unittest.mock.Mock) -> None:
         mock.is_communicating = True
         mock.connected = True
-        mock._communication_status_changed_callback(CommunicationStatus.NOT_ESTABLISHED)
+        mock._communication_status_changed_callback(
+            CommunicationStatus.NOT_ESTABLISHED
+        )
         mock._component_power_mode_changed_callback(PowerMode.ON)
-        mock._communication_status_changed_callback(CommunicationStatus.ESTABLISHED)
+        mock._communication_status_changed_callback(
+            CommunicationStatus.ESTABLISHED
+        )
 
-    def _on(mock: unittest.mock.Mock)  -> Tuple[ResultCode, str]:
+    def _on(mock: unittest.mock.Mock) -> Tuple[ResultCode, str]:
         mock._component_power_mode_changed_callback(PowerMode.ON)
         return (ResultCode.OK, "On command completed OK")
 
-    def _off(mock: unittest.mock.Mock)  -> Tuple[ResultCode, str]:
+    def _off(mock: unittest.mock.Mock) -> Tuple[ResultCode, str]:
         mock._component_power_mode_changed_callback(PowerMode.OFF)
         return (ResultCode.OK, "Off command completed OK")
 
-    def _standby(mock: unittest.mock.Mock)  -> Tuple[ResultCode, str]:
+    def _standby(mock: unittest.mock.Mock) -> Tuple[ResultCode, str]:
         mock._component_power_mode_changed_callback(PowerMode.STANDBY)
         return (ResultCode.OK, "Standby command completed OK")
 
@@ -99,11 +107,15 @@ def mock_component_manager(
 
     def _configure_band(mock: unittest.mock.Mock) -> Tuple[ResultCode, str]:
         return (ResultCode.OK, "ConfigureBand command completed OK")
-    
-    def _deconfigure() -> None: pass
+
+    def _deconfigure() -> None:
+        pass
 
     def _configure_search_window() -> Tuple[ResultCode, str]:
-        return (ResultCode.OK, "Vcc ConfigureSearchWindow command completed OK")
+        return (
+            ResultCode.OK,
+            "Vcc ConfigureSearchWindow command completed OK",
+        )
 
     mock.start_communicating.side_effect = lambda: _start_communicating(mock)
     mock.on.side_effect = lambda: _on(mock)
@@ -111,10 +123,12 @@ def mock_component_manager(
     mock.standby.side_effect = lambda: _standby(mock)
     mock.configure_scan.side_effect = lambda argin: _configure_scan()
     mock.scan.side_effect = lambda argin: _scan()
-    mock.end_scan.side_effect = lambda : _end_scan()
+    mock.end_scan.side_effect = lambda: _end_scan()
     mock.configure_band.side_effect = lambda argin: _configure_band(mock)
     mock.deconfigure.side_effect = lambda: _deconfigure()
-    mock.configure_search_window.side_effect = lambda argin: _configure_search_window()
+    mock.configure_search_window.side_effect = (
+        lambda argin: _configure_search_window()
+    )
 
     mock.enqueue.return_value = unique_id, ResultCode.QUEUED
 
@@ -123,7 +137,7 @@ def mock_component_manager(
 
 @pytest.fixture()
 def patched_vcc_device_class(
-    mock_component_manager: unittest.mock.Mock
+    mock_component_manager: unittest.mock.Mock,
 ) -> Type[Vcc]:
     """
     Return a Vcc device class, patched with extra methods for testing.
@@ -176,9 +190,7 @@ def device_under_test(tango_harness: TangoHarness) -> CbfDeviceProxy:
 
 
 @pytest.fixture()
-def device_to_load(
-    patched_vcc_device_class: Type[Vcc]
-) -> DeviceToLoadType:
+def device_to_load(patched_vcc_device_class: Type[Vcc]) -> DeviceToLoadType:
     """
     Fixture that specifies the device to be loaded for testing.
 
@@ -190,8 +202,9 @@ def device_to_load(
         "device": "vcc-001",
         "device_class": "Vcc",
         "proxy": CbfDeviceProxy,
-        "patch": patched_vcc_device_class
+        "patch": patched_vcc_device_class,
     }
+
 
 @pytest.fixture()
 def mock_talon_lru() -> unittest.mock.Mock:
@@ -199,6 +212,7 @@ def mock_talon_lru() -> unittest.mock.Mock:
     builder.add_attribute("PDU1PowerMode", PowerMode.OFF)
     builder.add_attribute("PDU2PowerMode", PowerMode.OFF)
     return builder()
+
 
 @pytest.fixture()
 def mock_vcc_controller() -> unittest.mock.Mock:
@@ -208,6 +222,7 @@ def mock_vcc_controller() -> unittest.mock.Mock:
     builder.add_command("ConfigureBand", None)
     builder.add_command("Unconfigure", None)
     return builder()
+
 
 @pytest.fixture()
 def mock_vcc_band() -> unittest.mock.Mock:
@@ -220,6 +235,7 @@ def mock_vcc_band() -> unittest.mock.Mock:
     builder.add_command("Abort", None)
     builder.add_command("ObsReset", None)
     return builder()
+
 
 @pytest.fixture()
 def mock_sw() -> unittest.mock.Mock:
@@ -235,12 +251,13 @@ def mock_sw() -> unittest.mock.Mock:
     builder.add_result_command("Off", ResultCode.OK)
     return builder()
 
+
 @pytest.fixture()
 def initial_mocks(
     mock_talon_lru: unittest.mock.Mock,
     mock_vcc_controller: unittest.mock.Mock,
     mock_vcc_band: unittest.mock.Mock,
-    mock_sw: unittest.mock.Mock
+    mock_sw: unittest.mock.Mock,
 ) -> Dict[str, unittest.mock.Mock]:
     """
     Return a dictionary of device proxy mocks to pre-register.
@@ -258,17 +275,18 @@ def initial_mocks(
         "talondx-001/vcc-app/vcc-band-4": mock_vcc_band,
         "talondx-001/vcc-app/vcc-band-5": mock_vcc_band,
         "mid_csp_cbf/vcc_sw1/001": mock_sw,
-        "mid_csp_cbf/vcc_sw2/001": mock_sw
+        "mid_csp_cbf/vcc_sw2/001": mock_sw,
     }
+
 
 @pytest.fixture()
 def vcc_component_manager(
     logger: logging.Logger,
-    tango_harness: TangoHarness, # sets the connection_factory
+    tango_harness: TangoHarness,  # sets the connection_factory
     push_change_event_callback: MockChangeEventCallback,
     communication_status_changed_callback: MockCallable,
     component_power_mode_changed_callback: MockCallable,
-    component_fault_callback: MockCallable
+    component_fault_callback: MockCallable,
 ) -> VccComponentManager:
     """Return a VCC component manager."""
     return VccComponentManager(
@@ -278,19 +296,17 @@ def vcc_component_manager(
             "talondx-001/vcc-app/vcc-band-1-and-2",
             "talondx-001/vcc-app/vcc-band-3",
             "talondx-001/vcc-app/vcc-band-4",
-            "talondx-001/vcc-app/vcc-band-5"
+            "talondx-001/vcc-app/vcc-band-5",
         ],
-        search_window=[
-            "mid_csp_cbf/vcc_sw1/001",
-            "mid_csp_cbf/vcc_sw2/001"
-        ],
+        search_window=["mid_csp_cbf/vcc_sw1/001", "mid_csp_cbf/vcc_sw2/001"],
         logger=logger,
         push_change_event_callback=push_change_event_callback,
         communication_status_changed_callback=communication_status_changed_callback,
         component_power_mode_changed_callback=component_power_mode_changed_callback,
         component_fault_callback=component_fault_callback,
-        simulation_mode=SimulationMode.FALSE
+        simulation_mode=SimulationMode.FALSE,
     )
+
 
 @pytest.fixture()
 def communication_status_changed_callback(
@@ -325,6 +341,7 @@ def component_power_mode_changed_callback(
     """
     return mock_callback_factory()
 
+
 @pytest.fixture()
 def component_fault_callback(
     mock_callback_factory: Callable[[], unittest.mock.Mock],
@@ -341,18 +358,21 @@ def component_fault_callback(
     """
     return mock_callback_factory()
 
+
 @pytest.fixture()
 def push_change_event_callback_factory(
-    mock_change_event_callback_factory: Callable[[str], MockChangeEventCallback],
+    mock_change_event_callback_factory: Callable[
+        [str], MockChangeEventCallback
+    ],
 ) -> Callable[[], MockChangeEventCallback]:
     """
-    Return a mock change event callback factory 
+    Return a mock change event callback factory
 
     :param mock_change_event_callback_factory: fixture that provides a
         mock change event callback factory (i.e. an object that returns
         mock callbacks when called).
 
-    :return: a mock change event callback factory 
+    :return: a mock change event callback factory
     """
 
     def _factory() -> MockChangeEventCallback:
@@ -366,12 +386,11 @@ def push_change_event_callback(
     push_change_event_callback_factory: Callable[[], MockChangeEventCallback],
 ) -> MockChangeEventCallback:
     """
-    Return a mock change event callback 
+    Return a mock change event callback
 
     :param push_change_event_callback_factory: fixture that provides a mock
-        change event callback factory 
+        change event callback factory
 
-    :return: a mock change event callback 
+    :return: a mock change event callback
     """
     return push_change_event_callback_factory()
-
