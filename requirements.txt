@@ -1,5 +1,5 @@
 --extra-index-url https://artefact.skao.int/repository/pypi-internal/simple
-numpy == 1.17.2
+numpy == 1.22.0
 pytango >= 9.3.3
 jsonschema >= 3.2.0
 ska-tango-base == 0.10.1
