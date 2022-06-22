@@ -39,7 +39,7 @@ UMBRELLA_CHART_PATH ?= charts/ska-mid-cbf-umbrella/
 
 K8S_CHARTS ?= ska-mid-cbf-umbrella ska-mid-cbf-mcs ska-mid-cbf-tmleafnode ## list of charts
 K8S_UMBRELLA_CHART_PATH ?= ./charts/ska-mid-cbf-umbrella
-K8S_CHART_PARAMS = --set global.tango_host=$(TANGO_HOST)
+K8S_CHART_PARAMS = --set global.tango_host=$(TANGO_HOST) --set midcbf.image.registry=registry.gitlab.com/ska-telescope/ska-mid-cbf-mcs
 
 PYTHON_TEST_FILE = 
 PYTHON_VARS_AFTER_PYTEST = -c setup-unit-test.cfg
@@ -88,8 +88,10 @@ TEST_RUNNER = test-runner-$(CI_JOB_ID)-$(KUBE_NAMESPACE)-$(HELM_RELEASE)
 
 ifneq ($(strip $(CI_JOB_ID)),)
 K8S_TEST_IMAGE_TO_TEST = $(CI_REGISTRY)/ska-telescope/ska-mid-cbf-mcs/ska-mid-cbf-mcs:$(VERSION)-dev.c$(CI_COMMIT_SHORT_SHA)
+K8S_CHART_PARAMS = --set global.tango_host=$(TANGO_HOST) --set midcbf.image.registry=$(CI_REGISTRY)/ska-telescope/ska-mid-cbf-mcs
 else
 K8S_TEST_IMAGE_TO_TEST = artefact.skao.int/ska-mid-cbf-mcs:$(VERSION)
+K8S_CHART_PARAMS = --set global.tango_host=$(TANGO_HOST)
 endif
 
 K8S_TEST_TEST_COMMAND ?= ls -lrt &&  $(PYTHON_VARS_BEFORE_PYTEST) $(PYTHON_RUNNER) \
