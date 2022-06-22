@@ -92,7 +92,7 @@ TEST_RUNNER = test-runner-$(CI_JOB_ID)-$(KUBE_NAMESPACE)-$(HELM_RELEASE)
 #K8S_TEST_IMAGE_TO_TEST = artefact.skao.int/ska-mid-cbf-mcs:0.6.3
 #endif
 
-K8S_TEST_IMAGE_TO_TEST = $(shell echo $(CAR_OCI_REGISTRY_HOST)/$(OCI_IMAGE):$(VERSION) | tr -d '[:space:]')
+#K8S_TEST_IMAGE_TO_TEST = $(shell echo $(CAR_OCI_REGISTRY_HOST)/$(OCI_IMAGE):$(VERSION) | tr -d '[:space:]')
 
 K8S_TEST_TEST_COMMAND ?= ls -lrt &&  $(PYTHON_VARS_BEFORE_PYTEST) $(PYTHON_RUNNER) \
                         pytest \
