@@ -127,6 +127,9 @@ unit-test: ## Run simulation mode unit tests
 #python-do-lint:
 #	@echo
 
+k8s-post-install-chart:
+	@sleep 60
+	kubectl describe pod powerswitch-powerswitch-001-0 -n $(KUBE_NAMESPACE)
 
 jive: ## configure TANGO_HOST to enable Jive
 	@echo
