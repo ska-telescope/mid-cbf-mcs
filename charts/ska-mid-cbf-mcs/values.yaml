@@ -72,6 +72,9 @@ deviceServers:
   talonlru:
     file: "data/talonlru.yaml"
 
+  talondxlogconsumer:
+    file: "data/talondxlogconsumer.yaml"
+
 nodeSelector: {}
 
 affinity: {}
