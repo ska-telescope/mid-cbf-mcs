@@ -209,18 +209,22 @@ class TalonDxComponentManager:
                         dest=dest_dir,
                     )
 
-            except NoValidConnectionsError:
+            except NoValidConnectionsError as e:
+                self.logger.error(f"{e}")
                 self.logger.error(
                     f"NoValidConnectionsError while connecting to {target}"
                 )
                 ret = ResultCode.FAILED
-            except SSHException:
+            except SSHException as e:
+                self.logger.error(f"{e}")
                 self.logger.error(f"SSHException while talking to {target}")
                 ret = ResultCode.FAILED
-            except SCPException:
+            except SCPException as e:
+                self.logger.error(f"{e}")
                 self.logger.error(f"Failed to copy file to {target}")
                 ret = ResultCode.FAILED
             except FileNotFoundError as e:
+                self.logger.error(f"{e}")
                 self.logger.error(
                     f"Failed to copy file {e.filename}, file does not exist"
                 )
