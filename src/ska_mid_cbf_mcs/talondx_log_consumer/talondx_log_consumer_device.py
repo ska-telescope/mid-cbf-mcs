@@ -64,7 +64,7 @@ class TalonDxLogConsumer(SKABaseDevice):
         """
         super().init_command_objects()
 
-        device_args = (self, self.state_model, self.logger)
+        device_args = (self, self.op_state_model, self.logger)
         self.register_command_object(
             "log", self.LogCommand(*device_args)
         )
