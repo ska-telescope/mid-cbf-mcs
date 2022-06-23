@@ -10,30 +10,36 @@
 # Copyright (c) 2019 National Research Council of Canada
 
 from __future__ import annotations
+
 import logging
 from typing import List
 
 # tango imports
 import tango
-from tango.server import run
-from tango.server import attribute, command
 from ska_tango_base import SKABaseDevice
 
 # Additional import
 # PROTECTED REGION ID(TalonDxLogConsumer.additional_import) ENABLED START #
-from ska_tango_base.base.base_device import _Log4TangoLoggingLevel, _LMC_TO_PYTHON_LOGGING_LEVEL
-from ska_tango_base.control_model import LoggingLevel
+from ska_tango_base.base.base_device import (
+    _LMC_TO_PYTHON_LOGGING_LEVEL,
+    _Log4TangoLoggingLevel,
+)
 from ska_tango_base.commands import BaseCommand, ResultCode
+from ska_tango_base.control_model import LoggingLevel
 from ska_tango_base.faults import LoggingLevelError
+from tango.server import attribute, command, run
+
 # PROTECTED REGION END #    //  TalonDxLogConsumer.additional_import
 
 __all__ = ["TalonDxLogConsumer", "main"]
+
 
 class TalonDxLogConsumer(SKABaseDevice):
     """
     TANGO device class for consuming logs from the Tango devices run on the Talon boards,
     converting them to the SKA format, and outputting them via the logging framework.
     """
+
     # PROTECTED REGION ID(TalonDxLogConsumer.class_variable) ENABLED START #
     # PROTECTED REGION END #    //  TalonDxLogConsumer.class_variable
 
@@ -65,9 +71,7 @@ class TalonDxLogConsumer(SKABaseDevice):
         super().init_command_objects()
 
         device_args = (self, self.op_state_model, self.logger)
-        self.register_command_object(
-            "log", self.LogCommand(*device_args)
-        )
+        self.register_command_object("log", self.LogCommand(*device_args))
 
     # ------------------
     # Attributes methods
@@ -77,7 +81,7 @@ class TalonDxLogConsumer(SKABaseDevice):
         # PROTECTED REGION ID(SKABaseDevice.loggingLevel_write) ENABLED START #
         """
         Sets logging level for the device. Both the Python logger and the
-        Tango logger are updated. Overrides the base class attribute to 
+        Tango logger are updated. Overrides the base class attribute to
         accept all log levels coming from HPS devices, but still limit the
         logging level of TalonDxLogConsumer logs.
 
@@ -96,10 +100,11 @@ class TalonDxLogConsumer(SKABaseDevice):
             """
             Filter for the logging level of the TalonDxLogConsumer.
             """
+
             def __init__(
                 self: TalonDxLogConsumerFilter,
                 device_name: str,
-                log_level: int
+                log_level: int,
             ) -> None:
                 """
                 Create a new instance.
@@ -110,7 +115,9 @@ class TalonDxLogConsumer(SKABaseDevice):
                 self.device_name = device_name
                 self.log_level = log_level
 
-            def filter(self: TalonDxLogConsumerFilter, record: logging.LogRecord) -> bool:
+            def filter(
+                self: TalonDxLogConsumerFilter, record: logging.LogRecord
+            ) -> bool:
                 """
                 Filter all TalonDxLogConsumer logs that do not satisfy the log level requirement.
                 Also adds the tango-device tag if it does not already exist.
@@ -130,15 +137,18 @@ class TalonDxLogConsumer(SKABaseDevice):
         except ValueError:
             raise LoggingLevelError(
                 "Invalid level - {} - must be one of {} ".format(
-                    value, [v for v in LoggingLevel.__members__.values()]))
+                    value, [v for v in LoggingLevel.__members__.values()]
+                )
+            )
 
         # Remove all previous filters
         for filt in list(self.logger.filters):
             self.logger.removeFilter(filt)
 
         # Create new filter
-        log_filter = TalonDxLogConsumerFilter(self.get_name(),
-            _LMC_TO_PYTHON_LOGGING_LEVEL[lmc_logging_level])
+        log_filter = TalonDxLogConsumerFilter(
+            self.get_name(), _LMC_TO_PYTHON_LOGGING_LEVEL[lmc_logging_level]
+        )
         self.logger.addFilter(log_filter)
 
     # --------
@@ -149,6 +159,7 @@ class TalonDxLogConsumer(SKABaseDevice):
         """
         A class for the TalonDxLogConsumer's init_device() "command".
         """
+
         def do(self: TalonDxLogConsumer.InitCommand) -> tuple[ResultCode, str]:
             """
             Stateless hook for device initialisation.
@@ -169,13 +180,10 @@ class TalonDxLogConsumer(SKABaseDevice):
             "ERROR": logging.ERROR,
             "WARNING": logging.WARNING,
             "INFO": logging.INFO,
-            "DEBUG": logging.DEBUG
+            "DEBUG": logging.DEBUG,
         }
 
-        def do(
-            self: TalonDxLogConsumer.LogCommand,
-            argin: List[str]
-        ) -> None:
+        def do(self: TalonDxLogConsumer.LogCommand, argin: List[str]) -> None:
             """
             Implement log command functionality.
 
@@ -189,42 +197,49 @@ class TalonDxLogConsumer(SKABaseDevice):
                 return
 
             try:
-                log_level = self._TANGO_LOGGING_TO_PYTHON_LOGGING_LEVEL[argin[1]]
+                log_level = self._TANGO_LOGGING_TO_PYTHON_LOGGING_LEVEL[
+                    argin[1]
+                ]
             except ValueError:
                 return
 
             # Forward the log message to the logger
             attrdict = {
-                'created': epoch_ms / 1000, # Seconds
-                'msecs': epoch_ms % 1000,   # Milliseconds
-                'levelname': argin[1],
-                'levelno': log_level,
-                'threadName': argin[5],
-                'funcName': '',
-                'filename': '',
-                'lineno': 0,
-                'tags': f"tango-device:{argin[2]}",
-                'msg': argin[3]
+                "created": epoch_ms / 1000,  # Seconds
+                "msecs": epoch_ms % 1000,  # Milliseconds
+                "levelname": argin[1],
+                "levelno": log_level,
+                "threadName": argin[5],
+                "funcName": "",
+                "filename": "",
+                "lineno": 0,
+                "tags": f"tango-device:{argin[2]}",
+                "msg": argin[3],
             }
             rec = logging.makeLogRecord(attrdict)
             self.logger.handle(rec)
 
     @command(
-    dtype_in='DevVarStringArray', 
-    doc_in="Log consumer input arguments", 
+        dtype_in="DevVarStringArray",
+        doc_in="Log consumer input arguments",
     )
-    def log(self: TalonDxLogConsumer, argin: int) -> tango.DevVarLongStringArray:
+    def log(
+        self: TalonDxLogConsumer, argin: int
+    ) -> tango.DevVarLongStringArray:
         handler = self.get_command_object("log")
         handler(argin)
+
 
 # ----------
 # Run server
 # ----------
+
 
 def main(args=None, **kwargs):
     # PROTECTED REGION ID(TalonDxLogConsumer.main) ENABLED START #
     return run((TalonDxLogConsumer,), args=args, **kwargs)
     # PROTECTED REGION END #    //  TalonDxLogConsumer.main
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()
