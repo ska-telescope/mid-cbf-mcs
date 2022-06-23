@@ -21,7 +21,7 @@ from ska_tango_base import SKABaseDevice
 
 # Additional import
 # PROTECTED REGION ID(TalonDxLogConsumer.additional_import) ENABLED START #
-from ska_tango_base.base_device import _Log4TangoLoggingLevel, _LMC_TO_PYTHON_LOGGING_LEVEL
+from ska_tango_base.base.base_device import _Log4TangoLoggingLevel, _LMC_TO_PYTHON_LOGGING_LEVEL
 from ska_tango_base.control_model import LoggingLevel
 from ska_tango_base.commands import BaseCommand, ResultCode
 from ska_tango_base.faults import LoggingLevelError
