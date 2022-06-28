@@ -7,15 +7,10 @@ Code repository: [ska-mid-cbf-mcs](https://gitlab.com/ska-telescope/ska-mid-cbf-
 
 # Table Of Contents
 * [Introduction](#introduction)
-* [Getting started](#getting-started)
-  * [Hardware and OS requirements](#hardware-and-os-requirements)
-  * [Install a virtual vachine](#install-a-virtual-machine)
-  * [Install Ubuntu](#install-ubuntu)
-  * [Set up development environment](#set-up-development-environment) 
-  * [Set up the Mid CBF MCS Software](#set-up-the-mid-cbf-mcs-software)
-  * [Set up Kubernetes](#set-up-kubernetes)
+* [Getting Started](#getting-started)
+* [Cloning the Repository](#cloning-the-repository)
 * [Running the Mid CBF MCS](#running-the-mid-cbf-mcs)
-* [Jive and Taranta](#jive-and-taranta)
+* [Taranta](#taranta)
 * [Documentation](#documentation)
 * [Releasing](#releasing)
 * [Development resources](#development-resources)
@@ -76,125 +71,17 @@ This section follows the instructions on the SKA developer’s portal:
 * https://developer.skao.int/en/latest/getting-started/devenv-setup.html
 * https://developer.skao.int/en/latest/tools/dev-faq.html
 
-## Hardware and OS requirements
+# Cloning the Repository
 
-The following settings are needed for the virtual machine, running on a Windows 
-10 host:
-* 4 CPUs
-* 8 GB RAM (ideally more, maximum that VirtualBox recommends)
-* ~40 GB storage
-
-## Install a virtual machine
-
-Download and install VirtualBox and the extension pack from: 
-https://www.virtualbox.org/wiki/Downloads
-
-## Install Ubuntu
-
-Download an image of Ubuntu 18.04 like the following one:
-
-https://sourceforge.net/projects/osboxes/files/v/vb/55-U-u/18.04/18.04.2/18042.64.7z/download
-
-Steps:
-
-1.  Open up the file downloaded from SourceForge for the Ubuntu image with 7-Zip 
-and extract the “Ubuntu 18.04.2 (64bit).vdi” file into a known directory.
-
-2.  Open up the VirtualBox software and click “new” and run through the setup 
-process, on the Hard Disk option screen choose “use and existing virtual hard 
-disk file” and then choose the VDI file that you extracted in step two.
-
-3.  Run the OS in VirtualBox and login to the Ubuntu OS. The login screen should 
-show the account `osboxes.org`; this is a default account the virtual machine 
-creates for you and the password is **`osboxes.org`** (you can change the name 
-and password in account settings once you are logged in”).
-
-*Note* : If you set your own password for the virtual machine, change 
-"ansible_become_pass=osboxes.org" to "ansible_become_pass=your_own_password"
-
-## Set up development environment 
-
-### DEPRECATION NOTICE
-`ansible-playbooks` repository no longer supported, however it is still useful 
-to set up a new development environment.
-
-Setting up the Development environment, including Tango environment,  is 
-performed using the ansible playbook script. Follow the commands in the yellow 
-box under the 'Creating a Development Environment' section of the 
-https://developer.skatelescope.org/en/latest/getting-started/devenv-setup/tango-devenv-setup.html 
-web page.
-
+Clone the repository with the following command in the directory of your choice:
 ```
-sudo apt -y install git
-git clone https://gitlab.com/ska-telescope/ansible-playbooks
-cd ansible-playbooks
-sudo apt-add-repository --yes --update ppa:ansible/ansible && \
-    sudo apt -y install ansible
-ansible-playbook -i hosts deploy_tangoenv.yml \
-    --extra-vars "ansible_become_pass=osboxes.org" \
-    -e ansible_python_interpreter=/usr/bin/python
-sudo reboot
+git clone https://gitlab.com/ska-telescope/ska-mid-cbf-mcs.git
 ```
-
-See that page for a list of the applications installed in this way.
-
-### Notes and troubleshooting
-
-*Note 1*: If you already have an older installation don't forget to first update 
-your local version of the ansible-playbooks repo (pull, checkout or delete and 
-clone again), before running the ansible-playbooks command.
-
-*Note 2*: You may need to precede the ``ansible-playbook`` command (from the 
-commands sequence at the link above) by ``sudo``.
-
-*Note 3*:  Depending on your system, the ``ansible-playbook`` command may take 
-more than one hour to complete.
-
-*Note 4*: If you encounter Python installation problem with the ansible command, 
-try to explicitly specify the python version in the ansible command, for example:
+Navigate to the newly cloned directory and initialize and update the git submodules:
 ```
-ansible-playbook -i hosts deploy_tangoenv.yml --extra-vars "ansible_become_pass=osboxes.org" -e ansible_python_interpreter=/usr/bin/python3
+git submodule init
+git submodule update
 ```
-
-*Note 5*: If you experience other issues with the script ask questions in the 
-[#team-system-support](https://skao.slack.com/archives/CEMF9HXUZ) slack channel.
-
-## Set up the Mid CBF MCS Software
-
-The basic requirements are:
-* Python 3.5
-* pip
-
-The following projects are required:
-* ska-mid-cbf-mcs
-* ska-tango-base
-
-To get a local copy of the ska-mid-cbf-mcs project:
-```
-git clone https://gitlab.com/ska-telescope/ska-mid-cbf-mcs.git  # clone the MCS 
-repository locally
-```
-
-To install ska-tango-base (as a Python package), follow the 'Installation steps' 
-of the README at https://gitlab.com/ska-telescope/ska-tango-base
-
-*Note*:SKA Tango base classes are needed when using Pogo to automatically 
-generate Python TANGO code. Pogo will ask for the Base class pogo (.xmi) files, 
-which are located in the ska-tango-base folder.
-
-## Set up Kubernetes
-
-For installing Kubernetes, Minikube and Helm, follow the instructions at 
-```https://developer.skatelescope.org/en/latest/tools/dev-faq.html```.
-
-### Individual installation instructions
-* [Docker Engine](https://docs.docker.com/engine/install/ubuntu/)
-* [minikube](https://minikube.sigs.k8s.io/docs/start/), 
-[kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/) 
-and [Helm](https://helm.sh/docs/intro/install/)
-  * Clone the `https://gitlab.com/ska-telescope/sdi/ska-cicd-deploy-minikube` 
-  project and follow the README instructions to install and configure minikube, 
-  kubectl and Helm correctly.
 
 # Running the Mid CBF MCS
 
@@ -226,20 +113,20 @@ LoadBalancer service external IP addresses.
 ```
 cd ska-mid-cbf-mcs
 eval $(minikube docker-env)  # if building from local source and not artefact repository
-make build
+make oci-image-build
 ```
 
-`make build` is required only if a local image needs to be built, for example 
+`make oci-image-build` is required only if a local image needs to be built, for example 
 every time the SW has been updated. 
 [For development, in order to get local changes to build, run `eval $(minikube docker-env)` before `make build`](https://v1-18.docs.kubernetes.io/docs/setup/learning-environment/minikube/#use-local-images-by-re-using-the-docker-daemon)
 
 #### 3.  Install the umbrella chart.
 ```
-make install-chart        # deploy from Helm charts
-make install-chart-only   # deploy from Helm charts without updating dependencies
+make k8s-install-chart        # deploy from Helm charts
+make k8s-install-chart-only   # deploy from Helm charts without updating dependencies
 ```
-*Note*: `make watch` will list all of the pods' status in every 2 seconds using 
-kubectl; `make wait` will wait until all jobs are 'Completed' and pods are 
+*Note*: `make k8s-watch` will list all of the pods' status in every 2 seconds using 
+kubectl; `make k8s-wait` will wait until all jobs are 'Completed' and pods are 
 'Running'.
 
 #### 4.  (Optional) Create python virtual environment to isolate project specific dependencies from your host environment.
@@ -260,16 +147,15 @@ pip install -e .
 
 #### 7.  Run a test.
 ```
-make test       # functional tests, creates a running deployment
-make test-only  # functional tests with an already running deployment
-make unit-test  # unit tests, deployment does not need to be running
+make k8s-test  # functional tests with an already running deployment
+make python-test  # unit tests, deployment does not need to be running
 ```
 *Note*: add `-k` pytest flags in `setup.cfg` in the project root to limit which 
 tests are run
 
 #### 8.  Tear down the deployment.
 ```
-make uninstall-chart                  # uninstall deployment from Helm charts
+make k8s-uninstall-chart                  # uninstall deployment from Helm charts
 deactivate                            # if in active virtualenv
 eval $(minikube docker-env --unset)   # if docker-env variables were set previously
 minikube stop                         # stop minikube
@@ -321,25 +207,14 @@ minikube delete -p <profile_name>
 
 
 
-# Jive and Taranta
+# Taranta
 
-## Jive
-Run `make jive` with the deployment active to get a command useful for configuring 
-local Jive; this command sets the TANGO_HOST environment variable equal to 
-```<minikube-IP-address>:<database-pod-TCP-port>```.
-```
-make jive   # copy and paste the output
-jive&       # run Jive
-```
-
-## Taranta
 This prototype provides a graphical user interface using Taranta (previously known as WebJive); to set it up:
 * Add the following line to `/etc/hosts`:
     ```
     192.168.49.2  taranta
     ```
     *Note*: 192.168.49.2 is the minikube IP address, obtainable with the command `minikube ip`
-* Deploy with `make install-chart-with-taranta`
 * Navigate to `taranta/ska-mid-cbf/taranta/devices` in a browser (works best with Google Chrome).
 
 The following credentials can be used to operate the system:
@@ -416,34 +291,6 @@ The 2 instances of the `TmCspSubarrayLeafNodeTest` TANGO device servers.
 * `tango-host-databaseds-from-makefile-test-0`: The TANGO DB device server.
 * etc.
 
-#### Docker
-Set up Docker run without `sudo`:
-```
-sudo groupadd docker
-sudo usermod -aG docker $USER
-newgrp docker
-docker run hello-world
-```
-System info and cleanup:
-```
-docker system info
-docker system prune
-docker images
-docker image rm <image-ID(s)>
-docker volume ls
-```
-To list the running containers issue:
-```
-docker ps
-```
-To list all created containers (not only running):
-```
-docker ps -a
-``` 
-To list all created containers but less verbose, run for example:
-```
-docker ps -a --format "table {{.ID}}\t{{.Status}}\t{{.Names}}"
-``` 
 
 # License
 
