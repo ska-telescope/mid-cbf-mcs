@@ -8,7 +8,7 @@ Code repository: [ska-mid-cbf-mcs](https://gitlab.com/ska-telescope/ska-mid-cbf-
 # Table Of Contents
 * [Introduction](#introduction)
 * [Getting Started](#getting-started)
-* [Cloning the Repository](#cloning-the-repository)
+* [Git Repository](#git-repository)
 * [Running the Mid CBF MCS](#running-the-mid-cbf-mcs)
 * [Taranta](#taranta)
 * [Documentation](#documentation)
@@ -71,17 +71,12 @@ This section follows the instructions on the SKA developer’s portal:
 * https://developer.skao.int/en/latest/getting-started/devenv-setup.html
 * https://developer.skao.int/en/latest/tools/dev-faq.html
 
-# Cloning the Repository
+# Git Repository
 
-Clone the repository with the following command in the directory of your choice:
-```
-git clone https://gitlab.com/ska-telescope/ska-mid-cbf-mcs.git
-```
-Navigate to the newly cloned directory and initialize and update the git submodules:
-```
-git submodule init
-git submodule update
-```
+The MCS Git Repository is available at the following page:
+https://gitlab.com/ska-telescope/ska-mid-cbf-mcs
+
+The README on the repository will guide users through cloning and initializing the repository.
 
 # Running the Mid CBF MCS
 
