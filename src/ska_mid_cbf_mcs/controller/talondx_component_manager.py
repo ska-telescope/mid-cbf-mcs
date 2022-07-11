@@ -175,6 +175,12 @@ class TalonDxComponentManager:
                         dest="/lib/firmware/hps_software",
                     )
 
+                     # Copy HPS master run script
+                    self._secure_copy(
+                        ssh_client=ssh_client,
+                        src=f"{src_dir}/hps_master_mcs.sh",
+                        dest="/lib/firmware/hps_software")
+
                     # Copy the remaining DS binaries
                     for binary_name in talon_cfg["devices"]:
                         self._secure_copy(
