@@ -72,14 +72,6 @@ server:
           - name: "VccID"
             values:
             - "1"
-          - name: "polled_attr"
-            values:
-            - "state"
-            - "1000"
-            - "healthstate"
-            - "3000"
-            - "adminmode"
-            - "3000"
     - name: "VccSearchWindow"
       devices:
       - name: "mid_csp_cbf/vcc_sw1/001"
@@ -137,14 +129,6 @@ server:
           - name: "VccID"
             values:
             - "2"
-          - name: "polled_attr"
-            values:
-            - "state"
-            - "1000"
-            - "healthstate"
-            - "3000"
-            - "adminmode"
-            - "3000"
     - name: "VccSearchWindow"
       devices:
       - name: "mid_csp_cbf/vcc_sw1/002"
@@ -202,14 +186,6 @@ server:
           - name: "VccID"
             values:
             - "3"
-          - name: "polled_attr"
-            values:
-            - "state"
-            - "1000"
-            - "healthstate"
-            - "3000"
-            - "adminmode"
-            - "3000"
     - name: "VccSearchWindow"
       devices:
       - name: "mid_csp_cbf/vcc_sw1/003"
@@ -267,14 +243,6 @@ server:
           - name: "VccID"
             values:
             - "4"
-          - name: "polled_attr"
-            values:
-            - "state"
-            - "1000"
-            - "healthstate"
-            - "3000"
-            - "adminmode"
-            - "3000"
     - name: "VccSearchWindow"
       devices:
       - name: "mid_csp_cbf/vcc_sw1/004"

@@ -227,20 +227,6 @@ class TestCbfController:
             )
             assert test_proxies.fsp[i].State() == DevState.STANDBY
 
-        for i in ["CORR", "PSS-BF", "PST-BF"]:
-            for j in range(1, test_proxies.num_sub + 1):
-                for k in range(1, test_proxies.num_fsp + 1):
-                    test_proxies.wait_timeout_dev(
-                        [test_proxies.fspSubarray[i][j][k]],
-                        DevState.STANDBY,
-                        wait_time_s,
-                        sleep_time_s,
-                    )
-                    assert (
-                        test_proxies.fspSubarray[i][j][k].State()
-                        == DevState.STANDBY
-                    )
-
     def test_Disconnect(self, test_proxies):
         """
         Verify the component manager can stop communicating
