@@ -107,6 +107,12 @@ server:
             - "3000"
             - "reportsubarraystate"
             - "3000"
+            - "reportvccadminmode"
+            - "3000"
+            - "reportvcchealthstate"
+            - "3000"
+            - "reportvccstate"
+            - "3000"
 image:
   registry: "{{.Values.midcbf.image.registry}}"
   image: "{{.Values.midcbf.image.image}}"
