@@ -374,17 +374,17 @@ class CbfController(SKAController):
         talondx_config_file = open(self.TalonDxConfigPath + "/talondx-config.json")
         talondx_config_json = json.load(talondx_config_file)
         
-        talon_lru_fqdn_list = []
+        talon_lru_fqdn_set = Set()
         for config_command in talondx_config_json['config_commands']:
-            talon_lru_fqdn_list.append(config_command['talon_lru_fqdn'])
-        self.logger.info(f"talonlru list = {talon_lru_fqdn_list}")
+            talon_lru_fqdn_set.add(config_command['talon_lru_fqdn'])
+        self.logger.info(f"talonlru list = {talon_lru_fqdn_set}")
 
         return ControllerComponentManager(
             get_num_capabilities=self.get_num_capabilities,
             vcc_fqdns_all=self.VCC,
             fsp_fqdns_all=self.FSP,
             subarray_fqdns_all=self.CbfSubarray,
-            talon_lru_fqdns_all=talon_lru_fqdn_list,
+            talon_lru_fqdns_all=list(talon_lru_fqdn_set),
             talondx_component_manager=self._talondx_component_manager,
             logger=self.logger,
             push_change_event=self.push_change_event,
