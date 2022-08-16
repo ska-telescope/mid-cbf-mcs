@@ -90,13 +90,6 @@ class TestCbfSubarray:
         )
         assert device_under_test.State() == DevState.OFF
 
-        device_under_test.Standby()
-
-        test_proxies.wait_timeout_dev(
-            [device_under_test], DevState.STANDBY, wait_time_s, sleep_time_s
-        )
-        assert device_under_test.State() == DevState.STANDBY
-
     @pytest.mark.parametrize(
         "receptor_ids, \
         receptors_to_remove, \
