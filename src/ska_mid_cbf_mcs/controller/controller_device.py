@@ -19,7 +19,6 @@ from __future__ import annotations  # allow forward references in type hints
 from typing import List, Optional, Tuple
 
 import tango
-import json
 from ska_tango_base import SKABaseDevice, SKAController
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import PowerMode, SimulationMode
@@ -371,21 +370,14 @@ class CbfController(SKAController):
             self.TalonDxConfigPath, self._simulation_mode, self.logger
         )
 
-        talondx_config_file = open(self.TalonDxConfigPath + "/talondx-config.json")
-        talondx_config_json = json.load(talondx_config_file)
-        
-        talon_lru_fqdn_set = Set()
-        for config_command in talondx_config_json['config_commands']:
-            talon_lru_fqdn_set.add(config_command['talon_lru_fqdn'])
-        self.logger.info(f"talonlru list = {talon_lru_fqdn_set}")
-
         return ControllerComponentManager(
             get_num_capabilities=self.get_num_capabilities,
             vcc_fqdns_all=self.VCC,
             fsp_fqdns_all=self.FSP,
             subarray_fqdns_all=self.CbfSubarray,
-            talon_lru_fqdns_all=list(talon_lru_fqdn_set),
+            talon_lru_fqdns_all=self.TalonLRU,
             talondx_component_manager=self._talondx_component_manager,
+            talondx_config_path=self.TalonDxConfigPath,
             logger=self.logger,
             push_change_event=self.push_change_event,
             communication_status_changed_callback=self._communication_status_changed,
