@@ -78,17 +78,17 @@ class TestCbfSubarray:
         """
         assert device_under_test.adminMode == AdminMode.OFFLINE
 
-    @pytest.mark.parametrize("command", ["On", "Off", "Standby"])
+    @pytest.mark.parametrize("command", ["On", "Off"])
     def test_Power_Commands(
         self: TestCbfSubarray, device_under_test: CbfDeviceProxy, command: str
     ) -> None:
         """
-        Test the On/Off/Standby Commands
+        Test the On/Off Commands
 
         :param device_under_test: fixture that provides a
             :py:class:`CbfDeviceProxy` to the device under test, in a
             :py:class:`tango.test_context.DeviceTestContext`.
-        :param command: the command to test (one of On/Off/Standby)
+        :param command: the command to test (one of On/Off)
         """
 
         device_under_test.adminMode = AdminMode.ONLINE
@@ -103,9 +103,6 @@ class TestCbfSubarray:
         elif command == "Off":
             expected_state = DevState.OFF
             result = device_under_test.Off()
-        elif command == "Standby":
-            expected_state = DevState.STANDBY
-            result = device_under_test.Standby()
 
         time.sleep(CONST_WAIT_TIME)
         assert result[0][0] == ResultCode.OK
