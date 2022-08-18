@@ -75,11 +75,11 @@ server:
           - name: "polled_attr"
             values:
             - "state"
-            - "1000"
+            - "50"
             - "healthstate"
-            - "1000"
+            - "50"
             - "adminmode"
-            - "1000"
+            - "50"
     - name: "VccSearchWindow"
       devices:
       - name: "mid_csp_cbf/vcc_sw1/001"
