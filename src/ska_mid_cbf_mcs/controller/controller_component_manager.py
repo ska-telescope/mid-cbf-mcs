@@ -771,7 +771,6 @@ class ControllerComponentManager(CbfComponentManager):
         if self._connected:
 
             try:
-                self._group_subarray.command_inout("Standby")
                 self._group_vcc.command_inout("Standby")
                 self._group_fsp.command_inout("Standby")
             except tango.DevFailed:

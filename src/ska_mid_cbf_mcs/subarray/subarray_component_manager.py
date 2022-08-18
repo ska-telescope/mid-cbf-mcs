@@ -417,14 +417,9 @@ class CbfSubarrayComponentManager(
 
     @check_communicating
     def standby(self: CbfSubarrayComponentManager) -> None:
-        for proxy in self._proxies_fsp_corr_subarray:
-            proxy.Standby()
-        for proxy in self._proxies_fsp_pss_subarray:
-            proxy.Standby()
-        for proxy in self._proxies_fsp_pst_subarray:
-            proxy.Standby()
-
-        self.update_component_power_mode(PowerMode.STANDBY)
+        self._logger.warning(
+            "Operating state Standby invalid for CbfSubarray."
+        )
 
     @check_communicating
     def _doppler_phase_correction_event_callback(

@@ -4,13 +4,13 @@ domain: csp-monitoring
 command: "CbfController"
 instances: ["controller"]
 depends_on:
-  - device: mid_csp_cbf/vcc/001   
-  - device: mid_csp_cbf/vcc/002  
-  - device: mid_csp_cbf/vcc/003  
-  - device: mid_csp_cbf/vcc/004  
-  - device: mid_csp_cbf/fsp/01 
-  - device: mid_csp_cbf/fsp/02 
-  - device: mid_csp_cbf/fsp/03 
+  - device: mid_csp_cbf/vcc/001
+  - device: mid_csp_cbf/vcc/002
+  - device: mid_csp_cbf/vcc/003
+  - device: mid_csp_cbf/vcc/004
+  - device: mid_csp_cbf/fsp/01
+  - device: mid_csp_cbf/fsp/02
+  - device: mid_csp_cbf/fsp/03
   - device: mid_csp_cbf/fsp/04
   - device: mid_csp_cbf/talon_lru/001
   - device: mid_csp_cbf/talon_lru/002
@@ -79,40 +79,40 @@ server:
             - "mnt/talondx-config"
           - name: "polled_attr"
             values:
+            - "adminmode"
+            - "3000"
+            - "commandprogress"
+            - "3000"
+            - "healthstate"
+            - "3000"
+            - "receptortovcc"
+            - "3000"
+            - "vcctoreceptor"
+            - "3000"
+            - "state"
+            - "1000"
+            - "subarrayconfigid"
+            - "3000"
+            - "reportfspadminmode"
+            - "3000"
+            - "reportfsphealthstate"
+            - "3000"
             - "reportfspstate"
+            - "3000"
+            - "reportfspsubarraymembership"
+            - "3000"
+            - "reportsubarrayhealthstate"
+            - "3000"
+            - "reportsubarrayadminmode"
+            - "3000"
+            - "reportsubarraystate"
             - "3000"
             - "reportvccadminmode"
             - "3000"
             - "reportvcchealthstate"
             - "3000"
-            - "receptortovcc"
-            - "3000"
-            - "reportfspsubarraymembership"
-            - "3000"
-            - "reportfsphealthstate"
-            - "3000"
-            - "healthstate"
-            - "3000"
-            - "adminmode"
-            - "3000"
-            - "subarrayconfigid"
-            - "3000"
-            - "reportfspadminmode"
-            - "3000"
-            - "commandprogress"
-            - "3000"
-            - "reportsubarrayhealthstate"
-            - "3000"
             - "reportvccstate"
             - "3000"
-            - "reportsubarrayadminmode"
-            - "3000"
-            - "vcctoreceptor"
-            - "3000"
-            - "reportsubarraystate"
-            - "3000"
-            - "state"
-            - "1000"
 image:
   registry: "{{.Values.midcbf.image.registry}}"
   image: "{{.Values.midcbf.image.image}}"
