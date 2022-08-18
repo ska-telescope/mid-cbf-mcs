@@ -91,7 +91,7 @@ def controller_component_manager(
 
     talondx_component_manager = MockTalonDxComponentManager()
 
-    talondx_config_path = "tests/data/"
+    talondx_config_path = "mnt/talondx-config/"
 
     return ControllerComponentManager(
         mock_get_num_capabilities,
