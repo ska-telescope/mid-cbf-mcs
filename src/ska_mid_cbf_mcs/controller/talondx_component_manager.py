@@ -35,14 +35,6 @@ class TalonDxComponentManager:
     """
     A component manager for the Talon-DX boards. Used to configure and start
     the Tango applications on the HPS of each board.
-
-    :param talondx_config_path: path to the directory containing configuration
-                                    files and artifacts for the Talon boards
-    :param simulation_mode: simulation mode identifies if the real Talon boards or
-                            a simulator should be used; note that currently there
-                            is no simulator for the Talon boards, so the component
-                            manager does nothing when in simulation mode
-    :param logger: a logger for this object to use
     """
 
     def __init__(
@@ -54,6 +46,13 @@ class TalonDxComponentManager:
         """
         Initialise a new instance.
 
+        :param talondx_config_path: path to the directory containing configuration
+                                    files and artifacts for the Talon boards
+        :param simulation_mode: simulation mode identifies if the real Talon boards or
+                                a simulator should be used; note that currently there
+                                is no simulator for the Talon boards, so the component
+                            manager does nothing when in simulation mode
+        :param logger: a logger for this object to use
         :param logger: a logger for this object to use
         """
         self.talondx_config_path = talondx_config_path
