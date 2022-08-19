@@ -139,6 +139,9 @@ update-db-port:  ## update Tango DB port so that the DB is accessible from the T
 documentation:   ## ## Re-generate documentation
 	cd docs && make clean && make html
 
+k8s-pre-test:
+	@kubectl exec -n $(KUBE_NAMESPACE) cbfcontroller-controller-0 -- ls -lrt /app/mnt/talondx-config 
+
 # pull and interactive preserved from docker.mk
 ###############################################
 # pull:  ## download the application image
