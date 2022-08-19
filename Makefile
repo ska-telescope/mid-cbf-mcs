@@ -96,7 +96,7 @@ K8S_TEST_IMAGE_TO_TEST = artefact.skao.int/ska-mid-cbf-mcs:$(VERSION)
 K8S_CHART_PARAMS = --set global.tango_host=$(TANGO_HOST) --values taranta-values.yaml
 endif
 
-K8S_TEST_TEST_COMMAND ?= ls -lrt /app/mnt/talondx-config/ &&  $(PYTHON_VARS_BEFORE_PYTEST) $(PYTHON_RUNNER) \
+K8S_TEST_TEST_COMMAND ?= ls -lrt &&  $(PYTHON_VARS_BEFORE_PYTEST) $(PYTHON_RUNNER) \
                         pytest \
                         -c setup-integration-test.cfg \
                         | tee pytest.stdout; ## k8s-test test command to run in container
@@ -138,24 +138,6 @@ update-db-port:  ## update Tango DB port so that the DB is accessible from the T
 
 documentation:   ## ## Re-generate documentation
 	cd docs && make clean && make html
-
-k8s-pre-test:
-	@kubectl exec -n $(KUBE_NAMESPACE) cbfcontroller-controller-0 -- cat /app/.release
-	@kubectl exec -n $(KUBE_NAMESPACE) cbfcontroller-controller-0 -- ls -lrt /app/mnt/talondx-config 
-
-# pull and interactive preserved from docker.mk
-###############################################
-# pull:  ## download the application image
-# 	docker pull $(IMAGE_TO_TEST)
-
-# # piplock: build  ## overwrite Pipfile.lock with the image version
-# # 	docker run $(IMAGE_TO_TEST) cat /app/Pipfile.lock > $(CURDIR)/Pipfile.lock
-
-# interactive:  ## start an interactive session 
-# 	docker run --rm -it -p 3000:3000 --name=$(CONTAINER_NAME_PREFIX)dev -e TANGO_HOST=$(TANGO_HOST)  -v $(CURDIR):/app $(IMAGE_TO_TEST) /bin/bash
-###############################################
-
-#pytest $(if $(findstring all,$(MARK)),, -m '$(MARK)')
 
 help: ## show this help.
 	@echo "make targets:"
