@@ -14,5 +14,8 @@
 
 {{ template "ska-tango-util.multidevice-svc.tpl" $context }}
 
+{{- $volume_context := dict "volume" $filedeviceserver.volume "local" $localchart }}
+{{ template "ska-tango-util.deviceserver-pvc.tpl" $volume_context }}
+
 {{ end }} # deviceservers
 
