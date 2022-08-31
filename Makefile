@@ -138,7 +138,7 @@ update-db-port:  ## update Tango DB port so that the DB is accessible from the T
 
 k8s-wait: ## wait for Jobs and Pods to be ready in KUBE_NAMESPACE
 	sleep 240
-	kubectl describe -n ska-mid-cbf pod/cbfcontroller-controller-0
+	kubectl describe -n $(KUBE_NAMESPACE) pod/cbfcontroller-controller-0
 	@. $(K8S_SUPPORT) ; K8S_TIMEOUT=$(K8S_TIMEOUT) \
         	KUBE_APP=$(KUBE_APP) \
                 k8sWait $(KUBE_NAMESPACE)
