@@ -101,6 +101,8 @@ K8S_TEST_TEST_COMMAND ?= ls -lrt &&  $(PYTHON_VARS_BEFORE_PYTEST) $(PYTHON_RUNNE
                         -c setup-integration-test.cfg \
                         | tee pytest.stdout; ## k8s-test test command to run in container
 
+ARTIFACTS_POD = $(shell kubectl -n ska-mid-cbf get pod --selector=vol=artifacts-admin -o name)
+
 #
 # include makefile to pick up the standard Make targets, e.g., 'make build'
 # build, 'make push' docker push procedure, etc. The other Make targets
@@ -137,7 +139,9 @@ update-db-port:  ## update Tango DB port so that the DB is accessible from the T
 	kubectl -n ska-mid-cbf patch service/tango-host-databaseds-from-makefile-test --type='json' -p '[{"op":"replace","path":"/spec/ports/0/nodePort","value": 30176}]'
 
 k8s-wait: ## wait for Jobs and Pods to be ready in KUBE_NAMESPACE
-	sleep 240
+	sleep 120
+	kubectl get pvc -n $(KUBE_NAMESPACE)
+	kubectl describe -n $(KUBE_NAMESPACE) $(ARTIFACTS_POD)
 	kubectl describe -n $(KUBE_NAMESPACE) pod/cbfcontroller-controller-0
 	@. $(K8S_SUPPORT) ; K8S_TIMEOUT=$(K8S_TIMEOUT) \
         	KUBE_APP=$(KUBE_APP) \
