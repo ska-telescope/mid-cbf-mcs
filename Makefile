@@ -140,6 +140,7 @@ update-db-port:  ## update Tango DB port so that the DB is accessible from the T
 
 k8s-wait: ## wait for Jobs and Pods to be ready in KUBE_NAMESPACE
 	sleep 120
+	kubectl get storageclass --all-namespaces
 	kubectl get pvc -n $(KUBE_NAMESPACE)
 	kubectl describe -n $(KUBE_NAMESPACE) $(ARTIFACTS_POD)
 	kubectl describe -n $(KUBE_NAMESPACE) pod/cbfcontroller-controller-0
