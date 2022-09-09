@@ -73,6 +73,7 @@ CI_PROJECT_DIR ?= .
 KUBE_CONFIG_BASE64 ?=  ## base64 encoded kubectl credentials for KUBECONFIG
 KUBECONFIG ?= /etc/deploy/config ## KUBECONFIG location
 
+ARTIFACTS_POD = $(shell kubectl -n ska-mid-cbf get pod --no-headers --selector=vol=artifacts-admin -o custom-columns=':metadata.name')
 
 XAUTHORITYx ?= ${XAUTHORITY}
 THIS_HOST := $(shell ifconfig | sed -En 's/127.0.0.1//;s/.*inet (addr:)?(([0-9]*\.){3}[0-9]*).*/\2/p' | head -n1)
@@ -137,10 +138,7 @@ update-db-port:  ## update Tango DB port so that the DB is accessible from the T
 	kubectl -n ska-mid-cbf patch service/tango-host-databaseds-from-makefile-test --type='json' -p '[{"op":"replace","path":"/spec/ports/0/nodePort","value": 30176}]'
 
 k8s-pre-test:
-	echo $(kubectl -n ska-mid-cbf get pod --no-headers --selector=vol=artifacts-admin -o custom-columns=':metadata.name')
-	#ARTIFACTS_POD=$$(kubectl -n ska-mid-cbf get pod --no-headers --selector=vol=artifacts-admin -o custom-columns=':metadata.name'); \
-	kubectl exec -ti -n $(KUBE_NAMESPACE) $$ARTIFACTS_POD -- mkdir /app/mnt/talondx-config; \
-	kubectl cp mnt/talondx-config/talondx-config.json $(KUBE_NAMESPACE)/$$ARTIFACTS_POD:/app/mnt/talondx-config/talondx-config.json
+	echo $(ARTIFACTS_POD)
 
 documentation:   ## ## Re-generate documentation
 	cd docs && make clean && make html
