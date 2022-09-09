@@ -139,6 +139,8 @@ update-db-port:  ## update Tango DB port so that the DB is accessible from the T
 
 k8s-pre-test:
 	echo $(ARTIFACTS_POD)
+	kubectl exec -ti -n $(KUBE_NAMESPACE) $(ARTIFACTS_POD) -- mkdir /app/mnt/talondx-config
+	kubectl cp mnt/talondx-config/talondx-config.json $(KUBE_NAMESPACE)/$(ARTIFACTS_POD):/app/mnt/talondx-config/talondx-config.json
 
 documentation:   ## ## Re-generate documentation
 	cd docs && make clean && make html
