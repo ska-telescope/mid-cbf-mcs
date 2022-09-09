@@ -138,15 +138,6 @@ jive: ## configure TANGO_HOST to enable Jive
 update-db-port:  ## update Tango DB port so that the DB is accessible from the Talon boards on the Dell server
 	kubectl -n ska-mid-cbf patch service/tango-host-databaseds-from-makefile-test --type='json' -p '[{"op":"replace","path":"/spec/ports/0/nodePort","value": 30176}]'
 
-k8s-wait: ## wait for Jobs and Pods to be ready in KUBE_NAMESPACE
-	sleep 120
-	kubectl get storageclass --all-namespaces
-	kubectl get pvc -n $(KUBE_NAMESPACE)
-	kubectl describe -n $(KUBE_NAMESPACE) $(ARTIFACTS_POD)
-	kubectl describe -n $(KUBE_NAMESPACE) pod/cbfcontroller-controller-0
-	@. $(K8S_SUPPORT) ; K8S_TIMEOUT=$(K8S_TIMEOUT) \
-        	KUBE_APP=$(KUBE_APP) \
-                k8sWait $(KUBE_NAMESPACE)
 
 documentation:   ## ## Re-generate documentation
 	cd docs && make clean && make html
