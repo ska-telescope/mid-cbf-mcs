@@ -17,13 +17,12 @@ import socket
 import unittest.mock
 from collections import defaultdict
 from types import TracebackType
-from typing import Any, Callable, Dict, Iterable, List, Optional, Type, cast
+from typing import Any, Callable, Dict, Iterable, List, Optional, Type, cast, TypedDict
 
 import tango
 from ska_tango_base import SKABaseDevice
 from ska_tango_base.control_model import TestMode
 from tango.test_context import MultiDeviceTestContext, get_host_ip
-from typing_extensions import TypedDict
 
 from ska_mid_cbf_mcs.attribute_proxy import CbfAttributeProxy
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy

@@ -17,12 +17,11 @@ __all__ = ["CbfDeviceProxy"]
 import logging
 import threading
 import warnings
-from typing import Any, Callable, Optional, Type
+from typing import Any, Callable, Optional, Type, TypedDict
 
 import backoff
 import tango
 from tango import AttrQuality, DevFailed, DevState
-from typing_extensions import TypedDict
 
 # type for the "details" dictionary that backoff calls its callbacks with
 BackoffDetailsType = TypedDict(
