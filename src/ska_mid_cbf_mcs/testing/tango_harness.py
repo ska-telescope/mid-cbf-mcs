@@ -17,7 +17,17 @@ import socket
 import unittest.mock
 from collections import defaultdict
 from types import TracebackType
-from typing import Any, Callable, Dict, Iterable, List, Optional, Type, cast, TypedDict
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Type,
+    TypedDict,
+    cast,
+)
 
 import tango
 from ska_tango_base import SKABaseDevice
