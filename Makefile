@@ -142,7 +142,7 @@ k8s-pre-test:
 	@kubectl cp mnt/talondx-config/talondx-config.json $(KUBE_NAMESPACE)/$(ARTIFACTS_POD):/app/mnt/talondx-config/talondx-config.json
 
 python-pre-lint:
-	@pip3 install black isort flake8 pylint pylint_junit
+	@pip3 install black isort flake8
 
 documentation:   ## ## Re-generate documentation
 	cd docs && make clean && make html
