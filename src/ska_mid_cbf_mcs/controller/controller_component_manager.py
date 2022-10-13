@@ -679,22 +679,24 @@ class ControllerComponentManager(CbfComponentManager):
             # Power on all the Talon boards
             # TODO: There are two VCCs per LRU. Need to check the number of
             #       VCCs turned on against the number of LRUs powered on
-            talondx_config_file = open(
-                os.path.join(
-                    os.getcwd(),
-                    self._talondx_config_path,
-                    "talondx-config.json",
+            if len(self._fqdn_talon_lru) == 0:
+                talondx_config_file = open(
+                    os.path.join(
+                        os.getcwd(),
+                        self._talondx_config_path,
+                        "talondx-config.json",
+                    )
                 )
-            )
-            talondx_config_json = json.load(talondx_config_file)
 
-            talon_lru_fqdn_set = set()
-            for config_command in talondx_config_json["config_commands"]:
-                talon_lru_fqdn_set.add(config_command["talon_lru_fqdn"])
-            self._logger.info(f"talonlru list = {talon_lru_fqdn_set}")
+                talondx_config_json = json.load(talondx_config_file)
 
-            # TODO: handle subscribed events for missing LRUs
-            self._fqdn_talon_lru = list(talon_lru_fqdn_set)
+                talon_lru_fqdn_set = set()
+                for config_command in talondx_config_json["config_commands"]:
+                    talon_lru_fqdn_set.add(config_command["talon_lru_fqdn"])
+                self._logger.info(f"talonlru list = {talon_lru_fqdn_set}")
+
+                # TODO: handle subscribed events for missing LRUs
+                self._fqdn_talon_lru = list(talon_lru_fqdn_set)
 
             try:
                 for fqdn in self._fqdn_talon_lru:
@@ -743,9 +745,27 @@ class ControllerComponentManager(CbfComponentManager):
         """
 
         if self._connected:
+            if len(self._fqdn_talon_lru) == 0:
+                talondx_config_file = open(
+                    os.path.join(
+                        os.getcwd(),
+                        self._talondx_config_path,
+                        "talondx-config.json",
+                    )
+                )
+                talondx_config_json = json.load(talondx_config_file)
+
+                talon_lru_fqdn_set = set()
+                for config_command in talondx_config_json["config_commands"]:
+                    talon_lru_fqdn_set.add(config_command["talon_lru_fqdn"])
+                self._logger.info(f"talonlru list = {talon_lru_fqdn_set}")
+
+                # TODO: handle subscribed events for missing LRUs
+                self._fqdn_talon_lru = list(talon_lru_fqdn_set)
+
             try:
-                for talon_lru_fqdn in self._fqdn_talon_lru:
-                    self._proxies[talon_lru_fqdn].Off()
+                for fqdn in self._fqdn_talon_lru:
+                    self._proxies[fqdn].Off()
             except tango.DevFailed:
                 log_msg = "Failed to power off Talon boards"
                 self._logger.error(log_msg)
