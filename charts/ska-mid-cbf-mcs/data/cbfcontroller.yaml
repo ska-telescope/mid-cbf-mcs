@@ -30,6 +30,9 @@ server:
   name: "CbfController"
   instances:
   - name: "controller"
+    env:
+    - name: "NAMESPACE"
+      value: "TEST_NAMESPACE"
     classes:
     - name: "CbfController"
       devices:
