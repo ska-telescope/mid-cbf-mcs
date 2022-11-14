@@ -7,7 +7,7 @@
 
 """This module implements utilities for managing DISH/receptor identifiers."""
 
-from __future__ import annotations  # allow forward references in type hints
+#from __future__ import annotations  # allow forward references in type hints
 
 __all__ = ["receptor_id_str_to_int", "receptor_id_int_to_str"]
 
@@ -31,19 +31,19 @@ def receptor_id_str_to_int(receptor_id: str) -> int:
             "Incorrect DISH instance size. Dish instance must be a 3 digit number."
         )
     if receptor_prefix == "SKA":
-        if 1 > int(receptor_number) > 133:
+        if int(receptor_number) not in range(1, 134):
             raise ValueError(
                 "Incorrect DISH instance. Dish instance for SKA DISH type is 1 to 133 incl."
             )
         else:
-            return receptor_number
+            return int(receptor_number)
     if receptor_prefix == "MKT":
-        if 0 > int(receptor_number) > 63:
+        if int(receptor_number) not in range(64):
             raise ValueError(
                 "Incorrect DISH instance. Dish instance for MKT DISH type is 0 to 63 incl."
             )
         else:
-            return receptor_number + 134
+            return int(receptor_number) + 134
 
 
 def receptor_id_int_to_str(receptor_id: int) -> str:
@@ -54,11 +54,11 @@ def receptor_id_int_to_str(receptor_id: int) -> str:
 
     :return: the DISH/receptor ID mnemonic as a string
     """
-    if 1 > receptor_id > 197:
+    if receptor_id not in range(1, 198):
         raise ValueError(
             "Incorrect receptor instance. ID should be in the range 1 to 197."
         )
     if receptor_id < 134:
-        return f"SKA{receptor_id : 03}"
+        return "SKA" + f"{receptor_id:03}"
     else:
-        return f"MKT{receptor_id - 134 : 03}"
+        return "MKT" + f"{receptor_id - 134:03}"
