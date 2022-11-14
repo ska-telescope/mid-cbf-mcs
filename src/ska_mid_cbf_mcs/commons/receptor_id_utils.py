@@ -7,7 +7,7 @@
 
 """This module implements utilities for managing DISH/receptor identifiers."""
 
-# from __future__ import annotations  # allow forward references in type hints
+from __future__ import annotations  # allow forward references in type hints
 
 __all__ = ["receptor_id_str_to_int", "receptor_id_int_to_str"]
 
