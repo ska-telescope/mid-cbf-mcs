@@ -1883,7 +1883,9 @@ class CbfSubarrayComponentManager(
             try:
                 receptor_id = receptor_id_str_to_int(receptor_id)
                 if receptor_id not in range(1, const.MAX_VCC + 1):
-                    raise ValueError(f"Unimplemented receptor ID {receptor_id}.")
+                    raise ValueError(
+                        f"Unimplemented receptor ID {receptor_id}."
+                    )
             except ValueError as ve:
                 self._logger.warning(str(ve) + " Skipping...")
 
@@ -2018,7 +2020,9 @@ class CbfSubarrayComponentManager(
             try:
                 receptor_id = receptor_id_str_to_int(receptor_id)
                 if receptor_id not in range(1, const.MAX_VCC + 1):
-                    raise ValueError(f"Unimplemented receptor ID {receptor_id}.")
+                    raise ValueError(
+                        f"Unimplemented receptor ID {receptor_id}."
+                    )
             except ValueError as ve:
                 self._logger.warning(str(ve) + " Skipping...")
 

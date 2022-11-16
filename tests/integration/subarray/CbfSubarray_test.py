@@ -95,7 +95,14 @@ class TestCbfSubarray:
         "receptor_ids, \
         receptors_to_remove, \
         sub_id",
-        [(["SKA001", "SKA003", "SKA004", "SKA002"], ["SKA002", "SKA001", "SKA004"], 1), (["SKA004", "SKA001", "SKA002"], ["SKA002", "SKA001"], 1)],
+        [
+            (
+                ["SKA001", "SKA003", "SKA004", "SKA002"],
+                ["SKA002", "SKA001", "SKA004"],
+                1,
+            ),
+            (["SKA004", "SKA001", "SKA002"], ["SKA002", "SKA001"], 1),
+        ],
     )
     def test_AddRemoveReceptors_valid(
         self: TestCbfSubarray,
@@ -235,7 +242,10 @@ class TestCbfSubarray:
         "receptor_ids, \
         invalid_receptor_id, \
         sub_id",
-        [(["SKA001", "SKA003"], ["SKA200"], 1), (["SKA004", "SKA002"], ["0"], 1)],
+        [
+            (["SKA001", "SKA003"], ["SKA200"], 1),
+            (["SKA004", "SKA002"], ["0"], 1),
+        ],
     )
     def test_AddReceptors_invalid_single(
         self: TestCbfSubarray,
@@ -332,7 +342,10 @@ class TestCbfSubarray:
         "receptor_ids, \
         invalid_receptors_to_remove, \
         sub_id",
-        [(["SKA001", "SKA003"], ["SKA002"], 1), (["SKA004", "SKA002"], ["SKA001", "SKA003"], 1)],
+        [
+            (["SKA001", "SKA003"], ["SKA002"], 1),
+            (["SKA004", "SKA002"], ["SKA001", "SKA003"], 1),
+        ],
     )
     def test_RemoveReceptors_invalid_single(
         self: TestCbfSubarray,
@@ -534,7 +547,13 @@ class TestCbfSubarray:
         "config_file_name, \
         receptor_ids, \
         vcc_receptors",
-        [("ConfigureScan_basic.json", ["SKA001", "SKA003", "SKA004", "SKA002"], [4, 1])],
+        [
+            (
+                "ConfigureScan_basic.json",
+                ["SKA001", "SKA003", "SKA004", "SKA002"],
+                [4, 1],
+            )
+        ],
     )
     def test_ConfigureScan_basic(
         self: TestCbfSubarray,
@@ -1427,7 +1446,9 @@ class TestCbfSubarray:
 
             vcc_ids = [None for _ in range(num_receptors)]
             for receptor_id, ii in zip(receptor_ids, range(num_receptors)):
-                vcc_ids[ii] = test_proxies.receptor_to_vcc[receptor_id_str_to_int(receptor_id)]
+                vcc_ids[ii] = test_proxies.receptor_to_vcc[
+                    receptor_id_str_to_int(receptor_id)
+                ]
 
             test_proxies.subarray[sub_id].AddReceptors(receptor_ids)
             test_proxies.wait_timeout_obs(
