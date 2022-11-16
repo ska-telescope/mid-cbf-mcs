@@ -115,7 +115,7 @@ charts/ska-mid-cbf-mcs/Chart.lock
 charts/ska-mid-cbf-mcs/charts/
 
 # ssl certs for MDA network workaround
-certs/*.crt
+certs/
 
 # Contents of mounted folder
 mnt/talondx-config/*

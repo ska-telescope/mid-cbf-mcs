@@ -1879,16 +1879,14 @@ class CbfSubarrayComponentManager(
         for receptor_id in argin:
             self._logger.debug(f"Attempting to remove receptor {receptor_id}")
 
-            # convert receptor ID to int
+            # convert receptor ID to int, check for unimplemented receptorID
             try:
                 receptor_id = receptor_id_str_to_int(receptor_id)
+                if receptor_id not in range(1, const.MAX_VCC + 1):
+                    raise ValueError(f"Unimplemented receptor ID {receptor_id}.")
             except ValueError as ve:
-                return (ResultCode.FAILED, str(ve))
+                self._logger.warning(str(ve) + " Skipping...")
 
-            # check for unimplemented receptorID
-            if receptor_id not in range(1, const.MAX_VCC + 1):
-                msg = f"Invalid receptor ID {receptor_id}. Skipping."
-                self._logger.warning(msg)
             else:
                 if receptor_id in self._receptors:
                     vccID = self._receptor_to_vcc[receptor_id]
@@ -2016,16 +2014,14 @@ class CbfSubarrayComponentManager(
         for receptor_id in argin:
             self._logger.debug(f"Attempting to add receptor {receptor_id}")
 
-            # convert receptor ID to int
+            # convert receptor ID to int, check for unimplemented receptorID
             try:
                 receptor_id = receptor_id_str_to_int(receptor_id)
+                if receptor_id not in range(1, const.MAX_VCC + 1):
+                    raise ValueError(f"Unimplemented receptor ID {receptor_id}.")
             except ValueError as ve:
-                return (ResultCode.FAILED, str(ve))
+                self._logger.warning(str(ve) + " Skipping...")
 
-            # check for unimplemented receptorID
-            if receptor_id not in range(1, const.MAX_VCC + 1):
-                msg = f"Invalid receptor ID {receptor_id}. Skipping."
-                self._logger.warning(msg)
             else:
                 vccID = self._receptor_to_vcc[receptor_id]
                 vccProxy = self._proxies_vcc[vccID - 1]

@@ -22,6 +22,7 @@ from ska_tango_base.control_model import AdminMode, ObsState
 from tango import DevState
 
 from ska_mid_cbf_mcs.commons.global_enum import FspModes, freq_band_dict
+from ska_mid_cbf_mcs.commons.receptor_id_utils import receptor_id_str_to_int
 
 # Data file path
 data_file_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
@@ -94,7 +95,7 @@ class TestCbfSubarray:
         "receptor_ids, \
         receptors_to_remove, \
         sub_id",
-        [([1, 3, 4, 2], [2, 1, 4], 1), ([4, 1, 2], [2, 1], 1)],
+        [(["SKA001", "SKA003", "SKA004", "SKA002"], ["SKA002", "SKA001", "SKA004"], 1), (["SKA004", "SKA001", "SKA002"], ["SKA002", "SKA001"], 1)],
     )
     def test_AddRemoveReceptors_valid(
         self: TestCbfSubarray,
@@ -234,7 +235,7 @@ class TestCbfSubarray:
         "receptor_ids, \
         invalid_receptor_id, \
         sub_id",
-        [([1, 3], [200], 1), ([4, 2], [0], 1)],
+        [(["SKA001", "SKA003"], ["SKA200"], 1), (["SKA004", "SKA002"], ["0"], 1)],
     )
     def test_AddReceptors_invalid_single(
         self: TestCbfSubarray,
@@ -331,7 +332,7 @@ class TestCbfSubarray:
         "receptor_ids, \
         invalid_receptors_to_remove, \
         sub_id",
-        [([1, 3], [2], 1), ([4, 2], [1, 3], 1)],
+        [(["SKA001", "SKA003"], ["SKA002"], 1), (["SKA004", "SKA002"], ["SKA001", "SKA003"], 1)],
     )
     def test_RemoveReceptors_invalid_single(
         self: TestCbfSubarray,
@@ -437,7 +438,7 @@ class TestCbfSubarray:
     @pytest.mark.parametrize(
         "receptor_ids, \
         sub_id",
-        [([1, 3, 4], 1), ([4, 2], 1)],
+        [(["SKA001", "SKA003", "SKA004"], 1), (["SKA004", "SKA002"], 1)],
     )
     def test_RemoveAllReceptors(
         self: TestCbfSubarray,
@@ -533,7 +534,7 @@ class TestCbfSubarray:
         "config_file_name, \
         receptor_ids, \
         vcc_receptors",
-        [("ConfigureScan_basic.json", [1, 3, 4, 2], [4, 1])],
+        [("ConfigureScan_basic.json", ["SKA001", "SKA003", "SKA004", "SKA002"], [4, 1])],
     )
     def test_ConfigureScan_basic(
         self: TestCbfSubarray,
@@ -1426,7 +1427,7 @@ class TestCbfSubarray:
 
             vcc_ids = [None for _ in range(num_receptors)]
             for receptor_id, ii in zip(receptor_ids, range(num_receptors)):
-                vcc_ids[ii] = test_proxies.receptor_to_vcc[receptor_id]
+                vcc_ids[ii] = test_proxies.receptor_to_vcc[receptor_id_str_to_int(receptor_id)]
 
             test_proxies.subarray[sub_id].AddReceptors(receptor_ids)
             test_proxies.wait_timeout_obs(
@@ -1644,7 +1645,7 @@ class TestCbfSubarray:
                 "ConfigureScan_basic.json",
                 "delaymodel.json",
                 "Scan1_basic.json",
-                [1, 3, 4, 2],
+                ["SKA001", "SKA003", "SKA004", "SKA002"],
                 [4, 1],
             )
         ],
@@ -2145,7 +2146,7 @@ class TestCbfSubarray:
             (
                 "ConfigureScan_basic.json",
                 "Scan1_basic.json",
-                [1, 3, 4, 2],
+                ["SKA001", "SKA003", "SKA004", "SKA002"],
                 [4, 1],
             )
         ],
@@ -2365,7 +2366,7 @@ class TestCbfSubarray:
             (
                 "ConfigureScan_basic.json",
                 "Scan1_basic.json",
-                [1, 3, 4, 2],
+                ["SKA001", "SKA003", "SKA004", "SKA002"],
                 [4, 1],
             ),
             (
@@ -2698,13 +2699,13 @@ class TestCbfSubarray:
             (
                 "ConfigureScan_basic.json",
                 "Scan1_basic.json",
-                [1, 3, 4, 2],
+                ["SKA001", "SKA003", "SKA004", "SKA002"],
                 [4, 1],
             ),
             (
                 "Configure_TM-CSP_v2.json",
                 "Scan2_basic.json",
-                [4, 1, 2],
+                ["SKA004", "SKA001", "SKA002"],
                 [4, 1],
             ),
         ],
