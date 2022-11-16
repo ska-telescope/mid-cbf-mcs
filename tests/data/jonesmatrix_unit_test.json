@@ -3,7 +3,7 @@
         {
             "matrixDetails": [
                 {
-                    "receptor": 1,
+                    "receptor": "SKA001",
                     "receptorMatrix": [
                         {
                             "fsid": 1,
@@ -33,7 +33,7 @@
         {
             "matrixDetails": [
                 {
-                    "receptor": 2,
+                    "receptor": "SKA002",
                     "receptorMatrix": [
                         {
                             "fsid": 1,
@@ -63,7 +63,7 @@
         {
             "matrixDetails": [
                 {
-                    "receptor": 1,
+                    "receptor": "SKA001",
                     "receptorMatrix": [
                         {
                             "fsid": 1,

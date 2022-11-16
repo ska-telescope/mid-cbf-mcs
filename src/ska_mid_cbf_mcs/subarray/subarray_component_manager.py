@@ -39,6 +39,7 @@ from tango import AttrQuality, DevState
 
 from ska_mid_cbf_mcs.attribute_proxy import CbfAttributeProxy
 from ska_mid_cbf_mcs.commons.global_enum import const, freq_band_dict
+from ska_mid_cbf_mcs.commons.receptor_id_utils import receptor_id_str_to_int
 from ska_mid_cbf_mcs.component.component_manager import (
     CbfComponentManager,
     CommunicationStatus,
@@ -962,7 +963,7 @@ class CbfSubarrayComponentManager(
             for sw in configuration["search_window"]:
                 if sw["tdc_enable"]:
                     for receptor in sw["tdc_destination_address"]:
-                        receptor_id = receptor["receptor_id"]
+                        receptor_id = receptor_id_str_to_int(receptor["receptor_id"])
                         if receptor_id not in self._receptors:
                             msg = (
                                 f"'searchWindow' receptor ID {receptor_id} "
@@ -1082,10 +1083,11 @@ class CbfSubarrayComponentManager(
                 if fsp["function_mode"] == "CORR":
 
                     if "receptor_ids" in fsp:
-                        for this_rec in fsp["receptor_ids"]:
-                            if this_rec not in self._receptors:
+                        for receptor in fsp["receptor_ids"]:
+                            receptor = receptor_id_str_to_int(receptor)
+                            if receptor not in self._receptors:
                                 msg = (
-                                    f"Receptor {this_rec} does not belong to "
+                                    f"Receptor {receptor} does not belong to "
                                     f"subarray {self._subarray_id}."
                                 )
                                 self._logger.error(msg)
@@ -1400,17 +1402,18 @@ class CbfSubarrayComponentManager(
                                             )
                                             return (False, msg)
 
-                                # Validate receptors.
-                                # This is always given, due to implementation details.
-                                # TODO assume always given, as there is currently only support for 1 receptor/beam
+                            # Validate receptors.
+                            # This is always given, due to implementation details.
+                            # TODO assume always given, as there is currently only support for 1 receptor/beam
                             if "receptor_ids" not in searchBeam:
                                 searchBeam["receptor_ids"] = self._receptors
 
                             # Sanity check:
-                            for this_rec in searchBeam["receptor_ids"]:
-                                if this_rec not in self._receptors:
+                            for receptor in searchBeam["receptor_ids"]:
+                                receptor = receptor_id_str_to_int(receptor)
+                                if receptor not in self._receptors:
                                     msg = (
-                                        f"Receptor {this_rec} does not belong to "
+                                        f"Receptor {receptor} does not belong to "
                                         f"subarray {self._subarray_id}."
                                     )
                                     self._logger.error(msg)
@@ -1489,10 +1492,11 @@ class CbfSubarrayComponentManager(
                             # Validate receptors.
                             # This is always given, due to implementation details.
                             if "receptor_ids" in timingBeam:
-                                for this_rec in timingBeam["receptor_ids"]:
-                                    if this_rec not in self._receptors:
+                                for receptor in timingBeam["receptor_ids"]:
+                                    receptor = receptor_id_str_to_int(receptor)
+                                    if receptor not in self._receptors:
                                         msg = (
-                                            f"Receptor {this_rec} does not belong to "
+                                            f"Receptor {receptor} does not belong to "
                                             f"subarray {self._subarray_id}."
                                         )
                                         self._logger.error(msg)
@@ -1752,6 +1756,9 @@ class CbfSubarrayComponentManager(
                 if "receptor_ids" not in fsp:
                     # TODO In this case by the ICD, all subarray allocated resources should be used.
                     fsp["receptor_ids"] = [self._receptors[0]]
+                else:
+                    for i, receptor in enumerate(fsp["receptor_ids"]):
+                        fsp["receptor_ids"][i] = receptor_id_str_to_int(receptor)
                 self._corr_config.append(fsp)
                 self._corr_fsp_list.append(fsp["fsp_id"])
 
@@ -1761,13 +1768,20 @@ class CbfSubarrayComponentManager(
                     if "receptor_ids" not in searchBeam:
                         # In this case by the ICD, all subarray allocated resources should be used.
                         searchBeam["receptor_ids"] = self._receptors
+                    else:
+                        for i, receptor in enumerate(searchBeam["receptor_ids"]):
+                            searchBeam["receptor_ids"][i] = receptor_id_str_to_int(receptor)
                 self._pss_config.append(fsp)
                 self._pss_fsp_list.append(fsp["fsp_id"])
+
             elif fsp["function_mode"] == "PST-BF":
                 for timingBeam in fsp["timing_beam"]:
                     if "receptor_ids" not in timingBeam:
                         # In this case by the ICD, all subarray allocated resources should be used.
                         timingBeam["receptor_ids"] = self._receptors
+                    else:
+                        for i, receptor in enumerate(timingBeam["receptor_ids"]):
+                            timingBeam["receptor_ids"][i] = receptor_id_str_to_int(receptor)
                 self._pst_config.append(fsp)
                 self._pst_fsp_list.append(fsp["fsp_id"])
 
@@ -1838,7 +1852,7 @@ class CbfSubarrayComponentManager(
 
     @check_communicating
     def remove_receptors(
-        self: CbfSubarrayComponentManager, argin: List[int]
+        self: CbfSubarrayComponentManager, argin: List[str]
     ) -> Tuple[ResultCode, str]:
         """
         Remove receptor from subarray.
@@ -1852,8 +1866,15 @@ class CbfSubarrayComponentManager(
         self._logger.debug(f"current receptors: {*self._receptors,}")
         for receptor_id in argin:
             self._logger.debug(f"Attempting to remove receptor {receptor_id}")
-            # check for invalid receptorID
-            if not 0 < receptor_id <= const.MAX_VCC:
+
+            # convert receptor ID to int
+            try:
+                receptor_id = receptor_id_str_to_int(receptor_id)
+            except ValueError as ve:
+                return (ResultCode.FAILED, str(ve))
+
+            # check for unimplemented receptorID
+            if receptor_id not in range(1, const.MAX_VCC + 1):
                 msg = f"Invalid receptor ID {receptor_id}. Skipping."
                 self._logger.warning(msg)
             else:
@@ -1898,8 +1919,9 @@ class CbfSubarrayComponentManager(
 
         if len(self._receptors) == 0:
             self.update_component_resources(False)
-
-        self._logger.debug(f"receptors remaining: {*self._receptors,}")
+            self._logger.debug("No receptors remaining.")
+        else:
+            self._logger.debug(f"receptors remaining: {*self._receptors,}")
 
         return (ResultCode.OK, "RemoveReceptors completed OK")
 
@@ -1954,7 +1976,7 @@ class CbfSubarrayComponentManager(
                     self._component_obs_fault_callback(True)
                     return (ResultCode.FAILED, msg)
 
-            self._logger.debug(f"receptors remaining: {*self._receptors,}")
+            self._logger.debug("No receptors remaining.")
             self.update_component_resources(False)
 
             return (ResultCode.OK, "RemoveAllReceptors completed OK")
@@ -1967,7 +1989,7 @@ class CbfSubarrayComponentManager(
 
     @check_communicating
     def add_receptors(
-        self: CbfSubarrayComponentManager, argin: List[int]
+        self: CbfSubarrayComponentManager, argin: List[str]
     ) -> Tuple[ResultCode, str]:
         """
         Add receptors to subarray.
@@ -1981,8 +2003,15 @@ class CbfSubarrayComponentManager(
         self._logger.debug(f"current receptors: {*self._receptors,}")
         for receptor_id in argin:
             self._logger.debug(f"Attempting to add receptor {receptor_id}")
-            # check for invalid receptorID
-            if not 0 < receptor_id <= const.MAX_VCC:
+
+            # convert receptor ID to int
+            try:
+                receptor_id = receptor_id_str_to_int(receptor_id)
+            except ValueError as ve:
+                return (ResultCode.FAILED, str(ve))
+
+            # check for unimplemented receptorID
+            if receptor_id not in range(1, const.MAX_VCC + 1):
                 msg = f"Invalid receptor ID {receptor_id}. Skipping."
                 self._logger.warning(msg)
             else:

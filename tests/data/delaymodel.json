@@ -3,7 +3,7 @@
     {
       "delayDetails": [
         {
-          "receptor": 1,
+          "receptor": "SKA001",
           "receptorDelayDetails": [
             {
               "fsid": 1,
@@ -20,7 +20,7 @@
           ]
         },
         {
-          "receptor": 4,
+          "receptor": "SKA004",
           "receptorDelayDetails": [
             {
               "fsid": 1,
@@ -41,7 +41,7 @@
     {
       "delayDetails": [
         {
-          "receptor": 1,
+          "receptor": "SKA001",
           "receptorDelayDetails": [
             {
               "fsid": 1,
@@ -58,7 +58,7 @@
           ]
         },
         {
-          "receptor": 4,
+          "receptor": "SKA004",
           "receptorDelayDetails": [
             {
               "fsid": 1,
@@ -79,7 +79,7 @@
     {
       "delayDetails": [
         {
-          "receptor": 1,
+          "receptor": "SKA001",
           "receptorDelayDetails": [
             {
               "fsid": 1,
@@ -96,7 +96,7 @@
           ]
         },
         {
-          "receptor": 4,
+          "receptor": "SKA004",
           "receptorDelayDetails": [
             {
               "fsid": 1,
