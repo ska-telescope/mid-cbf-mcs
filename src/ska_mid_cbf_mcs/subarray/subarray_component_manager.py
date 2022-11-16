@@ -963,7 +963,9 @@ class CbfSubarrayComponentManager(
             for sw in configuration["search_window"]:
                 if sw["tdc_enable"]:
                     for receptor in sw["tdc_destination_address"]:
-                        receptor_id = receptor_id_str_to_int(receptor["receptor_id"])
+                        receptor_id = receptor_id_str_to_int(
+                            receptor["receptor_id"]
+                        )
                         if receptor_id not in self._receptors:
                             msg = (
                                 f"'searchWindow' receptor ID {receptor_id} "
@@ -1758,7 +1760,9 @@ class CbfSubarrayComponentManager(
                     fsp["receptor_ids"] = [self._receptors[0]]
                 else:
                     for i, receptor in enumerate(fsp["receptor_ids"]):
-                        fsp["receptor_ids"][i] = receptor_id_str_to_int(receptor)
+                        fsp["receptor_ids"][i] = receptor_id_str_to_int(
+                            receptor
+                        )
                 self._corr_config.append(fsp)
                 self._corr_fsp_list.append(fsp["fsp_id"])
 
@@ -1769,8 +1773,12 @@ class CbfSubarrayComponentManager(
                         # In this case by the ICD, all subarray allocated resources should be used.
                         searchBeam["receptor_ids"] = self._receptors
                     else:
-                        for i, receptor in enumerate(searchBeam["receptor_ids"]):
-                            searchBeam["receptor_ids"][i] = receptor_id_str_to_int(receptor)
+                        for i, receptor in enumerate(
+                            searchBeam["receptor_ids"]
+                        ):
+                            searchBeam["receptor_ids"][
+                                i
+                            ] = receptor_id_str_to_int(receptor)
                 self._pss_config.append(fsp)
                 self._pss_fsp_list.append(fsp["fsp_id"])
 
@@ -1780,8 +1788,12 @@ class CbfSubarrayComponentManager(
                         # In this case by the ICD, all subarray allocated resources should be used.
                         timingBeam["receptor_ids"] = self._receptors
                     else:
-                        for i, receptor in enumerate(timingBeam["receptor_ids"]):
-                            timingBeam["receptor_ids"][i] = receptor_id_str_to_int(receptor)
+                        for i, receptor in enumerate(
+                            timingBeam["receptor_ids"]
+                        ):
+                            timingBeam["receptor_ids"][
+                                i
+                            ] = receptor_id_str_to_int(receptor)
                 self._pst_config.append(fsp)
                 self._pst_fsp_list.append(fsp["fsp_id"])
 
