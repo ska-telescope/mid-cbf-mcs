@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import json
 import logging
+import shutil
 
 import backoff
 import tango
@@ -80,6 +81,9 @@ class TalonDxComponentManager:
         except IOError:
             self.logger.error(f"Could not open {config_path} file")
             return ResultCode.FAILED
+        
+        if self._setup_tango_host_file() == ResultCode.FAILED:
+            return ResultCode.FAILED
 
         if self._copy_binaries_and_bitstream() == ResultCode.FAILED:
             return ResultCode.FAILED
@@ -94,6 +98,29 @@ class TalonDxComponentManager:
             return ResultCode.FAILED
 
         return ResultCode.OK
+    
+    def _setup_tango_host_file(
+        self: TalonDxComponentManager,
+    ) -> None:
+        """
+        Copy the hps_master_mcs.sh file from mnt into mnt/talondx-config
+
+        :return: ResultCode.OK if all artifacts were copied successfully,
+                 otherwise ResultCode.FAILED
+        """
+        shutil.copyfile('mnt/hps_master_mcs.sh','mnt/talondx-config/hps_master_mcs.sh')
+        with open('mnt/talondx-config/hps_master_mcs.sh') as hps_master_file:
+            environment = os.getenv('ENVIRONMENT')
+            if environment == 'minikube':
+                hostname = os.getenv('MINIKUBE_HOST_IP')
+                port = os.getenv('EXTERNAL_DB_PORT')
+            else:
+                namespace = os.getenv('NAMESPACE')
+                port = 10000
+                hostname = f'tango-host-databaseds-from-makefile-test-external.{namespace}.svc.cluster.local'
+            replaced_text = hps_master_file.read().replace('<hostname>:<port>', f'{hostname}:{port}')
+
+
 
     def _secure_copy(
         self: TalonDxComponentManager,
@@ -112,6 +139,7 @@ class TalonDxComponentManager:
         """
         with SCPClient(ssh_client.get_transport()) as scp_client:
             scp_client.put(src, remote_path=dest)
+
 
     def _copy_binaries_and_bitstream(
         self: TalonDxComponentManager,

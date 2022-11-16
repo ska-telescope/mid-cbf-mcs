@@ -30,9 +30,6 @@ server:
   name: "CbfController"
   instances:
   - name: "controller"
-    env:
-    - name: "NAMESPACE"
-      value: "TEST_NAMESPACE"
     classes:
     - name: "CbfController"
       devices:
@@ -121,6 +118,15 @@ image:
   image: "{{.Values.midcbf.image.image}}"
   tag: "{{.Values.midcbf.image.tag}}"
   pullPolicy: "{{.Values.midcbf.image.pullPolicy}}"
+environment_variables:
+- name: NAMESPACE
+  value: "{{ .Release.Namespace }}"
+- name: ENVIRONMENT
+  value: "{{ .Values.mcsEnvironment.environment }}"
+- name: MINIKUBE_HOST_IP
+  value: "{{ .Values.mcsEnvironment.hostIP }}"
+- name: EXTERNAL_DB_PORT
+  value: "{{ .Values.mcsEnvironment.externalPort }}"
 volume:
   name: "artifacts"
   mountPath: "/app/mnt"
