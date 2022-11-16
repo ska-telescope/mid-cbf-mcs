@@ -50,12 +50,18 @@ class TestCbfSubarrayComponentManager:
         subarray_component_manager.start_communicating()
         assert subarray_component_manager.connected
 
-    @pytest.mark.parametrize("receptor_ids", [([1, 3, 4, 2]), ([4, 1, 2])])
+    @pytest.mark.parametrize(
+        "receptor_ids",
+        [
+            (["SKA001", "SKA003", "SKA004", "SKA002"]),
+            (["SKA004", "SKA001", "SKA002"]),
+        ],
+    )
     def test_add_remove_receptors_valid(
         self: TestCbfSubarrayComponentManager,
         subarray_component_manager: CbfSubarrayComponentManager,
         tango_harness: TangoHarness,
-        receptor_ids: List[int],
+        receptor_ids: List[str],
     ) -> None:
         """
         Test adding and removing valid receptors.
@@ -76,12 +82,15 @@ class TestCbfSubarrayComponentManager:
 
         assert subarray_component_manager.receptors == []
 
-    @pytest.mark.parametrize("receptor_ids", [([1, 3, 4]), ([4, 2])])
+    @pytest.mark.parametrize(
+        "receptor_ids",
+        [(["SKA001", "SKA003", "SKA004"]), (["SKA004", "SKA002"])],
+    )
     def test_add_receptor_invalid(
         self: TestCbfSubarrayComponentManager,
         subarray_component_manager: CbfSubarrayComponentManager,
         tango_harness: TangoHarness,
-        receptor_ids: List[int],
+        receptor_ids: List[str],
     ) -> None:
         """
         Test adding invalid receptor cases.
@@ -112,12 +121,15 @@ class TestCbfSubarrayComponentManager:
         subarray_component_manager.add_receptors([receptor_ids[-1]])
         assert subarray_component_manager.receptors == [receptor_ids[-1]]
 
-    @pytest.mark.parametrize("receptor_ids", [([1, 3, 4]), ([4, 2])])
+    @pytest.mark.parametrize(
+        "receptor_ids",
+        [(["SKA001", "SKA003", "SKA004"]), (["SKA004", "SKA002"])],
+    )
     def test_remove_receptor_invalid(
         self: TestCbfSubarrayComponentManager,
         subarray_component_manager: CbfSubarrayComponentManager,
         tango_harness: TangoHarness,
-        receptor_ids: List[int],
+        receptor_ids: List[str],
     ) -> None:
         """
         Test removing invalid receptor cases.
@@ -137,12 +149,18 @@ class TestCbfSubarrayComponentManager:
         subarray_component_manager.remove_receptors([receptor_ids[-1]])
         assert subarray_component_manager.receptors == receptor_ids[:-1]
 
-    @pytest.mark.parametrize("receptor_ids", [([1, 3, 4, 2]), ([4, 1, 2])])
+    @pytest.mark.parametrize(
+        "receptor_ids",
+        [
+            (["SKA001", "SKA003", "SKA004", "SKA002"]),
+            (["SKA004", "SKA001", "SKA002"]),
+        ],
+    )
     def test_remove_all_receptors_invalid_valid(
         self: TestCbfSubarrayComponentManager,
         subarray_component_manager: CbfSubarrayComponentManager,
         tango_harness: TangoHarness,
-        receptor_ids: List[int],
+        receptor_ids: List[str],
     ) -> None:
         """
         Test valid use of remove_all_receptors command.
@@ -166,14 +184,19 @@ class TestCbfSubarrayComponentManager:
     @pytest.mark.parametrize(
         "config_file_name, \
         receptor_ids",
-        [("ConfigureScan_basic.json", [1, 3, 4, 2])],
+        [
+            (
+                "ConfigureScan_basic.json",
+                ["SKA001", "SKA003", "SKA004", "SKA002"],
+            )
+        ],
     )
     def test_validate_and_configure_scan(
         self: TestCbfSubarrayComponentManager,
         subarray_component_manager: CbfSubarrayComponentManager,
         tango_harness: TangoHarness,
         config_file_name: str,
-        receptor_ids: List[int],
+        receptor_ids: List[str],
     ) -> None:
         """
         Test scan parameter validation and configuration.
@@ -209,7 +232,13 @@ class TestCbfSubarrayComponentManager:
         "config_file_name, \
         scan_file_name, \
         receptor_ids",
-        [("ConfigureScan_basic.json", "Scan1_basic.json", [1, 3, 4, 2])],
+        [
+            (
+                "ConfigureScan_basic.json",
+                "Scan1_basic.json",
+                ["SKA001", "SKA003", "SKA004", "SKA002"],
+            )
+        ],
     )
     def test_scan_end_scan(
         self: TestCbfSubarrayComponentManager,
@@ -217,7 +246,7 @@ class TestCbfSubarrayComponentManager:
         tango_harness: TangoHarness,
         config_file_name: str,
         scan_file_name: str,
-        receptor_ids: List[int],
+        receptor_ids: List[str],
     ) -> None:
         """
         Test scan operation.

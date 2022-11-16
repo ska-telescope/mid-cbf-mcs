@@ -19,6 +19,7 @@ from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import PowerMode
 
 from ska_mid_cbf_mcs.commons.global_enum import FspModes
+from ska_mid_cbf_mcs.commons.receptor_id_utils import receptor_id_str_to_int
 from ska_mid_cbf_mcs.component.component_manager import (
     CbfComponentManager,
     CommunicationStatus,
@@ -546,7 +547,7 @@ class FspComponentManager(CbfComponentManager):
                         return (ResultCode.FAILED, log_msg)
 
                     for receptor in argin:
-                        rec_id = int(receptor["receptor"])
+                        rec_id = receptor_id_str_to_int(receptor["receptor"])
                         if rec_id in proxy.receptors:
                             for frequency_slice in receptor["receptorMatrix"]:
                                 fs_id = frequency_slice["fsid"]
@@ -615,7 +616,7 @@ class FspComponentManager(CbfComponentManager):
                     else:
                         proxy = self._proxy_fsp_pst_subarray[i - 1]
                     for receptor in argin:
-                        rec_id = int(receptor["receptor"])
+                        rec_id = receptor_id_str_to_int(receptor["receptor"])
                         if rec_id in proxy.receptors:
                             for frequency_slice in receptor[
                                 "receptorDelayDetails"
@@ -683,7 +684,7 @@ class FspComponentManager(CbfComponentManager):
                 for i in self._subarray_membership:
                     proxy = self._proxy_fsp_pst_subarray[i - 1]
                     for receptor in argin:
-                        rec_id = int(receptor["receptor"])
+                        rec_id = receptor_id_str_to_int(receptor["receptor"])
                         if rec_id in proxy.receptors:
                             for frequency_slice in receptor[
                                 "receptorWeightsDetails"

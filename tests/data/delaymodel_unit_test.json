@@ -3,7 +3,7 @@
       {
         "delayDetails": [
           {
-            "receptor": 2,
+            "receptor": "SKA002",
             "receptorDelayDetails": [
               {
                 "fsid": 1,
@@ -16,7 +16,7 @@
       {
         "delayDetails": [
           {
-            "receptor": 2,
+            "receptor": "SKA002",
             "receptorDelayDetails": [
               {
                 "fsid": 5,
@@ -29,7 +29,7 @@
       {
         "delayDetails": [
           {
-            "receptor": 2,
+            "receptor": "SKA002",
             "receptorDelayDetails": [
               {
                 "fsid": 3,
@@ -42,7 +42,7 @@
       {
         "delayDetails": [
           {
-            "receptor": 2,
+            "receptor": "SKA002",
             "receptorDelayDetails": [
               {
                 "fsid": 6,

@@ -107,7 +107,7 @@ class TestCbfSubarray:
     def test_AddRemoveReceptors_valid(
         self: TestCbfSubarray,
         test_proxies: pytest.fixture,
-        receptor_ids: List[int],
+        receptor_ids: List[str],
         receptors_to_remove: List[int],
         sub_id: int,
     ) -> None:
@@ -250,7 +250,7 @@ class TestCbfSubarray:
     def test_AddReceptors_invalid_single(
         self: TestCbfSubarray,
         test_proxies: pytest.fixture,
-        receptor_ids: List[int],
+        receptor_ids: List[str],
         invalid_receptor_id: List[int],
         sub_id: int,
     ) -> None:
@@ -350,7 +350,7 @@ class TestCbfSubarray:
     def test_RemoveReceptors_invalid_single(
         self: TestCbfSubarray,
         test_proxies: pytest.fixture,
-        receptor_ids: List[int],
+        receptor_ids: List[str],
         invalid_receptors_to_remove: List[int],
         sub_id: int,
     ) -> None:
@@ -456,7 +456,7 @@ class TestCbfSubarray:
     def test_RemoveAllReceptors(
         self: TestCbfSubarray,
         test_proxies: pytest.fixture,
-        receptor_ids: List[int],
+        receptor_ids: List[str],
         sub_id: int,
     ) -> None:
         """
@@ -559,7 +559,7 @@ class TestCbfSubarray:
         self: TestCbfSubarray,
         test_proxies: pytest.fixture,
         config_file_name: str,
-        receptor_ids: List[int],
+        receptor_ids: List[str],
         vcc_receptors: List[int],
     ) -> None:
         """
@@ -1109,7 +1109,7 @@ class TestCbfSubarray:
         jones_matrix_file_name: str,
         delay_model_file_name: str,
         timing_beam_weights_file_name: str,
-        receptor_ids: List[int],
+        receptor_ids: List[str],
     ) -> None:
         """
         Test CbfSubarrays's ConfigureScan command for Fsp PST
@@ -1418,7 +1418,7 @@ class TestCbfSubarray:
         test_proxies: pytest.fixture,
         config_file_name: str,
         scan_file_name: str,
-        receptor_ids: List[int],
+        receptor_ids: List[str],
     ) -> None:
         """
         Test CbfSubarrays's EndScan command
@@ -1677,7 +1677,7 @@ class TestCbfSubarray:
         config_file_name: str,
         delay_model_file_name: str,
         scan_file_name: str,
-        receptor_ids: List[int],
+        receptor_ids: List[str],
         vcc_receptors: List[int],
     ) -> None:
         """
@@ -1920,7 +1920,7 @@ class TestCbfSubarray:
         config_file_name: str,
         scan_file_name: str,
         jones_matrix_file_name: str,
-        receptor_ids: List[int],
+        receptor_ids: List[str],
     ) -> None:
         """
         Test CbfSubarrays's jones matrix update via the
@@ -2177,7 +2177,7 @@ class TestCbfSubarray:
         test_proxies: pytest.fixture,
         config_file_name: str,
         scan_file_name: str,
-        receptor_ids: List[int],
+        receptor_ids: List[str],
         vcc_receptors: List[int],
     ) -> None:
         """
@@ -2403,7 +2403,7 @@ class TestCbfSubarray:
         test_proxies: pytest.fixture,
         config_file_name: str,
         scan_file_name: str,
-        receptor_ids: List[int],
+        receptor_ids: List[str],
         vcc_receptors: List[int],
     ) -> None:
         """
@@ -2736,7 +2736,7 @@ class TestCbfSubarray:
         test_proxies: pytest.fixture,
         config_file_name: str,
         scan_file_name: str,
-        receptor_ids: List[int],
+        receptor_ids: List[str],
         vcc_receptors: List[int],
     ) -> None:
         """
