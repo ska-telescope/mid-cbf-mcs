@@ -14,6 +14,7 @@ from __future__ import annotations
 import json
 import logging
 import shutil
+import os
 
 import backoff
 import tango
@@ -108,8 +109,7 @@ class TalonDxComponentManager:
         :return: ResultCode.OK if all artifacts were copied successfully,
                  otherwise ResultCode.FAILED
         """
-        shutil.copyfile('mnt/hps_master_mcs.sh','mnt/talondx-config/hps_master_mcs.sh')
-        with open('mnt/talondx-config/hps_master_mcs.sh') as hps_master_file:
+        with open('hps_master_mcs_tmp.sh') as hps_master_file_tmp:
             environment = os.getenv('ENVIRONMENT')
             if environment == 'minikube':
                 hostname = os.getenv('MINIKUBE_HOST_IP')
@@ -118,8 +118,9 @@ class TalonDxComponentManager:
                 namespace = os.getenv('NAMESPACE')
                 port = 10000
                 hostname = f'tango-host-databaseds-from-makefile-test-external.{namespace}.svc.cluster.local'
-            replaced_text = hps_master_file.read().replace('<hostname>:<port>', f'{hostname}:{port}')
-
+            replaced_text = hps_master_file_tmp.read().replace('<hostname>:<port>', f'{hostname}:{port}')
+        with open('hps_master_mcs.sh','w') as hps_master_file:
+            hps_master_file.write(replaced_text)
 
 
     def _secure_copy(
@@ -205,7 +206,7 @@ class TalonDxComponentManager:
                     # Copy HPS master run script
                     self._secure_copy(
                         ssh_client=ssh_client,
-                        src=f"{src_dir}/hps_master_mcs.sh",
+                        src=f"hps_master_mcs.sh",
                         dest="/lib/firmware/hps_software",
                     )
 
