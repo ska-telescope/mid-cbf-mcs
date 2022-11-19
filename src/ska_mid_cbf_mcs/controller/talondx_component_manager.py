@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import json
 import logging
-import shutil
 import os
 
 import backoff
@@ -82,7 +81,7 @@ class TalonDxComponentManager:
         except IOError:
             self.logger.error(f"Could not open {config_path} file")
             return ResultCode.FAILED
-        
+
         if self._setup_tango_host_file() == ResultCode.FAILED:
             return ResultCode.FAILED
 
@@ -99,7 +98,7 @@ class TalonDxComponentManager:
             return ResultCode.FAILED
 
         return ResultCode.OK
-    
+
     def _setup_tango_host_file(
         self: TalonDxComponentManager,
     ) -> None:
@@ -109,19 +108,20 @@ class TalonDxComponentManager:
         :return: ResultCode.OK if all artifacts were copied successfully,
                  otherwise ResultCode.FAILED
         """
-        with open('hps_master_mcs_tmp.sh') as hps_master_file_tmp:
-            environment = os.getenv('ENVIRONMENT')
-            if environment == 'minikube':
-                hostname = os.getenv('MINIKUBE_HOST_IP')
-                port = os.getenv('EXTERNAL_DB_PORT')
+        with open("hps_master_mcs_tmp.sh") as hps_master_file_tmp:
+            environment = os.getenv("ENVIRONMENT")
+            if environment == "minikube":
+                hostname = os.getenv("MINIKUBE_HOST_IP")
+                port = os.getenv("EXTERNAL_DB_PORT")
             else:
-                namespace = os.getenv('NAMESPACE')
+                namespace = os.getenv("NAMESPACE")
                 port = 10000
-                hostname = f'tango-host-databaseds-from-makefile-test-external.{namespace}.svc.cluster.local'
-            replaced_text = hps_master_file_tmp.read().replace('<hostname>:<port>', f'{hostname}:{port}')
-        with open('hps_master_mcs.sh','w') as hps_master_file:
+                hostname = f"tango-host-databaseds-from-makefile-test-external.{namespace}.svc.cluster.local"
+            replaced_text = hps_master_file_tmp.read().replace(
+                "<hostname>:<port>", f"{hostname}:{port}"
+            )
+        with open("hps_master_mcs.sh", "w") as hps_master_file:
             hps_master_file.write(replaced_text)
-
 
     def _secure_copy(
         self: TalonDxComponentManager,
@@ -140,7 +140,6 @@ class TalonDxComponentManager:
         """
         with SCPClient(ssh_client.get_transport()) as scp_client:
             scp_client.put(src, remote_path=dest)
-
 
     def _copy_binaries_and_bitstream(
         self: TalonDxComponentManager,
@@ -206,7 +205,7 @@ class TalonDxComponentManager:
                     # Copy HPS master run script
                     self._secure_copy(
                         ssh_client=ssh_client,
-                        src=f"hps_master_mcs.sh",
+                        src="hps_master_mcs.sh",
                         dest="/lib/firmware/hps_software",
                     )
 
