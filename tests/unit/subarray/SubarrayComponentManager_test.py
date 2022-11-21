@@ -74,7 +74,9 @@ class TestCbfSubarrayComponentManager:
 
         subarray_component_manager.add_receptors(receptor_ids)
 
-        receptor_ids_int = [receptor_id_str_to_int(receptor) for receptor in receptor_ids]
+        receptor_ids_int = [
+            receptor_id_str_to_int(receptor) for receptor in receptor_ids
+        ]
         assert [
             subarray_component_manager.receptors[i]
             for i in range(len(receptor_ids))
@@ -149,7 +151,9 @@ class TestCbfSubarrayComponentManager:
         # try removing receptors before assignment
         assert subarray_component_manager.receptors == []
         subarray_component_manager.remove_receptors(receptor_ids)
-        receptor_ids_int = [receptor_id_str_to_int(receptor) for receptor in receptor_ids]
+        receptor_ids_int = [
+            receptor_id_str_to_int(receptor) for receptor in receptor_ids
+        ]
         assert subarray_component_manager.receptors == []
 
         # try removing unassigned receptor

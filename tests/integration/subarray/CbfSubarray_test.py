@@ -179,7 +179,9 @@ class TestCbfSubarray:
             ] == receptor_ids
             assert (
                 test_proxies.vcc[
-                    test_proxies.receptor_to_vcc[receptor_id_str_to_int(receptor_ids[-1])]
+                    test_proxies.receptor_to_vcc[
+                        receptor_id_str_to_int(receptor_ids[-1])
+                    ]
                 ].subarrayMembership
                 == sub_id
             )
@@ -194,7 +196,9 @@ class TestCbfSubarray:
                 assert test_proxies.subarray[sub_id].receptors[idx] == receptor
                 assert (
                     test_proxies.vcc[
-                        test_proxies.receptor_to_vcc[receptor_id_str_to_int(receptor)]
+                        test_proxies.receptor_to_vcc[
+                            receptor_id_str_to_int(receptor)
+                        ]
                     ].subarrayMembership
                     == sub_id
                 )
@@ -222,7 +226,9 @@ class TestCbfSubarray:
             for receptor in receptor_ids_after_remove:
                 assert (
                     test_proxies.vcc[
-                        test_proxies.receptor_to_vcc[receptor_id_str_to_int(receptor)]
+                        test_proxies.receptor_to_vcc[
+                            receptor_id_str_to_int(receptor)
+                        ]
                     ].subarrayMembership
                     == 0
                 )
@@ -832,12 +838,9 @@ class TestCbfSubarray:
                             == fsp["receptor_ids"][0]
                         )
                     else:
-                        assert (
-                            test_proxies.fspSubarray["CORR"][sub_id][
-                                fsp_id
-                            ].receptors
-                            == receptor_id_str_to_int(receptor_ids[0])
-                        )
+                        assert test_proxies.fspSubarray["CORR"][sub_id][
+                            fsp_id
+                        ].receptors == receptor_id_str_to_int(receptor_ids[0])
                     assert (
                         test_proxies.fspSubarray["CORR"][sub_id][
                             fsp_id
