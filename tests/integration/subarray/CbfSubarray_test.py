@@ -788,7 +788,7 @@ class TestCbfSubarray:
                                 for t in search_window[
                                     "tdc_destination_address"
                                 ]
-                                if t["receptor_id"] == r
+                                if receptor_id_str_to_int(t["receptor_id"]) == r
                             ]
                             assert [
                                 list(
@@ -829,13 +829,13 @@ class TestCbfSubarray:
                         ].obsState
                         == ObsState.READY
                     )
-                    # currently only support for one receptor so only index 0 is checked
+                    # TODO currently only support for one receptor so only index 0 is checked
                     if "receptor_ids" in fsp:
                         assert (
                             test_proxies.fspSubarray["CORR"][sub_id][
                                 fsp_id
                             ].receptors
-                            == fsp["receptor_ids"][0]
+                            == receptor_id_str_to_int(fsp["receptor_ids"][0])
                         )
                     else:
                         assert test_proxies.fspSubarray["CORR"][sub_id][
@@ -978,10 +978,10 @@ class TestCbfSubarray:
                             searchBeam["search_beam_id"]
                             == fsp["search_beam"][idx]["search_beam_id"]
                         )
-                        # currently only one receptor supported
+                        # TODO currently only one receptor supported
                         assert (
                             searchBeam["receptor_ids"][0]
-                            == fsp["search_beam"][idx]["receptor_ids"][0]
+                            == receptor_id_str_to_int(fsp["search_beam"][idx]["receptor_ids"][0])
                         )
                         assert (
                             searchBeam["enable_output"]
@@ -1022,12 +1022,13 @@ class TestCbfSubarray:
                         == ObsState.READY
                     )
                     for beam in fsp["timing_beam"]:
+                        # TODO currently only one receptor supported
                         assert all(
                             [
                                 test_proxies.fspSubarray["PST-BF"][sub_id][
                                     fsp_id
                                 ].receptors[i]
-                                == j
+                                == receptor_id_str_to_int(j)
                                 for i, j in zip(range(1), beam["receptor_ids"])
                             ]
                         )
@@ -1349,7 +1350,7 @@ class TestCbfSubarray:
 
             for weights in timing_beam_weights["beamWeights"]:
                 for receptor in weights["beamWeightsDetails"]:
-                    rec_id = int(receptor["receptor"])
+                    rec_id = receptor_id_str_to_int(receptor["receptor"])
                     fs_id = receptor["receptorWeightsDetails"][0]["fsid"]
                     for index, value in enumerate(
                         receptor["receptorWeightsDetails"][0]["weights"]
