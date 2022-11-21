@@ -509,7 +509,7 @@ class CbfSubarray(CspSubElementSubarray):
             return component_manager.remove_receptors(argin)
 
     @command(
-        dtype_in=("uint16",),
+        dtype_in=("str",),
         doc_in="List of receptor IDs",
         dtype_out="DevVarLongStringArray",
         doc_out="(ReturnType, 'informational message')",
@@ -594,7 +594,7 @@ class CbfSubarray(CspSubElementSubarray):
             return component_manager.add_receptors(argin)
 
     @command(
-        dtype_in=("uint16",),
+        dtype_in=("str",),
         doc_in="List of receptor IDs",
         dtype_out="DevVarLongStringArray",
         doc_out="(ReturnType, 'informational message')",

@@ -144,6 +144,10 @@ class TestCbfSubarray:
                 ]
             )
 
+            receptor_ids_int = []
+            for receptor in receptor_ids:
+                receptor_ids_int.append(receptor_id_str_to_int(receptor))
+
             # add all except last receptor
             test_proxies.subarray[sub_id].AddReceptors(receptor_ids[:-1])
             test_proxies.wait_timeout_obs(
@@ -152,19 +156,22 @@ class TestCbfSubarray:
                 wait_time_s,
                 sleep_time_s,
             )
+
             assert [
                 test_proxies.subarray[sub_id].receptors[i]
                 for i in range(len(receptor_ids[:-1]))
-            ] == receptor_ids[:-1]
+            ] == receptor_ids_int[:-1]
+
             assert all(
                 [
                     test_proxies.vcc[
                         test_proxies.receptor_to_vcc[i]
                     ].subarrayMembership
                     == sub_id
-                    for i in receptor_ids[:-1]
+                    for i in receptor_ids_int[:-1]
                 ]
             )
+
             assert test_proxies.subarray[sub_id].obsState == ObsState.IDLE
 
             # add the last receptor
@@ -176,7 +183,7 @@ class TestCbfSubarray:
             ] == receptor_ids
             assert (
                 test_proxies.vcc[
-                    test_proxies.receptor_to_vcc[receptor_ids[-1]]
+                    test_proxies.receptor_to_vcc[receptor_ids_int[-1]]
                 ].subarrayMembership
                 == sub_id
             )
@@ -793,6 +800,10 @@ class TestCbfSubarray:
                                 )
                             ] == tdcDestAddr
 
+            receptor_ids_int = []
+            for receptor in receptor_ids:
+                receptor_ids_int.append(receptor_id_str_to_int(receptor))
+
             # check configured attributes of FSPs, including states of function mode capabilities
             for fsp in configuration["cbf"]["fsp"]:
                 fsp_id = fsp["fsp_id"]
@@ -837,7 +848,7 @@ class TestCbfSubarray:
                             test_proxies.fspSubarray["CORR"][sub_id][
                                 fsp_id
                             ].receptors
-                            == receptor_ids[0]
+                            == receptor_ids_int[0]
                         )
                     assert (
                         test_proxies.fspSubarray["CORR"][sub_id][
@@ -1098,7 +1109,7 @@ class TestCbfSubarray:
                 "jonesmatrix.json",
                 "delaymodel.json",
                 "timingbeamweights.json",
-                [4, 1, 3, 2],
+                ["SKA004", "SKA001", "SKA003", "SKA002"],
             )
         ],
     )
@@ -1409,7 +1420,7 @@ class TestCbfSubarray:
             (
                 "ConfigureScan_basic.json",
                 "Scan1_basic.json",
-                [1, 3, 4, 2],
+                ["SKA001", "SKA003", "SKA004", "SKA002"],
             )
         ],
     )
@@ -1910,7 +1921,7 @@ class TestCbfSubarray:
                 "ConfigureScan_basic.json",
                 "Scan1_basic.json",
                 "jonesmatrix.json",
-                [1, 3, 4, 2],
+                ["SKA001", "SKA003", "SKA004", "SKA002"],
             ),
         ],
     )
@@ -2393,7 +2404,7 @@ class TestCbfSubarray:
             (
                 "Configure_TM-CSP_v2.json",
                 "Scan2_basic.json",
-                [4, 1, 2],
+                ["SKA004", "SKA001", "SKA002"],
                 [4, 1],
             ),
         ],
