@@ -142,7 +142,7 @@ class CbfSubarray(CspSubElementSubarray):
     )
 
     receptors = attribute(
-        dtype=("uint16",),
+        dtype=("str",),
         access=AttrWriteType.READ_WRITE,
         max_dim_x=197,
         label="receptor_ids",
@@ -405,10 +405,10 @@ class CbfSubarray(CspSubElementSubarray):
         :return: the list of receptors
         :rtype: List[int]
         """
-        receptors = []
-        for receptor in self.component_manager.receptors:
-            receptors.append(receptor_id_int_to_str(receptor))
-        return receptors
+        return [
+            receptor_id_int_to_str(receptor)
+            for receptor in self.component_manager.receptors
+        ]
         # PROTECTED REGION END #    //  CbfSubarray.receptors_read
 
     def write_receptors(self: CbfSubarray, value: List[str]) -> None:
