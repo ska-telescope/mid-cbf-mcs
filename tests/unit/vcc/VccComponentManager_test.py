@@ -22,6 +22,7 @@ import pytest
 from ska_tango_base.commands import ResultCode
 
 from ska_mid_cbf_mcs.commons.global_enum import freq_band_dict
+from ska_mid_cbf_mcs.commons.receptor_id_utils import receptor_id_str_to_int
 from ska_mid_cbf_mcs.vcc.vcc_component_manager import VccComponentManager
 
 # Data file paths
@@ -150,7 +151,7 @@ class TestVccComponentManager:
         matrix_len = 16
         for m in jones_matrix["jonesMatrix"]:
             for receptor in m["matrixDetails"]:
-                rec_id = receptor["receptor"]
+                rec_id = receptor_id_str_to_int(receptor["receptor"])
                 if rec_id == vcc_component_manager.receptor_id:
                     for frequency_slice in receptor["receptorMatrix"]:
                         fs_id = frequency_slice["fsid"]
@@ -208,13 +209,9 @@ class TestVccComponentManager:
 
         # update the delay model
         for m in delay_model["delayModel"]:
-            vcc_component_manager.receptor_id = m["delayDetails"][0][
-                "receptor"
-            ]
-            assert (
-                vcc_component_manager.receptor_id
-                == m["delayDetails"][0]["receptor"]
-            )
+            receptor = receptor_id_str_to_int(m["delayDetails"][0]["receptor"])
+            vcc_component_manager.receptor_id = receptor
+            assert vcc_component_manager.receptor_id == receptor
             vcc_component_manager.update_delay_model(
                 json.dumps(m["delayDetails"])
             )

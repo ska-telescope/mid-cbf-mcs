@@ -22,6 +22,7 @@ import pytest
 from ska_tango_base.commands import ResultCode
 
 from ska_mid_cbf_mcs.commons.global_enum import freq_band_dict
+from ska_mid_cbf_mcs.commons.receptor_id_utils import receptor_id_str_to_int
 from ska_mid_cbf_mcs.subarray.subarray_component_manager import (
     CbfSubarrayComponentManager,
 )
@@ -73,10 +74,13 @@ class TestCbfSubarrayComponentManager:
 
         subarray_component_manager.add_receptors(receptor_ids)
 
+        receptor_ids_int = []
+        for receptor in receptor_ids:
+            receptor_ids_int.append(receptor_id_str_to_int(receptor))
         assert [
             subarray_component_manager.receptors[i]
             for i in range(len(receptor_ids))
-        ] == receptor_ids
+        ] == receptor_ids_int
 
         subarray_component_manager.remove_receptors(receptor_ids)
 
@@ -102,6 +106,7 @@ class TestCbfSubarrayComponentManager:
 
         # assign VCCs to a different subarray, then attempt assignment
         for receptor in receptor_ids[:-1]:
+            receptor = receptor_id_str_to_int(receptor)
             vcc_id = subarray_component_manager._receptor_to_vcc[receptor]
             vcc_proxy = subarray_component_manager._proxies_vcc[vcc_id - 1]
             vcc_proxy.subarrayMembership = (
@@ -112,14 +117,14 @@ class TestCbfSubarrayComponentManager:
 
         assert subarray_component_manager.receptors == []
 
-        vcc_id = subarray_component_manager._receptor_to_vcc[receptor_ids[-1]]
+        vcc_id = subarray_component_manager._receptor_to_vcc[receptor_id_str_to_int(receptor_ids[-1])]
         vcc_proxy = subarray_component_manager._proxies_vcc[vcc_id - 1]
         vcc_proxy.subarrayMembership = subarray_component_manager.subarray_id
 
         # try adding same receptor twice
         subarray_component_manager.add_receptors([receptor_ids[-1]])
         subarray_component_manager.add_receptors([receptor_ids[-1]])
-        assert subarray_component_manager.receptors == [receptor_ids[-1]]
+        assert subarray_component_manager.receptors == [receptor_id_str_to_int(receptor_ids[-1])]
 
     @pytest.mark.parametrize(
         "receptor_ids",
@@ -142,12 +147,15 @@ class TestCbfSubarrayComponentManager:
         # try removing receptors before assignment
         assert subarray_component_manager.receptors == []
         subarray_component_manager.remove_receptors(receptor_ids)
+        receptor_ids_int = []
+        for receptor in receptor_ids:
+            receptor_ids_int.append(receptor_id_str_to_int(receptor))
         assert subarray_component_manager.receptors == []
 
         # try removing unassigned receptor
         subarray_component_manager.add_receptors(receptor_ids[:-1])
         subarray_component_manager.remove_receptors([receptor_ids[-1]])
-        assert subarray_component_manager.receptors == receptor_ids[:-1]
+        assert subarray_component_manager.receptors == receptor_ids_int[:-1]
 
     @pytest.mark.parametrize(
         "receptor_ids",
