@@ -144,10 +144,6 @@ class TestCbfSubarray:
                 ]
             )
 
-            receptor_ids_int = []
-            for receptor in receptor_ids:
-                receptor_ids_int.append(receptor_id_str_to_int(receptor))
-
             # add all except last receptor
             test_proxies.subarray[sub_id].AddReceptors(receptor_ids[:-1])
             test_proxies.wait_timeout_obs(
@@ -160,15 +156,15 @@ class TestCbfSubarray:
             assert [
                 test_proxies.subarray[sub_id].receptors[i]
                 for i in range(len(receptor_ids[:-1]))
-            ] == receptor_ids_int[:-1]
+            ] == receptor_ids[:-1]
 
             assert all(
                 [
                     test_proxies.vcc[
-                        test_proxies.receptor_to_vcc[i]
+                        test_proxies.receptor_to_vcc[receptor_id_str_to_int(i)]
                     ].subarrayMembership
                     == sub_id
-                    for i in receptor_ids_int[:-1]
+                    for i in receptor_ids[:-1]
                 ]
             )
 
@@ -183,7 +179,7 @@ class TestCbfSubarray:
             ] == receptor_ids
             assert (
                 test_proxies.vcc[
-                    test_proxies.receptor_to_vcc[receptor_ids_int[-1]]
+                    test_proxies.receptor_to_vcc[receptor_id_str_to_int(receptor_ids[-1])]
                 ].subarrayMembership
                 == sub_id
             )
@@ -198,14 +194,14 @@ class TestCbfSubarray:
                 assert test_proxies.subarray[sub_id].receptors[idx] == receptor
                 assert (
                     test_proxies.vcc[
-                        test_proxies.receptor_to_vcc[receptor]
+                        test_proxies.receptor_to_vcc[receptor_id_str_to_int(receptor)]
                     ].subarrayMembership
                     == sub_id
                 )
             assert all(
                 [
                     test_proxies.vcc[
-                        test_proxies.receptor_to_vcc[i]
+                        test_proxies.receptor_to_vcc[receptor_id_str_to_int(i)]
                     ].subarrayMembership
                     == 0
                     for i in receptors_to_remove
@@ -226,7 +222,7 @@ class TestCbfSubarray:
             for receptor in receptor_ids_after_remove:
                 assert (
                     test_proxies.vcc[
-                        test_proxies.receptor_to_vcc[receptor]
+                        test_proxies.receptor_to_vcc[receptor_id_str_to_int(receptor)]
                     ].subarrayMembership
                     == 0
                 )
@@ -302,7 +298,7 @@ class TestCbfSubarray:
             assert all(
                 [
                     test_proxies.vcc[
-                        test_proxies.receptor_to_vcc[i]
+                        test_proxies.receptor_to_vcc[receptor_id_str_to_int(i)]
                     ].subarrayMembership
                     == 1
                     for i in receptor_ids
@@ -325,7 +321,7 @@ class TestCbfSubarray:
             assert all(
                 [
                     test_proxies.vcc[
-                        test_proxies.receptor_to_vcc[i]
+                        test_proxies.receptor_to_vcc[receptor_id_str_to_int(i)]
                     ].subarrayMembership
                     == 1
                     for i in receptor_ids
@@ -405,7 +401,7 @@ class TestCbfSubarray:
             assert all(
                 [
                     test_proxies.vcc[
-                        test_proxies.receptor_to_vcc[i]
+                        test_proxies.receptor_to_vcc[receptor_id_str_to_int(i)]
                     ].subarrayMembership
                     == 1
                     for i in receptor_ids
@@ -509,7 +505,7 @@ class TestCbfSubarray:
             assert all(
                 [
                     test_proxies.vcc[
-                        test_proxies.receptor_to_vcc[i]
+                        test_proxies.receptor_to_vcc[receptor_id_str_to_int(i)]
                     ].subarrayMembership
                     == sub_id
                     for i in receptor_ids
@@ -529,7 +525,7 @@ class TestCbfSubarray:
             assert all(
                 [
                     test_proxies.vcc[
-                        test_proxies.receptor_to_vcc[i]
+                        test_proxies.receptor_to_vcc[receptor_id_str_to_int(i)]
                     ].subarrayMembership
                     == 0
                     for i in receptor_ids
@@ -591,10 +587,6 @@ class TestCbfSubarray:
             time.sleep(sleep_time_s)
 
             # check initial value of attributes of CBF subarray
-            vcc_index = test_proxies.receptor_to_vcc[4]
-
-            logging.info("vcc_index  = {}".format(vcc_index))
-
             assert len(test_proxies.subarray[sub_id].receptors) == 0
             assert test_proxies.subarray[sub_id].configurationID == ""
             assert test_proxies.subarray[sub_id].frequencyBand == 0
@@ -800,10 +792,6 @@ class TestCbfSubarray:
                                 )
                             ] == tdcDestAddr
 
-            receptor_ids_int = []
-            for receptor in receptor_ids:
-                receptor_ids_int.append(receptor_id_str_to_int(receptor))
-
             # check configured attributes of FSPs, including states of function mode capabilities
             for fsp in configuration["cbf"]["fsp"]:
                 fsp_id = fsp["fsp_id"]
@@ -848,7 +836,7 @@ class TestCbfSubarray:
                             test_proxies.fspSubarray["CORR"][sub_id][
                                 fsp_id
                             ].receptors
-                            == receptor_ids_int[0]
+                            == receptor_id_str_to_int(receptor_ids[0])
                         )
                     assert (
                         test_proxies.fspSubarray["CORR"][sub_id][
@@ -2021,7 +2009,7 @@ class TestCbfSubarray:
                 for receptor in jones_matrix["jonesMatrix"][
                     jones_matrix_index_per_epoch[epoch]
                 ]["matrixDetails"]:
-                    rec_id = receptor["receptor"]
+                    rec_id = receptor_id_str_to_int(receptor["receptor"])
                     for frequency_slice in receptor["receptorMatrix"]:
                         for index, value in enumerate(
                             frequency_slice["matrix"]
