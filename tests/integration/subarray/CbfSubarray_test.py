@@ -788,7 +788,8 @@ class TestCbfSubarray:
                                 for t in search_window[
                                     "tdc_destination_address"
                                 ]
-                                if receptor_id_str_to_int(t["receptor_id"]) == r
+                                if receptor_id_str_to_int(t["receptor_id"])
+                                == r
                             ]
                             assert [
                                 list(
@@ -831,11 +832,10 @@ class TestCbfSubarray:
                     )
                     # TODO currently only support for one receptor so only index 0 is checked
                     if "receptor_ids" in fsp:
-                        assert (
-                            test_proxies.fspSubarray["CORR"][sub_id][
-                                fsp_id
-                            ].receptors
-                            == receptor_id_str_to_int(fsp["receptor_ids"][0])
+                        assert test_proxies.fspSubarray["CORR"][sub_id][
+                            fsp_id
+                        ].receptors == receptor_id_str_to_int(
+                            fsp["receptor_ids"][0]
                         )
                     else:
                         assert test_proxies.fspSubarray["CORR"][sub_id][
@@ -979,9 +979,10 @@ class TestCbfSubarray:
                             == fsp["search_beam"][idx]["search_beam_id"]
                         )
                         # TODO currently only one receptor supported
-                        assert (
-                            searchBeam["receptor_ids"][0]
-                            == receptor_id_str_to_int(fsp["search_beam"][idx]["receptor_ids"][0])
+                        assert searchBeam["receptor_ids"][
+                            0
+                        ] == receptor_id_str_to_int(
+                            fsp["search_beam"][idx]["receptor_ids"][0]
                         )
                         assert (
                             searchBeam["enable_output"]
