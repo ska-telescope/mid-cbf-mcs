@@ -117,14 +117,18 @@ class TestCbfSubarrayComponentManager:
 
         assert subarray_component_manager.receptors == []
 
-        vcc_id = subarray_component_manager._receptor_to_vcc[receptor_id_str_to_int(receptor_ids[-1])]
+        vcc_id = subarray_component_manager._receptor_to_vcc[
+            receptor_id_str_to_int(receptor_ids[-1])
+        ]
         vcc_proxy = subarray_component_manager._proxies_vcc[vcc_id - 1]
         vcc_proxy.subarrayMembership = subarray_component_manager.subarray_id
 
         # try adding same receptor twice
         subarray_component_manager.add_receptors([receptor_ids[-1]])
         subarray_component_manager.add_receptors([receptor_ids[-1]])
-        assert subarray_component_manager.receptors == [receptor_id_str_to_int(receptor_ids[-1])]
+        assert subarray_component_manager.receptors == [
+            receptor_id_str_to_int(receptor_ids[-1])
+        ]
 
     @pytest.mark.parametrize(
         "receptor_ids",
