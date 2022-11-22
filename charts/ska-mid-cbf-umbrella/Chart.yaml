@@ -6,10 +6,10 @@ version: "0.3.7"
 icon: https://www.skatelescope.org/wp-content/uploads/2016/07/09545_NEW_LOGO_2014.png
 dependencies:
 - name: ska-tango-base
-  version: 0.3.8
+  version: 0.3.23
   repository:  https://artefact.skao.int/repository/helm-internal
 - name: ska-tango-util
-  version: 0.3.13
+  version: 0.3.23
   repository: https://artefact.skao.int/repository/helm-internal
 - name: ska-mid-cbf-mcs
   version: 0.1.6
