@@ -890,7 +890,9 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                 # Configure tdcDestinationAddress.
                 if argin["tdc_enable"]:
                     for receptor in argin["tdc_destination_address"]:
-                        receptor_id = receptor_id_str_to_int(receptor["receptor_id"])
+                        receptor_id = receptor_id_str_to_int(
+                            receptor["receptor_id"]
+                        )
                         if receptor_id == self._receptor_id:
                             # TODO: validate input
                             proxy_sw.tdcDestinationAddress = receptor[
