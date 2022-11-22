@@ -1754,6 +1754,7 @@ class CbfSubarrayComponentManager(
                 "frequency_band_offset_stream_2"
             ] = self._frequency_band_offset_stream_2
 
+            # convert receptor ID to int for FSP level
             if fsp["function_mode"] == "CORR":
                 if "receptor_ids" not in fsp:
                     # TODO In this case by the ICD, all subarray allocated resources should be used.
@@ -1801,11 +1802,7 @@ class CbfSubarrayComponentManager(
 
         # NOTE:_corr_config is a list of fsp config JSON objects, each
         #      augmented by a number of vcc-fsp common parameters
-        #      created by the function validate_input()
         if len(self._corr_config) != 0:
-            # self._proxy_corr_config.ConfigureFSP(json.dumps(self._corr_config))
-            # Michelle - WIP - TODO - this is to replace the call to
-            #  _proxy_corr_config.ConfigureFSP()
             for this_fsp in self._corr_config:
                 try:
                     this_proxy = self._proxies_fsp_corr_subarray[
