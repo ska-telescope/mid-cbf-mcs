@@ -76,9 +76,7 @@ def receptor_id_dict() -> Dict[str, int]:
 
     :return: the DISH/receptor ID translation as a dictionary
     """
-    receptor_dict = {}
-
-    for receptor in range(1, 198):
-        receptor_dict[receptor_id_int_to_str(receptor)] = receptor
-
-    return receptor_dict
+    return {
+        receptor_id_int_to_str(receptor): receptor
+        for receptor in range(1, 198)
+    }
