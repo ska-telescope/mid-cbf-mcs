@@ -783,21 +783,18 @@ class TestCbfSubarray:
                                 == search_window["tdc_period_after_epoch"]
                             )
                         if "tdc_destination_address" in search_window:
-                            tdcDestAddr = [
-                                t["tdc_destination_address"]
-                                for t in search_window[
-                                    "tdc_destination_address"
-                                ]
-                                if receptor_id_str_to_int(t["receptor_id"])
-                                == r
-                            ]
-                            assert [
-                                list(
-                                    test_proxies.vccSw[
-                                        test_proxies.receptor_to_vcc[r]
-                                    ][idx + 1].tdcDestinationAddress
-                                )
-                            ] == tdcDestAddr
+                            for t in search_window["tdc_destination_address"]:
+                                if (
+                                    receptor_id_str_to_int(t["receptor_id"])
+                                    == r
+                                ):
+                                    tdcDestAddr = t["tdc_destination_address"]
+                                    assert (
+                                        test_proxies.vccSw[
+                                            test_proxies.receptor_to_vcc[r]
+                                        ][idx + 1].tdcDestinationAddress
+                                        == tdcDestAddr
+                                    )
 
             # check configured attributes of FSPs, including states of function mode capabilities
             for fsp in configuration["cbf"]["fsp"]:
