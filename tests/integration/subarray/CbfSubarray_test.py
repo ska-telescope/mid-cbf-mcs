@@ -790,9 +790,11 @@ class TestCbfSubarray:
                                 ):
                                     tdcDestAddr = t["tdc_destination_address"]
                                     assert (
-                                        test_proxies.vccSw[
-                                            test_proxies.receptor_to_vcc[r]
-                                        ][idx + 1].tdcDestinationAddress
+                                        list(
+                                            test_proxies.vccSw[
+                                                test_proxies.receptor_to_vcc[r]
+                                            ][idx + 1].tdcDestinationAddress
+                                        )
                                         == tdcDestAddr
                                     )
 
