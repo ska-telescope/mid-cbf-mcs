@@ -9,7 +9,13 @@
 
 from __future__ import annotations  # allow forward references in type hints
 
-__all__ = ["receptor_id_str_to_int", "receptor_id_int_to_str"]
+from typing import Dict
+
+__all__ = [
+    "receptor_id_str_to_int",
+    "receptor_id_int_to_str",
+    "receptor_id_dict",
+]
 
 
 def receptor_id_str_to_int(receptor_id: str) -> int:
@@ -62,3 +68,17 @@ def receptor_id_int_to_str(receptor_id: int) -> str:
         return "SKA" + f"{receptor_id:03}"
     else:
         return "MKT" + f"{receptor_id - 134:03}"
+
+
+def receptor_id_dict() -> Dict[str, int]:
+    """
+    Output DISH ID string mnemonic to int in a dictionary.
+
+    :return: the DISH/receptor ID translation as a dictionary
+    """
+    receptor_dict = {}
+
+    for receptor in range(1, 198):
+        receptor_dict[receptor_id_int_to_str(receptor)] = receptor
+
+    return receptor_dict
