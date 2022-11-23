@@ -118,6 +118,15 @@ image:
   image: "{{.Values.midcbf.image.image}}"
   tag: "{{.Values.midcbf.image.tag}}"
   pullPolicy: "{{.Values.midcbf.image.pullPolicy}}"
+environment_variables:
+- name: NAMESPACE
+  value: "{{ .Release.Namespace }}"
+- name: ENVIRONMENT
+  value: "{{ .Values.hostInfo.environment }}"
+- name: MINIKUBE_HOST_IP
+  value: "{{ .Values.hostInfo.hostIP }}"
+- name: EXTERNAL_DB_PORT
+  value: "{{ .Values.hostInfo.externalPort }}"
 volume:
   name: "artifacts"
   mountPath: "/app/mnt"
