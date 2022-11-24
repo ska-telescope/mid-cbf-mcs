@@ -54,7 +54,10 @@ def receptor_id_str_to_int(receptor_id: str) -> int:
     receptor_prefix = receptor_id[:DISH_TYPE_STR_LEN]
     receptor_number = receptor_id[DISH_TYPE_STR_LEN:]
 
-    if receptor_prefix != SKA_DISH_TYPE_STR and receptor_prefix != MKT_DISH_TYPE_STR:
+    if (
+        receptor_prefix != SKA_DISH_TYPE_STR
+        and receptor_prefix != MKT_DISH_TYPE_STR
+    ):
         raise ValueError(
             f"Incorrect DISH type prefix. Prefix must be {SKA_DISH_TYPE_STR} or {MKT_DISH_TYPE_STR}."
         )
@@ -65,7 +68,9 @@ def receptor_id_str_to_int(receptor_id: str) -> int:
         )
 
     if receptor_prefix == MKT_DISH_TYPE_STR:
-        if int(receptor_number) not in range(MKT_DISH_INSTANCE_MIN, MKT_DISH_INSTANCE_MAX + 1):
+        if int(receptor_number) not in range(
+            MKT_DISH_INSTANCE_MIN, MKT_DISH_INSTANCE_MAX + 1
+        ):
             raise ValueError(
                 f"Incorrect DISH instance. Dish instance for {MKT_DISH_TYPE_STR} DISH type is {MKT_DISH_INSTANCE_MIN} to {MKT_DISH_INSTANCE_MAX} incl."
             )
@@ -73,7 +78,9 @@ def receptor_id_str_to_int(receptor_id: str) -> int:
             return int(receptor_number) + MKT_DISH_INSTANCE_OFFSET
 
     if receptor_prefix == SKA_DISH_TYPE_STR:
-        if int(receptor_number) not in range(SKA_DISH_INSTANCE_MIN, SKA_DISH_INSTANCE_MAX + 1):
+        if int(receptor_number) not in range(
+            SKA_DISH_INSTANCE_MIN, SKA_DISH_INSTANCE_MAX + 1
+        ):
             raise ValueError(
                 f"Incorrect DISH instance. Dish instance for {SKA_DISH_TYPE_STR} DISH type is {SKA_DISH_INSTANCE_MIN} to {SKA_DISH_INSTANCE_MAX} incl."
             )
@@ -94,11 +101,21 @@ def receptor_id_int_to_str(receptor_id: int) -> str:
             f"Incorrect receptor instance. ID should be in the range {RECEPTOR_ID_MIN} to {RECEPTOR_ID_MAX}."
         )
 
-    if receptor_id in range(MKT_DISH_INSTANCE_MIN + MKT_DISH_INSTANCE_OFFSET, MKT_DISH_INSTANCE_MAX + 1):
-        return MKT_DISH_TYPE_STR + str(receptor_id - MKT_DISH_INSTANCE_OFFSET).zfill(DISH_TYPE_STR_LEN)
+    if receptor_id in range(
+        MKT_DISH_INSTANCE_MIN + MKT_DISH_INSTANCE_OFFSET,
+        MKT_DISH_INSTANCE_MAX + 1,
+    ):
+        return MKT_DISH_TYPE_STR + str(
+            receptor_id - MKT_DISH_INSTANCE_OFFSET
+        ).zfill(DISH_TYPE_STR_LEN)
 
-    if receptor_id in range(SKA_DISH_INSTANCE_MIN + SKA_DISH_INSTANCE_OFFSET, SKA_DISH_INSTANCE_MAX + 1):
-        return SKA_DISH_TYPE_STR + str(receptor_id - SKA_DISH_INSTANCE_OFFSET).zfill(DISH_TYPE_STR_LEN)
+    if receptor_id in range(
+        SKA_DISH_INSTANCE_MIN + SKA_DISH_INSTANCE_OFFSET,
+        SKA_DISH_INSTANCE_MAX + 1,
+    ):
+        return SKA_DISH_TYPE_STR + str(
+            receptor_id - SKA_DISH_INSTANCE_OFFSET
+        ).zfill(DISH_TYPE_STR_LEN)
 
 
 def receptor_id_dict() -> Dict[str, int]:
