@@ -28,11 +28,11 @@
                 "tdc_period_after_epoch": 25,
                 "tdc_destination_address": [
                     {
-                        "receptor_id": "SKA004",
+                        "receptor_id": "MKT004",
                         "tdc_destination_address": ["foo", "bar", "8080"]
                     },
                     {
-                        "receptor_id": "SKA001",
+                        "receptor_id": "MKT001",
                         "tdc_destination_address": ["fizz", "buzz", "80"]
                     }
                 ]
@@ -47,7 +47,7 @@
             {
                 "fsp_id": 1,
                 "function_mode": "CORR",
-                "receptor_ids": ["SKA004"],
+                "receptor_ids": ["MKT004"],
                 "frequency_slice_id": 1,
                 "zoom_factor": 1,
                 "zoom_window_tuning": 4700000,
@@ -108,14 +108,14 @@
                 "search_beam": [
                     {
                         "search_beam_id": 300,
-                        "receptor_ids": ["SKA003"],
+                        "receptor_ids": ["MKT003"],
                         "enable_output": true,
                         "averaging_interval": 4,
                         "search_beam_destination_address": "10.1.1.1"
                     },
                     {
                         "search_beam_id": 400,
-                        "receptor_ids": ["SKA001"],
+                        "receptor_ids": ["MKT001"],
                         "enable_output": true,
                         "averaging_interval": 2,
                         "search_beam_destination_address": "10.1.2.1"
@@ -128,7 +128,7 @@
                 "timing_beam": [
                     {
                         "timing_beam_id": 10,
-                        "receptor_ids": ["SKA002"],
+                        "receptor_ids": ["MKT002"],
                         "enable_output": true,
                         "timing_beam_destination_address": "10.1.1.1"
                     }

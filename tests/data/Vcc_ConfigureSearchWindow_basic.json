@@ -11,7 +11,7 @@
     "tdc_period_after_epoch": 25,
     "tdc_destination_address": [
         {
-            "receptor_id": "SKA001",
+            "receptor_id": "MKT001",
             "tdc_destination_address": ["fizz", "buzz", "80"]
         }
     ]

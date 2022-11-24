@@ -54,8 +54,8 @@ class TestCbfSubarrayComponentManager:
     @pytest.mark.parametrize(
         "receptor_ids",
         [
-            (["SKA001", "SKA003", "SKA004", "SKA002"]),
-            (["SKA004", "SKA001", "SKA002"]),
+            (["MKT001", "MKT003", "MKT004", "MKT002"]),
+            (["MKT004", "MKT001", "MKT002"]),
         ],
     )
     def test_add_remove_receptors_valid(
@@ -88,7 +88,7 @@ class TestCbfSubarrayComponentManager:
 
     @pytest.mark.parametrize(
         "receptor_ids",
-        [(["SKA001", "SKA003", "SKA004"]), (["SKA004", "SKA002"])],
+        [(["MKT001", "MKT003", "MKT004"]), (["MKT004", "MKT002"])],
     )
     def test_add_receptor_invalid(
         self: TestCbfSubarrayComponentManager,
@@ -132,7 +132,7 @@ class TestCbfSubarrayComponentManager:
 
     @pytest.mark.parametrize(
         "receptor_ids",
-        [(["SKA001", "SKA003", "SKA004"]), (["SKA004", "SKA002"])],
+        [(["MKT001", "MKT003", "MKT004"]), (["MKT004", "MKT002"])],
     )
     def test_remove_receptor_invalid(
         self: TestCbfSubarrayComponentManager,
@@ -164,8 +164,8 @@ class TestCbfSubarrayComponentManager:
     @pytest.mark.parametrize(
         "receptor_ids",
         [
-            (["SKA001", "SKA003", "SKA004", "SKA002"]),
-            (["SKA004", "SKA001", "SKA002"]),
+            (["MKT001", "MKT003", "MKT004", "MKT002"]),
+            (["MKT004", "MKT001", "MKT002"]),
         ],
     )
     def test_remove_all_receptors_invalid_valid(
@@ -199,7 +199,7 @@ class TestCbfSubarrayComponentManager:
         [
             (
                 "ConfigureScan_basic.json",
-                ["SKA001", "SKA003", "SKA004", "SKA002"],
+                ["MKT001", "MKT003", "MKT004", "MKT002"],
             )
         ],
     )
@@ -248,7 +248,7 @@ class TestCbfSubarrayComponentManager:
             (
                 "ConfigureScan_basic.json",
                 "Scan1_basic.json",
-                ["SKA001", "SKA003", "SKA004", "SKA002"],
+                ["MKT001", "MKT003", "MKT004", "MKT002"],
             )
         ],
     )

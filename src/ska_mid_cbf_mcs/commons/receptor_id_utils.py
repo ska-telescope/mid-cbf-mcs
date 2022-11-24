@@ -17,6 +17,31 @@ __all__ = [
     "receptor_id_dict",
 ]
 
+# TODO: confirm ordering of SKA/MKT IDs
+"""
+for Mid.CBF (197 receptor IDs):
+    MKT receptor ID range: 1 - 64
+    SKA receptor ID range: 65 - 197
+
+currently (8 receptor IDs):
+    MKT receptor ID range: 1 - 8
+"""
+
+RECEPTOR_ID_MIN = 1
+RECEPTOR_ID_MAX = 8
+
+SKA_DISH_TYPE_STR = "SKA"
+SKA_DISH_INSTANCE_MIN = 1
+SKA_DISH_INSTANCE_MAX = 133
+SKA_DISH_INSTANCE_OFFSET = 64
+
+MKT_DISH_TYPE_STR = "MKT"
+MKT_DISH_INSTANCE_MIN = 0
+MKT_DISH_INSTANCE_MAX = 63
+MKT_DISH_INSTANCE_OFFSET = 1
+
+DISH_TYPE_STR_LEN = 3
+
 
 def receptor_id_str_to_int(receptor_id: str) -> int:
     """
@@ -26,30 +51,34 @@ def receptor_id_str_to_int(receptor_id: str) -> int:
 
     :return: the DISH/receptor ID as a sequential integer (1 to 197)
     """
-    receptor_prefix = receptor_id[:3]
-    receptor_number = receptor_id[3:]
-    if receptor_prefix != "SKA" and receptor_prefix != "MKT":
+    receptor_prefix = receptor_id[:DISH_TYPE_STR_LEN]
+    receptor_number = receptor_id[DISH_TYPE_STR_LEN:]
+
+    if receptor_prefix != SKA_DISH_TYPE_STR and receptor_prefix != MKT_DISH_TYPE_STR:
         raise ValueError(
-            "Incorrect DISH type prefix. Prefix must be SKA or MKT."
+            f"Incorrect DISH type prefix. Prefix must be {SKA_DISH_TYPE_STR} or {MKT_DISH_TYPE_STR}."
         )
-    if len(receptor_number) != 3:
+
+    if len(receptor_number) != DISH_TYPE_STR_LEN:
         raise ValueError(
-            "Incorrect DISH instance size. Dish instance must be a 3 digit number."
+            f"Incorrect DISH instance size. Dish instance must be a {DISH_TYPE_STR_LEN} digit number."
         )
-    if receptor_prefix == "SKA":
-        if int(receptor_number) not in range(1, 134):
+
+    if receptor_prefix == MKT_DISH_TYPE_STR:
+        if int(receptor_number) not in range(MKT_DISH_INSTANCE_MIN, MKT_DISH_INSTANCE_MAX + 1):
             raise ValueError(
-                "Incorrect DISH instance. Dish instance for SKA DISH type is 1 to 133 incl."
+                f"Incorrect DISH instance. Dish instance for {MKT_DISH_TYPE_STR} DISH type is {MKT_DISH_INSTANCE_MIN} to {MKT_DISH_INSTANCE_MAX} incl."
             )
         else:
-            return int(receptor_number)
-    if receptor_prefix == "MKT":
-        if int(receptor_number) not in range(64):
+            return int(receptor_number) + MKT_DISH_INSTANCE_OFFSET
+
+    if receptor_prefix == SKA_DISH_TYPE_STR:
+        if int(receptor_number) not in range(SKA_DISH_INSTANCE_MIN, SKA_DISH_INSTANCE_MAX + 1):
             raise ValueError(
-                "Incorrect DISH instance. Dish instance for MKT DISH type is 0 to 63 incl."
+                f"Incorrect DISH instance. Dish instance for {SKA_DISH_TYPE_STR} DISH type is {SKA_DISH_INSTANCE_MIN} to {SKA_DISH_INSTANCE_MAX} incl."
             )
         else:
-            return int(receptor_number) + 134
+            return int(receptor_number) + SKA_DISH_INSTANCE_OFFSET
 
 
 def receptor_id_int_to_str(receptor_id: int) -> str:
@@ -60,14 +89,16 @@ def receptor_id_int_to_str(receptor_id: int) -> str:
 
     :return: the DISH/receptor ID mnemonic as a string
     """
-    if receptor_id not in range(1, 198):
+    if receptor_id not in range(RECEPTOR_ID_MIN, RECEPTOR_ID_MAX + 1):
         raise ValueError(
-            "Incorrect receptor instance. ID should be in the range 1 to 197."
+            f"Incorrect receptor instance. ID should be in the range {RECEPTOR_ID_MIN} to {RECEPTOR_ID_MAX}."
         )
-    if receptor_id < 134:
-        return "SKA" + f"{receptor_id:03}"
-    else:
-        return "MKT" + f"{receptor_id - 134:03}"
+
+    if receptor_id in range(MKT_DISH_INSTANCE_MIN + MKT_DISH_INSTANCE_OFFSET, MKT_DISH_INSTANCE_MAX + 1):
+        return MKT_DISH_TYPE_STR + str(receptor_id - MKT_DISH_INSTANCE_OFFSET).zfill(DISH_TYPE_STR_LEN)
+
+    if receptor_id in range(SKA_DISH_INSTANCE_MIN + SKA_DISH_INSTANCE_OFFSET, SKA_DISH_INSTANCE_MAX + 1):
+        return SKA_DISH_TYPE_STR + str(receptor_id - SKA_DISH_INSTANCE_OFFSET).zfill(DISH_TYPE_STR_LEN)
 
 
 def receptor_id_dict() -> Dict[str, int]:
@@ -78,5 +109,5 @@ def receptor_id_dict() -> Dict[str, int]:
     """
     return {
         receptor_id_int_to_str(receptor): receptor
-        for receptor in range(1, 198)
+        for receptor in range(RECEPTOR_ID_MIN, RECEPTOR_ID_MAX)
     }
