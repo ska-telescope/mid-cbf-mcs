@@ -101,9 +101,12 @@ class TalonLRUComponentManager(CbfComponentManager):
         # TODO: implement
         # self._proxy_talondx_board1 = self.get_device_proxy(self._talon_fqdns[0])
         # self._proxy_talondx_board2 = self.get_device_proxy(self._talon_fqdns[1])
-        self._proxy_power_switch1 = self.get_device_proxy(self._pdu_fqdns[0])
+        self._proxy_power_switch1 = self.get_device_proxy(self._pdu_fqdns[0])        
         if self._pdu_fqdns[1] == self._pdu_fqdns[0]:
-            self._proxy_power_switch2 = self._proxy_power_switch1
+            if self._pdu_outlets[1] == self._pdu_outlets[0]: # only one outlet is in use
+                self._proxy_power_switch2 = None
+            else:
+                self._proxy_power_switch2 = self._proxy_power_switch1
         else:
             self._proxy_power_switch2 = self.get_device_proxy(
                 self._pdu_fqdns[1]
