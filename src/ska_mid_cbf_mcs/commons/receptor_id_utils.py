@@ -126,5 +126,5 @@ def receptor_id_dict() -> Dict[str, int]:
     """
     return {
         receptor_id_int_to_str(receptor): receptor
-        for receptor in range(RECEPTOR_ID_MIN, RECEPTOR_ID_MAX)
+        for receptor in range(RECEPTOR_ID_MIN, RECEPTOR_ID_MAX + 1)
     }
