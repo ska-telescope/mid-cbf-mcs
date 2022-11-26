@@ -140,7 +140,7 @@ update-db-port:  ## update Tango DB port so that the DB is accessible from the T
 	kubectl -n ska-mid-cbf patch service/tango-host-databaseds-from-makefile-test --type='json' -p '[{"op":"replace","path":"/spec/ports/0/nodePort","value": 30176}]'
 
 k8s-pre-test:
-	@kubectl exec -n $(KUBE_NAMESPACE) $(ARTIFACTS_POD) -- mkdir /app/mnt/talondx-config
+	@kubectl exec -n $(KUBE_NAMESPACE) $(ARTIFACTS_POD) -- mkdir -p /app/mnt/talondx-config
 	@kubectl cp mnt/talondx-config/talondx-config.json $(KUBE_NAMESPACE)/$(ARTIFACTS_POD):/app/mnt/talondx-config/talondx-config.json
 
 python-pre-lint:
