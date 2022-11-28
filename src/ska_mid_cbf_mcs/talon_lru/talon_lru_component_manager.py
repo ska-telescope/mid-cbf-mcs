@@ -250,7 +250,10 @@ class TalonLRUComponentManager(CbfComponentManager):
 
         if (
             self.pdu1_power_mode == expected_power_mode
-            and self.pdu2_power_mode == expected_power_mode
+            or self._proxy_power_switch1 is None
+        ) and (
+            self.pdu2_power_mode == expected_power_mode
+            or self._proxy_power_switch2 is None
         ):
             return
 
