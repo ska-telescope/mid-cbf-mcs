@@ -103,16 +103,7 @@ class TalonLRUComponentManager(CbfComponentManager):
         # self._proxy_talondx_board2 = self.get_device_proxy(self._talon_fqdns[1])
         self._proxy_power_switch1 = self.get_device_proxy(self._pdu_fqdns[0])
         if self._pdu_fqdns[1] == self._pdu_fqdns[0]:
-            if (
-                self._pdu_outlets[1] == self._pdu_outlets[0]
-            ):  # only one outlet is in use
-                self._proxy_power_switch2 = None
-            else:
-                self._proxy_power_switch2 = self._proxy_power_switch1
-        else:
-            self._proxy_power_switch2 = self.get_device_proxy(
-                self._pdu_fqdns[1]
-            )
+            self._proxy_power_switch2 = self._proxy_power_switch1
 
         if (self._proxy_power_switch1 is None) and (
             self._proxy_power_switch2 is None
@@ -228,11 +219,14 @@ class TalonLRUComponentManager(CbfComponentManager):
 
         if self._proxy_power_switch2 is not None:
             if self._proxy_power_switch2.numOutlets != 0:
-                self.pdu2_power_mode = (
-                    self._proxy_power_switch2.GetOutletPowerMode(
-                        self._pdu_outlets[1]
+                if self._pdu_outlets[1] == self._pdu_outlets[0]:
+                    self.pdu2_power_mode = self.pdu1_power_mode
+                else:
+                    self.pdu2_power_mode = (
+                        self._proxy_power_switch2.GetOutletPowerMode(
+                            self._pdu_outlets[1]
+                        )
                     )
-                )
             else:
                 self.pdu2_power_mode = PowerMode.UNKNOWN
         else:
@@ -250,10 +244,7 @@ class TalonLRUComponentManager(CbfComponentManager):
 
         if (
             self.pdu1_power_mode == expected_power_mode
-            or self._proxy_power_switch1 is None
-        ) and (
-            self.pdu2_power_mode == expected_power_mode
-            or self._proxy_power_switch2 is None
+            and self.pdu2_power_mode == expected_power_mode
         ):
             return
 
@@ -296,12 +287,15 @@ class TalonLRUComponentManager(CbfComponentManager):
 
             result2 = ResultCode.FAILED
             if self._proxy_power_switch2 is not None:
-                result2 = self._proxy_power_switch2.TurnOnOutlet(
-                    self._pdu_outlets[1]
-                )[0][0]
-                if result2 == ResultCode.OK:
-                    self.pdu2_power_mode = PowerMode.ON
-                    self._logger.info("PDU 2 successfully turned on.")
+                if self._pdu_fqdns[1] == self._pdu_fqdns[0] and self._pdu_outlets[1] == self._pdu_outlets[0]:
+                    result2 = result1
+                else:
+                    result2 = self._proxy_power_switch2.TurnOnOutlet(
+                        self._pdu_outlets[1]
+                    )[0][0]
+                    if result2 == ResultCode.OK:
+                        self.pdu2_power_mode = PowerMode.ON
+                        self._logger.info("PDU 2 successfully turned on.")
 
             # Determine what result code to return
             if result1 == ResultCode.FAILED and result2 == ResultCode.FAILED:
@@ -347,13 +341,16 @@ class TalonLRUComponentManager(CbfComponentManager):
                     self._logger.info("PDU 1 successfully turned off.")
 
             result2 = ResultCode.FAILED
-            if self._proxy_power_switch2 is not None:
-                result2 = self._proxy_power_switch2.TurnOffOutlet(
-                    self._pdu_outlets[1]
-                )[0][0]
-                if result2 == ResultCode.OK:
-                    self.pdu2_power_mode = PowerMode.OFF
-                    self._logger.info("PDU 2 successfully turned off.")
+            if self._proxy_power_switch2 is not None:                
+                if self._pdu_fqdns[1] == self._pdu_fqdns[0] and self._pdu_outlets[1] == self._pdu_outlets[0]:
+                    result2 = result1
+                else:
+                    result2 = self._proxy_power_switch2.TurnOffOutlet(
+                        self._pdu_outlets[1]
+                    )[0][0]
+                    if result2 == ResultCode.OK:
+                        self.pdu2_power_mode = PowerMode.OFF
+                        self._logger.info("PDU 2 successfully turned off.")
 
             # Determine what result code to return
             if result1 == ResultCode.FAILED and result2 == ResultCode.FAILED:
