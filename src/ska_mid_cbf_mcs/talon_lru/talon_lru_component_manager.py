@@ -287,7 +287,10 @@ class TalonLRUComponentManager(CbfComponentManager):
 
             result2 = ResultCode.FAILED
             if self._proxy_power_switch2 is not None:
-                if self._pdu_fqdns[1] == self._pdu_fqdns[0] and self._pdu_outlets[1] == self._pdu_outlets[0]:
+                if (
+                    self._pdu_fqdns[1] == self._pdu_fqdns[0]
+                    and self._pdu_outlets[1] == self._pdu_outlets[0]
+                ):
                     result2 = result1
                 else:
                     result2 = self._proxy_power_switch2.TurnOnOutlet(
@@ -341,8 +344,11 @@ class TalonLRUComponentManager(CbfComponentManager):
                     self._logger.info("PDU 1 successfully turned off.")
 
             result2 = ResultCode.FAILED
-            if self._proxy_power_switch2 is not None:                
-                if self._pdu_fqdns[1] == self._pdu_fqdns[0] and self._pdu_outlets[1] == self._pdu_outlets[0]:
+            if self._proxy_power_switch2 is not None:
+                if (
+                    self._pdu_fqdns[1] == self._pdu_fqdns[0]
+                    and self._pdu_outlets[1] == self._pdu_outlets[0]
+                ):
                     result2 = result1
                 else:
                     result2 = self._proxy_power_switch2.TurnOffOutlet(
