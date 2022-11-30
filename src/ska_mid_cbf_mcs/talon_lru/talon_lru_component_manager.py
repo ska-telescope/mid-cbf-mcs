@@ -223,7 +223,9 @@ class TalonLRUComponentManager(CbfComponentManager):
 
         if self._proxy_power_switch2 is not None:
             if self._proxy_power_switch2.numOutlets != 0:
-                if self._pdu_outlets[1] == self._pdu_outlets[0]:
+                if (self._pdu_fqdns[1] == self._pdu_fqdns[0]) and (
+                    self._pdu_outlets[1] == self._pdu_outlets[0]
+                ):
                     self.pdu2_power_mode = self.pdu1_power_mode
                 else:
                     self.pdu2_power_mode = (
