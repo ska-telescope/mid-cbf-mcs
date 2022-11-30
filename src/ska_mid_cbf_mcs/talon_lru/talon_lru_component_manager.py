@@ -104,6 +104,10 @@ class TalonLRUComponentManager(CbfComponentManager):
         self._proxy_power_switch1 = self.get_device_proxy(self._pdu_fqdns[0])
         if self._pdu_fqdns[1] == self._pdu_fqdns[0]:
             self._proxy_power_switch2 = self._proxy_power_switch1
+        else:
+            self._proxy_power_switch2 = self.get_device_proxy(
+                self._pdu_fqdns[1]
+            )
 
         if (self._proxy_power_switch1 is None) and (
             self._proxy_power_switch2 is None
@@ -291,6 +295,7 @@ class TalonLRUComponentManager(CbfComponentManager):
                     self._pdu_fqdns[1] == self._pdu_fqdns[0]
                     and self._pdu_outlets[1] == self._pdu_outlets[0]
                 ):
+                    self._logger.info("PDU 2 is not used.")
                     result2 = result1
                 else:
                     result2 = self._proxy_power_switch2.TurnOnOutlet(
@@ -349,6 +354,7 @@ class TalonLRUComponentManager(CbfComponentManager):
                     self._pdu_fqdns[1] == self._pdu_fqdns[0]
                     and self._pdu_outlets[1] == self._pdu_outlets[0]
                 ):
+                    self._logger.info("PDU 2 is not used.")
                     result2 = result1
                 else:
                     result2 = self._proxy_power_switch2.TurnOffOutlet(
