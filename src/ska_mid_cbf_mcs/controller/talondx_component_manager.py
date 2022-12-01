@@ -115,7 +115,7 @@ class TalonDxComponentManager:
                 port = os.getenv("EXTERNAL_DB_PORT")
             else:
                 namespace = os.getenv("NAMESPACE")
-                tango_host = os.getenv("TANGO_HOST").split(':')
+                tango_host = os.getenv("TANGO_HOST").split(":")
                 db_service_name = tango_host[0]
                 port = tango_host[1]
                 hostname = f"{db_service_name}.{namespace}.svc.cluster.local"
