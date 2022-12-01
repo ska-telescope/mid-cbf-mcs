@@ -115,8 +115,10 @@ class TalonDxComponentManager:
                 port = os.getenv("EXTERNAL_DB_PORT")
             else:
                 namespace = os.getenv("NAMESPACE")
-                port = 10000
-                hostname = f"tango-host-databaseds-from-makefile-test-external.{namespace}.svc.cluster.local"
+                tango_host = os.getenv("TANGO_HOST").split(":")
+                db_service_name = tango_host[0]
+                port = tango_host[1]
+                hostname = f"{db_service_name}.{namespace}.svc.cluster.local"
             replaced_text = hps_master_file_tmp.read().replace(
                 "<hostname>:<port>", f"{hostname}:{port}"
             )
