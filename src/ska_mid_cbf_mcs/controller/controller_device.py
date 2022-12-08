@@ -377,6 +377,7 @@ class CbfController(SKAController):
             subarray_fqdns_all=self.CbfSubarray,
             talon_lru_fqdns_all=self.TalonLRU,
             talondx_component_manager=self._talondx_component_manager,
+            talondx_config_path=self.TalonDxConfigPath,
             logger=self.logger,
             push_change_event=self.push_change_event,
             communication_status_changed_callback=self._communication_status_changed,

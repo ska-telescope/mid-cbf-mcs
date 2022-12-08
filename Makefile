@@ -34,7 +34,7 @@ PYTHON_VARS_BEFORE_PYTEST = PYTHONPATH=./src:/app/src:/app/src/ska_mid_cbf_mcs K
 # Ignoring 501 which checks line length. There are over 500 failures for this in the code due to commenting. 
 # Also ignoring 503 because operators can either be before or after line break(504). 
 # We are choosing a standard to have it before the line break and therefore 503 will be ignored.
-PYTHON_SWITCHES_FOR_FLAKE8 = --ignore=E501,W503
+PYTHON_SWITCHES_FOR_FLAKE8 = --ignore=E501,F407,W503
 
 
 # UMBRELLA_CHART_PATH Path of the umbrella chart to work with
@@ -73,6 +73,9 @@ CI_PROJECT_DIR ?= .
 KUBE_CONFIG_BASE64 ?=  ## base64 encoded kubectl credentials for KUBECONFIG
 KUBECONFIG ?= /etc/deploy/config ## KUBECONFIG location
 
+ARTIFACTS_POD = $(shell kubectl -n $(KUBE_NAMESPACE) get pod --no-headers --selector=vol=artifacts-admin -o custom-columns=':metadata.name')
+
+HOST_IP = $(shell ifconfig eno2 | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*')
 
 XAUTHORITYx ?= ${XAUTHORITY}
 THIS_HOST := $(shell ifconfig | sed -En 's/127.0.0.1//;s/.*inet (addr:)?(([0-9]*\.){3}[0-9]*).*/\2/p' | head -n1)
@@ -89,10 +92,11 @@ TEST_RUNNER = test-runner-$(CI_JOB_ID)-$(KUBE_NAMESPACE)-$(HELM_RELEASE)
 
 ifneq ($(strip $(CI_JOB_ID)),)
 K8S_TEST_IMAGE_TO_TEST = $(CI_REGISTRY)/ska-telescope/ska-mid-cbf-mcs/ska-mid-cbf-mcs:$(VERSION)-dev.c$(CI_COMMIT_SHORT_SHA)
-K8S_CHART_PARAMS = --set global.tango_host=$(TANGO_HOST) --set ska-mid-cbf-tmleafnode.midcbf.image.registry=$(CI_REGISTRY)/ska-telescope/ska-mid-cbf-mcs --set ska-mid-cbf-mcs.midcbf.image.registry=$(CI_REGISTRY)/ska-telescope/ska-mid-cbf-mcs
+K8S_CHART_PARAMS = --set global.minikube=false --set global.tango_host=$(TANGO_HOST) --set ska-mid-cbf-tmleafnode.midcbf.image.registry=$(CI_REGISTRY)/ska-telescope/ska-mid-cbf-mcs --set ska-mid-cbf-mcs.midcbf.image.registry=$(CI_REGISTRY)/ska-telescope/ska-mid-cbf-mcs --set ska-mid-cbf-mcs.midcbf.image.tag=$(VERSION)-dev.c$(CI_COMMIT_SHORT_SHA)
 else
+PYTHON_RUNNER = python3 -m
 K8S_TEST_IMAGE_TO_TEST = artefact.skao.int/ska-mid-cbf-mcs:$(VERSION)
-K8S_CHART_PARAMS = --set global.tango_host=$(TANGO_HOST)
+K8S_CHART_PARAMS = --set global.tango_host=$(TANGO_HOST) --set ska-mid-cbf-mcs.hostInfo.hostIP="$(HOST_IP)" --values taranta-values.yaml
 endif
 
 K8S_TEST_TEST_COMMAND ?= ls -lrt &&  $(PYTHON_VARS_BEFORE_PYTEST) $(PYTHON_RUNNER) \
@@ -135,22 +139,15 @@ jive: ## configure TANGO_HOST to enable Jive
 update-db-port:  ## update Tango DB port so that the DB is accessible from the Talon boards on the Dell server
 	kubectl -n ska-mid-cbf patch service/tango-host-databaseds-from-makefile-test --type='json' -p '[{"op":"replace","path":"/spec/ports/0/nodePort","value": 30176}]'
 
+k8s-pre-test:
+	@kubectl exec -n $(KUBE_NAMESPACE) $(ARTIFACTS_POD) -- mkdir -p /app/mnt/talondx-config
+	@kubectl cp mnt/talondx-config/talondx-config.json $(KUBE_NAMESPACE)/$(ARTIFACTS_POD):/app/mnt/talondx-config/talondx-config.json
+
+python-pre-lint:
+	@pip3 install black isort flake8 pylint_junit typing_extensions
+
 documentation:   ## ## Re-generate documentation
 	cd docs && make clean && make html
-	
-# pull and interactive preserved from docker.mk
-###############################################
-# pull:  ## download the application image
-# 	docker pull $(IMAGE_TO_TEST)
-
-# # piplock: build  ## overwrite Pipfile.lock with the image version
-# # 	docker run $(IMAGE_TO_TEST) cat /app/Pipfile.lock > $(CURDIR)/Pipfile.lock
-
-# interactive:  ## start an interactive session 
-# 	docker run --rm -it -p 3000:3000 --name=$(CONTAINER_NAME_PREFIX)dev -e TANGO_HOST=$(TANGO_HOST)  -v $(CURDIR):/app $(IMAGE_TO_TEST) /bin/bash
-###############################################
-
-#pytest $(if $(findstring all,$(MARK)),, -m '$(MARK)')
 
 help: ## show this help.
 	@echo "make targets:"

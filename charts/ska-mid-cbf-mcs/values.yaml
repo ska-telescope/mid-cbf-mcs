@@ -40,7 +40,7 @@ midcbf:
   image:
     registry: artefact.skao.int
     image: ska-mid-cbf-mcs
-    tag: 0.6.3
+    tag: 0.6.10
     pullPolicy: IfNotPresent
 
 resources:
@@ -81,3 +81,7 @@ affinity: {}
 
 tolerations: []
 
+hostInfo:
+  environment: "minikube"
+  hostIP: "127.0.0.1"
+  externalPort: 10001

@@ -43,7 +43,7 @@ server:
             - "mid_csp_cbf/power_switch/001"
           - name: "PDU2PowerOutlet"
             values:
-            - "1"
+            - "0"
           - name: "polled_attr"
             values:
             - "state"
@@ -70,13 +70,13 @@ server:
             - "mid_csp_cbf/power_switch/001"
           - name: "PDU1PowerOutlet"
             values:
-            - "2"
+            - "1"
           - name: "PDU2Address"
             values:
             - "mid_csp_cbf/power_switch/001"
           - name: "PDU2PowerOutlet"
             values:
-            - "3"
+            - "1"
           - name: "polled_attr"
             values:
             - "state"

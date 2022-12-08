@@ -11,7 +11,9 @@
 
 from __future__ import annotations
 
+import json
 import logging
+import os
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import tango
@@ -45,6 +47,7 @@ class ControllerComponentManager(CbfComponentManager):
         fsp_fqdns_all: List[str],
         talon_lru_fqdns_all: List[str],
         talondx_component_manager: TalonDxComponentManager,
+        talondx_config_path: str,
         logger: logging.Logger,
         push_change_event: Optional[Callable],
         communication_status_changed_callback: Callable[
@@ -63,6 +66,8 @@ class ControllerComponentManager(CbfComponentManager):
         :param fsp_fqdns_all: FQDNS of all the Fsp devices
         :param talon_lru_fqdns_all: FQDNS of all the Talon LRU devices
         :talondx_component_manager: component manager for the Talon LRU
+        :param talondx_config_path: path to the directory containing configuration
+                                    files and artifacts for the Talon boards
         :param logger: a logger for this object to use
         :param push_change_event: method to call when the base classes
             want to send an event
@@ -95,6 +100,8 @@ class ControllerComponentManager(CbfComponentManager):
 
         # TODO: component manager should not be passed into component manager
         self._talondx_component_manager = talondx_component_manager
+
+        self._talondx_config_path = talondx_config_path
 
         self._max_capabilities = ""
 
@@ -672,6 +679,25 @@ class ControllerComponentManager(CbfComponentManager):
             # Power on all the Talon boards
             # TODO: There are two VCCs per LRU. Need to check the number of
             #       VCCs turned on against the number of LRUs powered on
+            if len(self._fqdn_talon_lru) == 0:
+                talondx_config_file = open(
+                    os.path.join(
+                        os.getcwd(),
+                        self._talondx_config_path,
+                        "talondx-config.json",
+                    )
+                )
+
+                talondx_config_json = json.load(talondx_config_file)
+
+                talon_lru_fqdn_set = set()
+                for config_command in talondx_config_json["config_commands"]:
+                    talon_lru_fqdn_set.add(config_command["talon_lru_fqdn"])
+                self._logger.info(f"talonlru list = {talon_lru_fqdn_set}")
+
+                # TODO: handle subscribed events for missing LRUs
+                self._fqdn_talon_lru = list(talon_lru_fqdn_set)
+
             try:
                 for fqdn in self._fqdn_talon_lru:
                     self._proxies[fqdn].On()
@@ -719,9 +745,27 @@ class ControllerComponentManager(CbfComponentManager):
         """
 
         if self._connected:
+            if len(self._fqdn_talon_lru) == 0:
+                talondx_config_file = open(
+                    os.path.join(
+                        os.getcwd(),
+                        self._talondx_config_path,
+                        "talondx-config.json",
+                    )
+                )
+                talondx_config_json = json.load(talondx_config_file)
+
+                talon_lru_fqdn_set = set()
+                for config_command in talondx_config_json["config_commands"]:
+                    talon_lru_fqdn_set.add(config_command["talon_lru_fqdn"])
+                self._logger.info(f"talonlru list = {talon_lru_fqdn_set}")
+
+                # TODO: handle subscribed events for missing LRUs
+                self._fqdn_talon_lru = list(talon_lru_fqdn_set)
+
             try:
-                for talon_lru_fqdn in self._fqdn_talon_lru:
-                    self._proxies[talon_lru_fqdn].Off()
+                for fqdn in self._fqdn_talon_lru:
+                    self._proxies[fqdn].Off()
             except tango.DevFailed:
                 log_msg = "Failed to power off Talon boards"
                 self._logger.error(log_msg)
@@ -771,7 +815,6 @@ class ControllerComponentManager(CbfComponentManager):
         if self._connected:
 
             try:
-                self._group_subarray.command_inout("Standby")
                 self._group_vcc.command_inout("Standby")
                 self._group_fsp.command_inout("Standby")
             except tango.DevFailed:

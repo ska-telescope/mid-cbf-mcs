@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 
 import backoff
 import tango
@@ -35,14 +36,6 @@ class TalonDxComponentManager:
     """
     A component manager for the Talon-DX boards. Used to configure and start
     the Tango applications on the HPS of each board.
-
-    :param talondx_config_path: path to the directory containing configuration
-                                    files and artifacts for the Talon boards
-    :param simulation_mode: simulation mode identifies if the real Talon boards or
-                            a simulator should be used; note that currently there
-                            is no simulator for the Talon boards, so the component
-                            manager does nothing when in simulation mode
-    :param logger: a logger for this object to use
     """
 
     def __init__(
@@ -54,6 +47,13 @@ class TalonDxComponentManager:
         """
         Initialise a new instance.
 
+        :param talondx_config_path: path to the directory containing configuration
+                                    files and artifacts for the Talon boards
+        :param simulation_mode: simulation mode identifies if the real Talon boards or
+                                a simulator should be used; note that currently there
+                                is no simulator for the Talon boards, so the component
+                            manager does nothing when in simulation mode
+        :param logger: a logger for this object to use
         :param logger: a logger for this object to use
         """
         self.talondx_config_path = talondx_config_path
@@ -82,6 +82,9 @@ class TalonDxComponentManager:
             self.logger.error(f"Could not open {config_path} file")
             return ResultCode.FAILED
 
+        if self._setup_tango_host_file() == ResultCode.FAILED:
+            return ResultCode.FAILED
+
         if self._copy_binaries_and_bitstream() == ResultCode.FAILED:
             return ResultCode.FAILED
 
@@ -95,6 +98,32 @@ class TalonDxComponentManager:
             return ResultCode.FAILED
 
         return ResultCode.OK
+
+    def _setup_tango_host_file(
+        self: TalonDxComponentManager,
+    ) -> None:
+        """
+        Copy the hps_master_mcs.sh file from mnt into mnt/talondx-config
+
+        :return: ResultCode.OK if all artifacts were copied successfully,
+                 otherwise ResultCode.FAILED
+        """
+        with open("hps_master_mcs_tmp.sh") as hps_master_file_tmp:
+            environment = os.getenv("ENVIRONMENT")
+            if environment == "minikube":
+                hostname = os.getenv("MINIKUBE_HOST_IP")
+                port = os.getenv("EXTERNAL_DB_PORT")
+            else:
+                namespace = os.getenv("NAMESPACE")
+                tango_host = os.getenv("TANGO_HOST").split(":")
+                db_service_name = tango_host[0]
+                port = tango_host[1]
+                hostname = f"{db_service_name}.{namespace}.svc.cluster.local"
+            replaced_text = hps_master_file_tmp.read().replace(
+                "<hostname>:<port>", f"{hostname}:{port}"
+            )
+        with open("hps_master_mcs.sh", "w") as hps_master_file:
+            hps_master_file.write(replaced_text)
 
     def _secure_copy(
         self: TalonDxComponentManager,
@@ -172,6 +201,13 @@ class TalonDxComponentManager:
                     self._secure_copy(
                         ssh_client=ssh_client,
                         src=f"{src_dir}/dshpsmaster/bin/dshpsmaster",
+                        dest="/lib/firmware/hps_software",
+                    )
+
+                    # Copy HPS master run script
+                    self._secure_copy(
+                        ssh_client=ssh_client,
+                        src="hps_master_mcs.sh",
                         dest="/lib/firmware/hps_software",
                     )
 

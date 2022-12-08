@@ -54,7 +54,7 @@ disable=C,R,W,
         invalid-name,no-init,no-member,no-self-use,
 	no-name-in-module,unused-argument,
         fixme,broad-except,redefined-builtin,
-	undefined-variable, access-member-before-definition
+	undefined-variable, access-member-before-definition,unrecognized-option
 
 
 [REPORTS]
