@@ -270,7 +270,9 @@ class FspPssSubarrayComponentManager(
 
             self._remove_all_receptors()
             # "receptor_ids" values are pairs of str and int
-            receptors_to_add = [receptor[1] for receptor in searchBeam["receptor_ids"]]
+            receptors_to_add = [
+                receptor[1] for receptor in searchBeam["receptor_ids"]
+            ]
             self._add_receptors(receptors_to_add)
             self._search_beams.append(json.dumps(searchBeam))
             self._search_beam_id.append(int(searchBeam["search_beam_id"]))

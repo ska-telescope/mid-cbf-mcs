@@ -21,7 +21,7 @@ import pytest
 from ska_tango_base.control_model import AdminMode, ObsState
 from tango import DevState
 
-from ska_mid_cbf_mcs.commons.global_enum import const, FspModes, freq_band_dict
+from ska_mid_cbf_mcs.commons.global_enum import FspModes, const, freq_band_dict
 from ska_mid_cbf_mcs.commons.receptor_utils import ReceptorUtils
 
 # Data file path
@@ -164,7 +164,9 @@ class TestCbfSubarray:
             assert all(
                 [
                     test_proxies.vcc[
-                        test_proxies.receptor_to_vcc[self.receptor_utils.receptors[i]]
+                        test_proxies.receptor_to_vcc[
+                            self.receptor_utils.receptors[i]
+                        ]
                     ].subarrayMembership
                     == sub_id
                     for i in receptor_ids[:-1]
@@ -208,7 +210,9 @@ class TestCbfSubarray:
             assert all(
                 [
                     test_proxies.vcc[
-                        test_proxies.receptor_to_vcc[self.receptor_utils.receptors[i]]
+                        test_proxies.receptor_to_vcc[
+                            self.receptor_utils.receptors[i]
+                        ]
                     ].subarrayMembership
                     == 0
                     for i in receptors_to_remove
@@ -307,7 +311,9 @@ class TestCbfSubarray:
             assert all(
                 [
                     test_proxies.vcc[
-                        test_proxies.receptor_to_vcc[self.receptor_utils.receptors[i]]
+                        test_proxies.receptor_to_vcc[
+                            self.receptor_utils.receptors[i]
+                        ]
                     ].subarrayMembership
                     == 1
                     for i in receptor_ids
@@ -330,7 +336,9 @@ class TestCbfSubarray:
             assert all(
                 [
                     test_proxies.vcc[
-                        test_proxies.receptor_to_vcc[self.receptor_utils.receptors[i]]
+                        test_proxies.receptor_to_vcc[
+                            self.receptor_utils.receptors[i]
+                        ]
                     ].subarrayMembership
                     == 1
                     for i in receptor_ids
@@ -410,7 +418,9 @@ class TestCbfSubarray:
             assert all(
                 [
                     test_proxies.vcc[
-                        test_proxies.receptor_to_vcc[self.receptor_utils.receptors[i]]
+                        test_proxies.receptor_to_vcc[
+                            self.receptor_utils.receptors[i]
+                        ]
                     ].subarrayMembership
                     == 1
                     for i in receptor_ids
@@ -514,7 +524,9 @@ class TestCbfSubarray:
             assert all(
                 [
                     test_proxies.vcc[
-                        test_proxies.receptor_to_vcc[self.receptor_utils.receptors[i]]
+                        test_proxies.receptor_to_vcc[
+                            self.receptor_utils.receptors[i]
+                        ]
                     ].subarrayMembership
                     == sub_id
                     for i in receptor_ids
@@ -534,7 +546,9 @@ class TestCbfSubarray:
             assert all(
                 [
                     test_proxies.vcc[
-                        test_proxies.receptor_to_vcc[self.receptor_utils.receptors[i]]
+                        test_proxies.receptor_to_vcc[
+                            self.receptor_utils.receptors[i]
+                        ]
                     ].subarrayMembership
                     == 0
                     for i in receptor_ids
@@ -788,7 +802,9 @@ class TestCbfSubarray:
                         if "tdc_destination_address" in search_window:
                             for t in search_window["tdc_destination_address"]:
                                 if (
-                                    self.receptor_utils.receptors[t["receptor_id"]]
+                                    self.receptor_utils.receptors[
+                                        t["receptor_id"]
+                                    ]
                                     == r
                                 ):
                                     tdcDestAddr = t["tdc_destination_address"]
@@ -834,15 +850,21 @@ class TestCbfSubarray:
                     )
                     # TODO currently only support for one receptor so only index 0 is checked
                     if "receptor_ids" in fsp:
-                        assert test_proxies.fspSubarray["CORR"][sub_id][
-                            fsp_id
-                        ].receptors == self.receptor_utils.receptors[
-                            fsp["receptor_ids"][0]
-                        ]
+                        assert (
+                            test_proxies.fspSubarray["CORR"][sub_id][
+                                fsp_id
+                            ].receptors
+                            == self.receptor_utils.receptors[
+                                fsp["receptor_ids"][0]
+                            ]
+                        )
                     else:
-                        assert test_proxies.fspSubarray["CORR"][sub_id][
-                            fsp_id
-                        ].receptors == self.receptor_utils.receptors[receptor_ids[0]]
+                        assert (
+                            test_proxies.fspSubarray["CORR"][sub_id][
+                                fsp_id
+                            ].receptors
+                            == self.receptor_utils.receptors[receptor_ids[0]]
+                        )
                     assert (
                         test_proxies.fspSubarray["CORR"][sub_id][
                             fsp_id
@@ -981,11 +1003,12 @@ class TestCbfSubarray:
                             == fsp["search_beam"][idx]["search_beam_id"]
                         )
                         # TODO currently only one receptor supported
-                        assert searchBeam["receptor_ids"][
-                            0
-                        ] == self.receptor_utils.receptors[
-                            fsp["search_beam"][idx]["receptor_ids"][0]
-                        ]
+                        assert (
+                            searchBeam["receptor_ids"][0]
+                            == self.receptor_utils.receptors[
+                                fsp["search_beam"][idx]["receptor_ids"][0]
+                            ]
+                        )
                         assert (
                             searchBeam["enable_output"]
                             == fsp["search_beam"][idx]["enable_output"]
@@ -1353,7 +1376,9 @@ class TestCbfSubarray:
 
             for weights in timing_beam_weights["beamWeights"]:
                 for receptor in weights["beamWeightsDetails"]:
-                    rec_id = self.receptor_utils.receptors[receptor["receptor"]]
+                    rec_id = self.receptor_utils.receptors[
+                        receptor["receptor"]
+                    ]
                     fs_id = receptor["receptorWeightsDetails"][0]["fsid"]
                     for index, value in enumerate(
                         receptor["receptorWeightsDetails"][0]["weights"]
@@ -2016,7 +2041,9 @@ class TestCbfSubarray:
                 for receptor in jones_matrix["jonesMatrix"][
                     jones_matrix_index_per_epoch[epoch]
                 ]["matrixDetails"]:
-                    rec_id = self.receptor_utils.receptors[receptor["receptor"]]
+                    rec_id = self.receptor_utils.receptors[
+                        receptor["receptor"]
+                    ]
                     for frequency_slice in receptor["receptorMatrix"]:
                         for index, value in enumerate(
                             frequency_slice["matrix"]

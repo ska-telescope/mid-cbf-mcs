@@ -8,7 +8,7 @@
 """This module implements utilities for managing DISH/receptor identifiers."""
 
 from __future__ import annotations  # allow forward references in type hints
-import importlib.resources
+
 import json
 import pkgutil
 from typing import Dict
@@ -48,9 +48,7 @@ class ReceptorUtils:
         return self._receptor_id_dict
 
     def __init__(
-        self: ReceptorUtils,
-        receptor_json_file: str,
-        num_vcc: int
+        self: ReceptorUtils, receptor_json_file: str, num_vcc: int
     ) -> None:
         """
         Initialize a new instance.
@@ -59,15 +57,22 @@ class ReceptorUtils:
         :param num_vcc: number of VCCs in the system
         """
         # load the receptor ID dictionary from specified JSON file
-        self._receptor_id_dict = json.loads(pkgutil.get_data(__name__, f"receptor_id_dict/{receptor_json_file}").decode("utf-8"))
+        self._receptor_id_dict = json.loads(
+            pkgutil.get_data(
+                __name__, f"receptor_id_dict/{receptor_json_file}"
+            ).decode("utf-8")
+        )
         if len(self._receptor_id_dict) != num_vcc:
-            raise ValueError(f"Incorrect number ({len(self._receptor_id_dict)}) of receptors specified in file {receptor_json_file} ; {num_vcc} VCCs currently available.")
+            raise ValueError(
+                f"Incorrect number ({len(self._receptor_id_dict)}) of receptors specified in file {receptor_json_file} ; {num_vcc} VCCs currently available."
+            )
         for receptor_id_str, receptor_id_int in self._receptor_id_dict.items():
             if receptor_id_int != self.receptor_id_str_to_int(receptor_id_str):
-                raise ValueError(f"Encountered an incorrect entry for DISH ID {receptor_id_str}: {receptor_id_int} (should be {self.receptor_id_str_to_int(receptor_id_str)})")
+                raise ValueError(
+                    f"Encountered an incorrect entry for DISH ID {receptor_id_str}: {receptor_id_int} (should be {self.receptor_id_str_to_int(receptor_id_str)})"
+                )
 
-
-    def receptor_id_str_to_int(self:ReceptorUtils, receptor_id: str) -> int:
+    def receptor_id_str_to_int(self: ReceptorUtils, receptor_id: str) -> int:
         """
         Convert DISH/receptor ID mnemonic string to integer.
 
@@ -75,8 +80,8 @@ class ReceptorUtils:
 
         :return: the DISH/receptor ID as a sequential integer (1 to 197)
         """
-        receptor_prefix = receptor_id[:self.DISH_TYPE_STR_LEN]
-        receptor_number = receptor_id[self.DISH_TYPE_STR_LEN:]
+        receptor_prefix = receptor_id[: self.DISH_TYPE_STR_LEN]
+        receptor_number = receptor_id[self.DISH_TYPE_STR_LEN :]
 
         if (
             receptor_prefix != self.SKA_DISH_TYPE_STR
@@ -111,8 +116,7 @@ class ReceptorUtils:
             else:
                 return int(receptor_number) + self.SKA_DISH_INSTANCE_OFFSET
 
-
-    def receptor_id_int_to_str(self:ReceptorUtils, receptor_id: int) -> str:
+    def receptor_id_int_to_str(self: ReceptorUtils, receptor_id: int) -> str:
         """
         Convert DISH/receptor ID integer to mnemonic string.
 
@@ -120,7 +124,9 @@ class ReceptorUtils:
 
         :return: the DISH/receptor ID mnemonic as a string
         """
-        if receptor_id not in range(self.RECEPTOR_ID_MIN, self.RECEPTOR_ID_MAX + 1):
+        if receptor_id not in range(
+            self.RECEPTOR_ID_MIN, self.RECEPTOR_ID_MAX + 1
+        ):
             raise ValueError(
                 f"Incorrect receptor instance. ID should be in the range {self.RECEPTOR_ID_MIN} to {self.RECEPTOR_ID_MAX}."
             )
@@ -141,8 +147,7 @@ class ReceptorUtils:
                 receptor_id - self.SKA_DISH_INSTANCE_OFFSET
             ).zfill(self.DISH_TYPE_STR_LEN)
 
-
-    def receptor_id_dict(self:ReceptorUtils) -> Dict[str, int]:
+    def receptor_id_dict(self: ReceptorUtils) -> Dict[str, int]:
         """
         Output DISH ID string mnemonic to int in a dictionary.
 
@@ -150,5 +155,7 @@ class ReceptorUtils:
         """
         return {
             self.receptor_id_int_to_str(receptor): receptor
-            for receptor in range(self.RECEPTOR_ID_MIN, self.RECEPTOR_ID_MAX + 1)
+            for receptor in range(
+                self.RECEPTOR_ID_MIN, self.RECEPTOR_ID_MAX + 1
+            )
         }

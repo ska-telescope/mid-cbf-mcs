@@ -168,7 +168,9 @@ class CbfSubarrayComponentManager(
 
         self._logger.info("Entering CbfSubarrayComponentManager.__init__)")
 
-        self._receptor_utils = ReceptorUtils(receptor_json_file=receptor_json_file, num_vcc=const.MAX_VCC)
+        self._receptor_utils = ReceptorUtils(
+            receptor_json_file=receptor_json_file, num_vcc=const.MAX_VCC
+        )
 
         self._component_op_fault_callback = component_fault_callback
         self._component_obs_fault_callback = component_obs_fault_callback
@@ -298,9 +300,15 @@ class CbfSubarrayComponentManager(
                 )
                 self._count_vcc = int(self._controller_max_capabilities["VCC"])
                 self._count_fsp = int(self._controller_max_capabilities["FSP"])
-                for receptor_vcc_pair in self._proxy_cbf_controller.receptorToVcc:
+                for (
+                    receptor_vcc_pair
+                ) in self._proxy_cbf_controller.receptorToVcc:
                     receptor_vcc_pair = receptor_vcc_pair.split(":")
-                    self._receptor_to_vcc[self._receptor_utils.receptor_id_int_to_str(receptor_vcc_pair[0])] = int(receptor_vcc_pair[1])
+                    self._receptor_to_vcc[
+                        self._receptor_utils.receptor_id_int_to_str(
+                            receptor_vcc_pair[0]
+                        )
+                    ] = int(receptor_vcc_pair[1])
                 self._logger.debug(f"{self._receptor_to_vcc}")
 
                 self._fqdn_vcc = self._fqdn_vcc[: self._count_vcc]
@@ -493,7 +501,10 @@ class CbfSubarrayComponentManager(
                     # pass receptor IDs as pair of str and int to FPSs and VCCs
                     for model in delay_model["delayDetails"]:
                         receptor_id = model["receptor"]
-                        model["receptor"] = [receptor_id, self._receptor_utils.receptors[receptor_id]]
+                        model["receptor"] = [
+                            receptor_id,
+                            self._receptor_utils.receptors[receptor_id],
+                        ]
                     t = Thread(
                         target=self._update_delay_model,
                         args=(
@@ -575,7 +586,10 @@ class CbfSubarrayComponentManager(
                     # pass receptor IDs as pair of str and int to FPSs and VCCs
                     for matrix in jones_matrix["matrixDetails"]:
                         receptor_id = matrix["receptor"]
-                        matrix["receptor"] = [receptor_id, self._receptor_utils.receptors[receptor_id]]
+                        matrix["receptor"] = [
+                            receptor_id,
+                            self._receptor_utils.receptors[receptor_id],
+                        ]
                     t = Thread(
                         target=self._update_jones_matrix,
                         args=(
@@ -663,7 +677,10 @@ class CbfSubarrayComponentManager(
                     # pass receptor IDs as pair of str and int to FPSs and VCCs
                     for weights in beam_weights["beamWeightsDetails"]:
                         receptor_id = weights["receptor"]
-                        weights["receptor"] = [receptor_id, self._receptor_utils.receptors[receptor_id]]
+                        weights["receptor"] = [
+                            receptor_id,
+                            self._receptor_utils.receptors[receptor_id],
+                        ]
                     t = Thread(
                         target=self._update_timing_beam_weights,
                         args=(
@@ -1111,7 +1128,9 @@ class CbfSubarrayComponentManager(
                         # TODO - In this case by the ICD, all subarray allocated resources should be used.
                         # TODO add support for more than one receptor per fsp
                         # fsp["receptor_ids"] = self._receptors
-                        fsp["receptor_ids"] = self._receptor_utils.receptors[self._receptors[0]]
+                        fsp["receptor_ids"] = self._receptor_utils.receptors[
+                            self._receptors[0]
+                        ]
 
                     frequencyBand = freq_band_dict()[fsp["frequency_band"]]
                     # Validate frequencySliceID.
@@ -1420,7 +1439,11 @@ class CbfSubarrayComponentManager(
                             # This is always given, due to implementation details.
                             # TODO assume always given, as there is currently only support for 1 receptor/beam
                             if "receptor_ids" not in searchBeam:
-                                searchBeam["receptor_ids"] = self._receptor_utils.receptors[self._receptors[0]]
+                                searchBeam[
+                                    "receptor_ids"
+                                ] = self._receptor_utils.receptors[
+                                    self._receptors[0]
+                                ]
 
                             # Sanity check:
                             for receptor in searchBeam["receptor_ids"]:
@@ -1514,7 +1537,10 @@ class CbfSubarrayComponentManager(
                                         self._logger.error(msg)
                                         return (False, msg)
                             else:
-                                timingBeam["receptor_ids"] = [self._receptor_utils.receptors[receptor] for receptor in self._receptors]
+                                timingBeam["receptor_ids"] = [
+                                    self._receptor_utils.receptors[receptor]
+                                    for receptor in self._receptors
+                                ]
 
                             if (
                                 timingBeam["enable_output"] is False
@@ -1704,7 +1730,12 @@ class CbfSubarrayComponentManager(
                     ]
                 # pass receptor IDs as pair of str and int to VCCs
                 for tdc_dest in search_window["tdc_destination_address"]:
-                    tdc_dest["receptor_id"] = [tdc_dest["receptor_id"], self._receptor_utils.receptors[tdc_dest["receptor_id"]]]
+                    tdc_dest["receptor_id"] = [
+                        tdc_dest["receptor_id"],
+                        self._receptor_utils.receptors[
+                            tdc_dest["receptor_id"]
+                        ],
+                    ]
                 # pass on configuration to VCC
                 data = tango.DeviceData()
                 data.insert(tango.DevString, json.dumps(search_window))
@@ -1771,10 +1802,18 @@ class CbfSubarrayComponentManager(
             if fsp["function_mode"] == "CORR":
                 if "receptor_ids" not in fsp:
                     # TODO In this case by the ICD, all subarray allocated resources should be used.
-                    fsp["receptor_ids"] = [[self._receptors[0], self._receptor_utils.receptors[self._receptors[0]]]]
+                    fsp["receptor_ids"] = [
+                        [
+                            self._receptors[0],
+                            self._receptor_utils.receptors[self._receptors[0]],
+                        ]
+                    ]
                 else:
                     for i, receptor in enumerate(fsp["receptor_ids"]):
-                        fsp["receptor_ids"][i] = [receptor, self._receptor_utils.receptors[receptor]]
+                        fsp["receptor_ids"][i] = [
+                            receptor,
+                            self._receptor_utils.receptors[receptor],
+                        ]
                 self._corr_config.append(fsp)
                 self._corr_fsp_list.append(fsp["fsp_id"])
 
@@ -1783,14 +1822,21 @@ class CbfSubarrayComponentManager(
                 for searchBeam in fsp["search_beam"]:
                     if "receptor_ids" not in searchBeam:
                         # In this case by the ICD, all subarray allocated resources should be used.
-                        searchBeam["receptor_ids"] = [[receptor, self._receptor_utils.receptors[receptor]] for receptor in self._receptors]
+                        searchBeam["receptor_ids"] = [
+                            [
+                                receptor,
+                                self._receptor_utils.receptors[receptor],
+                            ]
+                            for receptor in self._receptors
+                        ]
                     else:
                         for i, receptor in enumerate(
                             searchBeam["receptor_ids"]
                         ):
-                            searchBeam["receptor_ids"][
-                                i
-                            ] = [receptor, self._receptor_utils.receptors[receptor]]
+                            searchBeam["receptor_ids"][i] = [
+                                receptor,
+                                self._receptor_utils.receptors[receptor],
+                            ]
                 self._pss_config.append(fsp)
                 self._pss_fsp_list.append(fsp["fsp_id"])
 
@@ -1798,14 +1844,21 @@ class CbfSubarrayComponentManager(
                 for timingBeam in fsp["timing_beam"]:
                     if "receptor_ids" not in timingBeam:
                         # In this case by the ICD, all subarray allocated resources should be used.
-                        timingBeam["receptor_ids"] = [[receptor, self._receptor_utils.receptors[receptor]] for receptor in self._receptors]
+                        timingBeam["receptor_ids"] = [
+                            [
+                                receptor,
+                                self._receptor_utils.receptors[receptor],
+                            ]
+                            for receptor in self._receptors
+                        ]
                     else:
                         for i, receptor in enumerate(
                             timingBeam["receptor_ids"]
                         ):
-                            timingBeam["receptor_ids"][
-                                i
-                            ] = [receptor, self._receptor_utils.receptors[receptor]]
+                            timingBeam["receptor_ids"][i] = [
+                                receptor,
+                                self._receptor_utils.receptors[receptor],
+                            ]
                 self._pst_config.append(fsp)
                 self._pst_fsp_list.append(fsp["fsp_id"])
 
@@ -1889,7 +1942,9 @@ class CbfSubarrayComponentManager(
 
             # convert receptor ID to int, check for unimplemented receptorID
             try:
-                if self._receptor_utils.receptors[receptor_id] not in range(1, const.MAX_VCC + 1):
+                if self._receptor_utils.receptors[receptor_id] not in range(
+                    1, const.MAX_VCC + 1
+                ):
                     raise ValueError(
                         f"Unimplemented receptor ID {receptor_id}."
                     )
@@ -2025,7 +2080,9 @@ class CbfSubarrayComponentManager(
 
             # convert receptor ID to int, check for unimplemented receptorID
             try:
-                if self._receptor_utils.receptors[receptor_id] not in range(1, const.MAX_VCC + 1):
+                if self._receptor_utils.receptors[receptor_id] not in range(
+                    1, const.MAX_VCC + 1
+                ):
                     raise ValueError(
                         f"Unimplemented receptor ID {receptor_id}."
                     )

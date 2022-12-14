@@ -369,7 +369,9 @@ class FspCorrSubarrayComponentManager(
 
         self._remove_all_receptors()
         # "receptor_ids" values are pairs of str and int
-        receptors_to_add = [receptor[1] for receptor in configuration["receptor_ids"]]
+        receptors_to_add = [
+            receptor[1] for receptor in configuration["receptor_ids"]
+        ]
         self._add_receptors(receptors_to_add)
 
         self._frequency_slice_id = int(configuration["frequency_slice_id"])
