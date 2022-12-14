@@ -22,7 +22,6 @@ import pytest
 from ska_tango_base.commands import ResultCode
 
 from ska_mid_cbf_mcs.commons.global_enum import freq_band_dict
-from ska_mid_cbf_mcs.commons.receptor_id_utils import receptor_id_str_to_int
 from ska_mid_cbf_mcs.vcc.vcc_component_manager import VccComponentManager
 
 # Data file paths
@@ -151,8 +150,8 @@ class TestVccComponentManager:
         matrix_len = 16
         for m in jones_matrix["jonesMatrix"]:
             for receptor in m["matrixDetails"]:
-                rec_id = receptor_id_str_to_int(receptor["receptor"])
-                if rec_id == vcc_component_manager.receptor_id:
+                receptor_index = receptor["receptor"]
+                if receptor_index == vcc_component_manager.receptor_id:
                     for frequency_slice in receptor["receptorMatrix"]:
                         fs_id = frequency_slice["fsid"]
                         matrix = frequency_slice["matrix"]
@@ -208,18 +207,16 @@ class TestVccComponentManager:
         delay_model = json.loads(json_str_model)
 
         # update the delay model
-        for m in delay_model["delayModel"]:
-            receptor = receptor_id_str_to_int(m["delayDetails"][0]["receptor"])
-            vcc_component_manager.receptor_id = receptor
-            assert vcc_component_manager.receptor_id == receptor
-            vcc_component_manager.update_delay_model(
-                json.dumps(m["delayDetails"])
-            )
-
         min_fs_id = 1
         max_fs_id = 26
         model_len = 6
         for m in delay_model["delayModel"]:
+            receptor_index = m["delayDetails"][0]["receptor"]
+            vcc_component_manager.receptor_id = receptor_index
+            assert vcc_component_manager.receptor_id == receptor_index
+            vcc_component_manager.update_delay_model(
+                json.dumps(m["delayDetails"])
+            )
             for delayDetails in m["delayDetails"]:
                 for frequency_slice in delayDetails["receptorDelayDetails"]:
                     fs_id = frequency_slice["fsid"]

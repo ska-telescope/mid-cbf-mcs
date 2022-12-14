@@ -34,7 +34,7 @@ class Const:
         self.DEFAULT_OUTPUT_MAC = [[0, "06-00-00-00-00-01"]]
         self.DEFAULT_OUTPUT_PORT = [[0, 9000, 1]]
 
-        self.MAX_VCC = 197
+        self.MAX_VCC = 4
 
 
 const = Const()

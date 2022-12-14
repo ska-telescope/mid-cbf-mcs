@@ -23,7 +23,6 @@ from tango import AttrWriteType, DebugIt, DevState
 from tango.server import attribute, command, device_property, run
 
 from ska_mid_cbf_mcs.commons.global_enum import const
-from ska_mid_cbf_mcs.commons.receptor_id_utils import receptor_id_int_to_str
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
 
 # SKA imports
@@ -241,6 +240,7 @@ class CbfSubarray(CspSubElementSubarray):
             fsp_corr_sub=self.FspCorrSubarray,
             fsp_pss_sub=self.FspPssSubarray,
             fsp_pst_sub=self.FspPstSubarray,
+            receptor_json_file="receptor_id_dict_4r.json", # TODO hardcoded
             logger=self.logger,
             push_change_event_callback=self.push_change_event,
             component_resourced_callback=self._component_resourced,
@@ -403,12 +403,9 @@ class CbfSubarray(CspSubElementSubarray):
         Return list of receptors assigned to subarray
 
         :return: the list of receptors
-        :rtype: List[int]
+        :rtype: List[str]
         """
-        return [
-            receptor_id_int_to_str(receptor)
-            for receptor in self.component_manager.receptors
-        ]
+        return self.component_manager.receptors
         # PROTECTED REGION END #    //  CbfSubarray.receptors_read
 
     def write_receptors(self: CbfSubarray, value: List[str]) -> None:

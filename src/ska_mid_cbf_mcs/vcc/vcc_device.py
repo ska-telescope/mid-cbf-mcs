@@ -31,7 +31,6 @@ from tango.server import attribute, command, device_property, run
 
 # SKA imports
 from ska_mid_cbf_mcs.commons.global_enum import const, freq_band_dict
-from ska_mid_cbf_mcs.commons.receptor_id_utils import receptor_id_str_to_int
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
 from ska_mid_cbf_mcs.vcc.vcc_component_manager import VccComponentManager
 
@@ -1392,10 +1391,9 @@ class Vcc(CspSubElementObsDevice):
             if argin["tdc_enable"]:
                 try:
                     for receptor in argin["tdc_destination_address"]:
-                        receptor_id = receptor_id_str_to_int(
-                            receptor["receptor_id"]
-                        )
-                        if receptor_id == device.component_manager.receptor_id:
+                        # "receptor" value is a pair of str and int
+                        receptor_index = receptor["receptor_id"][1]
+                        if receptor_index == device.component_manager.receptor_id:
                             # TODO: validate tdc_destination_address
                             break
                         else:

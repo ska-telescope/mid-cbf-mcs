@@ -26,7 +26,6 @@ from ska_tango_base.control_model import PowerMode, SimulationMode
 from ska_tango_base.csp.obs import CspObsComponentManager
 
 from ska_mid_cbf_mcs.commons.global_enum import const, freq_band_dict
-from ska_mid_cbf_mcs.commons.receptor_id_utils import receptor_id_str_to_int
 from ska_mid_cbf_mcs.component.component_manager import (
     CbfComponentManager,
     CommunicationStatus,
@@ -889,13 +888,11 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
 
                 # Configure tdcDestinationAddress.
                 if argin["tdc_enable"]:
-                    for receptor in argin["tdc_destination_address"]:
-                        receptor_id = receptor_id_str_to_int(
-                            receptor["receptor_id"]
-                        )
-                        if receptor_id == self._receptor_id:
+                    for tdc_dest in argin["tdc_destination_address"]:
+                        # "receptor" value is a pair of str and int
+                        if tdc_dest["receptor_id"][1] == self._receptor_id:
                             # TODO: validate input
-                            proxy_sw.tdcDestinationAddress = receptor[
+                            proxy_sw.tdcDestinationAddress = tdc_dest[
                                 "tdc_destination_address"
                             ]
                             break
@@ -920,8 +917,8 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         argin = json.loads(argin)
 
         for dopplerDetails in argin:
-            receptor = receptor_id_str_to_int(dopplerDetails["receptor"])
-            if receptor == self._receptor_id:
+            # "receptor" value is a pair of str and int
+            if dopplerDetails["receptor"][1] == self._receptor_id:
                 coeff = dopplerDetails["dopplerCoeff"]
                 if len(coeff) == 4:
                     self._doppler_phase_correction = coeff.copy()
@@ -938,8 +935,8 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         argin = json.loads(argin)
 
         for delayDetails in argin:
-            receptor = receptor_id_str_to_int(delayDetails["receptor"])
-            if receptor == self._receptor_id:
+            # "receptor" value is a pair of str and int
+            if delayDetails["receptor"][1] == self._receptor_id:
                 for frequency_slice in delayDetails["receptorDelayDetails"]:
                     fsid = frequency_slice["fsid"]
                     coeff = frequency_slice["delayCoeff"]
@@ -965,8 +962,8 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         argin = json.loads(argin)
 
         for jonesDetails in argin:
-            receptor = receptor_id_str_to_int(jonesDetails["receptor"])
-            if receptor == self._receptor_id:
+            # "receptor" value is a pair of str and int
+            if jonesDetails["receptor"][1] == self._receptor_id:
                 for frequency_slice in jonesDetails["receptorMatrix"]:
                     fs_id = frequency_slice["fsid"]
                     matrix = frequency_slice["matrix"]

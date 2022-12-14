@@ -20,7 +20,6 @@ import pytest
 from ska_tango_base.commands import ResultCode
 
 from ska_mid_cbf_mcs.commons.global_enum import FspModes
-from ska_mid_cbf_mcs.commons.receptor_id_utils import receptor_id_str_to_int
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
 from ska_mid_cbf_mcs.fsp.fsp_component_manager import FspComponentManager
 from ska_mid_cbf_mcs.testing.mock.mock_callable import MockCallable
@@ -423,12 +422,12 @@ class TestFspComponentManager:
         for weights in timing_beam_weights["beamWeights"]:
             beam_weights_details = weights["beamWeightsDetails"]
             for receptor in beam_weights_details:
-                receptor_id = receptor_id_str_to_int(receptor["receptor"])
+                receptor_index = receptor["receptor"]
                 for frequency_slice in receptor["receptorWeightsDetails"]:
                     weights = frequency_slice["weights"]
                     assert (
                         fsp_component_manager.timing_beam_weights[
-                            receptor_id - 1
+                            receptor_index - 1
                         ]
                         == weights
                     )
