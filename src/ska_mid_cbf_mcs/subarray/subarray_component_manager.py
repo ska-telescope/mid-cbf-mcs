@@ -306,7 +306,7 @@ class CbfSubarrayComponentManager(
                     receptor_vcc_pair = receptor_vcc_pair.split(":")
                     self._receptor_to_vcc[
                         self._receptor_utils.receptor_id_int_to_str(
-                            receptor_vcc_pair[0]
+                            int(receptor_vcc_pair[0])
                         )
                     ] = int(receptor_vcc_pair[1])
                 self._logger.debug(f"{self._receptor_to_vcc}")
@@ -996,6 +996,7 @@ class CbfSubarrayComponentManager(
             for sw in configuration["search_window"]:
                 if sw["tdc_enable"]:
                     for receptor in sw["tdc_destination_address"]:
+                        receptor_id = receptor["receptor_id"]
                         if receptor_id not in self._receptors:
                             msg = (
                                 f"'searchWindow' receptor ID {receptor_id} "
@@ -1729,13 +1730,14 @@ class CbfSubarrayComponentManager(
                         "band_5_tuning"
                     ]
                 # pass receptor IDs as pair of str and int to VCCs
-                for tdc_dest in search_window["tdc_destination_address"]:
-                    tdc_dest["receptor_id"] = [
-                        tdc_dest["receptor_id"],
-                        self._receptor_utils.receptors[
-                            tdc_dest["receptor_id"]
-                        ],
-                    ]
+                if search_window["tdc_enable"]:
+                    for tdc_dest in search_window["tdc_destination_address"]:
+                        tdc_dest["receptor_id"] = [
+                            tdc_dest["receptor_id"],
+                            self._receptor_utils.receptors[
+                                tdc_dest["receptor_id"]
+                            ],
+                        ]
                 # pass on configuration to VCC
                 data = tango.DeviceData()
                 data.insert(tango.DevString, json.dumps(search_window))

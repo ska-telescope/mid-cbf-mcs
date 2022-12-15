@@ -236,8 +236,14 @@ class FspPstSubarrayComponentManager(
         self._timing_beam_id = []
         self._receptors = []
 
+        self._remove_all_receptors()
+
         for timingBeam in configuration["timing_beam"]:
-            self._add_receptors(map(int, timingBeam["receptor_ids"]))
+            # "receptor_ids" values are pairs of str and int
+            receptors_to_add = [
+                receptor[1] for receptor in timingBeam["receptor_ids"]
+            ]
+            self._add_receptors(receptors_to_add)
             self._timing_beams.append(json.dumps(timingBeam))
             self._timing_beam_id.append(int(timingBeam["timing_beam_id"]))
 

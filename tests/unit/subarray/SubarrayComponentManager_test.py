@@ -253,6 +253,7 @@ class TestCbfSubarrayComponentManager:
 
         :param subarray_component_manager: subarray component manager under test.
         :param config_file_name: scan configuration file name.
+        :param scan_file_name: scan file name.
         :param receptor_ids: receptor IDs to use in test.
         """
         self.test_validate_and_configure_scan(

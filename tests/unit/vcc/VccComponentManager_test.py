@@ -150,7 +150,7 @@ class TestVccComponentManager:
         matrix_len = 16
         for m in jones_matrix["jonesMatrix"]:
             for receptor in m["matrixDetails"]:
-                receptor_index = receptor["receptor"]
+                receptor_index = receptor["receptor"][1]
                 if receptor_index == vcc_component_manager.receptor_id:
                     for frequency_slice in receptor["receptorMatrix"]:
                         fs_id = frequency_slice["fsid"]
@@ -211,7 +211,7 @@ class TestVccComponentManager:
         max_fs_id = 26
         model_len = 6
         for m in delay_model["delayModel"]:
-            receptor_index = m["delayDetails"][0]["receptor"]
+            receptor_index = m["delayDetails"][0]["receptor"][1]
             vcc_component_manager.receptor_id = receptor_index
             assert vcc_component_manager.receptor_id == receptor_index
             vcc_component_manager.update_delay_model(

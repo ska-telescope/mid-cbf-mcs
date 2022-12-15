@@ -422,7 +422,7 @@ class TestFspComponentManager:
         for weights in timing_beam_weights["beamWeights"]:
             beam_weights_details = weights["beamWeightsDetails"]
             for receptor in beam_weights_details:
-                receptor_index = receptor["receptor"]
+                receptor_index = receptor["receptor"][1]
                 for frequency_slice in receptor["receptorWeightsDetails"]:
                     weights = frequency_slice["weights"]
                     assert (
