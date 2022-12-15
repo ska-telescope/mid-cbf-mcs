@@ -509,6 +509,7 @@ def subarray_component_manager(
             "mid_csp_cbf/fspPstSubarray/03_01",
             "mid_csp_cbf/fspPstSubarray/04_01",
         ],
+        receptor_json_file="receptor_id_dict_4r",
         logger=logger,
         push_change_event_callback=push_change_event_callback,
         component_resourced_callback=component_callback,
