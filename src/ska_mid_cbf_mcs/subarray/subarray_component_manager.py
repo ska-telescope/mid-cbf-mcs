@@ -1939,57 +1939,44 @@ class CbfSubarrayComponentManager(
         self._logger.debug(f"current receptors: {*self._receptors,}")
         for receptor_id in argin:
             self._logger.debug(f"Attempting to remove receptor {receptor_id}")
+            if receptor_id in self._receptors:
+                vccID = self._receptor_to_vcc[receptor_id]
+                vccFQDN = self._fqdn_vcc[vccID - 1]
+                vccProxy = self._proxies_vcc[vccID - 1]
 
-            # convert receptor ID to int, check for unimplemented receptorID
-            try:
-                if self._receptor_utils.receptors[receptor_id] not in range(
-                    1, const.MAX_VCC + 1
-                ):
-                    raise ValueError(
-                        f"Unimplemented receptor ID {receptor_id}."
+                self._receptors.remove(receptor_id)
+                self._group_vcc.remove(vccFQDN)
+                del self._proxies_assigned_vcc[receptor_id]
+
+                try:
+                    # reset subarrayMembership Vcc attribute:
+                    vccProxy.subarrayMembership = 0
+                    self._logger.debug(
+                        f"VCC {vccID} subarray_id: "
+                        + f"{vccProxy.subarrayMembership}"
                     )
-            except ValueError as ve:
-                self._logger.warning(str(ve) + " Skipping...")
+
+                    # unsubscribe from events
+                    vccProxy.remove_event(
+                        "State", self._events_state_change_vcc[vccID][0]
+                    )
+                    vccProxy.remove_event(
+                        "healthState",
+                        self._events_state_change_vcc[vccID][1],
+                    )
+
+                    del self._events_state_change_vcc[vccID]
+                    del self._vcc_state[vccFQDN]
+                    del self._vcc_health_state[vccFQDN]
+
+                except tango.DevFailed as df:
+                    msg = str(df.args[0].desc)
+                    self._component_obs_fault_callback(True)
+                    return (ResultCode.FAILED, msg)
 
             else:
-                if receptor_id in self._receptors:
-                    vccID = self._receptor_to_vcc[receptor_id]
-                    vccFQDN = self._fqdn_vcc[vccID - 1]
-                    vccProxy = self._proxies_vcc[vccID - 1]
-
-                    self._receptors.remove(receptor_id)
-                    self._group_vcc.remove(vccFQDN)
-                    del self._proxies_assigned_vcc[receptor_id]
-
-                    try:
-                        # reset subarrayMembership Vcc attribute:
-                        vccProxy.subarrayMembership = 0
-                        self._logger.debug(
-                            f"VCC {vccID} subarray_id: "
-                            + f"{vccProxy.subarrayMembership}"
-                        )
-
-                        # unsubscribe from events
-                        vccProxy.remove_event(
-                            "State", self._events_state_change_vcc[vccID][0]
-                        )
-                        vccProxy.remove_event(
-                            "healthState",
-                            self._events_state_change_vcc[vccID][1],
-                        )
-
-                        del self._events_state_change_vcc[vccID]
-                        del self._vcc_state[vccFQDN]
-                        del self._vcc_health_state[vccFQDN]
-
-                    except tango.DevFailed as df:
-                        msg = str(df.args[0].desc)
-                        self._component_obs_fault_callback(True)
-                        return (ResultCode.FAILED, msg)
-
-                else:
-                    msg = f"Receptor {receptor_id} not found. Skipping."
-                    self._logger.warning(msg)
+                msg = f"Receptor {receptor_id} not found. Skipping."
+                self._logger.warning(msg)
 
         if len(self._receptors) == 0:
             self.update_component_resources(False)
@@ -2078,91 +2065,75 @@ class CbfSubarrayComponentManager(
         for receptor_id in argin:
             self._logger.debug(f"Attempting to add receptor {receptor_id}")
 
-            # convert receptor ID to int, check for unimplemented receptorID
-            try:
-                if self._receptor_utils.receptors[receptor_id] not in range(
-                    1, const.MAX_VCC + 1
-                ):
-                    raise ValueError(
-                        f"Unimplemented receptor ID {receptor_id}."
-                    )
-            except ValueError as ve:
-                self._logger.warning(str(ve) + " Skipping...")
+            vccID = self._receptor_to_vcc[receptor_id]
+            vccProxy = self._proxies_vcc[vccID - 1]
 
-            else:
-                vccID = self._receptor_to_vcc[receptor_id]
-                vccProxy = self._proxies_vcc[vccID - 1]
+            self._logger.debug(
+                f"receptor_id = {receptor_id}, vccProxy.receptor_id = "
+                + f"{vccProxy.receptorID}"
+            )
 
-                self._logger.debug(
-                    f"receptor_id = {receptor_id}, vccProxy.receptor_id = "
-                    + f"{vccProxy.receptorID}"
+            vccSubarrayID = vccProxy.subarrayMembership
+            self._logger.debug(f"VCC {vccID} subarray_id: {vccSubarrayID}")
+
+            # only add receptor if it does not already belong to a
+            # different subarray
+            if vccSubarrayID not in [0, self._subarray_id]:
+                msg = (
+                    f"Receptor {receptor_id} already in use by "
+                    + f"subarray {vccSubarrayID}. Skipping."
                 )
+                self._logger.warning(msg)
+            else:
+                if receptor_id not in self._receptors:
+                    # update resourced state once first receptor is added
+                    if len(self._receptors) == 0:
+                        self.update_component_resources(True)
 
-                vccSubarrayID = vccProxy.subarrayMembership
-                self._logger.debug(f"VCC {vccID} subarray_id: {vccSubarrayID}")
+                    self._receptors.append(receptor_id)
+                    self._group_vcc.add(self._fqdn_vcc[vccID - 1])
+                    self._proxies_assigned_vcc[receptor_id] = vccProxy
 
-                # only add receptor if it does not already belong to a
-                # different subarray
-                if vccSubarrayID not in [0, self._subarray_id]:
+                    try:
+                        # change subarray membership of vcc
+                        vccProxy.subarrayMembership = self._subarray_id
+                        self._logger.debug(
+                            f"VCC {vccID} subarray_id: "
+                            + f"{vccProxy.subarrayMembership}"
+                        )
+
+                        # subscribe to VCC state and healthState changes
+                        event_id_state = vccProxy.add_change_event_callback(
+                            "State", self._state_change_event_callback
+                        )
+                        self._logger.debug(f"State event ID: {event_id_state}")
+
+                        event_id_health_state = (
+                            vccProxy.add_change_event_callback(
+                                "healthState",
+                                self._state_change_event_callback,
+                            )
+                        )
+                        self._logger.debug(
+                            f"Health state event ID: {event_id_health_state}"
+                        )
+
+                        self._events_state_change_vcc[vccID] = [
+                            event_id_state,
+                            event_id_health_state,
+                        ]
+
+                    except tango.DevFailed as df:
+                        msg = str(df.args[0].desc)
+                        self._component_obs_fault_callback(True)
+                        return (ResultCode.FAILED, msg)
+
+                else:
                     msg = (
-                        f"Receptor {receptor_id} already in use by "
-                        + f"subarray {vccSubarrayID}. Skipping."
+                        f"Receptor {receptor_id} already assigned to "
+                        + "subarray. Skipping."
                     )
                     self._logger.warning(msg)
-                else:
-                    if receptor_id not in self._receptors:
-                        # update resourced state once first receptor is added
-                        if len(self._receptors) == 0:
-                            self.update_component_resources(True)
-
-                        self._receptors.append(receptor_id)
-                        self._group_vcc.add(self._fqdn_vcc[vccID - 1])
-                        self._proxies_assigned_vcc[receptor_id] = vccProxy
-
-                        try:
-                            # change subarray membership of vcc
-                            vccProxy.subarrayMembership = self._subarray_id
-                            self._logger.debug(
-                                f"VCC {vccID} subarray_id: "
-                                + f"{vccProxy.subarrayMembership}"
-                            )
-
-                            # subscribe to VCC state and healthState changes
-                            event_id_state = (
-                                vccProxy.add_change_event_callback(
-                                    "State", self._state_change_event_callback
-                                )
-                            )
-                            self._logger.debug(
-                                f"State event ID: {event_id_state}"
-                            )
-
-                            event_id_health_state = (
-                                vccProxy.add_change_event_callback(
-                                    "healthState",
-                                    self._state_change_event_callback,
-                                )
-                            )
-                            self._logger.debug(
-                                f"Health state event ID: {event_id_health_state}"
-                            )
-
-                            self._events_state_change_vcc[vccID] = [
-                                event_id_state,
-                                event_id_health_state,
-                            ]
-
-                        except tango.DevFailed as df:
-                            msg = str(df.args[0].desc)
-                            self._component_obs_fault_callback(True)
-                            return (ResultCode.FAILED, msg)
-
-                    else:
-                        msg = (
-                            f"Receptor {receptor_id} already assigned to "
-                            + "subarray. Skipping."
-                        )
-                        self._logger.warning(msg)
 
         self._logger.debug(f"receptors after adding: {*self._receptors,}")
 
