@@ -14,6 +14,8 @@ depends_on:
   - device: mid_csp_cbf/fsp/04
   - device: mid_csp_cbf/talon_lru/001
   - device: mid_csp_cbf/talon_lru/002
+  - device: mid_csp_cbf/talon_lru/003
+  - device: mid_csp_cbf/talon_lru/004
 readinessProbe:
   initialDelaySeconds: 0
   periodSeconds: 10
@@ -74,6 +76,8 @@ server:
             values:
             - "mid_csp_cbf/talon_lru/001"
             - "mid_csp_cbf/talon_lru/002"
+            - "mid_csp_cbf/talon_lru/003"
+            - "mid_csp_cbf/talon_lru/004"
           - name: "TalonDxConfigPath"
             values:
             - "mnt/talondx-config"

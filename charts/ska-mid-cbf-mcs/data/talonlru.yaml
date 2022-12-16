@@ -85,6 +85,71 @@ server:
             - "3000"
             - "adminmode"
             - "3000"
+  - name: "talonlru-003"
+    classes:
+    - name: "TalonLRU"
+      devices:
+      - name: "mid_csp_cbf/talon_lru/003"
+        properties:
+          - name: "TalonDxBoard1Address"
+            values:
+            - "arbitrary/fqdn/01"
+          - name: "TalonDxBoard2Address"
+            values:
+            - "arbitrary/fqdn/02"
+          - name: "PDU1Address"
+            values:
+            - "mid_csp_cbf/power_switch/001"
+          - name: "PDU1PowerOutlet"
+            values:
+            - "2"
+          - name: "PDU2Address"
+            values:
+            - "mid_csp_cbf/power_switch/001"
+          - name: "PDU2PowerOutlet"
+            values:
+            - "2"
+          - name: "polled_attr"
+            values:
+            - "state"
+            - "1000"
+            - "healthstate"
+            - "3000"
+            - "adminmode"
+            - "3000"
+  - name: "talonlru-004"
+    classes:
+    - name: "TalonLRU"
+      devices:
+      - name: "mid_csp_cbf/talon_lru/004"
+        properties:
+          - name: "TalonDxBoard1Address"
+            values:
+            - "arbitrary/fqdn/01"
+          - name: "TalonDxBoard2Address"
+            values:
+            - "arbitrary/fqdn/02"
+          - name: "PDU1Address"
+            values:
+            - "mid_csp_cbf/power_switch/001"
+          - name: "PDU1PowerOutlet"
+            values:
+            - "3"
+          - name: "PDU2Address"
+            values:
+            - "mid_csp_cbf/power_switch/001"
+          - name: "PDU2PowerOutlet"
+            values:
+            - "3"
+          - name: "polled_attr"
+            values:
+            - "state"
+            - "1000"
+            - "healthstate"
+            - "3000"
+            - "adminmode"
+            - "3000"
+
 image:
   registry: "{{.Values.midcbf.image.registry}}"
   image: "{{.Values.midcbf.image.image}}"

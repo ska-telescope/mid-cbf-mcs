@@ -43,7 +43,9 @@
                             ],
                             "TalonLRU": [
                                 "mid_csp_cbf/talon_lru/001",
-                                "mid_csp_cbf/talon_lru/002"
+                                "mid_csp_cbf/talon_lru/002",
+				"mid_csp_cbf/talon_lru/003",
+                                "mid_csp_cbf/talon_lru/004"
                             ],
                             "TalonDxConfigPath": [
                                 "mnt/talondx-config"
@@ -1895,6 +1897,74 @@
             "talonlru-002": {
                 "TalonLRU": {
                     "mid_csp_cbf/talon_lru/002": {
+                        "properties": {
+                            "TalonDxBoard1Address": [
+                                "arbitrary/fqdn/01"
+                            ],
+                            "TalonDxBoard2Address": [
+                                "arbitrary/fqdn/02"
+                            ],
+                            "PDU1Address": [
+                                "mid_csp_cbf/power_switch/001"
+                            ],
+                            "PDU1PowerOutlet": [
+                                "1"
+                            ],
+                            "PDU2Address": [
+                                "mid_csp_cbf/power_switch/001"
+                            ],
+                            "PDU2PowerOutlet": [
+                                "1"
+                            ],
+                            "polled_attr": [
+                                "state",
+                                "1000",
+                                "healthstate",
+                                "3000",
+                                "adminmode",
+                                "3000"
+                            ]
+                        }
+                    }
+                }
+            },
+            "talonlru-003": {
+                "TalonLRU": {
+                    "mid_csp_cbf/talon_lru/003": {
+                        "properties": {
+                            "TalonDxBoard1Address": [
+                                "arbitrary/fqdn/01"
+                            ],
+                            "TalonDxBoard2Address": [
+                                "arbitrary/fqdn/02"
+                            ],
+                            "PDU1Address": [
+                                "mid_csp_cbf/power_switch/001"
+                            ],
+                            "PDU1PowerOutlet": [
+                                "1"
+                            ],
+                            "PDU2Address": [
+                                "mid_csp_cbf/power_switch/001"
+                            ],
+                            "PDU2PowerOutlet": [
+                                "1"
+                            ],
+                            "polled_attr": [
+                                "state",
+                                "1000",
+                                "healthstate",
+                                "3000",
+                                "adminmode",
+                                "3000"
+                            ]
+                        }
+                    }
+                }
+            },
+            "talonlru-004": {
+                "TalonLRU": {
+                    "mid_csp_cbf/talon_lru/004": {
                         "properties": {
                             "TalonDxBoard1Address": [
                                 "arbitrary/fqdn/01"

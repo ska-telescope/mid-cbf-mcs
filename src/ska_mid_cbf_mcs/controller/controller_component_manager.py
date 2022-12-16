@@ -679,6 +679,7 @@ class ControllerComponentManager(CbfComponentManager):
             # Power on all the Talon boards
             # TODO: There are two VCCs per LRU. Need to check the number of
             #       VCCs turned on against the number of LRUs powered on
+            self._fqdn_talon_lru = []
             if len(self._fqdn_talon_lru) == 0:
                 talondx_config_file = open(
                     os.path.join(
