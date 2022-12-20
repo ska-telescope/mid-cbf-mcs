@@ -196,7 +196,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         return self._jones_matrix
 
     @property
-    def delay_model(self: VccComponentManager) -> List[List[float]]:
+    def delay_model(self: VccComponentManager) -> str:
         """
         Delay Model
 
@@ -275,7 +275,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         self._rfi_flagging_mask = ""
 
         self._jones_matrix = [[0] * 16 for _ in range(26)]
-        self._delay_model = [[0] * 6 for _ in range(26)]
+        self._delay_model = ""
         self._doppler_phase_correction = [0 for _ in range(4)]
 
         # Initialize list of band proxies and band -> index translation;
@@ -567,7 +567,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         """Deconfigure scan configuration parameters."""
         self._doppler_phase_correction = [0 for _ in range(4)]
         self._jones_matrix = [[0] * 16 for _ in range(26)]
-        self._delay_model = [[0] * 6 for _ in range(26)]
+        self._delay_model = ""
         self._rfi_flagging_mask = ""
         self._frequency_band_offset_stream_2 = 0
         self._frequency_band_offset_stream_1 = 0
@@ -931,24 +931,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         :param argin: the delay model JSON string
         """
         argin = json.loads(argin)
-
-        for delayDetails in argin:
-            if delayDetails["receptor"] == self._receptor_id:
-                for frequency_slice in delayDetails["receptorDelayDetails"]:
-                    fsid = frequency_slice["fsid"]
-                    coeff = frequency_slice["delayCoeff"]
-                    if 1 <= fsid <= 26:
-                        if len(coeff) == 6:
-                            self._delay_model[fsid - 1] = coeff.copy()
-                        else:
-                            log_msg = (
-                                "'delayCoeff' not valid for frequency slice "
-                                + f"{fsid} of receptor {self._receptor_id}"
-                            )
-                            self._logger.error(log_msg)
-                    else:
-                        log_msg = f"'fsid' {fsid} not valid for receptor {self._receptor_id}"
-                        self._logger.error(log_msg)
+        self._delay_model = argin
 
     def update_jones_matrix(self: VccComponentManager, argin: str) -> None:
         """

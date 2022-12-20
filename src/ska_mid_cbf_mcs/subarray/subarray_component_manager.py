@@ -488,8 +488,13 @@ class CbfSubarrayComponentManager(
                     t = Thread(
                         target=self._update_delay_model,
                         args=(
-                            int(delay_model["epoch"]),
-                            json.dumps(delay_model["delayDetails"]),
+                            # TODO need to address the issue
+                            # that each receptor in the subarray
+                            # has an epoch - temporarily
+                            # taking the epoch for the first
+                            # receptor in the delay model
+                            int(delay_model[0]["epoch"]),
+                            json.dumps(delay_model),
                         ),
                     )
                     t.start()
