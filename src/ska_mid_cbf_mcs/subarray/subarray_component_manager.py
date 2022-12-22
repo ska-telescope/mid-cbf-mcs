@@ -488,12 +488,6 @@ class CbfSubarrayComponentManager(
                     t = Thread(
                         target=self._update_delay_model,
                         args=(
-                            # TODO need to address the issue
-                            # that each receptor in the subarray
-                            # has an epoch - temporarily
-                            # taking the epoch for the first
-                            # receptor in the delay model
-                            int(delay_model[0]["epoch"]),
                             json.dumps(delay_model),
                         ),
                     )
@@ -504,7 +498,7 @@ class CbfSubarrayComponentManager(
             self._logger.warning(f"None value for {fqdn}")
 
     def _update_delay_model(
-        self: CbfSubarrayComponentManager, epoch: int, model: str
+        self: CbfSubarrayComponentManager, model: str
     ) -> None:
         """
         Update FSP and VCC delay models.
@@ -515,13 +509,8 @@ class CbfSubarrayComponentManager(
         """
         # This method is always called on a separate thread
         self._logger.debug("CbfSubarray._update_delay_model")
-        log_msg = f"Delay model active at {epoch} (currently {time.time()})..."
-        self._logger.info(log_msg)
 
-        if epoch > time.time():
-            time.sleep(epoch - time.time())
-
-        log_msg = f"Updating delay model at specified epoch {epoch}..."
+        log_msg = f"Updating delay model ..."
         self._logger.info(log_msg)
 
         data = tango.DeviceData()

@@ -15,6 +15,7 @@ Sub-element VCC component manager for Mid.CBF
 """
 from __future__ import annotations  # allow forward references in type hints
 
+import copy
 import json
 import logging
 from typing import Callable, List, Optional, Tuple
@@ -931,7 +932,13 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         :param argin: the delay model JSON string
         """
         argin = json.loads(argin)
-        self._delay_model = argin
+        
+        vcc_delay_model_entries = []
+        for entry in argin["delayModel"]:
+            if entry["receptor"] == self._receptor_id:
+                vcc_delay_model_entries.append(copy.deepcopy(entry))
+
+        self._delay_model = json.dumps({'delay_model':vcc_delay_model_entries})
 
     def update_jones_matrix(self: VccComponentManager, argin: str) -> None:
         """

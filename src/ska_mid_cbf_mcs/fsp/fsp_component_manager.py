@@ -102,7 +102,7 @@ class FspComponentManager(CbfComponentManager):
         self._subarray_membership = []
         self._function_mode = FspModes.IDLE.value  # IDLE
         self._jones_matrix = [[0.0] * 16 for _ in range(4)]
-        self._delay_model = [[0.0] * 6 for _ in range(4)]
+        self._delay_model = ""
         self._timing_beam_weights = [[0.0] * 6 for _ in range(4)]
 
         super().__init__(
@@ -144,12 +144,12 @@ class FspComponentManager(CbfComponentManager):
         return self._jones_matrix
 
     @property
-    def delay_model(self: FspComponentManager) -> List[List[float]]:
+    def delay_model(self: FspComponentManager) -> str:
         """
         Delay Model
 
         :return: the delay model
-        :rtype: List[List[float]]
+        :rtype: str
         """
         return self._delay_model
 
@@ -614,34 +614,7 @@ class FspComponentManager(CbfComponentManager):
                         proxy = self._proxy_fsp_pss_subarray[i - 1]
                     else:
                         proxy = self._proxy_fsp_pst_subarray[i - 1]
-                    for receptor in argin:
-                        rec_id = int(receptor["receptor"])
-                        if rec_id in proxy.receptors:
-                            for frequency_slice in receptor[
-                                "receptorDelayDetails"
-                            ]:
-                                fs_id = frequency_slice["fsid"]
-                                model = frequency_slice["delayCoeff"]
-                                if fs_id == self._fsp_id:
-                                    if len(model) == 6:
-                                        self._delay_model[
-                                            rec_id - 1
-                                        ] = model.copy()
-                                    else:
-                                        log_msg = (
-                                            "Fsp UpdateDelayModel command error: "
-                                            "'model' not valid length for frequency slice "
-                                            f"{fs_id} of receptor {rec_id}"
-                                        )
-                                        self._logger.error(log_msg)
-                                        return (ResultCode.FAILED, log_msg)
-                                else:
-                                    log_msg = (
-                                        "Fsp UpdateDelayModel command error: "
-                                        f"'fsid' {fs_id} not valid for receptor {rec_id}"
-                                    )
-                                    self._logger.warning(log_msg)
-
+                    self._delay_model = argin.copy()
             else:
                 log_msg = (
                     "Fsp UpdateDelayModel command failed: "
