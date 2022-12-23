@@ -29,7 +29,7 @@ __all__ = ["TalonDxComponentManager"]
 
 # Timeout for the first attempt at SSH connection with the Talon boards
 # after boot-up.
-TALON_FIRST_CONNECT_TIMEOUT = 30
+TALON_FIRST_CONNECT_TIMEOUT = 90
 
 
 class TalonDxComponentManager:
