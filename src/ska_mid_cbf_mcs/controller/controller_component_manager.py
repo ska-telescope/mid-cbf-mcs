@@ -679,25 +679,27 @@ class ControllerComponentManager(CbfComponentManager):
             # Power on all the Talon boards
             # TODO: There are two VCCs per LRU. Need to check the number of
             #       VCCs turned on against the number of LRUs powered on
+
+            # read in list of LRUs from configuration JSON
             self._fqdn_talon_lru = []
-            if len(self._fqdn_talon_lru) == 0:
-                talondx_config_file = open(
-                    os.path.join(
-                        os.getcwd(),
-                        self._talondx_config_path,
-                        "talondx-config.json",
-                    )
+
+            talondx_config_file = open(
+                os.path.join(
+                    os.getcwd(),
+                    self._talondx_config_path,
+                    "talondx-config.json",
                 )
+            )
 
-                talondx_config_json = json.load(talondx_config_file)
+            talondx_config_json = json.load(talondx_config_file)
 
-                talon_lru_fqdn_set = set()
-                for config_command in talondx_config_json["config_commands"]:
-                    talon_lru_fqdn_set.add(config_command["talon_lru_fqdn"])
-                self._logger.info(f"talonlru list = {talon_lru_fqdn_set}")
+            talon_lru_fqdn_set = set()
+            for config_command in talondx_config_json["config_commands"]:
+                talon_lru_fqdn_set.add(config_command["talon_lru_fqdn"])
+            self._logger.info(f"talonlru list = {talon_lru_fqdn_set}")
 
-                # TODO: handle subscribed events for missing LRUs
-                self._fqdn_talon_lru = list(talon_lru_fqdn_set)
+            # TODO: handle subscribed events for missing LRUs
+            self._fqdn_talon_lru = list(talon_lru_fqdn_set)
 
             try:
                 for fqdn in self._fqdn_talon_lru:
