@@ -27,6 +27,7 @@ from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 
 __all__ = ["TalonDxComponentManager"]
 
+
 class TalonDxComponentManager:
     """
     A component manager for the Talon-DX boards. Used to configure and start
@@ -153,7 +154,9 @@ class TalonDxComponentManager:
             try:
                 ip = talon_cfg["ip_address"]
                 target = talon_cfg["target"]
-                talon_first_connect_timeout = talon_cfg["talon_first_connect_timeout"]
+                talon_first_connect_timeout = talon_cfg[
+                    "talon_first_connect_timeout"
+                ]
                 self.logger.info(
                     f"Copying FPGA bitstream and HPS binaries to {target}"
                 )
