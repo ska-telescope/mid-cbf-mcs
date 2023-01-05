@@ -20,7 +20,7 @@ Code repository: [ska-mid-cbf-mcs](https://gitlab.com/ska-telescope/ska-mid-cbf-
 
 # Introduction
 
-The Mid CBF MCS prototype implements at the moment these TANGO device classes:
+The Mid CBF MCS implements at the moment these TANGO device classes:
 
 * `CbfController`: Based on the `SKAController` class. It represents a primary point 
 of contact for CBF Monitor and Control. It implements CBF state and mode 
@@ -204,7 +204,7 @@ minikube delete -p <profile_name>
 
 # Taranta
 
-This prototype provides a graphical user interface using Taranta (previously known as WebJive); to set it up:
+This provides a graphical user interface using Taranta (previously known as WebJive); to set it up:
 * Add the following line to `/etc/hosts`:
     ```
     192.168.49.2  taranta
