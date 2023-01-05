@@ -1,4 +1,4 @@
-MID CBF MCS Prototype's Documentation
+MID CBF MCS Documentation
 ========================================
 
 .. toctree::
