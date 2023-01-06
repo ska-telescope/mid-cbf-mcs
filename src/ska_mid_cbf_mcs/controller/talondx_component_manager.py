@@ -27,10 +27,6 @@ from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 
 __all__ = ["TalonDxComponentManager"]
 
-# Timeout for the first attempt at SSH connection with the Talon boards
-# after boot-up.
-TALON_FIRST_CONNECT_TIMEOUT = 30
-
 
 class TalonDxComponentManager:
     """
@@ -158,6 +154,11 @@ class TalonDxComponentManager:
             try:
                 ip = talon_cfg["ip_address"]
                 target = talon_cfg["target"]
+                # timeout for the first attempt at SSH connection
+                # to the Talon boards after boot-up
+                talon_first_connect_timeout = talon_cfg[
+                    "talon_first_connect_timeout"
+                ]
                 self.logger.info(
                     f"Copying FPGA bitstream and HPS binaries to {target}"
                 )
@@ -167,7 +168,7 @@ class TalonDxComponentManager:
                     @backoff.on_exception(
                         backoff.expo,
                         NoValidConnectionsError,
-                        max_time=TALON_FIRST_CONNECT_TIMEOUT,
+                        max_time=talon_first_connect_timeout,
                     )
                     def make_first_connect(
                         ip: str, ssh_client: SSHClient
