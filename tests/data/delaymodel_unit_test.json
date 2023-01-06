@@ -1,7 +1,7 @@
 {
   "delayModel": [
     {
-      "receptor": 1,
+      "receptor": 2,
       "epoch": 12345678,
       "validity_period": 10,
       "poly_info": [

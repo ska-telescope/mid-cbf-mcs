@@ -184,57 +184,56 @@ class TestVccComponentManager:
         vcc_component_manager.start_communicating()
         vcc_component_manager.on()
 
-        # delay model values should be set to 0.0 after init
-        num_cols = 6
-        num_rows = 26
-        assert vcc_component_manager.delay_model == [
-            [0] * num_cols for i in range(num_rows)
-        ]
+        # delay model should be empty string after init
+        assert vcc_component_manager.delay_model == ""
 
         f = open(file_path + config_file_name)
-        json_str = f.read().replace("\n", "")
-        configuration = json.loads(json_str)
+        json_str_config = f.read().replace("\n", "")
+        configuration = json.loads(json_str_config)
         f.close()
 
         vcc_component_manager.configure_band(configuration["frequency_band"])
 
-        vcc_component_manager.configure_scan(json_str)
+        vcc_component_manager.configure_scan(json_str_config)
 
         # read the json file
         f = open(file_path + delay_model_file_name)
         json_str_model = f.read().replace("\n", "")
         f.close()
-        delay_model = json.loads(json_str_model)
+        input_delay_model = json.loads(json_str_model)
 
         # update the delay model
-        for m in delay_model["delayModel"]:
-            vcc_component_manager.receptor_id = m["delayDetails"][0][
-                "receptor"
-            ]
-            assert (
-                vcc_component_manager.receptor_id
-                == m["delayDetails"][0]["receptor"]
-            )
-            vcc_component_manager.update_delay_model(
-                json.dumps(m["delayDetails"])
-            )
 
-        min_fs_id = 1
-        max_fs_id = 26
-        model_len = 6
-        for m in delay_model["delayModel"]:
-            for delayDetails in m["delayDetails"]:
-                for frequency_slice in delayDetails["receptorDelayDetails"]:
-                    fs_id = frequency_slice["fsid"]
-                    coeff = frequency_slice["delayCoeff"]
-                    if (
-                        min_fs_id <= fs_id <= max_fs_id
-                        and len(coeff) == model_len
-                    ):
-                        assert (
-                            vcc_component_manager.delay_model[fs_id - 1]
-                            == frequency_slice["delayCoeff"]
-                        )
+        # set the receptor id to the first receptor in the delay model
+        vcc_component_manager.receptor_id = input_delay_model["delayModel"][0][
+            "receptor"
+        ]
+        assert (
+            vcc_component_manager.receptor_id
+            == input_delay_model["delayModel"][0]["receptor"]
+        )
+        vcc_component_manager.update_delay_model(json.dumps(input_delay_model))
+
+        # check that the delay model is no longer an empty string
+        updated_delay_model = json.loads(vcc_component_manager.delay_model)
+        assert len(updated_delay_model) != 0
+
+        # check that the coeff values were copied
+        for entry in input_delay_model["delayModel"]:
+            if entry["receptor"] == vcc_component_manager.receptor_id:
+                for item in updated_delay_model["delayModel"]:
+                    # assuming that there can only be one unique epoch
+                    # in the delay model for a given receptor
+                    if entry["epoch"] == item["epoch"]:
+                        for i, poly in enumerate(entry["poly_info"]):
+                            assert (
+                                poly["polarization"]
+                                == item["poly_info"][i]["polarization"]
+                            )
+                            assert (
+                                poly["coeffs"]
+                                == item["poly_info"][i]["coeffs"]
+                            )
 
     @pytest.mark.parametrize(
         "config_file_name", ["Vcc_ConfigureScan_basic.json"]

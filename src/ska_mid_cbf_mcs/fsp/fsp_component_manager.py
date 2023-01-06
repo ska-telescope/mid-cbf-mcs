@@ -10,6 +10,7 @@
 # Copyright (c) 2019 National Research Council of Canada
 from __future__ import annotations
 
+import copy
 import json
 import logging
 from typing import Callable, List, Optional, Tuple
@@ -609,12 +610,7 @@ class FspComponentManager(CbfComponentManager):
                 FspModes.PST_BF.value,
             ]:
                 argin = json.loads(argin)
-                for i in self._subarray_membership:
-                    if self._function_mode == FspModes.PSS_BF.value:
-                        proxy = self._proxy_fsp_pss_subarray[i - 1]
-                    else:
-                        proxy = self._proxy_fsp_pst_subarray[i - 1]
-                    self._delay_model = argin.copy()
+                self._delay_model = copy.deepcopy(argin)
             else:
                 log_msg = (
                     "Fsp UpdateDelayModel command failed: "

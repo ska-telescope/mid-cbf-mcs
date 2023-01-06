@@ -303,12 +303,8 @@ class TestFspComponentManager:
         time.sleep(3)
         assert list(fsp_component_manager.subarray_membership) == [sub_id]
 
-        # delay model values should be set to 0.0 after init
-        num_cols = 6
-        num_rows = 4
-        assert list(fsp_component_manager.delay_model) == [
-            [0.0] * num_cols for _ in range(num_rows)
-        ]
+        # delay model should be empty string after init
+        assert fsp_component_manager.delay_model == ""
 
         # read the json file
         f = open(file_path + delay_model_file_name)
@@ -331,33 +327,11 @@ class TestFspComponentManager:
                     == FspModes.PST_BF.value
                 )
 
-            # update the delay model
-            for m in delay_model["delayModel"]:
-                fsp_component_manager.update_delay_model(
-                    json.dumps(m["delayDetails"])
-                )
-
+            fsp_component_manager.update_delay_model(json_str)
             time.sleep(3)
 
-            model_len = 6
             # verify the delay model was updated successfully
-            for m in delay_model["delayModel"]:
-                for delayDetail in m["delayDetails"]:
-                    rec_id = delayDetail["receptor"]
-                    if rec_id in valid_receptor_ids:
-                        for frequency_slice in delayDetail[
-                            "receptorDelayDetails"
-                        ]:
-                            fs_id = frequency_slice["fsid"]
-                            if fs_id == fsp_id:
-                                delayCoeffs = frequency_slice["delayCoeff"]
-                                if len(delayCoeffs) == model_len:
-                                    assert (
-                                        fsp_component_manager.delay_model[
-                                            rec_id - 1
-                                        ]
-                                        == delayCoeffs
-                                    )
+            assert delay_model == fsp_component_manager.delay_model
 
     @pytest.mark.parametrize(
         "timing_beam_weights_file_name, \
