@@ -154,6 +154,8 @@ class TalonDxComponentManager:
             try:
                 ip = talon_cfg["ip_address"]
                 target = talon_cfg["target"]
+                # timeout for the first attempt at SSH connection
+                # to the Talon boards after boot-up
                 talon_first_connect_timeout = talon_cfg[
                     "talon_first_connect_timeout"
                 ]
