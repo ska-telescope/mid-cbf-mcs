@@ -81,6 +81,9 @@ class TalonDxComponentManager:
         if self._setup_tango_host_file() == ResultCode.FAILED:
             return ResultCode.FAILED
 
+        if self._configure_talon_networking() == ResultCode.FAILED:
+            return ResultCode.FAILED
+
         if self._copy_binaries_and_bitstream() == ResultCode.FAILED:
             return ResultCode.FAILED
 
@@ -105,16 +108,11 @@ class TalonDxComponentManager:
                  otherwise ResultCode.FAILED
         """
         with open("hps_master_mcs_tmp.sh") as hps_master_file_tmp:
-            environment = os.getenv("ENVIRONMENT")
-            if environment == "minikube":
-                hostname = os.getenv("MINIKUBE_HOST_IP")
-                port = os.getenv("EXTERNAL_DB_PORT")
-            else:
-                namespace = os.getenv("NAMESPACE")
-                tango_host = os.getenv("TANGO_HOST").split(":")
-                db_service_name = tango_host[0]
-                port = tango_host[1]
-                hostname = f"{db_service_name}.{namespace}.svc.cluster.local"
+            namespace = os.getenv("NAMESPACE")
+            tango_host = os.getenv("TANGO_HOST").split(":")
+            db_service_name = tango_host[0]
+            port = tango_host[1]
+            hostname = f"{db_service_name}.{namespace}.svc.cluster.local"
             replaced_text = hps_master_file_tmp.read().replace(
                 "<hostname>:<port>", f"{hostname}:{port}"
             )
@@ -138,6 +136,88 @@ class TalonDxComponentManager:
         """
         with SCPClient(ssh_client.get_transport()) as scp_client:
             scp_client.put(src, remote_path=dest)
+
+    def _configure_talon_networking(
+        self: TalonDxComponentManager,
+    ) -> ResultCode:
+        """
+        Configure the networking of the boards including DNS nameserver
+        and ifconfig for default gateway
+
+        :return: ResultCode.OK if all artifacts were copied successfully,
+                 otherwise ResultCode.FAILED
+        """
+        ret = ResultCode.OK
+        for talon_cfg in self.talondx_config["config_commands"]:
+            try:
+                ip = talon_cfg["ip_address"]
+                target = talon_cfg["target"]
+                # timeout for the first attempt at SSH connection
+                # to the Talon boards after boot-up
+                talon_first_connect_timeout = talon_cfg[
+                    "talon_first_connect_timeout"
+                ]
+                self.logger.info(
+                    f"Copying FPGA bitstream and HPS binaries to {target}"
+                )
+                with SSHClient() as ssh_client:
+
+                    @backoff.on_exception(
+                        backoff.expo,
+                        NoValidConnectionsError,
+                        max_time=talon_first_connect_timeout,
+                    )
+                    def make_first_connect(
+                        ip: str, ssh_client: SSHClient
+                    ) -> None:
+                        """
+                        Attempts to connect to the Talon board for the first time
+                        after power-on.
+
+                        :param ip: IP address of the board
+                        :param ssh_client: SSH client to use for connection
+                        """
+                        ssh_client.connect(ip, username="root", password="")
+
+                    ssh_client.set_missing_host_key_policy(AutoAddPolicy())
+                    make_first_connect(ip, ssh_client)
+                    ssh_chan = ssh_client.get_transport().open_session()
+
+                    environment = os.getenv("ENVIRONMENT")
+                    host_ip = os.getenv("MINIKUB_HOST_IP")
+
+                    if environment == "minikube":
+                        ssh_chan.exec_command(
+                            f"'nameserver 172.17.0.95' > /etc/resolve.conf"
+                        )
+                        ssh_chan.exec_command(
+                            f"ip route add default via {host_ip} dev eth0"
+                        )
+                    else:
+                        ssh_chan.exec_command(
+                            f"'nameserver 192.168.128.47' > /etc/resolve.conf"
+                        )
+
+
+                    exit_status = ssh_chan.recv_exit_status()
+                    if exit_status != 0:
+                        self.logger.error(
+                            f"Error starting HPS master on {target}: {exit_status}"
+                        )
+                        ret = ResultCode.FAILED
+
+            except NoValidConnectionsError:
+                self.logger.error(
+                    f"NoValidConnectionsError while connecting to {target}"
+                )
+                ret = ResultCode.FAILED
+            except SSHException:
+                self.logger.error(f"SSHException while talking to {target}")
+                ret = ResultCode.FAILED
+
+        return ret
+
+
 
     def _copy_binaries_and_bitstream(
         self: TalonDxComponentManager,
