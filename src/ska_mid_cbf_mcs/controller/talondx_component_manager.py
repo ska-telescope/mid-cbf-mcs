@@ -113,6 +113,7 @@ class TalonDxComponentManager:
             db_service_name = tango_host[0]
             port = tango_host[1]
             hostname = f"{db_service_name}.{namespace}.svc.cluster.local"
+            print(f"HOSTNAME: {hostname}")
             replaced_text = hps_master_file_tmp.read().replace(
                 "<hostname>:<port>", f"{hostname}:{port}"
             )
@@ -181,30 +182,45 @@ class TalonDxComponentManager:
 
                     ssh_client.set_missing_host_key_policy(AutoAddPolicy())
                     make_first_connect(ip, ssh_client)
-                    ssh_chan = ssh_client.get_transport().open_session()
 
                     environment = os.getenv("ENVIRONMENT")
-                    host_ip = os.getenv("MINIKUB_HOST_IP")
+                    host_ip = os.getenv("MINIKUBE_HOST_IP")
+                    print(f"HOST IP: {host_ip}")
 
                     if environment == "minikube":
+                        ssh_chan = ssh_client.get_transport().open_session()
                         ssh_chan.exec_command(
-                            f"'nameserver 172.17.0.95' > /etc/resolve.conf"
+                            f"echo 'nameserver 172.17.0.95' > /etc/resolv.conf"
                         )
+                        exit_status = ssh_chan.recv_exit_status()
+                        if exit_status != 0:
+                            self.logger.error(
+                                f"Error configuring nameserver: {exit_status}"
+                            )
+                            ret = ResultCode.FAILED
+
+                        ssh_chan = ssh_client.get_transport().open_session()
                         ssh_chan.exec_command(
                             f"ip route add default via {host_ip} dev eth0"
                         )
+                        exit_status = ssh_chan.recv_exit_status()
+                        if exit_status != 0:
+                            self.logger.error(
+                                f"Error configuring default ip gateway: {exit_status}"
+                            )
+                            ret = ResultCode.FAILED
+
                     else:
+                        ssh_chan = ssh_client.get_transport().open_session()
                         ssh_chan.exec_command(
-                            f"'nameserver 192.168.128.47' > /etc/resolve.conf"
+                            f"echo 'nameserver 192.168.128.47' > /etc/resolv.conf"
                         )
-
-
-                    exit_status = ssh_chan.recv_exit_status()
-                    if exit_status != 0:
-                        self.logger.error(
-                            f"Error starting HPS master on {target}: {exit_status}"
-                        )
-                        ret = ResultCode.FAILED
+                        exit_status = ssh_chan.recv_exit_status()
+                        if exit_status != 0:
+                            self.logger.error(
+                                f"Error configuring nameserver: {exit_status}"
+                            )
+                            ret = ResultCode.FAILED
 
             except NoValidConnectionsError:
                 self.logger.error(
@@ -245,25 +261,7 @@ class TalonDxComponentManager:
 
                 with SSHClient() as ssh_client:
 
-                    @backoff.on_exception(
-                        backoff.expo,
-                        NoValidConnectionsError,
-                        max_time=talon_first_connect_timeout,
-                    )
-                    def make_first_connect(
-                        ip: str, ssh_client: SSHClient
-                    ) -> None:
-                        """
-                        Attempts to connect to the Talon board for the first time
-                        after power-on.
-
-                        :param ip: IP address of the board
-                        :param ssh_client: SSH client to use for connection
-                        """
-                        ssh_client.connect(ip, username="root", password="")
-
                     ssh_client.set_missing_host_key_policy(AutoAddPolicy())
-                    make_first_connect(ip, ssh_client)
                     ssh_chan = ssh_client.get_transport().open_session()
 
                     # Make the DS binaries directory
