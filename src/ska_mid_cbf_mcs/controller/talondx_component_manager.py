@@ -261,7 +261,25 @@ class TalonDxComponentManager:
 
                 with SSHClient() as ssh_client:
 
+                    @backoff.on_exception(
+                        backoff.expo,
+                        NoValidConnectionsError,
+                        max_time=talon_first_connect_timeout,
+                    )
+                    def make_first_connect(
+                        ip: str, ssh_client: SSHClient
+                    ) -> None:
+                        """
+                        Attempts to connect to the Talon board for the first time
+                        after power-on.
+
+                        :param ip: IP address of the board
+                        :param ssh_client: SSH client to use for connection
+                        """
+                        ssh_client.connect(ip, username="root", password="")
+
                     ssh_client.set_missing_host_key_policy(AutoAddPolicy())
+                    make_first_connect(ip, ssh_client)
                     ssh_chan = ssh_client.get_transport().open_session()
 
                     # Make the DS binaries directory
