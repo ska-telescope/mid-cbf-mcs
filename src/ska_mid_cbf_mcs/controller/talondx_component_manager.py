@@ -233,8 +233,6 @@ class TalonDxComponentManager:
 
         return ret
 
-
-
     def _copy_binaries_and_bitstream(
         self: TalonDxComponentManager,
     ) -> ResultCode:
