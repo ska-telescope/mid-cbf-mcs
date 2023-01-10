@@ -84,6 +84,7 @@ def talon_dx_component_manager(
                 args[1]
                 == "/lib/firmware/hps_software/hps_master_mcs.sh talon1_test"
             )
+            or (args[1] == "rm /lib/firmware/hps_software/vcc_test/*")
         )
 
         if request.param["sim_connect_error"]:
