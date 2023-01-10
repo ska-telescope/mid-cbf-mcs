@@ -190,7 +190,7 @@ class TalonDxComponentManager:
                     if environment == "minikube":
                         ssh_chan = ssh_client.get_transport().open_session()
                         ssh_chan.exec_command(
-                            f"echo 'nameserver 172.17.0.95' > /etc/resolv.conf"
+                            "echo 'nameserver 172.17.0.95' > /etc/resolv.conf"
                         )
                         exit_status = ssh_chan.recv_exit_status()
                         if exit_status != 0:
@@ -213,7 +213,7 @@ class TalonDxComponentManager:
                     else:
                         ssh_chan = ssh_client.get_transport().open_session()
                         ssh_chan.exec_command(
-                            f"echo 'nameserver 192.168.128.47' > /etc/resolv.conf"
+                            "echo 'nameserver 192.168.128.47' > /etc/resolv.conf"
                         )
                         exit_status = ssh_chan.recv_exit_status()
                         if exit_status != 0:
