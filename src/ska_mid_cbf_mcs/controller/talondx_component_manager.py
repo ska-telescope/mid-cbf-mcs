@@ -212,6 +212,17 @@ class TalonDxComponentManager:
                         dest="/lib/firmware/hps_software",
                     )
 
+                    # Clear the existing DS binaries from dest dir
+                    ssh_chan = ssh_client.get_transport().open_session()
+                    ssh_chan.exec_command(f"rm {dest_dir}/*")
+                    exit_status = ssh_chan.recv_exit_status()
+                    if exit_status != 0:
+                        self.logger.error(
+                            f"Error deleting ds binaries from {dest_dir}: {exit_status}"
+                        )
+                        ret = ResultCode.FAILED
+                        continue
+
                     # Copy the remaining DS binaries
                     for binary_name in talon_cfg["devices"]:
                         self._secure_copy(
