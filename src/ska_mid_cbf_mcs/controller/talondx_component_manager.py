@@ -113,7 +113,6 @@ class TalonDxComponentManager:
             db_service_name = tango_host[0]
             port = tango_host[1]
             hostname = f"{db_service_name}.{namespace}.svc.cluster.local"
-            print(f"HOSTNAME: {hostname}")
             replaced_text = hps_master_file_tmp.read().replace(
                 "<hostname>:<port>", f"{hostname}:{port}"
             )
@@ -185,7 +184,6 @@ class TalonDxComponentManager:
 
                     environment = os.getenv("ENVIRONMENT")
                     host_ip = os.getenv("MINIKUBE_HOST_IP")
-                    print(f"HOST IP: {host_ip}")
 
                     if environment == "minikube":
                         ssh_chan = ssh_client.get_transport().open_session()
