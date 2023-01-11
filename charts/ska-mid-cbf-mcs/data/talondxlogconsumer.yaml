@@ -28,10 +28,9 @@ server:
         properties:
           - name: "LoggingLevelDefault"
             values:
-            - "3"
+            - "5"
           - name: "LoggingTargetsDefault"
             values:
-            - "file"
             - "console"
           - name: "polled_attr"
             values:
