@@ -85,6 +85,10 @@ def talon_dx_component_manager(
                 == "/lib/firmware/hps_software/hps_master_mcs.sh talon1_test"
             )
             or (args[1] == "rm /lib/firmware/hps_software/vcc_test/*")
+            or (
+                args[1]
+                == "echo 'nameserver 192.168.128.47' > /etc/resolv.conf"
+            )
         )
 
         if request.param["sim_connect_error"]:

@@ -24,11 +24,14 @@ server:
     classes:
     - name: "TalonDxLogConsumer"
       devices:
-      - name: "mid_csp_cbf/talon_dx_log_consumer/001"
+      - name: "mid_csp_cbf/talondx_log_consumer/talondxlogconsumer-001"
         properties:
           - name: "LoggingLevelDefault"
             values:
-            - "3"
+            - "5"
+          - name: "LoggingTargetsDefault"
+            values:
+            - "console"
           - name: "polled_attr"
             values:
             - "state"
