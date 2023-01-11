@@ -306,7 +306,7 @@ class TalonDxComponentManager:
 
                     # Clear the existing DS binaries from dest dir
                     ssh_chan = ssh_client.get_transport().open_session()
-                    ssh_chan.exec_command(f"rm {dest_dir}/*")
+                    ssh_chan.exec_command(f"rm -f {dest_dir}/*")
                     exit_status = ssh_chan.recv_exit_status()
                     if exit_status != 0:
                         self.logger.error(
@@ -392,7 +392,7 @@ class TalonDxComponentManager:
                     ssh_chan = ssh_client.get_transport().open_session()
 
                     ssh_chan.exec_command(
-                        f"/lib/firmware/hps_software/hps_master_mcs.sh {inst}"
+                        f"sh /lib/firmware/hps_software/hps_master_mcs.sh {inst}"
                     )
                     exit_status = ssh_chan.recv_exit_status()
                     if exit_status != 0:
