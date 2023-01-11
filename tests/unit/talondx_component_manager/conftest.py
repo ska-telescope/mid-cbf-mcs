@@ -82,9 +82,9 @@ def talon_dx_component_manager(
             or (args[1] == "mkdir -p /lib/firmware")
             or (
                 args[1]
-                == "/lib/firmware/hps_software/hps_master_mcs.sh talon1_test"
+                == "sh /lib/firmware/hps_software/hps_master_mcs.sh talon1_test"
             )
-            or (args[1] == "rm /lib/firmware/hps_software/vcc_test/*")
+            or (args[1] == "rm -f /lib/firmware/hps_software/vcc_test/*")
             or (
                 args[1]
                 == "echo 'nameserver 192.168.128.47' > /etc/resolv.conf"
