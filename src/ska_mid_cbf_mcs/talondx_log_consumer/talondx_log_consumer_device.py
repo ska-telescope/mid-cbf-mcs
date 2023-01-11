@@ -208,7 +208,7 @@ class TalonDxLogConsumer(SKABaseDevice):
             lineno = 0
             filename = ""
             msg_out = argin[3]
-            # Format: [file_path:lineno] log message 
+            # Format: [file_path:lineno] log message
             matched = re.match(r"\[(.+?)\:(\d+)\](.+)", argin[3])
             if matched is not None:
                 filename = matched.group(1)
