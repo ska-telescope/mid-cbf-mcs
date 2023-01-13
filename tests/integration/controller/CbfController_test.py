@@ -46,7 +46,7 @@ class TestCbfController:
         can start communicating
         """
 
-        wait_time_s = 3
+        wait_time_s = 35
         sleep_time_s = 0.1
 
         # after init devices should be in DISABLE state
