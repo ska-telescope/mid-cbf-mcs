@@ -1,116 +1,92 @@
 {
   "delayModel": [
     {
-      "delayDetails": [
+      "receptor": 1,
+      "epoch": 1673289859,
+      "validity_period": 10,
+      "poly_info": [
         {
-          "receptor": 1,
-          "receptorDelayDetails": [
-            {
-              "fsid": 1,
-              "delayCoeff": [0.1, 0.2, 0.3, 0.4, 0.5, 0.6]
-            },
-            {
-              "fsid": 2,
-              "delayCoeff": [0.7, 0.8, 0.9, 1.0, 1.1, 1.2]
-            },
-            {
-              "fsid": 3,
-              "delayCoeff": [4.7, 4.8, 4.9, 4.0, 4.1, 4.2]
-            }
-          ]
+          "polarization": "X",
+          "coeffs": [0.1, 0.2, 0.3, 0.4, 0.5, 0.6]
         },
         {
-          "receptor": 4,
-          "receptorDelayDetails": [
-            {
-              "fsid": 1,
-              "delayCoeff": [1.3, 1.4, 1.5, 1.6, 1.7, 1.8]
-            },
-            {
-              "fsid": 2,
-              "delayCoeff": [1.9, 2.0, 2.1, 2.2, 2.3, 2.4]
-            },
-            {
-              "fsid": 3,
-              "delayCoeff": [5.7, 5.8, 5.9, 5.0, 5.1, 5.2]
-            }
-          ]
+          "polarization": "Y",
+          "coeffs": [0.7, 0.8, 0.9, 1.0, 1.1, 1.2]
         }
       ]
     },
     {
-      "delayDetails": [
+      "receptor": 1,
+      "epoch": 1673289869,
+      "validity_period": 10,
+      "poly_info": [
         {
-          "receptor": 1,
-          "receptorDelayDetails": [
-            {
-              "fsid": 1,
-              "delayCoeff": [1.1, 1.2, 1.3, 1.4, 1.5, 1.6]
-            },
-            {
-              "fsid": 2,
-              "delayCoeff": [1.7, 1.8, 1.9, 2.0, 2.1, 2.2]
-            },
-            {
-              "fsid": 3,
-              "delayCoeff": [6.7, 6.8, 6.9, 6.0, 6.1, 6.2]
-            }
-          ]
+          "polarization": "X",
+          "coeffs": [1.1, 1.2, 1.3, 1.4, 1.5, 1.6]
         },
         {
-          "receptor": 4,
-          "receptorDelayDetails": [
-            {
-              "fsid": 1,
-              "delayCoeff": [2.3, 2.4, 2.5, 2.6, 2.7, 2.8]
-            },
-            {
-              "fsid": 2,
-              "delayCoeff": [2.9, 3.0, 3.1, 3.2, 3.3, 3.4]
-            },
-            {
-              "fsid": 3,
-              "delayCoeff": [7.7, 7.8, 7.9, 7.0, 7.1, 7.2]
-            }
-          ]
+          "polarization": "Y",
+          "coeffs": [1.7, 1.8, 1.9, 2.0, 2.1, 2.2]
         }
       ]
     },
     {
-      "delayDetails": [
+      "receptor": 1,
+      "epoch": 0,
+      "validity_period": 10,
+      "poly_info": [
         {
-          "receptor": 1,
-          "receptorDelayDetails": [
-            {
-              "fsid": 1,
-              "delayCoeff": [2.1, 2.2, 2.3, 2.4, 2.5, 2.6]
-            },
-            {
-              "fsid": 2,
-              "delayCoeff": [2.7, 2.8, 2.9, 3.0, 3.1, 3.2]
-            },
-            {
-              "fsid": 3,
-              "delayCoeff": [8.7, 8.8, 8.9, 8.0, 8.1, 8.2]
-            }
-          ]
+          "polarization": "X",
+          "coeffs": [2.1, 2.2, 2.3, 2.4, 2.5, 2.6]
         },
         {
-          "receptor": 4,
-          "receptorDelayDetails": [
-            {
-              "fsid": 1,
-              "delayCoeff": [3.3, 3.4, 3.5, 3.6, 3.7, 3.8]
-            },
-            {
-              "fsid": 2,
-              "delayCoeff": [3.9, 4.0, 4.1, 4.2, 4.3, 4.4]
-            },
-            {
-              "fsid": 3,
-              "delayCoeff": [9.7, 9.8, 9.9, 9.0, 9.1, 9.2]
-            }
-          ]
+          "polarization": "Y",
+          "coeffs": [2.7, 2.8, 2.9, 3.0, 3.1, 3.2]
+        }
+      ]
+    },
+    {
+      "receptor": 4,
+      "epoch": 1673289859,
+      "validity_period": 10,
+      "poly_info": [
+        {
+          "polarization": "X",
+          "coeffs": [1.3, 1.4, 1.5, 1.6, 1.7, 1.8]
+        },
+        {
+          "polarization": "Y",
+          "coeffs": [1.9, 2.0, 2.1, 2.2, 2.3, 2.4]
+        }
+      ]
+    },
+    {
+      "receptor": 4,
+      "epoch": 1673289869,
+      "validity_period": 10,
+      "poly_info": [
+        {
+          "polarization": "X",
+          "coeffs": [2.3, 2.4, 2.5, 2.6, 2.7, 2.8]
+        },
+        {
+          "polarization": "Y",
+          "coeffs": [2.9, 3.0, 3.1, 3.2, 3.3, 3.4]
+        }
+      ]
+    },
+    {
+      "receptor": 4,
+      "epoch": 0,
+      "validity_period": 10,
+      "poly_info": [
+        {
+          "polarization": "X",
+          "coeffs": [3.3, 3.4, 3.5, 3.6, 3.7, 3.8]
+        },
+        {
+          "polarization": "Y",
+          "coeffs": [3.9, 4.0, 4.1, 4.2, 4.3, 4.4]
         }
       ]
     }

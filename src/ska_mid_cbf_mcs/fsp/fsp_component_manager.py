@@ -609,7 +609,6 @@ class FspComponentManager(CbfComponentManager):
                 FspModes.PSS_BF.value,
                 FspModes.PST_BF.value,
             ]:
-                argin = json.loads(argin)
                 self._delay_model = copy.deepcopy(argin)
             else:
                 log_msg = (

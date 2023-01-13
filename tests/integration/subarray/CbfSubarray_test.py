@@ -1233,85 +1233,34 @@ class TestCbfSubarray:
 
             # update delay models from tm emulator
             f = open(data_file_path + delay_model_file_name)
-            delay_model = json.loads(f.read().replace("\n", ""))
-
-            # Insert the epoch
-            delay_model_index_per_epoch = list(
-                range(len(delay_model["delayModel"]))
-            )
-            random.shuffle(delay_model_index_per_epoch)
-            epoch_increment = 10
-            for i, delay_model_index in enumerate(delay_model_index_per_epoch):
-                if i == 0:
-                    epoch_time = 0
-                    delay_model["delayModel"][delay_model_index][
-                        "epoch"
-                    ] = str(epoch_time)
-                else:
-                    epoch_time += epoch_increment
-                    delay_model["delayModel"][delay_model_index][
-                        "epoch"
-                    ] = str(int(time.time()) + epoch_time)
+            json_str_delay_model = f.read().replace("\n", "")
+            f.close()
 
             # update delay model
-            test_proxies.tm.delayModel = json.dumps(delay_model)
+            test_proxies.tm.delayModel = json_str_delay_model
             time.sleep(1)
 
-            for epoch in range(len(delay_model_index_per_epoch)):
+            # verify the delay model was updated successfully
+            for fsp in [
+                test_proxies.fsp[i] for i in range(1, test_proxies.num_fsp + 1)
+            ]:
+                log_msg = "function mode {} for current fsp".format(
+                    fsp.functionMode
+                )
+                if fsp.functionMode in [
+                    FspModes.PSS_BF.value,
+                    FspModes.PST_BF.value,
+                ]:
+                    assert json_str_delay_model == fsp.delayModel
+                else:
+                    log_msg = (
+                        "function mode {} currently not supported".format(
+                            fsp.functionMode
+                        )
+                    )
+                    logging.error(log_msg)
 
-                model = delay_model["delayModel"][
-                    delay_model_index_per_epoch[epoch]
-                ]
-                for delayDetail in model["delayDetails"]:
-                    rec_id = delayDetail["receptor"]
-                    for fsp in [
-                        test_proxies.fsp[i]
-                        for i in range(1, test_proxies.num_fsp + 1)
-                    ]:
-                        if fsp.functionMode in [
-                            FspModes.PSS_BF.value,
-                            FspModes.PST_BF.value,
-                        ]:
-                            for receptorDelayDetail in delayDetail[
-                                "receptorDelayDetails"
-                            ]:
-                                fsp_id = receptorDelayDetail["fsid"]
-                                delayCoeff = receptorDelayDetail["delayCoeff"]
-                                if fsp_id == int(
-                                    fsp.get_property("FspID")["FspID"][0]
-                                ):
-                                    if (
-                                        fsp.functionMode
-                                        == FspModes.PSS_BF.value
-                                    ):
-                                        proxy_subarray = (
-                                            test_proxies.fspSubarray["PSS-BF"][
-                                                sub_id
-                                            ][fsp_id]
-                                        )
-                                    else:
-                                        proxy_subarray = (
-                                            test_proxies.fspSubarray["PST-BF"][
-                                                sub_id
-                                            ][fsp_id]
-                                        )
-                                    if rec_id in proxy_subarray.receptors:
-                                        for idx, coeff in enumerate(
-                                            delayCoeff
-                                        ):
-                                            assert (
-                                                coeff
-                                                == fsp.delayModel[rec_id - 1][
-                                                    idx
-                                                ]
-                                            )
-                        else:
-                            log_msg = "function mode {} currently not supported".format(
-                                fsp.functionMode
-                            )
-                            logging.error(log_msg)
-
-                time.sleep(epoch_increment)
+            time.sleep(epoch_increment)
 
             # update timing beam weights from tm emulator
             f = open(data_file_path + timing_beam_weights_file_name)
@@ -1718,104 +1667,38 @@ class TestCbfSubarray:
 
             assert test_proxies.subarray[sub_id].obsState == ObsState.READY
 
-            # Insert the epoch
-            delay_model_index_per_epoch = list(
-                range(len(delay_model["delayModel"]))
-            )
-            random.shuffle(delay_model_index_per_epoch)
-            epoch_increment = 10
-            for i, delay_model_index in enumerate(delay_model_index_per_epoch):
-                if i == 0:
-                    epoch_time = 0
-                    delay_model["delayModel"][delay_model_index][
-                        "epoch"
-                    ] = str(epoch_time)
-                else:
-                    epoch_time += epoch_increment
-                    delay_model["delayModel"][delay_model_index][
-                        "epoch"
-                    ] = str(int(time.time()) + epoch_time)
-
             # update delay model
             test_proxies.tm.delayModel = json.dumps(delay_model)
             time.sleep(1)
 
-            epoch_to_scan = 1
-            num_cols = 6
-            num_rows_vcc = 26
+            epoch_increment = 10
+            vcc_receptor_to_scan = 1
 
-            for epoch in range(len(delay_model_index_per_epoch)):
-
-                model = delay_model["delayModel"][
-                    delay_model_index_per_epoch[epoch]
-                ]
-                for delayDetail in model["delayDetails"]:
-                    rec_id = delayDetail["receptor"]
-                    for r in vcc_receptors:
-                        vcc = test_proxies.vcc[test_proxies.receptor_to_vcc[r]]
-                        if delayDetail["receptor"] == r:
-                            mod_vcc = [
-                                [0.0] * num_cols for i in range(num_rows_vcc)
-                            ]
-                            for receptorDelayDetail in delayDetail[
-                                "receptorDelayDetails"
-                            ]:
-                                fs_id = receptorDelayDetail["fsid"]
-                                delayCoeff = receptorDelayDetail["delayCoeff"]
-                                mod_vcc[fs_id - 1] = delayCoeff
-                            for i in range(len(mod_vcc)):
-                                for j in range(len(mod_vcc[i])):
+            # check the delay model was correctly updated
+            for j, r in enumerate(vcc_receptors):
+                vcc = test_proxies.vcc[test_proxies.receptor_to_vcc[r]]
+                for listItem in delay_model["delayModel"]:
+                    if listItem["receptor"] == r:
+                        # loop through all the entries in the vcc proxy
+                        # to find a match with epoch
+                        print("****vcc delay model: ", vcc.delayModel)
+                        logging.info(f"****vcc delay model: {vcc.delayModel}")
+                        for entry in vcc.delayModel["delayModel"]:
+                            if entry["epoch"] == listItem["epoch"]:
+                                # then loop through the polarization/coeff pairs
+                                # and check these values are the same
+                                for i, poly in enumerate(entry["poly_info"]):
                                     assert (
-                                        vcc.delayModel[i][j] == mod_vcc[i][j]
+                                        poly["polarization"]
+                                        == listItem["poly_info"][i][
+                                            "polarization"
+                                        ]
                                     )
-                    for fsp in [
-                        test_proxies.fsp[i]
-                        for i in range(1, test_proxies.num_fsp + 1)
-                    ]:
-                        if fsp.functionMode in [
-                            FspModes.PSS_BF.value,
-                            FspModes.PST_BF.value,
-                        ]:
-                            for receptorDelayDetail in delayDetail[
-                                "receptorDelayDetails"
-                            ]:
-                                fsp_id = receptorDelayDetail["fsid"]
-                                delayCoeff = receptorDelayDetail["delayCoeff"]
-                                if fsp_id == int(
-                                    fsp.get_property("FspID")["FspID"][0]
-                                ):
-                                    if (
-                                        fsp.functionMode
-                                        == FspModes.PSS_BF.value
-                                    ):
-                                        proxy_subarray = (
-                                            test_proxies.fspSubarray["PSS-BF"][
-                                                sub_id
-                                            ][fsp_id]
-                                        )
-                                    else:
-                                        proxy_subarray = (
-                                            test_proxies.fspSubarray["PST-BF"][
-                                                sub_id
-                                            ][fsp_id]
-                                        )
-                                    if rec_id in proxy_subarray.receptors:
-                                        for idx, coeff in enumerate(
-                                            delayCoeff
-                                        ):
-                                            assert (
-                                                coeff
-                                                == fsp.delayModel[rec_id - 1][
-                                                    idx
-                                                ]
-                                            )
-                        else:
-                            log_msg = "function mode {} currently not supported".format(
-                                fsp.functionMode
-                            )
-                            logging.error(log_msg)
-
-                if epoch == epoch_to_scan:
+                                    assert (
+                                        poly["coeffs"]
+                                        == listItem["poly_info"][i]["coeffs"]
+                                    )
+                if j == vcc_receptor_to_scan:
                     # transition to obsState=SCANNING
                     f2 = open(data_file_path + scan_file_name)
                     test_proxies.subarray[sub_id].Scan(
@@ -1833,7 +1716,16 @@ class TestCbfSubarray:
                         == ObsState.SCANNING
                     )
 
-                time.sleep(epoch_increment)
+                    time.sleep(epoch_increment)
+
+            for fsp in [
+                test_proxies.fsp[i] for i in range(1, test_proxies.num_fsp + 1)
+            ]:
+                if fsp.functionMode in [
+                    FspModes.PSS_BF.value,
+                    FspModes.PST_BF.value,
+                ]:
+                    assert delay_model == fsp.delayModel
 
             # Clean up
             wait_time_s = 3

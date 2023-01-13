@@ -203,7 +203,6 @@ class TestVccComponentManager:
         input_delay_model = json.loads(json_str_model)
 
         # update the delay model
-
         # set the receptor id to the first receptor in the delay model
         vcc_component_manager.receptor_id = input_delay_model["delayModel"][0][
             "receptor"

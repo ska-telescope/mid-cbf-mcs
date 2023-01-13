@@ -308,9 +308,8 @@ class TestFspComponentManager:
 
         # read the json file
         f = open(file_path + delay_model_file_name)
-        json_str = f.read().replace("\n", "")
+        json_str_delay_model = f.read().replace("\n", "")
         f.close()
-        delay_model = json.loads(json_str)
 
         valid_function_modes = ["PSS-BF", "PST-BF"]
         for mode in valid_function_modes:
@@ -327,11 +326,11 @@ class TestFspComponentManager:
                     == FspModes.PST_BF.value
                 )
 
-            fsp_component_manager.update_delay_model(json_str)
+            fsp_component_manager.update_delay_model(json_str_delay_model)
             time.sleep(3)
 
             # verify the delay model was updated successfully
-            assert delay_model == fsp_component_manager.delay_model
+            assert json_str_delay_model == fsp_component_manager.delay_model
 
     @pytest.mark.parametrize(
         "timing_beam_weights_file_name, \
