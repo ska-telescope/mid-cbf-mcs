@@ -454,7 +454,7 @@ class TalonDxComponentManager:
             hps_master_fqdn = talon_cfg["ds_hps_master_fqdn"]
             hps_master = self.proxies[hps_master_fqdn]
 
-            Wait for HPS Master
+            # Wait for HPS Master
             for i in range(6):
                 try:
                     hps_master.state()
