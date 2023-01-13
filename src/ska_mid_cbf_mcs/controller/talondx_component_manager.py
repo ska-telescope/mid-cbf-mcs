@@ -457,7 +457,7 @@ class TalonDxComponentManager:
             # Wait for HPS Master
             for i in range(6):
                 try:
-                    hps_master.state()
+                    hps_master.ping()
                     break
                 except tango.DevFailed:
                     time.sleep(5)
