@@ -146,6 +146,9 @@ k8s-pre-test:
 python-pre-lint:
 	@pip3 install black isort flake8 pylint_junit typing_extensions
 
+python-pre-build:
+	@$(PYTHON_RUNNER) pip install sphinx==2.2
+
 documentation:   ## ## Re-generate documentation
 	cd docs && make clean && make html
 
