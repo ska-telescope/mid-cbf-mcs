@@ -455,7 +455,7 @@ class TalonDxComponentManager:
             hps_master = self.proxies[hps_master_fqdn]
 
             # Wait for HPS Master
-            #for i in range(6):
+            # for i in range(6):
             #    try:
             #        hps_master.state()
             #        break
