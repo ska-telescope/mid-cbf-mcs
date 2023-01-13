@@ -14,6 +14,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import time
 
 import backoff
 import tango
@@ -453,13 +454,13 @@ class TalonDxComponentManager:
             hps_master_fqdn = talon_cfg["ds_hps_master_fqdn"]
             hps_master = self.proxies[hps_master_fqdn]
 
-            # Wait for HPS Master
-            # for i in range(6):
-            #    try:
-            #        hps_master.state()
-            #        break
-            #    except tango.DevFailed:
-            #        time.sleep(5)
+            Wait for HPS Master
+            for i in range(6):
+                try:
+                    hps_master.state()
+                    break
+                except tango.DevFailed:
+                    time.sleep(5)
 
             self.logger.info(f"Sending configure command to {hps_master_fqdn}")
             try:
