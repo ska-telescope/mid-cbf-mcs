@@ -931,14 +931,21 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
 
         :param argin: the delay model JSON string
         """
-        argin = json.loads(argin)
+        delay_model_obj = json.loads(argin)
 
-        vcc_delay_model_entries = []
-        for entry in argin["delayModel"]:
+        print(f"*****self._receptor_id: {self._receptor_id}")
+        print(f"*****vcc_update_delay_model: {delay_model_obj}")
+
+        # find the delay model that applies to this vcc's
+        # receptor and store it
+        for entry in delay_model_obj["delayModel"]:
             if entry["receptor"] == self._receptor_id:
-                vcc_delay_model_entries.append(copy.deepcopy(entry))
+                self._delay_model = json.dumps(
+                    {"delayModel": (copy.deepcopy(entry))}
+                )
+                break
 
-        self._delay_model = json.dumps({"delayModel": vcc_delay_model_entries})
+        print(f"*****self._delay_model: {self._delay_model}")
 
     def update_jones_matrix(self: VccComponentManager, argin: str) -> None:
         """

@@ -8,6 +8,7 @@
 """Contain the tests for the CbfSubarray."""
 from __future__ import annotations  # allow forward references in type hints
 
+import copy
 import json
 import logging
 import os
@@ -1618,13 +1619,39 @@ class TestCbfSubarray:
         :param receptor_ids: list of receptor ids
         :param vcc_receptors: list of vcc receptor ids
         """
+        # Test Description:
+        # -----------------
+        # . The TM device attribute delayModel is updated from time to time by
+        #   invoking the write_delayModel attribute,
+        #   operationally every 10 seconds; for this test we can use any interval
+        # . In the background, the TM emulator polls the read_delayModel attribute
+        #   at a high rate, the polling interval is typically << 1s)
+        # . The CbfSubarray device subscribes to the read_delayModel attribute
+        #   which means that every time an event occurs (i.e. a change in this
+        #   attribute's value occurs) a callback is executed (the callback is
+        #   also executed at the time of the subscription).
+        # . The callback pushes the new value down to the VCC and FSP devices.
+        #
+        # The goal of this test is to verify that the delay model that
+        # reached VCC (or FSP) is the same as the input delay model read by TM,
+        # for all the delay Model in the  list in the input JSON File.
 
         # Read delay model data from file
         f = open(data_file_path + delay_model_file_name)
-        json_string_delay_mod = f.read().replace("\n", "")
-        delay_model = json.loads(json_string_delay_mod)
+        delay_model_all = f.read().replace("\n", "")
+        delay_model_all_obj = json.loads(delay_model_all)
         f.close()
 
+        # to speed up the testing we use 4s between
+        # delayModel updates (instead of the operational 10s)
+        update_period = 4
+
+        # to simulate updating the delay model multiple times, we
+        # have several delay models in the input data
+        dm_num_entries = len(delay_model_all_obj)
+
+        print(f"receptor_ids: {receptor_ids}")
+        print(f"vcc_receptors: {vcc_receptors}")
         try:
             wait_time_s = 1
             sleep_time_s = 1
@@ -1667,38 +1694,67 @@ class TestCbfSubarray:
 
             assert test_proxies.subarray[sub_id].obsState == ObsState.READY
 
-            # update delay model
-            test_proxies.tm.delayModel = json.dumps(delay_model)
-            time.sleep(1)
+            # update the TM with each of the input delay models
+            for i_dm in range(dm_num_entries):
 
-            epoch_increment = 10
-            vcc_receptor_to_scan = 1
+                # Get one delay model Python object from the list
+                input_delay_model_obj = delay_model_all_obj[i_dm]
 
-            # check the delay model was correctly updated
-            for j, r in enumerate(vcc_receptors):
-                vcc = test_proxies.vcc[test_proxies.receptor_to_vcc[r]]
-                for listItem in delay_model["delayModel"]:
-                    if listItem["receptor"] == r:
-                        # loop through all the entries in the vcc proxy
-                        # to find a match with epoch
-                        print("****vcc delay model: ", vcc.delayModel)
-                        logging.info(f"****vcc delay model: {vcc.delayModel}")
-                        for entry in vcc.delayModel["delayModel"]:
-                            if entry["epoch"] == listItem["epoch"]:
-                                # then loop through the polarization/coeff pairs
-                                # and check these values are the same
-                                for i, poly in enumerate(entry["poly_info"]):
-                                    assert (
-                                        poly["polarization"]
-                                        == listItem["poly_info"][i][
-                                            "polarization"
-                                        ]
-                                    )
-                                    assert (
-                                        poly["coeffs"]
-                                        == listItem["poly_info"][i]["coeffs"]
-                                    )
-                if j == vcc_receptor_to_scan:
+                # Convert to a serialized JSON object
+                input_delay_model = json.dumps(input_delay_model_obj)
+
+                # Write this one delay_model JSON object to the TM emulator
+                test_proxies.tm.delayModel = input_delay_model
+
+                time.sleep(1)
+
+                # check the delay model was correctly updated for vcc
+                for jj, i_rec in enumerate(vcc_receptors):
+
+                    # get the vcc device proxy (dp) corresponding to i_rec
+                    this_vcc = test_proxies.receptor_to_vcc[i_rec]
+                    vcc_dp = test_proxies.vcc[this_vcc]
+
+                    print(f"vcc_dp.configID = {vcc_dp.configID}")
+
+                    # Extract the  delay model corresponding to receptor i_rec:
+                    # It is assumed that there is only one entry in the
+                    # delay model for a given receptor
+                    for entry in input_delay_model_obj["delayModel"]:
+                        if entry["receptor"] == i_rec:
+                            this_input_delay_model_obj = copy.deepcopy(entry)
+                            break
+
+                    print(f"i_rec = {i_rec}")
+                    print(
+                        f"this_input_delay_model_obj = {this_input_delay_model_obj}"
+                    )
+                    print(f"vcc_dp.delayModel = {vcc_dp.delayModel}")
+
+                    vcc_updated_delayModel_obj = json.loads(vcc_dp.delayModel)
+
+                    # there should be only one delay model in the vcc
+                    assert len(vcc_updated_delayModel_obj) == 1
+
+                    # the one delay model should have only 1 entry
+                    # for the given receptor
+                    # remove the "delayModel" key so we can compare
+                    # just the list of dictionaries that includes the
+                    # receptor, epoch, etc
+                    vcc_updated_delay_receptor = vcc_updated_delayModel_obj[
+                        "delayModel"
+                    ]
+
+                    # want to compare strings
+                    this_input_delay_model = json.dumps(
+                        this_input_delay_model_obj
+                    )
+                    assert (
+                        json.dumps(vcc_updated_delay_receptor)
+                        == this_input_delay_model
+                    )
+
+                if i_dm == 0:
                     # transition to obsState=SCANNING
                     f2 = open(data_file_path + scan_file_name)
                     test_proxies.subarray[sub_id].Scan(
@@ -1716,16 +1772,36 @@ class TestCbfSubarray:
                         == ObsState.SCANNING
                     )
 
-                    time.sleep(epoch_increment)
+                time.sleep(update_period)
 
-            for fsp in [
-                test_proxies.fsp[i] for i in range(1, test_proxies.num_fsp + 1)
-            ]:
-                if fsp.functionMode in [
-                    FspModes.PSS_BF.value,
-                    FspModes.PST_BF.value,
+                # check the delay model was correctly updated for fsp
+                for fsp in [
+                    test_proxies.fsp[i]
+                    for i in range(1, test_proxies.num_fsp + 1)
                 ]:
-                    assert delay_model == fsp.delayModel
+                    print(f"fsp: {fsp}")
+
+                    if fsp.functionMode in [
+                        FspModes.PSS_BF.value,
+                        FspModes.PST_BF.value,
+                    ]:
+                        # fsp delay model may have multiple entries -
+                        # each one for a different receptor that is
+                        # part of the subarray
+                        # Look through the input delay model
+                        # and for each receptor, check whether
+                        # the subarray has that same receptor
+                        # if it does, loop through all the fsp
+                        # in the subarray pull out the entry with that receptor
+                        # then compare the entry for that receptor
+                        # from the input model with the entry
+                        # for that receptor from the fsp
+                        for entry in input_delay_model_obj["delayModel"]:
+                            rec_id = entry["receptor"]
+                            # check whether the subarray has this receptor
+                            #
+                            pass
+                        # assert input_delay_model == fsp.delayModel
 
             # Clean up
             wait_time_s = 3

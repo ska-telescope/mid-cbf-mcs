@@ -482,14 +482,9 @@ class CbfSubarrayComponentManager(
                     return
 
                 self._last_received_delay_model = value
-                delay_model_all = json.loads(value)
 
-                for delay_model in delay_model_all["delayModel"]:
-                    t = Thread(
-                        target=self._update_delay_model,
-                        args=(json.dumps(delay_model),),
-                    )
-                    t.start()
+                self._update_delay_model(value)
+
             except Exception as e:
                 self._logger.error(str(e))
         else:
@@ -508,7 +503,7 @@ class CbfSubarrayComponentManager(
         # This method is always called on a separate thread
         self._logger.debug("CbfSubarray._update_delay_model")
 
-        log_msg = "Updating delay model ..."
+        log_msg = f"Updating delay model ...{model}"
         self._logger.info(log_msg)
 
         data = tango.DeviceData()

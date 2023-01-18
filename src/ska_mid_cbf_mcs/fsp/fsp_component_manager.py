@@ -609,7 +609,28 @@ class FspComponentManager(CbfComponentManager):
                 FspModes.PSS_BF.value,
                 FspModes.PST_BF.value,
             ]:
-                self._delay_model = copy.deepcopy(argin)
+                delay_model_obj = json.loads(argin)
+
+                for i in self._subarray_membership:
+                    if self._function_mode == FspModes.PSS_BF.value:
+                        proxy = self._proxy_fsp_pss_subarray[i - 1]
+                    else:
+                        proxy = self._proxy_fsp_pst_subarray[i - 1]
+
+                    fsp_delay_model_entries = []
+                    for receptor in delay_model_obj["delayModel"]:
+                        if receptor["receptor"] in proxy.receptors:
+                            fsp_delay_model_entries.append(
+                                copy.deepcopy(receptor)
+                            )
+
+                    self._delay_model = json.dumps(
+                        {"delayModel": fsp_delay_model_entries}
+                    )
+
+                    print(f"****proxy.receptors = {proxy.receptors}")
+
+                print(f"*****fsp self._delay_model: {self._delay_model}")
             else:
                 log_msg = (
                     "Fsp UpdateDelayModel command failed: "
@@ -620,7 +641,6 @@ class FspComponentManager(CbfComponentManager):
 
             message = "Fsp UpdateDelayModel command completed OK"
             return (ResultCode.OK, message)
-
         else:
             log_msg = "Fsp UpdateDelayModel command failed: \
                     proxies not connected"
