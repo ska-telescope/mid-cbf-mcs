@@ -12,6 +12,7 @@
 from __future__ import annotations
 
 import logging
+import re
 from typing import List
 
 # tango imports
@@ -178,6 +179,7 @@ class TalonDxLogConsumer(SKABaseDevice):
         _TANGO_LOGGING_TO_PYTHON_LOGGING_LEVEL = {
             "FATAL": logging.CRITICAL,
             "ERROR": logging.ERROR,
+            "WARN": logging.WARNING,
             "WARNING": logging.WARNING,
             "INFO": logging.INFO,
             "DEBUG": logging.DEBUG,
@@ -203,6 +205,17 @@ class TalonDxLogConsumer(SKABaseDevice):
             except ValueError:
                 return
 
+            lineno = 0
+            filename = ""
+            msg_out = argin[3]
+            # Format: [file_path:lineno] log message
+            matched = re.match(r"\[(.+?)\:(\d+)\](.+)", argin[3])
+            if matched is not None:
+                filename = matched.group(1)
+                lineno = int(matched.group(2))
+                msg_out = matched.group(3)
+                filename = filename.split("/")[-1]  # file basename
+
             # Forward the log message to the logger
             attrdict = {
                 "created": epoch_ms / 1000,  # Seconds
@@ -211,10 +224,10 @@ class TalonDxLogConsumer(SKABaseDevice):
                 "levelno": log_level,
                 "threadName": argin[5],
                 "funcName": "",
-                "filename": "",
-                "lineno": 0,
+                "filename": filename,
+                "lineno": lineno,
                 "tags": f"tango-device:{argin[2]}",
-                "msg": argin[3],
+                "msg": msg_out,
             }
             rec = logging.makeLogRecord(attrdict)
             self.logger.handle(rec)
