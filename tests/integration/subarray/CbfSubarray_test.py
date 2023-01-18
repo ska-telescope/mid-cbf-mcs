@@ -1232,36 +1232,71 @@ class TestCbfSubarray:
 
                 time.sleep(epoch_increment)
 
-            # update delay models from tm emulator
+            # Read delay model data from file
+            # There are 3 delay models in the file that
+            # will be used to update the delay model
+            # 3 times to simulate successive updates
             f = open(data_file_path + delay_model_file_name)
-            json_str_delay_model = f.read().replace("\n", "")
+            delay_model_all = f.read().replace("\n", "")
+            delay_model_all_obj = json.loads(delay_model_all)
             f.close()
 
-            # update delay model
-            test_proxies.tm.delayModel = json_str_delay_model
-            time.sleep(1)
+            # to speed up the testing we use 4s between
+            # delayModel updates (instead of the operational 10s)
+            update_period = 4
 
-            # verify the delay model was updated successfully
-            for fsp in [
-                test_proxies.fsp[i] for i in range(1, test_proxies.num_fsp + 1)
-            ]:
-                log_msg = "function mode {} for current fsp".format(
-                    fsp.functionMode
-                )
-                if fsp.functionMode in [
-                    FspModes.PSS_BF.value,
-                    FspModes.PST_BF.value,
+            # to simulate updating the delay model multiple times, we
+            # have several delay models in the input data
+            dm_num_entries = len(delay_model_all_obj)
+
+            # update the TM with each of the input delay models
+            for i_dm in range(dm_num_entries):
+
+                # Get one delay model Python object from the list
+                input_delay_model_obj = delay_model_all_obj[i_dm]
+
+                # Convert to a serialized JSON object
+                input_delay_model = json.dumps(input_delay_model_obj)
+
+                # Write this one delay_model JSON object to the TM emulator
+                test_proxies.tm.delayModel = input_delay_model
+
+                time.sleep(2)
+
+                # check the delay model was correctly updated for fsp
+                for fsp in [
+                    test_proxies.fsp[i]
+                    for i in range(1, test_proxies.num_fsp + 1)
                 ]:
-                    assert json_str_delay_model == fsp.delayModel
-                else:
-                    log_msg = (
-                        "function mode {} currently not supported".format(
-                            fsp.functionMode
-                        )
-                    )
-                    logging.error(log_msg)
+                    if fsp.functionMode in [
+                        FspModes.PSS_BF.value,
+                        FspModes.PST_BF.value,
+                    ]:
+                        # fsp delay model may have multiple entries -
+                        # each one for a different receptor that is
+                        # part of the subarray
+                        # Find entries with the same receptor for
+                        # the input delay model and the updated fsp
+                        # delay model and verify that the data is the same
+                        fsp_delay_model_obj = json.loads(fsp.delayModel)
+                        for entry in input_delay_model_obj["delayModel"]:
+                            rec_id = entry["receptor"]
 
-            time.sleep(epoch_increment)
+                            # find same receptor in the fsp delay model
+                            for item in fsp_delay_model_obj["delayModel"]:
+                                if item["receptor"] == rec_id:
+                                    # compare the receptor data as strings
+                                    assert json.dumps(entry) == json.dumps(
+                                        item
+                                    )
+                    else:
+                        log_msg = (
+                            "function mode {} currently not supported".format(
+                                fsp.functionMode
+                            )
+                        )
+
+                time.sleep(update_period)
 
             # update timing beam weights from tm emulator
             f = open(data_file_path + timing_beam_weights_file_name)
@@ -1650,8 +1685,6 @@ class TestCbfSubarray:
         # have several delay models in the input data
         dm_num_entries = len(delay_model_all_obj)
 
-        print(f"receptor_ids: {receptor_ids}")
-        print(f"vcc_receptors: {vcc_receptors}")
         try:
             wait_time_s = 1
             sleep_time_s = 1
@@ -1706,7 +1739,7 @@ class TestCbfSubarray:
                 # Write this one delay_model JSON object to the TM emulator
                 test_proxies.tm.delayModel = input_delay_model
 
-                time.sleep(1)
+                time.sleep(2)
 
                 # check the delay model was correctly updated for vcc
                 for jj, i_rec in enumerate(vcc_receptors):
@@ -1715,8 +1748,6 @@ class TestCbfSubarray:
                     this_vcc = test_proxies.receptor_to_vcc[i_rec]
                     vcc_dp = test_proxies.vcc[this_vcc]
 
-                    print(f"vcc_dp.configID = {vcc_dp.configID}")
-
                     # Extract the  delay model corresponding to receptor i_rec:
                     # It is assumed that there is only one entry in the
                     # delay model for a given receptor
@@ -1724,12 +1755,6 @@ class TestCbfSubarray:
                         if entry["receptor"] == i_rec:
                             this_input_delay_model_obj = copy.deepcopy(entry)
                             break
-
-                    print(f"i_rec = {i_rec}")
-                    print(
-                        f"this_input_delay_model_obj = {this_input_delay_model_obj}"
-                    )
-                    print(f"vcc_dp.delayModel = {vcc_dp.delayModel}")
 
                     vcc_updated_delayModel_obj = json.loads(vcc_dp.delayModel)
 
@@ -1772,15 +1797,11 @@ class TestCbfSubarray:
                         == ObsState.SCANNING
                     )
 
-                time.sleep(update_period)
-
                 # check the delay model was correctly updated for fsp
                 for fsp in [
                     test_proxies.fsp[i]
                     for i in range(1, test_proxies.num_fsp + 1)
                 ]:
-                    print(f"fsp: {fsp}")
-
                     if fsp.functionMode in [
                         FspModes.PSS_BF.value,
                         FspModes.PST_BF.value,
@@ -1788,20 +1809,21 @@ class TestCbfSubarray:
                         # fsp delay model may have multiple entries -
                         # each one for a different receptor that is
                         # part of the subarray
-                        # Look through the input delay model
-                        # and for each receptor, check whether
-                        # the subarray has that same receptor
-                        # if it does, loop through all the fsp
-                        # in the subarray pull out the entry with that receptor
-                        # then compare the entry for that receptor
-                        # from the input model with the entry
-                        # for that receptor from the fsp
+                        # Find entries with the same receptor for
+                        # the input delay model and the updated fsp
+                        # delay model and verify that the data is the same
+                        fsp_delay_model_obj = json.loads(fsp.delayModel)
                         for entry in input_delay_model_obj["delayModel"]:
                             rec_id = entry["receptor"]
-                            # check whether the subarray has this receptor
-                            #
-                            pass
-                        # assert input_delay_model == fsp.delayModel
+
+                            # find same receptor in the fsp delay model
+                            for item in fsp_delay_model_obj["delayModel"]:
+                                if item["receptor"] == rec_id:
+                                    # compare the receptor data as strings
+                                    assert json.dumps(entry) == json.dumps(
+                                        item
+                                    )
+                time.sleep(update_period)
 
             # Clean up
             wait_time_s = 3

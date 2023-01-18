@@ -617,6 +617,10 @@ class FspComponentManager(CbfComponentManager):
                     else:
                         proxy = self._proxy_fsp_pst_subarray[i - 1]
 
+                    # find the entries in the delay model that
+                    # apply to the receptors for this subarray
+                    # and store only those delay model
+                    # entries
                     fsp_delay_model_entries = []
                     for receptor in delay_model_obj["delayModel"]:
                         if receptor["receptor"] in proxy.receptors:
@@ -627,10 +631,6 @@ class FspComponentManager(CbfComponentManager):
                     self._delay_model = json.dumps(
                         {"delayModel": fsp_delay_model_entries}
                     )
-
-                    print(f"****proxy.receptors = {proxy.receptors}")
-
-                print(f"*****fsp self._delay_model: {self._delay_model}")
             else:
                 log_msg = (
                     "Fsp UpdateDelayModel command failed: "
