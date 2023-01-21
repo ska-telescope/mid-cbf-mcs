@@ -1086,6 +1086,7 @@ class TestCbfSubarray:
     def test_ConfigureScan_onlyPst_basic_FSP_scan_parameters(
         self: TestCbfSubarray,
         test_proxies: pytest.fixture,
+        delay_model_test: pytest.fixture,
         config_file_name: str,
         jones_matrix_file_name: str,
         delay_model_file_name: str,
@@ -1232,14 +1233,19 @@ class TestCbfSubarray:
 
                 time.sleep(epoch_increment)
 
-            # Read delay model data from file
-            # There are 3 delay models in the file that
-            # will be used to update the delay model
-            # 3 times to simulate successive updates
-            f = open(data_file_path + delay_model_file_name)
-            delay_model_all = f.read().replace("\n", "")
-            delay_model_all_obj = json.loads(delay_model_all)
-            f.close()
+            # Read the input delay model Json string from file:
+            with open(data_file_path + delay_model_file_name) as f_in:
+                delay_model_all = f_in.read().replace("\n", "")
+
+            # Convert the serialized JSON object to a Python object:
+            dm_obj_all = json.loads(delay_model_all)
+
+            # Get the DM Python object input to the DM test
+            delay_model_for_test_all_obj = (
+                delay_model_test.create_test_dm_obj_all(
+                    dm_obj_all, receptor_ids
+                )
+            )
 
             # to speed up the testing we use 4s between
             # delayModel updates (instead of the operational 10s)
@@ -1247,13 +1253,13 @@ class TestCbfSubarray:
 
             # to simulate updating the delay model multiple times, we
             # have several delay models in the input data
-            dm_num_entries = len(delay_model_all_obj)
+            dm_num_entries = len(delay_model_for_test_all_obj)
 
             # update the TM with each of the input delay models
             for i_dm in range(dm_num_entries):
 
                 # Get one delay model Python object from the list
-                input_delay_model_obj = delay_model_all_obj[i_dm]
+                input_delay_model_obj = delay_model_for_test_all_obj[i_dm]
 
                 # Convert to a serialized JSON object
                 input_delay_model = json.dumps(input_delay_model_obj)
@@ -1271,24 +1277,11 @@ class TestCbfSubarray:
                     if fsp.functionMode in [
                         FspModes.PSS_BF.value,
                         FspModes.PST_BF.value,
+                        FspModes.CORR.value,
                     ]:
-                        # fsp delay model may have multiple entries -
-                        # each one for a different receptor that is
-                        # part of the subarray
-                        # Find entries with the same receptor for
-                        # the input delay model and the updated fsp
-                        # delay model and verify that the data is the same
-                        fsp_delay_model_obj = json.loads(fsp.delayModel)
-                        for entry in input_delay_model_obj["delayModel"]:
-                            rec_id = entry["receptor"]
-
-                            # find same receptor in the fsp delay model
-                            for item in fsp_delay_model_obj["delayModel"]:
-                                if item["receptor"] == rec_id:
-                                    # compare the receptor data as strings
-                                    assert json.dumps(entry) == json.dumps(
-                                        item
-                                    )
+                        # Fsp stores the whole delay model
+                        # compare strings
+                        assert input_delay_model == fsp.delayModel
                     else:
                         log_msg = (
                             "function mode {} currently not supported".format(
@@ -1637,6 +1630,7 @@ class TestCbfSubarray:
     def test_ConfigureScan_delayModel(
         self: TestCbfSubarray,
         test_proxies: pytest.fixture,
+        delay_model_test: pytest.fixture,
         config_file_name: str,
         delay_model_file_name: str,
         scan_file_name: str,
@@ -1671,11 +1665,17 @@ class TestCbfSubarray:
         # reached VCC (or FSP) is the same as the input delay model read by TM,
         # for all the delay Model in the  list in the input JSON File.
 
-        # Read delay model data from file
-        f = open(data_file_path + delay_model_file_name)
-        delay_model_all = f.read().replace("\n", "")
+        # Read the input delay model Json string from file:
+        with open(data_file_path + delay_model_file_name) as f_in:
+            delay_model_all = f_in.read().replace("\n", "")
+
+        # Convert the serialized JSON object to a Python object:
         delay_model_all_obj = json.loads(delay_model_all)
-        f.close()
+
+        # Get the DM Python object input to the DM test
+        delay_model_for_test_all_obj = delay_model_test.create_test_dm_obj_all(
+            delay_model_all_obj, vcc_receptors
+        )
 
         # to speed up the testing we use 4s between
         # delayModel updates (instead of the operational 10s)
@@ -1731,7 +1731,7 @@ class TestCbfSubarray:
             for i_dm in range(dm_num_entries):
 
                 # Get one delay model Python object from the list
-                input_delay_model_obj = delay_model_all_obj[i_dm]
+                input_delay_model_obj = delay_model_for_test_all_obj[i_dm]
 
                 # Convert to a serialized JSON object
                 input_delay_model = json.dumps(input_delay_model_obj)
@@ -1805,24 +1805,11 @@ class TestCbfSubarray:
                     if fsp.functionMode in [
                         FspModes.PSS_BF.value,
                         FspModes.PST_BF.value,
+                        FspModes.CORR.value,
                     ]:
-                        # fsp delay model may have multiple entries -
-                        # each one for a different receptor that is
-                        # part of the subarray
-                        # Find entries with the same receptor for
-                        # the input delay model and the updated fsp
-                        # delay model and verify that the data is the same
-                        fsp_delay_model_obj = json.loads(fsp.delayModel)
-                        for entry in input_delay_model_obj["delayModel"]:
-                            rec_id = entry["receptor"]
-
-                            # find same receptor in the fsp delay model
-                            for item in fsp_delay_model_obj["delayModel"]:
-                                if item["receptor"] == rec_id:
-                                    # compare the receptor data as strings
-                                    assert json.dumps(entry) == json.dumps(
-                                        item
-                                    )
+                        # fsp stores the whole delay model
+                        # compare strings
+                        assert fsp.delayModel == input_delay_model
                 time.sleep(update_period)
 
             # Clean up

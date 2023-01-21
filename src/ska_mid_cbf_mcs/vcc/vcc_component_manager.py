@@ -935,12 +935,20 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
 
         # find the delay model that applies to this vcc's
         # receptor and store it
+        dm_found = False
         for entry in delay_model_obj["delayModel"]:
             if entry["receptor"] == self._receptor_id:
                 self._delay_model = json.dumps(
                     {"delayModel": (copy.deepcopy(entry))}
                 )
+                dm_found = True
                 break
+
+        if not dm_found:
+            log_msg = (
+                "Delay Model for VCC (receptor: {self._receptor_id}) not found"
+            )
+            self._logger.error(log_msg)
 
     def update_jones_matrix(self: VccComponentManager, argin: str) -> None:
         """

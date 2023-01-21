@@ -92,7 +92,7 @@ class FspComponentManager(CbfComponentManager):
         self._group_fsp_corr_subarray = None
         self._group_fsp_pss_subarray = None
         self._group_fsp_pst_subarray = None
-        self._proxy_correlation = None
+        self._proxy_corr = None
         self._proxy_pss = None
         self._proxy_pst = None
         self._proxy_vlbi = None
@@ -228,9 +228,9 @@ class FspComponentManager(CbfComponentManager):
         """Establish connections with the capability proxies"""
         # for now, assume that given addresses are valid
 
-        if self._proxy_correlation is None:
+        if self._proxy_corr is None:
             if self._fsp_corr_address:
-                self._proxy_correlation = self._get_device_proxy(
+                self._proxy_corr = self._get_device_proxy(
                     self._fsp_corr_address, is_group=False
                 )
 
@@ -372,7 +372,7 @@ class FspComponentManager(CbfComponentManager):
 
         if self._connected:
             # TODO: VLBI device needs a component manager and power commands
-            self._proxy_correlation.SetState(tango.DevState.DISABLE)
+            self._proxy_corr.SetState(tango.DevState.DISABLE)
             self._proxy_pss.SetState(tango.DevState.DISABLE)
             self._proxy_pst.SetState(tango.DevState.DISABLE)
             self._proxy_vlbi.SetState(tango.DevState.DISABLE)
@@ -404,7 +404,7 @@ class FspComponentManager(CbfComponentManager):
 
         if self._connected:
 
-            self._proxy_correlation.SetState(tango.DevState.OFF)
+            self._proxy_corr.SetState(tango.DevState.OFF)
             self._proxy_pss.SetState(tango.DevState.OFF)
             self._proxy_pst.SetState(tango.DevState.OFF)
             self._proxy_vlbi.SetState(tango.DevState.OFF)
@@ -459,31 +459,31 @@ class FspComponentManager(CbfComponentManager):
 
             if argin == "IDLE":
                 self._function_mode = FspModes.IDLE.value
-                self._proxy_correlation.SetState(tango.DevState.DISABLE)
+                self._proxy_corr.SetState(tango.DevState.DISABLE)
                 self._proxy_pss.SetState(tango.DevState.DISABLE)
                 self._proxy_pst.SetState(tango.DevState.DISABLE)
                 self._proxy_vlbi.SetState(tango.DevState.DISABLE)
             elif argin == "CORR":
                 self._function_mode = FspModes.CORR.value
-                self._proxy_correlation.SetState(tango.DevState.ON)
+                self._proxy_corr.SetState(tango.DevState.ON)
                 self._proxy_pss.SetState(tango.DevState.DISABLE)
                 self._proxy_pst.SetState(tango.DevState.DISABLE)
                 self._proxy_vlbi.SetState(tango.DevState.DISABLE)
             elif argin == "PSS-BF":
                 self._function_mode = FspModes.PSS_BF.value
-                self._proxy_correlation.SetState(tango.DevState.DISABLE)
+                self._proxy_corr.SetState(tango.DevState.DISABLE)
                 self._proxy_pss.SetState(tango.DevState.ON)
                 self._proxy_pst.SetState(tango.DevState.DISABLE)
                 self._proxy_vlbi.SetState(tango.DevState.DISABLE)
             elif argin == "PST-BF":
                 self._function_mode = FspModes.PST_BF.value
-                self._proxy_correlation.SetState(tango.DevState.DISABLE)
+                self._proxy_corr.SetState(tango.DevState.DISABLE)
                 self._proxy_pss.SetState(tango.DevState.DISABLE)
                 self._proxy_pst.SetState(tango.DevState.ON)
                 self._proxy_vlbi.SetState(tango.DevState.DISABLE)
             elif argin == "VLBI":
                 self._function_mode = FspModes.VLBI.value
-                self._proxy_correlation.SetState(tango.DevState.DISABLE)
+                self._proxy_corr.SetState(tango.DevState.DISABLE)
                 self._proxy_pss.SetState(tango.DevState.DISABLE)
                 self._proxy_pst.SetState(tango.DevState.DISABLE)
                 self._proxy_vlbi.SetState(tango.DevState.ON)
@@ -604,33 +604,14 @@ class FspComponentManager(CbfComponentManager):
         self._logger.debug("entering update_delay_model")
 
         if self._connected:
-            # update if current function mode is either PSS-BF or PST-BF
+            # update if current function mode is either PSS-BF, PST-BF or CORR
             if self._function_mode in [
                 FspModes.PSS_BF.value,
                 FspModes.PST_BF.value,
+                FspModes.CORR.value,
             ]:
-                delay_model_obj = json.loads(argin)
-
-                for i in self._subarray_membership:
-                    if self._function_mode == FspModes.PSS_BF.value:
-                        proxy = self._proxy_fsp_pss_subarray[i - 1]
-                    else:
-                        proxy = self._proxy_fsp_pst_subarray[i - 1]
-
-                    # find the entries in the delay model that
-                    # apply to the receptors for this subarray
-                    # and store only those delay model
-                    # entries
-                    fsp_delay_model_entries = []
-                    for receptor in delay_model_obj["delayModel"]:
-                        if receptor["receptor"] in proxy.receptors:
-                            fsp_delay_model_entries.append(
-                                copy.deepcopy(receptor)
-                            )
-
-                    self._delay_model = json.dumps(
-                        {"delayModel": fsp_delay_model_entries}
-                    )
+                # the whole delay model must be stored
+                self._delay_model = copy.deepcopy(argin)
             else:
                 log_msg = (
                     "Fsp UpdateDelayModel command failed: "
