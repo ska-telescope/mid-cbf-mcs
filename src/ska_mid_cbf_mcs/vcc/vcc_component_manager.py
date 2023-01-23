@@ -936,11 +936,18 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         # find the delay model that applies to this vcc's
         # receptor and store it
         dm_found = False
+
+        # the delay model schema allows for a set of
+        # receptors to be included in the delay model
+        # Even though there will only be one entry
+        # for a VCC, there should still be a list
+        # with a single entry so that the schema is followed
+        # Set up the delay model to be a list
+        list_of_entries = []
         for entry in delay_model_obj["delayModel"]:
             if entry["receptor"] == self._receptor_id:
-                self._delay_model = json.dumps(
-                    {"delayModel": (copy.deepcopy(entry))}
-                )
+                list_of_entries.append(copy.deepcopy(entry))
+                self._delay_model = json.dumps({"delayModel": list_of_entries})
                 dm_found = True
                 break
 

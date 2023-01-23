@@ -1763,12 +1763,13 @@ class TestCbfSubarray:
 
                     # the one delay model should have only 1 entry
                     # for the given receptor
-                    # remove the "delayModel" key so we can compare
+                    # remove the "delayModel" key and get the first item
+                    # in the list so we can compare
                     # just the list of dictionaries that includes the
                     # receptor, epoch, etc
                     vcc_updated_delay_receptor = vcc_updated_delayModel_obj[
                         "delayModel"
-                    ]
+                    ][0]
 
                     # want to compare strings
                     this_input_delay_model = json.dumps(

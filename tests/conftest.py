@@ -663,13 +663,16 @@ def load_data(name: str) -> Dict[Any, Any]:
 @pytest.fixture(name="delay_model_test", scope="session")
 def init_delay_model_test_fixture():
     """
-    Return xxx
+    Return a delay model test object.
+
+    :return: a DelayModelTest object, with a method for creating
+    the delay model input used for tests
     """
 
     class DelayModelTest:
         def __init__(self: DelayModelTest) -> None:
             """
-            xxx
+            No initialization required.
             """
 
         def create_test_dm_obj_all(
@@ -682,24 +685,17 @@ def init_delay_model_test_fixture():
             receptors_to_remove = list(
                 set([1, 2, 3, 4]) - set(receptors_under_test)
             )
-            print(f"receptors_to_remove = {receptors_to_remove}")
 
             if receptors_to_remove:
                 for i_dm in range(dm_num_entries):
-                    print(f"i_dm = {i_dm}")
-
-                # Remove the delay models that are NOT among vcc_receptors:
-                for i_rec in receptors_to_remove:
-                    for jj, entry in enumerate(
-                        delay_model_all_obj[i_dm]["delayModel"]
-                    ):
-                        if entry["receptor"] == i_rec:
-                            delay_model_all_obj[i_dm]["delayModel"].pop(jj)
-
-                print(
-                    f" After pop delay_model_all_obj = \
-                    {delay_model_all_obj} "
-                )
+                    # Remove the entries from the delay models that are NOT
+                    # among receptors_under_test:
+                    for i_rec in receptors_to_remove:
+                        for jj, entry in enumerate(
+                            delay_model_all_obj[i_dm]["delayModel"]
+                        ):
+                            if entry["receptor"] == i_rec:
+                                delay_model_all_obj[i_dm]["delayModel"].pop(jj)
 
             return delay_model_all_obj
 
