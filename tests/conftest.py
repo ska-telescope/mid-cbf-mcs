@@ -658,3 +658,45 @@ def load_data(name: str) -> Dict[Any, Any]:
     """
     with open(f"tests/data/{name}.json", "r") as json_file:
         return json.load(json_file)
+
+
+@pytest.fixture(name="delay_model_test", scope="session")
+def init_delay_model_test_fixture():
+    """
+    Return a delay model test object.
+
+    :return: a DelayModelTest object, with a method for creating
+    the delay model input used for tests
+    """
+
+    class DelayModelTest:
+        def __init__(self: DelayModelTest) -> None:
+            """
+            No initialization required.
+            """
+
+        def create_test_dm_obj_all(
+            self: DelayModelTest,
+            delay_model_all_obj: dict,
+            receptors_under_test: List(int),
+        ) -> dict:
+
+            dm_num_entries = len(delay_model_all_obj)
+            receptors_to_remove = list(
+                set([1, 2, 3, 4]) - set(receptors_under_test)
+            )
+
+            if receptors_to_remove:
+                for i_dm in range(dm_num_entries):
+                    # Remove the entries from the delay models that are NOT
+                    # among receptors_under_test:
+                    for i_rec in receptors_to_remove:
+                        for jj, entry in enumerate(
+                            delay_model_all_obj[i_dm]["delayModel"]
+                        ):
+                            if entry["receptor"] == i_rec:
+                                delay_model_all_obj[i_dm]["delayModel"].pop(jj)
+
+            return delay_model_all_obj
+
+    return DelayModelTest()

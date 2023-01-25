@@ -10,6 +10,7 @@
 # Copyright (c) 2019 National Research Council of Canada
 from __future__ import annotations
 
+import copy
 import json
 import logging
 from typing import Callable, List, Optional, Tuple
@@ -91,7 +92,7 @@ class FspComponentManager(CbfComponentManager):
         self._group_fsp_corr_subarray = None
         self._group_fsp_pss_subarray = None
         self._group_fsp_pst_subarray = None
-        self._proxy_correlation = None
+        self._proxy_corr = None
         self._proxy_pss = None
         self._proxy_pst = None
         self._proxy_vlbi = None
@@ -102,7 +103,7 @@ class FspComponentManager(CbfComponentManager):
         self._subarray_membership = []
         self._function_mode = FspModes.IDLE.value  # IDLE
         self._jones_matrix = [[0.0] * 16 for _ in range(4)]
-        self._delay_model = [[0.0] * 6 for _ in range(4)]
+        self._delay_model = ""
         self._timing_beam_weights = [[0.0] * 6 for _ in range(4)]
 
         super().__init__(
@@ -144,12 +145,12 @@ class FspComponentManager(CbfComponentManager):
         return self._jones_matrix
 
     @property
-    def delay_model(self: FspComponentManager) -> List[List[float]]:
+    def delay_model(self: FspComponentManager) -> str:
         """
         Delay Model
 
         :return: the delay model
-        :rtype: List[List[float]]
+        :rtype: str
         """
         return self._delay_model
 
@@ -227,9 +228,9 @@ class FspComponentManager(CbfComponentManager):
         """Establish connections with the capability proxies"""
         # for now, assume that given addresses are valid
 
-        if self._proxy_correlation is None:
+        if self._proxy_corr is None:
             if self._fsp_corr_address:
-                self._proxy_correlation = self._get_device_proxy(
+                self._proxy_corr = self._get_device_proxy(
                     self._fsp_corr_address, is_group=False
                 )
 
@@ -371,7 +372,7 @@ class FspComponentManager(CbfComponentManager):
 
         if self._connected:
             # TODO: VLBI device needs a component manager and power commands
-            self._proxy_correlation.SetState(tango.DevState.DISABLE)
+            self._proxy_corr.SetState(tango.DevState.DISABLE)
             self._proxy_pss.SetState(tango.DevState.DISABLE)
             self._proxy_pst.SetState(tango.DevState.DISABLE)
             self._proxy_vlbi.SetState(tango.DevState.DISABLE)
@@ -403,7 +404,7 @@ class FspComponentManager(CbfComponentManager):
 
         if self._connected:
 
-            self._proxy_correlation.SetState(tango.DevState.OFF)
+            self._proxy_corr.SetState(tango.DevState.OFF)
             self._proxy_pss.SetState(tango.DevState.OFF)
             self._proxy_pst.SetState(tango.DevState.OFF)
             self._proxy_vlbi.SetState(tango.DevState.OFF)
@@ -458,31 +459,31 @@ class FspComponentManager(CbfComponentManager):
 
             if argin == "IDLE":
                 self._function_mode = FspModes.IDLE.value
-                self._proxy_correlation.SetState(tango.DevState.DISABLE)
+                self._proxy_corr.SetState(tango.DevState.DISABLE)
                 self._proxy_pss.SetState(tango.DevState.DISABLE)
                 self._proxy_pst.SetState(tango.DevState.DISABLE)
                 self._proxy_vlbi.SetState(tango.DevState.DISABLE)
             elif argin == "CORR":
                 self._function_mode = FspModes.CORR.value
-                self._proxy_correlation.SetState(tango.DevState.ON)
+                self._proxy_corr.SetState(tango.DevState.ON)
                 self._proxy_pss.SetState(tango.DevState.DISABLE)
                 self._proxy_pst.SetState(tango.DevState.DISABLE)
                 self._proxy_vlbi.SetState(tango.DevState.DISABLE)
             elif argin == "PSS-BF":
                 self._function_mode = FspModes.PSS_BF.value
-                self._proxy_correlation.SetState(tango.DevState.DISABLE)
+                self._proxy_corr.SetState(tango.DevState.DISABLE)
                 self._proxy_pss.SetState(tango.DevState.ON)
                 self._proxy_pst.SetState(tango.DevState.DISABLE)
                 self._proxy_vlbi.SetState(tango.DevState.DISABLE)
             elif argin == "PST-BF":
                 self._function_mode = FspModes.PST_BF.value
-                self._proxy_correlation.SetState(tango.DevState.DISABLE)
+                self._proxy_corr.SetState(tango.DevState.DISABLE)
                 self._proxy_pss.SetState(tango.DevState.DISABLE)
                 self._proxy_pst.SetState(tango.DevState.ON)
                 self._proxy_vlbi.SetState(tango.DevState.DISABLE)
             elif argin == "VLBI":
                 self._function_mode = FspModes.VLBI.value
-                self._proxy_correlation.SetState(tango.DevState.DISABLE)
+                self._proxy_corr.SetState(tango.DevState.DISABLE)
                 self._proxy_pss.SetState(tango.DevState.DISABLE)
                 self._proxy_pst.SetState(tango.DevState.DISABLE)
                 self._proxy_vlbi.SetState(tango.DevState.ON)
@@ -603,45 +604,14 @@ class FspComponentManager(CbfComponentManager):
         self._logger.debug("entering update_delay_model")
 
         if self._connected:
-            # update if current function mode is either PSS-BF or PST-BF
+            # update if current function mode is either PSS-BF, PST-BF or CORR
             if self._function_mode in [
                 FspModes.PSS_BF.value,
                 FspModes.PST_BF.value,
+                FspModes.CORR.value,
             ]:
-                argin = json.loads(argin)
-                for i in self._subarray_membership:
-                    if self._function_mode == FspModes.PSS_BF.value:
-                        proxy = self._proxy_fsp_pss_subarray[i - 1]
-                    else:
-                        proxy = self._proxy_fsp_pst_subarray[i - 1]
-                    for receptor in argin:
-                        rec_id = int(receptor["receptor"])
-                        if rec_id in proxy.receptors:
-                            for frequency_slice in receptor[
-                                "receptorDelayDetails"
-                            ]:
-                                fs_id = frequency_slice["fsid"]
-                                model = frequency_slice["delayCoeff"]
-                                if fs_id == self._fsp_id:
-                                    if len(model) == 6:
-                                        self._delay_model[
-                                            rec_id - 1
-                                        ] = model.copy()
-                                    else:
-                                        log_msg = (
-                                            "Fsp UpdateDelayModel command error: "
-                                            "'model' not valid length for frequency slice "
-                                            f"{fs_id} of receptor {rec_id}"
-                                        )
-                                        self._logger.error(log_msg)
-                                        return (ResultCode.FAILED, log_msg)
-                                else:
-                                    log_msg = (
-                                        "Fsp UpdateDelayModel command error: "
-                                        f"'fsid' {fs_id} not valid for receptor {rec_id}"
-                                    )
-                                    self._logger.warning(log_msg)
-
+                # the whole delay model must be stored
+                self._delay_model = copy.deepcopy(argin)
             else:
                 log_msg = (
                     "Fsp UpdateDelayModel command failed: "
@@ -652,7 +622,6 @@ class FspComponentManager(CbfComponentManager):
 
             message = "Fsp UpdateDelayModel command completed OK"
             return (ResultCode.OK, message)
-
         else:
             log_msg = "Fsp UpdateDelayModel command failed: \
                     proxies not connected"

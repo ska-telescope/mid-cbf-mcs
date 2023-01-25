@@ -8,6 +8,7 @@
 """Contain the tests for the CbfSubarray."""
 from __future__ import annotations  # allow forward references in type hints
 
+import copy
 import json
 import logging
 import os
@@ -1085,6 +1086,7 @@ class TestCbfSubarray:
     def test_ConfigureScan_onlyPst_basic_FSP_scan_parameters(
         self: TestCbfSubarray,
         test_proxies: pytest.fixture,
+        delay_model_test: pytest.fixture,
         config_file_name: str,
         jones_matrix_file_name: str,
         delay_model_file_name: str,
@@ -1231,87 +1233,63 @@ class TestCbfSubarray:
 
                 time.sleep(epoch_increment)
 
-            # update delay models from tm emulator
-            f = open(data_file_path + delay_model_file_name)
-            delay_model = json.loads(f.read().replace("\n", ""))
+            # Read the input delay model Json string from file:
+            with open(data_file_path + delay_model_file_name) as f_in:
+                delay_model_all = f_in.read().replace("\n", "")
 
-            # Insert the epoch
-            delay_model_index_per_epoch = list(
-                range(len(delay_model["delayModel"]))
+            # Convert the serialized JSON object to a Python object:
+            dm_obj_all = json.loads(delay_model_all)
+
+            # Get the DM Python object input to the DM test
+            delay_model_for_test_all_obj = (
+                delay_model_test.create_test_dm_obj_all(
+                    dm_obj_all, receptor_ids
+                )
             )
-            random.shuffle(delay_model_index_per_epoch)
-            epoch_increment = 10
-            for i, delay_model_index in enumerate(delay_model_index_per_epoch):
-                if i == 0:
-                    epoch_time = 0
-                    delay_model["delayModel"][delay_model_index][
-                        "epoch"
-                    ] = str(epoch_time)
-                else:
-                    epoch_time += epoch_increment
-                    delay_model["delayModel"][delay_model_index][
-                        "epoch"
-                    ] = str(int(time.time()) + epoch_time)
 
-            # update delay model
-            test_proxies.tm.delayModel = json.dumps(delay_model)
-            time.sleep(1)
+            # to speed up the testing we use 4s between
+            # delayModel updates (instead of the operational 10s)
+            update_period = 4
 
-            for epoch in range(len(delay_model_index_per_epoch)):
+            # to simulate updating the delay model multiple times, we
+            # have several delay models in the input data
+            dm_num_entries = len(delay_model_for_test_all_obj)
 
-                model = delay_model["delayModel"][
-                    delay_model_index_per_epoch[epoch]
-                ]
-                for delayDetail in model["delayDetails"]:
-                    rec_id = delayDetail["receptor"]
-                    for fsp in [
-                        test_proxies.fsp[i]
-                        for i in range(1, test_proxies.num_fsp + 1)
+            # update the TM with each of the input delay models
+            for i_dm in range(dm_num_entries):
+
+                # Get one delay model Python object from the list
+                input_delay_model_obj = delay_model_for_test_all_obj[i_dm]
+
+                # Convert to a serialized JSON object
+                input_delay_model = json.dumps(input_delay_model_obj)
+
+                # Write this one delay_model JSON object to the TM emulator
+                test_proxies.tm.delayModel = input_delay_model
+
+                time.sleep(2)
+
+                # check the delay model was correctly updated for fsp
+                for fsp in [
+                    test_proxies.fsp[i]
+                    for i in range(1, test_proxies.num_fsp + 1)
+                ]:
+                    if fsp.functionMode in [
+                        FspModes.PSS_BF.value,
+                        FspModes.PST_BF.value,
+                        FspModes.CORR.value,
                     ]:
-                        if fsp.functionMode in [
-                            FspModes.PSS_BF.value,
-                            FspModes.PST_BF.value,
-                        ]:
-                            for receptorDelayDetail in delayDetail[
-                                "receptorDelayDetails"
-                            ]:
-                                fsp_id = receptorDelayDetail["fsid"]
-                                delayCoeff = receptorDelayDetail["delayCoeff"]
-                                if fsp_id == int(
-                                    fsp.get_property("FspID")["FspID"][0]
-                                ):
-                                    if (
-                                        fsp.functionMode
-                                        == FspModes.PSS_BF.value
-                                    ):
-                                        proxy_subarray = (
-                                            test_proxies.fspSubarray["PSS-BF"][
-                                                sub_id
-                                            ][fsp_id]
-                                        )
-                                    else:
-                                        proxy_subarray = (
-                                            test_proxies.fspSubarray["PST-BF"][
-                                                sub_id
-                                            ][fsp_id]
-                                        )
-                                    if rec_id in proxy_subarray.receptors:
-                                        for idx, coeff in enumerate(
-                                            delayCoeff
-                                        ):
-                                            assert (
-                                                coeff
-                                                == fsp.delayModel[rec_id - 1][
-                                                    idx
-                                                ]
-                                            )
-                        else:
-                            log_msg = "function mode {} currently not supported".format(
+                        # Fsp stores the whole delay model
+                        # compare strings
+                        assert input_delay_model == fsp.delayModel
+                    else:
+                        log_msg = (
+                            "function mode {} currently not supported".format(
                                 fsp.functionMode
                             )
-                            logging.error(log_msg)
+                        )
 
-                time.sleep(epoch_increment)
+                time.sleep(update_period)
 
             # update timing beam weights from tm emulator
             f = open(data_file_path + timing_beam_weights_file_name)
@@ -1652,6 +1630,7 @@ class TestCbfSubarray:
     def test_ConfigureScan_delayModel(
         self: TestCbfSubarray,
         test_proxies: pytest.fixture,
+        delay_model_test: pytest.fixture,
         config_file_name: str,
         delay_model_file_name: str,
         scan_file_name: str,
@@ -1669,12 +1648,42 @@ class TestCbfSubarray:
         :param receptor_ids: list of receptor ids
         :param vcc_receptors: list of vcc receptor ids
         """
+        # Test Description:
+        # -----------------
+        # . The TM device attribute delayModel is updated from time to time by
+        #   invoking the write_delayModel attribute,
+        #   operationally every 10 seconds; for this test we can use any interval
+        # . In the background, the TM emulator polls the read_delayModel attribute
+        #   at a high rate, the polling interval is typically << 1s)
+        # . The CbfSubarray device subscribes to the read_delayModel attribute
+        #   which means that every time an event occurs (i.e. a change in this
+        #   attribute's value occurs) a callback is executed (the callback is
+        #   also executed at the time of the subscription).
+        # . The callback pushes the new value down to the VCC and FSP devices.
+        #
+        # The goal of this test is to verify that the delay model that
+        # reached VCC (or FSP) is the same as the input delay model read by TM,
+        # for all the delay Model in the  list in the input JSON File.
 
-        # Read delay model data from file
-        f = open(data_file_path + delay_model_file_name)
-        json_string_delay_mod = f.read().replace("\n", "")
-        delay_model = json.loads(json_string_delay_mod)
-        f.close()
+        # Read the input delay model Json string from file:
+        with open(data_file_path + delay_model_file_name) as f_in:
+            delay_model_all = f_in.read().replace("\n", "")
+
+        # Convert the serialized JSON object to a Python object:
+        delay_model_all_obj = json.loads(delay_model_all)
+
+        # Get the DM Python object input to the DM test
+        delay_model_for_test_all_obj = delay_model_test.create_test_dm_obj_all(
+            delay_model_all_obj, vcc_receptors
+        )
+
+        # to speed up the testing we use 4s between
+        # delayModel updates (instead of the operational 10s)
+        update_period = 4
+
+        # to simulate updating the delay model multiple times, we
+        # have several delay models in the input data
+        dm_num_entries = len(delay_model_all_obj)
 
         try:
             wait_time_s = 1
@@ -1718,104 +1727,60 @@ class TestCbfSubarray:
 
             assert test_proxies.subarray[sub_id].obsState == ObsState.READY
 
-            # Insert the epoch
-            delay_model_index_per_epoch = list(
-                range(len(delay_model["delayModel"]))
-            )
-            random.shuffle(delay_model_index_per_epoch)
-            epoch_increment = 10
-            for i, delay_model_index in enumerate(delay_model_index_per_epoch):
-                if i == 0:
-                    epoch_time = 0
-                    delay_model["delayModel"][delay_model_index][
-                        "epoch"
-                    ] = str(epoch_time)
-                else:
-                    epoch_time += epoch_increment
-                    delay_model["delayModel"][delay_model_index][
-                        "epoch"
-                    ] = str(int(time.time()) + epoch_time)
+            # update the TM with each of the input delay models
+            for i_dm in range(dm_num_entries):
 
-            # update delay model
-            test_proxies.tm.delayModel = json.dumps(delay_model)
-            time.sleep(1)
+                # Get one delay model Python object from the list
+                input_delay_model_obj = delay_model_for_test_all_obj[i_dm]
 
-            epoch_to_scan = 1
-            num_cols = 6
-            num_rows_vcc = 26
+                # Convert to a serialized JSON object
+                input_delay_model = json.dumps(input_delay_model_obj)
 
-            for epoch in range(len(delay_model_index_per_epoch)):
+                # Write this one delay_model JSON object to the TM emulator
+                test_proxies.tm.delayModel = input_delay_model
 
-                model = delay_model["delayModel"][
-                    delay_model_index_per_epoch[epoch]
-                ]
-                for delayDetail in model["delayDetails"]:
-                    rec_id = delayDetail["receptor"]
-                    for r in vcc_receptors:
-                        vcc = test_proxies.vcc[test_proxies.receptor_to_vcc[r]]
-                        if delayDetail["receptor"] == r:
-                            mod_vcc = [
-                                [0.0] * num_cols for i in range(num_rows_vcc)
-                            ]
-                            for receptorDelayDetail in delayDetail[
-                                "receptorDelayDetails"
-                            ]:
-                                fs_id = receptorDelayDetail["fsid"]
-                                delayCoeff = receptorDelayDetail["delayCoeff"]
-                                mod_vcc[fs_id - 1] = delayCoeff
-                            for i in range(len(mod_vcc)):
-                                for j in range(len(mod_vcc[i])):
-                                    assert (
-                                        vcc.delayModel[i][j] == mod_vcc[i][j]
-                                    )
-                    for fsp in [
-                        test_proxies.fsp[i]
-                        for i in range(1, test_proxies.num_fsp + 1)
-                    ]:
-                        if fsp.functionMode in [
-                            FspModes.PSS_BF.value,
-                            FspModes.PST_BF.value,
-                        ]:
-                            for receptorDelayDetail in delayDetail[
-                                "receptorDelayDetails"
-                            ]:
-                                fsp_id = receptorDelayDetail["fsid"]
-                                delayCoeff = receptorDelayDetail["delayCoeff"]
-                                if fsp_id == int(
-                                    fsp.get_property("FspID")["FspID"][0]
-                                ):
-                                    if (
-                                        fsp.functionMode
-                                        == FspModes.PSS_BF.value
-                                    ):
-                                        proxy_subarray = (
-                                            test_proxies.fspSubarray["PSS-BF"][
-                                                sub_id
-                                            ][fsp_id]
-                                        )
-                                    else:
-                                        proxy_subarray = (
-                                            test_proxies.fspSubarray["PST-BF"][
-                                                sub_id
-                                            ][fsp_id]
-                                        )
-                                    if rec_id in proxy_subarray.receptors:
-                                        for idx, coeff in enumerate(
-                                            delayCoeff
-                                        ):
-                                            assert (
-                                                coeff
-                                                == fsp.delayModel[rec_id - 1][
-                                                    idx
-                                                ]
-                                            )
-                        else:
-                            log_msg = "function mode {} currently not supported".format(
-                                fsp.functionMode
-                            )
-                            logging.error(log_msg)
+                time.sleep(2)
 
-                if epoch == epoch_to_scan:
+                # check the delay model was correctly updated for vcc
+                for jj, i_rec in enumerate(vcc_receptors):
+
+                    # get the vcc device proxy (dp) corresponding to i_rec
+                    this_vcc = test_proxies.receptor_to_vcc[i_rec]
+                    vcc_dp = test_proxies.vcc[this_vcc]
+
+                    # Extract the  delay model corresponding to receptor i_rec:
+                    # It is assumed that there is only one entry in the
+                    # delay model for a given receptor
+                    for entry in input_delay_model_obj["delayModel"]:
+                        if entry["receptor"] == i_rec:
+                            this_input_delay_model_obj = copy.deepcopy(entry)
+                            break
+
+                    vcc_updated_delayModel_obj = json.loads(vcc_dp.delayModel)
+
+                    # there should be only one delay model in the vcc
+                    assert len(vcc_updated_delayModel_obj) == 1
+
+                    # the one delay model should have only 1 entry
+                    # for the given receptor
+                    # remove the "delayModel" key and get the first item
+                    # in the list so we can compare
+                    # just the list of dictionaries that includes the
+                    # receptor, epoch, etc
+                    vcc_updated_delay_receptor = vcc_updated_delayModel_obj[
+                        "delayModel"
+                    ][0]
+
+                    # want to compare strings
+                    this_input_delay_model = json.dumps(
+                        this_input_delay_model_obj
+                    )
+                    assert (
+                        json.dumps(vcc_updated_delay_receptor)
+                        == this_input_delay_model
+                    )
+
+                if i_dm == 0:
                     # transition to obsState=SCANNING
                     f2 = open(data_file_path + scan_file_name)
                     test_proxies.subarray[sub_id].Scan(
@@ -1833,7 +1798,20 @@ class TestCbfSubarray:
                         == ObsState.SCANNING
                     )
 
-                time.sleep(epoch_increment)
+                # check the delay model was correctly updated for fsp
+                for fsp in [
+                    test_proxies.fsp[i]
+                    for i in range(1, test_proxies.num_fsp + 1)
+                ]:
+                    if fsp.functionMode in [
+                        FspModes.PSS_BF.value,
+                        FspModes.PST_BF.value,
+                        FspModes.CORR.value,
+                    ]:
+                        # fsp stores the whole delay model
+                        # compare strings
+                        assert fsp.delayModel == input_delay_model
+                time.sleep(update_period)
 
             # Clean up
             wait_time_s = 3

@@ -15,6 +15,7 @@ Sub-element VCC component manager for Mid.CBF
 """
 from __future__ import annotations  # allow forward references in type hints
 
+import copy
 import json
 import logging
 from typing import Callable, List, Optional, Tuple
@@ -196,7 +197,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         return self._jones_matrix
 
     @property
-    def delay_model(self: VccComponentManager) -> List[List[float]]:
+    def delay_model(self: VccComponentManager) -> str:
         """
         Delay Model
 
@@ -275,7 +276,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         self._rfi_flagging_mask = ""
 
         self._jones_matrix = [[0] * 16 for _ in range(26)]
-        self._delay_model = [[0] * 6 for _ in range(26)]
+        self._delay_model = ""
         self._doppler_phase_correction = [0 for _ in range(4)]
 
         # Initialize list of band proxies and band -> index translation;
@@ -567,7 +568,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         """Deconfigure scan configuration parameters."""
         self._doppler_phase_correction = [0 for _ in range(4)]
         self._jones_matrix = [[0] * 16 for _ in range(26)]
-        self._delay_model = [[0] * 6 for _ in range(26)]
+        self._delay_model = ""
         self._rfi_flagging_mask = ""
         self._frequency_band_offset_stream_2 = 0
         self._frequency_band_offset_stream_1 = 0
@@ -930,25 +931,31 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
 
         :param argin: the delay model JSON string
         """
-        argin = json.loads(argin)
+        delay_model_obj = json.loads(argin)
 
-        for delayDetails in argin:
-            if delayDetails["receptor"] == self._receptor_id:
-                for frequency_slice in delayDetails["receptorDelayDetails"]:
-                    fsid = frequency_slice["fsid"]
-                    coeff = frequency_slice["delayCoeff"]
-                    if 1 <= fsid <= 26:
-                        if len(coeff) == 6:
-                            self._delay_model[fsid - 1] = coeff.copy()
-                        else:
-                            log_msg = (
-                                "'delayCoeff' not valid for frequency slice "
-                                + f"{fsid} of receptor {self._receptor_id}"
-                            )
-                            self._logger.error(log_msg)
-                    else:
-                        log_msg = f"'fsid' {fsid} not valid for receptor {self._receptor_id}"
-                        self._logger.error(log_msg)
+        # find the delay model that applies to this vcc's
+        # receptor and store it
+        dm_found = False
+
+        # the delay model schema allows for a set of
+        # receptors to be included in the delay model
+        # Even though there will only be one entry
+        # for a VCC, there should still be a list
+        # with a single entry so that the schema is followed
+        # Set up the delay model to be a list
+        list_of_entries = []
+        for entry in delay_model_obj["delayModel"]:
+            if entry["receptor"] == self._receptor_id:
+                list_of_entries.append(copy.deepcopy(entry))
+                self._delay_model = json.dumps({"delayModel": list_of_entries})
+                dm_found = True
+                break
+
+        if not dm_found:
+            log_msg = (
+                "Delay Model for VCC (receptor: {self._receptor_id}) not found"
+            )
+            self._logger.error(log_msg)
 
     def update_jones_matrix(self: VccComponentManager, argin: str) -> None:
         """

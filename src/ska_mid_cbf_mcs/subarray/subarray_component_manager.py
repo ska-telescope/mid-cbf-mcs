@@ -482,24 +482,16 @@ class CbfSubarrayComponentManager(
                     return
 
                 self._last_received_delay_model = value
-                delay_model_all = json.loads(value)
 
-                for delay_model in delay_model_all["delayModel"]:
-                    t = Thread(
-                        target=self._update_delay_model,
-                        args=(
-                            int(delay_model["epoch"]),
-                            json.dumps(delay_model["delayDetails"]),
-                        ),
-                    )
-                    t.start()
+                self._update_delay_model(value)
+
             except Exception as e:
                 self._logger.error(str(e))
         else:
             self._logger.warning(f"None value for {fqdn}")
 
     def _update_delay_model(
-        self: CbfSubarrayComponentManager, epoch: int, model: str
+        self: CbfSubarrayComponentManager, model: str
     ) -> None:
         """
         Update FSP and VCC delay models.
@@ -510,13 +502,8 @@ class CbfSubarrayComponentManager(
         """
         # This method is always called on a separate thread
         self._logger.debug("CbfSubarray._update_delay_model")
-        log_msg = f"Delay model active at {epoch} (currently {time.time()})..."
-        self._logger.info(log_msg)
 
-        if epoch > time.time():
-            time.sleep(epoch - time.time())
-
-        log_msg = f"Updating delay model at specified epoch {epoch}..."
+        log_msg = f"Updating delay model ...{model}"
         self._logger.info(log_msg)
 
         data = tango.DeviceData()

@@ -119,9 +119,7 @@ class Fsp(SKACapability):
     )
 
     delayModel = attribute(
-        dtype=(("double",),),
-        max_dim_x=6,
-        max_dim_y=16,
+        dtype="str",
         access=AttrWriteType.READ,
         label="Delay Model",
         doc="Differential off-boresight beam delay model",
@@ -290,13 +288,13 @@ class Fsp(SKACapability):
         return self.component_manager.jones_matrix
         # PROTECTED REGION END #    //  Fsp.jonesMatrix_read
 
-    def read_delayModel(self: Fsp) -> List[List[float]]:
+    def read_delayModel(self: Fsp) -> str:
         # PROTECTED REGION ID(Fsp.delayModel_read) ENABLED START #
         """
         Read the delayModel attribute.
 
         :return: the delayModel attribute.
-        :rtype: list of list of float
+        :rtype: string
         """
         return self.component_manager.delay_model
         # PROTECTED REGION END #    //  Fsp.delayModel_read
