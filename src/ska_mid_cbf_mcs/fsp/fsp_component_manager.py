@@ -17,7 +17,7 @@ from typing import Callable, List, Optional, Tuple
 
 import tango
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import PowerMode
+from ska_tango_base.control_model import PowerMode, SimulationMode
 
 from ska_mid_cbf_mcs.commons.global_enum import FspModes
 from ska_mid_cbf_mcs.component.component_manager import (
@@ -26,6 +26,10 @@ from ska_mid_cbf_mcs.component.component_manager import (
 )
 from ska_mid_cbf_mcs.component.util import check_communicating
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
+from ska_mid_cbf_mcs.fsp.fsp_corr import FspCorr
+from ska_mid_cbf_mcs.fsp.fsp_hps_fsp_controller_simulator import (
+    HpsFspControllerSimulator,
+)
 from ska_mid_cbf_mcs.group_proxy import CbfGroupProxy
 
 MAX_SUBARRAY_MEMBERSHIPS = 16
@@ -38,6 +42,7 @@ class FspComponentManager(CbfComponentManager):
         self: FspComponentManager,
         logger: logging.Logger,
         fsp_id: int,
+        fsp_controller_address: str,
         fsp_corr_subarray_fqdns_all: List[str],
         fsp_pss_subarray_fqdns_all: List[str],
         fsp_pst_subarray_fqdns_all: List[str],
@@ -51,12 +56,14 @@ class FspComponentManager(CbfComponentManager):
         ],
         component_power_mode_changed_callback: Callable[[PowerMode], None],
         component_fault_callback: Callable[[bool], None],
+        simulation_mode: SimulationMode = SimulationMode.TRUE,
     ) -> None:
         """
         Initialise a new instance.
 
         :param logger: a logger for this object to use
         :param fsp_id: the fsp id
+        :param fsp_controller_address: FQDN of the HPS FSP controller device
         :param fsp_corr_subarray_fqdns_all: list of all
             fsp corr subarray fqdns
         :param fsp_pss_subarray_fqdns_all: list of all
@@ -76,10 +83,14 @@ class FspComponentManager(CbfComponentManager):
             called when the component power mode changes
         :param component_fault_callback: callback to be called in event of
             component fault
+        :param simulation_mode: simulation mode identifies if the real FSP HPS
+            applications or the simulator should be connected
         """
         self._connected = False
 
         self._fsp_id = fsp_id
+
+        self._fsp_controller = fsp_controller_address
 
         self._fsp_corr_subarray_fqdns_all = fsp_corr_subarray_fqdns_all
         self._fsp_pss_subarray_fqdns_all = fsp_pss_subarray_fqdns_all
@@ -105,6 +116,16 @@ class FspComponentManager(CbfComponentManager):
         self._jones_matrix = [[0.0] * 16 for _ in range(4)]
         self._delay_model = ""
         self._timing_beam_weights = [[0.0] * 6 for _ in range(4)]
+
+        self._simulation_mode = simulation_mode
+
+        # Create simulators
+        self._fsp_corr_controller_simulator = FspCorr(fsp_corr_address)
+
+        self._fsp_controller_simulator = HpsFspControllerSimulator(
+            fsp_controller_address,
+            self._fsp_corr_controller_simulator,
+        )
 
         super().__init__(
             logger=logger,
@@ -163,6 +184,26 @@ class FspComponentManager(CbfComponentManager):
         :rtype: List[List[float]]
         """
         return self._timing_beam_weights
+
+    @property
+    def simulation_mode(self: FspComponentManager) -> SimulationMode:
+        """
+        Get the simulation mode of the component manager.
+
+        :return: simulation mode of the component manager
+        """
+        return self._simulation_mode
+
+    @simulation_mode.setter
+    def simulation_mode(
+        self: FspComponentManager, value: SimulationMode
+    ) -> None:
+        """
+        Set the simulation mode of the component manager.
+
+        :param value: value to set simulation mode to
+        """
+        self._simulation_mode = value
 
     def start_communicating(
         self: FspComponentManager,
@@ -493,6 +534,14 @@ class FspComponentManager(CbfComponentManager):
                 message = "Fsp SetFunctionMode command failed: \
                     functionMode not valid"
                 return (ResultCode.FAILED, message)
+
+            if self._simulation_mode:
+                self._fsp_controller_simulator.SetFspFunctionMode(argin)
+            else:
+                # this will be the call to the HPS FSP Controller
+                # and will replace all the
+                # above calls to _proxy_correlation, _proxy_pss etc
+                pass
 
             self._logger.info(f"FSP set to function mode {argin}")
 

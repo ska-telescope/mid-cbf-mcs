@@ -56,7 +56,6 @@ class HpsFspCorrControllerSimulator:
         """Return the fqdn attribute."""
         return self._fqdn
 
-    # Methods that match the Tango commands in the band devices
     def State(self: HpsFspCorrControllerSimulator) -> tango.DevState:
         """Get the current state of the device"""
         return self._state

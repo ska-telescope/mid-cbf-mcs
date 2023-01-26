@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# This file is part of the Vcc project
+# This file is part of the Fsp project
 #
 #
 #
@@ -12,95 +12,99 @@ Author: James Jiang James.Jiang@nrc-cnrc.gc.ca,
 Herzberg Astronomy and Astrophysics, National Research Council of Canada
 Copyright (c) 2019 National Research Council of Canada
 """
+from __future__ import annotations  # allow forward references in type hints
 
-""" FspCorr Tango device prototype
+import tango
 
-FspCorr TANGO device class for the prototype
-"""
-import os  # noqa: E402
-import sys  # noqa: E402
-
-import tango  # noqa: E402
-from ska_tango_base import SKACapability  # noqa: E402
-from tango.server import command, run  # noqa: E402
-
-# Additional import
-# PROTECTED REGION ID(FspCorr.additionnal_import) ENABLED START #
-
-# tango imports
-
-# PROTECTED REGION END #    //  FspCorr.additionnal_import
-
-file_path = os.path.dirname(os.path.abspath(__file__))
-commons_pkg_path = os.path.abspath(os.path.join(file_path, "../../commons"))
-sys.path.insert(0, commons_pkg_path)
-
-__all__ = ["FspCorr", "main"]
+__all__ = ["FspCorr"]
 
 
-class FspCorr(SKACapability):
+class FspCorr:
     """
-    FspCorr TANGO device class for the prototype
+    FspCorr class used to simulate the behaviour of
+    the HPS FSP Corr Controller devices
+    when the Talon-DX hardware is not connected.
+
+    :param device_name: Identifier for the device instance
     """
 
-    # PROTECTED REGION ID(FspCorr.class_variable) ENABLED START #
-    # PROTECTED REGION END #    //  FspCorr.class_variable
+    def __init__(
+        self: FspCorr,
+        device_name: str,
+    ) -> None:
+        self.device_name = device_name
 
-    # -----------------
-    # Device Properties
-    # -----------------
+        self._state = tango.DevState.INIT
 
-    # ----------
-    # Attributes
-    # ----------
+        self._fsp_id = ""
+        self._fspUnitID = 0
+        self._fqdn = ""
+        self._scan_id = "0"
 
-    # ---------------
-    # General methods
-    # ---------------
+    @property
+    def fspID(self) -> str:
+        """Return the Fsp ID attribute."""
+        return self._fsp_id
 
-    def init_device(self):
-        SKACapability.init_device(self)
-        # PROTECTED REGION ID(FspCorr.init_device) ENABLED START #
-        """Set state to OFF."""
-        self.set_state(tango.DevState.OFF)
-        # PROTECTED REGION END #    //  FspCorr.init_device
+    @property
+    def fspUnitID(self) -> int:
+        """Return the Fsp Unit ID attribute."""
+        return self._fsp_unit_id
 
-    def always_executed_hook(self):
-        # PROTECTED REGION ID(FspCorr.always_executed_hook) ENABLED START #
-        """Hook before any commands"""
-        # PROTECTED REGION END #    //  FspCorr.always_executed_hook
-
-    def delete_device(self):
-        # PROTECTED REGION ID(FspCorr.delete_device) ENABLED START #
-        """hook before delete device"""
-        # PROTECTED REGION END #    //  FspCorr.delete_device
-
-    # ------------------
-    # Attributes methods
-    # ------------------
+    @property
+    def fqdn(self) -> str:
+        """Return the fqdn attribute."""
+        return self._fqdn
 
     # --------
     # Commands
     # --------
 
-    @command(dtype_in="DevState", doc_in="New state")
+    def init_device(self: FspCorr, json_str: str) -> None:
+        """
+        Initialize the common/constant parameters of this FSP device.
+
+        :param json_str: JSON-formatted string containing the parameters
+        """
+        pass
+
+    def ConfigureScan(self: FspCorr, json_str: str) -> None:
+        """
+        Execute a configure scan operation.
+
+        :param json_str: JSON-formatted string containing the scan configuration
+                         parameters
+        """
+        pass
+
+    def Scan(self: FspCorr, scan_id: str) -> None:
+        """
+        Execute a scan operation.
+
+        :param scan_id: Scan identifier
+        """
+        self._scan_id = scan_id
+
+    def EndScan(self: FspCorr) -> None:
+        """End the scan."""
+        self._scan_id = "0"
+
+    def Abort(self: FspCorr) -> None:
+        """Abort whatever action is currently executing."""
+        pass
+
+    def GoToIdle(self: FspCorr) -> None:
+        """Set the device state to IDLE"""
+        pass
+
+    def UpdateDelayModels(self: FspCorr, delay_model: str) -> None:
+        """
+        Execute an update delay model operation.
+
+        :param delay_model: Delay Model
+        """
+        pass
+
     def SetState(self, argin):
-        # PROTECTED REGION ID(FspCorr.SetState) ENABLED START #
         """Set state to argin(DevState)."""
         self.set_state(argin)
-        # PROTECTED REGION END #    //  FspCorr.SetState
-
-
-# ----------
-# Run server
-# ----------
-
-
-def main(args=None, **kwargs):
-    # PROTECTED REGION ID(FspCorr.main) ENABLED START #
-    return run((FspCorr,), args=args, **kwargs)
-    # PROTECTED REGION END #    //  FspCorr.main
-
-
-if __name__ == "__main__":
-    main()

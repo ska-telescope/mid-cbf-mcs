@@ -26,7 +26,7 @@ from typing import List, Optional, Tuple
 import tango
 from ska_tango_base import SKABaseDevice, SKACapability
 from ska_tango_base.commands import ResponseCommand, ResultCode
-from ska_tango_base.control_model import PowerMode
+from ska_tango_base.control_model import PowerMode, SimulationMode
 from tango import AttrWriteType
 from tango.server import attribute, command, device_property, run
 
@@ -55,6 +55,8 @@ class Fsp(SKACapability):
     # -----------------
 
     FspID = device_property(dtype="uint16")
+
+    FspControllerAddress = device_property(dtype="str")
 
     CorrelationAddress = device_property(dtype="str")
 
@@ -134,6 +136,15 @@ class Fsp(SKACapability):
         doc="Amplitude weights used in the tied-array beamforming",
     )
 
+    simulationMode = attribute(
+        dtype=SimulationMode,
+        access=AttrWriteType.READ_WRITE,
+        memorized=True,
+        doc="Reports the simulation mode of the device. \nSome devices may implement "
+        "both modes, while others will have simulators that set simulationMode "
+        "to True while the real devices always set simulationMode to False.",
+    )
+
     # ---------------
     # General methods
     # ---------------
@@ -201,6 +212,7 @@ class Fsp(SKACapability):
         return FspComponentManager(
             logger=self.logger,
             fsp_id=self.FspID,
+            fsp_controller_address=self.FspControllerAddress,
             fsp_corr_subarray_fqdns_all=self.FspCorrSubarray,
             fsp_pss_subarray_fqdns_all=self.FspPssSubarray,
             fsp_pst_subarray_fqdns_all=self.FspPstSubarray,
@@ -222,6 +234,15 @@ class Fsp(SKACapability):
     # ------------------
     # Attributes methods
     # ------------------
+
+    def write_simulationMode(self: Fsp, value: SimulationMode) -> None:
+        """
+        Set the simulation mode of the device.
+
+        :param value: SimulationMode
+        """
+        super().write_simulationMode(value)
+        self.component_manager.simulation_mode = value
 
     def read_functionMode(self: Fsp) -> tango.DevEnum:
         # PROTECTED REGION ID(Fsp.functionMode_read) ENABLED START #
