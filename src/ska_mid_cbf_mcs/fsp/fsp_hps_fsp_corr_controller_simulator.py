@@ -18,10 +18,10 @@ from typing import List
 
 import tango
 
-__all__ = ["FspCorr"]
+__all__ = ["HpsFspCorrControllerSimulator"]
 
 
-class FspCorr:
+class HpsFspCorrControllerSimulator:
     """
     FspCorr class used to simulate the behaviour of
     the HPS FSP Corr Controller devices
@@ -31,7 +31,7 @@ class FspCorr:
     """
 
     def __init__(
-        self: FspCorr,
+        self: HpsFspCorrControllerSimulator,
         device_name: str,
     ) -> None:
 
@@ -40,11 +40,11 @@ class FspCorr:
         self._state = tango.DevState.INIT
 
         self._fsp_id = ""
-        self._fspUnitID = (0,)
+        self._fspUnitID = 0
 
         # FQDNs of all low level, correlation specific devices,
         # controlled by this device
-        self._fqdn = (List[str],)
+        self._fqdn = List[str]
         self._scan_id = "0"
 
     # Properties that match the Tango attributes in the band devices
@@ -64,7 +64,9 @@ class FspCorr:
         return self._fqdn
 
     # Methods that match the Tango commands in the HPS FSP Corr Controller device
-    def init_device(self: FspCorr, json_str: str) -> None:
+    def init_device(
+        self: HpsFspCorrControllerSimulator, json_str: str
+    ) -> None:
         """
         Update to connect to all HPS FSP Low-level Tango devices
 
@@ -72,7 +74,9 @@ class FspCorr:
         """
         pass
 
-    def ConfigureScan(self: FspCorr, json_str: str) -> None:
+    def ConfigureScan(
+        self: HpsFspCorrControllerSimulator, json_str: str
+    ) -> None:
         """
         Execute a configure scan operation.
 
@@ -81,7 +85,7 @@ class FspCorr:
         """
         pass
 
-    def Scan(self: FspCorr, scan_id: str) -> None:
+    def Scan(self: HpsFspCorrControllerSimulator, scan_id: str) -> None:
         """
         Execute a scan operation.
 
@@ -89,19 +93,21 @@ class FspCorr:
         """
         self._scan_id = scan_id
 
-    def EndScan(self: FspCorr) -> None:
+    def EndScan(self: HpsFspCorrControllerSimulator) -> None:
         """End the scan."""
         self._scan_id = "0"
 
-    def Abort(self: FspCorr) -> None:
+    def Abort(self: HpsFspCorrControllerSimulator) -> None:
         """Abort whatever action is currently executing."""
         pass
 
-    def GoToIdle(self: FspCorr) -> None:
+    def GoToIdle(self: HpsFspCorrControllerSimulator) -> None:
         """Set the device state to IDLE"""
         pass
 
-    def UpdateDelayModels(self: FspCorr, delay_model: str) -> None:
+    def UpdateDelayModels(
+        self: HpsFspCorrControllerSimulator, delay_model: str
+    ) -> None:
         """
         Execute an update delay model operation.
 

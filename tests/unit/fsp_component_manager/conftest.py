@@ -64,27 +64,22 @@ def fsp_component_manager(
     f.close()
     configuration = json.loads(json_string)
 
-    fsp_controller = ("mid_csp_cbf/fsp_controller",)
     fsp_corr_subarray_fqdns_all = configuration["fqdn_fsp_corr_subarray"]
     fsp_pss_subarray_fqdns_all = configuration["fqdn_fsp_pss_subarray"]
     fsp_pst_subarray_fqdns_all = configuration["fqdn_fsp_pst_subarray"]
 
-    fsp_corr_subarray_address = fsp_corr_subarray_fqdns_all[0]
-    fsp_pss_subarray_address = fsp_pss_subarray_fqdns_all[0]
-    fsp_pst_subarray_address = fsp_pst_subarray_fqdns_all[0]
-    vlbi_address = configuration["fqdn_vlbi"][0]
+    # TODO: fix the test_fqdns.json to match the changes here - this seems hacky
+    fsp_controller_fqdn = fsp_corr_subarray_fqdns_all[0]
+    fsp_corr_controller_fqdn = fsp_pss_subarray_fqdns_all[0]
 
     return FspComponentManager(
         logger,
         fsp_id,
-        fsp_controller,
         fsp_corr_subarray_fqdns_all,
         fsp_pss_subarray_fqdns_all,
         fsp_pst_subarray_fqdns_all,
-        fsp_corr_subarray_address,
-        fsp_pss_subarray_address,
-        fsp_pst_subarray_address,
-        vlbi_address,
+        fsp_controller_fqdn,
+        fsp_corr_controller_fqdn,
         push_change_event_callback,
         communication_status_changed_callback,
         component_power_mode_changed_callback,

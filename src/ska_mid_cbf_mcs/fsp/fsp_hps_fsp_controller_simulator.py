@@ -17,7 +17,9 @@ from __future__ import annotations  # allow forward references in type hints
 import tango
 
 from ska_mid_cbf_mcs.commons.global_enum import FspModes
-from ska_mid_cbf_mcs.fsp.fsp_corr import FspCorr
+from ska_mid_cbf_mcs.fsp.fsp_hps_fsp_corr_controller_simulator import (
+    HpsFspCorrControllerSimulator,
+)
 
 __all__ = ["HpsFspControllerSimulator"]
 
@@ -34,7 +36,7 @@ class HpsFspControllerSimulator:
     def __init__(
         self: HpsFspControllerSimulator,
         device_name: str,
-        fsp_corr_controller: FspCorr,
+        fsp_corr_controller: HpsFspCorrControllerSimulator,
     ) -> None:
         self.device_name = device_name
 
@@ -48,7 +50,7 @@ class HpsFspControllerSimulator:
         return self._state
 
     def SetFspFunctionMode(
-        self: HpsFspControllerSimulator, f_mode: str
+        self: HpsFspControllerSimulator, f_mode: FspModes
     ) -> None:
         """
         Sets the function mode to be processed on this FPGA board.

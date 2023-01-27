@@ -8,9 +8,11 @@ import os
 
 from tango.server import run
 
-from ska_mid_cbf_mcs.fsp.fsp_corr import FspCorr
 from ska_mid_cbf_mcs.fsp.fsp_corr_subarray import FspCorrSubarray
 from ska_mid_cbf_mcs.fsp.fsp_device import Fsp
+from ska_mid_cbf_mcs.fsp.fsp_hps_fsp_corr_controller_simulator import (
+    HpsFspCorrControllerSimulator,
+)
 from ska_mid_cbf_mcs.fsp.fsp_pss import FspPss
 from ska_mid_cbf_mcs.fsp.fsp_pss_subarray import FspPssSubarray
 from ska_mid_cbf_mcs.fsp.fsp_pst import FspPst
@@ -26,7 +28,7 @@ __all__ = ["main"]
 def main(args=None, **kwargs):
     return run(
         classes=(
-            FspCorr,
+            HpsFspCorrControllerSimulator,
             FspPss,
             FspPst,
             FspVlbi,
