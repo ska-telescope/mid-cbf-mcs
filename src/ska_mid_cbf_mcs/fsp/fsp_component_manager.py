@@ -661,6 +661,13 @@ class FspComponentManager(CbfComponentManager):
             ]:
                 # the whole delay model must be stored
                 self._delay_model = copy.deepcopy(argin)
+                if self.simulation_mode:
+                    self._fsp_corr_controller_simulator.UpdateDelayModels(
+                        argin
+                    )
+                else:
+                    pass
+
             else:
                 log_msg = (
                     "Fsp UpdateDelayModel command failed: "

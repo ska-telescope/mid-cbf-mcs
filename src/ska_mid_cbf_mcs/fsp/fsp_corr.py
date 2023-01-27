@@ -14,6 +14,8 @@ Copyright (c) 2019 National Research Council of Canada
 """
 from __future__ import annotations  # allow forward references in type hints
 
+from typing import List
+
 import tango
 
 __all__ = ["FspCorr"]
@@ -32,15 +34,20 @@ class FspCorr:
         self: FspCorr,
         device_name: str,
     ) -> None:
+
         self.device_name = device_name
 
         self._state = tango.DevState.INIT
 
         self._fsp_id = ""
-        self._fspUnitID = 0
-        self._fqdn = ""
+        self._fspUnitID = (0,)
+
+        # FQDNs of all low level, correlation specific devices,
+        # controlled by this device
+        self._fqdn = (List[str],)
         self._scan_id = "0"
 
+    # Properties that match the Tango attributes in the band devices
     @property
     def fspID(self) -> str:
         """Return the Fsp ID attribute."""
@@ -52,17 +59,14 @@ class FspCorr:
         return self._fsp_unit_id
 
     @property
-    def fqdn(self) -> str:
+    def fqdn(self) -> List[str]:
         """Return the fqdn attribute."""
         return self._fqdn
 
-    # --------
-    # Commands
-    # --------
-
+    # Methods that match the Tango commands in the HPS FSP Corr Controller device
     def init_device(self: FspCorr, json_str: str) -> None:
         """
-        Initialize the common/constant parameters of this FSP device.
+        Update to connect to all HPS FSP Low-level Tango devices
 
         :param json_str: JSON-formatted string containing the parameters
         """
@@ -103,8 +107,9 @@ class FspCorr:
 
         :param delay_model: Delay Model
         """
+        # Nothing to do for simulation
         pass
 
     def SetState(self, argin):
         """Set state to argin(DevState)."""
-        self.set_state(argin)
+        self._state = argin
