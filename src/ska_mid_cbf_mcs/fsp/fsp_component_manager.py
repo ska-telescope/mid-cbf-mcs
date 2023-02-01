@@ -253,7 +253,6 @@ class FspComponentManager(CbfComponentManager):
         # for now, assume that given addresses are valid
 
         if not self._simulation_mode:
-
             if self._proxy_hsp_fsp_controller is None:
                 if self._hps_fsp_controller_fqdn:
                     self._proxy_hsp_fsp_controller = self._get_device_proxy(
@@ -269,7 +268,6 @@ class FspComponentManager(CbfComponentManager):
                             )
                         )
         else:
-
             self._proxy_hsp_fsp_corr_controller = (
                 HpsFspCorrControllerSimulator(
                     self._hps_fsp_corr_controller_fqdn
@@ -399,7 +397,6 @@ class FspComponentManager(CbfComponentManager):
         """
 
         if self._connected:
-
             # TODO: set state for the hps devices
 
             self._group_fsp_corr_subarray.command_inout("On")
@@ -479,7 +476,6 @@ class FspComponentManager(CbfComponentManager):
         """
 
         if self._connected:
-
             if argin == "IDLE":
                 self._function_mode = FspModes.IDLE.value
                 # TODO set state for the Hps devices
@@ -659,7 +655,6 @@ class FspComponentManager(CbfComponentManager):
         self._logger.debug("entering update_timing_beam_weights")
 
         if self._connected:
-
             # update if current function mode is PST-BF
             if self._function_mode == FspModes.PST_BF.value:
                 argin = json.loads(argin)

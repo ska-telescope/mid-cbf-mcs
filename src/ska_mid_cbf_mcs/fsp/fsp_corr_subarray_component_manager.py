@@ -573,7 +573,6 @@ class FspCorrSubarrayComponentManager(
     def _deconfigure(
         self: FspCorrSubarrayComponentManager,
     ) -> None:
-
         self._freq_band_name = ""
         self._frequency_band = 0
         self._stream_tuning = (0, 0)

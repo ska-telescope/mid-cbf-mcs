@@ -252,7 +252,6 @@ class TestFsp:
     def test_AddRemoveSubarrayMembership(
         self, test_proxies: pytest.fixture, fsp_id: int
     ) -> None:
-
         # subarray membership should be empty
         assert test_proxies.fsp[fsp_id].subarrayMembership is None
 

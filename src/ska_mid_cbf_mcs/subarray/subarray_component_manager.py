@@ -874,7 +874,9 @@ class CbfSubarrayComponentManager(
                     logger=self._logger,
                 )
                 attribute_proxy.ping()
-            except tango.DevFailed:  # attribute doesn't exist or is not set up correctly
+            except (
+                tango.DevFailed
+            ):  # attribute doesn't exist or is not set up correctly
                 msg = (
                     f"Attribute {configuration['doppler_phase_corr_subscription_point']}"
                     " not found or not set up correctly for "
@@ -890,7 +892,9 @@ class CbfSubarrayComponentManager(
                     logger=self._logger,
                 )
                 attribute_proxy.ping()
-            except tango.DevFailed:  # attribute doesn't exist or is not set up correctly
+            except (
+                tango.DevFailed
+            ):  # attribute doesn't exist or is not set up correctly
                 msg = (
                     f"Attribute {configuration['delay_model_subscription_point']}"
                     " not found or not set up correctly for "
@@ -906,7 +910,9 @@ class CbfSubarrayComponentManager(
                     logger=self._logger,
                 )
                 attribute_proxy.ping()
-            except tango.DevFailed:  # attribute doesn't exist or is not set up correctly
+            except (
+                tango.DevFailed
+            ):  # attribute doesn't exist or is not set up correctly
                 msg = (
                     f"Attribute {configuration['jones_matrix_subscription_point']}"
                     " not found or not set up correctly for "
@@ -924,7 +930,9 @@ class CbfSubarrayComponentManager(
                     logger=self._logger,
                 )
                 attribute_proxy.ping()
-            except tango.DevFailed:  # attribute doesn't exist or is not set up correctly
+            except (
+                tango.DevFailed
+            ):  # attribute doesn't exist or is not set up correctly
                 msg = (
                     f"Attribute {configuration['timing_beam_weights_subscription_point']}"
                     " not found or not set up correctly for "
@@ -1067,7 +1075,6 @@ class CbfSubarrayComponentManager(
                 # CORR #
 
                 if fsp["function_mode"] == "CORR":
-
                     if "receptor_ids" in fsp:
                         for this_rec in fsp["receptor_ids"]:
                             if this_rec not in self._receptors:
@@ -1116,7 +1123,6 @@ class CbfSubarrayComponentManager(
                         int(fsp["zoom_factor"]) > 0
                     ):  # zoomWindowTuning is required
                         if "zoom_window_tuning" in fsp:
-
                             if fsp["frequency_band"] not in [
                                 "5a",
                                 "5b",
@@ -1172,7 +1178,6 @@ class CbfSubarrayComponentManager(
                                 ]:  # band5Tuning not specified
                                     pass
                                 else:
-
                                     # TODO: these validations of BW range are done many times
                                     # in many places - use a commom function; also may be possible
                                     # to do them only once (ex. for band5Tuning)

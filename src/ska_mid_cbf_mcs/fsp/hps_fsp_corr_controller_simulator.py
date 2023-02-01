@@ -34,7 +34,6 @@ class HpsFspCorrControllerSimulator:
         self: HpsFspCorrControllerSimulator,
         device_name: str,
     ) -> None:
-
         self.device_name = device_name
 
         self._state = tango.DevState.INIT

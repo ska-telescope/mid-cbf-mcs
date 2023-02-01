@@ -303,9 +303,9 @@ def logger() -> logging.Logger:
 
 
 @pytest.fixture()
-def mock_change_event_callback_factory() -> Callable[
-    [str], MockChangeEventCallback
-]:
+def mock_change_event_callback_factory() -> (
+    Callable[[str], MockChangeEventCallback]
+):
     """
     Return a factory that returns a new mock change event callback each call.
 
@@ -680,7 +680,6 @@ def init_delay_model_test_fixture():
             delay_model_all_obj: dict,
             receptors_under_test: List(int),
         ) -> dict:
-
             dm_num_entries = len(delay_model_all_obj)
             receptors_to_remove = list(
                 set([1, 2, 3, 4]) - set(receptors_under_test)

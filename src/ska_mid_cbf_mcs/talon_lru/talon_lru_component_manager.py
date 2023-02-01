@@ -339,7 +339,6 @@ class TalonLRUComponentManager(CbfComponentManager):
         """
 
         if self.connected:
-
             # Power off both outlets
             result1 = ResultCode.FAILED
             if self._proxy_power_switch1 is not None:

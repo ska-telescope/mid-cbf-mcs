@@ -1259,7 +1259,6 @@ class Vcc(CspSubElementObsDevice):
                     "5a",
                     "5b",
                 ]:  # frequency band is not band 5
-
                     frequencyBand_mi = freq_band_dict()[freq_band_name]
 
                     frequencyBand = ["1", "2", "3", "4", "5a", "5b"].index(

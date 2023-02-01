@@ -1176,7 +1176,6 @@ class TestCbfSubarray:
             time.sleep(1)
 
             for epoch in range(len(jones_matrix_index_per_epoch)):
-
                 for receptor in jones_matrix["jonesMatrix"][
                     jones_matrix_index_per_epoch[epoch]
                 ]["matrixDetails"]:
@@ -1257,7 +1256,6 @@ class TestCbfSubarray:
 
             # update the TM with each of the input delay models
             for i_dm in range(dm_num_entries):
-
                 # Get one delay model Python object from the list
                 input_delay_model_obj = delay_model_for_test_all_obj[i_dm]
 
@@ -1729,7 +1727,6 @@ class TestCbfSubarray:
 
             # update the TM with each of the input delay models
             for i_dm in range(dm_num_entries):
-
                 # Get one delay model Python object from the list
                 input_delay_model_obj = delay_model_for_test_all_obj[i_dm]
 
@@ -1743,7 +1740,6 @@ class TestCbfSubarray:
 
                 # check the delay model was correctly updated for vcc
                 for jj, i_rec in enumerate(vcc_receptors):
-
                     # get the vcc device proxy (dp) corresponding to i_rec
                     this_vcc = test_proxies.receptor_to_vcc[i_rec]
                     vcc_dp = test_proxies.vcc[this_vcc]
@@ -1962,7 +1958,6 @@ class TestCbfSubarray:
             epoch_to_scan = 1
 
             for epoch in range(len(jones_matrix_index_per_epoch)):
-
                 for receptor in jones_matrix["jonesMatrix"][
                     jones_matrix_index_per_epoch[epoch]
                 ]["matrixDetails"]:
