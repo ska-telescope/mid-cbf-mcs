@@ -56,21 +56,15 @@ class Fsp(SKACapability):
 
     FspID = device_property(dtype="uint16")
 
-    FspControllerAddress = device_property(dtype="str")
-
-    CorrelationAddress = device_property(dtype="str")
-
-    PSSAddress = device_property(dtype="str")
-
-    PSTAddress = device_property(dtype="str")
-
-    VLBIAddress = device_property(dtype="str")
-
     FspCorrSubarray = device_property(dtype=("str",))
 
     FspPssSubarray = device_property(dtype=("str",))
 
     FspPstSubarray = device_property(dtype=("str",))
+
+    HpsFspControllerAddress = device_property(dtype="str")
+
+    HspFspCorrControllerAddress = device_property(dtype="str")
 
     # ----------
     # Attributes
@@ -215,8 +209,8 @@ class Fsp(SKACapability):
             fsp_corr_subarray_fqdns_all=self.FspCorrSubarray,
             fsp_pss_subarray_fqdns_all=self.FspPssSubarray,
             fsp_pst_subarray_fqdns_all=self.FspPstSubarray,
-            hps_fsp_controller_fqdn=self.FspControllerAddress,
-            hps_fsp_corr_controller_fqdn=self.CorrelationAddress,
+            hps_fsp_controller_fqdn=self.HpsFspControllerAddress,
+            hps_fsp_corr_controller_fqdn=self.HspFspCorrControllerAddress,
             push_change_event_callback=self.push_change_event,
             communication_status_changed_callback=self._communication_status_changed,
             component_power_mode_changed_callback=self._component_power_mode_changed,

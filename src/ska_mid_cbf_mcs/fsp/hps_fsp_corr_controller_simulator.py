@@ -45,7 +45,7 @@ class HpsFspCorrControllerSimulator:
         # FQDNs of all low level, correlation specific devices,
         # controlled by this device
         self._fqdn = List[str]
-        self._scan_id = "0"
+        self._scan_id = 0
 
     # Properties that match the Tango attributes in the band devices
     @property
@@ -85,7 +85,7 @@ class HpsFspCorrControllerSimulator:
         """
         pass
 
-    def Scan(self: HpsFspCorrControllerSimulator, scan_id: str) -> None:
+    def Scan(self: HpsFspCorrControllerSimulator, scan_id: int) -> None:
         """
         Execute a scan operation.
 
@@ -95,7 +95,7 @@ class HpsFspCorrControllerSimulator:
 
     def EndScan(self: HpsFspCorrControllerSimulator) -> None:
         """End the scan."""
-        self._scan_id = "0"
+        self._scan_id = 0
 
     def Abort(self: HpsFspCorrControllerSimulator) -> None:
         """Abort whatever action is currently executing."""

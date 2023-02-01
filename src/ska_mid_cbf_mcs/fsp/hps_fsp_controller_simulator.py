@@ -17,7 +17,7 @@ from __future__ import annotations  # allow forward references in type hints
 import tango
 
 from ska_mid_cbf_mcs.commons.global_enum import FspModes
-from ska_mid_cbf_mcs.fsp.fsp_hps_fsp_corr_controller_simulator import (
+from ska_mid_cbf_mcs.fsp.hps_fsp_corr_controller_simulator import (
     HpsFspCorrControllerSimulator,
 )
 

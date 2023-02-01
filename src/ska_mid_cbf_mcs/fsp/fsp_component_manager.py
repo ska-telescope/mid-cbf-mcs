@@ -26,10 +26,10 @@ from ska_mid_cbf_mcs.component.component_manager import (
 )
 from ska_mid_cbf_mcs.component.util import check_communicating
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
-from ska_mid_cbf_mcs.fsp.fsp_hps_fsp_controller_simulator import (
+from ska_mid_cbf_mcs.fsp.hps_fsp_controller_simulator import (
     HpsFspControllerSimulator,
 )
-from ska_mid_cbf_mcs.fsp.fsp_hps_fsp_corr_controller_simulator import (
+from ska_mid_cbf_mcs.fsp.hps_fsp_corr_controller_simulator import (
     HpsFspCorrControllerSimulator,
 )
 from ska_mid_cbf_mcs.group_proxy import CbfGroupProxy
@@ -62,7 +62,6 @@ class FspComponentManager(CbfComponentManager):
 
         :param logger: a logger for this object to use
         :param fsp_id: the fsp id
-        :param fsp_controller_address: FQDN of the HPS FSP controller device
         :param fsp_corr_subarray_fqdns_all: list of all
             fsp corr subarray fqdns
         :param fsp_pss_subarray_fqdns_all: list of all
