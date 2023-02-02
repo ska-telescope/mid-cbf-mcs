@@ -21,3 +21,4 @@ pytest-pylint
 pyyaml
 scp
 paramiko
+pylint == 2.15.5
