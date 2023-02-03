@@ -787,17 +787,6 @@ class TestCbfSubarray:
                     assert (
                         sub_id in test_proxies.fsp[fsp_id].subarrayMembership
                     )
-                    assert [
-                        proxy.State()
-                        for proxy in test_proxies.fspFunctionMode[
-                            fsp_id
-                        ].values()
-                    ] == [
-                        DevState.ON,
-                        DevState.DISABLE,
-                        DevState.DISABLE,
-                        DevState.DISABLE,
-                    ]
                     # check configured attributes of FSP subarray
                     assert (
                         test_proxies.fspSubarray["CORR"][sub_id][
@@ -983,17 +972,7 @@ class TestCbfSubarray:
                     assert (
                         sub_id in test_proxies.fsp[fsp_id].subarrayMembership
                     )
-                    assert [
-                        proxy.State()
-                        for proxy in test_proxies.fspFunctionMode[
-                            fsp_id
-                        ].values()
-                    ] == [
-                        DevState.DISABLE,
-                        DevState.DISABLE,
-                        DevState.ON,
-                        DevState.DISABLE,
-                    ]
+
                     assert (
                         test_proxies.fspSubarray["PST-BF"][sub_id][
                             fsp_id
@@ -1852,6 +1831,7 @@ class TestCbfSubarray:
             time.sleep(2)
             raise e
 
+    @pytest.mark.skip(reason="Jones matrix not used for AA0.5).")
     @pytest.mark.parametrize(
         "config_file_name, \
         scan_file_name, \

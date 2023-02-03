@@ -433,17 +433,6 @@ def init_proxies_fixture():
             ]:
                 self.fspSubarray["PST-BF"][1].append(proxy)
 
-            # fspFunctionMode[fsp id (int)][function mode (str)]
-            self.fspFunctionMode = [None]
-            for i in range(1, self.num_fsp + 1):
-                func_modes = {}
-                for j in ["corr", "pss", "pst", "vlbi"]:
-                    func_modes[j] = CbfDeviceProxy(
-                        fqdn=f"mid_csp_cbf/fsp_{j}/{i:02}",
-                        logger=logging.getLogger(),
-                    )
-                self.fspFunctionMode.append(func_modes)
-
             # Vcc
             # index == vccID
             self.vcc = [None]
@@ -630,6 +619,11 @@ def init_proxies_fixture():
             self.controller.Off()
             self.wait_timeout_dev(
                 [self.controller], DevState.OFF, wait_time_s, sleep_time_s
+            )
+
+            self.controller.adminMode = AdminMode.OFFLINE
+            self.wait_timeout_dev(
+                [self.controller], DevState.DISABLE, wait_time_s, sleep_time_s
             )
 
     return TestProxies()
