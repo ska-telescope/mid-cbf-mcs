@@ -74,8 +74,6 @@ class TestCbfController:
         )
         assert test_proxies.controller.State() == DevState.OFF
 
-        test_proxies.off()
-
     def test_On(self, test_proxies):
         """
         Test the "On" command
