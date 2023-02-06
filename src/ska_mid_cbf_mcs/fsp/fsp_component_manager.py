@@ -254,19 +254,15 @@ class FspComponentManager(CbfComponentManager):
 
         if not self._simulation_mode:
             if self._proxy_hsp_fsp_controller is None:
-                if self._hps_fsp_controller_fqdn:
-                    self._proxy_hsp_fsp_controller = self._get_device_proxy(
-                        self._hps_fsp_controller_fqdn, is_group=False
-                    )
+                self._proxy_hsp_fsp_controller = self._get_device_proxy(
+                    self._hps_fsp_controller_fqdn, is_group=False
+                )
 
-                if self._proxy_hsp_fsp_corr_controller is None:
-                    if self._hps_fsp_corr_controller_fqdn:
-                        self._proxy_hsp_fsp_corr_controller = (
-                            self._get_device_proxy(
-                                self._hps_fsp_corr_controller_fqdn,
-                                is_group=False,
-                            )
-                        )
+            if self._proxy_hsp_fsp_corr_controller is None:
+                self._proxy_hsp_fsp_corr_controller = self._get_device_proxy(
+                    self._hps_fsp_corr_controller_fqdn,
+                    is_group=False,
+                )
         else:
             self._proxy_hsp_fsp_corr_controller = (
                 HpsFspCorrControllerSimulator(

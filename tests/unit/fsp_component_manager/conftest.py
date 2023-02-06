@@ -68,12 +68,6 @@ def fsp_component_manager(
     fsp_pss_subarray_fqdns_all = configuration["fqdn_fsp_pss_subarray"]
     fsp_pst_subarray_fqdns_all = configuration["fqdn_fsp_pst_subarray"]
 
-    # TODO: confirm whether the 4 unused variables below are needed
-    # fsp_corr_subarray_address = fsp_corr_subarray_fqdns_all[0]
-    # fsp_pss_subarray_address = fsp_pss_subarray_fqdns_all[0]
-    # fsp_pst_subarray_address = fsp_pss_subarray_fqdns_all[0]
-    # vlbi_address = configuration["fqdn_vlbi"][0]
-
     hps_fsp_controller_fqdn = fsp_corr_subarray_fqdns_all[0]
     fsp_corr_controller_fqdn = fsp_pss_subarray_fqdns_all[0]
 

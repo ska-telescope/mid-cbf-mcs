@@ -51,18 +51,6 @@ server:
           - name: "FspID"
             values:
             - "1"
-          - name: "CorrelationAddress"
-            values:
-            - "mid_csp_cbf/fsp_corr/01"
-          - name: "PSSAddress"
-            values:
-            - "mid_csp_cbf/fsp_pss/01"
-          - name: "PSTAddress"
-            values:
-            - "mid_csp_cbf/fsp_pst/01"
-          - name: "VLBIAddress"
-            values:
-            - "mid_csp_cbf/fsp_vlbi/01"
           - name: "FspCorrSubarray"
             values:
             - "mid_csp_cbf/fspCorrSubarray/01_01"
@@ -328,18 +316,6 @@ server:
           - name: "FspID"
             values:
             - "2"
-          - name: "CorrelationAddress"
-            values:
-            - "mid_csp_cbf/fsp_corr/02"
-          - name: "PSSAddress"
-            values:
-            - "mid_csp_cbf/fsp_pss/02"
-          - name: "PSTAddress"
-            values:
-            - "mid_csp_cbf/fsp_pst/02"
-          - name: "VLBIAddress"
-            values:
-            - "mid_csp_cbf/fsp_vlbi/02"
           - name: "FspCorrSubarray"
             values:
             - "mid_csp_cbf/fspCorrSubarray/02_01"
@@ -605,18 +581,6 @@ server:
           - name: "FspID"
             values:
             - "3"
-          - name: "CorrelationAddress"
-            values:
-            - "mid_csp_cbf/fsp_corr/03"
-          - name: "PSSAddress"
-            values:
-            - "mid_csp_cbf/fsp_pss/03"
-          - name: "PSTAddress"
-            values:
-            - "mid_csp_cbf/fsp_pst/03"
-          - name: "VLBIAddress"
-            values:
-            - "mid_csp_cbf/fsp_vlbi/03"
           - name: "FspCorrSubarray"
             values:
             - "mid_csp_cbf/fspCorrSubarray/03_01"
@@ -882,18 +846,6 @@ server:
           - name: "FspID"
             values:
             - "4"
-          - name: "CorrelationAddress"
-            values:
-            - "mid_csp_cbf/fsp_corr/04"
-          - name: "PSSAddress"
-            values:
-            - "mid_csp_cbf/fsp_pss/04"
-          - name: "PSTAddress"
-            values:
-            - "mid_csp_cbf/fsp_pst/04"
-          - name: "VLBIAddress"
-            values:
-            - "mid_csp_cbf/fsp_vlbi/04"
           - name: "FspCorrSubarray"
             values:
             - "mid_csp_cbf/fspCorrSubarray/04_01"
