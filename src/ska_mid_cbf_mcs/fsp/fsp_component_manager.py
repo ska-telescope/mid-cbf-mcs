@@ -47,8 +47,8 @@ class FspComponentManager(CbfComponentManager):
         fsp_corr_subarray_fqdns_all: List[str],
         fsp_pss_subarray_fqdns_all: List[str],
         fsp_pst_subarray_fqdns_all: List[str],
-        hps_fsp_controller_fqdn: str,
-        hps_fsp_corr_controller_fqdn: str,
+        hps_fsp_controller_fqdn: str,  # TODO: for Mid.CBF, to be updated to a list of FQDNs (max length = 20), one entry for each Talon board in the FSP_UNIT
+        hps_fsp_corr_controller_fqdn: str,  # TODO: for Mid.CBF, to be updated to a list of FQDNs (max length = 20), one entry for each Talon board in the FSP_UNIT
         push_change_event_callback: Optional[Callable],
         communication_status_changed_callback: Callable[
             [CommunicationStatus], None
@@ -68,7 +68,9 @@ class FspComponentManager(CbfComponentManager):
             fsp pss subarray fqdns
         :param fsp_pst_subarray_fqdns_all: list of all
             fsp pst subarray fqdns
+        # TODO: for Mid.CBF, param hps_fsp_controller_fqdn to be updated to a list of FQDNs (max length = 20), one entry for each Talon board in the FSP_UNIT
         :param hps_fsp_controller_fqdn: FQDN of the HPS FSP controller device
+        # TODO: for Mid.CBF, param hps_fsp_corr_controller_fqdn to be updated to a list of FQDNs (max length = 20), one entry for each Talon board in the FSP_UNIT
         :param hps_fsp_corr_controller_fqdn: FQDN of the HPS FSP Correlator controller device
         :param push_change_event: method to call when the base classes
             want to send an event
@@ -275,25 +277,22 @@ class FspComponentManager(CbfComponentManager):
             )
 
         if self._proxy_fsp_corr_subarray is None:
-            if self._fsp_corr_subarray_fqdns_all:
-                self._proxy_fsp_corr_subarray = [
-                    self._get_device_proxy(fqdn, is_group=False)
-                    for fqdn in self._fsp_corr_subarray_fqdns_all
-                ]
+            self._proxy_fsp_corr_subarray = [
+                self._get_device_proxy(fqdn, is_group=False)
+                for fqdn in self._fsp_corr_subarray_fqdns_all
+            ]
 
         if self._proxy_fsp_pss_subarray is None:
-            if self._fsp_pss_subarray_fqdns_all:
-                self._proxy_fsp_pss_subarray = [
-                    self._get_device_proxy(fqdn, is_group=False)
-                    for fqdn in self._fsp_pss_subarray_fqdns_all
-                ]
+            self._proxy_fsp_pss_subarray = [
+                self._get_device_proxy(fqdn, is_group=False)
+                for fqdn in self._fsp_pss_subarray_fqdns_all
+            ]
 
         if self._proxy_fsp_pst_subarray is None:
-            if self._fsp_pst_subarray_fqdns_all:
-                self._proxy_fsp_pst_subarray = [
-                    self._get_device_proxy(fqdn, is_group=False)
-                    for fqdn in self._fsp_pst_subarray_fqdns_all
-                ]
+            self._proxy_fsp_pst_subarray = [
+                self._get_device_proxy(fqdn, is_group=False)
+                for fqdn in self._fsp_pst_subarray_fqdns_all
+            ]
 
     def _get_group_proxies(
         self: FspComponentManager,
@@ -393,7 +392,8 @@ class FspComponentManager(CbfComponentManager):
         """
 
         if self._connected:
-            # TODO: set state for the hps devices
+            # TODO: in the future, DsFspController to implement on(), off()
+            # commands. Then invoke here the DsFspController on() command.
 
             self._group_fsp_corr_subarray.command_inout("On")
             self._group_fsp_pss_subarray.command_inout("On")
@@ -422,7 +422,8 @@ class FspComponentManager(CbfComponentManager):
         """
 
         if self._connected:
-            # TODO set state for the hps devices
+            # TODO: in the future, DsFspController to implement on(), off()
+            # commands. Then invoke here the DsFspController off() command.
 
             self._group_fsp_corr_subarray.command_inout("Off")
             self._group_fsp_pss_subarray.command_inout("Off")
@@ -474,19 +475,14 @@ class FspComponentManager(CbfComponentManager):
         if self._connected:
             if argin == "IDLE":
                 self._function_mode = FspModes.IDLE.value
-                # TODO set state for the Hps devices
             elif argin == "CORR":
                 self._function_mode = FspModes.CORR.value
-                # TODO set state for the Hps devices
             elif argin == "PSS-BF":
                 self._function_mode = FspModes.PSS_BF.value
-                # TODO set state for the Hps devices
             elif argin == "PST-BF":
                 self._function_mode = FspModes.PST_BF.value
-                # TODO set state for the Hps devices
             elif argin == "VLBI":
                 self._function_mode = FspModes.VLBI.value
-                # TODO set state for the Hps devices
             else:
                 # shouldn't happen
                 self._logger.warning("functionMode not valid. Ignoring.")

@@ -58,38 +58,16 @@ class HpsFspControllerSimulator:
         :param f_mode: string containing the function mode
         """
 
-        """
-        From Confluence design page "description of updates":
-        Sets the function mode.
-        Connect to  the DsFsp<Func>Controller devices
-        Set to ON the DsFsp<Func>Controller corresponding to the given function mode
-        Set to DESABLE the other DsFsp<Func>Controller devices
-        """
-
         if f_mode == "IDLE":
             self._function_mode = FspModes.IDLE.value
-            # set all the DsFsp<>Controllers state to tango.DevState.DISABLE
-            self._fsp_corr_controller.SetState(tango.DevState.DISABLE)
         elif f_mode == "CORR":
             self._function_mode = FspModes.CORR.value
-            # set the DsFspCorrController state to tango.DevState.ON
-            self._fsp_corr_controller.SetState(tango.DevState.ON)
-            # TODO set the others to tango.DevState.DISABLE
         elif f_mode == "PSS_BF":
             self._function_mode = FspModes.PSS_BF.value
-            # TODO set the DsFspPssController state to tango.DevState.ON
-            # set the others to tango.DevState.DISABLE
-            self._fsp_corr_controller.SetState(tango.DevState.DISABLE)
         elif f_mode == "PST_BF":
             self._function_mode = FspModes.PST_BF.value
-            # TODO set the DsFspPstController state to tango.DevState.ON
-            # set the others to tango.DevState.DISABLE
-            self._fsp_corr_controller.SetState(tango.DevState.DISABLE)
         elif f_mode == "VLBI":
             self._function_mode = FspModes.VLBI.value
-            # TODO set the DsFspVlbiController state to tango.DevState.ON
-            # set the others to tango.DevState.DISABLE
-            self._fsp_corr_controller.SetState(tango.DevState.DISABLE)
         else:
             # error
             pass

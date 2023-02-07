@@ -134,9 +134,7 @@ class Fsp(SKACapability):
         dtype=SimulationMode,
         access=AttrWriteType.READ_WRITE,
         memorized=True,
-        doc="Reports the simulation mode of the device. \nSome devices may implement "
-        "both modes, while others will have simulators that set simulationMode "
-        "to True while the real devices always set simulationMode to False.",
+        doc="Reports the simulation mode of the device.",
     )
 
     # ---------------
