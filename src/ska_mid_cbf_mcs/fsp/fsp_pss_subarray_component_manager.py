@@ -261,7 +261,6 @@ class FspPssSubarrayComponentManager(
         self._search_window_id = int(configuration["search_window_id"])
 
         for searchBeam in configuration["search_beam"]:
-
             if len(searchBeam["receptor_ids"]) != 1:
                 # TODO - to add support for multiple receptors
                 msg = "Currently only 1 receptor per searchBeam is supported"
@@ -312,7 +311,6 @@ class FspPssSubarrayComponentManager(
     def _deconfigure(
         self: FspPssSubarrayComponentManager,
     ) -> None:
-
         self._search_beams = []
         self._search_window_id = 0
         self._search_beam_id = []

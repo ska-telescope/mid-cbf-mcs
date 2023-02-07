@@ -17,7 +17,7 @@ from typing import Callable, List, Optional, Tuple
 
 import tango
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import PowerMode
+from ska_tango_base.control_model import PowerMode, SimulationMode
 
 from ska_mid_cbf_mcs.commons.global_enum import FspModes
 from ska_mid_cbf_mcs.component.component_manager import (
@@ -26,6 +26,12 @@ from ska_mid_cbf_mcs.component.component_manager import (
 )
 from ska_mid_cbf_mcs.component.util import check_communicating
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
+from ska_mid_cbf_mcs.fsp.hps_fsp_controller_simulator import (
+    HpsFspControllerSimulator,
+)
+from ska_mid_cbf_mcs.fsp.hps_fsp_corr_controller_simulator import (
+    HpsFspCorrControllerSimulator,
+)
 from ska_mid_cbf_mcs.group_proxy import CbfGroupProxy
 
 MAX_SUBARRAY_MEMBERSHIPS = 16
@@ -41,16 +47,15 @@ class FspComponentManager(CbfComponentManager):
         fsp_corr_subarray_fqdns_all: List[str],
         fsp_pss_subarray_fqdns_all: List[str],
         fsp_pst_subarray_fqdns_all: List[str],
-        fsp_corr_address: str,
-        fsp_pss_address: str,
-        fsp_pst_address: str,
-        fsp_vlbi_address: str,
+        hps_fsp_controller_fqdn: str,  # TODO: for Mid.CBF, to be updated to a list of FQDNs (max length = 20), one entry for each Talon board in the FSP_UNIT
+        hps_fsp_corr_controller_fqdn: str,  # TODO: for Mid.CBF, to be updated to a list of FQDNs (max length = 20), one entry for each Talon board in the FSP_UNIT
         push_change_event_callback: Optional[Callable],
         communication_status_changed_callback: Callable[
             [CommunicationStatus], None
         ],
         component_power_mode_changed_callback: Callable[[PowerMode], None],
         component_fault_callback: Callable[[bool], None],
+        simulation_mode: SimulationMode = SimulationMode.TRUE,
     ) -> None:
         """
         Initialise a new instance.
@@ -63,10 +68,10 @@ class FspComponentManager(CbfComponentManager):
             fsp pss subarray fqdns
         :param fsp_pst_subarray_fqdns_all: list of all
             fsp pst subarray fqdns
-        :param fsp_corr_address: the address of the fsp corr subarray
-        :param fsp_pss_address: the address of the fsp pss subarray
-        :param fsp_pst_address: the address of the fsp pst subarray
-        :param fsp_vlbi_address: the address of the fsp vlbi subarray
+        # TODO: for Mid.CBF, param hps_fsp_controller_fqdn to be updated to a list of FQDNs (max length = 20), one entry for each Talon board in the FSP_UNIT
+        :param hps_fsp_controller_fqdn: FQDN of the HPS FSP controller device
+        # TODO: for Mid.CBF, param hps_fsp_corr_controller_fqdn to be updated to a list of FQDNs (max length = 20), one entry for each Talon board in the FSP_UNIT
+        :param hps_fsp_corr_controller_fqdn: FQDN of the HPS FSP Correlator controller device
         :param push_change_event: method to call when the base classes
             want to send an event
         :param communication_status_changed_callback: callback to be
@@ -76,6 +81,8 @@ class FspComponentManager(CbfComponentManager):
             called when the component power mode changes
         :param component_fault_callback: callback to be called in event of
             component fault
+        :param simulation_mode: simulation mode identifies if the real FSP HPS
+            applications or the simulator should be connected
         """
         self._connected = False
 
@@ -84,18 +91,15 @@ class FspComponentManager(CbfComponentManager):
         self._fsp_corr_subarray_fqdns_all = fsp_corr_subarray_fqdns_all
         self._fsp_pss_subarray_fqdns_all = fsp_pss_subarray_fqdns_all
         self._fsp_pst_subarray_fqdns_all = fsp_pst_subarray_fqdns_all
-        self._fsp_corr_address = fsp_corr_address
-        self._fsp_pss_address = fsp_pss_address
-        self._fsp_pst_address = fsp_pst_address
-        self._fsp_vlbi_address = fsp_vlbi_address
+
+        self._hps_fsp_controller_fqdn = hps_fsp_controller_fqdn
+        self._hps_fsp_corr_controller_fqdn = hps_fsp_corr_controller_fqdn
 
         self._group_fsp_corr_subarray = None
         self._group_fsp_pss_subarray = None
         self._group_fsp_pst_subarray = None
-        self._proxy_corr = None
-        self._proxy_pss = None
-        self._proxy_pst = None
-        self._proxy_vlbi = None
+        self._proxy_hsp_fsp_controller = None
+        self._proxy_hsp_fsp_corr_controller = None
         self._proxy_fsp_corr_subarray = None
         self._proxy_fsp_pss_subarray = None
         self._proxy_fsp_pst_subarray = None
@@ -105,6 +109,8 @@ class FspComponentManager(CbfComponentManager):
         self._jones_matrix = [[0.0] * 16 for _ in range(4)]
         self._delay_model = ""
         self._timing_beam_weights = [[0.0] * 6 for _ in range(4)]
+
+        self._simulation_mode = simulation_mode
 
         super().__init__(
             logger=logger,
@@ -163,6 +169,26 @@ class FspComponentManager(CbfComponentManager):
         :rtype: List[List[float]]
         """
         return self._timing_beam_weights
+
+    @property
+    def simulation_mode(self: FspComponentManager) -> SimulationMode:
+        """
+        Get the simulation mode of the component manager.
+
+        :return: simulation mode of the component manager
+        """
+        return self._simulation_mode
+
+    @simulation_mode.setter
+    def simulation_mode(
+        self: FspComponentManager, value: SimulationMode
+    ) -> None:
+        """
+        Set the simulation mode of the component manager.
+
+        :param value: value to set simulation mode to
+        """
+        self._simulation_mode = value
 
     def start_communicating(
         self: FspComponentManager,
@@ -228,50 +254,45 @@ class FspComponentManager(CbfComponentManager):
         """Establish connections with the capability proxies"""
         # for now, assume that given addresses are valid
 
-        if self._proxy_corr is None:
-            if self._fsp_corr_address:
-                self._proxy_corr = self._get_device_proxy(
-                    self._fsp_corr_address, is_group=False
+        if not self._simulation_mode:
+            if self._proxy_hsp_fsp_controller is None:
+                self._proxy_hsp_fsp_controller = self._get_device_proxy(
+                    self._hps_fsp_controller_fqdn, is_group=False
                 )
 
-            if self._proxy_pss is None:
-                if self._fsp_pss_address:
-                    self._proxy_pss = self._get_device_proxy(
-                        self._fsp_pss_address, is_group=False
-                    )
+            if self._proxy_hsp_fsp_corr_controller is None:
+                self._proxy_hsp_fsp_corr_controller = self._get_device_proxy(
+                    self._hps_fsp_corr_controller_fqdn,
+                    is_group=False,
+                )
+        else:
+            self._proxy_hsp_fsp_corr_controller = (
+                HpsFspCorrControllerSimulator(
+                    self._hps_fsp_corr_controller_fqdn
+                )
+            )
+            self._proxy_hsp_fsp_controller = HpsFspControllerSimulator(
+                self._hps_fsp_controller_fqdn,
+                self._proxy_hsp_fsp_corr_controller,
+            )
 
-            if self._proxy_pst is None:
-                if self._fsp_pst_address:
-                    self._proxy_pst = self._get_device_proxy(
-                        self._fsp_pst_address, is_group=False
-                    )
+        if self._proxy_fsp_corr_subarray is None:
+            self._proxy_fsp_corr_subarray = [
+                self._get_device_proxy(fqdn, is_group=False)
+                for fqdn in self._fsp_corr_subarray_fqdns_all
+            ]
 
-            if self._proxy_vlbi is None:
-                if self._fsp_vlbi_address:
-                    self._proxy_vlbi = self._get_device_proxy(
-                        self._fsp_vlbi_address, is_group=False
-                    )
+        if self._proxy_fsp_pss_subarray is None:
+            self._proxy_fsp_pss_subarray = [
+                self._get_device_proxy(fqdn, is_group=False)
+                for fqdn in self._fsp_pss_subarray_fqdns_all
+            ]
 
-            if self._proxy_fsp_corr_subarray is None:
-                if self._fsp_corr_subarray_fqdns_all:
-                    self._proxy_fsp_corr_subarray = [
-                        self._get_device_proxy(fqdn, is_group=False)
-                        for fqdn in self._fsp_corr_subarray_fqdns_all
-                    ]
-
-            if self._proxy_fsp_pss_subarray is None:
-                if self._fsp_pss_subarray_fqdns_all:
-                    self._proxy_fsp_pss_subarray = [
-                        self._get_device_proxy(fqdn, is_group=False)
-                        for fqdn in self._fsp_pss_subarray_fqdns_all
-                    ]
-
-            if self._proxy_fsp_pst_subarray is None:
-                if self._fsp_pst_subarray_fqdns_all:
-                    self._proxy_fsp_pst_subarray = [
-                        self._get_device_proxy(fqdn, is_group=False)
-                        for fqdn in self._fsp_pst_subarray_fqdns_all
-                    ]
+        if self._proxy_fsp_pst_subarray is None:
+            self._proxy_fsp_pst_subarray = [
+                self._get_device_proxy(fqdn, is_group=False)
+                for fqdn in self._fsp_pst_subarray_fqdns_all
+            ]
 
     def _get_group_proxies(
         self: FspComponentManager,
@@ -371,11 +392,9 @@ class FspComponentManager(CbfComponentManager):
         """
 
         if self._connected:
-            # TODO: VLBI device needs a component manager and power commands
-            self._proxy_corr.SetState(tango.DevState.DISABLE)
-            self._proxy_pss.SetState(tango.DevState.DISABLE)
-            self._proxy_pst.SetState(tango.DevState.DISABLE)
-            self._proxy_vlbi.SetState(tango.DevState.DISABLE)
+            # TODO: in the future, DsFspController to implement on(), off()
+            # commands. Then invoke here the DsFspController on() command.
+
             self._group_fsp_corr_subarray.command_inout("On")
             self._group_fsp_pss_subarray.command_inout("On")
             self._group_fsp_pst_subarray.command_inout("On")
@@ -403,11 +422,9 @@ class FspComponentManager(CbfComponentManager):
         """
 
         if self._connected:
+            # TODO: in the future, DsFspController to implement on(), off()
+            # commands. Then invoke here the DsFspController off() command.
 
-            self._proxy_corr.SetState(tango.DevState.OFF)
-            self._proxy_pss.SetState(tango.DevState.OFF)
-            self._proxy_pst.SetState(tango.DevState.OFF)
-            self._proxy_vlbi.SetState(tango.DevState.OFF)
             self._group_fsp_corr_subarray.command_inout("Off")
             self._group_fsp_pss_subarray.command_inout("Off")
             self._group_fsp_pst_subarray.command_inout("Off")
@@ -456,43 +473,26 @@ class FspComponentManager(CbfComponentManager):
         """
 
         if self._connected:
-
             if argin == "IDLE":
                 self._function_mode = FspModes.IDLE.value
-                self._proxy_corr.SetState(tango.DevState.DISABLE)
-                self._proxy_pss.SetState(tango.DevState.DISABLE)
-                self._proxy_pst.SetState(tango.DevState.DISABLE)
-                self._proxy_vlbi.SetState(tango.DevState.DISABLE)
             elif argin == "CORR":
                 self._function_mode = FspModes.CORR.value
-                self._proxy_corr.SetState(tango.DevState.ON)
-                self._proxy_pss.SetState(tango.DevState.DISABLE)
-                self._proxy_pst.SetState(tango.DevState.DISABLE)
-                self._proxy_vlbi.SetState(tango.DevState.DISABLE)
             elif argin == "PSS-BF":
                 self._function_mode = FspModes.PSS_BF.value
-                self._proxy_corr.SetState(tango.DevState.DISABLE)
-                self._proxy_pss.SetState(tango.DevState.ON)
-                self._proxy_pst.SetState(tango.DevState.DISABLE)
-                self._proxy_vlbi.SetState(tango.DevState.DISABLE)
             elif argin == "PST-BF":
                 self._function_mode = FspModes.PST_BF.value
-                self._proxy_corr.SetState(tango.DevState.DISABLE)
-                self._proxy_pss.SetState(tango.DevState.DISABLE)
-                self._proxy_pst.SetState(tango.DevState.ON)
-                self._proxy_vlbi.SetState(tango.DevState.DISABLE)
             elif argin == "VLBI":
                 self._function_mode = FspModes.VLBI.value
-                self._proxy_corr.SetState(tango.DevState.DISABLE)
-                self._proxy_pss.SetState(tango.DevState.DISABLE)
-                self._proxy_pst.SetState(tango.DevState.DISABLE)
-                self._proxy_vlbi.SetState(tango.DevState.ON)
             else:
                 # shouldn't happen
                 self._logger.warning("functionMode not valid. Ignoring.")
                 message = "Fsp SetFunctionMode command failed: \
                     functionMode not valid"
                 return (ResultCode.FAILED, message)
+
+            self._proxy_hsp_fsp_controller.SetFspFunctionMode(
+                self._function_mode
+            )
 
             self._logger.info(f"FSP set to function mode {argin}")
 
@@ -612,6 +612,8 @@ class FspComponentManager(CbfComponentManager):
             ]:
                 # the whole delay model must be stored
                 self._delay_model = copy.deepcopy(argin)
+                self._proxy_hsp_fsp_corr_controller.UpdateDelayModels(argin)
+
             else:
                 log_msg = (
                     "Fsp UpdateDelayModel command failed: "
@@ -645,7 +647,6 @@ class FspComponentManager(CbfComponentManager):
         self._logger.debug("entering update_timing_beam_weights")
 
         if self._connected:
-
             # update if current function mode is PST-BF
             if self._function_mode == FspModes.PST_BF.value:
                 argin = json.loads(argin)

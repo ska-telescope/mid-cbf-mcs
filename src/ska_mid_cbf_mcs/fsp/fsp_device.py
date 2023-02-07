@@ -26,7 +26,7 @@ from typing import List, Optional, Tuple
 import tango
 from ska_tango_base import SKABaseDevice, SKACapability
 from ska_tango_base.commands import ResponseCommand, ResultCode
-from ska_tango_base.control_model import PowerMode
+from ska_tango_base.control_model import PowerMode, SimulationMode
 from tango import AttrWriteType
 from tango.server import attribute, command, device_property, run
 
@@ -56,19 +56,15 @@ class Fsp(SKACapability):
 
     FspID = device_property(dtype="uint16")
 
-    CorrelationAddress = device_property(dtype="str")
-
-    PSSAddress = device_property(dtype="str")
-
-    PSTAddress = device_property(dtype="str")
-
-    VLBIAddress = device_property(dtype="str")
-
     FspCorrSubarray = device_property(dtype=("str",))
 
     FspPssSubarray = device_property(dtype=("str",))
 
     FspPstSubarray = device_property(dtype=("str",))
+
+    HpsFspControllerAddress = device_property(dtype="str")
+
+    HspFspCorrControllerAddress = device_property(dtype="str")
 
     # ----------
     # Attributes
@@ -132,6 +128,13 @@ class Fsp(SKACapability):
         access=AttrWriteType.READ,
         label="Timing Beam Weights",
         doc="Amplitude weights used in the tied-array beamforming",
+    )
+
+    simulationMode = attribute(
+        dtype=SimulationMode,
+        access=AttrWriteType.READ_WRITE,
+        memorized=True,
+        doc="Reports the simulation mode of the device.",
     )
 
     # ---------------
@@ -204,10 +207,8 @@ class Fsp(SKACapability):
             fsp_corr_subarray_fqdns_all=self.FspCorrSubarray,
             fsp_pss_subarray_fqdns_all=self.FspPssSubarray,
             fsp_pst_subarray_fqdns_all=self.FspPstSubarray,
-            fsp_corr_address=self.CorrelationAddress,
-            fsp_pss_address=self.PSSAddress,
-            fsp_pst_address=self.PSTAddress,
-            fsp_vlbi_address=self.VLBIAddress,
+            hps_fsp_controller_fqdn=self.HpsFspControllerAddress,
+            hps_fsp_corr_controller_fqdn=self.HspFspCorrControllerAddress,
             push_change_event_callback=self.push_change_event,
             communication_status_changed_callback=self._communication_status_changed,
             component_power_mode_changed_callback=self._component_power_mode_changed,
@@ -222,6 +223,15 @@ class Fsp(SKACapability):
     # ------------------
     # Attributes methods
     # ------------------
+
+    def write_simulationMode(self: Fsp, value: SimulationMode) -> None:
+        """
+        Set the simulation mode of the device.
+
+        :param value: SimulationMode
+        """
+        super().write_simulationMode(value)
+        self.component_manager.simulation_mode = value
 
     def read_functionMode(self: Fsp) -> tango.DevEnum:
         # PROTECTED REGION ID(Fsp.functionMode_read) ENABLED START #

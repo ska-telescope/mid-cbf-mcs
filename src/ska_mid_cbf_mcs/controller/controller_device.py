@@ -261,7 +261,8 @@ class CbfController(SKAController):
             # self._max_capabilities inherited from SKAController
             # check first if property exists in DB
             """Get number of capabilities for _init_Device.
-            If property not found in db, then assign a default amount(197,27,16)"""
+            If property not found in db, then assign a default amount(197,27,16)
+            """
 
             device = self.target
 
@@ -417,7 +418,8 @@ class CbfController(SKAController):
     def read_subarrayconfigID(self: CbfController) -> List[str]:
         # PROTECTED REGION ID(CbfController.subarrayconfigID_read) ENABLED START #
         """Return subarrayconfigID atrribute: ID of subarray config.
-        Used for debug purposes. empty string if subarray is not configured for a scan"""
+        Used for debug purposes. empty string if subarray is not configured for a scan
+        """
         return self.component_manager.subarray_config_ID
         # PROTECTED REGION END #    //  CbfController.subarrayconfigID_read
 
@@ -440,7 +442,8 @@ class CbfController(SKAController):
         # PROTECTED REGION ID(CbfController.reportVCCAdminMode_read) ENABLED START #
         """
         Return reportVCCAdminMode attribute: report the administration mode
-        of the VCC capabilities as an array of unsigned short. For ex.: [0,0,0,...1,2]"""
+        of the VCC capabilities as an array of unsigned short. For ex.: [0,0,0,...1,2]
+        """
         return self.component_manager.report_vcc_admin_mode
         # PROTECTED REGION END #    //  CbfController.reportVCCAdminMode_read
 
@@ -477,7 +480,8 @@ class CbfController(SKAController):
     ) -> List[List[int]]:
         # PROTECTED REGION ID(CbfController.reportFSPSubarrayMembership_read) ENABLED START #
         """Return reportVCCSubarrayMembership attribute: Report the subarray membership
-        of FSPs (each can only belong to at most 16 subarrays), 0 if not assigned."""
+        of FSPs (each can only belong to at most 16 subarrays), 0 if not assigned.
+        """
         return self.component_manager.report_fsp_subarray_membership
         # PROTECTED REGION END #    //  CbfController.reportFSPSubarrayMembership_read
 

@@ -303,9 +303,9 @@ def logger() -> logging.Logger:
 
 
 @pytest.fixture()
-def mock_change_event_callback_factory() -> Callable[
-    [str], MockChangeEventCallback
-]:
+def mock_change_event_callback_factory() -> (
+    Callable[[str], MockChangeEventCallback]
+):
     """
     Return a factory that returns a new mock change event callback each call.
 
@@ -432,17 +432,6 @@ def init_proxies_fixture():
                 for j in range(1, self.num_fsp + 1)
             ]:
                 self.fspSubarray["PST-BF"][1].append(proxy)
-
-            # fspFunctionMode[fsp id (int)][function mode (str)]
-            self.fspFunctionMode = [None]
-            for i in range(1, self.num_fsp + 1):
-                func_modes = {}
-                for j in ["corr", "pss", "pst", "vlbi"]:
-                    func_modes[j] = CbfDeviceProxy(
-                        fqdn=f"mid_csp_cbf/fsp_{j}/{i:02}",
-                        logger=logging.getLogger(),
-                    )
-                self.fspFunctionMode.append(func_modes)
 
             # Vcc
             # index == vccID
@@ -632,6 +621,11 @@ def init_proxies_fixture():
                 [self.controller], DevState.OFF, wait_time_s, sleep_time_s
             )
 
+            self.controller.adminMode = AdminMode.OFFLINE
+            self.wait_timeout_dev(
+                [self.controller], DevState.DISABLE, wait_time_s, sleep_time_s
+            )
+
     return TestProxies()
 
 
@@ -680,7 +674,6 @@ def init_delay_model_test_fixture():
             delay_model_all_obj: dict,
             receptors_under_test: List(int),
         ) -> dict:
-
             dm_num_entries = len(delay_model_all_obj)
             receptors_to_remove = list(
                 set([1, 2, 3, 4]) - set(receptors_under_test)

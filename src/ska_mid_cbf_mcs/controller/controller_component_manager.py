@@ -633,7 +633,6 @@ class ControllerComponentManager(CbfComponentManager):
         """
 
         if self._connected:
-
             # Try connection with each subarray/capability
             for fqdn, proxy in self._proxies.items():
                 try:
@@ -816,7 +815,6 @@ class ControllerComponentManager(CbfComponentManager):
         """
 
         if self._connected:
-
             try:
                 self._group_vcc.command_inout("Standby")
                 self._group_fsp.command_inout("Standby")
