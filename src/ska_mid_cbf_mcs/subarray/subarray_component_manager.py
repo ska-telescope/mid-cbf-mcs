@@ -1740,6 +1740,9 @@ class CbfSubarrayComponentManager(
                 "frequency_band_offset_stream_2"
             ] = self._frequency_band_offset_stream_2
 
+            # Add all receptor ids for subarray to fsp
+            fsp["subarray_receptor_ids"] = self._receptors
+
             if fsp["function_mode"] == "CORR":
                 if "receptor_ids" not in fsp:
                     # TODO In this case by the ICD, all subarray allocated resources should be used.
@@ -1778,6 +1781,11 @@ class CbfSubarrayComponentManager(
                         int(this_fsp["fsp_id"]) - 1
                     ]
                     this_proxy.ConfigureScan(json.dumps(this_fsp))
+
+                    self._logger.info(
+                        f"cbf_subarray this_fsp: {json.dumps(this_fsp)}"
+                    )
+
                 except tango.DevFailed:
                     msg = (
                         "An exception occurred while configuring "

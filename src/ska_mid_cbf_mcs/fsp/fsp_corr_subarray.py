@@ -76,6 +76,8 @@ class FspCorrSubarray(CspSubElementObsDevice):
 
     VCC = device_property(dtype=("str",))
 
+    HspFspCorrControllerAddress = device_property(dtype="str")
+
     # ----------
     # Attributes
     # ----------
@@ -85,7 +87,7 @@ class FspCorrSubarray(CspSubElementObsDevice):
         access=AttrWriteType.READ,
         max_dim_x=197,
         label="Receptors",
-        doc="List of receptors assigned to subarray",
+        doc="List of receptors for correlation",
     )
 
     frequencyBand = attribute(
@@ -280,6 +282,7 @@ class FspCorrSubarray(CspSubElementObsDevice):
 
         return FspCorrSubarrayComponentManager(
             self.logger,
+            self.HspFspCorrControllerAddress,
             self.push_change_event,
             self._communication_status_changed,
             self._component_power_mode_changed,

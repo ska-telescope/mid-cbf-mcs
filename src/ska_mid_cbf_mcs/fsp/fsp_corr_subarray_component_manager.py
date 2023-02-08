@@ -16,7 +16,7 @@ from typing import Callable, List, Optional, Tuple
 
 import tango
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import PowerMode
+from ska_tango_base.control_model import PowerMode, SimulationMode
 from ska_tango_base.csp.obs.component_manager import CspObsComponentManager
 
 from ska_mid_cbf_mcs.commons.global_enum import const, freq_band_dict
@@ -24,6 +24,12 @@ from ska_mid_cbf_mcs.component.component_manager import (
     CbfComponentManager,
     CommunicationStatus,
 )
+from ska_mid_cbf_mcs.fsp.hps_fsp_corr_controller_simulator import (
+    HpsFspCorrControllerSimulator,
+)
+
+# Data file path
+FSP_CORR_PARAM_PATH = "mnt/fsp_param/"
 
 
 class FspCorrSubarrayComponentManager(
@@ -34,17 +40,21 @@ class FspCorrSubarrayComponentManager(
     def __init__(
         self: FspCorrSubarrayComponentManager,
         logger: logging.Logger,
+        hps_fsp_corr_controller_fqdn: str,  # TODO: for Mid.CBF, to be updated to a list of FQDNs (max length = 20), one entry for each Talon board in the FSP_UNIT
         push_change_event_callback: Optional[Callable],
         communication_status_changed_callback: Callable[
             [CommunicationStatus], None
         ],
         component_power_mode_changed_callback: Callable[[PowerMode], None],
         component_fault_callback: Callable[[bool], None],
+        simulation_mode: SimulationMode = SimulationMode.TRUE,
     ) -> None:
         """
         Initialise a new instance.
 
         :param logger: a logger for this object to use
+        # TODO: for Mid.CBF, param hps_fsp_corr_controller_fqdn to be updated to a list of FQDNs (max length = 20), one entry for each Talon board in the FSP_UNIT
+        :param hps_fsp_corr_controller_fqdn: FQDN of the HPS FSP Correlator controller device
         :param push_change_event: method to call when the base classes
             want to send an event
         :param communication_status_changed_callback: callback to be
@@ -56,6 +66,9 @@ class FspCorrSubarrayComponentManager(
             component fault
         """
         self._logger = logger
+
+        self._hps_fsp_corr_controller_fqdn = hps_fsp_corr_controller_fqdn
+        self._proxy_hsp_fsp_corr_controller = None
 
         self._connected = False
 
@@ -69,7 +82,7 @@ class FspCorrSubarrayComponentManager(
         self._bandwidth = 0
         self._bandwidth_actual = const.FREQUENCY_SLICE_BW
         self._zoom_window_tuning = 0
-        self._integration_time = 0
+        self._integration_factor = 0
         self._scan_id = 0
         self._config_id = ""
         self._channel_averaging_map = [
@@ -88,6 +101,8 @@ class FspCorrSubarrayComponentManager(
         self._fsp_channel_offset = 0
 
         self._output_link_map = [[0, 0] for i in range(40)]
+
+        self._simulation_mode = simulation_mode
 
         super().__init__(
             logger=logger,
@@ -166,14 +181,14 @@ class FspCorrSubarrayComponentManager(
         return self._bandwidth
 
     @property
-    def integration_time(self: FspCorrSubarrayComponentManager) -> int:
+    def integration_factor(self: FspCorrSubarrayComponentManager) -> int:
         """
         Integration Time
 
         :return: the integration time (millisecond).
         :rtype: int
         """
-        return self._integration_time
+        return self._integration_factor
 
     @property
     def fsp_channel_offset(self: FspCorrSubarrayComponentManager) -> int:
@@ -272,6 +287,8 @@ class FspCorrSubarrayComponentManager(
 
         super().start_communicating()
 
+        self._get_capability_proxies()
+
         self._connected = True
         self.update_communication_status(CommunicationStatus.ESTABLISHED)
         self.update_component_fault(False)
@@ -285,6 +302,25 @@ class FspCorrSubarrayComponentManager(
         super().stop_communicating()
 
         self._connected = False
+
+    def _get_capability_proxies(
+        self: FspCorrSubarrayComponentManager,
+    ) -> None:
+        """Establish connections with the capability proxies"""
+        # for now, assume that given addresses are valid
+
+        if not self._simulation_mode:
+            if self._proxy_hsp_fsp_corr_controller is None:
+                self._proxy_hsp_fsp_corr_controller = self._get_device_proxy(
+                    self._hps_fsp_corr_controller_fqdn,
+                    is_group=False,
+                )
+        else:
+            self._proxy_hsp_fsp_corr_controller = (
+                HpsFspCorrControllerSimulator(
+                    self._hps_fsp_corr_controller_fqdn
+                )
+            )
 
     def _add_receptors(
         self: FspCorrSubarrayComponentManager, argin: List[int]
@@ -479,7 +515,7 @@ class FspCorrSubarrayComponentManager(
                     )
                     self._logger.warning(log_msg)
 
-        self._integration_time = int(configuration["integration_factor"])
+        self._integration_factor = int(configuration["integration_factor"])
 
         self._fsp_channel_offset = int(configuration["channel_offset"])
 
@@ -533,6 +569,32 @@ class FspCorrSubarrayComponentManager(
 
         self._config_id = configuration["config_id"]
 
+        # Rename receptor id configuration parameters to match those used
+        # in HPS
+        # TODO (future enhancement) ideally change names of receptor id
+        # configuration parameters in HPS and remove this renaming.
+        corr_receptors = configuration["receptor_ids"]
+        configuration["receptor_ids"] = configuration["subarray_receptor_ids"]
+        configuration["corr_receptor_ids"] = corr_receptors
+
+        # Get the internal parameters from file
+        internal_params_file_name = (
+            FSP_CORR_PARAM_PATH + "internal_params_fsp_corr_subarray" + ".json"
+        )
+
+        with open(internal_params_file_name) as f_in:
+            internal_params = f_in.read().replace("\n", "")
+        internal_params_obj = json.loads(internal_params)
+
+        # append all internal parameters to the configuration to pass to
+        # HPS
+        config_internal_param = dict(configuration)
+        config_internal_param.update(internal_params_obj)
+
+        self._proxy_hsp_fsp_corr_controller.ConfigureScan(
+            json.dumps(config_internal_param)
+        )
+
         return (
             ResultCode.OK,
             "FspCorrSubarray ConfigureScan command completed OK",
@@ -554,6 +616,8 @@ class FspCorrSubarrayComponentManager(
 
         self._scan_id = scan_id
 
+        self._proxy_hsp_fsp_corr_controller.Scan(scan_id)
+
         return (ResultCode.OK, "FspCorrSubarray Scan command completed OK")
 
     def end_scan(
@@ -567,6 +631,8 @@ class FspCorrSubarrayComponentManager(
                 information purpose only.
         :rtype: (ResultCode, str)
         """
+
+        self._proxy_hsp_fsp_corr_controller.EndScan()
 
         return (ResultCode.OK, "FspCorrSubarray EndScan command completed OK")
 
@@ -582,7 +648,7 @@ class FspCorrSubarrayComponentManager(
         self._bandwidth = 0
         self._bandwidth_actual = const.FREQUENCY_SLICE_BW
         self._zoom_window_tuning = 0
-        self._integration_time = 0
+        self._integration_factor = 0
         self._scan_id = 0
         self._config_id = ""
 
@@ -620,5 +686,7 @@ class FspCorrSubarrayComponentManager(
         self._deconfigure()
 
         self._remove_all_receptors()
+
+        self._proxy_hsp_fsp_corr_controller.GoToIdle()
 
         return (ResultCode.OK, "FspCorrSubarray GoToIdle command completed OK")
