@@ -183,9 +183,9 @@ class FspCorrSubarrayComponentManager(
     @property
     def integration_factor(self: FspCorrSubarrayComponentManager) -> int:
         """
-        Integration Time
+        Integration Factor
 
-        :return: the integration time (millisecond).
+        :return: the integration factor
         :rtype: int
         """
         return self._integration_factor
@@ -573,8 +573,13 @@ class FspCorrSubarrayComponentManager(
         # in HPS
         # TODO (future enhancement) ideally change names of receptor id
         # configuration parameters in HPS and remove this renaming.
+
+        # Parameter named "receptor_ids" used by HPS contains all the
+        # receptors for the subarray
         corr_receptors = configuration["receptor_ids"]
         configuration["receptor_ids"] = configuration["subarray_receptor_ids"]
+        # Parameter named "corr_receptor_ids" used by HPS contains the
+        # receptors just for correlation
         configuration["corr_receptor_ids"] = corr_receptors
 
         # Get the internal parameters from file
@@ -588,11 +593,10 @@ class FspCorrSubarrayComponentManager(
 
         # append all internal parameters to the configuration to pass to
         # HPS
-        config_internal_param = dict(configuration)
-        config_internal_param.update(internal_params_obj)
+        configuration.update(internal_params_obj)
 
         self._proxy_hsp_fsp_corr_controller.ConfigureScan(
-            json.dumps(config_internal_param)
+            json.dumps(configuration)
         )
 
         return (

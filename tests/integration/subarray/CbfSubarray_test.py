@@ -858,7 +858,7 @@ class TestCbfSubarray:
                     assert (
                         test_proxies.fspSubarray["CORR"][sub_id][
                             fsp_id
-                        ].integrationTime
+                        ].integrationFactor
                         == fsp["integration_factor"]
                     )
                     assert (

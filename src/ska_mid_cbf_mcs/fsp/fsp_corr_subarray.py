@@ -148,11 +148,11 @@ class FspCorrSubarray(CspSubElementObsDevice):
         doc="Zoom window tuning (kHz)",
     )
 
-    integrationTime = attribute(
+    integrationFactor = attribute(
         dtype="uint16",
         access=AttrWriteType.READ,
-        label="Integration time (ms)",
-        doc="Integration time (ms)",
+        label="Integration factor",
+        doc="Integration factor",
     )
 
     channelAveragingMap = attribute(
@@ -390,16 +390,16 @@ class FspCorrSubarray(CspSubElementObsDevice):
         return self.component_manager.zoom_window_tuning
         # PROTECTED REGION END #    //  FspCorrSubarray.zoomWindowTuning_read
 
-    def read_integrationTime(self: FspCorrSubarray) -> int:
-        # PROTECTED REGION ID(FspCorrSubarray.integrationTime_read) ENABLED START #
+    def read_integrationFactor(self: FspCorrSubarray) -> int:
+        # PROTECTED REGION ID(FspCorrSubarray.read_integrationFactor_read) ENABLED START #
         """
-        Read the integrationTime attribute.
+        Read the integrationFactor attribute.
 
-        :return: the integrationTime attribute (millisecond).
+        :return: the integrationFactor attribute (millisecond).
         :rtype: int
         """
-        return self.component_manager.integration_time
-        # PROTECTED REGION END #    //  FspCorrSubarray.integrationTime_read
+        return self.component_manager.integration_factor
+        # PROTECTED REGION END #    //  FspCorrSubarray.integrationFactor_read
 
     def read_channelAveragingMap(self: FspCorrSubarray) -> List[List[int]]:
         # PROTECTED REGION ID(FspCorrSubarray.channelAveragingMap_read) ENABLED START #

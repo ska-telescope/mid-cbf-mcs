@@ -9,7 +9,7 @@
         "fspID": 1,
         "functionMode": "CORR", 
         "frequencySliceID": 1,
-        "integrationTime": 1400,
+        "integrationFactor": 1400,
         "corrBandwidth": 0,
         "fspChannelOffset": 14880,
         "channelAveragingMap": [[1,2], [745,0]],
