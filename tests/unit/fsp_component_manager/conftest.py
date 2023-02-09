@@ -68,10 +68,13 @@ def fsp_component_manager(
     fsp_pss_subarray_fqdns_all = configuration["fqdn_fsp_pss_subarray"]
     fsp_pst_subarray_fqdns_all = configuration["fqdn_fsp_pst_subarray"]
 
-    fsp_corr_subarray_address = fsp_corr_subarray_fqdns_all[0]
-    fsp_pss_subarray_address = fsp_pss_subarray_fqdns_all[0]
-    fsp_pst_subarray_address = fsp_pst_subarray_fqdns_all[0]
-    vlbi_address = configuration["fqdn_vlbi"][0]
+    # HPS Fsp Controller fqdn not used in this testing
+    # since test only executed for simulationMode = true
+    hps_fsp_controller_fqdn = "DsFspController FQDN placeholder for test"
+
+    # HPS Fsp Corr Controller fqdn not used in this testing
+    # since test only executed for simulationMode = true
+    fsp_corr_controller_fqdn = "DsFspCorrController FQDN placeholder for test"
 
     return FspComponentManager(
         logger,
@@ -79,10 +82,8 @@ def fsp_component_manager(
         fsp_corr_subarray_fqdns_all,
         fsp_pss_subarray_fqdns_all,
         fsp_pst_subarray_fqdns_all,
-        fsp_corr_subarray_address,
-        fsp_pss_subarray_address,
-        fsp_pst_subarray_address,
-        vlbi_address,
+        hps_fsp_controller_fqdn,
+        fsp_corr_controller_fqdn,
         push_change_event_callback,
         communication_status_changed_callback,
         component_power_mode_changed_callback,
