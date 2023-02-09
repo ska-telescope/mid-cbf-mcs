@@ -20,7 +20,7 @@ from typing import Callable, Dict
 import pytest
 import tango
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import AdminMode, HealthState
+from ska_tango_base.control_model import AdminMode, HealthState, SimulationMode
 
 from ska_mid_cbf_mcs.controller.controller_component_manager import (
     ControllerComponentManager,
@@ -67,6 +67,7 @@ def controller_component_manager(
         """
 
         def __init__(self: MockTalonDxComponentManager) -> None:
+            self.simulation_mode = SimulationMode.TRUE
             pass
 
         def configure_talons(self: MockTalonDxComponentManager) -> ResultCode:
