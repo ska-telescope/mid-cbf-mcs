@@ -687,7 +687,6 @@ class ControllerComponentManager(CbfComponentManager):
                 self._talondx_component_manager.simulation_mode
                 == SimulationMode.FALSE
             ):
-
                 # read in list of LRUs from configuration JSON
                 self._fqdn_talon_lru = []
 
@@ -756,12 +755,10 @@ class ControllerComponentManager(CbfComponentManager):
         """
 
         if self._connected:
-
             if (
                 self._talondx_component_manager.simulation_mode
                 == SimulationMode.FALSE
             ):
-
                 if len(self._fqdn_talon_lru) == 0:
                     talondx_config_file = open(
                         os.path.join(
