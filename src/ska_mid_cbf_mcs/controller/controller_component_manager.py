@@ -707,23 +707,26 @@ class ControllerComponentManager(CbfComponentManager):
 
                 # TODO: handle subscribed events for missing LRUs
                 self._fqdn_talon_lru = list(talon_lru_fqdn_set)
+            else:
+                # use a hard-coded example fqdn talon lru for simulation mode
+                self._fqdn_talon_lru = {"mid_csp_cbf/talon_lru/001"}
 
-                try:
-                    for fqdn in self._fqdn_talon_lru:
-                        self._proxies[fqdn].On()
-                except tango.DevFailed:
-                    log_msg = "Failed to power on Talon boards"
-                    self._logger.error(log_msg)
-                    return (ResultCode.FAILED, log_msg)
+            try:
+                for fqdn in self._fqdn_talon_lru:
+                    self._proxies[fqdn].On()
+            except tango.DevFailed:
+                log_msg = "Failed to power on Talon boards"
+                self._logger.error(log_msg)
+                return (ResultCode.FAILED, log_msg)
 
-                # Configure all the Talon boards
-                if (
-                    self._talondx_component_manager.configure_talons()
-                    == ResultCode.FAILED
-                ):
-                    log_msg = "Failed to configure Talon boards"
-                    self._logger.error(log_msg)
-                    return (ResultCode.FAILED, log_msg)
+            # Configure all the Talon boards
+            if (
+                self._talondx_component_manager.configure_talons()
+                == ResultCode.FAILED
+            ):
+                log_msg = "Failed to configure Talon boards"
+                self._logger.error(log_msg)
+                return (ResultCode.FAILED, log_msg)
 
             try:
                 self._group_subarray.command_inout("On")
@@ -780,14 +783,17 @@ class ControllerComponentManager(CbfComponentManager):
 
                     # TODO: handle subscribed events for missing LRUs
                     self._fqdn_talon_lru = list(talon_lru_fqdn_set)
+            else:
+                # use a hard-coded example fqdn talon lru for simulation mode
+                self._fqdn_talon_lru = {"mid_csp_cbf/talon_lru/001"}
 
-                try:
-                    for fqdn in self._fqdn_talon_lru:
-                        self._proxies[fqdn].Off()
-                except tango.DevFailed:
-                    log_msg = "Failed to power off Talon boards"
-                    self._logger.error(log_msg)
-                    return (ResultCode.FAILED, log_msg)
+            try:
+                for fqdn in self._fqdn_talon_lru:
+                    self._proxies[fqdn].Off()
+            except tango.DevFailed:
+                log_msg = "Failed to power off Talon boards"
+                self._logger.error(log_msg)
+                return (ResultCode.FAILED, log_msg)
 
             try:
                 self._group_subarray.command_inout("Off")
