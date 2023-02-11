@@ -576,6 +576,8 @@ class TestCbfSubarray:
 
             # add receptors
             # TODO currently only support for 1 receptor per fsp
+            print(f"receptor_ids: {receptor_ids}")
+
             test_proxies.subarray[sub_id].AddReceptors(receptor_ids)
             test_proxies.wait_timeout_obs(
                 [test_proxies.subarray[sub_id]],
@@ -800,14 +802,13 @@ class TestCbfSubarray:
                             test_proxies.fspSubarray["CORR"][sub_id][
                                 fsp_id
                             ].receptors
-                            == fsp["receptor_ids"][0]
-                        )
+                        ).sort() == (fsp["receptor_ids"]).sort()
                     else:
                         assert (
                             test_proxies.fspSubarray["CORR"][sub_id][
                                 fsp_id
-                            ].receptors
-                            == receptor_ids[0]
+                            ].receptors.sort()
+                            == receptor_ids.sort()
                         )
                     assert (
                         test_proxies.fspSubarray["CORR"][sub_id][
