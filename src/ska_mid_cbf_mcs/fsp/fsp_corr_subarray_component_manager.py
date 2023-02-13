@@ -24,6 +24,7 @@ from ska_mid_cbf_mcs.component.component_manager import (
     CbfComponentManager,
     CommunicationStatus,
 )
+from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_mid_cbf_mcs.fsp.hps_fsp_corr_controller_simulator import (
     HpsFspCorrControllerSimulator,
 )
@@ -40,7 +41,7 @@ class FspCorrSubarrayComponentManager(
     def __init__(
         self: FspCorrSubarrayComponentManager,
         logger: logging.Logger,
-        hps_fsp_corr_controller_fqdn: str,  # TODO: for Mid.CBF, to be updated to a list of FQDNs (max length = 20), one entry for each Talon board in the FSP_UNIT
+        hps_fsp_corr_controller_fqdn: str,
         push_change_event_callback: Optional[Callable],
         communication_status_changed_callback: Callable[
             [CommunicationStatus], None
@@ -313,7 +314,6 @@ class FspCorrSubarrayComponentManager(
             if self._proxy_hsp_fsp_corr_controller is None:
                 self._proxy_hsp_fsp_corr_controller = self._get_device_proxy(
                     self._hps_fsp_corr_controller_fqdn,
-                    is_group=False,
                 )
         else:
             self._proxy_hsp_fsp_corr_controller = (
@@ -322,6 +322,34 @@ class FspCorrSubarrayComponentManager(
                 )
             )
 
+    def _get_device_proxy(
+        self: FspCorrSubarrayComponentManager, fqdn_or_name: str
+    ) -> CbfDeviceProxy | None:
+        """
+        Attempt to get a device proxy of the specified device.
+
+        :param fqdn_or_name: FQDN of the device to connect to
+            or the name of the group proxy to connect to
+        :return: CbfDeviceProxy or None if no connection was made
+        """
+        try:
+            self._logger.info(f"Attempting connection to {fqdn_or_name} ")
+
+            device_proxy = CbfDeviceProxy(
+                fqdn=fqdn_or_name, logger=self._logger, connect=False
+            )
+            device_proxy.connect(
+                max_time=0
+            )  # Make one attempt at connecting
+            return device_proxy
+        except tango.DevFailed as df:
+            for item in df.args:
+                self._logger.error(
+                    f"Failed connection to {fqdn_or_name} : {item.reason}"
+                )
+            self.update_component_fault(True)
+            return None
+        
     def _add_receptors(
         self: FspCorrSubarrayComponentManager, argin: List[int]
     ) -> None:
@@ -579,7 +607,8 @@ class FspCorrSubarrayComponentManager(
         corr_receptors = configuration["receptor_ids"]
         configuration["receptor_ids"] = configuration["subarray_receptor_ids"]
         # Parameter named "corr_receptor_ids" used by HPS contains the
-        # receptors just for correlation
+        # subset of the subarray receptors for which the correlation results 
+        # are requested to be used in Mid.CBF output products (visibilities)
         configuration["corr_receptor_ids"] = corr_receptors
 
         # Get the internal parameters from file
