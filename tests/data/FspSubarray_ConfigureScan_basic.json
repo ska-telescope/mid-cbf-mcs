@@ -43,7 +43,7 @@
 			"frequencySliceID": 4,
 			"corrBandwidth": 1,
 			"zoomWindowTuning": 500000,
-			"integrationFactor": 140,
+			"integrationFactor": 1,
 			"channelAveragingMap": [
 				[1, 0],
 				[745, 0],
