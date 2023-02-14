@@ -40,20 +40,20 @@
                             "VLBIAddress": [
                                 "mid_csp_cbf/fsp_vlbi/01"
                             ],
-                            "FspCorrSubarray": [
-                                "mid_csp_cbf/fspCorrSubarray/01_01",
-                                "mid_csp_cbf/fspCorrSubarray/01_02",
-                                "mid_csp_cbf/fspCorrSubarray/01_03"
+                            "FspCorrSubarrayDevice": [
+                                "mid_csp_cbf/fspCorrSubarrayDevice/01_01",
+                                "mid_csp_cbf/fspCorrSubarrayDevice/01_02",
+                                "mid_csp_cbf/fspCorrSubarrayDevice/01_03"
                             ],
-                            "FspPssSubarray": [
-                                "mid_csp_cbf/fspPssSubarray/01_01",
-                                "mid_csp_cbf/fspPssSubarray/01_02",
-                                "mid_csp_cbf/fspPssSubarray/01_03"
+                            "FspPssSubarrayDevice": [
+                                "mid_csp_cbf/fspPssSubarrayDevice/01_01",
+                                "mid_csp_cbf/fspPssSubarrayDevice/01_02",
+                                "mid_csp_cbf/fspPssSubarrayDevice/01_03"
                             ],
-                            "FspPstSubarray": [
-                                "mid_csp_cbf/fspPstSubarray/01_01",
-                                "mid_csp_cbf/fspPstSubarray/01_02",
-                                "mid_csp_cbf/fspPstSubarray/01_03"
+                            "FspPstSubarrayDevice": [
+                                "mid_csp_cbf/fspPstSubarrayDevice/01_01",
+                                "mid_csp_cbf/fspPstSubarrayDevice/01_02",
+                                "mid_csp_cbf/fspPstSubarrayDevice/01_03"
                             ],
                             "polled_attr": [
                                 "adminmode",

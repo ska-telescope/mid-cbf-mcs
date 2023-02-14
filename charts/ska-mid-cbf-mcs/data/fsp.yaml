@@ -51,21 +51,21 @@ server:
           - name: "FspID"
             values:
             - "1"
-          - name: "FspCorrSubarray"
+          - name: "FspCorrSubarrayDevice"
             values:
-            - "mid_csp_cbf/fspCorrSubarray/01_01"
-            - "mid_csp_cbf/fspCorrSubarray/01_02"
-            - "mid_csp_cbf/fspCorrSubarray/01_03"
-          - name: "FspPssSubarray"
+            - "mid_csp_cbf/fspCorrSubarrayDevice/01_01"
+            - "mid_csp_cbf/fspCorrSubarrayDevice/01_02"
+            - "mid_csp_cbf/fspCorrSubarrayDevice/01_03"
+          - name: "FspPssSubarrayDevice"
             values:
-            - "mid_csp_cbf/fspPssSubarray/01_01"
-            - "mid_csp_cbf/fspPssSubarray/01_02"
-            - "mid_csp_cbf/fspPssSubarray/01_03"
-          - name: "FspPstSubarray"
+            - "mid_csp_cbf/fspPssSubarrayDevice/01_01"
+            - "mid_csp_cbf/fspPssSubarrayDevice/01_02"
+            - "mid_csp_cbf/fspPssSubarrayDevice/01_03"
+          - name: "FspPstSubarrayDevice"
             values:
-            - "mid_csp_cbf/fspPstSubarray/01_01"
-            - "mid_csp_cbf/fspPstSubarray/01_02"
-            - "mid_csp_cbf/fspPstSubarray/01_03"
+            - "mid_csp_cbf/fspPstSubarrayDevice/01_01"
+            - "mid_csp_cbf/fspPstSubarrayDevice/01_02"
+            - "mid_csp_cbf/fspPstSubarrayDevice/01_03"
           - name: "polled_attr"
             values:
             - "state"
@@ -93,9 +93,9 @@ server:
       devices:
       - name: "mid_csp_cbf/fsp_vlbi/01"
 
-    - name: "FspCorrSubarray"
+    - name: "FspCorrSubarrayDevice"
       devices:
-      - name: "mid_csp_cbf/fspCorrSubarray/01_01"
+      - name: "mid_csp_cbf/fspCorrSubarrayDevice/01_01"
         properties:
           - name: "CbfControllerAddress"
             values:
@@ -116,7 +116,7 @@ server:
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
 
-      - name: "mid_csp_cbf/fspCorrSubarray/01_02"
+      - name: "mid_csp_cbf/fspCorrSubarrayDevice/01_02"
         properties:
           - name: "CbfControllerAddress"
             values:
@@ -137,7 +137,7 @@ server:
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
 
-      - name: "mid_csp_cbf/fspCorrSubarray/01_03"
+      - name: "mid_csp_cbf/fspCorrSubarrayDevice/01_03"
         properties:
           - name: "CbfControllerAddress"
             values:
@@ -158,9 +158,9 @@ server:
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
 
-    - name: "FspPssSubarray"
+    - name: "FspPssSubarrayDevice"
       devices:
-      - name: "mid_csp_cbf/fspPssSubarray/01_01"
+      - name: "mid_csp_cbf/fspPssSubarrayDevice/01_01"
         properties:
           - name: "CbfControllerAddress"
             values:
@@ -181,7 +181,7 @@ server:
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
 
-      - name: "mid_csp_cbf/fspPssSubarray/01_02"
+      - name: "mid_csp_cbf/fspPssSubarrayDevice/01_02"
         properties:
           - name: "CbfControllerAddress"
             values:
@@ -202,7 +202,7 @@ server:
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
 
-      - name: "mid_csp_cbf/fspPssSubarray/01_03"
+      - name: "mid_csp_cbf/fspPssSubarrayDevice/01_03"
         properties:
           - name: "CbfControllerAddress"
             values:
@@ -223,9 +223,9 @@ server:
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
             
-    - name: "FspPstSubarray"
+    - name: "FspPstSubarrayDevice"
       devices:
-      - name: "mid_csp_cbf/fspPstSubarray/01_01"
+      - name: "mid_csp_cbf/fspPstSubarrayDevice/01_01"
         properties:
           - name: "CbfControllerAddress"
             values:
@@ -246,7 +246,7 @@ server:
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
 
-      - name: "mid_csp_cbf/fspPstSubarray/01_02"
+      - name: "mid_csp_cbf/fspPstSubarrayDevice/01_02"
         properties:
           - name: "CbfControllerAddress"
             values:
@@ -267,7 +267,7 @@ server:
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
 
-      - name: "mid_csp_cbf/fspPstSubarray/01_03"
+      - name: "mid_csp_cbf/fspPstSubarrayDevice/01_03"
         properties:
           - name: "CbfControllerAddress"
             values:
@@ -316,21 +316,21 @@ server:
           - name: "FspID"
             values:
             - "2"
-          - name: "FspCorrSubarray"
+          - name: "FspCorrSubarrayDevice"
             values:
-            - "mid_csp_cbf/fspCorrSubarray/02_01"
-            - "mid_csp_cbf/fspCorrSubarray/02_02"
-            - "mid_csp_cbf/fspCorrSubarray/02_03"
-          - name: "FspPssSubarray"
+            - "mid_csp_cbf/fspCorrSubarrayDevice/02_01"
+            - "mid_csp_cbf/fspCorrSubarrayDevice/02_02"
+            - "mid_csp_cbf/fspCorrSubarrayDevice/02_03"
+          - name: "FspPssSubarrayDevice"
             values:
-            - "mid_csp_cbf/fspPssSubarray/02_01"
-            - "mid_csp_cbf/fspPssSubarray/02_02"
-            - "mid_csp_cbf/fspPssSubarray/02_03"
-          - name: "FspPstSubarray"
+            - "mid_csp_cbf/fspPssSubarrayDevice/02_01"
+            - "mid_csp_cbf/fspPssSubarrayDevice/02_02"
+            - "mid_csp_cbf/fspPssSubarrayDevice/02_03"
+          - name: "FspPstSubarrayDevice"
             values:
-            - "mid_csp_cbf/fspPstSubarray/02_01"
-            - "mid_csp_cbf/fspPstSubarray/02_02"
-            - "mid_csp_cbf/fspPstSubarray/02_03"
+            - "mid_csp_cbf/fspPstSubarrayDevice/02_01"
+            - "mid_csp_cbf/fspPstSubarrayDevice/02_02"
+            - "mid_csp_cbf/fspPstSubarrayDevice/02_03"
           - name: "polled_attr"
             values:
             - "state"
@@ -358,9 +358,9 @@ server:
       devices:
       - name: "mid_csp_cbf/fsp_vlbi/02"
 
-    - name: "FspCorrSubarray"
+    - name: "FspCorrSubarrayDevice"
       devices:
-      - name: "mid_csp_cbf/fspCorrSubarray/02_01"
+      - name: "mid_csp_cbf/fspCorrSubarrayDevice/02_01"
         properties:
           - name: "CbfControllerAddress"
             values:
@@ -381,7 +381,7 @@ server:
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
 
-      - name: "mid_csp_cbf/fspCorrSubarray/02_02"
+      - name: "mid_csp_cbf/fspCorrSubarrayDevice/02_02"
         properties:
           - name: "CbfControllerAddress"
             values:
@@ -402,7 +402,7 @@ server:
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
 
-      - name: "mid_csp_cbf/fspCorrSubarray/02_03"
+      - name: "mid_csp_cbf/fspCorrSubarrayDevice/02_03"
         properties:
           - name: "CbfControllerAddress"
             values:
@@ -423,9 +423,9 @@ server:
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
 
-    - name: "FspPssSubarray"
+    - name: "FspPssSubarrayDevice"
       devices:
-      - name: "mid_csp_cbf/fspPssSubarray/02_01"
+      - name: "mid_csp_cbf/fspPssSubarrayDevice/02_01"
         properties:
           - name: "CbfControllerAddress"
             values:
@@ -446,7 +446,7 @@ server:
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
 
-      - name: "mid_csp_cbf/fspPssSubarray/02_02"
+      - name: "mid_csp_cbf/fspPssSubarrayDevice/02_02"
         properties:
           - name: "CbfControllerAddress"
             values:
@@ -467,7 +467,7 @@ server:
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
 
-      - name: "mid_csp_cbf/fspPssSubarray/02_03"
+      - name: "mid_csp_cbf/fspPssSubarrayDevice/02_03"
         properties:
           - name: "CbfControllerAddress"
             values:
@@ -488,9 +488,9 @@ server:
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
 
-    - name: "FspPstSubarray"
+    - name: "FspPstSubarrayDevice"
       devices:
-      - name: "mid_csp_cbf/fspPstSubarray/02_01"
+      - name: "mid_csp_cbf/fspPstSubarrayDevice/02_01"
         properties:
           - name: "CbfControllerAddress"
             values:
@@ -511,7 +511,7 @@ server:
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
 
-      - name: "mid_csp_cbf/fspPstSubarray/02_02"
+      - name: "mid_csp_cbf/fspPstSubarrayDevice/02_02"
         properties:
           - name: "CbfControllerAddress"
             values:
@@ -532,7 +532,7 @@ server:
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
 
-      - name: "mid_csp_cbf/fspPstSubarray/02_03"
+      - name: "mid_csp_cbf/fspPstSubarrayDevice/02_03"
         properties:
           - name: "CbfControllerAddress"
             values:
@@ -581,21 +581,21 @@ server:
           - name: "FspID"
             values:
             - "3"
-          - name: "FspCorrSubarray"
+          - name: "FspCorrSubarrayDevice"
             values:
-            - "mid_csp_cbf/fspCorrSubarray/03_01"
-            - "mid_csp_cbf/fspCorrSubarray/03_02"
-            - "mid_csp_cbf/fspCorrSubarray/03_03"
-          - name: "FspPssSubarray"
+            - "mid_csp_cbf/fspCorrSubarrayDevice/03_01"
+            - "mid_csp_cbf/fspCorrSubarrayDevice/03_02"
+            - "mid_csp_cbf/fspCorrSubarrayDevice/03_03"
+          - name: "FspPssSubarrayDevice"
             values:
-            - "mid_csp_cbf/fspPssSubarray/03_01"
-            - "mid_csp_cbf/fspPssSubarray/03_02"
-            - "mid_csp_cbf/fspPssSubarray/03_03"
-          - name: "FspPstSubarray"
+            - "mid_csp_cbf/fspPssSubarrayDevice/03_01"
+            - "mid_csp_cbf/fspPssSubarrayDevice/03_02"
+            - "mid_csp_cbf/fspPssSubarrayDevice/03_03"
+          - name: "FspPstSubarrayDevice"
             values:
-            - "mid_csp_cbf/fspPstSubarray/03_01"
-            - "mid_csp_cbf/fspPstSubarray/03_02"
-            - "mid_csp_cbf/fspPstSubarray/03_03"
+            - "mid_csp_cbf/fspPstSubarrayDevice/03_01"
+            - "mid_csp_cbf/fspPstSubarrayDevice/03_02"
+            - "mid_csp_cbf/fspPstSubarrayDevice/03_03"
           - name: "polled_attr"
             values:
             - "state"
@@ -623,9 +623,9 @@ server:
       devices:
       - name: "mid_csp_cbf/fsp_vlbi/03"
 
-    - name: "FspCorrSubarray"
+    - name: "FspCorrSubarrayDevice"
       devices:
-      - name: "mid_csp_cbf/fspCorrSubarray/03_01"
+      - name: "mid_csp_cbf/fspCorrSubarrayDevice/03_01"
         properties:
           - name: "CbfControllerAddress"
             values:
@@ -646,7 +646,7 @@ server:
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
 
-      - name: "mid_csp_cbf/fspCorrSubarray/03_02"
+      - name: "mid_csp_cbf/fspCorrSubarrayDevice/03_02"
         properties:
           - name: "CbfControllerAddress"
             values:
@@ -667,7 +667,7 @@ server:
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
 
-      - name: "mid_csp_cbf/fspCorrSubarray/03_03"
+      - name: "mid_csp_cbf/fspCorrSubarrayDevice/03_03"
         properties:
           - name: "CbfControllerAddress"
             values:
@@ -688,9 +688,9 @@ server:
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
 
-    - name: "FspPssSubarray"
+    - name: "FspPssSubarrayDevice"
       devices:
-      - name: "mid_csp_cbf/fspPssSubarray/03_01"
+      - name: "mid_csp_cbf/fspPssSubarrayDevice/03_01"
         properties:
           - name: "CbfControllerAddress"
             values:
@@ -711,7 +711,7 @@ server:
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
 
-      - name: "mid_csp_cbf/fspPssSubarray/03_02"
+      - name: "mid_csp_cbf/fspPssSubarrayDevice/03_02"
         properties:
           - name: "CbfControllerAddress"
             values:
@@ -732,7 +732,7 @@ server:
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
 
-      - name: "mid_csp_cbf/fspPssSubarray/03_03"
+      - name: "mid_csp_cbf/fspPssSubarrayDevice/03_03"
         properties:
           - name: "CbfControllerAddress"
             values:
@@ -753,9 +753,9 @@ server:
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
 
-    - name: "FspPstSubarray"
+    - name: "FspPstSubarrayDevice"
       devices:
-      - name: "mid_csp_cbf/fspPstSubarray/03_01"
+      - name: "mid_csp_cbf/fspPstSubarrayDevice/03_01"
         properties:
           - name: "CbfControllerAddress"
             values:
@@ -776,7 +776,7 @@ server:
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
 
-      - name: "mid_csp_cbf/fspPstSubarray/03_02"
+      - name: "mid_csp_cbf/fspPstSubarrayDevice/03_02"
         properties:
           - name: "CbfControllerAddress"
             values:
@@ -797,7 +797,7 @@ server:
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
 
-      - name: "mid_csp_cbf/fspPstSubarray/03_03"
+      - name: "mid_csp_cbf/fspPstSubarrayDevice/03_03"
         properties:
           - name: "CbfControllerAddress"
             values:
@@ -846,21 +846,21 @@ server:
           - name: "FspID"
             values:
             - "4"
-          - name: "FspCorrSubarray"
+          - name: "FspCorrSubarrayDevice"
             values:
-            - "mid_csp_cbf/fspCorrSubarray/04_01"
-            - "mid_csp_cbf/fspCorrSubarray/04_02"
-            - "mid_csp_cbf/fspCorrSubarray/04_03"
-          - name: "FspPssSubarray"
+            - "mid_csp_cbf/fspCorrSubarrayDevice/04_01"
+            - "mid_csp_cbf/fspCorrSubarrayDevice/04_02"
+            - "mid_csp_cbf/fspCorrSubarrayDevice/04_03"
+          - name: "FspPssSubarrayDevice"
             values:
-            - "mid_csp_cbf/fspPssSubarray/04_01"
-            - "mid_csp_cbf/fspPssSubarray/04_02"
-            - "mid_csp_cbf/fspPssSubarray/04_03"
-          - name: "FspPstSubarray"
+            - "mid_csp_cbf/fspPssSubarrayDevice/04_01"
+            - "mid_csp_cbf/fspPssSubarrayDevice/04_02"
+            - "mid_csp_cbf/fspPssSubarrayDevice/04_03"
+          - name: "FspPstSubarrayDevice"
             values:
-            - "mid_csp_cbf/fspPstSubarray/04_01"
-            - "mid_csp_cbf/fspPstSubarray/04_02"
-            - "mid_csp_cbf/fspPstSubarray/04_03"
+            - "mid_csp_cbf/fspPstSubarrayDevice/04_01"
+            - "mid_csp_cbf/fspPstSubarrayDevice/04_02"
+            - "mid_csp_cbf/fspPstSubarrayDevice/04_03"
           - name: "polled_attr"
             values:
             - "state"
@@ -888,9 +888,9 @@ server:
       devices:
       - name: "mid_csp_cbf/fsp_vlbi/04"
 
-    - name: "FspCorrSubarray"
+    - name: "FspCorrSubarrayDevice"
       devices:
-      - name: "mid_csp_cbf/fspCorrSubarray/04_01"
+      - name: "mid_csp_cbf/fspCorrSubarrayDevice/04_01"
         properties:
           - name: "CbfControllerAddress"
             values:
@@ -911,7 +911,7 @@ server:
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
 
-      - name: "mid_csp_cbf/fspCorrSubarray/04_02"
+      - name: "mid_csp_cbf/fspCorrSubarrayDevice/04_02"
         properties:
           - name: "CbfControllerAddress"
             values:
@@ -932,7 +932,7 @@ server:
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
 
-      - name: "mid_csp_cbf/fspCorrSubarray/04_03"
+      - name: "mid_csp_cbf/fspCorrSubarrayDevice/04_03"
         properties:
           - name: "CbfControllerAddress"
             values:
@@ -953,9 +953,9 @@ server:
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
 
-    - name: "FspPssSubarray"
+    - name: "FspPssSubarrayDevice"
       devices:
-      - name: "mid_csp_cbf/fspPssSubarray/04_01"
+      - name: "mid_csp_cbf/fspPssSubarrayDevice/04_01"
         properties:
           - name: "CbfControllerAddress"
             values:
@@ -976,7 +976,7 @@ server:
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
 
-      - name: "mid_csp_cbf/fspPssSubarray/04_02"
+      - name: "mid_csp_cbf/fspPssSubarrayDevice/04_02"
         properties:
           - name: "CbfControllerAddress"
             values:
@@ -997,7 +997,7 @@ server:
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
 
-      - name: "mid_csp_cbf/fspPssSubarray/04_03"
+      - name: "mid_csp_cbf/fspPssSubarrayDevice/04_03"
         properties:
           - name: "CbfControllerAddress"
             values:
@@ -1018,9 +1018,9 @@ server:
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
 
-    - name: "FspPstSubarray"
+    - name: "FspPstSubarrayDevice"
       devices:
-      - name: "mid_csp_cbf/fspPstSubarray/04_01"
+      - name: "mid_csp_cbf/fspPstSubarrayDevice/04_01"
         properties:
           - name: "CbfControllerAddress"
             values:
@@ -1041,7 +1041,7 @@ server:
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
 
-      - name: "mid_csp_cbf/fspPstSubarray/04_02"
+      - name: "mid_csp_cbf/fspPstSubarrayDevice/04_02"
         properties:
           - name: "CbfControllerAddress"
             values:
@@ -1062,7 +1062,7 @@ server:
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
 
-      - name: "mid_csp_cbf/fspPstSubarray/04_03"
+      - name: "mid_csp_cbf/fspPstSubarrayDevice/04_03"
         properties:
           - name: "CbfControllerAddress"
             values:

@@ -19,7 +19,7 @@ with one subarray. Currently, one subarray and four FSPs are supported.
 
 FSP Function Mode devices:
 
-* Correlation (CORR): ``FspCorr`` and ``FspCorrSubarray``
-* Pulsar Search Beamforming (PSS-BF): ``FspPss`` and ``FspPssSubarray``
-* Pulsar Timing Beamforming (PST-BF): ``FspPst`` and ``FspPstSubarray``
-* VLBI Beamforming (VLBI): ``FspVlbi`` and ``FspVlbiSubarray``
+* Correlation (CORR): ``FspCorr`` and ``FspCorrSubarrayDevice``
+* Pulsar Search Beamforming (PSS-BF): ``FspPss`` and ``FspPssSubarrayDevice``
+* Pulsar Timing Beamforming (PST-BF): ``FspPst`` and ``FspPstSubarrayDevice``
+* VLBI Beamforming (VLBI): ``FspVlbi`` and ``FspVlbiSubarrayDevice``

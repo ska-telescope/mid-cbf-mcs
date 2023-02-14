@@ -1,7 +1,7 @@
-FspCorrSubarray Class
+FspCorrSubarrayDevice Class
 ---------------------------
 
-.. autoclass:: ska_mid_cbf_mcs.fsp.fsp_corr_subarray.FspCorrSubarray
+.. autoclass:: ska_mid_cbf_mcs.fsp.fsp_corr_subarray.FspCorrSubarrayDevice
    :members:
    :undoc-members:
    :show-inheritance:

@@ -168,7 +168,7 @@ def patched_fsp_device_class(
 
 
 @pytest.fixture()
-def mock_fsp_corr_subarray() -> unittest.mock.Mock:
+def mock_fsp_corr_subarray_device() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.OFF)
     return builder()
@@ -183,7 +183,7 @@ def mock_fsp_corr_subarray_group() -> unittest.mock.Mock:
 
 
 @pytest.fixture()
-def mock_fsp_pss_subarray() -> unittest.mock.Mock:
+def mock_fsp_pss_subarray_device() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.OFF)
     # add receptors to the mock pss subarray
@@ -201,7 +201,7 @@ def mock_fsp_pss_subarray_group() -> unittest.mock.Mock:
 
 
 @pytest.fixture()
-def mock_fsp_pst_subarray() -> unittest.mock.Mock:
+def mock_fsp_pst_subarray_device() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.OFF)
     # add receptors to the mock pst subarray
@@ -220,38 +220,38 @@ def mock_fsp_pst_subarray_group() -> unittest.mock.Mock:
 
 @pytest.fixture()
 def initial_mocks(
-    mock_fsp_corr_subarray: unittest.mock.Mock,
+    mock_fsp_corr_subarray_device: unittest.mock.Mock,
     mock_fsp_corr_subarray_group: unittest.mock.Mock,
-    mock_fsp_pss_subarray: unittest.mock.Mock,
+    mock_fsp_pss_subarray_device: unittest.mock.Mock,
     mock_fsp_pss_subarray_group: unittest.mock.Mock,
-    mock_fsp_pst_subarray: unittest.mock.Mock,
+    mock_fsp_pst_subarray_device: unittest.mock.Mock,
     mock_fsp_pst_subarray_group: unittest.mock.Mock,
 ) -> Dict[str, unittest.mock.Mock]:
     """
     Return a dictionary of device proxy mocks to pre-register.
 
-    :param mock_fsp_corr_subarray: a mock FspCorrSubarray.
-    :param mock_fsp_corr_subarray_group: a mock FspCorrSubarray group.
-    :param mock_fsp_pss_subarray: a mock FspPssSubarray.
-    :param mock_fsp_pss_subarray_group: a mock FspPssSubarray group.
-    :param mock_fsp_pst_subarray: a mock FspPstSubarray.
+    :param mock_fsp_corr_subarray_device: a mock FspCorrSubarrayDevice.
+    :param mock_fsp_corr_subarray_group: a mock FspCorrSubarrayDevice group.
+    :param mock_fsp_pss_subarray_device: a mock FspPssSubarrayDevice.
+    :param mock_fsp_pss_subarray_group: a mock FspPssSubarrayDevice group.
+    :param mock_fsp_pst_subarray_device: a mock FspPstSubarrayDevice.
     :param mock_fsp_pst_subarray_group: a mock FspPstSubarray group.
 
     :return: a dictionary of device proxy mocks to pre-register.
     """
     return {
-        "mid_csp_cbf/fspCorrSubarray/01_01": mock_fsp_corr_subarray,
-        "mid_csp_cbf/fspCorrSubarray/02_01": mock_fsp_corr_subarray,
-        "mid_csp_cbf/fspCorrSubarray/03_01": mock_fsp_corr_subarray,
-        "mid_csp_cbf/fspCorrSubarray/04_01": mock_fsp_corr_subarray,
-        "mid_csp_cbf/fspPssSubarray/01_01": mock_fsp_pss_subarray,
-        "mid_csp_cbf/fspPssSubarray/02_01": mock_fsp_pss_subarray,
-        "mid_csp_cbf/fspPssSubarray/03_01": mock_fsp_pss_subarray,
-        "mid_csp_cbf/fspPssSubarray/04_01": mock_fsp_pss_subarray,
-        "mid_csp_cbf/fspPstSubarray/01_01": mock_fsp_pst_subarray,
-        "mid_csp_cbf/fspPstSubarray/02_01": mock_fsp_pst_subarray,
-        "mid_csp_cbf/fspPstSubarray/03_01": mock_fsp_pst_subarray,
-        "mid_csp_cbf/fspPstSubarray/04_01": mock_fsp_pst_subarray,
+        "mid_csp_cbf/fspCorrSubarrayDevice/01_01": mock_fsp_corr_subarray_device,
+        "mid_csp_cbf/fspCorrSubarrayDevice/02_01": mock_fsp_corr_subarray_device,
+        "mid_csp_cbf/fspCorrSubarrayDevice/03_01": mock_fsp_corr_subarray_device,
+        "mid_csp_cbf/fspCorrSubarrayDevice/04_01": mock_fsp_corr_subarray_device,
+        "mid_csp_cbf/fspPssSubarrayDevice/01_01": mock_fsp_pss_subarray_device,
+        "mid_csp_cbf/fspPssSubarrayDevice/02_01": mock_fsp_pss_subarray_device,
+        "mid_csp_cbf/fspPssSubarrayDevice/03_01": mock_fsp_pss_subarray_device,
+        "mid_csp_cbf/fspPssSubarrayDevice/04_01": mock_fsp_pss_subarray_device,
+        "mid_csp_cbf/fspPstSubarrayDevice/01_01": mock_fsp_pst_subarray_device,
+        "mid_csp_cbf/fspPstSubarrayDevice/02_01": mock_fsp_pst_subarray_device,
+        "mid_csp_cbf/fspPstSubarrayDevice/03_01": mock_fsp_pst_subarray_device,
+        "mid_csp_cbf/fspPstSubarrayDevice/04_01": mock_fsp_pst_subarray_device,
         "FSP Subarray Corr": mock_fsp_corr_subarray_group,
         "FSP Subarray Pss": mock_fsp_pss_subarray_group,
         "FSP Subarray Pst": mock_fsp_pst_subarray_group,

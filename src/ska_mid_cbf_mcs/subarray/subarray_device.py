@@ -115,11 +115,11 @@ class CbfSubarray(CspSubElementSubarray):
 
     FSP = device_property(dtype=("str",))
 
-    FspCorrSubarray = device_property(dtype=("str",))
+    FspCorrSubarrayDevice = device_property(dtype=("str",))
 
-    FspPssSubarray = device_property(dtype=("str",))
+    FspPssSubarrayDevice = device_property(dtype=("str",))
 
-    FspPstSubarray = device_property(dtype=("str",))
+    FspPstSubarrayDevice = device_property(dtype=("str",))
 
     # ----------
     # Attributes
@@ -237,9 +237,9 @@ class CbfSubarray(CspSubElementSubarray):
             controller=self.CbfControllerAddress,
             vcc=self.VCC,
             fsp=self.FSP,
-            fsp_corr_sub=self.FspCorrSubarray,
-            fsp_pss_sub=self.FspPssSubarray,
-            fsp_pst_sub=self.FspPstSubarray,
+            fsp_corr_sub=self.FspCorrSubarrayDevice,
+            fsp_pss_sub=self.FspPssSubarrayDevice,
+            fsp_pst_sub=self.FspPstSubarrayDevice,
             logger=self.logger,
             push_change_event_callback=self.push_change_event,
             component_resourced_callback=self._component_resourced,

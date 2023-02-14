@@ -7,7 +7,7 @@
 #
 # Distributed under the terms of the BSD-3-Clause license.
 # See LICENSE.txt for more info.
-"""Contain the tests for the FspPssSubarray."""
+"""Contain the tests for the TestFspPssSubarrayDevice."""
 
 from __future__ import annotations
 
@@ -34,13 +34,13 @@ file_path = os.path.dirname(os.path.abspath(__file__))
 CONST_WAIT_TIME = 4
 
 
-class TestFspPssSubarray:
+class TestFspPssSubarrayDevice:
     """
-    Test class for FspPssSubarray tests.
+    Test class for TestFspPssSubarrayDevice tests.
     """
 
     def test_State(
-        self: TestFspPssSubarray,
+        self: TestFspPssSubarrayDevice,
         device_under_test: CbfDeviceProxy,
     ) -> None:
         """
@@ -53,7 +53,7 @@ class TestFspPssSubarray:
         assert device_under_test.State() == DevState.DISABLE
 
     def test_Status(
-        self: TestFspPssSubarray,
+        self: TestFspPssSubarrayDevice,
         device_under_test: CbfDeviceProxy,
     ) -> None:
         """
@@ -66,7 +66,7 @@ class TestFspPssSubarray:
         assert device_under_test.Status() == "The device is in DISABLE state."
 
     def test_adminMode(
-        self: TestFspPssSubarray,
+        self: TestFspPssSubarrayDevice,
         device_under_test: CbfDeviceProxy,
     ) -> None:
         """
@@ -80,7 +80,7 @@ class TestFspPssSubarray:
 
     @pytest.mark.parametrize("command", ["On", "Off", "Standby"])
     def test_Power_Commands(
-        self: TestFspPssSubarray,
+        self: TestFspPssSubarrayDevice,
         device_under_test: CbfDeviceProxy,
         command: str,
     ) -> None:
@@ -128,7 +128,7 @@ class TestFspPssSubarray:
         ],
     )
     def test_ObsState_Commands(
-        self: TestFspPssSubarray,
+        self: TestFspPssSubarrayDevice,
         device_under_test: CbfDeviceProxy,
         config_file_name: str,
         scan_id: int,

@@ -408,7 +408,7 @@ def init_proxies_fixture():
 
             for proxy in [
                 CbfDeviceProxy(
-                    fqdn=f"mid_csp_cbf/fspCorrSubarray/{j:02}_01",
+                    fqdn=f"mid_csp_cbf/fspCorrSubarrayDevice/{j:02}_01",
                     logger=logging.getLogger(),
                 )
                 for j in range(1, self.num_fsp + 1)
@@ -417,7 +417,7 @@ def init_proxies_fixture():
 
             for proxy in [
                 CbfDeviceProxy(
-                    fqdn=f"mid_csp_cbf/fspPssSubarray/{j:02}_01",
+                    fqdn=f"mid_csp_cbf/fspPssSubarrayDevice/{j:02}_01",
                     logger=logging.getLogger(),
                 )
                 for j in range(1, self.num_fsp + 1)
@@ -426,7 +426,7 @@ def init_proxies_fixture():
 
             for proxy in [
                 CbfDeviceProxy(
-                    fqdn=f"mid_csp_cbf/fspPstSubarray/{j:02}_01",
+                    fqdn=f"mid_csp_cbf/fspPstSubarrayDevice/{j:02}_01",
                     logger=logging.getLogger(),
                 )
                 for j in range(1, self.num_fsp + 1)

@@ -56,11 +56,11 @@ class Fsp(SKACapability):
 
     FspID = device_property(dtype="uint16")
 
-    FspCorrSubarray = device_property(dtype=("str",))
+    FspCorrSubarrayDevice = device_property(dtype=("str",))
 
-    FspPssSubarray = device_property(dtype=("str",))
+    FspPssSubarrayDevice = device_property(dtype=("str",))
 
-    FspPstSubarray = device_property(dtype=("str",))
+    FspPstSubarrayDevice = device_property(dtype=("str",))
 
     HpsFspControllerAddress = device_property(dtype="str")
 
@@ -204,9 +204,9 @@ class Fsp(SKACapability):
         return FspComponentManager(
             logger=self.logger,
             fsp_id=self.FspID,
-            fsp_corr_subarray_fqdns_all=self.FspCorrSubarray,
-            fsp_pss_subarray_fqdns_all=self.FspPssSubarray,
-            fsp_pst_subarray_fqdns_all=self.FspPstSubarray,
+            fsp_corr_subarray_fqdns_all=self.FspCorrSubarrayDevice,
+            fsp_pss_subarray_fqdns_all=self.FspPssSubarrayDevice,
+            fsp_pst_subarray_fqdns_all=self.FspPstSubarrayDevice,
             hps_fsp_controller_fqdn=self.HpsFspControllerAddress,
             hps_fsp_corr_controller_fqdn=self.HspFspCorrControllerAddress,
             push_change_event_callback=self.push_change_event,
@@ -568,12 +568,12 @@ class Fsp(SKACapability):
     # If not also remove the get_fsp_corr_config_id method
     @command(
         dtype_out="DevString",
-        doc_out="returns configID for all the fspCorrSubarray",
+        doc_out="returns configID for all the fspCorrSubarrayDevice",
     )
     def getConfigID(self: Fsp) -> str:
         # PROTECTED REGION ID(Fsp.getConfigID) ENABLED START #
         """
-        Get the configID for all the fspCorrSubarray
+        Get the configID for all the fspCorrSubarrayDevice
 
         :return: the configID
         :rtype: str

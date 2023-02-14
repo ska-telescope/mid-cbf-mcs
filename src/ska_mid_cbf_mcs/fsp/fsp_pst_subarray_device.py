@@ -1,30 +1,25 @@
 # -*- coding: utf-8 -*-
 #
-# This file is part of the FspPssSubarray project
+# This file is part of the FspPstSubarrayDevice project
 #
 #
 #
 # Distributed under the terms of the GPL license.
 # See LICENSE.txt for more info.
 
-"""
-Author: Ryam Voigt Ryan.Voigt@nrc-cnrc.gc.ca,
-Herzberg Astronomy and Astrophysics, National Research Council of Canada
-Copyright (c) 2019 National Research Council of Canada
+""" Mid.CBF MCS
 
-FspPssSubarray Tango device prototype
-
-FspPssSubarray TANGO device class for the FspPssSubarray prototype
 """
 from __future__ import annotations  # allow forward references in type hints
 
 import json
 
 # Additional import
-# PROTECTED REGION ID(FspPssSubarray.additionnal_import) ENABLED START #
+# PROTECTED REGION ID(FspPstSubarray.additionnal_import) ENABLED START #
+import os
 from typing import List, Optional, Tuple
 
-# tango imports
+# PyTango imports
 import tango
 from ska_tango_base import CspSubElementObsDevice, SKABaseDevice
 from ska_tango_base.commands import ResultCode
@@ -33,22 +28,25 @@ from tango import AttrWriteType, DebugIt
 from tango.server import attribute, command, device_property, run
 
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
-from ska_mid_cbf_mcs.fsp.fsp_pss_subarray_component_manager import (
-    FspPssSubarrayComponentManager,
+from ska_mid_cbf_mcs.fsp.fsp_pst_subarray_component_manager import (
+    FspPstSubarrayComponentManager,
 )
 
-# PROTECTED REGION END #    //  FspPssSubarray.additionnal_import
-
-__all__ = ["FspPssSubarray", "main"]
+file_path = os.path.dirname(os.path.abspath(__file__))
 
 
-class FspPssSubarray(CspSubElementObsDevice):
+# PROTECTED REGION END #  //  FspPstSubarray.additionnal_import
+
+__all__ = ["FspPstSubarrayDevice", "main"]
+
+
+class FspPstSubarrayDevice(CspSubElementObsDevice):
     """
-    FspPssSubarray TANGO device class for the FspPssSubarray prototype
+    FspPstSubarrayDevice TANGO device class for the FspPstSubarrayDevice prototype
     """
 
-    # PROTECTED REGION ID(FspPssSubarray.class_variable) ENABLED START #
-    # PROTECTED REGION END #    //  FspPssSubarray.class_variable
+    # PROTECTED REGION ID(FspPstSubarray.class_variable) ENABLED START #
+    # PROTECTED REGION END #    //  FspPstSubarray.class_variable
 
     # -----------------
     # Device Properties
@@ -59,15 +57,10 @@ class FspPssSubarray(CspSubElementObsDevice):
     FspID = device_property(dtype="uint16")
 
     CbfControllerAddress = device_property(
-        dtype="str",
-        doc="FQDN of CBF Controller",
-        default_value="mid_csp_cbf/controller/main",
+        dtype="str", default_value="mid_csp_cbf/controller/main"
     )
 
-    # TODO: CbfSubarrayAddress prop not being used
-    CbfSubarrayAddress = device_property(
-        dtype="str", doc="FQDN of CBF Subarray"
-    )
+    CbfSubarrayAddress = device_property(dtype="str")
 
     VCC = device_property(dtype=("str",))
 
@@ -75,48 +68,39 @@ class FspPssSubarray(CspSubElementObsDevice):
     # Attributes
     # ----------
 
-    receptors = attribute(
-        dtype=("uint16",),
-        access=AttrWriteType.READ,
-        max_dim_x=197,
-        label="Receptors",
-        doc="List of receptors assigned to subarray",
-    )
-    searchBeams = attribute(
-        dtype=("str",),
-        access=AttrWriteType.READ,
-        max_dim_x=192,
-        label="SearchBeams",
-        doc="List of searchBeams assigned to fspsubarray",
-    )
-    searchWindowID = attribute(
-        dtype="uint16",
-        access=AttrWriteType.READ,
-        max_dim_x=2,
-        label="ID for 300MHz Search Window",
-        doc="Identifier of the Search Window to be used as input for beamforming on this FSP.",
-    )
-
-    searchBeamID = attribute(
-        dtype=("uint16",),
-        access=AttrWriteType.READ,
-        max_dim_x=192,
-        label="ID for 300MHz Search Window",
-        doc="Identifier of the Search Window to be used as input for beamforming on this FSP.",
-    )
-
     outputEnable = attribute(
         dtype="bool",
-        access=AttrWriteType.READ,
         label="Enable Output",
         doc="Enable/disable transmission of output products.",
+    )
+
+    receptors = attribute(
+        dtype=("uint16",),
+        access=AttrWriteType.READ_WRITE,
+        max_dim_x=197,
+        label="Receptors",
+        doc="List of receptors assigned to the subarray.",
+    )
+
+    timingBeams = attribute(
+        dtype=("str",),
+        max_dim_x=16,
+        label="TimingBeams",
+        doc="List of timing beams assigned to FSP PST Subarray.",
+    )
+
+    timingBeamID = attribute(
+        dtype=("uint16",),
+        max_dim_x=16,
+        label="TimingBeamID",
+        doc="Identifiers of timing beams assigned to FSP PST Subarray",
     )
 
     # ---------------
     # General methods
     # ---------------
 
-    def init_command_objects(self: FspPssSubarray) -> None:
+    def init_command_objects(self: FspPstSubarrayDevice) -> None:
         """
         Sets up the command objects
         """
@@ -148,11 +132,11 @@ class FspPssSubarray(CspSubElementObsDevice):
 
     class InitCommand(CspSubElementObsDevice.InitCommand):
         """
-        A class for the FspPssSubarray's init_device() "command".
+        A class for the FspPstSubarrayDevice's init_device() "command".
         """
 
         def do(
-            self: FspPssSubarray.InitCommand,
+            self: FspPstSubarrayDevice.InitCommand,
         ) -> Tuple[ResultCode, str]:
             """
             Stateless hook for device initialisation.
@@ -170,20 +154,18 @@ class FspPssSubarray(CspSubElementObsDevice):
             device = self.target
             device._configuring_from_idle = False
 
-            message = "FspPssSubarry Init command completed OK"
+            message = "FspPstSubarrayDevice Init command completed OK"
             self.logger.info(message)
             return (ResultCode.OK, message)
 
-        # PROTECTED REGION END #    //  FspPssSubarray.init_device
-
-    def always_executed_hook(self: FspPssSubarray) -> None:
-        # PROTECTED REGION ID(FspPssSubarray.always_executed_hook) ENABLED START #
+    def always_executed_hook(self: FspPstSubarrayDevice) -> None:
+        # PROTECTED REGION ID(FspPstSubarray.always_executed_hook) ENABLED START #
         """Hook to be executed before any commands."""
-        # PROTECTED REGION END #    //  FspPssSubarray.always_executed_hook
+        # PROTECTED REGION END #    //  FspPstSubarray.always_executed_hook
 
     def create_component_manager(
-        self: FspPssSubarray,
-    ) -> FspPssSubarrayComponentManager:
+        self: FspPstSubarrayDevice,
+    ) -> FspPstSubarrayComponentManager:
         """
         Create and return a component manager for this device.
 
@@ -193,7 +175,7 @@ class FspPssSubarray(CspSubElementObsDevice):
         self._communication_status: Optional[CommunicationStatus] = None
         self._component_power_mode: Optional[PowerMode] = None
 
-        return FspPssSubarrayComponentManager(
+        return FspPstSubarrayComponentManager(
             self.logger,
             self.FspID,
             self.push_change_event,
@@ -202,61 +184,17 @@ class FspPssSubarray(CspSubElementObsDevice):
             self._component_fault,
         )
 
-    def delete_device(self: FspPssSubarray) -> None:
-        # PROTECTED REGION ID(FspPssSubarray.delete_device) ENABLED START #
+    def delete_device(self: FspPstSubarrayDevice) -> None:
+        # PROTECTED REGION ID(FspPstSubarray.delete_device) ENABLED START #
         """Hook to delete device."""
-        # PROTECTED REGION END #    //  FspPssSubarray.delete_device
+        # PROTECTED REGION END #    //  FspPstSubarray.delete_device
 
     # ------------------
     # Attributes methods
     # ------------------
 
-    def read_receptors(self: FspPssSubarray) -> List[int]:
-        # PROTECTED REGION ID(FspPssSubarray.receptors_read) ENABLED START #
-        """
-        Read the receptors attribute.
-
-        :return: the receptors attribute.
-        :rtype: List[int]
-        """
-        return self.component_manager.receptors
-        # PROTECTED REGION END #    //  FspPssSubarray.receptors_read
-
-    def read_searchBeams(self: FspPssSubarray) -> List[str]:
-        # PROTECTED REGION ID(FspPssSubarray.searchBeams_read) ENABLED START #
-        """
-        Read the searchBeams attribute.
-
-        :return: the searchBeams attribute.
-        :rtype: List[str]
-        """
-        return self.component_manager.search_beams
-        # PROTECTED REGION END #    //  FspPssSubarray.searchBeams_read
-
-    def read_searchBeamID(self: FspPssSubarray) -> List[int]:
-        # PROTECTED REGION ID(FspPssSubarray.read_searchBeamID ENABLED START #
-        """
-        Read the searchBeamID attribute.
-
-        :return: the searchBeamID attribute.
-        :rtype: List[int]
-        """
-        return self.component_manager.search_beam_id
-        # PROTECTED REGION END #    //  FspPssSubarray.read_searchBeamID
-
-    def read_searchWindowID(self: FspPssSubarray) -> List[int]:
-        # PROTECTED REGION ID(CbfSubarrayPssConfig.read_searchWindowID) ENABLED START #
-        """
-        Read the searchWindowID attribute.
-
-        :return: the searchWindowID attribute.
-        :rtype: List[int]
-        """
-        return self.component_manager.search_window_id
-        # PROTECTED REGION END #    //  CbfSubarrayPssConfig.read_searchWindowID
-
-    def read_outputEnable(self: FspPssSubarray) -> bool:
-        # PROTECTED REGION ID(CbfSubarrayPssConfig.read_outputEnable) ENABLED START #
+    def read_outputEnable(self: FspPstSubarrayDevice) -> bool:
+        # PROTECTED REGION ID(FspPstSubarray.outputEnable_read) ENABLED START #
         """
         Read the outputEnable attribute. Used to enable/disable
         transmission of the output products.
@@ -265,9 +203,56 @@ class FspPssSubarray(CspSubElementObsDevice):
         :rtype: bool
         """
         return self.component_manager.output_enable
+        # PROTECTED REGION END #    //  FspPstSubarray.outputEnable_read
 
-    def read_scanID(self: FspPssSubarray) -> int:
-        # PROTECTED REGION ID(FspPssSubarray.scanID_read) ENABLED START #
+    def read_receptors(self: FspPstSubarrayDevice) -> List[int]:
+        # PROTECTED REGION ID(FspPstSubarray.receptors_read) ENABLED START #
+        """
+        Read the receptors attribute.
+
+        :return: the list of receptors.
+        :rtype: List[int]
+        """
+        return self.component_manager.receptors
+        # PROTECTED REGION END #    //  FspPstSubarray.receptors_read
+
+    # TODO: do we need write_receptors? All receptor adding is handled by component
+    # manager. Other Fsp subarray devices do not have this
+    def write_receptors(self: FspPstSubarrayDevice, value: List[int]) -> None:
+        # PROTECTED REGION ID(FspPstSubarray.receptors_write) ENABLED START #
+        """
+        Write the receptors attribute.
+
+        :param value: the receptors attribute value.
+        """
+        self.component_manager.receptors = value
+
+    #     # PROTECTED REGION END #    //  FspPstSubarray.receptors_write
+
+    def read_timingBeams(self: FspPstSubarrayDevice) -> List[str]:
+        # PROTECTED REGION ID(FspPstSubarray.timingBeams_read) ENABLED START #
+        """
+        Read the timingBeams attribute.
+
+        :return: the timingBeams attribute.
+        :rtype: List[int]
+        """
+        return self.component_manager.timing_beams
+        # PROTECTED REGION END #    //  FspPstSubarray.timingBeams_read
+
+    def read_timingBeamID(self: FspPstSubarrayDevice) -> List[int]:
+        # PROTECTED REGION ID(FspPstSubarray.timingBeamID_read) ENABLED START #
+        """
+        Read the list of Timing Beam IDs.
+
+        :return: the timingBeamID attribute.
+        :rtype: List[int]
+        """
+        return self.component_manager.timing_beam_id
+        # PROTECTED REGION END #    //  FspPstSubarray.timingBeamID_read
+
+    def read_scanID(self: FspPstSubarrayDevice) -> int:
+        # PROTECTED REGION ID(FspPstSubarray.scanID_read) ENABLED START #
         """
         Read the scanID attribute.
 
@@ -275,38 +260,17 @@ class FspPssSubarray(CspSubElementObsDevice):
         :rtype: int
         """
         return self.component_manager.scan_id
-        # PROTECTED REGION END #    //  FspPssSubarray.scanID_read
+        # PROTECTED REGION END #    //  FspPstSubarray.scanID_read
 
-    def write_scanID(self: FspPssSubarray, value: int) -> None:
-        # PROTECTED REGION ID(FspPssSubarray.scanID_write) ENABLED START #
+    def write_scanID(self: FspPstSubarrayDevice, value: int) -> None:
+        # PROTECTED REGION ID(FspPstSubarray.scanID_write) ENABLED START #
         """
         Write the scanID attribute.
 
         :param value: the scanID attribute value.
         """
         self.component_manager.scan_id = value
-        # PROTECTED REGION END #    //  FspPssSubarray.scanID_writes
-
-    def read_configID(self: FspPssSubarray) -> str:
-        # PROTECTED REGION ID(FspPssSubarray.scanID_read) ENABLED START #
-        """
-        Read the configID attribute.
-
-        :return: the configID attribute.
-        :rtype: str
-        """
-        return self.component_manager.config_id
-        # PROTECTED REGION END #    //  FspPssSubarray.scanID_read
-
-    def write_configID(self: FspPssSubarray, value: str) -> None:
-        # PROTECTED REGION ID(FspPssSubarray.scanID_write) ENABLED START #
-        """
-        Write the configID attribute.
-
-        :param value: the configID attribute value.
-        """
-        self.component_manager.config_id = value
-        # PROTECTED REGION END #    //  FspPssSubarray.scanID_writes
+        # PROTECTED REGION END #    //  FspPstSubarray.scanID_writes
 
     # --------
     # Commands
@@ -314,11 +278,11 @@ class FspPssSubarray(CspSubElementObsDevice):
 
     class OnCommand(SKABaseDevice.OnCommand):
         """
-        A class for the FspPssSubarray's On() command.
+        A class for the FspPstSubarrayDevice's On() command.
         """
 
         def do(
-            self: FspPssSubarray.OnCommand,
+            self: FspPstSubarrayDevice.OnCommand,
         ) -> Tuple[ResultCode, str]:
             """
             Stateless hook for On() command functionality.
@@ -333,7 +297,7 @@ class FspPssSubarray(CspSubElementObsDevice):
 
             (result_code, message) = (
                 ResultCode.OK,
-                "FspPssSubarray On command completed OK",
+                "FspPstSubarrayDevice On command completed OK",
             )
 
             self.target._component_power_mode_changed(PowerMode.ON)
@@ -343,11 +307,11 @@ class FspPssSubarray(CspSubElementObsDevice):
 
     class OffCommand(SKABaseDevice.OffCommand):
         """
-        A class for the FspPssSubarray's Off() command.
+        A class for the FspPstSubarrayDevice's Off() command.
         """
 
         def do(
-            self: FspPssSubarray.OffCommand,
+            self: FspPstSubarrayDevice.OffCommand,
         ) -> Tuple[ResultCode, str]:
             """
             Stateless hook for Off() command functionality.
@@ -362,7 +326,7 @@ class FspPssSubarray(CspSubElementObsDevice):
 
             (result_code, message) = (
                 ResultCode.OK,
-                "FspPssSubarray Off command completed OK",
+                "FspPstSubarrayDevice Off command completed OK",
             )
 
             self.target._component_power_mode_changed(PowerMode.OFF)
@@ -372,11 +336,11 @@ class FspPssSubarray(CspSubElementObsDevice):
 
     class StandbyCommand(SKABaseDevice.StandbyCommand):
         """
-        A class for the FspPssSubarray's Standby() command.
+        A class for the FspPstSubarrayDevice's Standby() command.
         """
 
         def do(
-            self: FspPssSubarray.StandbyCommand,
+            self: FspPstSubarrayDevice.StandbyCommand,
         ) -> Tuple[ResultCode, str]:
             """
             Stateless hook for Standby() command functionality.
@@ -391,7 +355,7 @@ class FspPssSubarray(CspSubElementObsDevice):
 
             (result_code, message) = (
                 ResultCode.OK,
-                "FspPssSubarray Standby command completed OK",
+                "FspPstSubarrayDevice Standby command completed OK",
             )
 
             self.target._component_power_mode_changed(PowerMode.STANDBY)
@@ -401,19 +365,18 @@ class FspPssSubarray(CspSubElementObsDevice):
 
     class ConfigureScanCommand(CspSubElementObsDevice.ConfigureScanCommand):
         """
-        A class for the FspPssSubarray's ConfigureScan() command.
+        A class for the FspPstSubarrayDevice's ConfigureScan() command.
         """
 
         """Input a serilized JSON object. """
 
         def do(
-            self: FspPssSubarray.ConfigureScanCommand,
-            argin: str,
+            self: FspPstSubarrayDevice, argin: str
         ) -> Tuple[ResultCode, str]:
             """
             Stateless hook for ConfigureScan() command functionality.
 
-            :param argin: The configuration as JSON formatted string.
+            :param argin: The configuration as JSON formatted string
             :type argin: str
 
             :return: A tuple containing a return code and a string
@@ -438,7 +401,7 @@ class FspPssSubarray(CspSubElementObsDevice):
             return (result_code, message)
 
         def validate_input(
-            self: FspPssSubarray.ConfigureScanCommand, argin: str
+            self: FspPstSubarrayDevice.ConfigureScanCommand, argin: str
         ) -> Tuple[bool, str]:
             """
             Validate the configuration parameters against allowed values, as needed.
@@ -470,7 +433,7 @@ class FspPssSubarray(CspSubElementObsDevice):
     )
     @DebugIt()
     def ConfigureScan(
-        self: FspPssSubarray, argin: str
+        self: FspPstSubarrayDevice, argin: str
     ) -> Tuple[ResultCode, str]:
         # PROTECTED REGION ID(Vcc.ConfigureScan) ENABLED START #
         """
@@ -504,11 +467,11 @@ class FspPssSubarray(CspSubElementObsDevice):
 
     class ScanCommand(CspSubElementObsDevice.ScanCommand):
         """
-        A class for the FspPssSubarray's Scan() command.
+        A class for the FspPstSubarrayDevice's Scan() command.
         """
 
         def do(
-            self: FspPssSubarray.ScanCommand, argin: str
+            self: FspPstSubarrayDevice.ScanCommand, argin: str
         ) -> Tuple[ResultCode, str]:
             """
             Stateless hook for Scan() command functionality.
@@ -536,11 +499,11 @@ class FspPssSubarray(CspSubElementObsDevice):
 
     class EndScanCommand(CspSubElementObsDevice.EndScanCommand):
         """
-        A class for the FspPssSubarray's Scan() command.
+        A class for the FspPstSubarrayDevice's EndScan() command.
         """
 
         def do(
-            self: FspPssSubarray.EndScanCommand,
+            self: FspPstSubarrayDevice.EndScanCommand,
         ) -> Tuple[ResultCode, str]:
             """
             Stateless hook for Scan() command functionality.
@@ -565,11 +528,11 @@ class FspPssSubarray(CspSubElementObsDevice):
 
     class GoToIdleCommand(CspSubElementObsDevice.GoToIdleCommand):
         """
-        A class for the FspPssSubarray's GoToIdle command.
+        A class for the FspPstSubarrayDevice's GoToIdle command.
         """
 
         def do(
-            self: FspPssSubarray.GoToIdleCommand,
+            self: FspPstSubarrayDevice.GoToIdleCommand,
         ) -> Tuple[ResultCode, str]:
             """
             Stateless hook for GoToIdle() command functionality.
@@ -595,7 +558,9 @@ class FspPssSubarray(CspSubElementObsDevice):
     # Callbacks
     # ----------
 
-    def _component_configured(self: FspPssSubarray, configured: bool) -> None:
+    def _component_configured(
+        self: FspPstSubarrayDevice, configured: bool
+    ) -> None:
         """
         Handle notification that the component has started or stopped configuring.
 
@@ -610,7 +575,9 @@ class FspPssSubarray(CspSubElementObsDevice):
         else:
             self.obs_state_model.perform_action("component_unconfigured")
 
-    def _component_scanning(self: FspPssSubarray, scanning: bool) -> None:
+    def _component_scanning(
+        self: FspPstSubarrayDevice, scanning: bool
+    ) -> None:
         """
         Handle notification that the component has started or stopped scanning.
 
@@ -624,7 +591,7 @@ class FspPssSubarray(CspSubElementObsDevice):
         else:
             self.obs_state_model.perform_action("component_not_scanning")
 
-    def _component_fault(self: FspPssSubarray, faulty: bool) -> None:
+    def _component_fault(self: FspPstSubarrayDevice, faulty: bool) -> None:
         """
         Handle component fault
         """
@@ -632,7 +599,7 @@ class FspPssSubarray(CspSubElementObsDevice):
             self.op_state_model.perform_action("component_fault")
             self.set_status("The device is in FAULT state")
 
-    def _component_obsfault(self: FspPssSubarray) -> None:
+    def _component_obsfault(self: FspPstSubarrayDevice) -> None:
         """
         Handle notification that the component has obsfaulted.
 
@@ -641,7 +608,7 @@ class FspPssSubarray(CspSubElementObsDevice):
         self.obs_state_model.perform_action("component_obsfault")
 
     def _communication_status_changed(
-        self: FspPssSubarray,
+        self: FspPstSubarrayDevice,
         communication_status: CommunicationStatus,
     ) -> None:
         """
@@ -663,7 +630,7 @@ class FspPssSubarray(CspSubElementObsDevice):
             self.op_state_model.perform_action("component_unknown")
 
     def _component_power_mode_changed(
-        self: FspPssSubarray,
+        self: FspPstSubarrayDevice,
         power_mode: PowerMode,
     ) -> None:
         """
@@ -694,9 +661,9 @@ class FspPssSubarray(CspSubElementObsDevice):
 
 
 def main(args=None, **kwargs):
-    # PROTECTED REGION ID(FspPssSubarray.main) ENABLED START #
-    return run((FspPssSubarray,), args=args, **kwargs)
-    # PROTECTED REGION END #    //  FspPssSubarray.main
+    # PROTECTED REGION ID(FspPstSubarrayDevice.main) ENABLED START #
+    return run((FspPstSubarrayDevice,), args=args, **kwargs)
+    # PROTECTED REGION END #    //  FspPstSubarrayDevice.main
 
 
 if __name__ == "__main__":

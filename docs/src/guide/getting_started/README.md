@@ -40,7 +40,7 @@ a scan.
     * `VccSearchWindow` defines a search window for a VCC.
     * `FspCorr`, `FspPss`, `FspPst`, and `FspVlbi` specify the function mode of 
     an FSP.
-    * `FspCorrSubarray`, `FspPssSubarray` and `FspPssSubarray`: Based on the 
+    * `FspCorrSubarrayDevice`, `FspPssSubarrayDevice` and `FspPssSubarrayDevice`: Based on the 
     `SKASubarray` class. It implements commands and attributes needed for scan 
     configuration.
 * `TmCspSubarrayLeafNodeTest`: Based on the `SKABaseDevice` class. It simulates 
@@ -53,8 +53,8 @@ implemented to run devices of different classes:
 * `VccMulti`: Runs a single instance of `Vcc`, one instance each of the VCC 
 frequency band capabilities, and two instances of ``VccSearchWindow``.
 * `FspMulti`: Runs a single instance of `Fsp`, one instance each of the FSP 
-function mode capabilities, and 4 instances each of `FspCorrSubarray`, 
-`FspPssSubarray` and `FspPssSubarray`.
+function mode capabilities, and 4 instances each of `FspCorrSubarrayDevice`, 
+`FspPssSubarrayDevice` and `FspPssSubarrayDevice`.
 
 At the moment, the device servers implemented are:
 

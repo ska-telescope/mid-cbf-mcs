@@ -338,9 +338,7 @@ class FspCorrSubarrayComponentManager(
             device_proxy = CbfDeviceProxy(
                 fqdn=fqdn_or_name, logger=self._logger, connect=False
             )
-            device_proxy.connect(
-                max_time=0
-            )  # Make one attempt at connecting
+            device_proxy.connect(max_time=0)  # Make one attempt at connecting
             return device_proxy
         except tango.DevFailed as df:
             for item in df.args:
@@ -349,7 +347,7 @@ class FspCorrSubarrayComponentManager(
                 )
             self.update_component_fault(True)
             return None
-        
+
     def _add_receptors(
         self: FspCorrSubarrayComponentManager, argin: List[int]
     ) -> None:
@@ -607,7 +605,7 @@ class FspCorrSubarrayComponentManager(
         corr_receptors = configuration["receptor_ids"]
         configuration["receptor_ids"] = configuration["subarray_receptor_ids"]
         # Parameter named "corr_receptor_ids" used by HPS contains the
-        # subset of the subarray receptors for which the correlation results 
+        # subset of the subarray receptors for which the correlation results
         # are requested to be used in Mid.CBF output products (visibilities)
         configuration["corr_receptor_ids"] = corr_receptors
 
