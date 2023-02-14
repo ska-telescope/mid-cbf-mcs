@@ -64,9 +64,9 @@ def fsp_component_manager(
     f.close()
     configuration = json.loads(json_string)
 
-    fsp_corr_subarray_fqdns_all = configuration["fqdn_fsp_corr_subarray"]
-    fsp_pss_subarray_fqdns_all = configuration["fqdn_fsp_pss_subarray"]
-    fsp_pst_subarray_fqdns_all = configuration["fqdn_fsp_pst_subarray"]
+    fsp_corr_subarray_fqdns_all = configuration["fqdn_fsp_corr_subarray_device"]
+    fsp_pss_subarray_fqdns_all = configuration["fqdn_fsp_pss_subarray_device"]
+    fsp_pst_subarray_fqdns_all = configuration["fqdn_fsp_pst_subarray_device"]
 
     # HPS Fsp Controller fqdn not used in this testing
     # since test only executed for simulationMode = true

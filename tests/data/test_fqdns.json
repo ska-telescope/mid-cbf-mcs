@@ -33,7 +33,7 @@
         "mid_csp_cbf/fspPssSubarrayDevice/03_01",
         "mid_csp_cbf/fspPssSubarrayDevice/04_01"
     ],
-    "fqdn_fsp_pst_subarray":
+    "fqdn_fsp_pst_subarray_device":
     [
         "mid_csp_cbf/fspPstSubarrayDevice/01_01",
         "mid_csp_cbf/fspPstSubarrayDevice/02_01",
