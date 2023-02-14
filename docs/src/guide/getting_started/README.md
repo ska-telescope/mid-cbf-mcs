@@ -38,14 +38,14 @@ a scan.
     * `VccBand1And2`, `VccBand3`, `VccBand4`, and `VccBand5` specify the 
     operative frequency band of a VCC.
     * `VccSearchWindow` defines a search window for a VCC.
-    * `FspCorr`, `FspPss`, `FspPst`, and `FspVlbi` specify the function mode of 
-    an FSP.
     * `FspCorrSubarray`, `FspPssSubarray` and `FspPssSubarray`: Based on the 
     `SKASubarray` class. It implements commands and attributes needed for scan 
     configuration.
 * `TmCspSubarrayLeafNodeTest`: Based on the `SKABaseDevice` class. It simulates 
 a TM CSP Subarray Leaf Node, providing regular updates to parameters during 
 scans using a publish-subscribe mechanism.
+* `TalonDxLogConsumer`: TANGO device class for consuming logs, converting them 
+to the SKA format, and outputting them via the logging framework.
 
 To cut down on the number of TANGO device servers, some multi-class servers are 
 implemented to run devices of different classes:
@@ -63,6 +63,7 @@ At the moment, the device servers implemented are:
 * 4 instances of `FspMulti`.
 * 4 instances of `VccMulti`.
 * 2 instances of `TmCspSubarrayLeafNodeTest`.
+* 1 instance of `TalonDxLogConsumer`.
 
 # Getting started
 
@@ -100,6 +101,16 @@ minikube start    # start minikube (local kubernetes node)
 minikube status   # check current status of minikube
 ```
 
+The `minikube status` output should be:
+```
+minikube
+type: Control Plane
+host: Running
+kubelet: Running
+apiserver: Running
+kubeconfig: Configured
+```
+
 If restarting a stopped minikube; from local `ska-cicd-deploy-minikube` repository 
 run `make minikube-metallb-config` to reapply metallb configMap to determine pod
 LoadBalancer service external IP addresses.
@@ -107,13 +118,26 @@ LoadBalancer service external IP addresses.
 #### 2.  From the root of the project, build the application image.
 ```
 cd ska-mid-cbf-mcs
-eval $(minikube docker-env)  # if building from local source and not artefact repository
-make oci-image-build
+eval $(minikube docker-env)   # to use the minikube's docker environment 
+make oci-image-build          # if building from local source and not artefact repository
 ```
 
 `make oci-image-build` is required only if a local image needs to be built, for example 
 every time the SW has been updated. 
 [For development, in order to get local changes to build, run `eval $(minikube docker-env)` before `make build`](https://v1-18.docs.kubernetes.io/docs/setup/learning-environment/minikube/#use-local-images-by-re-using-the-docker-daemon)
+
+*Note*: To check if you are within the minikube's docker environment, use the
+`minikube status` command. It will indicate `docker-env: in use` if in use as
+follows:
+```
+minikube
+type: Control Plane
+host: Running
+kubelet: Running
+apiserver: Running
+kubeconfig: Configured
+docker-env: in-use
+```
 
 #### 3.  Install the umbrella chart.
 ```
@@ -150,7 +174,7 @@ tests are run
 
 #### 8.  Tear down the deployment.
 ```
-make k8s-uninstall-chart                  # uninstall deployment from Helm charts
+make k8s-uninstall-chart              # uninstall deployment from Helm charts
 deactivate                            # if in active virtualenv
 eval $(minikube docker-env --unset)   # if docker-env variables were set previously
 minikube stop                         # stop minikube
@@ -158,49 +182,32 @@ minikube stop                         # stop minikube
 
 # Minikube Profiles
 
-### Create a minikube profile
+### Create a minikube rofile
 ```
-minikube start -p <profile_name>
-```
-
-### Check the status of the cluster created for your minikube profile
-```
-minikube status -p <profile_name>
+minikube start 
 ```
 
-### Switch to a pre-existing minikube profile
+### Check the status of the cluster created for your minikube 
 ```
-minikube profile <profile_name>
-```
-
-### Check which minikube profile you are on
-```
-minikube profile
+minikube status 
 ```
 
-### List all minikube profiles
+### If kubeconfig is pointing to a stale minikube and is `Misconfigured`, 
+### update the context 
 ```
-minikube profile list
-```
-
-### Set and unset docker-env variables
-```
-eval $(minikube docker-env -p <profile_name>) 
-eval $(minikube docker-env --unset -p <profile_name>) 
-```
-
-### Verify the kubectl context matches the minikube profile name
-In order to use kubectl to get pod information via the command line, the kubectl 'conext' should match the minikube profile. To verify this the output of `minikube profile` should match the output of `kubectl config current-context`
-```
-kubectl config current-context
+minikube update-context
 ```
 
 ### Delete a minikube profile
 ```
-minikube delete -p <profile_name>
+minikube delete
 ```
 
-
+### Set and unset docker-env variables
+```
+eval $(minikube docker-env)
+eval $(minikube docker-env --unset)
+```
 
 # Taranta
 
