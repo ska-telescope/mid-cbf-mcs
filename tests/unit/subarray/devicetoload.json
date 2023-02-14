@@ -40,23 +40,23 @@
                                 "mid_csp_cbf/fsp/03",
                                 "mid_csp_cbf/fsp/04"
                             ],
-                            "FspCorrSubarrayDevice": [
-                                "mid_csp_cbf/fspCorrSubarrayDevice/01_01",
-                                "mid_csp_cbf/fspCorrSubarrayDevice/02_01",
-                                "mid_csp_cbf/fspCorrSubarrayDevice/03_01",
-                                "mid_csp_cbf/fspCorrSubarrayDevice/04_01"
+                            "FspCorrSubarray": [
+                                "mid_csp_cbf/fspCorrSubarray/01_01",
+                                "mid_csp_cbf/fspCorrSubarray/02_01",
+                                "mid_csp_cbf/fspCorrSubarray/03_01",
+                                "mid_csp_cbf/fspCorrSubarray/04_01"
                             ],
-                            "FspPssSubarrayDevice": [
-                                "mid_csp_cbf/fspPssSubarrayDevice/01_01",
-                                "mid_csp_cbf/fspPssSubarrayDevice/02_01",
-                                "mid_csp_cbf/fspPssSubarrayDevice/03_01",
-                                "mid_csp_cbf/fspPssSubarrayDevice/04_01"
+                            "FspPssSubarray": [
+                                "mid_csp_cbf/fspPssSubarray/01_01",
+                                "mid_csp_cbf/fspPssSubarray/02_01",
+                                "mid_csp_cbf/fspPssSubarray/03_01",
+                                "mid_csp_cbf/fspPssSubarray/04_01"
                             ],
-                            "FspPstSubarrayDevice": [
-                                "mid_csp_cbf/fspPstSubarrayDevice/01_01",
-                                "mid_csp_cbf/fspPstSubarrayDevice/02_01",
-                                "mid_csp_cbf/fspPstSubarrayDevice/03_01",
-                                "mid_csp_cbf/fspPstSubarrayDevice/04_01"
+                            "FspPstSubarray": [
+                                "mid_csp_cbf/fspPstSubarray/01_01",
+                                "mid_csp_cbf/fspPstSubarray/02_01",
+                                "mid_csp_cbf/fspPstSubarray/03_01",
+                                "mid_csp_cbf/fspPstSubarray/04_01"
                             ],
                             "SW1Address": [
                                 "mid_csp_cbf/sw1/01"

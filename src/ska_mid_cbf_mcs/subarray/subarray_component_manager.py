@@ -1789,7 +1789,7 @@ class CbfSubarrayComponentManager(
                 except tango.DevFailed:
                     msg = (
                         "An exception occurred while configuring "
-                        "FspCorrSubarrayDevice; Aborting configuration"
+                        "FspCorrSubarray; Aborting configuration"
                     )
                     self.raise_configure_scan_fatal_error(msg)
 
@@ -1804,7 +1804,7 @@ class CbfSubarrayComponentManager(
                 except tango.DevFailed:
                     msg = (
                         "An exception occurred while configuring  "
-                        "FspPssSubarrayDevice; Aborting configuration"
+                        "FspPssSubarray; Aborting configuration"
                     )
                     self.raise_configure_scan_fatal_error(msg)
 
@@ -1819,7 +1819,7 @@ class CbfSubarrayComponentManager(
                 except tango.DevFailed:
                     msg = (
                         "An exception occurred while configuring  "
-                        "FspPstSubarrayDevice; Aborting configuration"
+                        "FspPstSubarray; Aborting configuration"
                     )
                     self.raise_configure_scan_fatal_error(msg)
 

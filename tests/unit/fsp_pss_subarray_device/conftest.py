@@ -25,7 +25,7 @@ from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
 
 # Local imports
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
-from ska_mid_cbf_mcs.fsp.fsp_pss_subarray_device import FspPssSubarrayDevice
+from ska_mid_cbf_mcs.fsp.fsp_pss_subarray_device import FspPssSubarray
 from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder
 from ska_mid_cbf_mcs.testing.tango_harness import (
     DeviceToLoadType,
@@ -42,12 +42,12 @@ def device_under_test(tango_harness: TangoHarness) -> CbfDeviceProxy:
 
     :return: the device under test
     """
-    return tango_harness.get_device("mid_csp_cbf/fspPssSubarrayDevice/01_01")
+    return tango_harness.get_device("mid_csp_cbf/fspPssSubarray/01_01")
 
 
 @pytest.fixture()
 def device_to_load(
-    patched_fsp_pss_subarray_device_class: Type[FspPssSubarrayDevice],
+    patched_fsp_pss_subarray_device_class: Type[FspPssSubarray],
 ) -> DeviceToLoadType:
     """
     Fixture that specifies the device to be loaded for testing.
@@ -58,7 +58,7 @@ def device_to_load(
         "path": "tests/unit/fsp_pss_subarray_device/devicetoload.json",
         "package": "ska_mid_cbf_mcs.fsp.fsp_pss_subarray_device",
         "device": "fsp-01",
-        "device_class": "FspPssSubarrayDevice",
+        "device_class": "FspPssSubarray",
         "proxy": CbfDeviceProxy,
         "patch": patched_fsp_pss_subarray_device_class,
     }
@@ -106,29 +106,27 @@ def mock_component_manager(
         mock._component_power_mode_changed_callback(PowerMode.OFF)
 
     def _on(mock: unittest.mock.Mock) -> None:
-        mock.message = "FspPssSubarrayDevice On command completed OK"
+        mock.message = "FspPssSubarray On command completed OK"
         return (ResultCode.OK, mock.message)
 
     def _off(mock: unittest.mock.Mock) -> None:
-        mock.message = "FspPssSubarrayDevice Off command completed OK"
+        mock.message = "FspPssSubarray Off command completed OK"
         return (ResultCode.OK, mock.message)
 
     def _configure_scan(mock: unittest.mock.Mock, argin: str) -> None:
-        mock.message = (
-            "FspPssSubarrayDevice ConfigureScan command completed OK"
-        )
+        mock.message = "FspPssSubarray ConfigureScan command completed OK"
         return (ResultCode.OK, mock.message)
 
     def _scan(mock: unittest.mock.Mock, argin: int) -> None:
-        mock.message = "FspPssSubarrayDevice Scan command completed OK"
+        mock.message = "FspPssSubarray Scan command completed OK"
         return (ResultCode.OK, mock.message)
 
     def _end_scan(mock: unittest.mock.Mock) -> None:
-        mock.message = "FspPssSubarrayDevice EndScan command completed OK"
+        mock.message = "FspPssSubarray EndScan command completed OK"
         return (ResultCode.OK, mock.message)
 
     def _go_to_idle(mock: unittest.mock.Mock) -> None:
-        mock.message = "FspPssSubarrayDevice GoToIdle command completed OK"
+        mock.message = "FspPssSubarray GoToIdle command completed OK"
         return (ResultCode.OK, mock.message)
 
     mock.on.side_effect = lambda: _on(mock)
@@ -149,7 +147,7 @@ def mock_component_manager(
 @pytest.fixture()
 def patched_fsp_pss_subarray_device_class(
     mock_component_manager: unittest.mock.Mock,
-) -> Type[FspPssSubarrayDevice]:
+) -> Type[FspPssSubarray]:
     """
     Return a device that is patched with a mock component manager.
 
@@ -160,11 +158,11 @@ def patched_fsp_pss_subarray_device_class(
         manager.
     """
 
-    class PatchedFspPssSubarrayDevice(FspPssSubarrayDevice):
+    class PatchedFspPssSubarray(FspPssSubarray):
         """A device patched with a mock component manager."""
 
         def create_component_manager(
-            self: PatchedFspPssSubarrayDevice,
+            self: PatchedFspPssSubarray,
         ) -> unittest.mock.Mock:
             """
             Return a mock component manager instead of the usual one.
@@ -183,7 +181,7 @@ def patched_fsp_pss_subarray_device_class(
 
             return mock_component_manager
 
-    return PatchedFspPssSubarrayDevice
+    return PatchedFspPssSubarray
 
 
 @pytest.fixture()

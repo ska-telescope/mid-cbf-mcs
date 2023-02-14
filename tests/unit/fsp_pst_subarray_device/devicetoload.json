@@ -2,8 +2,8 @@
     "servers": {
         "FspMulti": {
             "fsp-01": {
-                "FspPstSubarrayDevice": {
-                    "mid_csp_cbf/fspPstSubarrayDevice/01_01": {
+                "FspPstSubarray": {
+                    "mid_csp_cbf/fspPstSubarray/01_01": {
                         "properties": {
                             "CbfControllerAddress": [
                                 "mid_csp_cbf/sub_elt/controller"
