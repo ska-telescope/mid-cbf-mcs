@@ -13,4 +13,5 @@ Developer Guide
   Vcc<vcc>
   PowerSwitch<power_switch>
   TalonLRU<talon_lru>
+  TalonDxLogConsumer<talondx_log_consumer>
   
