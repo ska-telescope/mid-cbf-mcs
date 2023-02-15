@@ -575,9 +575,6 @@ class TestCbfSubarray:
             assert test_proxies.subarray[sub_id].obsState == ObsState.EMPTY
 
             # add receptors
-            # TODO currently only support for 1 receptor per fsp
-            print(f"receptor_ids: {receptor_ids}")
-
             test_proxies.subarray[sub_id].AddReceptors(receptor_ids)
             test_proxies.wait_timeout_obs(
                 [test_proxies.subarray[sub_id]],
@@ -796,7 +793,6 @@ class TestCbfSubarray:
                         ].obsState
                         == ObsState.READY
                     )
-                    # currently only support for one receptor so only index 0 is checked
                     if "receptor_ids" in fsp:
                         assert (
                             test_proxies.fspSubarray["CORR"][sub_id][
