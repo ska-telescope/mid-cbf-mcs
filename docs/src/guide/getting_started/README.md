@@ -10,6 +10,7 @@ Code repository: [ska-mid-cbf-mcs](https://gitlab.com/ska-telescope/ska-mid-cbf-
 * [Getting Started](#getting-started)
 * [Git Repository](#git-repository)
 * [Running the Mid CBF MCS](#running-the-mid-cbf-mcs)
+* [Useful Minikube Commands](#useful-minikube-commands)
 * [Taranta](#taranta)
 * [Documentation](#documentation)
 * [Releasing](#releasing)
@@ -69,13 +70,13 @@ At the moment, the device servers implemented are:
 
 This section follows the instructions on the SKA developer’s portal: 
 
-* https://developer.skao.int/en/latest/getting-started/devenv-setup.html
-* https://developer.skao.int/en/latest/tools/dev-faq.html
+* [Dev Environment Setup](https://developer.skao.int/en/latest/getting-started/devenv-setup.html)
+* [Dev FAQs](https://developer.skao.int/en/latest/tools/dev-faq.html)
 
 # Git Repository
 
 The MCS Git Repository is available at the following page:
-https://gitlab.com/ska-telescope/ska-mid-cbf-mcs
+[https://gitlab.com/ska-telescope/ska-mid-cbf-mcs](https://gitlab.com/ska-telescope/ska-mid-cbf-mcs)
 
 The README on the repository will guide users through cloning and initializing the repository.
 
@@ -180,9 +181,9 @@ eval $(minikube docker-env --unset)   # if docker-env variables were set previou
 minikube stop                         # stop minikube
 ```
 
-# Minikube Profiles
+# Useful Minikube Commands
 
-### Create a minikube rofile
+### Create a minikube 
 ```
 minikube start 
 ```
@@ -192,8 +193,11 @@ minikube start
 minikube status 
 ```
 
-### If kubeconfig is pointing to a stale minikube and is `Misconfigured`, 
-### update the context 
+### Fixing a Misconfigured Kubeconfig
+
+If the kubeconfig is pointing to a stale minikube and is showing as `Misconfigured` 
+when checking the `minikube status`, or if the minikube's IP or port has changed, 
+update the context as follows:
 ```
 minikube update-context
 ```
