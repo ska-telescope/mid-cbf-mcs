@@ -793,7 +793,14 @@ class TestCbfSubarray:
                         ].obsState
                         == ObsState.READY
                     )
+
+                    # If receptors are not specified, then
+                    # all the subarray receptors are used
+                    receptorsSpecified = False
                     if "receptor_ids" in fsp:
+                        if fsp["receptor_ids"] != []:
+                            receptorsSpecified = True
+                    if receptorsSpecified:
                         assert (
                             test_proxies.fspSubarray["CORR"][sub_id][
                                 fsp_id

@@ -1075,7 +1075,14 @@ class CbfSubarrayComponentManager(
                 # CORR #
 
                 if fsp["function_mode"] == "CORR":
+                    # Receptors may not be specified in the
+                    # configuration at all or the list
+                    # of receptors may be empty
+                    receptorsSpecified = False
                     if "receptor_ids" in fsp:
+                        if fsp["receptor_ids"] != []:
+                            receptorsSpecified = True
+                    if receptorsSpecified:
                         for this_rec in fsp["receptor_ids"]:
                             if this_rec not in self._receptors:
                                 msg = (
@@ -1743,7 +1750,14 @@ class CbfSubarrayComponentManager(
             ] = self._frequency_band_offset_stream_2
 
             if fsp["function_mode"] == "CORR":
-                if "receptor_ids" not in fsp:
+                # Receptors may not be specified in the
+                # configuration at all or the list
+                # of receptors may be empty
+                receptorsSpecified = False
+                if "receptor_ids" in fsp:
+                    if fsp["receptor_ids"] != []:
+                        receptorsSpecified = True
+                if not receptorsSpecified:
                     # In this case by the ICD, all subarray allocated resources should be used.
                     fsp["receptor_ids"] = self._receptors
                 self._corr_config.append(fsp)
