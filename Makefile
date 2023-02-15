@@ -149,9 +149,6 @@ python-pre-lint:
 python-pre-build:
 	@$(PYTHON_RUNNER) pip install sphinx==2.2
 
-documentation:   ## ## Re-generate documentation
-	cd docs && make clean && make html
-
 help: ## show this help.
 	@echo "make targets:"
 	@echo "$(MAKEFILE_LIST)"
