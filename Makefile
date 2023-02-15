@@ -139,7 +139,7 @@ jive: ## configure TANGO_HOST to enable Jive
 update-db-port:  ## update Tango DB port so that the DB is accessible from the Talon boards on the Dell server
 	kubectl -n ska-mid-cbf patch service/tango-host-databaseds-from-makefile-test --type='json' -p '[{"op":"replace","path":"/spec/ports/0/nodePort","value": 30176}]'
 
-k8s-post-install-chart:
+k8s-pre-test:
 	@kubectl exec -n $(KUBE_NAMESPACE) $(ARTIFACTS_POD) -- mkdir -p /app/mnt/talondx-config
 
 python-pre-lint:
