@@ -237,7 +237,7 @@ class TestFspCorrSubarray:
         assert device_under_test.zoomWindowTuning == int(
             configuration["zoom_window_tuning"]
         )
-        assert device_under_test.integrationTime == int(
+        assert device_under_test.integrationFactor == int(
             configuration["integration_factor"]
         )
         assert device_under_test.fspChannelOffset == int(
