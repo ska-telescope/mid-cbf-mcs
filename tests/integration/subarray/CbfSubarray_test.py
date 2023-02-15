@@ -534,7 +534,15 @@ class TestCbfSubarray:
         "config_file_name, \
         receptor_ids, \
         vcc_receptors",
-        [("ConfigureScan_basic.json", [1, 3, 4, 2], [4, 1])],
+        [
+            ("ConfigureScan_basic.json", [1, 3, 4, 2], [4, 1]),
+            (
+                "ConfigureScan_basic_fspMultiReceptors.json",
+                [1, 3, 4, 2],
+                [4, 1],
+            ),
+            ("ConfigureScan_basic_fspNoReceptors.json", [1, 3, 4, 2], [4, 1]),
+        ],
     )
     def test_ConfigureScan_basic(
         self: TestCbfSubarray,
