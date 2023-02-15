@@ -29,19 +29,13 @@ endpoint when starting up the log consumer that is visible to the HPS devices.
 
 The following ORB arguments are used (see the make target ``talondx-log-consumer``):
 
-* ``-ORBendPointPublish giop:tcp:169.254.100.88:60721``: Exposes this IP address and port to all clients of this Tango device. When the HPS device servers contact the datab
-ase to get the network information of the log consumer, this is the IP address and port that is returned. The IP addresses matches that of the Ethernet connection to the De
-ll server, allowing the HPS device servers to direct their messages across that interface.
-* ``-ORBendPoint giop:tcp:142.73.34.173:60721``: Assigns the IP address and port that the log consumer device is actually running on. This needs to be manually assigned sin
-ce an iptables mapping rule was created on the Dell server to route any TCP traffic coming in on ``169.254.100.88:60721`` to ``142.73.34.173:60721``.
+* ``-ORBendPointPublish giop:tcp:169.254.100.88:60721``: Exposes this IP address and port to all clients of this Tango device. When the HPS device servers contact the database to get the network information of the log consumer, this is the IP address and port that is returned. The IP addresses matches that of the Ethernet connection to the Dell server, allowing the HPS device servers to direct their messages across that interface.
+* ``-ORBendPoint giop:tcp:142.73.34.173:60721``: Assigns the IP address and port that the log consumer device is actually running on. This needs to be manually assigned since an iptables mapping rule was created on the Dell server to route any TCP traffic coming in on ``169.254.100.88:60721`` to ``142.73.34.173:60721``.
 
 Some important notes:
 
-* Due to the end point publishing, no Tango devices running on the Dell server will be able to connect to the log consumer (including being able to configure the device fro
-m Jive). This is because the published IP address is not accessible on the Dell server. There may be a way to publish multiple endpoints, but this needs further investigati
-on.
-* If the log consumer device cannot be started due to an OmniORB exception saying that the end point cannot be created, it is possible that the ``142.73.34.173`` needs to c
-hange to something else. It is not yet clear why this can happen. To change it do the following:
+* Due to the end point publishing, no Tango devices running on the Dell server will be able to connect to the log consumer (including being able to configure the device from Jive). This is because the published IP address is not accessible on the Dell server. There may be a way to publish multiple endpoints, but this needs further investigation.
+* If the log consumer device cannot be started due to an OmniORB exception saying that the end point cannot be created, it is possible that the ``142.73.34.173`` needs to change to something else. It is not yet clear why this can happen. To change it do the following:
 
   * Remove the ORB arguments from the ``talondx-log-consumer`` make target, and then start the log consumer.
   * Open up Jive and look at what IP address is automatically assigned to the log consumer device. This is the IP address that we now need to use for the endpoint.
