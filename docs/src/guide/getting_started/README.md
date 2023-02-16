@@ -235,7 +235,7 @@ new dashboard.
 # Documentation
 To re-generate the documentation locally prior to checking in updates to Git:
 ```bash
-make documentation
+make docs-build html
 ```
 To see the generated documentation, open `/ska-mid-cbf-mcs/docs/build/html/index.html` in a browser -- e.g.,
 ```
