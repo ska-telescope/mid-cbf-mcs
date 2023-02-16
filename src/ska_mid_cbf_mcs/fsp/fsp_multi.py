@@ -11,10 +11,10 @@ import os
 
 from tango.server import run
 
-from ska_mid_cbf_mcs.fsp.fsp_corr_subarray import FspCorrSubarray
+from ska_mid_cbf_mcs.fsp.fsp_corr_subarray_device import FspCorrSubarray
 from ska_mid_cbf_mcs.fsp.fsp_device import Fsp
-from ska_mid_cbf_mcs.fsp.fsp_pss_subarray import FspPssSubarray
-from ska_mid_cbf_mcs.fsp.fsp_pst_subarray import FspPstSubarray
+from ska_mid_cbf_mcs.fsp.fsp_pss_subarray_device import FspPssSubarray
+from ska_mid_cbf_mcs.fsp.fsp_pst_subarray_device import FspPstSubarray
 
 file_path = os.path.dirname(os.path.abspath(__file__))
 

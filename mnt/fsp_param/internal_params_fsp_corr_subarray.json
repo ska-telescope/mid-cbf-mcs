@@ -1,0 +1,21 @@
+{
+    "resampler_delay_tracker":{
+        "fo_validity_interval": 0.001,
+        "num_lsq_points": 10,
+        "fo_fill_threshold": 3000,
+        "fo_low_threshold": 512,
+        "set_input_sample_rate": 220000000,
+        "set_output_sample_rate": 220200960
+    },
+    "fine_channelizer":{
+        "gain": 1
+    },
+    "ddr4_corner_turner":{
+        "min_integration_time_num_samps": 1904,
+        "read_threshold" : 3808,
+        "read_timeout_threshold": 450000000
+    },
+    "correlator":{
+        "num_frequency_channel": 744
+    }
+}

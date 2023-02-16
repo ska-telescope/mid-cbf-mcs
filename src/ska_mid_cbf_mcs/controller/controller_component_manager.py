@@ -18,7 +18,12 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import tango
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import AdminMode, HealthState, PowerMode
+from ska_tango_base.control_model import (
+    AdminMode,
+    HealthState,
+    PowerMode,
+    SimulationMode,
+)
 from tango import AttrQuality
 
 from ska_mid_cbf_mcs.component.component_manager import (
@@ -675,30 +680,36 @@ class ControllerComponentManager(CbfComponentManager):
                         self._logger.error(log_msg)
                         return (ResultCode.FAILED, log_msg)
 
-            # Power on all the Talon boards
+            # Power on all the Talon boards if not in SimulationMode
             # TODO: There are two VCCs per LRU. Need to check the number of
             #       VCCs turned on against the number of LRUs powered on
+            if (
+                self._talondx_component_manager.simulation_mode
+                == SimulationMode.FALSE
+            ):
+                # read in list of LRUs from configuration JSON
+                self._fqdn_talon_lru = []
 
-            # read in list of LRUs from configuration JSON
-            self._fqdn_talon_lru = []
-
-            talondx_config_file = open(
-                os.path.join(
-                    os.getcwd(),
-                    self._talondx_config_path,
-                    "talondx-config.json",
+                talondx_config_file = open(
+                    os.path.join(
+                        os.getcwd(),
+                        self._talondx_config_path,
+                        "talondx-config.json",
+                    )
                 )
-            )
 
-            talondx_config_json = json.load(talondx_config_file)
+                talondx_config_json = json.load(talondx_config_file)
 
-            talon_lru_fqdn_set = set()
-            for config_command in talondx_config_json["config_commands"]:
-                talon_lru_fqdn_set.add(config_command["talon_lru_fqdn"])
-            self._logger.info(f"talonlru list = {talon_lru_fqdn_set}")
+                talon_lru_fqdn_set = set()
+                for config_command in talondx_config_json["config_commands"]:
+                    talon_lru_fqdn_set.add(config_command["talon_lru_fqdn"])
+                self._logger.info(f"talonlru list = {talon_lru_fqdn_set}")
 
-            # TODO: handle subscribed events for missing LRUs
-            self._fqdn_talon_lru = list(talon_lru_fqdn_set)
+                # TODO: handle subscribed events for missing LRUs
+                self._fqdn_talon_lru = list(talon_lru_fqdn_set)
+            else:
+                # use a hard-coded example fqdn talon lru for simulation mode
+                self._fqdn_talon_lru = {"mid_csp_cbf/talon_lru/001"}
 
             try:
                 for fqdn in self._fqdn_talon_lru:
@@ -747,23 +758,34 @@ class ControllerComponentManager(CbfComponentManager):
         """
 
         if self._connected:
-            if len(self._fqdn_talon_lru) == 0:
-                talondx_config_file = open(
-                    os.path.join(
-                        os.getcwd(),
-                        self._talondx_config_path,
-                        "talondx-config.json",
+            if (
+                self._talondx_component_manager.simulation_mode
+                == SimulationMode.FALSE
+            ):
+                if len(self._fqdn_talon_lru) == 0:
+                    talondx_config_file = open(
+                        os.path.join(
+                            os.getcwd(),
+                            self._talondx_config_path,
+                            "talondx-config.json",
+                        )
                     )
-                )
-                talondx_config_json = json.load(talondx_config_file)
+                    talondx_config_json = json.load(talondx_config_file)
 
-                talon_lru_fqdn_set = set()
-                for config_command in talondx_config_json["config_commands"]:
-                    talon_lru_fqdn_set.add(config_command["talon_lru_fqdn"])
-                self._logger.info(f"talonlru list = {talon_lru_fqdn_set}")
+                    talon_lru_fqdn_set = set()
+                    for config_command in talondx_config_json[
+                        "config_commands"
+                    ]:
+                        talon_lru_fqdn_set.add(
+                            config_command["talon_lru_fqdn"]
+                        )
+                    self._logger.info(f"talonlru list = {talon_lru_fqdn_set}")
 
-                # TODO: handle subscribed events for missing LRUs
-                self._fqdn_talon_lru = list(talon_lru_fqdn_set)
+                    # TODO: handle subscribed events for missing LRUs
+                    self._fqdn_talon_lru = list(talon_lru_fqdn_set)
+            else:
+                # use a hard-coded example fqdn talon lru for simulation mode
+                self._fqdn_talon_lru = {"mid_csp_cbf/talon_lru/001"}
 
             try:
                 for fqdn in self._fqdn_talon_lru:

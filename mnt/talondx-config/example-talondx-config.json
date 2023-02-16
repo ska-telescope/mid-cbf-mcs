@@ -13,9 +13,11 @@
             "ds_path": "/lib/firmware/hps_software/bite_vcc_test",
             "server_instance": "talon1_test",
             "talon_lru_fqdn": "mid_csp_cbf/talon_lru/001",
+            "ds_rdma_rx_fqdn": "dell/dsrdmarx/rx1",
             "devices": [
                 "ska-mid-cbf-vcc-app"
             ]
         }
     ]
 }
+
