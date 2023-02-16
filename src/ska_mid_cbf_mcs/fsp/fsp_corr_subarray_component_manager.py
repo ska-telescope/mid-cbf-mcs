@@ -430,7 +430,7 @@ class FspCorrSubarrayComponentManager(
         )
 
         self._remove_all_receptors()
-        self._add_receptors(map(int, configuration["receptor_ids"]))
+        self._add_receptors(configuration["receptor_ids"])
 
         self._frequency_slice_id = int(configuration["frequency_slice_id"])
 

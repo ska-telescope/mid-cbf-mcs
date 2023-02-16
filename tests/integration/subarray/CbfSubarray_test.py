@@ -534,7 +534,15 @@ class TestCbfSubarray:
         "config_file_name, \
         receptor_ids, \
         vcc_receptors",
-        [("ConfigureScan_basic.json", [1, 3, 4, 2], [4, 1])],
+        [
+            ("ConfigureScan_basic.json", [1, 3, 4, 2], [4, 1]),
+            (
+                "ConfigureScan_basic_fspMultiReceptors.json",
+                [1, 3, 4, 2],
+                [4, 1],
+            ),
+            ("ConfigureScan_basic_fspNoReceptors.json", [1, 3, 4, 2], [4, 1]),
+        ],
     )
     def test_ConfigureScan_basic(
         self: TestCbfSubarray,
@@ -575,7 +583,6 @@ class TestCbfSubarray:
             assert test_proxies.subarray[sub_id].obsState == ObsState.EMPTY
 
             # add receptors
-            # TODO currently only support for 1 receptor per fsp
             test_proxies.subarray[sub_id].AddReceptors(receptor_ids)
             test_proxies.wait_timeout_obs(
                 [test_proxies.subarray[sub_id]],
@@ -794,20 +801,25 @@ class TestCbfSubarray:
                         ].obsState
                         == ObsState.READY
                     )
-                    # currently only support for one receptor so only index 0 is checked
+
+                    # If receptors are not specified, then
+                    # all the subarray receptors are used
+                    receptorsSpecified = False
                     if "receptor_ids" in fsp:
+                        if fsp["receptor_ids"] != []:
+                            receptorsSpecified = True
+                    if receptorsSpecified:
                         assert (
                             test_proxies.fspSubarray["CORR"][sub_id][
                                 fsp_id
                             ].receptors
-                            == fsp["receptor_ids"][0]
-                        )
+                        ).sort() == (fsp["receptor_ids"]).sort()
                     else:
                         assert (
                             test_proxies.fspSubarray["CORR"][sub_id][
                                 fsp_id
-                            ].receptors
-                            == receptor_ids[0]
+                            ].receptors.sort()
+                            == receptor_ids.sort()
                         )
                     assert (
                         test_proxies.fspSubarray["CORR"][sub_id][

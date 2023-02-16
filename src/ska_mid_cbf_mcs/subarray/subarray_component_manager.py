@@ -1075,7 +1075,14 @@ class CbfSubarrayComponentManager(
                 # CORR #
 
                 if fsp["function_mode"] == "CORR":
+                    # Receptors may not be specified in the
+                    # configuration at all or the list
+                    # of receptors may be empty
+                    receptorsSpecified = False
                     if "receptor_ids" in fsp:
+                        if fsp["receptor_ids"] != []:
+                            receptorsSpecified = True
+                    if receptorsSpecified:
                         for this_rec in fsp["receptor_ids"]:
                             if this_rec not in self._receptors:
                                 msg = (
@@ -1085,11 +1092,13 @@ class CbfSubarrayComponentManager(
                                 self._logger.error(msg)
                                 return (False, msg)
                     else:
-                        msg = "'receptors' not specified for Fsp CORR config"
-                        # TODO - In this case by the ICD, all subarray allocated resources should be used.
-                        # TODO add support for more than one receptor per fsp
-                        # fsp["receptor_ids"] = self._receptors
-                        fsp["receptor_ids"] = self._receptors[0]
+                        msg = (
+                            "'receptors' not specified for Fsp CORR config."
+                            "Per ICD all receptors allocated to subarray are used"
+                        )
+                        self._logger.info(msg)
+                        # In this case by the ICD, all subarray allocated resources should be used.
+                        fsp["receptor_ids"] = self._receptors
 
                     frequencyBand = freq_band_dict()[fsp["frequency_band"]]
                     # Validate frequencySliceID.
@@ -1744,9 +1753,16 @@ class CbfSubarrayComponentManager(
             fsp["subarray_receptor_ids"] = self._receptors
 
             if fsp["function_mode"] == "CORR":
-                if "receptor_ids" not in fsp:
-                    # TODO In this case by the ICD, all subarray allocated resources should be used.
-                    fsp["receptor_ids"] = [self._receptors[0]]
+                # Receptors may not be specified in the
+                # configuration at all or the list
+                # of receptors may be empty
+                receptorsSpecified = False
+                if "receptor_ids" in fsp:
+                    if fsp["receptor_ids"] != []:
+                        receptorsSpecified = True
+                if not receptorsSpecified:
+                    # In this case by the ICD, all subarray allocated resources should be used.
+                    fsp["receptor_ids"] = self._receptors
                 self._corr_config.append(fsp)
                 self._corr_fsp_list.append(fsp["fsp_id"])
 
