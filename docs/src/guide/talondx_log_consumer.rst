@@ -13,7 +13,7 @@ Monitor and Control Software (MCS).
 Note that eventually this Tango device will be moved to the Mid CBF MCS, and more instances
 of the device may be created to provide enough bandwidth for all the HPS device servers.
 
-.. automodule:: talondx_log_consumer.talondx_log_consumer
+.. automodule:: talondx_log_consumer.talondx_log_consumer_device
     :members:
 
 Connecting from HPS DS to the Log Consumer
