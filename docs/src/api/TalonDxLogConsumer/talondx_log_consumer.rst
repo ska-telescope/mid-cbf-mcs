@@ -1,6 +1,6 @@
 TalonDxLogConsumer Class
 ---------------------------------
-.. autoclass:: ska_mid_cbf_mcs.controller.talondx_log_consumer.TalonDxLogConsumer
+.. autoclass:: ska_mid_cbf_mcs.talondx_log_consumer_device.TalonDxLogConsumer
    :members:
    :undoc-members:
    :show-inheritance:
