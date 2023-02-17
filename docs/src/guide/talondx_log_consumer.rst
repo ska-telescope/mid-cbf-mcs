@@ -10,8 +10,7 @@ SKA logging framework. In this way logs from the Talon-DX boards can be aggregat
 place and eventually shipped to the Elastic framework in the same way as logs from the Mid CBF
 Monitor and Control Software (MCS).
 
-Note that eventually this Tango device will be moved to the Mid CBF MCS, and more instances
-of the device may be created to provide enough bandwidth for all the HPS device servers.
+Note: more instances of the device may be created to provide enough bandwidth for all the HPS device servers.
 
 
 Connecting from HPS DS to the Log Consumer
