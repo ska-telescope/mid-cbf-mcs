@@ -110,7 +110,7 @@ class TestFspCorrSubarrayComponentManager:
         assert fsp_corr_subarray_component_manager.frequency_slice_id == 0
         assert fsp_corr_subarray_component_manager.bandwidth == 0
         assert fsp_corr_subarray_component_manager.zoom_window_tuning == 0
-        assert fsp_corr_subarray_component_manager.integration_time == 0
+        assert fsp_corr_subarray_component_manager.integration_factor == 0
         assert fsp_corr_subarray_component_manager.scan_id == 0
         assert fsp_corr_subarray_component_manager.config_id == ""
         for i in range(const.NUM_CHANNEL_GROUPS):
@@ -173,7 +173,7 @@ class TestFspCorrSubarrayComponentManager:
             == configuration["zoom_window_tuning"]
         )
         assert (
-            fsp_corr_subarray_component_manager.integration_time
+            fsp_corr_subarray_component_manager.integration_factor
             == configuration["integration_factor"]
         )
         channelAveragingMap_config = configuration["channel_averaging_map"]

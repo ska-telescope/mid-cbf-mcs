@@ -7,7 +7,7 @@
 #
 # Distributed under the terms of the BSD-3-Clause license.
 # See LICENSE.txt for more info.
-"""Contain the tests for the FspPssSubarray."""
+"""Contain the tests for the TestFspPssSubarray."""
 
 from __future__ import annotations
 
@@ -36,7 +36,7 @@ CONST_WAIT_TIME = 4
 
 class TestFspPssSubarray:
     """
-    Test class for FspPssSubarray tests.
+    Test class for TestFspPssSubarray tests.
     """
 
     def test_State(

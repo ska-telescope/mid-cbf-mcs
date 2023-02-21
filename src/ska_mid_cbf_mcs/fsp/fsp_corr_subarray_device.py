@@ -76,6 +76,8 @@ class FspCorrSubarray(CspSubElementObsDevice):
 
     VCC = device_property(dtype=("str",))
 
+    HspFspCorrControllerAddress = device_property(dtype="str")
+
     # ----------
     # Attributes
     # ----------
@@ -85,7 +87,7 @@ class FspCorrSubarray(CspSubElementObsDevice):
         access=AttrWriteType.READ,
         max_dim_x=197,
         label="Receptors",
-        doc="List of receptors assigned to subarray",
+        doc="List of receptors for correlation",
     )
 
     frequencyBand = attribute(
@@ -146,11 +148,11 @@ class FspCorrSubarray(CspSubElementObsDevice):
         doc="Zoom window tuning (kHz)",
     )
 
-    integrationTime = attribute(
+    integrationFactor = attribute(
         dtype="uint16",
         access=AttrWriteType.READ,
-        label="Integration time (ms)",
-        doc="Integration time (ms)",
+        label="Integration factor",
+        doc="Integration factor",
     )
 
     channelAveragingMap = attribute(
@@ -255,7 +257,7 @@ class FspCorrSubarray(CspSubElementObsDevice):
 
             self.logger.debug("Entering InitCommand()")
 
-            message = "FspCorrSubarry Init command completed OK"
+            message = "FspCorrSubarryDevice Init command completed OK"
             self.logger.info(message)
             return (ResultCode.OK, message)
 
@@ -280,6 +282,7 @@ class FspCorrSubarray(CspSubElementObsDevice):
 
         return FspCorrSubarrayComponentManager(
             self.logger,
+            self.HspFspCorrControllerAddress,
             self.push_change_event,
             self._communication_status_changed,
             self._component_power_mode_changed,
@@ -387,18 +390,20 @@ class FspCorrSubarray(CspSubElementObsDevice):
         return self.component_manager.zoom_window_tuning
         # PROTECTED REGION END #    //  FspCorrSubarray.zoomWindowTuning_read
 
-    def read_integrationTime(self: FspCorrSubarray) -> int:
-        # PROTECTED REGION ID(FspCorrSubarray.integrationTime_read) ENABLED START #
+    def read_integrationFactor(self: FspCorrSubarray) -> int:
+        # PROTECTED REGION ID(FspCorrSubarray.read_integrationFactor_read) ENABLED START #
         """
-        Read the integrationTime attribute.
+        Read the integrationFactor attribute.
 
-        :return: the integrationTime attribute (millisecond).
+        :return: the integrationFactor attribute (millisecond).
         :rtype: int
         """
-        return self.component_manager.integration_time
-        # PROTECTED REGION END #    //  FspCorrSubarray.integrationTime_read
+        return self.component_manager.integration_factor
+        # PROTECTED REGION END #    //  FspCorrSubarray.integrationFactor_read
 
-    def read_channelAveragingMap(self: FspCorrSubarray) -> List[List[int]]:
+    def read_channelAveragingMap(
+        self: FspCorrSubarray,
+    ) -> List[List[int]]:
         # PROTECTED REGION ID(FspCorrSubarray.channelAveragingMap_read) ENABLED START #
         """
         Read the channelAveragingMap attribute.
@@ -802,7 +807,7 @@ class FspCorrSubarray(CspSubElementObsDevice):
 
     class ScanCommand(CspSubElementObsDevice.ScanCommand):
         """
-        A class for the FspCorrSubarray's Scan() command.
+        A class for the FspCorrSubarrFspCorrSubarrayay's Scan() command.
         """
 
         def do(
