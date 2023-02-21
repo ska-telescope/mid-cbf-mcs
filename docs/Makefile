@@ -14,14 +14,6 @@ help:
 
 .PHONY: help Makefile
 
-# Copy README from project directory so that autodoc can see and parse it correctly.
-html:
-	@$(SPHINXBUILD) -M html "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
-
-# Remove copy of README from the doc source directory.
-clean:
-	@$(SPHINXBUILD) -M clean "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
-
 # Catch-all target: route all unknown targets to Sphinx using the new
 # "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).
 %: Makefile
