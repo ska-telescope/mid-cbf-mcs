@@ -19,7 +19,6 @@ ska-mid-cbf-mcs/
 ```
 
 1. Run `make html` to generate the documentation.
-1. `README.md` is copied to `docs/src/` during `make html` so that it is
 available for autodoc to include it correctly &ndash; 
 ref: github.com/sphinx-doc/sphinx/issues/7000 .
 1. `index.rst` references other `.rst` files in the `docs/src/` folder, which reference the Python code.
