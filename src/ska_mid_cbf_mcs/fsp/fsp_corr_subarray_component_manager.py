@@ -69,7 +69,7 @@ class FspCorrSubarrayComponentManager(
         self._logger = logger
 
         self._hps_fsp_corr_controller_fqdn = hps_fsp_corr_controller_fqdn
-        self._proxy_hsp_fsp_corr_controller = None
+        self._proxy_hps_fsp_corr_controller = None
 
         self._connected = False
 
@@ -277,6 +277,26 @@ class FspCorrSubarrayComponentManager(
         :rtype: List[int]
         """
         return self._receptors
+    
+    @property
+    def simulation_mode(self: FspCorrSubarrayComponentManager) -> SimulationMode:
+        """
+        Get the simulation mode of the component manager.
+
+        :return: simulation mode of the component manager
+        """
+        return self._simulation_mode
+
+    @simulation_mode.setter
+    def simulation_mode(
+        self: FspCorrSubarrayComponentManager, value: SimulationMode
+    ) -> None:
+        """
+        Set the simulation mode of the component manager.
+
+        :param value: value to set simulation mode to
+        """
+        self._simulation_mode = value
 
     def start_communicating(
         self: FspCorrSubarrayComponentManager,
@@ -287,8 +307,6 @@ class FspCorrSubarrayComponentManager(
             return
 
         super().start_communicating()
-
-        self._get_capability_proxies()
 
         self._connected = True
         self.update_communication_status(CommunicationStatus.ESTABLISHED)
@@ -311,12 +329,12 @@ class FspCorrSubarrayComponentManager(
         # for now, assume that given addresses are valid
 
         if not self._simulation_mode:
-            if self._proxy_hsp_fsp_corr_controller is None:
-                self._proxy_hsp_fsp_corr_controller = self._get_device_proxy(
+            if self._proxy_hps_fsp_corr_controller is None:
+                self._proxy_hps_fsp_corr_controller = self._get_device_proxy(
                     self._hps_fsp_corr_controller_fqdn,
                 )
         else:
-            self._proxy_hsp_fsp_corr_controller = (
+            self._proxy_hps_fsp_corr_controller = (
                 HpsFspCorrControllerSimulator(
                     self._hps_fsp_corr_controller_fqdn
                 )
@@ -602,12 +620,12 @@ class FspCorrSubarrayComponentManager(
 
         # Parameter named "receptor_ids" used by HPS contains all the
         # receptors for the subarray
-        corr_receptors = configuration["receptor_ids"]
-        configuration["receptor_ids"] = configuration["subarray_receptor_ids"]
+        # corr_receptors = configuration["receptor_ids"]
+        # configuration["receptor_ids"] = configuration["subarray_receptor_ids"]
         # Parameter named "corr_receptor_ids" used by HPS contains the
         # subset of the subarray receptors for which the correlation results
         # are requested to be used in Mid.CBF output products (visibilities)
-        configuration["corr_receptor_ids"] = corr_receptors
+        # configuration["corr_receptor_ids"] = corr_receptors
 
         # Get the internal parameters from file
         internal_params_file_name = (
@@ -620,10 +638,13 @@ class FspCorrSubarrayComponentManager(
 
         # append all internal parameters to the configuration to pass to
         # HPS
-        configuration.update(internal_params_obj)
+        hps_fsp_configuration = dict({"configure_scan": configuration})
+        hps_fsp_configuration.update(internal_params_obj)
 
-        self._proxy_hsp_fsp_corr_controller.ConfigureScan(
-            json.dumps(configuration)
+        self._get_capability_proxies()
+
+        self._proxy_hps_fsp_corr_controller.ConfigureScan(
+            json.dumps(hps_fsp_configuration)
         )
 
         return (
@@ -647,7 +668,7 @@ class FspCorrSubarrayComponentManager(
 
         self._scan_id = scan_id
 
-        self._proxy_hsp_fsp_corr_controller.Scan(scan_id)
+        self._proxy_hps_fsp_corr_controller.Scan(scan_id)
 
         return (ResultCode.OK, "FspCorrSubarray Scan command completed OK")
 
@@ -663,7 +684,7 @@ class FspCorrSubarrayComponentManager(
         :rtype: (ResultCode, str)
         """
 
-        self._proxy_hsp_fsp_corr_controller.EndScan()
+        self._proxy_hps_fsp_corr_controller.EndScan()
 
         return (ResultCode.OK, "FspCorrSubarray EndScan command completed OK")
 
@@ -718,6 +739,6 @@ class FspCorrSubarrayComponentManager(
 
         self._remove_all_receptors()
 
-        self._proxy_hsp_fsp_corr_controller.GoToIdle()
+        self._proxy_hps_fsp_corr_controller.GoToIdle()
 
         return (ResultCode.OK, "FspCorrSubarray GoToIdle command completed OK")
