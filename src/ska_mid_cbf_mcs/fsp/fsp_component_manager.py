@@ -491,9 +491,7 @@ class FspComponentManager(CbfComponentManager):
                     functionMode not valid"
                 return (ResultCode.FAILED, message)
 
-            self._proxy_hps_fsp_controller.SetFunctionMode(
-                self._function_mode
-            )
+            self._proxy_hps_fsp_controller.SetFunctionMode(self._function_mode)
 
             self._logger.info(f"FSP set to function mode {argin}")
 

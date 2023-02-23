@@ -277,9 +277,11 @@ class FspCorrSubarrayComponentManager(
         :rtype: List[int]
         """
         return self._receptors
-    
+
     @property
-    def simulation_mode(self: FspCorrSubarrayComponentManager) -> SimulationMode:
+    def simulation_mode(
+        self: FspCorrSubarrayComponentManager,
+    ) -> SimulationMode:
         """
         Get the simulation mode of the component manager.
 

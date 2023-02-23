@@ -532,7 +532,9 @@ class FspCorrSubarray(CspSubElementObsDevice):
         """
         self.component_manager.config_id = value
 
-    def write_simulationMode(self: FspCorrSubarray, value: SimulationMode) -> None:
+    def write_simulationMode(
+        self: FspCorrSubarray, value: SimulationMode
+    ) -> None:
         """
         Set the simulation mode of the device.
 
