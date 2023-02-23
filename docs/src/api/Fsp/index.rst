@@ -9,13 +9,9 @@ Fsp
 
   Fsp Device<fsp_device>
   FspComponentManager<fsp_component_manager>
-  FspCorr<fsp_corr>
   FspCorrSubarray Device<fsp_corr_subarray_device>
   FspCorrSubarrayComponentManager<fsp_corr_subarray_component_manager>
-  FspPss<fsp_pss>
   FspPssSubarray Device<fsp_pss_subarray_device>
   FspPssSubarrayComponentManager<fsp_pss_subarray_component_manager>
-  FspPst<fsp_pst>
   FspPstSubarray Device<fsp_pst_subarray_device>
   FspPstSubarrayComponentManager<fsp_pst_subarray_component_manager>
-  FspVlbi<fsp_vlbi>
