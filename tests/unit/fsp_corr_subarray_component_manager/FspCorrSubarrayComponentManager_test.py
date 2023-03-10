@@ -187,7 +187,13 @@ class TestFspCorrSubarrayComponentManager:
                     == channelAveragingMap_config[i][j]
                 )
 
-    @pytest.mark.parametrize("config_file_name, scan_id", [("/../../data/FspCorrSubarray_ConfigureScan_basic.json", 1), ("/../../data/FspCorrSubarray_ConfigureScan_basic.json", 2)])
+    @pytest.mark.parametrize(
+        "config_file_name, scan_id",
+        [
+            ("/../../data/FspCorrSubarray_ConfigureScan_basic.json", 1),
+            ("/../../data/FspCorrSubarray_ConfigureScan_basic.json", 2),
+        ],
+    )
     def test_scan(
         self: TestFspCorrSubarrayComponentManager,
         fsp_corr_subarray_component_manager: FspCorrSubarrayComponentManager,
@@ -213,9 +219,7 @@ class TestFspCorrSubarrayComponentManager:
         f = open(file_path + config_file_name)
         json_str = f.read().replace("\n", "")
         f.close()
-        configuration = json.loads(json_str)
         fsp_corr_subarray_component_manager.configure_scan(json_str)
-        f.close()
 
         fsp_corr_subarray_component_manager.scan(scan_id)
         assert fsp_corr_subarray_component_manager.scan_id == scan_id
