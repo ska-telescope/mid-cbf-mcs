@@ -13,6 +13,7 @@ import json
 import pkgutil
 from typing import Dict
 
+RECEPTOR_ID_DICT_PATH = "mnt/receptor_id_dict/"
 
 class ReceptorUtils:
     """Utilities for translation of DISH/receptor identifiers."""
@@ -48,20 +49,19 @@ class ReceptorUtils:
         return self._receptor_id_dict
 
     def __init__(
-        self: ReceptorUtils, receptor_json_file: str, num_vcc: int
+        self: ReceptorUtils, num_vcc: int
     ) -> None:
         """
         Initialize a new instance.
 
-        :param receptor_json_file: string name of JSON file to load receptor ID data from
         :param num_vcc: number of VCCs in the system
         """
         # load the receptor ID dictionary from specified JSON file
-        self._receptor_id_dict = json.loads(
-            pkgutil.get_data(
-                __name__, f"receptor_id_dict/{receptor_json_file}"
-            ).decode("utf-8")
-        )
+        receptor_id_dict_file_name = f"{RECEPTOR_ID_DICT_PATH}receptor_id_dict_{num_vcc}r.json"
+
+        with open(receptor_id_dict_file_name, "r") as f:
+            self._receptor_id_dict = json.loads(f.read())
+
         if len(self._receptor_id_dict) != num_vcc:
             raise ValueError(
                 f"Incorrect number ({len(self._receptor_id_dict)}) of receptors specified in file {receptor_json_file} ; {num_vcc} VCCs currently available."

@@ -523,14 +523,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                 f"Configuring internal parameters for VCC band {freq_band_name}"
             )
 
-            internal_params_file_name = (
-                VCC_PARAM_PATH
-                + "internal_params_receptor"
-                + str(self._receptor_id)
-                + "_band"
-                + freq_band_name
-                + ".json"
-            )
+            internal_params_file_name = f"{VCC_PARAM_PATH}internal_params_receptor{self._receptor_id}_band{freq_band_name}.json"
             self._logger.debug(
                 f"Using parameters stored in {internal_params_file_name}"
             )

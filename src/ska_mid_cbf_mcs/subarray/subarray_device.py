@@ -240,7 +240,6 @@ class CbfSubarray(CspSubElementSubarray):
             fsp_corr_sub=self.FspCorrSubarray,
             fsp_pss_sub=self.FspPssSubarray,
             fsp_pst_sub=self.FspPstSubarray,
-            receptor_json_file="receptor_id_dict_4r.json",  # TODO hardcoded
             logger=self.logger,
             push_change_event_callback=self.push_change_event,
             component_resourced_callback=self._component_resourced,

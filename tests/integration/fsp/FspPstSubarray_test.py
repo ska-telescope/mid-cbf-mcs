@@ -213,9 +213,8 @@ class TestFspPstSubarray:
         device_under_test.ConfigureScan(json_str)
 
         for i, timingBeam in enumerate(configuration["timing_beam"]):
-            assert list(device_under_test.receptors) == list(
-                timingBeam["receptor_ids"]
-            )
+            for idx in range(len(device_under_test.receptors)):
+                assert device_under_test.receptors[idx] == timingBeam["receptor_ids"][idx][1]
             assert device_under_test.timingBeams[i] == json.dumps(timingBeam)
             assert device_under_test.timingBeamID[i] == int(
                 timingBeam["timing_beam_id"]

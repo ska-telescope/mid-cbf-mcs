@@ -119,7 +119,6 @@ class CbfSubarrayComponentManager(
         fsp_corr_sub: List[str],
         fsp_pss_sub: List[str],
         fsp_pst_sub: List[str],
-        receptor_json_file: str,
         logger: logging.Logger,
         push_change_event_callback: Optional[Callable],
         component_resourced_callback: Callable[[bool], None],
@@ -142,8 +141,6 @@ class CbfSubarrayComponentManager(
         :param fsp_corr_sub: FQDNs of subordinate FSP CORR subarray devices
         :param fsp_pss_sub: FQDNs of subordinate FSP PSS-BF subarray devices
         :param fsp_pst_sub: FQDNs of subordinate FSP PST-BF devices
-        :param receptor_json_file: name of JSON file containing receptor IDs str
-            to int translation
         :param logger: a logger for this object to use
         :param push_change_event_callback: method to call when the base classes
             want to send an event
@@ -168,9 +165,7 @@ class CbfSubarrayComponentManager(
 
         self._logger.info("Entering CbfSubarrayComponentManager.__init__)")
 
-        self._receptor_utils = ReceptorUtils(
-            receptor_json_file=receptor_json_file, num_vcc=const.MAX_VCC
-        )
+        self._receptor_utils = ReceptorUtils(num_vcc=const.MAX_VCC)
 
         self._component_op_fault_callback = component_fault_callback
         self._component_obs_fault_callback = component_obs_fault_callback
@@ -1942,7 +1937,11 @@ class CbfSubarrayComponentManager(
         for receptor_id in argin:
             self._logger.debug(f"Attempting to remove receptor {receptor_id}")
             if receptor_id in self._receptors:
-                vccID = self._receptor_to_vcc[receptor_id]
+                if receptor_id in self._receptor_to_vcc.keys():
+                    vccID = self._receptor_to_vcc[receptor_id]
+                else:
+                    self._logger.warning(f"Invalid receptor {receptor_id}. Skipping.")
+                    continue
                 vccFQDN = self._fqdn_vcc[vccID - 1]
                 vccProxy = self._proxies_vcc[vccID - 1]
 
@@ -2007,7 +2006,12 @@ class CbfSubarrayComponentManager(
                 self._logger.debug(
                     f"Attempting to remove receptor {receptor_id}"
                 )
-                vccID = self._receptor_to_vcc[receptor_id]
+                
+                if receptor_id in self._receptor_to_vcc.keys():
+                    vccID = self._receptor_to_vcc[receptor_id]
+                else:
+                    self._logger.warning(f"Invalid receptor {receptor_id}. Skipping.")
+                    continue
                 vccFQDN = self._fqdn_vcc[vccID - 1]
                 vccProxy = self._proxies_vcc[vccID - 1]
 
@@ -2067,7 +2071,12 @@ class CbfSubarrayComponentManager(
         for receptor_id in argin:
             self._logger.debug(f"Attempting to add receptor {receptor_id}")
 
-            vccID = self._receptor_to_vcc[receptor_id]
+            if receptor_id in self._receptor_to_vcc.keys():
+                vccID = self._receptor_to_vcc[receptor_id]
+            else:
+                self._logger.warning(f"Invalid receptor {receptor_id}. Skipping.")
+                continue
+
             vccProxy = self._proxies_vcc[vccID - 1]
 
             self._logger.debug(
