@@ -214,7 +214,10 @@ class TestFspPstSubarray:
 
         for i, timingBeam in enumerate(configuration["timing_beam"]):
             for idx in range(len(device_under_test.receptors)):
-                assert device_under_test.receptors[idx] == timingBeam["receptor_ids"][idx][1]
+                assert (
+                    device_under_test.receptors[idx]
+                    == timingBeam["receptor_ids"][idx][1]
+                )
             assert device_under_test.timingBeams[i] == json.dumps(timingBeam)
             assert device_under_test.timingBeamID[i] == int(
                 timingBeam["timing_beam_id"]

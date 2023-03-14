@@ -1940,7 +1940,9 @@ class CbfSubarrayComponentManager(
                 if receptor_id in self._receptor_to_vcc.keys():
                     vccID = self._receptor_to_vcc[receptor_id]
                 else:
-                    self._logger.warning(f"Invalid receptor {receptor_id}. Skipping.")
+                    self._logger.warning(
+                        f"Invalid receptor {receptor_id}. Skipping."
+                    )
                     continue
                 vccFQDN = self._fqdn_vcc[vccID - 1]
                 vccProxy = self._proxies_vcc[vccID - 1]
@@ -2006,11 +2008,13 @@ class CbfSubarrayComponentManager(
                 self._logger.debug(
                     f"Attempting to remove receptor {receptor_id}"
                 )
-                
+
                 if receptor_id in self._receptor_to_vcc.keys():
                     vccID = self._receptor_to_vcc[receptor_id]
                 else:
-                    self._logger.warning(f"Invalid receptor {receptor_id}. Skipping.")
+                    self._logger.warning(
+                        f"Invalid receptor {receptor_id}. Skipping."
+                    )
                     continue
                 vccFQDN = self._fqdn_vcc[vccID - 1]
                 vccProxy = self._proxies_vcc[vccID - 1]
@@ -2074,7 +2078,9 @@ class CbfSubarrayComponentManager(
             if receptor_id in self._receptor_to_vcc.keys():
                 vccID = self._receptor_to_vcc[receptor_id]
             else:
-                self._logger.warning(f"Invalid receptor {receptor_id}. Skipping.")
+                self._logger.warning(
+                    f"Invalid receptor {receptor_id}. Skipping."
+                )
                 continue
 
             vccProxy = self._proxies_vcc[vccID - 1]

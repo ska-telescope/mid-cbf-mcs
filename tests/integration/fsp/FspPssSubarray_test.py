@@ -216,7 +216,10 @@ class TestFspPssSubarray:
         )
         for i, searchBeam in enumerate(configuration["search_beam"]):
             for idx in range(len(device_under_test.receptors)):
-                assert device_under_test.receptors[idx] == searchBeam["receptor_ids"][idx][1]
+                assert (
+                    device_under_test.receptors[idx]
+                    == searchBeam["receptor_ids"][idx][1]
+                )
             assert device_under_test.searchBeams[i] == json.dumps(searchBeam)
             assert device_under_test.searchBeamID[i] == int(
                 searchBeam["search_beam_id"]

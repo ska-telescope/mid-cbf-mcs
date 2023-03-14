@@ -10,10 +10,10 @@
 from __future__ import annotations  # allow forward references in type hints
 
 import json
-import pkgutil
 from typing import Dict
 
 RECEPTOR_ID_DICT_PATH = "mnt/receptor_id_dict/"
+
 
 class ReceptorUtils:
     """Utilities for translation of DISH/receptor identifiers."""
@@ -48,23 +48,23 @@ class ReceptorUtils:
         """Return the receptor ID str to int translation dictionary."""
         return self._receptor_id_dict
 
-    def __init__(
-        self: ReceptorUtils, num_vcc: int
-    ) -> None:
+    def __init__(self: ReceptorUtils, num_vcc: int) -> None:
         """
         Initialize a new instance.
 
         :param num_vcc: number of VCCs in the system
         """
         # load the receptor ID dictionary from specified JSON file
-        receptor_id_dict_file_name = f"{RECEPTOR_ID_DICT_PATH}receptor_id_dict_{num_vcc}r.json"
+        receptor_id_dict_file_name = (
+            f"{RECEPTOR_ID_DICT_PATH}receptor_id_dict_{num_vcc}r.json"
+        )
 
         with open(receptor_id_dict_file_name, "r") as f:
             self._receptor_id_dict = json.loads(f.read())
 
         if len(self._receptor_id_dict) != num_vcc:
             raise ValueError(
-                f"Incorrect number ({len(self._receptor_id_dict)}) of receptors specified in file {receptor_json_file} ; {num_vcc} VCCs currently available."
+                f"Incorrect number ({len(self._receptor_id_dict)}) of receptors specified in file {receptor_id_dict_file_name} ; {num_vcc} VCCs currently available."
             )
         for receptor_id_str, receptor_id_int in self._receptor_id_dict.items():
             if receptor_id_int != self.receptor_id_str_to_int(receptor_id_str):
