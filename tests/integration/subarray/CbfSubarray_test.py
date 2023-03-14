@@ -1004,7 +1004,7 @@ class TestCbfSubarray:
                         )
                         # TODO currently only one receptor supported
                         assert (
-                            searchBeam["receptor_ids"][0]
+                            searchBeam["receptor_ids"][0][1]
                             == self.receptor_utils.receptors[
                                 fsp["search_beam"][idx]["receptor_ids"][0]
                             ]
@@ -1049,15 +1049,8 @@ class TestCbfSubarray:
                     )
                     for beam in fsp["timing_beam"]:
                         # TODO currently only one receptor supported
-                        assert all(
-                            [
-                                test_proxies.fspSubarray["PST-BF"][sub_id][
-                                    fsp_id
-                                ].receptors[i]
-                                == self.receptor_utils.receptors[j]
-                                for i, j in zip(range(1), beam["receptor_ids"])
-                            ]
-                        )
+                        assert test_proxies.fspSubarray["PST-BF"][sub_id][fsp_id].receptors[0] == self.receptor_utils.receptors[beam["receptor_ids"][0]]
+
                         assert all(
                             [
                                 test_proxies.fspSubarray["PST-BF"][sub_id][
