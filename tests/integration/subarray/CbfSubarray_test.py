@@ -1049,7 +1049,14 @@ class TestCbfSubarray:
                     )
                     for beam in fsp["timing_beam"]:
                         # TODO currently only one receptor supported
-                        assert test_proxies.fspSubarray["PST-BF"][sub_id][fsp_id].receptors[0] == self.receptor_utils.receptors[beam["receptor_ids"][0]]
+                        assert (
+                            test_proxies.fspSubarray["PST-BF"][sub_id][
+                                fsp_id
+                            ].receptors[0]
+                            == self.receptor_utils.receptors[
+                                beam["receptor_ids"][0]
+                            ]
+                        )
 
                         assert all(
                             [
