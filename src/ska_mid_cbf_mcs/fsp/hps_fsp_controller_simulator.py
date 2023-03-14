@@ -49,7 +49,7 @@ class HpsFspControllerSimulator:
         """Get the current state of the device"""
         return self._state
 
-    def SetFspFunctionMode(
+    def SetFunctionMode(
         self: HpsFspControllerSimulator, f_mode: FspModes
     ) -> None:
         """

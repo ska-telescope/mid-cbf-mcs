@@ -301,7 +301,7 @@ class TestVccComponentManager:
     @pytest.mark.parametrize(
         "config_file_name", ["Vcc_ConfigureScan_basic.json"]
     )
-    @pytest.mark.skip(reason="Intermitent failure in the pipeline")
+    @pytest.mark.skip(reason="Intermittent failure in the pipeline")
     def test_configure_scan_invalid_frequency_band(
         self: TestVccComponentManager,
         vcc_component_manager: VccComponentManager,

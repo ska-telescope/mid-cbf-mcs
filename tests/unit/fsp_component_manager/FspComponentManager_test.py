@@ -204,6 +204,13 @@ class TestFspComponentManager:
         )
         assert fsp_component_manager._connected is True
 
+        # on invoked to get capability proxy
+        (result_code, msg) = fsp_component_manager.on()
+        assert (result_code, msg) == (
+            ResultCode.OK,
+            "Fsp On command completed OK",
+        )
+
         fsp_component_manager.add_subarray_membership(sub_id)
         time.sleep(3)
         assert list(fsp_component_manager.subarray_membership) == [sub_id]
@@ -299,6 +306,13 @@ class TestFspComponentManager:
         )
         assert fsp_component_manager._connected is True
 
+        # on invoked to get capability proxy
+        (result_code, msg) = fsp_component_manager.on()
+        assert (result_code, msg) == (
+            ResultCode.OK,
+            "Fsp On command completed OK",
+        )
+
         fsp_component_manager.add_subarray_membership(sub_id)
         time.sleep(3)
         assert list(fsp_component_manager.subarray_membership) == [sub_id]
@@ -364,6 +378,13 @@ class TestFspComponentManager:
         )
         assert fsp_component_manager._connected is True
 
+        # on invoked to get capability proxy
+        (result_code, msg) = fsp_component_manager.on()
+        assert (result_code, msg) == (
+            ResultCode.OK,
+            "Fsp On command completed OK",
+        )
+
         fsp_component_manager.add_subarray_membership(sub_id)
         time.sleep(3)
         assert list(fsp_component_manager.subarray_membership) == [sub_id]
@@ -399,12 +420,12 @@ class TestFspComponentManager:
         for weights in timing_beam_weights["beamWeights"]:
             beam_weights_details = weights["beamWeightsDetails"]
             for receptor in beam_weights_details:
-                recptor_id = receptor["receptor"]
+                receptor_id = receptor["receptor"]
                 for frequency_slice in receptor["receptorWeightsDetails"]:
                     weights = frequency_slice["weights"]
                     assert (
                         fsp_component_manager.timing_beam_weights[
-                            recptor_id - 1
+                            receptor_id - 1
                         ]
                         == weights
                     )

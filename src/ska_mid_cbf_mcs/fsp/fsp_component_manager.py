@@ -98,8 +98,8 @@ class FspComponentManager(CbfComponentManager):
         self._group_fsp_corr_subarray = None
         self._group_fsp_pss_subarray = None
         self._group_fsp_pst_subarray = None
-        self._proxy_hsp_fsp_controller = None
-        self._proxy_hsp_fsp_corr_controller = None
+        self._proxy_hps_fsp_controller = None
+        self._proxy_hps_fsp_corr_controller = None
         self._proxy_fsp_corr_subarray = None
         self._proxy_fsp_pss_subarray = None
         self._proxy_fsp_pst_subarray = None
@@ -200,7 +200,6 @@ class FspComponentManager(CbfComponentManager):
 
         super().start_communicating()
 
-        self._get_capability_proxies()
         self._get_group_proxies()
 
         self._connected = True
@@ -255,25 +254,25 @@ class FspComponentManager(CbfComponentManager):
         # for now, assume that given addresses are valid
 
         if not self._simulation_mode:
-            if self._proxy_hsp_fsp_controller is None:
-                self._proxy_hsp_fsp_controller = self._get_device_proxy(
+            if self._proxy_hps_fsp_controller is None:
+                self._proxy_hps_fsp_controller = self._get_device_proxy(
                     self._hps_fsp_controller_fqdn, is_group=False
                 )
 
-            if self._proxy_hsp_fsp_corr_controller is None:
-                self._proxy_hsp_fsp_corr_controller = self._get_device_proxy(
+            if self._proxy_hps_fsp_corr_controller is None:
+                self._proxy_hps_fsp_corr_controller = self._get_device_proxy(
                     self._hps_fsp_corr_controller_fqdn,
                     is_group=False,
                 )
         else:
-            self._proxy_hsp_fsp_corr_controller = (
+            self._proxy_hps_fsp_corr_controller = (
                 HpsFspCorrControllerSimulator(
                     self._hps_fsp_corr_controller_fqdn
                 )
             )
-            self._proxy_hsp_fsp_controller = HpsFspControllerSimulator(
+            self._proxy_hps_fsp_controller = HpsFspControllerSimulator(
                 self._hps_fsp_controller_fqdn,
-                self._proxy_hsp_fsp_corr_controller,
+                self._proxy_hps_fsp_corr_controller,
             )
 
         if self._proxy_fsp_corr_subarray is None:
@@ -392,6 +391,8 @@ class FspComponentManager(CbfComponentManager):
         """
 
         if self._connected:
+            self._get_capability_proxies()
+
             # TODO: in the future, DsFspController to implement on(), off()
             # commands. Then invoke here the DsFspController on() command.
 
@@ -490,9 +491,7 @@ class FspComponentManager(CbfComponentManager):
                     functionMode not valid"
                 return (ResultCode.FAILED, message)
 
-            self._proxy_hsp_fsp_controller.SetFspFunctionMode(
-                self._function_mode
-            )
+            self._proxy_hps_fsp_controller.SetFunctionMode(self._function_mode)
 
             self._logger.info(f"FSP set to function mode {argin}")
 
@@ -612,7 +611,7 @@ class FspComponentManager(CbfComponentManager):
             ]:
                 # the whole delay model must be stored
                 self._delay_model = copy.deepcopy(argin)
-                self._proxy_hsp_fsp_corr_controller.UpdateDelayModels(argin)
+                self._proxy_hps_fsp_corr_controller.UpdateDelayModels(argin)
 
             else:
                 log_msg = (

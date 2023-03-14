@@ -30,7 +30,7 @@ from typing import List, Optional, Tuple
 import tango
 from ska_tango_base import CspSubElementObsDevice, SKABaseDevice
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import ObsState, PowerMode
+from ska_tango_base.control_model import ObsState, PowerMode, SimulationMode
 from tango import AttrWriteType, DebugIt
 from tango.server import attribute, command, device_property, run
 
@@ -76,7 +76,7 @@ class FspCorrSubarray(CspSubElementObsDevice):
 
     VCC = device_property(dtype=("str",))
 
-    HspFspCorrControllerAddress = device_property(dtype="str")
+    HpsFspCorrControllerAddress = device_property(dtype="str")
 
     # ----------
     # Attributes
@@ -199,6 +199,13 @@ class FspCorrSubarray(CspSubElementObsDevice):
         doc="set when transition to READY is performed",
     )
 
+    simulationMode = attribute(
+        dtype=SimulationMode,
+        access=AttrWriteType.READ_WRITE,
+        memorized=True,
+        doc="Reports the simulation mode of the device.",
+    )
+
     # ---------------
     # General methods
     # ---------------
@@ -282,7 +289,7 @@ class FspCorrSubarray(CspSubElementObsDevice):
 
         return FspCorrSubarrayComponentManager(
             self.logger,
-            self.HspFspCorrControllerAddress,
+            self.HpsFspCorrControllerAddress,
             self.push_change_event,
             self._communication_status_changed,
             self._component_power_mode_changed,
@@ -524,6 +531,18 @@ class FspCorrSubarray(CspSubElementObsDevice):
         :param value: the configID attribute value.
         """
         self.component_manager.config_id = value
+
+    def write_simulationMode(
+        self: FspCorrSubarray, value: SimulationMode
+    ) -> None:
+        """
+        Set the simulation mode of the device.
+
+        :param value: SimulationMode
+        """
+        super().write_simulationMode(value)
+        self.component_manager.simulation_mode = value
+
         # PROTECTED REGION END #    //  FspCorrSubarray.configID_write
 
     # TODO: Reinstate AddChannels?
