@@ -622,11 +622,14 @@ class FspCorrSubarrayComponentManager(
 
         # Parameter named "receptor_ids" used by HPS contains all the
         # receptors for the subarray
-        # corr_receptors = configuration["receptor_ids"]
-        # configuration["receptor_ids"] = configuration["subarray_receptor_ids"]
         # Parameter named "corr_receptor_ids" used by HPS contains the
         # subset of the subarray receptors for which the correlation results
         # are requested to be used in Mid.CBF output products (visibilities)
+        # TODO uncomment the following and add the full list of receptors
+        # included in the CBF subarray before passing the scan configuration
+        # to the FSP subarray
+        # corr_receptors = configuration["receptor_ids"]
+        # configuration["receptor_ids"] = configuration["subarray_receptor_ids"]
         # configuration["corr_receptor_ids"] = corr_receptors
 
         # Get the internal parameters from file
