@@ -203,30 +203,6 @@ class TestVccComponentManager:
         input_delay_model_obj = json.loads(input_delay_model)
 
         # update the delay model
-<<<<<<< HEAD
-        min_fs_id = 1
-        max_fs_id = 26
-        model_len = 6
-        for m in delay_model["delayModel"]:
-            receptor_index = m["delayDetails"][0]["receptor"][1]
-            vcc_component_manager.receptor_id = receptor_index
-            assert vcc_component_manager.receptor_id == receptor_index
-            vcc_component_manager.update_delay_model(
-                json.dumps(m["delayDetails"])
-            )
-            for delayDetails in m["delayDetails"]:
-                for frequency_slice in delayDetails["receptorDelayDetails"]:
-                    fs_id = frequency_slice["fsid"]
-                    coeff = frequency_slice["delayCoeff"]
-                    if (
-                        min_fs_id <= fs_id <= max_fs_id
-                        and len(coeff) == model_len
-                    ):
-                        assert (
-                            vcc_component_manager.delay_model[fs_id - 1]
-                            == frequency_slice["delayCoeff"]
-                        )
-=======
         # Set the receptor id arbitrarily to the first receptor
         # in the delay model
         input_delay_model_first_receptor = input_delay_model_obj["delayModel"][
@@ -234,10 +210,10 @@ class TestVccComponentManager:
         ]
         vcc_component_manager.receptor_id = input_delay_model_first_receptor[
             "receptor"
-        ]
+        ][1]
         assert (
             vcc_component_manager.receptor_id
-            == input_delay_model_first_receptor["receptor"]
+            == input_delay_model_first_receptor["receptor"][1]
         )
         vcc_component_manager.update_delay_model(input_delay_model)
 
@@ -247,7 +223,7 @@ class TestVccComponentManager:
 
         # check that the coeff values were copied
         for entry in input_delay_model_obj["delayModel"]:
-            if entry["receptor"] == vcc_component_manager.receptor_id:
+            if entry["receptor"][1] == vcc_component_manager.receptor_id:
                 input_delay_model_for_receptor = json.dumps(entry)
                 # the updated delay model for vcc is a single entry
                 # for the given receptor and should be the first (only)
@@ -260,7 +236,6 @@ class TestVccComponentManager:
                     input_delay_model_for_receptor
                     == updated_delay_model_for_vcc
                 )
->>>>>>> main
 
     @pytest.mark.parametrize(
         "config_file_name", ["Vcc_ConfigureScan_basic.json"]

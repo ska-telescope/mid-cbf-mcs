@@ -847,17 +847,26 @@ class TestCbfSubarray:
                         if fsp["receptor_ids"] != []:
                             receptorsSpecified = True
 
-                    fsp_corr_receptors = (test_proxies.fspSubarray["CORR"][sub_id][fsp_id].receptors).sort()
+                    fsp_corr_receptors = (
+                        test_proxies.fspSubarray["CORR"][sub_id][
+                            fsp_id
+                        ].receptors
+                    ).sort()
 
                     if receptorsSpecified:
-                        fsp_config_receptors = [self.receptor_utils.receptors[r] for r in (fsp["receptor_ids"]).sort()]
+                        fsp_config_receptors = [
+                            self.receptor_utils.receptors[r]
+                            for r in (fsp["receptor_ids"]).sort()
+                        ]
                         assert fsp_corr_receptors == fsp_config_receptors
 
                     else:
-                        fsp_config_receptors = [self.receptor_utils.receptors[r] for r in receptor_ids.sort()]
+                        fsp_config_receptors = [
+                            self.receptor_utils.receptors[r]
+                            for r in receptor_ids.sort()
+                        ]
                         assert fsp_corr_receptors == fsp_config_receptors
 
-                        )
                     assert (
                         test_proxies.fspSubarray["CORR"][sub_id][
                             fsp_id

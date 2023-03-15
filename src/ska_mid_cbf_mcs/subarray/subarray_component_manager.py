@@ -501,8 +501,7 @@ class CbfSubarrayComponentManager(
                     ]
                 t = Thread(
                     target=self._update_delay_model,
-                    args=(json.dumps(delay_model),
-                    ),
+                    args=(json.dumps(delay_model),),
                 )
                 t.start()
             except Exception as e:
@@ -1821,10 +1820,10 @@ class CbfSubarrayComponentManager(
                     fsp["receptor_ids"] = self._receptors
                     # receptor IDs to pair of str and int for FSP level
                     for i, receptor in enumerate(self._receptors):
-                            fsp["receptor_ids"][i] = [
-                                receptor,
-                                self._receptor_utils.receptors[receptor],
-                            ]
+                        fsp["receptor_ids"][i] = [
+                            receptor,
+                            self._receptor_utils.receptors[receptor],
+                        ]
 
                 self._corr_config.append(fsp)
                 self._corr_fsp_list.append(fsp["fsp_id"])

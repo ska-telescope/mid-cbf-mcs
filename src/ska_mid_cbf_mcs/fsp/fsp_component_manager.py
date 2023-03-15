@@ -616,7 +616,9 @@ class FspComponentManager(CbfComponentManager):
                 # only send integer receptorID to HPS
                 for model in delay_model["delayModel"]:
                     model["receptor"] = model["receptor"][1]
-                self._proxy_hps_fsp_corr_controller.UpdateDelayModels(json.dumps(delay_model))
+                self._proxy_hps_fsp_corr_controller.UpdateDelayModels(
+                    json.dumps(delay_model)
+                )
 
             else:
                 log_msg = (
