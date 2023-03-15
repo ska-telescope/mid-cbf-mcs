@@ -55,8 +55,13 @@ def fsp_corr_subarray_component_manager(
     :return: a FspCorrSubarray component manager.
     """
 
+    # HPS Fsp Corr Controller fqdn not used in this testing
+    # since test only executed for simulationMode = true
+    fsp_corr_controller_fqdn = "DsFspCorrController FQDN placeholder for test"
+
     return FspCorrSubarrayComponentManager(
         logger,
+        fsp_corr_controller_fqdn,
         push_change_event_callback,
         communication_status_changed_callback,
         component_power_mode_changed_callback,

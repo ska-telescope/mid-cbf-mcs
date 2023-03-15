@@ -64,14 +64,19 @@ def fsp_component_manager(
     f.close()
     configuration = json.loads(json_string)
 
-    fsp_corr_subarray_fqdns_all = configuration["fqdn_fsp_corr_subarray"]
-    fsp_pss_subarray_fqdns_all = configuration["fqdn_fsp_pss_subarray"]
-    fsp_pst_subarray_fqdns_all = configuration["fqdn_fsp_pst_subarray"]
+    fsp_corr_subarray_fqdns_all = configuration[
+        "fqdn_fsp_corr_subarray_device"
+    ]
+    fsp_pss_subarray_fqdns_all = configuration["fqdn_fsp_pss_subarray_device"]
+    fsp_pst_subarray_fqdns_all = configuration["fqdn_fsp_pst_subarray_device"]
 
-    fsp_corr_subarray_address = fsp_corr_subarray_fqdns_all[0]
-    fsp_pss_subarray_address = fsp_pss_subarray_fqdns_all[0]
-    fsp_pst_subarray_address = fsp_pst_subarray_fqdns_all[0]
-    vlbi_address = configuration["fqdn_vlbi"][0]
+    # HPS Fsp Controller fqdn not used in this testing
+    # since test only executed for simulationMode = true
+    hps_fsp_controller_fqdn = "DsFspController FQDN placeholder for test"
+
+    # HPS Fsp Corr Controller fqdn not used in this testing
+    # since test only executed for simulationMode = true
+    fsp_corr_controller_fqdn = "DsFspCorrController FQDN placeholder for test"
 
     return FspComponentManager(
         logger,
@@ -79,10 +84,8 @@ def fsp_component_manager(
         fsp_corr_subarray_fqdns_all,
         fsp_pss_subarray_fqdns_all,
         fsp_pst_subarray_fqdns_all,
-        fsp_corr_subarray_address,
-        fsp_pss_subarray_address,
-        fsp_pst_subarray_address,
-        vlbi_address,
+        hps_fsp_controller_fqdn,
+        fsp_corr_controller_fqdn,
         push_change_event_callback,
         communication_status_changed_callback,
         component_power_mode_changed_callback,
@@ -179,7 +182,7 @@ def push_change_event_callback(
 
 
 @pytest.fixture()
-def mock_fsp_corr_subarray() -> unittest.mock.Mock:
+def mock_fsp_corr_subarray_device() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.OFF)
     return builder()
@@ -194,7 +197,7 @@ def mock_fsp_corr_subarray_group() -> unittest.mock.Mock:
 
 
 @pytest.fixture()
-def mock_fsp_pss_subarray() -> unittest.mock.Mock:
+def mock_fsp_pss_subarray_device() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.OFF)
     # add receptors to the mock pss subarray
@@ -212,7 +215,7 @@ def mock_fsp_pss_subarray_group() -> unittest.mock.Mock:
 
 
 @pytest.fixture()
-def mock_fsp_pst_subarray() -> unittest.mock.Mock:
+def mock_fsp_pst_subarray_device() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.OFF)
     # add receptors to the mock pst subarray
@@ -231,38 +234,38 @@ def mock_fsp_pst_subarray_group() -> unittest.mock.Mock:
 
 @pytest.fixture()
 def initial_mocks(
-    mock_fsp_corr_subarray: unittest.mock.Mock,
+    mock_fsp_corr_subarray_device: unittest.mock.Mock,
     mock_fsp_corr_subarray_group: unittest.mock.Mock,
-    mock_fsp_pss_subarray: unittest.mock.Mock,
+    mock_fsp_pss_subarray_device: unittest.mock.Mock,
     mock_fsp_pss_subarray_group: unittest.mock.Mock,
-    mock_fsp_pst_subarray: unittest.mock.Mock,
+    mock_fsp_pst_subarray_device: unittest.mock.Mock,
     mock_fsp_pst_subarray_group: unittest.mock.Mock,
 ) -> Dict[str, unittest.mock.Mock]:
     """
     Return a dictionary of device proxy mocks to pre-register.
 
-    :param mock_fsp_corr_subarray: a mock FspCorrSubarray.
+    :param mock_fsp_corr_subarray_device: a mock FspCorrSubarray.
     :param mock_fsp_corr_subarray_group: a mock FspCorrSubarray group.
-    :param mock_fsp_pss_subarray: a mock FspPssSubarray.
+    :param mock_fsp_pss_subarray_device: a mock FspPssSubarray.
     :param mock_fsp_pss_subarray_group: a mock FspPssSubarray group.
-    :param mock_fsp_pst_subarray: a mock FspPstSubarray.
+    :param mock_fsp_pst_subarray_device: a mock FspPstSubarray.
     :param mock_fsp_pst_subarray_group: a mock FspPstSubarray group.
 
     :return: a dictionary of device proxy mocks to pre-register.
     """
     return {
-        "mid_csp_cbf/fspCorrSubarray/01_01": mock_fsp_corr_subarray,
-        "mid_csp_cbf/fspCorrSubarray/02_01": mock_fsp_corr_subarray,
-        "mid_csp_cbf/fspCorrSubarray/03_01": mock_fsp_corr_subarray,
-        "mid_csp_cbf/fspCorrSubarray/04_01": mock_fsp_corr_subarray,
-        "mid_csp_cbf/fspPssSubarray/01_01": mock_fsp_pss_subarray,
-        "mid_csp_cbf/fspPssSubarray/02_01": mock_fsp_pss_subarray,
-        "mid_csp_cbf/fspPssSubarray/03_01": mock_fsp_pss_subarray,
-        "mid_csp_cbf/fspPssSubarray/04_01": mock_fsp_pss_subarray,
-        "mid_csp_cbf/fspPstSubarray/01_01": mock_fsp_pst_subarray,
-        "mid_csp_cbf/fspPstSubarray/02_01": mock_fsp_pst_subarray,
-        "mid_csp_cbf/fspPstSubarray/03_01": mock_fsp_pst_subarray,
-        "mid_csp_cbf/fspPstSubarray/04_01": mock_fsp_pst_subarray,
+        "mid_csp_cbf/fspCorrSubarray/01_01": mock_fsp_corr_subarray_device,
+        "mid_csp_cbf/fspCorrSubarray/02_01": mock_fsp_corr_subarray_device,
+        "mid_csp_cbf/fspCorrSubarray/03_01": mock_fsp_corr_subarray_device,
+        "mid_csp_cbf/fspCorrSubarray/04_01": mock_fsp_corr_subarray_device,
+        "mid_csp_cbf/fspPssSubarray/01_01": mock_fsp_pss_subarray_device,
+        "mid_csp_cbf/fspPssSubarray/02_01": mock_fsp_pss_subarray_device,
+        "mid_csp_cbf/fspPssSubarray/03_01": mock_fsp_pss_subarray_device,
+        "mid_csp_cbf/fspPssSubarray/04_01": mock_fsp_pss_subarray_device,
+        "mid_csp_cbf/fspPstSubarray/01_01": mock_fsp_pst_subarray_device,
+        "mid_csp_cbf/fspPstSubarray/02_01": mock_fsp_pst_subarray_device,
+        "mid_csp_cbf/fspPstSubarray/03_01": mock_fsp_pst_subarray_device,
+        "mid_csp_cbf/fspPstSubarray/04_01": mock_fsp_pst_subarray_device,
         "FSP Subarray Corr": mock_fsp_corr_subarray_group,
         "FSP Subarray Pss": mock_fsp_pss_subarray_group,
         "FSP Subarray Pst": mock_fsp_pst_subarray_group,

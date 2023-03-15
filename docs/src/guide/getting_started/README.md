@@ -10,6 +10,7 @@ Code repository: [ska-mid-cbf-mcs](https://gitlab.com/ska-telescope/ska-mid-cbf-
 * [Getting Started](#getting-started)
 * [Git Repository](#git-repository)
 * [Running the Mid CBF MCS](#running-the-mid-cbf-mcs)
+* [Useful Minikube Commands](#useful-minikube-commands)
 * [Taranta](#taranta)
 * [Documentation](#documentation)
 * [Releasing](#releasing)
@@ -20,7 +21,7 @@ Code repository: [ska-mid-cbf-mcs](https://gitlab.com/ska-telescope/ska-mid-cbf-
 
 # Introduction
 
-The Mid CBF MCS prototype implements at the moment these TANGO device classes:
+The Mid CBF MCS implements at the moment these TANGO device classes:
 
 * `CbfController`: Based on the `SKAController` class. It represents a primary point 
 of contact for CBF Monitor and Control. It implements CBF state and mode 
@@ -38,14 +39,14 @@ a scan.
     * `VccBand1And2`, `VccBand3`, `VccBand4`, and `VccBand5` specify the 
     operative frequency band of a VCC.
     * `VccSearchWindow` defines a search window for a VCC.
-    * `FspCorr`, `FspPss`, `FspPst`, and `FspVlbi` specify the function mode of 
-    an FSP.
     * `FspCorrSubarray`, `FspPssSubarray` and `FspPssSubarray`: Based on the 
     `SKASubarray` class. It implements commands and attributes needed for scan 
     configuration.
 * `TmCspSubarrayLeafNodeTest`: Based on the `SKABaseDevice` class. It simulates 
 a TM CSP Subarray Leaf Node, providing regular updates to parameters during 
 scans using a publish-subscribe mechanism.
+* `TalonDxLogConsumer`: TANGO device class for consuming logs, converting them 
+to the SKA format, and outputting them via the logging framework.
 
 To cut down on the number of TANGO device servers, some multi-class servers are 
 implemented to run devices of different classes:
@@ -63,18 +64,19 @@ At the moment, the device servers implemented are:
 * 4 instances of `FspMulti`.
 * 4 instances of `VccMulti`.
 * 2 instances of `TmCspSubarrayLeafNodeTest`.
+* 1 instance of `TalonDxLogConsumer`.
 
 # Getting started
 
 This section follows the instructions on the SKA developer’s portal: 
 
-* https://developer.skao.int/en/latest/getting-started/devenv-setup.html
-* https://developer.skao.int/en/latest/tools/dev-faq.html
+* [Dev Environment Setup](https://developer.skao.int/en/latest/getting-started/devenv-setup.html)
+* [Dev FAQs](https://developer.skao.int/en/latest/tools/dev-faq.html)
 
 # Git Repository
 
 The MCS Git Repository is available at the following page:
-https://gitlab.com/ska-telescope/ska-mid-cbf-mcs
+[https://gitlab.com/ska-telescope/ska-mid-cbf-mcs](https://gitlab.com/ska-telescope/ska-mid-cbf-mcs)
 
 The README on the repository will guide users through cloning and initializing the repository.
 
@@ -100,6 +102,16 @@ minikube start    # start minikube (local kubernetes node)
 minikube status   # check current status of minikube
 ```
 
+The `minikube status` output should be:
+```
+minikube
+type: Control Plane
+host: Running
+kubelet: Running
+apiserver: Running
+kubeconfig: Configured
+```
+
 If restarting a stopped minikube; from local `ska-cicd-deploy-minikube` repository 
 run `make minikube-metallb-config` to reapply metallb configMap to determine pod
 LoadBalancer service external IP addresses.
@@ -107,13 +119,26 @@ LoadBalancer service external IP addresses.
 #### 2.  From the root of the project, build the application image.
 ```
 cd ska-mid-cbf-mcs
-eval $(minikube docker-env)  # if building from local source and not artefact repository
-make oci-image-build
+eval $(minikube docker-env)   # to use the minikube's docker environment 
+make oci-image-build          # if building from local source and not artefact repository
 ```
 
 `make oci-image-build` is required only if a local image needs to be built, for example 
 every time the SW has been updated. 
 [For development, in order to get local changes to build, run `eval $(minikube docker-env)` before `make build`](https://v1-18.docs.kubernetes.io/docs/setup/learning-environment/minikube/#use-local-images-by-re-using-the-docker-daemon)
+
+*Note*: To check if you are within the minikube's docker environment, use the
+`minikube status` command. It will indicate `docker-env: in use` if in use as
+follows:
+```
+minikube
+type: Control Plane
+host: Running
+kubelet: Running
+apiserver: Running
+kubeconfig: Configured
+docker-env: in-use
+```
 
 #### 3.  Install the umbrella chart.
 ```
@@ -150,61 +175,47 @@ tests are run
 
 #### 8.  Tear down the deployment.
 ```
-make k8s-uninstall-chart                  # uninstall deployment from Helm charts
+make k8s-uninstall-chart              # uninstall deployment from Helm charts
 deactivate                            # if in active virtualenv
 eval $(minikube docker-env --unset)   # if docker-env variables were set previously
 minikube stop                         # stop minikube
 ```
 
-# Minikube Profiles
+# Useful Minikube Commands
 
-### Create a minikube profile
+### Create a minikube 
 ```
-minikube start -p <profile_name>
-```
-
-### Check the status of the cluster created for your minikube profile
-```
-minikube status -p <profile_name>
+minikube start 
 ```
 
-### Switch to a pre-existing minikube profile
+### Check the status of the cluster created for your minikube 
 ```
-minikube profile <profile_name>
-```
-
-### Check which minikube profile you are on
-```
-minikube profile
+minikube status 
 ```
 
-### List all minikube profiles
-```
-minikube profile list
-```
+### Fixing a Misconfigured Kubeconfig
 
-### Set and unset docker-env variables
+If the kubeconfig is pointing to a stale minikube and is showing as `Misconfigured` 
+when checking the `minikube status`, or if the minikube's IP or port has changed, 
+update the context as follows:
 ```
-eval $(minikube docker-env -p <profile_name>) 
-eval $(minikube docker-env --unset -p <profile_name>) 
-```
-
-### Verify the kubectl context matches the minikube profile name
-In order to use kubectl to get pod information via the command line, the kubectl 'conext' should match the minikube profile. To verify this the output of `minikube profile` should match the output of `kubectl config current-context`
-```
-kubectl config current-context
+minikube update-context
 ```
 
 ### Delete a minikube profile
 ```
-minikube delete -p <profile_name>
+minikube delete
 ```
 
-
+### Set and unset docker-env variables
+```
+eval $(minikube docker-env)
+eval $(minikube docker-env --unset)
+```
 
 # Taranta
 
-This prototype provides a graphical user interface using Taranta (previously known as WebJive); to set it up:
+This provides a graphical user interface using Taranta (previously known as WebJive); to set it up:
 * Add the following line to `/etc/hosts`:
     ```
     192.168.49.2  taranta
@@ -224,7 +235,7 @@ new dashboard.
 # Documentation
 To re-generate the documentation locally prior to checking in updates to Git:
 ```bash
-make documentation
+make docs-build html
 ```
 To see the generated documentation, open `/ska-mid-cbf-mcs/docs/build/html/index.html` in a browser -- e.g.,
 ```

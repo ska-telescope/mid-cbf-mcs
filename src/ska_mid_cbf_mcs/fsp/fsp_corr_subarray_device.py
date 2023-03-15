@@ -30,7 +30,7 @@ from typing import List, Optional, Tuple
 import tango
 from ska_tango_base import CspSubElementObsDevice, SKABaseDevice
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import ObsState, PowerMode
+from ska_tango_base.control_model import ObsState, PowerMode, SimulationMode
 from tango import AttrWriteType, DebugIt
 from tango.server import attribute, command, device_property, run
 
@@ -76,6 +76,8 @@ class FspCorrSubarray(CspSubElementObsDevice):
 
     VCC = device_property(dtype=("str",))
 
+    HpsFspCorrControllerAddress = device_property(dtype="str")
+
     # ----------
     # Attributes
     # ----------
@@ -85,7 +87,7 @@ class FspCorrSubarray(CspSubElementObsDevice):
         access=AttrWriteType.READ,
         max_dim_x=197,
         label="Receptors",
-        doc="List of receptors assigned to subarray",
+        doc="List of receptors for correlation",
     )
 
     frequencyBand = attribute(
@@ -146,11 +148,11 @@ class FspCorrSubarray(CspSubElementObsDevice):
         doc="Zoom window tuning (kHz)",
     )
 
-    integrationTime = attribute(
+    integrationFactor = attribute(
         dtype="uint16",
         access=AttrWriteType.READ,
-        label="Integration time (ms)",
-        doc="Integration time (ms)",
+        label="Integration factor",
+        doc="Integration factor",
     )
 
     channelAveragingMap = attribute(
@@ -195,6 +197,13 @@ class FspCorrSubarray(CspSubElementObsDevice):
         access=AttrWriteType.READ_WRITE,
         label="Config ID",
         doc="set when transition to READY is performed",
+    )
+
+    simulationMode = attribute(
+        dtype=SimulationMode,
+        access=AttrWriteType.READ_WRITE,
+        memorized=True,
+        doc="Reports the simulation mode of the device.",
     )
 
     # ---------------
@@ -255,7 +264,7 @@ class FspCorrSubarray(CspSubElementObsDevice):
 
             self.logger.debug("Entering InitCommand()")
 
-            message = "FspCorrSubarry Init command completed OK"
+            message = "FspCorrSubarryDevice Init command completed OK"
             self.logger.info(message)
             return (ResultCode.OK, message)
 
@@ -280,6 +289,7 @@ class FspCorrSubarray(CspSubElementObsDevice):
 
         return FspCorrSubarrayComponentManager(
             self.logger,
+            self.HpsFspCorrControllerAddress,
             self.push_change_event,
             self._communication_status_changed,
             self._component_power_mode_changed,
@@ -387,18 +397,20 @@ class FspCorrSubarray(CspSubElementObsDevice):
         return self.component_manager.zoom_window_tuning
         # PROTECTED REGION END #    //  FspCorrSubarray.zoomWindowTuning_read
 
-    def read_integrationTime(self: FspCorrSubarray) -> int:
-        # PROTECTED REGION ID(FspCorrSubarray.integrationTime_read) ENABLED START #
+    def read_integrationFactor(self: FspCorrSubarray) -> int:
+        # PROTECTED REGION ID(FspCorrSubarray.read_integrationFactor_read) ENABLED START #
         """
-        Read the integrationTime attribute.
+        Read the integrationFactor attribute.
 
-        :return: the integrationTime attribute (millisecond).
+        :return: the integrationFactor attribute (millisecond).
         :rtype: int
         """
-        return self.component_manager.integration_time
-        # PROTECTED REGION END #    //  FspCorrSubarray.integrationTime_read
+        return self.component_manager.integration_factor
+        # PROTECTED REGION END #    //  FspCorrSubarray.integrationFactor_read
 
-    def read_channelAveragingMap(self: FspCorrSubarray) -> List[List[int]]:
+    def read_channelAveragingMap(
+        self: FspCorrSubarray,
+    ) -> List[List[int]]:
         # PROTECTED REGION ID(FspCorrSubarray.channelAveragingMap_read) ENABLED START #
         """
         Read the channelAveragingMap attribute.
@@ -519,6 +531,18 @@ class FspCorrSubarray(CspSubElementObsDevice):
         :param value: the configID attribute value.
         """
         self.component_manager.config_id = value
+
+    def write_simulationMode(
+        self: FspCorrSubarray, value: SimulationMode
+    ) -> None:
+        """
+        Set the simulation mode of the device.
+
+        :param value: SimulationMode
+        """
+        super().write_simulationMode(value)
+        self.component_manager.simulation_mode = value
+
         # PROTECTED REGION END #    //  FspCorrSubarray.configID_write
 
     # TODO: Reinstate AddChannels?
@@ -802,7 +826,7 @@ class FspCorrSubarray(CspSubElementObsDevice):
 
     class ScanCommand(CspSubElementObsDevice.ScanCommand):
         """
-        A class for the FspCorrSubarray's Scan() command.
+        A class for the FspCorrSubarrFspCorrSubarrayay's Scan() command.
         """
 
         def do(

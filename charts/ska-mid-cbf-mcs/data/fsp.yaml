@@ -51,18 +51,6 @@ server:
           - name: "FspID"
             values:
             - "1"
-          - name: "CorrelationAddress"
-            values:
-            - "mid_csp_cbf/fsp_corr/01"
-          - name: "PSSAddress"
-            values:
-            - "mid_csp_cbf/fsp_pss/01"
-          - name: "PSTAddress"
-            values:
-            - "mid_csp_cbf/fsp_pst/01"
-          - name: "VLBIAddress"
-            values:
-            - "mid_csp_cbf/fsp_vlbi/01"
           - name: "FspCorrSubarray"
             values:
             - "mid_csp_cbf/fspCorrSubarray/01_01"
@@ -78,6 +66,12 @@ server:
             - "mid_csp_cbf/fspPstSubarray/01_01"
             - "mid_csp_cbf/fspPstSubarray/01_02"
             - "mid_csp_cbf/fspPstSubarray/01_03"
+          - name: "HpsFspControllerAddress"
+            values:
+            - "talondx-001/fsp-app/fsp-controller"
+          - name: "HpsFspCorrControllerAddress"
+            values:
+            - "talondx-001/fsp-app/fsp-corr-controller"
           - name: "polled_attr"
             values:
             - "state"
@@ -88,22 +82,6 @@ server:
             - "3000"
             - "subarraymembership"
             - "3000"
-
-    - name: "FspCorr"
-      devices:
-      - name: "mid_csp_cbf/fsp_corr/01"
-
-    - name: "FspPss"
-      devices:
-      - name: "mid_csp_cbf/fsp_pss/01"
-
-    - name: "FspPst"
-      devices:
-      - name: "mid_csp_cbf/fsp_pst/01"
-
-    - name: "FspVlbi"
-      devices:
-      - name: "mid_csp_cbf/fsp_vlbi/01"
 
     - name: "FspCorrSubarray"
       devices:
@@ -127,6 +105,9 @@ server:
             - "mid_csp_cbf/vcc/002"
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
+          - name: "HpsFspCorrControllerAddress"
+            values:
+            - "talondx-001/fsp-app/fsp-corr-controller"
 
       - name: "mid_csp_cbf/fspCorrSubarray/01_02"
         properties:
@@ -148,6 +129,9 @@ server:
             - "mid_csp_cbf/vcc/002"
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
+          - name: "HpsFspCorrControllerAddress"
+            values:
+            - "talondx-001/fsp-app/fsp-corr-controller"
 
       - name: "mid_csp_cbf/fspCorrSubarray/01_03"
         properties:
@@ -169,6 +153,9 @@ server:
             - "mid_csp_cbf/vcc/002"
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
+          - name: "HpsFspCorrControllerAddress"
+            values:
+            - "talondx-001/fsp-app/fsp-corr-controller"
 
     - name: "FspPssSubarray"
       devices:
@@ -328,18 +315,6 @@ server:
           - name: "FspID"
             values:
             - "2"
-          - name: "CorrelationAddress"
-            values:
-            - "mid_csp_cbf/fsp_corr/02"
-          - name: "PSSAddress"
-            values:
-            - "mid_csp_cbf/fsp_pss/02"
-          - name: "PSTAddress"
-            values:
-            - "mid_csp_cbf/fsp_pst/02"
-          - name: "VLBIAddress"
-            values:
-            - "mid_csp_cbf/fsp_vlbi/02"
           - name: "FspCorrSubarray"
             values:
             - "mid_csp_cbf/fspCorrSubarray/02_01"
@@ -355,6 +330,12 @@ server:
             - "mid_csp_cbf/fspPstSubarray/02_01"
             - "mid_csp_cbf/fspPstSubarray/02_02"
             - "mid_csp_cbf/fspPstSubarray/02_03"
+          - name: "HpsFspControllerAddress"
+            values:
+            - "talondx-002/fsp-app/fsp-controller"
+          - name: "HpsFspCorrControllerAddress"
+            values:
+            - "talondx-002/fsp-app/fsp-corr-controller"
           - name: "polled_attr"
             values:
             - "state"
@@ -365,22 +346,6 @@ server:
             - "3000"
             - "subarraymembership"
             - "3000"
-
-    - name: "FspCorr"
-      devices:
-      - name: "mid_csp_cbf/fsp_corr/02"
-
-    - name: "FspPss"
-      devices:
-      - name: "mid_csp_cbf/fsp_pss/02"
-
-    - name: "FspPst"
-      devices:
-      - name: "mid_csp_cbf/fsp_pst/02"
-
-    - name: "FspVlbi"
-      devices:
-      - name: "mid_csp_cbf/fsp_vlbi/02"
 
     - name: "FspCorrSubarray"
       devices:
@@ -404,6 +369,9 @@ server:
             - "mid_csp_cbf/vcc/002"
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
+          - name: "HpsFspCorrControllerAddress"
+            values:
+            - "talondx-002/fsp-app/fsp-corr-controller"
 
       - name: "mid_csp_cbf/fspCorrSubarray/02_02"
         properties:
@@ -425,6 +393,9 @@ server:
             - "mid_csp_cbf/vcc/002"
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
+          - name: "HpsFspCorrControllerAddress"
+            values:
+            - "talondx-002/fsp-app/fsp-corr-controller"
 
       - name: "mid_csp_cbf/fspCorrSubarray/02_03"
         properties:
@@ -446,6 +417,9 @@ server:
             - "mid_csp_cbf/vcc/002"
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
+          - name: "HpsFspCorrControllerAddress"
+            values:
+            - "talondx-002/fsp-app/fsp-corr-controller"
 
     - name: "FspPssSubarray"
       devices:
@@ -605,18 +579,6 @@ server:
           - name: "FspID"
             values:
             - "3"
-          - name: "CorrelationAddress"
-            values:
-            - "mid_csp_cbf/fsp_corr/03"
-          - name: "PSSAddress"
-            values:
-            - "mid_csp_cbf/fsp_pss/03"
-          - name: "PSTAddress"
-            values:
-            - "mid_csp_cbf/fsp_pst/03"
-          - name: "VLBIAddress"
-            values:
-            - "mid_csp_cbf/fsp_vlbi/03"
           - name: "FspCorrSubarray"
             values:
             - "mid_csp_cbf/fspCorrSubarray/03_01"
@@ -632,6 +594,12 @@ server:
             - "mid_csp_cbf/fspPstSubarray/03_01"
             - "mid_csp_cbf/fspPstSubarray/03_02"
             - "mid_csp_cbf/fspPstSubarray/03_03"
+          - name: "HpsFspControllerAddress"
+            values:
+            - "talondx-003/fsp-app/fsp-controller"
+          - name: "HpsFspCorrControllerAddress"
+            values:
+            - "talondx-003/fsp-app/fsp-corr-controller"
           - name: "polled_attr"
             values:
             - "state"
@@ -642,22 +610,6 @@ server:
             - "3000"
             - "subarraymembership"
             - "3000"
-
-    - name: "FspCorr"
-      devices:
-      - name: "mid_csp_cbf/fsp_corr/03"
-
-    - name: "FspPss"
-      devices:
-      - name: "mid_csp_cbf/fsp_pss/03"
-
-    - name: "FspPst"
-      devices:
-      - name: "mid_csp_cbf/fsp_pst/03"
-
-    - name: "FspVlbi"
-      devices:
-      - name: "mid_csp_cbf/fsp_vlbi/03"
 
     - name: "FspCorrSubarray"
       devices:
@@ -681,6 +633,9 @@ server:
             - "mid_csp_cbf/vcc/002"
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
+          - name: "HpsFspCorrControllerAddress"
+            values:
+            - "talondx-003/fsp-app/fsp-corr-controller"
 
       - name: "mid_csp_cbf/fspCorrSubarray/03_02"
         properties:
@@ -702,6 +657,9 @@ server:
             - "mid_csp_cbf/vcc/002"
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
+          - name: "HpsFspCorrControllerAddress"
+            values:
+            - "talondx-003/fsp-app/fsp-corr-controller"
 
       - name: "mid_csp_cbf/fspCorrSubarray/03_03"
         properties:
@@ -723,6 +681,9 @@ server:
             - "mid_csp_cbf/vcc/002"
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
+          - name: "HpsFspCorrControllerAddress"
+            values:
+            - "talondx-003/fsp-app/fsp-corr-controller"
 
     - name: "FspPssSubarray"
       devices:
@@ -882,18 +843,6 @@ server:
           - name: "FspID"
             values:
             - "4"
-          - name: "CorrelationAddress"
-            values:
-            - "mid_csp_cbf/fsp_corr/04"
-          - name: "PSSAddress"
-            values:
-            - "mid_csp_cbf/fsp_pss/04"
-          - name: "PSTAddress"
-            values:
-            - "mid_csp_cbf/fsp_pst/04"
-          - name: "VLBIAddress"
-            values:
-            - "mid_csp_cbf/fsp_vlbi/04"
           - name: "FspCorrSubarray"
             values:
             - "mid_csp_cbf/fspCorrSubarray/04_01"
@@ -909,6 +858,12 @@ server:
             - "mid_csp_cbf/fspPstSubarray/04_01"
             - "mid_csp_cbf/fspPstSubarray/04_02"
             - "mid_csp_cbf/fspPstSubarray/04_03"
+          - name: "HpsFspControllerAddress"
+            values:
+            - "talondx-004/fsp-app/fsp-controller"
+          - name: "HpsFspCorrControllerAddress"
+            values:
+            - "talondx-004/fsp-app/fsp-corr-controller"
           - name: "polled_attr"
             values:
             - "state"
@@ -919,22 +874,6 @@ server:
             - "3000"
             - "subarraymembership"
             - "3000"
-
-    - name: "FspCorr"
-      devices:
-      - name: "mid_csp_cbf/fsp_corr/04"
-
-    - name: "FspPss"
-      devices:
-      - name: "mid_csp_cbf/fsp_pss/04"
-
-    - name: "FspPst"
-      devices:
-      - name: "mid_csp_cbf/fsp_pst/04"
-
-    - name: "FspVlbi"
-      devices:
-      - name: "mid_csp_cbf/fsp_vlbi/04"
 
     - name: "FspCorrSubarray"
       devices:
@@ -958,6 +897,9 @@ server:
             - "mid_csp_cbf/vcc/002"
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
+          - name: "HpsFspCorrControllerAddress"
+            values:
+            - "talondx-004/fsp-app/fsp-corr-controller"
 
       - name: "mid_csp_cbf/fspCorrSubarray/04_02"
         properties:
@@ -979,6 +921,9 @@ server:
             - "mid_csp_cbf/vcc/002"
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
+          - name: "HpsFspCorrControllerAddress"
+            values:
+            - "talondx-004/fsp-app/fsp-corr-controller"
 
       - name: "mid_csp_cbf/fspCorrSubarray/04_03"
         properties:
@@ -1000,6 +945,9 @@ server:
             - "mid_csp_cbf/vcc/002"
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
+          - name: "HpsFspCorrControllerAddress"
+            values:
+            - "talondx-004/fsp-app/fsp-corr-controller"
 
     - name: "FspPssSubarray"
       devices:

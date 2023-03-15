@@ -40,7 +40,7 @@ midcbf:
   image:
     registry: artefact.skao.int
     image: ska-mid-cbf-mcs
-    tag: 0.6.8
+    tag: 0.6.17
     pullPolicy: IfNotPresent
 
 resources:
@@ -72,9 +72,16 @@ deviceServers:
   talonlru:
     file: "data/talonlru.yaml"
 
+  talondxlogconsumer:
+    file: "data/talondxlogconsumer.yaml"
+
 nodeSelector: {}
 
 affinity: {}
 
 tolerations: []
 
+hostInfo:
+  environment: "minikube"
+  hostIP: "127.0.0.1"
+  externalPort: 10001

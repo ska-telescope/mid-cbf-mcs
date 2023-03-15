@@ -13,4 +13,4 @@ API
   Vcc<Vcc/index>
   PowerSwitch<PowerSwitch/index>
   TalonLRU<TalonLRU/index>
-  
+  TalonDxLogConsumer<TalonDxLogConsumer/index>

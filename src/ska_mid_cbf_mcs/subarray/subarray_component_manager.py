@@ -174,9 +174,9 @@ class CbfSubarrayComponentManager(
         self._fqdn_controller = controller
         self._fqdn_vcc = vcc
         self._fqdn_fsp = fsp
-        self._fqdn_fsp_corr_subarray = fsp_corr_sub
-        self._fqdn_fsp_pss_subarray = fsp_pss_sub
-        self._fqdn_fsp_pst_subarray = fsp_pst_sub
+        self._fqdn_fsp_corr_subarray_device = fsp_corr_sub
+        self._fqdn_fsp_pss_subarray_device = fsp_pss_sub
+        self._fqdn_fsp_pst_subarray_device = fsp_pst_sub
 
         # set to determine if resources are assigned
         self._resourced = False
@@ -246,9 +246,9 @@ class CbfSubarrayComponentManager(
         self._proxies_vcc = []
         self._proxies_assigned_vcc = {}
         self._proxies_fsp = []
-        self._proxies_fsp_corr_subarray = []
-        self._proxies_fsp_pss_subarray = []
-        self._proxies_fsp_pst_subarray = []
+        self._proxies_fsp_corr_subarray_device = []
+        self._proxies_fsp_pss_subarray_device = []
+        self._proxies_fsp_pst_subarray_device = []
         # group proxies to subordinate devices
         # Note: VCC connected both individual and in group
         self._group_vcc = None
@@ -308,15 +308,15 @@ class CbfSubarrayComponentManager(
 
                 self._fqdn_vcc = self._fqdn_vcc[: self._count_vcc]
                 self._fqdn_fsp = self._fqdn_fsp[: self._count_fsp]
-                self._fqdn_fsp_corr_subarray = self._fqdn_fsp_corr_subarray[
-                    : self._count_fsp
-                ]
-                self._fqdn_fsp_pss_subarray = self._fqdn_fsp_pss_subarray[
-                    : self._count_fsp
-                ]
-                self._fqdn_fsp_pst_subarray = self._fqdn_fsp_pst_subarray[
-                    : self._count_fsp
-                ]
+                self._fqdn_fsp_corr_subarray_device = (
+                    self._fqdn_fsp_corr_subarray_device[: self._count_fsp]
+                )
+                self._fqdn_fsp_pss_subarray_device = (
+                    self._fqdn_fsp_pss_subarray_device[: self._count_fsp]
+                )
+                self._fqdn_fsp_pst_subarray_device = (
+                    self._fqdn_fsp_pst_subarray_device[: self._count_fsp]
+                )
 
             if len(self._proxies_vcc) == 0:
                 self._proxies_vcc = [
@@ -330,20 +330,20 @@ class CbfSubarrayComponentManager(
                     for fqdn in self._fqdn_fsp
                 ]
 
-            if len(self._proxies_fsp_corr_subarray) == 0:
-                for fqdn in self._fqdn_fsp_corr_subarray:
+            if len(self._proxies_fsp_corr_subarray_device) == 0:
+                for fqdn in self._fqdn_fsp_corr_subarray_device:
                     proxy = CbfDeviceProxy(fqdn=fqdn, logger=self._logger)
-                    self._proxies_fsp_corr_subarray.append(proxy)
+                    self._proxies_fsp_corr_subarray_device.append(proxy)
 
-            if len(self._proxies_fsp_pss_subarray) == 0:
-                for fqdn in self._fqdn_fsp_pss_subarray:
+            if len(self._proxies_fsp_pss_subarray_device) == 0:
+                for fqdn in self._fqdn_fsp_pss_subarray_device:
                     proxy = CbfDeviceProxy(fqdn=fqdn, logger=self._logger)
-                    self._proxies_fsp_pss_subarray.append(proxy)
+                    self._proxies_fsp_pss_subarray_device.append(proxy)
 
-            if len(self._proxies_fsp_pst_subarray) == 0:
-                for fqdn in self._fqdn_fsp_pst_subarray:
+            if len(self._proxies_fsp_pst_subarray_device) == 0:
+                for fqdn in self._fqdn_fsp_pst_subarray_device:
                     proxy = CbfDeviceProxy(fqdn=fqdn, logger=self._logger)
-                    self._proxies_fsp_pst_subarray.append(proxy)
+                    self._proxies_fsp_pst_subarray_device.append(proxy)
 
             if self._group_vcc is None:
                 self._group_vcc = CbfGroupProxy(
@@ -366,11 +366,11 @@ class CbfSubarrayComponentManager(
                     name="FSP Subarray Pst", logger=self._logger
                 )
 
-            for proxy in self._proxies_fsp_corr_subarray:
+            for proxy in self._proxies_fsp_corr_subarray_device:
                 proxy.adminMode = AdminMode.ONLINE
-            for proxy in self._proxies_fsp_pss_subarray:
+            for proxy in self._proxies_fsp_pss_subarray_device:
                 proxy.adminMode = AdminMode.ONLINE
-            for proxy in self._proxies_fsp_pst_subarray:
+            for proxy in self._proxies_fsp_pst_subarray_device:
                 proxy.adminMode = AdminMode.ONLINE
 
         except tango.DevFailed as dev_failed:
@@ -392,33 +392,33 @@ class CbfSubarrayComponentManager(
             "Entering CbfSubarrayComponentManager.stop_communicating"
         )
         super().stop_communicating()
-        for proxy in self._proxies_fsp_corr_subarray:
+        for proxy in self._proxies_fsp_corr_subarray_device:
             proxy.adminMode = AdminMode.OFFLINE
-        for proxy in self._proxies_fsp_pss_subarray:
+        for proxy in self._proxies_fsp_pss_subarray_device:
             proxy.adminMode = AdminMode.OFFLINE
-        for proxy in self._proxies_fsp_pst_subarray:
+        for proxy in self._proxies_fsp_pst_subarray_device:
             proxy.adminMode = AdminMode.OFFLINE
         self.connected = False
         self.update_component_power_mode(PowerMode.UNKNOWN)
 
     @check_communicating
     def on(self: CbfSubarrayComponentManager) -> None:
-        for proxy in self._proxies_fsp_corr_subarray:
+        for proxy in self._proxies_fsp_corr_subarray_device:
             proxy.On()
-        for proxy in self._proxies_fsp_pss_subarray:
+        for proxy in self._proxies_fsp_pss_subarray_device:
             proxy.On()
-        for proxy in self._proxies_fsp_pst_subarray:
+        for proxy in self._proxies_fsp_pst_subarray_device:
             proxy.On()
 
         self.update_component_power_mode(PowerMode.ON)
 
     @check_communicating
     def off(self: CbfSubarrayComponentManager) -> None:
-        for proxy in self._proxies_fsp_corr_subarray:
+        for proxy in self._proxies_fsp_corr_subarray_device:
             proxy.Off()
-        for proxy in self._proxies_fsp_pss_subarray:
+        for proxy in self._proxies_fsp_pss_subarray_device:
             proxy.Off()
-        for proxy in self._proxies_fsp_pst_subarray:
+        for proxy in self._proxies_fsp_pst_subarray_device:
             proxy.Off()
 
         self.update_component_power_mode(PowerMode.OFF)
@@ -490,31 +490,28 @@ class CbfSubarrayComponentManager(
                     return
 
                 self._last_received_delay_model = value
-                delay_model_all = json.loads(value)
 
-                for delay_model in delay_model_all["delayModel"]:
-                    # pass receptor IDs as pair of str and int to FPSs and VCCs
-                    for model in delay_model["delayDetails"]:
-                        receptor_id = model["receptor"]
-                        model["receptor"] = [
-                            receptor_id,
-                            self._receptor_utils.receptors[receptor_id],
-                        ]
-                    t = Thread(
-                        target=self._update_delay_model,
-                        args=(
-                            int(delay_model["epoch"]),
-                            json.dumps(delay_model["delayDetails"]),
-                        ),
-                    )
-                    t.start()
+                delay_model = json.loads(value)
+                # pass receptor IDs as pair of str and int to FPSs and VCCs
+                for model in delay_model["delayModel"]:
+                    receptor_id = model["receptor"]
+                    model["receptor"] = [
+                        receptor_id,
+                        self._receptor_utils.receptors[receptor_id],
+                    ]
+                t = Thread(
+                    target=self._update_delay_model,
+                    args=(json.dumps(delay_model),
+                    ),
+                )
+                t.start()
             except Exception as e:
                 self._logger.error(str(e))
         else:
             self._logger.warning(f"None value for {fqdn}")
 
     def _update_delay_model(
-        self: CbfSubarrayComponentManager, epoch: int, model: str
+        self: CbfSubarrayComponentManager, model: str
     ) -> None:
         """
         Update FSP and VCC delay models.
@@ -525,13 +522,8 @@ class CbfSubarrayComponentManager(
         """
         # This method is always called on a separate thread
         self._logger.debug("CbfSubarray._update_delay_model")
-        log_msg = f"Delay model active at {epoch} (currently {time.time()})..."
-        self._logger.info(log_msg)
 
-        if epoch > time.time():
-            time.sleep(epoch - time.time())
-
-        log_msg = f"Updating delay model at specified epoch {epoch}..."
+        log_msg = f"Updating delay model ...{model}"
         self._logger.info(log_msg)
 
         data = tango.DeviceData()
@@ -916,7 +908,9 @@ class CbfSubarrayComponentManager(
                     logger=self._logger,
                 )
                 attribute_proxy.ping()
-            except tango.DevFailed:  # attribute doesn't exist or is not set up correctly
+            except (
+                tango.DevFailed
+            ):  # attribute doesn't exist or is not set up correctly
                 msg = (
                     f"Attribute {configuration['doppler_phase_corr_subscription_point']}"
                     " not found or not set up correctly for "
@@ -932,7 +926,9 @@ class CbfSubarrayComponentManager(
                     logger=self._logger,
                 )
                 attribute_proxy.ping()
-            except tango.DevFailed:  # attribute doesn't exist or is not set up correctly
+            except (
+                tango.DevFailed
+            ):  # attribute doesn't exist or is not set up correctly
                 msg = (
                     f"Attribute {configuration['delay_model_subscription_point']}"
                     " not found or not set up correctly for "
@@ -948,7 +944,9 @@ class CbfSubarrayComponentManager(
                     logger=self._logger,
                 )
                 attribute_proxy.ping()
-            except tango.DevFailed:  # attribute doesn't exist or is not set up correctly
+            except (
+                tango.DevFailed
+            ):  # attribute doesn't exist or is not set up correctly
                 msg = (
                     f"Attribute {configuration['jones_matrix_subscription_point']}"
                     " not found or not set up correctly for "
@@ -966,7 +964,9 @@ class CbfSubarrayComponentManager(
                     logger=self._logger,
                 )
                 attribute_proxy.ping()
-            except tango.DevFailed:  # attribute doesn't exist or is not set up correctly
+            except (
+                tango.DevFailed
+            ):  # attribute doesn't exist or is not set up correctly
                 msg = (
                     f"Attribute {configuration['timing_beam_weights_subscription_point']}"
                     " not found or not set up correctly for "
@@ -1009,17 +1009,17 @@ class CbfSubarrayComponentManager(
                     fspID = int(fsp["fsp_id"])
                     proxy_fsp = self._proxies_fsp[fspID - 1]
                     if fsp["function_mode"] == "CORR":
-                        proxy_fsp_subarray = self._proxies_fsp_corr_subarray[
-                            fspID - 1
-                        ]
+                        proxy_fsp_subarray = (
+                            self._proxies_fsp_corr_subarray_device[fspID - 1]
+                        )
                     elif fsp["function_mode"] == "PSS-BF":
-                        proxy_fsp_subarray = self._proxies_fsp_pss_subarray[
-                            fspID - 1
-                        ]
+                        proxy_fsp_subarray = (
+                            self._proxies_fsp_pss_subarray_device[fspID - 1]
+                        )
                     elif fsp["function_mode"] == "PST-BF":
-                        proxy_fsp_subarray = self._proxies_fsp_pst_subarray[
-                            fspID - 1
-                        ]
+                        proxy_fsp_subarray = (
+                            self._proxies_fsp_pst_subarray_device[fspID - 1]
+                        )
                 else:
                     msg = (
                         f"'fspID' must be an integer in the range [1, {self._count_fsp}]."
@@ -1051,7 +1051,7 @@ class CbfSubarrayComponentManager(
                         # TODO need to add this check for VLBI once implemented
                         for (
                             fsp_corr_subarray_proxy
-                        ) in self._proxies_fsp_corr_subarray:
+                        ) in self._proxies_fsp_corr_subarray_device:
                             if (
                                 fsp_corr_subarray_proxy.obsState
                                 != ObsState.IDLE
@@ -1063,7 +1063,7 @@ class CbfSubarrayComponentManager(
                                 return (False, msg)
                         for (
                             fsp_pss_subarray_proxy
-                        ) in self._proxies_fsp_pss_subarray:
+                        ) in self._proxies_fsp_pss_subarray_device:
                             if (
                                 fsp_pss_subarray_proxy.obsState
                                 != ObsState.IDLE
@@ -1075,7 +1075,7 @@ class CbfSubarrayComponentManager(
                                 return (False, msg)
                         for (
                             fsp_pst_subarray_proxy
-                        ) in self._proxies_fsp_pst_subarray:
+                        ) in self._proxies_fsp_pst_subarray_device:
                             if (
                                 fsp_pst_subarray_proxy.obsState
                                 != ObsState.IDLE
@@ -1109,10 +1109,16 @@ class CbfSubarrayComponentManager(
                 # CORR #
 
                 if fsp["function_mode"] == "CORR":
-
+                    # Receptors may not be specified in the
+                    # configuration at all or the list
+                    # of receptors may be empty
+                    receptorsSpecified = False
                     if "receptor_ids" in fsp:
-                        for receptor in fsp["receptor_ids"]:
-                            if receptor not in self._receptors:
+                        if fsp["receptor_ids"] != []:
+                            receptorsSpecified = True
+                    if receptorsSpecified:
+                        for this_rec in fsp["receptor_ids"]:
+                            if this_rec not in self._receptors:
                                 msg = (
                                     f"Receptor {receptor} does not belong to "
                                     f"subarray {self._subarray_id}."
@@ -1120,13 +1126,13 @@ class CbfSubarrayComponentManager(
                                 self._logger.error(msg)
                                 return (False, msg)
                     else:
-                        msg = "'receptors' not specified for Fsp CORR config"
-                        # TODO - In this case by the ICD, all subarray allocated resources should be used.
-                        # TODO add support for more than one receptor per fsp
-                        # fsp["receptor_ids"] = self._receptors
-                        fsp["receptor_ids"] = self._receptor_utils.receptors[
-                            self._receptors[0]
-                        ]
+                        msg = (
+                            "'receptors' not specified for Fsp CORR config."
+                            "Per ICD all receptors allocated to subarray are used"
+                        )
+                        self._logger.info(msg)
+                        # In this case by the ICD, all subarray allocated resources should be used.
+                        fsp["receptor_ids"] = self._receptors
 
                     frequencyBand = freq_band_dict()[fsp["frequency_band"]]
                     # Validate frequencySliceID.
@@ -1160,7 +1166,6 @@ class CbfSubarrayComponentManager(
                         int(fsp["zoom_factor"]) > 0
                     ):  # zoomWindowTuning is required
                         if "zoom_window_tuning" in fsp:
-
                             if fsp["frequency_band"] not in [
                                 "5a",
                                 "5b",
@@ -1216,7 +1221,6 @@ class CbfSubarrayComponentManager(
                                 ]:  # band5Tuning not specified
                                     pass
                                 else:
-
                                     # TODO: these validations of BW range are done many times
                                     # in many places - use a common function; also may be possible
                                     # to do them only once (ex. for band5Tuning)
@@ -1406,7 +1410,7 @@ class CbfSubarrayComponentManager(
 
                             for (
                                 fsp_pss_subarray_proxy
-                            ) in self._proxies_fsp_pss_subarray:
+                            ) in self._proxies_fsp_pss_subarray_device:
                                 searchBeamID = (
                                     fsp_pss_subarray_proxy.searchBeamID
                                 )
@@ -1496,7 +1500,7 @@ class CbfSubarrayComponentManager(
                                 return (False, msg)
                             for (
                                 fsp_pst_subarray_proxy
-                            ) in self._proxies_fsp_pst_subarray:
+                            ) in self._proxies_fsp_pst_subarray_device:
                                 timingBeamID = (
                                     fsp_pst_subarray_proxy.timingBeamID
                                 )
@@ -1755,13 +1759,13 @@ class CbfSubarrayComponentManager(
 
             self._group_fsp.add(self._fqdn_fsp[fspID - 1])
             self._group_fsp_corr_subarray.add(
-                self._fqdn_fsp_corr_subarray[fspID - 1]
+                self._fqdn_fsp_corr_subarray_device[fspID - 1]
             )
             self._group_fsp_pss_subarray.add(
-                self._fqdn_fsp_pss_subarray[fspID - 1]
+                self._fqdn_fsp_pss_subarray_device[fspID - 1]
             )
             self._group_fsp_pst_subarray.add(
-                self._fqdn_fsp_pst_subarray[fspID - 1]
+                self._fqdn_fsp_pst_subarray_device[fspID - 1]
             )
 
             # change FSP subarray membership
@@ -1795,26 +1799,37 @@ class CbfSubarrayComponentManager(
                 "frequency_band_offset_stream_2"
             ] = self._frequency_band_offset_stream_2
 
-            # receptor IDs to pair of str and int for FSP level
+            # Add all receptor ids for subarray to fsp
+            fsp["subarray_receptor_ids"] = self._receptors
+
             if fsp["function_mode"] == "CORR":
-                if "receptor_ids" not in fsp:
-                    # TODO In this case by the ICD, all subarray allocated resources should be used.
-                    fsp["receptor_ids"] = [
-                        [
-                            self._receptors[0],
-                            self._receptor_utils.receptors[self._receptors[0]],
-                        ]
-                    ]
-                else:
-                    for i, receptor in enumerate(fsp["receptor_ids"]):
-                        fsp["receptor_ids"][i] = [
-                            receptor,
-                            self._receptor_utils.receptors[receptor],
-                        ]
+                # Receptors may not be specified in the
+                # configuration at all or the list
+                # of receptors may be empty
+                receptorsSpecified = False
+                if "receptor_ids" in fsp:
+                    if fsp["receptor_ids"] != []:
+                        receptorsSpecified = True
+                        # receptor IDs to pair of str and int for FSP level
+                        for i, receptor in enumerate(fsp["receptor_ids"]):
+                            fsp["receptor_ids"][i] = [
+                                receptor,
+                                self._receptor_utils.receptors[receptor],
+                            ]
+                if not receptorsSpecified:
+                    # In this case by the ICD, all subarray allocated resources should be used.
+                    fsp["receptor_ids"] = self._receptors
+                    # receptor IDs to pair of str and int for FSP level
+                    for i, receptor in enumerate(self._receptors):
+                            fsp["receptor_ids"][i] = [
+                                receptor,
+                                self._receptor_utils.receptors[receptor],
+                            ]
+
                 self._corr_config.append(fsp)
                 self._corr_fsp_list.append(fsp["fsp_id"])
 
-            # TODO currently only CORR function mode is supported outside of Mid.CBF MCS
+            # TODO: PSS, PST below may fall out of date; currently only CORR function mode is supported outside of Mid.CBF MCS
             elif fsp["function_mode"] == "PSS-BF":
                 for searchBeam in fsp["search_beam"]:
                     if "receptor_ids" not in searchBeam:
@@ -1866,10 +1881,15 @@ class CbfSubarrayComponentManager(
         if len(self._corr_config) != 0:
             for this_fsp in self._corr_config:
                 try:
-                    this_proxy = self._proxies_fsp_corr_subarray[
+                    this_proxy = self._proxies_fsp_corr_subarray_device[
                         int(this_fsp["fsp_id"]) - 1
                     ]
                     this_proxy.ConfigureScan(json.dumps(this_fsp))
+
+                    self._logger.info(
+                        f"cbf_subarray this_fsp: {json.dumps(this_fsp)}"
+                    )
+
                 except tango.DevFailed:
                     msg = (
                         "An exception occurred while configuring "
@@ -1881,7 +1901,7 @@ class CbfSubarrayComponentManager(
         if len(self._pss_config) != 0:
             for this_fsp in self._pss_config:
                 try:
-                    this_proxy = self._proxies_fsp_pss_subarray[
+                    this_proxy = self._proxies_fsp_pss_subarray_device[
                         int(this_fsp["fsp_id"]) - 1
                     ]
                     this_proxy.ConfigureScan(json.dumps(this_fsp))
@@ -1896,7 +1916,7 @@ class CbfSubarrayComponentManager(
         if len(self._pst_config) != 0:
             for this_fsp in self._pst_config:
                 try:
-                    this_proxy = self._proxies_fsp_pst_subarray[
+                    this_proxy = self._proxies_fsp_pst_subarray_device[
                         int(this_fsp["fsp_id"]) - 1
                     ]
                     this_proxy.ConfigureScan(json.dumps(this_fsp))

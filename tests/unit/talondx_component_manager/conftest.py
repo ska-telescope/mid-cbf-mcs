@@ -82,7 +82,12 @@ def talon_dx_component_manager(
             or (args[1] == "mkdir -p /lib/firmware")
             or (
                 args[1]
-                == "/lib/firmware/hps_software/hps_master_mcs.sh talon1_test"
+                == "sh /lib/firmware/hps_software/hps_master_mcs.sh talon1_test"
+            )
+            or (args[1] == "rm -f /lib/firmware/hps_software/vcc_test/*")
+            or (
+                args[1]
+                == "echo 'nameserver 192.168.128.47' > /etc/resolv.conf"
             )
         )
 
@@ -141,7 +146,11 @@ def talon_dx_component_manager(
         src_fpga = re.compile(
             r"tests\/unit\/talondx_component_manager\/fpga-.*\/bin\/vcc3_2ch4.*"
         )
-        assert src_ds.fullmatch(args[1]) or src_fpga.fullmatch(args[1])
+        assert (
+            src_ds.fullmatch(args[1])
+            or src_fpga.fullmatch(args[1])
+            or args[1] == "hps_master_mcs.sh"
+        )
 
         target_dest_ds = re.compile(
             r"\/lib\/firmware\/hps_software(\/vcc_test)?"

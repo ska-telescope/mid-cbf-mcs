@@ -57,14 +57,12 @@ class TestVcc:
         self: TestVcc,
         device_under_test: CbfDeviceProxy,
     ) -> None:
-
         assert device_under_test.Status() == "The device is in DISABLE state."
 
     def test_adminMode(
         self: TestVcc,
         device_under_test: CbfDeviceProxy,
     ) -> None:
-
         assert device_under_test.adminMode == AdminMode.OFFLINE
 
     @pytest.mark.parametrize("command", ["On", "Off", "Standby"])

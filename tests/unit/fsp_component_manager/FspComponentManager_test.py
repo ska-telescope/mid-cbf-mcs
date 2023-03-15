@@ -204,6 +204,13 @@ class TestFspComponentManager:
         )
         assert fsp_component_manager._connected is True
 
+        # on invoked to get capability proxy
+        (result_code, msg) = fsp_component_manager.on()
+        assert (result_code, msg) == (
+            ResultCode.OK,
+            "Fsp On command completed OK",
+        )
+
         fsp_component_manager.add_subarray_membership(sub_id)
         time.sleep(3)
         assert list(fsp_component_manager.subarray_membership) == [sub_id]
@@ -299,24 +306,26 @@ class TestFspComponentManager:
         )
         assert fsp_component_manager._connected is True
 
+        # on invoked to get capability proxy
+        (result_code, msg) = fsp_component_manager.on()
+        assert (result_code, msg) == (
+            ResultCode.OK,
+            "Fsp On command completed OK",
+        )
+
         fsp_component_manager.add_subarray_membership(sub_id)
         time.sleep(3)
         assert list(fsp_component_manager.subarray_membership) == [sub_id]
 
-        # delay model values should be set to 0.0 after init
-        num_cols = 6
-        num_rows = 4
-        assert list(fsp_component_manager.delay_model) == [
-            [0.0] * num_cols for _ in range(num_rows)
-        ]
+        # delay model should be empty string after init
+        assert fsp_component_manager.delay_model == ""
 
         # read the json file
         f = open(file_path + delay_model_file_name)
-        json_str = f.read().replace("\n", "")
+        delay_model = f.read().replace("\n", "")
         f.close()
-        delay_model = json.loads(json_str)
 
-        valid_function_modes = ["PSS-BF", "PST-BF"]
+        valid_function_modes = ["PSS-BF", "PST-BF", "CORR"]
         for mode in valid_function_modes:
             fsp_component_manager.set_function_mode(mode)
             time.sleep(0.1)
@@ -330,34 +339,16 @@ class TestFspComponentManager:
                     fsp_component_manager.function_mode
                     == FspModes.PST_BF.value
                 )
-
-            # update the delay model
-            for m in delay_model["delayModel"]:
-                fsp_component_manager.update_delay_model(
-                    json.dumps(m["delayDetails"])
+            elif mode == "CORR":
+                assert (
+                    fsp_component_manager.function_mode == FspModes.CORR.value
                 )
 
+            fsp_component_manager.update_delay_model(delay_model)
             time.sleep(3)
 
-            model_len = 6
             # verify the delay model was updated successfully
-            for m in delay_model["delayModel"]:
-                for delayDetail in m["delayDetails"]:
-                    rec_id = delayDetail["receptor"]
-                    if rec_id in valid_receptor_ids:
-                        for frequency_slice in delayDetail[
-                            "receptorDelayDetails"
-                        ]:
-                            fs_id = frequency_slice["fsid"]
-                            if fs_id == fsp_id:
-                                delayCoeffs = frequency_slice["delayCoeff"]
-                                if len(delayCoeffs) == model_len:
-                                    assert (
-                                        fsp_component_manager.delay_model[
-                                            rec_id - 1
-                                        ]
-                                        == delayCoeffs
-                                    )
+            assert delay_model == fsp_component_manager.delay_model
 
     @pytest.mark.parametrize(
         "timing_beam_weights_file_name, \
@@ -386,6 +377,13 @@ class TestFspComponentManager:
             == CommunicationStatus.ESTABLISHED
         )
         assert fsp_component_manager._connected is True
+
+        # on invoked to get capability proxy
+        (result_code, msg) = fsp_component_manager.on()
+        assert (result_code, msg) == (
+            ResultCode.OK,
+            "Fsp On command completed OK",
+        )
 
         fsp_component_manager.add_subarray_membership(sub_id)
         time.sleep(3)

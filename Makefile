@@ -75,6 +75,8 @@ KUBECONFIG ?= /etc/deploy/config ## KUBECONFIG location
 
 ARTIFACTS_POD = $(shell kubectl -n $(KUBE_NAMESPACE) get pod --no-headers --selector=vol=artifacts-admin -o custom-columns=':metadata.name')
 
+HOST_IP = $(shell ifconfig eno2 | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*')
+
 XAUTHORITYx ?= ${XAUTHORITY}
 THIS_HOST := $(shell ifconfig | sed -En 's/127.0.0.1//;s/.*inet (addr:)?(([0-9]*\.){3}[0-9]*).*/\2/p' | head -n1)
 DISPLAY := $(THIS_HOST):0
@@ -94,7 +96,7 @@ K8S_CHART_PARAMS = --set global.minikube=false --set global.tango_host=$(TANGO_H
 else
 PYTHON_RUNNER = python3 -m
 K8S_TEST_IMAGE_TO_TEST = artefact.skao.int/ska-mid-cbf-mcs:$(VERSION)
-K8S_CHART_PARAMS = --set global.tango_host=$(TANGO_HOST) --values taranta-values.yaml
+K8S_CHART_PARAMS = --set global.tango_host=$(TANGO_HOST) --set ska-mid-cbf-mcs.hostInfo.hostIP="$(HOST_IP)" --values taranta-values.yaml
 endif
 
 K8S_TEST_TEST_COMMAND ?= ls -lrt &&  $(PYTHON_VARS_BEFORE_PYTEST) $(PYTHON_RUNNER) \
@@ -138,14 +140,13 @@ update-db-port:  ## update Tango DB port so that the DB is accessible from the T
 	kubectl -n ska-mid-cbf patch service/tango-host-databaseds-from-makefile-test --type='json' -p '[{"op":"replace","path":"/spec/ports/0/nodePort","value": 30176}]'
 
 k8s-pre-test:
-	@kubectl exec -n $(KUBE_NAMESPACE) $(ARTIFACTS_POD) -- mkdir /app/mnt/talondx-config
-	@kubectl cp mnt/talondx-config/talondx-config.json $(KUBE_NAMESPACE)/$(ARTIFACTS_POD):/app/mnt/talondx-config/talondx-config.json
+	@kubectl exec -n $(KUBE_NAMESPACE) $(ARTIFACTS_POD) -- mkdir -p /app/mnt/talondx-config
 
 python-pre-lint:
 	@pip3 install black isort flake8 pylint_junit typing_extensions
 
-documentation:   ## ## Re-generate documentation
-	cd docs && make clean && make html
+python-pre-build:
+	@$(PYTHON_RUNNER) pip install sphinx==2.2
 
 help: ## show this help.
 	@echo "make targets:"

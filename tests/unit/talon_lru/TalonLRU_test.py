@@ -48,14 +48,12 @@ class TestTalonLRU:
         self: TestTalonLRU,
         device_under_test: CbfDeviceProxy,
     ) -> None:
-
         assert device_under_test.Status() == "The device is in DISABLE state."
 
     def test_adminMode(
         self: TestTalonLRU,
         device_under_test: CbfDeviceProxy,
     ) -> None:
-
         assert device_under_test.adminMode == AdminMode.OFFLINE
 
     def test_startup_state(

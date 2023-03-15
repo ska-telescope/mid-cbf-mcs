@@ -1878,7 +1878,7 @@
                                 "mid_csp_cbf/power_switch/001"
                             ],
                             "PDU2PowerOutlet": [
-                                "1"
+                                "0"
                             ],
                             "polled_attr": [
                                 "state",
@@ -1906,13 +1906,13 @@
                                 "mid_csp_cbf/power_switch/001"
                             ],
                             "PDU1PowerOutlet": [
-                                "2"
+                                "1"
                             ],
                             "PDU2Address": [
                                 "mid_csp_cbf/power_switch/001"
                             ],
                             "PDU2PowerOutlet": [
-                                "3"
+                                "1"
                             ],
                             "polled_attr": [
                                 "state",

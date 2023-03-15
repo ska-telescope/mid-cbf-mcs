@@ -4,6 +4,7 @@
       "description": "Configures Talon DX to run VCC firmware and devices.",
       "target": "talon1",
       "ip_address": "169.254.100.1",
+      "talon_first_connect_timeout": 90,
       "ds_hps_master_fqdn": "talondx-001/hpsmaster/hps-1",
       "fpga_path": "/lib/firmware",
       "fpga_dtb_name": "vcc3_2ch4.dtb",
@@ -21,4 +22,3 @@
     }
   ]
 }
-  

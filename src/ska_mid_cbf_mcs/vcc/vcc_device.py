@@ -151,9 +151,7 @@ class Vcc(CspSubElementObsDevice):
     )
 
     delayModel = attribute(
-        dtype=(("double",),),
-        max_dim_x=6,
-        max_dim_y=26,
+        dtype="str",
         access=AttrWriteType.READ,
         label="Delay model coefficients",
         doc="Delay model coefficients, given per frequency slice",
@@ -543,7 +541,7 @@ class Vcc(CspSubElementObsDevice):
         return self.component_manager.rfi_flagging_mask
         # PROTECTED REGION END #    //  Vcc.rfiFlaggingMask_read
 
-    def read_delayModel(self: Vcc) -> List[List[float]]:
+    def read_delayModel(self: Vcc) -> str:
         # PROTECTED REGION ID(Vcc.delayModel_read) ENABLED START #
         """
         Read the delayModel attribute.
@@ -1261,7 +1259,6 @@ class Vcc(CspSubElementObsDevice):
                     "5a",
                     "5b",
                 ]:  # frequency band is not band 5
-
                     frequencyBand_mi = freq_band_dict()[freq_band_name]
 
                     frequencyBand = ["1", "2", "3", "4", "5a", "5b"].index(

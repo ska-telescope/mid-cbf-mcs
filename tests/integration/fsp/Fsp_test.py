@@ -19,6 +19,8 @@ import pytest
 from ska_tango_base.control_model import AdminMode
 from tango import DevState
 
+from ska_mid_cbf_mcs.commons.global_enum import FspModes
+
 file_path = os.path.dirname(os.path.abspath(__file__))
 
 
@@ -134,125 +136,40 @@ class TestFsp:
         )
         assert test_proxies.fsp[fsp_id].State() == DevState.ON
 
-        # all function modes should be disabled after initialization
-        assert (
-            test_proxies.fspFunctionMode[fsp_id]["corr"].State()
-            == DevState.DISABLE
-        )
-        assert (
-            test_proxies.fspFunctionMode[fsp_id]["pss"].State()
-            == DevState.DISABLE
-        )
-        assert (
-            test_proxies.fspFunctionMode[fsp_id]["pst"].State()
-            == DevState.DISABLE
-        )
-        assert (
-            test_proxies.fspFunctionMode[fsp_id]["vlbi"].State()
-            == DevState.DISABLE
-        )
-
         # set function mode to CORR
         test_proxies.fsp[fsp_id].SetFunctionMode("CORR")
         time.sleep(1)
-        assert (
-            test_proxies.fspFunctionMode[fsp_id]["corr"].State() == DevState.ON
-        )
-        assert (
-            test_proxies.fspFunctionMode[fsp_id]["pss"].State()
-            == DevState.DISABLE
-        )
-        assert (
-            test_proxies.fspFunctionMode[fsp_id]["pst"].State()
-            == DevState.DISABLE
-        )
-        assert (
-            test_proxies.fspFunctionMode[fsp_id]["vlbi"].State()
-            == DevState.DISABLE
-        )
+        function_mode = FspModes.CORR.value
+        assert test_proxies.fsp[fsp_id].functionMode == function_mode
 
         # set function mode to PSS
         test_proxies.fsp[fsp_id].SetFunctionMode("PSS-BF")
         time.sleep(1)
-        assert (
-            test_proxies.fspFunctionMode[fsp_id]["corr"].State()
-            == DevState.DISABLE
-        )
-        assert (
-            test_proxies.fspFunctionMode[fsp_id]["pss"].State() == DevState.ON
-        )
-        assert (
-            test_proxies.fspFunctionMode[fsp_id]["pst"].State()
-            == DevState.DISABLE
-        )
-        assert (
-            test_proxies.fspFunctionMode[fsp_id]["vlbi"].State()
-            == DevState.DISABLE
-        )
+        function_mode = FspModes.PSS_BF.value
+        assert test_proxies.fsp[fsp_id].functionMode == function_mode
 
         # set function mode to PST
         test_proxies.fsp[fsp_id].SetFunctionMode("PST-BF")
         time.sleep(1)
-        assert (
-            test_proxies.fspFunctionMode[fsp_id]["corr"].State()
-            == DevState.DISABLE
-        )
-        assert (
-            test_proxies.fspFunctionMode[fsp_id]["pss"].State()
-            == DevState.DISABLE
-        )
-        assert (
-            test_proxies.fspFunctionMode[fsp_id]["pst"].State() == DevState.ON
-        )
-        assert (
-            test_proxies.fspFunctionMode[fsp_id]["vlbi"].State()
-            == DevState.DISABLE
-        )
+        function_mode = FspModes.PST_BF.value
+        assert test_proxies.fsp[fsp_id].functionMode == function_mode
 
         # set function mode to VLBI
         test_proxies.fsp[fsp_id].SetFunctionMode("VLBI")
         time.sleep(1)
-        assert (
-            test_proxies.fspFunctionMode[fsp_id]["corr"].State()
-            == DevState.DISABLE
-        )
-        assert (
-            test_proxies.fspFunctionMode[fsp_id]["pss"].State()
-            == DevState.DISABLE
-        )
-        assert (
-            test_proxies.fspFunctionMode[fsp_id]["pst"].State()
-            == DevState.DISABLE
-        )
-        assert (
-            test_proxies.fspFunctionMode[fsp_id]["vlbi"].State() == DevState.ON
-        )
+        function_mode = FspModes.VLBI.value
+        assert test_proxies.fsp[fsp_id].functionMode == function_mode
 
         # set function mode to IDLE
         test_proxies.fsp[fsp_id].SetFunctionMode("IDLE")
         time.sleep(1)
-        assert (
-            test_proxies.fspFunctionMode[fsp_id]["corr"].State()
-            == DevState.DISABLE
-        )
-        assert (
-            test_proxies.fspFunctionMode[fsp_id]["pss"].State()
-            == DevState.DISABLE
-        )
-        assert (
-            test_proxies.fspFunctionMode[fsp_id]["pst"].State()
-            == DevState.DISABLE
-        )
-        assert (
-            test_proxies.fspFunctionMode[fsp_id]["vlbi"].State()
-            == DevState.DISABLE
-        )
+        function_mode = FspModes.IDLE.value
+        assert test_proxies.fsp[fsp_id].functionMode == function_mode
 
     @pytest.mark.parametrize("fsp_id", [1])
     def test_AddRemoveSubarrayMembership(
         self, test_proxies: pytest.fixture, fsp_id: int
     ) -> None:
-
         # subarray membership should be empty
         assert test_proxies.fsp[fsp_id].subarrayMembership is None
 
