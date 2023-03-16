@@ -35,7 +35,6 @@ data_file_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
 
 
 class TestCbfSubarray:
-
     receptor_utils = ReceptorUtils(const.MAX_VCC)
 
     @pytest.mark.parametrize("sub_id", [1])
