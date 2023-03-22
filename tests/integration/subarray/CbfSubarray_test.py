@@ -574,13 +574,13 @@ class TestCbfSubarray:
         receptor_ids, \
         vcc_receptors",
         [
-            ("ConfigureScan_basic.json", [1, 3, 4, 2], [4, 1]),
+            ("ConfigureScan_basic.json", ["MKT000", "MKT002", "MKT003", "MKT001"], [4, 1]),
             (
                 "ConfigureScan_basic_fspMultiReceptors.json",
-                [1, 3, 4, 2],
+                ["MKT000", "MKT002", "MKT003", "MKT001"],
                 [4, 1],
             ),
-            ("ConfigureScan_basic_fspNoReceptors.json", [1, 3, 4, 2], [4, 1]),
+            ("ConfigureScan_basic_fspNoReceptors.json", ["MKT000", "MKT002", "MKT003", "MKT001"], [4, 1]),
         ],
     )
     def test_ConfigureScan_basic(
@@ -1704,7 +1704,7 @@ class TestCbfSubarray:
         #
         # The goal of this test is to verify that the delay model that
         # reached VCC (or FSP) is the same as the input delay model read by TM,
-        # for all the delay Model in the  list in the input JSON File.
+        # for all the delay Model in the list in the input JSON File.
 
         # Read the input delay model Json string from file:
         with open(data_file_path + delay_model_file_name) as f_in:
@@ -1837,7 +1837,15 @@ class TestCbfSubarray:
                         == ObsState.SCANNING
                     )
 
-                # check the delay model was correctly updated for fsp
+                # check the delay model was correctly updated for FSP
+                # convert receptor IDs to pair of str and int for FSPs
+                for model in input_delay_model_obj["delayModel"]:
+                    receptor_id = model["receptor"]
+                    model["receptor"] = [
+                        receptor_id,
+                        self.receptor_utils.receptors[receptor_id],
+                    ]
+                input_delay_model = json.dumps(input_delay_model_obj)
                 for fsp in [
                     test_proxies.fsp[i]
                     for i in range(1, test_proxies.num_fsp + 1)

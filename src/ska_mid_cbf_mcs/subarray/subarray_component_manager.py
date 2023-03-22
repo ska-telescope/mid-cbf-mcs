@@ -492,7 +492,7 @@ class CbfSubarrayComponentManager(
                 self._last_received_delay_model = value
 
                 delay_model = json.loads(value)
-                # pass receptor IDs as pair of str and int to FPSs and VCCs
+                # pass receptor IDs as pair of str and int to FSPs and VCCs
                 for model in delay_model["delayModel"]:
                     receptor_id = model["receptor"]
                     model["receptor"] = [
@@ -569,7 +569,7 @@ class CbfSubarrayComponentManager(
                 jones_matrix_all = json.loads(value)
 
                 for jones_matrix in jones_matrix_all["jonesMatrix"]:
-                    # pass receptor IDs as pair of str and int to FPSs and VCCs
+                    # pass receptor IDs as pair of str and int to FSPs and VCCs
                     for matrix in jones_matrix["matrixDetails"]:
                         receptor_id = matrix["receptor"]
                         matrix["receptor"] = [
@@ -660,7 +660,7 @@ class CbfSubarrayComponentManager(
                 timing_beam_weights_all = json.loads(value)
 
                 for beam_weights in timing_beam_weights_all["beamWeights"]:
-                    # pass receptor IDs as pair of str and int to FPSs and VCCs
+                    # pass receptor IDs as pair of str and int to FSPs and VCCs
                     for weights in beam_weights["beamWeightsDetails"]:
                         receptor_id = weights["receptor"]
                         weights["receptor"] = [
@@ -1131,7 +1131,7 @@ class CbfSubarrayComponentManager(
                         )
                         self._logger.info(msg)
                         # In this case by the ICD, all subarray allocated resources should be used.
-                        fsp["receptor_ids"] = self._receptors
+                        fsp["receptor_ids"] = self._receptors.copy()
 
                     frequencyBand = freq_band_dict()[fsp["frequency_band"]]
                     # Validate frequencySliceID.
@@ -1799,7 +1799,7 @@ class CbfSubarrayComponentManager(
             ] = self._frequency_band_offset_stream_2
 
             # Add all receptor ids for subarray to fsp
-            fsp["subarray_receptor_ids"] = self._receptors
+            fsp["subarray_receptor_ids"] = self._receptors.copy()
 
             if fsp["function_mode"] == "CORR":
                 # Receptors may not be specified in the
@@ -1809,21 +1809,17 @@ class CbfSubarrayComponentManager(
                 if "receptor_ids" in fsp:
                     if fsp["receptor_ids"] != []:
                         receptorsSpecified = True
-                        # receptor IDs to pair of str and int for FSP level
-                        for i, receptor in enumerate(fsp["receptor_ids"]):
-                            fsp["receptor_ids"][i] = [
-                                receptor,
-                                self._receptor_utils.receptors[receptor],
-                            ]
+
                 if not receptorsSpecified:
                     # In this case by the ICD, all subarray allocated resources should be used.
-                    fsp["receptor_ids"] = self._receptors
-                    # receptor IDs to pair of str and int for FSP level
-                    for i, receptor in enumerate(self._receptors):
-                        fsp["receptor_ids"][i] = [
-                            receptor,
-                            self._receptor_utils.receptors[receptor],
-                        ]
+                    fsp["receptor_ids"] = self._receptors.copy()
+
+                # receptor IDs to pair of str and int for FSP level
+                for i, receptor in enumerate(fsp["receptor_ids"]):
+                    fsp["receptor_ids"][i] = [
+                        receptor,
+                        self._receptor_utils.receptors[receptor],
+                    ]
 
                 self._corr_config.append(fsp)
                 self._corr_fsp_list.append(fsp["fsp_id"])
