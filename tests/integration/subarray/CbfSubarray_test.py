@@ -1831,12 +1831,17 @@ class TestCbfSubarray:
                     # It is assumed that there is only one entry in the
                     # delay model for a given receptor
                     for entry in input_delay_model_obj["delayModel"]:
-                        if self.receptor_utils.receptors[entry["receptor"]] == i_rec:
+                        if (
+                            self.receptor_utils.receptors[entry["receptor"]]
+                            == i_rec
+                        ):
                             this_input_delay_model_obj = copy.deepcopy(entry)
                             # receptor as pair of str and int for comparison
                             this_input_delay_model_obj["receptor"] = [
                                 entry["receptor"],
-                                self.receptor_utils.receptors[entry["receptor"]],
+                                self.receptor_utils.receptors[
+                                    entry["receptor"]
+                                ],
                             ]
                             break
 
