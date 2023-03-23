@@ -866,7 +866,12 @@ class TestCbfSubarray:
                             self.receptor_utils.receptors[r]
                             for r in config_fsp_receptors_sorted
                         ]
-                        assert fsp_corr_receptors == fsp_receptors_num
+                        assert all(
+                            [
+                                fsp_corr_receptors[i] == fsp_receptors_num[i]
+                                for i in range(len(fsp_corr_receptors))
+                            ]
+                        )
 
                     else:
                         receptor_ids_sorted = receptor_ids
@@ -875,7 +880,12 @@ class TestCbfSubarray:
                             self.receptor_utils.receptors[r]
                             for r in receptor_ids_sorted
                         ]
-                        assert fsp_corr_receptors == fsp_receptors_num
+                        assert all(
+                            [
+                                fsp_corr_receptors[i] == fsp_receptors_num[i]
+                                for i in range(len(fsp_corr_receptors))
+                            ]
+                        )
 
                     assert (
                         test_proxies.fspSubarray["CORR"][sub_id][
@@ -1821,8 +1831,13 @@ class TestCbfSubarray:
                     # It is assumed that there is only one entry in the
                     # delay model for a given receptor
                     for entry in input_delay_model_obj["delayModel"]:
-                        if entry["receptor"] == i_rec:
+                        if self.receptor_utils.receptors[entry["receptor"]] == i_rec:
                             this_input_delay_model_obj = copy.deepcopy(entry)
+                            # receptor as pair of str and int for comparison
+                            this_input_delay_model_obj["receptor"] = [
+                                entry["receptor"],
+                                self.receptor_utils.receptors[entry["receptor"]],
+                            ]
                             break
 
                     vcc_updated_delayModel_obj = json.loads(vcc_dp.delayModel)

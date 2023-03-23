@@ -1119,7 +1119,7 @@ class CbfSubarrayComponentManager(
                         for this_rec in fsp["receptor_ids"]:
                             if this_rec not in self._receptors:
                                 msg = (
-                                    f"Receptor {receptor} does not belong to "
+                                    f"Receptor {this_rec} does not belong to "
                                     f"subarray {self._subarray_id}."
                                 )
                                 self._logger.error(msg)
