@@ -28,11 +28,11 @@
                 "tdc_period_after_epoch": 25,
                 "tdc_destination_address": [
                     {
-                        "receptor_id": 4,
+                        "receptor_id": "MKT003",
                         "tdc_destination_address": ["foo", "bar", "8080"]
                     },
                     {
-                        "receptor_id": 1,
+                        "receptor_id": "MKT000",
                         "tdc_destination_address": ["fizz", "buzz", "80"]
                     }
                 ]
