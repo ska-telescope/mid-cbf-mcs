@@ -677,7 +677,8 @@ def init_delay_model_test_fixture():
             dm_num_entries = len(delay_model_all_obj)
             # TODO: receptor values are hardcoded
             receptors_to_remove = list(
-                set(["MKT000", "MKT001", "MKT002", "MKT003"]) - set(receptors_under_test)
+                set(["MKT000", "MKT001", "MKT002", "MKT003"])
+                - set(receptors_under_test)
             )
 
             if receptors_to_remove:

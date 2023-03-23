@@ -940,7 +940,9 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         # Set up the delay model to be a list
         list_of_entries = []
         for entry in delay_model_obj["delayModel"]:
-            self._logger.debug(f"Received delay model for receptor {entry['receptor']}")
+            self._logger.debug(
+                f"Received delay model for receptor {entry['receptor']}"
+            )
             if entry["receptor"][1] == self._receptor_id:
                 self._logger.debug("Updating delay model for this VCC")
                 list_of_entries.append(copy.deepcopy(entry))
@@ -949,9 +951,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                 break
 
         if not dm_found:
-            log_msg = (
-                f"Delay Model for VCC (receptor: {self._receptor_id}) not found"
-            )
+            log_msg = f"Delay Model for VCC (receptor: {self._receptor_id}) not found"
             self._logger.error(log_msg)
 
     def update_jones_matrix(self: VccComponentManager, argin: str) -> None:

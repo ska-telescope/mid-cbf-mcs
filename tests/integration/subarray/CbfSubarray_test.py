@@ -574,13 +574,21 @@ class TestCbfSubarray:
         receptor_ids, \
         vcc_receptors",
         [
-            ("ConfigureScan_basic.json", ["MKT000", "MKT002", "MKT003", "MKT001"], [4, 1]),
+            (
+                "ConfigureScan_basic.json",
+                ["MKT000", "MKT002", "MKT003", "MKT001"],
+                [4, 1],
+            ),
             (
                 "ConfigureScan_basic_fspMultiReceptors.json",
                 ["MKT000", "MKT002", "MKT003", "MKT001"],
                 [4, 1],
             ),
-            ("ConfigureScan_basic_fspNoReceptors.json", ["MKT000", "MKT002", "MKT003", "MKT001"], [4, 1]),
+            (
+                "ConfigureScan_basic_fspNoReceptors.json",
+                ["MKT000", "MKT002", "MKT003", "MKT001"],
+                [4, 1],
+            ),
         ],
     )
     def test_ConfigureScan_basic(
@@ -846,11 +854,9 @@ class TestCbfSubarray:
                         if fsp["receptor_ids"] != []:
                             receptorsSpecified = True
 
-                    fsp_corr_receptors = (
-                        test_proxies.fspSubarray["CORR"][sub_id][
-                            fsp_id
-                        ].receptors
-                    )
+                    fsp_corr_receptors = test_proxies.fspSubarray["CORR"][
+                        sub_id
+                    ][fsp_id].receptors
                     fsp_corr_receptors.sort()
 
                     if receptorsSpecified:
@@ -1332,7 +1338,10 @@ class TestCbfSubarray:
                     ]:
                         # Fsp stores the whole delay model
                         # compare strings
-                        assert input_delay_model.replace("\n", "") == fsp.delayModel
+                        assert (
+                            input_delay_model.replace("\n", "")
+                            == fsp.delayModel
+                        )
                     else:
                         log_msg = (
                             "function mode {} currently not supported".format(
@@ -1800,7 +1809,9 @@ class TestCbfSubarray:
                 # check the delay model was correctly updated for vcc
                 vcc_receptors_num = []
                 for receptor in vcc_receptors:
-                    vcc_receptors_num.append(self.receptor_utils.receptors[receptor])
+                    vcc_receptors_num.append(
+                        self.receptor_utils.receptors[receptor]
+                    )
                 for jj, i_rec in enumerate(vcc_receptors_num):
                     # get the vcc device proxy (dp) corresponding to i_rec
                     this_vcc = test_proxies.receptor_to_vcc[i_rec]
@@ -1876,7 +1887,9 @@ class TestCbfSubarray:
                     ]:
                         # fsp stores the whole delay model
                         # compare strings
-                        assert fsp.delayModel == input_delay_model.replace("\n", "")
+                        assert fsp.delayModel == input_delay_model.replace(
+                            "\n", ""
+                        )
                 time.sleep(update_period)
 
             # Clean up
