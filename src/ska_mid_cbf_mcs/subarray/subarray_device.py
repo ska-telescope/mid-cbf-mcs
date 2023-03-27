@@ -141,7 +141,7 @@ class CbfSubarray(CspSubElementSubarray):
     )
 
     receptors = attribute(
-        dtype=("uint16",),
+        dtype=("str",),
         access=AttrWriteType.READ_WRITE,
         max_dim_x=197,
         label="receptor_ids",
@@ -396,18 +396,18 @@ class CbfSubarray(CspSubElementSubarray):
         return self.component_manager.frequency_band
         # PROTECTED REGION END #    //  CbfSubarray.frequencyBand_read
 
-    def read_receptors(self: CbfSubarray) -> List[int]:
+    def read_receptors(self: CbfSubarray) -> List[str]:
         # PROTECTED REGION ID(CbfSubarray.receptors_read) ENABLED START #
         """
-        Return list of receptors assgined to subarray
+        Return list of receptors assigned to subarray
 
         :return: the list of receptors
-        :rtype: List[int]
+        :rtype: List[str]
         """
         return self.component_manager.receptors
         # PROTECTED REGION END #    //  CbfSubarray.receptors_read
 
-    def write_receptors(self: CbfSubarray, value: List[int]) -> None:
+    def write_receptors(self: CbfSubarray, value: List[str]) -> None:
         # PROTECTED REGION ID(CbfSubarray.receptors_write) ENABLED START #
         """
         Set receptors of this array to the input value.
@@ -490,7 +490,7 @@ class CbfSubarray(CspSubElementSubarray):
         """
 
         def do(
-            self: CbfSubarray.RemoveReceptorsCommand, argin: List[int]
+            self: CbfSubarray.RemoveReceptorsCommand, argin: List[str]
         ) -> Tuple[ResultCode, str]:
             """
             Stateless hook for RemoveReceptors() command functionality.
@@ -505,13 +505,13 @@ class CbfSubarray(CspSubElementSubarray):
             return component_manager.remove_receptors(argin)
 
     @command(
-        dtype_in=("uint16",),
+        dtype_in=("str",),
         doc_in="List of receptor IDs",
         dtype_out="DevVarLongStringArray",
         doc_out="(ReturnType, 'informational message')",
     )
     def RemoveReceptors(
-        self: CbfSubarray, argin: List[int]
+        self: CbfSubarray, argin: List[str]
     ) -> Tuple[ResultCode, str]:
         """
         Remove from list of receptors. Turn Subarray to ObsState = EMPTY if no receptors assigned.
@@ -575,7 +575,7 @@ class CbfSubarray(CspSubElementSubarray):
         """
 
         def do(
-            self: CbfSubarray.AddReceptorsCommand, argin: List[int]
+            self: CbfSubarray.AddReceptorsCommand, argin: List[str]
         ) -> Tuple[ResultCode, str]:
             """
             Stateless hook for AddReceptors() command functionality.
@@ -590,14 +590,14 @@ class CbfSubarray(CspSubElementSubarray):
             return component_manager.add_receptors(argin)
 
     @command(
-        dtype_in=("uint16",),
+        dtype_in=("str",),
         doc_in="List of receptor IDs",
         dtype_out="DevVarLongStringArray",
         doc_out="(ReturnType, 'informational message')",
     )
     @DebugIt()
     def AddReceptors(
-        self: CbfSubarray, argin: List[int]
+        self: CbfSubarray, argin: List[str]
     ) -> Tuple[ResultCode, str]:
         """
         Assign Receptors to this subarray.

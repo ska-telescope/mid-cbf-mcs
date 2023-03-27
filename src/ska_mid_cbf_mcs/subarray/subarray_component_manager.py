@@ -39,6 +39,7 @@ from tango import AttrQuality, DevState
 
 from ska_mid_cbf_mcs.attribute_proxy import CbfAttributeProxy
 from ska_mid_cbf_mcs.commons.global_enum import const, freq_band_dict
+from ska_mid_cbf_mcs.commons.receptor_utils import ReceptorUtils
 from ska_mid_cbf_mcs.component.component_manager import (
     CbfComponentManager,
     CommunicationStatus,
@@ -76,7 +77,7 @@ class CbfSubarrayComponentManager(
         return self._frequency_band
 
     @property
-    def receptors(self: CbfSubarrayComponentManager) -> List[int]:
+    def receptors(self: CbfSubarrayComponentManager) -> List[str]:
         """Return the receptor list."""
         return self._receptors
 
@@ -164,6 +165,8 @@ class CbfSubarrayComponentManager(
 
         self._logger.info("Entering CbfSubarrayComponentManager.__init__)")
 
+        self._receptor_utils = ReceptorUtils(num_vcc=const.MAX_VCC)
+
         self._component_op_fault_callback = component_fault_callback
         self._component_obs_fault_callback = component_obs_fault_callback
 
@@ -237,7 +240,7 @@ class CbfSubarrayComponentManager(
         self._controller_max_capabilities = {}
         self._count_vcc = 0
         self._count_fsp = 0
-        self._receptor_to_vcc = None
+        self._receptor_to_vcc = {}
 
         # proxies to subordinate devices
         self._proxies_vcc = []
@@ -292,10 +295,15 @@ class CbfSubarrayComponentManager(
                 )
                 self._count_vcc = int(self._controller_max_capabilities["VCC"])
                 self._count_fsp = int(self._controller_max_capabilities["FSP"])
-                self._receptor_to_vcc = dict(
-                    [*map(int, pair.split(":"))]
-                    for pair in self._proxy_cbf_controller.receptorToVcc
-                )
+                for (
+                    receptor_vcc_pair
+                ) in self._proxy_cbf_controller.receptorToVcc:
+                    receptor_vcc_pair = receptor_vcc_pair.split(":")
+                    self._receptor_to_vcc[
+                        self._receptor_utils.receptor_id_int_to_str(
+                            int(receptor_vcc_pair[0])
+                        )
+                    ] = int(receptor_vcc_pair[1])
                 self._logger.debug(f"{self._receptor_to_vcc}")
 
                 self._fqdn_vcc = self._fqdn_vcc[: self._count_vcc]
@@ -483,8 +491,19 @@ class CbfSubarrayComponentManager(
 
                 self._last_received_delay_model = value
 
-                self._update_delay_model(value)
-
+                delay_model = json.loads(value)
+                # pass receptor IDs as pair of str and int to FSPs and VCCs
+                for model in delay_model["delayModel"]:
+                    receptor_id = model["receptor"]
+                    model["receptor"] = [
+                        receptor_id,
+                        self._receptor_utils.receptors[receptor_id],
+                    ]
+                t = Thread(
+                    target=self._update_delay_model,
+                    args=(json.dumps(delay_model),),
+                )
+                t.start()
             except Exception as e:
                 self._logger.error(str(e))
         else:
@@ -550,6 +569,13 @@ class CbfSubarrayComponentManager(
                 jones_matrix_all = json.loads(value)
 
                 for jones_matrix in jones_matrix_all["jonesMatrix"]:
+                    # pass receptor IDs as pair of str and int to FSPs and VCCs
+                    for matrix in jones_matrix["matrixDetails"]:
+                        receptor_id = matrix["receptor"]
+                        matrix["receptor"] = [
+                            receptor_id,
+                            self._receptor_utils.receptors[receptor_id],
+                        ]
                     t = Thread(
                         target=self._update_jones_matrix,
                         args=(
@@ -634,6 +660,13 @@ class CbfSubarrayComponentManager(
                 timing_beam_weights_all = json.loads(value)
 
                 for beam_weights in timing_beam_weights_all["beamWeights"]:
+                    # pass receptor IDs as pair of str and int to FSPs and VCCs
+                    for weights in beam_weights["beamWeightsDetails"]:
+                        receptor_id = weights["receptor"]
+                        weights["receptor"] = [
+                            receptor_id,
+                            self._receptor_utils.receptors[receptor_id],
+                        ]
                     t = Thread(
                         target=self._update_timing_beam_weights,
                         args=(
@@ -1098,7 +1131,7 @@ class CbfSubarrayComponentManager(
                         )
                         self._logger.info(msg)
                         # In this case by the ICD, all subarray allocated resources should be used.
-                        fsp["receptor_ids"] = self._receptors
+                        fsp["receptor_ids"] = self._receptors.copy()
 
                     frequencyBand = freq_band_dict()[fsp["frequency_band"]]
                     # Validate frequencySliceID.
@@ -1188,7 +1221,7 @@ class CbfSubarrayComponentManager(
                                     pass
                                 else:
                                     # TODO: these validations of BW range are done many times
-                                    # in many places - use a commom function; also may be possible
+                                    # in many places - use a common function; also may be possible
                                     # to do them only once (ex. for band5Tuning)
 
                                     frequency_slice_range_1 = (
@@ -1401,17 +1434,21 @@ class CbfSubarrayComponentManager(
                                             )
                                             return (False, msg)
 
-                                # Validate receptors.
-                                # This is always given, due to implementation details.
-                                # TODO assume always given, as there is currently only support for 1 receptor/beam
+                            # Validate receptors.
+                            # This is always given, due to implementation details.
+                            # TODO assume always given, as there is currently only support for 1 receptor/beam
                             if "receptor_ids" not in searchBeam:
-                                searchBeam["receptor_ids"] = self._receptors
+                                searchBeam[
+                                    "receptor_ids"
+                                ] = self._receptor_utils.receptors[
+                                    self._receptors[0]
+                                ]
 
                             # Sanity check:
-                            for this_rec in searchBeam["receptor_ids"]:
-                                if this_rec not in self._receptors:
+                            for receptor in searchBeam["receptor_ids"]:
+                                if receptor not in self._receptors:
                                     msg = (
-                                        f"Receptor {this_rec} does not belong to "
+                                        f"Receptor {receptor} does not belong to "
                                         f"subarray {self._subarray_id}."
                                     )
                                     self._logger.error(msg)
@@ -1490,16 +1527,19 @@ class CbfSubarrayComponentManager(
                             # Validate receptors.
                             # This is always given, due to implementation details.
                             if "receptor_ids" in timingBeam:
-                                for this_rec in timingBeam["receptor_ids"]:
-                                    if this_rec not in self._receptors:
+                                for receptor in timingBeam["receptor_ids"]:
+                                    if receptor not in self._receptors:
                                         msg = (
-                                            f"Receptor {this_rec} does not belong to "
+                                            f"Receptor {receptor} does not belong to "
                                             f"subarray {self._subarray_id}."
                                         )
                                         self._logger.error(msg)
                                         return (False, msg)
                             else:
-                                timingBeam["receptor_ids"] = self._receptors
+                                timingBeam["receptor_ids"] = [
+                                    self._receptor_utils.receptors[receptor]
+                                    for receptor in self._receptors
+                                ]
 
                             if (
                                 timingBeam["enable_output"] is False
@@ -1687,6 +1727,15 @@ class CbfSubarrayComponentManager(
                     search_window["band_5_tuning"] = common_configuration[
                         "band_5_tuning"
                     ]
+                # pass receptor IDs as pair of str and int to VCCs
+                if search_window["tdc_enable"]:
+                    for tdc_dest in search_window["tdc_destination_address"]:
+                        tdc_dest["receptor_id"] = [
+                            tdc_dest["receptor_id"],
+                            self._receptor_utils.receptors[
+                                tdc_dest["receptor_id"]
+                            ],
+                        ]
                 # pass on configuration to VCC
                 data = tango.DeviceData()
                 data.insert(tango.DevString, json.dumps(search_window))
@@ -1750,7 +1799,7 @@ class CbfSubarrayComponentManager(
             ] = self._frequency_band_offset_stream_2
 
             # Add all receptor ids for subarray to fsp
-            fsp["subarray_receptor_ids"] = self._receptors
+            fsp["subarray_receptor_ids"] = self._receptors.copy()
 
             if fsp["function_mode"] == "CORR":
                 # Receptors may not be specified in the
@@ -1760,25 +1809,63 @@ class CbfSubarrayComponentManager(
                 if "receptor_ids" in fsp:
                     if fsp["receptor_ids"] != []:
                         receptorsSpecified = True
+
                 if not receptorsSpecified:
                     # In this case by the ICD, all subarray allocated resources should be used.
-                    fsp["receptor_ids"] = self._receptors
+                    fsp["receptor_ids"] = self._receptors.copy()
+
+                # receptor IDs to pair of str and int for FSP level
+                for i, receptor in enumerate(fsp["receptor_ids"]):
+                    fsp["receptor_ids"][i] = [
+                        receptor,
+                        self._receptor_utils.receptors[receptor],
+                    ]
+
                 self._corr_config.append(fsp)
                 self._corr_fsp_list.append(fsp["fsp_id"])
 
-            # TODO currently only CORR function mode is supported outside of Mid.CBF MCS
+            # TODO: PSS, PST below may fall out of date; currently only CORR function mode is supported outside of Mid.CBF MCS
             elif fsp["function_mode"] == "PSS-BF":
                 for searchBeam in fsp["search_beam"]:
                     if "receptor_ids" not in searchBeam:
                         # In this case by the ICD, all subarray allocated resources should be used.
-                        searchBeam["receptor_ids"] = self._receptors
+                        searchBeam["receptor_ids"] = [
+                            [
+                                receptor,
+                                self._receptor_utils.receptors[receptor],
+                            ]
+                            for receptor in self._receptors
+                        ]
+                    else:
+                        for i, receptor in enumerate(
+                            searchBeam["receptor_ids"]
+                        ):
+                            searchBeam["receptor_ids"][i] = [
+                                receptor,
+                                self._receptor_utils.receptors[receptor],
+                            ]
                 self._pss_config.append(fsp)
                 self._pss_fsp_list.append(fsp["fsp_id"])
+
             elif fsp["function_mode"] == "PST-BF":
                 for timingBeam in fsp["timing_beam"]:
                     if "receptor_ids" not in timingBeam:
                         # In this case by the ICD, all subarray allocated resources should be used.
-                        timingBeam["receptor_ids"] = self._receptors
+                        timingBeam["receptor_ids"] = [
+                            [
+                                receptor,
+                                self._receptor_utils.receptors[receptor],
+                            ]
+                            for receptor in self._receptors
+                        ]
+                    else:
+                        for i, receptor in enumerate(
+                            timingBeam["receptor_ids"]
+                        ):
+                            timingBeam["receptor_ids"][i] = [
+                                receptor,
+                                self._receptor_utils.receptors[receptor],
+                            ]
                 self._pst_config.append(fsp)
                 self._pst_fsp_list.append(fsp["fsp_id"])
 
@@ -1786,11 +1873,7 @@ class CbfSubarrayComponentManager(
 
         # NOTE:_corr_config is a list of fsp config JSON objects, each
         #      augmented by a number of vcc-fsp common parameters
-        #      created by the function validate_input()
         if len(self._corr_config) != 0:
-            # self._proxy_corr_config.ConfigureFSP(json.dumps(self._corr_config))
-            # Michelle - WIP - TODO - this is to replace the call to
-            #  _proxy_corr_config.ConfigureFSP()
             for this_fsp in self._corr_config:
                 try:
                     this_proxy = self._proxies_fsp_corr_subarray_device[
@@ -1809,7 +1892,7 @@ class CbfSubarrayComponentManager(
                     )
                     self.raise_configure_scan_fatal_error(msg)
 
-        # NOTE: _pss_config is costructed similarly to _corr_config
+        # NOTE: _pss_config is constructed similarly to _corr_config
         if len(self._pss_config) != 0:
             for this_fsp in self._pss_config:
                 try:
@@ -1824,7 +1907,7 @@ class CbfSubarrayComponentManager(
                     )
                     self.raise_configure_scan_fatal_error(msg)
 
-        # NOTE: _pst_config is costructed similarly to _corr_config
+        # NOTE: _pst_config is constructed similarly to _corr_config
         if len(self._pst_config) != 0:
             for this_fsp in self._pst_config:
                 try:
@@ -1854,7 +1937,7 @@ class CbfSubarrayComponentManager(
 
     @check_communicating
     def remove_receptors(
-        self: CbfSubarrayComponentManager, argin: List[int]
+        self: CbfSubarrayComponentManager, argin: List[str]
     ) -> Tuple[ResultCode, str]:
         """
         Remove receptor from subarray.
@@ -1868,54 +1951,56 @@ class CbfSubarrayComponentManager(
         self._logger.debug(f"current receptors: {*self._receptors,}")
         for receptor_id in argin:
             self._logger.debug(f"Attempting to remove receptor {receptor_id}")
-            # check for invalid receptorID
-            if not 0 < receptor_id <= const.MAX_VCC:
-                msg = f"Invalid receptor ID {receptor_id}. Skipping."
-                self._logger.warning(msg)
-            else:
-                if receptor_id in self._receptors:
+            if receptor_id in self._receptors:
+                if receptor_id in self._receptor_to_vcc.keys():
                     vccID = self._receptor_to_vcc[receptor_id]
-                    vccFQDN = self._fqdn_vcc[vccID - 1]
-                    vccProxy = self._proxies_vcc[vccID - 1]
-
-                    self._receptors.remove(receptor_id)
-                    self._group_vcc.remove(vccFQDN)
-                    del self._proxies_assigned_vcc[receptor_id]
-
-                    try:
-                        # reset subarrayMembership Vcc attribute:
-                        vccProxy.subarrayMembership = 0
-                        self._logger.debug(
-                            f"VCC {vccID} subarray_id: "
-                            + f"{vccProxy.subarrayMembership}"
-                        )
-
-                        # unsubscribe from events
-                        vccProxy.remove_event(
-                            "State", self._events_state_change_vcc[vccID][0]
-                        )
-                        vccProxy.remove_event(
-                            "healthState",
-                            self._events_state_change_vcc[vccID][1],
-                        )
-
-                        del self._events_state_change_vcc[vccID]
-                        del self._vcc_state[vccFQDN]
-                        del self._vcc_health_state[vccFQDN]
-
-                    except tango.DevFailed as df:
-                        msg = str(df.args[0].desc)
-                        self._component_obs_fault_callback(True)
-                        return (ResultCode.FAILED, msg)
-
                 else:
-                    msg = f"Receptor {receptor_id} not found. Skipping."
-                    self._logger.warning(msg)
+                    self._logger.warning(
+                        f"Invalid receptor {receptor_id}. Skipping."
+                    )
+                    continue
+                vccFQDN = self._fqdn_vcc[vccID - 1]
+                vccProxy = self._proxies_vcc[vccID - 1]
+
+                self._receptors.remove(receptor_id)
+                self._group_vcc.remove(vccFQDN)
+                del self._proxies_assigned_vcc[receptor_id]
+
+                try:
+                    # reset subarrayMembership Vcc attribute:
+                    vccProxy.subarrayMembership = 0
+                    self._logger.debug(
+                        f"VCC {vccID} subarray_id: "
+                        + f"{vccProxy.subarrayMembership}"
+                    )
+
+                    # unsubscribe from events
+                    vccProxy.remove_event(
+                        "State", self._events_state_change_vcc[vccID][0]
+                    )
+                    vccProxy.remove_event(
+                        "healthState",
+                        self._events_state_change_vcc[vccID][1],
+                    )
+
+                    del self._events_state_change_vcc[vccID]
+                    del self._vcc_state[vccFQDN]
+                    del self._vcc_health_state[vccFQDN]
+
+                except tango.DevFailed as df:
+                    msg = str(df.args[0].desc)
+                    self._component_obs_fault_callback(True)
+                    return (ResultCode.FAILED, msg)
+
+            else:
+                msg = f"Receptor {receptor_id} not found. Skipping."
+                self._logger.warning(msg)
 
         if len(self._receptors) == 0:
             self.update_component_resources(False)
-
-        self._logger.debug(f"receptors remaining: {*self._receptors,}")
+            self._logger.debug("No receptors remaining.")
+        else:
+            self._logger.debug(f"receptors remaining: {*self._receptors,}")
 
         return (ResultCode.OK, "RemoveReceptors completed OK")
 
@@ -1938,7 +2023,14 @@ class CbfSubarrayComponentManager(
                 self._logger.debug(
                     f"Attempting to remove receptor {receptor_id}"
                 )
-                vccID = self._receptor_to_vcc[receptor_id]
+
+                if receptor_id in self._receptor_to_vcc.keys():
+                    vccID = self._receptor_to_vcc[receptor_id]
+                else:
+                    self._logger.warning(
+                        f"Invalid receptor {receptor_id}. Skipping."
+                    )
+                    continue
                 vccFQDN = self._fqdn_vcc[vccID - 1]
                 vccProxy = self._proxies_vcc[vccID - 1]
 
@@ -1970,7 +2062,7 @@ class CbfSubarrayComponentManager(
                     self._component_obs_fault_callback(True)
                     return (ResultCode.FAILED, msg)
 
-            self._logger.debug(f"receptors remaining: {*self._receptors,}")
+            self._logger.debug("No receptors remaining.")
             self.update_component_resources(False)
 
             return (ResultCode.OK, "RemoveAllReceptors completed OK")
@@ -1983,7 +2075,7 @@ class CbfSubarrayComponentManager(
 
     @check_communicating
     def add_receptors(
-        self: CbfSubarrayComponentManager, argin: List[int]
+        self: CbfSubarrayComponentManager, argin: List[str]
     ) -> Tuple[ResultCode, str]:
         """
         Add receptors to subarray.
@@ -1997,84 +2089,83 @@ class CbfSubarrayComponentManager(
         self._logger.debug(f"current receptors: {*self._receptors,}")
         for receptor_id in argin:
             self._logger.debug(f"Attempting to add receptor {receptor_id}")
-            # check for invalid receptorID
-            if not 0 < receptor_id <= const.MAX_VCC:
-                msg = f"Invalid receptor ID {receptor_id}. Skipping."
+
+            if receptor_id in self._receptor_to_vcc.keys():
+                vccID = self._receptor_to_vcc[receptor_id]
+            else:
+                self._logger.warning(
+                    f"Invalid receptor {receptor_id}. Skipping."
+                )
+                continue
+
+            vccProxy = self._proxies_vcc[vccID - 1]
+
+            self._logger.debug(
+                f"receptor_id = {receptor_id}, vccProxy.receptor_id = "
+                + f"{vccProxy.receptorID}"
+            )
+
+            vccSubarrayID = vccProxy.subarrayMembership
+            self._logger.debug(f"VCC {vccID} subarray_id: {vccSubarrayID}")
+
+            # only add receptor if it does not already belong to a
+            # different subarray
+            if vccSubarrayID not in [0, self._subarray_id]:
+                msg = (
+                    f"Receptor {receptor_id} already in use by "
+                    + f"subarray {vccSubarrayID}. Skipping."
+                )
                 self._logger.warning(msg)
             else:
-                vccID = self._receptor_to_vcc[receptor_id]
-                vccProxy = self._proxies_vcc[vccID - 1]
+                if receptor_id not in self._receptors:
+                    # update resourced state once first receptor is added
+                    if len(self._receptors) == 0:
+                        self.update_component_resources(True)
 
-                self._logger.debug(
-                    f"receptor_id = {receptor_id}, vccProxy.receptor_id = "
-                    + f"{vccProxy.receptorID}"
-                )
+                    self._receptors.append(receptor_id)
+                    self._group_vcc.add(self._fqdn_vcc[vccID - 1])
+                    self._proxies_assigned_vcc[receptor_id] = vccProxy
 
-                vccSubarrayID = vccProxy.subarrayMembership
-                self._logger.debug(f"VCC {vccID} subarray_id: {vccSubarrayID}")
+                    try:
+                        # change subarray membership of vcc
+                        vccProxy.subarrayMembership = self._subarray_id
+                        self._logger.debug(
+                            f"VCC {vccID} subarray_id: "
+                            + f"{vccProxy.subarrayMembership}"
+                        )
 
-                # only add receptor if it does not already belong to a
-                # different subarray
-                if vccSubarrayID not in [0, self._subarray_id]:
+                        # subscribe to VCC state and healthState changes
+                        event_id_state = vccProxy.add_change_event_callback(
+                            "State", self._state_change_event_callback
+                        )
+                        self._logger.debug(f"State event ID: {event_id_state}")
+
+                        event_id_health_state = (
+                            vccProxy.add_change_event_callback(
+                                "healthState",
+                                self._state_change_event_callback,
+                            )
+                        )
+                        self._logger.debug(
+                            f"Health state event ID: {event_id_health_state}"
+                        )
+
+                        self._events_state_change_vcc[vccID] = [
+                            event_id_state,
+                            event_id_health_state,
+                        ]
+
+                    except tango.DevFailed as df:
+                        msg = str(df.args[0].desc)
+                        self._component_obs_fault_callback(True)
+                        return (ResultCode.FAILED, msg)
+
+                else:
                     msg = (
-                        f"Receptor {receptor_id} already in use by "
-                        + f"subarray {vccSubarrayID}. Skipping."
+                        f"Receptor {receptor_id} already assigned to "
+                        + "subarray. Skipping."
                     )
                     self._logger.warning(msg)
-                else:
-                    if receptor_id not in self._receptors:
-                        # update resourced state once first receptor is added
-                        if len(self._receptors) == 0:
-                            self.update_component_resources(True)
-
-                        self._receptors.append(int(receptor_id))
-                        self._group_vcc.add(self._fqdn_vcc[vccID - 1])
-                        self._proxies_assigned_vcc[receptor_id] = vccProxy
-
-                        try:
-                            # change subarray membership of vcc
-                            vccProxy.subarrayMembership = self._subarray_id
-                            self._logger.debug(
-                                f"VCC {vccID} subarray_id: "
-                                + f"{vccProxy.subarrayMembership}"
-                            )
-
-                            # subscribe to VCC state and healthState changes
-                            event_id_state = (
-                                vccProxy.add_change_event_callback(
-                                    "State", self._state_change_event_callback
-                                )
-                            )
-                            self._logger.debug(
-                                f"State event ID: {event_id_state}"
-                            )
-
-                            event_id_health_state = (
-                                vccProxy.add_change_event_callback(
-                                    "healthState",
-                                    self._state_change_event_callback,
-                                )
-                            )
-                            self._logger.debug(
-                                f"Health state event ID: {event_id_health_state}"
-                            )
-
-                            self._events_state_change_vcc[vccID] = [
-                                event_id_state,
-                                event_id_health_state,
-                            ]
-
-                        except tango.DevFailed as df:
-                            msg = str(df.args[0].desc)
-                            self._component_obs_fault_callback(True)
-                            return (ResultCode.FAILED, msg)
-
-                    else:
-                        msg = (
-                            f"Receptor {receptor_id} already assigned to "
-                            + "subarray. Skipping."
-                        )
-                        self._logger.warning(msg)
 
         self._logger.debug(f"receptors after adding: {*self._receptors,}")
 

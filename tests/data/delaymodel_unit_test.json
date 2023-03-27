@@ -1,7 +1,7 @@
 {
   "delayModel": [
     {
-      "receptor": 1,
+      "receptor": ["MKT000", 1],
       "epoch": 11000000,
       "validity_period": 10,
       "poly_info": [
@@ -16,7 +16,7 @@
       ]
     },
     {
-      "receptor": 2,
+      "receptor": ["MKT001", 2],
       "epoch": 11000000,
       "validity_period": 10,
       "poly_info": [
@@ -31,7 +31,7 @@
       ]
     },
     {
-      "receptor": 3,
+      "receptor": ["MKT002", 3],
       "epoch": 11000000,
       "validity_period": 10,
       "poly_info": [
@@ -46,7 +46,7 @@
       ]
     },
     {
-      "receptor": 4,
+      "receptor": ["MKT003", 4],
       "epoch": 11000000,
       "validity_period": 10,
       "poly_info": [

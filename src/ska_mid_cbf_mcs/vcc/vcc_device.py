@@ -1388,8 +1388,12 @@ class Vcc(CspSubElementObsDevice):
             if argin["tdc_enable"]:
                 try:
                     for receptor in argin["tdc_destination_address"]:
-                        receptor_id = receptor["receptor_id"]
-                        if receptor_id == device.component_manager.receptor_id:
+                        # "receptor" value is a pair of str and int
+                        receptor_index = receptor["receptor_id"][1]
+                        if (
+                            receptor_index
+                            == device.component_manager.receptor_id
+                        ):
                             # TODO: validate tdc_destination_address
                             break
                         else:

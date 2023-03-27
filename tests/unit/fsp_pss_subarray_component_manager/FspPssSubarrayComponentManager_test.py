@@ -118,6 +118,7 @@ class TestFspPssSubarrayComponentManager:
             assert fsp_pss_subarray_component_manager.search_beam_id[i] == int(
                 searchBeam["search_beam_id"]
             )
+        # TODO verify added receptors
 
     @pytest.mark.parametrize("scan_id", [1, 2])
     def test_scan(

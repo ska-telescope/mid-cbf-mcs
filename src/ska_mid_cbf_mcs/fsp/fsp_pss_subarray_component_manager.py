@@ -260,6 +260,8 @@ class FspPssSubarrayComponentManager(
         self._fsp_id = fsp_id
         self._search_window_id = int(configuration["search_window_id"])
 
+        self._remove_all_receptors()
+
         for searchBeam in configuration["search_beam"]:
             if len(searchBeam["receptor_ids"]) != 1:
                 # TODO - to add support for multiple receptors
@@ -267,7 +269,11 @@ class FspPssSubarrayComponentManager(
                 self._logger.error(msg)
                 return (ResultCode.FAILED, msg)
 
-            self._add_receptors(map(int, searchBeam["receptor_ids"]))
+            # "receptor_ids" values are pairs of str and int
+            receptors_to_add = [
+                receptor[1] for receptor in searchBeam["receptor_ids"]
+            ]
+            self._add_receptors(receptors_to_add)
             self._search_beams.append(json.dumps(searchBeam))
             self._search_beam_id.append(int(searchBeam["search_beam_id"]))
 

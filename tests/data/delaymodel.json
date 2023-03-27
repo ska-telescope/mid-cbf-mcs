@@ -1,7 +1,7 @@
 [{
   "delayModel": [
     {
-      "receptor": 1,
+      "receptor": "MKT000",
       "epoch": 11000000,
       "validity_period": 10,
       "poly_info": [
@@ -16,7 +16,7 @@
       ]
     },
     {
-      "receptor": 2,
+      "receptor": "MKT001",
       "epoch": 11000000,
       "validity_period": 10,
       "poly_info": [
@@ -31,7 +31,7 @@
       ]
     },
     {
-      "receptor": 3,
+      "receptor": "MKT002",
       "epoch": 11000000,
       "validity_period": 10,
       "poly_info": [
@@ -46,7 +46,7 @@
       ]
     },
     {
-      "receptor": 4,
+      "receptor": "MKT003",
       "epoch": 11000000,
       "validity_period": 10,
       "poly_info": [
@@ -65,7 +65,7 @@
 {
   "delayModel": [
     {
-      "receptor": 1,
+      "receptor": "MKT000",
       "epoch": 11000010,
       "validity_period": 10,
       "poly_info": [
@@ -80,7 +80,7 @@
       ]
     },
     {
-      "receptor": 2,
+      "receptor": "MKT001",
       "epoch": 11000010,
       "validity_period": 10,
       "poly_info": [
@@ -95,7 +95,7 @@
       ]
     },
     {
-      "receptor": 3,
+      "receptor": "MKT002",
       "epoch": 11000010,
       "validity_period": 10,
       "poly_info": [
@@ -110,7 +110,7 @@
       ]
     },
     {
-      "receptor": 4,
+      "receptor": "MKT003",
       "epoch": 11000010,
       "validity_period": 10,
       "poly_info": [
@@ -129,7 +129,7 @@
 {
   "delayModel": [
     {
-      "receptor": 1,
+      "receptor": "MKT000",
       "epoch": 11000020,
       "validity_period": 10,
       "poly_info": [
@@ -144,7 +144,7 @@
       ]
     },
     {
-      "receptor": 2,
+      "receptor": "MKT001",
       "epoch": 11000020,
       "validity_period": 10,
       "poly_info": [
@@ -159,7 +159,7 @@
       ]
     },
     {
-      "receptor": 3,
+      "receptor": "MKT002",
       "epoch": 11000020,
       "validity_period": 10,
       "poly_info": [
@@ -174,7 +174,7 @@
       ]
     },
     {
-      "receptor": 4,
+      "receptor": "MKT003",
       "epoch": 11000020,
       "validity_period": 10,
       "poly_info": [

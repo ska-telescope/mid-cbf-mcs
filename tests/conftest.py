@@ -621,10 +621,10 @@ def init_proxies_fixture():
                 [self.controller], DevState.OFF, wait_time_s, sleep_time_s
             )
 
-            self.controller.adminMode = AdminMode.OFFLINE
-            self.wait_timeout_dev(
-                [self.controller], DevState.DISABLE, wait_time_s, sleep_time_s
-            )
+            # self.controller.adminMode = AdminMode.OFFLINE
+            # self.wait_timeout_dev(
+            #     [self.controller], DevState.DISABLE, wait_time_s, sleep_time_s
+            # )
 
     return TestProxies()
 
@@ -675,8 +675,10 @@ def init_delay_model_test_fixture():
             receptors_under_test: List(int),
         ) -> dict:
             dm_num_entries = len(delay_model_all_obj)
+            # TODO: receptor values are hardcoded
             receptors_to_remove = list(
-                set([1, 2, 3, 4]) - set(receptors_under_test)
+                set(["MKT000", "MKT001", "MKT002", "MKT003"])
+                - set(receptors_under_test)
             )
 
             if receptors_to_remove:

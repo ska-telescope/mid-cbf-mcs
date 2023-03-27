@@ -546,27 +546,28 @@ class FspComponentManager(CbfComponentManager):
                         return (ResultCode.FAILED, log_msg)
 
                     for receptor in argin:
-                        rec_id = int(receptor["receptor"])
-                        if rec_id in proxy.receptors:
+                        # "receptor" value is a pair of str and int
+                        receptor_index = receptor["receptor"][1]
+                        if receptor_index in proxy.receptors:
                             for frequency_slice in receptor["receptorMatrix"]:
                                 fs_id = frequency_slice["fsid"]
                                 matrix = frequency_slice["matrix"]
                                 if fs_id == self._fsp_id:
                                     if len(matrix) == fs_length:
                                         self._jones_matrix[
-                                            rec_id - 1
+                                            receptor_index - 1
                                         ] = matrix.copy()
                                     else:
                                         log_msg = (
                                             "Fsp UpdateJonesMatrix command error: "
                                             "'matrix' not valid length for frequency slice "
-                                            f"{fs_id} of receptor {rec_id}"
+                                            f"{fs_id} of receptor {receptor_index}"
                                         )
                                         self._logger.error(log_msg)
                                 else:
                                     log_msg = (
                                         "Fsp UpdateJonesMatrix command error: "
-                                        f"'fsid' {fs_id} not valid for receptor {rec_id}"
+                                        f"'fsid' {fs_id} not valid for receptor {receptor_index}"
                                     )
                                     self._logger.error(log_msg)
             else:
@@ -611,7 +612,13 @@ class FspComponentManager(CbfComponentManager):
             ]:
                 # the whole delay model must be stored
                 self._delay_model = copy.deepcopy(argin)
-                self._proxy_hps_fsp_corr_controller.UpdateDelayModels(argin)
+                delay_model = json.loads(argin)
+                # only send integer receptorID to HPS
+                for model in delay_model["delayModel"]:
+                    model["receptor"] = model["receptor"][1]
+                self._proxy_hps_fsp_corr_controller.UpdateDelayModels(
+                    json.dumps(delay_model)
+                )
 
             else:
                 log_msg = (
@@ -652,8 +659,9 @@ class FspComponentManager(CbfComponentManager):
                 for i in self._subarray_membership:
                     proxy = self._proxy_fsp_pst_subarray[i - 1]
                     for receptor in argin:
-                        rec_id = int(receptor["receptor"])
-                        if rec_id in proxy.receptors:
+                        # "receptor" value is a pair of str and int
+                        receptor_index = receptor["receptor"][1]
+                        if receptor_index in proxy.receptors:
                             for frequency_slice in receptor[
                                 "receptorWeightsDetails"
                             ]:
@@ -662,13 +670,13 @@ class FspComponentManager(CbfComponentManager):
                                 if fs_id == self._fsp_id:
                                     if len(weights) == 6:
                                         self._timing_beam_weights[
-                                            rec_id - 1
+                                            receptor_index - 1
                                         ] = weights.copy()
                                     else:
                                         log_msg = (
                                             "Fsp UpdateTimingBeamWeights command error: "
                                             "'weights' not valid length for frequency slice "
-                                            f"{fs_id} of receptor {rec_id}"
+                                            f"{fs_id} of receptor {receptor_index}"
                                         )
                                         self._logger.error(log_msg)
                                         return (ResultCode.FAILED, log_msg)
@@ -676,7 +684,7 @@ class FspComponentManager(CbfComponentManager):
                                 else:
                                     log_msg = (
                                         "Fsp UpdateTimingBeamWeights command error: "
-                                        f"'fsid' {fs_id} not valid for receptor {rec_id}"
+                                        f"'fsid' {fs_id} not valid for receptor {receptor_index}"
                                     )
                                     self._logger.error(log_msg)
 

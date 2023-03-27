@@ -524,14 +524,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                 f"Configuring internal parameters for VCC band {freq_band_name}"
             )
 
-            internal_params_file_name = (
-                VCC_PARAM_PATH
-                + "internal_params_receptor"
-                + str(self._receptor_id)
-                + "_band"
-                + freq_band_name
-                + ".json"
-            )
+            internal_params_file_name = f"{VCC_PARAM_PATH}internal_params_receptor{self._receptor_id}_band{freq_band_name}.json"
             self._logger.debug(
                 f"Using parameters stored in {internal_params_file_name}"
             )
@@ -889,10 +882,11 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
 
                 # Configure tdcDestinationAddress.
                 if argin["tdc_enable"]:
-                    for receptor in argin["tdc_destination_address"]:
-                        if receptor["receptor_id"] == self._receptor_id:
+                    for tdc_dest in argin["tdc_destination_address"]:
+                        # "receptor" value is a pair of str and int
+                        if tdc_dest["receptor_id"][1] == self._receptor_id:
                             # TODO: validate input
-                            proxy_sw.tdcDestinationAddress = receptor[
+                            proxy_sw.tdcDestinationAddress = tdc_dest[
                                 "tdc_destination_address"
                             ]
                             break
@@ -917,7 +911,8 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         argin = json.loads(argin)
 
         for dopplerDetails in argin:
-            if dopplerDetails["receptor"] == self._receptor_id:
+            # "receptor" value is a pair of str and int
+            if dopplerDetails["receptor"][1] == self._receptor_id:
                 coeff = dopplerDetails["dopplerCoeff"]
                 if len(coeff) == 4:
                     self._doppler_phase_correction = coeff.copy()
@@ -945,16 +940,18 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         # Set up the delay model to be a list
         list_of_entries = []
         for entry in delay_model_obj["delayModel"]:
-            if entry["receptor"] == self._receptor_id:
+            self._logger.debug(
+                f"Received delay model for receptor {entry['receptor']}"
+            )
+            if entry["receptor"][1] == self._receptor_id:
+                self._logger.debug("Updating delay model for this VCC")
                 list_of_entries.append(copy.deepcopy(entry))
                 self._delay_model = json.dumps({"delayModel": list_of_entries})
                 dm_found = True
                 break
 
         if not dm_found:
-            log_msg = (
-                "Delay Model for VCC (receptor: {self._receptor_id}) not found"
-            )
+            log_msg = f"Delay Model for VCC (receptor: {self._receptor_id}) not found"
             self._logger.error(log_msg)
 
     def update_jones_matrix(self: VccComponentManager, argin: str) -> None:
@@ -965,9 +962,10 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         """
         argin = json.loads(argin)
 
-        for receptor in argin:
-            if receptor["receptor"] == self._receptor_id:
-                for frequency_slice in receptor["receptorMatrix"]:
+        for jonesDetails in argin:
+            # "receptor" value is a pair of str and int
+            if jonesDetails["receptor"][1] == self._receptor_id:
+                for frequency_slice in jonesDetails["receptorMatrix"]:
                     fs_id = frequency_slice["fsid"]
                     matrix = frequency_slice["matrix"]
                     if 1 <= fs_id <= 26:

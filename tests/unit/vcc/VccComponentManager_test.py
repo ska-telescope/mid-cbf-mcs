@@ -150,8 +150,8 @@ class TestVccComponentManager:
         matrix_len = 16
         for m in jones_matrix["jonesMatrix"]:
             for receptor in m["matrixDetails"]:
-                rec_id = receptor["receptor"]
-                if rec_id == vcc_component_manager.receptor_id:
+                receptor_index = receptor["receptor"][1]
+                if receptor_index == vcc_component_manager.receptor_id:
                     for frequency_slice in receptor["receptorMatrix"]:
                         fs_id = frequency_slice["fsid"]
                         matrix = frequency_slice["matrix"]
@@ -210,10 +210,10 @@ class TestVccComponentManager:
         ]
         vcc_component_manager.receptor_id = input_delay_model_first_receptor[
             "receptor"
-        ]
+        ][1]
         assert (
             vcc_component_manager.receptor_id
-            == input_delay_model_first_receptor["receptor"]
+            == input_delay_model_first_receptor["receptor"][1]
         )
         vcc_component_manager.update_delay_model(input_delay_model)
 
@@ -223,7 +223,7 @@ class TestVccComponentManager:
 
         # check that the coeff values were copied
         for entry in input_delay_model_obj["delayModel"]:
-            if entry["receptor"] == vcc_component_manager.receptor_id:
+            if entry["receptor"][1] == vcc_component_manager.receptor_id:
                 input_delay_model_for_receptor = json.dumps(entry)
                 # the updated delay model for vcc is a single entry
                 # for the given receptor and should be the first (only)
