@@ -130,6 +130,7 @@ environment_variables:
 volume:
   name: "artifacts"
   mountPath: "/app/mnt"
+  readOnly: false
   admin_image:
     registry: "docker.io"
     image: "alpine"
