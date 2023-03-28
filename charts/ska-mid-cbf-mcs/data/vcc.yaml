@@ -285,6 +285,6 @@ image:
   tag: "{{.Values.midcbf.image.tag}}"
   pullPolicy: "{{.Values.midcbf.image.pullPolicy}}"
 volume:
-  name: "artifacts"
+  existingClaimName: "artifacts-pvc-{{ .Release.Name }}"
   mountPath: "/app/mnt"
   readonly: false
