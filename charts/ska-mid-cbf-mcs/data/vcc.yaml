@@ -287,4 +287,5 @@ image:
 volume:
   existingClaimName: "artifacts-pvc-{{ .Release.Name }}"
   mountPath: "/app/mnt"
-  readonly: false
+  readOnly: false
+  existingClaimName: "artifacts-pvc-{{ .Release.Name }}"
