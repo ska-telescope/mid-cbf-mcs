@@ -189,35 +189,12 @@ class TalonDxComponentManager:
                     if environment == "minikube":
                         ssh_chan = ssh_client.get_transport().open_session()
                         ssh_chan.exec_command(
-                            "echo 'nameserver 172.17.0.95' > /etc/resolv.conf"
-                        )
-                        exit_status = ssh_chan.recv_exit_status()
-                        if exit_status != 0:
-                            self.logger.error(
-                                f"Error configuring nameserver: {exit_status}"
-                            )
-                            ret = ResultCode.FAILED
-
-                        ssh_chan = ssh_client.get_transport().open_session()
-                        ssh_chan.exec_command(
                             f"ip route add default via {host_ip} dev eth0"
                         )
                         exit_status = ssh_chan.recv_exit_status()
                         if exit_status != 0:
                             self.logger.error(
                                 f"Error configuring default ip gateway: {exit_status}"
-                            )
-                            ret = ResultCode.FAILED
-
-                    else:
-                        ssh_chan = ssh_client.get_transport().open_session()
-                        ssh_chan.exec_command(
-                            "echo 'nameserver 192.168.128.47' > /etc/resolv.conf"
-                        )
-                        exit_status = ssh_chan.recv_exit_status()
-                        if exit_status != 0:
-                            self.logger.error(
-                                f"Error configuring nameserver: {exit_status}"
                             )
                             ret = ResultCode.FAILED
 
