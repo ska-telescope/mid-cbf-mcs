@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: signal-verification-pod
+spec:
+  containers:
+  - name: signal-verification-cont
+    image: artefact.skao.int/ska-mid-cbf-signal-verification:{{ .Values.signalVerificationVersion }}
+    env:
+      - name: BITE_DATA_SRC
+        value: lstv
+      - name: CAPTURE_DIR
+        value: /app/bite-data
+    command: ["/bin/bash","-c"]
+    args: ["tail -f /dev/null"]
+

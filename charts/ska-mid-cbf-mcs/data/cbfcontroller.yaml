@@ -128,11 +128,7 @@ environment_variables:
 - name: EXTERNAL_DB_PORT
   value: "{{ .Values.hostInfo.externalPort }}"
 volume:
-  name: "artifacts"
+  existingClaimName: "artifacts-pvc-{{ .Release.Name }}"
   mountPath: "/app/mnt"
-  admin_image:
-    registry: "docker.io"
-    image: "alpine"
-    tag: "3.12"
-    pullPolicy: "IfNotPresent"
+  readOnly: false
 
