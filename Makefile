@@ -73,7 +73,7 @@ CI_PROJECT_DIR ?= .
 KUBE_CONFIG_BASE64 ?=  ## base64 encoded kubectl credentials for KUBECONFIG
 KUBECONFIG ?= /etc/deploy/config ## KUBECONFIG location
 
-ARTIFACTS_POD = $(shell kubectl -n $(KUBE_NAMESPACE) get pod --no-headers --selector=vol=artifacts-admin -o custom-columns=':metadata.name')
+CBF_CTRL_POD = $(shell kubectl -n $(KUBE_NAMESPACE) get pod --no-headers --selector=component=cbfcontroller-controller -o custom-columns=':metadata.name')
 
 HOST_IP = $(shell ifconfig eno2 | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*')
 
@@ -140,7 +140,7 @@ update-db-port:  ## update Tango DB port so that the DB is accessible from the T
 	kubectl -n ska-mid-cbf patch service/tango-host-databaseds-from-makefile-test --type='json' -p '[{"op":"replace","path":"/spec/ports/0/nodePort","value": 30176}]'
 
 k8s-pre-test:
-	@kubectl exec -n $(KUBE_NAMESPACE) $(ARTIFACTS_POD) -- mkdir -p /app/mnt/talondx-config
+	@kubectl exec -n $(KUBE_NAMESPACE) $(CBF_CTRL_POD) -- mkdir -p /app/mnt/talondx-config
 
 python-pre-lint:
 	@pip3 install black isort flake8 pylint_junit typing_extensions
