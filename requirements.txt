@@ -22,3 +22,8 @@ pyyaml
 scp
 paramiko
 pylint == 2.15.5
+influxdb-client
+multidict
+yarl
+aiohttp
+aiocsv
