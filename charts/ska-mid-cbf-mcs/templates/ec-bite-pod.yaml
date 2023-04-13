@@ -5,12 +5,12 @@ metadata:
 spec:
   containers:
   - name: engineering-console-bite-cont
-    image: artefact.skao.int/ska-mid-cbf-engineering-console:{{ .Values.engineeringConsoleVersion }}
+    image: artefact.skao.int/ska-mid-cbf-engineering-console-bite:{{ .Values.engineeringConsoleVersion }}
     env:
       - name: BITE_DATA_SRC
         value: lstv
-      - name: CAPTURE_DIR
-        value: /app/bite-data
+      - name: TANGO_HOST
+        value: {{ .Values.global.tango_host }}
     command: ["/bin/bash","-c"]
     args: ["tail -f /dev/null"]
 
