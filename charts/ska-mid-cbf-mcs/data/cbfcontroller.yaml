@@ -129,6 +129,6 @@ environment_variables:
   value: "{{ .Values.hostInfo.externalPort }}"
 volume:
   existingClaimName: "artifacts-pvc-{{ .Release.Name }}"
-  mountPath: "/app/mnt"
+  mountPath: "/app/mnt/talondx-config"
   readOnly: false
 

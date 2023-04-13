@@ -20,6 +20,6 @@ spec:
     command: ["/bin/bash","-c"]
     args: ["tail -f /dev/null"]
     volumeMounts:
-      - mountPath: "/app/images/ska-mid-cbf-engineering-console/artifacts"
+      - mountPath: "/app/images/ska-mid-cbf-engineering-console-deployer/artifacts"
         name: artifacts-pv-storage
 
