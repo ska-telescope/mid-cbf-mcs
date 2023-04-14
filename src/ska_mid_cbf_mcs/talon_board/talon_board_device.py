@@ -90,7 +90,7 @@ class TalonBoard(SKABaseDevice):
         """
         return self.component_manager.dimm_temperatures()
 
-    @attribute(dtype=(float,), max_dim_x=5, label="MBO Tx Temperatures", doc="MBO Tx Temperatures. Array of size 5. Value set to 0 if not valid.")
+    @attribute(dtype=(float,), max_dim_x=5, label="MBO Tx Temperatures", doc="MBO Tx Temperatures. Value set to 0 if not valid.")
     def MboTxTemperatures(self: TalonBoard):
         """
         Read the MBO Tx temperatures of the Talon-DX board. Not all
@@ -101,18 +101,84 @@ class TalonBoard(SKABaseDevice):
         """
         return self.component_manager.mbo_tx_temperatures()
 
-    @attribute(dtype=(float,), max_dim_x=5, label="MBO Rx VCC 3.3 Voltages", doc="MBO Rx VCC 3.3 Voltages. Array of size 5. Value set to 0 if not valid.")
-    def MboRxVccVoltages(self: TalonBoard):
+    @attribute(dtype=(float,), max_dim_x=5, label="MBO Tx VCC 3.3 Voltages", doc="MBO Tx VCC 3.3 Voltages. Value set to 0 if not valid.")
+    def MboTxVccVoltages(self: TalonBoard):
         """
-        Read the MBO Tx temperatures of the Talon-DX board. Not all
+        Read the MBO Tx VCC 3.3V voltages of the Talon-DX board. Not all
         MBO i2c addresses can be read, in which case a 0 will be
         returned for the MBO.
 
-        :return: the MBO Tx temperatures in deg Celcius.
+        :return: the MBO Tx VCC voltages.
         """
         return self.component_manager.mbo_rx_vcc_voltages()
 
-    @attribute(dtype=(int,), max_dim_x=4, label="Fan PWM values", doc="Fan PWM values. Array of size 4.")
+    @attribute(dtype=(bool,), max_dim_x=5, label="MBO Tx Fault Status", doc="MBO Tx Fault Status. True = status set.")
+    def MboTxFaultStatus(self: TalonBoard):
+        """
+        Read the MBO Tx fault status register of the Talon-DX board. Not all
+        MBO i2c addresses can be read, in which case false will be
+        returned for the MBO.
+
+        :return: the MBO Tx Fault Status Flag.
+        """
+        return self.component_manager.mbo_tx_fault_status()
+
+    @attribute(dtype=(bool,), max_dim_x=5, label="MBO Tx Loss of Lock Status", doc="MBO Tx Loss of Lock Status. True = status set.")
+    def MboTxLOLStatus(self: TalonBoard):
+        """
+        Read the MBO Tx loss of lock status register of the Talon-DX board. 
+        Not all MBO i2c addresses can be read, in which case false will be
+        returned for the MBO.
+
+        :return: the MBO Tx Loss of Lock Status Flag.
+        """
+        return self.component_manager.mbo_tx_lol_status()
+
+    @attribute(dtype=(bool,), max_dim_x=5, label="MBO Tx Loss of Signal Status", doc="MBO Tx Loss of Signal Status. True = status set.")
+    def MboTxLOSStatus(self: TalonBoard):
+        """
+        Read the MBO Tx loss of signal status register of the Talon-DX board. 
+        Not all MBO i2c addresses can be read, in which case false will be
+        returned for the MBO.
+
+        :return: the MBO Tx Loss of Signal Status Flag.
+        """
+        return self.component_manager.mbo_tx_los_status()
+
+    @attribute(dtype=(float,), max_dim_x=5, label="MBO Rx VCC 3.3 Voltages", doc="MBO Rx VCC 3.3 Voltages. Value set to 0 if not valid.")
+    def MboRxVccVoltages(self: TalonBoard):
+        """
+        Read the MBO Rx VCC 3.3V voltages of the Talon-DX board. Not all
+        MBO i2c addresses can be read, in which case a 0 will be
+        returned for the MBO.
+
+        :return: the MBO Rx VCC voltages.
+        """
+        return self.component_manager.mbo_rx_vcc_voltages()
+
+    @attribute(dtype=(bool,), max_dim_x=5, label="MBO Rx Loss of Lock Status", doc="MBO Rx Loss of Lock Status. True = status set.")
+    def MboRxLOLStatus(self: TalonBoard):
+        """
+        Read the MBO Rx loss of lock status register of the Talon-DX board. 
+        Not all MBO i2c addresses can be read, in which case false will be
+        returned for the MBO.
+
+        :return: the MBO Rx Loss of Lock Status Flag.
+        """
+        return self.component_manager.mbo_rx_lol_status()
+
+    @attribute(dtype=(bool,), max_dim_x=5, label="MBO Rx Loss of Signal Status", doc="MBO Rx Loss of Signal Status. True = status set.")
+    def MboRxLOSStatus(self: TalonBoard):
+        """
+        Read the MBO Rx loss of signal status register of the Talon-DX board. 
+        Not all MBO i2c addresses can be read, in which case false will be
+        returned for the MBO.
+
+        :return: the MBO Rx Loss of Signal Status Flag.
+        """
+        return self.component_manager.mbo_rx_los_status()
+
+    @attribute(dtype=(int,), max_dim_x=4, label="Fan PWM values", doc="Fan PWM values.")
     def FansPwm(self: TalonBoard):
         """
         Read the PWM value of the fans. Valid values are
@@ -121,6 +187,24 @@ class TalonBoard(SKABaseDevice):
         :return: the PWM value of the fans
         """
         return self.component_manager.fans_pwm()
+
+    @attribute(dtype=(int,), max_dim_x=4, label="Fan PWM enable values", doc="Fan PWM enable values.")
+    def FansPwmEnable(self: TalonBoard):
+        """
+        Read the PWM value of the fans. Valid values are 0 to 2.
+
+        :return: the PWM enable value of the fans
+        """
+        return self.component_manager.fans_pwm_enable()
+
+    @attribute(dtype=(bool,), max_dim_x=4, label="Fan Fault status", doc="Fan Fault status.")
+    def FansFault(self: TalonBoard):
+        """
+        Read the fault status of the fans. 
+
+        :return: true if fan fault register is set
+        """
+        return self.component_manager.fans_fault()
 
     # ---------------
     # General methods

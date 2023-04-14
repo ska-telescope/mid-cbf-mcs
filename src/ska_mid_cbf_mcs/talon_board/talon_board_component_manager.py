@@ -154,6 +154,62 @@ class TalonBoardComponentManager(CbfComponentManager):
                 res.append(0)
         return res
 
+    def mbo_tx_vcc_voltages(self) -> list[float]:
+        self._query_if_needed()
+        res = []
+        # Not all may be available.
+        for i in range(0, 5):
+            field = f"MBOs_{i}_TX_vcc-3.3-voltage"
+            if field in self._telemetry:
+                t, val = self._telemetry[field]
+                self._validate_time(field, t)
+                res.append(val)
+            else:
+                res.append(0)
+        return res
+
+    def mbo_tx_fault_status(self):
+        self._query_if_needed()
+        res = []
+        # Not all may be available.
+        for i in range(0, 5):
+            field = f"MBOs_{i}_TX_tx-fault-status"
+            if field in self._telemetry:
+                t, val = self._telemetry[field]
+                self._validate_time(field, t)
+                res.append(bool(val))
+            else:
+                res.append(False) 
+        return res
+
+    def mbo_tx_lol_status(self):
+        self._query_if_needed()
+        res = []
+        # Not all may be available.
+        for i in range(0, 5):
+            field = f"MBOs_{i}_TX_tx-lol-status"
+            if field in self._telemetry:
+                t, val = self._telemetry[field]
+                self._validate_time(field, t)
+                res.append(bool(val))
+            else:
+                res.append(False) 
+        return res
+
+    def mbo_tx_los_status(self):
+        self._query_if_needed()
+        res = []
+        # Not all may be available.
+        for i in range(0, 5):
+            field = f"MBOs_{i}_TX_tx-los-status"
+            if field in self._telemetry:
+                t, val = self._telemetry[field]
+                self._validate_time(field, t)
+                res.append(bool(val))
+            else:
+                res.append(False) 
+        return res
+
     def mbo_rx_vcc_voltages(self) -> list[float]:
         self._query_if_needed()
         res = []
@@ -168,6 +224,34 @@ class TalonBoardComponentManager(CbfComponentManager):
                 res.append(0)
         return res
 
+    def mbo_rx_lol_status(self):
+        self._query_if_needed()
+        res = []
+        # Not all may be available.
+        for i in range(0, 5):
+            field = f"MBOs_{i}_RX_rx-lol-status"
+            if field in self._telemetry:
+                t, val = self._telemetry[field]
+                self._validate_time(field, t)
+                res.append(bool(val))
+            else:
+                res.append(False) 
+        return res
+
+    def mbo_rx_los_status(self):
+        self._query_if_needed()
+        res = []
+        # Not all may be available.
+        for i in range(0, 5):
+            field = f"MBOs_{i}_RX_rx-los-status"
+            if field in self._telemetry:
+                t, val = self._telemetry[field]
+                self._validate_time(field, t)
+                res.append(bool(val))
+            else:
+                res.append(False) 
+        return res
+
     def fans_pwm(self) -> list[int]:
         self._query_if_needed()
         res = []
@@ -177,6 +261,36 @@ class TalonBoardComponentManager(CbfComponentManager):
                 t, val = self._telemetry[field]
                 self._validate_time(field, t)
                 res.append(int(val))
+            else:
+                msg = f"{field} cannot be read."
+                self._logger.warn(msg)
+                res.append(-1)
+        return res
+
+    def fans_pwm_enable(self) -> list[int]:
+        self._query_if_needed()
+        res = []
+        for i in range(0, 4):
+            field = f"fans_pwm-enable_{i}"
+            if field in self._telemetry:
+                t, val = self._telemetry[field]
+                self._validate_time(field, t)
+                res.append(int(val))
+            else:
+                msg = f"{field} cannot be read."
+                self._logger.warn(msg)
+                res.append(-1)
+        return res
+
+    def fans_fault(self) -> list[bool]:
+        self._query_if_needed()
+        res = []
+        for i in range(0, 4):
+            field = f"fans_fan-fault_{i}"
+            if field in self._telemetry:
+                t, val = self._telemetry[field]
+                self._validate_time(field, t)
+                res.append(bool(val))
             else:
                 msg = f"{field} cannot be read."
                 self._logger.warn(msg)
@@ -241,11 +355,27 @@ class TalonBoardComponentManager(CbfComponentManager):
         |>last()'
         return await self._query_common(client, query)
 
+    async def _query_mbo_status(self, client):
+        query = f'from(bucket: "{self._influx_bucket}")\
+        |>range(start: -5m)\
+        |>filter(fn: (r) => r["_measurement"] == "exec")\
+        |>filter(fn: (r) => r["_field"] =~ /MBOs_[0-9]_[TR]X_.*?status$/)\
+        |>last()'
+        return await self._query_common(client, query)
+
     async def _query_fans_pwm(self, client):
         query = f'from(bucket: "{self._influx_bucket}")\
         |>range(start: -5m)\
         |>filter(fn: (r) => r["_measurement"] == "exec")\
-        |>filter(fn: (r) => r["_field"] =~ /fans_pwm_[0-5]/)\
+        |>filter(fn: (r) => r["_field"] =~ /fans_pwm.*?_[0-5]/)\
+        |>last()'
+        return await self._query_common(client, query)
+
+    async def _query_fans_fault(self, client):
+        query = f'from(bucket: "{self._influx_bucket}")\
+        |>range(start: -5m)\
+        |>filter(fn: (r) => r["_measurement"] == "exec")\
+        |>filter(fn: (r) => r["_field"] =~ /fans_fan-fault_[0-5]/)\
         |>last()'
         return await self._query_common(client, query)
 
@@ -265,6 +395,7 @@ class TalonBoardComponentManager(CbfComponentManager):
                 self._query_mbo_temperatures(client),
                 self._query_mbo_voltages(client),
                 self._query_fans_pwm(client),
+                self._query_fans_fault(client),
             )
         for result in res:
             for r in result:
