@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: engineering-console-bite
+spec:
+  containers:
+  - name: engineering-console-bite-cont
+    image: artefact.skao.int/ska-mid-cbf-engineering-console-bite:{{ .Values.engineeringConsoleVersion }}
+    env:
+      - name: BITE_DATA_SRC
+        value: lstv
+      - name: TANGO_HOST
+        value: {{ .Values.global.tango_host }}
+    command: ["/bin/bash","-c"]
+    args: ["tail -f /dev/null"]
+
