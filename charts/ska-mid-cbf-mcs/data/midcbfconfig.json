@@ -1933,7 +1933,7 @@
                     "mid_csp_cbf/talon_board/talon-001": {
                         "properties": {
                             "TalonDxBoardAddress": [
-                                "talon1"
+                                "192.168.8.1"
                             ],
                             "InfluxDbPort": [
                                 "8086"
@@ -1946,6 +1946,21 @@
                             ],
                             "InfluxDbAuthToken": [
                                 "ikIDRLicRaMxviUJRqyE8bKF1Y_sZnaHc9MkWZY92jxg1isNPIGCyLtaC8EjbOhsT_kTzjt12qenB4g7-UOrog=="
+                            ],
+                            "TalonDxSysIdAddress": [
+                                "talondx-001/ska-talondx-sysid-ds/sysid"
+                            ],
+                            "TalonDx100GEthernet0Address": [
+                                "talondx-001/ska-talondx-100-gigabit-ethernet/100g_eth_0"
+                            ],
+                            "TalonDx100GEthernet1Address": [
+                                "talondx-001/ska-talondx-100-gigabit-ethernet/100g_eth_1"
+                            ],
+                            "TalonStatusAddress": [
+                                "talondx-001/ska-talondx-status/status"
+                            ],
+                            "HpsMasterAddress": [
+                                "talondx-001/hpsmaster/hps-1"
                             ],
                             "polled_attr": [
                                 "state",
@@ -1964,7 +1979,7 @@
                     "mid_csp_cbf/talon_board/talon-002": {
                         "properties": {
                             "TalonDxBoardAddress": [
-                                "talon2"
+                                "192.168.8.2"
                             ],
                             "InfluxDbPort": [
                                 "8086"
@@ -1977,6 +1992,21 @@
                             ],
                             "InfluxDbAuthToken": [
                                 "ikIDRLicRaMxviUJRqyE8bKF1Y_sZnaHc9MkWZY92jxg1isNPIGCyLtaC8EjbOhsT_kTzjt12qenB4g7-UOrog=="
+                            ],
+                            "TalonDxSysIdAddress": [
+                                "talondx-002/ska-talondx-sysid-ds/sysid"
+                            ],
+                            "TalonDx100GEthernet0Address": [
+                                "talondx-002/ska-talondx-100-gigabit-ethernet/100g_eth_0"
+                            ],
+                            "TalonDx100GEthernet1Address": [
+                                "talondx-002/ska-talondx-100-gigabit-ethernet/100g_eth_1"
+                            ],
+                            "TalonStatusAddress": [
+                                "talondx-002/ska-talondx-status/status"
+                            ],
+                            "HpsMasterAddress": [
+                                "talondx-002/hpsmaster/hps-2"
                             ],
                             "polled_attr": [
                                 "state",
@@ -1995,7 +2025,7 @@
                     "mid_csp_cbf/talon_board/talon-003": {
                         "properties": {
                             "TalonDxBoardAddress": [
-                                "talon3"
+                                "192.168.8.3"
                             ],
                             "InfluxDbPort": [
                                 "8086"
@@ -2008,6 +2038,21 @@
                             ],
                             "InfluxDbAuthToken": [
                                 "ikIDRLicRaMxviUJRqyE8bKF1Y_sZnaHc9MkWZY92jxg1isNPIGCyLtaC8EjbOhsT_kTzjt12qenB4g7-UOrog=="
+                            ],
+                            "TalonDxSysIdAddress": [
+                                "talondx-003/ska-talondx-sysid-ds/sysid"
+                            ],
+                            "TalonDx100GEthernet0Address": [
+                                "talondx-003/ska-talondx-100-gigabit-ethernet/100g_eth_0"
+                            ],
+                            "TalonDx100GEthernet1Address": [
+                                "talondx-003/ska-talondx-100-gigabit-ethernet/100g_eth_1"
+                            ],
+                            "TalonStatusAddress": [
+                                "talondx-003/ska-talondx-status/status"
+                            ],
+                            "HpsMasterAddress": [
+                                "talondx-003/hpsmaster/hps-3"
                             ],
                             "polled_attr": [
                                 "state",
@@ -2026,7 +2071,7 @@
                     "mid_csp_cbf/talon_board/talon-004": {
                         "properties": {
                             "TalonDxBoardAddress": [
-                                "talon4"
+                                "192.168.8.4"
                             ],
                             "InfluxDbPort": [
                                 "8086"
@@ -2039,6 +2084,21 @@
                             ],
                             "InfluxDbAuthToken": [
                                 "ikIDRLicRaMxviUJRqyE8bKF1Y_sZnaHc9MkWZY92jxg1isNPIGCyLtaC8EjbOhsT_kTzjt12qenB4g7-UOrog=="
+                            ],
+                            "TalonDxSysIdAddress": [
+                                "talondx-004/ska-talondx-sysid-ds/sysid"
+                            ],
+                            "TalonDx100GEthernet0Address": [
+                                "talondx-004/ska-talondx-100-gigabit-ethernet/100g_eth_0"
+                            ],
+                            "TalonDx100GEthernet1Address": [
+                                "talondx-004/ska-talondx-100-gigabit-ethernet/100g_eth_1"
+                            ],
+                            "TalonStatusAddress": [
+                                "talondx-004/ska-talondx-status/status"
+                            ],
+                            "HpsMasterAddress": [
+                                "talondx-004/hpsmaster/hps-4"
                             ],
                             "polled_attr": [
                                 "state",

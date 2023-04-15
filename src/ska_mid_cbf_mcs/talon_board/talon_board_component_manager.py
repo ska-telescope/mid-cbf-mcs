@@ -22,6 +22,7 @@ from ska_mid_cbf_mcs.component.component_manager import (
     CbfComponentManager,
     CommunicationStatus,
 )
+from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 
 
 class TalonBoardComponentManager(CbfComponentManager):
@@ -42,7 +43,12 @@ class TalonBoardComponentManager(CbfComponentManager):
         influx_port: int,
         influx_org: str,
         influx_bucket: str,
-        influx_auth_token: str,
+        influx_auth_token: str,        
+        talon_sysid_address: str,
+        eth_100g_0_address: str,
+        eth_100g_1_address: str,
+        talon_status_address: str,
+        hps_master_address: str,
         logger: logging.Logger,
         push_change_event_callback: Optional[Callable],
         communication_status_changed_callback: Callable[
@@ -60,6 +66,11 @@ class TalonBoardComponentManager(CbfComponentManager):
         :param influx_org: Influxdb organization
         :param influx_bucket: Influxdb bucket to query
         :param influx_auth_token: Influxdb authentication token
+        :param talon_sysid_address: Talon Sysid DS FQDN
+        :param eth_100g_0_address: 100g ethernet 0 DS FQDN
+        :param eth_100g_1_address: 100g ethernet 1 DS FQDN
+        :param talon_status_address: Talon Status DS FQDN
+        :param hps_master_address: HPS Master DS FQDN
         :param logger: a logger for this object to use
         :param push_change_event_callback: method to call when the base classes
             want to send an event
@@ -75,14 +86,29 @@ class TalonBoardComponentManager(CbfComponentManager):
         """
         self.connected = False
 
+        # influxdb
         self._hostname = hostname
         self._influx_port = influx_port
         self._influx_org = influx_org
         self._influx_bucket = influx_bucket
         self._influx_auth_token = influx_auth_token
 
+        # HPS device proxies
+        self._talon_sysid_fqdn = talon_sysid_address
+        self._eth_100g_0_fqdn = eth_100g_0_address
+        self._eth_100g_1_fqdn = eth_100g_1_address
+        self._talon_status_fqdn = talon_status_address
+        self._hps_master_fqdn = hps_master_address
+
+        # Subscribed device proxy attributes
+        self._talon_sysid_attrs = {}
+        self._talon_status_attrs = {}
+
         self._last_check = datetime.now() - timedelta(hours=1)
         self._telemetry = dict()
+        self._proxies = dict()
+        self._talon_sysid_events = []
+        self._talon_status_events = []
 
         super().__init__(
             logger=logger,
@@ -112,6 +138,206 @@ class TalonBoardComponentManager(CbfComponentManager):
         self.update_component_power_mode(PowerMode.OFF)
         self.connected = False
 
+    def on(self) -> Tuple[ResultCode, str]:
+        """
+        Turn on Talon Board component. This attempts to establish communication
+        with the devices on the HPS, and subscribe to attribute changes.
+
+        :return: A tuple containing a return code and a string
+            message indicating status. The message is for
+            information purpose only.
+        :rtype: (ResultCode, str)
+
+        :raise ConnectionError: if unable to connect to HPS VCC devices
+        """
+        self._logger.info("Entering TalonBoardComponentManager.on")
+        try:
+            for fqdn in [self._talon_sysid_fqdn,
+                self._eth_100g_0_fqdn,
+                self._eth_100g_1_fqdn,
+                self._talon_status_fqdn,
+                self._hps_master_fqdn]:
+                self._proxies[fqdn] = CbfDeviceProxy(
+                    fqdn=fqdn, logger=self._logger
+                ) 
+        except tango.DevFailed as df:
+            self._logger.error(str(df.args[0].desc))
+            self.update_component_fault(True)
+            return (ResultCode.FAILED, "Failed to connect to HPS devices")
+
+        self._subscribe_change_events()
+        
+        self._logger.info("Completed TalonBoardComponentManager.on")
+        self.update_component_power_mode(PowerMode.ON)
+        return (ResultCode.OK, "On command completed OK")
+    
+    def _subscribe_change_events(self):
+        """
+        Subscribe to attribute change events from HPS device proxies
+        """
+        # Talon System ID attributes
+        self._talon_sysid_events = []
+
+        e = self._proxies[self._talon_sysid_fqdn].add_change_event_callback(
+                            attribute_name='version',
+                            callback=self._attr_change_callback,
+                            stateless=True,)
+        self._talon_sysid_events.append(e)
+        e = self._proxies[self._talon_sysid_fqdn].add_change_event_callback(
+                            attribute_name='Bitstream',
+                            callback=self._attr_change_callback,
+                            stateless=True,)
+        self._talon_sysid_events.append(e)
+        
+        # Talon Status attributes
+        self._talon_status_events = []
+
+        e = self._proxies[self._talon_status_fqdn].add_change_event_callback(
+                            attribute_name='iopll_locked_fault',
+                            callback=self._attr_change_callback,
+                            stateless=True,)
+        self._talon_status_events.append(e)
+        e = self._proxies[self._talon_status_fqdn].add_change_event_callback(
+                            attribute_name='fs_iopll_locked_fault',
+                            callback=self._attr_change_callback,
+                            stateless=True,)
+        self._talon_status_events.append(e)
+        e = self._proxies[self._talon_status_fqdn].add_change_event_callback(
+                            attribute_name='comms_iopll_locked_fault',
+                            callback=self._attr_change_callback,
+                            stateless=True,)
+        self._talon_status_events.append(e)
+        e = self._proxies[self._talon_status_fqdn].add_change_event_callback(
+                            attribute_name='system_clk_fault',
+                            callback=self._attr_change_callback,
+                            stateless=True,)
+        self._talon_status_events.append(e)
+        e = self._proxies[self._talon_status_fqdn].add_change_event_callback(
+                            attribute_name='emif_bl_fault',
+                            callback=self._attr_change_callback,
+                            stateless=True,)
+        self._talon_status_events.append(e)
+        e = self._proxies[self._talon_status_fqdn].add_change_event_callback(
+                            attribute_name='emif_br_fault',
+                            callback=self._attr_change_callback,
+                            stateless=True,)
+        self._talon_status_events.append(e)
+        e = self._proxies[self._talon_status_fqdn].add_change_event_callback(
+                            attribute_name='emif_tr_fault',
+                            callback=self._attr_change_callback,
+                            stateless=True,)
+        self._talon_status_events.append(e)
+        e = self._proxies[self._talon_status_fqdn].add_change_event_callback(
+                            attribute_name='e100g_0_pll_fault',
+                            callback=self._attr_change_callback,
+                            stateless=True,)
+        self._talon_status_events.append(e)
+        e = self._proxies[self._talon_status_fqdn].add_change_event_callback(
+                            attribute_name='e100g_1_pll_fault',
+                            callback=self._attr_change_callback,
+                            stateless=True,)
+        self._talon_status_events.append(e)
+        e = self._proxies[self._talon_status_fqdn].add_change_event_callback(
+                            attribute_name='slim_pll_fault',
+                            callback=self._attr_change_callback,
+                            stateless=True,)
+        self._talon_status_events.append(e)
+        # TODO: Add attributes as needed
+
+    def off(self) -> Tuple[ResultCode, str]:
+        """
+        Turn off Talon Board component; 
+
+        :return: A tuple containing a return code and a string
+            message indicating status. The message is for
+            information purpose only.
+        :rtype: (ResultCode, str)
+        """
+        self.update_component_power_mode(PowerMode.OFF)
+
+        for ev in self._talon_sysid_events:
+            for name, id in ev.items():
+                self._logger.info(
+                    f"Unsubscribing from event {id}, device: {self._talon_sysid_fqdn}"
+                )
+                self._proxies[self._talon_sysid_fqdn].remove_event(name, id)
+        
+        for ev in self._talon_status_events:
+            for name, id in ev.items():
+                self._logger.info(
+                    f"Unsubscribing from event {id}, device: {self._talon_status_fqdn}"
+                )
+                self._proxies[self._talon_status_fqdn].remove_event(name, id)
+            
+        return (ResultCode.OK, "Off command completed OK")
+
+    def _attr_change_callback(
+        self, 
+        fqdn: str,
+        name: str,
+        value: Any,
+        quality: AttrQuality,):
+        if value is None:
+            self._logger.warning(
+                f"None value for attribute {name} of device {fqdn}"
+            )
+        if fqdn == self._talon_sysid_fqdn:
+            self._talon_sysid_attrs[name] = value
+        elif fqdn == self._talon_status_fqdn:
+            self._talon_status_attrs[name] = value
+        else:
+            self._logger.warning(f'Unexpected change callback from FQDN {fqdn}, attribute = {name}')
+
+    # Talon board telemetry and status from device proxies 
+    def talon_sysid_version(self) -> str:
+        """Returns the bitstream version string"""
+        return self._talon_sysid_attrs.get('version')
+
+    def talon_sysid_bitstream(self) -> int:
+        """Returns the least 32 bits of md5 checksum of the bitstream name"""
+        return self._talon_sysid_attrs.get('bitstream')
+
+    def talon_status_iopll_locked_fault(self) -> bool:
+        """Returns the iopll_locked_fault"""
+        return self._talon_sysid_attrs.get('iopll_locked_fault')
+
+    def talon_status_fs_iopll_locked_fault(self) -> bool:
+        """Returns the fs_iopll_locked_fault"""
+        return self._talon_sysid_attrs.get('fs_iopll_locked_fault')
+
+    def talon_status_comms_iopll_locked_fault(self) -> bool:
+        """Returns the comms_iopll_locked_fault"""
+        return self._talon_sysid_attrs.get('comms_iopll_locked_fault')
+
+    def talon_status_system_clk_fault(self) -> bool:
+        """Returns the system_clk_fault"""
+        return self._talon_sysid_attrs.get('system_clk_fault')
+
+    def talon_status_emif_bl_fault(self) -> bool:
+        """Returns the emif_bl_fault"""
+        return self._talon_sysid_attrs.get('emif_bl_fault')
+
+    def talon_status_emif_br_fault(self) -> bool:
+        """Returns the emif_br_fault"""
+        return self._talon_sysid_attrs.get('emif_br_fault')
+
+    def talon_status_emif_tr_fault(self) -> bool:
+        """Returns the emif_tr_fault"""
+        return self._talon_sysid_attrs.get('emif_tr_fault')
+
+    def talon_status_e100g_0_pll_fault(self) -> bool:
+        """Returns the e100g_0_pll_fault"""
+        return self._talon_sysid_attrs.get('e100g_0_pll_fault')
+
+    def talon_status_e100g_1_pll_fault(self) -> bool:
+        """Returns the e100g_1_pll_fault"""
+        return self._talon_sysid_attrs.get('e100g_1_pll_fault')
+
+    def talon_status_slim_pll_fault(self) -> bool:
+        """Returns the slim_pll_fault"""
+        return self._talon_sysid_attrs.get('slim_pll_fault')
+
+    # Talon board telemetry and status from Influxdb 
     def fpga_die_temperature(self) -> float:
         self._query_if_needed()
         field = "temperature-sensors_fpga-die-temp"

@@ -59,9 +59,139 @@ class TalonBoard(SKABaseDevice):
 
     InfluxDbAuthToken = device_property(dtype="str")
 
+    TalonDxSysIdAddress = device_property(dtype="str")
+
+    TalonDx100GEthernet0Address = device_property(dtype="str")
+
+    TalonDx100GEthernet1Address = device_property(dtype="str")
+
+    TalonStatusAddress = device_property(dtype="str")
+
+    HpsMasterAddress = device_property(dtype="str")
+
     # ----------
     # Attributes
     # ----------
+    @attribute(dtype=str, label="FPGA bitstream version", doc="FPGA bitstream version")
+    def BitstreamVersion(self: TalonBoard) -> str:
+        """
+        Read the FPGA bitstream version of the Talon-DX board.
+
+        :return: the FPGA bitstream version
+        """
+        res = self.component_manager.talon_sysid_version()
+        return res
+
+    @attribute(dtype=int, label="FPGA bitstream checksum", doc="FPGA bitstream checksum")
+    def BitstreamChecksum(self: TalonBoard) -> str:
+        """
+        Read the least 32 bits of md5 checksum of the bitstream name
+
+        :return: the FPGA bitstream version
+        """
+        res = self.component_manager.talon_sysid_bitstream()
+        return res
+
+    @attribute(dtype=bool, label="iopll_locked_fault", doc="iopll_locked_fault")
+    def iopll_locked_fault(self: TalonBoard) -> str:
+        """
+        Read the iopll_locked_fault status
+
+        :return: the iopll_locked_fault status
+        """
+        res = self.component_manager.talon_status_iopll_locked_fault()
+        return res
+
+    @attribute(dtype=bool, label="fs_iopll_locked_fault", doc="fs_iopll_locked_fault")
+    def fs_iopll_locked_fault(self: TalonBoard) -> str:
+        """
+        Read the fs_iopll_locked_fault status
+
+        :return: the fs_iopll_locked_fault status
+        """
+        res = self.component_manager.talon_status_fs_iopll_locked_fault()
+        return res
+
+    @attribute(dtype=bool, label="comms_iopll_locked_fault", doc="comms_iopll_locked_fault")
+    def comms_iopll_locked_fault(self: TalonBoard) -> str:
+        """
+        Read the comms_iopll_locked_fault status
+
+        :return: the comms_iopll_locked_fault status
+        """
+        res = self.component_manager.talon_status_comms_iopll_locked_fault()
+        return res
+
+    @attribute(dtype=bool, label="system_clk_fault", doc="system_clk_fault")
+    def system_clk_fault(self: TalonBoard) -> str:
+        """
+        Read the system_clk_fault status
+
+        :return: the system_clk_fault status
+        """
+        res = self.component_manager.talon_status_system_clk_fault()
+        return res
+
+    @attribute(dtype=bool, label="emif_bl_fault", doc="emif_bl_fault")
+    def emif_bl_fault(self: TalonBoard) -> str:
+        """
+        Read the emif_bl_fault status
+
+        :return: the emif_bl_fault status
+        """
+        res = self.component_manager.talon_status_emif_bl_fault()
+        return res
+
+    @attribute(dtype=bool, label="emif_br_fault", doc="emif_br_fault")
+    def emif_br_fault(self: TalonBoard) -> str:
+        """
+        Read the emif_br_fault status
+
+        :return: the emif_br_fault status
+        """
+        res = self.component_manager.talon_status_emif_br_fault()
+        return res
+
+    @attribute(dtype=bool, label="emif_tr_fault", doc="emif_tr_fault")
+    def emif_tr_fault(self: TalonBoard) -> str:
+        """
+        Read the emif_tr_fault status
+
+        :return: the emif_tr_fault status
+        """
+        res = self.component_manager.talon_status_emif_tr_fault()
+        return res
+
+    @attribute(dtype=bool, label="e100g_0_pll_fault", doc="e100g_0_pll_fault")
+    def e100g_0_pll_fault(self: TalonBoard) -> str:
+        """
+        Read the e100g_0_pll_fault status
+
+        :return: the e100g_0_pll_fault status
+        """
+        res = self.component_manager.talon_status_e100g_0_pll_fault()
+        return res
+
+    @attribute(dtype=bool, label="e100g_1_pll_fault", doc="e100g_1_pll_fault")
+    def e100g_1_pll_fault(self: TalonBoard) -> str:
+        """
+        Read the e100g_1_pll_fault status
+
+        :return: the e100g_1_pll_fault status
+        """
+        res = self.component_manager.talon_status_e100g_1_pll_fault()
+        return res
+
+    @attribute(dtype=bool, label="slim_pll_fault", doc="slim_pll_fault")
+    def slim_pll_fault(self: TalonBoard) -> str:
+        """
+        Read the slim_pll_fault status
+
+        :return: the slim_pll_fault status
+        """
+        res = self.component_manager.talon_status_slim_pll_fault()
+        return res
+
     @attribute(dtype=float, label="FPGA Die Temperature", doc="FPGA Die Temperature")
     def FpgaDieTemperature(self: TalonBoard) -> float:
         """
@@ -331,6 +461,11 @@ class TalonBoard(SKABaseDevice):
             influx_org=self.InfluxDbOrg,
             influx_bucket=self.InfluxDbBucket,
             influx_auth_token=self.InfluxDbAuthToken,
+            talon_sysid_address=self.TalonDxSysIdAddress,
+            eth_100g_0_address=self.TalonDx100GEthernet0Address,
+            eth_100g_1_address=self.TalonDx100GEthernet1Address,
+            talon_status_address=self.TalonStatusAddress,
+            hps_master_address=self.HpsMasterAddress,
             logger=self.logger,
             push_change_event_callback=self.push_change_event,
             communication_status_changed_callback=self._communication_status_changed,
@@ -354,6 +489,48 @@ class TalonBoard(SKABaseDevice):
             """
             return super().do()
 
+
+    class OnCommand(SKABaseDevice.OnCommand):
+        """
+        The command class for the On command.
+
+        Initializes HPS device proxies and starts listening to
+        attribute change events
+        """
+
+        def do(self: TalonBoard.OnCommand) -> Tuple[ResultCode, str]:
+            """
+            Implement On command functionality.
+
+            :return: A Tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            """
+            device = self.target
+
+            with device._power_switch_lock:
+                # Check that this command is still allowed since the
+                # _check_power_mode_callback could have changed the state
+                self.is_allowed()
+                return device.component_manager.on()
+
+    class OffCommand(SKABaseDevice.OffCommand):
+        """
+        The command class for the Off command.
+
+        Stops listening to attribute change events
+        """
+
+        def do(self: TalonBoard.OffCommand) -> Tuple[ResultCode, str]:
+            """
+            Implement Off command functionality.
+
+            :return: A Tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            """
+            device = self.target
+            return device.component_manager.off()
 
 # ----------
 # Run server
