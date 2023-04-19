@@ -13,13 +13,12 @@ TANGO device class for monitoring a Talon board.
 
 from __future__ import annotations
 
-from typing import Optional
+from typing import Optional, Tuple
 
 # tango imports
 from ska_tango_base import SKABaseDevice
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import PowerMode
-from tango import AttrWriteType
 from tango.server import attribute, device_property, run
 
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
@@ -72,7 +71,9 @@ class TalonBoard(SKABaseDevice):
     # ----------
     # Attributes
     # ----------
-    @attribute(dtype=str, label="FPGA bitstream version", doc="FPGA bitstream version")
+    @attribute(
+        dtype=str, label="FPGA bitstream version", doc="FPGA bitstream version"
+    )
     def BitstreamVersion(self: TalonBoard) -> str:
         """
         Read the FPGA bitstream version of the Talon-DX board.
@@ -82,7 +83,11 @@ class TalonBoard(SKABaseDevice):
         res = self.component_manager.talon_sysid_version()
         return res
 
-    @attribute(dtype=int, label="FPGA bitstream checksum", doc="FPGA bitstream checksum")
+    @attribute(
+        dtype=int,
+        label="FPGA bitstream checksum",
+        doc="FPGA bitstream checksum",
+    )
     def BitstreamChecksum(self: TalonBoard) -> str:
         """
         Read the least 32 bits of md5 checksum of the bitstream name
@@ -92,7 +97,9 @@ class TalonBoard(SKABaseDevice):
         res = self.component_manager.talon_sysid_bitstream()
         return res
 
-    @attribute(dtype=bool, label="iopll_locked_fault", doc="iopll_locked_fault")
+    @attribute(
+        dtype=bool, label="iopll_locked_fault", doc="iopll_locked_fault"
+    )
     def iopll_locked_fault(self: TalonBoard) -> str:
         """
         Read the iopll_locked_fault status
@@ -102,7 +109,9 @@ class TalonBoard(SKABaseDevice):
         res = self.component_manager.talon_status_iopll_locked_fault()
         return res
 
-    @attribute(dtype=bool, label="fs_iopll_locked_fault", doc="fs_iopll_locked_fault")
+    @attribute(
+        dtype=bool, label="fs_iopll_locked_fault", doc="fs_iopll_locked_fault"
+    )
     def fs_iopll_locked_fault(self: TalonBoard) -> str:
         """
         Read the fs_iopll_locked_fault status
@@ -112,7 +121,11 @@ class TalonBoard(SKABaseDevice):
         res = self.component_manager.talon_status_fs_iopll_locked_fault()
         return res
 
-    @attribute(dtype=bool, label="comms_iopll_locked_fault", doc="comms_iopll_locked_fault")
+    @attribute(
+        dtype=bool,
+        label="comms_iopll_locked_fault",
+        doc="comms_iopll_locked_fault",
+    )
     def comms_iopll_locked_fault(self: TalonBoard) -> str:
         """
         Read the comms_iopll_locked_fault status
@@ -192,7 +205,9 @@ class TalonBoard(SKABaseDevice):
         res = self.component_manager.talon_status_slim_pll_fault()
         return res
 
-    @attribute(dtype=float, label="FPGA Die Temperature", doc="FPGA Die Temperature")
+    @attribute(
+        dtype=float, label="FPGA Die Temperature", doc="FPGA Die Temperature"
+    )
     def FpgaDieTemperature(self: TalonBoard) -> float:
         """
         Read the FPGA die temperature of the Talon-DX board.
@@ -202,7 +217,11 @@ class TalonBoard(SKABaseDevice):
         res = self.component_manager.fpga_die_temperature()
         return res
 
-    @attribute(dtype=float, label="Humidity Sensor Temperature", doc="Humidity Sensor Temperature")
+    @attribute(
+        dtype=float,
+        label="Humidity Sensor Temperature",
+        doc="Humidity Sensor Temperature",
+    )
     def HumiditySensorTemperature(self: TalonBoard) -> float:
         """
         Read the humidity sensor temperature of the Talon-DX board.
@@ -211,7 +230,12 @@ class TalonBoard(SKABaseDevice):
         """
         return self.component_manager.humidity_sensor_temperature()
 
-    @attribute(dtype=(float,), max_dim_x=4, label="DIMM Memory Module Temperatures", doc="DIMM Memory Module Temperatures. Array of size 4. Value set to 0 if not valid.")
+    @attribute(
+        dtype=(float,),
+        max_dim_x=4,
+        label="DIMM Memory Module Temperatures",
+        doc="DIMM Memory Module Temperatures. Array of size 4. Value set to 0 if not valid.",
+    )
     def DIMMTemperatures(self: TalonBoard):
         """
         Read the DIMM temperatures of the Talon-DX board.
@@ -220,7 +244,12 @@ class TalonBoard(SKABaseDevice):
         """
         return self.component_manager.dimm_temperatures()
 
-    @attribute(dtype=(float,), max_dim_x=5, label="MBO Tx Temperatures", doc="MBO Tx Temperatures. Value set to 0 if not valid.")
+    @attribute(
+        dtype=(float,),
+        max_dim_x=5,
+        label="MBO Tx Temperatures",
+        doc="MBO Tx Temperatures. Value set to 0 if not valid.",
+    )
     def MboTxTemperatures(self: TalonBoard):
         """
         Read the MBO Tx temperatures of the Talon-DX board. Not all
@@ -231,7 +260,12 @@ class TalonBoard(SKABaseDevice):
         """
         return self.component_manager.mbo_tx_temperatures()
 
-    @attribute(dtype=(float,), max_dim_x=5, label="MBO Tx VCC 3.3 Voltages", doc="MBO Tx VCC 3.3 Voltages. Value set to 0 if not valid.")
+    @attribute(
+        dtype=(float,),
+        max_dim_x=5,
+        label="MBO Tx VCC 3.3 Voltages",
+        doc="MBO Tx VCC 3.3 Voltages. Value set to 0 if not valid.",
+    )
     def MboTxVccVoltages(self: TalonBoard):
         """
         Read the MBO Tx VCC 3.3V voltages of the Talon-DX board. Not all
@@ -242,7 +276,12 @@ class TalonBoard(SKABaseDevice):
         """
         return self.component_manager.mbo_rx_vcc_voltages()
 
-    @attribute(dtype=(bool,), max_dim_x=5, label="MBO Tx Fault Status", doc="MBO Tx Fault Status. True = status set.")
+    @attribute(
+        dtype=(bool,),
+        max_dim_x=5,
+        label="MBO Tx Fault Status",
+        doc="MBO Tx Fault Status. True = status set.",
+    )
     def MboTxFaultStatus(self: TalonBoard):
         """
         Read the MBO Tx fault status register of the Talon-DX board. Not all
@@ -253,10 +292,15 @@ class TalonBoard(SKABaseDevice):
         """
         return self.component_manager.mbo_tx_fault_status()
 
-    @attribute(dtype=(bool,), max_dim_x=5, label="MBO Tx Loss of Lock Status", doc="MBO Tx Loss of Lock Status. True = status set.")
+    @attribute(
+        dtype=(bool,),
+        max_dim_x=5,
+        label="MBO Tx Loss of Lock Status",
+        doc="MBO Tx Loss of Lock Status. True = status set.",
+    )
     def MboTxLOLStatus(self: TalonBoard):
         """
-        Read the MBO Tx loss of lock status register of the Talon-DX board. 
+        Read the MBO Tx loss of lock status register of the Talon-DX board.
         Not all MBO i2c addresses can be read, in which case false will be
         returned for the MBO.
 
@@ -264,10 +308,15 @@ class TalonBoard(SKABaseDevice):
         """
         return self.component_manager.mbo_tx_lol_status()
 
-    @attribute(dtype=(bool,), max_dim_x=5, label="MBO Tx Loss of Signal Status", doc="MBO Tx Loss of Signal Status. True = status set.")
+    @attribute(
+        dtype=(bool,),
+        max_dim_x=5,
+        label="MBO Tx Loss of Signal Status",
+        doc="MBO Tx Loss of Signal Status. True = status set.",
+    )
     def MboTxLOSStatus(self: TalonBoard):
         """
-        Read the MBO Tx loss of signal status register of the Talon-DX board. 
+        Read the MBO Tx loss of signal status register of the Talon-DX board.
         Not all MBO i2c addresses can be read, in which case false will be
         returned for the MBO.
 
@@ -275,7 +324,12 @@ class TalonBoard(SKABaseDevice):
         """
         return self.component_manager.mbo_tx_los_status()
 
-    @attribute(dtype=(float,), max_dim_x=5, label="MBO Rx VCC 3.3 Voltages", doc="MBO Rx VCC 3.3 Voltages. Value set to 0 if not valid.")
+    @attribute(
+        dtype=(float,),
+        max_dim_x=5,
+        label="MBO Rx VCC 3.3 Voltages",
+        doc="MBO Rx VCC 3.3 Voltages. Value set to 0 if not valid.",
+    )
     def MboRxVccVoltages(self: TalonBoard):
         """
         Read the MBO Rx VCC 3.3V voltages of the Talon-DX board. Not all
@@ -286,10 +340,15 @@ class TalonBoard(SKABaseDevice):
         """
         return self.component_manager.mbo_rx_vcc_voltages()
 
-    @attribute(dtype=(bool,), max_dim_x=5, label="MBO Rx Loss of Lock Status", doc="MBO Rx Loss of Lock Status. True = status set.")
+    @attribute(
+        dtype=(bool,),
+        max_dim_x=5,
+        label="MBO Rx Loss of Lock Status",
+        doc="MBO Rx Loss of Lock Status. True = status set.",
+    )
     def MboRxLOLStatus(self: TalonBoard):
         """
-        Read the MBO Rx loss of lock status register of the Talon-DX board. 
+        Read the MBO Rx loss of lock status register of the Talon-DX board.
         Not all MBO i2c addresses can be read, in which case false will be
         returned for the MBO.
 
@@ -297,10 +356,15 @@ class TalonBoard(SKABaseDevice):
         """
         return self.component_manager.mbo_rx_lol_status()
 
-    @attribute(dtype=(bool,), max_dim_x=5, label="MBO Rx Loss of Signal Status", doc="MBO Rx Loss of Signal Status. True = status set.")
+    @attribute(
+        dtype=(bool,),
+        max_dim_x=5,
+        label="MBO Rx Loss of Signal Status",
+        doc="MBO Rx Loss of Signal Status. True = status set.",
+    )
     def MboRxLOSStatus(self: TalonBoard):
         """
-        Read the MBO Rx loss of signal status register of the Talon-DX board. 
+        Read the MBO Rx loss of signal status register of the Talon-DX board.
         Not all MBO i2c addresses can be read, in which case false will be
         returned for the MBO.
 
@@ -308,7 +372,12 @@ class TalonBoard(SKABaseDevice):
         """
         return self.component_manager.mbo_rx_los_status()
 
-    @attribute(dtype=(int,), max_dim_x=4, label="Fan PWM values", doc="Fan PWM values.")
+    @attribute(
+        dtype=(int,),
+        max_dim_x=4,
+        label="Fan PWM values",
+        doc="Fan PWM values.",
+    )
     def FansPwm(self: TalonBoard):
         """
         Read the PWM value of the fans. Valid values are
@@ -318,7 +387,12 @@ class TalonBoard(SKABaseDevice):
         """
         return self.component_manager.fans_pwm()
 
-    @attribute(dtype=(int,), max_dim_x=4, label="Fan PWM enable values", doc="Fan PWM enable values.")
+    @attribute(
+        dtype=(int,),
+        max_dim_x=4,
+        label="Fan PWM enable values",
+        doc="Fan PWM enable values.",
+    )
     def FansPwmEnable(self: TalonBoard):
         """
         Read the PWM value of the fans. Valid values are 0 to 2.
@@ -327,10 +401,15 @@ class TalonBoard(SKABaseDevice):
         """
         return self.component_manager.fans_pwm_enable()
 
-    @attribute(dtype=(bool,), max_dim_x=4, label="Fan Fault status", doc="Fan Fault status.")
+    @attribute(
+        dtype=(bool,),
+        max_dim_x=4,
+        label="Fan Fault status",
+        doc="Fan Fault status.",
+    )
     def FansFault(self: TalonBoard):
         """
-        Read the fault status of the fans. 
+        Read the fault status of the fans.
 
         :return: true if fan fault register is set
         """
@@ -366,7 +445,7 @@ class TalonBoard(SKABaseDevice):
     # ----------
 
     def _communication_status_changed(
-        self: TalonLRU,
+        self: TalonBoard,
         communication_status: CommunicationStatus,
     ) -> None:
         """
@@ -388,7 +467,7 @@ class TalonBoard(SKABaseDevice):
             self.op_state_model.perform_action("component_unknown")
 
     def _component_power_mode_changed(
-        self: TalonLRU,
+        self: TalonBoard,
         power_mode: PowerMode,
     ) -> None:
         """
@@ -412,15 +491,13 @@ class TalonBoard(SKABaseDevice):
 
             self.op_state_model.perform_action(action_map[power_mode])
 
-    def _component_fault(self: TalonLRU, faulty: bool) -> None:
+    def _component_fault(self: TalonBoard, faulty: bool) -> None:
         """
         Handle component fault
         """
         if faulty:
             self.op_state_model.perform_action("component_fault")
-            self.set_status(
-                "The device is in FAULT state."
-            )
+            self.set_status("The device is in FAULT state.")
 
     # --------
     # Commands
@@ -473,7 +550,6 @@ class TalonBoard(SKABaseDevice):
             """
             return super().do()
 
-
     class OnCommand(SKABaseDevice.OnCommand):
         """
         The command class for the On command.
@@ -510,6 +586,7 @@ class TalonBoard(SKABaseDevice):
             """
             component_manager = self.target
             return component_manager.off()
+
 
 # ----------
 # Run server

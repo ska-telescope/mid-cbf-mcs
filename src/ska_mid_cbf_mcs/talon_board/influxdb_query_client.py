@@ -7,9 +7,11 @@
 
 # Copyright (c) 2022 National Research Council of Canada
 
-import logging
 import asyncio
+import logging
+
 from influxdb_client.client.influxdb_client_async import InfluxDBClientAsync
+
 
 class InfluxdbQueryClient:
     def __init__(
@@ -20,7 +22,7 @@ class InfluxdbQueryClient:
         influx_bucket: str,
         influx_auth_token: str,
         logger: logging.Logger,
-    ):    
+    ):
         """
         Initialise a new instance.
 
@@ -38,7 +40,9 @@ class InfluxdbQueryClient:
         self._influx_auth_token = influx_auth_token
 
         self._logger = logger
-        self._logger.info(f'InfluxdbQueryClient: using {self._hostname}:{self._influx_port}')
+        self._logger.info(
+            f"InfluxdbQueryClient: using {self._hostname}:{self._influx_port}"
+        )
 
     async def ping(self) -> bool:
         """
@@ -53,10 +57,14 @@ class InfluxdbQueryClient:
                 org=self._influx_org,
             ) as client:
                 ready = await client.ping()
-                self._logger.info(f'Ping InfluxDB at {self._hostname}:{self._influx_port}: {ready}')
+                self._logger.info(
+                    f"Ping InfluxDB at {self._hostname}:{self._influx_port}: {ready}"
+                )
                 return ready
         except Exception as e:
-            self._logger.error(f'Unexpected error when pinging InfluxDB at {self._hostname}:{self._influx_port}: {e}')
+            self._logger.error(
+                f"Unexpected error when pinging InfluxDB at {self._hostname}:{self._influx_port}: {e}"
+            )
             return False
 
     async def do_queries(self):
