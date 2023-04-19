@@ -300,54 +300,93 @@ class TalonBoardComponentManager(CbfComponentManager):
         else:
             self._logger.warning(f'Unexpected change callback from FQDN {fqdn}, attribute = {name}')
 
-    # Talon board telemetry and status from device proxies 
+    # Talon board telemetry and status from device proxies.
+    # The attribute change callback should get the latest values. But
+    # to be safe in case the callback hasn't happened for it, do read_attribute. 
     def talon_sysid_version(self) -> str:
         """Returns the bitstream version string"""
-        return self._talon_sysid_attrs.get('version')
+        attr_name = 'version'
+        if attr_name not in self._talon_sysid_attrs:
+            self._talon_sysid_attrs[attr_name] = self._proxies[self._talon_sysid_fqdn].read_attribute(attr_name)
+        return self._talon_sysid_attrs.get(attr_name)
 
     def talon_sysid_bitstream(self) -> int:
         """Returns the least 32 bits of md5 checksum of the bitstream name"""
-        return self._talon_sysid_attrs.get('bitstream')
+        attr_name = 'bitstream'
+        if attr_name not in self._talon_sysid_attrs:
+            self._talon_sysid_attrs[attr_name] = self._proxies[self._talon_sysid_fqdn].read_attribute(attr_name)
+        return self._talon_sysid_attrs.get(attr_name)
 
     def talon_status_iopll_locked_fault(self) -> bool:
         """Returns the iopll_locked_fault"""
-        return self._talon_status_attrs.get('iopll_locked_fault')
+        attr_name = 'iopll_locked_fault'
+        if attr_name not in self._talon_status_attrs:
+            print(self._proxies)
+            self._talon_status_attrs[attr_name] = self._proxies[self._talon_status_fqdn].read_attribute(attr_name)
+        return self._talon_status_attrs.get(attr_name)
 
     def talon_status_fs_iopll_locked_fault(self) -> bool:
         """Returns the fs_iopll_locked_fault"""
-        return self._talon_status_attrs.get('fs_iopll_locked_fault')
+        attr_name = 'fs_iopll_locked_fault'
+        if attr_name not in self._talon_status_attrs:
+            self._talon_status_attrs[attr_name] = self._proxies[self._talon_status_fqdn].read_attribute(attr_name)
+        return self._talon_status_attrs.get(attr_name)
 
     def talon_status_comms_iopll_locked_fault(self) -> bool:
         """Returns the comms_iopll_locked_fault"""
-        return self._talon_status_attrs.get('comms_iopll_locked_fault')
+        attr_name = 'comms_iopll_locked_fault'
+        if attr_name not in self._talon_status_attrs:
+            self._talon_status_attrs[attr_name] = self._proxies[self._talon_status_fqdn].read_attribute(attr_name)
+        return self._talon_status_attrs.get(attr_name)
 
     def talon_status_system_clk_fault(self) -> bool:
         """Returns the system_clk_fault"""
-        return self._talon_status_attrs.get('system_clk_fault')
+        attr_name = 'system_clk_fault'
+        if attr_name not in self._talon_status_attrs:
+            self._talon_status_attrs[attr_name] = self._proxies[self._talon_status_fqdn].read_attribute(attr_name)
+        return self._talon_status_attrs.get(attr_name)
 
     def talon_status_emif_bl_fault(self) -> bool:
         """Returns the emif_bl_fault"""
-        return self._talon_status_attrs.get('emif_bl_fault')
+        attr_name = 'emif_bl_fault'
+        if attr_name not in self._talon_status_attrs:
+            self._talon_status_attrs[attr_name] = self._proxies[self._talon_status_fqdn].read_attribute(attr_name)
+        return self._talon_status_attrs.get(attr_name)
 
     def talon_status_emif_br_fault(self) -> bool:
         """Returns the emif_br_fault"""
-        return self._talon_status_attrs.get('emif_br_fault')
+        attr_name = 'emif_br_fault'
+        if attr_name not in self._talon_status_attrs:
+            self._talon_status_attrs[attr_name] = self._proxies[self._talon_status_fqdn].read_attribute(attr_name)
+        return self._talon_status_attrs.get(attr_name)
 
     def talon_status_emif_tr_fault(self) -> bool:
         """Returns the emif_tr_fault"""
-        return self._talon_status_attrs.get('emif_tr_fault')
+        attr_name = 'emif_tr_fault'
+        if attr_name not in self._talon_status_attrs:
+            self._talon_status_attrs[attr_name] = self._proxies[self._talon_status_fqdn].read_attribute(attr_name)
+        return self._talon_status_attrs.get(attr_name)
 
     def talon_status_e100g_0_pll_fault(self) -> bool:
         """Returns the e100g_0_pll_fault"""
-        return self._talon_status_attrs.get('e100g_0_pll_fault')
+        attr_name = 'e100g_0_pll_fault'
+        if attr_name not in self._talon_status_attrs:
+            self._talon_status_attrs[attr_name] = self._proxies[self._talon_status_fqdn].read_attribute(attr_name)
+        return self._talon_status_attrs.get(attr_name)
 
     def talon_status_e100g_1_pll_fault(self) -> bool:
         """Returns the e100g_1_pll_fault"""
-        return self._talon_status_attrs.get('e100g_1_pll_fault')
+        attr_name = 'e100g_1_pll_fault'
+        if attr_name not in self._talon_status_attrs:
+            self._talon_status_attrs[attr_name] = self._proxies[self._talon_status_fqdn].read_attribute(attr_name)
+        return self._talon_status_attrs.get(attr_name)
 
     def talon_status_slim_pll_fault(self) -> bool:
         """Returns the slim_pll_fault"""
-        return self._talon_status_attrs.get('slim_pll_fault')
+        attr_name = 'slim_pll_fault'
+        if attr_name not in self._talon_status_attrs:
+            self._talon_status_attrs[attr_name] = self._proxies[self._talon_status_fqdn].read_attribute(attr_name)
+        return self._talon_status_attrs.get(attr_name)
 
     # TODO: read attributes 100G 
 
@@ -533,7 +572,7 @@ class TalonBoardComponentManager(CbfComponentManager):
                 res.append(bool(val))
             else:
                 msg = f"{field} cannot be read."
-                self._logger.warn(msg)
+                self._logger.error(msg)
                 res.append(-1)
         return res
 
@@ -553,13 +592,17 @@ class TalonBoardComponentManager(CbfComponentManager):
                     "Query_Influxdb_Error", msg, "query_if_needed()"
                 )
 
-    def _validate_time(self, field, t) -> None:
+    def _validate_time(self, field, t):
         """
-        Checks if the query result is too old
+        Checks if the query result is too old. When this happens, it means
+        Influxdb hasn't received a new entry in the time series recently.
 
         :param record: a record from Influxdb query result
         """
         td = datetime.now(timezone.utc) - t
-        if td.total_seconds() > 60:
+        if td.total_seconds() > 240:
             msg = f"Time of record {field} is too old. Currently not able to monitor device."
-            self._logger.warn(msg)
+            self._logger.error(msg)
+            tango.Except.throw_exception(
+                    "No new record available", msg, "validate_time()"
+                )
