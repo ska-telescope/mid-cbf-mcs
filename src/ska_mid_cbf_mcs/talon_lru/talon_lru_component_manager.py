@@ -14,7 +14,7 @@ from typing import Callable, List, Optional, Tuple
 
 import tango
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import PowerMode
+from ska_tango_base.control_model import AdminMode, PowerMode
 from tango import DevState
 
 from ska_mid_cbf_mcs.component.component_manager import (
@@ -98,9 +98,13 @@ class TalonLRUComponentManager(CbfComponentManager):
 
         super().start_communicating()
 
-        # TODO: implement
-        # self._proxy_talondx_board1 = self.get_device_proxy(self._talon_fqdns[0])
-        # self._proxy_talondx_board2 = self.get_device_proxy(self._talon_fqdns[1])
+        self._proxy_talondx_board1 = self.get_device_proxy(self._talon_fqdns[0])
+        self._proxy_talondx_board2 = self.get_device_proxy(self._talon_fqdns[1])
+
+        # Needs Admin mode == ONLINE to run ON command
+        self._proxy_talondx_board1.adminMode = AdminMode.ONLINE
+        self._proxy_talondx_board2.adminMode = AdminMode.ONLINE
+
         self._proxy_power_switch1 = self.get_device_proxy(self._pdu_fqdns[0])
         if self._pdu_fqdns[1] == self._pdu_fqdns[0]:
             self._proxy_power_switch2 = self._proxy_power_switch1
@@ -320,6 +324,10 @@ class TalonLRUComponentManager(CbfComponentManager):
             else:
                 self.update_component_power_mode(PowerMode.ON)
                 return (ResultCode.OK, "Both outlets successfully turned on")
+            
+            # Start monitoring talon board telemetries and fault status
+            self._proxy_talondx_board1.On()
+            self._proxy_talondx_board2.On()
         else:
             log_msg = "Proxies not connected"
             self._logger.error(log_msg)
@@ -378,6 +386,10 @@ class TalonLRUComponentManager(CbfComponentManager):
             else:
                 self.update_component_power_mode(PowerMode.OFF)
                 return (ResultCode.OK, "Both outlets successfully turned off")
+                
+            # Stop monitoring talon board telemetries and fault status
+            self._proxy_talondx_board1.Off()
+            self._proxy_talondx_board2.Off()
         else:
             log_msg = "Proxies not connected"
             self._logger.error(log_msg)

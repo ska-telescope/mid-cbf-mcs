@@ -355,11 +355,11 @@ class TalonBoard(SKABaseDevice):
         """
         super().init_command_objects()
 
-        device_args = (self, self.op_state_model, self.logger)
+        # device_args = (self, self.op_state_model, self.logger)
 
-        self.register_command_object("On", self.OnCommand(*device_args))
+        # self.register_command_object("On", self.OnCommand(*device_args))
 
-        self.register_command_object("Off", self.OffCommand(*device_args))
+        # self.register_command_object("Off", self.OffCommand(*device_args))
 
     # ----------
     # Callbacks
@@ -419,23 +419,8 @@ class TalonBoard(SKABaseDevice):
         if faulty:
             self.op_state_model.perform_action("component_fault")
             self.set_status(
-                "The device is in FAULT state - one or both PDU outlets have incorrect power state."
+                "The device is in FAULT state."
             )
-
-    def _check_power_mode(
-        self: TalonLRUComponentManager,
-        fqdn: str = "",
-        name: str = "",
-        value: Any = None,
-        quality: tango.AttrQuality = None,
-    ) -> None:
-        """
-        Get the power mode of both PDUs and check that it is consistent with the
-        current device state. This is a callback that gets called whenever simulationMode
-        changes in the power switch devices.
-        """
-        with self._power_switch_lock:
-            self.component_manager.check_power_mode(self.get_state())
 
     # --------
     # Commands
@@ -471,7 +456,6 @@ class TalonBoard(SKABaseDevice):
             communication_status_changed_callback=self._communication_status_changed,
             component_power_mode_changed_callback=self._component_power_mode_changed,
             component_fault_callback=self._component_fault,
-            check_power_mode_callback=self._check_power_mode,
         )
 
     class InitCommand(SKABaseDevice.InitCommand):
@@ -506,13 +490,8 @@ class TalonBoard(SKABaseDevice):
                 message indicating status. The message is for
                 information purpose only.
             """
-            device = self.target
-
-            with device._power_switch_lock:
-                # Check that this command is still allowed since the
-                # _check_power_mode_callback could have changed the state
-                self.is_allowed()
-                return device.component_manager.on()
+            component_manager = self.target
+            return component_manager.on()
 
     class OffCommand(SKABaseDevice.OffCommand):
         """
@@ -529,8 +508,8 @@ class TalonBoard(SKABaseDevice):
                 message indicating status. The message is for
                 information purpose only.
             """
-            device = self.target
-            return device.component_manager.off()
+            component_manager = self.target
+            return component_manager.off()
 
 # ----------
 # Run server

@@ -15,7 +15,9 @@ from datetime import datetime, timedelta, timezone
 from typing import Callable, Optional
 
 import tango
+from ska_mid_cbf_mcs.talon_board.influxdb_query_client import InfluxdbQueryClient
 from influxdb_client.client.influxdb_client_async import InfluxDBClientAsync
+from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import PowerMode
 
 from ska_mid_cbf_mcs.component.component_manager import (
@@ -56,7 +58,6 @@ class TalonBoardComponentManager(CbfComponentManager):
         ],
         component_power_mode_changed_callback: Callable[[PowerMode], None],
         component_fault_callback: Callable[[bool], None],
-        check_power_mode_callback: Callable,
     ) -> None:
         """
         Initialise a new instance.
@@ -81,17 +82,17 @@ class TalonBoardComponentManager(CbfComponentManager):
             called when the component power mode changes
         :param component_fault_callback: callback to be called in event of
             component fault
-        :param check_power_mode_callback: callback to be called in event of
-            power switch simulationMode change
         """
         self.connected = False
 
         # influxdb
-        self._hostname = hostname
-        self._influx_port = influx_port
-        self._influx_org = influx_org
-        self._influx_bucket = influx_bucket
-        self._influx_auth_token = influx_auth_token
+        self._db_client = InfluxdbQueryClient(
+            hostname=hostname, 
+            influx_port=influx_port, 
+            influx_org=influx_org, 
+            influx_bucket=influx_bucket, 
+            influx_auth_token=influx_auth_token, 
+            logger=logger)
 
         # HPS device proxies
         self._talon_sysid_fqdn = talon_sysid_address
@@ -118,10 +119,9 @@ class TalonBoardComponentManager(CbfComponentManager):
             component_fault_callback=component_fault_callback,
         )
 
-        self._logger.info("Using Influxdb {self._hostname}:{self._influx_port}")
-
     def start_communicating(self) -> None:
         """Establish communication with the component, then start monitoring."""
+        self._logger.info("Entering TalonBoardComponentManager.start_communicating")
 
         if self.connected:
             self._logger.info("Already communicating.")
@@ -134,6 +134,7 @@ class TalonBoardComponentManager(CbfComponentManager):
 
     def stop_communicating(self) -> None:
         """Stop communication with the component."""
+        self._logger.info("Entering TalonBoardComponentManager.stop_communicating")
         super().stop_communicating()
         self.update_component_power_mode(PowerMode.OFF)
         self.connected = False
@@ -166,6 +167,16 @@ class TalonBoardComponentManager(CbfComponentManager):
             return (ResultCode.FAILED, "Failed to connect to HPS devices")
 
         self._subscribe_change_events()
+
+        # TODO: The InfluxDB takes some time to come up and this ping
+        #       fails at the moment. We should make the on command
+        #       an asynchronous long running command, and wait for
+        #       ping to succeed before flipping device state to ON.
+        # ping_res = asyncio.run(self._db_client.ping())
+        # if not ping_res:
+        #     self._logger.error(f'Cannot ping InfluxDB: {ping_res}')
+            # self.update_component_fault(True)
+            # return (ResultCode.FAILED, "Failed to connect to InfluxDB")
         
         self._logger.info("Completed TalonBoardComponentManager.on")
         self.update_component_power_mode(PowerMode.ON)
@@ -281,6 +292,7 @@ class TalonBoardComponentManager(CbfComponentManager):
             self._logger.warning(
                 f"None value for attribute {name} of device {fqdn}"
             )
+        self._logger.debug(f'Attr Change callback: {name} -> {value}')
         if fqdn == self._talon_sysid_fqdn:
             self._talon_sysid_attrs[name] = value
         elif fqdn == self._talon_status_fqdn:
@@ -299,43 +311,45 @@ class TalonBoardComponentManager(CbfComponentManager):
 
     def talon_status_iopll_locked_fault(self) -> bool:
         """Returns the iopll_locked_fault"""
-        return self._talon_sysid_attrs.get('iopll_locked_fault')
+        return self._talon_status_attrs.get('iopll_locked_fault')
 
     def talon_status_fs_iopll_locked_fault(self) -> bool:
         """Returns the fs_iopll_locked_fault"""
-        return self._talon_sysid_attrs.get('fs_iopll_locked_fault')
+        return self._talon_status_attrs.get('fs_iopll_locked_fault')
 
     def talon_status_comms_iopll_locked_fault(self) -> bool:
         """Returns the comms_iopll_locked_fault"""
-        return self._talon_sysid_attrs.get('comms_iopll_locked_fault')
+        return self._talon_status_attrs.get('comms_iopll_locked_fault')
 
     def talon_status_system_clk_fault(self) -> bool:
         """Returns the system_clk_fault"""
-        return self._talon_sysid_attrs.get('system_clk_fault')
+        return self._talon_status_attrs.get('system_clk_fault')
 
     def talon_status_emif_bl_fault(self) -> bool:
         """Returns the emif_bl_fault"""
-        return self._talon_sysid_attrs.get('emif_bl_fault')
+        return self._talon_status_attrs.get('emif_bl_fault')
 
     def talon_status_emif_br_fault(self) -> bool:
         """Returns the emif_br_fault"""
-        return self._talon_sysid_attrs.get('emif_br_fault')
+        return self._talon_status_attrs.get('emif_br_fault')
 
     def talon_status_emif_tr_fault(self) -> bool:
         """Returns the emif_tr_fault"""
-        return self._talon_sysid_attrs.get('emif_tr_fault')
+        return self._talon_status_attrs.get('emif_tr_fault')
 
     def talon_status_e100g_0_pll_fault(self) -> bool:
         """Returns the e100g_0_pll_fault"""
-        return self._talon_sysid_attrs.get('e100g_0_pll_fault')
+        return self._talon_status_attrs.get('e100g_0_pll_fault')
 
     def talon_status_e100g_1_pll_fault(self) -> bool:
         """Returns the e100g_1_pll_fault"""
-        return self._talon_sysid_attrs.get('e100g_1_pll_fault')
+        return self._talon_status_attrs.get('e100g_1_pll_fault')
 
     def talon_status_slim_pll_fault(self) -> bool:
         """Returns the slim_pll_fault"""
-        return self._talon_sysid_attrs.get('slim_pll_fault')
+        return self._talon_status_attrs.get('slim_pll_fault')
+
+    # TODO: read attributes 100G 
 
     # Talon board telemetry and status from Influxdb 
     def fpga_die_temperature(self) -> float:
@@ -527,7 +541,11 @@ class TalonBoardComponentManager(CbfComponentManager):
         td = datetime.now() - self._last_check
         if td.total_seconds() > 10:
             try:
-                asyncio.run(self.do_queries())
+                res = asyncio.run(self._db_client.do_queries())
+                for result in res:
+                    for r in result:
+                        # each result is a tuple of (field, time, value)
+                        self._telemetry[r[0]] = (r[1], r[2])
             except Exception as e:
                 msg = f"Failed to query Influxdb of {self._hostname}: {e}"
                 self._logger.error(msg)
@@ -545,85 +563,3 @@ class TalonBoardComponentManager(CbfComponentManager):
         if td.total_seconds() > 60:
             msg = f"Time of record {field} is too old. Currently not able to monitor device."
             self._logger.warn(msg)
-
-    # Asynchronus functions to query the influxdb.
-
-    async def _query_common(self, client, query: str):
-        query_api = client.query_api()
-        result = await query_api.query(org=self._influx_org, query=query)
-        results = []
-        for table in result:
-            for r in table.records:
-                results.append((r.get_field(), r.get_time(), r.get_value()))
-        return results
-
-    async def _query_temperatures(self, client):
-        query = f'from(bucket: "{self._influx_bucket}")\
-        |>range(start: -5m)\
-        |>filter(fn: (r) => r["_measurement"] == "exec")\
-        |>filter(fn: (r) => r["_field"] =~ /temperature-sensors_.*?temp$/)\
-        |>last()'
-        return await self._query_common(client, query)
-
-    async def _query_mbo_temperatures(self, client):
-        query = f'from(bucket: "{self._influx_bucket}")\
-        |>range(start: -5m)\
-        |>filter(fn: (r) => r["_measurement"] == "exec")\
-        |>filter(fn: (r) => r["_field"] =~ /MBOs_[0-9]_[TR]X_temperature/)\
-        |>last()'
-        return await self._query_common(client, query)
-
-    async def _query_mbo_voltages(self, client):
-        query = f'from(bucket: "{self._influx_bucket}")\
-        |>range(start: -5m)\
-        |>filter(fn: (r) => r["_measurement"] == "exec")\
-        |>filter(fn: (r) => r["_field"] =~ /MBOs_[0-9]_[TR]X_.*?voltage$/)\
-        |>last()'
-        return await self._query_common(client, query)
-
-    async def _query_mbo_status(self, client):
-        query = f'from(bucket: "{self._influx_bucket}")\
-        |>range(start: -5m)\
-        |>filter(fn: (r) => r["_measurement"] == "exec")\
-        |>filter(fn: (r) => r["_field"] =~ /MBOs_[0-9]_[TR]X_.*?status$/)\
-        |>last()'
-        return await self._query_common(client, query)
-
-    async def _query_fans_pwm(self, client):
-        query = f'from(bucket: "{self._influx_bucket}")\
-        |>range(start: -5m)\
-        |>filter(fn: (r) => r["_measurement"] == "exec")\
-        |>filter(fn: (r) => r["_field"] =~ /fans_pwm.*?_[0-5]/)\
-        |>last()'
-        return await self._query_common(client, query)
-
-    async def _query_fans_fault(self, client):
-        query = f'from(bucket: "{self._influx_bucket}")\
-        |>range(start: -5m)\
-        |>filter(fn: (r) => r["_measurement"] == "exec")\
-        |>filter(fn: (r) => r["_field"] =~ /fans_fan-fault_[0-5]/)\
-        |>last()'
-        return await self._query_common(client, query)
-
-    async def do_queries(self):
-        """
-        The main query function that asynchronously queries
-        the Influxdb for all the monitored devices. The results
-        are saved to in the dict self._telemetry.
-        """
-        async with InfluxDBClientAsync(
-            url=f"http://{self._hostname}:{self._influx_port}",
-            token=self._influx_auth_token,
-            org=self._influx_org,
-        ) as client:
-            res = await asyncio.gather(
-                self._query_temperatures(client),
-                self._query_mbo_temperatures(client),
-                self._query_mbo_voltages(client),
-                self._query_fans_pwm(client),
-                self._query_fans_fault(client),
-            )
-        for result in res:
-            for r in result:
-                # each result is a tuple of (field, time, value)
-                self._telemetry[r[0]] = (r[1], r[2])
