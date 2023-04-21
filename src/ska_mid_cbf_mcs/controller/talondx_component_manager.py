@@ -441,6 +441,7 @@ class TalonDxComponentManager:
 
             self.logger.info(f"Sending configure command to {hps_master_fqdn}")
             try:
+                hps_master.set_timeout_millis(8000)
                 cmd_ret = hps_master.configure(json.dumps(talon_cfg))
                 if cmd_ret != 0:
                     self.logger.error(
