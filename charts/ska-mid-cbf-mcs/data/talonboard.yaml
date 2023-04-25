@@ -41,21 +41,21 @@ server:
           - name: "InfluxDbAuthToken"
             values:
             - "ikIDRLicRaMxviUJRqyE8bKF1Y_sZnaHc9MkWZY92jxg1isNPIGCyLtaC8EjbOhsT_kTzjt12qenB4g7-UOrog=="
-          - name: "TalonDxSysIdAddress"
+          - name: "Instance"
             values:
-            - "talondx-001/ska-talondx-sysid-ds/sysid"
-          - name: "TalonDx100GEthernet0Address"
+            - "talon1_test"          
+          - name: "TalonDxSysIdServer"
             values:
-            - "talondx-001/ska-talondx-100-gigabit-ethernet/100g_eth_0"
-          - name: "TalonDx100GEthernet1Address"
+            - "ska-talondx-sysid-ds"
+          - name: "TalonDx100GEthernetServer"
             values:
-            - "talondx-001/ska-talondx-100-gigabit-ethernet/100g_eth_1"
-          - name: "TalonStatusAddress"
+            - "ska-talondx-100-gigabit-ethernet-ds"          
+          - name: "TalonStatusServer"
             values:
-            - "talondx-001/ska-talondx-status/status"
-          - name: "HpsMasterAddress"
+            - "ska-talondx-status-ds"
+          - name: "HpsMasterServer"
             values:
-            - "talondx-001/hpsmaster/hps-1"
+            - "dshpsmaster"
           - name: "polled_attr"
             values:
             - "state"
@@ -85,21 +85,21 @@ server:
           - name: "InfluxDbAuthToken"
             values:
             - "ikIDRLicRaMxviUJRqyE8bKF1Y_sZnaHc9MkWZY92jxg1isNPIGCyLtaC8EjbOhsT_kTzjt12qenB4g7-UOrog=="
-          - name: "TalonDxSysIdAddress"
+          - name: "Instance"
             values:
-            - "talondx-002/ska-talondx-sysid-ds/sysid"
-          - name: "TalonDx100GEthernet0Address"
+            - "talon2_test"          
+          - name: "TalonDxSysIdServer"
             values:
-            - "talondx-002/ska-talondx-100-gigabit-ethernet/100g_eth_0"
-          - name: "TalonDx100GEthernet1Address"
+            - "ska-talondx-sysid-ds"
+          - name: "TalonDx100GEthernetServer"
             values:
-            - "talondx-002/ska-talondx-100-gigabit-ethernet/100g_eth_1"
-          - name: "TalonStatusAddress"
+            - "ska-talondx-100-gigabit-ethernet-ds"          
+          - name: "TalonStatusServer"
             values:
-            - "talondx-002/ska-talondx-status/status"
-          - name: "HpsMasterAddress"
+            - "ska-talondx-status-ds"
+          - name: "HpsMasterServer"
             values:
-            - "talondx-002/hpsmaster/hps-2"
+            - "dshpsmaster"
           - name: "polled_attr"
             values:
             - "state"
@@ -129,21 +129,21 @@ server:
           - name: "InfluxDbAuthToken"
             values:
             - "ikIDRLicRaMxviUJRqyE8bKF1Y_sZnaHc9MkWZY92jxg1isNPIGCyLtaC8EjbOhsT_kTzjt12qenB4g7-UOrog=="
-          - name: "TalonDxSysIdAddress"
+          - name: "Instance"
             values:
-            - "talondx-003/ska-talondx-sysid-ds/sysid"
-          - name: "TalonDx100GEthernet0Address"
+            - "talon2_test"          
+          - name: "TalonDxSysIdServer"
             values:
-            - "talondx-003/ska-talondx-100-gigabit-ethernet/100g_eth_0"
-          - name: "TalonDx100GEthernet1Address"
+            - "ska-talondx-sysid-ds"
+          - name: "TalonDx100GEthernetServer"
             values:
-            - "talondx-003/ska-talondx-100-gigabit-ethernet/100g_eth_1"
-          - name: "TalonStatusAddress"
+            - "ska-talondx-100-gigabit-ethernet-ds"          
+          - name: "TalonStatusServer"
             values:
-            - "talondx-003/ska-talondx-status/status"
-          - name: "HpsMasterAddress"
+            - "ska-talondx-status-ds"
+          - name: "HpsMasterServer"
             values:
-            - "talondx-003/hpsmaster/hps-3"
+            - "dshpsmaster"
           - name: "polled_attr"
             values:
             - "state"
@@ -173,21 +173,21 @@ server:
           - name: "InfluxDbAuthToken"
             values:
             - "ikIDRLicRaMxviUJRqyE8bKF1Y_sZnaHc9MkWZY92jxg1isNPIGCyLtaC8EjbOhsT_kTzjt12qenB4g7-UOrog=="
-          - name: "TalonDxSysIdAddress"
+          - name: "Instance"
             values:
-            - "talondx-004/ska-talondx-sysid-ds/sysid"
-          - name: "TalonDx100GEthernet0Address"
+            - "talon2_test"          
+          - name: "TalonDxSysIdServer"
             values:
-            - "talondx-004/ska-talondx-100-gigabit-ethernet/100g_eth_0"
-          - name: "TalonDx100GEthernet1Address"
+            - "ska-talondx-sysid-ds"
+          - name: "TalonDx100GEthernetServer"
             values:
-            - "talondx-004/ska-talondx-100-gigabit-ethernet/100g_eth_1"
-          - name: "TalonStatusAddress"
+            - "ska-talondx-100-gigabit-ethernet-ds"          
+          - name: "TalonStatusServer"
             values:
-            - "talondx-004/ska-talondx-status/status"
-          - name: "HpsMasterAddress"
+            - "ska-talondx-status-ds"
+          - name: "HpsMasterServer"
             values:
-            - "talondx-004/hpsmaster/hps-4"
+            - "dshpsmaster"
           - name: "polled_attr"
             values:
             - "state"

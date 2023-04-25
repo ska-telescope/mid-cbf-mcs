@@ -48,11 +48,11 @@ class TalonBoardComponentManager(CbfComponentManager):
         influx_org: str,
         influx_bucket: str,
         influx_auth_token: str,
-        talon_sysid_address: str,
-        eth_100g_0_address: str,
-        eth_100g_1_address: str,
-        talon_status_address: str,
-        hps_master_address: str,
+        instance: str,
+        talon_sysid_server: str,
+        eth_100g_server: str,
+        talon_status_server: str,
+        hps_master_server: str,
         logger: logging.Logger,
         push_change_event_callback: Optional[Callable],
         communication_status_changed_callback: Callable[
@@ -69,11 +69,11 @@ class TalonBoardComponentManager(CbfComponentManager):
         :param influx_org: Influxdb organization
         :param influx_bucket: Influxdb bucket to query
         :param influx_auth_token: Influxdb authentication token
-        :param talon_sysid_address: Talon Sysid DS FQDN
-        :param eth_100g_0_address: 100g ethernet 0 DS FQDN
-        :param eth_100g_1_address: 100g ethernet 1 DS FQDN
-        :param talon_status_address: Talon Status DS FQDN
-        :param hps_master_address: HPS Master DS FQDN
+        :param instance: instance of device server
+        :param talon_sysid_server: Talon Sysid device server name
+        :param eth_100g_server: 100g ethernet 0 device server name
+        :param talon_status_server: Talon Status device server name
+        :param hps_master_server: HPS Master device server name
         :param logger: a logger for this object to use
         :param push_change_event_callback: method to call when the base classes
             want to send an event
@@ -97,12 +97,18 @@ class TalonBoardComponentManager(CbfComponentManager):
             logger=logger,
         )
 
-        # HPS device proxies
-        self._talon_sysid_fqdn = talon_sysid_address
-        self._eth_100g_0_fqdn = eth_100g_0_address
-        self._eth_100g_1_fqdn = eth_100g_1_address
-        self._talon_status_fqdn = talon_status_address
-        self._hps_master_fqdn = hps_master_address
+        # Device Server names
+        self._talon_sysid_server = f"{talon_sysid_server}/{instance}"
+        self._eth_100g_server = f"{eth_100g_server}/{instance}"
+        self._talon_status_server = f"{talon_status_server}/{instance}"
+        self._hps_master_server = f"{hps_master_server}/{instance}"
+
+        # HPS device proxies. Initialized during ON command.
+        self._talon_sysid_fqdn = None
+        self._eth_100g_0_fqdn = None
+        self._eth_100g_1_fqdn = None
+        self._talon_status_fqdn = None
+        self._hps_master_fqdn = None
 
         # Subscribed device proxy attributes
         self._talon_sysid_attrs = {}
@@ -146,6 +152,31 @@ class TalonBoardComponentManager(CbfComponentManager):
         self.update_component_power_mode(PowerMode.OFF)
         self.connected = False
 
+    def _get_devices_in_server(self, server: str):
+        db = tango.Database()
+        res = db.get_device_class_list(server)
+        # get_device_class_list returns a list with the structure
+        # [device_name, class name] alternating.
+        dev_list = [
+            res[i] for i in range(0, len(res), 2) if res[i + 1] != "DServer"
+        ]
+        dev_list.sort()
+        return dev_list
+
+    def _get_hps_devices_in_db(self):
+        dev_list = self._get_devices_in_server(self._talon_sysid_server)
+        self._talon_sysid_fqdn = dev_list[0] if len(dev_list) >= 1 else None
+
+        dev_list = self._get_devices_in_server(self._talon_status_server)
+        self._talon_status_fqdn = dev_list[0] if len(dev_list) >= 1 else None
+
+        dev_list = self._get_devices_in_server(self._eth_100g_server)
+        self._eth_100g_0_fqdn = dev_list[0] if len(dev_list) >= 1 else None
+        self._eth_100g_1_fqdn = dev_list[1] if len(dev_list) >= 2 else None
+
+        dev_list = self._get_devices_in_server(self._hps_master_server)
+        self._hps_master_fqdn = dev_list[0] if len(dev_list) >= 1 else None
+
     def on(self) -> Tuple[ResultCode, str]:
         """
         Turn on Talon Board component. This attempts to establish communication
@@ -158,8 +189,10 @@ class TalonBoardComponentManager(CbfComponentManager):
 
         :raise ConnectionError: if unable to connect to HPS VCC devices
         """
-        self._logger.info("Entering TalonBoardComponentManager.on")
+        self._logger.debug("Entering TalonBoardComponentManager.on")
         try:
+            self._get_hps_devices_in_db()
+
             for fqdn in [
                 self._talon_sysid_fqdn,
                 self._eth_100g_0_fqdn,
@@ -167,9 +200,11 @@ class TalonBoardComponentManager(CbfComponentManager):
                 self._talon_status_fqdn,
                 self._hps_master_fqdn,
             ]:
-                self._proxies[fqdn] = CbfDeviceProxy(
-                    fqdn=fqdn, logger=self._logger
-                )
+                if fqdn is not None:
+                    self._proxies[fqdn] = CbfDeviceProxy(
+                        fqdn=fqdn, logger=self._logger
+                    )
+                    self._logger.info(f"Created device proxy for {fqdn}")
         except tango.DevFailed as df:
             self._logger.error(str(df.args[0].desc))
             self.update_component_fault(True)
@@ -198,82 +233,108 @@ class TalonBoardComponentManager(CbfComponentManager):
         # Talon System ID attributes
         self._talon_sysid_events = []
 
-        e = self._proxies[self._talon_sysid_fqdn].add_change_event_callback(
-            attribute_name="version",
-            callback=self._attr_change_callback,
-            stateless=True,
-        )
-        self._talon_sysid_events.append(e)
-        e = self._proxies[self._talon_sysid_fqdn].add_change_event_callback(
-            attribute_name="Bitstream",
-            callback=self._attr_change_callback,
-            stateless=True,
-        )
-        self._talon_sysid_events.append(e)
+        if self._talon_sysid_fqdn is not None:
+            e = self._proxies[
+                self._talon_sysid_fqdn
+            ].add_change_event_callback(
+                attribute_name="version",
+                callback=self._attr_change_callback,
+                stateless=True,
+            )
+            self._talon_sysid_events.append(e)
+            e = self._proxies[
+                self._talon_sysid_fqdn
+            ].add_change_event_callback(
+                attribute_name="Bitstream",
+                callback=self._attr_change_callback,
+                stateless=True,
+            )
+            self._talon_sysid_events.append(e)
 
         # Talon Status attributes
         self._talon_status_events = []
 
-        e = self._proxies[self._talon_status_fqdn].add_change_event_callback(
-            attribute_name="iopll_locked_fault",
-            callback=self._attr_change_callback,
-            stateless=True,
-        )
-        self._talon_status_events.append(e)
-        e = self._proxies[self._talon_status_fqdn].add_change_event_callback(
-            attribute_name="fs_iopll_locked_fault",
-            callback=self._attr_change_callback,
-            stateless=True,
-        )
-        self._talon_status_events.append(e)
-        e = self._proxies[self._talon_status_fqdn].add_change_event_callback(
-            attribute_name="comms_iopll_locked_fault",
-            callback=self._attr_change_callback,
-            stateless=True,
-        )
-        self._talon_status_events.append(e)
-        e = self._proxies[self._talon_status_fqdn].add_change_event_callback(
-            attribute_name="system_clk_fault",
-            callback=self._attr_change_callback,
-            stateless=True,
-        )
-        self._talon_status_events.append(e)
-        e = self._proxies[self._talon_status_fqdn].add_change_event_callback(
-            attribute_name="emif_bl_fault",
-            callback=self._attr_change_callback,
-            stateless=True,
-        )
-        self._talon_status_events.append(e)
-        e = self._proxies[self._talon_status_fqdn].add_change_event_callback(
-            attribute_name="emif_br_fault",
-            callback=self._attr_change_callback,
-            stateless=True,
-        )
-        self._talon_status_events.append(e)
-        e = self._proxies[self._talon_status_fqdn].add_change_event_callback(
-            attribute_name="emif_tr_fault",
-            callback=self._attr_change_callback,
-            stateless=True,
-        )
-        self._talon_status_events.append(e)
-        e = self._proxies[self._talon_status_fqdn].add_change_event_callback(
-            attribute_name="e100g_0_pll_fault",
-            callback=self._attr_change_callback,
-            stateless=True,
-        )
-        self._talon_status_events.append(e)
-        e = self._proxies[self._talon_status_fqdn].add_change_event_callback(
-            attribute_name="e100g_1_pll_fault",
-            callback=self._attr_change_callback,
-            stateless=True,
-        )
-        self._talon_status_events.append(e)
-        e = self._proxies[self._talon_status_fqdn].add_change_event_callback(
-            attribute_name="slim_pll_fault",
-            callback=self._attr_change_callback,
-            stateless=True,
-        )
-        self._talon_status_events.append(e)
+        if self._talon_status_fqdn is not None:
+            e = self._proxies[
+                self._talon_status_fqdn
+            ].add_change_event_callback(
+                attribute_name="iopll_locked_fault",
+                callback=self._attr_change_callback,
+                stateless=True,
+            )
+            self._talon_status_events.append(e)
+            e = self._proxies[
+                self._talon_status_fqdn
+            ].add_change_event_callback(
+                attribute_name="fs_iopll_locked_fault",
+                callback=self._attr_change_callback,
+                stateless=True,
+            )
+            self._talon_status_events.append(e)
+            e = self._proxies[
+                self._talon_status_fqdn
+            ].add_change_event_callback(
+                attribute_name="comms_iopll_locked_fault",
+                callback=self._attr_change_callback,
+                stateless=True,
+            )
+            self._talon_status_events.append(e)
+            e = self._proxies[
+                self._talon_status_fqdn
+            ].add_change_event_callback(
+                attribute_name="system_clk_fault",
+                callback=self._attr_change_callback,
+                stateless=True,
+            )
+            self._talon_status_events.append(e)
+            e = self._proxies[
+                self._talon_status_fqdn
+            ].add_change_event_callback(
+                attribute_name="emif_bl_fault",
+                callback=self._attr_change_callback,
+                stateless=True,
+            )
+            self._talon_status_events.append(e)
+            e = self._proxies[
+                self._talon_status_fqdn
+            ].add_change_event_callback(
+                attribute_name="emif_br_fault",
+                callback=self._attr_change_callback,
+                stateless=True,
+            )
+            self._talon_status_events.append(e)
+            e = self._proxies[
+                self._talon_status_fqdn
+            ].add_change_event_callback(
+                attribute_name="emif_tr_fault",
+                callback=self._attr_change_callback,
+                stateless=True,
+            )
+            self._talon_status_events.append(e)
+            e = self._proxies[
+                self._talon_status_fqdn
+            ].add_change_event_callback(
+                attribute_name="e100g_0_pll_fault",
+                callback=self._attr_change_callback,
+                stateless=True,
+            )
+            self._talon_status_events.append(e)
+            e = self._proxies[
+                self._talon_status_fqdn
+            ].add_change_event_callback(
+                attribute_name="e100g_1_pll_fault",
+                callback=self._attr_change_callback,
+                stateless=True,
+            )
+            self._talon_status_events.append(e)
+            e = self._proxies[
+                self._talon_status_fqdn
+            ].add_change_event_callback(
+                attribute_name="slim_pll_fault",
+                callback=self._attr_change_callback,
+                stateless=True,
+            )
+            self._talon_status_events.append(e)
         # TODO: Add attributes as needed
 
     def off(self) -> Tuple[ResultCode, str]:
@@ -329,6 +390,12 @@ class TalonBoardComponentManager(CbfComponentManager):
     # to be safe in case the callback hasn't happened for it, do read_attribute.
     def talon_sysid_version(self) -> str:
         """Returns the bitstream version string"""
+        if self._talon_sysid_fqdn is None:
+            tango.Except.throw_exception(
+                "TalonBoard_NoDeviceProxy",
+                "System ID Device is not available",
+                "talon_sysid_version()",
+            )
         attr_name = "version"
         if attr_name not in self._talon_sysid_attrs:
             self._talon_sysid_attrs[attr_name] = self._proxies[
@@ -338,6 +405,12 @@ class TalonBoardComponentManager(CbfComponentManager):
 
     def talon_sysid_bitstream(self) -> int:
         """Returns the least 32 bits of md5 checksum of the bitstream name"""
+        if self._talon_sysid_fqdn is None:
+            tango.Except.throw_exception(
+                "TalonBoard_NoDeviceProxy",
+                "System ID Device is not available",
+                "talon_sysid_version()",
+            )
         attr_name = "bitstream"
         if attr_name not in self._talon_sysid_attrs:
             self._talon_sysid_attrs[attr_name] = self._proxies[
@@ -347,6 +420,12 @@ class TalonBoardComponentManager(CbfComponentManager):
 
     def talon_status_iopll_locked_fault(self) -> bool:
         """Returns the iopll_locked_fault"""
+        if self._talon_status_fqdn is None:
+            tango.Except.throw_exception(
+                "TalonBoard_NoDeviceProxy",
+                "Talon Status Device is not available",
+                "talon_sysid_version()",
+            )
         attr_name = "iopll_locked_fault"
         if attr_name not in self._talon_status_attrs:
             print(self._proxies)
@@ -357,6 +436,12 @@ class TalonBoardComponentManager(CbfComponentManager):
 
     def talon_status_fs_iopll_locked_fault(self) -> bool:
         """Returns the fs_iopll_locked_fault"""
+        if self._talon_status_fqdn is None:
+            tango.Except.throw_exception(
+                "TalonBoard_NoDeviceProxy",
+                "Talon Status Device is not available",
+                "talon_sysid_version()",
+            )
         attr_name = "fs_iopll_locked_fault"
         if attr_name not in self._talon_status_attrs:
             self._talon_status_attrs[attr_name] = self._proxies[
@@ -366,6 +451,12 @@ class TalonBoardComponentManager(CbfComponentManager):
 
     def talon_status_comms_iopll_locked_fault(self) -> bool:
         """Returns the comms_iopll_locked_fault"""
+        if self._talon_status_fqdn is None:
+            tango.Except.throw_exception(
+                "TalonBoard_NoDeviceProxy",
+                "Talon Status Device is not available",
+                "talon_sysid_version()",
+            )
         attr_name = "comms_iopll_locked_fault"
         if attr_name not in self._talon_status_attrs:
             self._talon_status_attrs[attr_name] = self._proxies[
@@ -375,6 +466,12 @@ class TalonBoardComponentManager(CbfComponentManager):
 
     def talon_status_system_clk_fault(self) -> bool:
         """Returns the system_clk_fault"""
+        if self._talon_status_fqdn is None:
+            tango.Except.throw_exception(
+                "TalonBoard_NoDeviceProxy",
+                "Talon Status Device is not available",
+                "talon_sysid_version()",
+            )
         attr_name = "system_clk_fault"
         if attr_name not in self._talon_status_attrs:
             self._talon_status_attrs[attr_name] = self._proxies[
@@ -384,6 +481,12 @@ class TalonBoardComponentManager(CbfComponentManager):
 
     def talon_status_emif_bl_fault(self) -> bool:
         """Returns the emif_bl_fault"""
+        if self._talon_status_fqdn is None:
+            tango.Except.throw_exception(
+                "TalonBoard_NoDeviceProxy",
+                "Talon Status Device is not available",
+                "talon_sysid_version()",
+            )
         attr_name = "emif_bl_fault"
         if attr_name not in self._talon_status_attrs:
             self._talon_status_attrs[attr_name] = self._proxies[
@@ -393,6 +496,12 @@ class TalonBoardComponentManager(CbfComponentManager):
 
     def talon_status_emif_br_fault(self) -> bool:
         """Returns the emif_br_fault"""
+        if self._talon_status_fqdn is None:
+            tango.Except.throw_exception(
+                "TalonBoard_NoDeviceProxy",
+                "Talon Status Device is not available",
+                "talon_sysid_version()",
+            )
         attr_name = "emif_br_fault"
         if attr_name not in self._talon_status_attrs:
             self._talon_status_attrs[attr_name] = self._proxies[
@@ -402,6 +511,12 @@ class TalonBoardComponentManager(CbfComponentManager):
 
     def talon_status_emif_tr_fault(self) -> bool:
         """Returns the emif_tr_fault"""
+        if self._talon_status_fqdn is None:
+            tango.Except.throw_exception(
+                "TalonBoard_NoDeviceProxy",
+                "Talon Status Device is not available",
+                "talon_sysid_version()",
+            )
         attr_name = "emif_tr_fault"
         if attr_name not in self._talon_status_attrs:
             self._talon_status_attrs[attr_name] = self._proxies[
@@ -411,6 +526,12 @@ class TalonBoardComponentManager(CbfComponentManager):
 
     def talon_status_e100g_0_pll_fault(self) -> bool:
         """Returns the e100g_0_pll_fault"""
+        if self._talon_status_fqdn is None:
+            tango.Except.throw_exception(
+                "TalonBoard_NoDeviceProxy",
+                "Talon Status Device is not available",
+                "talon_sysid_version()",
+            )
         attr_name = "e100g_0_pll_fault"
         if attr_name not in self._talon_status_attrs:
             self._talon_status_attrs[attr_name] = self._proxies[
@@ -420,6 +541,12 @@ class TalonBoardComponentManager(CbfComponentManager):
 
     def talon_status_e100g_1_pll_fault(self) -> bool:
         """Returns the e100g_1_pll_fault"""
+        if self._talon_status_fqdn is None:
+            tango.Except.throw_exception(
+                "TalonBoard_NoDeviceProxy",
+                "Talon Status Device is not available",
+                "talon_sysid_version()",
+            )
         attr_name = "e100g_1_pll_fault"
         if attr_name not in self._talon_status_attrs:
             self._talon_status_attrs[attr_name] = self._proxies[
@@ -429,6 +556,12 @@ class TalonBoardComponentManager(CbfComponentManager):
 
     def talon_status_slim_pll_fault(self) -> bool:
         """Returns the slim_pll_fault"""
+        if self._talon_status_fqdn is None:
+            tango.Except.throw_exception(
+                "TalonBoard_NoDeviceProxy",
+                "Talon Status Device is not available",
+                "talon_sysid_version()",
+            )
         attr_name = "slim_pll_fault"
         if attr_name not in self._talon_status_attrs:
             self._talon_status_attrs[attr_name] = self._proxies[

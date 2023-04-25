@@ -98,6 +98,14 @@ class TalonLRUComponentManager(CbfComponentManager):
 
         super().start_communicating()
 
+        if len(self._talon_fqdns) < 2:
+            self._logger.error("Expect two Talon board FQDNs")
+            tango.Except.throw_exception(
+                "TalonLRU_TalonBoardFailed",
+                "Two FQDNs for Talon Boards are needed for the LRU",
+                "start_communicating()",
+            )
+
         self._proxy_talondx_board1 = self.get_device_proxy(
             self._talon_fqdns[0]
         )

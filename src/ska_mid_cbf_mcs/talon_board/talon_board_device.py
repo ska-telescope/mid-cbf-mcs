@@ -58,15 +58,15 @@ class TalonBoard(SKABaseDevice):
 
     InfluxDbAuthToken = device_property(dtype="str")
 
-    TalonDxSysIdAddress = device_property(dtype="str")
+    Instance = device_property(dtype="str")
 
-    TalonDx100GEthernet0Address = device_property(dtype="str")
+    TalonDxSysIdServer = device_property(dtype="str")
 
-    TalonDx100GEthernet1Address = device_property(dtype="str")
+    TalonDx100GEthernetServer = device_property(dtype="str")
 
-    TalonStatusAddress = device_property(dtype="str")
+    TalonStatusServer = device_property(dtype="str")
 
-    HpsMasterAddress = device_property(dtype="str")
+    HpsMasterServer = device_property(dtype="str")
 
     # ----------
     # Attributes
@@ -523,11 +523,11 @@ class TalonBoard(SKABaseDevice):
             influx_org=self.InfluxDbOrg,
             influx_bucket=self.InfluxDbBucket,
             influx_auth_token=self.InfluxDbAuthToken,
-            talon_sysid_address=self.TalonDxSysIdAddress,
-            eth_100g_0_address=self.TalonDx100GEthernet0Address,
-            eth_100g_1_address=self.TalonDx100GEthernet1Address,
-            talon_status_address=self.TalonStatusAddress,
-            hps_master_address=self.HpsMasterAddress,
+            instance=self.Instance,
+            talon_sysid_server=self.TalonDxSysIdServer,
+            eth_100g_server=self.TalonDx100GEthernetServer,
+            talon_status_server=self.TalonStatusServer,
+            hps_master_server=self.HpsMasterServer,
             logger=self.logger,
             push_change_event_callback=self.push_change_event,
             communication_status_changed_callback=self._communication_status_changed,
