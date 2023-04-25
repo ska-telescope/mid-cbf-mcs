@@ -40,8 +40,6 @@ setuptools.setup(
         'License :: OSI Approved :: BSD License',
         'Natural Language :: English',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.4',
-        'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
     ],
     entry_points={
@@ -58,7 +56,7 @@ setuptools.setup(
     },
     test_suite='tests',
     install_requires=[
-        'pytango == 9.3.3',
+        'pytango == 9.4.1',
         'ska-tango-base == 0.11.3'
     ],
     setup_requires=[
