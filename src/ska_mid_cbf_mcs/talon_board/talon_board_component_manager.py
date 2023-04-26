@@ -398,9 +398,10 @@ class TalonBoardComponentManager(CbfComponentManager):
             )
         attr_name = "version"
         if attr_name not in self._talon_sysid_attrs:
-            self._talon_sysid_attrs[attr_name] = self._proxies[
+            attr = self._proxies[
                 self._talon_sysid_fqdn
             ].read_attribute(attr_name)
+            self._talon_sysid_attrs[attr_name] = attr.value
         return self._talon_sysid_attrs.get(attr_name)
 
     def talon_sysid_bitstream(self) -> int:
@@ -413,9 +414,10 @@ class TalonBoardComponentManager(CbfComponentManager):
             )
         attr_name = "bitstream"
         if attr_name not in self._talon_sysid_attrs:
-            self._talon_sysid_attrs[attr_name] = self._proxies[
+            attr = self._proxies[
                 self._talon_sysid_fqdn
             ].read_attribute(attr_name)
+            self._talon_sysid_attrs[attr_name] = attr.value
         return self._talon_sysid_attrs.get(attr_name)
 
     def talon_status_iopll_locked_fault(self) -> bool:
@@ -428,10 +430,10 @@ class TalonBoardComponentManager(CbfComponentManager):
             )
         attr_name = "iopll_locked_fault"
         if attr_name not in self._talon_status_attrs:
-            print(self._proxies)
-            self._talon_status_attrs[attr_name] = self._proxies[
+            attr = self._proxies[
                 self._talon_status_fqdn
             ].read_attribute(attr_name)
+            self._talon_status_attrs[attr_name] = attr.value
         return self._talon_status_attrs.get(attr_name)
 
     def talon_status_fs_iopll_locked_fault(self) -> bool:
@@ -444,9 +446,10 @@ class TalonBoardComponentManager(CbfComponentManager):
             )
         attr_name = "fs_iopll_locked_fault"
         if attr_name not in self._talon_status_attrs:
-            self._talon_status_attrs[attr_name] = self._proxies[
+            attr = self._proxies[
                 self._talon_status_fqdn
             ].read_attribute(attr_name)
+            self._talon_status_attrs[attr_name] = attr.value
         return self._talon_status_attrs.get(attr_name)
 
     def talon_status_comms_iopll_locked_fault(self) -> bool:
@@ -459,9 +462,10 @@ class TalonBoardComponentManager(CbfComponentManager):
             )
         attr_name = "comms_iopll_locked_fault"
         if attr_name not in self._talon_status_attrs:
-            self._talon_status_attrs[attr_name] = self._proxies[
+            attr = self._proxies[
                 self._talon_status_fqdn
             ].read_attribute(attr_name)
+            self._talon_status_attrs[attr_name] = attr.value
         return self._talon_status_attrs.get(attr_name)
 
     def talon_status_system_clk_fault(self) -> bool:
@@ -474,9 +478,10 @@ class TalonBoardComponentManager(CbfComponentManager):
             )
         attr_name = "system_clk_fault"
         if attr_name not in self._talon_status_attrs:
-            self._talon_status_attrs[attr_name] = self._proxies[
+            attr = self._proxies[
                 self._talon_status_fqdn
             ].read_attribute(attr_name)
+            self._talon_status_attrs[attr_name] = attr.value
         return self._talon_status_attrs.get(attr_name)
 
     def talon_status_emif_bl_fault(self) -> bool:
@@ -489,9 +494,10 @@ class TalonBoardComponentManager(CbfComponentManager):
             )
         attr_name = "emif_bl_fault"
         if attr_name not in self._talon_status_attrs:
-            self._talon_status_attrs[attr_name] = self._proxies[
+            attr = self._proxies[
                 self._talon_status_fqdn
             ].read_attribute(attr_name)
+            self._talon_status_attrs[attr_name] = attr.value
         return self._talon_status_attrs.get(attr_name)
 
     def talon_status_emif_br_fault(self) -> bool:
@@ -504,9 +510,10 @@ class TalonBoardComponentManager(CbfComponentManager):
             )
         attr_name = "emif_br_fault"
         if attr_name not in self._talon_status_attrs:
-            self._talon_status_attrs[attr_name] = self._proxies[
+            attr = self._proxies[
                 self._talon_status_fqdn
             ].read_attribute(attr_name)
+            self._talon_status_attrs[attr_name] = attr.value
         return self._talon_status_attrs.get(attr_name)
 
     def talon_status_emif_tr_fault(self) -> bool:
@@ -519,9 +526,10 @@ class TalonBoardComponentManager(CbfComponentManager):
             )
         attr_name = "emif_tr_fault"
         if attr_name not in self._talon_status_attrs:
-            self._talon_status_attrs[attr_name] = self._proxies[
+            attr = self._proxies[
                 self._talon_status_fqdn
             ].read_attribute(attr_name)
+            self._talon_status_attrs[attr_name] = attr.value
         return self._talon_status_attrs.get(attr_name)
 
     def talon_status_e100g_0_pll_fault(self) -> bool:
@@ -534,9 +542,10 @@ class TalonBoardComponentManager(CbfComponentManager):
             )
         attr_name = "e100g_0_pll_fault"
         if attr_name not in self._talon_status_attrs:
-            self._talon_status_attrs[attr_name] = self._proxies[
+            attr = self._proxies[
                 self._talon_status_fqdn
             ].read_attribute(attr_name)
+            self._talon_status_attrs[attr_name] = attr.value
         return self._talon_status_attrs.get(attr_name)
 
     def talon_status_e100g_1_pll_fault(self) -> bool:
@@ -549,9 +558,10 @@ class TalonBoardComponentManager(CbfComponentManager):
             )
         attr_name = "e100g_1_pll_fault"
         if attr_name not in self._talon_status_attrs:
-            self._talon_status_attrs[attr_name] = self._proxies[
+            attr = self._proxies[
                 self._talon_status_fqdn
             ].read_attribute(attr_name)
+            self._talon_status_attrs[attr_name] = attr.value
         return self._talon_status_attrs.get(attr_name)
 
     def talon_status_slim_pll_fault(self) -> bool:
@@ -564,9 +574,10 @@ class TalonBoardComponentManager(CbfComponentManager):
             )
         attr_name = "slim_pll_fault"
         if attr_name not in self._talon_status_attrs:
-            self._talon_status_attrs[attr_name] = self._proxies[
+            attr = self._proxies[
                 self._talon_status_fqdn
             ].read_attribute(attr_name)
+            self._talon_status_attrs[attr_name] = attr.value
         return self._talon_status_attrs.get(attr_name)
 
     # TODO: read attributes 100G
