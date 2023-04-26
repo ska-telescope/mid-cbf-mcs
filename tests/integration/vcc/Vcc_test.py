@@ -51,6 +51,7 @@ class TestVcc:
         test_proxies.power_switch.adminMode = AdminMode.ONLINE
         for proxy in test_proxies.talon_lru:
             proxy.adminMode = AdminMode.ONLINE
+            proxy.set_timeout_millis(10000)
 
         # The VCC and bands should be in the OFF state after being initialised
         test_proxies.vcc[vcc_id].loggingLevel = LoggingLevel.DEBUG

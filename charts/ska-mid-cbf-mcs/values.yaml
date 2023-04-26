@@ -74,6 +74,9 @@ deviceServers:
   talonlru:
     file: "data/talonlru.yaml"
 
+  talonboard:
+    file: "data/talonboard.yaml"
+
   talondxlogconsumer:
     file: "data/talondxlogconsumer.yaml"
 
