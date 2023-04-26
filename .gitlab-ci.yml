@@ -2,7 +2,6 @@
 # Docker, when used with GitLab CI, runs each job in a separate and isolated container using the predefined image that is set up in .gitlab-ci.yml.
 # In this case we use the latest python docker image to build and test this project.
 
-#image: artefact.skao.int/ska-tango-images-pytango-builder:9.3.10
 image: $SKA_K8S_TOOLS_DOCKER_BUILDER_IMAGE
 
 variables:
@@ -56,14 +55,3 @@ include:
   # Helm chart
   - project: 'ska-telescope/templates-repository'
     file: 'gitlab-ci/includes/helm-chart.gitlab-ci.yml'
-
-
-    #docs-build:
-    #image: readthedocs/build:latest
-
-    #docs-pages:
-    #image: readthedocs/build:latest
-
-python-build-for-development-legacy:
-  image: artefact.skao.int/ska-tango-images-pytango-builder:9.4.1
-
