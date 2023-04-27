@@ -131,7 +131,7 @@ server:
             - "ikIDRLicRaMxviUJRqyE8bKF1Y_sZnaHc9MkWZY92jxg1isNPIGCyLtaC8EjbOhsT_kTzjt12qenB4g7-UOrog=="
           - name: "Instance"
             values:
-            - "talon2_test"          
+            - "talon3_test"          
           - name: "TalonDxSysIdServer"
             values:
             - "ska-talondx-sysid-ds"
@@ -175,7 +175,7 @@ server:
             - "ikIDRLicRaMxviUJRqyE8bKF1Y_sZnaHc9MkWZY92jxg1isNPIGCyLtaC8EjbOhsT_kTzjt12qenB4g7-UOrog=="
           - name: "Instance"
             values:
-            - "talon2_test"          
+            - "talon4_test"          
           - name: "TalonDxSysIdServer"
             values:
             - "ska-talondx-sysid-ds"
