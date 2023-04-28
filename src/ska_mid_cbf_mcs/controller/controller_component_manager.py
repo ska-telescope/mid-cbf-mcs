@@ -856,27 +856,27 @@ class ControllerComponentManager(CbfComponentManager):
             log_msg = "Proxies not connected"
             self._logger.error(log_msg)
             return (ResultCode.FAILED, log_msg)
-        
+
     def update_freq_offset_k(
         self: ControllerComponentManager,
         freq_offset_k: List[int],
-    )-> None:
-        
+    ) -> None:
         # store the attribute
         self.frequency_offset_k = freq_offset_k
 
         # write the frequency offset k to each of the subarrays
-        for fqdn in (self._fqdn_subarray):
+        for fqdn in self._fqdn_subarray:
             self._proxies[fqdn].write_frequencyOffsetK(freq_offset_k)
 
     def update_freq_offset_deltaF(
         self: ControllerComponentManager,
         freq_offset_deltaF: List[int],
-    )-> None:
-        
+    ) -> None:
         # store the attribute
         self.frequency_offset_delta_f = freq_offset_deltaF
 
-        #TODO: deltaF is a single value of 1800Hz, and should not be a list of values for each receptor
-        for fqdn in (self._fqdn_subarray):
-            self._proxies[fqdn].write_frequencyOffsetDeltaF(freq_offset_deltaF[0])
+        # TODO: deltaF is a single value of 1800Hz, and should not be a list of values for each receptor
+        for fqdn in self._fqdn_subarray:
+            self._proxies[fqdn].write_frequencyOffsetDeltaF(
+                freq_offset_deltaF[0]
+            )

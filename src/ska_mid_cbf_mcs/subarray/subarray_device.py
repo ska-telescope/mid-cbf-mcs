@@ -508,14 +508,11 @@ class CbfSubarray(CspSubElementSubarray):
         return self.component_manager.frequency_offset_delta_f
         # PROTECTED REGION END #    //  CbfController.frequencyOffsetDeltaF_read
 
-    def write_frequencyOffsetDeltaF(
-        self: CbfSubarray, value: int
-    ) -> None:
+    def write_frequencyOffsetDeltaF(self: CbfSubarray, value: int) -> None:
         # PROTECTED REGION ID(CbfSubarray.frequencyOffsetDeltaF_write) ENABLED START #
         """Set the frequencyOffsetDeltaF attribute"""
         self.component_manager.frequency_offset_delta_f = value
         # PROTECTED REGION END #    //  CbfSubarray.frequencyOffsetDeltaF_write
-
 
     # --------
     # Commands

@@ -438,7 +438,9 @@ class FspCorrSubarrayComponentManager(
         configuration = json.loads(configuration)
 
         self._freq_band_name = configuration["frequency_band"]
-        self._frequency_band = freq_band_dict()[self._freq_band_name]["band_index"]
+        self._frequency_band = freq_band_dict()[self._freq_band_name][
+            "band_index"
+        ]
 
         self._stream_tuning = configuration["band_5_tuning"]
 

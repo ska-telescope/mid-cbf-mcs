@@ -39,6 +39,7 @@ class Const:
 
 const = Const()
 
+
 class FspModes(Enum):
     IDLE = 0
     CORR = 1
@@ -46,61 +47,55 @@ class FspModes(Enum):
     PST_BF = 3
     VLBI = 4
 
+
 def freq_band_dict():
     band_info = {
-        "1":
-        {
+        "1": {
             "band_index": 0,
             "base_dish_sample_rate_MHz": 3960,
-            "sample_rate_const":1,
+            "sample_rate_const": 1,
             "total_num_FSs": 20,
-            "num_samples_per_frame": 18
+            "num_samples_per_frame": 18,
         },
-        "2":
-        {
+        "2": {
             "band_index": 1,
             "base_dish_sample_rate_MHz": 3960,
-            "sample_rate_const":1,
+            "sample_rate_const": 1,
             "total_num_FSs": 20,
-            "num_samples_per_frame": 18
+            "num_samples_per_frame": 18,
         },
-        "3":
-        {
+        "3": {
             "band_index": 2,
             "base_dish_sample_rate_MHz": 3168,
-            "sample_rate_const":0.8,
+            "sample_rate_const": 0.8,
             "total_num_FSs": 20,
-            "num_samples_per_frame": 18
+            "num_samples_per_frame": 18,
         },
-        "4":
-        {
+        "4": {
             "band_index": 3,
             "base_dish_sample_rate_MHz": 5940,
-            "sample_rate_const":1.5,
+            "sample_rate_const": 1.5,
             "total_num_FSs": 30,
-            "num_samples_per_frame": 27
+            "num_samples_per_frame": 27,
         },
-        "5a":
-        {
+        "5a": {
             "band_index": 4,
             "base_dish_sample_rate_MHz": 5940,
-            "sample_rate_const":1.5
+            "sample_rate_const": 1.5
             # TODO: add values for band 5a
         },
-        "5b":
-        {
+        "5b": {
             "band_index": 5,
             "base_dish_sample_rate_MHz": 5940,
-            "sample_rate_const":1.5
+            "sample_rate_const": 1.5
             # TODO: add values for band 5b
-        }
+        },
     }
     return band_info
 
 
-
 # The VCC-OSPPFB oversampling factor:
-vcc_oversampling_factor = 10/9
+vcc_oversampling_factor = 10 / 9
 
 mhz_to_hz = 1000000
 
@@ -125,4 +120,3 @@ cc_oversampling_factor/total_num_FSs .
 defined in this file into the corresponding band_info
 dictionary entries.
 """
-

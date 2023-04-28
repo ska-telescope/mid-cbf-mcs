@@ -38,7 +38,12 @@ from ska_tango_base.csp.subarray.component_manager import (
 from tango import AttrQuality, DevState
 
 from ska_mid_cbf_mcs.attribute_proxy import CbfAttributeProxy
-from ska_mid_cbf_mcs.commons.global_enum import const, freq_band_dict, vcc_oversampling_factor, mhz_to_hz
+from ska_mid_cbf_mcs.commons.global_enum import (
+    const,
+    freq_band_dict,
+    mhz_to_hz,
+    vcc_oversampling_factor,
+)
 from ska_mid_cbf_mcs.commons.receptor_utils import ReceptorUtils
 from ska_mid_cbf_mcs.component.component_manager import (
     CbfComponentManager,
@@ -1135,7 +1140,9 @@ class CbfSubarrayComponentManager(
                         # In this case by the ICD, all subarray allocated resources should be used.
                         fsp["receptor_ids"] = self._receptors.copy()
 
-                    frequencyBand = freq_band_dict()[fsp["frequency_band"]]["band_index"]
+                    frequencyBand = freq_band_dict()[fsp["frequency_band"]][
+                        "band_index"
+                    ]
                     # Validate frequencySliceID.
                     # TODO: move these to consts
                     # See for ex. Fig 8-2 in the Mid.CBF DDD
@@ -1804,7 +1811,9 @@ class CbfSubarrayComponentManager(
             fsp["subarray_receptor_ids"] = self._receptors.copy()
 
             # Add the fs_sample_rate for all receptors
-            fsp["fs_sample_rates"] = self.calculate_fs_sample_rates(common_configuration["frequency_band"])
+            fsp["fs_sample_rates"] = self.calculate_fs_sample_rates(
+                common_configuration["frequency_band"]
+            )
 
             if fsp["function_mode"] == "CORR":
                 # Receptors may not be specified in the
@@ -2298,38 +2307,46 @@ class CbfSubarrayComponentManager(
         self._ready = configured
 
     def calculate_fs_sample_rate(
-            self: CbfSubarrayComponentManager, freq_band: str, receptor: str
+        self: CbfSubarrayComponentManager, freq_band: str, receptor: str
     ) -> Dict:
-        
         # convert the receptor to an int using ReceptorUtils
-        receptor_int = ReceptorUtils.receptor_id_str_to_int(receptor)
+        receptor_int = self._receptor_utils.receptor_id_str_to_int(receptor)
 
         # find the k value for this receptor
         # array of k values is 0 index, so index of array value is receptor_int - 1
-        freq_offset_k = self._frequency_offset_k[(receptor_int-1)]
-        freq_band_info = freq_band_dict[freq_band]
-        base_dish_sample_rate_MH = freq_band_info[base_dish_sample_rate_MH]
-        sample_rate_const = freq_band_info[sample_rate_const]
-        total_num_fs = freq_band_info[total_num_fs]
+        freq_offset_k = self._frequency_offset_k[(receptor_int - 1)]
+        freq_band_info = freq_band_dict()[freq_band]
+        base_dish_sample_rate_MH = freq_band_info["base_dish_sample_rate_MH"]
+        sample_rate_const = freq_band_info["sample_rate_const"]
+        total_num_fs = freq_band_info["total_num_fs"]
 
         # dish_sample_rate = base_dish_sample_rate_MH * mhz_to_hz + sample_rate_const * k * deltaF
         # fs_sample_rate = dish_sample_rate * vcc_oversampling_factor / total_num_FSs
-        dish_sample_rate = base_dish_sample_rate_MH * mhz_to_hz * sample_rate_const * freq_offset_k * self._frequency_offset_delta_f
-        fs_sample_rate = dish_sample_rate * vcc_oversampling_factor / total_num_fs
+        dish_sample_rate = (
+            base_dish_sample_rate_MH
+            * mhz_to_hz
+            * sample_rate_const
+            * freq_offset_k
+            * self._frequency_offset_delta_f
+        )
+        fs_sample_rate = (
+            dish_sample_rate * vcc_oversampling_factor / total_num_fs
+        )
 
         fs_sample_rate_for_band = {
             "receptor": receptor,
-            "fs_sample_rate": fs_sample_rate
+            "fs_sample_rate": fs_sample_rate,
         }
 
         return fs_sample_rate_for_band
 
     def calculate_fs_sample_rates(
-            self: CbfSubarrayComponentManager, freq_band: str
+        self: CbfSubarrayComponentManager, freq_band: str
     ) -> List[Dict]:
-        
         output_sample_rates = []
         for receptorId in self._receptors:
-            output_sample_rates.append(self.calculate_fs_sample_rate(freq_band, receptorId))
-        
+            output_sample_rates.append(
+                self.calculate_fs_sample_rate(freq_band, receptorId)
+            )
+
         return output_sample_rates
