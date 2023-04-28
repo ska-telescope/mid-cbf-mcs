@@ -150,7 +150,7 @@ class VccBandSimulator:
         self._config_id = configuration["config_id"]
 
         self._frequency_band = freq_band_dict()[
-            configuration["frequency_band"]
+            configuration["frequency_band"]["band_index"]
         ]
 
         # If band is 5a or 5b, store band 5 turning parameter

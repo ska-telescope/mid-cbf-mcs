@@ -510,7 +510,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         try:
             # Configure the band via the VCC Controller device
             self._logger.info(f"Configuring VCC band {freq_band_name}")
-            self._frequency_band = freq_band_dict()[freq_band_name]
+            self._frequency_band = freq_band_dict()[freq_band_name]["band_index"]
             self._freq_band_name = freq_band_name
             if self._simulation_mode:
                 self._vcc_controller_simulator.ConfigureBand(
@@ -601,7 +601,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         # (see Mid.CBF Scan Configuration in ICD). Therefore, the previous frequency
         # band value needs to be stored, and if the frequency band is not
         # set in the config it should be replaced with the previous value.
-        freq_band = freq_band_dict()[configuration["frequency_band"]]
+        freq_band = freq_band_dict()[configuration["frequency_band"]]["band_index"]
         if self._frequency_band != freq_band:
             return (
                 ResultCode.FAILED,

@@ -495,7 +495,7 @@ class CbfController(SKAController):
         # PROTECTED REGION ID(CbfController.frequencyOffsetK_write) ENABLED START #
         """Set frequencyOffsetK attribute"""
         if len(value) == self._count_vcc:
-            self.component_manager.frequency_offset_k = value
+            self.component_manager.update_freq_offset_k(value)
         else:
             log_msg = (
                 "Skipped writing to frequencyOffsetK attribute "
@@ -517,7 +517,7 @@ class CbfController(SKAController):
         # PROTECTED REGION ID(CbfController.frequencyOffsetDeltaF_write) ENABLED START #
         """Set the frequencyOffsetDeltaF attribute"""
         if len(value) == self._count_vcc:
-            self.component_manager.frequency_offset_delta_f = value
+            self.component_manager.update_freq_offset_deltaF(value)
         else:
             log_msg = (
                 "Skipped writing to frequencyOffsetDeltaF attribute "
