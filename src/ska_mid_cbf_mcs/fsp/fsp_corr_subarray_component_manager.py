@@ -438,7 +438,7 @@ class FspCorrSubarrayComponentManager(
         configuration = json.loads(configuration)
 
         self._freq_band_name = configuration["frequency_band"]
-        self._frequency_band = freq_band_dict()[self._freq_band_name]
+        self._frequency_band = freq_band_dict()[self._freq_band_name]["band_index"]
 
         self._stream_tuning = configuration["band_5_tuning"]
 
@@ -649,6 +649,9 @@ class FspCorrSubarrayComponentManager(
         # HPS
         hps_fsp_configuration = dict({"configure_scan": configuration})
         hps_fsp_configuration.update(internal_params_obj)
+
+        # append the fs_sample_rates to the configuration
+        hps_fsp_configuration.update(configuration["fs_sample_rates"])
 
         self._get_capability_proxies()
 
