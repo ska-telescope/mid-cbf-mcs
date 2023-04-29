@@ -33,12 +33,12 @@ data_file_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
 CONST_WAIT_TIME = 4
 
 
-@pytest.mark.skip
+#@pytest.mark.skip
 class TestCbfSubarray:
     """
     Test class for TestCbfSubarray tests.
     """
-
+    @pytest.mark.skip
     def test_State(
         self: TestCbfSubarray,
         device_under_test: CbfDeviceProxy,
@@ -51,7 +51,7 @@ class TestCbfSubarray:
             :py:class:`tango.test_context.DeviceTestContext`.
         """
         assert device_under_test.State() == DevState.DISABLE
-
+    @pytest.mark.skip
     def test_Status(
         self: TestCbfSubarray,
         device_under_test: CbfDeviceProxy,
@@ -64,7 +64,7 @@ class TestCbfSubarray:
             :py:class:`tango.test_context.DeviceTestContext`.
         """
         assert device_under_test.Status() == "The device is in DISABLE state."
-
+    @pytest.mark.skip
     def test_adminMode(
         self: TestCbfSubarray,
         device_under_test: CbfDeviceProxy,
@@ -77,7 +77,7 @@ class TestCbfSubarray:
             :py:class:`tango.test_context.DeviceTestContext`.
         """
         assert device_under_test.adminMode == AdminMode.OFFLINE
-
+    @pytest.mark.skip
     @pytest.mark.parametrize("command", ["On", "Off"])
     def test_Power_Commands(
         self: TestCbfSubarray, device_under_test: CbfDeviceProxy, command: str
@@ -107,7 +107,7 @@ class TestCbfSubarray:
         time.sleep(CONST_WAIT_TIME)
         assert result[0][0] == ResultCode.OK
         assert device_under_test.State() == expected_state
-
+    @pytest.mark.skip
     @pytest.mark.parametrize(
         "receptor_ids, \
         receptors_to_remove",
@@ -158,7 +158,7 @@ class TestCbfSubarray:
         time.sleep(0.1)
         assert (device_under_test.receptors == []).all()
         assert device_under_test.obsState == ObsState.EMPTY
-
+    @pytest.mark.skip
     @pytest.mark.parametrize("receptor_ids", [([1, 3, 4, 2]), ([4, 1, 2])])
     def test_RemoveAllReceptors_valid(
         self: TestCbfSubarray,
@@ -186,7 +186,7 @@ class TestCbfSubarray:
         time.sleep(0.1)
         assert (device_under_test.receptors == []).all()
         assert device_under_test.obsState == ObsState.EMPTY
-
+    @pytest.mark.skip
     @pytest.mark.parametrize(
         "receptor_ids, \
         invalid_receptor_id",
@@ -218,7 +218,7 @@ class TestCbfSubarray:
         device_under_test.AddReceptors(invalid_receptor_id)
         time.sleep(0.1)
         assert (device_under_test.receptors == receptor_ids).all()
-
+    @pytest.mark.skip
     @pytest.mark.parametrize(
         "receptor_ids, \
         invalid_receptors_to_remove",
@@ -249,7 +249,7 @@ class TestCbfSubarray:
         time.sleep(0.1)
         assert (device_under_test.receptors == receptor_ids).all()
         assert device_under_test.obsState == ObsState.IDLE
-
+    @pytest.mark.skip
     @pytest.mark.parametrize("receptor_ids", [([1, 3]), ([4, 2])])
     def test_RemoveAllReceptors_invalid(
         self: TestCbfSubarray,
@@ -274,13 +274,18 @@ class TestCbfSubarray:
     @pytest.mark.parametrize(
         "config_file_name, \
         receptor_ids",
-        [("ConfigureScan_basic.json", [1, 3, 4, 2])],
+        [
+            (
+                "ConfigureScan_basic.json",
+                ["MKT000", "MKT002", "MKT003", "MKT001"],
+            )
+        ],
     )
     def test_ConfigureScan_basic(
         self: TestCbfSubarray,
         device_under_test: CbfDeviceProxy,
         config_file_name: str,
-        receptor_ids: List[int],
+        receptor_ids: List[str],
     ) -> None:
         """
         Test a successful scan configuration
@@ -288,9 +293,13 @@ class TestCbfSubarray:
         assert device_under_test.State() == DevState.DISABLE
         device_under_test.adminMode = AdminMode.ONLINE
         time.sleep(CONST_WAIT_TIME)
-        assert device_under_test.State() == DevState.ON
+        assert device_under_test.State() == DevState.OFF
         assert device_under_test.obsState == ObsState.EMPTY
         device_under_test.AddReceptors(receptor_ids)
+        freq_offset_k = [0] * 197
+        device_under_test.frequencyOffsetK = freq_offset_k
+        freq_offset_deltaF = 1800
+        device_under_test.frequencyOffsetDeltaF = freq_offset_deltaF
         time.sleep(0.1)
         assert device_under_test.obsState == ObsState.IDLE
 
@@ -300,7 +309,7 @@ class TestCbfSubarray:
         f.close()
         time.sleep(CONST_WAIT_TIME)
         assert device_under_test.obsState == ObsState.READY
-
+    @pytest.mark.skip
     @pytest.mark.parametrize(
         "config_file_name, \
         scan_file_name, \
@@ -331,7 +340,7 @@ class TestCbfSubarray:
         time.sleep(0.1)
 
         assert device_under_test.obsState == ObsState.SCANNING
-
+    @pytest.mark.skip
     @pytest.mark.parametrize(
         "config_file_name, \
         scan_file_name, \
@@ -349,6 +358,7 @@ class TestCbfSubarray:
             ),
         ],
     )
+    @pytest.mark.skip
     def test_EndScan(
         self: TestCbfSubarray,
         device_under_test: CbfDeviceProxy,
@@ -368,7 +378,7 @@ class TestCbfSubarray:
         time.sleep(0.1)
 
         assert device_under_test.obsState == ObsState.READY
-
+    @pytest.mark.skip
     @pytest.mark.parametrize(
         "config_file_name, \
         scan_file_name, \
@@ -386,6 +396,7 @@ class TestCbfSubarray:
             ),
         ],
     )
+    @pytest.mark.skip
     def test_Abort(
         self: TestCbfSubarray,
         device_under_test: CbfDeviceProxy,
@@ -405,7 +416,7 @@ class TestCbfSubarray:
         time.sleep(0.1)
 
         assert device_under_test.obsState == ObsState.ABORTED
-
+    @pytest.mark.skip
     @pytest.mark.parametrize(
         "config_file_name, \
         scan_file_name, \
@@ -423,6 +434,7 @@ class TestCbfSubarray:
             ),
         ],
     )
+    @pytest.mark.skip
     def test_Reset(
         self: TestCbfSubarray,
         device_under_test: CbfDeviceProxy,
@@ -442,7 +454,7 @@ class TestCbfSubarray:
         time.sleep(CONST_WAIT_TIME)
 
         assert device_under_test.obsState == ObsState.IDLE
-
+    @pytest.mark.skip
     @pytest.mark.parametrize(
         "config_file_name, \
         scan_file_name, \
@@ -460,6 +472,7 @@ class TestCbfSubarray:
             ),
         ],
     )
+    @pytest.mark.skip
     def test_Restart(
         self: TestCbfSubarray,
         device_under_test: CbfDeviceProxy,
@@ -494,6 +507,7 @@ class TestCbfSubarray:
             ),
         ],
     )
+    @pytest.mark.skip
     def test_End(
         self: TestCbfSubarray,
         device_under_test: CbfDeviceProxy,
