@@ -321,13 +321,14 @@ class TestCbfSubarrayComponentManager:
             dish_sample_rate * oversampling_factor / total_num_freq_slice
         )
         subarray_component_manager.frequency_offset_k = freq_offset_k
-        subarray_component_manager.frequency_offset_delta_f = freq_offset_delta_f
+        subarray_component_manager.frequency_offset_delta_f = (
+            freq_offset_delta_f
+        )
         output_fs_sample_rate = (
             subarray_component_manager.calculate_fs_sample_rate(
                 freq_band, receptor_id
             )
         )
         assert math.isclose(
-            output_fs_sample_rate["fs_sample_rate"],
-            expected_fs_sample_rate
+            output_fs_sample_rate["fs_sample_rate"], expected_fs_sample_rate
         )
