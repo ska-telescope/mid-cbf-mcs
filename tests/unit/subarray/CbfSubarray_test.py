@@ -33,11 +33,12 @@ data_file_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
 CONST_WAIT_TIME = 4
 
 
-#@pytest.mark.skip
+# @pytest.mark.skip
 class TestCbfSubarray:
     """
     Test class for TestCbfSubarray tests.
     """
+
     @pytest.mark.skip
     def test_State(
         self: TestCbfSubarray,
@@ -51,6 +52,7 @@ class TestCbfSubarray:
             :py:class:`tango.test_context.DeviceTestContext`.
         """
         assert device_under_test.State() == DevState.DISABLE
+
     @pytest.mark.skip
     def test_Status(
         self: TestCbfSubarray,
@@ -64,6 +66,7 @@ class TestCbfSubarray:
             :py:class:`tango.test_context.DeviceTestContext`.
         """
         assert device_under_test.Status() == "The device is in DISABLE state."
+
     @pytest.mark.skip
     def test_adminMode(
         self: TestCbfSubarray,
@@ -77,6 +80,7 @@ class TestCbfSubarray:
             :py:class:`tango.test_context.DeviceTestContext`.
         """
         assert device_under_test.adminMode == AdminMode.OFFLINE
+
     @pytest.mark.skip
     @pytest.mark.parametrize("command", ["On", "Off"])
     def test_Power_Commands(
@@ -107,6 +111,7 @@ class TestCbfSubarray:
         time.sleep(CONST_WAIT_TIME)
         assert result[0][0] == ResultCode.OK
         assert device_under_test.State() == expected_state
+
     @pytest.mark.skip
     @pytest.mark.parametrize(
         "receptor_ids, \
@@ -158,6 +163,7 @@ class TestCbfSubarray:
         time.sleep(0.1)
         assert (device_under_test.receptors == []).all()
         assert device_under_test.obsState == ObsState.EMPTY
+
     @pytest.mark.skip
     @pytest.mark.parametrize("receptor_ids", [([1, 3, 4, 2]), ([4, 1, 2])])
     def test_RemoveAllReceptors_valid(
@@ -186,6 +192,7 @@ class TestCbfSubarray:
         time.sleep(0.1)
         assert (device_under_test.receptors == []).all()
         assert device_under_test.obsState == ObsState.EMPTY
+
     @pytest.mark.skip
     @pytest.mark.parametrize(
         "receptor_ids, \
@@ -218,6 +225,7 @@ class TestCbfSubarray:
         device_under_test.AddReceptors(invalid_receptor_id)
         time.sleep(0.1)
         assert (device_under_test.receptors == receptor_ids).all()
+
     @pytest.mark.skip
     @pytest.mark.parametrize(
         "receptor_ids, \
@@ -249,6 +257,7 @@ class TestCbfSubarray:
         time.sleep(0.1)
         assert (device_under_test.receptors == receptor_ids).all()
         assert device_under_test.obsState == ObsState.IDLE
+
     @pytest.mark.skip
     @pytest.mark.parametrize("receptor_ids", [([1, 3]), ([4, 2])])
     def test_RemoveAllReceptors_invalid(
@@ -309,6 +318,7 @@ class TestCbfSubarray:
         f.close()
         time.sleep(CONST_WAIT_TIME)
         assert device_under_test.obsState == ObsState.READY
+
     @pytest.mark.skip
     @pytest.mark.parametrize(
         "config_file_name, \
@@ -340,6 +350,7 @@ class TestCbfSubarray:
         time.sleep(0.1)
 
         assert device_under_test.obsState == ObsState.SCANNING
+
     @pytest.mark.skip
     @pytest.mark.parametrize(
         "config_file_name, \
@@ -378,6 +389,7 @@ class TestCbfSubarray:
         time.sleep(0.1)
 
         assert device_under_test.obsState == ObsState.READY
+
     @pytest.mark.skip
     @pytest.mark.parametrize(
         "config_file_name, \
@@ -416,6 +428,7 @@ class TestCbfSubarray:
         time.sleep(0.1)
 
         assert device_under_test.obsState == ObsState.ABORTED
+
     @pytest.mark.skip
     @pytest.mark.parametrize(
         "config_file_name, \
@@ -454,6 +467,7 @@ class TestCbfSubarray:
         time.sleep(CONST_WAIT_TIME)
 
         assert device_under_test.obsState == ObsState.IDLE
+
     @pytest.mark.skip
     @pytest.mark.parametrize(
         "config_file_name, \
