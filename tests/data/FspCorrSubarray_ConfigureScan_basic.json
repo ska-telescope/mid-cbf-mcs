@@ -29,5 +29,11 @@
     "band_5_tuning": [5.85, 7.25], 
     "frequency_band_offset_stream_1": 0, 
     "frequency_band_offset_stream_2": 0,
-    "subarray_receptor_ids": [1,2,3]
+    "subarray_receptor_ids": [1,2,3],
+    "fs_sample_rates":[
+        {
+            "receptor": "MKT000",
+            "fs_sample_rate": 220
+        }
+    ]
 }

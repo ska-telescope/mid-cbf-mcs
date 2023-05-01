@@ -81,7 +81,7 @@ class TestVcc:
         time.sleep(2)
         assert (
             test_proxies.vcc[vcc_id].frequencyBand
-            == freq_band_dict()[frequency_band]
+            == freq_band_dict()[frequency_band]["band_index"]
         )
 
         test_proxies.vcc[vcc_id].ConfigureScan(json_str)

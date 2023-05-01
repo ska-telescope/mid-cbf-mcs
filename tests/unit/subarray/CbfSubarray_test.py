@@ -33,7 +33,6 @@ data_file_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
 CONST_WAIT_TIME = 4
 
 
-# @pytest.mark.skip
 class TestCbfSubarray:
     """
     Test class for TestCbfSubarray tests.

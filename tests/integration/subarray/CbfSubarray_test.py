@@ -1531,7 +1531,7 @@ class TestCbfSubarray:
 
             # check some configured attributes of CBF subarray
             frequency_band = configuration["common"]["frequency_band"]
-            input_band_index = freq_band_dict()[frequency_band]
+            input_band_index = freq_band_dict()[frequency_band]["band_index"]
 
             assert (
                 test_proxies.subarray[sub_id].configurationID
