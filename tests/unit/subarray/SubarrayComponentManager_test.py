@@ -214,6 +214,7 @@ class TestCbfSubarrayComponentManager:
         config_json = json.loads(config_string)
 
         subarray_component_manager.add_receptors(receptor_ids)
+        subarray_component_manager.frequency_offset_k = [11] * 197
 
         result = subarray_component_manager.validate_input(config_string)
         assert result[0]
@@ -224,7 +225,9 @@ class TestCbfSubarrayComponentManager:
             subarray_component_manager.config_id
             == config_json["common"]["config_id"]
         )
-        band_index = freq_band_dict()[config_json["common"]["frequency_band"]]
+        band_index = freq_band_dict()[config_json["common"]["frequency_band"]][
+            "band_index"
+        ]
         assert subarray_component_manager.frequency_band == band_index
 
         assert subarray_component_manager._ready
@@ -320,6 +323,7 @@ class TestCbfSubarrayComponentManager:
         expected_fs_sample_rate = (
             dish_sample_rate * oversampling_factor / total_num_freq_slice
         )
+        expected_fs_sample_rate = expected_fs_sample_rate/mhz_to_hz
         subarray_component_manager.frequency_offset_k = freq_offset_k
         subarray_component_manager.frequency_offset_delta_f = (
             freq_offset_delta_f

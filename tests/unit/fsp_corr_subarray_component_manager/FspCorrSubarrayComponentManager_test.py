@@ -151,7 +151,7 @@ class TestFspCorrSubarrayComponentManager:
             assert receptorID == configuration["receptor_ids"][idx][1]
         assert (
             fsp_corr_subarray_component_manager.frequency_band
-            == freq_band_dict()[configuration["frequency_band"]]
+            == freq_band_dict()[configuration["frequency_band"]]["band_index"]
         )
         assert (
             fsp_corr_subarray_component_manager.frequency_slice_id

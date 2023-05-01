@@ -2318,6 +2318,11 @@ class CbfSubarrayComponentManager(
         log_msg = f"receptor_int:{receptor_int}"
         self._logger.info(log_msg)
 
+        log_msg = (
+            f"len(self.frequency_offset_k):{len(self.frequency_offset_k)}"
+        )
+        self._logger.info(log_msg)
+
         # find the k value for this receptor
         # array of k values is 0 index, so index of array value is receptor_int - 1
 
@@ -2357,6 +2362,9 @@ class CbfSubarrayComponentManager(
         fs_sample_rate = (
             dish_sample_rate * vcc_oversampling_factor / total_num_fs
         )
+        # convert fs_sample_rate to MHz
+        fs_sample_rate = fs_sample_rate / mhz_to_hz
+
         log_msg = f"fs_sample_rate: {fs_sample_rate}"
         self._logger.info(log_msg)
 
