@@ -653,7 +653,12 @@ class FspCorrSubarrayComponentManager(
         hps_fsp_configuration.update(internal_params_obj)
 
         # append the fs_sample_rates to the configuration
-        hps_fsp_configuration.update(configuration["fs_sample_rates"])
+        sample_rates = configuration["fs_sample_rates"]
+        hps_fsp_configuration.update(sample_rates)
+        log_msg = (
+            f"Sample rates added to HPS FSP Corr configuration {sample_rates}."
+        )
+        self._logger.info(log_msg)
 
         self._get_capability_proxies()
 
