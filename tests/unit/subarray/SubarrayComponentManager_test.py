@@ -323,7 +323,7 @@ class TestCbfSubarrayComponentManager:
         expected_fs_sample_rate = (
             dish_sample_rate * oversampling_factor / total_num_freq_slice
         )
-        expected_fs_sample_rate = expected_fs_sample_rate/mhz_to_hz
+        expected_fs_sample_rate = expected_fs_sample_rate / mhz_to_hz
         subarray_component_manager.frequency_offset_k = freq_offset_k
         subarray_component_manager.frequency_offset_delta_f = (
             freq_offset_delta_f
