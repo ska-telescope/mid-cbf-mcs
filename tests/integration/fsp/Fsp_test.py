@@ -171,7 +171,7 @@ class TestFsp:
         self, test_proxies: pytest.fixture, fsp_id: int
     ) -> None:
         # subarray membership should be empty
-        assert test_proxies.fsp[fsp_id].subarrayMembership is None
+        assert len(test_proxies.fsp[fsp_id].subarrayMembership) == 0
 
         # add FSP to some subarrays
         test_proxies.fsp[fsp_id].AddSubarrayMembership(3)
@@ -193,7 +193,7 @@ class TestFsp:
         test_proxies.fsp[fsp_id].RemoveSubarrayMembership(4)
         test_proxies.fsp[fsp_id].RemoveSubarrayMembership(15)
         time.sleep(4)
-        assert test_proxies.fsp[fsp_id].subarrayMembership is None
+        assert len(test_proxies.fsp[fsp_id].subarrayMembership) == 0
 
     @pytest.mark.parametrize("fsp_id", [1])
     def test_Disconnect(

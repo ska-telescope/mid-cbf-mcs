@@ -40,8 +40,6 @@ setuptools.setup(
         'License :: OSI Approved :: BSD License',
         'Natural Language :: English',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.4',
-        'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
     ],
     entry_points={
@@ -51,6 +49,7 @@ setuptools.setup(
             "FspMulti=ska_mid_cbf_mcs.fsp.fsp_multi:main",
             "VccMulti=ska_mid_cbf_mcs.vcc.vcc_multi:main",
             "TalonLRU=ska_mid_cbf_mcs.talon_lru.talon_lru_device:main",
+            "TalonBoard=ska_mid_cbf_mcs.talon_board.talon_board_device:main",
             "PowerSwitch=ska_mid_cbf_mcs.power_switch.power_switch_device:main",
             "TalonDxLogConsumer=ska_mid_cbf_mcs.talondx_log_consumer.talondx_log_consumer_device:main",
             "TmCspSubarrayLeafNodeTest=ska_mid_cbf_mcs.tm_leaf_node:main",
@@ -58,7 +57,7 @@ setuptools.setup(
     },
     test_suite='tests',
     install_requires=[
-        'pytango == 9.3.3',
+        'pytango == 9.4.1',
         'ska-tango-base == 0.11.3'
     ],
     setup_requires=[

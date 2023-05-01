@@ -14,7 +14,7 @@ from typing import Callable, List, Optional, Tuple
 
 import tango
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import PowerMode
+from ska_tango_base.control_model import AdminMode, PowerMode
 from tango import DevState
 
 from ska_mid_cbf_mcs.component.component_manager import (
@@ -98,9 +98,25 @@ class TalonLRUComponentManager(CbfComponentManager):
 
         super().start_communicating()
 
-        # TODO: implement
-        # self._proxy_talondx_board1 = self.get_device_proxy(self._talon_fqdns[0])
-        # self._proxy_talondx_board2 = self.get_device_proxy(self._talon_fqdns[1])
+        if len(self._talon_fqdns) < 2:
+            self._logger.error("Expect two Talon board FQDNs")
+            tango.Except.throw_exception(
+                "TalonLRU_TalonBoardFailed",
+                "Two FQDNs for Talon Boards are needed for the LRU",
+                "start_communicating()",
+            )
+
+        self._proxy_talondx_board1 = self.get_device_proxy(
+            self._talon_fqdns[0]
+        )
+        self._proxy_talondx_board2 = self.get_device_proxy(
+            self._talon_fqdns[1]
+        )
+
+        # Needs Admin mode == ONLINE to run ON command
+        self._proxy_talondx_board1.adminMode = AdminMode.ONLINE
+        self._proxy_talondx_board2.adminMode = AdminMode.ONLINE
+
         self._proxy_power_switch1 = self.get_device_proxy(self._pdu_fqdns[0])
         if self._pdu_fqdns[1] == self._pdu_fqdns[0]:
             self._proxy_power_switch2 = self._proxy_power_switch1
@@ -307,6 +323,23 @@ class TalonLRUComponentManager(CbfComponentManager):
                         self.pdu2_power_mode = PowerMode.ON
                         self._logger.info("PDU 2 successfully turned on.")
 
+            # Start monitoring talon board telemetries and fault status
+            # This can fail if HPS devices are not deployed to the
+            # board, but it's okay to continue.
+            try:
+                self._proxy_talondx_board1.On()
+            except tango.DevFailed as df:
+                self._logger.warn(
+                    f"Talon board {self._talon_fqdns[0]} ON command failed: {df}"
+                )
+
+            try:
+                self._proxy_talondx_board2.On()
+            except tango.DevFailed as df:
+                self._logger.warn(
+                    f"Talon board {self._talon_fqdns[1]} ON command failed: {df}"
+                )
+
             # Determine what result code to return
             if result1 == ResultCode.FAILED and result2 == ResultCode.FAILED:
                 self.update_component_fault(True)
@@ -365,6 +398,21 @@ class TalonLRUComponentManager(CbfComponentManager):
                         self.pdu2_power_mode = PowerMode.OFF
                         self._logger.info("PDU 2 successfully turned off.")
 
+            # Stop monitoring talon board telemetries and fault status
+            try:
+                self._proxy_talondx_board1.Off()
+            except tango.DevFailed as df:
+                self._logger.warn(
+                    f"Talon board {self._talon_fqdns[0]} OFF command failed: {df}"
+                )
+
+            try:
+                self._proxy_talondx_board2.Off()
+            except tango.DevFailed as df:
+                self._logger.warn(
+                    f"Talon board {self._talon_fqdns[1]} OFF command failed: {df}"
+                )
+
             # Determine what result code to return
             if result1 == ResultCode.FAILED and result2 == ResultCode.FAILED:
                 self.update_component_fault(True)
@@ -378,6 +426,7 @@ class TalonLRUComponentManager(CbfComponentManager):
             else:
                 self.update_component_power_mode(PowerMode.OFF)
                 return (ResultCode.OK, "Both outlets successfully turned off")
+
         else:
             log_msg = "Proxies not connected"
             self._logger.error(log_msg)
