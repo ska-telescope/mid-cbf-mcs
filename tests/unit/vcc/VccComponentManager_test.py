@@ -80,7 +80,7 @@ class TestVccComponentManager:
 
         # Check for band configuration
         mock_vcc_controller.ConfigureBand.assert_next_call(
-            freq_band_dict()[frequency_band]
+            freq_band_dict()[frequency_band]["band_index"]
         )
 
         # Check for internal parameter configuration
@@ -266,7 +266,7 @@ class TestVccComponentManager:
         vcc_component_manager.configure_band(configuration["frequency_band"])
         assert (
             vcc_component_manager.frequency_band
-            == freq_band_dict()[configuration["frequency_band"]]
+            == freq_band_dict()[configuration["frequency_band"]]["band_index"]
         )
 
         (result_code, _) = vcc_component_manager.configure_scan(json_str)
@@ -343,7 +343,7 @@ class TestVccComponentManager:
         vcc_component_manager.configure_band(other_freq_bands[0])
         assert (
             vcc_component_manager.frequency_band
-            == freq_band_dict()[other_freq_bands[0]]
+            == freq_band_dict()[other_freq_bands[0]]["band_index"]
         )
 
         (result_code, msg) = vcc_component_manager.configure_scan(json_str)

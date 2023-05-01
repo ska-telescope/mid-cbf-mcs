@@ -81,14 +81,16 @@ def freq_band_dict():
         "5a": {
             "band_index": 4,
             "base_dish_sample_rate_MHz": 5940,
-            "sample_rate_const": 1.5
-            # TODO: add values for band 5a
+            "sample_rate_const": 1.5,
+            "total_num_FSs": 60,
+            "num_samples_per_frame": 27,  # FIXME with correct value
         },
         "5b": {
             "band_index": 5,
             "base_dish_sample_rate_MHz": 5940,
-            "sample_rate_const": 1.5
-            # TODO: add values for band 5b
+            "sample_rate_const": 1.5,
+            "total_num_FSs": 60,
+            "num_samples_per_frame": 27,  # FIXME with correct value
         },
     }
     return band_info
