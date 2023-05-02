@@ -1848,6 +1848,129 @@
                             "PowerSwitchIp": [
                                 "192.168.0.100"
                             ],
+                            "PowerSwitchLogin": [
+                                "admin"
+                            ],
+                            "PowerSwitchPassword": [
+                                "1234"
+                            ],
+                            "PowerSwitchModel": [
+                                "DLI-PRO"
+                            ],
+                            "PowerSwitchRequestHeaderContentType": [
+                                "application/x-www-form-urlencoded"
+                            ],
+                            "PowerSwitchStatusUrlPrefix": [
+                                "/restapi/relay/outlets"
+                            ],
+                            "PowerSwitchControlUrlPrefix": [
+                                "/restapi/relay/outlets"
+                            ],
+                            "PowerSwitchUrlPostfix": [
+                                "/state/"
+                            ], 
+                            "PowerSwitchOutletsSchemaFile": [
+                                "power_switch_001_schema.json"
+                            ],
+                            "PowerSwitchOutletsList": [
+                                "0",
+                                "1",
+                                "2",
+                                "3",
+                                "4",
+                                "5",
+                                "6",
+                                "7"
+                            ],
+                            "polled_attr": [
+                                "simulationMode",
+                                "3000"
+                            ]
+                        }
+                    }
+                }
+            },
+            "powerswitch-002": {
+                "PowerSwitch": {
+                    "mid_csp_cbf/power_switch/002": {
+                        "properties": {
+                            "PowerSwitchIp": [
+                                "192.168.1.254"
+                            ],
+                            "PowerSwitchLogin": [
+                                "admn"
+                            ],
+                            "PowerSwitchPassword": [
+                                "admn-1-Psi"
+                            ],
+                            "PowerSwitchModel": [
+                                "Switched PRO2"
+                            ],
+                            "PowerSwitchRequestHeaderContentType": [
+                                "application/json"
+                            ],
+                            "PowerSwitchStatusUrlPrefix": [
+                                "/jaws/monitor/outlets"
+                            ],
+                            "PowerSwitchControlUrlPrefix": [
+                                "/jaws/control/outlets"
+                            ],
+                            "PowerSwitchUrlPostfix": [
+                                ""
+                            ], 
+                            "PowerSwitchOutletsSchemaFile": [
+                                "power_switch_002_schema.json"
+                            ],
+                            "PowerSwitchOutletsList": [
+                                "AA1",
+                                "AA2",
+                                "AA3",
+                                "AA4",
+                                "AA5",
+                                "AA6",
+                                "AA7",
+                                "AA8",
+                                "AA9",
+                                "AA10",
+                                "AA11",
+                                "AA12",
+                                "AA13",
+                                "AA14",
+                                "AA15",
+                                "AA16",
+                                "AA17",
+                                "AA18",
+                                "AA19",
+                                "AA20",
+                                "AA21",
+                                "AA22",
+                                "AA23",
+                                "AA24",
+                                "AA25",
+                                "AA26",
+                                "AA27",
+                                "AA28",
+                                "AA29",
+                                "AA30",
+                                "AA31",
+                                "AA32",
+                                "AA33",
+                                "AA34",
+                                "AA35",
+                                "AA36",
+                                "AA37",
+                                "AA38",
+                                "AA39",
+                                "AA40",
+                                "AA41",
+                                "AA42",
+                                "AA43",
+                                "AA44",
+                                "AA45",
+                                "AA46",
+                                "AA47",
+                                "AA48"
+                            ],
                             "polled_attr": [
                                 "simulationMode",
                                 "3000"
@@ -1875,7 +1998,7 @@
                                 "0"
                             ],
                             "PDU2Address": [
-                                "mid_csp_cbf/power_switch/001"
+                                "mid_csp_cbf/power_switch/002"
                             ],
                             "PDU2PowerOutlet": [
                                 "0"
@@ -1909,7 +2032,7 @@
                                 "1"
                             ],
                             "PDU2Address": [
-                                "mid_csp_cbf/power_switch/001"
+                                "mid_csp_cbf/power_switch/002"
                             ],
                             "PDU2PowerOutlet": [
                                 "1"
