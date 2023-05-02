@@ -2315,42 +2315,14 @@ class CbfSubarrayComponentManager(
         # convert the receptor to an int using ReceptorUtils
         receptor_int = self._receptor_utils.receptor_id_str_to_int(receptor)
 
-        log_msg = f"receptor_int:{receptor_int}"
-        self._logger.info(log_msg)
-
-        log_msg = (
-            f"len(self.frequency_offset_k):{len(self.frequency_offset_k)}"
-        )
-        self._logger.info(log_msg)
-
         # find the k value for this receptor
         # array of k values is 0 index, so index of array value is receptor_int - 1
-
-        log_msg = f"Calculate fs_sample_rate with k value:{self.frequency_offset_k[(receptor_int - 1)]}"
-        self._logger.info(log_msg)
-
         freq_offset_k = self.frequency_offset_k[(receptor_int - 1)]
         freq_band_info = freq_band_dict()[freq_band]
-
-        log_msg = f"freq_band_info: {freq_band_info}"
-        self._logger.info(log_msg)
 
         base_dish_sample_rate_MH = freq_band_info["base_dish_sample_rate_MHz"]
         sample_rate_const = freq_band_info["sample_rate_const"]
         total_num_fs = freq_band_info["total_num_FSs"]
-
-        log_msg = f"base_dish_sample_rate_MH: {base_dish_sample_rate_MH}"
-        self._logger.info(log_msg)
-        log_msg = f"mhz_to_hz: {mhz_to_hz}"
-        self._logger.info(log_msg)
-        log_msg = f"sample_rate_const: {sample_rate_const}"
-        self._logger.info(log_msg)
-        log_msg = f"total_num_fs: {total_num_fs}"
-        self._logger.info(log_msg)
-        log_msg = (
-            f"self.frequency_offset_delta_f: {self.frequency_offset_delta_f}"
-        )
-        self._logger.info(log_msg)
 
         # dish_sample_rate = base_dish_sample_rate_MH * mhz_to_hz + sample_rate_const * k * deltaF
         # fs_sample_rate = dish_sample_rate * vcc_oversampling_factor / total_num_FSs
@@ -2358,16 +2330,12 @@ class CbfSubarrayComponentManager(
             sample_rate_const * freq_offset_k * self.frequency_offset_delta_f
         )
         log_msg = f"dish_sample_rate: {dish_sample_rate}"
-        self._logger.info(log_msg)
+        self._logger.debug(log_msg)
         fs_sample_rate = (
             dish_sample_rate * vcc_oversampling_factor / total_num_fs
         )
         # convert fs_sample_rate to MHz
         fs_sample_rate = fs_sample_rate / mhz_to_hz
-
-        log_msg = f"fs_sample_rate: {fs_sample_rate}"
-        self._logger.info(log_msg)
-
         fs_sample_rate_for_band = {
             "receptor": receptor,
             "fs_sample_rate": fs_sample_rate,

@@ -658,7 +658,7 @@ class TestCbfSubarray:
             )
             band_index = freq_band_dict()[
                 configuration["common"]["frequency_band"]
-            ]
+            ]["band_index"]
             assert band_index == test_proxies.subarray[sub_id].frequencyBand
             assert test_proxies.subarray[sub_id].obsState == ObsState.READY
 

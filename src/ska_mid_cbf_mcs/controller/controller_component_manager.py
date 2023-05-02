@@ -436,8 +436,8 @@ class ControllerComponentManager(CbfComponentManager):
         self.update_component_power_mode(PowerMode.OFF)
 
         # set the default frequency offset k and deltaF in the subarrays
-        self.update_freq_offset_k(self.frequency_offset_k)
-        self.update_freq_offset_deltaF(self.frequency_offset_delta_f)
+        self._update_freq_offset_k(self.frequency_offset_k)
+        self._update_freq_offset_deltaF(self.frequency_offset_delta_f)
 
     def stop_communicating(self: ControllerComponentManager) -> None:
         """Stop communication with the component"""
@@ -857,7 +857,7 @@ class ControllerComponentManager(CbfComponentManager):
             self._logger.error(log_msg)
             return (ResultCode.FAILED, log_msg)
 
-    def update_freq_offset_k(
+    def _update_freq_offset_k(
         self: ControllerComponentManager,
         freq_offset_k: List[int],
     ) -> None:
@@ -866,9 +866,11 @@ class ControllerComponentManager(CbfComponentManager):
 
         # write the frequency offset k to each of the subarrays
         for fqdn in self._fqdn_subarray:
-            self._proxies[fqdn].write_frequencyOffsetK(freq_offset_k)
+            self._proxies[fqdn].write_attribute(
+                "frequencyOffsetK", freq_offset_k
+            )
 
-    def update_freq_offset_deltaF(
+    def _update_freq_offset_deltaF(
         self: ControllerComponentManager,
         freq_offset_deltaF: List[int],
     ) -> None:
@@ -877,6 +879,6 @@ class ControllerComponentManager(CbfComponentManager):
 
         # TODO: deltaF is a single value of 1800Hz, and should not be a list of values for each receptor
         for fqdn in self._fqdn_subarray:
-            self._proxies[fqdn].write_frequencyOffsetDeltaF(
-                freq_offset_deltaF[0]
+            self._proxies[fqdn].write_attribute(
+                "frequencyOffsetDeltaF", freq_offset_deltaF[0]
             )
