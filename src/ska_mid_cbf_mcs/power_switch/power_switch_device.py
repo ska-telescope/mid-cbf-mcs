@@ -75,10 +75,10 @@ class PowerSwitch(SKABaseDevice):
     PowerSwitchUrlPostfix = device_property(
         dtype="str",
     )
-    PowerSwitchOutletsSchemaFile = device_property(
+    PowerSwitchOutletSchemaFile = device_property(
         dtype="str",
     )
-    PowerSwitchOutletsList = device_property(
+    PowerSwitchOutletIdList = device_property(
         dtype=("str",),
     )
 
@@ -148,8 +148,8 @@ class PowerSwitch(SKABaseDevice):
             self.PowerSwitchStatusUrlPrefix,
             self.PowerSwitchControlUrlPrefix,
             self.PowerSwitchUrlPostfix,
-            self.PowerSwitchOutletsSchemaFile,
-            self.PowerSwitchOutletsList,
+            self.PowerSwitchOutletSchemaFile,
+            self.PowerSwitchOutletIdList,
             self.logger,
             push_change_event_callback=self.push_change_event,
             communication_status_changed_callback=self._communication_status_changed,

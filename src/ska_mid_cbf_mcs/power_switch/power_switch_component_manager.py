@@ -45,8 +45,8 @@ class PowerSwitchComponentManager(CbfComponentManager):
     :param status_url_prefix: A portion of the URL to get the outlet status
     :param control_url_prefix: A portion of the URL to turn on/off outlet
     :param url_postfix: A portion of the URL after the outlet
-    :param outlets_schema_file: File name for the schema for a list of outlets
-    :param outlets_list: List of Outlet IDs
+    :param outlet_schema_file: File name for the schema for a list of outlets
+    :param outlet_id_list: List of Outlet IDs
     :param logger: a logger for this object to use
     """
 
@@ -60,8 +60,8 @@ class PowerSwitchComponentManager(CbfComponentManager):
         status_url_prefix: str,
         control_url_prefix: str,
         url_postfix: str,
-        outlets_schema_file: str,
-        outlets_list: List[str],
+        outlet_schema_file: str,
+        outlet_id_list: List[str],
         logger: logging.Logger,
         push_change_event_callback: Optional[Callable],
         communication_status_changed_callback: Callable[
@@ -82,8 +82,8 @@ class PowerSwitchComponentManager(CbfComponentManager):
         :param status_url_prefix: A portion of the URL to get the outlet status
         :param control_url_prefix: A portion of the URL to turn on/off outlet
         :param url_postfix: A portion of the URL after the outlet
-        :param outlets_schema_file: File name for the schema for a list of outlets
-        :param outlets_list: List of Outlet IDs
+        :param outlet_schema_file: File name for the schema for a list of outlets
+        :param outlet_id_list: List of Outlet IDs
         :param logger: a logger for this object to use
         :param push_change_event: method to call when the base classes
             want to send an event
@@ -102,7 +102,7 @@ class PowerSwitchComponentManager(CbfComponentManager):
 
         self._simulation_mode = simulation_mode
 
-        self.power_switch_driver = PowerSwitchDriver(ip, login, password, model, content_type, status_url_prefix, control_url_prefix, url_postfix, outlets_schema_file, outlets_list, logger)
+        self.power_switch_driver = PowerSwitchDriver(ip, login, password, model, content_type, status_url_prefix, control_url_prefix, url_postfix, outlet_schema_file, outlet_id_list, logger)
         self.power_switch_simulator = PowerSwitchSimulator(logger)
 
         super().__init__(
