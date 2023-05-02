@@ -5,6 +5,7 @@ command: "TalonLRU"
 instances: ["talonlru-001", "talonlru-002"]
 depends_on:
   - device: mid_csp_cbf/power_switch/001
+  - device: mid_csp_cbf/power_switch/002
 readinessProbe:
   initialDelaySeconds: 0
   periodSeconds: 10
@@ -40,7 +41,7 @@ server:
             - "0"
           - name: "PDU2Address"
             values:
-            - "mid_csp_cbf/power_switch/001"
+            - "mid_csp_cbf/power_switch/002"
           - name: "PDU2PowerOutlet"
             values:
             - "0"
@@ -73,7 +74,7 @@ server:
             - "1"
           - name: "PDU2Address"
             values:
-            - "mid_csp_cbf/power_switch/001"
+            - "mid_csp_cbf/power_switch/002"
           - name: "PDU2PowerOutlet"
             values:
             - "1"
