@@ -12,7 +12,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Callable, Optional, Tuple
+from typing import Callable, Optional, Tuple, List
 
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import PowerMode, SimulationMode
@@ -38,12 +38,30 @@ class PowerSwitchComponentManager(CbfComponentManager):
     :param simulation_mode: simulation mode identifies if the real power switch
                           driver or the simulator should be used
     :param ip: IP address of the power switch
+    :param login: Login username of the power switch
+    :param password: Login password for the power switch
+    :param model: Make and model name of the power switch
+    :param content_type: The content type in the request header
+    :param status_url_prefix: A portion of the URL to get the outlet status
+    :param control_url_prefix: A portion of the URL to turn on/off outlet
+    :param url_postfix: A portion of the URL after the outlet
+    :param outlets_schema_file: File name for the schema for a list of outlets
+    :param outlets_list: List of Outlet IDs
     :param logger: a logger for this object to use
     """
 
     def __init__(
         self: PowerSwitchComponentManager,
         ip: str,
+        login: str,
+        password: str,
+        model: str,
+        content_type: str,
+        status_url_prefix: str,
+        control_url_prefix: str,
+        url_postfix: str,
+        outlets_schema_file: str,
+        outlets_list: List[str],
         logger: logging.Logger,
         push_change_event_callback: Optional[Callable],
         communication_status_changed_callback: Callable[
@@ -57,6 +75,15 @@ class PowerSwitchComponentManager(CbfComponentManager):
         Initialize a new instance.
 
         :param ip: IP address of the power switch
+        :param login: Login username of the power switch
+        :param password: Login password for the power switch
+        :param model: Make and model name of the power switch
+        :param content_type: The content type in the request header
+        :param status_url_prefix: A portion of the URL to get the outlet status
+        :param control_url_prefix: A portion of the URL to turn on/off outlet
+        :param url_postfix: A portion of the URL after the outlet
+        :param outlets_schema_file: File name for the schema for a list of outlets
+        :param outlets_list: List of Outlet IDs
         :param logger: a logger for this object to use
         :param push_change_event: method to call when the base classes
             want to send an event
@@ -75,7 +102,7 @@ class PowerSwitchComponentManager(CbfComponentManager):
 
         self._simulation_mode = simulation_mode
 
-        self.power_switch_driver = PowerSwitchDriver(ip, logger)
+        self.power_switch_driver = PowerSwitchDriver(ip, login, password, model, content_type, status_url_prefix, control_url_prefix, url_postfix, outlets_schema_file, outlets_list, logger)
         self.power_switch_simulator = PowerSwitchSimulator(logger)
 
         super().__init__(
