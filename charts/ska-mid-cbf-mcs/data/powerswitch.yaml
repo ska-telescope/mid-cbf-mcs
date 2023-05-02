@@ -2,7 +2,7 @@ name: powerswitch
 function: power-switch
 domain: mid-csp-cbf
 command: "PowerSwitch"
-instances: ["powerswitch-001"]
+instances: ["powerswitch-001", "powerswitch-002"]
 depends_on:
   - device: sys/database/2
 readinessProbe:
@@ -29,6 +29,127 @@ server:
           - name: "PowerSwitchIp"
             values:
             - "192.168.0.100"
+          - name: "PowerSwitchLogin"
+            values: 
+            - "admin"
+          - name: "PowerSwitchPassword"
+            values:
+            - "1234"
+          - name: "PowerSwitchModel"
+            values:
+            - "DLI-PRO"
+          - name: "PowerSwitchStatusUrlPrefix"
+            values:
+            - "/restapi/relay/outlets"
+          - name: "PowerSwitchControlUrlPrefix"
+            values:
+            - "/restapi/relay/outlets"
+          - name: "PowerSwitchUrlPostfix"
+            values:
+            - "/state/"
+          - name: "PowerSwitchRequestHeaderContentType"
+            values:
+            - "application/x-www-form-urlencoded"
+          - name: "PowerSwitchOutletsSchemaFile"
+            values:
+            - "power_switch_001_schema.json"
+          - name: "PowerSwitchOutletsList"
+            values:
+            - "0"
+            - "1"
+            - "2"
+            - "3"
+            - "4"
+            - "5"
+            - "6"
+            - "7"
+          - name: "polled_attr"
+            values:
+            - "simulationMode"
+            - "3000"
+  - name: "powerswitch-002"
+    classes:
+    - name: "PowerSwitch"
+      devices:
+      - name: "mid_csp_cbf/power_switch/002"
+        properties:
+          - name: "PowerSwitchIp"
+            values:
+            - "192.168.1.254"
+          - name: "PowerSwitchLogin"
+            values: 
+            - "admn"
+          - name: "PowerSwitchPassword"
+            values:
+            - "admn-1-Psi"
+          - name: "PowerSwitchModel"
+            values:
+            - "Switched PRO2"
+          - name: "PowerSwitchStatusUrlPrefix"
+            values:
+            - "/jaws/monitor/outlets"
+          - name: "PowerSwitchControlUrlPrefix"
+            values:
+            - "/jaws/control/outlets"
+          - name: "PowerSwitchUrlPostfix"
+            values:
+            - ""
+          - name: "PowerSwitchRequestHeaderContentType"
+            values:
+            - "application/json"
+          - name: "PowerSwitchOutletsSchemaFile"
+            values:
+            - "power_switch_002_schema.json"
+          - name: "PowerSwitchOutletsList"
+            values:
+            - "AA1"
+            - "AA2"
+            - "AA3"
+            - "AA4"
+            - "AA5"
+            - "AA6"
+            - "AA7"
+            - "AA8"
+            - "AA9"
+            - "AA10"
+            - "AA11"
+            - "AA12"
+            - "AA13"
+            - "AA14"
+            - "AA15"
+            - "AA16"
+            - "AA17"
+            - "AA18"
+            - "AA19"
+            - "AA20"
+            - "AA21"
+            - "AA22"
+            - "AA23"
+            - "AA24"
+            - "AA25"
+            - "AA26"
+            - "AA27"
+            - "AA28"
+            - "AA29"
+            - "AA30"
+            - "AA31"
+            - "AA32"
+            - "AA33"
+            - "AA34"
+            - "AA35"
+            - "AA36"
+            - "AA37"
+            - "AA38"
+            - "AA39"
+            - "AA40"
+            - "AA41"
+            - "AA42"
+            - "AA43"
+            - "AA44"
+            - "AA45"
+            - "AA46"
+            - "AA47"
+            - "AA48"
           - name: "polled_attr"
             values:
             - "simulationMode"
