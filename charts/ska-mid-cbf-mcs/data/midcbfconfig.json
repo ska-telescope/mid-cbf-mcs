@@ -1869,10 +1869,10 @@
                             "PowerSwitchUrlPostfix": [
                                 "/state/"
                             ], 
-                            "PowerSwitchOutletsSchemaFile": [
-                                "power_switch_001_schema.json"
+                            "PowerSwitchOutletSchemaFile": [
+                                "charts/ska-mid-cbf-mcs/data/power_switch_001_schema.json"
                             ],
-                            "PowerSwitchOutletsList": [
+                            "PowerSwitchOutletIdList": [
                                 "0",
                                 "1",
                                 "2",
@@ -1918,10 +1918,10 @@
                             "PowerSwitchUrlPostfix": [
                                 ""
                             ], 
-                            "PowerSwitchOutletsSchemaFile": [
-                                "power_switch_002_schema.json"
+                            "PowerSwitchOutletSchemaFile": [
+                                "charts/ska-mid-cbf-mcs/data/power_switch_002_schema.json"
                             ],
-                            "PowerSwitchOutletsList": [
+                            "PowerSwitchOutletIdList": [
                                 "AA1",
                                 "AA2",
                                 "AA3",

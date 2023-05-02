@@ -50,10 +50,10 @@ server:
           - name: "PowerSwitchRequestHeaderContentType"
             values:
             - "application/x-www-form-urlencoded"
-          - name: "PowerSwitchOutletsSchemaFile"
+          - name: "PowerSwitchOutletSchemaFile"
             values:
-            - "power_switch_001_schema.json"
-          - name: "PowerSwitchOutletsList"
+            - "charts/ska-mid-cbf-mcs/data/power_switch_001_schema.json"
+          - name: "PowerSwitchOutletIdList"
             values:
             - "0"
             - "1"
@@ -97,10 +97,10 @@ server:
           - name: "PowerSwitchRequestHeaderContentType"
             values:
             - "application/json"
-          - name: "PowerSwitchOutletsSchemaFile"
+          - name: "PowerSwitchOutletSchemaFile"
             values:
-            - "power_switch_002_schema.json"
-          - name: "PowerSwitchOutletsList"
+            - "charts/ska-mid-cbf-mcs/data/power_switch_002_schema.json"
+          - name: "PowerSwitchOutletIdList"
             values:
             - "AA1"
             - "AA2"
