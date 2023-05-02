@@ -54,6 +54,34 @@ class PowerSwitch(SKABaseDevice):
     PowerSwitchIp = device_property(
         dtype="str",
     )
+    PowerSwitchLogin = device_property(
+        dtype="str",
+    )
+    PowerSwitchPassword = device_property(
+        dtype="str",
+    )
+    PowerSwitchModel = device_property(
+        dtype="str",
+    )
+    PowerSwitchRequestHeaderContentType = device_property(
+        dtype="str",
+    )
+    PowerSwitchStatusUrlPrefix = device_property(
+        dtype="str",
+    )
+    PowerSwitchControlUrlPrefix = device_property(
+        dtype="str",
+    )
+    PowerSwitchUrlPostfix = device_property(
+        dtype="str",
+    )
+    PowerSwitchOutletsSchemaFile = device_property(
+        dtype="str",
+    )
+    PowerSwitchOutletsList = device_property(
+        dtype=("str",),
+    )
+
 
     # ----------
     # Attributes
@@ -113,6 +141,15 @@ class PowerSwitch(SKABaseDevice):
         # Simulation mode default true (using the simulator)
         return PowerSwitchComponentManager(
             self.PowerSwitchIp,
+            self.PowerSwitchLogin,
+            self.PowerSwitchPassword,
+            self.PowerSwitchModel,
+            self.PowerSwitchRequestHeaderContentType,
+            self.PowerSwitchStatusUrlPrefix,
+            self.PowerSwitchControlUrlPrefix,
+            self.PowerSwitchUrlPostfix,
+            self.PowerSwitchOutletsSchemaFile,
+            self.PowerSwitchOutletsList,
             self.logger,
             push_change_event_callback=self.push_change_event,
             communication_status_changed_callback=self._communication_status_changed,
