@@ -15,6 +15,7 @@ import logging
 from typing import List
 
 import requests
+import json
 from jsonschema import validate
 from jsonschema.exceptions import ValidationError
 from requests.structures import CaseInsensitiveDict
@@ -22,10 +23,6 @@ from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import PowerMode
 
 __all__ = ["PowerSwitchDriver"]
-
-# TODO: replace these with Kubernetes secrets
-# user = "admin"
-# password = "1234"
 
 
 class Outlet:
@@ -58,19 +55,19 @@ class PowerSwitchDriver:
     :param status_url_prefix: A portion of the URL to get the outlet status
     :param control_url_prefix: A portion of the URL to turn on/off outlet
     :param url_postfix: A portion of the URL after the outlet
-    :param outlets_schema_file: File name for the schema for a list of outlets
-    :param outlets_list: List of Outlet IDs
+    :param outlet_schema_file: File name for the schema for a list of outlets
+    :param outlet_id_list: List of Outlet IDs
     :param logger: a logger for this object to use
     """
 
-    power_mode_conversion = [PowerMode.OFF, PowerMode.ON]
+    power_mode_conversion = {'true': PowerMode.ON, 'false': PowerMode.OFF, 'on': PowerMode.ON, 'off': PowerMode.OFF}
     """Coversion between PowerMode and outlet state response"""
 
     query_timeout_s = 4
     """Timeout in seconds used when waiting for a reply from the power switch"""
 
     def __init__(
-        self: PowerSwitchDriver, ip: str, login: str, password: str, model: str, content_type: str, status_url_prefix: str, control_url_prefix: str, url_postfix: str, outlets_schema_file: str, outlets_list: List[str], logger: logging.Logger
+        self: PowerSwitchDriver, ip: str, login: str, password: str, model: str, content_type: str, status_url_prefix: str, control_url_prefix: str, url_postfix: str, outlet_schema_file: str, outlet_id_list: List[str], logger: logging.Logger
     ) -> None:
         """
         Initialise a new instance.
@@ -80,28 +77,30 @@ class PowerSwitchDriver:
         # Initialize the base HTTP URL
         self.base_url = f"http://{ip}"
 
+        # Initialize the login credentials
+        self.login = login
+        self.password = password
+        
+        # Initialize outlet model
+        self.model = model
+
         # Initialize the API endpoints
         self.status_url_prefix = status_url_prefix
         self.control_url_prefix = control_url_prefix
         self.url_postfix = url_postfix
 
         # Initialize the request header
+        self.content_type = content_type
         self.header = CaseInsensitiveDict()
         self.header["Accept"] = "application/json"
         self.header["X-CSRF"] = "x"
-        self.header["Content-Type"] = "{content_type}"
+        self.header["Content-Type"] = f"{self.content_type}"
 
-        # Initialize the login credentials
-        self.login = login
-        self.password = password
-        
         # Initialize outlets list
-        self.outlets_list = outlets_list
+        self.outlet_id_list = outlet_id_list
         self.outlets: List(Outlet) = []
-        self.outlets_schema_file = outlets_schema_file
+        self.outlet_schema_file = outlet_schema_file
 
-        # Initialize outlet model
-        self.model = model
 
     def initialize(self: PowerSwitchDriver) -> None:
         """
@@ -159,13 +158,13 @@ class PowerSwitchDriver:
         :raise AssertionError: if outlet ID is out of bounds
         :raise AssertionError: if outlet power mode is different than expected
         """
-        # !!! FIX THE ASSERT because outlet ID for PSI is a str, not an int
-        #assert (
-        #    outlet < len(self.outlets) and outlet >= 0
-        #), f"Outlet ID must be >= 0 and < {len(self.outlets)} (number of outlets in this power switch)"
+        assert (
+            str(outlet) in self.outlet_id_list
+        ), "Outlet ID must be in the allowable outlet_id_list read in from the Config File"
 
         url = f"{self.base_url}{self.status_url_prefix}/{outlet}{self.url_postfix}"
-        print(f' get outlet power mode url = {url}')
+
+        print("get_outlet_power_mode::url =", url)
         # url = f"{self.base_url}/restapi/relay/outlets/{outlet}/state/"
         # url = f"{self.base_url}/jaws/monitor/outlets/{outlet}/"
         try:
@@ -180,10 +179,10 @@ class PowerSwitchDriver:
                 requests.codes.no_content,
             ]:
                 try:
-                    print('response.text =' + response.text)
-                    power_mode = self.power_mode_conversion[
-                        response.text == "true"
-                    ]
+                    out = response.text == "true"
+                    power_mode = self.power_mode_conversion[str(out).lower()]
+                    print(f"power_mode for outlet {outlet} in get outlet power mode fn = ", power_mode)
+
                 except IndexError:
                     power_mode = PowerMode.UNKNOWN
 
@@ -217,18 +216,21 @@ class PowerSwitchDriver:
 
         :raise AssertionError: if outlet ID is out of bounds
         """
-        # !!! FIX ASSERT
-        #assert (
-        #    outlet < len(self.outlets) and outlet >= 0
-        #), f"Outlet ID must be >= 0 and < {len(self.outlets)} (number of outlets in this power switch)"
+        assert (
+            str(outlet) in self.outlet_id_list
+        ), "Outlet ID must be in the allowable outlet_id_list read in from the Config File"
 
         url = f"{self.base_url}{self.control_url_prefix}/{outlet}{self.url_postfix}"
         print(f' turn on outlet url = {url}')
         # url = f"{self.base_url}/restapi/relay/outlets/{outlet}/state/"
-
-        #data = "value=true"
         # url = f"{self.base_url}/jaws/control/outlets/{outlet}/"
-        data = '{"control_action": "off"}'
+
+        if self.model == "DLI-PRO":
+            data = "value=true"
+        elif self.model == "Switched PRO2":
+            data = '{"control_action": "on"}'
+        else:
+            data = ""
 
         try:
             response = requests.put(
@@ -238,13 +240,14 @@ class PowerSwitchDriver:
                 auth=(self.login, self.password),
                 timeout=self.query_timeout_s,
             )
-            print('response.text turning on outlet=' + response.text)
 
             if response.status_code in [
                 requests.codes.ok,
                 requests.codes.no_content,
             ]:
+                print(f"self.outlets[{outlet}] line 252 = ", self.outlets[outlet].__dict__)
                 self.outlets[outlet].power_mode = PowerMode.ON
+                print("self.outlets[outlet].power_mode == ", self.outlets[outlet].power_mode)
                 return ResultCode.OK, f"Outlet {outlet} power on"
             else:
                 self.logger.error(
@@ -270,17 +273,21 @@ class PowerSwitchDriver:
 
         :raise AssertionError: if outlet ID is out of bounds
         """
-        # !!! FIX ASSERT
-        #assert (
-        #    outlet < len(self.outlets) and outlet >= 0
-        #), f"Outlet ID must be >= 0 and < {len(self.outlets)} (number of outlets in this power switch)"
+        assert (
+            str(outlet) in self.outlet_id_list
+        ), "Outlet ID must be in the allowable outlet_id_list read in from the Config File"
 
         url = f"{self.base_url}{self.control_url_prefix}/{outlet}{self.url_postfix}"
         print(f' turn off outlet url = {url}')
         #url = f"{self.base_url}/restapi/relay/outlets/{outlet}/state/"
-        #data = "value=false"
         #url = f"{self.base_url}/jaws/control/outlets/{outlet}/"
-        data = '{"control_action": "off"}'
+
+        if self.model == "DLI-PRO":
+            data = "value=false"
+        elif self.model == "Switched PRO2":
+            data = '{"control_action": "off"}'
+        else:
+            data = ""
 
         try:
             response = requests.put(
@@ -290,11 +297,12 @@ class PowerSwitchDriver:
                 auth=(self.login, self.password),
                 timeout=self.query_timeout_s,
             )
-            print('response.text turning off outlet=' + response.text)
+            print('response.text turning off outlet in line 302 =', response.text)
             if response.status_code in [
                 requests.codes.ok,
                 requests.codes.no_content,
             ]:
+                print(f"self.outlets[{outlet}] = ", self.outlets[outlet])
                 self.outlets[outlet].power_mode = PowerMode.OFF
                 return ResultCode.OK, f"Outlet {outlet} power off"
             else:
@@ -318,13 +326,11 @@ class PowerSwitchDriver:
                  or an empty list if there was an error
         """
         # JSON schema of the response
-
-        with open(self.outlets_schema_file, "r") as f:
+        with open(self.outlet_schema_file, "r") as f:
             schema = json.loads(f.read())
 
-        print(f"schema = \n {schema}")
-
         url = f"{self.base_url}{self.status_url_prefix}"
+        print(f'get_outlet_list url = {url}')
         #url = f"{self.base_url}/restapi/relay/outlets/"
         #url = f"{self.base_url}/jaws/monitor/outlets"
         try:
@@ -346,18 +352,20 @@ class PowerSwitchDriver:
                 outlets: List(Outlet) = []
                 resp_list = response.json()
 
-                print('resp_list t=' + resp_list)
+                # print('resp_list in get outlet list=', resp_list)
 
                 for idx, resp_dict in enumerate(resp_list):
                     try:
-                        print("resp_dict = " + resp_dict)
-                        print("resp_dict[state] =" + resp_dict["state"])
-                        power_mode = self.power_mode_conversion[
-                            resp_dict["state"]
-                        ]
-                        print("power_mode_conversion = " + self.power_mode_conversion[
-                            resp_dict["state"]])
-                        print("power mode = " + power_mode)
+                        #print("   ")
+                        #print("resp_dict = ", resp_dict)
+                        #print("resp_dict[state] =", resp_dict["state"])
+                        # power_mode = PowerMode.ON
+                        out = resp_dict["state"]
+                        power_mode = self.power_mode_conversion[str(out).lower()]
+                        print(f'power_mode for {resp_dict["name"]} = ', power_mode)
+                        #print("power_mode_conversion = " + self.power_mode_conversion[
+                        #    resp_dict["state"]])
+                        #print("power mode = " + power_mode)
                     except IndexError:
                         power_mode = PowerMode.UNKNOWN
 
