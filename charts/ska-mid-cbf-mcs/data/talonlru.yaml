@@ -35,16 +35,16 @@ server:
             - "arbitrary/fqdn/02"
           - name: "PDU1Address"
             values:
-            - "mid_csp_cbf/power_switch/001"
+            - "mid_csp_cbf/power_switch/002"
           - name: "PDU1PowerOutlet"
             values:
-            - "0"
+            - "1"
           - name: "PDU2Address"
             values:
             - "mid_csp_cbf/power_switch/002"
           - name: "PDU2PowerOutlet"
             values:
-            - "0"
+            - "1"
           - name: "polled_attr"
             values:
             - "state"
@@ -68,7 +68,7 @@ server:
             - "arbitrary/fqdn/02"
           - name: "PDU1Address"
             values:
-            - "mid_csp_cbf/power_switch/001"
+            - "mid_csp_cbf/power_switch/002"
           - name: "PDU1PowerOutlet"
             values:
             - "1"

@@ -1992,16 +1992,16 @@
                                 "arbitrary/fqdn/02"
                             ],
                             "PDU1Address": [
-                                "mid_csp_cbf/power_switch/001"
+                                "mid_csp_cbf/power_switch/002"
                             ],
                             "PDU1PowerOutlet": [
-                                "0"
+                                "1"
                             ],
                             "PDU2Address": [
                                 "mid_csp_cbf/power_switch/002"
                             ],
                             "PDU2PowerOutlet": [
-                                "0"
+                                "1"
                             ],
                             "polled_attr": [
                                 "state",
@@ -2026,7 +2026,7 @@
                                 "arbitrary/fqdn/02"
                             ],
                             "PDU1Address": [
-                                "mid_csp_cbf/power_switch/001"
+                                "mid_csp_cbf/power_switch/002"
                             ],
                             "PDU1PowerOutlet": [
                                 "1"
