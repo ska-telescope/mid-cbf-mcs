@@ -3,14 +3,22 @@ kind: Pod
 metadata:
   name: signal-verification
 spec:
+  volumes:
+    - name: sv-data-collector-results
+      persistentVolumeClaim:
+        claimName: sv-pvc-{{ .Release.Name }}
+spec:
   containers:
   - name: signal-verification-cont
     image: artefact.skao.int/ska-mid-cbf-signal-verification:{{ .Values.signalVerificationVersion }}
     env:
-      - name: BITE_DATA_SRC
-        value: lstv
+      - name: INPUT_DIR
+        value: /app/dc-results
       - name: CAPTURE_DIR
         value: /app/bite-data
     command: ["/bin/bash","-c"]
     args: ["tail -f /dev/null"]
+    volumeMounts:
+      - mountPath: "/app/dc-results"
+        name: sv-data-collector-results
 

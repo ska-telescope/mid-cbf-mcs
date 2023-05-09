@@ -3,6 +3,11 @@ kind: Pod
 metadata:
   name: signal-verification-data-collector
 spec:
+  volumes:
+    - name: sv-data-collector-results
+      persistentVolumeClaim:
+        claimName: sv-pvc-{{ .Release.Name }}
+spec:
   containers:
   - name: signal-verification-dc-cont
     image: artefact.skao.int/ska-mid-cbf-signal-verification-data-collector:{{ .Values.signalVerificationVersion }}
@@ -13,4 +18,7 @@ spec:
         value: /app/reports
     command: ["/bin/bash","-c"]
     args: ["tail -f /dev/null"]
+    volumeMounts:
+      - mountPath: "/app/reports"
+        name: sv-data-collector-results
 
