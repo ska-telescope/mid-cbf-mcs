@@ -1798,25 +1798,35 @@ class CbfSubarrayComponentManager(
                 "frequency_band_offset_stream_2"
             ] = self._frequency_band_offset_stream_2
 
-            # Add all receptor ids for subarray to fsp
+            # Add all receptor ids for subarray and for correlation to fsp
+            # Parameter named "subarray_receptor_ids" used by HPS contains all the
+            # receptors for the subarray
+            # Parameter named "corr_receptor_ids" used by HPS contains the
+            # subset of the subarray receptors for which the correlation results
+            # are requested to be used in Mid.CBF output products (visibilities)
             fsp["subarray_receptor_ids"] = self._receptors.copy()
+            for i, receptor in enumerate(fsp["subarray_receptor_ids"]):
+                fsp["subarray_receptor_ids"][i] = [
+                    receptor,
+                    self._receptor_utils.receptors[receptor],
+                ]
 
             if fsp["function_mode"] == "CORR":
                 # Receptors may not be specified in the
                 # configuration at all or the list
                 # of receptors may be empty
                 receptorsSpecified = False
-                if "receptor_ids" in fsp:
-                    if fsp["receptor_ids"] != []:
+                if "corr_receptor_ids" in fsp:
+                    if fsp["corr_receptor_ids"] != []:
                         receptorsSpecified = True
 
                 if not receptorsSpecified:
                     # In this case by the ICD, all subarray allocated resources should be used.
-                    fsp["receptor_ids"] = self._receptors.copy()
+                    fsp["corr_receptor_ids"] = self._receptors.copy()
 
                 # receptor IDs to pair of str and int for FSP level
-                for i, receptor in enumerate(fsp["receptor_ids"]):
-                    fsp["receptor_ids"][i] = [
+                for i, receptor in enumerate(fsp["corr_receptor_ids"]):
+                    fsp["corr_receptor_ids"][i] = [
                         receptor,
                         self._receptor_utils.receptors[receptor],
                     ]

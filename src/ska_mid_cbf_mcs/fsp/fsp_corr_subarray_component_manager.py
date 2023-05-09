@@ -451,10 +451,10 @@ class FspCorrSubarrayComponentManager(
 
         self._remove_all_receptors()
         # "receptor_ids" values are pairs of str and int
-        receptors_to_add = [
-            receptor[1] for receptor in configuration["receptor_ids"]
+        receptor_id_int = [
+            receptor[1] for receptor in configuration["corr_receptor_ids"]
         ]
-        self._add_receptors(receptors_to_add)
+        self._add_receptors(receptor_id_int)
 
         self._frequency_slice_id = int(configuration["frequency_slice_id"])
 
@@ -619,23 +619,6 @@ class FspCorrSubarrayComponentManager(
 
         self._config_id = configuration["config_id"]
 
-        # Rename receptor id configuration parameters to match those used
-        # in HPS
-        # TODO (future enhancement) ideally change names of receptor id
-        # configuration parameters in HPS and remove this renaming.
-
-        # Parameter named "receptor_ids" used by HPS contains all the
-        # receptors for the subarray
-        # Parameter named "corr_receptor_ids" used by HPS contains the
-        # subset of the subarray receptors for which the correlation results
-        # are requested to be used in Mid.CBF output products (visibilities)
-        # TODO uncomment the following and add the full list of receptors
-        # included in the CBF subarray before passing the scan configuration
-        # to the FSP subarray
-        # corr_receptors = configuration["receptor_ids"]
-        # configuration["receptor_ids"] = configuration["subarray_receptor_ids"]
-        # configuration["corr_receptor_ids"] = corr_receptors
-
         # Get the internal parameters from file
         internal_params_file_name = (
             FSP_CORR_PARAM_PATH + "internal_params_fsp_corr_subarray" + ".json"
@@ -647,6 +630,8 @@ class FspCorrSubarrayComponentManager(
 
         # append all internal parameters to the configuration to pass to
         # HPS
+        # change receptor_ids to list of int for HPS
+        configuration["corr_receptor_ids"] = receptor_id_int
         hps_fsp_configuration = dict({"configure_scan": configuration})
         hps_fsp_configuration.update(internal_params_obj)
 
