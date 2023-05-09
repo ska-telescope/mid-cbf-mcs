@@ -14,8 +14,8 @@ spec:
     env:
       - name: INPUT_DIR
         value: /app/dc-results
-      - name: CAPTURE_DIR
-        value: /app/bite-data
+      - name: OUTPUT_DIR
+        value: /app/reports
     command: ["/bin/bash","-c"]
     args: ["tail -f /dev/null"]
     volumeMounts:
