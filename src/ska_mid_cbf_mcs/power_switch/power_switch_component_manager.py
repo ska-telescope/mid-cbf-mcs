@@ -37,6 +37,7 @@ class PowerSwitchComponentManager(CbfComponentManager):
 
     :param simulation_mode: simulation mode identifies if the real power switch
                           driver or the simulator should be used
+    :param protocol: Connection protocol (HTTP or HTTPS) for the power switch
     :param ip: IP address of the power switch
     :param login: Login username of the power switch
     :param password: Login password for the power switch
@@ -52,6 +53,7 @@ class PowerSwitchComponentManager(CbfComponentManager):
 
     def __init__(
         self: PowerSwitchComponentManager,
+        protocol: str,
         ip: str,
         login: str,
         password: str,
@@ -102,8 +104,8 @@ class PowerSwitchComponentManager(CbfComponentManager):
 
         self._simulation_mode = simulation_mode
 
-        self.power_switch_driver = PowerSwitchDriver(ip, login, password, model, content_type, status_url_prefix, control_url_prefix, url_postfix, outlet_schema_file, outlet_id_list, logger)
-        self.power_switch_simulator = PowerSwitchSimulator(logger)
+        self.power_switch_driver = PowerSwitchDriver(protocol, ip, login, password, model, content_type, status_url_prefix, control_url_prefix, url_postfix, outlet_schema_file, outlet_id_list, logger)
+        self.power_switch_simulator = PowerSwitchSimulator(outlet_id_list, logger)
 
         super().__init__(
             logger=logger,

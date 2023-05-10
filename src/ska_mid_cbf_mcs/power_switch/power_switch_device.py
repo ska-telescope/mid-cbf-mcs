@@ -51,6 +51,9 @@ class PowerSwitch(SKABaseDevice):
     # Device Properties
     # -----------------
 
+    PowerSwitchProtocol = device_property(
+        dtype="str",
+    )
     PowerSwitchIp = device_property(
         dtype="str",
     )
@@ -140,6 +143,7 @@ class PowerSwitch(SKABaseDevice):
         self._component_power_mode: Optional[PowerMode] = None
         # Simulation mode default true (using the simulator)
         return PowerSwitchComponentManager(
+            self.PowerSwitchProtocol,
             self.PowerSwitchIp,
             self.PowerSwitchLogin,
             self.PowerSwitchPassword,
