@@ -12,8 +12,6 @@ spec:
   - name: signal-verification-dc-cont
     image: artefact.skao.int/ska-mid-cbf-signal-verification-data-collector:{{ .Values.signalVerificationVersion }}
     env:
-      - name: INPUT_DIR
-        value: /app/data
       - name: OUTPUT_DIR
         value: /app/reports
     command: ["/bin/bash","-c"]
