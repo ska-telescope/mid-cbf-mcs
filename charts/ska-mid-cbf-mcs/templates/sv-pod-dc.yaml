@@ -13,6 +13,8 @@ spec:
     env:
       - name: OUTPUT_DIR
         value: /app/reports
+      - name: TANGO_HOST
+        value: {{ .Values.global.tango_host }}
     command: ["/bin/bash","-c"]
     args: ["tail -f /dev/null"]
     volumeMounts:
