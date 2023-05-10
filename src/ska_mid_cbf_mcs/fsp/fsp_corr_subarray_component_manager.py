@@ -451,10 +451,10 @@ class FspCorrSubarrayComponentManager(
 
         self._remove_all_receptors()
         # "receptor_ids" values are pairs of str and int
-        receptor_id_int = [
+        corr_receptor_id_int = [
             receptor[1] for receptor in configuration["corr_receptor_ids"]
         ]
-        self._add_receptors(receptor_id_int)
+        self._add_receptors(corr_receptor_id_int)
 
         self._frequency_slice_id = int(configuration["frequency_slice_id"])
 
@@ -630,8 +630,12 @@ class FspCorrSubarrayComponentManager(
 
         # append all internal parameters to the configuration to pass to
         # HPS
-        # change receptor_ids to list of int for HPS
-        configuration["corr_receptor_ids"] = receptor_id_int
+        # change receptor IDs to list of int for HPS
+        configuration["corr_receptor_ids"] = corr_receptor_id_int
+        subarray_receptor_id_int = [
+            receptor[1] for receptor in configuration["subarray_receptor_ids"]
+        ]
+        configuration["subarray_receptor_ids"] = subarray_receptor_id_int
         hps_fsp_configuration = dict({"configure_scan": configuration})
         hps_fsp_configuration.update(internal_params_obj)
 
