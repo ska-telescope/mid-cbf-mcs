@@ -1,0 +1,27 @@
+
+{{- $labels := coalesce .Values.global.labels .Values.labels "label:none" }}
+{{- $annotations := coalesce .Values.global.annotations .Values.annotations }}
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: sv-pvc-{{ .Release.Name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+{{ toYaml $labels | indent 4 }}
+{{- if $annotations }}
+  annotations:
+{{ toYaml $annotations | indent 4 }}
+{{- end }}
+spec:
+{{- if (coalesce .Values.global.minikube .Values.minikube false)  }}
+  storageClassName: standard
+{{- else }}
+  storageClassName: nfss1
+{{- end }}
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: "250Mi"

@@ -1,23 +1,21 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: signal-verification
+  name: signal-verification-data-collector
 spec:
   volumes:
     - name: sv-data-collector-results
       persistentVolumeClaim:
         claimName: sv-pvc-{{ .Release.Name }}
   containers:
-  - name: signal-verification-cont
-    image: artefact.skao.int/ska-mid-cbf-signal-verification:{{ .Values.signalVerificationVersion }}
+  - name: signal-verification-dc-cont
+    image: artefact.skao.int/ska-mid-cbf-signal-verification-data-collector:{{ .Values.signalVerificationVersion }}
     env:
-      - name: INPUT_DIR
-        value: /app/dc-results
       - name: OUTPUT_DIR
         value: /app/reports
     command: ["/bin/bash","-c"]
     args: ["tail -f /dev/null"]
     volumeMounts:
-      - mountPath: "/app/dc-results"
+      - mountPath: "/app/reports"
         name: sv-data-collector-results
 
