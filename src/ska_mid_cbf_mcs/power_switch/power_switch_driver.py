@@ -47,6 +47,7 @@ class PowerSwitchDriver:
     """
     A driver for the DLI web power switch.
 
+    :param protocol: Connection protocol (HTTP or HTTPS) for the power switch
     :param ip: IP address of the power switch
     :param login: Login username of the power switch
     :param password: Login password for the power switch
@@ -67,7 +68,7 @@ class PowerSwitchDriver:
     """Timeout in seconds used when waiting for a reply from the power switch"""
 
     def __init__(
-        self: PowerSwitchDriver, ip: str, login: str, password: str, model: str, content_type: str, status_url_prefix: str, control_url_prefix: str, url_postfix: str, outlet_schema_file: str, outlet_id_list: List[str], logger: logging.Logger
+        self: PowerSwitchDriver, protocol: str, ip: str, login: str, password: str, model: str, content_type: str, status_url_prefix: str, control_url_prefix: str, url_postfix: str, outlet_schema_file: str, outlet_id_list: List[str], logger: logging.Logger
     ) -> None:
         """
         Initialise a new instance.
@@ -75,7 +76,7 @@ class PowerSwitchDriver:
         self.logger = logger
 
         # Initialize the base HTTP URL
-        self.base_url = f"http://{ip}"
+        self.base_url = f"{protocol}://{ip}"
 
         # Initialize the login credentials
         self.login = login
@@ -371,7 +372,7 @@ class PowerSwitchDriver:
 
                     outlets.append(
                         Outlet(
-                            outlet_ID=idx,
+                            outlet_ID=str(idx),
                             outlet_name=resp_dict["name"],
                             power_mode=power_mode,
                         )
