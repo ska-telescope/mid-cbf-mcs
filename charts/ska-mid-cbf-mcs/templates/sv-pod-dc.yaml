@@ -7,7 +7,6 @@ spec:
     - name: sv-data-collector-results
       persistentVolumeClaim:
         claimName: sv-pvc-{{ .Release.Name }}
-spec:
   containers:
   - name: signal-verification-dc-cont
     image: artefact.skao.int/ska-mid-cbf-signal-verification-data-collector:{{ .Values.signalVerificationVersion }}
