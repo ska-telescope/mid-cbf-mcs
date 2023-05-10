@@ -1816,16 +1816,16 @@ class CbfSubarrayComponentManager(
                 # configuration at all or the list
                 # of receptors may be empty
                 receptorsSpecified = False
-                if "corr_receptor_ids" in fsp:
-                    if fsp["corr_receptor_ids"] != []:
+                if "receptor_ids" in fsp:
+                    if fsp["receptor_ids"] != []:
                         receptorsSpecified = True
 
                 if not receptorsSpecified:
                     # In this case by the ICD, all subarray allocated resources should be used.
-                    fsp["corr_receptor_ids"] = self._receptors.copy()
+                    fsp["receptor_ids"] = self._receptors.copy()
 
                 # receptor IDs to pair of str and int for FSP level
-                for i, receptor in enumerate(fsp["corr_receptor_ids"]):
+                for i, receptor in enumerate(fsp["receptor_ids"]):
                     fsp["corr_receptor_ids"][i] = [
                         receptor,
                         self._receptor_utils.receptors[receptor],
