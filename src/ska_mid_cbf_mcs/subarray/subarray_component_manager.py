@@ -1825,6 +1825,7 @@ class CbfSubarrayComponentManager(
                     fsp["receptor_ids"] = self._receptors.copy()
 
                 # receptor IDs to pair of str and int for FSP level
+                fsp["corr_receptor_ids"] = []
                 for i, receptor in enumerate(fsp["receptor_ids"]):
                     fsp["corr_receptor_ids"][i] = [
                         receptor,
