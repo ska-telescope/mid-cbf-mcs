@@ -850,8 +850,8 @@ class TestCbfSubarray:
                     # If receptors are not specified, then
                     # all the subarray receptors are used
                     receptorsSpecified = False
-                    if "corr_receptor_ids" in fsp:
-                        if fsp["corr_receptor_ids"] != []:
+                    if "receptor_ids" in fsp:
+                        if fsp["receptor_ids"] != []:
                             receptorsSpecified = True
 
                     fsp_corr_receptors = test_proxies.fspSubarray["CORR"][
@@ -860,7 +860,7 @@ class TestCbfSubarray:
                     fsp_corr_receptors.sort()
 
                     if receptorsSpecified:
-                        config_fsp_receptors_sorted = fsp["corr_receptor_ids"]
+                        config_fsp_receptors_sorted = fsp["receptor_ids"]
                         config_fsp_receptors_sorted.sort()
                         fsp_receptors_num = [
                             self.receptor_utils.receptors[r]
