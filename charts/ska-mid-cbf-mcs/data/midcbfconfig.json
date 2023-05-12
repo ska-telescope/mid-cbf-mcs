@@ -2001,7 +2001,7 @@
                                 "mid_csp_cbf/power_switch/002"
                             ],
                             "PDU1PowerOutlet": [
-                                "1"
+                                "0"
                             ],
                             "PDU2Address": [
                                 "mid_csp_cbf/power_switch/002"
@@ -2035,7 +2035,7 @@
                                 "mid_csp_cbf/power_switch/002"
                             ],
                             "PDU1PowerOutlet": [
-                                "1"
+                                "0"
                             ],
                             "PDU2Address": [
                                 "mid_csp_cbf/power_switch/002"

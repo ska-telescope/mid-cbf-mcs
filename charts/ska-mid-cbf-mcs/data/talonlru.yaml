@@ -38,7 +38,7 @@ server:
             - "mid_csp_cbf/power_switch/002"
           - name: "PDU1PowerOutlet"
             values:
-            - "1"
+            - "0"
           - name: "PDU2Address"
             values:
             - "mid_csp_cbf/power_switch/002"
@@ -71,7 +71,7 @@ server:
             - "mid_csp_cbf/power_switch/002"
           - name: "PDU1PowerOutlet"
             values:
-            - "1"
+            - "0"
           - name: "PDU2Address"
             values:
             - "mid_csp_cbf/power_switch/002"
