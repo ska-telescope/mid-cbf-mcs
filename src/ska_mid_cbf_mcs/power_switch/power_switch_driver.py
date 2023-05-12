@@ -166,8 +166,7 @@ class PowerSwitchDriver:
         url = f"{self.base_url}{self.status_url_prefix}/{outlet}{self.url_postfix}"
 
         print("get_outlet_power_mode::url =", url)
-        # url = f"{self.base_url}/restapi/relay/outlets/{outlet}/state/"
-        # url = f"{self.base_url}/jaws/monitor/outlets/{outlet}/"
+
         try:
             response = requests.get(
                 url=url,
@@ -223,8 +222,6 @@ class PowerSwitchDriver:
 
         url = f"{self.base_url}{self.control_url_prefix}/{outlet}{self.url_postfix}"
         print(f' turn on outlet url = {url}')
-        # url = f"{self.base_url}/restapi/relay/outlets/{outlet}/state/"
-        # url = f"{self.base_url}/jaws/control/outlets/{outlet}/"
 
         if self.model == "DLI-PRO":
             data = "value=true"
@@ -280,8 +277,6 @@ class PowerSwitchDriver:
 
         url = f"{self.base_url}{self.control_url_prefix}/{outlet}{self.url_postfix}"
         print(f' turn off outlet url = {url}')
-        #url = f"{self.base_url}/restapi/relay/outlets/{outlet}/state/"
-        #url = f"{self.base_url}/jaws/control/outlets/{outlet}/"
 
         if self.model == "DLI-PRO":
             data = "value=false"
@@ -385,9 +380,15 @@ class PowerSwitchDriver:
                 )
                 return []
 
-        except (
-            requests.exceptions.ConnectTimeout,
-            requests.exceptions.ConnectionError,
-        ):
+        except requests.exceptions.ConnectTimeout:
+            print("CONNECTION TIMEOUT AFTER ", query_timeout_s)
+            self.logger.error("CONNECTION TIMEOUT")
+        except requests.exceptions.TooManyRedirects:
+            print("TOO MANY REDIRECTS")
+            self.logger.error("TOO MANY REDIRECTS")
+        except requests.exceptions.ConnectionError:
+            print("CONNECTION ERROR")
             self.logger.error("Failed to connect to power switch")
+        except requests.exceptions.RequestException as e:
+            raise SystemExit(e)
             return []
