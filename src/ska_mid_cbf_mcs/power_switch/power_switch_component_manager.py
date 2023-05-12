@@ -201,12 +201,13 @@ class PowerSwitchComponentManager(CbfComponentManager):
         :raise AssertionError: if outlet ID is out of bounds
         """
         if self.simulation_mode:
+            print("get_outlet_power_mode::simulation_mode")
             return self.power_switch_simulator.get_outlet_power_mode(outlet)
         else:
             return self.power_switch_driver.get_outlet_power_mode(outlet)
 
     def turn_on_outlet(
-        self: PowerSwitchComponentManager, outlet: int
+        self: PowerSwitchComponentManager, outlet: str
     ) -> Tuple[ResultCode, str]:
         """
         Tell the DLI power switch to turn on a specific outlet.
@@ -223,7 +224,7 @@ class PowerSwitchComponentManager(CbfComponentManager):
             return self.power_switch_driver.turn_on_outlet(outlet)
 
     def turn_off_outlet(
-        self: PowerSwitchComponentManager, outlet: int
+        self: PowerSwitchComponentManager, outlet: str
     ) -> Tuple[ResultCode, str]:
         """
         Tell the DLI power switch to turn off a specific outlet.

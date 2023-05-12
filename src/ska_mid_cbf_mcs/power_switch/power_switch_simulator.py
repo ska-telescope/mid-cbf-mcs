@@ -57,7 +57,7 @@ class PowerSwitchSimulator:
         return True
 
     def get_outlet_power_mode(
-        self: PowerSwitchSimulator, outlet: int
+        self: PowerSwitchSimulator, outlet: str
     ) -> PowerMode:
         """
         Get the power mode of a specific outlet.
@@ -74,7 +74,7 @@ class PowerSwitchSimulator:
         return self.outlets[outlet].power_mode
 
     def turn_on_outlet(
-        self: PowerSwitchSimulator, outlet: int
+        self: PowerSwitchSimulator, outlet: str
     ) -> tuple[ResultCode, str]:
         """
         Turn on a specific outlet.
@@ -93,7 +93,7 @@ class PowerSwitchSimulator:
         return ResultCode.OK, f"Outlet {outlet} power on"
 
     def turn_off_outlet(
-        self: PowerSwitchSimulator, outlet: int
+        self: PowerSwitchSimulator, outlet: str
     ) -> tuple[ResultCode, str]:
         """
         Turn off a specific outlet.

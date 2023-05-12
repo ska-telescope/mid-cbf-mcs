@@ -298,12 +298,11 @@ class PowerSwitch(SKABaseDevice):
         """
         The command class for the TurnOnOutlet command.
 
-        Turn on an individual outlet, specified by the outlet ID (range 0 to
-        numOutlets - 1).
+        Turn on an individual outlet, specified by the outlet ID 
         """
 
         def do(
-            self: PowerSwitch.TurnOnOutletCommand, argin: int
+            self: PowerSwitch.TurnOnOutletCommand, argin: str
         ) -> Tuple[ResultCode, str]:
             """
             Implement TurnOnOutlet command functionality.
@@ -344,7 +343,7 @@ class PowerSwitch(SKABaseDevice):
     )
     @DebugIt()
     def TurnOnOutlet(
-        self: PowerSwitch, argin: int
+        self: PowerSwitch, argin: str
     ) -> tango.DevVarLongStringArray:
         # PROTECTED REGION ID(PowerSwitch.TurnOnOutlet) ENABLED START #
         handler = self.get_command_object("TurnOnOutlet")
@@ -356,12 +355,11 @@ class PowerSwitch(SKABaseDevice):
         """
         The command class for the TurnOffOutlet command.
 
-        Turn off an individual outlet, specified by the outlet ID (range 0 to
-        numOutlets - 1).
+        Turn off an individual outlet, specified by the outlet ID.
         """
 
         def do(
-            self: PowerSwitch.TurnOffOutletCommand, argin: int
+            self: PowerSwitch.TurnOffOutletCommand, argin: str
         ) -> Tuple[ResultCode, str]:
             """
             Implement TurnOffOutlet command functionality.
@@ -402,7 +400,7 @@ class PowerSwitch(SKABaseDevice):
     )
     @DebugIt()
     def TurnOffOutlet(
-        self: PowerSwitch, argin: int
+        self: PowerSwitch, argin: str
     ) -> tango.DevVarLongStringArray:
         # PROTECTED REGION ID(PowerSwitch.TurnOffOutlet) ENABLED START #
         handler = self.get_command_object("TurnOffOutlet")
@@ -414,8 +412,7 @@ class PowerSwitch(SKABaseDevice):
         """
         The command class for the GetOutletPowerMode command.
 
-        Get the power mode of an individual outlet, specified by the outlet ID
-        (range 0 to numOutlets - 1).
+        Get the power mode of an individual outlet, specified by the outlet ID.
         """
 
         def do(
@@ -442,7 +439,7 @@ class PowerSwitch(SKABaseDevice):
         doc_out="Power mode of the outlet.",
     )
     @DebugIt()
-    def GetOutletPowerMode(self: PowerSwitch, argin: int) -> int:
+    def GetOutletPowerMode(self: PowerSwitch, argin: str) -> int:
         # PROTECTED REGION ID(PowerSwitch.GetOutletPowerMode) ENABLED START #
         handler = self.get_command_object("GetOutletPowerMode")
         return int(handler(argin))
