@@ -9,7 +9,7 @@ import sys
 from typing import Optional
 
 name = "ska_mid_cbf_mcs"
-version = "0.8.4"
+version = "0.8.5"
 version_info = version.split(".")
 description = "A set of Mid MCS tango devices for the SKA Telescope."
 author = "Team CIPA"
