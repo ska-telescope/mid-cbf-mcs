@@ -190,7 +190,7 @@ class PowerSwitchComponentManager(CbfComponentManager):
         self.connected = False
 
     def get_outlet_power_mode(
-        self: PowerSwitchComponentManager, outlet: int
+        self: PowerSwitchComponentManager, outlet: str
     ) -> PowerMode:
         """
         Get the power mode of a specific outlet.

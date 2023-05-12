@@ -419,7 +419,7 @@ class PowerSwitch(SKABaseDevice):
         """
 
         def do(
-            self: PowerSwitch.GetOutletPowerModeCommand, argin: int
+            self: PowerSwitch.GetOutletPowerModeCommand, argin: str
         ) -> PowerMode:
             """
             Implement GetOutletPowerMode command functionality.
