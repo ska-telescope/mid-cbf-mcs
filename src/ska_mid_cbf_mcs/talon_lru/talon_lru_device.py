@@ -61,7 +61,7 @@ class TalonLRU(SKABaseDevice):
     )
 
     PDU1PowerOutlet = device_property(
-        dtype="int",
+        dtype="str",
     )
 
     PDU2Address = device_property(
@@ -69,7 +69,7 @@ class TalonLRU(SKABaseDevice):
     )
 
     PDU2PowerOutlet = device_property(
-        dtype="int",
+        dtype="str",
     )
 
     # ----------
@@ -78,12 +78,12 @@ class TalonLRU(SKABaseDevice):
 
     PDU1PowerMode = attribute(
         dtype="uint16",
-        doc="Power mode of the Talon LRU PSU 1",
+        doc="Power mode of the Talon LRU PDU 1",
     )
 
     PDU2PowerMode = attribute(
         dtype="uint16",
-        doc="Power mode of the Talon LRU PSU 2",
+        doc="Power mode of the Talon LRU PDU 2",
     )
 
     # ---------------

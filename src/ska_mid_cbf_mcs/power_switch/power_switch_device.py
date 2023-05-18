@@ -336,8 +336,8 @@ class PowerSwitch(SKABaseDevice):
             return (result, msg)
 
     @command(
-        dtype_in="DevULong",
-        doc_in="Outlet to turn on.",
+        dtype_in="DevString",
+        doc_in="Outlet ID to turn on.",
         dtype_out="DevVarLongStringArray",
         doc_out="Tuple containing a return code and a string message indicating the status of the command.",
     )
@@ -393,8 +393,8 @@ class PowerSwitch(SKABaseDevice):
             return (result, msg)
 
     @command(
-        dtype_in="DevULong",
-        doc_in="Outlet to turn off.",
+        dtype_in="DevString",
+        doc_in="Outlet ID to turn off.",
         dtype_out="DevVarLongStringArray",
         doc_out="Tuple containing a return code and a string message indicating the status of the command.",
     )
@@ -433,8 +433,8 @@ class PowerSwitch(SKABaseDevice):
                 return PowerMode.UNKNOWN
 
     @command(
-        dtype_in="DevULong",
-        doc_in="Outlet to get the power mode of.",
+        dtype_in="DevString",
+        doc_in="Outlet ID to get the power mode of.",
         dtype_out="DevULong",
         doc_out="Power mode of the outlet.",
     )
