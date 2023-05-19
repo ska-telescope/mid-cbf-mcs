@@ -35,7 +35,7 @@ server:
             - "arbitrary/fqdn/02"
           - name: "PDU1Address"
             values:
-            - "mid_csp_cbf/power_switch/002"
+            - "mid_csp_cbf/power_switch/001"
           - name: "PDU1PowerOutlet"
             values:
             - "0"
@@ -44,7 +44,7 @@ server:
             - "mid_csp_cbf/power_switch/002"
           - name: "PDU2PowerOutlet"
             values:
-            - "1"
+            - "AA1"
           - name: "polled_attr"
             values:
             - "state"
@@ -53,7 +53,6 @@ server:
             - "3000"
             - "adminmode"
             - "3000"
-
   - name: "talonlru-002"
     classes:
     - name: "TalonLRU"
@@ -68,16 +67,16 @@ server:
             - "arbitrary/fqdn/02"
           - name: "PDU1Address"
             values:
-            - "mid_csp_cbf/power_switch/002"
+            - "mid_csp_cbf/power_switch/001"
           - name: "PDU1PowerOutlet"
             values:
-            - "0"
+            - "1"
           - name: "PDU2Address"
             values:
             - "mid_csp_cbf/power_switch/002"
           - name: "PDU2PowerOutlet"
             values:
-            - "1"
+            - "AA2"
           - name: "polled_attr"
             values:
             - "state"

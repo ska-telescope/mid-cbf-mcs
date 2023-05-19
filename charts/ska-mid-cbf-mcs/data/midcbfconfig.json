@@ -1955,11 +1955,6 @@
                                 "AA25",
                                 "AA26",
                                 "AA27",
-                                "AA28",
-                                "AA29",
-                                "AA30",
-                                "AA31",
-                                "AA32",
                                 "AA33",
                                 "AA34",
                                 "AA35",
@@ -1998,7 +1993,7 @@
                                 "arbitrary/fqdn/02"
                             ],
                             "PDU1Address": [
-                                "mid_csp_cbf/power_switch/002"
+                                "mid_csp_cbf/power_switch/001"
                             ],
                             "PDU1PowerOutlet": [
                                 "0"
@@ -2007,7 +2002,7 @@
                                 "mid_csp_cbf/power_switch/002"
                             ],
                             "PDU2PowerOutlet": [
-                                "1"
+                                "AA1"
                             ],
                             "polled_attr": [
                                 "state",
@@ -2032,16 +2027,16 @@
                                 "arbitrary/fqdn/02"
                             ],
                             "PDU1Address": [
-                                "mid_csp_cbf/power_switch/002"
+                                "mid_csp_cbf/power_switch/001"
                             ],
                             "PDU1PowerOutlet": [
-                                "0"
+                                "1"
                             ],
                             "PDU2Address": [
                                 "mid_csp_cbf/power_switch/002"
                             ],
                             "PDU2PowerOutlet": [
-                                "1"
+                                "AA2"
                             ],
                             "polled_attr": [
                                 "state",
