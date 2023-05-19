@@ -35,7 +35,9 @@ class PowerSwitchSimulator:
         """
         self.logger = logger
         self.outlets = self.get_outlet_list()
-        self.outlet_id_list = outlet_id_list
+        self.outlet_id_list: List(str) = []
+        for item in outlet_id_list:
+            self.outlet_id_list.append(item)
 
 
     @property
@@ -71,7 +73,9 @@ class PowerSwitchSimulator:
             str(outlet) in self.outlet_id_list
         ), "Outlet ID must be in the allowable outlet_id_list read in from the Config File"
 
-        return self.outlets[outlet].power_mode
+        outlet_idx = self.outlet_id_list.index(outlet)
+
+        return self.outlets[outlet_idx].power_mode
 
     def turn_on_outlet(
         self: PowerSwitchSimulator, outlet: str
@@ -89,7 +93,8 @@ class PowerSwitchSimulator:
             str(outlet) in self.outlet_id_list
         ), "Outlet ID must be in the allowable outlet_id_list read in from the Config File"
 
-        self.outlets[outlet].power_mode = PowerMode.ON
+        outlet_idx = self.outlet_id_list.index(outlet)
+        self.outlets[outlet_idx].power_mode = PowerMode.ON
         return ResultCode.OK, f"Outlet {outlet} power on"
 
     def turn_off_outlet(
@@ -108,7 +113,8 @@ class PowerSwitchSimulator:
             str(outlet) in self.outlet_id_list
         ), "Outlet ID must be in the allowable outlet_id_list read in from the Config File"
 
-        self.outlets[outlet].power_mode = PowerMode.OFF
+        outlet_idx = self.outlet_id_list.index(outlet)
+        self.outlets[outlet_idx].power_mode = PowerMode.OFF
         return ResultCode.OK, f"Outlet {outlet} power off"
 
     def get_outlet_list(self: PowerSwitchSimulator) -> List(Outlet):
