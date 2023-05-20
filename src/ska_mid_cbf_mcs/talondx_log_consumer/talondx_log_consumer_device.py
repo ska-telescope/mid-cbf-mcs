@@ -20,7 +20,6 @@ import tango
 from ska_tango_base import SKABaseDevice
 from ska_tango_base.base.component_manager import BaseComponentManager
 
-
 # Additional import
 # PROTECTED REGION ID(TalonDxLogConsumer.additional_import) ENABLED START #
 from ska_tango_base.base.base_device import (
@@ -164,39 +163,6 @@ class TalonDxLogConsumer(SKABaseDevice):
     converting them to the SKA format, and outputting them via the logging framework.
     """
 
-    # PROTECTED REGION ID(TalonDxLogConsumer.class_variable) ENABLED START #
-    # PROTECTED REGION END #    //  TalonDxLogConsumer.class_variable
-
-    # -----------------
-    # Device Properties
-    # -----------------
-
-    # ----------
-    # Attributes
-    # ----------
-
-    # ---------------
-    # General methods
-    # ---------------
-    # def always_executed_hook(self: TalonDxLogConsumer) -> None:
-    #     # PROTECTED REGION ID(TalonDxLogConsumer.always_executed_hook) ENABLED START #
-    #     pass
-    #     # PROTECTED REGION END #    //  TalonDxLogConsumer.always_executed_hook
-
-    # def delete_device(self: TalonDxLogConsumer) -> None:
-    #     # PROTECTED REGION ID(TalonDxLogConsumer.delete_device) ENABLED START #
-    #     pass
-    #     # PROTECTED REGION END #    //  TalonDxLogConsumer.delete_device
-
-    # def init_command_objects(self: TalonDxLogConsumer) -> None:
-    #     """
-    #     Sets up the command objects.
-    #     """
-    #     super().init_command_objects()
-
-    #     device_args = (self, self.op_state_model, self.logger)
-    #     self.register_command_object("log", self.LogCommand(*device_args))
-
     # ------------------
     # Attributes methods
     # ------------------
@@ -278,21 +244,6 @@ class TalonDxLogConsumer(SKABaseDevice):
     # --------
     # Commands
     # --------
-
-    # class InitCommand(SKABaseDevice.InitCommand):
-    #     """
-    #     A class for the TalonDxLogConsumer's init_device() "command".
-    #     """
-
-    #     def do(self: TalonDxLogConsumer.InitCommand) -> tuple[ResultCode, str]:
-    #         """
-    #         Stateless hook for device initialisation.
-
-    #         :return: A tuple containing a return code and a string
-    #             message indicating status. The message is for
-    #             information purpose only.
-    #         """
-    #         return super().do()
 
     # class LogCommand(BaseCommand):
     #     """
