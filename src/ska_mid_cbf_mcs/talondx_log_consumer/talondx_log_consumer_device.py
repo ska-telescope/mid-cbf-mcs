@@ -29,6 +29,9 @@ from ska_tango_base.commands import BaseCommand, ResultCode
 from ska_tango_base.control_model import LoggingLevel
 from ska_tango_base.faults import LoggingLevelError
 from tango.server import command, run
+# PROTECTED REGION END #    //  TalonDxLogConsumer.additional_import
+
+__all__ = ["TalonDxLogConsumer", "main"]
 
 _TANGO_LOGGING_TO_PYTHON_LOGGING_LEVEL = {
             "FATAL": logging.CRITICAL,
@@ -38,10 +41,6 @@ _TANGO_LOGGING_TO_PYTHON_LOGGING_LEVEL = {
             "INFO": logging.INFO,
             "DEBUG": logging.DEBUG,
         }
-
-# PROTECTED REGION END #    //  TalonDxLogConsumer.additional_import
-
-__all__ = ["TalonDxLogConsumer", "main"]
 
 # Borrowed from ska-dish-lmc/src/ska_dish_lmc/DishLogger.py
 class LogComponentManager(BaseComponentManager):
