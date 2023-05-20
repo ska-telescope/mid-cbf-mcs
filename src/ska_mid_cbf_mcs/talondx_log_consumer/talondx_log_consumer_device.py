@@ -29,6 +29,7 @@ from ska_tango_base.commands import BaseCommand, ResultCode
 from ska_tango_base.control_model import LoggingLevel
 from ska_tango_base.faults import LoggingLevelError
 from tango.server import command, run
+
 # PROTECTED REGION END #    //  TalonDxLogConsumer.additional_import
 
 __all__ = ["TalonDxLogConsumer", "main"]
