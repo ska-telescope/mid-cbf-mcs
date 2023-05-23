@@ -97,9 +97,16 @@ class PowerSwitchDriver:
         self.header["X-CSRF"] = "x"
         self.header["Content-Type"] = f"{self.content_type}"
 
-        # Initialize outlets list
-        self.outlet_id_list = outlet_id_list
+        # Initialize and populate the outlet_id_list as a list
+        # of strings, not DevStrings
+        self.outlet_id_list: List(str) = []
+        for item in outlet_id_list:
+            self.outlet_id_list.append(item)
+
+        # Initialize outlets
         self.outlets: List(Outlet) = []
+
+        # Initialize schema file
         self.outlet_schema_file = outlet_schema_file
 
 
@@ -160,13 +167,15 @@ class PowerSwitchDriver:
         :raise AssertionError: if outlet power mode is different than expected
         """
         assert (
-            str(outlet) in self.outlet_id_list
+           str(outlet) in self.outlet_id_list
         ), "Outlet ID must be in the allowable outlet_id_list read in from the Config File"
 
         url = f"{self.base_url}{self.status_url_prefix}/{outlet}{self.url_postfix}"
 
         print("get_outlet_power_mode::url =", url)
 
+        outlet_idx = self.outlet_id_list.index(outlet)
+        # print("outlet_idx = ", outlet_idx)
         try:
             response = requests.get(
                 url=url,
@@ -186,10 +195,10 @@ class PowerSwitchDriver:
                 except IndexError:
                     power_mode = PowerMode.UNKNOWN
 
-                if power_mode != self.outlets[outlet].power_mode:
+                if power_mode != self.outlets[outlet_idx].power_mode:
                     raise AssertionError(
                         f"Power mode of outlet {outlet} ({power_mode})"
-                        f" is different than the expected mode {self.outlets[outlet].power_mode}"
+                        f" is different than the expected mode {self.outlets[outlet_idx].power_mode}"
                     )
                 return power_mode
             else:
@@ -230,9 +239,23 @@ class PowerSwitchDriver:
         else:
             data = ""
 
+        # url = f"{self.base_url}{self.control_url_prefix}/{outlet}{self.url_postfix}"
+        print(f' turn on outlet url = {url}')
+
+        # if self.model == "DLI-PRO":
+
+        # elif self.model == "Switched PRO2":
+        #     data = '{"control_action": "on"}'
+        # else:
+        #     data = ""
+
+        outlet_idx = self.outlet_id_list.index(outlet)
+        # print("outlet_idx = ", outlet_idx)
+        # print("header = ", self.header)
         try:
-            response = requests.put(
+            response = requests.patch(
                 url=url,
+                verify=False,
                 data=data,
                 headers=self.header,
                 auth=(self.login, self.password),
@@ -243,9 +266,9 @@ class PowerSwitchDriver:
                 requests.codes.ok,
                 requests.codes.no_content,
             ]:
-                print(f"self.outlets[{outlet}] line 252 = ", self.outlets[outlet].__dict__)
-                self.outlets[outlet].power_mode = PowerMode.ON
-                print("self.outlets[outlet].power_mode == ", self.outlets[outlet].power_mode)
+                print(f"self.outlets[{outlet}] line 252 = ", self.outlets[outlet_idx].__dict__)
+                self.outlets[outlet_idx].power_mode = PowerMode.ON
+                print(f"self.outlets[{outlet}].power_mode == ", self.outlets[outlet_idx].power_mode)
                 return ResultCode.OK, f"Outlet {outlet} power on"
             else:
                 self.logger.error(
@@ -285,9 +308,13 @@ class PowerSwitchDriver:
         else:
             data = ""
 
+        print(f' turn off outlet url = {url}')
+        outlet_idx = self.outlet_id_list.index(outlet)
+        # print("outlet_idx = ", outlet_idx)
         try:
-            response = requests.put(
+            response = requests.patch(
                 url=url,
+                verify=False,
                 data=data,
                 headers=self.header,
                 auth=(self.login, self.password),
@@ -298,8 +325,8 @@ class PowerSwitchDriver:
                 requests.codes.ok,
                 requests.codes.no_content,
             ]:
-                print(f"self.outlets[{outlet}] = ", self.outlets[outlet])
-                self.outlets[outlet].power_mode = PowerMode.OFF
+                print(f"self.outlets[{outlet}] = ", self.outlets[outlet_idx])
+                self.outlets[outlet_idx].power_mode = PowerMode.OFF
                 return ResultCode.OK, f"Outlet {outlet} power off"
             else:
                 self.logger.error(
@@ -332,10 +359,12 @@ class PowerSwitchDriver:
         try:
             response = requests.get(
                 url=url,
-                headers=self.header,
+                verify=False,
+                # headers=self.header,
                 auth=(self.login, self.password),
                 timeout=self.query_timeout_s,
             )
+
             if response.status_code == requests.codes.ok:
                 # Validate the response has the expected format
                 try:
@@ -381,7 +410,7 @@ class PowerSwitchDriver:
                 return []
 
         except requests.exceptions.ConnectTimeout:
-            print("CONNECTION TIMEOUT AFTER ", query_timeout_s)
+            print("CONNECTION TIMEOUT AFTER ", self.query_timeout_s)
             self.logger.error("CONNECTION TIMEOUT")
         except requests.exceptions.TooManyRedirects:
             print("TOO MANY REDIRECTS")
