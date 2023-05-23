@@ -282,7 +282,10 @@ class TalonLRUComponentManager(CbfComponentManager):
                 f" actual power mode: ({self.pdu1_power_mode})"
             )
 
-        self.update_component_fault(True)
+        # Temporary fix to avoid redeploying MCS (CIP-1561)
+        # PDU outlet state mismatch is logged but fault is not triggered
+        # self.update_component_fault(True)
+        return
 
     def on(
         self: TalonLRUComponentManager,
