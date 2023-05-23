@@ -25,7 +25,6 @@ from ska_tango_base.base.base_device import (
     _Log4TangoLoggingLevel,
 )
 from ska_tango_base.base.component_manager import BaseComponentManager
-# from ska_tango_base.commands import BaseCommand, ResultCode
 from ska_tango_base.control_model import LoggingLevel
 from ska_tango_base.faults import LoggingLevelError
 from tango.server import command, run
