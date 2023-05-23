@@ -158,8 +158,9 @@ class TalonDxLogConsumer(SKABaseDevice):
     # end of copying DishLogger.py
 
     """
-    TANGO device class for consuming logs from the Tango devices run on the Talon boards,
-    converting them to the SKA format, and outputting them via the logging framework.
+    TANGO device class for consuming logs from the Tango devices
+    run on the Talon boards, converting them to the SKA format,
+    and outputting them via the logging framework.
     """
 
     # ------------------
