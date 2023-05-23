@@ -35,13 +35,14 @@ from tango.server import command, run
 __all__ = ["TalonDxLogConsumer", "main"]
 
 _TANGO_LOGGING_TO_PYTHON_LOGGING_LEVEL = {
-            "FATAL": logging.CRITICAL,
-            "ERROR": logging.ERROR,
-            "WARN": logging.WARNING,
-            "WARNING": logging.WARNING,
-            "INFO": logging.INFO,
-            "DEBUG": logging.DEBUG,
-        }
+    "FATAL": logging.CRITICAL,
+    "ERROR": logging.ERROR,
+    "WARN": logging.WARNING,
+    "WARNING": logging.WARNING,
+    "INFO": logging.INFO,
+    "DEBUG": logging.DEBUG,
+}
+
 
 # Borrowed from ska-dish-lmc/src/ska_dish_lmc/DishLogger.py
 class LogComponentManager(BaseComponentManager):
@@ -109,6 +110,7 @@ class LogComponentManager(BaseComponentManager):
             self.logger.exception(e)
             raise
 
+
 class TalonDxLogConsumer(SKABaseDevice):
     # add changes to copy DishLogger.py
     def create_component_manager(self):
@@ -118,7 +120,7 @@ class TalonDxLogConsumer(SKABaseDevice):
         :rtype: LogComponentManager
         """
         return LogComponentManager(self.logger)
-    
+
     @command(dtype_in=[str], doc_out="Consume a log message from TLS")
     def Log(self, log_message: List[str]):
         """Write the log to stdout as received from TLS
@@ -139,7 +141,7 @@ class TalonDxLogConsumer(SKABaseDevice):
         self.component_manager.log(
             timestamp, tango_log_level, tango_device, message
         )
-    
+
     @command(
         dtype_in=str, doc_in="name of the device to add new logging target"
     )
@@ -155,6 +157,7 @@ class TalonDxLogConsumer(SKABaseDevice):
         """Remove TalonDxLogConsumer as a logging target destination on device"""
         logging_device = tango.DeviceProxy(device_name)
         logging_device.remove_logging_target(f"device::{self.get_name()}")
+
     # end of copying DishLogger.py
 
     """
@@ -320,6 +323,7 @@ class TalonDxLogConsumer(SKABaseDevice):
 # ----------
 # Run server
 # ----------
+
 
 def main(args=None, **kwargs):
     # PROTECTED REGION ID(TalonDxLogConsumer.main) ENABLED START #
