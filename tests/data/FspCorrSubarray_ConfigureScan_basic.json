@@ -32,7 +32,7 @@
     "subarray_receptor_ids": [1,2,3],
     "fs_sample_rates":[
         {
-            "receptor": "MKT000",
+            "receptor": 1,
             "fs_sample_rate": 220
         }
     ]
