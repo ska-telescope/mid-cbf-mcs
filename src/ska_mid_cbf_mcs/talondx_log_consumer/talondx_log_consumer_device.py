@@ -229,11 +229,8 @@ class TalonDxLogConsumer(SKABaseDevice):
                 "tags": f"tango-device:{argin[2]}",
                 "msg": msg_out,
             }
-
-            # Filter out "LogCommand" messages
-            if not ("LogCommand" in attrdict["msg"]):
-                rec = logging.makeLogRecord(attrdict)
-                self.logger.handle(rec)
+            rec = logging.makeLogRecord(attrdict)
+            self.logger.handle(rec)
 
     @command(
         dtype_in="DevVarStringArray",
