@@ -2,6 +2,7 @@
     "fsp_id": 1, 
     "function_mode": "CORR", 
     "corr_receptor_ids": [["MKT000", 1]], 
+    "subarray_receptor_ids": [["MKT000", 1],["MKT001", 2],["MKT002", 3]],
     "frequency_slice_id": 1, 
     "zoom_factor": 1, 
     "zoom_window_tuning": 4700000, 
@@ -29,10 +30,9 @@
     "band_5_tuning": [5.85, 7.25], 
     "frequency_band_offset_stream_1": 0, 
     "frequency_band_offset_stream_2": 0,
-    "subarray_receptor_ids": [["MKT000", 1],["MKT001", 2],["MKT002", 3]],
     "fs_sample_rates":[
         {
-            "receptor": ["MKT000", 1],
+            "receptor_id": 1,
             "fs_sample_rate": 220
         }
     ]
