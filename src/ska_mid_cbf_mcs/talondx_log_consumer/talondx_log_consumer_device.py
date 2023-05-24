@@ -54,22 +54,26 @@ class LogComponentManager(BaseComponentManager):
         """
         super().__init__(logger, None, None)
 
-        class TangoDeviceTagsFilter(logging.Filter):
-            """Reset the log record components if a TLS log"""
+        # class TangoDeviceTagsFilter(logging.Filter):
+        #     """Reset the log record components if a TLS log"""
 
-            @classmethod
-            def filter(cls, record):
-                # Log a TLS log
-                if hasattr(record, "device_name"):
-                    record.tags = f"tango-device:{record.device_name}"
-                    record.filename = "unknown_file"
-                    record.threadName = "unknown_thread"
-                    record.funcName = record.src_funcName
-                    record.created = record.timestamp
-                    record.lineno = 0
-                return True
+        #     @classmethod
+        #     def filter(cls, record):
+        #         # Log a TLS log
+        #         if hasattr(record, "device_name"):
+        #             record.tags = f"tango-device:{record.device_name}"
+        #             record.filename = "unknown_file"
+        #             record.threadName = "unknown_thread"
+        #             record.funcName = record.src_funcName
+        #             record.created = record.timestamp
+        #             record.lineno = 0
+        #         return True
 
-        logger.addFilter(TangoDeviceTagsFilter())
+        # # Remove all previous filters
+        # for filt in list(logger.filters):
+        #     logger.removeFilter(filt)
+
+        # logger.addFilter(TangoDeviceTagsFilter())
 
     def log(
         self,
@@ -111,6 +115,11 @@ class LogComponentManager(BaseComponentManager):
 
 
 class TalonDxLogConsumer(SKABaseDevice):
+    """
+    TANGO device class for consuming logs from the Tango devices
+    run on the Talon boards, converting them to the SKA format,
+    and outputting them via the logging framework.
+    """
     # add changes to copy DishLogger.py
     def create_component_manager(self):
         """Create the component manager LogComponentManager
@@ -121,7 +130,7 @@ class TalonDxLogConsumer(SKABaseDevice):
         return LogComponentManager(self.logger)
 
     @command(dtype_in=[str], doc_out="Consume a log message from TLS")
-    def Log(self, log_message: List[str]):
+    def log(self, log_message: List[str]):
         """Write the log to stdout as received from TLS
 
         Sample log:
@@ -158,12 +167,6 @@ class TalonDxLogConsumer(SKABaseDevice):
         logging_device.remove_logging_target(f"device::{self.get_name()}")
 
     # end of copying DishLogger.py
-
-    """
-    TANGO device class for consuming logs from the Tango devices
-    run on the Talon boards, converting them to the SKA format,
-    and outputting them via the logging framework.
-    """
 
     # ------------------
     # Attributes methods
