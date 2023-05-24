@@ -69,7 +69,7 @@ class LogComponentManager(BaseComponentManager):
                     record.lineno = 0
                 return True
 
-        self.logger.addFilter(TangoDeviceTagsFilter())
+        logger.addFilter(TangoDeviceTagsFilter())
 
     def log(
         self,
