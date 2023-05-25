@@ -492,7 +492,9 @@ class FspComponentManager(CbfComponentManager):
                 return (ResultCode.FAILED, message)
 
             try:
-                self._proxy_hps_fsp_controller.SetFunctionMode(self._function_mode)
+                self._proxy_hps_fsp_controller.SetFunctionMode(
+                    self._function_mode
+                )
             except Exception as e:
                 self._logger.error(str(e))
 
@@ -617,7 +619,7 @@ class FspComponentManager(CbfComponentManager):
                 self._delay_model = copy.deepcopy(argin)
                 delay_model = json.loads(argin)
                 # only send integer receptorID to HPS
-                for model in delay_model["delayModel"]:
+                for model in delay_model["delay_model"]:
                     model["receptor"] = model["receptor"][1]
                 self._proxy_hps_fsp_corr_controller.UpdateDelayModels(
                     json.dumps(delay_model)

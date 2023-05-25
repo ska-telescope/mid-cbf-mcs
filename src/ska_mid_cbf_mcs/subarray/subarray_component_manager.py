@@ -500,7 +500,7 @@ class CbfSubarrayComponentManager(
 
                 delay_model = json.loads(value)
                 # pass receptor IDs as pair of str and int to FSPs and VCCs
-                for model in delay_model["delayModel"]:
+                for model in delay_model["delay_model"]:
                     receptor_id = model["receptor"]
                     model["receptor"] = [
                         receptor_id,

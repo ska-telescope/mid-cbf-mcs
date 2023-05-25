@@ -645,15 +645,15 @@ class FspCorrSubarrayComponentManager(
         hps_fsp_configuration.update(internal_params_obj)
         # append the fs_sample_rates to the configuration
         hps_fsp_configuration["fs_sample_rates"] = sample_rates
-        log_msg = (
-            f"Sample rates added to HPS FSP Corr configuration; fs_sample_rates = {sample_rates}."
-        )
+        log_msg = f"Sample rates added to HPS FSP Corr configuration; fs_sample_rates = {sample_rates}."
         self._logger.debug(log_msg)
 
         self._get_capability_proxies()
 
         try:
-            self._logger.debug(f"HPS FSP ConfigureScan input: {json.dumps(hps_fsp_configuration)}")
+            self._logger.debug(
+                f"HPS FSP ConfigureScan input: {json.dumps(hps_fsp_configuration)}"
+            )
             self._proxy_hps_fsp_corr_controller.ConfigureScan(
                 json.dumps(hps_fsp_configuration)
             )
