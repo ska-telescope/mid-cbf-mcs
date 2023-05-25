@@ -79,7 +79,11 @@ class LogComponentManager(BaseComponentManager):
         self.logger.addFilter(TangoDeviceTagsFilter())
 
     def log(
-        self, timestamp: str, tango_log_level: str, tango_device: str, message: str
+        self,
+        timestamp: str,
+        tango_log_level: str,
+        tango_device: str,
+        message: str,
     ) -> None:
         """Override log components and log to stdout.
 
@@ -145,15 +149,21 @@ class TalonDxLogConsumer(SKABaseDevice):
         :type log_message: List[str]
         """
         timestamp, tango_log_level, tango_device, message, _, _ = log_message
-        self.component_manager.log(timestamp, tango_log_level, tango_device, message)
+        self.component_manager.log(
+            timestamp, tango_log_level, tango_device, message
+        )
 
-    @command(dtype_in=str, doc_in="name of the device to add new logging target")
+    @command(
+        dtype_in=str, doc_in="name of the device to add new logging target"
+    )
     def SetTalonDxLogConsumerTarget(self, device_name: str) -> None:
         """Add TalonDxLogConsumer as a logging target destination on device"""
         logging_device = tango.DeviceProxy(device_name)
         logging_device.add_logging_target(f"device::{self.get_name()}")
 
-    @command(dtype_in=str, doc_in="name of the device to remove logging target")
+    @command(
+        dtype_in=str, doc_in="name of the device to remove logging target"
+    )
     def RemoveTalonDxLogConsumerTarget(self, device_name: str) -> None:
         """Remove TalonDxLogConsumer as a logging target destination on device"""
         logging_device = tango.DeviceProxy(device_name)
@@ -188,7 +198,9 @@ class TalonDxLogConsumer(SKABaseDevice):
             """
 
             def __init__(
-                self: TalonDxLogConsumerFilter, device_name: str, log_level: int
+                self: TalonDxLogConsumerFilter,
+                device_name: str,
+                log_level: int,
             ) -> None:
                 """
                 Create a new instance.
