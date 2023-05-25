@@ -43,7 +43,6 @@ _TANGO_LOGGING_TO_PYTHON_LOGGING_LEVEL = {
 }
 
 
-# Borrowed from ska-dish-lmc/src/ska_dish_lmc/DishLogger.py
 class LogComponentManager(BaseComponentManager):
     def __init__(self, logger: logging.Logger) -> None:
         """
@@ -53,27 +52,31 @@ class LogComponentManager(BaseComponentManager):
         :rtype: LogComponentManager
         """
         super().__init__(logger, None, None)
+        self.logger = logger
 
-        # class TangoDeviceTagsFilter(logging.Filter):
-        #     """Reset the log record components if a TLS log"""
+        class TangoDeviceTagsFilter(logging.Filter):
+            """Reset the log record components if a TLS log"""
 
-        #     @classmethod
-        #     def filter(cls, record):
-        #         # Log a TLS log
-        #         if hasattr(record, "device_name"):
-        #             record.tags = f"tango-device:{record.device_name}"
-        #             record.filename = "unknown_file"
-        #             record.threadName = "unknown_thread"
-        #             record.funcName = record.src_funcName
-        #             record.created = record.timestamp
-        #             record.lineno = 0
-        #         return True
+            @classmethod
+            def filter(cls, record):
+                # Log a TLS log
+                if hasattr(record, "device_name"):
+                    try:
+                        source, funcName = record.src_funcName.split(" ", 1)
+                        filename, lineno = source[1:-1].split(":")
+                    except Exception as e:
+                        funcName = record.src_funcName
+                        filename = record.filename
+                        lineno = record.lineno
 
-        # # Remove all previous filters
-        # for filt in list(logger.filters):
-        #     logger.removeFilter(filt)
+                    record.tags = f"tango-device:{record.device_name}"
+                    record.filename = filename
+                    record.funcName = funcName
+                    record.created = record.timestamp
+                    record.lineno = int(lineno)
+                return True
 
-        # logger.addFilter(TangoDeviceTagsFilter())
+        self.logger.addFilter(TangoDeviceTagsFilter())
 
     def log(
         self,
@@ -120,7 +123,6 @@ class TalonDxLogConsumer(SKABaseDevice):
     run on the Talon boards, converting them to the SKA format,
     and outputting them via the logging framework.
     """
-    # add changes to copy DishLogger.py
     def create_component_manager(self):
         """Create the component manager LogComponentManager
 
@@ -130,7 +132,7 @@ class TalonDxLogConsumer(SKABaseDevice):
         return LogComponentManager(self.logger)
 
     @command(dtype_in=[str], doc_out="Consume a log message from TLS")
-    def log(self, log_message: List[str]):
+    def Log(self, log_message: List[str]):
         """Write the log to stdout as received from TLS
 
         Sample log:
@@ -165,8 +167,6 @@ class TalonDxLogConsumer(SKABaseDevice):
         """Remove TalonDxLogConsumer as a logging target destination on device"""
         logging_device = tango.DeviceProxy(device_name)
         logging_device.remove_logging_target(f"device::{self.get_name()}")
-
-    # end of copying DishLogger.py
 
     # ------------------
     # Attributes methods
@@ -245,82 +245,6 @@ class TalonDxLogConsumer(SKABaseDevice):
             self.get_name(), _LMC_TO_PYTHON_LOGGING_LEVEL[lmc_logging_level]
         )
         self.logger.addFilter(log_filter)
-
-    # --------
-    # Commands
-    # --------
-
-    # class LogCommand(BaseCommand):
-    #     """
-    #     The command class for the log command.
-    #     """
-
-    #     _TANGO_LOGGING_TO_PYTHON_LOGGING_LEVEL = {
-    #         "FATAL": logging.CRITICAL,
-    #         "ERROR": logging.ERROR,
-    #         "WARN": logging.WARNING,
-    #         "WARNING": logging.WARNING,
-    #         "INFO": logging.INFO,
-    #         "DEBUG": logging.DEBUG,
-    #     }
-
-    #     def do(self: TalonDxLogConsumer.LogCommand, argin: List[str]) -> None:
-    #         """
-    #         Implement log command functionality.
-
-    #         :param argin: the outlet ID of the outlet to switch on
-    #         """
-    #         # Drop the log message if it has invalid arguments, we could log
-    #         # an error here instead but this should not typically be an issue
-    #         try:
-    #             epoch_ms = int(argin[0])
-    #         except ValueError:
-    #             return
-
-    #         try:
-    #             log_level = self._TANGO_LOGGING_TO_PYTHON_LOGGING_LEVEL[
-    #                 argin[1]
-    #             ]
-    #         except ValueError:
-    #             return
-
-    #         lineno = 0
-    #         filename = ""
-    #         msg_out = argin[3]
-    #         # Format: [file_path:lineno] log message
-    #         matched = re.match(r"\[(.+?)\:(\d+)\](.+)", argin[3])
-    #         if matched is not None:
-    #             filename = matched.group(1)
-    #             lineno = int(matched.group(2))
-    #             msg_out = matched.group(3)
-    #             filename = filename.split("/")[-1]  # file basename
-
-    #         # Forward the log message to the logger
-    #         attrdict = {
-    #             "created": epoch_ms / 1000,  # Seconds
-    #             "msecs": epoch_ms % 1000,  # Milliseconds
-    #             "levelname": argin[1],
-    #             "levelno": log_level,
-    #             "threadName": argin[5],
-    #             "funcName": "",
-    #             "filename": filename,
-    #             "lineno": lineno,
-    #             "tags": f"tango-device:{argin[2]}",
-    #             "msg": msg_out,
-    #         }
-    #         rec = logging.makeLogRecord(attrdict)
-    #         self.logger.handle(rec)
-
-    # @command(
-    #     dtype_in="DevVarStringArray",
-    #     doc_in="Log consumer input arguments",
-    # )
-    # def log(
-    #     self: TalonDxLogConsumer, argin: int
-    # ) -> tango.DevVarLongStringArray:
-    #     handler = self.get_command_object("log")
-    #     handler(argin)
-
 
 # ----------
 # Run server
