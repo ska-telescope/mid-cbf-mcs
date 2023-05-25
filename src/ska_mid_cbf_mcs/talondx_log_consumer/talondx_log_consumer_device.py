@@ -64,7 +64,7 @@ class LogComponentManager(BaseComponentManager):
                     try:
                         source, funcName = record.src_funcName.split(" ", 1)
                         filename, lineno = source[1:-1].split(":")
-                    except Exception as e:
+                    except Exception:
                         funcName = record.src_funcName
                         filename = record.filename
                         lineno = record.lineno
