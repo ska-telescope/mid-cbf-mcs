@@ -687,10 +687,12 @@ def init_delay_model_test_fixture():
                     # among receptors_under_test:
                     for i_rec in receptors_to_remove:
                         for jj, entry in enumerate(
-                            delay_model_all_obj[i_dm]["delayModel"]
+                            delay_model_all_obj[i_dm]["delay_model"]
                         ):
                             if entry["receptor"] == i_rec:
-                                delay_model_all_obj[i_dm]["delayModel"].pop(jj)
+                                delay_model_all_obj[i_dm]["delay_model"].pop(
+                                    jj
+                                )
 
             return delay_model_all_obj
 

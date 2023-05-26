@@ -190,6 +190,21 @@ class CbfSubarray(CspSubElementSubarray):
         doc="fsp[1][x] = CORR [2][x] = PSS [1][x] = PST [1][x] = VLBI",
     )
 
+    frequencyOffsetK = attribute(
+        dtype=("int",),
+        access=AttrWriteType.READ_WRITE,
+        max_dim_x=197,
+        label="Frequency offset (k)",
+        doc="Frequency offset (k) of all 197 receptors as an array of ints.",
+    )
+
+    frequencyOffsetDeltaF = attribute(
+        dtype="int",
+        access=AttrWriteType.READ_WRITE,
+        label="Frequency offset (delta f)",
+        doc="Frequency offset (delta f)",
+    )
+
     # ---------------
     # General methods
     # ---------------
@@ -467,13 +482,37 @@ class CbfSubarray(CspSubElementSubarray):
         # PROTECTED REGION ID(CbfSubarray.fspList_read) ENABLED START #
         """
         return fspList attribute
-        2 dimentional array the fsp used by all the subarrays
+        2 dimensional array the fsp used by all the subarrays
 
         :return: the array of FSP IDs
         :rtype: List[List[int]]
         """
         return self.component_manager.fsp_list
         # PROTECTED REGION END #    //  CbfSubarray.fspList_read
+
+    def read_frequencyOffsetK(self: CbfSubarray) -> List[int]:
+        # PROTECTED REGION ID(CbfSubarray.frequencyOffsetK_read) ENABLED START #
+        """Return frequencyOffsetK attribute: array of integers reporting receptors in subarray"""
+        return self.component_manager.frequency_offset_k
+        # PROTECTED REGION END #    //  CbfSubarray.frequencyOffsetK_read
+
+    def write_frequencyOffsetK(self: CbfSubarray, value: List[int]) -> None:
+        # PROTECTED REGION ID(CbfController.frequencyOffsetK_write) ENABLED START #
+        """Set frequencyOffsetK attribute"""
+        self.component_manager.frequency_offset_k = value
+        # PROTECTED REGION END #    //  CbfController.frequencyOffsetK_write
+
+    def read_frequencyOffsetDeltaF(self: CbfSubarray) -> int:
+        # PROTECTED REGION ID(CbfController.frequencyOffsetDeltaF_read) ENABLED START #
+        """Return frequencyOffsetDeltaF attribute: Frequency offset (delta f)"""
+        return self.component_manager.frequency_offset_delta_f
+        # PROTECTED REGION END #    //  CbfController.frequencyOffsetDeltaF_read
+
+    def write_frequencyOffsetDeltaF(self: CbfSubarray, value: int) -> None:
+        # PROTECTED REGION ID(CbfSubarray.frequencyOffsetDeltaF_write) ENABLED START #
+        """Set the frequencyOffsetDeltaF attribute"""
+        self.component_manager.frequency_offset_delta_f = value
+        # PROTECTED REGION END #    //  CbfSubarray.frequencyOffsetDeltaF_write
 
     # --------
     # Commands

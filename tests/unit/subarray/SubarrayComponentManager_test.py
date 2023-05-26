@@ -15,6 +15,7 @@ from __future__ import annotations
 import json
 
 # Standard imports
+import math
 import os
 from typing import List
 
@@ -213,6 +214,7 @@ class TestCbfSubarrayComponentManager:
         config_json = json.loads(config_string)
 
         subarray_component_manager.add_receptors(receptor_ids)
+        subarray_component_manager.frequency_offset_k = [11] * 197
 
         result = subarray_component_manager.validate_input(config_string)
         assert result[0]
@@ -223,7 +225,9 @@ class TestCbfSubarrayComponentManager:
             subarray_component_manager.config_id
             == config_json["common"]["config_id"]
         )
-        band_index = freq_band_dict()[config_json["common"]["frequency_band"]]
+        band_index = freq_band_dict()[config_json["common"]["frequency_band"]][
+            "band_index"
+        ]
         assert subarray_component_manager.frequency_band == band_index
 
         assert subarray_component_manager._ready
@@ -272,3 +276,63 @@ class TestCbfSubarrayComponentManager:
 
         assert subarray_component_manager.scan_id == int(scan_json["scan_id"])
         assert result_code == ResultCode.STARTED
+
+    @pytest.mark.parametrize(
+        "freq_band, \
+        receptor_id, \
+        freq_offset_k, \
+        sample_rate_const_for_band, \
+        base_dish_sample_rate_for_bandMHz",
+        [
+            (
+                "1",
+                "MKT001",
+                [0] * 197,
+                1,
+                3960,
+            ),
+            (
+                "3",
+                "MKT001",
+                [11] * 197,
+                0.8,
+                3168,
+            ),
+        ],
+    )
+    def test_calculate_fs_sample_rate(
+        self: TestCbfSubarrayComponentManager,
+        subarray_component_manager: CbfSubarrayComponentManager,
+        freq_band: str,
+        receptor_id: str,
+        sample_rate_const_for_band: float,
+        base_dish_sample_rate_for_bandMHz: int,
+        freq_offset_k: List[int],
+    ) -> None:
+        """
+        Test calculate_fs_sample_rate.
+        """
+
+        mhz_to_hz = 1000000
+        total_num_freq_slice = 20
+        freq_offset_delta_f = 1800
+        oversampling_factor = 10 / 9
+        dish_sample_rate = (base_dish_sample_rate_for_bandMHz * mhz_to_hz) + (
+            sample_rate_const_for_band * freq_offset_k[0] * freq_offset_delta_f
+        )
+        expected_fs_sample_rate = (
+            dish_sample_rate * oversampling_factor / total_num_freq_slice
+        )
+        expected_fs_sample_rate = expected_fs_sample_rate / mhz_to_hz
+        subarray_component_manager.frequency_offset_k = freq_offset_k
+        subarray_component_manager.frequency_offset_delta_f = (
+            freq_offset_delta_f
+        )
+        output_fs_sample_rate = (
+            subarray_component_manager.calculate_fs_sample_rate(
+                freq_band, receptor_id
+            )
+        )
+        assert math.isclose(
+            output_fs_sample_rate["fs_sample_rate"], expected_fs_sample_rate
+        )

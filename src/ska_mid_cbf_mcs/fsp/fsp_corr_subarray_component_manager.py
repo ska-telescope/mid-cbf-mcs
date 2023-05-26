@@ -438,7 +438,9 @@ class FspCorrSubarrayComponentManager(
         configuration = json.loads(configuration)
 
         self._freq_band_name = configuration["frequency_band"]
-        self._frequency_band = freq_band_dict()[self._freq_band_name]
+        self._frequency_band = freq_band_dict()[self._freq_band_name][
+            "band_index"
+        ]
 
         self._stream_tuning = configuration["band_5_tuning"]
 
@@ -636,14 +638,27 @@ class FspCorrSubarrayComponentManager(
             receptor[1] for receptor in configuration["subarray_receptor_ids"]
         ]
         configuration["subarray_receptor_ids"] = subarray_receptor_id_int
+
+        # construct HPS ConfigureScan input
+        sample_rates = configuration.pop("fs_sample_rates")
         hps_fsp_configuration = dict({"configure_scan": configuration})
         hps_fsp_configuration.update(internal_params_obj)
+        # append the fs_sample_rates to the configuration
+        hps_fsp_configuration["fs_sample_rates"] = sample_rates
+        log_msg = f"Sample rates added to HPS FSP Corr configuration; fs_sample_rates = {sample_rates}."
+        self._logger.debug(log_msg)
 
         self._get_capability_proxies()
 
-        self._proxy_hps_fsp_corr_controller.ConfigureScan(
-            json.dumps(hps_fsp_configuration)
-        )
+        try:
+            self._logger.debug(
+                f"HPS FSP ConfigureScan input: {json.dumps(hps_fsp_configuration)}"
+            )
+            self._proxy_hps_fsp_corr_controller.ConfigureScan(
+                json.dumps(hps_fsp_configuration)
+            )
+        except Exception as e:
+            self._logger.error(str(e))
 
         return (
             ResultCode.OK,

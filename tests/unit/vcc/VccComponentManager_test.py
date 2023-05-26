@@ -80,7 +80,7 @@ class TestVccComponentManager:
 
         # Check for band configuration
         mock_vcc_controller.ConfigureBand.assert_next_call(
-            freq_band_dict()[frequency_band]
+            freq_band_dict()[frequency_band]["band_index"]
         )
 
         # Check for internal parameter configuration
@@ -205,9 +205,9 @@ class TestVccComponentManager:
         # update the delay model
         # Set the receptor id arbitrarily to the first receptor
         # in the delay model
-        input_delay_model_first_receptor = input_delay_model_obj["delayModel"][
-            0
-        ]
+        input_delay_model_first_receptor = input_delay_model_obj[
+            "delay_model"
+        ][0]
         vcc_component_manager.receptor_id = input_delay_model_first_receptor[
             "receptor"
         ][1]
@@ -222,14 +222,14 @@ class TestVccComponentManager:
         assert len(updated_delay_model_obj) != 0
 
         # check that the coeff values were copied
-        for entry in input_delay_model_obj["delayModel"]:
+        for entry in input_delay_model_obj["delay_model"]:
             if entry["receptor"][1] == vcc_component_manager.receptor_id:
                 input_delay_model_for_receptor = json.dumps(entry)
                 # the updated delay model for vcc is a single entry
                 # for the given receptor and should be the first (only)
                 # item in the list of entries allowed by the schema
                 updated_delay_model_for_vcc = json.dumps(
-                    updated_delay_model_obj["delayModel"][0]
+                    updated_delay_model_obj["delay_model"][0]
                 )
                 # compare the delay models as strings
                 assert (
@@ -266,7 +266,7 @@ class TestVccComponentManager:
         vcc_component_manager.configure_band(configuration["frequency_band"])
         assert (
             vcc_component_manager.frequency_band
-            == freq_band_dict()[configuration["frequency_band"]]
+            == freq_band_dict()[configuration["frequency_band"]]["band_index"]
         )
 
         (result_code, _) = vcc_component_manager.configure_scan(json_str)
@@ -343,7 +343,7 @@ class TestVccComponentManager:
         vcc_component_manager.configure_band(other_freq_bands[0])
         assert (
             vcc_component_manager.frequency_band
-            == freq_band_dict()[other_freq_bands[0]]
+            == freq_band_dict()[other_freq_bands[0]]["band_index"]
         )
 
         (result_code, msg) = vcc_component_manager.configure_scan(json_str)

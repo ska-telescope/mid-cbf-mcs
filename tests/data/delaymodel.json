@@ -1,5 +1,5 @@
 [{
-  "delayModel": [
+  "delay_model": [
     {
       "receptor": "MKT000",
       "epoch": 11000000,
@@ -63,7 +63,7 @@
   ]
 },
 {
-  "delayModel": [
+  "delay_model": [
     {
       "receptor": "MKT000",
       "epoch": 11000010,
@@ -127,7 +127,7 @@
   ]
 },
 {
-  "delayModel": [
+  "delay_model": [
     {
       "receptor": "MKT000",
       "epoch": 11000020,
