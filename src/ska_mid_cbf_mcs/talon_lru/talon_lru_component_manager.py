@@ -263,10 +263,11 @@ class TalonLRUComponentManager(CbfComponentManager):
         if self.pdu2_power_mode != expected_power_mode:
             self._logger.error(
                 f"PDU outlet 2 expected power mode: ({expected_power_mode}),"
-                f" actual power mode: ({self.pdu1_power_mode})"
+                f" actual power mode: ({self.pdu2_power_mode})"
             )
 
-        self.update_component_fault(True)
+        #self.update_component_fault(True)
+        return
 
     def on(
         self: TalonLRUComponentManager,
