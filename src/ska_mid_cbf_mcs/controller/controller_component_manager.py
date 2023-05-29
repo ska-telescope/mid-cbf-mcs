@@ -476,9 +476,15 @@ class ControllerComponentManager(CbfComponentManager):
                             self._fqdn_fsp.index(fqdn)
                         ] = value
                     elif "talon_lru" in fqdn:
-                        self._report_talon_lru_health_state[
-                            self._fqdn_talon_lru.index(fqdn)
-                        ] = value
+                        if fqdn in self._fqdn_talon_lru:
+                            self._report_talon_lru_health_state[
+                                self._fqdn_talon_lru.index(fqdn)
+                            ] = value
+                        else:
+                            log_msg = (
+                            f"LRU {fqdn} is not in list"
+                        )
+                            self._logger.warning(log_msg)
                     else:
                         # should NOT happen!
                         log_msg = (
@@ -501,9 +507,15 @@ class ControllerComponentManager(CbfComponentManager):
                             self._fqdn_fsp.index(fqdn)
                         ] = value
                     elif "talon_lru" in fqdn:
-                        self._report_talon_lru_state[
-                            self._fqdn_talon_lru.index(fqdn)
-                        ] = value
+                        if fqdn in self._fqdn_talon_lru:
+                            self._report_talon_lru_state[
+                                self._fqdn_talon_lru.index(fqdn)
+                            ] = value
+                        else:
+                            log_msg = (
+                            f"LRU {fqdn} is not in list"
+                        )
+                            self._logger.warning(log_msg)
                     else:
                         # should NOT happen!
                         log_msg = (
@@ -526,9 +538,15 @@ class ControllerComponentManager(CbfComponentManager):
                             self._fqdn_fsp.index(fqdn)
                         ] = value
                     elif "talon_lru" in fqdn:
-                        self._report_talon_lru_admin_mode[
-                            self._fqdn_talon_lru.index(fqdn)
-                        ] = value
+                        if fqdn in self._fqdn_talon_lru:
+                            self._report_talon_lru_admin_mode[
+                                self._fqdn_talon_lru.index(fqdn)
+                            ] = value
+                        else:
+                            log_msg = (
+                            f"LRU {fqdn} is not in list"
+                        )
+                            self._logger.warning(log_msg)
                     else:
                         # should NOT happen!
                         log_msg = (
