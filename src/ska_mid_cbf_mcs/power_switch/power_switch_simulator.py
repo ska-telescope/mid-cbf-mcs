@@ -29,7 +29,11 @@ class PowerSwitchSimulator:
     :param logger: a logger for this object to use
     """
 
-    def __init__(self: PowerSwitchSimulator, outlet_id_list: List[str], logger: logging.Logger) -> None:
+    def __init__(
+        self: PowerSwitchSimulator,
+        outlet_id_list: List[str],
+        logger: logging.Logger,
+    ) -> None:
         """
         Initialise a new instance.
         """
@@ -38,7 +42,6 @@ class PowerSwitchSimulator:
         self.outlet_id_list: List(str) = []
         for item in outlet_id_list:
             self.outlet_id_list.append(item)
-
 
     @property
     def num_outlets(self: PowerSwitchSimulator) -> int:

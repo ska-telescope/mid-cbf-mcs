@@ -85,7 +85,6 @@ class PowerSwitch(SKABaseDevice):
         dtype=("str",),
     )
 
-
     # ----------
     # Attributes
     # ----------
@@ -298,7 +297,7 @@ class PowerSwitch(SKABaseDevice):
         """
         The command class for the TurnOnOutlet command.
 
-        Turn on an individual outlet, specified by the outlet ID 
+        Turn on an individual outlet, specified by the outlet ID
         """
 
         def do(

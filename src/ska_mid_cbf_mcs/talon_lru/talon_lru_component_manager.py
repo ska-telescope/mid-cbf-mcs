@@ -266,7 +266,7 @@ class TalonLRUComponentManager(CbfComponentManager):
                 f" actual power mode: ({self.pdu2_power_mode})"
             )
 
-        #self.update_component_fault(True)
+        # self.update_component_fault(True)
         return
 
     def on(

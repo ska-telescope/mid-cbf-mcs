@@ -481,9 +481,7 @@ class ControllerComponentManager(CbfComponentManager):
                                 self._fqdn_talon_lru.index(fqdn)
                             ] = value
                         else:
-                            log_msg = (
-                            f"LRU {fqdn} is not in list"
-                        )
+                            log_msg = f"LRU {fqdn} is not in list"
                             self._logger.warning(log_msg)
                     else:
                         # should NOT happen!
@@ -512,9 +510,7 @@ class ControllerComponentManager(CbfComponentManager):
                                 self._fqdn_talon_lru.index(fqdn)
                             ] = value
                         else:
-                            log_msg = (
-                            f"LRU {fqdn} is not in list"
-                        )
+                            log_msg = f"LRU {fqdn} is not in list"
                             self._logger.warning(log_msg)
                     else:
                         # should NOT happen!
@@ -543,9 +539,7 @@ class ControllerComponentManager(CbfComponentManager):
                                 self._fqdn_talon_lru.index(fqdn)
                             ] = value
                         else:
-                            log_msg = (
-                            f"LRU {fqdn} is not in list"
-                        )
+                            log_msg = f"LRU {fqdn} is not in list"
                             self._logger.warning(log_msg)
                     else:
                         # should NOT happen!
