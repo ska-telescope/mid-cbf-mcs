@@ -221,6 +221,8 @@ class PowerSwitchDriver:
             self.outlet_id_list,
         )
 
+        outlet_idx = self.outlet_id_list.index(outlet)
+        # print("outlet_idx = ", outlet_idx)
         try:
             response = requests.get(
                 url=url,
