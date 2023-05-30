@@ -104,6 +104,8 @@ class PowerSwitchComponentManager(CbfComponentManager):
 
         self._simulation_mode = simulation_mode
 
+        print(" --- LINE 107 --- power_switch_component_manager::__init__() --- self._simulation_mode == ", self._simulation_mode)
+
         self.power_switch_driver = PowerSwitchDriver(protocol, ip, login, password, model, content_type, status_url_prefix, control_url_prefix, url_postfix, outlet_schema_file, outlet_id_list, logger)
         self.power_switch_simulator = PowerSwitchSimulator(outlet_id_list, logger)
 
@@ -123,8 +125,10 @@ class PowerSwitchComponentManager(CbfComponentManager):
         :return: number of outlets
         """
         if self.simulation_mode:
+            print(" --- LINE 128 --- power_switch_component_manager::num_outlets() --- in simulation mode")
             return self.power_switch_simulator.num_outlets
         else:
+            print(" --- LINE 131 --- power_switch_component_manager::num_outlets() --- NOT simulation mode")
             return self.power_switch_driver.num_outlets
 
     @property
@@ -142,8 +146,10 @@ class PowerSwitchComponentManager(CbfComponentManager):
         # If we have started communicating, check the actual communication
         # status of the power switch
         if self.simulation_mode:
+            print(" --- LINE 149 --- power_switch_component_manager::is_communicating() --- in simulation mode")
             return self.power_switch_simulator.is_communicating
         else:
+            print(" --- LINE 152 --- power_switch_component_manager::is_communicating() --- NOT in simulation mode")
             return self.power_switch_driver.is_communicating
 
     @property
@@ -177,6 +183,7 @@ class PowerSwitchComponentManager(CbfComponentManager):
         super().start_communicating()
 
         if not self._simulation_mode:
+            print(" --- LINE 186 --- power_switch_component_manager::start_communicating() --- NOT in simulation mode")
             self.power_switch_driver.initialize()
 
         self.update_communication_status(CommunicationStatus.ESTABLISHED)
@@ -201,9 +208,10 @@ class PowerSwitchComponentManager(CbfComponentManager):
         :raise AssertionError: if outlet ID is out of bounds
         """
         if self.simulation_mode:
-            print("get_outlet_power_mode::simulation_mode")
+            print(" --- LINE 211 --- power_switch_component_manager::get_outlet_power_mode() --- in simulation mode")
             return self.power_switch_simulator.get_outlet_power_mode(outlet)
         else:
+            print(" --- LINE 214 --- power_switch_component_manager::get_outlet_power_mode() --- NOT in simulation mode")
             return self.power_switch_driver.get_outlet_power_mode(outlet)
 
     def turn_on_outlet(
@@ -218,9 +226,12 @@ class PowerSwitchComponentManager(CbfComponentManager):
 
         :raise AssertionError: if outlet ID is out of bounds
         """
+        print(" --- LINE 229 --- power_switch_component_manager::turn_on_outlet() --- outlet == ", outlet)
         if self.simulation_mode:
+            print(" --- LINE 231 --- power_switch_component_manager::turn_on_outlet() --- in simulation mode")
             return self.power_switch_simulator.turn_on_outlet(outlet)
         else:
+            print(" --- LINE 231 --- power_switch_component_manager::turn_on_outlet() --- NOT in simulation mode")
             return self.power_switch_driver.turn_on_outlet(outlet)
 
     def turn_off_outlet(
@@ -235,7 +246,10 @@ class PowerSwitchComponentManager(CbfComponentManager):
 
         :raise AssertionError: if outlet ID is out of bounds
         """
+        print(" --- LINE 249 --- power_switch_component_manager::turn_off_outlet() --- outlet == ", outlet)
         if self.simulation_mode:
+            print(" --- LINE 251 --- power_switch_component_manager::turn_off_outlet() --- in simulation mode")
             return self.power_switch_simulator.turn_off_outlet(outlet)
         else:
+            print(" --- LINE 254 --- power_switch_component_manager::turn_off_outlet() --- NOT in simulation mode")
             return self.power_switch_driver.turn_off_outlet(outlet)
