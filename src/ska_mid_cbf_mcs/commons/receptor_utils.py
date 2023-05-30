@@ -16,10 +16,9 @@ RECEPTOR_ID_DICT_PATH = "mnt/receptor_id_dict/"
 
 
 class ReceptorUtils:
-    """Utilities for translation of DISH/receptor identifiers."""
-
-    # TODO: confirm ordering of SKA/MKT IDs
     """
+    Utilities for translation of DISH/receptor identifiers.
+
     for Mid.CBF (197 receptor IDs):
         MKT receptor ID range: 1 - 64
         SKA receptor ID range: 65 - 197

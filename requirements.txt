@@ -6,7 +6,7 @@ jsonschema == 3.2.0
 ska-tango-base == 0.11.3
 ska-ser-logging
 ska-ser-log-transactions
-pytango == 9.3.3
+pytango == 9.4.1
 pytest-pydocstyle == 2.2.0
 pytest-pycodestyle == 2.2.0
 pytest == 6.2.5
@@ -22,3 +22,8 @@ pyyaml
 scp
 paramiko
 pylint == 2.15.5
+influxdb-client
+multidict
+yarl
+aiohttp
+aiocsv

@@ -65,5 +65,5 @@ include:
     #image: readthedocs/build:latest
 
 python-build-for-development-legacy:
-  image: artefact.skao.int/ska-tango-images-pytango-builder:9.3.10
+  image: artefact.skao.int/ska-tango-images-pytango-builder:9.4.1
 
