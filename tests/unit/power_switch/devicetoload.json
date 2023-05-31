@@ -5,8 +5,45 @@
                 "PowerSwitch": {
                     "mid_csp_cbf/power_switch/001": {
                         "properties": {
+                            "PowerSwitchProtocol": [
+                                "http"
+                            ],
                             "PowerSwitchIp": [
                                 "0.0.0.0"
+                            ],
+                            "PowerSwitchLogin": [
+                                ""
+                            ],
+                            "PowerSwitchPassword": [
+                                ""
+                            ],
+                            "PowerSwitchModel": [
+                                "DLI-PRO"
+                            ],
+                            "PowerSwitchRequestHeaderContentType": [
+                                "application/json"
+                            ],
+                            "PowerSwitchStatusUrlPrefix": [
+                                "/restapi/relay/outlets"
+                            ],
+                            "PowerSwitchControlUrlPrefix": [
+                                "/restapi/relay/outlets"
+                            ],
+                            "PowerSwitchUrlPostfix": [
+                                "/state/"
+                            ],
+                            "PowerSwitchOutletSchemaFile": [
+                                "charts/ska-mid-cbf-mcs/data/power_switch_001_schema.json"
+                            ],
+                            "PowerSwitchOutletIdList": [
+                                "0",
+                                "1",
+                                "2",
+                                "3",
+                                "4",
+                                "5",
+                                "6",
+                                "7"
                             ]
                         }
                     }
