@@ -56,7 +56,7 @@ def device_to_load() -> DevicesToLoadType:
     :return: specification of the device to be loaded
     """
     return {
-        "path": "tests/unit/talon_lru/devicetoload.json",
+        "path": "tests/unit/talon_lru_component_manager/devicetoload.json",
         "package": "ska_mid_cbf_mcs.talon_lru.talon_lru_device",
         "device": "talonlru-001",
         "device_class": "TalonLRU",
