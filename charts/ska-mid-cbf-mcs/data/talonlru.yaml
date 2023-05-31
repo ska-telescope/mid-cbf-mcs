@@ -73,10 +73,10 @@ server:
             - "1"
           - name: "PDU2Address"
             values:
-            - "mid_csp_cbf/power_switch/002"
+            - "mid_csp_cbf/power_switch/001"
           - name: "PDU2PowerOutlet"
             values:
-            - "AA2"
+            - "1"
           - name: "polled_attr"
             values:
             - "state"

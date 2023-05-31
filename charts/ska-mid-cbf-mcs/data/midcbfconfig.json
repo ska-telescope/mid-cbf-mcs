@@ -2033,10 +2033,10 @@
                                 "1"
                             ],
                             "PDU2Address": [
-                                "mid_csp_cbf/power_switch/002"
+                                "mid_csp_cbf/power_switch/001"
                             ],
                             "PDU2PowerOutlet": [
-                                "AA2"
+                                "1"
                             ],
                             "polled_attr": [
                                 "state",
