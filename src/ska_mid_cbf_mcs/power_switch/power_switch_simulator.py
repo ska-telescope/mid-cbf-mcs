@@ -43,12 +43,12 @@ class PowerSwitchSimulator:
             self.outlet_id_list.append(item)
         print(
             " --- LINE 45 --- power_switch_simulator::__init__() --- self.outlet_id_list == ",
-            self.outlet_id_list
+            self.outlet_id_list,
         )
         self.outlets = self.get_outlet_list()
         print(
             " --- LINE 50 --- power_switch_simulator::__init__() --- self.outlets == ",
-            self.outlets
+            self.outlets,
         )
 
     @property
@@ -60,7 +60,7 @@ class PowerSwitchSimulator:
         """
         print(
             " --- LINE 62 --- power_switch_simulator::num_outlets() --- num_outlets == ",
-            len(self.outlets)
+            len(self.outlets),
         )
         return len(self.outlets)
 
@@ -91,8 +91,14 @@ class PowerSwitchSimulator:
             " --- LINE 91 --- power_switch_simulator::get_outlet_power_mode --- outlet == ",
             outlet,
         )
-        print(" --- LINE 94 --- power_switch_simulator::get_outlet_power_mode --- outlet_id_list == ", self.outlet_id_list)
-        print(" --- LINE 95 --- power_switch_simulator::get_outlet_power_mode --- type(outlet_id_list) == ", type(self.outlet_id_list))
+        print(
+            " --- LINE 94 --- power_switch_simulator::get_outlet_power_mode --- outlet_id_list == ",
+            self.outlet_id_list,
+        )
+        print(
+            " --- LINE 95 --- power_switch_simulator::get_outlet_power_mode --- type(outlet_id_list) == ",
+            type(self.outlet_id_list),
+        )
         assert (
             outlet in self.outlet_id_list
         ), f"Outlet ID {outlet} must be in the allowable outlet_id_list read in from the Config File"
@@ -100,7 +106,10 @@ class PowerSwitchSimulator:
         outlet_idx = self.outlet_id_list.index(outlet)
 
         power_mode = self.outlets[outlet_idx].power_mode
-        print(" --- LINE 103 --- power_switch_simulator::get_outlet_power_mode --- power_mode == ", power_mode)
+        print(
+            " --- LINE 103 --- power_switch_simulator::get_outlet_power_mode --- power_mode == ",
+            power_mode,
+        )
         return self.outlets[outlet_idx].power_mode
 
     def turn_on_outlet(

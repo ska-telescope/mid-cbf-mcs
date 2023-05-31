@@ -191,8 +191,14 @@ class PowerSwitchDriver:
             " --- LINE 174 --- power_switch_driver::get_outlet_power_mode --- outlet == ",
             outlet,
         )
-        print(" --- LINE 175 --- power_switch_driver::get_outlet_power_mode --- outlet_id_list == ", self.outlet_id_list)
-        print(" --- LINE 176 --- power_switch_driver::get_outlet_power_mode --- type(outlet_id_list) == ", type(self.outlet_id_list))
+        print(
+            " --- LINE 175 --- power_switch_driver::get_outlet_power_mode --- outlet_id_list == ",
+            self.outlet_id_list,
+        )
+        print(
+            " --- LINE 176 --- power_switch_driver::get_outlet_power_mode --- type(outlet_id_list) == ",
+            type(self.outlet_id_list),
+        )
 
         assert (
             outlet in self.outlet_id_list
@@ -212,7 +218,10 @@ class PowerSwitchDriver:
         )
         # print("headers = ", self.header)
 
-        print(" --- LINE 190 --- power_switch_driver::get_outlet_power_mode --- type(outlet) == ", type(outlet) )
+        print(
+            " --- LINE 190 --- power_switch_driver::get_outlet_power_mode --- type(outlet) == ",
+            type(outlet),
+        )
 
         outlet_idx = self.outlet_id_list.index(outlet)
         print(
@@ -221,11 +230,14 @@ class PowerSwitchDriver:
         )
         print(
             " --- LINE 196 --- power_switch_driver::get_outlet_power_mode --- self.outlet_id_list == ",
-            self.outlet_id_list
+            self.outlet_id_list,
         )
 
         # outlet_idx = self.outlet_id_list.index(outlet)
-        print(" --- LINE 200 --- power_switch_driver::get_outlet_power_mode --- outlet_idx == ", outlet_idx)
+        print(
+            " --- LINE 200 --- power_switch_driver::get_outlet_power_mode --- outlet_idx == ",
+            outlet_idx,
+        )
         try:
             response = requests.get(
                 url=url,
