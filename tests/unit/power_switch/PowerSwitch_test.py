@@ -35,29 +35,29 @@ def test_TurnOnOutlet_TurnOffOutlet(device_under_test: CbfDeviceProxy) -> None:
     # Check initial state
     outlets: List[PowerMode] = []
     for i in range(0, num_outlets):
-        outlets.append(device_under_test.GetOutletPowerMode(i))
+        outlets.append(device_under_test.GetOutletPowerMode(str(i)))
 
     # Turn outlets off and check the state again
     for i in range(0, num_outlets):
-        assert device_under_test.TurnOffOutlet(i) == [
+        assert device_under_test.TurnOffOutlet(str(i)) == [
             [ResultCode.OK],
             [f"Outlet {i} power off"],
         ]
         outlets[i] = PowerMode.OFF
 
         for j in range(0, num_outlets):
-            assert device_under_test.GetOutletPowerMode(j) == outlets[j]
+            assert device_under_test.GetOutletPowerMode(str(j)) == outlets[j]
 
     # Turn on outlets and check the state again
     for i in range(0, num_outlets):
-        assert device_under_test.TurnOnOutlet(i) == [
+        assert device_under_test.TurnOnOutlet(str(i)) == [
             [ResultCode.OK],
             [f"Outlet {i} power on"],
         ]
         outlets[i] = PowerMode.ON
 
         for j in range(0, num_outlets):
-            assert device_under_test.GetOutletPowerMode(j) == outlets[j]
+            assert device_under_test.GetOutletPowerMode(str(j)) == outlets[j]
 
 
 def test_connection_failure(device_under_test: CbfDeviceProxy) -> None:
