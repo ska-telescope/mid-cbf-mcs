@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import logging
 
-import tango
 from ska_tango_base.base.component_manager import BaseComponentManager
 
 _TANGO_LOGGING_TO_PYTHON_LOGGING_LEVEL = {
