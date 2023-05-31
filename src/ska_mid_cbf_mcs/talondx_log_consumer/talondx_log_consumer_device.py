@@ -16,16 +16,19 @@ from typing import List
 
 # tango imports
 import tango
+from ska_tango_base import SKABaseDevice
+from ska_tango_base.base.base_device import (
+    _LMC_TO_PYTHON_LOGGING_LEVEL,
+    _Log4TangoLoggingLevel,
+)
+from ska_tango_base.control_model import LoggingLevel
+from tango.server import command, run
 
 # Additional import
 # PROTECTED REGION ID(TalonDxLogConsumer.additional_import) ENABLED START #
-from ska_mid_cbf_mcs.talondx_log_consumer.talondx_log_consumer_component_manager import \
-    LogComponentManager
-from ska_tango_base import SKABaseDevice
-from ska_tango_base.base.base_device import (_LMC_TO_PYTHON_LOGGING_LEVEL,
-                                             _Log4TangoLoggingLevel)
-from ska_tango_base.control_model import LoggingLevel
-from tango.server import command, run
+from ska_mid_cbf_mcs.talondx_log_consumer.talondx_log_consumer_component_manager import (
+    LogComponentManager,
+)
 
 # PROTECTED REGION END #    //  TalonDxLogConsumer.additional_import
 
