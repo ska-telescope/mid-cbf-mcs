@@ -15,13 +15,13 @@
                                 "mid_csp_cbf/power_switch/001"
                             ],
                             "PDU1Outlet": [
-                                0
+                                "0"
                             ],
                             "PDU2Address": [
                                 "mid_csp_cbf/power_switch/002"
                             ],
                             "PDU2Outlet": [
-                                0
+                                "AA1"
                             ]
                         }
                     }
