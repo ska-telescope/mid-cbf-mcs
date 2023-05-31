@@ -55,7 +55,7 @@ def power_switch_component_manager(
     :param request: the pytest request fixture, must be indirectly parametrized
                     by each test with a dict of the form:
                         {
-                            "sim_put_error": boolean,
+                            "sim_patch_error": boolean,
                             "sim_get_error": boolean
                         }
     :param monkeypatch: the pytest monkey-patching fixture
@@ -118,7 +118,7 @@ def power_switch_component_manager(
             """
             return self._json
 
-    def mock_put(url: str, **kwargs: Any) -> MockResponse:
+    def mock_patch(url: str, **kwargs: Any) -> MockResponse:
         """
         Replace requests.request method with a mock method.
 
@@ -127,7 +127,7 @@ def power_switch_component_manager(
 
         :return: a response
         """
-        return MockResponse(url, request.param["sim_put_error"])
+        return MockResponse(url, request.param["sim_patch_error"])
 
     def mock_get(url: str, params: Any = None, **kwargs: Any) -> MockResponse:
         """
@@ -141,12 +141,22 @@ def power_switch_component_manager(
         """
         return MockResponse(url, request.param["sim_get_error"])
 
-    monkeypatch.setattr(requests, "put", mock_put)
+    monkeypatch.setattr(requests, "patch", mock_patch)
     monkeypatch.setattr(requests, "get", mock_get)
 
     return PowerSwitchComponentManager(
         simulation_mode=SimulationMode.FALSE,
+        protocol="http",
         ip="0.0.0.0",
+        login="",
+        password="",
+        model="DLI-PRO",
+        content_type="application/json",
+        status_url_prefix="",
+        control_url_prefix="",
+        url_postfix="",
+        outlet_schema_file="charts/ska-mid-cbf-mcs/data/power_switch_001_schema.json",
+        outlet_id_list=[0,1,2,3,4,5,6,7],
         logger=logger,
         push_change_event_callback=push_change_event_callback,
         communication_status_changed_callback=communication_status_changed_callback,
@@ -207,7 +217,7 @@ def component_fault_callback(
 
 
 @pytest.fixture()
-def ccheck_power_mode_callback(
+def check_power_mode_callback(
     mock_callback_factory: Callable[[], unittest.mock.Mock],
 ) -> unittest.mock.Mock:
     """
