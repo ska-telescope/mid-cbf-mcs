@@ -22,7 +22,7 @@ from ska_mid_cbf_mcs.power_switch.power_switch_component_manager import (
 
 @pytest.mark.parametrize(
     "power_switch_component_manager",
-    [{"sim_put_error": False, "sim_get_error": False}],
+    [{"sim_patch_error": False, "sim_get_error": False}],
     indirect=True,
 )
 def test_get_outlet_state(
@@ -45,7 +45,7 @@ def test_get_outlet_state(
 
 @pytest.mark.parametrize(
     "power_switch_component_manager",
-    [{"sim_put_error": False, "sim_get_error": False}],
+    [{"sim_patch_error": False, "sim_get_error": False}],
     indirect=True,
 )
 def test_turn_outlet_on_off(
@@ -109,7 +109,7 @@ def test_turn_outlet_on_off(
 
 @pytest.mark.parametrize(
     "power_switch_component_manager",
-    [{"sim_put_error": False, "sim_get_error": False}],
+    [{"sim_patch_error": False, "sim_get_error": False}],
     indirect=True,
 )
 def test_outlet_out_of_bounds(
@@ -137,7 +137,7 @@ def test_outlet_out_of_bounds(
 
 @pytest.mark.parametrize(
     "power_switch_component_manager",
-    [{"sim_put_error": False, "sim_get_error": True}],
+    [{"sim_patch_error": False, "sim_get_error": True}],
     indirect=True,
 )
 def test_get_request_failure(
@@ -153,7 +153,7 @@ def test_get_request_failure(
 
 @pytest.mark.parametrize(
     "power_switch_component_manager",
-    [{"sim_put_error": True, "sim_get_error": False}],
+    [{"sim_patch_error": True, "sim_get_error": False}],
     indirect=True,
 )
 def test_put_request_failure(
