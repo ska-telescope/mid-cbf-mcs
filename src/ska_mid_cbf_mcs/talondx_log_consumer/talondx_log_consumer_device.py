@@ -16,6 +16,7 @@ from typing import List
 
 # tango imports
 import tango
+
 # Additional import
 # PROTECTED REGION ID(TalonDxLogConsumer.additional_import) ENABLED START #
 from ska_mid_cbf_mcs.talondx_log_consumer.talondx_log_consumer_component_manager import \
