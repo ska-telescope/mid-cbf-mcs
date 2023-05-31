@@ -38,10 +38,18 @@ class PowerSwitchSimulator:
         Initialise a new instance.
         """
         self.logger = logger
-        self.outlets = self.get_outlet_list()
         self.outlet_id_list: List(str) = []
         for item in outlet_id_list:
             self.outlet_id_list.append(item)
+        print(
+            " --- LINE 45 --- power_switch_simulator::__init__() --- self.outlet_id_list == ",
+            self.outlet_id_list
+        )
+        self.outlets = self.get_outlet_list()
+        print(
+            " --- LINE 50 --- power_switch_simulator::__init__() --- self.outlets == ",
+            self.outlets
+        )
 
     @property
     def num_outlets(self: PowerSwitchSimulator) -> int:
@@ -50,6 +58,10 @@ class PowerSwitchSimulator:
 
         :return: number of outlets
         """
+        print(
+            " --- LINE 62 --- power_switch_simulator::num_outlets() --- num_outlets == ",
+            len(self.outlets)
+        )
         return len(self.outlets)
 
     @property
@@ -59,6 +71,9 @@ class PowerSwitchSimulator:
 
         :return: simulator always returns True
         """
+        print(
+            " --- LINE 75 --- power_switch_simulator::is_communicating() --- "
+        )
         return True
 
     def get_outlet_power_mode(
@@ -72,12 +87,20 @@ class PowerSwitchSimulator:
 
         :raise AssertionError: if outlet ID is out of bounds
         """
+        print(
+            " --- LINE 91 --- power_switch_simulator::get_outlet_power_mode --- outlet == ",
+            outlet,
+        )
+        print(" --- LINE 94 --- power_switch_simulator::get_outlet_power_mode --- outlet_id_list == ", self.outlet_id_list)
+        print(" --- LINE 95 --- power_switch_simulator::get_outlet_power_mode --- type(outlet_id_list) == ", type(self.outlet_id_list))
         assert (
-            str(outlet) in self.outlet_id_list
-        ), "Outlet ID must be in the allowable outlet_id_list read in from the Config File"
+            outlet in self.outlet_id_list
+        ), f"Outlet ID {outlet} must be in the allowable outlet_id_list read in from the Config File"
 
         outlet_idx = self.outlet_id_list.index(outlet)
 
+        power_mode = self.outlets[outlet_idx].power_mode
+        print(" --- LINE 103 --- power_switch_simulator::get_outlet_power_mode --- power_mode == ", power_mode)
         return self.outlets[outlet_idx].power_mode
 
     def turn_on_outlet(
@@ -93,8 +116,8 @@ class PowerSwitchSimulator:
         :raise AssertionError: if outlet ID is out of bounds
         """
         assert (
-            str(outlet) in self.outlet_id_list
-        ), "Outlet ID must be in the allowable outlet_id_list read in from the Config File"
+            outlet in self.outlet_id_list
+        ), f"Outlet ID {outlet} must be in the allowable outlet_id_list read in from the Config File"
 
         outlet_idx = self.outlet_id_list.index(outlet)
         self.outlets[outlet_idx].power_mode = PowerMode.ON
@@ -113,8 +136,8 @@ class PowerSwitchSimulator:
         :raise AssertionError: if outlet ID is out of bounds
         """
         assert (
-            str(outlet) in self.outlet_id_list
-        ), "Outlet ID must be in the allowable outlet_id_list read in from the Config File"
+            outlet in self.outlet_id_list
+        ), f"Outlet ID {outlet} must be in the allowable outlet_id_list read in from the Config File"
 
         outlet_idx = self.outlet_id_list.index(outlet)
         self.outlets[outlet_idx].power_mode = PowerMode.OFF

@@ -191,11 +191,12 @@ class PowerSwitchDriver:
             " --- LINE 174 --- power_switch_driver::get_outlet_power_mode --- outlet == ",
             outlet,
         )
-        # print("get_outlet_power_mode::self.outlet_id_list", self.outlet_id_list)
+        print(" --- LINE 175 --- power_switch_driver::get_outlet_power_mode --- outlet_id_list == ", self.outlet_id_list)
+        print(" --- LINE 176 --- power_switch_driver::get_outlet_power_mode --- type(outlet_id_list) == ", type(self.outlet_id_list))
 
         assert (
-            str(outlet) in self.outlet_id_list
-        ), f"Outlet {outlet} must be in the allowable outlet_id_list read in from the Config File"
+            outlet in self.outlet_id_list
+        ), f"Outlet ID {outlet} must be in the allowable outlet_id_list read in from the Config File"
 
         if self.model == "DLI-PRO":
             url = f"{self.base_url}/restapi/relay/outlets/{outlet}/state/"
@@ -211,6 +212,8 @@ class PowerSwitchDriver:
         )
         # print("headers = ", self.header)
 
+        print(" --- LINE 190 --- power_switch_driver::get_outlet_power_mode --- type(outlet) == ", type(outlet) )
+
         outlet_idx = self.outlet_id_list.index(outlet)
         print(
             " --- LINE 195 --- power_switch_driver::get_outlet_power_mode --- outlet_idx == ",
@@ -218,11 +221,11 @@ class PowerSwitchDriver:
         )
         print(
             " --- LINE 196 --- power_switch_driver::get_outlet_power_mode --- self.outlet_id_list == ",
-            self.outlet_id_list,
+            self.outlet_id_list
         )
 
-        outlet_idx = self.outlet_id_list.index(outlet)
-        # print("outlet_idx = ", outlet_idx)
+        # outlet_idx = self.outlet_id_list.index(outlet)
+        print(" --- LINE 200 --- power_switch_driver::get_outlet_power_mode --- outlet_idx == ", outlet_idx)
         try:
             response = requests.get(
                 url=url,
@@ -258,7 +261,7 @@ class PowerSwitchDriver:
                 # print(f" --- LINE 219 --- power_switch_driver::get_outlet_power_mode --- self.outlets[{outlet_idx}] == {self.outlets[outlet_idx].__dict__}")
                 if power_mode != self.outlets[outlet_idx].power_mode:
                     raise AssertionError(
-                        f"Power mode of outlet {outlet} ({power_mode})"
+                        f"Power mode of outlet ID {outlet} ({power_mode})"
                         f" is different than the expected mode {self.outlets[outlet_idx].power_mode}"
                     )
                 return power_mode
@@ -287,8 +290,8 @@ class PowerSwitchDriver:
         :raise AssertionError: if outlet ID is out of bounds
         """
         assert (
-            str(outlet) in self.outlet_id_list
-        ), "Outlet ID must be in the allowable outlet_id_list read in from the Config File"
+            outlet in self.outlet_id_list
+        ), f"Outlet ID {outlet} must be in the allowable outlet_id_list read in from the Config File"
 
         if self.model == "DLI-PRO":
             url = f"{self.base_url}/restapi/relay/outlets/{outlet}/state/"
@@ -360,8 +363,8 @@ class PowerSwitchDriver:
         :raise AssertionError: if outlet ID is out of bounds
         """
         assert (
-            str(outlet) in self.outlet_id_list
-        ), "Outlet ID must be in the allowable outlet_id_list read in from the Config File"
+            outlet in self.outlet_id_list
+        ), f"Outlet ID {outlet} must be in the allowable outlet_id_list read in from the Config File"
 
         # url = f"{self.base_url}{self.control_url_prefix}/{outlet}{self.url_postfix}"
 
@@ -392,10 +395,10 @@ class PowerSwitchDriver:
                 auth=(self.login, self.password),
                 timeout=self.query_timeout_s,
             )
-            print(
-                " --- LINE 346 --- power_switch_driver::turn_off_outlet --- response.text turning off outlet in line 346 == ",
-                response.text,
-            )
+            # print(
+            #     " --- LINE 346 --- power_switch_driver::turn_off_outlet --- response.text turning off outlet in line 346 == ",
+            #     response.text,
+            # )
             if response.status_code in [
                 requests.codes.ok,
                 requests.codes.no_content,
@@ -470,7 +473,15 @@ class PowerSwitchDriver:
                             " --- LINE 414 ---  power_switch_driver::get_outlet_list --- idx == ",
                             idx,
                         )
+                        print(
+                            " --- LINE 415 ---  power_switch_driver::get_outlet_list --- resp_dict == ",
+                            resp_dict,
+                        )
                         out = resp_dict["state"]
+                        print(
+                            " --- LINE 416 ---  power_switch_driver::get_outlet_list --- out == ",
+                            out,
+                        )
                         power_mode = self.power_mode_conversion[
                             str(out).lower()
                         ]
