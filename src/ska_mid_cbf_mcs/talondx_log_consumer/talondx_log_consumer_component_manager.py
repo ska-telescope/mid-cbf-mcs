@@ -10,6 +10,7 @@
 from __future__ import annotations
 
 import logging
+
 import tango
 from ska_tango_base.base.component_manager import BaseComponentManager
 
