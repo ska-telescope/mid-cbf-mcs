@@ -153,7 +153,7 @@ def power_switch_component_manager(
         model="DLI-PRO",
         content_type="application/json",
         outlet_schema_file="charts/ska-mid-cbf-mcs/data/power_switch_001_schema.json",
-        outlet_id_list=[0, 1, 2, 3, 4, 5, 6, 7],
+        outlet_id_list=["0", "1", "2", "3", "4", "5", "6", "7"],
         logger=logger,
         push_change_event_callback=push_change_event_callback,
         communication_status_changed_callback=communication_status_changed_callback,
