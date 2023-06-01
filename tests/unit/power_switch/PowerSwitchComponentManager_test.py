@@ -98,7 +98,7 @@ def test_turn_outlet_on_off(
 
     # Turn on outlets and check the state again
     for i in range(0, num_outlets):
-        assert power_switch_component_manager.turn_on_outlet(i) == (
+        assert power_switch_component_manager.turn_on_outlet(str(i)) == (
             ResultCode.OK,
             f"Outlet {i} power on",
         )
@@ -106,7 +106,7 @@ def test_turn_outlet_on_off(
         for j in range(0, num_outlets):
             if j <= i:
                 assert (
-                    power_switch_component_manager.get_outlet_power_mode(j)
+                    power_switch_component_manager.get_outlet_power_mode(str(j))
                     == PowerMode.ON
                 )
             else:
@@ -114,7 +114,7 @@ def test_turn_outlet_on_off(
                     AssertionError,
                     match=r"Power mode of outlet \d \(3\) is different than the expected mode 1",
                 ):
-                    power_switch_component_manager.get_outlet_power_mode(j)
+                    power_switch_component_manager.get_outlet_power_mode(str(j))
 
 
 @pytest.mark.parametrize(
@@ -136,13 +136,13 @@ def test_outlet_out_of_bounds(
 
     # Check that an assertion is raised if we try to access an invalid outlet ID
     with pytest.raises(AssertionError):
-        power_switch_component_manager.get_outlet_power_mode(num_outlets)
+        power_switch_component_manager.get_outlet_power_mode(str(num_outlets))
 
     with pytest.raises(AssertionError):
-        power_switch_component_manager.turn_on_outlet(num_outlets)
+        power_switch_component_manager.turn_on_outlet(str(num_outlets))
 
     with pytest.raises(AssertionError):
-        power_switch_component_manager.turn_off_outlet(num_outlets)
+        power_switch_component_manager.turn_off_outlet(str(num_outlets))
 
 
 @pytest.mark.parametrize(
@@ -176,7 +176,7 @@ def test_patch_request_failure(
     num_outlets = power_switch_component_manager.num_outlets
     assert num_outlets == 8
 
-    assert power_switch_component_manager.turn_off_outlet(0) == (
+    assert power_switch_component_manager.turn_off_outlet("0") == (
         ResultCode.FAILED,
         "HTTP response error",
     )
