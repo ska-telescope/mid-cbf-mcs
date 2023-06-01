@@ -353,6 +353,10 @@ class PowerSwitchDriver:
 
         :raise AssertionError: if outlet ID is out of bounds
         """
+        print(" --- LINE 356 --- power_switch_driver::turn_off_outlet --- outlet == ", outlet)
+        print(" --- LINE 357 --- power_switch_driver::turn_off_outlet --- type(outlet) == ", type(outlet))
+        print(" --- LINE 356 --- power_switch_driver::turn_off_outlet --- self.outlet_id_list == ", self.outlet_id_list)
+
         assert (
             outlet in self.outlet_id_list
         ), f"Outlet ID {outlet} must be in the allowable outlet_id_list read in from the Config File"
@@ -385,10 +389,10 @@ class PowerSwitchDriver:
                 auth=(self.login, self.password),
                 timeout=self.query_timeout_s,
             )
-            print(
-                " --- LINE 346 --- power_switch_driver::turn_off_outlet --- response.text turning off outlet in line 346 == ",
-                response.text
-            )
+            # print(
+            #     " --- LINE 346 --- power_switch_driver::turn_off_outlet --- response.text turning off outlet in line 346 == ",
+            #     response.text
+            # )
             if response.status_code in [
                 requests.codes.ok,
                 requests.codes.no_content,
