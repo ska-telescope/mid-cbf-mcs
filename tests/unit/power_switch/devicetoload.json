@@ -23,15 +23,6 @@
                             "PowerSwitchRequestHeaderContentType": [
                                 "application/json"
                             ],
-                            "PowerSwitchStatusUrlPrefix": [
-                                "/restapi/relay/outlets"
-                            ],
-                            "PowerSwitchControlUrlPrefix": [
-                                "/restapi/relay/outlets"
-                            ],
-                            "PowerSwitchUrlPostfix": [
-                                "/state/"
-                            ],
                             "PowerSwitchOutletSchemaFile": [
                                 "charts/ska-mid-cbf-mcs/data/power_switch_001_schema.json"
                             ],

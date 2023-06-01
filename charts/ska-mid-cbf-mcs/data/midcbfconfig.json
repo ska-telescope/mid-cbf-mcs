@@ -1863,15 +1863,6 @@
                             "PowerSwitchRequestHeaderContentType": [
                                 "application/x-www-form-urlencoded"
                             ],
-                            "PowerSwitchStatusUrlPrefix": [
-                                "/restapi/relay/outlets"
-                            ],
-                            "PowerSwitchControlUrlPrefix": [
-                                "/restapi/relay/outlets"
-                            ],
-                            "PowerSwitchUrlPostfix": [
-                                "/state/"
-                            ], 
                             "PowerSwitchOutletSchemaFile": [
                                 "charts/ska-mid-cbf-mcs/data/power_switch_001_schema.json"
                             ],
@@ -1915,15 +1906,6 @@
                             "PowerSwitchRequestHeaderContentType": [
                                 "application/json"
                             ],
-                            "PowerSwitchStatusUrlPrefix": [
-                                "/jaws/monitor/outlets"
-                            ],
-                            "PowerSwitchControlUrlPrefix": [
-                                "/jaws/control/outlets"
-                            ],
-                            "PowerSwitchUrlPostfix": [
-                                ""
-                            ], 
                             "PowerSwitchOutletSchemaFile": [
                                 "charts/ska-mid-cbf-mcs/data/power_switch_002_schema.json"
                             ],

@@ -41,15 +41,6 @@ server:
           - name: "PowerSwitchModel"
             values:
             - "DLI-PRO"
-          - name: "PowerSwitchStatusUrlPrefix"
-            values:
-            - "/restapi/relay/outlets"
-          - name: "PowerSwitchControlUrlPrefix"
-            values:
-            - "/restapi/relay/outlets"
-          - name: "PowerSwitchUrlPostfix"
-            values:
-            - "/state/"
           - name: "PowerSwitchRequestHeaderContentType"
             values:
             - "application/x-www-form-urlencoded"
@@ -91,15 +82,6 @@ server:
           - name: "PowerSwitchModel"
             values:
             - "Switched PRO2"
-          - name: "PowerSwitchStatusUrlPrefix"
-            values:
-            - "/jaws/monitor/outlets"
-          - name: "PowerSwitchControlUrlPrefix"
-            values:
-            - "/jaws/control/outlets"
-          - name: "PowerSwitchUrlPostfix"
-            values:
-            - ''
           - name: "PowerSwitchRequestHeaderContentType"
             values:
             - "application/json"

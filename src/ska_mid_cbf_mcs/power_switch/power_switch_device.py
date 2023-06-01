@@ -69,15 +69,6 @@ class PowerSwitch(SKABaseDevice):
     PowerSwitchRequestHeaderContentType = device_property(
         dtype="str",
     )
-    PowerSwitchStatusUrlPrefix = device_property(
-        dtype="str",
-    )
-    PowerSwitchControlUrlPrefix = device_property(
-        dtype="str",
-    )
-    PowerSwitchUrlPostfix = device_property(
-        dtype="str",
-    )
     PowerSwitchOutletSchemaFile = device_property(
         dtype="str",
     )
@@ -148,9 +139,6 @@ class PowerSwitch(SKABaseDevice):
             self.PowerSwitchPassword,
             self.PowerSwitchModel,
             self.PowerSwitchRequestHeaderContentType,
-            self.PowerSwitchStatusUrlPrefix,
-            self.PowerSwitchControlUrlPrefix,
-            self.PowerSwitchUrlPostfix,
             self.PowerSwitchOutletSchemaFile,
             self.PowerSwitchOutletIdList,
             self.logger,
