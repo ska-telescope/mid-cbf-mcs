@@ -160,11 +160,11 @@ def test_get_request_failure(
     [{"sim_patch_error": True, "sim_get_error": False}],
     indirect=True,
 )
-def test_put_request_failure(
+def test_patch_request_failure(
     power_switch_component_manager: PowerSwitchComponentManager,
 ) -> None:
     """
-    Tests that a PUT request failure is appropriately handled.
+    Tests that a PATCH request failure is appropriately handled.
     """
     power_switch_component_manager.start_communicating()
     num_outlets = power_switch_component_manager.num_outlets
