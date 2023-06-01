@@ -133,6 +133,7 @@ class PowerSwitchDriver:
 
         :return: number of outlets
         """
+        print("--- LINE 136 --- power_switch_driver::num_outlets() --- self.outlets == ", self.outlets)
         return len(self.outlets)
 
     @property

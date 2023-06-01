@@ -132,13 +132,15 @@ class PowerSwitchComponentManager(CbfComponentManager):
         """
         if self.simulation_mode:
             print(
-                " --- LINE 128 --- power_switch_component_manager::num_outlets() --- in simulation mode"
+                " --- LINE 135 --- power_switch_component_manager::num_outlets() --- in simulation mode"
             )
+            print("--- LINE 137 --- power_switch_component_manager::num_outlets() --- self.power_switch_driver.num_outlets", self.power_switch_driver.num_outlets)
             return self.power_switch_simulator.num_outlets
         else:
             print(
-                " --- LINE 131 --- power_switch_component_manager::num_outlets() --- NOT simulation mode"
+                " --- LINE 141 --- power_switch_component_manager::num_outlets() --- NOT simulation mode"
             )
+            print("--- LINE 143 --- power_switch_component_manager::num_outlets() --- self.power_switch_driver.num_outlets", self.power_switch_driver.num_outlets)
             return self.power_switch_driver.num_outlets
 
     @property
