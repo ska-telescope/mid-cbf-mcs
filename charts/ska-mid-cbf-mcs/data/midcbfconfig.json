@@ -43,7 +43,9 @@
                             ],
                             "TalonLRU": [
                                 "mid_csp_cbf/talon_lru/001",
-                                "mid_csp_cbf/talon_lru/002"
+                                "mid_csp_cbf/talon_lru/002",
+                                "mid_csp_cbf/talon_lru/003",
+                                "mid_csp_cbf/talon_lru/004"
                             ],
                             "TalonDxConfigPath": [
                                 "mnt/talondx-config"
@@ -1863,10 +1865,10 @@
                     "mid_csp_cbf/talon_lru/001": {
                         "properties": {
                             "TalonDxBoard1Address": [
-                                "arbitrary/fqdn/01"
+                                "mid_csp_cbf/talon_board/talon-001"
                             ],
                             "TalonDxBoard2Address": [
-                                "arbitrary/fqdn/02"
+                                "mid_csp_cbf/talon_board/talon-002"
                             ],
                             "PDU1Address": [
                                 "mid_csp_cbf/power_switch/001"
@@ -1897,10 +1899,10 @@
                     "mid_csp_cbf/talon_lru/002": {
                         "properties": {
                             "TalonDxBoard1Address": [
-                                "arbitrary/fqdn/01"
+                                "mid_csp_cbf/talon_board/talon-003"
                             ],
                             "TalonDxBoard2Address": [
-                                "arbitrary/fqdn/02"
+                                "mid_csp_cbf/talon_board/talon-004"
                             ],
                             "PDU1Address": [
                                 "mid_csp_cbf/power_switch/001"
@@ -1913,6 +1915,74 @@
                             ],
                             "PDU2PowerOutlet": [
                                 "1"
+                            ],
+                            "polled_attr": [
+                                "state",
+                                "1000",
+                                "healthstate",
+                                "3000",
+                                "adminmode",
+                                "3000"
+                            ]
+                        }
+                    }
+                }
+            },
+            "talonlru-003": {
+                "TalonLRU": {
+                    "mid_csp_cbf/talon_lru/003": {
+                        "properties": {
+                            "TalonDxBoard1Address": [
+                                "mid_csp_cbf/talon_board/talon-005"
+                            ],
+                            "TalonDxBoard2Address": [
+                                "mid_csp_cbf/talon_board/talon-006"
+                            ],
+                            "PDU1Address": [
+                                "mid_csp_cbf/power_switch/001"
+                            ],
+                            "PDU1PowerOutlet": [
+                                "2"
+                            ],
+                            "PDU2Address": [
+                                "mid_csp_cbf/power_switch/001"
+                            ],
+                            "PDU2PowerOutlet": [
+                                "2"
+                            ],
+                            "polled_attr": [
+                                "state",
+                                "1000",
+                                "healthstate",
+                                "3000",
+                                "adminmode",
+                                "3000"
+                            ]
+                        }
+                    }
+                }
+            },
+            "talonlru-004": {
+                "TalonLRU": {
+                    "mid_csp_cbf/talon_lru/001": {
+                        "properties": {
+                            "TalonDxBoard1Address": [
+                                "mid_csp_cbf/talon_board/talon-007"
+                            ],
+                            "TalonDxBoard2Address": [
+                                "mid_csp_cbf/talon_board/talon-008"
+                            ],
+                            "PDU1Address": [
+                                "mid_csp_cbf/power_switch/001"
+                            ],
+                            "PDU1PowerOutlet": [
+                                "3"
+                            ],
+                            "PDU2Address": [
+                                "mid_csp_cbf/power_switch/001"
+                            ],
+                            "PDU2PowerOutlet": [
+                                "3"
                             ],
                             "polled_attr": [
                                 "state",
@@ -2087,6 +2157,190 @@
                             ],
                             "Instance": [
                                 "talon4_test"
+                            ],
+                            "TalonDxSysIdServer": [
+                                "ska-talondx-sysid-ds"
+                            ],
+                            "TalonDx100GEthernetServer": [
+                                "ska-talondx-100-gigabit-ethernet-ds"
+                            ],
+                            "TalonStatusServer": [
+                                "ska-talondx-status-ds"
+                            ],
+                            "HpsMasterServer": [
+                                "dshpsmaster"
+                            ],
+                            "polled_attr": [
+                                "state",
+                                "1000",
+                                "healthstate",
+                                "3000",
+                                "adminmode",
+                                "3000"
+                            ]
+                        }
+                    }
+                }
+            },
+            "talon-005": {
+                "TalonBoard": {
+                    "mid_csp_cbf/talon_board/talon-005": {
+                        "properties": {
+                            "TalonDxBoardAddress": [
+                                "192.168.8.5"
+                            ],
+                            "InfluxDbPort": [
+                                "8086"
+                            ],
+                            "InfluxDbOrg": [
+                                "ska"
+                            ],
+                            "InfluxDbBucket": [
+                                "talon"
+                            ],
+                            "InfluxDbAuthToken": [
+                                "ikIDRLicRaMxviUJRqyE8bKF1Y_sZnaHc9MkWZY92jxg1isNPIGCyLtaC8EjbOhsT_kTzjt12qenB4g7-UOrog=="
+                            ],
+                            "Instance": [
+                                "talon5_test"
+                            ],
+                            "TalonDxSysIdServer": [
+                                "ska-talondx-sysid-ds"
+                            ],
+                            "TalonDx100GEthernetServer": [
+                                "ska-talondx-100-gigabit-ethernet-ds"
+                            ],
+                            "TalonStatusServer": [
+                                "ska-talondx-status-ds"
+                            ],
+                            "HpsMasterServer": [
+                                "dshpsmaster"
+                            ],
+                            "polled_attr": [
+                                "state",
+                                "1000",
+                                "healthstate",
+                                "3000",
+                                "adminmode",
+                                "3000"
+                            ]
+                        }
+                    }
+                }
+            },
+            "talon-006": {
+                "TalonBoard": {
+                    "mid_csp_cbf/talon_board/talon-006": {
+                        "properties": {
+                            "TalonDxBoardAddress": [
+                                "192.168.8.6"
+                            ],
+                            "InfluxDbPort": [
+                                "8086"
+                            ],
+                            "InfluxDbOrg": [
+                                "ska"
+                            ],
+                            "InfluxDbBucket": [
+                                "talon"
+                            ],
+                            "InfluxDbAuthToken": [
+                                "ikIDRLicRaMxviUJRqyE8bKF1Y_sZnaHc9MkWZY92jxg1isNPIGCyLtaC8EjbOhsT_kTzjt12qenB4g7-UOrog=="
+                            ],
+                            "Instance": [
+                                "talon6_test"
+                            ],
+                            "TalonDxSysIdServer": [
+                                "ska-talondx-sysid-ds"
+                            ],
+                            "TalonDx100GEthernetServer": [
+                                "ska-talondx-100-gigabit-ethernet-ds"
+                            ],
+                            "TalonStatusServer": [
+                                "ska-talondx-status-ds"
+                            ],
+                            "HpsMasterServer": [
+                                "dshpsmaster"
+                            ],
+                            "polled_attr": [
+                                "state",
+                                "1000",
+                                "healthstate",
+                                "3000",
+                                "adminmode",
+                                "3000"
+                            ]
+                        }
+                    }
+                }
+            },
+            "talon-007": {
+                "TalonBoard": {
+                    "mid_csp_cbf/talon_board/talon-007": {
+                        "properties": {
+                            "TalonDxBoardAddress": [
+                                "192.168.8.7"
+                            ],
+                            "InfluxDbPort": [
+                                "8086"
+                            ],
+                            "InfluxDbOrg": [
+                                "ska"
+                            ],
+                            "InfluxDbBucket": [
+                                "talon"
+                            ],
+                            "InfluxDbAuthToken": [
+                                "ikIDRLicRaMxviUJRqyE8bKF1Y_sZnaHc9MkWZY92jxg1isNPIGCyLtaC8EjbOhsT_kTzjt12qenB4g7-UOrog=="
+                            ],
+                            "Instance": [
+                                "talon7_test"
+                            ],
+                            "TalonDxSysIdServer": [
+                                "ska-talondx-sysid-ds"
+                            ],
+                            "TalonDx100GEthernetServer": [
+                                "ska-talondx-100-gigabit-ethernet-ds"
+                            ],
+                            "TalonStatusServer": [
+                                "ska-talondx-status-ds"
+                            ],
+                            "HpsMasterServer": [
+                                "dshpsmaster"
+                            ],
+                            "polled_attr": [
+                                "state",
+                                "1000",
+                                "healthstate",
+                                "3000",
+                                "adminmode",
+                                "3000"
+                            ]
+                        }
+                    }
+                }
+            },
+            "talon-008": {
+                "TalonBoard": {
+                    "mid_csp_cbf/talon_board/talon-008": {
+                        "properties": {
+                            "TalonDxBoardAddress": [
+                                "192.168.8.8"
+                            ],
+                            "InfluxDbPort": [
+                                "8086"
+                            ],
+                            "InfluxDbOrg": [
+                                "ska"
+                            ],
+                            "InfluxDbBucket": [
+                                "talon"
+                            ],
+                            "InfluxDbAuthToken": [
+                                "ikIDRLicRaMxviUJRqyE8bKF1Y_sZnaHc9MkWZY92jxg1isNPIGCyLtaC8EjbOhsT_kTzjt12qenB4g7-UOrog=="
+                            ],
+                            "Instance": [
+                                "talon8_test"
                             ],
                             "TalonDxSysIdServer": [
                                 "ska-talondx-sysid-ds"
