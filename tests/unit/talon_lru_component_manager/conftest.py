@@ -188,7 +188,7 @@ def talon_lru_component_manager(
             "mid_csp_cbf/power_switch/001",
             "mid_csp_cbf/power_switch/002",
         ],
-        pdu_outlets=[0, 0],
+        pdu_outlets=["0","AA1"],
         logger=logging.getLogger(),
         push_change_event_callback=push_change_event_callback,
         communication_status_changed_callback=communication_status_changed_callback,

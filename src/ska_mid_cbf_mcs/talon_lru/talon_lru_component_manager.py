@@ -31,7 +31,7 @@ class TalonLRUComponentManager(CbfComponentManager):
         self: TalonLRUComponentManager,
         talon_fqdns: List[str],
         pdu_fqdns: List[str],
-        pdu_outlets: List[int],
+        pdu_outlets: List[str],
         logger: logging.Logger,
         push_change_event_callback: Optional[Callable],
         communication_status_changed_callback: Callable[
