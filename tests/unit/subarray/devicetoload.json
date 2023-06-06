@@ -38,7 +38,11 @@
                                 "mid_csp_cbf/fsp/01",
                                 "mid_csp_cbf/fsp/02",
                                 "mid_csp_cbf/fsp/03",
-                                "mid_csp_cbf/fsp/04"
+                                "mid_csp_cbf/fsp/04",
+                                "mid_csp_cbf/fsp/05",
+                                "mid_csp_cbf/fsp/06",
+                                "mid_csp_cbf/fsp/07",
+                                "mid_csp_cbf/fsp/08"
                             ],
                             "FspCorrSubarray": [
                                 "mid_csp_cbf/fspCorrSubarray/01_01",
@@ -80,7 +84,11 @@
                                 "mid_csp_cbf/vcc/001",
                                 "mid_csp_cbf/vcc/002",
                                 "mid_csp_cbf/vcc/003",
-                                "mid_csp_cbf/vcc/004"
+                                "mid_csp_cbf/vcc/004",
+                                "mid_csp_cbf/vcc/005",
+                                "mid_csp_cbf/vcc/006",
+                                "mid_csp_cbf/vcc/007",
+                                "mid_csp_cbf/vcc/008"
                             ],
                             "polled_attr": [
                                 "state",

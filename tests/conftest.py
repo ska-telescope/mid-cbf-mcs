@@ -333,8 +333,8 @@ def init_proxies_fixture():
             Currently supported capabilities:
             - 1 CbfController
             - 1 CbfSubarray
-            - 4 Fsp
-            - 4 Vcc
+            - 8 Fsp
+            - 8 Vcc
             """
             # NOTE: set debug_device_is_on to True in order
             #       to allow device debugging under VScode
