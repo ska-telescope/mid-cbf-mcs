@@ -8,6 +8,10 @@ depends_on:
   - device: mid_csp_cbf/vcc/002
   - device: mid_csp_cbf/vcc/003
   - device: mid_csp_cbf/vcc/004
+  - device: mid_csp_cbf/vcc/005
+  - device: mid_csp_cbf/vcc/006
+  - device: mid_csp_cbf/vcc/007
+  - device: mid_csp_cbf/vcc/008
 readinessProbe:
   initialDelaySeconds: 0
   periodSeconds: 10
@@ -105,6 +109,10 @@ server:
             - "mid_csp_cbf/vcc/002"
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
+            - "mid_csp_cbf/vcc/005"
+            - "mid_csp_cbf/vcc/006"
+            - "mid_csp_cbf/vcc/007"
+            - "mid_csp_cbf/vcc/008"
           - name: "HpsFspCorrControllerAddress"
             values:
             - "talondx-001/fsp-app/fsp-corr-controller"
@@ -129,6 +137,10 @@ server:
             - "mid_csp_cbf/vcc/002"
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
+            - "mid_csp_cbf/vcc/005"
+            - "mid_csp_cbf/vcc/006"
+            - "mid_csp_cbf/vcc/007"
+            - "mid_csp_cbf/vcc/008"
           - name: "HpsFspCorrControllerAddress"
             values:
             - "talondx-001/fsp-app/fsp-corr-controller"
@@ -153,6 +165,10 @@ server:
             - "mid_csp_cbf/vcc/002"
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
+            - "mid_csp_cbf/vcc/005"
+            - "mid_csp_cbf/vcc/006"
+            - "mid_csp_cbf/vcc/007"
+            - "mid_csp_cbf/vcc/008"
           - name: "HpsFspCorrControllerAddress"
             values:
             - "talondx-001/fsp-app/fsp-corr-controller"
@@ -179,6 +195,10 @@ server:
             - "mid_csp_cbf/vcc/002"
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
+            - "mid_csp_cbf/vcc/005"
+            - "mid_csp_cbf/vcc/006"
+            - "mid_csp_cbf/vcc/007"
+            - "mid_csp_cbf/vcc/008"
 
       - name: "mid_csp_cbf/fspPssSubarray/01_02"
         properties:
@@ -200,6 +220,10 @@ server:
             - "mid_csp_cbf/vcc/002"
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
+            - "mid_csp_cbf/vcc/005"
+            - "mid_csp_cbf/vcc/006"
+            - "mid_csp_cbf/vcc/007"
+            - "mid_csp_cbf/vcc/008"
 
       - name: "mid_csp_cbf/fspPssSubarray/01_03"
         properties:
@@ -221,6 +245,10 @@ server:
             - "mid_csp_cbf/vcc/002"
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
+            - "mid_csp_cbf/vcc/005"
+            - "mid_csp_cbf/vcc/006"
+            - "mid_csp_cbf/vcc/007"
+            - "mid_csp_cbf/vcc/008"
             
     - name: "FspPstSubarray"
       devices:
@@ -244,6 +272,10 @@ server:
             - "mid_csp_cbf/vcc/002"
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
+            - "mid_csp_cbf/vcc/005"
+            - "mid_csp_cbf/vcc/006"
+            - "mid_csp_cbf/vcc/007"
+            - "mid_csp_cbf/vcc/008"
 
       - name: "mid_csp_cbf/fspPstSubarray/01_02"
         properties:
@@ -265,6 +297,10 @@ server:
             - "mid_csp_cbf/vcc/002"
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
+            - "mid_csp_cbf/vcc/005"
+            - "mid_csp_cbf/vcc/006"
+            - "mid_csp_cbf/vcc/007"
+            - "mid_csp_cbf/vcc/008"
 
       - name: "mid_csp_cbf/fspPstSubarray/01_03"
         properties:
@@ -286,6 +322,10 @@ server:
             - "mid_csp_cbf/vcc/002"
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
+            - "mid_csp_cbf/vcc/005"
+            - "mid_csp_cbf/vcc/006"
+            - "mid_csp_cbf/vcc/007"
+            - "mid_csp_cbf/vcc/008"
 
   - name: "fsp-02"
     classes:
@@ -369,6 +409,10 @@ server:
             - "mid_csp_cbf/vcc/002"
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
+            - "mid_csp_cbf/vcc/005"
+            - "mid_csp_cbf/vcc/006"
+            - "mid_csp_cbf/vcc/007"
+            - "mid_csp_cbf/vcc/008"
           - name: "HpsFspCorrControllerAddress"
             values:
             - "talondx-002/fsp-app/fsp-corr-controller"
@@ -393,6 +437,10 @@ server:
             - "mid_csp_cbf/vcc/002"
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
+            - "mid_csp_cbf/vcc/005"
+            - "mid_csp_cbf/vcc/006"
+            - "mid_csp_cbf/vcc/007"
+            - "mid_csp_cbf/vcc/008"
           - name: "HpsFspCorrControllerAddress"
             values:
             - "talondx-002/fsp-app/fsp-corr-controller"
@@ -417,6 +465,10 @@ server:
             - "mid_csp_cbf/vcc/002"
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
+            - "mid_csp_cbf/vcc/005"
+            - "mid_csp_cbf/vcc/006"
+            - "mid_csp_cbf/vcc/007"
+            - "mid_csp_cbf/vcc/008"
           - name: "HpsFspCorrControllerAddress"
             values:
             - "talondx-002/fsp-app/fsp-corr-controller"
@@ -443,6 +495,10 @@ server:
             - "mid_csp_cbf/vcc/002"
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
+            - "mid_csp_cbf/vcc/005"
+            - "mid_csp_cbf/vcc/006"
+            - "mid_csp_cbf/vcc/007"
+            - "mid_csp_cbf/vcc/008"
 
       - name: "mid_csp_cbf/fspPssSubarray/02_02"
         properties:
@@ -464,6 +520,10 @@ server:
             - "mid_csp_cbf/vcc/002"
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
+            - "mid_csp_cbf/vcc/005"
+            - "mid_csp_cbf/vcc/006"
+            - "mid_csp_cbf/vcc/007"
+            - "mid_csp_cbf/vcc/008"
 
       - name: "mid_csp_cbf/fspPssSubarray/02_03"
         properties:
@@ -485,6 +545,10 @@ server:
             - "mid_csp_cbf/vcc/002"
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
+            - "mid_csp_cbf/vcc/005"
+            - "mid_csp_cbf/vcc/006"
+            - "mid_csp_cbf/vcc/007"
+            - "mid_csp_cbf/vcc/008"
 
     - name: "FspPstSubarray"
       devices:
@@ -508,6 +572,10 @@ server:
             - "mid_csp_cbf/vcc/002"
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
+            - "mid_csp_cbf/vcc/005"
+            - "mid_csp_cbf/vcc/006"
+            - "mid_csp_cbf/vcc/007"
+            - "mid_csp_cbf/vcc/008"
 
       - name: "mid_csp_cbf/fspPstSubarray/02_02"
         properties:
@@ -529,6 +597,10 @@ server:
             - "mid_csp_cbf/vcc/002"
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
+            - "mid_csp_cbf/vcc/005"
+            - "mid_csp_cbf/vcc/006"
+            - "mid_csp_cbf/vcc/007"
+            - "mid_csp_cbf/vcc/008"
 
       - name: "mid_csp_cbf/fspPstSubarray/02_03"
         properties:
@@ -550,6 +622,10 @@ server:
             - "mid_csp_cbf/vcc/002"
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
+            - "mid_csp_cbf/vcc/005"
+            - "mid_csp_cbf/vcc/006"
+            - "mid_csp_cbf/vcc/007"
+            - "mid_csp_cbf/vcc/008"
 
   - name: "fsp-03"
     classes:
@@ -633,6 +709,10 @@ server:
             - "mid_csp_cbf/vcc/002"
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
+            - "mid_csp_cbf/vcc/005"
+            - "mid_csp_cbf/vcc/006"
+            - "mid_csp_cbf/vcc/007"
+            - "mid_csp_cbf/vcc/008"
           - name: "HpsFspCorrControllerAddress"
             values:
             - "talondx-003/fsp-app/fsp-corr-controller"
@@ -657,6 +737,10 @@ server:
             - "mid_csp_cbf/vcc/002"
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
+            - "mid_csp_cbf/vcc/005"
+            - "mid_csp_cbf/vcc/006"
+            - "mid_csp_cbf/vcc/007"
+            - "mid_csp_cbf/vcc/008"
           - name: "HpsFspCorrControllerAddress"
             values:
             - "talondx-003/fsp-app/fsp-corr-controller"
@@ -681,6 +765,10 @@ server:
             - "mid_csp_cbf/vcc/002"
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
+            - "mid_csp_cbf/vcc/005"
+            - "mid_csp_cbf/vcc/006"
+            - "mid_csp_cbf/vcc/007"
+            - "mid_csp_cbf/vcc/008"
           - name: "HpsFspCorrControllerAddress"
             values:
             - "talondx-003/fsp-app/fsp-corr-controller"
@@ -707,6 +795,10 @@ server:
             - "mid_csp_cbf/vcc/002"
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
+            - "mid_csp_cbf/vcc/005"
+            - "mid_csp_cbf/vcc/006"
+            - "mid_csp_cbf/vcc/007"
+            - "mid_csp_cbf/vcc/008"
 
       - name: "mid_csp_cbf/fspPssSubarray/03_02"
         properties:
@@ -728,6 +820,10 @@ server:
             - "mid_csp_cbf/vcc/002"
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
+            - "mid_csp_cbf/vcc/005"
+            - "mid_csp_cbf/vcc/006"
+            - "mid_csp_cbf/vcc/007"
+            - "mid_csp_cbf/vcc/008"
 
       - name: "mid_csp_cbf/fspPssSubarray/03_03"
         properties:
@@ -749,6 +845,10 @@ server:
             - "mid_csp_cbf/vcc/002"
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
+            - "mid_csp_cbf/vcc/005"
+            - "mid_csp_cbf/vcc/006"
+            - "mid_csp_cbf/vcc/007"
+            - "mid_csp_cbf/vcc/008"
 
     - name: "FspPstSubarray"
       devices:
@@ -772,6 +872,10 @@ server:
             - "mid_csp_cbf/vcc/002"
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
+            - "mid_csp_cbf/vcc/005"
+            - "mid_csp_cbf/vcc/006"
+            - "mid_csp_cbf/vcc/007"
+            - "mid_csp_cbf/vcc/008"
 
       - name: "mid_csp_cbf/fspPstSubarray/03_02"
         properties:
@@ -793,6 +897,10 @@ server:
             - "mid_csp_cbf/vcc/002"
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
+            - "mid_csp_cbf/vcc/005"
+            - "mid_csp_cbf/vcc/006"
+            - "mid_csp_cbf/vcc/007"
+            - "mid_csp_cbf/vcc/008"
 
       - name: "mid_csp_cbf/fspPstSubarray/03_03"
         properties:
@@ -814,6 +922,10 @@ server:
             - "mid_csp_cbf/vcc/002"
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
+            - "mid_csp_cbf/vcc/005"
+            - "mid_csp_cbf/vcc/006"
+            - "mid_csp_cbf/vcc/007"
+            - "mid_csp_cbf/vcc/008"
 
   - name: "fsp-04"
     classes:
@@ -897,6 +1009,10 @@ server:
             - "mid_csp_cbf/vcc/002"
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
+            - "mid_csp_cbf/vcc/005"
+            - "mid_csp_cbf/vcc/006"
+            - "mid_csp_cbf/vcc/007"
+            - "mid_csp_cbf/vcc/008"
           - name: "HpsFspCorrControllerAddress"
             values:
             - "talondx-004/fsp-app/fsp-corr-controller"
@@ -921,6 +1037,10 @@ server:
             - "mid_csp_cbf/vcc/002"
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
+            - "mid_csp_cbf/vcc/005"
+            - "mid_csp_cbf/vcc/006"
+            - "mid_csp_cbf/vcc/007"
+            - "mid_csp_cbf/vcc/008"
           - name: "HpsFspCorrControllerAddress"
             values:
             - "talondx-004/fsp-app/fsp-corr-controller"
@@ -945,6 +1065,10 @@ server:
             - "mid_csp_cbf/vcc/002"
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
+            - "mid_csp_cbf/vcc/005"
+            - "mid_csp_cbf/vcc/006"
+            - "mid_csp_cbf/vcc/007"
+            - "mid_csp_cbf/vcc/008"
           - name: "HpsFspCorrControllerAddress"
             values:
             - "talondx-004/fsp-app/fsp-corr-controller"
@@ -971,6 +1095,10 @@ server:
             - "mid_csp_cbf/vcc/002"
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
+            - "mid_csp_cbf/vcc/005"
+            - "mid_csp_cbf/vcc/006"
+            - "mid_csp_cbf/vcc/007"
+            - "mid_csp_cbf/vcc/008"
 
       - name: "mid_csp_cbf/fspPssSubarray/04_02"
         properties:
@@ -992,6 +1120,10 @@ server:
             - "mid_csp_cbf/vcc/002"
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
+            - "mid_csp_cbf/vcc/005"
+            - "mid_csp_cbf/vcc/006"
+            - "mid_csp_cbf/vcc/007"
+            - "mid_csp_cbf/vcc/008"
 
       - name: "mid_csp_cbf/fspPssSubarray/04_03"
         properties:
@@ -1013,6 +1145,10 @@ server:
             - "mid_csp_cbf/vcc/002"
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
+            - "mid_csp_cbf/vcc/005"
+            - "mid_csp_cbf/vcc/006"
+            - "mid_csp_cbf/vcc/007"
+            - "mid_csp_cbf/vcc/008"
 
     - name: "FspPstSubarray"
       devices:
@@ -1036,6 +1172,10 @@ server:
             - "mid_csp_cbf/vcc/002"
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
+            - "mid_csp_cbf/vcc/005"
+            - "mid_csp_cbf/vcc/006"
+            - "mid_csp_cbf/vcc/007"
+            - "mid_csp_cbf/vcc/008"
 
       - name: "mid_csp_cbf/fspPstSubarray/04_02"
         properties:
@@ -1057,6 +1197,10 @@ server:
             - "mid_csp_cbf/vcc/002"
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
+            - "mid_csp_cbf/vcc/005"
+            - "mid_csp_cbf/vcc/006"
+            - "mid_csp_cbf/vcc/007"
+            - "mid_csp_cbf/vcc/008"
 
       - name: "mid_csp_cbf/fspPstSubarray/04_03"
         properties:
@@ -1078,6 +1222,10 @@ server:
             - "mid_csp_cbf/vcc/002"
             - "mid_csp_cbf/vcc/003"
             - "mid_csp_cbf/vcc/004"
+            - "mid_csp_cbf/vcc/005"
+            - "mid_csp_cbf/vcc/006"
+            - "mid_csp_cbf/vcc/007"
+            - "mid_csp_cbf/vcc/008"
 image:
   registry: "{{.Values.midcbf.image.registry}}"
   image: "{{.Values.midcbf.image.image}}"
