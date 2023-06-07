@@ -808,9 +808,7 @@ class ControllerComponentManager(CbfComponentManager):
                     try:
                         log_msg = f"Trying connection to {fqdn}"
                         self._logger.info(log_msg)
-                        proxy = CbfDeviceProxy(
-                            fqdn=fqdn, logger=self._logger
-                        )
+                        proxy = CbfDeviceProxy(fqdn=fqdn, logger=self._logger)
                         proxy.set_timeout_millis(10000)
                         self._proxies[fqdn] = proxy
                     except tango.DevFailed as df:
