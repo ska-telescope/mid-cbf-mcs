@@ -802,6 +802,24 @@ class ControllerComponentManager(CbfComponentManager):
                 # use a hard-coded example fqdn talon lru for simulation mode
                 self._fqdn_talon_lru = {"mid_csp_cbf/talon_lru/001"}
 
+            # Add talon_lru fqdns to self._proxies if absent
+            for fqdn in self._fqdn_talon_lru:
+                if fqdn not in self._proxies:
+                    try:
+                        log_msg = f"Trying connection to {fqdn}"
+                        self._logger.info(log_msg)
+                        proxy = CbfDeviceProxy(
+                            fqdn=fqdn, logger=self._logger
+                        )
+                        proxy.set_timeout_millis(10000)
+                        self._proxies[fqdn] = proxy
+                    except tango.DevFailed as df:
+                        self._connected = False
+                        for item in df.args:
+                            log_msg = f"Failure in connection to {fqdn}; {item.reason}"
+                            self._logger.error(log_msg)
+                        return
+
             try:
                 for fqdn in self._fqdn_talon_lru:
                     self._proxies[fqdn].Off()
