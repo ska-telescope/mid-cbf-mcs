@@ -47,7 +47,9 @@
                             ],
                             "TalonLRU": [
                                 "mid_csp_cbf/talon_lru/001",
-                                "mid_csp_cbf/talon_lru/002"
+                                "mid_csp_cbf/talon_lru/002",
+                                "mid_csp_cbf/talon_lru/003",
+                                "mid_csp_cbf/talon_lru/004"
                             ],
                             "TalonDxConfigPath": [
                                 "mnt/talondx-config"
