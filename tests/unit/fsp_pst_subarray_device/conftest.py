@@ -229,5 +229,5 @@ def initial_mocks(
         "mid_csp_cbf/vcc/005": mock_vcc,
         "mid_csp_cbf/vcc/006": mock_vcc,
         "mid_csp_cbf/vcc/007": mock_vcc,
-        "mid_csp_cbf/vcc/008": mock_vcc
+        "mid_csp_cbf/vcc/008": mock_vcc,
     }
