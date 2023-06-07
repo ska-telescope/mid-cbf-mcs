@@ -39,7 +39,7 @@ file_path = os.path.dirname(os.path.abspath(__file__))
 # Local imports
 
 
-CONST_TEST_NUM_VCC = 4
+CONST_TEST_NUM_VCC = 8
 CONST_TEST_NUM_FSP = 4
 CONST_TEST_NUM_SUBARRAY = 1
 
@@ -302,10 +302,6 @@ def initial_mocks(
         "mid_csp_cbf/fsp/02": mock_fsp,
         "mid_csp_cbf/fsp/03": mock_fsp,
         "mid_csp_cbf/fsp/04": mock_fsp,
-        "mid_csp_cbf/fsp/05": mock_fsp,
-        "mid_csp_cbf/fsp/06": mock_fsp,
-        "mid_csp_cbf/fsp/07": mock_fsp,
-        "mid_csp_cbf/fsp/08": mock_fsp,
         "mid_csp_cbf/sub_elt/subarray_01": mock_subarray,
         "mid_csp_cbf/sub_elt/subarray_02": mock_subarray,
         "mid_csp_cbf/sub_elt/subarray_03": mock_subarray,

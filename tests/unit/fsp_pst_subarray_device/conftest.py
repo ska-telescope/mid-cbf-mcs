@@ -190,7 +190,7 @@ def mock_cbf_controller() -> unittest.mock.Mock:
     # Mock the MaxCapabilities Cbf Controller property
     builder.add_property(
         "MaxCapabilities",
-        {"MaxCapabilities": ["VCC:8", "FSP:8", "Subarray:2"]},
+        {"MaxCapabilities": ["VCC:8", "FSP:4", "Subarray:2"]},
     )
     # Mock the receptortoVcc Cbf Controller attribute
     # Note: Each receptor can only have one Vcc

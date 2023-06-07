@@ -38,11 +38,7 @@
                                 "mid_csp_cbf/fsp/01",
                                 "mid_csp_cbf/fsp/02",
                                 "mid_csp_cbf/fsp/03",
-                                "mid_csp_cbf/fsp/04",
-                                "mid_csp_cbf/fsp/05",
-                                "mid_csp_cbf/fsp/06",
-                                "mid_csp_cbf/fsp/07",
-                                "mid_csp_cbf/fsp/08"
+                                "mid_csp_cbf/fsp/04"
                             ],
                             "FspCorrSubarray": [
                                 "mid_csp_cbf/fspCorrSubarray/01_01",

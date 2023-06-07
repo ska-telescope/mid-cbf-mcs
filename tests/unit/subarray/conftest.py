@@ -319,7 +319,7 @@ def mock_controller() -> unittest.mock.Mock:
     builder.add_attribute("receptorToVcc", ["1:1", "2:2", "3:3", "4:4"])
     builder.add_property(
         "MaxCapabilities",
-        {"MaxCapabilities": ["VCC:8", "FSP:8", "Subarray:1"]},
+        {"MaxCapabilities": ["VCC:8", "FSP:4", "Subarray:1"]},
     )
     return builder()
 
@@ -452,10 +452,6 @@ def initial_mocks(
         "mid_csp_cbf/fsp/02": mock_fsp,
         "mid_csp_cbf/fsp/03": mock_fsp,
         "mid_csp_cbf/fsp/04": mock_fsp,
-        "mid_csp_cbf/fsp/05": mock_fsp,
-        "mid_csp_cbf/fsp/06": mock_fsp,
-        "mid_csp_cbf/fsp/07": mock_fsp,
-        "mid_csp_cbf/fsp/08": mock_fsp,
         "mid_csp_cbf/fspCorrSubarray/01_01": mock_fsp_subarray,
         "mid_csp_cbf/fspCorrSubarray/02_01": mock_fsp_subarray,
         "mid_csp_cbf/fspCorrSubarray/03_01": mock_fsp_subarray,
@@ -502,10 +498,6 @@ def subarray_component_manager(
             "mid_csp_cbf/fsp/02",
             "mid_csp_cbf/fsp/03",
             "mid_csp_cbf/fsp/04",
-            "mid_csp_cbf/fsp/05",
-            "mid_csp_cbf/fsp/05",
-            "mid_csp_cbf/fsp/07",
-            "mid_csp_cbf/fsp/08",
         ],
         fsp_corr_sub=[
             "mid_csp_cbf/fspCorrSubarray/01_01",
