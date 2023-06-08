@@ -333,7 +333,7 @@ def init_proxies_fixture():
             Currently supported capabilities:
             - 1 CbfController
             - 1 CbfSubarray
-            - 8 Fsp
+            - 4 Fsp
             - 8 Vcc
             """
             # NOTE: set debug_device_is_on to True in order
@@ -458,7 +458,7 @@ def init_proxies_fixture():
 
             # Talon LRU
             self.talon_lru = []
-            for i in range(1, 3):  # 2 Talon LRUs for now
+            for i in range(1, 5):  # 4 Talon LRUs for now
                 self.talon_lru.append(
                     CbfDeviceProxy(
                         fqdn=f"mid_csp_cbf/talon_lru/{i:03}",
