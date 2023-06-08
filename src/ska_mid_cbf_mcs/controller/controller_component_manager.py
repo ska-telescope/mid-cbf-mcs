@@ -377,12 +377,18 @@ class ControllerComponentManager(CbfComponentManager):
             self._logger.error(log_msg)
             return
 
-        for fqdn in self._fqdn_fsp + self._fqdn_subarray:
+        for fqdn in (
+            self._fqdn_fsp + self._fqdn_talon_lru + self._fqdn_subarray
+        ):
             if fqdn not in self._proxies:
                 try:
                     log_msg = f"Trying connection to {fqdn}"
                     self._logger.info(log_msg)
                     proxy = CbfDeviceProxy(fqdn=fqdn, logger=self._logger)
+
+                    if fqdn in self._fqdn_talon_lru:
+                        proxy.set_timeout_millis(10000)
+
                     self._proxies[fqdn] = proxy
                 except tango.DevFailed as df:
                     self._connected = False
@@ -411,6 +417,7 @@ class ControllerComponentManager(CbfComponentManager):
                     proxy.frequencyOffsetDeltaF = (
                         self.frequency_offset_delta_f[idx]
                     )
+
                 except tango.DevFailed as df:
                     for item in df.args:
                         log_msg = (
@@ -458,7 +465,6 @@ class ControllerComponentManager(CbfComponentManager):
         :param value: attribute value
         :param quality: attribute quality
         """
-
         if value is not None:
             try:
                 if "healthstate" in name:
@@ -704,6 +710,7 @@ class ControllerComponentManager(CbfComponentManager):
                     talon_lru_fqdn_set.add(config_command["talon_lru_fqdn"])
                 self._logger.info(f"talonlru list = {talon_lru_fqdn_set}")
 
+                # TODO: handle subscribed events for missing LRUs
                 self._fqdn_talon_lru = list(talon_lru_fqdn_set)
             else:
                 # use a hard-coded example fqdn talon lru for simulation mode
@@ -711,24 +718,6 @@ class ControllerComponentManager(CbfComponentManager):
 
             try:
                 for fqdn in self._fqdn_talon_lru:
-                    if fqdn not in self._proxies:
-                        try:
-                            log_msg = f"Trying connection to {fqdn}"
-                            self._logger.info(log_msg)
-                            proxy = CbfDeviceProxy(
-                                fqdn=fqdn, logger=self._logger
-                            )
-                            proxy.set_timeout_millis(10000)
-                            self._proxies[fqdn] = proxy
-                            # establish proxy connection to component
-                            self._proxies[fqdn].adminMode = AdminMode.ONLINE
-                        except tango.DevFailed as df:
-                            self._connected = False
-                            for item in df.args:
-                                log_msg = f"Failure in connection to {fqdn}; {item.reason}"
-                                self._logger.error(log_msg)
-                            return
-
                     self._proxies[fqdn].On()
             except tango.DevFailed:
                 log_msg = "Failed to power on Talon boards"
@@ -797,26 +786,11 @@ class ControllerComponentManager(CbfComponentManager):
                         )
                     self._logger.info(f"talonlru list = {talon_lru_fqdn_set}")
 
+                    # TODO: handle subscribed events for missing LRUs
                     self._fqdn_talon_lru = list(talon_lru_fqdn_set)
             else:
                 # use a hard-coded example fqdn talon lru for simulation mode
                 self._fqdn_talon_lru = {"mid_csp_cbf/talon_lru/001"}
-
-            # Add talon_lru fqdns to self._proxies if absent
-            for fqdn in self._fqdn_talon_lru:
-                if fqdn not in self._proxies:
-                    try:
-                        log_msg = f"Trying connection to {fqdn}"
-                        self._logger.info(log_msg)
-                        proxy = CbfDeviceProxy(fqdn=fqdn, logger=self._logger)
-                        proxy.set_timeout_millis(10000)
-                        self._proxies[fqdn] = proxy
-                    except tango.DevFailed as df:
-                        self._connected = False
-                        for item in df.args:
-                            log_msg = f"Failure in connection to {fqdn}; {item.reason}"
-                            self._logger.error(log_msg)
-                        return
 
             try:
                 for fqdn in self._fqdn_talon_lru:
