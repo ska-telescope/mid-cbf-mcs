@@ -417,7 +417,6 @@ class ControllerComponentManager(CbfComponentManager):
                     proxy.frequencyOffsetDeltaF = (
                         self.frequency_offset_delta_f[idx]
                     )
-
                 except tango.DevFailed as df:
                     for item in df.args:
                         log_msg = (
