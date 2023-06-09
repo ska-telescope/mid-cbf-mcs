@@ -12,10 +12,10 @@ dependencies:
   version: 0.4.3
   repository: https://artefact.skao.int/repository/helm-internal
 - name: ska-mid-cbf-mcs
-  version: 0.8.6
+  version: 0.9.0
   repository: "file://../ska-mid-cbf-mcs"
 - name: ska-mid-cbf-tmleafnode
-  version: 0.8.6
+  version: 0.9.0
   repository: "file://../ska-mid-cbf-tmleafnode"
 - name: ska-webjive
   version: 1.0.25
