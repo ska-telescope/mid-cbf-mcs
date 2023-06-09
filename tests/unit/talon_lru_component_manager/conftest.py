@@ -183,7 +183,10 @@ def talon_lru_component_manager(
     check_power_mode_callback: MockCallable,
 ) -> TalonLRUComponentManager:
     return TalonLRUComponentManager(
-        talon_fqdns=["arbitrary/fqdn/01", "arbitrary/fqdn/02"],
+        talon_fqdns=[
+            "mid_csp_cbf/talon_board/talon-001",
+            "mid_csp_cbf/talon_board/talon-002",
+        ],
         pdu_fqdns=[
             "mid_csp_cbf/power_switch/001",
             "mid_csp_cbf/power_switch/002",

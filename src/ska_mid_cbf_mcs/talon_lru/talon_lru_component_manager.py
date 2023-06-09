@@ -279,7 +279,7 @@ class TalonLRUComponentManager(CbfComponentManager):
         if self.pdu2_power_mode != expected_power_mode:
             self._logger.error(
                 f"PDU outlet 2 expected power mode: ({expected_power_mode}),"
-                f" actual power mode: ({self.pdu1_power_mode})"
+                f" actual power mode: ({self.pdu2_power_mode})"
             )
 
         # Temporary fix to avoid redeploying MCS (CIP-1561)

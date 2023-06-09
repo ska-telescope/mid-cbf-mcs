@@ -2,7 +2,7 @@ name: talonlru
 function: talon-lru
 domain: mid-csp-cbf
 command: "TalonLRU"
-instances: ["talonlru-001", "talonlru-002"]
+instances: ["talonlru-001", "talonlru-002", "talonlru-003", "talonlru-004"]
 depends_on:
   - device: mid_csp_cbf/power_switch/001
 readinessProbe:
@@ -52,7 +52,6 @@ server:
             - "3000"
             - "adminmode"
             - "3000"
-
   - name: "talonlru-002"
     classes:
     - name: "TalonLRU"
@@ -85,8 +84,73 @@ server:
             - "3000"
             - "adminmode"
             - "3000"
+  - name: "talonlru-003"
+    classes:
+    - name: "TalonLRU"
+      devices:
+      - name: "mid_csp_cbf/talon_lru/003"
+        properties:
+          - name: "TalonDxBoard1Address"
+            values:
+            - "mid_csp_cbf/talon_board/talon-005"
+          - name: "TalonDxBoard2Address"
+            values:
+            - "mid_csp_cbf/talon_board/talon-006"
+          - name: "PDU1Address"
+            values:
+            - "mid_csp_cbf/power_switch/001"
+          - name: "PDU1PowerOutlet"
+            values:
+            - "2"
+          - name: "PDU2Address"
+            values:
+            - "mid_csp_cbf/power_switch/001"
+          - name: "PDU2PowerOutlet"
+            values:
+            - "2"
+          - name: "polled_attr"
+            values:
+            - "state"
+            - "1000"
+            - "healthstate"
+            - "3000"
+            - "adminmode"
+            - "3000"
+  - name: "talonlru-004"
+    classes:
+    - name: "TalonLRU"
+      devices:
+      - name: "mid_csp_cbf/talon_lru/004"
+        properties:
+          - name: "TalonDxBoard1Address"
+            values:
+            - "mid_csp_cbf/talon_board/talon-007"
+          - name: "TalonDxBoard2Address"
+            values:
+            - "mid_csp_cbf/talon_board/talon-008"
+          - name: "PDU1Address"
+            values:
+            - "mid_csp_cbf/power_switch/001"
+          - name: "PDU1PowerOutlet"
+            values:
+            - "3"
+          - name: "PDU2Address"
+            values:
+            - "mid_csp_cbf/power_switch/001"
+          - name: "PDU2PowerOutlet"
+            values:
+            - "3"
+          - name: "polled_attr"
+            values:
+            - "state"
+            - "1000"
+            - "healthstate"
+            - "3000"
+            - "adminmode"
+            - "3000"
 image:
   registry: "{{.Values.midcbf.image.registry}}"
   image: "{{.Values.midcbf.image.image}}"
   tag: "{{.Values.midcbf.image.tag}}"
   pullPolicy: "{{.Values.midcbf.image.pullPolicy}}"
+  

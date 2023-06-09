@@ -80,7 +80,11 @@
                                 "mid_csp_cbf/vcc/001",
                                 "mid_csp_cbf/vcc/002",
                                 "mid_csp_cbf/vcc/003",
-                                "mid_csp_cbf/vcc/004"
+                                "mid_csp_cbf/vcc/004",
+                                "mid_csp_cbf/vcc/005",
+                                "mid_csp_cbf/vcc/006",
+                                "mid_csp_cbf/vcc/007",
+                                "mid_csp_cbf/vcc/008"
                             ],
                             "polled_attr": [
                                 "state",

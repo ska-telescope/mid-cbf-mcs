@@ -35,7 +35,7 @@ file_path = os.path.dirname(os.path.abspath(__file__))
 # Local imports
 
 
-CONST_TEST_NUM_VCC = 4
+CONST_TEST_NUM_VCC = 8
 CONST_TEST_NUM_FSP = 4
 CONST_TEST_NUM_SUBARRAY = 1
 
