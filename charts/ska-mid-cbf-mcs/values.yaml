@@ -35,14 +35,14 @@ itango:
     image:
       registry: artefact.skao.int
       image: ska-tango-images-tango-itango
-      tag: 9.3.5
+      tag: 9.4.1
       pullPolicy: IfNotPresent 
 
 midcbf:
   image:
     registry: artefact.skao.int
     image: ska-mid-cbf-mcs
-    tag: 0.8.2
+    tag: 0.9.0
     pullPolicy: IfNotPresent
 
 resources:

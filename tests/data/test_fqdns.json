@@ -4,7 +4,11 @@
         "mid_csp_cbf/vcc/001", 
         "mid_csp_cbf/vcc/002", 
         "mid_csp_cbf/vcc/003", 
-        "mid_csp_cbf/vcc/004"
+        "mid_csp_cbf/vcc/004",
+        "mid_csp_cbf/vcc/005", 
+        "mid_csp_cbf/vcc/006", 
+        "mid_csp_cbf/vcc/007", 
+        "mid_csp_cbf/vcc/008"
     ],
     "fqdn_fsp": 
     [
@@ -47,10 +51,12 @@
     "fqdn_talon_lru":
     [
         "mid_csp_cbf/talon_lru/001",
-        "mid_csp_cbf/talon_lru/002"
+        "mid_csp_cbf/talon_lru/002",
+        "mid_csp_cbf/talon_lru/003",
+        "mid_csp_cbf/talon_lru/004"
     ],
-    "count_vcc": 4,
+    "count_vcc": 8,
     "count_fsp": 4,
     "count_subarray": 3,
-    "count_talon_lru": 2
+    "count_talon_lru": 4
 }

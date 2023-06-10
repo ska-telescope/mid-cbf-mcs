@@ -31,7 +31,7 @@
                                 "mid_csp_cbf/fsp/04"
                             ],
                             "MaxCapabilities": [
-                                "VCC:4",
+                                "VCC:8",
                                 "FSP:4",
                                 "Subarray:1"
                             ],
@@ -39,11 +39,17 @@
                                 "mid_csp_cbf/vcc/001",
                                 "mid_csp_cbf/vcc/002",
                                 "mid_csp_cbf/vcc/003",
-                                "mid_csp_cbf/vcc/004"
+                                "mid_csp_cbf/vcc/004",
+                                "mid_csp_cbf/vcc/005",
+                                "mid_csp_cbf/vcc/006",
+                                "mid_csp_cbf/vcc/007",
+                                "mid_csp_cbf/vcc/008"
                             ],
                             "TalonLRU": [
                                 "mid_csp_cbf/talon_lru/001",
-                                "mid_csp_cbf/talon_lru/002"
+                                "mid_csp_cbf/talon_lru/002",
+                                "mid_csp_cbf/talon_lru/003",
+                                "mid_csp_cbf/talon_lru/004"
                             ],
                             "TalonDxConfigPath": [
                                 "mnt/talondx-config"

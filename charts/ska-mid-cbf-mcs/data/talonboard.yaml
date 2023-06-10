@@ -2,7 +2,7 @@ name: talonboard
 function: talon-board
 domain: mid-csp-cbf
 command: "TalonBoard"
-instances: ["talon-001", "talon-002", "talon-003", "talon-004"]
+instances: ["talon-001", "talon-002", "talon-003", "talon-004", "talon-005", "talon-006", "talon-007", "talon-008"]
 depends_on:
   - device: mid_csp_cbf/sub_elt/controller
 readinessProbe:
@@ -182,6 +182,182 @@ server:
           - name: "TalonDx100GEthernetServer"
             values:
             - "ska-talondx-100-gigabit-ethernet-ds"          
+          - name: "TalonStatusServer"
+            values:
+            - "ska-talondx-status-ds"
+          - name: "HpsMasterServer"
+            values:
+            - "dshpsmaster"
+          - name: "polled_attr"
+            values:
+            - "state"
+            - "1000"
+            - "healthstate"
+            - "3000"
+            - "adminmode"
+            - "3000"
+  - name: "talon-005"
+    classes:
+    - name: "TalonBoard"
+      devices:
+      - name: "mid_csp_cbf/talon_board/talon-005"
+        properties:
+          - name: "TalonDxBoardAddress"
+            values:
+            - "192.168.8.5"
+          - name: "InfluxDbPort"
+            values:
+            - "8086"
+          - name: "InfluxDbOrg"
+            values:
+            - "ska"
+          - name: "InfluxDbBucket"
+            values:
+            - "talon"
+          - name: "InfluxDbAuthToken"
+            values:
+            - "ikIDRLicRaMxviUJRqyE8bKF1Y_sZnaHc9MkWZY92jxg1isNPIGCyLtaC8EjbOhsT_kTzjt12qenB4g7-UOrog=="
+          - name: "Instance"
+            values:
+            - "talon5_test"
+          - name: "TalonDxSysIdServer"
+            values:
+            - "ska-talondx-sysid-ds"
+          - name: "TalonDx100GEthernetServer"
+            values:
+            - "ska-talondx-100-gigabit-ethernet-ds"
+          - name: "TalonStatusServer"
+            values:
+            - "ska-talondx-status-ds"
+          - name: "HpsMasterServer"
+            values:
+            - "dshpsmaster"
+          - name: "polled_attr"
+            values:
+            - "state"
+            - "1000"
+            - "healthstate"
+            - "3000"
+            - "adminmode"
+            - "3000"
+  - name: "talon-006"
+    classes:
+    - name: "TalonBoard"
+      devices:
+      - name: "mid_csp_cbf/talon_board/talon-006"
+        properties:
+          - name: "TalonDxBoardAddress"
+            values:
+            - "192.168.8.6"
+          - name: "InfluxDbPort"
+            values:
+            - "8086"
+          - name: "InfluxDbOrg"
+            values:
+            - "ska"
+          - name: "InfluxDbBucket"
+            values:
+            - "talon"
+          - name: "InfluxDbAuthToken"
+            values:
+            - "ikIDRLicRaMxviUJRqyE8bKF1Y_sZnaHc9MkWZY92jxg1isNPIGCyLtaC8EjbOhsT_kTzjt12qenB4g7-UOrog=="
+          - name: "Instance"
+            values:
+            - "talon6_test"
+          - name: "TalonDxSysIdServer"
+            values:
+            - "ska-talondx-sysid-ds"
+          - name: "TalonDx100GEthernetServer"
+            values:
+            - "ska-talondx-100-gigabit-ethernet-ds"
+          - name: "TalonStatusServer"
+            values:
+            - "ska-talondx-status-ds"
+          - name: "HpsMasterServer"
+            values:
+            - "dshpsmaster"
+          - name: "polled_attr"
+            values:
+            - "state"
+            - "1000"
+            - "healthstate"
+            - "3000"
+            - "adminmode"
+            - "3000"
+  - name: "talon-007"
+    classes:
+    - name: "TalonBoard"
+      devices:
+      - name: "mid_csp_cbf/talon_board/talon-007"
+        properties:
+          - name: "TalonDxBoardAddress"
+            values:
+            - "192.168.8.7"
+          - name: "InfluxDbPort"
+            values:
+            - "8086"
+          - name: "InfluxDbOrg"
+            values:
+            - "ska"
+          - name: "InfluxDbBucket"
+            values:
+            - "talon"
+          - name: "InfluxDbAuthToken"
+            values:
+            - "ikIDRLicRaMxviUJRqyE8bKF1Y_sZnaHc9MkWZY92jxg1isNPIGCyLtaC8EjbOhsT_kTzjt12qenB4g7-UOrog=="
+          - name: "Instance"
+            values:
+            - "talon7_test"
+          - name: "TalonDxSysIdServer"
+            values:
+            - "ska-talondx-sysid-ds"
+          - name: "TalonDx100GEthernetServer"
+            values:
+            - "ska-talondx-100-gigabit-ethernet-ds"
+          - name: "TalonStatusServer"
+            values:
+            - "ska-talondx-status-ds"
+          - name: "HpsMasterServer"
+            values:
+            - "dshpsmaster"
+          - name: "polled_attr"
+            values:
+            - "state"
+            - "1000"
+            - "healthstate"
+            - "3000"
+            - "adminmode"
+            - "3000"
+  - name: "talon-008"
+    classes:
+    - name: "TalonBoard"
+      devices:
+      - name: "mid_csp_cbf/talon_board/talon-008"
+        properties:
+          - name: "TalonDxBoardAddress"
+            values:
+            - "192.168.8.8"
+          - name: "InfluxDbPort"
+            values:
+            - "8086"
+          - name: "InfluxDbOrg"
+            values:
+            - "ska"
+          - name: "InfluxDbBucket"
+            values:
+            - "talon"
+          - name: "InfluxDbAuthToken"
+            values:
+            - "ikIDRLicRaMxviUJRqyE8bKF1Y_sZnaHc9MkWZY92jxg1isNPIGCyLtaC8EjbOhsT_kTzjt12qenB4g7-UOrog=="
+          - name: "Instance"
+            values:
+            - "talon8_test"
+          - name: "TalonDxSysIdServer"
+            values:
+            - "ska-talondx-sysid-ds"
+          - name: "TalonDx100GEthernetServer"
+            values:
+            - "ska-talondx-100-gigabit-ethernet-ds"
           - name: "TalonStatusServer"
             values:
             - "ska-talondx-status-ds"

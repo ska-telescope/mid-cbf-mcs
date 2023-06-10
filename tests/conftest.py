@@ -334,7 +334,7 @@ def init_proxies_fixture():
             - 1 CbfController
             - 1 CbfSubarray
             - 4 Fsp
-            - 4 Vcc
+            - 8 Vcc
             """
             # NOTE: set debug_device_is_on to True in order
             #       to allow device debugging under VScode
@@ -458,7 +458,7 @@ def init_proxies_fixture():
 
             # Talon LRU
             self.talon_lru = []
-            for i in range(1, 3):  # 2 Talon LRUs for now
+            for i in range(1, 5):  # 4 Talon LRUs for now
                 self.talon_lru.append(
                     CbfDeviceProxy(
                         fqdn=f"mid_csp_cbf/talon_lru/{i:03}",
@@ -692,10 +692,12 @@ def init_delay_model_test_fixture():
                     # among receptors_under_test:
                     for i_rec in receptors_to_remove:
                         for jj, entry in enumerate(
-                            delay_model_all_obj[i_dm]["delayModel"]
+                            delay_model_all_obj[i_dm]["delay_model"]
                         ):
                             if entry["receptor"] == i_rec:
-                                delay_model_all_obj[i_dm]["delayModel"].pop(jj)
+                                delay_model_all_obj[i_dm]["delay_model"].pop(
+                                    jj
+                                )
 
             return delay_model_all_obj
 

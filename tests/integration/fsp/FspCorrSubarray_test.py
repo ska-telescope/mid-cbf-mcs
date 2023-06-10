@@ -216,7 +216,8 @@ class TestFspCorrSubarray:
 
         freq_band_name = configuration["frequency_band"]
         assert (
-            device_under_test.frequencyBand == freq_band_dict()[freq_band_name]
+            device_under_test.frequencyBand
+            == freq_band_dict()[freq_band_name]["band_index"]
         )
         assert list(device_under_test.band5Tuning) == list(
             configuration["band_5_tuning"]

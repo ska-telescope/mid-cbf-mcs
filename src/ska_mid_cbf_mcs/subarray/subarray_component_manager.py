@@ -38,7 +38,12 @@ from ska_tango_base.csp.subarray.component_manager import (
 from tango import AttrQuality, DevState
 
 from ska_mid_cbf_mcs.attribute_proxy import CbfAttributeProxy
-from ska_mid_cbf_mcs.commons.global_enum import const, freq_band_dict
+from ska_mid_cbf_mcs.commons.global_enum import (
+    const,
+    freq_band_dict,
+    mhz_to_hz,
+    vcc_oversampling_factor,
+)
 from ska_mid_cbf_mcs.commons.receptor_utils import ReceptorUtils
 from ska_mid_cbf_mcs.component.component_manager import (
     CbfComponentManager,
@@ -192,6 +197,8 @@ class CbfSubarrayComponentManager(
         self._config_id = ""
         self._scan_id = 0
         self._fsp_list = [[], [], [], []]
+        self.frequency_offset_k = []
+        self.frequency_offset_delta_f = 0
 
         # store list of fsp configurations being used for each function mode
         self._corr_config = []
@@ -493,7 +500,7 @@ class CbfSubarrayComponentManager(
 
                 delay_model = json.loads(value)
                 # pass receptor IDs as pair of str and int to FSPs and VCCs
-                for model in delay_model["delayModel"]:
+                for model in delay_model["delay_model"]:
                     receptor_id = model["receptor"]
                     model["receptor"] = [
                         receptor_id,
@@ -1133,7 +1140,9 @@ class CbfSubarrayComponentManager(
                         # In this case by the ICD, all subarray allocated resources should be used.
                         fsp["receptor_ids"] = self._receptors.copy()
 
-                    frequencyBand = freq_band_dict()[fsp["frequency_band"]]
+                    frequencyBand = freq_band_dict()[fsp["frequency_band"]][
+                        "band_index"
+                    ]
                     # Validate frequencySliceID.
                     # TODO: move these to consts
                     # See for ex. Fig 8-2 in the Mid.CBF DDD
@@ -1798,8 +1807,23 @@ class CbfSubarrayComponentManager(
                 "frequency_band_offset_stream_2"
             ] = self._frequency_band_offset_stream_2
 
-            # Add all receptor ids for subarray to fsp
+            # Add all receptor ids for subarray and for correlation to fsp
+            # Parameter named "subarray_receptor_ids" used by HPS contains all the
+            # receptors for the subarray
+            # Parameter named "corr_receptor_ids" used by HPS contains the
+            # subset of the subarray receptors for which the correlation results
+            # are requested to be used in Mid.CBF output products (visibilities)
             fsp["subarray_receptor_ids"] = self._receptors.copy()
+            for i, receptor in enumerate(fsp["subarray_receptor_ids"]):
+                fsp["subarray_receptor_ids"][i] = [
+                    receptor,
+                    self._receptor_utils.receptors[receptor],
+                ]
+
+            # Add the fs_sample_rate for all receptors
+            fsp["fs_sample_rates"] = self.calculate_fs_sample_rates(
+                common_configuration["frequency_band"]
+            )
 
             if fsp["function_mode"] == "CORR":
                 # Receptors may not be specified in the
@@ -1815,11 +1839,14 @@ class CbfSubarrayComponentManager(
                     fsp["receptor_ids"] = self._receptors.copy()
 
                 # receptor IDs to pair of str and int for FSP level
+                fsp["corr_receptor_ids"] = []
                 for i, receptor in enumerate(fsp["receptor_ids"]):
-                    fsp["receptor_ids"][i] = [
-                        receptor,
-                        self._receptor_utils.receptors[receptor],
-                    ]
+                    fsp["corr_receptor_ids"].append(
+                        [
+                            receptor,
+                            self._receptor_utils.receptors[receptor],
+                        ]
+                    )
 
                 self._corr_config.append(fsp)
                 self._corr_fsp_list.append(fsp["fsp_id"])
@@ -2291,3 +2318,53 @@ class CbfSubarrayComponentManager(
             self._component_configured_callback(False)
 
         self._ready = configured
+
+    def calculate_fs_sample_rate(
+        self: CbfSubarrayComponentManager, freq_band: str, receptor: str
+    ) -> Dict:
+        log_msg = f"Calculate fs_sample_rate for freq_band:{freq_band} and receptor {receptor}"
+        self._logger.info(log_msg)
+
+        # convert the receptor to an int using ReceptorUtils
+        receptor_int = self._receptor_utils.receptor_id_str_to_int(receptor)
+
+        # find the k value for this receptor
+        # array of k values is 0 index, so index of array value is receptor_int - 1
+        freq_offset_k = self.frequency_offset_k[(receptor_int - 1)]
+        freq_band_info = freq_band_dict()[freq_band]
+
+        base_dish_sample_rate_MH = freq_band_info["base_dish_sample_rate_MHz"]
+        sample_rate_const = freq_band_info["sample_rate_const"]
+        total_num_fs = freq_band_info["total_num_FSs"]
+
+        # dish_sample_rate = base_dish_sample_rate_MH * mhz_to_hz + sample_rate_const * k * deltaF
+        # fs_sample_rate = dish_sample_rate * vcc_oversampling_factor / total_num_FSs
+        dish_sample_rate = (base_dish_sample_rate_MH * mhz_to_hz) + (
+            sample_rate_const * freq_offset_k * self.frequency_offset_delta_f
+        )
+        log_msg = f"dish_sample_rate: {dish_sample_rate}"
+        self._logger.debug(log_msg)
+        fs_sample_rate = (
+            dish_sample_rate * vcc_oversampling_factor / total_num_fs
+        )
+        # convert fs_sample_rate to MHz
+        fs_sample_rate = fs_sample_rate / mhz_to_hz
+        fs_sample_rate_for_band = {
+            "receptor": receptor_int,
+            "fs_sample_rate": fs_sample_rate,
+        }
+        log_msg = f"fs_sample_rate_for_band: {fs_sample_rate_for_band}"
+        self._logger.info(log_msg)
+
+        return fs_sample_rate_for_band
+
+    def calculate_fs_sample_rates(
+        self: CbfSubarrayComponentManager, freq_band: str
+    ) -> List[Dict]:
+        output_sample_rates = []
+        for receptorId in self._receptors:
+            output_sample_rates.append(
+                self.calculate_fs_sample_rate(freq_band, receptorId)
+            )
+
+        return output_sample_rates
