@@ -133,7 +133,10 @@ class PowerSwitchDriver:
 
         :return: number of outlets
         """
-        print("--- LINE 136 --- power_switch_driver::num_outlets() --- self.outlets == ", self.outlets)
+        print(
+            "--- LINE 136 --- power_switch_driver::num_outlets() --- self.outlets == ",
+            self.outlets,
+        )
         return len(self.outlets)
 
     @property
@@ -208,9 +211,12 @@ class PowerSwitchDriver:
 
         print(
             " --- LINE 213 --- power_switch_driver::get_outlet_power_mode --- url == ",
-            url
+            url,
         )
-        print(" --- LINE 216 --- power_switch_driver::get_outlet_power_mode ---headers = ", self.header)
+        print(
+            " --- LINE 216 --- power_switch_driver::get_outlet_power_mode ---headers = ",
+            self.header,
+        )
 
         outlet_idx = self.outlet_id_list.index(outlet)
         print(
@@ -230,7 +236,10 @@ class PowerSwitchDriver:
                 requests.codes.no_content,
             ]:
                 try:
-                    print(" --- LINE 236 --- power_switch_driver::get_outlet_power_mode --- response.text == ", response.text)
+                    print(
+                        " --- LINE 236 --- power_switch_driver::get_outlet_power_mode --- response.text == ",
+                        response.text,
+                    )
                     if self.model == "DLI-PRO":
                         out = response.text == "true"
                     elif self.model == "Switched PRO2":
@@ -239,19 +248,21 @@ class PowerSwitchDriver:
 
                     print(
                         " --- LINE 247 --- power_switch_driver::get_outlet_power_mode --- out == ",
-                        out
+                        out,
                     )
                     power_mode = self.power_mode_conversion[str(out).lower()]
                     print(
                         f" --- LINE 252 --- power_mode for outlet {outlet} in get outlet power mode fn = ",
-                        power_mode
+                        power_mode,
                     )
 
                 except IndexError:
                     power_mode = PowerMode.UNKNOWN
 
                 if power_mode != self.outlets[outlet_idx].power_mode:
-                    print(" --- LINE 260 --- power_mode != self.outlets[outlet_idx].power_mode")
+                    print(
+                        " --- LINE 260 --- power_mode != self.outlets[outlet_idx].power_mode"
+                    )
                     raise AssertionError(
                         f"Power mode of outlet ID {outlet} ({power_mode})"
                         f" is different than the expected mode {self.outlets[outlet_idx].power_mode}"
@@ -322,7 +333,7 @@ class PowerSwitchDriver:
             ]:
                 print(
                     f" --- LINE 289 --- power_switch_driver::turn_on_outlet --- self.outlets[{outlet}] == ",
-                    self.outlets[outlet_idx].__dict__
+                    self.outlets[outlet_idx].__dict__,
                 )
                 self.outlets[outlet_idx].power_mode = PowerMode.ON
                 print(
@@ -354,9 +365,18 @@ class PowerSwitchDriver:
 
         :raise AssertionError: if outlet ID is out of bounds
         """
-        print(" --- LINE 356 --- power_switch_driver::turn_off_outlet --- outlet == ", outlet)
-        print(" --- LINE 357 --- power_switch_driver::turn_off_outlet --- type(outlet) == ", type(outlet))
-        print(" --- LINE 356 --- power_switch_driver::turn_off_outlet --- self.outlet_id_list == ", self.outlet_id_list)
+        print(
+            " --- LINE 356 --- power_switch_driver::turn_off_outlet --- outlet == ",
+            outlet,
+        )
+        print(
+            " --- LINE 357 --- power_switch_driver::turn_off_outlet --- type(outlet) == ",
+            type(outlet),
+        )
+        print(
+            " --- LINE 356 --- power_switch_driver::turn_off_outlet --- self.outlet_id_list == ",
+            self.outlet_id_list,
+        )
 
         assert (
             outlet in self.outlet_id_list
@@ -373,12 +393,15 @@ class PowerSwitchDriver:
             data = ""
 
         print(
-            f" --- LINE 334 --- power_switch_driver::turn_off_outlet ---  url == {url}"
+            f" --- LINE 396 --- power_switch_driver::turn_off_outlet ---  url == {url}"
         )
-        print(f" --- LINE 335 --- power_switch_driver::turn_off_outlet -- data == ", data)
+        print(
+            " --- LINE 399 --- power_switch_driver::turn_off_outlet -- data == ",
+            data,
+        )
         outlet_idx = self.outlet_id_list.index(outlet)
         print(
-            " --- LINE 336 --- power_switch_driver::turn_off_outlet --- outlet_idx == ",
+            " --- LINE 404 --- power_switch_driver::turn_off_outlet --- outlet_idx == ",
             outlet_idx,
         )
         try:
@@ -400,12 +423,12 @@ class PowerSwitchDriver:
             ]:
                 print(
                     f" --- LINE 411 --- power_switch_driver::turn_off_outlet --- self.outlets[{outlet}] = ",
-                    self.outlets[outlet_idx].__dict__
+                    self.outlets[outlet_idx].__dict__,
                 )
                 self.outlets[outlet_idx].power_mode = PowerMode.OFF
                 print(
                     f" --- LINE 416 --- power_switch_driver::turn_off_outlet --- self.outlets[{outlet_idx}].power_mode for outlet {outlet} == ",
-                    self.outlets[outlet_idx].power_mode
+                    self.outlets[outlet_idx].power_mode,
                 )
                 return ResultCode.OK, f"Outlet {outlet} power off"
             else:
