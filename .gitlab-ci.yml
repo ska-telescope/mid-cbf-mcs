@@ -19,6 +19,7 @@ cache:
 # It is also specified that only the master branch will be subject of this job.
 
 stages:
+  - deploy
   - lint
   - build
   - test
@@ -30,7 +31,12 @@ stages:
 include:
   # Python packages build,lint, test and publish
   - project: 'ska-telescope/templates-repository'
-    file: 'gitlab-ci/includes/python.gitlab-ci.yml'
+    file: 'gitlab-ci/includes/python.gitlab-ci.yml'  
+  
+  # Deploy steps
+  - project: 'ska-telescope/templates-repository'
+    file: 'gitlab-ci/includes/deploy.shared.gitlab-ci.yml'
+    ref: 'st-1664-shared-env-deploy'
 
   # OCI
   - project: 'ska-telescope/templates-repository'
