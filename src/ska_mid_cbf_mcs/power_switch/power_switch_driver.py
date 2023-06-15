@@ -159,7 +159,7 @@ class PowerSwitchDriver:
                 verify=False,
                 headers=self.header,
                 auth=(self.login, self.password),
-                # timeout=self.query_timeout_s,
+                timeout=self.query_timeout_s,
             )
             if response.status_code == requests.codes.ok:
                 return True
@@ -233,7 +233,7 @@ class PowerSwitchDriver:
                 verify=False,
                 headers=self.header,
                 auth=(self.login, self.password),
-                # timeout=self.query_timeout_s
+                timeout=self.query_timeout_s
             )
             if response.status_code in [
                 requests.codes.ok,
@@ -328,7 +328,7 @@ class PowerSwitchDriver:
                 data=data,
                 headers=self.header,
                 auth=(self.login, self.password),
-                # timeout=self.query_timeout_s,
+                timeout=self.query_timeout_s,
             )
 
             if response.status_code in [
@@ -415,7 +415,7 @@ class PowerSwitchDriver:
                 data=data,
                 # headers=self.header,
                 auth=(self.login, self.password),
-                # timeout=self.query_timeout_s,
+                timeout=self.query_timeout_s,
             )
             # print(
             #     " --- LINE 346 --- power_switch_driver::turn_off_outlet --- response.text turning off outlet in line 346 == ",
@@ -469,7 +469,6 @@ class PowerSwitchDriver:
         print(
             f" --- LINE 386 --- power_switch_driver::get_outlet_list ---  url == {url}"
         )
-
         try:
             print(" --- LINE 483 --- power_switch_driver::get_outlet_list() --- url == ", url)
             print(" --- LINE 484 --- power_switch_driver::get_outlet_list() --- self.header == ", self.header)
@@ -481,7 +480,7 @@ class PowerSwitchDriver:
                 verify=False,
                 headers=self.header,
                 auth=(self.login, self.password),
-                # timeout=self.query_timeout_s,
+                timeout=self.query_timeout_s,
             )
 
             if response.status_code == requests.codes.ok:
