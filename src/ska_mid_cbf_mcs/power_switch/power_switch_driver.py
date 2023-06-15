@@ -148,11 +148,22 @@ class PowerSwitchDriver:
         :return: whether the power switch is communicating
         """
         try:
-
-            print(" --- LINE 151 --- power_switch_driver::is_communicating() --- url == ", self.base_url)
-            print(" --- LINE 152 --- power_switch_driver::is_communicating() --- self.header == ", self.header)
-            print(" --- LINE 153 --- power_switch_driver::is_communicating() --- self.login == ", self.login)
-            print(" --- LINE 154 --- power_switch_driver::is_communicating() --- self.password == ", self.password)
+            print(
+                " --- LINE 151 --- power_switch_driver::is_communicating() --- url == ",
+                self.base_url,
+            )
+            print(
+                " --- LINE 152 --- power_switch_driver::is_communicating() --- self.header == ",
+                self.header,
+            )
+            print(
+                " --- LINE 153 --- power_switch_driver::is_communicating() --- self.login == ",
+                self.login,
+            )
+            print(
+                " --- LINE 154 --- power_switch_driver::is_communicating() --- self.password == ",
+                self.password,
+            )
 
             response = requests.get(
                 url=self.base_url,
@@ -190,19 +201,19 @@ class PowerSwitchDriver:
 
         print(
             " --- LINE 185 --- power_switch_driver::get_outlet_power_mode --- outlet == ",
-            outlet
+            outlet,
         )
         print(
             " --- LINE 189 --- power_switch_driver::get_outlet_power_mode --- type(outlet) == ",
-            type(outlet)
+            type(outlet),
         )
         print(
             " --- LINE 193 --- power_switch_driver::get_outlet_power_mode --- outlet_id_list == ",
-            self.outlet_id_list
+            self.outlet_id_list,
         )
         print(
             " --- LINE 197 --- power_switch_driver::get_outlet_power_mode --- type(outlet_id_list) == ",
-            type(self.outlet_id_list)
+            type(self.outlet_id_list),
         )
 
         assert (
@@ -219,21 +230,32 @@ class PowerSwitchDriver:
         outlet_idx = self.outlet_id_list.index(outlet)
         print(
             " --- LINE 195 --- power_switch_driver::get_outlet_power_mode --- outlet_idx == ",
-            outlet_idx
+            outlet_idx,
         )
         try:
-
-            print(" --- LINE 234 --- power_switch_driver::get_outlet_power_mode() --- url == ", self.base_url)
-            print(" --- LINE 235 --- power_switch_driver::get_outlet_power_mode() --- self.header == ", self.header)
-            print(" --- LINE 236 --- power_switch_driver::get_outlet_power_mode() --- self.login == ", self.login)
-            print(" --- LINE 237 --- power_switch_driver::get_outlet_power_mode() --- self.password == ", self.password)
+            print(
+                " --- LINE 234 --- power_switch_driver::get_outlet_power_mode() --- url == ",
+                self.base_url,
+            )
+            print(
+                " --- LINE 235 --- power_switch_driver::get_outlet_power_mode() --- self.header == ",
+                self.header,
+            )
+            print(
+                " --- LINE 236 --- power_switch_driver::get_outlet_power_mode() --- self.login == ",
+                self.login,
+            )
+            print(
+                " --- LINE 237 --- power_switch_driver::get_outlet_power_mode() --- self.password == ",
+                self.password,
+            )
 
             response = requests.get(
                 url=url,
                 verify=False,
                 headers=self.header,
                 auth=(self.login, self.password),
-                timeout=self.query_timeout_s
+                timeout=self.query_timeout_s,
             )
             if response.status_code in [
                 requests.codes.ok,
@@ -470,10 +492,22 @@ class PowerSwitchDriver:
             f" --- LINE 386 --- power_switch_driver::get_outlet_list ---  url == {url}"
         )
         try:
-            print(" --- LINE 483 --- power_switch_driver::get_outlet_list() --- url == ", url)
-            print(" --- LINE 484 --- power_switch_driver::get_outlet_list() --- self.header == ", self.header)
-            print(" --- LINE 485 --- power_switch_driver::get_outlet_list() --- self.login == ", self.login)
-            print(" --- LINE 486 --- power_switch_driver::get_outlet_list() --- self.password == ", self.password)
+            print(
+                " --- LINE 483 --- power_switch_driver::get_outlet_list() --- url == ",
+                url,
+            )
+            print(
+                " --- LINE 484 --- power_switch_driver::get_outlet_list() --- self.header == ",
+                self.header,
+            )
+            print(
+                " --- LINE 485 --- power_switch_driver::get_outlet_list() --- self.login == ",
+                self.login,
+            )
+            print(
+                " --- LINE 486 --- power_switch_driver::get_outlet_list() --- self.password == ",
+                self.password,
+            )
 
             response = requests.get(
                 url=url,
