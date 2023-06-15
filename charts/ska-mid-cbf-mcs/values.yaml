@@ -16,6 +16,12 @@ signalVerificationVersion: 0.0.4
 labels:
   app: ska-mid-cbf-mcs
 
+ska-tango-base:
+  enabled: false
+sub-system:
+  ska-tango-base:
+  enabled: false
+
 global:
   minikube: true
   exposeDatabaseDS: true
@@ -54,6 +60,7 @@ resources:
     cpu: 100m
     memory: 128Mi  
     ephemeral-storage: 256Mi
+
 
 deviceServers:
   cbfcontroller:
