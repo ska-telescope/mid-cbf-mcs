@@ -21,9 +21,9 @@ cache:
 # It is also specified that only the master branch will be subject of this job.
 
 stages:
-  - deploy
   - lint
   - build
+  - deploy
   - test
   - publish
   - pages
