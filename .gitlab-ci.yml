@@ -38,7 +38,7 @@ include:
   # Deploy steps
   - project: 'ska-telescope/templates-repository'
     file: 'gitlab-ci/includes/deploy.shared.gitlab-ci.yml'
-    ref: 'st-1670-k8s-namepsace-info'
+    ref: 'st-1670-k8s-namespace-info'
 
   # OCI
   - project: 'ska-telescope/templates-repository'
