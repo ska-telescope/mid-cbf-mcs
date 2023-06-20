@@ -77,7 +77,7 @@ def test_turn_outlet_on_off(
             if j <= i:
                 with pytest.raises(
                     AssertionError,
-                    match=r"Power mode of outlet \d \(3\) is different than the expected mode 1",
+                    match=r"Power mode of outlet ID \w \(3\) is different than the expected mode 1",
                 ):
                     power_switch_component_manager.get_outlet_power_mode(
                         str(j)
@@ -108,7 +108,7 @@ def test_turn_outlet_on_off(
             else:
                 with pytest.raises(
                     AssertionError,
-                    match=r"Power mode of outlet \d \(3\) is different than the expected mode 1",
+                    match=r"Power mode of outlet ID \w \(3\) is different than the expected mode 1",
                 ):
                     power_switch_component_manager.get_outlet_power_mode(
                         str(j)
