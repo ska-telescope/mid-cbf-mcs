@@ -108,10 +108,6 @@ class PowerSwitchDriver:
         self.outlet_id_list: List(str) = []
         for item in outlet_id_list:
             self.outlet_id_list.append(item)
-        print(
-            " --- LINE 106 --- power_switch_driver::__init__() --- self.outlet_id_list == ",
-            self.outlet_id_list,
-        )
 
         # Initialize outlets
         self.outlets: List(Outlet) = []
@@ -203,33 +199,18 @@ class PowerSwitchDriver:
                 requests.codes.no_content,
             ]:
                 try:
-                    print(
-                        " --- LINE 252 --- power_switch_driver::get_outlet_power_mode --- response.text == ",
-                        response.text,
-                    )
                     if self.model == "DLI-PRO":
                         out = response.text == "true"
                     elif self.model == "Switched PRO2":
                         json = response.json()
                         out = json["state"]
 
-                    print(
-                        " --- LINE 262 --- power_switch_driver::get_outlet_power_mode --- out == ",
-                        out,
-                    )
                     power_mode = self.power_mode_conversion[str(out).lower()]
-                    print(
-                        f" --- LINE 267 --- power_mode for outlet {outlet} in get outlet power mode fn = ",
-                        power_mode,
-                    )
 
                 except IndexError:
                     power_mode = PowerMode.UNKNOWN
 
                 if power_mode != self.outlets[outlet_idx].power_mode:
-                    print(
-                        " --- LINE 276 --- power_mode != self.outlets[outlet_idx].power_mode"
-                    )
                     raise AssertionError(
                         f"Power mode of outlet ID {outlet} ({power_mode})"
                         f" is different than the expected mode {self.outlets[outlet_idx].power_mode}"
@@ -430,13 +411,9 @@ class PowerSwitchDriver:
         except requests.exceptions.ConnectTimeout:
             self.logger.error("CONNECTION TIMEOUT")
         except requests.exceptions.TooManyRedirects:
-            print("TOO MANY REDIRECTS")
             self.logger.error("TOO MANY REDIRECTS")
         except requests.exceptions.ConnectionError as err:
-            print("CONNECTION ERROR")
             self.logger.error("Failed to connect to power switch")
-            raise SystemExit(err)
         except requests.exceptions.RequestException as e:
-            print("Something else went wrong")
             raise SystemExit(e)
             return []

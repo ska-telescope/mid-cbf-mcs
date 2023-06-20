@@ -88,9 +88,6 @@ def power_switch_component_manager(
                 self.status_code = requests.codes.ok
 
                 if outlet_list_url.fullmatch(url):
-                    print(
-                        " --- LINE 91 --- conftest::MockResponse::__init__() --- YES outlet_list_url fullmatch"
-                    )
                     self._json: List[dict[str, Any]] = []
 
                     for i in range(0, 8):
@@ -108,9 +105,6 @@ def power_switch_component_manager(
 
                     self.text = json.dumps(self._json)
                 elif outlet_state_url.fullmatch(url):
-                    print(
-                        " --- LINE 109 --- conftest::MockResponse::__init__() --- NOT  fullmatch"
-                    )
                     self.text = "true"
 
         def json(self: MockResponse) -> dict[str, str]:
