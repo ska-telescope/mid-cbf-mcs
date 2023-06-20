@@ -327,7 +327,6 @@ class PowerSwitchDriver:
                 requests.codes.ok,
                 requests.codes.no_content,
             ]:
-
                 self.outlets[outlet_idx].power_mode = PowerMode.OFF
                 return ResultCode.OK, f"Outlet {outlet} power off"
             else:
@@ -362,7 +361,6 @@ class PowerSwitchDriver:
             url = self.base_url
 
         try:
-
             response = requests.get(
                 url=url,
                 verify=False,
@@ -385,7 +383,6 @@ class PowerSwitchDriver:
 
                 for idx, resp_dict in enumerate(resp_list):
                     try:
-
                         out = resp_dict["state"]
                         power_mode = self.power_mode_conversion[
                             str(out).lower()
@@ -412,7 +409,7 @@ class PowerSwitchDriver:
             self.logger.error("CONNECTION TIMEOUT")
         except requests.exceptions.TooManyRedirects:
             self.logger.error("TOO MANY REDIRECTS")
-        except requests.exceptions.ConnectionError as err:
+        except requests.exceptions.ConnectionError:
             self.logger.error("Failed to connect to power switch")
         except requests.exceptions.RequestException as e:
             raise SystemExit(e)

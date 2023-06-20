@@ -45,7 +45,6 @@ class PowerSwitchSimulator:
 
         self.outlets = self.get_outlet_list()
 
-
     @property
     def num_outlets(self: PowerSwitchSimulator) -> int:
         """
@@ -81,8 +80,6 @@ class PowerSwitchSimulator:
         ), f"Outlet ID {outlet} must be in the allowable outlet_id_list read in from the Config File"
 
         outlet_idx = self.outlet_id_list.index(outlet)
-
-        power_mode = self.outlets[outlet_idx].power_mode
 
         return self.outlets[outlet_idx].power_mode
 
