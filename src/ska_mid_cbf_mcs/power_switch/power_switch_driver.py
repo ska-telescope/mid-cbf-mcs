@@ -405,12 +405,9 @@ class PowerSwitchDriver:
                 )
                 return []
 
-        except requests.exceptions.ConnectTimeout:
-            self.logger.error("CONNECTION TIMEOUT")
-        except requests.exceptions.TooManyRedirects:
-            self.logger.error("TOO MANY REDIRECTS")
-        except requests.exceptions.ConnectionError:
+        except (
+            requests.exceptions.ConnectTimeout,
+            requests.exceptions.ConnectionError,
+        ):
             self.logger.error("Failed to connect to power switch")
-        except requests.exceptions.RequestException as e:
-            raise SystemExit(e)
             return []
