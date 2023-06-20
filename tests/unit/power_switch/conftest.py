@@ -122,10 +122,7 @@ def power_switch_component_manager(
             :return: representative JSON reponse as the power switch when
                      querying the outlets page
             """
-            print(
-                " --- LINE 121 --- conftest::MockResponse::json() --- self._json == ",
-                self._json,
-            )
+
             return self._json
 
     def mock_patch(url: str, **kwargs: Any) -> MockResponse:

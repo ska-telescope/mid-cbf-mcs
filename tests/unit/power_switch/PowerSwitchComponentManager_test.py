@@ -40,8 +40,6 @@ def test_get_outlet_state(
         power_mode = power_switch_component_manager.get_outlet_power_mode(
             str(i)
         )
-        print(" --- LINE 41 --- i == ", i)
-        print(" --- LINE 42 --- power_mode == ", power_mode)
         assert (
             power_switch_component_manager.get_outlet_power_mode(str(i))
             == PowerMode.ON
