@@ -170,6 +170,7 @@ class CbfSubarrayComponentManager(
 
         self._logger.info("Entering CbfSubarrayComponentManager.__init__)")
 
+        #TODO: pull max capabilities from controller?
         self._receptor_utils = ReceptorUtils(num_vcc=const.MAX_VCC)
 
         self._component_op_fault_callback = component_fault_callback

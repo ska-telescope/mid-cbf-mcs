@@ -16,7 +16,7 @@
       {
         "beamWeightsDetails": [
           {
-            "receptor": ["SKA100", 2],
+            "receptor": ["SKA100", 100],
             "receptorWeightsDetails": [
               {
                 "fsid": 1,
@@ -29,7 +29,7 @@
       {
         "beamWeightsDetails": [
           {
-            "receptor": ["SKA036", 3],
+            "receptor": ["SKA036", 36],
             "receptorWeightsDetails": [
               {
                 "fsid": 1,
@@ -42,7 +42,7 @@
       {
         "beamWeightsDetails": [
           {
-            "receptor": ["SKA063", 4],
+            "receptor": ["SKA063", 63],
             "receptorWeightsDetails": [
               {
                 "fsid": 1,

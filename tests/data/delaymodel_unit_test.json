@@ -16,7 +16,7 @@
       ]
     },
     {
-      "receptor": ["SKA100", 2],
+      "receptor": ["SKA100", 100],
       "epoch": 11000000,
       "validity_period": 10,
       "poly_info": [
@@ -31,7 +31,7 @@
       ]
     },
     {
-      "receptor": ["SKA036", 3],
+      "receptor": ["SKA036", 36],
       "epoch": 11000000,
       "validity_period": 10,
       "poly_info": [
@@ -46,7 +46,7 @@
       ]
     },
     {
-      "receptor": ["SKA063", 4],
+      "receptor": ["SKA063", 63],
       "epoch": 11000000,
       "validity_period": 10,
       "poly_info": [

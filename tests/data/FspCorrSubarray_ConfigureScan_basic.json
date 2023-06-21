@@ -2,7 +2,7 @@
     "fsp_id": 1, 
     "function_mode": "CORR", 
     "corr_receptor_ids": [["SKA001", 1]], 
-    "subarray_receptor_ids": [["SKA001", 1],["SKA100", 2],["SKA036", 3]],
+    "subarray_receptor_ids": [["SKA001", 1],["SKA100", 100],["SKA036", 36]],
     "frequency_slice_id": 1, 
     "zoom_factor": 1, 
     "zoom_window_tuning": 4700000, 
