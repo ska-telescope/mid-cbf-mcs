@@ -332,7 +332,7 @@ class CbfController(SKAController):
             receptor_utils = ReceptorUtils(num_vcc=device._count_vcc)
             device._receptor_to_vcc = []
             device._vcc_to_receptor = []
-            #TODO currently assigning VCC in sequential order
+            # TODO currently assigning VCC in sequential order
             vcc_idx = 1
             for _, receptorID in receptor_utils.receptors.items():
                 device._receptor_to_vcc.append(f"{receptorID}:{vcc_idx}")
