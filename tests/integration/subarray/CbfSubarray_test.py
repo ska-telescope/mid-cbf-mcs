@@ -100,11 +100,11 @@ class TestCbfSubarray:
         sub_id",
         [
             (
-                ["MKT000", "MKT002", "MKT003", "MKT001"],
-                ["MKT001", "MKT000", "MKT003"],
+                ["SKA001", "SKA036", "SKA063", "SKA100"],
+                ["SKA100", "SKA001", "SKA063"],
                 1,
             ),
-            (["MKT003", "MKT000", "MKT001"], ["MKT001", "MKT000"], 1),
+            (["SKA063", "SKA001", "SKA100"], ["SKA100", "SKA001"], 1),
         ],
     )
     def test_AddRemoveReceptors_valid(
@@ -259,8 +259,8 @@ class TestCbfSubarray:
         invalid_receptor_id, \
         sub_id",
         [
-            (["MKT000", "MKT002"], ["SKA200"], 1),
-            (["MKT003", "MKT001"], ["0"], 1),
+            (["SKA001", "SKA036"], ["SKA200"], 1),
+            (["SKA063", "SKA100"], ["0"], 1),
         ],
     )
     def test_AddReceptors_invalid_single(
@@ -363,8 +363,8 @@ class TestCbfSubarray:
         invalid_receptors_to_remove, \
         sub_id",
         [
-            (["MKT000", "MKT002"], ["MKT001"], 1),
-            (["MKT003", "MKT001"], ["MKT000", "MKT002"], 1),
+            (["SKA001", "SKA036"], ["SKA100"], 1),
+            (["SKA063", "SKA100"], ["SKA001", "SKA036"], 1),
         ],
     )
     def test_RemoveReceptors_invalid_single(
@@ -473,7 +473,7 @@ class TestCbfSubarray:
     @pytest.mark.parametrize(
         "receptor_ids, \
         sub_id",
-        [(["MKT000", "MKT002", "MKT003"], 1), (["MKT003", "MKT001"], 1)],
+        [(["SKA001", "SKA036", "SKA063"], 1), (["SKA063", "SKA100"], 1)],
     )
     def test_RemoveAllReceptors(
         self: TestCbfSubarray,
@@ -576,17 +576,17 @@ class TestCbfSubarray:
         [
             (
                 "ConfigureScan_basic.json",
-                ["MKT000", "MKT002", "MKT003", "MKT001"],
+                ["SKA001", "SKA036", "SKA063", "SKA100"],
                 [4, 1],
             ),
             (
                 "ConfigureScan_basic_fspMultiReceptors.json",
-                ["MKT000", "MKT002", "MKT003", "MKT001"],
+                ["SKA001", "SKA036", "SKA063", "SKA100"],
                 [4, 1],
             ),
             (
                 "ConfigureScan_basic_fspNoReceptors.json",
-                ["MKT000", "MKT002", "MKT003", "MKT001"],
+                ["SKA001", "SKA036", "SKA063", "SKA100"],
                 [4, 1],
             ),
         ],
@@ -1139,7 +1139,7 @@ class TestCbfSubarray:
                 "jonesmatrix.json",
                 "delaymodel.json",
                 "timingbeamweights.json",
-                ["MKT003", "MKT000", "MKT002", "MKT001"],
+                ["SKA063", "SKA001", "SKA036", "SKA100"],
             )
         ],
     )
@@ -1439,7 +1439,7 @@ class TestCbfSubarray:
             (
                 "ConfigureScan_basic.json",
                 "Scan1_basic.json",
-                ["MKT000", "MKT002", "MKT003", "MKT001"],
+                ["SKA001", "SKA036", "SKA063", "SKA100"],
             )
         ],
     )
@@ -1696,8 +1696,8 @@ class TestCbfSubarray:
                 "ConfigureScan_basic.json",
                 "delaymodel.json",
                 "Scan1_basic.json",
-                ["MKT000", "MKT002", "MKT003", "MKT001"],
-                ["MKT003", "MKT000"],
+                ["SKA001", "SKA036", "SKA063", "SKA100"],
+                ["SKA063", "SKA001"],
             )
         ],
     )
@@ -1966,7 +1966,7 @@ class TestCbfSubarray:
                 "ConfigureScan_basic.json",
                 "Scan1_basic.json",
                 "jonesmatrix.json",
-                ["MKT000", "MKT002", "MKT003", "MKT001"],
+                ["SKA001", "SKA036", "SKA063", "SKA100"],
             ),
         ],
     )
@@ -2224,7 +2224,7 @@ class TestCbfSubarray:
             (
                 "ConfigureScan_basic.json",
                 "Scan1_basic.json",
-                ["MKT000", "MKT002", "MKT003", "MKT001"],
+                ["SKA001", "SKA036", "SKA063", "SKA100"],
                 [4, 1],
             )
         ],
@@ -2444,13 +2444,13 @@ class TestCbfSubarray:
             (
                 "ConfigureScan_basic.json",
                 "Scan1_basic.json",
-                ["MKT000", "MKT002", "MKT003", "MKT001"],
+                ["SKA001", "SKA036", "SKA063", "SKA100"],
                 [4, 1],
             ),
             (
                 "Configure_TM-CSP_v2.json",
                 "Scan2_basic.json",
-                ["MKT003", "MKT000", "MKT001"],
+                ["SKA063", "SKA001", "SKA100"],
                 [4, 1],
             ),
         ],
@@ -2777,13 +2777,13 @@ class TestCbfSubarray:
             (
                 "ConfigureScan_basic.json",
                 "Scan1_basic.json",
-                ["MKT000", "MKT002", "MKT003", "MKT001"],
+                ["SKA001", "SKA036", "SKA063", "SKA100"],
                 [4, 1],
             ),
             (
                 "Configure_TM-CSP_v2.json",
                 "Scan2_basic.json",
-                ["MKT003", "MKT000", "MKT001"],
+                ["SKA063", "SKA001", "SKA100"],
                 [4, 1],
             ),
         ],

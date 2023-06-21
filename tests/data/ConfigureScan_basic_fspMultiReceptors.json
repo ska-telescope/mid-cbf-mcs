@@ -28,11 +28,11 @@
                 "tdc_period_after_epoch": 25,
                 "tdc_destination_address": [
                     {
-                        "receptor_id": "MKT003",
+                        "receptor_id": "SKA063",
                         "tdc_destination_address": ["foo", "bar", "8080"]
                     },
                     {
-                        "receptor_id": "MKT000",
+                        "receptor_id": "SKA001",
                         "tdc_destination_address": ["fizz", "buzz", "80"]
                     }
                 ]
@@ -47,7 +47,7 @@
             {
                 "fsp_id": 1,
                 "function_mode": "CORR",
-                "receptor_ids": ["MKT003", "MKT000", "MKT001"],
+                "receptor_ids": ["SKA063", "SKA001", "SKA100"],
                 "frequency_slice_id": 1,
                 "zoom_factor": 1,
                 "zoom_window_tuning": 4700000,

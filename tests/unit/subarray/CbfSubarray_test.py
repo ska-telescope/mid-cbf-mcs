@@ -285,7 +285,7 @@ class TestCbfSubarray:
         [
             (
                 "ConfigureScan_basic.json",
-                ["MKT000", "MKT002", "MKT003", "MKT001"],
+                ["SKA001", "SKA036", "SKA063", "SKA100"],
             )
         ],
     )
