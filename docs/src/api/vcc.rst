@@ -1,7 +1,6 @@
-.. Documentation
-
-Mid.Cbf VCC Device Server (VccMulti)
-===========================================
+==================
+VCC 
+==================
 
 VCC Device
 ----------
@@ -19,3 +18,21 @@ any connection to the hardware.
    :align: center
    
    MCS Vcc Device
+
+VCC Device Class
+---------------------------
+
+.. autoclass:: ska_mid_cbf_mcs.vcc.vcc_device.Vcc
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :member-order:
+
+VccComponentManager Class
+---------------------------------
+
+.. autoclass:: ska_mid_cbf_mcs.vcc.vcc_component_manager.VccComponentManager
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :member-order:   

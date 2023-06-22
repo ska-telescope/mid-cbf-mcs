@@ -1,72 +1,4 @@
-# Mid.CBF MCS
-
-Documentation on the Developer's portal:
-[![ReadTheDocs](https://developer.skao.int/projects/ska-mid-cbf-mcs/en/latest/?badge=latest)](https://developer.skao.int/projects/ska-mid-cbf-mcs/en/latest/?badge=latest)
-
-Code repository: [ska-mid-cbf-mcs](https://gitlab.com/ska-telescope/ska-mid-cbf-mcs)
-
-# Table Of Contents
-* [Introduction](#introduction)
-* [Getting Started](#getting-started)
-* [Git Repository](#git-repository)
-* [Running the Mid CBF MCS](#running-the-mid-cbf-mcs)
-* [Useful Minikube Commands](#useful-minikube-commands)
-* [Taranta](#taranta)
-* [Documentation](#documentation)
-* [Releasing](#releasing)
-* [Development resources](#development-resources)
-  * [Other resources](#other-resources)
-  * [Useful commands](#commands)
-* [License](#license)
-
-# Introduction
-
-The Mid CBF MCS implements at the moment these TANGO device classes:
-
-* `CbfController`: Based on the `SKAController` class. It represents a primary point 
-of contact for CBF Monitor and Control. It implements CBF state and mode 
-indicators 
-and a set of housekeeping commands.
-* `CbfSubarray`: Based on the `SKASubarray` class. It implements commands needed 
-for scan configuration.
-
-* `Vcc` and `Fsp`: Based on the `SKACapability` and `CspSubelementObsDevice` 
-classes, respectfully. These implement commands and attributes needed for scan 
-configuration.
-* `Vcc` and `Fsp` Capabilities: Based on the `SKACapability` class. These 
-implement state machines to enable/disable certain VCC and FSP functionality for 
-a scan.
-    * `VccBand1And2`, `VccBand3`, `VccBand4`, and `VccBand5` specify the 
-    operative frequency band of a VCC.
-    * `VccSearchWindow` defines a search window for a VCC.
-    * `FspCorrSubarray`, `FspPssSubarray` and `FspPssSubarray`: Based on the 
-    `SKASubarray` class. It implements commands and attributes needed for scan 
-    configuration.
-* `TmCspSubarrayLeafNodeTest`: Based on the `SKABaseDevice` class. It simulates 
-a TM CSP Subarray Leaf Node, providing regular updates to parameters during 
-scans using a publish-subscribe mechanism.
-* `TalonDxLogConsumer`: TANGO device class for consuming logs, converting them 
-to the SKA format, and outputting them via the logging framework.
-
-To cut down on the number of TANGO device servers, some multi-class servers are 
-implemented to run devices of different classes:
-
-* `VccMulti`: Runs a single instance of `Vcc`, one instance each of the VCC 
-frequency band capabilities, and two instances of ``VccSearchWindow``.
-* `FspMulti`: Runs a single instance of `Fsp`, one instance each of the FSP 
-function mode capabilities, and 4 instances each of `FspCorrSubarray`, 
-`FspPssSubarray` and `FspPssSubarray`.
-
-At the moment, the device servers implemented are:
-
-* 1 instance of `CbfController`.
-* 3 instance of `CbfSubarray`.
-* 4 instances of `FspMulti`.
-* 4 instances of `VccMulti`.
-* 2 instances of `TmCspSubarrayLeafNodeTest`.
-* 1 instance of `TalonDxLogConsumer`.
-
-# Getting started
+# Developer Setup
 
 This section follows the instructions on the SKA developer’s portal: 
 
@@ -232,7 +164,7 @@ The device tree can be viewed and explored. In addition, device attributes can
 be seen and modified, and device commands can be sent, by creating and saving a 
 new dashboard.
 
-# Documentation
+# Generating Documentation
 To re-generate the documentation locally prior to checking in updates to Git:
 ```bash
 make docs-build html

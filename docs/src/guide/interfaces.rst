@@ -1,32 +1,29 @@
-Overview
-********
-The Mid.CBF Master Control Software (MCS) runs on a COTS server to provide a 
-high-level interface to TMC and CSP.LMC, and translate the high-level commands 
-into the configuration and control of individual Talon-DX boards.
-
-System Context
-==============
-The following diagram shows the Mid.CBF MCS as it fits into the rest of the CSP Mid
-system.
-
-.. figure:: ../diagrams/mcs-context.png
-    :align: center
-
-    MCS System Context
-
 Interfaces
 ==========
 
 LMC to MCS Interface
 --------------------
+
+MCS provides commands and attributes to turn MCS on and off (through the CBF Controller)
+as well as commands needed to configure and execute scans through the subarrays. (CBF Subarray)
+
+The sequence diagram below shows the interactions between LMC and MCS to assign 
+receptors to a subarray, configure a scan, and run a scan. 
+It shows configuration of one Mid.CBF subarray
+followed by running a scan on that subarray. It ends with no receptors assigned
+to the subarray. The calls to write the frequency offset K and frequency offset
+delta F values are not required for every configuration and scan but must
+be written to the CBF Controller before the scan configuration.
+
+.. figure:: ../diagrams/mid-cbf-scan-ops.png
+
 See the `ICD document <https://drive.google.com/drive/folders/1CQJAJP1RhRuSvaM1OQhnxBZZ4xH1Pq_m>`_ for details of this interface.
 
-MCS to TDC Interface
+
+MCS to HPS Interface
 --------------------
-The interface from the MCS to the TDC is largely in the form of communication between
-Tango devices running on either side. Currently only one such Tango device is running
-on each Talon-DX board that the MCS directly communicates with; this is known as the 
-HPS Master.
+The interface from the MCS to the HPS is largely in the form of communication between
+Tango devices running on either side. 
 
 The interface also currently consists of low-level SSH calls from the MCS to the Talon-DX
 boards, which are used to copy FPGA bitstreams and Tango device server binaries to the boards
@@ -67,22 +64,3 @@ of its contents can be seen below.
             "dsvcc"
         ]
     }
-
-On Command Sequence
-===================
-The following diagram shows the ``CbfController`` On command sequence and how it integrates with other
-components in the Mid.CBF system. The steps are outlined in detail in the 
-`Engineering Console <https://developer.skatelescope.org/projects/ska-mid-cbf-engineering-console/en/latest/system.html#on-command-sequence>`_.
-
-From a MCS perspective, the On command sequence consists of the following steps:
-
-- Arrows 4-7: Power on the Talon-DX boards (see :ref:`TalonLRU Device` and :ref:`PowerSwitch Device`)
-- Arrow 9: Attempt to connect to each board over SSH (see :ref:`TalonDxComponentManager Class`)
-- Arrows 8-9: Copy the relevant binaries and bitstreams to each board
-- Arrow 10: Start up the HPS Master on each board
-- Arrow 12: Send the ``configure`` to each HPS Master device server
-
-.. figure:: ../diagrams/on-command-sequence.png
-    :align: center
-    
-    MCS On Command Sequence

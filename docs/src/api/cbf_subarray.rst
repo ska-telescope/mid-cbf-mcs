@@ -1,7 +1,6 @@
-.. Documentation
-
-CbfSubarray 
-======================================================
+==================
+CbfSubarray
+==================
 
 The ``CbfSubarray`` Tango device is used to monitor and control scan operation 
 of a Mid.CBF receptor subarray. This device receives one configuration per scan, 
@@ -24,3 +23,20 @@ configuration is validated for completeness and its parameters implemented as Ta
 device attributes; the subarray device will then also configure subordinate devices 
 with the relevant parameters, including VCC, FSP and FSP-subarray devices.
 
+CbfSubarray Class
+------------------
+
+.. autoclass:: ska_mid_cbf_mcs.subarray.subarray_device.CbfSubarray
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :member-order:
+
+CbfSubarrayComponentManager Class
+-----------------------------------
+
+.. autoclass:: ska_mid_cbf_mcs.subarray.subarray_component_manager.CbfSubarrayComponentManager
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :member-order:   

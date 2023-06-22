@@ -1,7 +1,6 @@
-.. Documentation
-
-Talon LRU
-======================================================
+==================
+TalonLRU
+==================
 
 The ``TalonLRU`` Tango device handles the monitor and control functionality 
 for a single Talon LRU. A TalonLRU instance must therefore be created for each LRU. 
@@ -20,3 +19,21 @@ be manually switched to the expected startup state via some other method before 
 the ``TalonLRU`` device.
 
 The expected startup state of the device is OFF.
+
+TalonLRU Device Class
+----------------------
+
+.. autoclass:: ska_mid_cbf_mcs.talon_lru.talon_lru_device.TalonLRU
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :member-order:
+
+TalonLRUComponentManager Class
+------------------------------
+
+.. autoclass:: ska_mid_cbf_mcs.talon_lru.talon_lru_component_manager.TalonLRUComponentManager
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :member-order:

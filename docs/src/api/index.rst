@@ -6,11 +6,11 @@ API
   :caption: Device subpackages
   :maxdepth: 2
 
-  CbfComponentManager<CbfComponentManager/index>
-  CbfController<CbfController/index>
-  CbfSubarray<CbfSubarray/index>
-  Fsp<Fsp/index>
-  Vcc<Vcc/index>
-  PowerSwitch<PowerSwitch/index>
-  TalonLRU<TalonLRU/index>
-  TalonDxLogConsumer<TalonDxLogConsumer/index>
+  cbf_component_manager
+  cbf_controller
+  cbf_subarray
+  fsp
+  vcc
+  power_switch
+  talon_lru
+  talondx_log_consumer

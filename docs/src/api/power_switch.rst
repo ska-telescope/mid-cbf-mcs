@@ -1,7 +1,6 @@
-.. Documentation
-
-Power Switch
-======================================================
+==================
+PowerSwitch 
+==================
 
 The ``PowerSwitch`` Tango device is used to control and monitor the web power switch 
 that provides power to the Talon LRUs. The current power switch in use is the DLI LPC9 (`User Guide
@@ -37,3 +36,41 @@ Important operational notes:
   sequential. Currently the ``PowerSwitchDriver`` does not ensure this. If the ``PowerSwitch``
   device is ever changed to handle requests asynchronously, the ``PowerSwitchDriver`` should
   also be updated to only process one request at a time. 
+
+PowerSwitch Device Class
+-------------------------
+
+.. autoclass:: ska_mid_cbf_mcs.power_switch.power_switch_device.PowerSwitch
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :member-order:
+
+PowerSwitchComponentManager Class
+---------------------------------
+
+.. autoclass:: ska_mid_cbf_mcs.power_switch.power_switch_component_manager.PowerSwitchComponentManager
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :member-order:   
+
+PowerSwitchDriver Class
+------------------------
+
+.. automodule:: ska_mid_cbf_mcs.power_switch.power_switch_driver
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :member-order:
+
+PowerSwitchSimulator Class
+--------------------------
+
+.. automodule:: ska_mid_cbf_mcs.power_switch.power_switch_simulator
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :member-order:   
+
+   
