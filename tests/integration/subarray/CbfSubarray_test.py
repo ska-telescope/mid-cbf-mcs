@@ -1248,7 +1248,9 @@ class TestCbfSubarray:
                             FspModes.PSS_BF.value,
                             FspModes.PST_BF.value,
                         ]:
-                            for frequency_slice in receptor["jones_matrix_details"]:
+                            for frequency_slice in receptor[
+                                "jones_matrix_details"
+                            ]:
                                 fs_id = frequency_slice["fsid"]
                                 matrix = frequency_slice["matrix"]
                                 if fs_id == int(
@@ -1280,9 +1282,9 @@ class TestCbfSubarray:
                                         ):
                                             assert (
                                                 matrix_val
-                                                == fsp.jones_matrix[rec_id - 1][
-                                                    idx
-                                                ]
+                                                == fsp.jones_matrix[
+                                                    rec_id - 1
+                                                ][idx]
                                             )
                         else:
                             log_msg = "function mode {} currently not supported".format(
@@ -2107,7 +2109,9 @@ class TestCbfSubarray:
                             FspModes.PSS_BF.value,
                             FspModes.PST_BF.value,
                         ]:
-                            for frequency_slice in receptor["jones_matrix_details"]:
+                            for frequency_slice in receptor[
+                                "jones_matrix_details"
+                            ]:
                                 fs_id = frequency_slice["fsid"]
                                 matrix = frequency_slice["matrix"]
                                 if fs_id == int(
@@ -2142,9 +2146,9 @@ class TestCbfSubarray:
                                         ):
                                             assert (
                                                 matrix_val
-                                                == fsp.jones_matrix[rec_id - 1][
-                                                    idx
-                                                ]
+                                                == fsp.jones_matrix[
+                                                    rec_id - 1
+                                                ][idx]
                                             )
                         else:
                             log_msg = "function mode {} currently not supported".format(

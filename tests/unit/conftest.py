@@ -10,17 +10,16 @@
 
 """This module contains pytest-specific test harness for MCS unit tests."""
 
+import unittest
 from typing import Callable, Optional
 
 import pytest
-import unittest
 import tango
 
 from ska_mid_cbf_mcs.testing.mock.mock_callable import (
     MockCallable,
     MockChangeEventCallback,
 )
-
 from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder
 
 # SKA imports
@@ -214,6 +213,7 @@ def device_to_load() -> Optional[DeviceToLoadType]:
     :return: specification of the device to be loaded
     """
     return None
+
 
 @pytest.fixture()
 def mock_controller() -> unittest.mock.Mock:

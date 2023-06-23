@@ -989,9 +989,9 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                 self._jones_matrix = json.dumps(
                     {"jones_matrix": list_of_entries}
                 )
-                dm_found = True
+                jm_found = True
                 break
 
-        if not dm_found:
-            log_msg = f"Jones amtrix for VCC (receptor: {self._receptor_id}) not found"
+        if not jm_found:
+            log_msg = f"Jones matrix for VCC (receptor: {self._receptor_id}) not found"
             self._logger.error(log_msg)

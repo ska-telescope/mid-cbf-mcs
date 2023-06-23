@@ -19,7 +19,7 @@ import tango
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import PowerMode, SimulationMode
 
-from ska_mid_cbf_mcs.commons.global_enum import const, FspModes
+from ska_mid_cbf_mcs.commons.global_enum import FspModes
 from ska_mid_cbf_mcs.component.component_manager import (
     CbfComponentManager,
     CommunicationStatus,

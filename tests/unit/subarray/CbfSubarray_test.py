@@ -12,7 +12,6 @@ from __future__ import annotations
 
 # Standard imports
 import os
-import time
 from typing import List
 
 import pytest
@@ -95,7 +94,7 @@ class TestCbfSubarray:
         """
 
         device_under_test.adminMode = AdminMode.ONLINE
-        
+
         assert device_under_test.adminMode == AdminMode.ONLINE
 
         assert device_under_test.State() == DevState.ON
@@ -107,7 +106,6 @@ class TestCbfSubarray:
             expected_state = DevState.OFF
             result = device_under_test.Off()
 
-        
         assert result[0][0] == ResultCode.OK
         assert device_under_test.State() == expected_state
 
@@ -132,25 +130,25 @@ class TestCbfSubarray:
         """
         assert device_under_test.State() == DevState.DISABLE
         device_under_test.adminMode = AdminMode.ONLINE
-        
+
         assert device_under_test.State() == DevState.ON
 
         # add all except last receptor
         assert device_under_test.obsState == ObsState.EMPTY
         device_under_test.AddReceptors(receptor_ids[:-1])
-        
+
         assert (device_under_test.receptors == receptor_ids[:-1]).all()
         assert device_under_test.obsState == ObsState.IDLE
 
         # add the last receptor
         device_under_test.AddReceptors([receptor_ids[-1]])
-        
+
         assert (device_under_test.receptors == receptor_ids).all()
         assert device_under_test.obsState == ObsState.IDLE
 
         # remove all except last receptor
         device_under_test.RemoveReceptors(receptors_to_remove)
-        
+
         receptor_ids_after_remove = [
             r for r in receptor_ids if r not in receptors_to_remove
         ]
@@ -159,7 +157,7 @@ class TestCbfSubarray:
 
         # remove remaining receptor
         device_under_test.RemoveReceptors(receptor_ids_after_remove)
-        
+
         assert (device_under_test.receptors == []).all()
         assert device_under_test.obsState == ObsState.EMPTY
 
@@ -179,16 +177,16 @@ class TestCbfSubarray:
         """
         assert device_under_test.State() == DevState.DISABLE
         device_under_test.adminMode = AdminMode.ONLINE
-        
+
         assert device_under_test.State() == DevState.ON
         assert device_under_test.obsState == ObsState.EMPTY
         device_under_test.AddReceptors(receptor_ids)
-        
+
         assert device_under_test.obsState == ObsState.IDLE
 
         # remove all receptors
         device_under_test.RemoveAllReceptors()
-        
+
         assert (device_under_test.receptors == []).all()
         assert device_under_test.obsState == ObsState.EMPTY
 
@@ -210,19 +208,19 @@ class TestCbfSubarray:
         """
         assert device_under_test.State() == DevState.DISABLE
         device_under_test.adminMode = AdminMode.ONLINE
-        
+
         assert device_under_test.State() == DevState.ON
 
         # add some receptors
         assert device_under_test.obsState == ObsState.EMPTY
         device_under_test.AddReceptors(receptor_ids)
-        
+
         assert (device_under_test.receptors == receptor_ids).all()
         assert device_under_test.obsState == ObsState.IDLE
 
         # try adding an invalid receptor ID
         device_under_test.AddReceptors(invalid_receptor_id)
-        
+
         assert (device_under_test.receptors == receptor_ids).all()
 
     @pytest.mark.skip
@@ -243,17 +241,17 @@ class TestCbfSubarray:
         """
         assert device_under_test.State() == DevState.DISABLE
         device_under_test.adminMode = AdminMode.ONLINE
-        
+
         assert device_under_test.State() == DevState.ON
         # add some receptors
         assert device_under_test.obsState == ObsState.EMPTY
         device_under_test.AddReceptors(receptor_ids)
-        
+
         assert device_under_test.obsState == ObsState.IDLE
 
         # try removing a receptor not assigned to subarray 1
         device_under_test.RemoveReceptors(invalid_receptors_to_remove)
-        
+
         assert (device_under_test.receptors == receptor_ids).all()
         assert device_under_test.obsState == ObsState.IDLE
 
@@ -270,13 +268,13 @@ class TestCbfSubarray:
         """
         assert device_under_test.State() == DevState.DISABLE
         device_under_test.adminMode = AdminMode.ONLINE
-        
+
         assert device_under_test.State() == DevState.ON
         assert device_under_test.obsState == ObsState.EMPTY
 
         # try removing all receptors
         result = device_under_test.RemoveAllReceptors()
-        
+
         assert result[0][0] == ResultCode.FAILED
 
     @pytest.mark.parametrize(
@@ -300,7 +298,7 @@ class TestCbfSubarray:
         """
         assert device_under_test.State() == DevState.DISABLE
         device_under_test.adminMode = AdminMode.ONLINE
-        
+
         assert device_under_test.State() == DevState.OFF
         assert device_under_test.obsState == ObsState.EMPTY
         device_under_test.AddReceptors(receptor_ids)
@@ -308,14 +306,14 @@ class TestCbfSubarray:
         device_under_test.frequencyOffsetK = freq_offset_k
         freq_offset_deltaF = 1800
         device_under_test.frequencyOffsetDeltaF = freq_offset_deltaF
-        
+
         assert device_under_test.obsState == ObsState.IDLE
 
         # configure scan
         f = open(data_file_path + config_file_name)
         device_under_test.ConfigureScan(f.read().replace("\n", ""))
         f.close()
-        
+
         assert device_under_test.obsState == ObsState.READY
 
     @pytest.mark.skip
@@ -346,7 +344,6 @@ class TestCbfSubarray:
         f = open(data_file_path + scan_file_name)
         device_under_test.Scan(f.read().replace("\n", ""))
         f.close()
-        
 
         assert device_under_test.obsState == ObsState.SCANNING
 
@@ -385,7 +382,6 @@ class TestCbfSubarray:
 
         # send the EndScan command
         device_under_test.EndScan()
-        
 
         assert device_under_test.obsState == ObsState.READY
 
@@ -424,7 +420,6 @@ class TestCbfSubarray:
 
         # send the Abort command
         device_under_test.Abort()
-        
 
         assert device_under_test.obsState == ObsState.ABORTED
 
@@ -463,7 +458,6 @@ class TestCbfSubarray:
 
         # send the Reset command
         device_under_test.ObsReset()
-        
 
         assert device_under_test.obsState == ObsState.IDLE
 
@@ -502,7 +496,6 @@ class TestCbfSubarray:
 
         # send the Reset command
         device_under_test.Restart()
-        
 
         assert device_under_test.obsState == ObsState.EMPTY
 
@@ -532,5 +525,5 @@ class TestCbfSubarray:
         )
 
         device_under_test.End()
-        
+
         assert device_under_test.obsState == ObsState.IDLE

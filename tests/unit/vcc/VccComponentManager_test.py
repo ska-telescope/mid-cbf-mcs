@@ -151,7 +151,9 @@ class TestVccComponentManager:
         vcc_component_manager.update_jones_matrix(input_jones_matrix)
 
         # check that the Jones matrix is no longer an empty string
-        updated_jones_matrix_obj = json.loads(vcc_component_manager.jones_matrix)
+        updated_jones_matrix_obj = json.loads(
+            vcc_component_manager.jones_matrix
+        )
         assert len(updated_jones_matrix_obj) != 0
 
         # check that the matrix values were copied

@@ -19,7 +19,6 @@ import copy
 import json
 import logging
 import sys
-import time
 from threading import Lock, Thread
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
@@ -588,9 +587,7 @@ class CbfSubarrayComponentManager(
                         ]
                     t = Thread(
                         target=self._update_jones_matrix,
-                        args=(
-                            json.dumps(jones_matrix),
-                        ),
+                        args=(json.dumps(jones_matrix),),
                     )
                     t.start()
             except Exception as e:
@@ -662,7 +659,9 @@ class CbfSubarrayComponentManager(
                 timing_beam_weights = json.loads(value)
 
                 # pass receptor IDs as pair of str and int to FSPs and VCCs
-                for weights in timing_beam_weights["timing_beam_weights_details"]:
+                for weights in timing_beam_weights[
+                    "timing_beam_weights_details"
+                ]:
                     receptor_id = weights["receptor"]
                     weights["receptor"] = [
                         receptor_id,
@@ -672,7 +671,11 @@ class CbfSubarrayComponentManager(
                         target=self._update_timing_beam_weights,
                         args=(
                             int(timing_beam_weights["epoch"]),
-                            json.dumps(timing_beam_weights["timing_beam_weights_details"]),
+                            json.dumps(
+                                timing_beam_weights[
+                                    "timing_beam_weights_details"
+                                ]
+                            ),
                         ),
                     )
                     t.start()
@@ -693,7 +696,7 @@ class CbfSubarrayComponentManager(
         """
         # This method is always called on a separate thread
         self._logger.debug("CbfSubarray._update_timing_beam_weights")
-        
+
         log_msg = f"Updating timing beam weights {weights}"
         self._logger.info(log_msg)
 
