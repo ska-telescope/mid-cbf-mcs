@@ -12,6 +12,7 @@ from __future__ import annotations
 
 # Standard imports
 import os
+from time import sleep
 from typing import List
 
 import pytest
@@ -20,7 +21,6 @@ import pytest
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import AdminMode, ObsState
 from tango import DevState
-from time import sleep
 
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 
