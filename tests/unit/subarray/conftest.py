@@ -425,8 +425,8 @@ def initial_mocks(
     return {
         "ska_mid/tm_leaf_node/csp_subarray_01/dopplerPhaseCorrection": mock_doppler,
         "ska_mid/tm_leaf_node/csp_subarray_01/delayModel": mock_delay,
-        "ska_mid/tm_leaf_node/csp_subarray_01/jones_matrix": mock_jones,
-        "ska_mid/tm_leaf_node/csp_subarray_01/beam_weights": mock_beam,
+        "ska_mid/tm_leaf_node/csp_subarray_01/jonesMatrix": mock_jones,
+        "ska_mid/tm_leaf_node/csp_subarray_01/timingBeamWeights": mock_beam,
         "mid_csp_cbf/sub_elt/controller": mock_controller,
         "mid_csp_cbf/vcc/001": mock_vcc,
         "mid_csp_cbf/vcc/002": mock_vcc,

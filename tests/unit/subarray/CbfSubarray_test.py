@@ -20,6 +20,7 @@ import pytest
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import AdminMode, ObsState
 from tango import DevState
+from time import sleep
 
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 
@@ -313,6 +314,7 @@ class TestCbfSubarray:
         f = open(data_file_path + config_file_name)
         device_under_test.ConfigureScan(f.read().replace("\n", ""))
         f.close()
+        sleep(CONST_WAIT_TIME)
 
         assert device_under_test.obsState == ObsState.READY
 
@@ -339,6 +341,7 @@ class TestCbfSubarray:
         self.test_ConfigureScan_basic(
             device_under_test, config_file_name, receptor_ids
         )
+        sleep(CONST_WAIT_TIME)
 
         # send the Scan command
         f = open(data_file_path + scan_file_name)
