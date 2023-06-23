@@ -312,7 +312,9 @@ class CbfSubarrayComponentManager(
                             int(receptor_vcc_pair[0])
                         )
                     ] = int(receptor_vcc_pair[1])
-                self._logger.debug(f"{self._receptor_to_vcc}")
+                self._logger.info(
+                    f"Receptor to VCC mapping: {self._receptor_to_vcc}"
+                )
 
                 self._fqdn_vcc = self._fqdn_vcc[: self._count_vcc]
                 self._fqdn_fsp = self._fqdn_fsp[: self._count_fsp]
@@ -576,9 +578,9 @@ class CbfSubarrayComponentManager(
                 self._last_received_jones_matrix = value
                 jones_matrix_all = json.loads(value)
 
-                for jones_matrix in jones_matrix_all["jonesMatrix"]:
+                for jones_matrix in jones_matrix_all["jones_matrix"]:
                     # pass receptor IDs as pair of str and int to FSPs and VCCs
-                    for matrix in jones_matrix["matrixDetails"]:
+                    for matrix in jones_matrix["matrix_details"]:
                         receptor_id = matrix["receptor"]
                         matrix["receptor"] = [
                             receptor_id,
@@ -587,8 +589,7 @@ class CbfSubarrayComponentManager(
                     t = Thread(
                         target=self._update_jones_matrix,
                         args=(
-                            int(jones_matrix["epoch"]),
-                            json.dumps(jones_matrix["matrixDetails"]),
+                            json.dumps(jones_matrix),
                         ),
                     )
                     t.start()
@@ -598,30 +599,23 @@ class CbfSubarrayComponentManager(
             self._logger.warning(f"None value for {fqdn}")
 
     def _update_jones_matrix(
-        self: CbfSubarrayComponentManager, epoch: int, matrix_details: str
+        self: CbfSubarrayComponentManager, matrix: str
     ) -> None:
         """
         Update FSP and VCC Jones matrices.
 
         :param destination_type: type of device to send the delay model to
         :param epoch: system time of delay model reception
-        :param matrix_details: Jones matrix value
+        :param matrix: Jones matrix value
         """
         # This method is always called on a separate thread
         self._logger.debug("CbfSubarray._update_jones_matrix")
-        log_msg = (
-            f"Jones matrix active at {epoch} (currently {time.time()})..."
-        )
-        self._logger.info(log_msg)
 
-        if epoch > time.time():
-            time.sleep(epoch - time.time())
-
-        log_msg = f"Updating Jones Matrix at specified epoch {epoch}..."
+        log_msg = f"Updating Jones Matrix {matrix}"
         self._logger.info(log_msg)
 
         data = tango.DeviceData()
-        data.insert(tango.DevString, matrix_details)
+        data.insert(tango.DevString, matrix)
 
         # we lock the mutex, forward the configuration, then immediately unlock it
         self._mutex_jones_matrix_config.acquire()
@@ -665,21 +659,20 @@ class CbfSubarrayComponentManager(
                     return
 
                 self._last_received_timing_beam_weights = value
-                timing_beam_weights_all = json.loads(value)
+                timing_beam_weights = json.loads(value)
 
-                for beam_weights in timing_beam_weights_all["beamWeights"]:
-                    # pass receptor IDs as pair of str and int to FSPs and VCCs
-                    for weights in beam_weights["beamWeightsDetails"]:
-                        receptor_id = weights["receptor"]
-                        weights["receptor"] = [
-                            receptor_id,
-                            self._receptor_utils.receptors[receptor_id],
-                        ]
+                # pass receptor IDs as pair of str and int to FSPs and VCCs
+                for weights in timing_beam_weights["timing_beam_weights_details"]:
+                    receptor_id = weights["receptor"]
+                    weights["receptor"] = [
+                        receptor_id,
+                        self._receptor_utils.receptors[receptor_id],
+                    ]
                     t = Thread(
                         target=self._update_timing_beam_weights,
                         args=(
-                            int(beam_weights["epoch"]),
-                            json.dumps(beam_weights["beamWeightsDetails"]),
+                            int(timing_beam_weights["epoch"]),
+                            json.dumps(timing_beam_weights["timing_beam_weights_details"]),
                         ),
                     )
                     t.start()
@@ -689,28 +682,23 @@ class CbfSubarrayComponentManager(
             self._logger.warning(f"None value for {fqdn}")
 
     def _update_timing_beam_weights(
-        self: CbfSubarrayComponentManager, epoch: int, weights_details: str
+        self: CbfSubarrayComponentManager, weights: str
     ) -> None:
         """
         Update FSP beam weights.
 
         :param destination_type: type of device to send the delay model to
         :param epoch: system time of delay model reception
-        :param weights_details: beam weights value
+        :param weights: beam weights value
         """
         # This method is always called on a separate thread
         self._logger.debug("CbfSubarray._update_timing_beam_weights")
-        log_msg = f"Timing beam weights active at {epoch} (currently {time.time()})..."
-        self._logger.info(log_msg)
-
-        if epoch > time.time():
-            time.sleep(epoch - time.time())
-
-        log_msg = f"Updating timing beam weights at specified epoch {epoch}..."
+        
+        log_msg = f"Updating timing beam weights {weights}"
         self._logger.info(log_msg)
 
         data = tango.DeviceData()
-        data.insert(tango.DevString, weights_details)
+        data.insert(tango.DevString, weights)
 
         # we lock the mutex, forward the configuration, then immediately unlock it
         self._mutex_beam_weights_config.acquire()
@@ -851,7 +839,7 @@ class CbfSubarrayComponentManager(
                     # change FSP subarray membership
                     data = tango.DeviceData()
                     data.insert(tango.DevUShort, self._subarray_id)
-                    # self._logger.info(data)
+                    self._logger.debug(data)
                     self._group_fsp.command_inout(
                         "RemoveSubarrayMembership", data
                     )

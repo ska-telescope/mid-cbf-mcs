@@ -1213,7 +1213,7 @@ class TestCbfSubarray:
 
             # Insert the epoch
             jones_matrix_index_per_epoch = list(
-                range(len(jones_matrix["jonesMatrix"]))
+                range(len(jones_matrix["jones_matrix"]))
             )
             random.shuffle(jones_matrix_index_per_epoch)
             epoch_increment = 10
@@ -1222,23 +1222,23 @@ class TestCbfSubarray:
             ):
                 if i == 0:
                     epoch_time = 0
-                    jones_matrix["jonesMatrix"][jones_matrix_index][
+                    jones_matrix["jones_matrix"][jones_matrix_index][
                         "epoch"
                     ] = str(epoch_time)
                 else:
                     epoch_time += epoch_increment
-                    jones_matrix["jonesMatrix"][jones_matrix_index][
+                    jones_matrix["jones_matrix"][jones_matrix_index][
                         "epoch"
                     ] = str(int(time.time()) + epoch_time)
 
             # update Jones Matrix
-            test_proxies.tm.jonesMatrix = json.dumps(jones_matrix)
+            test_proxies.tm.jones_matrix = json.dumps(jones_matrix)
             time.sleep(1)
 
             for epoch in range(len(jones_matrix_index_per_epoch)):
-                for receptor in jones_matrix["jonesMatrix"][
+                for receptor in jones_matrix["jones_matrix"][
                     jones_matrix_index_per_epoch[epoch]
-                ]["matrixDetails"]:
+                ]["jones_matrix"]:
                     rec_id = receptor["receptor"]
                     for fsp in [
                         test_proxies.fsp[i]
@@ -1248,7 +1248,7 @@ class TestCbfSubarray:
                             FspModes.PSS_BF.value,
                             FspModes.PST_BF.value,
                         ]:
-                            for frequency_slice in receptor["receptorMatrix"]:
+                            for frequency_slice in receptor["jones_matrix_details"]:
                                 fs_id = frequency_slice["fsid"]
                                 matrix = frequency_slice["matrix"]
                                 if fs_id == int(
@@ -1280,7 +1280,7 @@ class TestCbfSubarray:
                                         ):
                                             assert (
                                                 matrix_val
-                                                == fsp.jonesMatrix[rec_id - 1][
+                                                == fsp.jones_matrix[rec_id - 1][
                                                     idx
                                                 ]
                                             )
@@ -1365,22 +1365,22 @@ class TestCbfSubarray:
             f = open(data_file_path + timing_beam_weights_file_name)
             timing_beam_weights = json.loads(f.read().replace("\n", ""))
             epoch = str(int(time.time()))
-            for weights in timing_beam_weights["beamWeights"]:
+            for weights in timing_beam_weights["beam_weights"]:
                 weights["epoch"] = epoch
                 epoch = str(int(epoch) + 10)
 
             # update timing beam weights
-            test_proxies.tm.beamWeights = json.dumps(timing_beam_weights)
+            test_proxies.tm.beam_weights = json.dumps(timing_beam_weights)
             time.sleep(1)
 
-            for weights in timing_beam_weights["beamWeights"]:
-                for receptor in weights["beamWeightsDetails"]:
+            for weights in timing_beam_weights["beam_weights"]:
+                for receptor in weights["timing_beam_weights"]:
                     rec_id = self.receptor_utils.receptors[
                         receptor["receptor"]
                     ]
-                    fs_id = receptor["receptorWeightsDetails"][0]["fsid"]
+                    fs_id = receptor["timing_beam_weights_details"][0]["fsid"]
                     for index, value in enumerate(
-                        receptor["receptorWeightsDetails"][0]["weights"]
+                        receptor["timing_beam_weights_details"][0]["weights"]
                     ):
                         try:
                             assert (
@@ -1970,7 +1970,7 @@ class TestCbfSubarray:
             ),
         ],
     )
-    def test_ConfigureScan_jonesMatrix(
+    def test_ConfigureScan_jones_matrix(
         self: TestCbfSubarray,
         test_proxies: pytest.fixture,
         config_file_name: str,
@@ -2037,7 +2037,7 @@ class TestCbfSubarray:
 
             # Insert the epoch
             jones_matrix_index_per_epoch = list(
-                range(len(jones_matrix["jonesMatrix"]))
+                range(len(jones_matrix["jones_matrix"]))
             )
             random.shuffle(jones_matrix_index_per_epoch)
             epoch_increment = 10
@@ -2046,29 +2046,29 @@ class TestCbfSubarray:
             ):
                 if i == 0:
                     epoch_time = 0
-                    jones_matrix["jonesMatrix"][jones_matrix_index][
+                    jones_matrix["jones_matrix"][jones_matrix_index][
                         "epoch"
                     ] = str(epoch_time)
                 else:
                     epoch_time += epoch_increment
-                    jones_matrix["jonesMatrix"][jones_matrix_index][
+                    jones_matrix["jones_matrix"][jones_matrix_index][
                         "epoch"
                     ] = str(int(time.time()) + epoch_time)
 
             # update Jones Matrix
-            test_proxies.tm.jonesMatrix = json.dumps(jones_matrix)
+            test_proxies.tm.jones_matrix = json.dumps(jones_matrix)
             time.sleep(1)
 
             epoch_to_scan = 1
 
             for epoch in range(len(jones_matrix_index_per_epoch)):
-                for receptor in jones_matrix["jonesMatrix"][
+                for receptor in jones_matrix["jones_matrix"][
                     jones_matrix_index_per_epoch[epoch]
-                ]["matrixDetails"]:
+                ]["jones_matrix"]:
                     rec_id = self.receptor_utils.receptors[
                         receptor["receptor"]
                     ]
-                    for frequency_slice in receptor["receptorMatrix"]:
+                    for frequency_slice in receptor["jones_matrix_details"]:
                         for index, value in enumerate(
                             frequency_slice["matrix"]
                         ):
@@ -2076,7 +2076,7 @@ class TestCbfSubarray:
                             fs_id = frequency_slice["fsid"]
                             try:
                                 assert (
-                                    test_proxies.vcc[vcc_id].jonesMatrix[
+                                    test_proxies.vcc[vcc_id].jones_matrix[
                                         fs_id - 1
                                     ][index]
                                     == value
@@ -2084,14 +2084,14 @@ class TestCbfSubarray:
                             except AssertionError as ae:
                                 logging.error(
                                     "AssertionError; incorrect Jones matrix entry: \
-                                    epoch {}, VCC {}, i = {}, jonesMatrix[{}] = {}".format(
-                                        jones_matrix["jonesMatrix"][
+                                    epoch {}, VCC {}, i = {}, jones_matrix[{}] = {}".format(
+                                        jones_matrix["jones_matrix"][
                                             jones_matrix_index_per_epoch[epoch]
                                         ]["epoch"],
                                         vcc_id,
                                         index,
                                         fs_id - 1,
-                                        test_proxies.vcc[vcc_id].jonesMatrix[
+                                        test_proxies.vcc[vcc_id].jones_matrix[
                                             fs_id - 1
                                         ],
                                     )
@@ -2107,7 +2107,7 @@ class TestCbfSubarray:
                             FspModes.PSS_BF.value,
                             FspModes.PST_BF.value,
                         ]:
-                            for frequency_slice in receptor["receptorMatrix"]:
+                            for frequency_slice in receptor["jones_matrix_details"]:
                                 fs_id = frequency_slice["fsid"]
                                 matrix = frequency_slice["matrix"]
                                 if fs_id == int(
@@ -2142,7 +2142,7 @@ class TestCbfSubarray:
                                         ):
                                             assert (
                                                 matrix_val
-                                                == fsp.jonesMatrix[rec_id - 1][
+                                                == fsp.jones_matrix[rec_id - 1][
                                                     idx
                                                 ]
                                             )

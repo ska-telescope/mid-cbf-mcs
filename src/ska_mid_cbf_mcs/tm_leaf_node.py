@@ -156,11 +156,11 @@ class TmCspSubarrayLeafNodeTest(SKABaseDevice):
         doc="Delay model coefficients",
     )
 
-    beamWeights = attribute(
+    timingBeamWeights = attribute(
         dtype="str",
         access=AttrWriteType.READ_WRITE,
-        label="Search/timing beam weights",
-        doc="Search/timing beam weights",
+        label="Timing beam weights",
+        doc="Timing beam weights",
     )
 
     visDestinationAddress = attribute(
@@ -259,15 +259,15 @@ class TmCspSubarrayLeafNodeTest(SKABaseDevice):
             self.logger.error(log_msg)
         # PROTECTED REGION END #    //  TmCspSubarrayLeafNodeTest.dopplerPhaseCorrection_write
 
-    def read_jonesMatrix(self):
-        # PROTECTED REGION ID(TmCspSubarrayLeafNodeTest.jonesMatrix_read) ENABLED START #
+    def read_jones_matrix(self):
+        # PROTECTED REGION ID(TmCspSubarrayLeafNodeTest.jones_matrix_read) ENABLED START #
         return json.dumps(self._jones_matrix)
-        # PROTECTED REGION END #    //  TmCspSubarrayLeafNodeTest.jonesMatrix_read
+        # PROTECTED REGION END #    //  TmCspSubarrayLeafNodeTest.jones_matrix_read
 
-    def write_jonesMatrix(self, value):
-        # PROTECTED REGION ID(TmCspSubarrayLeafNodeTest.jonesMatrix_write) ENABLED START #
+    def write_jones_matrix(self, value):
+        # PROTECTED REGION ID(TmCspSubarrayLeafNodeTest.jones_matrix_write) ENABLED START #
         self._jones_matrix = json.loads(str(value))
-        # PROTECTED REGION END #    //  TmCspSubarrayLeafNodeTest.jonesMatrix_write
+        # PROTECTED REGION END #    //  TmCspSubarrayLeafNodeTest.jones_matrix_write
 
     def read_delayModel(self):
         # PROTECTED REGION ID(TmCspSubarrayLeafNodeTest.delayModel_read) ENABLED START #
@@ -280,16 +280,16 @@ class TmCspSubarrayLeafNodeTest(SKABaseDevice):
         self._delay_model = json.loads(str(value))
         # PROTECTED REGION END #    //  TmCspSubarrayLeafNodeTest.delayModel_write
 
-    def read_beamWeights(self):
-        # PROTECTED REGION ID(TmCspSubarrayLeafNodeTest.beamWeights_read) ENABLED START #
+    def read_beam_weights(self):
+        # PROTECTED REGION ID(TmCspSubarrayLeafNodeTest.beam_weights_read) ENABLED START #
         return json.dumps(self._beam_weights)
-        # PROTECTED REGION END #    //  TmCspSubarrayLeafNodeTest.beamWeights_read
+        # PROTECTED REGION END #    //  TmCspSubarrayLeafNodeTest.beam_weights_read
 
-    def write_beamWeights(self, value):
-        # PROTECTED REGION ID(TmCspSubarrayLeafNodeTest.beamWeights_write) ENABLED START #
+    def write_beam_weights(self, value):
+        # PROTECTED REGION ID(TmCspSubarrayLeafNodeTest.beam_weights_write) ENABLED START #
         # since this is just a test device, assume that the JSON schema is always what we expect
         self._beam_weights = json.loads(str(value))
-        # PROTECTED REGION END #    //  TmCspSubarrayLeafNodeTest.beamWeights_write
+        # PROTECTED REGION END #    //  TmCspSubarrayLeafNodeTest.beam_weights_write
 
     def read_visDestinationAddress(self):
         # PROTECTED REGION ID(TmCspSubarrayLeafNodeTest.visDestinationAddress_read) ENABLED START #

@@ -138,7 +138,6 @@ class TestFspComponentManager:
         # add fsp to all but last test subarray
         for sub_id in sub_ids[:-1]:
             fsp_component_manager.add_subarray_membership(sub_id)
-            time.sleep(3)
         for idx, sub_id in enumerate(sub_ids[:-1]):
             assert (
                 list(fsp_component_manager.subarray_membership)[idx]
@@ -147,7 +146,6 @@ class TestFspComponentManager:
 
         # remove fsp from first test subarray
         fsp_component_manager.remove_subarray_membership(sub_ids[0])
-        time.sleep(3)
         for idx, sub_id in enumerate(sub_ids[1:-1]):
             assert (
                 list(fsp_component_manager.subarray_membership)[idx]
@@ -156,7 +154,6 @@ class TestFspComponentManager:
 
         # add fsp to last test subarray
         fsp_component_manager.add_subarray_membership(sub_ids[-1])
-        time.sleep(3)
         for idx, sub_id in enumerate(sub_ids[1:]):
             assert (
                 list(fsp_component_manager.subarray_membership)[idx]
@@ -166,23 +163,18 @@ class TestFspComponentManager:
         # remove fsp from all subarrays
         for sub_id in sub_ids:
             fsp_component_manager.remove_subarray_membership(sub_id)
-            time.sleep(3)
         assert fsp_component_manager.subarray_membership == []
 
     @pytest.mark.parametrize(
         "jones_matrix_file_name, \
-        sub_id, \
-        valid_receptor_ids, \
-        fsp_id",
-        [("/../../data/jonesmatrix_unit_test.json", 1, [1, 2, 3, 4], 1)],
+        sub_id",
+        [("/../../data/jonesmatrix_unit_test.json", 1)],
     )
     def test_UpdateJonesMatrix(
         self: TestFspComponentManager,
         fsp_component_manager: FspComponentManager,
         jones_matrix_file_name: str,
         sub_id: int,
-        valid_receptor_ids: List[int],
-        fsp_id: int,
     ) -> None:
         """
         Test Fsp's UpdateJonesMatrix command
@@ -192,9 +184,6 @@ class TestFspComponentManager:
             :py:class:`tango.test_context.DeviceTestContext`.
         :param jones_matrix_file_name: JSON file for the jones matrix
         :param sub_id: the subarray id
-        :param valid_receptor_ids: the valid receptor ids for the pss/pst subarray
-            (mocked in conftest.py)
-        :param fsp_id: the fsp id (defined in conftest.py)
         """
 
         fsp_component_manager.start_communicating()
@@ -212,79 +201,49 @@ class TestFspComponentManager:
         )
 
         fsp_component_manager.add_subarray_membership(sub_id)
-        time.sleep(3)
         assert list(fsp_component_manager.subarray_membership) == [sub_id]
 
-        # jones matrix values should be set to 0.0 after init
-        num_cols = 16
-        num_rows = 4
-        assert list(fsp_component_manager.jones_matrix) == [
-            [0.0] * num_cols for _ in range(num_rows)
-        ]
+        # jones matrix values should be set to "" after init
+        assert fsp_component_manager.jones_matrix == ""
 
         # read the json file
         f = open(file_path + jones_matrix_file_name)
-        json_str = f.read().replace("\n", "")
+        jones_matrix = f.read().replace("\n", "")
         f.close()
-        jones_matrix = json.loads(json_str)
 
-        valid_function_modes = ["PSS-BF", "PST-BF"]
+        valid_function_modes = ["PSS-BF", "PST-BF", "VLBI"]
         for mode in valid_function_modes:
             fsp_component_manager.set_function_mode(mode)
-            time.sleep(0.1)
             if mode == "PSS-BF":
                 assert (
                     fsp_component_manager.function_mode
                     == FspModes.PSS_BF.value
                 )
-                fs_length = 16
             elif mode == "PST-BF":
                 assert (
                     fsp_component_manager.function_mode
                     == FspModes.PST_BF.value
                 )
-                fs_length = 4
-
-            # update the jones matrix
-            for m in jones_matrix["jonesMatrix"]:
-                fsp_component_manager.update_jones_matrix(
-                    json.dumps(m["matrixDetails"])
+            elif mode == "VLBI":
+                assert (
+                    fsp_component_manager.function_mode == FspModes.VLBI.value
                 )
 
-            time.sleep(3)
-            # verify the jones matrix was updated successfully
-            for m in jones_matrix["jonesMatrix"]:
-                for matrixDetail in m["matrixDetails"]:
-                    rec_id = matrixDetail["receptor"]
-                    if rec_id in valid_receptor_ids:
-                        for frequency_slice in matrixDetail["receptorMatrix"]:
-                            fs_id = frequency_slice["fsid"]
-                            matrix = frequency_slice["matrix"]
-                            if fs_id == fsp_id:
-                                if len(matrix) == fs_length:
-                                    assert (
-                                        list(
-                                            fsp_component_manager.jones_matrix[
-                                                rec_id - 1
-                                            ]
-                                        )
-                                        == matrix
-                                    )
+            fsp_component_manager.update_jones_matrix(jones_matrix)
+
+            # verify the Jones Matrix was updated successfully
+            assert jones_matrix == fsp_component_manager.jones_matrix
 
     @pytest.mark.parametrize(
         "delay_model_file_name, \
-        sub_id, \
-        valid_receptor_ids, \
-        fsp_id",
-        [("/../../data/delaymodel_unit_test.json", 1, [1, 2, 3, 4], 1)],
+        sub_id",
+        [("/../../data/delaymodel_unit_test.json", 1)],
     )
     def test_UpdateDelayModel(
         self: TestFspComponentManager,
         fsp_component_manager: FspComponentManager,
         delay_model_file_name: str,
         sub_id: int,
-        valid_receptor_ids: List[int],
-        fsp_id: int,
     ) -> None:
         """
         Test Fsp's UpdateDelayModel command
@@ -294,9 +253,6 @@ class TestFspComponentManager:
             :py:class:`tango.test_context.DeviceTestContext`.
         :param delay_model_file_name: JSON file for the delay model
         :param sub_id: the subarray id
-        :param valid_receptor_ids: the valid receptor ids for the pss/pst subarray
-            (mocked in conftest.py)
-        :param fsp_id: the fsp id (defined in conftest.py)
         """
 
         fsp_component_manager.start_communicating()
@@ -314,7 +270,6 @@ class TestFspComponentManager:
         )
 
         fsp_component_manager.add_subarray_membership(sub_id)
-        time.sleep(3)
         assert list(fsp_component_manager.subarray_membership) == [sub_id]
 
         # delay model should be empty string after init
@@ -328,7 +283,6 @@ class TestFspComponentManager:
         valid_function_modes = ["PSS-BF", "PST-BF", "CORR"]
         for mode in valid_function_modes:
             fsp_component_manager.set_function_mode(mode)
-            time.sleep(0.1)
             if mode == "PSS-BF":
                 assert (
                     fsp_component_manager.function_mode
@@ -345,7 +299,6 @@ class TestFspComponentManager:
                 )
 
             fsp_component_manager.update_delay_model(delay_model)
-            time.sleep(3)
 
             # verify the delay model was updated successfully
             assert delay_model == fsp_component_manager.delay_model
@@ -386,46 +339,22 @@ class TestFspComponentManager:
         )
 
         fsp_component_manager.add_subarray_membership(sub_id)
-        time.sleep(3)
         assert list(fsp_component_manager.subarray_membership) == [sub_id]
 
-        # timing beam weights should be set to 0.0 after init
-        num_cols = 6
-        num_rows = 4
-        assert fsp_component_manager.timing_beam_weights == [
-            [0.0] * num_cols for _ in range(num_rows)
-        ]
+        # timing beam weights should be set to "" after init
+        assert fsp_component_manager.timing_beam_weights == ""
 
         # update only valid for function mode PST-BF
         fsp_component_manager.set_function_mode("PST-BF")
-        time.sleep(0.1)
         assert fsp_component_manager.function_mode == FspModes.PST_BF.value
 
         # read the json file
         f = open(file_path + timing_beam_weights_file_name)
-        json_str = f.read().replace("\n", "")
+        timing_beam_weights = f.read().replace("\n", "")
         f.close()
-        timing_beam_weights = json.loads(json_str)
 
         # update the weights
-        for weights in timing_beam_weights["beamWeights"]:
-            beam_weights_details = weights["beamWeightsDetails"]
+        fsp_component_manager.update_timing_beam_weights(timing_beam_weights)
 
-            fsp_component_manager.update_timing_beam_weights(
-                json.dumps(beam_weights_details)
-            )
-
-        time.sleep(3)
-        # verify the weights were updated successfully
-        for weights in timing_beam_weights["beamWeights"]:
-            beam_weights_details = weights["beamWeightsDetails"]
-            for receptor in beam_weights_details:
-                receptor_index = receptor["receptor"][1]
-                for frequency_slice in receptor["receptorWeightsDetails"]:
-                    weights = frequency_slice["weights"]
-                    assert (
-                        fsp_component_manager.timing_beam_weights[
-                            receptor_index - 1
-                        ]
-                        == weights
-                    )
+        # verify the timing beam weights were updated successfully
+        assert timing_beam_weights == fsp_component_manager.timing_beam_weights

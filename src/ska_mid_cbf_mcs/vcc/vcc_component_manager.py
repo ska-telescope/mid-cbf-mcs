@@ -188,7 +188,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         return self._rfi_flagging_mask
 
     @property
-    def jones_matrix(self: VccComponentManager) -> List[List[float]]:
+    def jones_matrix(self: VccComponentManager) -> str:
         """
         Jones Matrix
 
@@ -275,7 +275,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         self._frequency_band_offset_stream_2 = 0
         self._rfi_flagging_mask = ""
 
-        self._jones_matrix = [[0] * 16 for _ in range(26)]
+        self._jones_matrix = ""
         self._delay_model = ""
         self._doppler_phase_correction = [0 for _ in range(4)]
 
@@ -562,7 +562,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
     def deconfigure(self: VccComponentManager) -> None:
         """Deconfigure scan configuration parameters."""
         self._doppler_phase_correction = [0 for _ in range(4)]
-        self._jones_matrix = [[0] * 16 for _ in range(26)]
+        self._jones_matrix = ""
         self._delay_model = ""
         self._rfi_flagging_mask = ""
         self._frequency_band_offset_stream_2 = 0
@@ -945,7 +945,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         list_of_entries = []
         for entry in delay_model_obj["delay_model"]:
             self._logger.debug(
-                f"Received delay model for receptor {entry['receptor']}"
+                f"Received delay model for receptor {entry['receptor'][0]}"
             )
             if entry["receptor"][1] == self._receptor_id:
                 self._logger.debug("Updating delay model for this VCC")
@@ -966,23 +966,32 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
 
         :param argin: the jones matrix JSON string
         """
-        argin = json.loads(argin)
+        matrix = json.loads(argin)
 
-        for jonesDetails in argin:
-            # "receptor" value is a pair of str and int
-            if jonesDetails["receptor"][1] == self._receptor_id:
-                for frequency_slice in jonesDetails["receptorMatrix"]:
-                    fs_id = frequency_slice["fsid"]
-                    matrix = frequency_slice["matrix"]
-                    if 1 <= fs_id <= 26:
-                        if len(matrix) == 16:
-                            self._jones_matrix[fs_id - 1] = matrix.copy()
-                        else:
-                            log_msg = (
-                                f"'matrix' not valid for frequency slice {fs_id} "
-                                + f" of receptor {self._receptor_id}"
-                            )
-                            self._logger.error(log_msg)
-                    else:
-                        log_msg = f"'fsid' {fs_id} not valid for receptor {self._receptor_id}"
-                        self._logger.error(log_msg)
+        # find the Jones matrix that applies to this vcc's
+        # receptor and store it
+        jm_found = False
+
+        # the Jones matrix schema allows for a set of
+        # receptors to be included in the Jones matrix
+        # Even though there will only be one entry
+        # for a VCC, there should still be a list
+        # with a single entry so that the schema is followed
+        # Set up the Jones matrix to be a list
+        list_of_entries = []
+        for entry in matrix["jones_matrix"]:
+            self._logger.debug(
+                f"Received Jones matrix for receptor {entry['receptor'][0]}"
+            )
+            if entry["receptor"][1] == self._receptor_id:
+                self._logger.debug("Updating Jones Matrix for this VCC")
+                list_of_entries.append(copy.deepcopy(entry))
+                self._jones_matrix = json.dumps(
+                    {"jones_matrix": list_of_entries}
+                )
+                dm_found = True
+                break
+
+        if not dm_found:
+            log_msg = f"Jones amtrix for VCC (receptor: {self._receptor_id}) not found"
+            self._logger.error(log_msg)

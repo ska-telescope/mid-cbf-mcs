@@ -185,20 +185,6 @@ def patched_fsp_pss_subarray_device_class(
 
 
 @pytest.fixture()
-def mock_cbf_controller() -> unittest.mock.Mock:
-    builder = MockDeviceBuilder()
-    # Mock the MaxCapabilities Cbf Controller property
-    builder.add_property(
-        "MaxCapabilities",
-        {"MaxCapabilities": ["VCC:8", "FSP:4", "Subarray:2"]},
-    )
-    # Mock the receptortoVcc Cbf Controller attribute
-    # Note: Each receptor can only have one Vcc
-    builder.add_attribute("receptorToVcc", ["1:1", "2:2", "3:3"])
-    return builder()
-
-
-@pytest.fixture()
 def mock_vcc() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     # Mock the Vcc subarrayMembership attribute
@@ -209,18 +195,18 @@ def mock_vcc() -> unittest.mock.Mock:
 
 @pytest.fixture()
 def initial_mocks(
-    mock_cbf_controller: unittest.mock.Mock,
+    mock_controller: unittest.mock.Mock,
     mock_vcc: unittest.mock.Mock,
 ) -> Dict[str, unittest.mock.Mock]:
     """
     Return a dictionary of device proxy mocks to pre-register.
 
-    :param mock_cbf_controller: a mock CbfController.
+    :param mock_controller: a mock CbfController.
     :param mock_vcc: a mock Vcc.
 
     :return: a dictionary of device proxy mocks to pre-register.
     """
     return {
-        "mid_csp_cbf/sub_elt/controller": mock_cbf_controller,
+        "mid_csp_cbf/sub_elt/controller": mock_controller,
         "mid_csp_cbf/vcc/001": mock_vcc,
     }

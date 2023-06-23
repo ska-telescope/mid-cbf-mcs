@@ -313,18 +313,6 @@ def mock_beam() -> unittest.mock.Mock:
 
 
 @pytest.fixture()
-def mock_controller() -> unittest.mock.Mock:
-    builder = MockDeviceBuilder()
-    builder.set_state(tango.DevState.ON)
-    builder.add_attribute("receptorToVcc", ["1:1", "2:2", "3:3", "4:4"])
-    builder.add_property(
-        "MaxCapabilities",
-        {"MaxCapabilities": ["VCC:8", "FSP:4", "Subarray:1"]},
-    )
-    return builder()
-
-
-@pytest.fixture()
 def mock_vcc() -> unittest.mock.Mock:
     builder = MockDeviceBuilder()
     builder.set_state(tango.DevState.ON)
@@ -422,8 +410,8 @@ def initial_mocks(
 
     :param mock_doppler: a mock dopplerPhaseCorrection attribute
     :param mock_delay: a mock delayModel attribute
-    :param mock_jones: a mock jonesMatrix attribute
-    :param mock_beam: a mock beamWeights attribute
+    :param mock_jones: a mock jones_matrix attribute
+    :param mock_beam: a mock beam_weights attribute
     :param mock_controller: a mock CbfController that is powered on.
     :param mock_vcc: a mock Vcc that is powered on.
     :param mock_vcc_group: a mock Vcc tango.Group.
@@ -437,8 +425,8 @@ def initial_mocks(
     return {
         "ska_mid/tm_leaf_node/csp_subarray_01/dopplerPhaseCorrection": mock_doppler,
         "ska_mid/tm_leaf_node/csp_subarray_01/delayModel": mock_delay,
-        "ska_mid/tm_leaf_node/csp_subarray_01/jonesMatrix": mock_jones,
-        "ska_mid/tm_leaf_node/csp_subarray_01/beamWeights": mock_beam,
+        "ska_mid/tm_leaf_node/csp_subarray_01/jones_matrix": mock_jones,
+        "ska_mid/tm_leaf_node/csp_subarray_01/beam_weights": mock_beam,
         "mid_csp_cbf/sub_elt/controller": mock_controller,
         "mid_csp_cbf/vcc/001": mock_vcc,
         "mid_csp_cbf/vcc/002": mock_vcc,
