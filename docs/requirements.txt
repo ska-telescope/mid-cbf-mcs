@@ -1,1 +1,4 @@
 recommonmark
+m2r2
+sphinxcontrib-mermaid
+sphinxcontrib-plantuml

@@ -1,0 +1,63 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+skinparam backgroundColor #EEEBDC
+skinparam sequence {
+ParticipantBorderColor DodgerBlue
+ParticipantBackgroundColor DeepSkyBlue
+ActorBorderColor DarkGreen
+ActorBackgroundColor Green
+BoxBorderColor LightBlue
+BoxBackgroundColor #F0FFFF
+}
+
+participant "\nTMC" as tmc
+participant "CSP_Mid\n.LMC" as lmc
+
+box "MCS"
+participant "Mid.CBF\nController" as controller
+participant "Mid.CBF\nSubarray" as subarray
+end box
+
+lmc         -> controller   : write frequencyOffsetK()
+controller  -> subarray     : write frequencyOffsetK()
+lmc         -> controller   : write frequencyOffsetDeltaF()
+controller  -> subarray     : write frequencyOffsetDeltaF()
+subarray    -> subarray     : obs state IDLE
+subarray   --> lmc          : success
+lmc         -> subarray     : ConfigureScan()
+lmc         -> controller   : write frequencyOffsetK(ints)
+subarray    -> tmc          : unsubscribe all events
+
+group Delay model subscription point
+subarray    -> tmc          : subscribe delay model
+end group
+
+group Doppler subscription point
+subarray    -> tmc          : subscribe Doppler phase correction
+end group
+
+group Jones matrix subscription point
+subarray    -> tmc          : subscribe Jones matrix
+end group
+
+group Timing beam subscription point
+subarray    -> tmc          : subscribe timing beam weights
+end group
+
+subarray    -> subarray     : obs state READY
+subarray   --> lmc          : success
+
+lmc         -> subarray     : Scan()
+subarray    -> subarray     : obs state SCANNING
+subarray   --> lmc          : success
+
+lmc         -> subarray     : EndScan()
+subarray    -> subarray     : obs state READY
+subarray   --> lmc          : success
+
+lmc         -> subarray     : RemoveAllReceptors()
+subarray    -> subarray     : obs state EMPTY
+subarray   --> lmc          : success
+
+@enduml

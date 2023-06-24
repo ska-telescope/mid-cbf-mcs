@@ -17,8 +17,109 @@ be written to the CBF Controller before the scan configuration.
 
 .. figure:: ../diagrams/mid-cbf-scan-ops.png
 
+.. uml:: ../diagrams/mid-cbf-scan-ops.puml
+
 See the `ICD document <https://drive.google.com/drive/folders/1CQJAJP1RhRuSvaM1OQhnxBZZ4xH1Pq_m>`_ for details of this interface.
 
+Init Command
+**************
+
+.. autoclass:: ska_mid_cbf_mcs.controller.controller_device.CbfController.InitCommand
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :member-order:
+   :noindex:
+
+On Command
+************
+
+.. autoclass:: ska_mid_cbf_mcs.controller.controller_device.CbfController.OnCommand
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :member-order:
+   :noindex:
+
+Off Command
+************
+
+.. autoclass:: ska_mid_cbf_mcs.controller.controller_device.CbfController.OffCommand
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :member-order:
+   :noindex:   
+
+Standby Command
+*****************
+
+.. autoclass:: ska_mid_cbf_mcs.controller.controller_device.CbfController.StandbyCommand
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :member-order:
+   :noindex:   
+
+Add Receptor Command
+*********************
+
+.. autoclass:: ska_mid_cbf_mcs.subarray.subarray_device.CbfSubarray.AddReceptorsCommand
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :member-order:   
+   :noindex:   
+
+Configure Scan Command
+************************
+
+.. autoclass:: ska_mid_cbf_mcs.subarray.subarray_device.CbfSubarray.ConfigureScanCommand
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :member-order:
+   :noindex:
+
+Scan Command
+************************
+
+.. autoclass:: ska_mid_cbf_mcs.subarray.subarray_device.CbfSubarray.ScanCommand
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :member-order:
+   :noindex:
+   
+Remove Receptors Command
+**************************
+
+.. autoclass:: ska_mid_cbf_mcs.subarray.subarray_device.CbfSubarray.RemoveReceptorsCommand
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :member-order:
+   :noindex:
+
+Remove All Receptors Command
+******************************
+
+.. autoclass:: ska_mid_cbf_mcs.subarray.subarray_device.CbfSubarray.RemoveAllReceptorsCommand
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :member-order:
+   :noindex:
+
+End Scan Command
+******************************
+
+.. autoclass:: ska_mid_cbf_mcs.subarray.subarray_device.CbfSubarray.EndScanCommand
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :member-order:
+   :noindex:
 
 MCS to HPS Interface
 --------------------
@@ -32,7 +133,7 @@ it is implemented in the :ref:`TalonDxComponentManager Class`, which is instanti
 :ref:`CbfController`.
 
 MCS and HPS Master DS
-^^^^^^^^^^^^^^^^^^^^^
+**********************
 The interface between the MCS and the HPS Master device server is primarily made up
 of the ``configure`` command sent from the MCS to the HPS master, which programs the
 FPGA and spawns the remaining HPS device servers. Before this command can be run, it is 
