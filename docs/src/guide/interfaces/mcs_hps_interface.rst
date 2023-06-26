@@ -1,4 +1,4 @@
-MCS to HPS Interface
+MCS to HPS
 =====================
 The interface from the MCS to the HPS is largely in the form of communication between
 Tango devices running on either side. 

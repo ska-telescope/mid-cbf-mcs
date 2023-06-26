@@ -1,4 +1,4 @@
-LMC to MCS Interface
+LMC to MCS
 =====================
 
 MCS provides commands and attributes to turn MCS on and off (through the CBF Controller)

@@ -20,7 +20,7 @@ MID CBF MCS Documentation
    :maxdepth: 2
    :caption: Developer Guide
 
-   guide/index
+   guide/developer/index
 
 .. CODE =============================================================
 .. toctree::

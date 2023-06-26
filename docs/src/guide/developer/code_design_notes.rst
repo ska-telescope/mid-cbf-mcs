@@ -16,7 +16,7 @@ with its component. Its role is to establish communication with its component an
 An example of this Tango device and component manager interaction is shown in the diagram below. 
 
 
-.. figure:: ../diagrams/component-manager-interactions.png
+.. figure:: ../../diagrams/component-manager-interactions.png
    :align: center
 
 Cbf Controller
@@ -93,7 +93,7 @@ mode (this is the default), simulator classes are used in place of communication
 with the real Talon-DX Tango devices. This allows testing of the MCS without
 any connection to the hardware.
 
-.. figure:: ../diagrams/vcc-device.png
+.. figure:: ../../diagrams/vcc-device.png
    :align: center
    
    MCS Vcc Device
@@ -136,7 +136,7 @@ When integration testing with the hardware is desired, the ``simulationMode`` at
 be set to 0. This initializes communication with the real power switch via the ``PowerSwitchDriver``,
 and queries the list of outlets in the power switch. 
 
-.. figure:: ../diagrams/power-switch-device.png
+.. figure:: ../../diagrams/power-switch-device.png
    :align: center
    
    MCS PowerSwitch Device
