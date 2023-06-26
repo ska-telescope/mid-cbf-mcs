@@ -21,105 +21,86 @@ For full details of MCS Subarray see :ref:`CbfSubarray`.
 CbfController Commands
 ------------------------
 
-Init Command
-**************
+On
+************
 
-.. autoclass:: ska_mid_cbf_mcs.controller.controller_device.CbfController.InitCommand
+.. autoclass:: ska_mid_cbf_mcs.controller.controller_device.CbfController.On
    :members:
    :undoc-members:
-   :show-inheritance:
    :member-order:
    :noindex:
 
-On Command
+Off
 ************
 
-.. autoclass:: ska_mid_cbf_mcs.controller.controller_device.CbfController.OnCommand
+.. autoclass:: ska_mid_cbf_mcs.controller.controller_device.CbfController.Off
    :members:
    :undoc-members:
-   :show-inheritance:
-   :member-order:
-   :noindex:
-
-Off Command
-************
-
-.. autoclass:: ska_mid_cbf_mcs.controller.controller_device.CbfController.OffCommand
-   :members:
-   :undoc-members:
-   :show-inheritance:
    :member-order:
    :noindex:   
 
-Standby Command
+Standby
 *****************
 
-.. autoclass:: ska_mid_cbf_mcs.controller.controller_device.CbfController.StandbyCommand
+.. autoclass:: ska_mid_cbf_mcs.controller.controller_device.CbfController.Standby
    :members:
    :undoc-members:
-   :show-inheritance:
    :member-order:
    :noindex:   
 
 CbfSubarray Commands
 ------------------------
 
-Add Receptor Command
+Add Receptors
 *********************
 
-.. autoclass:: ska_mid_cbf_mcs.subarray.subarray_device.CbfSubarray.AddReceptorsCommand
+.. autoclass:: ska_mid_cbf_mcs.subarray.subarray_device.CbfSubarray.AddReceptors
    :members:
    :undoc-members:
-   :show-inheritance:
    :member-order:   
    :noindex:   
 
-Configure Scan Command
+Configure Scan
 ************************
 
-.. autoclass:: ska_mid_cbf_mcs.subarray.subarray_device.CbfSubarray.ConfigureScanCommand
+.. autoclass:: ska_mid_cbf_mcs.subarray.subarray_device.CbfSubarray.ConfigureScan
    :members:
    :undoc-members:
-   :show-inheritance:
    :member-order:
    :noindex:
 
-Scan Command
+Scan
 ************************
 
-.. autoclass:: ska_mid_cbf_mcs.subarray.subarray_device.CbfSubarray.ScanCommand
+.. autoclass:: ska_mid_cbf_mcs.subarray.subarray_device.CbfSubarray.Scan
    :members:
    :undoc-members:
-   :show-inheritance:
    :member-order:
    :noindex:
    
-Remove Receptors Command
+Remove Receptors
 **************************
 
-.. autoclass:: ska_mid_cbf_mcs.subarray.subarray_device.CbfSubarray.RemoveReceptorsCommand
+.. autoclass:: ska_mid_cbf_mcs.subarray.subarray_device.CbfSubarray.RemoveReceptors
    :members:
    :undoc-members:
-   :show-inheritance:
    :member-order:
    :noindex:
 
-Remove All Receptors Command
+Remove All Receptors
 ******************************
 
-.. autoclass:: ska_mid_cbf_mcs.subarray.subarray_device.CbfSubarray.RemoveAllReceptorsCommand
+.. autoclass:: ska_mid_cbf_mcs.subarray.subarray_device.CbfSubarray.RemoveAllReceptors
    :members:
    :undoc-members:
-   :show-inheritance:
    :member-order:
    :noindex:
 
-End Scan Command
+End Scan
 ******************************
 
-.. autoclass:: ska_mid_cbf_mcs.subarray.subarray_device.CbfSubarray.EndScanCommand
+.. autoclass:: ska_mid_cbf_mcs.subarray.subarray_device.CbfSubarray.EndScan
    :members:
    :undoc-members:
-   :show-inheritance:
    :member-order:
    :noindex:

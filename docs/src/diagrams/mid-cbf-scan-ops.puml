@@ -25,7 +25,7 @@ lmc         -> controller   : write frequencyOffsetK(ints)
 controller  -> subarray     : write frequencyOffsetK(ints)
 lmc         -> controller   : write frequencyOffsetDeltaF(int)
 controller  -> subarray     : write frequencyOffsetDeltaF(int)
-lmc         -> controller   : AddReceptors(strs)
+lmc         -> subarray     : AddReceptors(strs)
 subarray    -> subarray     : obs state IDLE
 subarray   --> lmc          : success
 lmc         -> subarray     : ConfigureScan(json_str)

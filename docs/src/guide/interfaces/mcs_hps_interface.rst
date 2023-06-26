@@ -47,7 +47,7 @@ Configure Scan Command Sequence
 --------------------------------
 
 The sequence diagram below shows the main sequence of calls in MCS 
-to configure a correlation scan.
+to configure a correlation scan. Return calls are not shown.
 
 .. uml:: ../../diagrams/configure-corr-scan-mcs.puml   
 
