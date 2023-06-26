@@ -1,0 +1,76 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+skinparam backgroundColor #EEEBDC
+skinparam sequence {
+ParticipantBorderColor DodgerBlue
+ParticipantBackgroundColor DeepSkyBlue
+ActorBorderColor DarkGreen
+ActorBackgroundColor Green
+BoxBorderColor LightBlue
+BoxBackgroundColor #F0FFFF
+}
+
+title MCS Correlation Configure Scan\n
+
+participant "\nTMC" as tmc
+participant "CSP_Mid\n.LMC" as lmc
+
+box "MCS"
+participant "Mid.CBF\nController" as controller
+participant "Mid.CBF\nSubarray" as subarray
+participant "VCC" as vcc
+participant "FSP" as fsp
+participant "FspCorr Subarray" as fspcorr
+end box
+
+participant "HPS Devices" as hps
+
+lmc         -> subarray     : ConfigureScan(json_str)
+subarray    -> subarray     : validateInput
+
+group Each FSP
+subarray    -> fsp          : Unsubscribe to state/healthstate
+end group
+
+subarray    -> tmc          : Unsubscribe all events
+subarray    -> vcc          : GoToIdle
+subarray    -> fspcorr      : GoToIdle
+subarray    -> fsp          : RemoveSubarrayMembership(subarrayID)
+subarray    -> vcc          : ConfigureBand(int)
+subarray    -> vcc          : ConfigureScan(json_str)
+vcc         -> hps          : configure lower level devices
+
+group Delay model subscription point
+subarray    -> tmc          : subscribe delay model
+end group
+
+group Doppler subscription point
+subarray    -> tmc          : subscribe Doppler phase correction
+end group
+
+group Jones matrix subscription point
+subarray    -> tmc          : subscribe Jones matrix
+end group
+
+group Timing beam subscription point
+subarray    -> tmc          : subscribe timing beam weights
+end group
+
+group SearchWindow
+subarray    ->vcc           : ConfigureSearchWindow(data)
+end group
+
+group Each FSP
+subarray    -> fsp          : AddSubarrayMembership(subarrayID)
+subarray    -> fsp          : SetFunctionMode(str)
+subarray    -> fsp          : subscribe to state/healthstate changes
+fsp         -> hps          : configure lower level devices
+end group
+
+group Each FSP Corr
+subarray    -> fspcorr          : ConfigureScan(json_str)
+fspcorr         -> hps          : configure lower level devices
+end group
+
+@enduml

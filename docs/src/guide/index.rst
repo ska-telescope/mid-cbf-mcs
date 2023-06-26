@@ -1,9 +1,7 @@
-===============
-Developer Guide
-===============
 
 .. toctree::
 
-  Getting started<getting_started/index>
-  Code design notes<code_design_notes>
+  Getting Started<getting_started/index>
+  MCS On Command - Internal<on_command_sequence>
+  Code Design Notes<code_design_notes>
   

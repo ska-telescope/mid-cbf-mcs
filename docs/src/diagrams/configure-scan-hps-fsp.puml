@@ -1,0 +1,49 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+skinparam backgroundColor #EEEBDC
+skinparam sequence {
+ParticipantBorderColor DodgerBlue
+ParticipantBackgroundColor DeepSkyBlue
+ActorBorderColor DarkGreen
+ActorBackgroundColor Green
+BoxBorderColor LightBlue
+BoxBackgroundColor #F0FFFF
+}
+
+title HPS Configure FSP for Correlation Scan\n
+
+box "MCS"
+participant "FspCorr\nSubarray" as fspcorr
+end box
+
+box "HPS"
+participant "FSP\nCorr" as hpsfspcorr
+participant "Packet Stream\nRepair" as psr
+participant "Resampler\nDelay Tracker" as rdt
+participant "Fine\nChannelizer" as channelizer
+participant "DDR4Corner\nTurner" as dct
+participant "\nCorrelator" as correlator
+end box
+
+fspcorr     -> hpsfspcorr   : ConfigureScan(json_str)
+
+group Receptor ID
+hpsfspcorr  -> psr         : write packet rate
+hpsfspcorr  -> rdt         : stop
+hpsfspcorr  -> rdt         : write attributes
+hpsfspcorr  -> rdt         : set input sample rate
+hpsfspcorr  -> rdt         : set output sample rate
+hpsfspcorr  -> rdt         : start
+hpsfspcorr  -> channelizer : write gain
+end group
+
+group Corner Turner
+hpsfspcorr -> dct : read number of samples
+hpsfspcorr -> dct : write attributes
+end group
+
+hpsfspcorr -> correlator : write attributes
+hpsfspcorr -> correlator : program long term accumulator
+
+@enduml

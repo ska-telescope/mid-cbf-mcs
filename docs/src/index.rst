@@ -7,15 +7,13 @@ MID CBF MCS Documentation
    :caption: Background
 
    guide/system_context
-   guide/on_command_sequence
-   guide/configure_scan_command_sequence
 
 .. INTERFACES =============================================================
 .. toctree::
    :maxdepth: 2
    :caption: Interfaces
 
-   guide/interfaces
+   guide/interfaces/index
 
 .. DEVELOPER =============================================================
 .. toctree::

@@ -11,6 +11,8 @@ BoxBorderColor LightBlue
 BoxBackgroundColor #F0FFFF
 }
 
+title TMC and Mid_CBF.LMC Scan Sequence\n
+
 participant "\nTMC" as tmc
 participant "CSP_Mid\n.LMC" as lmc
 
@@ -19,14 +21,14 @@ participant "Mid.CBF\nController" as controller
 participant "Mid.CBF\nSubarray" as subarray
 end box
 
-lmc         -> controller   : write frequencyOffsetK()
-controller  -> subarray     : write frequencyOffsetK()
-lmc         -> controller   : write frequencyOffsetDeltaF()
-controller  -> subarray     : write frequencyOffsetDeltaF()
+lmc         -> controller   : write frequencyOffsetK(ints)
+controller  -> subarray     : write frequencyOffsetK(ints)
+lmc         -> controller   : write frequencyOffsetDeltaF(int)
+controller  -> subarray     : write frequencyOffsetDeltaF(int)
+lmc         -> controller   : AddReceptors(strs)
 subarray    -> subarray     : obs state IDLE
 subarray   --> lmc          : success
-lmc         -> subarray     : ConfigureScan()
-lmc         -> controller   : write frequencyOffsetK(ints)
+lmc         -> subarray     : ConfigureScan(json_str)
 subarray    -> tmc          : unsubscribe all events
 
 group Delay model subscription point

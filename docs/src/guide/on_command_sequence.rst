@@ -1,5 +1,5 @@
-On Command Sequence
-===================
+MCS On Command
+==========================
 
 The following diagram shows the ``CbfController`` On command sequence and how it integrates with other
 components in the Mid.CBF system. The steps are outlined in detail in the 

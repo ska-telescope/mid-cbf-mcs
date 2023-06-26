@@ -1,0 +1,45 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+skinparam backgroundColor #EEEBDC
+skinparam sequence {
+ParticipantBorderColor DodgerBlue
+ParticipantBackgroundColor DeepSkyBlue
+ActorBorderColor DarkGreen
+ActorBackgroundColor Green
+BoxBorderColor LightBlue
+BoxBackgroundColor #F0FFFF
+}
+
+title MCS Correlation Configure Scan Band 1 - VCC Detail\n
+
+box "MCS"
+participant "Mid.CBF\nSubarray" as subarray
+participant "VCC" as vcc
+participant "FSP" as fsp
+end box
+
+box "HPS"
+participant "HPS VCC Controller" as hpsvcc
+participant "HPC VCC Band1&2" as vccband1
+participant "Circuit Switch" as cs
+participant "VCC" as vccdevice
+participant "Wide Band Input Buffer" as wb
+end box
+
+
+subarray    -> vcc          : GoToIdle
+vcc         -> hpsvcc       : Unconfigure
+hpsvcc      -> vccband1     : Unconfigure
+hpsvcc      -> vccband1     : Disable
+subarray    -> vcc          : ConfigureBand(int)
+vcc         -> hpsvcc       : ConfigureBand(json_str)
+vcc         -> vccband1     : SetInternalParameters(json_str)
+subarray    -> vcc          : ConfigureScan(json_str)
+vcc         -> vccband1     : ConfigureScan(json_str)
+vccband1    -> cs           : write_attribute(input_select)
+vccband1    -> vccdevice    : write_attribute(frame_count)
+vccband1    -> wb           : write_attributes(stream_rate, packet_rate, etc)
+
+
+@enduml
