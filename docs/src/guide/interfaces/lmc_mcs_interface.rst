@@ -24,16 +24,16 @@ CbfController Commands
 On
 ************
 
-.. autoclass:: ska_mid_cbf_mcs.controller.controller_device.CbfController.On
+.. autoclass:: ska_mid_cbf_mcs.controller.controller_device.CbfController.OnCommand
    :members:
    :undoc-members:
-   :member-order:
+   :member-order:    
    :noindex:
 
 Off
 ************
 
-.. autoclass:: ska_mid_cbf_mcs.controller.controller_device.CbfController.Off
+.. autoclass:: ska_mid_cbf_mcs.controller.controller_device.CbfController.OffCommand
    :members:
    :undoc-members:
    :member-order:
@@ -42,7 +42,7 @@ Off
 Standby
 *****************
 
-.. autoclass:: ska_mid_cbf_mcs.controller.controller_device.CbfController.Standby
+.. autoclass:: ska_mid_cbf_mcs.controller.controller_device.CbfController.StandbyCommand
    :members:
    :undoc-members:
    :member-order:
@@ -54,7 +54,7 @@ CbfSubarray Commands
 Add Receptors
 *********************
 
-.. autoclass:: ska_mid_cbf_mcs.subarray.subarray_device.CbfSubarray.AddReceptors
+.. autoclass:: ska_mid_cbf_mcs.subarray.subarray_device.CbfSubarray.AddReceptorsCommand
    :members:
    :undoc-members:
    :member-order:   
@@ -63,7 +63,7 @@ Add Receptors
 Configure Scan
 ************************
 
-.. autoclass:: ska_mid_cbf_mcs.subarray.subarray_device.CbfSubarray.ConfigureScan
+.. autoclass:: ska_mid_cbf_mcs.subarray.subarray_device.CbfSubarray.ConfigureScanCommand
    :members:
    :undoc-members:
    :member-order:
@@ -72,7 +72,7 @@ Configure Scan
 Scan
 ************************
 
-.. autoclass:: ska_mid_cbf_mcs.subarray.subarray_device.CbfSubarray.Scan
+.. autoclass:: ska_mid_cbf_mcs.subarray.subarray_device.CbfSubarray.ScanCommand
    :members:
    :undoc-members:
    :member-order:
@@ -81,7 +81,7 @@ Scan
 Remove Receptors
 **************************
 
-.. autoclass:: ska_mid_cbf_mcs.subarray.subarray_device.CbfSubarray.RemoveReceptors
+.. autoclass:: ska_mid_cbf_mcs.subarray.subarray_device.CbfSubarray.RemoveReceptorsCommand
    :members:
    :undoc-members:
    :member-order:
@@ -90,7 +90,7 @@ Remove Receptors
 Remove All Receptors
 ******************************
 
-.. autoclass:: ska_mid_cbf_mcs.subarray.subarray_device.CbfSubarray.RemoveAllReceptors
+.. autoclass:: ska_mid_cbf_mcs.subarray.subarray_device.CbfSubarray.RemoveAllReceptorsCommand
    :members:
    :undoc-members:
    :member-order:
@@ -99,7 +99,7 @@ Remove All Receptors
 End Scan
 ******************************
 
-.. autoclass:: ska_mid_cbf_mcs.subarray.subarray_device.CbfSubarray.EndScan
+.. autoclass:: ska_mid_cbf_mcs.subarray.subarray_device.CbfSubarray.EndScanCommand
    :members:
    :undoc-members:
    :member-order:
