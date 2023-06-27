@@ -451,20 +451,20 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
             self._vcc_controller_simulator.InitCommonParameters(
                 json.dumps(param_init)
             )
-        else:
+       # else:
             # Skip this if the device has already been initialized
-            if self._vcc_controller_proxy.State() != tango.DevState.INIT:
-                self._logger.info(
-                    "VCC Controller parameters already initialized"
-                )
-                return
+            #if self._vcc_controller_proxy.State() != tango.DevState.INIT:
+               # self._logger.info(
+                   # "VCC Controller parameters already initialized"
+                #)
+                #return
 
-            self._logger.info(
-                "Initializing VCC Controller constant parameters"
-            )
-            self._vcc_controller_proxy.InitCommonParameters(
-                json.dumps(param_init)
-            )
+           # self._logger.info(
+               # "Initializing VCC Controller constant parameters"
+            #)
+            #self._vcc_controller_proxy.InitCommonParameters(
+               # json.dumps(param_init)
+            #)
 
     def off(self: VccComponentManager) -> Tuple[ResultCode, str]:
         """
