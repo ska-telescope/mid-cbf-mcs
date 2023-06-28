@@ -32,25 +32,6 @@ server:
     - name: "Fsp"
       devices:
       - name: "mid_csp_cbf/fsp/01"
-        attribute_properties:
-        - attribute: "adminMode"
-          properties: 
-          - name: "abs_change"
-            values: 
-            - "-1"
-            - "1"
-        - attribute: "healthState"
-          properties:
-          - name: "abs_change"
-            values: 
-            - "-1"
-            - "1"
-        - attribute: "subarrayMembership"
-          properties:
-          - name: "abs_change"
-            values: 
-            - "-1"
-            - "1"
         properties:
           - name: "FspID"
             values:
@@ -76,16 +57,6 @@ server:
           - name: "HpsFspCorrControllerAddress"
             values:
             - "talondx-001/fsp-app/fsp-corr-controller"
-          - name: "polled_attr"
-            values:
-            - "state"
-            - "1000"
-            - "healthstate"
-            - "3000"
-            - "adminmode"
-            - "3000"
-            - "subarraymembership"
-            - "3000"
 
     - name: "FspCorrSubarray"
       devices:
@@ -332,25 +303,6 @@ server:
     - name: "Fsp"
       devices:
       - name: "mid_csp_cbf/fsp/02"
-        attribute_properties:
-        - attribute: "adminMode"
-          properties: 
-          - name: "abs_change"
-            values: 
-            - "-1"
-            - "1"
-        - attribute: "healthState"
-          properties:
-          - name: "abs_change"
-            values: 
-            - "-1"
-            - "1"
-        - attribute: "subarrayMembership"
-          properties:
-          - name: "abs_change"
-            values: 
-            - "-1"
-            - "1"
         properties:
           - name: "FspID"
             values:
@@ -376,16 +328,6 @@ server:
           - name: "HpsFspCorrControllerAddress"
             values:
             - "talondx-002/fsp-app/fsp-corr-controller"
-          - name: "polled_attr"
-            values:
-            - "state"
-            - "1000"
-            - "healthstate"
-            - "3000"
-            - "adminmode"
-            - "3000"
-            - "subarraymembership"
-            - "3000"
 
     - name: "FspCorrSubarray"
       devices:
@@ -632,25 +574,6 @@ server:
     - name: "Fsp"
       devices:
       - name: "mid_csp_cbf/fsp/03"
-        attribute_properties:
-        - attribute: "adminMode"
-          properties: 
-          - name: "abs_change"
-            values: 
-            - "-1"
-            - "1"
-        - attribute: "healthState"
-          properties:
-          - name: "abs_change"
-            values: 
-            - "-1"
-            - "1"
-        - attribute: "subarrayMembership"
-          properties:
-          - name: "abs_change"
-            values: 
-            - "-1"
-            - "1"
         properties:
           - name: "FspID"
             values:
@@ -676,16 +599,6 @@ server:
           - name: "HpsFspCorrControllerAddress"
             values:
             - "talondx-003/fsp-app/fsp-corr-controller"
-          - name: "polled_attr"
-            values:
-            - "state"
-            - "1000"
-            - "healthstate"
-            - "3000"
-            - "adminmode"
-            - "3000"
-            - "subarraymembership"
-            - "3000"
 
     - name: "FspCorrSubarray"
       devices:
@@ -932,25 +845,6 @@ server:
     - name: "Fsp"
       devices:
       - name: "mid_csp_cbf/fsp/04"
-        attribute_properties:
-        - attribute: "adminMode"
-          properties: 
-          - name: "abs_change"
-            values: 
-            - "-1"
-            - "1"
-        - attribute: "healthState"
-          properties:
-          - name: "abs_change"
-            values: 
-            - "-1"
-            - "1"
-        - attribute: "subarrayMembership"
-          properties:
-          - name: "abs_change"
-            values: 
-            - "-1"
-            - "1"
         properties:
           - name: "FspID"
             values:
@@ -976,16 +870,6 @@ server:
           - name: "HpsFspCorrControllerAddress"
             values:
             - "talondx-004/fsp-app/fsp-corr-controller"
-          - name: "polled_attr"
-            values:
-            - "state"
-            - "1000"
-            - "healthstate"
-            - "3000"
-            - "adminmode"
-            - "3000"
-            - "subarraymembership"
-            - "3000"
 
     - name: "FspCorrSubarray"
       devices:

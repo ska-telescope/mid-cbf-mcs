@@ -104,7 +104,6 @@ class CbfController(SKAController):
         dtype=("DevState",),
         max_dim_x=197,
         label="VCC state",
-        polling_period=3000,
         doc="Report the state of the VCC capabilities as an array of DevState",
     )
 
@@ -112,7 +111,6 @@ class CbfController(SKAController):
         dtype=("uint16",),
         max_dim_x=197,
         label="VCC health status",
-        polling_period=3000,
         abs_change=1,
         doc="Report the health status of VCC capabilities as an array of unsigned short.\nEx:\n[0,0,0,2,0...3]",
     )
@@ -121,7 +119,6 @@ class CbfController(SKAController):
         dtype=("uint16",),
         max_dim_x=197,
         label="VCC admin mode",
-        polling_period=3000,
         abs_change=1,
         doc="Report the administration mode of the VCC capabilities as an array of unsigned short.\nFor ex.:\n[0,0,0,...1,2]",
     )
@@ -130,7 +127,6 @@ class CbfController(SKAController):
         dtype=("uint16",),
         max_dim_x=197,
         label="VCC subarray membership",
-        # no polling period so it reads the true value and not the one in cache
         doc="Report the subarray membership of VCCs (each can only belong to a single subarray), 0 if not assigned.",
     )
 
@@ -138,7 +134,6 @@ class CbfController(SKAController):
         dtype=("DevState",),
         max_dim_x=27,
         label="FSP state",
-        polling_period=3000,
         doc="Report the state of the FSP capabilities.",
     )
 
@@ -146,7 +141,6 @@ class CbfController(SKAController):
         dtype=("uint16",),
         max_dim_x=27,
         label="FSP health status",
-        polling_period=3000,
         abs_change=1,
         doc="Report the health status of the FSP capabilities.",
     )
@@ -155,7 +149,6 @@ class CbfController(SKAController):
         dtype=("uint16",),
         max_dim_x=27,
         label="FSP admin mode",
-        polling_period=3000,
         abs_change=1,
         doc="Report the administration mode of the FSP capabilities as an array of unsigned short.\nfor ex:\n[0,0,2,..]",
     )
@@ -165,7 +158,6 @@ class CbfController(SKAController):
         max_dim_x=16,
         max_dim_y=27,
         label="FSP subarray membership",
-        polling_period=3000,
         abs_change=1,
         doc="Report the subarray membership of FSPs (each can only belong to at most 16 subarrays), 0 if not assigned.",
     )
@@ -190,7 +182,6 @@ class CbfController(SKAController):
         dtype=("DevState",),
         max_dim_x=16,
         label="Subarray state",
-        polling_period=3000,
         doc="Report the state of the Subarray",
     )
 
@@ -198,7 +189,6 @@ class CbfController(SKAController):
         dtype=("uint16",),
         max_dim_x=16,
         label="Subarray health status",
-        polling_period=3000,
         abs_change=1,
         doc="Report the health status of the Subarray.",
     )
@@ -207,7 +197,6 @@ class CbfController(SKAController):
         dtype=("uint16",),
         max_dim_x=16,
         label="FSP admin mode",
-        polling_period=3000,
         abs_change=1,
         doc="Report the administration mode of the Subarray as an array of unsigned short.\nfor ex:\n[0,0,2,..]",
     )
@@ -320,10 +309,6 @@ class CbfController(SKAController):
             # initialize attribute values
             device._command_progress = 0
 
-            device._storage_logging_level = tango.LogLevel.LOG_DEBUG
-            device._element_logging_level = tango.LogLevel.LOG_DEBUG
-            device._central_logging_level = tango.LogLevel.LOG_DEBUG
-
             # defines self._count_vcc, self._count_fsp, and self._count_subarray
             self._get_num_capabilities()
 
@@ -338,6 +323,21 @@ class CbfController(SKAController):
 
             # # initialize attribute values
             device._command_progress = 0
+
+            device.set_change_event("reportFSPAdminMode", True, True)
+            device.set_change_event("reportFSPHealthState", True, True)
+            device.set_change_event("reportFSPState", True, True)
+            device.set_change_event("reportFSPSubarrayMembership", True, True)
+            device.set_change_event("reportVCCAdminMode", True, True)
+            device.set_change_event("reportVCCHealthState", True, True)
+            device.set_change_event("reportVCCState", True, True)
+            device.set_change_event("reportVCCSubarrayMembership", True, True)
+            device.set_change_event("reportSubarrayAdminMode", True, True)
+            device.set_change_event("reportSubarrayHealthState", True, True)
+            device.set_change_event("reportSubarrayState", True, True)
+
+            # TODO remove when ugrading base class from 0.11.3
+            device.set_change_event("healthState", True, True)
 
             message = "CbfController Init command completed OK"
             self.logger.info(message)

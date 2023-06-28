@@ -152,7 +152,6 @@ class CbfSubarray(CspSubElementSubarray):
         dtype=("DevState",),
         max_dim_x=197,
         label="VCC state",
-        polling_period=1000,
         doc="Report the state of the assigned VCCs as an array of DevState",
     )
 
@@ -160,7 +159,6 @@ class CbfSubarray(CspSubElementSubarray):
         dtype=("uint16",),
         max_dim_x=197,
         label="VCC health status",
-        polling_period=1000,
         abs_change=1,
         doc="Report the health state of assigned VCCs as an array of unsigned short.\nEx:\n[0,0,0,2,0...3]",
     )
@@ -169,7 +167,6 @@ class CbfSubarray(CspSubElementSubarray):
         dtype=("DevState",),
         max_dim_x=27,
         label="FSP state",
-        polling_period=1000,
         doc="Report the state of the assigned FSPs",
     )
 
@@ -177,7 +174,6 @@ class CbfSubarray(CspSubElementSubarray):
         dtype=("uint16",),
         max_dim_x=27,
         label="FSP health status",
-        polling_period=1000,
         abs_change=1,
         doc="Report the health state of the assigned FSPs.",
     )
@@ -228,10 +224,16 @@ class CbfSubarray(CspSubElementSubarray):
             # PROTECTED REGION ID(CbfSubarray.init_device) ENABLED START #
             (result_code, message) = super().do()
 
-            # TODO: remove
-            # device._storage_logging_level = tango.LogLevel.LOG_DEBUG
-            # device._element_logging_level = tango.LogLevel.LOG_DEBUG
-            # device._central_logging_level = tango.LogLevel.LOG_DEBUG
+            device = self.target
+
+            device.set_change_event("fspHealthState", True, True)
+            device.set_change_event("fspList", True, True)
+            device.set_change_event("fspState", True, True)
+            device.set_change_event("vccHealthState", True, True)
+            device.set_change_event("vccState", True, True)
+
+            # TODO remove when ugrading base class from 0.11.3
+            device.set_change_event("healthState", True, True)
 
             return (result_code, message)
 
