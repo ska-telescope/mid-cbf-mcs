@@ -18,6 +18,7 @@ from __future__ import annotations  # allow forward references in type hints
 import copy
 import json
 import logging
+import time
 from typing import Callable, List, Optional, Tuple
 
 # tango imports
@@ -451,7 +452,16 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
             self._vcc_controller_simulator.InitCommonParameters(
                 json.dumps(param_init)
             )
+
         else:
+            # Wait for VCC Controller
+            for i in range(6):
+                try:
+                    self._vcc_controller_proxy.ping()
+                    break
+                except tango.DevFailed:
+                    time.sleep(5)
+
             # Skip this if the device has already been initialized
             if self._vcc_controller_proxy.State() != tango.DevState.INIT:
                 self._logger.info(
