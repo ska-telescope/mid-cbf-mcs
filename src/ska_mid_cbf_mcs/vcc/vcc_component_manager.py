@@ -584,10 +584,10 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         self._config_id = ""
         self._scan_id = 0
 
-        if self._simulation_mode:
-            self._vcc_controller_simulator.Unconfigure()
-        else:
-            if self._ready:
+        if self._ready: 
+            if self._simulation_mode:
+                self._vcc_controller_simulator.Unconfigure()
+            else:  
                 try:
                     self._vcc_controller_proxy.Unconfigure()
                 except tango.DevFailed as df:
