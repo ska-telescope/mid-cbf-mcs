@@ -260,6 +260,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         self._search_window_fqdn = search_window
 
         self.connected = False
+        self._ready = False
 
         # Initialize attribute values
         self._receptor_id = 0
@@ -583,14 +584,16 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         self._config_id = ""
         self._scan_id = 0
 
-        if self._simulation_mode:
-            self._vcc_controller_simulator.Unconfigure()
-        else:
-            try:
-                self._vcc_controller_proxy.Unconfigure()
-            except tango.DevFailed as df:
-                self._logger.error(str(df.args[0].desc))
-                self.update_component_fault(True)
+        if self._ready:
+            if self._simulation_mode:
+                self._vcc_controller_simulator.Unconfigure()
+            else:
+                try:
+                    self._vcc_controller_proxy.Unconfigure()
+                except tango.DevFailed as df:
+                    self._logger.error(str(df.args[0].desc))
+                    self.update_component_fault(True)
+                self._ready = False
 
     def configure_scan(
         self: VccComponentManager, argin: str
@@ -653,6 +656,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                     "Failed to connect to VCC band device",
                 )
 
+        self._ready = True
         return (ResultCode.OK, "Vcc ConfigureScanCommand completed OK")
 
     def scan(
