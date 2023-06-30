@@ -593,7 +593,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                 except tango.DevFailed as df:
                     self._logger.error(str(df.args[0].desc))
                     self.update_component_fault(True)
-                self._ready = False
+            self._ready = False
 
     def configure_scan(
         self: VccComponentManager, argin: str
