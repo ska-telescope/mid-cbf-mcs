@@ -94,7 +94,7 @@ def controller_component_manager(
 
     talondx_config_path = "mnt/talondx-config/"
 
-    return ControllerComponentManager(
+    component_manager =  ControllerComponentManager(
         mock_get_num_capabilities,
         subarray_fqdns_all=subarray,
         vcc_fqdns_all=vcc,
@@ -108,6 +108,8 @@ def controller_component_manager(
         component_power_mode_changed_callback=component_power_mode_changed_callback,
         component_fault_callback=component_fault_callback,
     )
+    component_manager._vcc_to_receptor = {1: 1, 2: 36, 3: 63, 4: 100}
+    return component_manager
 
 
 @pytest.fixture()
@@ -207,6 +209,7 @@ def mock_vcc() -> unittest.mock.Mock:
     builder.add_attribute("subarrayMembership", 0)
     builder.add_attribute("frequencyOffsetF", 0)
     builder.add_attribute("frequencyOffsetDeltaK", 0)
+    builder.add_property("VccID", {"VccID": ["1"]})
     builder.add_result_command("On", ResultCode.OK)
     builder.add_result_command("Off", ResultCode.OK)
     return builder()

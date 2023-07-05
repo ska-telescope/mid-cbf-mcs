@@ -164,6 +164,8 @@ def patched_controller_device_class(
                 self._component_power_mode_changed
             )
 
+            mock_component_manager._vcc_to_receptor = {}
+
             return mock_component_manager
 
     return PatchedCbfController
