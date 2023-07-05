@@ -92,7 +92,9 @@ class TestVccComponentManager:
         #     + frequency_band
         #     + ".json"
         # )
-        internal_params_file_name = vcc_param_path + "internal_params_default.json"
+        internal_params_file_name = (
+            vcc_param_path + "internal_params_default.json"
+        )
         with open(internal_params_file_name, "r") as f:
             json_string = f.read()
         mock_vcc_band.SetInternalParameters.assert_next_call(json_string)

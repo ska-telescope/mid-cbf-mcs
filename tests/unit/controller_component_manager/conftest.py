@@ -94,7 +94,7 @@ def controller_component_manager(
 
     talondx_config_path = "mnt/talondx-config/"
 
-    component_manager =  ControllerComponentManager(
+    component_manager = ControllerComponentManager(
         mock_get_num_capabilities,
         subarray_fqdns_all=subarray,
         vcc_fqdns_all=vcc,
