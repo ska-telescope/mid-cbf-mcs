@@ -190,28 +190,27 @@ class TmCspSubarrayLeafNodeTest(SKABaseDevice):
         self._doppler_phase_correction = [0.0, 0.0, 0.0, 0.0]
         self._jones_matrix = {}  # this is interpreted as a JSON object
         self._delay_model = {}  # this is interpreted as a JSON object
-        self._beam_weights = {}  # this is interpreted as a JSON object
+        self._timing_beam_weights = {}  # this is interpreted as a JSON object
         self._vis_destination_address = (
             {}
         )  # this is interpreted as a JSON object
         self._received_output_links = False
 
-        # these properties do not exist anymore and are not used anywhere in this file so they have been commented out
-        # self._proxy_cbf_controller = tango.DeviceProxy(self.CbfControllerAddress)
-        # self._proxy_cbf_controller = tango.DeviceProxy(
-        #    self._proxy_cbf_controller.get_property("CspMidCbf")["CspMidCbf"][0]
-        # )
-
         # decoupling mif-cbf-mcs from csp-mid-lmc so that it can be tested  standalone
         # TmCspSubarrayLeafNodeTest device subscribes directly to the CbfSubarray
         # outputLinksDistribution attribute to received the outputlinks.
         self._proxy_cbf_subarray = tango.DeviceProxy(self.CbfSubarrayAddress)
-        self._proxy_cbf_subarray.subscribe_event(
-            "outputLinksDistribution",
-            tango.EventType.CHANGE_EVENT,
-            self.__output_links_event_callback,
-            stateless=True,
-        )
+        # self._proxy_cbf_subarray.subscribe_event(
+        #     "outputLinksDistribution",
+        #     tango.EventType.CHANGE_EVENT,
+        #     self.__output_links_event_callback,
+        #     stateless=True,
+        # )
+
+        self.set_change_event("dopplerPhaseCorrection", True, True)
+        self.set_change_event("delayModel", True, True)
+        self.set_change_event("jonesMatrix", True, True)
+        self.set_change_event("timingBeamWeights", True, True)
 
         self.set_state(DevState.STANDBY)
         # PROTECTED REGION END #    //  TmCspSubarrayLeafNodeTest.init_device
@@ -259,15 +258,15 @@ class TmCspSubarrayLeafNodeTest(SKABaseDevice):
             self.logger.error(log_msg)
         # PROTECTED REGION END #    //  TmCspSubarrayLeafNodeTest.dopplerPhaseCorrection_write
 
-    def read_jones_matrix(self):
-        # PROTECTED REGION ID(TmCspSubarrayLeafNodeTest.jones_matrix_read) ENABLED START #
+    def read_jonesMatrix(self):
+        # PROTECTED REGION ID(TmCspSubarrayLeafNodeTest.jonesMatrix_read) ENABLED START #
         return json.dumps(self._jones_matrix)
-        # PROTECTED REGION END #    //  TmCspSubarrayLeafNodeTest.jones_matrix_read
+        # PROTECTED REGION END #    //  TmCspSubarrayLeafNodeTest.jonesMatrix_read
 
-    def write_jones_matrix(self, value):
-        # PROTECTED REGION ID(TmCspSubarrayLeafNodeTest.jones_matrix_write) ENABLED START #
+    def write_jonesMatrix(self, value):
+        # PROTECTED REGION ID(TmCspSubarrayLeafNodeTest.jonesMatrix_write) ENABLED START #
         self._jones_matrix = json.loads(str(value))
-        # PROTECTED REGION END #    //  TmCspSubarrayLeafNodeTest.jones_matrix_write
+        # PROTECTED REGION END #    //  TmCspSubarrayLeafNodeTest.jonesMatrix_write
 
     def read_delayModel(self):
         # PROTECTED REGION ID(TmCspSubarrayLeafNodeTest.delayModel_read) ENABLED START #
@@ -280,16 +279,16 @@ class TmCspSubarrayLeafNodeTest(SKABaseDevice):
         self._delay_model = json.loads(str(value))
         # PROTECTED REGION END #    //  TmCspSubarrayLeafNodeTest.delayModel_write
 
-    def read_beam_weights(self):
-        # PROTECTED REGION ID(TmCspSubarrayLeafNodeTest.beam_weights_read) ENABLED START #
-        return json.dumps(self._beam_weights)
-        # PROTECTED REGION END #    //  TmCspSubarrayLeafNodeTest.beam_weights_read
+    def read_timingBeamWeights(self):
+        # PROTECTED REGION ID(TmCspSubarrayLeafNodeTest.timingBeamWeights_read) ENABLED START #
+        return json.dumps(self._timing_beam_weights)
+        # PROTECTED REGION END #    //  TmCspSubarrayLeafNodeTest.timingBeamWeights_read
 
-    def write_beam_weights(self, value):
-        # PROTECTED REGION ID(TmCspSubarrayLeafNodeTest.beam_weights_write) ENABLED START #
+    def write_timingBeamWeights(self, value):
+        # PROTECTED REGION ID(TmCspSubarrayLeafNodeTest.timingBeamWeights_write) ENABLED START #
         # since this is just a test device, assume that the JSON schema is always what we expect
-        self._beam_weights = json.loads(str(value))
-        # PROTECTED REGION END #    //  TmCspSubarrayLeafNodeTest.beam_weights_write
+        self._timing_beam_weights = json.loads(str(value))
+        # PROTECTED REGION END #    //  TmCspSubarrayLeafNodeTest.timingBeamWeights_write
 
     def read_visDestinationAddress(self):
         # PROTECTED REGION ID(TmCspSubarrayLeafNodeTest.visDestinationAddress_read) ENABLED START #

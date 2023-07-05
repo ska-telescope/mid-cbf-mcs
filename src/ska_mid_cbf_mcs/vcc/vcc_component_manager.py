@@ -526,7 +526,11 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                 f"Configuring internal parameters for VCC band {freq_band_name}"
             )
 
-            internal_params_file_name = f"{VCC_PARAM_PATH}internal_params_receptor{self._receptor_id}_band{freq_band_name}.json"
+            # TODO create file for every pair of receptor and band
+            # internal_params_file_name = f"{VCC_PARAM_PATH}internal_params_receptor{self._receptor_id}_band{freq_band_name}.json"
+            internal_params_file_name = (
+                f"{VCC_PARAM_PATH}internal_params_default.json"
+            )
             self._logger.debug(
                 f"Using parameters stored in {internal_params_file_name}"
             )
@@ -687,7 +691,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
             information purpose only.
         :rtype: (ResultCode, str)
         """
-        self._logger.info("Edning scan")
+        self._logger.info("Ending scan")
 
         # Send the EndScan command to the HPS
         idx = self._freq_band_index[self._freq_band_name]

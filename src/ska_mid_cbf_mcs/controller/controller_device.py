@@ -338,6 +338,14 @@ class CbfController(SKAController):
                 device._receptor_to_vcc.append(f"{receptorID}:{vcc_idx}")
                 device._vcc_to_receptor.append(f"{vcc_idx}:{receptorID}")
                 vcc_idx += 1
+            device.logger.info(
+                f"Receptor to VCC mapping: {device._receptor_to_vcc}"
+            )
+            for receptor_vcc_pair in device._vcc_to_receptor:
+                receptor_vcc_pair = receptor_vcc_pair.split(":")
+                device.component_manager._vcc_to_receptor[
+                    int(receptor_vcc_pair[0])
+                ] = int(receptor_vcc_pair[1])
 
             # # initialize attribute values
             device._command_progress = 0

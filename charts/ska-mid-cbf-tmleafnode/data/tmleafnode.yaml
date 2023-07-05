@@ -1,0 +1,40 @@
+name: tmcspsubarrayleafnode
+function: telescope-monitoring
+domain: subarray
+command: "TmCspSubarrayLeafNodeTest"
+instances: ["tm"]
+depends_on:
+  - device: mid_csp_cbf/sub_elt/subarray_01
+readinessProbe:
+  initialDelaySeconds: 0
+  periodSeconds: 10
+  timeoutSeconds: 5
+  successThreshold: 1
+  failureThreshold: 3
+livenessProbe:
+  initialDelaySeconds: 0
+  periodSeconds: 10
+  timeoutSeconds: 5
+  successThreshold: 1
+  failureThreshold: 3
+server:
+  name: "TmCspSubarrayLeafNodeTest"
+  instances:
+  - name: "tmleafnode"
+    classes:
+    - name: "TmCspSubarrayLeafNodeTest"
+      devices:
+      - name: "ska_mid/tm_leaf_node/csp_subarray_01"
+        properties:
+          - name: "CbfControllerAddress"
+            values:
+            - "mid_csp_cbf/sub_elt/controller"
+          - name: "CbfSubarrayAddress"
+            values:
+            - "mid_csp_cbf/sub_elt/subarray_01"
+image:
+  registry: "{{.Values.midcbf.image.registry}}"
+  image: "{{.Values.midcbf.image.image}}"
+  tag: "{{.Values.midcbf.image.tag}}"
+  pullPolicy: "{{.Values.midcbf.image.pullPolicy}}"
+

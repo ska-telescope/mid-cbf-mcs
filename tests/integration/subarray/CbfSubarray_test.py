@@ -577,17 +577,17 @@ class TestCbfSubarray:
             (
                 "ConfigureScan_basic.json",
                 ["SKA001", "SKA036", "SKA063", "SKA100"],
-                [4, 1],
+                [100, 1],
             ),
             (
                 "ConfigureScan_basic_fspMultiReceptors.json",
                 ["SKA001", "SKA036", "SKA063", "SKA100"],
-                [4, 1],
+                [100, 1],
             ),
             (
                 "ConfigureScan_basic_fspNoReceptors.json",
                 ["SKA001", "SKA036", "SKA063", "SKA100"],
-                [4, 1],
+                [100, 1],
             ),
         ],
     )
@@ -724,33 +724,6 @@ class TestCbfSubarray:
                     ].rfiFlaggingMask == str(
                         configuration["cbf"]["rfi_flagging_mask"]
                     )
-
-            # check configured attributes of search windows
-            # first for search window 1...
-
-            # TODO - SearchWidow device test is disabled since the same
-            # functionality is implemented by the VccSearchWindow device;
-            # to be decide which one to keep.
-
-            # print("test_proxies.sw[1].State() = {}".format(test_proxies.sw[1].State()))
-            # print("test_proxies.sw[2].State() = {}".format(test_proxies.sw[2].State()))
-
-            # assert test_proxies.sw[1].State() == DevState.ON
-            # assert test_proxies.sw[1].searchWindowTuning == 6000000000
-            # assert test_proxies.sw[1].tdcEnable == True
-            # assert test_proxies.sw[1].tdcNumBits == 8
-            # assert test_proxies.sw[1].tdcPeriodBeforeEpoch == 5
-            # assert test_proxies.sw[1].tdcPeriodAfterEpoch == 25
-            # assert "".join(test_proxies.sw[1].tdcDestinationAddress.split()) in [
-            #     "[{\"receptorID\":4,\"tdcDestinationAddress\":[\"foo\",\"bar\",\"8080\"]},{\"receptorID\":1,\"tdcDestinationAddress\":[\"fizz\",\"buzz\",\"80\"]}]",
-            #     "[{\"tdcDestinationAddress\":[\"foo\",\"bar\",\"8080\"],\"receptorID\":4},{\"receptorID\":1,\"tdcDestinationAddress\":[\"fizz\",\"buzz\",\"80\"]}]",
-            #     "[{\"receptorID\":4,\"tdcDestinationAddress\":[\"foo\",\"bar\",\"8080\"]},{\"tdcDestinationAddress\":[\"fizz\",\"buzz\",\"80\"],\"receptorID\":1}]",
-            #     "[{\"tdcDestinationAddress\":[\"foo\",\"bar\",\"8080\"],\"receptorID\":4},{\"tdcDestinationAddress\":[\"fizz\",\"buzz\",\"80\"],\"receptorID\":1}]",
-            # ]
-            # # then for search window 2...
-            # assert test_proxies.sw[2].State() == DevState.DISABLE
-            # assert test_proxies.sw[2].searchWindowTuning == 7000000000
-            # assert test_proxies.sw[2].tdcEnable == False
 
             time.sleep(1)
             # check configured attributes of VCC search windows
@@ -1127,6 +1100,9 @@ class TestCbfSubarray:
 
     # TODO: The delay model and jones matrix are already tested.
     # Should this test just be for the beam weights?
+    @pytest.mark.skip(
+        reason="PST currently unsupported; timing beam verification needs refactor"
+    )
     @pytest.mark.parametrize(
         "config_file_name, \
         jones_matrix_file_name, \
@@ -1212,9 +1188,7 @@ class TestCbfSubarray:
             f.close()
 
             # Insert the epoch
-            jones_matrix_index_per_epoch = list(
-                range(len(jones_matrix["jones_matrix"]))
-            )
+            jones_matrix_index_per_epoch = list(range(len(jones_matrix)))
             random.shuffle(jones_matrix_index_per_epoch)
             epoch_increment = 10
             for i, jones_matrix_index in enumerate(
@@ -1222,9 +1196,7 @@ class TestCbfSubarray:
             ):
                 if i == 0:
                     epoch_time = 0
-                    jones_matrix["jones_matrix"][jones_matrix_index][
-                        "epoch"
-                    ] = str(epoch_time)
+                    jones_matrix[jones_matrix_index]["epoch"] = str(epoch_time)
                 else:
                     epoch_time += epoch_increment
                     jones_matrix["jones_matrix"][jones_matrix_index][
@@ -1232,7 +1204,7 @@ class TestCbfSubarray:
                     ] = str(int(time.time()) + epoch_time)
 
             # update Jones Matrix
-            test_proxies.tm.jones_matrix = json.dumps(jones_matrix)
+            test_proxies.tm.jonesMatrix = json.dumps(jones_matrix)
             time.sleep(1)
 
             for epoch in range(len(jones_matrix_index_per_epoch)):
@@ -1367,15 +1339,16 @@ class TestCbfSubarray:
             f = open(data_file_path + timing_beam_weights_file_name)
             timing_beam_weights = json.loads(f.read().replace("\n", ""))
             epoch = str(int(time.time()))
-            for weights in timing_beam_weights["beam_weights"]:
-                weights["epoch"] = epoch
-                epoch = str(int(epoch) + 10)
+            for weights in timing_beam_weights["timing_beam_weights"]:
+                for receptor in weights:
+                    receptor["epoch"] = epoch
+                    epoch = str(int(epoch) + 10)
 
             # update timing beam weights
-            test_proxies.tm.beam_weights = json.dumps(timing_beam_weights)
+            test_proxies.tm.timingBeamWeights = json.dumps(timing_beam_weights)
             time.sleep(1)
 
-            for weights in timing_beam_weights["beam_weights"]:
+            for weights in timing_beam_weights:
                 for receptor in weights["timing_beam_weights"]:
                     rec_id = self.receptor_utils.receptors[
                         receptor["receptor"]
@@ -2058,7 +2031,7 @@ class TestCbfSubarray:
                     ] = str(int(time.time()) + epoch_time)
 
             # update Jones Matrix
-            test_proxies.tm.jones_matrix = json.dumps(jones_matrix)
+            test_proxies.tm.jonesMatrix = json.dumps(jones_matrix)
             time.sleep(1)
 
             epoch_to_scan = 1
@@ -2229,7 +2202,7 @@ class TestCbfSubarray:
                 "ConfigureScan_basic.json",
                 "Scan1_basic.json",
                 ["SKA001", "SKA036", "SKA063", "SKA100"],
-                [4, 1],
+                [100, 1],
             )
         ],
     )
@@ -2449,13 +2422,13 @@ class TestCbfSubarray:
                 "ConfigureScan_basic.json",
                 "Scan1_basic.json",
                 ["SKA001", "SKA036", "SKA063", "SKA100"],
-                [4, 1],
+                [100, 1],
             ),
             (
                 "Configure_TM-CSP_v2.json",
                 "Scan2_basic.json",
                 ["SKA063", "SKA001", "SKA100"],
-                [4, 1],
+                [100, 1],
             ),
         ],
     )
@@ -2782,13 +2755,13 @@ class TestCbfSubarray:
                 "ConfigureScan_basic.json",
                 "Scan1_basic.json",
                 ["SKA001", "SKA036", "SKA063", "SKA100"],
-                [4, 1],
+                [100, 1],
             ),
             (
                 "Configure_TM-CSP_v2.json",
                 "Scan2_basic.json",
                 ["SKA063", "SKA001", "SKA100"],
-                [4, 1],
+                [100, 1],
             ),
         ],
     )
