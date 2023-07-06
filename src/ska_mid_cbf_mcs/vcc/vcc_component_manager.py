@@ -510,14 +510,10 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         try:
             # Configure the band via the VCC Controller device
             self._logger.info(f"Configuring VCC band {freq_band_name}")
-            frequency_band = freq_band_dict()[freq_band_name][
-                "band_index"
-            ]
+            frequency_band = freq_band_dict()[freq_band_name]["band_index"]
             self._freq_band_name = freq_band_name
             if self._simulation_mode:
-                self._vcc_controller_simulator.ConfigureBand(
-                    frequency_band
-                )
+                self._vcc_controller_simulator.ConfigureBand(frequency_band)
             else:
                 self._vcc_controller_proxy.ConfigureBand(frequency_band)
 

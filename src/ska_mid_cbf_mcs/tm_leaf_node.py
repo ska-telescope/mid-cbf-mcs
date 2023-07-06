@@ -216,7 +216,9 @@ class TmCspSubarrayLeafNodeTest(SKABaseDevice):
         self.set_change_event("dopplerPhaseCorrection", True, True)
         self.set_change_event("delayModel", True, True)
         self.set_change_event("jonesMatrix", True, True)
-        self.set_change_event("beamWeights", True, True) # TODO change to timingBeamWeights
+        self.set_change_event(
+            "beamWeights", True, True
+        )  # TODO change to timingBeamWeights
 
         self.set_state(DevState.STANDBY)
         # PROTECTED REGION END #    //  TmCspSubarrayLeafNodeTest.init_device

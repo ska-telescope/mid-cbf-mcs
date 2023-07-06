@@ -736,10 +736,14 @@ class CbfSubarrayComponentManager(
                 if "healthState" in name:
                     if "vcc" in fqdn:
                         self._vcc_health_state[fqdn] = value
-                        self._push_change_event("vccHealthState", self._vcc_health_state)
+                        self._push_change_event(
+                            "vccHealthState", self._vcc_health_state
+                        )
                     elif "fsp" in fqdn:
                         self._fsp_health_state[fqdn] = value
-                        self._push_change_event("fspHealthState", self._fsp_health_state)
+                        self._push_change_event(
+                            "fspHealthState", self._fsp_health_state
+                        )
                     else:
                         # should NOT happen!
                         log_msg = f"Received healthState change for unknown device {name}"
@@ -834,7 +838,9 @@ class CbfSubarrayComponentManager(
                 del self._fsp_state[self._fqdn_fsp[fspID - 1]]
                 self._push_change_event("fspState", self._fsp_state)
                 del self._fsp_health_state[self._fqdn_fsp[fspID - 1]]
-                self._push_change_event("fspHealthState", self._fsp_health_state)
+                self._push_change_event(
+                    "fspHealthState", self._fsp_health_state
+                )
 
             if self._ready:
                 # TODO: add 'GoToIdle' for VLBI once implemented
@@ -2022,7 +2028,9 @@ class CbfSubarrayComponentManager(
                     del self._vcc_state[vccFQDN]
                     self._push_change_event("vccState", self._vcc_state)
                     del self._vcc_health_state[vccFQDN]
-                    self._push_change_event("vccHealthState", self._vcc_health_state)
+                    self._push_change_event(
+                        "vccHealthState", self._vcc_health_state
+                    )
 
                 except tango.DevFailed as df:
                     msg = str(df.args[0].desc)

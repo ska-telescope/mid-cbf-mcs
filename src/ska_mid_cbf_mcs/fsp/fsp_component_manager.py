@@ -19,7 +19,7 @@ import tango
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import PowerMode, SimulationMode
 
-from ska_mid_cbf_mcs.commons.global_enum import const, FspModes
+from ska_mid_cbf_mcs.commons.global_enum import FspModes, const
 from ska_mid_cbf_mcs.component.component_manager import (
     CbfComponentManager,
     CommunicationStatus,
@@ -334,7 +334,9 @@ class FspComponentManager(CbfComponentManager):
         message = "Fsp RemoveSubarrayMembership command completed OK"
         if argin in self._subarray_membership:
             self._subarray_membership.remove(argin)
-            self._push_change_event("subarrayMembership", self._subarray_membership)
+            self._push_change_event(
+                "subarrayMembership", self._subarray_membership
+            )
             # change function mode to IDLE if no subarrays are using it.
             if len(self._subarray_membership) == 0:
                 self._function_mode = FspModes.IDLE.value
@@ -342,7 +344,7 @@ class FspComponentManager(CbfComponentManager):
         else:
             result_code = ResultCode.FAILED
             message = f"Fsp RemoveSubarrayMembership command failed; FSP does not belong to subarray {argin}."
-            
+
         return (result_code, message)
 
     @check_communicating
@@ -369,7 +371,9 @@ class FspComponentManager(CbfComponentManager):
             result_code = ResultCode.FAILED
         elif argin not in self._subarray_membership:
             self._subarray_membership.append(argin)
-            self._push_change_event("subarrayMembership", self._subarray_membership)
+            self._push_change_event(
+                "subarrayMembership", self._subarray_membership
+            )
         else:
             result_code = ResultCode.FAILED
             message = f"Fsp AddSubarrayMembership command failed; FSP already belongs to subarray {argin}."
@@ -492,9 +496,7 @@ class FspComponentManager(CbfComponentManager):
                 return (ResultCode.FAILED, message)
 
             try:
-                self._proxy_hps_fsp_controller.SetFunctionMode(
-                    function_mode
-                )
+                self._proxy_hps_fsp_controller.SetFunctionMode(function_mode)
             except Exception as e:
                 self._logger.error(str(e))
 
