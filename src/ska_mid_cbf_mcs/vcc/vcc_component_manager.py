@@ -526,39 +526,42 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                 f"Configuring internal parameters for VCC band {freq_band_name}"
             )
 
-            # TODO create file for every pair of receptor and band
-            # internal_params_file_name = f"{VCC_PARAM_PATH}internal_params_receptor{self._receptor_id}_band{freq_band_name}.json"
-            internal_params_file_name = (
-                f"{VCC_PARAM_PATH}internal_params_default.json"
-            )
+            internal_params_file_name = f"{VCC_PARAM_PATH}internal_params_receptor{self._receptor_id}_band{freq_band_name}.json"
             self._logger.debug(
                 f"Using parameters stored in {internal_params_file_name}"
             )
+            try:
+                with open(internal_params_file_name, "r") as f:
+                    json_string = f.read()
+            except FileNotFoundError:
+                self._logger.error(
+                    f"Could not find internal parameters file for receptor {self._receptor_id}, band {freq_band_name}; using default."
+                )
+                with open(
+                    f"{VCC_PARAM_PATH}internal_params_default.json", "r"
+                ) as f:
+                    json_string = f.read()
 
-            with open(internal_params_file_name, "r") as f:
-                json_string = f.read()
-                idx = self._freq_band_index[self._freq_band_name]
-                if self._simulation_mode:
-                    self._band_simulators[idx].SetInternalParameters(
-                        json_string
-                    )
-                else:
-                    self._band_proxies[idx].SetInternalParameters(json_string)
+            idx = self._freq_band_index[self._freq_band_name]
+            if self._simulation_mode:
+                self._band_simulators[idx].SetInternalParameters(json_string)
+            else:
+                self._band_proxies[idx].SetInternalParameters(json_string)
+
         except tango.DevFailed as df:
             self._logger.error(str(df.args[0].desc))
             self.update_component_fault(True)
             (result_code, msg) = (
                 ResultCode.FAILED,
-                "Failed to connect to HPS VCC devices",
+                "Failed to connect to HPS VCC devices.",
             )
         except FileNotFoundError:
             self._logger.error(
-                f"Could not find internal parameters file for \
-                receptor {self._receptor_id}, band {freq_band_name}"
+                "Could not find default internal parameters file."
             )
             (result_code, msg) = (
                 ResultCode.FAILED,
-                "Invalid internal parameters file name",
+                "Missing default internal parameters file.",
             )
 
         return (result_code, msg)
