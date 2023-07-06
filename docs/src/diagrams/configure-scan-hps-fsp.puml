@@ -14,16 +14,16 @@ BoxBackgroundColor #F0FFFF
 title HPS Configure FSP for Correlation Scan\n
 
 box "MCS"
-participant "FspCorr\nSubarray" as fspcorr
+participant "\nFspCorr\nSubarray" as fspcorr
 end box
 
 box "HPS"
-participant "FSP\nCorr" as hpsfspcorr
-participant "Packet Stream\nRepair" as psr
-participant "Resampler\nDelay Tracker" as rdt
-participant "Fine\nChannelizer" as channelizer
-participant "DDR4Corner\nTurner" as dct
-participant "\nCorrelator" as correlator
+participant "FSP\nCorr\n" as hpsfspcorr
+participant "Packet\nStream\nRepair" as psr
+participant "Resampler\nDelay\nTracker" as rdt
+participant "Fine\nChannelizer\n" as channelizer
+participant "DDR4Corner\nTurner\n" as dct
+participant "Correlator\n\n" as correlator
 end box
 
 fspcorr     -> hpsfspcorr   : ConfigureScan(json_str)

@@ -13,18 +13,18 @@ BoxBackgroundColor #F0FFFF
 
 title MCS Correlation Configure Scan\n
 
-participant "\nTMC" as tmc
+participant "TMC\n" as tmc
 participant "CSP_Mid\n.LMC" as lmc
 
 box "MCS"
 participant "Mid.CBF\nController" as controller
 participant "Mid.CBF\nSubarray" as subarray
-participant "VCC" as vcc
-participant "FSP" as fsp
-participant "FspCorr Subarray" as fspcorr
+participant "VCC\n" as vcc
+participant "FSP\n" as fsp
+participant "FspCorr\nSubarray" as fspcorr
 end box
 
-participant "HPS Devices" as hps
+participant "HPS\nDevices" as hps
 
 lmc         -> subarray     : ConfigureScan(json_str)
 subarray    -> subarray     : validateInput
@@ -39,7 +39,7 @@ subarray    -> fspcorr      : GoToIdle
 subarray    -> fsp          : RemoveSubarrayMembership(subarrayID)
 subarray    -> vcc          : ConfigureBand(int)
 subarray    -> vcc          : ConfigureScan(json_str)
-vcc         -> hps          : configure lower level devices
+vcc         -> hps          : configure HPS VCC
 
 group Delay model subscription point
 subarray    -> tmc          : subscribe delay model
@@ -65,12 +65,12 @@ group Each FSP
 subarray    -> fsp          : AddSubarrayMembership(subarrayID)
 subarray    -> fsp          : SetFunctionMode(str)
 subarray    -> fsp          : subscribe to state/healthstate changes
-fsp         -> hps          : configure lower level devices
+fsp         -> hps          : configure HPS FSP
 end group
 
 group Each FSP Corr
 subarray    -> fspcorr          : ConfigureScan(json_str)
-fspcorr         -> hps          : configure lower level devices
+fspcorr         -> hps          : configure HPS FSP Corr
 end group
 
 @enduml

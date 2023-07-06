@@ -13,14 +13,16 @@ MID CBF MCS Documentation
    :maxdepth: 2
    :caption: Interfaces
 
-   guide/interfaces/index
+   guide/interfaces/lmc_mcs_interface
+   guide/interfaces/mcs_hps_interface
 
 .. DEVELOPER =============================================================
 .. toctree::
    :maxdepth: 2
    :caption: Developer Guide
 
-   guide/developer/index
+   Getting Started<guide/developer/getting_started/index>
+   Code Design Notes<guide/developer/code_design_notes>
 
 .. CODE =============================================================
 .. toctree::

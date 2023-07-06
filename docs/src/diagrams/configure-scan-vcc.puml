@@ -15,16 +15,16 @@ title MCS Correlation Configure Scan Band 1 - VCC Detail\n
 
 box "MCS"
 participant "Mid.CBF\nSubarray" as subarray
-participant "VCC" as vcc
-participant "FSP" as fsp
+participant "VCC\n" as vcc
+participant "FSP\n" as fsp
 end box
 
 box "HPS"
-participant "HPS VCC Controller" as hpsvcc
-participant "HPC VCC Band1&2" as vccband1
-participant "Circuit Switch" as cs
-participant "VCC" as vccdevice
-participant "Wide Band Input Buffer" as wb
+participant "HPS VCC\nController" as hpsvcc
+participant "HPC VCC\nBand1&2" as vccband1
+participant "Circuit\nSwitch" as cs
+participant "VCC\n" as vccdevice
+participant "Wide Band\nInput Buffer" as wb
 end box
 
 
