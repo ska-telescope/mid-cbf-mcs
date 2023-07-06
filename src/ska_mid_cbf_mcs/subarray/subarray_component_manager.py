@@ -2350,7 +2350,7 @@ class CbfSubarrayComponentManager(
         # convert fs_sample_rate to MHz
         fs_sample_rate = fs_sample_rate / mhz_to_hz
         fs_sample_rate_for_band = {
-            "receptor": receptor_int,
+            "receptor_id": receptor_int,
             "fs_sample_rate": fs_sample_rate,
         }
         log_msg = f"fs_sample_rate_for_band: {fs_sample_rate_for_band}"
