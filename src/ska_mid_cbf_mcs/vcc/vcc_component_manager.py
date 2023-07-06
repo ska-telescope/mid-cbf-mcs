@@ -510,16 +510,16 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         try:
             # Configure the band via the VCC Controller device
             self._logger.info(f"Configuring VCC band {freq_band_name}")
-            self._frequency_band = freq_band_dict()[freq_band_name][
+            frequency_band = freq_band_dict()[freq_band_name][
                 "band_index"
             ]
             self._freq_band_name = freq_band_name
             if self._simulation_mode:
                 self._vcc_controller_simulator.ConfigureBand(
-                    self._frequency_band
+                    frequency_band
                 )
             else:
-                self._vcc_controller_proxy.ConfigureBand(self._frequency_band)
+                self._vcc_controller_proxy.ConfigureBand(frequency_band)
 
             # Set internal params for the configured band
             self._logger.info(
@@ -540,6 +540,9 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                     )
                 else:
                     self._band_proxies[idx].SetInternalParameters(json_string)
+
+            self._frequency_band = frequency_band
+            self._push_change_event("frequencyBand", self._frequency_band)
         except tango.DevFailed as df:
             self._logger.error(str(df.args[0].desc))
             self.update_component_fault(True)

@@ -736,8 +736,10 @@ class CbfSubarrayComponentManager(
                 if "healthState" in name:
                     if "vcc" in fqdn:
                         self._vcc_health_state[fqdn] = value
+                        self._push_change_event("vccHealthState", self._vcc_health_state)
                     elif "fsp" in fqdn:
                         self._fsp_health_state[fqdn] = value
+                        self._push_change_event("fspHealthState", self._fsp_health_state)
                     else:
                         # should NOT happen!
                         log_msg = f"Received healthState change for unknown device {name}"
@@ -746,8 +748,10 @@ class CbfSubarrayComponentManager(
                 elif "State" in name:
                     if "vcc" in fqdn:
                         self._vcc_state[fqdn] = value
+                        self._push_change_event("vccState", self._vcc_state)
                     elif "fsp" in fqdn:
                         self._fsp_state[fqdn] = value
+                        self._push_change_event("fspState", self._fsp_state)
                     else:
                         # should NOT happen!
                         log_msg = (
@@ -828,7 +832,9 @@ class CbfSubarrayComponentManager(
                 )
                 del self._events_state_change_fsp[fspID]
                 del self._fsp_state[self._fqdn_fsp[fspID - 1]]
+                self._push_change_event("fspState", self._fsp_state)
                 del self._fsp_health_state[self._fqdn_fsp[fspID - 1]]
+                self._push_change_event("fspHealthState", self._fsp_health_state)
 
             if self._ready:
                 # TODO: add 'GoToIdle' for VLBI once implemented
@@ -863,6 +869,7 @@ class CbfSubarrayComponentManager(
 
         # reset all private data to their initialization values:
         self._fsp_list = [[], [], [], []]
+        self._push_change_event("fspList", self._fsp_list)
         self._pst_fsp_list = []
         self._pss_fsp_list = []
         self._corr_fsp_list = []
@@ -1954,6 +1961,7 @@ class CbfSubarrayComponentManager(
         self._fsp_list[0].append(self._corr_fsp_list)
         self._fsp_list[1].append(self._pss_fsp_list)
         self._fsp_list[2].append(self._pst_fsp_list)
+        self._push_change_event("fspList", self._fsp_list)
 
         # save configuration into latestScanConfig
         self._latest_scan_config = str(configuration)
@@ -2012,7 +2020,9 @@ class CbfSubarrayComponentManager(
 
                     del self._events_state_change_vcc[vccID]
                     del self._vcc_state[vccFQDN]
+                    self._push_change_event("vccState", self._vcc_state)
                     del self._vcc_health_state[vccFQDN]
+                    self._push_change_event("vccHealthState", self._vcc_health_state)
 
                 except tango.DevFailed as df:
                     msg = str(df.args[0].desc)

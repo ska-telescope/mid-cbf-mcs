@@ -25,6 +25,19 @@ server:
     - name: "CbfSubarray"
       devices:
       - name: "mid_csp_cbf/sub_elt/subarray_01"
+        attribute_properties:
+        - attribute: "fspList"
+          properties:
+          - name: "abs_change"
+            values:
+            - "-1"
+            - "1"
+        - attribute: "scanID"
+          properties:
+          - name: "abs_change"
+            values:
+            - "-1"
+            - "1"
         properties:
           - name: "CbfControllerAddress"
             values:
@@ -87,6 +100,19 @@ server:
     - name: "CbfSubarray"
       devices:
       - name: "mid_csp_cbf/sub_elt/subarray_02"
+        attribute_properties:
+        - attribute: "fspList"
+          properties:
+          - name: "abs_change"
+            values:
+            - "-1"
+            - "1"
+        - attribute: "scanID"
+          properties:
+          - name: "abs_change"
+            values:
+            - "-1"
+            - "1"
         properties:
           - name: "CbfControllerAddress"
             values:
@@ -149,6 +175,19 @@ server:
     - name: "CbfSubarray"
       devices:
       - name: "mid_csp_cbf/sub_elt/subarray_03"
+        attribute_properties:
+        - attribute: "fspList"
+          properties:
+          - name: "abs_change"
+            values:
+            - "-1"
+            - "1"
+        - attribute: "scanID"
+          properties:
+          - name: "abs_change"
+            values:
+            - "-1"
+            - "1"
         properties:
           - name: "CbfControllerAddress"
             values:

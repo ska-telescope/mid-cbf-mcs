@@ -444,7 +444,7 @@ class CbfSubarray(CspSubElementSubarray):
         :return: the list of VCC states
         :rtype: Dict[str, DevState]
         """
-        return self.component_manager.vcc_state.values()
+        return list(self.component_manager.vcc_state.values())
         # PROTECTED REGION END #    //  CbfSubarray.vccState_read
 
     def read_vccHealthState(self: CbfSubarray) -> Dict[str, HealthState]:
@@ -455,7 +455,7 @@ class CbfSubarray(CspSubElementSubarray):
         :return: the list of VCC health states
         :rtype: Dict[str, HealthState]
         """
-        return self.component_manager.vcc_health_state.values()
+        return list(self.component_manager.vcc_health_state.values())
         # PROTECTED REGION END #    //  CbfSubarray.vccHealthState_read
 
     def read_fspState(self: CbfSubarray) -> Dict[str, DevState]:
@@ -466,7 +466,7 @@ class CbfSubarray(CspSubElementSubarray):
         :return: the list of FSP states
         :rtype: Dict[str, DevState]
         """
-        return self.component_manager.fsp_state.values()
+        return list(self.component_manager.fsp_state.values())
         # PROTECTED REGION END #    //  CbfSubarray.fspState_read
 
     def read_fspHealthState(self: CbfSubarray) -> Dict[str, HealthState]:
@@ -477,7 +477,7 @@ class CbfSubarray(CspSubElementSubarray):
         :return: the list of FSP health states
         :rtype: Dict[str, HealthState]
         """
-        return self.component_manager.fsp_health_state.values()
+        return list(self.component_manager.fsp_health_state.values())
         # PROTECTED REGION END #    //  CbfSubarray.fspHealthState_read
 
     def read_fspList(self: CbfSubarray) -> List[List[int]]:
