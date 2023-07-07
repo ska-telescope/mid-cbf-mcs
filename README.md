@@ -21,4 +21,4 @@ git submodule update
 # Running the Mid CBF MCS
 
 Follow the MCS ReadTheDocs guide to deploy the MCS:
-[ReadTheDocs](https://https://developer.skao.int/projects/ska-mid-cbf-mcs/en/latest/guide/developer/getting_started/index.html)
+[ReadTheDocs](https://developer.skao.int/projects/ska-mid-cbf-mcs/en/latest/guide/developer/getting_started/index.html)
