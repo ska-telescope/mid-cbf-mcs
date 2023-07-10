@@ -5,5 +5,7 @@ FROM $BASE_IMAGE
 
 ENV PATH=/home/tango/.local/bin:$PATH
 
-RUN python3 -m pip install docutils==0.19
-RUN python3 -m pip install -r requirements.txt .
+RUN python3 -m pip install docutils==0.19 && \
+    sed -i '/pytango/d' requirements.txt && \
+    sed -i '/numpy/d' requirements.txt && \
+    python3 -m pip install -r requirements.txt .
