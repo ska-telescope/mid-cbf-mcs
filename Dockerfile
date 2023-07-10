@@ -1,5 +1,5 @@
-FROM artefact.skao.int/ska-tango-images-pytango-builder:9.4.1 as buildenv
-FROM artefact.skao.int/ska-tango-images-pytango-runtime:9.4.1
+ARG BUILD_IMAGE="registry.gitlab.com/ska-telescope/ska-tango-images/ska-tango-images-pytango-builder:9.4.2dev1-dev.c5e316570" as buildenv
+ARG BASE_IMAGE="registry.gitlab.com/ska-telescope/ska-tango-images/ska-tango-images-pytango-runtime:9.4.2dev0-dev.c5e316570"
 
 ENV PATH=/home/tango/.local/bin:$PATH
 
