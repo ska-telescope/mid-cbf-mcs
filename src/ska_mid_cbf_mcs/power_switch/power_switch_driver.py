@@ -53,6 +53,9 @@ class PowerSwitchDriver:
     :param password: Login password for the power switch
     :param model: Make and model name of the power switch
     :param content_type: The content type in the request header
+    :param outlet_list_url: A portion of the URL to get the list of outlets
+    :param outlet_state_url: A portion of the URL to get the outlet state
+    :param outlet_control_url: A portion of the URL to turn on/off outlet
     :param outlet_schema_file: File name for the schema for a list of outlets
     :param outlet_id_list: List of Outlet IDs
     :param logger: a logger for this object to use
@@ -77,6 +80,9 @@ class PowerSwitchDriver:
         password: str,
         model: str,
         content_type: str,
+        outlet_list_url: str,
+        outlet_state_url: str,
+        outlet_control_url: str,
         outlet_schema_file: str,
         outlet_id_list: List[str],
         logger: logging.Logger,
@@ -86,8 +92,16 @@ class PowerSwitchDriver:
         """
         self.logger = logger
 
-        # Initialize the base HTTP URL
+        # Initialize the various URLs for monitoring/controlling the power switch
         self.base_url = f"{protocol}://{ip}"
+        self.outlet_list_url = f"{self.base_url}/{outlet_list_url}"
+        self.outlet_state_url = f"{self.base_url}/{outlet_state_url}"
+        self.outlet_control_url = f"{self.base_url}/{outlet_control_url}"
+
+        print(" --- init() --- self.base_url == ", self.base_url)
+        print(" --- init() --- self.outlet_list_url == ", self.outlet_list_url)
+        print(" --- init() --- self.outlet_state_url == ", self.outlet_state_url)
+        print(" --- init() --- self.outlet_control_url == ", self.outlet_control_url)
 
         # Initialize the login credentials
         self.login = login
@@ -177,12 +191,8 @@ class PowerSwitchDriver:
             outlet in self.outlet_id_list
         ), f"Outlet ID {outlet} must be in the allowable outlet_id_list read in from the Config File"
 
-        if self.model == "DLI-PRO":
-            url = f"{self.base_url}/restapi/relay/outlets/{outlet}/state/"
-        elif self.model == "Switched PRO2":
-            url = f"{self.base_url}/jaws/monitor/outlets/{outlet}"
-        else:
-            url = self.base_url
+        url = self.outlet_state_url.replace("{outlet}", outlet)
+        print(" --- get_outlet_power_mode() --- url == ", url)
 
         outlet_idx = self.outlet_id_list.index(outlet)
 
@@ -244,14 +254,14 @@ class PowerSwitchDriver:
             outlet in self.outlet_id_list
         ), f"Outlet ID {outlet} must be in the allowable outlet_id_list read in from the Config File"
 
+        url = self.outlet_control_url.replace("{outlet}", outlet)
+        print(" --- get_outlet_power_mode() --- url == ", url)
+
         if self.model == "DLI-PRO":
-            url = f"{self.base_url}/restapi/relay/outlets/{outlet}/state/"
             data = "value=true"
         elif self.model == "Switched PRO2":
-            url = f"{self.base_url}/jaws/control/outlets/{outlet}"
             data = '{"control_action": "on"}'
         else:
-            url = self.base_url
             data = ""
 
         outlet_idx = self.outlet_id_list.index(outlet)
@@ -301,14 +311,14 @@ class PowerSwitchDriver:
             outlet in self.outlet_id_list
         ), f"Outlet ID {outlet} must be in the allowable outlet_id_list read in from the Config File"
 
+        url = self.outlet_control_url.replace("{outlet}", outlet)
+        print(" --- get_outlet_power_mode() --- url == ", url)
+
         if self.model == "DLI-PRO":
-            url = f"{self.base_url}/restapi/relay/outlets/{outlet}/state/"
             data = "value=false"
         elif self.model == "Switched PRO2":
-            url = f"{self.base_url}/jaws/control/outlets/{outlet}"
             data = '{"control_action": "off"}'
         else:
-            url = self.base_url
             data = ""
 
         outlet_idx = self.outlet_id_list.index(outlet)
@@ -353,12 +363,8 @@ class PowerSwitchDriver:
         with open(self.outlet_schema_file, "r") as f:
             schema = json.loads(f.read())
 
-        if self.model == "DLI-PRO":
-            url = f"{self.base_url}/restapi/relay/outlets/"
-        elif self.model == "Switched PRO2":
-            url = f"{self.base_url}/jaws/monitor/outlets"
-        else:
-            url = self.base_url
+        url = self.outlet_list_url
+        print(" --- get_outlet_list() url == ", url)
 
         try:
             response = requests.get(

@@ -44,6 +44,15 @@ server:
           - name: "PowerSwitchRequestHeaderContentType"
             values:
             - "application/x-www-form-urlencoded"
+          - name: "PowerSwitchOutletListUrl"
+            values:
+            - "restapi/relay/outlets/"
+          - name: "PowerSwitchOutletStateUrl"
+            values:
+            - "restapi/relay/outlets/{outlet}/state/"
+          - name: "PowerSwitchOutletControlUrl"
+            values:
+            - "restapi/relay/outlets/{outlet}/state/"
           - name: "PowerSwitchOutletSchemaFile"
             values:
             - "charts/ska-mid-cbf-mcs/data/power_switch_001_schema.json"
@@ -85,6 +94,15 @@ server:
           - name: "PowerSwitchRequestHeaderContentType"
             values:
             - "application/json"
+          - name: "PowerSwitchOutletListUrl"
+            values:
+            - "jaws/monitor/outlets"
+          - name: "PowerSwitchOutletStateUrl"
+            values:
+            - "jaws/monitor/outlets/{outlet}"
+          - name: "PowerSwitchOutletControlUrl"
+            values:
+            - "jaws/control/outlets/{outlet}"
           - name: "PowerSwitchOutletSchemaFile"
             values:
             - "charts/ska-mid-cbf-mcs/data/power_switch_002_schema.json"

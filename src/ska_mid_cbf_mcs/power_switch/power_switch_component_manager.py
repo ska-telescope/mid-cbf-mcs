@@ -43,6 +43,9 @@ class PowerSwitchComponentManager(CbfComponentManager):
     :param password: Login password for the power switch
     :param model: Make and model name of the power switch
     :param content_type: The content type in the request header
+    :param outlet_list_url: A portion of the URL to get the list of outlets
+    :param outlet_state_url: A portion of the URL to get the outlet state
+    :param outlet_control_url: A portion of the URL to turn on/off outlet
     :param outlet_schema_file: File name for the schema for a list of outlets
     :param outlet_id_list: List of Outlet IDs
     :param logger: a logger for this object to use
@@ -56,6 +59,9 @@ class PowerSwitchComponentManager(CbfComponentManager):
         password: str,
         model: str,
         content_type: str,
+        outlet_list_url: str,
+        outlet_state_url: str,
+        outlet_control_url: str,
         outlet_schema_file: str,
         outlet_id_list: List[str],
         logger: logging.Logger,
@@ -75,6 +81,9 @@ class PowerSwitchComponentManager(CbfComponentManager):
         :param password: Login password for the power switch
         :param model: Make and model name of the power switch
         :param content_type: The content type in the request header
+        :param outlet_list_url: A portion of the URL to get the list of outlets
+        :param outlet_state_url: A portion of the URL to get the outlet state
+        :param outlet_control_url: A portion of the URL to turn on/off outlet
         :param outlet_schema_file: File name for the schema for a list of outlets
         :param outlet_id_list: List of Outlet IDs
         :param logger: a logger for this object to use
@@ -102,6 +111,9 @@ class PowerSwitchComponentManager(CbfComponentManager):
             password,
             model,
             content_type,
+            outlet_list_url,
+            outlet_state_url,
+            outlet_control_url,
             outlet_schema_file,
             outlet_id_list,
             logger,
