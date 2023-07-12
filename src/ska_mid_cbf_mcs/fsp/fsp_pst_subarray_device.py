@@ -154,6 +154,8 @@ class FspPstSubarray(CspSubElementObsDevice):
             device = self.target
             device._configuring_from_idle = False
 
+            device.write_simulationMode(True)
+
             message = "FspPstSubarray Init command completed OK"
             self.logger.info(message)
             return (ResultCode.OK, message)
