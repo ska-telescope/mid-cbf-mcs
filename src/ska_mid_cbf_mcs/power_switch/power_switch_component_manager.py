@@ -46,6 +46,8 @@ class PowerSwitchComponentManager(CbfComponentManager):
     :param outlet_list_url: A portion of the URL to get the list of outlets
     :param outlet_state_url: A portion of the URL to get the outlet state
     :param outlet_control_url: A portion of the URL to turn on/off outlet
+    :param turn_on_action: value to pass to request to turn on an outlet
+    :param turn_off_action: value to pass to request to turn on an outlet
     :param outlet_schema_file: File name for the schema for a list of outlets
     :param outlet_id_list: List of Outlet IDs
     :param logger: a logger for this object to use
@@ -62,6 +64,8 @@ class PowerSwitchComponentManager(CbfComponentManager):
         outlet_list_url: str,
         outlet_state_url: str,
         outlet_control_url: str,
+        turn_on_action: str,
+        turn_off_action: str,
         outlet_schema_file: str,
         outlet_id_list: List[str],
         logger: logging.Logger,
@@ -84,6 +88,8 @@ class PowerSwitchComponentManager(CbfComponentManager):
         :param outlet_list_url: A portion of the URL to get the list of outlets
         :param outlet_state_url: A portion of the URL to get the outlet state
         :param outlet_control_url: A portion of the URL to turn on/off outlet
+        :param turn_on_action: value to pass to request to turn on an outlet
+        :param turn_off_action: value to pass to request to turn on an outlet
         :param outlet_schema_file: File name for the schema for a list of outlets
         :param outlet_id_list: List of Outlet IDs
         :param logger: a logger for this object to use
@@ -114,6 +120,8 @@ class PowerSwitchComponentManager(CbfComponentManager):
             outlet_list_url,
             outlet_state_url,
             outlet_control_url,
+            turn_on_action,
+            turn_off_action,
             outlet_schema_file,
             outlet_id_list,
             logger,

@@ -78,6 +78,12 @@ class PowerSwitch(SKABaseDevice):
     PowerSwitchOutletControlUrl = device_property(
         dtype="str",
     )
+    PowerSwitchTurnOnAction = device_property(
+        dtype="str",
+    )
+    PowerSwitchTurnOffAction = device_property(
+        dtype="str",
+    )
     PowerSwitchOutletSchemaFile = device_property(
         dtype="str",
     )
@@ -151,6 +157,8 @@ class PowerSwitch(SKABaseDevice):
             self.PowerSwitchOutletListUrl,
             self.PowerSwitchOutletStateUrl,
             self.PowerSwitchOutletControlUrl,
+            self.PowerSwitchTurnOnAction,
+            self.PowerSwitchTurnOffAction,
             self.PowerSwitchOutletSchemaFile,
             self.PowerSwitchOutletIdList,
             self.logger,

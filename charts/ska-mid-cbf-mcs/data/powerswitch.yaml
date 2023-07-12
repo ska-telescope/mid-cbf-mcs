@@ -43,16 +43,22 @@ server:
             - "DLI-PRO"
           - name: "PowerSwitchRequestHeaderContentType"
             values:
-            - "application/x-www-form-urlencoded"
+            - "application/json"
           - name: "PowerSwitchOutletListUrl"
             values:
             - "restapi/relay/outlets/"
           - name: "PowerSwitchOutletStateUrl"
             values:
-            - "restapi/relay/outlets/{outlet}/state/"
+            - "restapi/relay/outlets/{outlet}/"
           - name: "PowerSwitchOutletControlUrl"
             values:
             - "restapi/relay/outlets/{outlet}/state/"
+          - name: "PowerSwitchTurnOnAction"
+            values:
+            - "value=true"
+          - name: "PowerSwitchTurnOffAction"
+            values:
+            - "value=false"
           - name: "PowerSwitchOutletSchemaFile"
             values:
             - "charts/ska-mid-cbf-mcs/data/power_switch_001_schema.json"
@@ -103,6 +109,12 @@ server:
           - name: "PowerSwitchOutletControlUrl"
             values:
             - "jaws/control/outlets/{outlet}"
+          - name: "PowerSwitchTurnOnAction"
+            values:
+            - "{'control_action': 'on'}"
+          - name: "PowerSwitchTurnOffAction"
+            values:
+            - "{'control_action': 'off'}"
           - name: "PowerSwitchOutletSchemaFile"
             values:
             - "charts/ska-mid-cbf-mcs/data/power_switch_002_schema.json"
