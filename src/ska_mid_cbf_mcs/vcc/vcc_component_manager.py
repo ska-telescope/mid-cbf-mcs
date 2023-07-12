@@ -18,6 +18,7 @@ from __future__ import annotations  # allow forward references in type hints
 import copy
 import json
 import logging
+import time
 from typing import Callable, List, Optional, Tuple
 
 # tango imports
@@ -259,6 +260,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         self._search_window_fqdn = search_window
 
         self.connected = False
+        self._ready = False
 
         # Initialize attribute values
         self._receptor_id = 0
@@ -451,7 +453,16 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
             self._vcc_controller_simulator.InitCommonParameters(
                 json.dumps(param_init)
             )
+
         else:
+            # Wait for VCC Controller
+            for i in range(6):
+                try:
+                    self._vcc_controller_proxy.ping()
+                    break
+                except tango.DevFailed:
+                    time.sleep(5)
+
             # Skip this if the device has already been initialized
             if self._vcc_controller_proxy.State() != tango.DevState.INIT:
                 self._logger.info(
@@ -572,14 +583,16 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         self._config_id = ""
         self._scan_id = 0
 
-        if self._simulation_mode:
-            self._vcc_controller_simulator.Unconfigure()
-        else:
-            try:
-                self._vcc_controller_proxy.Unconfigure()
-            except tango.DevFailed as df:
-                self._logger.error(str(df.args[0].desc))
-                self.update_component_fault(True)
+        if self._ready:
+            if self._simulation_mode:
+                self._vcc_controller_simulator.Unconfigure()
+            else:
+                try:
+                    self._vcc_controller_proxy.Unconfigure()
+                except tango.DevFailed as df:
+                    self._logger.error(str(df.args[0].desc))
+                    self.update_component_fault(True)
+            self._ready = False
 
     def configure_scan(
         self: VccComponentManager, argin: str
@@ -642,6 +655,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                     "Failed to connect to VCC band device",
                 )
 
+        self._ready = True
         return (ResultCode.OK, "Vcc ConfigureScanCommand completed OK")
 
     def scan(

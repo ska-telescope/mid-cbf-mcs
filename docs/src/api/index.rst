@@ -1,6 +1,6 @@
-===
-API
-===
+=====
+Code
+=====
 
 .. toctree::
   :caption: Device subpackages

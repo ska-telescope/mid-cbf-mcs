@@ -266,8 +266,6 @@ class Vcc(CspSubElementObsDevice):
         self._communication_status: Optional[CommunicationStatus] = None
         self._component_power_mode: Optional[PowerMode] = None
 
-        self._simulation_mode = SimulationMode.TRUE
-
         return VccComponentManager(
             talon_lru=self.TalonLRUAddress,
             vcc_controller=self.VccControllerAddress,
@@ -626,6 +624,9 @@ class Vcc(CspSubElementObsDevice):
             device._configuring_from_idle = False
 
             device.set_change_event("frequencyBand", True, True)
+
+            device.write_simulationMode(True)
+
             device.set_change_event("subarrayMembership", True, True)
 
             # TODO remove when ugrading base class from 0.11.3

@@ -235,6 +235,8 @@ class CbfSubarray(CspSubElementSubarray):
             # TODO remove when ugrading base class from 0.11.3
             device.set_change_event("healthState", True, True)
 
+            device.write_simulationMode(True)
+
             return (result_code, message)
 
     def create_component_manager(

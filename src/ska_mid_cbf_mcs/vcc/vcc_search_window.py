@@ -111,6 +111,8 @@ class VccSearchWindow(SKACapability):
 
             device = self.target
 
+            device.write_simulationMode(True)
+
             # initialize attribute values
             device._search_window_tuning = 0
             device._enable_TDC = False

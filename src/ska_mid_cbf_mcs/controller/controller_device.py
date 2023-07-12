@@ -255,6 +255,8 @@ class CbfController(SKAController):
 
             device = self.target
 
+            device.write_simulationMode(True)
+
             if device._max_capabilities:
                 try:
                     device._count_vcc = device._max_capabilities["VCC"]
