@@ -206,8 +206,9 @@ class TmCspSubarrayLeafNodeTest(SKABaseDevice):
         #     self.__output_links_event_callback,
         #     stateless=True,
         # )
+        
+        self.set_change_event("delayModel", True, True)
 
-        self.set_state(DevState.STANDBY)
         # PROTECTED REGION END #    //  TmCspSubarrayLeafNodeTest.init_device
 
     def always_executed_hook(self):
@@ -272,6 +273,7 @@ class TmCspSubarrayLeafNodeTest(SKABaseDevice):
         # PROTECTED REGION ID(TmCspSubarrayLeafNodeTest.delayModel_write) ENABLED START #
         # since this is just a test device, assume that the JSON schema is always what we expect
         self._delay_model = json.loads(str(value))
+        self.push_change_event("delayModel", value)
         # PROTECTED REGION END #    //  TmCspSubarrayLeafNodeTest.delayModel_write
 
     def read_timingBeamWeights(self):
