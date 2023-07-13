@@ -206,7 +206,7 @@ class TmCspSubarrayLeafNodeTest(SKABaseDevice):
         #     self.__output_links_event_callback,
         #     stateless=True,
         # )
-        
+
         self.set_change_event("delayModel", True, True)
 
         # PROTECTED REGION END #    //  TmCspSubarrayLeafNodeTest.init_device
