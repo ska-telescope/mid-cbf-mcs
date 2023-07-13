@@ -679,6 +679,16 @@ class CbfSubarray(CspSubElementSubarray):
                 return (result_code, msg)
 
             full_configuration = json.loads(argin)
+
+            try:
+                configure_scan_schema = get_csp_config_schema(version=config["interface"], strict=True)
+                configure_scan_schema.validate(full_configuration)
+            except Exception as ex:
+                msg = f"Validation of the ConfigureScan command against ska-telmodel schema failed with the following exception:\n{ex}"
+                return (ResultCode.FAILED, msg)
+
+            self.logger.info("Successfully validated the ConfigureScan command against the telescope model schema.")
+
             common_configuration = copy.deepcopy(full_configuration["common"])
             configuration = copy.deepcopy(full_configuration["cbf"])
             # set band5Tuning to [0,0] if not specified

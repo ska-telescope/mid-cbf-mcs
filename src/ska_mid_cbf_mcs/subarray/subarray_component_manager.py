@@ -54,6 +54,7 @@ from ska_mid_cbf_mcs.component.util import check_communicating
 # SKA imports
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_mid_cbf_mcs.group_proxy import CbfGroupProxy
+from ska_telmodel.csp.schema import get_csp_config_schema
 
 
 class CbfSubarrayComponentManager(
@@ -481,7 +482,7 @@ class CbfSubarrayComponentManager(
         :param value: attribute value
         :param quality: attribute quality
         """
-        self._logger.debug("Entering _delay_model_event_callback()")
+        self._logger.debug("Entering _delay_model_event_callback()") # TODO: CIP-1606 validate delay model against telescope model
 
         if value is not None:
             if not self._ready:
@@ -1046,57 +1047,50 @@ class CbfSubarrayComponentManager(
 
                 # Validate functionMode.
                 function_modes = ["CORR", "PSS-BF", "PST-BF", "VLBI"]
-                if fsp["function_mode"] in function_modes:
-                    if (
-                        function_modes.index(fsp["function_mode"]) + 1
-                        == proxy_fsp.functionMode
-                        or proxy_fsp.functionMode == 0
-                    ):
-                        pass
-                    else:
-                        # TODO need to add this check for VLBI once implemented
-                        for (
-                            fsp_corr_subarray_proxy
-                        ) in self._proxies_fsp_corr_subarray_device:
-                            if (
-                                fsp_corr_subarray_proxy.obsState
-                                != ObsState.IDLE
-                            ):
-                                msg = (
-                                    f"A different subarray is using FSP {fsp['fsp_id']} "
-                                    "for a different function mode. Aborting configuration."
-                                )
-                                return (False, msg)
-                        for (
-                            fsp_pss_subarray_proxy
-                        ) in self._proxies_fsp_pss_subarray_device:
-                            if (
-                                fsp_pss_subarray_proxy.obsState
-                                != ObsState.IDLE
-                            ):
-                                msg = (
-                                    f"A different subarray is using FSP {fsp['fsp_id']} "
-                                    "for a different function mode. Aborting configuration."
-                                )
-                                return (False, msg)
-                        for (
-                            fsp_pst_subarray_proxy
-                        ) in self._proxies_fsp_pst_subarray_device:
-                            if (
-                                fsp_pst_subarray_proxy.obsState
-                                != ObsState.IDLE
-                            ):
-                                msg = (
-                                    f"A different subarray is using FSP {fsp['fsp_id']} "
-                                    "for a different function mode. Aborting configuration."
-                                )
-                                return (False, msg)
+                if (
+                    function_modes.index(fsp["function_mode"]) + 1
+                    == proxy_fsp.functionMode
+                    or proxy_fsp.functionMode == 0
+                ):
+                    pass
                 else:
-                    msg = (
-                        f"'functionMode' must be one of {function_modes} "
-                        f"(received {fsp['function_mode']}). "
-                    )
-                    return (False, msg)
+                    # TODO need to add this check for VLBI once implemented
+                    for (
+                        fsp_corr_subarray_proxy
+                    ) in self._proxies_fsp_corr_subarray_device:
+                        if (
+                            fsp_corr_subarray_proxy.obsState
+                            != ObsState.IDLE
+                        ):
+                            msg = (
+                                f"A different subarray is using FSP {fsp['fsp_id']} "
+                                "for a different function mode. Aborting configuration."
+                            )
+                            return (False, msg)
+                    for (
+                        fsp_pss_subarray_proxy
+                    ) in self._proxies_fsp_pss_subarray_device:
+                        if (
+                            fsp_pss_subarray_proxy.obsState
+                            != ObsState.IDLE
+                        ):
+                            msg = (
+                                f"A different subarray is using FSP {fsp['fsp_id']} "
+                                "for a different function mode. Aborting configuration."
+                            )
+                            return (False, msg)
+                    for (
+                        fsp_pst_subarray_proxy
+                    ) in self._proxies_fsp_pst_subarray_device:
+                        if (
+                            fsp_pst_subarray_proxy.obsState
+                            != ObsState.IDLE
+                        ):
+                            msg = (
+                                f"A different subarray is using FSP {fsp['fsp_id']} "
+                                "for a different function mode. Aborting configuration."
+                            )
+                            return (False, msg)
 
                 # TODO - why add these keys to the fsp dict - not good practice!
                 # TODO - create a new dict from a deep copy of the fsp dict.
@@ -1119,11 +1113,11 @@ class CbfSubarrayComponentManager(
                     # configuration at all or the list
                     # of receptors may be empty
                     receptorsSpecified = False
-                    if "receptor_ids" in fsp:
-                        if fsp["receptor_ids"] != []:
+                    if "receptors" in fsp:
+                        if fsp["receptors"] != []:
                             receptorsSpecified = True
                     if receptorsSpecified:
-                        for this_rec in fsp["receptor_ids"]:
+                        for this_rec in fsp["receptors"]:
                             if this_rec not in self._receptors:
                                 msg = (
                                     f"Receptor {this_rec} does not belong to "
@@ -1138,7 +1132,7 @@ class CbfSubarrayComponentManager(
                         )
                         self._logger.info(msg)
                         # In this case by the ICD, all subarray allocated resources should be used.
-                        fsp["receptor_ids"] = self._receptors.copy()
+                        fsp["receptors"] = self._receptors.copy()
 
                     frequencyBand = freq_band_dict()[fsp["frequency_band"]][
                         "band_index"
@@ -1830,17 +1824,17 @@ class CbfSubarrayComponentManager(
                 # configuration at all or the list
                 # of receptors may be empty
                 receptorsSpecified = False
-                if "receptor_ids" in fsp:
-                    if fsp["receptor_ids"] != []:
+                if "receptors" in fsp:
+                    if fsp["receptors"] != []:
                         receptorsSpecified = True
 
                 if not receptorsSpecified:
                     # In this case by the ICD, all subarray allocated resources should be used.
-                    fsp["receptor_ids"] = self._receptors.copy()
+                    fsp["receptors"] = self._receptors.copy()
 
                 # receptor IDs to pair of str and int for FSP level
                 fsp["corr_receptor_ids"] = []
-                for i, receptor in enumerate(fsp["receptor_ids"]):
+                for i, receptor in enumerate(fsp["receptors"]):
                     fsp["corr_receptor_ids"].append(
                         [
                             receptor,
