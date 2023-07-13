@@ -119,14 +119,14 @@ class PowerSwitchDriver:
         self.header["Accept"] = "application/json"
         self.header["X-CSRF"] = "x"
         self.header["Content-Type"] = f"{self.content_type}"
-        
-        # Initialize the value of the payload data to pass to 
+
+        # Initialize the value of the payload data to pass to
         # the request to turn on/off an outlet
         self.turn_on_action = turn_on_action
         self.turn_off_action = turn_off_action
 
-        # Initialize the expected on/off values of the response 
-        # to the request to turn on/off an outlet 
+        # Initialize the expected on/off values of the response
+        # to the request to turn on/off an outlet
         self.state_on = state_on
         self.state_off = state_off
 
