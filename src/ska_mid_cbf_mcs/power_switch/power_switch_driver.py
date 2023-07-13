@@ -65,14 +65,6 @@ class PowerSwitchDriver:
     :param logger: a logger for this object to use
     """
 
-    power_mode_conversion = {
-        "true": PowerMode.ON,
-        "false": PowerMode.OFF,
-        "on": PowerMode.ON,
-        "off": PowerMode.OFF,
-    }
-    """Coversion between PowerMode and outlet state response"""
-
     query_timeout_s = 6
     """Timeout in seconds used when waiting for a reply from the power switch"""
 
