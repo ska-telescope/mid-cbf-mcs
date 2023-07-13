@@ -166,6 +166,8 @@ def patched_controller_device_class(
 
             mock_component_manager._vcc_to_receptor = {}
 
+            self._talondx_component_manager = mock_component_manager
+
             return mock_component_manager
 
     return PatchedCbfController

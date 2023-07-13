@@ -264,8 +264,6 @@ class Vcc(CspSubElementObsDevice):
         self._communication_status: Optional[CommunicationStatus] = None
         self._component_power_mode: Optional[PowerMode] = None
 
-        self._simulation_mode = SimulationMode.TRUE
-
         return VccComponentManager(
             talon_lru=self.TalonLRUAddress,
             vcc_controller=self.VccControllerAddress,
@@ -620,6 +618,8 @@ class Vcc(CspSubElementObsDevice):
             device._last_scan_configuration = ""
 
             device._configuring_from_idle = False
+
+            device.write_simulationMode(True)
 
             device.set_change_event("subarrayMembership", True, True)
 

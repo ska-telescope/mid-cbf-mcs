@@ -341,6 +341,8 @@ class Fsp(SKACapability):
 
             device = self.target
 
+            device.write_simulationMode(True)
+
             device._scan_id = 0
             device._config_id = ""
 

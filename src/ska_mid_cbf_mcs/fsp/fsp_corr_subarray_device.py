@@ -261,6 +261,7 @@ class FspCorrSubarray(CspSubElementObsDevice):
 
             device = self.target
             device._configuring_from_idle = False
+            device.write_simulationMode(True)
 
             self.logger.debug("Entering InitCommand()")
 

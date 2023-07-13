@@ -228,6 +228,10 @@ class CbfSubarray(CspSubElementSubarray):
             # PROTECTED REGION ID(CbfSubarray.init_device) ENABLED START #
             (result_code, message) = super().do()
 
+            device = self.target
+
+            device.write_simulationMode(True)
+
             # TODO: remove
             # device._storage_logging_level = tango.LogLevel.LOG_DEBUG
             # device._element_logging_level = tango.LogLevel.LOG_DEBUG
