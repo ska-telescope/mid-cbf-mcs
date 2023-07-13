@@ -1,32 +1,7 @@
-Overview
-********
-The Mid.CBF Master Control Software (MCS) runs on a COTS server to provide a 
-high-level interface to TMC and CSP.LMC, and translate the high-level commands 
-into the configuration and control of individual Talon-DX boards.
-
-System Context
-==============
-The following diagram shows the Mid.CBF MCS as it fits into the rest of the CSP Mid
-system.
-
-.. figure:: ../diagrams/mcs-context.png
-    :align: center
-
-    MCS System Context
-
-Interfaces
-==========
-
-LMC to MCS Interface
---------------------
-See the `ICD document <https://drive.google.com/drive/folders/1CQJAJP1RhRuSvaM1OQhnxBZZ4xH1Pq_m>`_ for details of this interface.
-
-MCS to TDC Interface
---------------------
-The interface from the MCS to the TDC is largely in the form of communication between
-Tango devices running on either side. Currently only one such Tango device is running
-on each Talon-DX board that the MCS directly communicates with; this is known as the 
-HPS Master.
+MCS to HPS
+=====================
+The interface from the MCS to the HPS is largely in the form of communication between
+Tango devices running on either side. 
 
 The interface also currently consists of low-level SSH calls from the MCS to the Talon-DX
 boards, which are used to copy FPGA bitstreams and Tango device server binaries to the boards
@@ -35,13 +10,13 @@ it is implemented in the :ref:`TalonDxComponentManager Class`, which is instanti
 :ref:`CbfController`.
 
 MCS and HPS Master DS
-^^^^^^^^^^^^^^^^^^^^^
+----------------------
 The interface between the MCS and the HPS Master device server is primarily made up
 of the ``configure`` command sent from the MCS to the HPS master, which programs the
 FPGA and spawns the remaining HPS device servers. Before this command can be run, it is 
 expected that the MCS has already copied the necessary bitstreams and binaries to the board
 and the HPS master has obviously been started. This is all handled automatically as part of
-the :ref:`On Command Sequence`.
+the :ref:`MCS On Command`.
 
 The ``configure`` command has one argument, which is a JSON-formatted string. An example
 of its contents can be seen below.
@@ -68,21 +43,41 @@ of its contents can be seen below.
         ]
     }
 
-On Command Sequence
-===================
+MCS On Command
+----------------
+
 The following diagram shows the ``CbfController`` On command sequence and how it integrates with other
 components in the Mid.CBF system. The steps are outlined in detail in the 
 `Engineering Console <https://developer.skatelescope.org/projects/ska-mid-cbf-engineering-console/en/latest/system.html#on-command-sequence>`_.
 
 From a MCS perspective, the On command sequence consists of the following steps:
 
-- Arrows 4-7: Power on the Talon-DX boards (see :ref:`TalonLRU Device` and :ref:`PowerSwitch Device`)
+- Arrows 4-7: Power on the Talon-DX boards
 - Arrow 9: Attempt to connect to each board over SSH (see :ref:`TalonDxComponentManager Class`)
 - Arrows 8-9: Copy the relevant binaries and bitstreams to each board
 - Arrow 10: Start up the HPS Master on each board
 - Arrow 12: Send the ``configure`` to each HPS Master device server
 
-.. figure:: ../diagrams/on-command-sequence.png
+.. figure:: ../../diagrams/on-command-sequence.png
     :align: center
     
     MCS On Command Sequence
+
+Configure Scan Command Sequence
+--------------------------------
+
+The sequence diagram below shows the main sequence of calls in MCS 
+to configure a correlation scan. Return calls are not shown.
+
+.. uml:: ../../diagrams/configure-corr-scan-mcs.puml   
+
+The sequence diagram below shows additional detail for configuration of 
+the VCC for a correlation scan.
+
+.. uml:: ../../diagrams/configure-scan-vcc.puml
+
+The sequence diagram below shows details of calls to configure a FSP for a 
+correlation scan.
+
+.. uml:: ../../diagrams/configure-scan-hps-fsp.puml
+

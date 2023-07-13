@@ -34,6 +34,7 @@ sys.path.insert(0, os.path.abspath('../../src/'))
 def setup(app):
     app.add_css_file('css/custom.css')
     app.add_js_file('js/github.js')
+    app.add_js_file('js/mermaid.js')
 
 # -- Project information -----------------------------------------------------
 
@@ -63,12 +64,18 @@ extensions = [
     'sphinx.ext.ifconfig',
     'sphinx.ext.viewcode',
     'sphinx.ext.githubpages',
+    'sphinx.ext.autosectionlabel',
     'recommonmark',
-    'sphinx.ext.autosectionlabel'
+    'sphinxcontrib.mermaid',
+    'sphinxcontrib.plantuml'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
+
+# mermaid_output_format = 'png'
+# mermaid_cmd_shell = 'true'
+
 
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:

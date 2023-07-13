@@ -1,5 +1,5 @@
 ==================
-CbfSubarray Device
+CbfSubarray
 ==================
 
 .. automodule:: ska_mid_cbf_mcs.subarray
@@ -8,3 +8,4 @@ CbfSubarray Device
 .. toctree::
 
   CbfSubarray Device<cbfsubarray_device>
+  CbfSubarrayComponentManager<cbfsubarray_component_manager>

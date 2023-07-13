@@ -1132,7 +1132,7 @@ class CbfSubarrayComponentManager(
                         )
                         self._logger.info(msg)
                         # In this case by the ICD, all subarray allocated resources should be used.
-                        fsp["receptors"] = self._receptors.copy()
+                        # fsp["receptors"] = self._receptors.copy()
 
                     frequencyBand = freq_band_dict()[fsp["frequency_band"]][
                         "band_index"
@@ -2344,7 +2344,7 @@ class CbfSubarrayComponentManager(
         # convert fs_sample_rate to MHz
         fs_sample_rate = fs_sample_rate / mhz_to_hz
         fs_sample_rate_for_band = {
-            "receptor": receptor_int,
+            "receptor_id": receptor_int,
             "fs_sample_rate": fs_sample_rate,
         }
         log_msg = f"fs_sample_rate_for_band: {fs_sample_rate_for_band}"
