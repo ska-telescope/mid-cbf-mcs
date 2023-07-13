@@ -58,6 +58,8 @@ class PowerSwitchDriver:
     :param outlet_control_url: A portion of the URL to turn on/off outlet
     :param turn_on_action: value to pass to request to turn on an outlet
     :param turn_off_action: value to pass to request to turn on an outlet
+    :param state_on: value of the outlet's state when on
+    :param state_off: value of the outlet's state when off
     :param outlet_schema_file: File name for the schema for a list of outlets
     :param outlet_id_list: List of Outlet IDs
     :param logger: a logger for this object to use
@@ -87,6 +89,8 @@ class PowerSwitchDriver:
         outlet_control_url: str,
         turn_on_action: str,
         turn_off_action: str,
+        state_on: str,
+        state_off: str,
         outlet_schema_file: str,
         outlet_id_list: List[str],
         logger: logging.Logger,
@@ -102,11 +106,6 @@ class PowerSwitchDriver:
         self.outlet_state_url = f"{self.base_url}/{outlet_state_url}"
         self.outlet_control_url = f"{self.base_url}/{outlet_control_url}"
 
-        print(" --- init() --- self.base_url == ", self.base_url)
-        print(" --- init() --- self.outlet_list_url == ", self.outlet_list_url)
-        print(" --- init() --- self.outlet_state_url == ", self.outlet_state_url)
-        print(" --- init() --- self.outlet_control_url == ", self.outlet_control_url)
-
         # Initialize the login credentials
         self.login = login
         self.password = password
@@ -121,12 +120,15 @@ class PowerSwitchDriver:
         self.header["X-CSRF"] = "x"
         self.header["Content-Type"] = f"{self.content_type}"
         
-        # Initialize the value of the data to pass to the request to
-        # turn on/off an outlet
+        # Initialize the value of the payload data to pass to 
+        # the request to turn on/off an outlet
         self.turn_on_action = turn_on_action
         self.turn_off_action = turn_off_action
-        print(" --- init() --- self.turn_on_action == ", self.turn_on_action)
-        print(" --- init() --- self.turn_off_action == ", self.turn_off_action)
+
+        # Initialize the expected on/off values of the response 
+        # to the request to turn on/off an outlet 
+        self.state_on = state_on
+        self.state_off = state_off
 
         # Initialize and populate the outlet_id_list as a list
         # of strings, not DevStrings
@@ -203,13 +205,9 @@ class PowerSwitchDriver:
         ), f"Outlet ID {outlet} must be in the allowable outlet_id_list read in from the Config File"
 
         url = self.outlet_state_url.replace("{outlet}", outlet)
-        print(" --- get_outlet_power_mode() --- url == ", url)
-
-        print(" --- get_outlet_power_mode() --- outlet == ", outlet)
-        print(" --- get_outlet_power_mode() --- self.outlet_id_list == ", self.outlet_id_list)
 
         outlet_idx = self.outlet_id_list.index(outlet)
-        print(" --- get_outlet_power_mode() --- outlet_idx == ", outlet_idx)
+
         try:
             response = requests.get(
                 url=url,
@@ -224,19 +222,19 @@ class PowerSwitchDriver:
             ]:
                 try:
 
-                    json = response.json()
-                    print(" --- get_outlet_power_mode() --- json == ", json)
+                    resp = response.json()
+                    state = str(resp["state"])
 
-                    state = json["state"]
-                    print(" --- get_outlet_power_mode() --- out == ", state)
-
-                    power_mode = self.power_mode_conversion[str(state).lower()]
-                    print(" --- get_outlet_power_mode() --- power_mode == ", power_mode)
+                    if state == self.state_on:
+                        power_mode = PowerMode.ON
+                    elif state == self.state_off:
+                        power_mode = PowerMode.OFF
+                    else:
+                        power_mode = PowerMode.UNKNOWN
 
                 except IndexError:
                     power_mode = PowerMode.UNKNOWN
 
-                print(" --- get_outlet_power_mode() --- self.outlets[outlet_idx] == ", self.outlets[outlet_idx])
                 if power_mode != self.outlets[outlet_idx].power_mode:
                     raise AssertionError(
                         f"Power mode of outlet ID {outlet} ({power_mode})"
@@ -272,9 +270,7 @@ class PowerSwitchDriver:
         ), f"Outlet ID {outlet} must be in the allowable outlet_id_list read in from the Config File"
 
         url = self.outlet_control_url.replace("{outlet}", outlet)
-        print(" --- get_outlet_power_mode() --- url == ", url)
         data = self.turn_on_action
-        print(" --- get_outlet_power_mode() --- self.turn_on_action == ", self.turn_on_action)
 
         outlet_idx = self.outlet_id_list.index(outlet)
 
@@ -324,10 +320,7 @@ class PowerSwitchDriver:
         ), f"Outlet ID {outlet} must be in the allowable outlet_id_list read in from the Config File"
 
         url = self.outlet_control_url.replace("{outlet}", outlet)
-        print(" --- get_outlet_power_mode() --- url == ", url)
-
         data = self.turn_off_action
-        print(" --- get_outlet_power_mode() --- self.turn_on_action == ", self.turn_on_action)
 
         outlet_idx = self.outlet_id_list.index(outlet)
 
@@ -372,7 +365,6 @@ class PowerSwitchDriver:
             schema = json.loads(f.read())
 
         url = self.outlet_list_url
-        print(" --- get_outlet_list() url == ", url)
 
         try:
             response = requests.get(
@@ -397,10 +389,15 @@ class PowerSwitchDriver:
 
                 for idx, resp_dict in enumerate(resp_list):
                     try:
-                        out = resp_dict["state"]
-                        power_mode = self.power_mode_conversion[
-                            str(out).lower()
-                        ]
+                        state = str(resp_dict["state"])
+
+                        if state == self.state_on:
+                            power_mode = PowerMode.ON
+                        elif state == self.state_off:
+                            power_mode = PowerMode.OFF
+                        else:
+                            power_mode = PowerMode.UNKNOWN
+
                     except IndexError:
                         power_mode = PowerMode.UNKNOWN
 

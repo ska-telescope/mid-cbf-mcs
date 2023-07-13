@@ -2298,6 +2298,18 @@
                             "PowerSwitchOutletControlUrl": [
                                 "restapi/relay/outlets/{outlet}/state/"
                             ],
+                            "PowerSwitchTurnOnAction": [
+                                "value=true"
+                            ],
+                            "PowerSwitchTurnOffAction": [
+                                "value=false"
+                            ],
+                            "PowerSwitchOutletStateOn": [
+                                "True"
+                            ],
+                            "PowerSwitchOutletStateOff": [
+                                "False"
+                            ],
                             "PowerSwitchOutletSchemaFile": [
                                 "charts/ska-mid-cbf-mcs/data/power_switch_001_schema.json"
                             ],
@@ -2349,6 +2361,18 @@
                             ],
                             "PowerSwitchOutletControlUrl": [
                                 "jaws/control/outlets/{outlet}"
+                            ],
+                            "PowerSwitchTurnOnAction": [
+                                "{\"control_action\": \"on\"}"
+                            ],
+                            "PowerSwitchTurnOffAction": [
+                                "{\"control_action\": \"on\"}"
+                            ],
+                            "PowerSwitchOutletStateOn": [
+                                "On"
+                            ],
+                            "PowerSwitchOutletStateOff": [
+                                "Off"
                             ],
                             "PowerSwitchOutletSchemaFile": [
                                 "charts/ska-mid-cbf-mcs/data/power_switch_002_schema.json"
