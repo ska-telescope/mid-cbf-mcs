@@ -581,6 +581,8 @@ class CbfController(SKAController):
             :rtype: (ResultCode, str)
             """
 
+            self.logger.info("Trying ON Command")
+
             (result_code, message) = self.target.component_manager.on()
 
             if result_code == ResultCode.OK:

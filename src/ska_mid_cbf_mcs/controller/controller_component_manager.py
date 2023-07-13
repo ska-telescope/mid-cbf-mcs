@@ -641,6 +641,8 @@ class ControllerComponentManager(CbfComponentManager):
         :rtype: (ResultCode, str)
         """
 
+        self._logger.info("Trying to execute ON Command")
+
         if self._connected:
             # Try connection with each subarray/capability
             for fqdn, proxy in self._proxies.items():
@@ -733,6 +735,8 @@ class ControllerComponentManager(CbfComponentManager):
                 return (ResultCode.FAILED, log_msg)
 
             try:
+                ## Set the Simulation mode of the Subarray to the simulation mode of the controller
+                self._group_subarray.write_attribute("simulationMode", self._talondx_component_manager.simulation_mode)
                 self._group_subarray.command_inout("On")
                 self._group_vcc.command_inout("On")
                 self._group_fsp.command_inout("On")
