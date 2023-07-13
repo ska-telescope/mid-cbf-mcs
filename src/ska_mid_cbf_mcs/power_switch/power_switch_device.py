@@ -63,9 +63,6 @@ class PowerSwitch(SKABaseDevice):
     PowerSwitchPassword = device_property(
         dtype="str",
     )
-    PowerSwitchModel = device_property(
-        dtype="str",
-    )
     PowerSwitchRequestHeaderContentType = device_property(
         dtype="str",
     )
@@ -158,7 +155,6 @@ class PowerSwitch(SKABaseDevice):
             self.PowerSwitchIp,
             self.PowerSwitchLogin,
             self.PowerSwitchPassword,
-            self.PowerSwitchModel,
             self.PowerSwitchRequestHeaderContentType,
             self.PowerSwitchOutletListUrl,
             self.PowerSwitchOutletStateUrl,

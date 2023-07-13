@@ -51,7 +51,6 @@ class PowerSwitchDriver:
     :param ip: IP address of the power switch
     :param login: Login username of the power switch
     :param password: Login password for the power switch
-    :param model: Make and model name of the power switch
     :param content_type: The content type in the request header
     :param outlet_list_url: A portion of the URL to get the list of outlets
     :param outlet_state_url: A portion of the URL to get the outlet state
@@ -74,7 +73,6 @@ class PowerSwitchDriver:
         ip: str,
         login: str,
         password: str,
-        model: str,
         content_type: str,
         outlet_list_url: str,
         outlet_state_url: str,
@@ -101,9 +99,6 @@ class PowerSwitchDriver:
         # Initialize the login credentials
         self.login = login
         self.password = password
-
-        # Initialize outlet model
-        self.model = model
 
         # Initialize the request header
         self.content_type = content_type

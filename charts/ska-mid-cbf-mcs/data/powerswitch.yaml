@@ -38,9 +38,6 @@ server:
           - name: "PowerSwitchPassword"
             values:
             - "1234"
-          - name: "PowerSwitchModel"
-            values:
-            - "DLI-PRO"
           - name: "PowerSwitchRequestHeaderContentType"
             values:
             - "application/x-www-form-urlencoded"
@@ -100,9 +97,6 @@ server:
           - name: "PowerSwitchPassword"
             values:
             - "admn-1-Psi"
-          - name: "PowerSwitchModel"
-            values:
-            - "Switched PRO2"
           - name: "PowerSwitchRequestHeaderContentType"
             values:
             - "application/json"

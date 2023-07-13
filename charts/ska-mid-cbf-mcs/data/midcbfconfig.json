@@ -2283,9 +2283,6 @@
                             "PowerSwitchPassword": [
                                 "1234"
                             ],
-                            "PowerSwitchModel": [
-                                "DLI-PRO"
-                            ],
                             "PowerSwitchRequestHeaderContentType": [
                                 "application/x-www-form-urlencoded"
                             ],
@@ -2346,9 +2343,6 @@
                             ],
                             "PowerSwitchPassword": [
                                 "admn-1-Psi"
-                            ],
-                            "PowerSwitchModel": [
-                                "Switched PRO2"
                             ],
                             "PowerSwitchRequestHeaderContentType": [
                                 "application/json"
