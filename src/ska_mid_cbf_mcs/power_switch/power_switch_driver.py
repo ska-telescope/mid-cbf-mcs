@@ -192,7 +192,6 @@ class PowerSwitchDriver:
         ), f"Outlet ID {outlet} must be in the allowable outlet_id_list read in from the Config File"
 
         url = self.outlet_state_url.replace("{outlet}", outlet)
-
         outlet_idx = self.outlet_id_list.index(outlet)
 
         try:
@@ -258,7 +257,6 @@ class PowerSwitchDriver:
 
         url = self.outlet_control_url.replace("{outlet}", outlet)
         data = self.turn_on_action
-
         outlet_idx = self.outlet_id_list.index(outlet)
 
         try:
@@ -308,7 +306,6 @@ class PowerSwitchDriver:
 
         url = self.outlet_control_url.replace("{outlet}", outlet)
         data = self.turn_off_action
-
         outlet_idx = self.outlet_id_list.index(outlet)
 
         try:
