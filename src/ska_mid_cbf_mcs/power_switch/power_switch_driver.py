@@ -207,7 +207,6 @@ class PowerSwitchDriver:
                 requests.codes.no_content,
             ]:
                 try:
-
                     resp = response.json()
                     state = str(resp["state"])
 
