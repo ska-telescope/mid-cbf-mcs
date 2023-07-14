@@ -719,6 +719,7 @@ class ControllerComponentManager(CbfComponentManager):
 
             try:
                 for fqdn in self._fqdn_talon_lru:
+                    self._proxies[fqdn].write_attribute("simulationMode",self._talondx_component_manager.simulation_mode)
                     self._proxies[fqdn].On()
             except tango.DevFailed:
                 log_msg = "Failed to power on Talon boards"

@@ -299,6 +299,8 @@ class TalonLRUComponentManager(CbfComponentManager):
         :rtype: (ResultCode, str)
         """
 
+        self._proxy_power_switch1.write_attribute("simulationMode", )
+
         if self.connected:
             # Power on both outlets
             result1 = ResultCode.FAILED
