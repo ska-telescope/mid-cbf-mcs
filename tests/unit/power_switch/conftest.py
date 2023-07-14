@@ -114,7 +114,7 @@ def power_switch_component_manager(
                     self._json: List[dict[str, Any]] = []
 
                     outlet_cfg = {
-                        "name": f"Outlet 0",
+                        "name": "Outlet 0",
                         "locked": False,
                         "critical": False,
                         "cycle_delay": 0,
