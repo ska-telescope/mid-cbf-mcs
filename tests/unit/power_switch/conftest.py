@@ -76,7 +76,7 @@ def power_switch_component_manager(
             :param simulate_response_error: set to True to simulate error response
             """
             outlet_state_url = re.compile(
-                r"http:\/\/[\d.]+\/restapi\/relay\/outlets\/\d+\/state\/"
+                r"http:\/\/[\d.]+\/restapi\/relay\/outlets\/\d+\/"
             )
             outlet_list_url = re.compile(
                 r"http:\/\/[\d.]+\/restapi\/relay\/outlets\/"
@@ -90,6 +90,7 @@ def power_switch_component_manager(
                 if outlet_list_url.fullmatch(url):
                     self._json: List[dict[str, Any]] = []
 
+                    print(" ------------ FULL MATCH ----------- ")
                     for i in range(0, 8):
                         outlet_cfg = {
                             "name": f"Outlet {i}",
@@ -103,9 +104,31 @@ def power_switch_component_manager(
 
                         self._json.append(outlet_cfg)
 
+                    print("self._json == ", self._json)
                     self.text = json.dumps(self._json)
+                    print("self.text == ", self.text)
+
                 elif outlet_state_url.fullmatch(url):
-                    self.text = "true"
+                    print(" ------------ NOT full match ----------- ")
+
+                    self._json: List[dict[str, Any]] = []
+
+                    outlet_cfg = {
+                            "name": f"Outlet 0",
+                            "locked": False,
+                            "critical": False,
+                            "cycle_delay": 0,
+                            "state": True,
+                            "physical_state": True,
+                            "transient_state": True,
+                        }
+
+                    self._json.append(outlet_cfg)
+                    print("self._json == ", self._json)
+
+                    self.text = json.dumps(self._json)
+                    print("self.text == ", self.text)
+
 
         def json(self: MockResponse) -> dict[str, str]:
             """
@@ -151,11 +174,14 @@ def power_switch_component_manager(
         ip="0.0.0.0",
         login="",
         password="",
-        model="DLI-PRO",
         content_type="application/json",
-        outlet_list_url="",
-        outlet_state_url="",
-        outlet_control_url="",
+        outlet_list_url="restapi/relay/outlets/",
+        outlet_state_url="restapi/relay/outlets/0",
+        outlet_control_url="restapi/relay/outlets/0/state/",
+        turn_on_action="value=true",
+        turn_off_action="value=false",
+        state_on="True",
+        state_off="False",
         outlet_schema_file="charts/ska-mid-cbf-mcs/data/power_switch_001_schema.json",
         outlet_id_list=["0", "1", "2", "3", "4", "5", "6", "7"],
         logger=logger,

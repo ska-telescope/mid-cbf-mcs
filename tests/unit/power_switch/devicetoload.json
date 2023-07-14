@@ -17,20 +17,29 @@
                             "PowerSwitchPassword": [
                                 ""
                             ],
-                            "PowerSwitchModel": [
-                                "DLI-PRO"
-                            ],
                             "PowerSwitchRequestHeaderContentType": [
-                                "application/json"
+                                "application/x-www-form-urlencoded"
                             ],
                             "PowerSwitchOutletListUrl": [
                                 "restapi/relay/outlets/"
                             ],
                             "PowerSwitchOutletStateUrl": [
-                                "restapi/relay/outlets/{outlet}/state/"
+                                "restapi/relay/outlets/{outlet}"
                             ],
                             "PowerSwitchOutletControlUrl": [
                                 "restapi/relay/outlets/{outlet}/state/"
+                            ],
+                            "PowerSwitchTurnOnAction": [
+                                "value=true"
+                            ],
+                            "PowerSwitchTurnOffAction": [
+                                "value=false"
+                            ],
+                            "PowerSwitchOutletStateOn": [
+                                "True"
+                            ],
+                            "PowerSwitchOutletStateOff": [
+                                "False"
                             ],
                             "PowerSwitchOutletSchemaFile": [
                                 "charts/ska-mid-cbf-mcs/data/power_switch_001_schema.json"
