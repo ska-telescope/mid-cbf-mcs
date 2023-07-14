@@ -114,21 +114,20 @@ def power_switch_component_manager(
                     self._json: List[dict[str, Any]] = []
 
                     outlet_cfg = {
-                            "name": f"Outlet 0",
-                            "locked": False,
-                            "critical": False,
-                            "cycle_delay": 0,
-                            "state": True,
-                            "physical_state": True,
-                            "transient_state": True,
-                        }
+                        "name": f"Outlet 0",
+                        "locked": False,
+                        "critical": False,
+                        "cycle_delay": 0,
+                        "state": True,
+                        "physical_state": True,
+                        "transient_state": True,
+                    }
 
                     self._json.append(outlet_cfg)
                     print("self._json == ", self._json)
 
                     self.text = json.dumps(self._json)
                     print("self.text == ", self.text)
-
 
         def json(self: MockResponse) -> dict[str, str]:
             """
