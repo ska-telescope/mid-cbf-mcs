@@ -280,6 +280,12 @@ class TalonLRU(SKABaseDevice):
             """
             device = self.target
 
+            # Setting Powerswitch simulation mode to LRU simulation mode
+            lru_simulation_mode = device.read_simulationMode()
+
+            # TO DO: REMOVE THIS ONCE DATA MODEL REDESIGN KICKS IN. WILL BE PART OF CBFCONTROLLER
+            device.component_manager._proxy_power_switch1.write_attribute("simulationMode", lru_simulation_mode)
+
             with device._power_switch_lock:
                 # Check that this command is still allowed since the
                 # _check_power_mode_callback could have changed the state
