@@ -24,7 +24,7 @@
                                 "restapi/relay/outlets/"
                             ],
                             "PowerSwitchOutletStateUrl": [
-                                "restapi/relay/outlets/{outlet}"
+                                "restapi/relay/outlets/{outlet}/"
                             ],
                             "PowerSwitchOutletControlUrl": [
                                 "restapi/relay/outlets/{outlet}/state/"
