@@ -28,17 +28,17 @@ class ReceptorUtils:
     """
 
     RECEPTOR_ID_MIN = 1
-    RECEPTOR_ID_MAX = 8
+    RECEPTOR_ID_MAX = 197
 
     SKA_DISH_TYPE_STR = "SKA"
     SKA_DISH_INSTANCE_MIN = 1
     SKA_DISH_INSTANCE_MAX = 133
-    SKA_DISH_INSTANCE_OFFSET = 64
+    SKA_DISH_INSTANCE_OFFSET = 0
 
     MKT_DISH_TYPE_STR = "MKT"
     MKT_DISH_INSTANCE_MIN = 0
     MKT_DISH_INSTANCE_MAX = 63
-    MKT_DISH_INSTANCE_OFFSET = 1
+    MKT_DISH_INSTANCE_OFFSET = 134
 
     DISH_TYPE_STR_LEN = 3
 
@@ -132,7 +132,7 @@ class ReceptorUtils:
 
         if receptor_id in range(
             self.MKT_DISH_INSTANCE_MIN + self.MKT_DISH_INSTANCE_OFFSET,
-            self.MKT_DISH_INSTANCE_MAX + 1,
+            self.MKT_DISH_INSTANCE_MAX + self.MKT_DISH_INSTANCE_OFFSET + 1,
         ):
             return self.MKT_DISH_TYPE_STR + str(
                 receptor_id - self.MKT_DISH_INSTANCE_OFFSET
@@ -140,7 +140,7 @@ class ReceptorUtils:
 
         if receptor_id in range(
             self.SKA_DISH_INSTANCE_MIN + self.SKA_DISH_INSTANCE_OFFSET,
-            self.SKA_DISH_INSTANCE_MAX + 1,
+            self.SKA_DISH_INSTANCE_MAX + self.SKA_DISH_INSTANCE_OFFSET + 1,
         ):
             return self.SKA_DISH_TYPE_STR + str(
                 receptor_id - self.SKA_DISH_INSTANCE_OFFSET

@@ -4,32 +4,16 @@
             "tm": {
                 "TmCspSubarrayLeafNodeTest": {
                     "ska_mid/tm_leaf_node/csp_subarray_01": {
-                        "attribute_properties": {
-                            "dopplerPhaseCorrection": {
-                                "abs_change": [
-                                    "-1",
-                                    "1"
-                                ]
-                            }
-                        },
                         "properties": {
-			    "CbfControllerAddress": [
-		                "mid_csp_cbf/sub_elt/controller"
-			    ],
-			    "CbfSubarrayAddress": [
-		                "mid_csp_cbf/sub_elt/subarray_01"
-			    ],
+                            "CbfControllerAddress": [
+                                    "mid_csp_cbf/sub_elt/controller"
+                            ],
+                            "CbfSubarrayAddress": [
+                                    "mid_csp_cbf/sub_elt/subarray_01"
+                            ],
 
                             "polled_attr": [
-                                "beamweights",
-                                "1000",
-                                "jonesmatrix",
-                                "1000",
-                                "delaymodel",
-                                "1000",
                                 "visdestinationaddress",
-                                "1000",
-                                "dopplerphasecorrection",
                                 "1000"
                             ]
                         }
@@ -39,32 +23,15 @@
             "tm2": {
                 "TmCspSubarrayLeafNodeTest": {
                     "ska_mid/tm_leaf_node/csp_subarray_02": {
-                        "attribute_properties": {
-                            "dopplerPhaseCorrection": {
-                                "abs_change": [
-                                    "-1",
-                                    "1"
-                                ]
-                            }
-                        },
                         "properties": {
-			    "CbfControllerAddress": [
-		                "mid_csp_cbf/sub_elt/controller"
-			    ],
-			    "CbfSubarrayAddress": [
-		                "mid_csp_cbf/sub_elt/subarray_02"
-			    ],
-
+                            "CbfControllerAddress": [
+                                    "mid_csp_cbf/sub_elt/controller"
+                            ],
+                            "CbfSubarrayAddress": [
+                                    "mid_csp_cbf/sub_elt/subarray_02"
+                            ],
                             "polled_attr": [
-                                "beamweights",
-                                "1000",
-                                "jonesmatrix",
-                                "1000",
-                                "delaymodel",
-                                "1000",
                                 "visdestinationaddress",
-                                "1000",
-                                "dopplerphasecorrection",
                                 "1000"
                             ]
                         }

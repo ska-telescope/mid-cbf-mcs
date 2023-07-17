@@ -156,11 +156,11 @@ class TmCspSubarrayLeafNodeTest(SKABaseDevice):
         doc="Delay model coefficients",
     )
 
-    beamWeights = attribute(
+    timingBeamWeights = attribute(
         dtype="str",
         access=AttrWriteType.READ_WRITE,
-        label="Search/timing beam weights",
-        doc="Search/timing beam weights",
+        label="Timing beam weights",
+        doc="Timing beam weights",
     )
 
     visDestinationAddress = attribute(
@@ -190,30 +190,25 @@ class TmCspSubarrayLeafNodeTest(SKABaseDevice):
         self._doppler_phase_correction = [0.0, 0.0, 0.0, 0.0]
         self._jones_matrix = {}  # this is interpreted as a JSON object
         self._delay_model = {}  # this is interpreted as a JSON object
-        self._beam_weights = {}  # this is interpreted as a JSON object
+        self._timing_beam_weights = {}  # this is interpreted as a JSON object
         self._vis_destination_address = (
             {}
         )  # this is interpreted as a JSON object
         self._received_output_links = False
 
-        # these properties do not exist anymore and are not used anywhere in this file so they have been commented out
-        # self._proxy_cbf_controller = tango.DeviceProxy(self.CbfControllerAddress)
-        # self._proxy_cbf_controller = tango.DeviceProxy(
-        #    self._proxy_cbf_controller.get_property("CspMidCbf")["CspMidCbf"][0]
-        # )
-
         # decoupling mif-cbf-mcs from csp-mid-lmc so that it can be tested  standalone
         # TmCspSubarrayLeafNodeTest device subscribes directly to the CbfSubarray
         # outputLinksDistribution attribute to received the outputlinks.
         self._proxy_cbf_subarray = tango.DeviceProxy(self.CbfSubarrayAddress)
-        self._proxy_cbf_subarray.subscribe_event(
-            "outputLinksDistribution",
-            tango.EventType.CHANGE_EVENT,
-            self.__output_links_event_callback,
-            stateless=True,
-        )
+        # self._proxy_cbf_subarray.subscribe_event(
+        #     "outputLinksDistribution",
+        #     tango.EventType.CHANGE_EVENT,
+        #     self.__output_links_event_callback,
+        #     stateless=True,
+        # )
 
-        self.set_state(DevState.STANDBY)
+        self.set_change_event("delayModel", True, True)
+
         # PROTECTED REGION END #    //  TmCspSubarrayLeafNodeTest.init_device
 
     def always_executed_hook(self):
@@ -278,18 +273,19 @@ class TmCspSubarrayLeafNodeTest(SKABaseDevice):
         # PROTECTED REGION ID(TmCspSubarrayLeafNodeTest.delayModel_write) ENABLED START #
         # since this is just a test device, assume that the JSON schema is always what we expect
         self._delay_model = json.loads(str(value))
+        self.push_change_event("delayModel", value)
         # PROTECTED REGION END #    //  TmCspSubarrayLeafNodeTest.delayModel_write
 
-    def read_beamWeights(self):
-        # PROTECTED REGION ID(TmCspSubarrayLeafNodeTest.beamWeights_read) ENABLED START #
-        return json.dumps(self._beam_weights)
-        # PROTECTED REGION END #    //  TmCspSubarrayLeafNodeTest.beamWeights_read
+    def read_timingBeamWeights(self):
+        # PROTECTED REGION ID(TmCspSubarrayLeafNodeTest.timingBeamWeights_read) ENABLED START #
+        return json.dumps(self._timing_beam_weights)
+        # PROTECTED REGION END #    //  TmCspSubarrayLeafNodeTest.timingBeamWeights_read
 
-    def write_beamWeights(self, value):
-        # PROTECTED REGION ID(TmCspSubarrayLeafNodeTest.beamWeights_write) ENABLED START #
+    def write_timingBeamWeights(self, value):
+        # PROTECTED REGION ID(TmCspSubarrayLeafNodeTest.timingBeamWeights_write) ENABLED START #
         # since this is just a test device, assume that the JSON schema is always what we expect
-        self._beam_weights = json.loads(str(value))
-        # PROTECTED REGION END #    //  TmCspSubarrayLeafNodeTest.beamWeights_write
+        self._timing_beam_weights = json.loads(str(value))
+        # PROTECTED REGION END #    //  TmCspSubarrayLeafNodeTest.timingBeamWeights_write
 
     def read_visDestinationAddress(self):
         # PROTECTED REGION ID(TmCspSubarrayLeafNodeTest.visDestinationAddress_read) ENABLED START #

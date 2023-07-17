@@ -4,7 +4,7 @@
     "timing_beam": [
         {
             "timing_beam_id": 10, 
-            "receptor_ids": [["MKT000", 1]], 
+            "receptor_ids": [["SKA001", 1]], 
             "enable_output": true, 
             "timing_beam_destination_address": "10.1.1.1"
         }

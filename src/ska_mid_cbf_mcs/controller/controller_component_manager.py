@@ -103,6 +103,8 @@ class ControllerComponentManager(CbfComponentManager):
 
         self._get_max_capabilities = get_num_capabilities
 
+        self._vcc_to_receptor = {}
+
         # TODO: component manager should not be passed into component manager
         self._talondx_component_manager = talondx_component_manager
 
@@ -409,14 +411,6 @@ class ControllerComponentManager(CbfComponentManager):
                     self._logger.info(log_msg)
                     proxy = CbfDeviceProxy(fqdn=fqdn, logger=self._logger)
                     self._proxies[fqdn] = proxy
-
-                    # TODO: for testing purposes;
-                    # receptorID assigned to VCCs in order they are processed
-                    proxy.receptorID = idx + 1
-                    proxy.frequencyOffsetK = self.frequency_offset_k[idx]
-                    proxy.frequencyOffsetDeltaF = (
-                        self.frequency_offset_delta_f[idx]
-                    )
                 except tango.DevFailed as df:
                     for item in df.args:
                         log_msg = (
@@ -657,14 +651,37 @@ class ControllerComponentManager(CbfComponentManager):
                             stateless=True,
                         )
 
-                    # subscribe to VCC/FSP subarray membership change events
-                    if "vcc" in fqdn or "fsp" in fqdn:
+                    # subscribe to FSP subarray membership change events
+                    if "fsp" in fqdn:
                         events[
                             "subarrayMembership"
                         ] = proxy.add_change_event_callback(
                             attribute_name="subarrayMembership",
                             callback=self._membership_event_callback,
                             stateless=True,
+                        )
+
+                    # subscribe to VCC subarray membership change events; set VCC values
+                    if "vcc" in fqdn:
+                        events[
+                            "subarrayMembership"
+                        ] = proxy.add_change_event_callback(
+                            attribute_name="subarrayMembership",
+                            callback=self._membership_event_callback,
+                            stateless=True,
+                        )
+
+                        vcc_id = int(proxy.get_property("VccID")["VccID"][0])
+                        rec_id = self._vcc_to_receptor[vcc_id]
+                        self._logger.info(
+                            f"Assigning receptor ID {rec_id} to VCC {vcc_id}"
+                        )
+                        proxy.receptorID = self._vcc_to_receptor[vcc_id]
+                        proxy.frequencyOffsetK = self.frequency_offset_k[
+                            vcc_id
+                        ]
+                        proxy.frequencyOffsetDeltaF = (
+                            self.frequency_offset_delta_f[vcc_id]
                         )
 
                     # subscribe to subarray config ID change events

@@ -25,6 +25,7 @@ from ska_tango_base.control_model import PowerMode, SimulationMode
 from tango import AttrWriteType
 from tango.server import attribute, device_property, run
 
+from ska_mid_cbf_mcs.commons.receptor_utils import ReceptorUtils
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
 from ska_mid_cbf_mcs.controller.controller_component_manager import (
     ControllerComponentManager,
@@ -330,13 +331,23 @@ class CbfController(SKAController):
             self._get_num_capabilities()
 
             # initialize dicts with maps receptorID <=> vccID
-            # TODO: vccID == receptorID for now, for testing purposes
+            receptor_utils = ReceptorUtils(num_vcc=device._count_vcc)
             device._receptor_to_vcc = []
             device._vcc_to_receptor = []
-            for vccID in range(1, device._count_vcc + 1):
-                receptorID = vccID
-                device._receptor_to_vcc.append(f"{receptorID}:{vccID}")
-                device._vcc_to_receptor.append(f"{vccID}:{receptorID}")
+            # TODO currently assigning VCC in sequential order
+            vcc_idx = 1
+            for _, receptorID in receptor_utils.receptors.items():
+                device._receptor_to_vcc.append(f"{receptorID}:{vcc_idx}")
+                device._vcc_to_receptor.append(f"{vcc_idx}:{receptorID}")
+                vcc_idx += 1
+            device.logger.info(
+                f"Receptor to VCC mapping: {device._receptor_to_vcc}"
+            )
+            for receptor_vcc_pair in device._vcc_to_receptor:
+                receptor_vcc_pair = receptor_vcc_pair.split(":")
+                device.component_manager._vcc_to_receptor[
+                    int(receptor_vcc_pair[0])
+                ] = int(receptor_vcc_pair[1])
 
             # # initialize attribute values
             device._command_progress = 0
