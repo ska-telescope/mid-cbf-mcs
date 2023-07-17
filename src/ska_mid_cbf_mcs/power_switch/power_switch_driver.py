@@ -372,9 +372,7 @@ class PowerSwitchDriver:
 
                 for idx, resp_dict in enumerate(resp_list):
                     try:
-                        print("resp_dict == ", resp_dict)
                         state = str(resp_dict["state"])
-                        print("state == ", state)
 
                         if state == self.state_on:
                             power_mode = PowerMode.ON
