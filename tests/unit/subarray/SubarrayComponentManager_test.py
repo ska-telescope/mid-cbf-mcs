@@ -54,8 +54,8 @@ class TestCbfSubarrayComponentManager:
     @pytest.mark.parametrize(
         "receptor_ids",
         [
-            (["MKT000", "MKT002", "MKT003", "MKT001"]),
-            (["MKT003", "MKT000", "MKT001"]),
+            (["SKA001", "SKA036", "SKA063", "SKA100"]),
+            (["SKA063", "SKA001", "SKA100"]),
         ],
     )
     def test_add_remove_receptors_valid(
@@ -85,7 +85,7 @@ class TestCbfSubarrayComponentManager:
 
     @pytest.mark.parametrize(
         "receptor_ids",
-        [(["MKT000", "MKT002", "MKT003"]), (["MKT003", "MKT001"])],
+        [(["SKA001", "SKA036", "SKA063"]), (["SKA063", "SKA100"])],
     )
     def test_add_receptor_invalid(
         self: TestCbfSubarrayComponentManager,
@@ -124,7 +124,7 @@ class TestCbfSubarrayComponentManager:
 
     @pytest.mark.parametrize(
         "receptor_ids",
-        [(["MKT000", "MKT002", "MKT003"]), (["MKT003", "MKT001"])],
+        [(["SKA001", "SKA036", "SKA063"]), (["SKA063", "SKA100"])],
     )
     def test_remove_receptor_invalid(
         self: TestCbfSubarrayComponentManager,
@@ -153,8 +153,8 @@ class TestCbfSubarrayComponentManager:
     @pytest.mark.parametrize(
         "receptor_ids",
         [
-            (["MKT000", "MKT002", "MKT003", "MKT001"]),
-            (["MKT003", "MKT000", "MKT001"]),
+            (["SKA001", "SKA036", "SKA063", "SKA100"]),
+            (["SKA063", "SKA001", "SKA100"]),
         ],
     )
     def test_remove_all_receptors_invalid_valid(
@@ -188,7 +188,7 @@ class TestCbfSubarrayComponentManager:
         [
             (
                 "ConfigureScan_basic.json",
-                ["MKT000", "MKT002", "MKT003", "MKT001"],
+                ["SKA001", "SKA036", "SKA063", "SKA100"],
             )
         ],
     )
@@ -240,7 +240,7 @@ class TestCbfSubarrayComponentManager:
             (
                 "ConfigureScan_basic.json",
                 "Scan1_basic.json",
-                ["MKT000", "MKT002", "MKT003", "MKT001"],
+                ["SKA001", "SKA036", "SKA063", "SKA100"],
             )
         ],
     )
@@ -286,14 +286,14 @@ class TestCbfSubarrayComponentManager:
         [
             (
                 "1",
-                "MKT001",
+                "SKA100",
                 [0] * 197,
                 1,
                 3960,
             ),
             (
                 "3",
-                "MKT001",
+                "SKA100",
                 [11] * 197,
                 0.8,
                 3168,

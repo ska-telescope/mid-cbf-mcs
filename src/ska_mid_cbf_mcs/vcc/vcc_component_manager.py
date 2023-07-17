@@ -189,7 +189,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         return self._rfi_flagging_mask
 
     @property
-    def jones_matrix(self: VccComponentManager) -> List[List[float]]:
+    def jones_matrix(self: VccComponentManager) -> str:
         """
         Jones Matrix
 
@@ -277,7 +277,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         self._frequency_band_offset_stream_2 = 0
         self._rfi_flagging_mask = ""
 
-        self._jones_matrix = [[0] * 16 for _ in range(26)]
+        self._jones_matrix = ""
         self._delay_model = ""
         self._doppler_phase_correction = [0 for _ in range(4)]
 
@@ -537,34 +537,41 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
             self._logger.debug(
                 f"Using parameters stored in {internal_params_file_name}"
             )
+            try:
+                with open(internal_params_file_name, "r") as f:
+                    json_string = f.read()
+            except FileNotFoundError:
+                self._logger.error(
+                    f"Could not find internal parameters file for receptor {self._receptor_id}, band {freq_band_name}; using default."
+                )
+                with open(
+                    f"{VCC_PARAM_PATH}internal_params_default.json", "r"
+                ) as f:
+                    json_string = f.read()
 
-            with open(internal_params_file_name, "r") as f:
-                json_string = f.read()
-                idx = self._freq_band_index[self._freq_band_name]
-                if self._simulation_mode:
-                    self._band_simulators[idx].SetInternalParameters(
-                        json_string
-                    )
-                else:
-                    self._band_proxies[idx].SetInternalParameters(json_string)
+            idx = self._freq_band_index[self._freq_band_name]
+            if self._simulation_mode:
+                self._band_simulators[idx].SetInternalParameters(json_string)
+            else:
+                self._band_proxies[idx].SetInternalParameters(json_string)
 
             self._frequency_band = frequency_band
             self._push_change_event("frequencyBand", self._frequency_band)
+
         except tango.DevFailed as df:
             self._logger.error(str(df.args[0].desc))
             self.update_component_fault(True)
             (result_code, msg) = (
                 ResultCode.FAILED,
-                "Failed to connect to HPS VCC devices",
+                "Failed to connect to HPS VCC devices.",
             )
         except FileNotFoundError:
             self._logger.error(
-                f"Could not find internal parameters file for \
-                receptor {self._receptor_id}, band {freq_band_name}"
+                "Could not find default internal parameters file."
             )
             (result_code, msg) = (
                 ResultCode.FAILED,
-                "Invalid internal parameters file name",
+                "Missing default internal parameters file.",
             )
 
         return (result_code, msg)
@@ -572,7 +579,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
     def deconfigure(self: VccComponentManager) -> None:
         """Deconfigure scan configuration parameters."""
         self._doppler_phase_correction = [0 for _ in range(4)]
-        self._jones_matrix = [[0] * 16 for _ in range(26)]
+        self._jones_matrix = ""
         self._delay_model = ""
         self._rfi_flagging_mask = ""
         self._frequency_band_offset_stream_2 = 0
@@ -700,7 +707,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
             information purpose only.
         :rtype: (ResultCode, str)
         """
-        self._logger.info("Edning scan")
+        self._logger.info("Ending scan")
 
         # Send the EndScan command to the HPS
         idx = self._freq_band_index[self._freq_band_name]
@@ -958,7 +965,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         list_of_entries = []
         for entry in delay_model_obj["delay_model"]:
             self._logger.debug(
-                f"Received delay model for receptor {entry['receptor']}"
+                f"Received delay model for receptor {entry['receptor'][0]}"
             )
             if entry["receptor"][1] == self._receptor_id:
                 self._logger.debug("Updating delay model for this VCC")
@@ -979,23 +986,32 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
 
         :param argin: the jones matrix JSON string
         """
-        argin = json.loads(argin)
+        matrix = json.loads(argin)
 
-        for jonesDetails in argin:
-            # "receptor" value is a pair of str and int
-            if jonesDetails["receptor"][1] == self._receptor_id:
-                for frequency_slice in jonesDetails["receptorMatrix"]:
-                    fs_id = frequency_slice["fsid"]
-                    matrix = frequency_slice["matrix"]
-                    if 1 <= fs_id <= 26:
-                        if len(matrix) == 16:
-                            self._jones_matrix[fs_id - 1] = matrix.copy()
-                        else:
-                            log_msg = (
-                                f"'matrix' not valid for frequency slice {fs_id} "
-                                + f" of receptor {self._receptor_id}"
-                            )
-                            self._logger.error(log_msg)
-                    else:
-                        log_msg = f"'fsid' {fs_id} not valid for receptor {self._receptor_id}"
-                        self._logger.error(log_msg)
+        # find the Jones matrix that applies to this vcc's
+        # receptor and store it
+        jm_found = False
+
+        # the Jones matrix schema allows for a set of
+        # receptors to be included in the Jones matrix
+        # Even though there will only be one entry
+        # for a VCC, there should still be a list
+        # with a single entry so that the schema is followed
+        # Set up the Jones matrix to be a list
+        list_of_entries = []
+        for entry in matrix["jones_matrix"]:
+            self._logger.debug(
+                f"Received Jones matrix for receptor {entry['receptor'][0]}"
+            )
+            if entry["receptor"][1] == self._receptor_id:
+                self._logger.debug("Updating Jones Matrix for this VCC")
+                list_of_entries.append(copy.deepcopy(entry))
+                self._jones_matrix = json.dumps(
+                    {"jones_matrix": list_of_entries}
+                )
+                jm_found = True
+                break
+
+        if not jm_found:
+            log_msg = f"Jones matrix for VCC (receptor: {self._receptor_id}) not found"
+            self._logger.error(log_msg)

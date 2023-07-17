@@ -150,10 +150,6 @@ class MockDeviceBuilder:
         """
         Set up property reads for a mock device.
 
-        Tango allows attributes to be read via a high-level API
-        (``device.voltage``) or a low-level API
-        (`device.get_property("voltage"`). This method sets that up.
-
         :param mock_device: the mock being set up
         """
 
@@ -163,7 +159,7 @@ class MockDeviceBuilder:
             """
             Mock side-effect for get_property method, which reads the
             property value and packs it into a
-            :py:class:`tango.DeviceAttribute`.
+            :py:class:`tango.DbData`.
 
             :param name: the name of the property
             :param args: positional args to ``get_property``

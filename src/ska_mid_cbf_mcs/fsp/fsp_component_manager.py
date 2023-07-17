@@ -104,9 +104,9 @@ class FspComponentManager(CbfComponentManager):
 
         self._subarray_membership = []
         self._function_mode = FspModes.IDLE.value  # IDLE
-        self._jones_matrix = [[0.0] * 16 for _ in range(4)]
+        self._jones_matrix = ""
         self._delay_model = ""
-        self._timing_beam_weights = [[0.0] * 6 for _ in range(4)]
+        self._timing_beam_weights = ""
 
         self._simulation_mode = simulation_mode
 
@@ -139,12 +139,12 @@ class FspComponentManager(CbfComponentManager):
         return self._function_mode
 
     @property
-    def jones_matrix(self: FspComponentManager) -> List[List[float]]:
+    def jones_matrix(self: FspComponentManager) -> str:
         """
         Jones Matrix
 
         :return: the jones matrix
-        :rtype: List[List[float]]
+        :rtype: str
         """
         return self._jones_matrix
 
@@ -159,12 +159,12 @@ class FspComponentManager(CbfComponentManager):
         return self._delay_model
 
     @property
-    def timing_beam_weights(self: FspComponentManager) -> List[List[float]]:
+    def timing_beam_weights(self: FspComponentManager) -> str:
         """
         Timing Beam Weights
 
         :return: the timing beam weights
-        :rtype: List[List[float]]
+        :rtype: str
         """
         return self._timing_beam_weights
 
@@ -530,55 +530,20 @@ class FspComponentManager(CbfComponentManager):
         self._logger.debug("Entering update_jones_matrix")
 
         if self._connected:
+            # update if current function mode is either PSS-BF, PST-BF or VLBI
             if self._function_mode in [
                 FspModes.PSS_BF.value,
                 FspModes.PST_BF.value,
                 FspModes.VLBI.value,
             ]:
-                argin = json.loads(argin)
+                # the whole jones matrix object must be stored
+                self._jones_matrix = copy.deepcopy(argin)
+                jones_matrix = json.loads(argin)
+                # only send integer receptorID to HPS
+                for matrix in jones_matrix["jones_matrix"]:
+                    matrix["receptor"] = matrix["receptor"][1]
+                # TODO HPS jones matrix handling currently unimplemented
 
-                for i in self._subarray_membership:
-                    if self._function_mode == FspModes.PSS_BF.value:
-                        proxy = self._proxy_fsp_pss_subarray[i - 1]
-                        fs_length = 16
-                    elif self._function_mode == FspModes.PST_BF.value:
-                        proxy = self._proxy_fsp_pst_subarray[i - 1]
-                        fs_length = 4
-                    else:
-                        fs_length = 4
-                        # TODO: support for function mode VLBI
-                        log_msg = (
-                            "Fsp UpdateJonesMatrix command failed: "
-                            f"function mode {self._function_mode} currently not supported"
-                        )
-                        self._logger.warning(log_msg)
-                        return (ResultCode.FAILED, log_msg)
-
-                    for receptor in argin:
-                        # "receptor" value is a pair of str and int
-                        receptor_index = receptor["receptor"][1]
-                        if receptor_index in proxy.receptors:
-                            for frequency_slice in receptor["receptorMatrix"]:
-                                fs_id = frequency_slice["fsid"]
-                                matrix = frequency_slice["matrix"]
-                                if fs_id == self._fsp_id:
-                                    if len(matrix) == fs_length:
-                                        self._jones_matrix[
-                                            receptor_index - 1
-                                        ] = matrix.copy()
-                                    else:
-                                        log_msg = (
-                                            "Fsp UpdateJonesMatrix command error: "
-                                            "'matrix' not valid length for frequency slice "
-                                            f"{fs_id} of receptor {receptor_index}"
-                                        )
-                                        self._logger.error(log_msg)
-                                else:
-                                    log_msg = (
-                                        "Fsp UpdateJonesMatrix command error: "
-                                        f"'fsid' {fs_id} not valid for receptor {receptor_index}"
-                                    )
-                                    self._logger.error(log_msg)
             else:
                 log_msg = (
                     "Fsp UpdateJonesMatrix command failed: "
@@ -589,7 +554,6 @@ class FspComponentManager(CbfComponentManager):
 
             message = "Fsp UpdateJonesMatrix command completed OK"
             return (ResultCode.OK, message)
-
         else:
             log_msg = "Fsp UpdateJonesMatrix command failed: \
                     proxies not connected"
@@ -610,7 +574,7 @@ class FspComponentManager(CbfComponentManager):
                 information purpose only.
         :rtype: (ResultCode, str)
         """
-        self._logger.debug("entering update_delay_model")
+        self._logger.debug("Entering update_delay_model")
 
         if self._connected:
             # update if current function mode is either PSS-BF, PST-BF or CORR
@@ -625,6 +589,7 @@ class FspComponentManager(CbfComponentManager):
                 # only send integer receptorID to HPS
                 for model in delay_model["delay_model"]:
                     model["receptor"] = model["receptor"][1]
+                # TODO handle delay models in function modes other than CORR
                 self._proxy_hps_fsp_corr_controller.UpdateDelayModels(
                     json.dumps(delay_model)
                 )
@@ -653,49 +618,27 @@ class FspComponentManager(CbfComponentManager):
         """
         Update the FSP's timing beam weights (serialized JSON object)
 
-        :param argin: the timing beam weight data:param argin: the timing beam weight data
+        :param argin: the timing beam weight data
         :return: A tuple containing a return code and a string
                 message indicating status. The message is for
                 information purpose only.
         :rtype: (ResultCode, str)
         """
-        self._logger.debug("entering update_timing_beam_weights")
+        self._logger.debug("Entering update_timing_beam_weights")
 
         if self._connected:
             # update if current function mode is PST-BF
             if self._function_mode == FspModes.PST_BF.value:
-                argin = json.loads(argin)
-                for i in self._subarray_membership:
-                    proxy = self._proxy_fsp_pst_subarray[i - 1]
-                    for receptor in argin:
-                        # "receptor" value is a pair of str and int
-                        receptor_index = receptor["receptor"][1]
-                        if receptor_index in proxy.receptors:
-                            for frequency_slice in receptor[
-                                "receptorWeightsDetails"
-                            ]:
-                                fs_id = frequency_slice["fsid"]
-                                weights = frequency_slice["weights"]
-                                if fs_id == self._fsp_id:
-                                    if len(weights) == 6:
-                                        self._timing_beam_weights[
-                                            receptor_index - 1
-                                        ] = weights.copy()
-                                    else:
-                                        log_msg = (
-                                            "Fsp UpdateTimingBeamWeights command error: "
-                                            "'weights' not valid length for frequency slice "
-                                            f"{fs_id} of receptor {receptor_index}"
-                                        )
-                                        self._logger.error(log_msg)
-                                        return (ResultCode.FAILED, log_msg)
-
-                                else:
-                                    log_msg = (
-                                        "Fsp UpdateTimingBeamWeights command error: "
-                                        f"'fsid' {fs_id} not valid for receptor {receptor_index}"
-                                    )
-                                    self._logger.error(log_msg)
+                # the whole timing beam weights object must be stored
+                self._timing_beam_weights = copy.deepcopy(argin)
+                timing_beam_weights = json.loads(argin)
+                # only send integer receptorID to HPS
+                for weights in timing_beam_weights["timing_beam_weights"]:
+                    weights["receptor"] = weights["receptor"][1]
+                # TODO PST controller currently unimplemented
+                # self._proxy_hps_fsp_pst_controller.UpdateTimingBeamWeights(
+                #     json.dumps(timing_beam_weights)
+                # )
 
             else:
                 log_msg = (
@@ -705,11 +648,10 @@ class FspComponentManager(CbfComponentManager):
                 self._logger.warning(log_msg)
                 return (ResultCode.FAILED, log_msg)
 
-            message = "Fsp UpdateDelayModel command completed OK"
+            message = "Fsp UpdateTimingBeamWeights command completed OK"
             return (ResultCode.OK, message)
-
         else:
-            log_msg = "Fsp UpdateDelayModel command failed: \
+            log_msg = "Fsp UpdateTimingBeamWeights command failed: \
                     proxies not connected"
             self._logger.error(log_msg)
             return (ResultCode.FAILED, log_msg)
