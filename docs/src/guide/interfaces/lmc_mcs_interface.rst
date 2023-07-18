@@ -48,25 +48,28 @@ Standby
    :member-order:
    :noindex:   
 
-CbfSubarray Commands
-------------------------
+CbfSubarray Tango Commands
+----------------------------
 
-Add Receptors
-*********************
+**AddReceptors** (*argin:List[str]*)->Tuple[ResultCode, str]
+****************************************************************
 
-.. autoclass:: ska_mid_cbf_mcs.subarray.subarray_device.CbfSubarray.AddReceptorsCommand
-   :members:
-   :undoc-members:
-   :member-order:   
-   :noindex:   
+    Assign Receptors to this subarray. Turn subarray to ObsState = IDLE if previously no receptor is assigned.
+
+    *Parameters:*    argin - list of receptors to add
+
+    *Returns:*       A tuple containing a return code and a string message indicating status. The message is for information purpose only.
+
+    *Return type:*   (ResultCode, str)
+
+
+.. automethod:: ska_mid_cbf_mcs.subarray.subarray_device.CbfSubarray.AddReceptors
+   :noindex:
 
 Configure Scan
 ************************
 
-.. autoclass:: ska_mid_cbf_mcs.subarray.subarray_device.CbfSubarray.ConfigureScanCommand
-   :members:
-   :undoc-members:
-   :member-order:
+.. automethod:: ska_mid_cbf_mcs.subarray.subarray_device.CbfSubarray.ConfigureScan
    :noindex:
 
 Scan
@@ -81,19 +84,13 @@ Scan
 Remove Receptors
 **************************
 
-.. autoclass:: ska_mid_cbf_mcs.subarray.subarray_device.CbfSubarray.RemoveReceptorsCommand
-   :members:
-   :undoc-members:
-   :member-order:
+.. automethod:: ska_mid_cbf_mcs.subarray.subarray_device.CbfSubarray.RemoveReceptors
    :noindex:
 
 Remove All Receptors
 ******************************
 
-.. autoclass:: ska_mid_cbf_mcs.subarray.subarray_device.CbfSubarray.RemoveAllReceptorsCommand
-   :members:
-   :undoc-members:
-   :member-order:
+.. automethod:: ska_mid_cbf_mcs.subarray.subarray_device.CbfSubarray.RemoveAllReceptors
    :noindex:
 
 End Scan

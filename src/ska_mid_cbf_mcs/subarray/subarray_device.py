@@ -19,7 +19,13 @@ from typing import List, Optional, Tuple
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import PowerMode
 from ska_tango_base.csp.subarray.subarray_device import CspSubElementSubarray
-from tango import AttrWriteType, DebugIt
+
+# tango imported to enable use of @tango.DebugIt. If
+# DebugIt is imported using "from tango import DebugIt"
+# then docs will not generate
+import tango
+
+from tango import AttrWriteType
 from tango.server import attribute, command, device_property, run
 
 from ska_mid_cbf_mcs.commons.global_enum import const
@@ -495,7 +501,7 @@ class CbfSubarray(CspSubElementSubarray):
         dtype_out="DevVarLongStringArray",
         doc_out="(ReturnType, 'informational message')",
     )
-    @DebugIt()
+    @tango.DebugIt()
     def RemoveAllReceptors(self: CbfSubarray) -> Tuple[ResultCode, str]:
         # PROTECTED REGION ID(CbfSubarray.RemoveAllReceptors) ENABLED START #
         """
@@ -538,7 +544,7 @@ class CbfSubarray(CspSubElementSubarray):
         dtype_out="DevVarLongStringArray",
         doc_out="(ReturnType, 'informational message')",
     )
-    @DebugIt()
+    @tango.DebugIt()
     def AddReceptors(
         self: CbfSubarray, argin: List[str]
     ) -> Tuple[ResultCode, str]:
@@ -732,7 +738,7 @@ class CbfSubarray(CspSubElementSubarray):
         dtype_out="DevVarLongStringArray",
         doc_out="(ReturnType, 'informational message')",
     )
-    @DebugIt()
+    @tango.DebugIt()
     def ConfigureScan(self: CbfSubarray, argin: str) -> Tuple[ResultCode, str]:
         # PROTECTED REGION ID(CbfSubarray.ConfigureScan) ENABLED START #
         # """
