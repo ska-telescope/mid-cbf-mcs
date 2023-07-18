@@ -2271,8 +2271,155 @@
                 "PowerSwitch": {
                     "mid_csp_cbf/power_switch/001": {
                         "properties": {
+                            "PowerSwitchProtocol": [
+                                "http" 
+                            ],
                             "PowerSwitchIp": [
                                 "192.168.0.100"
+                            ],
+                            "PowerSwitchLogin": [
+                                "admin"
+                            ],
+                            "PowerSwitchPassword": [
+                                "1234"
+                            ],
+                            "PowerSwitchRequestHeaderContentType": [
+                                "application/x-www-form-urlencoded"
+                            ],
+                            "PowerSwitchOutletListUrl": [
+                                "restapi/relay/outlets/"
+                            ],
+                            "PowerSwitchOutletStateUrl": [
+                                "restapi/relay/outlets/{outlet}/state/"
+                            ],
+                            "PowerSwitchOutletControlUrl": [
+                                "restapi/relay/outlets/{outlet}/state/"
+                            ],
+                            "PowerSwitchTurnOnAction": [
+                                "value=true"
+                            ],
+                            "PowerSwitchTurnOffAction": [
+                                "value=false"
+                            ],
+                            "PowerSwitchOutletStateOn": [
+                                "True"
+                            ],
+                            "PowerSwitchOutletStateOff": [
+                                "False"
+                            ],
+                            "PowerSwitchOutletSchemaFile": [
+                                "charts/ska-mid-cbf-mcs/data/power_switch_001_schema.json"
+                            ],
+                            "PowerSwitchOutletIdList": [
+                                "0",
+                                "1",
+                                "2",
+                                "3",
+                                "4",
+                                "5",
+                                "6",
+                                "7"
+                            ],
+                            "polled_attr": [
+                                "simulationMode",
+                                "3000"
+                            ]
+                        }
+                    }
+                }
+            },
+            "powerswitch-002": {
+                "PowerSwitch": {
+                    "mid_csp_cbf/power_switch/002": {
+                        "properties": {
+                            "PowerSwitchProtocol": [
+                                "https" 
+                            ],
+                            "PowerSwitchIp": [
+                                "192.168.1.254"
+                            ],
+                            "PowerSwitchLogin": [
+                                "admn"
+                            ],
+                            "PowerSwitchPassword": [
+                                "admn-1-Psi"
+                            ],
+                            "PowerSwitchRequestHeaderContentType": [
+                                "application/json"
+                            ],
+                            "PowerSwitchOutletListUrl": [
+                                "jaws/monitor/outlets"
+                            ],
+                            "PowerSwitchOutletStateUrl": [
+                                "jaws/monitor/outlets/{outlet}"
+                            ],
+                            "PowerSwitchOutletControlUrl": [
+                                "jaws/control/outlets/{outlet}"
+                            ],
+                            "PowerSwitchTurnOnAction": [
+                                "{\"control_action\": \"on\"}"
+                            ],
+                            "PowerSwitchTurnOffAction": [
+                                "{\"control_action\": \"on\"}"
+                            ],
+                            "PowerSwitchOutletStateOn": [
+                                "On"
+                            ],
+                            "PowerSwitchOutletStateOff": [
+                                "Off"
+                            ],
+                            "PowerSwitchOutletSchemaFile": [
+                                "charts/ska-mid-cbf-mcs/data/power_switch_002_schema.json"
+                            ],
+                            "PowerSwitchOutletIdList": [
+                                "AA1",
+                                "AA2",
+                                "AA3",
+                                "AA4",
+                                "AA5",
+                                "AA6",
+                                "AA7",
+                                "AA8",
+                                "AA9",
+                                "AA10",
+                                "AA11",
+                                "AA12",
+                                "AA13",
+                                "AA14",
+                                "AA15",
+                                "AA16",
+                                "AA17",
+                                "AA18",
+                                "AA19",
+                                "AA20",
+                                "AA21",
+                                "AA22",
+                                "AA23",
+                                "AA24",
+                                "AA25",
+                                "AA26",
+                                "AA27",
+                                "AA28",
+                                "AA29",
+                                "AA30",
+                                "AA31",
+                                "AA32",
+                                "AA33",
+                                "AA34",
+                                "AA35",
+                                "AA36",
+                                "AA37",
+                                "AA38",
+                                "AA39",
+                                "AA40",
+                                "AA41",
+                                "AA42",
+                                "AA43",
+                                "AA44",
+                                "AA45",
+                                "AA46",
+                                "AA47",
+                                "AA48"
                             ],
                             "polled_attr": [
                                 "simulationMode",
@@ -2301,10 +2448,10 @@
                                 "0"
                             ],
                             "PDU2Address": [
-                                "mid_csp_cbf/power_switch/001"
+                                "mid_csp_cbf/power_switch/002"
                             ],
                             "PDU2PowerOutlet": [
-                                "0"
+                                "AA1"
                             ],
                             "polled_attr": [
                                 "state",

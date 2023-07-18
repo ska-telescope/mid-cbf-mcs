@@ -48,7 +48,9 @@ class TestVcc:
         sleep_time_s = 1
 
         # Start monitoring the TalonLRUs and power switch devices
-        test_proxies.power_switch.adminMode = AdminMode.ONLINE
+        for proxy in test_proxies.power_switch:
+            proxy.adminMode = AdminMode.ONLINE
+
         for proxy in test_proxies.talon_lru:
             proxy.adminMode = AdminMode.ONLINE
             proxy.set_timeout_millis(10000)
