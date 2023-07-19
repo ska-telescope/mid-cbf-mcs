@@ -25,16 +25,11 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 # Tango imports
 import tango
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import (
-    AdminMode,
-    HealthState,
-    ObsState,
-    PowerMode,
-)
+from ska_tango_base.control_model import AdminMode, ObsState, PowerMode
 from ska_tango_base.csp.subarray.component_manager import (
     CspSubarrayComponentManager,
 )
-from tango import AttrQuality, DevState
+from tango import AttrQuality
 
 from ska_mid_cbf_mcs.attribute_proxy import CbfAttributeProxy
 from ska_mid_cbf_mcs.commons.global_enum import (
@@ -84,30 +79,6 @@ class CbfSubarrayComponentManager(
     def receptors(self: CbfSubarrayComponentManager) -> List[str]:
         """Return the receptor list."""
         return self._receptors
-
-    @property
-    def vcc_state(self: CbfSubarrayComponentManager) -> Dict[str, DevState]:
-        """Return the VCC operational states."""
-        return self._vcc_state
-
-    @property
-    def vcc_health_state(
-        self: CbfSubarrayComponentManager,
-    ) -> Dict[str, HealthState]:
-        """Return the VCC health states."""
-        return self._vcc_health_state
-
-    @property
-    def fsp_state(self: CbfSubarrayComponentManager) -> Dict[str, DevState]:
-        """Return the FSP operational states."""
-        return self._fsp_state
-
-    @property
-    def fsp_health_state(
-        self: CbfSubarrayComponentManager,
-    ) -> Dict[str, HealthState]:
-        """Return the FSP health states."""
-        return self._fsp_health_state
 
     @property
     def fsp_list(self: CbfSubarrayComponentManager) -> List[List[int]]:
@@ -225,17 +196,6 @@ class CbfSubarrayComponentManager(
 
         # store the subscribed telstate events as event_ID:attribute_proxy key:value pairs
         self._events_telstate = {}
-
-        # store the subscribed state change events as vcc_ID:[event_ID, event_ID] key:value pairs
-        self._events_state_change_vcc = {}
-
-        # store the subscribed state change events as fsp_ID:[event_ID, event_ID] key:value pairs
-        self._events_state_change_fsp = {}
-
-        self._vcc_state = {}
-        self._vcc_health_state = {}
-        self._fsp_state = {}
-        self._fsp_health_state = {}
 
         # for easy device-reference
         self._frequency_band_offset_stream_1 = 0
@@ -708,62 +668,6 @@ class CbfSubarrayComponentManager(
         self._group_fsp.command_inout("UpdateTimingBeamWeights", data)
         self._mutex_beam_weights_config.release()
 
-    def _state_change_event_callback(
-        self: CbfSubarrayComponentManager,
-        fqdn: str,
-        name: str,
-        value: Any,
-        quality: AttrQuality,
-    ) -> None:
-        """ "
-        Callback for state and healthState change event subscription.
-
-        :param fqdn: attribute FQDN
-        :param name: attribute name
-        :param value: attribute value
-        :param quality: attribute quality
-        """
-        if value is not None:
-            try:
-                if "healthState" in name:
-                    if "vcc" in fqdn:
-                        self._vcc_health_state[fqdn] = value
-                        self._push_change_event(
-                            "vccHealthState", self._vcc_health_state
-                        )
-                    elif "fsp" in fqdn:
-                        self._fsp_health_state[fqdn] = value
-                        self._push_change_event(
-                            "fspHealthState", self._fsp_health_state
-                        )
-                    else:
-                        # should NOT happen!
-                        log_msg = f"Received healthState change for unknown device {name}"
-                        self._logger.warning(log_msg)
-                        return
-                elif "State" in name:
-                    if "vcc" in fqdn:
-                        self._vcc_state[fqdn] = value
-                        self._push_change_event("vccState", self._vcc_state)
-                    elif "fsp" in fqdn:
-                        self._fsp_state[fqdn] = value
-                        self._push_change_event("fspState", self._fsp_state)
-                    else:
-                        # should NOT happen!
-                        log_msg = (
-                            f"Received state change for unknown device {name}"
-                        )
-                        self._logger.warning(log_msg)
-                        return
-
-                log_msg = f"New value for {fqdn} {name} is {value}"
-                self._logger.info(log_msg)
-
-            except Exception as except_occurred:
-                self._logger.error(str(except_occurred))
-        else:
-            self._logger.warning(f"None value for {fqdn}")
-
     def validate_ip(self: CbfSubarrayComponentManager, ip: str) -> bool:
         """
         Validate IP address format.
@@ -816,23 +720,6 @@ class CbfSubarrayComponentManager(
             for event_id in list(self._events_telstate.keys()):
                 self._events_telstate[event_id].remove_event(event_id)
                 del self._events_telstate[event_id]
-
-            # unsubscribe from FSP state change events
-            for fspID in list(self._events_state_change_fsp.keys()):
-                proxy_fsp = self._proxies_fsp[fspID - 1]
-                proxy_fsp.remove_event(
-                    "State", self._events_state_change_fsp[fspID][0]
-                )
-                proxy_fsp.remove_event(
-                    "healthState", self._events_state_change_fsp[fspID][1]
-                )
-                del self._events_state_change_fsp[fspID]
-                del self._fsp_state[self._fqdn_fsp[fspID - 1]]
-                self._push_change_event("fspState", self._fsp_state)
-                del self._fsp_health_state[self._fqdn_fsp[fspID - 1]]
-                self._push_change_event(
-                    "fspHealthState", self._fsp_health_state
-                )
 
             if self._ready:
                 # TODO: add 'GoToIdle' for VLBI once implemented
@@ -1787,20 +1674,6 @@ class CbfSubarrayComponentManager(
             # Configure functionMode.
             proxy_fsp.SetFunctionMode(fsp["function_mode"])
 
-            # subscribe to FSP state and healthState changes
-            (
-                event_id_state,
-                event_id_health_state,
-            ) = proxy_fsp.add_change_event_callback(
-                "State", self._state_change_event_callback
-            ), proxy_fsp.add_change_event_callback(
-                "healthState", self._state_change_event_callback
-            )
-            self._events_state_change_fsp[int(fsp["fsp_id"])] = [
-                event_id_state,
-                event_id_health_state,
-            ]
-
             # Add configID to fsp. It is not included in the "FSP" portion in configScan JSON
             fsp["config_id"] = common_configuration["config_id"]
             fsp["frequency_band"] = common_configuration["frequency_band"]
@@ -2006,24 +1879,6 @@ class CbfSubarrayComponentManager(
                         f"VCC {vccID} subarray_id: "
                         + f"{vccProxy.subarrayMembership}"
                     )
-
-                    # unsubscribe from events
-                    vccProxy.remove_event(
-                        "State", self._events_state_change_vcc[vccID][0]
-                    )
-                    vccProxy.remove_event(
-                        "healthState",
-                        self._events_state_change_vcc[vccID][1],
-                    )
-
-                    del self._events_state_change_vcc[vccID]
-                    del self._vcc_state[vccFQDN]
-                    self._push_change_event("vccState", self._vcc_state)
-                    del self._vcc_health_state[vccFQDN]
-                    self._push_change_event(
-                        "vccHealthState", self._vcc_health_state
-                    )
-
                 except tango.DevFailed as df:
                     msg = str(df.args[0].desc)
                     self._component_obs_fault_callback(True)
@@ -2082,18 +1937,6 @@ class CbfSubarrayComponentManager(
                         f"VCC {vccID} subarray_id: "
                         + f"{vccProxy.subarrayMembership}"
                     )
-
-                    # unsubscribe from events
-                    vccProxy.remove_event(
-                        "State", self._events_state_change_vcc[vccID][0]
-                    )
-                    vccProxy.remove_event(
-                        "healthState", self._events_state_change_vcc[vccID][1]
-                    )
-
-                    del self._events_state_change_vcc[vccID]
-                    del self._vcc_state[vccFQDN]
-                    del self._vcc_health_state[vccFQDN]
                 except tango.DevFailed as df:
                     msg = str(df.args[0].desc)
                     self._component_obs_fault_callback(True)
@@ -2170,27 +2013,6 @@ class CbfSubarrayComponentManager(
                             f"VCC {vccID} subarray_id: "
                             + f"{vccProxy.subarrayMembership}"
                         )
-
-                        # subscribe to VCC state and healthState changes
-                        event_id_state = vccProxy.add_change_event_callback(
-                            "State", self._state_change_event_callback
-                        )
-                        self._logger.debug(f"State event ID: {event_id_state}")
-
-                        event_id_health_state = (
-                            vccProxy.add_change_event_callback(
-                                "healthState",
-                                self._state_change_event_callback,
-                            )
-                        )
-                        self._logger.debug(
-                            f"Health state event ID: {event_id_health_state}"
-                        )
-
-                        self._events_state_change_vcc[vccID] = [
-                            event_id_state,
-                            event_id_health_state,
-                        ]
 
                     except tango.DevFailed as df:
                         msg = str(df.args[0].desc)
