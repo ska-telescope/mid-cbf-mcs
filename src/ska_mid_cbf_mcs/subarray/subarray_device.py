@@ -148,14 +148,6 @@ class CbfSubarray(CspSubElementSubarray):
         doc="List of receptors assigned to subarray",
     )
 
-    fspList = attribute(
-        dtype=(("uint16",),),
-        max_dim_x=4,
-        max_dim_y=27,
-        label="List of FSP's used by subarray",
-        doc="fsp[1][x] = CORR [2][x] = PSS [1][x] = PST [1][x] = VLBI",
-    )
-
     frequencyOffsetK = attribute(
         dtype=("int",),
         access=AttrWriteType.READ_WRITE,
@@ -195,8 +187,6 @@ class CbfSubarray(CspSubElementSubarray):
             (result_code, message) = super().do()
 
             device = self.target
-
-            device.set_change_event("fspList", True, True)
 
             # TODO remove when ugrading base class from 0.11.3
             device.set_change_event("healthState", True, True)
@@ -403,18 +393,6 @@ class CbfSubarray(CspSubElementSubarray):
         self.RemoveAllReceptors()
         self.AddReceptors(value)
         # PROTECTED REGION END #    //  CbfSubarray.receptors_write
-
-    def read_fspList(self: CbfSubarray) -> List[List[int]]:
-        # PROTECTED REGION ID(CbfSubarray.fspList_read) ENABLED START #
-        """
-        return fspList attribute
-        2 dimensional array the fsp used by all the subarrays
-
-        :return: the array of FSP IDs
-        :rtype: List[List[int]]
-        """
-        return self.component_manager.fsp_list
-        # PROTECTED REGION END #    //  CbfSubarray.fspList_read
 
     def read_frequencyOffsetK(self: CbfSubarray) -> List[int]:
         # PROTECTED REGION ID(CbfSubarray.frequencyOffsetK_read) ENABLED START #

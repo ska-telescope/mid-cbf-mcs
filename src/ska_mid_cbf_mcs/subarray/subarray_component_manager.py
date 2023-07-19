@@ -80,11 +80,6 @@ class CbfSubarrayComponentManager(
         """Return the receptor list."""
         return self._receptors
 
-    @property
-    def fsp_list(self: CbfSubarrayComponentManager) -> List[List[int]]:
-        """Return the FSP function mode device IDs."""
-        return self._fsp_list
-
     def __init__(
         self: CbfSubarrayComponentManager,
         subarray_id: int,
@@ -167,7 +162,6 @@ class CbfSubarrayComponentManager(
         self._frequency_band = 0
         self._config_id = ""
         self._scan_id = 0
-        self._fsp_list = [[], [], [], []]
         self.frequency_offset_k = []
         self.frequency_offset_delta_f = 0
 
@@ -753,8 +747,6 @@ class CbfSubarrayComponentManager(
             return (ResultCode.FAILED, msg)
 
         # reset all private data to their initialization values:
-        self._fsp_list = [[], [], [], []]
-        self._push_change_event("fspList", self._fsp_list)
         self._pst_fsp_list = []
         self._pss_fsp_list = []
         self._corr_fsp_list = []
@@ -1826,13 +1818,6 @@ class CbfSubarrayComponentManager(
                         "FspPstSubarray; Aborting configuration"
                     )
                     self.raise_configure_scan_fatal_error(msg)
-
-        # TODO add VLBI to this once they are implemented
-        # potentially remove
-        self._fsp_list[0].append(self._corr_fsp_list)
-        self._fsp_list[1].append(self._pss_fsp_list)
-        self._fsp_list[2].append(self._pst_fsp_list)
-        self._push_change_event("fspList", self._fsp_list)
 
         # save configuration into latestScanConfig
         self._latest_scan_config = str(configuration)
