@@ -17,7 +17,7 @@ from typing import Dict, List, Optional, Tuple
 
 # Tango imports
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import HealthState, PowerMode
+from ska_tango_base.control_model import HealthState, PowerMode, SimulationMode
 from ska_tango_base.csp.subarray.subarray_device import CspSubElementSubarray
 from tango import AttrWriteType, DebugIt, DevState
 from tango.server import attribute, command, device_property, run
@@ -251,6 +251,8 @@ class CbfSubarray(CspSubElementSubarray):
         self._communication_status: Optional[CommunicationStatus] = None
         self._component_power_mode: Optional[PowerMode] = None
 
+        self._simulation_mode = SimulationMode.TRUE
+
         return CbfSubarrayComponentManager(
             subarray_id=int(self.SubID),
             controller=self.CbfControllerAddress,
@@ -260,6 +262,7 @@ class CbfSubarray(CspSubElementSubarray):
             fsp_pss_sub=self.FspPssSubarray,
             fsp_pst_sub=self.FspPstSubarray,
             logger=self.logger,
+            simulation_mode=self._simulation_mode,
             push_change_event_callback=self.push_change_event,
             component_resourced_callback=self._component_resourced,
             component_configured_callback=self._component_configured,
@@ -402,6 +405,17 @@ class CbfSubarray(CspSubElementSubarray):
     # ------------------
     # Attributes methods
     # ------------------
+
+    def write_simulationMode(
+        self: CbfSubarray, value: SimulationMode
+    ) -> None:
+        """
+        Set the Simulation Mode of the device.
+
+        :param value: SimulationMode
+        """
+        super().write_simulationMode(value)
+        self.component_manager._simulation_mode = value
 
     def read_frequencyBand(self: CbfSubarray) -> int:
         # PROTECTED REGION ID(CbfSubarray.frequencyBand_read) ENABLED START #

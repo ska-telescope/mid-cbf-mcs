@@ -31,6 +31,7 @@ from ska_tango_base.control_model import (
     HealthState,
     ObsState,
     PowerMode,
+    SimulationMode,
 )
 from ska_tango_base.csp.subarray.component_manager import (
     CspSubarrayComponentManager,
@@ -125,6 +126,7 @@ class CbfSubarrayComponentManager(
         fsp_pss_sub: List[str],
         fsp_pst_sub: List[str],
         logger: logging.Logger,
+        simulation_mode: SimulationMode,
         push_change_event_callback: Optional[Callable],
         component_resourced_callback: Callable[[bool], None],
         component_configured_callback: Callable[[bool], None],
@@ -167,6 +169,8 @@ class CbfSubarrayComponentManager(
         """
 
         self._logger = logger
+
+        self._simulation_mode = simulation_mode
 
         self._logger.info("Entering CbfSubarrayComponentManager.__init__)")
 
@@ -1782,6 +1786,27 @@ class CbfSubarrayComponentManager(
             # Configure functionMode.
             proxy_fsp.SetFunctionMode(fsp["function_mode"])
 
+            # Set simulation mode of FSPs to subarray sim mode
+            fsp_corr_proxy = self._proxies_fsp_corr_subarray_device[fspID - 1]
+            fsp_pss_proxy = self._proxies_fsp_pss_subarray_device[fspID - 1]
+            fsp_pst_proxy = self._proxies_fsp_pst_subarray_device[fspID - 1]
+
+            proxy_fsp.write_attribute("adminMode", AdminMode.OFFLINE)
+            proxy_fsp.write_attribute("simulationMode", self._simulation_mode)
+            proxy_fsp.write_attribute("adminMode", AdminMode.ONLINE)
+
+            fsp_corr_proxy.write_attribute("adminMode", AdminMode.OFFLINE)
+            fsp_corr_proxy.write_attribute("simulationMode", self._simulation_mode)
+            fsp_corr_proxy.write_attribute("adminMode", AdminMode.ONLINE)
+
+            fsp_pss_proxy.write_attribute("adminMode", AdminMode.OFFLINE)
+            fsp_pss_proxy.write_attribute("simulationMode", self._simulation_mode)
+            fsp_pss_proxy.write_attribute("adminMode", AdminMode.ONLINE)
+
+            fsp_pst_proxy.write_attribute("adminMode", AdminMode.OFFLINE)
+            fsp_pst_proxy.write_attribute("simulationMode", self._simulation_mode)
+            fsp_pst_proxy.write_attribute("adminMode", AdminMode.ONLINE)
+
             # subscribe to FSP state and healthState changes
             (
                 event_id_state,
@@ -2134,6 +2159,10 @@ class CbfSubarrayComponentManager(
 
             vccSubarrayID = vccProxy.subarrayMembership
             self._logger.debug(f"VCC {vccID} subarray_id: {vccSubarrayID}")
+
+            vccProxy.write_attribute("adminMode", AdminMode.OFFLINE)
+            vccProxy.write_attribute("simulationMode", self._simulation_mode)
+            vccProxy.write_attribute("adminMode", AdminMode.ONLINE)
 
             # only add receptor if it does not already belong to a
             # different subarray
