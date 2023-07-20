@@ -12,175 +12,70 @@ to the subarray. The calls to write the frequency offset K and frequency offset
 delta F values only need to be written when there are updates to the values. They must
 be written to the CBF Controller before the scan configuration.
 
-.. uml:: ../../diagrams/mid-cbf-scan-ops.puml
-
-Commands for CbfController and CbfSubarray are below. 
 For full details of MCS Controller see :ref:`CbfController`.
+
 For full details of MCS Subarray see :ref:`CbfSubarray`.
+
+.. uml:: ../../diagrams/mid-cbf-scan-ops.puml
 
 CbfController Tango Commands
 ------------------------------
 
-**CbfController.On** ()->Tuple[ResultCode, str]
-*****************************************************
-
-    Turns on the controller and it's subordinate devices
-
-        *Parameters:*    *None*
-
-        *Returns:*       A tuple containing a return code and a string message indicating status. The message is for information purpose only.
-
-        *Return type:*   (ResultCode, str)
-
-**CbfController.Off** ()->Tuple[ResultCode, str]
-*****************************************************
-
-    Turn off the controller and it's subordinate devices
-
-        *Parameters:*    *None*
-
-        *Returns:*       A tuple containing a return code and a string message indicating status. The message is for information purpose only.
-
-        *Return type:*   (ResultCode, str)
-
-**CbfController.Standby** ()->Tuple[ResultCode, str]
-*****************************************************
-
-    Put the CbfController into low power mode.
-
-        *Parameters:*    *None*
-
-        *Returns:*       A tuple containing a return code and a string message indicating status. The message is for information purpose only.
-
-        *Return type:*   (ResultCode, str)
++---------+---------------+--------------------+--------------------------------------------------------+
+| Command | Parameters    | Return type        | Action                                                 |
++=========+===============+====================+========================================================+
+| Off     | None          | (ResultCode, str)  | Turn off the controller and subordinate devices        |
++---------+---------------+--------------------+--------------------------------------------------------+
+| Standby | None          | (ResultCode, str)  | Put in low power mode                                  |
++---------+---------------+--------------------+--------------------------------------------------------+
+| On      | None          | (ResultCode, str)  | Turn on the controller and subordinate devices         |
++---------+---------------+--------------------+--------------------------------------------------------+
 
 CbfSubarray Tango Commands
 ----------------------------
 
-**CbfSubarray.Abort** ()->Tuple[ResultCode, str]
-****************************************************
-
-    Abort subarray configuration or operation.
-
-        *Parameters:*    *None*
-
-        *Returns:*       A tuple containing a return code and a string message indicating status. The message is for information purpose only.
-
-        *Return type:*   (ResultCode, str)
-
-**CbfSubarray.AddReceptors** (*argin:List[str]*)->Tuple[ResultCode, str]
-**************************************************************************
-
-    Assign Receptors to this subarray. Turn subarray to ObsState = IDLE if previously no receptor is assigned.
-
-        *Parameters:*    argin - list of receptors to add
-
-        *Returns:*       A tuple containing a return code and a string message indicating status. The message is for information purpose only.
-
-        *Return type:*   (ResultCode, str)
-
-**CbfSubarray.ConfigureScan** (*argin: str*)->Tuple[ResultCode, str]
-*******************************************************************************
-
-    Change state to CONFIGURING. Configure attributes from input JSON. Subscribe events. Configure VCC, VCC subarray, FSP, FSP Subarray. publish output links.
-
-        *Parameters:*   argin – The configuration as JSON formatted string.
-
-        *Returns:*      A tuple containing a return code and a string message indicating status. The message is for information purpose only.
-
-        *Return type:*  (ResultCode, str)
-
-**CbfSubarray.EndScan** ()->Tuple[ResultCode, str]
-***************************************************
-
-    End the scan
-
-        *Parameters:*    *None*
-
-        *Returns:*       A tuple containing a return code and a string message indicating status. The message is for information purpose only.
-
-        *Return type:*   (ResultCode, str)
-
-**CbfSubarray.ObsReset** ()->Tuple[ResultCode, str]
-****************************************************
-
-    Reset subarray scan configuration.
-
-        *Parameters:*    *None*
-
-        *Returns:*       A tuple containing a return code and a string message indicating status. The message is for information purpose only.
-
-        *Return type:*   (ResultCode, str)
-
-**CbfSubarray.Off** ()->Tuple[ResultCode, str]
-****************************************************
-
-    Sets subarray power mode to off. Commands FSP <function mode> Subarrays to turn off.
-
-        *Parameters:*    *None*
-
-        *Returns:*       A tuple containing a return code and a string message indicating status. The message is for information purpose only.
-
-        *Return type:*   (ResultCode, str)
-
-**CbfSubarray.On** ()->Tuple[ResultCode, str]
-****************************************************
-
-    Sets subarray power mode to on. Commands FSP <function mode> Subarrays to turn on.
-
-        *Parameters:*    *None*
-
-        *Returns:*       A tuple containing a return code and a string message indicating status. The message is for information purpose only.
-
-        *Return type:*   (ResultCode, str)
-
-**CbfSubarray.RemoveAllReceptors** ()->Tuple[ResultCode, str]
-****************************************************************
-
-    Remove all receptors. Turn Subarray OFF if no receptors assigned
-
-        *Parameters:*    *None*
-
-        *Returns:*       A tuple containing a return code and a string message indicating status. The message is for information purpose only.
-
-        *Return type:*   (ResultCode, str)
-
-**CbfSubarray.RemoveReceptors** (*argin:List[str]*)->Tuple[ResultCode, str]
-*****************************************************************************
-
-    Remove from list of receptors. Turn Subarray to ObsState = EMPTY if no receptors assigned. Uses RemoveReceptorsCommand class
-
-        *Parameters:*    argin - list of receptor IDs to remove
-
-        *Returns:*       A tuple containing a return code and a string message indicating status. The message is for information purpose only.
-
-        *Return type:*   (ResultCode, str)
-
-**CbfSubarray.Restart** ()->Tuple[ResultCode, str]
-****************************************************
-
-    Reset scan configuration and remove receptors.
-
-        *Parameters:*    *None*
-
-        *Returns:*       A tuple containing a return code and a string message indicating status. The message is for information purpose only.
-
-        *Return type:*   (ResultCode, str)
-
-**CbfSubarray.Scan** (*argin: str*)->Tuple[ResultCode, str]
-********************************************************************************
-
-    Start scanning
-
-        *Parameters:*   argin (str) – The scan ID as JSON formatted string.
-
-        *Returns:*  A tuple containing a return code and a string message indicating status. The message is for information purpose only.
-
-        *Return type:*  (ResultCode, str)
-
-
++----------------------+---------------+--------------------+-------------------------------------------+
+| Command              | Parameters    | Return type        | Action                                    |
++======================+===============+====================+===========================================+
+| Abort                | None          | (ResultCode, str)  | Abort subarray configuration or operation |
++----------------------+---------------+--------------------+-------------------------------------------+
+| AddReceptors         | List[str]     | (ResultCode, str)  | | Assign receptors to this subarray       |
+|                      |               |                    | | Turn subarray to ObsState = IDLE if no  |
+|                      |               |                    | | receptor was previously assigned        |
++----------------------+---------------+--------------------+-------------------------------------------+
+| ConfigureScan        | JSON str*     | (ResultCode, str)  | | Change state to configuring             |
+|                      |               |                    | | Configure attributes from input JSON    |
+|                      |               |                    | | Subscribe events                        |
+|                      |               |                    | | Configure VCC, VCC subarray, FSP,       |
+|                      |               |                    | | FSP Subarray. Publish output links.     |
++----------------------+---------------+--------------------+-------------------------------------------+
+| EndScan              | None          | (ResultCode, str)  | End the scan                              |
++----------------------+---------------+--------------------+-------------------------------------------+
+| ObsReset             | None          | (ResultCode, str)  | Reset subarray scan configuration         |
++----------------------+---------------+--------------------+-------------------------------------------+
+| Off                  | None          | (ResultCode, str)  | | Set subarry power mode to off.          |
+|                      |               |                    | | Commands FSP<function mode> Subarrays   |
+|                      |               |                    | | to turn off                             |
++----------------------+---------------+--------------------+-------------------------------------------+
+| On                   | None          | (ResultCode, str)  | | Set subarry power mode to on.           |
+|                      |               |                    | | Commands FSP<function mode> Subarrays   |
+|                      |               |                    | | to turn on                              |
++----------------------+---------------+--------------------+-------------------------------------------+
+| RemoveAllReceptors   | None          | (ResultCode, str)  | | Remove all receptors                    |
+|                      |               |                    | | Turns Subarray off if no receptors are  |
+|                      |               |                    | | assigned                                |
++----------------------+---------------+--------------------+-------------------------------------------+
+| RemoveReceptors      | List[str]     | (ResultCode, str)  | | Remove receptors in input list          |
+|                      |               |                    | | Turns Subarray to ObsState=EMPTY if no  |
+|                      |               |                    | | receptors assigned                      |
++----------------------+---------------+--------------------+-------------------------------------------+
+| Restart              | None          | (ResultCode, str)  | | Reset scan configuration and            |
+|                      |               |                    | | remove receptors                        |
++----------------------+---------------+--------------------+-------------------------------------------+
+| Scan                 | None          | (ResultCode, str)  | Start scanning                            |
++----------------------+---------------+--------------------+-------------------------------------------+
    
-
+* Schema for JSON string defined in the `Telescope Model - Mid.CBF schemas <https://developer.skao.int/projects/ska-telmodel/en/latest/schemas/ska-mid-cbf.html>`_
 
 
 

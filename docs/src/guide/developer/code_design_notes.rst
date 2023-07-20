@@ -54,7 +54,7 @@ configuration is validated for completeness and its parameters implemented as Ta
 device attributes; the subarray device will then also configure subordinate devices 
 with the relevant parameters, including VCC, FSP and FSP-subarray devices.
 
-FSP
+Frequency Slice Processor (FSP)
 ======================================================
 
 The ``Fsp`` Tango device is used for monitoring and control of a Frequency Slice 

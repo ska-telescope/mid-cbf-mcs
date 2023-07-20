@@ -65,7 +65,7 @@ extensions = [
     'sphinx.ext.viewcode',
     'sphinx.ext.githubpages',
     'sphinx.ext.autosectionlabel',
-    'recommonmark',
+    'myst_parser',
     'sphinxcontrib.mermaid',
     'sphinxcontrib.plantuml'
 ]
