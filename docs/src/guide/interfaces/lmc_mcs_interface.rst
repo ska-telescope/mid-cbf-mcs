@@ -18,86 +18,169 @@ Commands for CbfController and CbfSubarray are below.
 For full details of MCS Controller see :ref:`CbfController`.
 For full details of MCS Subarray see :ref:`CbfSubarray`.
 
-CbfController Commands
-------------------------
+CbfController Tango Commands
+------------------------------
 
-On
-************
+**CbfController.On** ()->Tuple[ResultCode, str]
+*****************************************************
 
-.. autoclass:: ska_mid_cbf_mcs.controller.controller_device.CbfController.OnCommand
-   :members:
-   :undoc-members:
-   :member-order:    
-   :noindex:
+    Turns on the controller and it's subordinate devices
 
-Off
-************
+        *Parameters:*    *None*
 
-.. autoclass:: ska_mid_cbf_mcs.controller.controller_device.CbfController.OffCommand
-   :members:
-   :undoc-members:
-   :member-order:
-   :noindex:   
+        *Returns:*       A tuple containing a return code and a string message indicating status. The message is for information purpose only.
 
-Standby
-*****************
+        *Return type:*   (ResultCode, str)
 
-.. autoclass:: ska_mid_cbf_mcs.controller.controller_device.CbfController.StandbyCommand
-   :members:
-   :undoc-members:
-   :member-order:
-   :noindex:   
+**CbfController.Off** ()->Tuple[ResultCode, str]
+*****************************************************
+
+    Turn off the controller and it's subordinate devices
+
+        *Parameters:*    *None*
+
+        *Returns:*       A tuple containing a return code and a string message indicating status. The message is for information purpose only.
+
+        *Return type:*   (ResultCode, str)
+
+**CbfController.Standby** ()->Tuple[ResultCode, str]
+*****************************************************
+
+    Put the CbfController into low power mode.
+
+        *Parameters:*    *None*
+
+        *Returns:*       A tuple containing a return code and a string message indicating status. The message is for information purpose only.
+
+        *Return type:*   (ResultCode, str)
 
 CbfSubarray Tango Commands
 ----------------------------
 
-**AddReceptors** (*argin:List[str]*)->Tuple[ResultCode, str]
-****************************************************************
+**CbfSubarray.Abort** ()->Tuple[ResultCode, str]
+****************************************************
+
+    Abort subarray configuration or operation.
+
+        *Parameters:*    *None*
+
+        *Returns:*       A tuple containing a return code and a string message indicating status. The message is for information purpose only.
+
+        *Return type:*   (ResultCode, str)
+
+**CbfSubarray.AddReceptors** (*argin:List[str]*)->Tuple[ResultCode, str]
+**************************************************************************
 
     Assign Receptors to this subarray. Turn subarray to ObsState = IDLE if previously no receptor is assigned.
 
-    *Parameters:*    argin - list of receptors to add
+        *Parameters:*    argin - list of receptors to add
 
-    *Returns:*       A tuple containing a return code and a string message indicating status. The message is for information purpose only.
+        *Returns:*       A tuple containing a return code and a string message indicating status. The message is for information purpose only.
 
-    *Return type:*   (ResultCode, str)
+        *Return type:*   (ResultCode, str)
+
+**CbfSubarray.ConfigureScan** (*argin: str*)->Tuple[ResultCode, str]
+*******************************************************************************
+
+    Change state to CONFIGURING. Configure attributes from input JSON. Subscribe events. Configure VCC, VCC subarray, FSP, FSP Subarray. publish output links.
+
+        *Parameters:*   argin – The configuration as JSON formatted string.
+
+        *Returns:*      A tuple containing a return code and a string message indicating status. The message is for information purpose only.
+
+        *Return type:*  (ResultCode, str)
+
+**CbfSubarray.EndScan** ()->Tuple[ResultCode, str]
+***************************************************
+
+    End the scan
+
+        *Parameters:*    *None*
+
+        *Returns:*       A tuple containing a return code and a string message indicating status. The message is for information purpose only.
+
+        *Return type:*   (ResultCode, str)
+
+**CbfSubarray.ObsReset** ()->Tuple[ResultCode, str]
+****************************************************
+
+    Reset subarray scan configuration.
+
+        *Parameters:*    *None*
+
+        *Returns:*       A tuple containing a return code and a string message indicating status. The message is for information purpose only.
+
+        *Return type:*   (ResultCode, str)
+
+**CbfSubarray.Off** ()->Tuple[ResultCode, str]
+****************************************************
+
+    Sets subarray power mode to off. Commands FSP <function mode> Subarrays to turn off.
+
+        *Parameters:*    *None*
+
+        *Returns:*       A tuple containing a return code and a string message indicating status. The message is for information purpose only.
+
+        *Return type:*   (ResultCode, str)
+
+**CbfSubarray.On** ()->Tuple[ResultCode, str]
+****************************************************
+
+    Sets subarray power mode to on. Commands FSP <function mode> Subarrays to turn on.
+
+        *Parameters:*    *None*
+
+        *Returns:*       A tuple containing a return code and a string message indicating status. The message is for information purpose only.
+
+        *Return type:*   (ResultCode, str)
+
+**CbfSubarray.RemoveAllReceptors** ()->Tuple[ResultCode, str]
+****************************************************************
+
+    Remove all receptors. Turn Subarray OFF if no receptors assigned
+
+        *Parameters:*    *None*
+
+        *Returns:*       A tuple containing a return code and a string message indicating status. The message is for information purpose only.
+
+        *Return type:*   (ResultCode, str)
+
+**CbfSubarray.RemoveReceptors** (*argin:List[str]*)->Tuple[ResultCode, str]
+*****************************************************************************
+
+    Remove from list of receptors. Turn Subarray to ObsState = EMPTY if no receptors assigned. Uses RemoveReceptorsCommand class
+
+        *Parameters:*    argin - list of receptor IDs to remove
+
+        *Returns:*       A tuple containing a return code and a string message indicating status. The message is for information purpose only.
+
+        *Return type:*   (ResultCode, str)
+
+**CbfSubarray.Restart** ()->Tuple[ResultCode, str]
+****************************************************
+
+    Reset scan configuration and remove receptors.
+
+        *Parameters:*    *None*
+
+        *Returns:*       A tuple containing a return code and a string message indicating status. The message is for information purpose only.
+
+        *Return type:*   (ResultCode, str)
+
+**CbfSubarray.Scan** (*argin: str*)->Tuple[ResultCode, str]
+********************************************************************************
+
+    Start scanning
+
+        *Parameters:*   argin (str) – The scan ID as JSON formatted string.
+
+        *Returns:*  A tuple containing a return code and a string message indicating status. The message is for information purpose only.
+
+        *Return type:*  (ResultCode, str)
 
 
-.. automethod:: ska_mid_cbf_mcs.subarray.subarray_device.CbfSubarray.AddReceptors
-   :noindex:
-
-Configure Scan
-************************
-
-.. automethod:: ska_mid_cbf_mcs.subarray.subarray_device.CbfSubarray.ConfigureScan
-   :noindex:
-
-Scan
-************************
-
-.. autoclass:: ska_mid_cbf_mcs.subarray.subarray_device.CbfSubarray.ScanCommand
-   :members:
-   :undoc-members:
-   :member-order:
-   :noindex:
    
-Remove Receptors
-**************************
 
-.. automethod:: ska_mid_cbf_mcs.subarray.subarray_device.CbfSubarray.RemoveReceptors
-   :noindex:
 
-Remove All Receptors
-******************************
 
-.. automethod:: ska_mid_cbf_mcs.subarray.subarray_device.CbfSubarray.RemoveAllReceptors
-   :noindex:
 
-End Scan
-******************************
-
-.. autoclass:: ska_mid_cbf_mcs.subarray.subarray_device.CbfSubarray.EndScanCommand
-   :members:
-   :undoc-members:
-   :member-order:
-   :noindex:
