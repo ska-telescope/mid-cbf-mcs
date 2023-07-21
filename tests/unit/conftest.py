@@ -10,14 +10,17 @@
 
 """This module contains pytest-specific test harness for MCS unit tests."""
 
+import unittest
 from typing import Callable, Optional
 
 import pytest
+import tango
 
 from ska_mid_cbf_mcs.testing.mock.mock_callable import (
     MockCallable,
     MockChangeEventCallback,
 )
+from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder
 
 # SKA imports
 from ska_mid_cbf_mcs.testing.tango_harness import (
@@ -210,3 +213,15 @@ def device_to_load() -> Optional[DeviceToLoadType]:
     :return: specification of the device to be loaded
     """
     return None
+
+
+@pytest.fixture()
+def mock_controller() -> unittest.mock.Mock:
+    builder = MockDeviceBuilder()
+    builder.set_state(tango.DevState.ON)
+    builder.add_attribute("receptorToVcc", ["1:1", "36:2", "63:3", "100:4"])
+    builder.add_property(
+        "MaxCapabilities",
+        {"MaxCapabilities": ["VCC:4", "FSP:4", "Subarray:1"]},
+    )
+    return builder()

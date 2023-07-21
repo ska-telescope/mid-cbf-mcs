@@ -55,7 +55,7 @@ def power_switch_component_manager(
     :param request: the pytest request fixture, must be indirectly parametrized
                     by each test with a dict of the form:
                         {
-                            "sim_put_error": boolean,
+                            "sim_patch_error": boolean,
                             "sim_get_error": boolean
                         }
     :param monkeypatch: the pytest monkey-patching fixture
@@ -76,38 +76,43 @@ def power_switch_component_manager(
             :param simulate_response_error: set to True to simulate error response
             """
             outlet_state_url = re.compile(
-                r"http:\/\/[\d.]+\/restapi\/relay\/outlets\/\d+\/state\/"
+                r"http:\/\/[\d.]+\/restapi\/relay\/outlets\/\d+\/"
             )
             outlet_list_url = re.compile(
                 r"http:\/\/[\d.]+\/restapi\/relay\/outlets\/"
             )
+
+            self._json: List[dict[str, Any]] = []
 
             if simulate_response_error:
                 self.status_code = 404
             else:
                 self.status_code = requests.codes.ok
 
+                for i in range(0, 8):
+                    outlet_cfg = {
+                        "name": f"Outlet {i}",
+                        "locked": False,
+                        "critical": False,
+                        "cycle_delay": 0,
+                        "state": True,
+                        "physical_state": True,
+                        "transient_state": True,
+                    }
+
+                    self._json.append(outlet_cfg)
+
                 if outlet_list_url.fullmatch(url):
-                    self._json: List[dict[str, Any]] = []
-
-                    for i in range(0, 8):
-                        outlet_cfg = {
-                            "name": f"Outlet {i}",
-                            "locked": False,
-                            "critical": False,
-                            "cycle_delay": 0,
-                            "state": True,
-                            "physical_state": True,
-                            "transient_state": True,
-                        }
-
-                        self._json.append(outlet_cfg)
-
                     self.text = json.dumps(self._json)
-                elif outlet_state_url.fullmatch(url):
-                    self.text = "true"
 
-        def json(self: MockResponse) -> dict[str, str]:
+                elif outlet_state_url.fullmatch(url):
+                    url.split("/")
+                    outlet = url[-2]
+
+                    self._json = self._json[int(outlet)]
+                    self.text = json.dumps(self._json)
+
+        def json(self: MockResponse) -> dict[str, Any]:
             """
             Replace the patched :py:meth:`request.Response.json` with mock.
 
@@ -116,9 +121,10 @@ def power_switch_component_manager(
             :return: representative JSON reponse as the power switch when
                      querying the outlets page
             """
+
             return self._json
 
-    def mock_put(url: str, **kwargs: Any) -> MockResponse:
+    def mock_patch(url: str, **kwargs: Any) -> MockResponse:
         """
         Replace requests.request method with a mock method.
 
@@ -127,7 +133,7 @@ def power_switch_component_manager(
 
         :return: a response
         """
-        return MockResponse(url, request.param["sim_put_error"])
+        return MockResponse(url, request.param["sim_patch_error"])
 
     def mock_get(url: str, params: Any = None, **kwargs: Any) -> MockResponse:
         """
@@ -141,12 +147,25 @@ def power_switch_component_manager(
         """
         return MockResponse(url, request.param["sim_get_error"])
 
-    monkeypatch.setattr(requests, "put", mock_put)
+    monkeypatch.setattr(requests, "patch", mock_patch)
     monkeypatch.setattr(requests, "get", mock_get)
 
     return PowerSwitchComponentManager(
         simulation_mode=SimulationMode.FALSE,
+        protocol="http",
         ip="0.0.0.0",
+        login="",
+        password="",
+        content_type="application/x-www-form-urlencoded",
+        outlet_list_url="restapi/relay/outlets/",
+        outlet_state_url="restapi/relay/outlets/{outlet}/",
+        outlet_control_url="restapi/relay/outlets/{outlet}/state/",
+        turn_on_action="value=true",
+        turn_off_action="value=false",
+        state_on="True",
+        state_off="False",
+        outlet_schema_file="charts/ska-mid-cbf-mcs/data/power_switch_001_schema.json",
+        outlet_id_list=["0", "1", "2", "3", "4", "5", "6", "7"],
         logger=logger,
         push_change_event_callback=push_change_event_callback,
         communication_status_changed_callback=communication_status_changed_callback,
@@ -207,7 +226,7 @@ def component_fault_callback(
 
 
 @pytest.fixture()
-def ccheck_power_mode_callback(
+def check_power_mode_callback(
     mock_callback_factory: Callable[[], unittest.mock.Mock],
 ) -> unittest.mock.Mock:
     """

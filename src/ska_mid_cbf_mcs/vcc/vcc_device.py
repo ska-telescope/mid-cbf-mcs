@@ -158,9 +158,7 @@ class Vcc(CspSubElementObsDevice):
     )
 
     jonesMatrix = attribute(
-        dtype=(("double",),),
-        max_dim_x=16,
-        max_dim_y=26,
+        dtype=str,
         access=AttrWriteType.READ,
         label="Jones Matrix elements",
         doc="Jones Matrix elements, given per frequency slice",
@@ -553,16 +551,14 @@ class Vcc(CspSubElementObsDevice):
         return self.component_manager.delay_model
         # PROTECTED REGION END #    //  Vcc.delayModel_read
 
-    def read_jonesMatrix(self: Vcc) -> List[List[float]]:
+    def read_jonesMatrix(self: Vcc) -> str:
         # PROTECTED REGION ID(Vcc.jonesMatrix_read) ENABLED START #
         """
         Read the jonesMatrix attribute.
 
         :return: the jonesMatrix attribute (jones matrix values,
-            :return: the jonesMatrix attribute (jones matrix values,
-        :return: the jonesMatrix attribute (jones matrix values,
             given per frequency slice).
-        :rtype: list of list of float
+        :rtype: str
         """
         return self.component_manager.jones_matrix
         # PROTECTED REGION END #    //  Vcc.jonesMatrix_read
