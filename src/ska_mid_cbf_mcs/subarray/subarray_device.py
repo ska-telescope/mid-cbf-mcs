@@ -16,16 +16,15 @@ import json
 import re
 from typing import List, Optional, Tuple
 
-# Tango imports
-from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import PowerMode
-from ska_tango_base.csp.subarray.subarray_device import CspSubElementSubarray
-
 # tango imported to enable use of @tango.DebugIt. If
 # DebugIt is imported using "from tango import DebugIt"
 # then docs will not generate
 import tango
 
+# Tango imports
+from ska_tango_base.commands import ResultCode
+from ska_tango_base.control_model import PowerMode
+from ska_tango_base.csp.subarray.subarray_device import CspSubElementSubarray
 from tango import AttrWriteType
 from tango.server import attribute, command, device_property, run
 
