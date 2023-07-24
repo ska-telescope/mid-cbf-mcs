@@ -329,7 +329,7 @@ class TestCbfSubarrayComponentManager:
             freq_offset_delta_f
         )
         output_fs_sample_rate = (
-            subarray_component_manager.calculate_fs_sample_rate(
+            subarray_component_manager._calculate_fs_sample_rate(
                 freq_band, receptor_id
             )
         )
