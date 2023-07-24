@@ -30,7 +30,7 @@ from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 # Data file path
 data_file_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
 
-CONST_WAIT_TIME = 1
+CONST_WAIT_TIME = 4
 
 
 class TestCbfSubarray:
