@@ -3,7 +3,7 @@ SHELL := /bin/bash
 #
 
 # You can set these variables from the command line.
-SPHINXOPTS    = 
+SPHINXOPTS    =
 SPHINXBUILD   = python3 -msphinx
 SOURCEDIR     = src
 BUILDDIR      = build

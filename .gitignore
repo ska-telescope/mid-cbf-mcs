@@ -90,8 +90,6 @@ venv/
 ENV/
 env.bak/
 venv.bak/
-docs/bin
-docs/share
 
 # Spyder project settings
 .spyderproject
