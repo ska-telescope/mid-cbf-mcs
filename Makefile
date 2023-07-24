@@ -44,7 +44,7 @@ K8S_CHARTS ?= ska-mid-cbf-umbrella ska-mid-cbf-mcs ska-mid-cbf-tmleafnode ## lis
 K8S_UMBRELLA_CHART_PATH ?= ./charts/ska-mid-cbf-umbrella
 
 PYTHON_TEST_FILE = 
-PYTHON_VARS_AFTER_PYTEST = -c setup-unit-test.cfg
+PYTHON_VARS_AFTER_PYTEST = -c setup-unit-test.cfg -rx -rP -k CbfSubarray_test.py
 
 # Fixed variables
 # Timeout for gitlab-runner when run locally
@@ -101,7 +101,7 @@ endif
 
 K8S_TEST_TEST_COMMAND ?= ls -lrt &&  $(PYTHON_VARS_BEFORE_PYTEST) $(PYTHON_RUNNER) \
                         pytest \
-                        -c setup-integration-test.cfg \
+                        -c setup-integration-test.cfg -rP -rX -vv -k test_ConfigureScan_basic\
                         | tee pytest.stdout; ## k8s-test test command to run in container
 
 #

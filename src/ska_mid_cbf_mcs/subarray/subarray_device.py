@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import copy
 import json
+import re
 from typing import List, Optional, Tuple
 
 # Tango imports
@@ -453,6 +454,21 @@ class CbfSubarray(CspSubElementSubarray):
             component_manager = self.target
             return component_manager.remove_receptors(argin)
 
+        def validate_input(
+            self: CbfSubarray.RemoveReceptorsCommand, argin: List[str]
+        ) -> Tuple[bool, str]:
+            """
+            Validate receptor ids.
+
+            :param argin: The list of receptor IDs to remove.
+
+            :return: A tuple containing a boolean indicating if the configuration
+                is valid and a string message. The message is for information
+                purpose only.
+            :rtype: (bool, str)
+            """
+            return CbfSubarray._is_Valid_Receptor_Id(argin)
+
     @command(
         dtype_in=("str",),
         doc_in="List of receptor IDs",
@@ -473,6 +489,18 @@ class CbfSubarray(CspSubElementSubarray):
         :rtype: (ResultCode, str)
         """
         command = self.get_command_object("RemoveReceptors")
+
+        (valid, msg) = command.validate_input(argin)
+        if not valid:
+            self._logger.error(msg)
+            tango.Except.throw_exception(
+                "Command failed",
+                msg,
+                "RemoveReceptors command input failed",
+                tango.ErrSeverity.ERR,
+            )
+
+        self.logger.info(msg)
         (return_code, message) = command(argin)
         return [[return_code], [message]]
 
@@ -538,6 +566,38 @@ class CbfSubarray(CspSubElementSubarray):
             component_manager = self.target
             return component_manager.add_receptors(argin)
 
+        def validate_input(
+            self: CbfSubarray.AddReceptorsCommand, argin: List[str]
+        ) -> Tuple[bool, str]:
+            """
+            Validate receptor ids.
+
+            :param argin: The list of receptor IDs to add.
+
+            :return: A tuple containing a boolean indicating if the configuration
+                is valid and a string message. The message is for information
+                purpose only.
+            :rtype: (bool, str)
+            """
+            return CbfSubarray._is_Valid_Receptor_Id(argin)
+
+    @staticmethod
+    def _is_Valid_Receptor_Id(argin: List[str]):
+        # The receptor ID must be in the range of SKA[001-133] or MKT[000-063]
+        pattern = "^(SKA(00[1-9]|0[1-9][0-9]|1[0-2][0-9]|13[0-3]))$|^(MKT(0[0-5][0-9]|06[0-3]))$"
+        for i in argin:
+            if re.match(pattern, i):
+                continue
+            else:
+                # receptor ID is not a valid ID
+                msg = f"Receptor ID {i} is not valid. It must be SKA001-SKA133"
+                f" or MKT000-MKT063. Spaces before or after the ID are not "
+                f"accepted."
+                print(msg)
+                return (False, msg)
+        # All the receptor IDs are valid.
+        return (True, "Receptor IDs are valid.")
+
     @command(
         dtype_in=("str",),
         doc_in="List of receptor IDs",
@@ -559,6 +619,18 @@ class CbfSubarray(CspSubElementSubarray):
         :rtype: (ResultCode, str)
         """
         command = self.get_command_object("AddReceptors")
+
+        (valid, msg) = command.validate_input(argin)
+        if not valid:
+            self._logger.error(msg)
+            tango.Except.throw_exception(
+                "Command failed",
+                msg,
+                "AddReceptors command input failed",
+                tango.ErrSeverity.ERR,
+            )
+        self.logger.info(msg)
+
         (return_code, message) = command(argin)
         return [[return_code], [message]]
 

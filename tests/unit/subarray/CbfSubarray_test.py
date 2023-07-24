@@ -30,7 +30,7 @@ from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 # Data file path
 data_file_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
 
-CONST_WAIT_TIME = 4
+CONST_WAIT_TIME = 1
 
 
 class TestCbfSubarray:
@@ -110,17 +110,22 @@ class TestCbfSubarray:
         assert result[0][0] == ResultCode.OK
         assert device_under_test.State() == expected_state
 
-    @pytest.mark.skip
     @pytest.mark.parametrize(
         "receptor_ids, \
         receptors_to_remove",
-        [([1, 3, 4, 2], [2, 1, 4]), ([4, 1, 2], [2, 1])],
+        [
+            (
+                ["SKA001", "SKA063", "SKA100", "SKA036"],
+                ["SKA063", "SKA036", "SKA001"],
+            ),
+            (["SKA100", "SKA036", "SKA001"], ["SKA036", "SKA100"]),
+        ],
     )
     def test_Add_Remove_Receptors_valid(
         self: TestCbfSubarray,
         device_under_test: CbfDeviceProxy,
-        receptor_ids: List[int],
-        receptors_to_remove: List[int],
+        receptor_ids: List[str],
+        receptors_to_remove: List[str],
     ) -> None:
         """
         Test valid use of Add/RemoveReceptors command.
@@ -132,19 +137,28 @@ class TestCbfSubarray:
         assert device_under_test.State() == DevState.DISABLE
         device_under_test.adminMode = AdminMode.ONLINE
 
+        # DevState should be OFF. Turn it to ON
+        device_under_test.On()
+
         assert device_under_test.State() == DevState.ON
 
         # add all except last receptor
         assert device_under_test.obsState == ObsState.EMPTY
         device_under_test.AddReceptors(receptor_ids[:-1])
 
-        assert (device_under_test.receptors == receptor_ids[:-1]).all()
+        # list of receptors from device_under_test is returned as a tuple
+        # so need to cast to list
+        assert sorted(list(device_under_test.receptors)) == sorted(
+            receptor_ids[:-1]
+        )
         assert device_under_test.obsState == ObsState.IDLE
 
         # add the last receptor
         device_under_test.AddReceptors([receptor_ids[-1]])
 
-        assert (device_under_test.receptors == receptor_ids).all()
+        assert sorted(list(device_under_test.receptors)) == sorted(
+            receptor_ids
+        )
         assert device_under_test.obsState == ObsState.IDLE
 
         # remove all except last receptor
@@ -153,21 +167,33 @@ class TestCbfSubarray:
         receptor_ids_after_remove = [
             r for r in receptor_ids if r not in receptors_to_remove
         ]
-        assert (device_under_test.receptors == receptor_ids_after_remove).all()
+        assert sorted(list(device_under_test.receptors)) == sorted(
+            receptor_ids_after_remove
+        )
         assert device_under_test.obsState == ObsState.IDLE
 
         # remove remaining receptor
         device_under_test.RemoveReceptors(receptor_ids_after_remove)
 
-        assert (device_under_test.receptors == []).all()
+        assert list(device_under_test.receptors) == []
+
+        # check for ObsState.EMPTY fails inconsistently
+        # adding wait time allows consistent pass
+        sleep(CONST_WAIT_TIME)
+
         assert device_under_test.obsState == ObsState.EMPTY
 
-    @pytest.mark.skip
-    @pytest.mark.parametrize("receptor_ids", [([1, 3, 4, 2]), ([4, 1, 2])])
+    @pytest.mark.parametrize(
+        "receptor_ids",
+        [
+            (["SKA001", "SKA063", "SKA100", "SKA036"]),
+            (["SKA036", "SKA001", "SKA063"]),
+        ],
+    )
     def test_RemoveAllReceptors_valid(
         self: TestCbfSubarray,
         device_under_test: CbfDeviceProxy,
-        receptor_ids: List[int],
+        receptor_ids: List[str],
     ) -> None:
         """
         Test valid use of RemoveAllReceptors command.
@@ -179,6 +205,8 @@ class TestCbfSubarray:
         assert device_under_test.State() == DevState.DISABLE
         device_under_test.adminMode = AdminMode.ONLINE
 
+        # DevState should be OFF. Turn it to ON
+        device_under_test.On()
         assert device_under_test.State() == DevState.ON
         assert device_under_test.obsState == ObsState.EMPTY
         device_under_test.AddReceptors(receptor_ids)
@@ -188,20 +216,27 @@ class TestCbfSubarray:
         # remove all receptors
         device_under_test.RemoveAllReceptors()
 
-        assert (device_under_test.receptors == []).all()
+        assert list(device_under_test.receptors) == []
+
+        # check for ObsState.EMPTY fails inconsistently
+        # adding wait time allows consistent pass
+        sleep(CONST_WAIT_TIME)
+
         assert device_under_test.obsState == ObsState.EMPTY
 
-    @pytest.mark.skip
     @pytest.mark.parametrize(
         "receptor_ids, \
         invalid_receptor_id",
-        [([1, 3], [200]), ([4, 2], [0])],
+        [
+            (["SKA100", "SKA063"], ["SKA200"]),
+            (["SKA036", "SKA001"], ["MKT100"]),
+        ],
     )
     def test_AddReceptors_invalid(
         self: TestCbfSubarray,
         device_under_test: CbfDeviceProxy,
-        receptor_ids: List[int],
-        invalid_receptor_id: List[int],
+        receptor_ids: List[str],
+        invalid_receptor_id: List[str],
     ) -> None:
         """
         Test invalid use of AddReceptors commands:
@@ -210,31 +245,42 @@ class TestCbfSubarray:
         assert device_under_test.State() == DevState.DISABLE
         device_under_test.adminMode = AdminMode.ONLINE
 
+        # DevState should be OFF. Turn it to ON
+        device_under_test.On()
+
         assert device_under_test.State() == DevState.ON
 
         # add some receptors
         assert device_under_test.obsState == ObsState.EMPTY
         device_under_test.AddReceptors(receptor_ids)
 
-        assert (device_under_test.receptors == receptor_ids).all()
+        assert sorted(list(device_under_test.receptors)) == sorted(
+            receptor_ids
+        )
         assert device_under_test.obsState == ObsState.IDLE
 
-        # try adding an invalid receptor ID
-        device_under_test.AddReceptors(invalid_receptor_id)
+        # Validation of input receptors will throw an
+        # exception if there is an invalid receptor id
+        with pytest.raises(Exception):
+            device_under_test.AddReceptors(invalid_receptor_id)
 
-        assert (device_under_test.receptors == receptor_ids).all()
+        assert sorted(list(device_under_test.receptors)) == sorted(
+            receptor_ids
+        )
 
-    @pytest.mark.skip
     @pytest.mark.parametrize(
         "receptor_ids, \
-        invalid_receptors_to_remove",
-        [([1, 3], [2]), ([4, 2], [1, 3])],
+        not_assigned_receptors_to_remove",
+        [
+            (["SKA036", "SKA063"], ["SKA100"]),
+            (["SKA100", "SKA001"], ["SKA063", "SKA036"]),
+        ],
     )
-    def test_RemoveReceptors_invalid(
+    def test_RemoveReceptors_notAssigned(
         self: TestCbfSubarray,
         device_under_test: CbfDeviceProxy,
-        receptor_ids: List[int],
-        invalid_receptors_to_remove: List[int],
+        receptor_ids: List[str],
+        not_assigned_receptors_to_remove: List[int],
     ) -> None:
         """
         Test invalid use of RemoveReceptors commands:
@@ -242,6 +288,9 @@ class TestCbfSubarray:
         """
         assert device_under_test.State() == DevState.DISABLE
         device_under_test.adminMode = AdminMode.ONLINE
+
+        # DevState should be OFF. Turn it to ON
+        device_under_test.On()
 
         assert device_under_test.State() == DevState.ON
         # add some receptors
@@ -251,17 +300,61 @@ class TestCbfSubarray:
         assert device_under_test.obsState == ObsState.IDLE
 
         # try removing a receptor not assigned to subarray 1
-        device_under_test.RemoveReceptors(invalid_receptors_to_remove)
+        device_under_test.RemoveReceptors(not_assigned_receptors_to_remove)
 
-        assert (device_under_test.receptors == receptor_ids).all()
+        assert sorted(list(device_under_test.receptors)) == sorted(
+            receptor_ids
+        )
         assert device_under_test.obsState == ObsState.IDLE
 
-    @pytest.mark.skip
-    @pytest.mark.parametrize("receptor_ids", [([1, 3]), ([4, 2])])
+    @pytest.mark.parametrize(
+        "receptor_ids, \
+        invalid_receptors_to_remove",
+        [
+            (["SKA036", "SKA063"], ["SKA000"]),
+            (["SKA100", "SKA001"], [" SKA160", "MKT163"]),
+        ],
+    )
+    def test_RemoveReceptors_invalid(
+        self: TestCbfSubarray,
+        device_under_test: CbfDeviceProxy,
+        receptor_ids: List[str],
+        invalid_receptors_to_remove: List[int],
+    ) -> None:
+        """
+        Test invalid use of RemoveReceptors commands:
+            - when a receptor id to be removed is not a valid receptor id
+        """
+        assert device_under_test.State() == DevState.DISABLE
+        device_under_test.adminMode = AdminMode.ONLINE
+
+        # DevState should be OFF. Turn it to ON
+        device_under_test.On()
+
+        assert device_under_test.State() == DevState.ON
+        # add some receptors
+        assert device_under_test.obsState == ObsState.EMPTY
+        device_under_test.AddReceptors(receptor_ids)
+
+        assert device_under_test.obsState == ObsState.IDLE
+
+        # Validation of requested receptors will throw an
+        # exception if there is an invalid receptor id
+        with pytest.raises(Exception):
+            device_under_test.RemoveReceptors(invalid_receptors_to_remove)
+
+        assert sorted(list(device_under_test.receptors)) == sorted(
+            receptor_ids
+        )
+        assert device_under_test.obsState == ObsState.IDLE
+
+    @pytest.mark.parametrize(
+        "receptor_ids", [(["SKA100", "SKA036"]), (["SKA063", "SKA001"])]
+    )
     def test_RemoveAllReceptors_invalid(
         self: TestCbfSubarray,
         device_under_test: CbfDeviceProxy,
-        receptor_ids: List[int],
+        receptor_ids: List[str],
     ) -> None:
         """
         Test invalid use of RemoveReceptors commands:
@@ -269,6 +362,9 @@ class TestCbfSubarray:
         """
         assert device_under_test.State() == DevState.DISABLE
         device_under_test.adminMode = AdminMode.ONLINE
+
+        # DevState should be OFF. Turn it to ON
+        device_under_test.On()
 
         assert device_under_test.State() == DevState.ON
         assert device_under_test.obsState == ObsState.EMPTY
