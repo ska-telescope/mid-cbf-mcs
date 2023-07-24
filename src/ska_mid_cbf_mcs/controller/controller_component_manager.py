@@ -14,17 +14,11 @@ from __future__ import annotations
 import json
 import logging
 import os
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Callable, Dict, List, Optional, Tuple
 
 import tango
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import (
-    AdminMode,
-    HealthState,
-    PowerMode,
-    SimulationMode,
-)
-from tango import AttrQuality
+from ska_tango_base.control_model import AdminMode, PowerMode, SimulationMode
 
 from ska_mid_cbf_mcs.component.component_manager import (
     CbfComponentManager,
@@ -113,7 +107,6 @@ class ControllerComponentManager(CbfComponentManager):
         self._max_capabilities = ""
 
         self._proxies = {}
-        self._events = {}
 
         # Initialize attribute values
         self.frequency_offset_k = [0] * CONST_DEFAULT_COUNT_VCC
@@ -126,148 +119,6 @@ class ControllerComponentManager(CbfComponentManager):
             component_power_mode_changed_callback=component_power_mode_changed_callback,
             component_fault_callback=component_fault_callback,
         )
-
-    @property
-    def report_vcc_state(
-        self: ControllerComponentManager,
-    ) -> List[tango.DevState]:
-        """
-        Get Vcc States
-
-        :return: the state of the VCC capabilities as an array of DevState
-        """
-
-        return self._report_vcc_state
-
-    @property
-    def report_vcc_health_state(self: ControllerComponentManager) -> List[int]:
-        """
-        Get Vcc Health States
-
-        :return: health status of VCC capabilities as an array of unsigned short
-        """
-
-        return self._report_vcc_health_state
-
-    @property
-    def report_vcc_admin_mode(self: ControllerComponentManager) -> List[int]:
-        """
-        Get Vcc Admin Modes
-
-        :return: report the administration mode of the
-                 VCC capabilities as an array of unsigned short
-        """
-
-        return self._report_vcc_admin_mode
-
-    @property
-    def report_vcc_subarray_membership(
-        self: ControllerComponentManager,
-    ) -> List[int]:
-        """
-        Get Vcc Subarray Memberships
-
-        :return: report the subarray membership of VCCs (each can only belong to
-                 a single subarray), 0 if not assigned
-        """
-
-        return self._report_vcc_subarray_membership
-
-    @property
-    def report_fsp_state(
-        self: ControllerComponentManager,
-    ) -> List[tango.DevState]:
-        """
-        Get Subarray States
-
-        :return: report the state of the Subarray with an array of DevState
-        """
-
-        return self._report_subarray_state
-
-    @property
-    def report_fsp_health_state(self: ControllerComponentManager) -> List[int]:
-        """
-        Get Fsp Health States
-
-        :return: Report the health status of the FSP capabilities
-        """
-
-        return self._report_fsp_health_state
-
-    @property
-    def report_fsp_admin_mode(self: ControllerComponentManager) -> List[int]:
-        """
-        Get Fsp Admin Modes
-
-        :return: Report the administration mode of the FSP capabilities
-                 as an array of unsigned short
-        """
-
-        return self._report_fsp_admin_mode
-
-    @property
-    def report_fsp_subarray_membership(
-        self: ControllerComponentManager,
-    ) -> List[int]:
-        """
-        Get Fsp Subarray Memberships
-
-        :return: Report the subarray membership of FSPs (each can only belong to
-                 at most 16 subarrays), 0 if not assigned.
-        """
-
-        return self._report_fsp_subarray_membership
-
-    @property
-    def report_subarray_state(
-        self: ControllerComponentManager,
-    ) -> List[tango.DevState]:
-        """
-        Get Fsp States
-
-        :return: state of all the FSP capabilities in the form of array
-        """
-
-        return self._report_fsp_state
-
-    @property
-    def report_subarray_health_state(
-        self: ControllerComponentManager,
-    ) -> List[int]:
-        """
-        Get Subarray Health States
-
-        :return: subarray healthstate in an array of unsigned short
-        """
-
-        return self._report_subarray_health_state
-
-    @property
-    def report_subarray_admin_mode(
-        self: ControllerComponentManager,
-    ) -> List[int]:
-        """
-        Get Subarray Admin Modes
-
-        :return: Report the administration mode of the Subarray
-                 as an array of unsigned short
-        """
-
-        return self._report_subarray_admin_mode
-
-    @property
-    def report_subarray_config_id(
-        self: ControllerComponentManager,
-    ) -> List[str]:
-        """
-        Get Subarray Config Id
-
-        :return: ID of subarray config. Used for debug purposes.
-                 Empty string if subarray is not configured for a scan.
-        """
-
-        return self._report_subarray_config_id
 
     def start_communicating(
         self: ControllerComponentManager,
@@ -307,48 +158,6 @@ class ControllerComponentManager(CbfComponentManager):
             : self._count_subarray
         ]
         self._fqdn_talon_lru = list(self._talon_lru_fqdns_all)
-
-        self._report_vcc_state = [tango.DevState.UNKNOWN] * self._count_vcc
-        self._report_vcc_health_state = [
-            HealthState.UNKNOWN.value
-        ] * self._count_vcc
-        self._report_vcc_admin_mode = [
-            AdminMode.OFFLINE.value
-        ] * self._count_vcc
-        self._report_vcc_subarray_membership = [0] * self._count_vcc
-
-        self._report_fsp_state = [tango.DevState.UNKNOWN] * self._count_fsp
-        self._report_fsp_health_state = [
-            HealthState.UNKNOWN.value
-        ] * self._count_fsp
-        self._report_fsp_admin_mode = [
-            AdminMode.OFFLINE.value
-        ] * self._count_fsp
-        self._report_fsp_subarray_membership = [
-            [] for i in range(self._count_fsp)
-        ]
-
-        self._report_subarray_state = [
-            tango.DevState.UNKNOWN
-        ] * self._count_subarray
-        self._report_subarray_health_state = [
-            HealthState.UNKNOWN.value
-        ] * self._count_subarray
-        self._report_subarray_admin_mode = [
-            AdminMode.OFFLINE.value
-        ] * self._count_subarray
-        self._subarray_config_ID = [""] * self._count_subarray
-
-        self._count_talon_lru = len(self._talon_lru_fqdns_all)
-        self._report_talon_lru_state = [
-            tango.DevState.UNKNOWN
-        ] * self._count_talon_lru
-        self._report_talon_lru_health_state = [
-            HealthState.UNKNOWN.value
-        ] * self._count_talon_lru
-        self._report_talon_lru_admin_mode = [
-            AdminMode.OFFLINE.value
-        ] * self._count_talon_lru
 
         try:
             self._group_vcc = CbfGroupProxy("VCC", logger=self._logger)
@@ -443,186 +252,6 @@ class ControllerComponentManager(CbfComponentManager):
             proxy.adminMode = AdminMode.OFFLINE
         self._connected = False
 
-    def _state_change_event_callback(
-        self: ControllerComponentManager,
-        fqdn: str,
-        name: str,
-        value: Any,
-        quality: AttrQuality,
-    ) -> None:
-        """
-        Callback for state/healthState change event subscription.
-
-        :param fqdn: attribute FQDN
-        :param name: attribute name
-        :param value: attribute value
-        :param quality: attribute quality
-        """
-        if value is not None:
-            try:
-                if "healthstate" in name:
-                    if "subarray" in fqdn:
-                        self._report_subarray_health_state[
-                            self._fqdn_subarray.index(fqdn)
-                        ] = value
-                    elif "vcc" in fqdn:
-                        self._report_vcc_health_state[
-                            self._fqdn_vcc.index(fqdn)
-                        ] = value
-                    elif "fsp" in fqdn:
-                        self._report_fsp_health_state[
-                            self._fqdn_fsp.index(fqdn)
-                        ] = value
-                    elif "talon_lru" in fqdn:
-                        self._report_talon_lru_health_state[
-                            self._fqdn_talon_lru.index(fqdn)
-                        ] = value
-                    else:
-                        # should NOT happen!
-                        log_msg = (
-                            "Received health state change for "
-                            f"unknown device {name}"
-                        )
-                        self._logger.warning(log_msg)
-                        return
-                elif "state" in name:
-                    if "subarray" in fqdn:
-                        self._report_subarray_state[
-                            self._fqdn_subarray.index(fqdn)
-                        ] = value
-                    elif "vcc" in fqdn:
-                        self._report_vcc_state[
-                            self._fqdn_vcc.index(fqdn)
-                        ] = value
-                    elif "fsp" in fqdn:
-                        self._report_fsp_state[
-                            self._fqdn_fsp.index(fqdn)
-                        ] = value
-                    elif "talon_lru" in fqdn:
-                        self._report_talon_lru_state[
-                            self._fqdn_talon_lru.index(fqdn)
-                        ] = value
-                    else:
-                        # should NOT happen!
-                        log_msg = (
-                            "Received state change for unknown device "
-                            f"{name}"
-                        )
-                        self._logger.warning(log_msg)
-                        return
-                elif "adminmode" in name:
-                    if "subarray" in fqdn:
-                        self._report_subarray_admin_mode[
-                            self._fqdn_subarray.index(fqdn)
-                        ] = value
-                    elif "vcc" in fqdn:
-                        self._report_vcc_admin_mode[
-                            self._fqdn_vcc.index(fqdn)
-                        ] = value
-                    elif "fsp" in fqdn:
-                        self._report_fsp_admin_mode[
-                            self._fqdn_fsp.index(fqdn)
-                        ] = value
-                    elif "talon_lru" in fqdn:
-                        self._report_talon_lru_admin_mode[
-                            self._fqdn_talon_lru.index(fqdn)
-                        ] = value
-                    else:
-                        # should NOT happen!
-                        log_msg = (
-                            "Received admin mode change for "
-                            f"unknown device {name}"
-                        )
-                        self._logger.warning(log_msg)
-                        return
-
-                log_msg = f"New value for {name} of device {fqdn}: {value}"
-                self._logger.info(log_msg)
-            except Exception as except_occurred:
-                self._logger.error(str(except_occurred))
-        else:
-            self._logger.warning(
-                f"None value for attribute {name} of device {fqdn}"
-            )
-
-    def _membership_event_callback(
-        self: ControllerComponentManager,
-        fqdn: str,
-        name: str,
-        value: Any,
-        quality: AttrQuality,
-    ) -> None:
-        """
-        Callback for subarrayMembership change event subscription.
-
-        :param fqdn: attribute FQDN
-        :param name: attribute name
-        :param value: attribute value
-        :param quality: attribute quality
-        """
-        if value is not None:
-            try:
-                if "vcc" in fqdn:
-                    self._report_vcc_subarray_membership[
-                        self._fqdn_vcc.index(fqdn)
-                    ] = value
-                elif "fsp" in fqdn:
-                    if (
-                        value
-                        not in self._report_fsp_subarray_membership[
-                            self._fqdn_fsp.index(fqdn)
-                        ]
-                    ):
-                        self._logger.info(f"{value}")
-                        self._report_fsp_subarray_membership[
-                            self._fqdn_fsp.index(fqdn)
-                        ].append(value)
-                else:
-                    # should NOT happen!
-                    log_msg = f"Received event for unknown device {name}"
-                    self._logger.warning(log_msg)
-                    return
-
-                log_msg = f"New value for {name} of device {fqdn}: {value}"
-                self._logger.info(log_msg)
-
-            except Exception as except_occurred:
-                self._logger.error(str(except_occurred))
-        else:
-            self._logger.warning(
-                f"None value for attribute {name} of device {fqdn}"
-            )
-
-    def _config_ID_event_callback(
-        self: ControllerComponentManager,
-        fqdn: str,
-        name: str,
-        value: Any,
-        quality: AttrQuality,
-    ) -> None:
-        """
-        Callback for configID change event subscription.
-
-        :param fqdn: attribute FQDN
-        :param name: attribute name
-        :param value: attribute value
-        :param quality: attribute quality
-        """
-
-        if value is not None:
-            try:
-                self._subarray_config_ID[
-                    self._fqdn_subarray.index(fqdn)
-                ] = value
-                log_msg = f"New value for {name} of device {fqdn}: {value}"
-                self._logger.info(log_msg)
-            except Exception as except_occurred:
-                self._logger.error(str(except_occurred))
-        else:
-            self._logger.warning(
-                f"None value for attribute {name} of device {fqdn}"
-            )
-
     def on(
         self: ControllerComponentManager,
     ) -> Tuple[ResultCode, str]:
@@ -636,41 +265,10 @@ class ControllerComponentManager(CbfComponentManager):
         """
 
         if self._connected:
-            # Try connection with each subarray/capability
+            # set VCC values
             for fqdn, proxy in self._proxies.items():
-                try:
-                    events = {}
-
-                    # subscribe to change events on subarrays/capabilities
-                    for attribute_val in ["adminMode", "healthState", "State"]:
-                        events[
-                            attribute_val
-                        ] = proxy.add_change_event_callback(
-                            attribute_name=attribute_val,
-                            callback=self._state_change_event_callback,
-                            stateless=True,
-                        )
-
-                    # subscribe to FSP subarray membership change events
-                    if "fsp" in fqdn:
-                        events[
-                            "subarrayMembership"
-                        ] = proxy.add_change_event_callback(
-                            attribute_name="subarrayMembership",
-                            callback=self._membership_event_callback,
-                            stateless=True,
-                        )
-
-                    # subscribe to VCC subarray membership change events; set VCC values
-                    if "vcc" in fqdn:
-                        events[
-                            "subarrayMembership"
-                        ] = proxy.add_change_event_callback(
-                            attribute_name="subarrayMembership",
-                            callback=self._membership_event_callback,
-                            stateless=True,
-                        )
-
+                if "vcc" in fqdn:
+                    try:
                         vcc_id = int(proxy.get_property("VccID")["VccID"][0])
                         rec_id = self._vcc_to_receptor[vcc_id]
                         self._logger.info(
@@ -683,23 +281,11 @@ class ControllerComponentManager(CbfComponentManager):
                         proxy.frequencyOffsetDeltaF = (
                             self.frequency_offset_delta_f[vcc_id]
                         )
-
-                    # subscribe to subarray config ID change events
-                    if "subarray" in fqdn:
-                        events["configID"] = proxy.add_change_event_callback(
-                            attribute_name="configurationID",
-                            callback=self._config_ID_event_callback,
-                            stateless=True,
-                        )
-
-                    self._events[proxy] = events
-                except tango.DevFailed as df:
-                    for item in df.args:
-                        log_msg = (
-                            f"Failure in connection to {fqdn}; {item.reason}"
-                        )
-                        self._logger.error(log_msg)
-                        return (ResultCode.FAILED, log_msg)
+                    except tango.DevFailed as df:
+                        for item in df.args:
+                            log_msg = f"Failure in connection to {fqdn}; {item.reason}"
+                            self._logger.error(log_msg)
+                            return (ResultCode.FAILED, log_msg)
 
             # Power on all the Talon boards if not in SimulationMode
             # TODO: There are two VCCs per LRU. Need to check the number of
@@ -822,18 +408,6 @@ class ControllerComponentManager(CbfComponentManager):
                 self._group_fsp.command_inout("Off")
             except tango.DevFailed:
                 log_msg = "Failed to turn off group proxies"
-                self._logger.error(log_msg)
-                return (ResultCode.FAILED, log_msg)
-
-            try:
-                for proxy, events in self._events.items():
-                    for name, id in events.items():
-                        self._logger.info(
-                            f"Unsubscribing from event {id}, device: {proxy._fqdn}"
-                        )
-                        proxy.remove_event(name, id)
-            except tango.DevFailed:
-                log_msg = "Failed to unsubscribe to events"
                 self._logger.error(log_msg)
                 return (ResultCode.FAILED, log_msg)
 

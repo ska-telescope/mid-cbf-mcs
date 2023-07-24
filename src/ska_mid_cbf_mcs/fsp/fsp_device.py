@@ -346,6 +346,12 @@ class Fsp(SKACapability):
             device._scan_id = 0
             device._config_id = ""
 
+            device.set_change_event("functionMode", True, True)
+            device.set_change_event("subarrayMembership", True, True)
+
+            # TODO remove when ugrading base class from 0.11.3
+            device.set_change_event("healthState", True, True)
+
             return (result_code, message)
 
     class OnCommand(SKABaseDevice.OnCommand):

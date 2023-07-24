@@ -13,13 +13,13 @@ from __future__ import annotations
 
 import copy
 import json
-from typing import Dict, List, Optional, Tuple
+from typing import List, Optional, Tuple
 
 # Tango imports
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import HealthState, PowerMode
+from ska_tango_base.control_model import PowerMode
 from ska_tango_base.csp.subarray.subarray_device import CspSubElementSubarray
-from tango import AttrWriteType, DebugIt, DevState
+from tango import AttrWriteType, DebugIt
 from tango.server import attribute, command, device_property, run
 
 from ska_mid_cbf_mcs.commons.global_enum import const
@@ -148,48 +148,6 @@ class CbfSubarray(CspSubElementSubarray):
         doc="List of receptors assigned to subarray",
     )
 
-    vccState = attribute(
-        dtype=("DevState",),
-        max_dim_x=197,
-        label="VCC state",
-        polling_period=1000,
-        doc="Report the state of the assigned VCCs as an array of DevState",
-    )
-
-    vccHealthState = attribute(
-        dtype=("uint16",),
-        max_dim_x=197,
-        label="VCC health status",
-        polling_period=1000,
-        abs_change=1,
-        doc="Report the health state of assigned VCCs as an array of unsigned short.\nEx:\n[0,0,0,2,0...3]",
-    )
-
-    fspState = attribute(
-        dtype=("DevState",),
-        max_dim_x=27,
-        label="FSP state",
-        polling_period=1000,
-        doc="Report the state of the assigned FSPs",
-    )
-
-    fspHealthState = attribute(
-        dtype=("uint16",),
-        max_dim_x=27,
-        label="FSP health status",
-        polling_period=1000,
-        abs_change=1,
-        doc="Report the health state of the assigned FSPs.",
-    )
-
-    fspList = attribute(
-        dtype=(("uint16",),),
-        max_dim_x=4,
-        max_dim_y=27,
-        label="List of FSP's used by subarray",
-        doc="fsp[1][x] = CORR [2][x] = PSS [1][x] = PST [1][x] = VLBI",
-    )
-
     frequencyOffsetK = attribute(
         dtype=("int",),
         access=AttrWriteType.READ_WRITE,
@@ -230,12 +188,10 @@ class CbfSubarray(CspSubElementSubarray):
 
             device = self.target
 
-            device.write_simulationMode(True)
+            # TODO remove when ugrading base class from 0.11.3
+            device.set_change_event("healthState", True, True)
 
-            # TODO: remove
-            # device._storage_logging_level = tango.LogLevel.LOG_DEBUG
-            # device._element_logging_level = tango.LogLevel.LOG_DEBUG
-            # device._central_logging_level = tango.LogLevel.LOG_DEBUG
+            device.write_simulationMode(True)
 
             return (result_code, message)
 
@@ -437,62 +393,6 @@ class CbfSubarray(CspSubElementSubarray):
         self.RemoveAllReceptors()
         self.AddReceptors(value)
         # PROTECTED REGION END #    //  CbfSubarray.receptors_write
-
-    def read_vccState(self: CbfSubarray) -> Dict[str, DevState]:
-        # PROTECTED REGION ID(CbfSubarray.vccState_read) ENABLED START #
-        """
-        Return the attribute vccState: array of DevState
-
-        :return: the list of VCC states
-        :rtype: Dict[str, DevState]
-        """
-        return self.component_manager.vcc_state.values()
-        # PROTECTED REGION END #    //  CbfSubarray.vccState_read
-
-    def read_vccHealthState(self: CbfSubarray) -> Dict[str, HealthState]:
-        # PROTECTED REGION ID(CbfSubarray.vccHealthState_read) ENABLED START #
-        """
-        returns vccHealthState attribute: an array of unsigned short
-
-        :return: the list of VCC health states
-        :rtype: Dict[str, HealthState]
-        """
-        return self.component_manager.vcc_health_state.values()
-        # PROTECTED REGION END #    //  CbfSubarray.vccHealthState_read
-
-    def read_fspState(self: CbfSubarray) -> Dict[str, DevState]:
-        # PROTECTED REGION ID(CbfSubarray.fspState_read) ENABLED START #
-        """
-        Return the attribute fspState: array of DevState
-
-        :return: the list of FSP states
-        :rtype: Dict[str, DevState]
-        """
-        return self.component_manager.fsp_state.values()
-        # PROTECTED REGION END #    //  CbfSubarray.fspState_read
-
-    def read_fspHealthState(self: CbfSubarray) -> Dict[str, HealthState]:
-        # PROTECTED REGION ID(CbfSubarray.fspHealthState_read) ENABLED START #
-        """
-        returns fspHealthState attribute: an array of unsigned short
-
-        :return: the list of FSP health states
-        :rtype: Dict[str, HealthState]
-        """
-        return self.component_manager.fsp_health_state.values()
-        # PROTECTED REGION END #    //  CbfSubarray.fspHealthState_read
-
-    def read_fspList(self: CbfSubarray) -> List[List[int]]:
-        # PROTECTED REGION ID(CbfSubarray.fspList_read) ENABLED START #
-        """
-        return fspList attribute
-        2 dimensional array the fsp used by all the subarrays
-
-        :return: the array of FSP IDs
-        :rtype: List[List[int]]
-        """
-        return self.component_manager.fsp_list
-        # PROTECTED REGION END #    //  CbfSubarray.fspList_read
 
     def read_frequencyOffsetK(self: CbfSubarray) -> List[int]:
         # PROTECTED REGION ID(CbfSubarray.frequencyOffsetK_read) ENABLED START #
