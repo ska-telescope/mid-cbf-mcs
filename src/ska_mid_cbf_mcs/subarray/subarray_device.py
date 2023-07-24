@@ -590,9 +590,11 @@ class CbfSubarray(CspSubElementSubarray):
                 continue
             else:
                 # receptor ID is not a valid ID
-                msg = f"Receptor ID {i} is not valid. It must be SKA001-SKA133"
-                f" or MKT000-MKT063. Spaces before or after the ID are not "
-                f"accepted."
+                msg = (
+                    f"Receptor ID {i} is not valid. It must be SKA001-SKA133"
+                    " or MKT000-MKT063. Spaces before or after the ID are not"
+                    " accepted."
+                )
                 print(msg)
                 return (False, msg)
         # All the receptor IDs are valid.
