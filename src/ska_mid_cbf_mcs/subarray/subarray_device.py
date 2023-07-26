@@ -15,14 +15,20 @@ import copy
 import json
 from typing import List, Optional, Tuple
 
+# tango imported to enable use of @tango.DebugIt. If
+# DebugIt is imported using "from tango import DebugIt"
+# then docs will not generate
+import tango
+
 # Tango imports
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import PowerMode
 from ska_tango_base.csp.subarray.subarray_device import CspSubElementSubarray
-from tango import AttrWriteType, DebugIt
+from tango import AttrWriteType
 from tango.server import attribute, command, device_property, run
 
 from ska_mid_cbf_mcs.commons.global_enum import const
+from ska_mid_cbf_mcs.commons.receptor_utils import ReceptorUtils
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
 
 # SKA imports
@@ -447,6 +453,21 @@ class CbfSubarray(CspSubElementSubarray):
             component_manager = self.target
             return component_manager.remove_receptors(argin)
 
+        def validate_input(
+            self: CbfSubarray.RemoveReceptorsCommand, argin: List[str]
+        ) -> Tuple[bool, str]:
+            """
+            Validate receptor ids.
+
+            :param argin: The list of receptor IDs to remove.
+
+            :return: A tuple containing a boolean indicating if the configuration
+                is valid and a string message. The message is for information
+                purpose only.
+            :rtype: (bool, str)
+            """
+            return ReceptorUtils.are_Valid_Receptor_Ids(argin)
+
     @command(
         dtype_in=("str",),
         doc_in="List of receptor IDs",
@@ -467,6 +488,18 @@ class CbfSubarray(CspSubElementSubarray):
         :rtype: (ResultCode, str)
         """
         command = self.get_command_object("RemoveReceptors")
+
+        (valid, msg) = command.validate_input(argin)
+        if not valid:
+            self._logger.error(msg)
+            tango.Except.throw_exception(
+                "Command failed",
+                msg,
+                "RemoveReceptors command input failed",
+                tango.ErrSeverity.ERR,
+            )
+
+        self.logger.info(msg)
         (return_code, message) = command(argin)
         return [[return_code], [message]]
 
@@ -495,7 +528,7 @@ class CbfSubarray(CspSubElementSubarray):
         dtype_out="DevVarLongStringArray",
         doc_out="(ReturnType, 'informational message')",
     )
-    @DebugIt()
+    @tango.DebugIt()
     def RemoveAllReceptors(self: CbfSubarray) -> Tuple[ResultCode, str]:
         # PROTECTED REGION ID(CbfSubarray.RemoveAllReceptors) ENABLED START #
         """
@@ -532,13 +565,28 @@ class CbfSubarray(CspSubElementSubarray):
             component_manager = self.target
             return component_manager.add_receptors(argin)
 
+        def validate_input(
+            self: CbfSubarray.AddReceptorsCommand, argin: List[str]
+        ) -> Tuple[bool, str]:
+            """
+            Validate receptor ids.
+
+            :param argin: The list of receptor IDs to add.
+
+            :return: A tuple containing a boolean indicating if the configuration
+                is valid and a string message. The message is for information
+                purpose only.
+            :rtype: (bool, str)
+            """
+            return ReceptorUtils.are_Valid_Receptor_Ids(argin)
+
     @command(
         dtype_in=("str",),
         doc_in="List of receptor IDs",
         dtype_out="DevVarLongStringArray",
         doc_out="(ReturnType, 'informational message')",
     )
-    @DebugIt()
+    @tango.DebugIt()
     def AddReceptors(
         self: CbfSubarray, argin: List[str]
     ) -> Tuple[ResultCode, str]:
@@ -553,6 +601,18 @@ class CbfSubarray(CspSubElementSubarray):
         :rtype: (ResultCode, str)
         """
         command = self.get_command_object("AddReceptors")
+
+        (valid, msg) = command.validate_input(argin)
+        if not valid:
+            self._logger.error(msg)
+            tango.Except.throw_exception(
+                "Command failed",
+                msg,
+                "AddReceptors command input failed",
+                tango.ErrSeverity.ERR,
+            )
+        self.logger.info(msg)
+
         (return_code, message) = command(argin)
         return [[return_code], [message]]
 
@@ -732,7 +792,7 @@ class CbfSubarray(CspSubElementSubarray):
         dtype_out="DevVarLongStringArray",
         doc_out="(ReturnType, 'informational message')",
     )
-    @DebugIt()
+    @tango.DebugIt()
     def ConfigureScan(self: CbfSubarray, argin: str) -> Tuple[ResultCode, str]:
         # PROTECTED REGION ID(CbfSubarray.ConfigureScan) ENABLED START #
         # """

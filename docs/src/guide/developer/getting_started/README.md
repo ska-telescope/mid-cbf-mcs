@@ -26,7 +26,7 @@ sudo chown -R <user_name>:<user_name> ~/.minikube/
 sudo chown -R <user_name>:<user_name> ~/.kube/
 ```
 
-#### 1.  Make sure minikube is up and running
+## 1.  Make sure minikube is up and running
 The following commands use the default minikube profile. If you are running the MCS on the Dell server you will need to set up your own minikube profile. A new minikube profile is needed for a new cluster, so creating minikube profiles ensures two users on the Dell server do not work on the same cluster at the same time. To view the modifications needed to run the following commands on a new minikube profile see Minikube Profiles
 
 ```
@@ -48,7 +48,7 @@ If restarting a stopped minikube; from local `ska-cicd-deploy-minikube` reposito
 run `make minikube-metallb-config` to reapply metallb configMap to determine pod
 LoadBalancer service external IP addresses.
 
-#### 2.  From the root of the project, build the application image.
+## 2.  From the root of the project, build the application image.
 ```
 cd ska-mid-cbf-mcs
 eval $(minikube docker-env)   # to use the minikube's docker environment 
@@ -72,7 +72,7 @@ kubeconfig: Configured
 docker-env: in-use
 ```
 
-#### 3.  Install the umbrella chart.
+## 3.  Install the umbrella chart.
 ```
 make k8s-install-chart        # deploy from Helm charts
 make k8s-install-chart-only   # deploy from Helm charts without updating dependencies
@@ -81,23 +81,23 @@ make k8s-install-chart-only   # deploy from Helm charts without updating depende
 kubectl; `make k8s-wait` will wait until all jobs are 'Completed' and pods are 
 'Running'.
 
-#### 4.  (Optional) Create python virtual environment to isolate project specific dependencies from your host environment.
+## 4.  (Optional) Create python virtual environment to isolate project specific dependencies from your host environment.
 ```
 virtualenv venv           # create python virtualenv 'venv'
 source venv/bin/activate  # activate venv
 ```
 
-#### 5.  Install linting and testing requirements.
+## 5.  Install linting and testing requirements.
 ```
 make requirements
 ```
 
-#### 6.  Install the MCS package in editable mode.
+## 6.  Install the MCS package in editable mode.
 ```
 pip install -e .
 ```
 
-#### 7.  Run a test.
+## 7.  Run a test.
 ```
 make k8s-test  # functional tests with an already running deployment
 make python-test  # unit tests, deployment does not need to be running
@@ -105,7 +105,7 @@ make python-test  # unit tests, deployment does not need to be running
 *Note*: add `-k` pytest flags in `setup.cfg` in the project root to limit which 
 tests are run
 
-#### 8.  Tear down the deployment.
+## 8.  Tear down the deployment.
 ```
 make k8s-uninstall-chart              # uninstall deployment from Helm charts
 deactivate                            # if in active virtualenv
@@ -115,17 +115,17 @@ minikube stop                         # stop minikube
 
 # Useful Minikube Commands
 
-### Create a minikube 
+## Create a minikube 
 ```
 minikube start 
 ```
 
-### Check the status of the cluster created for your minikube 
+## Check the status of the cluster created for your minikube 
 ```
 minikube status 
 ```
 
-### Fixing a Misconfigured Kubeconfig
+## Fixing a Misconfigured Kubeconfig
 
 If the kubeconfig is pointing to a stale minikube and is showing as `Misconfigured` 
 when checking the `minikube status`, or if the minikube's IP or port has changed, 
@@ -134,12 +134,12 @@ update the context as follows:
 minikube update-context
 ```
 
-### Delete a minikube profile
+## Delete a minikube profile
 ```
 minikube delete
 ```
 
-### Set and unset docker-env variables
+## Set and unset docker-env variables
 ```
 eval $(minikube docker-env)
 eval $(minikube docker-env --unset)
@@ -198,14 +198,14 @@ Helm charts.
 
 # Development resources
 
-### Other resources
+## Other resources
 
 See more tango device guidelines and examples in the `ska-tango-examples` 
 repository
 
-### Useful commands
+## Useful commands
 
-#### Kubernetes
+### Kubernetes
 For Kubernetes basic kubectl commands see: 
 https://kubernetes.io/docs/reference/kubectl/cheatsheet/
 

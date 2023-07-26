@@ -322,7 +322,10 @@ class TestCbfSubarray:
             assert test_proxies.subarray[sub_id].obsState == ObsState.IDLE
 
             # try adding an invalid receptor ID
-            test_proxies.subarray[sub_id].AddReceptors(invalid_receptor_id)
+            # Validation of input receptors will throw an
+            # exception if there is an invalid receptor id
+            with pytest.raises(Exception):
+                test_proxies.subarray[sub_id].AddReceptors(invalid_receptor_id)
             test_proxies.wait_timeout_obs(
                 [test_proxies.subarray[sub_id]],
                 ObsState.IDLE,

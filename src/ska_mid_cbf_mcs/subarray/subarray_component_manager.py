@@ -1691,7 +1691,7 @@ class CbfSubarrayComponentManager(
                 ]
 
             # Add the fs_sample_rate for all receptors
-            fsp["fs_sample_rates"] = self.calculate_fs_sample_rates(
+            fsp["fs_sample_rates"] = self._calculate_fs_sample_rates(
                 common_configuration["frequency_band"]
             )
 
@@ -2136,7 +2136,7 @@ class CbfSubarrayComponentManager(
 
         self._ready = configured
 
-    def calculate_fs_sample_rate(
+    def _calculate_fs_sample_rate(
         self: CbfSubarrayComponentManager, freq_band: str, receptor: str
     ) -> Dict:
         log_msg = f"Calculate fs_sample_rate for freq_band:{freq_band} and receptor {receptor}"
@@ -2175,13 +2175,13 @@ class CbfSubarrayComponentManager(
 
         return fs_sample_rate_for_band
 
-    def calculate_fs_sample_rates(
+    def _calculate_fs_sample_rates(
         self: CbfSubarrayComponentManager, freq_band: str
     ) -> List[Dict]:
         output_sample_rates = []
         for receptorId in self._receptors:
             output_sample_rates.append(
-                self.calculate_fs_sample_rate(freq_band, receptorId)
+                self._calculate_fs_sample_rate(freq_band, receptorId)
             )
 
         return output_sample_rates
