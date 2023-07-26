@@ -38,7 +38,6 @@ class TestCbfSubarray:
     Test class for TestCbfSubarray tests.
     """
 
-    @pytest.mark.skip
     def test_State(
         self: TestCbfSubarray,
         device_under_test: CbfDeviceProxy,
@@ -52,7 +51,6 @@ class TestCbfSubarray:
         """
         assert device_under_test.State() == DevState.DISABLE
 
-    @pytest.mark.skip
     def test_Status(
         self: TestCbfSubarray,
         device_under_test: CbfDeviceProxy,
@@ -66,7 +64,6 @@ class TestCbfSubarray:
         """
         assert device_under_test.Status() == "The device is in DISABLE state."
 
-    @pytest.mark.skip
     def test_adminMode(
         self: TestCbfSubarray,
         device_under_test: CbfDeviceProxy,
@@ -80,10 +77,8 @@ class TestCbfSubarray:
         """
         assert device_under_test.adminMode == AdminMode.OFFLINE
 
-    @pytest.mark.skip
-    @pytest.mark.parametrize("command", ["On", "Off"])
     def test_Power_Commands(
-        self: TestCbfSubarray, device_under_test: CbfDeviceProxy, command: str
+        self: TestCbfSubarray, device_under_test: CbfDeviceProxy
     ) -> None:
         """
         Test the On/Off Commands
@@ -98,15 +93,18 @@ class TestCbfSubarray:
 
         assert device_under_test.adminMode == AdminMode.ONLINE
 
-        assert device_under_test.State() == DevState.ON
+        # DevState should be OFF. Turn it to ON
+        assert device_under_test.State() == DevState.OFF
 
-        if command == "On":
-            expected_state = DevState.ON
-            result = device_under_test.On()
-        elif command == "Off":
-            expected_state = DevState.OFF
-            result = device_under_test.Off()
+        # test ON command
+        expected_state = DevState.ON
+        result = device_under_test.On()
+        assert result[0][0] == ResultCode.OK
+        assert device_under_test.State() == expected_state
 
+        # test OFF command
+        expected_state = DevState.OFF
+        result = device_under_test.Off()
         assert result[0][0] == ResultCode.OK
         assert device_under_test.State() == expected_state
 
@@ -414,14 +412,21 @@ class TestCbfSubarray:
 
         assert device_under_test.obsState == ObsState.READY
 
-    @pytest.mark.skip
     @pytest.mark.parametrize(
         "config_file_name, \
         scan_file_name, \
         receptor_ids",
         [
-            ("ConfigureScan_basic.json", "Scan1_basic.json", [1, 3, 4, 2]),
-            ("Configure_TM-CSP_v2.json", "Scan2_basic.json", [4, 1, 2]),
+            (
+                "ConfigureScan_basic.json",
+                "Scan1_basic.json",
+                ["SKA001", "SKA063", "SKA100", "SKA036"],
+            ),
+            (
+                "Configure_TM-CSP_v2.json",
+                "Scan2_basic.json",
+                ["SKA100", "SKA001", "SKA036"],
+            ),
         ],
     )
     def test_Scan(
@@ -437,7 +442,11 @@ class TestCbfSubarray:
         self.test_ConfigureScan_basic(
             device_under_test, config_file_name, receptor_ids
         )
+
+        # scan command is only allowed in op state ON
+        device_under_test.On()
         sleep(CONST_WAIT_TIME)
+        assert device_under_test.State() == DevState.ON
 
         # send the Scan command
         f = open(data_file_path + scan_file_name)
@@ -446,7 +455,6 @@ class TestCbfSubarray:
 
         assert device_under_test.obsState == ObsState.SCANNING
 
-    @pytest.mark.skip
     @pytest.mark.parametrize(
         "config_file_name, \
         scan_file_name, \
@@ -455,16 +463,15 @@ class TestCbfSubarray:
             (
                 "ConfigureScan_basic.json",
                 "Scan1_basic.json",
-                [1, 3, 4, 2],
+                ["SKA001", "SKA063", "SKA100", "SKA036"],
             ),
             (
                 "Configure_TM-CSP_v2.json",
                 "Scan2_basic.json",
-                [4, 1, 2],
+                ["SKA100", "SKA001", "SKA036"],
             ),
         ],
     )
-    @pytest.mark.skip
     def test_EndScan(
         self: TestCbfSubarray,
         device_under_test: CbfDeviceProxy,
@@ -484,7 +491,6 @@ class TestCbfSubarray:
 
         assert device_under_test.obsState == ObsState.READY
 
-    @pytest.mark.skip
     @pytest.mark.parametrize(
         "config_file_name, \
         scan_file_name, \
@@ -493,16 +499,15 @@ class TestCbfSubarray:
             (
                 "ConfigureScan_basic.json",
                 "Scan1_basic.json",
-                [1, 3, 4, 2],
+                ["SKA001", "SKA063", "SKA100", "SKA036"],
             ),
             (
                 "Configure_TM-CSP_v2.json",
                 "Scan2_basic.json",
-                [4, 1, 2],
+                ["SKA100", "SKA001", "SKA036"],
             ),
         ],
     )
-    @pytest.mark.skip
     def test_Abort(
         self: TestCbfSubarray,
         device_under_test: CbfDeviceProxy,
@@ -522,7 +527,6 @@ class TestCbfSubarray:
 
         assert device_under_test.obsState == ObsState.ABORTED
 
-    @pytest.mark.skip
     @pytest.mark.parametrize(
         "config_file_name, \
         scan_file_name, \
@@ -531,17 +535,16 @@ class TestCbfSubarray:
             (
                 "ConfigureScan_basic.json",
                 "Scan1_basic.json",
-                [1, 3, 4, 2],
+                ["SKA001", "SKA063", "SKA100", "SKA036"],
             ),
             (
                 "Configure_TM-CSP_v2.json",
                 "Scan2_basic.json",
-                [4, 1, 2],
+                ["SKA100", "SKA001", "SKA036"],
             ),
         ],
     )
-    @pytest.mark.skip
-    def test_Reset(
+    def test_ObsReset(
         self: TestCbfSubarray,
         device_under_test: CbfDeviceProxy,
         config_file_name: str,
@@ -555,12 +558,11 @@ class TestCbfSubarray:
             device_under_test, config_file_name, scan_file_name, receptor_ids
         )
 
-        # send the Reset command
+        # send the ObsReset command
         device_under_test.ObsReset()
 
         assert device_under_test.obsState == ObsState.IDLE
 
-    @pytest.mark.skip
     @pytest.mark.parametrize(
         "config_file_name, \
         scan_file_name, \
@@ -569,16 +571,15 @@ class TestCbfSubarray:
             (
                 "ConfigureScan_basic.json",
                 "Scan1_basic.json",
-                [1, 3, 4, 2],
+                ["SKA001", "SKA063", "SKA100", "SKA036"],
             ),
             (
                 "Configure_TM-CSP_v2.json",
                 "Scan2_basic.json",
-                [4, 1, 2],
+                ["SKA100", "SKA001", "SKA036"],
             ),
         ],
     )
-    @pytest.mark.skip
     def test_Restart(
         self: TestCbfSubarray,
         device_under_test: CbfDeviceProxy,
@@ -593,7 +594,7 @@ class TestCbfSubarray:
             device_under_test, config_file_name, scan_file_name, receptor_ids
         )
 
-        # send the Reset command
+        # send the Restart command
         device_under_test.Restart()
 
         assert device_under_test.obsState == ObsState.EMPTY
@@ -604,24 +605,28 @@ class TestCbfSubarray:
         [
             (
                 "ConfigureScan_basic.json",
-                [1, 3, 4, 2],
+                ["SKA001", "SKA063", "SKA100", "SKA036"],
             ),
             (
                 "Configure_TM-CSP_v2.json",
-                [4, 1, 2],
+                ["SKA100", "SKA001", "SKA036"],
             ),
         ],
     )
-    @pytest.mark.skip
     def test_End(
         self: TestCbfSubarray,
         device_under_test: CbfDeviceProxy,
         config_file_name: str,
         receptor_ids: List[int],
     ) -> None:
+        # End the scan block.
         self.test_ConfigureScan_basic(
             device_under_test, config_file_name, receptor_ids
         )
+
+        # end command is only permitted in Op state ON
+        device_under_test.On()
+        assert device_under_test.State() == DevState.ON
 
         device_under_test.End()
 
