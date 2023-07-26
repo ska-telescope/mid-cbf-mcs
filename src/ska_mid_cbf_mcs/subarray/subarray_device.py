@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import copy
 import json
-import re
 from typing import List, Optional, Tuple
 
 # tango imported to enable use of @tango.DebugIt. If
@@ -29,6 +28,7 @@ from tango import AttrWriteType
 from tango.server import attribute, command, device_property, run
 
 from ska_mid_cbf_mcs.commons.global_enum import const
+from ska_mid_cbf_mcs.commons.receptor_utils import ReceptorUtils
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
 
 # SKA imports
@@ -466,7 +466,7 @@ class CbfSubarray(CspSubElementSubarray):
                 purpose only.
             :rtype: (bool, str)
             """
-            return CbfSubarray._is_Valid_Receptor_Id(argin)
+            return ReceptorUtils.are_Valid_Receptor_Ids(argin)
 
     @command(
         dtype_in=("str",),
@@ -578,26 +578,7 @@ class CbfSubarray(CspSubElementSubarray):
                 purpose only.
             :rtype: (bool, str)
             """
-            return CbfSubarray._is_Valid_Receptor_Id(argin)
-
-    @staticmethod
-    def _is_Valid_Receptor_Id(argin: List[str]):
-        # The receptor ID must be in the range of SKA[001-133] or MKT[000-063]
-        pattern = "^(SKA(00[1-9]|0[1-9][0-9]|1[0-2][0-9]|13[0-3]))$|^(MKT(0[0-5][0-9]|06[0-3]))$"
-        for i in argin:
-            if re.match(pattern, i):
-                continue
-            else:
-                # receptor ID is not a valid ID
-                msg = (
-                    f"Receptor ID {i} is not valid. It must be SKA001-SKA133"
-                    " or MKT000-MKT063. Spaces before or after the ID are not"
-                    " accepted."
-                )
-                print(msg)
-                return (False, msg)
-        # All the receptor IDs are valid.
-        return (True, "Receptor IDs are valid.")
+            return ReceptorUtils.are_Valid_Receptor_Ids(argin)
 
     @command(
         dtype_in=("str",),

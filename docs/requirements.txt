@@ -2,4 +2,4 @@ m2r2==0.3.2
 sphinxcontrib-mermaid
 sphinxcontrib-plantuml
 sphinx_rtd_theme
-myST_parser
+myst_parser
