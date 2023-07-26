@@ -166,7 +166,7 @@ class ReceptorUtils:
                 return (False, msg)
         # All the receptor IDs are valid.
         return (True, "Receptor IDs are valid.")
-    
+
     @staticmethod
     def is_Valid_Receptor_Id(argin: str) -> Tuple[bool, str]:
         """
