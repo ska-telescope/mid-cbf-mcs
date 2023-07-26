@@ -72,7 +72,7 @@ CbfSubarray Tango Commands
 | Restart              | None          | (ResultCode, str)  | | Reset scan configuration and            |
 |                      |               |                    | | remove receptors                        |
 +----------------------+---------------+--------------------+-------------------------------------------+
-| Scan                 | None          | (ResultCode, str)  | Start scanning                            |
+| Scan                 | JSON str*     | (ResultCode, str)  | Start scanning                            |
 +----------------------+---------------+--------------------+-------------------------------------------+
    
 * Schema for JSON string defined in the `Telescope Model - Mid.CBF schemas <https://developer.skao.int/projects/ska-telmodel/en/latest/schemas/ska-mid-cbf.html>`_
