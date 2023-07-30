@@ -619,7 +619,8 @@ class Vcc(CspSubElementObsDevice):
 
             device._configuring_from_idle = False
 
-            device.write_simulationMode(True)
+            # Setting initial simulation mode to True
+            device.write_simulationMode(SimulationMode.TRUE)
 
             device.set_change_event("subarrayMembership", True, True)
 

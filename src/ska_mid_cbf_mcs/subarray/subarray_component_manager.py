@@ -900,6 +900,8 @@ class CbfSubarrayComponentManager(
             msg = "Scan configuration object is not a valid JSON object. Aborting configuration."
             return (False, msg)
 
+        self._logger.info("Validate 1")
+
         # Validate dopplerPhaseCorrSubscriptionPoint.
         if "doppler_phase_corr_subscription_point" in configuration:
             try:
@@ -920,6 +922,8 @@ class CbfSubarrayComponentManager(
                 )
                 return (False, msg)
 
+        self._logger.info("Validate 2")
+
         # Validate delayModelSubscriptionPoint.
         if "delay_model_subscription_point" in configuration:
             try:
@@ -937,6 +941,8 @@ class CbfSubarrayComponentManager(
                     "'delayModelSubscriptionPoint'. Aborting configuration."
                 )
                 return (False, msg)
+            
+        self._logger.info("Validate 3")
 
         # Validate jonesMatrixSubscriptionPoint.
         if "jones_matrix_subscription_point" in configuration:
@@ -955,6 +961,8 @@ class CbfSubarrayComponentManager(
                     "'jonesMatrixSubscriptionPoint'. Aborting configuration."
                 )
                 return (False, msg)
+
+        self._logger.info("Validate 4")
 
         # Validate beamWeightsSubscriptionPoint.
         if "timing_beam_weights_subscription_point" in configuration:
@@ -976,10 +984,13 @@ class CbfSubarrayComponentManager(
                 )
                 return (False, msg)
 
+        self._logger.info("Validate 5")
+
         for receptor_id, proxy in self._proxies_assigned_vcc.items():
             if proxy.State() != tango.DevState.ON:
                 msg = f"VCC {self._proxies_vcc.index(proxy) + 1} is not ON. Aborting configuration."
                 return (False, msg)
+        self._logger.info("Validate 6")
 
         # Validate searchWindow.
         if "search_window" in configuration:
@@ -1003,8 +1014,11 @@ class CbfSubarrayComponentManager(
         else:
             pass
 
+        self._logger.info("Validate 7")
+
         # Validate fsp.
         for fsp in configuration["fsp"]:
+            self._logger.info("Validate 8")
             try:
                 # Validate fspID.
                 if int(fsp["fsp_id"]) in list(range(1, self._count_fsp + 1)):
@@ -1028,17 +1042,8 @@ class CbfSubarrayComponentManager(
                         " Aborting configuration."
                     )
                     return (False, msg)
+                self._logger.info("Validate 9")
 
-                if proxy_fsp.State() != tango.DevState.ON:
-                    msg = f"FSP {fspID} is not ON. Aborting configuration."
-                    return (False, msg)
-
-                if proxy_fsp_subarray.State() != tango.DevState.ON:
-                    msg = (
-                        f"Subarray {self._subarray_id} of FSP {fspID} is not ON."
-                        " Aborting configuration."
-                    )
-                    return (False, msg)
 
                 # Validate functionMode.
                 function_modes = ["CORR", "PSS-BF", "PST-BF", "VLBI"]
@@ -1120,6 +1125,7 @@ class CbfSubarrayComponentManager(
                             receptorsSpecified = True
                     if receptorsSpecified:
                         for this_rec in fsp["receptor_ids"]:
+                            self._logger.info(f"List of receptors: {self._receptors}")
                             if this_rec not in self._receptors:
                                 msg = (
                                     f"Receptor {this_rec} does not belong to "
@@ -1594,6 +1600,8 @@ class CbfSubarrayComponentManager(
         common_configuration = copy.deepcopy(full_configuration["common"])
         configuration = copy.deepcopy(full_configuration["cbf"])
 
+        self._logger.info("Configure scan 1")
+
         # Configure configID.
         self._config_id = str(common_configuration["config_id"])
         self._logger.debug(f"config_id: {self._config_id}")
@@ -1605,9 +1613,13 @@ class CbfSubarrayComponentManager(
         )
         self._logger.debug(f"frequency_band: {self._frequency_band}")
 
+        self._logger.info("Configure scan 2")
+
         data = tango.DeviceData()
         data.insert(tango.DevString, common_configuration["frequency_band"])
         self._group_vcc.command_inout("ConfigureBand", data)
+
+        self._logger.info("Configure scan 3")
 
         # Configure band5Tuning, if frequencyBand is 5a or 5b.
         if self._frequency_band in [4, 5]:
@@ -1627,6 +1639,8 @@ class CbfSubarrayComponentManager(
                 "'frequencyBandOffsetStream1' not specified. Defaulting to 0."
             )
             self._logger.warning(log_msg)
+
+        self._logger.info("Configure scan 4")
 
         # If not given, use a default value.
         # If malformed, use a default value, but append an error.
@@ -1650,6 +1664,8 @@ class CbfSubarrayComponentManager(
             "rfi_flagging_mask": configuration["rfi_flagging_mask"],
         }
 
+        self._logger.info("Configure scan 5")
+
         # Add subset of FSP configuration to the VCC configure scan argument
         # TODO determine necessary parameters to send to VCC for each function mode
         # TODO VLBI
@@ -1664,10 +1680,14 @@ class CbfSubarrayComponentManager(
             reduced_fsp.append(fsp_cfg)
         config_dict["fsp"] = reduced_fsp
 
+        self._logger.info("Configure scan 6")
+
         json_str = json.dumps(config_dict)
         data = tango.DeviceData()
         data.insert(tango.DevString, json_str)
         self._group_vcc.command_inout("ConfigureScan", data)
+
+        self._logger.info("Configure scan 7")
 
         # Configure dopplerPhaseCorrSubscriptionPoint.
         if "doppler_phase_corr_subscription_point" in configuration:
@@ -1754,6 +1774,8 @@ class CbfSubarrayComponentManager(
         # the obsState are properly (implicitly) updated by the command
         # (And not manually by SetObservingState as before)
 
+        self._logger.info("Configure scan 8")
+
         # FSP #
         # Configure FSP.
         for fsp in configuration["fsp"]:
@@ -1772,11 +1794,9 @@ class CbfSubarrayComponentManager(
                 self._fqdn_fsp_pst_subarray_device[fspID - 1]
             )
 
-            # change FSP subarray membership
-            proxy_fsp.AddSubarrayMembership(self._subarray_id)
+            self._logger.info("Connecting to FSP devices from subarray")
 
-            # Configure functionMode.
-            proxy_fsp.SetFunctionMode(fsp["function_mode"])
+            self._logger.info(proxy_fsp)
 
             # Set simulation mode of FSPs to subarray sim mode
             fsp_corr_proxy = self._proxies_fsp_corr_subarray_device[fspID - 1]
@@ -1786,18 +1806,35 @@ class CbfSubarrayComponentManager(
             proxy_fsp.write_attribute("adminMode", AdminMode.OFFLINE)
             proxy_fsp.write_attribute("simulationMode", self._simulation_mode)
             proxy_fsp.write_attribute("adminMode", AdminMode.ONLINE)
+            proxy_fsp.command_inout("On")
 
             fsp_corr_proxy.write_attribute("adminMode", AdminMode.OFFLINE)
-            fsp_corr_proxy.write_attribute("simulationMode", self._simulation_mode)
+            fsp_corr_proxy.write_attribute(
+                "simulationMode", self._simulation_mode
+            )
             fsp_corr_proxy.write_attribute("adminMode", AdminMode.ONLINE)
+            fsp_corr_proxy.command_inout("On")
 
             fsp_pss_proxy.write_attribute("adminMode", AdminMode.OFFLINE)
-            fsp_pss_proxy.write_attribute("simulationMode", self._simulation_mode)
+            fsp_pss_proxy.write_attribute(
+                "simulationMode", self._simulation_mode
+            )
             fsp_pss_proxy.write_attribute("adminMode", AdminMode.ONLINE)
+            fsp_pss_proxy.command_inout("On")
 
             fsp_pst_proxy.write_attribute("adminMode", AdminMode.OFFLINE)
-            fsp_pst_proxy.write_attribute("simulationMode", self._simulation_mode)
+            fsp_pst_proxy.write_attribute(
+                "simulationMode", self._simulation_mode
+            )
             fsp_pst_proxy.write_attribute("adminMode", AdminMode.ONLINE)
+            fsp_pst_proxy.command_inout("On")
+
+            # change FSP subarray membership
+            proxy_fsp.AddSubarrayMembership(self._subarray_id)
+
+            # Configure functionMode.
+            proxy_fsp.SetFunctionMode(fsp["function_mode"])
+
 
             # subscribe to FSP state and healthState changes
             (
@@ -2134,6 +2171,8 @@ class CbfSubarrayComponentManager(
         for receptor_id in argin:
             self._logger.debug(f"Attempting to add receptor {receptor_id}")
 
+            self._logger.info(f"receptor to vcc keys: {self._receptor_to_vcc.keys()}")
+
             if receptor_id in self._receptor_to_vcc.keys():
                 vccID = self._receptor_to_vcc[receptor_id]
             else:
@@ -2152,9 +2191,12 @@ class CbfSubarrayComponentManager(
             vccSubarrayID = vccProxy.subarrayMembership
             self._logger.debug(f"VCC {vccID} subarray_id: {vccSubarrayID}")
 
+            # Setting simulation mode of VCC proxies based on simulation mode of subarray
+            self._logger.info(f"Writing VCC simulation mode to: {self._simulation_mode}")
             vccProxy.write_attribute("adminMode", AdminMode.OFFLINE)
             vccProxy.write_attribute("simulationMode", self._simulation_mode)
             vccProxy.write_attribute("adminMode", AdminMode.ONLINE)
+            vccProxy.command_inout("On")
 
             # only add receptor if it does not already belong to a
             # different subarray

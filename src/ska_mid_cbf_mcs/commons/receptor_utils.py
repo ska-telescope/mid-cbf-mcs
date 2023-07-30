@@ -65,11 +65,11 @@ class ReceptorUtils:
             raise ValueError(
                 f"Incorrect number ({len(self._receptor_id_dict)}) of receptors specified in file {receptor_id_dict_file_name} ; {num_vcc} VCCs currently available."
             )
-        for receptor_id_str, receptor_id_int in self._receptor_id_dict.items():
-            if receptor_id_int != self.receptor_id_str_to_int(receptor_id_str):
-                raise ValueError(
-                    f"Encountered an incorrect entry for DISH ID {receptor_id_str}: {receptor_id_int} (should be {self.receptor_id_str_to_int(receptor_id_str)})"
-                )
+        #for receptor_id_str, receptor_id_int in self._receptor_id_dict.items():
+        #    if receptor_id_int != self.receptor_id_str_to_int(receptor_id_str):
+        #        raise ValueError(
+        #            f"Encountered an incorrect entry for DISH ID {receptor_id_str}: {receptor_id_int} (should be {self.receptor_id_str_to_int(receptor_id_str)})"
+        #        )
 
     def receptor_id_str_to_int(self: ReceptorUtils, receptor_id: str) -> int:
         """

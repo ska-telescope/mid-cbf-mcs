@@ -284,9 +284,15 @@ class TalonLRU(SKABaseDevice):
             lru_simulation_mode = device.read_simulationMode()
 
             # TO DO: REMOVE THIS ONCE DATA MODEL REDESIGN KICKS IN. WILL BE PART OF CBFCONTROLLER
-            device.component_manager._proxy_power_switch1.write_attribute("adminMode", 1)
-            device.component_manager._proxy_power_switch1.write_attribute("simulationMode", lru_simulation_mode)
-            device.component_manager._proxy_power_switch1.write_attribute("adminMode", 0)
+            device.component_manager._proxy_power_switch1.write_attribute(
+                "adminMode", 1
+            )
+            device.component_manager._proxy_power_switch1.write_attribute(
+                "simulationMode", lru_simulation_mode
+            )
+            device.component_manager._proxy_power_switch1.write_attribute(
+                "adminMode", 0
+            )
 
             with device._power_switch_lock:
                 # Check that this command is still allowed since the

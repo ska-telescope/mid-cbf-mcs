@@ -261,7 +261,9 @@ class FspCorrSubarray(CspSubElementObsDevice):
 
             device = self.target
             device._configuring_from_idle = False
-            device.write_simulationMode(True)
+
+            # Setting initial simulation mode to True
+            device.write_simulationMode(SimulationMode.TRUE)
 
             self.logger.debug("Entering InitCommand()")
 
@@ -541,6 +543,7 @@ class FspCorrSubarray(CspSubElementObsDevice):
 
         :param value: SimulationMode
         """
+        self.logger.info(f"Writing simulation mode: {value}")
         super().write_simulationMode(value)
         self.component_manager.simulation_mode = value
 

@@ -205,6 +205,13 @@ class CbfSubarray(CspSubElementSubarray):
         doc="Frequency offset (delta f)",
     )
 
+    simulationMode = attribute(
+        dtype=SimulationMode,
+        access=AttrWriteType.READ_WRITE,
+        label="Simulation Mode",
+        doc="Simulation Mode",
+    )
+
     # ---------------
     # General methods
     # ---------------
@@ -406,16 +413,19 @@ class CbfSubarray(CspSubElementSubarray):
     # Attributes methods
     # ------------------
 
-    def write_simulationMode(
-        self: CbfSubarray, value: SimulationMode
-    ) -> None:
+    def write_simulationMode(self: CbfSubarray, value: SimulationMode) -> None:
         """
         Set the Simulation Mode of the device.
 
         :param value: SimulationMode
         """
+        self.logger.info(f"Writing simulation mode of {value}")
         super().write_simulationMode(value)
         self.component_manager._simulation_mode = value
+    
+    def read_simulationMode(self: CbfSubarray) -> SimulationMode:
+        self.logger.info(f"Reading Simulation Mode of value {self.component_manager._simulation_mode}")
+        return self.component_manager._simulation_mode
 
     def read_frequencyBand(self: CbfSubarray) -> int:
         # PROTECTED REGION ID(CbfSubarray.frequencyBand_read) ENABLED START #
