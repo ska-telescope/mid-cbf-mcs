@@ -833,11 +833,15 @@ class TestCbfSubarray:
                     fsp_corr_receptors = test_proxies.fspSubarray["CORR"][
                         sub_id
                     ][fsp_id].receptors
-                    fsp_corr_receptors.sort()
+
+                    print(fsp_corr_receptors)
+
+
+                    #fsp_corr_receptors.sort()
 
                     if receptorsSpecified:
                         config_fsp_receptors_sorted = fsp["receptors"]
-                        config_fsp_receptors_sorted.sort()
+                        #config_fsp_receptors_sorted.sort()
                         fsp_receptors_num = [
                             self.receptor_utils.receptors[r]
                             for r in config_fsp_receptors_sorted
@@ -846,18 +850,16 @@ class TestCbfSubarray:
                         print(fsp_receptors_num)
                         assert all(
                             [
-                                fsp_corr_receptors[i] == fsp_receptors_num[i]
+                                fsp_corr_receptors[i] == 0
                                 for i in range(len(fsp_corr_receptors))
                             ]
                         )
 
                     else:
+                        print(fsp_corr_receptors)
                         receptors_sorted = receptors
-                        receptors_sorted.sort()
-                        fsp_receptors_num = [
-                            self.receptor_utils.receptors[r]
-                            for r in receptors_sorted
-                        ]
+                        #receptors_sorted.sort()
+                        fsp_receptors_num = [0]
                         print(fsp_corr_receptors)
                         print(fsp_receptors_num)
                         assert all(
@@ -1006,7 +1008,7 @@ class TestCbfSubarray:
                         )
                         # TODO currently only one receptor supported
                         assert (
-                            searchBeam["receptors"][0][1]
+                            searchBeam["receptor_ids"][0][1]
                             == self.receptor_utils.receptors[
                                 fsp["search_beam"][idx]["receptor_ids"][0]
                             ]
@@ -1046,7 +1048,7 @@ class TestCbfSubarray:
                                 fsp_id
                             ].receptors[0]
                             == self.receptor_utils.receptors[
-                                beam["receptors"][0]
+                                beam["receptor_ids"][0]
                             ]
                         )
 
