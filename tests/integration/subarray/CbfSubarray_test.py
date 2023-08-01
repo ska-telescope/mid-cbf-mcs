@@ -834,7 +834,6 @@ class TestCbfSubarray:
                         sub_id
                     ][fsp_id].receptors
 
-
                     if receptorsSpecified:
                         config_fsp_receptors_sorted = fsp["receptors"]
                         fsp_receptors_num = [
