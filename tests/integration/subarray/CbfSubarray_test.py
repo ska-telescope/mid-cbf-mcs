@@ -834,19 +834,13 @@ class TestCbfSubarray:
                         sub_id
                     ][fsp_id].receptors
 
-                    print(fsp_corr_receptors)
-
-                    # fsp_corr_receptors.sort()
 
                     if receptorsSpecified:
                         config_fsp_receptors_sorted = fsp["receptors"]
-                        # config_fsp_receptors_sorted.sort()
                         fsp_receptors_num = [
                             self.receptor_utils.receptors[r]
                             for r in config_fsp_receptors_sorted
                         ]
-                        print(fsp_corr_receptors)
-                        print(fsp_receptors_num)
                         assert all(
                             [
                                 fsp_corr_receptors[i] == 0
@@ -855,12 +849,7 @@ class TestCbfSubarray:
                         )
 
                     else:
-                        print(fsp_corr_receptors)
-                        # receptors_sorted = receptors
-                        # receptors_sorted.sort()
                         fsp_receptors_num = [0]
-                        print(fsp_corr_receptors)
-                        print(fsp_receptors_num)
                         assert all(
                             [
                                 fsp_corr_receptors[i] == fsp_receptors_num[i]
