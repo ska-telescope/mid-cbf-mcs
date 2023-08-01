@@ -1003,11 +1003,11 @@ class CbfSubarrayComponentManager(
                     # configuration at all or the list
                     # of receptors may be empty
                     receptorsSpecified = False
-                    if "receptor_ids" in fsp:
-                        if fsp["receptor_ids"] != []:
+                    if "receptors" in fsp:
+                        if fsp["receptors"] != []:
                             receptorsSpecified = True
                     if receptorsSpecified:
-                        for this_rec in fsp["receptor_ids"]:
+                        for this_rec in fsp["receptors"]:
                             if this_rec not in self._receptors:
                                 msg = (
                                     f"Receptor {this_rec} does not belong to "
@@ -1683,11 +1683,17 @@ class CbfSubarrayComponentManager(
             # Parameter named "corr_receptor_ids" used by HPS contains the
             # subset of the subarray receptors for which the correlation results
             # are requested to be used in Mid.CBF output products (visibilities)
+
+            # CIP-1724 Overriding the subarray_receptor_id value to 0 until design is determined to understand
+            # where it should come from and what it should be set to. This value is being used for the
+            # receptor lane at the moment by the hps fsp app
+
             fsp["subarray_receptor_ids"] = self._receptors.copy()
             for i, receptor in enumerate(fsp["subarray_receptor_ids"]):
                 fsp["subarray_receptor_ids"][i] = [
                     receptor,
-                    self._receptor_utils.receptors[receptor],
+                    0
+                    #self._receptor_utils.receptors[receptor],
                 ]
 
             # Add the fs_sample_rate for all receptors
@@ -1700,21 +1706,26 @@ class CbfSubarrayComponentManager(
                 # configuration at all or the list
                 # of receptors may be empty
                 receptorsSpecified = False
-                if "receptor_ids" in fsp:
-                    if fsp["receptor_ids"] != []:
+                if "receptors" in fsp:
+                    if fsp["receptors"] != []:
                         receptorsSpecified = True
 
                 if not receptorsSpecified:
                     # In this case by the ICD, all subarray allocated resources should be used.
-                    fsp["receptor_ids"] = self._receptors.copy()
+                    fsp["receptors"] = self._receptors.copy()
 
                 # receptor IDs to pair of str and int for FSP level
+
+                # CIP-1724 Overriding the corr_receptor_id value to 0 until design is determined to understand
+                # where it should come from and what it should be set to. This value is being used for the 
+                # receptor lane at the moment by the hps fsp app
                 fsp["corr_receptor_ids"] = []
-                for i, receptor in enumerate(fsp["receptor_ids"]):
+                for i, receptor in enumerate(fsp["receptors"]):
                     fsp["corr_receptor_ids"].append(
                         [
                             receptor,
-                            self._receptor_utils.receptors[receptor],
+                            0,
+                            # self._receptor_utils.receptors[receptor],
                         ]
                     )
 
