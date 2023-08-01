@@ -1692,8 +1692,7 @@ class CbfSubarrayComponentManager(
             for i, receptor in enumerate(fsp["subarray_receptor_ids"]):
                 fsp["subarray_receptor_ids"][i] = [
                     receptor,
-                    0
-                    # self._receptor_utils.receptors[receptor],
+                    self._receptor_utils.receptors[receptor],
                 ]
 
             # Add the fs_sample_rate for all receptors

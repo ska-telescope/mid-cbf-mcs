@@ -842,6 +842,8 @@ class TestCbfSubarray:
                             self.receptor_utils.receptors[r]
                             for r in config_fsp_receptors_sorted
                         ]
+                        print(fsp_corr_receptors)
+                        print(fsp_receptors_num)
                         assert all(
                             [
                                 fsp_corr_receptors[i] == fsp_receptors_num[i]
@@ -856,6 +858,8 @@ class TestCbfSubarray:
                             self.receptor_utils.receptors[r]
                             for r in receptors_sorted
                         ]
+                        print(fsp_corr_receptors)
+                        print(fsp_receptors_num)
                         assert all(
                             [
                                 fsp_corr_receptors[i] == fsp_receptors_num[i]
