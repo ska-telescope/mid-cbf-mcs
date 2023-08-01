@@ -109,7 +109,7 @@ class TestCbfSubarray:
         assert device_under_test.State() == expected_state
 
     @pytest.mark.parametrize(
-        "receptor_ids, \
+        "receptors, \
         receptors_to_remove",
         [
             (
@@ -122,7 +122,7 @@ class TestCbfSubarray:
     def test_Add_Remove_Receptors_valid(
         self: TestCbfSubarray,
         device_under_test: CbfDeviceProxy,
-        receptor_ids: List[str],
+        receptors: List[str],
         receptors_to_remove: List[str],
     ) -> None:
         """
@@ -142,36 +142,34 @@ class TestCbfSubarray:
 
         # add all except last receptor
         assert device_under_test.obsState == ObsState.EMPTY
-        device_under_test.AddReceptors(receptor_ids[:-1])
+        device_under_test.AddReceptors(receptors[:-1])
 
         # list of receptors from device_under_test is returned as a tuple
         # so need to cast to list
         assert sorted(list(device_under_test.receptors)) == sorted(
-            receptor_ids[:-1]
+            receptors[:-1]
         )
         assert device_under_test.obsState == ObsState.IDLE
 
         # add the last receptor
-        device_under_test.AddReceptors([receptor_ids[-1]])
+        device_under_test.AddReceptors([receptors[-1]])
 
-        assert sorted(list(device_under_test.receptors)) == sorted(
-            receptor_ids
-        )
+        assert sorted(list(device_under_test.receptors)) == sorted(receptors)
         assert device_under_test.obsState == ObsState.IDLE
 
         # remove all except last receptor
         device_under_test.RemoveReceptors(receptors_to_remove)
 
-        receptor_ids_after_remove = [
-            r for r in receptor_ids if r not in receptors_to_remove
+        receptors_after_remove = [
+            r for r in receptors if r not in receptors_to_remove
         ]
         assert sorted(list(device_under_test.receptors)) == sorted(
-            receptor_ids_after_remove
+            receptors_after_remove
         )
         assert device_under_test.obsState == ObsState.IDLE
 
         # remove remaining receptor
-        device_under_test.RemoveReceptors(receptor_ids_after_remove)
+        device_under_test.RemoveReceptors(receptors_after_remove)
 
         assert list(device_under_test.receptors) == []
 
@@ -182,7 +180,7 @@ class TestCbfSubarray:
         assert device_under_test.obsState == ObsState.EMPTY
 
     @pytest.mark.parametrize(
-        "receptor_ids",
+        "receptors",
         [
             (["SKA001", "SKA063", "SKA100", "SKA036"]),
             (["SKA036", "SKA001", "SKA063"]),
@@ -191,7 +189,7 @@ class TestCbfSubarray:
     def test_RemoveAllReceptors_valid(
         self: TestCbfSubarray,
         device_under_test: CbfDeviceProxy,
-        receptor_ids: List[str],
+        receptors: List[str],
     ) -> None:
         """
         Test valid use of RemoveAllReceptors command.
@@ -207,7 +205,7 @@ class TestCbfSubarray:
         device_under_test.On()
         assert device_under_test.State() == DevState.ON
         assert device_under_test.obsState == ObsState.EMPTY
-        device_under_test.AddReceptors(receptor_ids)
+        device_under_test.AddReceptors(receptors)
 
         assert device_under_test.obsState == ObsState.IDLE
 
@@ -223,7 +221,7 @@ class TestCbfSubarray:
         assert device_under_test.obsState == ObsState.EMPTY
 
     @pytest.mark.parametrize(
-        "receptor_ids, \
+        "receptors, \
         invalid_receptor_id",
         [
             (["SKA100", "SKA063"], ["SKA200"]),
@@ -233,7 +231,7 @@ class TestCbfSubarray:
     def test_AddReceptors_invalid(
         self: TestCbfSubarray,
         device_under_test: CbfDeviceProxy,
-        receptor_ids: List[str],
+        receptors: List[str],
         invalid_receptor_id: List[str],
     ) -> None:
         """
@@ -250,11 +248,9 @@ class TestCbfSubarray:
 
         # add some receptors
         assert device_under_test.obsState == ObsState.EMPTY
-        device_under_test.AddReceptors(receptor_ids)
+        device_under_test.AddReceptors(receptors)
 
-        assert sorted(list(device_under_test.receptors)) == sorted(
-            receptor_ids
-        )
+        assert sorted(list(device_under_test.receptors)) == sorted(receptors)
         assert device_under_test.obsState == ObsState.IDLE
 
         # Validation of input receptors will throw an
@@ -262,12 +258,10 @@ class TestCbfSubarray:
         with pytest.raises(Exception):
             device_under_test.AddReceptors(invalid_receptor_id)
 
-        assert sorted(list(device_under_test.receptors)) == sorted(
-            receptor_ids
-        )
+        assert sorted(list(device_under_test.receptors)) == sorted(receptors)
 
     @pytest.mark.parametrize(
-        "receptor_ids, \
+        "receptors, \
         not_assigned_receptors_to_remove",
         [
             (["SKA036", "SKA063"], ["SKA100"]),
@@ -277,7 +271,7 @@ class TestCbfSubarray:
     def test_RemoveReceptors_notAssigned(
         self: TestCbfSubarray,
         device_under_test: CbfDeviceProxy,
-        receptor_ids: List[str],
+        receptors: List[str],
         not_assigned_receptors_to_remove: List[int],
     ) -> None:
         """
@@ -293,20 +287,18 @@ class TestCbfSubarray:
         assert device_under_test.State() == DevState.ON
         # add some receptors
         assert device_under_test.obsState == ObsState.EMPTY
-        device_under_test.AddReceptors(receptor_ids)
+        device_under_test.AddReceptors(receptors)
 
         assert device_under_test.obsState == ObsState.IDLE
 
         # try removing a receptor not assigned to subarray 1
         device_under_test.RemoveReceptors(not_assigned_receptors_to_remove)
 
-        assert sorted(list(device_under_test.receptors)) == sorted(
-            receptor_ids
-        )
+        assert sorted(list(device_under_test.receptors)) == sorted(receptors)
         assert device_under_test.obsState == ObsState.IDLE
 
     @pytest.mark.parametrize(
-        "receptor_ids, \
+        "receptors, \
         invalid_receptors_to_remove",
         [
             (["SKA036", "SKA063"], ["SKA000"]),
@@ -316,7 +308,7 @@ class TestCbfSubarray:
     def test_RemoveReceptors_invalid(
         self: TestCbfSubarray,
         device_under_test: CbfDeviceProxy,
-        receptor_ids: List[str],
+        receptors: List[str],
         invalid_receptors_to_remove: List[int],
     ) -> None:
         """
@@ -332,7 +324,7 @@ class TestCbfSubarray:
         assert device_under_test.State() == DevState.ON
         # add some receptors
         assert device_under_test.obsState == ObsState.EMPTY
-        device_under_test.AddReceptors(receptor_ids)
+        device_under_test.AddReceptors(receptors)
 
         assert device_under_test.obsState == ObsState.IDLE
 
@@ -341,18 +333,16 @@ class TestCbfSubarray:
         with pytest.raises(Exception):
             device_under_test.RemoveReceptors(invalid_receptors_to_remove)
 
-        assert sorted(list(device_under_test.receptors)) == sorted(
-            receptor_ids
-        )
+        assert sorted(list(device_under_test.receptors)) == sorted(receptors)
         assert device_under_test.obsState == ObsState.IDLE
 
     @pytest.mark.parametrize(
-        "receptor_ids", [(["SKA100", "SKA036"]), (["SKA063", "SKA001"])]
+        "receptors", [(["SKA100", "SKA036"]), (["SKA063", "SKA001"])]
     )
     def test_RemoveAllReceptors_invalid(
         self: TestCbfSubarray,
         device_under_test: CbfDeviceProxy,
-        receptor_ids: List[str],
+        receptors: List[str],
     ) -> None:
         """
         Test invalid use of RemoveReceptors commands:
@@ -374,7 +364,7 @@ class TestCbfSubarray:
 
     @pytest.mark.parametrize(
         "config_file_name, \
-        receptor_ids",
+        receptors",
         [
             (
                 "ConfigureScan_basic.json",
@@ -386,7 +376,7 @@ class TestCbfSubarray:
         self: TestCbfSubarray,
         device_under_test: CbfDeviceProxy,
         config_file_name: str,
-        receptor_ids: List[str],
+        receptors: List[str],
     ) -> None:
         """
         Test a successful scan configuration
@@ -396,7 +386,7 @@ class TestCbfSubarray:
 
         assert device_under_test.State() == DevState.OFF
         assert device_under_test.obsState == ObsState.EMPTY
-        device_under_test.AddReceptors(receptor_ids)
+        device_under_test.AddReceptors(receptors)
         freq_offset_k = [0] * 197
         device_under_test.frequencyOffsetK = freq_offset_k
         freq_offset_deltaF = 1800
@@ -415,7 +405,7 @@ class TestCbfSubarray:
     @pytest.mark.parametrize(
         "config_file_name, \
         scan_file_name, \
-        receptor_ids",
+        receptors",
         [
             (
                 "ConfigureScan_basic.json",
@@ -434,13 +424,13 @@ class TestCbfSubarray:
         device_under_test: CbfDeviceProxy,
         config_file_name: str,
         scan_file_name: str,
-        receptor_ids: List[int],
+        receptors: List[int],
     ) -> None:
         """
         Test the Scan command
         """
         self.test_ConfigureScan_basic(
-            device_under_test, config_file_name, receptor_ids
+            device_under_test, config_file_name, receptors
         )
 
         # scan command is only allowed in op state ON
@@ -458,7 +448,7 @@ class TestCbfSubarray:
     @pytest.mark.parametrize(
         "config_file_name, \
         scan_file_name, \
-        receptor_ids",
+        receptors",
         [
             (
                 "ConfigureScan_basic.json",
@@ -477,13 +467,13 @@ class TestCbfSubarray:
         device_under_test: CbfDeviceProxy,
         config_file_name: str,
         scan_file_name: str,
-        receptor_ids: List[int],
+        receptors: List[int],
     ) -> None:
         """
         Test the EndScan command
         """
         self.test_Scan(
-            device_under_test, config_file_name, scan_file_name, receptor_ids
+            device_under_test, config_file_name, scan_file_name, receptors
         )
 
         # send the EndScan command
@@ -494,7 +484,7 @@ class TestCbfSubarray:
     @pytest.mark.parametrize(
         "config_file_name, \
         scan_file_name, \
-        receptor_ids",
+        receptors",
         [
             (
                 "ConfigureScan_basic.json",
@@ -513,13 +503,13 @@ class TestCbfSubarray:
         device_under_test: CbfDeviceProxy,
         config_file_name: str,
         scan_file_name: str,
-        receptor_ids: List[int],
+        receptors: List[int],
     ) -> None:
         """
         Test the Abort command
         """
         self.test_Scan(
-            device_under_test, config_file_name, scan_file_name, receptor_ids
+            device_under_test, config_file_name, scan_file_name, receptors
         )
 
         # send the Abort command
@@ -530,7 +520,7 @@ class TestCbfSubarray:
     @pytest.mark.parametrize(
         "config_file_name, \
         scan_file_name, \
-        receptor_ids",
+        receptors",
         [
             (
                 "ConfigureScan_basic.json",
@@ -549,13 +539,13 @@ class TestCbfSubarray:
         device_under_test: CbfDeviceProxy,
         config_file_name: str,
         scan_file_name: str,
-        receptor_ids: List[int],
+        receptors: List[int],
     ) -> None:
         """
         Test the ObsReset command
         """
         self.test_Abort(
-            device_under_test, config_file_name, scan_file_name, receptor_ids
+            device_under_test, config_file_name, scan_file_name, receptors
         )
 
         # send the ObsReset command
@@ -566,7 +556,7 @@ class TestCbfSubarray:
     @pytest.mark.parametrize(
         "config_file_name, \
         scan_file_name, \
-        receptor_ids",
+        receptors",
         [
             (
                 "ConfigureScan_basic.json",
@@ -585,13 +575,13 @@ class TestCbfSubarray:
         device_under_test: CbfDeviceProxy,
         config_file_name: str,
         scan_file_name: str,
-        receptor_ids: List[int],
+        receptors: List[int],
     ) -> None:
         """
         Test the Restart command
         """
         self.test_Abort(
-            device_under_test, config_file_name, scan_file_name, receptor_ids
+            device_under_test, config_file_name, scan_file_name, receptors
         )
 
         # send the Restart command
@@ -601,7 +591,7 @@ class TestCbfSubarray:
 
     @pytest.mark.parametrize(
         "config_file_name, \
-        receptor_ids",
+        receptors",
         [
             (
                 "ConfigureScan_basic.json",
@@ -617,11 +607,11 @@ class TestCbfSubarray:
         self: TestCbfSubarray,
         device_under_test: CbfDeviceProxy,
         config_file_name: str,
-        receptor_ids: List[int],
+        receptors: List[int],
     ) -> None:
         # End the scan block.
         self.test_ConfigureScan_basic(
-            device_under_test, config_file_name, receptor_ids
+            device_under_test, config_file_name, receptors
         )
 
         # end command is only permitted in Op state ON

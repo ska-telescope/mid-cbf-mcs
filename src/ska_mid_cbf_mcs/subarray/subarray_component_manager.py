@@ -1693,7 +1693,7 @@ class CbfSubarrayComponentManager(
                 fsp["subarray_receptor_ids"][i] = [
                     receptor,
                     0
-                    #self._receptor_utils.receptors[receptor],
+                    # self._receptor_utils.receptors[receptor],
                 ]
 
             # Add the fs_sample_rate for all receptors
@@ -1717,7 +1717,7 @@ class CbfSubarrayComponentManager(
                 # receptor IDs to pair of str and int for FSP level
 
                 # CIP-1724 Overriding the corr_receptor_id value to 0 until design is determined to understand
-                # where it should come from and what it should be set to. This value is being used for the 
+                # where it should come from and what it should be set to. This value is being used for the
                 # receptor lane at the moment by the hps fsp app
                 fsp["corr_receptor_ids"] = []
                 for i, receptor in enumerate(fsp["receptors"]):
