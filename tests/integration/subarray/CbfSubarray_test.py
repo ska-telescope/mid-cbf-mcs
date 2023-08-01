@@ -836,12 +836,11 @@ class TestCbfSubarray:
 
                     print(fsp_corr_receptors)
 
-
-                    #fsp_corr_receptors.sort()
+                    # fsp_corr_receptors.sort()
 
                     if receptorsSpecified:
                         config_fsp_receptors_sorted = fsp["receptors"]
-                        #config_fsp_receptors_sorted.sort()
+                        # config_fsp_receptors_sorted.sort()
                         fsp_receptors_num = [
                             self.receptor_utils.receptors[r]
                             for r in config_fsp_receptors_sorted
@@ -857,8 +856,8 @@ class TestCbfSubarray:
 
                     else:
                         print(fsp_corr_receptors)
-                        receptors_sorted = receptors
-                        #receptors_sorted.sort()
+                        # receptors_sorted = receptors
+                        # receptors_sorted.sort()
                         fsp_receptors_num = [0]
                         print(fsp_corr_receptors)
                         print(fsp_receptors_num)

@@ -1693,12 +1693,11 @@ class CbfSubarrayComponentManager(
                 fsp["subarray_receptor_ids"][i] = [
                     receptor,
                     0,
-                    #self._receptor_utils.receptors[receptor],
+                    # self._receptor_utils.receptors[receptor],
                 ]
             log_subarray_rec_ids = fsp["subarray_receptor_ids"]
 
             self._logger.info(f"subarray receptor ids: {log_subarray_rec_ids}")
-
 
             # Add the fs_sample_rate for all receptors
             fsp["fs_sample_rates"] = self._calculate_fs_sample_rates(
