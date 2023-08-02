@@ -877,10 +877,7 @@ class TestCbfSubarray:
                                 ].band5Tuning[idx]
                                 == band
                             )
-                    if (
-                        "frequency_band_offset_stream1"
-                        in configuration["cbf"]
-                    ):
+                    if "frequency_band_offset_stream1" in configuration["cbf"]:
                         assert (
                             test_proxies.fspSubarray["CORR"][sub_id][
                                 fsp_id
@@ -889,10 +886,7 @@ class TestCbfSubarray:
                                 "frequency_band_offset_stream1"
                             ]
                         )
-                    if (
-                        "frequency_band_offset_stream2"
-                        in configuration["cbf"]
-                    ):
+                    if "frequency_band_offset_stream2" in configuration["cbf"]:
                         assert (
                             test_proxies.fspSubarray["CORR"][sub_id][
                                 fsp_id
