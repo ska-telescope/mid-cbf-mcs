@@ -350,7 +350,7 @@ class FspCorrSubarray(CspSubElementObsDevice):
         :return: the frequencyBandOffsetStream1 attribute
         :rtype: int
         """
-        return self.component_manager.frequency_band_offset_stream_1
+        return self.component_manager.frequency_band_offset_stream1
         # PROTECTED REGION END #    //  FspCorrSubarray.frequencyBandOffsetStream1
 
     def read_frequencyBandOffsetStream2(self: FspCorrSubarray) -> int:
@@ -361,7 +361,7 @@ class FspCorrSubarray(CspSubElementObsDevice):
         :return: the frequencyBandOffsetStream2 attribute.
         :rtype: int
         """
-        return self.component_manager.frequency_band_offset_stream_2
+        return self.component_manager.frequency_band_offset_stream2
         # PROTECTED REGION END #    //  FspCorrSubarray.frequencyBandOffsetStream2
 
     def read_frequencySliceID(self: FspCorrSubarray) -> int:

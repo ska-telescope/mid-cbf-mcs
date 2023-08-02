@@ -703,22 +703,22 @@ class TestCbfSubarray:
                             ].band5Tuning[idx]
                             == band
                         )
-                if "frequency_band_offset_stream_1" in configuration["cbf"]:
+                if "frequency_band_offset_stream1" in configuration["cbf"]:
                     assert (
                         test_proxies.vcc[
                             test_proxies.receptor_to_vcc[r]
                         ].frequencyBandOffsetStream1
                         == configuration["cbf"][
-                            "frequency_band_offset_stream_1"
+                            "frequency_band_offset_stream1"
                         ]
                     )
-                if "frequency_band_offset_stream_2" in configuration["cbf"]:
+                if "frequency_band_offset_stream2" in configuration["cbf"]:
                     assert (
                         test_proxies.vcc[
                             test_proxies.receptor_to_vcc[r]
                         ].frequencyBandOffsetStream2
                         == configuration["cbf"][
-                            "frequency_band_offset_stream_2"
+                            "frequency_band_offset_stream2"
                         ]
                     )
                 if "rfi_flagging_mask" in configuration["cbf"]:
@@ -878,7 +878,7 @@ class TestCbfSubarray:
                                 == band
                             )
                     if (
-                        "frequency_band_offset_stream_1"
+                        "frequency_band_offset_stream1"
                         in configuration["cbf"]
                     ):
                         assert (
@@ -886,11 +886,11 @@ class TestCbfSubarray:
                                 fsp_id
                             ].frequencyBandOffsetStream1
                             == configuration["cbf"][
-                                "frequency_band_offset_stream_1"
+                                "frequency_band_offset_stream1"
                             ]
                         )
                     if (
-                        "frequency_band_offset_stream_2"
+                        "frequency_band_offset_stream2"
                         in configuration["cbf"]
                     ):
                         assert (
@@ -898,7 +898,7 @@ class TestCbfSubarray:
                                 fsp_id
                             ].frequencyBandOffsetStream2
                             == configuration["cbf"][
-                                "frequency_band_offset_stream_2"
+                                "frequency_band_offset_stream2"
                             ]
                         )
                     assert (

@@ -100,11 +100,11 @@ class TestFspCorrSubarrayComponentManager:
             fsp_corr_subarray_component_manager.stream_tuning[1],
         ] == [0, 0]
         assert (
-            fsp_corr_subarray_component_manager.frequency_band_offset_stream_1
+            fsp_corr_subarray_component_manager.frequency_band_offset_stream1
             == 0
         )
         assert (
-            fsp_corr_subarray_component_manager.frequency_band_offset_stream_2
+            fsp_corr_subarray_component_manager.frequency_band_offset_stream2
             == 0
         )
         assert fsp_corr_subarray_component_manager.frequency_slice_id == 0

@@ -77,8 +77,8 @@ class FspCorrSubarrayComponentManager(
         self._freq_band_name = ""
         self._frequency_band = 0
         self._stream_tuning = (0, 0)
-        self._frequency_band_offset_stream_1 = 0
-        self._frequency_band_offset_stream_2 = 0
+        self._frequency_band_offset_stream1 = 0
+        self._frequency_band_offset_stream2 = 0
         self._frequency_slice_id = 0
         self._bandwidth = 0
         self._bandwidth_actual = const.FREQUENCY_SLICE_BW
@@ -137,7 +137,7 @@ class FspCorrSubarrayComponentManager(
         return self._stream_tuning
 
     @property
-    def frequency_band_offset_stream_1(
+    def frequency_band_offset_stream1(
         self: FspCorrSubarrayComponentManager,
     ) -> int:
         """
@@ -146,10 +146,10 @@ class FspCorrSubarrayComponentManager(
         :return: the frequency band offset for stream 1
         :rtype: int
         """
-        return self._frequency_band_offset_stream_1
+        return self._frequency_band_offset_stream1
 
     @property
-    def frequency_band_offset_stream_2(
+    def frequency_band_offset_stream2(
         self: FspCorrSubarrayComponentManager,
     ) -> int:
         """
@@ -158,7 +158,7 @@ class FspCorrSubarrayComponentManager(
         :return: the frequency band offset for stream 2
         :rtype: int
         """
-        return self._frequency_band_offset_stream_2
+        return self._frequency_band_offset_stream2
 
     @property
     def frequency_slice_id(self: FspCorrSubarrayComponentManager) -> int:
@@ -444,11 +444,11 @@ class FspCorrSubarrayComponentManager(
 
         self._stream_tuning = configuration["band_5_tuning"]
 
-        self._frequency_band_offset_stream_1 = int(
-            configuration["frequency_band_offset_stream_1"]
+        self._frequency_band_offset_stream1 = int(
+            configuration["frequency_band_offset_stream1"]
         )
-        self._frequency_band_offset_stream_2 = int(
-            configuration["frequency_band_offset_stream_2"]
+        self._frequency_band_offset_stream2 = int(
+            configuration["frequency_band_offset_stream2"]
         )
 
         self._remove_all_receptors()
@@ -483,7 +483,7 @@ class FspCorrSubarrayComponentManager(
                             const.FREQUENCY_BAND_4_RANGE,
                         ],
                     )
-                ][self._frequency_band] + self._frequency_band_offset_stream_1
+                ][self._frequency_band] + self._frequency_band_offset_stream1
                 frequency_slice_range = (
                     frequency_band_start
                     + (self._frequency_slice_id - 1)
@@ -516,13 +516,13 @@ class FspCorrSubarrayComponentManager(
 
                 frequency_slice_range_1 = (
                     self._stream_tuning[0] * 10**9
-                    + self._frequency_band_offset_stream_1
+                    + self._frequency_band_offset_stream1
                     - const.BAND_5_STREAM_BANDWIDTH * 10**9 / 2
                     + (self._frequency_slice_id - 1)
                     * const.FREQUENCY_SLICE_BW
                     * 10**6,
                     self._stream_tuning[0] * 10**9
-                    + self._frequency_band_offset_stream_1
+                    + self._frequency_band_offset_stream1
                     - const.BAND_5_STREAM_BANDWIDTH * 10**9 / 2
                     + self._frequency_slice_id
                     * const.FREQUENCY_SLICE_BW
@@ -531,13 +531,13 @@ class FspCorrSubarrayComponentManager(
 
                 frequency_slice_range_2 = (
                     self._stream_tuning[1] * 10**9
-                    + self._frequency_band_offset_stream_2
+                    + self._frequency_band_offset_stream2
                     - const.BAND_5_STREAM_BANDWIDTH * 10**9 / 2
                     + (self._frequency_slice_id - 1)
                     * const.FREQUENCY_SLICE_BW
                     * 10**6,
                     self._stream_tuning[1] * 10**9
-                    + self._frequency_band_offset_stream_2
+                    + self._frequency_band_offset_stream2
                     - const.BAND_5_STREAM_BANDWIDTH * 10**9 / 2
                     + self._frequency_slice_id
                     * const.FREQUENCY_SLICE_BW
@@ -707,8 +707,8 @@ class FspCorrSubarrayComponentManager(
         self._freq_band_name = ""
         self._frequency_band = 0
         self._stream_tuning = (0, 0)
-        self._frequency_band_offset_stream_1 = 0
-        self._frequency_band_offset_stream_2 = 0
+        self._frequency_band_offset_stream1 = 0
+        self._frequency_band_offset_stream2 = 0
         self._frequency_slice_id = 0
         self._bandwidth = 0
         self._bandwidth_actual = const.FREQUENCY_SLICE_BW
