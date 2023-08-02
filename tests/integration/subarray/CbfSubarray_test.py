@@ -580,17 +580,17 @@ class TestCbfSubarray:
             (
                 "ConfigureScan_basic.json",
                 ["SKA001", "SKA036", "SKA063", "SKA100"],
-                [100, 1],
+                [4, 1],
             ),
             (
                 "ConfigureScan_basic_fspMultiReceptors.json",
                 ["SKA001", "SKA036", "SKA063", "SKA100"],
-                [100, 1],
+                [4, 1],
             ),
             (
                 "ConfigureScan_basic_fspNoReceptors.json",
                 ["SKA001", "SKA036", "SKA063", "SKA100"],
-                [100, 1],
+                [4, 1],
             ),
         ],
     )
@@ -842,13 +842,18 @@ class TestCbfSubarray:
                         ]
                         assert all(
                             [
-                                fsp_corr_receptors[i] == 0
+                                fsp_corr_receptors[i] == fsp_receptors_num[i]
                                 for i in range(len(fsp_corr_receptors))
                             ]
                         )
 
                     else:
-                        fsp_receptors_num = [0]
+                        receptors_sorted = receptors
+                        receptors_sorted.sort()
+                        fsp_receptors_num = [
+                            self.receptor_utils.receptors[r]
+                            for r in receptors_sorted
+                        ]
                         assert all(
                             [
                                 fsp_corr_receptors[i] == fsp_receptors_num[i]
@@ -2196,7 +2201,7 @@ class TestCbfSubarray:
                 "ConfigureScan_basic.json",
                 "Scan1_basic.json",
                 ["SKA001", "SKA036", "SKA063", "SKA100"],
-                [100, 1],
+                [4, 1],
             )
         ],
     )
@@ -2416,13 +2421,13 @@ class TestCbfSubarray:
                 "ConfigureScan_basic.json",
                 "Scan1_basic.json",
                 ["SKA001", "SKA036", "SKA063", "SKA100"],
-                [100, 1],
+                [4, 1],
             ),
             (
                 "Configure_TM-CSP_v2.json",
                 "Scan2_basic.json",
                 ["SKA063", "SKA001", "SKA100"],
-                [100, 1],
+                [4, 1],
             ),
         ],
     )
@@ -2749,13 +2754,13 @@ class TestCbfSubarray:
                 "ConfigureScan_basic.json",
                 "Scan1_basic.json",
                 ["SKA001", "SKA036", "SKA063", "SKA100"],
-                [100, 1],
+                [4, 1],
             ),
             (
                 "Configure_TM-CSP_v2.json",
                 "Scan2_basic.json",
                 ["SKA063", "SKA001", "SKA100"],
-                [100, 1],
+                [4, 1],
             ),
         ],
     )
@@ -2846,6 +2851,7 @@ class TestCbfSubarray:
                         ].obsState
                         == ObsState.IDLE
                     )
+            print(vcc_receptors)
             for r in vcc_receptors:
                 assert (
                     test_proxies.vcc[test_proxies.receptor_to_vcc[r]].obsState

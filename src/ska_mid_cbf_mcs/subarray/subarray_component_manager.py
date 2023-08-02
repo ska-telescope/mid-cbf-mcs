@@ -256,15 +256,24 @@ class CbfSubarrayComponentManager(
                 )
                 self._count_vcc = int(self._controller_max_capabilities["VCC"])
                 self._count_fsp = int(self._controller_max_capabilities["FSP"])
-                for (
-                    receptor_vcc_pair
-                ) in self._proxy_cbf_controller.receptorToVcc:
-                    receptor_vcc_pair = receptor_vcc_pair.split(":")
-                    self._receptor_to_vcc[
-                        self._receptor_utils.receptor_id_int_to_str(
-                            int(receptor_vcc_pair[0])
-                        )
-                    ] = int(receptor_vcc_pair[1])
+
+                # CIP-1724 Temporary work around to use 4 receptor lanes along with the Dish IDs
+                # recommended by Sonja
+                # for (
+                #    receptor_vcc_pair
+                # ) in self._proxy_cbf_controller.receptorToVcc:
+                #    receptor_vcc_pair = receptor_vcc_pair.split(":")
+                #    self._receptor_to_vcc[
+                #        self._receptor_utils.receptor_id_int_to_str(
+                #            int(receptor_vcc_pair[0])
+                #        )
+                #    ] = int(receptor_vcc_pair[1])
+                self._receptor_to_vcc = {
+                    "SKA001": 1,
+                    "SKA036": 2,
+                    "SKA063": 3,
+                    "SKA100": 4,
+                }
                 self._logger.info(
                     f"Receptor to VCC mapping: {self._receptor_to_vcc}"
                 )
@@ -464,8 +473,7 @@ class CbfSubarrayComponentManager(
                     receptor_id = model["receptor"]
                     model["receptor"] = [
                         receptor_id,
-                        0,
-                        # self._receptor_utils.receptors[receptor_id],
+                        self._receptor_utils.receptors[receptor_id],
                     ]
                 t = Thread(
                     target=self._update_delay_model,
@@ -1689,16 +1697,11 @@ class CbfSubarrayComponentManager(
             # subset of the subarray receptors for which the correlation results
             # are requested to be used in Mid.CBF output products (visibilities)
 
-            # CIP-1724 Overriding the subarray_receptor_id value to 0 until design is determined to understand
-            # where it should come from and what it should be set to. This value is being used for the
-            # receptor lane at the moment by the hps fsp app
-
             fsp["subarray_receptor_ids"] = self._receptors.copy()
             for i, receptor in enumerate(fsp["subarray_receptor_ids"]):
                 fsp["subarray_receptor_ids"][i] = [
                     receptor,
-                    0,
-                    # self._receptor_utils.receptors[receptor],
+                    self._receptor_utils.receptors[receptor],
                 ]
 
             # Add the fs_sample_rate for all receptors
@@ -1720,17 +1723,12 @@ class CbfSubarrayComponentManager(
                     fsp["receptors"] = self._receptors.copy()
 
                 # receptor IDs to pair of str and int for FSP level
-
-                # CIP-1724 Overriding the corr_receptor_id value to 0 until design is determined to understand
-                # where it should come from and what it should be set to. This value is being used for the
-                # receptor lane at the moment by the hps fsp app
                 fsp["corr_receptor_ids"] = []
                 for i, receptor in enumerate(fsp["receptors"]):
                     fsp["corr_receptor_ids"].append(
                         [
                             receptor,
-                            0,
-                            # self._receptor_utils.receptors[receptor],
+                            self._receptor_utils.receptors[receptor],
                         ]
                     )
 
