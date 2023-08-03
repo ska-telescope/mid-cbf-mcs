@@ -975,7 +975,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                 )
                 dm_found = True
                 break
-
+        print(f"vcc_component_manager.py > update_delay_model --> delay_model_obj: {delay_model_obj}")
         if not dm_found:
             log_msg = f"Delay Model for VCC (receptor: {self._receptor_id}) not found"
             self._logger.error(log_msg)
