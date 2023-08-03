@@ -2157,7 +2157,10 @@ class CbfSubarrayComponentManager(
         self._logger.info(log_msg)
 
         # convert the receptor to an int using ReceptorUtils
-        receptor_int = self._receptor_utils.receptor_id_str_to_int(receptor)
+
+        # CIP-1724 Using receptors dictionary to access receptor int instead
+        # receptor_int = self._receptor_utils.receptor_id_str_to_int(receptor)
+        receptor_int = self._receptor_utils.receptors[receptor]
 
         # find the k value for this receptor
         # array of k values is 0 index, so index of array value is receptor_int - 1
