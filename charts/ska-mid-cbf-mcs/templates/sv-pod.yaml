@@ -1,14 +1,14 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: signal-verification
+  name: sv
 spec:
   volumes:
     - name: sv-data-collector-results
       persistentVolumeClaim:
         claimName: sv-pvc-{{ .Release.Name }}
   containers:
-  - name: signal-verification-cont
+  - name: sv-cont
     image: artefact.skao.int/ska-mid-cbf-signal-verification:{{ .Values.signalVerificationVersion }}
     env:
       - name: INPUT_DIR

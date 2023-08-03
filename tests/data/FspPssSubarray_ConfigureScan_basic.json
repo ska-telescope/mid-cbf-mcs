@@ -5,14 +5,14 @@
     "search_beam": [
         {
             "search_beam_id": 300, 
-            "receptor_ids": [["MKT000", 1]], 
+            "receptor_ids": [["SKA001", 1]], 
             "enable_output": true, 
             "averaging_interval": 4, 
             "search_beam_destination_address": "10.1.1.1"
         }, 
         {   
             "search_beam_id": 400, 
-            "receptor_ids": [["MKT000", 1]], 
+            "receptor_ids": [["SKA001", 1]], 
             "enable_output": true, 
             "averaging_interval": 2, 
             "search_beam_destination_address": "10.1.2.1"

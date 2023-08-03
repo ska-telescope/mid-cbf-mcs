@@ -467,9 +467,14 @@ def init_proxies_fixture():
                 )
 
             # Power switch
-            self.power_switch = CbfDeviceProxy(
-                fqdn="mid_csp_cbf/power_switch/001", logger=logging.getLogger()
-            )
+            self.power_switch = []
+            for i in range(1, 3):  # 2 Power Switches
+                self.power_switch.append(
+                    CbfDeviceProxy(
+                        fqdn=f"mid_csp_cbf/power_switch/{i:03}",
+                        logger=logging.getLogger(),
+                    )
+                )
 
         def wait_timeout_dev(
             self: TestProxies,
@@ -677,7 +682,7 @@ def init_delay_model_test_fixture():
             dm_num_entries = len(delay_model_all_obj)
             # TODO: receptor values are hardcoded
             receptors_to_remove = list(
-                set(["MKT000", "MKT001", "MKT002", "MKT003"])
+                set(["SKA001", "SKA100", "SKA036", "SKA063"])
                 - set(receptors_under_test)
             )
 

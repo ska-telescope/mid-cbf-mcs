@@ -54,7 +54,7 @@ def main(argv):
             jones_details_list_receptor.append(
                 {
                     "receptor": number_of_receptors,
-                    "receptorMatrix": receptor_details,
+                    "jones_matrix_details": receptor_details,
                 }
             )  # number of receptor to be tested
 
@@ -62,18 +62,18 @@ def main(argv):
             jones_dict_list.append(
                 {
                     "destinationType": "fsp",
-                    "matrixDetails": jones_details_list_receptor,
+                    "jones_matrix": jones_details_list_receptor,
                 }
             )
         elif length == 16:
             jones_dict_list.append(
                 {
                     "destinationType": "vcc",
-                    "matrixDetails": jones_details_list_receptor,
+                    "jones_matrix": jones_details_list_receptor,
                 }
             )
 
-    jones_dict = {"jonesMatrix": jones_dict_list}
+    jones_dict = {"jones_matrix": jones_dict_list}
 
     with open(json_file_name, "w") as json_file:
         json.dump(jones_dict, json_file, indent=4, sort_keys=True)

@@ -1,0 +1,9 @@
+{
+    "name": "string",
+    "locked": "boolean",
+    "critical": "boolean",
+    "cycle_delay": "integer",
+    "state": "boolean",
+    "physical_state": "boolean",
+    "transient_state": "boolean"
+}
