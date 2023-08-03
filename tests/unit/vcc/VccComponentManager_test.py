@@ -230,9 +230,6 @@ class TestVccComponentManager:
         updated_delay_model_obj = json.loads(vcc_component_manager.delay_model)
         assert len(updated_delay_model_obj) != 0
 
-        print(
-            f"VccComponentManager_test.py > test_update_delay_model --> updated_delay_model_obj: {updated_delay_model_obj}"
-        )
         # check that the coeff values were copied
         for entry in input_delay_model_obj["delay_details"]:
             if entry["receptor"][1] == vcc_component_manager.receptor_id:
