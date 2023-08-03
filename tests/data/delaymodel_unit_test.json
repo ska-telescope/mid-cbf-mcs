@@ -1,9 +1,7 @@
 {
-  "delay_model": [
+  "delay_details": [
     {
       "receptor": ["SKA001", 1],
-      "epoch": 11000000,
-      "validity_period": 10,
       "poly_info": [
         {
           "polarization": "X",
@@ -17,8 +15,6 @@
     },
     {
       "receptor": ["SKA100", 100],
-      "epoch": 11000000,
-      "validity_period": 10,
       "poly_info": [
         {
           "polarization": "X",
@@ -32,8 +28,6 @@
     },
     {
       "receptor": ["SKA036", 36],
-      "epoch": 11000000,
-      "validity_period": 10,
       "poly_info": [
         {
           "polarization": "X",
@@ -47,8 +41,6 @@
     },
     {
       "receptor": ["SKA063", 63],
-      "epoch": 11000000,
-      "validity_period": 10,
       "poly_info": [
         {
           "polarization": "X",
