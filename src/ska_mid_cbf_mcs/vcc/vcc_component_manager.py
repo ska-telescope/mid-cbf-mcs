@@ -957,7 +957,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         # with a single entry so that the schema is followed
         # Set up the delay model to be a list
         list_of_entries = []
-        for entry in delay_model_obj["delay_model"]:
+        for entry in delay_model_obj["delay_details"]:
             self._logger.debug(
                 f"Received delay model for receptor {entry['receptor']}"
             )
