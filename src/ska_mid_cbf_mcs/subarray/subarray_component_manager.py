@@ -192,8 +192,8 @@ class CbfSubarrayComponentManager(
         self._events_telstate = {}
 
         # for easy device-reference
-        self._frequency_band_offset_stream_1 = 0
-        self._frequency_band_offset_stream_2 = 0
+        self._frequency_band_offset_stream1 = 0
+        self._frequency_band_offset_stream2 = 0
         self._stream_tuning = [0, 0]
 
         # device proxy for easy reference to CBF controller
@@ -998,11 +998,11 @@ class CbfSubarrayComponentManager(
                 # TODO - why add these keys to the fsp dict - not good practice!
                 # TODO - create a new dict from a deep copy of the fsp dict.
                 fsp["frequency_band"] = common_configuration["frequency_band"]
-                fsp["frequency_band_offset_stream_1"] = configuration[
-                    "frequency_band_offset_stream_1"
+                fsp["frequency_band_offset_stream1"] = configuration[
+                    "frequency_band_offset_stream1"
                 ]
-                fsp["frequency_band_offset_stream_2"] = configuration[
-                    "frequency_band_offset_stream_2"
+                fsp["frequency_band_offset_stream2"] = configuration[
+                    "frequency_band_offset_stream2"
                 ]
                 if fsp["frequency_band"] in ["5a", "5b"]:
                     fsp["band_5_tuning"] = common_configuration[
@@ -1094,7 +1094,7 @@ class CbfSubarrayComponentManager(
                                         ],
                                     )
                                 ][frequencyBand] + fsp[
-                                    "frequency_band_offset_stream_1"
+                                    "frequency_band_offset_stream1"
                                 ]
 
                                 frequency_slice_range = (
@@ -1132,7 +1132,7 @@ class CbfSubarrayComponentManager(
 
                                     frequency_slice_range_1 = (
                                         fsp["band_5_tuning"][0] * 10**9
-                                        + fsp["frequency_band_offset_stream_1"]
+                                        + fsp["frequency_band_offset_stream1"]
                                         - const.BAND_5_STREAM_BANDWIDTH
                                         * 10**9
                                         / 2
@@ -1140,7 +1140,7 @@ class CbfSubarrayComponentManager(
                                         * const.FREQUENCY_SLICE_BW
                                         * 10**6,
                                         fsp["band_5_tuning"][0] * 10**9
-                                        + fsp["frequency_band_offset_stream_1"]
+                                        + fsp["frequency_band_offset_stream1"]
                                         - const.BAND_5_STREAM_BANDWIDTH
                                         * 10**9
                                         / 2
@@ -1151,7 +1151,7 @@ class CbfSubarrayComponentManager(
 
                                     frequency_slice_range_2 = (
                                         fsp["band_5_tuning"][1] * 10**9
-                                        + fsp["frequency_band_offset_stream_2"]
+                                        + fsp["frequency_band_offset_stream2"]
                                         - const.BAND_5_STREAM_BANDWIDTH
                                         * 10**9
                                         / 2
@@ -1159,7 +1159,7 @@ class CbfSubarrayComponentManager(
                                         * const.FREQUENCY_SLICE_BW
                                         * 10**6,
                                         fsp["band_5_tuning"][1] * 10**9
-                                        + fsp["frequency_band_offset_stream_2"]
+                                        + fsp["frequency_band_offset_stream2"]
                                         - const.BAND_5_STREAM_BANDWIDTH
                                         * 10**9
                                         / 2
@@ -1518,12 +1518,12 @@ class CbfSubarrayComponentManager(
             self._stream_tuning = stream_tuning
 
         # Configure frequencyBandOffsetStream1.
-        if "frequency_band_offset_stream_1" in configuration:
-            self._frequency_band_offset_stream_1 = int(
-                configuration["frequency_band_offset_stream_1"]
+        if "frequency_band_offset_stream1" in configuration:
+            self._frequency_band_offset_stream1 = int(
+                configuration["frequency_band_offset_stream1"]
             )
         else:
-            self._frequency_band_offset_stream_1 = 0
+            self._frequency_band_offset_stream1 = 0
             log_msg = (
                 "'frequencyBandOffsetStream1' not specified. Defaulting to 0."
             )
@@ -1531,12 +1531,12 @@ class CbfSubarrayComponentManager(
 
         # If not given, use a default value.
         # If malformed, use a default value, but append an error.
-        if "frequency_band_offset_stream_2" in configuration:
-            self._frequency_band_offset_stream_2 = int(
-                configuration["frequency_band_offset_stream_2"]
+        if "frequency_band_offset_stream2" in configuration:
+            self._frequency_band_offset_stream2 = int(
+                configuration["frequency_band_offset_stream2"]
             )
         else:
-            self._frequency_band_offset_stream_2 = 0
+            self._frequency_band_offset_stream2 = 0
             log_msg = (
                 "'frequencyBandOffsetStream2' not specified. Defaulting to 0."
             )
@@ -1546,8 +1546,8 @@ class CbfSubarrayComponentManager(
             "config_id": self._config_id,
             "frequency_band": common_configuration["frequency_band"],
             "band_5_tuning": self._stream_tuning,
-            "frequency_band_offset_stream_1": self._frequency_band_offset_stream_1,
-            "frequency_band_offset_stream_2": self._frequency_band_offset_stream_2,
+            "frequency_band_offset_stream1": self._frequency_band_offset_stream1,
+            "frequency_band_offset_stream2": self._frequency_band_offset_stream2,
             "rfi_flagging_mask": configuration["rfi_flagging_mask"],
         }
 
@@ -1624,11 +1624,11 @@ class CbfSubarrayComponentManager(
                     "frequency_band"
                 ]
                 search_window[
-                    "frequency_band_offset_stream_1"
-                ] = self._frequency_band_offset_stream_1
+                    "frequency_band_offset_stream1"
+                ] = self._frequency_band_offset_stream1
                 search_window[
-                    "frequency_band_offset_stream_2"
-                ] = self._frequency_band_offset_stream_2
+                    "frequency_band_offset_stream2"
+                ] = self._frequency_band_offset_stream2
                 if search_window["frequency_band"] in ["5a", "5b"]:
                     search_window["band_5_tuning"] = common_configuration[
                         "band_5_tuning"
@@ -1684,11 +1684,11 @@ class CbfSubarrayComponentManager(
             fsp["frequency_band"] = common_configuration["frequency_band"]
             fsp["band_5_tuning"] = common_configuration["band_5_tuning"]
             fsp[
-                "frequency_band_offset_stream_1"
-            ] = self._frequency_band_offset_stream_1
+                "frequency_band_offset_stream1"
+            ] = self._frequency_band_offset_stream1
             fsp[
-                "frequency_band_offset_stream_2"
-            ] = self._frequency_band_offset_stream_2
+                "frequency_band_offset_stream2"
+            ] = self._frequency_band_offset_stream2
 
             # Add all receptor ids for subarray and for correlation to fsp
             # Parameter named "subarray_receptor_ids" used by HPS contains all the

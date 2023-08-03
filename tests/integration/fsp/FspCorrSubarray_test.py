@@ -223,10 +223,10 @@ class TestFspCorrSubarray:
             configuration["band_5_tuning"]
         )
         assert device_under_test.frequencyBandOffsetStream1 == int(
-            configuration["frequency_band_offset_stream_1"]
+            configuration["frequency_band_offset_stream1"]
         )
         assert device_under_test.frequencyBandOffsetStream2 == int(
-            configuration["frequency_band_offset_stream_2"]
+            configuration["frequency_band_offset_stream2"]
         )
         assert (
             device_under_test.frequencySliceID

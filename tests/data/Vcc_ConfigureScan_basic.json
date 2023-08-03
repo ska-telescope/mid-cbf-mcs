@@ -2,7 +2,7 @@
     "config_id": "band:5a, fsp1, 744 channels average factor 8",
     "frequency_band": "5a",
     "band_5_tuning": [5.85, 7.25],
-    "frequency_band_offset_stream_1": 0,
-    "frequency_band_offset_stream_2": 0,
+    "frequency_band_offset_stream1": 0,
+    "frequency_band_offset_stream2": 0,
     "rfi_flagging_mask": ""
 }

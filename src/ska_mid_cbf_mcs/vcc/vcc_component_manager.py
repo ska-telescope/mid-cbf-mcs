@@ -161,23 +161,23 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         return self._stream_tuning
 
     @property
-    def frequency_band_offset_stream_1(self: VccComponentManager) -> int:
+    def frequency_band_offset_stream1(self: VccComponentManager) -> int:
         """
         Frequency Band Offset Stream 1
 
         :return: the frequency band offset for stream 1
         """
-        return self._frequency_band_offset_stream_1
+        return self._frequency_band_offset_stream1
 
     @property
-    def frequency_band_offset_stream_2(self: VccComponentManager) -> int:
+    def frequency_band_offset_stream2(self: VccComponentManager) -> int:
         """
         Frequency Band Offset Stream 2
 
         :return: the frequency band offset for stream 2, this
                 is only use when band 5 is active
         """
-        return self._frequency_band_offset_stream_2
+        return self._frequency_band_offset_stream2
 
     @property
     def rfi_flagging_mask(self: VccComponentManager) -> str:
@@ -273,8 +273,8 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         self._frequency_band = 0
         self._freq_band_name = ""
         self._stream_tuning = (0, 0)
-        self._frequency_band_offset_stream_1 = 0
-        self._frequency_band_offset_stream_2 = 0
+        self._frequency_band_offset_stream1 = 0
+        self._frequency_band_offset_stream2 = 0
         self._rfi_flagging_mask = ""
 
         self._jones_matrix = ""
@@ -582,8 +582,8 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         self._jones_matrix = ""
         self._delay_model = ""
         self._rfi_flagging_mask = ""
-        self._frequency_band_offset_stream_2 = 0
-        self._frequency_band_offset_stream_1 = 0
+        self._frequency_band_offset_stream2 = 0
+        self._frequency_band_offset_stream1 = 0
         self._stream_tuning = (0, 0)
         self._frequency_band = 0
         self._freq_band_name = ""
@@ -635,11 +635,11 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         if self._frequency_band in [4, 5]:
             self._stream_tuning = configuration["band_5_tuning"]
 
-        self._frequency_band_offset_stream_1 = int(
-            configuration["frequency_band_offset_stream_1"]
+        self._frequency_band_offset_stream1 = int(
+            configuration["frequency_band_offset_stream1"]
         )
-        self._frequency_band_offset_stream_2 = int(
-            configuration["frequency_band_offset_stream_2"]
+        self._frequency_band_offset_stream2 = int(
+            configuration["frequency_band_offset_stream2"]
         )
 
         if "rfi_flagging_mask" in configuration:
@@ -807,11 +807,11 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
 
                 if (
                     start_freq_Hz
-                    + self._frequency_band_offset_stream_1
+                    + self._frequency_band_offset_stream1
                     + const.SEARCH_WINDOW_BW_HZ / 2
                     <= int(argin["search_window_tuning"])
                     <= stop_freq_Hz
-                    + self._frequency_band_offset_stream_1
+                    + self._frequency_band_offset_stream1
                     - const.SEARCH_WINDOW_BW_HZ / 2
                 ):
                     # this is the acceptable range
@@ -828,19 +828,19 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
 
                 frequency_band_range_1 = (
                     self._stream_tuning[0] * 10**9
-                    + self._frequency_band_offset_stream_1
+                    + self._frequency_band_offset_stream1
                     - const.BAND_5_STREAM_BANDWIDTH * 10**9 / 2,
                     self._stream_tuning[0] * 10**9
-                    + self._frequency_band_offset_stream_1
+                    + self._frequency_band_offset_stream1
                     + const.BAND_5_STREAM_BANDWIDTH * 10**9 / 2,
                 )
 
                 frequency_band_range_2 = (
                     self._stream_tuning[1] * 10**9
-                    + self._frequency_band_offset_stream_2
+                    + self._frequency_band_offset_stream2
                     - const.BAND_5_STREAM_BANDWIDTH * 10**9 / 2,
                     self._stream_tuning[1] * 10**9
-                    + self._frequency_band_offset_stream_2
+                    + self._frequency_band_offset_stream2
                     + const.BAND_5_STREAM_BANDWIDTH * 10**9 / 2,
                 )
 

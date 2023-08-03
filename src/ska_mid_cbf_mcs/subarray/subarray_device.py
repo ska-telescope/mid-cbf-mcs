@@ -648,10 +648,10 @@ class CbfSubarray(CspSubElementSubarray):
             # set band5Tuning to [0,0] if not specified
             if "band_5_tuning" not in common_configuration:
                 common_configuration["band_5_tuning"] = [0, 0]
-            if "frequency_band_offset_stream_1" not in common_configuration:
-                configuration["frequency_band_offset_stream_1"] = 0
-            if "frequency_band_offset_stream_2" not in common_configuration:
-                configuration["frequency_band_offset_stream_2"] = 0
+            if "frequency_band_offset_stream1" not in common_configuration:
+                configuration["frequency_band_offset_stream1"] = 0
+            if "frequency_band_offset_stream2" not in common_configuration:
+                configuration["frequency_band_offset_stream2"] = 0
             if "rfi_flagging_mask" not in configuration:
                 configuration["rfi_flagging_mask"] = {}
 
@@ -689,10 +689,10 @@ class CbfSubarray(CspSubElementSubarray):
                 return (False, msg)
 
             # Validate frequencyBandOffsetStream1.
-            if "frequency_band_offset_stream_1" not in configuration:
-                configuration["frequency_band_offset_stream_1"] = 0
+            if "frequency_band_offset_stream1" not in configuration:
+                configuration["frequency_band_offset_stream1"] = 0
             if (
-                abs(int(configuration["frequency_band_offset_stream_1"]))
+                abs(int(configuration["frequency_band_offset_stream1"]))
                 <= const.FREQUENCY_SLICE_BW * 10**6 / 2
             ):
                 pass
@@ -704,10 +704,10 @@ class CbfSubarray(CspSubElementSubarray):
                 return (False, msg)
 
             # Validate frequencyBandOffsetStream2.
-            if "frequency_band_offset_stream_2" not in configuration:
-                configuration["frequency_band_offset_stream_2"] = 0
+            if "frequency_band_offset_stream2" not in configuration:
+                configuration["frequency_band_offset_stream2"] = 0
             if (
-                abs(int(configuration["frequency_band_offset_stream_2"]))
+                abs(int(configuration["frequency_band_offset_stream2"]))
                 <= const.FREQUENCY_SLICE_BW * 10**6 / 2
             ):
                 pass
