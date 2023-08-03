@@ -207,7 +207,10 @@ class TmCspSubarrayLeafNodeTest(SKABaseDevice):
         #     stateless=True,
         # )
 
+        self.set_change_event("dopplerPhaseCorrection", True, True)
         self.set_change_event("delayModel", True, True)
+        self.set_change_event("jonesMatrix", True, True)
+        self.set_change_event("timingBeamWeights", True, True)
 
         # PROTECTED REGION END #    //  TmCspSubarrayLeafNodeTest.init_device
 

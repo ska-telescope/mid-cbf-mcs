@@ -12,95 +12,70 @@ to the subarray. The calls to write the frequency offset K and frequency offset
 delta F values only need to be written when there are updates to the values. They must
 be written to the CBF Controller before the scan configuration.
 
-.. uml:: ../../diagrams/mid-cbf-scan-ops.puml
-
-Commands for CbfController and CbfSubarray are below. 
 For full details of MCS Controller see :ref:`CbfController`.
+
 For full details of MCS Subarray see :ref:`CbfSubarray`.
 
-CbfController Commands
-------------------------
+.. uml:: ../../diagrams/mid-cbf-scan-ops.puml
 
-On
-************
+CbfController Tango Commands
+------------------------------
 
-.. autoclass:: ska_mid_cbf_mcs.controller.controller_device.CbfController.OnCommand
-   :members:
-   :undoc-members:
-   :member-order:    
-   :noindex:
++---------+---------------+--------------------+--------------------------------------------------------+
+| Command | Parameters    | Return type        | Action                                                 |
++=========+===============+====================+========================================================+
+| Off     | None          | (ResultCode, str)  | Turn off the controller and subordinate devices        |
++---------+---------------+--------------------+--------------------------------------------------------+
+| Standby | None          | (ResultCode, str)  | Put in low power mode                                  |
++---------+---------------+--------------------+--------------------------------------------------------+
+| On      | None          | (ResultCode, str)  | Turn on the controller and subordinate devices         |
++---------+---------------+--------------------+--------------------------------------------------------+
 
-Off
-************
+CbfSubarray Tango Commands
+----------------------------
 
-.. autoclass:: ska_mid_cbf_mcs.controller.controller_device.CbfController.OffCommand
-   :members:
-   :undoc-members:
-   :member-order:
-   :noindex:   
-
-Standby
-*****************
-
-.. autoclass:: ska_mid_cbf_mcs.controller.controller_device.CbfController.StandbyCommand
-   :members:
-   :undoc-members:
-   :member-order:
-   :noindex:   
-
-CbfSubarray Commands
-------------------------
-
-Add Receptors
-*********************
-
-.. autoclass:: ska_mid_cbf_mcs.subarray.subarray_device.CbfSubarray.AddReceptorsCommand
-   :members:
-   :undoc-members:
-   :member-order:   
-   :noindex:   
-
-Configure Scan
-************************
-
-.. autoclass:: ska_mid_cbf_mcs.subarray.subarray_device.CbfSubarray.ConfigureScanCommand
-   :members:
-   :undoc-members:
-   :member-order:
-   :noindex:
-
-Scan
-************************
-
-.. autoclass:: ska_mid_cbf_mcs.subarray.subarray_device.CbfSubarray.ScanCommand
-   :members:
-   :undoc-members:
-   :member-order:
-   :noindex:
++----------------------+---------------+--------------------+-------------------------------------------+
+| Command              | Parameters    | Return type        | Action                                    |
++======================+===============+====================+===========================================+
+| Abort                | None          | (ResultCode, str)  | Abort subarray configuration or operation |
++----------------------+---------------+--------------------+-------------------------------------------+
+| AddReceptors         | List[str]     | (ResultCode, str)  | | Assign receptors to this subarray       |
+|                      |               |                    | | Turn subarray to ObsState = IDLE if no  |
+|                      |               |                    | | receptor was previously assigned        |
++----------------------+---------------+--------------------+-------------------------------------------+
+| ConfigureScan        | JSON str*     | (ResultCode, str)  | | Change state to configuring             |
+|                      |               |                    | | Configure attributes from input JSON    |
+|                      |               |                    | | Subscribe events                        |
+|                      |               |                    | | Configure VCC, VCC subarray, FSP,       |
+|                      |               |                    | | FSP Subarray. Publish output links.     |
++----------------------+---------------+--------------------+-------------------------------------------+
+| EndScan              | None          | (ResultCode, str)  | End the scan                              |
++----------------------+---------------+--------------------+-------------------------------------------+
+| ObsReset             | None          | (ResultCode, str)  | Reset subarray scan configuration         |
++----------------------+---------------+--------------------+-------------------------------------------+
+| Off                  | None          | (ResultCode, str)  | | Set subarry power mode to off.          |
+|                      |               |                    | | Commands FSP<function mode> Subarrays   |
+|                      |               |                    | | to turn off                             |
++----------------------+---------------+--------------------+-------------------------------------------+
+| On                   | None          | (ResultCode, str)  | | Set subarry power mode to on.           |
+|                      |               |                    | | Commands FSP<function mode> Subarrays   |
+|                      |               |                    | | to turn on                              |
++----------------------+---------------+--------------------+-------------------------------------------+
+| RemoveAllReceptors   | None          | (ResultCode, str)  | | Remove all receptors                    |
+|                      |               |                    | | Turns Subarray off if no receptors are  |
+|                      |               |                    | | assigned                                |
++----------------------+---------------+--------------------+-------------------------------------------+
+| RemoveReceptors      | List[str]     | (ResultCode, str)  | | Remove receptors in input list          |
+|                      |               |                    | | Turns Subarray to ObsState=EMPTY if no  |
+|                      |               |                    | | receptors assigned                      |
++----------------------+---------------+--------------------+-------------------------------------------+
+| Restart              | None          | (ResultCode, str)  | | Reset scan configuration and            |
+|                      |               |                    | | remove receptors                        |
++----------------------+---------------+--------------------+-------------------------------------------+
+| Scan                 | JSON str*     | (ResultCode, str)  | Start scanning                            |
++----------------------+---------------+--------------------+-------------------------------------------+
    
-Remove Receptors
-**************************
+* Schema for JSON string defined in the `Telescope Model - Mid.CBF schemas <https://developer.skao.int/projects/ska-telmodel/en/latest/schemas/ska-mid-cbf.html>`_
 
-.. autoclass:: ska_mid_cbf_mcs.subarray.subarray_device.CbfSubarray.RemoveReceptorsCommand
-   :members:
-   :undoc-members:
-   :member-order:
-   :noindex:
 
-Remove All Receptors
-******************************
 
-.. autoclass:: ska_mid_cbf_mcs.subarray.subarray_device.CbfSubarray.RemoveAllReceptorsCommand
-   :members:
-   :undoc-members:
-   :member-order:
-   :noindex:
-
-End Scan
-******************************
-
-.. autoclass:: ska_mid_cbf_mcs.subarray.subarray_device.CbfSubarray.EndScanCommand
-   :members:
-   :undoc-members:
-   :member-order:
-   :noindex:

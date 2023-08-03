@@ -36,6 +36,8 @@ class Const:
 
         self.MAX_VCC = 4
 
+        self.MAX_SUBARRAY = 16
+
 
 const = Const()
 

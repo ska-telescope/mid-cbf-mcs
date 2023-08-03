@@ -19,7 +19,7 @@ import tango
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import PowerMode, SimulationMode
 
-from ska_mid_cbf_mcs.commons.global_enum import FspModes
+from ska_mid_cbf_mcs.commons.global_enum import FspModes, const
 from ska_mid_cbf_mcs.component.component_manager import (
     CbfComponentManager,
     CommunicationStatus,
@@ -33,8 +33,6 @@ from ska_mid_cbf_mcs.fsp.hps_fsp_corr_controller_simulator import (
     HpsFspCorrControllerSimulator,
 )
 from ska_mid_cbf_mcs.group_proxy import CbfGroupProxy
-
-MAX_SUBARRAY_MEMBERSHIPS = 16
 
 
 class FspComponentManager(CbfComponentManager):
@@ -334,17 +332,22 @@ class FspComponentManager(CbfComponentManager):
             information purpose only.
         :rtype: (ResultCode, str)
         """
+        result_code = ResultCode.OK
+        message = "Fsp RemoveSubarrayMembership command completed OK"
         if argin in self._subarray_membership:
             self._subarray_membership.remove(argin)
+            self._push_change_event(
+                "subarrayMembership", self._subarray_membership
+            )
             # change function mode to IDLE if no subarrays are using it.
-            if not self._subarray_membership:
+            if len(self._subarray_membership) == 0:
                 self._function_mode = FspModes.IDLE.value
+                self._push_change_event("functionMode", self._function_mode)
         else:
-            log_msg = f"FSP does not belong to subarray {argin}."
-            self._logger.warning(log_msg)
+            result_code = ResultCode.FAILED
+            message = f"Fsp RemoveSubarrayMembership command failed; FSP does not belong to subarray {argin}."
 
-        message = "Fsp RemoveSubarrayMembership command completed OK"
-        return (ResultCode.OK, message)
+        return (result_code, message)
 
     @check_communicating
     def add_subarray_membership(
@@ -360,24 +363,24 @@ class FspComponentManager(CbfComponentManager):
             information purpose only.
         :rtype: (ResultCode, str)
         """
-
-        if len(self._subarray_membership) == MAX_SUBARRAY_MEMBERSHIPS:
-            log_msg = (
-                "Fsp already assigned to the maximum number subarrays "
-                f"({MAX_SUBARRAY_MEMBERSHIPS})"
-            )
-            self._logger.warning(log_msg)
-            message = "Fsp AddSubarrayMembership command completed OK"
-            return (ResultCode.OK, message)
-
-        if argin not in self._subarray_membership:
-            self._subarray_membership.append(argin)
-        else:
-            log_msg = f"Fsp already belongs to subarray {argin}."
-            self._logger.warning(log_msg)
-
+        result_code = ResultCode.OK
         message = "Fsp AddSubarrayMembership command completed OK"
-        return (ResultCode.OK, message)
+        if len(self._subarray_membership) == const.MAX_SUBARRAY:
+            message = (
+                "Fsp already assigned to the maximum number subarrays "
+                f"({const.MAX_SUBARRAY})"
+            )
+            result_code = ResultCode.FAILED
+        elif argin not in self._subarray_membership:
+            self._subarray_membership.append(argin)
+            self._push_change_event(
+                "subarrayMembership", self._subarray_membership
+            )
+        else:
+            result_code = ResultCode.FAILED
+            message = f"Fsp AddSubarrayMembership command failed; FSP already belongs to subarray {argin}."
+
+        return (result_code, message)
 
     @check_communicating
     def on(
@@ -479,16 +482,17 @@ class FspComponentManager(CbfComponentManager):
         """
 
         if self._connected:
+            function_mode = FspModes.IDLE.value
             if argin == "IDLE":
-                self._function_mode = FspModes.IDLE.value
+                pass
             elif argin == "CORR":
-                self._function_mode = FspModes.CORR.value
+                function_mode = FspModes.CORR.value
             elif argin == "PSS-BF":
-                self._function_mode = FspModes.PSS_BF.value
+                function_mode = FspModes.PSS_BF.value
             elif argin == "PST-BF":
-                self._function_mode = FspModes.PST_BF.value
+                function_mode = FspModes.PST_BF.value
             elif argin == "VLBI":
-                self._function_mode = FspModes.VLBI.value
+                function_mode = FspModes.VLBI.value
             else:
                 # shouldn't happen
                 self._logger.warning("functionMode not valid. Ignoring.")
@@ -497,12 +501,12 @@ class FspComponentManager(CbfComponentManager):
                 return (ResultCode.FAILED, message)
 
             try:
-                self._proxy_hps_fsp_controller.SetFunctionMode(
-                    self._function_mode
-                )
+                self._proxy_hps_fsp_controller.SetFunctionMode(function_mode)
             except Exception as e:
                 self._logger.error(str(e))
 
+            self._function_mode = function_mode
+            self._push_change_event("functionMode", self._function_mode)
             self._logger.info(f"FSP set to function mode {argin}")
 
             message = "Fsp SetFunctionMode command completed OK"

@@ -18,7 +18,6 @@ from __future__ import annotations  # allow forward references in type hints
 
 from typing import List, Optional, Tuple
 
-import tango
 from ska_tango_base import SKABaseDevice, SKAController
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import PowerMode, SimulationMode
@@ -101,76 +100,6 @@ class CbfController(SKAController):
         doc="ID of subarray configuration. empty string if subarray is not configured for a scan.",
     )
 
-    reportVCCState = attribute(
-        dtype=("DevState",),
-        max_dim_x=197,
-        label="VCC state",
-        polling_period=3000,
-        doc="Report the state of the VCC capabilities as an array of DevState",
-    )
-
-    reportVCCHealthState = attribute(
-        dtype=("uint16",),
-        max_dim_x=197,
-        label="VCC health status",
-        polling_period=3000,
-        abs_change=1,
-        doc="Report the health status of VCC capabilities as an array of unsigned short.\nEx:\n[0,0,0,2,0...3]",
-    )
-
-    reportVCCAdminMode = attribute(
-        dtype=("uint16",),
-        max_dim_x=197,
-        label="VCC admin mode",
-        polling_period=3000,
-        abs_change=1,
-        doc="Report the administration mode of the VCC capabilities as an array of unsigned short.\nFor ex.:\n[0,0,0,...1,2]",
-    )
-
-    reportVCCSubarrayMembership = attribute(
-        dtype=("uint16",),
-        max_dim_x=197,
-        label="VCC subarray membership",
-        # no polling period so it reads the true value and not the one in cache
-        doc="Report the subarray membership of VCCs (each can only belong to a single subarray), 0 if not assigned.",
-    )
-
-    reportFSPState = attribute(
-        dtype=("DevState",),
-        max_dim_x=27,
-        label="FSP state",
-        polling_period=3000,
-        doc="Report the state of the FSP capabilities.",
-    )
-
-    reportFSPHealthState = attribute(
-        dtype=("uint16",),
-        max_dim_x=27,
-        label="FSP health status",
-        polling_period=3000,
-        abs_change=1,
-        doc="Report the health status of the FSP capabilities.",
-    )
-
-    reportFSPAdminMode = attribute(
-        dtype=("uint16",),
-        max_dim_x=27,
-        label="FSP admin mode",
-        polling_period=3000,
-        abs_change=1,
-        doc="Report the administration mode of the FSP capabilities as an array of unsigned short.\nfor ex:\n[0,0,2,..]",
-    )
-
-    reportFSPSubarrayMembership = attribute(
-        dtype=(("uint16",),),
-        max_dim_x=16,
-        max_dim_y=27,
-        label="FSP subarray membership",
-        polling_period=3000,
-        abs_change=1,
-        doc="Report the subarray membership of FSPs (each can only belong to at most 16 subarrays), 0 if not assigned.",
-    )
-
     frequencyOffsetK = attribute(
         dtype=("int",),
         access=AttrWriteType.READ_WRITE,
@@ -185,32 +114,6 @@ class CbfController(SKAController):
         max_dim_x=197,
         label="Frequency offset (delta f)",
         doc="Frequency offset (delta f) of all 197 receptors as an array of ints.",
-    )
-
-    reportSubarrayState = attribute(
-        dtype=("DevState",),
-        max_dim_x=16,
-        label="Subarray state",
-        polling_period=3000,
-        doc="Report the state of the Subarray",
-    )
-
-    reportSubarrayHealthState = attribute(
-        dtype=("uint16",),
-        max_dim_x=16,
-        label="Subarray health status",
-        polling_period=3000,
-        abs_change=1,
-        doc="Report the health status of the Subarray.",
-    )
-
-    reportSubarrayAdminMode = attribute(
-        dtype=("uint16",),
-        max_dim_x=16,
-        label="FSP admin mode",
-        polling_period=3000,
-        abs_change=1,
-        doc="Report the administration mode of the Subarray as an array of unsigned short.\nfor ex:\n[0,0,2,..]",
     )
 
     simulationMode = attribute(
@@ -323,10 +226,6 @@ class CbfController(SKAController):
             # initialize attribute values
             device._command_progress = 0
 
-            device._storage_logging_level = tango.LogLevel.LOG_DEBUG
-            device._element_logging_level = tango.LogLevel.LOG_DEBUG
-            device._central_logging_level = tango.LogLevel.LOG_DEBUG
-
             # defines self._count_vcc, self._count_fsp, and self._count_subarray
             self._get_num_capabilities()
 
@@ -351,6 +250,9 @@ class CbfController(SKAController):
 
             # # initialize attribute values
             device._command_progress = 0
+
+            # TODO remove when ugrading base class from 0.11.3
+            device.set_change_event("healthState", True, True)
 
             message = "CbfController Init command completed OK"
             self.logger.info(message)
@@ -436,68 +338,6 @@ class CbfController(SKAController):
         return self.component_manager.subarray_config_ID
         # PROTECTED REGION END #    //  CbfController.subarrayconfigID_read
 
-    def read_reportVCCState(self: CbfController) -> List[tango.DevState]:
-        # PROTECTED REGION ID(CbfController.reportVCCState_read) ENABLED START #
-        """Return reportVCCState attribute: the state of the VCC capabilities as an array of DevState"""
-        return self.component_manager.report_vcc_state
-        # PROTECTED REGION END #    //  CbfController.reportVCCState_read
-
-    def read_reportVCCHealthState(self: CbfController) -> List[int]:
-        # PROTECTED REGION ID(CbfController.reportVCCHealthState_read) ENABLED START #
-        """
-        Return reportVCCHealthState attribute: health status of VCC capabilities
-        as an array of unsigned short. Ex: [0,0,0,2,0...3]
-        """
-        return self.component_manager.report_vcc_health_state
-        # PROTECTED REGION END #    //  CbfController.reportVCCHealthState_read
-
-    def read_reportVCCAdminMode(self: CbfController) -> List[int]:
-        # PROTECTED REGION ID(CbfController.reportVCCAdminMode_read) ENABLED START #
-        """
-        Return reportVCCAdminMode attribute: report the administration mode
-        of the VCC capabilities as an array of unsigned short. For ex.: [0,0,0,...1,2]
-        """
-        return self.component_manager.report_vcc_admin_mode
-        # PROTECTED REGION END #    //  CbfController.reportVCCAdminMode_read
-
-    def read_reportVCCSubarrayMembership(self: CbfController) -> List[int]:
-        """Return reportVCCSubarrayMembership attribute: report the subarray membership of VCCs
-        (each can only belong to a single subarray), 0 if not assigned."""
-        # PROTECTED REGION ID(CbfController.reportVCCSubarrayMembership_read) ENABLED START #
-        return self.component_manager.report_vcc_subarray_membership
-        # PROTECTED REGION END #    //  CbfController.reportVCCSubarrayMembership_read
-
-    def read_reportFSPState(self: CbfController) -> List[tango.DevState]:
-        # PROTECTED REGION ID(CbfController.reportFSPState_read) ENABLED START #
-        """Return reportFSPState attribute: state of all the FSP capabilities in the form of array"""
-        return self.component_manager.report_fsp_state
-        # PROTECTED REGION END #    //  CbfController.reportFSPState_read
-
-    def read_reportFSPHealthState(self: CbfController) -> List[int]:
-        # PROTECTED REGION ID(CbfController.reportFSPHealthState_read) ENABLED START #
-        """Return reportFspHealthState attribute: Report the health status of the FSP capabilities"""
-        return self.component_manager.report_fsp_health_state
-        # PROTECTED REGION END #    //  CbfController.reportFSPHealthState_read
-
-    def read_reportFSPAdminMode(self: CbfController) -> List[int]:
-        # PROTECTED REGION ID(CbfController.reportFSPAdminMode_read) ENABLED START #
-        """
-        Return reportFSPAdminMode attribute: Report the administration mode
-        of the FSP capabilities as an array of unsigned short. for ex: [0,0,2,..]
-        """
-        return self.component_manager.report_fsp_admin_mode
-        # PROTECTED REGION END #    //  CbfController.reportFSPAdminMode_read
-
-    def read_reportFSPSubarrayMembership(
-        self: CbfController,
-    ) -> List[List[int]]:
-        # PROTECTED REGION ID(CbfController.reportFSPSubarrayMembership_read) ENABLED START #
-        """Return reportVCCSubarrayMembership attribute: Report the subarray membership
-        of FSPs (each can only belong to at most 16 subarrays), 0 if not assigned.
-        """
-        return self.component_manager.report_fsp_subarray_membership
-        # PROTECTED REGION END #    //  CbfController.reportFSPSubarrayMembership_read
-
     def read_frequencyOffsetK(self: CbfController) -> List[int]:
         # PROTECTED REGION ID(CbfController.frequencyOffsetK_read) ENABLED START #
         """Return frequencyOffsetK attribute: array of integers reporting receptors in subarray"""
@@ -538,27 +378,6 @@ class CbfController(SKAController):
             )
             self.logger.warning(log_msg)
         # PROTECTED REGION END #    //  CbfController.frequencyOffsetDeltaF_write
-
-    def read_reportSubarrayState(self: CbfController) -> List[tango.DevState]:
-        # PROTECTED REGION ID(CbfController.reportSubarrayState_read) ENABLED START #
-        """Return reportSubarrayState attribute: report the state of the Subarray with an array of DevState"""
-        return self.component_manager.report_subarray_state
-        # PROTECTED REGION END #    //  CbfController.reportSubarrayState_read
-
-    def read_reportSubarrayHealthState(self: CbfController) -> List[int]:
-        # PROTECTED REGION ID(CbfController.reportSubarrayHealthState_read) ENABLED START #
-        """Return reportSubarrayHealthState attribute: subarray healthstate in an array of unsigned short"""
-        return self.component_manager.report_subarray_health_state
-        # PROTECTED REGION END #    //  CbfController.reportSubarrayHealthState_read
-
-    def read_reportSubarrayAdminMode(self: CbfController) -> List[int]:
-        # PROTECTED REGION ID(CbfController.reportSubarrayAdminMode_read) ENABLED START #
-        """
-        Return reportSubarrayAdminMode attribute: Report the administration mode
-        of the Subarray as an array of unsigned short. for ex: [0,0,2,..]
-        """
-        return self.component_manager.report_subarray_admin_mode
-        # PROTECTED REGION END #    //  CbfController.reportSubarrayAdminMode_read
 
     def write_simulationMode(
         self: CbfController, value: SimulationMode

@@ -619,10 +619,15 @@ class Vcc(CspSubElementObsDevice):
 
             device._configuring_from_idle = False
 
+            device.set_change_event("frequencyBand", True, True)
+
             # Setting initial simulation mode to True
             device.write_simulationMode(SimulationMode.TRUE)
 
             device.set_change_event("subarrayMembership", True, True)
+
+            # TODO remove when ugrading base class from 0.11.3
+            device.set_change_event("healthState", True, True)
 
             return (result_code, msg)
 
