@@ -191,6 +191,16 @@ class TestCbfSubarray:
                 == sub_id
             )
 
+            # Adding Receptors turns on the VCC devices
+            for i in range(1, test_proxies.num_vcc + 1):
+                test_proxies.wait_timeout_dev(
+                    [test_proxies.vcc[i]],
+                    DevState.ON,
+                    wait_time_s,
+                    sleep_time_s,
+                )
+                assert test_proxies.vcc[i].State() == DevState.ON
+
             # remove all except last receptor
             test_proxies.subarray[sub_id].RemoveReceptors(receptors_to_remove)
             time.sleep(1)
@@ -652,6 +662,29 @@ class TestCbfSubarray:
                 wait_time_configure,
                 sleep_time_s,
             )
+
+            for i in range(1, test_proxies.num_fsp + 1):
+                test_proxies.wait_timeout_dev(
+                    [test_proxies.fsp[i]],
+                    DevState.ON,
+                    wait_time_s,
+                    sleep_time_s,
+                )
+                assert test_proxies.fsp[i].State() == DevState.ON
+
+            for i in ["CORR", "PSS-BF", "PST-BF"]:
+                for j in range(1, test_proxies.num_sub + 1):
+                    for k in range(1, test_proxies.num_fsp + 1):
+                        test_proxies.wait_timeout_dev(
+                            [test_proxies.fspSubarray[i][j][k]],
+                            DevState.ON,
+                            wait_time_s,
+                            sleep_time_s,
+                        )
+                        assert (
+                            test_proxies.fspSubarray[i][j][k].State()
+                            == DevState.ON
+                        )
 
             # check configured attributes of CBF subarray
             assert sub_id == int(configuration["common"]["subarray_id"])
