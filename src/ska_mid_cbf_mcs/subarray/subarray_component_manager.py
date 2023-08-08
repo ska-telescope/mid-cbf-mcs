@@ -27,7 +27,6 @@ import tango
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import (
     AdminMode,
-    HealthState,
     ObsState,
     PowerMode,
     SimulationMode,
@@ -1034,12 +1033,8 @@ class CbfSubarrayComponentManager(
                         if fsp["receptors"] != []:
                             receptorsSpecified = True
                     if receptorsSpecified:
-<<<<<<< HEAD
-                        for this_rec in fsp["receptor_ids"]:
-                            self._logger.info(f"List of receptors: {self._receptors}")
-=======
                         for this_rec in fsp["receptors"]:
->>>>>>> main
+                            self._logger.info(f"List of receptors: {self._receptors}")
                             if this_rec not in self._receptors:
                                 msg = (
                                     f"Receptor {this_rec} does not belong to "
@@ -1749,24 +1744,6 @@ class CbfSubarrayComponentManager(
             # Configure functionMode.
             proxy_fsp.SetFunctionMode(fsp["function_mode"])
 
-<<<<<<< HEAD
-
-            # subscribe to FSP state and healthState changes
-            (
-                event_id_state,
-                event_id_health_state,
-            ) = proxy_fsp.add_change_event_callback(
-                "State", self._state_change_event_callback
-            ), proxy_fsp.add_change_event_callback(
-                "healthState", self._state_change_event_callback
-            )
-            self._events_state_change_fsp[int(fsp["fsp_id"])] = [
-                event_id_state,
-                event_id_health_state,
-            ]
-
-=======
->>>>>>> main
             # Add configID to fsp. It is not included in the "FSP" portion in configScan JSON
             fsp["config_id"] = common_configuration["config_id"]
             fsp["frequency_band"] = common_configuration["frequency_band"]
