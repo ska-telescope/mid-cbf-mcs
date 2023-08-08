@@ -22,7 +22,7 @@ import tango
 
 # Tango imports
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import HealthState, PowerMode, SimulationMode
+from ska_tango_base.control_model import PowerMode, SimulationMode
 from ska_tango_base.csp.subarray.subarray_device import CspSubElementSubarray
 from tango import AttrWriteType
 from tango.server import attribute, command, device_property, run
@@ -384,9 +384,11 @@ class CbfSubarray(CspSubElementSubarray):
         self.logger.info(f"Writing simulation mode of {value}")
         super().write_simulationMode(value)
         self.component_manager._simulation_mode = value
-    
+
     def read_simulationMode(self: CbfSubarray) -> SimulationMode:
-        self.logger.info(f"Reading Simulation Mode of value {self.component_manager._simulation_mode}")
+        self.logger.info(
+            f"Reading Simulation Mode of value {self.component_manager._simulation_mode}"
+        )
         return self.component_manager._simulation_mode
 
     def read_frequencyBand(self: CbfSubarray) -> int:

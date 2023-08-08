@@ -354,8 +354,8 @@ class ControllerComponentManager(CbfComponentManager):
                     self._talondx_component_manager.simulation_mode,
                 )
                 self._group_subarray.command_inout("On")
-                #self._group_vcc.command_inout("On")
-                #self._group_fsp.command_inout("On")
+                # self._group_vcc.command_inout("On")
+                # self._group_fsp.command_inout("On")
             except tango.DevFailed:
                 log_msg = "Failed to turn on group proxies"
                 self._logger.error(log_msg)

@@ -396,7 +396,6 @@ class FspComponentManager(CbfComponentManager):
         """
 
         if self._connected:
-
             self._logger.info(f"Value of _connected: {self._connected}")
 
             self._get_capability_proxies()

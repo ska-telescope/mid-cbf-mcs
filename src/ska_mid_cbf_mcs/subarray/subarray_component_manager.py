@@ -809,8 +809,6 @@ class CbfSubarrayComponentManager(
             msg = "Scan configuration object is not a valid JSON object. Aborting configuration."
             return (False, msg)
 
-        self._logger.info("Validate 1")
-
         # Validate dopplerPhaseCorrSubscriptionPoint.
         if "doppler_phase_corr_subscription_point" in configuration:
             try:
@@ -831,8 +829,6 @@ class CbfSubarrayComponentManager(
                 )
                 return (False, msg)
 
-        self._logger.info("Validate 2")
-
         # Validate delayModelSubscriptionPoint.
         if "delay_model_subscription_point" in configuration:
             try:
@@ -850,8 +846,6 @@ class CbfSubarrayComponentManager(
                     "'delayModelSubscriptionPoint'. Aborting configuration."
                 )
                 return (False, msg)
-            
-        self._logger.info("Validate 3")
 
         # Validate jonesMatrixSubscriptionPoint.
         if "jones_matrix_subscription_point" in configuration:
@@ -870,8 +864,6 @@ class CbfSubarrayComponentManager(
                     "'jonesMatrixSubscriptionPoint'. Aborting configuration."
                 )
                 return (False, msg)
-
-        self._logger.info("Validate 4")
 
         # Validate beamWeightsSubscriptionPoint.
         if "timing_beam_weights_subscription_point" in configuration:
@@ -893,13 +885,10 @@ class CbfSubarrayComponentManager(
                 )
                 return (False, msg)
 
-        self._logger.info("Validate 5")
-
         for receptor_id, proxy in self._proxies_assigned_vcc.items():
             if proxy.State() != tango.DevState.ON:
                 msg = f"VCC {self._proxies_vcc.index(proxy) + 1} is not ON. Aborting configuration."
                 return (False, msg)
-        self._logger.info("Validate 6")
 
         # Validate searchWindow.
         if "search_window" in configuration:
@@ -923,36 +912,19 @@ class CbfSubarrayComponentManager(
         else:
             pass
 
-        self._logger.info("Validate 7")
-
         # Validate fsp.
         for fsp in configuration["fsp"]:
-            self._logger.info("Validate 8")
             try:
                 # Validate fspID.
                 if int(fsp["fsp_id"]) in list(range(1, self._count_fsp + 1)):
                     fspID = int(fsp["fsp_id"])
                     proxy_fsp = self._proxies_fsp[fspID - 1]
-                    if fsp["function_mode"] == "CORR":
-                        proxy_fsp_subarray = (
-                            self._proxies_fsp_corr_subarray_device[fspID - 1]
-                        )
-                    elif fsp["function_mode"] == "PSS-BF":
-                        proxy_fsp_subarray = (
-                            self._proxies_fsp_pss_subarray_device[fspID - 1]
-                        )
-                    elif fsp["function_mode"] == "PST-BF":
-                        proxy_fsp_subarray = (
-                            self._proxies_fsp_pst_subarray_device[fspID - 1]
-                        )
                 else:
                     msg = (
                         f"'fspID' must be an integer in the range [1, {self._count_fsp}]."
                         " Aborting configuration."
                     )
                     return (False, msg)
-                self._logger.info("Validate 9")
-
 
                 # Validate functionMode.
                 function_modes = ["CORR", "PSS-BF", "PST-BF", "VLBI"]
@@ -1034,7 +1006,9 @@ class CbfSubarrayComponentManager(
                             receptorsSpecified = True
                     if receptorsSpecified:
                         for this_rec in fsp["receptors"]:
-                            self._logger.info(f"List of receptors: {self._receptors}")
+                            self._logger.info(
+                                f"List of receptors: {self._receptors}"
+                            )
                             if this_rec not in self._receptors:
                                 msg = (
                                     f"Receptor {this_rec} does not belong to "
@@ -2034,7 +2008,9 @@ class CbfSubarrayComponentManager(
         for receptor_id in argin:
             self._logger.debug(f"Attempting to add receptor {receptor_id}")
 
-            self._logger.info(f"receptor to vcc keys: {self._receptor_to_vcc.keys()}")
+            self._logger.info(
+                f"receptor to vcc keys: {self._receptor_to_vcc.keys()}"
+            )
 
             if receptor_id in self._receptor_to_vcc.keys():
                 vccID = self._receptor_to_vcc[receptor_id]
@@ -2055,7 +2031,9 @@ class CbfSubarrayComponentManager(
             self._logger.debug(f"VCC {vccID} subarray_id: {vccSubarrayID}")
 
             # Setting simulation mode of VCC proxies based on simulation mode of subarray
-            self._logger.info(f"Writing VCC simulation mode to: {self._simulation_mode}")
+            self._logger.info(
+                f"Writing VCC simulation mode to: {self._simulation_mode}"
+            )
             vccProxy.write_attribute("adminMode", AdminMode.OFFLINE)
             vccProxy.write_attribute("simulationMode", self._simulation_mode)
             vccProxy.write_attribute("adminMode", AdminMode.ONLINE)
