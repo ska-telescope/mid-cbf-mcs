@@ -77,6 +77,8 @@ class TestControllerComponentManager:
         )
         assert controller_component_manager._connected is True
 
+        assert controller_component_manager._on is False
+
         (result_code, _) = controller_component_manager.on()
         assert result_code == ResultCode.OK
 
@@ -94,8 +96,11 @@ class TestControllerComponentManager:
         )
         assert controller_component_manager._connected is True
 
-        (result_code, result_msg) = controller_component_manager.off()
-        print(" ---- result_msg == ", result_msg)
+        (result_code, _) = controller_component_manager.on()
+
+        assert controller_component_manager._on is True
+
+        (result_code, _) = controller_component_manager.off()
         assert result_code == ResultCode.OK
 
     def test_Standby(
