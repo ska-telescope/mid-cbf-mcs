@@ -81,7 +81,9 @@ class ControllerComponentManager(CbfComponentManager):
 
         self._logger = logger
 
-        self._connected = False
+        self._connected = False # to device proxies
+
+        self._on = False # CBF controller itself
 
         (
             self._fqdn_vcc,
@@ -264,88 +266,98 @@ class ControllerComponentManager(CbfComponentManager):
         :rtype: (ResultCode, str)
         """
 
+        # Check if connection to device proxies has been established
         if self._connected:
-            # set VCC values
-            for fqdn, proxy in self._proxies.items():
-                if "vcc" in fqdn:
-                    try:
-                        vcc_id = int(proxy.get_property("VccID")["VccID"][0])
-                        rec_id = self._vcc_to_receptor[vcc_id]
-                        self._logger.info(
-                            f"Assigning receptor ID {rec_id} to VCC {vcc_id}"
-                        )
-                        proxy.receptorID = self._vcc_to_receptor[vcc_id]
-                        proxy.frequencyOffsetK = self.frequency_offset_k[
-                            vcc_id
-                        ]
-                        proxy.frequencyOffsetDeltaF = (
-                            self.frequency_offset_delta_f[vcc_id]
-                        )
-                    except tango.DevFailed as df:
-                        for item in df.args:
-                            log_msg = f"Failure in connection to {fqdn}; {item.reason}"
-                            self._logger.error(log_msg)
-                            return (ResultCode.FAILED, log_msg)
 
-            # Power on all the Talon boards if not in SimulationMode
-            # TODO: There are two VCCs per LRU. Need to check the number of
-            #       VCCs turned on against the number of LRUs powered on
-            if (
-                self._talondx_component_manager.simulation_mode
-                == SimulationMode.FALSE
-            ):
-                # read in list of LRUs from configuration JSON
-                self._fqdn_talon_lru = []
+            # Check if CBF Controller is already on
+            if not self._on: 
 
-                talondx_config_file = open(
-                    os.path.join(
-                        os.getcwd(),
-                        self._talondx_config_path,
-                        "talondx-config.json",
+                # set VCC values
+                for fqdn, proxy in self._proxies.items():
+                    if "vcc" in fqdn:
+                        try:
+                            vcc_id = int(proxy.get_property("VccID")["VccID"][0])
+                            rec_id = self._vcc_to_receptor[vcc_id]
+                            self._logger.info(
+                                f"Assigning receptor ID {rec_id} to VCC {vcc_id}"
+                            )
+                            proxy.receptorID = self._vcc_to_receptor[vcc_id]
+                            proxy.frequencyOffsetK = self.frequency_offset_k[
+                                vcc_id
+                            ]
+                            proxy.frequencyOffsetDeltaF = (
+                                self.frequency_offset_delta_f[vcc_id]
+                            )
+                        except tango.DevFailed as df:
+                            for item in df.args:
+                                log_msg = f"Failure in connection to {fqdn}; {item.reason}"
+                                self._logger.error(log_msg)
+                                return (ResultCode.FAILED, log_msg)
+
+                # Power on all the Talon boards if not in SimulationMode
+                # TODO: There are two VCCs per LRU. Need to check the number of
+                #       VCCs turned on against the number of LRUs powered on
+                if (
+                    self._talondx_component_manager.simulation_mode
+                    == SimulationMode.FALSE
+                ):
+                    # read in list of LRUs from configuration JSON
+                    self._fqdn_talon_lru = []
+
+                    talondx_config_file = open(
+                        os.path.join(
+                            os.getcwd(),
+                            self._talondx_config_path,
+                            "talondx-config.json",
+                        )
                     )
-                )
 
-                talondx_config_json = json.load(talondx_config_file)
+                    talondx_config_json = json.load(talondx_config_file)
 
-                talon_lru_fqdn_set = set()
-                for config_command in talondx_config_json["config_commands"]:
-                    talon_lru_fqdn_set.add(config_command["talon_lru_fqdn"])
-                self._logger.info(f"talonlru list = {talon_lru_fqdn_set}")
+                    talon_lru_fqdn_set = set()
+                    for config_command in talondx_config_json["config_commands"]:
+                        talon_lru_fqdn_set.add(config_command["talon_lru_fqdn"])
+                    self._logger.info(f"talonlru list = {talon_lru_fqdn_set}")
 
-                # TODO: handle subscribed events for missing LRUs
-                self._fqdn_talon_lru = list(talon_lru_fqdn_set)
+                    # TODO: handle subscribed events for missing LRUs
+                    self._fqdn_talon_lru = list(talon_lru_fqdn_set)
+                else:
+                    # use a hard-coded example fqdn talon lru for simulation mode
+                    self._fqdn_talon_lru = {"mid_csp_cbf/talon_lru/001"}
+
+                try:
+                    for fqdn in self._fqdn_talon_lru:
+                        self._proxies[fqdn].On()
+                except tango.DevFailed:
+                    log_msg = "Failed to power on Talon boards"
+                    self._logger.error(log_msg)
+                    return (ResultCode.FAILED, log_msg)
+
+                # Configure all the Talon boards
+                if (
+                    self._talondx_component_manager.configure_talons()
+                    == ResultCode.FAILED
+                ):
+                    log_msg = "Failed to configure Talon boards"
+                    self._logger.error(log_msg)
+                    return (ResultCode.FAILED, log_msg)
+
+                try:
+                    self._group_subarray.command_inout("On")
+                    self._group_vcc.command_inout("On")
+                    self._group_fsp.command_inout("On")
+                    self._on = True
+                except tango.DevFailed:
+                    log_msg = "Failed to turn on group proxies"
+                    self._logger.error(log_msg)
+                    return (ResultCode.FAILED, log_msg)
+
+                message = "CbfController On command completed OK"
+                return (ResultCode.OK, message)
+            
             else:
-                # use a hard-coded example fqdn talon lru for simulation mode
-                self._fqdn_talon_lru = {"mid_csp_cbf/talon_lru/001"}
-
-            try:
-                for fqdn in self._fqdn_talon_lru:
-                    self._proxies[fqdn].On()
-            except tango.DevFailed:
-                log_msg = "Failed to power on Talon boards"
-                self._logger.error(log_msg)
+                log_msg = "CbfController is already ON. Disregarding redundant command."
                 return (ResultCode.FAILED, log_msg)
-
-            # Configure all the Talon boards
-            if (
-                self._talondx_component_manager.configure_talons()
-                == ResultCode.FAILED
-            ):
-                log_msg = "Failed to configure Talon boards"
-                self._logger.error(log_msg)
-                return (ResultCode.FAILED, log_msg)
-
-            try:
-                self._group_subarray.command_inout("On")
-                self._group_vcc.command_inout("On")
-                self._group_fsp.command_inout("On")
-            except tango.DevFailed:
-                log_msg = "Failed to turn on group proxies"
-                self._logger.error(log_msg)
-                return (ResultCode.FAILED, log_msg)
-
-            message = "CbfController On command completed OK"
-            return (ResultCode.OK, message)
 
         else:
             log_msg = "Proxies not connected"
@@ -364,55 +376,64 @@ class ControllerComponentManager(CbfComponentManager):
         :rtype: (ResultCode, str)
         """
 
+        # Check if connection to device proxies has been established
         if self._connected:
-            if (
-                self._talondx_component_manager.simulation_mode
-                == SimulationMode.FALSE
-            ):
-                if len(self._fqdn_talon_lru) == 0:
-                    talondx_config_file = open(
-                        os.path.join(
-                            os.getcwd(),
-                            self._talondx_config_path,
-                            "talondx-config.json",
-                        )
-                    )
-                    talondx_config_json = json.load(talondx_config_file)
 
-                    talon_lru_fqdn_set = set()
-                    for config_command in talondx_config_json[
-                        "config_commands"
-                    ]:
-                        talon_lru_fqdn_set.add(
-                            config_command["talon_lru_fqdn"]
+            # Check if CBF Controller is on
+            if self._on:
+                if (
+                    self._talondx_component_manager.simulation_mode
+                    == SimulationMode.FALSE
+                ):
+                    if len(self._fqdn_talon_lru) == 0:
+                        talondx_config_file = open(
+                            os.path.join(
+                                os.getcwd(),
+                                self._talondx_config_path,
+                                "talondx-config.json",
+                            )
                         )
-                    self._logger.info(f"talonlru list = {talon_lru_fqdn_set}")
+                        talondx_config_json = json.load(talondx_config_file)
 
-                    # TODO: handle subscribed events for missing LRUs
-                    self._fqdn_talon_lru = list(talon_lru_fqdn_set)
+                        talon_lru_fqdn_set = set()
+                        for config_command in talondx_config_json[
+                            "config_commands"
+                        ]:
+                            talon_lru_fqdn_set.add(
+                                config_command["talon_lru_fqdn"]
+                            )
+                        self._logger.info(f"talonlru list = {talon_lru_fqdn_set}")
+
+                        # TODO: handle subscribed events for missing LRUs
+                        self._fqdn_talon_lru = list(talon_lru_fqdn_set)
+                else:
+                    # use a hard-coded example fqdn talon lru for simulation mode
+                    self._fqdn_talon_lru = {"mid_csp_cbf/talon_lru/001"}
+
+                try:
+                    for fqdn in self._fqdn_talon_lru:
+                        self._proxies[fqdn].Off()
+                except tango.DevFailed:
+                    log_msg = "Failed to power off Talon boards"
+                    self._logger.error(log_msg)
+                    return (ResultCode.FAILED, log_msg)
+
+                try:
+                    self._group_subarray.command_inout("Off")
+                    self._group_vcc.command_inout("Off")
+                    self._group_fsp.command_inout("Off")
+                    self._on = False
+                except tango.DevFailed:
+                    log_msg = "Failed to turn off group proxies"
+                    self._logger.error(log_msg)
+                    return (ResultCode.FAILED, log_msg)
+
+                message = "CbfController Off command completed OK"
+                return (ResultCode.OK, message)
+
             else:
-                # use a hard-coded example fqdn talon lru for simulation mode
-                self._fqdn_talon_lru = {"mid_csp_cbf/talon_lru/001"}
-
-            try:
-                for fqdn in self._fqdn_talon_lru:
-                    self._proxies[fqdn].Off()
-            except tango.DevFailed:
-                log_msg = "Failed to power off Talon boards"
-                self._logger.error(log_msg)
+                log_msg = "CbfController is already OFF. Disregarding redundant command."
                 return (ResultCode.FAILED, log_msg)
-
-            try:
-                self._group_subarray.command_inout("Off")
-                self._group_vcc.command_inout("Off")
-                self._group_fsp.command_inout("Off")
-            except tango.DevFailed:
-                log_msg = "Failed to turn off group proxies"
-                self._logger.error(log_msg)
-                return (ResultCode.FAILED, log_msg)
-
-            message = "CbfController Off command completed OK"
-            return (ResultCode.OK, message)
 
         else:
             log_msg = "Proxies not connected"
