@@ -286,12 +286,12 @@ class TestVccComponentManager:
             == configuration["band_5_tuning"]
         )
         assert (
-            vcc_component_manager.frequency_band_offset_stream_1
-            == configuration["frequency_band_offset_stream_1"]
+            vcc_component_manager.frequency_band_offset_stream1
+            == configuration["frequency_band_offset_stream1"]
         )
         assert (
-            vcc_component_manager.frequency_band_offset_stream_2
-            == configuration["frequency_band_offset_stream_2"]
+            vcc_component_manager.frequency_band_offset_stream2
+            == configuration["frequency_band_offset_stream2"]
         )
         assert vcc_component_manager.rfi_flagging_mask == str(
             configuration["rfi_flagging_mask"]
@@ -302,8 +302,8 @@ class TestVccComponentManager:
         assert vcc_component_manager.frequency_band == 0
         assert vcc_component_manager.config_id == ""
         assert vcc_component_manager.stream_tuning == (0, 0)
-        assert vcc_component_manager.frequency_band_offset_stream_1 == 0
-        assert vcc_component_manager.frequency_band_offset_stream_2 == 0
+        assert vcc_component_manager.frequency_band_offset_stream1 == 0
+        assert vcc_component_manager.frequency_band_offset_stream2 == 0
         assert vcc_component_manager.rfi_flagging_mask == ""
         mock_vcc_controller.Unconfigure.assert_next_call()
 
