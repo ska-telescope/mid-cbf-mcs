@@ -361,6 +361,7 @@ class ControllerComponentManager(CbfComponentManager):
 
             else:
                 log_msg = "CbfController is already ON. Disregarding redundant command."
+                self._logger.error(log_msg)
                 return (ResultCode.FAILED, log_msg)
 
         else:
@@ -438,6 +439,7 @@ class ControllerComponentManager(CbfComponentManager):
 
             else:
                 log_msg = "CbfController is already OFF. Disregarding redundant command."
+                self._logger.error(log_msg)
                 return (ResultCode.FAILED, log_msg)
 
         else:
