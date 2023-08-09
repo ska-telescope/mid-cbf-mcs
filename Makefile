@@ -44,7 +44,7 @@ K8S_CHARTS ?= ska-mid-cbf-umbrella ska-mid-cbf-mcs ska-mid-cbf-tmleafnode ## lis
 K8S_UMBRELLA_CHART_PATH ?= ./charts/ska-mid-cbf-umbrella
 
 PYTHON_TEST_FILE = 
-PYTHON_VARS_AFTER_PYTEST = -c setup-unit-test.cfg -k ControllerComponentManager
+PYTHON_VARS_AFTER_PYTEST = -c setup-unit-test.cfg -s -k ControllerComponentManager
 
 # Fixed variables
 # Timeout for gitlab-runner when run locally
