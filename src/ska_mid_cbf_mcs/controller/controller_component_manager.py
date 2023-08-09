@@ -81,9 +81,9 @@ class ControllerComponentManager(CbfComponentManager):
 
         self._logger = logger
 
-        self._connected = False # to device proxies
+        self._connected = False  # to device proxies
 
-        self._on = False # CBF controller itself
+        self._on = False  # CBF controller itself
 
         (
             self._fqdn_vcc,
@@ -268,15 +268,15 @@ class ControllerComponentManager(CbfComponentManager):
 
         # Check if connection to device proxies has been established
         if self._connected:
-
             # Check if CBF Controller is already on
-            if not self._on: 
-
+            if not self._on:
                 # set VCC values
                 for fqdn, proxy in self._proxies.items():
                     if "vcc" in fqdn:
                         try:
-                            vcc_id = int(proxy.get_property("VccID")["VccID"][0])
+                            vcc_id = int(
+                                proxy.get_property("VccID")["VccID"][0]
+                            )
                             rec_id = self._vcc_to_receptor[vcc_id]
                             self._logger.info(
                                 f"Assigning receptor ID {rec_id} to VCC {vcc_id}"
@@ -315,8 +315,12 @@ class ControllerComponentManager(CbfComponentManager):
                     talondx_config_json = json.load(talondx_config_file)
 
                     talon_lru_fqdn_set = set()
-                    for config_command in talondx_config_json["config_commands"]:
-                        talon_lru_fqdn_set.add(config_command["talon_lru_fqdn"])
+                    for config_command in talondx_config_json[
+                        "config_commands"
+                    ]:
+                        talon_lru_fqdn_set.add(
+                            config_command["talon_lru_fqdn"]
+                        )
                     self._logger.info(f"talonlru list = {talon_lru_fqdn_set}")
 
                     # TODO: handle subscribed events for missing LRUs
@@ -354,7 +358,7 @@ class ControllerComponentManager(CbfComponentManager):
 
                 message = "CbfController On command completed OK"
                 return (ResultCode.OK, message)
-            
+
             else:
                 log_msg = "CbfController is already ON. Disregarding redundant command."
                 return (ResultCode.FAILED, log_msg)
@@ -378,7 +382,6 @@ class ControllerComponentManager(CbfComponentManager):
 
         # Check if connection to device proxies has been established
         if self._connected:
-
             # Check if CBF Controller is on
             if self._on:
                 if (
@@ -402,7 +405,9 @@ class ControllerComponentManager(CbfComponentManager):
                             talon_lru_fqdn_set.add(
                                 config_command["talon_lru_fqdn"]
                             )
-                        self._logger.info(f"talonlru list = {talon_lru_fqdn_set}")
+                        self._logger.info(
+                            f"talonlru list = {talon_lru_fqdn_set}"
+                        )
 
                         # TODO: handle subscribed events for missing LRUs
                         self._fqdn_talon_lru = list(talon_lru_fqdn_set)
