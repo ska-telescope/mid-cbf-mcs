@@ -415,8 +415,10 @@ class CbfController(SKAController):
 
             if result_code == ResultCode.OK:
                 self.target._component_power_mode_changed(PowerMode.ON)
+                self.logger.info(message)
+            elif result_code == ResultCode.FAILED:
+                self.logger.error(message)
 
-            self.logger.info(message)
             return (result_code, message)
 
     class OffCommand(SKABaseDevice.OffCommand):
@@ -440,8 +442,10 @@ class CbfController(SKAController):
 
             if result_code == ResultCode.OK:
                 self.target._component_power_mode_changed(PowerMode.OFF)
+                self.logger.info(message)
+            elif result_code == ResultCode.FAILED:
+                self.logger.error(message)
 
-            self.logger.info(message)
             return (result_code, message)
 
     class StandbyCommand(SKABaseDevice.StandbyCommand):
