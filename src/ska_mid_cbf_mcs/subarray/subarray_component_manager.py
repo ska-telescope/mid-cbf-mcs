@@ -25,7 +25,12 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 # Tango imports
 import tango
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import AdminMode, ObsState, PowerMode
+from ska_tango_base.control_model import (
+    AdminMode,
+    ObsState,
+    PowerMode,
+    SimulationMode,
+)
 from ska_tango_base.csp.subarray.component_manager import (
     CspSubarrayComponentManager,
 )
@@ -90,6 +95,7 @@ class CbfSubarrayComponentManager(
         fsp_pss_sub: List[str],
         fsp_pst_sub: List[str],
         logger: logging.Logger,
+        simulation_mode: SimulationMode,
         push_change_event_callback: Optional[Callable],
         component_resourced_callback: Callable[[bool], None],
         component_configured_callback: Callable[[bool], None],
@@ -132,6 +138,8 @@ class CbfSubarrayComponentManager(
         """
 
         self._logger = logger
+
+        self._simulation_mode = simulation_mode
 
         self._logger.info("Entering CbfSubarrayComponentManager.__init__)")
 
@@ -911,32 +919,9 @@ class CbfSubarrayComponentManager(
                 if int(fsp["fsp_id"]) in list(range(1, self._count_fsp + 1)):
                     fspID = int(fsp["fsp_id"])
                     proxy_fsp = self._proxies_fsp[fspID - 1]
-                    if fsp["function_mode"] == "CORR":
-                        proxy_fsp_subarray = (
-                            self._proxies_fsp_corr_subarray_device[fspID - 1]
-                        )
-                    elif fsp["function_mode"] == "PSS-BF":
-                        proxy_fsp_subarray = (
-                            self._proxies_fsp_pss_subarray_device[fspID - 1]
-                        )
-                    elif fsp["function_mode"] == "PST-BF":
-                        proxy_fsp_subarray = (
-                            self._proxies_fsp_pst_subarray_device[fspID - 1]
-                        )
                 else:
                     msg = (
                         f"'fspID' must be an integer in the range [1, {self._count_fsp}]."
-                        " Aborting configuration."
-                    )
-                    return (False, msg)
-
-                if proxy_fsp.State() != tango.DevState.ON:
-                    msg = f"FSP {fspID} is not ON. Aborting configuration."
-                    return (False, msg)
-
-                if proxy_fsp_subarray.State() != tango.DevState.ON:
-                    msg = (
-                        f"Subarray {self._subarray_id} of FSP {fspID} is not ON."
                         " Aborting configuration."
                     )
                     return (False, msg)
@@ -1021,6 +1006,9 @@ class CbfSubarrayComponentManager(
                             receptorsSpecified = True
                     if receptorsSpecified:
                         for this_rec in fsp["receptors"]:
+                            self._logger.info(
+                                f"List of receptors: {self._receptors}"
+                            )
                             if this_rec not in self._receptors:
                                 msg = (
                                     f"Receptor {this_rec} does not belong to "
@@ -1673,16 +1661,53 @@ class CbfSubarrayComponentManager(
                 self._fqdn_fsp_pst_subarray_device[fspID - 1]
             )
 
+            self._logger.info("Connecting to FSP devices from subarray")
+            self._logger.info(
+                f"Setting Simulation Mode of FSP proxies to: {self._simulation_mode}"
+            )
+
+            # Set simulation mode of FSPs to subarray sim mode
+            fsp_corr_proxy = self._proxies_fsp_corr_subarray_device[fspID - 1]
+            fsp_pss_proxy = self._proxies_fsp_pss_subarray_device[fspID - 1]
+            fsp_pst_proxy = self._proxies_fsp_pst_subarray_device[fspID - 1]
+
+            proxy_fsp.write_attribute("adminMode", AdminMode.OFFLINE)
+            proxy_fsp.write_attribute("simulationMode", self._simulation_mode)
+            proxy_fsp.write_attribute("adminMode", AdminMode.ONLINE)
+            proxy_fsp.command_inout("On")
+
+            fsp_corr_proxy.write_attribute("adminMode", AdminMode.OFFLINE)
+            fsp_corr_proxy.write_attribute(
+                "simulationMode", self._simulation_mode
+            )
+            fsp_corr_proxy.write_attribute("adminMode", AdminMode.ONLINE)
+            fsp_corr_proxy.command_inout("On")
+
+            fsp_pss_proxy.write_attribute("adminMode", AdminMode.OFFLINE)
+            fsp_pss_proxy.write_attribute(
+                "simulationMode", self._simulation_mode
+            )
+            fsp_pss_proxy.write_attribute("adminMode", AdminMode.ONLINE)
+            fsp_pss_proxy.command_inout("On")
+
+            fsp_pst_proxy.write_attribute("adminMode", AdminMode.OFFLINE)
+            fsp_pst_proxy.write_attribute(
+                "simulationMode", self._simulation_mode
+            )
+            fsp_pst_proxy.write_attribute("adminMode", AdminMode.ONLINE)
+            fsp_pst_proxy.command_inout("On")
+
             # change FSP subarray membership
             proxy_fsp.AddSubarrayMembership(self._subarray_id)
 
             # Configure functionMode.
             proxy_fsp.SetFunctionMode(fsp["function_mode"])
 
-            # Add configID to fsp. It is not included in the "FSP" portion in configScan JSON
+            # Add configID, frequency_band, band_5_tuning, and sub_id to fsp. They are not included in the "FSP" portion in configScan JSON
             fsp["config_id"] = common_configuration["config_id"]
             fsp["frequency_band"] = common_configuration["frequency_band"]
             fsp["band_5_tuning"] = common_configuration["band_5_tuning"]
+            fsp["sub_id"] = common_configuration["subarray_id"]
             fsp[
                 "frequency_band_offset_stream1"
             ] = self._frequency_band_offset_stream1
@@ -1969,6 +1994,10 @@ class CbfSubarrayComponentManager(
         for receptor_id in argin:
             self._logger.debug(f"Attempting to add receptor {receptor_id}")
 
+            self._logger.info(
+                f"receptor to vcc keys: {self._receptor_to_vcc.keys()}"
+            )
+
             if receptor_id in self._receptor_to_vcc.keys():
                 vccID = self._receptor_to_vcc[receptor_id]
             else:
@@ -1986,6 +2015,15 @@ class CbfSubarrayComponentManager(
 
             vccSubarrayID = vccProxy.subarrayMembership
             self._logger.debug(f"VCC {vccID} subarray_id: {vccSubarrayID}")
+
+            # Setting simulation mode of VCC proxies based on simulation mode of subarray
+            self._logger.info(
+                f"Writing VCC simulation mode to: {self._simulation_mode}"
+            )
+            vccProxy.write_attribute("adminMode", AdminMode.OFFLINE)
+            vccProxy.write_attribute("simulationMode", self._simulation_mode)
+            vccProxy.write_attribute("adminMode", AdminMode.ONLINE)
+            vccProxy.command_inout("On")
 
             # only add receptor if it does not already belong to a
             # different subarray

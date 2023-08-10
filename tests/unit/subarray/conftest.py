@@ -26,6 +26,7 @@ from ska_tango_base.control_model import (
     HealthState,
     ObsState,
     PowerMode,
+    SimulationMode,
 )
 from tango.server import command
 
@@ -506,6 +507,7 @@ def subarray_component_manager(
             "mid_csp_cbf/fspPstSubarray/04_01",
         ],
         logger=logger,
+        simulation_mode=SimulationMode.TRUE,
         push_change_event_callback=push_change_event_callback,
         component_resourced_callback=component_callback,
         component_configured_callback=component_callback,

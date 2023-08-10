@@ -22,7 +22,7 @@ import tango
 
 # Tango imports
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import PowerMode
+from ska_tango_base.control_model import PowerMode, SimulationMode
 from ska_tango_base.csp.subarray.subarray_device import CspSubElementSubarray
 from tango import AttrWriteType
 from tango.server import attribute, command, device_property, run
@@ -169,6 +169,13 @@ class CbfSubarray(CspSubElementSubarray):
         doc="Frequency offset (delta f)",
     )
 
+    simulationMode = attribute(
+        dtype=SimulationMode,
+        access=AttrWriteType.READ_WRITE,
+        label="Simulation Mode",
+        doc="Simulation Mode",
+    )
+
     # ---------------
     # General methods
     # ---------------
@@ -213,6 +220,8 @@ class CbfSubarray(CspSubElementSubarray):
         self._communication_status: Optional[CommunicationStatus] = None
         self._component_power_mode: Optional[PowerMode] = None
 
+        self._simulation_mode = SimulationMode.TRUE
+
         return CbfSubarrayComponentManager(
             subarray_id=int(self.SubID),
             controller=self.CbfControllerAddress,
@@ -222,6 +231,7 @@ class CbfSubarray(CspSubElementSubarray):
             fsp_pss_sub=self.FspPssSubarray,
             fsp_pst_sub=self.FspPstSubarray,
             logger=self.logger,
+            simulation_mode=self._simulation_mode,
             push_change_event_callback=self.push_change_event,
             component_resourced_callback=self._component_resourced,
             component_configured_callback=self._component_configured,
@@ -364,6 +374,22 @@ class CbfSubarray(CspSubElementSubarray):
     # ------------------
     # Attributes methods
     # ------------------
+
+    def write_simulationMode(self: CbfSubarray, value: SimulationMode) -> None:
+        """
+        Set the Simulation Mode of the device.
+
+        :param value: SimulationMode
+        """
+        self.logger.info(f"Writing simulation mode of {value}")
+        super().write_simulationMode(value)
+        self.component_manager._simulation_mode = value
+
+    def read_simulationMode(self: CbfSubarray) -> SimulationMode:
+        self.logger.info(
+            f"Reading Simulation Mode of value {self.component_manager._simulation_mode}"
+        )
+        return self.component_manager._simulation_mode
 
     def read_frequencyBand(self: CbfSubarray) -> int:
         # PROTECTED REGION ID(CbfSubarray.frequencyBand_read) ENABLED START #
