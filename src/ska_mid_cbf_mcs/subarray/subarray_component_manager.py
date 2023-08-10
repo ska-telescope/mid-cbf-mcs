@@ -1679,10 +1679,11 @@ class CbfSubarrayComponentManager(
             # Configure functionMode.
             proxy_fsp.SetFunctionMode(fsp["function_mode"])
 
-            # Add configID to fsp. It is not included in the "FSP" portion in configScan JSON
+            # Add configID, frequency_band, band_5_tuning, and sub_id to fsp. They are not included in the "FSP" portion in configScan JSON
             fsp["config_id"] = common_configuration["config_id"]
             fsp["frequency_band"] = common_configuration["frequency_band"]
             fsp["band_5_tuning"] = common_configuration["band_5_tuning"]
+            fsp["sub_id"] = common_configuration["subarray_id"]
             fsp[
                 "frequency_band_offset_stream1"
             ] = self._frequency_band_offset_stream1
