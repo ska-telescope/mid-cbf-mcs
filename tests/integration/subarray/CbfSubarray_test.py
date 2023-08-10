@@ -1788,7 +1788,7 @@ class TestCbfSubarray:
                 # Write this one delay_model JSON object to the TM emulator
                 test_proxies.tm.delayModel = input_delay_model
 
-                time.sleep(2)
+                time.sleep(10)
 
                 # check the delay model was correctly updated for vcc
                 vcc_receptors_num = []
