@@ -22,7 +22,6 @@ annotations:
     app.gitlab.com/app: CI_PROJECT_PATH_SLUG
     app.gitlab.com/env: CI_ENVIRONMENT_SLUG  
 dsconfig:
-    configuration_file: data/tmleafnodeconfig.json
     image:
       registry: artefact.skao.int
       image: ska-tango-images-tango-dsconfig
@@ -42,7 +41,7 @@ midcbf:
     tag: 0.10.5
     pullPolicy: IfNotPresent
 
-deviceServers2:
+deviceServers_tm:
   tmcspsubarrayleafnodetest:
     file: "data/tmcspsubarrayleafnodetest.yaml"
 

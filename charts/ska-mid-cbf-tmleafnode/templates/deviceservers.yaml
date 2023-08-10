@@ -1,6 +1,6 @@
 {{ $localchart := . }}
 
-{{ range $key, $deviceserver := .Values.deviceServers2 }}
+{{ range $key, $deviceserver := .Values.deviceServers_tm }}
 
 {{- $filedeviceserver := tpl ($.Files.Get $deviceserver.file) $ | fromYaml }}
 
