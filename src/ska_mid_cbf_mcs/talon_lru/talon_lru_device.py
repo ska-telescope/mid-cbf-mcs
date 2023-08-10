@@ -20,7 +20,7 @@ from typing import Any, Optional, Tuple
 import tango
 from ska_tango_base import SKABaseDevice
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import PowerMode
+from ska_tango_base.control_model import PowerMode, SimulationMode
 from tango.server import attribute, device_property, run
 
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
@@ -256,6 +256,9 @@ class TalonLRU(SKABaseDevice):
 
             device = self.target
             device._power_switch_lock = Lock()
+
+            # Setting initial simulation mode to True
+            device.write_simulationMode(SimulationMode.TRUE)
 
             # check power mode in case of fault during communication establishment
             # device.component_manager.check_power_mode(device.get_state())
