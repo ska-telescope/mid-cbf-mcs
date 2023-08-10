@@ -1483,8 +1483,6 @@ class CbfSubarrayComponentManager(
         common_configuration = copy.deepcopy(full_configuration["common"])
         configuration = copy.deepcopy(full_configuration["cbf"])
 
-        self._logger.info("Configure scan 1")
-
         # Configure configID.
         self._config_id = str(common_configuration["config_id"])
         self._logger.debug(f"config_id: {self._config_id}")
@@ -1496,13 +1494,9 @@ class CbfSubarrayComponentManager(
         )
         self._logger.debug(f"frequency_band: {self._frequency_band}")
 
-        self._logger.info("Configure scan 2")
-
         data = tango.DeviceData()
         data.insert(tango.DevString, common_configuration["frequency_band"])
         self._group_vcc.command_inout("ConfigureBand", data)
-
-        self._logger.info("Configure scan 3")
 
         # Configure band5Tuning, if frequencyBand is 5a or 5b.
         if self._frequency_band in [4, 5]:
@@ -1522,8 +1516,6 @@ class CbfSubarrayComponentManager(
                 "'frequencyBandOffsetStream1' not specified. Defaulting to 0."
             )
             self._logger.warning(log_msg)
-
-        self._logger.info("Configure scan 4")
 
         # If not given, use a default value.
         # If malformed, use a default value, but append an error.
@@ -1547,8 +1539,6 @@ class CbfSubarrayComponentManager(
             "rfi_flagging_mask": configuration["rfi_flagging_mask"],
         }
 
-        self._logger.info("Configure scan 5")
-
         # Add subset of FSP configuration to the VCC configure scan argument
         # TODO determine necessary parameters to send to VCC for each function mode
         # TODO VLBI
@@ -1563,14 +1553,10 @@ class CbfSubarrayComponentManager(
             reduced_fsp.append(fsp_cfg)
         config_dict["fsp"] = reduced_fsp
 
-        self._logger.info("Configure scan 6")
-
         json_str = json.dumps(config_dict)
         data = tango.DeviceData()
         data.insert(tango.DevString, json_str)
         self._group_vcc.command_inout("ConfigureScan", data)
-
-        self._logger.info("Configure scan 7")
 
         # Configure dopplerPhaseCorrSubscriptionPoint.
         if "doppler_phase_corr_subscription_point" in configuration:
@@ -1657,8 +1643,6 @@ class CbfSubarrayComponentManager(
         # the obsState are properly (implicitly) updated by the command
         # (And not manually by SetObservingState as before)
 
-        self._logger.info("Configure scan 8")
-
         # FSP #
         # Configure FSP.
         for fsp in configuration["fsp"]:
@@ -1678,8 +1662,9 @@ class CbfSubarrayComponentManager(
             )
 
             self._logger.info("Connecting to FSP devices from subarray")
-
-            self._logger.info(proxy_fsp)
+            self._logger.info(
+                f"Setting Simulation Mode of FSP proxies to: {self._simulation_mode}"
+            )
 
             # Set simulation mode of FSPs to subarray sim mode
             fsp_corr_proxy = self._proxies_fsp_corr_subarray_device[fspID - 1]
