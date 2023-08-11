@@ -473,9 +473,6 @@ class CbfSubarrayComponentManager(
 
                 delay_model = json.loads(value)
                 # pass receptor IDs as pair of str and int to FSPs and VCCs
-                # CIP-1724 Overriding the delay model receptor_id value to 0 until design is determined
-                # to understand where it should come from and what it should be set to. This value is
-                # being used for the receptor lane at the moment by the hps fsp app
                 for delay_detail in delay_model["delay_details"]:
                     receptor_id = delay_detail["receptor"]
                     delay_detail["receptor"] = [
