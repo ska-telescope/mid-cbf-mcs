@@ -1,4 +1,7 @@
 {
+  "interface": "https://schema.skao.int/ska-csp-delaymodel/2.2",
+  "epoch": 11000000,
+  "validity_period": 400.0,
   "delay_details": [
     {
       "receptor": ["SKA001", 1],
