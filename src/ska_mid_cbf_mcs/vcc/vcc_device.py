@@ -621,7 +621,8 @@ class Vcc(CspSubElementObsDevice):
 
             device.set_change_event("frequencyBand", True, True)
 
-            device.write_simulationMode(True)
+            # Setting initial simulation mode to True
+            device.write_simulationMode(SimulationMode.TRUE)
 
             device.set_change_event("subarrayMembership", True, True)
 
