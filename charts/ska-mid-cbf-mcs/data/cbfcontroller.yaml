@@ -92,7 +92,7 @@ server:
             - "mnt/talondx-config"
           - name: "HWConfigPath"
             values:
-            - "mnt/hw_config"
+            - "mnt/hw_config/hw_config.yaml"
           - name: "polled_attr"
             values:
             - "commandprogress"

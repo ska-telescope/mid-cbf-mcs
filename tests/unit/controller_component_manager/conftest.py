@@ -98,7 +98,7 @@ def controller_component_manager(
     hw_config_path = "mnt/hw_config/hw_config.yaml"
 
     component_manager = ControllerComponentManager(
-        mock_get_num_capabilities,
+        get_num_capabilities=mock_get_num_capabilities,
         subarray_fqdns_all=subarray,
         vcc_fqdns_all=vcc,
         fsp_fqdns_all=fsp,
