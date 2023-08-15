@@ -169,7 +169,7 @@ class ControllerComponentManager(CbfComponentManager):
             : self._count_subarray
         ]
         self._fqdn_talon_lru = list(self._talon_lru_fqdns_all)[
-            : len(self._hw_config["talon_LRU"])
+            : len(self._hw_config["talon_lru"])
         ]
         self._fqdn_talon_board = list(self._talon_board_fqdns_all)[
             : len(self._hw_config["talon_ip"])
@@ -208,44 +208,56 @@ class ControllerComponentManager(CbfComponentManager):
             return
 
         for fqdn in (
-            self._fqdn_fsp + self._fqdn_talon_lru + self._fqdn_subarray
+            self._fqdn_fsp
+            + self._fqdn_talon_lru
+            + self._fqdn_talon_board
+            + self._fqdn_power_switch
+            + self._fqdn_subarray
         ):
             if fqdn not in self._proxies:
                 try:
                     log_msg = f"Trying connection to {fqdn}"
-                    self._logger.info(log_msg)
+                    self._logger.debug(log_msg)
                     proxy = CbfDeviceProxy(fqdn=fqdn, logger=self._logger)
 
                     if fqdn in self._fqdn_talon_lru:
-                        lru_config = tango.DbData()
+                        self._logger.debug(
+                            f"Writing hardware configuration properties to {fqdn}"
+                        )
                         lru_id = fqdn.split("/")[-1]
-                        for property, value in self._hw_config["talon_LRU"][
-                            int(lru_id) - 1
-                        ][lru_id].items():
-                            lru_config.append(tango.DbDatum(property, value))
+                        lru_config = tango.utils.obj_2_property(
+                            self._hw_config["talon_lru"][int(lru_id) - 1][
+                                lru_id
+                            ]
+                        )
                         proxy.put_property(lru_config)
                         proxy.set_timeout_millis(10000)
 
                     elif fqdn in self._fqdn_talon_board:
-                        board_config = tango.DbData()
+                        self._logger.debug(
+                            f"Writing hardware configuration properties to {fqdn}"
+                        )
                         board_id = fqdn.split("/")[-1]
-                        board_config.append(
-                            tango.DbDatum(
-                                "TalonDxBoardAddress",
-                                self._hw_config["talon_ip"][board_id],
-                            )
+                        board_config = tango.utils.obj_2_property(
+                            {
+                                "TalonDxBoardAddress": self._hw_config[
+                                    "talon_ip"
+                                ][board_id]
+                            }
                         )
                         proxy.put_property(board_config)
 
                     elif fqdn in self._fqdn_power_switch:
+                        self._logger.debug(
+                            f"Writing hardware configuration properties to {fqdn}"
+                        )
                         switch_config = tango.DbData()
                         switch_id = fqdn.split("/")[-1]
-                        for property, value in self._hw_config["power_switch"][
-                            int(switch_id) - 1
-                        ][switch_id].items():
-                            switch_config.append(
-                                tango.DbDatum(property, value)
-                            )
+                        lru_config = tango.utils.obj_2_property(
+                            self._hw_config["power_switch"][
+                                int(switch_id) - 1
+                            ][switch_id]
+                        )
                         proxy.put_property(switch_config)
 
                     self._proxies[fqdn] = proxy

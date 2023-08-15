@@ -82,8 +82,7 @@ class TalonDxComponentManager:
             )
             with open(talondx_config_path) as json_fd:
                 self.talondx_config = json.load(json_fd)
-            hw_config_path = f"{self._hw_config_path}/hw_config.yaml"
-            with open(hw_config_path) as yaml_fd:
+            with open(self._hw_config_path) as yaml_fd:
                 self._hw_config = yaml.safe_load(yaml_fd)
         except IOError as e:
             self.logger.error(e)
