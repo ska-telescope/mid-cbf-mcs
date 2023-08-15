@@ -478,7 +478,7 @@ class CbfSubarrayComponentManager(
 
                 # Validate delay_model against the telescope model
                 delay_model_schema = get_csp_delaymodel_schema(
-                    version=config["interface"], strict=True
+                    version=delay_model_json["interface"], strict=True
                 )
                 try:
                     delay_model_schema.validate(delay_model_json)
