@@ -34,7 +34,10 @@ from ska_tango_base.control_model import (
 from ska_tango_base.csp.subarray.component_manager import (
     CspSubarrayComponentManager,
 )
-from ska_telmodel.csp.schema import get_csp_config_schema
+from ska_telmodel.csp.schema import (
+    get_csp_delaymodel_schema,
+    get_csp_scan_schema,
+)
 from tango import AttrQuality
 
 from ska_mid_cbf_mcs.attribute_proxy import CbfAttributeProxy
@@ -455,9 +458,7 @@ class CbfSubarrayComponentManager(
         :param value: attribute value
         :param quality: attribute quality
         """
-        self._logger.debug(
-            "Entering _delay_model_event_callback()"
-        )  # TODO: CIP-1606 validate delay model against telescope model
+        self._logger.debug("Entering _delay_model_event_callback()")
 
         if value is not None:
             if not self._ready:
@@ -473,10 +474,19 @@ class CbfSubarrayComponentManager(
                     return
 
                 self._last_received_delay_model = value
+                delay_model_json = json.loads(value)
 
-                delay_model = json.loads(value)
+                # Validate delay_model against the telescope model
+                delay_model_schema = get_csp_delaymodel_schema(
+                    version=config["interface"], strict=True
+                )
+                try:
+                    delay_model_schema.validate(delay_model_json)
+                except Exception as e:
+                    self._logger.error(str(e))
+
                 # pass receptor IDs as pair of str and int to FSPs and VCCs
-                for delay_detail in delay_model["delay_details"]:
+                for delay_detail in delay_model_json["delay_details"]:
                     receptor_id = delay_detail["receptor"]
                     delay_detail["receptor"] = [
                         receptor_id,
@@ -484,7 +494,7 @@ class CbfSubarrayComponentManager(
                     ]
                 t = Thread(
                     target=self._update_delay_model,
-                    args=(json.dumps(delay_model),),
+                    args=(json.dumps(delay_model_json),),
                 )
                 t.start()
             except Exception as e:
@@ -1463,6 +1473,7 @@ class CbfSubarrayComponentManager(
         :rtype: (ResultCode, str)
         """
         full_configuration = json.loads(argin)
+
         common_configuration = copy.deepcopy(full_configuration["common"])
         configuration = copy.deepcopy(full_configuration["cbf"])
 
@@ -2064,7 +2075,20 @@ class CbfSubarrayComponentManager(
             information purpose only.
         :rtype: (ResultCode, str)
         """
-        scan_id = argin["scan_id"]
+
+        scan_json = json.loads(argin)
+
+        # Validate scan_json against the telescope model
+        scan_schema = get_csp_scan_schema(
+            version=scan_json["interface"], strict=True
+        )
+        try:
+            scan_schema.validate(scan_json)
+        except Exception as e:
+            msg = f"Scan validation against ska-telmodel schema failed with exception:\n {str(e)}"
+            return (False, msg)
+
+        scan_id = scan_json["scan_id"]
         try:
             data = tango.DeviceData()
             data.insert(tango.DevString, scan_id)

@@ -24,6 +24,7 @@ import tango
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import PowerMode, SimulationMode
 from ska_tango_base.csp.subarray.subarray_device import CspSubElementSubarray
+from ska_telmodel.csp.schema import get_csp_config_schema
 from tango import AttrWriteType
 from tango.server import attribute, command, device_property, run
 
@@ -670,19 +671,6 @@ class CbfSubarray(CspSubElementSubarray):
 
             full_configuration = json.loads(argin)
 
-            try:
-                configure_scan_schema = get_csp_config_schema(
-                    version=config["interface"], strict=True
-                )
-                configure_scan_schema.validate(full_configuration)
-            except Exception as ex:
-                msg = f"Validation of the ConfigureScan command against ska-telmodel schema failed with the following exception:\n{ex}"
-                return (ResultCode.FAILED, msg)
-
-            self.logger.info(
-                "Successfully validated the ConfigureScan command against the telescope model schema."
-            )
-
             common_configuration = copy.deepcopy(full_configuration["common"])
             configuration = copy.deepcopy(full_configuration["cbf"])
             # set band5Tuning to [0,0] if not specified
@@ -728,6 +716,17 @@ class CbfSubarray(CspSubElementSubarray):
                 msg = "Scan configuration object is not a valid JSON object. Aborting configuration."
                 return (False, msg)
 
+            # Validate full_configuration against the telescope model
+            configure_scan_schema = get_csp_config_schema(
+                version=full_configuration["interface"], strict=True
+            )
+            try:
+                configure_scan_schema.validate(full_configuration)
+            except Exception:
+                msg = "Scan configuration validation against the telescope model failed. Aborting configuration."
+                return (False, msg)
+
+            # TODO: CIP-1606 see how much of the below validation is redundant now that telescope model is used to validate
             # Validate frequencyBandOffsetStream1.
             if "frequency_band_offset_stream1" not in configuration:
                 configuration["frequency_band_offset_stream1"] = 0
