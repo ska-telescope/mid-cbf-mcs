@@ -19,7 +19,6 @@ import copy
 import json
 import logging
 import sys
-import time
 from threading import Lock, Thread
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
@@ -28,14 +27,15 @@ import tango
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import (
     AdminMode,
-    HealthState,
     ObsState,
     PowerMode,
+    SimulationMode,
 )
 from ska_tango_base.csp.subarray.component_manager import (
     CspSubarrayComponentManager,
 )
-from tango import AttrQuality, DevState
+from ska_telmodel.csp.schema import get_csp_config_schema
+from tango import AttrQuality
 
 from ska_mid_cbf_mcs.attribute_proxy import CbfAttributeProxy
 from ska_mid_cbf_mcs.commons.global_enum import (
@@ -54,7 +54,6 @@ from ska_mid_cbf_mcs.component.util import check_communicating
 # SKA imports
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_mid_cbf_mcs.group_proxy import CbfGroupProxy
-from ska_telmodel.csp.schema import get_csp_config_schema
 
 
 class CbfSubarrayComponentManager(
@@ -87,35 +86,6 @@ class CbfSubarrayComponentManager(
         """Return the receptor list."""
         return self._receptors
 
-    @property
-    def vcc_state(self: CbfSubarrayComponentManager) -> Dict[str, DevState]:
-        """Return the VCC operational states."""
-        return self._vcc_state
-
-    @property
-    def vcc_health_state(
-        self: CbfSubarrayComponentManager,
-    ) -> Dict[str, HealthState]:
-        """Return the VCC health states."""
-        return self._vcc_health_state
-
-    @property
-    def fsp_state(self: CbfSubarrayComponentManager) -> Dict[str, DevState]:
-        """Return the FSP operational states."""
-        return self._fsp_state
-
-    @property
-    def fsp_health_state(
-        self: CbfSubarrayComponentManager,
-    ) -> Dict[str, HealthState]:
-        """Return the FSP health states."""
-        return self._fsp_health_state
-
-    @property
-    def fsp_list(self: CbfSubarrayComponentManager) -> List[List[int]]:
-        """Return the FSP function mode device IDs."""
-        return self._fsp_list
-
     def __init__(
         self: CbfSubarrayComponentManager,
         subarray_id: int,
@@ -126,6 +96,7 @@ class CbfSubarrayComponentManager(
         fsp_pss_sub: List[str],
         fsp_pst_sub: List[str],
         logger: logging.Logger,
+        simulation_mode: SimulationMode,
         push_change_event_callback: Optional[Callable],
         component_resourced_callback: Callable[[bool], None],
         component_configured_callback: Callable[[bool], None],
@@ -169,8 +140,11 @@ class CbfSubarrayComponentManager(
 
         self._logger = logger
 
+        self._simulation_mode = simulation_mode
+
         self._logger.info("Entering CbfSubarrayComponentManager.__init__)")
 
+        # TODO: pull max capabilities from controller?
         self._receptor_utils = ReceptorUtils(num_vcc=const.MAX_VCC)
 
         self._component_op_fault_callback = component_fault_callback
@@ -197,7 +171,6 @@ class CbfSubarrayComponentManager(
         self._frequency_band = 0
         self._config_id = ""
         self._scan_id = 0
-        self._fsp_list = [[], [], [], []]
         self.frequency_offset_k = []
         self.frequency_offset_delta_f = 0
 
@@ -227,20 +200,9 @@ class CbfSubarrayComponentManager(
         # store the subscribed telstate events as event_ID:attribute_proxy key:value pairs
         self._events_telstate = {}
 
-        # store the subscribed state change events as vcc_ID:[event_ID, event_ID] key:value pairs
-        self._events_state_change_vcc = {}
-
-        # store the subscribed state change events as fsp_ID:[event_ID, event_ID] key:value pairs
-        self._events_state_change_fsp = {}
-
-        self._vcc_state = {}
-        self._vcc_health_state = {}
-        self._fsp_state = {}
-        self._fsp_health_state = {}
-
         # for easy device-reference
-        self._frequency_band_offset_stream_1 = 0
-        self._frequency_band_offset_stream_2 = 0
+        self._frequency_band_offset_stream1 = 0
+        self._frequency_band_offset_stream2 = 0
         self._stream_tuning = [0, 0]
 
         # device proxy for easy reference to CBF controller
@@ -303,16 +265,27 @@ class CbfSubarrayComponentManager(
                 )
                 self._count_vcc = int(self._controller_max_capabilities["VCC"])
                 self._count_fsp = int(self._controller_max_capabilities["FSP"])
-                for (
-                    receptor_vcc_pair
-                ) in self._proxy_cbf_controller.receptorToVcc:
-                    receptor_vcc_pair = receptor_vcc_pair.split(":")
-                    self._receptor_to_vcc[
-                        self._receptor_utils.receptor_id_int_to_str(
-                            int(receptor_vcc_pair[0])
-                        )
-                    ] = int(receptor_vcc_pair[1])
-                self._logger.debug(f"{self._receptor_to_vcc}")
+
+                # CIP-1724 Temporary work around to use 4 receptor lanes along with the Dish IDs
+                # recommended by Sonja
+                # for (
+                #    receptor_vcc_pair
+                # ) in self._proxy_cbf_controller.receptorToVcc:
+                #    receptor_vcc_pair = receptor_vcc_pair.split(":")
+                #    self._receptor_to_vcc[
+                #        self._receptor_utils.receptor_id_int_to_str(
+                #            int(receptor_vcc_pair[0])
+                #        )
+                #    ] = int(receptor_vcc_pair[1])
+                self._receptor_to_vcc = {
+                    "SKA001": 1,
+                    "SKA036": 2,
+                    "SKA063": 3,
+                    "SKA100": 4,
+                }
+                self._logger.info(
+                    f"Receptor to VCC mapping: {self._receptor_to_vcc}"
+                )
 
                 self._fqdn_vcc = self._fqdn_vcc[: self._count_vcc]
                 self._fqdn_fsp = self._fqdn_fsp[: self._count_fsp]
@@ -482,7 +455,9 @@ class CbfSubarrayComponentManager(
         :param value: attribute value
         :param quality: attribute quality
         """
-        self._logger.debug("Entering _delay_model_event_callback()") # TODO: CIP-1606 validate delay model against telescope model
+        self._logger.debug(
+            "Entering _delay_model_event_callback()"
+        )  # TODO: CIP-1606 validate delay model against telescope model
 
         if value is not None:
             if not self._ready:
@@ -501,9 +476,9 @@ class CbfSubarrayComponentManager(
 
                 delay_model = json.loads(value)
                 # pass receptor IDs as pair of str and int to FSPs and VCCs
-                for model in delay_model["delay_model"]:
-                    receptor_id = model["receptor"]
-                    model["receptor"] = [
+                for delay_detail in delay_model["delay_details"]:
+                    receptor_id = delay_detail["receptor"]
+                    delay_detail["receptor"] = [
                         receptor_id,
                         self._receptor_utils.receptors[receptor_id],
                     ]
@@ -576,9 +551,9 @@ class CbfSubarrayComponentManager(
                 self._last_received_jones_matrix = value
                 jones_matrix_all = json.loads(value)
 
-                for jones_matrix in jones_matrix_all["jonesMatrix"]:
+                for jones_matrix in jones_matrix_all["jones_matrix"]:
                     # pass receptor IDs as pair of str and int to FSPs and VCCs
-                    for matrix in jones_matrix["matrixDetails"]:
+                    for matrix in jones_matrix["matrix_details"]:
                         receptor_id = matrix["receptor"]
                         matrix["receptor"] = [
                             receptor_id,
@@ -586,10 +561,7 @@ class CbfSubarrayComponentManager(
                         ]
                     t = Thread(
                         target=self._update_jones_matrix,
-                        args=(
-                            int(jones_matrix["epoch"]),
-                            json.dumps(jones_matrix["matrixDetails"]),
-                        ),
+                        args=(json.dumps(jones_matrix),),
                     )
                     t.start()
             except Exception as e:
@@ -598,30 +570,23 @@ class CbfSubarrayComponentManager(
             self._logger.warning(f"None value for {fqdn}")
 
     def _update_jones_matrix(
-        self: CbfSubarrayComponentManager, epoch: int, matrix_details: str
+        self: CbfSubarrayComponentManager, matrix: str
     ) -> None:
         """
         Update FSP and VCC Jones matrices.
 
         :param destination_type: type of device to send the delay model to
         :param epoch: system time of delay model reception
-        :param matrix_details: Jones matrix value
+        :param matrix: Jones matrix value
         """
         # This method is always called on a separate thread
         self._logger.debug("CbfSubarray._update_jones_matrix")
-        log_msg = (
-            f"Jones matrix active at {epoch} (currently {time.time()})..."
-        )
-        self._logger.info(log_msg)
 
-        if epoch > time.time():
-            time.sleep(epoch - time.time())
-
-        log_msg = f"Updating Jones Matrix at specified epoch {epoch}..."
+        log_msg = f"Updating Jones Matrix {matrix}"
         self._logger.info(log_msg)
 
         data = tango.DeviceData()
-        data.insert(tango.DevString, matrix_details)
+        data.insert(tango.DevString, matrix)
 
         # we lock the mutex, forward the configuration, then immediately unlock it
         self._mutex_jones_matrix_config.acquire()
@@ -665,21 +630,26 @@ class CbfSubarrayComponentManager(
                     return
 
                 self._last_received_timing_beam_weights = value
-                timing_beam_weights_all = json.loads(value)
+                timing_beam_weights = json.loads(value)
 
-                for beam_weights in timing_beam_weights_all["beamWeights"]:
-                    # pass receptor IDs as pair of str and int to FSPs and VCCs
-                    for weights in beam_weights["beamWeightsDetails"]:
-                        receptor_id = weights["receptor"]
-                        weights["receptor"] = [
-                            receptor_id,
-                            self._receptor_utils.receptors[receptor_id],
-                        ]
+                # pass receptor IDs as pair of str and int to FSPs and VCCs
+                for weights in timing_beam_weights[
+                    "timing_beam_weights_details"
+                ]:
+                    receptor_id = weights["receptor"]
+                    weights["receptor"] = [
+                        receptor_id,
+                        self._receptor_utils.receptors[receptor_id],
+                    ]
                     t = Thread(
                         target=self._update_timing_beam_weights,
                         args=(
-                            int(beam_weights["epoch"]),
-                            json.dumps(beam_weights["beamWeightsDetails"]),
+                            int(timing_beam_weights["epoch"]),
+                            json.dumps(
+                                timing_beam_weights[
+                                    "timing_beam_weights_details"
+                                ]
+                            ),
                         ),
                     )
                     t.start()
@@ -689,81 +659,28 @@ class CbfSubarrayComponentManager(
             self._logger.warning(f"None value for {fqdn}")
 
     def _update_timing_beam_weights(
-        self: CbfSubarrayComponentManager, epoch: int, weights_details: str
+        self: CbfSubarrayComponentManager, weights: str
     ) -> None:
         """
         Update FSP beam weights.
 
         :param destination_type: type of device to send the delay model to
         :param epoch: system time of delay model reception
-        :param weights_details: beam weights value
+        :param weights: beam weights value
         """
         # This method is always called on a separate thread
         self._logger.debug("CbfSubarray._update_timing_beam_weights")
-        log_msg = f"Timing beam weights active at {epoch} (currently {time.time()})..."
-        self._logger.info(log_msg)
 
-        if epoch > time.time():
-            time.sleep(epoch - time.time())
-
-        log_msg = f"Updating timing beam weights at specified epoch {epoch}..."
+        log_msg = f"Updating timing beam weights {weights}"
         self._logger.info(log_msg)
 
         data = tango.DeviceData()
-        data.insert(tango.DevString, weights_details)
+        data.insert(tango.DevString, weights)
 
         # we lock the mutex, forward the configuration, then immediately unlock it
         self._mutex_beam_weights_config.acquire()
         self._group_fsp.command_inout("UpdateTimingBeamWeights", data)
         self._mutex_beam_weights_config.release()
-
-    def _state_change_event_callback(
-        self: CbfSubarrayComponentManager,
-        fqdn: str,
-        name: str,
-        value: Any,
-        quality: AttrQuality,
-    ) -> None:
-        """ "
-        Callback for state and healthState change event subscription.
-
-        :param fqdn: attribute FQDN
-        :param name: attribute name
-        :param value: attribute value
-        :param quality: attribute quality
-        """
-        if value is not None:
-            try:
-                if "healthState" in name:
-                    if "vcc" in fqdn:
-                        self._vcc_health_state[fqdn] = value
-                    elif "fsp" in fqdn:
-                        self._fsp_health_state[fqdn] = value
-                    else:
-                        # should NOT happen!
-                        log_msg = f"Received healthState change for unknown device {name}"
-                        self._logger.warning(log_msg)
-                        return
-                elif "State" in name:
-                    if "vcc" in fqdn:
-                        self._vcc_state[fqdn] = value
-                    elif "fsp" in fqdn:
-                        self._fsp_state[fqdn] = value
-                    else:
-                        # should NOT happen!
-                        log_msg = (
-                            f"Received state change for unknown device {name}"
-                        )
-                        self._logger.warning(log_msg)
-                        return
-
-                log_msg = f"New value for {fqdn} {name} is {value}"
-                self._logger.info(log_msg)
-
-            except Exception as except_occurred:
-                self._logger.error(str(except_occurred))
-        else:
-            self._logger.warning(f"None value for {fqdn}")
 
     def validate_ip(self: CbfSubarrayComponentManager, ip: str) -> bool:
         """
@@ -818,19 +735,6 @@ class CbfSubarrayComponentManager(
                 self._events_telstate[event_id].remove_event(event_id)
                 del self._events_telstate[event_id]
 
-            # unsubscribe from FSP state change events
-            for fspID in list(self._events_state_change_fsp.keys()):
-                proxy_fsp = self._proxies_fsp[fspID - 1]
-                proxy_fsp.remove_event(
-                    "State", self._events_state_change_fsp[fspID][0]
-                )
-                proxy_fsp.remove_event(
-                    "healthState", self._events_state_change_fsp[fspID][1]
-                )
-                del self._events_state_change_fsp[fspID]
-                del self._fsp_state[self._fqdn_fsp[fspID - 1]]
-                del self._fsp_health_state[self._fqdn_fsp[fspID - 1]]
-
             if self._ready:
                 # TODO: add 'GoToIdle' for VLBI once implemented
                 for group in [
@@ -851,7 +755,7 @@ class CbfSubarrayComponentManager(
                     # change FSP subarray membership
                     data = tango.DeviceData()
                     data.insert(tango.DevUShort, self._subarray_id)
-                    # self._logger.info(data)
+                    self._logger.debug(data)
                     self._group_fsp.command_inout(
                         "RemoveSubarrayMembership", data
                     )
@@ -863,7 +767,6 @@ class CbfSubarrayComponentManager(
             return (ResultCode.FAILED, msg)
 
         # reset all private data to their initialization values:
-        self._fsp_list = [[], [], [], []]
         self._pst_fsp_list = []
         self._pss_fsp_list = []
         self._corr_fsp_list = []
@@ -1015,32 +918,9 @@ class CbfSubarrayComponentManager(
                 if int(fsp["fsp_id"]) in list(range(1, self._count_fsp + 1)):
                     fspID = int(fsp["fsp_id"])
                     proxy_fsp = self._proxies_fsp[fspID - 1]
-                    if fsp["function_mode"] == "CORR":
-                        proxy_fsp_subarray = (
-                            self._proxies_fsp_corr_subarray_device[fspID - 1]
-                        )
-                    elif fsp["function_mode"] == "PSS-BF":
-                        proxy_fsp_subarray = (
-                            self._proxies_fsp_pss_subarray_device[fspID - 1]
-                        )
-                    elif fsp["function_mode"] == "PST-BF":
-                        proxy_fsp_subarray = (
-                            self._proxies_fsp_pst_subarray_device[fspID - 1]
-                        )
                 else:
                     msg = (
                         f"'fspID' must be an integer in the range [1, {self._count_fsp}]."
-                        " Aborting configuration."
-                    )
-                    return (False, msg)
-
-                if proxy_fsp.State() != tango.DevState.ON:
-                    msg = f"FSP {fspID} is not ON. Aborting configuration."
-                    return (False, msg)
-
-                if proxy_fsp_subarray.State() != tango.DevState.ON:
-                    msg = (
-                        f"Subarray {self._subarray_id} of FSP {fspID} is not ON."
                         " Aborting configuration."
                     )
                     return (False, msg)
@@ -1058,10 +938,7 @@ class CbfSubarrayComponentManager(
                     for (
                         fsp_corr_subarray_proxy
                     ) in self._proxies_fsp_corr_subarray_device:
-                        if (
-                            fsp_corr_subarray_proxy.obsState
-                            != ObsState.IDLE
-                        ):
+                        if fsp_corr_subarray_proxy.obsState != ObsState.IDLE:
                             msg = (
                                 f"A different subarray is using FSP {fsp['fsp_id']} "
                                 "for a different function mode. Aborting configuration."
@@ -1070,10 +947,7 @@ class CbfSubarrayComponentManager(
                     for (
                         fsp_pss_subarray_proxy
                     ) in self._proxies_fsp_pss_subarray_device:
-                        if (
-                            fsp_pss_subarray_proxy.obsState
-                            != ObsState.IDLE
-                        ):
+                        if fsp_pss_subarray_proxy.obsState != ObsState.IDLE:
                             msg = (
                                 f"A different subarray is using FSP {fsp['fsp_id']} "
                                 "for a different function mode. Aborting configuration."
@@ -1082,10 +956,7 @@ class CbfSubarrayComponentManager(
                     for (
                         fsp_pst_subarray_proxy
                     ) in self._proxies_fsp_pst_subarray_device:
-                        if (
-                            fsp_pst_subarray_proxy.obsState
-                            != ObsState.IDLE
-                        ):
+                        if fsp_pst_subarray_proxy.obsState != ObsState.IDLE:
                             msg = (
                                 f"A different subarray is using FSP {fsp['fsp_id']} "
                                 "for a different function mode. Aborting configuration."
@@ -1095,11 +966,11 @@ class CbfSubarrayComponentManager(
                 # TODO - why add these keys to the fsp dict - not good practice!
                 # TODO - create a new dict from a deep copy of the fsp dict.
                 fsp["frequency_band"] = common_configuration["frequency_band"]
-                fsp["frequency_band_offset_stream_1"] = configuration[
-                    "frequency_band_offset_stream_1"
+                fsp["frequency_band_offset_stream1"] = configuration[
+                    "frequency_band_offset_stream1"
                 ]
-                fsp["frequency_band_offset_stream_2"] = configuration[
-                    "frequency_band_offset_stream_2"
+                fsp["frequency_band_offset_stream2"] = configuration[
+                    "frequency_band_offset_stream2"
                 ]
                 if fsp["frequency_band"] in ["5a", "5b"]:
                     fsp["band_5_tuning"] = common_configuration[
@@ -1118,6 +989,9 @@ class CbfSubarrayComponentManager(
                             receptorsSpecified = True
                     if receptorsSpecified:
                         for this_rec in fsp["receptors"]:
+                            self._logger.info(
+                                f"List of receptors: {self._receptors}"
+                            )
                             if this_rec not in self._receptors:
                                 msg = (
                                     f"Receptor {this_rec} does not belong to "
@@ -1132,7 +1006,7 @@ class CbfSubarrayComponentManager(
                         )
                         self._logger.info(msg)
                         # In this case by the ICD, all subarray allocated resources should be used.
-                        # fsp["receptors"] = self._receptors.copy()
+                        # fsp["receptor_ids"] = self._receptors.copy()
 
                     frequencyBand = freq_band_dict()[fsp["frequency_band"]][
                         "band_index"
@@ -1191,7 +1065,7 @@ class CbfSubarrayComponentManager(
                                         ],
                                     )
                                 ][frequencyBand] + fsp[
-                                    "frequency_band_offset_stream_1"
+                                    "frequency_band_offset_stream1"
                                 ]
 
                                 frequency_slice_range = (
@@ -1229,7 +1103,7 @@ class CbfSubarrayComponentManager(
 
                                     frequency_slice_range_1 = (
                                         fsp["band_5_tuning"][0] * 10**9
-                                        + fsp["frequency_band_offset_stream_1"]
+                                        + fsp["frequency_band_offset_stream1"]
                                         - const.BAND_5_STREAM_BANDWIDTH
                                         * 10**9
                                         / 2
@@ -1237,7 +1111,7 @@ class CbfSubarrayComponentManager(
                                         * const.FREQUENCY_SLICE_BW
                                         * 10**6,
                                         fsp["band_5_tuning"][0] * 10**9
-                                        + fsp["frequency_band_offset_stream_1"]
+                                        + fsp["frequency_band_offset_stream1"]
                                         - const.BAND_5_STREAM_BANDWIDTH
                                         * 10**9
                                         / 2
@@ -1248,7 +1122,7 @@ class CbfSubarrayComponentManager(
 
                                     frequency_slice_range_2 = (
                                         fsp["band_5_tuning"][1] * 10**9
-                                        + fsp["frequency_band_offset_stream_2"]
+                                        + fsp["frequency_band_offset_stream2"]
                                         - const.BAND_5_STREAM_BANDWIDTH
                                         * 10**9
                                         / 2
@@ -1256,7 +1130,7 @@ class CbfSubarrayComponentManager(
                                         * const.FREQUENCY_SLICE_BW
                                         * 10**6,
                                         fsp["band_5_tuning"][1] * 10**9
-                                        + fsp["frequency_band_offset_stream_2"]
+                                        + fsp["frequency_band_offset_stream2"]
                                         - const.BAND_5_STREAM_BANDWIDTH
                                         * 10**9
                                         / 2
@@ -1615,12 +1489,12 @@ class CbfSubarrayComponentManager(
             self._stream_tuning = stream_tuning
 
         # Configure frequencyBandOffsetStream1.
-        if "frequency_band_offset_stream_1" in configuration:
-            self._frequency_band_offset_stream_1 = int(
-                configuration["frequency_band_offset_stream_1"]
+        if "frequency_band_offset_stream1" in configuration:
+            self._frequency_band_offset_stream1 = int(
+                configuration["frequency_band_offset_stream1"]
             )
         else:
-            self._frequency_band_offset_stream_1 = 0
+            self._frequency_band_offset_stream1 = 0
             log_msg = (
                 "'frequencyBandOffsetStream1' not specified. Defaulting to 0."
             )
@@ -1628,12 +1502,12 @@ class CbfSubarrayComponentManager(
 
         # If not given, use a default value.
         # If malformed, use a default value, but append an error.
-        if "frequency_band_offset_stream_2" in configuration:
-            self._frequency_band_offset_stream_2 = int(
-                configuration["frequency_band_offset_stream_2"]
+        if "frequency_band_offset_stream2" in configuration:
+            self._frequency_band_offset_stream2 = int(
+                configuration["frequency_band_offset_stream2"]
             )
         else:
-            self._frequency_band_offset_stream_2 = 0
+            self._frequency_band_offset_stream2 = 0
             log_msg = (
                 "'frequencyBandOffsetStream2' not specified. Defaulting to 0."
             )
@@ -1643,8 +1517,8 @@ class CbfSubarrayComponentManager(
             "config_id": self._config_id,
             "frequency_band": common_configuration["frequency_band"],
             "band_5_tuning": self._stream_tuning,
-            "frequency_band_offset_stream_1": self._frequency_band_offset_stream_1,
-            "frequency_band_offset_stream_2": self._frequency_band_offset_stream_2,
+            "frequency_band_offset_stream1": self._frequency_band_offset_stream1,
+            "frequency_band_offset_stream2": self._frequency_band_offset_stream2,
             "rfi_flagging_mask": configuration["rfi_flagging_mask"],
         }
 
@@ -1721,11 +1595,11 @@ class CbfSubarrayComponentManager(
                     "frequency_band"
                 ]
                 search_window[
-                    "frequency_band_offset_stream_1"
-                ] = self._frequency_band_offset_stream_1
+                    "frequency_band_offset_stream1"
+                ] = self._frequency_band_offset_stream1
                 search_window[
-                    "frequency_band_offset_stream_2"
-                ] = self._frequency_band_offset_stream_2
+                    "frequency_band_offset_stream2"
+                ] = self._frequency_band_offset_stream2
                 if search_window["frequency_band"] in ["5a", "5b"]:
                     search_window["band_5_tuning"] = common_configuration[
                         "band_5_tuning"
@@ -1770,36 +1644,59 @@ class CbfSubarrayComponentManager(
                 self._fqdn_fsp_pst_subarray_device[fspID - 1]
             )
 
+            self._logger.info("Connecting to FSP devices from subarray")
+            self._logger.info(
+                f"Setting Simulation Mode of FSP proxies to: {self._simulation_mode}"
+            )
+
+            # Set simulation mode of FSPs to subarray sim mode
+            fsp_corr_proxy = self._proxies_fsp_corr_subarray_device[fspID - 1]
+            fsp_pss_proxy = self._proxies_fsp_pss_subarray_device[fspID - 1]
+            fsp_pst_proxy = self._proxies_fsp_pst_subarray_device[fspID - 1]
+
+            proxy_fsp.write_attribute("adminMode", AdminMode.OFFLINE)
+            proxy_fsp.write_attribute("simulationMode", self._simulation_mode)
+            proxy_fsp.write_attribute("adminMode", AdminMode.ONLINE)
+            proxy_fsp.command_inout("On")
+
+            fsp_corr_proxy.write_attribute("adminMode", AdminMode.OFFLINE)
+            fsp_corr_proxy.write_attribute(
+                "simulationMode", self._simulation_mode
+            )
+            fsp_corr_proxy.write_attribute("adminMode", AdminMode.ONLINE)
+            fsp_corr_proxy.command_inout("On")
+
+            fsp_pss_proxy.write_attribute("adminMode", AdminMode.OFFLINE)
+            fsp_pss_proxy.write_attribute(
+                "simulationMode", self._simulation_mode
+            )
+            fsp_pss_proxy.write_attribute("adminMode", AdminMode.ONLINE)
+            fsp_pss_proxy.command_inout("On")
+
+            fsp_pst_proxy.write_attribute("adminMode", AdminMode.OFFLINE)
+            fsp_pst_proxy.write_attribute(
+                "simulationMode", self._simulation_mode
+            )
+            fsp_pst_proxy.write_attribute("adminMode", AdminMode.ONLINE)
+            fsp_pst_proxy.command_inout("On")
+
             # change FSP subarray membership
             proxy_fsp.AddSubarrayMembership(self._subarray_id)
 
             # Configure functionMode.
             proxy_fsp.SetFunctionMode(fsp["function_mode"])
 
-            # subscribe to FSP state and healthState changes
-            (
-                event_id_state,
-                event_id_health_state,
-            ) = proxy_fsp.add_change_event_callback(
-                "State", self._state_change_event_callback
-            ), proxy_fsp.add_change_event_callback(
-                "healthState", self._state_change_event_callback
-            )
-            self._events_state_change_fsp[int(fsp["fsp_id"])] = [
-                event_id_state,
-                event_id_health_state,
-            ]
-
-            # Add configID to fsp. It is not included in the "FSP" portion in configScan JSON
+            # Add configID, frequency_band, band_5_tuning, and sub_id to fsp. They are not included in the "FSP" portion in configScan JSON
             fsp["config_id"] = common_configuration["config_id"]
             fsp["frequency_band"] = common_configuration["frequency_band"]
             fsp["band_5_tuning"] = common_configuration["band_5_tuning"]
+            fsp["sub_id"] = common_configuration["subarray_id"]
             fsp[
-                "frequency_band_offset_stream_1"
-            ] = self._frequency_band_offset_stream_1
+                "frequency_band_offset_stream1"
+            ] = self._frequency_band_offset_stream1
             fsp[
-                "frequency_band_offset_stream_2"
-            ] = self._frequency_band_offset_stream_2
+                "frequency_band_offset_stream2"
+            ] = self._frequency_band_offset_stream2
 
             # Add all receptor ids for subarray and for correlation to fsp
             # Parameter named "subarray_receptor_ids" used by HPS contains all the
@@ -1807,6 +1704,7 @@ class CbfSubarrayComponentManager(
             # Parameter named "corr_receptor_ids" used by HPS contains the
             # subset of the subarray receptors for which the correlation results
             # are requested to be used in Mid.CBF output products (visibilities)
+
             fsp["subarray_receptor_ids"] = self._receptors.copy()
             for i, receptor in enumerate(fsp["subarray_receptor_ids"]):
                 fsp["subarray_receptor_ids"][i] = [
@@ -1815,7 +1713,7 @@ class CbfSubarrayComponentManager(
                 ]
 
             # Add the fs_sample_rate for all receptors
-            fsp["fs_sample_rates"] = self.calculate_fs_sample_rates(
+            fsp["fs_sample_rates"] = self._calculate_fs_sample_rates(
                 common_configuration["frequency_band"]
             )
 
@@ -1943,12 +1841,6 @@ class CbfSubarrayComponentManager(
                     )
                     self.raise_configure_scan_fatal_error(msg)
 
-        # TODO add VLBI to this once they are implemented
-        # potentially remove
-        self._fsp_list[0].append(self._corr_fsp_list)
-        self._fsp_list[1].append(self._pss_fsp_list)
-        self._fsp_list[2].append(self._pst_fsp_list)
-
         # save configuration into latestScanConfig
         self._latest_scan_config = str(configuration)
 
@@ -1976,10 +1868,10 @@ class CbfSubarrayComponentManager(
                 if receptor_id in self._receptor_to_vcc.keys():
                     vccID = self._receptor_to_vcc[receptor_id]
                 else:
-                    self._logger.warning(
-                        f"Invalid receptor {receptor_id}. Skipping."
+                    return (
+                        ResultCode.FAILED,
+                        f"Invalid receptor {receptor_id}. RemoveReceptors command failed.",
                     )
-                    continue
                 vccFQDN = self._fqdn_vcc[vccID - 1]
                 vccProxy = self._proxies_vcc[vccID - 1]
 
@@ -1994,20 +1886,6 @@ class CbfSubarrayComponentManager(
                         f"VCC {vccID} subarray_id: "
                         + f"{vccProxy.subarrayMembership}"
                     )
-
-                    # unsubscribe from events
-                    vccProxy.remove_event(
-                        "State", self._events_state_change_vcc[vccID][0]
-                    )
-                    vccProxy.remove_event(
-                        "healthState",
-                        self._events_state_change_vcc[vccID][1],
-                    )
-
-                    del self._events_state_change_vcc[vccID]
-                    del self._vcc_state[vccFQDN]
-                    del self._vcc_health_state[vccFQDN]
-
                 except tango.DevFailed as df:
                     msg = str(df.args[0].desc)
                     self._component_obs_fault_callback(True)
@@ -2066,18 +1944,6 @@ class CbfSubarrayComponentManager(
                         f"VCC {vccID} subarray_id: "
                         + f"{vccProxy.subarrayMembership}"
                     )
-
-                    # unsubscribe from events
-                    vccProxy.remove_event(
-                        "State", self._events_state_change_vcc[vccID][0]
-                    )
-                    vccProxy.remove_event(
-                        "healthState", self._events_state_change_vcc[vccID][1]
-                    )
-
-                    del self._events_state_change_vcc[vccID]
-                    del self._vcc_state[vccFQDN]
-                    del self._vcc_health_state[vccFQDN]
                 except tango.DevFailed as df:
                     msg = str(df.args[0].desc)
                     self._component_obs_fault_callback(True)
@@ -2111,13 +1977,17 @@ class CbfSubarrayComponentManager(
         for receptor_id in argin:
             self._logger.debug(f"Attempting to add receptor {receptor_id}")
 
+            self._logger.info(
+                f"receptor to vcc keys: {self._receptor_to_vcc.keys()}"
+            )
+
             if receptor_id in self._receptor_to_vcc.keys():
                 vccID = self._receptor_to_vcc[receptor_id]
             else:
-                self._logger.warning(
-                    f"Invalid receptor {receptor_id}. Skipping."
+                return (
+                    ResultCode.FAILED,
+                    f"Invalid receptor {receptor_id}. AddReceptors command failed.",
                 )
-                continue
 
             vccProxy = self._proxies_vcc[vccID - 1]
 
@@ -2128,6 +1998,15 @@ class CbfSubarrayComponentManager(
 
             vccSubarrayID = vccProxy.subarrayMembership
             self._logger.debug(f"VCC {vccID} subarray_id: {vccSubarrayID}")
+
+            # Setting simulation mode of VCC proxies based on simulation mode of subarray
+            self._logger.info(
+                f"Writing VCC simulation mode to: {self._simulation_mode}"
+            )
+            vccProxy.write_attribute("adminMode", AdminMode.OFFLINE)
+            vccProxy.write_attribute("simulationMode", self._simulation_mode)
+            vccProxy.write_attribute("adminMode", AdminMode.ONLINE)
+            vccProxy.command_inout("On")
 
             # only add receptor if it does not already belong to a
             # different subarray
@@ -2154,27 +2033,6 @@ class CbfSubarrayComponentManager(
                             f"VCC {vccID} subarray_id: "
                             + f"{vccProxy.subarrayMembership}"
                         )
-
-                        # subscribe to VCC state and healthState changes
-                        event_id_state = vccProxy.add_change_event_callback(
-                            "State", self._state_change_event_callback
-                        )
-                        self._logger.debug(f"State event ID: {event_id_state}")
-
-                        event_id_health_state = (
-                            vccProxy.add_change_event_callback(
-                                "healthState",
-                                self._state_change_event_callback,
-                            )
-                        )
-                        self._logger.debug(
-                            f"Health state event ID: {event_id_health_state}"
-                        )
-
-                        self._events_state_change_vcc[vccID] = [
-                            event_id_state,
-                            event_id_health_state,
-                        ]
 
                     except tango.DevFailed as df:
                         msg = str(df.args[0].desc)
@@ -2313,14 +2171,17 @@ class CbfSubarrayComponentManager(
 
         self._ready = configured
 
-    def calculate_fs_sample_rate(
+    def _calculate_fs_sample_rate(
         self: CbfSubarrayComponentManager, freq_band: str, receptor: str
     ) -> Dict:
         log_msg = f"Calculate fs_sample_rate for freq_band:{freq_band} and receptor {receptor}"
         self._logger.info(log_msg)
 
         # convert the receptor to an int using ReceptorUtils
-        receptor_int = self._receptor_utils.receptor_id_str_to_int(receptor)
+
+        # CIP-1724 Using receptors dictionary to access receptor int instead
+        # receptor_int = self._receptor_utils.receptor_id_str_to_int(receptor)
+        receptor_int = self._receptor_utils.receptors[receptor]
 
         # find the k value for this receptor
         # array of k values is 0 index, so index of array value is receptor_int - 1
@@ -2352,13 +2213,13 @@ class CbfSubarrayComponentManager(
 
         return fs_sample_rate_for_band
 
-    def calculate_fs_sample_rates(
+    def _calculate_fs_sample_rates(
         self: CbfSubarrayComponentManager, freq_band: str
     ) -> List[Dict]:
         output_sample_rates = []
         for receptorId in self._receptors:
             output_sample_rates.append(
-                self.calculate_fs_sample_rate(freq_band, receptorId)
+                self._calculate_fs_sample_rate(freq_band, receptorId)
             )
 
         return output_sample_rates

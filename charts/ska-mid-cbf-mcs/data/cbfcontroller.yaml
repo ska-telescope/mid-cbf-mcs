@@ -40,19 +40,6 @@ server:
     - name: "CbfController"
       devices:
       - name: "mid_csp_cbf/sub_elt/controller"
-        attribute_properties:
-        - attribute: "adminMode"
-          properties: 
-          - name: "abs_change"
-            values: 
-            - "-1"
-            - "1"
-        - attribute: "healthState"
-          properties:
-          - name: "abs_change"
-            values: 
-            - "-1"
-            - "1"
         properties:
           - name: "CbfSubarray"
             values:
@@ -67,7 +54,7 @@ server:
             - "mid_csp_cbf/fsp/04"
           - name: "MaxCapabilities"
             values:
-            - "VCC:8"
+            - "VCC:4"
             - "FSP:4"
             - "Subarray:1"
           - name: "VCC"
@@ -91,39 +78,13 @@ server:
             - "mnt/talondx-config"
           - name: "polled_attr"
             values:
-            - "adminmode"
-            - "3000"
             - "commandprogress"
-            - "3000"
-            - "healthstate"
             - "3000"
             - "receptortovcc"
             - "3000"
             - "vcctoreceptor"
             - "3000"
-            - "state"
-            - "1000"
             - "subarrayconfigid"
-            - "3000"
-            - "reportfspadminmode"
-            - "3000"
-            - "reportfsphealthstate"
-            - "3000"
-            - "reportfspstate"
-            - "3000"
-            - "reportfspsubarraymembership"
-            - "3000"
-            - "reportsubarrayhealthstate"
-            - "3000"
-            - "reportsubarrayadminmode"
-            - "3000"
-            - "reportsubarraystate"
-            - "3000"
-            - "reportvccadminmode"
-            - "3000"
-            - "reportvcchealthstate"
-            - "3000"
-            - "reportvccstate"
             - "3000"
 image:
   registry: "{{.Values.midcbf.image.registry}}"

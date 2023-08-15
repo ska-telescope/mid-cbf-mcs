@@ -26,28 +26,10 @@ server:
       devices:
       - name: "mid_csp_cbf/sub_elt/subarray_01"
         attribute_properties:
-        - attribute: "adminMode"
-          properties: 
-          - name: "abs_change"
-            values: 
-            - "-1"
-            - "1"
-        - attribute: "healthState"
-          properties:
-          - name: "abs_change"
-            values: 
-            - "-1"
-            - "1"
-        - attribute: "obsState"
-          properties:
-          - name: "abs_change"
-            values: 
-            - "-1"
-            - "1"
         - attribute: "scanID"
           properties:
           - name: "abs_change"
-            values: 
+            values:
             - "-1"
             - "1"
         properties:
@@ -106,30 +88,6 @@ server:
             - "mid_csp_cbf/vcc/006"
             - "mid_csp_cbf/vcc/007"
             - "mid_csp_cbf/vcc/008"
-          - name: "polled_attr"
-            values:
-            - "state"
-            - "3000"
-            - "healthstate"
-            - "3000"
-            - "adminmode"
-            - "3000"
-            - "fsphealthstate"
-            - "3000"
-            - "fspstate"
-            - "3000"
-            - "vccstate"
-            - "3000"
-            - "vcchealthstate"
-            - "3000"
-            - "obsstate"
-            - "50"
-            - "configid"
-            - "3000"
-            - "fspList"
-            - "3000"
-            - "outputLinkDistribution"
-            - "3000"
 
   - name: "cbfsubarray-02"
     classes:
@@ -137,28 +95,10 @@ server:
       devices:
       - name: "mid_csp_cbf/sub_elt/subarray_02"
         attribute_properties:
-        - attribute: "adminMode"
-          properties: 
-          - name: "abs_change"
-            values: 
-            - "-1"
-            - "1"
-        - attribute: "healthState"
-          properties:
-          - name: "abs_change"
-            values: 
-            - "-1"
-            - "1"
-        - attribute: "obsState"
-          properties:
-          - name: "abs_change"
-            values: 
-            - "-1"
-            - "1"
         - attribute: "scanID"
           properties:
           - name: "abs_change"
-            values: 
+            values:
             - "-1"
             - "1"
         properties:
@@ -217,30 +157,6 @@ server:
             - "mid_csp_cbf/vcc/006"
             - "mid_csp_cbf/vcc/007"
             - "mid_csp_cbf/vcc/008"
-          - name: "polled_attr"
-            values:
-            - "state"
-            - "3000"
-            - "healthstate"
-            - "3000"
-            - "adminmode"
-            - "3000"
-            - "fsphealthstate"
-            - "3000"
-            - "fspstate"
-            - "3000"
-            - "vccstate"
-            - "3000"
-            - "vcchealthstate"
-            - "3000"
-            - "obsstate"
-            - "50"
-            - "configid"
-            - "3000"
-            - "fspList"
-            - "3000"
-            - "outputLinkDistribution"
-            - "3000"
 
   - name: "cbfsubarray-03"
     classes:
@@ -248,28 +164,10 @@ server:
       devices:
       - name: "mid_csp_cbf/sub_elt/subarray_03"
         attribute_properties:
-        - attribute: "adminMode"
-          properties: 
-          - name: "abs_change"
-            values: 
-            - "-1"
-            - "1"
-        - attribute: "healthState"
-          properties:
-          - name: "abs_change"
-            values: 
-            - "-1"
-            - "1"
-        - attribute: "obsState"
-          properties:
-          - name: "abs_change"
-            values: 
-            - "-1"
-            - "1"
         - attribute: "scanID"
           properties:
           - name: "abs_change"
-            values: 
+            values:
             - "-1"
             - "1"
         properties:
@@ -328,30 +226,6 @@ server:
             - "mid_csp_cbf/vcc/006"
             - "mid_csp_cbf/vcc/007"
             - "mid_csp_cbf/vcc/008"
-          - name: "polled_attr"
-            values:
-            - "state"
-            - "3000"
-            - "healthstate"
-            - "3000"
-            - "adminmode"
-            - "3000"
-            - "fsphealthstate"
-            - "3000"
-            - "fspstate"
-            - "3000"
-            - "vccstate"
-            - "3000"
-            - "vcchealthstate"
-            - "3000"
-            - "obsstate"
-            - "50"
-            - "configid"
-            - "3000"
-            - "fspList"
-            - "3000"
-            - "outputLinkDistribution"
-            - "3000"
 image:
   registry: "{{.Values.midcbf.image.registry}}"
   image: "{{.Values.midcbf.image.image}}"

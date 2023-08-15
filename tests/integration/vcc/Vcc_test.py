@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# This file is part of the csp-lmc-prototype project
+# This file is part of the mid-cbf-prototype project
 #
 #
 #
@@ -48,7 +48,9 @@ class TestVcc:
         sleep_time_s = 1
 
         # Start monitoring the TalonLRUs and power switch devices
-        test_proxies.power_switch.adminMode = AdminMode.ONLINE
+        for proxy in test_proxies.power_switch:
+            proxy.adminMode = AdminMode.ONLINE
+
         for proxy in test_proxies.talon_lru:
             proxy.adminMode = AdminMode.ONLINE
             proxy.set_timeout_millis(10000)
@@ -105,15 +107,15 @@ class TestVcc:
                         test_proxies.vcc[vcc_id].band5Tuning[i]
                         == band5Tuning_config[i]
                     )
-        if "frequency_band_offset_stream_1" in configuration:
+        if "frequency_band_offset_stream1" in configuration:
             assert (
                 test_proxies.vcc[vcc_id].frequencyBandOffsetStream1
-                == configuration["frequency_band_offset_stream_1"]
+                == configuration["frequency_band_offset_stream1"]
             )
-        if "frequency_band_offset_stream_2" in configuration:
+        if "frequency_band_offset_stream2" in configuration:
             assert (
                 test_proxies.vcc[vcc_id].frequencyBandOffsetStream2
-                == configuration["frequency_band_offset_stream_2"]
+                == configuration["frequency_band_offset_stream2"]
             )
 
         test_proxies.vcc[vcc_id].Scan("1")

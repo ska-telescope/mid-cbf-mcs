@@ -1,10 +1,10 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: engineering-console-bite
+  name: ec-bite
 spec:
   containers:
-  - name: engineering-console-bite-cont
+  - name: ec-bite-cont
     image: artefact.skao.int/ska-mid-cbf-engineering-console-bite:{{ .Values.engineeringConsoleVersion }}
     env:
       - name: BITE_DATA_SRC

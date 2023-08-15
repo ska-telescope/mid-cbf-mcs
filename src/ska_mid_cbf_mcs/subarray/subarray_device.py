@@ -13,16 +13,22 @@ from __future__ import annotations
 
 import copy
 import json
-from typing import Dict, List, Optional, Tuple
+from typing import List, Optional, Tuple
+
+# tango imported to enable use of @tango.DebugIt. If
+# DebugIt is imported using "from tango import DebugIt"
+# then docs will not generate
+import tango
 
 # Tango imports
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import HealthState, PowerMode
+from ska_tango_base.control_model import PowerMode, SimulationMode
 from ska_tango_base.csp.subarray.subarray_device import CspSubElementSubarray
-from tango import AttrWriteType, DebugIt, DevState
+from tango import AttrWriteType
 from tango.server import attribute, command, device_property, run
 
 from ska_mid_cbf_mcs.commons.global_enum import const
+from ska_mid_cbf_mcs.commons.receptor_utils import ReceptorUtils
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
 
 # SKA imports
@@ -148,48 +154,6 @@ class CbfSubarray(CspSubElementSubarray):
         doc="List of receptors assigned to subarray",
     )
 
-    vccState = attribute(
-        dtype=("DevState",),
-        max_dim_x=197,
-        label="VCC state",
-        polling_period=1000,
-        doc="Report the state of the assigned VCCs as an array of DevState",
-    )
-
-    vccHealthState = attribute(
-        dtype=("uint16",),
-        max_dim_x=197,
-        label="VCC health status",
-        polling_period=1000,
-        abs_change=1,
-        doc="Report the health state of assigned VCCs as an array of unsigned short.\nEx:\n[0,0,0,2,0...3]",
-    )
-
-    fspState = attribute(
-        dtype=("DevState",),
-        max_dim_x=27,
-        label="FSP state",
-        polling_period=1000,
-        doc="Report the state of the assigned FSPs",
-    )
-
-    fspHealthState = attribute(
-        dtype=("uint16",),
-        max_dim_x=27,
-        label="FSP health status",
-        polling_period=1000,
-        abs_change=1,
-        doc="Report the health state of the assigned FSPs.",
-    )
-
-    fspList = attribute(
-        dtype=(("uint16",),),
-        max_dim_x=4,
-        max_dim_y=27,
-        label="List of FSP's used by subarray",
-        doc="fsp[1][x] = CORR [2][x] = PSS [1][x] = PST [1][x] = VLBI",
-    )
-
     frequencyOffsetK = attribute(
         dtype=("int",),
         access=AttrWriteType.READ_WRITE,
@@ -203,6 +167,13 @@ class CbfSubarray(CspSubElementSubarray):
         access=AttrWriteType.READ_WRITE,
         label="Frequency offset (delta f)",
         doc="Frequency offset (delta f)",
+    )
+
+    simulationMode = attribute(
+        dtype=SimulationMode,
+        access=AttrWriteType.READ_WRITE,
+        label="Simulation Mode",
+        doc="Simulation Mode",
     )
 
     # ---------------
@@ -230,12 +201,10 @@ class CbfSubarray(CspSubElementSubarray):
 
             device = self.target
 
-            device.write_simulationMode(True)
+            # TODO remove when ugrading base class from 0.11.3
+            device.set_change_event("healthState", True, True)
 
-            # TODO: remove
-            # device._storage_logging_level = tango.LogLevel.LOG_DEBUG
-            # device._element_logging_level = tango.LogLevel.LOG_DEBUG
-            # device._central_logging_level = tango.LogLevel.LOG_DEBUG
+            device.write_simulationMode(True)
 
             return (result_code, message)
 
@@ -251,6 +220,8 @@ class CbfSubarray(CspSubElementSubarray):
         self._communication_status: Optional[CommunicationStatus] = None
         self._component_power_mode: Optional[PowerMode] = None
 
+        self._simulation_mode = SimulationMode.TRUE
+
         return CbfSubarrayComponentManager(
             subarray_id=int(self.SubID),
             controller=self.CbfControllerAddress,
@@ -260,6 +231,7 @@ class CbfSubarray(CspSubElementSubarray):
             fsp_pss_sub=self.FspPssSubarray,
             fsp_pst_sub=self.FspPstSubarray,
             logger=self.logger,
+            simulation_mode=self._simulation_mode,
             push_change_event_callback=self.push_change_event,
             component_resourced_callback=self._component_resourced,
             component_configured_callback=self._component_configured,
@@ -403,6 +375,22 @@ class CbfSubarray(CspSubElementSubarray):
     # Attributes methods
     # ------------------
 
+    def write_simulationMode(self: CbfSubarray, value: SimulationMode) -> None:
+        """
+        Set the Simulation Mode of the device.
+
+        :param value: SimulationMode
+        """
+        self.logger.info(f"Writing simulation mode of {value}")
+        super().write_simulationMode(value)
+        self.component_manager._simulation_mode = value
+
+    def read_simulationMode(self: CbfSubarray) -> SimulationMode:
+        self.logger.info(
+            f"Reading Simulation Mode of value {self.component_manager._simulation_mode}"
+        )
+        return self.component_manager._simulation_mode
+
     def read_frequencyBand(self: CbfSubarray) -> int:
         # PROTECTED REGION ID(CbfSubarray.frequencyBand_read) ENABLED START #
         """
@@ -437,62 +425,6 @@ class CbfSubarray(CspSubElementSubarray):
         self.RemoveAllReceptors()
         self.AddReceptors(value)
         # PROTECTED REGION END #    //  CbfSubarray.receptors_write
-
-    def read_vccState(self: CbfSubarray) -> Dict[str, DevState]:
-        # PROTECTED REGION ID(CbfSubarray.vccState_read) ENABLED START #
-        """
-        Return the attribute vccState: array of DevState
-
-        :return: the list of VCC states
-        :rtype: Dict[str, DevState]
-        """
-        return self.component_manager.vcc_state.values()
-        # PROTECTED REGION END #    //  CbfSubarray.vccState_read
-
-    def read_vccHealthState(self: CbfSubarray) -> Dict[str, HealthState]:
-        # PROTECTED REGION ID(CbfSubarray.vccHealthState_read) ENABLED START #
-        """
-        returns vccHealthState attribute: an array of unsigned short
-
-        :return: the list of VCC health states
-        :rtype: Dict[str, HealthState]
-        """
-        return self.component_manager.vcc_health_state.values()
-        # PROTECTED REGION END #    //  CbfSubarray.vccHealthState_read
-
-    def read_fspState(self: CbfSubarray) -> Dict[str, DevState]:
-        # PROTECTED REGION ID(CbfSubarray.fspState_read) ENABLED START #
-        """
-        Return the attribute fspState: array of DevState
-
-        :return: the list of FSP states
-        :rtype: Dict[str, DevState]
-        """
-        return self.component_manager.fsp_state.values()
-        # PROTECTED REGION END #    //  CbfSubarray.fspState_read
-
-    def read_fspHealthState(self: CbfSubarray) -> Dict[str, HealthState]:
-        # PROTECTED REGION ID(CbfSubarray.fspHealthState_read) ENABLED START #
-        """
-        returns fspHealthState attribute: an array of unsigned short
-
-        :return: the list of FSP health states
-        :rtype: Dict[str, HealthState]
-        """
-        return self.component_manager.fsp_health_state.values()
-        # PROTECTED REGION END #    //  CbfSubarray.fspHealthState_read
-
-    def read_fspList(self: CbfSubarray) -> List[List[int]]:
-        # PROTECTED REGION ID(CbfSubarray.fspList_read) ENABLED START #
-        """
-        return fspList attribute
-        2 dimensional array the fsp used by all the subarrays
-
-        :return: the array of FSP IDs
-        :rtype: List[List[int]]
-        """
-        return self.component_manager.fsp_list
-        # PROTECTED REGION END #    //  CbfSubarray.fspList_read
 
     def read_frequencyOffsetK(self: CbfSubarray) -> List[int]:
         # PROTECTED REGION ID(CbfSubarray.frequencyOffsetK_read) ENABLED START #
@@ -547,6 +479,21 @@ class CbfSubarray(CspSubElementSubarray):
             component_manager = self.target
             return component_manager.remove_receptors(argin)
 
+        def validate_input(
+            self: CbfSubarray.RemoveReceptorsCommand, argin: List[str]
+        ) -> Tuple[bool, str]:
+            """
+            Validate receptor ids.
+
+            :param argin: The list of receptor IDs to remove.
+
+            :return: A tuple containing a boolean indicating if the configuration
+                is valid and a string message. The message is for information
+                purpose only.
+            :rtype: (bool, str)
+            """
+            return ReceptorUtils.are_Valid_Receptor_Ids(argin)
+
     @command(
         dtype_in=("str",),
         doc_in="List of receptor IDs",
@@ -567,6 +514,18 @@ class CbfSubarray(CspSubElementSubarray):
         :rtype: (ResultCode, str)
         """
         command = self.get_command_object("RemoveReceptors")
+
+        (valid, msg) = command.validate_input(argin)
+        if not valid:
+            self._logger.error(msg)
+            tango.Except.throw_exception(
+                "Command failed",
+                msg,
+                "RemoveReceptors command input failed",
+                tango.ErrSeverity.ERR,
+            )
+
+        self.logger.info(msg)
         (return_code, message) = command(argin)
         return [[return_code], [message]]
 
@@ -595,7 +554,7 @@ class CbfSubarray(CspSubElementSubarray):
         dtype_out="DevVarLongStringArray",
         doc_out="(ReturnType, 'informational message')",
     )
-    @DebugIt()
+    @tango.DebugIt()
     def RemoveAllReceptors(self: CbfSubarray) -> Tuple[ResultCode, str]:
         # PROTECTED REGION ID(CbfSubarray.RemoveAllReceptors) ENABLED START #
         """
@@ -632,13 +591,28 @@ class CbfSubarray(CspSubElementSubarray):
             component_manager = self.target
             return component_manager.add_receptors(argin)
 
+        def validate_input(
+            self: CbfSubarray.AddReceptorsCommand, argin: List[str]
+        ) -> Tuple[bool, str]:
+            """
+            Validate receptor ids.
+
+            :param argin: The list of receptor IDs to add.
+
+            :return: A tuple containing a boolean indicating if the configuration
+                is valid and a string message. The message is for information
+                purpose only.
+            :rtype: (bool, str)
+            """
+            return ReceptorUtils.are_Valid_Receptor_Ids(argin)
+
     @command(
         dtype_in=("str",),
         doc_in="List of receptor IDs",
         dtype_out="DevVarLongStringArray",
         doc_out="(ReturnType, 'informational message')",
     )
-    @DebugIt()
+    @tango.DebugIt()
     def AddReceptors(
         self: CbfSubarray, argin: List[str]
     ) -> Tuple[ResultCode, str]:
@@ -653,6 +627,18 @@ class CbfSubarray(CspSubElementSubarray):
         :rtype: (ResultCode, str)
         """
         command = self.get_command_object("AddReceptors")
+
+        (valid, msg) = command.validate_input(argin)
+        if not valid:
+            self._logger.error(msg)
+            tango.Except.throw_exception(
+                "Command failed",
+                msg,
+                "AddReceptors command input failed",
+                tango.ErrSeverity.ERR,
+            )
+        self.logger.info(msg)
+
         (return_code, message) = command(argin)
         return [[return_code], [message]]
 
@@ -685,23 +671,27 @@ class CbfSubarray(CspSubElementSubarray):
             full_configuration = json.loads(argin)
 
             try:
-                configure_scan_schema = get_csp_config_schema(version=config["interface"], strict=True)
+                configure_scan_schema = get_csp_config_schema(
+                    version=config["interface"], strict=True
+                )
                 configure_scan_schema.validate(full_configuration)
             except Exception as ex:
                 msg = f"Validation of the ConfigureScan command against ska-telmodel schema failed with the following exception:\n{ex}"
                 return (ResultCode.FAILED, msg)
 
-            self.logger.info("Successfully validated the ConfigureScan command against the telescope model schema.")
+            self.logger.info(
+                "Successfully validated the ConfigureScan command against the telescope model schema."
+            )
 
             common_configuration = copy.deepcopy(full_configuration["common"])
             configuration = copy.deepcopy(full_configuration["cbf"])
             # set band5Tuning to [0,0] if not specified
             if "band_5_tuning" not in common_configuration:
                 common_configuration["band_5_tuning"] = [0, 0]
-            if "frequency_band_offset_stream_1" not in common_configuration:
-                configuration["frequency_band_offset_stream_1"] = 0
-            if "frequency_band_offset_stream_2" not in common_configuration:
-                configuration["frequency_band_offset_stream_2"] = 0
+            if "frequency_band_offset_stream1" not in common_configuration:
+                configuration["frequency_band_offset_stream1"] = 0
+            if "frequency_band_offset_stream2" not in common_configuration:
+                configuration["frequency_band_offset_stream2"] = 0
             if "rfi_flagging_mask" not in configuration:
                 configuration["rfi_flagging_mask"] = {}
 
@@ -739,10 +729,10 @@ class CbfSubarray(CspSubElementSubarray):
                 return (False, msg)
 
             # Validate frequencyBandOffsetStream1.
-            if "frequency_band_offset_stream_1" not in configuration:
-                configuration["frequency_band_offset_stream_1"] = 0
+            if "frequency_band_offset_stream1" not in configuration:
+                configuration["frequency_band_offset_stream1"] = 0
             if (
-                abs(int(configuration["frequency_band_offset_stream_1"]))
+                abs(int(configuration["frequency_band_offset_stream1"]))
                 <= const.FREQUENCY_SLICE_BW * 10**6 / 2
             ):
                 pass
@@ -754,10 +744,10 @@ class CbfSubarray(CspSubElementSubarray):
                 return (False, msg)
 
             # Validate frequencyBandOffsetStream2.
-            if "frequency_band_offset_stream_2" not in configuration:
-                configuration["frequency_band_offset_stream_2"] = 0
+            if "frequency_band_offset_stream2" not in configuration:
+                configuration["frequency_band_offset_stream2"] = 0
             if (
-                abs(int(configuration["frequency_band_offset_stream_2"]))
+                abs(int(configuration["frequency_band_offset_stream2"]))
                 <= const.FREQUENCY_SLICE_BW * 10**6 / 2
             ):
                 pass
@@ -842,7 +832,7 @@ class CbfSubarray(CspSubElementSubarray):
         dtype_out="DevVarLongStringArray",
         doc_out="(ReturnType, 'informational message')",
     )
-    @DebugIt()
+    @tango.DebugIt()
     def ConfigureScan(self: CbfSubarray, argin: str) -> Tuple[ResultCode, str]:
         # PROTECTED REGION ID(CbfSubarray.ConfigureScan) ENABLED START #
         # """

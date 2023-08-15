@@ -1,9 +1,10 @@
 [{
-  "delay_model": [
+  "interface": "https://schema.skao.int/ska-csp-delaymodel/2.2",
+  "epoch": 11000000,
+  "validity_period": 400.0,
+  "delay_details": [
     {
-      "receptor": "MKT000",
-      "epoch": 11000000,
-      "validity_period": 10,
+      "receptor": "SKA001",
       "poly_info": [
         {
           "polarization": "X",
@@ -16,9 +17,7 @@
       ]
     },
     {
-      "receptor": "MKT001",
-      "epoch": 11000000,
-      "validity_period": 10,
+      "receptor": "SKA100",
       "poly_info": [
         {
           "polarization": "X",
@@ -31,9 +30,7 @@
       ]
     },
     {
-      "receptor": "MKT002",
-      "epoch": 11000000,
-      "validity_period": 10,
+      "receptor": "SKA036",
       "poly_info": [
         {
           "polarization": "X",
@@ -46,9 +43,7 @@
       ]
     },
     {
-      "receptor": "MKT003",
-      "epoch": 11000000,
-      "validity_period": 10,
+      "receptor": "SKA063",
       "poly_info": [
         {
           "polarization": "X",
@@ -63,11 +58,12 @@
   ]
 },
 {
-  "delay_model": [
+  "interface": "https://schema.skao.int/ska-csp-delaymodel/2.2",
+  "epoch": 11000000,
+  "validity_period": 400.0,
+  "delay_details": [
     {
-      "receptor": "MKT000",
-      "epoch": 11000010,
-      "validity_period": 10,
+      "receptor": "SKA001",
       "poly_info": [
         {
           "polarization": "X",
@@ -80,9 +76,7 @@
       ]
     },
     {
-      "receptor": "MKT001",
-      "epoch": 11000010,
-      "validity_period": 10,
+      "receptor": "SKA100",
       "poly_info": [
         {
           "polarization": "X",
@@ -95,9 +89,7 @@
       ]
     },
     {
-      "receptor": "MKT002",
-      "epoch": 11000010,
-      "validity_period": 10,
+      "receptor": "SKA036",
       "poly_info": [
         {
           "polarization": "X",
@@ -110,9 +102,7 @@
       ]
     },
     {
-      "receptor": "MKT003",
-      "epoch": 11000010,
-      "validity_period": 10,
+      "receptor": "SKA063",
       "poly_info": [
         {
           "polarization": "X",
@@ -127,11 +117,12 @@
   ]
 },
 {
-  "delay_model": [
+  "interface": "https://schema.skao.int/ska-csp-delaymodel/2.2",
+  "epoch": 11000000,
+  "validity_period": 400.0,
+  "delay_details": [
     {
-      "receptor": "MKT000",
-      "epoch": 11000020,
-      "validity_period": 10,
+      "receptor": "SKA001",
       "poly_info": [
         {
           "polarization": "X",
@@ -144,9 +135,7 @@
       ]
     },
     {
-      "receptor": "MKT001",
-      "epoch": 11000020,
-      "validity_period": 10,
+      "receptor": "SKA100",
       "poly_info": [
         {
           "polarization": "X",
@@ -159,9 +148,7 @@
       ]
     },
     {
-      "receptor": "MKT002",
-      "epoch": 11000020,
-      "validity_period": 10,
+      "receptor": "SKA036",
       "poly_info": [
         {
           "polarization": "X",
@@ -174,9 +161,7 @@
       ]
     },
     {
-      "receptor": "MKT003",
-      "epoch": 11000020,
-      "validity_period": 10,
+      "receptor": "SKA063",
       "poly_info": [
         {
           "polarization": "X",

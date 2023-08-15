@@ -158,9 +158,7 @@ class Vcc(CspSubElementObsDevice):
     )
 
     jonesMatrix = attribute(
-        dtype=(("double",),),
-        max_dim_x=16,
-        max_dim_y=26,
+        dtype=str,
         access=AttrWriteType.READ,
         label="Jones Matrix elements",
         doc="Jones Matrix elements, given per frequency slice",
@@ -493,7 +491,7 @@ class Vcc(CspSubElementObsDevice):
         :return: the frequencyBandOffsetStream1 attribute.
         :rtype: int
         """
-        return self.component_manager.frequency_band_offset_stream_1
+        return self.component_manager.frequency_band_offset_stream1
         # PROTECTED REGION END #    //  Vcc.frequencyBandOffsetStream1_read
 
     def read_frequencyBandOffsetStream2(self: Vcc) -> int:
@@ -504,7 +502,7 @@ class Vcc(CspSubElementObsDevice):
         :return: the frequencyBandOffsetStream2 attribute.
         :rtype: int
         """
-        return self.component_manager.frequency_band_offset_stream_2
+        return self.component_manager.frequency_band_offset_stream2
         # PROTECTED REGION END #    //  Vcc.frequencyBandOffsetStream2_read
 
     def read_dopplerPhaseCorrection(self: Vcc) -> List[float]:
@@ -553,16 +551,14 @@ class Vcc(CspSubElementObsDevice):
         return self.component_manager.delay_model
         # PROTECTED REGION END #    //  Vcc.delayModel_read
 
-    def read_jonesMatrix(self: Vcc) -> List[List[float]]:
+    def read_jonesMatrix(self: Vcc) -> str:
         # PROTECTED REGION ID(Vcc.jonesMatrix_read) ENABLED START #
         """
         Read the jonesMatrix attribute.
 
         :return: the jonesMatrix attribute (jones matrix values,
-            :return: the jonesMatrix attribute (jones matrix values,
-        :return: the jonesMatrix attribute (jones matrix values,
             given per frequency slice).
-        :rtype: list of list of float
+        :rtype: str
         """
         return self.component_manager.jones_matrix
         # PROTECTED REGION END #    //  Vcc.jonesMatrix_read
@@ -623,9 +619,15 @@ class Vcc(CspSubElementObsDevice):
 
             device._configuring_from_idle = False
 
-            device.write_simulationMode(True)
+            device.set_change_event("frequencyBand", True, True)
+
+            # Setting initial simulation mode to True
+            device.write_simulationMode(SimulationMode.TRUE)
 
             device.set_change_event("subarrayMembership", True, True)
+
+            # TODO remove when ugrading base class from 0.11.3
+            device.set_change_event("healthState", True, True)
 
             return (result_code, msg)
 
@@ -810,11 +812,11 @@ class Vcc(CspSubElementObsDevice):
                 msg = "'frequencyBand' attribute is required."
                 return (False, msg)
 
-            # Validate frequency_band_offset_stream_1.
-            if "frequency_band_offset_stream_1" not in configuration:
-                configuration["frequency_band_offset_stream_1"] = 0
+            # Validate frequency_band_offset_stream1.
+            if "frequency_band_offset_stream1" not in configuration:
+                configuration["frequency_band_offset_stream1"] = 0
             if (
-                abs(int(configuration["frequency_band_offset_stream_1"]))
+                abs(int(configuration["frequency_band_offset_stream1"]))
                 <= const.FREQUENCY_SLICE_BW * 10**6 / 2
             ):
                 pass
@@ -825,11 +827,11 @@ class Vcc(CspSubElementObsDevice):
                 )
                 return (False, msg)
 
-            # Validate frequency_band_offset_stream_2.
-            if "frequency_band_offset_stream_2" not in configuration:
-                configuration["frequency_band_offset_stream_2"] = 0
+            # Validate frequency_band_offset_stream2.
+            if "frequency_band_offset_stream2" not in configuration:
+                configuration["frequency_band_offset_stream2"] = 0
             if (
-                abs(int(configuration["frequency_band_offset_stream_2"]))
+                abs(int(configuration["frequency_band_offset_stream2"]))
                 <= const.FREQUENCY_SLICE_BW * 10**6 / 2
             ):
                 pass
@@ -849,7 +851,7 @@ class Vcc(CspSubElementObsDevice):
                 )
                 return (False, msg)
 
-            # Validate band_5_tuning, frequency_band_offset_stream_2
+            # Validate band_5_tuning, frequency_band_offset_stream2
             # if frequency_band is 5a or 5b.
             if configuration["frequency_band"] in ["5a", "5b"]:
                 # band_5_tuning is optional
@@ -1280,10 +1282,10 @@ class Vcc(CspSubElementObsDevice):
                     device.logger.debug(f"stop_freq_Hz = {stop_freq_Hz}")
 
                     if (
-                        start_freq_Hz + argin["frequency_band_offset_stream_1"]
+                        start_freq_Hz + argin["frequency_band_offset_stream1"]
                         <= int(argin["search_window_tuning"])
                         <= stop_freq_Hz
-                        + argin["frequency_band_offset_stream_1"]
+                        + argin["frequency_band_offset_stream1"]
                     ):
                         pass
                     else:
@@ -1299,19 +1301,19 @@ class Vcc(CspSubElementObsDevice):
                     else:
                         frequency_band_range_1 = (
                             argin["band_5_tuning"][0] * 10**9
-                            + argin["frequency_band_offset_stream_1"]
+                            + argin["frequency_band_offset_stream1"]
                             - const.BAND_5_STREAM_BANDWIDTH * 10**9 / 2,
                             argin["band_5_tuning"][0] * 10**9
-                            + argin["frequency_band_offset_stream_1"]
+                            + argin["frequency_band_offset_stream1"]
                             + const.BAND_5_STREAM_BANDWIDTH * 10**9 / 2,
                         )
 
                         frequency_band_range_2 = (
                             argin["band_5_tuning"][1] * 10**9
-                            + argin["frequency_band_offset_stream_2"]
+                            + argin["frequency_band_offset_stream2"]
                             - const.BAND_5_STREAM_BANDWIDTH * 10**9 / 2,
                             argin["band_5_tuning"][1] * 10**9
-                            + argin["frequency_band_offset_stream_2"]
+                            + argin["frequency_band_offset_stream2"]
                             + const.BAND_5_STREAM_BANDWIDTH * 10**9 / 2,
                         )
 

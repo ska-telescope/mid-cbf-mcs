@@ -26,22 +26,10 @@ server:
       devices:
       - name: "mid_csp_cbf/vcc/001"
         attribute_properties:
-        - attribute: "adminMode"
-          properties: 
-          - name: "abs_change"
-            values: 
-            - "-1"
-            - "1"
-        - attribute: "healthState"
-          properties:
-          - name: "abs_change"
-            values: 
-            - "-1"
-            - "1"
         - attribute: "subarrayMembership"
           properties:
           - name: "abs_change"
-            values: 
+            values:
             - "-1"
             - "1"
         properties:
@@ -72,14 +60,6 @@ server:
           - name: "VccID"
             values:
             - "1"
-          - name: "polled_attr"
-            values:
-            - "state"
-            - "50"
-            - "healthstate"
-            - "50"
-            - "adminmode"
-            - "50"
     - name: "VccSearchWindow"
       devices:
       - name: "mid_csp_cbf/vcc_sw1/001"
@@ -91,22 +71,10 @@ server:
       devices:
       - name: "mid_csp_cbf/vcc/002"
         attribute_properties:
-        - attribute: "adminMode"
-          properties: 
-          - name: "abs_change"
-            values: 
-            - "-1"
-            - "1"
-        - attribute: "healthState"
-          properties:
-          - name: "abs_change"
-            values: 
-            - "-1"
-            - "1"
         - attribute: "subarrayMembership"
           properties:
           - name: "abs_change"
-            values: 
+            values:
             - "-1"
             - "1"
         properties:
@@ -137,14 +105,6 @@ server:
           - name: "VccID"
             values:
             - "2"
-          - name: "polled_attr"
-            values:
-            - "state"
-            - "50"
-            - "healthstate"
-            - "50"
-            - "adminmode"
-            - "50"
     - name: "VccSearchWindow"
       devices:
       - name: "mid_csp_cbf/vcc_sw1/002"
@@ -156,22 +116,10 @@ server:
       devices:
       - name: "mid_csp_cbf/vcc/003"
         attribute_properties:
-        - attribute: "adminMode"
-          properties: 
-          - name: "abs_change"
-            values: 
-            - "-1"
-            - "1"
-        - attribute: "healthState"
-          properties:
-          - name: "abs_change"
-            values: 
-            - "-1"
-            - "1"
         - attribute: "subarrayMembership"
           properties:
           - name: "abs_change"
-            values: 
+            values:
             - "-1"
             - "1"
         properties:
@@ -202,14 +150,6 @@ server:
           - name: "VccID"
             values:
             - "3"
-          - name: "polled_attr"
-            values:
-            - "state"
-            - "50"
-            - "healthstate"
-            - "50"
-            - "adminmode"
-            - "50"
     - name: "VccSearchWindow"
       devices:
       - name: "mid_csp_cbf/vcc_sw1/003"
@@ -221,22 +161,10 @@ server:
       devices:
       - name: "mid_csp_cbf/vcc/004"
         attribute_properties:
-        - attribute: "adminMode"
-          properties: 
-          - name: "abs_change"
-            values: 
-            - "-1"
-            - "1"
-        - attribute: "healthState"
-          properties:
-          - name: "abs_change"
-            values: 
-            - "-1"
-            - "1"
         - attribute: "subarrayMembership"
           properties:
           - name: "abs_change"
-            values: 
+            values:
             - "-1"
             - "1"
         properties:
@@ -267,14 +195,6 @@ server:
           - name: "VccID"
             values:
             - "4"
-          - name: "polled_attr"
-            values:
-            - "state"
-            - "50"
-            - "healthstate"
-            - "50"
-            - "adminmode"
-            - "50"
     - name: "VccSearchWindow"
       devices:
       - name: "mid_csp_cbf/vcc_sw1/004"
@@ -286,22 +206,10 @@ server:
       devices:
       - name: "mid_csp_cbf/vcc/005"
         attribute_properties:
-        - attribute: "adminMode"
-          properties: 
-          - name: "abs_change"
-            values: 
-            - "-1"
-            - "1"
-        - attribute: "healthState"
-          properties:
-          - name: "abs_change"
-            values: 
-            - "-1"
-            - "1"
         - attribute: "subarrayMembership"
           properties:
           - name: "abs_change"
-            values: 
+            values:
             - "-1"
             - "1"
         properties:
@@ -332,14 +240,6 @@ server:
           - name: "VccID"
             values:
             - "5"
-          - name: "polled_attr"
-            values:
-            - "state"
-            - "50"
-            - "healthstate"
-            - "50"
-            - "adminmode"
-            - "50"
     - name: "VccSearchWindow"
       devices:
       - name: "mid_csp_cbf/vcc_sw1/005"
@@ -350,22 +250,10 @@ server:
       devices:
       - name: "mid_csp_cbf/vcc/006"
         attribute_properties:
-        - attribute: "adminMode"
-          properties: 
-          - name: "abs_change"
-            values: 
-            - "-1"
-            - "1"
-        - attribute: "healthState"
-          properties:
-          - name: "abs_change"
-            values: 
-            - "-1"
-            - "1"
         - attribute: "subarrayMembership"
           properties:
           - name: "abs_change"
-            values: 
+            values:
             - "-1"
             - "1"
         properties:
@@ -396,14 +284,6 @@ server:
           - name: "VccID"
             values:
             - "6"
-          - name: "polled_attr"
-            values:
-            - "state"
-            - "50"
-            - "healthstate"
-            - "50"
-            - "adminmode"
-            - "50"
     - name: "VccSearchWindow"
       devices:
       - name: "mid_csp_cbf/vcc_sw1/006"
@@ -414,22 +294,10 @@ server:
       devices:
       - name: "mid_csp_cbf/vcc/007"
         attribute_properties:
-        - attribute: "adminMode"
-          properties: 
-          - name: "abs_change"
-            values: 
-            - "-1"
-            - "1"
-        - attribute: "healthState"
-          properties:
-          - name: "abs_change"
-            values: 
-            - "-1"
-            - "1"
         - attribute: "subarrayMembership"
           properties:
           - name: "abs_change"
-            values: 
+            values:
             - "-1"
             - "1"
         properties:
@@ -460,14 +328,6 @@ server:
           - name: "VccID"
             values:
             - "7"
-          - name: "polled_attr"
-            values:
-            - "state"
-            - "50"
-            - "healthstate"
-            - "50"
-            - "adminmode"
-            - "50"
     - name: "VccSearchWindow"
       devices:
       - name: "mid_csp_cbf/vcc_sw1/007"
@@ -478,22 +338,10 @@ server:
       devices:
       - name: "mid_csp_cbf/vcc/008"
         attribute_properties:
-        - attribute: "adminMode"
-          properties: 
-          - name: "abs_change"
-            values: 
-            - "-1"
-            - "1"
-        - attribute: "healthState"
-          properties:
-          - name: "abs_change"
-            values: 
-            - "-1"
-            - "1"
         - attribute: "subarrayMembership"
           properties:
           - name: "abs_change"
-            values: 
+            values:
             - "-1"
             - "1"
         properties:
@@ -524,14 +372,6 @@ server:
           - name: "VccID"
             values:
             - "8"
-          - name: "polled_attr"
-            values:
-            - "state"
-            - "50"
-            - "healthstate"
-            - "50"
-            - "adminmode"
-            - "50"
     - name: "VccSearchWindow"
       devices:
       - name: "mid_csp_cbf/vcc_sw1/008"

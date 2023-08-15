@@ -12,7 +12,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Callable, Optional, Tuple
+from typing import Callable, List, Optional, Tuple
 
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import PowerMode, SimulationMode
@@ -37,13 +37,39 @@ class PowerSwitchComponentManager(CbfComponentManager):
 
     :param simulation_mode: simulation mode identifies if the real power switch
                           driver or the simulator should be used
+    :param protocol: Connection protocol (HTTP or HTTPS) for the power switch
     :param ip: IP address of the power switch
+    :param login: Login username of the power switch
+    :param password: Login password for the power switch
+    :param content_type: The content type in the request header
+    :param outlet_list_url: A portion of the URL to get the list of outlets
+    :param outlet_state_url: A portion of the URL to get the outlet state
+    :param outlet_control_url: A portion of the URL to turn on/off outlet
+    :param turn_on_action: value to pass to request to turn on an outlet
+    :param turn_off_action: value to pass to request to turn on an outlet
+    :param state_on: value of the outlet's state when on
+    :param state_off: value of the outlet's state when off
+    :param outlet_schema_file: File name for the schema for a list of outlets
+    :param outlet_id_list: List of Outlet IDs
     :param logger: a logger for this object to use
     """
 
     def __init__(
         self: PowerSwitchComponentManager,
+        protocol: str,
         ip: str,
+        login: str,
+        password: str,
+        content_type: str,
+        outlet_list_url: str,
+        outlet_state_url: str,
+        outlet_control_url: str,
+        turn_on_action: str,
+        turn_off_action: str,
+        state_on: str,
+        state_off: str,
+        outlet_schema_file: str,
+        outlet_id_list: List[str],
         logger: logging.Logger,
         push_change_event_callback: Optional[Callable],
         communication_status_changed_callback: Callable[
@@ -57,6 +83,18 @@ class PowerSwitchComponentManager(CbfComponentManager):
         Initialize a new instance.
 
         :param ip: IP address of the power switch
+        :param login: Login username of the power switch
+        :param password: Login password for the power switch
+        :param content_type: The content type in the request header
+        :param outlet_list_url: A portion of the URL to get the list of outlets
+        :param outlet_state_url: A portion of the URL to get the outlet state
+        :param outlet_control_url: A portion of the URL to turn on/off outlet
+        :param turn_on_action: value to pass to request to turn on an outlet
+        :param turn_off_action: value to pass to request to turn on an outlet
+        :param state_on: value of the outlet's state when on
+        :param state_off: value of the outlet's state when off
+        :param outlet_schema_file: File name for the schema for a list of outlets
+        :param outlet_id_list: List of Outlet IDs
         :param logger: a logger for this object to use
         :param push_change_event: method to call when the base classes
             want to send an event
@@ -75,8 +113,26 @@ class PowerSwitchComponentManager(CbfComponentManager):
 
         self._simulation_mode = simulation_mode
 
-        self.power_switch_driver = PowerSwitchDriver(ip, logger)
-        self.power_switch_simulator = PowerSwitchSimulator(logger)
+        self.power_switch_driver = PowerSwitchDriver(
+            protocol,
+            ip,
+            login,
+            password,
+            content_type,
+            outlet_list_url,
+            outlet_state_url,
+            outlet_control_url,
+            turn_on_action,
+            turn_off_action,
+            state_on,
+            state_off,
+            outlet_schema_file,
+            outlet_id_list,
+            logger,
+        )
+        self.power_switch_simulator = PowerSwitchSimulator(
+            outlet_id_list, logger
+        )
 
         super().__init__(
             logger=logger,
@@ -161,7 +217,7 @@ class PowerSwitchComponentManager(CbfComponentManager):
         self.connected = False
 
     def get_outlet_power_mode(
-        self: PowerSwitchComponentManager, outlet: int
+        self: PowerSwitchComponentManager, outlet: str
     ) -> PowerMode:
         """
         Get the power mode of a specific outlet.
@@ -177,7 +233,7 @@ class PowerSwitchComponentManager(CbfComponentManager):
             return self.power_switch_driver.get_outlet_power_mode(outlet)
 
     def turn_on_outlet(
-        self: PowerSwitchComponentManager, outlet: int
+        self: PowerSwitchComponentManager, outlet: str
     ) -> Tuple[ResultCode, str]:
         """
         Tell the DLI power switch to turn on a specific outlet.
@@ -188,13 +244,14 @@ class PowerSwitchComponentManager(CbfComponentManager):
 
         :raise AssertionError: if outlet ID is out of bounds
         """
+
         if self.simulation_mode:
             return self.power_switch_simulator.turn_on_outlet(outlet)
         else:
             return self.power_switch_driver.turn_on_outlet(outlet)
 
     def turn_off_outlet(
-        self: PowerSwitchComponentManager, outlet: int
+        self: PowerSwitchComponentManager, outlet: str
     ) -> Tuple[ResultCode, str]:
         """
         Tell the DLI power switch to turn off a specific outlet.
@@ -205,6 +262,7 @@ class PowerSwitchComponentManager(CbfComponentManager):
 
         :raise AssertionError: if outlet ID is out of bounds
         """
+
         if self.simulation_mode:
             return self.power_switch_simulator.turn_off_outlet(outlet)
         else:

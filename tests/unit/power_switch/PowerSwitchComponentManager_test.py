@@ -22,7 +22,7 @@ from ska_mid_cbf_mcs.power_switch.power_switch_component_manager import (
 
 @pytest.mark.parametrize(
     "power_switch_component_manager",
-    [{"sim_put_error": False, "sim_get_error": False}],
+    [{"sim_patch_error": False, "sim_get_error": False}],
     indirect=True,
 )
 def test_get_outlet_state(
@@ -38,14 +38,14 @@ def test_get_outlet_state(
 
     for i in range(0, num_outlets):
         assert (
-            power_switch_component_manager.get_outlet_power_mode(i)
+            power_switch_component_manager.get_outlet_power_mode(str(i))
             == PowerMode.ON
         )
 
 
 @pytest.mark.parametrize(
     "power_switch_component_manager",
-    [{"sim_put_error": False, "sim_get_error": False}],
+    [{"sim_patch_error": False, "sim_get_error": False}],
     indirect=True,
 )
 def test_turn_outlet_on_off(
@@ -62,13 +62,13 @@ def test_turn_outlet_on_off(
     # Check initial state
     for i in range(0, num_outlets):
         assert (
-            power_switch_component_manager.get_outlet_power_mode(i)
+            power_switch_component_manager.get_outlet_power_mode(str(i))
             == PowerMode.ON
         )
 
     # Turn outlets off and check the state again
     for i in range(0, num_outlets):
-        assert power_switch_component_manager.turn_off_outlet(i) == (
+        assert power_switch_component_manager.turn_off_outlet(str(i)) == (
             ResultCode.OK,
             f"Outlet {i} power off",
         )
@@ -77,18 +77,22 @@ def test_turn_outlet_on_off(
             if j <= i:
                 with pytest.raises(
                     AssertionError,
-                    match=r"Power mode of outlet \d \(3\) is different than the expected mode 1",
+                    match=r"Power mode of outlet ID \w \(3\) is different than the expected mode 1",
                 ):
-                    power_switch_component_manager.get_outlet_power_mode(j)
+                    power_switch_component_manager.get_outlet_power_mode(
+                        str(j)
+                    )
             else:
                 assert (
-                    power_switch_component_manager.get_outlet_power_mode(j)
+                    power_switch_component_manager.get_outlet_power_mode(
+                        str(j)
+                    )
                     == PowerMode.ON
                 )
 
     # Turn on outlets and check the state again
     for i in range(0, num_outlets):
-        assert power_switch_component_manager.turn_on_outlet(i) == (
+        assert power_switch_component_manager.turn_on_outlet(str(i)) == (
             ResultCode.OK,
             f"Outlet {i} power on",
         )
@@ -96,20 +100,24 @@ def test_turn_outlet_on_off(
         for j in range(0, num_outlets):
             if j <= i:
                 assert (
-                    power_switch_component_manager.get_outlet_power_mode(j)
+                    power_switch_component_manager.get_outlet_power_mode(
+                        str(j)
+                    )
                     == PowerMode.ON
                 )
             else:
                 with pytest.raises(
                     AssertionError,
-                    match=r"Power mode of outlet \d \(3\) is different than the expected mode 1",
+                    match=r"Power mode of outlet ID \w \(3\) is different than the expected mode 1",
                 ):
-                    power_switch_component_manager.get_outlet_power_mode(j)
+                    power_switch_component_manager.get_outlet_power_mode(
+                        str(j)
+                    )
 
 
 @pytest.mark.parametrize(
     "power_switch_component_manager",
-    [{"sim_put_error": False, "sim_get_error": False}],
+    [{"sim_patch_error": False, "sim_get_error": False}],
     indirect=True,
 )
 def test_outlet_out_of_bounds(
@@ -126,18 +134,18 @@ def test_outlet_out_of_bounds(
 
     # Check that an assertion is raised if we try to access an invalid outlet ID
     with pytest.raises(AssertionError):
-        power_switch_component_manager.get_outlet_power_mode(num_outlets)
+        power_switch_component_manager.get_outlet_power_mode(str(num_outlets))
 
     with pytest.raises(AssertionError):
-        power_switch_component_manager.turn_on_outlet(num_outlets)
+        power_switch_component_manager.turn_on_outlet(str(num_outlets))
 
     with pytest.raises(AssertionError):
-        power_switch_component_manager.turn_off_outlet(num_outlets)
+        power_switch_component_manager.turn_off_outlet(str(num_outlets))
 
 
 @pytest.mark.parametrize(
     "power_switch_component_manager",
-    [{"sim_put_error": False, "sim_get_error": True}],
+    [{"sim_patch_error": False, "sim_get_error": True}],
     indirect=True,
 )
 def test_get_request_failure(
@@ -153,20 +161,20 @@ def test_get_request_failure(
 
 @pytest.mark.parametrize(
     "power_switch_component_manager",
-    [{"sim_put_error": True, "sim_get_error": False}],
+    [{"sim_patch_error": True, "sim_get_error": False}],
     indirect=True,
 )
-def test_put_request_failure(
+def test_patch_request_failure(
     power_switch_component_manager: PowerSwitchComponentManager,
 ) -> None:
     """
-    Tests that a PUT request failure is appropriately handled.
+    Tests that a PATCH request failure is appropriately handled.
     """
     power_switch_component_manager.start_communicating()
     num_outlets = power_switch_component_manager.num_outlets
     assert num_outlets == 8
 
-    assert power_switch_component_manager.turn_off_outlet(0) == (
+    assert power_switch_component_manager.turn_off_outlet("0") == (
         ResultCode.FAILED,
         "HTTP response error",
     )

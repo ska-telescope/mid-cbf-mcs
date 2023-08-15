@@ -106,9 +106,7 @@ class Fsp(SKACapability):
     )
 
     jonesMatrix = attribute(
-        dtype=(("double",),),
-        max_dim_x=16,
-        max_dim_y=26,
+        dtype="str",
         access=AttrWriteType.READ,
         label="Jones Matrix",
         doc="Jones Matrix, given per frequency slice",
@@ -122,9 +120,7 @@ class Fsp(SKACapability):
     )
 
     timingBeamWeights = attribute(
-        dtype=(("double",),),
-        max_dim_x=6,
-        max_dim_y=16,
+        dtype="str",
         access=AttrWriteType.READ,
         label="Timing Beam Weights",
         doc="Amplitude weights used in the tied-array beamforming",
@@ -287,13 +283,13 @@ class Fsp(SKACapability):
         self._config_id = value
         # PROTECTED REGION END #    //  Fsp.configID_write
 
-    def read_jonesMatrix(self: Fsp) -> List[List[float]]:
+    def read_jonesMatrix(self: Fsp) -> str:
         # PROTECTED REGION ID(Fsp.jonesMatrix_read) ENABLED START #
         """
         Read the jonesMatrix attribute.
 
         :return: the jonesMatrix attribute.
-        :rtype: list of list of float
+        :rtype: string
         """
         return self.component_manager.jones_matrix
         # PROTECTED REGION END #    //  Fsp.jonesMatrix_read
@@ -309,13 +305,13 @@ class Fsp(SKACapability):
         return self.component_manager.delay_model
         # PROTECTED REGION END #    //  Fsp.delayModel_read
 
-    def read_timingBeamWeights(self: Fsp) -> List[List[float]]:
+    def read_timingBeamWeights(self: Fsp) -> str:
         # PROTECTED REGION ID(Fsp.timingBeamWeights_read) ENABLED START #
         """
         Read the timingBeamWeights attribute.
 
         :return: the timingBeamWeights attribute.
-        :rtype: list of list of float
+        :rtype: string
         """
         return self.component_manager.timing_beam_weights
         # PROTECTED REGION END #    //  Fsp.timingBeamWeights_read
@@ -345,10 +341,17 @@ class Fsp(SKACapability):
 
             device = self.target
 
-            device.write_simulationMode(True)
+            # Setting initial simulation mode to True
+            device.write_simulationMode(SimulationMode.TRUE)
 
             device._scan_id = 0
             device._config_id = ""
+
+            device.set_change_event("functionMode", True, True)
+            device.set_change_event("subarrayMembership", True, True)
+
+            # TODO remove when ugrading base class from 0.11.3
+            device.set_change_event("healthState", True, True)
 
             return (result_code, message)
 

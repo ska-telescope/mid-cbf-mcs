@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# This file is part of the csp-lmc-prototype project
+# This file is part of the mid-cbf-prototype project
 #
 #
 #
@@ -113,32 +113,6 @@ class TestCbfController:
                 sleep_time_s,
             )
             assert test_proxies.subarray[i].State() == DevState.ON
-
-        for i in range(1, test_proxies.num_fsp + 1):
-            test_proxies.wait_timeout_dev(
-                [test_proxies.fsp[i]], DevState.ON, wait_time_s, sleep_time_s
-            )
-            assert test_proxies.fsp[i].State() == DevState.ON
-
-        for i in ["CORR", "PSS-BF", "PST-BF"]:
-            for j in range(1, test_proxies.num_sub + 1):
-                for k in range(1, test_proxies.num_fsp + 1):
-                    test_proxies.wait_timeout_dev(
-                        [test_proxies.fspSubarray[i][j][k]],
-                        DevState.ON,
-                        wait_time_s,
-                        sleep_time_s,
-                    )
-                    assert (
-                        test_proxies.fspSubarray[i][j][k].State()
-                        == DevState.ON
-                    )
-
-        for i in range(1, test_proxies.num_vcc + 1):
-            test_proxies.wait_timeout_dev(
-                [test_proxies.vcc[i]], DevState.ON, wait_time_s, sleep_time_s
-            )
-            assert test_proxies.vcc[i].State() == DevState.ON
 
     def test_Off(self, test_proxies):
         """

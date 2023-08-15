@@ -28,3 +28,4 @@ multidict
 yarl
 aiohttp
 aiocsv
+requests == 2.26.0

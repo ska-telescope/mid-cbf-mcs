@@ -158,8 +158,8 @@ class VccBandSimulator:
             self._stream_tuning = configuration["band_5_tuning"]
 
         self._frequency_band_offset = [
-            int(configuration["frequency_band_offset_stream_1"]),
-            int(configuration["frequency_band_offset_stream_2"]),
+            int(configuration["frequency_band_offset_stream1"]),
+            int(configuration["frequency_band_offset_stream2"]),
         ]
 
         if "rfi_flagging_mask" in configuration:

@@ -117,12 +117,8 @@ class TestVccComponentManager:
         vcc_component_manager.start_communicating()
         vcc_component_manager.on()
 
-        # jones matrix values should be set to 0.0 after init
-        num_cols = 16
-        num_rows = 26
-        assert vcc_component_manager.jones_matrix == [
-            [0.0] * num_cols for _ in range(num_rows)
-        ]
+        # jones matrix values should be set to "" after init
+        assert vcc_component_manager.jones_matrix == ""
 
         f = open(file_path + config_file_name)
         json_str = f.read().replace("\n", "")
@@ -135,33 +131,46 @@ class TestVccComponentManager:
 
         # read the json file
         f = open(file_path + jones_matrix_file_name)
-        json_str = f.read().replace("\n", "")
+        input_jones_matrix = f.read().replace("\n", "")
         f.close()
-        jones_matrix = json.loads(json_str)
+        input_jones_matrix_obj = json.loads(input_jones_matrix)
 
-        # update the jones matrix
-        for m in jones_matrix["jonesMatrix"]:
-            vcc_component_manager.update_jones_matrix(
-                json.dumps(m["matrixDetails"])
-            )
+        # update the Jones matrix
+        # Set the receptor id arbitrarily to the first receptor
+        # in the Jones matrix
+        input_jones_matrix_first_receptor = input_jones_matrix_obj[
+            "jones_matrix"
+        ][0]
+        vcc_component_manager.receptor_id = input_jones_matrix_first_receptor[
+            "receptor"
+        ][1]
+        assert (
+            vcc_component_manager.receptor_id
+            == input_jones_matrix_first_receptor["receptor"][1]
+        )
+        vcc_component_manager.update_jones_matrix(input_jones_matrix)
 
-        min_fs_id = 1
-        max_fs_id = 26
-        matrix_len = 16
-        for m in jones_matrix["jonesMatrix"]:
-            for receptor in m["matrixDetails"]:
-                receptor_index = receptor["receptor"][1]
-                if receptor_index == vcc_component_manager.receptor_id:
-                    for frequency_slice in receptor["receptorMatrix"]:
-                        fs_id = frequency_slice["fsid"]
-                        matrix = frequency_slice["matrix"]
-                        if (
-                            min_fs_id <= fs_id <= max_fs_id
-                            and len(matrix) == matrix_len
-                        ):
-                            assert list(
-                                vcc_component_manager.jones_matrix[fs_id - 1]
-                            ) == list(matrix)
+        # check that the Jones matrix is no longer an empty string
+        updated_jones_matrix_obj = json.loads(
+            vcc_component_manager.jones_matrix
+        )
+        assert len(updated_jones_matrix_obj) != 0
+
+        # check that the matrix values were copied
+        for entry in input_jones_matrix_obj["jones_matrix"]:
+            if entry["receptor"][1] == vcc_component_manager.receptor_id:
+                input_jones_matrix_for_receptor = json.dumps(entry)
+                # the updated Jones matrix for vcc is a single entry
+                # for the given receptor and should be the first (only)
+                # item in the list of entries allowed by the schema
+                updated_jones_matrix_for_vcc = json.dumps(
+                    updated_jones_matrix_obj["jones_matrix"][0]
+                )
+                # compare the Jones matrices as strings
+                assert (
+                    input_jones_matrix_for_receptor
+                    == updated_jones_matrix_for_vcc
+                )
 
     @pytest.mark.parametrize(
         "config_file_name, \
@@ -206,7 +215,7 @@ class TestVccComponentManager:
         # Set the receptor id arbitrarily to the first receptor
         # in the delay model
         input_delay_model_first_receptor = input_delay_model_obj[
-            "delay_model"
+            "delay_details"
         ][0]
         vcc_component_manager.receptor_id = input_delay_model_first_receptor[
             "receptor"
@@ -222,14 +231,14 @@ class TestVccComponentManager:
         assert len(updated_delay_model_obj) != 0
 
         # check that the coeff values were copied
-        for entry in input_delay_model_obj["delay_model"]:
+        for entry in input_delay_model_obj["delay_details"]:
             if entry["receptor"][1] == vcc_component_manager.receptor_id:
                 input_delay_model_for_receptor = json.dumps(entry)
                 # the updated delay model for vcc is a single entry
                 # for the given receptor and should be the first (only)
                 # item in the list of entries allowed by the schema
                 updated_delay_model_for_vcc = json.dumps(
-                    updated_delay_model_obj["delay_model"][0]
+                    updated_delay_model_obj["delay_details"][0]
                 )
                 # compare the delay models as strings
                 assert (
@@ -277,12 +286,12 @@ class TestVccComponentManager:
             == configuration["band_5_tuning"]
         )
         assert (
-            vcc_component_manager.frequency_band_offset_stream_1
-            == configuration["frequency_band_offset_stream_1"]
+            vcc_component_manager.frequency_band_offset_stream1
+            == configuration["frequency_band_offset_stream1"]
         )
         assert (
-            vcc_component_manager.frequency_band_offset_stream_2
-            == configuration["frequency_band_offset_stream_2"]
+            vcc_component_manager.frequency_band_offset_stream2
+            == configuration["frequency_band_offset_stream2"]
         )
         assert vcc_component_manager.rfi_flagging_mask == str(
             configuration["rfi_flagging_mask"]
@@ -293,8 +302,8 @@ class TestVccComponentManager:
         assert vcc_component_manager.frequency_band == 0
         assert vcc_component_manager.config_id == ""
         assert vcc_component_manager.stream_tuning == (0, 0)
-        assert vcc_component_manager.frequency_band_offset_stream_1 == 0
-        assert vcc_component_manager.frequency_band_offset_stream_2 == 0
+        assert vcc_component_manager.frequency_band_offset_stream1 == 0
+        assert vcc_component_manager.frequency_band_offset_stream2 == 0
         assert vcc_component_manager.rfi_flagging_mask == ""
         mock_vcc_controller.Unconfigure.assert_next_call()
 

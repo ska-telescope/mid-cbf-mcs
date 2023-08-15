@@ -11,12 +11,12 @@
         "subarray_id": 1
     },
     "cbf": {
-        "frequency_band_offset_stream_1": 0,
-        "frequency_band_offset_stream_2": 0,
+        "frequency_band_offset_stream1": 0,
+        "frequency_band_offset_stream2": 0,
         "doppler_phase_corr_subscription_point": "ska_mid/tm_leaf_node/csp_subarray_01/dopplerPhaseCorrection",
         "jones_matrix_subscription_point": "ska_mid/tm_leaf_node/csp_subarray_01/jonesMatrix",
         "delay_model_subscription_point": "ska_mid/tm_leaf_node/csp_subarray_01/delayModel",
-        "timing_beam_weights_subscription_point": "ska_mid/tm_leaf_node/csp_subarray_01/beamWeights",
+        "timing_beam_weights_subscription_point": "ska_mid/tm_leaf_node/csp_subarray_01/timingBeamWeights",
         "rfi_flagging_mask": {},
         "search_window": [
             {
@@ -28,11 +28,11 @@
                 "tdc_period_after_epoch": 25,
                 "tdc_destination_address": [
                     {
-                        "receptor_id": "MKT003",
+                        "receptor_id": "SKA063",
                         "tdc_destination_address": ["foo", "bar", "8080"]
                     },
                     {
-                        "receptor_id": "MKT000",
+                        "receptor_id": "SKA001",
                         "tdc_destination_address": ["fizz", "buzz", "80"]
                     }
                 ]
@@ -47,7 +47,7 @@
             {
                 "fsp_id": 1,
                 "function_mode": "CORR",
-                "receptor_ids": [],
+                "receptors": [],
                 "frequency_slice_id": 1,
                 "zoom_factor": 1,
                 "zoom_window_tuning": 4700000,

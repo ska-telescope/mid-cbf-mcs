@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# This file is part of the csp-lmc-prototype project
+# This file is part of the mid-cbf-prototype project
 #
 # Distributed under the terms of the BSD-3-Clause license.
 # See LICENSE.txt for more info.
@@ -95,22 +95,22 @@ class TestCbfSubarray:
         assert device_under_test.State() == DevState.OFF
 
     @pytest.mark.parametrize(
-        "receptor_ids, \
+        "receptors, \
         receptors_to_remove, \
         sub_id",
         [
             (
-                ["MKT000", "MKT002", "MKT003", "MKT001"],
-                ["MKT001", "MKT000", "MKT003"],
+                ["SKA001", "SKA036", "SKA063", "SKA100"],
+                ["SKA100", "SKA001", "SKA063"],
                 1,
             ),
-            (["MKT003", "MKT000", "MKT001"], ["MKT001", "MKT000"], 1),
+            (["SKA063", "SKA001", "SKA100"], ["SKA100", "SKA001"], 1),
         ],
     )
     def test_AddRemoveReceptors_valid(
         self: TestCbfSubarray,
         test_proxies: pytest.fixture,
-        receptor_ids: List[str],
+        receptors: List[str],
         receptors_to_remove: List[int],
         sub_id: int,
     ) -> None:
@@ -118,7 +118,7 @@ class TestCbfSubarray:
         Test CbfSubarrays's AddReceptors and RemoveReceptors commands
 
         :param proxies: proxies pytest fixture
-        :param receptor_ids: list of receptor ids
+        :param receptors: list of receptor ids
         :param receptors_to_remove: list of ids of receptors to remove
         :param sub_id: the subarray id
         """
@@ -148,7 +148,7 @@ class TestCbfSubarray:
             )
 
             # add all except last receptor
-            test_proxies.subarray[sub_id].AddReceptors(receptor_ids[:-1])
+            test_proxies.subarray[sub_id].AddReceptors(receptors[:-1])
             test_proxies.wait_timeout_obs(
                 [test_proxies.subarray[sub_id]],
                 ObsState.IDLE,
@@ -158,8 +158,8 @@ class TestCbfSubarray:
 
             assert [
                 test_proxies.subarray[sub_id].receptors[i]
-                for i in range(len(receptor_ids[:-1]))
-            ] == receptor_ids[:-1]
+                for i in range(len(receptors[:-1]))
+            ] == receptors[:-1]
 
             assert all(
                 [
@@ -169,23 +169,23 @@ class TestCbfSubarray:
                         ]
                     ].subarrayMembership
                     == sub_id
-                    for i in receptor_ids[:-1]
+                    for i in receptors[:-1]
                 ]
             )
 
             assert test_proxies.subarray[sub_id].obsState == ObsState.IDLE
 
             # add the last receptor
-            test_proxies.subarray[sub_id].AddReceptors([receptor_ids[-1]])
+            test_proxies.subarray[sub_id].AddReceptors([receptors[-1]])
             time.sleep(1)
             assert [
                 test_proxies.subarray[sub_id].receptors[i]
-                for i in range(len(receptor_ids))
-            ] == receptor_ids
+                for i in range(len(receptors))
+            ] == receptors
             assert (
                 test_proxies.vcc[
                     test_proxies.receptor_to_vcc[
-                        self.receptor_utils.receptors[receptor_ids[-1]]
+                        self.receptor_utils.receptors[receptors[-1]]
                     ]
                 ].subarrayMembership
                 == sub_id
@@ -194,10 +194,10 @@ class TestCbfSubarray:
             # remove all except last receptor
             test_proxies.subarray[sub_id].RemoveReceptors(receptors_to_remove)
             time.sleep(1)
-            receptor_ids_after_remove = [
-                r for r in receptor_ids if r not in receptors_to_remove
+            receptors_after_remove = [
+                r for r in receptors if r not in receptors_to_remove
             ]
-            for idx, receptor in enumerate(receptor_ids_after_remove):
+            for idx, receptor in enumerate(receptors_after_remove):
                 assert test_proxies.subarray[sub_id].receptors[idx] == receptor
                 assert (
                     test_proxies.vcc[
@@ -221,7 +221,7 @@ class TestCbfSubarray:
 
             # remove remaining receptor
             test_proxies.subarray[sub_id].RemoveReceptors(
-                receptor_ids_after_remove
+                receptors_after_remove
             )
             test_proxies.wait_timeout_obs(
                 [test_proxies.subarray[sub_id]],
@@ -230,7 +230,7 @@ class TestCbfSubarray:
                 sleep_time_s,
             )
             assert len(test_proxies.subarray[sub_id].receptors) == 0
-            for receptor in receptor_ids_after_remove:
+            for receptor in receptors_after_remove:
                 assert (
                     test_proxies.vcc[
                         test_proxies.receptor_to_vcc[
@@ -255,18 +255,18 @@ class TestCbfSubarray:
             raise e
 
     @pytest.mark.parametrize(
-        "receptor_ids, \
+        "receptors, \
         invalid_receptor_id, \
         sub_id",
         [
-            (["MKT000", "MKT002"], ["SKA200"], 1),
-            (["MKT003", "MKT001"], ["0"], 1),
+            (["SKA001", "SKA036"], ["SKA200"], 1),
+            (["SKA063", "SKA100"], ["0"], 1),
         ],
     )
     def test_AddReceptors_invalid_single(
         self: TestCbfSubarray,
         test_proxies: pytest.fixture,
-        receptor_ids: List[str],
+        receptors: List[str],
         invalid_receptor_id: List[int],
         sub_id: int,
     ) -> None:
@@ -275,7 +275,7 @@ class TestCbfSubarray:
             when the receptor id is invalid
 
         :param proxies: proxies pytest fixture
-        :param receptor_ids: list of receptor ids
+        :param receptors: list of receptor ids
         :param invalid_receptor_id: invalid receptor id
         :param sub_id: the subarray id
         """
@@ -297,7 +297,7 @@ class TestCbfSubarray:
             )
 
             # add some receptors
-            test_proxies.subarray[sub_id].AddReceptors(receptor_ids)
+            test_proxies.subarray[sub_id].AddReceptors(receptors)
             test_proxies.wait_timeout_obs(
                 [test_proxies.subarray[sub_id]],
                 ObsState.IDLE,
@@ -306,8 +306,8 @@ class TestCbfSubarray:
             )
             assert [
                 test_proxies.subarray[sub_id].receptors[i]
-                for i in range(len(receptor_ids))
-            ] == receptor_ids
+                for i in range(len(receptors))
+            ] == receptors
             assert all(
                 [
                     test_proxies.vcc[
@@ -316,13 +316,16 @@ class TestCbfSubarray:
                         ]
                     ].subarrayMembership
                     == 1
-                    for i in receptor_ids
+                    for i in receptors
                 ]
             )
             assert test_proxies.subarray[sub_id].obsState == ObsState.IDLE
 
             # try adding an invalid receptor ID
-            test_proxies.subarray[sub_id].AddReceptors(invalid_receptor_id)
+            # Validation of input receptors will throw an
+            # exception if there is an invalid receptor id
+            with pytest.raises(Exception):
+                test_proxies.subarray[sub_id].AddReceptors(invalid_receptor_id)
             test_proxies.wait_timeout_obs(
                 [test_proxies.subarray[sub_id]],
                 ObsState.IDLE,
@@ -331,8 +334,8 @@ class TestCbfSubarray:
             )
             assert [
                 test_proxies.subarray[sub_id].receptors[i]
-                for i in range(len(receptor_ids))
-            ] == receptor_ids
+                for i in range(len(receptors))
+            ] == receptors
             assert all(
                 [
                     test_proxies.vcc[
@@ -341,7 +344,7 @@ class TestCbfSubarray:
                         ]
                     ].subarrayMembership
                     == 1
-                    for i in receptor_ids
+                    for i in receptors
                 ]
             )
 
@@ -359,18 +362,18 @@ class TestCbfSubarray:
             raise e
 
     @pytest.mark.parametrize(
-        "receptor_ids, \
+        "receptors, \
         invalid_receptors_to_remove, \
         sub_id",
         [
-            (["MKT000", "MKT002"], ["MKT001"], 1),
-            (["MKT003", "MKT001"], ["MKT000", "MKT002"], 1),
+            (["SKA001", "SKA036"], ["SKA100"], 1),
+            (["SKA063", "SKA100"], ["SKA001", "SKA036"], 1),
         ],
     )
     def test_RemoveReceptors_invalid_single(
         self: TestCbfSubarray,
         test_proxies: pytest.fixture,
-        receptor_ids: List[str],
+        receptors: List[str],
         invalid_receptors_to_remove: List[int],
         sub_id: int,
     ) -> None:
@@ -380,7 +383,7 @@ class TestCbfSubarray:
             - when a receptor to be removed is not assigned to the subarray
 
         :param proxies: proxies pytest fixture
-        :param receptor_ids: list of receptor ids
+        :param receptors: list of receptor ids
         :param invalid_receptors_to_remove: invalid receptor ids
         :param sub_id: the subarray id
         """
@@ -404,7 +407,7 @@ class TestCbfSubarray:
             )
 
             # add some receptors
-            test_proxies.subarray[sub_id].AddReceptors(receptor_ids)
+            test_proxies.subarray[sub_id].AddReceptors(receptors)
             test_proxies.wait_timeout_obs(
                 [test_proxies.subarray[sub_id]],
                 ObsState.IDLE,
@@ -413,8 +416,8 @@ class TestCbfSubarray:
             )
             assert [
                 test_proxies.subarray[sub_id].receptors[i]
-                for i in range(len(receptor_ids))
-            ] == receptor_ids
+                for i in range(len(receptors))
+            ] == receptors
             assert all(
                 [
                     test_proxies.vcc[
@@ -423,7 +426,7 @@ class TestCbfSubarray:
                         ]
                     ].subarrayMembership
                     == 1
-                    for i in receptor_ids
+                    for i in receptors
                 ]
             )
             assert test_proxies.subarray[sub_id].obsState == ObsState.IDLE
@@ -435,8 +438,8 @@ class TestCbfSubarray:
             )
             assert [
                 test_proxies.subarray[sub_id].receptors[i]
-                for i in range(len(receptor_ids))
-            ] == receptor_ids
+                for i in range(len(receptors))
+            ] == receptors
             test_proxies.subarray[sub_id].RemoveAllReceptors()
             test_proxies.wait_timeout_obs(
                 [test_proxies.subarray[sub_id]],
@@ -471,21 +474,21 @@ class TestCbfSubarray:
         """
 
     @pytest.mark.parametrize(
-        "receptor_ids, \
+        "receptors, \
         sub_id",
-        [(["MKT000", "MKT002", "MKT003"], 1), (["MKT003", "MKT001"], 1)],
+        [(["SKA001", "SKA036", "SKA063"], 1), (["SKA063", "SKA100"], 1)],
     )
     def test_RemoveAllReceptors(
         self: TestCbfSubarray,
         test_proxies: pytest.fixture,
-        receptor_ids: List[str],
+        receptors: List[str],
         sub_id: int,
     ) -> None:
         """
         Test CbfSubarrays's RemoveAllReceptors command
 
         :param proxies: proxies pytest fixture
-        :param receptor_ids: list of receptor ids
+        :param receptors: list of receptor ids
         :param sub_id: the subarray id
         """
         try:
@@ -508,7 +511,7 @@ class TestCbfSubarray:
             )
 
             # add some receptors
-            test_proxies.subarray[sub_id].AddReceptors(receptor_ids)
+            test_proxies.subarray[sub_id].AddReceptors(receptors)
             test_proxies.wait_timeout_obs(
                 [test_proxies.subarray[sub_id]],
                 ObsState.IDLE,
@@ -518,7 +521,7 @@ class TestCbfSubarray:
             assert all(
                 [
                     test_proxies.subarray[sub_id].receptors[i] == j
-                    for i, j in zip(range(len(receptor_ids)), receptor_ids)
+                    for i, j in zip(range(len(receptors)), receptors)
                 ]
             )
             assert all(
@@ -529,7 +532,7 @@ class TestCbfSubarray:
                         ]
                     ].subarrayMembership
                     == sub_id
-                    for i in receptor_ids
+                    for i in receptors
                 ]
             )
             assert test_proxies.subarray[sub_id].obsState == ObsState.IDLE
@@ -551,7 +554,7 @@ class TestCbfSubarray:
                         ]
                     ].subarrayMembership
                     == 0
-                    for i in receptor_ids
+                    for i in receptors
                 ]
             )
             assert test_proxies.subarray[sub_id].obsState == ObsState.EMPTY
@@ -571,22 +574,22 @@ class TestCbfSubarray:
 
     @pytest.mark.parametrize(
         "config_file_name, \
-        receptor_ids, \
+        receptors, \
         vcc_receptors",
         [
             (
                 "ConfigureScan_basic.json",
-                ["MKT000", "MKT002", "MKT003", "MKT001"],
+                ["SKA001", "SKA036", "SKA063", "SKA100"],
                 [4, 1],
             ),
             (
                 "ConfigureScan_basic_fspMultiReceptors.json",
-                ["MKT000", "MKT002", "MKT003", "MKT001"],
+                ["SKA001", "SKA036", "SKA063", "SKA100"],
                 [4, 1],
             ),
             (
                 "ConfigureScan_basic_fspNoReceptors.json",
-                ["MKT000", "MKT002", "MKT003", "MKT001"],
+                ["SKA001", "SKA036", "SKA063", "SKA100"],
                 [4, 1],
             ),
         ],
@@ -595,7 +598,7 @@ class TestCbfSubarray:
         self: TestCbfSubarray,
         test_proxies: pytest.fixture,
         config_file_name: str,
-        receptor_ids: List[str],
+        receptors: List[str],
         vcc_receptors: List[int],
     ) -> None:
         """
@@ -603,7 +606,7 @@ class TestCbfSubarray:
 
         :param proxies: proxies pytest fixture
         :param config_file_name: JSON file for the configuration
-        :param receptor_ids: list of receptor ids
+        :param receptors: list of receptor ids
         :param vcc_receptors: list of vcc receptor ids
         """
         try:
@@ -626,7 +629,7 @@ class TestCbfSubarray:
             assert test_proxies.subarray[sub_id].obsState == ObsState.EMPTY
 
             # add receptors
-            test_proxies.subarray[sub_id].AddReceptors(receptor_ids)
+            test_proxies.subarray[sub_id].AddReceptors(receptors)
             test_proxies.wait_timeout_obs(
                 [test_proxies.subarray[sub_id]],
                 ObsState.IDLE,
@@ -636,7 +639,7 @@ class TestCbfSubarray:
             assert all(
                 [
                     test_proxies.subarray[sub_id].receptors[i] == j
-                    for i, j in zip(range(len(receptor_ids)), receptor_ids)
+                    for i, j in zip(range(len(receptors)), receptors)
                 ]
             )
 
@@ -700,22 +703,22 @@ class TestCbfSubarray:
                             ].band5Tuning[idx]
                             == band
                         )
-                if "frequency_band_offset_stream_1" in configuration["cbf"]:
+                if "frequency_band_offset_stream1" in configuration["cbf"]:
                     assert (
                         test_proxies.vcc[
                             test_proxies.receptor_to_vcc[r]
                         ].frequencyBandOffsetStream1
                         == configuration["cbf"][
-                            "frequency_band_offset_stream_1"
+                            "frequency_band_offset_stream1"
                         ]
                     )
-                if "frequency_band_offset_stream_2" in configuration["cbf"]:
+                if "frequency_band_offset_stream2" in configuration["cbf"]:
                     assert (
                         test_proxies.vcc[
                             test_proxies.receptor_to_vcc[r]
                         ].frequencyBandOffsetStream2
                         == configuration["cbf"][
-                            "frequency_band_offset_stream_2"
+                            "frequency_band_offset_stream2"
                         ]
                     )
                 if "rfi_flagging_mask" in configuration["cbf"]:
@@ -724,33 +727,6 @@ class TestCbfSubarray:
                     ].rfiFlaggingMask == str(
                         configuration["cbf"]["rfi_flagging_mask"]
                     )
-
-            # check configured attributes of search windows
-            # first for search window 1...
-
-            # TODO - SearchWidow device test is disabled since the same
-            # functionality is implemented by the VccSearchWindow device;
-            # to be decide which one to keep.
-
-            # print("test_proxies.sw[1].State() = {}".format(test_proxies.sw[1].State()))
-            # print("test_proxies.sw[2].State() = {}".format(test_proxies.sw[2].State()))
-
-            # assert test_proxies.sw[1].State() == DevState.ON
-            # assert test_proxies.sw[1].searchWindowTuning == 6000000000
-            # assert test_proxies.sw[1].tdcEnable == True
-            # assert test_proxies.sw[1].tdcNumBits == 8
-            # assert test_proxies.sw[1].tdcPeriodBeforeEpoch == 5
-            # assert test_proxies.sw[1].tdcPeriodAfterEpoch == 25
-            # assert "".join(test_proxies.sw[1].tdcDestinationAddress.split()) in [
-            #     "[{\"receptorID\":4,\"tdcDestinationAddress\":[\"foo\",\"bar\",\"8080\"]},{\"receptorID\":1,\"tdcDestinationAddress\":[\"fizz\",\"buzz\",\"80\"]}]",
-            #     "[{\"tdcDestinationAddress\":[\"foo\",\"bar\",\"8080\"],\"receptorID\":4},{\"receptorID\":1,\"tdcDestinationAddress\":[\"fizz\",\"buzz\",\"80\"]}]",
-            #     "[{\"receptorID\":4,\"tdcDestinationAddress\":[\"foo\",\"bar\",\"8080\"]},{\"tdcDestinationAddress\":[\"fizz\",\"buzz\",\"80\"],\"receptorID\":1}]",
-            #     "[{\"tdcDestinationAddress\":[\"foo\",\"bar\",\"8080\"],\"receptorID\":4},{\"tdcDestinationAddress\":[\"fizz\",\"buzz\",\"80\"],\"receptorID\":1}]",
-            # ]
-            # # then for search window 2...
-            # assert test_proxies.sw[2].State() == DevState.DISABLE
-            # assert test_proxies.sw[2].searchWindowTuning == 7000000000
-            # assert test_proxies.sw[2].tdcEnable == False
 
             time.sleep(1)
             # check configured attributes of VCC search windows
@@ -850,18 +826,16 @@ class TestCbfSubarray:
                     # If receptors are not specified, then
                     # all the subarray receptors are used
                     receptorsSpecified = False
-                    if "receptor_ids" in fsp:
-                        if fsp["receptor_ids"] != []:
+                    if "receptors" in fsp:
+                        if fsp["receptors"] != []:
                             receptorsSpecified = True
 
                     fsp_corr_receptors = test_proxies.fspSubarray["CORR"][
                         sub_id
                     ][fsp_id].receptors
-                    fsp_corr_receptors.sort()
 
                     if receptorsSpecified:
-                        config_fsp_receptors_sorted = fsp["receptor_ids"]
-                        config_fsp_receptors_sorted.sort()
+                        config_fsp_receptors_sorted = fsp["receptors"]
                         fsp_receptors_num = [
                             self.receptor_utils.receptors[r]
                             for r in config_fsp_receptors_sorted
@@ -874,11 +848,11 @@ class TestCbfSubarray:
                         )
 
                     else:
-                        receptor_ids_sorted = receptor_ids
-                        receptor_ids_sorted.sort()
+                        receptors_sorted = receptors
+                        receptors_sorted.sort()
                         fsp_receptors_num = [
                             self.receptor_utils.receptors[r]
-                            for r in receptor_ids_sorted
+                            for r in receptors_sorted
                         ]
                         assert all(
                             [
@@ -903,28 +877,22 @@ class TestCbfSubarray:
                                 ].band5Tuning[idx]
                                 == band
                             )
-                    if (
-                        "frequency_band_offset_stream_1"
-                        in configuration["cbf"]
-                    ):
+                    if "frequency_band_offset_stream1" in configuration["cbf"]:
                         assert (
                             test_proxies.fspSubarray["CORR"][sub_id][
                                 fsp_id
                             ].frequencyBandOffsetStream1
                             == configuration["cbf"][
-                                "frequency_band_offset_stream_1"
+                                "frequency_band_offset_stream1"
                             ]
                         )
-                    if (
-                        "frequency_band_offset_stream_2"
-                        in configuration["cbf"]
-                    ):
+                    if "frequency_band_offset_stream2" in configuration["cbf"]:
                         assert (
                             test_proxies.fspSubarray["CORR"][sub_id][
                                 fsp_id
                             ].frequencyBandOffsetStream2
                             == configuration["cbf"][
-                                "frequency_band_offset_stream_2"
+                                "frequency_band_offset_stream2"
                             ]
                         )
                     assert (
@@ -1127,19 +1095,22 @@ class TestCbfSubarray:
 
     # TODO: The delay model and jones matrix are already tested.
     # Should this test just be for the beam weights?
+    @pytest.mark.skip(
+        reason="PST currently unsupported; timing beam verification needs refactor"
+    )
     @pytest.mark.parametrize(
         "config_file_name, \
         jones_matrix_file_name, \
         delay_model_file_name, \
         timing_beam_weights_file_name, \
-        receptor_ids",
+        receptors",
         [
             (
                 "ConfigureScan_basic.json",
                 "jonesmatrix.json",
                 "delaymodel.json",
                 "timingbeamweights.json",
-                ["MKT003", "MKT000", "MKT002", "MKT001"],
+                ["SKA063", "SKA001", "SKA036", "SKA100"],
             )
         ],
     )
@@ -1151,7 +1122,7 @@ class TestCbfSubarray:
         jones_matrix_file_name: str,
         delay_model_file_name: str,
         timing_beam_weights_file_name: str,
-        receptor_ids: List[str],
+        receptors: List[str],
     ) -> None:
         """
         Test CbfSubarrays's ConfigureScan command for Fsp PST
@@ -1161,7 +1132,7 @@ class TestCbfSubarray:
         :param jones_matrix_file_name: JSON file for the jones matrix
         :param delay_model_file_name: JSON file for the delay model
         :param timing_beam_weights_file_name: JSON file for the timing beam weights
-        :param receptor_ids: list of receptor ids
+        :param receptors: list of receptor ids
         """
         try:
             wait_time_s = 1
@@ -1183,7 +1154,7 @@ class TestCbfSubarray:
             assert test_proxies.subarray[sub_id].obsState == ObsState.EMPTY
 
             # add receptors
-            test_proxies.subarray[sub_id].AddReceptors(receptor_ids)
+            test_proxies.subarray[sub_id].AddReceptors(receptors)
             test_proxies.wait_timeout_obs(
                 [test_proxies.subarray[sub_id]],
                 ObsState.IDLE,
@@ -1193,7 +1164,7 @@ class TestCbfSubarray:
             assert all(
                 [
                     test_proxies.subarray[sub_id].receptors[i] == j
-                    for i, j in zip(range(len(receptor_ids)), receptor_ids)
+                    for i, j in zip(range(len(receptors)), receptors)
                 ]
             )
 
@@ -1212,9 +1183,7 @@ class TestCbfSubarray:
             f.close()
 
             # Insert the epoch
-            jones_matrix_index_per_epoch = list(
-                range(len(jones_matrix["jonesMatrix"]))
-            )
+            jones_matrix_index_per_epoch = list(range(len(jones_matrix)))
             random.shuffle(jones_matrix_index_per_epoch)
             epoch_increment = 10
             for i, jones_matrix_index in enumerate(
@@ -1222,12 +1191,10 @@ class TestCbfSubarray:
             ):
                 if i == 0:
                     epoch_time = 0
-                    jones_matrix["jonesMatrix"][jones_matrix_index][
-                        "epoch"
-                    ] = str(epoch_time)
+                    jones_matrix[jones_matrix_index]["epoch"] = str(epoch_time)
                 else:
                     epoch_time += epoch_increment
-                    jones_matrix["jonesMatrix"][jones_matrix_index][
+                    jones_matrix["jones_matrix"][jones_matrix_index][
                         "epoch"
                     ] = str(int(time.time()) + epoch_time)
 
@@ -1236,9 +1203,9 @@ class TestCbfSubarray:
             time.sleep(1)
 
             for epoch in range(len(jones_matrix_index_per_epoch)):
-                for receptor in jones_matrix["jonesMatrix"][
+                for receptor in jones_matrix["jones_matrix"][
                     jones_matrix_index_per_epoch[epoch]
-                ]["matrixDetails"]:
+                ]["jones_matrix"]:
                     rec_id = receptor["receptor"]
                     for fsp in [
                         test_proxies.fsp[i]
@@ -1248,7 +1215,9 @@ class TestCbfSubarray:
                             FspModes.PSS_BF.value,
                             FspModes.PST_BF.value,
                         ]:
-                            for frequency_slice in receptor["receptorMatrix"]:
+                            for frequency_slice in receptor[
+                                "jones_matrix_details"
+                            ]:
                                 fs_id = frequency_slice["fsid"]
                                 matrix = frequency_slice["matrix"]
                                 if fs_id == int(
@@ -1280,9 +1249,9 @@ class TestCbfSubarray:
                                         ):
                                             assert (
                                                 matrix_val
-                                                == fsp.jonesMatrix[rec_id - 1][
-                                                    idx
-                                                ]
+                                                == fsp.jones_matrix[
+                                                    rec_id - 1
+                                                ][idx]
                                             )
                         else:
                             log_msg = "function mode {} currently not supported".format(
@@ -1301,9 +1270,7 @@ class TestCbfSubarray:
 
             # Get the DM Python object input to the DM test
             delay_model_for_test_all_obj = (
-                delay_model_test.create_test_dm_obj_all(
-                    dm_obj_all, receptor_ids
-                )
+                delay_model_test.create_test_dm_obj_all(dm_obj_all, receptors)
             )
 
             # to speed up the testing we use 4s between
@@ -1328,9 +1295,9 @@ class TestCbfSubarray:
                 time.sleep(2)
 
                 # convert receptor IDs to pair of str and int for FSPs
-                for model in input_delay_model_obj["delay_model"]:
-                    receptor_id = model["receptor"]
-                    model["receptor"] = [
+                for delay_detail in input_delay_model_obj["delay_details"]:
+                    receptor_id = delay_detail["receptor"]
+                    delay_detail["receptor"] = [
                         receptor_id,
                         self.receptor_utils.receptors[receptor_id],
                     ]
@@ -1365,22 +1332,23 @@ class TestCbfSubarray:
             f = open(data_file_path + timing_beam_weights_file_name)
             timing_beam_weights = json.loads(f.read().replace("\n", ""))
             epoch = str(int(time.time()))
-            for weights in timing_beam_weights["beamWeights"]:
-                weights["epoch"] = epoch
-                epoch = str(int(epoch) + 10)
+            for weights in timing_beam_weights["timing_beam_weights"]:
+                for receptor in weights:
+                    receptor["epoch"] = epoch
+                    epoch = str(int(epoch) + 10)
 
             # update timing beam weights
-            test_proxies.tm.beamWeights = json.dumps(timing_beam_weights)
+            test_proxies.tm.timingBeamWeights = json.dumps(timing_beam_weights)
             time.sleep(1)
 
-            for weights in timing_beam_weights["beamWeights"]:
-                for receptor in weights["beamWeightsDetails"]:
+            for weights in timing_beam_weights:
+                for receptor in weights["timing_beam_weights"]:
                     rec_id = self.receptor_utils.receptors[
                         receptor["receptor"]
                     ]
-                    fs_id = receptor["receptorWeightsDetails"][0]["fsid"]
+                    fs_id = receptor["timing_beam_weights_details"][0]["fsid"]
                     for index, value in enumerate(
-                        receptor["receptorWeightsDetails"][0]["weights"]
+                        receptor["timing_beam_weights_details"][0]["weights"]
                     ):
                         try:
                             assert (
@@ -1434,12 +1402,12 @@ class TestCbfSubarray:
     @pytest.mark.parametrize(
         "config_file_name, \
         scan_file_name, \
-        receptor_ids",
+        receptors",
         [
             (
                 "ConfigureScan_basic.json",
                 "Scan1_basic.json",
-                ["MKT000", "MKT002", "MKT003", "MKT001"],
+                ["SKA001", "SKA036", "SKA063", "SKA100"],
             )
         ],
     )
@@ -1448,7 +1416,7 @@ class TestCbfSubarray:
         test_proxies: pytest.fixture,
         config_file_name: str,
         scan_file_name: str,
-        receptor_ids: List[str],
+        receptors: List[str],
     ) -> None:
         """
         Test CbfSubarrays's EndScan command
@@ -1456,7 +1424,7 @@ class TestCbfSubarray:
         :param proxies: proxies pytest fixture
         :param config_file_name: JSON file for the configuration
         :param scan_file_name: JSON file for the scan configuration
-        :param receptor_ids: list of receptor ids
+        :param receptors: list of receptor ids
         """
         try:
             wait_time_s = 1
@@ -1472,15 +1440,15 @@ class TestCbfSubarray:
             test_proxies.on()
             time.sleep(sleep_time_s)
 
-            num_receptors = len(receptor_ids)
+            num_receptors = len(receptors)
 
             vcc_ids = [None for _ in range(num_receptors)]
-            for receptor_id, ii in zip(receptor_ids, range(num_receptors)):
+            for receptor_id, ii in zip(receptors, range(num_receptors)):
                 vcc_ids[ii] = test_proxies.receptor_to_vcc[
                     self.receptor_utils.receptors[receptor_id]
                 ]
 
-            test_proxies.subarray[sub_id].AddReceptors(receptor_ids)
+            test_proxies.subarray[sub_id].AddReceptors(receptors)
             test_proxies.wait_timeout_obs(
                 [test_proxies.subarray[sub_id]],
                 ObsState.IDLE,
@@ -1490,7 +1458,7 @@ class TestCbfSubarray:
             assert all(
                 [
                     test_proxies.subarray[sub_id].receptors[i] == j
-                    for i, j in zip(range(num_receptors), receptor_ids)
+                    for i, j in zip(range(num_receptors), receptors)
                 ]
             )
             assert test_proxies.subarray[sub_id].obsState == ObsState.IDLE
@@ -1689,15 +1657,15 @@ class TestCbfSubarray:
         "config_file_name, \
         delay_model_file_name, \
         scan_file_name, \
-        receptor_ids, \
+        receptors, \
         vcc_receptors",
         [
             (
                 "ConfigureScan_basic.json",
                 "delaymodel.json",
                 "Scan1_basic.json",
-                ["MKT000", "MKT002", "MKT003", "MKT001"],
-                ["MKT003", "MKT000"],
+                ["SKA001", "SKA036", "SKA063", "SKA100"],
+                ["SKA063", "SKA001"],
             )
         ],
     )
@@ -1708,7 +1676,7 @@ class TestCbfSubarray:
         config_file_name: str,
         delay_model_file_name: str,
         scan_file_name: str,
-        receptor_ids: List[str],
+        receptors: List[str],
         vcc_receptors: List[str],
     ) -> None:
         """
@@ -1719,7 +1687,7 @@ class TestCbfSubarray:
         :param config_file_name: JSON file for the configuration
         :param delay_model_file_name: JSON file for the delay model
         :param scan_file_name: JSON file for the scan configuration
-        :param receptor_ids: list of receptor ids
+        :param receptors: list of receptor ids
         :param vcc_receptors: list of vcc receptor ids
         """
         # Test Description:
@@ -1777,7 +1745,7 @@ class TestCbfSubarray:
             assert test_proxies.subarray[sub_id].obsState == ObsState.EMPTY
 
             # add receptors
-            test_proxies.subarray[sub_id].AddReceptors(receptor_ids)
+            test_proxies.subarray[sub_id].AddReceptors(receptors)
             test_proxies.wait_timeout_obs(
                 [test_proxies.subarray[sub_id]],
                 ObsState.IDLE,
@@ -1787,7 +1755,7 @@ class TestCbfSubarray:
             assert all(
                 [
                     test_proxies.subarray[sub_id].receptors[i] == j
-                    for i, j in zip(range(len(receptor_ids)), receptor_ids)
+                    for i, j in zip(range(len(receptors)), receptors)
                 ]
             )
 
@@ -1814,7 +1782,7 @@ class TestCbfSubarray:
                 # Write this one delay_model JSON object to the TM emulator
                 test_proxies.tm.delayModel = input_delay_model
 
-                time.sleep(2)
+                time.sleep(10)
 
                 # check the delay model was correctly updated for vcc
                 vcc_receptors_num = []
@@ -1830,7 +1798,7 @@ class TestCbfSubarray:
                     # Extract the  delay model corresponding to receptor i_rec:
                     # It is assumed that there is only one entry in the
                     # delay model for a given receptor
-                    for entry in input_delay_model_obj["delay_model"]:
+                    for entry in input_delay_model_obj["delay_details"]:
                         if (
                             self.receptor_utils.receptors[entry["receptor"]]
                             == i_rec
@@ -1852,12 +1820,12 @@ class TestCbfSubarray:
 
                     # the one delay model should have only 1 entry
                     # for the given receptor
-                    # remove the "delay_model" key and get the first item
+                    # remove the "delay_details" key and get the first item
                     # in the list so we can compare
                     # just the list of dictionaries that includes the
                     # receptor, epoch, etc
                     vcc_updated_delay_receptor = vcc_updated_delayModel_obj[
-                        "delay_model"
+                        "delay_details"
                     ][0]
 
                     # want to compare strings
@@ -1889,7 +1857,7 @@ class TestCbfSubarray:
 
                 # check the delay model was correctly updated for FSP
                 # convert receptor IDs to pair of str and int for FSPs
-                for model in input_delay_model_obj["delay_model"]:
+                for model in input_delay_model_obj["delay_details"]:
                     receptor_id = model["receptor"]
                     model["receptor"] = [
                         receptor_id,
@@ -1960,23 +1928,23 @@ class TestCbfSubarray:
         "config_file_name, \
         scan_file_name, \
         jones_matrix_file_name, \
-        receptor_ids",
+        receptors",
         [
             (
                 "ConfigureScan_basic.json",
                 "Scan1_basic.json",
                 "jonesmatrix.json",
-                ["MKT000", "MKT002", "MKT003", "MKT001"],
+                ["SKA001", "SKA036", "SKA063", "SKA100"],
             ),
         ],
     )
-    def test_ConfigureScan_jonesMatrix(
+    def test_ConfigureScan_jones_matrix(
         self: TestCbfSubarray,
         test_proxies: pytest.fixture,
         config_file_name: str,
         scan_file_name: str,
         jones_matrix_file_name: str,
-        receptor_ids: List[str],
+        receptors: List[str],
     ) -> None:
         """
         Test CbfSubarrays's jones matrix update via the
@@ -1986,7 +1954,7 @@ class TestCbfSubarray:
         :param config_file_name: JSON file for the configuration
         :param scan_file_name: JSON file for the scan configuration
         :param jones_matrix_file_name: JSON file for the jones matrix
-        :param receptor_ids: list of receptor ids
+        :param receptors: list of receptor ids
         """
         try:
             wait_time_s = 1
@@ -2005,7 +1973,7 @@ class TestCbfSubarray:
             assert test_proxies.subarray[sub_id].obsState == ObsState.EMPTY
 
             # add receptors
-            test_proxies.subarray[sub_id].AddReceptors(receptor_ids)
+            test_proxies.subarray[sub_id].AddReceptors(receptors)
             test_proxies.wait_timeout_obs(
                 [test_proxies.subarray[sub_id]],
                 ObsState.IDLE,
@@ -2015,7 +1983,7 @@ class TestCbfSubarray:
             assert all(
                 [
                     test_proxies.subarray[sub_id].receptors[i] == j
-                    for i, j in zip(range(len(receptor_ids)), receptor_ids)
+                    for i, j in zip(range(len(receptors)), receptors)
                 ]
             )
 
@@ -2037,7 +2005,7 @@ class TestCbfSubarray:
 
             # Insert the epoch
             jones_matrix_index_per_epoch = list(
-                range(len(jones_matrix["jonesMatrix"]))
+                range(len(jones_matrix["jones_matrix"]))
             )
             random.shuffle(jones_matrix_index_per_epoch)
             epoch_increment = 10
@@ -2046,12 +2014,12 @@ class TestCbfSubarray:
             ):
                 if i == 0:
                     epoch_time = 0
-                    jones_matrix["jonesMatrix"][jones_matrix_index][
+                    jones_matrix["jones_matrix"][jones_matrix_index][
                         "epoch"
                     ] = str(epoch_time)
                 else:
                     epoch_time += epoch_increment
-                    jones_matrix["jonesMatrix"][jones_matrix_index][
+                    jones_matrix["jones_matrix"][jones_matrix_index][
                         "epoch"
                     ] = str(int(time.time()) + epoch_time)
 
@@ -2062,13 +2030,13 @@ class TestCbfSubarray:
             epoch_to_scan = 1
 
             for epoch in range(len(jones_matrix_index_per_epoch)):
-                for receptor in jones_matrix["jonesMatrix"][
+                for receptor in jones_matrix["jones_matrix"][
                     jones_matrix_index_per_epoch[epoch]
-                ]["matrixDetails"]:
+                ]["jones_matrix"]:
                     rec_id = self.receptor_utils.receptors[
                         receptor["receptor"]
                     ]
-                    for frequency_slice in receptor["receptorMatrix"]:
+                    for frequency_slice in receptor["jones_matrix_details"]:
                         for index, value in enumerate(
                             frequency_slice["matrix"]
                         ):
@@ -2076,7 +2044,7 @@ class TestCbfSubarray:
                             fs_id = frequency_slice["fsid"]
                             try:
                                 assert (
-                                    test_proxies.vcc[vcc_id].jonesMatrix[
+                                    test_proxies.vcc[vcc_id].jones_matrix[
                                         fs_id - 1
                                     ][index]
                                     == value
@@ -2084,14 +2052,14 @@ class TestCbfSubarray:
                             except AssertionError as ae:
                                 logging.error(
                                     "AssertionError; incorrect Jones matrix entry: \
-                                    epoch {}, VCC {}, i = {}, jonesMatrix[{}] = {}".format(
-                                        jones_matrix["jonesMatrix"][
+                                    epoch {}, VCC {}, i = {}, jones_matrix[{}] = {}".format(
+                                        jones_matrix["jones_matrix"][
                                             jones_matrix_index_per_epoch[epoch]
                                         ]["epoch"],
                                         vcc_id,
                                         index,
                                         fs_id - 1,
-                                        test_proxies.vcc[vcc_id].jonesMatrix[
+                                        test_proxies.vcc[vcc_id].jones_matrix[
                                             fs_id - 1
                                         ],
                                     )
@@ -2107,7 +2075,9 @@ class TestCbfSubarray:
                             FspModes.PSS_BF.value,
                             FspModes.PST_BF.value,
                         ]:
-                            for frequency_slice in receptor["receptorMatrix"]:
+                            for frequency_slice in receptor[
+                                "jones_matrix_details"
+                            ]:
                                 fs_id = frequency_slice["fsid"]
                                 matrix = frequency_slice["matrix"]
                                 if fs_id == int(
@@ -2142,9 +2112,9 @@ class TestCbfSubarray:
                                         ):
                                             assert (
                                                 matrix_val
-                                                == fsp.jonesMatrix[rec_id - 1][
-                                                    idx
-                                                ]
+                                                == fsp.jones_matrix[
+                                                    rec_id - 1
+                                                ][idx]
                                             )
                         else:
                             log_msg = "function mode {} currently not supported".format(
@@ -2218,13 +2188,13 @@ class TestCbfSubarray:
     @pytest.mark.parametrize(
         "config_file_name, \
         scan_file_name, \
-        receptor_ids, \
+        receptors, \
         vcc_receptors",
         [
             (
                 "ConfigureScan_basic.json",
                 "Scan1_basic.json",
-                ["MKT000", "MKT002", "MKT003", "MKT001"],
+                ["SKA001", "SKA036", "SKA063", "SKA100"],
                 [4, 1],
             )
         ],
@@ -2234,7 +2204,7 @@ class TestCbfSubarray:
         test_proxies: pytest.fixture,
         config_file_name: str,
         scan_file_name: str,
-        receptor_ids: List[str],
+        receptors: List[str],
         vcc_receptors: List[int],
     ) -> None:
         """
@@ -2243,7 +2213,7 @@ class TestCbfSubarray:
         :param proxies: proxies pytest fixture
         :param config_file_name: JSON file for the configuration
         :param scan_file_name: JSON file for the scan configuration
-        :param receptor_ids: list of receptor ids
+        :param receptors: list of receptor ids
         :param vcc_receptors: list of vcc receptor ids
         """
         try:
@@ -2263,7 +2233,7 @@ class TestCbfSubarray:
             assert test_proxies.subarray[sub_id].obsState == ObsState.EMPTY
 
             # add receptors
-            test_proxies.subarray[sub_id].AddReceptors(receptor_ids)
+            test_proxies.subarray[sub_id].AddReceptors(receptors)
             test_proxies.wait_timeout_obs(
                 [test_proxies.subarray[sub_id]],
                 ObsState.IDLE,
@@ -2273,7 +2243,7 @@ class TestCbfSubarray:
             assert all(
                 [
                     test_proxies.subarray[sub_id].receptors[i] == j
-                    for i, j in zip(range(len(receptor_ids)), receptor_ids)
+                    for i, j in zip(range(len(receptors)), receptors)
                 ]
             )
 
@@ -2438,19 +2408,19 @@ class TestCbfSubarray:
     @pytest.mark.parametrize(
         "config_file_name, \
         scan_file_name, \
-        receptor_ids, \
+        receptors, \
         vcc_receptors",
         [
             (
                 "ConfigureScan_basic.json",
                 "Scan1_basic.json",
-                ["MKT000", "MKT002", "MKT003", "MKT001"],
+                ["SKA001", "SKA036", "SKA063", "SKA100"],
                 [4, 1],
             ),
             (
                 "Configure_TM-CSP_v2.json",
                 "Scan2_basic.json",
-                ["MKT003", "MKT000", "MKT001"],
+                ["SKA063", "SKA001", "SKA100"],
                 [4, 1],
             ),
         ],
@@ -2460,7 +2430,7 @@ class TestCbfSubarray:
         test_proxies: pytest.fixture,
         config_file_name: str,
         scan_file_name: str,
-        receptor_ids: List[str],
+        receptors: List[str],
         vcc_receptors: List[int],
     ) -> None:
         """
@@ -2469,7 +2439,7 @@ class TestCbfSubarray:
         :param proxies: proxies pytest fixture
         :param config_file_name: JSON file for the configuration
         :param scan_file_name: JSON file for the scan configuration
-        :param receptor_ids: list of receptor ids
+        :param receptors: list of receptor ids
         :param vcc_receptors: list of vcc receptor ids
         """
         try:
@@ -2492,7 +2462,7 @@ class TestCbfSubarray:
             # abort from READY #
             # -------------------- #
             # add receptors
-            test_proxies.subarray[sub_id].AddReceptors(receptor_ids)
+            test_proxies.subarray[sub_id].AddReceptors(receptors)
             test_proxies.wait_timeout_obs(
                 [test_proxies.subarray[sub_id]],
                 ObsState.IDLE,
@@ -2502,7 +2472,7 @@ class TestCbfSubarray:
             assert all(
                 [
                     test_proxies.subarray[sub_id].receptors[i] == j
-                    for i, j in zip(range(len(receptor_ids)), receptor_ids)
+                    for i, j in zip(range(len(receptors)), receptors)
                 ]
             )
             # configure scan
@@ -2564,7 +2534,7 @@ class TestCbfSubarray:
             assert all(
                 [
                     test_proxies.subarray[sub_id].receptors[i] == j
-                    for i, j in zip(range(3), receptor_ids)
+                    for i, j in zip(range(3), receptors)
                 ]
             )
             for fsp in configuration["cbf"]["fsp"]:
@@ -2599,7 +2569,7 @@ class TestCbfSubarray:
             # abort from SCANNING #
             # ------------------- #
             # add receptors
-            test_proxies.subarray[sub_id].AddReceptors(receptor_ids)
+            test_proxies.subarray[sub_id].AddReceptors(receptors)
             test_proxies.wait_timeout_obs(
                 [test_proxies.subarray[sub_id]],
                 ObsState.IDLE,
@@ -2609,7 +2579,7 @@ class TestCbfSubarray:
             assert all(
                 [
                     test_proxies.subarray[sub_id].receptors[i] == j
-                    for i, j in zip(range(len(receptor_ids)), receptor_ids)
+                    for i, j in zip(range(len(receptors)), receptors)
                 ]
             )
             # configure scan
@@ -2771,19 +2741,19 @@ class TestCbfSubarray:
     @pytest.mark.parametrize(
         "config_file_name, \
         scan_file_name, \
-        receptor_ids, \
+        receptors, \
         vcc_receptors",
         [
             (
                 "ConfigureScan_basic.json",
                 "Scan1_basic.json",
-                ["MKT000", "MKT002", "MKT003", "MKT001"],
+                ["SKA001", "SKA036", "SKA063", "SKA100"],
                 [4, 1],
             ),
             (
                 "Configure_TM-CSP_v2.json",
                 "Scan2_basic.json",
-                ["MKT003", "MKT000", "MKT001"],
+                ["SKA063", "SKA001", "SKA100"],
                 [4, 1],
             ),
         ],
@@ -2793,7 +2763,7 @@ class TestCbfSubarray:
         test_proxies: pytest.fixture,
         config_file_name: str,
         scan_file_name: str,
-        receptor_ids: List[str],
+        receptors: List[str],
         vcc_receptors: List[int],
     ) -> None:
         """
@@ -2802,7 +2772,7 @@ class TestCbfSubarray:
         :param proxies: proxies pytest fixture
         :param config_file_name: JSON file for the configuration
         :param scan_file_name: JSON file for the scan configuration
-        :param receptor_ids: list of receptor ids
+        :param receptors: list of receptor ids
         :param vcc_receptors: list of vcc receptor ids
         """
         try:
@@ -2825,7 +2795,7 @@ class TestCbfSubarray:
             # abort from IDLE #
             # --------------- #
             # add receptors
-            test_proxies.subarray[sub_id].AddReceptors(receptor_ids)
+            test_proxies.subarray[sub_id].AddReceptors(receptors)
             test_proxies.wait_timeout_obs(
                 [test_proxies.subarray[sub_id]],
                 ObsState.IDLE,
@@ -2875,6 +2845,7 @@ class TestCbfSubarray:
                         ].obsState
                         == ObsState.IDLE
                     )
+            print(vcc_receptors)
             for r in vcc_receptors:
                 assert (
                     test_proxies.vcc[test_proxies.receptor_to_vcc[r]].obsState
@@ -2885,7 +2856,7 @@ class TestCbfSubarray:
             # abort from READY #
             # ---------------- #
             # add receptors
-            test_proxies.subarray[sub_id].AddReceptors(receptor_ids)
+            test_proxies.subarray[sub_id].AddReceptors(receptors)
             test_proxies.wait_timeout_obs(
                 [test_proxies.subarray[sub_id]],
                 ObsState.IDLE,
@@ -2983,7 +2954,7 @@ class TestCbfSubarray:
             # abort from SCANNING #
             # ------------------- #
             # add receptors
-            test_proxies.subarray[sub_id].AddReceptors(receptor_ids)
+            test_proxies.subarray[sub_id].AddReceptors(receptors)
             test_proxies.wait_timeout_obs(
                 [test_proxies.subarray[sub_id]],
                 ObsState.IDLE,

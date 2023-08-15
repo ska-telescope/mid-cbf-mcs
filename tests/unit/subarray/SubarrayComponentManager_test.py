@@ -52,116 +52,116 @@ class TestCbfSubarrayComponentManager:
         assert subarray_component_manager.connected
 
     @pytest.mark.parametrize(
-        "receptor_ids",
+        "receptors",
         [
-            (["MKT000", "MKT002", "MKT003", "MKT001"]),
-            (["MKT003", "MKT000", "MKT001"]),
+            (["SKA001", "SKA036", "SKA063", "SKA100"]),
+            (["SKA063", "SKA001", "SKA100"]),
         ],
     )
     def test_add_remove_receptors_valid(
         self: TestCbfSubarrayComponentManager,
         subarray_component_manager: CbfSubarrayComponentManager,
         tango_harness: TangoHarness,
-        receptor_ids: List[str],
+        receptors: List[str],
     ) -> None:
         """
         Test adding and removing valid receptors.
 
         :param subarray_component_manager: subarray component manager under test.
-        :param receptor_ids: receptor IDs to use in test.
+        :param receptors: receptor IDs to use in test.
         """
         subarray_component_manager.start_communicating()
 
-        subarray_component_manager.add_receptors(receptor_ids)
+        subarray_component_manager.add_receptors(receptors)
 
         assert [
             subarray_component_manager.receptors[i]
-            for i in range(len(receptor_ids))
-        ] == receptor_ids
+            for i in range(len(receptors))
+        ] == receptors
 
-        subarray_component_manager.remove_receptors(receptor_ids)
+        subarray_component_manager.remove_receptors(receptors)
 
         assert subarray_component_manager.receptors == []
 
     @pytest.mark.parametrize(
-        "receptor_ids",
-        [(["MKT000", "MKT002", "MKT003"]), (["MKT003", "MKT001"])],
+        "receptors",
+        [(["SKA001", "SKA036", "SKA063"]), (["SKA063", "SKA100"])],
     )
     def test_add_receptor_invalid(
         self: TestCbfSubarrayComponentManager,
         subarray_component_manager: CbfSubarrayComponentManager,
         tango_harness: TangoHarness,
-        receptor_ids: List[str],
+        receptors: List[str],
     ) -> None:
         """
         Test adding invalid receptor cases.
 
         :param subarray_component_manager: subarray component manager under test.
-        :param receptor_ids: receptor IDs to use in test.
+        :param receptors: receptor IDs to use in test.
         """
         subarray_component_manager.start_communicating()
 
         # assign VCCs to a different subarray, then attempt assignment
-        for receptor in receptor_ids[:-1]:
+        for receptor in receptors[:-1]:
             vcc_id = subarray_component_manager._receptor_to_vcc[receptor]
             vcc_proxy = subarray_component_manager._proxies_vcc[vcc_id - 1]
             vcc_proxy.subarrayMembership = (
                 subarray_component_manager.subarray_id + 1
             )
 
-        subarray_component_manager.add_receptors(receptor_ids[:-1])
+        subarray_component_manager.add_receptors(receptors[:-1])
 
         assert subarray_component_manager.receptors == []
 
-        vcc_id = subarray_component_manager._receptor_to_vcc[receptor_ids[-1]]
+        vcc_id = subarray_component_manager._receptor_to_vcc[receptors[-1]]
         vcc_proxy = subarray_component_manager._proxies_vcc[vcc_id - 1]
         vcc_proxy.subarrayMembership = subarray_component_manager.subarray_id
 
         # try adding same receptor twice
-        subarray_component_manager.add_receptors([receptor_ids[-1]])
-        subarray_component_manager.add_receptors([receptor_ids[-1]])
-        assert subarray_component_manager.receptors == [receptor_ids[-1]]
+        subarray_component_manager.add_receptors([receptors[-1]])
+        subarray_component_manager.add_receptors([receptors[-1]])
+        assert subarray_component_manager.receptors == [receptors[-1]]
 
     @pytest.mark.parametrize(
-        "receptor_ids",
-        [(["MKT000", "MKT002", "MKT003"]), (["MKT003", "MKT001"])],
+        "receptors",
+        [(["SKA001", "SKA036", "SKA063"]), (["SKA063", "SKA100"])],
     )
     def test_remove_receptor_invalid(
         self: TestCbfSubarrayComponentManager,
         subarray_component_manager: CbfSubarrayComponentManager,
         tango_harness: TangoHarness,
-        receptor_ids: List[str],
+        receptors: List[str],
     ) -> None:
         """
         Test removing invalid receptor cases.
 
         :param subarray_component_manager: subarray component manager under test.
-        :param receptor_ids: receptor IDs to use in test.
+        :param receptors: receptor IDs to use in test.
         """
         subarray_component_manager.start_communicating()
 
         # try removing receptors before assignment
         assert subarray_component_manager.receptors == []
-        subarray_component_manager.remove_receptors(receptor_ids)
+        subarray_component_manager.remove_receptors(receptors)
         assert subarray_component_manager.receptors == []
 
         # try removing unassigned receptor
-        subarray_component_manager.add_receptors(receptor_ids[:-1])
-        subarray_component_manager.remove_receptors([receptor_ids[-1]])
-        assert subarray_component_manager.receptors == receptor_ids[:-1]
+        subarray_component_manager.add_receptors(receptors[:-1])
+        subarray_component_manager.remove_receptors([receptors[-1]])
+        assert subarray_component_manager.receptors == receptors[:-1]
 
     @pytest.mark.parametrize(
-        "receptor_ids",
+        "receptors",
         [
-            (["MKT000", "MKT002", "MKT003", "MKT001"]),
-            (["MKT003", "MKT000", "MKT001"]),
+            (["SKA001", "SKA036", "SKA063", "SKA100"]),
+            (["SKA063", "SKA001", "SKA100"]),
         ],
     )
     def test_remove_all_receptors_invalid_valid(
         self: TestCbfSubarrayComponentManager,
         subarray_component_manager: CbfSubarrayComponentManager,
         tango_harness: TangoHarness,
-        receptor_ids: List[str],
+        receptors: List[str],
     ) -> None:
         """
         Test valid use of remove_all_receptors command.
@@ -177,18 +177,18 @@ class TestCbfSubarrayComponentManager:
         assert result[0] == ResultCode.FAILED
 
         # remove all receptors
-        subarray_component_manager.add_receptors(receptor_ids)
+        subarray_component_manager.add_receptors(receptors)
         result = subarray_component_manager.remove_all_receptors()
         assert result[0] == ResultCode.OK
         assert subarray_component_manager.receptors == []
 
     @pytest.mark.parametrize(
         "config_file_name, \
-        receptor_ids",
+        receptors",
         [
             (
                 "ConfigureScan_basic.json",
-                ["MKT000", "MKT002", "MKT003", "MKT001"],
+                ["SKA001", "SKA036", "SKA063", "SKA100"],
             )
         ],
     )
@@ -197,14 +197,14 @@ class TestCbfSubarrayComponentManager:
         subarray_component_manager: CbfSubarrayComponentManager,
         tango_harness: TangoHarness,
         config_file_name: str,
-        receptor_ids: List[str],
+        receptors: List[str],
     ) -> None:
         """
         Test scan parameter validation and configuration.
 
         :param subarray_component_manager: subarray component manager under test.
         :param config_file_name: scan configuration file name.
-        :param receptor_ids: receptor IDs to use in test.
+        :param receptors: receptor IDs to use in test.
         """
         subarray_component_manager.start_communicating()
 
@@ -213,7 +213,7 @@ class TestCbfSubarrayComponentManager:
         f.close()
         config_json = json.loads(config_string)
 
-        subarray_component_manager.add_receptors(receptor_ids)
+        subarray_component_manager.add_receptors(receptors)
         subarray_component_manager.frequency_offset_k = [11] * 197
 
         result = subarray_component_manager.validate_input(config_string)
@@ -235,12 +235,12 @@ class TestCbfSubarrayComponentManager:
     @pytest.mark.parametrize(
         "config_file_name, \
         scan_file_name, \
-        receptor_ids",
+        receptors",
         [
             (
                 "ConfigureScan_basic.json",
                 "Scan1_basic.json",
-                ["MKT000", "MKT002", "MKT003", "MKT001"],
+                ["SKA001", "SKA036", "SKA063", "SKA100"],
             )
         ],
     )
@@ -250,7 +250,7 @@ class TestCbfSubarrayComponentManager:
         tango_harness: TangoHarness,
         config_file_name: str,
         scan_file_name: str,
-        receptor_ids: List[str],
+        receptors: List[str],
     ) -> None:
         """
         Test scan operation.
@@ -258,13 +258,13 @@ class TestCbfSubarrayComponentManager:
         :param subarray_component_manager: subarray component manager under test.
         :param config_file_name: scan configuration file name.
         :param scan_file_name: scan file name.
-        :param receptor_ids: receptor IDs to use in test.
+        :param receptors: receptor IDs to use in test.
         """
         self.test_validate_and_configure_scan(
             subarray_component_manager,
             tango_harness,
             config_file_name,
-            receptor_ids,
+            receptors,
         )
 
         # start scan
@@ -286,14 +286,14 @@ class TestCbfSubarrayComponentManager:
         [
             (
                 "1",
-                "MKT001",
+                "SKA100",
                 [0] * 197,
                 1,
                 3960,
             ),
             (
                 "3",
-                "MKT001",
+                "SKA100",
                 [11] * 197,
                 0.8,
                 3168,
@@ -329,7 +329,7 @@ class TestCbfSubarrayComponentManager:
             freq_offset_delta_f
         )
         output_fs_sample_rate = (
-            subarray_component_manager.calculate_fs_sample_rate(
+            subarray_component_manager._calculate_fs_sample_rate(
                 freq_band, receptor_id
             )
         )

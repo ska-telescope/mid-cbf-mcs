@@ -2,7 +2,7 @@ name: talondxlogconsumer
 function: talon-dx-log-consumer
 domain: mid-csp-cbf
 command: "TalonDxLogConsumer"
-instances: ["talondxlogconsumer-001"]
+instances: ["001"]
 depends_on:
   - device: mid_csp_cbf/sub_elt/controller
 readinessProbe:
@@ -20,11 +20,11 @@ livenessProbe:
 server:
   name: "TalonDxLogConsumer"
   instances:
-  - name: "talondxlogconsumer-001"
+  - name: "001"
     classes:
     - name: "TalonDxLogConsumer"
       devices:
-      - name: "mid_csp_cbf/talondx_log_consumer/talondxlogconsumer-001"
+      - name: "mid_csp_cbf/talondx_log_consumer/001"
         properties:
           - name: "LoggingLevelDefault"
             values:
