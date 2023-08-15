@@ -73,9 +73,26 @@ server:
             - "mid_csp_cbf/talon_lru/002"
             - "mid_csp_cbf/talon_lru/003"
             - "mid_csp_cbf/talon_lru/004"
+          - name: "TalonBoard"
+            values:
+            - "mid_csp_cbf/talon_board/001"
+            - "mid_csp_cbf/talon_board/002"
+            - "mid_csp_cbf/talon_board/003"
+            - "mid_csp_cbf/talon_board/004"
+            - "mid_csp_cbf/talon_board/005"
+            - "mid_csp_cbf/talon_board/006"
+            - "mid_csp_cbf/talon_board/007"
+            - "mid_csp_cbf/talon_board/008"
+          - name: "PowerSwitch"
+            values:
+            - "mid_csp_cbf/power_switch/001"
+            - "mid_csp_cbf/power_switch/002"
           - name: "TalonDxConfigPath"
             values:
             - "mnt/talondx-config"
+          - name: "HWConfigPath"
+            values:
+            - "mnt/hw_config"
           - name: "polled_attr"
             values:
             - "commandprogress"

@@ -24,7 +24,7 @@ server:
     classes:
     - name: "TalonBoard"
       devices:
-      - name: "mid_csp_cbf/talon_board/talon-001"
+      - name: "mid_csp_cbf/talon_board/001"
         properties:
           - name: "TalonDxBoardAddress"
             values:
@@ -68,7 +68,7 @@ server:
     classes:
     - name: "TalonBoard"
       devices:
-      - name: "mid_csp_cbf/talon_board/talon-002"
+      - name: "mid_csp_cbf/talon_board/002"
         properties:
           - name: "TalonDxBoardAddress"
             values:
@@ -112,7 +112,7 @@ server:
     classes:
     - name: "TalonBoard"
       devices:
-      - name: "mid_csp_cbf/talon_board/talon-003"
+      - name: "mid_csp_cbf/talon_board/003"
         properties:
           - name: "TalonDxBoardAddress"
             values:
@@ -156,7 +156,7 @@ server:
     classes:
     - name: "TalonBoard"
       devices:
-      - name: "mid_csp_cbf/talon_board/talon-004"
+      - name: "mid_csp_cbf/talon_board/004"
         properties:
           - name: "TalonDxBoardAddress"
             values:
@@ -200,7 +200,7 @@ server:
     classes:
     - name: "TalonBoard"
       devices:
-      - name: "mid_csp_cbf/talon_board/talon-005"
+      - name: "mid_csp_cbf/talon_board/005"
         properties:
           - name: "TalonDxBoardAddress"
             values:
@@ -244,7 +244,7 @@ server:
     classes:
     - name: "TalonBoard"
       devices:
-      - name: "mid_csp_cbf/talon_board/talon-006"
+      - name: "mid_csp_cbf/talon_board/006"
         properties:
           - name: "TalonDxBoardAddress"
             values:
@@ -288,7 +288,7 @@ server:
     classes:
     - name: "TalonBoard"
       devices:
-      - name: "mid_csp_cbf/talon_board/talon-007"
+      - name: "mid_csp_cbf/talon_board/007"
         properties:
           - name: "TalonDxBoardAddress"
             values:
@@ -332,7 +332,7 @@ server:
     classes:
     - name: "TalonBoard"
       devices:
-      - name: "mid_csp_cbf/talon_board/talon-008"
+      - name: "mid_csp_cbf/talon_board/008"
         properties:
           - name: "TalonDxBoardAddress"
             values:

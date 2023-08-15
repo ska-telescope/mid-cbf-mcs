@@ -24,15 +24,14 @@ from ska_mid_cbf_mcs.component.component_manager import (
     CbfComponentManager,
     CommunicationStatus,
 )
+from ska_mid_cbf_mcs.commons.global_enum import const
 from ska_mid_cbf_mcs.controller.talondx_component_manager import (
     TalonDxComponentManager,
 )
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_mid_cbf_mcs.group_proxy import CbfGroupProxy
 
-CONST_DEFAULT_COUNT_VCC = 197
-CONST_DEFAULT_COUNT_FSP = 27
-CONST_DEFAULT_COUNT_SUBARRAY = 16
+import yaml
 
 
 class ControllerComponentManager(CbfComponentManager):
@@ -45,8 +44,11 @@ class ControllerComponentManager(CbfComponentManager):
         vcc_fqdns_all: List[str],
         fsp_fqdns_all: List[str],
         talon_lru_fqdns_all: List[str],
+        talon_board_fqdns_all: List[str],
+        power_switch_fqdns_all: List[str],
         talondx_component_manager: TalonDxComponentManager,
         talondx_config_path: str,
+        hw_config_path: str,
         logger: logging.Logger,
         push_change_event: Optional[Callable],
         communication_status_changed_callback: Callable[
@@ -64,9 +66,13 @@ class ControllerComponentManager(CbfComponentManager):
         :param vcc_fqdns_all: FQDNS of all the Vcc devices
         :param fsp_fqdns_all: FQDNS of all the Fsp devices
         :param talon_lru_fqdns_all: FQDNS of all the Talon LRU devices
+        :param talon_board_fqdns_all: FQDNS of all the Talon board devices
+        :param power_switch_fqdns_all: FQDNS of all the power switch devices
         :talondx_component_manager: component manager for the Talon LRU
         :param talondx_config_path: path to the directory containing configuration
                                     files and artifacts for the Talon boards
+        :param hw_config_path: path to the directory containing the hardware
+                               configuration file
         :param logger: a logger for this object to use
         :param push_change_event: method to call when the base classes
             want to send an event
@@ -94,23 +100,26 @@ class ControllerComponentManager(CbfComponentManager):
         self._vcc_fqdns_all = vcc_fqdns_all
         self._fsp_fqdns_all = fsp_fqdns_all
         self._talon_lru_fqdns_all = talon_lru_fqdns_all
+        self._talon_board_fqdns_all = talon_board_fqdns_all
+        self._power_Switch_fqdns_all = power_switch_fqdns_all
 
         self._get_max_capabilities = get_num_capabilities
 
         self._vcc_to_receptor = {}
 
-        # TODO: component manager should not be passed into component manager
+        # TODO: component manager should not be passed into component manager ?
         self._talondx_component_manager = talondx_component_manager
 
         self._talondx_config_path = talondx_config_path
+        self._hw_config_path = hw_config_path
 
         self._max_capabilities = ""
 
         self._proxies = {}
 
         # Initialize attribute values
-        self.frequency_offset_k = [0] * CONST_DEFAULT_COUNT_VCC
-        self.frequency_offset_delta_f = [0] * CONST_DEFAULT_COUNT_VCC
+        self.frequency_offset_k = [0] * const.DEFAULT_COUNT_VCC
+        self.frequency_offset_delta_f = [0] * const.DEFAULT_COUNT_VCC
 
         super().__init__(
             logger=logger,
@@ -130,22 +139,25 @@ class ControllerComponentManager(CbfComponentManager):
 
         super().start_communicating()
 
+        with open(self._hw_config_path) as yaml_fd:
+            self._hw_config = yaml.safe_load(yaml_fd)
+
         self._max_capabilities = self._get_max_capabilities()
         if self._max_capabilities:
             try:
                 self._count_vcc = self._max_capabilities["VCC"]
             except KeyError:  # not found in DB
-                self._count_vcc = CONST_DEFAULT_COUNT_VCC
+                self._count_vcc = const.DEFAULT_COUNT_VCC
 
             try:
                 self._count_fsp = self._max_capabilities["FSP"]
             except KeyError:  # not found in DB
-                self._count_fsp = CONST_DEFAULT_COUNT_FSP
+                self._count_fsp = const.DEFAULT_COUNT_FSP
 
             try:
                 self._count_subarray = self._max_capabilities["Subarray"]
             except KeyError:  # not found in DB
-                self._count_subarray = CONST_DEFAULT_COUNT_SUBARRAY
+                self._count_subarray = const.DEFAULT_COUNT_SUBARRAY
         else:
             self._logger.warning(
                 "MaxCapabilities device property not defined - \
@@ -157,7 +169,9 @@ class ControllerComponentManager(CbfComponentManager):
         self._fqdn_subarray = list(self._subarray_fqdns_all)[
             : self._count_subarray
         ]
-        self._fqdn_talon_lru = list(self._talon_lru_fqdns_all)
+        self._fqdn_talon_lru = list(self._talon_lru_fqdns_all)[: len(self._hw_config["talon_LRU"])]
+        self._fqdn_talon_board = list(self._talon_board_fqdns_all)[: len(self._hw_config["talon_board"])]
+        self._fqdn_power_switch = list(self._power_Switch_fqdns_all)[: len(self._hw_config["power_switch"])]
 
         try:
             self._group_vcc = CbfGroupProxy("VCC", logger=self._logger)
@@ -198,7 +212,25 @@ class ControllerComponentManager(CbfComponentManager):
                     proxy = CbfDeviceProxy(fqdn=fqdn, logger=self._logger)
 
                     if fqdn in self._fqdn_talon_lru:
+                        lru_config = tango.DbData()
+                        lru_id = fqdn.split("/")[-1]
+                        for property, value in self._hw_config["talon_LRU"][int(lru_id) - 1][lru_id].items():
+                            lru_config.append(tango.DbDatum(property, value))
+                        proxy.put_property(lru_config)
                         proxy.set_timeout_millis(10000)
+                    
+                    elif fqdn in self._fqdn_talon_board:
+                        board_config = tango.DbData()
+                        board_id = fqdn.split("/")[-1]
+                        board_config.append(tango.DbDatum("TalonDxBoardAddress", self._hw_config["talon_ip"][board_id]))
+                        proxy.put_property(board_config)
+
+                    elif fqdn in self._fqdn_power_switch:
+                        switch_config = tango.DbData()
+                        switch_id = fqdn.split("/")[-1]
+                        for property, value in self._hw_config["power_switch"][int(switch_id) - 1][switch_id].items():
+                            switch_config.append(tango.DbDatum(property, value))
+                        proxy.put_property(switch_config)
 
                     self._proxies[fqdn] = proxy
                 except tango.DevFailed as df:

@@ -18,6 +18,7 @@ import time
 
 import backoff
 import tango
+import yaml
 from paramiko import AutoAddPolicy, SSHClient
 from paramiko.ssh_exception import NoValidConnectionsError, SSHException
 from scp import SCPClient, SCPException
@@ -38,6 +39,7 @@ class TalonDxComponentManager:
     def __init__(
         self: TalonDxComponentManager,
         talondx_config_path: str,
+        hw_config_path: str,
         simulation_mode: SimulationMode,
         logger: logging.Logger,
     ) -> None:
@@ -46,6 +48,8 @@ class TalonDxComponentManager:
 
         :param talondx_config_path: path to the directory containing configuration
                                     files and artifacts for the Talon boards
+        :param hw_config_path: path to the directory containing the hardware
+                               configuration file
         :param simulation_mode: simulation mode identifies if the real Talon boards or
                                 a simulator should be used; note that currently there
                                 is no simulator for the Talon boards, so the component
@@ -54,6 +58,7 @@ class TalonDxComponentManager:
         :param logger: a logger for this object to use
         """
         self.talondx_config_path = talondx_config_path
+        self._hw_config_path = hw_config_path
         self.simulation_mode = simulation_mode
         self.logger = logger
 
@@ -72,11 +77,14 @@ class TalonDxComponentManager:
 
         # Try to read in the configuration file
         try:
-            config_path = f"{self.talondx_config_path}/talondx-config.json"
-            with open(config_path) as json_fd:
+            talondx_config_path = f"{self.talondx_config_path}/talondx-config.json"
+            with open(talondx_config_path) as json_fd:
                 self.talondx_config = json.load(json_fd)
-        except IOError:
-            self.logger.error(f"Could not open {config_path} file")
+            hw_config_path = f"{self._hw_config_path}/hw_config.yaml"
+            with open(hw_config_path) as yaml_fd:
+                self._hw_config = yaml.safe_load(yaml_fd)
+        except IOError as e:
+            self.logger.error(e)
             return ResultCode.FAILED
 
         if self._setup_tango_host_file() == ResultCode.FAILED:
@@ -151,8 +159,8 @@ class TalonDxComponentManager:
         ret = ResultCode.OK
         for talon_cfg in self.talondx_config["config_commands"]:
             try:
-                ip = talon_cfg["ip_address"]
                 target = talon_cfg["target"]
+                ip = self._hw_config["talon_ip"][target]
                 # timeout for the first attempt at SSH connection
                 # to the Talon boards after boot-up
                 talon_first_connect_timeout = talon_cfg[
@@ -198,13 +206,19 @@ class TalonDxComponentManager:
                             )
                             ret = ResultCode.FAILED
 
-            except NoValidConnectionsError:
+            except NoValidConnectionsError as e:
+                self.logger.error(f"{e}")
                 self.logger.error(
                     f"NoValidConnectionsError while connecting to {target}"
                 )
                 ret = ResultCode.FAILED
-            except SSHException:
+            except SSHException as e:
+                self.logger.error(f"{e}")
                 self.logger.error(f"SSHException while talking to {target}")
+                ret = ResultCode.FAILED
+            except yaml.YAMLError as e:
+                self.logger.error(f"{e}")
+                self.logger.error(f"YAMLError with target {target}")
                 ret = ResultCode.FAILED
 
         return ret
@@ -222,8 +236,8 @@ class TalonDxComponentManager:
         ret = ResultCode.OK
         for talon_cfg in self.talondx_config["config_commands"]:
             try:
-                ip = talon_cfg["ip_address"]
                 target = talon_cfg["target"]
+                ip = self._hw_config["talon_ip"][target]
                 # timeout for the first attempt at SSH connection
                 # to the Talon boards after boot-up
                 talon_first_connect_timeout = talon_cfg[
@@ -347,6 +361,9 @@ class TalonDxComponentManager:
                     f"Failed to copy file {e.filename}, file does not exist"
                 )
                 ret = ResultCode.FAILED
+            except yaml.YAMLError as e:
+                self.logger.error(f"YAMLError with target {target}; {e}")
+                ret = ResultCode.FAILED
 
         return ret
 
@@ -359,7 +376,8 @@ class TalonDxComponentManager:
         """
         ret = ResultCode.OK
         for talon_cfg in self.talondx_config["config_commands"]:
-            ip = talon_cfg["ip_address"]
+            talon = talon_cfg["target"]
+            ip = self._hw_config["talon_ip"][talon]
             target = f"root@{ip}"
             inst = talon_cfg["server_instance"]
 
@@ -436,7 +454,7 @@ class TalonDxComponentManager:
                 try:
                     hps_master.ping()
                     break
-                except tango.DevFailed:
+                except tango.DevFailed: # TODO handle unstarted HPS master
                     time.sleep(5)
 
             self.logger.info(f"Sending configure command to {hps_master_fqdn}")

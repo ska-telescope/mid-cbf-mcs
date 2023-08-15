@@ -29,10 +29,10 @@ server:
         properties:
           - name: "TalonDxBoard1Address"
             values:
-            - "mid_csp_cbf/talon_board/talon-001"
+            - "mid_csp_cbf/talon_board/001"
           - name: "TalonDxBoard2Address"
             values:
-            - "mid_csp_cbf/talon_board/talon-002"
+            - "mid_csp_cbf/talon_board/002"
           - name: "PDU1Address"
             values:
             - "mid_csp_cbf/power_switch/001"
@@ -61,10 +61,10 @@ server:
         properties:
           - name: "TalonDxBoard1Address"
             values:
-            - "mid_csp_cbf/talon_board/talon-003"
+            - "mid_csp_cbf/talon_board/003"
           - name: "TalonDxBoard2Address"
             values:
-            - "mid_csp_cbf/talon_board/talon-004"
+            - "mid_csp_cbf/talon_board/004"
           - name: "PDU1Address"
             values:
             - "mid_csp_cbf/power_switch/001"
@@ -93,10 +93,10 @@ server:
         properties:
           - name: "TalonDxBoard1Address"
             values:
-            - "mid_csp_cbf/talon_board/talon-005"
+            - "mid_csp_cbf/talon_board/005"
           - name: "TalonDxBoard2Address"
             values:
-            - "mid_csp_cbf/talon_board/talon-006"
+            - "mid_csp_cbf/talon_board/006"
           - name: "PDU1Address"
             values:
             - "mid_csp_cbf/power_switch/001"
@@ -125,10 +125,10 @@ server:
         properties:
           - name: "TalonDxBoard1Address"
             values:
-            - "mid_csp_cbf/talon_board/talon-007"
+            - "mid_csp_cbf/talon_board/007"
           - name: "TalonDxBoard2Address"
             values:
-            - "mid_csp_cbf/talon_board/talon-008"
+            - "mid_csp_cbf/talon_board/008"
           - name: "PDU1Address"
             values:
             - "mid_csp_cbf/power_switch/001"
