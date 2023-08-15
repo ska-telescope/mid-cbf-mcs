@@ -77,7 +77,9 @@ class TalonDxComponentManager:
 
         # Try to read in the configuration file
         try:
-            talondx_config_path = f"{self.talondx_config_path}/talondx-config.json"
+            talondx_config_path = (
+                f"{self.talondx_config_path}/talondx-config.json"
+            )
             with open(talondx_config_path) as json_fd:
                 self.talondx_config = json.load(json_fd)
             hw_config_path = f"{self._hw_config_path}/hw_config.yaml"
@@ -454,7 +456,7 @@ class TalonDxComponentManager:
                 try:
                     hps_master.ping()
                     break
-                except tango.DevFailed: # TODO handle unstarted HPS master
+                except tango.DevFailed:  # TODO handle unstarted HPS master
                     time.sleep(5)
 
             self.logger.info(f"Sending configure command to {hps_master_fqdn}")

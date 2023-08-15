@@ -17,21 +17,20 @@ import os
 from typing import Callable, Dict, List, Optional, Tuple
 
 import tango
+import yaml
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import AdminMode, PowerMode, SimulationMode
 
+from ska_mid_cbf_mcs.commons.global_enum import const
 from ska_mid_cbf_mcs.component.component_manager import (
     CbfComponentManager,
     CommunicationStatus,
 )
-from ska_mid_cbf_mcs.commons.global_enum import const
 from ska_mid_cbf_mcs.controller.talondx_component_manager import (
     TalonDxComponentManager,
 )
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_mid_cbf_mcs.group_proxy import CbfGroupProxy
-
-import yaml
 
 
 class ControllerComponentManager(CbfComponentManager):
@@ -169,9 +168,15 @@ class ControllerComponentManager(CbfComponentManager):
         self._fqdn_subarray = list(self._subarray_fqdns_all)[
             : self._count_subarray
         ]
-        self._fqdn_talon_lru = list(self._talon_lru_fqdns_all)[: len(self._hw_config["talon_LRU"])]
-        self._fqdn_talon_board = list(self._talon_board_fqdns_all)[: len(self._hw_config["talon_board"])]
-        self._fqdn_power_switch = list(self._power_Switch_fqdns_all)[: len(self._hw_config["power_switch"])]
+        self._fqdn_talon_lru = list(self._talon_lru_fqdns_all)[
+            : len(self._hw_config["talon_LRU"])
+        ]
+        self._fqdn_talon_board = list(self._talon_board_fqdns_all)[
+            : len(self._hw_config["talon_ip"])
+        ]
+        self._fqdn_power_switch = list(self._power_Switch_fqdns_all)[
+            : len(self._hw_config["power_switch"])
+        ]
 
         try:
             self._group_vcc = CbfGroupProxy("VCC", logger=self._logger)
@@ -214,22 +219,33 @@ class ControllerComponentManager(CbfComponentManager):
                     if fqdn in self._fqdn_talon_lru:
                         lru_config = tango.DbData()
                         lru_id = fqdn.split("/")[-1]
-                        for property, value in self._hw_config["talon_LRU"][int(lru_id) - 1][lru_id].items():
+                        for property, value in self._hw_config["talon_LRU"][
+                            int(lru_id) - 1
+                        ][lru_id].items():
                             lru_config.append(tango.DbDatum(property, value))
                         proxy.put_property(lru_config)
                         proxy.set_timeout_millis(10000)
-                    
+
                     elif fqdn in self._fqdn_talon_board:
                         board_config = tango.DbData()
                         board_id = fqdn.split("/")[-1]
-                        board_config.append(tango.DbDatum("TalonDxBoardAddress", self._hw_config["talon_ip"][board_id]))
+                        board_config.append(
+                            tango.DbDatum(
+                                "TalonDxBoardAddress",
+                                self._hw_config["talon_ip"][board_id],
+                            )
+                        )
                         proxy.put_property(board_config)
 
                     elif fqdn in self._fqdn_power_switch:
                         switch_config = tango.DbData()
                         switch_id = fqdn.split("/")[-1]
-                        for property, value in self._hw_config["power_switch"][int(switch_id) - 1][switch_id].items():
-                            switch_config.append(tango.DbDatum(property, value))
+                        for property, value in self._hw_config["power_switch"][
+                            int(switch_id) - 1
+                        ][switch_id].items():
+                            switch_config.append(
+                                tango.DbDatum(property, value)
+                            )
                         proxy.put_property(switch_config)
 
                     self._proxies[fqdn] = proxy
