@@ -591,8 +591,8 @@ class FspComponentManager(CbfComponentManager):
                 self._delay_model = copy.deepcopy(argin)
                 delay_model = json.loads(argin)
                 # only send integer receptorID to HPS
-                for model in delay_model["delay_model"]:
-                    model["receptor"] = model["receptor"][1]
+                for delay_detail in delay_model["delay_details"]:
+                    delay_detail["receptor"] = delay_detail["receptor"][1]
                 # TODO handle delay models in function modes other than CORR
                 self._proxy_hps_fsp_corr_controller.UpdateDelayModels(
                     json.dumps(delay_model)
