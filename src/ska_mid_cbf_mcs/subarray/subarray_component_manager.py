@@ -1616,12 +1616,12 @@ class CbfSubarrayComponentManager(
                     ]
                 # pass receptor IDs as pair of str and int to VCCs
                 if search_window["tdc_enable"]:
-                    for receptor_id in search_window["tdc_destination_address"]:
+                    for receptor_id in search_window[
+                        "tdc_destination_address"
+                    ]:
                         receptor_id = [
                             receptor_id,
-                            self._receptor_utils.receptors[
-                                receptor_id
-                            ],
+                            self._receptor_utils.receptors[receptor_id],
                         ]
                 # pass on configuration to VCC
                 data = tango.DeviceData()
