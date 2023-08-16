@@ -2079,14 +2079,15 @@ class CbfSubarrayComponentManager(
         scan_json = json.loads(argin)
 
         # Validate scan_json against the telescope model
-        scan_schema = get_csp_scan_schema(
-            version=scan_json["interface"], strict=True
-        )
-        try:
-            scan_schema.validate(scan_json)
-        except Exception as e:
-            msg = f"Scan validation against ska-telmodel schema failed with exception:\n {str(e)}"
-            return (False, msg)
+        # TODO: CIP-1732 uncomment the below section to validate the scan
+        # scan_schema = get_csp_scan_schema(
+        #     version=scan_json["interface"], strict=True
+        # )
+        # try:
+        #     scan_schema.validate(scan_json)
+        # except Exception as e:
+        #     msg = f"Scan validation against ska-telmodel schema failed with exception:\n {str(e)}"
+        #     return (False, msg)
 
         scan_id = scan_json["scan_id"]
         try:
