@@ -722,8 +722,8 @@ class CbfSubarray(CspSubElementSubarray):
             )
             try:
                 configure_scan_schema.validate(full_configuration)
-            except Exception:
-                msg = "Scan configuration validation against the telescope model failed. Aborting configuration."
+            except Exception as e:
+                msg = f"Scan configuration validation against the telescope model failed with exception:\n {str(e)}."
                 return (False, msg)
 
             # TODO: CIP-1606 see how much of the below validation is redundant now that telescope model is used to validate

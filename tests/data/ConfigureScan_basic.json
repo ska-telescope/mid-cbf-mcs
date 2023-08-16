@@ -1,6 +1,5 @@
 {
-    "interface": "https://schema.skao.int/ska-csp-configure/2.0",
-    "transaction_id": "txn-00001",
+    "interface": "https://schema.skao.int/ska-csp-configure/2.3",
     "subarray": {
         "subarray_name": "science period 23"
     },
@@ -14,9 +13,7 @@
         "frequency_band_offset_stream1": 0,
         "frequency_band_offset_stream2": 0,
         "doppler_phase_corr_subscription_point": "ska_mid/tm_leaf_node/csp_subarray_01/dopplerPhaseCorrection",
-        "jones_matrix_subscription_point": "ska_mid/tm_leaf_node/csp_subarray_01/jonesMatrix",
         "delay_model_subscription_point": "ska_mid/tm_leaf_node/csp_subarray_01/delayModel",
-        "timing_beam_weights_subscription_point": "ska_mid/tm_leaf_node/csp_subarray_01/timingBeamWeights",
         "rfi_flagging_mask": {},
         "search_window": [
             {
@@ -27,14 +24,8 @@
                 "tdc_period_before_epoch": 5,
                 "tdc_period_after_epoch": 25,
                 "tdc_destination_address": [
-                    {
-                        "receptor_id": "SKA063",
-                        "tdc_destination_address": ["foo", "bar", "8080"]
-                    },
-                    {
-                        "receptor_id": "SKA001",
-                        "tdc_destination_address": ["fizz", "buzz", "80"]
-                    }
+                    "SKA063",
+                    "SKA001"
                 ]
             },
             {
@@ -104,53 +95,17 @@
             {
                 "fsp_id": 3,
                 "function_mode": "PSS-BF",
-                "search_window_id": 2,
-                "search_beam": [
-                    {
-                        "search_beam_id": 300,
-                        "receptor_ids": ["SKA036"],
-                        "enable_output": true,
-                        "averaging_interval": 4,
-                        "search_beam_destination_address": "10.1.1.1"
-                    },
-                    {
-                        "search_beam_id": 400,
-                        "receptor_ids": ["SKA001"],
-                        "enable_output": true,
-                        "averaging_interval": 2,
-                        "search_beam_destination_address": "10.1.2.1"
-                    }
-                ]
+                "frequency_slice_id": 1,
+                "zoom_factor": 0,
+                "integration_factor": 1
             },
             {
                 "fsp_id": 2,
                 "function_mode": "PST-BF",
-                "timing_beam": [
-                    {
-                        "timing_beam_id": 10,
-                        "receptor_ids": ["SKA100"],
-                        "enable_output": true,
-                        "timing_beam_destination_address": "10.1.1.1"
-                    }
-                ]
+                "frequency_slice_id": 1,
+                "zoom_factor": 0,
+                "integration_factor": 1
             }
-        ],
-        "vlbi": {
-
-        }
-    },
-    "pss": {
-
-    },
-    "pst": {
-
-    },
-    "pointing": {
-        "target": {
-            "system": "ICRS",
-            "target_name": "Polaris Australis",
-            "ra": "21:08:47.92",
-            "dec": "-88:57:22.9"
-        }
+        ]
     }
 }

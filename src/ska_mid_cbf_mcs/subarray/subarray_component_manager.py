@@ -910,8 +910,7 @@ class CbfSubarrayComponentManager(
                 return (False, msg)
             for sw in configuration["search_window"]:
                 if sw["tdc_enable"]:
-                    for receptor in sw["tdc_destination_address"]:
-                        receptor_id = receptor["receptor_id"]
+                    for receptor_id in sw["tdc_destination_address"]:
                         if receptor_id not in self._receptors:
                             msg = (
                                 f"'searchWindow' receptor ID {receptor_id} "
@@ -1275,181 +1274,181 @@ class CbfSubarrayComponentManager(
                 # PSS-BF #
 
                 # TODO currently only CORR function mode is supported outside of Mid.CBF MCS
-                if fsp["function_mode"] == "PSS-BF":
-                    if int(fsp["search_window_id"]) in [1, 2]:
-                        pass
-                    else:  # searchWindowID not in valid range
-                        msg = (
-                            "'searchWindowID' must be one of [1, 2] "
-                            f"(received {fsp['search_window_id']})."
-                        )
-                        return (False, msg)
-                    if len(fsp["search_beam"]) <= 192:
-                        for searchBeam in fsp["search_beam"]:
-                            if 1 > int(searchBeam["search_beam_id"]) > 1500:
-                                # searchbeamID not in valid range
-                                msg = (
-                                    "'searchBeamID' must be within range 1-1500 "
-                                    f"(received {searchBeam['search_beam_id']})."
-                                )
-                                return (False, msg)
+                # if fsp["function_mode"] == "PSS-BF":
+                #     if "search_window" in configuration and int(configuration["search_window"]["search_window_id"]) in [1, 2]:
+                #         pass
+                #     else:  # search_window_id not in valid range
+                #         msg = (
+                #             "'search_window_id' must be one of [1, 2] "
+                #             f"(received {fsp['search_window_id']})."
+                #         )
+                #         return (False, msg)
+                #     if len(fsp["search_beam"]) <= 192:
+                #         for searchBeam in fsp["search_beam"]:
+                #             if 1 > int(searchBeam["search_beam_id"]) > 1500:
+                #                 # searchbeamID not in valid range
+                #                 msg = (
+                #                     "'searchBeamID' must be within range 1-1500 "
+                #                     f"(received {searchBeam['search_beam_id']})."
+                #                 )
+                #                 return (False, msg)
 
-                            for (
-                                fsp_pss_subarray_proxy
-                            ) in self._proxies_fsp_pss_subarray_device:
-                                searchBeamID = (
-                                    fsp_pss_subarray_proxy.searchBeamID
-                                )
-                                if searchBeamID is None:
-                                    pass
-                                else:
-                                    for search_beam_ID in searchBeamID:
-                                        if (
-                                            int(searchBeam["search_beam_id"])
-                                            != search_beam_ID
-                                        ):
-                                            pass
-                                        elif (
-                                            fsp_pss_subarray_proxy.obsState
-                                            == ObsState.IDLE
-                                        ):
-                                            pass
-                                        else:
-                                            msg = (
-                                                f"'searchBeamID' {searchBeam['search_beam_id']} "
-                                                "is already being used on another fspSubarray."
-                                            )
-                                            return (False, msg)
+                #             for (
+                #                 fsp_pss_subarray_proxy
+                #             ) in self._proxies_fsp_pss_subarray_device:
+                #                 searchBeamID = (
+                #                     fsp_pss_subarray_proxy.searchBeamID
+                #                 )
+                #                 if searchBeamID is None:
+                #                     pass
+                #                 else:
+                #                     for search_beam_ID in searchBeamID:
+                #                         if (
+                #                             int(searchBeam["search_beam_id"])
+                #                             != search_beam_ID
+                #                         ):
+                #                             pass
+                #                         elif (
+                #                             fsp_pss_subarray_proxy.obsState
+                #                             == ObsState.IDLE
+                #                         ):
+                #                             pass
+                #                         else:
+                #                             msg = (
+                #                                 f"'searchBeamID' {searchBeam['search_beam_id']} "
+                #                                 "is already being used on another fspSubarray."
+                #                             )
+                #                             return (False, msg)
 
-                            # Validate receptors.
-                            # This is always given, due to implementation details.
-                            # TODO assume always given, as there is currently only support for 1 receptor/beam
-                            if "receptor_ids" not in searchBeam:
-                                searchBeam[
-                                    "receptor_ids"
-                                ] = self._receptor_utils.receptors[
-                                    self._receptors[0]
-                                ]
+                #             # Validate receptors.
+                #             # This is always given, due to implementation details.
+                #             # TODO assume always given, as there is currently only support for 1 receptor/beam
+                #             if "receptor_ids" not in searchBeam:
+                #                 searchBeam[
+                #                     "receptor_ids"
+                #                 ] = self._receptor_utils.receptors[
+                #                     self._receptors[0]
+                #                 ]
 
-                            # Sanity check:
-                            for receptor in searchBeam["receptor_ids"]:
-                                if receptor not in self._receptors:
-                                    msg = (
-                                        f"Receptor {receptor} does not belong to "
-                                        f"subarray {self._subarray_id}."
-                                    )
-                                    self._logger.error(msg)
-                                    return (False, msg)
+                #             # Sanity check:
+                #             for receptor in searchBeam["receptor_ids"]:
+                #                 if receptor not in self._receptors:
+                #                     msg = (
+                #                         f"Receptor {receptor} does not belong to "
+                #                         f"subarray {self._subarray_id}."
+                #                     )
+                #                     self._logger.error(msg)
+                #                     return (False, msg)
 
-                            if (
-                                searchBeam["enable_output"] is False
-                                or searchBeam["enable_output"] is True
-                            ):
-                                pass
-                            else:
-                                msg = "'outputEnabled' is not a valid boolean"
-                                return (False, msg)
+                #             if (
+                #                 searchBeam["enable_output"] is False
+                #                 or searchBeam["enable_output"] is True
+                #             ):
+                #                 pass
+                #             else:
+                #                 msg = "'outputEnabled' is not a valid boolean"
+                #                 return (False, msg)
 
-                            if isinstance(
-                                searchBeam["averaging_interval"], int
-                            ):
-                                pass
-                            else:
-                                msg = "'averagingInterval' is not a valid integer"
-                                return (False, msg)
+                #             if isinstance(
+                #                 searchBeam["averaging_interval"], int
+                #             ):
+                #                 pass
+                #             else:
+                #                 msg = "'averagingInterval' is not a valid integer"
+                #                 return (False, msg)
 
-                            if self.validate_ip(
-                                searchBeam["search_beam_destination_address"]
-                            ):
-                                pass
-                            else:
-                                msg = "'searchBeamDestinationAddress' is not a valid IP address"
-                                return (False, msg)
+                #             if self.validate_ip(
+                #                 searchBeam["search_beam_destination_address"]
+                #             ):
+                #                 pass
+                #             else:
+                #                 msg = "'searchBeamDestinationAddress' is not a valid IP address"
+                #                 return (False, msg)
 
-                    else:
-                        msg = "More than 192 SearchBeams defined in PSS-BF config"
-                        return (False, msg)
+                #     else:
+                #         msg = "More than 192 SearchBeams defined in PSS-BF config"
+                #         return (False, msg)
 
                 # PST-BF #
 
                 # TODO currently only CORR function mode is supported outside of Mid.CBF MCS
-                if fsp["function_mode"] == "PST-BF":
-                    if len(fsp["timing_beam"]) <= 16:
-                        for timingBeam in fsp["timing_beam"]:
-                            if 1 <= int(timingBeam["timing_beam_id"]) <= 16:
-                                pass
-                            else:  # timingBeamID not in valid range
-                                msg = (
-                                    "'timingBeamID' must be within range 1-16 "
-                                    f"(received {timingBeam['timing_beam_id']})."
-                                )
-                                return (False, msg)
-                            for (
-                                fsp_pst_subarray_proxy
-                            ) in self._proxies_fsp_pst_subarray_device:
-                                timingBeamID = (
-                                    fsp_pst_subarray_proxy.timingBeamID
-                                )
-                                if timingBeamID is None:
-                                    pass
-                                else:
-                                    for timing_beam_ID in timingBeamID:
-                                        if (
-                                            int(timingBeam["timing_beam_id"])
-                                            != timing_beam_ID
-                                        ):
-                                            pass
-                                        elif (
-                                            fsp_pst_subarray_proxy.obsState
-                                            == ObsState.IDLE
-                                        ):
-                                            pass
-                                        else:
-                                            msg = (
-                                                f"'timingBeamID' {timingBeam['timing_beam_id']} "
-                                                "is already being used on another fspSubarray."
-                                            )
-                                            return (False, msg)
+            #     if fsp["function_mode"] == "PST-BF":
+            #         if len(fsp["timing_beam"]) <= 16:
+            #             for timingBeam in fsp["timing_beam"]:
+            #                 if 1 <= int(timingBeam["timing_beam_id"]) <= 16:
+            #                     pass
+            #                 else:  # timingBeamID not in valid range
+            #                     msg = (
+            #                         "'timingBeamID' must be within range 1-16 "
+            #                         f"(received {timingBeam['timing_beam_id']})."
+            #                     )
+            #                     return (False, msg)
+            #                 for (
+            #                     fsp_pst_subarray_proxy
+            #                 ) in self._proxies_fsp_pst_subarray_device:
+            #                     timingBeamID = (
+            #                         fsp_pst_subarray_proxy.timingBeamID
+            #                     )
+            #                     if timingBeamID is None:
+            #                         pass
+            #                     else:
+            #                         for timing_beam_ID in timingBeamID:
+            #                             if (
+            #                                 int(timingBeam["timing_beam_id"])
+            #                                 != timing_beam_ID
+            #                             ):
+            #                                 pass
+            #                             elif (
+            #                                 fsp_pst_subarray_proxy.obsState
+            #                                 == ObsState.IDLE
+            #                             ):
+            #                                 pass
+            #                             else:
+            #                                 msg = (
+            #                                     f"'timingBeamID' {timingBeam['timing_beam_id']} "
+            #                                     "is already being used on another fspSubarray."
+            #                                 )
+            #                                 return (False, msg)
 
-                            # Validate receptors.
-                            # This is always given, due to implementation details.
-                            if "receptor_ids" in timingBeam:
-                                for receptor in timingBeam["receptor_ids"]:
-                                    if receptor not in self._receptors:
-                                        msg = (
-                                            f"Receptor {receptor} does not belong to "
-                                            f"subarray {self._subarray_id}."
-                                        )
-                                        self._logger.error(msg)
-                                        return (False, msg)
-                            else:
-                                timingBeam["receptor_ids"] = [
-                                    self._receptor_utils.receptors[receptor]
-                                    for receptor in self._receptors
-                                ]
+            #                 # Validate receptors.
+            #                 # This is always given, due to implementation details.
+            #                 if "receptor_ids" in timingBeam:
+            #                     for receptor in timingBeam["receptor_ids"]:
+            #                         if receptor not in self._receptors:
+            #                             msg = (
+            #                                 f"Receptor {receptor} does not belong to "
+            #                                 f"subarray {self._subarray_id}."
+            #                             )
+            #                             self._logger.error(msg)
+            #                             return (False, msg)
+            #                 else:
+            #                     timingBeam["receptor_ids"] = [
+            #                         self._receptor_utils.receptors[receptor]
+            #                         for receptor in self._receptors
+            #                     ]
 
-                            if (
-                                timingBeam["enable_output"] is False
-                                or timingBeam["enable_output"] is True
-                            ):
-                                pass
-                            else:
-                                msg = "'outputEnabled' is not a valid boolean"
-                                return (False, msg)
+            #                 if (
+            #                     timingBeam["enable_output"] is False
+            #                     or timingBeam["enable_output"] is True
+            #                 ):
+            #                     pass
+            #                 else:
+            #                     msg = "'outputEnabled' is not a valid boolean"
+            #                     return (False, msg)
 
-                            if self.validate_ip(
-                                timingBeam["timing_beam_destination_address"]
-                            ):
-                                pass
-                            else:
-                                msg = "'timingBeamDestinationAddress' is not a valid IP address"
-                                return (False, msg)
+            #                 if self.validate_ip(
+            #                     timingBeam["timing_beam_destination_address"]
+            #                 ):
+            #                     pass
+            #                 else:
+            #                     msg = "'timingBeamDestinationAddress' is not a valid IP address"
+            #                     return (False, msg)
 
-                    else:
-                        msg = (
-                            "More than 16 TimingBeams defined in PST-BF config"
-                        )
-                        return (False, msg)
+            #         else:
+            #             msg = (
+            #                 "More than 16 TimingBeams defined in PST-BF config"
+            #             )
+            #             return (False, msg)
 
             except tango.DevFailed:  # exception in ConfigureScan
                 msg = (
@@ -1542,8 +1541,8 @@ class CbfSubarrayComponentManager(
             fsp_cfg = {"fsp_id": fsp["fsp_id"], "function_mode": function_mode}
             if function_mode == "CORR":
                 fsp_cfg["frequency_slice_id"] = fsp["frequency_slice_id"]
-            elif function_mode == "PSS-BF":
-                fsp_cfg["search_window_id"] = fsp["search_window_id"]
+            # elif function_mode == "PSS-BF":
+            #     fsp_cfg["search_window_id"] = fsp["search_window_id"]
             reduced_fsp.append(fsp_cfg)
         config_dict["fsp"] = reduced_fsp
 
@@ -1617,11 +1616,11 @@ class CbfSubarrayComponentManager(
                     ]
                 # pass receptor IDs as pair of str and int to VCCs
                 if search_window["tdc_enable"]:
-                    for tdc_dest in search_window["tdc_destination_address"]:
-                        tdc_dest["receptor_id"] = [
-                            tdc_dest["receptor_id"],
+                    for receptor_id in search_window["tdc_destination_address"]:
+                        receptor_id = [
+                            receptor_id,
                             self._receptor_utils.receptors[
-                                tdc_dest["receptor_id"]
+                                receptor_id
                             ],
                         ]
                 # pass on configuration to VCC
@@ -1755,49 +1754,49 @@ class CbfSubarrayComponentManager(
                 self._corr_fsp_list.append(fsp["fsp_id"])
 
             # TODO: PSS, PST below may fall out of date; currently only CORR function mode is supported outside of Mid.CBF MCS
-            elif fsp["function_mode"] == "PSS-BF":
-                for searchBeam in fsp["search_beam"]:
-                    if "receptor_ids" not in searchBeam:
-                        # In this case by the ICD, all subarray allocated resources should be used.
-                        searchBeam["receptor_ids"] = [
-                            [
-                                receptor,
-                                self._receptor_utils.receptors[receptor],
-                            ]
-                            for receptor in self._receptors
-                        ]
-                    else:
-                        for i, receptor in enumerate(
-                            searchBeam["receptor_ids"]
-                        ):
-                            searchBeam["receptor_ids"][i] = [
-                                receptor,
-                                self._receptor_utils.receptors[receptor],
-                            ]
-                self._pss_config.append(fsp)
-                self._pss_fsp_list.append(fsp["fsp_id"])
+            # elif fsp["function_mode"] == "PSS-BF":
+            #     for searchBeam in fsp["search_beam"]:
+            #         if "receptor_ids" not in searchBeam:
+            #             # In this case by the ICD, all subarray allocated resources should be used.
+            #             searchBeam["receptor_ids"] = [
+            #                 [
+            #                     receptor,
+            #                     self._receptor_utils.receptors[receptor],
+            #                 ]
+            #                 for receptor in self._receptors
+            #             ]
+            #         else:
+            #             for i, receptor in enumerate(
+            #                 searchBeam["receptor_ids"]
+            #             ):
+            #                 searchBeam["receptor_ids"][i] = [
+            #                     receptor,
+            #                     self._receptor_utils.receptors[receptor],
+            #                 ]
+            #     self._pss_config.append(fsp)
+            #     self._pss_fsp_list.append(fsp["fsp_id"])
 
-            elif fsp["function_mode"] == "PST-BF":
-                for timingBeam in fsp["timing_beam"]:
-                    if "receptor_ids" not in timingBeam:
-                        # In this case by the ICD, all subarray allocated resources should be used.
-                        timingBeam["receptor_ids"] = [
-                            [
-                                receptor,
-                                self._receptor_utils.receptors[receptor],
-                            ]
-                            for receptor in self._receptors
-                        ]
-                    else:
-                        for i, receptor in enumerate(
-                            timingBeam["receptor_ids"]
-                        ):
-                            timingBeam["receptor_ids"][i] = [
-                                receptor,
-                                self._receptor_utils.receptors[receptor],
-                            ]
-                self._pst_config.append(fsp)
-                self._pst_fsp_list.append(fsp["fsp_id"])
+            # elif fsp["function_mode"] == "PST-BF":
+            #     for timingBeam in fsp["timing_beam"]:
+            #         if "receptor_ids" not in timingBeam:
+            #             # In this case by the ICD, all subarray allocated resources should be used.
+            #             timingBeam["receptor_ids"] = [
+            #                 [
+            #                     receptor,
+            #                     self._receptor_utils.receptors[receptor],
+            #                 ]
+            #                 for receptor in self._receptors
+            #             ]
+            #         else:
+            #             for i, receptor in enumerate(
+            #                 timingBeam["receptor_ids"]
+            #             ):
+            #                 timingBeam["receptor_ids"][i] = [
+            #                     receptor,
+            #                     self._receptor_utils.receptors[receptor],
+            #                 ]
+            #     self._pst_config.append(fsp)
+            #     self._pst_fsp_list.append(fsp["fsp_id"])
 
         # Call ConfigureScan for all FSP Subarray devices (CORR/PSS/PST)
 
@@ -2076,8 +2075,6 @@ class CbfSubarrayComponentManager(
         :rtype: (ResultCode, str)
         """
 
-        scan_json = json.loads(argin)
-
         # Validate scan_json against the telescope model
         # TODO: CIP-1732 uncomment the below section to validate the scan
         # scan_schema = get_csp_scan_schema(
@@ -2089,7 +2086,7 @@ class CbfSubarrayComponentManager(
         #     msg = f"Scan validation against ska-telmodel schema failed with exception:\n {str(e)}"
         #     return (False, msg)
 
-        scan_id = scan_json["scan_id"]
+        scan_id = argin["scan_id"]
         try:
             data = tango.DeviceData()
             data.insert(tango.DevString, scan_id)
