@@ -36,7 +36,7 @@ from ska_tango_base.csp.subarray.component_manager import (
 )
 from ska_telmodel.csp.schema import (
     get_csp_delaymodel_schema,
-    # get_csp_scan_schema,
+    get_csp_scan_schema,
 )
 from tango import AttrQuality
 
@@ -2076,10 +2076,10 @@ class CbfSubarrayComponentManager(
         """
 
         # Validate scan_json against the telescope model
+        scan_schema = get_csp_scan_schema(
+            version=scan_json["interface"], strict=True
+        )
         # TODO: CIP-1732 uncomment the below section to validate the scan
-        # scan_schema = get_csp_scan_schema(
-        #     version=scan_json["interface"], strict=True
-        # )
         # try:
         #     scan_schema.validate(scan_json)
         # except Exception as e:
