@@ -36,7 +36,7 @@ from ska_tango_base.csp.subarray.component_manager import (
 )
 from ska_telmodel.csp.schema import (
     get_csp_delaymodel_schema,
-    get_csp_scan_schema,
+    # get_csp_scan_schema,
 )
 from tango import AttrQuality
 
