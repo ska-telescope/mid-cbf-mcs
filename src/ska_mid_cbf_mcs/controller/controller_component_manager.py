@@ -365,12 +365,12 @@ class ControllerComponentManager(CbfComponentManager):
                         self._talondx_component_manager.simulation_mode,
                     )
                     self._group_subarray.command_inout("On")
-                    self._on = True
                 except tango.DevFailed:
                     log_msg = "Failed to turn on group proxies"
                     self._logger.error(log_msg)
                     return (ResultCode.FAILED, log_msg)
 
+                self._on = True
                 message = "CbfController On command completed OK"
                 return (ResultCode.OK, message)
 
@@ -443,12 +443,12 @@ class ControllerComponentManager(CbfComponentManager):
                     self._group_subarray.command_inout("Off")
                     self._group_vcc.command_inout("Off")
                     self._group_fsp.command_inout("Off")
-                    self._on = False
                 except tango.DevFailed:
                     log_msg = "Failed to turn off group proxies"
                     self._logger.error(log_msg)
                     return (ResultCode.FAILED, log_msg)
 
+                self._on = False
                 message = "CbfController Off command completed OK"
                 return (ResultCode.OK, message)
 
