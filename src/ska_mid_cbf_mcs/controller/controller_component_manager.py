@@ -93,14 +93,16 @@ class ControllerComponentManager(CbfComponentManager):
             self._fqdn_fsp,
             self._fqdn_subarray,
             self._fqdn_talon_lru,
-        ) = ([] for i in range(4))
+            self._fqdn_talon_board,
+            self._fqdn_power_switch
+        ) = ([] for i in range(6))
 
         self._subarray_fqdns_all = subarray_fqdns_all
         self._vcc_fqdns_all = vcc_fqdns_all
         self._fsp_fqdns_all = fsp_fqdns_all
         self._talon_lru_fqdns_all = talon_lru_fqdns_all
         self._talon_board_fqdns_all = talon_board_fqdns_all
-        self._power_Switch_fqdns_all = power_switch_fqdns_all
+        self._power_switch_fqdns_all = power_switch_fqdns_all
 
         self._get_max_capabilities = get_num_capabilities
 
@@ -168,15 +170,10 @@ class ControllerComponentManager(CbfComponentManager):
         self._fqdn_subarray = list(self._subarray_fqdns_all)[
             : self._count_subarray
         ]
-        self._fqdn_talon_lru = list(self._talon_lru_fqdns_all)[
-            : len(self._hw_config["talon_lru"])
-        ]
-        self._fqdn_talon_board = list(self._talon_board_fqdns_all)[
-            : len(self._hw_config["talon_ip"])
-        ]
-        self._fqdn_power_switch = list(self._power_Switch_fqdns_all)[
-            : len(self._hw_config["power_switch"])
-        ]
+
+        self._fqdn_talon_lru = [fqdn for fqdn in self._talon_lru_fqdns_all if fqdn.split("/")[-1] in [list(lru.keys())[0] for lru in self._hw_config["talon_lru"]]]
+        self._fqdn_talon_board = [fqdn for fqdn in self._talon_board_fqdns_all if fqdn.split("/")[-1] in list(self._hw_config["talon_ip"].keys())]
+        self._fqdn_power_switch = [fqdn for fqdn in self._power_switch_fqdns_all if fqdn.split("/")[-1] in [list(ps.keys())[0] for ps in self._hw_config["power_switch"]]]
 
         try:
             self._group_vcc = CbfGroupProxy("VCC", logger=self._logger)
@@ -357,15 +354,14 @@ class ControllerComponentManager(CbfComponentManager):
                 # read in list of LRUs from configuration JSON
                 self._fqdn_talon_lru = []
 
-                talondx_config_file = open(
+                with open(
                     os.path.join(
                         os.getcwd(),
                         self._talondx_config_path,
                         "talondx-config.json",
                     )
-                )
-
-                talondx_config_json = json.load(talondx_config_file)
+                ) as f:
+                    talondx_config_json = json.load(f)
 
                 talon_lru_fqdn_set = set()
                 for config_command in talondx_config_json["config_commands"]:
@@ -430,14 +426,14 @@ class ControllerComponentManager(CbfComponentManager):
                 == SimulationMode.FALSE
             ):
                 if len(self._fqdn_talon_lru) == 0:
-                    talondx_config_file = open(
+                    with open(
                         os.path.join(
                             os.getcwd(),
                             self._talondx_config_path,
                             "talondx-config.json",
                         )
-                    )
-                    talondx_config_json = json.load(talondx_config_file)
+                    ) as f:
+                        talondx_config_json = json.load(f)
 
                     talon_lru_fqdn_set = set()
                     for config_command in talondx_config_json[
