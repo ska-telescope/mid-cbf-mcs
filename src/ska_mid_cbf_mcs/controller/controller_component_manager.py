@@ -94,7 +94,7 @@ class ControllerComponentManager(CbfComponentManager):
             self._fqdn_subarray,
             self._fqdn_talon_lru,
             self._fqdn_talon_board,
-            self._fqdn_power_switch
+            self._fqdn_power_switch,
         ) = ([] for i in range(6))
 
         self._subarray_fqdns_all = subarray_fqdns_all
@@ -171,9 +171,23 @@ class ControllerComponentManager(CbfComponentManager):
             : self._count_subarray
         ]
 
-        self._fqdn_talon_lru = [fqdn for fqdn in self._talon_lru_fqdns_all if fqdn.split("/")[-1] in [list(lru.keys())[0] for lru in self._hw_config["talon_lru"]]]
-        self._fqdn_talon_board = [fqdn for fqdn in self._talon_board_fqdns_all if fqdn.split("/")[-1] in list(self._hw_config["talon_ip"].keys())]
-        self._fqdn_power_switch = [fqdn for fqdn in self._power_switch_fqdns_all if fqdn.split("/")[-1] in [list(ps.keys())[0] for ps in self._hw_config["power_switch"]]]
+        self._fqdn_talon_lru = [
+            fqdn
+            for fqdn in self._talon_lru_fqdns_all
+            if fqdn.split("/")[-1]
+            in [list(lru.keys())[0] for lru in self._hw_config["talon_lru"]]
+        ]
+        self._fqdn_talon_board = [
+            fqdn
+            for fqdn in self._talon_board_fqdns_all
+            if fqdn.split("/")[-1] in list(self._hw_config["talon_ip"].keys())
+        ]
+        self._fqdn_power_switch = [
+            fqdn
+            for fqdn in self._power_switch_fqdns_all
+            if fqdn.split("/")[-1]
+            in [list(ps.keys())[0] for ps in self._hw_config["power_switch"]]
+        ]
 
         try:
             self._group_vcc = CbfGroupProxy("VCC", logger=self._logger)
@@ -351,9 +365,7 @@ class ControllerComponentManager(CbfComponentManager):
                 self._talondx_component_manager.simulation_mode
                 == SimulationMode.FALSE
             ):
-                # read in list of LRUs from configuration JSON
-                self._fqdn_talon_lru = []
-
+                # read in list of talons from configuration JSON
                 with open(
                     os.path.join(
                         os.getcwd(),
@@ -363,18 +375,29 @@ class ControllerComponentManager(CbfComponentManager):
                 ) as f:
                     talondx_config_json = json.load(f)
 
-                talon_lru_fqdn_set = set()
+                self._fqdn_talon_lru = []
                 for config_command in talondx_config_json["config_commands"]:
-                    talon_lru_fqdn_set.add(config_command["talon_lru_fqdn"])
-                self._logger.info(f"talonlru list = {talon_lru_fqdn_set}")
+                    target = config_command["target"]
+                    for lru in self._hw_config["talon_lru"]:
+                        lru_id = list(lru.keys())[0]
+                        talon1 = lru[lru_id]["TalonDxBoard1Address"].split(
+                            "/"
+                        )[-1]
+                        talon2 = lru[lru_id]["TalonDxBoard2Address"].split(
+                            "/"
+                        )[-1]
+                        if target in [talon1, talon2]:
+                            self._fqdn_talon_lru.append(
+                                f"mid_csp_cbf/talon_lru/{lru_id}"
+                            )
 
                 # TODO: handle subscribed events for missing LRUs
-                self._fqdn_talon_lru = list(talon_lru_fqdn_set)
             else:
                 # use a hard-coded example fqdn talon lru for simulation mode
-                self._fqdn_talon_lru = {"mid_csp_cbf/talon_lru/001"}
+                self._fqdn_talon_lru = ["mid_csp_cbf/talon_lru/001"]
 
             try:
+                self._logger.info(f"Turning on LRUs: {self._fqdn_talon_lru}")
                 for fqdn in self._fqdn_talon_lru:
                     self._proxies[fqdn].On()
             except tango.DevFailed:
@@ -435,22 +458,30 @@ class ControllerComponentManager(CbfComponentManager):
                     ) as f:
                         talondx_config_json = json.load(f)
 
-                    talon_lru_fqdn_set = set()
                     for config_command in talondx_config_json[
                         "config_commands"
                     ]:
-                        talon_lru_fqdn_set.add(
-                            config_command["talon_lru_fqdn"]
-                        )
-                    self._logger.info(f"talonlru list = {talon_lru_fqdn_set}")
+                        target = config_command["target"]
+                        for lru in self._hw_config["talon_lru"]:
+                            lru_id = list(lru.keys())[0]
+                            talon1 = lru[lru_id]["TalonDxBoard1Address"].split(
+                                "/"
+                            )[-1]
+                            talon2 = lru[lru_id]["TalonDxBoard2Address"].split(
+                                "/"
+                            )[-1]
+                            if target in [talon1, talon2]:
+                                self._fqdn_talon_lru.append(
+                                    f"mid_csp_cbf/talon_lru/{lru_id}"
+                                )
 
                     # TODO: handle subscribed events for missing LRUs
-                    self._fqdn_talon_lru = list(talon_lru_fqdn_set)
             else:
                 # use a hard-coded example fqdn talon lru for simulation mode
-                self._fqdn_talon_lru = {"mid_csp_cbf/talon_lru/001"}
+                self._fqdn_talon_lru = ["mid_csp_cbf/talon_lru/001"]
 
             try:
+                self._logger.info(f"Turning off LRUs: {self._fqdn_talon_lru}")
                 for fqdn in self._fqdn_talon_lru:
                     self._proxies[fqdn].Off()
             except tango.DevFailed:
