@@ -376,8 +376,8 @@ class ControllerComponentManager(CbfComponentManager):
 
             else:
                 log_msg = "CbfController is already ON. Disregarding redundant command."
-                self._logger.error(log_msg)
-                return (ResultCode.FAILED, log_msg)
+                self._logger.warning(log_msg)
+                return (ResultCode.OK, log_msg)
 
         else:
             log_msg = "Proxies not connected"
@@ -454,8 +454,8 @@ class ControllerComponentManager(CbfComponentManager):
 
             else:
                 log_msg = "CbfController is already OFF. Disregarding redundant command."
-                self._logger.error(log_msg)
-                return (ResultCode.FAILED, log_msg)
+                self._logger.warning(log_msg)
+                return (ResultCode.OK, log_msg)
 
         else:
             log_msg = "Proxies not connected"
