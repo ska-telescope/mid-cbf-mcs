@@ -1626,6 +1626,7 @@ class CbfSubarrayComponentManager(
                 # pass on configuration to VCC
                 data = tango.DeviceData()
                 data.insert(tango.DevString, json.dumps(search_window))
+                print("configuring search window")
                 self._group_vcc.command_inout("ConfigureSearchWindow", data)
         else:
             log_msg = "'searchWindow' not given."

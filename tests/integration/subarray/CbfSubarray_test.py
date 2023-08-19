@@ -734,7 +734,9 @@ class TestCbfSubarray:
                 for idx, search_window in enumerate(
                     configuration["cbf"]["search_window"]
                 ):
+                    print(f"search window index :{idx}")
                     for r in vcc_receptors:
+                        print(f"vcc receptor: {r}")
                         assert (
                             test_proxies.vccSw[
                                 test_proxies.receptor_to_vcc[r]

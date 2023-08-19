@@ -869,6 +869,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
 
                 # Configure tdcEnable.
                 proxy_sw.tdcEnable = argin["tdc_enable"]
+                print(f"vcc tdcEnable: {proxy_sw.tdcEnable}")
                 # if argin["tdc_enable"]:
                 #     proxy_sw.On()
                 # else:
@@ -906,13 +907,14 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
 
                 # Configure tdcDestinationAddress.
                 if argin["tdc_enable"]:
-                    for tdc_dest in argin["tdc_destination_address"]:
+                    for receptor in argin["tdc_destination_address"]:
                         # "receptor" value is a pair of str and int
-                        if tdc_dest["receptor_id"][1] == self._receptor_id:
+                        if receptor[1] == self._receptor_id:
                             # TODO: validate input
-                            proxy_sw.tdcDestinationAddress = tdc_dest[
-                                "tdc_destination_address"
-                            ]
+                            # CIP-1606 figure out how to handle this
+                            # proxy_sw.tdcDestinationAddress = tdc_dest[
+                            #     "tdc_destination_address"
+                            # ]
                             break
 
         except tango.DevFailed as df:
