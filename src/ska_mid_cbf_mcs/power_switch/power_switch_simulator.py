@@ -31,17 +31,13 @@ class PowerSwitchSimulator:
 
     def __init__(
         self: PowerSwitchSimulator,
-        outlet_id_list: List[str],
         logger: logging.Logger,
     ) -> None:
         """
         Initialise a new instance.
         """
         self.logger = logger
-        self.outlet_id_list: List(str) = []
-
-        for item in outlet_id_list:
-            self.outlet_id_list.append(item)
+        self.outlet_id_list: List(str) = [str(i) for i in range(0, 8)]
 
         self.outlets = self.get_outlet_list()
 
