@@ -262,9 +262,8 @@ class ControllerComponentManager(CbfComponentManager):
                         self._logger.debug(
                             f"Writing hardware configuration properties to {fqdn}"
                         )
-                        switch_config = tango.DbData()
                         switch_id = fqdn.split("/")[-1]
-                        lru_config = tango.utils.obj_2_property(
+                        switch_config = tango.utils.obj_2_property(
                             self._hw_config["power_switch"][
                                 int(switch_id) - 1
                             ][switch_id]
