@@ -297,6 +297,16 @@ class TalonLRU(SKABaseDevice):
                 "adminMode", 0
             )
 
+            device.component_manager._proxy_power_switch2.write_attribute(
+                "adminMode", 1
+            )
+            device.component_manager._proxy_power_switch2.write_attribute(
+                "simulationMode", lru_simulation_mode
+            )
+            device.component_manager._proxy_power_switch2.write_attribute(
+                "adminMode", 0
+            )
+
             with device._power_switch_lock:
                 # Check that this command is still allowed since the
                 # _check_power_mode_callback could have changed the state

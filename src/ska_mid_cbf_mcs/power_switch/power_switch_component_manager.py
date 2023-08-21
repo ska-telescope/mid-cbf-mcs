@@ -95,9 +95,7 @@ class PowerSwitchComponentManager(CbfComponentManager):
             model=model, ip=ip, login=login, password=password, logger=logger
         )
 
-        self.power_switch_simulator = PowerSwitchSimulator(
-            logger
-        )
+        self.power_switch_simulator = PowerSwitchSimulator(logger)
 
         super().__init__(
             logger=logger,
@@ -180,6 +178,9 @@ class PowerSwitchComponentManager(CbfComponentManager):
         super().stop_communicating()
         self.update_component_power_mode(PowerMode.UNKNOWN)
         self.connected = False
+
+        if not self._simulation_mode:
+            self.power_switch_driver.stop()
 
     def get_outlet_power_mode(
         self: PowerSwitchComponentManager, outlet: str

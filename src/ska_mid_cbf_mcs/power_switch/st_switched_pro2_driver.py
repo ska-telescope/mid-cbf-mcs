@@ -19,6 +19,7 @@ import requests
 from requests.structures import CaseInsensitiveDict
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import PowerMode
+
 from ska_mid_cbf_mcs.power_switch.pdu_common import Outlet
 
 __all__ = ["STSwitchedPRO2Driver"]
@@ -94,6 +95,12 @@ class STSwitchedPRO2Driver:
         power switch. Should be called once before any of the other methods.
         """
         self.outlets = self.get_outlet_list()
+
+    def stop(self: STSwitchedPRO2Driver) -> None:
+        """
+        Stops communicating with the PDU and cleans up.
+        """
+        pass
 
     @property
     def num_outlets(self: STSwitchedPRO2Driver) -> int:
