@@ -95,6 +95,12 @@ class DLIProSwitchDriver:
         """
         self.outlets = self.get_outlet_list()
 
+    def stop(self: DLIProSwitchDriver) -> None:
+        """
+        Stops communicating with the PDU and cleans up.
+        """
+        pass
+
     @property
     def num_outlets(self: DLIProSwitchDriver) -> int:
         """

@@ -13,6 +13,8 @@ from __future__ import annotations
 import logging
 import re
 import socket
+import time
+from threading import Event, Lock, Thread
 
 import paramiko
 from ska_tango_base.commands import ResultCode
@@ -49,14 +51,53 @@ class ApcPduDriver:
         # valid range 1 to 24
         self.outlet_id_list: List(str) = [f"{i}" for i in range(1, 25)]
 
-        self.outlets: List(Outlet) = []
+        self.mutex = Lock()
+        self.list_outlets_thread = None
+        self.end_thread = False
+        self.num_failed_polls = 0
+
+        # init outlet states to unknown first. The outlets can be polled
+        # before initialize is called.
+        self.outlets: List(Outlet) = [
+            Outlet(outlet_ID=id, outlet_name="", power_mode=PowerMode.UNKNOWN)
+            for id in self.outlet_id_list
+        ]
 
     def initialize(self: ApcPduDriver) -> None:
         """
         Initializes any variables needed for further communication with the
         power switch. Should be called once before any of the other methods.
         """
-        self.outlets = self.get_outlet_list()
+        self.end_thread = False
+        self.list_outlets_thread = Thread(target=self._poll_outlets)
+        self.list_outlets_thread.start()
+
+    def stop(self: ApcPduDriver) -> None:
+        """
+        Stops communicating with the PDU and cleans up.
+        """
+        self.end_thread = True
+        if list_outlets_thread is not None:
+            list_outlets_thread.join()
+
+    def _poll_outlets(self: ApcPduDriver) -> None:
+        sleep_t = 10
+        self.logger.info("Starting to poll the PDU every {sleep_t} seconds")
+        while not self.end_thread:
+            outlets_tmp = self.get_outlet_list()
+            # this is not a critical failure. Log a warning
+            # and hope it works next time.
+            if outlets_tmp is None:
+                self.num_failed_polls += 1
+                warn = (
+                    f"Failed to poll PDU outlets {self.num_failed_polls} times"
+                )
+                self.logger.warn(warn)
+            else:
+                self.num_failed_polls = 0
+                with self.mutex:
+                    self.outlets = outlets_tmp
+            time.sleep(sleep_t)
 
     @property
     def num_outlets(self: ApcPduDriver) -> int:
@@ -93,6 +134,8 @@ class ApcPduDriver:
         outlets = self._outlet_status(
             "all"
         )  # (outlet id, outlet name, On/Off)
+        if outlets is None:
+            return None
         for o in outlets:
             if o[2] == "On":
                 status = PowerMode.ON
@@ -114,18 +157,10 @@ class ApcPduDriver:
         :raise AssertionError: if outlet power mode is different than expected
         """
         assert outlet in self.outlet_id_list, "Valid outlet IDs are 1 to 24"
-
-        status = self._outlet_status(outlet)[0]
-        if status is None:
-            self.logger.error(f"Failed to get the status of outlet {outlet}")
-            return PowerMode.UNKNOWN
-        if "On" in status[2]:
-            return PowerMode.ON
-        elif "Off" in status[2]:
-            return PowerMode.OFF
-        else:
-            self.logger.error(f"Unexpected outlet {outlet} status")
-            return PowerMode.UNKNOWN
+        outlet_idx = self.outlet_id_list.index(outlet)
+        with self.mutex:
+            power_mode = self.outlets[outlet_idx].power_mode
+        return power_mode
 
     def turn_on_outlet(
         self: ApcPduDriver, outlet: str
@@ -146,6 +181,9 @@ class ApcPduDriver:
             err = f"Failed to turn on PDU outlet {outlet}: {output}"
             self.logger.error(err)
             return (ResultCode.FAILED, err)
+        outlet_idx = self.outlet_id_list.index(outlet)
+        with self.mutex:
+            self.outlets[outlet_idx].power_mode = PowerMode.ON
         return ResultCode.OK, f"Outlet {outlet} power on"
 
     def turn_off_outlet(
@@ -167,6 +205,9 @@ class ApcPduDriver:
             err = f"Failed to turn off PDU outlet {outlet}: {output}"
             self.logger.error(err)
             return (ResultCode.FAILED, err)
+        outlet_idx = self.outlet_id_list.index(outlet)
+        with self.mutex:
+            self.outlets[outlet_idx].power_mode = PowerMode.ON
         return ResultCode.OK, f"Outlet {outlet} power off"
 
     def _outlet_on(self: ApcPduDriver, outlet: str):
@@ -194,11 +235,12 @@ class ApcPduDriver:
             _ = ch.recv(4096).decode("utf-8")  # ignore the log in banner
             ch.send(f"{cmd} {outlet}\n")
             out = ch.recv(1024).decode("utf-8")
+            self.logger.debug(f"PDU command output: {out}")
             if "E000: Success" in out:
-                print(f"{cmd} {outlet} completed successfully")
+                self.logger.info(f"{cmd} {outlet} completed successfully")
                 return (True, out)
             else:
-                print(f"{cmd} {outlet} failed")
+                self.logger.error(f"{cmd} {outlet} failed")
                 return (False, out)
         except (
             paramiko.ssh_exception.AuthenticationException,

@@ -41,7 +41,7 @@ server:
           - name: "polled_attr"
             values:
             - "simulationMode"
-            - "3000"
+            - "90000"
   - name: "powerswitch-002"
     classes:
     - name: "PowerSwitch"
@@ -63,7 +63,7 @@ server:
           - name: "polled_attr"
             values:
             - "simulationMode"
-            - "3000"
+            - "90000"
   - name: "powerswitch-003"
     classes:
     - name: "PowerSwitch"
@@ -85,7 +85,7 @@ server:
           - name: "polled_attr"
             values:
             - "simulationMode"
-            - "3000"
+            - "90000"
 image:
   registry: "{{.Values.midcbf.image.registry}}"
   image: "{{.Values.midcbf.image.image}}"

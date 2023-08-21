@@ -181,6 +181,9 @@ class PowerSwitchComponentManager(CbfComponentManager):
         self.update_component_power_mode(PowerMode.UNKNOWN)
         self.connected = False
 
+        if not self._simulation_mode:
+            self.power_switch_driver.stop()
+
     def get_outlet_power_mode(
         self: PowerSwitchComponentManager, outlet: str
     ) -> PowerMode:

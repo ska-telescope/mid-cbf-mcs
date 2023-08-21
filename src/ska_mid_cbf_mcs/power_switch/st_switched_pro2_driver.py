@@ -96,6 +96,12 @@ class STSwitchedPRO2Driver:
         """
         self.outlets = self.get_outlet_list()
 
+    def stop(self: STSwitchedPRO2Driver) -> None:
+        """
+        Stops communicating with the PDU and cleans up.
+        """
+        pass
+
     @property
     def num_outlets(self: STSwitchedPRO2Driver) -> int:
         """

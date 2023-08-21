@@ -140,7 +140,7 @@ class TalonLRUComponentManager(CbfComponentManager):
         # timeout of the power switch proxies, since the HTTP connection
         # timeout must be >3s.
         if self._proxy_power_switch1 is not None:
-            self._proxy_power_switch1.set_timeout_millis(5000)
+            self._proxy_power_switch1.set_timeout_millis(8000)
             self._simulation_mode_events[
                 0
             ] = self._proxy_power_switch1.add_change_event_callback(
@@ -188,7 +188,7 @@ class TalonLRUComponentManager(CbfComponentManager):
             )
             self._simulation_mode_events[0] = None
         if self._simulation_mode_events[1]:
-            self._proxy_power_switch1.remove_event(
+            self._proxy_power_switch2.remove_event(
                 "simulationMode", self._simulation_mode_events[1]
             )
             self._simulation_mode_events[1] = None
