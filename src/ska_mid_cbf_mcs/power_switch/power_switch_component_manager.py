@@ -12,7 +12,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Callable, List, Optional, Tuple
+from typing import Callable, Optional, Tuple
 
 import tango
 from ska_tango_base.commands import ResultCode

@@ -14,7 +14,8 @@ import logging
 import re
 import socket
 import time
-from threading import Event, Lock, Thread
+from threading import Lock, Thread
+from typing import List
 
 import paramiko
 from ska_tango_base.commands import ResultCode
@@ -49,7 +50,7 @@ class ApcPduDriver:
         self.password = password
 
         # valid range 1 to 24
-        self.outlet_id_list: List(str) = [f"{i}" for i in range(1, 25)]
+        self.outlet_id_list = [f"{i}" for i in range(1, 25)]
 
         self.mutex = Lock()
         self.list_outlets_thread = None
@@ -58,7 +59,7 @@ class ApcPduDriver:
 
         # init outlet states to unknown first. The outlets can be polled
         # before initialize is called.
-        self.outlets: List(Outlet) = [
+        self.outlets = [
             Outlet(outlet_ID=id, outlet_name="", power_mode=PowerMode.UNKNOWN)
             for id in self.outlet_id_list
         ]
@@ -77,8 +78,8 @@ class ApcPduDriver:
         Stops communicating with the PDU and cleans up.
         """
         self.end_thread = True
-        if list_outlets_thread is not None:
-            list_outlets_thread.join()
+        if self.list_outlets_thread is not None:
+            self.list_outlets_thread.join()
 
     def _poll_outlets(self: ApcPduDriver) -> None:
         sleep_t = 10
