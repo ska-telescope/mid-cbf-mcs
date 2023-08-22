@@ -57,7 +57,7 @@ setuptools.setup(
     },
     test_suite='tests',
     install_requires=[
-        'pytango == 9.4.1',
+        'pytango == 9.4.2',
         'ska-tango-base == 0.11.3'
     ],
     setup_requires=[
