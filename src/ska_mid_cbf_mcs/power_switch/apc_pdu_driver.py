@@ -82,8 +82,9 @@ class ApcPduDriver:
             self.list_outlets_thread.join()
 
     def _poll_outlets(self: ApcPduDriver) -> None:
+        n_fail_to_print_err = 3
         sleep_t = 10
-        self.logger.info("Starting to poll the PDU every {sleep_t} seconds")
+        self.logger.info(f"Starting to poll the PDU every {sleep_t} seconds")
         while not self.end_thread:
             outlets_tmp = self.get_outlet_list()
             # this is not a critical failure. Log a warning
@@ -94,6 +95,10 @@ class ApcPduDriver:
                     f"Failed to poll PDU outlets {self.num_failed_polls} times"
                 )
                 self.logger.warn(warn)
+                if self.num_failed_polls == n_fail_to_print_err:
+                    self.logger.error(
+                        f"Failed to poll PDU outlets {n_fail_to_print_err} times consecutively. The PDU likely cannot be reached."
+                    )
             else:
                 self.num_failed_polls = 0
                 with self.mutex:

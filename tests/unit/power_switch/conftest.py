@@ -152,7 +152,7 @@ def power_switch_component_manager(
 
     return PowerSwitchComponentManager(
         simulation_mode=SimulationMode.FALSE,
-        model="APC AP8681",
+        model="DLI LPC9",
         ip="0.0.0.0",
         login="",
         password="",
