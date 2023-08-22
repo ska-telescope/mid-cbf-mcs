@@ -380,12 +380,8 @@ class ControllerComponentManager(CbfComponentManager):
                     target = config_command["target"]
                     for lru in self._hw_config["talon_lru"]:
                         lru_id = list(lru.keys())[0]
-                        talon1 = lru[lru_id]["TalonDxBoard1Address"].split(
-                            "/"
-                        )[-1]
-                        talon2 = lru[lru_id]["TalonDxBoard2Address"].split(
-                            "/"
-                        )[-1]
+                        talon1 = lru[lru_id]["TalonDxBoard1"]
+                        talon2 = lru[lru_id]["TalonDxBoard2"]
                         if target in [talon1, talon2]:
                             self._fqdn_talon_lru.append(
                                 f"mid_csp_cbf/talon_lru/{lru_id}"
@@ -464,12 +460,8 @@ class ControllerComponentManager(CbfComponentManager):
                         target = config_command["target"]
                         for lru in self._hw_config["talon_lru"]:
                             lru_id = list(lru.keys())[0]
-                            talon1 = lru[lru_id]["TalonDxBoard1Address"].split(
-                                "/"
-                            )[-1]
-                            talon2 = lru[lru_id]["TalonDxBoard2Address"].split(
-                                "/"
-                            )[-1]
+                            talon1 = lru[lru_id]["TalonDxBoard1"]
+                            talon2 = lru[lru_id]["TalonDxBoard2"]
                             if target in [talon1, talon2]:
                                 self._fqdn_talon_lru.append(
                                     f"mid_csp_cbf/talon_lru/{lru_id}"
