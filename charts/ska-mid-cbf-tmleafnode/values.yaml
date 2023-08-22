@@ -10,6 +10,8 @@ system: csp
 subsystem: tmsimulator-mid
 telescope: SKA-mid
 
+legacy_compatibility: true
+
 labels:
   app: ska-mid-cbf-mcs
 

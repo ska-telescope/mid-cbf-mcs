@@ -13,6 +13,8 @@ telescope: SKA-mid
 engineeringConsoleVersion: 0.7.10
 signalVerificationVersion: 0.1.6
 
+legacy_compatibility: true
+
 labels:
   app: ska-mid-cbf-mcs
 
