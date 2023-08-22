@@ -1,4 +1,4 @@
-talon_ip:
+talon_board:
     "001": 169.254.100.1
 talon_lru:
 - "001":

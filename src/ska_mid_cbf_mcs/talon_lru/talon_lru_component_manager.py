@@ -29,8 +29,8 @@ class TalonLRUComponentManager(CbfComponentManager):
 
     def __init__(
         self: TalonLRUComponentManager,
-        talon_fqdns: List[str],
-        pdu_fqdns: List[str],
+        talons: List[str],
+        pdus: List[str],
         pdu_outlets: List[str],
         logger: logging.Logger,
         push_change_event_callback: Optional[Callable],
@@ -44,8 +44,8 @@ class TalonLRUComponentManager(CbfComponentManager):
         """
         Initialise a new instance.
 
-        :param talon_fqdns: FQDNs of the Talon DX board
-        :param pdu_fqdns: FQDNs of the power switch devices
+        :param talons: FQDNs of the Talon DX board
+        :param pdus: FQDNs of the power switch devices
         :param pdu_outlets: IDs of the PDU outlets
         :param logger: a logger for this object to use
         :param push_change_event_callback: method to call when the base classes
@@ -65,8 +65,8 @@ class TalonLRUComponentManager(CbfComponentManager):
         # Get the device proxies of all the devices we care about
         # TODO: the talondx_board proxies are not currently used for anything
         # as the mirroring device on the HPS has not yet been created
-        self._talon_fqdns = talon_fqdns
-        self._pdu_fqdns = pdu_fqdns
+        self._talons = talons
+        self._pdus = pdus
         self._pdu_outlets = pdu_outlets
 
         self.pdu1_power_mode = PowerMode.UNKNOWN
@@ -98,7 +98,7 @@ class TalonLRUComponentManager(CbfComponentManager):
 
         super().start_communicating()
 
-        if len(self._talon_fqdns) < 2:
+        if len(self._talons) < 2:
             self._logger.error("Expect two Talon board FQDNs")
             tango.Except.throw_exception(
                 "TalonLRU_TalonBoardFailed",
@@ -107,22 +107,24 @@ class TalonLRUComponentManager(CbfComponentManager):
             )
 
         self._proxy_talondx_board1 = self.get_device_proxy(
-            self._talon_fqdns[0]
+            "mid_csp_cbf/talon_board/" + self._talons[0]
         )
         self._proxy_talondx_board2 = self.get_device_proxy(
-            self._talon_fqdns[1]
+            "mid_csp_cbf/talon_board/" + self._talons[1]
         )
 
         # Needs Admin mode == ONLINE to run ON command
         self._proxy_talondx_board1.adminMode = AdminMode.ONLINE
         self._proxy_talondx_board2.adminMode = AdminMode.ONLINE
 
-        self._proxy_power_switch1 = self.get_device_proxy(self._pdu_fqdns[0])
-        if self._pdu_fqdns[1] == self._pdu_fqdns[0]:
+        self._proxy_power_switch1 = self.get_device_proxy(
+            "mid_csp_cbf/power_switch/" + self._pdus[0]
+        )
+        if self._pdus[1] == self._pdus[0]:
             self._proxy_power_switch2 = self._proxy_power_switch1
         else:
             self._proxy_power_switch2 = self.get_device_proxy(
-                self._pdu_fqdns[1]
+                "mid_csp_cbf/power_switch/" + self._pdus[1]
             )
 
         if (self._proxy_power_switch1 is None) and (
@@ -155,7 +157,7 @@ class TalonLRUComponentManager(CbfComponentManager):
                 self.pdu1_power_mode = PowerMode.UNKNOWN
 
         if self._proxy_power_switch2 is not None:
-            if self._pdu_fqdns[1] != self._pdu_fqdns[0]:
+            if self._pdus[1] != self._pdus[0]:
                 self._proxy_power_switch2.set_timeout_millis(5000)
                 self._simulation_mode_events[
                     1
@@ -239,7 +241,7 @@ class TalonLRUComponentManager(CbfComponentManager):
 
         if self._proxy_power_switch2 is not None:
             if self._proxy_power_switch2.numOutlets != 0:
-                if (self._pdu_fqdns[1] == self._pdu_fqdns[0]) and (
+                if (self._pdus[1] == self._pdus[0]) and (
                     self._pdu_outlets[1] == self._pdu_outlets[0]
                 ):
                     self.pdu2_power_mode = self.pdu1_power_mode
@@ -313,7 +315,7 @@ class TalonLRUComponentManager(CbfComponentManager):
             result2 = ResultCode.FAILED
             if self._proxy_power_switch2 is not None:
                 if (
-                    self._pdu_fqdns[1] == self._pdu_fqdns[0]
+                    self._pdus[1] == self._pdus[0]
                     and self._pdu_outlets[1] == self._pdu_outlets[0]
                 ):
                     self._logger.info("PDU 2 is not used.")
@@ -333,14 +335,14 @@ class TalonLRUComponentManager(CbfComponentManager):
                 self._proxy_talondx_board1.On()
             except tango.DevFailed as df:
                 self._logger.warn(
-                    f"Talon board {self._talon_fqdns[0]} ON command failed: {df}"
+                    f"Talon board {self._talons[0]} ON command failed: {df}"
                 )
 
             try:
                 self._proxy_talondx_board2.On()
             except tango.DevFailed as df:
                 self._logger.warn(
-                    f"Talon board {self._talon_fqdns[1]} ON command failed: {df}"
+                    f"Talon board {self._talons[1]} ON command failed: {df}"
                 )
 
             # Determine what result code to return
@@ -388,7 +390,7 @@ class TalonLRUComponentManager(CbfComponentManager):
             result2 = ResultCode.FAILED
             if self._proxy_power_switch2 is not None:
                 if (
-                    self._pdu_fqdns[1] == self._pdu_fqdns[0]
+                    self._pdus[1] == self._pdus[0]
                     and self._pdu_outlets[1] == self._pdu_outlets[0]
                 ):
                     self._logger.info("PDU 2 is not used.")
@@ -406,14 +408,14 @@ class TalonLRUComponentManager(CbfComponentManager):
                 self._proxy_talondx_board1.Off()
             except tango.DevFailed as df:
                 self._logger.warn(
-                    f"Talon board {self._talon_fqdns[0]} OFF command failed: {df}"
+                    f"Talon board {self._talons[0]} OFF command failed: {df}"
                 )
 
             try:
                 self._proxy_talondx_board2.Off()
             except tango.DevFailed as df:
                 self._logger.warn(
-                    f"Talon board {self._talon_fqdns[1]} OFF command failed: {df}"
+                    f"Talon board {self._talons[1]} OFF command failed: {df}"
                 )
 
             # Determine what result code to return

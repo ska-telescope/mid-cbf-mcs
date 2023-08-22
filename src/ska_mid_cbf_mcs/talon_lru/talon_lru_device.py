@@ -48,15 +48,15 @@ class TalonLRU(SKABaseDevice):
     # Device Properties
     # -----------------
 
-    TalonDxBoard1Address = device_property(
+    TalonDxBoard1 = device_property(
         dtype="str",
     )
 
-    TalonDxBoard2Address = device_property(
+    TalonDxBoard2 = device_property(
         dtype="str",
     )
 
-    PDU1Address = device_property(
+    PDU1 = device_property(
         dtype="str",
     )
 
@@ -64,7 +64,7 @@ class TalonLRU(SKABaseDevice):
         dtype="str",
     )
 
-    PDU2Address = device_property(
+    PDU2 = device_property(
         dtype="str",
     )
 
@@ -227,8 +227,8 @@ class TalonLRU(SKABaseDevice):
         self._component_power_mode: Optional[PowerMode] = None
 
         return TalonLRUComponentManager(
-            talon_fqdns=[self.TalonDxBoard1Address, self.TalonDxBoard2Address],
-            pdu_fqdns=[self.PDU1Address, self.PDU2Address],
+            talons=[self.TalonDxBoard1, self.TalonDxBoard2],
+            pdus=[self.PDU1, self.PDU2],
             pdu_outlets=[self.PDU1PowerOutlet, self.PDU2PowerOutlet],
             logger=self.logger,
             push_change_event_callback=self.push_change_event,

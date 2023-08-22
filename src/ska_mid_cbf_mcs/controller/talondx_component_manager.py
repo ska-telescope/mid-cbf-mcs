@@ -161,7 +161,7 @@ class TalonDxComponentManager:
         for talon_cfg in self.talondx_config["config_commands"]:
             try:
                 target = talon_cfg["target"]
-                ip = self._hw_config["talon_ip"][target]
+                ip = self._hw_config["talon_board"][target]
                 # timeout for the first attempt at SSH connection
                 # to the Talon boards after boot-up
                 talon_first_connect_timeout = talon_cfg[
@@ -238,7 +238,7 @@ class TalonDxComponentManager:
         for talon_cfg in self.talondx_config["config_commands"]:
             try:
                 target = talon_cfg["target"]
-                ip = self._hw_config["talon_ip"][target]
+                ip = self._hw_config["talon_board"][target]
                 # timeout for the first attempt at SSH connection
                 # to the Talon boards after boot-up
                 talon_first_connect_timeout = talon_cfg[
@@ -378,7 +378,7 @@ class TalonDxComponentManager:
         ret = ResultCode.OK
         for talon_cfg in self.talondx_config["config_commands"]:
             talon = talon_cfg["target"]
-            ip = self._hw_config["talon_ip"][talon]
+            ip = self._hw_config["talon_board"][talon]
             target = f"root@{ip}"
             inst = talon_cfg["server_instance"]
 

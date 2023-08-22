@@ -180,7 +180,8 @@ class ControllerComponentManager(CbfComponentManager):
         self._fqdn_talon_board = [
             fqdn
             for fqdn in self._talon_board_fqdns_all
-            if fqdn.split("/")[-1] in list(self._hw_config["talon_ip"].keys())
+            if fqdn.split("/")[-1]
+            in list(self._hw_config["talon_board"].keys())
         ]
         self._fqdn_power_switch = [
             fqdn
@@ -252,7 +253,7 @@ class ControllerComponentManager(CbfComponentManager):
                         board_config = tango.utils.obj_2_property(
                             {
                                 "TalonDxBoardAddress": self._hw_config[
-                                    "talon_ip"
+                                    "talon_board"
                                 ][board_id]
                             }
                         )
