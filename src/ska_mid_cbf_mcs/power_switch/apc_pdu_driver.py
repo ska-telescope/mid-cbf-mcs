@@ -213,7 +213,7 @@ class ApcPduDriver:
             return (ResultCode.FAILED, err)
         outlet_idx = self.outlet_id_list.index(outlet)
         with self.mutex:
-            self.outlets[outlet_idx].power_mode = PowerMode.ON
+            self.outlets[outlet_idx].power_mode = PowerMode.OFF
         return ResultCode.OK, f"Outlet {outlet} power off"
 
     def _outlet_on(self: ApcPduDriver, outlet: str):
