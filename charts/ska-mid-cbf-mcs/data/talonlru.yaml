@@ -67,16 +67,16 @@ server:
             - "mid_csp_cbf/talon_board/talon-004"
           - name: "PDU1Address"
             values:
-            - "mid_csp_cbf/power_switch/003"
+            - "mid_csp_cbf/power_switch/001"
           - name: "PDU1PowerOutlet"
             values:
-            - "4"
+            - "1"
           - name: "PDU2Address"
             values:
-            - "mid_csp_cbf/power_switch/003"
+            - "mid_csp_cbf/power_switch/001"
           - name: "PDU2PowerOutlet"
             values:
-            - "5"
+            - "1"
           - name: "polled_attr"
             values:
             - "state"
