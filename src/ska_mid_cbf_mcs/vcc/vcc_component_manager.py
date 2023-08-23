@@ -782,6 +782,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         msg = "ConfigureSearchWindow completed OK"
 
         argin = json.loads(argin)
+        self._logger.debug(f"vcc argin: {json.dumps(argin)}")
 
         # variable to use as SW proxy
         proxy_sw = None
@@ -790,6 +791,8 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
             proxy_sw = self._sw_proxies[0]
         elif int(argin["search_window_id"]) == 2:
             proxy_sw = self._sw_proxies[1]
+            
+        self._logger.debug(f"search_window_id == {argin['search_window_id']}")
 
         try:
             # Configure searchWindowTuning.
@@ -869,7 +872,6 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
 
                 # Configure tdcEnable.
                 proxy_sw.tdcEnable = argin["tdc_enable"]
-                print(f"vcc tdcEnable: {proxy_sw.tdcEnable}")
                 # if argin["tdc_enable"]:
                 #     proxy_sw.On()
                 # else:

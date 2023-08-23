@@ -10,9 +10,6 @@
     "tdc_period_before_epoch": 5,
     "tdc_period_after_epoch": 25,
     "tdc_destination_address": [
-        {
-            "receptor_id": ["SKA001", 1],
-            "tdc_destination_address": ["fizz", "buzz", "80"]
-        }
+        ["SKA001", 1]
     ]
 }

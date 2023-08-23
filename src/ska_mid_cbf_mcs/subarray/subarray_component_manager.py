@@ -1616,17 +1616,19 @@ class CbfSubarrayComponentManager(
                     ]
                 # pass receptor IDs as pair of str and int to VCCs
                 if search_window["tdc_enable"]:
+                    receptors = []
                     for receptor_id in search_window[
                         "tdc_destination_address"
                     ]:
-                        receptor_id = [
+                        receptors.append([
                             receptor_id,
                             self._receptor_utils.receptors[receptor_id],
-                        ]
+                        ])
+                    search_window["tdc_destination_address"] = receptors
                 # pass on configuration to VCC
                 data = tango.DeviceData()
                 data.insert(tango.DevString, json.dumps(search_window))
-                print("configuring search window")
+                self._logger.debug(f"configuring search window: {json.dumps(search_window)}")
                 self._group_vcc.command_inout("ConfigureSearchWindow", data)
         else:
             log_msg = "'searchWindow' not given."

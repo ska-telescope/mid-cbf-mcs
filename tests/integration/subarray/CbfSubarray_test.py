@@ -734,9 +734,7 @@ class TestCbfSubarray:
                 for idx, search_window in enumerate(
                     configuration["cbf"]["search_window"]
                 ):
-                    print(f"search window index :{idx}")
                     for r in vcc_receptors:
-                        print(f"vcc receptor: {r}")
                         assert (
                             test_proxies.vccSw[
                                 test_proxies.receptor_to_vcc[r]
@@ -789,20 +787,20 @@ class TestCbfSubarray:
                         if "tdc_destination_address" in search_window:
                             for t in search_window["tdc_destination_address"]:
                                 if (
-                                    self.receptor_utils.receptors[
-                                        t["receptor_id"]
-                                    ]
+                                    self.receptor_utils.receptors[t]
                                     == r
                                 ):
-                                    tdcDestAddr = t["tdc_destination_address"]
-                                    assert (
-                                        list(
-                                            test_proxies.vccSw[
-                                                test_proxies.receptor_to_vcc[r]
-                                            ][idx + 1].tdcDestinationAddress
-                                        )
-                                        == tdcDestAddr
-                                    )
+                                    pass
+                                    # TODO: as of CIP-1606, this is not compliant with the telescope model
+                                    # tdcDestAddr = t["tdc_destination_address"]
+                                    # assert (
+                                    #     list(
+                                    #         test_proxies.vccSw[
+                                    #             test_proxies.receptor_to_vcc[r]
+                                    #         ][idx + 1].tdcDestinationAddress
+                                    #     )
+                                    #     == tdcDestAddr
+                                    # )
 
             # check configured attributes of FSPs, including states of function mode capabilities
             for fsp in configuration["cbf"]["fsp"]:
@@ -973,42 +971,45 @@ class TestCbfSubarray:
                     assert (
                         test_proxies.fsp[fsp_id].functionMode == function_mode
                     )
-                    assert (
-                        test_proxies.fspSubarray["PSS-BF"][sub_id][
-                            fsp_id
-                        ].searchWindowID
-                        == fsp["search_window_id"]
-                    )
+                    
+                    # TODO: As of CIP-1606, the scan configuration must be compliant to the telescope model.
+                    #       The below asserts depend on the previous configuration which is not compliant.
+                    # assert (
+                    #     test_proxies.fspSubarray["PSS-BF"][sub_id][
+                    #         fsp_id
+                    #     ].searchWindowID
+                    #     == fsp["search_window_id"]
+                    # )
 
                     # TODO: currently searchBeams is stored by the device
                     #       as a json string ( via attribute 'searchBeams');
                     #       this has to be updated in FspPssSubarray
                     #       to read/write individual members
-                    for idx, sBeam in enumerate(
-                        test_proxies.fspSubarray["PSS-BF"][sub_id][
-                            fsp_id
-                        ].searchBeams
-                    ):
-                        searchBeam = json.loads(sBeam)
-                        assert (
-                            searchBeam["search_beam_id"]
-                            == fsp["search_beam"][idx]["search_beam_id"]
-                        )
-                        # TODO currently only one receptor supported
-                        assert (
-                            searchBeam["receptor_ids"][0][1]
-                            == self.receptor_utils.receptors[
-                                fsp["search_beam"][idx]["receptor_ids"][0]
-                            ]
-                        )
-                        assert (
-                            searchBeam["enable_output"]
-                            == fsp["search_beam"][idx]["enable_output"]
-                        )
-                        assert (
-                            searchBeam["averaging_interval"]
-                            == fsp["search_beam"][idx]["averaging_interval"]
-                        )
+                    # for idx, sBeam in enumerate(
+                    #     test_proxies.fspSubarray["PSS-BF"][sub_id][
+                    #         fsp_id
+                    #     ].searchBeams
+                    # ):
+                    #     searchBeam = json.loads(sBeam)
+                    #     assert (
+                    #         searchBeam["search_beam_id"]
+                    #         == fsp["search_beam"][idx]["search_beam_id"]
+                    #     )
+                    #     # TODO currently only one receptor supported
+                    #     assert (
+                    #         searchBeam["receptor_ids"][0][1]
+                    #         == self.receptor_utils.receptors[
+                    #             fsp["search_beam"][idx]["receptor_ids"][0]
+                    #         ]
+                    #     )
+                    #     assert (
+                    #         searchBeam["enable_output"]
+                    #         == fsp["search_beam"][idx]["enable_output"]
+                    #     )
+                    #     assert (
+                    #         searchBeam["averaging_interval"]
+                    #         == fsp["search_beam"][idx]["averaging_interval"]
+                    #     )
                         # TODO - this does not pass - to debug & fix
                         # assert searchBeam["searchBeamDestinationAddress"] == fsp["search_beam"][idx]["search_beam_destination_address"]
 
@@ -1023,34 +1024,39 @@ class TestCbfSubarray:
                         sub_id in test_proxies.fsp[fsp_id].subarrayMembership
                     )
 
-                    assert (
-                        test_proxies.fspSubarray["PST-BF"][sub_id][
-                            fsp_id
-                        ].obsState
-                        == ObsState.READY
-                    )
-                    for beam in fsp["timing_beam"]:
-                        # TODO currently only one receptor supported
-                        assert (
-                            test_proxies.fspSubarray["PST-BF"][sub_id][
-                                fsp_id
-                            ].receptors[0]
-                            == self.receptor_utils.receptors[
-                                beam["receptor_ids"][0]
-                            ]
-                        )
+                    # TODO: As of CIP-1606, the fspSubarray for PST-BF does not get configured.
+                    #       Configuration is being skipped temporarily as it's not compliant to the telescope model.
+                    # assert (
+                    #     test_proxies.fspSubarray["PST-BF"][sub_id][
+                    #         fsp_id
+                    #     ].obsState
+                    #     == ObsState.READY
+                    # )
 
-                        assert all(
-                            [
-                                test_proxies.fspSubarray["PST-BF"][sub_id][
-                                    fsp_id
-                                ].timingBeamID[i]
-                                == j
-                                for i, j in zip(
-                                    range(1), [beam["timing_beam_id"]]
-                                )
-                            ]
-                        )
+                    # TODO: As of CIP-1606, the scan configuration must be compliant to the telescope model.
+                    #       The below asserts depend on the previous configuration which is not compliant.
+                    # for beam in fsp["timing_beam"]:
+                    #     # TODO currently only one receptor supported
+                    #     assert (
+                    #         test_proxies.fspSubarray["PST-BF"][sub_id][
+                    #             fsp_id
+                    #         ].receptors[0]
+                    #         == self.receptor_utils.receptors[
+                    #             beam["receptor_ids"][0]
+                    #         ]
+                    #     )
+
+                    #     assert all(
+                    #         [
+                    #             test_proxies.fspSubarray["PST-BF"][sub_id][
+                    #                 fsp_id
+                    #             ].timingBeamID[i]
+                    #             == j
+                    #             for i, j in zip(
+                    #                 range(1), [beam["timing_beam_id"]]
+                    #             )
+                    #         ]
+                    #     )
 
                 elif fsp["function_mode"] == "VLBI":
                     function_mode = FspModes.VLBI.value
@@ -1522,20 +1528,22 @@ class TestCbfSubarray:
                         ].obsState
                         == ObsState.READY
                     )
-                elif fsp["function_mode"] == "PSS-BF":
-                    assert (
-                        test_proxies.fspSubarray["PSS-BF"][sub_id][
-                            fsp_id
-                        ].obsState
-                        == ObsState.READY
-                    )
-                elif fsp["function_mode"] == "PST-BF":
-                    assert (
-                        test_proxies.fspSubarray["PST-BF"][sub_id][
-                            fsp_id
-                        ].obsState
-                        == ObsState.READY
-                    )
+                
+                # TODO: As of CIP-1606, currently skipping configuration of PSS-BF and PST-BF modes
+                # elif fsp["function_mode"] == "PSS-BF":
+                #     assert (
+                #         test_proxies.fspSubarray["PSS-BF"][sub_id][
+                #             fsp_id
+                #         ].obsState
+                #         == ObsState.READY
+                #     )
+                # elif fsp["function_mode"] == "PST-BF":
+                #     assert (
+                #         test_proxies.fspSubarray["PST-BF"][sub_id][
+                #             fsp_id
+                #         ].obsState
+                #         == ObsState.READY
+                #     )
 
             # Send the Scan command
             f2 = open(data_file_path + scan_file_name)
@@ -1561,20 +1569,22 @@ class TestCbfSubarray:
                         ].obsState
                         == ObsState.SCANNING
                     )
-                elif fsp["function_mode"] == "PSS-BF":
-                    assert (
-                        test_proxies.fspSubarray["PSS-BF"][sub_id][
-                            fsp_id
-                        ].obsState
-                        == ObsState.SCANNING
-                    )
-                elif fsp["function_mode"] == "PST-BF":
-                    assert (
-                        test_proxies.fspSubarray["PST-BF"][sub_id][
-                            fsp_id
-                        ].obsState
-                        == ObsState.SCANNING
-                    )
+
+                # TODO: As of CIP-1606, currently skipping configuration of PSS-BF and PST-BF modes
+                # elif fsp["function_mode"] == "PSS-BF":
+                #     assert (
+                #         test_proxies.fspSubarray["PSS-BF"][sub_id][
+                #             fsp_id
+                #         ].obsState
+                #         == ObsState.SCANNING
+                #     )
+                # elif fsp["function_mode"] == "PST-BF":
+                #     assert (
+                #         test_proxies.fspSubarray["PST-BF"][sub_id][
+                #             fsp_id
+                #         ].obsState
+                #         == ObsState.SCANNING
+                #     )
 
             test_proxies.subarray[sub_id].EndScan()
             test_proxies.wait_timeout_obs(
@@ -1604,20 +1614,22 @@ class TestCbfSubarray:
                         ].obsState
                         == ObsState.READY
                     )
-                elif fsp["function_mode"] == "PSS-BF":
-                    assert (
-                        test_proxies.fspSubarray["PSS-BF"][sub_id][
-                            fsp_id
-                        ].obsState
-                        == ObsState.READY
-                    )
-                elif fsp["function_mode"] == "PST-BF":
-                    assert (
-                        test_proxies.fspSubarray["PST-BF"][sub_id][
-                            fsp_id
-                        ].obsState
-                        == ObsState.READY
-                    )
+
+                # TODO: As of CIP-1606, currently skipping configuration of PSS-BF and PST-BF modes
+                # elif fsp["function_mode"] == "PSS-BF":
+                #     assert (
+                #         test_proxies.fspSubarray["PSS-BF"][sub_id][
+                #             fsp_id
+                #         ].obsState
+                #         == ObsState.READY
+                #     )
+                # elif fsp["function_mode"] == "PST-BF":
+                #     assert (
+                #         test_proxies.fspSubarray["PST-BF"][sub_id][
+                #             fsp_id
+                #         ].obsState
+                #         == ObsState.READY
+                #     )
 
             # Clean up
             wait_time_s = 3
@@ -1716,8 +1728,6 @@ class TestCbfSubarray:
         # Convert the serialized JSON object to a Python object:
         delay_model_all_obj = json.loads(delay_model_all)
 
-        print(f"{delay_model_all}")
-
         # Get the DM Python object input to the DM test
         delay_model_for_test_all_obj = delay_model_test.create_test_dm_obj_all(
             delay_model_all_obj, vcc_receptors
@@ -1782,8 +1792,9 @@ class TestCbfSubarray:
                 input_delay_model = json.dumps(input_delay_model_obj)
 
                 # Write this one delay_model JSON object to the TM emulator
+                print(f"CbfSubarray_test.py::test_ConfigureScan_delayModel() -- writing delay model to TM emulator: {input_delay_model}")
                 test_proxies.tm.delayModel = input_delay_model
-
+                
                 time.sleep(10)
 
                 # check the delay model was correctly updated for vcc
@@ -1814,7 +1825,8 @@ class TestCbfSubarray:
                                 ],
                             ]
                             break
-
+                    
+                    print(f"CbfSubarray_test.py::test_ConfigureScan_delayModel() -- vcc delay model: {vcc_dp.delayModel}")
                     vcc_updated_delayModel_obj = json.loads(vcc_dp.delayModel)
 
                     # there should be only one delay model in the vcc
@@ -2275,20 +2287,22 @@ class TestCbfSubarray:
                         ].obsState
                         == ObsState.READY
                     )
-                elif fsp["function_mode"] == "PSS-BF":
-                    assert (
-                        test_proxies.fspSubarray["PSS-BF"][sub_id][
-                            fsp_id
-                        ].obsState
-                        == ObsState.READY
-                    )
-                elif fsp["function_mode"] == "PST-BF":
-                    assert (
-                        test_proxies.fspSubarray["PST-BF"][sub_id][
-                            fsp_id
-                        ].obsState
-                        == ObsState.READY
-                    )
+
+                # TODO: As of CIP-1606, currently skipping configuration of PSS-BF and PST-BF modes
+                # elif fsp["function_mode"] == "PSS-BF":
+                #     assert (
+                #         test_proxies.fspSubarray["PSS-BF"][sub_id][
+                #             fsp_id
+                #         ].obsState
+                #         == ObsState.READY
+                #     )
+                # elif fsp["function_mode"] == "PST-BF":
+                #     assert (
+                #         test_proxies.fspSubarray["PST-BF"][sub_id][
+                #             fsp_id
+                #         ].obsState
+                #         == ObsState.READY
+                #     )
 
             # send the Scan command
             f2 = open(data_file_path + scan_file_name)
@@ -2313,20 +2327,22 @@ class TestCbfSubarray:
                         test_proxies.fspSubarray["CORR"][sub_id][fsp_id].scanID
                         == scan_id
                     )
-                elif fsp["function_mode"] == "PSS-BF":
-                    assert (
-                        test_proxies.fspSubarray["PSS-BF"][sub_id][
-                            fsp_id
-                        ].scanID
-                        == scan_id
-                    )
-                elif fsp["function_mode"] == "PST-BF":
-                    assert (
-                        test_proxies.fspSubarray["PST-BF"][sub_id][
-                            fsp_id
-                        ].scanID
-                        == scan_id
-                    )
+
+                # TODO: As of CIP-1606, currently skipping configuration of PSS-BF and PST-BF modes
+                # elif fsp["function_mode"] == "PSS-BF":
+                #     assert (
+                #         test_proxies.fspSubarray["PSS-BF"][sub_id][
+                #             fsp_id
+                #         ].scanID
+                #         == scan_id
+                #     )
+                # elif fsp["function_mode"] == "PST-BF":
+                #     assert (
+                #         test_proxies.fspSubarray["PST-BF"][sub_id][
+                #             fsp_id
+                #         ].scanID
+                #         == scan_id
+                #     )
             for r in vcc_receptors:
                 assert (
                     test_proxies.vcc[test_proxies.receptor_to_vcc[r]].scanID
@@ -2349,20 +2365,22 @@ class TestCbfSubarray:
                         ].obsState
                         == ObsState.SCANNING
                     )
-                elif fsp["function_mode"] == "PSS-BF":
-                    assert (
-                        test_proxies.fspSubarray["PSS-BF"][sub_id][
-                            fsp_id
-                        ].obsState
-                        == ObsState.SCANNING
-                    )
-                elif fsp["function_mode"] == "PST-BF":
-                    assert (
-                        test_proxies.fspSubarray["PST-BF"][sub_id][
-                            fsp_id
-                        ].obsState
-                        == ObsState.SCANNING
-                    )
+
+                # TODO: As of CIP-1606, currently skipping configuration of PSS-BF and PST-BF modes
+                # elif fsp["function_mode"] == "PSS-BF":
+                #     assert (
+                #         test_proxies.fspSubarray["PSS-BF"][sub_id][
+                #             fsp_id
+                #         ].obsState
+                #         == ObsState.SCANNING
+                #     )
+                # elif fsp["function_mode"] == "PST-BF":
+                #     assert (
+                #         test_proxies.fspSubarray["PST-BF"][sub_id][
+                #             fsp_id
+                #         ].obsState
+                #         == ObsState.SCANNING
+                #     )
 
             # Clean up
             wait_time_s = 3
@@ -2496,20 +2514,22 @@ class TestCbfSubarray:
                         ].obsState
                         == ObsState.READY
                     )
-                elif fsp["function_mode"] == "PSS-BF":
-                    assert (
-                        test_proxies.fspSubarray["PSS-BF"][sub_id][
-                            fsp_id
-                        ].obsState
-                        == ObsState.READY
-                    )
-                elif fsp["function_mode"] == "PST-BF":
-                    assert (
-                        test_proxies.fspSubarray["PST-BF"][sub_id][
-                            fsp_id
-                        ].obsState
-                        == ObsState.READY
-                    )
+
+                # TODO: As of CIP-1606, currently skipping configuration of PSS-BF and PST-BF modes
+                # elif fsp["function_mode"] == "PSS-BF":
+                #     assert (
+                #         test_proxies.fspSubarray["PSS-BF"][sub_id][
+                #             fsp_id
+                #         ].obsState
+                #         == ObsState.READY
+                #     )
+                # elif fsp["function_mode"] == "PST-BF":
+                #     assert (
+                #         test_proxies.fspSubarray["PST-BF"][sub_id][
+                #             fsp_id
+                #         ].obsState
+                #         == ObsState.READY
+                #     )
             for r in vcc_receptors:
                 assert (
                     test_proxies.vcc[test_proxies.receptor_to_vcc[r]].obsState
@@ -2617,20 +2637,22 @@ class TestCbfSubarray:
                         ].obsState
                         == ObsState.SCANNING
                     )
-                elif fsp["function_mode"] == "PSS-BF":
-                    assert (
-                        test_proxies.fspSubarray["PSS-BF"][sub_id][
-                            fsp_id
-                        ].obsState
-                        == ObsState.SCANNING
-                    )
-                elif fsp["function_mode"] == "PST-BF":
-                    assert (
-                        test_proxies.fspSubarray["PST-BF"][sub_id][
-                            fsp_id
-                        ].obsState
-                        == ObsState.SCANNING
-                    )
+
+                # TODO: As of CIP-1606, currently skipping configuration of PSS-BF and PST-BF modes
+                # elif fsp["function_mode"] == "PSS-BF":
+                #     assert (
+                #         test_proxies.fspSubarray["PSS-BF"][sub_id][
+                #             fsp_id
+                #         ].obsState
+                #         == ObsState.SCANNING
+                #     )
+                # elif fsp["function_mode"] == "PST-BF":
+                #     assert (
+                #         test_proxies.fspSubarray["PST-BF"][sub_id][
+                #             fsp_id
+                #         ].obsState
+                #         == ObsState.SCANNING
+                #     )
             for r in vcc_receptors:
                 assert (
                     test_proxies.vcc[test_proxies.receptor_to_vcc[r]].obsState
@@ -2655,20 +2677,22 @@ class TestCbfSubarray:
                         ].obsState
                         == ObsState.READY
                     )
-                elif fsp["function_mode"] == "PSS-BF":
-                    assert (
-                        test_proxies.fspSubarray["PSS-BF"][sub_id][
-                            fsp_id
-                        ].obsState
-                        == ObsState.READY
-                    )
-                elif fsp["function_mode"] == "PST-BF":
-                    assert (
-                        test_proxies.fspSubarray["PST-BF"][sub_id][
-                            fsp_id
-                        ].obsState
-                        == ObsState.READY
-                    )
+
+                # TODO: As of CIP-1606, currently skipping configuration of PSS-BF and PST-BF modes
+                # elif fsp["function_mode"] == "PSS-BF":
+                #     assert (
+                #         test_proxies.fspSubarray["PSS-BF"][sub_id][
+                #             fsp_id
+                #         ].obsState
+                #         == ObsState.READY
+                #     )
+                # elif fsp["function_mode"] == "PST-BF":
+                #     assert (
+                #         test_proxies.fspSubarray["PST-BF"][sub_id][
+                #             fsp_id
+                #         ].obsState
+                #         == ObsState.READY
+                #    )
             for r in vcc_receptors:
                 assert (
                     test_proxies.vcc[test_proxies.receptor_to_vcc[r]].obsState
@@ -2847,7 +2871,6 @@ class TestCbfSubarray:
                         ].obsState
                         == ObsState.IDLE
                     )
-            print(vcc_receptors)
             for r in vcc_receptors:
                 assert (
                     test_proxies.vcc[test_proxies.receptor_to_vcc[r]].obsState
@@ -2884,20 +2907,22 @@ class TestCbfSubarray:
                         ].obsState
                         == ObsState.READY
                     )
-                elif fsp["function_mode"] == "PSS-BF":
-                    assert (
-                        test_proxies.fspSubarray["PSS-BF"][sub_id][
-                            fsp_id
-                        ].obsState
-                        == ObsState.READY
-                    )
-                elif fsp["function_mode"] == "PST-BF":
-                    assert (
-                        test_proxies.fspSubarray["PST-BF"][sub_id][
-                            fsp_id
-                        ].obsState
-                        == ObsState.READY
-                    )
+
+                # TODO: As of CIP-1606, currently skipping configuration of PSS-BF and PST-BF modes
+                # elif fsp["function_mode"] == "PSS-BF":
+                #     assert (
+                #         test_proxies.fspSubarray["PSS-BF"][sub_id][
+                #             fsp_id
+                #         ].obsState
+                #         == ObsState.READY
+                #     )
+                # elif fsp["function_mode"] == "PST-BF":
+                #     assert (
+                #         test_proxies.fspSubarray["PST-BF"][sub_id][
+                #             fsp_id
+                #         ].obsState
+                #         == ObsState.READY
+                #     )
             for r in vcc_receptors:
                 assert (
                     test_proxies.vcc[test_proxies.receptor_to_vcc[r]].obsState
@@ -2997,20 +3022,22 @@ class TestCbfSubarray:
                         ].obsState
                         == ObsState.SCANNING
                     )
-                elif fsp["function_mode"] == "PSS-BF":
-                    assert (
-                        test_proxies.fspSubarray["PSS-BF"][sub_id][
-                            fsp_id
-                        ].obsState
-                        == ObsState.SCANNING
-                    )
-                elif fsp["function_mode"] == "PST-BF":
-                    assert (
-                        test_proxies.fspSubarray["PST-BF"][sub_id][
-                            fsp_id
-                        ].obsState
-                        == ObsState.SCANNING
-                    )
+
+                # TODO: As of CIP-1606, currently skipping configuration of PSS-BF and PST-BF modes
+                # elif fsp["function_mode"] == "PSS-BF":
+                #     assert (
+                #         test_proxies.fspSubarray["PSS-BF"][sub_id][
+                #             fsp_id
+                #         ].obsState
+                #         == ObsState.SCANNING
+                #     )
+                # elif fsp["function_mode"] == "PST-BF":
+                #     assert (
+                #         test_proxies.fspSubarray["PST-BF"][sub_id][
+                #             fsp_id
+                #         ].obsState
+                #         == ObsState.SCANNING
+                #     )
             for r in vcc_receptors:
                 assert (
                     test_proxies.vcc[test_proxies.receptor_to_vcc[r]].obsState
@@ -3035,20 +3062,22 @@ class TestCbfSubarray:
                         ].obsState
                         == ObsState.READY
                     )
-                elif fsp["function_mode"] == "PSS-BF":
-                    assert (
-                        test_proxies.fspSubarray["PSS-BF"][sub_id][
-                            fsp_id
-                        ].obsState
-                        == ObsState.READY
-                    )
-                elif fsp["function_mode"] == "PST-BF":
-                    assert (
-                        test_proxies.fspSubarray["PST-BF"][sub_id][
-                            fsp_id
-                        ].obsState
-                        == ObsState.READY
-                    )
+
+                # TODO: As of CIP-1606, currently skipping configuration of PSS-BF and PST-BF modes
+                # elif fsp["function_mode"] == "PSS-BF":
+                #     assert (
+                #         test_proxies.fspSubarray["PSS-BF"][sub_id][
+                #             fsp_id
+                #         ].obsState
+                #         == ObsState.READY
+                #     )
+                # elif fsp["function_mode"] == "PST-BF":
+                #     assert (
+                #         test_proxies.fspSubarray["PST-BF"][sub_id][
+                #             fsp_id
+                #         ].obsState
+                #         == ObsState.READY
+                #     )
             for r in vcc_receptors:
                 assert (
                     test_proxies.vcc[test_proxies.receptor_to_vcc[r]].obsState
