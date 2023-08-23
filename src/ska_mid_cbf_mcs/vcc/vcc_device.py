@@ -1246,7 +1246,7 @@ class Vcc(CspSubElementObsDevice):
                 return (False, msg)
 
             print(
-                f"vcc_device.py::ConfigureSearchWindowCommand::validate_input -- loaded json"
+                "vcc_device.py::ConfigureSearchWindowCommand::validate_input -- loaded json"
             )
 
             # Validate searchWindowID.
@@ -1262,7 +1262,7 @@ class Vcc(CspSubElementObsDevice):
                 return (False, msg)
 
             print(
-                f"vcc_device.py::ConfigureSearchWindowCommand::validate_input() -- validated searchWindowId"
+                "vcc_device.py::ConfigureSearchWindowCommand::validate_input() -- validated searchWindowId"
             )
 
             # Validate searchWindowTuning.
@@ -1352,7 +1352,7 @@ class Vcc(CspSubElementObsDevice):
                 return (False, msg)
 
             print(
-                f"vcc_device.py::ConfigureSearchWindowCommand::validate_input() -- validated searchWindowTuning"
+                "vcc_device.py::ConfigureSearchWindowCommand::validate_input() -- validated searchWindowTuning"
             )
 
             # Validate tdcEnable.
@@ -1369,7 +1369,7 @@ class Vcc(CspSubElementObsDevice):
                 return (False, msg)
 
             print(
-                f"vcc_device.py::ConfigureSearchWindowCommand::validate_input() -- validated tdcEnable"
+                "vcc_device.py::ConfigureSearchWindowCommand::validate_input() -- validated tdcEnable"
             )
 
             # Validate tdcNumBits.
@@ -1386,7 +1386,7 @@ class Vcc(CspSubElementObsDevice):
                     return (False, msg)
 
             print(
-                f"vcc_device.py::ConfigureSearchWindowCommand::validate_input() -- validated tdcNumBits"
+                "vcc_device.py::ConfigureSearchWindowCommand::validate_input() -- validated tdcNumBits"
             )
 
             # Validate tdcPeriodBeforeEpoch.
@@ -1401,7 +1401,7 @@ class Vcc(CspSubElementObsDevice):
                 pass
 
             print(
-                f"vcc_device.py::ConfigureSearchWindowCommand::validate_input() -- validated tdcPeriodBeforeEpoch"
+                "vcc_device.py::ConfigureSearchWindowCommand::validate_input() -- validated tdcPeriodBeforeEpoch"
             )
 
             # Validate tdcPeriodAfterEpoch.
@@ -1416,7 +1416,7 @@ class Vcc(CspSubElementObsDevice):
                 pass
 
             print(
-                f"vcc_device.py::ConfigureSearchWindowCommand::validate_input() -- validated tdcPeriodAfterEpoch"
+                "vcc_device.py::ConfigureSearchWindowCommand::validate_input() -- validated tdcPeriodAfterEpoch"
             )
 
             # Validate tdcDestinationAddress.
@@ -1442,10 +1442,10 @@ class Vcc(CspSubElementObsDevice):
                     return (False, msg)
 
             print(
-                f"vcc_device.py::ConfigureSearchWindowCommand::validate_input() -- validated tdcDestinationAddress"
+                "vcc_device.py::ConfigureSearchWindowCommand::validate_input() -- validated tdcDestinationAddress"
             )
             print(
-                f"vcc_device.py::ConfigureSearchWindowCommand::validate_input() -- validation complete"
+                "vcc_device.py::ConfigureSearchWindowCommand::validate_input() -- validation complete"
             )
             return (True, "Search window validated.")
 
