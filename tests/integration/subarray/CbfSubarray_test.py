@@ -786,10 +786,7 @@ class TestCbfSubarray:
                             )
                         if "tdc_destination_address" in search_window:
                             for t in search_window["tdc_destination_address"]:
-                                if (
-                                    self.receptor_utils.receptors[t]
-                                    == r
-                                ):
+                                if self.receptor_utils.receptors[t] == r:
                                     pass
                                     # TODO: as of CIP-1606, this is not compliant with the telescope model
                                     # tdcDestAddr = t["tdc_destination_address"]
@@ -971,7 +968,7 @@ class TestCbfSubarray:
                     assert (
                         test_proxies.fsp[fsp_id].functionMode == function_mode
                     )
-                    
+
                     # TODO: As of CIP-1606, the scan configuration must be compliant to the telescope model.
                     #       The below asserts depend on the previous configuration which is not compliant.
                     # assert (
@@ -1010,8 +1007,8 @@ class TestCbfSubarray:
                     #         searchBeam["averaging_interval"]
                     #         == fsp["search_beam"][idx]["averaging_interval"]
                     #     )
-                        # TODO - this does not pass - to debug & fix
-                        # assert searchBeam["searchBeamDestinationAddress"] == fsp["search_beam"][idx]["search_beam_destination_address"]
+                    # TODO - this does not pass - to debug & fix
+                    # assert searchBeam["searchBeamDestinationAddress"] == fsp["search_beam"][idx]["search_beam_destination_address"]
 
                 elif fsp["function_mode"] == "PST-BF":
                     function_mode = FspModes.PST_BF.value
@@ -1528,7 +1525,7 @@ class TestCbfSubarray:
                         ].obsState
                         == ObsState.READY
                     )
-                
+
                 # TODO: As of CIP-1606, currently skipping configuration of PSS-BF and PST-BF modes
                 # elif fsp["function_mode"] == "PSS-BF":
                 #     assert (
@@ -1792,9 +1789,11 @@ class TestCbfSubarray:
                 input_delay_model = json.dumps(input_delay_model_obj)
 
                 # Write this one delay_model JSON object to the TM emulator
-                print(f"CbfSubarray_test.py::test_ConfigureScan_delayModel() -- writing delay model to TM emulator: {input_delay_model}")
+                print(
+                    f"CbfSubarray_test.py::test_ConfigureScan_delayModel() -- writing delay model to TM emulator: {input_delay_model}"
+                )
                 test_proxies.tm.delayModel = input_delay_model
-                
+
                 time.sleep(10)
 
                 # check the delay model was correctly updated for vcc
@@ -1825,8 +1824,10 @@ class TestCbfSubarray:
                                 ],
                             ]
                             break
-                    
-                    print(f"CbfSubarray_test.py::test_ConfigureScan_delayModel() -- vcc delay model: {vcc_dp.delayModel}")
+
+                    print(
+                        f"CbfSubarray_test.py::test_ConfigureScan_delayModel() -- vcc delay model: {vcc_dp.delayModel}"
+                    )
                     vcc_updated_delayModel_obj = json.loads(vcc_dp.delayModel)
 
                     # there should be only one delay model in the vcc

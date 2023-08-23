@@ -791,7 +791,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
             proxy_sw = self._sw_proxies[0]
         elif int(argin["search_window_id"]) == 2:
             proxy_sw = self._sw_proxies[1]
-            
+
         self._logger.debug(f"search_window_id == {argin['search_window_id']}")
 
         try:
