@@ -483,7 +483,7 @@ class CbfSubarrayComponentManager(
                 try:
                     delay_model_schema.validate(delay_model_json)
                 except Exception as e:
-                    self._logger.error(str(e))
+                    self.raise_update_delay_model_fatal_error(str(e))
 
                 # pass receptor IDs as pair of str and int to FSPs and VCCs
                 for delay_detail in delay_model_json["delay_details"]:
@@ -730,6 +730,27 @@ class CbfSubarrayComponentManager(
             "Command failed",
             msg,
             "ConfigureScan execution",
+            tango.ErrSeverity.ERR,
+        )
+
+    def raise_update_delay_model_fatal_error(
+        self: CbfSubarrayComponentManager, msg: str
+    ) -> Tuple[ResultCode, str]:
+        """
+        Raise fatal error in UpdateDelayModel execution
+
+        :param msg: error message
+        :return: A tuple containing a return code and a string
+            message indicating status. The message is for
+            information purpose only.
+        :rtype: (ResultCode, str)
+        """
+        self._component_obs_fault_callback(True)
+        self._logger.error(msg)
+        tango.Except.throw_exception(
+            "Command failed",
+            msg,
+            "UpdateDelayModel execution",
             tango.ErrSeverity.ERR,
         )
 
