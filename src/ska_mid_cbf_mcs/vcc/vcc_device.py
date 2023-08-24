@@ -1245,10 +1245,6 @@ class Vcc(CspSubElementObsDevice):
                 msg = "Search window configuration object is not a valid JSON object."
                 return (False, msg)
 
-            print(
-                "vcc_device.py::ConfigureSearchWindowCommand::validate_input -- loaded json"
-            )
-
             # Validate searchWindowID.
             if "search_window_id" in argin:
                 sw_id = argin["search_window_id"]
@@ -1261,8 +1257,8 @@ class Vcc(CspSubElementObsDevice):
                 msg = "Search window specified, but 'search_window_id' not given."
                 return (False, msg)
 
-            print(
-                "vcc_device.py::ConfigureSearchWindowCommand::validate_input() -- validated searchWindowId"
+            self.logger.debug(
+                f"Validated search_window_id: {argin['search_window_id']}"
             )
 
             # Validate searchWindowTuning.
@@ -1351,8 +1347,8 @@ class Vcc(CspSubElementObsDevice):
                 msg = "Search window specified, but 'search_window_tuning' not given."
                 return (False, msg)
 
-            print(
-                "vcc_device.py::ConfigureSearchWindowCommand::validate_input() -- validated searchWindowTuning"
+            self.logger.debug(
+                f"Validated search_window_tuning: {json.dumps(argin['search_window_tuning'])}"
             )
 
             # Validate tdcEnable.
@@ -1368,9 +1364,7 @@ class Vcc(CspSubElementObsDevice):
                 msg = "Search window specified, but 'tdc_enable' not given."
                 return (False, msg)
 
-            print(
-                "vcc_device.py::ConfigureSearchWindowCommand::validate_input() -- validated tdcEnable"
-            )
+            self.logger.debug("Validated tdcEnable")
 
             # Validate tdcNumBits.
             if argin["tdc_enable"]:
@@ -1385,9 +1379,7 @@ class Vcc(CspSubElementObsDevice):
                     msg = "Search window specified with TDC enabled, but 'tdcNumBits' not given."
                     return (False, msg)
 
-            print(
-                "vcc_device.py::ConfigureSearchWindowCommand::validate_input() -- validated tdcNumBits"
-            )
+            self.logger.debug("Validated tdcNumBits")
 
             # Validate tdcPeriodBeforeEpoch.
             if "tdc_period_before_epoch" in argin:
@@ -1400,9 +1392,7 @@ class Vcc(CspSubElementObsDevice):
             else:
                 pass
 
-            print(
-                "vcc_device.py::ConfigureSearchWindowCommand::validate_input() -- validated tdcPeriodBeforeEpoch"
-            )
+            self.logger.debug("Validated tdcPeriodBeforeEpoch")
 
             # Validate tdcPeriodAfterEpoch.
             if "tdc_period_after_epoch" in argin:
@@ -1415,9 +1405,7 @@ class Vcc(CspSubElementObsDevice):
             else:
                 pass
 
-            print(
-                "vcc_device.py::ConfigureSearchWindowCommand::validate_input() -- validated tdcPeriodAfterEpoch"
-            )
+            self.logger.debug("Validated tdcPeriodAfterEpoch")
 
             # Validate tdcDestinationAddress.
             if argin["tdc_enable"]:
@@ -1441,12 +1429,8 @@ class Vcc(CspSubElementObsDevice):
                     )
                     return (False, msg)
 
-            print(
-                "vcc_device.py::ConfigureSearchWindowCommand::validate_input() -- validated tdcDestinationAddress"
-            )
-            print(
-                "vcc_device.py::ConfigureSearchWindowCommand::validate_input() -- validation complete"
-            )
+            self.logger.debug("Validated tdcDestinationAddress")
+            self.logger.debug("Search window validation complete")
             return (True, "Search window validated.")
 
         def do(
