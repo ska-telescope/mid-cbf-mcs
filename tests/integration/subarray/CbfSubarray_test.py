@@ -786,8 +786,12 @@ class TestCbfSubarray:
                             )
                         if "tdc_destination_address" in search_window:
                             for t in search_window["tdc_destination_address"]:
-                                if self.receptor_utils.receptors[t] == r:
-                                    pass
+                                if (
+                                    self.receptor_utils.receptors[
+                                        t["receptor_id"]
+                                    ]
+                                    == r
+                                ):
                                     tdcDestAddr = t["tdc_destination_address"]
                                     assert (
                                         list(
@@ -967,7 +971,6 @@ class TestCbfSubarray:
                     assert (
                         test_proxies.fsp[fsp_id].functionMode == function_mode
                     )
-
                     assert (
                         test_proxies.fspSubarray["PSS-BF"][sub_id][
                             fsp_id
@@ -1004,8 +1007,8 @@ class TestCbfSubarray:
                             searchBeam["averaging_interval"]
                             == fsp["search_beam"][idx]["averaging_interval"]
                         )
-                    # TODO - this does not pass - to debug & fix
-                    # assert searchBeam["searchBeamDestinationAddress"] == fsp["search_beam"][idx]["search_beam_destination_address"]
+                        # TODO - this does not pass - to debug & fix
+                        # assert searchBeam["searchBeamDestinationAddress"] == fsp["search_beam"][idx]["search_beam_destination_address"]
 
                 elif fsp["function_mode"] == "PST-BF":
                     function_mode = FspModes.PST_BF.value
@@ -1517,7 +1520,6 @@ class TestCbfSubarray:
                         ].obsState
                         == ObsState.READY
                     )
-
                 elif fsp["function_mode"] == "PSS-BF":
                     assert (
                         test_proxies.fspSubarray["PSS-BF"][sub_id][
@@ -1557,7 +1559,6 @@ class TestCbfSubarray:
                         ].obsState
                         == ObsState.SCANNING
                     )
-
                 elif fsp["function_mode"] == "PSS-BF":
                     assert (
                         test_proxies.fspSubarray["PSS-BF"][sub_id][
@@ -1713,6 +1714,7 @@ class TestCbfSubarray:
 
         # Convert the serialized JSON object to a Python object:
         delay_model_all_obj = json.loads(delay_model_all)
+
         print(f"{delay_model_all}")
 
         # Get the DM Python object input to the DM test
@@ -2278,7 +2280,6 @@ class TestCbfSubarray:
                         ].obsState
                         == ObsState.READY
                     )
-
                 elif fsp["function_mode"] == "PSS-BF":
                     assert (
                         test_proxies.fspSubarray["PSS-BF"][sub_id][
@@ -2354,7 +2355,6 @@ class TestCbfSubarray:
                         ].obsState
                         == ObsState.SCANNING
                     )
-
                 elif fsp["function_mode"] == "PSS-BF":
                     assert (
                         test_proxies.fspSubarray["PSS-BF"][sub_id][
@@ -2502,7 +2502,6 @@ class TestCbfSubarray:
                         ].obsState
                         == ObsState.READY
                     )
-
                 elif fsp["function_mode"] == "PSS-BF":
                     assert (
                         test_proxies.fspSubarray["PSS-BF"][sub_id][
@@ -2624,7 +2623,6 @@ class TestCbfSubarray:
                         ].obsState
                         == ObsState.SCANNING
                     )
-
                 elif fsp["function_mode"] == "PSS-BF":
                     assert (
                         test_proxies.fspSubarray["PSS-BF"][sub_id][
@@ -2663,7 +2661,6 @@ class TestCbfSubarray:
                         ].obsState
                         == ObsState.READY
                     )
-
                 elif fsp["function_mode"] == "PSS-BF":
                     assert (
                         test_proxies.fspSubarray["PSS-BF"][sub_id][
@@ -2893,7 +2890,6 @@ class TestCbfSubarray:
                         ].obsState
                         == ObsState.READY
                     )
-
                 elif fsp["function_mode"] == "PSS-BF":
                     assert (
                         test_proxies.fspSubarray["PSS-BF"][sub_id][
@@ -3007,7 +3003,6 @@ class TestCbfSubarray:
                         ].obsState
                         == ObsState.SCANNING
                     )
-
                 elif fsp["function_mode"] == "PSS-BF":
                     assert (
                         test_proxies.fspSubarray["PSS-BF"][sub_id][
@@ -3046,7 +3041,6 @@ class TestCbfSubarray:
                         ].obsState
                         == ObsState.READY
                     )
-
                 elif fsp["function_mode"] == "PSS-BF":
                     assert (
                         test_proxies.fspSubarray["PSS-BF"][sub_id][
