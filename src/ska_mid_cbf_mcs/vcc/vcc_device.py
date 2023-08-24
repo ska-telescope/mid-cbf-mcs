@@ -1233,9 +1233,7 @@ class Vcc(CspSubElementObsDevice):
 
             :param argin: JSON object with the search window parameters
             """
-            print(
-                f"vcc_device.py::ConfigureSearchWindowCommand::validate_input() -- validating argin: {argin}"
-            )
+            self.logger.debug(f"Validating argin: {argin}")
             device = self.target
 
             # try to deserialize input string to a JSON object
@@ -1446,9 +1444,7 @@ class Vcc(CspSubElementObsDevice):
                 information purpose only.
             :rtype: (ResultCode, str)
             """
-            print(
-                f"vcc_device.py::ConfigureSearchWindow::do() -- argin: {argin}"
-            )
+            self.logger.debug(f"argin: {argin}")
             return self.target.component_manager.configure_search_window(argin)
 
     @command(
@@ -1476,11 +1472,11 @@ class Vcc(CspSubElementObsDevice):
         # most of the validation can be done through a schema instead of manually
         # through functions).
         command = self.get_command_object("ConfigureSearchWindow")
-        print(f"vcc_device.py::ConfigureSearchWindow() -- argin: {argin}")
+        self.logger.debug(f"argin: {argin}")
 
         (valid, message) = command.validate_input(argin)
-        print(
-            f"vcc_device.py::ConfigureSearchWindow() -- validation result: {message}"
+        self.logger.debug(
+            f"ConfigureSearchWindow validation result: {message}"
         )
 
         if not valid:
@@ -1490,9 +1486,7 @@ class Vcc(CspSubElementObsDevice):
 
         (result_code, message) = command(argin)
 
-        print(
-            f"vcc_device.py::ConfigureSearchWindow() -- ConfigureSearchWindow result: {message}"
-        )
+        self.logger.debug(f"ConfigureSearchWindow result: {message}")
         return [[result_code], [message]]
         # PROTECTED REGION END #    //  CspSubElementObsDevice.ConfigureScan
 
