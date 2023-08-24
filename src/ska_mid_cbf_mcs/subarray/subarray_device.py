@@ -670,7 +670,6 @@ class CbfSubarray(CspSubElementSubarray):
                 return (result_code, msg)
 
             full_configuration = json.loads(argin)
-
             common_configuration = copy.deepcopy(full_configuration["common"])
             configuration = copy.deepcopy(full_configuration["cbf"])
             # set band5Tuning to [0,0] if not specified
@@ -723,10 +722,9 @@ class CbfSubarray(CspSubElementSubarray):
             try:
                 configure_scan_schema.validate(full_configuration)
             except Exception as e:
-                msg = f"Scan configuration validation against the telescope model failed with exception:\n {str(e)}."
-                return (False, msg)
+                msg = f"Scan configuration validation against the telescope model failed with the following exception:\n {str(e)}."
+                self.logger.error(msg)
 
-            # TODO: CIP-1606 see how much of the below validation is redundant now that telescope model is used to validate
             # Validate frequencyBandOffsetStream1.
             if "frequency_band_offset_stream1" not in configuration:
                 configuration["frequency_band_offset_stream1"] = 0

@@ -909,14 +909,13 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
 
                 # Configure tdcDestinationAddress.
                 if argin["tdc_enable"]:
-                    for receptor in argin["tdc_destination_address"]:
+                    for tdc_dest in argin["tdc_destination_address"]:
                         # "receptor" value is a pair of str and int
-                        if receptor[1] == self._receptor_id:
+                        if tdc_dest["receptor_id"][1] == self._receptor_id:
                             # TODO: validate input
-                            # CIP-1606 figure out how to handle this
-                            # proxy_sw.tdcDestinationAddress = tdc_dest[
-                            #     "tdc_destination_address"
-                            # ]
+                            proxy_sw.tdcDestinationAddress = tdc_dest[
+                                "tdc_destination_address"
+                            ]
                             break
 
         except tango.DevFailed as df:

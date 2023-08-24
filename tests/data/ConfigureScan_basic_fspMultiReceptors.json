@@ -1,5 +1,5 @@
 {
-    "interface": "https://schema.skao.int/ska-csp-configure/2.3",
+    "interface": "https://schema.skao.int/ska-csp-configure/2.4",
     "subarray": {
         "subarray_name": "science period 23"
     },
@@ -13,7 +13,9 @@
         "frequency_band_offset_stream1": 0,
         "frequency_band_offset_stream2": 0,
         "doppler_phase_corr_subscription_point": "ska_mid/tm_leaf_node/csp_subarray_01/dopplerPhaseCorrection",
+        "jones_matrix_subscription_point": "ska_mid/tm_leaf_node/csp_subarray_01/jonesMatrix",
         "delay_model_subscription_point": "ska_mid/tm_leaf_node/csp_subarray_01/delayModel",
+        "timing_beam_weights_subscription_point": "ska_mid/tm_leaf_node/csp_subarray_01/timingBeamWeights",
         "rfi_flagging_mask": {},
         "search_window": [
             {
@@ -24,8 +26,14 @@
                 "tdc_period_before_epoch": 5,
                 "tdc_period_after_epoch": 25,
                 "tdc_destination_address": [
-                    "SKA063",
-                    "SKA001"
+                    {
+                        "receptor_id": "SKA063",
+                        "tdc_destination_address": ["foo", "bar", "8080"]
+                    },
+                    {
+                        "receptor_id": "SKA001",
+                        "tdc_destination_address": ["fizz", "buzz", "80"]
+                    }
                 ]
             },
             {
