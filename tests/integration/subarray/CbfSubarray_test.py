@@ -1602,7 +1602,6 @@ class TestCbfSubarray:
                         ].obsState
                         == ObsState.READY
                     )
-
                 elif fsp["function_mode"] == "PSS-BF":
                     assert (
                         test_proxies.fspSubarray["PSS-BF"][sub_id][
@@ -1782,7 +1781,7 @@ class TestCbfSubarray:
 
                 # Write this one delay_model JSON object to the TM emulator
                 logging.debug(
-                    f"CbfSubarray_test.py::test_ConfigureScan_delayModel() -- writing delay model to TM emulator: {input_delay_model}"
+                    f"Writing delay model to TM emulator: {input_delay_model}"
                 )
                 test_proxies.tm.delayModel = input_delay_model
 
@@ -1817,9 +1816,7 @@ class TestCbfSubarray:
                             ]
                             break
 
-                    logging.debug(
-                        f"CbfSubarray_test.py::test_ConfigureScan_delayModel() -- vcc delay model: {vcc_dp.delayModel}"
-                    )
+                    logging.debug(f"vcc delay model: {vcc_dp.delayModel}")
                     vcc_updated_delayModel_obj = json.loads(vcc_dp.delayModel)
 
                     # there should be only one delay model in the vcc
@@ -2318,7 +2315,6 @@ class TestCbfSubarray:
                         test_proxies.fspSubarray["CORR"][sub_id][fsp_id].scanID
                         == scan_id
                     )
-
                 elif fsp["function_mode"] == "PSS-BF":
                     assert (
                         test_proxies.fspSubarray["PSS-BF"][sub_id][

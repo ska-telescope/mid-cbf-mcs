@@ -261,7 +261,6 @@ class FspCorrSubarray(CspSubElementObsDevice):
 
             device = self.target
             device._configuring_from_idle = False
-            device.write_simulationMode(True)
 
             # Setting initial simulation mode to True
             device.write_simulationMode(SimulationMode.TRUE)
