@@ -1295,9 +1295,9 @@ class TestCbfSubarray:
                 time.sleep(2)
 
                 # convert receptor IDs to pair of str and int for FSPs
-                for model in input_delay_model_obj["delay_model"]:
-                    receptor_id = model["receptor"]
-                    model["receptor"] = [
+                for delay_detail in input_delay_model_obj["delay_details"]:
+                    receptor_id = delay_detail["receptor"]
+                    delay_detail["receptor"] = [
                         receptor_id,
                         self.receptor_utils.receptors[receptor_id],
                     ]
@@ -1782,7 +1782,7 @@ class TestCbfSubarray:
                 # Write this one delay_model JSON object to the TM emulator
                 test_proxies.tm.delayModel = input_delay_model
 
-                time.sleep(2)
+                time.sleep(10)
 
                 # check the delay model was correctly updated for vcc
                 vcc_receptors_num = []
@@ -1798,7 +1798,7 @@ class TestCbfSubarray:
                     # Extract the  delay model corresponding to receptor i_rec:
                     # It is assumed that there is only one entry in the
                     # delay model for a given receptor
-                    for entry in input_delay_model_obj["delay_model"]:
+                    for entry in input_delay_model_obj["delay_details"]:
                         if (
                             self.receptor_utils.receptors[entry["receptor"]]
                             == i_rec
@@ -1820,12 +1820,12 @@ class TestCbfSubarray:
 
                     # the one delay model should have only 1 entry
                     # for the given receptor
-                    # remove the "delay_model" key and get the first item
+                    # remove the "delay_details" key and get the first item
                     # in the list so we can compare
                     # just the list of dictionaries that includes the
                     # receptor, epoch, etc
                     vcc_updated_delay_receptor = vcc_updated_delayModel_obj[
-                        "delay_model"
+                        "delay_details"
                     ][0]
 
                     # want to compare strings
@@ -1857,7 +1857,7 @@ class TestCbfSubarray:
 
                 # check the delay model was correctly updated for FSP
                 # convert receptor IDs to pair of str and int for FSPs
-                for model in input_delay_model_obj["delay_model"]:
+                for model in input_delay_model_obj["delay_details"]:
                     receptor_id = model["receptor"]
                     model["receptor"] = [
                         receptor_id,

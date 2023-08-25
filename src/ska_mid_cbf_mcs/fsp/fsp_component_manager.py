@@ -252,6 +252,7 @@ class FspComponentManager(CbfComponentManager):
         # for now, assume that given addresses are valid
 
         if not self._simulation_mode:
+            self._logger.info("Trying to connected to REAL HPS devices")
             if self._proxy_hps_fsp_controller is None:
                 self._proxy_hps_fsp_controller = self._get_device_proxy(
                     self._hps_fsp_controller_fqdn, is_group=False
@@ -263,6 +264,7 @@ class FspComponentManager(CbfComponentManager):
                     is_group=False,
                 )
         else:
+            self._logger.info("Trying to connected to Simulated HPS devices")
             self._proxy_hps_fsp_corr_controller = (
                 HpsFspCorrControllerSimulator(
                     self._hps_fsp_corr_controller_fqdn
@@ -394,6 +396,8 @@ class FspComponentManager(CbfComponentManager):
         """
 
         if self._connected:
+            self._logger.info(f"Value of _connected: {self._connected}")
+
             self._get_capability_proxies()
 
             # TODO: in the future, DsFspController to implement on(), off()
@@ -587,8 +591,8 @@ class FspComponentManager(CbfComponentManager):
                 self._delay_model = copy.deepcopy(argin)
                 delay_model = json.loads(argin)
                 # only send integer receptorID to HPS
-                for model in delay_model["delay_model"]:
-                    model["receptor"] = model["receptor"][1]
+                for delay_detail in delay_model["delay_details"]:
+                    delay_detail["receptor"] = delay_detail["receptor"][1]
                 # TODO handle delay models in function modes other than CORR
                 self._proxy_hps_fsp_corr_controller.UpdateDelayModels(
                     json.dumps(delay_model)

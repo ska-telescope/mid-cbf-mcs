@@ -23,7 +23,7 @@ from typing import List, Optional, Tuple
 import tango
 from ska_tango_base import CspSubElementObsDevice, SKABaseDevice
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import ObsState, PowerMode
+from ska_tango_base.control_model import ObsState, PowerMode, SimulationMode
 from tango import AttrWriteType, DebugIt
 from tango.server import attribute, command, device_property, run
 
@@ -154,7 +154,8 @@ class FspPstSubarray(CspSubElementObsDevice):
             device = self.target
             device._configuring_from_idle = False
 
-            device.write_simulationMode(True)
+            # Setting initial simulation mode to True
+            device.write_simulationMode(SimulationMode.TRUE)
 
             message = "FspPstSubarray Init command completed OK"
             self.logger.info(message)
