@@ -468,7 +468,7 @@ def init_proxies_fixture():
 
             # Power switch
             self.power_switch = []
-            for i in range(1, 3):  # 2 Power Switches
+            for i in range(1, 4):  # 3 Power Switches
                 self.power_switch.append(
                     CbfDeviceProxy(
                         fqdn=f"mid_csp_cbf/power_switch/{i:03}",
