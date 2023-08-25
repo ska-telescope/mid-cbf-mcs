@@ -289,7 +289,7 @@ class PowerSwitch(SKABaseDevice):
 
         :param value: SimulationMode
         """
-        self.logger.info("Writing SIMULATION MODE FROM ATTRIBUTE FUNC")
+        self.logger.info(f"Writing simulationMode to {value}")
         super().write_simulationMode(value)
         self.component_manager.simulation_mode = value
 
