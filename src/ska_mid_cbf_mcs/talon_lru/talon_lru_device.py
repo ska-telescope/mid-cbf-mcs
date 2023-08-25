@@ -21,7 +21,7 @@ import tango
 from ska_tango_base import SKABaseDevice
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import PowerMode, SimulationMode
-from tango.server import attribute, device_property, run
+from tango.server import attribute, command, device_property, run
 
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
 
@@ -238,6 +238,17 @@ class TalonLRU(SKABaseDevice):
             check_power_mode_callback=self._check_power_mode,
         )
 
+    @command()
+    def InitHardware(self: TalonLRU) -> None:
+        """
+        Initialize the component manager hardware configuration from device properties.
+        """
+        self.component_manager.init_hardware(
+            talons=[self.TalonDxBoard1, self.TalonDxBoard2],
+            pdus=[self.PDU1, self.PDU2],
+            pdu_outlets=[self.PDU1PowerOutlet, self.PDU2PowerOutlet],
+        )
+
     class InitCommand(SKABaseDevice.InitCommand):
         """
         A class for the TalonLRU's init_device() "command".
@@ -282,26 +293,13 @@ class TalonLRU(SKABaseDevice):
                 information purpose only.
             """
             device = self.target
-
-            # Setting Powerswitch simulation mode to LRU simulation mode
-            lru_simulation_mode = device.read_simulationMode()
-
-            # TO DO: REMOVE THIS ONCE DATA MODEL REDESIGN KICKS IN. WILL BE PART OF CBFCONTROLLER
-            device.component_manager._proxy_power_switch1.write_attribute(
-                "adminMode", 1
-            )
-            device.component_manager._proxy_power_switch1.write_attribute(
-                "simulationMode", lru_simulation_mode
-            )
-            device.component_manager._proxy_power_switch1.write_attribute(
-                "adminMode", 0
-            )
-
             with device._power_switch_lock:
                 # Check that this command is still allowed since the
                 # _check_power_mode_callback could have changed the state
                 self.is_allowed()
-                return device.component_manager.on()
+                return device.component_manager.on(
+                    simulation_mode=device.read_simulationMode()
+                )
 
     class OffCommand(SKABaseDevice.OffCommand):
         """

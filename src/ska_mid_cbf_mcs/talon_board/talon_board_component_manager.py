@@ -128,6 +128,32 @@ class TalonBoardComponentManager(CbfComponentManager):
             component_fault_callback=component_fault_callback,
         )
 
+    def init_hardware(
+        self: TalonBoardComponentManager,
+        hostname: str,
+        influx_port: int,
+        influx_org: str,
+        influx_bucket: str,
+        influx_auth_token: str,
+    ) -> None:
+        """
+        Initialize hardware values from device properties.
+
+        :param hostname: Hostname of the Talon DX board
+        :param influx_port: Influxdb port
+        :param influx_org: Influxdb organization
+        :param influx_bucket: Influxdb bucket to query
+        :param influx_auth_token: Influxdb authentication token
+        """
+        self._db_client = InfluxdbQueryClient(
+            hostname=hostname,
+            influx_port=influx_port,
+            influx_org=influx_org,
+            influx_bucket=influx_bucket,
+            influx_auth_token=influx_auth_token,
+            logger=self._logger,
+        )
+
     def start_communicating(self) -> None:
         """Establish communication with the component, then start monitoring."""
         self._logger.info(

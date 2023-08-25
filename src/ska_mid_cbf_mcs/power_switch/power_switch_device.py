@@ -151,25 +151,47 @@ class PowerSwitch(SKABaseDevice):
         self._component_power_mode: Optional[PowerMode] = None
         # Simulation mode default true (using the simulator)
         return PowerSwitchComponentManager(
-            self.PowerSwitchProtocol,
-            self.PowerSwitchIp,
-            self.PowerSwitchLogin,
-            self.PowerSwitchPassword,
-            self.PowerSwitchRequestHeaderContentType,
-            self.PowerSwitchOutletListUrl,
-            self.PowerSwitchOutletStateUrl,
-            self.PowerSwitchOutletControlUrl,
-            self.PowerSwitchTurnOnAction,
-            self.PowerSwitchTurnOffAction,
-            self.PowerSwitchOutletStateOn,
-            self.PowerSwitchOutletStateOff,
-            self.PowerSwitchOutletSchemaFile,
-            self.PowerSwitchOutletIdList,
-            self.logger,
+            protocol=self.PowerSwitchProtocol,
+            ip=self.PowerSwitchIp,
+            login=self.PowerSwitchLogin,
+            password=self.PowerSwitchPassword,
+            content_type=self.PowerSwitchRequestHeaderContentType,
+            outlet_list_url=self.PowerSwitchOutletListUrl,
+            outlet_state_url=self.PowerSwitchOutletStateUrl,
+            outlet_control_url=self.PowerSwitchOutletControlUrl,
+            turn_on_action=self.PowerSwitchTurnOnAction,
+            turn_off_action=self.PowerSwitchTurnOffAction,
+            state_on=self.PowerSwitchOutletStateOn,
+            state_off=self.PowerSwitchOutletStateOff,
+            outlet_schema_file=self.PowerSwitchOutletSchemaFile,
+            outlet_id_list=self.PowerSwitchOutletIdList,
+            logger=self.logger,
             push_change_event_callback=self.push_change_event,
             communication_status_changed_callback=self._communication_status_changed,
             component_power_mode_changed_callback=self._component_power_mode_changed,
             component_fault_callback=self._component_fault,
+        )
+
+    @command()
+    def InitHardware(self: PowerSwitch) -> None:
+        """
+        Initialize the component manager hardware configuration from device properties.
+        """
+        self.component_manager.init_hardware(
+            protocol=self.PowerSwitchProtocol,
+            ip=self.PowerSwitchIp,
+            login=self.PowerSwitchLogin,
+            password=self.PowerSwitchPassword,
+            content_type=self.PowerSwitchRequestHeaderContentType,
+            outlet_list_url=self.PowerSwitchOutletListUrl,
+            outlet_state_url=self.PowerSwitchOutletStateUrl,
+            outlet_control_url=self.PowerSwitchOutletControlUrl,
+            turn_on_action=self.PowerSwitchTurnOnAction,
+            turn_off_action=self.PowerSwitchTurnOffAction,
+            state_on=self.PowerSwitchOutletStateOn,
+            state_off=self.PowerSwitchOutletStateOff,
+            outlet_schema_file=self.PowerSwitchOutletSchemaFile,
+            outlet_id_list=self.PowerSwitchOutletIdList,
         )
 
     def init_command_objects(self: PowerSwitch) -> None:

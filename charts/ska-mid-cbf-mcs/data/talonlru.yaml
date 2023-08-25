@@ -4,8 +4,8 @@ domain: mid-csp-cbf
 command: "TalonLRU"
 instances: ["talonlru-001", "talonlru-002", "talonlru-003", "talonlru-004"]
 depends_on:
-  - device: 001
-  - device: 002
+  - device: mid_csp_cbf/power_switch/001
+  - device: mid_csp_cbf/power_switch/002
 readinessProbe:
   initialDelaySeconds: 0
   periodSeconds: 10

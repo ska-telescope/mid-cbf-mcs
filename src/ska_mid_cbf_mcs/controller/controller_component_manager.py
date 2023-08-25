@@ -243,6 +243,7 @@ class ControllerComponentManager(CbfComponentManager):
                             ]
                         )
                         proxy.put_property(lru_config)
+                        proxy.InitHardware()
                         proxy.set_timeout_millis(10000)
 
                     elif fqdn in self._fqdn_talon_board:
@@ -258,6 +259,7 @@ class ControllerComponentManager(CbfComponentManager):
                             }
                         )
                         proxy.put_property(board_config)
+                        proxy.InitHardware()
 
                     elif fqdn in self._fqdn_power_switch:
                         self._logger.debug(
@@ -270,6 +272,7 @@ class ControllerComponentManager(CbfComponentManager):
                             ][switch_id]
                         )
                         proxy.put_property(switch_config)
+                        proxy.InitHardware()
 
                     self._proxies[fqdn] = proxy
                 except tango.DevFailed as df:
@@ -382,12 +385,14 @@ class ControllerComponentManager(CbfComponentManager):
                     target = config_command["target"]
                     for lru in self._hw_config["talon_lru"]:
                         lru_id = list(lru.keys())[0]
+                        lru_fqdn = f"mid_csp_cbf/talon_lru/{lru_id}"
                         talon1 = lru[lru_id]["TalonDxBoard1"]
                         talon2 = lru[lru_id]["TalonDxBoard2"]
-                        if target in [talon1, talon2]:
-                            self._fqdn_talon_lru.append(
-                                f"mid_csp_cbf/talon_lru/{lru_id}"
-                            )
+                        if (
+                            target in [talon1, talon2]
+                            and lru_fqdn not in self._fqdn_talon_lru
+                        ):
+                            self._fqdn_talon_lru.append(lru_fqdn)
 
                 # TODO: handle subscribed events for missing LRUs
             else:

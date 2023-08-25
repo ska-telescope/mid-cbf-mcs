@@ -9,17 +9,17 @@ talon_board:
     "008": 192.168.8.8
 talon_lru:
 - "001":
-    PDU1: "001"
-    PDU1PowerOutlet: "0"
+    PDU1: "002"
+    PDU1PowerOutlet: "AA41"
     PDU2: "002"
-    PDU2PowerOutlet: "AA1"
+    PDU2PowerOutlet: "AA41"
     TalonDxBoard1: "001"
     TalonDxBoard2: "002"
 - "002":
-    PDU1: "001"
-    PDU1PowerOutlet: "1"
-    PDU2: "001"
-    PDU2PowerOutlet: "1"
+    PDU1: "002"
+    PDU1PowerOutlet: "AA42"
+    PDU2: "002"
+    PDU2PowerOutlet: "AA42"
     TalonDxBoard1: "003"
     TalonDxBoard2: "004"
 - "003":

@@ -19,7 +19,7 @@ from typing import Optional, Tuple
 from ska_tango_base import SKABaseDevice
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import PowerMode
-from tango.server import attribute, device_property, run
+from tango.server import attribute, command, device_property, run
 
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
 from ska_mid_cbf_mcs.talon_board.talon_board_component_manager import (
@@ -533,6 +533,19 @@ class TalonBoard(SKABaseDevice):
             communication_status_changed_callback=self._communication_status_changed,
             component_power_mode_changed_callback=self._component_power_mode_changed,
             component_fault_callback=self._component_fault,
+        )
+
+    @command()
+    def InitHardware(self: TalonBoard) -> None:
+        """
+        Initialize the component manager hardware configuration from device properties.
+        """
+        self.component_manager.init_hardware(
+            hostname=self.TalonDxBoardAddress,
+            influx_port=self.InfluxDbPort,
+            influx_org=self.InfluxDbOrg,
+            influx_bucket=self.InfluxDbBucket,
+            influx_auth_token=self.InfluxDbAuthToken,
         )
 
     class InitCommand(SKABaseDevice.InitCommand):
