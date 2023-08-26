@@ -700,7 +700,7 @@ class FspCorrSubarrayComponentManager(
         self._proxy_hps_fsp_corr_controller.EndScan()
 
         return (ResultCode.OK, "FspCorrSubarray EndScan command completed OK")
-    
+
     def abort(
         self: FspCorrSubarrayComponentManager,
     ) -> Tuple[ResultCode, str]:
@@ -716,7 +716,7 @@ class FspCorrSubarrayComponentManager(
         # TODO: send command to HPS
 
         return (ResultCode.OK, "FspCorrSubarray Abort command completed OK")
-    
+
     def obsreset(
         self: FspCorrSubarrayComponentManager,
     ) -> Tuple[ResultCode, str]:

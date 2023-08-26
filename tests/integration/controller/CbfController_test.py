@@ -265,7 +265,7 @@ class TestCbfController:
 
         wait_time_s = 3
         sleep_time_s = 0.1
-        
+
         # send the On command
         test_proxies.controller.On()
 
@@ -276,7 +276,7 @@ class TestCbfController:
 
         # check the subarray obs state is EMPTY
         # send the OFF command, make sure it works fine
-        # set Subarray obs state to 
+        # set Subarray obs state to
         # - IDLE (AssignResources)
         # - READY (ConfigureScan)
         # - see if can get CONFIGURING by not waiting after the Configure Scan

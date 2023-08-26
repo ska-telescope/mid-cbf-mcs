@@ -766,7 +766,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                         ResultCode.FAILED,
                         "Failed to connect to VCC band device",
                     )
-                
+
         self.deconfigure()
 
         return (ResultCode.OK, "Vcc ObsReset command completed OK")

@@ -2129,15 +2129,14 @@ class CbfSubarrayComponentManager(
             self._group_vcc.command_inout("Abort")
             self._group_fsp_corr_subarray.command_inout("Abort")
             # TODO: add for PSS and PST
-            #self._group_fsp_pss_subarray.command_inout("Abort")
-            #self._group_fsp_pst_subarray.command_inout("Abort")
+            # self._group_fsp_pss_subarray.command_inout("Abort")
+            # self._group_fsp_pst_subarray.command_inout("Abort")
         except tango.DevFailed as df:
             msg = str(df.args[0].desc)
             self._component_obs_fault_callback(True)
             return (ResultCode.FAILED, msg)
 
         return (ResultCode.OK, "Abort command completed OK")
-        
 
     @check_communicating
     def restart(self: CbfSubarrayComponentManager) -> None:

@@ -19,7 +19,12 @@ from typing import Callable, Dict, List, Optional, Tuple
 
 import tango
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import AdminMode, PowerMode, SimulationMode, ObsState
+from ska_tango_base.control_model import (
+    AdminMode,
+    ObsState,
+    PowerMode,
+    SimulationMode,
+)
 
 from ska_mid_cbf_mcs.component.component_manager import (
     CbfComponentManager,
@@ -428,13 +433,14 @@ class ControllerComponentManager(CbfComponentManager):
                 log_msg = "Failed to turn off group proxies"
                 self._logger.error(log_msg)
                 return (ResultCode.FAILED, log_msg)
-            
+
             # To ensure that the subarray, vcc, and fsps
             # can be turned on again, we need to ensure that the
             # observing state is cleaned up
+            # TODO: what type of except should this catch?
             try:
                 self._set_subarrays_obs_state_to_empty
-            except:
+            except tango.DevFailed:
                 log_msg = "Failed to set subarray obs state to EMPTY"
                 self._logger.error(log_msg)
                 return (ResultCode.FAILED, log_msg)
@@ -503,7 +509,7 @@ class ControllerComponentManager(CbfComponentManager):
             )
 
     def _set_subarrays_obs_state_to_empty(
-            self: ControllerComponentManager
+        self: ControllerComponentManager,
     ) -> None:
         """
         Helper method for the OFF command to ensure that
@@ -512,7 +518,7 @@ class ControllerComponentManager(CbfComponentManager):
         - the VCC ObsState is IDLE
         - the FSP <func> Subarrays ObstState is IDLE
         so that when the Controller is commanded
-        to turn On again, the observing state of 
+        to turn On again, the observing state of
         all the controlled MCS software is ready to
         be turned On again
 
@@ -521,20 +527,22 @@ class ControllerComponentManager(CbfComponentManager):
         subarray_obs_state = None
         counter = 1
 
-        #TBD - we have 3 subarrays, we are only using 1 - will the others
+        # TBD - we have 3 subarrays, we are only using 1 - will the others
         # be in EMPTY? This should be the case, but needs to be checked
         for fqdn in self._fqdn_subarray:
             # Move the subarray through the observing model to get to
             # EMPTY. If it is in one of the transition states that
             # occurs while moving from one state to another (like RESOURCING)
-            # just wait for the completion and then move 
+            # just wait for the completion and then move
             # This assumes that subarray won't get stuck in
             # a transition state, will have to find another option if we
             # find that it can get stuck in a transition state since
             # there aren't commands to move it out of those states. Instead
             # we would need to "perform an action" on the obs state model.
             while subarray_obs_state != ObsState.EMPTY and counter < 10:
-                subarray_obs_state = self._proxies[fqdn].read_attribute("obsState")
+                subarray_obs_state = self._proxies[fqdn].read_attribute(
+                    "obsState"
+                )
                 if subarray_obs_state == ObsState.EMPTY:
                     # this is the state we want, nothing to do
                     break
@@ -577,9 +585,6 @@ class ControllerComponentManager(CbfComponentManager):
                 sleep(CONST_WAIT_TIME)
                 counter = counter + 1
             if subarray_obs_state != ObsState.EMPTY:
-              log_msg = "Unable to transition subarray to ObsState.EMPTY. ObsState is {subarray_obs_state}"
-              self._logger.error(log_msg)
-              # TBD raise exception
-
-            
-        
+                log_msg = "Unable to transition subarray to ObsState.EMPTY. ObsState is {subarray_obs_state}"
+                self._logger.error(log_msg)
+                # TBD raise exception
