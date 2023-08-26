@@ -244,6 +244,7 @@ class ControllerComponentManager(CbfComponentManager):
                         )
                         proxy.put_property(lru_config)
                         proxy.InitHardware()
+                        proxy.Init()
                         proxy.set_timeout_millis(10000)
 
                     elif fqdn in self._fqdn_talon_board:
@@ -260,6 +261,7 @@ class ControllerComponentManager(CbfComponentManager):
                         )
                         proxy.put_property(board_config)
                         proxy.InitHardware()
+                        proxy.Init()
 
                     elif fqdn in self._fqdn_power_switch:
                         self._logger.debug(
@@ -273,6 +275,7 @@ class ControllerComponentManager(CbfComponentManager):
                         )
                         proxy.put_property(switch_config)
                         proxy.InitHardware()
+                        proxy.Init()
 
                     self._proxies[fqdn] = proxy
                 except tango.DevFailed as df:
