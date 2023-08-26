@@ -700,6 +700,39 @@ class FspCorrSubarrayComponentManager(
         self._proxy_hps_fsp_corr_controller.EndScan()
 
         return (ResultCode.OK, "FspCorrSubarray EndScan command completed OK")
+    
+    def abort(
+        self: FspCorrSubarrayComponentManager,
+    ) -> Tuple[ResultCode, str]:
+        """
+        Performs the Abort() command functionality
+
+        :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+        :rtype: (ResultCode, str)
+        """
+
+        # TODO: send command to HPS
+
+        return (ResultCode.OK, "FspCorrSubarray Abort command completed OK")
+    
+    def obsreset(
+        self: FspCorrSubarrayComponentManager,
+    ) -> Tuple[ResultCode, str]:
+        """
+        Performs the ObsReset() command functionality
+
+        :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+        :rtype: (ResultCode, str)
+        """
+
+        self._deconfigure()
+        # TODO: send command to HPS
+
+        return (ResultCode.OK, "FspCorrSubarray ObsReset command completed OK")
 
     def _deconfigure(
         self: FspCorrSubarrayComponentManager,

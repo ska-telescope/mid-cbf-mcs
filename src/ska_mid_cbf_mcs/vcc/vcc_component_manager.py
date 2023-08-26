@@ -726,39 +726,48 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
 
         return (ResultCode.OK, "Vcc EndScanCommand completed OK")
 
-    def abort(self):
+    def abort(self: VccComponentManager) -> Tuple[ResultCode, str]:
         """Tell the current VCC band device to abort whatever it was doing."""
-        idx = self._freq_band_index[self._freq_band_name]
-        if self._simulation_mode:
-            self._band_simulators[idx].Abort()
+        # allow pass through if there is nothing connected
+        if self.connected and len(self._freq_band_name) != 0:
+            idx = self._freq_band_index[self._freq_band_name]
+            if self._simulation_mode:
+                self._band_simulators[idx].Abort()
+            else:
+                try:
+                    self._band_proxies[idx].Abort()
+                except tango.DevFailed as df:
+                    self._logger.error(str(df.args[0].desc))
+                    self.update_component_fault(True)
+                    return (
+                        ResultCode.FAILED,
+                        "Failed to connect to VCC band device",
+                    )
         else:
-            try:
-                self._band_proxies[idx].Abort()
-            except tango.DevFailed as df:
-                self._logger.error(str(df.args[0].desc))
-                self.update_component_fault(True)
-                return (
-                    ResultCode.FAILED,
-                    "Failed to connect to VCC band device",
-                )
+            # nothing to do
+            pass
 
         return (ResultCode.OK, "Vcc Abort command completed OK")
 
     def obsreset(self):
         """Reset the configuration."""
-        idx = self._freq_band_index[self._freq_band_name]
-        if self._simulation_mode:
-            self._band_simulators[idx].ObsReset()
-        else:
-            try:
-                self._band_proxies[idx].ObsReset()
-            except tango.DevFailed as df:
-                self._logger.error(str(df.args[0].desc))
-                self.update_component_fault(True)
-                return (
-                    ResultCode.FAILED,
-                    "Failed to connect to VCC band device",
-                )
+        # allow pass through if there is nothing connected
+        if self.connected and len(self._freq_band_name) != 0:
+            idx = self._freq_band_index[self._freq_band_name]
+            if self._simulation_mode:
+                self._band_simulators[idx].ObsReset()
+            else:
+                try:
+                    self._band_proxies[idx].ObsReset()
+                except tango.DevFailed as df:
+                    self._logger.error(str(df.args[0].desc))
+                    self.update_component_fault(True)
+                    return (
+                        ResultCode.FAILED,
+                        "Failed to connect to VCC band device",
+                    )
+                
+        self.deconfigure()
 
         return (ResultCode.OK, "Vcc ObsReset command completed OK")
 

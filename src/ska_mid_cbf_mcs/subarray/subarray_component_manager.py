@@ -733,20 +733,20 @@ class CbfSubarrayComponentManager(
                 del self._events_telstate[event_id]
 
             if self._ready:
-                # TODO: add 'GoToIdle' for VLBI once implemented
+                # TODO: add 'ObsReset' for VLBI once implemented
                 for group in [
                     self._group_fsp_corr_subarray,
                     self._group_fsp_pss_subarray,
                     self._group_fsp_pst_subarray,
                 ]:
                     if group.get_size() > 0:
-                        group.command_inout("GoToIdle")
+                        group.command_inout("ObsReset")
                         # remove channel info from FSP subarrays
                         # already done in GoToIdle
                         group.remove_all()
 
                 if self._group_vcc.get_size() > 0:
-                    self._group_vcc.command_inout("GoToIdle")
+                    self._group_vcc.command_inout("ObsReset")
 
                 if self._group_fsp.get_size() > 0:
                     # change FSP subarray membership
@@ -2124,9 +2124,20 @@ class CbfSubarrayComponentManager(
         """
         Abort subarray configuration or operation.
         """
-        # if aborted from SCANNING, end VCC and FSP Subarray scans
-        if self.scan_id != 0:
-            self.end_scan()
+        try:
+            # Abort for all subordinate devices:
+            self._group_vcc.command_inout("Abort")
+            self._group_fsp_corr_subarray.command_inout("Abort")
+            # TODO: add for PSS and PST
+            #self._group_fsp_pss_subarray.command_inout("Abort")
+            #self._group_fsp_pst_subarray.command_inout("Abort")
+        except tango.DevFailed as df:
+            msg = str(df.args[0].desc)
+            self._component_obs_fault_callback(True)
+            return (ResultCode.FAILED, msg)
+
+        return (ResultCode.OK, "Abort command completed OK")
+        
 
     @check_communicating
     def restart(self: CbfSubarrayComponentManager) -> None:

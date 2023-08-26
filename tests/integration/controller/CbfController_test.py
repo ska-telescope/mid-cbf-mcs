@@ -257,3 +257,34 @@ class TestCbfController:
                         test_proxies.fspSubarray[i][j][k].State()
                         == DevState.DISABLE
                     )
+
+    def test_Off_with_Subarray_obs_states(self, test_proxies):
+        """
+        Verify we can reset the subarray obs states
+        """
+
+        wait_time_s = 3
+        sleep_time_s = 0.1
+        
+        # send the On command
+        test_proxies.controller.On()
+
+        test_proxies.wait_timeout_dev(
+            [test_proxies.controller], DevState.ON, wait_time_s, sleep_time_s
+        )
+        assert test_proxies.controller.State() == DevState.ON
+
+        # check the subarray obs state is EMPTY
+        # send the OFF command, make sure it works fine
+        # set Subarray obs state to 
+        # - IDLE (AssignResources)
+        # - READY (ConfigureScan)
+        # - see if can get CONFIGURING by not waiting after the Configure Scan
+        #   (add logging to else branches in controller to see if this works)
+        # - SCANNING (Scan)
+        # - ABORTED (Abort)
+        # - see if can set to FAULT by sending component_obsfault
+        # After each of above check the Subarray obs state and try
+        # Off command, making sure the Subarray returns to EMPTY, the
+        # VCC and FSP return to IDLE
+        # Then turn On again ready for next part of test
