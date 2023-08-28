@@ -43,11 +43,11 @@ class PowerSwitchSimulator:
         if model == "DLI LPC9":
             self.outlet_id_list: List(str) = [str(i) for i in range(0, 8)]
         elif model == "Server Technology Switched PRO2":
-            self.outlet_id_list: List(str) = [f'AA{i}' for i in range(1, 49)]
+            self.outlet_id_list: List(str) = [f"AA{i}" for i in range(1, 49)]
         elif model == "APC AP8681":
             self.outlet_id_list = [f"{i}" for i in range(1, 25)]
         else:
-            raise AssertionError(f'Invalid PDU model: {model}')
+            raise AssertionError(f"Invalid PDU model: {model}")
 
         self.outlets = self.get_outlet_list()
 
