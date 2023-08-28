@@ -172,28 +172,6 @@ class PowerSwitch(SKABaseDevice):
             component_fault_callback=self._component_fault,
         )
 
-    @command()
-    def InitHardware(self: PowerSwitch) -> None:
-        """
-        Initialize the component manager hardware configuration from device properties.
-        """
-        self.component_manager.init_hardware(
-            protocol=self.PowerSwitchProtocol,
-            ip=self.PowerSwitchIp,
-            login=self.PowerSwitchLogin,
-            password=self.PowerSwitchPassword,
-            content_type=self.PowerSwitchRequestHeaderContentType,
-            outlet_list_url=self.PowerSwitchOutletListUrl,
-            outlet_state_url=self.PowerSwitchOutletStateUrl,
-            outlet_control_url=self.PowerSwitchOutletControlUrl,
-            turn_on_action=self.PowerSwitchTurnOnAction,
-            turn_off_action=self.PowerSwitchTurnOffAction,
-            state_on=self.PowerSwitchOutletStateOn,
-            state_off=self.PowerSwitchOutletStateOff,
-            outlet_schema_file=self.PowerSwitchOutletSchemaFile,
-            outlet_id_list=self.PowerSwitchOutletIdList,
-        )
-
     def init_command_objects(self: PowerSwitch) -> None:
         """
         Sets up the command objects.

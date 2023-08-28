@@ -243,7 +243,6 @@ class ControllerComponentManager(CbfComponentManager):
                             ]
                         )
                         proxy.put_property(lru_config)
-                        proxy.InitHardware()
                         proxy.Init()
                         proxy.set_timeout_millis(10000)
 
@@ -260,7 +259,6 @@ class ControllerComponentManager(CbfComponentManager):
                             }
                         )
                         proxy.put_property(board_config)
-                        proxy.InitHardware()
                         proxy.Init()
 
                     elif fqdn in self._fqdn_power_switch:
@@ -274,7 +272,6 @@ class ControllerComponentManager(CbfComponentManager):
                             ][switch_id]
                         )
                         proxy.put_property(switch_config)
-                        proxy.InitHardware()
                         proxy.Init()
 
                     self._proxies[fqdn] = proxy

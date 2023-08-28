@@ -142,58 +142,6 @@ class PowerSwitchComponentManager(CbfComponentManager):
             component_fault_callback=component_fault_callback,
         )
 
-    def init_hardware(
-        self: PowerSwitchComponentManager,
-        protocol: str,
-        ip: str,
-        login: str,
-        password: str,
-        content_type: str,
-        outlet_list_url: str,
-        outlet_state_url: str,
-        outlet_control_url: str,
-        turn_on_action: str,
-        turn_off_action: str,
-        state_on: str,
-        state_off: str,
-        outlet_schema_file: str,
-        outlet_id_list: List[str],
-    ) -> None:
-        """
-        Initialize hardware values from device properties.
-
-        :param ip: IP address of the power switch
-        :param login: Login username of the power switch
-        :param password: Login password for the power switch
-        :param content_type: The content type in the request header
-        :param outlet_list_url: A portion of the URL to get the list of outlets
-        :param outlet_state_url: A portion of the URL to get the outlet state
-        :param outlet_control_url: A portion of the URL to turn on/off outlet
-        :param turn_on_action: value to pass to request to turn on an outlet
-        :param turn_off_action: value to pass to request to turn on an outlet
-        :param state_on: value of the outlet's state when on
-        :param state_off: value of the outlet's state when off
-        :param outlet_schema_file: File name for the schema for a list of outlets
-        :param outlet_id_list: List of Outlet IDs
-        """
-        self.power_switch_driver = PowerSwitchDriver(
-            protocol=protocol,
-            ip=ip,
-            login=login,
-            password=password,
-            content_type=content_type,
-            outlet_list_url=outlet_list_url,
-            outlet_state_url=outlet_state_url,
-            outlet_control_url=outlet_control_url,
-            turn_on_action=turn_on_action,
-            turn_off_action=turn_off_action,
-            state_on=state_on,
-            state_off=state_off,
-            outlet_schema_file=outlet_schema_file,
-            outlet_id_list=outlet_id_list,
-            logger=self._logger,
-        )
-
     @property
     def num_outlets(self: PowerSwitchComponentManager) -> int:
         """

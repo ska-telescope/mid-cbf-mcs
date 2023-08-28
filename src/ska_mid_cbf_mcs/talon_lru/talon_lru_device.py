@@ -238,17 +238,6 @@ class TalonLRU(SKABaseDevice):
             check_power_mode_callback=self._check_power_mode,
         )
 
-    @command()
-    def InitHardware(self: TalonLRU) -> None:
-        """
-        Initialize the component manager hardware configuration from device properties.
-        """
-        self.component_manager.init_hardware(
-            talons=[self.TalonDxBoard1, self.TalonDxBoard2],
-            pdus=[self.PDU1, self.PDU2],
-            pdu_outlets=[self.PDU1PowerOutlet, self.PDU2PowerOutlet],
-        )
-
     class InitCommand(SKABaseDevice.InitCommand):
         """
         A class for the TalonLRU's init_device() "command".

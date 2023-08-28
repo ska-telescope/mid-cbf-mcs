@@ -89,23 +89,6 @@ class TalonLRUComponentManager(CbfComponentManager):
             component_fault_callback=component_fault_callback,
         )
 
-    def init_hardware(
-        self: TalonLRUComponentManager,
-        talons: List[str],
-        pdus: List[str],
-        pdu_outlets: List[str],
-    ) -> None:
-        """
-        Initialize hardware values from device properties.
-
-        :param talons: FQDNs of the Talon DX board
-        :param pdus: FQDNs of the power switch devices
-        :param pdu_outlets: IDs of the PDU outlets
-        """
-        self._talons = talons
-        self._pdus = pdus
-        self._pdu_outlets = pdu_outlets
-
     def start_communicating(self: TalonLRUComponentManager) -> None:
         """Establish communication with the component, then start monitoring."""
 

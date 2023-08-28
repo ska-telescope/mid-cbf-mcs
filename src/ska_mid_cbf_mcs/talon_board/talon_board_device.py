@@ -535,19 +535,6 @@ class TalonBoard(SKABaseDevice):
             component_fault_callback=self._component_fault,
         )
 
-    @command()
-    def InitHardware(self: TalonBoard) -> None:
-        """
-        Initialize the component manager hardware configuration from device properties.
-        """
-        self.component_manager.init_hardware(
-            hostname=self.TalonDxBoardAddress,
-            influx_port=self.InfluxDbPort,
-            influx_org=self.InfluxDbOrg,
-            influx_bucket=self.InfluxDbBucket,
-            influx_auth_token=self.InfluxDbAuthToken,
-        )
-
     class InitCommand(SKABaseDevice.InitCommand):
         """
         A class for the TalonBoard's init_device() "command".
