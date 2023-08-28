@@ -83,7 +83,7 @@ class STSwitchedPRO2Driver:
         self.state_off = "Off"
 
         # valid range AA1 to AA48
-        self.outlet_id_list: List(str) = [f"AA{i}" for i in range(1, 49)]
+        self.outlet_id_list: List(str) = [f'AA{i}' for i in range(1, 49)]
 
         # Initialize outlets
         self.outlets: List(Outlet) = []
@@ -154,7 +154,7 @@ class STSwitchedPRO2Driver:
 
         assert (
             outlet in self.outlet_id_list
-        ), f"Outlet ID {outlet} must be in the allowable outlet_id_list read in from the Config File"
+        ), f"Outlet ID {outlet} must be in the allowable outlet_id_list {self.outlet_id_list}"
 
         url = self.outlet_state_url.replace("REPLACE_OUTLET", outlet)
         outlet_idx = self.outlet_id_list.index(outlet)
@@ -217,7 +217,7 @@ class STSwitchedPRO2Driver:
         """
         assert (
             outlet in self.outlet_id_list
-        ), f"Outlet ID {outlet} must be in the allowable outlet_id_list read in from the Config File"
+        ), f"Outlet ID {outlet} must be in the allowable outlet_id_list {self.outlet_id_list}"
 
         url = self.outlet_control_url.replace("REPLACE_OUTLET", outlet)
         data = self.turn_on_action
@@ -266,7 +266,7 @@ class STSwitchedPRO2Driver:
 
         assert (
             outlet in self.outlet_id_list
-        ), f"Outlet ID {outlet} must be in the allowable outlet_id_list read in from the Config File"
+        ), f"Outlet ID {outlet} must be in the allowable outlet_id_list {self.outlet_id_list}"
 
         url = self.outlet_control_url.replace("REPLACE_OUTLET", outlet)
         data = self.turn_off_action

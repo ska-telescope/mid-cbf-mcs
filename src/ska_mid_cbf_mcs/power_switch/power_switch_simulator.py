@@ -31,13 +31,23 @@ class PowerSwitchSimulator:
 
     def __init__(
         self: PowerSwitchSimulator,
+        model: str,
         logger: logging.Logger,
     ) -> None:
         """
         Initialise a new instance.
         """
         self.logger = logger
-        self.outlet_id_list: List(str) = [str(i) for i in range(0, 8)]
+
+        # The text must match the powerswitch.yaml
+        if model == "DLI LPC9":
+            self.outlet_id_list: List(str) = [str(i) for i in range(0, 8)]
+        elif model == "Server Technology Switched PRO2":
+            self.outlet_id_list: List(str) = [f'AA{i}' for i in range(1, 49)]
+        elif model == "APC AP8681":
+            self.outlet_id_list = [f"{i}" for i in range(1, 25)]
+        else:
+            raise AssertionError(f'Invalid PDU model: {model}')
 
         self.outlets = self.get_outlet_list()
 
@@ -127,10 +137,10 @@ class PowerSwitchSimulator:
         :return: list of all the outlets available in this power switch
         """
         outlets: List(Outlet) = []
-        for i in range(0, 8):
+        for i in range(0, len(self.outlet_id_list)):
             outlets.append(
                 Outlet(
-                    outlet_ID=str(i),
+                    outlet_ID=self.outlet_id_list[i],
                     outlet_name=f"Outlet {i}",
                     power_mode=PowerMode.OFF,
                 )

@@ -95,7 +95,7 @@ class PowerSwitchComponentManager(CbfComponentManager):
             model=model, ip=ip, login=login, password=password, logger=logger
         )
 
-        self.power_switch_simulator = PowerSwitchSimulator(logger)
+        self.power_switch_simulator = PowerSwitchSimulator(model, logger)
 
         super().__init__(
             logger=logger,

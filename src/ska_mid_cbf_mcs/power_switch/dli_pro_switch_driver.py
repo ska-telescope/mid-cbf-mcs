@@ -153,7 +153,7 @@ class DLIProSwitchDriver:
 
         assert (
             outlet in self.outlet_id_list
-        ), f"Outlet ID {outlet} must be in the allowable outlet_id_list read in from the Config File"
+        ), f"Outlet ID {outlet} must be in the allowable outlet_id_list"
 
         url = self.outlet_state_url.replace("REPLACE_OUTLET", outlet)
         outlet_idx = self.outlet_id_list.index(outlet)
@@ -216,7 +216,7 @@ class DLIProSwitchDriver:
         """
         assert (
             outlet in self.outlet_id_list
-        ), f"Outlet ID {outlet} must be in the allowable outlet_id_list read in from the Config File"
+        ), f"Outlet ID {outlet} must be in the allowable outlet_id_list"
 
         url = self.outlet_control_url.replace("REPLACE_OUTLET", outlet)
         data = self.turn_on_action
@@ -265,7 +265,7 @@ class DLIProSwitchDriver:
 
         assert (
             outlet in self.outlet_id_list
-        ), f"Outlet ID {outlet} must be in the allowable outlet_id_list read in from the Config File"
+        ), f"Outlet ID {outlet} must be in the allowable outlet_id_list"
 
         url = self.outlet_control_url.replace("REPLACE_OUTLET", outlet)
         data = self.turn_off_action
