@@ -83,7 +83,7 @@ class STSwitchedPRO2Driver:
         self.state_off = "Off"
 
         # valid range AA1 to AA48
-        self.outlet_id_list: List(str) = [f'AA{i}' for i in range(1, 49)]
+        self.outlet_id_list: List(str) = [f"AA{i}" for i in range(1, 49)]
 
         # Initialize outlets
         self.outlets: List(Outlet) = []
