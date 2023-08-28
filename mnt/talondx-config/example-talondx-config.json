@@ -11,7 +11,6 @@
             "fpga_label": "base",
             "ds_path": "/lib/firmware/hps_software/bite_vcc_test",
             "server_instance": "talon1_test",
-            "ds_rdma_rx_fqdn": "dell/dsrdmarx/rx1",
             "devices": [
                 "ska-mid-cbf-vcc-app"
             ]
