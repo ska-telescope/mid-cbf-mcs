@@ -101,7 +101,7 @@ endif
 
 K8S_TEST_TEST_COMMAND ?= ls -lrt &&  $(PYTHON_VARS_BEFORE_PYTEST) $(PYTHON_RUNNER) \
                         pytest \
-                        -c setup-integration-test.cfg \
+                        -c setup-integration-test.cfg -rx -rP \
                         | tee pytest.stdout; ## k8s-test test command to run in container
 
 #

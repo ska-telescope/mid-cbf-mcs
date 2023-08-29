@@ -355,3 +355,6 @@ class TestCbfController:
         # Off command, making sure the Subarray returns to EMPTY, the
         # VCC and FSP return to IDLE
         # Then turn On again ready for next part of test
+
+        # clean up
+        self.test_Disconnect(test_proxies)
