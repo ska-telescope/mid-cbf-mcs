@@ -55,6 +55,22 @@
         "mid_csp_cbf/talon_lru/003",
         "mid_csp_cbf/talon_lru/004"
     ],
+    "fqdn_talon_board":
+    [
+        "mid_csp_cbf/talon_board/001",
+        "mid_csp_cbf/talon_board/002",
+        "mid_csp_cbf/talon_board/003",
+        "mid_csp_cbf/talon_board/004",
+        "mid_csp_cbf/talon_board/005",
+        "mid_csp_cbf/talon_board/006",
+        "mid_csp_cbf/talon_board/007",
+        "mid_csp_cbf/talon_board/008"
+    ],
+    "fqdn_power_switch":
+    [
+        "mid_csp_cbf/power_switch/001",
+        "mid_csp_cbf/power_switch/002"
+    ],
     "count_vcc": 8,
     "count_fsp": 4,
     "count_subarray": 3,

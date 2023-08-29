@@ -80,8 +80,10 @@ def controller_component_manager(
 
     vcc = configuration["fqdn_vcc"]
     fsp = configuration["fqdn_fsp"]
-    talon_lru = configuration["fqdn_talon_lru"]
     subarray = configuration["fqdn_subarray"]
+    talon_lru = configuration["fqdn_talon_lru"]
+    talon_board = configuration["fqdn_talon_board"]
+    power_switch = configuration["fqdn_power_switch"]
 
     def mock_get_num_capabilities():
         num_capabilities = {
@@ -93,15 +95,19 @@ def controller_component_manager(
     talondx_component_manager = MockTalonDxComponentManager()
 
     talondx_config_path = "mnt/talondx-config/"
+    hw_config_path = "mnt/hw_config/hw_config.yaml"
 
     component_manager = ControllerComponentManager(
-        mock_get_num_capabilities,
+        get_num_capabilities=mock_get_num_capabilities,
         subarray_fqdns_all=subarray,
         vcc_fqdns_all=vcc,
         fsp_fqdns_all=fsp,
         talon_lru_fqdns_all=talon_lru,
+        talon_board_fqdns_all=talon_board,
+        power_switch_fqdns_all=power_switch,
         talondx_component_manager=talondx_component_manager,
         talondx_config_path=talondx_config_path,
+        hw_config_path=hw_config_path,
         logger=logger,
         push_change_event=push_change_event_callback,
         communication_status_changed_callback=communication_status_changed_callback,
