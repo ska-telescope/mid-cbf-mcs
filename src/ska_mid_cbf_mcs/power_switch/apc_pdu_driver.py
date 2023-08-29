@@ -253,6 +253,7 @@ class ApcPduDriver:
             paramiko.ssh_exception.SSHException,
         ) as e:
             self.logger.error(f"Failed to connect to PDU: {e}")
+            return (False, None)
         except socket.timeout:
             self.logger.error("APC PDU - Socket timeout error")
             return (False, None)

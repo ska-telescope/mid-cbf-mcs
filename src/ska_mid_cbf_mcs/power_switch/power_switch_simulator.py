@@ -17,7 +17,7 @@ from typing import List
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import PowerMode
 
-from ska_mid_cbf_mcs.power_switch.power_switch_driver import Outlet
+from ska_mid_cbf_mcs.power_switch.pdu_common import Outlet
 
 __all__ = ["PowerSwitchSimulator"]
 
