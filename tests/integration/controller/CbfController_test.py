@@ -17,7 +17,7 @@ import pytest
 from ska_tango_base.base.base_device import (
     _DEBUGGER_PORT,  # DeviceStateModel, removed in v0.11.3
 )
-from ska_tango_base.control_model import AdminMode
+from ska_tango_base.control_model import AdminMode, ObsState
 from tango import DevState
 
 # Standard imports
@@ -258,7 +258,7 @@ class TestCbfController:
                         == DevState.DISABLE
                     )
 
-    def test_Off_with_Subarray_obs_states(self, test_proxies):
+    def test_Off_with_subarray_obs_states(self, test_proxies):
         """
         Verify we can reset the subarray obs states
         """
@@ -266,16 +266,83 @@ class TestCbfController:
         wait_time_s = 3
         sleep_time_s = 0.1
 
+        # after init devices should be in DISABLE state
+        # trigger start_communicating by setting the AdminMode to ONLINE
+        test_proxies.controller.adminMode = AdminMode.ONLINE
+
         # send the On command
         test_proxies.controller.On()
+
+        for i in range(1, test_proxies.num_sub + 1):
+            test_proxies.wait_timeout_dev(
+                [test_proxies.subarray[i]],
+                DevState.ON,
+                wait_time_s,
+                sleep_time_s,
+            )
+            assert test_proxies.subarray[i].State() == DevState.ON
+
+        # check the observing states are as expected
+        for i in range(1, test_proxies.num_sub + 1):
+            assert test_proxies.subarray[i].obsState == ObsState.EMPTY
+        for i in range(1, test_proxies.num_vcc + 1):
+            assert test_proxies.vcc[i].obsState == ObsState.IDLE
+        for i in ["CORR", "PSS-BF", "PST-BF"]:
+            for j in range(1, test_proxies.num_sub + 1):
+                for k in range(1, test_proxies.num_fsp + 1):
+                    assert (
+                        test_proxies.fspSubarray[i][j][k].obsState
+                        == ObsState.IDLE
+                    )
 
         test_proxies.wait_timeout_dev(
             [test_proxies.controller], DevState.ON, wait_time_s, sleep_time_s
         )
         assert test_proxies.controller.State() == DevState.ON
 
-        # check the subarray obs state is EMPTY
-        # send the OFF command, make sure it works fine
+        # send the OFF command, check ObsState
+        test_proxies.controller.Off()
+
+        test_proxies.wait_timeout_dev(
+            [test_proxies.controller], DevState.OFF, wait_time_s, sleep_time_s
+        )
+        assert test_proxies.controller.State() == DevState.OFF
+
+        for i in range(1, test_proxies.num_sub + 1):
+            test_proxies.wait_timeout_dev(
+                [test_proxies.subarray[i]],
+                DevState.OFF,
+                wait_time_s,
+                sleep_time_s,
+            )
+            assert test_proxies.subarray[i].State() == DevState.OFF
+
+        for i in range(1, test_proxies.num_vcc + 1):
+            test_proxies.wait_timeout_dev(
+                [test_proxies.vcc[i]], DevState.OFF, wait_time_s, sleep_time_s
+            )
+            assert test_proxies.vcc[i].State() == DevState.OFF
+
+        for i in range(1, test_proxies.num_fsp + 1):
+            test_proxies.wait_timeout_dev(
+                [test_proxies.fsp[i]], DevState.OFF, wait_time_s, sleep_time_s
+            )
+            assert test_proxies.fsp[i].State() == DevState.OFF
+
+        for i in ["CORR", "PSS-BF", "PST-BF"]:
+            for j in range(1, test_proxies.num_sub + 1):
+                for k in range(1, test_proxies.num_fsp + 1):
+                    test_proxies.wait_timeout_dev(
+                        [test_proxies.fspSubarray[i][j][k]],
+                        DevState.OFF,
+                        wait_time_s,
+                        sleep_time_s,
+                    )
+                    assert (
+                        test_proxies.fspSubarray[i][j][k].State()
+                        == DevState.OFF
+                    )
+
         # set Subarray obs state to
         # - IDLE (AssignResources)
         # - READY (ConfigureScan)

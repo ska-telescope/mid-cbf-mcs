@@ -516,7 +516,7 @@ class ControllerComponentManager(CbfComponentManager):
         - the Subarrays ObsState is EMPTY
         which in turn ensures that
         - the VCC ObsState is IDLE
-        - the FSP <func> Subarrays ObstState is IDLE
+        - the FSP <func> Subarrays ObsState is IDLE
         so that when the Controller is commanded
         to turn On again, the observing state of
         all the controlled MCS software is ready to
@@ -526,6 +526,9 @@ class ControllerComponentManager(CbfComponentManager):
         """
         subarray_obs_state = None
         counter = 1
+
+        log_msg = "Entering _set_subarrays_obs_state_to_empty"
+        self._logger.info(log_msg)
 
         # TBD - we have 3 subarrays, we are only using 1 - will the others
         # be in EMPTY? This should be the case, but needs to be checked
@@ -543,37 +546,60 @@ class ControllerComponentManager(CbfComponentManager):
                 subarray_obs_state = self._proxies[fqdn].read_attribute(
                     "obsState"
                 )
+                log_msg = f"Inside while loop subarray {self._proxies[fqdn].SubID} counter: {counter}"
+                self._logger.info(log_msg)
                 if subarray_obs_state == ObsState.EMPTY:
                     # this is the state we want, nothing to do
+                    log_msg = f"Obs state for subarray {self._proxies[fqdn].SubID} is ObsState.EMPTY"
+                    self._logger.info(log_msg)
                     break
                 elif subarray_obs_state == ObsState.RESOURCING:
                     # wait for this to complete
-                    pass
+                    log_msg = f"Obs state for subarray {self._proxies[fqdn].SubID} is ObsState.RESOURCING"
+                    self._logger.info(log_msg)
                 elif subarray_obs_state == ObsState.IDLE:
                     # send RemoveAllReceptors command
+                    log_msg = f"Obs state for subarray {self._proxies[fqdn].SubID} is ObsState.IDLE"
+                    self._logger.info(log_msg)
                     self._proxies[fqdn].RemoveAllReceptors()
                 elif subarray_obs_state == ObsState.CONFIGURING:
+                    log_msg = f"Obs state for subarray {self._proxies[fqdn].SubID} is ObsState.CONFIGURING"
+                    self._logger.info(log_msg)
                     # wait for this to complete
                     pass
                 elif subarray_obs_state == ObsState.READY:
+                    log_msg = f"Obs state for subarray {self._proxies[fqdn].SubID} is ObsState.READY"
+                    self._logger.info(log_msg)
                     # send Abort command
                     self._proxies[fqdn].Abort()
                 elif subarray_obs_state == ObsState.SCANNING:
+                    log_msg = f"Obs state for subarray {self._proxies[fqdn].SubID} is ObsState.SCANNING"
+                    self._logger.info(log_msg)
                     # send Abort command
                     self._proxies[fqdn].Abort()
                 elif subarray_obs_state == ObsState.ABORTING:
+                    log_msg = f"Obs state for subarray {self._proxies[fqdn].SubID} is ObsState.ABORTING"
+                    self._logger.info(log_msg)
                     # wait for this to complete
                     pass
                 elif subarray_obs_state == ObsState.RESETTING:
+                    log_msg = f"Obs state for subarray {self._proxies[fqdn].SubID} is ObsState.RESETTING"
+                    self._logger.info(log_msg)
                     # wait for this to complete
                     pass
                 elif subarray_obs_state == ObsState.ABORTED:
+                    log_msg = f"Obs state for subarray {self._proxies[fqdn].SubID} is ObsState.ABORTED"
+                    self._logger.info(log_msg)
                     # send Restart command
                     self._proxies[fqdn].Restart()
                 elif subarray_obs_state == ObsState.FAULT:
+                    log_msg = f"Obs state for subarray {self._proxies[fqdn].SubID} is ObsState.FAULT"
+                    self._logger.info(log_msg)
                     # send Restart command
                     self._proxies[fqdn].Restart()
                 elif subarray_obs_state == ObsState.RESTARTING:
+                    log_msg = f"Obs state for subarray {self._proxies[fqdn].SubID} is ObsState.RESTARTING"
+                    self._logger.info(log_msg)
                     # wait for this to complete and check again
                     pass
                 else:
@@ -585,6 +611,11 @@ class ControllerComponentManager(CbfComponentManager):
                 sleep(CONST_WAIT_TIME)
                 counter = counter + 1
             if subarray_obs_state != ObsState.EMPTY:
-                log_msg = "Unable to transition subarray to ObsState.EMPTY. ObsState is {subarray_obs_state}"
+                log_msg = "Unable to transition subarray to ObsState.EMPTY. ObsState is {subarray_obs_state}; counter = {counter}"
                 self._logger.error(log_msg)
                 # TBD raise exception
+            log_msg = f"Exiting update state of subarray {self._proxies[fqdn].SubID}. Counter: {counter}"
+            self._logger.info(log_msg)
+
+        log_msg = "Exiting _set_subarrays_obs_state_to_empty"
+        self._logger.info(log_msg)

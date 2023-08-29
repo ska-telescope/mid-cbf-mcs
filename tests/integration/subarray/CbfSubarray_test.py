@@ -1437,9 +1437,32 @@ class TestCbfSubarray:
 
             sub_id = int(configuration["common"]["subarray_id"])
 
+            print(
+                "*********Cbf_Subarray_test_endScan just before test_proxies.on()"
+            )
+
+            for fsp in configuration["cbf"]["fsp"]:
+                fsp_id = int(fsp["fsp_id"])
+                if fsp["function_mode"] == "CORR":
+                    fspSubarrayObsState = test_proxies.fspSubarray["CORR"][
+                        sub_id
+                    ][fsp_id].obsState
+                    print(
+                        f"*********Before test_proxies.on() fsp subarray obsState: {fspSubarrayObsState}"
+                    )
+
             test_proxies.on()
             time.sleep(sleep_time_s)
 
+            for fsp in configuration["cbf"]["fsp"]:
+                fsp_id = int(fsp["fsp_id"])
+                if fsp["function_mode"] == "CORR":
+                    fspSubarrayObsState = test_proxies.fspSubarray["CORR"][
+                        sub_id
+                    ][fsp_id].obsState
+                    print(
+                        f"*********After test_proxies.on() fsp subarray obsState: {fspSubarrayObsState}"
+                    )
             num_receptors = len(receptors)
 
             vcc_ids = [None for _ in range(num_receptors)]
