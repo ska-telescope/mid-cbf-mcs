@@ -284,6 +284,39 @@ class FspPstSubarrayComponentManager(
 
         return (ResultCode.OK, "FspPstSubarray EndScan command completed OK")
 
+    def abort(
+        self: FspPstSubarrayComponentManager,
+    ) -> Tuple[ResultCode, str]:
+        """
+        Performs the Abort() command functionality
+
+        :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+        :rtype: (ResultCode, str)
+        """
+
+        # TODO: send command to HPS
+
+        return (ResultCode.OK, "FspPstSubarray Abort command completed OK")
+
+    def obsreset(
+        self: FspPstSubarrayComponentManager,
+    ) -> Tuple[ResultCode, str]:
+        """
+        Performs the ObsReset() command functionality
+
+        :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+        :rtype: (ResultCode, str)
+        """
+
+        self._deconfigure()
+        # TODO: send command to HPS
+
+        return (ResultCode.OK, "FspPstSubarray ObsReset command completed OK")
+    
     def _deconfigure(
         self: FspPstSubarrayComponentManager,
     ) -> None:

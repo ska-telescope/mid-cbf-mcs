@@ -734,19 +734,26 @@ class CbfSubarrayComponentManager(
 
             if self._ready:
                 # TODO: add 'ObsReset' for VLBI once implemented
+                # TODO: refactor to move the command flowdown to the command
+                # since deconfigure() is used by configurescan, restart, and 
+                # obsreset
+                # leaving here with GoToIdle as the command being flow down
+                # so that it works for ConfigureScan
+                # temporarily removing calls to deconfigure for
+                # restart and obsreset
                 for group in [
                     self._group_fsp_corr_subarray,
                     self._group_fsp_pss_subarray,
                     self._group_fsp_pst_subarray,
                 ]:
                     if group.get_size() > 0:
-                        group.command_inout("ObsReset")
+                        group.command_inout("GoToIdle")
                         # remove channel info from FSP subarrays
                         # already done in GoToIdle
                         group.remove_all()
 
                 if self._group_vcc.get_size() > 0:
-                    self._group_vcc.command_inout("ObsReset")
+                    self._group_vcc.command_inout("GoToIdle")
 
                 if self._group_fsp.get_size() > 0:
                     # change FSP subarray membership
@@ -2145,9 +2152,41 @@ class CbfSubarrayComponentManager(
         """
         # We might have interrupted a long-running command such as a Configure
         # or a Scan, so we need to clean up from that.
-        (result_code, msg) = self.deconfigure()
-        if result_code == ResultCode.OK:
-            self.remove_all_receptors()
+
+        # TODO for prototype, just remove the deconfigure
+        # need to refactor deconfigure so it doesn't include the
+        # command flow down
+
+        # (result_code, msg) = self.deconfigure()
+        # if result_code == ResultCode.OK:
+        self.remove_all_receptors()
+
+        # TODO: add 'ObsReset' for VLBI once implemented
+        for group in [
+            self._group_fsp_corr_subarray,
+            self._group_fsp_pss_subarray,
+            self._group_fsp_pst_subarray,
+        ]:
+            if group.get_size() > 0:
+                group.command_inout("ObsReset")
+                # remove channel info from FSP subarrays
+                # already done in GoToIdle
+                group.remove_all()
+
+        if self._group_vcc.get_size() > 0:
+            self._group_vcc.command_inout("ObsReset")
+
+        if self._group_fsp.get_size() > 0:
+            # change FSP subarray membership
+            data = tango.DeviceData()
+            data.insert(tango.DevUShort, self._subarray_id)
+            self._logger.debug(data)
+            self._group_fsp.command_inout(
+                "RemoveSubarrayMembership", data
+            )
+            self._group_fsp.remove_all()
+
+        return (ResultCode.OK, "Restart command completed OK")
 
     @check_communicating
     def obsreset(self: CbfSubarrayComponentManager) -> None:
@@ -2156,7 +2195,23 @@ class CbfSubarrayComponentManager(
         """
         # We might have interrupted a long-running command such as a Configure
         # or a Scan, so we need to clean up from that.
-        (result_code, msg) = self.deconfigure()
+
+        # TODO for prototype, just remove the deconfigure
+        # need to refactor deconfigure so it doesn't include the
+        # command flow down
+        # (result_code, msg) = self.deconfigure()
+
+        for group in [
+            self._group_fsp_corr_subarray,
+            self._group_fsp_pss_subarray,
+            self._group_fsp_pst_subarray,
+        ]:
+            if group.get_size() > 0:
+                group.command_inout("ObsReset")
+ 
+        if self._group_vcc.get_size() > 0:
+            self._group_vcc.command_inout("ObsReset")
+        return (ResultCode.OK, "ObsReset command completed OK")
 
     def update_component_resources(
         self: CbfSubarrayComponentManager, resourced: bool

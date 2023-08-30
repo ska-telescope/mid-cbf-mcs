@@ -2562,6 +2562,7 @@ class TestCbfSubarray:
             )
             for fsp in configuration["cbf"]["fsp"]:
                 fsp_id = int(fsp["fsp_id"])
+                # FSP Subarrays
                 if fsp["function_mode"] == "CORR":
                     assert (
                         test_proxies.fspSubarray["CORR"][sub_id][

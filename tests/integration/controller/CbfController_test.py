@@ -345,7 +345,33 @@ class TestCbfController:
 
         # set Subarray obs state to
         # - IDLE (AssignResources)
-        # - READY (ConfigureScan)
+        # test_proxies.controller.On()
+        # receptors = ["SKA100", "SKA001", "SKA063"]
+        # test_proxies.subarray[1].AddReceptors(receptors)
+        # test_proxies.wait_timeout_obs(
+        #     [test_proxies.subarray[1]],
+        #     ObsState.IDLE,
+        #     wait_time_s,
+        #     sleep_time_s,
+        # )
+
+        # assert test_proxies.subarray[1].obsState == ObsState.IDLE
+
+        # # turn off and make sure this succeeds
+        # self.test_Off(test_proxies)
+
+        # # - READY (ConfigureScan)
+        # self.test_On(test_proxies)
+        # receptors = ["SKA100", "SKA001", "SKA063"]
+        # test_proxies.subarray[1].AddReceptors(receptors)
+        # test_proxies.wait_timeout_obs(
+        #     [test_proxies.subarray[1]],
+        #     ObsState.IDLE,
+        #     wait_time_s,
+        #     sleep_time_s,
+        # )
+        
+
         # - see if can get CONFIGURING by not waiting after the Configure Scan
         #   (add logging to else branches in controller to see if this works)
         # - SCANNING (Scan)
@@ -357,4 +383,6 @@ class TestCbfController:
         # Then turn On again ready for next part of test
 
         # clean up
+        # TBD: consider whether we want to connect tests
+        # like this, or prefer reusable common methods
         self.test_Disconnect(test_proxies)

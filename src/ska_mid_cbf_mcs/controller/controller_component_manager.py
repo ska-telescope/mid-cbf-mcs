@@ -558,15 +558,15 @@ class ControllerComponentManager(CbfComponentManager):
                     log_msg = f"Obs state for subarray {self._proxies[fqdn].SubID} is ObsState.RESOURCING"
                     self._logger.info(log_msg)
                 elif subarray_obs_state == ObsState.IDLE:
-                    # send RemoveAllReceptors command
+                    # send Abort command
                     log_msg = f"Obs state for subarray {self._proxies[fqdn].SubID} is ObsState.IDLE"
                     self._logger.info(log_msg)
-                    self._proxies[fqdn].RemoveAllReceptors()
+                    self._proxies[fqdn].Abort()
                 elif subarray_obs_state == ObsState.CONFIGURING:
+                    # send Abort command
                     log_msg = f"Obs state for subarray {self._proxies[fqdn].SubID} is ObsState.CONFIGURING"
                     self._logger.info(log_msg)
-                    # wait for this to complete
-                    pass
+                    self._proxies[fqdn].Abort()
                 elif subarray_obs_state == ObsState.READY:
                     log_msg = f"Obs state for subarray {self._proxies[fqdn].SubID} is ObsState.READY"
                     self._logger.info(log_msg)
