@@ -735,7 +735,7 @@ class CbfSubarrayComponentManager(
             if self._ready:
                 # TODO: add 'ObsReset' for VLBI once implemented
                 # TODO: refactor to move the command flowdown to the command
-                # since deconfigure() is used by configurescan, restart, and 
+                # since deconfigure() is used by configurescan, restart, and
                 # obsreset
                 # leaving here with GoToIdle as the command being flow down
                 # so that it works for ConfigureScan
@@ -2181,9 +2181,7 @@ class CbfSubarrayComponentManager(
             data = tango.DeviceData()
             data.insert(tango.DevUShort, self._subarray_id)
             self._logger.debug(data)
-            self._group_fsp.command_inout(
-                "RemoveSubarrayMembership", data
-            )
+            self._group_fsp.command_inout("RemoveSubarrayMembership", data)
             self._group_fsp.remove_all()
 
         return (ResultCode.OK, "Restart command completed OK")
@@ -2208,7 +2206,7 @@ class CbfSubarrayComponentManager(
         ]:
             if group.get_size() > 0:
                 group.command_inout("ObsReset")
- 
+
         if self._group_vcc.get_size() > 0:
             self._group_vcc.command_inout("ObsReset")
         return (ResultCode.OK, "ObsReset command completed OK")

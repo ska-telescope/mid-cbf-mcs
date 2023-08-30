@@ -370,7 +370,6 @@ class TestCbfController:
         #     wait_time_s,
         #     sleep_time_s,
         # )
-        
 
         # - see if can get CONFIGURING by not waiting after the Configure Scan
         #   (add logging to else branches in controller to see if this works)

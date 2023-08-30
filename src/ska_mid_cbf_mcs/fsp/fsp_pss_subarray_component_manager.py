@@ -346,7 +346,7 @@ class FspPssSubarrayComponentManager(
         # TODO: send command to HPS
 
         return (ResultCode.OK, "FspPssSubarray ObsReset command completed OK")
-    
+
     def _deconfigure(
         self: FspPssSubarrayComponentManager,
     ) -> None:
