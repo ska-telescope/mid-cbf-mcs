@@ -158,7 +158,7 @@ class TalonLRUComponentManager(CbfComponentManager):
 
         if self._proxy_power_switch2 is not None:
             if self._pdus[1] != self._pdus[0]:
-                self._proxy_power_switch2.set_timeout_millis(5000)
+                self._proxy_power_switch2.set_timeout_millis(8000)
                 self._simulation_mode_events[
                     1
                 ] = self._proxy_power_switch2.add_change_event_callback(
