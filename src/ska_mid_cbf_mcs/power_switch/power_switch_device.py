@@ -51,7 +51,7 @@ class PowerSwitch(SKABaseDevice):
     # Device Properties
     # -----------------
 
-    PowerSwitchProtocol = device_property(
+    PowerSwitchModel = device_property(
         dtype="str",
     )
     PowerSwitchIp = device_property(
@@ -62,36 +62,6 @@ class PowerSwitch(SKABaseDevice):
     )
     PowerSwitchPassword = device_property(
         dtype="str",
-    )
-    PowerSwitchRequestHeaderContentType = device_property(
-        dtype="str",
-    )
-    PowerSwitchOutletListUrl = device_property(
-        dtype="str",
-    )
-    PowerSwitchOutletStateUrl = device_property(
-        dtype="str",
-    )
-    PowerSwitchOutletControlUrl = device_property(
-        dtype="str",
-    )
-    PowerSwitchTurnOnAction = device_property(
-        dtype="str",
-    )
-    PowerSwitchTurnOffAction = device_property(
-        dtype="str",
-    )
-    PowerSwitchOutletStateOn = device_property(
-        dtype="str",
-    )
-    PowerSwitchOutletStateOff = device_property(
-        dtype="str",
-    )
-    PowerSwitchOutletSchemaFile = device_property(
-        dtype="str",
-    )
-    PowerSwitchOutletIdList = device_property(
-        dtype=("str",),
     )
 
     # ----------
@@ -151,21 +121,11 @@ class PowerSwitch(SKABaseDevice):
         self._component_power_mode: Optional[PowerMode] = None
         # Simulation mode default true (using the simulator)
         return PowerSwitchComponentManager(
-            protocol=self.PowerSwitchProtocol,
-            ip=self.PowerSwitchIp,
-            login=self.PowerSwitchLogin,
-            password=self.PowerSwitchPassword,
-            content_type=self.PowerSwitchRequestHeaderContentType,
-            outlet_list_url=self.PowerSwitchOutletListUrl,
-            outlet_state_url=self.PowerSwitchOutletStateUrl,
-            outlet_control_url=self.PowerSwitchOutletControlUrl,
-            turn_on_action=self.PowerSwitchTurnOnAction,
-            turn_off_action=self.PowerSwitchTurnOffAction,
-            state_on=self.PowerSwitchOutletStateOn,
-            state_off=self.PowerSwitchOutletStateOff,
-            outlet_schema_file=self.PowerSwitchOutletSchemaFile,
-            outlet_id_list=self.PowerSwitchOutletIdList,
-            logger=self.logger,
+            self.PowerSwitchModel,
+            self.PowerSwitchIp,
+            self.PowerSwitchLogin,
+            self.PowerSwitchPassword,
+            self.logger,
             push_change_event_callback=self.push_change_event,
             communication_status_changed_callback=self._communication_status_changed,
             component_power_mode_changed_callback=self._component_power_mode_changed,

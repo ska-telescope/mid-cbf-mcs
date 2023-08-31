@@ -14,6 +14,7 @@ from __future__ import annotations
 import logging
 from typing import Callable, List, Optional, Tuple
 
+import tango
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import PowerMode, SimulationMode
 
@@ -21,9 +22,15 @@ from ska_mid_cbf_mcs.component.component_manager import (
     CbfComponentManager,
     CommunicationStatus,
 )
-from ska_mid_cbf_mcs.power_switch.power_switch_driver import PowerSwitchDriver
+from ska_mid_cbf_mcs.power_switch.apc_pdu_driver import ApcPduDriver
+from ska_mid_cbf_mcs.power_switch.dli_pro_switch_driver import (
+    DLIProSwitchDriver,
+)
 from ska_mid_cbf_mcs.power_switch.power_switch_simulator import (
     PowerSwitchSimulator,
+)
+from ska_mid_cbf_mcs.power_switch.st_switched_pro2_driver import (
+    STSwitchedPRO2Driver,
 )
 
 __all__ = ["PowerSwitchComponentManager"]
@@ -31,7 +38,7 @@ __all__ = ["PowerSwitchComponentManager"]
 
 class PowerSwitchComponentManager(CbfComponentManager):
     """
-    A component manager for the DLI web power switch. Calls either the power
+    A component manager for the power switch. Calls either the power
     switch driver or the power switch simulator based on the value of simulation
     mode.
 
@@ -41,35 +48,15 @@ class PowerSwitchComponentManager(CbfComponentManager):
     :param ip: IP address of the power switch
     :param login: Login username of the power switch
     :param password: Login password for the power switch
-    :param content_type: The content type in the request header
-    :param outlet_list_url: A portion of the URL to get the list of outlets
-    :param outlet_state_url: A portion of the URL to get the outlet state
-    :param outlet_control_url: A portion of the URL to turn on/off outlet
-    :param turn_on_action: value to pass to request to turn on an outlet
-    :param turn_off_action: value to pass to request to turn on an outlet
-    :param state_on: value of the outlet's state when on
-    :param state_off: value of the outlet's state when off
-    :param outlet_schema_file: File name for the schema for a list of outlets
-    :param outlet_id_list: List of Outlet IDs
     :param logger: a logger for this object to use
     """
 
     def __init__(
         self: PowerSwitchComponentManager,
-        protocol: str,
+        model: str,
         ip: str,
         login: str,
         password: str,
-        content_type: str,
-        outlet_list_url: str,
-        outlet_state_url: str,
-        outlet_control_url: str,
-        turn_on_action: str,
-        turn_off_action: str,
-        state_on: str,
-        state_off: str,
-        outlet_schema_file: str,
-        outlet_id_list: List[str],
         logger: logging.Logger,
         push_change_event_callback: Optional[Callable],
         communication_status_changed_callback: Callable[
@@ -82,19 +69,10 @@ class PowerSwitchComponentManager(CbfComponentManager):
         """
         Initialize a new instance.
 
+        :param model: Name of the power switch model
         :param ip: IP address of the power switch
         :param login: Login username of the power switch
         :param password: Login password for the power switch
-        :param content_type: The content type in the request header
-        :param outlet_list_url: A portion of the URL to get the list of outlets
-        :param outlet_state_url: A portion of the URL to get the outlet state
-        :param outlet_control_url: A portion of the URL to turn on/off outlet
-        :param turn_on_action: value to pass to request to turn on an outlet
-        :param turn_off_action: value to pass to request to turn on an outlet
-        :param state_on: value of the outlet's state when on
-        :param state_off: value of the outlet's state when off
-        :param outlet_schema_file: File name for the schema for a list of outlets
-        :param outlet_id_list: List of Outlet IDs
         :param logger: a logger for this object to use
         :param push_change_event: method to call when the base classes
             want to send an event
@@ -113,25 +91,12 @@ class PowerSwitchComponentManager(CbfComponentManager):
 
         self._simulation_mode = simulation_mode
 
-        self.power_switch_driver = PowerSwitchDriver(
-            protocol,
-            ip,
-            login,
-            password,
-            content_type,
-            outlet_list_url,
-            outlet_state_url,
-            outlet_control_url,
-            turn_on_action,
-            turn_off_action,
-            state_on,
-            state_off,
-            outlet_schema_file,
-            outlet_id_list,
-            logger,
+        self.power_switch_driver = self.get_power_switch_driver(
+            model=model, ip=ip, login=login, password=password, logger=logger
         )
+
         self.power_switch_simulator = PowerSwitchSimulator(
-            outlet_id_list, logger
+            model=model, logger=logger
         )
 
         super().__init__(
@@ -236,7 +201,7 @@ class PowerSwitchComponentManager(CbfComponentManager):
         self: PowerSwitchComponentManager, outlet: str
     ) -> Tuple[ResultCode, str]:
         """
-        Tell the DLI power switch to turn on a specific outlet.
+        Tell the power switch to turn on a specific outlet.
 
         :param outlet: outlet ID to turn on
         :return: a tuple containing a return code and a string
@@ -254,7 +219,7 @@ class PowerSwitchComponentManager(CbfComponentManager):
         self: PowerSwitchComponentManager, outlet: str
     ) -> Tuple[ResultCode, str]:
         """
-        Tell the DLI power switch to turn off a specific outlet.
+        Tell the power switch to turn off a specific outlet.
 
         :param outlet: outlet ID to turn off
         :return: a tuple containing a return code and a string
@@ -267,3 +232,33 @@ class PowerSwitchComponentManager(CbfComponentManager):
             return self.power_switch_simulator.turn_off_outlet(outlet)
         else:
             return self.power_switch_driver.turn_off_outlet(outlet)
+
+    def get_power_switch_driver(
+        self: PowerSwitchComponentManager,
+        model: str,
+        ip: str,
+        login: str,
+        password: str,
+        logger: logging.Logger,
+    ):
+        # The text must match the powerswitch.yaml
+        if model == "DLI LPC9":
+            return DLIProSwitchDriver(
+                ip=ip, login=login, password=password, logger=logger
+            )
+        elif model == "Server Technology Switched PRO2":
+            return STSwitchedPRO2Driver(
+                ip=ip, login=login, password=password, logger=logger
+            )
+        elif model == "APC AP8681":
+            return ApcPduDriver(
+                ip=ip, login=login, password=password, logger=logger
+            )
+        else:
+            err = f"Model name {model} is not supported."
+            logger.error(err)
+            tango.Except.throw_exception(
+                "PowerSwitch_CreateDriverFailed",
+                err,
+                "get_power_switch_driver()",
+            )
