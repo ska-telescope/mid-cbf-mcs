@@ -174,7 +174,10 @@ def talon_dx_component_manager(
     monkeypatch.setattr(scp.SCPClient, "put", mock_scp_put)
 
     return TalonDxComponentManager(
-        "tests/unit/talondx_component_manager", SimulationMode.FALSE, logger
+        talondx_config_path="tests/unit/talondx_component_manager",
+        hw_config_path="tests/unit/talondx_component_manager/hw_config.yaml",
+        simulation_mode=SimulationMode.FALSE,
+        logger=logger,
     )
 
 
