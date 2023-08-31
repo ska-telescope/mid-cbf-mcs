@@ -59,7 +59,13 @@ class CbfController(SKAController):
 
     TalonLRU = device_property(dtype=("str",))
 
+    TalonBoard = device_property(dtype=("str",))
+
+    PowerSwitch = device_property(dtype=("str",))
+
     TalonDxConfigPath = device_property(dtype=("str"))
+
+    HWConfigPath = device_property(dtype=("str"))
 
     # ----------
     # Attributes
@@ -283,7 +289,10 @@ class CbfController(SKAController):
         # mode to on
         self._simulation_mode = SimulationMode.TRUE
         self._talondx_component_manager = TalonDxComponentManager(
-            self.TalonDxConfigPath, self._simulation_mode, self.logger
+            talondx_config_path=self.TalonDxConfigPath,
+            hw_config_path=self.HWConfigPath,
+            simulation_mode=self._simulation_mode,
+            logger=self.logger,
         )
 
         return ControllerComponentManager(
@@ -292,8 +301,11 @@ class CbfController(SKAController):
             fsp_fqdns_all=self.FSP,
             subarray_fqdns_all=self.CbfSubarray,
             talon_lru_fqdns_all=self.TalonLRU,
+            talon_board_fqdns_all=self.TalonBoard,
+            power_switch_fqdns_all=self.PowerSwitch,
             talondx_component_manager=self._talondx_component_manager,
             talondx_config_path=self.TalonDxConfigPath,
+            hw_config_path=self.HWConfigPath,
             logger=self.logger,
             push_change_event=self.push_change_event,
             communication_status_changed_callback=self._communication_status_changed,
