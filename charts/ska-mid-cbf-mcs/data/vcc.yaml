@@ -42,15 +42,6 @@ server:
           - name: "Band1And2Address"
             values:
             - "talondx-001/vcc-app/vcc-band-1-and-2"
-          - name: "Band3Address"
-            values:
-            - "talondx-001/vcc-app/vcc-band-3"
-          - name: "Band4Address"
-            values:
-            - "talondx-001/vcc-app/vcc-band-4"
-          - name: "Band5Address"
-            values:
-            - "talondx-001/vcc-app/vcc-band-5"
           - name: "SW1Address"
             values:
             - "mid_csp_cbf/vcc_sw1/001"
@@ -87,15 +78,6 @@ server:
           - name: "Band1And2Address"
             values:
             - "talondx-002/vcc-app/vcc-band-1-and-2"
-          - name: "Band3Address"
-            values:
-            - "talondx-002/vcc-app/vcc-band-3"
-          - name: "Band4Address"
-            values:
-            - "talondx-002/vcc-app/vcc-band-4"
-          - name: "Band5Address"
-            values:
-            - "talondx-002/vcc-app/vcc-band-5"
           - name: "SW1Address"
             values:
             - "mid_csp_cbf/vcc_sw1/002"
@@ -132,15 +114,6 @@ server:
           - name: "Band1And2Address"
             values:
             - "talondx-003/vcc-app/vcc-band-1-and-2"
-          - name: "Band3Address"
-            values:
-            - "talondx-003/vcc-app/vcc-band-3"
-          - name: "Band4Address"
-            values:
-            - "talondx-003/vcc-app/vcc-band-4"
-          - name: "Band5Address"
-            values:
-            - "talondx-003/vcc-app/vcc-band-5"
           - name: "SW1Address"
             values:
             - "mid_csp_cbf/vcc_sw1/003"
@@ -177,15 +150,6 @@ server:
           - name: "Band1And2Address"
             values:
             - "talondx-004/vcc-app/vcc-band-1-and-2"
-          - name: "Band3Address"
-            values:
-            - "talondx-004/vcc-app/vcc-band-3"
-          - name: "Band4Address"
-            values:
-            - "talondx-004/vcc-app/vcc-band-4"
-          - name: "Band5Address"
-            values:
-            - "talondx-004/vcc-app/vcc-band-5"
           - name: "SW1Address"
             values:
             - "mid_csp_cbf/vcc_sw1/004"
@@ -222,15 +186,6 @@ server:
           - name: "Band1And2Address"
             values:
             - "talondx-005/vcc-app/vcc-band-1-and-2"
-          - name: "Band3Address"
-            values:
-            - "talondx-005/vcc-app/vcc-band-3"
-          - name: "Band4Address"
-            values:
-            - "talondx-005/vcc-app/vcc-band-4"
-          - name: "Band5Address"
-            values:
-            - "talondx-005/vcc-app/vcc-band-5"
           - name: "SW1Address"
             values:
             - "mid_csp_cbf/vcc_sw1/005"
@@ -266,15 +221,6 @@ server:
           - name: "Band1And2Address"
             values:
             - "talondx-006/vcc-app/vcc-band-1-and-2"
-          - name: "Band3Address"
-            values:
-            - "talondx-006/vcc-app/vcc-band-3"
-          - name: "Band4Address"
-            values:
-            - "talondx-006/vcc-app/vcc-band-4"
-          - name: "Band5Address"
-            values:
-            - "talondx-006/vcc-app/vcc-band-5"
           - name: "SW1Address"
             values:
             - "mid_csp_cbf/vcc_sw1/006"
@@ -310,15 +256,6 @@ server:
           - name: "Band1And2Address"
             values:
             - "talondx-007/vcc-app/vcc-band-1-and-2"
-          - name: "Band3Address"
-            values:
-            - "talondx-007/vcc-app/vcc-band-3"
-          - name: "Band4Address"
-            values:
-            - "talondx-007/vcc-app/vcc-band-4"
-          - name: "Band5Address"
-            values:
-            - "talondx-007/vcc-app/vcc-band-5"
           - name: "SW1Address"
             values:
             - "mid_csp_cbf/vcc_sw1/007"
@@ -354,15 +291,6 @@ server:
           - name: "Band1And2Address"
             values:
             - "talondx-008/vcc-app/vcc-band-1-and-2"
-          - name: "Band3Address"
-            values:
-            - "talondx-008/vcc-app/vcc-band-3"
-          - name: "Band4Address"
-            values:
-            - "talondx-008/vcc-app/vcc-band-4"
-          - name: "Band5Address"
-            values:
-            - "talondx-008/vcc-app/vcc-band-5"
           - name: "SW1Address"
             values:
             - "mid_csp_cbf/vcc_sw1/008"

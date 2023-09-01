@@ -33,26 +33,17 @@ class VccControllerSimulator:
 
     :param device_name: Identifier for the device instance
     :param vcc_band_1_and_2: VCC band simulator instance for the band 1 and 2 device
-    :param vcc_band_3: VCC band simulator instance for the band 3 device
-    :param vcc_band_4: VCC band simulator instance for the band 4 device
-    :param vcc_band_5: VCC band simulator instance for the band 5 device
     """
 
     def __init__(
         self: VccControllerSimulator,
         device_name: str,
         vcc_band_1_and_2: VccBandSimulator,
-        vcc_band_3: VccBandSimulator,
-        vcc_band_4: VccBandSimulator,
-        vcc_band_5: VccBandSimulator,
     ) -> None:
         self.device_name = device_name
 
         self._band_devices = [
             vcc_band_1_and_2,
-            vcc_band_3,
-            vcc_band_4,
-            vcc_band_5,
         ]
 
         self._state = tango.DevState.INIT

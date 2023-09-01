@@ -271,9 +271,6 @@ def initial_mocks(
         "mid_csp_cbf/talon_lru/001": mock_talon_lru,
         "talondx-001/vcc-app/vcc-controller": mock_vcc_controller,
         "talondx-001/vcc-app/vcc-band-1-and-2": mock_vcc_band,
-        "talondx-001/vcc-app/vcc-band-3": mock_vcc_band,
-        "talondx-001/vcc-app/vcc-band-4": mock_vcc_band,
-        "talondx-001/vcc-app/vcc-band-5": mock_vcc_band,
         "mid_csp_cbf/vcc_sw1/001": mock_sw,
         "mid_csp_cbf/vcc_sw2/001": mock_sw,
     }
@@ -294,9 +291,6 @@ def vcc_component_manager(
         vcc_controller="talondx-001/vcc-app/vcc-controller",
         vcc_band=[
             "talondx-001/vcc-app/vcc-band-1-and-2",
-            "talondx-001/vcc-app/vcc-band-3",
-            "talondx-001/vcc-app/vcc-band-4",
-            "talondx-001/vcc-app/vcc-band-5",
         ],
         search_window=["mid_csp_cbf/vcc_sw1/001", "mid_csp_cbf/vcc_sw2/001"],
         logger=logger,

@@ -293,8 +293,8 @@ def initial_mocks(
     Return a dictionary of device proxy mocks to pre-register.
 
     :param mock_vcc: a mock Vcc that is powered off.
-    :param mock_fsp: a mock VccBand3 that is powered off.
-    :param mock_subarray: a mock VccBand4 that is powered off.
+    :param mock_fsp: a mock Fsp that is powered off.
+    :param mock_subarray: a mock subarray that is powered off.
 
     :return: a dictionary of device proxy mocks to pre-register.
     """

@@ -34,15 +34,6 @@
                             "Band1And2Address": [
                                 "talondx-001/vcc-app/vcc-band-1-and-2"
                             ],
-                            "Band3Address": [
-                                "talondx-001/vcc-app/vcc-band-3"
-                            ],
-                            "Band4Address": [
-                                "talondx-001/vcc-app/vcc-band-4"
-                            ],
-                            "Band5Address": [
-                                "talondx-001/vcc-app/vcc-band-5"
-                            ],
                             "SW1Address": [
                                 "mid_csp_cbf/vcc_sw1/001"
                             ],

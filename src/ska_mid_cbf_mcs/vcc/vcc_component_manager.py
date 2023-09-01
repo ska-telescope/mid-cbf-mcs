@@ -295,16 +295,10 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         # Create simulators
         self._band_simulators = [
             VccBandSimulator(vcc_band[0]),
-            VccBandSimulator(vcc_band[1]),
-            VccBandSimulator(vcc_band[2]),
-            VccBandSimulator(vcc_band[3]),
         ]
         self._vcc_controller_simulator = VccControllerSimulator(
             vcc_controller,
             self._band_simulators[0],
-            self._band_simulators[1],
-            self._band_simulators[2],
-            self._band_simulators[3],
         )
 
         super().__init__(

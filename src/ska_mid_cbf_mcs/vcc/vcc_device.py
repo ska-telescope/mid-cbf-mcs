@@ -56,12 +56,6 @@ class Vcc(CspSubElementObsDevice):
 
     Band1And2Address = device_property(dtype="str")
 
-    Band3Address = device_property(dtype="str")
-
-    Band4Address = device_property(dtype="str")
-
-    Band5Address = device_property(dtype="str")
-
     SW1Address = device_property(dtype="str")
 
     SW2Address = device_property(dtype="str")
@@ -269,9 +263,6 @@ class Vcc(CspSubElementObsDevice):
             vcc_controller=self.VccControllerAddress,
             vcc_band=[
                 self.Band1And2Address,
-                self.Band3Address,
-                self.Band4Address,
-                self.Band5Address,
             ],
             search_window=[self.SW1Address, self.SW2Address],
             logger=self.logger,
