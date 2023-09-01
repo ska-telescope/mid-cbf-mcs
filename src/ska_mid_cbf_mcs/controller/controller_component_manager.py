@@ -88,7 +88,9 @@ class ControllerComponentManager(CbfComponentManager):
 
         self._connected = False  # to device proxies
 
-        self._on = False  # CBF controller itself
+        # TODO: CIP-1569
+        # Temporarily commenting out the self._on
+        # self._on = False  # CBF controller itself
 
         (
             self._fqdn_vcc,
