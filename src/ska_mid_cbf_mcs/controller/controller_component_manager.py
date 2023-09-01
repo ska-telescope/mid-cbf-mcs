@@ -454,7 +454,9 @@ class ControllerComponentManager(CbfComponentManager):
                 self._logger.error(log_msg)
                 return (ResultCode.FAILED, log_msg)
 
-            self._on = True
+            # TODO: CIP-1569
+            # Uncomment out the "self._on = True" when OFF command implemented.
+            # self._on = True
             message = "CbfController On command completed OK"
             return (ResultCode.OK, message)
 
@@ -545,7 +547,9 @@ class ControllerComponentManager(CbfComponentManager):
                 self._logger.error(log_msg)
                 return (ResultCode.FAILED, log_msg)
 
-            self._on = False
+            # TODO: CIP-1569
+            # Uncomment out the "self._on = False" when OFF command implemented.
+            # self._on = False
             message = "CbfController Off command completed OK"
             return (ResultCode.OK, message)
 
