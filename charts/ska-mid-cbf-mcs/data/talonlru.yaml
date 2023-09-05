@@ -77,8 +77,7 @@ server:
             - "001"
           - name: "PDU2PowerOutlet"
             values:
-            - "AA42"
-            - "AA42"
+            - "1"
           - name: "polled_attr"
             values:
             - "state"
