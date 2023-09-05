@@ -48,15 +48,15 @@ class TalonLRU(SKABaseDevice):
     # Device Properties
     # -----------------
 
-    TalonDxBoard1Address = device_property(
+    TalonDxBoard1 = device_property(
         dtype="str",
     )
 
-    TalonDxBoard2Address = device_property(
+    TalonDxBoard2 = device_property(
         dtype="str",
     )
 
-    PDU1Address = device_property(
+    PDU1 = device_property(
         dtype="str",
     )
 
@@ -64,7 +64,7 @@ class TalonLRU(SKABaseDevice):
         dtype="str",
     )
 
-    PDU2Address = device_property(
+    PDU2 = device_property(
         dtype="str",
     )
 
@@ -227,8 +227,8 @@ class TalonLRU(SKABaseDevice):
         self._component_power_mode: Optional[PowerMode] = None
 
         return TalonLRUComponentManager(
-            talon_fqdns=[self.TalonDxBoard1Address, self.TalonDxBoard2Address],
-            pdu_fqdns=[self.PDU1Address, self.PDU2Address],
+            talons=[self.TalonDxBoard1, self.TalonDxBoard2],
+            pdus=[self.PDU1, self.PDU2],
             pdu_outlets=[self.PDU1PowerOutlet, self.PDU2PowerOutlet],
             logger=self.logger,
             push_change_event_callback=self.push_change_event,
@@ -282,26 +282,13 @@ class TalonLRU(SKABaseDevice):
                 information purpose only.
             """
             device = self.target
-
-            # Setting Powerswitch simulation mode to LRU simulation mode
-            lru_simulation_mode = device.read_simulationMode()
-
-            # TO DO: REMOVE THIS ONCE DATA MODEL REDESIGN KICKS IN. WILL BE PART OF CBFCONTROLLER
-            device.component_manager._proxy_power_switch1.write_attribute(
-                "adminMode", 1
-            )
-            device.component_manager._proxy_power_switch1.write_attribute(
-                "simulationMode", lru_simulation_mode
-            )
-            device.component_manager._proxy_power_switch1.write_attribute(
-                "adminMode", 0
-            )
-
             with device._power_switch_lock:
                 # Check that this command is still allowed since the
                 # _check_power_mode_callback could have changed the state
                 self.is_allowed()
-                return device.component_manager.on()
+                return device.component_manager.on(
+                    simulation_mode=device.read_simulationMode()
+                )
 
     class OffCommand(SKABaseDevice.OffCommand):
         """

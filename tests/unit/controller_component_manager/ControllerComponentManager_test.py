@@ -77,6 +77,10 @@ class TestControllerComponentManager:
         )
         assert controller_component_manager._connected is True
 
+        # TODO: CIP-1569
+        # Temporarily commenting out the assert below
+        # assert controller_component_manager._on is False
+
         (result_code, _) = controller_component_manager.on()
         assert result_code == ResultCode.OK
 
@@ -93,6 +97,12 @@ class TestControllerComponentManager:
             == CommunicationStatus.ESTABLISHED
         )
         assert controller_component_manager._connected is True
+
+        # TODO: CIP-1569
+        # Temporarily commenting out the next two lines
+        # (result_code, _) = controller_component_manager.on()
+        #
+        # assert controller_component_manager._on is True
 
         (result_code, _) = controller_component_manager.off()
         assert result_code == ResultCode.OK

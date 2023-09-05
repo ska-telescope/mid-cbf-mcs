@@ -17,9 +17,11 @@ import os
 from typing import Callable, Dict, List, Optional, Tuple
 
 import tango
+import yaml
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import AdminMode, PowerMode, SimulationMode
 
+from ska_mid_cbf_mcs.commons.global_enum import const
 from ska_mid_cbf_mcs.component.component_manager import (
     CbfComponentManager,
     CommunicationStatus,
@@ -29,10 +31,6 @@ from ska_mid_cbf_mcs.controller.talondx_component_manager import (
 )
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_mid_cbf_mcs.group_proxy import CbfGroupProxy
-
-CONST_DEFAULT_COUNT_VCC = 197
-CONST_DEFAULT_COUNT_FSP = 27
-CONST_DEFAULT_COUNT_SUBARRAY = 16
 
 
 class ControllerComponentManager(CbfComponentManager):
@@ -45,8 +43,11 @@ class ControllerComponentManager(CbfComponentManager):
         vcc_fqdns_all: List[str],
         fsp_fqdns_all: List[str],
         talon_lru_fqdns_all: List[str],
+        talon_board_fqdns_all: List[str],
+        power_switch_fqdns_all: List[str],
         talondx_component_manager: TalonDxComponentManager,
         talondx_config_path: str,
+        hw_config_path: str,
         logger: logging.Logger,
         push_change_event: Optional[Callable],
         communication_status_changed_callback: Callable[
@@ -64,9 +65,13 @@ class ControllerComponentManager(CbfComponentManager):
         :param vcc_fqdns_all: FQDNS of all the Vcc devices
         :param fsp_fqdns_all: FQDNS of all the Fsp devices
         :param talon_lru_fqdns_all: FQDNS of all the Talon LRU devices
+        :param talon_board_fqdns_all: FQDNS of all the Talon board devices
+        :param power_switch_fqdns_all: FQDNS of all the power switch devices
         :talondx_component_manager: component manager for the Talon LRU
         :param talondx_config_path: path to the directory containing configuration
                                     files and artifacts for the Talon boards
+        :param hw_config_path: path to the directory containing the hardware
+                               configuration file
         :param logger: a logger for this object to use
         :param push_change_event: method to call when the base classes
             want to send an event
@@ -81,36 +86,45 @@ class ControllerComponentManager(CbfComponentManager):
 
         self._logger = logger
 
-        self._connected = False
+        self._connected = False  # to device proxies
+
+        # TODO: CIP-1569
+        # Temporarily commenting out the self._on
+        # self._on = False  # CBF controller itself
 
         (
             self._fqdn_vcc,
             self._fqdn_fsp,
             self._fqdn_subarray,
             self._fqdn_talon_lru,
-        ) = ([] for i in range(4))
+            self._fqdn_talon_board,
+            self._fqdn_power_switch,
+        ) = ([] for i in range(6))
 
         self._subarray_fqdns_all = subarray_fqdns_all
         self._vcc_fqdns_all = vcc_fqdns_all
         self._fsp_fqdns_all = fsp_fqdns_all
         self._talon_lru_fqdns_all = talon_lru_fqdns_all
+        self._talon_board_fqdns_all = talon_board_fqdns_all
+        self._power_switch_fqdns_all = power_switch_fqdns_all
 
         self._get_max_capabilities = get_num_capabilities
 
         self._vcc_to_receptor = {}
 
-        # TODO: component manager should not be passed into component manager
+        # TODO: component manager should not be passed into component manager ?
         self._talondx_component_manager = talondx_component_manager
 
         self._talondx_config_path = talondx_config_path
+        self._hw_config_path = hw_config_path
 
         self._max_capabilities = ""
 
         self._proxies = {}
 
         # Initialize attribute values
-        self.frequency_offset_k = [0] * CONST_DEFAULT_COUNT_VCC
-        self.frequency_offset_delta_f = [0] * CONST_DEFAULT_COUNT_VCC
+        self.frequency_offset_k = [0] * const.DEFAULT_COUNT_VCC
+        self.frequency_offset_delta_f = [0] * const.DEFAULT_COUNT_VCC
 
         super().__init__(
             logger=logger,
@@ -130,22 +144,25 @@ class ControllerComponentManager(CbfComponentManager):
 
         super().start_communicating()
 
+        with open(self._hw_config_path) as yaml_fd:
+            self._hw_config = yaml.safe_load(yaml_fd)
+
         self._max_capabilities = self._get_max_capabilities()
         if self._max_capabilities:
             try:
                 self._count_vcc = self._max_capabilities["VCC"]
             except KeyError:  # not found in DB
-                self._count_vcc = CONST_DEFAULT_COUNT_VCC
+                self._count_vcc = const.DEFAULT_COUNT_VCC
 
             try:
                 self._count_fsp = self._max_capabilities["FSP"]
             except KeyError:  # not found in DB
-                self._count_fsp = CONST_DEFAULT_COUNT_FSP
+                self._count_fsp = const.DEFAULT_COUNT_FSP
 
             try:
                 self._count_subarray = self._max_capabilities["Subarray"]
             except KeyError:  # not found in DB
-                self._count_subarray = CONST_DEFAULT_COUNT_SUBARRAY
+                self._count_subarray = const.DEFAULT_COUNT_SUBARRAY
         else:
             self._logger.warning(
                 "MaxCapabilities device property not defined - \
@@ -157,7 +174,25 @@ class ControllerComponentManager(CbfComponentManager):
         self._fqdn_subarray = list(self._subarray_fqdns_all)[
             : self._count_subarray
         ]
-        self._fqdn_talon_lru = list(self._talon_lru_fqdns_all)
+
+        self._fqdn_talon_lru = [
+            fqdn
+            for fqdn in self._talon_lru_fqdns_all
+            if fqdn.split("/")[-1]
+            in [list(lru.keys())[0] for lru in self._hw_config["talon_lru"]]
+        ]
+        self._fqdn_talon_board = [
+            fqdn
+            for fqdn in self._talon_board_fqdns_all
+            if fqdn.split("/")[-1]
+            in list(self._hw_config["talon_board"].keys())
+        ]
+        self._fqdn_power_switch = [
+            fqdn
+            for fqdn in self._power_switch_fqdns_all
+            if fqdn.split("/")[-1]
+            in [list(ps.keys())[0] for ps in self._hw_config["power_switch"]]
+        ]
 
         try:
             self._group_vcc = CbfGroupProxy("VCC", logger=self._logger)
@@ -189,16 +224,59 @@ class ControllerComponentManager(CbfComponentManager):
             return
 
         for fqdn in (
-            self._fqdn_fsp + self._fqdn_talon_lru + self._fqdn_subarray
+            self._fqdn_fsp
+            + self._fqdn_talon_lru
+            + self._fqdn_talon_board
+            + self._fqdn_power_switch
+            + self._fqdn_subarray
         ):
             if fqdn not in self._proxies:
                 try:
                     log_msg = f"Trying connection to {fqdn}"
-                    self._logger.info(log_msg)
+                    self._logger.debug(log_msg)
                     proxy = CbfDeviceProxy(fqdn=fqdn, logger=self._logger)
 
                     if fqdn in self._fqdn_talon_lru:
+                        self._logger.debug(
+                            f"Writing hardware configuration properties to {fqdn}"
+                        )
+                        lru_id = fqdn.split("/")[-1]
+                        lru_config = tango.utils.obj_2_property(
+                            self._hw_config["talon_lru"][int(lru_id) - 1][
+                                lru_id
+                            ]
+                        )
+                        proxy.put_property(lru_config)
+                        proxy.Init()
                         proxy.set_timeout_millis(10000)
+
+                    elif fqdn in self._fqdn_talon_board:
+                        self._logger.debug(
+                            f"Writing hardware configuration properties to {fqdn}"
+                        )
+                        board_id = fqdn.split("/")[-1]
+                        board_config = tango.utils.obj_2_property(
+                            {
+                                "TalonDxBoardAddress": self._hw_config[
+                                    "talon_board"
+                                ][board_id]
+                            }
+                        )
+                        proxy.put_property(board_config)
+                        proxy.Init()
+
+                    elif fqdn in self._fqdn_power_switch:
+                        self._logger.debug(
+                            f"Writing hardware configuration properties to {fqdn}"
+                        )
+                        switch_id = fqdn.split("/")[-1]
+                        switch_config = tango.utils.obj_2_property(
+                            self._hw_config["power_switch"][
+                                int(switch_id) - 1
+                            ][switch_id]
+                        )
+                        proxy.put_property(switch_config)
+                        proxy.Init()
 
                     self._proxies[fqdn] = proxy
                 except tango.DevFailed as df:
@@ -266,7 +344,18 @@ class ControllerComponentManager(CbfComponentManager):
 
         self._logger.info("Trying to execute ON Command")
 
+        # Check if connection to device proxies has been established
         if self._connected:
+            # Check if CBF Controller is already on
+            # TODO: CIP-1569
+            # Temporarily commenting out check for redundant ON command
+            # until the Off command is fully implemented.
+            # Uncomment the "if not self._on:" and indent everything after it
+            # until the corresponding else for CIP-1569.
+            #
+            # if not self._on:
+            #
+
             # set VCC values
             for fqdn, proxy in self._proxies.items():
                 if "vcc" in fqdn:
@@ -297,30 +386,36 @@ class ControllerComponentManager(CbfComponentManager):
                 == SimulationMode.FALSE
             ):
                 # read in list of LRUs from configuration JSON
-                self._fqdn_talon_lru = []
-
-                talondx_config_file = open(
+                with open(
                     os.path.join(
                         os.getcwd(),
                         self._talondx_config_path,
                         "talondx-config.json",
                     )
-                )
+                ) as f:
+                    talondx_config_json = json.load(f)
 
-                talondx_config_json = json.load(talondx_config_file)
-
-                talon_lru_fqdn_set = set()
+                self._fqdn_talon_lru = []
                 for config_command in talondx_config_json["config_commands"]:
-                    talon_lru_fqdn_set.add(config_command["talon_lru_fqdn"])
-                self._logger.info(f"talonlru list = {talon_lru_fqdn_set}")
+                    target = config_command["target"]
+                    for lru in self._hw_config["talon_lru"]:
+                        lru_id = list(lru.keys())[0]
+                        lru_fqdn = f"mid_csp_cbf/talon_lru/{lru_id}"
+                        talon1 = lru[lru_id]["TalonDxBoard1"]
+                        talon2 = lru[lru_id]["TalonDxBoard2"]
+                        if (
+                            target in [talon1, talon2]
+                            and lru_fqdn not in self._fqdn_talon_lru
+                        ):
+                            self._fqdn_talon_lru.append(lru_fqdn)
 
                 # TODO: handle subscribed events for missing LRUs
-                self._fqdn_talon_lru = list(talon_lru_fqdn_set)
             else:
                 # use a hard-coded example fqdn talon lru for simulation mode
-                self._fqdn_talon_lru = {"mid_csp_cbf/talon_lru/001"}
+                self._fqdn_talon_lru = ["mid_csp_cbf/talon_lru/001"]
 
             try:
+                self._logger.info(f"Turning on LRUs: {self._fqdn_talon_lru}")
                 for fqdn in self._fqdn_talon_lru:
                     self._proxies[fqdn].write_attribute(
                         "adminMode", AdminMode.OFFLINE
@@ -359,8 +454,19 @@ class ControllerComponentManager(CbfComponentManager):
                 self._logger.error(log_msg)
                 return (ResultCode.FAILED, log_msg)
 
+            # TODO: CIP-1569
+            # Uncomment out the "self._on = True" when OFF command implemented.
+            # self._on = True
             message = "CbfController On command completed OK"
             return (ResultCode.OK, message)
+
+            # TODO: CIP-1569
+            # Corresponding ELSE to handle redundant ON command.
+            # Uncomment out the following 4 lines when OFF command implemented.
+            # else:
+            #    log_msg = "CbfController is already ON. Disregarding redundant command."
+            #    self._logger.warning(log_msg)
+            #    return (ResultCode.OK, log_msg)
 
         else:
             log_msg = "Proxies not connected"
@@ -379,37 +485,52 @@ class ControllerComponentManager(CbfComponentManager):
         :rtype: (ResultCode, str)
         """
 
+        # Check if connection to device proxies has been established
         if self._connected:
+            # Check if CBF Controller is on
+            # TODO: CIP-1569
+            # Temporarily commenting out check for redundant Off command
+            # until the Off command is fully implemented.
+            # Uncomment the "if self._on:" and indent everything after it
+            # until the corresponding else for CIP-1569.
+            #
+            # if self._on:
+            #
+
             if (
                 self._talondx_component_manager.simulation_mode
                 == SimulationMode.FALSE
             ):
                 if len(self._fqdn_talon_lru) == 0:
-                    talondx_config_file = open(
+                    with open(
                         os.path.join(
                             os.getcwd(),
                             self._talondx_config_path,
                             "talondx-config.json",
                         )
-                    )
-                    talondx_config_json = json.load(talondx_config_file)
+                    ) as f:
+                        talondx_config_json = json.load(f)
 
-                    talon_lru_fqdn_set = set()
                     for config_command in talondx_config_json[
                         "config_commands"
                     ]:
-                        talon_lru_fqdn_set.add(
-                            config_command["talon_lru_fqdn"]
-                        )
-                    self._logger.info(f"talonlru list = {talon_lru_fqdn_set}")
+                        target = config_command["target"]
+                        for lru in self._hw_config["talon_lru"]:
+                            lru_id = list(lru.keys())[0]
+                            talon1 = lru[lru_id]["TalonDxBoard1"]
+                            talon2 = lru[lru_id]["TalonDxBoard2"]
+                            if target in [talon1, talon2]:
+                                self._fqdn_talon_lru.append(
+                                    f"mid_csp_cbf/talon_lru/{lru_id}"
+                                )
 
                     # TODO: handle subscribed events for missing LRUs
-                    self._fqdn_talon_lru = list(talon_lru_fqdn_set)
             else:
                 # use a hard-coded example fqdn talon lru for simulation mode
-                self._fqdn_talon_lru = {"mid_csp_cbf/talon_lru/001"}
+                self._fqdn_talon_lru = ["mid_csp_cbf/talon_lru/001"]
 
             try:
+                self._logger.info(f"Turning off LRUs: {self._fqdn_talon_lru}")
                 for fqdn in self._fqdn_talon_lru:
                     self._proxies[fqdn].Off()
             except tango.DevFailed:
@@ -426,8 +547,19 @@ class ControllerComponentManager(CbfComponentManager):
                 self._logger.error(log_msg)
                 return (ResultCode.FAILED, log_msg)
 
+            # TODO: CIP-1569
+            # Uncomment out the "self._on = False" when OFF command implemented.
+            # self._on = False
             message = "CbfController Off command completed OK"
             return (ResultCode.OK, message)
+
+            # TODO: CIP-1569
+            # Corresponding ELSE to handle redundant OFF command.
+            # Uncomment out the following 4 lines when OFF command fully implemented.
+            # else:
+            #    log_msg = "CbfController is already OFF. Disregarding redundant command."
+            #    self._logger.warning(log_msg)
+            #    return (ResultCode.OK, log_msg)
 
         else:
             log_msg = "Proxies not connected"

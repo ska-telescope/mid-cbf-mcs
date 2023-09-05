@@ -74,7 +74,6 @@ class PowerSwitchSimulator:
 
         :raise AssertionError: if outlet ID is out of bounds
         """
-
         assert (
             outlet in self.outlet_id_list
         ), f"Outlet ID {outlet} must be in the allowable outlet_id_list read in from the Config File"
@@ -131,7 +130,7 @@ class PowerSwitchSimulator:
         :return: list of all the outlets available in this power switch
         """
         outlets: List(Outlet) = []
-        for i in range(0, 8):
+        for i in range(0, len(self.outlet_id_list)):
             outlets.append(
                 Outlet(
                     outlet_ID=str(i),

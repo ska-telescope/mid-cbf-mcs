@@ -38,6 +38,10 @@ class Const:
 
         self.MAX_SUBARRAY = 16
 
+        self.DEFAULT_COUNT_VCC = 197
+        self.DEFAULT_COUNT_FSP = 27
+        self.DEFAULT_COUNT_SUBARRAY = 16
+
 
 const = Const()
 
