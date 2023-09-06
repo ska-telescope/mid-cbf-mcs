@@ -13,8 +13,6 @@ telescope: SKA-mid
 engineeringConsoleVersion: 0.7.10
 signalVerificationVersion: 0.1.6
 
-legacy_compatibility: true
-
 labels:
   app: ska-mid-cbf-mcs
 
@@ -43,7 +41,7 @@ midcbf:
   image:
     registry: artefact.skao.int
     image: ska-mid-cbf-mcs
-    tag: 0.10.9
+    tag: 0.10.10
     pullPolicy: IfNotPresent
 
 resources:
