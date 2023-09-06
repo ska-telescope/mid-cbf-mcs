@@ -476,8 +476,6 @@ class CbfSubarrayComponentManager(
                 self._last_received_delay_model = value
                 delay_model_json = json.loads(value)
 
-                self._logger.debug(f"Updated delay model: {json.dumps(delay_model_json)}")
-
                 # Validate delay_model against the telescope model
                 delay_model_schema = get_csp_delaymodel_schema(
                     version=delay_model_json["interface"], strict=True
