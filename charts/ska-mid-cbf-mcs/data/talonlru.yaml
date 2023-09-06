@@ -36,16 +36,16 @@ server:
             - "002"
           - name: "PDU1"
             values:
-            - "001"
+            - "003"
           - name: "PDU1PowerOutlet"
             values:
-            - "0"
+            - "1"
           - name: "PDU2"
             values:
-            - "002"
+            - "003"
           - name: "PDU2PowerOutlet"
             values:
-            - "AA41"
+            - "1"
           - name: "polled_attr"
             values:
             - "state"
@@ -68,16 +68,16 @@ server:
             - "004"
           - name: "PDU1"
             values:
-            - "001"
+            - "002"
           - name: "PDU1PowerOutlet"
             values:
-            - "1"
+            - "AA42"
           - name: "PDU2"
             values:
-            - "001"
+            - "002"
           - name: "PDU2PowerOutlet"
             values:
-            - "1"
+            - "AA42"
           - name: "polled_attr"
             values:
             - "state"
