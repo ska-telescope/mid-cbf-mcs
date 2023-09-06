@@ -476,12 +476,15 @@ class CbfSubarrayComponentManager(
                 self._last_received_delay_model = value
                 delay_model_json = json.loads(value)
 
+                self._logger.debug(f"Updated delay model: {json.dumps(delay_model_json)}")
+
                 # Validate delay_model against the telescope model
                 delay_model_schema = get_csp_delaymodel_schema(
                     version=delay_model_json["interface"], strict=True
                 )
                 try:
                     delay_model_schema.validate(delay_model_json)
+                    self._logger.info("Delay model is valid!")
                 except Exception as e:
                     self.raise_update_delay_model_fatal_error(str(e))
 
@@ -2105,9 +2108,10 @@ class CbfSubarrayComponentManager(
         )
         try:
             scan_schema.validate(argin)
+            self._logger.info("Scan is valid!")
         except Exception:
             # TODO: CIP-1732 uncomment the below section and remove the print statement to validate the scan
-            print(
+            self._logger.debug(
                 "Scan validation against ska-telmodel schema fails because telmodel is outdated. To be resolved by CIP-1732. Ignoring error for now."
             )
             # msg = f"Scan validation against ska-telmodel schema failed with exception:\n {str(e)}"

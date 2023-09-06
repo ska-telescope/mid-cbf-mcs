@@ -721,6 +721,7 @@ class CbfSubarray(CspSubElementSubarray):
             )
             try:
                 configure_scan_schema.validate(full_configuration)
+                self.logger.info("Scan configuration is valid!")
             except Exception as e:
                 msg = f"Scan configuration validation against the telescope model failed with the following exception:\n {str(e)}."
                 self.logger.error(msg)
