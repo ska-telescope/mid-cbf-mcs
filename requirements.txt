@@ -3,7 +3,7 @@ backoff
 typing_extensions
 numpy
 jsonschema == 3.2.0
-git+https://gitlab.com/ska-telescope/ska-tango-base.git@backport/0.11.4
+ska-tango-base == 0.11.4
 ska-ser-logging
 ska-ser-log-transactions
 pytango == 9.4.2
