@@ -6,6 +6,7 @@ instances: ["talonlru-001", "talonlru-002", "talonlru-003", "talonlru-004"]
 depends_on:
   - device: mid_csp_cbf/power_switch/001
   - device: mid_csp_cbf/power_switch/002
+  - device: mid_csp_cbf/power_switch/003
 readinessProbe:
   initialDelaySeconds: 0
   periodSeconds: 10
@@ -35,16 +36,16 @@ server:
             - "002"
           - name: "PDU1"
             values:
-            - "001"
+            - "003"
           - name: "PDU1PowerOutlet"
             values:
-            - "0"
+            - "1"
           - name: "PDU2"
             values:
-            - "002"
+            - "003"
           - name: "PDU2PowerOutlet"
             values:
-            - "AA1"
+            - "1"
           - name: "polled_attr"
             values:
             - "state"
@@ -67,16 +68,16 @@ server:
             - "004"
           - name: "PDU1"
             values:
-            - "001"
+            - "002"
           - name: "PDU1PowerOutlet"
             values:
-            - "1"
+            - "AA42"
           - name: "PDU2"
             values:
-            - "001"
+            - "002"
           - name: "PDU2PowerOutlet"
             values:
-            - "1"
+            - "AA42"
           - name: "polled_attr"
             values:
             - "state"

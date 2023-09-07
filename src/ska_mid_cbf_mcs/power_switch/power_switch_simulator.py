@@ -17,7 +17,7 @@ from typing import List
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import PowerMode
 
-from ska_mid_cbf_mcs.power_switch.power_switch_driver import Outlet
+from ska_mid_cbf_mcs.power_switch.pdu_common import Outlet
 
 __all__ = ["PowerSwitchSimulator"]
 
@@ -26,22 +26,29 @@ class PowerSwitchSimulator:
     """
     A simulator for the power switch.
 
+    :param model: Name of the power switch model
     :param logger: a logger for this object to use
     """
 
     def __init__(
         self: PowerSwitchSimulator,
-        outlet_id_list: List[str],
+        model: str,
         logger: logging.Logger,
     ) -> None:
         """
         Initialise a new instance.
         """
         self.logger = logger
-        self.outlet_id_list: List(str) = []
 
-        for item in outlet_id_list:
-            self.outlet_id_list.append(item)
+        # The text must match the powerswitch.yaml
+        if model == "DLI LPC9":
+            self.outlet_id_list: List(str) = [str(i) for i in range(0, 8)]
+        elif model == "Server Technology Switched PRO2":
+            self.outlet_id_list: List(str) = [f"AA{i}" for i in range(1, 49)]
+        elif model == "APC AP8681":
+            self.outlet_id_list: List(str) = [f"{i}" for i in range(1, 25)]
+        else:
+            raise AssertionError(f"Invalid PDU model: {model}")
 
         self.outlets = self.get_outlet_list()
 
@@ -74,6 +81,7 @@ class PowerSwitchSimulator:
 
         :raise AssertionError: if outlet ID is out of bounds
         """
+
         assert (
             outlet in self.outlet_id_list
         ), f"Outlet ID {outlet} must be in the allowable outlet_id_list read in from the Config File"
@@ -133,7 +141,7 @@ class PowerSwitchSimulator:
         for i in range(0, len(self.outlet_id_list)):
             outlets.append(
                 Outlet(
-                    outlet_ID=str(i),
+                    outlet_ID=self.outlet_id_list[i],
                     outlet_name=f"Outlet {i}",
                     power_mode=PowerMode.OFF,
                 )

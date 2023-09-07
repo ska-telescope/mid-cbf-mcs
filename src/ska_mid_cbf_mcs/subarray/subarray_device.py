@@ -24,6 +24,7 @@ import tango
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import PowerMode, SimulationMode
 from ska_tango_base.csp.subarray.subarray_device import CspSubElementSubarray
+from ska_telmodel.csp.schema import get_csp_config_schema
 from tango import AttrWriteType
 from tango.server import attribute, command, device_property, run
 
@@ -713,6 +714,17 @@ class CbfSubarray(CspSubElementSubarray):
             except json.JSONDecodeError:  # argument not a valid JSON object
                 msg = "Scan configuration object is not a valid JSON object. Aborting configuration."
                 return (False, msg)
+
+            # Validate full_configuration against the telescope model
+            configure_scan_schema = get_csp_config_schema(
+                version=full_configuration["interface"], strict=True
+            )
+            try:
+                configure_scan_schema.validate(full_configuration)
+                self.logger.info("Scan configuration is valid!")
+            except Exception as e:
+                msg = f"Scan configuration validation against the telescope model failed with the following exception:\n {str(e)}."
+                self.logger.error(msg)
 
             # Validate frequencyBandOffsetStream1.
             if "frequency_band_offset_stream1" not in configuration:
