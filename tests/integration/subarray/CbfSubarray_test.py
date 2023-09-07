@@ -1780,6 +1780,9 @@ class TestCbfSubarray:
                 input_delay_model = json.dumps(input_delay_model_obj)
 
                 # Write this one delay_model JSON object to the TM emulator
+                logging.debug(
+                    f"Writing delay model to TM emulator: {input_delay_model}"
+                )
                 test_proxies.tm.delayModel = input_delay_model
 
                 time.sleep(10)
@@ -1813,6 +1816,7 @@ class TestCbfSubarray:
                             ]
                             break
 
+                    logging.debug(f"vcc delay model: {vcc_dp.delayModel}")
                     vcc_updated_delayModel_obj = json.loads(vcc_dp.delayModel)
 
                     # there should be only one delay model in the vcc

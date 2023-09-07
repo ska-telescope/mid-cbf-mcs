@@ -1233,6 +1233,7 @@ class Vcc(CspSubElementObsDevice):
 
             :param argin: JSON object with the search window parameters
             """
+            self.logger.debug(f"Validating argin: {argin}")
             device = self.target
 
             # try to deserialize input string to a JSON object
@@ -1253,6 +1254,10 @@ class Vcc(CspSubElementObsDevice):
             else:
                 msg = "Search window specified, but 'search_window_id' not given."
                 return (False, msg)
+
+            self.logger.debug(
+                f"Validated search_window_id: {argin['search_window_id']}"
+            )
 
             # Validate searchWindowTuning.
             if "search_window_tuning" in argin:
@@ -1340,6 +1345,10 @@ class Vcc(CspSubElementObsDevice):
                 msg = "Search window specified, but 'search_window_tuning' not given."
                 return (False, msg)
 
+            self.logger.debug(
+                f"Validated search_window_tuning: {json.dumps(argin['search_window_tuning'])}"
+            )
+
             # Validate tdcEnable.
             if "tdc_enable" in argin:
                 if argin["tdc_enable"] in [True, False]:
@@ -1352,6 +1361,8 @@ class Vcc(CspSubElementObsDevice):
             else:
                 msg = "Search window specified, but 'tdc_enable' not given."
                 return (False, msg)
+
+            self.logger.debug("Validated tdcEnable")
 
             # Validate tdcNumBits.
             if argin["tdc_enable"]:
@@ -1366,6 +1377,8 @@ class Vcc(CspSubElementObsDevice):
                     msg = "Search window specified with TDC enabled, but 'tdcNumBits' not given."
                     return (False, msg)
 
+            self.logger.debug("Validated tdcNumBits")
+
             # Validate tdcPeriodBeforeEpoch.
             if "tdc_period_before_epoch" in argin:
                 tdc_pbe = argin["tdc_period_before_epoch"]
@@ -1377,6 +1390,8 @@ class Vcc(CspSubElementObsDevice):
             else:
                 pass
 
+            self.logger.debug("Validated tdcPeriodBeforeEpoch")
+
             # Validate tdcPeriodAfterEpoch.
             if "tdc_period_after_epoch" in argin:
                 tdc_pae = argin["tdc_period_after_epoch"]
@@ -1387,6 +1402,8 @@ class Vcc(CspSubElementObsDevice):
                     return (False, msg)
             else:
                 pass
+
+            self.logger.debug("Validated tdcPeriodAfterEpoch")
 
             # Validate tdcDestinationAddress.
             if argin["tdc_enable"]:
@@ -1410,6 +1427,8 @@ class Vcc(CspSubElementObsDevice):
                     )
                     return (False, msg)
 
+            self.logger.debug("Validated tdcDestinationAddress")
+            self.logger.debug("Search window validation complete")
             return (True, "Search window validated.")
 
         def do(
@@ -1425,6 +1444,7 @@ class Vcc(CspSubElementObsDevice):
                 information purpose only.
             :rtype: (ResultCode, str)
             """
+            self.logger.debug(f"argin: {argin}")
             return self.target.component_manager.configure_search_window(argin)
 
     @command(
@@ -1452,8 +1472,13 @@ class Vcc(CspSubElementObsDevice):
         # most of the validation can be done through a schema instead of manually
         # through functions).
         command = self.get_command_object("ConfigureSearchWindow")
+        self.logger.debug(f"argin: {argin}")
 
         (valid, message) = command.validate_input(argin)
+        self.logger.debug(
+            f"ConfigureSearchWindow validation result: {message}"
+        )
+
         if not valid:
             self._raise_configuration_fatal_error(
                 message, "ConfigureSearchWindow"
@@ -1461,6 +1486,7 @@ class Vcc(CspSubElementObsDevice):
 
         (result_code, message) = command(argin)
 
+        self.logger.debug(f"ConfigureSearchWindow result: {message}")
         return [[result_code], [message]]
         # PROTECTED REGION END #    //  CspSubElementObsDevice.ConfigureScan
 

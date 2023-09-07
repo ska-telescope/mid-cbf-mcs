@@ -34,6 +34,10 @@ from ska_tango_base.control_model import (
 from ska_tango_base.csp.subarray.component_manager import (
     CspSubarrayComponentManager,
 )
+from ska_telmodel.csp.schema import (
+    get_csp_delaymodel_schema,
+    get_csp_scan_schema,
+)
 from tango import AttrQuality
 
 from ska_mid_cbf_mcs.attribute_proxy import CbfAttributeProxy
@@ -470,10 +474,20 @@ class CbfSubarrayComponentManager(
                     return
 
                 self._last_received_delay_model = value
+                delay_model_json = json.loads(value)
 
-                delay_model = json.loads(value)
+                # Validate delay_model against the telescope model
+                delay_model_schema = get_csp_delaymodel_schema(
+                    version=delay_model_json["interface"], strict=True
+                )
+                try:
+                    delay_model_schema.validate(delay_model_json)
+                    self._logger.info("Delay model is valid!")
+                except Exception as e:
+                    self.raise_update_delay_model_fatal_error(str(e))
+
                 # pass receptor IDs as pair of str and int to FSPs and VCCs
-                for delay_detail in delay_model["delay_details"]:
+                for delay_detail in delay_model_json["delay_details"]:
                     receptor_id = delay_detail["receptor"]
                     delay_detail["receptor"] = [
                         receptor_id,
@@ -481,7 +495,7 @@ class CbfSubarrayComponentManager(
                     ]
                 t = Thread(
                     target=self._update_delay_model,
-                    args=(json.dumps(delay_model),),
+                    args=(json.dumps(delay_model_json),),
                 )
                 t.start()
             except Exception as e:
@@ -720,6 +734,27 @@ class CbfSubarrayComponentManager(
             tango.ErrSeverity.ERR,
         )
 
+    def raise_update_delay_model_fatal_error(
+        self: CbfSubarrayComponentManager, msg: str
+    ) -> Tuple[ResultCode, str]:
+        """
+        Raise fatal error in UpdateDelayModel execution
+
+        :param msg: error message
+        :return: A tuple containing a return code and a string
+            message indicating status. The message is for
+            information purpose only.
+        :rtype: (ResultCode, str)
+        """
+        self._component_obs_fault_callback(True)
+        self._logger.error(msg)
+        tango.Except.throw_exception(
+            "Command failed",
+            msg,
+            "UpdateDelayModel execution",
+            tango.ErrSeverity.ERR,
+        )
+
     @check_communicating
     def deconfigure(
         self: CbfSubarrayComponentManager,
@@ -924,57 +959,41 @@ class CbfSubarrayComponentManager(
 
                 # Validate functionMode.
                 function_modes = ["CORR", "PSS-BF", "PST-BF", "VLBI"]
-                if fsp["function_mode"] in function_modes:
-                    if (
-                        function_modes.index(fsp["function_mode"]) + 1
-                        == proxy_fsp.functionMode
-                        or proxy_fsp.functionMode == 0
-                    ):
-                        pass
-                    else:
-                        # TODO need to add this check for VLBI once implemented
-                        for (
-                            fsp_corr_subarray_proxy
-                        ) in self._proxies_fsp_corr_subarray_device:
-                            if (
-                                fsp_corr_subarray_proxy.obsState
-                                != ObsState.IDLE
-                            ):
-                                msg = (
-                                    f"A different subarray is using FSP {fsp['fsp_id']} "
-                                    "for a different function mode. Aborting configuration."
-                                )
-                                return (False, msg)
-                        for (
-                            fsp_pss_subarray_proxy
-                        ) in self._proxies_fsp_pss_subarray_device:
-                            if (
-                                fsp_pss_subarray_proxy.obsState
-                                != ObsState.IDLE
-                            ):
-                                msg = (
-                                    f"A different subarray is using FSP {fsp['fsp_id']} "
-                                    "for a different function mode. Aborting configuration."
-                                )
-                                return (False, msg)
-                        for (
-                            fsp_pst_subarray_proxy
-                        ) in self._proxies_fsp_pst_subarray_device:
-                            if (
-                                fsp_pst_subarray_proxy.obsState
-                                != ObsState.IDLE
-                            ):
-                                msg = (
-                                    f"A different subarray is using FSP {fsp['fsp_id']} "
-                                    "for a different function mode. Aborting configuration."
-                                )
-                                return (False, msg)
+                if (
+                    function_modes.index(fsp["function_mode"]) + 1
+                    == proxy_fsp.functionMode
+                    or proxy_fsp.functionMode == 0
+                ):
+                    pass
                 else:
-                    msg = (
-                        f"'functionMode' must be one of {function_modes} "
-                        f"(received {fsp['function_mode']}). "
-                    )
-                    return (False, msg)
+                    # TODO need to add this check for VLBI once implemented
+                    for (
+                        fsp_corr_subarray_proxy
+                    ) in self._proxies_fsp_corr_subarray_device:
+                        if fsp_corr_subarray_proxy.obsState != ObsState.IDLE:
+                            msg = (
+                                f"A different subarray is using FSP {fsp['fsp_id']} "
+                                "for a different function mode. Aborting configuration."
+                            )
+                            return (False, msg)
+                    for (
+                        fsp_pss_subarray_proxy
+                    ) in self._proxies_fsp_pss_subarray_device:
+                        if fsp_pss_subarray_proxy.obsState != ObsState.IDLE:
+                            msg = (
+                                f"A different subarray is using FSP {fsp['fsp_id']} "
+                                "for a different function mode. Aborting configuration."
+                            )
+                            return (False, msg)
+                    for (
+                        fsp_pst_subarray_proxy
+                    ) in self._proxies_fsp_pst_subarray_device:
+                        if fsp_pst_subarray_proxy.obsState != ObsState.IDLE:
+                            msg = (
+                                f"A different subarray is using FSP {fsp['fsp_id']} "
+                                "for a different function mode. Aborting configuration."
+                            )
+                            return (False, msg)
 
                 # TODO - why add these keys to the fsp dict - not good practice!
                 # TODO - create a new dict from a deep copy of the fsp dict.
@@ -1629,6 +1648,9 @@ class CbfSubarrayComponentManager(
                 # pass on configuration to VCC
                 data = tango.DeviceData()
                 data.insert(tango.DevString, json.dumps(search_window))
+                self._logger.debug(
+                    f"configuring search window: {json.dumps(search_window)}"
+                )
                 self._group_vcc.command_inout("ConfigureSearchWindow", data)
         else:
             log_msg = "'searchWindow' not given."
@@ -2077,6 +2099,22 @@ class CbfSubarrayComponentManager(
             information purpose only.
         :rtype: (ResultCode, str)
         """
+
+        # Validate scan_json against the telescope model
+        scan_schema = get_csp_scan_schema(
+            version=argin["interface"], strict=True
+        )
+        try:
+            scan_schema.validate(argin)
+            self._logger.info("Scan is valid!")
+        except Exception:
+            # TODO: CIP-1732 uncomment the below section and remove the print statement to validate the scan
+            self._logger.debug(
+                "Scan validation against ska-telmodel schema fails because telmodel is outdated. To be resolved by CIP-1732. Ignoring error for now."
+            )
+            # msg = f"Scan validation against ska-telmodel schema failed with exception:\n {str(e)}"
+            # return (False, msg)
+
         scan_id = argin["scan_id"]
         try:
             data = tango.DeviceData()
