@@ -2107,13 +2107,9 @@ class CbfSubarrayComponentManager(
         try:
             scan_schema.validate(argin)
             self._logger.info("Scan is valid!")
-        except Exception:
-            # TODO: CIP-1732 uncomment the below section and remove the print statement to validate the scan
-            self._logger.debug(
-                "Scan validation against ska-telmodel schema fails because telmodel is outdated. To be resolved by CIP-1732. Ignoring error for now."
-            )
-            # msg = f"Scan validation against ska-telmodel schema failed with exception:\n {str(e)}"
-            # return (False, msg)
+        except Exception as e:
+            msg = f"Scan validation against ska-telmodel schema failed with exception:\n {str(e)}"
+            return (False, msg)
 
         scan_id = argin["scan_id"]
         try:
