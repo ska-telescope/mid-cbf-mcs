@@ -140,7 +140,9 @@ class TalonLRUComponentManager(CbfComponentManager):
         # timeout of the power switch proxies, since the HTTP connection
         # timeout must be >3s.
         if self._proxy_power_switch1 is not None:
-            self._proxy_power_switch1.set_timeout_millis(8000)
+            # TEMP: increase timeout to 30s until LRU2 is switched over to the ITF PDU
+            # to handle the observed slowness in the PSI PDU
+            self._proxy_power_switch1.set_timeout_millis(30000)
             self._simulation_mode_events[
                 0
             ] = self._proxy_power_switch1.add_change_event_callback(
@@ -158,7 +160,9 @@ class TalonLRUComponentManager(CbfComponentManager):
 
         if self._proxy_power_switch2 is not None:
             if self._pdus[1] != self._pdus[0]:
-                self._proxy_power_switch2.set_timeout_millis(8000)
+                # TEMP: increase timeout to 30s until LRU2 is switched over to the ITF PDU
+                # to handle the observed slowness in the PSI PDU
+                self._proxy_power_switch2.set_timeout_millis(30000)
                 self._simulation_mode_events[
                     1
                 ] = self._proxy_power_switch2.add_change_event_callback(
