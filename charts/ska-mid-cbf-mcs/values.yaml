@@ -89,3 +89,4 @@ hostInfo:
   environment: "minikube"
   hostIP: "127.0.0.1"
   externalPort: 10001
+  clusterDomain: cluster.local

@@ -117,6 +117,8 @@ environment_variables:
   value: "{{ .Values.hostInfo.hostIP }}"
 - name: EXTERNAL_DB_PORT
   value: "{{ .Values.hostInfo.externalPort }}"
+- name: CLUSTER_DOMAIN
+  value: "{{ .Values.hostInfo.clusterDomain }}"
 volume:
   existingClaimName: "artifacts-pvc-{{ .Release.Name }}"
   mountPath: "/app/mnt/talondx-config"

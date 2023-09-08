@@ -120,9 +120,10 @@ class TalonDxComponentManager:
         with open("hps_master_mcs_tmp.sh") as hps_master_file_tmp:
             namespace = os.getenv("NAMESPACE")
             tango_host = os.getenv("TANGO_HOST").split(":")
-            db_service_name = tango_host[0]
+            cluster_domain = os.getenv("CLUSTER_DOMAIN")
+            db_service_name = tango_host[0].split(".")[0]
             port = tango_host[1]
-            hostname = f"{db_service_name}.{namespace}.svc.cluster.local"
+            hostname = f"{db_service_name}.{namespace}.svc.{cluster_domain}"
             replaced_text = hps_master_file_tmp.read().replace(
                 "<hostname>:<port>", f"{hostname}:{port}"
             )
