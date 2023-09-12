@@ -179,7 +179,7 @@ class ControllerComponentManager(CbfComponentManager):
             fqdn
             for fqdn in self._talon_lru_fqdns_all
             if fqdn.split("/")[-1]
-            in [list(lru.keys())[0] for lru in self._hw_config["talon_lru"]]
+            in list(self._hw_config["talon_lru"].keys())
         ]
         self._fqdn_talon_board = [
             fqdn
@@ -191,7 +191,7 @@ class ControllerComponentManager(CbfComponentManager):
             fqdn
             for fqdn in self._power_switch_fqdns_all
             if fqdn.split("/")[-1]
-            in [list(ps.keys())[0] for ps in self._hw_config["power_switch"]]
+            in list(self._hw_config["power_switch"].keys())
         ]
 
         try:
@@ -242,9 +242,7 @@ class ControllerComponentManager(CbfComponentManager):
                         )
                         lru_id = fqdn.split("/")[-1]
                         lru_config = tango.utils.obj_2_property(
-                            self._hw_config["talon_lru"][int(lru_id) - 1][
-                                lru_id
-                            ]
+                            self._hw_config["talon_lru"][lru_id]
                         )
                         proxy.put_property(lru_config)
                         proxy.Init()
@@ -271,9 +269,7 @@ class ControllerComponentManager(CbfComponentManager):
                         )
                         switch_id = fqdn.split("/")[-1]
                         switch_config = tango.utils.obj_2_property(
-                            self._hw_config["power_switch"][
-                                int(switch_id) - 1
-                            ][switch_id]
+                            self._hw_config["power_switch"][switch_id]
                         )
                         proxy.put_property(switch_config)
                         proxy.Init()
@@ -398,11 +394,10 @@ class ControllerComponentManager(CbfComponentManager):
                 self._fqdn_talon_lru = []
                 for config_command in talondx_config_json["config_commands"]:
                     target = config_command["target"]
-                    for lru in self._hw_config["talon_lru"]:
-                        lru_id = list(lru.keys())[0]
+                    for lru_id, lru_config in self._hw_config["talon_lru"].items():
                         lru_fqdn = f"mid_csp_cbf/talon_lru/{lru_id}"
-                        talon1 = lru[lru_id]["TalonDxBoard1"]
-                        talon2 = lru[lru_id]["TalonDxBoard2"]
+                        talon1 = lru_config["TalonDxBoard1"]
+                        talon2 = lru_config["TalonDxBoard2"]
                         if (
                             target in [talon1, talon2]
                             and lru_fqdn not in self._fqdn_talon_lru
@@ -515,10 +510,9 @@ class ControllerComponentManager(CbfComponentManager):
                         "config_commands"
                     ]:
                         target = config_command["target"]
-                        for lru in self._hw_config["talon_lru"]:
-                            lru_id = list(lru.keys())[0]
-                            talon1 = lru[lru_id]["TalonDxBoard1"]
-                            talon2 = lru[lru_id]["TalonDxBoard2"]
+                        for lru_id, lru_config in self._hw_config["talon_lru"].items():
+                            talon1 = lru_config["TalonDxBoard1"]
+                            talon2 = lru_config["TalonDxBoard2"]
                             if target in [talon1, talon2]:
                                 self._fqdn_talon_lru.append(
                                     f"mid_csp_cbf/talon_lru/{lru_id}"
