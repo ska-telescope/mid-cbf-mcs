@@ -484,7 +484,10 @@ class CbfSubarrayComponentManager(
                     delay_model_schema.validate(delay_model_json)
                     self._logger.info("Delay model is valid!")
                 except Exception as e:
-                    self.raise_update_delay_model_fatal_error(str(e))
+                    # TODO: Once delay model epoch integer error is resolved, throw the error instead
+                    msg = f"Delay model validation against the telescope model failed with the following exception:\n {str(e)}."
+                    self.logger.error(msg)
+                    # self.raise_update_delay_model_fatal_error(str(e))
 
                 # pass receptor IDs as pair of str and int to FSPs and VCCs
                 for delay_detail in delay_model_json["delay_details"]:

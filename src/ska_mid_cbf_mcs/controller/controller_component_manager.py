@@ -428,9 +428,10 @@ class ControllerComponentManager(CbfComponentManager):
                         "adminMode", AdminMode.ONLINE
                     )
                     self._proxies[fqdn].On()
-            except tango.DevFailed:
+            except tango.DevFailed as e:
                 log_msg = "Failed to power on Talon boards"
                 self._logger.error(log_msg)
+                self._logger.error(e)
                 return (ResultCode.FAILED, log_msg)
 
             # Configure all the Talon boards
