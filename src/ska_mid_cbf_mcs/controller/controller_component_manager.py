@@ -178,8 +178,7 @@ class ControllerComponentManager(CbfComponentManager):
         self._fqdn_talon_lru = [
             fqdn
             for fqdn in self._talon_lru_fqdns_all
-            if fqdn.split("/")[-1]
-            in list(self._hw_config["talon_lru"].keys())
+            if fqdn.split("/")[-1] in list(self._hw_config["talon_lru"].keys())
         ]
         self._fqdn_talon_board = [
             fqdn
@@ -394,7 +393,9 @@ class ControllerComponentManager(CbfComponentManager):
                 self._fqdn_talon_lru = []
                 for config_command in talondx_config_json["config_commands"]:
                     target = config_command["target"]
-                    for lru_id, lru_config in self._hw_config["talon_lru"].items():
+                    for lru_id, lru_config in self._hw_config[
+                        "talon_lru"
+                    ].items():
                         lru_fqdn = f"mid_csp_cbf/talon_lru/{lru_id}"
                         talon1 = lru_config["TalonDxBoard1"]
                         talon2 = lru_config["TalonDxBoard2"]
@@ -510,7 +511,9 @@ class ControllerComponentManager(CbfComponentManager):
                         "config_commands"
                     ]:
                         target = config_command["target"]
-                        for lru_id, lru_config in self._hw_config["talon_lru"].items():
+                        for lru_id, lru_config in self._hw_config[
+                            "talon_lru"
+                        ].items():
                             talon1 = lru_config["TalonDxBoard1"]
                             talon2 = lru_config["TalonDxBoard2"]
                             if target in [talon1, talon2]:
