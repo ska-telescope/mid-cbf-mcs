@@ -484,7 +484,7 @@ class CbfSubarrayComponentManager(
                     delay_model_schema.validate(delay_model_json)
                     self._logger.info("Delay model is valid!")
                 except Exception as e:
-                    # TODO: Once delay model epoch integer error is resolved, throw the error instead
+                    # TODO: Once the delay model epoch int type issue from CIP-1749 is resolved, raise the exception instead of just logging the error
                     msg = f"Delay model validation against the telescope model failed with the following exception:\n {str(e)}."
                     self.logger.error(msg)
                     # self.raise_update_delay_model_fatal_error(str(e))
