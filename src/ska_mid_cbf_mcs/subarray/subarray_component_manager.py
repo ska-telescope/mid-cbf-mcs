@@ -486,7 +486,7 @@ class CbfSubarrayComponentManager(
                 except Exception as e:
                     # TODO: Once the delay model epoch int type issue from CIP-1749 is resolved, raise the exception instead of just logging the error
                     msg = f"Delay model validation against the telescope model failed with the following exception:\n {str(e)}."
-                    self.logger.error(msg)
+                    self._logger.error(msg)
                     # self.raise_update_delay_model_fatal_error(str(e))
 
                 # pass receptor IDs as pair of str and int to FSPs and VCCs
