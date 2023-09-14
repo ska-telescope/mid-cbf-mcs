@@ -105,6 +105,7 @@ def controller_component_manager(
         talon_lru_fqdns_all=talon_lru,
         talon_board_fqdns_all=talon_board,
         power_switch_fqdns_all=power_switch,
+        lru_timeout=20,
         talondx_component_manager=talondx_component_manager,
         talondx_config_path=talondx_config_path,
         hw_config_path=hw_config_path,
