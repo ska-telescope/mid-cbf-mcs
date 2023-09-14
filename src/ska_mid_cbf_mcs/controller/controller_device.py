@@ -67,6 +67,8 @@ class CbfController(SKAController):
 
     HWConfigPath = device_property(dtype=("str"))
 
+    LruTimeout = device_property(dtype=("str"))
+
     # ----------
     # Attributes
     # ----------
@@ -303,6 +305,7 @@ class CbfController(SKAController):
             talon_lru_fqdns_all=self.TalonLRU,
             talon_board_fqdns_all=self.TalonBoard,
             power_switch_fqdns_all=self.PowerSwitch,
+            lru_timeout=int(self.LruTimeout),
             talondx_component_manager=self._talondx_component_manager,
             talondx_config_path=self.TalonDxConfigPath,
             hw_config_path=self.HWConfigPath,

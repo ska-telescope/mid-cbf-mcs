@@ -46,6 +46,9 @@ server:
           - name: "PDU2PowerOutlet"
             values:
             - "1"
+          - name: "PDUCommandTimeout"
+            values:
+            - "20"
           - name: "polled_attr"
             values:
             - "state"
@@ -78,6 +81,9 @@ server:
           - name: "PDU2PowerOutlet"
             values:
             - "AA42"
+          - name: "PDUCommandTimeout"
+            values:
+            - "20"
           - name: "polled_attr"
             values:
             - "state"
@@ -110,6 +116,9 @@ server:
           - name: "PDU2PowerOutlet"
             values:
             - "2"
+          - name: "PDUCommandTimeout"
+            values:
+            - "20"
           - name: "polled_attr"
             values:
             - "state"
@@ -142,6 +151,9 @@ server:
           - name: "PDU2PowerOutlet"
             values:
             - "3"
+          - name: "PDUCommandTimeout"
+            values:
+            - "20"
           - name: "polled_attr"
             values:
             - "state"

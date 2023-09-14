@@ -11,6 +11,7 @@
 
 from __future__ import annotations
 
+import concurrent.futures
 import json
 import logging
 import os
@@ -45,6 +46,7 @@ class ControllerComponentManager(CbfComponentManager):
         talon_lru_fqdns_all: List[str],
         talon_board_fqdns_all: List[str],
         power_switch_fqdns_all: List[str],
+        lru_timeout: int,
         talondx_component_manager: TalonDxComponentManager,
         talondx_config_path: str,
         hw_config_path: str,
@@ -67,6 +69,7 @@ class ControllerComponentManager(CbfComponentManager):
         :param talon_lru_fqdns_all: FQDNS of all the Talon LRU devices
         :param talon_board_fqdns_all: FQDNS of all the Talon board devices
         :param power_switch_fqdns_all: FQDNS of all the power switch devices
+        :param lru_timeout: Timeout in seconds for Talon LRU device proxies
         :talondx_component_manager: component manager for the Talon LRU
         :param talondx_config_path: path to the directory containing configuration
                                     files and artifacts for the Talon boards
@@ -107,6 +110,7 @@ class ControllerComponentManager(CbfComponentManager):
         self._talon_lru_fqdns_all = talon_lru_fqdns_all
         self._talon_board_fqdns_all = talon_board_fqdns_all
         self._power_switch_fqdns_all = power_switch_fqdns_all
+        self._lru_timeout = lru_timeout
 
         self._get_max_capabilities = get_num_capabilities
 
@@ -245,7 +249,7 @@ class ControllerComponentManager(CbfComponentManager):
                         )
                         proxy.put_property(lru_config)
                         proxy.Init()
-                        proxy.set_timeout_millis(10000)
+                        proxy.set_timeout_millis(self._lru_timeout * 1000)
 
                     elif fqdn in self._fqdn_talon_board:
                         self._logger.debug(
@@ -410,24 +414,9 @@ class ControllerComponentManager(CbfComponentManager):
                 # use a hard-coded example fqdn talon lru for simulation mode
                 self._fqdn_talon_lru = ["mid_csp_cbf/talon_lru/001"]
 
-            try:
-                self._logger.info(f"Turning on LRUs: {self._fqdn_talon_lru}")
-                for fqdn in self._fqdn_talon_lru:
-                    self._proxies[fqdn].write_attribute(
-                        "adminMode", AdminMode.OFFLINE
-                    )
-                    self._proxies[fqdn].write_attribute(
-                        "simulationMode",
-                        self._talondx_component_manager.simulation_mode,
-                    )
-                    self._proxies[fqdn].write_attribute(
-                        "adminMode", AdminMode.ONLINE
-                    )
-                    self._proxies[fqdn].On()
-            except tango.DevFailed as e:
-                log_msg = "Failed to power on Talon boards"
-                self._logger.error(log_msg)
-                self._logger.error(e)
+            # Turn on all the LRUs with the boards we need
+            lru_on_status, log_msg = self._bulk_lru_on()
+            if not lru_on_status:
                 return (ResultCode.FAILED, log_msg)
 
             # Configure all the Talon boards
@@ -618,3 +607,40 @@ class ControllerComponentManager(CbfComponentManager):
             self._proxies[fqdn].write_attribute(
                 "frequencyOffsetDeltaF", freq_offset_deltaF[0]
             )
+
+    def _lru_on_thread(self, proxy, sim_mode, lru_fqdn) -> (bool, str):
+        try:
+            self._logger.info(f"Turning on LRU {lru_fqdn}")
+            proxy.write_attribute("adminMode", AdminMode.OFFLINE)
+            proxy.write_attribute("simulationMode", sim_mode)
+            proxy.write_attribute("adminMode", AdminMode.ONLINE)
+            proxy.On()
+        except tango.DevFailed as e:
+            self._logger.error(e)
+            return (False, lru_fqdn)
+
+        self._logger.info(f"LRU successfully turned on: {lru_fqdn}")
+        return (True, None)
+
+    def _bulk_lru_on(
+        self: ControllerComponentManager,
+    ) -> (bool, str):
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            futures = [
+                executor.submit(
+                    self._lru_on_thread,
+                    self._proxies[fqdn],
+                    self._talondx_component_manager.simulation_mode,
+                    fqdn,
+                )
+                for fqdn in self._fqdn_talon_lru
+            ]
+            results = [f.result() for f in futures]
+
+        failed_lrus = []
+        out_status = True
+        for status, fqdn in results:
+            if not status:
+                failed_lrus.append(fqdn)
+                out_status = False
+        return (out_status, f"Failed to power on Talon LRUs: {failed_lrus}")

@@ -32,6 +32,7 @@ class TalonLRUComponentManager(CbfComponentManager):
         talons: List[str],
         pdus: List[str],
         pdu_outlets: List[str],
+        pdu_cmd_timeout: int,
         logger: logging.Logger,
         push_change_event_callback: Optional[Callable],
         communication_status_changed_callback: Callable[
@@ -68,6 +69,7 @@ class TalonLRUComponentManager(CbfComponentManager):
         self._talons = talons
         self._pdus = pdus
         self._pdu_outlets = pdu_outlets
+        self._pdu_cmd_timeout = pdu_cmd_timeout
 
         self.pdu1_power_mode = PowerMode.UNKNOWN
         self.pdu2_power_mode = PowerMode.UNKNOWN
@@ -142,7 +144,9 @@ class TalonLRUComponentManager(CbfComponentManager):
         if self._proxy_power_switch1 is not None:
             # TEMP: increase timeout to 30s until LRU2 is switched over to the ITF PDU
             # to handle the observed slowness in the PSI PDU
-            self._proxy_power_switch1.set_timeout_millis(30000)
+            self._proxy_power_switch1.set_timeout_millis(
+                self._pdu_cmd_timeout * 1000
+            )
             self._simulation_mode_events[
                 0
             ] = self._proxy_power_switch1.add_change_event_callback(
@@ -162,7 +166,9 @@ class TalonLRUComponentManager(CbfComponentManager):
             if self._pdus[1] != self._pdus[0]:
                 # TEMP: increase timeout to 30s until LRU2 is switched over to the ITF PDU
                 # to handle the observed slowness in the PSI PDU
-                self._proxy_power_switch2.set_timeout_millis(30000)
+                self._proxy_power_switch2.set_timeout_millis(
+                    self._pdu_cmd_timeout * 1000
+                )
                 self._simulation_mode_events[
                     1
                 ] = self._proxy_power_switch2.add_change_event_callback(

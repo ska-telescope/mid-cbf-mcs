@@ -186,6 +186,7 @@ def talon_lru_component_manager(
         talons=["001", "002"],
         pdus=["001", "002"],
         pdu_outlets=["0", "AA1"],
+        pdu_cmd_timeout=20,
         logger=logging.getLogger(),
         push_change_event_callback=push_change_event_callback,
         communication_status_changed_callback=communication_status_changed_callback,

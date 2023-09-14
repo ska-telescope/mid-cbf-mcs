@@ -72,6 +72,8 @@ class TalonLRU(SKABaseDevice):
         dtype="str",
     )
 
+    PDUCommandTimeout = device_property(dtype="str")
+
     # ----------
     # Attributes
     # ----------
@@ -230,6 +232,7 @@ class TalonLRU(SKABaseDevice):
             talons=[self.TalonDxBoard1, self.TalonDxBoard2],
             pdus=[self.PDU1, self.PDU2],
             pdu_outlets=[self.PDU1PowerOutlet, self.PDU2PowerOutlet],
+            pdu_cmd_timeout=int(self.PDUCommandTimeout),
             logger=self.logger,
             push_change_event_callback=self.push_change_event,
             communication_status_changed_callback=self._communication_status_changed,
