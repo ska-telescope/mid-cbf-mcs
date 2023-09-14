@@ -11,7 +11,7 @@
 
 from __future__ import annotations
 
-import asyncio
+import concurrent.futures
 import json
 import logging
 import os
@@ -414,7 +414,8 @@ class ControllerComponentManager(CbfComponentManager):
                 # use a hard-coded example fqdn talon lru for simulation mode
                 self._fqdn_talon_lru = ["mid_csp_cbf/talon_lru/001"]
 
-            lru_on_status, log_msg = asyncio.run(self._bulk_lru_on())
+            # Turn on all the LRUs with the boards we need
+            lru_on_status, log_msg = self._bulk_lru_on()
             if not lru_on_status:
                 return (ResultCode.FAILED, log_msg)
 
@@ -607,8 +608,9 @@ class ControllerComponentManager(CbfComponentManager):
                 "frequencyOffsetDeltaF", freq_offset_deltaF[0]
             )
 
-    async def _turn_on_lru(self, proxy, sim_mode, lru_fqdn) -> (bool, str):
+    def _lru_on_thread(self, proxy, sim_mode, lru_fqdn) -> (bool, str):
         try:
+            self._logger.info(f"Turning on LRU {lru_fqdn}")
             proxy.write_attribute("adminMode", AdminMode.OFFLINE)
             proxy.write_attribute("simulationMode", sim_mode)
             proxy.write_attribute("adminMode", AdminMode.ONLINE)
@@ -616,20 +618,25 @@ class ControllerComponentManager(CbfComponentManager):
         except tango.DevFailed as e:
             self._logger.error(e)
             return (False, lru_fqdn)
+
+        self._logger.info(f"LRU successfully turned on: {lru_fqdn}")
         return (True, None)
 
-    async def _bulk_lru_on(
+    def _bulk_lru_on(
         self: ControllerComponentManager,
     ) -> (bool, str):
-        tasks = [
-            self._turn_on_lru(
-                self._proxies[fqdn],
-                self._talondx_component_manager.simulation_mode,
-                fqdn,
-            )
-            for fqdn in self._fqdn_talon_lru
-        ]
-        results = await asyncio.gather(*tasks)
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            futures = [
+                executor.submit(
+                    self._lru_on_thread,
+                    self._proxies[fqdn],
+                    self._talondx_component_manager.simulation_mode,
+                    fqdn,
+                )
+                for fqdn in self._fqdn_talon_lru
+            ]
+            results = [f.result() for f in futures]
+
         failed_lrus = []
         out_status = True
         for status, fqdn in results:
