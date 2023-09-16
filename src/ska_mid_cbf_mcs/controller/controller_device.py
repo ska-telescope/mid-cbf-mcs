@@ -19,7 +19,7 @@ from __future__ import annotations  # allow forward references in type hints
 from typing import List, Optional, Tuple
 
 from ska_tango_base import SKABaseDevice, SKAController
-from ska_tango_base.commands import ResultCode
+from ska_tango_base.commands import ResponseCommand, ResultCode
 from ska_tango_base.control_model import PowerMode, SimulationMode
 from tango import AttrWriteType
 from tango.server import attribute, device_property, run
@@ -151,6 +151,10 @@ class CbfController(SKAController):
 
         self.register_command_object(
             "Standby", self.StandbyCommand(*device_args)
+        )
+
+        self.register_command_object(
+            "InitSysParam", self.InitSysParamCommand(*device_args)
         )
 
     def get_num_capabilities(
@@ -489,6 +493,46 @@ class CbfController(SKAController):
                 self.target._component_power_mode_changed(PowerMode.STANDBY)
 
             self.logger.info(message)
+            return (result_code, message)
+
+    class InitSysParamCommand(ResponseCommand):
+        """
+        A class for the CbfController's InitSysParam() command.
+        """
+
+        def is_allowed(self: CbfController.InitSysParamCommand) -> bool:
+            """
+            Determine if InitSysParamCommand is allowed
+            (allowed when Devstate is OFF).
+
+            :return: if InitSysParamCommand is allowed
+            :rtype: bool
+            """
+            return self.target.get_state() == tango.DevState.OFF
+
+        def do(
+            self: CbfController.InitSysParamCommand, argin: str
+        ) -> Tuple[ResultCode, str]:
+            """
+            This command sets the Dish ID - VCC ID mapping and k values
+
+            :param argin: the Dish ID - VCC ID mapping and k values in a
+                          json string.
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
+            (
+                result_code,
+                message,
+            ) = self.target.component_manager.init_sys_param(argin)
+
+            if result_code == ResultCode.OK:
+                self.logger.info(message)
+            elif result_code == ResultCode.FAILED:
+                self.logger.error(message)
+
             return (result_code, message)
 
     # ----------

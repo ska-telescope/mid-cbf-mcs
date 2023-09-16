@@ -582,6 +582,82 @@ class ControllerComponentManager(CbfComponentManager):
             self._logger.error(log_msg)
             return (ResultCode.FAILED, log_msg)
 
+    def init_sys_param(
+        self: ControllerComponentManager,
+        params: str,
+    ) -> Tuple[ResultCode, str]:
+        """
+        Validate and save the Dish ID - VCC ID mapping and k values.
+
+        :param argin: the Dish ID - VCC ID mapping and k values in a
+                        json string.
+        :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+        :rtype: (ResultCode, str)
+        """
+        status, msg = self._validate_sys_param(params)
+        if status is not ResultCode.OK:
+            return (status, msg)
+        return (
+            ResultCode.OK,
+            "CbfController InitSysParam command completed OK",
+        )
+
+    def _validate_sys_param(
+        self: ControllerComponentManager,
+        params: str,
+    ) -> Tuple[ResultCode, str]:
+        if not self._validate_sys_param_schemas(params):
+            return (
+                ResultCode.FAILED,
+                "Failed to validate against json schema",
+            )
+        params_json = json.loads(params)
+        dish_dict = params_json["dish_parameters"]
+        dish_id_set = set()
+        vcc_id_set = set()
+        for dish_id, v in dish_dict.items():
+            # Dish ID must be SKA001-133, MKT000-063
+            if dish_id[0:3] == "SKA":
+                id = int(dish_id[3:])
+                if id < 1 or id > 133:
+                    return (ResultCode.FAILED, "Invalid Dish ID")
+            elif dish_id[0:3] == "MKT":
+                id = int(dish_id[3:])
+                if id < 0 or id > 63:
+                    return (ResultCode.FAILED, "Invalid Dish ID")
+            else:
+                return (ResultCode.FAILED, "Invalid Dish ID")
+
+            # Dish ID must be unique
+            if dish_id not in dish_id_set:
+                dish_id_set.add(dish_id)
+            else:
+                return (ResultCode.FAILED, f"Duplicated Dish ID {dish_id}")
+
+            # VCC ID must be an integer in 1 - 197 (TODO: confirm)
+            if v["vcc"] < 1 or v["vcc"] > 197:
+                return (ResultCode.FAILED, f"Invalid VCC ID {v['vcc']}")
+
+            # VCC ID must be unique
+            if v["vcc"] not in vcc_id_set:
+                vcc_id_set.add(v["vcc"])
+            else:
+                return (ResultCode.FAILED, f"Duplicated VCC ID {v['vcc']}")
+
+            # k values must be an integer in 1 - 2222
+            if v["k"] < 1 or v["k"] > 2222:
+                return (ResultCode.FAILED, f"Invalid k value {v['k']}")
+        return (ResultCode.OK, "")
+
+    def _validate_sys_param_schemas(
+        self: ControllerComponentManager,
+        params: str,
+    ) -> bool:
+        # TODO
+        return True
+
     def _update_freq_offset_k(
         self: ControllerComponentManager,
         freq_offset_k: List[int],

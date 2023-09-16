@@ -21,6 +21,7 @@ class Const:
         self.NUM_CHANNEL_GROUPS = 20
         self.NUM_PHASE_BINS = 1024
         self.NUM_OUTPUT_LINKS = 80
+        self.DELTA_F = 1800  # Hz
 
         # TODO - remove the consts in MHZ/GHz eventually
         self.FREQUENCY_SLICE_BW_HZ = 200 * 10**6

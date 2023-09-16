@@ -175,7 +175,6 @@ class CbfSubarrayComponentManager(
         self._config_id = ""
         self._scan_id = 0
         self.frequency_offset_k = []
-        self.frequency_offset_delta_f = 0
 
         # store list of fsp configurations being used for each function mode
         self._corr_config = []
@@ -2245,7 +2244,7 @@ class CbfSubarrayComponentManager(
         # dish_sample_rate = base_dish_sample_rate_MH * mhz_to_hz + sample_rate_const * k * deltaF
         # fs_sample_rate = dish_sample_rate * vcc_oversampling_factor / total_num_FSs
         dish_sample_rate = (base_dish_sample_rate_MH * mhz_to_hz) + (
-            sample_rate_const * freq_offset_k * self.frequency_offset_delta_f
+            sample_rate_const * freq_offset_k * const.DELTA_F
         )
         log_msg = f"dish_sample_rate: {dish_sample_rate}"
         self._logger.debug(log_msg)

@@ -163,13 +163,6 @@ class CbfSubarray(CspSubElementSubarray):
         doc="Frequency offset (k) of all 197 receptors as an array of ints.",
     )
 
-    frequencyOffsetDeltaF = attribute(
-        dtype="int",
-        access=AttrWriteType.READ_WRITE,
-        label="Frequency offset (delta f)",
-        doc="Frequency offset (delta f)",
-    )
-
     simulationMode = attribute(
         dtype=SimulationMode,
         access=AttrWriteType.READ_WRITE,
@@ -438,18 +431,6 @@ class CbfSubarray(CspSubElementSubarray):
         """Set frequencyOffsetK attribute"""
         self.component_manager.frequency_offset_k = value
         # PROTECTED REGION END #    //  CbfController.frequencyOffsetK_write
-
-    def read_frequencyOffsetDeltaF(self: CbfSubarray) -> int:
-        # PROTECTED REGION ID(CbfController.frequencyOffsetDeltaF_read) ENABLED START #
-        """Return frequencyOffsetDeltaF attribute: Frequency offset (delta f)"""
-        return self.component_manager.frequency_offset_delta_f
-        # PROTECTED REGION END #    //  CbfController.frequencyOffsetDeltaF_read
-
-    def write_frequencyOffsetDeltaF(self: CbfSubarray, value: int) -> None:
-        # PROTECTED REGION ID(CbfSubarray.frequencyOffsetDeltaF_write) ENABLED START #
-        """Set the frequencyOffsetDeltaF attribute"""
-        self.component_manager.frequency_offset_delta_f = value
-        # PROTECTED REGION END #    //  CbfSubarray.frequencyOffsetDeltaF_write
 
     # --------
     # Commands
