@@ -55,6 +55,7 @@ nbmake = "^1.4.3"
 nbqa = "^1.7.0"
 sphinxcontrib-mermaid = "^0.9.2"
 black = "^23.9.1"
+flake8 = "^6.1.0"
 
 
 [[tool.poetry.source]]
