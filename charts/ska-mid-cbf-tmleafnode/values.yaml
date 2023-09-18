@@ -28,8 +28,9 @@ midcbf:
     tag: 0.10.14
     pullPolicy: IfNotPresent
 
-deviceServers_tm:
+deviceServers:
   tmcspsubarrayleafnodetest:
+    enabled: true
     file: "data/tmcspsubarrayleafnodetest.yaml"
 
 nodeSelector: {}

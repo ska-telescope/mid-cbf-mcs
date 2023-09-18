@@ -22,7 +22,6 @@ PYTHON_VARS_BEFORE_PYTEST = PYTHONPATH=./src:/app/src:/app/src/ska_mid_cbf_mcs K
 # We are choosing a standard to have it before the line break and therefore 503 will be ignored.
 PYTHON_SWITCHES_FOR_FLAKE8 = --ignore=E203,E501,F407,W503
 
-K8S_CHARTS ?= ska-mid-cbf-umbrella ska-mid-cbf-mcs ska-mid-cbf-tmleafnode ## list of charts
 K8S_UMBRELLA_CHART_PATH ?= ./charts/ska-mid-cbf-umbrella
 
 PYTHON_TEST_FILE = ./tests/unit

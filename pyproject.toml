@@ -51,11 +51,25 @@ ska-tango-base = "0.11.4"
 ska-ser-logging = "^0.4.1+0a677a67"
 ska-ser-log-transactions = "^0.2.2+ae0f5c92"
 ska-telmodel = "^1.8.1"
+nbmake = "^1.4.3"
+nbqa = "^1.7.0"
 
 
 [[tool.poetry.source]]
 name = "ska-nexus"
 url = "https://artefact.skao.int/repository/pypi-internal/simple"
+
+
+[tool.poetry.group.docs.dependencies]
+Sphinx = "^6"
+ska-ser-sphinx-theme = "^0.1.1"
+myst-parser = "^2.0.0"
+
+[tool.isort]
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+line_length = 79
 
 [build-system]
 requires = ["poetry-core"]

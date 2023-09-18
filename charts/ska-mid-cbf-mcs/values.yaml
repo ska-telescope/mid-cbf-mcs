@@ -41,27 +41,34 @@ resources:
 
 deviceServers:
   cbfcontroller:
+    enabled: true
     file: "data/cbfcontroller.yaml"
 
   cbfsubarray:
+    enabled: true
     file: "data/cbfsubarray.yaml"
 
   vcc:
+    enabled: true
     file: "data/vcc.yaml"
   
   fsp:
+    enabled: true
     file: "data/fsp.yaml"
   
   powerswitch:
     file: "data/powerswitch.yaml"
 
   talonlru:
+    enabled: true
     file: "data/talonlru.yaml"
 
   talonboard:
+    enabled: true
     file: "data/talonboard.yaml"
 
   talondxlogconsumer:
+    enabled: true
     file: "data/talondxlogconsumer.yaml"
 
 nodeSelector: {}
