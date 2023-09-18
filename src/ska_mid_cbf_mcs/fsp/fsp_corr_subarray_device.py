@@ -917,6 +917,23 @@ class FspCorrSubarray(CspSubElementObsDevice):
 
             return (result_code, message)
 
+    class AbortCommand(CspSubElementObsDevice.AbortCommand):
+        """A class for FspCorrSubarray's Abort() command."""
+
+        def do(self):
+            """
+            Stateless hook for Abort() command functionality.
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
+            component_manager = self.target
+            (result_code, message) = component_manager.abort()
+
+            return (result_code, message)
+
     # TODO - currently not used
     def is_getLinkAndAddress_allowed(self: FspCorrSubarray) -> bool:
         """

@@ -755,3 +755,8 @@ class FspCorrSubarrayComponentManager(
         self._proxy_hps_fsp_corr_controller.GoToIdle()
 
         return (ResultCode.OK, "FspCorrSubarray GoToIdle command completed OK")
+
+    def abort(
+        self: FspCorrSubarrayComponentManager,
+    ) -> Tuple[ResultCode, str]:
+        return (ResultCode.Ok, "Abort command not implemented")
