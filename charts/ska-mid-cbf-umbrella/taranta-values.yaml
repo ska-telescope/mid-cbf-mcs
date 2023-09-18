@@ -7,10 +7,9 @@
 
 display: ":0"
 xauthority: "~/.Xauthority"
-minikube: true
 
 global:
-  minikube: true
+  minikube: false
   tango_host: databaseds-tango-base-test:10000
   environment_variables: []
   sub-system:
@@ -29,7 +28,6 @@ ska-tango-base:
 
 ska-webjive:
     enabled: true
-    minikube: true
     ingress:
        enabled: true
        nginx: true
