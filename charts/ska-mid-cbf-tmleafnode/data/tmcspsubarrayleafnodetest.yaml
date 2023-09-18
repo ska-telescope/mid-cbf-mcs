@@ -6,7 +6,7 @@ instances: ["tm", "tm2"]
 depends_on:
   - device: sys/database/2
   - device: mid_csp_cbf/sub_elt/subarray_01
-  - device: ska_mid/tm_leaf_node/csp_subarray_02
+  - device: mid_csp_cbf/sub_elt/subarray_01
 readinessProbe:
   initialDelaySeconds: 0
   periodSeconds: 10
