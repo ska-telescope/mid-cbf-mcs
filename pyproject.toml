@@ -53,6 +53,7 @@ ska-ser-log-transactions = "^0.2.2+ae0f5c92"
 ska-telmodel = "^1.8.1"
 nbmake = "^1.4.3"
 nbqa = "^1.7.0"
+sphinxcontrib-mermaid = "^0.9.2"
 
 
 [[tool.poetry.source]]
