@@ -130,3 +130,4 @@ docs/src/diagrams/*.~vsdx
 .DS_Store
 hps_master_mcs.sh*
 MANIFEST.in
+Makefile
