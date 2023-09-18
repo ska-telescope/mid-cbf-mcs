@@ -66,8 +66,7 @@ PYTHON_RUNNER = python3 -m
 K8S_TEST_IMAGE_TO_TEST = artefact.skao.int/ska-mid-cbf-mcs:$(VERSION)
 K8S_TEST_TANGO_IMAGE_PARAMS = --set ska-mid-cbf-mcs.midcbf.image.tag=$(VERSION) \
 	--set ska-mid-cbf-tmleafnode.midcbf.image.tag=$(VERSION) \
-	--set ska-mid-cbf-mcs.hostInfo.hostIP="$(HOST_IP)" \
-	--values charts/ska-mid-cbf-umbrella/taranta-values.yaml
+	--set ska-mid-cbf-mcs.hostInfo.hostIP="$(HOST_IP)"
 endif
 
 TARANTA_PARAMS = --set ska-taranta.enabled=$(TARANTA) \

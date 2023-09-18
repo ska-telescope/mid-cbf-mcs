@@ -14,8 +14,6 @@ labels:
   app: ska-mid-cbf-mcs
 
 global:
-  labels:
-    app: ska-mid-cbf-mcs
   minikube: false
   exposeDatabaseDS: true
   exposeAllDS: false
