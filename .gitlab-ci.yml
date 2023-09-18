@@ -58,3 +58,6 @@ include:
 
 helm-chart-lint:
   allow_failure: true
+
+notebook-test:
+  when: manual
