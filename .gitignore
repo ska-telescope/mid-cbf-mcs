@@ -131,3 +131,4 @@ docs/src/diagrams/*.~vsdx
 hps_master_mcs.sh*
 MANIFEST.in
 Makefile
+manifests.yaml
