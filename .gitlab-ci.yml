@@ -62,3 +62,9 @@ helm-chart-lint:
 
 notebook-test:
   when: manual
+
+deploy-shared-environment:
+  script:
+    - make k8s-dep-update
+    - HELM_RELEASE=$SHARED_K8S_CHART K8S_UMBRELLA_CHART_PATH="./charts/$SHARED_K8S_CHART" make k8s-install-chart
+    - make k8s-wait
