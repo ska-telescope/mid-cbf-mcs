@@ -11,7 +11,6 @@ HELM_RELEASE ?= test##H ELM_RELEASE is the release that all Kubernetes resources
 
 HELM_CHART ?= ska-mid-cbf-umbrella## HELM_CHART the chart name
 K8S_CHART ?= $(HELM_CHART)
-SHARED_K8S_CHART ?= $(HELM_CHART)
 TANGO_DATABASE = tango-databaseds-$(HELM_RELEASE)
 TANGO_HOST = $(TANGO_DATABASE):10000## TANGO_HOST is an input!
 
