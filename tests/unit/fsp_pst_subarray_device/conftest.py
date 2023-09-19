@@ -128,6 +128,11 @@ def mock_component_manager(
     def _go_to_idle(mock: unittest.mock.Mock) -> None:
         mock.message = "FspPstSubarray GoToIdle command completed OK"
         return (ResultCode.OK, mock.message)
+    
+    def _abort(mock: unittest.mock.Mock) -> None:
+        mock.message = "FspPstSubarray Abort command completed OK"
+        return (ResultCode.OK, mock.message)
+
 
     mock.on.side_effect = lambda: _on(mock)
     mock.off.side_effect = lambda: _off(mock)
@@ -137,6 +142,7 @@ def mock_component_manager(
     mock.scan.side_effect = lambda mock_scan_id: _scan(mock, mock_scan_id)
     mock.end_scan.side_effect = lambda: _end_scan(mock)
     mock.go_to_idle.side_effect = lambda: _go_to_idle(mock)
+    mock.abort.side_effect = lambda: _abort(mock)
     mock.start_communicating.side_effect = lambda: _start_communicating(mock)
 
     mock.enqueue.return_value = unique_id, ResultCode.QUEUED

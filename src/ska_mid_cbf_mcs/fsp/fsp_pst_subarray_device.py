@@ -106,29 +106,14 @@ class FspPstSubarray(CspSubElementObsDevice):
         """
         super().init_command_objects()
 
-        device_args = (
-            self,
-            self.op_state_model,
-            self.obs_state_model,
-            self.logger,
-        )
-        self.register_command_object(
-            "ConfigureScan", self.ConfigureScanCommand(*device_args)
-        )
-        self.register_command_object("Scan", self.ScanCommand(*device_args))
-        self.register_command_object(
-            "EndScan", self.EndScanCommand(*device_args)
-        )
-        self.register_command_object(
-            "GoToIdle", self.GoToIdleCommand(*device_args)
-        )
-
+        # registering with target = self
         device_args = (self, self.op_state_model, self.logger)
         self.register_command_object("On", self.OnCommand(*device_args))
         self.register_command_object("Off", self.OffCommand(*device_args))
         self.register_command_object(
             "Standby", self.StandbyCommand(*device_args)
         )
+        self.register_command_object("Reset", self.ResetCommand(*device_args))
 
     class InitCommand(CspSubElementObsDevice.InitCommand):
         """
@@ -554,6 +539,24 @@ class FspPstSubarray(CspSubElementObsDevice):
                 device._component_configured(False)
 
             return (result_code, message)
+    
+    class AbortCommand(CspSubElementObsDevice.AbortCommand):
+        """A class for FspPstSubarray's Abort() command."""
+
+        def do(self):
+            """
+            Stateless hook for Abort() command functionality.
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
+            component_manager = self.target
+            (result_code, message) = component_manager.abort()
+
+            return (result_code, message)
+
 
     # ----------
     # Callbacks
