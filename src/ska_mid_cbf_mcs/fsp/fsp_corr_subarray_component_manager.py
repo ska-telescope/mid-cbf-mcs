@@ -759,4 +759,4 @@ class FspCorrSubarrayComponentManager(
     def abort(
         self: FspCorrSubarrayComponentManager,
     ) -> Tuple[ResultCode, str]:
-        return (ResultCode.Ok, "Abort command not implemented")
+        return (ResultCode.OK, "Abort command not implemented")

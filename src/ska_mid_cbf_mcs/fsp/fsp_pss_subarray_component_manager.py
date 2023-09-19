@@ -249,15 +249,6 @@ class FspPssSubarrayComponentManager(
 
         configuration = json.loads(configuration)
 
-        # TODO: Why are we overwriting the device property fsp ID
-        #       with the argument in the ConfigureScan json file
-        fsp_id = configuration["fsp_id"]
-        if self._fsp_id != fsp_id:
-            self._logger.warning(
-                f"The Fsp ID from ConfigureScan {fsp_id} does not equal "
-                + f"the Fsp ID from the device properties {self._fsp_id}"
-            )
-        self._fsp_id = fsp_id
         self._search_window_id = int(configuration["search_window_id"])
 
         self._remove_all_receptors()

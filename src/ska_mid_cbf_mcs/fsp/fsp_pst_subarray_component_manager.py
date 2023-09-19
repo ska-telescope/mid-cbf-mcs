@@ -224,14 +224,6 @@ class FspPstSubarrayComponentManager(
 
         configuration = json.loads(configuration)
 
-        fsp_id = configuration["fsp_id"]
-        if self._fsp_id != fsp_id:
-            self._logger.warning(
-                f"The Fsp ID from ConfigureScan {fsp_id} does not equal "
-                + f"the Fsp ID from the self properties {self._fsp_id}"
-            )
-
-        self._fsp_id = fsp_id
         self._timing_beams = []
         self._timing_beam_id = []
         self._receptors = []
