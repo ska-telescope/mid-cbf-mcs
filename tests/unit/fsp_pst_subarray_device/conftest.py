@@ -128,11 +128,10 @@ def mock_component_manager(
     def _go_to_idle(mock: unittest.mock.Mock) -> None:
         mock.message = "FspPstSubarray GoToIdle command completed OK"
         return (ResultCode.OK, mock.message)
-    
+
     def _abort(mock: unittest.mock.Mock) -> None:
         mock.message = "FspPstSubarray Abort command completed OK"
         return (ResultCode.OK, mock.message)
-
 
     mock.on.side_effect = lambda: _on(mock)
     mock.off.side_effect = lambda: _off(mock)

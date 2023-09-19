@@ -539,7 +539,7 @@ class FspPstSubarray(CspSubElementObsDevice):
                 device._component_configured(False)
 
             return (result_code, message)
-    
+
     class AbortCommand(CspSubElementObsDevice.AbortCommand):
         """A class for FspPstSubarray's Abort() command."""
 
@@ -556,7 +556,6 @@ class FspPstSubarray(CspSubElementObsDevice):
             (result_code, message) = component_manager.abort()
 
             return (result_code, message)
-
 
     # ----------
     # Callbacks
