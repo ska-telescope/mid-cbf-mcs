@@ -594,6 +594,23 @@ class FspPssSubarray(CspSubElementObsDevice):
 
             return (result_code, message)
 
+    class AbortCommand(CspSubElementObsDevice.AbortCommand):
+        """A class for FspPssSubarray's Abort() command."""
+
+        def do(self):
+            """
+            Calls component manager abort() command functionality.
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            :rtype: (ResultCode, str)
+            """
+            component_manager = self.target
+            (result_code, message) = component_manager.abort()
+
+            return (result_code, message)
+
     # ----------
     # Callbacks
     # ----------

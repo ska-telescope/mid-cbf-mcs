@@ -343,3 +343,8 @@ class FspPssSubarrayComponentManager(
         self._remove_all_receptors()
 
         return (ResultCode.OK, "FspPssSubarray GoToIdle command completed OK")
+
+    def abort(
+        self: FspPssSubarrayComponentManager,
+    ) -> Tuple[ResultCode, str]:
+        return (ResultCode.Ok, "Abort command not implemented")
