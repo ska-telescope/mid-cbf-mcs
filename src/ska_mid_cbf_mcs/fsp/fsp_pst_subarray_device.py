@@ -105,7 +105,7 @@ class FspPstSubarray(CspSubElementObsDevice):
         Sets up the command objects
         """
         super().init_command_objects()
-        
+
         device_args = (
             self,
             self.op_state_model,
