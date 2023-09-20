@@ -105,6 +105,23 @@ class FspPstSubarray(CspSubElementObsDevice):
         Sets up the command objects
         """
         super().init_command_objects()
+        
+        device_args = (
+            self,
+            self.op_state_model,
+            self.obs_state_model,
+            self.logger,
+        )
+        self.register_command_object(
+            "ConfigureScan", self.ConfigureScanCommand(*device_args)
+        )
+        self.register_command_object("Scan", self.ScanCommand(*device_args))
+        self.register_command_object(
+            "EndScan", self.EndScanCommand(*device_args)
+        )
+        self.register_command_object(
+            "GoToIdle", self.GoToIdleCommand(*device_args)
+        )
 
         # registering with target = self
         device_args = (self, self.op_state_model, self.logger)
