@@ -299,6 +299,10 @@ class TestFspPstSubarray:
         assert device_under_test.State() == DevState.ON
 
         device_under_test.EndScan()
+        test_proxies.wait_timeout_obs(
+            [device_under_test], ObsState.READY, wait_time_s, sleep_time_s
+        )
+        assert device_under_test.obsState == ObsState.READY
 
     @pytest.mark.parametrize(
         "fsp_id, \
@@ -332,6 +336,72 @@ class TestFspPstSubarray:
 
         device_under_test.GoToIdle()
 
+        test_proxies.wait_timeout_obs(
+            [device_under_test], ObsState.IDLE, wait_time_s, sleep_time_s
+        )
+        assert device_under_test.obsState == ObsState.IDLE
+
+    @pytest.mark.parametrize(
+        "config_file_name, \
+        fsp_id, \
+        sub_id",
+        [
+            (
+                "FspPstSubarray_ConfigureScan_basic.json",
+                1,
+                1,
+            )
+        ],
+    )
+    def test_Abort_ObsReset(
+        self: TestFspPstSubarray,
+        test_proxies: pytest.fixture,
+        config_file_name: str,
+        fsp_id: int,
+        sub_id: int,
+    ) -> None:
+        """
+        Test the "ConfigureScan" command
+
+        :param test_proxies: the proxies test fixture
+        :param config_file_name: the name of the JSON file
+            containing the configuration
+        :param fsp_id: the fsp id
+        :param sub_id: the subarray id
+        """
+
+        device_under_test = test_proxies.fspSubarray["PST-BF"][sub_id][fsp_id]
+        wait_time_s = 1
+        sleep_time_s = 1
+
+        assert device_under_test.adminMode == AdminMode.ONLINE
+
+        # abort from READY
+        self.test_ConfigureScan(test_proxies, config_file_name, fsp_id, sub_id)
+
+        device_under_test.Abort()
+        test_proxies.wait_timeout_obs(
+            [device_under_test], ObsState.ABORTED, wait_time_s, sleep_time_s
+        )
+        assert device_under_test.obsState == ObsState.ABORTED
+
+        device_under_test.ObsReset()
+        test_proxies.wait_timeout_obs(
+            [device_under_test], ObsState.IDLE, wait_time_s, sleep_time_s
+        )
+        assert device_under_test.obsState == ObsState.IDLE
+
+        # abort from SCANNING
+        self.test_ConfigureScan(test_proxies, config_file_name, fsp_id, sub_id)
+        self.test_Scan(test_proxies, fsp_id, sub_id)
+
+        device_under_test.Abort()
+        test_proxies.wait_timeout_obs(
+            [device_under_test], ObsState.ABORTED, wait_time_s, sleep_time_s
+        )
+        assert device_under_test.obsState == ObsState.ABORTED
+
+        device_under_test.ObsReset()
         test_proxies.wait_timeout_obs(
             [device_under_test], ObsState.IDLE, wait_time_s, sleep_time_s
         )
