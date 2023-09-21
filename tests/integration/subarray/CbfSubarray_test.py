@@ -94,6 +94,13 @@ class TestCbfSubarray:
         )
         assert device_under_test.State() == DevState.OFF
 
+        device_under_test.Standby()
+
+        test_proxies.wait_timeout_dev(
+            [device_under_test], DevState.STANDBY, wait_time_s, sleep_time_s
+        )
+        assert device_under_test.State() == DevState.STANDBY
+
     @pytest.mark.parametrize(
         "receptors, \
         receptors_to_remove, \
@@ -2491,32 +2498,18 @@ class TestCbfSubarray:
             assert test_proxies.subarray[sub_id].obsState == ObsState.READY
             for fsp in configuration["cbf"]["fsp"]:
                 fsp_id = int(fsp["fsp_id"])
-                if fsp["function_mode"] == "CORR":
-                    assert (
-                        test_proxies.fspSubarray["CORR"][sub_id][
-                            fsp_id
-                        ].obsState
-                        == ObsState.READY
-                    )
-                elif fsp["function_mode"] == "PSS-BF":
-                    assert (
-                        test_proxies.fspSubarray["PSS-BF"][sub_id][
-                            fsp_id
-                        ].obsState
-                        == ObsState.READY
-                    )
-                elif fsp["function_mode"] == "PST-BF":
-                    assert (
-                        test_proxies.fspSubarray["PST-BF"][sub_id][
-                            fsp_id
-                        ].obsState
-                        == ObsState.READY
-                    )
+                assert (
+                    test_proxies.fspSubarray[fsp["function_mode"]][sub_id][
+                        fsp_id
+                    ].obsState
+                    == ObsState.READY
+                )
             for r in vcc_receptors:
                 assert (
                     test_proxies.vcc[test_proxies.receptor_to_vcc[r]].obsState
                     == ObsState.READY
                 )
+
             # abort
             test_proxies.subarray[sub_id].Abort()
             test_proxies.wait_timeout_obs(
@@ -2526,6 +2519,21 @@ class TestCbfSubarray:
                 sleep_time_s,
             )
             assert test_proxies.subarray[sub_id].obsState == ObsState.ABORTED
+
+            for fsp in configuration["cbf"]["fsp"]:
+                fsp_id = int(fsp["fsp_id"])
+                assert (
+                    test_proxies.fspSubarray[fsp["function_mode"]][sub_id][
+                        fsp_id
+                    ].obsState
+                    == ObsState.ABORTED
+                )
+            for r in vcc_receptors:
+                assert (
+                    test_proxies.vcc[test_proxies.receptor_to_vcc[r]].obsState
+                    == ObsState.ABORTED
+                )
+
             # ObsReset
             test_proxies.subarray[sub_id].ObsReset()
             test_proxies.wait_timeout_obs(
@@ -2543,32 +2551,18 @@ class TestCbfSubarray:
             )
             for fsp in configuration["cbf"]["fsp"]:
                 fsp_id = int(fsp["fsp_id"])
-                if fsp["function_mode"] == "CORR":
-                    assert (
-                        test_proxies.fspSubarray["CORR"][sub_id][
-                            fsp_id
-                        ].obsState
-                        == ObsState.IDLE
-                    )
-                elif fsp["function_mode"] == "PSS-BF":
-                    assert (
-                        test_proxies.fspSubarray["PSS-BF"][sub_id][
-                            fsp_id
-                        ].obsState
-                        == ObsState.IDLE
-                    )
-                elif fsp["function_mode"] == "PST-BF":
-                    assert (
-                        test_proxies.fspSubarray["PST-BF"][sub_id][
-                            fsp_id
-                        ].obsState
-                        == ObsState.IDLE
-                    )
+                assert (
+                    test_proxies.fspSubarray[fsp["function_mode"]][sub_id][
+                        fsp_id
+                    ].obsState
+                    == ObsState.IDLE
+                )
             for r in vcc_receptors:
                 assert (
                     test_proxies.vcc[test_proxies.receptor_to_vcc[r]].obsState
                     == ObsState.IDLE
                 )
+
             # ------------------- #
             # abort from SCANNING #
             # ------------------- #
@@ -2612,27 +2606,12 @@ class TestCbfSubarray:
             )
             for fsp in configuration["cbf"]["fsp"]:
                 fsp_id = int(fsp["fsp_id"])
-                if fsp["function_mode"] == "CORR":
-                    assert (
-                        test_proxies.fspSubarray["CORR"][sub_id][
-                            fsp_id
-                        ].obsState
-                        == ObsState.SCANNING
-                    )
-                elif fsp["function_mode"] == "PSS-BF":
-                    assert (
-                        test_proxies.fspSubarray["PSS-BF"][sub_id][
-                            fsp_id
-                        ].obsState
-                        == ObsState.SCANNING
-                    )
-                elif fsp["function_mode"] == "PST-BF":
-                    assert (
-                        test_proxies.fspSubarray["PST-BF"][sub_id][
-                            fsp_id
-                        ].obsState
-                        == ObsState.SCANNING
-                    )
+                assert (
+                    test_proxies.fspSubarray[fsp["function_mode"]][sub_id][
+                        fsp_id
+                    ].obsState
+                    == ObsState.SCANNING
+                )
             for r in vcc_receptors:
                 assert (
                     test_proxies.vcc[test_proxies.receptor_to_vcc[r]].obsState
@@ -2648,33 +2627,19 @@ class TestCbfSubarray:
                 sleep_time_s,
             )
             assert test_proxies.subarray[sub_id].obsState == ObsState.ABORTED
+
             for fsp in configuration["cbf"]["fsp"]:
                 fsp_id = int(fsp["fsp_id"])
-                if fsp["function_mode"] == "CORR":
-                    assert (
-                        test_proxies.fspSubarray["CORR"][sub_id][
-                            fsp_id
-                        ].obsState
-                        == ObsState.READY
-                    )
-                elif fsp["function_mode"] == "PSS-BF":
-                    assert (
-                        test_proxies.fspSubarray["PSS-BF"][sub_id][
-                            fsp_id
-                        ].obsState
-                        == ObsState.READY
-                    )
-                elif fsp["function_mode"] == "PST-BF":
-                    assert (
-                        test_proxies.fspSubarray["PST-BF"][sub_id][
-                            fsp_id
-                        ].obsState
-                        == ObsState.READY
-                    )
+                assert (
+                    test_proxies.fspSubarray[fsp["function_mode"]][sub_id][
+                        fsp_id
+                    ].obsState
+                    == ObsState.ABORTED
+                )
             for r in vcc_receptors:
                 assert (
                     test_proxies.vcc[test_proxies.receptor_to_vcc[r]].obsState
-                    == ObsState.READY
+                    == ObsState.ABORTED
                 )
 
             # ObsReset
@@ -2689,27 +2654,12 @@ class TestCbfSubarray:
             assert test_proxies.subarray[sub_id].scanID == 0
             for fsp in configuration["cbf"]["fsp"]:
                 fsp_id = int(fsp["fsp_id"])
-                if fsp["function_mode"] == "CORR":
-                    assert (
-                        test_proxies.fspSubarray["CORR"][sub_id][
-                            fsp_id
-                        ].obsState
-                        == ObsState.IDLE
-                    )
-                elif fsp["function_mode"] == "PSS-BF":
-                    assert (
-                        test_proxies.fspSubarray["PSS-BF"][sub_id][
-                            fsp_id
-                        ].obsState
-                        == ObsState.IDLE
-                    )
-                elif fsp["function_mode"] == "PST-BF":
-                    assert (
-                        test_proxies.fspSubarray["PST-BF"][sub_id][
-                            fsp_id
-                        ].obsState
-                        == ObsState.IDLE
-                    )
+                assert (
+                    test_proxies.fspSubarray[fsp["function_mode"]][sub_id][
+                        fsp_id
+                    ].obsState
+                    == ObsState.IDLE
+                )
             for r in vcc_receptors:
                 assert (
                     test_proxies.vcc[test_proxies.receptor_to_vcc[r]].obsState
@@ -2816,6 +2766,21 @@ class TestCbfSubarray:
                 sleep_time_s,
             )
             assert test_proxies.subarray[sub_id].obsState == ObsState.ABORTED
+
+            for fsp in configuration["cbf"]["fsp"]:
+                fsp_id = int(fsp["fsp_id"])
+                assert (
+                    test_proxies.fspSubarray[fsp["function_mode"]][sub_id][
+                        fsp_id
+                    ].obsState
+                    == ObsState.ABORTED
+                )
+            for r in vcc_receptors:
+                assert (
+                    test_proxies.vcc[test_proxies.receptor_to_vcc[r]].obsState
+                    == ObsState.ABORTED
+                )
+
             # Restart: receptors should be empty
             test_proxies.subarray[sub_id].Restart()
             test_proxies.wait_timeout_obs(
@@ -2826,30 +2791,15 @@ class TestCbfSubarray:
             )
             assert test_proxies.subarray[sub_id].obsState == ObsState.EMPTY
             assert len(test_proxies.subarray[sub_id].receptors) == 0
+
             for fsp in configuration["cbf"]["fsp"]:
                 fsp_id = int(fsp["fsp_id"])
-                if fsp["function_mode"] == "CORR":
-                    assert (
-                        test_proxies.fspSubarray["CORR"][sub_id][
-                            fsp_id
-                        ].obsState
-                        == ObsState.IDLE
-                    )
-                elif fsp["function_mode"] == "PSS-BF":
-                    assert (
-                        test_proxies.fspSubarray["PSS-BF"][sub_id][
-                            fsp_id
-                        ].obsState
-                        == ObsState.IDLE
-                    )
-                elif fsp["function_mode"] == "PST-BF":
-                    assert (
-                        test_proxies.fspSubarray["PST-BF"][sub_id][
-                            fsp_id
-                        ].obsState
-                        == ObsState.IDLE
-                    )
-            print(vcc_receptors)
+                assert (
+                    test_proxies.fspSubarray[fsp["function_mode"]][sub_id][
+                        fsp_id
+                    ].obsState
+                    == ObsState.IDLE
+                )
             for r in vcc_receptors:
                 assert (
                     test_proxies.vcc[test_proxies.receptor_to_vcc[r]].obsState
@@ -2879,27 +2829,12 @@ class TestCbfSubarray:
             assert test_proxies.subarray[sub_id].obsState == ObsState.READY
             for fsp in configuration["cbf"]["fsp"]:
                 fsp_id = int(fsp["fsp_id"])
-                if fsp["function_mode"] == "CORR":
-                    assert (
-                        test_proxies.fspSubarray["CORR"][sub_id][
-                            fsp_id
-                        ].obsState
-                        == ObsState.READY
-                    )
-                elif fsp["function_mode"] == "PSS-BF":
-                    assert (
-                        test_proxies.fspSubarray["PSS-BF"][sub_id][
-                            fsp_id
-                        ].obsState
-                        == ObsState.READY
-                    )
-                elif fsp["function_mode"] == "PST-BF":
-                    assert (
-                        test_proxies.fspSubarray["PST-BF"][sub_id][
-                            fsp_id
-                        ].obsState
-                        == ObsState.READY
-                    )
+                assert (
+                    test_proxies.fspSubarray[fsp["function_mode"]][sub_id][
+                        fsp_id
+                    ].obsState
+                    == ObsState.READY
+                )
             for r in vcc_receptors:
                 assert (
                     test_proxies.vcc[test_proxies.receptor_to_vcc[r]].obsState
@@ -2915,7 +2850,22 @@ class TestCbfSubarray:
                 sleep_time_s,
             )
             assert test_proxies.subarray[sub_id].obsState == ObsState.ABORTED
-            # ObsReset
+
+            for fsp in configuration["cbf"]["fsp"]:
+                fsp_id = int(fsp["fsp_id"])
+                assert (
+                    test_proxies.fspSubarray[fsp["function_mode"]][sub_id][
+                        fsp_id
+                    ].obsState
+                    == ObsState.ABORTED
+                )
+            for r in vcc_receptors:
+                assert (
+                    test_proxies.vcc[test_proxies.receptor_to_vcc[r]].obsState
+                    == ObsState.ABORTED
+                )
+
+            # Restart
             test_proxies.subarray[sub_id].Restart()
             test_proxies.wait_timeout_obs(
                 [test_proxies.subarray[sub_id]],
@@ -2925,29 +2875,15 @@ class TestCbfSubarray:
             )
             assert test_proxies.subarray[sub_id].obsState == ObsState.EMPTY
             assert len(test_proxies.subarray[sub_id].receptors) == 0
+
             for fsp in configuration["cbf"]["fsp"]:
                 fsp_id = int(fsp["fsp_id"])
-                if fsp["function_mode"] == "CORR":
-                    assert (
-                        test_proxies.fspSubarray["CORR"][sub_id][
-                            fsp_id
-                        ].obsState
-                        == ObsState.IDLE
-                    )
-                elif fsp["function_mode"] == "PSS-BF":
-                    assert (
-                        test_proxies.fspSubarray["PSS-BF"][sub_id][
-                            fsp_id
-                        ].obsState
-                        == ObsState.IDLE
-                    )
-                elif fsp["function_mode"] == "PST-BF":
-                    assert (
-                        test_proxies.fspSubarray["PST-BF"][sub_id][
-                            fsp_id
-                        ].obsState
-                        == ObsState.IDLE
-                    )
+                assert (
+                    test_proxies.fspSubarray[fsp["function_mode"]][sub_id][
+                        fsp_id
+                    ].obsState
+                    == ObsState.IDLE
+                )
             for r in vcc_receptors:
                 assert (
                     test_proxies.vcc[test_proxies.receptor_to_vcc[r]].obsState
@@ -2992,27 +2928,12 @@ class TestCbfSubarray:
             )
             for fsp in configuration["cbf"]["fsp"]:
                 fsp_id = int(fsp["fsp_id"])
-                if fsp["function_mode"] == "CORR":
-                    assert (
-                        test_proxies.fspSubarray["CORR"][sub_id][
-                            fsp_id
-                        ].obsState
-                        == ObsState.SCANNING
-                    )
-                elif fsp["function_mode"] == "PSS-BF":
-                    assert (
-                        test_proxies.fspSubarray["PSS-BF"][sub_id][
-                            fsp_id
-                        ].obsState
-                        == ObsState.SCANNING
-                    )
-                elif fsp["function_mode"] == "PST-BF":
-                    assert (
-                        test_proxies.fspSubarray["PST-BF"][sub_id][
-                            fsp_id
-                        ].obsState
-                        == ObsState.SCANNING
-                    )
+                assert (
+                    test_proxies.fspSubarray[fsp["function_mode"]][sub_id][
+                        fsp_id
+                    ].obsState
+                    == ObsState.SCANNING
+                )
             for r in vcc_receptors:
                 assert (
                     test_proxies.vcc[test_proxies.receptor_to_vcc[r]].obsState
@@ -3028,36 +2949,22 @@ class TestCbfSubarray:
                 sleep_time_s,
             )
             assert test_proxies.subarray[sub_id].obsState == ObsState.ABORTED
+
             for fsp in configuration["cbf"]["fsp"]:
                 fsp_id = int(fsp["fsp_id"])
-                if fsp["function_mode"] == "CORR":
-                    assert (
-                        test_proxies.fspSubarray["CORR"][sub_id][
-                            fsp_id
-                        ].obsState
-                        == ObsState.READY
-                    )
-                elif fsp["function_mode"] == "PSS-BF":
-                    assert (
-                        test_proxies.fspSubarray["PSS-BF"][sub_id][
-                            fsp_id
-                        ].obsState
-                        == ObsState.READY
-                    )
-                elif fsp["function_mode"] == "PST-BF":
-                    assert (
-                        test_proxies.fspSubarray["PST-BF"][sub_id][
-                            fsp_id
-                        ].obsState
-                        == ObsState.READY
-                    )
+                assert (
+                    test_proxies.fspSubarray[fsp["function_mode"]][sub_id][
+                        fsp_id
+                    ].obsState
+                    == ObsState.ABORTED
+                )
             for r in vcc_receptors:
                 assert (
                     test_proxies.vcc[test_proxies.receptor_to_vcc[r]].obsState
-                    == ObsState.READY
+                    == ObsState.ABORTED
                 )
 
-            # ObsReset
+            # Restart
             wait_time_s = 3
             test_proxies.subarray[sub_id].Restart()
             test_proxies.wait_timeout_obs(
@@ -3068,29 +2975,15 @@ class TestCbfSubarray:
             )
             assert len(test_proxies.subarray[sub_id].receptors) == 0
             assert test_proxies.subarray[sub_id].obsState == ObsState.EMPTY
+
             for fsp in configuration["cbf"]["fsp"]:
                 fsp_id = int(fsp["fsp_id"])
-                if fsp["function_mode"] == "CORR":
-                    assert (
-                        test_proxies.fspSubarray["CORR"][sub_id][
-                            fsp_id
-                        ].obsState
-                        == ObsState.IDLE
-                    )
-                elif fsp["function_mode"] == "PSS-BF":
-                    assert (
-                        test_proxies.fspSubarray["PSS-BF"][sub_id][
-                            fsp_id
-                        ].obsState
-                        == ObsState.IDLE
-                    )
-                elif fsp["function_mode"] == "PST-BF":
-                    assert (
-                        test_proxies.fspSubarray["PST-BF"][sub_id][
-                            fsp_id
-                        ].obsState
-                        == ObsState.IDLE
-                    )
+                assert (
+                    test_proxies.fspSubarray[fsp["function_mode"]][sub_id][
+                        fsp_id
+                    ].obsState
+                    == ObsState.IDLE
+                )
             for r in vcc_receptors:
                 assert (
                     test_proxies.vcc[test_proxies.receptor_to_vcc[r]].obsState
