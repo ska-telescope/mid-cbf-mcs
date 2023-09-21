@@ -280,7 +280,7 @@ class TestVcc:
         )
         assert device_under_test.obsState == ObsState.SCANNING
 
-        assert device_under_test.scanID == scan_id
+        assert device_under_test.scanID == int(scan_id)
 
     @pytest.mark.parametrize(
         "vcc_id",

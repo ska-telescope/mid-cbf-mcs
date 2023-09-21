@@ -348,8 +348,8 @@ class TestFspPstSubarray:
         [
             (
                 "FspPstSubarray_ConfigureScan_basic.json",
-                1,
                 2,
+                1,
             )
         ],
     )
