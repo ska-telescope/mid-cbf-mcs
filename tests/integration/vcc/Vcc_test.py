@@ -192,6 +192,8 @@ class TestVcc:
 
         assert device_under_test.adminMode == AdminMode.ONLINE
 
+        device_under_test.On()
+
         f = open(data_file_path + config_file_name)
         json_str = f.read().replace("\n", "")
         configuration = copy.deepcopy(json.loads(json_str))
