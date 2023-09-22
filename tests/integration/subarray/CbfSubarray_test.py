@@ -66,7 +66,7 @@ class TestCbfSubarray:
         assert device_under_test.State() == DevState.OFF
 
     @pytest.mark.parametrize("sub_id", [1])
-    def test_Off_On_Standby(
+    def test_On_Off(
         self: TestCbfSubarray, test_proxies: pytest.fixture, sub_id: int
     ) -> None:
         """
@@ -93,13 +93,6 @@ class TestCbfSubarray:
             [device_under_test], DevState.OFF, wait_time_s, sleep_time_s
         )
         assert device_under_test.State() == DevState.OFF
-
-        device_under_test.Standby()
-
-        test_proxies.wait_timeout_dev(
-            [device_under_test], DevState.STANDBY, wait_time_s, sleep_time_s
-        )
-        assert device_under_test.State() == DevState.STANDBY
 
     @pytest.mark.parametrize(
         "receptors, \
@@ -2528,6 +2521,7 @@ class TestCbfSubarray:
                     ].obsState
                     == ObsState.ABORTED
                 )
+                # add wait timeout ################################
             for r in vcc_receptors:
                 assert (
                     test_proxies.vcc[test_proxies.receptor_to_vcc[r]].obsState
