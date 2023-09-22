@@ -743,7 +743,8 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                         "Failed to connect to VCC band device",
                     )
         else:
-            # if no value for _freq_band_name, assume in IDLE state, either from initialization or after deconfigure has been called
+            # if no value for _freq_band_name, assume in IDLE state,
+            # either from initialization or after deconfigure has been called
             self._logger.info(
                 "Aborting from IDLE; not issuing Abort command to VCC band devices"
             )
@@ -767,7 +768,8 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                         "Failed to connect to VCC band device",
                     )
         else:
-            # if no value for _freq_band_name, assume in IDLE state, either from initialization or after deconfigure has been called
+            # if no value for _freq_band_name, assume in IDLE state,
+            # either from initialization or after deconfigure has been called
             self._logger.info(
                 "Aborted from IDLE; not issuing ObsReset command to VCC band devices"
             )

@@ -123,14 +123,12 @@ class FspPstSubarray(CspSubElementObsDevice):
             "GoToIdle", self.GoToIdleCommand(*device_args)
         )
 
-        # registering with target = self
         device_args = (self, self.op_state_model, self.logger)
         self.register_command_object("On", self.OnCommand(*device_args))
         self.register_command_object("Off", self.OffCommand(*device_args))
         self.register_command_object(
             "Standby", self.StandbyCommand(*device_args)
         )
-        self.register_command_object("Reset", self.ResetCommand(*device_args))
 
     class InitCommand(CspSubElementObsDevice.InitCommand):
         """
