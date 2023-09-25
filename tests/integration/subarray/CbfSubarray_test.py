@@ -2983,8 +2983,6 @@ class TestCbfSubarray:
                     == ObsState.IDLE
                 )
 
-            test_proxies.off()
-
         except AssertionError as ae:
             time.sleep(2)
             test_proxies.clean_test_proxies()
@@ -3020,3 +3018,235 @@ class TestCbfSubarray:
             test_proxies.clean_test_proxies()
             time.sleep(2)
             raise e
+
+    @pytest.mark.parametrize(
+        "config_file_name, \
+        scan_file_name, \
+        receptors, \
+        vcc_receptors",
+        [
+            (
+                "ConfigureScan_basic.json",
+                "Scan1_basic.json",
+                ["SKA001", "SKA036", "SKA063", "SKA100"],
+                [4, 1],
+            ),
+            (
+                "Configure_TM-CSP_v2.json",
+                "Scan2_basic.json",
+                ["SKA063", "SKA001", "SKA100"],
+                [4, 1],
+            ),
+        ],
+    )
+    def test_Fault_Restart(
+        self: TestCbfSubarray,
+        test_proxies: pytest.fixture,
+        config_file_name: str,
+        scan_file_name: str,
+        receptors: List[str],
+        vcc_receptors: List[int],
+    ) -> None:
+        """
+        Test CbfSubarrays's Restart from ObsState.FAULT
+
+        :param proxies: proxies pytest fixture
+        :param config_file_name: JSON file for the configuration
+        :param scan_file_name: JSON file for the scan configuration
+        :param receptors: list of receptor ids
+        :param vcc_receptors: list of vcc receptor ids
+        """
+        try:
+            wait_time_s = 3
+            sleep_time_s = 1
+
+            f = open(data_file_path + config_file_name)
+            json_string = f.read().replace("\n", "")
+            f.close()
+            configuration = json.loads(json_string)
+
+            sub_id = int(configuration["common"]["subarray_id"])
+
+            test_proxies.on()
+            time.sleep(sleep_time_s)
+
+            assert test_proxies.subarray[sub_id].obsState == ObsState.EMPTY
+
+            # add receptors
+            test_proxies.subarray[sub_id].AddReceptors(receptors)
+            test_proxies.wait_timeout_obs(
+                [test_proxies.subarray[sub_id]],
+                ObsState.IDLE,
+                wait_time_s,
+                sleep_time_s,
+            )
+            assert test_proxies.subarray[sub_id].obsState == ObsState.IDLE
+
+            # send invalid configuration to trigger fault state
+            test_proxies.subarray[sub_id].ConfigureScan("INVALID JSON")
+            test_proxies.wait_timeout_obs(
+                [test_proxies.subarray[sub_id]],
+                ObsState.FAULT,
+                wait_time_s,
+                sleep_time_s,
+            )
+            assert test_proxies.subarray[sub_id].obsState == ObsState.FAULT
+
+            # Restart
+            test_proxies.subarray[sub_id].Restart()
+            test_proxies.wait_timeout_obs(
+                [test_proxies.subarray[sub_id]],
+                ObsState.EMPTY,
+                wait_time_s,
+                sleep_time_s,
+            )
+            assert len(test_proxies.subarray[sub_id].receptors) == 0
+            assert test_proxies.subarray[sub_id].obsState == ObsState.EMPTY
+
+            for fsp in configuration["cbf"]["fsp"]:
+                fsp_id = int(fsp["fsp_id"])
+                assert (
+                    test_proxies.fspSubarray[fsp["function_mode"]][sub_id][
+                        fsp_id
+                    ].obsState
+                    == ObsState.IDLE
+                )
+            for r in vcc_receptors:
+                assert (
+                    test_proxies.vcc[test_proxies.receptor_to_vcc[r]].obsState
+                    == ObsState.IDLE
+                )
+
+        except AssertionError as ae:
+            time.sleep(2)
+            test_proxies.clean_test_proxies()
+            time.sleep(2)
+            raise ae
+        except Exception as e:
+            time.sleep(2)
+            test_proxies.clean_test_proxies()
+            time.sleep(2)
+            raise e
+
+    @pytest.mark.parametrize(
+        "config_file_name, \
+        scan_file_name, \
+        receptors, \
+        vcc_receptors",
+        [
+            (
+                "ConfigureScan_basic.json",
+                "Scan1_basic.json",
+                ["SKA001", "SKA036", "SKA063", "SKA100"],
+                [4, 1],
+            ),
+            (
+                "Configure_TM-CSP_v2.json",
+                "Scan2_basic.json",
+                ["SKA063", "SKA001", "SKA100"],
+                [4, 1],
+            ),
+        ],
+    )
+    def test_Fault_ObsReset(
+        self: TestCbfSubarray,
+        test_proxies: pytest.fixture,
+        config_file_name: str,
+        scan_file_name: str,
+        receptors: List[str],
+        vcc_receptors: List[int],
+    ) -> None:
+        """
+        Test CbfSubarrays's Restart from ObsState.FAULT
+
+        :param proxies: proxies pytest fixture
+        :param config_file_name: JSON file for the configuration
+        :param scan_file_name: JSON file for the scan configuration
+        :param receptors: list of receptor ids
+        :param vcc_receptors: list of vcc receptor ids
+        """
+        try:
+            wait_time_s = 3
+            sleep_time_s = 1
+
+            f = open(data_file_path + config_file_name)
+            json_string = f.read().replace("\n", "")
+            f.close()
+            configuration = json.loads(json_string)
+
+            sub_id = int(configuration["common"]["subarray_id"])
+
+            test_proxies.on()
+            time.sleep(sleep_time_s)
+
+            assert test_proxies.subarray[sub_id].obsState == ObsState.EMPTY
+
+            # add receptors
+            test_proxies.subarray[sub_id].AddReceptors(receptors)
+            test_proxies.wait_timeout_obs(
+                [test_proxies.subarray[sub_id]],
+                ObsState.IDLE,
+                wait_time_s,
+                sleep_time_s,
+            )
+            assert test_proxies.subarray[sub_id].obsState == ObsState.IDLE
+
+            # send invalid configuration to trigger fault state
+            test_proxies.subarray[sub_id].ConfigureScan("INVALID JSON")
+            test_proxies.wait_timeout_obs(
+                [test_proxies.subarray[sub_id]],
+                ObsState.FAULT,
+                wait_time_s,
+                sleep_time_s,
+            )
+            assert test_proxies.subarray[sub_id].obsState == ObsState.FAULT
+
+            # ObsReset
+            test_proxies.subarray[sub_id].ObsReset()
+            test_proxies.wait_timeout_obs(
+                [test_proxies.subarray[sub_id]],
+                ObsState.IDLE,
+                wait_time_s,
+                sleep_time_s,
+            )
+            assert test_proxies.subarray[sub_id].obsState == ObsState.IDLE
+            assert all(
+                [
+                    test_proxies.subarray[sub_id].receptors[i] == j
+                    for i, j in zip(range(3), receptors)
+                ]
+            )
+            for fsp in configuration["cbf"]["fsp"]:
+                fsp_id = int(fsp["fsp_id"])
+                assert (
+                    test_proxies.fspSubarray[fsp["function_mode"]][sub_id][
+                        fsp_id
+                    ].obsState
+                    == ObsState.IDLE
+                )
+            for r in vcc_receptors:
+                assert (
+                    test_proxies.vcc[test_proxies.receptor_to_vcc[r]].obsState
+                    == ObsState.IDLE
+                )
+
+        except AssertionError as ae:
+            time.sleep(2)
+            test_proxies.clean_test_proxies()
+            time.sleep(2)
+            raise ae
+        except Exception as e:
+            time.sleep(2)
+            test_proxies.clean_test_proxies()
+            time.sleep(2)
+            raise e
+
+    def test_proxies_off(
+        self: TestCbfSubarray,
+        test_proxies: pytest.fixture,
+    ) -> None:
+        """
+        Turn proxies off at the end of the subarray test suite
+        to reset for subsequent tests.
+        """
+        test_proxies.off()

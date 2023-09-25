@@ -539,22 +539,26 @@ def init_proxies_fixture():
                         [proxy], DevState.ON, wait_time_s, sleep_time_s_long
                     )
 
-                if proxy.obsState not in [ObsState.FAULT, ObsState.ABORTED]:
-                    proxy.Abort()
+                if proxy.obsState != ObsState.EMPTY:
+                    if proxy.obsState not in [
+                        ObsState.FAULT,
+                        ObsState.ABORTED,
+                    ]:
+                        proxy.Abort()
+                        self.wait_timeout_obs(
+                            [proxy],
+                            ObsState.ABORTED,
+                            wait_time_s,
+                            sleep_time_s_short,
+                        )
+
+                    proxy.Restart()
                     self.wait_timeout_obs(
                         [proxy],
-                        ObsState.ABORTED,
+                        ObsState.EMPTY,
                         wait_time_s,
                         sleep_time_s_short,
                     )
-
-                proxy.Restart()
-                self.wait_timeout_obs(
-                    [proxy],
-                    ObsState.EMPTY,
-                    wait_time_s,
-                    sleep_time_s_short,
-                )
 
         def on(self: TestProxies) -> None:
             """
