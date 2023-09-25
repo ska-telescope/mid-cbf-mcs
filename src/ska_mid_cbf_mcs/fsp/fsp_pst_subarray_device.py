@@ -106,6 +106,9 @@ class FspPstSubarray(CspSubElementObsDevice):
         """
         super().init_command_objects()
 
+        # note: registering commands with target = self,
+        # as opposed to base class approach, with target = component manager
+
         device_args = (
             self,
             self.op_state_model,

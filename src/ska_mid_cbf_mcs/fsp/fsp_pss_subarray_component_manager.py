@@ -338,4 +338,5 @@ class FspPssSubarrayComponentManager(
     def abort(
         self: FspPssSubarrayComponentManager,
     ) -> Tuple[ResultCode, str]:
+        # TODO: Abort command not implemented for the HPS FSP application
         return (ResultCode.OK, "Abort command not implemented")

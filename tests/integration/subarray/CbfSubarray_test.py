@@ -2521,7 +2521,6 @@ class TestCbfSubarray:
                     ].obsState
                     == ObsState.ABORTED
                 )
-                # add wait timeout ################################
             for r in vcc_receptors:
                 assert (
                     test_proxies.vcc[test_proxies.receptor_to_vcc[r]].obsState

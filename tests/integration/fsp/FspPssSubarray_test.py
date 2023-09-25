@@ -197,7 +197,8 @@ class TestFspPssSubarray:
         )
         assert device_under_test.State() == DevState.ON
 
-        # reset VCC subarray membership for other integration tests
+        # mocking subarrayMembership at beginning of FSP subarray test suite
+        # typically set by CbfSubarray
         for i in range(1, test_proxies.num_vcc + 1):
             test_proxies.vcc[i].subarrayMembership = sub_id
             assert test_proxies.vcc[i].subarrayMembership == sub_id
@@ -431,7 +432,8 @@ class TestFspPssSubarray:
         wait_time_s = 3
         sleep_time_s = 0.1
 
-        # reset VCC subarray membership for other integration tests
+        # resetting VCC subarray membership at end of FSP subarray tests
+        # for subsequent integration tests after this test suite
         for i in range(1, test_proxies.num_vcc + 1):
             test_proxies.vcc[i].subarrayMembership = 0
             assert test_proxies.vcc[i].subarrayMembership == 0
