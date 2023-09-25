@@ -2174,6 +2174,7 @@ class CbfSubarrayComponentManager(
         """
         try:
             # if subarray is in FAULT, we must first abort VCC and FSP operation
+            # this will allow us to call ObsReset on them even if they are not in FAULT
             if self.obs_faulty:
                 self.abort()
                 # use callback to reset FAULT state
@@ -2219,6 +2220,7 @@ class CbfSubarrayComponentManager(
         """
         try:
             # if subarray is in FAULT, we must first abort VCC and FSP operation
+            # this will allow us to call ObsReset on them even if they are not in FAULT
             if self.obs_faulty:
                 self.abort()
                 # use callback to reset FAULT state
