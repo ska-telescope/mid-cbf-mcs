@@ -2983,6 +2983,8 @@ class TestCbfSubarray:
                     == ObsState.IDLE
                 )
 
+            test_proxies.off()
+
         except AssertionError as ae:
             time.sleep(2)
             test_proxies.clean_test_proxies()
@@ -3119,6 +3121,8 @@ class TestCbfSubarray:
                     == ObsState.IDLE
                 )
 
+            test_proxies.off()
+
         except AssertionError as ae:
             time.sleep(2)
             test_proxies.clean_test_proxies()
@@ -3234,6 +3238,9 @@ class TestCbfSubarray:
                     == ObsState.IDLE
                 )
 
+            test_proxies.subarray[sub_id].RemoveAllReceptors()
+            test_proxies.off()
+
         except AssertionError as ae:
             time.sleep(2)
             test_proxies.clean_test_proxies()
@@ -3244,13 +3251,3 @@ class TestCbfSubarray:
             test_proxies.clean_test_proxies()
             time.sleep(2)
             raise e
-
-    def test_proxies_off(
-        self: TestCbfSubarray,
-        test_proxies: pytest.fixture,
-    ) -> None:
-        """
-        Turn proxies off at the end of the subarray test suite
-        to reset for subsequent tests.
-        """
-        test_proxies.off()
