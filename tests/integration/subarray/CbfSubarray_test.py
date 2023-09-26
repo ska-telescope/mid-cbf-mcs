@@ -3023,19 +3023,16 @@ class TestCbfSubarray:
 
     @pytest.mark.parametrize(
         "config_file_name, \
-        scan_file_name, \
         receptors, \
         vcc_receptors",
         [
             (
                 "ConfigureScan_basic.json",
-                "Scan1_basic.json",
                 ["SKA001", "SKA036", "SKA063", "SKA100"],
                 [4, 1],
             ),
             (
                 "Configure_TM-CSP_v2.json",
-                "Scan2_basic.json",
                 ["SKA063", "SKA001", "SKA100"],
                 [4, 1],
             ),
@@ -3045,7 +3042,6 @@ class TestCbfSubarray:
         self: TestCbfSubarray,
         test_proxies: pytest.fixture,
         config_file_name: str,
-        scan_file_name: str,
         receptors: List[str],
         vcc_receptors: List[int],
     ) -> None:
@@ -3054,7 +3050,6 @@ class TestCbfSubarray:
 
         :param proxies: proxies pytest fixture
         :param config_file_name: JSON file for the configuration
-        :param scan_file_name: JSON file for the scan configuration
         :param receptors: list of receptor ids
         :param vcc_receptors: list of vcc receptor ids
         """
@@ -3136,19 +3131,16 @@ class TestCbfSubarray:
 
     @pytest.mark.parametrize(
         "config_file_name, \
-        scan_file_name, \
         receptors, \
         vcc_receptors",
         [
             (
                 "ConfigureScan_basic.json",
-                "Scan1_basic.json",
                 ["SKA001", "SKA036", "SKA063", "SKA100"],
                 [4, 1],
             ),
             (
                 "Configure_TM-CSP_v2.json",
-                "Scan2_basic.json",
                 ["SKA063", "SKA001", "SKA100"],
                 [4, 1],
             ),
@@ -3158,16 +3150,14 @@ class TestCbfSubarray:
         self: TestCbfSubarray,
         test_proxies: pytest.fixture,
         config_file_name: str,
-        scan_file_name: str,
         receptors: List[str],
         vcc_receptors: List[int],
     ) -> None:
         """
-        Test CbfSubarrays's Restart from ObsState.FAULT
+        Test CbfSubarrays's Obsreset from ObsState.FAULT
 
         :param proxies: proxies pytest fixture
         :param config_file_name: JSON file for the configuration
-        :param scan_file_name: JSON file for the scan configuration
         :param receptors: list of receptor ids
         :param vcc_receptors: list of vcc receptor ids
         """
