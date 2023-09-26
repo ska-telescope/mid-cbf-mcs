@@ -15,12 +15,18 @@ import concurrent.futures
 import json
 import logging
 import os
+from time import sleep
 from typing import Callable, Dict, List, Optional, Tuple
 
 import tango
 import yaml
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import AdminMode, PowerMode, SimulationMode
+from ska_tango_base.control_model import (
+    AdminMode,
+    ObsState,
+    PowerMode,
+    SimulationMode,
+)
 
 from ska_mid_cbf_mcs.commons.global_enum import const
 from ska_mid_cbf_mcs.component.component_manager import (
@@ -435,9 +441,10 @@ class ControllerComponentManager(CbfComponentManager):
                     self._talondx_component_manager.simulation_mode,
                 )
                 self._group_subarray.command_inout("On")
-            except tango.DevFailed:
-                log_msg = "Failed to turn on group proxies"
-                self._logger.error(log_msg)
+            except tango.DevFailed as df:
+                for item in df.args:
+                    log_msg = f"Failed to turn on group proxies; {item.reason}"
+                    self._logger.error(log_msg)
                 return (ResultCode.FAILED, log_msg)
 
             # TODO: CIP-1569
@@ -473,6 +480,7 @@ class ControllerComponentManager(CbfComponentManager):
 
         # Check if connection to device proxies has been established
         if self._connected:
+            (result_code, message) = (ResultCode.OK, [])
             # Check if CBF Controller is on
             # TODO: CIP-1569
             # Temporarily commenting out check for redundant Off command
@@ -487,6 +495,13 @@ class ControllerComponentManager(CbfComponentManager):
                 self._talondx_component_manager.simulation_mode
                 == SimulationMode.FALSE
             ):
+                # HPS master shutdown
+                # TODO parameterize?
+                result = self._talondx_component_manager.shutdown(3)
+                if result == ResultCode.FAILED:
+                    message = "HPS Master shutdown failed."
+                    return (ResultCode.FAILED, message)
+
                 if len(self._fqdn_talon_lru) == 0:
                     with open(
                         os.path.join(
@@ -516,29 +531,148 @@ class ControllerComponentManager(CbfComponentManager):
                 # use a hard-coded example fqdn talon lru for simulation mode
                 self._fqdn_talon_lru = ["mid_csp_cbf/talon_lru/001"]
 
-            try:
-                self._logger.info(f"Turning off LRUs: {self._fqdn_talon_lru}")
-                for fqdn in self._fqdn_talon_lru:
+            self._logger.info(f"Turning off LRUs: {self._fqdn_talon_lru}")
+            for fqdn in self._fqdn_talon_lru:
+                try:
                     self._proxies[fqdn].Off()
-            except tango.DevFailed:
-                log_msg = "Failed to power off Talon boards"
-                self._logger.error(log_msg)
-                return (ResultCode.FAILED, log_msg)
+
+                except tango.DevFailed as df:
+                    for item in df.args:
+                        log_msg = (
+                            f"Failed to power off Talon boards; {item.reason}"
+                        )
+                        self._logger.error(log_msg)
+                        message.append(log_msg)
+                    result_code = ResultCode.FAILED
+
+            # reset subarray observing state to EMPTY
+            for fqdn in self._fqdn_subarray:
+                try:
+                    if self._proxies[fqdn].obsState in [
+                        ObsState.RESOURCING,
+                        ObsState.RESTARTING,
+                    ]:
+                        # TODO parameterize?
+                        stuck = True
+                        for _ in range(4):
+                            if self._proxies[fqdn].obsState in [
+                                ObsState.RESOURCING,
+                                ObsState.RESTARTING,
+                            ]:
+                                sleep(1)
+                            else:
+                                stuck = False
+                                break
+                        if stuck:
+                            raise tango.DevFailed()  # TODO
+
+                    if self._proxies[fqdn].obsState != ObsState.EMPTY:
+                        if self._proxies[fqdn].obsState in [
+                            ObsState.ABORTING,
+                            ObsState.RESETTING,
+                        ]:
+                            # TODO parameterize?
+                            stuck = True
+                            for _ in range(4):
+                                if self._proxies[fqdn].obsState in [
+                                    ObsState.ABORTING,
+                                    ObsState.RESETTING,
+                                ]:
+                                    sleep(1)
+                                else:
+                                    stuck = False
+                                    break
+                            if stuck:
+                                raise tango.DevFailed()  # TODO
+
+                        if self._proxies[fqdn].obsState not in [
+                            ObsState.FAULT,
+                            ObsState.ABORTED,
+                        ]:
+                            self._proxies[fqdn].Abort()
+
+                        self._proxies[fqdn].Restart()
+
+                except tango.DevFailed as df:
+                    for item in df.args:
+                        log_msg = f"Failed to restart {fqdn}; {item.reason}"
+                        self._logger.error(log_msg)
+                        message.append(log_msg)
+                    result_code = ResultCode.FAILED
 
             try:
                 self._group_subarray.command_inout("Off")
+            except tango.DevFailed as df:
+                for item in df.args:
+                    log_msg = f"Failed to turn off subarray group proxy; {item.reason}"
+                    self._logger.error(log_msg)
+                    message.append(log_msg)
+                result_code = ResultCode.FAILED
+
+            try:
                 self._group_vcc.command_inout("Off")
+            except tango.DevFailed as df:
+                for item in df.args:
+                    log_msg = (
+                        f"Failed to turn off VCC group proxy; {item.reason}"
+                    )
+                    self._logger.error(log_msg)
+                    message.append(log_msg)
+                result_code = ResultCode.FAILED
+
+            try:
                 self._group_fsp.command_inout("Off")
-            except tango.DevFailed:
-                log_msg = "Failed to turn off group proxies"
-                self._logger.error(log_msg)
-                return (ResultCode.FAILED, log_msg)
+            except tango.DevFailed as df:
+                for item in df.args:
+                    log_msg = (
+                        f"Failed to turn off FSP group proxy; {item.reason}"
+                    )
+                    self._logger.error(log_msg)
+                    message.append(log_msg)
+                result_code = ResultCode.FAILED
+
+            # check final device states
+            op_state_error_list = []
+            obs_state_error_list = []
+            for fqdn, proxy in self._proxies.items():
+                state = proxy.State()
+                if state != tango.DevState.OFF:
+                    op_state_error_list.append([fqdn, state])
+
+                if fqdn in self._fqdn_subarray:
+                    obs_state = proxy.obsState
+                    if state != ObsState.EMPTY:
+                        obs_state_error_list.append((fqdn, obs_state))
+
+                if fqdn in self._fqdn_vcc:
+                    obs_state = proxy.obsState
+                    if state != ObsState.IDLE:
+                        obs_state_error_list.append((fqdn, obs_state))
+
+            if len(op_state_error_list) > 0:
+                for fqdn, state in op_state_error_list:
+                    log_msg = (
+                        f"{fqdn} failed to turn OFF, current state: {state}"
+                    )
+                    self._logger.error(log_msg)
+                    message.append(log_msg)
+                result_code = ResultCode.FAILED
+
+            if len(obs_state_error_list) > 0:
+                for fqdn, state in obs_state_error_list:
+                    log_msg = f"{fqdn} failed to restart to EMPTY, current obsState: {state}"
+                    self._logger.error(log_msg)
+                    message.append(log_msg)
+                result_code = ResultCode.FAILED
+
+                # TODO FSP subarray devices?
 
             # TODO: CIP-1569
             # Uncomment out the "self._on = False" when OFF command implemented.
             # self._on = False
-            message = "CbfController Off command completed OK"
-            return (ResultCode.OK, message)
+            if result_code == ResultCode.OK:
+                message.append("CbfController Off command completed OK")
+            return (result_code, " ;".join(message))
 
             # TODO: CIP-1569
             # Corresponding ELSE to handle redundant OFF command.

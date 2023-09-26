@@ -494,3 +494,34 @@ class TalonDxComponentManager:
             ret = ResultCode.FAILED
 
         return ret
+
+    def shutdown(
+        self: TalonDxComponentManager,
+        argin: int,
+    ) -> ResultCode:
+        """
+        Shutdown the DsHpsMaster device with a given shutdown command code.
+
+        :param argin: shutdown command code;
+            0. Child Tango DSs only
+            1. Child and HPS Master Tango DSs
+            2. Child and HPS Master Tango DSs, reboot Talon DX board
+            3. Child and HPS Master Tango DSs, shut down Talon DX board
+        :return: ResultCode.OK if all configure commands were sent successfully,
+                 otherwise ResultCode.FAILED
+        """
+        ret = ResultCode.OK
+        for talon_cfg in self.talondx_config:
+            hps_master_fqdn = talon_cfg["ds_hps_master_fqdn"]
+            hps_master = self.proxies[hps_master_fqdn]
+            try:
+                hps_master.shutdown(argin)
+            except tango.DevFailed as df:
+                for item in df.args:
+                    self.logger.error(
+                        f"Exception while sending shutdown command"
+                        f" to {hps_master_fqdn} device: {str(item.reason)}"
+                    )
+                ret = ResultCode.FAILED
+
+        return ret
