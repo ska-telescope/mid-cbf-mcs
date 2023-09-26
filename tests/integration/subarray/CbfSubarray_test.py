@@ -3083,7 +3083,12 @@ class TestCbfSubarray:
             assert test_proxies.subarray[sub_id].obsState == ObsState.IDLE
 
             # send invalid configuration to trigger fault state
-            test_proxies.subarray[sub_id].ConfigureScan("INVALID JSON")
+            try:
+                test_proxies.subarray[sub_id].ConfigureScan("INVALID JSON")
+            except Exception as ie:
+                print(
+                    "Invalid JSON exception triggered intentionally to put subarray into fault state. Not raising exception: {ie}"
+                )
             test_proxies.wait_timeout_obs(
                 [test_proxies.subarray[sub_id]],
                 ObsState.FAULT,
