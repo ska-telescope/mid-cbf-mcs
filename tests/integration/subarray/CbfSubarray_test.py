@@ -3087,7 +3087,7 @@ class TestCbfSubarray:
                 test_proxies.subarray[sub_id].ConfigureScan("INVALID JSON")
             except Exception as ie:
                 print(
-                    "Invalid JSON exception triggered intentionally to put subarray into fault state. Not raising exception: {ie}"
+                    f"Invalid JSON exception triggered intentionally to put subarray into fault state. Not raising exception: {ie}"
                 )
             test_proxies.wait_timeout_obs(
                 [test_proxies.subarray[sub_id]],
