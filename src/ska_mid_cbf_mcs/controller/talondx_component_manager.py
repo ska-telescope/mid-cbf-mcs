@@ -511,11 +511,12 @@ class TalonDxComponentManager:
                  otherwise ResultCode.FAILED
         """
         ret = ResultCode.OK
-        for talon_cfg in self.talondx_config:
+        for talon_cfg in self.talondx_config["config_commands"]:
             hps_master_fqdn = talon_cfg["ds_hps_master_fqdn"]
             hps_master = self.proxies[hps_master_fqdn]
             try:
-                hps_master.shutdown(argin)
+                if self.simulation_mode == SimulationMode.FALSE:
+                    hps_master.shutdown(argin)
             except tango.DevFailed as df:
                 for item in df.args:
                     self.logger.error(

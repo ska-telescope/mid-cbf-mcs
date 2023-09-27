@@ -20,7 +20,7 @@ from typing import Callable, Dict
 import pytest
 import tango
 from ska_tango_base.commands import ResultCode
-from ska_tango_base.control_model import AdminMode, HealthState, SimulationMode
+from ska_tango_base.control_model import AdminMode, HealthState, SimulationMode, ObsState
 
 from ska_mid_cbf_mcs.controller.controller_component_manager import (
     ControllerComponentManager,
@@ -71,6 +71,9 @@ def controller_component_manager(
             pass
 
         def configure_talons(self: MockTalonDxComponentManager) -> ResultCode:
+            return ResultCode.OK
+        
+        def shutdown(self: MockTalonDxComponentManager, argin: int) -> ResultCode:
             return ResultCode.OK
 
     f = open(file_path + "/../../data/test_fqdns.json")
@@ -216,6 +219,7 @@ def mock_vcc() -> unittest.mock.Mock:
     builder.add_attribute("subarrayMembership", 0)
     builder.add_attribute("frequencyOffsetF", 0)
     builder.add_attribute("frequencyOffsetDeltaK", 0)
+    builder.add_attribute("obsState", ObsState.IDLE)
     builder.add_property("VccID", {"VccID": ["1"]})
     builder.add_result_command("On", ResultCode.OK)
     builder.add_result_command("Off", ResultCode.OK)
@@ -256,6 +260,7 @@ def mock_subarray() -> unittest.mock.Mock:
     builder.set_state(tango.DevState.OFF)
     builder.add_attribute("adminMode", AdminMode.ONLINE)
     builder.add_attribute("healthState", HealthState.OK)
+    builder.add_attribute("obsState", ObsState.EMPTY)
     builder.add_result_command("On", ResultCode.OK)
     builder.add_result_command("Off", ResultCode.OK)
     return builder()
@@ -266,6 +271,12 @@ def mock_subarray_group() -> unittest.mock.Mock:
     builder = MockGroupBuilder()
     builder.add_command("On", None)
     builder.add_command("Off", None)
+    return builder()
+
+@pytest.fixture()
+def mock_talon_board() -> unittest.mock.Mock:
+    builder = MockDeviceBuilder()
+    builder.set_state(tango.DevState.OFF)
     return builder()
 
 
@@ -279,6 +290,11 @@ def mock_talon_lru() -> unittest.mock.Mock:
     builder.add_result_command("Off", ResultCode.OK)
     return builder()
 
+@pytest.fixture()
+def mock_power_switch() -> unittest.mock.Mock:
+    builder = MockDeviceBuilder()
+    builder.set_state(tango.DevState.OFF)
+    return builder()
 
 @pytest.fixture()
 def initial_mocks(
@@ -288,7 +304,9 @@ def initial_mocks(
     mock_fsp_group: unittest.mock.Mock,
     mock_subarray: unittest.mock.Mock,
     mock_subarray_group: unittest.mock.Mock,
+    mock_talon_board: unittest.mock.Mock,
     mock_talon_lru: unittest.mock.Mock,
+    mock_power_switch: unittest.mock.Mock,
 ) -> Dict[str, unittest.mock.Mock]:
     """
     Return a dictionary of device proxy mocks to pre-register.
@@ -315,10 +333,20 @@ def initial_mocks(
         "mid_csp_cbf/sub_elt/subarray_01": mock_subarray,
         "mid_csp_cbf/sub_elt/subarray_02": mock_subarray,
         "mid_csp_cbf/sub_elt/subarray_03": mock_subarray,
+        "mid_csp_cbf/talon_board/001": mock_talon_board,
+        "mid_csp_cbf/talon_board/002": mock_talon_board,
+        "mid_csp_cbf/talon_board/003": mock_talon_board,
+        "mid_csp_cbf/talon_board/004": mock_talon_board,
+        "mid_csp_cbf/talon_board/005": mock_talon_board,
+        "mid_csp_cbf/talon_board/006": mock_talon_board,
+        "mid_csp_cbf/talon_board/007": mock_talon_board,
+        "mid_csp_cbf/talon_board/008": mock_talon_board,
         "mid_csp_cbf/talon_lru/001": mock_talon_lru,
         "mid_csp_cbf/talon_lru/002": mock_talon_lru,
         "mid_csp_cbf/talon_lru/003": mock_talon_lru,
         "mid_csp_cbf/talon_lru/004": mock_talon_lru,
+        "mid_csp_cbf/power_switch/001": mock_power_switch,
+        "mid_csp_cbf/power_switch/002": mock_power_switch,
         "VCC": mock_vcc_group,
         "FSP": mock_fsp_group,
         "CBF Subarray": mock_subarray_group,
