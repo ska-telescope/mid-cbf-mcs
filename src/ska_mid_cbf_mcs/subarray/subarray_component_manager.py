@@ -169,6 +169,8 @@ class CbfSubarrayComponentManager(
 
         self.connected = False
 
+        self.obs_faulty = False
+
         # initialize attribute values
         self._receptors = []
         self._frequency_band = 0
@@ -761,7 +763,7 @@ class CbfSubarrayComponentManager(
     @check_communicating
     def deconfigure(
         self: CbfSubarrayComponentManager,
-    ) -> Tuple[ResultCode, str]:
+    ) -> None:
         """Completely deconfigure the subarray; all initialization performed
         by by the ConfigureScan command must be 'undone' here."""
         try:
@@ -769,37 +771,8 @@ class CbfSubarrayComponentManager(
             for event_id in list(self._events_telstate.keys()):
                 self._events_telstate[event_id].remove_event(event_id)
                 del self._events_telstate[event_id]
-
-            if self._ready:
-                # TODO: add 'GoToIdle' for VLBI once implemented
-                for group in [
-                    self._group_fsp_corr_subarray,
-                    self._group_fsp_pss_subarray,
-                    self._group_fsp_pst_subarray,
-                ]:
-                    if group.get_size() > 0:
-                        group.command_inout("GoToIdle")
-                        # remove channel info from FSP subarrays
-                        # already done in GoToIdle
-                        group.remove_all()
-
-                if self._group_vcc.get_size() > 0:
-                    self._group_vcc.command_inout("GoToIdle")
-
-                if self._group_fsp.get_size() > 0:
-                    # change FSP subarray membership
-                    data = tango.DeviceData()
-                    data.insert(tango.DevUShort, self._subarray_id)
-                    self._logger.debug(data)
-                    self._group_fsp.command_inout(
-                        "RemoveSubarrayMembership", data
-                    )
-                    self._group_fsp.remove_all()
-
-        except tango.DevFailed as df:
+        except tango.DevFailed:
             self._component_op_fault_callback(True)
-            msg = str(df.args[0].desc)
-            return (ResultCode.FAILED, msg)
 
         # reset all private data to their initialization values:
         self._pst_fsp_list = []
@@ -817,8 +790,6 @@ class CbfSubarrayComponentManager(
         self._last_received_timing_beam_weights = "{}"
 
         self.update_component_configuration(False)
-
-        return (ResultCode.OK, "Deconfiguration completed OK")
 
     @check_communicating
     def validate_input(
@@ -1501,6 +1472,10 @@ class CbfSubarrayComponentManager(
         common_configuration = copy.deepcopy(full_configuration["common"])
         configuration = copy.deepcopy(full_configuration["cbf"])
 
+        # reset any previously configured VCCs
+        if self._ready:
+            self._group_vcc.command_inout("GoToIdle")
+
         # Configure configID.
         self._config_id = str(common_configuration["config_id"])
         self._logger.debug(f"config_id: {self._config_id}")
@@ -1662,10 +1637,29 @@ class CbfSubarrayComponentManager(
         # TODO: the entire vcc configuration should move to Vcc
         # for now, run ConfigScan only wih the following data, so that
         # the obsState are properly (implicitly) updated by the command
-        # (And not manually by SetObservingState as before)
+        # (And not manually by SetObservingState as before) - relevant???
 
-        # FSP #
+        # FSP ##################################################################
         # Configure FSP.
+        # TODO add VLBI once implemented
+
+        # remove any previously assigned FSPs
+        for group in [
+            self._group_fsp_corr_subarray,
+            self._group_fsp_pss_subarray,
+            self._group_fsp_pst_subarray,
+        ]:
+            if group.get_size() > 0:
+                group.remove_all()
+
+        if self._group_fsp.get_size() > 0:
+            # change FSP subarray membership
+            data = tango.DeviceData()
+            data.insert(tango.DevUShort, self._subarray_id)
+            self._logger.debug(data)
+            self._group_fsp.command_inout("RemoveSubarrayMembership", data)
+            self._group_fsp.remove_all()
+
         for fsp in configuration["fsp"]:
             # Configure fspID.
             fspID = int(fsp["fsp_id"])
@@ -2161,29 +2155,105 @@ class CbfSubarrayComponentManager(
         """
         Abort subarray configuration or operation.
         """
-        # if aborted from SCANNING, end VCC and FSP Subarray scans
-        if self.scan_id != 0:
-            self.end_scan()
+        try:
+            if self._group_vcc.get_size() > 0:
+                self._group_vcc.command_inout("Abort")
+            if self._group_fsp_corr_subarray.get_size() > 0:
+                self._group_fsp_corr_subarray.command_inout("Abort")
+            if self._group_fsp_pss_subarray.get_size() > 0:
+                self._group_fsp_pss_subarray.command_inout("Abort")
+            if self._group_fsp_pst_subarray.get_size() > 0:
+                self._group_fsp_pst_subarray.command_inout("Abort")
+        except tango.DevFailed:
+            self._component_obs_fault_callback(True)
 
     @check_communicating
     def restart(self: CbfSubarrayComponentManager) -> None:
         """
         Restart from fault.
         """
-        # We might have interrupted a long-running command such as a Configure
-        # or a Scan, so we need to clean up from that.
-        (result_code, msg) = self.deconfigure()
-        if result_code == ResultCode.OK:
+        try:
+            # if subarray is in FAULT, we must first abort VCC and FSP operation
+            # this will allow us to call ObsReset on them even if they are not in FAULT
+            if self.obs_faulty:
+                self.abort()
+                # use callback to reset FAULT state
+                self._component_obs_fault_callback(False)
+
+            # We might have interrupted a long-running command such as a Configure
+            # or a Scan, so we need to clean up from that.
+            self.deconfigure()
+
+            # send Vcc devices to IDLE, remove all assigned VCCs
+            if self._group_vcc.get_size() > 0:
+                self._group_vcc.command_inout("ObsReset")
+
+            # remove all assigned VCCs to return to EMPTY
             self.remove_all_receptors()
+
+            # remove any previously assigned FSPs
+            # TODO VLBI
+            for group in [
+                self._group_fsp_corr_subarray,
+                self._group_fsp_pss_subarray,
+                self._group_fsp_pst_subarray,
+            ]:
+                if group.get_size() > 0:
+                    group.command_inout("ObsReset")
+                    group.remove_all()
+
+            if self._group_fsp.get_size() > 0:
+                # change FSP subarray membership
+                data = tango.DeviceData()
+                data.insert(tango.DevUShort, self._subarray_id)
+                self._logger.debug(data)
+                # TODO could potentially be sending FSP subarrays to IDLE twice
+                self._group_fsp.command_inout("RemoveSubarrayMembership", data)
+                self._group_fsp.remove_all()
+        except tango.DevFailed:
+            self._component_obs_fault_callback(True)
 
     @check_communicating
     def obsreset(self: CbfSubarrayComponentManager) -> None:
         """
         Reset subarray scan configuration or operation.
         """
-        # We might have interrupted a long-running command such as a Configure
-        # or a Scan, so we need to clean up from that.
-        (result_code, msg) = self.deconfigure()
+        try:
+            # if subarray is in FAULT, we must first abort VCC and FSP operation
+            # this will allow us to call ObsReset on them even if they are not in FAULT
+            if self.obs_faulty:
+                self.abort()
+                # use callback to reset FAULT state
+                self._component_obs_fault_callback(False)
+
+            # We might have interrupted a long-running command such as a Configure
+            # or a Scan, so we need to clean up from that.
+            self.deconfigure()
+
+            if self._group_vcc.get_size() > 0:
+                self._group_vcc.command_inout("ObsReset")
+
+            # remove any previously assigned FSPs
+            # TODO VLBI
+            for group in [
+                self._group_fsp_corr_subarray,
+                self._group_fsp_pss_subarray,
+                self._group_fsp_pst_subarray,
+            ]:
+                if group.get_size() > 0:
+                    group.command_inout("ObsReset")
+                    group.remove_all()
+
+            if self._group_fsp.get_size() > 0:
+                # change FSP subarray membership
+                data = tango.DeviceData()
+                data.insert(tango.DevUShort, self._subarray_id)
+                self._logger.debug(data)
+                # TODO could potentially be sending FSP subarrays to IDLE twice
+                self._group_fsp.command_inout("RemoveSubarrayMembership", data)
+                self._group_fsp.remove_all()
+        except tango.DevFailed:
+            self._component_obs_fault_callback(True)
 
     def update_component_resources(
         self: CbfSubarrayComponentManager, resourced: bool
