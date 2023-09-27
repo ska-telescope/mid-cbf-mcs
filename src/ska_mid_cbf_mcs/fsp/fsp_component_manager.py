@@ -341,6 +341,13 @@ class FspComponentManager(CbfComponentManager):
             )
             # change function mode to IDLE if no subarrays are using it.
             if len(self._subarray_membership) == 0:
+                # TODO implement VLBI
+                if self._function_mode == FspModes.CORR.value:
+                    self._group_fsp_corr_subarray.command_inout("GoToIdle")
+                if self._function_mode == FspModes.PSS_BF.value:
+                    self._group_fsp_pss_subarray.command_inout("GoToIdle")
+                if self._function_mode == FspModes.PST_BF.value:
+                    self._group_fsp_pst_subarray.command_inout("GoToIdle")
                 self._function_mode = FspModes.IDLE.value
                 self._push_change_event("functionMode", self._function_mode)
         else:

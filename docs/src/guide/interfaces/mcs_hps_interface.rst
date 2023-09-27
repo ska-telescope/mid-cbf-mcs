@@ -81,3 +81,15 @@ correlation scan.
 
 .. uml:: ../../diagrams/configure-scan-hps-fsp.puml
 
+Abort/ObsReset/Restart Command Sequence
+----------------------------------------
+
+The sequence diagram below shows the main sequence of calls in MCS 
+to Abort from a correlation scan, and return to either IDLE or EMPTY via the 
+ObsReset and Restart commands, respectively. Return calls are not shown.
+
+.. uml:: ../../diagrams/abort-command.puml
+
+.. uml:: ../../diagrams/obsreset-command.puml
+    
+.. uml:: ../../diagrams/restart-command.puml

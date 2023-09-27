@@ -71,16 +71,16 @@ server:
             - "004"
           - name: "PDU1"
             values:
-            - "002"
+            - "003"
           - name: "PDU1PowerOutlet"
             values:
-            - "AA42"
+            - "2"
           - name: "PDU2"
             values:
-            - "002"
+            - "003"
           - name: "PDU2PowerOutlet"
             values:
-            - "AA42"
+            - "2"
           - name: "PDUCommandTimeout"
             values:
             - "20"

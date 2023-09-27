@@ -113,6 +113,10 @@ def mock_component_manager(
         mock.message = "FspCorrSubarray Off command completed OK"
         return (ResultCode.OK, mock.message)
 
+    def _abort(mock: unittest.mock.Mock) -> None:
+        mock.message = "FspCorrSubarray Abort command completed OK"
+        return (ResultCode.OK, mock.message)
+
     def _configure_scan(mock: unittest.mock.Mock, argin: str) -> None:
         mock.message = "FspCorrSubarray ConfigureScan command completed OK"
         return (ResultCode.OK, mock.message)
@@ -131,6 +135,7 @@ def mock_component_manager(
 
     mock.on.side_effect = lambda: _on(mock)
     mock.off.side_effect = lambda: _off(mock)
+    mock.abort.side_effect = lambda: _abort(mock)
     mock.configure_scan.side_effect = lambda mock_config: _configure_scan(
         mock, mock_config
     )
