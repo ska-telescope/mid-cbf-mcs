@@ -83,7 +83,7 @@ class ApcPduDriver:
 
     def _poll_outlets(self: ApcPduDriver) -> None:
         n_fail_to_print_err = 3
-        sleep_t = 10
+        sleep_t = 20
         self.logger.info(f"Starting to poll the PDU every {sleep_t} seconds")
         while not self.end_thread:
             outlets_tmp = self.get_outlet_list()
@@ -251,6 +251,9 @@ class ApcPduDriver:
         except (
             paramiko.ssh_exception.AuthenticationException,
             paramiko.ssh_exception.SSHException,
+            paramiko.ssh_exception.NoValidConnectionsError,
+            paramiko.ssh_exception.BadAuthenticationType,
+            paramiko.ssh_exception.BadHostKeyException,
         ) as e:
             self.logger.error(f"Failed to connect to PDU: {e}")
             return (False, None)
