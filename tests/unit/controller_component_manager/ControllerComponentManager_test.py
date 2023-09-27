@@ -96,7 +96,7 @@ class TestControllerComponentManager:
         )
         assert controller_component_manager._connected is True
 
-        (result_code, _) = controller_component_manager.on()        
+        (result_code, _) = controller_component_manager.on()
         assert controller_component_manager._on is True
 
         (result_code, _) = controller_component_manager.off()

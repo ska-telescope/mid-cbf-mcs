@@ -358,12 +358,13 @@ class ControllerComponentManager(CbfComponentManager):
         if self._connected:
             # Check if CBF Controller is already on
             if not self._on:
-
                 # set VCC values
                 for fqdn, proxy in self._proxies.items():
                     if "vcc" in fqdn:
                         try:
-                            vcc_id = int(proxy.get_property("VccID")["VccID"][0])
+                            vcc_id = int(
+                                proxy.get_property("VccID")["VccID"][0]
+                            )
                             rec_id = self._vcc_to_receptor[vcc_id]
                             self._logger.info(
                                 f"Assigning receptor ID {rec_id} to VCC {vcc_id}"
@@ -399,7 +400,9 @@ class ControllerComponentManager(CbfComponentManager):
                         talondx_config_json = json.load(f)
 
                     self._fqdn_talon_lru = []
-                    for config_command in talondx_config_json["config_commands"]:
+                    for config_command in talondx_config_json[
+                        "config_commands"
+                    ]:
                         target = config_command["target"]
                         for lru_id, lru_config in self._hw_config[
                             "talon_lru"
@@ -441,7 +444,9 @@ class ControllerComponentManager(CbfComponentManager):
                     self._group_subarray.command_inout("On")
                 except tango.DevFailed as df:
                     for item in df.args:
-                        log_msg = f"Failed to turn on group proxies; {item.reason}"
+                        log_msg = (
+                            f"Failed to turn on group proxies; {item.reason}"
+                        )
                         self._logger.error(log_msg)
                     return (ResultCode.FAILED, log_msg)
 
@@ -451,9 +456,9 @@ class ControllerComponentManager(CbfComponentManager):
 
             # TODO: CIP-1814
             else:
-               log_msg = "CbfController is already ON. Disregarding redundant command."
-               self._logger.warning(log_msg)
-               return (ResultCode.OK, log_msg)
+                log_msg = "CbfController is already ON. Disregarding redundant command."
+                self._logger.warning(log_msg)
+                return (ResultCode.OK, log_msg)
 
         else:
             log_msg = "Proxies not connected"
@@ -477,7 +482,6 @@ class ControllerComponentManager(CbfComponentManager):
             (result_code, message) = (ResultCode.OK, [])
             # Check if CBF Controller is on
             if self._on:
-
                 # HPS master shutdown
                 # TODO parameterize?
                 result = self._talondx_component_manager.shutdown(3)
@@ -525,9 +529,7 @@ class ControllerComponentManager(CbfComponentManager):
 
                     except tango.DevFailed as df:
                         for item in df.args:
-                            log_msg = (
-                                f"Failed to power off Talon boards; {item.reason}"
-                            )
+                            log_msg = f"Failed to power off Talon boards; {item.reason}"
                             self._logger.error(log_msg)
                             message.append(log_msg)
                         result_code = ResultCode.FAILED
@@ -582,7 +584,9 @@ class ControllerComponentManager(CbfComponentManager):
 
                     except tango.DevFailed as df:
                         for item in df.args:
-                            log_msg = f"Failed to restart {fqdn}; {item.reason}"
+                            log_msg = (
+                                f"Failed to restart {fqdn}; {item.reason}"
+                            )
                             self._logger.error(log_msg)
                             message.append(log_msg)
                         result_code = ResultCode.FAILED
@@ -600,9 +604,7 @@ class ControllerComponentManager(CbfComponentManager):
                     self._group_vcc.command_inout("Off")
                 except tango.DevFailed as df:
                     for item in df.args:
-                        log_msg = (
-                            f"Failed to turn off VCC group proxy; {item.reason}"
-                        )
+                        log_msg = f"Failed to turn off VCC group proxy; {item.reason}"
                         self._logger.error(log_msg)
                         message.append(log_msg)
                     result_code = ResultCode.FAILED
@@ -611,9 +613,7 @@ class ControllerComponentManager(CbfComponentManager):
                     self._group_fsp.command_inout("Off")
                 except tango.DevFailed as df:
                     for item in df.args:
-                        log_msg = (
-                            f"Failed to turn off FSP group proxy; {item.reason}"
-                        )
+                        log_msg = f"Failed to turn off FSP group proxy; {item.reason}"
                         self._logger.error(log_msg)
                         message.append(log_msg)
                     result_code = ResultCode.FAILED
@@ -638,9 +638,7 @@ class ControllerComponentManager(CbfComponentManager):
 
                 if len(op_state_error_list) > 0:
                     for fqdn, state in op_state_error_list:
-                        log_msg = (
-                            f"{fqdn} failed to turn OFF, current state: {state}"
-                        )
+                        log_msg = f"{fqdn} failed to turn OFF, current state: {state}"
                         self._logger.error(log_msg)
                         message.append(log_msg)
                     result_code = ResultCode.FAILED
@@ -661,9 +659,9 @@ class ControllerComponentManager(CbfComponentManager):
 
             # TODO: CIP-1814
             else:
-               log_msg = "CbfController is already OFF. Disregarding redundant command."
-               self._logger.warning(log_msg)
-               return (ResultCode.OK, log_msg)
+                log_msg = "CbfController is already OFF. Disregarding redundant command."
+                self._logger.warning(log_msg)
+                return (ResultCode.OK, log_msg)
 
         else:
             log_msg = "Proxies not connected"
