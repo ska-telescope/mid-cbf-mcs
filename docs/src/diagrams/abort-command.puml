@@ -1,0 +1,60 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+skinparam backgroundColor #EEEBDC
+skinparam sequence {
+ParticipantBorderColor DodgerBlue
+ParticipantBackgroundColor DeepSkyBlue
+ActorBorderColor DarkGreen
+ActorBackgroundColor Green
+BoxBorderColor LightBlue
+BoxBackgroundColor #F0FFFF
+}
+
+skinparam collections {
+  BackGroundColor LightBlue
+  BorderColor DodgerBlue
+}
+
+skinparam database {
+  BackgroundColor LightGreen
+  BorderColor DarkGreen
+}
+
+title Abort Command Sequence\n
+
+participant "CSP_Mid\n.LMC" as lmc
+
+box "MCS"
+participant "Mid.CBF\nSubarray" as subarray
+collections "VCC" as vcc
+collections "FSP" as fsp
+collections "FSP\nCorr\nSubarray" as fspsubarray
+end box
+
+box "HPS"
+participant "HPS\nVCC\nController" as hpsvcc
+participant "HPS\nVCC\nBand1&2" as hpsvccband
+participant "HPS FSP\nCorr App" as hpsfsp
+collections "HPS\nLow Level\nDevices" as hpsdevices
+end box
+
+lmc        ->  subarray      : Abort
+
+subarray   ->  vcc           : Abort
+vcc        ->  hpsvccband    : Abort
+note over hpsvccband         : (TBD)
+subarray   <-- vcc           : Success
+note over vcc                : VCC\nObsState ABORTED
+subarray   ->  fspsubarray   : Abort
+fspsubarray->  hpsfsp        : Abort (stub)
+note over hpsfsp             : (TBD)
+subarray   <-- fspsubarray   : Success
+note over fsp                : FSP\nObsState ABORTED
+
+
+lmc       <--  subarray      : Success
+note over subarray           : Subarray\nObsState ABORTED
+
+
+@enduml
