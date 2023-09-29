@@ -766,13 +766,29 @@ class CbfSubarrayComponentManager(
     ) -> None:
         """Completely deconfigure the subarray; all initialization performed
         by by the ConfigureScan command must be 'undone' here."""
+        # if deconfiguring from READY, GoToIdle was called
+        if self._ready:
+            for group in [
+                self._group_vcc,
+                self._group_fsp_corr_subarray,
+                self._group_fsp_pss_subarray,
+                self._group_fsp_pst_subarray,
+            ]:
+                if group.get_size() > 0:
+                    try:
+                        group.command_inout("GoToIdle")
+                    except tango.DevFailed as df:
+                        msg = str(df.args[0].desc)
+                        self._logger.error(f"Error in GoToIdle; {msg}")
+                        self.obs_faulty = True
+            self._component_obs_fault_callback(self.obs_faulty)
         try:
             # unsubscribe from TMC events
             for event_id in list(self._events_telstate.keys()):
                 self._events_telstate[event_id].remove_event(event_id)
                 del self._events_telstate[event_id]
         except tango.DevFailed:
-            self._component_op_fault_callback(True)
+            self._component_obs_fault_callback(True)
 
         # reset all private data to their initialization values:
         self._pst_fsp_list = []
@@ -2109,17 +2125,22 @@ class CbfSubarrayComponentManager(
             return (False, msg)
 
         scan_id = argin["scan_id"]
-        try:
-            data = tango.DeviceData()
-            data.insert(tango.DevString, scan_id)
-            self._group_vcc.command_inout("Scan", data)
-            self._group_fsp_corr_subarray.command_inout("Scan", data)
-            self._group_fsp_pss_subarray.command_inout("Scan", data)
-            self._group_fsp_pst_subarray.command_inout("Scan", data)
-        except tango.DevFailed as df:
-            msg = str(df.args[0].desc)
-            self._component_obs_fault_callback(True)
-            return (ResultCode.FAILED, msg)
+        data = tango.DeviceData()
+        data.insert(tango.DevString, scan_id)
+        for group in [
+            self._group_vcc,
+            self._group_fsp_corr_subarray,
+            self._group_fsp_pss_subarray,
+            self._group_fsp_pst_subarray,
+        ]:
+            if group.get_size() > 0:
+                try:
+                    group.command_inout("Scan", data)
+                except tango.DevFailed as df:
+                    msg = str(df.args[0].desc)
+                    self._logger.error(f"Error in Scan; {msg}")
+                    self.obs_faulty = True
+        self._component_obs_fault_callback(self.obs_faulty)
 
         self._scan_id = int(scan_id)
         self._component_scanning_callback(True)
@@ -2135,16 +2156,21 @@ class CbfSubarrayComponentManager(
             information purpose only.
         :rtype: (ResultCode, str)
         """
-        try:
-            # EndScan for all subordinate devices:
-            self._group_vcc.command_inout("EndScan")
-            self._group_fsp_corr_subarray.command_inout("EndScan")
-            self._group_fsp_pss_subarray.command_inout("EndScan")
-            self._group_fsp_pst_subarray.command_inout("EndScan")
-        except tango.DevFailed as df:
-            msg = str(df.args[0].desc)
-            self._component_obs_fault_callback(True)
-            return (ResultCode.FAILED, msg)
+        # EndScan for all subordinate devices:
+        for group in [
+            self._group_vcc,
+            self._group_fsp_corr_subarray,
+            self._group_fsp_pss_subarray,
+            self._group_fsp_pst_subarray,
+        ]:
+            if group.get_size() > 0:
+                try:
+                    group.command_inout("EndScan")
+                except tango.DevFailed as df:
+                    msg = str(df.args[0].desc)
+                    self._logger.error(f"Error in EndScan; {msg}")
+                    self.obs_faulty = True
+        self._component_obs_fault_callback(self.obs_faulty)
 
         self._scan_id = 0
         self._component_scanning_callback(False)
@@ -2155,17 +2181,20 @@ class CbfSubarrayComponentManager(
         """
         Abort subarray configuration or operation.
         """
-        try:
-            if self._group_vcc.get_size() > 0:
-                self._group_vcc.command_inout("Abort")
-            if self._group_fsp_corr_subarray.get_size() > 0:
-                self._group_fsp_corr_subarray.command_inout("Abort")
-            if self._group_fsp_pss_subarray.get_size() > 0:
-                self._group_fsp_pss_subarray.command_inout("Abort")
-            if self._group_fsp_pst_subarray.get_size() > 0:
-                self._group_fsp_pst_subarray.command_inout("Abort")
-        except tango.DevFailed:
-            self._component_obs_fault_callback(True)
+        for group in [
+            self._group_vcc,
+            self._group_fsp_corr_subarray,
+            self._group_fsp_pss_subarray,
+            self._group_fsp_pst_subarray,
+        ]:
+            if group.get_size() > 0:
+                try:
+                    group.command_inout("Abort")
+                except tango.DevFailed as df:
+                    msg = str(df.args[0].desc)
+                    self._logger.error(f"Error in Abort; {msg}")
+                    self.obs_faulty = True
+        self._component_obs_fault_callback(self.obs_faulty)
 
     @check_communicating
     def restart(self: CbfSubarrayComponentManager) -> None:
