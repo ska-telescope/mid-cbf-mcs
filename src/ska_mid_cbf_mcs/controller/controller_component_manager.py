@@ -526,7 +526,22 @@ class ControllerComponentManager(CbfComponentManager):
                 for fqdn in self._fqdn_talon_lru:
                     try:
                         self._proxies[fqdn].Off()
-
+                        # wait for LRU to return to OFF state
+                        if self._proxies[fqdn].State() != tango.DevState.OFF:
+                            # TODO parameterize?
+                            stuck = True
+                            for _ in range(4):
+                                if (
+                                    self._proxies[fqdn].State()
+                                    != tango.DevState.OFF
+                                ):
+                                    sleep(1)
+                                else:
+                                    stuck = False
+                                    break
+                            if stuck:
+                                # raise exception if timed out waiting for OFF
+                                raise tango.DevFailed()  # TODO
                     except tango.DevFailed as df:
                         for item in df.args:
                             log_msg = f"Failed to power off Talon boards; {item.reason}"
@@ -537,6 +552,7 @@ class ControllerComponentManager(CbfComponentManager):
                 # reset subarray observing state to EMPTY
                 for fqdn in self._fqdn_subarray:
                     try:
+                        # first check if subarray is in the middle of RESOURCING/RESTARTING, as it may return to EMPTY
                         if self._proxies[fqdn].obsState in [
                             ObsState.RESOURCING,
                             ObsState.RESTARTING,
@@ -553,9 +569,12 @@ class ControllerComponentManager(CbfComponentManager):
                                     stuck = False
                                     break
                             if stuck:
+                                # raise exception if timed out waiting to exit RESOURCING/RESTARTING
                                 raise tango.DevFailed()  # TODO
 
+                        # if subarray not in EMPTY then we need to ABORT and RESTART
                         if self._proxies[fqdn].obsState != ObsState.EMPTY:
+                            # if subarray is in the middle of ABORTING/RESETTING, wait before issuing RESTART/ABORT
                             if self._proxies[fqdn].obsState in [
                                 ObsState.ABORTING,
                                 ObsState.RESETTING,
@@ -572,15 +591,51 @@ class ControllerComponentManager(CbfComponentManager):
                                         stuck = False
                                         break
                                 if stuck:
+                                    #  raise exception if timed out waiting to exit ABORTING/RESETTING
                                     raise tango.DevFailed()  # TODO
 
+                            # if subarray not yet in FAULT/ABORTED, issue Abort command to enable Restart
                             if self._proxies[fqdn].obsState not in [
                                 ObsState.FAULT,
                                 ObsState.ABORTED,
                             ]:
                                 self._proxies[fqdn].Abort()
+                                if (
+                                    self._proxies[fqdn].obsState
+                                    != ObsState.ABORTED
+                                ):
+                                    # TODO parameterize?
+                                    stuck = True
+                                    for _ in range(4):
+                                        if (
+                                            self._proxies[fqdn].obsState
+                                            != ObsState.ABORTED
+                                        ):
+                                            sleep(1)
+                                        else:
+                                            stuck = False
+                                            break
+                                    if stuck:
+                                        #  raise exception if timed out waiting to exit ABORTING
+                                        raise tango.DevFailed()  # TODO
 
+                            # finally, subarray may be restarted to EMPTY
                             self._proxies[fqdn].Restart()
+                            if self._proxies[fqdn].obsState != ObsState.EMPTY:
+                                # TODO parameterize?
+                                stuck = True
+                                for _ in range(4):
+                                    if (
+                                        self._proxies[fqdn].obsState
+                                        != ObsState.EMPTY
+                                    ):
+                                        sleep(1)
+                                    else:
+                                        stuck = False
+                                        break
+                                if stuck:
+                                    #  raise exception if timed out waiting to exit ABORTING
+                                    raise tango.DevFailed()  # TODO
 
                     except tango.DevFailed as df:
                         for item in df.args:
@@ -622,9 +677,14 @@ class ControllerComponentManager(CbfComponentManager):
                 op_state_error_list = []
                 obs_state_error_list = []
                 for fqdn, proxy in self._proxies.items():
-                    state = proxy.State()
-                    if state != tango.DevState.OFF:
-                        op_state_error_list.append([fqdn, state])
+                    # power switch device state is always ON as long as it is
+                    # communicating and monitoring the PDU; does not implement
+                    # On/Off commands, rather TurnOn/OffOutlet commands to
+                    # target specific outlets
+                    if fqdn not in self._fqdn_power_switch:
+                        state = proxy.State()
+                        if state != tango.DevState.OFF:
+                            op_state_error_list.append([fqdn, state])
 
                     if fqdn in self._fqdn_subarray:
                         obs_state = proxy.obsState

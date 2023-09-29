@@ -140,7 +140,7 @@ class TalonBoardComponentManager(CbfComponentManager):
 
         super().start_communicating()
         self.update_communication_status(CommunicationStatus.ESTABLISHED)
-        self.update_component_power_mode(PowerMode.ON)
+        self.update_component_power_mode(PowerMode.OFF)
         self.connected = True
 
     def stop_communicating(self) -> None:
@@ -149,7 +149,7 @@ class TalonBoardComponentManager(CbfComponentManager):
             "Entering TalonBoardComponentManager.stop_communicating"
         )
         super().stop_communicating()
-        self.update_component_power_mode(PowerMode.OFF)
+        self.update_component_power_mode(PowerMode.UNKNOWN)
         self.connected = False
 
     def _get_devices_in_server(self, server: str):

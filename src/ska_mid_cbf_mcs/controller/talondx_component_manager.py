@@ -72,7 +72,7 @@ class TalonDxComponentManager:
 
         :return: ResultCode.FAILED if any operations failed, else ResultCode.OK
         """
-        # Simulation mode does not do anything yet
+        # TODO Simulation mode does not do anything yet
         if self.simulation_mode == SimulationMode.TRUE:
             return ResultCode.OK
 
@@ -511,18 +511,17 @@ class TalonDxComponentManager:
                  otherwise ResultCode.FAILED
         """
         ret = ResultCode.OK
-        for talon_cfg in self.talondx_config["config_commands"]:
-            hps_master_fqdn = talon_cfg["ds_hps_master_fqdn"]
-            hps_master = self.proxies[hps_master_fqdn]
-            try:
-                if self.simulation_mode == SimulationMode.FALSE:
+        if self.simulation_mode == SimulationMode.FALSE:
+            for talon_cfg in self.talondx_config["config_commands"]:
+                hps_master_fqdn = talon_cfg["ds_hps_master_fqdn"]
+                hps_master = self.proxies[hps_master_fqdn]
+                try:
                     hps_master.shutdown(argin)
-            except tango.DevFailed as df:
-                for item in df.args:
-                    self.logger.error(
-                        f"Exception while sending shutdown command"
-                        f" to {hps_master_fqdn} device: {str(item.reason)}"
-                    )
-                ret = ResultCode.FAILED
-
+                except tango.DevFailed as df:
+                    for item in df.args:
+                        self.logger.error(
+                            f"Exception while sending shutdown command"
+                            f" to {hps_master_fqdn} device: {str(item.reason)}"
+                        )
+                    ret = ResultCode.FAILED
         return ret
