@@ -1,0 +1,81 @@
+[tool.poetry]
+name = "ska-mid-cbf-mcs"
+version = "0.1.0"
+description = ""
+authors = ["Mariana Paulo <mariana.paulo@criticalsoftware.com>"]
+readme = "README.md"
+packages = [
+    { include = "ska_mid_cbf_mcs", from = "src" }
+]
+
+[tool.poetry.scripts]
+CbfController='ska_mid_cbf_mcs.controller.controller_device:main'
+CbfSubarray='ska_mid_cbf_mcs.subarray.subarray_device:main'
+FspMulti='ska_mid_cbf_mcs.fsp.fsp_multi:main'
+VccMulti='ska_mid_cbf_mcs.vcc.vcc_multi:main'
+TalonLRU='ska_mid_cbf_mcs.talon_lru.talon_lru_device:main'
+TalonBoard='ska_mid_cbf_mcs.talon_board.talon_board_device:main'
+PowerSwitch='ska_mid_cbf_mcs.power_switch.power_switch_device:main'
+TalonDxLogConsumer='ska_mid_cbf_mcs.talondx_log_consumer.talondx_log_consumer_device:main'
+TmCspSubarrayLeafNodeTest='ska_mid_cbf_mcs.tm_leaf_node:main'
+
+[tool.poetry.dependencies]
+python = ">=3.10,<3.13"
+backoff = "^2.2.1"
+typing-extensions = "^4.8.0"
+numpy = "^1.26.0"
+jsonschema = "3.2.0"
+pytango = "9.4.2"
+pyyaml = "^6.0.1"
+scp = "^0.14.5"
+paramiko = "^3.3.1"
+influxdb-client = "^1.37.0"
+multidict = "^6.0.4"
+yarl = "^1.9.2"
+aiohttp = "^3.8.5"
+aiocsv = "^1.2.4"
+requests = "2.26.0"
+ska-tango-base = "0.11.4"
+ska-ser-logging = "^0.4.1+0a677a67"
+ska-ser-log-transactions = "^0.2.2+ae0f5c92"
+ska-telmodel = "^1.8.1"
+nbmake = "^1.4.3"
+nbqa = "^1.7.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest-pydocstyle = "2.2.0"
+pytest-pycodestyle = "2.2.0"
+pytest = "6.2.5"
+pytest-bdd = "^6.1.1"
+pytest-cov = "^4.1.0"
+pytest-forked = "^1.6.0"
+pytest-json-report = "^1.5.0"
+pytest-mock = "^3.11.1"
+pytest-xdist = "^3.3.1"
+pytest-repeat = "^0.9.1"
+pytest-pylint = "^0.19.0"
+pylint = "2.15.5"
+
+[[tool.poetry.source]]
+name = "ska-nexus"
+url = "https://artefact.skao.int/repository/pypi-internal/simple"
+
+
+[tool.poetry.group.docs.dependencies]
+Sphinx = "^6"
+ska-ser-sphinx-theme = "^0.1.1"
+myst-parser = "^2.0.0"
+sphinxcontrib-mermaid = "^0.9.2"
+black = "^23.9.1"
+flake8 = "^6.1.0"
+sphinxcontrib-plantuml = "^0.26"
+
+[tool.isort]
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+line_length = 79
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
