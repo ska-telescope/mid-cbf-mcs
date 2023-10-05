@@ -21,10 +21,9 @@ from typing import List, Optional, Tuple
 from ska_tango_base import SKABaseDevice, SKAController
 from ska_tango_base.commands import ResponseCommand, ResultCode
 from ska_tango_base.control_model import PowerMode, SimulationMode
-from tango import AttrWriteType
+from tango import AttrWriteType, DevState
 from tango.server import attribute, device_property, run
 
-from ska_mid_cbf_mcs.commons.receptor_utils import ReceptorUtils
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
 from ska_mid_cbf_mcs.controller.controller_component_manager import (
     ControllerComponentManager,
@@ -450,7 +449,7 @@ class CbfController(SKAController):
             :return: if InitSysParamCommand is allowed
             :rtype: bool
             """
-            return self.target.get_state() == tango.DevState.OFF
+            return self.target.get_state() == DevState.OFF
 
         def do(
             self: CbfController.InitSysParamCommand, argin: str
