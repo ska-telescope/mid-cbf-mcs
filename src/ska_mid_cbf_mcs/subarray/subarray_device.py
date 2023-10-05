@@ -368,6 +368,7 @@ class CbfSubarray(CspSubElementSubarray):
 
         This is a callback hook.
         """
+        self.component_manager.obs_faulty = faulty
         if faulty:
             self.obs_state_model.perform_action("component_obsfault")
             self.set_status("The device is in FAULT state")
@@ -675,9 +676,7 @@ class CbfSubarray(CspSubElementSubarray):
             component_manager = self.target
 
             # Call this just to release all FSPs and unsubscribe to events.
-            (result_code, msg) = component_manager.deconfigure()
-            if result_code == ResultCode.FAILED:
-                return (result_code, msg)
+            component_manager.deconfigure()
 
             full_configuration = json.loads(argin)
             common_configuration = copy.deepcopy(full_configuration["common"])

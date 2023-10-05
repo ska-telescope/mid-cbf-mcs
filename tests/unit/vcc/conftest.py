@@ -117,6 +117,18 @@ def mock_component_manager(
             "Vcc ConfigureSearchWindow command completed OK",
         )
 
+    def _abort() -> Tuple[ResultCode, str]:
+        return (
+            ResultCode.OK,
+            "Vcc Abort command completed OK",
+        )
+
+    def _obsreset() -> Tuple[ResultCode, str]:
+        return (
+            ResultCode.OK,
+            "Vcc Obsreset command completed OK",
+        )
+
     mock.start_communicating.side_effect = lambda: _start_communicating(mock)
     mock.on.side_effect = lambda: _on(mock)
     mock.off.side_effect = lambda: _off(mock)
@@ -129,6 +141,8 @@ def mock_component_manager(
     mock.configure_search_window.side_effect = (
         lambda argin: _configure_search_window()
     )
+    mock.abort.side_effect = lambda: _abort()
+    mock.obsreset.side_effect = lambda: _obsreset()
 
     mock.enqueue.return_value = unique_id, ResultCode.QUEUED
 

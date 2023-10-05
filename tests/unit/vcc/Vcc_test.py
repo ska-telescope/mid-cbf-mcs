@@ -101,7 +101,7 @@ class TestVcc:
     @pytest.mark.parametrize(
         "config_file_name", [("Vcc_ConfigureScan_basic.json")]
     )
-    def test_Vcc_ConfigureScan_basic(
+    def test_Vcc_ConfigureScan(
         self, device_under_test: CbfDeviceProxy, config_file_name: str
     ) -> None:
         """
@@ -128,7 +128,26 @@ class TestVcc:
         device_under_test.ConfigureScan(json_str)
         assert device_under_test.obsState == ObsState.READY
 
+    @pytest.mark.parametrize(
+        "config_file_name", [("Vcc_ConfigureScan_basic.json")]
+    )
+    def test_GoToIdle(
+        self, device_under_test: CbfDeviceProxy, config_file_name: str
+    ) -> None:
+        """
+        Test a the GoToIdle command from a successful scan configuration.
+
+        First calls test_Vcc_ConfigureScan to get it in the ready state
+        :param device_under_test: fixture that provides a
+            :py:class:`tango.DeviceProxy` to the device under test, in a
+            :py:class:`tango.test_context.DeviceTestContext`.
+        :param config_file_name: JSON file for the configuration
+        """
+        self.test_Vcc_ConfigureScan(device_under_test, config_file_name)
+
         device_under_test.GoToIdle()
+        time.sleep(CONST_WAIT_TIME)
+        assert device_under_test.obsState == ObsState.IDLE
 
     @pytest.mark.parametrize(
         "config_file_name, \
@@ -144,7 +163,7 @@ class TestVcc:
             ),
         ],
     )
-    def test_Scan_EndScan_GoToIdle(
+    def test_Scan(
         self: TestVcc,
         device_under_test: CbfDeviceProxy,
         config_file_name: str,
@@ -153,22 +172,15 @@ class TestVcc:
         """
         Test Vcc's Scan command state changes.
 
+        First calls test_Vcc_ConfigureScan to get it in the ready state
         :param device_under_test: fixture that provides a
             :py:class:`tango.DeviceProxy` to the device under test, in a
             :py:class:`tango.test_context.DeviceTestContext`.
         :param config_file_name: JSON file for the configuration
         :param scan_id: the scan id
         """
-        device_under_test.adminMode = AdminMode.ONLINE
-
         # turn on device and configure scan
-        device_under_test.On()
-        f = open(file_path + config_file_name)
-        json_string = f.read().replace("\n", "")
-        f.close()
-        (result_code, _) = device_under_test.ConfigureScan(json_string)
-        time.sleep(CONST_WAIT_TIME)
-        assert result_code == ResultCode.OK
+        self.test_Vcc_ConfigureScan(device_under_test, config_file_name)
 
         scan_id_device_data = tango.DeviceData()
         scan_id_device_data.insert(tango.DevString, str(scan_id))
@@ -178,13 +190,89 @@ class TestVcc:
         assert result_code == ResultCode.STARTED
         assert device_under_test.obsState == ObsState.SCANNING
 
+    @pytest.mark.parametrize(
+        "config_file_name, \
+        scan_id",
+        [
+            (
+                "Vcc_ConfigureScan_basic.json",
+                1,
+            ),
+            (
+                "Vcc_ConfigureScan_basic.json",
+                2,
+            ),
+        ],
+    )
+    def test_EndScan(
+        self: TestVcc,
+        device_under_test: CbfDeviceProxy,
+        config_file_name: str,
+        scan_id: int,
+    ) -> None:
+        """
+        Test Vcc's EndScan command state changes.
+
+        First calls test_Scan to get it in the Scanning state
+        :param device_under_test: fixture that provides a
+            :py:class:`tango.DeviceProxy` to the device under test, in a
+            :py:class:`tango.test_context.DeviceTestContext`.
+        :param config_file_name: JSON file for the configuration
+        :param scan_id: the scan id
+        """
+        self.test_Scan(device_under_test, config_file_name, scan_id)
+
         (result_code, _) = device_under_test.EndScan()
         assert device_under_test.obsState == ObsState.READY
 
-        # try reconfiguring and scanning again
-        (result_code, _) = device_under_test.ConfigureScan(json_string)
+    @pytest.mark.parametrize(
+        "config_file_name, \
+        scan_id",
+        [
+            (
+                "Vcc_ConfigureScan_basic.json",
+                1,
+            ),
+            (
+                "Vcc_ConfigureScan_basic.json",
+                2,
+            ),
+        ],
+    )
+    def test_Reconfigure_Scan_EndScan_GoToIdle(
+        self: TestVcc,
+        device_under_test: CbfDeviceProxy,
+        config_file_name: str,
+        scan_id: int,
+    ) -> None:
+        """
+        Test Vcc's ability to reconfigure and run multiple scans.
+
+        Calls test_EndScan to get it in the ready state after a first test run.
+        :param device_under_test: fixture that provides a
+            :py:class:`tango.DeviceProxy` to the device under test, in a
+            :py:class:`tango.test_context.DeviceTestContext`.
+        :param config_file_name: JSON file for the configuration
+        :param scan_id: the scan id
+        """
+        self.test_EndScan(device_under_test, config_file_name, scan_id)
+
+        # try reconfiguring and scanning again (w/o power cycling)
+        f = open(file_path + config_file_name)
+        json_str = f.read().replace("\n", "")
+        configuration = json.loads(json_str)
+        f.close()
+
+        device_under_test.ConfigureBand(configuration["frequency_band"])
+
+        (result_code, _) = device_under_test.ConfigureScan(json_str)
         time.sleep(CONST_WAIT_TIME)
         assert result_code == ResultCode.OK
+        assert device_under_test.obsState == ObsState.READY
+
+        # rescanning
+        scan_id_device_data = tango.DeviceData()
+        scan_id_device_data.insert(tango.DevString, str(scan_id))
 
         (result_code, _) = device_under_test.Scan(scan_id_device_data)
         assert result_code == ResultCode.STARTED
@@ -196,6 +284,85 @@ class TestVcc:
         (result_code, _) = device_under_test.GoToIdle()
         assert device_under_test.obsState == ObsState.IDLE
         assert result_code == ResultCode.OK
+
+    @pytest.mark.parametrize(
+        "config_file_name", [("Vcc_ConfigureScan_basic.json")]
+    )
+    def test_Abort_FromReady(
+        self, device_under_test: CbfDeviceProxy, config_file_name: str
+    ) -> None:
+        """
+        Test a Abort() from ready state.
+
+        First calls test_Vcc_ConfigureScan to get it in ready state.
+        :param device_under_test: fixture that provides a
+            :py:class:`tango.DeviceProxy` to the device under test, in a
+            :py:class:`tango.test_context.DeviceTestContext`.
+        :param config_file_name: JSON file for the configuration
+        """
+        self.test_Vcc_ConfigureScan(device_under_test, config_file_name)
+
+        device_under_test.Abort()
+        time.sleep(CONST_WAIT_TIME)
+        assert device_under_test.obsState == ObsState.ABORTED
+
+    @pytest.mark.parametrize(
+        "config_file_name, \
+        scan_id",
+        [
+            (
+                "Vcc_ConfigureScan_basic.json",
+                1,
+            ),
+            (
+                "Vcc_ConfigureScan_basic.json",
+                2,
+            ),
+        ],
+    )
+    def test_Abort_FromScanning(
+        self: TestVcc,
+        device_under_test: CbfDeviceProxy,
+        config_file_name: str,
+        scan_id: int,
+    ) -> None:
+        """
+        Test a Abort() from scanning state.
+
+        First calls test_Scan to get it in the scanning state
+        :param device_under_test: fixture that provides a
+            :py:class:`tango.DeviceProxy` to the device under test, in a
+            :py:class:`tango.test_context.DeviceTestContext`.
+        :param config_file_name: JSON file for the configuration
+        :param scan_id: the scan id
+        """
+        self.test_Scan(device_under_test, config_file_name, scan_id)
+
+        device_under_test.Abort()
+        time.sleep(CONST_WAIT_TIME)
+        assert device_under_test.obsState == ObsState.ABORTED
+
+    @pytest.mark.parametrize(
+        "config_file_name", [("Vcc_ConfigureScan_basic.json")]
+    )
+    def test_ObsReset(
+        self, device_under_test: CbfDeviceProxy, config_file_name: str
+    ) -> None:
+        """
+        Test ObsReset() command from aborted state.
+
+        First calls test_Abort_FromReady to get it in aborted state.
+        :param device_under_test: fixture that provides a
+            :py:class:`tango.DeviceProxy` to the device under test, in a
+            :py:class:`tango.test_context.DeviceTestContext`.
+        :param config_file_name: JSON file for the configuration
+        """
+
+        self.test_Abort_FromReady(device_under_test, config_file_name)
+
+        device_under_test.ObsReset()
+        time.sleep(CONST_WAIT_TIME)
+        assert device_under_test.obsState == ObsState.IDLE
 
     @pytest.mark.parametrize(
         "sw_config_file_name, \

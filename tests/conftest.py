@@ -534,45 +534,25 @@ def init_proxies_fixture():
                 self.subarray[i] for i in range(1, self.num_sub + 1)
             ]:
                 if proxy.State() != DevState.ON:
-                    if proxy.State() != DevState.OFF:
-                        proxy.Off()
-                        self.wait_timeout_dev(
-                            [proxy],
-                            DevState.OFF,
-                            wait_time_s,
-                            sleep_time_s_long,
-                        )
                     proxy.On()
                     self.wait_timeout_dev(
                         [proxy], DevState.ON, wait_time_s, sleep_time_s_long
                     )
 
-                if proxy.obsState == ObsState.FAULT:
+                if proxy.obsState != ObsState.EMPTY:
+                    if proxy.obsState not in [
+                        ObsState.FAULT,
+                        ObsState.ABORTED,
+                    ]:
+                        proxy.Abort()
+                        self.wait_timeout_obs(
+                            [proxy],
+                            ObsState.ABORTED,
+                            wait_time_s,
+                            sleep_time_s_short,
+                        )
+
                     proxy.Restart()
-                    self.wait_timeout_obs(
-                        [proxy],
-                        ObsState.READY,
-                        wait_time_s,
-                        sleep_time_s_short,
-                    )
-
-                if proxy.obsState == ObsState.SCANNING:
-                    proxy.EndScan()
-                    self.wait_timeout_obs(
-                        [proxy],
-                        ObsState.READY,
-                        wait_time_s,
-                        sleep_time_s_short,
-                    )
-
-                if proxy.obsState == ObsState.READY:
-                    proxy.End()
-                    self.wait_timeout_obs(
-                        [proxy], ObsState.IDLE, wait_time_s, sleep_time_s_short
-                    )
-
-                if proxy.obsState == ObsState.IDLE:
-                    proxy.RemoveAllReceptors()
                     self.wait_timeout_obs(
                         [proxy],
                         ObsState.EMPTY,

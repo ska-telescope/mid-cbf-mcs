@@ -1,3 +1,4 @@
+
 if [ "$#" -ne 1 ]; then
 	    echo "Usage:   ./hps_master_run <server_instance>"
 	        exit 1

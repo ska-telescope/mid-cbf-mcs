@@ -1,0 +1,57 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+skinparam backgroundColor #EEEBDC
+skinparam sequence {
+ParticipantBorderColor DodgerBlue
+ParticipantBackgroundColor DeepSkyBlue
+ActorBorderColor DarkGreen
+ActorBackgroundColor Green
+BoxBorderColor LightBlue
+BoxBackgroundColor #F0FFFF
+}
+
+skinparam collections {
+  BackGroundColor LightBlue
+  BorderColor DodgerBlue
+}
+
+skinparam database {
+  BackgroundColor LightGreen
+  BorderColor DarkGreen
+}
+
+title ObsReset Command Sequence\n
+
+participant "CSP_Mid\n.LMC" as lmc
+
+box "MCS"
+participant "Mid.CBF\nSubarray" as subarray
+collections "VCC" as vcc
+collections "FSP" as fsp
+collections "FSP\nSubarray" as fspsubarray
+end box
+
+box "HPS"
+participant "HPS\nVCC\nController" as hpsvcc
+participant "HPS\nVCC\nBand1&2" as hpsvccband
+participant "HPS FSP\nCorr App" as hpsfsp
+collections "HPS\nLow Level\nDevices" as hpsdevices
+end box
+
+lmc         ->  subarray      : Obsreset
+
+subarray    ->  subarray      : deconfigure
+subarray    ->  vcc           : ObsReset
+vcc         ->  hpsvccband    : ObsReset
+note over vcc                 : VCC\nObsState IDLE
+subarray    ->  fspsubarray   : ObsReset
+note over fspsubarray         : FSP\nObsState IDLE
+subarray    ->  fsp           : RemoveSubarrayMembership
+fsp         ->  fspsubarray   : GoToIdle\n(if no other subarray membership)
+note over fspsubarray         : FSP\nObsState IDLE
+note over subarray            : Subarray\nObsState IDLE
+lmc        <--  subarray      : Success
+
+
+@enduml

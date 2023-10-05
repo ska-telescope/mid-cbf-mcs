@@ -114,35 +114,25 @@ class TestFspPssSubarray:
         assert device_under_test.State() == expected_state
 
     @pytest.mark.parametrize(
-        "config_file_name, \
-        scan_id",
+        "config_file_name",
         [
-            (
-                "/../../data/FspPssSubarray_ConfigureScan_basic.json",
-                1,
-            ),
-            (
-                "/../../data/FspPssSubarray_ConfigureScan_basic.json",
-                2,
-            ),
+            "/../../data/FspPssSubarray_ConfigureScan_basic.json",
+            "/../../data/FspPssSubarray_ConfigureScan_basic.json",
         ],
     )
-    def test_ObsState_Commands(
+    def test_ConfigureScan(
         self: TestFspPssSubarray,
         device_under_test: CbfDeviceProxy,
         config_file_name: str,
-        scan_id: int,
     ) -> None:
         """
-        Test the ConfigureScan(), Scan(), EndScan() amd GoToIdle() commands
-            and the triggered ObState transitions
+        Test the ConfigureScan() command and the triggered ObState transition
 
         :param device_under_test: fixture that provides a
             :py:class:`tango.DeviceProxy` to the device under test, in a
             :py:class:`tango.test_context.DeviceTestContext`.
         :param config_file_name: name of the JSON file that contains the
             configuration
-        :param scan_id: the scan id
         """
 
         device_under_test.write_attribute("adminMode", AdminMode.ONLINE)
@@ -161,6 +151,71 @@ class TestFspPssSubarray:
         device_under_test.ConfigureScan(json_string)
         time.sleep(0.1)
 
+        assert device_under_test.obsState == ObsState.READY
+
+    @pytest.mark.parametrize(
+        "config_file_name",
+        [
+            "/../../data/FspPssSubarray_ConfigureScan_basic.json",
+            "/../../data/FspPssSubarray_ConfigureScan_basic.json",
+        ],
+    )
+    def test_GoToIdle(
+        self: TestFspPssSubarray,
+        device_under_test: CbfDeviceProxy,
+        config_file_name: str,
+    ) -> None:
+        """
+        Test the test_GoToIdle() command and the triggered ObState transition
+
+
+        First calls test_ConfigureScan() to get it in the ready state
+        :param device_under_test: fixture that provides a
+            :py:class:`tango.DeviceProxy` to the device under test, in a
+            :py:class:`tango.test_context.DeviceTestContext`.
+        :param config_file_name: name of the JSON file that contains the
+            configuration
+        """
+        self.test_ConfigureScan(device_under_test, config_file_name)
+
+        device_under_test.GoToIdle()
+        time.sleep(0.1)
+        assert device_under_test.obsState == ObsState.IDLE
+
+    @pytest.mark.parametrize(
+        "config_file_name, \
+        scan_id",
+        [
+            (
+                "/../../data/FspPssSubarray_ConfigureScan_basic.json",
+                1,
+            ),
+            (
+                "/../../data/FspPssSubarray_ConfigureScan_basic.json",
+                2,
+            ),
+        ],
+    )
+    def test_Scan(
+        self: TestFspPssSubarray,
+        device_under_test: CbfDeviceProxy,
+        config_file_name: str,
+        scan_id: int,
+    ) -> None:
+        """
+        Test the Scan() command and the triggered ObState transition
+
+        First calls test_ConfigureScan() to get it in the ready state
+        :param device_under_test: fixture that provides a
+            :py:class:`tango.DeviceProxy` to the device under test, in a
+            :py:class:`tango.test_context.DeviceTestContext`.
+        :param config_file_name: name of the JSON file that contains the
+            configuration
+        :param scan_id: the scan id
+        """
+
+        self.test_ConfigureScan(device_under_test, config_file_name)
+
         scan_id_device_data = tango.DeviceData()
         scan_id_device_data.insert(tango.DevString, str(scan_id))
 
@@ -168,10 +223,136 @@ class TestFspPssSubarray:
         time.sleep(0.1)
         assert device_under_test.obsState == ObsState.SCANNING
 
+    @pytest.mark.parametrize(
+        "config_file_name, \
+        scan_id",
+        [
+            (
+                "/../../data/FspPssSubarray_ConfigureScan_basic.json",
+                1,
+            ),
+            (
+                "/../../data/FspPssSubarray_ConfigureScan_basic.json",
+                2,
+            ),
+        ],
+    )
+    def test_EndScan(
+        self: TestFspPssSubarray,
+        device_under_test: CbfDeviceProxy,
+        config_file_name: str,
+        scan_id: int,
+    ) -> None:
+        """
+        Test the EndScan() command and the triggered ObState transition
+
+        First calls test_Scan() to get it in the scanning state
+        :param device_under_test: fixture that provides a
+            :py:class:`tango.DeviceProxy` to the device under test, in a
+            :py:class:`tango.test_context.DeviceTestContext`.
+        :param config_file_name: name of the JSON file that contains the
+            configuration
+        :param scan_id: the scan id
+        """
+
+        self.test_Scan(device_under_test, config_file_name, scan_id)
+
         device_under_test.EndScan()
         time.sleep(0.1)
         assert device_under_test.obsState == ObsState.READY
 
-        device_under_test.GoToIdle()
+    @pytest.mark.parametrize(
+        "config_file_name",
+        [
+            "/../../data/FspPssSubarray_ConfigureScan_basic.json",
+            "/../../data/FspPssSubarray_ConfigureScan_basic.json",
+        ],
+    )
+    def test_Abort_FromReady(
+        self: TestFspPssSubarray,
+        device_under_test: CbfDeviceProxy,
+        config_file_name: str,
+    ) -> None:
+        """
+        Test the Abort() command and the triggered ObState transition
+
+        First calls test_ConfigureScan() to get it in the ready state
+        :param device_under_test: fixture that provides a
+            :py:class:`tango.DeviceProxy` to the device under test, in a
+            :py:class:`tango.test_context.DeviceTestContext`.
+        :param config_file_name: name of the JSON file that contains the
+            configuration
+        """
+
+        self.test_ConfigureScan(device_under_test, config_file_name)
+
+        device_under_test.Abort()
+        time.sleep(0.1)
+        assert device_under_test.obsState == ObsState.ABORTED
+
+    @pytest.mark.parametrize(
+        "config_file_name, \
+        scan_id",
+        [
+            (
+                "/../../data/FspPssSubarray_ConfigureScan_basic.json",
+                1,
+            ),
+            (
+                "/../../data/FspPssSubarray_ConfigureScan_basic.json",
+                2,
+            ),
+        ],
+    )
+    def test_Abort_FromScanning(
+        self: TestFspPssSubarray,
+        device_under_test: CbfDeviceProxy,
+        config_file_name: str,
+        scan_id: int,
+    ) -> None:
+        """
+        Test the Abort() command and the triggered ObState transition
+
+        First calls test_Scan() to get it in the scanning state
+        :param device_under_test: fixture that provides a
+            :py:class:`tango.DeviceProxy` to the device under test, in a
+            :py:class:`tango.test_context.DeviceTestContext`.
+        :param config_file_name: name of the JSON file that contains the
+            configuration
+        :param scan_id: the scan id
+        """
+
+        self.test_Scan(device_under_test, config_file_name, scan_id)
+
+        device_under_test.Abort()
+        time.sleep(0.1)
+        assert device_under_test.obsState == ObsState.ABORTED
+
+    @pytest.mark.parametrize(
+        "config_file_name",
+        [
+            "/../../data/FspPssSubarray_ConfigureScan_basic.json",
+            "/../../data/FspPssSubarray_ConfigureScan_basic.json",
+        ],
+    )
+    def test_ObsReset(
+        self: TestFspPssSubarray,
+        device_under_test: CbfDeviceProxy,
+        config_file_name: str,
+    ) -> None:
+        """
+        Test the ObsReset() command and the triggered ObState transition
+
+        First calls test_Abort_FromReady() to get it in the aborted state
+        :param device_under_test: fixture that provides a
+            :py:class:`tango.DeviceProxy` to the device under test, in a
+            :py:class:`tango.test_context.DeviceTestContext`.
+        :param config_file_name: name of the JSON file that contains the
+            configuration
+        """
+
+        self.test_Abort_FromReady(device_under_test, config_file_name)
+
+        device_under_test.ObsReset()
         time.sleep(0.1)
         assert device_under_test.obsState == ObsState.IDLE

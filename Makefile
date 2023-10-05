@@ -1,31 +1,17 @@
 #
-# Project makefile for ska-mid-cbf-mcs project. You should normally only need to modify
-# DOCKER_REGISTRY_USER and PROJECT below.
-#
-
-#
-# DOCKER_REGISTRY_HOST, DOCKER_REGISTRY_USER and PROJECT are combined to define
-# the Docker tag for this project. The definition below overwrites
-# DOCKER_REGISTRY_USER and PROJECT
-#
-#DOCKER_REGISTRY_USER:=ska-docker
+# Project makefile for ska-mid-cbf-mcs project. 
 PROJECT = ska-mid-cbf-mcs
 
-# KUBE_NAMESPACE defines the Kubernetes Namespace that will be deployed to
-# using Helm.  If this does not already exist it will be created
-KUBE_NAMESPACE ?= ska-mid-cbf
-SDP_KUBE_NAMESPACE ?= sdp #namespace to be used
+KUBE_NAMESPACE ?= ska-mid-cbf## KUBE_NAMESPACE defines the Kubernetes Namespace that will be deployed to using Helm
+SDP_KUBE_NAMESPACE ?= ska-mid-cbf-sdp##namespace to be used
 DASHBOARD ?= webjive-dash.dump
-DOMAIN ?= cluster.local
+CLUSTER_DOMAIN ?= cluster.local
 
-# HELM_RELEASE is the release that all Kubernetes resources will be labelled
-# with
-HELM_RELEASE ?= test
+HELM_RELEASE ?= test##H ELM_RELEASE is the release that all Kubernetes resources will be labelled with
 
-# HELM_CHART the chart name
-HELM_CHART ?= ska-mid-cbf-umbrella
-
-TANGO_DATABASE = tango-host-databaseds-from-makefile-$(HELM_RELEASE)
+HELM_CHART ?= ska-mid-cbf-umbrella## HELM_CHART the chart name
+K8S_CHART ?= $(HELM_CHART)
+TANGO_DATABASE = tango-databaseds-$(HELM_RELEASE)
 TANGO_HOST = $(TANGO_DATABASE):10000## TANGO_HOST is an input!
 
 # Python variables
@@ -36,36 +22,10 @@ PYTHON_VARS_BEFORE_PYTEST = PYTHONPATH=./src:/app/src:/app/src/ska_mid_cbf_mcs K
 # We are choosing a standard to have it before the line break and therefore 503 will be ignored.
 PYTHON_SWITCHES_FOR_FLAKE8 = --ignore=E203,E501,F407,W503
 
-
-# UMBRELLA_CHART_PATH Path of the umbrella chart to work with
-UMBRELLA_CHART_PATH ?= charts/ska-mid-cbf-umbrella/
-
-K8S_CHARTS ?= ska-mid-cbf-umbrella ska-mid-cbf-mcs ska-mid-cbf-tmleafnode ## list of charts
 K8S_UMBRELLA_CHART_PATH ?= ./charts/ska-mid-cbf-umbrella
 
-PYTHON_TEST_FILE = 
-PYTHON_VARS_AFTER_PYTEST = -c setup-unit-test.cfg
+PYTHON_TEST_FILE = ./tests/unit
 
-# Fixed variables
-# Timeout for gitlab-runner when run locally
-TIMEOUT = 86400
-# Helm version
-HELM_VERSION = v3.3.1
-# kubectl version
-KUBERNETES_VERSION = v1.19.2
-
-# Docker, K8s and Gitlab CI variables
-# gitlab-runner debug mode - turn on with non-empty value
-RDEBUG ?=
-# gitlab-runner executor - shell or docker
-EXECUTOR ?= shell
-# DOCKER_HOST connector to gitlab-runner - local domain socket for shell exec
-DOCKER_HOST ?= unix:///var/run/docker.sock
-# DOCKER_VOLUMES pass in local domain socket for DOCKER_HOST
-DOCKER_VOLUMES ?= /var/run/docker.sock:/var/run/docker.sock
-# registry credentials - user/pass/registry - set these in PrivateRules.mak
-CAR_OCI_REGISTRY_USER_LOGIN ?=  ## registry credentials - user - set in PrivateRules.mak
-CI_REGISTRY_PASS_LOGIN ?=  ## registry credentials - pass - set in PrivateRules.mak
 CI_REGISTRY ?= gitlab.com/ska-telescope/ska-mid-cbf-mcs
 
 CI_PROJECT_DIR ?= .
@@ -75,11 +35,16 @@ KUBECONFIG ?= /etc/deploy/config ## KUBECONFIG location
 
 CBF_CTRL_POD = $(shell kubectl -n $(KUBE_NAMESPACE) get pod --no-headers --selector=component=cbfcontroller-controller -o custom-columns=':metadata.name')
 
-HOST_IP = $(shell ifconfig eno2 | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*')
-
-XAUTHORITYx ?= ${XAUTHORITY}
-THIS_HOST := $(shell ifconfig | sed -En 's/127.0.0.1//;s/.*inet (addr:)?(([0-9]*\.){3}[0-9]*).*/\2/p' | head -n1)
-DISPLAY := $(THIS_HOST):0
+HOST_IP = $(shell ip a 2> /dev/null | sed -En 's/127.0.0.1//;s/.*inet (addr:)?(([0-9]*\.){3}[0-9]*).*/\2/p' | head -n1)
+THIS_HOST := $(HOST_IP)
+XAUTHORITY ?= $(HOME)/.Xauthority
+DISPLAY ?= $(THIS_HOST):0
+JIVE ?= false# Enable jive
+TARANTA ?= false# Enable Taranta
+MINIKUBE ?= true ## Minikube or not
+EXPOSE_All_DS ?= false ## Expose All Tango Services to the external network (enable Loadbalancer service)
+SKA_TANGO_OPERATOR ?= true
+ITANGO_ENABLED ?= true## ITango enabled in ska-tango-base
 
 # define private overrides for above variables in here
 -include PrivateRules.mak
@@ -92,17 +57,46 @@ TEST_RUNNER = test-runner-$(CI_JOB_ID)-$(KUBE_NAMESPACE)-$(HELM_RELEASE)
 
 ifneq ($(strip $(CI_JOB_ID)),)
 K8S_TEST_IMAGE_TO_TEST = $(CI_REGISTRY)/ska-telescope/ska-mid-cbf-mcs/ska-mid-cbf-mcs:$(VERSION)-dev.c$(CI_COMMIT_SHORT_SHA)
-K8S_CHART_PARAMS = --set global.minikube=false --set global.tango_host=$(TANGO_HOST) --set ska-mid-cbf-tmleafnode.midcbf.image.registry=$(CI_REGISTRY)/ska-telescope/ska-mid-cbf-mcs --set ska-mid-cbf-mcs.midcbf.image.registry=$(CI_REGISTRY)/ska-telescope/ska-mid-cbf-mcs --set ska-mid-cbf-mcs.midcbf.image.tag=$(VERSION)-dev.c$(CI_COMMIT_SHORT_SHA) --set ska-mid-cbf-tmleafnode.midcbf.image.tag=$(VERSION)-dev.c$(CI_COMMIT_SHORT_SHA)
+K8S_TEST_TANGO_IMAGE_PARAMS = --set ska-mid-cbf-tmleafnode.midcbf.image.registry=$(CI_REGISTRY)/ska-telescope/ska-mid-cbf-mcs \
+	--set ska-mid-cbf-mcs.midcbf.image.registry=$(CI_REGISTRY)/ska-telescope/ska-mid-cbf-mcs \
+	--set ska-mid-cbf-mcs.midcbf.image.tag=$(VERSION)-dev.c$(CI_COMMIT_SHORT_SHA) \
+	--set ska-mid-cbf-tmleafnode.midcbf.image.tag=$(VERSION)-dev.c$(CI_COMMIT_SHORT_SHA)
 else
 PYTHON_RUNNER = python3 -m
 K8S_TEST_IMAGE_TO_TEST = artefact.skao.int/ska-mid-cbf-mcs:$(VERSION)
-K8S_CHART_PARAMS = --set global.tango_host=$(TANGO_HOST) --set ska-mid-cbf-mcs.hostInfo.hostIP="$(HOST_IP)" --values taranta-values.yaml
+K8S_TEST_TANGO_IMAGE_PARAMS = --set ska-mid-cbf-mcs.midcbf.image.tag=$(VERSION) \
+	--set ska-mid-cbf-tmleafnode.midcbf.image.tag=$(VERSION) \
+	--set ska-mid-cbf-mcs.hostInfo.hostIP="$(HOST_IP)"
 endif
 
-K8S_TEST_TEST_COMMAND ?= ls -lrt &&  $(PYTHON_VARS_BEFORE_PYTEST) $(PYTHON_RUNNER) \
-                        pytest \
-                        -c setup-integration-test.cfg \
-                        | tee pytest.stdout; ## k8s-test test command to run in container
+TARANTA_PARAMS = --set ska-taranta.enabled=$(TARANTA) \
+				 --set ska-taranta-auth.enabled=$(TARANTA) \
+				 --set ska-dashboard-repo.enabled=$(TARANTA)
+
+ifneq ($(MINIKUBE),)
+ifneq ($(MINIKUBE),true)
+TARANTA_PARAMS = --set ska-taranta.enabled=$(TARANTA) \
+				 --set ska-taranta-auth.enabled=false \
+				 --set ska-dashboard-repo.enabled=false
+endif
+endif
+
+K8S_CHART_PARAMS = --set global.minikube=$(MINIKUBE) \
+	--set global.exposeAllDS=$(EXPOSE_All_DS) \
+	--set global.tango_host=$(TANGO_HOST) \
+	--set global.cluster_domain=$(CLUSTER_DOMAIN) \
+	--set global.operator=$(SKA_TANGO_OPERATOR) \
+	--set ska-tango-base.display=$(DISPLAY) \
+	--set ska-tango-base.xauthority=$(XAUTHORITY) \
+	--set ska-tango-base.jive.enabled=$(JIVE) \
+	--set ska-tango-base.itango.enabled=$(ITANGO_ENABLED) \
+	${K8S_TEST_TANGO_IMAGE_PARAMS} \
+	${TARANTA_PARAMS}
+
+K8S_TEST_TEST_COMMAND ?= $(PYTHON_VARS_BEFORE_PYTEST) $(PYTHON_RUNNER) \
+						pytest \
+						$(PYTHON_VARS_AFTER_PYTEST) ./tests/integration \
+						| tee pytest.stdout
 
 #
 # include makefile to pick up the standard Make targets, e.g., 'make build'
@@ -122,14 +116,6 @@ include .make/docs.mk
 #
 .DEFAULT_GOAL := help
 
-requirements: ## Install Dependencies
-	python3 -m pip install -r requirements.txt
-
-unit-test: ## Run simulation mode unit tests
-	@mkdir -p build; \
-	python3 -m pytest -c setup-unit-test.cfg
-
-
 jive: ## configure TANGO_HOST to enable Jive
 	@echo
 	@echo 'With the deployment active, copy and run the following command to configure TANGO_HOST for local jive:'
@@ -144,7 +130,6 @@ python-pre-lint:
 
 python-pre-build:
 	@$(PYTHON_RUNNER) pip install sphinx==2.2
-
 
 help: ## show this help.
 	@echo "make targets:"
