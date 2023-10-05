@@ -174,7 +174,6 @@ class CbfSubarrayComponentManager(
         self._frequency_band = 0
         self._config_id = ""
         self._scan_id = 0
-        self.frequency_offset_k = []
 
         # store list of fsp configurations being used for each function mode
         self._corr_config = []
@@ -213,6 +212,7 @@ class CbfSubarrayComponentManager(
         self._count_vcc = 0
         self._count_fsp = 0
         self._receptor_to_vcc = {}
+        self._receptor_to_frequency_offset_k = {}
 
         # proxies to subordinate devices
         self._proxies_vcc = []
@@ -410,6 +410,24 @@ class CbfSubarrayComponentManager(
     def standby(self: CbfSubarrayComponentManager) -> None:
         self._logger.warning(
             "Operating state Standby invalid for CbfSubarray."
+        )
+
+    @check_communicating
+    def update_sys_param(
+        self: CbfSubarrayComponentManager, sys_param_str: str
+    ) -> None:
+        self._sys_param_str = sys_param_str
+        sys_param = json.loads(sys_param_str)
+        dish_dict = sys_param["dish_parameters"]
+
+        # Update the Dish ID to VCC ID mapping
+        self._receptor_to_vcc = {}
+        self._receptor_to_frequency_offset_k = {}
+        for dish_id, v in dish_dict.items():
+            self._receptor_to_vcc[dish_id] = v["vcc"]
+            self._receptor_to_frequency_offset_k[dish_id] = v["k"]
+        self._logger.info(
+            "Updated dish ID to VCC ID and frequency offset k mapping"
         )
 
     @check_communicating
@@ -2234,7 +2252,7 @@ class CbfSubarrayComponentManager(
 
         # find the k value for this receptor
         # array of k values is 0 index, so index of array value is receptor_int - 1
-        freq_offset_k = self.frequency_offset_k[(receptor_int - 1)]
+        freq_offset_k = self._receptor_to_frequency_offset_k[receptor]
         freq_band_info = freq_band_dict()[freq_band]
 
         base_dish_sample_rate_MH = freq_band_info["base_dish_sample_rate_MHz"]

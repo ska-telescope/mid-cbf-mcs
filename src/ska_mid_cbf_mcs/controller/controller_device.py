@@ -84,20 +84,10 @@ class CbfController(SKAController):
         doc="Percentage progress implemented for commands that result in state/mode transitions for a large \nnumber of components and/or are executed in stages (e.g power up, power down)",
     )
 
-    receptorToVcc = attribute(
+    sysParam = attribute(
         dtype=("str",),
-        max_dim_x=197,
-        label="Receptor-VCC map",
-        polling_period=3000,
-        doc='Maps receptors IDs to VCC IDs, in the form "receptorID:vccID"',
-    )
-
-    vccToReceptor = attribute(
-        dtype=("str",),
-        max_dim_x=197,
-        label="VCC-receptor map",
-        polling_period=3000,
-        doc='Maps VCC IDs to receptor IDs, in the form "vccID:receptorID"',
+        label="Dish ID to VCC and frequency offset k mapping",
+        doc="Maps Dish ID to VCC and frequency offset k. The string is in JSON format.",
     )
 
     subarrayconfigID = attribute(
@@ -106,22 +96,6 @@ class CbfController(SKAController):
         label="Subarray config IDs",
         polling_period=3000,
         doc="ID of subarray configuration. empty string if subarray is not configured for a scan.",
-    )
-
-    frequencyOffsetK = attribute(
-        dtype=("int",),
-        access=AttrWriteType.READ_WRITE,
-        max_dim_x=197,
-        label="Frequency offset (k)",
-        doc="Frequency offset (k) of all 197 receptors as an array of ints.",
-    )
-
-    frequencyOffsetDeltaF = attribute(
-        dtype=("int",),
-        access=AttrWriteType.READ_WRITE,
-        max_dim_x=197,
-        label="Frequency offset (delta f)",
-        doc="Frequency offset (delta f) of all 197 receptors as an array of ints.",
     )
 
     simulationMode = attribute(
@@ -241,25 +215,6 @@ class CbfController(SKAController):
             # defines self._count_vcc, self._count_fsp, and self._count_subarray
             self._get_num_capabilities()
 
-            # initialize dicts with maps receptorID <=> vccID
-            receptor_utils = ReceptorUtils(num_vcc=device._count_vcc)
-            device._receptor_to_vcc = []
-            device._vcc_to_receptor = []
-            # TODO currently assigning VCC in sequential order
-            vcc_idx = 1
-            for _, receptorID in receptor_utils.receptors.items():
-                device._receptor_to_vcc.append(f"{receptorID}:{vcc_idx}")
-                device._vcc_to_receptor.append(f"{vcc_idx}:{receptorID}")
-                vcc_idx += 1
-            device.logger.info(
-                f"Receptor to VCC mapping: {device._receptor_to_vcc}"
-            )
-            for receptor_vcc_pair in device._vcc_to_receptor:
-                receptor_vcc_pair = receptor_vcc_pair.split(":")
-                device.component_manager._vcc_to_receptor[
-                    int(receptor_vcc_pair[0])
-                ] = int(receptor_vcc_pair[1])
-
             # # initialize attribute values
             device._command_progress = 0
 
@@ -337,6 +292,12 @@ class CbfController(SKAController):
         return self._command_progress
         # PROTECTED REGION END #    //  CbfController.commandProgress_read
 
+    def read_sysParam(self: CbfController) -> str:
+        # PROTECTED REGION ID(CbfController.read_sysParam) ENABLED START #
+        """Return the mapping from Dish ID to VCC and frequency offset k. The string is in JSON format."""
+        return self.component_manager._sys_param
+        # PROTECTED REGION END #    //  CbfController.sysParam_read
+
     def read_receptorToVcc(self: CbfController) -> List[str]:
         # PROTECTED REGION ID(CbfController.receptorToVcc_read) ENABLED START #
         """Return 'receptorID:vccID'"""
@@ -356,25 +317,6 @@ class CbfController(SKAController):
         """
         return self.component_manager.subarray_config_ID
         # PROTECTED REGION END #    //  CbfController.subarrayconfigID_read
-
-    def read_frequencyOffsetK(self: CbfController) -> List[int]:
-        # PROTECTED REGION ID(CbfController.frequencyOffsetK_read) ENABLED START #
-        """Return frequencyOffsetK attribute: array of integers reporting receptors in subarray"""
-        return self.component_manager.frequency_offset_k
-        # PROTECTED REGION END #    //  CbfController.frequencyOffsetK_read
-
-    def write_frequencyOffsetK(self: CbfController, value: List[int]) -> None:
-        # PROTECTED REGION ID(CbfController.frequencyOffsetK_write) ENABLED START #
-        """Set frequencyOffsetK attribute"""
-        if len(value) == self._count_vcc:
-            self.component_manager.update_freq_offset_k(value)
-        else:
-            log_msg = (
-                "Skipped writing to frequencyOffsetK attribute "
-                + f"(expected {self._count_vcc} arguments, but received {len(value)}."
-            )
-            self.logger.warning(log_msg)
-        # PROTECTED REGION END #    //  CbfController.frequencyOffsetK_write
 
     def read_frequencyOffsetDeltaF(self: CbfController) -> List[int]:
         # PROTECTED REGION ID(CbfController.frequencyOffsetDeltaF_read) ENABLED START #
@@ -516,8 +458,8 @@ class CbfController(SKAController):
             """
             This command sets the Dish ID - VCC ID mapping and k values
 
-            :param argin: the Dish ID - VCC ID mapping and k values in a
-                          json string.
+            :param argin: the Dish ID - VCC ID mapping and frequency offset (k)
+                in a json string.
             :return: A tuple containing a return code and a string
                 message indicating status. The message is for
                 information purpose only.

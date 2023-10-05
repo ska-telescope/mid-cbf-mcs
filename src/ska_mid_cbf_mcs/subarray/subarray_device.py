@@ -163,6 +163,13 @@ class CbfSubarray(CspSubElementSubarray):
         doc="Frequency offset (k) of all 197 receptors as an array of ints.",
     )
 
+    sysParam = attribute(
+        dtype=("str",),
+        access=AttrWriteType.READ_WRITE,
+        label="sys_param",
+        doc="the Dish ID - VCC ID mapping and frequency offset (k) in a json string",
+    )
+
     simulationMode = attribute(
         dtype=SimulationMode,
         access=AttrWriteType.READ_WRITE,
@@ -431,6 +438,28 @@ class CbfSubarray(CspSubElementSubarray):
         """Set frequencyOffsetK attribute"""
         self.component_manager.frequency_offset_k = value
         # PROTECTED REGION END #    //  CbfController.frequencyOffsetK_write
+
+    def read_sysParam(self: CbfSubarray) -> str:
+        # PROTECTED REGION ID(CbfSubarray.receptors_read) ENABLED START #
+        """
+        Return list of receptors assigned to subarray
+
+        :return: the list of receptors
+        :rtype: List[str]
+        """
+        return self.component_manager.sys_param_str
+        # PROTECTED REGION END #    //  CbfSubarray.receptors_read
+
+    def write_sysParam(self: CbfSubarray, value: str) -> None:
+        # PROTECTED REGION ID(CbfSubarray.receptors_write) ENABLED START #
+        """
+        Set receptors of this array to the input value.
+        Input should be an array of int
+
+        :param value: the list of receptors
+        """
+        self.component_manager.update_sys_param(value)
+        # PROTECTED REGION END #    //  CbfSubarray.receptors_write
 
     # --------
     # Commands
