@@ -482,13 +482,6 @@ class ControllerComponentManager(CbfComponentManager):
             (result_code, message) = (ResultCode.OK, [])
             # Check if CBF Controller is on
             if self._on:
-                # HPS master shutdown
-                # TODO parameterize?
-                result = self._talondx_component_manager.shutdown(3)
-                if result == ResultCode.FAILED:
-                    message = "HPS Master shutdown failed."
-                    return (ResultCode.FAILED, message)
-
                 if (
                     self._talondx_component_manager.simulation_mode
                     == SimulationMode.FALSE
@@ -682,9 +675,20 @@ class ControllerComponentManager(CbfComponentManager):
                     # On/Off commands, rather TurnOn/OffOutlet commands to
                     # target specific outlets
                     if fqdn not in self._fqdn_power_switch:
-                        state = proxy.State()
-                        if state != tango.DevState.OFF:
-                            op_state_error_list.append([fqdn, state])
+                        if proxy.State() != tango.DevState.OFF:
+                            # TODO parameterize?
+                            off_fault = True
+                            for _ in range(4):
+                                if proxy.State() != tango.DevState.OFF:
+                                    sleep(1)
+                                else:
+                                    off_fault = False
+                                    break
+                            if off_fault:
+                                #  append error if timed out waiting for device OFF
+                                op_state_error_list.append(
+                                    [fqdn, proxy.State()]
+                                )
 
                     if fqdn in self._fqdn_subarray:
                         obs_state = proxy.obsState
@@ -695,6 +699,13 @@ class ControllerComponentManager(CbfComponentManager):
                         obs_state = proxy.obsState
                         if obs_state != ObsState.IDLE:
                             obs_state_error_list.append((fqdn, obs_state))
+
+                # HPS master shutdown
+                # TODO parametrize?
+                result = self._talondx_component_manager.shutdown(3)
+                if result == ResultCode.FAILED:
+                    message = "HPS Master shutdown failed."
+                    return (ResultCode.FAILED, message)
 
                 if len(op_state_error_list) > 0:
                     for fqdn, state in op_state_error_list:

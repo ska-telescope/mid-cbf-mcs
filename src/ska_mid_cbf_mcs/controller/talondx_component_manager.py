@@ -99,35 +99,39 @@ class TalonDxComponentManager:
             ]
             results = [f.result() for f in futures]
 
-        if any(r == ResultCode.FAILED for r in results):
+        if any(r[1] == ResultCode.FAILED for r in results):
+            self.logger.error(f"Talon configure thread results: {results}")
             return ResultCode.FAILED
 
         return ResultCode.OK
 
     def _configure_talon_thread(
         self: TalonDxComponentManager, talon_cfg
-    ) -> ResultCode:
+    ) -> tuple(ResultCode, str):
         if self._configure_talon_networking(talon_cfg) == ResultCode.FAILED:
-            return ResultCode.FAILED
+            return (ResultCode.FAILED, "_configure_talon_networking FAILED")
 
         if self._copy_binaries_and_bitstream(talon_cfg) == ResultCode.FAILED:
-            return ResultCode.FAILED
+            return (ResultCode.FAILED, "_copy_binaries_and_bitstream FAILED")
 
         if self._start_hps_master(talon_cfg) == ResultCode.FAILED:
-            return ResultCode.FAILED
+            return (ResultCode.FAILED, "_start_hps_master FAILED")
 
         if (
             self._create_hps_master_device_proxies(talon_cfg)
             == ResultCode.FAILED
         ):
-            return ResultCode.FAILED
+            return (
+                ResultCode.FAILED,
+                "_create_hps_master_device_proxies FAILED",
+            )
 
         if self._configure_hps_master(talon_cfg) == ResultCode.FAILED:
-            return ResultCode.FAILED
+            return (ResultCode.FAILED, "_configure_hps_master FAILED")
 
         target = talon_cfg["target"]
         self.logger.info(f"Completed configuring talon board {target}")
-        return ResultCode.OK
+        return (ResultCode.OK, "_configure_talon_thread completed OK")
 
     def _setup_tango_host_file(
         self: TalonDxComponentManager,
@@ -523,5 +527,6 @@ class TalonDxComponentManager:
                             f"Exception while sending shutdown command"
                             f" to {hps_master_fqdn} device: {str(item.reason)}"
                         )
-                    ret = ResultCode.FAILED
+                    # TODO: determine behaviour here; the shutdown command will
+                    # inevitably throw an exception, as the device is shut off
         return ret
