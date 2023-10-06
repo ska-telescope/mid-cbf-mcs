@@ -514,13 +514,13 @@ class FspPssSubarray(CspSubElementObsDevice):
         """
 
         def do(
-            self: FspPssSubarray.ScanCommand, argin: str
+            self: FspPssSubarray.ScanCommand, argin: int
         ) -> Tuple[ResultCode, str]:
             """
             Stateless hook for Scan() command functionality.
 
             :param argin: The scan ID
-            :type argin: str
+            :type argin: int
 
             :return: A tuple containing a return code and a string
                 message indicating status. The message is for
@@ -533,7 +533,7 @@ class FspPssSubarray(CspSubElementObsDevice):
 
             device = self.target
 
-            (result_code, message) = device.component_manager.scan(int(argin))
+            (result_code, message) = device.component_manager.scan(argin)
 
             if result_code == ResultCode.OK:
                 device._component_scanning(True)

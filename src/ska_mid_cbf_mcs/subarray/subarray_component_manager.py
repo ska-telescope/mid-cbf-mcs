@@ -2111,7 +2111,7 @@ class CbfSubarrayComponentManager(
         scan_id = argin["scan_id"]
         try:
             data = tango.DeviceData()
-            data.insert(tango.DevString, scan_id)
+            data.insert(tango.DevShort, scan_id)
             self._group_vcc.command_inout("Scan", data)
             self._group_fsp_corr_subarray.command_inout("Scan", data)
             self._group_fsp_pss_subarray.command_inout("Scan", data)
@@ -2121,7 +2121,7 @@ class CbfSubarrayComponentManager(
             self._component_obs_fault_callback(True)
             return (ResultCode.FAILED, msg)
 
-        self._scan_id = int(scan_id)
+        self._scan_id = scan_id
         self._component_scanning_callback(True)
         return (ResultCode.STARTED, "Scan command successful")
 
