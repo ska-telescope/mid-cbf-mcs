@@ -18,11 +18,12 @@ from __future__ import annotations  # allow forward references in type hints
 
 from typing import List, Optional, Tuple
 
+import tango
 from ska_tango_base import SKABaseDevice, SKAController
 from ska_tango_base.commands import ResponseCommand, ResultCode
 from ska_tango_base.control_model import PowerMode, SimulationMode
-from tango import AttrWriteType, DevState
-from tango.server import attribute, device_property, run
+from tango import AttrWriteType, DebugIt, DevState
+from tango.server import attribute, command, device_property, run
 
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
 from ska_mid_cbf_mcs.controller.controller_component_manager import (
@@ -475,6 +476,22 @@ class CbfController(SKAController):
                 self.logger.error(message)
 
             return (result_code, message)
+
+    @command(
+        dtype_in="DevString",
+        doc_in="the Dish ID - VCC ID mapping and frequency offset (k) in a json string",
+        dtype_out="DevVarLongStringArray",
+        doc_out="Tuple containing a return code and a string message indicating the status of the command.",
+    )
+    @DebugIt()
+    def InitSysParam(
+        self: CbfController, argin: str
+    ) -> tango.DevVarLongStringArray:
+        # PROTECTED REGION ID(CbfController.InitSysParam) ENABLED START #
+        handler = self.get_command_object("InitSysParam")
+        return_code, message = handler(argin)
+        return [[return_code], [message]]
+        # PROTECTED REGION END #    //  CbfController.InitSysParam
 
     # ----------
     # Callbacks
