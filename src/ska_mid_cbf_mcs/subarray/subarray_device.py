@@ -164,7 +164,7 @@ class CbfSubarray(CspSubElementSubarray):
     )
 
     sysParam = attribute(
-        dtype=("str",),
+        dtype="str",
         access=AttrWriteType.READ_WRITE,
         label="sys_param",
         doc="the Dish ID - VCC ID mapping and frequency offset (k) in a json string",
@@ -448,7 +448,7 @@ class CbfSubarray(CspSubElementSubarray):
         :return: the list of receptors
         :rtype: List[str]
         """
-        return self.component_manager.sys_param_str
+        return self.component_manager._sys_param_str
         # PROTECTED REGION END #    //  CbfSubarray.receptors_read
 
     def write_sysParam(self: CbfSubarray, value: str) -> None:

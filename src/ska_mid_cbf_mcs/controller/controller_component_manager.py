@@ -116,8 +116,7 @@ class ControllerComponentManager(CbfComponentManager):
         self._get_max_capabilities = get_num_capabilities
 
         self._sys_param = ""
-        self._vcc_to_receptor = {}
-        self._receptor_to_frequency_offset_k = {}
+        self._receptor_utils = None
 
         # TODO: component manager should not be passed into component manager ?
         self._talondx_component_manager = talondx_component_manager
@@ -569,26 +568,30 @@ class ControllerComponentManager(CbfComponentManager):
                 information purpose only.
         :rtype: (ResultCode, str)
         """
+        self._logger.info(f"Received sys params {params}")
+
         if not self._check_sys_param_schemas(params):
             return (
                 ResultCode.FAILED,
                 "Failed to validate against json schema",
             )
 
+        self._logger.info("Validated sys params against json schemas")
+
         sys_param = json.loads(params)
-        status, msg = self._validate_sys_param(sys_param)
-        if status is not ResultCode.OK:
-            return (status, msg)
 
         # store the attribute
         self._sys_param = params
-        dish_dict = sys_param["dish_parameters"]
-        for dish_id, v in dish_dict.items():
-            self._vcc_to_receptor[int(v["vcc"])] = dish_id
-            self._receptor_to_frequency_offset_k[dish_id] = int(v["k"])
+        self._receptor_utils = ReceptorUtils(sys_param)
 
         # send sys params to the subarrays
-        self._update_sys_param(params)
+        try:
+            self._update_sys_param(params)
+        except tango.DevFailed as e:
+            self._logger.error(e)
+            return (False, "Failed to update subarrays with sys params")
+
+        self._logger.info("Updated subarrays with sys params")
 
         return (
             ResultCode.OK,
@@ -662,12 +665,13 @@ class ControllerComponentManager(CbfComponentManager):
             proxy = self._proxies[fqdn]
             try:
                 vcc_id = int(proxy.get_property("VccID")["VccID"][0])
-                rec_id = self._vcc_to_receptor[vcc_id]
+                rec_id = self._receptor_utils.vcc_id_to_receptor_id[vcc_id]
+                rec_id_int = self._receptor_utils.receptor_id_to_int[rec_id]
                 self._logger.info(
-                    f"Assigning receptor ID {rec_id} to VCC {vcc_id}"
+                    f"Assigning receptor ID {rec_id_int} ({rec_id}) to VCC {vcc_id}"
                 )
-                proxy.receptorID = rec_id
-                proxy.frequencyOffsetK = self._receptor_to_frequency_offset_k[
+                proxy.receptorID = rec_id_int
+                proxy.frequencyOffsetK = self._receptor_utils.receptor_id_to_k[
                     rec_id
                 ]
             except tango.DevFailed as df:

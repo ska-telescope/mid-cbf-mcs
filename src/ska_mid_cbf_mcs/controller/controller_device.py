@@ -85,7 +85,8 @@ class CbfController(SKAController):
     )
 
     sysParam = attribute(
-        dtype=("str",),
+        dtype="str",
+        access=AttrWriteType.READ,
         label="Dish ID to VCC and frequency offset k mapping",
         doc="Maps Dish ID to VCC and frequency offset k. The string is in JSON format.",
     )
