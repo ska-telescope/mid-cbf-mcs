@@ -67,3 +67,27 @@ notebook-test:
 python-gemnasium-scan:
   rules:
     - when: never
+
+deploy-dev-environment:
+  variables:
+    KUBE_NAMESPACE: "ci-dev-$CI_PROJECT_NAME-$CI_PIPELINE_ID"
+  environment:
+    name: ci-dev-$CI_PROJECT_NAME-$CI_PIPELINE_ID
+
+test-dev-environment:
+  variables:
+    KUBE_NAMESPACE: "ci-dev-$CI_PROJECT_NAME-$CI_PIPELINE_ID"
+  environment:
+    name: ci-dev-$CI_PROJECT_NAME-$CI_PIPELINE_ID
+
+info-dev-environment:
+  variables:
+    KUBE_NAMESPACE: "ci-dev-$CI_PROJECT_NAME-$CI_PIPELINE_ID"
+  environment:
+    name: ci-dev-$CI_PROJECT_NAME-$CI_PIPELINE_ID
+
+stop-dev-environment:
+  variables:
+    KUBE_NAMESPACE: "ci-dev-$CI_PROJECT_NAME-$CI_PIPELINE_ID"
+  environment:
+    name: ci-dev-$CI_PROJECT_NAME-$CI_PIPELINE_ID  
