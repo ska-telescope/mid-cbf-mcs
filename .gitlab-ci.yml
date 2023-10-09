@@ -72,22 +72,22 @@ deploy-dev-environment:
   variables:
     KUBE_NAMESPACE: "ci-dev-$CI_PROJECT_NAME-$CI_PIPELINE_ID"
   environment:
-    name: ci-dev-$CI_PROJECT_NAME-$CI_PIPELINE_ID
+    name: ci-dev-$CI_PROJECT_NAME-$CI_COMMIT_REF_NAME
 
 test-dev-environment:
   variables:
     KUBE_NAMESPACE: "ci-dev-$CI_PROJECT_NAME-$CI_PIPELINE_ID"
   environment:
-    name: ci-dev-$CI_PROJECT_NAME-$CI_PIPELINE_ID
+    name: ci-dev-$CI_PROJECT_NAME-$CI_COMMIT_REF_NAME
 
 info-dev-environment:
   variables:
     KUBE_NAMESPACE: "ci-dev-$CI_PROJECT_NAME-$CI_PIPELINE_ID"
   environment:
-    name: ci-dev-$CI_PROJECT_NAME-$CI_PIPELINE_ID
+    name: ci-dev-$CI_PROJECT_NAME-$CI_COMMIT_REF_NAME
 
 stop-dev-environment:
   variables:
     KUBE_NAMESPACE: "ci-dev-$CI_PROJECT_NAME-$CI_PIPELINE_ID"
   environment:
-    name: ci-dev-$CI_PROJECT_NAME-$CI_PIPELINE_ID  
+    name: ci-dev-$CI_PROJECT_NAME-$CI_COMMIT_REF_NAME
