@@ -63,3 +63,7 @@ helm-chart-lint:
 notebook-test:
   rules:
     - when: never
+
+python-gemnasium-scan:
+  rules:
+    - when: never
