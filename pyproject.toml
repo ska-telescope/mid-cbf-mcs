@@ -44,6 +44,7 @@ nbqa = "^1.7.0"
 jupyterhub = "^4.0.2"
 jupyterlab = "^4.0.6"
 notebook = "^7.0.4"
+pylint-junit = "^0.3.2"
 
 [tool.poetry.group.dev.dependencies]
 pytest-pydocstyle = "2.2.0"
