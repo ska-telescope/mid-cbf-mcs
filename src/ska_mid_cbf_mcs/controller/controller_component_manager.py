@@ -14,11 +14,11 @@ from __future__ import annotations
 import json
 import logging
 import os
-from time import sleep
 from typing import Callable, Dict, List, Optional, Tuple
 
 import tango
 import yaml
+from polling2 import poll
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import (
     AdminMode,
@@ -514,125 +514,105 @@ class ControllerComponentManager(CbfComponentManager):
                     # use a hard-coded example fqdn talon lru for simulation mode
                     self._fqdn_talon_lru = ["mid_csp_cbf/talon_lru/001"]
 
-                self._logger.info(f"Turning off LRUs: {self._fqdn_talon_lru}")
-                for fqdn in self._fqdn_talon_lru:
-                    try:
-                        self._proxies[fqdn].Off()
-                        # wait for LRU to return to OFF state
-                        if self._proxies[fqdn].State() != tango.DevState.OFF:
-                            # TODO parameterize?
-                            stuck = True
-                            for _ in range(4):
-                                if (
-                                    self._proxies[fqdn].State()
-                                    != tango.DevState.OFF
-                                ):
-                                    sleep(1)
-                                else:
-                                    stuck = False
-                                    break
-                            if stuck:
-                                # raise exception if timed out waiting for OFF
-                                raise tango.DevFailed()  # TODO
-                    except tango.DevFailed as df:
-                        for item in df.args:
-                            log_msg = f"Failed to power off Talon boards; {item.reason}"
-                            self._logger.error(log_msg)
-                            message.append(log_msg)
-                        result_code = ResultCode.FAILED
+                # Turn off all the LRUs currently in use
+                lru_off_status, log_msg = self._turn_off_lrus()
+                if not lru_off_status:
+                    return (ResultCode.FAILED, log_msg)
 
                 # reset subarray observing state to EMPTY
-                for fqdn in self._fqdn_subarray:
+                for subarray in [
+                    self._proxies[fqdn] for fqdn in self._fqdn_subarray
+                ]:
                     try:
                         # first check if subarray is in the middle of RESOURCING/RESTARTING, as it may return to EMPTY
-                        if self._proxies[fqdn].obsState in [
+                        if subarray.obsState in [
                             ObsState.RESOURCING,
                             ObsState.RESTARTING,
                         ]:
-                            # TODO parameterize?
-                            stuck = True
-                            for _ in range(4):
-                                if self._proxies[fqdn].obsState in [
-                                    ObsState.RESOURCING,
-                                    ObsState.RESTARTING,
-                                ]:
-                                    sleep(1)
-                                else:
-                                    stuck = False
-                                    break
-                            if stuck:
+                            try:
+                                poll(
+                                    lambda: subarray.obsState
+                                    not in [
+                                        ObsState.RESOURCING,
+                                        ObsState.RESTARTING,
+                                    ],
+                                    timeout=4,
+                                    step=0.5,
+                                )
+                            except TimeoutError:
                                 # raise exception if timed out waiting to exit RESOURCING/RESTARTING
-                                raise tango.DevFailed()  # TODO
+                                log_msg = f"Failed to restart {subarray}, currently in {subarray.obsState}"
+                                self._logger.error(log_msg)
+                                message.append(log_msg)
+                                raise TimeoutError()
 
                         # if subarray not in EMPTY then we need to ABORT and RESTART
-                        if self._proxies[fqdn].obsState != ObsState.EMPTY:
+                        if subarray.obsState != ObsState.EMPTY:
                             # if subarray is in the middle of ABORTING/RESETTING, wait before issuing RESTART/ABORT
-                            if self._proxies[fqdn].obsState in [
+                            if subarray.obsState in [
                                 ObsState.ABORTING,
                                 ObsState.RESETTING,
                             ]:
-                                # TODO parameterize?
-                                stuck = True
-                                for _ in range(4):
-                                    if self._proxies[fqdn].obsState in [
-                                        ObsState.ABORTING,
-                                        ObsState.RESETTING,
-                                    ]:
-                                        sleep(1)
-                                    else:
-                                        stuck = False
-                                        break
-                                if stuck:
-                                    #  raise exception if timed out waiting to exit ABORTING/RESETTING
-                                    raise tango.DevFailed()  # TODO
+                                try:
+                                    poll(
+                                        lambda: subarray.obsState
+                                        not in [
+                                            ObsState.ABORTING,
+                                            ObsState.RESETTING,
+                                        ],
+                                        timeout=4,
+                                        step=0.5,
+                                    )
+                                except TimeoutError:
+                                    # raise exception if timed out waiting to exit ABORTING/RESETTING
+                                    log_msg = f"Failed to restart {subarray}, currently in {subarray.obsState}"
+                                    self._logger.error(log_msg)
+                                    message.append(log_msg)
+                                    raise TimeoutError()
 
                             # if subarray not yet in FAULT/ABORTED, issue Abort command to enable Restart
-                            if self._proxies[fqdn].obsState not in [
+                            if subarray.obsState not in [
                                 ObsState.FAULT,
                                 ObsState.ABORTED,
                             ]:
-                                self._proxies[fqdn].Abort()
-                                if (
-                                    self._proxies[fqdn].obsState
-                                    != ObsState.ABORTED
-                                ):
-                                    # TODO parameterize?
-                                    stuck = True
-                                    for _ in range(4):
-                                        if (
-                                            self._proxies[fqdn].obsState
-                                            != ObsState.ABORTED
-                                        ):
-                                            sleep(1)
-                                        else:
-                                            stuck = False
-                                            break
-                                    if stuck:
-                                        #  raise exception if timed out waiting to exit ABORTING
-                                        raise tango.DevFailed()  # TODO
+                                subarray.Abort()
+                                if subarray.obsState != ObsState.ABORTED:
+                                    try:
+                                        poll(
+                                            lambda: subarray.obsState
+                                            == ObsState.ABORTED,
+                                            timeout=4,
+                                            step=0.5,
+                                        )
+                                    except TimeoutError:
+                                        # raise exception if timed out waiting to exit ABORTING
+                                        log_msg = f"Failed to restart {subarray}, currently in {subarray.obsState}"
+                                        self._logger.error(log_msg)
+                                        message.append(log_msg)
+                                        raise TimeoutError()
 
                             # finally, subarray may be restarted to EMPTY
-                            self._proxies[fqdn].Restart()
-                            if self._proxies[fqdn].obsState != ObsState.EMPTY:
-                                # TODO parameterize?
-                                stuck = True
-                                for _ in range(4):
-                                    if (
-                                        self._proxies[fqdn].obsState
-                                        != ObsState.EMPTY
-                                    ):
-                                        sleep(1)
-                                    else:
-                                        stuck = False
-                                        break
-                                if stuck:
-                                    #  raise exception if timed out waiting to exit ABORTING
-                                    raise tango.DevFailed()  # TODO
-
+                            subarray.Restart()
+                            if subarray.obsState != ObsState.EMPTY:
+                                try:
+                                    poll(
+                                        lambda: subarray.obsState
+                                        == ObsState.EMPTY,
+                                        timeout=4,
+                                        step=0.5,
+                                    )
+                                except TimeoutError:
+                                    # raise exception if timed out waiting to exit RESTARTING
+                                    log_msg = f"Failed to restart {subarray}, currently in {subarray.obsState}"
+                                    self._logger.error(log_msg)
+                                    message.append(log_msg)
+                                    raise TimeoutError()
+                    except TimeoutError:
+                        result_code = ResultCode.FAILED
                     except tango.DevFailed as df:
                         for item in df.args:
                             log_msg = (
-                                f"Failed to restart {fqdn}; {item.reason}"
+                                f"Failed to restart {subarray}; {item.reason}"
                             )
                             self._logger.error(log_msg)
                             message.append(log_msg)
@@ -675,16 +655,15 @@ class ControllerComponentManager(CbfComponentManager):
                     # target specific outlets
                     if fqdn not in self._fqdn_power_switch:
                         if proxy.State() != tango.DevState.OFF:
-                            # TODO parameterize?
-                            off_fault = True
-                            for _ in range(4):
-                                if proxy.State() != tango.DevState.OFF:
-                                    sleep(1)
-                                else:
-                                    off_fault = False
-                                    break
-                            if off_fault:
-                                #  append error if timed out waiting for device OFF
+                            try:
+                                poll(
+                                    lambda: proxy.State()
+                                    == tango.DevState.OFF,
+                                    timeout=4,
+                                    step=0.5,
+                                )
+                            except TimeoutError:
+                                # append error if timed out waiting for device OFF
                                 op_state_error_list.append(
                                     [fqdn, proxy.State()]
                                 )
@@ -826,3 +805,33 @@ class ControllerComponentManager(CbfComponentManager):
                 failed_lrus.append(fqdn)
                 out_status = False
         return (out_status, f"Failed to power on Talon LRUs: {failed_lrus}")
+
+    def _lru_off(self, proxy, lru_fqdn) -> (bool, str):
+        try:
+            self._logger.info(f"Turning off LRU {lru_fqdn}")
+            proxy.Off()
+        except tango.DevFailed as e:
+            self._logger.error(e)
+            return (False, lru_fqdn)
+
+        self._logger.info(f"LRU successfully turned off: {lru_fqdn}")
+        return (True, None)
+
+    def _turn_off_lrus(
+        self: ControllerComponentManager,
+    ) -> (bool, str):
+        results = [
+            self._lru_off(
+                self._proxies[fqdn],
+                fqdn,
+            )
+            for fqdn in self._fqdn_talon_lru
+        ]
+
+        failed_lrus = []
+        out_status = True
+        for status, fqdn in results:
+            if not status:
+                failed_lrus.append(fqdn)
+                out_status = False
+        return (out_status, f"Failed to power off Talon LRUs: {failed_lrus}")
