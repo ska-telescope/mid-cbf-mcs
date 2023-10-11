@@ -183,7 +183,7 @@ class TestVcc:
         self.test_Vcc_ConfigureScan(device_under_test, config_file_name)
 
         scan_id_device_data = tango.DeviceData()
-        scan_id_device_data.insert(tango.DevString, str(scan_id))
+        scan_id_device_data.insert(tango.DevShort, scan_id)
 
         # Use callable 'Scan'  API
         (result_code, _) = device_under_test.Scan(scan_id_device_data)
@@ -272,7 +272,7 @@ class TestVcc:
 
         # rescanning
         scan_id_device_data = tango.DeviceData()
-        scan_id_device_data.insert(tango.DevString, str(scan_id))
+        scan_id_device_data.insert(tango.DevShort, scan_id)
 
         (result_code, _) = device_under_test.Scan(scan_id_device_data)
         assert result_code == ResultCode.STARTED

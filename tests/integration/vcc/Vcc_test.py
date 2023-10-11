@@ -17,7 +17,7 @@ import time
 
 import pytest
 from ska_tango_base.control_model import AdminMode, LoggingLevel, ObsState
-from tango import DeviceData, DevState, DevString
+from tango import DeviceData, DevState, DevShort
 
 from ska_mid_cbf_mcs.commons.global_enum import freq_band_dict
 
@@ -243,13 +243,13 @@ class TestVcc:
     @pytest.mark.parametrize(
         "vcc_id, \
         scan_id",
-        [(1, "1")],
+        [(1, 1)],
     )
     def test_Scan(
         self: TestVcc,
         test_proxies: pytest.fixture,
         vcc_id: int,
-        scan_id: str,
+        scan_id: int,
     ) -> None:
         """
         Test the "Scan" command
@@ -271,7 +271,7 @@ class TestVcc:
         assert device_under_test.State() == DevState.ON
 
         scan_id_device_data = DeviceData()
-        scan_id_device_data.insert(DevString, scan_id)
+        scan_id_device_data.insert(DevShort, scan_id)
 
         device_under_test.Scan(scan_id_device_data)
 
@@ -280,7 +280,7 @@ class TestVcc:
         )
         assert device_under_test.obsState == ObsState.SCANNING
 
-        assert device_under_test.scanID == int(scan_id)
+        assert device_under_test.scanID == scan_id
 
     @pytest.mark.parametrize(
         "vcc_id",

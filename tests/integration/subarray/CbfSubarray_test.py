@@ -2305,7 +2305,7 @@ class TestCbfSubarray:
                 sleep_time_s,
             )
 
-            scan_id = int(scan_configuration["scan_id"])
+            scan_id = scan_configuration["scan_id"]
 
             # check scanID on VCC and FSP
             for fsp in configuration["cbf"]["fsp"]:
@@ -2594,9 +2594,7 @@ class TestCbfSubarray:
                 sleep_time_s,
             )
             assert test_proxies.subarray[sub_id].obsState == ObsState.SCANNING
-            assert test_proxies.subarray[sub_id].scanID == int(
-                scan_configuration["scan_id"]
-            )
+            assert test_proxies.subarray[sub_id].scanID == scan_configuration["scan_id"]
             for fsp in configuration["cbf"]["fsp"]:
                 fsp_id = int(fsp["fsp_id"])
                 assert (
@@ -2916,9 +2914,7 @@ class TestCbfSubarray:
                 sleep_time_s,
             )
             assert test_proxies.subarray[sub_id].obsState == ObsState.SCANNING
-            assert test_proxies.subarray[sub_id].scanID == int(
-                scan_configuration["scan_id"]
-            )
+            assert test_proxies.subarray[sub_id].scanID == scan_configuration["scan_id"]
             for fsp in configuration["cbf"]["fsp"]:
                 fsp_id = int(fsp["fsp_id"])
                 assert (

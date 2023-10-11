@@ -258,7 +258,7 @@ class TestFspPstSubarray:
 
         scan_id = 1
         scan_id_device_data = tango.DeviceData()
-        scan_id_device_data.insert(tango.DevString, str(scan_id))
+        scan_id_device_data.insert(tango.DevShort, scan_id)
 
         device_under_test.Scan(scan_id_device_data)
 
