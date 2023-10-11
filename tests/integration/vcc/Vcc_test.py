@@ -17,7 +17,7 @@ import time
 
 import pytest
 from ska_tango_base.control_model import AdminMode, LoggingLevel, ObsState
-from tango import DeviceData, DevState, DevShort
+from tango import DeviceData, DevShort, DevState
 
 from ska_mid_cbf_mcs.commons.global_enum import freq_band_dict
 
