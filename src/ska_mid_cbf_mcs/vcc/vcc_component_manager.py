@@ -43,6 +43,9 @@ __all__ = ["VccComponentManager"]
 
 VCC_PARAM_PATH = "mnt/vcc_param/"
 
+BASE_TRANSPORT_SAMPLE_RATE_BAND_1_2_MSPS = 3960
+NUM_SAMPLES_PER_FRAME = 18
+
 
 class VccComponentManager(CbfComponentManager, CspObsComponentManager):
     """Component manager for Vcc class."""
@@ -140,66 +143,6 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         :param frequency_offset_delta_f: Frequency offset delta-f value
         """
         self._frequency_offset_delta_f = frequency_offset_delta_f
-    
-    @property
-    def sample_rate(self: VccComponentManager) -> int:
-        """
-        Sample rate for this receptor
-
-        :return: the sample rate
-        """
-        return self._sample_rate
-
-    @sample_rate.setter
-    def sample_rate(
-        self: VccComponentManager, sample_rate: int
-    ) -> None:
-        """
-        Set the sample rate.
-
-        :param sample_rate: Sample rate
-        """
-        self._sample_rate = sample_rate
-
-    @property
-    def frame_rate(self: VccComponentManager) -> int:
-        """
-        Frame rate for this receptor; number of frames per second
-
-        :return: the frame rate value
-        """
-        return self._frame_rate
-
-    @frame_rate.setter
-    def frame_rate(
-        self: VccComponentManager, frame_rate: int
-    ) -> None:
-        """
-        Set the frame rate value.
-
-        :param frame_rate: Frame rate value
-        """
-        self._frame_rate = frame_rate
-        
-    @property
-    def stream_rate(self: VccComponentManager) -> int:
-        """
-        Stream rate for this receptor.
-
-        :return: the stream rate value
-        """
-        return self._stream_rate
-
-    @stream_rate.setter
-    def stream_rate(
-        self: VccComponentManager, stream_rate: int
-    ) -> None:
-        """
-        Set the stream rate value.
-
-        :param stream_rate: Stream rate value
-        """
-        self._stream_rate = stream_rate
 
     @property
     def frequency_band(self: VccComponentManager) -> int:
@@ -326,9 +269,6 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         self._receptor_id = 0
         self._frequency_offset_k = 0
         self._frequency_offset_delta_f = 0
-        self._sample_rate = 0
-        self._frame_rate = 0
-        self._stream_rate = 0
 
         self._scan_id = 0
         self._config_id = ""
@@ -504,12 +444,16 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         Initialize the set of parameters in the VCC Controller device that
         are common to all bands and will not change during scan configuration.
         """
+        # Calculate sample, frame, and stream rates from deltaF and K
+        sample_rate = ( BASE_TRANSPORT_SAMPLE_RATE_BAND_1_2_MSPS * 1000000 + 
+                        self._frequency_offset_k * self._frequency_offset_delta_f )
+        frame_rate = round( sample_rate / NUM_SAMPLES_PER_FRAME )
+        stream_rate = (3.96e9 + self._frequency_offset_k * 1800) / NUM_SAMPLES_PER_FRAME
+        
         param_init = {
-            "frequency_offset_k": self._frequency_offset_k,
-            "frequency_offset_delta_f": self._frequency_offset_delta_f,
-            "sample_rate": self._sample_rate,
-            "frame_rate": self._frame_rate,
-            "stream_rate": self._stream_rate,
+            "sample_rate": sample_rate,
+            "frame_rate": frame_rate,
+            "stream_rate": stream_rate,
         }
 
         if self._simulation_mode:
