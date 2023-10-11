@@ -63,7 +63,9 @@ class TestCbfController:
     ) -> None:
         assert device_under_test.adminMode == AdminMode.OFFLINE
 
-    @pytest.mark.parametrize("command", ["On", "Off", "Standby", "InitSysParam"])
+    @pytest.mark.parametrize(
+        "command", ["On", "Off", "Standby", "InitSysParam"]
+    )
     def test_Commands(
         self: TestCbfController,
         device_under_test: CbfDeviceProxy,
@@ -93,8 +95,8 @@ class TestCbfController:
             expected_state = DevState.STANDBY
             result = device_under_test.Standby()
         elif command == "InitSysParam":
-            expected_state = device_under_test.State() # no change expected
-            s = '''{
+            expected_state = device_under_test.State()  # no change expected
+            s = """{
     "interface": "https://schema.skao.int/ska-mid-cbf-initial-parameters/2.2",
     "dish_parameters": {
         "SKA001": {
@@ -114,7 +116,7 @@ class TestCbfController:
             "k"  : 620
         }
     }
-}'''
+}"""
             result = device_under_test.InitSysParam(s)
 
         time.sleep(CONST_WAIT_TIME)
