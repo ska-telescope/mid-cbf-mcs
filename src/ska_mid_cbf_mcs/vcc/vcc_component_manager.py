@@ -102,44 +102,64 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         self._receptor_id = receptor_id
 
     @property
-    def frequency_offset_k(self: VccComponentManager) -> int:
+    def sample_rate(self: VccComponentManager) -> int:
         """
-        Frequency Offset K-value for this receptor
+        Sample rate for this receptor
 
-        :return: the frequency offset k-value
+        :return: the sample rate
         """
-        return self._frequency_offset_k
+        return self._sample_rate
 
-    @frequency_offset_k.setter
-    def frequency_offset_k(
-        self: VccComponentManager, frequency_offset_k: int
+    @sample_rate.setter
+    def sample_rate(
+        self: VccComponentManager, sample_rate: int
     ) -> None:
         """
-        Set the frequency offset k-value.
+        Set the sample rate.
 
-        :param frequency_offset_k: Frequency offset k-value
+        :param sample_rate: Sample rate
         """
-        self._frequency_offset_k = frequency_offset_k
+        self._sample_rate = sample_rate
 
     @property
-    def frequency_offset_delta_f(self: VccComponentManager) -> int:
+    def frame_rate(self: VccComponentManager) -> int:
         """
-        Frequency Offset Delta-F Value for this receptor
+        Frame rate for this receptor; number of frames per second
 
-        :return: the frequency offset delta-f value
+        :return: the frame rate value
         """
-        return self._frequency_offset_delta_f
+        return self._frame_rate
 
-    @frequency_offset_delta_f.setter
-    def frequency_offset_delta_f(
-        self: VccComponentManager, frequency_offset_delta_f: int
+    @frame_rate.setter
+    def frame_rate(
+        self: VccComponentManager, frame_rate: int
     ) -> None:
         """
-        Set the frequency offset delta-f value.
+        Set the frame rate value.
 
-        :param frequency_offset_delta_f: Frequency offset delta-f value
+        :param frame_rate: Frame rate value
         """
-        self._frequency_offset_delta_f = frequency_offset_delta_f
+        self._frame_rate = frame_rate
+        
+    @property
+    def stream_rate(self: VccComponentManager) -> int:
+        """
+        Stream rate for this receptor.
+
+        :return: the stream rate value
+        """
+        return self._stream_rate
+
+    @stream_rate.setter
+    def stream_rate(
+        self: VccComponentManager, stream_rate: int
+    ) -> None:
+        """
+        Set the stream rate value.
+
+        :param stream_rate: Stream rate value
+        """
+        self._stream_rate = stream_rate
 
     @property
     def frequency_band(self: VccComponentManager) -> int:
@@ -264,8 +284,9 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
 
         # Initialize attribute values
         self._receptor_id = 0
-        self._frequency_offset_k = 0
-        self._frequency_offset_delta_f = 0
+        self._sample_rate = 0
+        self._frame_rate = 0
+        self._stream_rate = 0
 
         self._scan_id = 0
         self._config_id = ""
@@ -442,8 +463,9 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         are common to all bands and will not change during scan configuration.
         """
         param_init = {
-            "frequency_offset_k": self._frequency_offset_k,
-            "frequency_offset_delta_f": self._frequency_offset_delta_f,
+            "sample_rate": self._sample_rate,
+            "frame_rate": self._frame_rate,
+            "stream_rate": self._stream_rate,
         }
 
         if self._simulation_mode:

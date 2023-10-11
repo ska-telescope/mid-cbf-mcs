@@ -57,20 +57,26 @@ class VccControllerSimulator:
 
         self._state = tango.DevState.INIT
 
-        self._frequency_offset_k = 0
-        self._frequency_offset_delta_f = 0
+        self._sample_rate = 0
+        self._frame_rate = 0
+        self._stream_rate = 0
         self._frequency_band = 0
 
     # Properties that match the Tango attributes in the band devices
     @property
-    def frequencyOffsetK(self) -> List[float]:
-        """Return the frequency offset K attribute."""
-        return self._frequency_offset_k
+    def sample_rate(self) -> List[float]:
+        """Return the sample rate attribute."""
+        return self._sample_rate
 
     @property
-    def frequencyOffsetDeltaF(self) -> List[float]:
-        """Return the frequency offset delta_f attribute."""
-        return self._frequency_offset_delta_f
+    def frame_rate(self) -> List[float]:
+        """Return the frame rate attribute."""
+        return self._frame_rate
+    
+    @property
+    def stream_rate(self) -> List[float]:
+        """Return the stream rate attribute."""
+        return self._stream_rate
 
     @property
     def frequencyBand(self) -> int:
@@ -93,8 +99,9 @@ class VccControllerSimulator:
         :param json_str: JSON-formatted string containing the parameters
         """
         params = json.loads(json_str)
-        self._frequency_offset_k = params["frequency_offset_k"]
-        self._frequency_offset_delta_f = params["frequency_offset_delta_f"]
+        self._sample_rate = params["sample_rate"]
+        self._frame_rate = params["frame_rate"]
+        self._stream_rate = params["stream_rate"]
 
         # Initialize the band devices
         for band_device in self._band_devices:

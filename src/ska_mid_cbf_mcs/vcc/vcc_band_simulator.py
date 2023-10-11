@@ -46,8 +46,9 @@ class VccBandSimulator:
         self._state = tango.DevState.INIT
         self._obs_state = ObsState.IDLE
 
-        self._frequency_offset_k = 0
-        self._frequency_offset_delta_f = 0
+        self._sample_rate = 0
+        self._frame_rate = 0
+        self._stream_rate = 0
         self._vcc_gain = []
 
         self._config_id = ""
@@ -65,14 +66,19 @@ class VccBandSimulator:
         return self._obs_state
 
     @property
-    def frequencyOffsetK(self) -> List[float]:
-        """Return the frequency offset K attribute."""
-        return self._frequency_offset_k
+    def sample_rate(self) -> List[float]:
+        """Return the sample rate attribute."""
+        return self._sample_rate
 
     @property
-    def frequencyOffsetDeltaF(self) -> List[float]:
-        """Return the frequency offset delta_f attribute."""
-        return self._frequency_offset_delta_f
+    def frame_rate(self) -> List[float]:
+        """Return the frame rate attribute."""
+        return self._frame_rate
+    
+    @property
+    def stream_rate(self) -> List[float]:
+        """Return the stream rate attribute."""
+        return self._stream_rate
 
     @property
     def vccGain(self) -> List[float]:
@@ -121,8 +127,9 @@ class VccBandSimulator:
         :param json_str: JSON-formatted string containing the parameters
         """
         params = json.loads(json_str)
-        self._frequency_offset_k = params["frequency_offset_k"]
-        self._frequency_offset_delta_f = params["frequency_offset_delta_f"]
+        self._sample_rate = params["sample_rate"]
+        self._frame_rate = params["frame_rate"]
+        self._stream_rate = params["stream_rate"]
         self._state = tango.DevState.DISABLE
 
     def SetInternalParameters(self: VccBandSimulator, json_str: str) -> None:

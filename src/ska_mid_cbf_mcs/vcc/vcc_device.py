@@ -84,18 +84,25 @@ class Vcc(CspSubElementObsDevice):
         doc="Subarray membership",
     )
 
-    frequencyOffsetK = attribute(
+    sampleRate = attribute(
         dtype="int",
         access=AttrWriteType.READ_WRITE,
-        label="Frequency offset (k)",
-        doc="Frequency offset (k) of this receptor",
+        label="Sample rate",
+        doc="Sample rate of this receptor",
     )
-
-    frequencyOffsetDeltaF = attribute(
+    
+    frameRate = attribute(
         dtype="int",
         access=AttrWriteType.READ_WRITE,
-        label="Frequency offset (delta f)",
-        doc="Frequency offset (delta f) of this receptor",
+        label="Frame rate",
+        doc="Frame rate of this receptor",
+    )
+    
+    streamRate = attribute(
+        dtype="int",
+        access=AttrWriteType.READ_WRITE,
+        label="Stream rate",
+        doc="Stream rate of this receptor",
     )
 
     frequencyBand = attribute(
@@ -417,48 +424,69 @@ class Vcc(CspSubElementObsDevice):
         self.push_change_event("subarrayMembership", value)
         self.component_manager.deconfigure()
         # PROTECTED REGION END #    //  Vcc.subarrayMembership_write
-
-    def read_frequencyOffsetK(self: Vcc) -> int:
-        # PROTECTED REGION ID(Vcc.frequencyOffsetK_read) ENABLED START #
+        
+    def read_sampleRate(self: Vcc) -> int:
+        # PROTECTED REGION ID(Vcc.sampleRate_read) ENABLED START #
         """
-        Read the frequencyOffsetK attribute.
+        Read the sampleRate attribute.
 
-        :return: the frequency offset k-value
+        :return: the sample rate value
         :rtype: int
         """
-        return self.component_manager.frequency_offset_k
-        # PROTECTED REGION END #    //  Vcc.frequencyOffsetK_read
+        return self.component_manager.sample_rate
+        # PROTECTED REGION END #    //  Vcc.sampleRead_read
 
-    def write_frequencyOffsetK(self: Vcc, value: int) -> None:
-        # PROTECTED REGION ID(Vcc.frequencyOffsetK_write) ENABLED START #
+    def write_sampleRate(self: Vcc, value: int) -> None:
+        # PROTECTED REGION ID(Vcc.sampleRate_write) ENABLED START #
         """
-        Write the frequencyOffsetK attribute.
+        Write the sampleRate attribute.
 
-        :param value: the frequency offset k-value
+        :param value: the sample rate value
         """
-        self.component_manager.frequency_offset_k = value
-        # PROTECTED REGION END #    //  Vcc.frequencyOffsetK_write
-
-    def read_frequencyOffsetDeltaF(self: Vcc) -> int:
-        # PROTECTED REGION ID(Vcc.frequencyOffsetDeltaF_read) ENABLED START #
+        self.component_manager.sample_rate = value
+        # PROTECTED REGION END #    //  Vcc.sampleRate_write
+        
+    def read_frameRate(self: Vcc) -> int:
+        # PROTECTED REGION ID(Vcc.frameRate_read) ENABLED START #
         """
-        Read the frequencyOffsetDeltaF attribute.
+        Read the frameRate attribute.
 
-        :return: the frequency offset delta-f value
+        :return: the frame rate value
         :rtype: int
         """
-        return self.component_manager.frequency_offset_delta_f
-        # PROTECTED REGION END #    //  Vcc.frequencyOffsetDeltaF_read
+        return self.component_manager.frame_rate
+        # PROTECTED REGION END #    //  Vcc.sampleRead_read
 
-    def write_frequencyOffsetDeltaF(self: Vcc, value: int) -> None:
-        # PROTECTED REGION ID(Vcc.frequencyOffsetDeltaF_write) ENABLED START #
+    def write_frameRate(self: Vcc, value: int) -> None:
+        # PROTECTED REGION ID(Vcc.frameRate_write) ENABLED START #
         """
-        Write the frequencyOffsetDeltaF attribute.
+        Write the frameRate attribute.
 
-        :param value: the frequency offset delta-f value
+        :param value: the frame rate value
         """
-        self.component_manager.frequency_offset_delta_f = value
-        # PROTECTED REGION END #    //  Vcc.frequencyOffsetDeltaF_write
+        self.component_manager.frame_rate = value
+        # PROTECTED REGION END #    //  Vcc.frameRate_write
+        
+    def read_streamRate(self: Vcc) -> int:
+        # PROTECTED REGION ID(Vcc.streamRate_read) ENABLED START #
+        """
+        Read the streamRate attribute.
+
+        :return: the stream rate value
+        :rtype: int
+        """
+        return self.component_manager.stream_rate
+        # PROTECTED REGION END #    //  Vcc.sampleRead_read
+
+    def write_streamRate(self: Vcc, value: int) -> None:
+        # PROTECTED REGION ID(Vcc.streamRate_write) ENABLED START #
+        """
+        Write the streamRate attribute.
+
+        :param value: the stream rate value
+        """
+        self.component_manager.stream_rate = value
+        # PROTECTED REGION END #    //  Vcc.streamRate_write
 
     def read_frequencyBand(self: Vcc) -> tango.DevEnum:
         # PROTECTED REGION ID(Vcc.frequencyBand_read) ENABLED START #
