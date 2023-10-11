@@ -445,11 +445,15 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         are common to all bands and will not change during scan configuration.
         """
         # Calculate sample, frame, and stream rates from deltaF and K
-        sample_rate = ( BASE_TRANSPORT_SAMPLE_RATE_BAND_1_2_MSPS * 1000000 + 
-                        self._frequency_offset_k * self._frequency_offset_delta_f )
-        frame_rate = round( sample_rate / NUM_SAMPLES_PER_FRAME )
-        stream_rate = (3.96e9 + self._frequency_offset_k * 1800) / NUM_SAMPLES_PER_FRAME
-        
+        sample_rate = (
+            BASE_TRANSPORT_SAMPLE_RATE_BAND_1_2_MSPS * 1000000
+            + self._frequency_offset_k * self._frequency_offset_delta_f
+        )
+        frame_rate = round(sample_rate / NUM_SAMPLES_PER_FRAME)
+        stream_rate = (
+            3.96e9 + self._frequency_offset_k * 1800
+        ) / NUM_SAMPLES_PER_FRAME
+
         param_init = {
             "sample_rate": sample_rate,
             "frame_rate": frame_rate,

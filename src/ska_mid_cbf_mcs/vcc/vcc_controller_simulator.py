@@ -72,7 +72,7 @@ class VccControllerSimulator:
     def frame_rate(self) -> List[float]:
         """Return the frame rate attribute."""
         return self._frame_rate
-    
+
     @property
     def stream_rate(self) -> List[float]:
         """Return the stream rate attribute."""
