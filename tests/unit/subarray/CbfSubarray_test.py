@@ -389,8 +389,6 @@ class TestCbfSubarray:
         device_under_test.AddReceptors(receptors)
         freq_offset_k = [0] * 197
         device_under_test.frequencyOffsetK = freq_offset_k
-        freq_offset_deltaF = 1800
-        device_under_test.frequencyOffsetDeltaF = freq_offset_deltaF
 
         assert device_under_test.obsState == ObsState.IDLE
 
