@@ -780,8 +780,7 @@ class CbfSubarrayComponentManager(
                     except tango.DevFailed as df:
                         msg = str(df.args[0].desc)
                         self._logger.error(f"Error in GoToIdle; {msg}")
-                        self.obs_faulty = True
-            self._component_obs_fault_callback(self.obs_faulty)
+                        self._component_obs_fault_callback(True)
         try:
             # unsubscribe from TMC events
             for event_id in list(self._events_telstate.keys()):
@@ -2139,8 +2138,7 @@ class CbfSubarrayComponentManager(
                 except tango.DevFailed as df:
                     msg = str(df.args[0].desc)
                     self._logger.error(f"Error in Scan; {msg}")
-                    self.obs_faulty = True
-        self._component_obs_fault_callback(self.obs_faulty)
+                    self._component_obs_fault_callback(True)
 
         self._scan_id = int(scan_id)
         self._component_scanning_callback(True)
@@ -2169,8 +2167,7 @@ class CbfSubarrayComponentManager(
                 except tango.DevFailed as df:
                     msg = str(df.args[0].desc)
                     self._logger.error(f"Error in EndScan; {msg}")
-                    self.obs_faulty = True
-        self._component_obs_fault_callback(self.obs_faulty)
+                    self._component_obs_fault_callback(True)
 
         self._scan_id = 0
         self._component_scanning_callback(False)
@@ -2193,33 +2190,32 @@ class CbfSubarrayComponentManager(
                 except tango.DevFailed as df:
                     msg = str(df.args[0].desc)
                     self._logger.error(f"Error in Abort; {msg}")
-                    self.obs_faulty = True
-        self._component_obs_fault_callback(self.obs_faulty)
+                    self._component_obs_fault_callback(True)
 
     @check_communicating
     def restart(self: CbfSubarrayComponentManager) -> None:
         """
-        Restart from fault.
+        Restart to EMPTY from abort/fault.
         """
+        # if subarray is in FAULT, we must first abort VCC and FSP operation
+        # this will allow us to call ObsReset on them even if they are not in FAULT
+        if self.obs_faulty:
+            self.abort()
+            # use callback to reset FAULT state
+            self._component_obs_fault_callback(False)
+
+        # We might have interrupted a long-running command such as a Configure
+        # or a Scan, so we need to clean up from that.
+        self.deconfigure()
+
+        # send Vcc devices to IDLE, remove all assigned VCCs
+        if self._group_vcc.get_size() > 0:
+            self._group_vcc.command_inout("ObsReset")
+
+        # remove all assigned VCCs to return to EMPTY
+        self.remove_all_receptors()
+
         try:
-            # if subarray is in FAULT, we must first abort VCC and FSP operation
-            # this will allow us to call ObsReset on them even if they are not in FAULT
-            if self.obs_faulty:
-                self.abort()
-                # use callback to reset FAULT state
-                self._component_obs_fault_callback(False)
-
-            # We might have interrupted a long-running command such as a Configure
-            # or a Scan, so we need to clean up from that.
-            self.deconfigure()
-
-            # send Vcc devices to IDLE, remove all assigned VCCs
-            if self._group_vcc.get_size() > 0:
-                self._group_vcc.command_inout("ObsReset")
-
-            # remove all assigned VCCs to return to EMPTY
-            self.remove_all_receptors()
-
             # remove any previously assigned FSPs
             # TODO VLBI
             for group in [
@@ -2245,20 +2241,20 @@ class CbfSubarrayComponentManager(
     @check_communicating
     def obsreset(self: CbfSubarrayComponentManager) -> None:
         """
-        Reset subarray scan configuration or operation.
+        Reset to IDLE from abort/fault.
         """
+        # if subarray is in FAULT, we must first abort VCC and FSP operation
+        # this will allow us to call ObsReset on them even if they are not in FAULT
+        if self.obs_faulty:
+            self.abort()
+            # use callback to reset FAULT state
+            self._component_obs_fault_callback(False)
+
+        # We might have interrupted a long-running command such as a Configure
+        # or a Scan, so we need to clean up from that.
+        self.deconfigure()
+
         try:
-            # if subarray is in FAULT, we must first abort VCC and FSP operation
-            # this will allow us to call ObsReset on them even if they are not in FAULT
-            if self.obs_faulty:
-                self.abort()
-                # use callback to reset FAULT state
-                self._component_obs_fault_callback(False)
-
-            # We might have interrupted a long-running command such as a Configure
-            # or a Scan, so we need to clean up from that.
-            self.deconfigure()
-
             if self._group_vcc.get_size() > 0:
                 self._group_vcc.command_inout("ObsReset")
 
