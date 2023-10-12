@@ -25,6 +25,13 @@ The basic model is:
 """
 from ska_tango_base.control_model import PowerMode
 
+NUM_COUNTERS = 7
+NUM_REG_COUNTERS_RX = 4
+NUM_COUNTERS_TX = 3
+BLOCK_LOST_COUNT_INDEX = 4
+CDR_LOST_COUNT_INDEX = 5
+NUM_LOST_COUNTERS = 2
+
 
 class SlimLinkComponentManager(CbfComponentManager):
     """
@@ -40,41 +47,129 @@ class SlimLinkComponentManager(CbfComponentManager):
     * Monitoring its component, e.g. detect that it has been turned off
       or on
     """
+    
+    @property
+    def tx_device_name(self: SlimLinkComponentManager) -> str:
+        """
+        The name of the tx device the link is associated with.
 
-    def __init__(self, op_state_model, *args, **kwargs):
+        :return: the tx device name
+        """
+        return self._tx_device_name
+
+    @tx_device_name.setter
+    def tx_device_name(
+        self: SlimLinkComponentManager, tx_device_name: str
+    ) -> None:
+        """
+        Set the tx device name value.
+
+        :param tx_device_name: The tx device name
+        """
+        self._tx_device_name = tx_device_name
+
+    @property
+    def rx_device_name(self: SlimLinkComponentManager) -> str:
+        """
+        The name of the rx device the link is associated with.
+
+        :return: the rx device name
+        """
+        return self._rx_device_name
+
+    @rx_device_name.setter
+    def rx_device_name(
+        self: SlimLinkComponentManager, rx_device_name: str
+    ) -> None:
+        """
+        Set the rx device name value.
+
+        :param rx_device_name: The rx device name
+        """
+        self._rx_device_name = rx_device_name
+
+
+    def __init__(
+        self:SlimLinkComponentManager,
+        tx_device_name: str,
+        rx_device_name: str,
+        logger: logging.Logger,
+        push_change_event_callback: Optional[Callable],
+        communication_status_changed_callback: Callable[
+            [CommunicationStatus], None
+        ],
+        component_power_mode_changed_callback: Callable[[PowerMode], None],
+        component_fault_callback: Callable[[bool], None],
+    ) -> None:
         """
         Initialise a new ComponentManager instance.
 
-        :param op_state_model: the op state model used by this component
-            manager
+        :param tx_device_name: a string containing the tx device's fqdn
+        :param rx_device_name: a string containing the rx device's fqdn
+        :param logger: a logger for this object to use
+        :param push_change_event_callback: method to call when the base classes
+            want to send an event
+        :param communication_status_changed_callback: callback to be
+            called when the status of the communications channel between
+            the component manager and its component changes
+        :param component_power_mode_changed_callback: callback to be
+            called when the component power mode changes
+        :param component_fault_callback: callback to be called in event of
+            component fault
         """
-        self.op_state_model = op_state_model
+        self.connected = False
+        
+        self._tx_device_name = tx_device_name
+        self._rx_device_name = rx_device_name
+        
+        self._tx_device_proxy = None
+        self._rx_device_proxy = None
+        
+        super().__init__(
+            logger=logger,
+            push_change_event_callback=push_change_event_callback,
+            communication_status_changed_callback=communication_status_changed_callback,
+            component_power_mode_changed_callback=component_power_mode_changed_callback,
+            component_fault_callback=component_fault_callback,
+            obs_state_model=None,
+        )
+        
+        self._logger.info("Linking {tx_device_name} to {rx_device_name}")
 
-    def start_communicating(self):
-        """
-        Establish communication with the component, then start monitoring.
 
-        This is the place to do things like:
+    def start_communicating(self: SlimLinkComponentManager) -> None:
+        """Establish communication with the component, then start monitoring."""
 
-        * Initiate a connection to the component (if your communication
-          is connection-oriented)
-        * Subscribe to component events (if using "pull" model)
-        * Start a polling loop to monitor the component (if using a
-          "push" model)
-        """
-        raise NotImplementedError("BaseComponentManager is abstract.")
+        if self.connected:
+            self._logger.info("Already communicating.")
+            return
 
-    def stop_communicating(self):
-        """
-        Cease monitoring the component, and break off all communication with it.
+        super().start_communicating()
+        
+        try:
+            self._tx_device_proxy = CbfDeviceProxy(
+                fqdn=self._tx_device_fqdn, logger=self._logger
+            )
+            self._rx_device_proxy = CbfDeviceProxy(
+                fqdn=self._rx_device_fqdn, logger=self._logger
+            )
+        except tango.DevFailed:
+            self.update_component_fault(True)
+            self._logger.error("Error in proxy connection")
+            return
+            
+        self.connected = True
+        self.update_communication_status(CommunicationStatus.ESTABLISHED)
+        self.update_component_power_mode(PowerMode.ON)
+        self.update_component_fault(False)
 
-        For example,
 
-        * If you are communicating over a connection, disconnect.
-        * If you have subscribed to events, unsubscribe.
-        * If you are running a polling loop, stop it.
-        """
-        raise NotImplementedError("BaseComponentManager is abstract.")
+    def stop_communicating(self: SlimLinkComponentManager) -> None:
+        """Stop communication with the component."""
+        super().stop_communicating()
+        self.update_component_power_mode(PowerMode.OFF)
+        self.connected = False
+
 
     @property
     def is_communicating(self):
