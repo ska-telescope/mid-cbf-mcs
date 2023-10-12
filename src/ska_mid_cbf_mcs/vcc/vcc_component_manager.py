@@ -44,7 +44,6 @@ __all__ = ["VccComponentManager"]
 VCC_PARAM_PATH = "mnt/vcc_param/"
 
 
-
 class VccComponentManager(CbfComponentManager, CspObsComponentManager):
     """Component manager for Vcc class."""
 
