@@ -88,7 +88,6 @@ class TestCbfController:
         )
         with open(json_file_path + "sys_param_4_boards.json") as f:
             sp = f.read()
-        result = device_under_test.InitSysParam(sp)
         test_proxies.controller.InitSysParam(sp)
 
         # send the On command

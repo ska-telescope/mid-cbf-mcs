@@ -305,21 +305,18 @@ class TestCbfSubarrayComponentManager:
     @pytest.mark.parametrize(
         "freq_band, \
         receptor_id, \
-        freq_offset_k, \
         sample_rate_const_for_band, \
         base_dish_sample_rate_for_bandMHz",
         [
             (
                 "1",
                 "SKA100",
-                [0] * 197,
                 1,
                 3960,
             ),
             (
                 "3",
                 "SKA100",
-                [11] * 197,
                 0.8,
                 3168,
             ),
@@ -332,7 +329,6 @@ class TestCbfSubarrayComponentManager:
         receptor_id: str,
         sample_rate_const_for_band: float,
         base_dish_sample_rate_for_bandMHz: int,
-        freq_offset_k: List[int],
     ) -> None:
         """
         Test calculate_fs_sample_rate.
@@ -341,12 +337,14 @@ class TestCbfSubarrayComponentManager:
             sp = f.read()
         subarray_component_manager.update_sys_param(sp)
 
+        sys_param = json.loads(sp)
+        freq_offset_k = sys_param["dish_parameters"][receptor_id]["k"]
         mhz_to_hz = 1000000
         total_num_freq_slice = 20
         freq_offset_delta_f = 1800
         oversampling_factor = 10 / 9
         dish_sample_rate = (base_dish_sample_rate_for_bandMHz * mhz_to_hz) + (
-            sample_rate_const_for_band * freq_offset_k[0] * freq_offset_delta_f
+            sample_rate_const_for_band * freq_offset_k * freq_offset_delta_f
         )
         expected_fs_sample_rate = (
             dish_sample_rate * oversampling_factor / total_num_freq_slice
