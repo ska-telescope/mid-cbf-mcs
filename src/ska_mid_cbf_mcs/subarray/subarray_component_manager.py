@@ -391,7 +391,6 @@ class CbfSubarrayComponentManager(
             "Operating state Standby invalid for CbfSubarray."
         )
 
-    @check_communicating
     def update_sys_param(
         self: CbfSubarrayComponentManager, sys_param_str: str
     ) -> None:
