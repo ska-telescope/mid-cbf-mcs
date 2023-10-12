@@ -43,8 +43,6 @@ __all__ = ["VccComponentManager"]
 
 VCC_PARAM_PATH = "mnt/vcc_param/"
 
-BASE_TRANSPORT_SAMPLE_RATE_BAND_1_2_MSPS = 3960
-NUM_SAMPLES_PER_FRAME = 18
 
 
 class VccComponentManager(CbfComponentManager, CspObsComponentManager):
@@ -446,13 +444,13 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         """
         # Calculate sample, frame, and stream rates from deltaF and K
         sample_rate = (
-            BASE_TRANSPORT_SAMPLE_RATE_BAND_1_2_MSPS * 1000000
+            const.BASE_TRANSPORT_SAMPLE_RATE_BAND_1_2_MSPS * 1000000
             + self._frequency_offset_k * self._frequency_offset_delta_f
         )
-        frame_rate = round(sample_rate / NUM_SAMPLES_PER_FRAME)
+        frame_rate = round(sample_rate / const.NUM_SAMPLES_PER_FRAME)
         stream_rate = (
             3.96e9 + self._frequency_offset_k * 1800
-        ) / NUM_SAMPLES_PER_FRAME
+        ) / const.NUM_SAMPLES_PER_FRAME
 
         param_init = {
             "sample_rate": sample_rate,

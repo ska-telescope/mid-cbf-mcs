@@ -427,7 +427,7 @@ class Vcc(CspSubElementObsDevice):
         :rtype: int
         """
         return self.component_manager.frequency_offset_k
-        # PROTECTED REGION END #    //  Vcc.sampleRead_read
+        # PROTECTED REGION END #    //  Vcc.frequencyOffsetK_read
 
     def write_frequencyOffsetK(self: Vcc, value: int) -> None:
         # PROTECTED REGION ID(Vcc.frequencyOffsetK_write) ENABLED START #
@@ -448,7 +448,7 @@ class Vcc(CspSubElementObsDevice):
         :rtype: int
         """
         return self.component_manager.frequency_offset_delta_f
-        # PROTECTED REGION END #    //  Vcc.sampleRead_read
+        # PROTECTED REGION END #    //  Vcc.frequencyOffsetDeltaF_read
 
     def write_frequencyOffsetDeltaF(self: Vcc, value: int) -> None:
         # PROTECTED REGION ID(Vcc.frequencyOffsetDeltaF_write) ENABLED START #
