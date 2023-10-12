@@ -36,7 +36,7 @@ KUBECONFIG ?= /etc/deploy/config ## KUBECONFIG location
 CBF_CTRL_POD = $(shell kubectl -n $(KUBE_NAMESPACE) get pod --no-headers --selector=component=cbfcontroller-controller -o custom-columns=':metadata.name')
 
 # this assumes host and talon board 1g ethernet is on the 192.168 subnet
-HOST_IP = $(shell ip a 2> /dev/null | sed -En 's/127.0.0.1//;s/.*inet (addr:)?(([0-9]*\.){3}[0-9]*).*/\2/p' | grep 192.168 ) 
+HOST_IP = $(shell ip a 2> /dev/null | sed -En 's/127.0.0.1//;s/.*inet (addr:)?(([0-9]*\.){3}[0-9]*).*/\2/p' | grep 192.168) 
 THIS_HOST := $(HOST_IP)
 XAUTHORITY ?= $(HOME)/.Xauthority
 DISPLAY ?= $(THIS_HOST):0

@@ -9,6 +9,7 @@
 # See LICENSE.txt for more info.
 """Contain the tests for the CbfController."""
 
+import os
 import socket
 
 import pytest
@@ -82,27 +83,10 @@ class TestCbfController:
         wait_time_s = 3
         sleep_time_s = 0.1
 
-        sp = """{
-    "interface": "https://schema.skao.int/ska-mid-cbf-initial-parameters/2.2",
-    "dish_parameters": {
-        "SKA001": {
-            "vcc": 1,
-            "k"  : 11
-        },
-        "SKA100": {
-            "vcc": 2,
-            "k"  : 101
-        },
-        "SKA036": {
-            "vcc": 3,
-            "k"  : 1127
-        },
-        "SKA063": {
-            "vcc": 4,
-            "k"  : 620
-        }
-    }
-}"""
+        json_file_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
+        with open(json_file_path + "sys_param_4_boards.json") as f:
+            sp = f.read()
+        result = device_under_test.InitSysParam(sp)
         test_proxies.controller.InitSysParam(sp)
 
         # send the On command
