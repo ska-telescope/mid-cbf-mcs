@@ -37,9 +37,6 @@ CBF_CTRL_POD = $(shell kubectl -n $(KUBE_NAMESPACE) get pod --no-headers --selec
 
 # this assumes host and talon board 1g ethernet is on the 192.168 subnet
 HOST_IP = $(shell ip a 2> /dev/null | sed -En 's/127.0.0.1//;s/.*inet (addr:)?(([0-9]*\.){3}[0-9]*).*/\2/p' | grep 192.168) 
-THIS_HOST := $(HOST_IP)
-XAUTHORITY ?= $(HOME)/.Xauthority
-DISPLAY ?= $(THIS_HOST):0
 JIVE ?= false# Enable jive
 TARANTA ?= false# Enable Taranta
 MINIKUBE ?= true ## Minikube or not
@@ -87,9 +84,6 @@ K8S_CHART_PARAMS = --set global.minikube=$(MINIKUBE) \
 	--set global.tango_host=$(TANGO_HOST) \
 	--set global.cluster_domain=$(CLUSTER_DOMAIN) \
 	--set global.operator=$(SKA_TANGO_OPERATOR) \
-	--set ska-tango-base.display=$(DISPLAY) \
-	--set ska-tango-base.xauthority=$(XAUTHORITY) \
-	--set ska-tango-base.jive.enabled=$(JIVE) \
 	--set ska-tango-base.itango.enabled=$(ITANGO_ENABLED) \
 	${K8S_TEST_TANGO_IMAGE_PARAMS} \
 	${TARANTA_PARAMS}
