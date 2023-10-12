@@ -135,7 +135,7 @@ class TestCbfSubarray:
         assert device_under_test.State() == DevState.DISABLE
         device_under_test.adminMode = AdminMode.ONLINE
 
-        with open(data_file_path + "sys_param_4_boards.json") as f: 
+        with open(data_file_path + "sys_param_4_boards.json") as f:
             sp = f.read()
         device_under_test.sysParam = sp
 
@@ -205,7 +205,7 @@ class TestCbfSubarray:
         assert device_under_test.State() == DevState.DISABLE
         device_under_test.adminMode = AdminMode.ONLINE
 
-        with open(data_file_path + "sys_param_4_boards.json") as f: 
+        with open(data_file_path + "sys_param_4_boards.json") as f:
             sp = f.read()
         device_under_test.sysParam = sp
 
@@ -249,10 +249,10 @@ class TestCbfSubarray:
         assert device_under_test.State() == DevState.DISABLE
         device_under_test.adminMode = AdminMode.ONLINE
 
-        with open(data_file_path + "sys_param_4_boards.json") as f: 
+        with open(data_file_path + "sys_param_4_boards.json") as f:
             sp = f.read()
         device_under_test.sysParam = sp
-        
+
         # DevState should be OFF. Turn it to ON
         device_under_test.On()
 
@@ -293,9 +293,9 @@ class TestCbfSubarray:
         assert device_under_test.State() == DevState.DISABLE
         device_under_test.adminMode = AdminMode.ONLINE
 
-        with open(data_file_path + "sys_param_4_boards.json") as f: 
+        with open(data_file_path + "sys_param_4_boards.json") as f:
             sp = f.read()
-        device_under_test.sysParam = sp  
+        device_under_test.sysParam = sp
 
         # DevState should be OFF. Turn it to ON
         device_under_test.On()
@@ -334,9 +334,9 @@ class TestCbfSubarray:
         assert device_under_test.State() == DevState.DISABLE
         device_under_test.adminMode = AdminMode.ONLINE
 
-        with open(data_file_path + "sys_param_4_boards.json") as f: 
+        with open(data_file_path + "sys_param_4_boards.json") as f:
             sp = f.read()
-        device_under_test.sysParam = sp       
+        device_under_test.sysParam = sp
 
         # DevState should be OFF. Turn it to ON
         device_under_test.On()
@@ -371,10 +371,10 @@ class TestCbfSubarray:
         assert device_under_test.State() == DevState.DISABLE
         device_under_test.adminMode = AdminMode.ONLINE
 
-        with open(data_file_path + "sys_param_4_boards.json") as f: 
+        with open(data_file_path + "sys_param_4_boards.json") as f:
             sp = f.read()
         device_under_test.sysParam = sp
-        
+
         # DevState should be OFF. Turn it to ON
         device_under_test.On()
 
@@ -410,8 +410,8 @@ class TestCbfSubarray:
 
         assert device_under_test.State() == DevState.OFF
         assert device_under_test.obsState == ObsState.EMPTY
-        
-        with open(data_file_path + "sys_param_4_boards.json") as f: 
+
+        with open(data_file_path + "sys_param_4_boards.json") as f:
             sp = f.read()
         device_under_test.sysParam = sp
 

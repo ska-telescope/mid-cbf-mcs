@@ -9,12 +9,12 @@
 
 from __future__ import annotations
 
+import os
 import unittest
 
 # Standard imports
 from typing import Dict, Optional, Type
 
-import os
 import pytest
 import pytest_mock
 
@@ -225,7 +225,9 @@ def mock_subarray() -> unittest.mock.Mock:
     builder.set_state(tango.DevState.OFF)
     builder.add_attribute("adminMode", AdminMode.ONLINE)
     builder.add_attribute("healthState", HealthState.OK)
-    json_file_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
+    json_file_path = (
+        os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
+    )
     with open(json_file_path + "sys_param_4_boards.json") as f:
         sp = f.read()
     builder.add_attribute("sysParam", sp)

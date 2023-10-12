@@ -23,7 +23,7 @@ from tango import DevState
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 
 # Path
-file_path = os.path.dirname(os.path.abspath(__file__))# Path
+file_path = os.path.dirname(os.path.abspath(__file__))  # Path
 json_file_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
 
 # SKA imports

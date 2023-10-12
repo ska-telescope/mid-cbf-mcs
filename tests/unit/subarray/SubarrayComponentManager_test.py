@@ -111,7 +111,9 @@ class TestCbfSubarrayComponentManager:
 
         # assign VCCs to a different subarray, then attempt assignment
         for receptor in receptors[:-1]:
-            vcc_id = subarray_component_manager._receptor_utils.receptor_id_to_vcc_id[receptor]
+            vcc_id = subarray_component_manager._receptor_utils.receptor_id_to_vcc_id[
+                receptor
+            ]
             vcc_proxy = subarray_component_manager._proxies_vcc[vcc_id - 1]
             vcc_proxy.subarrayMembership = (
                 subarray_component_manager.subarray_id + 1
@@ -121,7 +123,11 @@ class TestCbfSubarrayComponentManager:
 
         assert subarray_component_manager.receptors == []
 
-        vcc_id = subarray_component_manager._receptor_utils.receptor_id_to_vcc_id[receptors[-1]]
+        vcc_id = (
+            subarray_component_manager._receptor_utils.receptor_id_to_vcc_id[
+                receptors[-1]
+            ]
+        )
         vcc_proxy = subarray_component_manager._proxies_vcc[vcc_id - 1]
         vcc_proxy.subarrayMembership = subarray_component_manager.subarray_id
 
