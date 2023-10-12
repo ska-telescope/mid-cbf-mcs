@@ -31,6 +31,7 @@ import yaml
 from ska_tango_base.control_model import AdminMode, LoggingLevel, ObsState
 from tango import DevState
 
+from ska_mid_cbf_mcs.commons.receptor_utils import ReceptorUtils
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 from ska_mid_cbf_mcs.testing.mock.mock_callable import MockChangeEventCallback
 from ska_mid_cbf_mcs.testing.mock.mock_device import MockDeviceBuilder

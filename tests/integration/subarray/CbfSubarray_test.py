@@ -22,7 +22,7 @@ import pytest
 from ska_tango_base.control_model import AdminMode, ObsState
 from tango import DevState
 
-from ska_mid_cbf_mcs.commons.global_enum import FspModes, const, freq_band_dict
+from ska_mid_cbf_mcs.commons.global_enum import FspModes, freq_band_dict
 from ska_mid_cbf_mcs.commons.receptor_utils import ReceptorUtils
 
 # Data file path
@@ -1748,9 +1748,8 @@ class TestCbfSubarray:
                         self.receptor_utils.receptor_id_to_int[receptor]
                     )
                 for jj, rec in enumerate(vcc_receptors):
-                    i_rec = self.receptor_utils.receptor_id_to_int[rec]
                     # get the vcc device proxy (dp) corresponding to i_rec
-                    this_vcc = receptor_utils.receptor_id_to_vcc_id[rec]
+                    this_vcc = self.receptor_utils.receptor_id_to_vcc_id[rec]
                     vcc_dp = test_proxies.vcc[this_vcc]
 
                     # Extract the  delay model corresponding to receptor i_rec:
@@ -1996,7 +1995,7 @@ class TestCbfSubarray:
                         for index, value in enumerate(
                             frequency_slice["matrix"]
                         ):
-                            vcc_id = receptor_utils.receptor_id_to_vcc_id[
+                            vcc_id = self.receptor_utils.receptor_id_to_vcc_id[
                                 receptor["receptor"]
                             ]
                             fs_id = frequency_slice["fsid"]
