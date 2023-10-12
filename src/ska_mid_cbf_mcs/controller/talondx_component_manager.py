@@ -196,6 +196,7 @@ class TalonDxComponentManager:
                 @backoff.on_exception(
                     backoff.expo,
                     NoValidConnectionsError,
+                    max_value=3,
                     max_time=talon_first_connect_timeout,
                 )
                 def make_first_connect(ip: str, ssh_client: SSHClient) -> None:
@@ -398,6 +399,8 @@ class TalonDxComponentManager:
         target = f"root@{ip}"
         inst = talon_cfg["server_instance"]
 
+        self.logger.info(f"Starting HPS Master on talon board {talon}")
+
         try:
             with SSHClient() as ssh_client:
                 ssh_client.set_missing_host_key_policy(AutoAddPolicy())
@@ -467,12 +470,18 @@ class TalonDxComponentManager:
         hps_master = self.proxies[hps_master_fqdn]
 
         # Wait for HPS Master
+        ping_ok = False
         for i in range(6):
             try:
                 hps_master.ping()
+                ping_ok = True
                 break
             except tango.DevFailed:  # TODO handle unstarted HPS master
                 time.sleep(5)
+
+        if not ping_ok:
+            self.logger.error(f"Timeout trying to ping {hps_master_fqdn}.")
+            return ResultCode.FAILED
 
         self.logger.info(f"Sending configure command to {hps_master_fqdn}")
         try:
