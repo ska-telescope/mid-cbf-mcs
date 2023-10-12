@@ -443,10 +443,10 @@ class CbfSubarray(CspSubElementSubarray):
     def read_sysParam(self: CbfSubarray) -> str:
         # PROTECTED REGION ID(CbfSubarray.receptors_read) ENABLED START #
         """
-        Return list of receptors assigned to subarray
+        Return the sys param string in json format
 
-        :return: the list of receptors
-        :rtype: List[str]
+        :return: the sys param string in json format
+        :rtype: str
         """
         return self.component_manager._sys_param_str
         # PROTECTED REGION END #    //  CbfSubarray.receptors_read
@@ -454,10 +454,9 @@ class CbfSubarray(CspSubElementSubarray):
     def write_sysParam(self: CbfSubarray, value: str) -> None:
         # PROTECTED REGION ID(CbfSubarray.receptors_write) ENABLED START #
         """
-        Set receptors of this array to the input value.
-        Input should be an array of int
+        Set the sys param string in json format
 
-        :param value: the list of receptors
+        :param value: the sys param string in json format
         """
         self.component_manager.update_sys_param(value)
         # PROTECTED REGION END #    //  CbfSubarray.receptors_write

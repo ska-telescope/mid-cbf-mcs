@@ -23,7 +23,8 @@ from tango import DevState
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 
 # Path
-file_path = os.path.dirname(os.path.abspath(__file__))
+file_path = os.path.dirname(os.path.abspath(__file__))# Path
+json_file_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
 
 # SKA imports
 
@@ -96,28 +97,9 @@ class TestCbfController:
             result = device_under_test.Standby()
         elif command == "InitSysParam":
             expected_state = device_under_test.State()  # no change expected
-            s = """{
-    "interface": "https://schema.skao.int/ska-mid-cbf-initial-parameters/2.2",
-    "dish_parameters": {
-        "SKA001": {
-            "vcc": 1,
-            "k"  : 11
-        },
-        "SKA100": {
-            "vcc": 2,
-            "k"  : 101
-        },
-        "SKA036": {
-            "vcc": 3,
-            "k"  : 1127
-        },
-        "SKA063": {
-            "vcc": 4,
-            "k"  : 620
-        }
-    }
-}"""
-            result = device_under_test.InitSysParam(s)
+            with open(json_file_path + "sys_param_4_boards.json") as f:
+                sp = f.read()
+            result = device_under_test.InitSysParam(sp)
 
         time.sleep(CONST_WAIT_TIME)
         assert result[0][0] == ResultCode.OK

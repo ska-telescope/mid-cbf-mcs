@@ -72,7 +72,7 @@ class TestVccComponentManager:
         vcc_component_manager.start_communicating()
         vcc_component_manager.on()
         mock_vcc_controller.InitCommonParameters.assert_next_call(
-            '{"frequency_offset_k": 0, "frequency_offset_delta_f": 0}'
+            '{"frequency_offset_k": 0, "frequency_offset_delta_f": 1800}'
         )
 
         (result_code, _) = vcc_component_manager.configure_band(frequency_band)
