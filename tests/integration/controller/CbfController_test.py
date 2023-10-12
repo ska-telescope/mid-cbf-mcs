@@ -83,7 +83,9 @@ class TestCbfController:
         wait_time_s = 3
         sleep_time_s = 0.1
 
-        json_file_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
+        json_file_path = (
+            os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
+        )
         with open(json_file_path + "sys_param_4_boards.json") as f:
             sp = f.read()
         result = device_under_test.InitSysParam(sp)
