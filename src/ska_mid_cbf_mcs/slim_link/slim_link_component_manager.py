@@ -169,26 +169,43 @@ class SlimLinkComponentManager(CbfComponentManager):
         super().stop_communicating()
         self.update_component_power_mode(PowerMode.OFF)
         self.connected = False
-
+        
+    def connect_to_slim_tx(self: SlimLinkComponentManager, tx_device: CbfDeviceProxy) -> None:
+        try:
+            ping = tx_device.ping()
+            
+            _logger.info("Connection to SLIM TX Tango DS successful. tx_device_name: " +
+                        _tx_device_name + "; device ping took " + ping + " microseconds")
+        except tango.DevFailed:
+            self._logger.error("Connection to SLIM TX Tango DS failed: " + _tx_device_name)
+            self.update_component_fault(True)
+            # throw exception
+            
+    def connect_to_slim_rx(self: SlimLinkComponentManager, rx_device: CbfDeviceProxy) -> None:
+        try:
+            disconnectFromSLIMRx()
+            ping = rx_device.ping()
+            
+            serial_loopback_enable = False
+            rx_device.initialize_connection(serial_loopback_enable)
+            
+            _logger.info("Connection to SLIM RX Tango DS successful. rx_device_name: " +
+                        _rx_device_name + "; device ping took " + ping + " microseconds")
+        except tango.DevFailed:
+            self._logger.error("Connection to SLIM RX Tango DS failed: " + _rx_device_name)
+            self.update_component_fault(True)
+            # throw exception
+            
+    def verify_connection() -> bool:
+        connected = false
+        self._logger.debug("DsSLIMLink::verifyConnection()  - " + self._device_name)
+        # TODO: This is where I made it to
 
     @property
     def is_communicating(self):
-        """
-        Return whether communication with the component is established.
+        """Return whether communication with the component is established."""
 
-        For example:
-
-        * If communication is over a connection, are you connected?
-        * If communication is via event subscription, are you
-          subscribed, and is the event subsystem healthy?
-        * If you are polling the component, is the polling loop running,
-          and is the component responsive?
-
-        :return: whether there is currently a connection to the
-            component
-        :rtype: bool
-        """
-        raise NotImplementedError("BaseComponentManager is abstract.")
+        return self.connected
 
     @property
     def power_mode(self):
