@@ -346,6 +346,10 @@ def init_proxies_fixture():
             else:
                 timeout_millis = 60000
 
+            # Load in system params
+            sys_param = load_data("sys_param_4_boards")
+            self.receptor_utils = ReceptorUtils(sys_param)
+
             # TmCspSubarrayLeafNodeTest
             self.tm = CbfDeviceProxy(
                 fqdn="ska_mid/tm_leaf_node/csp_subarray_01",
@@ -359,9 +363,6 @@ def init_proxies_fixture():
             )
             self.controller.set_timeout_millis(timeout_millis)
             self.wait_timeout_dev([self.controller], DevState.DISABLE, 3, 1)
-
-            sys_param = load_data("sys_param_4_boards")
-            self.receptor_utils = ReceptorUtils(sys_param)
 
             self.max_capabilities = dict(
                 pair.split(":")
