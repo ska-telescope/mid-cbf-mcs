@@ -22,7 +22,7 @@ import tango
 from ska_tango_base import SKABaseDevice, SKAController
 from ska_tango_base.commands import ResponseCommand, ResultCode
 from ska_tango_base.control_model import PowerMode, SimulationMode
-from tango import AttrWriteType, DebugIt, DevState
+from tango import AttrWriteType, DebugIt
 from tango.server import attribute, command, device_property, run
 
 from ska_mid_cbf_mcs.component.component_manager import CommunicationStatus
@@ -446,12 +446,12 @@ class CbfController(SKAController):
         def is_allowed(self: CbfController.InitSysParamCommand) -> bool:
             """
             Determine if InitSysParamCommand is allowed
-            (allowed when Devstate is OFF).
+            (allowed when state is OFF).
 
             :return: if InitSysParamCommand is allowed
             :rtype: bool
             """
-            return self.target.get_state() == DevState.OFF
+            return self.target._component_power_mode == PowerMode.OFF
 
         def do(
             self: CbfController.InitSysParamCommand, argin: str
@@ -466,6 +466,12 @@ class CbfController(SKAController):
                 information purpose only.
             :rtype: (ResultCode, str)
             """
+            if not self.is_allowed():
+                return (
+                    ResultCode.FAILED,
+                    "InitSysParam command may be called only when device is OFF",
+                )
+
             (
                 result_code,
                 message,

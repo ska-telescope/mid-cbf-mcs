@@ -394,7 +394,7 @@ class CbfSubarrayComponentManager(
     def update_sys_param(
         self: CbfSubarrayComponentManager, sys_param_str: str
     ) -> None:
-        self._logger.info(f"Received sys param: {sys_param_str}")
+        self._logger.debug(f"Received sys param: {sys_param_str}")
         self._sys_param_str = sys_param_str
         sys_param = json.loads(sys_param_str)
         self._receptor_utils = ReceptorUtils(sys_param)
