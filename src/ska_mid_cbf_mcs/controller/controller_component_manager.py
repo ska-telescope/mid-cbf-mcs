@@ -567,7 +567,7 @@ class ControllerComponentManager(CbfComponentManager):
                 information purpose only.
         :rtype: (ResultCode, str)
         """
-        self._logger.info(f"Received sys params {params}")
+        self._logger.debug(f"Received sys params {params}")
 
         if not self._check_sys_param_schemas(params):
             return (
