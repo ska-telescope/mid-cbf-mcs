@@ -1,29 +1,29 @@
-"""
-This module provides an abstract component manager for SKA Tango base devices.
+# -*- coding: utf-8 -*-
+#
+# This file is part of the SKA Mid.CBF MCS project
+#
+# Distributed under the terms of the GPL license.
+# See LICENSE.txt for more info.
 
-The basic model is:
+# Copyright (c) 2022 National Research Council of Canada
 
-* Every Tango device has a *component* that it monitors and/or
-  controls. That component could be, for example:
+from __future__ import annotations
 
-  * Hardware such as an antenna, APIU, TPM, switch, subrack, etc.
+import asyncio
+import logging
+from datetime import datetime, timedelta, timezone
+from typing import Any, Callable, Optional, Tuple
 
-  * An external software system such as a cluster manager
-
-  * A software routine, possibly implemented within the Tango device
-    itself
-
-  * In a hierarchical system, a pool of lower-level Tango devices.
-
-* A Tango device will usually need to establish and maintain a
-  *connection* to its component. This connection may be deliberately
-  broken by the device, or it may fail.
-
-* A Tango device *controls* its component by issuing commands that cause
-  the component to change behaviour and/or state; and it *monitors* its
-  component by keeping track of its state.
-"""
+import tango
+from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import PowerMode
+from tango import AttrQuality
+
+from ska_mid_cbf_mcs.component.component_manager import (
+    CbfComponentManager,
+    CommunicationStatus,
+)
+from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 
 NUM_COUNTERS = 7
 NUM_REG_COUNTERS_RX = 4
@@ -35,17 +35,7 @@ NUM_LOST_COUNTERS = 2
 
 class SlimLinkComponentManager(CbfComponentManager):
     """
-    An abstract base class for a component manager for SKA Tango devices.
-
-    It supports:
-
-    * Maintaining a connection to its component
-
-    * Controlling its component via commands like Off(), Standby(),
-      On(), etc.
-
-    * Monitoring its component, e.g. detect that it has been turned off
-      or on
+    A component manager for a slim link.
     """
     
     @property
@@ -102,7 +92,7 @@ class SlimLinkComponentManager(CbfComponentManager):
         component_fault_callback: Callable[[bool], None],
     ) -> None:
         """
-        Initialise a new ComponentManager instance.
+        Initialise a new instance.
 
         :param tx_device_name: a string containing the tx device's fqdn
         :param rx_device_name: a string containing the rx device's fqdn
@@ -134,7 +124,7 @@ class SlimLinkComponentManager(CbfComponentManager):
             obs_state_model=None,
         )
         
-        self._logger.info("Linking {tx_device_name} to {rx_device_name}")
+        self._logger.info(f"Linking {tx_device_name} to {rx_device_name}")
 
 
     def start_communicating(self: SlimLinkComponentManager) -> None:
@@ -196,74 +186,7 @@ class SlimLinkComponentManager(CbfComponentManager):
             self.update_component_fault(True)
             # throw exception
             
-    def verify_connection() -> bool:
+    def verify_connection(self: SlimLinkComponentManager) -> bool:
         connected = false
         self._logger.debug("DsSLIMLink::verifyConnection()  - " + self._device_name)
         # TODO: This is where I made it to
-
-    @property
-    def is_communicating(self):
-        """Return whether communication with the component is established."""
-
-        return self.connected
-
-    @property
-    def power_mode(self):
-        """
-        Power mode of the component.
-
-        :return: the power mode of the component
-        """
-        raise NotImplementedError("BaseComponentManager is abstract.")
-
-    @property
-    def faulty(self):
-        """
-        Whether the component is currently faulting.
-
-        :return: whether the component is faulting
-        """
-        raise NotImplementedError("BaseComponentManager is abstract.")
-
-    def off(self):
-        """Turn the component off."""
-        raise NotImplementedError("BaseComponentManager is abstract.")
-
-    def standby(self):
-        """Put the component into low-power standby mode."""
-        raise NotImplementedError("BaseComponentManager is abstract.")
-
-    def on(self):
-        """Turn the component on."""
-        raise NotImplementedError("BaseComponentManager is abstract.")
-
-    def reset(self):
-        """Reset the component (from fault state)."""
-        raise NotImplementedError("BaseComponentManager is abstract.")
-
-    action_map = {
-        PowerMode.OFF: "component_off",
-        PowerMode.STANDBY: "component_standby",
-        PowerMode.ON: "component_on",
-    }
-
-    def component_power_mode_changed(self, power_mode):
-        """
-        Handle notification that the component's power mode has changed.
-
-        This is a callback hook.
-
-        :param power_mode: the new power mode of the component
-        :type power_mode:
-            :py:class:`ska_tango_base.control_model.PowerMode`
-        """
-        action = self.action_map[power_mode]
-        self.op_state_model.perform_action(action)
-
-    def component_fault(self):
-        """
-        Handle notification that the component has faulted.
-
-        This is a callback hook.
-        """
-        self.op_state_model.perform_action("component_fault")
