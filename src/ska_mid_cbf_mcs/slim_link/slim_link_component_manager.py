@@ -92,7 +92,7 @@ class SlimLinkComponentManager(CbfComponentManager):
         component_fault_callback: Callable[[bool], None],
     ) -> None:
         """
-        Initialise a new instance.
+        Initialize a new instance.
 
         :param tx_device_name: a string containing the tx device's fqdn
         :param rx_device_name: a string containing the rx device's fqdn
@@ -107,6 +107,9 @@ class SlimLinkComponentManager(CbfComponentManager):
         :param component_fault_callback: callback to be called in event of
             component fault
         """
+        
+        self._logger.debug("SLIMLink  -  initDevice()  - " + self._device_name)
+        
         self.connected = False
         
         self._tx_device_name = tx_device_name
@@ -129,7 +132,8 @@ class SlimLinkComponentManager(CbfComponentManager):
 
     def start_communicating(self: SlimLinkComponentManager) -> None:
         """Establish communication with the component, then start monitoring."""
-
+        self._logger.debug("SLIMLink  -  startCommunicating()  - " + self._device_name)
+        
         if self.connected:
             self._logger.info("Already communicating.")
             return
@@ -156,11 +160,13 @@ class SlimLinkComponentManager(CbfComponentManager):
 
     def stop_communicating(self: SlimLinkComponentManager) -> None:
         """Stop communication with the component."""
+        self._logger.debug("SLIMLink  -  stopCommunicating()  - " + self._device_name)
         super().stop_communicating()
         self.update_component_power_mode(PowerMode.OFF)
         self.connected = False
         
     def connect_to_slim_tx(self: SlimLinkComponentManager, tx_device: CbfDeviceProxy) -> None:
+        self._logger.debug("SLIMLink  -  connectToSlimTx()  - " + self._device_name)
         try:
             ping = tx_device.ping()
             
@@ -172,6 +178,7 @@ class SlimLinkComponentManager(CbfComponentManager):
             # throw exception
             
     def connect_to_slim_rx(self: SlimLinkComponentManager, rx_device: CbfDeviceProxy) -> None:
+        self._logger.debug("SLIMLink  -  connectToSlimRx()  - " + self._device_name)
         try:
             disconnectFromSLIMRx()
             ping = rx_device.ping()
@@ -188,5 +195,40 @@ class SlimLinkComponentManager(CbfComponentManager):
             
     def verify_connection(self: SlimLinkComponentManager) -> bool:
         connected = false
-        self._logger.debug("DsSLIMLink::verifyConnection()  - " + self._device_name)
+        self._logger.debug("SLIMLink  -  verifyConnection()  - " + self._device_name)
+        
+        if self._tx_device_proxy and self._rx_device_proxy:
+            connected = True
+            result_msg = "Valid connection between TX and RX device! "
+            error_msg = ""
+            
+            try:
+                expected_idle_ctrl_word = self._tx_device_proxy.read_attribute("idle_ctrl_word")
+                rx_idle_ctrl_word = self._rx_device_proxy.read_attribute("idle_ctrl_word")
+                counters = self._rx_device_proxy.read_attribute("read_counters")
+                block_lost_count = counters[BLOCK_LOST_COUNT_INDEX]
+                cdr_lost_count = counters[CDR_LOST_COUNT_INDEX]
+                
+                if rx_idle_ctrl_word != expected_idle_ctrl_word:
+                    connected = False
+			        result_msg = "Invalid connection between TX and RX device! "
+			        err_msg += "Expected and received idle control word do not match. "
+                if block_lost_count != 0:
+                    connected = False
+			        result_msg = "Invalid connection between TX and RX device! "
+			        err_msg += "block_lost_count not zero. "
+                if cdr_lost_count != 0:
+                    connected = False
+			        result_msg = "Invalid connection between TX and RX device! "
+			        err_msg += "cdr_lost_count not zero. "
+           
+                self._logger.debug("SLIMLink  -  verifyConnection()  - " + result_msg + err_msg)
+            except tango.DevFailed:
+                # tango.except.print_exception()
+                # exit(-1)
+        else:
+            self._logger.error("Must connect Tx and Rx device!")
+            
+        return connected
+            
         # TODO: This is where I made it to
