@@ -37,14 +37,9 @@ class TestVcc:
     Test class for Vcc device class integration testing.
     """
 
-    @pytest.mark.parametrize(
-        "vcc_id",
-        [1],
-    )
+    @pytest.mark.parametrize("vcc_id", [1])
     def test_Connect(
-        self: TestVcc,
-        test_proxies: pytest.fixture,
-        vcc_id: int,
+        self: TestVcc, test_proxies: pytest.fixture, vcc_id: int
     ) -> None:
         """
         Test the initial states and verify the component manager
@@ -73,14 +68,9 @@ class TestVcc:
         )
         assert test_proxies.vcc[vcc_id].State() == DevState.OFF
 
-    @pytest.mark.parametrize(
-        "vcc_id",
-        [1],
-    )
+    @pytest.mark.parametrize("vcc_id", [1])
     def test_On(
-        self: TestVcc,
-        test_proxies: pytest.fixture,
-        vcc_id: int,
+        self: TestVcc, test_proxies: pytest.fixture, vcc_id: int
     ) -> None:
         """
         Test the "On" command
@@ -102,14 +92,9 @@ class TestVcc:
         )
         assert device_under_test.State() == DevState.ON
 
-    @pytest.mark.parametrize(
-        "vcc_id",
-        [1],
-    )
+    @pytest.mark.parametrize("vcc_id", [1])
     def test_Off(
-        self: TestVcc,
-        test_proxies: pytest.fixture,
-        vcc_id: int,
+        self: TestVcc, test_proxies: pytest.fixture, vcc_id: int
     ) -> None:
         """
         Test the "Off" command
@@ -131,14 +116,9 @@ class TestVcc:
         )
         assert device_under_test.State() == DevState.OFF
 
-    @pytest.mark.parametrize(
-        "vcc_id",
-        [1],
-    )
+    @pytest.mark.parametrize("vcc_id", [1])
     def test_Standby(
-        self: TestVcc,
-        test_proxies: pytest.fixture,
-        vcc_id: int,
+        self: TestVcc, test_proxies: pytest.fixture, vcc_id: int
     ) -> None:
         """
         Test the "Standby" command
@@ -163,12 +143,7 @@ class TestVcc:
     @pytest.mark.parametrize(
         "config_file_name, \
         vcc_id",
-        [
-            (
-                "Vcc_ConfigureScan_basic.json",
-                1,
-            )
-        ],
+        [("Vcc_ConfigureScan_basic.json", 1)],
     )
     def test_ConfigureScan(
         self: TestVcc,
@@ -246,10 +221,7 @@ class TestVcc:
         [(1, 1)],
     )
     def test_Scan(
-        self: TestVcc,
-        test_proxies: pytest.fixture,
-        vcc_id: int,
-        scan_id: int,
+        self: TestVcc, test_proxies: pytest.fixture, vcc_id: int, scan_id: int
     ) -> None:
         """
         Test the "Scan" command
@@ -282,14 +254,9 @@ class TestVcc:
 
         assert device_under_test.scanID == scan_id
 
-    @pytest.mark.parametrize(
-        "vcc_id",
-        [1],
-    )
+    @pytest.mark.parametrize("vcc_id", [1])
     def test_EndScan(
-        self: TestVcc,
-        test_proxies: pytest.fixture,
-        vcc_id: int,
+        self: TestVcc, test_proxies: pytest.fixture, vcc_id: int
     ) -> None:
         """
         Test the "EndScan" command
@@ -316,14 +283,9 @@ class TestVcc:
         )
         assert device_under_test.obsState == ObsState.READY
 
-    @pytest.mark.parametrize(
-        "vcc_id",
-        [1],
-    )
+    @pytest.mark.parametrize("vcc_id", [1])
     def test_GoToIdle(
-        self: TestVcc,
-        test_proxies: pytest.fixture,
-        vcc_id: int,
+        self: TestVcc, test_proxies: pytest.fixture, vcc_id: int
     ) -> None:
         """
         Test the "GoToIdle" command
@@ -355,14 +317,14 @@ class TestVcc:
         "config_file_name, \
         vcc_id, \
         scan_id",
-        [("Vcc_ConfigureScan_basic.json", 1, "1")],
+        [("Vcc_ConfigureScan_basic.json", 1, 1)],
     )
     def test_Abort_ObsReset(
         self: TestVcc,
         test_proxies: pytest.fixture,
         config_file_name: str,
         vcc_id: int,
-        scan_id: str,
+        scan_id: int,
     ) -> None:
         """
         Test the "ConfigureScan" command
@@ -411,14 +373,9 @@ class TestVcc:
         )
         assert device_under_test.obsState == ObsState.IDLE
 
-    @pytest.mark.parametrize(
-        "vcc_id",
-        [1],
-    )
+    @pytest.mark.parametrize("vcc_id", [1])
     def test_Disconnect(
-        self: TestVcc,
-        test_proxies: pytest.fixture,
-        vcc_id: int,
+        self: TestVcc, test_proxies: pytest.fixture, vcc_id: int
     ) -> None:
         """
         Verify the component manager can stop communicating

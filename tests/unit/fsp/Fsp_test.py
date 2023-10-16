@@ -38,10 +38,7 @@ class TestFsp:
     Test class for Fsp tests.
     """
 
-    def test_State(
-        self: TestFsp,
-        device_under_test: CbfDeviceProxy,
-    ) -> None:
+    def test_State(self: TestFsp, device_under_test: CbfDeviceProxy) -> None:
         """
         Test State
 
@@ -51,10 +48,7 @@ class TestFsp:
         """
         assert device_under_test.State() == DevState.DISABLE
 
-    def test_Status(
-        self: TestFsp,
-        device_under_test: CbfDeviceProxy,
-    ) -> None:
+    def test_Status(self: TestFsp, device_under_test: CbfDeviceProxy) -> None:
         """
         Test Status
 
@@ -65,8 +59,7 @@ class TestFsp:
         assert device_under_test.Status() == "The device is in DISABLE state."
 
     def test_adminMode(
-        self: TestFsp,
-        device_under_test: CbfDeviceProxy,
+        self: TestFsp, device_under_test: CbfDeviceProxy
     ) -> None:
         """
         Test Admin Mode

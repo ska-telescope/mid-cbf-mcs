@@ -159,13 +159,7 @@ class TestFspPssSubarray:
         "config_file_name, \
         fsp_id, \
         sub_id",
-        [
-            (
-                "FspPssSubarray_ConfigureScan_basic.json",
-                1,
-                1,
-            )
-        ],
+        [("FspPssSubarray_ConfigureScan_basic.json", 1, 1)],
     )
     def test_ConfigureScan(
         self: TestFspPssSubarray,
@@ -348,13 +342,7 @@ class TestFspPssSubarray:
         "config_file_name, \
         fsp_id, \
         sub_id",
-        [
-            (
-                "FspPssSubarray_ConfigureScan_basic.json",
-                1,
-                1,
-            )
-        ],
+        [("FspPssSubarray_ConfigureScan_basic.json", 1, 1)],
     )
     def test_Abort_ObsReset(
         self: TestFspPssSubarray,

@@ -95,14 +95,7 @@ class FspCorrSubarray(CspSubElementObsDevice):
         access=AttrWriteType.READ,
         label="Frequency band",
         doc="Frequency band; an int in the range [0, 5]",
-        enum_labels=[
-            "1",
-            "2",
-            "3",
-            "4",
-            "5a",
-            "5b",
-        ],
+        enum_labels=["1", "2", "3", "4", "5a", "5b"],
     )
 
     band5Tuning = attribute(
@@ -248,9 +241,7 @@ class FspCorrSubarray(CspSubElementObsDevice):
         A class for the FspCorrSubarray's init_device() "command".
         """
 
-        def do(
-            self: FspCorrSubarray.InitCommand,
-        ) -> Tuple[ResultCode, str]:
+        def do(self: FspCorrSubarray.InitCommand,) -> Tuple[ResultCode, str]:
             """
             Stateless hook for device initialisation.
 
@@ -414,9 +405,7 @@ class FspCorrSubarray(CspSubElementObsDevice):
         return self.component_manager.integration_factor
         # PROTECTED REGION END #    //  FspCorrSubarray.integrationFactor_read
 
-    def read_channelAveragingMap(
-        self: FspCorrSubarray,
-    ) -> List[List[int]]:
+    def read_channelAveragingMap(self: FspCorrSubarray,) -> List[List[int]]:
         # PROTECTED REGION ID(FspCorrSubarray.channelAveragingMap_read) ENABLED START #
         """
         Read the channelAveragingMap attribute.
@@ -657,9 +646,7 @@ class FspCorrSubarray(CspSubElementObsDevice):
         A class for the FspCorrSubarray's On() command.
         """
 
-        def do(
-            self: FspCorrSubarray.OnCommand,
-        ) -> Tuple[ResultCode, str]:
+        def do(self: FspCorrSubarray.OnCommand,) -> Tuple[ResultCode, str]:
             """
             Stateless hook for On() command functionality.
 
@@ -684,9 +671,7 @@ class FspCorrSubarray(CspSubElementObsDevice):
         A class for the FspCorrSubarray's Off() command.
         """
 
-        def do(
-            self: FspCorrSubarray.OffCommand,
-        ) -> Tuple[ResultCode, str]:
+        def do(self: FspCorrSubarray.OffCommand,) -> Tuple[ResultCode, str]:
             """
             Stateless hook for Off() command functionality.
 
@@ -862,6 +847,30 @@ class FspCorrSubarray(CspSubElementObsDevice):
                 device._component_scanning(True)
 
             return (result_code, message)
+
+    @command(
+        dtype_in="DevShort",
+        doc_in="A string with the scan ID",
+        dtype_out="DevVarLongStringArray",
+        doc_out="A tuple containing a return code and a string message indicating status."
+        "The message is for information purpose only.",
+    )
+    @DebugIt()
+    def Scan(self, argin):
+        # PROTECTED REGION ID(CspSubElementObsDevice.Scan) ENABLED START #
+        """
+        Start an observing scan.
+
+        :param argin: A string with the scan ID
+        :type argin: 'DevShort'
+
+        :return: A tuple containing a return code and a string message indicating status.
+            The message is for information purpose only.
+        :rtype: (ResultCode, str)
+        """
+        command = self.get_command_object("Scan")
+        (return_code, message) = command(argin)
+        return [[return_code], [message]]
 
     class EndScanCommand(CspSubElementObsDevice.EndScanCommand):
         """
@@ -1071,8 +1080,7 @@ class FspCorrSubarray(CspSubElementObsDevice):
         self.obs_state_model.perform_action("component_obsfault")
 
     def _communication_status_changed(
-        self: FspCorrSubarray,
-        communication_status: CommunicationStatus,
+        self: FspCorrSubarray, communication_status: CommunicationStatus
     ) -> None:
         """
         Handle change in communications status between component manager and component.
@@ -1093,8 +1101,7 @@ class FspCorrSubarray(CspSubElementObsDevice):
             self.op_state_model.perform_action("component_unknown")
 
     def _component_power_mode_changed(
-        self: FspCorrSubarray,
-        power_mode: PowerMode,
+        self: FspCorrSubarray, power_mode: PowerMode
     ) -> None:
         """
         Handle change in the power mode of the component.

@@ -154,10 +154,8 @@ class TalonLRUComponentManager(CbfComponentManager):
                 self._check_power_mode_callback,
                 stateless=True,
             )
-            self.pdu1_power_mode = (
-                self._proxy_power_switch1.GetOutletPowerMode(
-                    self._pdu_outlets[0]
-                )
+            self.pdu1_power_mode = self._proxy_power_switch1.GetOutletPowerMode(
+                self._pdu_outlets[0]
             )
             if self._proxy_power_switch1.numOutlets == 0:
                 self.pdu1_power_mode = PowerMode.UNKNOWN
@@ -176,10 +174,8 @@ class TalonLRUComponentManager(CbfComponentManager):
                     self._check_power_mode_callback,
                     stateless=True,
                 )
-                self.pdu2_power_mode = (
-                    self._proxy_power_switch2.GetOutletPowerMode(
-                        self._pdu_outlets[1]
-                    )
+                self.pdu2_power_mode = self._proxy_power_switch2.GetOutletPowerMode(
+                    self._pdu_outlets[1]
                 )
                 if self._proxy_power_switch2.numOutlets == 0:
                     self.pdu2_power_mode = PowerMode.UNKNOWN
@@ -239,10 +235,8 @@ class TalonLRUComponentManager(CbfComponentManager):
         """
         if self._proxy_power_switch1 is not None:
             if self._proxy_power_switch1.numOutlets != 0:
-                self.pdu1_power_mode = (
-                    self._proxy_power_switch1.GetOutletPowerMode(
-                        self._pdu_outlets[0]
-                    )
+                self.pdu1_power_mode = self._proxy_power_switch1.GetOutletPowerMode(
+                    self._pdu_outlets[0]
                 )
             else:
                 self.pdu1_power_mode = PowerMode.UNKNOWN
@@ -256,10 +250,8 @@ class TalonLRUComponentManager(CbfComponentManager):
                 ):
                     self.pdu2_power_mode = self.pdu1_power_mode
                 else:
-                    self.pdu2_power_mode = (
-                        self._proxy_power_switch2.GetOutletPowerMode(
-                            self._pdu_outlets[1]
-                        )
+                    self.pdu2_power_mode = self._proxy_power_switch2.GetOutletPowerMode(
+                        self._pdu_outlets[1]
                     )
             else:
                 self.pdu2_power_mode = PowerMode.UNKNOWN
@@ -300,8 +292,7 @@ class TalonLRUComponentManager(CbfComponentManager):
         return
 
     def on(
-        self: TalonLRUComponentManager,
-        simulation_mode: SimulationMode,
+        self: TalonLRUComponentManager, simulation_mode: SimulationMode
     ) -> Tuple[ResultCode, str]:
         """
         Turn on the TalonLRU and its subordinate devices
@@ -385,9 +376,7 @@ class TalonLRUComponentManager(CbfComponentManager):
             self.update_component_fault(True)
             return (ResultCode.FAILED, log_msg)
 
-    def off(
-        self: TalonLRUComponentManager,
-    ) -> Tuple[ResultCode, str]:
+    def off(self: TalonLRUComponentManager,) -> Tuple[ResultCode, str]:
         """
         Turn off the TalonLRU and its subordinate devices
 
@@ -459,9 +448,7 @@ class TalonLRUComponentManager(CbfComponentManager):
             self.update_component_fault(True)
             return (ResultCode.FAILED, log_msg)
 
-    def standby(
-        self: TalonLRUComponentManager,
-    ) -> Tuple[ResultCode, str]:
+    def standby(self: TalonLRUComponentManager,) -> Tuple[ResultCode, str]:
         """
         Turn the TalonLRU into low power standby mode
 

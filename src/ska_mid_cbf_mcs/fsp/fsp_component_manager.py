@@ -188,9 +188,7 @@ class FspComponentManager(CbfComponentManager):
         """
         self._simulation_mode = value
 
-    def start_communicating(
-        self: FspComponentManager,
-    ) -> None:
+    def start_communicating(self: FspComponentManager,) -> None:
         """Establish communication with the component, then start monitoring."""
 
         if self._connected:
@@ -245,9 +243,7 @@ class FspComponentManager(CbfComponentManager):
             self.update_component_fault(True)
             return None
 
-    def _get_capability_proxies(
-        self: FspComponentManager,
-    ) -> None:
+    def _get_capability_proxies(self: FspComponentManager,) -> None:
         """Establish connections with the capability proxies"""
         # for now, assume that given addresses are valid
 
@@ -260,15 +256,12 @@ class FspComponentManager(CbfComponentManager):
 
             if self._proxy_hps_fsp_corr_controller is None:
                 self._proxy_hps_fsp_corr_controller = self._get_device_proxy(
-                    self._hps_fsp_corr_controller_fqdn,
-                    is_group=False,
+                    self._hps_fsp_corr_controller_fqdn, is_group=False
                 )
         else:
             self._logger.info("Trying to connected to Simulated HPS devices")
-            self._proxy_hps_fsp_corr_controller = (
-                HpsFspCorrControllerSimulator(
-                    self._hps_fsp_corr_controller_fqdn
-                )
+            self._proxy_hps_fsp_corr_controller = HpsFspCorrControllerSimulator(
+                self._hps_fsp_corr_controller_fqdn
             )
             self._proxy_hps_fsp_controller = HpsFspControllerSimulator(
                 self._hps_fsp_controller_fqdn,
@@ -293,9 +286,7 @@ class FspComponentManager(CbfComponentManager):
                 for fqdn in self._fsp_pst_subarray_fqdns_all
             ]
 
-    def _get_group_proxies(
-        self: FspComponentManager,
-    ) -> None:
+    def _get_group_proxies(self: FspComponentManager,) -> None:
         """Establish connections with the group proxies"""
         if self._group_fsp_corr_subarray is None:
             self._group_fsp_corr_subarray = self._get_device_proxy(
@@ -318,8 +309,7 @@ class FspComponentManager(CbfComponentManager):
 
     @check_communicating
     def remove_subarray_membership(
-        self: FspComponentManager,
-        argin: int,
+        self: FspComponentManager, argin: int
     ) -> Tuple[ResultCode, str]:
         """
         Remove subarray from the subarrayMembership list.
@@ -358,8 +348,7 @@ class FspComponentManager(CbfComponentManager):
 
     @check_communicating
     def add_subarray_membership(
-        self: FspComponentManager,
-        argin: int,
+        self: FspComponentManager, argin: int
     ) -> Tuple[ResultCode, str]:
         """
         Add a subarray to the subarrayMembership list.
@@ -390,9 +379,7 @@ class FspComponentManager(CbfComponentManager):
         return (result_code, message)
 
     @check_communicating
-    def on(
-        self: FspComponentManager,
-    ) -> Tuple[ResultCode, str]:
+    def on(self: FspComponentManager,) -> Tuple[ResultCode, str]:
         """
         Turn on the fsp and its subordinate devices
 
@@ -424,9 +411,7 @@ class FspComponentManager(CbfComponentManager):
             return (ResultCode.FAILED, log_msg)
 
     @check_communicating
-    def off(
-        self: FspComponentManager,
-    ) -> Tuple[ResultCode, str]:
+    def off(self: FspComponentManager,) -> Tuple[ResultCode, str]:
         """
         Turn off the fsp and its subordinate devices
 
@@ -457,9 +442,7 @@ class FspComponentManager(CbfComponentManager):
             return (ResultCode.FAILED, log_msg)
 
     @check_communicating
-    def standby(
-        self: FspComponentManager,
-    ) -> Tuple[ResultCode, str]:
+    def standby(self: FspComponentManager,) -> Tuple[ResultCode, str]:
         """
         Put the fsp into low power standby mode
 
@@ -474,8 +457,7 @@ class FspComponentManager(CbfComponentManager):
 
     @check_communicating
     def set_function_mode(
-        self: FspComponentManager,
-        argin: str,
+        self: FspComponentManager, argin: str
     ) -> Tuple[ResultCode, str]:
         """
         Put the fsp into low power standby mode
@@ -526,8 +508,7 @@ class FspComponentManager(CbfComponentManager):
 
     @check_communicating
     def update_jones_matrix(
-        self: FspComponentManager,
-        argin: str,
+        self: FspComponentManager, argin: str
     ) -> Tuple[ResultCode, str]:
         """
         Update the FSP's jones matrix (serialized JSON object)
@@ -573,8 +554,7 @@ class FspComponentManager(CbfComponentManager):
 
     @check_communicating
     def update_delay_model(
-        self: FspComponentManager,
-        argin: str,
+        self: FspComponentManager, argin: str
     ) -> Tuple[ResultCode, str]:
         """
         Update the FSP's delay model (serialized JSON object)
@@ -623,8 +603,7 @@ class FspComponentManager(CbfComponentManager):
 
     @check_communicating
     def update_timing_beam_weights(
-        self: FspComponentManager,
-        argin: str,
+        self: FspComponentManager, argin: str
     ) -> Tuple[ResultCode, str]:
         """
         Update the FSP's timing beam weights (serialized JSON object)
@@ -668,9 +647,7 @@ class FspComponentManager(CbfComponentManager):
             return (ResultCode.FAILED, log_msg)
 
     @check_communicating
-    def get_fsp_corr_config_id(
-        self: FspComponentManager,
-    ) -> str:
+    def get_fsp_corr_config_id(self: FspComponentManager,) -> str:
         """
         Get the configID for all the fspCorrSubarray
 

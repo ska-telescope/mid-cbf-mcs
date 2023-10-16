@@ -129,9 +129,7 @@ class TalonDxComponentManager:
         self.logger.info(f"Completed configuring talon board {target}")
         return ResultCode.OK
 
-    def _setup_tango_host_file(
-        self: TalonDxComponentManager,
-    ) -> None:
+    def _setup_tango_host_file(self: TalonDxComponentManager,) -> None:
         """
         Copy the hps_master_mcs.sh file from mnt into mnt/talondx-config
 

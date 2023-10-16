@@ -153,9 +153,7 @@ class CbfController(SKAController):
             "Standby", self.StandbyCommand(*device_args)
         )
 
-    def get_num_capabilities(
-        self: CbfController,
-    ) -> None:
+    def get_num_capabilities(self: CbfController,) -> None:
         # self._max_capabilities inherited from SKAController
         # check first if property exists in DB
         """Get number of capabilities for _init_Device.
@@ -167,9 +165,7 @@ class CbfController(SKAController):
             self.logger.warning("MaxCapabilities device property not defined")
 
     class InitCommand(SKAController.InitCommand):
-        def _get_num_capabilities(
-            self: CbfController.InitCommand,
-        ) -> None:
+        def _get_num_capabilities(self: CbfController.InitCommand,) -> None:
             # self._max_capabilities inherited from SKAController
             # check first if property exists in DB
             """Get number of capabilities for _init_Device.
@@ -212,9 +208,7 @@ class CbfController(SKAController):
                     using default value"
                 )
 
-        def do(
-            self: CbfController.InitCommand,
-        ) -> Tuple[ResultCode, str]:
+        def do(self: CbfController.InitCommand,) -> Tuple[ResultCode, str]:
             """
             Stateless hook for device initialisation.
             :return: A tuple containing a return code and a string
@@ -414,9 +408,7 @@ class CbfController(SKAController):
         A class for the CbfController's On() command.
         """
 
-        def do(
-            self: CbfController.OnCommand,
-        ) -> Tuple[ResultCode, str]:
+        def do(self: CbfController.OnCommand,) -> Tuple[ResultCode, str]:
             """
             Stateless hook for On() command functionality.
 
@@ -443,9 +435,7 @@ class CbfController(SKAController):
         A class for the CbfController's Off() command.
         """
 
-        def do(
-            self: CbfController.OffCommand,
-        ) -> Tuple[ResultCode, str]:
+        def do(self: CbfController.OffCommand,) -> Tuple[ResultCode, str]:
             """
             Stateless hook for Off() command functionality.
 
@@ -470,9 +460,7 @@ class CbfController(SKAController):
         A class for the CbfController's Standby() command.
         """
 
-        def do(
-            self: CbfController.StandbyCommand,
-        ) -> Tuple[ResultCode, str]:
+        def do(self: CbfController.StandbyCommand,) -> Tuple[ResultCode, str]:
             """
             Stateless hook for Standby() command functionality.
             Turn off subarray, vcc, fsp, turn CbfController to standby
@@ -495,8 +483,7 @@ class CbfController(SKAController):
     # Callbacks
     # ----------
     def _communication_status_changed(
-        self: CbfController,
-        communication_status: CommunicationStatus,
+        self: CbfController, communication_status: CommunicationStatus
     ) -> None:
         """
         Handle change in communications status between component manager and component.
@@ -517,8 +504,7 @@ class CbfController(SKAController):
             self.op_state_model.perform_action("component_unknown")
 
     def _component_power_mode_changed(
-        self: CbfController,
-        power_mode: PowerMode,
+        self: CbfController, power_mode: PowerMode
     ) -> None:
         """
         Handle change in the power mode of the component.

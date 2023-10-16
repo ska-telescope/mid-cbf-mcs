@@ -39,8 +39,7 @@ class TestFspCorrSubarray:
     """
 
     def test_State(
-        self: TestFspCorrSubarray,
-        device_under_test: CbfDeviceProxy,
+        self: TestFspCorrSubarray, device_under_test: CbfDeviceProxy
     ) -> None:
         """
         Test State
@@ -52,8 +51,7 @@ class TestFspCorrSubarray:
         assert device_under_test.State() == DevState.DISABLE
 
     def test_Status(
-        self: TestFspCorrSubarray,
-        device_under_test: CbfDeviceProxy,
+        self: TestFspCorrSubarray, device_under_test: CbfDeviceProxy
     ) -> None:
         """
         Test Status
@@ -65,8 +63,7 @@ class TestFspCorrSubarray:
         assert device_under_test.Status() == "The device is in DISABLE state."
 
     def test_adminMode(
-        self: TestFspCorrSubarray,
-        device_under_test: CbfDeviceProxy,
+        self: TestFspCorrSubarray, device_under_test: CbfDeviceProxy
     ) -> None:
         """
         Test Admin Mode
@@ -185,14 +182,8 @@ class TestFspCorrSubarray:
         "config_file_name, \
         scan_id",
         [
-            (
-                "/../../data/FspCorrSubarray_ConfigureScan_basic.json",
-                1,
-            ),
-            (
-                "/../../data/FspCorrSubarray_ConfigureScan_basic.json",
-                2,
-            ),
+            ("/../../data/FspCorrSubarray_ConfigureScan_basic.json", 1),
+            ("/../../data/FspCorrSubarray_ConfigureScan_basic.json", 2),
         ],
     )
     def test_Scan(
@@ -226,14 +217,8 @@ class TestFspCorrSubarray:
         "config_file_name, \
         scan_id",
         [
-            (
-                "/../../data/FspCorrSubarray_ConfigureScan_basic.json",
-                1,
-            ),
-            (
-                "/../../data/FspCorrSubarray_ConfigureScan_basic.json",
-                2,
-            ),
+            ("/../../data/FspCorrSubarray_ConfigureScan_basic.json", 1),
+            ("/../../data/FspCorrSubarray_ConfigureScan_basic.json", 2),
         ],
     )
     def test_EndScan(
@@ -293,14 +278,8 @@ class TestFspCorrSubarray:
         "config_file_name, \
         scan_id",
         [
-            (
-                "/../../data/FspCorrSubarray_ConfigureScan_basic.json",
-                1,
-            ),
-            (
-                "/../../data/FspCorrSubarray_ConfigureScan_basic.json",
-                2,
-            ),
+            ("/../../data/FspCorrSubarray_ConfigureScan_basic.json", 1),
+            ("/../../data/FspCorrSubarray_ConfigureScan_basic.json", 2),
         ],
     )
     def test_Abort_FromScanning(

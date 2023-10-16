@@ -103,14 +103,7 @@ class Vcc(CspSubElementObsDevice):
         access=AttrWriteType.READ,
         label="Frequency band",
         doc="Frequency band; an int in the range [0, 5]",
-        enum_labels=[
-            "1",
-            "2",
-            "3",
-            "4",
-            "5a",
-            "5b",
-        ],
+        enum_labels=["1", "2", "3", "4", "5a", "5b"],
     )
 
     band5Tuning = attribute(
@@ -296,8 +289,7 @@ class Vcc(CspSubElementObsDevice):
     # ---------
 
     def _communication_status_changed(
-        self: Vcc,
-        communication_status: CommunicationStatus,
+        self: Vcc, communication_status: CommunicationStatus
     ) -> None:
         """
         Handle change in communications status between component manager and component.
@@ -325,8 +317,7 @@ class Vcc(CspSubElementObsDevice):
             pass  # wait for a power mode update
 
     def _component_power_mode_changed(
-        self: Vcc,
-        power_mode: PowerMode,
+        self: Vcc, power_mode: PowerMode
     ) -> None:
         """
         Handle change in the power mode of the component.
@@ -594,9 +585,7 @@ class Vcc(CspSubElementObsDevice):
         A class for the Vcc's init_device() "command".
         """
 
-        def do(
-            self: Vcc.InitCommand,
-        ) -> Tuple[ResultCode, str]:
+        def do(self: Vcc.InitCommand,) -> Tuple[ResultCode, str]:
             """
             Stateless hook for device initialisation.
 
@@ -636,9 +625,7 @@ class Vcc(CspSubElementObsDevice):
         A class for the Vcc's on command.
         """
 
-        def do(
-            self: Vcc.OnCommand,
-        ) -> Tuple[ResultCode, str]:
+        def do(self: Vcc.OnCommand,) -> Tuple[ResultCode, str]:
             """
             Stateless hook for device initialisation.
 
@@ -655,9 +642,7 @@ class Vcc(CspSubElementObsDevice):
         A class for the Vcc's off command.
         """
 
-        def do(
-            self: Vcc.OffCommand,
-        ) -> Tuple[ResultCode, str]:
+        def do(self: Vcc.OffCommand,) -> Tuple[ResultCode, str]:
             """
             Stateless hook for device initialisation.
 
@@ -673,9 +658,7 @@ class Vcc(CspSubElementObsDevice):
         A class for the Vcc's standby command.
         """
 
-        def do(
-            self: Vcc.StandbyCommand,
-        ) -> Tuple[ResultCode, str]:
+        def do(self: Vcc.StandbyCommand,) -> Tuple[ResultCode, str]:
             """
             Stateless hook for device initialisation.
 
@@ -708,10 +691,7 @@ class Vcc(CspSubElementObsDevice):
             """
             return self.target.component_manager.configure_band(argin)
 
-    @command(
-        dtype_in="DevString",
-        doc_in="Frequency band string.",
-    )
+    @command(dtype_in="DevString", doc_in="Frequency band string.")
     @DebugIt()
     def ConfigureBand(self, freq_band_name: str) -> Tuple[ResultCode, str]:
         # PROTECTED REGION ID(CspSubElementObsDevice.ConfigureBand) ENABLED START #
@@ -817,7 +797,7 @@ class Vcc(CspSubElementObsDevice):
                 configuration["frequency_band_offset_stream1"] = 0
             if (
                 abs(int(configuration["frequency_band_offset_stream1"]))
-                <= const.FREQUENCY_SLICE_BW * 10**6 / 2
+                <= const.FREQUENCY_SLICE_BW * 10 ** 6 / 2
             ):
                 pass
             else:
@@ -832,7 +812,7 @@ class Vcc(CspSubElementObsDevice):
                 configuration["frequency_band_offset_stream2"] = 0
             if (
                 abs(int(configuration["frequency_band_offset_stream2"]))
-                <= const.FREQUENCY_SLICE_BW * 10**6 / 2
+                <= const.FREQUENCY_SLICE_BW * 10 ** 6 / 2
             ):
                 pass
             else:
@@ -954,12 +934,12 @@ class Vcc(CspSubElementObsDevice):
         A class for the Vcc's Scan() command.
         """
 
-        def do(self: Vcc.ScanCommand, argin: str) -> Tuple[ResultCode, str]:
+        def do(self: Vcc.ScanCommand, argin: int) -> Tuple[ResultCode, str]:
             """
             Stateless hook for Scan() command functionality.
 
             :param argin: The scan ID as JSON formatted string
-            :type argin: str
+            :type argin: int
 
             :return: A tuple containing a return code and a string
                 message indicating status. The message is for
@@ -968,12 +948,36 @@ class Vcc(CspSubElementObsDevice):
             """
 
             device = self.target
-            (result_code, msg) = device.component_manager.scan(int(argin))
+            (result_code, msg) = device.component_manager.scan(argin)
 
             if result_code == ResultCode.STARTED:
                 device.obs_state_model.perform_action("component_scanning")
 
             return (result_code, msg)
+
+    @command(
+        dtype_in="DevShort",
+        doc_in="A string with the scan ID",
+        dtype_out="DevVarLongStringArray",
+        doc_out="A tuple containing a return code and a string message indicating status."
+        "The message is for information purpose only.",
+    )
+    @DebugIt()
+    def Scan(self, argin):
+        # PROTECTED REGION ID(CspSubElementObsDevice.Scan) ENABLED START #
+        """
+        Start an observing scan.
+
+        :param argin: A string with the scan ID
+        :type argin: 'DevShort'
+
+        :return: A tuple containing a return code and a string message indicating status.
+            The message is for information purpose only.
+        :rtype: (ResultCode, str)
+        """
+        command = self.get_command_object("Scan")
+        (return_code, message) = command(argin)
+        return [[return_code], [message]]
 
     class EndScanCommand(CspSubElementObsDevice.EndScanCommand):
         """
@@ -1032,9 +1036,7 @@ class Vcc(CspSubElementObsDevice):
         A class for the Vcc's GoToIdle command.
         """
 
-        def do(
-            self: Vcc.GoToIdleCommand,
-        ) -> Tuple[ResultCode, str]:
+        def do(self: Vcc.GoToIdleCommand,) -> Tuple[ResultCode, str]:
             """
             Stateless hook for GoToIdle() command functionality.
 
@@ -1076,11 +1078,10 @@ class Vcc(CspSubElementObsDevice):
             :return: if UpdateDopplerPhaseCorrection is allowed
             :rtype: bool
             """
-            if (
-                self.target.get_state() == tango.DevState.ON
-                and self.target._obs_state
-                in [ObsState.READY, ObsState.SCANNING]
-            ):
+            if self.target.get_state() == tango.DevState.ON and self.target._obs_state in [
+                ObsState.READY,
+                ObsState.SCANNING,
+            ]:
                 return True
             return False
 
@@ -1125,11 +1126,10 @@ class Vcc(CspSubElementObsDevice):
             :return: if UpdateDelayModel is allowed
             :rtype: bool
             """
-            if (
-                self.target.get_state() == tango.DevState.ON
-                and self.target._obs_state
-                in [ObsState.READY, ObsState.SCANNING]
-            ):
+            if self.target.get_state() == tango.DevState.ON and self.target._obs_state in [
+                ObsState.READY,
+                ObsState.SCANNING,
+            ]:
                 return True
             return False
 
@@ -1170,11 +1170,10 @@ class Vcc(CspSubElementObsDevice):
             :return: if UpdateJonesMatrix is allowed
             :rtype: bool
             """
-            if (
-                self.target.get_state() == tango.DevState.ON
-                and self.target._obs_state
-                in [ObsState.READY, ObsState.SCANNING]
-            ):
+            if self.target.get_state() == tango.DevState.ON and self.target._obs_state in [
+                ObsState.READY,
+                ObsState.SCANNING,
+            ]:
                 return True
             return False
 
@@ -1305,21 +1304,21 @@ class Vcc(CspSubElementObsDevice):
                         pass
                     else:
                         frequency_band_range_1 = (
-                            argin["band_5_tuning"][0] * 10**9
+                            argin["band_5_tuning"][0] * 10 ** 9
                             + argin["frequency_band_offset_stream1"]
-                            - const.BAND_5_STREAM_BANDWIDTH * 10**9 / 2,
-                            argin["band_5_tuning"][0] * 10**9
+                            - const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2,
+                            argin["band_5_tuning"][0] * 10 ** 9
                             + argin["frequency_band_offset_stream1"]
-                            + const.BAND_5_STREAM_BANDWIDTH * 10**9 / 2,
+                            + const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2,
                         )
 
                         frequency_band_range_2 = (
-                            argin["band_5_tuning"][1] * 10**9
+                            argin["band_5_tuning"][1] * 10 ** 9
                             + argin["frequency_band_offset_stream2"]
-                            - const.BAND_5_STREAM_BANDWIDTH * 10**9 / 2,
-                            argin["band_5_tuning"][1] * 10**9
+                            - const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2,
+                            argin["band_5_tuning"][1] * 10 ** 9
                             + argin["frequency_band_offset_stream2"]
-                            + const.BAND_5_STREAM_BANDWIDTH * 10**9 / 2,
+                            + const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2,
                         )
 
                         if (

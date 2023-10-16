@@ -25,7 +25,7 @@ from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import PowerMode, SimulationMode
 from ska_tango_base.csp.subarray.subarray_device import CspSubElementSubarray
 from ska_telmodel.csp.schema import get_csp_config_schema
-from tango import AttrWriteType
+from tango import AttrWriteType, DebugIt
 from tango.server import attribute, command, device_property, run
 
 from ska_mid_cbf_mcs.commons.global_enum import const
@@ -100,9 +100,7 @@ class CbfSubarray(CspSubElementSubarray):
     # Device Properties
     # -----------------
 
-    SubID = device_property(
-        dtype="uint16",
-    )
+    SubID = device_property(dtype="uint16")
 
     CbfControllerAddress = device_property(
         dtype="str",
@@ -137,14 +135,7 @@ class CbfSubarray(CspSubElementSubarray):
         access=AttrWriteType.READ,
         label="Frequency band",
         doc="Frequency band; an int in the range [0, 5]",
-        enum_labels=[
-            "1",
-            "2",
-            "3",
-            "4",
-            "5a",
-            "5b",
-        ],
+        enum_labels=["1", "2", "3", "4", "5a", "5b"],
     )
 
     receptors = attribute(
@@ -301,8 +292,7 @@ class CbfSubarray(CspSubElementSubarray):
             self.obs_state_model.perform_action("component_not_scanning")
 
     def _communication_status_changed(
-        self: CbfSubarray,
-        communication_status: CommunicationStatus,
+        self: CbfSubarray, communication_status: CommunicationStatus
     ) -> None:
         """
         Handle change in communications status between component manager and component.
@@ -329,8 +319,7 @@ class CbfSubarray(CspSubElementSubarray):
             pass  # wait for a power mode update
 
     def _component_power_mode_changed(
-        self: CbfSubarray,
-        power_mode: PowerMode,
+        self: CbfSubarray, power_mode: PowerMode
     ) -> None:
         """
         Handle change in the power mode of the component.
@@ -730,7 +719,7 @@ class CbfSubarray(CspSubElementSubarray):
                 configuration["frequency_band_offset_stream1"] = 0
             if (
                 abs(int(configuration["frequency_band_offset_stream1"]))
-                <= const.FREQUENCY_SLICE_BW * 10**6 / 2
+                <= const.FREQUENCY_SLICE_BW * 10 ** 6 / 2
             ):
                 pass
             else:
@@ -745,7 +734,7 @@ class CbfSubarray(CspSubElementSubarray):
                 configuration["frequency_band_offset_stream2"] = 0
             if (
                 abs(int(configuration["frequency_band_offset_stream2"]))
-                <= const.FREQUENCY_SLICE_BW * 10**6 / 2
+                <= const.FREQUENCY_SLICE_BW * 10 ** 6 / 2
             ):
                 pass
             else:

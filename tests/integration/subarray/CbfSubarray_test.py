@@ -1228,18 +1228,22 @@ class TestCbfSubarray:
                                         == FspModes.PSS_BF.value
                                     ):
                                         fs_length = 16
-                                        proxy_subarray = (
-                                            test_proxies.fspSubarray["PSS-BF"][
-                                                sub_id
-                                            ][fs_id]
-                                        )
+                                        proxy_subarray = test_proxies.fspSubarray[
+                                            "PSS-BF"
+                                        ][
+                                            sub_id
+                                        ][
+                                            fs_id
+                                        ]
                                     else:
                                         fs_length = 4
-                                        proxy_subarray = (
-                                            test_proxies.fspSubarray["PST-BF"][
-                                                sub_id
-                                            ][fs_id]
-                                        )
+                                        proxy_subarray = test_proxies.fspSubarray[
+                                            "PST-BF"
+                                        ][
+                                            sub_id
+                                        ][
+                                            fs_id
+                                        ]
                                     if (
                                         rec_id in proxy_subarray.receptors
                                         and len(matrix) == fs_length
@@ -1269,8 +1273,8 @@ class TestCbfSubarray:
             dm_obj_all = json.loads(delay_model_all)
 
             # Get the DM Python object input to the DM test
-            delay_model_for_test_all_obj = (
-                delay_model_test.create_test_dm_obj_all(dm_obj_all, receptors)
+            delay_model_for_test_all_obj = delay_model_test.create_test_dm_obj_all(
+                dm_obj_all, receptors
             )
 
             # to speed up the testing we use 4s between
@@ -1320,10 +1324,8 @@ class TestCbfSubarray:
                             == fsp.delayModel
                         )
                     else:
-                        log_msg = (
-                            "function mode {} currently not supported".format(
-                                fsp.functionMode
-                            )
+                        log_msg = "function mode {} currently not supported".format(
+                            fsp.functionMode
                         )
 
                 time.sleep(update_period)
@@ -1939,7 +1941,7 @@ class TestCbfSubarray:
                 "Scan1_basic.json",
                 "jonesmatrix.json",
                 ["SKA001", "SKA036", "SKA063", "SKA100"],
-            ),
+            )
         ],
     )
     def test_ConfigureScan_jones_matrix(
@@ -2091,21 +2093,25 @@ class TestCbfSubarray:
                                         fsp.functionMode
                                         == FspModes.PSS_BF.value
                                     ):
-                                        proxy_subarray = (
-                                            test_proxies.fspSubarray["PSS-BF"][
-                                                sub_id
-                                            ][fs_id]
-                                        )
+                                        proxy_subarray = test_proxies.fspSubarray[
+                                            "PSS-BF"
+                                        ][
+                                            sub_id
+                                        ][
+                                            fs_id
+                                        ]
                                         fs_length = 16
                                     elif (
                                         fsp.functionMode
                                         == FspModes.PST_BF.value
                                     ):
-                                        proxy_subarray = (
-                                            test_proxies.fspSubarray["PST-BF"][
-                                                sub_id
-                                            ][fs_id]
-                                        )
+                                        proxy_subarray = test_proxies.fspSubarray[
+                                            "PST-BF"
+                                        ][
+                                            sub_id
+                                        ][
+                                            fs_id
+                                        ]
                                         fs_length = 4
                                     if (
                                         rec_id in proxy_subarray.receptors
@@ -2594,7 +2600,10 @@ class TestCbfSubarray:
                 sleep_time_s,
             )
             assert test_proxies.subarray[sub_id].obsState == ObsState.SCANNING
-            assert test_proxies.subarray[sub_id].scanID == scan_configuration["scan_id"]
+            assert (
+                test_proxies.subarray[sub_id].scanID
+                == scan_configuration["scan_id"]
+            )
             for fsp in configuration["cbf"]["fsp"]:
                 fsp_id = int(fsp["fsp_id"])
                 assert (
@@ -2914,7 +2923,10 @@ class TestCbfSubarray:
                 sleep_time_s,
             )
             assert test_proxies.subarray[sub_id].obsState == ObsState.SCANNING
-            assert test_proxies.subarray[sub_id].scanID == scan_configuration["scan_id"]
+            assert (
+                test_proxies.subarray[sub_id].scanID
+                == scan_configuration["scan_id"]
+            )
             for fsp in configuration["cbf"]["fsp"]:
                 fsp_id = int(fsp["fsp_id"])
                 assert (

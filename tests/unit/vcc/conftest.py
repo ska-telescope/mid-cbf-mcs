@@ -52,8 +52,7 @@ def unique_id() -> str:
 
 @pytest.fixture()
 def mock_component_manager(
-    mocker: pytest_mock.mocker,
-    unique_id: str,
+    mocker: pytest_mock.mocker, unique_id: str
 ) -> unittest.mock.Mock:
     """
     Return a mock component manager.
@@ -118,16 +117,10 @@ def mock_component_manager(
         )
 
     def _abort() -> Tuple[ResultCode, str]:
-        return (
-            ResultCode.OK,
-            "Vcc Abort command completed OK",
-        )
+        return (ResultCode.OK, "Vcc Abort command completed OK")
 
     def _obsreset() -> Tuple[ResultCode, str]:
-        return (
-            ResultCode.OK,
-            "Vcc Obsreset command completed OK",
-        )
+        return (ResultCode.OK, "Vcc Obsreset command completed OK")
 
     mock.start_communicating.side_effect = lambda: _start_communicating(mock)
     mock.on.side_effect = lambda: _on(mock)
@@ -168,9 +161,7 @@ def patched_vcc_device_class(
         change events from subservient devices.
         """
 
-        def create_component_manager(
-            self: PatchedVcc,
-        ) -> unittest.mock.Mock:
+        def create_component_manager(self: PatchedVcc,) -> unittest.mock.Mock:
             """
             Return a mock component manager instead of the usual one.
 

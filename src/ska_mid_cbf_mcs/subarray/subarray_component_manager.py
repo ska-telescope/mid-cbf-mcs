@@ -294,15 +294,15 @@ class CbfSubarrayComponentManager(
 
                 self._fqdn_vcc = self._fqdn_vcc[: self._count_vcc]
                 self._fqdn_fsp = self._fqdn_fsp[: self._count_fsp]
-                self._fqdn_fsp_corr_subarray_device = (
-                    self._fqdn_fsp_corr_subarray_device[: self._count_fsp]
-                )
-                self._fqdn_fsp_pss_subarray_device = (
-                    self._fqdn_fsp_pss_subarray_device[: self._count_fsp]
-                )
-                self._fqdn_fsp_pst_subarray_device = (
-                    self._fqdn_fsp_pst_subarray_device[: self._count_fsp]
-                )
+                self._fqdn_fsp_corr_subarray_device = self._fqdn_fsp_corr_subarray_device[
+                    : self._count_fsp
+                ]
+                self._fqdn_fsp_pss_subarray_device = self._fqdn_fsp_pss_subarray_device[
+                    : self._count_fsp
+                ]
+                self._fqdn_fsp_pst_subarray_device = self._fqdn_fsp_pst_subarray_device[
+                    : self._count_fsp
+                ]
 
             if len(self._proxies_vcc) == 0:
                 self._proxies_vcc = [
@@ -761,9 +761,7 @@ class CbfSubarrayComponentManager(
         )
 
     @check_communicating
-    def deconfigure(
-        self: CbfSubarrayComponentManager,
-    ) -> None:
+    def deconfigure(self: CbfSubarrayComponentManager,) -> None:
         """Completely deconfigure the subarray; all initialization performed
         by by the ConfigureScan command must be 'undone' here."""
         try:
@@ -1060,34 +1058,35 @@ class CbfSubarrayComponentManager(
                                     "5a",
                                     "5b",
                                 ].index(fsp["frequency_band"])
-                                frequency_band_start = [
-                                    *map(
-                                        lambda j: j[0] * 10**9,
-                                        [
-                                            const.FREQUENCY_BAND_1_RANGE,
-                                            const.FREQUENCY_BAND_2_RANGE,
-                                            const.FREQUENCY_BAND_3_RANGE,
-                                            const.FREQUENCY_BAND_4_RANGE,
-                                        ],
-                                    )
-                                ][frequencyBand] + fsp[
-                                    "frequency_band_offset_stream1"
-                                ]
+                                frequency_band_start = (
+                                    [
+                                        *map(
+                                            lambda j: j[0] * 10 ** 9,
+                                            [
+                                                const.FREQUENCY_BAND_1_RANGE,
+                                                const.FREQUENCY_BAND_2_RANGE,
+                                                const.FREQUENCY_BAND_3_RANGE,
+                                                const.FREQUENCY_BAND_4_RANGE,
+                                            ],
+                                        )
+                                    ][frequencyBand]
+                                    + fsp["frequency_band_offset_stream1"]
+                                )
 
                                 frequency_slice_range = (
                                     frequency_band_start
                                     + (fsp["frequency_slice_id"] - 1)
                                     * const.FREQUENCY_SLICE_BW
-                                    * 10**6,
+                                    * 10 ** 6,
                                     frequency_band_start
                                     + fsp["frequency_slice_id"]
                                     * const.FREQUENCY_SLICE_BW
-                                    * 10**6,
+                                    * 10 ** 6,
                                 )
 
                                 if (
                                     frequency_slice_range[0]
-                                    <= int(fsp["zoom_window_tuning"]) * 10**3
+                                    <= int(fsp["zoom_window_tuning"]) * 10 ** 3
                                     <= frequency_slice_range[1]
                                 ):
                                     pass
@@ -1108,52 +1107,52 @@ class CbfSubarrayComponentManager(
                                     # to do them only once (ex. for band5Tuning)
 
                                     frequency_slice_range_1 = (
-                                        fsp["band_5_tuning"][0] * 10**9
+                                        fsp["band_5_tuning"][0] * 10 ** 9
                                         + fsp["frequency_band_offset_stream1"]
                                         - const.BAND_5_STREAM_BANDWIDTH
-                                        * 10**9
+                                        * 10 ** 9
                                         / 2
                                         + (fsp["frequency_slice_id"] - 1)
                                         * const.FREQUENCY_SLICE_BW
-                                        * 10**6,
-                                        fsp["band_5_tuning"][0] * 10**9
+                                        * 10 ** 6,
+                                        fsp["band_5_tuning"][0] * 10 ** 9
                                         + fsp["frequency_band_offset_stream1"]
                                         - const.BAND_5_STREAM_BANDWIDTH
-                                        * 10**9
+                                        * 10 ** 9
                                         / 2
                                         + fsp["frequency_slice_id"]
                                         * const.FREQUENCY_SLICE_BW
-                                        * 10**6,
+                                        * 10 ** 6,
                                     )
 
                                     frequency_slice_range_2 = (
-                                        fsp["band_5_tuning"][1] * 10**9
+                                        fsp["band_5_tuning"][1] * 10 ** 9
                                         + fsp["frequency_band_offset_stream2"]
                                         - const.BAND_5_STREAM_BANDWIDTH
-                                        * 10**9
+                                        * 10 ** 9
                                         / 2
                                         + (fsp["frequency_slice_id"] - 1)
                                         * const.FREQUENCY_SLICE_BW
-                                        * 10**6,
-                                        fsp["band_5_tuning"][1] * 10**9
+                                        * 10 ** 6,
+                                        fsp["band_5_tuning"][1] * 10 ** 9
                                         + fsp["frequency_band_offset_stream2"]
                                         - const.BAND_5_STREAM_BANDWIDTH
-                                        * 10**9
+                                        * 10 ** 9
                                         / 2
                                         + fsp["frequency_slice_id"]
                                         * const.FREQUENCY_SLICE_BW
-                                        * 10**6,
+                                        * 10 ** 6,
                                     )
 
                                     if (
                                         frequency_slice_range_1[0]
                                         <= int(fsp["zoom_window_tuning"])
-                                        * 10**3
+                                        * 10 ** 3
                                         <= frequency_slice_range_1[1]
                                     ) or (
                                         frequency_slice_range_2[0]
                                         <= int(fsp["zoom_window_tuning"])
-                                        * 10**3
+                                        * 10 ** 3
                                         <= frequency_slice_range_2[1]
                                     ):
                                         pass
@@ -1766,10 +1765,7 @@ class CbfSubarrayComponentManager(
                 fsp["corr_receptor_ids"] = []
                 for i, receptor in enumerate(fsp["receptors"]):
                     fsp["corr_receptor_ids"].append(
-                        [
-                            receptor,
-                            self._receptor_utils.receptors[receptor],
-                        ]
+                        [receptor, self._receptor_utils.receptors[receptor]]
                     )
 
                 self._corr_config.append(fsp)

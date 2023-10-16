@@ -161,9 +161,7 @@ class FspPssSubarrayComponentManager(
         """
         return self._receptors
 
-    def start_communicating(
-        self: FspPssSubarrayComponentManager,
-    ) -> None:
+    def start_communicating(self: FspPssSubarrayComponentManager,) -> None:
         """Establish communication with the component, then start monitoring."""
 
         if self._connected:
@@ -274,8 +272,7 @@ class FspPssSubarrayComponentManager(
         )
 
     def scan(
-        self: FspPssSubarrayComponentManager,
-        scan_id: int,
+        self: FspPssSubarrayComponentManager, scan_id: int
     ) -> Tuple[ResultCode, str]:
         """
         Performs the Scan() command functionality
@@ -305,9 +302,7 @@ class FspPssSubarrayComponentManager(
 
         return (ResultCode.OK, "FspPssSubarray EndScan command completed OK")
 
-    def _deconfigure(
-        self: FspPssSubarrayComponentManager,
-    ) -> None:
+    def _deconfigure(self: FspPssSubarrayComponentManager,) -> None:
         self._search_beams = []
         self._search_window_id = 0
         self._search_beam_id = []
@@ -335,8 +330,6 @@ class FspPssSubarrayComponentManager(
 
         return (ResultCode.OK, "FspPssSubarray GoToIdle command completed OK")
 
-    def abort(
-        self: FspPssSubarrayComponentManager,
-    ) -> Tuple[ResultCode, str]:
+    def abort(self: FspPssSubarrayComponentManager,) -> Tuple[ResultCode, str]:
         # TODO: Abort command not implemented for the HPS FSP application
         return (ResultCode.OK, "Abort command not implemented")

@@ -84,8 +84,7 @@ class TestCbfSubarrayComponentManager:
         assert subarray_component_manager.receptors == []
 
     @pytest.mark.parametrize(
-        "receptors",
-        [(["SKA001", "SKA036", "SKA063"]), (["SKA063", "SKA100"])],
+        "receptors", [(["SKA001", "SKA036", "SKA063"]), (["SKA063", "SKA100"])]
     )
     def test_add_receptor_invalid(
         self: TestCbfSubarrayComponentManager,
@@ -123,8 +122,7 @@ class TestCbfSubarrayComponentManager:
         assert subarray_component_manager.receptors == [receptors[-1]]
 
     @pytest.mark.parametrize(
-        "receptors",
-        [(["SKA001", "SKA036", "SKA063"]), (["SKA063", "SKA100"])],
+        "receptors", [(["SKA001", "SKA036", "SKA063"]), (["SKA063", "SKA100"])]
     )
     def test_remove_receptor_invalid(
         self: TestCbfSubarrayComponentManager,
@@ -284,20 +282,8 @@ class TestCbfSubarrayComponentManager:
         sample_rate_const_for_band, \
         base_dish_sample_rate_for_bandMHz",
         [
-            (
-                "1",
-                "SKA100",
-                [0] * 197,
-                1,
-                3960,
-            ),
-            (
-                "3",
-                "SKA100",
-                [11] * 197,
-                0.8,
-                3168,
-            ),
+            ("1", "SKA100", [0] * 197, 1, 3960),
+            ("3", "SKA100", [11] * 197, 0.8, 3168),
         ],
     )
     def test_calculate_fs_sample_rate(
@@ -328,10 +314,8 @@ class TestCbfSubarrayComponentManager:
         subarray_component_manager.frequency_offset_delta_f = (
             freq_offset_delta_f
         )
-        output_fs_sample_rate = (
-            subarray_component_manager._calculate_fs_sample_rate(
-                freq_band, receptor_id
-            )
+        output_fs_sample_rate = subarray_component_manager._calculate_fs_sample_rate(
+            freq_band, receptor_id
         )
         assert math.isclose(
             output_fs_sample_rate["fs_sample_rate"], expected_fs_sample_rate

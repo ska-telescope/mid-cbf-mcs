@@ -154,9 +154,7 @@ class FspPssSubarray(CspSubElementObsDevice):
         A class for the FspPssSubarray's init_device() "command".
         """
 
-        def do(
-            self: FspPssSubarray.InitCommand,
-        ) -> Tuple[ResultCode, str]:
+        def do(self: FspPssSubarray.InitCommand,) -> Tuple[ResultCode, str]:
             """
             Stateless hook for device initialisation.
 
@@ -323,9 +321,7 @@ class FspPssSubarray(CspSubElementObsDevice):
         A class for the FspPssSubarray's On() command.
         """
 
-        def do(
-            self: FspPssSubarray.OnCommand,
-        ) -> Tuple[ResultCode, str]:
+        def do(self: FspPssSubarray.OnCommand,) -> Tuple[ResultCode, str]:
             """
             Stateless hook for On() command functionality.
 
@@ -352,9 +348,7 @@ class FspPssSubarray(CspSubElementObsDevice):
         A class for the FspPssSubarray's Off() command.
         """
 
-        def do(
-            self: FspPssSubarray.OffCommand,
-        ) -> Tuple[ResultCode, str]:
+        def do(self: FspPssSubarray.OffCommand,) -> Tuple[ResultCode, str]:
             """
             Stateless hook for Off() command functionality.
 
@@ -381,9 +375,7 @@ class FspPssSubarray(CspSubElementObsDevice):
         A class for the FspPssSubarray's Standby() command.
         """
 
-        def do(
-            self: FspPssSubarray.StandbyCommand,
-        ) -> Tuple[ResultCode, str]:
+        def do(self: FspPssSubarray.StandbyCommand,) -> Tuple[ResultCode, str]:
             """
             Stateless hook for Standby() command functionality.
 
@@ -413,8 +405,7 @@ class FspPssSubarray(CspSubElementObsDevice):
         """Input a serilized JSON object. """
 
         def do(
-            self: FspPssSubarray.ConfigureScanCommand,
-            argin: str,
+            self: FspPssSubarray.ConfigureScanCommand, argin: str
         ) -> Tuple[ResultCode, str]:
             """
             Stateless hook for ConfigureScan() command functionality.
@@ -540,14 +531,36 @@ class FspPssSubarray(CspSubElementObsDevice):
 
             return (result_code, message)
 
+    @command(
+        dtype_in="DevShort",
+        doc_in="A string with the scan ID",
+        dtype_out="DevVarLongStringArray",
+        doc_out="A tuple containing a return code and a string message indicating status."
+        "The message is for information purpose only.",
+    )
+    @DebugIt()
+    def Scan(self, argin):
+        # PROTECTED REGION ID(CspSubElementObsDevice.Scan) ENABLED START #
+        """
+        Start an observing scan.
+
+        :param argin: A string with the scan ID
+        :type argin: 'DevShort'
+
+        :return: A tuple containing a return code and a string message indicating status.
+            The message is for information purpose only.
+        :rtype: (ResultCode, str)
+        """
+        command = self.get_command_object("Scan")
+        (return_code, message) = command(argin)
+        return [[return_code], [message]]
+
     class EndScanCommand(CspSubElementObsDevice.EndScanCommand):
         """
         A class for the FspPssSubarray's Scan() command.
         """
 
-        def do(
-            self: FspPssSubarray.EndScanCommand,
-        ) -> Tuple[ResultCode, str]:
+        def do(self: FspPssSubarray.EndScanCommand,) -> Tuple[ResultCode, str]:
             """
             Stateless hook for Scan() command functionality.
 
@@ -664,8 +677,7 @@ class FspPssSubarray(CspSubElementObsDevice):
         self.obs_state_model.perform_action("component_obsfault")
 
     def _communication_status_changed(
-        self: FspPssSubarray,
-        communication_status: CommunicationStatus,
+        self: FspPssSubarray, communication_status: CommunicationStatus
     ) -> None:
         """
         Handle change in communications status between component manager and component.
@@ -686,8 +698,7 @@ class FspPssSubarray(CspSubElementObsDevice):
             self.op_state_model.perform_action("component_unknown")
 
     def _component_power_mode_changed(
-        self: FspPssSubarray,
-        power_mode: PowerMode,
+        self: FspPssSubarray, power_mode: PowerMode
     ) -> None:
         """
         Handle change in the power mode of the component.
