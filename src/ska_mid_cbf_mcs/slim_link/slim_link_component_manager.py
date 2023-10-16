@@ -169,6 +169,7 @@ class SlimLinkComponentManager(CbfComponentManager):
         self._logger.debug("SLIMLink  -  connectToSlimTx()  - " + self._device_name)
         try:
             ping = tx_device.ping()
+            self._tx_idle_ctrl_word = tx_device.read_attribute("idle_ctrl_word")
             
             _logger.info("Connection to SLIM TX Tango DS successful. tx_device_name: " +
                         _tx_device_name + "; device ping took " + ping + " microseconds")
@@ -185,6 +186,7 @@ class SlimLinkComponentManager(CbfComponentManager):
             
             serial_loopback_enable = False
             rx_device.initialize_connection(serial_loopback_enable)
+            rx_device.write_attribute("idle_ctrl_word", self._tx_idle_ctrl_word)
             
             _logger.info("Connection to SLIM RX Tango DS successful. rx_device_name: " +
                         _rx_device_name + "; device ping took " + ping + " microseconds")
@@ -225,7 +227,7 @@ class SlimLinkComponentManager(CbfComponentManager):
                 self._logger.debug("SLIMLink  -  verifyConnection()  - " + result_msg + err_msg)
             except tango.DevFailed:
                 # tango.except.print_exception()
-                # exit(-1)
+                exit(-1) # TODO: probably just throw exception
         else:
             self._logger.error("Must connect Tx and Rx device!")
             
