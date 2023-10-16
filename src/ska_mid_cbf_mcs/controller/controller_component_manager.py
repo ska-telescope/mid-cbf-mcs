@@ -536,7 +536,7 @@ class ControllerComponentManager(CbfComponentManager):
                                         ObsState.RESOURCING,
                                         ObsState.RESTARTING,
                                     ],
-                                    timeout=4,
+                                    timeout=const.DEFAULT_TIMEOUT,
                                     step=0.5,
                                 )
                             except TimeoutError:
@@ -560,7 +560,7 @@ class ControllerComponentManager(CbfComponentManager):
                                             ObsState.ABORTING,
                                             ObsState.RESETTING,
                                         ],
-                                        timeout=4,
+                                        timeout=const.DEFAULT_TIMEOUT,
                                         step=0.5,
                                     )
                                 except TimeoutError:
@@ -581,7 +581,7 @@ class ControllerComponentManager(CbfComponentManager):
                                         poll(
                                             lambda: subarray.obsState
                                             == ObsState.ABORTED,
-                                            timeout=4,
+                                            timeout=const.DEFAULT_TIMEOUT,
                                             step=0.5,
                                         )
                                     except TimeoutError:
@@ -598,7 +598,7 @@ class ControllerComponentManager(CbfComponentManager):
                                     poll(
                                         lambda: subarray.obsState
                                         == ObsState.EMPTY,
-                                        timeout=4,
+                                        timeout=const.DEFAULT_TIMEOUT,
                                         step=0.5,
                                     )
                                 except TimeoutError:
@@ -659,7 +659,7 @@ class ControllerComponentManager(CbfComponentManager):
                                 poll(
                                     lambda: proxy.State()
                                     == tango.DevState.OFF,
-                                    timeout=4,
+                                    timeout=const.DEFAULT_TIMEOUT,
                                     step=0.5,
                                 )
                             except TimeoutError:
