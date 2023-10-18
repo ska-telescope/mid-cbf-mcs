@@ -50,7 +50,7 @@ subarray   ->  fspsubarray   : Abort
 fspsubarray->  hpsfsp        : Abort (stub)
 note over hpsfsp             : (TBD)
 subarray   <-- fspsubarray   : Success
-note over fsp                : FSP\nObsState ABORTED
+note over fspsubarray        : FSP Corr Subarray\nObsState ABORTED
 
 
 lmc       <--  subarray      : Success

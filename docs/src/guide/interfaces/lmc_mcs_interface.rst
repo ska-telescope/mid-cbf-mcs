@@ -34,46 +34,57 @@ CbfController Tango Commands
 CbfSubarray Tango Commands
 ----------------------------
 
-+----------------------+---------------+--------------------+-------------------------------------------+
-| Command              | Parameters    | Return type        | Action                                    |
-+======================+===============+====================+===========================================+
-| Abort                | None          | (ResultCode, str)  | Abort subarray configuration or operation |
-+----------------------+---------------+--------------------+-------------------------------------------+
-| AddReceptors         | List[str]     | (ResultCode, str)  | | Assign receptors to this subarray       |
-|                      |               |                    | | Turn subarray to ObsState = IDLE if no  |
-|                      |               |                    | | receptor was previously assigned        |
-+----------------------+---------------+--------------------+-------------------------------------------+
-| ConfigureScan        | JSON str*     | (ResultCode, str)  | | Change state to configuring             |
-|                      |               |                    | | Configure attributes from input JSON    |
-|                      |               |                    | | Subscribe events                        |
-|                      |               |                    | | Configure VCC, VCC subarray, FSP,       |
-|                      |               |                    | | FSP Subarray. Publish output links.     |
-+----------------------+---------------+--------------------+-------------------------------------------+
-| EndScan              | None          | (ResultCode, str)  | End the scan                              |
-+----------------------+---------------+--------------------+-------------------------------------------+
-| ObsReset             | None          | (ResultCode, str)  | Reset subarray scan configuration         |
-+----------------------+---------------+--------------------+-------------------------------------------+
-| Off                  | None          | (ResultCode, str)  | | Set subarry power mode to off.          |
-|                      |               |                    | | Commands FSP<function mode> Subarrays   |
-|                      |               |                    | | to turn off                             |
-+----------------------+---------------+--------------------+-------------------------------------------+
-| On                   | None          | (ResultCode, str)  | | Set subarry power mode to on.           |
-|                      |               |                    | | Commands FSP<function mode> Subarrays   |
-|                      |               |                    | | to turn on                              |
-+----------------------+---------------+--------------------+-------------------------------------------+
-| RemoveAllReceptors   | None          | (ResultCode, str)  | | Remove all receptors                    |
-|                      |               |                    | | Turns Subarray off if no receptors are  |
-|                      |               |                    | | assigned                                |
-+----------------------+---------------+--------------------+-------------------------------------------+
-| RemoveReceptors      | List[str]     | (ResultCode, str)  | | Remove receptors in input list          |
-|                      |               |                    | | Turns Subarray to ObsState=EMPTY if no  |
-|                      |               |                    | | receptors assigned                      |
-+----------------------+---------------+--------------------+-------------------------------------------+
-| Restart              | None          | (ResultCode, str)  | | Reset scan configuration and            |
-|                      |               |                    | | remove receptors                        |
-+----------------------+---------------+--------------------+-------------------------------------------+
-| Scan                 | JSON str*     | (ResultCode, str)  | Start scanning                            |
-+----------------------+---------------+--------------------+-------------------------------------------+
++----------------------+---------------+--------------------+-------------------------------------------------+
+| Command              | Parameters    | Return type        | Action                                          |
++======================+===============+====================+=================================================+
+| Abort                | None          | (ResultCode, str)  | | Change observing state to ABORTED             |
+|                      |               |                    | | No other action taken.                        |
+|                      |               |                    | | No action on hardware                         |
+|                      |               |                    | | See also :ref:`Abort Sequence`                |
++----------------------+---------------+--------------------+-------------------------------------------------+
+| AddReceptors         | List[str]     | (ResultCode, str)  | | Assign receptors to this subarray             |
+|                      |               |                    | | Turn subarray to ObsState = IDLE if no        |
+|                      |               |                    | | receptor was previously assigned              |
++----------------------+---------------+--------------------+-------------------------------------------------+
+| ConfigureScan        | JSON str*     | (ResultCode, str)  | | Change observing state to READY               |
+|                      |               |                    | | Configure attributes from input JSON          |
+|                      |               |                    | | Subscribe events                              |
+|                      |               |                    | | Configure VCC, VCC subarray, FSP, FSP Subarray|
+|                      |               |                    | | Publish output links.                         |
+|                      |               |                    | | See also :ref:`Configure Scan Sequence`       |
++----------------------+---------------+--------------------+-------------------------------------------------+
+| EndScan              | None          | (ResultCode, str)  | End the scan                                    |
++----------------------+---------------+--------------------+-------------------------------------------------+
+| ObsReset             | None          | (ResultCode, str)  | | Reset subarray scan configuration             |
+|                      |               |                    | | Keep assigned receptors                       |
+|                      |               |                    | | Change observing state to IDLE                |
+|                      |               |                    | | No action on hardware                         |
+|                      |               |                    | | See also :ref:`ObsReset Sequence`             |
++----------------------+---------------+--------------------+-------------------------------------------------+
+| Off                  | None          | (ResultCode, str)  | | Set subarry power mode to off.                |
+|                      |               |                    | | Commands FSP<function mode> Subarrays         |
+|                      |               |                    | | to turn off                                   |
++----------------------+---------------+--------------------+-------------------------------------------------+
+| On                   | None          | (ResultCode, str)  | | Set subarry power mode to on.                 |
+|                      |               |                    | | Command FSP<function mode> Subarrays          |
+|                      |               |                    | | to turn on                                    |
++----------------------+---------------+--------------------+-------------------------------------------------+
+| RemoveAllReceptors   | None          | (ResultCode, str)  | | Remove all receptors                          |
+|                      |               |                    | | Turn Subarray off if no receptors are         |
+|                      |               |                    | | assigned                                      |
++----------------------+---------------+--------------------+-------------------------------------------------+
+| RemoveReceptors      | List[str]     | (ResultCode, str)  | | Remove receptors in input list                |
+|                      |               |                    | | Change observing state to EMPTY if no         |
+|                      |               |                    | | receptors assigned                            |
++----------------------+---------------+--------------------+-------------------------------------------------+
+| Restart              | None          | (ResultCode, str)  | | Reset subarray scan configuration and         |
+|                      |               |                    | | remove assigned receptors                     |
+|                      |               |                    | | Change observing state to EMPTY               |
+|                      |               |                    | | No action on hardware                         |
+|                      |               |                    | | See also :ref:`Restart Sequence`              |
++----------------------+---------------+--------------------+-------------------------------------------------+
+| Scan                 | JSON str*     | (ResultCode, str)  | Start scanning                                  |
++----------------------+---------------+--------------------+-------------------------------------------------+
    
 * Schema for JSON string defined in the `Telescope Model - Mid.CBF schemas <https://developer.skao.int/projects/ska-telmodel/en/latest/schemas/ska-mid-cbf.html>`_
 

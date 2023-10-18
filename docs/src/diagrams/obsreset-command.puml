@@ -29,7 +29,7 @@ box "MCS"
 participant "Mid.CBF\nSubarray" as subarray
 collections "VCC" as vcc
 collections "FSP" as fsp
-collections "FSP\nSubarray" as fspsubarray
+collections "FSP\nCorr\nSubarray" as fspsubarray
 end box
 
 box "HPS"
@@ -46,10 +46,14 @@ subarray    ->  vcc           : ObsReset
 vcc         ->  hpsvccband    : ObsReset
 note over vcc                 : VCC\nObsState IDLE
 subarray    ->  fspsubarray   : ObsReset
-note over fspsubarray         : FSP\nObsState IDLE
+note over fspsubarray         : FSP Corr Subarray\nObsState IDLE
 subarray    ->  fsp           : RemoveSubarrayMembership
-fsp         ->  fspsubarray   : GoToIdle\n(if no other subarray membership)
-note over fspsubarray         : FSP\nObsState IDLE
+
+group no other subarray membership
+fsp         ->  fspsubarray   : GoToIdle\n
+end group
+
+note over fspsubarray         : FSP Corr Subarray\nObsState IDLE
 note over subarray            : Subarray\nObsState IDLE
 lmc        <--  subarray      : Success
 
