@@ -110,10 +110,6 @@ python-lint:
   tags:
     - aws-k8srunner
 
-docs-build:
-  tags:
-    - aws-k8srunner
-
 helm-chart-build:
   tags:
     - aws-k8srunner
