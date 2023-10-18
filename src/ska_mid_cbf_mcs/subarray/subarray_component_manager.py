@@ -1486,10 +1486,29 @@ class CbfSubarrayComponentManager(
             common_configuration["frequency_band"]
         )
         self._logger.debug(f"frequency_band: {self._frequency_band}")
+        
+        for receptor_id in self._receptors:   
+            if receptor_id in self._receptor_to_vcc.keys():
+                vccID = self._receptor_to_vcc[receptor_id]
+                vccProxy = self._proxies_vcc[vccID - 1]
+                receptor_int = self._receptor_utils.receptors[receptor_id]
+                # find the k value for this receptor
+                # array of k values is 0 index, so index of array value is receptor_int - 1
+                freq_offset_k = self.frequency_offset_k[(receptor_int - 1)]
+                dish_sample_rate = self._calculate_dish_sample_rate(freq_band_dict()[self._frequency_band], freq_offset_k)
+                samples_per_frame = freq_band_dict()[self._frequency_band]["num_samples_per_frame"]
 
-        data = tango.DeviceData()
-        data.insert(tango.DevString, common_configuration["frequency_band"])
-        self._group_vcc.command_inout("ConfigureBand", data)
+                data = tango.DeviceData()
+                data.insert(tango.DevString, common_configuration["frequency_band"])
+                data.insert(tango.DevULong, dish_sample_rate)
+                data.insert(tango.DevULong, samples_per_frame)
+                vccProxy.command_inout("ConfigureBand", data)
+            else:
+                return (
+                    ResultCode.FAILED,
+                    f"Invalid receptor {receptor_id}. RemoveReceptors command failed.",
+                )
+            
 
         # Configure band5Tuning, if frequencyBand is 5a or 5b.
         if self._frequency_band in [4, 5]:
@@ -2308,15 +2327,12 @@ class CbfSubarrayComponentManager(
         freq_offset_k = self.frequency_offset_k[(receptor_int - 1)]
         freq_band_info = freq_band_dict()[freq_band]
 
-        base_dish_sample_rate_MH = freq_band_info["base_dish_sample_rate_MHz"]
-        sample_rate_const = freq_band_info["sample_rate_const"]
         total_num_fs = freq_band_info["total_num_FSs"]
-
-        # dish_sample_rate = base_dish_sample_rate_MH * mhz_to_hz + sample_rate_const * k * deltaF
-        # fs_sample_rate = dish_sample_rate * vcc_oversampling_factor / total_num_FSs
-        dish_sample_rate = (base_dish_sample_rate_MH * mhz_to_hz) + (
-            sample_rate_const * freq_offset_k * self.frequency_offset_delta_f
-        )
+        
+        dish_sample_rate = self._calculate_dish_sample_rate(
+                                freq_band_info, freq_offset_k
+                            )
+        
         log_msg = f"dish_sample_rate: {dish_sample_rate}"
         self._logger.debug(log_msg)
         fs_sample_rate = (
@@ -2343,3 +2359,15 @@ class CbfSubarrayComponentManager(
             )
 
         return output_sample_rates
+    
+    def _calculate_dish_sample_rate(
+        self: CbfSubarrayComponentManager,
+        freq_band_info,
+        freq_offset_k
+    ):
+        base_dish_sample_rate_MH = freq_band_info["base_dish_sample_rate_MHz"]
+        sample_rate_const = freq_band_info["sample_rate_const"]
+        
+        return (base_dish_sample_rate_MH * mhz_to_hz) + (
+            sample_rate_const * freq_offset_k * self.frequency_offset_delta_f
+        )
