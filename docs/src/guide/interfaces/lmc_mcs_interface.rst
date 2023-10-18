@@ -24,9 +24,12 @@ CbfController Tango Commands
 +---------+---------------+--------------------+--------------------------------------------------------+
 | Command | Parameters    | Return type        | Action                                                 |
 +=========+===============+====================+========================================================+
-| Off     | None          | (ResultCode, str)  | Turn off the controller and subordinate devices        |
+| Off     | None          | (ResultCode, str)  | | Set power state to OFF for controller and            |
+|         |               |                    | | subordinate devices (subarrays, VCCs, FSPs)          |
+|         |               |                    | | Turn off power to all hardware                       |
+|         |               |                    | | See also :ref:`Off Sequence`                         |
 +---------+---------------+--------------------+--------------------------------------------------------+
-| Standby | None          | (ResultCode, str)  | Put in low power mode                                  |
+| Standby | None          | (ResultCode, str)  | None                                                   |
 +---------+---------------+--------------------+--------------------------------------------------------+
 | On      | None          | (ResultCode, str)  | Turn on the controller and subordinate devices         |
 +---------+---------------+--------------------+--------------------------------------------------------+
@@ -61,9 +64,10 @@ CbfSubarray Tango Commands
 |                      |               |                    | | No action on hardware                         |
 |                      |               |                    | | See also :ref:`ObsReset Sequence`             |
 +----------------------+---------------+--------------------+-------------------------------------------------+
-| Off                  | None          | (ResultCode, str)  | | Set subarry power mode to off.                |
+| Off                  | None          | (ResultCode, str)  | | Set subarray power mode to off.               |
 |                      |               |                    | | Commands FSP<function mode> Subarrays         |
 |                      |               |                    | | to turn off                                   |
+|                      |               |                    | | No action on hardware power                   |
 +----------------------+---------------+--------------------+-------------------------------------------------+
 | On                   | None          | (ResultCode, str)  | | Set subarry power mode to on.                 |
 |                      |               |                    | | Command FSP<function mode> Subarrays          |

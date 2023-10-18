@@ -66,6 +66,14 @@ From a MCS perspective, the On command sequence consists of the following steps:
 Command Sequence
 -----------------
 
+Off Sequence
+++++++++++++++
+
+The sequence diagram below shows the main sequence of calls in MCS
+when the Off command is called. Return calls are not shown.
+
+.. uml:: ../../diagrams/off-command-sequence.puml
+
 Configure Scan Sequence
 ++++++++++++++++++++++++
 
