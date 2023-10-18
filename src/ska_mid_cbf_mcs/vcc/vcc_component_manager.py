@@ -478,7 +478,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
 
         try:
             freq_band_name = argin["freq_band"]
-            
+
             # Configure the band via the VCC Controller device
             self._logger.info(f"Configuring VCC band {freq_band_name}")
             frequency_band = freq_band_dict()[freq_band_name]["band_index"]
@@ -510,10 +510,12 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                     json_string = f.read()
 
             args = json.loads(json_string)
-            args.update({"dish_sample_rate":argin["dish_sample_rate"]},
-                        {"samples_per_frame":argin["samples_per_frame"]})
+            args.update(
+                {"dish_sample_rate": argin["dish_sample_rate"]},
+                {"samples_per_frame": argin["samples_per_frame"]},
+            )
             json_string = json.dumps(args)
-            
+
             idx = self._freq_band_index[self._freq_band_name]
             if self._simulation_mode:
                 self._band_simulators[idx].SetInternalParameters(json_string)
