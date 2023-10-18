@@ -1498,10 +1498,12 @@ class CbfSubarrayComponentManager(
                 dish_sample_rate = self._calculate_dish_sample_rate(freq_band_dict()[self._frequency_band], freq_offset_k)
                 samples_per_frame = freq_band_dict()[self._frequency_band]["num_samples_per_frame"]
 
+                args = {"freq_band":common_configuration["frequency_band"],
+                        "dish_sample_rate": dish_sample_rate,
+                        "samples_per_frame": samples_per_frame}
+                
                 data = tango.DeviceData()
-                data.insert(tango.DevString, common_configuration["frequency_band"])
-                data.insert(tango.DevULong, dish_sample_rate)
-                data.insert(tango.DevULong, samples_per_frame)
+                data.insert(tango.DevString, json.dumps(args))
                 vccProxy.command_inout("ConfigureBand", data)
             else:
                 return (

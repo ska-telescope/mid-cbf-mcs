@@ -460,7 +460,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         return (ResultCode.OK, "Standby command completed OK")
 
     def configure_band(
-        self: VccComponentManager, freq_band_name: str
+        self: VccComponentManager, argin: dict
     ) -> Tuple[ResultCode, str]:
         """
         Configure the corresponding band. At the HPS level, this reconfigures the
@@ -477,6 +477,8 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
         (result_code, msg) = (ResultCode.OK, "ConfigureBand completed OK.")
 
         try:
+            freq_band_name = argin["freq_band"]
+            
             # Configure the band via the VCC Controller device
             self._logger.info(f"Configuring VCC band {freq_band_name}")
             frequency_band = freq_band_dict()[freq_band_name]["band_index"]
@@ -507,6 +509,11 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                 ) as f:
                     json_string = f.read()
 
+            args = json.loads(json_string)
+            args.update({"dish_sample_rate":argin["dish_sample_rate"]},
+                        {"samples_per_frame":argin["samples_per_frame"]})
+            json_string = json.dumps(args)
+            
             idx = self._freq_band_index[self._freq_band_name]
             if self._simulation_mode:
                 self._band_simulators[idx].SetInternalParameters(json_string)
