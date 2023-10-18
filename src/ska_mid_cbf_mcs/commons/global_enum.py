@@ -42,9 +42,6 @@ class Const:
         self.DEFAULT_COUNT_FSP = 27
         self.DEFAULT_COUNT_SUBARRAY = 16
 
-        self.BASE_TRANSPORT_SAMPLE_RATE_BAND_1_2_MSPS = 3960
-        self.NUM_SAMPLES_PER_FRAME = 18
-
 
 const = Const()
 
