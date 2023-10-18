@@ -73,24 +73,32 @@ deploy-dev-environment:
     KUBE_NAMESPACE: "ci-dev-$CI_PROJECT_NAME-$CI_PIPELINE_ID"
   environment:
     name: ci-dev-$CI_PROJECT_NAME-$CI_COMMIT_REF_NAME
+  tags:
+    - aws-k8srunner
 
 test-dev-environment:
   variables:
     KUBE_NAMESPACE: "ci-dev-$CI_PROJECT_NAME-$CI_PIPELINE_ID"
   environment:
     name: ci-dev-$CI_PROJECT_NAME-$CI_COMMIT_REF_NAME
+  tags:
+    - aws-k8srunner
 
 info-dev-environment:
   variables:
     KUBE_NAMESPACE: "ci-dev-$CI_PROJECT_NAME-$CI_PIPELINE_ID"
   environment:
     name: ci-dev-$CI_PROJECT_NAME-$CI_COMMIT_REF_NAME
+  tags:
+    - aws-k8srunner
 
 stop-dev-environment:
   variables:
     KUBE_NAMESPACE: "ci-dev-$CI_PROJECT_NAME-$CI_PIPELINE_ID"
   environment:
     name: ci-dev-$CI_PROJECT_NAME-$CI_COMMIT_REF_NAME
+  tags:
+    - aws-k8srunner
 
 #### Override runner
 
