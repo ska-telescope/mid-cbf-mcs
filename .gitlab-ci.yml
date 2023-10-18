@@ -106,6 +106,10 @@ oci-image-lint:
   tags:
     - aws-k8srunner
 
+notebook-lint:
+  tags:
+    - aws-k8srunner
+
 python-lint:
   tags:
     - aws-k8srunner
