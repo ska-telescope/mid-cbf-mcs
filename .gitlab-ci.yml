@@ -91,3 +91,70 @@ stop-dev-environment:
     KUBE_NAMESPACE: "ci-dev-$CI_PROJECT_NAME-$CI_PIPELINE_ID"
   environment:
     name: ci-dev-$CI_PROJECT_NAME-$CI_COMMIT_REF_NAME
+
+#### Override runner
+
+default:
+  tags:
+    - aws-k8sruner
+
+helm-chart-lint:
+  tags:
+    - aws-k8srunner
+
+oci-image-lint:
+  tags:
+    - aws-k8srunner
+
+python-lint:
+  tags:
+    - aws-k8srunner
+
+docs-build:
+  tags:
+    - aws-k8srunner
+
+helm-chart-build:
+  tags:
+    - aws-k8srunner
+
+oci-image-build:
+  tags:
+    - aws-k8srunner
+
+python-build-for-development:
+  tags:
+    - aws-k8srunner
+  
+k8s-test:
+  tags:
+    - aws-k8srunner
+
+python-test:
+  tags:
+    - aws-k8srunner
+
+stop-k8s-test:
+  tags:
+    - aws-k8srunner
+
+docs-pages:
+  tags:
+    - aws-k8srunner
+
+oci-image-scan:
+  tags:
+    - aws-k8srunner
+
+python-gemnasium-scan:
+  tags:
+    - aws-k8srunner
+
+python-publish-to-gitlab:
+  tags:
+    - aws-k8srunner
+
+create-ci-metrics:
+  tags:
+    - aws-k8srunner
+
