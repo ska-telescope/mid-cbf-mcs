@@ -35,30 +35,22 @@ participant "HPS\nMaster" as hpsmaster
 collections "HPS\nDevices" as hpsdevices
 end box
 lmc        ->  controller    : Off()
-controller ->  hpsmaster     : Shutdown(3)
-group no Tango exception on Shutdown
-hpsmaster  ->  hpsdevices !! : kill pid
-hpsmaster  ->  os !!         : system "shutdown now"
-controller ->  controller    : wait x sec
-end group
-controller ->  lru           : PowerOff
-lru        ->  switch        : Off()
-switch     ->  pdu           : Off(outlets)
-note over controller         : enter loop below to\nclean up observing model
+
+note over controller         : clean up observing model:
 
 loop until Subarray ObsState EMPTY or time exceeded
 alt Subarray ObsState EMPTY
-controller -> controller : Exit loop
-else ObsStates IDLE\nCONFIGURING, READY,\nSCANNING, RESETTING
+controller -> controller : Do nothing
+else ObStates RESOURCING, RESTARTING, ABORTING,\nRESETTING
+controller -> controller : Wait
+else ObsStates IDLE\nCONFIGURING, READY,\nSCANNING
 controller -> subarray   : Abort
 else ObsState ABORTED, FAULT
 controller -> subarray   : Restart
-else ObStates RESOURCING, RESTARTING, ABORTING
-controller -> controller : Wait
 end loop
 note over vcc            : VCC\nObsState IDLE
 note over fsp            : FSP\nObstState IDLE
-note over subarray       : Subarray\nObsState EMPTY
+
 controller ->  subarray      : Off
 subarray   ->  fspsubarray   : Off
 fspsubarray->  fspsubarray   : PowerMode OFF
@@ -69,5 +61,17 @@ controller ->  fsp           : Off
 fsp        ->  fspsubarray   : Off
 fspsubarray->  fspsubarray   : PowerMode OFF
 fsp        ->  fsp           : PowerMode OFF
+
+note over subarray       : Subarray\nObsState EMPTY
+controller ->  hpsmaster     : Shutdown(3)
+group no Tango exception on Shutdown
+hpsmaster  ->  hpsdevices !! : kill pid
+hpsmaster  ->  os !!         : system "shutdown now"
+controller ->  controller    : wait x sec
+end group
+controller ->  lru           : PowerOff
+lru        ->  switch        : Off()
+switch     ->  pdu           : Off(outlets)
+
 controller ->  controller    : PowerMode OFF
 @enduml
