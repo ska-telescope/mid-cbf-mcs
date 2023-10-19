@@ -766,7 +766,15 @@ class CbfSubarrayComponentManager(
     ) -> None:
         """Completely deconfigure the subarray; all initialization performed
         by by the ConfigureScan command must be 'undone' here."""
-        # if deconfiguring from READY, GoToIdle was called
+        # TODO: component_manager.deconfigure is invoked by the base class v0.11.3
+        # GoToIdleCommand, while it is also being used by ConfigureScan, ObsReset
+        # and Restart here (in the CbfSubarray); this should get simplified to be
+        # more useful for general deconfiguration, with command/state-specific logic
+        # handled elsewhere, during the ska-tango-base upgrade, where GoToIdle
+        # will be replaced by the End command
+
+        # if deconfiguring from READY, which can occur if ConfigureScan is called
+        # from READY or if GoToIdle was called, issue GoToIdle to VCCs/FSP subarrays
         if self._ready:
             for group in [
                 self._group_vcc,
