@@ -350,7 +350,7 @@ class Fsp(SKACapability):
             device.set_change_event("functionMode", True, True)
             device.set_change_event("subarrayMembership", True, True)
 
-            # TODO remove when ugrading base class from 0.11.3
+            # TODO remove when upgrading base class from 0.11.3
             device.set_change_event("healthState", True, True)
 
             return (result_code, message)
