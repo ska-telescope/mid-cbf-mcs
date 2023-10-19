@@ -1,6 +1,8 @@
 {
     "config_id": "band:5a, fsp1, 744 channels average factor 8",
     "frequency_band": "5a",
+    "dish_sample_rate": 99999,
+    "samples_per_frame": 18,
     "band_5_tuning": [5.85, 7.25],
     "frequency_band_offset_stream1": 0,
     "frequency_band_offset_stream2": 0,
