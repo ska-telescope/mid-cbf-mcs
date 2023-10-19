@@ -1499,9 +1499,9 @@ class CbfSubarrayComponentManager(
                     freq_band_dict()[common_configuration["frequency_band"]],
                     freq_offset_k,
                 )
-                samples_per_frame = freq_band_dict()[self._frequency_band][
-                    "num_samples_per_frame"
-                ]
+                samples_per_frame = freq_band_dict()[
+                    common_configuration["frequency_band"]
+                ]["num_samples_per_frame"]
 
                 args = {
                     "freq_band": common_configuration["frequency_band"],
