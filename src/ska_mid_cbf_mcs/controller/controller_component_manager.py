@@ -670,8 +670,7 @@ class ControllerComponentManager(CbfComponentManager):
                         if proxy.State != tango.DevState.OFF:
                             try:
                                 poll(
-                                    lambda: proxy.State
-                                    == tango.DevState.OFF,
+                                    lambda: proxy.State == tango.DevState.OFF,
                                     timeout=const.DEFAULT_TIMEOUT,
                                     step=0.5,
                                 )
