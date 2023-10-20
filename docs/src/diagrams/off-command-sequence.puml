@@ -67,7 +67,7 @@ controller ->  hpsmaster     : Shutdown(3)
 group no Tango exception on Shutdown
 hpsmaster  ->  hpsdevices !! : kill pid
 hpsmaster  ->  os !!         : system "shutdown now"
-controller ->  controller    : wait x sec
+controller ->  controller    : wait 4 sec
 end group
 controller ->  lru           : PowerOff
 lru        ->  switch        : Off()
