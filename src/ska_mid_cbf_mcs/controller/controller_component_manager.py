@@ -670,16 +670,13 @@ class ControllerComponentManager(CbfComponentManager):
                                 f"polling {fqdn} State() for tango.DevState.OFF"
                             )
                             poll(
-                                lambda: proxy.State()
-                                == tango.DevState.OFF,
+                                lambda: proxy.State() == tango.DevState.OFF,
                                 timeout=const.DEFAULT_TIMEOUT,
                                 step=0.5,
                             )
                         except TimeoutError:
                             # append error if timed out waiting for device OFF
-                            op_state_error_list.append(
-                                [fqdn, proxy.State()]
-                            )
+                            op_state_error_list.append([fqdn, proxy.State()])
 
                     if fqdn in self._fqdn_subarray:
                         obs_state = proxy.obsState
