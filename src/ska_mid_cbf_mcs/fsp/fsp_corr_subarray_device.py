@@ -858,7 +858,7 @@ class FspCorrSubarray(CspSubElementObsDevice):
 
     @command(
         dtype_in="DevShort",
-        doc_in="A string with the scan ID",
+        doc_in="An integer with the scan ID",
         dtype_out="DevVarLongStringArray",
         doc_out="A tuple containing a return code and a string message indicating status."
         "The message is for information purpose only.",
