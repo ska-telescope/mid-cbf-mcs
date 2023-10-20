@@ -662,26 +662,24 @@ class ControllerComponentManager(CbfComponentManager):
                         self._logger.info(
                             f"checking fqdn {fqdn}, device {proxy}"
                         )
-                        proxy_state = proxy.State()
-                        proxy_state_attr = proxy.state
-                        self._logger.info(f"State() is {proxy_state}")
-                        self._logger.info(f"state is {proxy_state_attr}")
-                        if proxy_state != tango.DevState.OFF:
-                            try:
-                                self._logger.info(
-                                    f"polling {fqdn} State() for tango.DevState.OFF"
-                                )
-                                poll(
-                                    lambda: proxy.State()
-                                    == tango.DevState.OFF,
-                                    timeout=const.DEFAULT_TIMEOUT,
-                                    step=0.5,
-                                )
-                            except TimeoutError:
-                                # append error if timed out waiting for device OFF
-                                op_state_error_list.append(
-                                    [fqdn, proxy.State()]
-                                )
+                        # if proxy_state != tango.DevState.OFF:
+                        try:
+                            # proxy_state = proxy.State()
+                            # self._logger.info(f"State() is {proxy_state}")
+                            self._logger.info(
+                                f"polling {fqdn} State() for tango.DevState.OFF"
+                            )
+                            poll(
+                                lambda: proxy.State()
+                                == tango.DevState.OFF,
+                                timeout=const.DEFAULT_TIMEOUT,
+                                step=0.5,
+                            )
+                        except TimeoutError:
+                            # append error if timed out waiting for device OFF
+                            op_state_error_list.append(
+                                [fqdn, proxy.State()]
+                            )
 
                     if fqdn in self._fqdn_subarray:
                         obs_state = proxy.obsState
