@@ -659,15 +659,11 @@ class ControllerComponentManager(CbfComponentManager):
                     # On/Off commands, rather TurnOn/OffOutlet commands to
                     # target specific outlets
                     if fqdn not in self._fqdn_power_switch:
-                        # proxy_State = proxy.State()
-                        # proxy_state = proxy.state()
-                        # proxy_Status = proxy.Status()
-                        # proxy_status = proxy.status()
-                        # self._logger.info(f"proxy.State() is {proxy_State}")
-                        # self._logger.info(f"proxy.state() is {proxy_state}")
-                        # self._logger.info(f"proxy.Status() is {proxy_Status}")
-                        # self._logger.info(f"proxy.status() is {proxy_status}")
-                        if proxy.State != tango.DevState.OFF:
+                        proxy_State = proxy.State()
+                        proxy_State_attr = proxy.State
+                        self._logger.info(f"{fqdn} State() is {proxy_State}")
+                        self._logger.info(f"{fqdn} State is {proxy_State_attr}")
+                        if proxy_State != tango.DevState.OFF:
                             try:
                                 poll(
                                     lambda: proxy.State == tango.DevState.OFF,
