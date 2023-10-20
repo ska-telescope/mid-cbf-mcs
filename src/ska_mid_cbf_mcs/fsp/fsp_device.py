@@ -319,7 +319,9 @@ class Fsp(SKACapability):
         A class for the Fsp's init_device() "command".
         """
 
-        def do(self: Fsp.InitCommand,) -> Tuple[ResultCode, str]:
+        def do(
+            self: Fsp.InitCommand,
+        ) -> Tuple[ResultCode, str]:
             """
             Stateless hook for device initialisation.
 
@@ -352,7 +354,9 @@ class Fsp(SKACapability):
         A class for the Fsp's On() command.
         """
 
-        def do(self: Fsp.OnCommand,) -> Tuple[ResultCode, str]:
+        def do(
+            self: Fsp.OnCommand,
+        ) -> Tuple[ResultCode, str]:
             """
             Stateless hook for On() command functionality.
 
@@ -374,7 +378,9 @@ class Fsp(SKACapability):
         A class for the Fsp's Off() command.
         """
 
-        def do(self: Fsp.OffCommand,) -> Tuple[ResultCode, str]:
+        def do(
+            self: Fsp.OffCommand,
+        ) -> Tuple[ResultCode, str]:
             """
             Stateless hook for Off() command functionality.
 
@@ -396,7 +402,9 @@ class Fsp(SKACapability):
         A class for the Fsp's Standby() command.
         """
 
-        def do(self: Fsp.StandbyCommand,) -> Tuple[ResultCode, str]:
+        def do(
+            self: Fsp.StandbyCommand,
+        ) -> Tuple[ResultCode, str]:
             """
             Stateless hook for Standby() command functionality.
 

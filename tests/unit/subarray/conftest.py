@@ -166,8 +166,8 @@ def mock_component_manager(
     mock.off.side_effect = lambda: mock._component_power_mode_changed_callback(
         PowerMode.OFF
     )
-    mock.standby.side_effect = lambda: mock._component_power_mode_changed_callback(
-        PowerMode.STANDBY
+    mock.standby.side_effect = (
+        lambda: mock._component_power_mode_changed_callback(PowerMode.STANDBY)
     )
     mock.raise_configure_scan_fatal_error.side_effect = (
         lambda: _raise_configure_scan_fatal_error()

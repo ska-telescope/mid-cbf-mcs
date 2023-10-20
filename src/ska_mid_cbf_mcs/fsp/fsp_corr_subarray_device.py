@@ -241,7 +241,9 @@ class FspCorrSubarray(CspSubElementObsDevice):
         A class for the FspCorrSubarray's init_device() "command".
         """
 
-        def do(self: FspCorrSubarray.InitCommand,) -> Tuple[ResultCode, str]:
+        def do(
+            self: FspCorrSubarray.InitCommand,
+        ) -> Tuple[ResultCode, str]:
             """
             Stateless hook for device initialisation.
 
@@ -405,7 +407,9 @@ class FspCorrSubarray(CspSubElementObsDevice):
         return self.component_manager.integration_factor
         # PROTECTED REGION END #    //  FspCorrSubarray.integrationFactor_read
 
-    def read_channelAveragingMap(self: FspCorrSubarray,) -> List[List[int]]:
+    def read_channelAveragingMap(
+        self: FspCorrSubarray,
+    ) -> List[List[int]]:
         # PROTECTED REGION ID(FspCorrSubarray.channelAveragingMap_read) ENABLED START #
         """
         Read the channelAveragingMap attribute.
@@ -646,7 +650,9 @@ class FspCorrSubarray(CspSubElementObsDevice):
         A class for the FspCorrSubarray's On() command.
         """
 
-        def do(self: FspCorrSubarray.OnCommand,) -> Tuple[ResultCode, str]:
+        def do(
+            self: FspCorrSubarray.OnCommand,
+        ) -> Tuple[ResultCode, str]:
             """
             Stateless hook for On() command functionality.
 
@@ -671,7 +677,9 @@ class FspCorrSubarray(CspSubElementObsDevice):
         A class for the FspCorrSubarray's Off() command.
         """
 
-        def do(self: FspCorrSubarray.OffCommand,) -> Tuple[ResultCode, str]:
+        def do(
+            self: FspCorrSubarray.OffCommand,
+        ) -> Tuple[ResultCode, str]:
             """
             Stateless hook for Off() command functionality.
 

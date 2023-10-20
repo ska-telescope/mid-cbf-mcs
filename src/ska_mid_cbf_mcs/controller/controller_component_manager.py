@@ -138,7 +138,9 @@ class ControllerComponentManager(CbfComponentManager):
             component_fault_callback=component_fault_callback,
         )
 
-    def start_communicating(self: ControllerComponentManager,) -> None:
+    def start_communicating(
+        self: ControllerComponentManager,
+    ) -> None:
         """Establish communication with the component, then start monitoring."""
 
         if self._connected:
@@ -327,7 +329,9 @@ class ControllerComponentManager(CbfComponentManager):
             proxy.adminMode = AdminMode.OFFLINE
         self._connected = False
 
-    def on(self: ControllerComponentManager,) -> Tuple[ResultCode, str]:
+    def on(
+        self: ControllerComponentManager,
+    ) -> Tuple[ResultCode, str]:
         """
         Turn on the controller and its subordinate devices
 
@@ -364,9 +368,9 @@ class ControllerComponentManager(CbfComponentManager):
                         proxy.frequencyOffsetK = self.frequency_offset_k[
                             vcc_id
                         ]
-                        proxy.frequencyOffsetDeltaF = self.frequency_offset_delta_f[
-                            vcc_id
-                        ]
+                        proxy.frequencyOffsetDeltaF = (
+                            self.frequency_offset_delta_f[vcc_id]
+                        )
                     except tango.DevFailed as df:
                         for item in df.args:
                             log_msg = f"Failure in connection to {fqdn}; {item.reason}"
@@ -455,7 +459,9 @@ class ControllerComponentManager(CbfComponentManager):
             self._logger.error(log_msg)
             return (ResultCode.FAILED, log_msg)
 
-    def off(self: ControllerComponentManager,) -> Tuple[ResultCode, str]:
+    def off(
+        self: ControllerComponentManager,
+    ) -> Tuple[ResultCode, str]:
         """
         Turn off the controller and its subordinate devices
 
@@ -547,7 +553,9 @@ class ControllerComponentManager(CbfComponentManager):
             self._logger.error(log_msg)
             return (ResultCode.FAILED, log_msg)
 
-    def standby(self: ControllerComponentManager,) -> Tuple[ResultCode, str]:
+    def standby(
+        self: ControllerComponentManager,
+    ) -> Tuple[ResultCode, str]:
         """
         Turn the controller into low power standby mode
 
@@ -612,7 +620,9 @@ class ControllerComponentManager(CbfComponentManager):
         self._logger.info(f"LRU successfully turned on: {lru_fqdn}")
         return (True, None)
 
-    def _bulk_lru_on(self: ControllerComponentManager,) -> (bool, str):
+    def _bulk_lru_on(
+        self: ControllerComponentManager,
+    ) -> (bool, str):
         with concurrent.futures.ThreadPoolExecutor() as executor:
             futures = [
                 executor.submit(

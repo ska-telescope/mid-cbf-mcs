@@ -585,7 +585,9 @@ class Vcc(CspSubElementObsDevice):
         A class for the Vcc's init_device() "command".
         """
 
-        def do(self: Vcc.InitCommand,) -> Tuple[ResultCode, str]:
+        def do(
+            self: Vcc.InitCommand,
+        ) -> Tuple[ResultCode, str]:
             """
             Stateless hook for device initialisation.
 
@@ -625,7 +627,9 @@ class Vcc(CspSubElementObsDevice):
         A class for the Vcc's on command.
         """
 
-        def do(self: Vcc.OnCommand,) -> Tuple[ResultCode, str]:
+        def do(
+            self: Vcc.OnCommand,
+        ) -> Tuple[ResultCode, str]:
             """
             Stateless hook for device initialisation.
 
@@ -642,7 +646,9 @@ class Vcc(CspSubElementObsDevice):
         A class for the Vcc's off command.
         """
 
-        def do(self: Vcc.OffCommand,) -> Tuple[ResultCode, str]:
+        def do(
+            self: Vcc.OffCommand,
+        ) -> Tuple[ResultCode, str]:
             """
             Stateless hook for device initialisation.
 
@@ -658,7 +664,9 @@ class Vcc(CspSubElementObsDevice):
         A class for the Vcc's standby command.
         """
 
-        def do(self: Vcc.StandbyCommand,) -> Tuple[ResultCode, str]:
+        def do(
+            self: Vcc.StandbyCommand,
+        ) -> Tuple[ResultCode, str]:
             """
             Stateless hook for device initialisation.
 
@@ -797,7 +805,7 @@ class Vcc(CspSubElementObsDevice):
                 configuration["frequency_band_offset_stream1"] = 0
             if (
                 abs(int(configuration["frequency_band_offset_stream1"]))
-                <= const.FREQUENCY_SLICE_BW * 10 ** 6 / 2
+                <= const.FREQUENCY_SLICE_BW * 10**6 / 2
             ):
                 pass
             else:
@@ -812,7 +820,7 @@ class Vcc(CspSubElementObsDevice):
                 configuration["frequency_band_offset_stream2"] = 0
             if (
                 abs(int(configuration["frequency_band_offset_stream2"]))
-                <= const.FREQUENCY_SLICE_BW * 10 ** 6 / 2
+                <= const.FREQUENCY_SLICE_BW * 10**6 / 2
             ):
                 pass
             else:
@@ -1036,7 +1044,9 @@ class Vcc(CspSubElementObsDevice):
         A class for the Vcc's GoToIdle command.
         """
 
-        def do(self: Vcc.GoToIdleCommand,) -> Tuple[ResultCode, str]:
+        def do(
+            self: Vcc.GoToIdleCommand,
+        ) -> Tuple[ResultCode, str]:
             """
             Stateless hook for GoToIdle() command functionality.
 
@@ -1078,10 +1088,14 @@ class Vcc(CspSubElementObsDevice):
             :return: if UpdateDopplerPhaseCorrection is allowed
             :rtype: bool
             """
-            if self.target.get_state() == tango.DevState.ON and self.target._obs_state in [
-                ObsState.READY,
-                ObsState.SCANNING,
-            ]:
+            if (
+                self.target.get_state() == tango.DevState.ON
+                and self.target._obs_state
+                in [
+                    ObsState.READY,
+                    ObsState.SCANNING,
+                ]
+            ):
                 return True
             return False
 
@@ -1126,10 +1140,14 @@ class Vcc(CspSubElementObsDevice):
             :return: if UpdateDelayModel is allowed
             :rtype: bool
             """
-            if self.target.get_state() == tango.DevState.ON and self.target._obs_state in [
-                ObsState.READY,
-                ObsState.SCANNING,
-            ]:
+            if (
+                self.target.get_state() == tango.DevState.ON
+                and self.target._obs_state
+                in [
+                    ObsState.READY,
+                    ObsState.SCANNING,
+                ]
+            ):
                 return True
             return False
 
@@ -1170,10 +1188,14 @@ class Vcc(CspSubElementObsDevice):
             :return: if UpdateJonesMatrix is allowed
             :rtype: bool
             """
-            if self.target.get_state() == tango.DevState.ON and self.target._obs_state in [
-                ObsState.READY,
-                ObsState.SCANNING,
-            ]:
+            if (
+                self.target.get_state() == tango.DevState.ON
+                and self.target._obs_state
+                in [
+                    ObsState.READY,
+                    ObsState.SCANNING,
+                ]
+            ):
                 return True
             return False
 
@@ -1304,21 +1326,21 @@ class Vcc(CspSubElementObsDevice):
                         pass
                     else:
                         frequency_band_range_1 = (
-                            argin["band_5_tuning"][0] * 10 ** 9
+                            argin["band_5_tuning"][0] * 10**9
                             + argin["frequency_band_offset_stream1"]
-                            - const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2,
-                            argin["band_5_tuning"][0] * 10 ** 9
+                            - const.BAND_5_STREAM_BANDWIDTH * 10**9 / 2,
+                            argin["band_5_tuning"][0] * 10**9
                             + argin["frequency_band_offset_stream1"]
-                            + const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2,
+                            + const.BAND_5_STREAM_BANDWIDTH * 10**9 / 2,
                         )
 
                         frequency_band_range_2 = (
-                            argin["band_5_tuning"][1] * 10 ** 9
+                            argin["band_5_tuning"][1] * 10**9
                             + argin["frequency_band_offset_stream2"]
-                            - const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2,
-                            argin["band_5_tuning"][1] * 10 ** 9
+                            - const.BAND_5_STREAM_BANDWIDTH * 10**9 / 2,
+                            argin["band_5_tuning"][1] * 10**9
                             + argin["frequency_band_offset_stream2"]
-                            + const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2,
+                            + const.BAND_5_STREAM_BANDWIDTH * 10**9 / 2,
                         )
 
                         if (

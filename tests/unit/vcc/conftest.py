@@ -161,7 +161,9 @@ def patched_vcc_device_class(
         change events from subservient devices.
         """
 
-        def create_component_manager(self: PatchedVcc,) -> unittest.mock.Mock:
+        def create_component_manager(
+            self: PatchedVcc,
+        ) -> unittest.mock.Mock:
             """
             Return a mock component manager instead of the usual one.
 

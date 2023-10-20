@@ -300,7 +300,9 @@ class FspCorrSubarrayComponentManager(
         """
         self._simulation_mode = value
 
-    def start_communicating(self: FspCorrSubarrayComponentManager,) -> None:
+    def start_communicating(
+        self: FspCorrSubarrayComponentManager,
+    ) -> None:
         """Establish communication with the component, then start monitoring."""
 
         if self._connected:
@@ -334,8 +336,10 @@ class FspCorrSubarrayComponentManager(
                     self._hps_fsp_corr_controller_fqdn
                 )
         else:
-            self._proxy_hps_fsp_corr_controller = HpsFspCorrControllerSimulator(
-                self._hps_fsp_corr_controller_fqdn
+            self._proxy_hps_fsp_corr_controller = (
+                HpsFspCorrControllerSimulator(
+                    self._hps_fsp_corr_controller_fqdn
+                )
             )
 
     def _get_device_proxy(
@@ -471,7 +475,7 @@ class FspCorrSubarrayComponentManager(
 
                 frequency_band_start = [
                     *map(
-                        lambda j: j[0] * 10 ** 9,
+                        lambda j: j[0] * 10**9,
                         [
                             const.FREQUENCY_BAND_1_RANGE,
                             const.FREQUENCY_BAND_2_RANGE,
@@ -484,19 +488,19 @@ class FspCorrSubarrayComponentManager(
                     frequency_band_start
                     + (self._frequency_slice_id - 1)
                     * const.FREQUENCY_SLICE_BW
-                    * 10 ** 6,
+                    * 10**6,
                     frequency_band_start
                     + self._frequency_slice_id
                     * const.FREQUENCY_SLICE_BW
-                    * 10 ** 6,
+                    * 10**6,
                 )
 
                 if (
                     frequency_slice_range[0]
-                    + self._bandwidth_actual * 10 ** 6 / 2
-                    <= int(configuration["zoom_window_tuning"]) * 10 ** 3
+                    + self._bandwidth_actual * 10**6 / 2
+                    <= int(configuration["zoom_window_tuning"]) * 10**3
                     <= frequency_slice_range[1]
-                    - self._bandwidth_actual * 10 ** 6 / 2
+                    - self._bandwidth_actual * 10**6 / 2
                 ):
                     # this is the acceptable range
                     pass
@@ -511,47 +515,47 @@ class FspCorrSubarrayComponentManager(
                 self._zoom_window_tuning = configuration["zoom_window_tuning"]
 
                 frequency_slice_range_1 = (
-                    self._stream_tuning[0] * 10 ** 9
+                    self._stream_tuning[0] * 10**9
                     + self._frequency_band_offset_stream1
-                    - const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2
+                    - const.BAND_5_STREAM_BANDWIDTH * 10**9 / 2
                     + (self._frequency_slice_id - 1)
                     * const.FREQUENCY_SLICE_BW
-                    * 10 ** 6,
-                    self._stream_tuning[0] * 10 ** 9
+                    * 10**6,
+                    self._stream_tuning[0] * 10**9
                     + self._frequency_band_offset_stream1
-                    - const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2
+                    - const.BAND_5_STREAM_BANDWIDTH * 10**9 / 2
                     + self._frequency_slice_id
                     * const.FREQUENCY_SLICE_BW
-                    * 10 ** 6,
+                    * 10**6,
                 )
 
                 frequency_slice_range_2 = (
-                    self._stream_tuning[1] * 10 ** 9
+                    self._stream_tuning[1] * 10**9
                     + self._frequency_band_offset_stream2
-                    - const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2
+                    - const.BAND_5_STREAM_BANDWIDTH * 10**9 / 2
                     + (self._frequency_slice_id - 1)
                     * const.FREQUENCY_SLICE_BW
-                    * 10 ** 6,
-                    self._stream_tuning[1] * 10 ** 9
+                    * 10**6,
+                    self._stream_tuning[1] * 10**9
                     + self._frequency_band_offset_stream2
-                    - const.BAND_5_STREAM_BANDWIDTH * 10 ** 9 / 2
+                    - const.BAND_5_STREAM_BANDWIDTH * 10**9 / 2
                     + self._frequency_slice_id
                     * const.FREQUENCY_SLICE_BW
-                    * 10 ** 6,
+                    * 10**6,
                 )
 
                 if (
                     frequency_slice_range_1[0]
-                    + self._bandwidth_actual * 10 ** 6 / 2
-                    <= int(configuration["zoom_window_tuning"]) * 10 ** 3
+                    + self._bandwidth_actual * 10**6 / 2
+                    <= int(configuration["zoom_window_tuning"]) * 10**3
                     <= frequency_slice_range_1[1]
-                    - self._bandwidth_actual * 10 ** 6 / 2
+                    - self._bandwidth_actual * 10**6 / 2
                 ) or (
                     frequency_slice_range_2[0]
-                    + self._bandwidth_actual * 10 ** 6 / 2
-                    <= int(configuration["zoom_window_tuning"]) * 10 ** 3
+                    + self._bandwidth_actual * 10**6 / 2
+                    <= int(configuration["zoom_window_tuning"]) * 10**3
                     <= frequency_slice_range_2[1]
-                    - self._bandwidth_actual * 10 ** 6 / 2
+                    - self._bandwidth_actual * 10**6 / 2
                 ):
                     # this is the acceptable range
                     pass
@@ -696,7 +700,9 @@ class FspCorrSubarrayComponentManager(
 
         return (ResultCode.OK, "FspCorrSubarray EndScan command completed OK")
 
-    def _deconfigure(self: FspCorrSubarrayComponentManager,) -> None:
+    def _deconfigure(
+        self: FspCorrSubarrayComponentManager,
+    ) -> None:
         self._freq_band_name = ""
         self._frequency_band = 0
         self._stream_tuning = (0, 0)

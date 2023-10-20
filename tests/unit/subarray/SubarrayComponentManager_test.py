@@ -314,8 +314,10 @@ class TestCbfSubarrayComponentManager:
         subarray_component_manager.frequency_offset_delta_f = (
             freq_offset_delta_f
         )
-        output_fs_sample_rate = subarray_component_manager._calculate_fs_sample_rate(
-            freq_band, receptor_id
+        output_fs_sample_rate = (
+            subarray_component_manager._calculate_fs_sample_rate(
+                freq_band, receptor_id
+            )
         )
         assert math.isclose(
             output_fs_sample_rate["fs_sample_rate"], expected_fs_sample_rate

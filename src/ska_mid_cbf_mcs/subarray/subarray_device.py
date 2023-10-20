@@ -719,7 +719,7 @@ class CbfSubarray(CspSubElementSubarray):
                 configuration["frequency_band_offset_stream1"] = 0
             if (
                 abs(int(configuration["frequency_band_offset_stream1"]))
-                <= const.FREQUENCY_SLICE_BW * 10 ** 6 / 2
+                <= const.FREQUENCY_SLICE_BW * 10**6 / 2
             ):
                 pass
             else:
@@ -734,7 +734,7 @@ class CbfSubarray(CspSubElementSubarray):
                 configuration["frequency_band_offset_stream2"] = 0
             if (
                 abs(int(configuration["frequency_band_offset_stream2"]))
-                <= const.FREQUENCY_SLICE_BW * 10 ** 6 / 2
+                <= const.FREQUENCY_SLICE_BW * 10**6 / 2
             ):
                 pass
             else:

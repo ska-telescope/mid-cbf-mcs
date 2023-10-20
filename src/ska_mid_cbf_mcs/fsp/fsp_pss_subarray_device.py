@@ -154,7 +154,9 @@ class FspPssSubarray(CspSubElementObsDevice):
         A class for the FspPssSubarray's init_device() "command".
         """
 
-        def do(self: FspPssSubarray.InitCommand,) -> Tuple[ResultCode, str]:
+        def do(
+            self: FspPssSubarray.InitCommand,
+        ) -> Tuple[ResultCode, str]:
             """
             Stateless hook for device initialisation.
 
@@ -321,7 +323,9 @@ class FspPssSubarray(CspSubElementObsDevice):
         A class for the FspPssSubarray's On() command.
         """
 
-        def do(self: FspPssSubarray.OnCommand,) -> Tuple[ResultCode, str]:
+        def do(
+            self: FspPssSubarray.OnCommand,
+        ) -> Tuple[ResultCode, str]:
             """
             Stateless hook for On() command functionality.
 
@@ -348,7 +352,9 @@ class FspPssSubarray(CspSubElementObsDevice):
         A class for the FspPssSubarray's Off() command.
         """
 
-        def do(self: FspPssSubarray.OffCommand,) -> Tuple[ResultCode, str]:
+        def do(
+            self: FspPssSubarray.OffCommand,
+        ) -> Tuple[ResultCode, str]:
             """
             Stateless hook for Off() command functionality.
 
@@ -375,7 +381,9 @@ class FspPssSubarray(CspSubElementObsDevice):
         A class for the FspPssSubarray's Standby() command.
         """
 
-        def do(self: FspPssSubarray.StandbyCommand,) -> Tuple[ResultCode, str]:
+        def do(
+            self: FspPssSubarray.StandbyCommand,
+        ) -> Tuple[ResultCode, str]:
             """
             Stateless hook for Standby() command functionality.
 
@@ -560,7 +568,9 @@ class FspPssSubarray(CspSubElementObsDevice):
         A class for the FspPssSubarray's Scan() command.
         """
 
-        def do(self: FspPssSubarray.EndScanCommand,) -> Tuple[ResultCode, str]:
+        def do(
+            self: FspPssSubarray.EndScanCommand,
+        ) -> Tuple[ResultCode, str]:
             """
             Stateless hook for Scan() command functionality.
 
