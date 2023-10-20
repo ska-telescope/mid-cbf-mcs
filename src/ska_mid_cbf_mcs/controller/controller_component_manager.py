@@ -662,7 +662,9 @@ class ControllerComponentManager(CbfComponentManager):
                         proxy_State = proxy.State()
                         proxy_State_attr = proxy.State
                         self._logger.info(f"{fqdn} State() is {proxy_State}")
-                        self._logger.info(f"{fqdn} State is {proxy_State_attr}")
+                        self._logger.info(
+                            f"{fqdn} State is {proxy_State_attr}"
+                        )
                         if proxy_State != tango.DevState.OFF:
                             try:
                                 poll(
