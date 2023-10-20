@@ -15,6 +15,7 @@ import concurrent.futures
 import json
 import logging
 import os
+import subprocess
 import time
 
 import backoff
@@ -22,10 +23,12 @@ import tango
 import yaml
 from paramiko import AutoAddPolicy, SSHClient
 from paramiko.ssh_exception import NoValidConnectionsError, SSHException
+from polling2 import poll
 from scp import SCPClient, SCPException
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import SimulationMode
 
+from ska_mid_cbf_mcs.commons.global_enum import const
 from ska_mid_cbf_mcs.device_proxy import CbfDeviceProxy
 
 __all__ = ["TalonDxComponentManager"]
@@ -510,12 +513,10 @@ class TalonDxComponentManager:
 
     def shutdown(
         self: TalonDxComponentManager,
-        argin: int,
     ) -> ResultCode:
         """
-        Shutdown the DsHpsMaster device with a given shutdown command code.
-
-        :param argin: shutdown command code;
+        Shutdown the DsHpsMaster device with shutdown code 3.
+        For reference, shutdown command codes:
             0. Child Tango DSs only
             1. Child and HPS Master Tango DSs
             2. Child and HPS Master Tango DSs, reboot Talon DX board
@@ -525,17 +526,56 @@ class TalonDxComponentManager:
         """
         ret = ResultCode.OK
         if self.simulation_mode == SimulationMode.FALSE:
-            for talon_cfg in self.talondx_config["config_commands"]:
-                hps_master_fqdn = talon_cfg["ds_hps_master_fqdn"]
-                hps_master = self.proxies[hps_master_fqdn]
-                try:
-                    hps_master.shutdown(argin)
-                except tango.DevFailed as df:
-                    for item in df.args:
-                        self.logger.error(
-                            f"Exception while sending shutdown command"
-                            f" to {hps_master_fqdn} device: {str(item.reason)}"
-                        )
-                    # TODO: determine behaviour here; the shutdown command will
-                    # inevitably throw an exception, as the device is shut off
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                futures = [
+                    executor.submit(self._shutdown_talon_thread, talon_cfg)
+                    for talon_cfg in self.talondx_config["config_commands"]
+                ]
+                results = [f.result() for f in futures]
+
+            if any(r[0] == ResultCode.FAILED for r in results):
+                self.logger.error(f"Talon configure thread results: {results}")
+                ret = ResultCode.FAILED
+
         return ret
+
+    def _shutdown_talon_thread(
+        self: TalonDxComponentManager, talon_cfg
+    ) -> tuple(ResultCode, str):
+        # HPS master shutdown with code 3 to gracefully shut down linux host (HPS)
+        hps_master_fqdn = talon_cfg["ds_hps_master_fqdn"]
+        hps_master = self.proxies[hps_master_fqdn]
+        try:
+            hps_master.shutdown(3)
+        except tango.DevFailed as df:
+            for item in df.args:
+                self.logger.error(
+                    f"Exception while sending shutdown command"
+                    f" to {hps_master_fqdn} device: {str(item.reason)}"
+                )
+            # TODO: determine behaviour here; the shutdown command will
+            # inevitably throw an exception, as the device is shut off
+
+        # verify the HPS is turned off
+        target = talon_cfg["target"]
+        ip = self._hw_config["talon_board"][target]
+        try:
+            poll(
+                lambda: subprocess.run(["ping", "-c", "1", ip]).returncode
+                == 1,
+                timeout=const.DEFAULT_TIMEOUT,
+                step=0.5,
+            )
+        except TimeoutError:
+            # raise exception if timed out waiting to exit RESOURCING/RESTARTING
+            log_msg = f"Timed out waiting for {target}:{ip} to shutdown"
+            self._logger.error(log_msg)
+            return (
+                ResultCode.OK,
+                f"_shutdown_talon_thread for {target} FAILED",
+            )
+
+        return (
+            ResultCode.OK,
+            f"_shutdown_talon_thread for {target} completed OK",
+        )
