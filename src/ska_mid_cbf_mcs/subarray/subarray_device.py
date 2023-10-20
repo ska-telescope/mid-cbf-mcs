@@ -25,7 +25,7 @@ from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import PowerMode, SimulationMode
 from ska_tango_base.csp.subarray.subarray_device import CspSubElementSubarray
 from ska_telmodel.csp.schema import get_csp_config_schema
-from tango import AttrWriteType, DebugIt
+from tango import AttrWriteType
 from tango.server import attribute, command, device_property, run
 
 from ska_mid_cbf_mcs.commons.global_enum import const
