@@ -21,7 +21,7 @@ skinparam database {
   BorderColor DarkGreen
 }
 
-title Abort Command Sequence\n
+title Abort Command Sequence - Correlation\n
 
 participant "CSP_Mid\n.LMC" as lmc
 

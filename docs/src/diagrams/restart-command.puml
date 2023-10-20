@@ -21,7 +21,7 @@ skinparam database {
   BorderColor DarkGreen
 }
 
-title Restart Command Sequence\n
+title Restart Command Sequence - Correlation\n
 
 participant "CSP_Mid\n.LMC" as lmc
 
@@ -42,10 +42,10 @@ end box
 lmc         ->  subarray      : Restart
 
 subarray    ->  subarray      : deconfigure
-subarray    ->  subarray      : remove_all_receptors
 subarray    ->  vcc           : ObsReset
 vcc         ->  hpsvccband    : ObsReset
 note over vcc                 : VCC\nObsState IDLE
+subarray    ->  subarray      : remove_all_receptors
 subarray    ->  fspsubarray   : ObsReset
 note over fspsubarray         : FSP Corr Subarray\nObsState IDLE
 subarray    ->  fsp           : RemoveSubarrayMembership
