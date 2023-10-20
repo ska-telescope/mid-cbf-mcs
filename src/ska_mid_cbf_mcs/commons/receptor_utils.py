@@ -9,7 +9,6 @@
 
 from __future__ import annotations  # allow forward references in type hints
 
-import re
 from typing import List, Tuple
 
 
@@ -97,22 +96,9 @@ class ReceptorUtils:
         vcc_id_set = set()
         for dish_id, v in dish_dict.items():
             # Dish ID must be SKA001-133, MKT000-063
-            if dish_id[0 : ReceptorUtils.DISH_TYPE_STR_LEN] == "SKA":
-                id = int(dish_id[ReceptorUtils.DISH_TYPE_STR_LEN :])
-                if (
-                    id < ReceptorUtils.SKA_DISH_INSTANCE_MIN
-                    or id > ReceptorUtils.SKA_DISH_INSTANCE_MAX
-                ):
-                    return (False, "Invalid Dish ID")
-            elif dish_id[0 : ReceptorUtils.DISH_TYPE_STR_LEN] == "MKT":
-                id = int(dish_id[ReceptorUtils.DISH_TYPE_STR_LEN :])
-                if (
-                    id < ReceptorUtils.MKT_DISH_INSTANCE_MIN
-                    or id > ReceptorUtils.MKT_DISH_INSTANCE_MAX
-                ):
-                    return (False, "Invalid Dish ID")
-            else:
-                return (False, "Invalid Dish ID")
+            result = ReceptorUtils.is_Valid_Receptor_Id(dish_id)
+            if not result[0]:
+                return (False, result[1])
 
             # Dish ID must be unique
             if dish_id not in dish_id_set:
@@ -120,7 +106,7 @@ class ReceptorUtils:
             else:
                 return (False, f"Duplicated Dish ID {dish_id}")
 
-            # VCC ID must be an integer in 1 - 197 (TODO: confirm)
+            # VCC ID must be an integer in 1 - 197
             if v["vcc"] < 1 or v["vcc"] > 197:
                 return (False, f"Invalid VCC ID {v['vcc']}")
 
@@ -169,15 +155,25 @@ class ReceptorUtils:
         :return: the result(bool) and message(str) as a Tuple(result, msg)
         """
         # The receptor ID must be in the range of SKA[001-133] or MKT[000-063]
-        pattern = "^(SKA(00[1-9]|0[1-9][0-9]|1[0-2][0-9]|13[0-3]))$|^(MKT(0[0-5][0-9]|06[0-3]))$"
-        if re.match(pattern, argin):
-            msg = "Receptor ID is valid"
-            return (True, msg)
+        fail_msg = (
+            f"Receptor ID {argin} is not valid. It must be SKA001-SKA133"
+            " or MKT000-MKT063. Spaces before, after, or in the middle"
+            " of the ID are not accepted."
+        )
+        if argin[0 : ReceptorUtils.DISH_TYPE_STR_LEN] == "SKA":
+            id = int(argin[ReceptorUtils.DISH_TYPE_STR_LEN :])
+            if (
+                id < ReceptorUtils.SKA_DISH_INSTANCE_MIN
+                or id > ReceptorUtils.SKA_DISH_INSTANCE_MAX
+            ):
+                return (False, fail_msg)
+        elif argin[0 : ReceptorUtils.DISH_TYPE_STR_LEN] == "MKT":
+            id = int(argin[ReceptorUtils.DISH_TYPE_STR_LEN :])
+            if (
+                id < ReceptorUtils.MKT_DISH_INSTANCE_MIN
+                or id > ReceptorUtils.MKT_DISH_INSTANCE_MAX
+            ):
+                return (False, fail_msg)
         else:
-            # receptor ID is not a valid ID
-            msg = (
-                f"Receptor ID {argin} is not valid. It must be SKA001-SKA133"
-                " or MKT000-MKT063. Spaces before, after, or in the middle"
-                " of the ID are not accepted."
-            )
-            return (False, msg)
+            return (False, fail_msg)
+        return (True, "Receptor ID is valid")

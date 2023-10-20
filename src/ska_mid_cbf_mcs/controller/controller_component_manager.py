@@ -70,7 +70,7 @@ class ControllerComponentManager(CbfComponentManager):
         :param talon_board_fqdns_all: FQDNS of all the Talon board devices
         :param power_switch_fqdns_all: FQDNS of all the power switch devices
         :param lru_timeout: Timeout in seconds for Talon LRU device proxies
-        :talondx_component_manager: component manager for the Talon LRU
+        :param talondx_component_manager: component manager for the Talon LRU
         :param talondx_config_path: path to the directory containing configuration
                                     files and artifacts for the Talon boards
         :param hw_config_path: path to the directory containing the hardware

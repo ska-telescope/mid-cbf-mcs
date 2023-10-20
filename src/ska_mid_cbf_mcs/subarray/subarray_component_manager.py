@@ -2033,6 +2033,12 @@ class CbfSubarrayComponentManager(
                     f"Invalid receptor {receptor_id}. AddReceptors command failed.",
                 )
 
+            if vccID > const.MAX_VCC:
+                return (
+                    ResultCode.FAILED,
+                    f"VCC ID {vccID} is not supported. AddReceptors command failed.",
+                )
+
             vccProxy = self._proxies_vcc[vccID - 1]
 
             self._logger.debug(

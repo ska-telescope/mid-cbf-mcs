@@ -302,13 +302,26 @@ class CbfController(SKAController):
     def read_receptorToVcc(self: CbfController) -> List[str]:
         # PROTECTED REGION ID(CbfController.receptorToVcc_read) ENABLED START #
         """Return 'receptorID:vccID'"""
-        return self._receptor_to_vcc
+        if self.component_manager._receptor_utils is None:
+            return []
+        out_str = [
+            f"{r}:{v}"
+            for r, v in self.component_manager._receptor_utils.receptor_id_to_vcc_id.items()
+        ]
+
+        return out_str
         # PROTECTED REGION END #    //  CbfController.receptorToVcc_read
 
     def read_vccToReceptor(self: CbfController) -> List[str]:
         # PROTECTED REGION ID(CbfController.vccToReceptor_read) ENABLED START #
         """Return receptorToVcc attribute: 'vccID:receptorID'"""
-        return self._vcc_to_receptor
+        if self.component_manager._receptor_utils is None:
+            return []
+        out_str = [
+            f"{v}:{r}"
+            for r, v in self.component_manager._receptor_utils.receptor_id_to_vcc_id.items()
+        ]
+        return out_str
         # PROTECTED REGION END #    //  CbfController.vccToReceptor_read
 
     def read_subarrayconfigID(self: CbfController) -> List[str]:
@@ -318,28 +331,6 @@ class CbfController(SKAController):
         """
         return self.component_manager.subarray_config_ID
         # PROTECTED REGION END #    //  CbfController.subarrayconfigID_read
-
-    def read_frequencyOffsetDeltaF(self: CbfController) -> List[int]:
-        # PROTECTED REGION ID(CbfController.frequencyOffsetDeltaF_read) ENABLED START #
-        """Return frequencyOffsetDeltaF attribute: Frequency offset (delta f)
-        of all 197 receptors as an array of ints."""
-        return self.component_manager.frequency_offset_delta_f
-        # PROTECTED REGION END #    //  CbfController.frequencyOffsetDeltaF_read
-
-    def write_frequencyOffsetDeltaF(
-        self: CbfController, value: List[int]
-    ) -> None:
-        # PROTECTED REGION ID(CbfController.frequencyOffsetDeltaF_write) ENABLED START #
-        """Set the frequencyOffsetDeltaF attribute"""
-        if len(value) == self._count_vcc:
-            self.component_manager.update_freq_offset_deltaF(value)
-        else:
-            log_msg = (
-                "Skipped writing to frequencyOffsetDeltaF attribute "
-                + f"(expected {self._count_vcc} arguments, but received {len(value)}."
-            )
-            self.logger.warning(log_msg)
-        # PROTECTED REGION END #    //  CbfController.frequencyOffsetDeltaF_write
 
     def write_simulationMode(
         self: CbfController, value: SimulationMode
@@ -469,7 +460,7 @@ class CbfController(SKAController):
             if not self.is_allowed():
                 return (
                     ResultCode.FAILED,
-                    "InitSysParam command may be called only when DevState is OFF",
+                    "InitSysParam command may be called only when state is OFF",
                 )
 
             (
