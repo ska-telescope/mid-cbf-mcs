@@ -1124,12 +1124,7 @@ class TestCbfSubarray:
             # check initial states
             assert test_proxies.subarray[sub_id].obsState == ObsState.READY
             for r in vcc_receptors:
-                assert (
-                    test_proxies.vcc[
-                        test_proxies.receptor_utils.receptor_id_to_vcc_id[r]
-                    ].obsState
-                    == ObsState.READY
-                )
+                assert test_proxies.vcc[r].obsState == ObsState.READY
             for fsp in configuration["cbf"]["fsp"]:
                 fsp_id = int(fsp["fsp_id"])
                 if fsp["function_mode"] == "CORR":
@@ -1164,12 +1159,7 @@ class TestCbfSubarray:
             )
             assert test_proxies.subarray[sub_id].obsState == ObsState.IDLE
             for r in vcc_receptors:
-                assert (
-                    test_proxies.vcc[
-                        test_proxies.receptor_utils.receptor_id_to_vcc_id[r]
-                    ].obsState
-                    == ObsState.IDLE
-                )
+                assert test_proxies.vcc[r].obsState == ObsState.IDLE
             for fsp in configuration["cbf"]["fsp"]:
                 fsp_id = int(fsp["fsp_id"])
                 if fsp["function_mode"] == "CORR":
