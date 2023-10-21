@@ -593,7 +593,10 @@ class ControllerComponentManager(CbfComponentManager):
             self._update_sys_param(params)
         except tango.DevFailed as e:
             self._logger.error(e)
-            return (ResultCode.FAILED, "Failed to update subarrays with sys params")
+            return (
+                ResultCode.FAILED,
+                "Failed to update subarrays with sys params",
+            )
 
         self._logger.info("Updated subarrays with sys params")
 
