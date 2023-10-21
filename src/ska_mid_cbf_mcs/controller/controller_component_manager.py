@@ -584,7 +584,7 @@ class ControllerComponentManager(CbfComponentManager):
             self._receptor_utils = ReceptorUtils(sys_param)
         except ValueError as e:
             self._logger.error(e)
-            return (False, "Invalid sys params")
+            return (ResultCode.FAILED, "Invalid sys params")
 
         self._sys_param = params
 
@@ -593,7 +593,7 @@ class ControllerComponentManager(CbfComponentManager):
             self._update_sys_param(params)
         except tango.DevFailed as e:
             self._logger.error(e)
-            return (False, "Failed to update subarrays with sys params")
+            return (ResultCode.FAILED, "Failed to update subarrays with sys params")
 
         self._logger.info("Updated subarrays with sys params")
 
