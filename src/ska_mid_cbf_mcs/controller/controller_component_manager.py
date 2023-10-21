@@ -580,8 +580,13 @@ class ControllerComponentManager(CbfComponentManager):
         sys_param = json.loads(params)
 
         # store the attribute
+        try:
+            self._receptor_utils = ReceptorUtils(sys_param)
+        except ValueError as e:
+            self._logger.error(e)
+            return (False, "Invalid sys params")
+
         self._sys_param = params
-        self._receptor_utils = ReceptorUtils(sys_param)
 
         # send sys params to the subarrays
         try:
