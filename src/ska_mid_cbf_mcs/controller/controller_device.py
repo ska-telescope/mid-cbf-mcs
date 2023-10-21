@@ -219,7 +219,7 @@ class CbfController(SKAController):
             # # initialize attribute values
             device._command_progress = 0
 
-            # TODO remove when ugrading base class from 0.11.3
+            # TODO remove when upgrading base class from 0.11.3
             device.set_change_event("healthState", True, True)
 
             message = "CbfController Init command completed OK"
