@@ -106,7 +106,7 @@ pygments_style = 'sphinx'
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'sphinx_rtd_theme'
+html_theme = 'ska_ser_sphinx_theme'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -119,8 +119,6 @@ html_theme_options = {
 }
 
 html_context = {
-    'favicon': 'img/favicon.ico',
-    'logo': 'img/logo.jpg',
     'theme_logo_only' : True,
     'display_github': True, # Integrate GitHub
     'github_repo': 'developer.skatelescope.org', # Repo name
