@@ -475,13 +475,13 @@ class FspPstSubarray(CspSubElementObsDevice):
         """
 
         def do(
-            self: FspPstSubarray.ScanCommand, argin: str
+            self: FspPstSubarray.ScanCommand, argin: int
         ) -> Tuple[ResultCode, str]:
             """
             Stateless hook for Scan() command functionality.
 
             :param argin: The scan ID
-            :type argin: str
+            :type argin: int
 
             :return: A tuple containing a return code and a string
                 message indicating status. The message is for
@@ -494,12 +494,36 @@ class FspPstSubarray(CspSubElementObsDevice):
 
             device = self.target
 
-            (result_code, message) = device.component_manager.scan(int(argin))
+            (result_code, message) = device.component_manager.scan(argin)
 
             if result_code == ResultCode.OK:
                 device._component_scanning(True)
 
             return (result_code, message)
+
+    @command(
+        dtype_in="DevShort",
+        doc_in="An integer with the scan ID",
+        dtype_out="DevVarLongStringArray",
+        doc_out="A tuple containing a return code and a string message indicating status."
+        "The message is for information purpose only.",
+    )
+    @DebugIt()
+    def Scan(self, argin):
+        # PROTECTED REGION ID(CspSubElementObsDevice.Scan) ENABLED START #
+        """
+        Start an observing scan.
+
+        :param argin: A string with the scan ID
+        :type argin: 'DevShort'
+
+        :return: A tuple containing a return code and a string message indicating status.
+            The message is for information purpose only.
+        :rtype: (ResultCode, str)
+        """
+        command = self.get_command_object("Scan")
+        (return_code, message) = command(argin)
+        return [[return_code], [message]]
 
     class EndScanCommand(CspSubElementObsDevice.EndScanCommand):
         """
@@ -625,8 +649,7 @@ class FspPstSubarray(CspSubElementObsDevice):
         self.obs_state_model.perform_action("component_obsfault")
 
     def _communication_status_changed(
-        self: FspPstSubarray,
-        communication_status: CommunicationStatus,
+        self: FspPstSubarray, communication_status: CommunicationStatus
     ) -> None:
         """
         Handle change in communications status between component manager and component.
@@ -647,8 +670,7 @@ class FspPstSubarray(CspSubElementObsDevice):
             self.op_state_model.perform_action("component_unknown")
 
     def _component_power_mode_changed(
-        self: FspPstSubarray,
-        power_mode: PowerMode,
+        self: FspPstSubarray, power_mode: PowerMode
     ) -> None:
         """
         Handle change in the power mode of the component.

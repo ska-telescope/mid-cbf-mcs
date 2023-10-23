@@ -18,10 +18,7 @@ from typing import Any, Callable, Optional
 from ska_tango_base.base import BaseComponentManager
 from ska_tango_base.control_model import PowerMode
 
-__all__ = [
-    "CommunicationStatus",
-    "CbfComponentManager",
-]
+__all__ = ["CommunicationStatus", "CbfComponentManager"]
 
 
 class CommunicationStatus(enum.Enum):
@@ -152,8 +149,7 @@ class CbfComponentManager(BaseComponentManager):
         self.update_component_fault(None)
 
     def update_communication_status(
-        self: CbfComponentManager,
-        communication_status: CommunicationStatus,
+        self: CbfComponentManager, communication_status: CommunicationStatus
     ) -> None:
         """
         Handle a change in communication status.
