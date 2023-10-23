@@ -654,20 +654,15 @@ class ControllerComponentManager(CbfComponentManager):
                 op_state_error_list = []
                 obs_state_error_list = []
                 for fqdn, proxy in self._proxies.items():
+                    self._logger.info(f"Checking final state of device {fqdn}")
                     # power switch device state is always ON as long as it is
                     # communicating and monitoring the PDU; does not implement
                     # On/Off commands, rather TurnOn/OffOutlet commands to
                     # target specific outlets
                     if fqdn not in self._fqdn_power_switch:
-                        self._logger.info(
-                            f"checking fqdn {fqdn}, device {proxy}"
-                        )
-                        # if proxy_state != tango.DevState.OFF:
                         try:
-                            # proxy_state = proxy.State()
-                            # self._logger.info(f"State() is {proxy_state}")
                             self._logger.info(
-                                f"polling {fqdn} State() for tango.DevState.OFF"
+                                f"Polling {fqdn} State() for tango.DevState.OFF"
                             )
                             poll(
                                 lambda: proxy.State() == tango.DevState.OFF,
