@@ -98,7 +98,7 @@ class TalonDxComponentManager:
                 for talon_cfg in self.talondx_config["config_commands"]
             ]
             results = [f.result() for f in futures]
-        
+
         self.logger.info(f"self.proxies:\n{self.proxies.join(', ')}")
 
         if any(r[0] == ResultCode.FAILED for r in results):
