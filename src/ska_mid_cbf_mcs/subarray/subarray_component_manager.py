@@ -766,13 +766,36 @@ class CbfSubarrayComponentManager(
     ) -> None:
         """Completely deconfigure the subarray; all initialization performed
         by by the ConfigureScan command must be 'undone' here."""
+        # TODO: component_manager.deconfigure is invoked by the base class v0.11.3
+        # GoToIdleCommand, while it is also being used by ConfigureScan, ObsReset
+        # and Restart here (in the CbfSubarray); this should get simplified to be
+        # more useful for general deconfiguration, with command/state-specific logic
+        # handled elsewhere, during the ska-tango-base upgrade, where GoToIdle
+        # will be replaced by the End command
+
+        # if deconfiguring from READY, which can occur if ConfigureScan is called
+        # from READY or if GoToIdle was called, issue GoToIdle to VCCs/FSP subarrays
+        if self._ready:
+            for group in [
+                self._group_vcc,
+                self._group_fsp_corr_subarray,
+                self._group_fsp_pss_subarray,
+                self._group_fsp_pst_subarray,
+            ]:
+                if group.get_size() > 0:
+                    try:
+                        group.command_inout("GoToIdle")
+                    except tango.DevFailed as df:
+                        msg = str(df.args[0].desc)
+                        self._logger.error(f"Error in GoToIdle; {msg}")
+                        self._component_obs_fault_callback(True)
         try:
             # unsubscribe from TMC events
             for event_id in list(self._events_telstate.keys()):
                 self._events_telstate[event_id].remove_event(event_id)
                 del self._events_telstate[event_id]
         except tango.DevFailed:
-            self._component_op_fault_callback(True)
+            self._component_obs_fault_callback(True)
 
         # reset all private data to their initialization values:
         self._pst_fsp_list = []
@@ -2106,17 +2129,21 @@ class CbfSubarrayComponentManager(
             return (False, msg)
 
         scan_id = argin["scan_id"]
-        try:
-            data = tango.DeviceData()
-            data.insert(tango.DevShort, scan_id)
-            self._group_vcc.command_inout("Scan", data)
-            self._group_fsp_corr_subarray.command_inout("Scan", data)
-            self._group_fsp_pss_subarray.command_inout("Scan", data)
-            self._group_fsp_pst_subarray.command_inout("Scan", data)
-        except tango.DevFailed as df:
-            msg = str(df.args[0].desc)
-            self._component_obs_fault_callback(True)
-            return (ResultCode.FAILED, msg)
+        data = tango.DeviceData()
+        data.insert(tango.DevShort, scan_id)
+        for group in [
+            self._group_vcc,
+            self._group_fsp_corr_subarray,
+            self._group_fsp_pss_subarray,
+            self._group_fsp_pst_subarray,
+        ]:
+            if group.get_size() > 0:
+                try:
+                    group.command_inout("Scan", data)
+                except tango.DevFailed as df:
+                    msg = str(df.args[0].desc)
+                    self._logger.error(f"Error in Scan; {msg}")
+                    self._component_obs_fault_callback(True)
 
         self._scan_id = scan_id
         self._component_scanning_callback(True)
@@ -2132,16 +2159,20 @@ class CbfSubarrayComponentManager(
             information purpose only.
         :rtype: (ResultCode, str)
         """
-        try:
-            # EndScan for all subordinate devices:
-            self._group_vcc.command_inout("EndScan")
-            self._group_fsp_corr_subarray.command_inout("EndScan")
-            self._group_fsp_pss_subarray.command_inout("EndScan")
-            self._group_fsp_pst_subarray.command_inout("EndScan")
-        except tango.DevFailed as df:
-            msg = str(df.args[0].desc)
-            self._component_obs_fault_callback(True)
-            return (ResultCode.FAILED, msg)
+        # EndScan for all subordinate devices:
+        for group in [
+            self._group_vcc,
+            self._group_fsp_corr_subarray,
+            self._group_fsp_pss_subarray,
+            self._group_fsp_pst_subarray,
+        ]:
+            if group.get_size() > 0:
+                try:
+                    group.command_inout("EndScan")
+                except tango.DevFailed as df:
+                    msg = str(df.args[0].desc)
+                    self._logger.error(f"Error in EndScan; {msg}")
+                    self._component_obs_fault_callback(True)
 
         self._scan_id = 0
         self._component_scanning_callback(False)
@@ -2152,42 +2183,44 @@ class CbfSubarrayComponentManager(
         """
         Abort subarray configuration or operation.
         """
-        try:
-            if self._group_vcc.get_size() > 0:
-                self._group_vcc.command_inout("Abort")
-            if self._group_fsp_corr_subarray.get_size() > 0:
-                self._group_fsp_corr_subarray.command_inout("Abort")
-            if self._group_fsp_pss_subarray.get_size() > 0:
-                self._group_fsp_pss_subarray.command_inout("Abort")
-            if self._group_fsp_pst_subarray.get_size() > 0:
-                self._group_fsp_pst_subarray.command_inout("Abort")
-        except tango.DevFailed:
-            self._component_obs_fault_callback(True)
+        for group in [
+            self._group_vcc,
+            self._group_fsp_corr_subarray,
+            self._group_fsp_pss_subarray,
+            self._group_fsp_pst_subarray,
+        ]:
+            if group.get_size() > 0:
+                try:
+                    group.command_inout("Abort")
+                except tango.DevFailed as df:
+                    msg = str(df.args[0].desc)
+                    self._logger.error(f"Error in Abort; {msg}")
+                    self._component_obs_fault_callback(True)
 
     @check_communicating
     def restart(self: CbfSubarrayComponentManager) -> None:
         """
-        Restart from fault.
+        Restart to EMPTY from abort/fault.
         """
+        # if subarray is in FAULT, we must first abort VCC and FSP operation
+        # this will allow us to call ObsReset on them even if they are not in FAULT
+        if self.obs_faulty:
+            self.abort()
+            # use callback to reset FAULT state
+            self._component_obs_fault_callback(False)
+
+        # We might have interrupted a long-running command such as a Configure
+        # or a Scan, so we need to clean up from that.
+        self.deconfigure()
+
+        # send Vcc devices to IDLE, remove all assigned VCCs
+        if self._group_vcc.get_size() > 0:
+            self._group_vcc.command_inout("ObsReset")
+
+        # remove all assigned VCCs to return to EMPTY
+        self.remove_all_receptors()
+
         try:
-            # if subarray is in FAULT, we must first abort VCC and FSP operation
-            # this will allow us to call ObsReset on them even if they are not in FAULT
-            if self.obs_faulty:
-                self.abort()
-                # use callback to reset FAULT state
-                self._component_obs_fault_callback(False)
-
-            # We might have interrupted a long-running command such as a Configure
-            # or a Scan, so we need to clean up from that.
-            self.deconfigure()
-
-            # send Vcc devices to IDLE, remove all assigned VCCs
-            if self._group_vcc.get_size() > 0:
-                self._group_vcc.command_inout("ObsReset")
-
-            # remove all assigned VCCs to return to EMPTY
-            self.remove_all_receptors()
-
             # remove any previously assigned FSPs
             # TODO VLBI
             for group in [
@@ -2213,20 +2246,20 @@ class CbfSubarrayComponentManager(
     @check_communicating
     def obsreset(self: CbfSubarrayComponentManager) -> None:
         """
-        Reset subarray scan configuration or operation.
+        Reset to IDLE from abort/fault.
         """
+        # if subarray is in FAULT, we must first abort VCC and FSP operation
+        # this will allow us to call ObsReset on them even if they are not in FAULT
+        if self.obs_faulty:
+            self.abort()
+            # use callback to reset FAULT state
+            self._component_obs_fault_callback(False)
+
+        # We might have interrupted a long-running command such as a Configure
+        # or a Scan, so we need to clean up from that.
+        self.deconfigure()
+
         try:
-            # if subarray is in FAULT, we must first abort VCC and FSP operation
-            # this will allow us to call ObsReset on them even if they are not in FAULT
-            if self.obs_faulty:
-                self.abort()
-                # use callback to reset FAULT state
-                self._component_obs_fault_callback(False)
-
-            # We might have interrupted a long-running command such as a Configure
-            # or a Scan, so we need to clean up from that.
-            self.deconfigure()
-
             if self._group_vcc.get_size() > 0:
                 self._group_vcc.command_inout("ObsReset")
 

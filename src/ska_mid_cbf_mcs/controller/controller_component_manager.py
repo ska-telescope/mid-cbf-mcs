@@ -11,7 +11,6 @@
 
 from __future__ import annotations
 
-import concurrent.futures
 import json
 import logging
 import os
@@ -415,7 +414,7 @@ class ControllerComponentManager(CbfComponentManager):
                 self._fqdn_talon_lru = ["mid_csp_cbf/talon_lru/001"]
 
             # Turn on all the LRUs with the boards we need
-            lru_on_status, log_msg = self._bulk_lru_on()
+            lru_on_status, log_msg = self._turn_on_lrus()
             if not lru_on_status:
                 return (ResultCode.FAILED, log_msg)
 
@@ -606,7 +605,7 @@ class ControllerComponentManager(CbfComponentManager):
                 "frequencyOffsetDeltaF", freq_offset_deltaF[0]
             )
 
-    def _lru_on_thread(self, proxy, sim_mode, lru_fqdn) -> (bool, str):
+    def _lru_on(self, proxy, sim_mode, lru_fqdn) -> (bool, str):
         try:
             self._logger.info(f"Turning on LRU {lru_fqdn}")
             proxy.write_attribute("adminMode", AdminMode.OFFLINE)
@@ -620,20 +619,17 @@ class ControllerComponentManager(CbfComponentManager):
         self._logger.info(f"LRU successfully turned on: {lru_fqdn}")
         return (True, None)
 
-    def _bulk_lru_on(
+    def _turn_on_lrus(
         self: ControllerComponentManager,
     ) -> (bool, str):
-        with concurrent.futures.ThreadPoolExecutor() as executor:
-            futures = [
-                executor.submit(
-                    self._lru_on_thread,
-                    self._proxies[fqdn],
-                    self._talondx_component_manager.simulation_mode,
-                    fqdn,
-                )
-                for fqdn in self._fqdn_talon_lru
-            ]
-            results = [f.result() for f in futures]
+        results = [
+            self._lru_on(
+                self._proxies[fqdn],
+                self._talondx_component_manager.simulation_mode,
+                fqdn,
+            )
+            for fqdn in self._fqdn_talon_lru
+        ]
 
         failed_lrus = []
         out_status = True
