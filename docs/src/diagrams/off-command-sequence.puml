@@ -1,0 +1,77 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+skinparam backgroundColor #EEEBDC
+skinparam sequence {
+ParticipantBorderColor DodgerBlue
+ParticipantBackgroundColor DeepSkyBlue
+ActorBorderColor DarkGreen
+ActorBackgroundColor Green
+BoxBorderColor LightBlue
+BoxBackgroundColor #F0FFFF
+}
+skinparam collections {
+  BackGroundColor LightBlue
+  BorderColor DodgerBlue
+}
+skinparam database {
+  BackgroundColor LightGreen
+  BorderColor DarkGreen
+}
+title Off Command Sequence - Correlation\n
+participant "CSP_Mid\n.LMC" as lmc
+box "MCS"
+participant "Mid.CBF\nController" as controller
+participant "Mid.CBF\nSubarray" as subarray
+collections "VCC" as vcc
+collections "FSP" as fsp
+collections "FSP\nCorr\nSubarray" as fspsubarray
+participant "Talon\nLRU" as lru
+participant "Power\nSwitch" as switch
+end box
+participant "PDU\n" as pdu
+box "HPS"
+participant "Linux\nOS" as os #LightGreen
+participant "HPS\nMaster" as hpsmaster
+collections "HPS\nDevices" as hpsdevices
+end box
+lmc        ->  controller    : Off()
+
+note over controller         : clean up observing model:
+
+loop until Subarray ObsState EMPTY or time exceeded
+alt Subarray ObsState EMPTY
+controller -> controller : Do nothing
+else ObStates RESOURCING, RESTARTING, ABORTING,\nRESETTING
+controller -> controller : Wait
+else ObsStates IDLE\nCONFIGURING, READY,\nSCANNING
+controller -> subarray   : Abort
+else ObsState ABORTED, FAULT
+controller -> subarray   : Restart
+end loop
+note over vcc            : VCC\nObsState IDLE
+note over fspsubarray    : FSP Corr Subarray\nObsState IDLE
+
+controller ->  subarray      : Off
+subarray   ->  fspsubarray   : Off
+fspsubarray->  fspsubarray   : PowerMode OFF
+subarray   ->  subarray      : PowerMode OFF
+controller ->  vcc           : Off
+vcc        ->  vcc           : PowerMode OFF
+controller ->  fsp           : Off
+fsp        ->  fspsubarray   : Off
+fspsubarray->  fspsubarray   : PowerMode OFF
+fsp        ->  fsp           : PowerMode OFF
+
+note over subarray       : Subarray\nObsState EMPTY
+controller ->  hpsmaster     : Shutdown(3)
+group no Tango exception on Shutdown
+hpsmaster  ->  hpsdevices !! : kill pid
+hpsmaster  ->  os !!         : system "shutdown now"
+controller ->  controller    : wait 4 sec
+end group
+controller ->  lru           : PowerOff
+lru        ->  switch        : Off()
+switch     ->  pdu           : Off(outlets)
+
+controller ->  controller    : PowerMode OFF
+@enduml
