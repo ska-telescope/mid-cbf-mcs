@@ -76,7 +76,7 @@ class SlimLink(SKABaseDevice):
             "4",
         ],
     )
-    
+
     # ---------------
     # General methods
     # ---------------
@@ -131,7 +131,7 @@ class SlimLink(SKABaseDevice):
             component_power_mode_changed_callback=self._component_power_mode_changed,
             component_fault_callback=self._component_fault,
         )
-    
+
     class InitCommand(SKABaseDevice.InitCommand):
         """
         A class for the SlimLink's init_device() "command".
