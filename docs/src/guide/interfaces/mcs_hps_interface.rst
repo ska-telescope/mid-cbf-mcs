@@ -63,8 +63,11 @@ From a MCS perspective, the On command sequence consists of the following steps:
     
     MCS On Command Sequence
 
-Configure Scan Command Sequence
---------------------------------
+Command Sequence
+-----------------
+
+Configure Scan Sequence
+++++++++++++++++++++++++
 
 The sequence diagram below shows the main sequence of calls in MCS 
 to configure a correlation scan. Return calls are not shown.
@@ -81,15 +84,28 @@ correlation scan.
 
 .. uml:: ../../diagrams/configure-scan-hps-fsp.puml
 
-Abort/ObsReset/Restart Command Sequence
-----------------------------------------
+Abort Sequence
++++++++++++++++
 
 The sequence diagram below shows the main sequence of calls in MCS 
-to Abort from a correlation scan, and return to either IDLE or EMPTY via the 
-ObsReset and Restart commands, respectively. Return calls are not shown.
+to Abort from a correlation scan. Return calls are not shown.
 
 .. uml:: ../../diagrams/abort-command.puml
 
+ObsReset Sequence
+++++++++++++++++++
+
+The sequence diagram below shows the main sequence of calls in MCS
+to return to IDLE via the ObsReset command for a correlation scan.
+Return calls are not shown.
+
 .. uml:: ../../diagrams/obsreset-command.puml
-    
+
+Restart Sequence
+++++++++++++++++++
+
+The sequence diagram below shows the main sequence of calls in MCS
+to return to EMPTY via the Restart command for a correlation scan.
+Return calls are not shown.
+
 .. uml:: ../../diagrams/restart-command.puml

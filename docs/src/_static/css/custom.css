@@ -47,6 +47,16 @@ SKA Earth Green: rgb(166, 206, 57)
       padding-top: 40px;
 }
 
+/*
+Adding extra width so content
+takes up more of the screen.
+Not provided in ska theme
+*/
+
+.wy-nav-content {
+    max-width: 1500px !important;
+}
+
 .ska-logo, ska-logo:hover{
 	background-attachment: scroll;
 	background-clip: border-box;
