@@ -260,8 +260,7 @@ class FspComponentManager(CbfComponentManager):
 
             if self._proxy_hps_fsp_corr_controller is None:
                 self._proxy_hps_fsp_corr_controller = self._get_device_proxy(
-                    self._hps_fsp_corr_controller_fqdn,
-                    is_group=False,
+                    self._hps_fsp_corr_controller_fqdn, is_group=False
                 )
         else:
             self._logger.info("Trying to connected to Simulated HPS devices")
@@ -318,8 +317,7 @@ class FspComponentManager(CbfComponentManager):
 
     @check_communicating
     def remove_subarray_membership(
-        self: FspComponentManager,
-        argin: int,
+        self: FspComponentManager, argin: int
     ) -> Tuple[ResultCode, str]:
         """
         Remove subarray from the subarrayMembership list.
@@ -358,8 +356,7 @@ class FspComponentManager(CbfComponentManager):
 
     @check_communicating
     def add_subarray_membership(
-        self: FspComponentManager,
-        argin: int,
+        self: FspComponentManager, argin: int
     ) -> Tuple[ResultCode, str]:
         """
         Add a subarray to the subarrayMembership list.
@@ -474,8 +471,7 @@ class FspComponentManager(CbfComponentManager):
 
     @check_communicating
     def set_function_mode(
-        self: FspComponentManager,
-        argin: str,
+        self: FspComponentManager, argin: str
     ) -> Tuple[ResultCode, str]:
         """
         Put the fsp into low power standby mode
@@ -526,8 +522,7 @@ class FspComponentManager(CbfComponentManager):
 
     @check_communicating
     def update_jones_matrix(
-        self: FspComponentManager,
-        argin: str,
+        self: FspComponentManager, argin: str
     ) -> Tuple[ResultCode, str]:
         """
         Update the FSP's jones matrix (serialized JSON object)
@@ -573,8 +568,7 @@ class FspComponentManager(CbfComponentManager):
 
     @check_communicating
     def update_delay_model(
-        self: FspComponentManager,
-        argin: str,
+        self: FspComponentManager, argin: str
     ) -> Tuple[ResultCode, str]:
         """
         Update the FSP's delay model (serialized JSON object)
@@ -623,8 +617,7 @@ class FspComponentManager(CbfComponentManager):
 
     @check_communicating
     def update_timing_beam_weights(
-        self: FspComponentManager,
-        argin: str,
+        self: FspComponentManager, argin: str
     ) -> Tuple[ResultCode, str]:
         """
         Update the FSP's timing beam weights (serialized JSON object)

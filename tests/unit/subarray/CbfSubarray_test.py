@@ -39,8 +39,7 @@ class TestCbfSubarray:
     """
 
     def test_State(
-        self: TestCbfSubarray,
-        device_under_test: CbfDeviceProxy,
+        self: TestCbfSubarray, device_under_test: CbfDeviceProxy
     ) -> None:
         """
         Test State
@@ -52,8 +51,7 @@ class TestCbfSubarray:
         assert device_under_test.State() == DevState.DISABLE
 
     def test_Status(
-        self: TestCbfSubarray,
-        device_under_test: CbfDeviceProxy,
+        self: TestCbfSubarray, device_under_test: CbfDeviceProxy
     ) -> None:
         """
         Test Status
@@ -65,8 +63,7 @@ class TestCbfSubarray:
         assert device_under_test.Status() == "The device is in DISABLE state."
 
     def test_adminMode(
-        self: TestCbfSubarray,
-        device_under_test: CbfDeviceProxy,
+        self: TestCbfSubarray, device_under_test: CbfDeviceProxy
     ) -> None:
         """
         Test Admin Mode
@@ -597,10 +594,7 @@ class TestCbfSubarray:
                 "ConfigureScan_basic.json",
                 ["SKA001", "SKA063", "SKA100", "SKA036"],
             ),
-            (
-                "Configure_TM-CSP_v2.json",
-                ["SKA100", "SKA001", "SKA036"],
-            ),
+            ("Configure_TM-CSP_v2.json", ["SKA100", "SKA001", "SKA036"]),
         ],
     )
     def test_End(

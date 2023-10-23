@@ -214,6 +214,4 @@ def initial_mocks(
     :param mock_ds_hps_master: a mock DsHpsMaster device
     :return: a dictionary of device proxy mocks to pre-register.
     """
-    return {
-        "talondx-001/hpsmaster/hps-1": mock_ds_hps_master,
-    }
+    return {"talondx-001/hpsmaster/hps-1": mock_ds_hps_master}

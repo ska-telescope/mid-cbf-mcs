@@ -160,13 +160,7 @@ class TestFspPstSubarray:
         "config_file_name, \
         fsp_id, \
         sub_id",
-        [
-            (
-                "FspPstSubarray_ConfigureScan_basic.json",
-                2,
-                1,
-            )
-        ],
+        [("FspPstSubarray_ConfigureScan_basic.json", 2, 1)],
     )
     def test_ConfigureScan(
         self: TestFspPstSubarray,
@@ -258,7 +252,7 @@ class TestFspPstSubarray:
 
         scan_id = 1
         scan_id_device_data = tango.DeviceData()
-        scan_id_device_data.insert(tango.DevString, str(scan_id))
+        scan_id_device_data.insert(tango.DevShort, scan_id)
 
         device_under_test.Scan(scan_id_device_data)
 
@@ -346,13 +340,7 @@ class TestFspPstSubarray:
         "config_file_name, \
         fsp_id, \
         sub_id",
-        [
-            (
-                "FspPstSubarray_ConfigureScan_basic.json",
-                2,
-                1,
-            )
-        ],
+        [("FspPstSubarray_ConfigureScan_basic.json", 2, 1)],
     )
     def test_Abort_ObsReset(
         self: TestFspPstSubarray,

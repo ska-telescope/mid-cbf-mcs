@@ -32,8 +32,7 @@ class TestTalonLRU:
     """Test class for the TalonLRU device"""
 
     def test_State(
-        self: TestTalonLRU,
-        device_under_test: CbfDeviceProxy,
+        self: TestTalonLRU, device_under_test: CbfDeviceProxy
     ) -> None:
         """
         Test State
@@ -45,14 +44,12 @@ class TestTalonLRU:
         assert device_under_test.State() == DevState.DISABLE
 
     def test_Status(
-        self: TestTalonLRU,
-        device_under_test: CbfDeviceProxy,
+        self: TestTalonLRU, device_under_test: CbfDeviceProxy
     ) -> None:
         assert device_under_test.Status() == "The device is in DISABLE state."
 
     def test_adminMode(
-        self: TestTalonLRU,
-        device_under_test: CbfDeviceProxy,
+        self: TestTalonLRU, device_under_test: CbfDeviceProxy
     ) -> None:
         assert device_under_test.adminMode == AdminMode.OFFLINE
 

@@ -166,8 +166,7 @@ def mock_vcc() -> unittest.mock.Mock:
 
 @pytest.fixture()
 def initial_mocks(
-    mock_controller: unittest.mock.Mock,
-    mock_vcc: unittest.mock.Mock,
+    mock_controller: unittest.mock.Mock, mock_vcc: unittest.mock.Mock
 ) -> Dict[str, unittest.mock.Mock]:
     """
     Return a dictionary of device proxy mocks to pre-register.
