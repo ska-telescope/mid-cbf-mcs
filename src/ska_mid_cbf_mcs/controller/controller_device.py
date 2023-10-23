@@ -91,14 +91,6 @@ class CbfController(SKAController):
         doc="Maps Dish ID to VCC and frequency offset k. The string is in JSON format.",
     )
 
-    subarrayconfigID = attribute(
-        dtype=("str",),
-        max_dim_x=16,
-        label="Subarray config IDs",
-        polling_period=3000,
-        doc="ID of subarray configuration. empty string if subarray is not configured for a scan.",
-    )
-
     simulationMode = attribute(
         dtype=SimulationMode,
         access=AttrWriteType.READ_WRITE,
@@ -323,14 +315,6 @@ class CbfController(SKAController):
         ]
         return out_str
         # PROTECTED REGION END #    //  CbfController.vccToReceptor_read
-
-    def read_subarrayconfigID(self: CbfController) -> List[str]:
-        # PROTECTED REGION ID(CbfController.subarrayconfigID_read) ENABLED START #
-        """Return subarrayconfigID atrribute: ID of subarray config.
-        Used for debug purposes. empty string if subarray is not configured for a scan
-        """
-        return self.component_manager.subarray_config_ID
-        # PROTECTED REGION END #    //  CbfController.subarrayconfigID_read
 
     def write_simulationMode(
         self: CbfController, value: SimulationMode

@@ -1782,7 +1782,7 @@ class CbfSubarrayComponentManager(
                     fsp["corr_receptor_ids"].append(
                         [
                             receptor,
-                            self._receptor_utils.receptor_id_to_int[receptor],
+                            self._receptor_utils.receptor_id_to_vcc_id[receptor],
                         ]
                     )
 
