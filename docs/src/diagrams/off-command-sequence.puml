@@ -17,14 +17,14 @@ skinparam database {
   BackgroundColor LightGreen
   BorderColor DarkGreen
 }
-title Off Command Sequence\n
+title Off Command Sequence - Correlation\n
 participant "CSP_Mid\n.LMC" as lmc
 box "MCS"
 participant "Mid.CBF\nController" as controller
 participant "Mid.CBF\nSubarray" as subarray
 collections "VCC" as vcc
 collections "FSP" as fsp
-collections "FSP\nSubarray" as fspsubarray
+collections "FSP\nCorr\nSubarray" as fspsubarray
 participant "Talon\nLRU" as lru
 participant "Power\nSwitch" as switch
 end box
@@ -49,7 +49,7 @@ else ObsState ABORTED, FAULT
 controller -> subarray   : Restart
 end loop
 note over vcc            : VCC\nObsState IDLE
-note over fsp            : FSP\nObstState IDLE
+note over fspsubarray    : FSP Corr Subarray\nObsState IDLE
 
 controller ->  subarray      : Off
 subarray   ->  fspsubarray   : Off
