@@ -797,7 +797,9 @@ class TestCbfSubarray:
                     if receptorsSpecified:
                         config_fsp_receptors_sorted = fsp["receptors"]
                         fsp_receptors_num = [
-                            test_proxies.receptor_utils.receptor_id_to_int[r]
+                            test_proxies.receptor_utils.receptor_id_to_vcc_id[
+                                r
+                            ]
                             for r in config_fsp_receptors_sorted
                         ]
                         assert all(
@@ -811,7 +813,9 @@ class TestCbfSubarray:
                         receptors_sorted = receptors
                         receptors_sorted.sort()
                         fsp_receptors_num = [
-                            test_proxies.receptor_utils.receptor_id_to_int[r]
+                            test_proxies.receptor_utils.receptor_id_to_vcc_id[
+                                r
+                            ]
                             for r in receptors_sorted
                         ]
                         assert all(
@@ -2063,7 +2067,7 @@ class TestCbfSubarray:
                 "Scan1_basic.json",
                 "jonesmatrix.json",
                 ["SKA001", "SKA036", "SKA063", "SKA100"],
-            ),
+            )
         ],
     )
     def test_ConfigureScan_jones_matrix(
@@ -2428,7 +2432,7 @@ class TestCbfSubarray:
                 sleep_time_s,
             )
 
-            scan_id = int(scan_configuration["scan_id"])
+            scan_id = scan_configuration["scan_id"]
 
             # check scanID on VCC and FSP
             for fsp in configuration["cbf"]["fsp"]:
@@ -2702,8 +2706,9 @@ class TestCbfSubarray:
                 sleep_time_s,
             )
             assert test_proxies.subarray[sub_id].obsState == ObsState.SCANNING
-            assert test_proxies.subarray[sub_id].scanID == int(
-                scan_configuration["scan_id"]
+            assert (
+                test_proxies.subarray[sub_id].scanID
+                == scan_configuration["scan_id"]
             )
             for fsp in configuration["cbf"]["fsp"]:
                 fsp_id = int(fsp["fsp_id"])
@@ -3000,8 +3005,9 @@ class TestCbfSubarray:
                 sleep_time_s,
             )
             assert test_proxies.subarray[sub_id].obsState == ObsState.SCANNING
-            assert test_proxies.subarray[sub_id].scanID == int(
-                scan_configuration["scan_id"]
+            assert (
+                test_proxies.subarray[sub_id].scanID
+                == scan_configuration["scan_id"]
             )
             for fsp in configuration["cbf"]["fsp"]:
                 fsp_id = int(fsp["fsp_id"])

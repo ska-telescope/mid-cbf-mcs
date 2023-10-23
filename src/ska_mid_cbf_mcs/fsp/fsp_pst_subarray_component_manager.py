@@ -245,8 +245,7 @@ class FspPstSubarrayComponentManager(
         )
 
     def scan(
-        self: FspPstSubarrayComponentManager,
-        scan_id: int,
+        self: FspPstSubarrayComponentManager, scan_id: int
     ) -> Tuple[ResultCode, str]:
         """
         Performs the Scan() command functionality

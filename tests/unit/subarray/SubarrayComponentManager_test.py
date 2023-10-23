@@ -88,8 +88,7 @@ class TestCbfSubarrayComponentManager:
         assert subarray_component_manager.receptors == []
 
     @pytest.mark.parametrize(
-        "receptors",
-        [(["SKA001", "SKA036", "SKA063"]), (["SKA063", "SKA100"])],
+        "receptors", [(["SKA001", "SKA036", "SKA063"]), (["SKA063", "SKA100"])]
     )
     def test_add_receptor_invalid(
         self: TestCbfSubarrayComponentManager,
@@ -137,8 +136,7 @@ class TestCbfSubarrayComponentManager:
         assert subarray_component_manager.receptors == [receptors[-1]]
 
     @pytest.mark.parametrize(
-        "receptors",
-        [(["SKA001", "SKA036", "SKA063"]), (["SKA063", "SKA100"])],
+        "receptors", [(["SKA001", "SKA036", "SKA063"]), (["SKA063", "SKA100"])]
     )
     def test_remove_receptor_invalid(
         self: TestCbfSubarrayComponentManager,
@@ -299,7 +297,7 @@ class TestCbfSubarrayComponentManager:
 
         (result_code, msg) = subarray_component_manager.scan(scan_json)
 
-        assert subarray_component_manager.scan_id == int(scan_json["scan_id"])
+        assert subarray_component_manager.scan_id == scan_json["scan_id"]
         assert result_code == ResultCode.STARTED
 
     @pytest.mark.parametrize(

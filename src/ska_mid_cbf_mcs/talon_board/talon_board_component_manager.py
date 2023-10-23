@@ -365,11 +365,7 @@ class TalonBoardComponentManager(CbfComponentManager):
         return (ResultCode.OK, "Off command completed OK")
 
     def _attr_change_callback(
-        self,
-        fqdn: str,
-        name: str,
-        value: Any,
-        quality: AttrQuality,
+        self, fqdn: str, name: str, value: Any, quality: AttrQuality
     ):
         if value is None:
             self._logger.warning(
