@@ -659,19 +659,18 @@ class ControllerComponentManager(CbfComponentManager):
                     # On/Off commands, rather TurnOn/OffOutlet commands to
                     # target specific outlets
                     if fqdn not in self._fqdn_power_switch:
-                        if proxy.State() != tango.DevState.OFF:
-                            try:
-                                poll(
-                                    lambda: proxy.State()
-                                    == tango.DevState.OFF,
-                                    timeout=const.DEFAULT_TIMEOUT,
-                                    step=0.5,
-                                )
-                            except TimeoutError:
-                                # append error if timed out waiting for device OFF
-                                op_state_error_list.append(
-                                    [fqdn, proxy.State()]
-                                )
+                        try:
+                            self._logger.info(
+                                f"Polling {fqdn} State() for tango.DevState.OFF"
+                            )
+                            poll(
+                                lambda: proxy.State() == tango.DevState.OFF,
+                                timeout=const.DEFAULT_TIMEOUT,
+                                step=0.5,
+                            )
+                        except TimeoutError:
+                            # append error if timed out waiting for device OFF
+                            op_state_error_list.append([fqdn, proxy.State()])
 
                     if fqdn in self._fqdn_subarray:
                         obs_state = proxy.obsState
