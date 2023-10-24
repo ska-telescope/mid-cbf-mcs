@@ -697,8 +697,6 @@ class ControllerComponentManager(CbfComponentManager):
                         message.append(log_msg)
                     result_code = ResultCode.FAILED
 
-                    # TODO FSP subarray devices?
-
                 self._on = False
                 if result_code == ResultCode.OK:
                     message.append("CbfController Off command completed OK")

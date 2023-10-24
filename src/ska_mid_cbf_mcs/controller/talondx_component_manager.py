@@ -15,7 +15,6 @@ import concurrent.futures
 import json
 import logging
 import os
-import subprocess
 import time
 
 import backoff
@@ -23,7 +22,6 @@ import tango
 import yaml
 from paramiko import AutoAddPolicy, SSHClient
 from paramiko.ssh_exception import NoValidConnectionsError, SSHException
-from polling2 import poll
 from scp import SCPClient, SCPException
 from ska_tango_base.commands import ResultCode
 from ska_tango_base.control_model import SimulationMode
@@ -556,26 +554,10 @@ class TalonDxComponentManager:
             # TODO: determine behaviour here; the shutdown command will
             # inevitably throw an exception, as the device is shut off
 
-        # verify the HPS is turned off
-        target = talon_cfg["target"]
-        ip = self._hw_config["talon_board"][target]
-        try:
-            poll(
-                lambda: subprocess.run(["ping", "-c", "1", ip]).returncode
-                == 1,
-                timeout=const.DEFAULT_TIMEOUT,
-                step=0.5,
-            )
-        except TimeoutError:
-            # raise exception if timed out waiting to exit RESOURCING/RESTARTING
-            log_msg = f"Timed out waiting for {target}:{ip} to shutdown"
-            self._logger.error(log_msg)
-            return (
-                ResultCode.OK,
-                f"_shutdown_talon_thread for {target} FAILED",
-            )
+        # wait for linux shutdown
+        time.sleep(const.DEFAULT_TIMEOUT)
 
         return (
             ResultCode.OK,
-            f"_shutdown_talon_thread for {target} completed OK",
+            f"_shutdown_talon_thread for {talon_cfg['target']} completed OK",
         )
