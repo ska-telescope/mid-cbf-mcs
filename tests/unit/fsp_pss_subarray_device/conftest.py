@@ -76,8 +76,7 @@ def unique_id() -> str:
 
 @pytest.fixture()
 def mock_component_manager(
-    mocker: pytest_mock.mocker,
-    unique_id: str,
+    mocker: pytest_mock.mocker, unique_id: str
 ) -> unittest.mock.Mock:
     """
     Return a mock component manager.
@@ -200,8 +199,7 @@ def mock_vcc() -> unittest.mock.Mock:
 
 @pytest.fixture()
 def initial_mocks(
-    mock_controller: unittest.mock.Mock,
-    mock_vcc: unittest.mock.Mock,
+    mock_controller: unittest.mock.Mock, mock_vcc: unittest.mock.Mock
 ) -> Dict[str, unittest.mock.Mock]:
     """
     Return a dictionary of device proxy mocks to pre-register.

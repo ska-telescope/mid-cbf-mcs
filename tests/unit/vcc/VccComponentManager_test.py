@@ -419,14 +419,8 @@ class TestVccComponentManager:
         "config_file_name, \
         scan_id",
         [
-            (
-                "Vcc_ConfigureScan_basic.json",
-                1,
-            ),
-            (
-                "Vcc_ConfigureScan_basic.json",
-                2,
-            ),
+            ("Vcc_ConfigureScan_basic.json", 1),
+            ("Vcc_ConfigureScan_basic.json", 2),
         ],
     )
     def test_scan_end_scan_go_to_idle(

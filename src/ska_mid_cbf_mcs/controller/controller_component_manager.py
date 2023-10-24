@@ -582,8 +582,7 @@ class ControllerComponentManager(CbfComponentManager):
             return (ResultCode.FAILED, log_msg)
 
     def _update_freq_offset_k(
-        self: ControllerComponentManager,
-        freq_offset_k: List[int],
+        self: ControllerComponentManager, freq_offset_k: List[int]
     ) -> None:
         # store the attribute
         self.frequency_offset_k = freq_offset_k
@@ -595,8 +594,7 @@ class ControllerComponentManager(CbfComponentManager):
             )
 
     def _update_freq_offset_deltaF(
-        self: ControllerComponentManager,
-        freq_offset_deltaF: List[int],
+        self: ControllerComponentManager, freq_offset_deltaF: List[int]
     ) -> None:
         # store the attribute
         self.frequency_offset_delta_f = freq_offset_deltaF

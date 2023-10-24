@@ -1815,10 +1815,7 @@ class CbfSubarrayComponentManager(
                 fsp["corr_receptor_ids"] = []
                 for i, receptor in enumerate(fsp["receptors"]):
                     fsp["corr_receptor_ids"].append(
-                        [
-                            receptor,
-                            self._receptor_utils.receptors[receptor],
-                        ]
+                        [receptor, self._receptor_utils.receptors[receptor]]
                     )
 
                 self._corr_config.append(fsp)
@@ -2159,7 +2156,7 @@ class CbfSubarrayComponentManager(
 
         scan_id = argin["scan_id"]
         data = tango.DeviceData()
-        data.insert(tango.DevString, scan_id)
+        data.insert(tango.DevShort, scan_id)
         for group in [
             self._group_vcc,
             self._group_fsp_corr_subarray,
@@ -2174,7 +2171,7 @@ class CbfSubarrayComponentManager(
                     self._logger.error(f"Error in Scan; {msg}")
                     self._component_obs_fault_callback(True)
 
-        self._scan_id = int(scan_id)
+        self._scan_id = scan_id
         self._component_scanning_callback(True)
         return (ResultCode.STARTED, "Scan command successful")
 

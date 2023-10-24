@@ -31,9 +31,7 @@ class PowerSwitchSimulator:
     """
 
     def __init__(
-        self: PowerSwitchSimulator,
-        model: str,
-        logger: logging.Logger,
+        self: PowerSwitchSimulator, model: str, logger: logging.Logger
     ) -> None:
         """
         Initialise a new instance.

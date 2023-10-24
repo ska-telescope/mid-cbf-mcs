@@ -31,8 +31,7 @@ class HpsFspCorrControllerSimulator:
     """
 
     def __init__(
-        self: HpsFspCorrControllerSimulator,
-        device_name: str,
+        self: HpsFspCorrControllerSimulator, device_name: str
     ) -> None:
         self.device_name = device_name
 

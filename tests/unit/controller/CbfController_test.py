@@ -39,8 +39,7 @@ class TestCbfController:
     """
 
     def test_State(
-        self: TestCbfController,
-        device_under_test: CbfDeviceProxy,
+        self: TestCbfController, device_under_test: CbfDeviceProxy
     ) -> None:
         """
         Test State
@@ -52,14 +51,12 @@ class TestCbfController:
         assert device_under_test.State() == DevState.DISABLE
 
     def test_Status(
-        self: TestCbfController,
-        device_under_test: CbfDeviceProxy,
+        self: TestCbfController, device_under_test: CbfDeviceProxy
     ) -> None:
         assert device_under_test.Status() == "The device is in DISABLE state."
 
     def test_adminMode(
-        self: TestCbfController,
-        device_under_test: CbfDeviceProxy,
+        self: TestCbfController, device_under_test: CbfDeviceProxy
     ) -> None:
         assert device_under_test.adminMode == AdminMode.OFFLINE
 

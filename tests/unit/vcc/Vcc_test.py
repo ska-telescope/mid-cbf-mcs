@@ -40,10 +40,7 @@ class TestVcc:
     Test class for Vcc tests.
     """
 
-    def test_State(
-        self: TestVcc,
-        device_under_test: CbfDeviceProxy,
-    ) -> None:
+    def test_State(self: TestVcc, device_under_test: CbfDeviceProxy) -> None:
         """
         Test State
 
@@ -53,15 +50,11 @@ class TestVcc:
         """
         assert device_under_test.state() == DevState.DISABLE
 
-    def test_Status(
-        self: TestVcc,
-        device_under_test: CbfDeviceProxy,
-    ) -> None:
+    def test_Status(self: TestVcc, device_under_test: CbfDeviceProxy) -> None:
         assert device_under_test.Status() == "The device is in DISABLE state."
 
     def test_adminMode(
-        self: TestVcc,
-        device_under_test: CbfDeviceProxy,
+        self: TestVcc, device_under_test: CbfDeviceProxy
     ) -> None:
         assert device_under_test.adminMode == AdminMode.OFFLINE
 
@@ -153,14 +146,8 @@ class TestVcc:
         "config_file_name, \
         scan_id",
         [
-            (
-                "Vcc_ConfigureScan_basic.json",
-                1,
-            ),
-            (
-                "Vcc_ConfigureScan_basic.json",
-                2,
-            ),
+            ("Vcc_ConfigureScan_basic.json", 1),
+            ("Vcc_ConfigureScan_basic.json", 2),
         ],
     )
     def test_Scan(
@@ -183,7 +170,7 @@ class TestVcc:
         self.test_Vcc_ConfigureScan(device_under_test, config_file_name)
 
         scan_id_device_data = tango.DeviceData()
-        scan_id_device_data.insert(tango.DevString, str(scan_id))
+        scan_id_device_data.insert(tango.DevShort, scan_id)
 
         # Use callable 'Scan'  API
         (result_code, _) = device_under_test.Scan(scan_id_device_data)
@@ -194,14 +181,8 @@ class TestVcc:
         "config_file_name, \
         scan_id",
         [
-            (
-                "Vcc_ConfigureScan_basic.json",
-                1,
-            ),
-            (
-                "Vcc_ConfigureScan_basic.json",
-                2,
-            ),
+            ("Vcc_ConfigureScan_basic.json", 1),
+            ("Vcc_ConfigureScan_basic.json", 2),
         ],
     )
     def test_EndScan(
@@ -229,14 +210,8 @@ class TestVcc:
         "config_file_name, \
         scan_id",
         [
-            (
-                "Vcc_ConfigureScan_basic.json",
-                1,
-            ),
-            (
-                "Vcc_ConfigureScan_basic.json",
-                2,
-            ),
+            ("Vcc_ConfigureScan_basic.json", 1),
+            ("Vcc_ConfigureScan_basic.json", 2),
         ],
     )
     def test_Reconfigure_Scan_EndScan_GoToIdle(
@@ -272,7 +247,7 @@ class TestVcc:
 
         # rescanning
         scan_id_device_data = tango.DeviceData()
-        scan_id_device_data.insert(tango.DevString, str(scan_id))
+        scan_id_device_data.insert(tango.DevShort, scan_id)
 
         (result_code, _) = device_under_test.Scan(scan_id_device_data)
         assert result_code == ResultCode.STARTED
@@ -310,14 +285,8 @@ class TestVcc:
         "config_file_name, \
         scan_id",
         [
-            (
-                "Vcc_ConfigureScan_basic.json",
-                1,
-            ),
-            (
-                "Vcc_ConfigureScan_basic.json",
-                2,
-            ),
+            ("Vcc_ConfigureScan_basic.json", 1),
+            ("Vcc_ConfigureScan_basic.json", 2),
         ],
     )
     def test_Abort_FromScanning(

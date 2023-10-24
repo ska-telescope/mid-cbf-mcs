@@ -39,8 +39,7 @@ class TestFspPstSubarray:
     """
 
     def test_State(
-        self: TestFspPstSubarray,
-        device_under_test: CbfDeviceProxy,
+        self: TestFspPstSubarray, device_under_test: CbfDeviceProxy
     ) -> None:
         """
         Test State
@@ -52,8 +51,7 @@ class TestFspPstSubarray:
         assert device_under_test.State() == DevState.DISABLE
 
     def test_Status(
-        self: TestFspPstSubarray,
-        device_under_test: CbfDeviceProxy,
+        self: TestFspPstSubarray, device_under_test: CbfDeviceProxy
     ) -> None:
         """
         Test Status
@@ -65,8 +63,7 @@ class TestFspPstSubarray:
         assert device_under_test.Status() == "The device is in DISABLE state."
 
     def test_adminMode(
-        self: TestFspPstSubarray,
-        device_under_test: CbfDeviceProxy,
+        self: TestFspPstSubarray, device_under_test: CbfDeviceProxy
     ) -> None:
         """
         Test Admin Mode
@@ -185,14 +182,8 @@ class TestFspPstSubarray:
         "config_file_name, \
         scan_id",
         [
-            (
-                "/../../data/FspPstSubarray_ConfigureScan_basic.json",
-                1,
-            ),
-            (
-                "/../../data/FspPstSubarray_ConfigureScan_basic.json",
-                2,
-            ),
+            ("/../../data/FspPstSubarray_ConfigureScan_basic.json", 1),
+            ("/../../data/FspPstSubarray_ConfigureScan_basic.json", 2),
         ],
     )
     def test_Scan(
@@ -216,7 +207,7 @@ class TestFspPstSubarray:
         self.test_ConfigureScan(device_under_test, config_file_name)
 
         scan_id_device_data = tango.DeviceData()
-        scan_id_device_data.insert(tango.DevString, str(scan_id))
+        scan_id_device_data.insert(tango.DevShort, scan_id)
 
         device_under_test.Scan(scan_id_device_data)
         time.sleep(0.1)
@@ -226,14 +217,8 @@ class TestFspPstSubarray:
         "config_file_name, \
         scan_id",
         [
-            (
-                "/../../data/FspPstSubarray_ConfigureScan_basic.json",
-                1,
-            ),
-            (
-                "/../../data/FspPstSubarray_ConfigureScan_basic.json",
-                2,
-            ),
+            ("/../../data/FspPstSubarray_ConfigureScan_basic.json", 1),
+            ("/../../data/FspPstSubarray_ConfigureScan_basic.json", 2),
         ],
     )
     def test_EndScan(
@@ -293,14 +278,8 @@ class TestFspPstSubarray:
         "config_file_name, \
         scan_id",
         [
-            (
-                "/../../data/FspPstSubarray_ConfigureScan_basic.json",
-                1,
-            ),
-            (
-                "/../../data/FspPstSubarray_ConfigureScan_basic.json",
-                2,
-            ),
+            ("/../../data/FspPstSubarray_ConfigureScan_basic.json", 1),
+            ("/../../data/FspPstSubarray_ConfigureScan_basic.json", 2),
         ],
     )
     def test_Abort_FromScanning(
