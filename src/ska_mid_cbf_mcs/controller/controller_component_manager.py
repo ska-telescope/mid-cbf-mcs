@@ -605,8 +605,8 @@ class ControllerComponentManager(CbfComponentManager):
                         message.append(log_msg)
                     result_code = ResultCode.FAILED
 
-                # HPS master shutdown, code 3 to gracefully shut down linux host (HPS)
-                result = self._talondx_component_manager.shutdown(3)
+                # HPS master shutdown
+                result = self._talondx_component_manager.shutdown()
                 if result == ResultCode.FAILED:
                     message = "HPS Master shutdown failed."
                     return (ResultCode.FAILED, message)
@@ -696,8 +696,6 @@ class ControllerComponentManager(CbfComponentManager):
                         self._logger.error(log_msg)
                         message.append(log_msg)
                     result_code = ResultCode.FAILED
-
-                    # TODO FSP subarray devices?
 
                 self._on = False
                 if result_code == ResultCode.OK:

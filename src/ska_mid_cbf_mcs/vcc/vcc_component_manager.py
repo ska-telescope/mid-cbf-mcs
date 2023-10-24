@@ -541,7 +541,7 @@ class VccComponentManager(CbfComponentManager, CspObsComponentManager):
                 with open(internal_params_file_name, "r") as f:
                     json_string = f.read()
             except FileNotFoundError:
-                self._logger.error(
+                self._logger.warning(
                     f"Could not find internal parameters file for receptor {self._receptor_id}, band {freq_band_name}; using default."
                 )
                 with open(
