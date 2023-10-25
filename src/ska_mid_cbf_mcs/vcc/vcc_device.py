@@ -697,7 +697,9 @@ class Vcc(CspSubElementObsDevice):
                 information purpose only.
             :rtype: (ResultCode, str)
             """
-            return self.target.component_manager.configure_band(argin)
+            return self.target.component_manager.configure_band(
+                json.loads(argin)
+            )
 
     @command(dtype_in="DevString", doc_in="Frequency band string.")
     @DebugIt()
