@@ -1529,7 +1529,7 @@ class CbfSubarrayComponentManager(
                 args = {
                     "frequency_band": common_configuration["frequency_band"],
                     "dish_sample_rate": int(dish_sample_rate),
-                    "samples_per_frame": int(samples_per_frame),
+                    "samples_per_frame": int(samples_per_frame)
                 }
                 data = tango.DeviceData()
                 data.insert(tango.DevString, json.dumps(args))
