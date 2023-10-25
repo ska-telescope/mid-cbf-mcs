@@ -639,6 +639,9 @@ class FspCorrSubarrayComponentManager(
         ]
         configuration["subarray_receptor_ids"] = subarray_receptor_id_int
 
+        # Subtract 1 from sub_id so that if 1 comes from top level, 0 is sent to HPS
+        configuration["sub_id"] = configuration["sub_id"] - 1
+
         # construct HPS ConfigureScan input
         sample_rates = configuration.pop("fs_sample_rates")
         hps_fsp_configuration = dict({"configure_scan": configuration})
