@@ -483,7 +483,9 @@ class CbfSubarrayComponentManager(
                     receptor_id = delay_detail["receptor"]
                     delay_detail["receptor"] = [
                         receptor_id,
-                        self._receptor_utils.receptor_id_to_vcc_id[receptor_id],
+                        self._receptor_utils.receptor_id_to_vcc_id[
+                            receptor_id
+                        ],
                     ]
                 t = Thread(
                     target=self._update_delay_model,
@@ -644,7 +646,9 @@ class CbfSubarrayComponentManager(
                     receptor_id = weights["receptor"]
                     weights["receptor"] = [
                         receptor_id,
-                        self._receptor_utils.receptor_id_to_vcc_id[receptor_id],
+                        self._receptor_utils.receptor_id_to_vcc_id[
+                            receptor_id
+                        ],
                     ]
                     t = Thread(
                         target=self._update_timing_beam_weights,
