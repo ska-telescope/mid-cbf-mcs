@@ -639,6 +639,8 @@ class FspCorrSubarrayComponentManager(
         ]
         configuration["subarray_receptor_ids"] = subarray_receptor_id_int
 
+        print(configuration)
+
         # Subtract 1 from sub_id so that if 1 comes from top level, 0 is sent to HPS
         configuration["sub_id"] = configuration["sub_id"] - 1
 
